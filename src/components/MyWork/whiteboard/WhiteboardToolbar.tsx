@@ -50,6 +50,11 @@ export interface WhiteboardToolbarProps {
   canUndo: boolean;
   canRedo: boolean;
   whiteboardModeCopy: { toggleLabel: string; modeLabel: string; exitHint: string; helper: string };
+  /** When true (Menu 1 owns the save indicator in the mels canvas shell), the
+   *  toolbar hides its own Save button to avoid duplicating the identity-row
+   *  save state. Save mechanics (autosave + onSave) are untouched. Default OFF
+   *  → legacy layout renders exactly as before. */
+  hideSaveIndicator?: boolean;
 
   onAddElement: (kind: string, extraData?: Record<string, unknown>) => void;
   onSetBoardMode: (mode: 'board' | 'draw') => void;
@@ -200,6 +205,7 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
   onSave,
   onUndo,
   onRedo,
+  hideSaveIndicator = false,
 }) => {
   const { t } = useTranslation();
 
@@ -389,21 +395,29 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
 
       <div className="flex-1" />
 
-      <button
-        type="button"
-        onClick={onSave}
-        disabled={saving || loading || locked}
-        aria-label={t('myWork.whiteboard.toolbar.save')}
-        aria-busy={saving}
-        className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors shrink-0 ${
-          saving || loading || locked
-            ? 'bg-c-surface-raised text-c-text-muted'
-            : 'bg-c-text text-c-surface hover:brightness-110'
-        }`}
-      >
-        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-        {saving ? t('myWork.whiteboard.toolbarExtra.saving') : t('myWork.whiteboard.toolbar.save')}
-      </button>
+      {/* Z9: gdy Menu 1 (mels canvas shell) niesie własny wskaźnik zapisu
+          (IdeaSaveIndicator), toolbar chowa WŁASNY przycisk Zapisz — zero dubli.
+          hideSaveIndicator=false (legacy) → renderuje jak dotąd. Mechanika
+          zapisu (autosave + onSave) bez zmian. */}
+      {!hideSaveIndicator && (
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={saving || loading || locked}
+          aria-label={t('myWork.whiteboard.toolbar.save')}
+          aria-busy={saving}
+          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors shrink-0 ${
+            saving || loading || locked
+              ? 'bg-c-surface-raised text-c-text-muted'
+              : 'bg-c-text text-c-surface hover:brightness-110'
+          }`}
+        >
+          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          {saving
+            ? t('myWork.whiteboard.toolbarExtra.saving')
+            : t('myWork.whiteboard.toolbar.save')}
+        </button>
+      )}
       {/* #6c: "Saved Xs ago" tekst usunięty — autosave ma być cichy (dublet z Mind Map #6b/#6c).
           Mechanika sync (saveStatusLabel prop) zostaje niezmieniona, tylko nie renderujemy jej. */}
     </div>

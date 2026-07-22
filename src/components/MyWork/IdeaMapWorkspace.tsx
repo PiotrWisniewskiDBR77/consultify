@@ -3491,6 +3491,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             <IdeaTableTool
               open
               ideaId={realId}
+              // Z9: mels canvas shell → Menu 1 (IdeaSaveIndicator) owns the save
+              // state, so the per-tool toolbar hides its own Save button (zero
+              // dubli). Legacy (flag OFF) → false → unchanged.
+              hideSaveIndicator={melsCanvasEnabled}
               preferredPlatformTableId={activeTool === 'table' ? deepLinkedTableId : null}
               preferredViewId={activeTool === 'table' ? deepLinkedViewId : null}
               locked={canvasLocked}
@@ -3516,6 +3520,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               open
               ideaId={realId}
               locked={canvasLocked}
+              // Z9: mels canvas shell → Menu 1 owns the save indicator; toolbar
+              // hides its own Save button (zero dubli). Legacy → false.
+              hideSaveIndicator={melsCanvasEnabled}
               refreshToken={mapRefreshToken}
               onSelectionChange={handleSelectionChange}
               // NO onGraphChange here (unlike Table/Whiteboard): those tools own
@@ -3565,6 +3572,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               open
               ideaId={realId}
               locked={canvasLocked}
+              // Z9: mels canvas shell → Menu 1 owns the save indicator; toolbar
+              // hides its own Save button (zero dubli). Legacy → false.
+              hideSaveIndicator={melsCanvasEnabled}
               title={title}
               seedText={seedText}
               refreshToken={mapRefreshToken}

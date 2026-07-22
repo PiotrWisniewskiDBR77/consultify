@@ -116,6 +116,11 @@ function ToolbarIconButton({
 
 export interface TableToolbarProps {
   ideaId: string;
+  /** When true (Menu 1 owns the save indicator in the mels canvas shell), the
+   *  toolbar hides its own Save button to avoid duplicating the identity-row
+   *  save state. Save mechanics (autosave + handleSave from useTableData) are
+   *  untouched. Default OFF → legacy layout renders exactly as before. */
+  hideSaveIndicator?: boolean;
   /** Legacy undo hook — kept until full platform migration */
   nodesUndo: { canUndo: boolean; canRedo: boolean; undo: () => void; redo: () => void };
   onPlatformUndo: () => void;
@@ -262,6 +267,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
     ColorPaletteComponent,
     MobileToolbarMenuComponent,
     BatchAIFillButtonComponent,
+    hideSaveIndicator = false,
   } = props;
 
   const handleSaveView = useCallback(
@@ -1276,17 +1282,23 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       )}
 
       {/* Save button — #6c: "Saved Xs ago" tekst usunięty, autosave ma być cichy
-          (dublet z Mind Map #6b/#6c). Mechanika sync (saveStatusLabel prop) zostaje. */}
-      <Button
-        variant="primary"
-        size="sm"
-        onClick={() => void handleSave()}
-        disabled={saving || loading || locked}
-        loading={saving}
-        icon={<Save />}
-      >
-        {saving ? t('ideas.table.saving', 'Saving…') : t('ideas.table.save', 'Save')}
-      </Button>
+          (dublet z Mind Map #6b/#6c). Mechanika sync (saveStatusLabel prop) zostaje.
+          Z9: gdy Menu 1 (mels canvas shell) niesie własny wskaźnik zapisu
+          (IdeaSaveIndicator), toolbar chowa WŁASNY przycisk Zapisz — zero dubli.
+          hideSaveIndicator=false (legacy) → renderuje jak dotąd. Mechanika zapisu
+          (autosave + handleSave) bez zmian. */}
+      {!hideSaveIndicator && (
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => void handleSave()}
+          disabled={saving || loading || locked}
+          loading={saving}
+          icon={<Save />}
+        >
+          {saving ? t('ideas.table.saving', 'Saving…') : t('ideas.table.save', 'Save')}
+        </Button>
+      )}
 
       <Sheet
         open={aiSchemaSheetOpen}
