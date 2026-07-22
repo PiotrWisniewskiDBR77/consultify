@@ -107,6 +107,7 @@ import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import { Button, LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
@@ -7967,10 +7968,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // (usunięte) fmtPanelDateTime — obsługiwało wyłącznie skróty komentarzy
   // i historii w panelu; oba skróty zastąpione pełnymi canvasami (SPEC-N §2.1),
   // które formatują daty same.
-  const panelTdKey = 'px-3 py-2 text-c-text-muted border-b border-c-border-subtle';
-  const panelTdVal = 'px-3 py-2 text-right text-c-text border-b border-c-border-subtle';
-  const panelTdValLast = 'px-3 py-2 text-right text-c-text';
-
   const rightPanelSections: ArtifactRightPanelSection[] = [
     {
       // SPEC-N §2.6 (anty-duplikacja: jedna akcja = jedno miejsce). Ta sekcja
@@ -8004,86 +8001,80 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       icon: Flag,
       defaultOpen: true,
       children: (
-        <div className="rounded-lg border border-c-border-subtle overflow-hidden">
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr className="bg-c-surface-raised">
-                <th className="text-left font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                  {t('interview.insightViewer.property')}
-                </th>
-                <th className="text-right font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                  {t('interview.insightViewer.value')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className={panelTdKey}>{t('interview.insightViewer.status')}</td>
-                <td className={panelTdVal}>
-                  <div className="relative inline-flex justify-end w-full">
+        <ArtifactPropertiesTable
+          propertyLabel={t('interview.insightViewer.property')}
+          valueLabel={t('interview.insightViewer.value')}
+          rows={[
+            {
+              id: 'status',
+              label: t('interview.insightViewer.status'),
+              value: (
+                <div className="relative inline-flex justify-end w-full">
+                  <span
+                    className={`inline-flex h-6 items-center gap-1.5 px-2 rounded-md text-[11px] font-semibold ${statusPill.bg} ${statusPill.text}`}
+                  >
                     <span
-                      className={`inline-flex h-6 items-center gap-1.5 px-2 rounded-md text-[11px] font-semibold ${statusPill.bg} ${statusPill.text}`}
-                    >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusPill.dot}`}
-                      />
-                      <span className="truncate">{statusPillLabel || currentInsightStatus}</span>
-                      {statusEditable && (
-                        <ChevronDown size={10} className="flex-shrink-0 opacity-60" />
-                      )}
-                    </span>
+                      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusPill.dot}`}
+                    />
+                    <span className="truncate">{statusPillLabel || currentInsightStatus}</span>
                     {statusEditable && (
-                      <select
-                        value={currentInsightStatus}
-                        onChange={(e) => runStatusTransition(e.target.value)}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        title={t('interview.insightViewer.changeStatus')}
-                      >
-                        {statusBaseOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {t(
-                              `interview.insightViewer.statusOptionLabel.${opt.value}`,
-                              opt.label.en
-                            )}
-                          </option>
-                        ))}
-                      </select>
+                      <ChevronDown size={10} className="flex-shrink-0 opacity-60" />
                     )}
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td className={panelTdKey}>{t('interview.insightViewer.source')}</td>
-                <td className={panelTdVal}>
-                  {t('interview.insightViewer.sessionsCount', {
-                    count: insight?.sourceSessionCount ?? 0,
-                  })}
-                </td>
-              </tr>
-              <tr>
-                <td className={panelTdKey}>{t('interview.insightViewer.date')}</td>
-                <td className={`${panelTdVal} tabular-nums`}>{fmtPanelDate(insight?.createdAt)}</td>
-              </tr>
-              <tr>
-                <td className={panelTdKey}>{t('interview.insightViewer.confidence')}</td>
-                <td className={panelTdVal}>{panelConfidence || panelDash}</td>
-              </tr>
-              <tr>
-                <td className={panelTdKey}>{t('interview.insightViewer.findings')}</td>
-                <td className={`${panelTdVal} tabular-nums`}>{String(findingsSummary.total)}</td>
-              </tr>
-              <tr>
-                <td className="px-3 py-2 text-c-text-muted">{t('interview.insightViewer.tag')}</td>
-                <td className={panelTdValLast}>
-                  {t(
-                    `interview.insightViewer.insightTypeLabel.${insight?.promptType || 'summary'}`,
-                    typeMeta.label
+                  </span>
+                  {statusEditable && (
+                    <select
+                      value={currentInsightStatus}
+                      onChange={(e) => runStatusTransition(e.target.value)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      title={t('interview.insightViewer.changeStatus')}
+                    >
+                      {statusBaseOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {t(
+                            `interview.insightViewer.statusOptionLabel.${opt.value}`,
+                            opt.label.en
+                          )}
+                        </option>
+                      ))}
+                    </select>
                   )}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                </div>
+              ),
+            },
+            {
+              id: 'source',
+              label: t('interview.insightViewer.source'),
+              value: t('interview.insightViewer.sessionsCount', {
+                count: insight?.sourceSessionCount ?? 0,
+              }),
+            },
+            {
+              id: 'date',
+              label: t('interview.insightViewer.date'),
+              value: fmtPanelDate(insight?.createdAt),
+              mono: true,
+            },
+            {
+              id: 'confidence',
+              label: t('interview.insightViewer.confidence'),
+              value: panelConfidence || panelDash,
+            },
+            {
+              id: 'findings',
+              label: t('interview.insightViewer.findings'),
+              value: String(findingsSummary.total),
+              mono: true,
+            },
+            {
+              id: 'tag',
+              label: t('interview.insightViewer.tag'),
+              value: t(
+                `interview.insightViewer.insightTypeLabel.${insight?.promptType || 'summary'}`,
+                typeMeta.label
+              ),
+            },
+          ]}
+        />
       ),
     },
     {
