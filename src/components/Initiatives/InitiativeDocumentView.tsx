@@ -9665,14 +9665,50 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     };
 
     const sourceTitle = initiative?.source_title || initiative?.sourceTitle || null;
-    const relationRows: { label: string; value: string }[] = [
-      { label: t('initiatives.panel.tasks', 'Tasks'), value: `${tasksDone}/${tasks.length}` },
-      { label: t('initiatives.panel.decisions', 'Decisions'), value: String(decisions.length) },
-      { label: t('initiatives.panel.raid', 'RAID'), value: String(raidItems.length) },
-      { label: t('initiatives.artifacts2', 'Artifacts'), value: String(relatedArtifacts.length) },
+    // N2 — nawigacja do źródła (Insight/wywiad), którego dotyczy inicjatywa.
+    // Ten sam obliczenie co we `Właściwościach` (pole `sourceInsight` powyżej) —
+    // tylko obsłużone typy source_type dostają realny href, reszta zostaje
+    // czystym tekstem (brak wiarygodnego celu nawigacji).
+    const srcType = initiative?.source_type || initiative?.sourceType;
+    const srcId = initiative?.source_id || initiative?.sourceId;
+    const normalizedSourceType = srcType ? String(srcType).toLowerCase() : '';
+    const sourceNavPath =
+      srcType &&
+      srcId &&
+      ['interview', 'interview_insight', 'insight', 'conclusion'].includes(normalizedSourceType)
+        ? getArtifactPath('insight', srcId)
+        : normalizedSourceType === 'conclusion_readout'
+          ? '/presentations?tab=documents'
+          : null;
+    // Wiersze powiązań — każdy ma odpowiadającą sekcję Menu 2 W TYM SAMYM
+    // dokumencie (Zadania/Decyzje/RAID/Artefakty/Załączniki), więc klik = ta
+    // sama nawigacja co istniejące pigułki (por. `setActiveNSection('tasks')`
+    // przy CTA „Plan"), nie nowy wzorzec.
+    const relationRows: { label: string; value: string; sectionId: string }[] = [
+      {
+        label: t('initiatives.panel.tasks', 'Tasks'),
+        value: `${tasksDone}/${tasks.length}`,
+        sectionId: 'tasks',
+      },
+      {
+        label: t('initiatives.panel.decisions', 'Decisions'),
+        value: String(decisions.length),
+        sectionId: 'decisions',
+      },
+      {
+        label: t('initiatives.panel.raid', 'RAID'),
+        value: String(raidItems.length),
+        sectionId: 'risk-raid',
+      },
+      {
+        label: t('initiatives.artifacts2', 'Artifacts'),
+        value: String(relatedArtifacts.length),
+        sectionId: 'artifacts',
+      },
       {
         label: t('initiatives.panel.attachments', 'Attachments'),
         value: String(attachments.length + linkedItems.length),
+        sectionId: 'attachments-links',
       },
     ];
     const hasRelations =
@@ -9754,20 +9790,51 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         isEmpty: !hasRelations,
         emptyLabel: t('initiatives.panel.noRelations', 'No relations'),
         children: (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             {sourceTitle ? (
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-c-text-muted shrink-0">
-                  {t('initiatives.panel.source', 'Source')}
-                </span>
-                <span className="text-xs text-c-text truncate">{sourceTitle}</span>
-              </div>
+              sourceNavPath ? (
+                // Źródło ma realny cel (Insight/wywiad) — klikalny link,
+                // ten sam href co pole „Źródło" we Właściwościach powyżej.
+                <a
+                  href={sourceNavPath}
+                  title={t('initiatives.initiativeDocumentView.openSourceTitle', {
+                    title: sourceTitle,
+                  })}
+                  className="flex items-center justify-between gap-2 -mx-1.5 px-1.5 py-1 rounded-lg text-c-info hover:bg-c-surface-raised transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                >
+                  <span className="text-xs text-c-text-muted shrink-0">
+                    {t('initiatives.panel.source', 'Source')}
+                  </span>
+                  <span className="inline-flex items-center gap-1 min-w-0">
+                    <span className="text-xs truncate">{sourceTitle}</span>
+                    <ExternalLink size={10} className="shrink-0 opacity-60" />
+                  </span>
+                </a>
+              ) : (
+                // Brak wiarygodnego source_type/source_id → zostaje tekstem
+                // (nawigacja donikąd byłaby gorsza niż licznik).
+                <div className="flex items-center justify-between gap-2 px-1.5 py-1">
+                  <span className="text-xs text-c-text-muted shrink-0">
+                    {t('initiatives.panel.source', 'Source')}
+                  </span>
+                  <span className="text-xs text-c-text truncate">{sourceTitle}</span>
+                </div>
+              )
             ) : null}
             {relationRows.map((row) => (
-              <div key={row.label} className="flex items-center justify-between gap-2">
+              <button
+                key={row.label}
+                type="button"
+                onClick={() => setActiveNSection(row.sectionId)}
+                // Brak dedykowanego klucza i18n dla tego tooltipu — budujemy
+                // go wprost z `isPolish` (ten sam wzorzec co pola właściwości
+                // powyżej), żeby nie ciągnąć angielskiego fallbacku do PL UI.
+                title={isPolish ? `Otwórz: ${row.label}` : `Open: ${row.label}`}
+                className="flex items-center justify-between gap-2 -mx-1.5 px-1.5 py-1 rounded-lg text-left hover:bg-c-surface-raised transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+              >
                 <span className="text-xs text-c-text-muted shrink-0">{row.label}</span>
-                <span className="text-xs text-c-text tabular-nums">{row.value}</span>
-              </div>
+                <span className="text-xs text-c-info tabular-nums">{row.value}</span>
+              </button>
             ))}
           </div>
         ),
@@ -9936,6 +10003,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     handleNModeSubmitComment,
     handleDeleteComment,
     requestCommentsAi,
+    setActiveNSection,
   ]);
 
   // ==========================================
