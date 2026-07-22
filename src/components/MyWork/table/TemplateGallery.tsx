@@ -124,7 +124,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
-            <LayoutTemplate size={18} className="text-c-accent" />
+            <LayoutTemplate size={18} className="text-c-text-secondary" />
             <h2 className="text-base font-semibold text-c-text">
               {t('ideas.table.templateGallery.templateGalleryTitle', 'Template Gallery')}
             </h2>
@@ -161,7 +161,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
                 onClick={() => setActiveCategory(cat.id)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                   activeCategory === cat.id
-                    ? 'bg-c-accent-soft text-c-accent ring-1 ring-c-focus'
+                    ? 'bg-c-surface-raised text-c-text ring-1 ring-c-focus'
                     : 'text-c-text-muted hover:bg-c-surface-raised'
                 }`}
               >
@@ -196,7 +196,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
                 return (
                   <div
                     key={tpl.id}
-                    className="group relative rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 hover:border-c-accent hover:shadow-md transition-all"
+                    className="group relative rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 hover:border-c-border hover:shadow-md transition-all"
                   >
                     {tpl.is_featured && (
                       <div className="absolute top-3 right-3">
@@ -204,8 +204,8 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
                       </div>
                     )}
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="w-9 h-9 rounded-lg bg-c-accent-soft flex items-center justify-center flex-shrink-0">
-                        <CatIcon size={18} className="text-c-accent" />
+                      <div className="w-9 h-9 rounded-lg bg-c-surface-raised flex items-center justify-center flex-shrink-0">
+                        <CatIcon size={18} className="text-c-text-secondary" />
                       </div>
                       <div className="min-w-0">
                         <h3 className="text-sm font-semibold text-c-text truncate">{tpl.name}</h3>
