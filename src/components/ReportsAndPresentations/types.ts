@@ -13,7 +13,11 @@ export type RapTab =
   | 'templates'
   // C2 (2026-07-22): Architekt szablonów Prezentacji — zakładka widoczna TYLKO
   // przy fladze isDeckArchitectEnabled() (default OFF); przy OFF hub bez zmian.
-  | 'template_architect';
+  | 'template_architect'
+  // Gen. Excel nav (2026-07-22): rejestr parametrycznych szablonów Excela —
+  // zakładka widoczna TYLKO przy fladze isWorkbookTemplatesEnabled() (default
+  // OFF); przy OFF hub bez zmian.
+  | 'workbook_templates';
 // NOTE (#83a): 'outputs_data' retired as a top-level Menu 2 tab — Data Sources
 // moved to a sub-tab inside Sheets (SheetsTabContent). Legacy `?tab=data` deep
 // links now resolve to 'outputs_sheets' via outputsLibraryTabQuery.ts.
