@@ -45,9 +45,9 @@ function stepIcon(type: ReadbackStep['type']) {
     case 'decision':
       return { Icon: GitBranch, className: 'text-warning-600 dark:text-warning-400' };
     case 'parallel_split':
-      return { Icon: Split, className: 'text-c-accent' };
+      return { Icon: Split, className: 'text-c-info' };
     case 'parallel_join':
-      return { Icon: Merge, className: 'text-c-accent' };
+      return { Icon: Merge, className: 'text-c-info' };
     case 'step':
     default:
       return { Icon: ChevronRight, className: 'text-c-text-muted' };
@@ -131,7 +131,7 @@ export const ReadbackPanel: React.FC<ReadbackPanelProps> = ({
 
       {isLoading && !hasPaths ? (
         <div className="flex items-center justify-center gap-2 py-10 text-c-text-muted">
-          <Loader2 size={20} className="animate-spin text-c-accent" />
+          <Loader2 size={20} className="animate-spin text-c-text-secondary" />
         </div>
       ) : null}
 
