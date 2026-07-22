@@ -141,7 +141,7 @@ const CheckboxDisplay: React.FC<{ value: unknown; onChange?: (v: unknown) => voi
         className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
           checked
             ? 'bg-c-text border-c-text text-c-bg'
-            : 'border-c-border-subtle hover:border-c-accent'
+            : 'border-c-border-subtle hover:border-c-border'
         }`}
       >
         {checked && <Check size={12} />}
@@ -294,7 +294,7 @@ const ButtonDisplay: React.FC<{ fieldOptions?: Record<string, unknown> }> = ({ f
           }).catch(() => {});
         }
       }}
-      className="px-2 py-0.5 rounded bg-c-accent-soft text-c-accent text-xs font-medium hover:bg-c-accent transition-colors"
+      className="px-2 py-0.5 rounded bg-c-surface-raised text-c-text text-xs font-medium hover:bg-c-surface-raised/80 transition-colors"
     >
       {opts?.label || t('ideas.table.action', 'Action')}
     </button>
@@ -326,7 +326,7 @@ const FormulaDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, u
 
   return (
     <span className="inline-flex items-center gap-1 text-xs text-c-text px-1">
-      <FunctionSquare size={10} className="text-c-accent flex-shrink-0" />
+      <FunctionSquare size={10} className="text-c-text-secondary flex-shrink-0" />
       <span className={resultType === 'number' ? 'tabular-nums text-right' : 'truncate'}>
         {formatted}
       </span>
@@ -379,7 +379,7 @@ const CreatedByDisplay: React.FC<PlatformCellRendererProps> = ({ value, record }
   const name = record?.data?.__created_by_name || record?.data?.__created_by || value || '—';
   return (
     <div className="flex items-center gap-1.5 text-xs px-1">
-      <div className="w-5 h-5 rounded-full bg-c-accent-soft flex items-center justify-center text-[10px] font-medium text-c-accent">
+      <div className="w-5 h-5 rounded-full bg-c-surface-raised flex items-center justify-center text-[10px] font-medium text-c-text-secondary">
         {String(name).charAt(0).toUpperCase()}
       </div>
       <span className="truncate">{String(name)}</span>
