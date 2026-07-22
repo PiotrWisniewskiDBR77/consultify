@@ -72,11 +72,17 @@ export function deckTitleFromIntent(intent: string, fallback: string): string {
 interface DeckGenerationSetup {
   title: string;
   language: 'pl' | 'en';
+  /** Temat/brief z prośby użytkownika — nieść do generateDeck, patrz niżej. */
+  brief?: string;
 }
 
-function buildDeckSetup({ title, language }: DeckGenerationSetup): Record<string, unknown> {
+function buildDeckSetup({ title, language, brief }: DeckGenerationSetup): Record<string, unknown> {
   // Minimalny DeckSetup (presentationGeneratorService) — bez źródeł generator
   // tworzy outline z default szablonu i oznacza deck jako częściowo ugruntowany.
+  // `brief` (temat prośby) MUSI tu być — inaczej `setup.brief` nie dociera do
+  // generateDeck (ten sam setup jest reużyty w start()), useBriefRewrite=false
+  // i deck pisze „brak danych" (root-cause 2026-07-22). audience/goal derywuje
+  // backend z briefu (resolveDeckBrief w deliverablesGenerationService).
   return {
     title,
     audience: 'internal',
@@ -85,6 +91,7 @@ function buildDeckSetup({ title, language }: DeckGenerationSetup): Record<string
     theme: 'corporate',
     confidentiality: 'internal',
     sourceArtifacts: [],
+    ...(brief && brief.trim() ? { brief: brief.trim() } : {}),
   };
 }
 
@@ -99,7 +106,11 @@ export async function planDeckGeneration(params: {
   setup: Record<string, unknown>;
   sources: Array<{ sourceType: string; sourceId: string; sourceTitle?: string }>;
 }> {
-  const setup = buildDeckSetup({ title: params.title, language: params.language });
+  const setup = buildDeckSetup({
+    title: params.title,
+    language: params.language,
+    brief: params.intent,
+  });
   const res = (await Api.post('/deliverables/generations', {
     format: 'deck',
     setup,
