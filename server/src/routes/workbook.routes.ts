@@ -87,6 +87,48 @@ function buildWorkbookGrounding(input: {
   return text ? text.slice(0, 6000) : undefined;
 }
 
+/**
+ * A2 fix (2026-07-22): the dedicated artifact-run path (ExceleView /
+ * useKimiArtifactPipeline.ts) only sends `artifactRunId` — which elsewhere in this
+ * route is used SOLELY to adopt the Outputs Library card (see adoptRunArtifactForWorkbook
+ * below) — so `buildWorkbookGrounding` above got nothing and the LLM prompt was silently
+ * ungrounded on that path. When no explicit sourcePack/evidenceRefs/researchContext made
+ * it into the request, hydrate a grounding string server-side from the run's own record:
+ *   v8_artifact_runs (artifactRegistryService.getArtifactRun) → execution_run_id
+ *   → v8_execution_runs (executionSpineService.getRun) → free-text `goal` (the brief
+ *     that was captured when the run was planned from chat, see createArtifactRunFromChat).
+ * FAIL-SOFT: any missing record or thrown error → undefined, logged as a warning —
+ * generation must proceed ungrounded rather than fail.
+ */
+async function hydrateGroundingFromRun(params: {
+  artifactRunId: string;
+  organizationId: string;
+}): Promise<string | undefined> {
+  try {
+    const { getArtifactRun } = await import('../services/v8/artifactRegistryService.js');
+    const run = await getArtifactRun(params.artifactRunId, params.organizationId);
+    if (!run) return undefined;
+
+    const { getRun: getExecutionRun } = await import('../services/v8/executionSpineService.js');
+    const executionRun = await getExecutionRun(run.executionRunId, params.organizationId);
+    const goal = typeof executionRun?.goal === 'string' ? executionRun.goal.trim() : '';
+    if (!goal) return undefined;
+
+    const titleHint =
+      typeof run.plan?.titleHint === 'string' ? run.plan.titleHint.trim() : '';
+    const heading = titleHint
+      ? `Brief z sesji (${titleHint}) — podstawa liczb, nie zaprzeczaj mu:`
+      : 'Brief z sesji — podstawa liczb, nie zaprzeczaj mu:';
+    return `${heading}\n${goal}`.slice(0, 6000);
+  } catch (err) {
+    logger.warn(
+      `[WorkbookRoutes] hydrateGroundingFromRun failed for run ${params.artifactRunId}, continuing without grounding:`,
+      err
+    );
+    return undefined;
+  }
+}
+
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(requireOrgAccess());
@@ -188,7 +230,23 @@ router.post(
     // w researchContext dawał „[object Object]". Składamy jeden czytelny string ze
     // wszystkich dostępnych źródeł, żeby liczby modelu miały podstawę, nie były
     // zmyślane. WorkbookGeneratorService.generate przyjmuje researchContext:string.
-    const groundingText = buildWorkbookGrounding({ researchContext, sourcePack, evidenceRefs });
+    let groundingText = buildWorkbookGrounding({ researchContext, sourcePack, evidenceRefs });
+
+    // A2 fix (2026-07-22): no explicit source in the body but an artifactRunId was
+    // passed (dedicated ExceleView / artifact-run generation path) — hydrate grounding
+    // from the run itself instead of leaving the prompt bare. See hydrateGroundingFromRun
+    // above for the FAIL-SOFT lookup chain and rationale.
+    if (!groundingText && typeof artifactRunId === 'string' && artifactRunId.trim()) {
+      groundingText = await hydrateGroundingFromRun({
+        artifactRunId: artifactRunId.trim(),
+        organizationId: user.organizationId,
+      });
+      if (groundingText) {
+        logger.info(
+          `[WorkbookRoutes] Hydrated grounding from artifactRun ${artifactRunId.trim()} (${groundingText.length} chars)`
+        );
+      }
+    }
 
     const result = await WorkbookGeneratorService.generate({
       prompt: prompt.trim(),
