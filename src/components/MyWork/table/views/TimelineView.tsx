@@ -364,7 +364,9 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
               <div
                 key={i}
                 className={`flex-shrink-0 flex items-center justify-center border-r border-c-border-subtle text-[9px] font-medium ${
-                  slot.isToday ? 'text-c-accent bg-c-accent-soft' : 'text-c-text-muted'
+                  slot.isToday
+                    ? 'text-c-info bg-[color-mix(in_srgb,var(--c-info)_8%,transparent)]'
+                    : 'text-c-text-muted'
                 }`}
                 style={{ width: colWidth }}
               >
@@ -390,7 +392,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
             {/* Today marker */}
             {todayOffset >= 0 && todayOffset <= totalWidth && (
               <div
-                className="absolute top-0 bottom-0 w-0.5 bg-c-accent-soft z-20"
+                className="absolute top-0 bottom-0 w-0.5 bg-c-info z-20"
                 style={{ left: todayOffset }}
               >
                 <div className="absolute -top-1 -left-1.5 w-3 h-3 rounded-full bg-c-surface" />

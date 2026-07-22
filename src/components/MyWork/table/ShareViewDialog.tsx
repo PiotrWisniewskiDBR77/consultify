@@ -71,7 +71,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Share2 size={16} className="text-c-accent" />
+            <Share2 size={16} className="text-c-text-secondary" />
             <h3 className="font-semibold text-sm">
               {t('ideas.table.shareView.title', 'Share View')}
             </h3>
@@ -114,7 +114,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
               />
               <button
                 onClick={handleCopy}
-                className="p-2 rounded-lg bg-c-accent-soft text-c-accent hover:bg-c-accent transition-colors"
+                className="p-2 rounded-lg bg-c-surface-raised text-c-text hover:bg-c-surface-raised/80 transition-colors"
               >
                 {copied ? <Check size={14} /> : <Copy size={14} />}
               </button>

@@ -265,20 +265,20 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
   const IconComp = ICON_MAP[current.icon || 'lightbulb'] || Lightbulb;
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 bg-c-accent-soft border-t border-c-border-subtle">
+    <div className="flex items-center gap-3 px-4 py-2.5 bg-c-surface-raised border-t border-c-border-subtle">
       {/* Sparkle icon */}
-      <div className="flex items-center justify-center w-7 h-7 rounded-xl bg-c-accent-soft flex-shrink-0">
+      <div className="flex items-center justify-center w-7 h-7 rounded-xl bg-c-surface flex-shrink-0">
         {loading ? (
-          <Loader2 size={13} className="text-c-accent animate-spin" />
+          <Loader2 size={13} className="text-c-text-secondary animate-spin" />
         ) : (
-          <Sparkles size={13} className="text-c-accent" />
+          <Sparkles size={13} className="text-c-text-secondary" />
         )}
       </div>
 
       {/* Suggestion content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-0.5">
-          <IconComp size={10} className="text-c-accent" />
+          <IconComp size={10} className="text-c-text-secondary" />
           <span className="text-[10px] font-bold text-c-text">{current.title}</span>
           <span
             className="text-[8px] font-bold uppercase tracking-wider px-1 py-0 rounded"
@@ -307,7 +307,7 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
       {current.action && onApplySuggestion && (
         <button
           onClick={() => onApplySuggestion(current)}
-          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors whitespace-nowrap flex-shrink-0"
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-bold text-c-text bg-c-surface hover:bg-c-surface/80 transition-colors whitespace-nowrap flex-shrink-0"
         >
           {current.action.label}
           <ArrowRight size={9} />

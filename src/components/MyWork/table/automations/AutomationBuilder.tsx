@@ -347,7 +347,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
             >
               <div className="mb-2 flex items-center gap-2">
                 <GripVertical className="h-4 w-4 flex-shrink-0 text-c-text-secondary" />
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-c-accent text-xs font-bold text-c-accent bg-c-accent-soft text-c-accent">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-c-surface-raised text-xs font-bold text-c-text-secondary bg-c-surface-raised text-c-text-secondary">
                   {idx + 1}
                 </span>
                 <select

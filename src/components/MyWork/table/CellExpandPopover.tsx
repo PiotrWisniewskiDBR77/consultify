@@ -228,7 +228,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                   <button
                     onClick={handleAddOption}
                     disabled={!newOption.trim()}
-                    className="p-1.5 rounded-lg bg-c-accent-soft text-c-accent hover:bg-c-accent-soft disabled:opacity-40 transition-colors"
+                    className="p-1.5 rounded-lg bg-c-surface-raised text-c-text hover:bg-c-surface-raised/80 disabled:opacity-40 transition-colors"
                   >
                     <Plus size={12} />
                   </button>
@@ -240,10 +240,10 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
           {/* AI Generated — prompt editor */}
           {column.type === 'ai_generated' && (
             <div>
-              <div className="rounded-xl border border-c-accent bg-c-accent-soft p-3 mb-3">
+              <div className="rounded-xl border border-c-border bg-c-surface-raised p-3 mb-3">
                 <div className="flex items-center gap-1.5 mb-2">
-                  <Sparkles size={11} className="text-c-accent" />
-                  <span className="text-[10px] font-bold text-c-accent">
+                  <Sparkles size={11} className="text-c-text-secondary" />
+                  <span className="text-[10px] font-bold text-c-text">
                     {t('myWorkTable.cellExpandPopover.aiPrompt')}
                   </span>
                 </div>
@@ -268,7 +268,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                 <button
                   onClick={handleAIRegenerate}
                   disabled={aiLoading || !aiPrompt.trim()}
-                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft disabled:opacity-40 transition-colors"
+                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold text-c-surface bg-c-text hover:bg-c-text/90 disabled:opacity-40 transition-colors"
                 >
                   {aiLoading ? (
                     <Loader2 size={12} className="animate-spin" />

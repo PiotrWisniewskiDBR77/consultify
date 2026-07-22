@@ -73,7 +73,7 @@ function getStatusIndicator(status: OperationStatus): React.ReactNode {
       );
     case 'running':
       return (
-        <div className="w-5 h-5 rounded-full bg-c-surface flex items-center justify-center">
+        <div className="w-5 h-5 rounded-full bg-c-info flex items-center justify-center">
           <Loader2 size={12} className="text-white animate-spin" />
         </div>
       );
@@ -120,7 +120,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
     ? 'bg-danger-500'
     : stats.allDone
       ? 'bg-emerald-500'
-      : 'bg-c-surface';
+      : 'bg-c-info';
 
   const statusLabel = stats.allDone
     ? stats.hasErrors
@@ -129,12 +129,12 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
     : t('ideas.table.executing', 'Executing…');
 
   return (
-    <div className="rounded-2xl border border-c-accent bg-c-surface shadow-xl overflow-hidden transition-all duration-200">
+    <div className="rounded-2xl border border-c-border bg-c-surface shadow-xl overflow-hidden transition-all duration-200">
       {/* Header + Progress bar */}
       <div className="px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            {!stats.allDone && <Loader2 size={14} className="animate-spin text-c-accent" />}
+            {!stats.allDone && <Loader2 size={14} className="animate-spin text-c-info" />}
             {stats.allDone && !stats.hasErrors && <Check size={14} className="text-emerald-500" />}
             {stats.allDone && stats.hasErrors && (
               <AlertCircle size={14} className="text-danger-500" />
@@ -166,7 +166,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
               key={op.id}
               className={`flex items-start gap-2.5 px-3 py-2 rounded-xl transition-all duration-200 ${
                 isActive
-                  ? 'bg-c-accent-soft border border-c-accent'
+                  ? 'bg-[color-mix(in_srgb,var(--c-info)_8%,transparent)] border border-[color-mix(in_srgb,var(--c-info)_25%,transparent)]'
                   : isFailed
                     ? 'bg-danger-500/5 dark:bg-danger-500/10 border border-danger-500/20'
                     : isDone
@@ -197,7 +197,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
                         : isFailed
                           ? 'text-danger-600 dark:text-danger-400'
                           : isActive
-                            ? 'text-c-accent'
+                            ? 'text-c-info'
                             : 'text-c-text-secondary'
                     }`}
                   />

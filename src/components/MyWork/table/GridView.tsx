@@ -668,11 +668,11 @@ const DataGrid: React.FC<DataGridProps> = ({
                           isPrimary &&
                             missing &&
                             'sticky z-[5] border-r border-[color-mix(in_srgb,var(--c-warning)_35%,transparent)]',
-                          isPrimary && !missing && (selected ? 'bg-c-accent-soft' : 'bg-c-surface'),
+                          isPrimary && !missing && (selected ? 'bg-c-surface-raised' : 'bg-c-surface'),
                           isPrimary &&
                             missing &&
                             (selected
-                              ? 'bg-c-accent-soft'
+                              ? 'bg-c-surface-raised'
                               : 'bg-[color-mix(in_srgb,var(--c-warning)_8%,transparent)]'),
                         ]
                           .filter(Boolean)

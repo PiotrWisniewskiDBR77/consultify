@@ -241,7 +241,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                           onClick={() => setType(t)}
                           className={`flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-xl text-[9px] font-medium transition-all ${
                             isActive
-                              ? 'bg-c-accent-soft text-c-accent ring-1 ring-c-focus'
+                              ? 'bg-c-surface-raised text-c-text ring-1 ring-c-focus'
                               : 'text-c-text-secondary hover:bg-c-surface-raised'
                           }`}
                         >

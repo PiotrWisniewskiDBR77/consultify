@@ -44,7 +44,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
             onClick={() => onPaletteChange(id)}
             className={`w-full flex items-center gap-2 p-2 rounded-xl transition-colors ${
               activePalette === id
-                ? 'bg-c-accent-soft ring-1 ring-c-focus'
+                ? 'bg-c-surface-raised ring-1 ring-c-focus'
                 : 'hover:bg-c-surface-raised'
             }`}
           >
@@ -56,7 +56,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
             <span className="text-[10px] font-semibold text-c-text flex-1 text-left">
               {palette.name}
             </span>
-            {activePalette === id && <Check size={12} className="text-c-accent" />}
+            {activePalette === id && <Check size={12} className="text-c-text" />}
           </button>
         ))}
       </div>
@@ -67,7 +67,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
             onAutoAssign();
             onClose();
           }}
-          className="w-full px-3 py-2 rounded-xl text-[10px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors"
+          className="w-full px-3 py-2 rounded-xl text-[10px] font-bold bg-c-text text-c-surface hover:bg-c-text/90 transition-colors"
         >
           {t('ideas.table.autoAssignColorsToRows', 'Auto-assign colors to rows')}
         </button>

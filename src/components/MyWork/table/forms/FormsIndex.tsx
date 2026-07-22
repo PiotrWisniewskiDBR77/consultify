@@ -353,7 +353,7 @@ export function FormsIndex({
                           key={mode}
                           onClick={() => handleShareModeChange(form, mode)}
                           className={`flex w-full items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-c-surface-raised ${
-                            shareMode === mode ? 'font-medium text-c-accent' : 'text-c-text-muted'
+                            shareMode === mode ? 'font-medium text-c-text' : 'text-c-text-muted'
                           }`}
                         >
                           <Icon className="h-3.5 w-3.5" />

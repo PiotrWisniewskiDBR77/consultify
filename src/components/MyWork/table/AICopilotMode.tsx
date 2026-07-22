@@ -254,7 +254,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle">
-          <Brain size={16} className="text-c-accent" />
+          <Brain size={16} className="text-c-text-secondary" />
           <span className="text-sm font-bold text-c-text">
             {t('ideas.table.aiCopilot.title', 'AI Copilot')}
           </span>
@@ -284,7 +284,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
                       setMode(key);
                       setShowModeSelector(false);
                     }}
-                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-[10px] font-bold transition-colors ${mode === key ? 'bg-c-accent-soft text-c-accent' : 'text-c-text-secondary hover:bg-c-surface-raised'}`}
+                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-[10px] font-bold transition-colors ${mode === key ? 'bg-c-surface-raised text-c-text' : 'text-c-text-secondary hover:bg-c-surface-raised'}`}
                   >
                     <span style={{ color: config.color }}>{config.icon}</span>
                     {isPl ? config.labelPl : config.label}
@@ -343,7 +343,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
               <div
                 className={`max-w-[85%] rounded-2xl px-3 py-2 ${
                   msg.role === 'user'
-                    ? 'bg-c-accent-soft text-c-text'
+                    ? 'bg-c-text text-c-surface'
                     : msg.role === 'system'
                       ? 'bg-danger-500/10 text-danger-600 dark:text-danger-400'
                       : 'bg-c-surface-raised text-c-text'
@@ -402,7 +402,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
           {loading && !streamingText && (
             <div className="flex justify-start">
               <div className="rounded-2xl px-3 py-2 bg-c-surface-raised">
-                <Loader2 size={14} className="animate-spin text-c-accent" />
+                <Loader2 size={14} className="animate-spin text-c-text-secondary" />
               </div>
             </div>
           )}
@@ -430,7 +430,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
             <button
               onClick={() => handleSend()}
               disabled={loading || !input.trim()}
-              className="p-2 rounded-xl bg-c-accent-soft text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
+              className="p-2 rounded-xl bg-c-text text-c-surface hover:opacity-90 transition-colors disabled:opacity-50"
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
             </button>

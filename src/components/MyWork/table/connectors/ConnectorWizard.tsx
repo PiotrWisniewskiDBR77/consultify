@@ -312,7 +312,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
               flex flex-col items-center gap-2 rounded-xl border-2 p-5 transition-all
               ${
                 selected
-                  ? 'border-c-accent bg-c-accent-soft shadow-sm'
+                  ? 'border-c-border bg-c-surface-raised shadow-sm'
                   : 'border-c-border-subtle hover:border-c-border-subtle bg-c-surface'
               }
             `}
@@ -620,7 +620,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
         <button
           onClick={handleAutoMap}
           disabled={isAutoMapping}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-c-accent-soft px-3 py-1.5 text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-c-surface-raised px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised/80 transition-colors disabled:opacity-50"
         >
           {isAutoMapping ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
           {t('myWorkTable.connectorWizard.autoMap')}
@@ -768,9 +768,9 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 rounded-lg bg-c-accent-soft px-3 py-2">
-            <Clock size={14} className="text-c-accent" />
-            <span className="text-xs text-c-accent">
+          <div className="flex items-center gap-2 rounded-lg bg-c-surface-raised px-3 py-2">
+            <Clock size={14} className="text-c-text-secondary" />
+            <span className="text-xs text-c-text-secondary">
               {t('myWorkTable.connectorWizard.nextRun')}
               {nextRunLabel}
             </span>
@@ -822,7 +822,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           type="checkbox"
           checked={runNow}
           onChange={(e) => setRunNow(e.target.checked)}
-          className="h-4 w-4 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
+          className="h-4 w-4 rounded border-c-border-subtle text-c-focus-solid focus:ring-c-focus"
         />
         <div>
           <p className="text-sm font-medium text-c-text">
@@ -875,7 +875,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
                   isActive
                     ? 'bg-c-surface text-c-text'
                     : isDone
-                      ? 'bg-c-accent-soft text-c-accent cursor-pointer hover:bg-c-accent'
+                      ? 'bg-c-surface-raised text-c-text-secondary cursor-pointer hover:bg-c-surface-raised/80'
                       : 'bg-c-surface-raised text-c-text-muted'
                 }
               `}

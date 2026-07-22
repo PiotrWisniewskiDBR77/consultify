@@ -106,7 +106,7 @@ const RecordChip = React.memo<{
       e.stopPropagation();
       onClick(record.id);
     }}
-    className="truncate text-[9px] font-medium text-c-text-muted cursor-pointer hover:text-c-accent px-1.5 py-0.5 rounded bg-c-surface-raised mb-0.5 transition-colors"
+    className="truncate text-[9px] font-medium text-c-text-muted cursor-pointer hover:text-c-text px-1.5 py-0.5 rounded bg-c-surface-raised mb-0.5 transition-colors"
     style={color ? { borderLeft: `2px solid ${color}` } : undefined}
   >
     {record.data?.label || record.id}
@@ -268,7 +268,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           </button>
           <button
             onClick={goToday}
-            className="px-2 py-1 rounded-lg text-[10px] font-medium text-c-accent hover:bg-c-accent-soft transition-colors"
+            className="px-2 py-1 rounded-lg text-[10px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             {t('myWorkTable.calendarViewV2.today')}
           </button>
@@ -282,7 +282,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               onClick={() => setMode(m)}
               className={`px-2 py-1 text-[10px] font-medium rounded-md transition-colors ${
                 mode === m
-                  ? 'bg-c-accent-soft text-c-accent'
+                  ? 'bg-c-surface-raised text-c-text'
                   : 'text-c-text-muted hover:bg-c-surface-raised'
               }`}
             >
@@ -319,7 +319,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 className={`min-h-[60px] rounded-lg border p-1 transition-colors ${
                   cell.isCurrentMonth
                     ? isToday
-                      ? 'border-c-accent bg-c-accent-soft'
+                      ? 'border-c-focus bg-c-surface-raised'
                       : 'border-c-border-subtle bg-c-surface bg-[color-mix(in_srgb,var(--c-surface)_50%25,transparent)]'
                     : 'border-c-border-subtle bg-[color-mix(in_srgb,var(--c-surface-raised)_30%25,transparent)] bg-[color-mix(in_srgb,var(--c-bg)_30%25,transparent)]'
                 }`}
@@ -330,7 +330,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   <span
                     className={`text-[10px] font-bold ${
                       isToday
-                        ? 'text-c-accent'
+                        ? 'text-c-focus-solid'
                         : cell.isCurrentMonth
                           ? 'text-c-text-muted'
                           : 'text-c-text-muted'
@@ -360,7 +360,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 {cell.isCurrentMonth && dayRecords.length === 0 && (
                   <button
                     onClick={() => onAddRecord({ [dateFieldId]: cell.date })}
-                    className="mt-0.5 flex items-center gap-0.5 text-[8px] text-c-accent hover:text-c-accent font-medium opacity-0 hover:opacity-100 transition-opacity"
+                    className="mt-0.5 flex items-center gap-0.5 text-[8px] text-c-text-muted hover:text-c-text font-medium opacity-0 hover:opacity-100 transition-opacity"
                   >
                     <Plus size={8} />
                   </button>
@@ -383,7 +383,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 key={dateStr}
                 className={`rounded-lg border p-2 transition-colors ${
                   isToday
-                    ? 'border-c-accent bg-c-accent-soft'
+                    ? 'border-c-focus bg-c-surface-raised'
                     : 'border-c-border-subtle bg-c-surface bg-[color-mix(in_srgb,var(--c-surface)_50%25,transparent)]'
                 }`}
                 onDragOver={(e) => e.preventDefault()}
@@ -407,7 +407,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   ))}
                   <button
                     onClick={() => onAddRecord({ [dateFieldId]: dateStr })}
-                    className="w-full flex items-center justify-center gap-0.5 py-1 rounded border border-dashed border-c-border-subtle text-[8px] text-c-text-secondary hover:text-c-accent hover:border-c-accent transition-colors"
+                    className="w-full flex items-center justify-center gap-0.5 py-1 rounded border border-dashed border-c-border-subtle text-[8px] text-c-text-secondary hover:text-c-text hover:border-c-border transition-colors"
                   >
                     <Plus size={8} />
                   </button>

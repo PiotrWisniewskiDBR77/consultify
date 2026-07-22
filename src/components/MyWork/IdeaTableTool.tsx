@@ -1283,7 +1283,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             : detailNodeId === row.id
               ? 'bg-c-surface-raised'
               : selectedNodeForLines === row.id
-                ? 'bg-c-accent-soft'
+                ? 'bg-c-surface-raised'
                 : 'hover:bg-c-surface-raised'
         }`}
         style={rowColor ? { borderLeftWidth: 3, borderLeftColor: rowColor } : undefined}
@@ -2077,7 +2077,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       onClick={() => setShowToolsMenu((p) => !p)}
                       className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
                         showToolsMenu
-                          ? 'text-c-accent bg-c-accent-soft'
+                          ? 'text-c-text bg-c-surface-raised'
                           : 'text-c-text-muted hover:bg-c-surface-raised'
                       }`}
                       title={t('ideas.table.tools', 'Tools')}
@@ -2320,7 +2320,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {usePlatform && (
                   <button
                     onClick={() => setShowWebhookRelays(true)}
-                    className="p-1.5 rounded-lg text-c-text-muted hover:text-c-accent transition-colors"
+                    className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text transition-colors"
                     title={t('ideas.table.webhookRelaysZapierMake', 'Webhook Relays (Zapier/Make)')}
                   >
                     <Webhook size={12} />

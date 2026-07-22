@@ -236,7 +236,7 @@ const TableSection: React.FC<{
               ? 'text-emerald-600 dark:text-emerald-400'
               : isDeleted
                 ? 'text-danger-600 dark:text-danger-400'
-                : 'text-c-accent'
+                : 'text-c-text-secondary'
           }
         />
         <span

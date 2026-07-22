@@ -197,7 +197,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
         </div>
         <button
           onClick={addRule}
-          className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-c-accent hover:bg-c-accent-soft transition-colors"
+          className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
         >
           <Plus size={10} />
           {t('myWorkTable.conditionalFormatting.addRule')}
@@ -290,7 +290,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                     onClick={() => updateStyle(rule.id, { backgroundColor: c })}
                     className={`w-3.5 h-3.5 rounded-full border transition-transform hover:scale-125 ${
                       rule.style.backgroundColor === c
-                        ? 'border-c-accent scale-110'
+                        ? 'border-c-focus scale-110'
                         : 'border-c-border-subtle'
                     }`}
                     style={{ backgroundColor: c }}
@@ -315,7 +315,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                     onClick={() => updateStyle(rule.id, { color: c })}
                     className={`w-3.5 h-3.5 rounded-full border transition-transform hover:scale-125 ${
                       rule.style.color === c
-                        ? 'border-c-accent scale-110'
+                        ? 'border-c-focus scale-110'
                         : 'border-c-border-subtle'
                     }`}
                     style={{ backgroundColor: c }}
@@ -332,7 +332,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                 }
                 className={`px-1.5 py-0.5 rounded text-[9px] font-bold transition-colors ${
                   rule.style.fontWeight === 'bold'
-                    ? 'bg-c-accent-soft text-c-accent'
+                    ? 'bg-c-surface-raised text-c-text'
                     : 'text-c-text-secondary hover:bg-c-surface-raised'
                 }`}
               >
@@ -348,7 +348,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                 }
                 className={`px-1.5 py-0.5 rounded text-[9px] italic transition-colors ${
                   rule.style.fontStyle === 'italic'
-                    ? 'bg-c-accent-soft text-c-accent'
+                    ? 'bg-c-surface-raised text-c-text'
                     : 'text-c-text-secondary hover:bg-c-surface-raised'
                 }`}
               >

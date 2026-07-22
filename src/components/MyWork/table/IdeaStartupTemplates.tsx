@@ -55,9 +55,9 @@ const popularStarts = IDEA_STARTING_POINTS.slice(0, 4);
 
 const COLOR_MAP: Record<string, { bg: string; text: string; border: string; ring: string }> = {
   violet: {
-    bg: 'bg-c-accent-soft',
-    text: 'text-c-accent',
-    border: 'border-c-accent',
+    bg: 'bg-violet-500/10',
+    text: 'text-violet-500',
+    border: 'border-violet-500/30',
     ring: 'ring-c-focus',
   },
   blue: {
@@ -227,8 +227,8 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
         <div className="relative flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
           <div className="absolute inset-0 bg-c-surface-raised" />
           <div className="relative flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-c-accent-soft flex items-center justify-center">
-              <Sparkles size={16} className="text-c-accent" />
+            <div className="w-9 h-9 rounded-xl bg-c-surface-raised flex items-center justify-center">
+              <Sparkles size={16} className="text-c-text-secondary" />
             </div>
             <div>
               <h3 className="text-[15px] font-semibold text-c-text">
@@ -251,7 +251,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
         <div className="px-6 py-5 space-y-5">
           {/* Problem description */}
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-c-accent mb-1.5">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-c-text-muted mb-1.5">
               {t('myWorkTable.ideaStartupTemplates.yourIdea')}
             </div>
             <h4 className="text-lg font-semibold text-c-text tracking-tight">
@@ -318,13 +318,13 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                 onClick={() => handleCardClick('describe_with_ai')}
                 onDoubleClick={() => handleCardDoubleClick('describe_with_ai')}
                 selected={selectedAction === 'describe_with_ai'}
-                className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-accent bg-c-accent-soft px-3 py-4 text-center transition-all duration-200 hover:border-c-accent hover:shadow-lg hover:-translate-y-0.5"
+                className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-4 text-center transition-all duration-200 hover:border-c-border-subtle hover:shadow-lg hover:-translate-y-0.5"
               >
-                <div className="rounded-xl p-2.5 bg-c-accent-soft text-c-accent transition-transform duration-200 group-hover:scale-110">
+                <div className="rounded-xl p-2.5 bg-c-surface text-c-text-muted transition-transform duration-200 group-hover:scale-110">
                   <Wand2 size={18} />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[13px] font-semibold text-c-accent">
+                  <div className="text-[13px] font-semibold text-c-text">
                     {t('ideas.table.ideaStartupTemplates.startWithAi', 'Start with AI')}
                   </div>
                   <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
@@ -400,7 +400,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               <button
                 type="button"
                 onClick={() => setShowStructuredBrief((next) => !next)}
-                className="text-[11px] font-medium text-c-accent hover:underline"
+                className="text-[11px] font-medium text-c-text hover:underline"
               >
                 {showStructuredBrief
                   ? t('myWorkTable.ideaStartupTemplates.hideBrief')
@@ -413,7 +413,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   key={start.id}
                   type="button"
                   onClick={() => handlePopularStart(start)}
-                  className="rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised px-3 py-1.5 text-[11px] font-medium text-c-text-secondary hover:border-c-accent hover:text-c-accent"
+                  className="rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised px-3 py-1.5 text-[11px] font-medium text-c-text-secondary hover:border-c-border hover:text-c-text"
                 >
                   {isPl ? start.labelPl : start.labelEn}
                 </button>

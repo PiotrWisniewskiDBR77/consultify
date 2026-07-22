@@ -46,13 +46,13 @@ const OP_META: Record<string, { en: string; pl: string; icon: LucideIcon; color:
     en: 'Create table',
     pl: 'Utwórz tabelę',
     icon: Table2,
-    color: 'text-c-accent',
+    color: 'text-violet-600 dark:text-violet-400',
   },
   add_table: {
     en: 'Create table',
     pl: 'Utwórz tabelę',
     icon: Table2,
-    color: 'text-c-accent',
+    color: 'text-violet-600 dark:text-violet-400',
   },
   create_field: {
     en: 'Add field',
@@ -265,7 +265,7 @@ const OperationItem: React.FC<{
   return (
     <div
       className={`rounded-xl border transition-all duration-150 ${
-        selected ? 'border-c-accent bg-c-accent-soft' : 'border-c-border-subtle bg-c-surface'
+        selected ? 'border-c-border bg-c-surface-raised' : 'border-c-border-subtle bg-c-surface'
       }`}
     >
       <div className="flex items-center gap-2 px-3 py-2">
@@ -275,7 +275,7 @@ const OperationItem: React.FC<{
             selected ? 'border-c-border-subtle bg-c-surface' : 'border-c-border-subtle'
           } flex items-center justify-center`}
         >
-          {selected && <Check size={10} className="text-white" />}
+          {selected && <Check size={10} className="text-c-surface" />}
         </button>
         <button
           onClick={onToggleExpand}
@@ -323,7 +323,7 @@ function renderPayloadDetails(
       <div className="space-y-1">
         {fields.map((f, i) => (
           <div key={i} className="flex items-center gap-2">
-            <span className="text-c-accent font-semibold">
+            <span className="text-c-text font-semibold">
               {String(f.name ?? f.fieldName ?? `field_${i}`)}
             </span>
             <span className="text-c-text-secondary">—</span>
@@ -442,11 +442,11 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
   const timeStr = formatTimestamp(proposal.created_at);
 
   return (
-    <div className="rounded-2xl border border-c-accent bg-c-surface shadow-xl overflow-hidden transition-all duration-200">
+    <div className="rounded-2xl border border-c-border bg-c-surface shadow-xl overflow-hidden transition-all duration-200">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-c-border-subtle bg-c-accent-soft">
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-c-border-subtle bg-c-surface-raised">
         <div className="flex items-center gap-2 flex-wrap min-w-0">
-          <span className="inline-flex items-center rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-c-accent-soft text-c-accent border border-c-accent">
+          <span className="inline-flex items-center rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-c-surface text-c-text border border-c-border">
             {intentLabel}
           </span>
           <span
@@ -494,11 +494,11 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
           </button>
           {allOpsVisible && (
             <div className="flex gap-1">
-              <button onClick={selectAll} className="text-[10px] text-c-accent hover:underline">
+              <button onClick={selectAll} className="text-[10px] text-c-text hover:underline">
                 {t('ideas.table.schemaProposal.selectAll', 'All')}
               </button>
               <span className="text-c-text-secondary">|</span>
-              <button onClick={selectNone} className="text-[10px] text-c-accent hover:underline">
+              <button onClick={selectNone} className="text-[10px] text-c-text hover:underline">
                 {t('ideas.table.schemaProposal.selectNone', 'None')}
               </button>
               {onShowDiff && (

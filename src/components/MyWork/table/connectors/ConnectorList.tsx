@@ -115,7 +115,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
         </h3>
         <button
           onClick={onAdd}
-          className="inline-flex items-center gap-1 rounded-lg bg-c-accent-soft px-2.5 py-1.5 text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors"
+          className="inline-flex items-center gap-1 rounded-lg bg-c-text px-2.5 py-1.5 text-xs font-medium text-c-surface hover:bg-c-text/90 transition-colors"
         >
           <Plus size={12} />
           {t('myWorkTable.connectorList.add')}

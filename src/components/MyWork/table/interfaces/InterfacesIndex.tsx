@@ -317,9 +317,9 @@ export function InterfacesIndex({
             <button
               key={tpl.key}
               onClick={() => handleCreateFromTemplate(tpl)}
-              className="group flex flex-col items-center rounded-2xl border border-c-border-subtle bg-c-surface p-6 text-center transition-all hover:border-c-accent hover:shadow-md border-c-border-subtle bg-c-surface-raised hover:border-c-accent"
+              className="group flex flex-col items-center rounded-2xl border border-c-border-subtle bg-c-surface p-6 text-center transition-all hover:border-c-border hover:shadow-md border-c-border-subtle bg-c-surface-raised hover:border-c-border"
             >
-              <div className="mb-3 rounded-xl bg-c-accent p-3 text-c-accent transition-colors group-hover:bg-c-accent-soft text-c-accent">
+              <div className="mb-3 rounded-xl bg-c-surface text-c-text-secondary transition-colors group-hover:bg-c-surface-raised">
                 {tpl.icon}
               </div>
               <h4 className="mb-1 text-sm font-semibold text-c-text">{tpl.label}</h4>
@@ -357,10 +357,10 @@ export function InterfacesIndex({
             className="group relative rounded-2xl border border-c-border-subtle bg-c-surface p-5 transition-shadow hover:shadow-md border-c-border-subtle bg-c-surface-raised"
           >
             {/* Placeholder thumbnail */}
-            <div className="mb-3 flex h-24 items-center justify-center rounded-xl bg-c-accent-soft">
-              <Layout className="h-8 w-8 text-c-accent" />
+            <div className="mb-3 flex h-24 items-center justify-center rounded-xl bg-c-surface-raised">
+              <Layout className="h-8 w-8 text-c-text-secondary" />
               {iface.config?.blocks && iface.config.blocks.length > 0 && (
-                <span className="ml-2 text-xs text-c-accent">
+                <span className="ml-2 text-xs text-c-text-secondary">
                   {iface.config.blocks.length} {t('interfacesIndex.blocks', 'blocks')}
                 </span>
               )}

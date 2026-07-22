@@ -124,7 +124,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
         </div>
         <button
           onClick={addRule}
-          className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-c-accent hover:bg-c-accent-soft transition-colors"
+          className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
         >
           <Plus size={10} />
           {t('ideas.table.rowColoring.addRule', 'Add rule')}
@@ -202,7 +202,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
                     key={c}
                     onClick={() => updateRule(rule.id, { color: c })}
                     className={`w-4 h-4 rounded-full border-2 transition-transform hover:scale-125 ${
-                      rule.color === c ? 'border-c-accent scale-110' : 'border-transparent'
+                      rule.color === c ? 'border-c-focus scale-110' : 'border-transparent'
                     }`}
                     style={{ backgroundColor: c }}
                   />

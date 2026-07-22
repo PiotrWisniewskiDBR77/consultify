@@ -86,7 +86,7 @@ const FieldRenderer: React.FC<{
             type="checkbox"
             checked={!!value}
             onChange={(e) => onChange(e.target.checked)}
-            className="w-4 h-4 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
+            className="w-4 h-4 rounded border-c-border-subtle text-c-focus-solid focus:ring-c-focus"
           />
           <span className="text-xs text-c-text-muted">
             {value ? t('myWorkTable.formView.yes') : t('myWorkTable.formView.no')}
@@ -168,7 +168,7 @@ const FieldRenderer: React.FC<{
             max={100}
             value={pct}
             onChange={(e) => onChange(Number(e.target.value))}
-            className="flex-1 h-2 rounded-full appearance-none bg-c-surface-raised accent-c-accent"
+            className="flex-1 h-2 rounded-full appearance-none bg-c-surface-raised accent-c-info"
           />
           <span className="text-xs font-bold text-c-text-muted w-10 text-right">{pct}%</span>
         </div>
@@ -316,7 +316,7 @@ export const FormView: React.FC<FormViewProps> = ({
           ) : onRecordCreate ? (
             <button
               onClick={startCreate}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
             >
               <Plus size={12} />
               {t('myWorkTable.formView.new')}

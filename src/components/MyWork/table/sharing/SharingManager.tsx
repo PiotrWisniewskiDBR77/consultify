@@ -192,7 +192,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
         >
           <ChevronLeft size={16} className="text-c-text-secondary" />
         </button>
-        <Shield size={18} className="text-c-accent" />
+        <Shield size={18} className="text-c-text-secondary" />
         <h3 className="text-sm font-semibold text-c-text">{t('ideas.table.sharing', 'Sharing')}</h3>
       </div>
 
@@ -243,7 +243,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                   key={view.id}
                   className="flex items-center gap-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-4 py-3"
                 >
-                  <Globe size={14} className="text-c-accent shrink-0" />
+                  <Globe size={14} className="text-c-text-secondary shrink-0" />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-c-text truncate block">
                       {view.name}
@@ -254,7 +254,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                   </div>
                   <button
                     onClick={() => handleCopyLink(view.id, view.shareToken!)}
-                    className="p-1.5 rounded-lg text-c-accent hover:bg-c-accent-soft transition-colors"
+                    className="p-1.5 rounded-lg text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                     title={t('ideas.table.copyLink', 'Copy link')}
                   >
                     {copiedId === view.id ? <Check size={14} /> : <Copy size={14} />}
@@ -280,7 +280,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
           {!showInvite && (
             <button
               onClick={() => setShowInvite(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-c-accent-soft px-3 py-2 text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors mb-4"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-3 py-2 text-xs font-medium text-c-surface hover:bg-c-text/90 transition-colors mb-4"
             >
               <UserPlus size={12} />
               {t('ideas.table.invitePerson', 'Invite person')}
@@ -364,8 +364,8 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                     className="flex items-center gap-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-4 py-3"
                   >
                     {/* Avatar placeholder */}
-                    <div className="w-8 h-8 rounded-full bg-c-accent-soft flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-c-accent">
+                    <div className="w-8 h-8 rounded-full bg-c-surface-raised flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-c-text-secondary">
                         {(collab.name ?? collab.email)?.[0]?.toUpperCase() ?? '?'}
                       </span>
                     </div>
@@ -411,7 +411,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                                 onClick={() => handleChangeRole(collab.userId, r.value)}
                                 className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs font-medium transition-colors ${
                                   collab.role === r.value
-                                    ? 'text-c-accent bg-c-accent-soft'
+                                    ? 'text-c-text bg-c-surface-raised'
                                     : 'text-c-text-muted hover:bg-c-surface-raised'
                                 }`}
                               >
