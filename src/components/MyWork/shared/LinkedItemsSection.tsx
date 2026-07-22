@@ -98,7 +98,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
       case 'task':
         return <CheckSquare size={size} className="text-blue-400" />;
       case 'decision':
-        return <Scale size={size} className="text-primary-400" />;
+        return <Scale size={size} className="text-c-info" />;
       case 'risk':
         return <AlertTriangle size={size} className="text-amber-400" />;
       case 'initiative':
@@ -108,7 +108,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
       case 'assessment':
         return <FileText size={size} className="text-blue-400" />;
       case 'report':
-        return <FileText size={size} className="text-primary-400" />;
+        return <FileText size={size} className="text-c-info" />;
       case 'tool':
         return <Flag size={size} className="text-fuchsia-400" />;
       case 'insight':
@@ -267,8 +267,8 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
       >
         <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
-          <div className="p-2 rounded-xl bg-primary-500/10 dark:bg-primary-500/20">
-            <LinkIcon size={18} className="text-primary-500 dark:text-primary-400" />
+          <div className="p-2 rounded-xl bg-c-info/10 dark:bg-c-info/20">
+            <LinkIcon size={18} className="text-c-info dark:text-c-info" />
           </div>
           <span className="text-sm font-semibold">
             {t('myWork.linkedItems.linkedItems', 'Linked Items')}
@@ -348,7 +348,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                             handleSearch(e.target.value);
                           }}
                           placeholder={t('myWork.linkedItems.placeholder', 'Search items...')}
-                          className="w-full pl-10 pr-4 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
+                          className="w-full pl-10 pr-4 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-c-focus-solid outline-none"
                           autoFocus
                         />
                         {searching && (
@@ -414,7 +414,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                               'myWork.linkedItems.eGProjectDocumentation',
                               'e.g., Project documentation'
                             )}
-                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
+                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-c-focus-solid outline-none"
                             autoFocus
                           />
                         </div>
@@ -430,7 +430,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                               'myWork.linkedItems.placeholder2',
                               'https://example.com'
                             )}
-                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
+                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-c-focus-solid outline-none"
                           />
                         </div>
                         <div className="flex items-center gap-2">
@@ -485,14 +485,14 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                             key={item.id}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="group flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-500/50 transition-all"
+                            className="group flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-c-info dark:hover:border-c-info/50 transition-all"
                           >
                             {/* Title */}
                             <button
                               onClick={() => onNavigate?.(item)}
                               className="flex-1 min-w-0 text-left flex items-center gap-2"
                             >
-                              <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                              <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate hover:text-c-info dark:hover:text-c-info transition-colors">
                                 {item.title}
                               </span>
                               <ChevronRight

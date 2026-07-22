@@ -229,7 +229,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
           min-h-[80px] rounded-lg border-2 border-dashed transition-all
           ${
             dragOver
-              ? 'border-primary-400 bg-primary-50 dark:bg-primary-500/10'
+              ? 'border-c-info bg-c-info/5 dark:bg-c-info/10'
               : 'border-slate-200 dark:border-navy-600'
           }
           ${attachments.length === 0 ? 'flex items-center justify-center p-6' : 'p-3'}
@@ -266,7 +266,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        className="group relative bg-slate-50 dark:bg-navy-800 rounded-lg p-3 border border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-500/50 transition-all cursor-pointer"
+                        className="group relative bg-slate-50 dark:bg-navy-800 rounded-lg p-3 border border-slate-200 dark:border-navy-600 hover:border-c-border-strong dark:hover:border-c-border-strong transition-all cursor-pointer"
                         onClick={() =>
                           canPreview(attachment.type) && setPreviewAttachment(attachment)
                         }

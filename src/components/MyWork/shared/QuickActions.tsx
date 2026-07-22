@@ -221,7 +221,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
               }}
               className={`
                 w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700
-                ${status === s.value ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
+                ${status === s.value ? 'bg-c-surface-raised' : ''}
               `}
             >
               <div className={`w-2.5 h-2.5 rounded-full ${s.color}`} />
@@ -250,7 +250,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
               }}
               className={`
                 w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700
-                ${priority === p.value ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
+                ${priority === p.value ? 'bg-c-surface-raised' : ''}
               `}
             >
               <Flag size={14} className={p.textColor} />
@@ -268,7 +268,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
           id="assignee"
           icon={
             currentAssignee ? (
-              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                 <span className="text-[10px] font-medium text-white">
                   {currentAssignee.name.charAt(0).toUpperCase()}
                 </span>
@@ -286,7 +286,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
             }}
             className={`
               w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700
-              ${!assigneeId ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
+              ${!assigneeId ? 'bg-c-surface-raised' : ''}
             `}
           >
             <User size={14} className="text-slate-600" />
@@ -304,13 +304,13 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
               }}
               className={`
                 w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700
-                ${assigneeId === user.id ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
+                ${assigneeId === user.id ? 'bg-c-surface-raised' : ''}
               `}
             >
               {user.avatar ? (
                 <img src={user.avatar} alt={user.name} className="w-5 h-5 rounded-full" />
               ) : (
-                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                   <span className="text-[10px] font-medium text-white">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
@@ -361,7 +361,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       {showTimer && onStartTimer && (
         <button
           onClick={onStartTimer}
-          className="p-1.5 rounded-lg text-slate-600 hover:text-primary-500 hover:bg-primary-500/10 transition-all"
+          className="p-1.5 rounded-lg text-slate-600 hover:text-c-info hover:bg-c-info/10 transition-all"
           title={t('myWork.quickActions.title2', 'Start timer')}
         >
           <Play size={14} />

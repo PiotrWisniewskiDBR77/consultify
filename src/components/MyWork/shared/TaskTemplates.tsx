@@ -316,8 +316,8 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary-500/10">
-                <Layers size={20} className="text-primary-500" />
+              <div className="p-2 rounded-lg bg-c-info/10">
+                <Layers size={20} className="text-c-info" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white">
@@ -374,7 +374,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={t('myWork.taskTemplates.placeholder', 'Search templates...')}
-                      className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-500"
+                      className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-c-focus-solid"
                     />
                   </div>
                   <button
@@ -406,7 +406,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                         key={template.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="group flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-500/50 transition-all"
+                        className="group flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-c-border-strong dark:hover:border-c-border-strong transition-all"
                       >
                         {/* Favorite */}
                         <button
@@ -455,7 +455,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => onCreateFromTemplate(template)}
-                            className="p-2 rounded-lg bg-primary-500/10 text-primary-500 hover:bg-primary-500/20 transition-colors"
+                            className="p-2 rounded-lg bg-c-info/10 text-c-info hover:bg-c-info/20 transition-colors"
                             title={t('myWork.taskTemplates.title', 'Use template')}
                           >
                             <Plus size={16} />
@@ -492,7 +492,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                     type="text"
                     value={formData.name || ''}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-500"
+                    className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                     placeholder={t('myWork.taskTemplates.placeholder2', 'e.g., Weekly report')}
                   />
                 </div>
@@ -506,7 +506,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                     type="text"
                     value={formData.category || ''}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-500"
+                    className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                     placeholder={t('myWork.taskTemplates.placeholder3', 'e.g., Reports')}
                   />
                 </div>
@@ -525,7 +525,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                       type="text"
                       value={formData.title || ''}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-500"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                     />
                   </div>
 
@@ -538,7 +538,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                       <select
                         value={formData.priority || 'medium'}
                         onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-500"
+                        className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                       >
                         {PRIORITY_OPTIONS.map((opt) => (
                           <option key={opt.value} value={opt.value}>
@@ -562,7 +562,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                             estimatedHours: e.target.value ? parseFloat(e.target.value) : undefined,
                           })
                         }
-                        className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-500"
+                        className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                       />
                     </div>
                   </div>
@@ -575,7 +575,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                       type="checkbox"
                       checked={formData.isRecurring || false}
                       onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
-                      className="rounded border-slate-300 dark:border-navy-600 text-primary-500"
+                      className="rounded border-slate-300 dark:border-navy-600 text-c-info"
                     />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
                       <RefreshCw size={14} />

@@ -48,7 +48,7 @@ const DELEGATION_TYPES: {
       pl: 'Przekaż decyzję innej osobie',
     },
     icon: ArrowRight,
-    color: 'text-primary-500 bg-primary-500/10',
+    color: 'text-c-info bg-c-info/10',
   },
   {
     type: 'review',
@@ -228,8 +228,8 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary-500/10">
-                <Share2 size={20} className="text-primary-500" />
+              <div className="p-2 rounded-lg bg-c-info/10">
+                <Share2 size={20} className="text-c-info" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white">
@@ -267,7 +267,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                       }}
                       className={`p-3 rounded-lg border text-left transition-all ${
                         delegationType === dt.type
-                          ? 'border-primary-500 bg-primary-500/5 ring-1 ring-primary-500'
+                          ? 'border-c-border-strong bg-c-surface-raised ring-1 ring-c-border-strong'
                           : 'border-slate-200 dark:border-navy-600 hover:border-slate-300 dark:hover:border-navy-500'
                       }`}
                     >
@@ -305,7 +305,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                     onClick={() => handleUserToggle(user.id)}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
                       selectedUsers.includes(user.id)
-                        ? 'border-primary-500 bg-primary-500/5'
+                        ? 'border-c-border-strong bg-c-surface-raised'
                         : 'border-slate-200 dark:border-navy-600 hover:border-slate-300 dark:hover:border-navy-500'
                     }`}
                   >
@@ -323,7 +323,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                       )}
                     </div>
                     {selectedUsers.includes(user.id) && (
-                      <CheckCircle size={18} className="text-primary-500" />
+                      <CheckCircle size={18} className="text-c-info" />
                     )}
                   </button>
                 ))}
@@ -349,7 +349,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                     'myWork.delegation.eGAbsenceLack',
                     'e.g., Absence, lack of expertise...'
                   )}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-500"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-c-focus-solid"
                 />
               </div>
             )}
@@ -374,7 +374,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                         'Additional information for the recipient...'
                       )
                 }
-                className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-500 resize-none"
+                className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-c-focus-solid resize-none"
               />
             </div>
           </div>
