@@ -16,6 +16,34 @@
 
 ---
 
+## 0. ★★ DECYZJE PIOTRA 2026-07-22 — ZABLOKOWANE (buduj do nich)
+
+> Ta fala (2026-07-22) domyka kontrakt: **dwa systemy → jeden kanon**. Piotr zablokował 5 decyzji
+> architektonicznych. Poniżej — literalnie, z ich rozstrzygnięciem. To **unieważnia** wcześniejsze
+> „rekomendacje (nie decyzje)" z §4 i §5 tam, gdzie się różnią (banery przy §4/§5).
+>
+> **Nowe artefakty tej fali:** `_KANON_KARTY_MODEL_2026-07-22.md` (SSOT modelu — jeden schemat 9-pól,
+> katalog zunifikowany 51 id, kompozycja), zalążek typu `src/components/standard/cardContract.types.ts`
+> (NIEUŻYWANY, zero konsumentów), bramka `scripts/check-artefakt-struktura.mjs` (tryb raportu). Ten kontrakt
+> je **WPINA** (§8), dokłada **plan migracji POC-first** (§9) i **drugą turę decyzji** (§10).
+
+| # | Decyzja | Rozstrzygnięcie (ZABLOKOWANE) | Dowód / gdzie zrealizowane |
+|---|---------|-------------------------------|----------------------------|
+| **D-7** | **SYSTEM: jeden kanon czy dwa?** | **JEDEN kanon, wypracowany best-of.** Cyt. Piotr: *„weź najlepsze z tego jak wyglądają Decyzje i Taski (bo już wyglądają dobrze), weź najlepsze z Inicjatyw, stwórz jeden kanon i użyj go jako standard."* → **NIE** „cardSets kasuje Initiative". **Nadzbiór:** model cardSets jako baza (czyste dane, egzekwuje `core`) **WCHŁANIA** najlepsze z Initiative (szablony/widoczność per-instancja, bogaty katalog, `ai_prompt` per sekcja). | KANON §1 (9-pól best-of), §3.3 (szablony wchłonięte); rozstrzyga §4/P-1 |
+| **D-8** | **EGZEKWOWANIE: konwencja czy wiążące?** | **WIĄŻĄCE — typ + bramka jak `StandardTable` (nie da się obejść).** `cardContract.types.ts` = zalążek typu (stany niedozwolone = **błąd kompilacji**); `check-artefakt-struktura.mjs` = zalążek bramki strukturalnej. | KANON §4; typ §4.1-4.3, bramka §4.4; zweryfikowane runtime (§8.4) |
+| **D-6** | **SIEROTY: zwolnić czy objąć?** | **WSZYSTKIE 7 artefaktów POD kontraktem** — Interview/Tool/Notification też, z ich klasą/redukcją **uzasadnioną**, ale W kontrakcie, nie zwolnione po cichu. **Unieważnia** rekomendację §5 („ZWOLNIĆ"). | KANON §3.4; baner przy §5; §8.3 |
+| **D-4** | **RDZEŃ (nieusuwalny) per artefakt.** | **Każdy artefakt ma RDZEŃ nieusuwalny.** Initiative dostaje rdzeń **`overview` + `control`** (dziś registry nie zna `core`; już zadeklarowane w martwym cardSets). Reszta bez zmian (§8.3). | KANON §3.2; `cardSets.ts:235,307` (zweryfik. `core:true`) |
+| **D-5** | **ZESTAW DOMYŚLNY: „pokaż wszystko" czy węższy?** | **WĘŻSZY zestaw domyślny** (nie „pokaż wszystko"). Initiative schodzi z 24/29 widocznych do węższego (kandydat = dzisiejszy `minimal` = 7: overview, problemDefinition, targetState, scope, tasks, kpis, control). | KANON §3.1; `cardSets.ts:377` (minimal), `registry.ts:138-170` |
+
+**★ Liczba po dedupie: 51 kart kanonicznych** (65 żywych instancji − 14 dubli). **★ Rekomendowany POC: Decision** (§9).
+
+**Co pozostaje OTWARTE (druga tura, §10):** progi treści **D-1/D-2/D-3** + granularne rozjazdy
+(competencyRequirements/skillsGap, raciEscalation↔raci, material-quality/traceability, candidate-triage,
+watchers, financialAnalysis) + **D-9** (n-mode-card-standard.md). Te **NIE blokują struktury** —
+struktura (D-4..D-8) jest zamknięta.
+
+---
+
 ## 1. CEL I ZASADA
 
 **Jeden kontrakt karty — wiążący.** Ma być dla kart tym, czym `StandardTable` jest dla list: nie da się go
@@ -199,6 +227,12 @@ id kart (`checklist`, `implementation`) ≠ klucze walidatora (`execution`, `str
 
 ## 4. ROZSTRZYGNIĘCIE DWÓCH SYSTEMÓW (cardSets.ts vs Initiative SECTION_REGISTRY)
 
+> **★ ZAKTUALIZOWANE 07-22 — D-7 ROZSTRZYGA (§0):** poniższa „★ REKOMENDACJA (nie decyzja)" jest już
+> **DECYZJĄ**. Jeden kanon, best-of: **model cardSets jako baza WCHŁANIA bogactwo Initiative** (szablony,
+> katalog, `ai_prompt` per sekcja) — nie „Initiative schodzi do uboższego cardSets". Rozwinięcie:
+> `_KANON_KARTY_MODEL` §1 (9-pól best-of) + §3.3 (szablony jako „zestaw generowany", jeden model danych).
+> Poniższy tekst zostaje jako zapis rozumowania.
+
 **Fakt:** istnieją DWA równoległe systemy zarządzania kartami, bez żadnej specyfikacji, która by je godziła:
 - **System A — `cardSets.ts`**: katalog + zestawy + `core`, egzekwowane w UI (`NModeCardManager`, „Remove
   non-core only"). Obsługuje **Insight, Decision, Task** (i formalnie Initiative — ale to martwe, patrz niżej).
@@ -230,6 +264,12 @@ To jest decyzja **P-1** z audytu i „determinuje CAŁĄ standaryzację" — dla
 ---
 
 ## 5. TRZY SIEROTY — Interview · Tool · Notification
+
+> **★ ZAKTUALIZOWANE 07-22 — D-6 UNIEWAŻNIA „ZWOLNIĆ" (§0):** Piotr zdecydował, że **wszystkie 7 artefaktów
+> są POD kontraktem** — także te trzy. **Nie zwalniamy** — obejmujemy z **jawną klasą/redukcją**:
+> Notification (S, bez Komentarzy — plan K2), Tool (S, ≤4 sekcje), Interview (L, produkt = Insight).
+> Kompozycje sierot: §8.3 tu + `_KANON_KARTY_MODEL` §3.4. Poniższe „rekomendacje ZWOLNIĆ" zostają jako ślad
+> rozumowania — **nadpisane** przez D-6 (sierota jest w kontrakcie z uzasadnioną redukcją, nie poza standardem).
 
 Żadna nie ma dziś zestawu kart ani kontraktu treści (potwierdzone grepem — brak `*_SECTIONS`/karty N):
 
@@ -275,6 +315,10 @@ zbudować taksonomię z tego SSOT.
 
 ## 7. ★ DO DECYZJI PIOTRA (krótko — tylko realne wybory)
 
+> **★ STATUS 07-22:** **D-4, D-5, D-6, D-7, D-8 ZABLOKOWANE** (§0 — nie są już „do decyzji"). Lista poniżej
+> zachowana jako pełny zapis; **wiążące rozstrzygnięcia patrz §0**. Nadal OTWARTE (druga tura, §10):
+> **D-1, D-2, D-3** (progi treści), **D-9** (n-mode-card-standard.md) + granularne rozjazdy (§2.3 KANONU).
+
 **Progi (liczby, których w kodzie NIE MA):**
 - **D-1. Próg kompletności per-karta.** Czy w ogóle wprowadzamy „karta gotowa w X%"? Jeśli tak — jedna liczba
   globalna, czy per-karta? Dziś istnieje tylko scoring CAŁEJ karty ≥90 (Insight/Initiative) i doradcze minima pól.
@@ -301,7 +345,182 @@ zbudować taksonomię z tego SSOT.
 
 ---
 
-## 8. CZEGO NIE ZWERYFIKOWANO (uczciwie)
+## 8. ★ KANON WPIĘTY — model, katalog zunifikowany, kompozycje (D-7)
+
+**SSOT modelu = `_KANON_KARTY_MODEL_2026-07-22.md`.** Ten kontrakt go WPINA — **nie** dubluje 51 wierszy
+(dublowanie samo w sobie byłoby rozjazdem, z którym walczy cała fala). Poniżej: streszczenie modelu +
+katalog rodzinami + 5 kart wspólnych (sedno dedup) + kompozycje per artefakt.
+
+### 8.1 Model karty — 9 pól (best-of A+B)
+
+Schemat §2 (6 pól) rozszerza się do **9 pól** kanonu. Dochodzą trzy, których DZIŚ NIE MA jako deklaracja:
+
+| # | Pole | Skąd (best-of) | Uwaga |
+|---|------|----------------|-------|
+| 1-4 | id · label{en,pl} · opis · grupa | A `cardSets` + B `description`/`category` | id = section-id (kod=prawda) |
+| 5 | **rola_AI** (`pisze`·`asystuje`·`dane`·`systemowa`·`transakcyjna`) | **NOWE** | dziś rozproszona w promptach |
+| 6 | **ai_prompt** (szablon albo jawny brak z powodem) | B `ai_prompt_template` | „milczenie" staje się niewyrażalne |
+| 7 | **prog** | **NOWE — placeholder** | brak w kodzie per-karta → `do-decyzji-piotra` (D-1) |
+| 8 | **kompozycja** (rdzeń·domyślna·dodawalna·ukryta, per artefakt) | A `core` + B `column`/`order`/szablon | krotka niepusta = błąd gdy brak |
+| 9 | **klasa artefaktu** S/L | **NOWE** (SSOT `standard/registry.ts:46`) | S ⇒ ≤4 sekcje |
+
+Pełny schemat: KANON §1. Egzekwowanie: typ `cardContract.types.ts` (§8.4).
+
+### 8.2 Katalog zunifikowany — 51 kanonicznych id (dedup)
+
+**65 żywych instancji** (Insight 18 · Initiative 29 · Decision 8 · Task 10) **− 14 dubli = 51 kanonicznych.**
+Rodziny (KANON §2.2, pełne 51 wierszy z dowodem `plik:linia`): **Insight 16 · Initiative 21 · Decision 4 ·
+Task 5 · Wspólne 5 = 51.** Pięć kart WSPÓLNYCH to sedno dedup — jeden wpis kanoniczny dla wielu artefaktów:
+
+| kanoniczny id | występuje w (po dedup) | wchłania (aliasy) | dowód |
+|---|---|---|---|
+| `comments` | Insight·Initiative·Decision·Task | — | cardSets.ts:162,296,450,535 |
+| `activity-log` | Insight·Decision·Task·Initiative | Initiative **`history`** | cardSets.ts:168,462,547; registry.ts:154 |
+| `attachments` | Initiative·Task·Decision | Task **`attachments-links`**, Decision **`resources-links`**, Initiative **`linkedItems`** | cardSets.ts:330,541,456 |
+| `dependencies` | Initiative·Task | — | registry.ts:160; cardSets.ts:522 |
+| `governance` | Decision·Task·Initiative | Decision **`governance-escalation`**, Initiative **`raciEscalation`** (rozjazd klucza) | cardSets.ts:444,529 |
+
+Zdjęte 14 dubli: `comments` 4→1, `activity-log`(+`history`) 4→1, `attachments`(+2 aliasy) 3→1,
+`dependencies` 2→1, `governance`(+alias) 2→1, plus legacy `initiativeTeam`→`team`, `linkedItems`→`attachments`,
+`watchers`→placeholder.
+
+### 8.3 Kompozycje per artefakt (rdzeń · domyślny · dodawalne) — D-4/D-5/D-6
+
+Legenda: **rdzeń** = nieusuwalny (tylko chowany) · **domyślny** = węższy zestaw startowy (nie „pokaż wszystko")
+· **dodawalne/ukryte** = w katalogu, poza domyślnym.
+
+| artefakt | klasa | rdzeń (D-4) | zestaw domyślny (D-5) | dodawalne / ukryte | dowód |
+|---|:--:|---|---|---|---|
+| **Insight** | L | artifact-actions · executive-summary | 12/18 (`sets[0]`) | +6 „full": people, signals, analysis-matrix, consensus-divergence, implicit-assumptions, silences | cardSets.ts:78,85,176-192 |
+| **Decision** | L | context-problem | 8 (wszystkie; „minimal"=4) | — (katalog = domyślny) | cardSets.ts:418 |
+| **Task** | L | description-scope | 10 (wszystkie; „minimal"=3) | — | cardSets.ts:496 |
+| **Initiative** | L | ★ **overview + control** (NOWE — D-4) | ★ **węższy** (D-5: kandydat „minimal"=7: overview, problemDefinition, targetState, scope, tasks, kpis, control) | reszta 22 dodawalne; `pilot`/`watchers`/`initiativeTeam`/`linkedItems` ukryte | registry.ts:140-170; cardSets.ts:377 |
+| **Notification** | S | treść wiadomości | Właściwości + Historia | `comments` **pominięta z powodem** (plan K2) | KANON §3.4 (D-6) |
+| **Tool** | S | katalog narzędzia | ≤4 sekcje | rola AI = `dane`/`asystuje`, prompt = jawny brak | KANON §3.4 (D-6) |
+| **Interview** | L | produkt = Insight | minimalny (sekcje = pytania szablonu) | DO DECYZJI: własne karty-treści (§10) | KANON §3.4 (D-6) |
+
+**9 kart ROZJECHANYCH** (jawny werdykt, nie znikają po cichu): `competencyRequirements`/`skillsGap` (brak
+wiersza DB), `financialAnalysis` (enum „dead per F0"), `initiativeTeam`/`linkedItems` (martwe dublety),
+`watchers` (placeholder), `raciEscalation` (rozjazd klucza `raci`), `material-quality`/`traceability`
+(tylko DOC „wymagane"), `candidate-triage` (label drift sensu) — pełne trasy: KANON §2.3; decyzje → §10.
+
+### 8.4 Egzekwowanie (D-8) — typ + bramka, zweryfikowane runtime
+
+- **Typ** `src/components/standard/cardContract.types.ts` (NOWY, nieużywany): karta bez `id`/`label`/`rolaAI`/
+  `kompozycji`, albo „AI pisze bez promptu", albo `kompozycja:[]` = **błąd kompilacji** (unia dyskryminowana +
+  krotka niepusta + brandowane typy-błędy PL). Reużywa `KartaNKey`/`KartaNKlasa` z `standard/registry.ts`
+  (jeden SSOT klasy S/L — **zweryfikowane**: eksporty `registry.ts:32,46,84`). **esbuild transform seed = exit 0.**
+- **Bramka** `scripts/check-artefakt-struktura.mjs` (JUŻ istnieje, tryb raportu): skanuje 7 artefaktów AST-lite —
+  montaż NModeHeader, `ArtifactRightPanel`, kanoniczna kolejność sekcji, crimson w centrum. **Zweryfikowane
+  runtime: 7 artefaktów, exit 0**; wszystkie montują NModeHeader + ArtifactRightPanel; Insight strukturalnie
+  czysty, 6 z baseline długu (crimson/kolejność). `--strict` awansuje FLAGĘ do exit 1 — moment wymagalności = D-8/§10.
+
+Warstwy są **komplementarne**: typ łapie schemat karty na literałach (miejsce wywołania), bramka łapie montaż
+powłoki i (faza kompozycji) rozjazd id kod↔katalog + `klasa` vs `REJESTR_KART_N` (KANON §4.4).
+
+---
+
+## 9. ★ PLAN MIGRACJI POC-FIRST (reguła CLAUDE.md #9 — NIE hurtem)
+
+**Zasada:** to jest PROJEKT (dokumenty + zalążek typu). Migracja 7 artefaktów = OSOBNY etap PO akcepcie Piotra,
+**jeden po drugim za flagą OFF** (reguła #9: krach 07-12 „tabelki jak dla trzylatka" = masowe włączenie).
+
+### KROK 0 — GOTOWE (ta fala, zero zmian w produkcie)
+Dokumenty (kanon + kontrakt + 3 mapy) + zalążek typu `cardContract.types.ts` (nieużywany) + bramka
+`check-artefakt-struktura.mjs` (tryb raportu). Zero edycji 7 artefaktów.
+
+### KROK 1 — POC na JEDNYM artefakcie: **Decision** (rekomendacja)
+
+**Dlaczego Decision** (a nie Task/Insight/Initiative):
+- **Najmniejsza powierzchnia** (8 kart) → najszybsza weryfikacja, najmniejszy blast radius (duch reguły #9).
+- Już na `cardSets` = **baza kanonu D-7**; rdzeń `context-problem` **bez zmian** (czysto).
+- **Ćwiczy najtrudniejszą część na najmniejszej powierzchni:** 4 z 8 kart to karty wspólne/aliasowane
+  (`governance-escalation`→`governance` #51, `resources-links`→`attachments` #49, `activity-log` #48,
+  `comments` #47) — POC waliduje dedup + rozwiązywanie aliasów, zanim dotknie większych artefaktów.
+- Decision jest dziś FLAGA w bramce (crimson/kolejność w centrum) — adopcja kontraktu + `--strict` na Decision
+  domyka też ten dług na małej powierzchni (bonus: dowód, że bramka działa end-to-end).
+- *Kontr-kandydat Task* = bliźniak (10 kart, cardSets, rdzeń `description-scope`) + ma **żywego wołacza treści**
+  (`taskSectionGenerationService.ts:269`) — ale ścieżka treści NIE jest przedmiotem tego POC (progi = D-1/D-2/D-3,
+  druga tura). Dlatego mniejsze Decision wygrywa; Task = natychmiastowy fast-follow #1 (§KROK 2).
+
+**Zakres POC (za flagą OFF):**
+1. Adapter `DECISION_SPEC` (cardSets) → `KanonicznaKarta[]` przez `definiujKarteKanoniczna` (rola AI + prompt/jawny
+   brak + kompozycja rdzeń/domyślny + klasa L per karta).
+2. Wpięcie za flagą **default OFF** (reguła #7 — Piotr nie jest pierwszym testerem wizualnym).
+3. Bramka `check-artefakt-struktura.mjs --strict` na Decision = zielono (twarde defekty domknięte).
+4. **JA renderuję** DecisionDetailView w harnessie z mock-danymi (wzór: harness EV football-field), **oba motywy
+   (dark+light)**, **zrzut czysty** (zero gwiazdek/ozdób, tokeny c-*).
+5. Higiena: tsc **zakresowy** na adapterze (esbuild per plik), **NIE** pełny tsc/vitest.
+
+**BRAMA:** akcept Piotra na zrzutach (do AKCEPTU, nie do odkrywania zepsucia) **PRZED** KROK 2. Po akcepcie →
+flaga domyślna + re-tag `demo-safe-<data>` (reguła #8).
+
+### KROK 2 — po akcepcie: eskadra migruje pozostałe 6 (per artefakt, POC-first każdy)
+
+Kolejność od najbliższego kanonu do najtrudniejszego:
+
+| # | artefakt | dlaczego tu | główne ryzyko |
+|---|----------|-------------|---------------|
+| 1 | **Task** | bliźniak Decision + żywy wołacz treści (testuje ścieżkę prompt/rola) | niskie |
+| 2 | **Insight** | 16 kart, **prawdziwy** węższy domyślny 12/18 — testuje mechanikę „domyślny vs full" | średnie (najwięcej kart pisanych AI) |
+| 3 | **Initiative** | **NAJTRUDNIEJSZY** — osobny, ostrożny blok | **wysokie** (patrz R1) |
+| 4-6 | **Tool · Notification · Interview** | sieroty (D-6) — najlżejsze, ale wymagają **jawnej redukcji** w kontrakcie | niskie, ale nowa mechanika „pominięta sekcja" |
+
+Każdy artefakt = ta sama pętla: flaga OFF → adapter → bramka `--strict` zielona → harness oba motywy → zrzut →
+akcept Piotra → flaga domyślna + re-tag. **Nigdy dwa naraz** (reguła #9).
+
+### Ryzyka i mitygacje
+- **R1 — regresja Initiative** (największy artefakt: szablony DB, org-custom, 2 kolumny, `ai_prompt` per sekcja).
+  Mitygacja: Initiative **OSTATNI** (po ograniu wzorca na 3 prostych); adapter **addytywny**, dane DB **nietknięte**
+  (DWA_SYSTEMY §4 „hybryda: kontrakt=nadzbiór B + UI=A"); nowy rdzeń `overview`+`control` już zadeklarowany w kodzie.
+- **R2 — rozjazd id kod↔katalog** przy adapterze. Mitygacja: bramka test (e) „każda renderowana sekcja ma wpis w
+  katalogu i odwrotnie" (KANON §4.4) — rozjazd = FLAGA.
+- **R3 — złe zmapowanie aliasów** shared cards (`governance-escalation` vs `governance`, `resources-links` vs
+  `attachments`). Mitygacja: Decision POC ćwiczy to **pierwsze**, na małej powierzchni.
+- **R4 — masowe włączenie** (krach 07-12). Mitygacja: reguła #9 — jeden po drugim, za flagą, akcept per zrzut.
+
+### Punkty cofnięcia (reguła #8 — `_RUNBOOK_COFANIA.md`)
+- Każdy artefakt za flagą OFF → **dramat wizualny = flaga OFF natychmiast**.
+- Bezpieczny punkt = tag `demo-safe-<data>`, re-tagowany po każdym akcepcie.
+- Adapter **addytywny** (nie kasuje `cardSets`/`registry`, aż wszystkie zielone) → rollback = usuń wpięcie, stary
+  render wraca bez migracji danych.
+- Zły deploy → Railway rollback / `git revert` (**NIGDY** force-push na demo).
+
+---
+
+## 10. ★ DRUGA TURA DECYZJI PIOTRA (teed-up — NIE blokuje struktury)
+
+Struktura (D-4..D-8) zamknięta (§0). Poniższe to progi treści + granularne rozjazdy — **do rozstrzygnięcia po
+POC**, nie warunkują wpięcia kontraktu. Żadnej liczby nie wymyślamy (brak w kodzie = decyzja Piotra).
+
+**Progi treści (liczby, których w kodzie NIE MA):**
+- **D-1. Próg per-karta.** Wprowadzamy „karta gotowa w X%"? Jedna liczba globalna czy per-karta? Dziś tylko
+  scoring CAŁEJ karty ≥90 (Insight/Initiative, `cardContentFormulaValidator.ts:59`) + doradcze minima pól.
+- **D-2. `gates.readinessScore` → PROCEED przy ilu?** (0–100; w FE brak liczby odcięcia).
+- **D-3. Minima pól = bramka czy dalej porada?** Dziś `successCriteria≥4`, `checklist≥3` = ADVISORY ONLY
+  (`cardContentValidator.ts:21-22`). Awansujemy któreś do twardej bramki wejścia na demo?
+
+**Granularne rozjazdy (§2.3 KANONU — każda karta ma trasę, ale wybór należy do Piotra):**
+- `competencyRequirements` / `skillsGap` — **zaseedować w DB** czy zostawić fallback-only? (brak wiersza DB dziś)
+- `raciEscalation` vs `raci` — **który klucz kanoniczny?** (DB/nawigacja=`raci`, registry=`raciEscalation`)
+- `material-quality` / `traceability` — **zbudować** (luka implementacji) czy **skreślić** (DOC przeterminowany)?
+- `candidate-triage` — **jedna karta czy dwie?** (KOD „Wnioski i dowody" vs DOC „Triage kandydatów" — różnica sensu)
+- `watchers` — **własny UI** czy **skreślić**? (dziś mapuje na `OverviewSection`, placeholder)
+- `financialAnalysis` — **żywy enum czy martwy?** (DB aktywna, komentarz „enum is dead per F0")
+- `recommendation` (DOC-only) — do backlogu czy skreślić?
+
+**Zakres modelu (DWA_SYSTEMY §5):**
+- Czy 3 proste artefakty (Insight/Task/Decision) też dostają **katalog w DB**, czy zostają statyczne?
+- Czy **customizacja org-level** obejmuje proste 3, czy tylko Initiative?
+- **Persystencja:** ujednolicić do serwera (DB) czy zostawić localStorage dla lekkiej warstwy?
+
+**Dokumentacja:**
+- **D-9. `n-mode-card-standard.md`** — aktualizować do kodu (żywy SSOT) czy oznaczyć jako HISTORIĘ? (ROZJAZD §4
+  rekomenduje HISTORIĘ; `_FORMULA_TRESCI_INSIGHT_2026-07-13.md` — port na demo, WIDMA §2 poz. 6.)
+
+---
+
+## 11. CZEGO NIE ZWERYFIKOWANO (uczciwie)
 
 - **Osobiście otwarte i sprawdzone (dowód z pierwszej ręki):** `cardSets.ts` (cały), `registry.ts` (cały),
   `cardContentValidator.ts` (cały, + brak callera w Decision), `cardContentFormulaValidator.ts` (próg 90, CardKind),
