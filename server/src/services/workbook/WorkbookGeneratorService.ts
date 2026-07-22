@@ -43,6 +43,7 @@ Given a user request, analyze it and produce a structured plan. Think step by st
    - Row-level calculations (e.g. Revenue * Margin = Profit)
 6. FORMATTING PLAN: Header colors, number formats, which rows are summaries, alternating colors.
 7. REALISTIC DATA: What sample data makes sense? Use realistic numbers for the domain.
+8. GROUNDING & ANTI-FABRICATION: Ground concrete figures in the provided research context when one is attached. Any specific number, percentage, or amount you plan to use that is NOT supported by that context is an assumption, not a fact — mark it (in the cell or the label that carries it) inline as "(założenie)" for Polish workbooks or "(assumption)" for English workbooks, in the workbook's own language. Never present a fabricated figure as a verified fact.
 
 Return your plan as a structured JSON:
 {
