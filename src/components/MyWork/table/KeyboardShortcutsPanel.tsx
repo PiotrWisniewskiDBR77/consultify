@@ -107,7 +107,7 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
-          <Keyboard size={16} className="text-c-accent" />
+          <Keyboard size={16} className="text-c-text-secondary" />
           <span className="text-sm font-bold text-c-text">
             {t('ideas.table.shortcuts.title', 'Keyboard Shortcuts')}
           </span>
