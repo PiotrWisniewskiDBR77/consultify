@@ -247,7 +247,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
             {!locked && (
               <button
                 onClick={() => setShowAddField(true)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-c-accent hover:bg-c-accent-soft transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
               >
                 <Plus size={12} />
                 {t('myWorkTable.fieldManager.add')}
@@ -296,7 +296,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
                 onDragEnd={handleDragEnd}
                 className={`mb-0.5 rounded-xl border transition-all ${
                   overIdx === idx && dragIdx !== null
-                    ? 'border-c-accent bg-c-accent-soft'
+                    ? 'border-c-focus bg-c-surface-raised'
                     : 'border-transparent hover:border-c-border-subtle'
                 } ${dragIdx === idx ? 'opacity-40' : ''}`}
               >
@@ -738,7 +738,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
                     onClick={() => setFieldType(ft)}
                     className={`flex flex-col items-center gap-0.5 px-1.5 py-2 rounded-xl text-[9px] font-medium transition-all ${
                       isActive
-                        ? 'bg-c-accent-soft text-c-accent ring-1 ring-c-focus'
+                        ? 'bg-c-surface-raised text-c-text ring-1 ring-c-focus'
                         : 'text-c-text-secondary hover:bg-c-surface-raised'
                     }`}
                   >
