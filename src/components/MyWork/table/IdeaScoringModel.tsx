@@ -213,7 +213,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
             <button
               onClick={handleAICalibrate}
               disabled={aiLoading}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold bg-c-text text-c-surface hover:bg-c-text/90 transition-colors disabled:opacity-50"
             >
               {aiLoading ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
               {t('myWorkTable.ideaScoringModel.aiCalibrate')}
@@ -338,7 +338,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
           <button
             onClick={handleApply}
             disabled={scoredNodes.length === 0}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-c-accent-soft text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-c-text text-c-surface hover:bg-c-text/90 transition-colors disabled:opacity-50"
           >
             <Save size={12} />
             {t('myWorkTable.ideaScoringModel.applyRanking')}
