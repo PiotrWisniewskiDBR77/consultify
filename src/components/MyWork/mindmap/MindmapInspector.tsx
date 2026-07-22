@@ -291,7 +291,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
               type="checkbox"
               checked={autoLayout}
               onChange={(e) => setAutoLayout(e.target.checked)}
-              className="w-3.5 h-3.5 rounded accent-c-accent"
+              className="w-3.5 h-3.5 rounded accent-c-text"
             />
             <span className="text-[11px] text-c-text-secondary dark:text-c-text-muted">
               {t('ideas.mindmap.autoLayoutChanges', 'Auto-layout on changes')}
