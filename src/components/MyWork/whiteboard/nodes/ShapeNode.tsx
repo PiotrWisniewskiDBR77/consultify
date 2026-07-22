@@ -2,17 +2,30 @@ import React from 'react';
 import { Handle, type NodeProps, NodeResizer, Position } from 'reactflow';
 
 import { commentCountOf, CommentPinBadge } from './CommentPinBadge';
-import { darkenHex, hexToGlow, useIsDark } from './whiteboardNodeHelpers';
+import {
+  darkenHex,
+  hexToGlow,
+  resolveNodeFontStyle,
+  useIsDark,
+} from './whiteboardNodeHelpers';
 
 export const ShapeNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
   const isDark = useIsDark();
   const shape = data?.shape || 'rectangle';
+  // Z15: an explicit style-bar accent (c-tag token) wins over the legacy hex
+  // bgColor and is theme-aware via color-mix (no darkenHex needed).
+  const accent = typeof data?.accentColor === 'string' ? data.accentColor : null;
+  const fontStyle = resolveNodeFontStyle(data);
   // Default shape fill = periwinkle identity token (theme-aware); a user-picked
   // data.bgColor is still a raw hex, darkened for dark mode via darkenHex.
-  const lightBg = data?.bgColor || 'color-mix(in srgb, var(--c-tag-2) 20%, transparent)';
-  const darkBg = data?.bgColor
-    ? darkenHex(data.bgColor, 0.7)
-    : 'color-mix(in srgb, var(--c-tag-2) 24%, transparent)';
+  const lightBg = accent
+    ? `color-mix(in srgb, ${accent} 20%, transparent)`
+    : data?.bgColor || 'color-mix(in srgb, var(--c-tag-2) 20%, transparent)';
+  const darkBg = accent
+    ? `color-mix(in srgb, ${accent} 28%, transparent)`
+    : data?.bgColor
+      ? darkenHex(data.bgColor, 0.7)
+      : 'color-mix(in srgb, var(--c-tag-2) 24%, transparent)';
   const [editing, setEditing] = React.useState(false);
   const [editValue, setEditValue] = React.useState(String(data?.label || ''));
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -87,9 +100,12 @@ export const ShapeNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) =
                 if (e.key === 'Escape') setEditing(false);
               }}
               className="w-full bg-transparent text-[11px] font-medium text-c-text text-center outline-none border-b border-c-border-strong"
+              style={fontStyle}
             />
           ) : (
-            <div className="text-[11px] font-medium text-c-text truncate">{data?.label || ''}</div>
+            <div className="text-[11px] font-medium text-c-text truncate" style={fontStyle}>
+              {data?.label || ''}
+            </div>
           )}
         </div>
         <Handle

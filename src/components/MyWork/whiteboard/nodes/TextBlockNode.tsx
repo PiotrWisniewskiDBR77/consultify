@@ -2,8 +2,12 @@ import React from 'react';
 import { Handle, type NodeProps, NodeResizer, Position } from 'reactflow';
 
 import { commentCountOf, CommentPinBadge } from './CommentPinBadge';
+import { resolveNodeAccentBg, resolveNodeFontStyle } from './whiteboardNodeHelpers';
 
 export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
+  // Z15: per-element style overrides written by the floating style bar.
+  const accentBg = resolveNodeAccentBg(data?.accentColor);
+  const fontStyle = resolveNodeFontStyle(data);
   const [editing, setEditing] = React.useState(false);
   const [editValue, setEditValue] = React.useState(String(data?.label || ''));
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -29,6 +33,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
       <NodeResizer isVisible={selected && !data?.locked} minWidth={100} minHeight={40} />
       <div
         className={`relative w-full h-full min-w-[100px] min-h-[40px] overflow-auto p-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:backdrop-blur-md shadow-lg dark:shadow-[0_0_12px_rgba(148,163,184,0.15)] transition-shadow ${selected ? 'ring-2 ring-c-border-strong shadow-xl' : ''}`}
+        style={accentBg || undefined}
         onDoubleClick={() => {
           if (!data?.locked) {
             setEditValue(String(data?.label || ''));
@@ -56,6 +61,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
               }
             }}
             className="w-full min-h-[40px] bg-transparent text-xs text-c-text outline-none resize-none border-b border-c-border-strong"
+            style={fontStyle}
             rows={2}
           />
         ) : (
@@ -65,10 +71,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
                 {String(data.semanticLabel)}
               </div>
             )}
-            <div
-              className="text-xs text-c-text whitespace-pre-wrap break-words"
-              style={typeof data?.fontSize === 'number' ? { fontSize: data.fontSize } : undefined}
-            >
+            <div className="text-xs text-c-text whitespace-pre-wrap break-words" style={fontStyle}>
               {data?.label || ''}
             </div>
           </div>
