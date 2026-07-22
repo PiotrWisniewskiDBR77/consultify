@@ -19,12 +19,13 @@
  *
  * Resolution order (highest wins):
  *   1. URL query `?ff_melsCanvas=0|1` — operator bypass for staging /
- *      visual-review smoke runs.
+ *      visual-review smoke runs, or to force legacy chrome for comparison.
  *   2. `localStorage["ff.mels_canvas"]` — user / org override.
  *   3. `import.meta.env.VITE_MELS_CANVAS` — build-time override.
- *   4. Default: OFF. Wave W-1 ships behind an OFF flag so the proven legacy
- *      canvas-chrome stays the default surface until Piotr signs off on the
- *      Mind Map reference on demo. Set any override to `1` to preview.
+ *   4. Default: ON (flipped 2026-07-22 night — Piotr signed off on the
+ *      Menu 1/Menu 3 shell across all 4 canvases, light+dark, live render;
+ *      see Harvard/wdrozenie-100/_HANDOFF_IDEE_2026-07-22.md §12-15). Legacy
+ *      canvas-chrome stays reachable via `?ff_melsCanvas=0` as an escape hatch.
  */
 
 const LS_KEY = 'ff.mels_canvas';
@@ -40,14 +41,15 @@ function parseFlag(raw: string | null | undefined): boolean | null {
 }
 
 function readEnvFlag(): boolean {
-  // Default OFF: when no build-time override is set, the legacy canvas-chrome
-  // is the default surface. An explicit `1`/`true` env value opts in.
+  // Default ON (2026-07-22, post-accept): when no build-time override is set,
+  // the new Menu 1/Menu 3 shell is the default surface. An explicit `0`/`false`
+  // env value opts back out to legacy chrome.
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    return parsed === null ? false : parsed;
+    return parsed === null ? true : parsed;
   } catch {
-    return false;
+    return true;
   }
 }
 
