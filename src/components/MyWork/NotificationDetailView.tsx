@@ -1653,10 +1653,22 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         <div
                           key={item.id}
                           className={`group flex items-center justify-between gap-3 text-sm text-c-text-secondary rounded-md px-1 py-0.5 -mx-1 transition-colors ${
-                            isClickable ? 'hover:bg-c-info/5 cursor-pointer' : ''
+                            isClickable
+                              ? 'hover:bg-c-info/5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus'
+                              : ''
                           }`}
                           onClick={
                             isClickable ? () => onNavigateToSource!(itemType, item.id) : undefined
+                          }
+                          onKeyDown={
+                            isClickable
+                              ? (e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    onNavigateToSource!(itemType, item.id);
+                                  }
+                                }
+                              : undefined
                           }
                           role={isClickable ? 'button' : undefined}
                           tabIndex={isClickable ? 0 : undefined}
