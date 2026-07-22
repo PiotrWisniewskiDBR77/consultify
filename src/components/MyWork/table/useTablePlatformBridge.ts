@@ -5,7 +5,7 @@
  */
 
 import i18n from 'i18next';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
@@ -191,7 +191,11 @@ export function useTablePlatformBridge(
   }, []);
 
   const columns = fields.map(fieldToColumn);
-  const nodes = records.map((r) => recordToNode(r, fields));
+  // Memoized — useTablePlatformIntegration syncs this into local state via
+  // useEffect([..., bridge.nodes]); a fresh array identity per render tam
+  // zapętlało setLocalNodes → re-render → nowa tożsamość → "Maximum update
+  // depth exceeded" (wykryte na pierwszym flag-ON renderze, 2026-07-22).
+  const nodes = useMemo(() => records.map((r) => recordToNode(r, fields)), [records, fields]);
 
   const ensureBaseAndTable = useCallback(async (): Promise<{
     baseId: string;

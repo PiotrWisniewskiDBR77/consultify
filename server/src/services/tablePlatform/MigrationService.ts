@@ -115,15 +115,34 @@ const LEGACY_TYPE_TO_TP: Record<string, string> = {
 
 const migrationService = {
   /**
-   * Build field mapping from legacy columns to TP field definitions
+   * Build field mapping from legacy columns to TP field definitions.
+   *
+   * `nodes` (optional): realne dane wierszy. Legacy kolumny typu number/currency
+   * często niosą wolny tekst („2.4 mln PLN", „800 km") — RecordsService.createRecord
+   * waliduje typy, więc optymistyczne mapowanie wywracało cały batch
+   * („Record validation failed", workspace idea-1783507968242, 2026-07-22).
+   * Gdy jakakolwiek niepusta wartość kolumny nie parsuje się jako liczba,
+   * degradujemy typ do single_line_text — zero utraty danych.
    */
-  buildFieldMapping(legacyColumns: LegacyColumn[]): FieldMappingEntry[] {
+  buildFieldMapping(legacyColumns: LegacyColumn[], nodes?: LegacyNode[]): FieldMappingEntry[] {
     if (!Array.isArray(legacyColumns) || legacyColumns.length === 0) {
       return [];
     }
+    const NUMERIC_TP = new Set(['number', 'currency', 'percent']);
+    const columnHasNonNumericData = (key: string): boolean => {
+      if (!Array.isArray(nodes) || nodes.length === 0) return false;
+      return nodes.some((n) => {
+        const v = n?.data?.[key];
+        if (v === undefined || v === null || v === '') return false;
+        return Number.isNaN(Number(String(v).replace(',', '.')));
+      });
+    };
     return legacyColumns.map((col) => {
       const legacyType = (col.type || 'default').toLowerCase();
-      const fieldType = LEGACY_TYPE_TO_TP[legacyType] ?? 'single_line_text';
+      let fieldType = LEGACY_TYPE_TO_TP[legacyType] ?? 'single_line_text';
+      if (NUMERIC_TP.has(fieldType) && columnHasNonNumericData(col.key)) {
+        fieldType = 'single_line_text';
+      }
       const options: Record<string, unknown> = {};
       if (col.options?.length && ['single_select', 'multi_select'].includes(fieldType)) {
         options.choices = col.options.map((opt, i) => ({
@@ -222,7 +241,7 @@ const migrationService = {
     const existingFields = (table as { fields?: Array<{ id: string; name: string }> }).fields ?? [];
 
     // 3. Build field mapping and create fields
-    const mappingEntries = this.buildFieldMapping(columns);
+    const mappingEntries = this.buildFieldMapping(columns, nodes);
     let fieldsMigrated = 0;
 
     if (mappingEntries.length > 0) {

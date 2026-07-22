@@ -139,9 +139,13 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     name: 'Table Platform: Metadata-First Backend',
     description:
       'Routes table persistence to the new metadata-first Records API instead of workspace graph',
-    defaultValue: false,
+    // Włączone decyzją Piotra D1 (2026-07-22, plan IDEE→9,5 / Z19). Bezpiecznik
+    // w IdeaTableTool (platformLooksEmpty && legacyLooksPopulated → legacy)
+    // trzyma zasiedlone legacy-tabele na starym silniku do czasu ich migracji
+    // (MigrationService.migrateWorkspace); puste/nowe idą od razu na platformę.
+    defaultValue: true,
     category: 'beta',
-    allowLocalOverride: false,
+    allowLocalOverride: true,
   },
   {
     id: 'tablePlatformRecordsApi',
@@ -261,7 +265,9 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
 // ============================================
 
 const STORAGE_KEY = 'consultify_feature_flags';
-const CLEARED_FLAG_OVERRIDES = new Set(['tablePlatformMetadataFirst']);
+// tablePlatformMetadataFirst zdjęte z czyszczenia 2026-07-22 (D1: flaga default
+// ON; stare wyczyszczone lokalne override'y OFF i tak już nie istnieją).
+const CLEARED_FLAG_OVERRIDES = new Set<string>([]);
 
 function sanitizeStoredOverrides(overrides: Record<string, boolean>): Record<string, boolean> {
   if (!overrides || typeof overrides !== 'object') return {};

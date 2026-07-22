@@ -929,19 +929,33 @@ const recordsService = {
     const response: BatchRecordsResponse = { results: [], errors: [] };
 
     if (!continueOnError) {
-      const db = getDatabase();
+      // NIE wolno tu użyć BEGIN/COMMIT przez db.query: to pool.query — każda
+      // komenda może trafić na INNE połączenie z puli, więc INSERT ląduje w
+      // transakcji otwartej na jednym kliencie, COMMIT idzie na drugi (no-op),
+      // a rollback następuje cicho przy zwrocie klienta do puli. Objaw: serwis
+      // raportował recordsMigrated=N, w tp_records było 0 wierszy (wykryte na
+      // migracji Z19, 2026-07-22). Warstwa DB nie wystawia dedykowanego klienta,
+      // więc atomowość realizujemy KOMPENSACJĄ: przy pierwszym błędzie usuwamy
+      // rekordy utworzone w tej partii i rzucamy. Uwaga: opy update/delete w
+      // partii mieszanej nie są cofane (brak danych undo) — creates tak.
+      const createdIds: string[] = [];
       try {
-        await db.query('BEGIN');
         for (let i = 0; i < operations.length; i++) {
           const op = operations[i];
           const result = await this._executeSingleOp(tableId, op, userId);
+          if (op.type === 'create') {
+            const id = (result as { id?: string } | null)?.id;
+            if (id) createdIds.push(id);
+          }
           response.results.push({ index: i, result });
         }
-        await db.query('COMMIT');
       } catch (e) {
-        await db.query('ROLLBACK').catch(() => {});
-        logger.error('[RecordsService] batchRecords transaction failed', {
+        for (const id of createdIds.reverse()) {
+          await this.deleteRecord(id, userId).catch(() => {});
+        }
+        logger.error('[RecordsService] batchRecords failed — compensated created records', {
           tableId,
+          compensated: createdIds.length,
           error: (e as Error).message,
         });
         throw e;
