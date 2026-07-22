@@ -1288,7 +1288,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   })
                 );
               }}
-              className="absolute right-2 top-2 z-20 h-7 w-7 rounded-full border border-slate-200/80 bg-white text-slate-500 hover:bg-slate-50 transition-colors flex items-center justify-center dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800"
+              className="absolute right-2 top-2 z-20 h-7 w-7 rounded-full border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors flex items-center justify-center dark:text-c-text-muted"
             >
               <Pencil size={13} />
             </button>
@@ -1299,7 +1299,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
             <button
               type="button"
               title={t('mindmap.addChildTab')}
-              className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-600 text-white hover:bg-slate-700 active:scale-[0.98] transition-all"
+              className="w-6 h-6 flex items-center justify-center rounded-full bg-c-text text-c-surface hover:opacity-90 active:scale-[0.98] transition-all"
               onClick={(e) => {
                 e.stopPropagation();
                 window.dispatchEvent(
@@ -1318,7 +1318,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
             <button
               type="button"
               title={t('mindmap.addSiblingShiftEnter')}
-              className="w-5 h-5 flex items-center justify-center rounded-full bg-slate-500 text-white hover:bg-slate-600 active:scale-[0.98] transition-all opacity-70 hover:opacity-100"
+              className="w-5 h-5 flex items-center justify-center rounded-full bg-c-text text-c-surface active:scale-[0.98] transition-all opacity-70 hover:opacity-100"
               onClick={(e) => {
                 e.stopPropagation();
                 window.dispatchEvent(
@@ -1343,7 +1343,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         {/* Artifact link badge */}
         {Array.isArray(data.artifactLinks) && data.artifactLinks.length > 0 && (
           <div
-            className="absolute -bottom-1 -right-1 flex items-center gap-0.5 rounded-full bg-slate-600 text-white px-1 py-0.5 shadow-sm cursor-pointer hover:bg-slate-700 transition-colors"
+            className="absolute -bottom-1 -right-1 flex items-center gap-0.5 rounded-full bg-c-text text-c-surface px-1 py-0.5 shadow-sm cursor-pointer hover:opacity-90 transition-colors"
             title={data.artifactLinks
               .map((l: any) => l.label || l.title || `${l.artifactRef?.type || l.type}`)
               .join(', ')}
@@ -1375,7 +1375,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         {/* MM-15: Converted indicator */}
         {nodeStatus === 'converted' && data._convertedTo && (
           <div
-            className="absolute -bottom-1 -left-1 flex items-center gap-0.5 rounded-full bg-navy-900 text-white px-1.5 py-0.5 text-[7px] font-bold shadow-sm dark:bg-white dark:text-navy-950"
+            className="absolute -bottom-1 -left-1 flex items-center gap-0.5 rounded-full bg-c-text text-c-surface px-1.5 py-0.5 text-[7px] font-bold shadow-sm"
             title={t('mindmap.convertedToTarget', { target: data._convertedTo })}
           >
             <ExternalLink size={8} />
