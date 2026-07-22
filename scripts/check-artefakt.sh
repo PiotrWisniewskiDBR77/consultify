@@ -64,12 +64,27 @@ done
 #   - NModeLayout/*                — powłoka archetypu A Canvas ("N Mode")
 #   - ExecutiveModuleShell/*       — powłoka archetypów B/D/E (Wordy/Tabele/Prezentacje)
 #   - IdeaMapWorkspace.tsx         — powłoka Idea Map (Canvas, MyWork)
+#
+# Rozszerzenie (Fala 2 Z11, 2026-07-22) — 4 narzędzia IDEE (MyWork):
+#   - IdeaRecommendationMap.tsx + mindmap/*      — Mind Map
+#   - IdeaWhiteboardTool.tsx + whiteboard/*      — Whiteboard
+#   - IdeaProcessFlowTool.tsx + processflow/*    — Process Flow
+#   - IdeaTableTool.tsx + table/** (rekursywnie, ma podkatalogi np. table/offline/) — Idea Table
+# IDEE tools (Fala 2 Z11, 2026-07-22): dług zamrożony baseline'em, sweep w toku — po scaleniu sweepów baseline → 0
 list_scope_files() {
   {
     echo "src/components/standard/ArtifactRightPanel.tsx"
     echo "src/components/MyWork/IdeaMapWorkspace.tsx"
     find src/components/shared/NModeLayout -maxdepth 1 \( -iname '*.ts' -o -iname '*.tsx' \) ! -iname '*.test.*' 2>/dev/null
     find src/components/shared/ExecutiveModuleShell -maxdepth 1 \( -iname '*.ts' -o -iname '*.tsx' \) ! -iname '*.test.*' 2>/dev/null
+    echo "src/components/MyWork/IdeaRecommendationMap.tsx"
+    find src/components/MyWork/mindmap -maxdepth 1 \( -iname '*.ts' -o -iname '*.tsx' \) ! -iname '*.test.*' 2>/dev/null
+    echo "src/components/MyWork/IdeaWhiteboardTool.tsx"
+    find src/components/MyWork/whiteboard -maxdepth 1 \( -iname '*.ts' -o -iname '*.tsx' \) ! -iname '*.test.*' 2>/dev/null
+    echo "src/components/MyWork/IdeaProcessFlowTool.tsx"
+    find src/components/MyWork/processflow -maxdepth 1 \( -iname '*.ts' -o -iname '*.tsx' \) ! -iname '*.test.*' 2>/dev/null
+    echo "src/components/MyWork/IdeaTableTool.tsx"
+    find src/components/MyWork/table \( -iname '*.ts' -o -iname '*.tsx' \) ! -iname '*.test.*' 2>/dev/null
   } | sort
 }
 
