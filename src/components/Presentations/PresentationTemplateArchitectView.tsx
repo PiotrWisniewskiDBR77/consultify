@@ -34,6 +34,7 @@ import {
 import Button from '@/components/ui/primitives/Button';
 import {
   clonePresentationTemplate,
+  deprecatePresentationTemplate,
   getPresentationTemplate,
   listPresentationTemplates,
   planPresentationTemplate,
@@ -142,6 +143,7 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
   const [loadingList, setLoadingList] = useState(false);
   const [drafting, setDrafting] = useState(false);
   const [cloningId, setCloningId] = useState<string | null>(null);
+  const [deprecatingId, setDeprecatingId] = useState<string | null>(null);
   const [savingOutline, setSavingOutline] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -383,6 +385,43 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
     }
   };
 
+  const handleDeprecate = async (): Promise<void> => {
+    if (!selectedTemplate) return;
+    const reason = window.prompt(
+      t(
+        'presentations.templateArchitect.deprecateReasonPrompt',
+        'Why are you withdrawing this draft? (required)'
+      ),
+      ''
+    );
+    if (reason === null) return; // user cancelled
+    const trimmedReason = reason.trim();
+    if (!trimmedReason) {
+      setError(
+        t(
+          'presentations.templateArchitect.errDeprecateReasonRequired',
+          'A reason is required to withdraw a template.'
+        )
+      );
+      return;
+    }
+    setDeprecatingId(selectedTemplate.id);
+    setError(null);
+    try {
+      await deprecatePresentationTemplate(selectedTemplate.id, trimmedReason);
+      setSelectedTemplateId(null);
+      await refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('presentations.templateArchitect.errDeprecateTemplate', 'Failed to withdraw template')
+      );
+    } finally {
+      setDeprecatingId(null);
+    }
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-6">
       <header>
@@ -607,23 +646,41 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
                 {t('presentations.templateArchitect.outlineEditor', 'Outline editor')} —{' '}
                 {selectedTemplate.name}
               </div>
-              {!isEditable ? (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => void handleCloneAsDraft()}
-                  disabled={cloningId === selectedTemplate.id}
-                >
-                  <span className="inline-flex items-center gap-1.5">
-                    {cloningId === selectedTemplate.id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5" />
-                    )}
-                    {t('presentations.templateArchitect.cloneAsDraft', 'Clone as new draft')}
-                  </span>
-                </Button>
-              ) : null}
+              <div className="flex shrink-0 items-center gap-2">
+                {isEditable ? (
+                  <Button
+                    type="button"
+                    variant="danger"
+                    onClick={() => void handleDeprecate()}
+                    disabled={deprecatingId === selectedTemplate.id}
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      {deprecatingId === selectedTemplate.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                      {t('presentations.templateArchitect.deprecateTemplate', 'Withdraw / delete draft')}
+                    </span>
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => void handleCloneAsDraft()}
+                    disabled={cloningId === selectedTemplate.id}
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      {cloningId === selectedTemplate.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )}
+                      {t('presentations.templateArchitect.cloneAsDraft', 'Clone as new draft')}
+                    </span>
+                  </Button>
+                )}
+              </div>
             </div>
 
             {!isEditable ? (
@@ -713,6 +770,49 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
                 />
               </label>
             </div>
+
+            {(selectedTemplate.recommended_visuals?.length ?? 0) > 0 ||
+            (selectedTemplate.must_have_intents?.length ?? 0) > 0 ? (
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {(selectedTemplate.recommended_visuals?.length ?? 0) > 0 ? (
+                  <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
+                      {t(
+                        'presentations.templateArchitect.recommendedVisuals',
+                        'Suggested visualizations'
+                      )}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {selectedTemplate.recommended_visuals.map((visual, i) => (
+                        <span
+                          key={`${visual}-${i}`}
+                          className="rounded-full border border-c-border-subtle bg-c-surface px-2.5 py-1 text-xs text-c-text-secondary"
+                        >
+                          {visual}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {(selectedTemplate.must_have_intents?.length ?? 0) > 0 ? (
+                  <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
+                      {t('presentations.templateArchitect.mustHaveIntents', 'Mandatory slides')}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {selectedTemplate.must_have_intents.map((intent, i) => (
+                        <span
+                          key={`${intent}-${i}`}
+                          className="rounded-full border border-c-border-subtle bg-c-surface px-2.5 py-1 text-xs text-c-text-secondary"
+                        >
+                          {intentLabel(intent)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
 
             <div className="mt-4">
               <div className="text-xs font-semibold uppercase tracking-wide text-c-text-secondary">

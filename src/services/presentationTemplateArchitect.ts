@@ -225,3 +225,22 @@ export async function clonePresentationTemplate(
   });
   return unwrap<{ id: string }>(res);
 }
+
+// ---------------------------------------------------------------------------
+// deprecatePresentationTemplate — POST /templates/:id/governance/deprecate
+// (existing governance surface, re-exported here so the architect view can
+// offer "withdraw this draft" without duplicating the endpoint string; see
+// presentations.routes.ts:1310. Requires `template_approve` capability and a
+// non-empty `reason` server-side.)
+// ---------------------------------------------------------------------------
+
+export async function deprecatePresentationTemplate(
+  templateId: string,
+  reason: string
+): Promise<{ record: unknown }> {
+  const res = await Api.post(
+    `/presentations/templates/${encodeURIComponent(templateId)}/governance/deprecate`,
+    { reason }
+  );
+  return unwrap<{ record: unknown }>(res);
+}
