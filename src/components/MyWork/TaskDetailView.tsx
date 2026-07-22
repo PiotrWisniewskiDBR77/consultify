@@ -87,6 +87,9 @@ import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import { NModeSectionWrapper } from '../shared/NModeLayout/NModeSectionWrapper';
 import type { NModeSection } from '../shared/NModeLayout/types';
 import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLayout';
+// MIGRACJA (D-8): kompozycja kart Task wyprowadzona z WIĄŻĄCEGO kontraktu karty
+// (cardContract.types.ts) zamiast z luźnego TASK_SPEC — patrz taskCardContract.ts.
+import { TASK_CARD_RENDER_IDS, TASK_CARD_SPEC } from './taskCardContract';
 // ── N-Mode Sections (shared, reusable across artifacts) ─────────────────────
 import {
   ActivityLogCanvas,
@@ -149,6 +152,19 @@ interface TaskDetailViewProps {
 // states. Default OFF until Piotr accepts on screenshots (reguła #7).
 // See docs/ui-standards/TRIADA_KANON.md + ARTIFACT_ANATOMY_STANDARD.md §18.1.
 const VF1_TASK_SPECA = import.meta.env.VITE_VF1_TASK_SPECA === 'true';
+
+// MIGRACJA — kompozycja kart Task przez WIĄŻĄCY kontrakt karty (D-8, KONTRAKT §9).
+// Default OFF (zero regresji na demo); w dev/harnessie włącza URL `?cardContract=1`
+// (Piotr nie jest pierwszym testerem wizualnym — reguła #7; ja renderuję zrzut sam).
+function useTaskCardContractEnabled(): boolean {
+  return useMemo(() => {
+    if (import.meta.env.VITE_VF1_TASK_CARD_CONTRACT === 'true') return true;
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('cardContract') === '1';
+    }
+    return false;
+  }, []);
+}
 
 // Status configuration
 const STATUS_CONFIG = {
@@ -3902,7 +3918,13 @@ Return ONLY the final comment text.`;
   // orders `nModeSectionsWithContent` by the live layout in one step (no
   // separate hiddenSectionIds/order state needed — Task has no legacy
   // order key to stay back-compat with, unlike Insight).
-  const taskCardLayoutStorageKey = `task:nmode:card-layout:v1:${taskId ?? 'new'}`;
+  // MIGRACJA (D-8): gdy włączony kontrakt, layout ma INNE znaczenie (węższy zestaw
+  // domyślny), więc namespace klucza jest osobny — stary 10-kartowy layout nie
+  // hydratuje się nad węższy domyślny, a wyłączenie flagi wraca do 'v1' bez utraty.
+  const taskCardContractEnabled = useTaskCardContractEnabled();
+  const taskCardLayoutStorageKey = `task:nmode:card-layout:${
+    taskCardContractEnabled ? 'v2-contract' : 'v1'
+  }:${taskId ?? 'new'}`;
   const initialTaskCardLayout = useMemo<CardLayout | null>(() => {
     try {
       const raw = localStorage.getItem(taskCardLayoutStorageKey);
@@ -3937,6 +3959,10 @@ Return ONLY the final comment text.`;
 
   const taskCardLayout = useCardLayout({
     artifactType: 'task',
+    // MIGRACJA: gdy flaga ON, katalog + zestawy płyną z kontraktu kanonicznego
+    // (TASK_CARD_SPEC — stała moduł-const, stabilna referencja); gdy OFF,
+    // `undefined` ⇒ useCardLayout czyta DEFAULT_CARD_SETS['task'] jak dotąd.
+    spec: taskCardContractEnabled ? TASK_CARD_SPEC : undefined,
     initialLayout: initialTaskCardLayout,
     onLayoutChange: persistTaskCardLayout,
   });
@@ -3945,6 +3971,20 @@ Return ONLY the final comment text.`;
     () => taskCardLayout.applyToSections(nModeSectionsWithContent),
     [taskCardLayout, nModeSectionsWithContent]
   );
+
+  // R3 (przepis §3): każda sekcja renderowana przez Task ma wpis w katalogu
+  // kanonicznym i odwrotnie. Cichy dev-only sygnał rozjazdu id kod↔katalog —
+  // nie blokuje renderu, ale ostrzega, gdyby alias został źle zmapowany.
+  useEffect(() => {
+    if (!import.meta.env.DEV || !taskCardContractEnabled) return;
+    const missing = taskNSections
+      .map((s) => s.id)
+      .filter((id) => !TASK_CARD_RENDER_IDS.includes(id));
+    if (missing.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn('[taskCardContract] sekcje lewej nawigacji bez wpisu w katalogu:', missing);
+    }
+  }, [taskCardContractEnabled, taskNSections]);
 
   useEffect(() => {
     if (visibleTaskNModeSections.length === 0) return;
