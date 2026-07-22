@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Siatka ocen IDEE — 4 narzędzia vs liderzy rynku</title>
+<style>
+  :root {
+    --bg: #f5f7f9;
+    --surface: #ffffff;
+    --surface-2: #eceff3;
+    --ink: #14202b;
+    --ink-soft: #4c5a68;
+    --ink-faint: #7c8895;
+    --line: #dce2e9;
+    --line-strong: #c4ccd6;
+    --accent: #1f4e79;
+    --accent-soft: #e5edf5;
+    --b1: #b23a2e; --b1-bg: #f6e3e0;   /* 1–3 słabe */
+    --b2: #b9791a; --b2-bg: #f7ecd8;   /* 4–6 poniżej lidera */
+    --b3: #2c7d59; --b3-bg: #dff0e7;   /* 7–8 poziom rynku */
+    --b4: #1c6b45; --b4-bg: #d3ead9;   /* 9–10 parytet lidera */
+    --shadow: 0 1px 2px rgba(20,32,43,.06), 0 6px 20px rgba(20,32,43,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1319; --surface: #141d26; --surface-2: #1b2731;
+      --ink: #e9eef3; --ink-soft: #a6b4c2; --ink-faint: #6f8090;
+      --line: #253340; --line-strong: #33475a;
+      --accent: #74acdf; --accent-soft: #172532;
+      --b1: #e07d6d; --b1-bg: #2c1a18;
+      --b2: #dcab55; --b2-bg: #2b2416;
+      --b3: #57bd8e; --b3-bg: #16271f;
+      --b4: #4fb87e; --b4-bg: #14241b;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 26px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f7f9; --surface: #ffffff; --surface-2: #eceff3;
+    --ink: #14202b; --ink-soft: #4c5a68; --ink-faint: #7c8895;
+    --line: #dce2e9; --line-strong: #c4ccd6; --accent: #1f4e79; --accent-soft: #e5edf5;
+    --b1: #b23a2e; --b1-bg: #f6e3e0; --b2: #b9791a; --b2-bg: #f7ecd8;
+    --b3: #2c7d59; --b3-bg: #dff0e7; --b4: #1c6b45; --b4-bg: #d3ead9;
+    --shadow: 0 1px 2px rgba(20,32,43,.06), 0 6px 20px rgba(20,32,43,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1319; --surface: #141d26; --surface-2: #1b2731;
+    --ink: #e9eef3; --ink-soft: #a6b4c2; --ink-faint: #6f8090;
+    --line: #253340; --line-strong: #33475a; --accent: #74acdf; --accent-soft: #172532;
+    --b1: #e07d6d; --b1-bg: #2c1a18; --b2: #dcab55; --b2-bg: #2b2416;
+    --b3: #57bd8e; --b3-bg: #16271f; --b4: #4fb87e; --b4-bg: #14241b;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 26px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    line-height: 1.5; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: clamp(20px, 4vw, 52px) clamp(16px, 4vw, 40px) 72px; }
+  .serif { font-family: Georgia, "Times New Roman", serif; }
+
+  .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--accent);
+  }
+  h1 {
+    font-size: clamp(26px, 4.4vw, 40px); line-height: 1.1; margin: 10px 0 0;
+    font-weight: 800; letter-spacing: -.02em; text-wrap: balance; max-width: 20ch;
+  }
+  .lede { font-size: 17px; color: var(--ink-soft); margin: 14px 0 0; max-width: 66ch; }
+  .lede .serif { font-style: italic; color: var(--ink); }
+
+  .rule { height: 1px; background: var(--line); border: 0; margin: 28px 0; }
+
+  h2 {
+    font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-faint); margin: 0 0 16px;
+  }
+  section { margin-top: 44px; }
+
+  /* Rubric legend */
+  .rubric { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+  .band {
+    display: flex; align-items: baseline; gap: 10px; padding: 12px 14px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  }
+  .band .rng { font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums; min-width: 42px; }
+  .band .lab { font-size: 13px; color: var(--ink-soft); line-height: 1.35; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .band.b1 .rng, .band.b1 .dot { color: var(--b1); background-image: none; }
+  .band.b1 .dot { background: var(--b1); }
+  .band.b2 .rng { color: var(--b2); } .band.b2 .dot { background: var(--b2); }
+  .band.b3 .rng { color: var(--b3); } .band.b3 .dot { background: var(--b3); }
+  .band.b4 .rng { color: var(--b4); } .band.b4 .dot { background: var(--b4); }
+
+  /* Summary cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 18px 16px; box-shadow: var(--shadow); position: relative; overflow: hidden;
+  }
+  .card .tool { font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
+  .card .leader { font-size: 12.5px; color: var(--ink-faint); margin-top: 2px; }
+  .card .leader b { color: var(--ink-soft); font-weight: 600; }
+  .card .avgrow { display: flex; align-items: baseline; gap: 8px; margin: 14px 0 10px; }
+  .card .avg { font-size: 40px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+  .card .avg .max { font-size: 17px; color: var(--ink-faint); font-weight: 600; }
+  .segbar { display: flex; gap: 3px; }
+  .segbar i { height: 7px; flex: 1; border-radius: 2px; background: var(--surface-2); }
+  .card .verdict { font-size: 13px; color: var(--ink-soft); margin-top: 12px; line-height: 1.45; }
+
+  /* Matrix */
+  .scrollx { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; background: var(--surface); }
+  thead th {
+    text-align: left; font-size: 13px; font-weight: 700; color: var(--ink);
+    padding: 14px 14px; border-bottom: 1px solid var(--line-strong); vertical-align: bottom;
+    background: var(--surface);
+  }
+  thead th .th-lead { display: block; font-size: 11.5px; font-weight: 500; color: var(--ink-faint); margin-top: 2px; }
+  thead th.crit-h { color: var(--ink-faint); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+  tbody td { padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+  .crit { min-width: 170px; }
+  .crit .k { font-weight: 700; font-size: 13.5px; }
+  .crit .kdesc { font-size: 12px; color: var(--ink-faint); margin-top: 2px; line-height: 1.35; }
+  .cell { min-width: 148px; }
+  .cell .why { font-size: 12px; color: var(--ink-soft); line-height: 1.4; margin-top: 6px; }
+
+  /* Score chip */
+  .score {
+    display: inline-flex; align-items: baseline; gap: 3px; font-weight: 800;
+    font-variant-numeric: tabular-nums; font-size: 15px; padding: 3px 9px; border-radius: 7px; line-height: 1.2;
+  }
+  .score .of { font-size: 11px; font-weight: 600; opacity: .7; }
+  .s-b1 { color: var(--b1); background: var(--b1-bg); }
+  .s-b2 { color: var(--b2); background: var(--b2-bg); }
+  .s-b3 { color: var(--b3); background: var(--b3-bg); }
+  .s-b4 { color: var(--b4); background: var(--b4-bg); }
+  .seg-b1 { background: var(--b1) !important; }
+  .seg-b2 { background: var(--b2) !important; }
+  .seg-b3 { background: var(--b3) !important; }
+  .seg-b4 { background: var(--b4) !important; }
+
+  /* Detail per-tool */
+  .tool-detail { margin-top: 34px; }
+  .tool-detail > .head {
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    padding-bottom: 12px; border-bottom: 2px solid var(--accent); margin-bottom: 4px;
+  }
+  .tool-detail > .head .nm { font-size: 20px; font-weight: 800; letter-spacing: -.01em; }
+  .tool-detail > .head .vs { font-size: 13px; color: var(--ink-faint); }
+  .tool-detail > .head .vs b { color: var(--ink-soft); }
+  .tool-detail > .head .mini { margin-left: auto; font-size: 13px; color: var(--ink-soft); }
+  .tool-detail > .head .mini b { font-size: 17px; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  .drow { display: grid; grid-template-columns: 52px 1fr 1.2fr; gap: 14px; padding: 14px 2px; border-bottom: 1px solid var(--line); }
+  .drow:last-child { border-bottom: 0; }
+  .drow .sc { padding-top: 2px; }
+  .drow .k { font-weight: 700; font-size: 13.5px; }
+  .drow .why { font-size: 12.5px; color: var(--ink-soft); margin-top: 4px; line-height: 1.45; }
+  .drow .to10 { font-size: 12.5px; color: var(--ink-soft); line-height: 1.45; }
+  .drow .to10 .lbl { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 3px; }
+  .drow .to10 b { color: var(--ink); font-weight: 600; }
+  @media (max-width: 620px) {
+    .drow { grid-template-columns: 52px 1fr; }
+    .drow .to10 { grid-column: 1 / -1; padding-left: 66px; }
+  }
+
+  .note { font-size: 12.5px; color: var(--ink-faint); margin-top: 8px; line-height: 1.5; }
+  .lever {
+    display: grid; grid-template-columns: 34px 1fr; gap: 14px; padding: 16px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-top: 12px;
+  }
+  .lever .n { font-size: 22px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1; }
+  .lever .t b { font-weight: 700; }
+  .lever .t { font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 5px; background: var(--accent-soft); color: var(--accent); vertical-align: middle; }
+  .flag { color: var(--b2); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Consultify · IDEE · 2026-07-22</div>
+    <h1>Siatka ocen: 4 narzędzia vs liderzy rynku</h1>
+    <p class="lede">Skala <b>1–10</b>, gdzie <b>10 = poziom lidera</b> danej kategorii (Mapa→Whimsical · Whiteboard→Miro/FigJam · Proces→Lucidchart · Tabela→Airtable). Oceniamy <b>funkcjonalność</b> na 9 osiach. Każda ocena ma <span class="serif">kotwicę dowodową</span> — kod lub render — więc jest podważalna i zbieżna: jeśli nie zgadzasz się z liczbą, wskaż komórkę, sprawdzimy dowód, korygujemy.</p>
+  </header>
+
+  <hr class="rule" />
+
+  <section style="margin-top:0">
+    <h2>Jak czytać ocenę (pasma)</h2>
+    <div class="rubric">
+      <div class="band b4"><span class="rng">9–10</span><span class="lab"><span class="dot"></span> Parytet lidera — nic istotnego nie brakuje</span></div>
+      <div class="band b3"><span class="rng">7–8</span><span class="lab"><span class="dot"></span> Poziom rynku — drobne braki (nice-to-have)</span></div>
+      <div class="band b2"><span class="rng">4–6</span><span class="lab"><span class="dot"></span> Poniżej lidera — kilka braków, które bolą</span></div>
+      <div class="band b1"><span class="rng">1–3</span><span class="lab"><span class="dot"></span> Surowe / brak — oś nie działa jak u lidera</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Podsumowanie — gdzie jesteśmy</h2>
+    <div class="cards">
+      <div class="card">
+        <div class="tool">Mind Map</div>
+        <div class="leader">lider: <b>Whimsical / MindMeister</b></div>
+        <div class="avgrow"><span class="avg">7,0<span class="max"> / 10</span></span></div>
+        <div class="segbar" data-fill="7"></div>
+        <div class="verdict">Najbliżej rynku. Mechanika (prawy-klik, struktura, AI) na poziomie lub ponad lidera. Blokuje <b>wygląd i powłoka</b>, nie funkcja.</div>
+      </div>
+      <div class="card">
+        <div class="tool">Process Flow</div>
+        <div class="leader">lider: <b>Lucidchart / Visio</b></div>
+        <div class="avgrow"><span class="avg">6,0<span class="max"> / 10</span></span></div>
+        <div class="segbar" data-fill="6"></div>
+        <div class="verdict">Najbogatsze zdolności w całym Consultify (lanes, KPI, Automation, VSM) — <b>ponad</b> Lucidchart. Trzyma je w dole <b>interakcja canvasu</b> (connector, prowadnice).</div>
+      </div>
+      <div class="card">
+        <div class="tool">Whiteboard</div>
+        <div class="leader">lider: <b>Miro / FigJam</b></div>
+        <div class="avgrow"><span class="avg">5,4<span class="max"> / 10</span></span></div>
+        <div class="segbar" data-fill="5"></div>
+        <div class="verdict">Prawy-klik dopełniony (moja integracja), ale <b>brak snappingu, paska stylu i trackpad-pan</b> + defekt wizualny overlaya. Najwięcej wykończenia.</div>
+      </div>
+      <div class="card">
+        <div class="tool">Table</div>
+        <div class="leader">lider: <b>Airtable / Notion</b></div>
+        <div class="avgrow"><span class="avg">5,4<span class="max"> / 10</span></span></div>
+        <div class="segbar" data-fill="5"></div>
+        <div class="verdict">Silnik danych ≈1:1 z Airtable, ale <b>bogaty kebab i typy są za martwą flagą</b> (0 żywych baz). User dostaje surowy, uboższy widok arkusza.</div>
+      </div>
+    </div>
+    <p class="note">Stan realny na gałęzi <code>audyt-idee</code> (po mojej integracji whiteboard/process/table + zdjęciu orba Mapy), <b>przed akceptem i deployem</b>. Średnia = zwykła średnia z 9 osi (bez wag — wagi to osobna decyzja).</p>
+  </section>
+
+  <section>
+    <h2>Siatka ocen — 9 osi × 4 narzędzia</h2>
+    <div class="scrollx">
+      <table>
+        <thead>
+          <tr>
+            <th class="crit-h">Kryterium</th>
+            <th>Mind Map<span class="th-lead">vs Whimsical</span></th>
+            <th>Whiteboard<span class="th-lead">vs Miro/FigJam</span></th>
+            <th>Process Flow<span class="th-lead">vs Lucidchart</span></th>
+            <th>Table<span class="th-lead">vs Airtable</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="crit"><div class="k">K1 · Budowalność</div><div class="kdesc">prawy-klik = komplet operacji, szybkie dodawanie</div></td>
+            <td class="cell"><span class="score s-b4">9<span class="of">/10</span></span><div class="why">Komplet + AI/convert/struktura — ponad lidera.</div></td>
+            <td class="cell"><span class="score s-b3">8<span class="of">/10</span></span><div class="why">Dodałem sekcję bazową nad AI (był 🔴 same AI).</div></td>
+            <td class="cell"><span class="score s-b2">6<span class="of">/10</span></span><div class="why">Solidny rdzeń; brak copy / connect / change-shape / kolor.</div></td>
+            <td class="cell"><span class="score s-b2">5<span class="of">/10</span></span><div class="why">User = legacy 4 poz. Bogaty kebab (8 poz.) za martwą flagą.</div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K2 · Sterowalność</div><div class="kdesc">move / select / connect / edycja-inline „pod ręką"</div></td>
+            <td class="cell"><span class="score s-b3">7<span class="of">/10</span></span><div class="why">Drag-reparent + inline-edit; płynność drag niezmierzona.</div></td>
+            <td class="cell"><span class="score s-b2">5<span class="of">/10</span></span><div class="why">Marquee+pan są; brak snappingu/prowadnic, trackpad-pan off.</div></td>
+            <td class="cell"><span class="score s-b2">5<span class="of">/10</span></span><div class="why">Snap-grid + auto-layout; connector niemagnetyczny (L→R).</div></td>
+            <td class="cell"><span class="score s-b2">6<span class="of">/10</span></span><div class="why">Kolumny drag/resize ✓; brak Tab-nav, zakresu, fill-handle.</div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K3 · Prawy panel</div><div class="kdesc">wiadomo CO i PO CO; prosty accordion</div></td>
+            <td class="cell"><span class="score s-b2">5<span class="of">/10</span></span><div class="why">Gęsty, „prehistoryczny", nieujednolicony.</div></td>
+            <td class="cell"><span class="score s-b2">5<span class="of">/10</span></span><div class="why">Jak wyżej — wspólny problem powłoki.</div></td>
+            <td class="cell"><span class="score s-b2">5<span class="of">/10</span></span><div class="why">Jak wyżej — wspólny problem powłoki.</div></td>
+            <td class="cell"><span class="score s-b2">5<span class="of">/10</span></span><div class="why">Jak wyżej — wspólny problem powłoki.</div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K4 · Grafika</div><div class="kdesc">tokeny c-*, zero crimson-leak, zero gimmicków</div></td>
+            <td class="cell"><span class="score s-b3">7<span class="of">/10</span></span><div class="why">Orb-gimmick zdjęty; zostają surowe hex gałęzi.</div></td>
+            <td class="cell"><span class="score s-b2">5<span class="of">/10</span></span><div class="why">Defekt: half-rendered overlay z uciętym tekstem.</div></td>
+            <td class="cell"><span class="score s-b2">6<span class="of">/10</span></span><div class="why">Odchudziłem toolbar + wyczyściłem crimson.</div></td>
+            <td class="cell"><span class="score s-b2">5<span class="of">/10</span></span><div class="why">„AI Fill" crimson-leak; brak ikon typów / empty-state.</div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K5 · Menu / powłoka</div><div class="kdesc">jedna powłoka między narzędziami (WSPÓLNE)</div></td>
+            <td class="cell"><span class="score s-b1">3<span class="of">/10</span></span><div class="why">Brak górnego Menu 1 / paska w ogóle.</div></td>
+            <td class="cell"><span class="score s-b1">3<span class="of">/10</span></span><div class="why">Własny toolbar Create/Draw — niespójny.</div></td>
+            <td class="cell"><span class="score s-b2">6<span class="of">/10</span></span><div class="why">Po odchudzeniu najbliżej wzorca docelowego.</div></td>
+            <td class="cell"><span class="score s-b2">4<span class="of">/10</span></span><div class="why">Zakładki-widoków, niespójne z resztą.</div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K6 · Zdolności</div><div class="kdesc">robi to, czego wymaga jego kategoria</div></td>
+            <td class="cell"><span class="score s-b4">9<span class="of">/10</span></span><div class="why">Struktura/AI/cross-link/auto-layout ≈ lub &gt; lider.</div></td>
+            <td class="cell"><span class="score s-b2">6<span class="of">/10</span></span><div class="why">Sticky/kształty/ramki/komentarze; brak rich-text/czcionki.</div></td>
+            <td class="cell"><span class="score s-b4">9<span class="of">/10</span></span><div class="why">Najbogatsze: lanes/KPI/Automation/VSM — ponad Lucid.</div></td>
+            <td class="cell"><span class="score s-b3">8<span class="of">/10</span></span><div class="why">Typy ≈1:1 + consultingowe, 5 widoków, formuły, relacje.</div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K7 · Teresa / kolaboracja</div><div class="kdesc">tworzenie z czatu + współpraca real-time</div></td>
+            <td class="cell"><span class="score s-b4">9<span class="of">/10</span></span><div class="why">Tworzy realnie; collab WS realne.</div></td>
+            <td class="cell"><span class="score s-b3">8<span class="of">/10</span></span><div class="why">Teresa+collab realne; brak live-kursorów.</div></td>
+            <td class="cell"><span class="score s-b2">6<span class="of">/10</span></span><div class="why">Tworzy (interceptory czatu do zawężenia).</div></td>
+            <td class="cell"><span class="score s-b2">6<span class="of">/10</span></span><div class="why">Częściowe; AI-fill mocne.</div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K8 · Elegancja = lider</div><div class="kdesc">wygląda jak produkt tej klasy</div></td>
+            <td class="cell"><span class="score s-b3">7<span class="of">/10</span></span><div class="why">Po zdjęciu orba blisko Whimsical; brak powłoki/tokenów.</div></td>
+            <td class="cell"><span class="score s-b2">4<span class="of">/10</span></span><div class="why">Najrawsze; overlay-defekt, brak systemu stylu.</div></td>
+            <td class="cell"><span class="score s-b2">6<span class="of">/10</span></span><div class="why">Po odchudzeniu toolbara wyraźnie lepiej.</div></td>
+            <td class="cell"><span class="score s-b2">5<span class="of">/10</span></span><div class="why">Crimson-leak, surowe; ikony/gęstość niezweryf.</div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K9 · Dynamika</div><div class="kdesc">zoom / pan / drag / add / type / font / kolor</div></td>
+            <td class="cell"><span class="score s-b3">7<span class="of">/10</span></span><div class="why">9🟢/3🟡/1🔴; zoom/pan niezmierzone, brak emoji.</div></td>
+            <td class="cell"><span class="score s-b2">5<span class="of">/10</span></span><div class="why">10 prymitywów jest; brak snapping/guides/style-bar.</div></td>
+            <td class="cell"><span class="score s-b2">5<span class="of">/10</span></span><div class="why">Snap-grid+auto-layout ✓; connector/guides/style brak.</div></td>
+            <td class="cell"><span class="score s-b2">5<span class="of">/10</span></span><div class="why">Kolumny+widoki ✓; brak interakcji arkuszowej komórek.</div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">🟢/🟡/🔴 w opisach odnoszą się do checklist parytetu (<code>_FAZA0_PARYTET_*.md</code>) — źródło każdej oceny. „Dodałem / odchudziłem / zdjąłem" = zmiany zintegrowane w tej sesji, jeszcze przed akceptem.</p>
+  </section>
+
+  <section>
+    <h2>Co musi się wydarzyć, żeby dojechać do 10 — per narzędzie</h2>
+
+    <div class="tool-detail">
+      <div class="head"><span class="nm">Mind Map</span><span class="vs">vs <b>Whimsical / MindMeister</b></span><span class="mini">średnia <b>7,0</b></span></div>
+      <div class="drow"><div class="sc"><span class="score s-b4">9</span></div><div><div class="k">K1 Budowalność</div><div class="why">Prawy-klik: komplet bazowy + strukturalny (MindMeister) + AI/convert — ponad lidera.</div></div><div class="to10"><span class="lbl">→ 10</span><b>„Zmień kolor" jako jawna pozycja menu</b> + wklej obraz ze schowka (dziś tylko URL). Drobne [NICE].</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b3">7</span></div><div><div class="k">K2 Sterowalność</div><div class="why">Drag-reparent, inline-edit (dblclick+F2), multi-mode — są. Marquee niepotwierdzony, płynność drag niezmierzona (zgłoszenie „przesuwanie trudne").</div></div><div class="to10"><span class="lbl">→ 10</span><b>Harness interakcji</b>: zmierzyć i dostroić płynność drag/zoom/pan; potwierdzić lub dobudować <b>marquee box-select</b>.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">5</span></div><div><div class="k">K3 Prawy panel</div><div class="why">Map Inspector / Health / Convert wymieszane, gęsto.</div></div><div class="to10"><span class="lbl">→ 10</span><b>Wpiąć wspólny accordion</b> ArtifactRightPanel (Akcje/Właściwości/Powiązania/Komentarze/Historia-AI) — Faza 1.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b3">7</span></div><div><div class="k">K4 Grafika</div><div class="why">Orb-gimmick zdjęty; kształty/cienie/bezier blisko Whimsical. Zostają surowe hex <code>BRANCH_COLORS</code>.</div></div><div class="to10"><span class="lbl">→ 10</span>Migracja <b>hex → tokeny c-tag</b>; złagodzić cień węzła centralnego.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b1">3</span></div><div><div class="k">K5 Menu / powłoka</div><div class="why">Mapa nie ma górnego Menu 1 ani wspólnego paska.</div></div><div class="to10"><span class="lbl">→ 10</span><b>Wspólna powłoka</b> (Menu 1 + wzorzec paska) — Faza 1, robiona raz dla 4 narzędzi.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b4">9</span></div><div><div class="k">K6 Zdolności</div><div class="why">Struktura, AI, cross-linki, auto-layout — ≈ lub &gt; Whimsical.</div></div><div class="to10"><span class="lbl">→ 10</span><b>Emoji/ikona na węźle</b> — jedyny brak mechaniki wobec lidera.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b4">9</span></div><div><div class="k">K7 Teresa / kolaboracja</div><div class="why">Tworzy realnie z czatu; kolaboracja WS realna.</div></div><div class="to10"><span class="lbl">→ 10</span>Domknąć wyścig persistu <code>map/sync</code> (cichy data-loss przy współpracy).</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b3">7</span></div><div><div class="k">K8 Elegancja = lider</div><div class="why">Po zdjęciu orba blisko Whimsical.</div></div><div class="to10"><span class="lbl">→ 10</span>Wspólna powłoka + tokeny + dopięcie dark/light (zależne od K5/K4).</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b3">7</span></div><div><div class="k">K9 Dynamika</div><div class="why">Bogata (9🟢); zoom/pan/marquee niezmierzone, brak emoji.</div></div><div class="to10"><span class="lbl">→ 10</span>Zmierzyć zoom/pan harnessem, potwierdzić marquee, dodać emoji-picker.</div></div>
+    </div>
+
+    <div class="tool-detail">
+      <div class="head"><span class="nm">Process Flow</span><span class="vs">vs <b>Lucidchart / Visio</b></span><span class="mini">średnia <b>6,0</b></span></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">6</span></div><div><div class="k">K1 Budowalność</div><div class="why">Węzeł: edit/duplicate/delete/auto-layout/convert. Brakuje 4 operacji standardu Lucid.</div></div><div class="to10"><span class="lbl">→ 10</span>Dodać <b>copy + connect + change-shape + kolor/styl</b> do menu węzła.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">5</span></div><div><div class="k">K2 Sterowalność</div><div class="why">Snap-grid ON, auto-layout dagre mocne. Connector sztywny (1 handle L→R), brak smart-guides i align.</div></div><div class="to10"><span class="lbl">→ 10</span><b>Connector magnetyczny 4-stronny</b> + <b>smart-guides</b> + align/distribute.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">5</span></div><div><div class="k">K3 Prawy panel</div><div class="why">Wspólny problem powłoki.</div></div><div class="to10"><span class="lbl">→ 10</span>Panele (KPI/Coach/Summary) → accordion prawego panelu — Faza 1.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">6</span></div><div><div class="k">K4 Grafika</div><div class="why">Odchudziłem ścianę 3-kol → pasek + „Więcej"; crimson (c-accent) → navy. „Ucięty tekst" naprawiony.</div></div><div class="to10"><span class="lbl">→ 10</span>Styl kształtu (wypełnienie/obrys), empty-state, wykończenie dark/light.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">6</span></div><div><div class="k">K5 Menu / powłoka</div><div class="why">Po odchudzeniu <b>najbliżej wzorca docelowego</b> (progresywne ujawnianie).</div></div><div class="to10"><span class="lbl">→ 10</span>Wpiąć wspólne Menu 1 + prawy panel — Faza 1.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b4">9</span></div><div><div class="k">K6 Zdolności</div><div class="why">Najbogatsze w Consultify: lanes, KPI, Automation, Value Stream, walidacja, AI Coach — <b>ponad</b> Lucid.</div></div><div class="to10"><span class="lbl">→ 10</span>To interakcja (connector/paleta), nie zdolność — patrz K2/K9.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">6</span></div><div><div class="k">K7 Teresa / kolaboracja</div><div class="why">Tworzy z czatu; interceptory czatu przechwytują poza otwartym narzędziem.</div></div><div class="to10"><span class="lbl">→ 10</span>Zawęzić regex interceptorów; domknąć presence.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">6</span></div><div><div class="k">K8 Elegancja = lider</div><div class="why">Po odchudzeniu toolbara wyraźnie bliżej.</div></div><div class="to10"><span class="lbl">→ 10</span>Styl kształtu, empty-state, mikro-interakcje, dark/light.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">5</span></div><div><div class="k">K9 Dynamika</div><div class="why">Snap-grid + auto-layout ✓. Connector niemagnetyczny, brak smart-guides/style/align, brak drag-z-palety.</div></div><div class="to10"><span class="lbl">→ 10</span>Connector magnetyczny, smart-guides, style-picker, align, odsłonić auto-routing domyślnie.</div></div>
+    </div>
+
+    <div class="tool-detail">
+      <div class="head"><span class="nm">Whiteboard</span><span class="vs">vs <b>Miro / FigJam</b></span><span class="mini">średnia <b>5,4</b></span></div>
+      <div class="drow"><div class="sc"><span class="score s-b3">8</span></div><div><div class="k">K1 Budowalność</div><div class="why">Dodałem sekcję bazową (Edytuj/Duplikuj/Kopiuj/Warstwa przód-tył/Lock/Usuń) nad AI — był 🔴 (same akcje AI).</div></div><div class="to10"><span class="lbl">→ 10</span><b>Kolor / czcionka / styl per element</b> z menu (wymaga silnika stylu — Faza 2).</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">5</span></div><div><div class="k">K2 Sterowalność</div><div class="why">Marquee-select + spacja-pan są. Brak snappingu i prowadnic, trackpad-pan wyłączony, drag-lift niezweryf.</div></div><div class="to10"><span class="lbl">→ 10</span><b>Snapping (siatka+obiekty) + prowadnice</b> (Faza 2), włączyć trackpad-pan, drag-lift.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">5</span></div><div><div class="k">K3 Prawy panel</div><div class="why">Wspólny problem powłoki.</div></div><div class="to10"><span class="lbl">→ 10</span>Wpiąć ArtifactRightPanel — Faza 1.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">5</span></div><div><div class="k">K4 Grafika</div><div class="why">Defekt: <b>half-rendered overlay</b> top-left z uciętym tekstem („ION LAYER") — wygląda zepsuty.</div></div><div class="to10"><span class="lbl">→ 10</span>Naprawić overlay (Faza 4), empty-state „dodaj pierwszą karteczkę", audyt palety sticky.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b1">3</span></div><div><div class="k">K5 Menu / powłoka</div><div class="why">Własny toolbar Create/Draw/Undo — inna filozofia niż reszta.</div></div><div class="to10"><span class="lbl">→ 10</span>Wspólna powłoka — Faza 1.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">6</span></div><div><div class="k">K6 Zdolności</div><div class="why">Sticky/kształty/ramki/komentarze-na-obiekcie są. Brak rich-text i kontroli czcionki.</div></div><div class="to10"><span class="lbl">→ 10</span>Kolor/czcionka per element, rich-text w sticky.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b3">8</span></div><div><div class="k">K7 Teresa / kolaboracja</div><div class="why">Teresa + collab realne, komentarze na obiekcie. Brak live-kursorów.</div></div><div class="to10"><span class="lbl">→ 10</span>Kursory obecności real-time (dziś tylko lista uczestników).</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">4</span></div><div><div class="k">K8 Elegancja = lider</div><div class="why">Najrawsze z 4 — overlay-defekt, brak systemu stylu.</div></div><div class="to10"><span class="lbl">→ 10</span>Overlay-fix, pasek stylu, empty-state, mikro-interakcje, dark/light.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">5</span></div><div><div class="k">K9 Dynamika</div><div class="why">10 prymitywów jest (fitView/spacja-pan/marquee/paleta-kształtów/dwuklik-edit/ramki); z-order+lock dodałem do menu. Brak snappingu/guides/style-bar/trackpad-pan.</div></div><div class="to10"><span class="lbl">→ 10</span>Snapping+prowadnice, pasek stylu (kolor/czcionka po utworzeniu), trackpad-pan.</div></div>
+    </div>
+
+    <div class="tool-detail">
+      <div class="head"><span class="nm">Table</span><span class="vs">vs <b>Airtable / Notion</b></span><span class="mini">średnia <b>5,4</b></span></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">5</span></div><div><div class="k">K1 Budowalność</div><div class="why">User dostaje <b>legacy</b> menu (Edit/Add note/Duplicate/Delete). Bogaty kebab 8-poz. zbudowany (moja integracja), ale <span class="flag">za martwą flagą</span> <code>tablePlatformMetadataFirst</code> — 0 żywych baz.</div></div><div class="to10"><span class="lbl">→ 10</span><b>Odblokować silnik platform</b> (flaga + zasiedzić realne bazy) LUB port kebaba do legacy grid; + kolor wiersza ręczny; + prawy-klik komórki.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">6</span></div><div><div class="k">K2 Sterowalność</div><div class="why">Drag-reorder kolumn + resize ✓. Brak Tab-nav, zaznaczania zakresu, fill-handle, drag-reorder wierszy.</div></div><div class="to10"><span class="lbl">→ 10</span><b>Nawigacja Tab/strzałki</b>, zaznaczanie zakresu + kopiuj/wklej, fill-handle (lub świadoma decyzja: AI-fill zamiast), drag-reorder wierszy.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">5</span></div><div><div class="k">K3 Prawy panel</div><div class="why">Wspólny problem powłoki.</div></div><div class="to10"><span class="lbl">→ 10</span>Ujednolicić do ArtifactRightPanel — Faza 1.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">5</span></div><div><div class="k">K4 Grafika</div><div class="why">„AI Fill" crimson-leak zgłoszony (zbadać wzrokiem). Brak ikon typów pól, empty-state niepewny.</div></div><div class="to10"><span class="lbl">→ 10</span>Rozwiązać crimson, dodać ikony typów pól, empty-state.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">4</span></div><div><div class="k">K5 Menu / powłoka</div><div class="why">Zakładki-widoków, niespójne z resztą.</div></div><div class="to10"><span class="lbl">→ 10</span>Wspólne Menu 1 + prawy panel — Faza 1.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b3">8</span></div><div><div class="k">K6 Zdolności</div><div class="why">Typy ≈1:1 z Airtable + consultingowe (risk_score/priority/ai_summary), 5 widoków, sort/filter/group, formuły, linked records.</div></div><div class="to10"><span class="lbl">→ 10</span>Pole <b>„Assignee"</b> ręczne (dziś tylko auto createdBy) + interakcje arkuszowe (K2).</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">6</span></div><div><div class="k">K7 Teresa / kolaboracja</div><div class="why">Częściowe; AI-fill mocne.</div></div><div class="to10"><span class="lbl">→ 10</span>Domknąć tworzenie z czatu + presence; odblokować realtime silnika platform.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">5</span></div><div><div class="k">K8 Elegancja = lider</div><div class="why">Crimson-leak, surowe; gęstość/ikony niezweryfikowane.</div></div><div class="to10"><span class="lbl">→ 10</span>Crimson-fix, ikony typów, przełącznik gęstości wiersza.</div></div>
+      <div class="drow"><div class="sc"><span class="score s-b2">5</span></div><div><div class="k">K9 Dynamika</div><div class="why">Kolumny drag/resize + 5 widoków ✓. Brak interakcji komórka-po-komórce jak arkusz.</div></div><div class="to10"><span class="lbl">→ 10</span>Tab-nav, zaznaczanie zakresu, kopiuj/wklej zakresu, fill-handle, drag-reorder wierszy.</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Trzy dźwignie, które podnoszą najwięcej komórek naraz</h2>
+    <div class="lever"><div class="n">1</div><div class="t"><b>Wspólna powłoka (Faza 1).</b> K5 to najniższa oś przekrojowo (3 / 3 / 6 / 4). Jeden Menu 1 + jeden wzorzec paska + jeden prawy panel = podnosi <b>K3, K5 i K8 na wszystkich 4 naraz</b>. <span class="tag">WSPÓLNE ×4</span></div></div>
+    <div class="lever"><div class="n">2</div><div class="t"><b>Silnik interakcji (Faza 2).</b> Snapping + prowadnice + pasek stylu (kolor/czcionka per element) — wspólny dla 3 canvasów. Podnosi <b>K2 i K9 w Whiteboard, Process i Mind Map</b>. To rdzeń zgłoszenia „przesuwanie trudne". <span class="tag">WSPÓLNE ×3</span></div></div>
+    <div class="lever"><div class="n">3</div><div class="t"><b>Odblokować silnik platform Table.</b> Bogaty kebab, typy i realtime są <b>zbudowane, ale niewidoczne dla usera</b> (flaga OFF, 0 żywych baz). Bez decyzji o włączeniu — cała praca nad Tabelą jest martwa dla klienta. To decyzja, nie kod. <span class="tag">Table</span></div></div>
+  </section>
+
+  <hr class="rule" />
+  <p class="note"><b>Metodyka.</b> Oceny ugruntowane w: (a) checklistach parytetu vs lider czytanych z realnego kodu (<code>_FAZA0_PARYTET_*.md</code>), (b) renderach własnych (reguła #7), (c) stanie żywej bazy (np. Table: 0 platform-baz sprawdzone SQL). Złota reguła: liczy się realny runtime, nie flaga — dlatego funkcja „za martwą flagą" nie liczy się jako to, co dostaje user. Stan na gałęzi <code>audyt-idee</code>, przed akceptem/deployem. Każda liczba jest podważalna — wskaż komórkę, wrócimy do dowodu.</p>
+
+</div>
+
+<script>
+  document.querySelectorAll('.segbar').forEach(function (bar) {
+    var fill = parseInt(bar.getAttribute('data-fill'), 10);
+    var band = fill <= 3 ? 'seg-b1' : fill <= 6 ? 'seg-b2' : fill <= 8 ? 'seg-b3' : 'seg-b4';
+    for (var i = 1; i <= 10; i++) {
+      var s = document.createElement('i');
+      if (i <= fill) s.className = band;
+      bar.appendChild(s);
+    }
+  });
+</script>
+</body>
+</html>
