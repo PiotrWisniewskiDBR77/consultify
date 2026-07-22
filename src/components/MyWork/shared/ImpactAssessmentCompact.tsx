@@ -216,7 +216,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
               key={dim.id}
               className={`relative rounded-xl border transition-all ${
                 isExpanded
-                  ? 'border-primary-300 dark:border-primary-500/50 bg-primary-50/50 dark:bg-primary-500/10'
+                  ? 'border-c-border-strong bg-c-surface-raised'
                   : 'border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900'
               }`}
             >
@@ -350,7 +350,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                         }
                         placeholder="0"
                         disabled={readOnly}
-                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                       />
                     </div>
                     <div>
@@ -372,7 +372,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                         }
                         placeholder="0"
                         disabled={readOnly}
-                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                       />
                     </div>
                   </div>
@@ -410,7 +410,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                 {/* Timeline estimate */}
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
                   <div className="flex items-center gap-2 mb-3">
-                    <Clock size={16} className="text-primary-500" />
+                    <Clock size={16} className="text-c-text" />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                       {t('myWork.impactAssessment.timelineImpact', 'Timeline Impact')}
                     </span>
@@ -432,7 +432,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                       }
                       placeholder="0"
                       disabled={readOnly}
-                      className="flex-1 px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                      className="flex-1 px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                     />
                     <select
                       value={impact.timelineEstimate?.unit || 'weeks'}
@@ -515,7 +515,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                         }
                         placeholder="0"
                         disabled={readOnly}
-                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                       />
                     </div>
                     <div>
@@ -538,7 +538,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                         }
                         placeholder="e.g. 3 months"
                         disabled={readOnly}
-                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                       />
                     </div>
                   </div>
@@ -590,7 +590,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                     'myWork.impactAssessment.describeImpactDetails',
                     'Describe impact details...'
                   )}
-                  className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
+                  className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-c-focus resize-none"
                 />
               </div>
             </motion.div>

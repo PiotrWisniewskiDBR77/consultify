@@ -80,7 +80,7 @@ const EVIDENCE_TYPES: Record<
   DEMO: {
     label: { en: 'Demo', pl: 'Demo' },
     icon: Monitor,
-    color: 'text-primary-500',
+    color: 'text-c-text',
   },
   APPROVAL: {
     label: { en: 'Approval', pl: 'Zatwierdzenie' },
@@ -213,8 +213,8 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                         disabled={readOnly}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                           isSelected
-                            ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-500/50'
-                            : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-500/50'
+                            ? 'bg-c-surface-raised text-c-text border border-c-border'
+                            : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-600 hover:border-c-border-strong'
                         }`}
                       >
                         <Icon size={12} className={isSelected ? config.color : ''} />
@@ -235,7 +235,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                   {!readOnly && (
                     <button
                       onClick={() => setShowAddEvidence(true)}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                     >
                       <Plus size={12} />
                       {t('myWork.evidence.add', 'Add')}
@@ -324,7 +324,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                 </div>
 
                 {requiresAcceptance && (
-                  <div className="space-y-3 pl-2 border-l-2 border-primary-200 dark:border-primary-500/30">
+                  <div className="space-y-3 pl-2 border-l-2 border-c-border">
                     {/* Acceptance Type */}
                     <div className="flex gap-2">
                       <button
@@ -332,7 +332,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                         disabled={readOnly}
                         className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                           acceptanceType === 'manual'
-                            ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-500/50'
+                            ? 'bg-c-surface-raised text-c-text border border-c-border'
                             : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-600'
                         }`}
                       >
@@ -346,7 +346,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                         disabled={readOnly}
                         className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                           acceptanceType === 'automatic'
-                            ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-500/50'
+                            ? 'bg-c-surface-raised text-c-text border border-c-border'
                             : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-600'
                         }`}
                       >
@@ -367,7 +367,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                             !readOnly && onAcceptanceChange(true, 'manual', e.target.value || null)
                           }
                           disabled={readOnly}
-                          className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                          className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                         >
                           <option value="">{t('myWork.evidence.select', 'Select...')}</option>
                           {availableUsers.map((user) => (
@@ -458,7 +458,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                           onClick={() => setNewEvidenceType(type as EvidenceType)}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                             newEvidenceType === type
-                              ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-500/50'
+                              ? 'bg-c-surface-raised text-c-text border border-c-border'
                               : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-600'
                           }`}
                         >
@@ -481,7 +481,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                     value={newEvidenceTitle}
                     onChange={(e) => setNewEvidenceTitle(e.target.value)}
                     placeholder={t('myWork.evidence.placeholder', 'Evidence name...')}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-c-focus"
                     autoFocus
                   />
                 </div>

@@ -136,7 +136,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                 }}
                 className={`p-1.5 rounded-md transition-colors ${
                   viewMode === 'list'
-                    ? 'bg-white dark:bg-navy-700 shadow-sm text-primary-600 dark:text-primary-400'
+                    ? 'bg-white dark:bg-navy-700 shadow-sm text-c-text'
                     : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
                 title={t('myWork.alternatives.title', 'List view')}
@@ -150,7 +150,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                 }}
                 className={`p-1.5 rounded-md transition-colors ${
                   viewMode === 'comparison'
-                    ? 'bg-white dark:bg-navy-700 shadow-sm text-primary-600 dark:text-primary-400'
+                    ? 'bg-white dark:bg-navy-700 shadow-sm text-c-text'
                     : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
                 title={t('myWork.alternatives.title2', 'Comparison view')}
@@ -178,7 +178,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                   onGenerateAI();
                 }}
                 disabled={isGenerating}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-c-info/10 dark:bg-c-info/20 text-c-info hover:bg-c-info/20 dark:hover:bg-c-info/30 text-xs font-medium transition-all disabled:opacity-50"
                 title={t('myWork.alternatives.title3', 'Generate AI')}
               >
                 {isGenerating ? (
@@ -246,7 +246,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                 value={alt.title}
                                 onChange={(e) => onUpdate(alt.id, { title: e.target.value })}
                                 placeholder={t('myWork.alternatives.placeholder', 'Option name...')}
-                                className="w-full font-semibold text-slate-800 dark:text-white bg-transparent focus:outline-none focus:ring-2 focus:ring-primary-500/20 rounded px-1 -mx-1"
+                                className="w-full font-semibold text-slate-800 dark:text-white bg-transparent focus:outline-none focus:ring-2 focus:ring-c-focus rounded px-1 -mx-1"
                               />
                               <div className="flex items-center gap-2 mt-1">
                                 {alt.isRecommended && (
@@ -296,7 +296,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                             'Option description...'
                           )}
                           rows={2}
-                          className="w-full mb-3 px-2 py-1.5 rounded-lg text-sm bg-white/50 dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
+                          className="w-full mb-3 px-2 py-1.5 rounded-lg text-sm bg-white/50 dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 placeholder-slate-400 focus:outline-none focus:border-c-focus resize-none"
                         />
 
                         {/* Pros & Cons */}
@@ -524,7 +524,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={onAdd}
-                  className="w-full py-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-primary-400 dark:hover:border-primary-500/50 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50/50 dark:hover:bg-primary-500/10 transition-all duration-200 flex items-center justify-center gap-2 font-medium"
+                  className="w-full py-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-c-border-strong hover:text-c-text hover:bg-c-surface-raised transition-all duration-200 flex items-center justify-center gap-2 font-medium"
                 >
                   <Plus size={18} />
                   <span>{t('myWork.alternatives.addAlternative', 'Add alternative')}</span>
