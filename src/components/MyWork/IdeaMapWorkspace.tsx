@@ -2793,8 +2793,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const vf1CanvasSpecAEnabled = isVf1CanvasSpecAEnabled();
   // Z-menu1-delete: "Usuń" kebab entry — wires the same `Api.deleteMyIdea`
   // used by the ideas list (MyIdeasListContent) + the same confirm-dialog
-  // pattern. Historia/Duplikuj stay disabled: no workspace-level flow exists
-  // for either (a real SnapshotHistory component exists but is mindmap-only
+  // pattern. "Duplikuj" is now wired too (Api.duplicateMyIdea → deep-link into
+  // the new copy). Only Historia stays disabled: no workspace-level version
+  // history flow exists (a real SnapshotHistory component is mindmap-only
   // today — generalizing it to all 4 tools is separate, unscoped work).
   const { dialog: deleteIdeaDialog, confirm: confirmDeleteIdea } = useConfirmDialog();
   const handleDeleteIdea = useCallback(async () => {
@@ -2817,9 +2818,25 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       toast.error(err?.message || (isPolish ? 'Nie udało się usunąć' : 'Failed to delete'));
     }
   }, [realId, confirmDeleteIdea, isPolish, title, navigate]);
+  // Duplicate: clone the idea + its map on the server, then deep-link into the
+  // NEW copy's workspace on the same tool the user is currently in (backend drops
+  // promotion state and suffixes the title with (kopia)/(copy)).
+  const handleDuplicateIdea = useCallback(async () => {
+    if (!realId) return;
+    try {
+      const dup = await Api.duplicateMyIdea(realId, { language: isPolish ? 'pl' : 'en' });
+      const newId = dup?.id ? String(dup.id) : null;
+      if (!newId) throw new Error(isPolish ? 'Brak id kopii' : 'No copy id returned');
+      toast.success(isPolish ? 'Zduplikowano' : 'Duplicated');
+      const toolSlug = activeTool === 'process_flow' ? 'process-flow' : activeTool;
+      navigate(`/my-work/ideas/${encodeURIComponent(newId)}/workspace/${toolSlug}`);
+    } catch (err: any) {
+      toast.error(err?.message || (isPolish ? 'Nie udało się zduplikować' : 'Failed to duplicate'));
+    }
+  }, [realId, isPolish, activeTool, navigate]);
   // ── Menu 1 (top bar) chips — Z7 anatomy ─────────────────────────────────
   // Clean identity row: ghost Teresa (secondary) + kebab `⋯` (Eksport +
-  // Usuń real · Historia/Duplikuj disabled-with-"wkrótce" — see note above).
+  // Eksport + Duplikuj + Usuń real · Historia disabled-with-"wkrótce" — see note above).
   // The sole primary "Konwertuj ▾" is `melsPrimaryActionSlot` below; the
   // per-tool VIEW actions moved to Menu 3 (`melsSecondBarNode`).
   const melsCanvasChips = useMemo(
@@ -2830,10 +2847,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             handlers: {
               onDiscuss: handleDiscussWithTeresa,
               onExport: () => setExportMenuOpen(true),
-              // onHistory / onDuplicate intentionally omitted — no
-              // workspace-level handler exists (verified 2026-07-22). The
-              // builder renders them DISABLED with a "wkrótce" hint, never
-              // hidden (ANATOMY: brakujące pozycje disabled z dopiskiem).
+              // onHistory intentionally omitted — no workspace-level version
+              // history flow exists yet (a real SnapshotHistory component is
+              // mindmap-only; generalizing it to all 4 tools is separate,
+              // unscoped work). The builder renders it DISABLED with a "wkrótce"
+              // hint, never hidden (ANATOMY: brakujące pozycje disabled z dopiskiem).
+              onDuplicate: handleDuplicateIdea,
               onDelete: handleDeleteIdea,
               onSearch: () => setSearchOpen(true),
               onShowHelp: () => setShortcutsHelpOpen(true),
@@ -2841,7 +2860,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           })
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [melsCanvasEnabled, isPolish, handleDiscussWithTeresa, handleDeleteIdea]
+    [melsCanvasEnabled, isPolish, handleDiscussWithTeresa, handleDuplicateIdea, handleDeleteIdea]
   );
   // ── Menu 3 (second bar) view actions — Z7 anatomy ───────────────────────
   const melsMenu3Actions = useMemo(
