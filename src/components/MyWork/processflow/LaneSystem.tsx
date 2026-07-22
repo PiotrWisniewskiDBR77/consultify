@@ -128,7 +128,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
         {onToggleCollapse && (
           <button
             onClick={() => onToggleCollapse(lane.id)}
-            className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
+            className="p-0.5 rounded hover:bg-c-surface-raised"
             title={
               collapsed
                 ? t('processFlow.laneSystem.expandLane', 'Expand lane')
