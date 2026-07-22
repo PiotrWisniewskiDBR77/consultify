@@ -429,7 +429,15 @@ export function useIdeaMapSync({
       }
       syncTimerRef.current = window.setTimeout(
         () => {
-          void flushNow(null, { reason: opts?.reason || 'draft' });
+          // Swallow here so a rejected background autosave (e.g. a transient
+          // server 500, or a read-only render harness blocking the write) never
+          // escapes as an unhandled promise rejection — which in Vite dev pops
+          // the full-screen error overlay ("Something went very wrong!") and
+          // masquerades as a hard crash. The failure is already surfaced to the
+          // UI via syncState ('queued'/'conflict'/'offline'); flushNow keeps
+          // re-throwing for awaiting callers (flushGraph) that react to it.
+          // Mirrors the finally-block re-flush guard below (conflict self-heal).
+          void flushNow(null, { reason: opts?.reason || 'draft' }).catch(() => null);
         },
         opts?.immediate ? 0 : idleMs
       );
