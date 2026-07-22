@@ -184,9 +184,9 @@ const MODAL_HINT =
 const CHANNEL_CHIP =
   'px-2 py-1 rounded-md border text-[11px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
 const ADD_BTN =
-  'px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
+  'px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-text hover:border-c-border-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
 const AI_BTN =
-  'px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1';
+  'px-2.5 py-1 rounded-lg text-xs font-medium border border-c-info/40 text-c-info hover:text-c-info hover:border-c-info/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1';
 const TH =
   'text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50';
 const BADGE =
@@ -402,7 +402,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               onClick={() => onToggle(ch.key, !isSelected)}
               className={`${CHANNEL_CHIP} ${
                 isSelected
-                  ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                  ? 'border-c-border text-c-text bg-c-surface-raised'
                   : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
               }`}
               title={ch.scope}
@@ -507,7 +507,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                               setEditingStakeholderId(s.id);
                               setStakeholderDraft({ ...s });
                             }}
-                            className="p-1 text-slate-600 hover:text-primary-500 disabled:opacity-40"
+                            className="p-1 text-slate-600 hover:text-c-text disabled:opacity-40"
                             title={t('sharedComponents.governanceCanvas.edit')}
                           >
                             <Edit3 size={13} />
@@ -622,7 +622,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                               setEditingReminderId(r.id);
                               setReminderDraft(normalizeReminderRule({ ...r }));
                             }}
-                            className="p-1 text-slate-600 hover:text-primary-500 disabled:opacity-40"
+                            className="p-1 text-slate-600 hover:text-c-text disabled:opacity-40"
                             title={t('sharedComponents.governanceCanvas.edit')}
                           >
                             <Edit3 size={13} />
@@ -748,7 +748,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                               setEditingEscalationId(rule.id);
                               setEscalationDraft({ ...rule });
                             }}
-                            className="p-1 text-slate-600 hover:text-primary-500 disabled:opacity-40"
+                            className="p-1 text-slate-600 hover:text-c-text disabled:opacity-40"
                             title={t('sharedComponents.governanceCanvas.edit')}
                           >
                             <Edit3 size={13} />

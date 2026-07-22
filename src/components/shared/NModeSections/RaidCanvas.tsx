@@ -184,9 +184,9 @@ const RAID_TYPE_META: Record<
   },
   dependency: {
     icon: GitBranch,
-    color: 'text-primary-500',
-    bgLight: 'bg-primary-500/10',
-    borderActive: 'border-primary-400/60 ring-primary-400/30',
+    color: 'text-c-info',
+    bgLight: 'bg-c-info/10',
+    borderActive: 'border-c-info/60 ring-c-info/30',
   },
 };
 
@@ -236,7 +236,7 @@ const getStatusClass = (status: string): string => {
   if (s === 'mitigated' || s === 'on_track')
     return 'bg-green-500/15 text-green-500 border-green-400/30';
   if (s === 'accepted') return 'bg-amber-500/15 text-amber-500 border-amber-400/30';
-  if (s === 'transferred') return 'bg-primary-500/15 text-primary-500 border-primary-400/30';
+  if (s === 'transferred') return 'bg-c-info/15 text-c-info border-c-info/30';
   if (s === 'materialized' || s === 'invalidated' || s === 'not_met')
     return 'bg-danger-500/20 text-danger-500 border-danger-400/40';
   if (s === 'escalated' || s === 'at_risk')
@@ -484,7 +484,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
           <button
             onClick={onAIGenerate}
             disabled={locked || isGeneratingAI}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-primary-500/15 to-primary-500/15 border border-primary-400/40 dark:border-primary-500/30 text-primary-600 dark:text-primary-400 hover:from-primary-500/25 hover:to-primary-500/25 hover:border-primary-400/60 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-c-info/10 border border-c-info/40 text-c-info hover:bg-c-info/20 hover:border-c-info/60 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isGeneratingAI ? (
               <Loader2 size={13} className="animate-spin" />
@@ -668,7 +668,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
             onClick={() => setTypeFilter(tab.key)}
             className={`px-2.5 py-1.5 text-[11px] font-medium rounded-t-lg transition-colors ${
               typeFilter === tab.key
-                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
+                ? 'text-c-text border-b-2 border-c-info'
                 : 'text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
           >
@@ -850,7 +850,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                             })
                           }
                           disabled={locked}
-                          className={`w-full text-[11px] px-2 py-1 rounded-md border ${meta.bgLight} ${meta.color} border-current/20 focus:outline-none focus:border-primary-400 disabled:opacity-60`}
+                          className={`w-full text-[11px] px-2 py-1 rounded-md border ${meta.bgLight} ${meta.color} border-current/20 focus:outline-none focus:border-c-focus-solid disabled:opacity-60`}
                         >
                           {(['risk', 'assumption', 'issue', 'dependency'] as const).map((t) => (
                             <option key={t} value={t}>
@@ -872,7 +872,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                               onUpdateItem(item.id, { probability: e.target.value as RaidLevel })
                             }
                             disabled={locked}
-                            className={`w-full text-[11px] px-2 py-1 rounded-md border focus:outline-none focus:border-primary-400 ${getLevelClass(item.probability)} disabled:opacity-60`}
+                            className={`w-full text-[11px] px-2 py-1 rounded-md border focus:outline-none focus:border-c-focus-solid ${getLevelClass(item.probability)} disabled:opacity-60`}
                           >
                             {RAID_LEVEL_OPTIONS.map((level) => (
                               <option key={`p-${item.id}-${level}`} value={level}>
@@ -894,7 +894,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                             onUpdateItem(item.id, { impact: e.target.value as RaidLevel })
                           }
                           disabled={locked}
-                          className={`w-full text-[11px] px-2 py-1 rounded-md border focus:outline-none focus:border-primary-400 ${getLevelClass(item.impact)} disabled:opacity-60`}
+                          className={`w-full text-[11px] px-2 py-1 rounded-md border focus:outline-none focus:border-c-focus-solid ${getLevelClass(item.impact)} disabled:opacity-60`}
                         >
                           {RAID_LEVEL_OPTIONS.map((level) => (
                             <option key={`i-${item.id}-${level}`} value={level}>
@@ -913,7 +913,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           value={item.category || 'business'}
                           onChange={(e) => onUpdateItem(item.id, { category: e.target.value })}
                           disabled={locked}
-                          className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 disabled:opacity-60"
+                          className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid disabled:opacity-60"
                         >
                           {categoryOptions.map((cat) => (
                             <option key={`c-${item.id}-${cat.value}`} value={cat.value}>
@@ -934,7 +934,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                             onUpdateItem(item.id, { status: e.target.value as RaidStatus })
                           }
                           disabled={locked}
-                          className={`w-full text-[11px] px-2 py-1 rounded-md border focus:outline-none focus:border-primary-400 ${getStatusClass(item.status)} disabled:opacity-60`}
+                          className={`w-full text-[11px] px-2 py-1 rounded-md border focus:outline-none focus:border-c-focus-solid ${getStatusClass(item.status)} disabled:opacity-60`}
                         >
                           {allowedStatuses.map((s) => (
                             <option key={`s-${item.id}-${s}`} value={s}>
@@ -958,7 +958,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                               })
                             }
                             disabled={locked}
-                            className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 disabled:opacity-60"
+                            className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid disabled:opacity-60"
                           >
                             {RESPONSE_STRATEGIES.map((s) => (
                               <option key={`rs-${item.id}-${s}`} value={s}>
@@ -990,7 +990,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                             value={item.owner || ''}
                             onChange={(e) => onUpdateItem(item.id, { owner: e.target.value })}
                             disabled={locked}
-                            className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 disabled:opacity-60 ${itemUnowned ? 'border-amber-400/50' : 'border-slate-200/60 dark:border-navy-600/60'}`}
+                            className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid disabled:opacity-60 ${itemUnowned ? 'border-amber-400/50' : 'border-slate-200/60 dark:border-navy-600/60'}`}
                           >
                             <option value="">{t('sharedComponents.raidCanvas.select')}</option>
                             {users.map((u) => (
@@ -1004,7 +1004,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                             value={item.owner || ''}
                             onChange={(e) => onUpdateItem(item.id, { owner: e.target.value })}
                             readOnly={locked}
-                            className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 ${itemUnowned ? 'border-amber-400/50' : 'border-slate-200/60 dark:border-navy-600/60'}`}
+                            className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid ${itemUnowned ? 'border-amber-400/50' : 'border-slate-200/60 dark:border-navy-600/60'}`}
                             placeholder={t('sharedComponents.raidCanvas.name')}
                           />
                         )}
@@ -1028,7 +1028,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           value={item.dueDate || ''}
                           onChange={(e) => onUpdateItem(item.id, { dueDate: e.target.value })}
                           readOnly={locked}
-                          className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 ${
+                          className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid ${
                             itemOverdue
                               ? 'border-amber-400/60 text-amber-500 dark:text-amber-400'
                               : 'border-slate-200/60 dark:border-navy-600/60'
@@ -1046,7 +1046,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           value={item.source || ''}
                           onChange={(e) => onUpdateItem(item.id, { source: e.target.value })}
                           readOnly={locked}
-                          className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                          className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                           placeholder={t('sharedComponents.raidCanvas.eGMeetingAuditAiWorkshop')}
                         />
                       </div>
@@ -1076,7 +1076,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           onChange={(e) => onUpdateItem(item.id, { contingency: e.target.value })}
                           rows={3}
                           readOnly={locked}
-                          className="w-full min-h-[72px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
+                          className="w-full min-h-[72px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid resize-y"
                           placeholder={t(
                             'sharedComponents.raidCanvas.whatIsTheFallbackIfRiskMaterializes'
                           )}
@@ -1121,7 +1121,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           onChange={(e) => onUpdateItem(item.id, { mitigation: e.target.value })}
                           rows={3}
                           readOnly={locked}
-                          className="w-full min-h-[72px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
+                          className="w-full min-h-[72px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid resize-y"
                           placeholder={t(
                             'sharedComponents.raidCanvas.howDoWeReduceTheProbabilityOfThisRisk'
                           )}
@@ -1168,7 +1168,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       onChange={(e) => onUpdateItem(item.id, { proposedAction: e.target.value })}
                       rows={3}
                       readOnly={locked}
-                      className="w-full min-h-[72px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
+                      className="w-full min-h-[72px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid resize-y"
                       placeholder={getActionPlaceholder(item.type)}
                     />
                     <div className="flex flex-wrap gap-1">
@@ -1190,7 +1190,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                                 ? 'border-blue-400/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10'
                                 : item.type === 'issue'
                                   ? 'border-danger-400/30 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10'
-                                  : 'border-primary-400/30 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10'
+                                  : 'border-c-info/30 text-c-info hover:bg-c-info/10'
                           }`}
                         >
                           +{arg}

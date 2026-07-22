@@ -129,7 +129,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
         <button
           onClick={scrollToInput}
           disabled={locked}
-          className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+          className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-500 hover:text-c-text transition-colors"
         >
           <Plus size={13} />
           {t('sharedComponents.commentsCanvas.addComment')}
@@ -166,7 +166,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
             {visibleComments.map((c) => (
               <div key={c.id} className="group">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary-500/15 flex items-center justify-center text-[10px] font-bold text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-c-border-subtle flex items-center justify-center text-[10px] font-bold text-c-text flex-shrink-0 mt-0.5">
                     {(c.authorName || '?').charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -184,7 +184,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                         {new Date(c.createdAt).toLocaleDateString()}
                       </span>
                       {c.isAIGenerated && (
-                        <span className="text-[9px] text-primary-500 font-medium">AI</span>
+                        <span className="text-[9px] text-c-info font-medium">AI</span>
                       )}
                     </div>
                     <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -209,7 +209,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
             <button
               type="button"
               onClick={() => setShowMoreComments((prev) => !prev)}
-              className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+              className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-c-text transition-colors"
             >
               {isExpandedComments
                 ? t('sharedComponents.commentsCanvas.less')
@@ -284,7 +284,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
             <button
               onClick={onAIEnhance}
               disabled={locked || isAIEnhancing}
-              className="inline-flex items-center gap-1 text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40"
+              className="inline-flex items-center gap-1 text-xs font-medium text-c-info hover:text-c-info transition-colors disabled:opacity-40"
               title={t('sharedComponents.commentsCanvas.aiEnhanceTitle')}
             >
               {isAIEnhancing ? (

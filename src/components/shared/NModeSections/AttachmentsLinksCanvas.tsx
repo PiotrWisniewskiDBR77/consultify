@@ -148,7 +148,7 @@ const FileIcon: React.FC<{ name: string; className?: string }> = ({ name, classN
 /** Coloured chip config per linked item type */
 const TYPE_CHIP: Record<string, { bg: string; text: string; border: string }> = {
   task: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20' },
-  decision: { bg: 'bg-primary-500/10', text: 'text-primary-400', border: 'border-primary-500/20' },
+  decision: { bg: 'bg-c-info/10', text: 'text-c-info', border: 'border-c-info/20' },
   risk: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' },
   initiative: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20' },
   project: { bg: 'bg-indigo-500/10', text: 'text-indigo-400', border: 'border-indigo-500/20' },
@@ -314,7 +314,7 @@ const FormField: React.FC<{
 );
 
 const inputClass =
-  'w-full px-3 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800/60 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-colors';
+  'w-full px-3 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800/60 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-colors';
 
 /** Shared action button for modals */
 const ModalActions: React.FC<{
@@ -358,7 +358,7 @@ const EmptyState: React.FC<{
     {actionLabel && onAction && (
       <button
         onClick={onAction}
-        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-400 border border-primary-500/25 hover:bg-primary-500/20 transition-colors"
+        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border hover:bg-c-border-subtle transition-colors"
       >
         <Plus size={13} />
         {actionLabel}
@@ -753,7 +753,7 @@ Write a clear, professional comment explaining why this link exists and its sign
             <button
               type="button"
               onClick={() => setAttachmentSortOrder((p) => (p === 'asc' ? 'desc' : 'asc'))}
-              className="inline-flex items-center justify-center w-6 h-6 rounded-md border border-slate-300/50 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:text-primary-500 hover:border-primary-400/40 transition-colors"
+              className="inline-flex items-center justify-center w-6 h-6 rounded-md border border-slate-300/50 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:text-c-text hover:border-c-border-strong transition-colors"
               title={
                 attachmentSortOrder === 'asc'
                   ? t('sharedComponents.attachmentsLinksCanvas.sortOldestFirst')
@@ -789,7 +789,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                 <FileIcon name={a.name} />
                 <button
                   onClick={() => a.url && window.open(a.url, '_blank', 'noopener,noreferrer')}
-                  className="flex-1 min-w-0 text-left text-sm text-slate-700 dark:text-slate-200 truncate hover:text-primary-500 transition-colors"
+                  className="flex-1 min-w-0 text-left text-sm text-slate-700 dark:text-slate-200 truncate hover:text-c-info transition-colors"
                   title={a.name}
                 >
                   {a.name}
@@ -853,7 +853,7 @@ Write a clear, professional comment explaining why this link exists and its sign
             <button
               type="button"
               onClick={() => setLinkedItemsSortOrder((p) => (p === 'asc' ? 'desc' : 'asc'))}
-              className="inline-flex items-center justify-center w-6 h-6 rounded-md border border-slate-300/50 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:text-primary-500 hover:border-primary-400/40 transition-colors"
+              className="inline-flex items-center justify-center w-6 h-6 rounded-md border border-slate-300/50 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:text-c-text hover:border-c-border-strong transition-colors"
               title={linkedItemsSortOrder === 'asc' ? 'A → Z' : 'Z → A'}
             >
               <ArrowDownUp size={11} />
@@ -891,7 +891,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                 <div className="flex-1 min-w-0">
                   <button
                     onClick={() => onNavigateLinkedItem?.(item)}
-                    className="text-sm text-slate-700 dark:text-slate-200 truncate text-left hover:text-primary-500 transition-colors block w-full"
+                    className="text-sm text-slate-700 dark:text-slate-200 truncate text-left hover:text-c-info transition-colors block w-full"
                     title={item.title}
                   >
                     {item.title}
@@ -965,7 +965,7 @@ Write a clear, professional comment explaining why this link exists and its sign
             <button
               type="button"
               onClick={() => setLinkedItemsSortOrder((p) => (p === 'asc' ? 'desc' : 'asc'))}
-              className="inline-flex items-center justify-center w-6 h-6 rounded-md border border-slate-300/50 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:text-primary-500 hover:border-primary-400/40 transition-colors"
+              className="inline-flex items-center justify-center w-6 h-6 rounded-md border border-slate-300/50 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:text-c-text hover:border-c-border-strong transition-colors"
               title={linkedItemsSortOrder === 'asc' ? 'A → Z' : 'Z → A'}
             >
               <ArrowDownUp size={11} />
@@ -1014,7 +1014,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                   {/* Title */}
                   <button
                     onClick={() => onNavigateLinkedItem?.(item)}
-                    className="flex-1 min-w-0 text-left text-sm text-slate-700 dark:text-slate-200 truncate hover:text-primary-500 transition-colors"
+                    className="flex-1 min-w-0 text-left text-sm text-slate-700 dark:text-slate-200 truncate hover:text-c-info transition-colors"
                     title={item.title}
                   >
                     {item.title}
@@ -1132,10 +1132,10 @@ Write a clear, professional comment explaining why this link exists and its sign
                 setAttachmentDiskFiles((prev) => [...prev, ...Array.from(e.target.files || [])])
               }
             />
-            <div className="rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-800/30 p-6 min-h-[120px] transition-all hover:border-primary-400/60 hover:bg-primary-500/5 flex items-center justify-center">
+            <div className="rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-800/30 p-6 min-h-[120px] transition-all hover:border-c-border-strong hover:bg-c-surface-raised flex items-center justify-center">
               <div className="flex items-center gap-4">
-                <div className="h-11 w-11 rounded-xl bg-primary-500/10 flex items-center justify-center">
-                  <Upload size={18} className="text-primary-500" />
+                <div className="h-11 w-11 rounded-xl bg-c-border-subtle flex items-center justify-center">
+                  <Upload size={18} className="text-c-text-secondary" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -1157,7 +1157,7 @@ Write a clear, professional comment explaining why this link exists and its sign
               {connectedProviderIds.length === 0 && (
                 <button
                   onClick={() => window.location.assign(ROUTES.SETTINGS.INTEGRATIONS)}
-                  className="inline-flex items-center gap-1 text-[10px] font-medium text-primary-400 hover:text-primary-300 transition-colors"
+                  className="inline-flex items-center gap-1 text-[10px] font-medium text-c-text-muted hover:text-c-text transition-colors"
                 >
                   <Settings size={11} />
                   {t('sharedComponents.attachmentsLinksCanvas.settingsLink')}
@@ -1174,7 +1174,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     onClick={() => setSelectedCloudProvider(p.id)}
                     className={`rounded-lg border px-3 py-2.5 text-left transition-all ${
                       selected
-                        ? 'border-primary-500/50 bg-primary-500/5 dark:bg-primary-500/10 ring-1 ring-primary-500/20'
+                        ? 'border-c-border-strong bg-c-surface-raised ring-1 ring-c-border'
                         : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
                     }`}
                   >
@@ -1213,7 +1213,7 @@ Write a clear, professional comment explaining why this link exists and its sign
             ) : (
               <button
                 onClick={openCloudPicker}
-                className="w-full rounded-lg border border-primary-500/30 bg-primary-500/5 px-3 py-2.5 text-xs font-medium text-primary-400 hover:bg-primary-500/10 transition-colors"
+                className="w-full rounded-lg border border-c-border bg-c-surface-raised px-3 py-2.5 text-xs font-medium text-c-text hover:bg-c-border-subtle transition-colors"
               >
                 {t('sharedComponents.attachmentsLinksCanvas.chooseFileFromCloud')}
               </button>
@@ -1329,10 +1329,10 @@ Write a clear, professional comment explaining why this link exists and its sign
               onClick={(e) => e.stopPropagation()}
             >
               {/* ── Header ─────────────────────────────── */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700/70 bg-gradient-to-r from-primary-50/40 via-white to-white dark:from-primary-500/5 dark:via-navy-900 dark:to-navy-900">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700/70 bg-gradient-to-r from-c-surface-raised via-white to-white dark:from-c-border-subtle dark:via-navy-900 dark:to-navy-900">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-primary-100 dark:bg-primary-500/15">
-                    <LinkIcon size={16} className="text-primary-600 dark:text-primary-400" />
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-c-info/10">
+                    <LinkIcon size={16} className="text-c-info" />
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold text-secondary-900 dark:text-white">
@@ -1363,7 +1363,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                       onClick={() => setSelectedLinkDirection('outgoing')}
                       className={`relative flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border-2 transition-all text-center ${
                         selectedLinkDirection === 'outgoing'
-                          ? 'border-primary-400 dark:border-primary-500 bg-primary-50 dark:bg-primary-500/10 shadow-sm shadow-primary-500/10'
+                          ? 'border-c-border-strong bg-c-surface-raised shadow-sm shadow-c-border-strong/10'
                           : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600 bg-white dark:bg-navy-800/50'
                       }`}
                     >
@@ -1371,17 +1371,17 @@ Write a clear, professional comment explaining why this link exists and its sign
                         size={16}
                         className={
                           selectedLinkDirection === 'outgoing'
-                            ? 'text-primary-500'
+                            ? 'text-c-text'
                             : 'text-slate-600'
                         }
                       />
                       <span
-                        className={`text-xs font-semibold ${selectedLinkDirection === 'outgoing' ? 'text-primary-700 dark:text-primary-300' : 'text-secondary-700 dark:text-slate-400'}`}
+                        className={`text-xs font-semibold ${selectedLinkDirection === 'outgoing' ? 'text-c-text' : 'text-secondary-700 dark:text-slate-400'}`}
                       >
                         {t('sharedComponents.attachmentsLinksCanvas.outgoingLabel')}
                       </span>
                       <span
-                        className={`text-[10px] leading-tight ${selectedLinkDirection === 'outgoing' ? 'text-primary-500/70 dark:text-primary-400/60' : 'text-secondary-500 dark:text-slate-500'}`}
+                        className={`text-[10px] leading-tight ${selectedLinkDirection === 'outgoing' ? 'text-c-text-muted' : 'text-secondary-500 dark:text-slate-500'}`}
                       >
                         {t('sharedComponents.attachmentsLinksCanvas.outgoingDesc')}
                       </span>
@@ -1466,7 +1466,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     <button
                       onClick={handleAIGenerateLinkComment}
                       disabled={isGeneratingLinkComment}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-gradient-to-r from-primary-500/10 to-crimson-700/10 text-primary-600 dark:text-primary-400 border border-primary-300/40 dark:border-primary-500/30 hover:from-primary-500/20 hover:to-crimson-700/20 hover:border-primary-400/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-c-info/10 text-c-info border border-c-info/40 hover:bg-c-info/20 hover:border-c-info/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       title={t('sharedComponents.attachmentsLinksCanvas.aiGenerateTooltip')}
                     >
                       {isGeneratingLinkComment ? (
@@ -1482,7 +1482,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     onChange={(e) => setInternalLinkComment(e.target.value)}
                     placeholder={t('sharedComponents.attachmentsLinksCanvas.commentPlaceholder')}
                     rows={2}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 focus:border-primary-400 transition-all resize-none"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-all resize-none"
                   />
                 </div>
 
@@ -1492,7 +1492,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     <label className="text-[10px] uppercase tracking-wider font-semibold text-secondary-800 dark:text-slate-400 mb-2 block">
                       {t('sharedComponents.attachmentsLinksCanvas.selectedItemLabel')}
                     </label>
-                    <div className="flex items-center gap-3 rounded-xl border-2 border-primary-300 dark:border-primary-500/40 bg-primary-50/50 dark:bg-primary-500/5 px-3.5 py-2.5">
+                    <div className="flex items-center gap-3 rounded-xl border-2 border-c-border-strong bg-c-surface-raised px-3.5 py-2.5">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase border ${getChip(stagedInternalItem.type).bg} ${getChip(stagedInternalItem.type).text} ${getChip(stagedInternalItem.type).border} min-w-[56px] justify-center`}
                       >
@@ -1543,7 +1543,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                         value={linkSearchQuery}
                         onChange={(e) => setLinkSearchQuery(e.target.value)}
                         placeholder={t('sharedComponents.attachmentsLinksCanvas.searchPlaceholder')}
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 focus:border-primary-400 transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-all"
                         autoFocus
                       />
                     </div>
@@ -1551,7 +1551,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     {/* Search loading */}
                     {isLinkSearching && (
                       <div className="flex items-center justify-center py-6">
-                        <div className="w-5 h-5 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-c-border-subtle border-t-c-info rounded-full animate-spin" />
                       </div>
                     )}
 
@@ -1579,8 +1579,8 @@ Write a clear, professional comment explaining why this link exists and its sign
                               <span className="text-[10px] text-slate-600 whitespace-nowrap">
                                 {item.status || '—'}
                               </span>
-                              <div className="w-6 h-6 rounded-md bg-primary-500/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                <Check size={14} className="text-primary-500" />
+                              <div className="w-6 h-6 rounded-md bg-c-info/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                <Check size={14} className="text-c-info" />
                               </div>
                             </button>
                           );
