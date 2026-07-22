@@ -48,7 +48,7 @@ const GalleryCard = React.memo<{
 
   return (
     <div
-      className="rounded-xl border border-c-border-subtle bg-c-surface-raised overflow-hidden cursor-pointer hover:shadow-lg hover:border-c-accent hover:-translate-y-0.5 transition-all group"
+      className="rounded-xl border border-c-border-subtle bg-c-surface-raised overflow-hidden cursor-pointer hover:shadow-lg hover:border-c-border hover:-translate-y-0.5 transition-all group"
       onClick={() => onClick(record.id)}
     >
       {/* Cover area */}
@@ -82,7 +82,7 @@ const GalleryCard = React.memo<{
       {/* Content */}
       <div className={cardSize === 'small' ? 'p-2' : 'p-3'}>
         <div
-          className={`font-bold text-c-text truncate mb-1.5 group-hover:text-c-accent transition-colors ${
+          className={`font-bold text-c-text truncate mb-1.5 group-hover:text-c-text-secondary transition-colors ${
             cardSize === 'small' ? 'text-[10px]' : 'text-xs'
           }`}
         >
