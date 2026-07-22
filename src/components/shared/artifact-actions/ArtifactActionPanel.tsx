@@ -732,7 +732,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 </div>
               )}
               <div
-                className={`grid gap-3 ${isCompact ? 'grid-cols-1' : 'md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3'}`}
+                className={`grid gap-3 ${isCompact ? 'grid-cols-1' : 'grid-cols-[repeat(auto-fill,minmax(160px,1fr))]'}`}
               >
                 {DOC_TARGETS.map(renderAction)}
               </div>
@@ -744,7 +744,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 </div>
               )}
               <div
-                className={`grid gap-3 ${isCompact ? 'grid-cols-1' : 'md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3'}`}
+                className={`grid gap-3 ${isCompact ? 'grid-cols-1' : 'grid-cols-[repeat(auto-fill,minmax(160px,1fr))]'}`}
               >
                 {APP_TARGETS.map(renderAction)}
               </div>

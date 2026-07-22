@@ -1503,7 +1503,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   .catch(() => Api.get(`/interview/sessions/${id}`).catch(() => null))
               )
             );
-            const validSessions = (sessionsData || []).filter(Boolean);
+            // Dedup po id — powiązania nie mogą renderować dwóch wpisów o tym
+            // samym kluczu (React „same key") ani duplikować sesji źródłowej,
+            // gdy sourceSessionIds/getSession zwrócą powtórzone id.
+            const validSessions = Array.from(
+              new Map(
+                (sessionsData || [])
+                  .filter(Boolean)
+                  .map((session: SourceSession) => [session.id, session])
+              ).values()
+            );
             setSourceSessions(validSessions);
 
             const summaryEntries = await Promise.all(
