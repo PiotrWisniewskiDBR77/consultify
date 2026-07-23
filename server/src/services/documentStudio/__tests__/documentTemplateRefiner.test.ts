@@ -213,4 +213,100 @@ describe('AI Template Architect refiner safety contract (MVP-3)', () => {
     const refined = await refineTemplateWithLlm(template, input, { enable: true });
     expect(refined.sectionBlueprint[0].contentHints).toBeUndefined();
   });
+
+  // ---------------------------------------------------------------------
+  // keyMessage / dataNeeded / suggestedEvidence (additive, 2026-07-23) —
+  // mirrors the contentHints contract above: lenient sanitize (invalid/
+  // missing → undefined, never fails the refinement), title/order
+  // immutability unaffected.
+  // ---------------------------------------------------------------------
+
+  it('accepts valid keyMessage, dataNeeded and suggestedEvidence per-section without touching titles/order', async () => {
+    const { template, input } = deterministicTemplate();
+    const dataNeeded = ['Latest org chart', 'Customer churn by segment, last 4 quarters'];
+    const sections = template.sectionBlueprint.map((s) => ({
+      title: s.title,
+      purpose: s.purpose,
+      keyMessage: 'The current operating model cannot scale past 3x volume.',
+      dataNeeded,
+      suggestedEvidence: 'quote from stakeholder interview',
+    }));
+    generateChatResponseMock.mockResolvedValueOnce({
+      content: JSON.stringify({ sections }),
+    });
+    const refined = await refineTemplateWithLlm(template, input, { enable: true });
+    expect(refined.sectionBlueprint.map((s) => s.title)).toEqual(
+      template.sectionBlueprint.map((s) => s.title)
+    );
+    for (const section of refined.sectionBlueprint) {
+      expect(section.keyMessage).toBe(
+        'The current operating model cannot scale past 3x volume.'
+      );
+      expect(section.dataNeeded).toEqual(dataNeeded);
+      expect(section.suggestedEvidence).toBe('quote from stakeholder interview');
+    }
+  });
+
+  it('caps dataNeeded at 6 items and 100 chars, keyMessage at 200 chars, suggestedEvidence at 150 chars', async () => {
+    const { template, input } = deterministicTemplate();
+    const longItem = 'x'.repeat(200);
+    const rawDataNeeded = ['a', '', 42, 'b', 'c', 'd', 'e', longItem, 'g'];
+    const longKeyMessage = 'k'.repeat(300);
+    const longEvidence = 'e'.repeat(250);
+    const sections = template.sectionBlueprint.map((s) => ({
+      title: s.title,
+      purpose: s.purpose,
+      keyMessage: longKeyMessage,
+      dataNeeded: rawDataNeeded,
+      suggestedEvidence: longEvidence,
+    }));
+    generateChatResponseMock.mockResolvedValueOnce({
+      content: JSON.stringify({ sections }),
+    });
+    const refined = await refineTemplateWithLlm(template, input, { enable: true });
+    const section = refined.sectionBlueprint[0];
+    expect(section.keyMessage).toBe(longKeyMessage.slice(0, 200));
+    expect(section.keyMessage!.length).toBe(200);
+    expect(section.dataNeeded!.length).toBe(6);
+    expect(section.dataNeeded).toEqual(['a', 'b', 'c', 'd', 'e', longItem.slice(0, 100)]);
+    expect(section.dataNeeded!.every((v) => v.length <= 100)).toBe(true);
+    expect(section.suggestedEvidence).toBe(longEvidence.slice(0, 150));
+    expect(section.suggestedEvidence!.length).toBe(150);
+  });
+
+  it('omits keyMessage/dataNeeded/suggestedEvidence (undefined) when the LLM does not supply any — never fails the refinement', async () => {
+    const { template, input } = deterministicTemplate();
+    const sections = template.sectionBlueprint.map((s) => ({
+      title: s.title,
+      purpose: `${s.purpose} (refined)`,
+    }));
+    generateChatResponseMock.mockResolvedValueOnce({
+      content: JSON.stringify({ sections }),
+    });
+    const refined = await refineTemplateWithLlm(template, input, { enable: true });
+    for (const section of refined.sectionBlueprint) {
+      expect(section.keyMessage).toBeUndefined();
+      expect(section.dataNeeded).toBeUndefined();
+      expect(section.suggestedEvidence).toBeUndefined();
+    }
+  });
+
+  it('invalid keyMessage/dataNeeded/suggestedEvidence values are lenient — still refines purpose fine', async () => {
+    const { template, input } = deterministicTemplate();
+    const sections = template.sectionBlueprint.map((s) => ({
+      title: s.title,
+      purpose: s.purpose,
+      keyMessage: 42,
+      dataNeeded: 'not an array',
+      suggestedEvidence: { nested: true },
+    }));
+    generateChatResponseMock.mockResolvedValueOnce({
+      content: JSON.stringify({ sections }),
+    });
+    const refined = await refineTemplateWithLlm(template, input, { enable: true });
+    expect(refined.sectionBlueprint[0].keyMessage).toBeUndefined();
+    expect(refined.sectionBlueprint[0].dataNeeded).toBeUndefined();
+    expect(refined.sectionBlueprint[0].suggestedEvidence).toBeUndefined();
+    expect(refined.sectionBlueprint[0].purpose).toBe(template.sectionBlueprint[0].purpose);
+  });
 });

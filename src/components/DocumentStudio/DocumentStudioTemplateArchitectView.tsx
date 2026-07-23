@@ -746,6 +746,39 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                           ))}
                         </div>
                       ) : null}
+                      {section.keyMessage ? (
+                        <div className="mt-1 text-[11px] text-c-text-secondary">
+                          <span className="font-medium uppercase tracking-wide text-c-text-muted">
+                            {t('documentStudio.templateArchitect.keyMessage', 'Key message')}:
+                          </span>{' '}
+                          <span className="italic">{section.keyMessage}</span>
+                        </div>
+                      ) : null}
+                      {section.dataNeeded && section.dataNeeded.length > 0 ? (
+                        <div className="mt-1 text-[11px] text-c-text-secondary">
+                          <span className="font-medium uppercase tracking-wide text-c-text-muted">
+                            {t('documentStudio.templateArchitect.dataNeeded', 'Data needed')}:
+                          </span>{' '}
+                          <div className="mt-0.5 flex flex-wrap gap-1.5">
+                            {section.dataNeeded.map((item, itemIdx) => (
+                              <span
+                                key={`${selectedTemplate.templateId}-section-${idx}-data-${itemIdx}`}
+                                className="rounded-full border border-c-border-subtle bg-c-surface px-2.5 py-0.5 text-[11px] text-c-text-secondary"
+                              >
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                      {section.suggestedEvidence ? (
+                        <div className="mt-1 text-[11px] text-c-text-secondary">
+                          <span className="font-medium uppercase tracking-wide text-c-text-muted">
+                            {t('documentStudio.templateArchitect.suggestedEvidence', 'Suggested evidence')}:
+                          </span>{' '}
+                          {section.suggestedEvidence}
+                        </div>
+                      ) : null}
                     </li>
                   ))}
                 </ol>
