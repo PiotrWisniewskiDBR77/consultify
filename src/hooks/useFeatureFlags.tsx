@@ -258,6 +258,21 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     category: 'beta',
     allowLocalOverride: true,
   },
+  {
+    id: 'ideaImportGuardRail',
+    name: 'Idea Workspace: Import Guard Rail (P0-2)',
+    description:
+      'docs/standards/idea-workspace/10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md §4.1 — draw.io/' +
+      'BPMN/diagram-package import into the Idea workspace stops replacing the whole graph on ' +
+      'a single click. ON: staged confirm step (shows exactly how many nodes/edges are lost vs ' +
+      'gained + source format), a snapshot taken BEFORE the destructive replace, a post-import ' +
+      'summary, and one-click undo. OFF = today’s behavior (import runs immediately on click, ' +
+      'no confirmation, snapshot only captured after the replace already happened). Visual ' +
+      'change — stays OFF until Piotr accepts the dev-render screenshots (rule #7).',
+    defaultValue: false,
+    category: 'ui',
+    allowLocalOverride: true,
+  },
 ];
 
 // ============================================
