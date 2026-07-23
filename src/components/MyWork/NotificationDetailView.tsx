@@ -61,6 +61,11 @@ import { AppView } from '@/types';
 import { muteNotificationTypeForSession } from '@/utils/notificationMuteSession';
 
 import { Api } from '../../services/api';
+// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
+import { mergeChangeValue } from '@/services/cardAnalysis';
+import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
+import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
 import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
 // ETAP 1.2: menu 2 niesie SAM picker „Sekcje" — „+ Nowa karta" zdjęte.
 import { SectionsManagerMenu } from '../shared/NModeLayout/NModeCardManager';
@@ -2463,6 +2468,183 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     }
   }, [notificationCardContractEnabled, nModeSections]);
 
+  // ── ETAP 3 standardu n-Type: „Analizuj z AI" AKTYWNEJ KARTY ────────────────
+  // Kontrakt właściciela dla Powiadomienia: „treść aktywnej karty względem jej
+  // celu — braki, ryzyka, proponowane poprawki". Cel karty i standard treści
+  // silnik czyta z kanonu (NOTIFICATION_CARDS); tu deklarujemy tylko ZAWARTOŚĆ
+  // aktywnej karty i to, gdzie wolno zapisać.
+  //
+  // ★ ZMIANA ZACHOWANIA PRZYCISKU (świadoma): dotąd „Analizuj z AI" wołało
+  //   `handleAnalyzeWithAI(false)`, które NADPISYWAŁO pięć pól bez pytania —
+  //   dokładnie to, czego kontrakt zabrania („AI NIE nadpisuje treści bez
+  //   potwierdzenia"). Generator zostaje żywy jako auto-uzupełnienie pustego
+  //   arkusza przy wczytaniu (efekt wyżej), przycisk przechodzi na ANALIZĘ.
+  const notificationAnalysisFields = useMemo<CardAnalysisField[]>(() => {
+    switch (activeNSection) {
+      case 'whats-happening':
+        return [
+          {
+            id: 'description',
+            label: isPolish ? 'Co się wydarzyło' : 'What happened',
+            value: descriptionDraft,
+            kind: 'text',
+            writable: true,
+          },
+          {
+            id: 'whyImportant',
+            label: isPolish ? 'Dlaczego to ważne' : 'Why it matters',
+            value: whyImportantDraft,
+            kind: 'text',
+            writable: true,
+          },
+          {
+            id: 'blocked',
+            label: isPolish ? 'Co jest zablokowane' : 'What is blocked',
+            value: blockedDraft,
+            kind: 'text',
+            writable: true,
+          },
+        ];
+
+      case 'expected-action':
+        return [
+          {
+            id: 'expectedAction',
+            label: isPolish ? 'Co należy zrobić' : 'What needs to be done',
+            value: expectedActionDraft,
+            kind: 'text',
+            writable: true,
+          },
+          {
+            id: 'checklist',
+            label: isPolish ? 'Lista kontrolna' : 'Checklist',
+            value: actionChecklist
+              .map((i) => `${i.completed ? '[x]' : '[ ]'} ${String(i.text || '').trim()}`)
+              .join('\n'),
+            kind: 'list',
+            writable: true,
+          },
+        ];
+
+      case 'ai-analysis':
+        // Karta czyta `notification.data` (ryzyko/rekomendacja/pewność) — to są
+        // FAKTY przysłane przez system, nie pole edytowalne. Deklarujemy je jako
+        // kontekst tylko-do-odczytu: AI może wskazać braki i ryzyka, ale panel
+        // nie da „Zastosuj", bo nie ma dokąd zapisać. Uczciwiej niż udawać zapis.
+        return [
+          {
+            id: 'ai-analysis-readonly',
+            label: isPolish ? 'Analiza AI (dane systemowe)' : 'AI analysis (system data)',
+            value: JSON.stringify(notification?.data ?? {}, null, 2),
+            kind: 'text',
+            writable: false,
+          },
+        ];
+
+      default:
+        return [];
+    }
+  }, [
+    activeNSection,
+    isPolish,
+    descriptionDraft,
+    whyImportantDraft,
+    blockedDraft,
+    expectedActionDraft,
+    actionChecklist,
+    notification?.data,
+  ]);
+
+  const notificationWritableFieldIds = useMemo(
+    () => notificationAnalysisFields.filter((f) => f.writable).map((f) => f.id),
+    [notificationAnalysisFields]
+  );
+
+  const buildNotificationAnalysisInput = useCallback(() => {
+    const ctx = [
+      `${isPolish ? 'Typ' : 'Type'}: ${notification?.type ?? '—'}`,
+      `${isPolish ? 'Waga' : 'Severity'}: ${notification?.severity ?? '—'}`,
+      `${isPolish ? 'Kategoria' : 'Category'}: ${notification?.category ?? '—'}`,
+      `${isPolish ? 'Wiadomość' : 'Message'}: ${notification?.message ?? '—'}`,
+      notification?.projectName ? `${isPolish ? 'Projekt' : 'Project'}: ${notification.projectName}` : '',
+      sourceEntity?.title
+        ? `${isPolish ? 'Źródło' : 'Source'}: ${sourceEntity.type ?? ''} — ${sourceEntity.title}`
+        : '',
+      // Pozostałe karty jako kontekst — po to, żeby AI wykryło NIESPÓJNOŚĆ
+      // między kartami, a nie tylko brak w jednej.
+      activeNSection !== 'whats-happening'
+        ? `${isPolish ? 'Karta „Co się dzieje"' : 'Card "What is happening"'}: ${descriptionDraft} | ${whyImportantDraft} | ${blockedDraft}`
+        : '',
+      activeNSection !== 'expected-action'
+        ? `${isPolish ? 'Karta „Oczekiwana akcja"' : 'Card "Expected action"'}: ${expectedActionDraft}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    return {
+      artifactType: 'notification' as const,
+      cardId: activeNSection,
+      artifactTitle: notification?.title ?? '',
+      artifactContext: ctx,
+      fields: notificationAnalysisFields,
+      isPolish,
+    };
+  }, [
+    activeNSection,
+    isPolish,
+    notification,
+    sourceEntity,
+    descriptionDraft,
+    whyImportantDraft,
+    blockedDraft,
+    expectedActionDraft,
+    notificationAnalysisFields,
+  ]);
+
+  const applyNotificationAnalysisChange = useCallback(
+    (change: CardAnalysisChange): boolean => {
+      // Tryb Podglądu = zero zapisu (panel też blokuje przycisk; to drugi zamek).
+      if (readMode) return false;
+
+      switch (change.fieldId) {
+        case 'description':
+          setDescriptionDraft((prev) => mergeChangeValue(change, prev));
+          return true;
+        case 'whyImportant':
+          setWhyImportantDraft((prev) => mergeChangeValue(change, prev));
+          return true;
+        case 'blocked':
+          setBlockedDraft((prev) => mergeChangeValue(change, prev));
+          return true;
+        case 'expectedAction':
+          setExpectedActionDraft((prev) => mergeChangeValue(change, prev));
+          return true;
+        case 'checklist': {
+          // `applyChecklistFromAIText` PODMIENIA całą listę, więc dla trybu
+          // „append" scalamy ręcznie z bieżącą listą — inaczej dopisanie jednej
+          // pozycji skasowałoby resztę (i odhaczenia).
+          const current = actionChecklist
+            .map((i) => `${i.completed ? '[x]' : '[ ]'} ${String(i.text || '').trim()}`)
+            .join('\n');
+          const merged = mergeChangeValue(change, current);
+          applyChecklistFromAIText(merged);
+          return true;
+        }
+        default:
+          // Nieznane pole — NIE zgadujemy celu. Panel pokaże „nie udało się".
+          return false;
+      }
+    },
+    [readMode, actionChecklist, applyChecklistFromAIText]
+  );
+
+  const notificationCardAnalysis = useCardAIAnalysis({
+    activeCardId: activeNSection,
+    buildInput: buildNotificationAnalysisInput,
+    applyChange: applyNotificationAnalysisChange,
+  });
+
   // ── Loading / 404 guards (AFTER all hooks to respect Rules of Hooks) ────
 
   if (loading) {
@@ -3038,11 +3220,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 readMode={readMode}
                 onReadModeChange={setReadMode}
                 aiButton={
+                  // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera panel
+                  // wyników. Nie pisze do pól — zapis wyłącznie przez „Zastosuj".
                   <Menu2AIButton
                     isPolish={isPolish}
-                    busy={isAnalyzingWorksheet}
-                    disabled={isAnalyzingWorksheet}
-                    onClick={() => handleAnalyzeWithAI(false)}
+                    busy={notificationCardAnalysis.loading}
+                    aria-expanded={notificationCardAnalysis.open}
+                    onClick={notificationCardAnalysis.run}
                   />
                 }
               />
@@ -3069,6 +3253,23 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   sections={rightPanelSections}
                 />
               </div>
+
+              {/* ── ETAP 3: panel wyników „Analizuj z AI" ──────────────────
+                  Slide-over przy prawej krawędzi (nie modal, nie przyciemnia).
+                  Renderowany tylko przy `open` — komponent sam się chowa. */}
+              <NCardAIAnalysisPanel
+                open={notificationCardAnalysis.open}
+                onClose={notificationCardAnalysis.close}
+                loading={notificationCardAnalysis.loading}
+                result={notificationCardAnalysis.result}
+                errorCode={notificationCardAnalysis.errorCode}
+                serverErrorCode={notificationCardAnalysis.serverErrorCode}
+                onRerun={notificationCardAnalysis.rerun}
+                onApplyChange={notificationCardAnalysis.applyChange}
+                writableFieldIds={notificationWritableFieldIds}
+                readMode={readMode}
+                isPolish={isPolish}
+              />
             </div>
           )}
 
