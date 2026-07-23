@@ -53,6 +53,12 @@ export interface NModeContentBlockProps {
   onEdit?: () => void;
   /** Gdy podane — przycisk edycji renderowany, ale WYŁĄCZONY, z powodem. */
   editDisabledReason?: string;
+  /**
+   * `framed` (domyślne) — blok rysuje własną ramkę karty.
+   * `plain` — bez ramki i tła; dla powłok, które same rysują kafelek wokół
+   * sekcji (np. NModeCBoard w trybie C), żeby nie było ramki w ramce.
+   */
+  variant?: 'framed' | 'plain';
   children: React.ReactNode;
   className?: string;
 }
@@ -116,6 +122,7 @@ export const NModeContentBlock: React.FC<NModeContentBlockProps> = ({
   aiDisabledReason,
   onEdit,
   editDisabledReason,
+  variant = 'framed',
   children,
   className = '',
 }) => {
@@ -189,14 +196,14 @@ export const NModeContentBlock: React.FC<NModeContentBlockProps> = ({
   const showAI = showControls && (!!onAI || !!aiDisabledReason);
   const showEdit = showControls && (!!onEdit || !!editDisabledReason);
   const hasHeader = !!title || showControls;
+  const framed = variant === 'framed';
+  const frameClass = framed ? 'rounded-2xl border border-c-border-subtle bg-c-surface' : '';
+  const padX = framed ? 'px-4' : 'px-0';
 
   return (
-    <section
-      className={`relative rounded-2xl border border-c-border-subtle bg-c-surface ${className}`}
-      data-block-id={blockId}
-    >
+    <section className={`relative ${frameClass} ${className}`} data-block-id={blockId}>
       {hasHeader && (
-        <div className="flex items-center gap-2 px-4 pt-3">
+        <div className={`flex items-center gap-2 ${padX} ${framed ? 'pt-3' : 'pt-0'}`}>
           {title ? (
             <h3 className="min-w-0 flex-1 truncate text-sm font-semibold text-c-text">{title}</h3>
           ) : (
@@ -249,9 +256,9 @@ export const NModeContentBlock: React.FC<NModeContentBlockProps> = ({
 
       <div
         ref={bodyRef}
-        className={`px-4 pb-4 ${hasHeader ? 'pt-3' : 'pt-4'} ${
-          height === null ? '' : 'overflow-y-auto'
-        }`}
+        className={`${padX} ${framed ? 'pb-4' : 'pb-4'} ${
+          hasHeader ? 'pt-3' : framed ? 'pt-4' : 'pt-0'
+        } ${height === null ? '' : 'overflow-y-auto'}`}
         style={height === null ? undefined : { height }}
       >
         {children}
@@ -269,7 +276,9 @@ export const NModeContentBlock: React.FC<NModeContentBlockProps> = ({
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
           onKeyDown={onHandleKeyDown}
-          className="group absolute inset-x-0 bottom-0 flex h-3 cursor-ns-resize items-center justify-center rounded-b-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+          className={`group absolute inset-x-0 bottom-0 flex h-3 cursor-ns-resize items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ${
+            framed ? 'rounded-b-2xl' : 'rounded-md'
+          }`}
         >
           <span className="h-0.5 w-8 rounded-full bg-c-border transition-colors group-hover:bg-c-border-strong" />
         </div>
