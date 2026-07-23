@@ -50,7 +50,9 @@ function pomiar() {
   wszystkie.forEach((el) => {
     const s = w.getComputedStyle(el);
     ['color', 'backgroundColor', 'borderColor', 'borderTopColor'].forEach((p) => {
-      if (/rgb\(133, 24, 47\)/.test(s[p])) crimson++;
+      // Crimson ma DWA warianty: #85182F w jasnym i #c8324a w ciemnym (--c-accent).
+      // Skan tylko literalnego #85182F dawał fałszywą zieleń w ciemnym motywie.
+      if (/rgb\(133, 24, 47\)|rgb\(200, 50, 74\)/.test(s[p])) crimson++;
     });
     if (el.children.length === 0 && widoczny(el) && parseFloat(s.opacity) > 0.9) {
       const t = (el.textContent || '').trim();
