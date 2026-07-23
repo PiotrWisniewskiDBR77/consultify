@@ -2258,6 +2258,49 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [findings]
   );
 
+  /**
+   * ── JEDNO ŹRÓDŁO LICZNIKÓW (R2/defekt #3, 2026-07-23) ──────────────────────
+   *
+   * Ta sama metryka miała na JEDNYM ekranie trzy różne wartości, bo trzy
+   * miejsca liczyły ją z trzech różnych tablic:
+   *   · kafle „Podsumowania"  → `issuesReadout` / `hiddenSignals` /
+   *     `opportunityReadout` — HEURYSTYKA z narracji (regexp po nagłówkach
+   *     sekcji + bullety), obcinana do 10/8/10 pozycji,
+   *   · plakietki nawigacji    → `v6Issues` / `v6Opportunities` / `v6Signals`
+   *     — STRUKTURA V6 z bazy,
+   *   · widoczność sekcji      → jeszcze inny zestaw (`definiteCounts`).
+   * Efekt: „ISSUES/RISKS 10" obok „Problemy i ryzyka 5".
+   *
+   * Rozwiązanie nie polega na poprawieniu liczb, tylko na usunięciu
+   * możliwości rozjazdu: KAŻDY licznik wychodzi teraz stąd. Struktura V6 jest
+   * źródłem prawdy; heurystyka z narracji wchodzi wyłącznie jako awaryjny
+   * fallback dla wniosków zaimportowanych/zaseedowanych, które nigdy nie
+   * przeszły materializacji V6 (patrz #57 niżej) — i wtedy obowiązuje
+   * jednakowo w kaflach, w nawigacji i w bramce widoczności.
+   */
+  const insightCounts = useMemo(
+    () => ({
+      themes: v6Themes.length,
+      issues: v6Issues.length > 0 ? v6Issues.length : issuesReadout.length,
+      opportunities:
+        v6Opportunities.length > 0 ? v6Opportunities.length : opportunityReadout.length,
+      signals: v6Signals.length > 0 ? v6Signals.length : hiddenSignals.length,
+      evidence: v6EvidenceMap.length,
+      officialAnswers: officialAnswers.length,
+    }),
+    [
+      v6Themes.length,
+      v6Issues.length,
+      v6Opportunities.length,
+      v6Signals.length,
+      v6EvidenceMap.length,
+      issuesReadout.length,
+      opportunityReadout.length,
+      hiddenSignals.length,
+      officialAnswers.length,
+    ]
+  );
+
   const candidateSummary = useMemo(
     () => ({
       total: candidates.length,
@@ -3903,8 +3946,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-muted">
                     {t('interview.insightViewer.officialAnswers')}
                   </div>
+                  {/* Wszystkie trzy kafle czytają `insightCounts` — te same
+                      liczby, co plakietki nawigacji (R2/defekt #3). */}
                   <div className="mt-1 text-2xl font-bold text-c-text">
-                    {officialAnswers.length}
+                    {insightCounts.officialAnswers}
                   </div>
                 </div>
                 <div className="rounded-xl border border-danger-200/40 dark:border-danger-900/30 bg-danger-50/60 dark:bg-danger-500/10 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.danger.400)]">
@@ -3916,7 +3961,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     {t('interview.insightViewer.issuesRisks')}
                   </div>
                   <div className="mt-1 text-2xl font-bold text-c-text">
-                    {issuesReadout.length}
+                    {insightCounts.issues}
                   </div>
                 </div>
                 <div className="rounded-xl border border-emerald-200/40 dark:border-emerald-900/30 bg-emerald-50/60 dark:bg-emerald-500/10 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.emerald.400)]">
@@ -3926,8 +3971,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <div className="text-[11px] uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
                     {t('interview.insightViewer.signalsOpportunities')}
                   </div>
+                  {/* Kafel łączy dwie sekcje nawigacji („Sygnały" +
+                      „Przestrzenie szans"), więc jego wartość musi być SUMĄ
+                      dokładnie tych dwóch liczników — nie trzeciego zestawu. */}
                   <div className="mt-1 text-2xl font-bold text-c-text">
-                    {hiddenSignals.length + opportunityReadout.length}
+                    {insightCounts.signals + insightCounts.opportunities}
                   </div>
                 </div>
               </div>
@@ -7701,11 +7749,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       // ich liczniki żyją na sekcjach prawego panelu.
       'material-quality': truthReviewSummary.publishBlockers.length || undefined,
       'source-pack': sourceSessions.length || undefined,
-      themes: v6Themes.length || undefined,
-      'issues-risks': v6Issues.length || undefined,
-      opportunities: v6Opportunities.length || undefined,
-      signals: v6Signals.length || undefined,
-      'evidence-map': v6EvidenceMap.length || undefined,
+      // R2/defekt #3: te same liczniki co kafle „Podsumowania" — `insightCounts`.
+      themes: insightCounts.themes || undefined,
+      'issues-risks': insightCounts.issues || undefined,
+      opportunities: insightCounts.opportunities || undefined,
+      signals: insightCounts.signals || undefined,
+      'evidence-map': insightCounts.evidence || undefined,
       'hypothesis-board': candidates.length || undefined,
     };
 
@@ -7717,11 +7766,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     // the one or two flagged alwaysShow.
     const definiteCounts: Record<string, number> = {
       'candidate-triage': candidates.length,
-      themes: v6Themes.length,
-      'issues-risks': v6Issues.length,
-      opportunities: v6Opportunities.length,
-      signals: v6Signals.length,
-      'evidence-map': v6EvidenceMap.length,
+      // R2/defekt #3: bramka widoczności czyta ten sam licznik, co plakietka —
+      // inaczej sekcja mogła zniknąć z nawigacji mimo niezerowego kafla.
+      themes: insightCounts.themes,
+      'issues-risks': insightCounts.issues,
+      opportunities: insightCounts.opportunities,
+      signals: insightCounts.signals,
+      'evidence-map': insightCounts.evidence,
       // derived analytical sections — hidden until their data exists
       'consensus-divergence':
         consensusTopics.length + localOnlyTopics.length + contradictedTopics.length,
@@ -7857,6 +7908,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     getPriorityDotClass,
     openSourceSessionInInterviewHub,
     activityEntries,
+    insightCounts,
     v6Themes,
     v6Issues,
     v6Opportunities,
