@@ -20,6 +20,9 @@ function section(
     level?: 1 | 2 | 3;
     required?: boolean;
     expectedLengthHint?: 'short' | 'medium' | 'long';
+    keyMessage?: string;
+    dataNeeded?: string[];
+    suggestedEvidence?: string;
   }
 ) {
   return {
@@ -31,6 +34,10 @@ function section(
     requiredData: [],
     optionalData: [],
     contentHints,
+    // W5 genword-briefing — richer per-section briefing (read-only display).
+    keyMessage: opts?.keyMessage,
+    dataNeeded: opts?.dataNeeded,
+    suggestedEvidence: opts?.suggestedEvidence,
   };
 }
 
@@ -53,7 +60,14 @@ const DRAFT_TEMPLATE = {
       'Streszczenie zarządcze',
       'Zwięzłe podsumowanie statusu i kluczowej decyzji.',
       ['Zacznij od jednego zdania o ogólnym statusie programu', 'Wyróżnij decyzję wymaganą od komitetu'],
-      { level: 1, required: true, expectedLengthHint: 'long' }
+      {
+        level: 1,
+        required: true,
+        expectedLengthHint: 'long',
+        keyMessage: 'Program dostarcza wartość, ale jedna decyzja budżetowa jest pilna',
+        dataNeeded: ['status kluczowych inicjatyw', 'prognoza budżetu do końca kwartału'],
+        suggestedEvidence: 'tabela statusu inicjatyw + wykres wydatków vs. plan',
+      }
     ),
     section(
       'Status realizacji',
