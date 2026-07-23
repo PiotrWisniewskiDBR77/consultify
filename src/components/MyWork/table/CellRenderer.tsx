@@ -37,15 +37,29 @@ interface CellProps {
   locked?: boolean;
   allNodes?: { id: string; label?: string }[];
   onAIRefresh?: () => void;
+  /** Nazwa rekordu (np. label pomysłu) — do budowy nazw dostępności (aria-label) komórek. */
+  rowLabel?: string;
+}
+
+/** Buduje nazwę dostępności "kolumna — wiersz" dla kontrolek edycji komórki (a11y). */
+function useCellA11yName(column: ColumnDef, rowLabel?: string): string {
+  const { t } = useTranslation();
+  return rowLabel
+    ? t('ideas.table.a11y.editCellFor', '{{column}} — {{row}}', {
+        column: column.header,
+        row: rowLabel,
+      })
+    : column.header;
 }
 
 // ── Text Cell ────────────────────────────────────────────────────────────────
 
-const TextCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
+const TextCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
   <input
     value={String(value ?? '')}
     onChange={(e) => onChange(e.target.value)}
     disabled={locked}
+    aria-label={useCellA11yName(column, rowLabel)}
     className="w-full bg-transparent border-0 outline-none text-xs text-c-text px-1 py-0.5 focus:ring-2 focus:ring-blue-500/30 rounded"
     onClick={(e) => e.stopPropagation()}
   />
@@ -53,12 +67,13 @@ const TextCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
 
 // ── Number Cell ──────────────────────────────────────────────────────────────
 
-const NumberCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
+const NumberCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
   <input
     type="number"
     value={value ?? ''}
     onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
     disabled={locked}
+    aria-label={useCellA11yName(column, rowLabel)}
     className="w-full bg-transparent border-0 outline-none text-xs text-c-text px-1 py-0.5 focus:ring-2 focus:ring-blue-500/30 rounded text-right tabular-nums"
     onClick={(e) => e.stopPropagation()}
   />
@@ -206,7 +221,7 @@ const MultiSelectCell: React.FC<CellProps> = ({ column, value, onChange, locked 
 
 // ── Date Cell ────────────────────────────────────────────────────────────────
 
-const DateCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
+const DateCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
     <Calendar size={11} className="text-c-text-secondary flex-shrink-0" />
     <input
@@ -214,6 +229,7 @@ const DateCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
       value={value ? String(value).slice(0, 10) : ''}
       onChange={(e) => onChange(e.target.value || null)}
       disabled={locked}
+      aria-label={useCellA11yName(column, rowLabel)}
       className="bg-transparent border-0 outline-none text-xs text-c-text focus:ring-2 focus:ring-blue-500/30 rounded"
     />
   </div>
@@ -221,23 +237,26 @@ const DateCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
 
 // ── Checkbox Cell ────────────────────────────────────────────────────────────
 
-const CheckboxCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
+const CheckboxCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
   <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
     <button
       onClick={() => !locked && onChange(!value)}
       disabled={locked}
+      aria-label={useCellA11yName(column, rowLabel)}
+      aria-pressed={!!value}
       className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
         value ? 'bg-c-text border-c-text text-c-bg' : 'border-c-border-subtle hover:border-c-border'
       }`}
     >
-      {value && <Check size={12} />}
+      {value && <Check size={12} aria-hidden="true" />}
     </button>
   </div>
 );
 
 // ── Rating Cell ──────────────────────────────────────────────────────────────
 
-const RatingCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
+const RatingCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => {
+  const { t } = useTranslation();
   const rating = Number(value) || 0;
   return (
     <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
@@ -246,9 +265,16 @@ const RatingCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
           key={star}
           onClick={() => !locked && onChange(rating === star ? 0 : star)}
           disabled={locked}
+          aria-label={t('ideas.table.a11y.ratingStarFor', '{{column}}: {{star}} of 5 — {{row}}', {
+            column: column.header,
+            star,
+            row: rowLabel || column.header,
+          })}
+          aria-pressed={star <= rating}
           className="p-0 transition-colors"
         >
           <Star
+            aria-hidden="true"
             size={14}
             className={star <= rating ? 'text-amber-400 fill-amber-400' : 'text-c-text-secondary'}
           />
@@ -260,7 +286,7 @@ const RatingCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
 
 // ── Person Cell ──────────────────────────────────────────────────────────────
 
-const PersonCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
+const PersonCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
   <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
     <div className="w-5 h-5 rounded-full bg-c-text-secondary flex items-center justify-center text-[8px] font-bold text-c-surface flex-shrink-0">
       {String(value || '?')
@@ -272,6 +298,7 @@ const PersonCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
       onChange={(e) => onChange(e.target.value)}
       disabled={locked}
       placeholder="—"
+      aria-label={useCellA11yName(column, rowLabel)}
       className="flex-1 bg-transparent border-0 outline-none text-xs text-c-text focus:ring-2 focus:ring-blue-500/30 rounded"
     />
   </div>
@@ -279,13 +306,14 @@ const PersonCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
 
 // ── URL Cell ─────────────────────────────────────────────────────────────────
 
-const UrlCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
+const UrlCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
     <input
       value={String(value ?? '')}
       onChange={(e) => onChange(e.target.value)}
       disabled={locked}
       placeholder="https://..."
+      aria-label={useCellA11yName(column, rowLabel)}
       className="flex-1 bg-transparent border-0 outline-none text-xs text-blue-600 dark:text-blue-400 underline focus:ring-2 focus:ring-blue-500/30 rounded"
     />
     {value && (
@@ -303,7 +331,7 @@ const UrlCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
 
 // ── Progress Cell ────────────────────────────────────────────────────────────
 
-const ProgressCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
+const ProgressCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => {
   const pct = Math.max(0, Math.min(100, Number(value) || 0));
   return (
     <div className="flex items-center gap-2 w-full" onClick={(e) => e.stopPropagation()}>
@@ -320,6 +348,7 @@ const ProgressCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
         value={pct}
         onChange={(e) => onChange(Math.max(0, Math.min(100, Number(e.target.value) || 0)))}
         disabled={locked}
+        aria-label={useCellA11yName(column, rowLabel)}
         className="w-10 bg-transparent border-0 outline-none text-[10px] text-c-text-secondary text-right tabular-nums"
       />
       <span className="text-[9px] text-c-text-secondary">%</span>
@@ -355,7 +384,7 @@ const AIGeneratedCell: React.FC<CellProps> = ({ value, onAIRefresh, locked }) =>
           className="p-0.5 rounded text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           title={t('ideas.table.cellRenderer.regenerate', 'Regenerate')}
         >
-          <RefreshCw size={10} />
+          <RefreshCw size={10} aria-hidden="true" />
         </button>
       )}
     </div>
@@ -378,20 +407,26 @@ const WrappedRelationCell: React.FC<CellProps> = ({ value, onChange, locked, all
 const WrappedRollupCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
   <RollupCell value={value} onChange={onChange} locked={locked} />
 );
-const WrappedEmojiCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
-  <EmojiCell value={value} onChange={onChange} locked={locked} />
+const WrappedEmojiCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
+  <EmojiCell value={value} onChange={onChange} locked={locked} column={column} rowLabel={rowLabel} />
 );
-const WrappedColorCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
-  <ColorCell value={value} onChange={onChange} locked={locked} />
+const WrappedColorCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
+  <ColorCell value={value} onChange={onChange} locked={locked} column={column} rowLabel={rowLabel} />
 );
-const WrappedCurrencyCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
-  <CurrencyCell value={value} onChange={onChange} locked={locked} />
+const WrappedCurrencyCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
+  <CurrencyCell
+    value={value}
+    onChange={onChange}
+    locked={locked}
+    column={column}
+    rowLabel={rowLabel}
+  />
 );
-const WrappedPhoneCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
-  <PhoneCell value={value} onChange={onChange} locked={locked} />
+const WrappedPhoneCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
+  <PhoneCell value={value} onChange={onChange} locked={locked} column={column} rowLabel={rowLabel} />
 );
-const WrappedEmailCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
-  <EmailCell value={value} onChange={onChange} locked={locked} />
+const WrappedEmailCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
+  <EmailCell value={value} onChange={onChange} locked={locked} column={column} rowLabel={rowLabel} />
 );
 
 // ── Status Cell (semantic status with fixed states) ─────────────────────────

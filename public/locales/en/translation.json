@@ -25859,6 +25859,22 @@
         "aiPending": "AI pending...",
         "regenerate": "Regenerate"
       },
+      "a11y": {
+        "selectAllRows": "Select all rows",
+        "selectRow": "Select row: {{name}}",
+        "untitledRow": "Row {{n}}",
+        "untitledRecord": "Untitled",
+        "editCellFor": "{{column}} — {{row}}",
+        "ratingStarFor": "{{column}}: {{star}} of 5 — {{row}}",
+        "filterAdvanced": "Advanced filters",
+        "clearFilterInput": "Clear filter input",
+        "closeInterfaceDesigner": "Close Interface Designer",
+        "colorSwatchFor": "{{column}}: color {{hex}} — {{row}}",
+        "colorOption": "Set color {{hex}}",
+        "emojiPickerFor": "{{column}}: choose emoji — {{row}}",
+        "emojiOption": "Choose emoji {{emoji}}",
+        "renameColumnFor": "New column name: {{column}}"
+      },
       "distributionBuilder": {
         "webhookUrl": "Webhook URL"
       },
