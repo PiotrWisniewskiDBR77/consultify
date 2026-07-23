@@ -7083,7 +7083,6 @@
         "ownerReassigned": "Właściciel przepisany",
         "reassignFailed": "Nie udało się przepisać właściciela",
         "proposalApplied": "Przepisanie zastosowane",
-        "aiProposals": "Propozycje rebalansowania AI",
         "applyAll": "Zastosuj wszystkie",
         "selectPerson": "— Wybierz osobę —",
         "accept": "Akceptuj",
@@ -7098,10 +7097,14 @@
         "reassign": "Przepisz",
         "allApplied": "Zastosowano wszystkie przepisania ({{count}})",
         "partialApplied": "Zastosowano {{success}}, nie powiodło się {{failed}}",
-        "aiNoCapacity": "Brak dostępnego członka zespołu — rozważ rekrutację lub przesunięcie w czasie",
         "noActionable": "Brak propozycji do realizacji — najpierw wybierz osobę dla każdego wiersza",
-        "aiBalanced": "Obciążenie jest zrównoważone — żadne zmiany nie są potrzebne",
-        "selectOwner": "Wybierz nowego właściciela..."
+        "selectOwner": "Wybierz nowego właściciela...",
+        "rebalanceProposals": "Propozycje rozłożenia obciążenia",
+        "balanceAction": "Zrównoważ obciążenie",
+        "balanceSubtitle": "Policzone z bieżących przypisań i dostępności — przepisz właścicieli, aby zdjąć przeciążenie.",
+        "applying": "Stosuję…",
+        "noCapacity": "Brak dostępnego członka zespołu — rozważ rekrutację lub przesunięcie w czasie",
+        "balanced": "Obciążenie jest zrównoważone — żadne zmiany nie są potrzebne"
       },
       "feasibility": {
         "title": "Wykonalność",
@@ -7115,13 +7118,17 @@
         "noData": "Brak danych wykonalności.",
         "updated": "Inicjatywa zaktualizowana",
         "updateFailed": "Nie udało się zaktualizować",
-        "aiProposals": "Propozycje optymalizacji AI",
         "total": "Inicjatywy",
         "highRisk": "Wysokie ryzyko (<50%)",
         "criticalDims": "Z wymiarem krytycznym",
         "filterBy": "Filtrowane wg:",
         "allGood": "Wszystkie inicjatywy mają zdrową wykonalność",
-        "priorityRanking": "Ranking priorytetów AI — zalecana kolejność realizacji"
+        "priorityRanking": "Ranking priorytetów — zalecana kolejność realizacji",
+        "gapFixProposals": "Sugerowane poprawki słabych wymiarów",
+        "gapFixAction": "Popraw słabe punkty",
+        "gapFixSubtitle": "Reguły sprawdzające wymiary wykonalności — zastosuj celowaną poprawkę do każdego wykrycia.",
+        "rankingAction": "Ranking",
+        "scoreExplainer": "Rozbicie wyniku"
       },
       "logic": {
         "title": "Logika",
@@ -7132,12 +7139,12 @@
         "depAccepted": "Zależność zapisana: {{from}} → {{to}}",
         "depAcceptFailed": "Nie udało się zapisać zależności",
         "noCycles": "Nie wykryto cykli",
-        "noNewDeps": "Nie odkryto dodatkowych zależności",
+        "noNewDeps": "AI nie znalazła dodatkowych zależności",
         "cyclesFound": "Wykryto {{count}} cykl(i)",
         "criticalPathTitle": "Ścieżka krytyczna",
         "blockersTitle": "Blokady",
         "blockerBadge": "{{count}} zależnych",
-        "sequencerTitle": "Rekomendowana przez AI sekwencja realizacji",
+        "sequencerTitle": "Rekomendowana sekwencja realizacji",
         "noInitiatives": "Brak inicjatyw do uszeregowania",
         "totalDeps": "Wszystkie zależności",
         "timingConflicts": "Konflikty terminów",
@@ -7158,7 +7165,19 @@
         },
         "discoveredDeps": "AI wykryła potencjalne zależności",
         "noCriticalPath": "Nie znaleziono łańcucha zależności — najpierw dodaj zależności",
-        "emptyHint": "Kliknij „Wykryj zależności z AI”, aby AI przeanalizowała Twoje inicjatywy i zasugerowała powiązania."
+        "emptyHint": "Kliknij „Wykryj zależności przez AI”, aby AI przeanalizowała nazwy i opisy Twoich inicjatyw i zaproponowała powiązania.",
+        "aiDiscovering": "Pytam AI…",
+        "aiDiscoverFailed": "Wykrywanie zależności nie powiodło się — {{reason}}.",
+        "aiErrNoProvider": "nie skonfigurowano dostawcy AI",
+        "aiErrBudget": "wyczerpany budżet AI",
+        "aiErrAccessBlocked": "dostęp do AI jest zablokowany dla tej przestrzeni",
+        "aiErrEmpty": "AI zwróciło pustą odpowiedź",
+        "aiErrCallFailed": "wywołanie AI się nie powiodło",
+        "aiErrBadJson": "nie udało się odczytać odpowiedzi AI",
+        "aiErrUnavailable": "AI jest chwilowo niedostępne",
+        "detectCyclesAction": "Wykryj cykle",
+        "criticalPathAction": "Ścieżka krytyczna",
+        "sequencerAction": "Sekwencer"
       },
       "timeline": {
         "title": "Harmonogram",
@@ -7171,7 +7190,14 @@
         "noData": "Brak danych harmonogramu.",
         "invalidDates": "Początek musi być przed końcem",
         "datesUpdated": "Daty zaktualizowane",
-        "updateFailed": "Niepowodzenie"
+        "updateFailed": "Niepowodzenie",
+        "autoScheduleAction": "Zaproponuj terminy",
+        "autoSchedulePanelTitle": "Zaproponowane terminy",
+        "autoScheduleSubtitle": "Terminy policzone z priorytetu, zależności i dostępności właściciela — sprawdź przed zastosowaniem.",
+        "conflictsAction": "Konflikty",
+        "optimizerAction": "Optymalizator",
+        "optimizerPanelTitle": "Optymalizacja harmonogramu",
+        "delayImpactAction": "Wpływ opóźnień"
       },
       "completeness": {
         "title": "Kompletność",
@@ -7183,13 +7209,23 @@
         "missingTotal": "Brak łącznie",
         "actions": "Akcje",
         "notGateReady": "{{count}} inicjatyw niegotowych do bramki",
-        "noData": "Brak danych kompletności."
+        "noData": "Brak danych kompletności.",
+        "autoFillAction": "Uzupełnij brakujące pola",
+        "autoFillPanelTitle": "Wartości domyślne dla pustych pól",
+        "autoFillSubtitle": "Wykryte puste pola z wartościami domyślnymi — sprawdź każdą przed zastosowaniem.",
+        "bulkFixAction": "Poprawki zbiorcze",
+        "triageAction": "Triage priorytetów",
+        "triagePanelTitle": "Triage priorytetów — na czym skupić wysiłek",
+        "reasonNoOwner": "Brak właściciela — krytyczne dla gotowości do bramki. Wybierz właściwą osobę przed zastosowaniem.",
+        "reasonNoDates": "Brak harmonogramu — domyślne okno 90 dni, dostosuj do realnego planu.",
+        "reasonNoBudget": "Brak budżetu — wartość zastępcza, zastąp realnym szacunkiem."
       },
       "issues": "Problemy",
       "openInitiative": "Otwórz inicjatywę",
-      "fixApplied": "Sugestia AI zastosowana",
+      "fixApplied": "Poprawka zastosowana",
       "fixFailed": "Nie udało się zastosować poprawki",
-      "previewInitiative": "Podgląd"
+      "previewInitiative": "Podgląd",
+      "applyFix": "Zastosuj poprawkę"
     },
     "templates": {
       "quick_win": {

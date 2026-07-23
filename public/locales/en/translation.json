@@ -7921,7 +7921,6 @@
         "ownerReassigned": "Owner reassigned",
         "reassignFailed": "Failed to reassign owner",
         "proposalApplied": "Reassignment applied",
-        "aiProposals": "AI rebalancing proposals",
         "applyAll": "Apply all",
         "selectPerson": "— Select person —",
         "accept": "Accept",
@@ -7936,10 +7935,14 @@
         "reassign": "Reassign",
         "allApplied": "All {{count}} reassignments applied",
         "partialApplied": "{{success}} applied, {{failed}} failed",
-        "aiNoCapacity": "No available team member — consider hiring or postponing",
         "noActionable": "No actionable proposals — select a person for each row first",
-        "aiBalanced": "Workload is balanced — no changes needed",
-        "selectOwner": "Select new owner..."
+        "selectOwner": "Select new owner...",
+        "rebalanceProposals": "Workload rebalancing proposals",
+        "balanceAction": "Balance workload",
+        "balanceSubtitle": "Computed from current assignments and capacity — reassign ownership to remove overload.",
+        "applying": "Applying…",
+        "noCapacity": "No available team member — consider hiring or postponing",
+        "balanced": "Workload is balanced — no changes needed"
       },
       "feasibility": {
         "title": "Feasibility",
@@ -7953,13 +7956,17 @@
         "noData": "No feasibility data available.",
         "updated": "Initiative updated",
         "updateFailed": "Failed to update",
-        "aiProposals": "AI optimization proposals",
         "total": "Initiatives",
         "highRisk": "High risk (<50%)",
         "criticalDims": "With critical dimension",
         "filterBy": "Filtered by:",
         "allGood": "All initiatives have healthy feasibility",
-        "priorityRanking": "AI Priority Ranking — recommended execution order"
+        "priorityRanking": "Priority ranking — recommended execution order",
+        "gapFixProposals": "Suggested fixes for weak dimensions",
+        "gapFixAction": "Fix weak spots",
+        "gapFixSubtitle": "Rule-based checks over the feasibility dimensions — apply a targeted fix per finding.",
+        "rankingAction": "Ranking",
+        "scoreExplainer": "Score breakdown"
       },
       "logic": {
         "title": "Logic",
@@ -7970,12 +7977,12 @@
         "depAccepted": "Dependency saved: {{from}} → {{to}}",
         "depAcceptFailed": "Failed to save dependency",
         "noCycles": "No cycles detected",
-        "noNewDeps": "No additional dependencies discovered",
+        "noNewDeps": "AI found no additional dependencies",
         "cyclesFound": "{{count}} cycle(s) detected",
         "criticalPathTitle": "Critical Path",
         "blockersTitle": "Blockers",
         "blockerBadge": "{{count}} dependent(s)",
-        "sequencerTitle": "AI Recommended Execution Sequence",
+        "sequencerTitle": "Recommended execution sequence",
         "noInitiatives": "No initiatives to sequence",
         "totalDeps": "Total dependencies",
         "timingConflicts": "Timing conflicts",
@@ -7996,7 +8003,19 @@
         },
         "discoveredDeps": "AI discovered potential dependencies",
         "noCriticalPath": "No dependency chain found — add dependencies first",
-        "emptyHint": "Click \"AI Discover Dependencies\" to let AI analyze your initiatives and suggest connections."
+        "emptyHint": "Click \"AI Discover Dependencies\" to let AI analyze the names and descriptions of your initiatives and suggest connections.",
+        "aiDiscovering": "Asking AI…",
+        "aiDiscoverFailed": "Dependency discovery failed — {{reason}}.",
+        "aiErrNoProvider": "no AI provider is configured",
+        "aiErrBudget": "the AI budget is exhausted",
+        "aiErrAccessBlocked": "AI access is blocked for this workspace",
+        "aiErrEmpty": "AI returned an empty response",
+        "aiErrCallFailed": "the AI call failed",
+        "aiErrBadJson": "the AI response could not be parsed",
+        "aiErrUnavailable": "AI is temporarily unavailable",
+        "detectCyclesAction": "Detect Cycles",
+        "criticalPathAction": "Critical Path",
+        "sequencerAction": "Sequencer"
       },
       "timeline": {
         "title": "Timeline",
@@ -8009,7 +8028,14 @@
         "noData": "No timeline data available.",
         "invalidDates": "Start must be before end",
         "datesUpdated": "Dates updated",
-        "updateFailed": "Failed"
+        "updateFailed": "Failed",
+        "autoScheduleAction": "Propose dates",
+        "autoSchedulePanelTitle": "Proposed dates",
+        "autoScheduleSubtitle": "Dates computed from priority, dependencies and owner availability — review before applying.",
+        "conflictsAction": "Conflicts",
+        "optimizerAction": "Optimizer",
+        "optimizerPanelTitle": "Timeline optimization",
+        "delayImpactAction": "Delay Impact"
       },
       "completeness": {
         "title": "Completeness",
@@ -8021,13 +8047,23 @@
         "missingTotal": "Missing total",
         "actions": "Actions",
         "notGateReady": "{{count}} initiative(s) not gate-ready",
-        "noData": "No completeness data available."
+        "noData": "No completeness data available.",
+        "autoFillAction": "Fill missing fields",
+        "autoFillPanelTitle": "Missing field defaults",
+        "autoFillSubtitle": "Detected empty fields with default values — review each one before applying.",
+        "bulkFixAction": "Bulk Fix",
+        "triageAction": "Priority Triage",
+        "triagePanelTitle": "Priority Triage — where to focus effort",
+        "reasonNoOwner": "No owner assigned — critical for gate readiness. Pick the right person before applying.",
+        "reasonNoDates": "Missing timeline — default 90-day window, adjust to the real plan.",
+        "reasonNoBudget": "No budget defined — placeholder value, replace with a real estimate."
       },
       "issues": "Issues",
       "openInitiative": "Open initiative",
-      "fixApplied": "AI suggestion applied",
+      "fixApplied": "Fix applied",
       "fixFailed": "Failed to apply fix",
-      "previewInitiative": "Preview"
+      "previewInitiative": "Preview",
+      "applyFix": "Apply fix"
     },
     "templates": {
       "quick_win": {
