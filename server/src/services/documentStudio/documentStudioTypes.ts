@@ -1463,6 +1463,20 @@ export interface TemplateSectionBlueprint {
   optionalData?: string[];
   formattingStyle?: string;
   approvalRequired?: boolean;
+  /**
+   * Optional 2-4 short thematic guidance phrases for this section (e.g.
+   * "Frame the current-state pain points", "Contrast before/after
+   * operating model") — content STRUCTURE guidance for whoever fills the
+   * template with real data later, never fabricated facts/numbers (this
+   * is a reusable template, not a specific document). Mirrors the deck
+   * template `contentHints` field
+   * (`presentationTemplateDraftService.ts`). `undefined` means "no
+   * guidance yet" and is safe to omit anywhere this type is used; the
+   * deterministic draft never sets it, `refineTemplateWithLlm` may add
+   * it, and the manual structure editor (`reviseTemplateStructure`) may
+   * persist author-typed guidance.
+   */
+  contentHints?: string[];
 }
 
 /**
