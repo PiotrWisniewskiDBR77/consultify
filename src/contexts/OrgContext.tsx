@@ -89,7 +89,11 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
       }
 
       const data = await response.json();
-      const orgs: Organization[] = data.organizations || data || [];
+      // Kształt odpowiedzi bywa inny niż oczekiwany (starsze wersje API, harness
+      // dev-render, proxy zwracające kopertę) — wtedy traktujemy to jak brak
+      // organizacji zamiast wysypywać kontekst na `orgs.find is not a function`.
+      const surowe = data?.organizations ?? data ?? [];
+      const orgs: Organization[] = Array.isArray(surowe) ? surowe : [];
       setAvailableOrgs(orgs);
 
       const savedOrgId = localStorage.getItem(STORAGE_KEY);
