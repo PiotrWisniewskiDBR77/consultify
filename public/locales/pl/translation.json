@@ -2928,7 +2928,8 @@
       "user": "Użytkownik",
       "label5": "Historia / AI",
       "emptyLabel3": "Brak historii",
-      "ariaLabel": "Szczegóły decyzji"
+      "ariaLabel": "Szczegóły decyzji",
+      "actionsHiddenInReadMode": "Akcje są ukryte w trybie Podgląd"
     },
     "taskDetail": {
       "label": "Powiadomienie tylko",
@@ -24322,7 +24323,8 @@
         "analyzeConsequencesTitle": "Uruchom analizę konsekwencji przez AI",
         "analyzeConsequences": "Analizuj konsekwencje",
         "analyzeOptions": "Analizuj opcje",
-        "analyzeOptionsTitle": "Omów i przeanalizuj te opcje z Teresą"
+        "analyzeOptionsTitle": "Omów i przeanalizuj te opcje z Teresą",
+        "approveDecision": "Zatwierdź decyzję"
       },
       "scope": {
         "title": "Zakres decyzji",

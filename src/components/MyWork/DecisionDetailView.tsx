@@ -4876,10 +4876,40 @@ Use userId only from this list:
   const rpKeyClass = 'text-xs text-c-text-muted shrink-0';
   const rpPill =
     'inline-flex items-center h-5 px-2 rounded-md text-xs bg-c-surface-raised text-c-text';
-  const rpBtn =
-    'inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50';
+  // `rpBtn` (przycisk panelu h-8, szerokość treści) usunięty 2026-07-23 —
+  // jedynym konsumentem był „Deleguj" w sekcji Akcje, a n-Type §6.3 wymaga tam
+  // przycisków PEŁNEJ szerokości (`rpActionNeutral` niżej). Helper osierocił się
+  // w tym samym commicie, więc znika razem z nim, a nie „kiedyś przy sprzątaniu".
   const rpChipBtn =
     'inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle truncate hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]';
+
+  // ── Akcje decyzji w prawym panelu (n-Type §6.3 / 01_DECYZJA §2.2) ─────────
+  // Decyzja ma ZŁOŻONY zestaw przejść workflow, więc reguła „jedna oczywista
+  // akcja w nagłówku" jej nie dotyczy — nagłówek traci `primaryAction`, a
+  // WSZYSTKIE działania (zatwierdzenie etapu, cofnięcie do draftu, zatwierdzenie
+  // decyzji, odrzucenie, prośba o informacje, delegowanie) żyją TU.
+  // Układ: pionowo, przyciski pełnej szerokości, JEDNA akcja wyróżniona.
+  // Crimson (`primary-*`) świadomie nieużywany: zielony = sukces, `danger` =
+  // odrzucenie (semantyka krytyczna), reszta neutralna `c-*`.
+  const rpActionBtn =
+    'w-full inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg text-xs font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50 disabled:cursor-not-allowed';
+  /* karty-n-ok — po zdjęciu `primaryAction` z nagłówka to JEDYNY solid CTA karty
+     (SPEC-N §2.3 dopuszcza dokładnie jeden; tu jego miejscem jest panel). */
+  const rpActionPrimary = `${rpActionBtn} bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500`;
+  const rpActionDestructive = `${rpActionBtn} bg-transparent border-danger-400/60 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10`;
+  const rpActionNeutral = `${rpActionBtn} bg-c-surface-raised border-c-border-subtle text-c-text hover:bg-c-surface`;
+
+  // Przejścia etapów pokazujemy tylko dla zapisanej decyzji (draft nie ma
+  // workflow po stronie serwera). `workflowActions` liczy je z `workflowStatus`.
+  const panelWorkflowActions = decisionId ? workflowActions : [];
+  const canApproveDecision = Boolean(decisionId && isPending);
+  // Dokładnie JEDNO wyróżnienie: zatwierdzenie decyzji ma pierwszeństwo przed
+  // przejściem etapu „do przodu"; gdy decyzja nie czeka na werdykt — wyróżniamy
+  // przejście do przodu (jedyne, które posuwa sprawę).
+  const highlightedWorkflowActionId = canApproveDecision
+    ? null
+    : (panelWorkflowActions.find((a) => a.tone === 'success' || a.tone === 'primary')?.id ?? null);
+
   const deciderUser = users.find((u) => u.id === deciderId);
   const deciderDisplayName =
     deciderName ||
@@ -4901,15 +4931,86 @@ Use userId only from this list:
       // ("Saved"/autosave przez `draftSavedLabel`). Zgodnie z zasada
       // rozstrzygajaca zostaje miejsce, ktore niesie wiecej informacji i jest
       // czescia powloki — naglowek; z panelu znika DUPLIKAT, nie funkcja.
+      //
+      // ── n-Type §6.3 / 01_DECYZJA §2.2 (2026-07-23) ──
+      // Sekcja przejmuje WSZYSTKIE działania decyzji: zatwierdzenie decyzji,
+      // przejścia etapu (wyślij do przeglądu / zatwierdź etap / opublikuj),
+      // cofnięcia (do draftu, do przeglądu), odrzucenie, prośbę o informacje
+      // i delegowanie. Nagłówek nie ma już `primaryAction`, a pasek karty
+      // (NModeToolbar) nie ma już przejść ani overflow z Reject/Request info —
+      // te same handlery renderowały się w 2-3 miejscach naraz.
       label: t('myWork.decisionDetail.label', 'Actions'),
       icon: Save,
       defaultOpen: true,
-      children: (
-        <div className="grid grid-cols-1 gap-2">
-          <button type="button" onClick={() => setShowDelegationModal(true)} className={rpBtn}>
+      // Pusto TYLKO w trybie Podgląd („do pokazania klientowi") — w Edycji
+      // zawsze zostaje co najmniej „Deleguj".
+      isEmpty: readMode,
+      emptyLabel: t(
+        'myWork.decisionDetail.actionsHiddenInReadMode',
+        'Actions are hidden in preview mode'
+      ),
+      children: readMode ? null : (
+        <div className="flex flex-col gap-2">
+          {/* 1) Zatwierdzenie decyzji — akcja, po której karta zmienia status.
+                 Zeszła TU z nagłówka (§2.2: decyzja ma zbyt złożony zestaw
+                 przejść, by wskazywać jedno w powłoce). */}
+          {canApproveDecision && (
+            <CapabilityGate capability="decision.approve" gateMode="disable">
+              <button type="button" onClick={handleApprove} className={rpActionPrimary}>
+                <Check size={14} />
+                {t('decisions.detail.actions.approveDecision', 'Approve decision')}
+              </button>
+            </CapabilityGate>
+          )}
+
+          {/* 2) Przejścia etapu workflow — pełny zestaw zależny od stanu
+                 (`workflowActions`). Do 2026-07-23 stały w pasku karty. */}
+          {panelWorkflowActions.map((action) => (
+            <button
+              key={action.id}
+              type="button"
+              onClick={action.onClick}
+              disabled={workflowActionLoading}
+              className={
+                action.id === highlightedWorkflowActionId ? rpActionPrimary : rpActionNeutral
+              }
+            >
+              {workflowActionLoading ? <Loader2 size={13} className="animate-spin" /> : null}
+              {action.label}
+            </button>
+          ))}
+
+          {/* 3) Werdykt negatywny + prośba o uzupełnienie — były w overflow „…"
+                 paska karty. Odrzucenie = jedyna akcja destrukcyjna (danger). */}
+          {canApproveDecision && (
+            <>
+              <CapabilityGate capability="decision.approve" gateMode="disable">
+                <button type="button" onClick={handleReject} className={rpActionDestructive}>
+                  <X size={14} />
+                  {t('decisions.detail.actions.reject', 'Reject')}
+                </button>
+              </CapabilityGate>
+              <button
+                type="button"
+                onClick={handleRequestMoreInfo}
+                className={rpActionNeutral}
+              >
+                <HelpCircle size={14} className="text-c-text-muted" />
+                {t('decisions.detail.actions.requestInfo', 'Request info')}
+              </button>
+            </>
+          )}
+
+          {/* 4) Delegowanie — działanie na decyzji, nie na jej treści. */}
+          <button
+            type="button"
+            onClick={() => setShowDelegationModal(true)}
+            className={rpActionNeutral}
+          >
             <Share2 size={14} className="text-c-text-muted" />
             {t('myWork.decisionDetail.delegate', 'Delegate')}
           </button>
+
           {decisionId && (
             <div className="flex items-center justify-between h-8 px-3 rounded-lg border border-c-border-subtle bg-c-surface-raised">
               <span className="text-xs text-c-text-muted">
@@ -5290,24 +5391,12 @@ Use userId only from this list:
 
   // Akcje drugorzedne pod "…" — komponent renderuje trigger i menu sam
   // (§2.4); karta NIE pisze wlasnego "...".
+  //
+  // 2026-07-23 (n-Type §6.3): Reject i Request info ZNIKŁY stąd — razem z
+  // "Approve decision" z nagłówka i przejściami etapu ze slotu `newButton`
+  // tworzyły trzy różne miejsca na jeden zestaw działań. Wszystkie żyją teraz
+  // w sekcji AKCJE prawego panelu. Overflow zostaje dla akcji NIE-workflow.
   const toolbarOverflowActions: NModeToolbarAction[] = [];
-  if (decisionId && isPending) {
-    // Primary = "Approve decision" w NModeHeader, wiec Reject i Request info sa
-    // z definicji drugorzedne. Przy okazji znika ich solid/kontrastowy wyglad —
-    // §2.3: poza slotem primary nic nie moze wygladac jak CTA.
-    toolbarOverflowActions.push(
-      {
-        label: t('decisions.detail.actions.reject', 'Reject'),
-        icon: X,
-        onClick: handleReject,
-      },
-      {
-        label: t('decisions.detail.actions.requestInfo', 'Request info'),
-        icon: HelpCircle,
-        onClick: handleRequestMoreInfo,
-      }
-    );
-  }
   if (activeNotionSection === 'options-tradeoffs') {
     // Druga akcja AI tej samej sekcji ("omow opcje z Teresa"). Slot
     // `aiSectionButton` jest JEDEN, wiec zamiast dokladac drugi przycisk obok
@@ -5350,15 +5439,14 @@ Use userId only from this list:
               presentationMode={presentationMode}
               onPresentationModeChange={setPresentationMode}
               buildArtifactCode={buildArtifactCode}
-              primaryAction={
-                decisionId && isPending
-                  ? {
-                      label: { en: 'Approve decision', pl: 'Zatwierdź decyzję' },
-                      icon: Check,
-                      onClick: handleApprove,
-                    }
-                  : undefined
-              }
+              /* n-Type §6.3 / 01_DECYZJA §2.2 (2026-07-23): `primaryAction`
+                 CELOWO nieustawiony. Reguła „jedna oczywista akcja w nagłówku"
+                 zakłada artefakt o jednym przejściu do przodu; decyzja ma ich
+                 kilka naraz (etap workflow × werdykt), więc wskazanie jednego w
+                 powłoce kłamało o modelu. Wszystkie działania — zatwierdzenie
+                 etapu, cofnięcie, zatwierdzenie decyzji, odrzucenie, prośba o
+                 informacje, delegowanie — żyją w sekcji AKCJE prawego panelu
+                 (`rightPanelSections[0]`), pionowo i bez duplikatów. */
             />
 
             {/* ═══════════ N MODE (page-first, 2-pane) ═════════════════════════
@@ -5422,8 +5510,12 @@ Use userId only from this list:
                     skutku, wiec Decision byl jedna z kart budujacych pasek recznie
                     z <div>. Teraz pasek stawia `NModeToolbar`; karta deklaruje
                     tylko TRESC slotow, a komponent narzuca uklad, gestosc i overflow.
-                    Read mode ("do pokazania klientowi"): caly pasek akcji znika. */}
-                {!readMode && (
+                    Read mode ("do pokazania klientowi"): caly pasek akcji znika.
+
+                    2026-07-23: po zabraniu przejsc workflow do prawego panelu
+                    pasek moze nie miec ZADNEJ tresci (karta bez AI + decyzja
+                    niezapisana) — wtedy nie renderujemy pustej ramki. */}
+                {!readMode && (aiSectionButton || decisionId || toolbarOverflowActions.length > 0) && (
                   <div className="px-3 py-2 rounded-xl border border-c-border-subtle bg-c-surface">
                     <NModeToolbar
                       isPolish={isPolish}
@@ -5436,9 +5528,7 @@ Use userId only from this list:
                       /* Sloty lewej grupy niosa GRUPY kontrolek, wiec licznik gestosci
                          komponentu policzylby je jako 1 — podajemy realna liczbe
                          widocznych akcji, zeby dev-warn nie klamal w dol. */
-                      visibleActionCount={
-                        (decisionId ? workflowActions.length : 0) + (aiSectionButton ? 1 : 0)
-                      }
+                      visibleActionCount={aiSectionButton ? 1 : 0}
                       sectionsDropdown={
                         decisionId ? (
                           <span className="inline-flex items-center gap-2">
@@ -5456,35 +5546,13 @@ Use userId only from this list:
                           </span>
                         ) : undefined
                       }
-                      newButton={
-                        decisionId && workflowActions.length > 0 ? (
-                          <span className="inline-flex items-center gap-1.5">
-                            {workflowActions.map((action) => (
-                              <button
-                                key={action.id}
-                                type="button"
-                                onClick={action.onClick}
-                                disabled={workflowActionLoading}
-                                /* §2.3: zaden z tych przyciskow nie jest solid — solid
-                                   CTA istnieje wylacznie w slocie primary naglowka
-                                   ("Approve decision"). */
-                                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ${
-                                  action.tone === 'primary'
-                                    ? 'border border-c-info/50 bg-c-info/10 text-c-info hover:bg-c-info/15'
-                                    : action.tone === 'success'
-                                      ? 'border border-c-success/50 bg-c-success/10 text-c-success hover:bg-c-success/15'
-                                      : 'border border-c-border-subtle text-c-text-secondary hover:bg-state-hover'
-                                }`}
-                              >
-                                {workflowActionLoading ? (
-                                  <Loader2 size={13} className="animate-spin" />
-                                ) : null}
-                                {action.label}
-                              </button>
-                            ))}
-                          </span>
-                        ) : undefined
-                      }
+                      /* `newButton` (przejścia etapu workflow) CELOWO pusty od
+                         2026-07-23 — n-Type §6.3 / 01_DECYZJA §2.2: wszystkie
+                         działania decyzji mają JEDNO miejsce, sekcję AKCJE
+                         prawego panelu. Tu zostaje wyłącznie BADGE etapu
+                         (`sectionsDropdown`), bo to informacja o stanie, a nie
+                         działanie. Pasek nie znika — niesie kontekstowe AI
+                         aktywnej karty. */
                     />
                   </div>
                 )}
