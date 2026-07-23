@@ -36,6 +36,14 @@ export { NModeCardBadge, NModeCardState } from './NModeCardState';
 export { NModeCBoard } from './NModeCBoard';
 export { NModeHeader } from './NModeHeader';
 export { NModeLeftNav } from './NModeLeftNav';
+// ── Menu 2 (ETAP 1.2 standardu n-Type) ──────────────────────────────────────
+export type {
+  Menu2AIButtonProps,
+  Menu2HowToButtonProps,
+  Menu2ModeToggleProps,
+  NModeMenu2Props,
+} from './NModeMenu2';
+export { Menu2AIButton, Menu2HowToButton, Menu2ModeToggle, NModeMenu2 } from './NModeMenu2';
 export { NModePropertiesStrip } from './NModePropertiesStrip';
 export type { QuoteRequirementLevel } from './NModeSectionWrapper';
 export { EvidenceBadge, NModeSectionWrapper } from './NModeSectionWrapper';
