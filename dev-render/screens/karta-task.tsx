@@ -80,6 +80,39 @@ const MOCK_TASK = {
     'oczekiwania. Mapa jest wsadem do warsztatu 29.07 — bez niej nie da się rzetelnie oszacować ' +
     'oszczędności z automatyzacji, a to jest główny argument w decyzji budżetowej na Q4.\n\n' +
     'Poza zakresem: projektowanie stanu TO-BE (osobne zadanie po warsztacie).',
+
+  /**
+   * ★ KRYTERIA AKCEPTACJI (pole „Oczekiwany rezultat", SPEC-A §6.2/§6.3).
+   *
+   * UWAGA — DEFEKT KOMPONENTU, NIE MOCKA: `TaskDetailView.loadTask()`
+   * (src/components/MyWork/TaskDetailView.tsx:936-1020) mapuje 24 pola rekordu,
+   * ale `expectedOutcome` NIE JEST wśród nich — stan startuje z `useState('')`
+   * (linia 524) i jedyne, co go zapisuje, to generator AI (linie 1989, 4366).
+   * Skutek: karta flagowego zadania demo pokazuje placeholder „Zdefiniuj
+   * mierzalny rezultat…", choć dane je mają. Naprawa = jedna linia w loadTask:
+   *   setExpectedOutcome(task.expectedOutcome || '');
+   * Do czasu tej naprawy pole zostaje puste NA EKRANIE mimo poprawnych danych.
+   *
+   * Kryteria napisane falsyfikowalnie: każde da się jednoznacznie orzec
+   * (spełnione / niespełnione) przed warsztatem 29.07.
+   */
+  expectedOutcome:
+    'Zadanie jest wykonane, gdy spełnione są trzy warunki (każdy sprawdzalny przed 29.07):\n\n' +
+    '1. KOMPLETNOŚĆ. Mapa AS-IS obejmuje 4 projekty (Grupa Termika, NordFarm, Bielmar, ' +
+    'Kolej Wschodnia) × wszystkie kroki od zamknięcia wywiadów do wysyłki, a przy każdym kroku ' +
+    'jest właściciel, narzędzie i lead time liczony jako mediana z eksportu timestampów. ' +
+    'Sprawdzenie: brak kroku bez wartości lead time.\n\n' +
+    '2. WALIDACJA. Mapa zwalidowana przez Marka Zielińskiego (partner prowadzący) — pisemne ' +
+    '„tak" w komentarzu do zadania albo lista poprawek do naniesienia. ' +
+    'Sprawdzenie: wpis Marka w karcie, nie ustna zgoda.\n\n' +
+    '3. GOTOWOŚĆ WARSZTATU. Pre-read (mapa + 3 liczby wąskiego gardła) wysłany do wszystkich ' +
+    'uczestników co najmniej 48 h przed warsztatem 29.07, czyli do 27.07 godz. 9:00. ' +
+    'Sprawdzenie: data wysyłki w wątku warsztatowym.\n\n' +
+    'Poza kryterium: uzgodnienie stanu TO-BE i wyliczenie oszczędności — to warsztat, ' +
+    'nie to zadanie.\n\n' +
+    'Warunek falsyfikujący całość: jeśli eksport timestampów okaże się niekompletny dla ' +
+    'co najmniej jednego z 4 projektów, mapa nie jest wsadem liczbowym do decyzji budżetowej ' +
+    'i zadanie trzeba przeciąć — zamiast mapy idzie na warsztat notatka o luce w danych.',
   status: 'in_progress',
   priority: 'high',
   dueDate: '2026-07-28T00:00:00Z',
