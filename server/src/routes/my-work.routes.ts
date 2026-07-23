@@ -7067,13 +7067,60 @@ router.post(
       }
     }
 
+    // P0-1 (docs/standards/idea-workspace/12_BACKLOG_I_ODBIOR.md, model docelowy:
+    // 10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md §2.3): backend dziś NIE dostaje jawnego
+    // zakresu konwersji z FE (żadne z trzech wejść — Menu 1 / prawy panel / menu
+    // kontekstowe — nie wysyła `options.scope`, patrz IdeaMapWorkspace.tsx:2045-2052).
+    // Naprawa: akceptujemy `options.scope` jeśli kiedyś zacznie być wysyłany
+    // ('workspace' = cała Idea), a przy jego braku wnioskujemy best-effort z obecności
+    // `nodeIds` — dokładnie ten sam sygnał, którego dziś używa FE do rozróżnienia
+    // "konwertuj całość" (Menu 1 bez zaznaczenia, nodeIds puste) od "konwertuj
+    // zaznaczenie/węzeł/gałąź" (nodeIds niepuste). To NIE jest doskonałe (np. Table
+    // bulk-convert bywa niespójny ze `selection.ids` — patrz audyt §4.5), ale jest
+    // ścisłym nadzbiorem informacji, którą backend miał do tej pory (żadnej).
+    const explicitScope = typeof options?.scope === 'string' ? options.scope.trim() : '';
+    const isWholeIdeaScope = explicitScope ? explicitScope === 'workspace' : nodeIds.length === 0;
+    const conversionScope = isWholeIdeaScope ? 'workspace' : 'selection';
+
     const promote = async (promotedTo: string, promotedEntityId: string | null) => {
-      await queryHelpers.queryRun(
-        `UPDATE my_ideas
-         SET promoted_to = ?, promoted_entity_id = ?, stage = 'promoted', updated_at = CURRENT_TIMESTAMP
-         WHERE id = ? AND user_id = ? AND organization_id = ?`,
-        [promotedTo, promotedEntityId, ideaId, userId, orgId]
-      );
+      // Historia KAŻDEJ konwersji — insert, NIGDY update. Zastępuje pojedyncze pole
+      // `promoted_to`, które nadpisywało się bezwarunkowo niezależnie od zakresu
+      // (defekt P0-1). Best-effort: brak tabeli (migracja 20260723_idea_conversion_history
+      // jeszcze nie uruchomiona) nie może zablokować samej konwersji.
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO my_idea_conversions
+             (id, idea_id, organization_id, target, entity_id, scope, node_ids_json, created_by)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            uuidv4(),
+            ideaId,
+            orgId,
+            promotedTo,
+            promotedEntityId,
+            conversionScope,
+            JSON.stringify(nodeIds),
+            userId,
+          ]
+        );
+      } catch (err: any) {
+        logger.warn(
+          `[my-work.convert] nie udało się zapisać wpisu my_idea_conversions (migracja 20260723 odpalona?): ${err?.message}`
+        );
+      }
+
+      // `promoted_to`/`promoted_entity_id`/`stage` Idei zostają dla zgodności wstecznej,
+      // ale zmieniają się TYLKO przy konwersji CAŁEJ Idei (scope='workspace'). Konwersja
+      // fragmentu (zaznaczenie/węzeł/gałąź) dostaje wyłącznie wpis w historii powyżej —
+      // status i etap całej Idei zostają nietknięte.
+      if (isWholeIdeaScope) {
+        await queryHelpers.queryRun(
+          `UPDATE my_ideas
+           SET promoted_to = ?, promoted_entity_id = ?, stage = 'promoted', updated_at = CURRENT_TIMESTAMP
+           WHERE id = ? AND user_id = ? AND organization_id = ?`,
+          [promotedTo, promotedEntityId, ideaId, userId, orgId]
+        );
+      }
     };
 
     // ----- Convert: Initiative -----
