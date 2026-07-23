@@ -107,7 +107,10 @@ import { definiujKarteKanoniczna, type KanonicznaKarta } from '../standard/cardC
 
 const ARTIFACT_ACTIONS = definiujKarteKanoniczna({
   id: 'artifact-actions',
-  label: { en: 'Next Actions', pl: 'Dalsze akcje' },
+  // 2026-07-23 (zgłoszenie właściciela, ETAP 2.5 pkt 1): etykieta przeklasyfikowana
+  // z „Dalsze akcje" na „Rezultaty" — tworzenie kolejnego artefaktu to REZULTAT
+  // wniosku, nie akcja na nim. `id` NIETKNIĘTE (rola `rdzen` ⇒ core:true).
+  label: { en: 'Results', pl: 'Rezultaty' },
   grupa: 'INSIGHT',
   ikona: 'Rocket',
   rolaAI: 'pisze',

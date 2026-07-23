@@ -112,6 +112,10 @@ import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import {
+  type ArtifactConversion,
+  ConclusionsApi,
+} from '@/services/api/conclusions.api';
+import {
   type V8InsightAnalysis,
   type V8InsightAnalysisMatrixCell,
   type V8InsightCandidate,
@@ -750,9 +754,17 @@ const STATUS_PILL: Record<string, { bg: string; text: string; dot: string }> = {
 // empty-state until the underlying multi-respondent data exists.
 const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   {
+    // KLASYFIKACJA (zgłoszenie właściciela 2026-07-23, pkt 1): utworzenie
+    // kolejnego artefaktu (decyzja / inicjatywa / raport / prezentacja) to
+    // REZULTAT wniosku, a nie „dalsza akcja". Etykieta była „Dalsze akcje"
+    // i mieszała dwie różne rzeczy: co z tego wniosku POWSTAJE (tu) z tym, co
+    // można na nim ZROBIĆ (status, recenzja — prawy panel, sekcja Akcje).
+    // Zmieniona jest WYŁĄCZNIE etykieta; `id` zostaje, bo `artifact-actions`
+    // ma rolę `rdzen` w kontrakcie karty (insightCardContract.ts) i jest
+    // nieusuwalne typem — zmiana id zerwałaby katalog kart.
     id: 'artifact-actions',
     icon: Rocket,
-    label: { en: 'Next Actions', pl: 'Dalsze akcje' },
+    label: { en: 'Results', pl: 'Rezultaty' },
     cSpan: 2,
   },
   {
@@ -1017,7 +1029,42 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
-  const { currentUser, currentOrganization } = useAppStore();
+  const { currentUser, currentOrganization, currentProjectId } = useAppStore();
+
+  // ── REZULTATY tego wniosku (prawy panel, sekcja `results`) ─────────────────
+  // Zgłoszenie właściciela 2026-07-23 (ETAP 2.5 pkt 1+2): kafelki tworzenia
+  // artefaktów zostają w CENTRUM (sekcja `artifact-actions`, rola `rdzen`
+  // w kontrakcie karty — nieusuwalna typem), więc panel NIE MOŻE ich dublować
+  // (SPEC-N §2.6). Panel dostaje to, czego centrum nie pokazuje: REJESTR tego,
+  // co z tego wniosku JUŻ powstało — realne dane z
+  // `GET /api/artifact-conversions?sourceArtifactType=interview_insight&sourceArtifactId=…`
+  // (server/src/routes/artifact-conversions.routes.ts). Zero nowego backendu,
+  // zero zmyślonych liczb: gdy zapytanie padnie, sekcja jest uczciwie pusta.
+  const [producedResults, setProducedResults] = useState<ArtifactConversion[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    if (!insightId) {
+      setProducedResults([]);
+      return;
+    }
+    (async () => {
+      try {
+        const res = await ConclusionsApi.listConversions({
+          sourceArtifactType: 'interview_insight',
+          sourceArtifactId: insightId,
+        });
+        if (!alive) return;
+        setProducedResults(Array.isArray(res?.conversions) ? res.conversions : []);
+      } catch {
+        if (!alive) return;
+        setProducedResults([]);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [insightId]);
   const setChatSystemPrompt = useAppStore((s) => s.setChatSystemPrompt);
   const setChatContextActions = useAppStore((s) => s.setChatContextActions);
   const openChatWithContext = useOpenChatWithContext();
@@ -3371,6 +3418,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           component = (
             <ArtifactActionPanel
               isPolish={isPolish}
+              // Kontekst projektu — bez niego `POST /api/decisions` odrzuca żądanie
+              // („Missing decision context"), więc kafelek „Rozpocznij decyzję"
+              // renderuje się wyłączony z powodem zamiast zapraszać w błąd.
+              projectId={currentProjectId || null}
               source={{
                 type: 'interview_insight',
                 id: insight?.id || insightId,
@@ -7996,20 +8047,90 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       // znika duplikat w panelu. Funkcja użytkownikowi nie znika — zmienia się
       // tylko liczba wejść z dwóch na jedno.
       //
-      // ⚠ DO ROZSTRZYGNIĘCIA PRZEZ WŁAŚCICIELA: po usunięciu trzech duplikatów
-      // w tej sekcji nie zostaje ŻADNA akcja, która nie byłaby duplikatem.
-      // Sekcja `actions` jest wymaganym kluczem panelu (SPEC-N §2.2), więc
-      // zostaje z uczciwym stanem pustym zamiast zniknąć po cichu — pustka jest
-      // widoczna na zrzucie i czeka na decyzję CO ma tu mieszkać. Strefa
-      // „Co dalej" (create-targets, ArtifactActionPanel) świadomie NIE jest tu
-      // przenoszona — to create-strip centrum wg §7.3a.
+      // ⚠ ROZSTRZYGNIĘCIE (właściciel, 2026-07-23, ETAP 2.5 pkt 3): „Akcje —
+      // osobno od Rezultatów: zmiana statusu, przypisanie, recenzja, forkowanie."
+      // Sekcja przestaje być pusta i dostaje JEDYNĄ akcję, która ma tu realne
+      // pokrycie: przejście stanu cyklu życia (`runStatusTransition` — ten sam
+      // handler, który do dziś siedział WYŁĄCZNIE jako niewidoczny `select`
+      // naciągnięty na pigułkę statusu we Właściwościach). Rozdział jest teraz
+      // czysty: Właściwości POKAZUJĄ stan, Akcje go ZMIENIAJĄ, Rezultaty mówią,
+      // co z wniosku powstało.
+      //
+      // ŚWIADOMIE NIEOBECNE (brak pokrycia — patrz raport ETAP 2.5, Z-3/Z-4):
+      //  · przypisanie — model wniosku nie ma pola właściciela/przypisanego,
+      //  · forkowanie  — handler forka żyje w kebabie wiersza tabeli Insights
+      //                  (InterviewHub → rowMenu), nie w tym komponencie,
+      //  · recenzja    — „wyślij do recenzji" to przejście stanu `in_review`,
+      //                  więc jest już w przejściach wyżej; osobny przycisk
+      //                  byłby drugim wejściem do tego samego handlera (§2.6).
       id: 'actions',
       label: t('interview.insightViewer.actions'),
       icon: Sparkles,
       defaultOpen: true,
-      isEmpty: true,
+      isEmpty: !statusEditable || statusBaseOptions.length === 0,
       emptyLabel: t('interview.insightViewer.actionsLiveInHeaderAndToolbar'),
-      children: null,
+      children: (
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap gap-1.5">
+            {statusBaseOptions
+              .filter((opt) => opt.value !== currentInsightStatus)
+              .map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => runStatusTransition(opt.value)}
+                  className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface-raised px-2.5 text-xs font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                >
+                  {t(`interview.insightViewer.statusOptionLabel.${opt.value}`, opt.label.en)}
+                </button>
+              ))}
+          </div>
+          <p className="text-[11px] leading-relaxed text-c-text-muted">
+            {t('interview.insightViewer.panelActionsHint')}
+          </p>
+        </div>
+      ),
+    },
+    {
+      // ── REZULTATY (właściciel 2026-07-23, ETAP 2.5 pkt 2) ─────────────────
+      // Kafelki „utwórz…" zostają w CENTRUM (sekcja `artifact-actions` = rdzeń
+      // kontraktu karty), więc panel ich NIE dubluje (§2.6). Panel pokazuje to,
+      // czego centrum nie pokazuje: co z tego wniosku JUŻ powstało — realne
+      // wpisy z `/api/artifact-conversions` — plus skok do sekcji, w której
+      // rezultaty się tworzy. Jedna funkcja, jedno miejsce; panel jest
+      // rejestrem, centrum jest warsztatem.
+      id: 'results',
+      label: t('interview.insightViewer.panelResults', 'Results'),
+      icon: Rocket,
+      defaultOpen: true,
+      badge: producedResults.length || undefined,
+      isEmpty: producedResults.length === 0,
+      emptyLabel: t(
+        'interview.insightViewer.panelResultsEmpty',
+        'Nothing has been produced from this insight yet.'
+      ),
+      children: (
+        <div className="flex flex-col gap-2">
+          {producedResults.map((conv) => (
+            <div key={conv.id} className="flex items-center justify-between gap-2">
+              <span className="inline-flex h-6 min-w-0 items-center gap-1.5 truncate rounded-md border border-c-border-subtle bg-c-surface-raised px-2 text-xs font-medium text-c-text">
+                <FileText size={12} className="shrink-0 text-c-text-muted" />
+                <span className="truncate">{conv.targetArtifactType}</span>
+              </span>
+              <span className="shrink-0 text-[11px] text-c-text-muted">
+                {conv.conversionStatus}
+              </span>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => setActiveNSection('artifact-actions')}
+            className="inline-flex h-7 items-center justify-center rounded-lg border border-c-border-subtle bg-c-surface-raised px-2.5 text-xs font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+          >
+            {t('interview.insightViewer.panelResultsGoto', 'Go to the Results section')}
+          </button>
+        </div>
+      ),
     },
     {
       id: 'properties',
@@ -8022,39 +8143,21 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           valueLabel={t('interview.insightViewer.value')}
           rows={[
             {
+              // SPEC-N §2.6 (2026-07-23): status POKAZUJEMY tu, ZMIENIAMY
+              // w sekcji Akcje. Do dziś na pigułkę był naciągnięty niewidzialny
+              // `<select>` — ten sam handler `runStatusTransition` co w Akcjach,
+              // tylko ukryty i nieodkrywalny (kliknięcie w „właściwość" otwierało
+              // listę wyboru). Zostaje jedno, widoczne wejście: przyciski przejść
+              // w Akcjach. Właściwość wraca do bycia właściwością.
               id: 'status',
               label: t('interview.insightViewer.status'),
               value: (
-                <div className="relative inline-flex justify-end w-full">
-                  <span
-                    className={`inline-flex h-6 items-center gap-1.5 px-2 rounded-md text-[11px] font-semibold ${statusPill.bg} ${statusPill.text}`}
-                  >
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusPill.dot}`}
-                    />
-                    <span className="truncate">{statusPillLabel || currentInsightStatus}</span>
-                    {statusEditable && (
-                      <ChevronDown size={10} className="flex-shrink-0 opacity-60" />
-                    )}
-                  </span>
-                  {statusEditable && (
-                    <select
-                      value={currentInsightStatus}
-                      onChange={(e) => runStatusTransition(e.target.value)}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      title={t('interview.insightViewer.changeStatus')}
-                    >
-                      {statusBaseOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {t(
-                            `interview.insightViewer.statusOptionLabel.${opt.value}`,
-                            opt.label.en
-                          )}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
+                <span
+                  className={`inline-flex h-6 items-center gap-1.5 px-2 rounded-md text-[11px] font-semibold ${statusPill.bg} ${statusPill.text}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusPill.dot}`} />
+                  <span className="truncate">{statusPillLabel || currentInsightStatus}</span>
+                </span>
               ),
             },
             {
