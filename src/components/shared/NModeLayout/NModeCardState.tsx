@@ -64,6 +64,30 @@ export type NModeCardStatus = 'empty' | 'generating' | 'ai-draft' | 'edited' | '
 
 type BilingualText = { en: string; pl: string };
 
+// ── Wybór funkcji tłumaczącej ────────────────────────────────────────────────
+
+type TFunc = ReturnType<typeof useTranslation>['t'];
+type I18nInstance = ReturnType<typeof useTranslation>['i18n'];
+
+/**
+ * Wybiera `t` przypięte do języka wymuszonego propem `isPolish`, a gdy propu
+ * nie ma — zwykłe `t` z hooka.
+ *
+ * R2/defekt #4 (2026-07-23): `i18n.getFixedT` było wołane bez guardu. Pełna
+ * instancja i18next zawsze ją ma, ale testy (i każdy `I18nextProvider`
+ * z atrapą/okrojoną instancją) podstawiają obiekt bez tej metody — wtedy
+ * KAŻDA karta wzorca N wywracała się na `TypeError: i18n.getFixedT is not
+ * a function`, co przewracało cały render Insightu (38 błędów, 10 czerwonych
+ * testów z JEDNEJ linii). Zachowanie produkcyjne bez zmian: przy sprawnej
+ * instancji nadal dostajemy `getFixedT`; awaryjnie schodzimy na `t` z hooka,
+ * czyli język bieżącej instancji zamiast wywrotki komponentu.
+ */
+function useFixedT(i18n: I18nInstance, tHook: TFunc, isPolishProp?: boolean): TFunc {
+  if (typeof isPolishProp !== 'boolean') return tHook;
+  if (typeof i18n?.getFixedT !== 'function') return tHook;
+  return i18n.getFixedT(isPolishProp ? 'pl' : 'en') as TFunc;
+}
+
 // ── Badge stanu ──────────────────────────────────────────────────────────────
 
 /**
@@ -76,7 +100,7 @@ export const NModeCardBadge: React.FC<{ status: NModeCardStatus; isPolish?: bool
   isPolish: isPolishProp,
 }) => {
   const { t: tHook, i18n } = useTranslation();
-  const t = typeof isPolishProp === 'boolean' ? i18n.getFixedT(isPolishProp ? 'pl' : 'en') : tHook;
+  const t = useFixedT(i18n, tHook, isPolishProp);
 
   // Wspólna baza pastylki badge.
   const base =
@@ -325,7 +349,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
   children,
 }) => {
   const { t: tHook, i18n } = useTranslation();
-  const t = typeof isPolishProp === 'boolean' ? i18n.getFixedT(isPolishProp ? 'pl' : 'en') : tHook;
+  const t = useFixedT(i18n, tHook, isPolishProp);
   const isPolish = isPolishProp ?? i18n.language === 'pl';
 
   const [regenerating, setRegenerating] = useState(false);

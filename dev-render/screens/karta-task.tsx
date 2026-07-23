@@ -84,14 +84,14 @@ const MOCK_TASK = {
   /**
    * ★ KRYTERIA AKCEPTACJI (pole „Oczekiwany rezultat", SPEC-A §6.2/§6.3).
    *
-   * UWAGA — DEFEKT KOMPONENTU, NIE MOCKA: `TaskDetailView.loadTask()`
-   * (src/components/MyWork/TaskDetailView.tsx:936-1020) mapuje 24 pola rekordu,
-   * ale `expectedOutcome` NIE JEST wśród nich — stan startuje z `useState('')`
-   * (linia 524) i jedyne, co go zapisuje, to generator AI (linie 1989, 4366).
-   * Skutek: karta flagowego zadania demo pokazuje placeholder „Zdefiniuj
-   * mierzalny rezultat…", choć dane je mają. Naprawa = jedna linia w loadTask:
-   *   setExpectedOutcome(task.expectedOutcome || '');
-   * Do czasu tej naprawy pole zostaje puste NA EKRANIE mimo poprawnych danych.
+   * HISTORIA DEFEKTU (NAPRAWIONY 2026-07-23, fala 2): `TaskDetailView.loadTask()`
+   * mapowało 24 pola rekordu, ale `expectedOutcome` nie było wśród nich — stan
+   * startował z `useState('')` i zapisywał go wyłącznie generator AI. Karta
+   * flagowego zadania demo pokazywała placeholder „Zdefiniuj mierzalny
+   * rezultat…", choć dane były w bazie. Audyt runtime pokazał, że łańcuch był
+   * przerwany w trzech miejscach naraz (GET nie zwracał kolumny, PUT jej nie
+   * przyjmował, front nie mapował) — naprawione wszystkie trzy.
+   * Weryfikacja: `.value` textarei „Oczekiwany rezultat" = 1166 znaków.
    *
    * Kryteria napisane falsyfikowalnie: każde da się jednoznacznie orzec
    * (spełnione / niespełnione) przed warsztatem 29.07.

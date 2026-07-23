@@ -1355,6 +1355,10 @@ router.get(
     });
 
     const id = String(req.params.id || '').trim();
+    // R2/defekt #1 (2026-07-23): `expected_outcome` istnieje w tabeli `tasks`
+    // (DatabaseInitializer — kolumna gwarantowana) i jest zapisywane przez
+    // generator AI, ale detal personal-task go NIE ZWRACAŁ, a PUT go nie
+    // przyjmował. Karta zawsze renderowała pusty „Oczekiwany rezultat".
     const row = await queryHelpers.queryOne<any>(
       `
       SELECT
@@ -1365,6 +1369,7 @@ router.get(
         t.priority,
         t.due_date as "dueDate",
         t.tags,
+        t.expected_outcome as "expectedOutcome",
         t.created_at as "createdAt",
         t.updated_at as "updatedAt",
         t.completed_at as "completedAt"
@@ -1434,6 +1439,10 @@ router.put(
     if (typeof req.body?.title === 'string')
       setIf('title', decodeHtmlEntities(String(req.body.title).trim()));
     if (typeof req.body?.description === 'string') setIf('description', req.body.description);
+    // R2/defekt #1: bez tego pole wczytywało się, ale każda edycja ginęła.
+    // `setIf` sam pomija kolumnę, jeśli schemat jej nie ma — zmiana addytywna.
+    if (typeof req.body?.expectedOutcome === 'string')
+      setIf('expected_outcome', req.body.expectedOutcome);
     if (typeof req.body?.priority === 'string') setIf('priority', String(req.body.priority).trim());
     if (req.body?.dueDate !== undefined) {
       const d = req.body.dueDate ? String(req.body.dueDate).trim() : null;
@@ -1473,6 +1482,7 @@ router.put(
           t.priority,
           t.due_date as "dueDate",
           t.tags,
+          t.expected_outcome as "expectedOutcome",
           t.created_at as "createdAt",
           t.updated_at as "updatedAt",
           t.completed_at as "completedAt"
@@ -1503,6 +1513,7 @@ router.put(
         t.priority,
         t.due_date as "dueDate",
         t.tags,
+        t.expected_outcome as "expectedOutcome",
         t.created_at as "createdAt",
         t.updated_at as "updatedAt",
         t.completed_at as "completedAt"

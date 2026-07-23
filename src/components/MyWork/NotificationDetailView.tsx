@@ -199,6 +199,41 @@ const TYPE_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
   DBR77_INSTRUCTION: { icon: BookOpen, color: 'text-amber-400' },
 };
 
+// ── Formatowanie pewności ────────────────────────────────────────────────────
+
+/**
+ * Zamienia surową „pewność" z danych powiadomienia na etykietę procentową.
+ *
+ * Producenci nie są spójni: silniki AI zwracają UŁAMEK (0.82), reguły
+ * biznesowe — punkty procentowe (82), a treści autorskie potrafią przysłać
+ * gotowy string („82%"). Do 2026-07-23 karta doklejała gołe „%" do wartości
+ * wprost, więc 0.82 renderowało się jako „0.82%" (defekt R2 #2). Jedna
+ * funkcja = jedno miejsce, w którym ta konwersja może się zepsuć.
+ *
+ * Umowa: wartość z przedziału (0, 1] traktujemy jako ułamek i mnożymy ×100;
+ * powyżej 1 traktujemy jako punkty procentowe. 0 / brak / śmieci → ''.
+ */
+export function formatConfidencePercent(raw: unknown): string {
+  if (raw === null || raw === undefined || raw === '') return '';
+
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (!trimmed) return '';
+    // Już sformatowane („82%", „82 %") — nie ruszamy, tylko normalizujemy odstęp.
+    if (trimmed.endsWith('%')) return trimmed.replace(/\s+%$/, '%');
+    const parsed = Number(trimmed.replace(',', '.'));
+    if (!Number.isFinite(parsed)) return trimmed;
+    return formatConfidencePercent(parsed);
+  }
+
+  if (typeof raw !== 'number' || !Number.isFinite(raw) || raw <= 0) return '';
+
+  const percent = raw <= 1 ? raw * 100 : raw;
+  // Bez sztucznej precyzji: 82 zamiast „82.0", ale 82,5 nie znika.
+  const rounded = Math.round(percent * 10) / 10;
+  return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}%`;
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 // MIGRACJA — kompozycja kart Notification przez WIĄŻĄCY kontrakt karty (D-8).
@@ -1269,7 +1304,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     const enrichedRiskLevel = (data.riskLevel as string) || '';
     const enrichedRecommendation = (data.recommendation as string) || '';
     const enrichedImpact = (data.impact as string) || '';
-    const enrichedConfidence = data.confidence ? `${data.confidence}%` : '';
+    // R2/defekt #2 (2026-07-23): `confidence` przychodzi z silnika jako UŁAMEK
+    // (0.82), a doklejaliśmy gołe „%" → karta pokazywała „Pewność: 0.82%”
+    // zamiast „82%”. Producenci nie są spójni (0..1 z modeli, 0..100 z reguł,
+    // czasem string „82%”), więc normalizujemy w JEDNYM miejscu — obie karty
+    // (nagłówek i sekcja analizy) czytają ten sam wynik.
+    const enrichedConfidence = formatConfidencePercent(data.confidence);
 
     let computedPriority = 'MEDIUM';
     let computedRiskLevel = 'medium';
