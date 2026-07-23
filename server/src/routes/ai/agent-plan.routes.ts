@@ -13,8 +13,15 @@
  *
  * Endpoints:
  * - POST   /api/ai/agent-plan                    -> utworzenie planu (deleguje agentPlannerService.createPlan)
+ *                                                   (AGT-009: `draft:true` => plan zostaje w 'planning', bez dispatchu.
+ *                                                   Decyzja Piotra 2026-07-23 (DOROBKA A): gdy `draft` NIE podano
+ *                                                   jawnie, ścieżka generatora — `processId` obecne — domyślnie
+ *                                                   liczy się jak `draft:true`; ścieżka katalogu — `manifestId` —
+ *                                                   zostaje wstecznie zgodna, dispatch od razu.)
  * - GET    /api/ai/agent-plan                     -> lista planów (org + opcjonalnie user-scoped)
  * - GET    /api/ai/agent-plan/:id                 -> status planu (org-scoped)
+ * - PATCH  /api/ai/agent-plan/:id/steps           -> AGT-009: zapis przestawionego schematu (tylko 'planning')
+ * - POST   /api/ai/agent-plan/:id/run             -> AGT-009: jawne "Uruchom" (opc. zapis steps + dispatch)
  * - POST   /api/ai/agent-plan/:id/approve-step    -> zatwierdzenie kroku awaiting_approval
  * - POST   /api/ai/agent-plan/:id/cancel          -> przerwanie planu
  *
@@ -62,6 +69,7 @@ import { z } from 'zod';
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import { buildPlanFromManifest } from '../../services/ai/agentPlan/planBuilderService.js';
+import { buildStepsFromProcess } from '../../services/ai/agentPlan/processLibraryService.js';
 import { agentPlannerService } from '../../services/ai/agentPlannerService.js';
 import { getDiscoveryAgentManifest } from '../../services/ai/agentRuntime/discoveryAgentManifestCatalog.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -76,6 +84,10 @@ const MAX_STEPS_PER_PLAN = 12; // koncept sekcja 1 "Limity (twarde)" — F6 doda
 const PlanStepInputSchema = z.object({
   toolName: z.string().trim().min(1).max(120),
   toolInput: z.record(z.string(), z.unknown()).default({}),
+  // DOROBKA C (2026-07-23, decyzja Piotra): jawny override bramki akceptu —
+  // patrz komentarz przy `agentPlannerService.createPlan`. Opcjonalny; gdy
+  // pominięty, requiresApproval liczone jak dotąd z SIDE_EFFECT_TOOLS.
+  requiresApproval: z.boolean().optional(),
 });
 
 const CreatePlanRequestSchema = z
@@ -84,14 +96,43 @@ const CreatePlanRequestSchema = z
     description: z.string().trim().max(2000).optional(),
     conversationId: z.string().trim().max(200).optional(),
     manifestId: z.string().trim().max(120).optional(),
+    // AGT-006 (partia 2): generator PROCESU konsultingowego. Gdy podany (i brak
+    // explicit `steps`), ProcessLibrary kładzie cały schemat procesu — domyślny
+    // `classic-5` (5 faz Kubr/ILO) lub wariant `drd` (4 kroki). Kontekst
+    // dostrajający (opcjonalny) modyfikuje toolInput faz bez zmiany ich liczby.
+    processId: z.string().trim().max(60).optional(),
+    processContext: z
+      .object({
+        focusAxis: z.string().trim().max(120).optional(),
+        industry: z.string().trim().max(120).optional(),
+        hasVaultDocs: z.boolean().optional(),
+        projectSummary: z.string().trim().max(500).optional(),
+      })
+      .optional(),
     // Optional now: when omitted and manifestId is set, PlanBuilder generates
     // the steps (see header comment). Still capped at MAX_STEPS_PER_PLAN when provided explicitly.
     steps: z.array(PlanStepInputSchema).max(MAX_STEPS_PER_PLAN).optional(),
+    // AGT-009 (partia 2) + decyzja Piotra 2026-07-23 (DOROBKA A): rozdział
+    // tworzenia od uruchomienia. Gdy `draft:true` (jawnie), router TWORZY
+    // plan (zostaje w 'planning'), ale NIE zleca wykonania w tle — schemat
+    // czeka na jawne "Uruchom" (POST /:id/run). Jawne `draft:false` wymusza
+    // natychmiastowy dispatch niezależnie od ścieżki. Gdy `draft` NIE podano
+    // wcale: ścieżka GENERATORA procesu (`processId` obecne) domyślnie liczy
+    // się jak `draft:true` — ① AI kładzie schemat (np. classic-5) → user
+    // przestawia klocki → dopiero jawne "Uruchom" dispatchuje. Ścieżka
+    // KATALOGU (`manifestId`) i jawne `steps` bez `processId` zostają
+    // wstecznie zgodne — natychmiastowy best-effort dispatch jak dotąd.
+    draft: z.boolean().optional(),
   })
-  .refine((body) => Boolean(body.manifestId) || (body.steps && body.steps.length > 0), {
-    message: 'Either manifestId (to auto-generate steps) or a non-empty steps array is required',
-    path: ['steps'],
-  });
+  .refine(
+    (body) =>
+      Boolean(body.manifestId) || Boolean(body.processId) || (body.steps && body.steps.length > 0),
+    {
+      message:
+        'Either manifestId, processId (to auto-generate steps) or a non-empty steps array is required',
+      path: ['steps'],
+    }
+  );
 
 /** Best-effort background dispatch — nigdy nie wysadza żądania HTTP (default: background, patrz nagłówek pliku). */
 async function tryDispatchBackgroundExecution(payload: {
@@ -144,7 +185,8 @@ router.post(
 
     // steps resolution order: explicit caller-provided steps win; otherwise,
     // when manifestId is set, PlanBuilder generates them from the manifest
-    // (see header comment — F1 landed 2026-07-16).
+    // (F1, 2026-07-16); otherwise, when processId is set, ProcessLibrary lays
+    // down a whole consulting process (AGT-006 — default classic-5, variant drd).
     let steps = body.steps;
 
     if (body.manifestId) {
@@ -169,6 +211,24 @@ router.post(
       }
     }
 
+    // AGT-006: process generator — only when no explicit steps and no manifest
+    // resolved them. Default schema = classic-5 (5 phases Kubr/ILO); drd = variant.
+    // DOROBKA C: requiresApproval passed through — ProcessLibrary phases carry
+    // an explicit override for phases that need a gate beyond SIDE_EFFECT_TOOLS
+    // (e.g. "Rekomendacje"); createPlan honours it over its own computation.
+    if ((!steps || steps.length === 0) && body.processId) {
+      const generated = buildStepsFromProcess(body.processId, body.processContext);
+      steps = generated.map(({ toolName, toolInput, requiresApproval }) => ({
+        toolName,
+        toolInput,
+        requiresApproval,
+      }));
+      logger.info('[AgentPlanRoutes] ProcessLibrary generated steps from process', {
+        processId: body.processId,
+        stepCount: steps.length,
+      });
+    }
+
     if (!steps || steps.length === 0) {
       return res
         .status(400)
@@ -188,13 +248,107 @@ router.post(
       isBackground: true, // HP-4 default (Piotr decision pending): background, patrz nagłówek pliku
     });
 
-    const dispatch = await tryDispatchBackgroundExecution({
-      planId: plan.id,
-      organizationId,
-      userId,
-    });
+    // AGT-009 + decyzja Piotra 2026-07-23 (DOROBKA A): jawne `draft` zawsze
+    // wygrywa. Gdy nie podano jawnie, ścieżka GENERATORA (`processId` obecne)
+    // domyślnie NIE dispatchuje — plan zostaje w 'planning' do jawnego
+    // "Uruchom" (① AI kładzie schemat ② user przestawia klocki ③ dopiero wtedy
+    // dispatch). Ścieżka katalogu (`manifestId`) i jawne `steps` BEZ ZMIAN —
+    // dispatch od razu, wstecznie zgodnie z HP-4.
+    const effectiveDraft = body.draft ?? Boolean(body.processId);
+    const dispatch: 'enqueued' | 'unavailable' | 'deferred' = effectiveDraft
+      ? 'deferred'
+      : await tryDispatchBackgroundExecution({
+          planId: plan.id,
+          organizationId,
+          userId,
+        });
 
     return res.status(201).json({ success: true, plan, dispatch });
+  })
+);
+
+/**
+ * PATCH /api/ai/agent-plan/:id/steps
+ * AGT-009 (partia 2): zapis przestawionego/edytowanego schematu na planie, który
+ * jest jeszcze w 'planning' (przed "Uruchom"). Nadpisuje CAŁĄ listę kroków w
+ * podanej kolejności (canvas AgentPlanCanvas.tsx). Guard: plan musi być
+ * 'planning' (inaczej 409). Nie zleca wykonania — to robi dopiero POST /:id/run.
+ */
+router.patch(
+  '/:id/steps',
+  validateBody(z.object({ steps: z.array(PlanStepInputSchema).min(1).max(MAX_STEPS_PER_PLAN) })),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const userId = req.user?.id;
+    const organizationId = req.user?.organizationId;
+    if (!userId || !organizationId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const planId = String(req.params.id || '');
+    const existingPlan = await agentPlannerService.getPlan(planId);
+    if (!assertPlanInOrg(existingPlan, organizationId)) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
+    }
+    if (existingPlan.status !== 'planning') {
+      return res.status(409).json({
+        success: false,
+        error: `Plan not editable in status '${existingPlan.status}' (only 'planning')`,
+      });
+    }
+
+    const { steps } = req.body as {
+      steps: Array<{ toolName: string; toolInput: Record<string, unknown> }>;
+    };
+
+    const plan = await agentPlannerService.replaceSteps(planId, steps);
+    return res.json({ success: true, plan });
+  })
+);
+
+/**
+ * POST /api/ai/agent-plan/:id/run
+ * AGT-009 (partia 2): jawne "Uruchom" — dispatch planu, który czeka w 'planning'
+ * (utworzonego z `draft:true`). Opcjonalnie przyjmuje `steps` — wtedy najpierw
+ * zapisuje ostateczny przestawiony schemat (replaceSteps), potem zleca wykonanie
+ * w tle. Jednym żądaniem domyka ścieżkę canvas → "Uruchom" (zapis + dispatch).
+ * Guard: plan musi być 'planning' (inaczej 409 — już ruszył albo terminalny).
+ */
+router.post(
+  '/:id/run',
+  validateBody(
+    z.object({ steps: z.array(PlanStepInputSchema).min(1).max(MAX_STEPS_PER_PLAN).optional() })
+  ),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const userId = req.user?.id;
+    const organizationId = req.user?.organizationId;
+    if (!userId || !organizationId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const planId = String(req.params.id || '');
+    const existingPlan = await agentPlannerService.getPlan(planId);
+    if (!assertPlanInOrg(existingPlan, organizationId)) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
+    }
+    if (existingPlan.status !== 'planning') {
+      return res.status(409).json({
+        success: false,
+        error: `Plan not runnable in status '${existingPlan.status}' (only 'planning')`,
+      });
+    }
+
+    const { steps } = req.body as {
+      steps?: Array<{ toolName: string; toolInput: Record<string, unknown> }>;
+    };
+
+    if (steps && steps.length > 0) {
+      await agentPlannerService.replaceSteps(planId, steps);
+    }
+
+    const dispatch = await tryDispatchBackgroundExecution({ planId, organizationId, userId });
+    const plan = (await agentPlannerService.getPlan(planId)) ?? existingPlan;
+
+    return res.json({ success: true, plan, dispatch });
   })
 );
 

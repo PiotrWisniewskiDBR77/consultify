@@ -3164,6 +3164,28 @@ export const Api = {
   },
 
   /**
+   * DOROBKA B (2026-07-23, decyzja Piotra): projekty, w których wołający jest
+   * CZŁONKIEM — nie cała organizacja (`getProjects()` powyżej zwraca WSZYSTKIE
+   * projekty org, za dużo dla selektora Vault "Projekt"). Adoptuje istniejący
+   * endpoint `GET /api/projects/my-memberships`
+   * (server/src/controllers/ProjectController.ts:905 `getMyMemberships`,
+   * JOIN project_members->projects org-scoped) — był już zbudowany, ale bez
+   * konsumenta we froncie. Mapuje odpowiedź `{ memberships: [{projectId,
+   * projectName,...}] }` na płaski kształt `{id, name}`, zgodny z tym, czego
+   * oczekuje `normalizeProjects` w DocumentsRAGTab.tsx.
+   */
+  getMyProjectMemberships: async (): Promise<Array<{ id: string; name: string }>> => {
+    const res = await fetch(`${API_URL}/projects/my-memberships`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch project memberships');
+    const data = await res.json();
+    const memberships = Array.isArray(data?.memberships) ? data.memberships : [];
+    return memberships.map((m: any) => ({
+      id: String(m.projectId || ''),
+      name: String(m.projectName || ''),
+    }));
+  },
+
+  /**
    * Zwornik Delta B (§4.2) — project finance rollup (read-model only).
    * SSOT: Harvard/wdrozenie-100/_KONCEPT_ZWORNIK_2026-07-10.md.
    * Backend: `ProjectController.getProjectFinance` / `projectFinanceRollupService.ts`.
@@ -7761,14 +7783,29 @@ export const Api = {
     return data;
   },
 
-  getKnowledgeDocuments: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/knowledge/documents`, { headers: getHeaders() });
+  getKnowledgeDocuments: async (filters?: {
+    scope?: 'user' | 'project' | 'organization';
+    projectId?: string;
+  }): Promise<any[]> => {
+    const params = new URLSearchParams();
+    if (filters?.scope) params.set('scope', filters.scope);
+    if (filters?.projectId) params.set('project_id', filters.projectId);
+    const qs = params.toString();
+    const res = await fetch(`${API_URL}/knowledge/documents${qs ? `?${qs}` : ''}`, {
+      headers: getHeaders(),
+    });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to fetch docs');
     return data;
   },
 
-  uploadKnowledgeDocument: async (file: File, category?: string, tags?: string[]): Promise<any> => {
+  uploadKnowledgeDocument: async (
+    file: File,
+    category?: string,
+    tags?: string[],
+    scope?: 'user' | 'project' | 'organization',
+    projectId?: string
+  ): Promise<any> => {
     const formData = new FormData();
     formData.append('file', file);
     if (category) {
@@ -7776,6 +7813,12 @@ export const Api = {
     }
     if (Array.isArray(tags) && tags.length > 0) {
       formData.append('tags', JSON.stringify(tags));
+    }
+    if (scope) {
+      formData.append('scope', scope);
+    }
+    if (scope === 'project' && projectId) {
+      formData.append('project_id', projectId);
     }
 
     // Content-Type header must NOT be set manually for FormData, browser sets it with boundary
@@ -11947,6 +11990,38 @@ export const Api = {
     });
     const out = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((out as any)?.error || 'Failed to delete document');
+    return out;
+  },
+  // ★ VLT-003 — dry-run wpływu zmiany zakresu (nie zapisuje nic w bazie), wołane
+  // PRZED PATCH .../scope, żeby pokazać ostrzeżenie „X dokumentów stanie się
+  // widocznych dla całej organizacji" i dać użytkownikowi anulować.
+  getKnowledgeDocumentScopeImpact: async (
+    id: string,
+    scope: 'user' | 'project' | 'organization'
+  ): Promise<{ previousScope: string; requestedScope: string; becameOrgVisibleCount: number }> => {
+    const params = new URLSearchParams({ scope });
+    const res = await fetch(
+      `${API_URL}/knowledge/documents/${id}/scope-impact?${params.toString()}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((out as any)?.error || 'Failed to check scope impact');
+    return out;
+  },
+  updateKnowledgeDocumentScope: async (
+    id: string,
+    scope: 'user' | 'project' | 'organization',
+    projectId?: string
+  ) => {
+    const res = await fetch(`${API_URL}/knowledge/documents/${id}/scope`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ scope, project_id: scope === 'project' ? projectId : undefined }),
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((out as any)?.error || 'Failed to update document scope');
     return out;
   },
   // Approval workflows

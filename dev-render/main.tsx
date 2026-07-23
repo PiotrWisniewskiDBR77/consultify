@@ -23,6 +23,7 @@ import i18n from '../src/i18n';
 import AccentSoftTokenFixScreen from './screens/accent-soft-token-fix';
 import AdminCommandCenterPanelScreen from './screens/admin-command-center-panel';
 import AdminSsoSelfServiceCardScreen from './screens/admin-sso-self-service-card';
+import AgentPlanCanvasScreen from './screens/agent-plan-canvas';
 import AgentPlanViewScreen from './screens/agent-plan-view';
 import AssessmentInitiativesPanelScreen from './screens/assessment-initiatives-panel';
 import AssessmentInitiativesTableScreen from './screens/assessment-initiatives-table';
@@ -87,6 +88,12 @@ import KartaNotificationScreen from './screens/karta-notification';
 import KartaTaskScreen from './screens/karta-task';
 import PreviewZakladkiScreen from './screens/preview-4-zakladki';
 import IdeaTableToolKebabScreen from './screens/idea-table-tool-kebab';
+// VLT-003 — importem MUSI być ostatnia: każdy dev-render screen instaluje swój
+// window.fetch stub jako top-level side effect przy imporcie (niezależnie od
+// tego, który ?screen= jest renderowany — statyczne importy main.tsx odpalają
+// WSZYSTKIE moduły). Import na końcu = mój stub owija wszystkie poprzednie
+// jako fallback i jego warunki są sprawdzane PIERWSZE (patrz DZIENNIK VLT-003).
+import VaultScopeSelectorScreen from './screens/vault-scope-selector';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
@@ -179,6 +186,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'HP-4 F3 — /agent-plan entry point (AgentManifestLauncher → AgentPlanPanel), ff_agentPlan; append &ff_agentPlan=1 to the URL',
     render: () => <AgentPlanViewScreen />,
+  },
+  'agent-plan-canvas': {
+    label:
+      'AGT-007 — AgentPlanCanvas przestawialny schemat (ścieżka ① 5-fazowy vs ② pusty), status planning',
+    render: () => <AgentPlanCanvasScreen />,
   },
   'capability-gate-demo': {
     label: 'Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)',
@@ -378,6 +390,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'I1-I3 Faza 0/1 — UnifiedCreateLauncher "+ Nowy" (Insight/Initiative/Decision), Krok 0 — &context=mywork|interview|initiatives',
     render: () => <UnifiedCreateLauncherScreen />,
+  },
+  'vault-scope-selector': {
+    label:
+      'VLT-003 — REALNY <DocumentsRAGTab variant="client"> — selektor poziomu upload, badge, filtr, ostrzeżenie zmiany zakresu',
+    render: () => <VaultScopeSelectorScreen />,
   },
 };
 

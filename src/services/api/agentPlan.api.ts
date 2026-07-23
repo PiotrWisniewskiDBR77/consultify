@@ -76,19 +76,66 @@ export interface CreateAgentPlanInput {
    * step list from the manifest. Provide explicit steps to override.
    */
   steps?: Array<{ toolName: string; toolInput: Record<string, unknown> }>;
+  /**
+   * AGT-009: gdy `true`, backend tworzy plan (zostaje w 'planning') ale NIE
+   * zleca wykonania — schemat czeka na jawne `runAgentPlan` ("Uruchom"). To
+   * ścieżka generatora procesu: ① AI kładzie schemat → user przestawia klocki
+   * → dopiero wtedy dispatch. Bez tej flagi zachowanie jest jak dotąd.
+   */
+  draft?: boolean;
 }
+
+/** AGT-009: 'deferred' dochodzi do wyników dispatchu, gdy plan utworzono jako draft. */
+export type AgentPlanDispatch = 'enqueued' | 'unavailable' | 'deferred';
 
 export async function createAgentPlan(
   input: CreateAgentPlanInput
-): Promise<{ plan: AgentPlan; dispatch: 'enqueued' | 'unavailable' }> {
+): Promise<{ plan: AgentPlan; dispatch: AgentPlanDispatch }> {
   const res = await fetch(`${API_URL}/ai/agent-plan`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify(input),
   });
-  return handleResponse<{ plan: AgentPlan; dispatch: 'enqueued' | 'unavailable' }>(
+  return handleResponse<{ plan: AgentPlan; dispatch: AgentPlanDispatch }>(
     res,
     'Failed to create agent plan'
+  );
+}
+
+/**
+ * AGT-009: zapis przestawionego/edytowanego schematu na planie w 'planning'
+ * (PATCH /:id/steps). Nadpisuje całą listę kroków w podanej kolejności. NIE
+ * uruchamia planu — to robi `runAgentPlan`.
+ */
+export async function updateAgentPlanSteps(
+  planId: string,
+  steps: Array<{ toolName: string; toolInput: Record<string, unknown> }>
+): Promise<{ plan: AgentPlan }> {
+  const res = await fetch(`${API_URL}/ai/agent-plan/${encodeURIComponent(planId)}/steps`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify({ steps }),
+  });
+  return handleResponse<{ plan: AgentPlan }>(res, 'Failed to update agent plan steps');
+}
+
+/**
+ * AGT-009: jawne "Uruchom" (POST /:id/run) — dispatch planu z 'planning'.
+ * Opcjonalne `steps` zapisują ostateczny przestawiony schemat przed dispatchem
+ * (canvas → "Uruchom" jednym żądaniem: zapis + start).
+ */
+export async function runAgentPlan(
+  planId: string,
+  steps?: Array<{ toolName: string; toolInput: Record<string, unknown> }>
+): Promise<{ plan: AgentPlan; dispatch: AgentPlanDispatch }> {
+  const res = await fetch(`${API_URL}/ai/agent-plan/${encodeURIComponent(planId)}/run`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(steps && steps.length > 0 ? { steps } : {}),
+  });
+  return handleResponse<{ plan: AgentPlan; dispatch: AgentPlanDispatch }>(
+    res,
+    'Failed to run agent plan'
   );
 }
 
