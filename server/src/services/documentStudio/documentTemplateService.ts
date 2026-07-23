@@ -503,6 +503,10 @@ export interface ReviseTemplateStructureParams {
 }
 
 const MAX_TEMPLATE_SECTIONS = 60;
+// Mirrors the Deck Template Architect's contentHints cap
+// (`presentationTemplateDraftService.ts`) — kept in sync manually.
+const MAX_CONTENT_HINTS_PER_SECTION = 4;
+const MAX_CONTENT_HINT_CHARS = 100;
 
 /**
  * Sanitize a single author-supplied section blueprint. Coerces the two
@@ -527,6 +531,17 @@ function sanitizeAuthoredSection(raw: unknown): TemplateSectionBlueprint {
       .filter((v) => v.length > 0);
     return cleaned.length > 0 ? cleaned : undefined;
   };
+  // Lenient — an invalid/missing value just means "no hints", mirrors
+  // `sanitizeContentHints` in `documentTemplateRefiner.ts` /
+  // `presentationTemplateDraftService.ts`.
+  const cleanContentHints = (value: unknown): string[] | undefined => {
+    if (!Array.isArray(value)) return undefined;
+    const cleaned = value
+      .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+      .map((v) => v.trim().slice(0, MAX_CONTENT_HINT_CHARS))
+      .slice(0, MAX_CONTENT_HINTS_PER_SECTION);
+    return cleaned.length > 0 ? cleaned : undefined;
+  };
   const section: TemplateSectionBlueprint = {
     title,
     level,
@@ -542,6 +557,8 @@ function sanitizeAuthoredSection(raw: unknown): TemplateSectionBlueprint {
     section.formattingStyle = input.formattingStyle.trim();
   }
   if (input.approvalRequired === true) section.approvalRequired = true;
+  const contentHints = cleanContentHints(input.contentHints);
+  if (contentHints) section.contentHints = contentHints;
   return section;
 }
 

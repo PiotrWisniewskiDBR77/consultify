@@ -136,4 +136,81 @@ describe('AI Template Architect refiner safety contract (MVP-3)', () => {
       expect(section.title).toBe(template.sectionBlueprint[idx].title);
     });
   });
+
+  // ---------------------------------------------------------------------
+  // contentHints (additive, 2026-07-23) — mirrors the Deck Template
+  // Architect's `refinePresentationTemplateWithLlm` content-hints contract
+  // (`presentationTemplateDraftService.test.ts`). Every pre-existing safety
+  // guarantee above (fallback on throw/malformed JSON/violation, intent —
+  // here title — immutability) is unaffected; these cases cover only the
+  // new optional field.
+  // ---------------------------------------------------------------------
+
+  it('accepts valid contentHints and attaches them per-section without touching titles/order', async () => {
+    const { template, input } = deterministicTemplate();
+    const hints = ['Frame the current-state pain points', 'Contrast before/after operating model'];
+    const sections = template.sectionBlueprint.map((s) => ({
+      title: s.title,
+      purpose: s.purpose,
+      contentHints: hints,
+    }));
+    generateChatResponseMock.mockResolvedValueOnce({
+      content: JSON.stringify({ sections }),
+    });
+    const refined = await refineTemplateWithLlm(template, input, { enable: true });
+    expect(refined.sectionBlueprint.map((s) => s.title)).toEqual(
+      template.sectionBlueprint.map((s) => s.title)
+    );
+    for (const section of refined.sectionBlueprint) {
+      expect(section.contentHints).toEqual(hints);
+    }
+  });
+
+  it('caps contentHints at 4 items and 100 chars each, dropping non-string/empty entries', async () => {
+    const { template, input } = deterministicTemplate();
+    const longHint = 'x'.repeat(200);
+    const rawHints = ['a', '', 42, 'b', 'c', longHint, 'd', 'e'];
+    const sections = template.sectionBlueprint.map((s) => ({
+      title: s.title,
+      purpose: s.purpose,
+      contentHints: rawHints,
+    }));
+    generateChatResponseMock.mockResolvedValueOnce({
+      content: JSON.stringify({ sections }),
+    });
+    const refined = await refineTemplateWithLlm(template, input, { enable: true });
+    const hints = refined.sectionBlueprint[0].contentHints!;
+    expect(hints.length).toBe(4);
+    expect(hints).toEqual(['a', 'b', 'c', longHint.slice(0, 100)]);
+    expect(hints.every((h) => h.length <= 100)).toBe(true);
+  });
+
+  it('omits contentHints (undefined) when the LLM does not supply any — never fails the refinement', async () => {
+    const { template, input } = deterministicTemplate();
+    const sections = template.sectionBlueprint.map((s) => ({
+      title: s.title,
+      purpose: `${s.purpose} (refined)`,
+    }));
+    generateChatResponseMock.mockResolvedValueOnce({
+      content: JSON.stringify({ sections }),
+    });
+    const refined = await refineTemplateWithLlm(template, input, { enable: true });
+    for (const section of refined.sectionBlueprint) {
+      expect(section.contentHints).toBeUndefined();
+    }
+  });
+
+  it('an invalid contentHints value (not an array) is lenient — still refines purpose fine', async () => {
+    const { template, input } = deterministicTemplate();
+    const sections = template.sectionBlueprint.map((s) => ({
+      title: s.title,
+      purpose: s.purpose,
+      contentHints: 'not an array',
+    }));
+    generateChatResponseMock.mockResolvedValueOnce({
+      content: JSON.stringify({ sections }),
+    });
+    const refined = await refineTemplateWithLlm(template, input, { enable: true });
+    expect(refined.sectionBlueprint[0].contentHints).toBeUndefined();
+  });
 });

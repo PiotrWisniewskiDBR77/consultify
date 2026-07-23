@@ -365,6 +365,13 @@ export interface TemplateSectionBlueprint {
   optionalData?: string[];
   formattingStyle?: string;
   approvalRequired?: boolean;
+  /**
+   * Optional 2-4 short thematic guidance phrases for this section — content
+   * STRUCTURE guidance, never fabricated facts/numbers (this is a reusable
+   * template, not a specific document). Mirrors the Deck Template
+   * Architect's `contentHints` field. `undefined` means "no guidance yet".
+   */
+  contentHints?: string[];
 }
 
 export interface TemplateExportRules {

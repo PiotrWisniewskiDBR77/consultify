@@ -118,6 +118,31 @@ describe('reviseTemplateStructure — author manual structure editor', () => {
     ).toThrow('template_not_draft');
   });
 
+  it('persists author-typed contentHints and caps them at 4 items / 100 chars each', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      input: { purpose: 'Content hints test', documentType: 'executive_memo' },
+    });
+
+    const longHint = 'y'.repeat(200);
+    const next = reviseTemplateStructure({
+      templateId: template.templateId,
+      organizationId: 'org-A',
+      userId: 'user-1',
+      sections: [
+        {
+          ...section('Intro'),
+          contentHints: ['a', '', 'b', 'c', longHint, 'd', 'e'] as unknown as string[],
+        },
+      ],
+    });
+
+    const hints = next.sectionBlueprint[0].contentHints!;
+    expect(hints.length).toBe(4);
+    expect(hints).toEqual(['a', 'b', 'c', longHint.slice(0, 100)]);
+  });
+
   it('does not leak across tenants', () => {
     const { template } = draftTemplate({
       organizationId: 'org-A',

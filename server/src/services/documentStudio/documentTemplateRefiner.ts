@@ -10,6 +10,13 @@
  * `documentNarrativeRefiner.ts`):
  *   - May rewrite the `purpose` text of an existing section.
  *   - May propose a refined template `name`.
+ *   - May add optional per-section `contentHints` (2-4 short thematic
+ *     structure-guidance phrases, never invented facts/numbers — this is a
+ *     template, not a specific document; mirrors the Deck Template
+ *     Architect's `contentHints`, see `presentationTemplateDraftService.ts`).
+ *     An invalid/missing `contentHints` value is lenient (falls back to "no
+ *     hints"), it never invalidates the whole refinement the way a
+ *     title/section violation does.
  *   - May NOT add new sections.
  *   - May NOT remove sections.
  *   - May NOT rename sections.
@@ -31,10 +38,26 @@ import type {
 
 const MODEL_DEFAULT = 'default';
 const MAX_TOKENS_DEFAULT = 1200;
+const MAX_CONTENT_HINTS_PER_SECTION = 4;
+const MAX_CONTENT_HINT_CHARS = 100;
 
 interface LlmTemplateRefinementResponse {
   name?: unknown;
-  sections?: Array<{ title?: unknown; purpose?: unknown }>;
+  sections?: Array<{ title?: unknown; purpose?: unknown; contentHints?: unknown }>;
+}
+
+/**
+ * Lenient — an invalid/missing value just means "no hints", never fails the
+ * refinement. Mirrors `sanitizeContentHints` in
+ * `presentationTemplateDraftService.ts` (Deck Template Architect).
+ */
+function sanitizeContentHints(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const hints = raw
+    .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    .map((item) => item.trim().slice(0, MAX_CONTENT_HINT_CHARS))
+    .slice(0, MAX_CONTENT_HINTS_PER_SECTION);
+  return hints.length > 0 ? hints : undefined;
 }
 
 function safeParseJson(raw: string): LlmTemplateRefinementResponse | null {
@@ -59,9 +82,10 @@ function buildSystemPrompt(): string {
     'You are a senior consulting document architect refining a Word/PDF template.',
     'You MAY rewrite the "purpose" text of each section in the same language as the input.',
     'You MAY propose a refined "name" for the template.',
+    'You MAY add "contentHints": 2-4 short phrases per section guiding WHAT KIND of content belongs there (e.g. "Contrast current-state pain points with target state", "List the top 3 risks with owner and mitigation") — this is a REUSABLE TEMPLATE, not a specific document, so hints MUST describe content structure/themes only and MUST NOT invent specific numbers, dates, client names, or other facts.',
     'You MUST keep exactly the same set of section titles you receive (same order, no rename, no addition, no removal).',
     'You MUST NOT change document type, category, language, formatting, required inputs, audience, density or any other field.',
-    'You MUST respond with strict JSON in this shape: {"name":"<optional refined name>","sections":[{"title":"<exact original title>","purpose":"<refined purpose>"}, ...]}',
+    'You MUST respond with strict JSON in this shape: {"name":"<optional refined name>","sections":[{"title":"<exact original title>","purpose":"<refined purpose>","contentHints":["<optional phrase>", ...]}, ...]}',
     'No prose, no commentary, JSON only.',
   ].join(' ');
 }
@@ -148,7 +172,7 @@ export async function refineTemplateWithLlm(
   const parsedSections = parsed.sections;
   const refinedBlueprint: TemplateSectionBlueprint[] = template.sectionBlueprint.map((original) => {
     const entry = parsedSections.find(
-      (e): e is { title: string; purpose?: unknown } =>
+      (e): e is { title: string; purpose?: unknown; contentHints?: unknown } =>
         typeof e?.title === 'string' && e.title === original.title
     );
     if (!entry) return original;
@@ -156,7 +180,8 @@ export async function refineTemplateWithLlm(
       typeof entry.purpose === 'string' && entry.purpose.trim().length > 0
         ? entry.purpose.trim()
         : original.purpose;
-    return { ...original, purpose: refinedPurpose };
+    const contentHints = sanitizeContentHints(entry.contentHints) ?? original.contentHints;
+    return { ...original, purpose: refinedPurpose, contentHints };
   });
 
   const refinedName =

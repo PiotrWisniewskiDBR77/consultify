@@ -175,6 +175,19 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     });
   };
 
+  const handleEditSectionHintsChange = (index: number, rawText: string): void => {
+    const hints = rawText
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    setEditSections((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const next = [...prev];
+      next[index] = { ...next[index], contentHints: hints.length > 0 ? hints : undefined };
+      return next;
+    });
+  };
+
   const handleSaveStructure = async (): Promise<void> => {
     if (!selectedTemplate) return;
     setSavingStructure(true);
@@ -607,63 +620,82 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                   {editSections.map((section, idx) => (
                     <li
                       key={`${selectedTemplate.templateId}-edit-section-${idx}`}
-                      className="group flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-c-surface focus-within:bg-c-surface"
+                      className="group flex flex-col gap-1 rounded-md px-1.5 py-1 hover:bg-c-surface focus-within:bg-c-surface"
                     >
-                      <span className="w-5 shrink-0 text-right text-xs tabular-nums text-c-text-secondary">
-                        {idx + 1}.
-                      </span>
-                      <input
-                        type="text"
-                        value={section.title}
-                        onChange={(e) => renameEditSection(idx, e.target.value)}
-                        aria-label={t(
-                          'documentStudio.templateArchitect.sectionTitleLabel',
-                          'Section title'
-                        )}
-                        placeholder={t(
-                          'documentStudio.templateArchitect.sectionTitlePlaceholder',
-                          'Section title'
-                        )}
-                        className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-c-text hover:border-c-border-subtle focus:border-c-focus-solid focus:bg-c-surface focus:outline-none focus:ring-2 focus:ring-c-focus"
-                      />
-                      <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-                        <button
-                          type="button"
-                          onClick={() => setEditSections((prev) => reorderSection(prev, idx, 'up'))}
-                          disabled={idx === 0}
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 shrink-0 text-right text-xs tabular-nums text-c-text-secondary">
+                          {idx + 1}.
+                        </span>
+                        <input
+                          type="text"
+                          value={section.title}
+                          onChange={(e) => renameEditSection(idx, e.target.value)}
                           aria-label={t(
-                            'documentStudio.templateArchitect.moveSectionUp',
-                            'Move section up'
+                            'documentStudio.templateArchitect.sectionTitleLabel',
+                            'Section title'
                           )}
-                          className="rounded p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus disabled:cursor-not-allowed disabled:opacity-30"
-                        >
-                          <ChevronUp className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setEditSections((prev) => reorderSection(prev, idx, 'down'))
-                          }
-                          disabled={idx === editSections.length - 1}
-                          aria-label={t(
-                            'documentStudio.templateArchitect.moveSectionDown',
-                            'Move section down'
+                          placeholder={t(
+                            'documentStudio.templateArchitect.sectionTitlePlaceholder',
+                            'Section title'
                           )}
-                          className="rounded p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus disabled:cursor-not-allowed disabled:opacity-30"
-                        >
-                          <ChevronDown className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditSections((prev) => removeSection(prev, idx))}
-                          aria-label={t(
-                            'documentStudio.templateArchitect.removeSection',
-                            'Remove section'
+                          className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-c-text hover:border-c-border-subtle focus:border-c-focus-solid focus:bg-c-surface focus:outline-none focus:ring-2 focus:ring-c-focus"
+                        />
+                        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEditSections((prev) => reorderSection(prev, idx, 'up'))
+                            }
+                            disabled={idx === 0}
+                            aria-label={t(
+                              'documentStudio.templateArchitect.moveSectionUp',
+                              'Move section up'
+                            )}
+                            className="rounded p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus disabled:cursor-not-allowed disabled:opacity-30"
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEditSections((prev) => reorderSection(prev, idx, 'down'))
+                            }
+                            disabled={idx === editSections.length - 1}
+                            aria-label={t(
+                              'documentStudio.templateArchitect.moveSectionDown',
+                              'Move section down'
+                            )}
+                            className="rounded p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus disabled:cursor-not-allowed disabled:opacity-30"
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditSections((prev) => removeSection(prev, idx))}
+                            aria-label={t(
+                              'documentStudio.templateArchitect.removeSection',
+                              'Remove section'
+                            )}
+                            className="rounded p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="pl-7">
+                        <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                          {t('documentStudio.templateArchitect.contentHints', 'Content guidance')}
+                        </span>
+                        <textarea
+                          value={(section.contentHints ?? []).join('\n')}
+                          onChange={(e) => handleEditSectionHintsChange(idx, e.target.value)}
+                          rows={Math.max(2, (section.contentHints ?? []).length)}
+                          placeholder={t(
+                            'documentStudio.templateArchitect.contentHintsPlaceholder',
+                            'One guidance phrase per line — what this section should cover (no invented facts). Use "Refine with AI" on a new draft to auto-suggest.'
                           )}
-                          className="rounded p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                          className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                        />
                       </div>
                     </li>
                   ))}
@@ -693,12 +725,24 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                   {t('documentStudio.templateArchitect.sectionBlueprint', 'Section blueprint')} —{' '}
                   {selectedTemplate.name}
                 </div>
-                <ol className="mt-2 list-decimal space-y-1 pl-5 text-c-text">
+                <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-c-text">
                   {selectedTemplate.sectionBlueprint.map((section, idx) => (
                     <li key={`${selectedTemplate.templateId}-section-${idx}`}>
                       <span className="font-medium">{section.title}</span>
                       {section.purpose ? (
                         <span className="text-xs text-c-text-secondary"> — {section.purpose}</span>
+                      ) : null}
+                      {section.contentHints && section.contentHints.length > 0 ? (
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          {section.contentHints.map((hint, hintIdx) => (
+                            <span
+                              key={`${selectedTemplate.templateId}-section-${idx}-hint-${hintIdx}`}
+                              className="rounded-full border border-c-border-subtle bg-c-surface px-2.5 py-0.5 text-[11px] text-c-text-secondary"
+                            >
+                              {hint}
+                            </span>
+                          ))}
+                        </div>
                       ) : null}
                     </li>
                   ))}
