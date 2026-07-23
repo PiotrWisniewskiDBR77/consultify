@@ -75,6 +75,10 @@ import {
   NModeSectionWrapper,
 } from '@/components/shared/NModeLayout';
 import { Menu2AIButton, NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
+// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+import type { CardAnalysisField } from '@/services/cardAnalysis';
+import { NCardAIAnalysisPanel } from '@/components/shared/NModeLayout/NCardAIAnalysisPanel';
+import { useCardAIAnalysis } from '@/components/shared/NModeLayout/useCardAIAnalysis';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 // ToolbarAISolidButton celowo NIE importowany (SPEC-N §2.3 — poza slotem primary
 // nic nie jest solid; AI Consultant zjechał na wariant outline/split).
@@ -7909,6 +7913,164 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     genOpen,
   ]);
 
+  // ── ETAP 3 standardu n-Type: „Analizuj z AI" AKTYWNEJ KARTY ────────────────
+  // Kryteria oceny Insightu (kontrakt właściciela 2026-07-23) żyją w rubryce
+  // silnika (`ARTIFACT_CRITERIA.insight`): jasność tezy · jakość dowodów ·
+  // poziom pewności · brakujące źródła · sprzeczności · potencjalny wpływ ·
+  // gotowość do konwersji.
+  //
+  // ★ WSZYSTKIE POLA SĄ TYLKO-DO-ODCZYTU — i to jest STAN FAKTYCZNY, nie wybór:
+  //   backend NIE MA endpointu zapisu treści kart Insightu. `updateInsight`
+  //   (src/services/api/v8/interview.ts:790) przyjmuje wyłącznie
+  //   title/status/exportedTo*/archived/sectionCompletions; treść analityczna
+  //   (executiveSummary, themes, issues, opportunities, signals) powstaje z
+  //   generacji i jedyną drogą jej zmiany jest `regenerateInsight` — czyli
+  //   przepisanie CAŁOŚCI, nie pojedynczej poprawki.
+  //   Skutkiem: panel pokazuje Braki/Ryzyka/Sugestie w pełni, a „Proponowane
+  //   zmiany" dostają „Kopiuj treść" zamiast „Zastosuj", z jawnym powodem.
+  //   Czego brakuje po stronie backendu, żeby „Zastosuj" zadziałało:
+  //   PATCH /interview/insights/:id z polami treści kart (patrz raport).
+  const insightAnalysisFields = useMemo<CardAnalysisField[]>(() => {
+    const asLines = (items: unknown[], toText: (x: any) => string) =>
+      (items || []).map((x) => `- ${toText(x)}`).join('\n');
+
+    const field = (id: string, label: string, value: string): CardAnalysisField => ({
+      id,
+      label,
+      value,
+      kind: 'text',
+      writable: false,
+    });
+
+    switch (activeNSection) {
+      case 'executive-summary':
+        return [
+          field(
+            'executive-summary',
+            isPolish ? 'Podsumowanie' : 'Executive summary',
+            insight?.executiveSummary || executiveSummary || ''
+          ),
+        ];
+
+      case 'consulting-readout':
+        return [
+          field(
+            'consulting-readout',
+            isPolish ? 'Odczyt konsultingowy' : 'Consulting readout',
+            insight?.content || ''
+          ),
+        ];
+
+      case 'themes':
+        return [
+          field(
+            'themes',
+            isPolish ? 'Tematy' : 'Themes',
+            asLines(v6Themes, (th) => `${th?.title ?? th?.name ?? ''}: ${th?.description ?? ''}`)
+          ),
+        ];
+
+      case 'issues-risks':
+        return [
+          field(
+            'issues-risks',
+            isPolish ? 'Problemy i ryzyka' : 'Issues & risks',
+            asLines(v6Issues, (i) => `${i?.title ?? ''}: ${i?.description ?? ''}`)
+          ),
+        ];
+
+      case 'opportunities':
+        return [
+          field(
+            'opportunities',
+            isPolish ? 'Przestrzenie szans' : 'Opportunity spaces',
+            asLines(v6Opportunities, (o) => `${o?.title ?? ''}: ${o?.description ?? ''}`)
+          ),
+        ];
+
+      case 'signals':
+        return [
+          field(
+            'signals',
+            isPolish ? 'Sygnały' : 'Signals',
+            asLines(v6Signals, (s) => `${s?.title ?? s?.signal ?? ''}: ${s?.description ?? ''}`)
+          ),
+        ];
+
+      default:
+        // Karty pochodne (macierz, cytaty, przemilczenia, konsensus…) są
+        // wyliczane z tych samych źródeł co powyżej. Zamiast zgadywać ich
+        // wewnętrzny kształt, podajemy trzon Insightu jako kontekst i MÓWIMY,
+        // że treść tej karty nie jest wystawiona do analizy pole-po-polu.
+        return [
+          field(
+            'insight-core',
+            isPolish ? 'Treść wniosku (trzon)' : 'Insight content (core)',
+            insight?.content || insight?.executiveSummary || ''
+          ),
+        ];
+    }
+  }, [
+    activeNSection,
+    isPolish,
+    insight,
+    executiveSummary,
+    v6Themes,
+    v6Issues,
+    v6Opportunities,
+    v6Signals,
+  ]);
+
+  const buildInsightAnalysisInput = useCallback(() => {
+    const ctx = [
+      `${isPolish ? 'Status' : 'Status'}: ${insight?.status ?? '—'}`,
+      `${isPolish ? 'Status przeglądu' : 'Review status'}: ${insight?.reviewStatus ?? '—'}`,
+      `${isPolish ? 'Liczba sesji źródłowych' : 'Source sessions'}: ${insight?.sourceSessionCount ?? 0}`,
+      // „brakujące źródła" i „jakość dowodów" bez tych dwóch pól byłyby zgadywaniem.
+      `${isPolish ? 'Brakujące dane (zadeklarowane)' : 'Missing data (declared)'}: ${
+        (insight?.missingData || []).join('; ') || '—'
+      }`,
+      `${isPolish ? 'Wpisów mapy dowodów' : 'Evidence map entries'}: ${
+        (insight?.evidenceMap || []).length
+      }`,
+      activeNSection !== 'executive-summary' && (insight?.executiveSummary || executiveSummary)
+        ? `${isPolish ? 'Podsumowanie' : 'Executive summary'}: ${insight?.executiveSummary || executiveSummary}`
+        : '',
+      `${isPolish ? 'Tematy' : 'Themes'}: ${v6Themes.length} · ${isPolish ? 'Problemy' : 'Issues'}: ${v6Issues.length} · ${isPolish ? 'Szanse' : 'Opportunities'}: ${v6Opportunities.length}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    return {
+      artifactType: 'insight' as const,
+      cardId: activeNSection,
+      artifactTitle: insight?.title ?? '',
+      artifactContext: ctx,
+      fields: insightAnalysisFields,
+      isPolish,
+    };
+  }, [
+    activeNSection,
+    isPolish,
+    insight,
+    executiveSummary,
+    v6Themes,
+    v6Issues,
+    v6Opportunities,
+    insightAnalysisFields,
+  ]);
+
+  // Brak endpointu zapisu treści karty ⇒ żadna zmiana nie jest zapisywalna.
+  // Zwracamy `false`, a nie „true na niby" — panel i tak nie pokaże „Zastosuj",
+  // bo `writableFieldIds` jest puste; to drugi zamek na wypadek regresji.
+  const applyInsightAnalysisChange = useCallback(() => false, []);
+
+  const insightCardAnalysis = useCardAIAnalysis({
+    activeCardId: activeNSection,
+    buildInput: buildInsightAnalysisInput,
+    applyChange: applyInsightAnalysisChange,
+  });
+
   // ── Render ─────────────────────────────────────────────────────────────────
   // VF1-2 (SPEC-A): swap ad-hoc spinner/error markup for the shared
   // shared/states library (record archetype) — gated (visible change,
@@ -8265,14 +8427,22 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               onReadModeChange={setReadMode}
               aiButton={
                 readMode ? undefined : (
+                  // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera panel
+                  // wyników. Było: `openInsightConsultant()` — czat konsultanta
+                  // na poziomie CAŁEGO artefaktu, bez oceny konkretnej karty.
+                  // Konsultant nie zniknął: żyje w toolbarze (slot 9) i w panelu
+                  // Akcje, więc żadna zdolność nie została zabrana.
+                  // Nadpisanie etykiety zdjęte — przycisk niesie teraz nazwę ze
+                  // standardu („Analizuj z AI"), zgodną z tym, co robi.
                   <Menu2AIButton
                     isPolish={isPolish}
-                    label={t('interview.insightViewer.aiConsultant')}
+                    busy={insightCardAnalysis.loading}
+                    aria-expanded={insightCardAnalysis.open}
                     onClick={() => {
                       setExportMenuOpen(false);
                       setSectionsMenuOpen(false);
                       setAiMenuOpen(false);
-                      openInsightConsultant();
+                      insightCardAnalysis.run();
                     }}
                   />
                 )
@@ -8895,6 +9065,25 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           kontekstem insightu i publikuje 5 akcji jako przyciski komend wewnątrz
           Teresy. Komponent AIConsultantPanel nie jest już renderowany (plik
           zostaje do sprzątnięcia martwego kodu po odbiorze). */}
+
+      {/* ── ETAP 3: panel wyników „Analizuj z AI" ─────────────────────────────
+          `writableFieldIds` jest PUSTE świadomie — backend nie ma endpointu
+          zapisu treści kart Insightu (patrz komentarz przy `insightAnalysisFields`).
+          Panel pokaże Braki/Ryzyka/Sugestie i da „Kopiuj treść" zamiast
+          „Zastosuj", z jawnym powodem — zamiast udawać zapis. */}
+      <NCardAIAnalysisPanel
+        open={insightCardAnalysis.open}
+        onClose={insightCardAnalysis.close}
+        loading={insightCardAnalysis.loading}
+        result={insightCardAnalysis.result}
+        errorCode={insightCardAnalysis.errorCode}
+        serverErrorCode={insightCardAnalysis.serverErrorCode}
+        onRerun={insightCardAnalysis.rerun}
+        onApplyChange={insightCardAnalysis.applyChange}
+        writableFieldIds={[]}
+        readMode={readMode}
+        isPolish={isPolish}
+      />
 
       {/* Phase A3 — fullscreen Present mode over the canonical insight sections */}
       {presentOpen && presentCards.length > 0 && (
