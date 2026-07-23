@@ -2,15 +2,38 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 export function DynamicSwotLibraryGraphic({
+  isPolish: isPolishProp,
   variant = 'process',
 }: {
   isPolish?: boolean;
   variant?: 'process' | 'example';
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isExample = variant === 'example';
   const ns = 'discoveryToolsMain.dynamicSwotLibraryGraphic';
-  const outputs = ['Initiative', 'Report', 'Presentation', 'Idea'];
+
+  // ── MIESZANKA JĘZYKOWA — NAPRAWA 2026-07-24 (fala 2) ───────────────────────
+  // Prop `isPolish` był DEKLAROWANY, ale nigdy nie czytany, więc pigułki grafiki
+  // („Tool", „Process", „Matrix", „Output") i kafle rezultatów („Initiative",
+  // „Report", „Presentation", „Idea") renderowały się PO ANGIELSKU także w
+  // polskiej karcie. Wzorzec naprawy 1:1 z `NModeMenu2.tsx` (tabela par + `pick`)
+  // — bez nowych kluczy w translation.json, bez wyścigu „angielski default
+  // do czasu doładowania bundla".
+  const isPolish = isPolishProp ?? i18n.language === 'pl';
+  const pick = (pair: { en: string; pl: string }) => (isPolish ? pair.pl : pair.en);
+  const CHIP = {
+    tool: { en: 'Tool', pl: 'Narzędzie' },
+    process: { en: 'Process', pl: 'Proces' },
+    matrix: { en: 'Matrix', pl: 'Macierz' },
+    output: { en: 'Output', pl: 'Rezultat' },
+  } as const;
+
+  const outputs = [
+    pick({ en: 'Initiative', pl: 'Inicjatywa' }),
+    pick({ en: 'Report', pl: 'Raport' }),
+    pick({ en: 'Presentation', pl: 'Prezentacja' }),
+    pick({ en: 'Idea', pl: 'Pomysł' }),
+  ];
   const strengthItems = isExample
     ? (t(`${ns}.strengthItemsExample`, { returnObjects: true }) as string[])
     : (t(`${ns}.strengthItemsProcess`, { returnObjects: true }) as string[]);
@@ -24,7 +47,9 @@ export function DynamicSwotLibraryGraphic({
     ? (t(`${ns}.threatItemsExample`, { returnObjects: true }) as string[])
     : (t(`${ns}.threatItemsProcess`, { returnObjects: true }) as string[]);
   const labels = {
-    eyebrow: 'Dynamic SWOT',
+    // Nazwa metody — po polsku tak samo jak tytuł karty w Menu 1 („Dynamiczny SWOT"),
+    // żeby ta sama rzecz nie nazywała się na jednym ekranie dwoma nazwami.
+    eyebrow: pick({ en: 'Dynamic SWOT', pl: 'Dynamiczny SWOT' }),
     title: isExample ? t(`${ns}.titleExample`) : t(`${ns}.titleProcess`),
     subtitle: isExample ? t(`${ns}.subtitleExample`) : t(`${ns}.subtitleProcess`),
     scenario: isExample ? t(`${ns}.scenarioLabelExample`) : t(`${ns}.scenarioLabelProcess`),
@@ -164,7 +189,7 @@ export function DynamicSwotLibraryGraphic({
             </span>
           </div>
           <span className="inline-flex rounded-full border border-c-border-strong bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary dark:bg-white/[0.05]">
-            Tool
+            {pick(CHIP.tool)}
           </span>
         </div>
         <div className="mt-3 max-w-4xl text-lg font-semibold leading-tight text-c-text">
@@ -208,7 +233,7 @@ export function DynamicSwotLibraryGraphic({
               </div>
             </div>
             <span className="inline-flex shrink-0 rounded-full border border-c-border-strong bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary dark:bg-white/[0.05]">
-              Process
+              {pick(CHIP.process)}
             </span>
           </div>
 
@@ -285,7 +310,7 @@ export function DynamicSwotLibraryGraphic({
                 {labels.signals}
               </div>
               <span className="inline-flex shrink-0 rounded-full border border-c-border-strong bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary dark:bg-white/[0.05]">
-                Matrix
+                {pick(CHIP.matrix)}
               </span>
             </div>
             <div className="mt-1 text-sm text-c-text-secondary">
@@ -379,7 +404,7 @@ export function DynamicSwotLibraryGraphic({
               {labels.outputs}
             </div>
             <span className="inline-flex rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">
-              Output
+              {pick(CHIP.output)}
             </span>
           </div>
           <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">

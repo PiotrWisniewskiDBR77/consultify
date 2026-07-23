@@ -1,18 +1,15 @@
 import {
   AlertTriangle,
   ArrowRight,
-  BookOpen,
   CheckCircle2,
   FileText,
   Lightbulb,
   Link2,
   Package,
-  Play,
   RefreshCw,
   ShieldCheck,
   SlidersHorizontal,
   Target,
-  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -24,7 +21,9 @@ import {
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
-import { PreviewActionBar } from '@/components/shared/PreviewPane/PreviewActionBar';
+// `PreviewActionBar` USUNIETY z importow (2026-07-24, fala 2) — jedynym jego
+// konsumentem byla sekcja ① AKCJE prawego panelu, zdjeta przez anty-duplikacje
+// SPEC-N §2.6 (obie akcje maja swoj kanoniczny dom w Menu 1 / Menu 2).
 import { PreviewRelations } from '@/components/shared/PreviewPane/PreviewRelations';
 // PRZELACZNIK Edycja|Podglad — SWIADOMIE NIE RENDEROWANY (2026-07-23).
 // `NModeMenu2` pokazuje go tylko gdy dostanie `onReadModeChange`; karta
@@ -115,6 +114,27 @@ function useToolCardContractEnabled(): boolean {
 // (useCardLayout.ts:148-151) — identyczny placeholder jak w Notification
 // (NotificationDetailView.tsx:205), wspóldzielony plik świadomie nietknięty.
 const TOOL_ARTIFACT_TYPE = 'tool' as unknown as NModeArtifactType;
+
+// ── SPEC „wszystko widoczne" — domyślny wariant Menu 2 (2026-07-24, fala 2) ──
+// Ten sam KATALOG co `TOOL_CARD_SPEC` (jedno źródło sekcji — kontrakt karty),
+// ale zestaw domyślny obejmuje KOMPLET sekcji. Dzięki temu picker „Sekcje" może
+// być w Menu 2 zawsze, a pierwszy render karty pozostaje identyczny jak przed
+// zmianą (Cel · Proces · Rezultat · Przykład). Zwężenie zestawu domyślnego do
+// rdzenia metody (3 sekcje) czeka na decyzję właściciela i dalej siedzi za flagą
+// `?cardContract=1` — patrz `toolCards.contract.ts`, „★ DO POTWIERDZENIA PIOTRA".
+//
+// Referencja MODUŁOWA (nie budowana w renderze) — `useCardLayout` wymaga
+// stabilnego `spec`, bo zasila memo warstwy layoutu.
+const TOOL_CARD_SPEC_ALL_VISIBLE = {
+  catalog: TOOL_CARD_SPEC.catalog,
+  sets: [
+    {
+      id: 'all',
+      label: { en: 'All sections', pl: 'Wszystkie sekcje' },
+      cards: TOOL_CARD_SPEC.catalog.map((c) => c.id),
+    },
+  ],
+};
 
 export function KnownToolDetailView(props: {
   toolType: string;
@@ -374,6 +394,28 @@ export function KnownToolDetailView(props: {
         'Sessions run',
         'Liczba użyć (sesje)',
         sessionStats.available ? String(sessionStats.count) : dash
+      ),
+      // ── KWANTYFIKACJA (2026-07-24, fala 2) ────────────────────────────────
+      // Sędzia merytoryki zapisał „zero liczb na całej karcie" — to nieprawda
+      // (Wejścia/Kroki procesu/Rezultaty/Liczba użyć/dwie daty były i są), ale
+      // JEDNA realna miara faktycznie leżała odłogiem: `status` każdej sesji
+      // przychodzi już w tej samej odpowiedzi `Api.listToolSessions`, z której
+      // liczymy `count`, i nikt go nie pokazywał. „Ile z uruchomionych sesji
+      // dobiegło końca" to dla biblioteki referencyjnej sygnał mocny: metoda,
+      // której nikt nie kończy, jest w praktyce trudniejsza niż w opisie.
+      // ZERO nowych zapytań, ZERO wymyślonych wartości — gdy zapytanie padło,
+      // wiersz pokazuje „—" jak pozostałe (0 ≠ „nie wiem").
+      row(
+        'sessionsCompleted',
+        'Sessions completed',
+        'Sesje ukończone',
+        sessionStats.available
+          ? `${
+              (Array.isArray(sessionStats.items) ? sessionStats.items : []).filter(
+                (s) => s.status === 'completed'
+              ).length
+            } / ${sessionStats.count}`
+          : dash
       ),
       row(
         'lastUsed',
@@ -756,7 +798,7 @@ export function KnownToolDetailView(props: {
               {t('discoveryToolsMain.knownToolDetailView.workLogic')}
             </h2>
             <span className="inline-flex shrink-0 rounded-full border border-c-border-strong bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted dark:bg-white/[0.05]">
-              Process
+              {chip({ en: 'Process', pl: 'Proces' })}
             </span>
           </div>
           <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
@@ -772,7 +814,7 @@ export function KnownToolDetailView(props: {
               {t('discoveryToolsMain.knownToolDetail.dynamicSwot.process.sessionQualityLabel')}
             </div>
             <span className="inline-flex shrink-0 rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">
-              Quality
+              {chip({ en: 'Quality', pl: 'Jakość' })}
             </span>
           </div>
           <ul className="mt-3 space-y-2 text-sm text-c-text-secondary">
@@ -795,7 +837,7 @@ export function KnownToolDetailView(props: {
               {t('discoveryToolsMain.knownToolDetailView.4CommonDecisionSituations')}
             </div>
             <span className="inline-flex shrink-0 rounded-full border border-c-info/40 bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-info dark:bg-white/[0.05]">
-              Insight
+              {chip({ en: 'Insight', pl: 'Wniosek' })}
             </span>
           </div>
           <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
@@ -859,7 +901,7 @@ export function KnownToolDetailView(props: {
               {t('discoveryToolsMain.knownToolDetailView.workingNotes')}
             </div>
             <span className="inline-flex shrink-0 rounded-full border border-amber-300/50 bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-800 dark:border-amber-800/50 dark:bg-white/[0.05] dark:text-amber-200">
-              Tips
+              {chip({ en: 'Tips', pl: 'Wskazówki' })}
             </span>
           </div>
           <ul className="mt-3 space-y-2 text-sm text-c-text-secondary">
@@ -878,12 +920,21 @@ export function KnownToolDetailView(props: {
       </div>
     );
 
+    // Etykiety pigułek — pary { en, pl } jak w `NModeMenu2` (wzorzec `L`+`pick`),
+    // bo `t(klucz, 'English default')` renderowałby po polsku angielski default.
+    // 2026-07-24 (fala 2): były to nagie łańcuchy angielskie („Decision",
+    // „Evidence", „Tensions", „Moves", „Execution") widoczne w polskiej wersji
+    // karty — zgłoszenie sędziego merytoryki (mieszanka językowa).
     const dynamicSwotOutcomeMeta = [
-      { id: 'decision-frame', badge: 'Decision', color: 'violet' as const },
-      { id: 'evidence-picture', badge: 'Evidence', color: 'sky' as const },
-      { id: 'tensions', badge: 'Tensions', color: 'amber' as const },
-      { id: 'moves', badge: 'Moves', color: 'emerald' as const },
-      { id: 'execution-bridge', badge: 'Execution', color: 'rose' as const },
+      { id: 'decision-frame', badge: chip({ en: 'Decision', pl: 'Decyzja' }), color: 'violet' as const },
+      { id: 'evidence-picture', badge: chip({ en: 'Evidence', pl: 'Dowody' }), color: 'sky' as const },
+      { id: 'tensions', badge: chip({ en: 'Tensions', pl: 'Napięcia' }), color: 'amber' as const },
+      { id: 'moves', badge: chip({ en: 'Moves', pl: 'Ruchy' }), color: 'emerald' as const },
+      {
+        id: 'execution-bridge',
+        badge: chip({ en: 'Execution', pl: 'Wykonanie' }),
+        color: 'rose' as const,
+      },
     ];
     const dynamicSwotOutcomeText = t(
       'discoveryToolsMain.knownToolDetail.dynamicSwot.outcomes.blocks',
@@ -941,7 +992,7 @@ export function KnownToolDetailView(props: {
               {t('discoveryToolsMain.knownToolDetailView.whatTheSessionProduces')}
             </h2>
             <span className="inline-flex shrink-0 rounded-full border border-c-border-strong bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted dark:bg-white/[0.05]">
-              Output
+              {chip({ en: 'Output', pl: 'Rezultat' })}
             </span>
           </div>
           <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
@@ -1004,7 +1055,7 @@ export function KnownToolDetailView(props: {
               {t('discoveryToolsMain.knownToolDetailView.whatAStrongOutcomeLooksLike')}
             </div>
             <span className="inline-flex shrink-0 rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">
-              Quality
+              {chip({ en: 'Quality', pl: 'Jakość' })}
             </span>
           </div>
           <p className="mt-3 text-sm leading-relaxed text-c-text-secondary">
@@ -1395,20 +1446,26 @@ export function KnownToolDetailView(props: {
       </div>
     );
 
+    // Tytuły kafli — pary { en, pl } przez `chip` (2026-07-24, fala 2). Były
+    // nagimi łańcuchami angielskimi w polskiej karcie, tak samo jak pigułki
+    // Rezultatu (ta sama klasa defektu, inne narzędzie biblioteki).
     const portfolioProcessSection = (
       <div className="grid gap-4 md:grid-cols-2">
         {[
           [
-            'Mission',
+            chip({ en: 'Mission', pl: 'Cel sesji' }),
             t('discoveryToolsMain.knownToolDetail.portfolioPriority.process.missionText'),
           ],
           [
-            'Evidence',
+            chip({ en: 'Evidence', pl: 'Dowody' }),
             t('discoveryToolsMain.knownToolDetail.portfolioPriority.process.evidenceText'),
           ],
-          ['Items', t('discoveryToolsMain.knownToolDetail.portfolioPriority.process.itemsText')],
           [
-            'Outputs',
+            chip({ en: 'Items', pl: 'Pozycje portfela' }),
+            t('discoveryToolsMain.knownToolDetail.portfolioPriority.process.itemsText'),
+          ],
+          [
+            chip({ en: 'Outputs', pl: 'Materiały wyjściowe' }),
             t('discoveryToolsMain.knownToolDetail.portfolioPriority.process.outputsText'),
           ],
         ].map(([title, text]) => (
@@ -1482,13 +1539,22 @@ export function KnownToolDetailView(props: {
     const riskProcessSection = (
       <div className="grid gap-4 md:grid-cols-2">
         {[
-          ['Mission', t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.missionText')],
           [
-            'Evidence',
+            chip({ en: 'Mission', pl: 'Cel sesji' }),
+            t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.missionText'),
+          ],
+          [
+            chip({ en: 'Evidence', pl: 'Dowody' }),
             t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.evidenceText'),
           ],
-          ['Risk map', t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.riskMapText')],
-          ['Outputs', t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.outputsText')],
+          [
+            chip({ en: 'Risk map', pl: 'Mapa ryzyk' }),
+            t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.riskMapText'),
+          ],
+          [
+            chip({ en: 'Outputs', pl: 'Materiały wyjściowe' }),
+            t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.outputsText'),
+          ],
         ].map(([title, text]) => (
           <div
             key={title}
@@ -1803,56 +1869,72 @@ export function KnownToolDetailView(props: {
   // applyToSections/manager nie są używane ⇒ zachowanie 1:1 bez zmian (zero
   // regresji na demo — reguła #7/#9 CLAUDE.md).
   const toolCardContractEnabled = useToolCardContractEnabled();
-  // Osobny namespace klucza (v2-contract) — spójny z wzorcem Notification;
-  // wyłączenie flagi wraca do dawnej ścieżki bez utraty stanu.
-  const toolCardLayoutStorageKey = `tool:nmode:card-layout:v2-contract:${tool?.toolType || toolType}`;
+  // Osobny namespace klucza per WARIANT SPEC-u — layout zapisany przy węższym
+  // zestawie domyślnym nie może być odczytany jako layout zestawu pełnego
+  // (i odwrotnie), bo `order`/`visible` odnoszą się do innego zestawu bazowego.
+  const toolCardLayoutStorageKey = `tool:nmode:card-layout:${
+    toolCardContractEnabled ? 'v2-contract' : 'v2-all'
+  }:${tool?.toolType || toolType}`;
   const initialToolCardLayout = useMemo<CardLayout | null>(() => {
-    if (!toolCardContractEnabled) return null;
     try {
       const raw = localStorage.getItem(toolCardLayoutStorageKey);
       return raw ? (JSON.parse(raw) as CardLayout) : null;
     } catch {
       return null;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toolCardLayoutStorageKey, toolCardContractEnabled]);
+  }, [toolCardLayoutStorageKey]);
   const persistToolCardLayout = useCallback(
     (next: CardLayout) => {
-      if (!toolCardContractEnabled) return;
       try {
         localStorage.setItem(toolCardLayoutStorageKey, JSON.stringify(next));
       } catch {
         /* localStorage niedostępny — layout pozostaje w pamięci sesji */
       }
     },
-    [toolCardLayoutStorageKey, toolCardContractEnabled]
+    [toolCardLayoutStorageKey]
   );
 
   const toolCardLayout = useCardLayout({
     // INERTNE gdy `spec` podany (patrz TOOL_ARTIFACT_TYPE wyżej).
     artifactType: TOOL_ARTIFACT_TYPE,
-    spec: TOOL_CARD_SPEC,
+    // ── MENU 2, LEWY SLOT (naprawa 2026-07-24, fala 2) ──────────────────────
+    // Do tej pory `spec` był ZAWSZE `TOOL_CARD_SPEC`, którego zestaw domyślny
+    // jest WĘŻSZY (Cel/Proces/Rezultat — „Przykład" ukryty; patrz
+    // `toolCards.contract.ts`, oznaczone „★ DO POTWIERDZENIA PIOTRA"). Dlatego
+    // cała warstwa managera wisiała za flagą `?cardContract=1` i przy domyślnym
+    // OFF lewa strefa Menu 2 była PUSTA — to jest zgłoszony defekt.
+    //
+    // Rozdzielamy dwie rzeczy, które były sklejone w jedną flagę:
+    //   (a) CZY karta ma picker „Sekcje"  → od teraz ZAWSZE (sterowanie
+    //       widocznością to preferencja WIDOKU, nie zapis danych, więc
+    //       read-only jej nie blokuje — picker ma realny skutek: chowa/pokazuje
+    //       sekcję w lewej nawigacji i w centrum),
+    //   (b) JAKI jest zestaw DOMYŚLNY     → nadal za flagą (propozycja zwężenia
+    //       czeka na decyzję właściciela).
+    // Przy OFF podajemy spec o tym samym katalogu, ale z zestawem domyślnym =
+    // WSZYSTKIE 4 sekcje ⇒ pierwszy render jest co do sekcji identyczny jak
+    // przed zmianą (zero regresji), a picker i tak działa.
+    spec: toolCardContractEnabled ? TOOL_CARD_SPEC : TOOL_CARD_SPEC_ALL_VISIBLE,
     initialLayout: initialToolCardLayout,
     onLayoutChange: persistToolCardLayout,
   });
 
-  // Sekcje przekazywane do NModeShell: gdy flaga ON, filtruj+porządkuj przez
-  // layout (węższy domyślny; „Przykład" dodawalny); gdy OFF, surowe `sections`
-  // bez zmian — to jest gwarancja zero regresji przy OFF.
+  // Sekcje przekazywane do NModeShell — layout stosowany ZAWSZE, bo picker
+  // „Sekcje" jest teraz stały. Przy fladze OFF zestaw domyślny obejmuje komplet
+  // sekcji, więc wynik początkowy = surowe `sections`.
   const orderedToolSections = useMemo<NModeSection[]>(
-    () => (toolCardContractEnabled ? toolCardLayout.applyToSections(sections) : sections),
-    [toolCardContractEnabled, toolCardLayout, sections]
+    () => toolCardLayout.applyToSections(sections),
+    [toolCardLayout, sections]
   );
 
-  // Gdy flaga ON i aktywna sekcja została ukryta w pickerze — przeskocz na
-  // pierwszą widoczną (analogicznie do Notification).
+  // Gdy aktywna sekcja została ukryta w pickerze — przeskocz na pierwszą
+  // widoczną (analogicznie do Notification).
   useEffect(() => {
-    if (!toolCardContractEnabled) return;
     const visibleIds = toolCardLayout.visibleOrderedIds;
     if (visibleIds.length > 0 && !visibleIds.includes(activeSection)) {
       setActiveSection(visibleIds[0]);
     }
-  }, [toolCardContractEnabled, toolCardLayout.visibleOrderedIds, activeSection]);
+  }, [toolCardLayout.visibleOrderedIds, activeSection]);
 
   // R2 (KONTRAKT §9): każda sekcja centrum renderowana przez Tool ma wpis w
   // katalogu kanonicznym. Cichy dev-only sygnał rozjazdu id kod↔katalog.
@@ -2005,6 +2087,32 @@ export function KnownToolDetailView(props: {
   //    wpisem „utworzono" udawałby dziennik zmian, którego system nie prowadzi
   //    (brak audytu na `known_tools`, brak PUT/PATCH → nie ma nawet czego
   //    zapisywać). → ZGŁOSZONE w raporcie.
+  //
+  // ── SPROSTOWANIE WŁASNEGO SPRAWDZENIA (2026-07-24, fala 2) ────────────────
+  // Powyższe zdanie „Nie ma `known_tool_comments`" jest PRAWDZIWE co do nazwy,
+  // ale MYLĄCE co do faktu: tabela `tool_comments` ISTNIEJE
+  // (`server/migrations-v2/001_baseline_20260413.sql:29088`, tworzona też przez
+  // `ensureToolCommentsSchema` w `ToolController.ts:498`). WNIOSEK MIMO TO STOI,
+  // tylko z innego powodu: jej kluczem jest `tool_session_id` + `organization_id`
+  // (`ToolController.ts:500-508`, odczyt `:2278` filtruje
+  // `WHERE c.tool_session_id = ? AND c.organization_id = ?`). Komentarz należy
+  // więc do SESJI narzędzia u konkretnego najemcy, a nie do wpisu bibliotecznego
+  // — a ta karta to globalny katalog metod, który żadnego `tool_session_id` nie
+  // ma. Nie da się jej podpiąć pod istniejący wątek bez wymyślenia nowej encji.
+  //
+  // ── ANTY-DUPLIKACJA (SPEC-N §2.6, fala 2) ─────────────────────────────────
+  // BYŁA sekcja ① AKCJE z dwoma przyciskami: „Startuj sesję" i „How to / Baza
+  // wiedzy". OBA były trzecim renderem tego samego handlera:
+  //   · „Startuj sesję"        → Menu 1, slot `primaryAction` (JEDYNY primary karty),
+  //   · „How to / Baza wiedzy" → Menu 2, nazwany slot `howToButton` (`NModeMenu2`).
+  // §2.6 mówi wprost: „Sekcja «Akcje» w panelu automatycznie wyklucza akcje,
+  // które powłoka renderuje w nagłówku". Po wykluczeniu obu w sekcji nie zostaje
+  // NIC — a karta read-only nie ma ani jednej akcji bez własnego domu w powłoce
+  // (kopiuj kod/permalink siedzą w kebabie Menu 1 — `NModeHeader` D-D).
+  // Kanon dopuszcza wprost: „Sekcja BEZ ZASTOSOWANIA może być NIEOBECNA (lepiej
+  // brak niż pusty akordeon udający funkcję)" — więc ① znika, zamiast zostać
+  // pustym nagłówkiem. Panel: Właściwości · Powiązania · Źródła i założenia ·
+  // Rezultaty. → ZGŁOSZONE w raporcie (spadek 5→4 sekcji jest ŚWIADOMY).
   const rightPanelSections: ArtifactRightPanelSection[] = useMemo(() => {
     // Obrona przed kształtem stanu bez `items` (np. stan przeniesiony przez
     // hot-reload sprzed dodania pola). `sessionItems.length` na
@@ -2013,61 +2121,6 @@ export function KnownToolDetailView(props: {
     // przechodzi esbuild i tsc, a wysypuje się dopiero w przeglądarce.
     const sessionItems = Array.isArray(sessionStats.items) ? sessionStats.items : [];
     return [
-      {
-        // ── ① AKCJE (kanon: pierwsza, defaultOpen) ─────────────────────────
-        // Wcześniejszy komentarz twierdził, że sekcja Akcje byłaby „trzecią
-        // kopią tych samych handlerów (§2.6)". To był błąd czytania §2.6: ta
-        // reguła zabrania dublowania TREŚCI, a nie wystawiania akcji w
-        // kanonicznym slocie. Wszystkie pozostałe karty N mają Akcje jako ①,
-        // i to tam użytkownik ich szuka. Oba przyciski wołają TE SAME, realne
-        // handlery co nagłówek/Menu 2 — nie ma tu ani jednej atrapy.
-        id: 'actions',
-        label: t('discoveryToolsMain.knownToolDetailView.panelActions', 'Actions'),
-        icon: Zap,
-        defaultOpen: true,
-        children: (
-          <PreviewActionBar
-            rows={[
-              {
-                buttons: [
-                  {
-                    label: starting
-                      ? t('discoveryToolsMain.knownToolDetailView.panelActionStarting', 'Starting…')
-                      : t(
-                          'discoveryToolsMain.knownToolDetailView.panelActionStartSession',
-                          'Start session'
-                        ),
-                    icon: Play,
-                    // Neutralne, NIE `primary` — `primary` w tej palecie to
-                    // crimson (CLAUDE.md pułapka nr 1).
-                    colorScheme: 'neutral',
-                    flex: true,
-                    disabled: !tool || !tool.isActive || starting,
-                    onClick: () => {
-                      void startSession();
-                    },
-                  },
-                ],
-              },
-              {
-                buttons: [
-                  {
-                    label: t(
-                      'discoveryToolsMain.knownToolDetailView.panelActionKnowledge',
-                      'How to / Knowledge base'
-                    ),
-                    icon: BookOpen,
-                    colorScheme: 'neutral',
-                    flex: true,
-                    disabled: !tool,
-                    onClick: openKb,
-                  },
-                ],
-              },
-            ]}
-          />
-        ),
-      },
       {
         id: 'properties',
         label: t('discoveryToolsMain.knownToolDetailView.panelProperties', 'Properties'),
@@ -2256,9 +2309,8 @@ export function KnownToolDetailView(props: {
     evidenceInputs,
     evidenceLimits,
     tool,
-    starting,
-    startSession,
-    openKb,
+    // `starting` / `startSession` / `openKb` zdjete z zaleznosci razem z sekcja
+    // ① AKCJE (anty-duplikacja §2.6) — panel juz ich nie renderuje.
     onSessionCreated,
     toolType,
   ]);
@@ -2362,6 +2414,20 @@ export function KnownToolDetailView(props: {
       // Stan `readMode` zostaje (stale `true` = Podglad) i dalej karmi
       // `NModeContentBlock`, wiec bloki wiedza, ze sa w trybie czytania.
       //
+      // ── ROZSTRZYGNIECIE 2026-07-24 (fala 2), WARIANT A ────────────────────
+      // Pytanie postawione tej fali brzmialo: (A) dodac „Sekcje" i zostawic bez
+      // trybow, czy (B) przywrocic tryby i nadac im skutek. Sprawdzone jeszcze
+      // raz w runtime: w centrum jest 0 pol edytowalnych i 0 przyciskow AI przy
+      // polach, a `/api/known-tools` nadal wystawia wylacznie `GET /` i
+      // `GET /:toolType` (zero POST/PUT/PATCH — `knownTools.routes.ts:18-19`).
+      // „Podglad" nie mialby wiec czego schowac — wariant B odtworzylby dokladnie
+      // te atrape, ktora poprzednia fala slusznie zdjela. WYBRANO A: lewy slot
+      // wypelnia picker „Sekcje" (realny skutek), a brak trybow zostaje jawna,
+      // uzasadniona konsekwencja charakteru read-only. Srodkowy slot paska
+      // pozostaje pusty zgodnie z kontraktem `NModeMenu2` (srodek nalezy WYLACZNIE
+      // do przelacznika trybu — dokladanie tam czegokolwiek innego zlamaloby
+      // wspolny standard szesciu kart N).
+      //
       // ── ZGLOSZENIE (b): SZEROKOSC MENU 2 — NAPRAWA NALEZY DO POWLOKI ───────
       // Zmierzone w runtime (viewport 1700, kolumna centrum 1308 px):
       //   Menu 1 → x 78 · szer. 1152 · prawa 1230
@@ -2389,11 +2455,14 @@ export function KnownToolDetailView(props: {
       renderActionBar={() => (
         <NModeMenu2
           isPolish={isPolish}
-          sectionsMenu={
-            toolCardContractEnabled ? (
-              <SectionsManagerMenu layout={toolCardLayout} isPolish={isPolish} />
-            ) : undefined
-          }
+          // ── LEWA STREFA — „Sekcje" ZAWSZE (naprawa 2026-07-24, fala 2) ────
+          // Było: tylko przy `?cardContract=1`, więc domyślnie lewe 2/3 paska
+          // świeciło pustką (zgłoszenie sędziego grafiki, największy brak tej
+          // karty). Picker steruje WIDOCZNOŚCIĄ sekcji — to preferencja widoku,
+          // nie zapis danych, więc charakter read-only karty go nie unieważnia
+          // i nie jest to atrapa: kliknięcie realnie chowa/pokazuje sekcję w
+          // lewej nawigacji i w centrum (patrz `orderedToolSections`).
+          sectionsMenu={<SectionsManagerMenu layout={toolCardLayout} isPolish={isPolish} />}
           readMode={readMode}
           howToButton={
             <Menu2HowToButton
