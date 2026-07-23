@@ -7921,7 +7921,6 @@
         "ownerReassigned": "Owner reassigned",
         "reassignFailed": "Failed to reassign owner",
         "proposalApplied": "Reassignment applied",
-        "aiProposals": "AI rebalancing proposals",
         "applyAll": "Apply all",
         "selectPerson": "— Select person —",
         "accept": "Accept",
@@ -7936,10 +7935,14 @@
         "reassign": "Reassign",
         "allApplied": "All {{count}} reassignments applied",
         "partialApplied": "{{success}} applied, {{failed}} failed",
-        "aiNoCapacity": "No available team member — consider hiring or postponing",
         "noActionable": "No actionable proposals — select a person for each row first",
-        "aiBalanced": "Workload is balanced — no changes needed",
-        "selectOwner": "Select new owner..."
+        "selectOwner": "Select new owner...",
+        "rebalanceProposals": "Workload rebalancing proposals",
+        "balanceAction": "Balance workload",
+        "balanceSubtitle": "Computed from current assignments and capacity — reassign ownership to remove overload.",
+        "applying": "Applying…",
+        "noCapacity": "No available team member — consider hiring or postponing",
+        "balanced": "Workload is balanced — no changes needed"
       },
       "feasibility": {
         "title": "Feasibility",

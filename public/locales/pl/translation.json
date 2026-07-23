@@ -7083,7 +7083,6 @@
         "ownerReassigned": "Właściciel przepisany",
         "reassignFailed": "Nie udało się przepisać właściciela",
         "proposalApplied": "Przepisanie zastosowane",
-        "aiProposals": "Propozycje rebalansowania AI",
         "applyAll": "Zastosuj wszystkie",
         "selectPerson": "— Wybierz osobę —",
         "accept": "Akceptuj",
@@ -7098,10 +7097,14 @@
         "reassign": "Przepisz",
         "allApplied": "Zastosowano wszystkie przepisania ({{count}})",
         "partialApplied": "Zastosowano {{success}}, nie powiodło się {{failed}}",
-        "aiNoCapacity": "Brak dostępnego członka zespołu — rozważ rekrutację lub przesunięcie w czasie",
         "noActionable": "Brak propozycji do realizacji — najpierw wybierz osobę dla każdego wiersza",
-        "aiBalanced": "Obciążenie jest zrównoważone — żadne zmiany nie są potrzebne",
-        "selectOwner": "Wybierz nowego właściciela..."
+        "selectOwner": "Wybierz nowego właściciela...",
+        "rebalanceProposals": "Propozycje rozłożenia obciążenia",
+        "balanceAction": "Zrównoważ obciążenie",
+        "balanceSubtitle": "Policzone z bieżących przypisań i dostępności — przepisz właścicieli, aby zdjąć przeciążenie.",
+        "applying": "Stosuję…",
+        "noCapacity": "Brak dostępnego członka zespołu — rozważ rekrutację lub przesunięcie w czasie",
+        "balanced": "Obciążenie jest zrównoważone — żadne zmiany nie są potrzebne"
       },
       "feasibility": {
         "title": "Wykonalność",
