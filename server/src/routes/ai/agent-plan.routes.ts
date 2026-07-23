@@ -62,6 +62,7 @@ import { z } from 'zod';
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import { buildPlanFromManifest } from '../../services/ai/agentPlan/planBuilderService.js';
+import { buildStepsFromProcess } from '../../services/ai/agentPlan/processLibraryService.js';
 import { agentPlannerService } from '../../services/ai/agentPlannerService.js';
 import { getDiscoveryAgentManifest } from '../../services/ai/agentRuntime/discoveryAgentManifestCatalog.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -84,14 +85,32 @@ const CreatePlanRequestSchema = z
     description: z.string().trim().max(2000).optional(),
     conversationId: z.string().trim().max(200).optional(),
     manifestId: z.string().trim().max(120).optional(),
+    // AGT-006 (partia 2): generator PROCESU konsultingowego. Gdy podany (i brak
+    // explicit `steps`), ProcessLibrary kładzie cały schemat procesu — domyślny
+    // `classic-5` (5 faz Kubr/ILO) lub wariant `drd` (4 kroki). Kontekst
+    // dostrajający (opcjonalny) modyfikuje toolInput faz bez zmiany ich liczby.
+    processId: z.string().trim().max(60).optional(),
+    processContext: z
+      .object({
+        focusAxis: z.string().trim().max(120).optional(),
+        industry: z.string().trim().max(120).optional(),
+        hasVaultDocs: z.boolean().optional(),
+        projectSummary: z.string().trim().max(500).optional(),
+      })
+      .optional(),
     // Optional now: when omitted and manifestId is set, PlanBuilder generates
     // the steps (see header comment). Still capped at MAX_STEPS_PER_PLAN when provided explicitly.
     steps: z.array(PlanStepInputSchema).max(MAX_STEPS_PER_PLAN).optional(),
   })
-  .refine((body) => Boolean(body.manifestId) || (body.steps && body.steps.length > 0), {
-    message: 'Either manifestId (to auto-generate steps) or a non-empty steps array is required',
-    path: ['steps'],
-  });
+  .refine(
+    (body) =>
+      Boolean(body.manifestId) || Boolean(body.processId) || (body.steps && body.steps.length > 0),
+    {
+      message:
+        'Either manifestId, processId (to auto-generate steps) or a non-empty steps array is required',
+      path: ['steps'],
+    }
+  );
 
 /** Best-effort background dispatch — nigdy nie wysadza żądania HTTP (default: background, patrz nagłówek pliku). */
 async function tryDispatchBackgroundExecution(payload: {
@@ -144,7 +163,8 @@ router.post(
 
     // steps resolution order: explicit caller-provided steps win; otherwise,
     // when manifestId is set, PlanBuilder generates them from the manifest
-    // (see header comment — F1 landed 2026-07-16).
+    // (F1, 2026-07-16); otherwise, when processId is set, ProcessLibrary lays
+    // down a whole consulting process (AGT-006 — default classic-5, variant drd).
     let steps = body.steps;
 
     if (body.manifestId) {
@@ -167,6 +187,17 @@ router.post(
           stepCount: steps.length,
         });
       }
+    }
+
+    // AGT-006: process generator — only when no explicit steps and no manifest
+    // resolved them. Default schema = classic-5 (5 phases Kubr/ILO); drd = variant.
+    if ((!steps || steps.length === 0) && body.processId) {
+      const generated = buildStepsFromProcess(body.processId, body.processContext);
+      steps = generated.map(({ toolName, toolInput }) => ({ toolName, toolInput }));
+      logger.info('[AgentPlanRoutes] ProcessLibrary generated steps from process', {
+        processId: body.processId,
+        stepCount: steps.length,
+      });
     }
 
     if (!steps || steps.length === 0) {
