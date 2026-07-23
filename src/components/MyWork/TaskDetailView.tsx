@@ -4264,6 +4264,31 @@ Return ONLY the final comment text.`;
       );
     };
 
+    // ── Akcje workflow w prawym panelu (n-Type §7.3) ─────────────────────────
+    // Pionowo, pełna szerokość, główna akcja wyróżniona, destrukcyjna osobnym
+    // stylem. Crimson (`primary-*`) świadomie NIEUŻYWANY — zielony = sukces,
+    // `danger` = blokada (semantyka krytyczna), reszta neutralna c-*.
+    const rpActionBtn =
+      'w-full inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg text-xs font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50';
+    const rpActionPrimary = `${rpActionBtn} bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500`;
+    const rpActionDestructive = `${rpActionBtn} bg-transparent border-danger-400/60 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10`;
+    const rpActionNeutral = `${rpActionBtn} bg-c-surface-raised border-c-border-subtle text-c-text hover:bg-c-surface`;
+
+    // „Ukończ" jest w panelu tylko gdy NIE jest już akcją główną nagłówka
+    // (przy status='review' Complete = taskPrimaryAction → §7.3 zakaz dublowania).
+    const canCompleteFromPanel = status === 'in_progress';
+    const canBlockFromPanel = status !== 'blocked' && status !== 'done';
+
+    // Po zabraniu Ukończ/Zablokuj/Przydziel pasek pod nagłówkiem niesie już
+    // WYŁĄCZNIE kontekstowe akcje AI aktywnej karty — gdy karta ich nie ma,
+    // nie renderujemy pustej ramki.
+    const hasSectionAIAction = [
+      'implementation',
+      'risk-alternatives',
+      'checklist',
+      'governance',
+    ].includes(activeNSection);
+
     const rightPanelSections: ArtifactRightPanelSection[] = [
       {
         id: 'actions',
@@ -4271,18 +4296,83 @@ Return ONLY the final comment text.`;
         // SPEC-N §2.6 (anty-duplikacja): Save też ZNIKA stąd — ten sam handler
         // `handleSave` renderował się w nagłówku (NModeHeader onSave, wraz ze
         // wskaźnikiem „Zapisano HH:MM") i drugi raz tutaj. Zostaje ten, który
-        // jest widoczny ZAWSZE, czyli nagłówek; panel traci duplikat. Sekcja
-        // zostaje w kanonie §11.2 (Akcje jako pierwsza, jedyna otwarta) ze
-        // stanem pustym mówiącym wprost, gdzie akcje żyją.
+        // jest widoczny ZAWSZE, czyli nagłówek; panel traci duplikat.
+        //
+        // ── n-Type §7.3 / 02_ZADANIE §5 (2026-07-23) ──
+        // Sekcja przestaje być pusta: rozproszony pasek „Ukończ · Zablokuj ·
+        // Przydziel" spod nagłówka zjechał TUTAJ. Układ pionowy, przyciski
+        // pełnej szerokości, główna akcja (Ukończ) wyróżniona, Zablokuj ma
+        // osobny styl destrukcyjny. Akcji z nagłówka (Start / Wyślij do
+        // przeglądu / Wznów, a przy status='review' także Ukończ) NIE
+        // dublujemy — patrz canCompleteFromPanel.
         label: t('myWork.taskDetail.label8', 'Actions'),
         icon: Save,
         defaultOpen: true,
-        isEmpty: true,
+        // Pusto TYLKO w trybie Podgląd („do pokazania klientowi") — w trybie
+        // Edycja zawsze zostaje co najmniej „Przydziel".
+        isEmpty: readMode,
         emptyLabel: t(
-          'myWork.taskDetail.actionsLiveInHeader',
-          'All actions live in the card header'
+          'myWork.taskDetail.actionsHiddenInReadMode',
+          'Actions are hidden in preview mode'
         ),
-        children: null,
+        children: readMode ? null : (
+          <div className="flex flex-col gap-2">
+            {canCompleteFromPanel && (
+              <button
+                type="button"
+                onClick={() => {
+                  const old = status;
+                  setStatus('done');
+                  addActivityLogEntry(
+                    'status_change',
+                    t('myWork.taskDetail.taskCompleted', 'Task completed'),
+                    old,
+                    'done'
+                  );
+                }}
+                className={rpActionPrimary}
+              >
+                <CheckCircle2 size={14} /> {t('myWork.taskDetail.complete', 'Complete')}
+              </button>
+            )}
+            {canBlockFromPanel && (
+              <button
+                type="button"
+                onClick={() => {
+                  const old = status;
+                  setStatus('blocked');
+                  addActivityLogEntry(
+                    'status_change',
+                    t('myWork.taskDetail.taskBlocked', 'Task blocked'),
+                    old,
+                    'blocked'
+                  );
+                }}
+                className={rpActionDestructive}
+              >
+                <AlertCircle size={14} /> {t('myWork.taskDetail.block', 'Block')}
+              </button>
+            )}
+            {/* Przydziel — FAZA C: bramka task.reassign (fail-open, shadow = bez zmian) */}
+            <CapabilityGate capability="task.reassign" projectId={projectId || undefined}>
+              <button
+                type="button"
+                onClick={() => {
+                  toast(
+                    t(
+                      'myWork.taskDetail.changeAssigneeInThe',
+                      'Change assignee in the Assignee field above'
+                    )
+                  );
+                }}
+                className={rpActionNeutral}
+              >
+                <Share2 size={14} className="text-c-text-muted" />{' '}
+                {t('myWork.taskDetail.reassign', 'Reassign')}
+              </button>
+            </CapabilityGate>
+          </div>
+        ),
       },
       {
         id: 'properties',
@@ -4567,74 +4657,21 @@ Return ONLY the final comment text.`;
 
                 {/* ── Task Action Bar ──────────────────────────────── */}
                 {/* Read mode ("do pokazania klientowi"): ukryj cały pasek akcji stanu. */}
-                {!readMode && (
+                {!readMode && hasSectionAIAction && (
                   <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-c-surface/80 backdrop-blur-xl border border-c-border dark:border-c-border/60">
                     <div className="flex items-center gap-2">
-                      {/* Start/Resume, Send to Review and Reopen are now the M1 primary
-                          CTA (NModeHeader.primaryAction, computed in taskPrimaryAction
-                          above from `status`) — kept here only when they are NOT the
-                          current primary, so the same transition is never offered twice. */}
+                      {/* Start/Resume, Send to Review i Reopen = M1 primary CTA
+                          (NModeHeader.primaryAction, liczone w taskPrimaryAction
+                          powyżej z `status`) — nagłówek jest jedynym miejscem
+                          głównej akcji workflow.
 
-                      {/* Complete — secondary "skip ahead" shortcut while in_progress;
-                          when status is 'review', Complete IS the primary action already
-                          shown in the header, so it is intentionally not duplicated here. */}
-                      {status === 'in_progress' && (
-                        <button
-                          onClick={() => {
-                            const old = status;
-                            setStatus('done');
-                            addActivityLogEntry(
-                              'status_change',
-                              t('myWork.taskDetail.taskCompleted', 'Task completed'),
-                              old,
-                              'done'
-                            );
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
-                        >
-                          <CheckCircle2 size={13} /> {t('myWork.taskDetail.complete', 'Complete')}
-                        </button>
-                      )}
-
-                      {/* Block — shown when not blocked and not done */}
-                      {status !== 'blocked' && status !== 'done' && (
-                        <button
-                          onClick={() => {
-                            const old = status;
-                            setStatus('blocked');
-                            addActivityLogEntry(
-                              'status_change',
-                              t('myWork.taskDetail.taskBlocked', 'Task blocked'),
-                              old,
-                              'blocked'
-                            );
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors"
-                        >
-                          <AlertCircle size={13} /> {t('myWork.taskDetail.block', 'Block')}
-                        </button>
-                      )}
-
-                      {/* Reopen (done → in_progress) is the M1 primary CTA when status
-                          is 'done' (see taskPrimaryAction) — no local duplicate. */}
-
-                      {/* Reassign — FAZA C: bramka task.reassign (fail-open, shadow = bez zmian) */}
-                      <CapabilityGate capability="task.reassign" projectId={projectId || undefined}>
-                        <button
-                          onClick={() => {
-                            // scroll to assignee field or open a quick picker
-                            toast(
-                              t(
-                                'myWork.taskDetail.changeAssigneeInThe',
-                                'Change assignee in the Assignee field above'
-                              )
-                            );
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border/60 dark:border-c-border/60 text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
-                        >
-                          <Share2 size={13} /> {t('myWork.taskDetail.reassign', 'Reassign')}
-                        </button>
-                      </CapabilityGate>
+                          ── n-Type §7.3 / 02_ZADANIE §5 (2026-07-23) ──
+                          Rozproszony pasek akcji „Ukończ · Zablokuj · Przydziel"
+                          ZNIKŁ stąd i żyje w sekcji AKCJE prawego panelu
+                          (pionowo, przyciski pełnej szerokości, główna akcja
+                          wyróżniona). Tutaj zostają WYŁĄCZNIE kontekstowe akcje
+                          AI zależne od aktywnej karty — nie są to działania
+                          workflow i nie podlegają §7.3. */}
 
                       {/* ── Section-specific AI actions (right-aligned) ── */}
                       {activeNSection === 'implementation' && (
