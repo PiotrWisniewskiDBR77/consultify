@@ -136,8 +136,6 @@ import {
 } from './shared';
 import { AIConnections } from './shared/AIConnections';
 import { buildAskAIMessage } from './shared/askAiHelper';
-// ── Presentation Mode Switcher ───────────────────────────────────────────────
-import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
 import { ReadEditToggle } from './shared/ReadEditToggle';
 import { RelatedContext } from './shared/RelatedContext';
 
@@ -4416,6 +4414,8 @@ Return ONLY the final comment text.`;
                 statusTone={STATUS_TONE[status] || 'neutral'}
                 presentationMode={presentationMode}
                 onPresentationModeChange={setPresentationMode}
+                // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+                showModeSwitcher={false}
                 buildArtifactCode={buildArtifactCode}
                 primaryAction={taskPrimaryAction}
               />
@@ -5668,8 +5668,8 @@ Return ONLY the final comment text.`;
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Presentation Mode Switcher */}
-                <PresentationModeSwitcher value={presentationMode} onChange={setPresentationMode} />
+                {/* ETAP 1.1 n-Type: przełącznik widoku N/C USUNIĘTY również z tego
+                    (starszego) nagłówka trybu C — karta N ma jeden widok. */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}

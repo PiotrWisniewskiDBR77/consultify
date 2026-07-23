@@ -81,7 +81,6 @@ import TeresaMark from '../shared/TeresaMark';
 // `NModePropertiesStrip` przestal byc importowany — 6 pol metadanych przenioslo sie
 // z poziomego paska pod naglowkiem do sekcji Wlasciwosci tego panelu.
 import { ArtifactRightPanel, type ArtifactRightPanelSection } from '../standard/ArtifactRightPanel';
-import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -2803,6 +2802,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             statusTone={notifStatusTone}
             presentationMode={presentationMode}
             onPresentationModeChange={setPresentationMode}
+            // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+            showModeSwitcher={false}
             primaryAction={headerPrimaryAction}
           />
 
