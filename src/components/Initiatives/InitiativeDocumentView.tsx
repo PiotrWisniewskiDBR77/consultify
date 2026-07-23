@@ -160,6 +160,11 @@ import {
   AIConsultantPanel,
 } from '../shared/NModeLayout/AIConsultantPanel';
 import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
+// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
+import { mergeChangeValue } from '@/services/cardAnalysis';
+import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
+import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
 import type { EscalationRuleWithConfig, ReminderRuleWithDelivery } from '../shared/NModeSections';
 import {
   type ActivityLogEntry as NModeActivityLogEntry,
@@ -10038,6 +10043,269 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     setActiveNSection,
   ]);
 
+  // ── ETAP 3 standardu n-Type: „Analizuj z AI" AKTYWNEJ KARTY ────────────────
+  // Kryteria oceny Inicjatywy (kontrakt właściciela 2026-07-23) żyją w rubryce
+  // silnika (`ARTIFACT_CRITERIA.initiative`): jasność celu · zakres i wyłączenia ·
+  // jakość KPI · kryteria sukcesu · kompletność zadań · zależności · ryzyka ·
+  // zgodność z decyzją/insightem źródłowym · gotowość do bramy.
+  //
+  // TREŚĆ KARTY czytamy przez ISTNIEJĄCE `buildSectionBody(sectionId)` — ten sam
+  // ekstraktor, którego używa eksport, więc analiza widzi DOKŁADNIE to, co widzi
+  // użytkownik i co wychodzi w dokumencie. Zero drugiego, rozjeżdżającego się
+  // odczytu. Osobno deklarujemy pola ZAPISYWALNE — tylko tam, gdzie karta ma
+  // realny setter drafta.
+  const initiativeAnalysisFields = useMemo<CardAnalysisField[]>(() => {
+    const asList = (items: { text: string }[]) =>
+      items
+        .filter((i) => (i.text || '').trim())
+        .map((i) => `- ${i.text.trim()}`)
+        .join('\n');
+    const asStrList = (items: string[]) =>
+      items
+        .filter((s) => (s || '').trim())
+        .map((s) => `- ${s.trim()}`)
+        .join('\n');
+
+    switch (activeNSection) {
+      case 'initiative-definition':
+        return [
+          {
+            id: 'symptom',
+            label: isPolish ? 'Problem' : 'Problem',
+            value: symptomDraft,
+            kind: 'text',
+            writable: true,
+          },
+          {
+            id: 'rootCause',
+            label: isPolish ? 'Proponowane rozwiązanie' : 'Proposed solution',
+            value: rootCauseDraft,
+            kind: 'text',
+            writable: true,
+          },
+          {
+            id: 'costOfInaction',
+            label: isPolish ? 'Koszt zaniechania' : 'Cost of inaction',
+            value: costOfInactionDraft,
+            kind: 'text',
+            writable: true,
+          },
+          {
+            id: 'marketContext',
+            label: isPolish ? 'Kontekst rynkowy' : 'Market context',
+            value: marketContextDraft,
+            kind: 'text',
+            writable: true,
+          },
+        ];
+
+      case 'target-state-scope':
+        return [
+          {
+            id: 'successCriteria',
+            label: isPolish ? 'Kryteria sukcesu' : 'Success criteria',
+            value: asList(successCriteriaItems),
+            kind: 'list',
+            writable: true,
+          },
+          {
+            id: 'targetState',
+            label: isPolish ? 'Stan docelowy' : 'Target state',
+            value: asList(targetStateItems),
+            kind: 'list',
+            writable: true,
+          },
+          {
+            id: 'deliverables',
+            label: isPolish ? 'Produkty' : 'Deliverables',
+            value: asList(deliverableItems),
+            kind: 'list',
+            writable: true,
+          },
+          {
+            id: 'inScope',
+            label: isPolish ? 'W zakresie' : 'In scope',
+            value: asStrList(inScopeItems),
+            kind: 'list',
+            writable: true,
+          },
+          {
+            id: 'outScope',
+            label: isPolish ? 'Poza zakresem' : 'Out of scope',
+            value: asStrList(outScopeItems),
+            kind: 'list',
+            writable: true,
+          },
+          {
+            id: 'killCriteria',
+            label: isPolish ? 'Kryteria zatrzymania' : 'Kill criteria',
+            value: asStrList(killCriteriaItems),
+            kind: 'list',
+            writable: true,
+          },
+        ];
+
+      default:
+        // Pozostałe karty (Zadania, KPI, RAID, Bramy, Finanse, Zespół…) niosą
+        // OBIEKTY z własnymi bramkami zapisu i powiązaniami po id — dopisanie
+        // ich prozą stworzyłoby atrapę wyglądającą jak dane. Analiza czyta je
+        // przez `buildSectionBody`, ale nie proponuje zapisu.
+        return [
+          {
+            id: `${activeNSection}-readonly`,
+            label: (() => {
+              const s = orderedNModeSectionsWithContent.find((x) => x.id === activeNSection);
+              return s ? (isPolish ? s.label.pl : s.label.en) : activeNSection;
+            })(),
+            value: buildSectionBody(activeNSection),
+            kind: 'text',
+            writable: false,
+          },
+        ];
+    }
+  }, [
+    activeNSection,
+    isPolish,
+    symptomDraft,
+    rootCauseDraft,
+    costOfInactionDraft,
+    marketContextDraft,
+    successCriteriaItems,
+    targetStateItems,
+    deliverableItems,
+    inScopeItems,
+    outScopeItems,
+    killCriteriaItems,
+    orderedNModeSectionsWithContent,
+    buildSectionBody,
+  ]);
+
+  const initiativeWritableFieldIds = useMemo(
+    () => initiativeAnalysisFields.filter((f) => f.writable).map((f) => f.id),
+    [initiativeAnalysisFields]
+  );
+
+  const buildInitiativeAnalysisInput = useCallback(() => {
+    const ctx = [
+      `${isPolish ? 'Status' : 'Status'}: ${status}`,
+      `${isPolish ? 'Priorytet' : 'Priority'}: ${priority}`,
+      `${isPolish ? 'Zadania' : 'Tasks'}: ${tasks.length}`,
+      `${isPolish ? 'KPI' : 'KPIs'}: ${localKpis.length}`,
+      // „gotowość do bramy" bez treści karty Bram byłaby zgadywaniem.
+      activeNSection !== 'gates'
+        ? `${isPolish ? 'Bramy' : 'Gates'}:\n${buildSectionBody('gates') || '—'}`
+        : '',
+      activeNSection !== 'initiative-definition'
+        ? `${isPolish ? 'Definicja inicjatywy' : 'Initiative definition'}:\n${buildSectionBody('initiative-definition')}`
+        : '',
+      activeNSection !== 'target-state-scope'
+        ? `${isPolish ? 'Stan docelowy i zakres' : 'Target state & scope'}:\n${buildSectionBody('target-state-scope')}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    return {
+      artifactType: 'initiative' as const,
+      cardId: activeNSection,
+      artifactTitle: initiative?.name || initiative?.title || '',
+      artifactContext: ctx,
+      fields: initiativeAnalysisFields,
+      isPolish,
+    };
+  }, [
+    activeNSection,
+    isPolish,
+    initiative,
+    status,
+    priority,
+    tasks,
+    localKpis,
+    buildSectionBody,
+    initiativeAnalysisFields,
+  ]);
+
+  const applyInitiativeAnalysisChange = useCallback(
+    (change: CardAnalysisChange): boolean => {
+      if (readMode) return false;
+      const newId = () => Math.random().toString(36).slice(2, 11);
+      const linesOf = (text: string) =>
+        String(text || '')
+          .split('\n')
+          .map((l) => l.trim().replace(/^(?:[-*•]\s+|\d+[.)]\s+)/, '').trim())
+          .filter(Boolean);
+
+      /** Listy „checklist-owe" ({id,text,done}) — wspólne scalanie. */
+      const applyItemList = (
+        setter: React.Dispatch<React.SetStateAction<{ id: string; text: string; done: boolean }[]>>
+      ): boolean => {
+        const incoming = linesOf(change.proposedValue);
+        if (incoming.length === 0) return false;
+        setter((prev) =>
+          change.mode === 'append'
+            ? [
+                ...prev,
+                ...incoming
+                  .filter((line) => !prev.some((p) => p.text.trim().toLowerCase() === line.toLowerCase()))
+                  .map((text) => ({ id: newId(), text, done: false })),
+              ]
+            : incoming.map((text) => ({ id: newId(), text, done: false }))
+        );
+        return true;
+      };
+
+      /** Listy tekstowe (zakres/wyłączenia/kryteria zatrzymania). */
+      const applyStrList = (
+        setter: React.Dispatch<React.SetStateAction<string[]>>
+      ): boolean => {
+        const incoming = linesOf(change.proposedValue);
+        if (incoming.length === 0) return false;
+        setter((prev) =>
+          change.mode === 'append'
+            ? [...prev, ...incoming.filter((line) => !prev.some((p) => p.trim().toLowerCase() === line.toLowerCase()))]
+            : incoming
+        );
+        return true;
+      };
+
+      switch (change.fieldId) {
+        case 'symptom':
+          setSymptomDraft((prev) => mergeChangeValue(change, prev));
+          return true;
+        case 'rootCause':
+          setRootCauseDraft((prev) => mergeChangeValue(change, prev));
+          return true;
+        case 'costOfInaction':
+          setCostOfInactionDraft((prev) => mergeChangeValue(change, prev));
+          return true;
+        case 'marketContext':
+          setMarketContextDraft((prev) => mergeChangeValue(change, prev));
+          return true;
+        case 'successCriteria':
+          return applyItemList(setSuccessCriteriaItems);
+        case 'targetState':
+          return applyItemList(setTargetStateItems);
+        case 'deliverables':
+          return applyItemList(setDeliverableItems);
+        case 'inScope':
+          return applyStrList(setInScopeItems);
+        case 'outScope':
+          return applyStrList(setOutScopeItems);
+        case 'killCriteria':
+          return applyStrList(setKillCriteriaItems);
+        default:
+          return false;
+      }
+    },
+    [readMode]
+  );
+
+  const initiativeCardAnalysis = useCardAIAnalysis({
+    activeCardId: activeNSection,
+    buildInput: buildInitiativeAnalysisInput,
+    applyChange: applyInitiativeAnalysisChange,
+  });
+
   // ==========================================
   // LOADING & ERROR STATES
   // ==========================================
@@ -10783,18 +11051,25 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         onReadModeChange={setReadMode}
                         aiButton={
                           readMode ? undefined : (
+                            // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera
+                            // panel wyników. Było: przełącznik `aiPanelOpen`
+                            // (AIConsultantPanel = czat całego artefaktu).
+                            // Konsultant NIE zniknął — `AIConsultantPanel` nadal
+                            // renderuje się niżej i ma swoje wejścia; zmienia się
+                            // tylko to, co robi TEN przycisk, zgodnie z jego nazwą.
+                            // Nadpisanie etykiety zdjęte: przycisk niesie nazwę
+                            // ze standardu („Analizuj z AI").
                             <Menu2AIButton
                               isPolish={isPolish}
-                              label={t('initiatives.aiConsultant4')}
-                              title={t('initiatives.aiConsultant3')}
-                              aria-expanded={aiPanelOpen}
+                              busy={initiativeCardAnalysis.loading}
+                              aria-expanded={initiativeCardAnalysis.open}
                               disabled={!canUseAi}
                               onClick={() => {
                                 if (!canUseAi) {
                                   toast.error(t('initiatives.aiIsUnavailableBecauseYouHave2'));
                                   return;
                                 }
-                                setAiPanelOpen((v) => !v);
+                                initiativeCardAnalysis.run();
                               }}
                             />
                           )
@@ -11353,6 +11628,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         contextText={aiPanelContextText}
         actions={aiConsultantActions}
         isBusy={!canUseAi}
+        isPolish={isPolish}
+      />
+
+      {/* ── ETAP 3: panel wyników „Analizuj z AI" ─────────────────────────────
+          Analiza AKTYWNEJ KARTY (poziom karty), obok konsultanta artefaktu
+          (poziom 3, wyżej). Zapis wyłącznie przez „Zastosuj". */}
+      <NCardAIAnalysisPanel
+        open={initiativeCardAnalysis.open}
+        onClose={initiativeCardAnalysis.close}
+        loading={initiativeCardAnalysis.loading}
+        result={initiativeCardAnalysis.result}
+        errorCode={initiativeCardAnalysis.errorCode}
+        serverErrorCode={initiativeCardAnalysis.serverErrorCode}
+        onRerun={initiativeCardAnalysis.rerun}
+        onApplyChange={initiativeCardAnalysis.applyChange}
+        writableFieldIds={initiativeWritableFieldIds}
+        readMode={readMode}
         isPolish={isPolish}
       />
     </InitiativeContext.Provider>

@@ -102,6 +102,7 @@ const DeckArtifactScreen = React.lazy(() => import('./screens/deck-artifact'));
 const DocumentArtifactScreen = React.lazy(() => import('./screens/document-artifact'));
 const IdeasPreviewOverlayScreen = React.lazy(() => import('./screens/ideas-preview-overlay'));
 const SheetArtifactScreen = React.lazy(() => import('./screens/sheet-artifact'));
+const NTypeAnalizujAiScreen = React.lazy(() => import('./screens/ntype-analizuj-ai'));
 // Ekrany ładujemy LENIWIE (React.lazy) — i to jest wymóg poprawności, nie optymalizacja.
 // Każdy screen instaluje swój stub `window.fetch` jako efekt uboczny importu. Przy
 // statycznych importach ładowały się WSZYSTKIE moduły naraz, więc stub ekranu ładowanego
@@ -120,6 +121,11 @@ const ExceleReopenVerifyScreen = React.lazy(() => import('./screens/excele-reope
 const OdbiorScreen = React.lazy(() => import('./screens/odbior'));
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'ntype-analizuj-ai': {
+    label:
+      'n-Type ETAP 3 — „Analizuj z AI": menu 2 + panel wyników (Braki · Ryzyka · Sugestie · Zmiany)',
+    render: () => <NTypeAnalizujAiScreen />,
+  },
   odbior: {
     label: '★ PANEL ODBIORU — wszystkie obszary (rejestr/3-DO-ODBIORU), żywe ekrany + werdykty',
     render: () => <OdbiorScreen />,

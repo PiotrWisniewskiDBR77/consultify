@@ -98,6 +98,11 @@ import { CapabilityGate } from '../shared/CapabilityGate';
 // ETAP 1.2: menu 2 niesie SAM picker „Sekcje" — „+ Nowa karta" zdjęte.
 import { SectionsManagerMenu } from '../shared/NModeLayout/NModeCardManager';
 import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
+// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
+import { mergeChangeValue } from '@/services/cardAnalysis';
+import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
+import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
 import { NModeCardState, type NModeCardStatus } from '../shared/NModeLayout/NModeCardState';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
@@ -5443,6 +5448,261 @@ Use userId only from this list:
     aiMenuOpenField,
   ]);
 
+  // ── ETAP 3 standardu n-Type: „Analizuj z AI" AKTYWNEJ KARTY ────────────────
+  // Kryteria oceny Decyzji (kontrakt właściciela 2026-07-23) żyją w rubryce
+  // silnika (`ARTIFACT_CRITERIA.decision`): jakość opcji i trade-offów · ryzyko ·
+  // konsekwencje · gotowość do zatwierdzenia.
+  const decisionAnalysisFields = useMemo<CardAnalysisField[]>(() => {
+    switch (activeNotionSection) {
+      case 'context-problem':
+        return [
+          {
+            id: 'description',
+            label: isPolish ? 'Opis decyzji' : 'Decision description',
+            value: description,
+            kind: 'text',
+            writable: true,
+          },
+          {
+            id: 'contextDetails',
+            label: isPolish ? 'Kontekst' : 'Context',
+            value: contextDetails,
+            kind: 'text',
+            writable: true,
+          },
+          {
+            id: 'rationale',
+            label: isPolish ? 'Uzasadnienie' : 'Rationale',
+            value: rationale,
+            kind: 'text',
+            writable: true,
+          },
+        ];
+
+      case 'options-tradeoffs':
+        return [
+          {
+            id: 'alternatives',
+            label: isPolish ? 'Opcje i trade-offy' : 'Options & trade-offs',
+            value: alternatives
+              .map(
+                (a) =>
+                  `- ${a.title}${a.description ? `: ${a.description}` : ''}` +
+                  `${a.pros?.length ? `\n  + ${a.pros.join(' | ')}` : ''}` +
+                  `${a.cons?.length ? `\n  − ${a.cons.join(' | ')}` : ''}` +
+                  `${a.id === selectedAlternativeId ? `  <<< ${isPolish ? 'WYBRANA' : 'SELECTED'}` : ''}`
+              )
+              .join('\n'),
+            kind: 'list',
+            writable: true,
+            hint: isPolish
+              ? 'Format dopisania: „Tytuł: opis". Wyboru opcji AI NIE zmienia — to decyzja człowieka.'
+              : 'Append format: "Title: description". AI does NOT change the selection — that is a human decision.',
+          },
+        ];
+
+      case 'risk-impact':
+        return [
+          {
+            id: 'risks',
+            label: isPolish ? 'Ryzyka' : 'Risks',
+            value: risks
+              .map(
+                (r) =>
+                  `- ${r.title} (${isPolish ? 'prawdop.' : 'prob.'} ${r.probability}, ${isPolish ? 'skutek' : 'impact'} ${r.impact})${r.mitigation ? ` — ${isPolish ? 'mitygacja' : 'mitigation'}: ${r.mitigation}` : ''}`
+              )
+              .join('\n'),
+            kind: 'list',
+            writable: true,
+          },
+          {
+            id: 'impactDescription',
+            label: isPolish ? 'Opis wpływu' : 'Impact description',
+            value: impact.description ?? '',
+            kind: 'text',
+            writable: true,
+          },
+        ];
+
+      case 'consequences':
+        return [
+          {
+            id: 'consequences-readonly',
+            label: isPolish ? 'Konsekwencje braku decyzji' : 'Consequences of inaction',
+            // Scenariusze to sztywna macierz 3 × (d7/d30/d90) budowana przez
+            // `generateConsequenceScenariosAI`. Płaski tekst nie zmapuje się na
+            // tę strukturę bez zgadywania, więc karta zostaje do odczytu —
+            // AI może wskazać braki i sprzeczności, ale nie wpisze ich za nas.
+            value: consequenceScenarios
+              ? JSON.stringify(consequenceScenarios, null, 2)
+              : isPolish
+                ? '(scenariusze nie zostały wygenerowane)'
+                : '(scenarios have not been generated)',
+            kind: 'text',
+            writable: false,
+          },
+        ];
+
+      default:
+        // governance-escalation (RACI = decyzja organizacyjna człowieka) oraz
+        // resources-links (pliki i powiązania = fakty) — bez pól do zapisu.
+        return [];
+    }
+  }, [
+    activeNotionSection,
+    isPolish,
+    description,
+    contextDetails,
+    rationale,
+    alternatives,
+    selectedAlternativeId,
+    risks,
+    impact.description,
+    consequenceScenarios,
+  ]);
+
+  const decisionWritableFieldIds = useMemo(
+    () => decisionAnalysisFields.filter((f) => f.writable).map((f) => f.id),
+    [decisionAnalysisFields]
+  );
+
+  const buildDecisionAnalysisInput = useCallback(() => {
+    const ctx = [
+      `${isPolish ? 'Status' : 'Status'}: ${status}`,
+      // „gotowość do zatwierdzenia" bez etapu workflow byłaby zgadywaniem.
+      `${isPolish ? 'Etap workflow' : 'Workflow stage'}: ${workflowStatus}`,
+      `${isPolish ? 'Priorytet' : 'Priority'}: ${priority}`,
+      `${isPolish ? 'Kategoria' : 'Category'}: ${category}`,
+      dueDate ? `${isPolish ? 'Termin' : 'Due date'}: ${dueDate}` : '',
+      deciderName ? `${isPolish ? 'Decydent' : 'Decider'}: ${deciderName}` : '',
+      initiativeName ? `${isPolish ? 'Inicjatywa' : 'Initiative'}: ${initiativeName}` : '',
+      `${isPolish ? 'Wpływ' : 'Impact'}: ${isPolish ? 'zakres' : 'scope'} ${impact.scope}, ${isPolish ? 'harmonogram' : 'schedule'} ${impact.schedule}, ${isPolish ? 'koszt' : 'cost'} ${impact.cost}, ${isPolish ? 'jakość' : 'quality'} ${impact.quality}`,
+      activeNotionSection !== 'context-problem'
+        ? `${isPolish ? 'Opis decyzji' : 'Decision description'}: ${description}`
+        : '',
+      activeNotionSection !== 'options-tradeoffs'
+        ? `${isPolish ? 'Opcje' : 'Options'}: ${alternatives.map((a) => a.title).join('; ') || '—'}`
+        : '',
+      activeNotionSection !== 'risk-impact'
+        ? `${isPolish ? 'Ryzyka' : 'Risks'}: ${risks.map((r) => r.title).join('; ') || '—'}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    return {
+      artifactType: 'decision' as const,
+      cardId: activeNotionSection,
+      artifactTitle: title,
+      artifactContext: ctx,
+      fields: decisionAnalysisFields,
+      isPolish,
+    };
+  }, [
+    activeNotionSection,
+    isPolish,
+    title,
+    status,
+    workflowStatus,
+    priority,
+    category,
+    dueDate,
+    deciderName,
+    initiativeName,
+    impact,
+    description,
+    alternatives,
+    risks,
+    decisionAnalysisFields,
+  ]);
+
+  const applyDecisionAnalysisChange = useCallback(
+    (change: CardAnalysisChange): boolean => {
+      // Blokada etapu workflow jest NADRZĘDNA — ta sama bramka, co dla ręcznej
+      // edycji. Panel oznaczy pozycję jako nieudaną zamiast po cichu nie zapisać.
+      if (isDecisionStageLocked) return false;
+      const newId = () => Math.random().toString(36).slice(2, 11);
+      const linesOf = (text: string) =>
+        String(text || '')
+          .split('\n')
+          .map((l) => l.trim().replace(/^(?:[-*•]\s+|\d+[.)]\s+)/, '').trim())
+          .filter(Boolean);
+
+      switch (change.fieldId) {
+        case 'description':
+          setDescription((prev) => mergeChangeValue(change, prev));
+          markCardEdited('description');
+          return true;
+
+        case 'contextDetails':
+          setContextDetails((prev) => mergeChangeValue(change, prev));
+          return true;
+
+        case 'rationale':
+          setRationale((prev) => mergeChangeValue(change, prev));
+          return true;
+
+        case 'impactDescription':
+          setImpact((prev) => ({
+            ...prev,
+            description: mergeChangeValue(change, prev.description ?? ''),
+          }));
+          return true;
+
+        case 'risks': {
+          const incoming = linesOf(change.proposedValue);
+          if (incoming.length === 0) return false;
+          const toRisk = (riskTitle: string): RiskItem => ({
+            id: newId(),
+            title: riskTitle,
+            probability: 'medium',
+            impact: 'medium',
+            category: 'operational',
+            mitigation: '',
+            contingency: '',
+          });
+          setRisks((prev) =>
+            change.mode === 'append' ? [...prev, ...incoming.map(toRisk)] : incoming.map(toRisk)
+          );
+          markCardEdited('risk');
+          return true;
+        }
+
+        case 'alternatives': {
+          // Tylko DOPISANIE opcji. „replace" świadomie odrzucone: przepisanie
+          // listy skasowałoby `selectedAlternativeId`, czyli sam WYBÓR — a wybór
+          // opcji jest decyzją człowieka, nie treścią do wygenerowania.
+          const incoming = linesOf(change.proposedValue).filter((l) => !/^[+−-]\s/.test(l));
+          if (incoming.length === 0) return false;
+          const toAlt = (line: string): Alternative => {
+            const [head, ...rest] = line.split(':');
+            return {
+              id: newId(),
+              title: head.trim(),
+              description: rest.join(':').trim(),
+              pros: [],
+              cons: [],
+              isRecommended: false,
+            };
+          };
+          setAlternatives((prev) => [...prev, ...incoming.map(toAlt)]);
+          markCardEdited('alternatives');
+          return true;
+        }
+
+        default:
+          return false;
+      }
+    },
+    [isDecisionStageLocked, markCardEdited]
+  );
+
+  const decisionCardAnalysis = useCardAIAnalysis({
+    activeCardId: activeNotionSection,
+    buildInput: buildDecisionAnalysisInput,
+    applyChange: applyDecisionAnalysisChange,
+  });
+
   // ── Loading guard (AFTER all hooks to respect Rules of Hooks) ────────────
   // VF1-4 (SPEC-A): swap ad-hoc spinner for the shared shared/states library
   // (record archetype) — gated (visible change, needs Piotr's screenshot
@@ -5623,7 +5883,17 @@ Use userId only from this list:
                   }
                   readMode={readMode}
                   onReadModeChange={setReadMode}
-                  aiButton={<Menu2AIButton isPolish={isPolish} onClick={handleOpenChat} />}
+                  aiButton={
+                    // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera panel
+                    // wyników. Było: `handleOpenChat` — ogólny czat, bez oceny
+                    // karty i bez propozycji zmian do zatwierdzenia.
+                    <Menu2AIButton
+                      isPolish={isPolish}
+                      busy={decisionCardAnalysis.loading}
+                      aria-expanded={decisionCardAnalysis.open}
+                      onClick={decisionCardAnalysis.run}
+                    />
+                  }
                 />
                 {/* ── Origin Badge ──────────────────────────────────── */}
                 {sourceType && sourceId && (
@@ -9122,6 +9392,24 @@ Use userId only from this list:
           </div>
         </div>
       </div>
+
+      {/* ── ETAP 3: panel wyników „Analizuj z AI" ─────────────────────────────
+          Slide-over przy prawej krawędzi (nie modal, nie przyciemnia kanwy).
+          `readMode` ORuje się z blokadą etapu workflow — panel wyłącza
+          „Zastosuj" dokładnie tam, gdzie ręczna edycja też jest zablokowana. */}
+      <NCardAIAnalysisPanel
+        open={decisionCardAnalysis.open}
+        onClose={decisionCardAnalysis.close}
+        loading={decisionCardAnalysis.loading}
+        result={decisionCardAnalysis.result}
+        errorCode={decisionCardAnalysis.errorCode}
+        serverErrorCode={decisionCardAnalysis.serverErrorCode}
+        onRerun={decisionCardAnalysis.rerun}
+        onApplyChange={decisionCardAnalysis.applyChange}
+        writableFieldIds={decisionWritableFieldIds}
+        readMode={isDecisionStageLocked}
+        isPolish={isPolish}
+      />
 
       {/* Delegation Modal */}
       {decisionId && (
