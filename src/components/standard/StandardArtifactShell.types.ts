@@ -297,8 +297,10 @@ export interface StandardArtifactShellProps<
    */
   readonly densityMode: PresentationMode;
   readonly onDensityModeChange: (mode: PresentationMode) => void;
-  /** Pokazuje przełącznik gęstości w nagłówku (domyślnie true). */
-  readonly showDensitySwitcher?: boolean;
+  // ETAP 1.1 standardu n-Type (2026-07-23): `showDensitySwitcher` USUNIĘTY.
+  // Karta N ma JEDEN widok, więc powłoka standardowa nigdy nie renderuje
+  // przełącznika N/C w Menu 1 — nie ma czego konfigurować. `densityMode`
+  // zostaje: nadal steruje gęstością centrum, tylko bez przełącznika w nagłówku.
 
   /** Pasek właściwości pod nagłówkiem. Pominięty → metadane żyją w panelu (§2.2). */
   readonly properties?: readonly NModePropertyField[];
