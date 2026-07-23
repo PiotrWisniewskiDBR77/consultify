@@ -316,7 +316,7 @@ function TaskProgressBar({
           className="flex items-center gap-3 hover:bg-c-surface-raised transition-colors rounded-hig-xs px-1 -mx-1"
         >
           {isGenerating ? (
-            <Loader2 size={16} className="animate-spin text-brand" />
+            <Loader2 size={16} className="animate-spin text-c-text-secondary" />
           ) : isCompleted ? (
             <CheckCircle2 size={16} className="text-emerald-500" />
           ) : (
@@ -348,10 +348,13 @@ function TaskProgressBar({
               {t('kimi.replay', 'Replay')}
             </button>
           )}
+          {/* KANON KOLORU (CLAUDE.md §UI.3): „Remix" to CTA, nie semantyka krytyczna
+              → neutralnie, identycznie jak sąsiedni „Replay". Rodzina `brand`
+              w tailwind.config.js jest przekierowana na crimson #85182F. */}
           {isCompleted && onRemix && (
             <button
               onClick={onRemix}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-hig-xs text-xs font-medium bg-brand/10 text-brand hover:bg-brand/20 transition-colors"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-hig-xs text-xs font-medium bg-c-border-subtle text-c-text hover:bg-c-border transition-colors"
             >
               <RefreshCw size={12} />
               {t('kimi.remix', 'Remix')}
@@ -363,8 +366,10 @@ function TaskProgressBar({
       {/* Progress bar */}
       <div className="px-4 pb-1">
         <div className="h-1 bg-c-border-subtle rounded-hig-full overflow-hidden">
+          {/* KANON KOLORU: postęp to informacja neutralna (nie błąd/alert) —
+              wypełnienie neutralne, czytelne na torze `c-border-subtle`. */}
           <div
-            className="h-full bg-brand rounded-hig-full transition-all duration-500 ease-out"
+            className="h-full bg-c-text-secondary rounded-hig-full transition-all duration-500 ease-out"
             style={{ width: total > 0 ? `${(completed / total) * 100}%` : '0%' }}
           />
         </div>
@@ -376,7 +381,7 @@ function TaskProgressBar({
           {steps.map((step) => (
             <div key={step.id} className="flex items-center gap-2 text-xs">
               {step.status === 'running' ? (
-                <Loader2 size={12} className="animate-spin text-brand flex-shrink-0" />
+                <Loader2 size={12} className="animate-spin text-c-text-secondary flex-shrink-0" />
               ) : step.status === 'completed' ? (
                 <CheckCircle2 size={12} className="text-emerald-500 flex-shrink-0" />
               ) : step.status === 'failed' ? (
@@ -457,8 +462,8 @@ function ArtifactPreviewPane({
     return (
       <div className="flex-1 flex items-center justify-center bg-c-surface-raised">
         <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-hig-lg bg-brand/10 flex items-center justify-center mx-auto">
-            <Loader2 size={28} className="animate-spin text-brand" />
+          <div className="w-16 h-16 rounded-hig-lg bg-c-border-subtle flex items-center justify-center mx-auto">
+            <Loader2 size={28} className="animate-spin text-c-text-secondary" />
           </div>
           <div>
             <p className="text-sm font-medium text-c-text">
@@ -545,7 +550,7 @@ function ArtifactPreviewPane({
                 onChange={(e) => setGoalInput(e.target.value)}
                 placeholder={t(`kimi.shell.inputPlaceholder.${lane}`, config.inputPlaceholder)}
                 rows={3}
-                className="w-full rounded-hig-md border border-c-border-subtle bg-c-surface px-4 py-3 text-sm text-c-text placeholder:text-c-text-muted outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 resize-none"
+                className="w-full rounded-hig-md border border-c-border-subtle bg-c-surface px-4 py-3 text-sm text-c-text placeholder:text-c-text-muted outline-none focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus resize-none"
               />
               <button
                 onClick={handleGenerate}
@@ -600,7 +605,9 @@ function ArtifactPreviewPane({
             <button
               onClick={onDownload}
               aria-label={t('kimi.download', 'Download')}
-              className="flex items-center gap-1 px-2 py-1 rounded-hig-xs text-xs font-medium bg-brand/10 text-brand hover:bg-brand/20 transition-colors"
+              /* KANON KOLORU: pobranie to CTA, nie semantyka krytyczna → neutralne
+                 wypełnienie; hierarchia względem „PDF" (surface-raised) zachowana. */
+              className="flex items-center gap-1 px-2 py-1 rounded-hig-xs text-xs font-medium bg-c-border-subtle text-c-text hover:bg-c-border transition-colors"
             >
               <Download size={12} />
             </button>

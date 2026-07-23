@@ -160,6 +160,9 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'DOKUMENTY — Excel: naprawa "nie mam czego otworzyć" — reopen wiszącego artifactId → honest error zamiast pustego fake-podglądu (2026-07-23)',
     render: () => <ExceleReopenVerifyScreen />,
   },
+  // (deck-artifact / sheet-artifact są zarejestrowane niżej, w bloku DOKUMENTY
+  // razem z document-artifact — scalenie fix/crimson-deck-sheet dołożyło tu ich
+  // duplikat, zdjęty przy rozwiązywaniu konfliktu.)
   'idea-table-tool-kebab': {
     label:
       'IDEE Table — K1 kebab wiersza (PlatformGridView, prawy-klik) — audyt-idee 2026-07-22',
