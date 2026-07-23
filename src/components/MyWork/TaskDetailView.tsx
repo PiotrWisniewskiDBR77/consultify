@@ -566,6 +566,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [editingEscalationId, setEditingEscalationId] = useState<string | null>(null);
   const [escalationDraft, setEscalationDraft] = useState<EscalationRuleWithConfig | null>(null);
   const [isSuggestingStakeholders, setIsSuggestingStakeholders] = useState(false);
+  // Osobne stany per przycisk — przyciski AI w modalach przypomnienia/eskalacji
+  // wcześniej dziedziczyły `isSuggestingStakeholders` (stan generatora RACI),
+  // czyli blokowały się od zupełnie innej funkcji.
+  const [isFillingReminderAI, setIsFillingReminderAI] = useState(false);
+  const [isFillingEscalationAI, setIsFillingEscalationAI] = useState(false);
   const [escalationRules, setEscalationRules] = useState<EscalationRuleWithConfig[]>(() => {
     if (escalation) {
       return [
@@ -1774,6 +1779,88 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     setRisks(risks.map((r) => (r.id === id ? { ...r, ...updates } : r)));
   const removeRisk = (id: string) => setRisks(risks.filter((r) => r.id !== id));
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // AI PLUMBING — jeden uczciwy kanał do modelu (2026-07-23)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // POWÓD: karta wołała `POST /ai/chat`, czyli ORKIESTRATOR. Ten endpoint zwraca
+  // `{ role, intent, prompt, … }` — BEZ pola `text`. Walidator nie jest `strict`,
+  // więc odpowiedź wracała ze statusem 200, front czytał `undefined` i wchodził
+  // w gałąź awaryjną. Token spalony, użytkownik dostawał zmyśloną treść.
+  // Działający endpoint dla narzędzi w aplikacji to `POST /ai/generate` → `{ text }`
+  // (wzorzec: src/services/cardAnalysis/cardAnalysisService.ts).
+  //
+  // ZASADA KARTY: karta jest UCZCIWA. „AI niedostępne" to poprawny wynik —
+  // pokazujemy powód i NIE dotykamy treści. Zero zaszytych fallbacków.
+  const requestAiText = async (opts: {
+    message: string;
+    systemInstruction: string;
+    roleName: string;
+  }): Promise<string> => {
+    const res = await Api.post('/ai/generate', {
+      message: opts.message,
+      systemInstruction: opts.systemInstruction,
+      roleName: opts.roleName,
+    });
+    const cleaned = String((res as { text?: unknown })?.text ?? '')
+      .trim()
+      .replace(/^```[\w-]*\n?/, '')
+      .replace(/```$/, '')
+      .replace(/^["']|["']$/g, '')
+      .trim();
+    if (!cleaned) throw new Error('EMPTY_AI_RESPONSE');
+    return cleaned;
+  };
+
+  const requestAiJson = async <T,>(opts: {
+    message: string;
+    systemInstruction: string;
+    roleName: string;
+  }): Promise<T> => {
+    const raw = await requestAiText(opts);
+    const match = raw.match(/[[{][\s\S]*[\]}]/);
+    if (!match) throw new Error('NO_JSON_IN_AI_RESPONSE');
+    return JSON.parse(match[0]) as T;
+  };
+
+  /** Czytelny powód niepowodzenia — bez „coś poszło nie tak". */
+  const describeAiError = (err: unknown): string => {
+    const code = String(
+      (err as { data?: { code?: string } })?.data?.code ||
+        (err as { code?: string })?.code ||
+        (err as Error)?.message ||
+        ''
+    ).toUpperCase();
+    if (code.includes('AI_BUDGET_EXHAUSTED'))
+      return isPolish ? 'wyczerpany budżet AI' : 'AI budget exhausted';
+    if (code.includes('NO_AI_PROVIDER') || code.includes('AI_PROVIDER'))
+      return isPolish ? 'brak skonfigurowanego dostawcy AI' : 'no AI provider configured';
+    if (code.includes('EMPTY_AI_RESPONSE') || code.includes('EMPTY_LLM_RESPONSE'))
+      return isPolish ? 'model zwrócił pustą odpowiedź' : 'model returned an empty response';
+    if (code.includes('NO_JSON_IN_AI_RESPONSE') || code.includes('JSON'))
+      return isPolish
+        ? 'odpowiedź modelu nie ma oczekiwanego formatu'
+        : 'model response was not in the expected format';
+    const status = (err as { status?: number })?.status;
+    if (status === 429) return isPolish ? 'limit zapytań (429)' : 'rate limited (429)';
+    if (status === 401 || status === 403)
+      return isPolish ? 'brak uprawnień do AI' : 'no permission to use AI';
+    const message = (err as Error)?.message;
+    return message ? String(message) : isPolish ? 'brak połączenia z AI' : 'AI is not reachable';
+  };
+
+  /**
+   * Uczciwy komunikat porażki. NIE modyfikuje żadnej treści — użytkownik
+   * dostaje dokładnie ten sam stan karty, który miał przed kliknięciem.
+   */
+  const notifyAiUnavailable = (err: unknown) => {
+    const reason = describeAiError(err);
+    toast.error(
+      isPolish
+        ? `AI niedostępne (${reason}). Nic nie zostało zmienione.`
+        : `AI unavailable (${reason}). Nothing was changed.`
+    );
+  };
+
   // Risk handlers
   const addRisk = () => {
     const newRisk: RiskItem = {
@@ -2106,26 +2193,15 @@ ${recentComments || 'No comments yet'}
 
 Return ONLY the final comment text.`;
 
-      const aiRes = await Api.post('/ai/chat', {
+      // `/ai/generate` → `{ text }`. NIE `/ai/chat` (orkiestrator, bez `text`).
+      const generatedComment = await requestAiText({
         message: prompt,
-        history: [],
         systemInstruction: t(
           'myWork.taskDetail.systemInstruction',
           'You are a practical PMO coach. Respond briefly, concretely, and avoid generic filler.'
         ),
         roleName: 'Task Comment Advisor',
       });
-
-      const raw = String(aiRes?.text || aiRes?.content || '').trim();
-      const generatedComment = raw
-        .replace(/^```[\w-]*\n?/g, '')
-        .replace(/```$/g, '')
-        .replace(/^["']|["']$/g, '')
-        .trim();
-
-      if (!generatedComment) {
-        throw new Error('Empty AI response');
-      }
 
       const recentAIMessages = comments
         .filter((c) => c.authorId === 'ai-assistant')
@@ -2134,7 +2210,14 @@ Return ONLY the final comment text.`;
 
       const isDuplicate = recentAIMessages.includes(generatedComment.toLowerCase());
       if (isDuplicate) {
-        throw new Error('Duplicate AI comment');
+        // Uczciwie: model powtórzył istniejący komentarz. Nie dodajemy duplikatu
+        // i NIE podstawiamy niczego w zamian.
+        toast.error(
+          isPolish
+            ? 'AI powtórzyło istniejący komentarz — nic nie dodano.'
+            : 'AI repeated an existing comment — nothing was added.'
+        );
+        return;
       }
 
       const newComment: Comment = {
@@ -2155,39 +2238,234 @@ Return ONLY the final comment text.`;
       );
       toast.success(t('myWork.taskDetail.toastSuccess8', 'AI comment generated'));
     } catch (error) {
-      const fallback = isPolish
-        ? `Proponuję doprecyzować jeden najbliższy krok i właściciela zadania na dziś. Dla priorytetu "${priority}" warto też potwierdzić blocker oraz termin, żeby uniknąć opóźnienia.`
-        : `I suggest clarifying one immediate next step and assigning a clear owner today. For "${priority}" priority, also confirm blocker status and due date to reduce delivery risk.`;
-
-      const lastAI = comments
-        .filter((c) => c.authorId === 'ai-assistant')
-        .slice(-1)[0]
-        ?.content?.trim()
-        .toLowerCase();
-      const fallbackWithVariant =
-        lastAI === fallback.trim().toLowerCase()
-          ? `${fallback} ${t('myWork.taskDetail.focusOnAMeasurable', 'Focus on a measurable outcome by end of day.')}`
-          : fallback;
-
-      const newComment: Comment = {
-        id: Math.random().toString(36).substr(2, 9),
-        content: fallbackWithVariant,
-        authorId: 'ai-assistant',
-        authorName: 'AI Assistant',
-        createdAt: new Date().toISOString(),
-        likes: 0,
-        likedByMe: false,
-        isAIGenerated: true,
-      };
-
-      setComments((prev) => [...prev, newComment]);
-      addActivityLogEntry(
-        'comment',
-        t('myWork.taskDetail.aIAddedFallbackComment', 'AI added fallback comment')
-      );
-      toast.success(t('myWork.taskDetail.toastSuccess9', 'Added a fallback AI comment'));
+      // ZERO ZASZYTYCH FALLBACKÓW. Wcześniej `catch` doklejał zmyślony komentarz
+      // podpisany „AI Assistant" — użytkownik dostawał treść, której model nigdy
+      // nie wygenerował. Teraz: uczciwy powód, treść karty nietknięta.
+      notifyAiUnavailable(error);
     } finally {
       setIsGeneratingAIComment(false);
+    }
+  };
+
+  // ── AI: propozycja składu RACI ────────────────────────────────────────────
+  // Było: `/ai/chat` (orkiestrator, bez `text`) + `catch`, który wstawiał
+  // pierwsze 4 osoby z listy jako „skład RACI" i meldował SUKCES. Teraz:
+  // `/ai/generate`, twarda walidacja odpowiedzi (tylko realne userId i tylko
+  // dozwolone role) i uczciwy błąd zamiast wymyślonego zespołu.
+  const suggestStakeholdersWithAI = async () => {
+    if (users.length === 0) {
+      toast.error(
+        isPolish
+          ? 'Brak listy osób — nie ma z czego zbudować RACI.'
+          : 'No people available — RACI cannot be built.'
+      );
+      return;
+    }
+    setIsSuggestingStakeholders(true);
+    try {
+      const roster = users
+        .map((u) => `${u.id}: ${u.firstName} ${u.lastName} (${u.email})`)
+        .join('\n');
+      const taskContext = isPolish
+        ? `Zadanie: ${title || 'bez tytułu'}\nOpis: ${description || 'brak'}\nPriorytet: ${priority}\nTermin: ${dueDate || 'brak'}`
+        : `Task: ${title || 'untitled'}\nDescription: ${description || 'none'}\nPriority: ${priority}\nDue date: ${dueDate || 'none'}`;
+      const message = isPolish
+        ? `Na podstawie danych zadania zaproponuj skład RACI. Zwróć WYŁĄCZNIE JSON:\n{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}\nUżywaj WYŁĄCZNIE identyfikatorów z listy poniżej.\n\n${taskContext}\n\nDostępne osoby:\n${roster}`
+        : `Based on task data, propose a RACI team. Return JSON ONLY:\n{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}\nUse ONLY identifiers from the list below.\n\n${taskContext}\n\nAvailable people:\n${roster}`;
+
+      const parsed = await requestAiJson<{
+        stakeholders?: Array<{ userId?: string; role?: string }>;
+      }>({
+        message,
+        systemInstruction: t(
+          'myWork.taskDetail.systemInstruction2',
+          'You are a PMO assistant. Return valid JSON only.'
+        ),
+        roleName: 'RACI Team Advisor',
+      });
+
+      const allowedRoles: StakeholderRole[] = [
+        'accountable',
+        'responsible',
+        'consulted',
+        'informed',
+      ];
+      const next: Stakeholder[] = (
+        Array.isArray(parsed.stakeholders) ? parsed.stakeholders : []
+      ).flatMap((s) => {
+        const user = users.find((u) => u.id === s?.userId);
+        const role = String(s?.role || '').toLowerCase() as StakeholderRole;
+        // Halucynacja (nieznany userId / nieznana rola) jest ODRZUCANA,
+        // nie „naprawiana" domyślną wartością.
+        if (!user || !allowedRoles.includes(role)) return [];
+        return [
+          {
+            id: Math.random().toString(36).substr(2, 9),
+            decisionId: taskId || 'new',
+            userId: user.id,
+            userName: `${user.firstName} ${user.lastName}`,
+            userEmail: user.email,
+            role,
+            notificationSettings: {
+              enabled: true,
+              triggers: ['on_status_change'] as StakeholderNotificationSettings['triggers'],
+              emailEnabled: false,
+              inAppEnabled: true,
+              integrationChannels: [],
+              syncTargets: [],
+            },
+          } as Stakeholder,
+        ];
+      });
+
+      if (next.length === 0) {
+        toast.error(
+          isPolish
+            ? 'AI nie zwróciło poprawnego składu RACI — skład bez zmian.'
+            : 'AI returned no valid RACI team — the team is unchanged.'
+        );
+        return;
+      }
+
+      setStakeholders(next);
+      toast.success(
+        isPolish
+          ? `AI zaproponowało skład RACI (${next.length} osób).`
+          : `AI proposed RACI team (${next.length} people).`
+      );
+    } catch (error) {
+      notifyAiUnavailable(error);
+    } finally {
+      setIsSuggestingStakeholders(false);
+    }
+  };
+
+  // ── AI: wypełnienie formularza przypomnienia / reguły eskalacji ───────────
+  // Było: `onClick={() => toast('AI will fill the form...')}` — czysta ATRAPA,
+  // zero logiki, do tego `disabled` spięty ze stanem generatora RACI
+  // (`isSuggestingStakeholders`) — błąd kopiuj-wklej. Teraz: realna generacja
+  // przez `/ai/generate`, własny stan ładowania per modal, sanityzacja pól
+  // i brak jakiejkolwiek zmiany draftu, gdy AI nie odpowie.
+  const clampDays = (value: unknown, min: number, max: number, fallback: number): number => {
+    const n = Math.round(Number(value));
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(max, Math.max(min, n));
+  };
+  const cleanMessage = (value: unknown, current: string): string => {
+    const text = String(value ?? '').trim();
+    return text ? text.slice(0, 600) : current;
+  };
+
+  const fillReminderWithAI = async () => {
+    if (!reminderDraft) return;
+    setIsFillingReminderAI(true);
+    try {
+      const message = isPolish
+        ? `Zaproponuj ustawienia przypomnienia dla zadania projektowego. Zwróć WYŁĄCZNIE JSON:\n{"type":"before_due|after_due","days":<liczba 0-30>,"recipients":"both|stakeholders|owner","message":"<treść przypomnienia, max 300 znaków, po polsku>"}\n\nZadanie: ${title || 'bez tytułu'}\nOpis: ${description || 'brak'}\nStatus: ${status}\nPriorytet: ${priority}\nTermin: ${dueDate || 'brak'}`
+        : `Propose reminder settings for a project task. Return JSON ONLY:\n{"type":"before_due|after_due","days":<number 0-30>,"recipients":"both|stakeholders|owner","message":"<reminder text, max 300 chars, in English>"}\n\nTask: ${title || 'untitled'}\nDescription: ${description || 'none'}\nStatus: ${status}\nPriority: ${priority}\nDue date: ${dueDate || 'none'}`;
+
+      const parsed = await requestAiJson<{
+        type?: string;
+        days?: unknown;
+        recipients?: string;
+        message?: unknown;
+      }>({
+        message,
+        systemInstruction: t(
+          'myWork.taskDetail.systemInstructionReminder',
+          'You are a PMO assistant configuring a task reminder. Return valid JSON only.'
+        ),
+        roleName: 'Task Reminder Advisor',
+      });
+
+      const type = parsed.type === 'after_due' ? 'after_due' : 'before_due';
+      // Dopuszczamy WYŁĄCZNIE wartości, które ma pole <select> w tym modalu.
+      const recipientOptions = ['both', 'stakeholders', 'owner'];
+      const recipients = recipientOptions.includes(String(parsed.recipients))
+        ? (parsed.recipients as ReminderRuleWithDelivery['recipients'])
+        : reminderDraft.recipients;
+
+      setReminderDraft((prev) =>
+        prev
+          ? {
+              ...prev,
+              type,
+              days: clampDays(parsed.days, 0, 30, prev.days),
+              recipients,
+              message: cleanMessage(parsed.message, prev.message || ''),
+            }
+          : prev
+      );
+      toast.success(
+        isPolish
+          ? 'AI wypełniło formularz — sprawdź i zapisz.'
+          : 'AI filled the form — review and save.'
+      );
+    } catch (error) {
+      notifyAiUnavailable(error);
+    } finally {
+      setIsFillingReminderAI(false);
+    }
+  };
+
+  const fillEscalationWithAI = async () => {
+    if (!escalationDraft) return;
+    setIsFillingEscalationAI(true);
+    try {
+      const roster = users
+        .map((u) => `${u.id}: ${u.firstName} ${u.lastName}`)
+        .join('\n');
+      const message = isPolish
+        ? `Zaproponuj ustawienia reguły eskalacji dla zadania projektowego. Zwróć WYŁĄCZNIE JSON:\n{"warningDays":<0-60>,"criticalDays":<0-60>,"afterDays":<1-60>,"escalationMode":"notify_only|manager_review|executive_alert","escalateTo":"<userId z listy lub pusty string>","message":"<treść eskalacji, max 300 znaków, po polsku>"}\n\nZadanie: ${title || 'bez tytułu'}\nOpis: ${description || 'brak'}\nStatus: ${status}\nPriorytet: ${priority}\nTermin: ${dueDate || 'brak'}\n\nDostępne osoby:\n${roster || 'brak'}`
+        : `Propose escalation rule settings for a project task. Return JSON ONLY:\n{"warningDays":<0-60>,"criticalDays":<0-60>,"afterDays":<1-60>,"escalationMode":"notify_only|manager_review|executive_alert","escalateTo":"<userId from the list or empty string>","message":"<escalation text, max 300 chars, in English>"}\n\nTask: ${title || 'untitled'}\nDescription: ${description || 'none'}\nStatus: ${status}\nPriority: ${priority}\nDue date: ${dueDate || 'none'}\n\nAvailable people:\n${roster || 'none'}`;
+
+      const parsed = await requestAiJson<{
+        warningDays?: unknown;
+        criticalDays?: unknown;
+        afterDays?: unknown;
+        escalationMode?: string;
+        escalateTo?: string;
+        message?: unknown;
+      }>({
+        message,
+        systemInstruction: t(
+          'myWork.taskDetail.systemInstructionEscalation',
+          'You are a PMO assistant configuring a task escalation rule. Return valid JSON only.'
+        ),
+        roleName: 'Task Escalation Advisor',
+      });
+
+      const modes: EscalationMode[] = ['notify_only', 'manager_review', 'executive_alert'];
+      const suggestedUser = users.find((u) => u.id === parsed.escalateTo);
+
+      setEscalationDraft((prev) =>
+        prev
+          ? {
+              ...prev,
+              warningDays: clampDays(parsed.warningDays, 0, 60, prev.warningDays),
+              criticalDays: clampDays(parsed.criticalDays, 0, 60, prev.criticalDays),
+              afterDays: clampDays(parsed.afterDays, 1, 60, prev.afterDays),
+              escalationMode: modes.includes(parsed.escalationMode as EscalationMode)
+                ? (parsed.escalationMode as EscalationMode)
+                : prev.escalationMode,
+              // Nieznany userId → zostawiamy wybór użytkownika, NIE zgadujemy.
+              escalateTo: suggestedUser ? suggestedUser.id : prev.escalateTo,
+              escalateToName: suggestedUser
+                ? `${suggestedUser.firstName} ${suggestedUser.lastName}`
+                : prev.escalateToName,
+              message: cleanMessage(parsed.message, prev.message || ''),
+            }
+          : prev
+      );
+      toast.success(
+        isPolish
+          ? 'AI wypełniło formularz — sprawdź i zapisz.'
+          : 'AI filled the form — review and save.'
+      );
+    } catch (error) {
+      notifyAiUnavailable(error);
+    } finally {
+      setIsFillingEscalationAI(false);
     }
   };
 
@@ -5105,99 +5383,7 @@ Return ONLY the final comment text.`;
 
                       {activeNSection === 'governance' && (
                         <button
-                          onClick={async () => {
-                            setIsSuggestingStakeholders(true);
-                            try {
-                              const roster = users
-                                .map((u) => `${u.id}: ${u.firstName} ${u.lastName} (${u.email})`)
-                                .join('\n');
-                              const prompt = isPolish
-                                ? `Na podstawie danych zadania zaproponuj skład RACI. Zwróć WYŁĄCZNIE JSON:\n{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}\nDostępne osoby:\n${roster}`
-                                : `Based on task data, propose a RACI team. Return JSON ONLY:\n{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}\nAvailable people:\n${roster}`;
-                              const aiRes = await Api.post('/ai/chat', {
-                                message: prompt,
-                                history: [],
-                                systemInstruction: t(
-                                  'myWork.taskDetail.systemInstruction2',
-                                  'You are a PMO assistant. Return valid JSON only.'
-                                ),
-                                roleName: 'RACI Team Advisor',
-                              });
-                              const raw = String(aiRes?.text || aiRes?.content || '').trim();
-                              const jsonMatch = raw.match(/\{[\s\S]*\}/);
-                              if (jsonMatch) {
-                                const parsed = JSON.parse(jsonMatch[0]);
-                                if (Array.isArray(parsed.stakeholders)) {
-                                  const next = parsed.stakeholders.map((s: any) => {
-                                    const user = users.find((u) => u.id === s.userId);
-                                    return {
-                                      id: Math.random().toString(36).substr(2, 9),
-                                      decisionId: taskId || 'new',
-                                      userId: s.userId,
-                                      userName: user
-                                        ? `${user.firstName} ${user.lastName}`
-                                        : s.userId,
-                                      userEmail: user?.email || '',
-                                      role: s.role as StakeholderRole,
-                                      notificationSettings: {
-                                        enabled: true,
-                                        triggers: ['on_status_change'],
-                                        emailEnabled: false,
-                                        inAppEnabled: true,
-                                        integrationChannels: [],
-                                        syncTargets: [],
-                                      },
-                                    };
-                                  });
-                                  setStakeholders(next);
-                                  toast.success(
-                                    isPolish
-                                      ? `AI zaproponowało skład RACI (${next.length} osób).`
-                                      : `AI proposed RACI team (${next.length} people).`
-                                  );
-                                }
-                              }
-                            } catch {
-                              // fallback
-                              const fallbackTeam = users
-                                .slice(0, Math.min(4, users.length))
-                                .map((u, i) => ({
-                                  id: Math.random().toString(36).substr(2, 9),
-                                  decisionId: taskId || 'new',
-                                  userId: u.id,
-                                  userName: `${u.firstName} ${u.lastName}`,
-                                  userEmail: u.email,
-                                  role:
-                                    (
-                                      [
-                                        'accountable',
-                                        'responsible',
-                                        'consulted',
-                                        'informed',
-                                      ] as StakeholderRole[]
-                                    )[i] || 'informed',
-                                  notificationSettings: {
-                                    enabled: true,
-                                    triggers: [
-                                      'on_status_change',
-                                    ] as StakeholderNotificationSettings['triggers'],
-                                    emailEnabled: false,
-                                    inAppEnabled: true,
-                                    integrationChannels: [],
-                                    syncTargets: [],
-                                  },
-                                }));
-                              setStakeholders(fallbackTeam);
-                              toast.success(
-                                t(
-                                  'myWork.taskDetail.appliedFallbackRACITeam',
-                                  'Applied fallback RACI team.'
-                                )
-                              );
-                            } finally {
-                              setIsSuggestingStakeholders(false);
-                            }
-                          }}
+                          onClick={suggestStakeholdersWithAI}
                           disabled={isSuggestingStakeholders}
                           className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                             isSuggestingStakeholders
@@ -5536,11 +5722,18 @@ Return ONLY the final comment text.`;
                 </h4>
                 <div className="inline-flex items-center gap-2">
                   <button
-                    disabled={isSuggestingStakeholders}
-                    onClick={() => toast(t('myWork.taskDetail.toast3', 'AI will fill the form...'))}
+                    type="button"
+                    disabled={isFillingReminderAI}
+                    onClick={fillReminderWithAI}
+                    title={t('myWork.taskDetail.aiFillReminder', 'Fill the form with AI')}
                     className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-info/40 text-c-info hover:border-c-info/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                   >
-                    <Sparkles size={12} /> AI
+                    {isFillingReminderAI ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={12} />
+                    )}{' '}
+                    AI
                   </button>
                   <button
                     className="p-1 text-c-text-secondary dark:text-c-text-secondary hover:text-c-text"
@@ -5808,11 +6001,18 @@ Return ONLY the final comment text.`;
                 </h4>
                 <div className="inline-flex items-center gap-2">
                   <button
-                    disabled={isSuggestingStakeholders}
-                    onClick={() => toast(t('myWork.taskDetail.toast4', 'AI will fill the form...'))}
+                    type="button"
+                    disabled={isFillingEscalationAI}
+                    onClick={fillEscalationWithAI}
+                    title={t('myWork.taskDetail.aiFillEscalation', 'Fill the form with AI')}
                     className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-info/40 text-c-info hover:border-c-info/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                   >
-                    <Sparkles size={12} /> AI
+                    {isFillingEscalationAI ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={12} />
+                    )}{' '}
+                    AI
                   </button>
                   <button
                     className="p-1 text-c-text-secondary dark:text-c-text-secondary hover:text-c-text"
