@@ -3652,17 +3652,23 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               isAccepted
               graphNodes={nodes as any[]}
               graphEdges={edges as any[]}
+              // P1-1 (Z3): pasek podpowiedzi AI wysyłał `mm_ai_expand` /
+              // `mm_ai_summarize`, które obsługuje WYŁĄCZNIE
+              // useMindMapQuickActions (montowany tylko w Mapie myśli) — w
+              // Whiteboardzie oba przyciski nie robiły NIC. Podpięte do realnych
+              // generatorów tablicy (useWhiteboardQuickActions → AI_ACTION_MAP,
+              // ścieżka propozycja→akceptacja).
               onActionExpand={() =>
                 window.dispatchEvent(
                   new CustomEvent('idea-workspace-quick-action', {
-                    detail: { action: 'mm_ai_expand', ideaId },
+                    detail: { action: 'wb_ai_find_themes', ideaId },
                   })
                 )
               }
               onActionConvert={() =>
                 window.dispatchEvent(
                   new CustomEvent('idea-workspace-quick-action', {
-                    detail: { action: 'mm_ai_summarize', ideaId },
+                    detail: { action: 'wb_ai_to_map', ideaId },
                   })
                 )
               }

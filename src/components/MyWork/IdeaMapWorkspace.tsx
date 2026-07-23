@@ -195,6 +195,44 @@ function isSameSelection(left: IdeaWorkspaceSelection, right: IdeaWorkspaceSelec
   );
 }
 
+// P0-5 (docs/standards/idea-workspace/12_BACKLOG_I_ODBIOR.md): the active
+// representation (Mind Map / Whiteboard / Process Flow / Table) is a LOCAL
+// view preference — per user, per browser — never a global property of the
+// Idea. `my_idea_maps.preferred_tool` / `extensions.surfaceState.activeTool`
+// live on the ONE shared canonical map row per idea (server reads it
+// "regardless of who last edited it" — see GET /my-ideas/:id/map) and get
+// re-stamped with whichever tool is active on every autosave, so adopting
+// them as "the tool to open with" silently hands one teammate's view to
+// everyone else. We persist the real preference here instead, scoped to this
+// idea + this browser, and never write it back to the server.
+const IDEA_TOOL_PREF_ALLOWED = ['mindmap', 'process_flow', 'table', 'whiteboard'] as const;
+
+function ideaToolPrefStorageKey(ideaId: string) {
+  return `consultify.idea-active-tool.${ideaId}`;
+}
+
+function readLocalToolPreference(ideaId: string): CanvasToolType | null {
+  if (typeof window === 'undefined' || !ideaId) return null;
+  try {
+    const raw = window.localStorage.getItem(ideaToolPrefStorageKey(ideaId));
+    if (raw && (IDEA_TOOL_PREF_ALLOWED as readonly string[]).includes(raw)) {
+      return raw as CanvasToolType;
+    }
+  } catch {
+    /* private mode / storage disabled — fall through to default */
+  }
+  return null;
+}
+
+function writeLocalToolPreference(ideaId: string, tool: CanvasToolType) {
+  if (typeof window === 'undefined' || !ideaId) return;
+  try {
+    window.localStorage.setItem(ideaToolPrefStorageKey(ideaId), tool);
+  } catch {
+    /* ignore — quota / private mode */
+  }
+}
+
 type IdeaMapWorkspaceProps = {
   ideaId: string;
   initialOpenMap?: boolean;
@@ -252,6 +290,24 @@ function buildStartupExtensions(
   };
 }
 
+/**
+ * P1-1 (martwe kliknięcia powłoki): akcja „dodaj" Menu 3 per reprezentacja.
+ * Powłoka (Menu 3 / rail / prawy panel) nie może wysyłać ciągów Mapy myśli do
+ * wszystkich narzędzi — `mm_*` obsługuje WYŁĄCZNIE useMindMapQuickActions,
+ * zamontowany tylko w IdeaRecommendationMap. Każdy ciąg poniżej ma realny
+ * handler w hooku swojej reprezentacji:
+ *   mm_add_child   → mindmap/useMindMapQuickActions.ts
+ *   wb_add_sticky  → whiteboard/useWhiteboardQuickActions.ts
+ *   pf_add_step    → processflow/useProcessFlowQuickActions.ts
+ *   tbl_add_row    → table/useTableQuickActions.ts
+ */
+const MENU3_ADD_ACTION_PER_TOOL: Record<CanvasToolType, string> = {
+  mindmap: 'mm_add_child',
+  whiteboard: 'wb_add_sticky',
+  process_flow: 'pf_add_step',
+  table: 'tbl_add_row',
+};
+
 export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   ideaId,
   initialOpenMap,
@@ -294,6 +350,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   const [loading, setLoading] = useState(true);
   const [realId, setRealId] = useState(ideaId);
+  // Stable read of the current idea id for callbacks that must not churn their
+  // identity every time realId changes (e.g. new-idea temp id → real id).
+  const realIdRef = useRef(realId);
+  useEffect(() => {
+    realIdRef.current = realId;
+  }, [realId]);
   const [title, setTitle] = useState('');
   const [seedText, setSeedText] = useState('');
   const [stage, setStage] = useState<string>('seed');
@@ -419,6 +481,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     (tool: CanvasToolType) => {
       if (onActiveToolChange) onActiveToolChange(tool);
       else setInternalActiveTool(tool);
+      // P0-5: persist the view preference LOCALLY (this browser only) so it
+      // survives reloads/reopens for THIS user without ever touching the
+      // shared idea map row other org members read.
+      writeLocalToolPreference(realIdRef.current || ideaId, tool);
       try {
         const url = new URL(window.location.href);
         url.searchParams.set('tool', tool);
@@ -427,7 +493,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         /* ignore */
       }
     },
-    [onActiveToolChange]
+    [ideaId, onActiveToolChange]
   );
 
   const setActivePanel = useCallback(
@@ -1474,29 +1540,23 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           const mapRes = await Api.getMyIdeaMap(String(idea?.id || ideaId), {
             language: i18n.language,
           });
-          const savedPref = mapRes?.map?.preferredTool ? String(mapRes.map.preferredTool) : null;
-          if (
-            !initialTool &&
-            savedPref &&
-            ['mindmap', 'process_flow', 'table', 'whiteboard'].includes(savedPref) &&
-            !userSelectedToolRef.current
-          ) {
-            setActiveTool(savedPref as CanvasToolType);
+          // P0-5: the tool to open with is resolved LOCALLY, never from the
+          // shared map row (`preferredTool` / `surfaceState.activeTool` — see
+          // the module-level note above `readLocalToolPreference`). A deep
+          // link always wins; otherwise fall back to this browser's own
+          // remembered choice for this idea, defaulting to Mind Map when
+          // neither is present — never to whatever another org member last
+          // had open.
+          if (!initialTool && !userSelectedToolRef.current) {
+            const localPref = readLocalToolPreference(String(idea?.id || ideaId));
+            if (localPref) setActiveTool(localPref);
           }
 
-          // V5-IDEA-16: Restore surface state
+          // V5-IDEA-16: Restore surface state (focus mode / viewport only —
+          // the active TOOL is deliberately excluded, see above).
           const ss = mapRes?.map?.extensions?.surfaceState;
           if (ss && typeof ss === 'object') {
             const ssObj = ss as Record<string, unknown>;
-            if (
-              ssObj.activeTool &&
-              typeof ssObj.activeTool === 'string' &&
-              ['mindmap', 'process_flow', 'table', 'whiteboard'].includes(ssObj.activeTool) &&
-              !initialTool &&
-              !userSelectedToolRef.current
-            ) {
-              setActiveTool(ssObj.activeTool as CanvasToolType);
-            }
             if (ssObj.focusMode === 'system' || ssObj.focusMode === 'object') {
               setFocusMode(ssObj.focusMode as 'system' | 'object');
             }
@@ -1561,13 +1621,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // (`key={idea-workspace-<id>}`) while the SPA URL persists, reading `?tool=` on
   // mount pulled the PREVIOUSLY-opened idea's tool into the newly-opened idea AND
   // set `userSelectedToolRef=true`, which then SUPPRESSED the idea's real,
-  // server-saved `preferredTool` / `surfaceState.activeTool` restore in
-  // `hydrate()`. Net effect: open a Process-Flow idea, then open a Mind-Map idea
-  // → the Mind-Map idea wrongly opened in Process Flow. Tool selection is fully
-  // governed by `initialTool` (deep-link) + server `preferredTool`/`surfaceState`
-  // (idea identity, restored on hydrate) + genuine in-session user clicks, so
-  // this stale cross-idea param read is pure liability and is removed. The
-  // `setActiveTool` write keeps `?tool=` in the address bar for shareability.
+  // locally-saved tool preference restore in `hydrate()`. Net effect: open a
+  // Process-Flow idea, then open a Mind-Map idea → the Mind-Map idea wrongly
+  // opened in Process Flow. Tool selection is fully governed by `initialTool`
+  // (deep-link) + this browser's own `readLocalToolPreference` (P0-5 — per
+  // idea, per user, restored on hydrate; NEVER the shared server map) +
+  // genuine in-session user clicks, so this stale cross-idea param read is
+  // pure liability and is removed. The `setActiveTool` write keeps `?tool=`
+  // in the address bar for shareability.
 
   // ── V4-IDEA-07: Keyboard shortcuts ─────────────────────────────────────────
   const {
@@ -1780,13 +1841,18 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     graphEdgesRef.current = graphEdges;
   }, [graphEdges]);
 
+  // P0-5: `activeTool` is deliberately EXCLUDED from `surfaceState` — that
+  // field lives on the ONE shared canonical map row per idea (read by every
+  // org member, see the note above `readLocalToolPreference`), so writing the
+  // active tool there on every switch was broadcasting this user's view to
+  // everyone else. focusMode/focusObjectId/viewport are unrelated to which
+  // representation is open and keep syncing as before.
   useEffect(() => {
     latestSurfaceStateRef.current = {
       focusMode,
       focusObjectId: focusObjectId || null,
-      activeTool,
     };
-  }, [activeTool, focusMode, focusObjectId]);
+  }, [focusMode, focusObjectId]);
 
   useEffect(() => {
     if (!realId || isDraft) return;
@@ -1799,7 +1865,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       },
       { reason: 'draft' }
     );
-  }, [activeTool, applyRuntimeExtensionsPatch, focusMode, focusObjectId, isDraft, realId]);
+  }, [applyRuntimeExtensionsPatch, focusMode, focusObjectId, isDraft, realId]);
 
   // ── Chat ────────────────────────────────────────────────────────────────────
   const openChat = useCallback(
@@ -2928,15 +2994,33 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             hasContent: mapHasNodes,
             isPolish: Boolean(isPolish),
             handlers: {
+              // P1-1 (Z3): każda reprezentacja ma WŁASNĄ akcję „dodaj". Wcześniej
+              // wszystko poza Mapą myśli wysyłało `add_node`, którego nie obsługuje
+              // ŻADEN hook (mm/wb/pf/tbl) — „Dodaj kształt/wiersz/karteczkę" był
+              // martwym klikiem. Etykietę per narzędzie daje już buildIdeaMenu3Actions.
               onAddPrimary: () =>
-                handleQuickAction(activeTool === 'mindmap' ? 'mm_add_child' : 'add_node'),
-              onAutoLayout: () =>
-                window.dispatchEvent(
-                  new CustomEvent('idea-mindmap-node-quick-action', {
-                    detail: { action: 'pane_auto_layout' },
-                  })
-                ),
-              onAIExpand: () => handleQuickAction('mm_ai_expand'),
+                handleQuickAction(MENU3_ADD_ACTION_PER_TOOL[activeTool] ?? 'mm_add_child'),
+              // P1-1: Auto-układ widnieje tylko dla Mapy myśli i Przepływu. Mapa
+              // słucha zdarzenia węzłowego, Przepływ ma własny silnik układu
+              // (pf_auto_layout → handleAutoLayout) — wcześniej dostawał zdarzenie
+              // Mapy myśli, którego nikt w Przepływie nie słucha.
+              onAutoLayout:
+                activeTool === 'process_flow'
+                  ? () => handleQuickAction('pf_auto_layout')
+                  : () =>
+                      window.dispatchEvent(
+                        new CustomEvent('idea-mindmap-node-quick-action', {
+                          detail: { action: 'pane_auto_layout' },
+                        })
+                      ),
+              // P1-1: „AI rozwiń" to czasownik Mapy myśli (mm_ai_expand obsługuje
+              // wyłącznie useMindMapQuickActions). Whiteboard/Przepływ/Tabela mają
+              // własne generatory AI, ale nie mają „rozwinięcia" — chip nie może
+              // być klikalny, więc w tych reprezentacjach go NIE wystawiamy
+              // (buildIdeaMenu3Actions pomija akcję bez handlera). Wejście do AI
+              // tych narzędzi jest w lewym railu (popover AI, per reprezentacja).
+              onAIExpand:
+                activeTool === 'mindmap' ? () => handleQuickAction('mm_ai_expand') : undefined,
               onOpenTemplateGallery: () => setTemplateGalleryOpen(true),
               onExport: () => setExportMenuOpen(true),
               onConvertFromMap: () => handlePanelChange('tools'),
@@ -3039,8 +3123,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       graphNodes,
       graphEdges,
       evidenceCount: graphNodes.filter((n: any) => n?.data?.evidenceLinks?.length > 0).length,
-      onAISummarize: () => handleQuickAction('mm_ai_summarize'),
-      onAIExpand: () => handleQuickAction('mm_ai_expand'),
+      // P1-1 (Z3): wiersz „Podsumuj AI / Rozwiń AI" w sekcji Status prawego
+      // panelu wysyła mm_ai_summarize / mm_ai_expand — obsługuje je wyłącznie
+      // useMindMapQuickActions (zamontowany tylko w Mapie myśli). Poza Mapą
+      // przyciski były klikalne i nie robiły NIC. IdeaWorkspaceTools rysuje je
+      // tylko wtedy, gdy handler istnieje, więc `undefined` = brak przycisku.
+      onAISummarize:
+        activeTool === 'mindmap' ? () => handleQuickAction('mm_ai_summarize') : undefined,
+      onAIExpand: activeTool === 'mindmap' ? () => handleQuickAction('mm_ai_expand') : undefined,
       onLayoutChange: (mode: string) => {
         window.dispatchEvent(
           new CustomEvent('idea-mindmap-node-quick-action', {
@@ -3542,8 +3632,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               extensions={mapExtensions}
               onPreferredToolLoaded={(tool) => {
                 if (!tool) return;
+                // Deep link always wins — never self-heal away from it.
+                if (initialTool) return;
                 if (userSelectedToolRef.current) return;
                 if (tool === activeTool) return;
+                // P0-5: `tool` here is read by the mind-map canvas's OWN map
+                // fetch from the SHARED canonical map row (`preferredTool` —
+                // see the module note above `readLocalToolPreference`). Only
+                // self-heal toward THIS browser's own remembered choice for
+                // this idea — never toward whatever another org member
+                // happened to have active when they last saved.
+                if (tool !== readLocalToolPreference(realId)) return;
                 setTimeout(() => setActiveTool(tool), 0);
               }}
               variant={mapOpen && !melsCanvasEnabled ? 'overlay' : 'embedded'}
