@@ -152,7 +152,6 @@ import {
   // nic nie jest solid). ETAP 1.2: AI Consultant to teraz Menu2AIButton (fiolet),
   // a ToolbarSubtleButton odszedl razem z przyciskiem "Nowy" (akcje -> kebab).
   ToolbarGhostButton,
-  ToolbarIconButton,
 } from '../shared/NModeLayout';
 import {
   type AIConsultantAction,
@@ -760,7 +759,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // (guard Esc); usuniecie jej z tamtej listy zmienialoby semantyke guardu.
   const showNewMenu = false;
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const [showToolbarKebab, setShowToolbarKebab] = useState(false);
+  // Kebab Menu 2 zwinięty do kebaba Menu 1 (2026-07-24), więc nikt już tego
+  // stanu nie ustawia. Zostaje jako STALA false — dokładnie jak `showNewMenu`
+  // wyżej — bo czyta ją `anyOverlayOpen` (guard Esc).
+  const showToolbarKebab = false;
 
   // Tryb Read/Edit (§ menu 5A · „do pokazania klientowi"). Read = czysty widok:
   // pasek akcji kart (Regeneruj/Edytuj/Zaakceptuj) znika, pola sekcji stają się
@@ -6482,8 +6484,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           component = (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
+                {/* Tytuł centrum = ETYKIETA TEJ SAMEJ SEKCJI co w nawigacji.
+                    BYŁO: literał `initiatives.descriptionContext2` („Opis
+                    i kontekst") przy zaznaczonej w nawigacji pozycji „Zakres
+                    inicjatywy" — dwa różne imiona jednego ekranu, więc nie dało
+                    się powiedzieć, gdzie się jest. JEST: czytamy `section.label`,
+                    czyli dokładnie to, co rysuje `NModeLeftNav` — rozjazd nie
+                    może już wrócić przy zmianie jednej z dwóch stron. */}
                 <h2 className="text-lg font-semibold text-c-text">
-                  {t('initiatives.descriptionContext2')}
+                  {isPolish ? section.label.pl : section.label.en}
                 </h2>
               </div>
 
@@ -9360,6 +9369,98 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     return items;
   }, [contextActions, toggleSection, setShowCreateTask, setShowCreateDecision, setShowCreateRaid]);
 
+  // ── JEDEN KEBAB NA EKRANIE (2026-07-24) ────────────────────────────────────
+  // BYŁO: kebab „Więcej" w Menu 2 (x≈876) OBOK kebaba Menu 1 (x≈1354) — dwa
+  // nieodróżnialne kebaby w jednym rzędzie wzroku i Menu 2 z PIĘCIOMA
+  // kontrolkami zamiast trzech (Sekcje · Edycja|Podgląd · Analizuj z AI).
+  //
+  // DLACZEGO SCALENIE, A NIE USUNIĘCIE: żadna z pozycji tamtego kebaba nie
+  // dotyczy KARTY (sekcji) — to akcje całego ARTEFAKTU (Nowe zadanie/decyzja/
+  // RAID, Eksport, Wstrzymaj/Anuluj, Archiwizuj, Usuń). Ich dom to Menu 1
+  // (tożsamość artefaktu), gdzie już mieszkają „Kopiuj kod/link". Usunięcie
+  // skasowałoby zdolności; scalenie tylko zmienia dom — a Menu 2 wraca do
+  // kontraktu trzech stref (`NModeMenu2` §props: `overflowKebab` opisany jako
+  // wyjątek „dla zdolności bez nowego domu" — ten dom właśnie dostały).
+  //
+  // Wcześniejszy komentarz przy Menu 2 twierdził, że kebaby „mają różne domy:
+  // Menu 1 = akcje artefaktu, Menu 2 = akcje karty". Rozbiór zawartości tego
+  // nie potwierdza — ani jedna pozycja nie operowała na aktywnej karcie.
+  const menu1ExtraOverflowItems = useMemo(() => {
+    const items: Array<{
+      id: string;
+      label: string;
+      icon: React.FC<{ size?: number; className?: string }>;
+      onClick: () => void;
+      danger?: boolean;
+    }> = [];
+    // Tworzenie — tylko w Edycji (Podgląd ma być czysty; tak było w Menu 2).
+    if (!readMode) {
+      for (const item of newMenuActions) {
+        items.push({
+          id: item.id,
+          label: isPolish ? item.label.pl : item.label.en,
+          icon: Plus,
+          onClick: item.onClick,
+        });
+      }
+    }
+    items.push({
+      id: 'export',
+      label: `${t('initiatives.export2')}…`,
+      icon: Download,
+      onClick: () => setShowExportDialog(true),
+    });
+    // Kolejność: neutralne najpierw, dopiero potem grupa destrukcyjna —
+    // `NModeHeader` rysuje separator NAD pierwszą pozycją `danger`, więc
+    // wstawienie „Archiwizuj" (neutralne) po „Oznacz jako zablokowane"
+    // rozbijało tę grupę na dwa kawałki.
+    if (canArchiveDoc) {
+      items.push({
+        id: 'archive',
+        label: t('initiatives.archiveAction'),
+        icon: Archive,
+        onClick: () => void handleArchive(),
+      });
+    }
+    for (const sa of destructiveStatusActions) {
+      items.push({
+        id: `status-${sa.targetStatus}`,
+        label: isPolish ? sa.labelPl : sa.label,
+        icon:
+          sa.targetStatus === InitiativeStatus.CANCELLED
+            ? XCircle
+            : sa.targetStatus === InitiativeStatus.BLOCKED
+              ? Ban
+              : AlertTriangle,
+        onClick: () => void handleStatusAction(sa),
+        danger: true,
+      });
+    }
+    if (canDeleteDoc) {
+      items.push({
+        id: 'delete',
+        label: t('initiatives.delete2'),
+        icon: Trash2,
+        onClick: () => void handleDelete(),
+        danger: true,
+      });
+    }
+    return items;
+    // `handleStatusAction`/`handleArchive`/`handleDelete` to zwykłe funkcje
+    // odtwarzane co render — celowo poza tablicą zależności (identycznie jak
+    // w poprzednim, inline'owym kebabie, który czytał je wprost z domknięcia).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    readMode,
+    newMenuActions,
+    isPolish,
+    t,
+    destructiveStatusActions,
+    canArchiveDoc,
+    canDeleteDoc,
+    setShowExportDialog,
+  ]);
+
   // Slot 5 — section-level AI: dispatches to the existing per-section request
   // handler for the active section (same calls the old per-section buttons made).
   const activeSectionAiBusy = useMemo(() => {
@@ -10164,8 +10265,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // `statusBar` w `ArtifactRightPanel`, który komponent sam obramowuje
   // (`border-b px-4 py-3`). Jedna deklaracja obsługuje OBIE gęstości (N i C).
   // Flaga OFF → `undefined` → panel renderuje się 1:1 jak wcześniej.
+  //
+  // ── 2026-07-24: BRAMKA `status === DRAFT` DOŁOŻONA ────────────────────────
+  // Pasek pokazywał pigułkę „Szkic" na inicjatywie, której własny status
+  // (Menu 1 + Właściwości) brzmiał „W realizacji". Powód: pasek czyta WŁASNY
+  // rekord HP-7 i przy jego braku (albo błędzie endpointu) spada na
+  // `state ?? 'draft'` — czyli ZMYŚLA „Szkic". Dopóki nie przyjmuje stanu
+  // z zewnątrz, mountujemy go tylko wtedy, gdy własny cykl życia karty JEST
+  // szkicem — wtedy oba napisy mówią to samo. Poza szkicem prawdą jest status
+  // karty. (Podglądu nie bramkujemy tu osobno jak w Decyzji: `hideSubmitAction`
+  // już zdejmuje jedyną akcję, więc pasek niesie wyłącznie STAN.)
   const artifactApprovalStatusBar =
-    isArtifactApprovalUiEnabled() && initiativeId ? (
+    isArtifactApprovalUiEnabled() && initiativeId && status === InitiativeStatus.DRAFT ? (
       <ArtifactApprovalStatusBar
         artifactType="initiative"
         artifactId={initiativeId}
@@ -11056,6 +11167,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
                 showModeSwitcher={false}
                 buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
+                /* Pozycje zwinięte tu z kebaba Menu 2 — uzasadnienie przy
+                   `menu1ExtraOverflowItems`. Jeden kebab na ekranie. */
+                extraOverflowItems={menu1ExtraOverflowItems}
                 primaryAction={
                   primaryLifecycleAction
                     ? {
@@ -11220,132 +11334,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 }}
                               />
                             }
-                            overflowKebab={
-                              <div className="relative">
-                                {/* Kebab Menu 2 mierzył `aria-label=""` — czytnik
-                                ekranu ogłaszał „przycisk", a na ekranie stały
-                                DWA nieopisane kebaby (drugi w Menu 1). Kebaby
-                                nie są scalane (mają różne domy: Menu 1 = akcje
-                                artefaktu, Menu 2 = akcje karty), więc ten
-                                dostaje jawną nazwę i `aria-haspopup`. */}
-                                <ToolbarIconButton
-                                  icon={<MoreVertical size={14} />}
-                                  tooltip={t('initiatives.more2')}
-                                  aria-label={t('initiatives.more2')}
-                                  aria-haspopup="menu"
-                                  onClick={() => setShowToolbarKebab((v) => !v)}
-                                  aria-expanded={showToolbarKebab}
-                                />
-                                {showToolbarKebab && (
-                                  <>
-                                    <div
-                                      className="fixed inset-0 z-40"
-                                      onClick={() => setShowToolbarKebab(false)}
-                                    />
-                                    <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
-                                      {/* ETAP 1.2 — akcje tworzenia („Nowy ▾") zeszly
-                                        tu z paska: lewa strefa menu 2 niesie WYLACZNIE
-                                        Sekcje. Zdolnosc nie znika, zmienia dom.
-                                        Read = ukryte (Podglad ma byc czysty). */}
-                                      {!readMode &&
-                                        newMenuActions.map((item) => (
-                                          <button
-                                            key={item.id}
-                                            type="button"
-                                            onClick={() => {
-                                              setShowToolbarKebab(false);
-                                              item.onClick();
-                                            }}
-                                            className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-                                          >
-                                            <Plus size={13} className="shrink-0 opacity-70" />
-                                            <span>{isPolish ? item.label.pl : item.label.en}</span>
-                                          </button>
-                                        ))}
-                                      {!readMode && newMenuActions.length > 0 && (
-                                        <div className="my-1 border-t border-c-border-subtle" />
-                                      )}
-                                      {/* Grupa neutralna (§6.4) — zeszła tu z paska.
-                                        JEDNO wejście „Eksport…" zamiast rozwijanego
-                                        menu z 5 pozycjami: otwiera Smart Export,
-                                        który jest nadzbiorem tamtych celów.
-                                        Fork i Tryb pokazu NIE są tutaj — Fork
-                                        mieszka w sekcji „Akcje", Tryb pokazu w
-                                        sekcji „Rezultaty" prawego panelu (§6.4:
-                                        akcje rekordu vs prezentacyjne; §2.6:
-                                        jedna akcja = jedno miejsce). */}
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setShowToolbarKebab(false);
-                                          setShowExportDialog(true);
-                                        }}
-                                        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-                                      >
-                                        <Download size={13} className="shrink-0 opacity-70" />
-                                        <span>{t('initiatives.export2')}…</span>
-                                      </button>
-                                      {(destructiveStatusActions.length > 0 ||
-                                        canArchiveDoc ||
-                                        canDeleteDoc) && (
-                                        <div className="my-1 border-t border-c-border-subtle" />
-                                      )}
-                                      {destructiveStatusActions.map((sa) => {
-                                        const KebabIcon =
-                                          sa.targetStatus === InitiativeStatus.CANCELLED
-                                            ? XCircle
-                                            : sa.targetStatus === InitiativeStatus.BLOCKED
-                                              ? Ban
-                                              : AlertTriangle;
-                                        return (
-                                          <button
-                                            key={sa.targetStatus}
-                                            type="button"
-                                            disabled={isMutating}
-                                            onClick={() => {
-                                              setShowToolbarKebab(false);
-                                              void handleStatusAction(sa);
-                                            }}
-                                            className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors disabled:opacity-50"
-                                          >
-                                            <KebabIcon size={13} className="shrink-0" />
-                                            <span>{isPolish ? sa.labelPl : sa.label}</span>
-                                          </button>
-                                        );
-                                      })}
-                                      {canArchiveDoc && (
-                                        <button
-                                          type="button"
-                                          disabled={isMutating}
-                                          onClick={() => {
-                                            setShowToolbarKebab(false);
-                                            void handleArchive();
-                                          }}
-                                          className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
-                                        >
-                                          <Archive size={13} className="shrink-0" />
-                                          <span>{t('initiatives.archiveAction')}</span>
-                                        </button>
-                                      )}
-                                      {canDeleteDoc && (
-                                        <button
-                                          type="button"
-                                          disabled={isMutating}
-                                          onClick={() => {
-                                            setShowToolbarKebab(false);
-                                            void handleDelete();
-                                          }}
-                                          className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors disabled:opacity-50"
-                                        >
-                                          <Trash2 size={13} className="shrink-0" />
-                                          <span>{t('initiatives.delete2')}</span>
-                                        </button>
-                                      )}
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            }
+                            /* KEBAB MENU 2 USUNIĘTY (2026-07-24) — jego pozycje żyją teraz
+                               w kebabie Menu 1 (`extraOverflowItems` = `menu1ExtraOverflowItems`).
+                               Menu 2 wraca do kontraktu trzech stref: Sekcje · Edycja|Podgląd ·
+                               Analizuj z AI. Zero utraconych zdolności — patrz uzasadnienie
+                               przy definicji `menu1ExtraOverflowItems`. */
                             sectionsMenu={
                               <div className="relative">
                                 <ToolbarGhostButton
