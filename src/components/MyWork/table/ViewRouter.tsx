@@ -238,6 +238,20 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   const densityRowPadY =
     density === 'compact' ? 'py-0.5' : density === 'comfortable' ? 'py-2' : 'py-1';
 
+  // Fala 10 (parytet Airtable) — zwijanie/rozwijanie grup po grupowaniu.
+  // Czysto prezentacyjne (per-sesję, bez trwałego zapisu): nie rusza
+  // sortu/filtra/zaznaczania/paste/resize/gęstości. Domyślnie wszystkie
+  // grupy rozwinięte (pusty zbiór).
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const toggleGroupCollapsed = useCallback((groupLabel: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupLabel)) next.delete(groupLabel);
+      else next.add(groupLabel);
+      return next;
+    });
+  }, []);
+
   // "Dodaj notatkę" reuses the first non-computed long-text field as the note
   // target (falls back to a single-line text field); disabled with a note
   // when the table has no text field to hold one (Aneks #4 — never hidden).
@@ -772,19 +786,36 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
 
   const body =
     groupedRows && Object.keys(groupedRows).length > 0
-      ? Object.entries(groupedRows).map(([groupLabel, rows]) => (
-          <React.Fragment key={groupLabel}>
-            <tr className="bg-c-surface-raised">
-              <td
-                colSpan={visibleColumns.length + 1}
-                className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted border-b border-c-border-subtle"
-              >
-                {groupLabel}
-              </td>
-            </tr>
-            {rows.map((row) => renderRow(row))}
-          </React.Fragment>
-        ))
+      ? Object.entries(groupedRows).map(([groupLabel, rows]) => {
+          const isCollapsed = collapsedGroups.has(groupLabel);
+          return (
+            <React.Fragment key={groupLabel}>
+              <tr className="bg-c-surface-raised">
+                <td
+                  colSpan={visibleColumns.length + 1}
+                  className="p-0 border-b border-c-border-subtle"
+                >
+                  <button
+                    type="button"
+                    onClick={() => toggleGroupCollapsed(groupLabel)}
+                    aria-expanded={!isCollapsed}
+                    className="w-full flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted hover:text-c-text transition-colors outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    {isCollapsed ? (
+                      <ChevronRight className="h-3 w-3 shrink-0" aria-hidden />
+                    ) : (
+                      <ChevronDown className="h-3 w-3 shrink-0" aria-hidden />
+                    )}
+                    <span>
+                      {groupLabel} · {rows.length}
+                    </span>
+                  </button>
+                </td>
+              </tr>
+              {!isCollapsed && rows.map((row) => renderRow(row))}
+            </React.Fragment>
+          );
+        })
       : processedRows.map((row) => renderRow(row));
 
   const densityOptions: { id: RowDensity; icon: typeof Minimize2; label: string }[] = [
