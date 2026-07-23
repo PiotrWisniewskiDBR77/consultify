@@ -15,6 +15,29 @@ Ten rozdział ustala kolejność doprowadzenia kodu do standardu i twarde bramki
 
 ## P0 — integralność danych (najpilniejsze)
 
+### Stan na 2026-07-23, noc — wykonanie
+
+Wszystkie pięć pozycji P0 tknięte. Dowody to pomiary w działającej aplikacji, nie deklaracje.
+
+| ID | Stan | Dowód |
+|---|---|---|
+| `P0-1` | naprawione, **migracja nieuruchomiona** | tabela `my_idea_conversions`; `promoted_to`/`stage` zmienia się tylko przy konwersji całej Idei. Ograniczenie: frontend nie wysyła jawnego `scope`, backend wnioskuje z `nodeIds` |
+| `P0-2` | naprawione **za flagą `ideaImportGuardRail` (domyślnie OFF)** | podgląd z liczbami → potwierdzenie → snapshot przed zmianą → cofnięcie. Czeka na akcept właściciela |
+| `P0-3` | **zamknięte** | repro na Idei bez bazy: dokładnie 1 `POST /table-platform/bases`, 1 tabela, 19 węzłów bez duplikatu (było 2 bazy → treść podwojona) |
+| `P0-4` | **zamknięte** | 5 ikon = 5 różnych treści (odciski treści unikalne: mapa 5/5, tablica 4/4, proces 5/5, tabela 3/3). Zakładki bez treści wyłączone z podanym powodem |
+| `P0-5` | naprawione | wektorem nie był WebSocket, tylko współdzielony wiersz `my_idea_maps` (`preferred_tool` + `surfaceState.activeTool`) czytany przez każdego członka organizacji. Stan widoku przeniesiony do `localStorage` per użytkownik |
+
+**Znalezione przy okazji, spoza pierwotnej listy:**
+
+| Co | Stan |
+|---|---|
+| Burza żądań `presence` — sprzężenie zwrotne render → POST → render; interwał 5 s nigdy nie wystrzeliwał | **zamknięte**: 880 → 8 żądań na ~16 s |
+| Zapis mapy zwracał 404 przy statusie członkostwa `'active'` zamiast `'ACTIVE'` | **zamknięte** (kod + dane) |
+| `flushGraph({createSnapshot:true})` robi snapshot ze stanu **po** zmianie, nie przed | otwarte — obejście tylko na ścieżce importu |
+| `CollaborationPresence` montuje się dwa razy (podwaja ruch) | otwarte, drobne |
+
+### Pozycje źródłowe
+
 | ID | Problem | Dowód z audytu | Naprawa |
 |---|---|---|---|
 | `P0-1` | `promote()` nadpisuje `promoted_to`/`stage` **całej Idei** nawet przy konwersji fragmentu — gubi ślad poprzednich konwersji | `my-work.routes.ts:7070-7077` | model **wielu konwersji** (historia wyników) zamiast pojedynczego pola; konwersja zaznaczenia nie zmienia statusu całej Idei |
@@ -74,7 +97,11 @@ Praca jest skończona, gdy **wszystkie** bramki są spełnione i **każda ma dow
 - [ ] Zapis i odświeżenie zachowują dane.
 
 ### Wizualna
-- [ ] Komplet wymaganych zrzutów (4 viewporty).
+- [x] Komplet wymaganych zrzutów (4 viewporty).
+  > 1280×800, 1440×900, 1600×1000, 1920×1080 × 4 reprezentacje.
+  > Geometria **czysta na wszystkich**: zero nakładania na Menu 1/Menu 3, zero
+  > poziomego scrolla strony, zero uciętej treści w prawym panelu. Bramka
+  > „1280×800 bez nakładania" spełniona pomiarem, nie oceną oka.
 - [ ] Brak veta (nakładanie, ucięta etykieta, menu poza ekranem, konkurujące paski, aktywna zakładka bez stanu…).
 - [ ] Każda kategoria ≥ 9/10, średnia ważona ≥ 9,5/10.
 - [ ] Prawy panel przechodzi **osobną** bramkę.
@@ -82,6 +109,14 @@ Praca jest skończona, gdy **wszystkie** bramki są spełnione i **każda ma dow
 
 ### Dostępność
 - [ ] 0 naruszeń `critical`, 0 `serious`.
+  > **Stan 2026-07-23: bramka NIE przechodzi.** Skan axe-core 4.12 na czterech obiektach
+  > testowych (1440×900) wykazał: `aria-allowed-attr` (critical — naprawione),
+  > `aria-required-attr`, `button-name` (1–5 na ekran), `label` (**49** w Tabeli),
+  > `aria-prohibited-attr`, `color-contrast` (3), `nested-interactive` (2 w Tablicy).
+  > To defekty zastane, nie wprowadzone przez bieżące naprawy — ale bramka jest bramką.
+  > Część `color-contrast` leży w powłoce globalnej (logo, breadcrumb, odznaka), czyli
+  > poza tym standardem — wymaga decyzji, czy poprawiamy globalnie.
+  > Surowe wyniki: `artifacts/idea-workspace-qa/<RUN>/qa-geometria-a11y.json`.
 - [ ] Główne przepływy obsługiwane klawiaturą.
 - [ ] Widoczny fokus, nazwy dostępności, tooltipy.
 
