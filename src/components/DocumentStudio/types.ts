@@ -382,6 +382,24 @@ export interface TemplateSectionBlueprint {
    * Architect's `contentHints` field. `undefined` means "no guidance yet".
    */
   contentHints?: string[];
+  /**
+   * Optional one-sentence thesis the section should argue/prove — content
+   * guidance only, never a fabricated conclusion. `undefined` means "no
+   * guidance yet".
+   */
+  keyMessage?: string;
+  /**
+   * Optional 2-6 short labels naming what data/input to collect before this
+   * section can be written — categories of evidence to gather, never
+   * invented values. `undefined` means "no guidance yet".
+   */
+  dataNeeded?: string[];
+  /**
+   * Optional short description of the type of evidence/source that should
+   * back this section's claims — describes a category of proof, never a
+   * specific fabricated citation. `undefined` means "no guidance yet".
+   */
+  suggestedEvidence?: string;
 }
 
 export interface TemplateExportRules {
