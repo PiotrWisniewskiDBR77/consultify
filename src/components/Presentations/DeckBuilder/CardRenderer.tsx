@@ -80,9 +80,12 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   onSourceClick,
 }) => {
   const navigate = useNavigate();
-  const theme = CURATED_COLOR_SETS.find((c) => c.id === colorSetId) || CURATED_COLOR_SETS[1];
+  const deckTheme = CURATED_COLOR_SETS.find((c) => c.id === colorSetId) || CURATED_COLOR_SETS[1];
 
-  const bgStyle = getBackgroundStyle(card, theme);
+  const bgStyle = getBackgroundStyle(card, deckTheme);
+  // Tło karty (nie motyw aplikacji) decyduje o kolorze tekstu — patrz komentarz
+  // przy `themeForCard`. Dla kart jasnych zwraca dokładnie `deckTheme`.
+  const theme = useMemo(() => themeForCard(card, deckTheme), [card, deckTheme]);
 
   const layout = useMemo(() => {
     if (card.blocks.length === 0) return null;
@@ -292,16 +295,115 @@ function justifyFor(mode: VerticalFillMode): React.CSSProperties['justifyContent
   }
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+ * CZYTELNOŚĆ TEKSTU NA WŁASNYM TLE SLAJDU
+ *
+ * Slajd to artefakt marki: jego kolory NIE mogą iść za motywem aplikacji
+ * (`c-*`), bo wtedy eksport/prezentacja wyglądałyby inaczej niż podgląd —
+ * a biały tekst z ciemnego motywu zniknąłby na białym slajdzie.
+ * Kolor tekstu musi natomiast wynikać z TŁA SAMEGO SLAJDU: motyw niesie
+ * `textPrimary` dobrany pod jasną kartę (#0F172A), więc gdy karta dostaje
+ * ciemne tło (np. `{type:'gradient'}` — ustawiane produkcyjnie przez
+ * presentationAgentEditService przy „popraw styl"), ciemny tekst na ciemnym
+ * tle staje się nieczytelny w OBU motywach aplikacji (audyt wyłapywał to
+ * tylko w ciemnym, bo skan czyta backgroundColor, a gradient siedzi w
+ * background-image). Poniższe wyliczenie odwraca WYŁĄCZNIE role tekstowe
+ * i tylko dla kart z ciemnym tłem — karty jasne zostają bajt w bajt.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/** Tekst dla ciemnej powierzchni slajdu — stałe (nie `c-*`: slajd nie zmienia się z motywem apki). */
+const SLIDE_TEXT_ON_DARK = { primary: '#F8FAFC', secondary: '#CBD5E1', heading: '#FFFFFF' } as const;
+
+/** Względna luminancja WCAG dla #rgb / #rrggbb. Zwraca null dla nierozpoznanego zapisu. */
+function relativeLuminance(hex: string): number | null {
+  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+  const h = m[1].length === 3 ? m[1].replace(/./g, (c) => c + c) : m[1];
+  const chan = [0, 2, 4].map((i) => {
+    const v = parseInt(h.slice(i, i + 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * chan[0] + 0.7152 * chan[1] + 0.0722 * chan[2];
+}
+
+/**
+ * Czy tło karty jest ciemne? `null` = nie da się ustalić (obrazek, nieznany
+ * zapis koloru) — wtedy niczego nie zmieniamy.
+ */
+function isDarkCardBackground(card: DeckCard, theme: CuratedColorSet): boolean | null {
+  const value = (card.background.value || '').trim();
+  switch (card.background.type) {
+    case 'color': {
+      const l = relativeLuminance(value || theme.colors.background);
+      return l === null ? null : l < 0.4;
+    }
+    case 'gradient': {
+      const stops = (value || `${theme.colors.primary} ${theme.colors.secondary}`).match(
+        /#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/gi
+      );
+      if (!stops?.length) return null;
+      const lums = stops.map(relativeLuminance).filter((l): l is number => l !== null);
+      if (!lums.length) return null;
+      // Najjaśniejszy przystanek decyduje: jeśli NAWET on jest ciemny, cała
+      // powierzchnia jest ciemna i ciemny tekst nie ma się gdzie obronić.
+      return Math.max(...lums) < 0.4;
+    }
+    case 'image':
+      return null; // nie zgadujemy zawartości obrazka
+    default: {
+      const l = relativeLuminance(theme.colors.surface);
+      return l === null ? null : l < 0.4;
+    }
+  }
+}
+
+/**
+ * Motyw przekazywany blokom: identyczny z motywem decka, chyba że karta ma
+ * ciemne własne tło — wtedy podmienione są TYLKO role tekstowe.
+ */
+function themeForCard(card: DeckCard, theme: CuratedColorSet): CuratedColorSet {
+  if (isDarkCardBackground(card, theme) !== true) return theme;
+  /** Podmieniamy tylko rolę, która sama jest ciemna — jasną zostawiamy nietkniętą. */
+  const jasniej = (rola: string, zamiennik: string): string => {
+    const l = relativeLuminance(rola);
+    return l !== null && l < 0.4 ? zamiennik : rola;
+  };
+  const { textPrimary, textSecondary, heading } = theme.colors;
+  const podmiana = {
+    textPrimary: jasniej(textPrimary, SLIDE_TEXT_ON_DARK.primary),
+    textSecondary: jasniej(textSecondary, SLIDE_TEXT_ON_DARK.secondary),
+    // Nagłówek na ciemnej karcie: crimson #A51C30 na navy gradiencie był
+    // nieczytelny (marka nie jest warta niewidocznego tytułu okładki).
+    heading: jasniej(heading, SLIDE_TEXT_ON_DARK.heading),
+  };
+  if (
+    podmiana.textPrimary === textPrimary &&
+    podmiana.textSecondary === textSecondary &&
+    podmiana.heading === heading
+  ) {
+    return theme; // motyw już jest jasnotekstowy — zero zmian
+  }
+  return { ...theme, colors: { ...theme.colors, ...podmiana } };
+}
+
 function getBackgroundStyle(card: DeckCard, theme: CuratedColorSet): React.CSSProperties {
   switch (card.background.type) {
     case 'color':
       return { backgroundColor: card.background.value || theme.colors.background };
-    case 'gradient':
-      return {
-        background:
-          card.background.value ||
-          `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`,
-      };
+    case 'gradient': {
+      const gradient =
+        card.background.value ||
+        `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`;
+      // Pierwszy przystanek gradientu jako JAWNY `background-color` pod spodem.
+      // Wizualnie nic nie zmienia (gradient zamalowuje całą powierzchnię), ale
+      // karta przestaje być „przezroczysta" dla wszystkiego, co czyta wyłącznie
+      // `background-color`: skanów kontrastu, druku bez grafik i eksportu.
+      // Bez tego jasny tekst slajdu wyglądał na postawiony na tle APLIKACJI.
+      const first = gradient.match(/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i)?.[0];
+      // Kolejność kluczy jest istotna: skrót `background` zeruje `background-color`,
+      // więc jawny kolor MUSI być ustawiany po nim.
+      return first ? { background: gradient, backgroundColor: first } : { background: gradient };
+    }
     case 'image':
       return {
         backgroundImage: `url(${card.background.value})`,

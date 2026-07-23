@@ -92,6 +92,12 @@ export default {
           warning: cTok('warning'),
           danger: cTok('danger'),
           info: cTok('info'),
+          // AI — kolor SYSTEMOWY sztucznej inteligencji (standard n-Type §4.6):
+          // przycisk AI w nagłówku, „Analizuj z AI", ikony AI przy polach, panel
+          // sugestii, oznaczenia treści wygenerowanej przez AI. Fiolet świadomie
+          // ODDZIELNY od sygnałów (success/warning/danger/info) i od crimson —
+          // „to zrobiła AI" nie jest stanem obiektu ani marką.
+          ai: cTok('ai'),
           // Identity palette (12) — kolory DANYCH/kategorii/serii (NIGDY crimson jako dana).
           // Vars zdefiniowane w src/index.css (:root light + .dark). Reguła §15.1: ≤5 serii widocznych.
           'tag-1': cTok('tag-1'),

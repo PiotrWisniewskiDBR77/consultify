@@ -156,14 +156,14 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+        <h2 className="text-lg font-semibold text-c-text dark:text-white">
           {t('sharedComponents.riskCanvas.riskImpact')}
         </h2>
         <div className="flex items-center gap-2">
           <button
             onClick={onAddRisk}
             disabled={locked}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-600/50 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-navy-500 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border/60 dark:border-c-border-strong/50 text-c-text-secondary dark:text-c-text-secondary hover:text-c-text dark:hover:text-c-text-muted hover:border-c-border-strong dark:hover:border-c-border-strong hover:bg-c-surface dark:hover:bg-c-surface-raised/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Plus size={13} />
             {t('sharedComponents.riskCanvas.addRisk')}
@@ -188,8 +188,8 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
       {/* Empty state */}
       {risks.length === 0 ? (
         <div className="py-8 text-center">
-          <AlertTriangle size={24} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
-          <p className="text-sm text-slate-600 dark:text-slate-500 mb-3">
+          <AlertTriangle size={24} className="mx-auto mb-2 text-c-text-secondary dark:text-c-text-secondary" />
+          <p className="text-sm text-c-text-secondary dark:text-c-text-muted mb-3">
             {t('sharedComponents.riskCanvas.noRisksIdentified')}
           </p>
           <button
@@ -201,7 +201,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
           </button>
         </div>
       ) : (
-        <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-500">
+        <div className="flex items-center justify-between text-[11px] text-c-text-secondary dark:text-c-text-muted">
           <span>{t('sharedComponents.riskCanvas.sortedByHighestRiskScorePI')}</span>
           <span>{t('sharedComponents.riskCanvas.riskCount', { count: risks.length })}</span>
         </div>
@@ -209,9 +209,9 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
 
       {/* Risk cards */}
       {risks.length > 0 && (
-        <div className="space-y-0 divide-y divide-slate-300/55 dark:divide-navy-600/65">
+        <div className="space-y-0 divide-y divide-c-border-strong/55 dark:divide-c-border-strong/65">
           {/* Level legend */}
-          <div className="py-2 text-[10px] flex flex-wrap items-center gap-1.5 text-slate-600 dark:text-slate-500">
+          <div className="py-2 text-[10px] flex flex-wrap items-center gap-1.5 text-c-text-secondary dark:text-c-text-muted">
             <span>{t('sharedComponents.riskCanvas.levelLegend')}</span>
             {RISK_LEVEL_OPTIONS.map((level) => (
               <span
@@ -226,7 +226,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
           {/* Risk items */}
           {sortedRisks.map((risk) => (
             <div key={risk.id} className="py-5 first:pt-2 group">
-              <div className="p-5 rounded-xl bg-slate-50/20 dark:bg-navy-900/25 space-y-5">
+              <div className="p-5 rounded-xl bg-c-surface/20 dark:bg-c-surface/25 space-y-5">
                 {/* Title + Score + Selectors */}
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
@@ -234,7 +234,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                       value={risk.title}
                       onChange={(e) => onUpdateRisk(risk.id, { title: e.target.value })}
                       readOnly={locked}
-                      className="flex-1 text-sm font-medium bg-transparent text-slate-800 dark:text-white focus:outline-none placeholder-slate-400"
+                      className="flex-1 text-sm font-medium bg-transparent text-c-text dark:text-white focus:outline-none placeholder-c-text-muted"
                       placeholder={t('sharedComponents.riskCanvas.riskName')}
                     />
                     <div className="flex items-center gap-2">
@@ -246,7 +246,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                       <button
                         onClick={() => onRemoveRisk(risk.id)}
                         disabled={locked}
-                        className="p-1 text-slate-600 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                        className="p-1 text-c-text-secondary hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
                       >
                         <X size={12} />
                       </button>
@@ -256,7 +256,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     {/* Probability */}
                     <div className="space-y-1">
-                      <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                      <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                         {t('sharedComponents.riskCanvas.probability')}
                       </span>
                       <select
@@ -276,7 +276,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                     </div>
                     {/* Impact */}
                     <div className="space-y-1">
-                      <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                      <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                         {t('sharedComponents.riskCanvas.impact')}
                       </span>
                       <select
@@ -296,14 +296,14 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                     </div>
                     {/* Category */}
                     <div className="space-y-1">
-                      <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                      <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                         {t('sharedComponents.riskCanvas.category')}
                       </span>
                       <select
                         value={risk.category || 'business'}
                         onChange={(e) => onUpdateRisk(risk.id, { category: e.target.value })}
                         disabled={locked}
-                        className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid disabled:opacity-60"
+                        className="w-full text-[11px] px-2 py-1 rounded-md bg-c-surface/70 dark:bg-c-surface-raised/70 border border-c-border/60 dark:border-c-border-strong/60 text-c-text-secondary dark:text-c-text-secondary focus:outline-none focus:border-c-focus-solid disabled:opacity-60"
                       >
                         {riskCategoryOptions.map((cat) => (
                           <option key={`c-${risk.id}-${cat.value}`} value={cat.value}>
@@ -320,7 +320,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                   {/* Risk (materialized) / Contingency */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                      <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                         {t('sharedComponents.riskCanvas.riskMaterialized')}
                       </span>
                       <AIFieldEnhancer
@@ -337,7 +337,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                       onChange={(e) => onUpdateRisk(risk.id, { contingency: e.target.value })}
                       rows={4}
                       readOnly={locked}
-                      className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid resize-y"
+                      className="w-full min-h-[92px] text-xs bg-transparent border-b border-c-border/60 dark:border-c-border/60 text-c-text-secondary dark:text-c-text-secondary focus:outline-none focus:border-c-focus-solid resize-y"
                       placeholder={t(
                         'sharedComponents.riskCanvas.whatIsTheFallbackIfRiskMaterializes'
                       )}
@@ -365,7 +365,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                   {/* Mitigation */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                      <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                         {t('sharedComponents.riskCanvas.mitigation')}
                       </span>
                       <AIFieldEnhancer
@@ -382,7 +382,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                       onChange={(e) => onUpdateRisk(risk.id, { mitigation: e.target.value })}
                       rows={4}
                       readOnly={locked}
-                      className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid resize-y"
+                      className="w-full min-h-[92px] text-xs bg-transparent border-b border-c-border/60 dark:border-c-border/60 text-c-text-secondary dark:text-c-text-secondary focus:outline-none focus:border-c-focus-solid resize-y"
                       placeholder={t('sharedComponents.riskCanvas.howDoWeMitigateThisRisk')}
                     />
                     <div className="flex flex-wrap gap-1">
@@ -415,7 +415,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
       <button
         onClick={onAddRisk}
         disabled={locked}
-        className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-c-text transition-colors disabled:opacity-40"
+        className="text-xs font-medium text-c-text-secondary dark:text-c-text-muted hover:text-c-text transition-colors disabled:opacity-40"
       >
         + {t('sharedComponents.riskCanvas.addRisk')}
       </button>

@@ -2175,21 +2175,62 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       emptyLabel: t('interview.workspace.noRelations', 'No linked items'),
       children: (
         <ul className="flex flex-col gap-1.5">
-          {linkedItems.map((item) => (
-            <li
-              key={item.edgeId || item.id}
-              className="flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2"
-            >
-              <Link2 size={13} className="mt-0.5 shrink-0 text-c-text-muted" />
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-c-text-secondary truncate">{item.title}</p>
-                <p className="text-[11px] uppercase tracking-wide text-c-text-muted">
-                  {String(item.type || '')}
-                  {item.status ? ` · ${item.status}` : ''}
-                </p>
-              </div>
-            </li>
-          ))}
+          {linkedItems.map((item) => {
+            // DoD §18.1 „powiązania klikalne first-class": nawigacja przez
+            // wspólny bus `mywork-open-item` (wzór: RelatedContext/AIConnections/
+            // DecisionDetailView). Gdy brak id — pozycja zostaje statyczna.
+            const isClickable = Boolean(item.id);
+            const content = (
+              <>
+                <Link2
+                  size={13}
+                  className="mt-0.5 shrink-0 text-c-text-muted"
+                />
+                <div className="min-w-0">
+                  <p
+                    className={`text-xs font-medium truncate ${
+                      isClickable ? 'text-c-info' : 'text-c-text-secondary'
+                    }`}
+                  >
+                    {item.title}
+                  </p>
+                  <p className="text-[11px] uppercase tracking-wide text-c-text-muted">
+                    {String(item.type || '')}
+                    {item.status ? ` · ${item.status}` : ''}
+                  </p>
+                </div>
+              </>
+            );
+
+            if (!isClickable) {
+              return (
+                <li
+                  key={item.edgeId || item.id}
+                  className="flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2"
+                >
+                  {content}
+                </li>
+              );
+            }
+
+            return (
+              <li key={item.edgeId || item.id}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.dispatchEvent(
+                      new CustomEvent('mywork-open-item', {
+                        detail: { type: item.type, id: item.id, name: item.title },
+                      })
+                    )
+                  }
+                  className="flex w-full items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-left cursor-pointer transition-colors hover:bg-c-surface-raised focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  {content}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       ),
     },

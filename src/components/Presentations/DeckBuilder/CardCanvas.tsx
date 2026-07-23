@@ -132,7 +132,11 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex items-center gap-1.5 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-lg px-2 py-1.5">
-                      <Sparkles size={13} className="text-c-accent shrink-0" />
+                      {/* KANON KOLORU (CLAUDE.md §UI.3): ikona to DEKORACJA pola
+                          „przerób slajd", nie semantyka krytyczna — token akcentu
+                          (crimson) zabroniony. Neutralne text-c-text-secondary,
+                          jak Sparkles w KimiWorkspaceShell. */}
+                      <Sparkles size={13} className="text-c-text-secondary shrink-0" />
                       <input
                         type="text"
                         value={instructions[index] ?? ''}

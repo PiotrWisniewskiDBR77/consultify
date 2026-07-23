@@ -3,8 +3,13 @@
  *
  * Standard header bar (Menu 1) for all N-mode artifact detail views.
  * Contains: back button, title (text→input on click), status pill, save-state
- * indicator, N/C mode switcher, ONE primary CTA, and an overflow (⋮) menu that
- * holds "copy object code" + "copy link".
+ * indicator, ONE primary CTA, and an overflow (⋮) menu that holds
+ * "copy object code" + "copy link".
+ *
+ * ETAP 1.1 standardu n-Type (2026-07-23) — przełącznik widoku N/C ZNIKA z Menu 1
+ * kart N (najczęstsza uwaga właściciela: „ikony między AI a akcją główną").
+ * `showModeSwitcher` domyślnie `false`; jedyny konsument, który go jeszcze włącza,
+ * to Interview (nie jest kartą N).
  *
  * Decisions 2026-07-22 (Piotr) implemented here:
  *   D-B — status = labelled pill (statusLabel/statusTone, c-* tokens), not a bare dot.
@@ -48,7 +53,12 @@ interface NModeHeaderProps extends NModeHeaderConfig {
   presentationMode: PresentationMode;
   /** Mode change handler */
   onPresentationModeChange: (mode: PresentationMode) => void;
-  /** If false, hides the N/C mode switcher (use N-only headers) */
+  /**
+   * Pokazuje przełącznik gęstości N/C w Menu 1. DOMYŚLNIE `false` — standard
+   * n-Type ETAP 1.1 (2026-07-23): karty N mają JEDEN widok, więc przełącznik
+   * znika z ich nagłówków. Zostaje wyłącznie dla konsumentów, którzy jawnie
+   * podadzą `true` (dziś: Interview — nie jest kartą N).
+   */
   showModeSwitcher?: boolean;
   /** Build artifact code string from type + id */
   buildArtifactCode?: (type: ArtifactType, id: string) => string;
@@ -93,6 +103,10 @@ interface OverflowMenuItem {
   label: string;
   icon: React.FC<{ size?: number; className?: string }>;
   onClick: () => void;
+  /** Optional tooltip (e.g. keyboard-shortcut hint). */
+  title?: string;
+  /** Destructive item — separator above + c-danger tone (see `extraOverflowItems`). */
+  danger?: boolean;
 }
 
 const HeaderOverflowMenu: React.FC<{ items: OverflowMenuItem[]; ariaLabel: string }> = ({
@@ -160,22 +174,37 @@ const HeaderOverflowMenu: React.FC<{ items: OverflowMenuItem[]; ariaLabel: strin
               className="fixed z-context-menu min-w-[200px] rounded-lg border border-c-border-subtle bg-c-surface p-1 shadow-lg"
               style={{ top: pos.top, right: pos.right }}
             >
-              {items.map((it) => {
+              {items.map((it, idx) => {
                 const Icon = it.icon;
+                // Separator nad pierwszą pozycją destrukcyjną — oddziela
+                // działania techniczne od nieodwracalnych (standard n-Type §3.5).
+                const needsSeparator = Boolean(it.danger) && idx > 0 && !items[idx - 1]?.danger;
                 return (
-                  <button
-                    key={it.id}
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      it.onClick();
-                      setOpen(false);
-                    }}
-                    className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-c-text transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
-                  >
-                    <Icon size={14} className="shrink-0 text-c-text-muted" />
-                    <span className="min-w-0 flex-1 truncate">{it.label}</span>
-                  </button>
+                  <React.Fragment key={it.id}>
+                    {needsSeparator ? (
+                      <div className="my-1 border-t border-c-border-subtle" aria-hidden="true" />
+                    ) : null}
+                    <button
+                      type="button"
+                      role="menuitem"
+                      title={it.title}
+                      onClick={() => {
+                        it.onClick();
+                        setOpen(false);
+                      }}
+                      className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ${
+                        it.danger
+                          ? 'text-c-danger hover:bg-[color-mix(in_srgb,var(--c-danger)_10%,transparent)]'
+                          : 'text-c-text hover:bg-c-surface-raised'
+                      }`}
+                    >
+                      <Icon
+                        size={14}
+                        className={`shrink-0 ${it.danger ? 'text-c-danger' : 'text-c-text-muted'}`}
+                      />
+                      <span className="min-w-0 flex-1 truncate">{it.label}</span>
+                    </button>
+                  </React.Fragment>
                 );
               })}
             </div>
@@ -204,10 +233,11 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   statusTone = 'neutral',
   presentationMode,
   onPresentationModeChange,
-  showModeSwitcher = true,
+  showModeSwitcher = false,
   buildArtifactCode,
   titleInputId,
   primaryAction,
+  extraOverflowItems,
   showChatButton = false,
   // NOTE: `statusDotColor` (deprecated, D-B) is intentionally NOT destructured
   // or rendered — the bare dot is replaced by the status pill above. The prop
@@ -250,22 +280,27 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
     }
   }, [artifactId, artifactType, t]);
 
-  const overflowItems: OverflowMenuItem[] = artifactId
-    ? [
-        {
-          id: 'copy-code',
-          label: t('sharedComponents.nModeHeader.copyObjectCode'),
-          icon: Copy,
-          onClick: () => void copyObjectCode(),
-        },
-        {
-          id: 'copy-link',
-          label: t('sharedComponents.nModeHeader.copyLink'),
-          icon: Link2,
-          onClick: () => void copyPermalink(),
-        },
-      ]
-    : [];
+  const overflowItems: OverflowMenuItem[] = [
+    ...(artifactId
+      ? [
+          {
+            id: 'copy-code',
+            label: t('sharedComponents.nModeHeader.copyObjectCode'),
+            icon: Copy,
+            onClick: () => void copyObjectCode(),
+          },
+          {
+            id: 'copy-link',
+            label: t('sharedComponents.nModeHeader.copyLink'),
+            icon: Link2,
+            onClick: () => void copyPermalink(),
+          },
+        ]
+      : []),
+    // Pozycje karty (standard n-Type §3.5) — techniczne/administracyjne.
+    // Doklejane, nigdy nie zastępują pozycji powłoki.
+    ...(extraOverflowItems ?? []),
+  ];
 
   // Save state — non-clickable text (D-C). Autosave still fires on title blur.
   const effectiveSaveState = saveState || (saving ? 'saving' : isDirty ? 'dirty' : 'saved');

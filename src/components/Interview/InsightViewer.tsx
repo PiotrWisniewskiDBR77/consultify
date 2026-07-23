@@ -35,7 +35,6 @@ import {
   Loader2,
   Map as MapIcon,
   MessageSquare,
-  Monitor,
   Network,
   Pencil,
   Plus,
@@ -63,7 +62,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { InitiativeGeneratorModal } from '@/components/Initiatives/Wizard/InitiativeGeneratorModal';
-import { ReadEditToggle } from '@/components/MyWork/shared/ReadEditToggle';
 import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
 import type { DeckCard } from '@/components/Presentations/wizard/types';
 import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
@@ -75,14 +73,16 @@ import {
   NModeCardBadge,
   type NModeCardStatus,
   NModeSectionWrapper,
-  ToolbarIconButton,
 } from '@/components/shared/NModeLayout';
-import { AddCardMenu } from '@/components/shared/NModeLayout/NModeCardManager';
+import { Menu2AIButton, NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
+// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+import type { CardAnalysisField } from '@/services/cardAnalysis';
+import { NCardAIAnalysisPanel } from '@/components/shared/NModeLayout/NCardAIAnalysisPanel';
+import { useCardAIAnalysis } from '@/components/shared/NModeLayout/useCardAIAnalysis';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 // ToolbarAISolidButton celowo NIE importowany (SPEC-N §2.3 — poza slotem primary
 // nic nie jest solid; AI Consultant zjechał na wariant outline/split).
 import {
-  ToolbarAISplitButton,
   ToolbarGhostButton,
 } from '@/components/shared/NModeLayout/NModeToolbar';
 import { SectionErrorBoundary } from '@/components/shared/NModeLayout/SectionErrorBoundary';
@@ -104,6 +104,7 @@ import {
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import {
+  ARTIFACT_PANEL_CARD_CLASS_DOCKED,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
@@ -114,6 +115,10 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
+import {
+  type ArtifactConversion,
+  ConclusionsApi,
+} from '@/services/api/conclusions.api';
 import {
   type V8InsightAnalysis,
   type V8InsightAnalysisMatrixCell,
@@ -217,7 +222,26 @@ function useInsightCardContractEnabled(): boolean {
  * Kod zostaje — przywrócić (`true`) po zadaniu C10 z planu wykonawczego
  * (kontrakt renderu prezentacji): Harvard/wdrozenie-100/_PLAN_WYKONAWCZY_2026-07-20.md
  */
-const PRESENT_MODE_ENABLED = import.meta.env.VITE_PRESENT_MODE === 'true';
+// ETAP 1.2 (2026-07-23): staly PRESENT_MODE_ENABLED USUNIETY razem z przyciskiem
+// "Prezentuj" w pasku — kontrakt menu 2 zna trzy strefy i nie ma w nich ikony
+// prezentacji, a flaga i tak byla OFF. Wejscie do prezentacji zostaje w Eksporcie
+// ("Do prezentacji" -> setExportTarget('deck')), wiec zdolnosc nie znika.
+
+/**
+ * ETAP 1.2 standardu n-Type (2026-07-23) — „Eksport ▾" ZDJĘTY z menu 2.
+ *
+ * Właściciel: „Eksportuj → kebab lub Rezultaty. Jeśli przeniesienie wymaga
+ * decyzji produktowej — usuń z paska i ZGŁOŚ, nie wymyślaj." Kontrakt menu 2
+ * zna trzy strefy (Sekcje | Edycja|Podgląd | How-to + Analizuj z AI) i nie ma
+ * w nich miejsca na eksport, a docelowy dom (kebab Menu 1 vs sekcja
+ * „Rezultaty") to decyzja właściciela, nie robotnika.
+ *
+ * Dlatego kod eksportu NIE jest kasowany — zostaje kompletny za tą flagą
+ * (domyślnie OFF). Po decyzji: albo `true` (wraca do paska), albo jeden ruch
+ * do kebaba/Rezultatów. Do tego czasu Insight NIE MA wejścia do eksportu —
+ * to świadoma, zgłoszona luka, nie przeoczenie.
+ */
+const INSIGHT_EXPORT_IN_MENU2 = false;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -734,9 +758,17 @@ const STATUS_PILL: Record<string, { bg: string; text: string; dot: string }> = {
 // empty-state until the underlying multi-respondent data exists.
 const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   {
+    // KLASYFIKACJA (zgłoszenie właściciela 2026-07-23, pkt 1): utworzenie
+    // kolejnego artefaktu (decyzja / inicjatywa / raport / prezentacja) to
+    // REZULTAT wniosku, a nie „dalsza akcja". Etykieta była „Dalsze akcje"
+    // i mieszała dwie różne rzeczy: co z tego wniosku POWSTAJE (tu) z tym, co
+    // można na nim ZROBIĆ (status, recenzja — prawy panel, sekcja Akcje).
+    // Zmieniona jest WYŁĄCZNIE etykieta; `id` zostaje, bo `artifact-actions`
+    // ma rolę `rdzen` w kontrakcie karty (insightCardContract.ts) i jest
+    // nieusuwalne typem — zmiana id zerwałaby katalog kart.
     id: 'artifact-actions',
     icon: Rocket,
-    label: { en: 'Next Actions', pl: 'Dalsze akcje' },
+    label: { en: 'Results', pl: 'Rezultaty' },
     cSpan: 2,
   },
   {
@@ -1001,7 +1033,42 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
-  const { currentUser, currentOrganization } = useAppStore();
+  const { currentUser, currentOrganization, currentProjectId } = useAppStore();
+
+  // ── REZULTATY tego wniosku (prawy panel, sekcja `results`) ─────────────────
+  // Zgłoszenie właściciela 2026-07-23 (ETAP 2.5 pkt 1+2): kafelki tworzenia
+  // artefaktów zostają w CENTRUM (sekcja `artifact-actions`, rola `rdzen`
+  // w kontrakcie karty — nieusuwalna typem), więc panel NIE MOŻE ich dublować
+  // (SPEC-N §2.6). Panel dostaje to, czego centrum nie pokazuje: REJESTR tego,
+  // co z tego wniosku JUŻ powstało — realne dane z
+  // `GET /api/artifact-conversions?sourceArtifactType=interview_insight&sourceArtifactId=…`
+  // (server/src/routes/artifact-conversions.routes.ts). Zero nowego backendu,
+  // zero zmyślonych liczb: gdy zapytanie padnie, sekcja jest uczciwie pusta.
+  const [producedResults, setProducedResults] = useState<ArtifactConversion[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    if (!insightId) {
+      setProducedResults([]);
+      return;
+    }
+    (async () => {
+      try {
+        const res = await ConclusionsApi.listConversions({
+          sourceArtifactType: 'interview_insight',
+          sourceArtifactId: insightId,
+        });
+        if (!alive) return;
+        setProducedResults(Array.isArray(res?.conversions) ? res.conversions : []);
+      } catch {
+        if (!alive) return;
+        setProducedResults([]);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [insightId]);
   const setChatSystemPrompt = useAppStore((s) => s.setChatSystemPrompt);
   const setChatContextActions = useAppStore((s) => s.setChatContextActions);
   const openChatWithContext = useOpenChatWithContext();
@@ -1029,6 +1096,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const { mode: presentationMode, setMode: setPresentationMode } = usePresentationMode({
     entityType: 'insight',
   });
+
+  // ETAP 1.1 n-Type: po zdjęciu przełącznika N/C z Menu 1 tryb 'c' nie ma już
+  // wejścia ANI wyjścia — a `usePresentationMode` czyta go z `?view=c` i z
+  // localStorage. Bez tego strażnika user, który kiedyś kliknął „C", zostaje w
+  // nim na zawsze, bez kontrolki powrotu. Ten sam wzorzec ma już Task/Decision/
+  // Notification (TaskDetailView ~758).
+  useEffect(() => {
+    if (presentationMode === 'c') {
+      setPresentationMode('n');
+    }
+  }, [presentationMode, setPresentationMode]);
 
   // Core state
   const [insight, setInsight] = useState<Insight | null>(null);
@@ -3355,6 +3433,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           component = (
             <ArtifactActionPanel
               isPolish={isPolish}
+              // Kontekst projektu — bez niego `POST /api/decisions` odrzuca żądanie
+              // („Missing decision context"), więc kafelek „Rozpocznij decyzję"
+              // renderuje się wyłączony z powodem zamiast zapraszać w błąd.
+              projectId={currentProjectId || null}
               source={{
                 type: 'interview_insight',
                 id: insight?.id || insightId,
@@ -7894,6 +7976,164 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     genOpen,
   ]);
 
+  // ── ETAP 3 standardu n-Type: „Analizuj z AI" AKTYWNEJ KARTY ────────────────
+  // Kryteria oceny Insightu (kontrakt właściciela 2026-07-23) żyją w rubryce
+  // silnika (`ARTIFACT_CRITERIA.insight`): jasność tezy · jakość dowodów ·
+  // poziom pewności · brakujące źródła · sprzeczności · potencjalny wpływ ·
+  // gotowość do konwersji.
+  //
+  // ★ WSZYSTKIE POLA SĄ TYLKO-DO-ODCZYTU — i to jest STAN FAKTYCZNY, nie wybór:
+  //   backend NIE MA endpointu zapisu treści kart Insightu. `updateInsight`
+  //   (src/services/api/v8/interview.ts:790) przyjmuje wyłącznie
+  //   title/status/exportedTo*/archived/sectionCompletions; treść analityczna
+  //   (executiveSummary, themes, issues, opportunities, signals) powstaje z
+  //   generacji i jedyną drogą jej zmiany jest `regenerateInsight` — czyli
+  //   przepisanie CAŁOŚCI, nie pojedynczej poprawki.
+  //   Skutkiem: panel pokazuje Braki/Ryzyka/Sugestie w pełni, a „Proponowane
+  //   zmiany" dostają „Kopiuj treść" zamiast „Zastosuj", z jawnym powodem.
+  //   Czego brakuje po stronie backendu, żeby „Zastosuj" zadziałało:
+  //   PATCH /interview/insights/:id z polami treści kart (patrz raport).
+  const insightAnalysisFields = useMemo<CardAnalysisField[]>(() => {
+    const asLines = (items: unknown[], toText: (x: any) => string) =>
+      (items || []).map((x) => `- ${toText(x)}`).join('\n');
+
+    const field = (id: string, label: string, value: string): CardAnalysisField => ({
+      id,
+      label,
+      value,
+      kind: 'text',
+      writable: false,
+    });
+
+    switch (activeNSection) {
+      case 'executive-summary':
+        return [
+          field(
+            'executive-summary',
+            isPolish ? 'Podsumowanie' : 'Executive summary',
+            insight?.executiveSummary || executiveSummary || ''
+          ),
+        ];
+
+      case 'consulting-readout':
+        return [
+          field(
+            'consulting-readout',
+            isPolish ? 'Odczyt konsultingowy' : 'Consulting readout',
+            insight?.content || ''
+          ),
+        ];
+
+      case 'themes':
+        return [
+          field(
+            'themes',
+            isPolish ? 'Tematy' : 'Themes',
+            asLines(v6Themes, (th) => `${th?.title ?? th?.name ?? ''}: ${th?.description ?? ''}`)
+          ),
+        ];
+
+      case 'issues-risks':
+        return [
+          field(
+            'issues-risks',
+            isPolish ? 'Problemy i ryzyka' : 'Issues & risks',
+            asLines(v6Issues, (i) => `${i?.title ?? ''}: ${i?.description ?? ''}`)
+          ),
+        ];
+
+      case 'opportunities':
+        return [
+          field(
+            'opportunities',
+            isPolish ? 'Przestrzenie szans' : 'Opportunity spaces',
+            asLines(v6Opportunities, (o) => `${o?.title ?? ''}: ${o?.description ?? ''}`)
+          ),
+        ];
+
+      case 'signals':
+        return [
+          field(
+            'signals',
+            isPolish ? 'Sygnały' : 'Signals',
+            asLines(v6Signals, (s) => `${s?.title ?? s?.signal ?? ''}: ${s?.description ?? ''}`)
+          ),
+        ];
+
+      default:
+        // Karty pochodne (macierz, cytaty, przemilczenia, konsensus…) są
+        // wyliczane z tych samych źródeł co powyżej. Zamiast zgadywać ich
+        // wewnętrzny kształt, podajemy trzon Insightu jako kontekst i MÓWIMY,
+        // że treść tej karty nie jest wystawiona do analizy pole-po-polu.
+        return [
+          field(
+            'insight-core',
+            isPolish ? 'Treść wniosku (trzon)' : 'Insight content (core)',
+            insight?.content || insight?.executiveSummary || ''
+          ),
+        ];
+    }
+  }, [
+    activeNSection,
+    isPolish,
+    insight,
+    executiveSummary,
+    v6Themes,
+    v6Issues,
+    v6Opportunities,
+    v6Signals,
+  ]);
+
+  const buildInsightAnalysisInput = useCallback(() => {
+    const ctx = [
+      `${isPolish ? 'Status' : 'Status'}: ${insight?.status ?? '—'}`,
+      `${isPolish ? 'Status przeglądu' : 'Review status'}: ${insight?.reviewStatus ?? '—'}`,
+      `${isPolish ? 'Liczba sesji źródłowych' : 'Source sessions'}: ${insight?.sourceSessionCount ?? 0}`,
+      // „brakujące źródła" i „jakość dowodów" bez tych dwóch pól byłyby zgadywaniem.
+      `${isPolish ? 'Brakujące dane (zadeklarowane)' : 'Missing data (declared)'}: ${
+        (insight?.missingData || []).join('; ') || '—'
+      }`,
+      `${isPolish ? 'Wpisów mapy dowodów' : 'Evidence map entries'}: ${
+        (insight?.evidenceMap || []).length
+      }`,
+      activeNSection !== 'executive-summary' && (insight?.executiveSummary || executiveSummary)
+        ? `${isPolish ? 'Podsumowanie' : 'Executive summary'}: ${insight?.executiveSummary || executiveSummary}`
+        : '',
+      `${isPolish ? 'Tematy' : 'Themes'}: ${v6Themes.length} · ${isPolish ? 'Problemy' : 'Issues'}: ${v6Issues.length} · ${isPolish ? 'Szanse' : 'Opportunities'}: ${v6Opportunities.length}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    return {
+      artifactType: 'insight' as const,
+      cardId: activeNSection,
+      artifactTitle: insight?.title ?? '',
+      artifactContext: ctx,
+      fields: insightAnalysisFields,
+      isPolish,
+    };
+  }, [
+    activeNSection,
+    isPolish,
+    insight,
+    executiveSummary,
+    v6Themes,
+    v6Issues,
+    v6Opportunities,
+    insightAnalysisFields,
+  ]);
+
+  // Brak endpointu zapisu treści karty ⇒ żadna zmiana nie jest zapisywalna.
+  // Zwracamy `false`, a nie „true na niby" — panel i tak nie pokaże „Zastosuj",
+  // bo `writableFieldIds` jest puste; to drugi zamek na wypadek regresji.
+  const applyInsightAnalysisChange = useCallback(() => false, []);
+
+  const insightCardAnalysis = useCardAIAnalysis({
+    activeCardId: activeNSection,
+    buildInput: buildInsightAnalysisInput,
+    applyChange: applyInsightAnalysisChange,
+  });
+
   // ── Render ─────────────────────────────────────────────────────────────────
   // VF1-2 (SPEC-A): swap ad-hoc spinner/error markup for the shared
   // shared/states library (record archetype) — gated (visible change,
@@ -7938,7 +8178,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   // ── SPEC-A prawy panel artefaktu (ArtifactRightPanel) ─────────────────────
   // Stała kolejność: Akcje · Właściwości · Powiązania · Komentarze ·
-  // Historia/AI. Wyłącznie ISTNIEJĄCE handlery/dane — zero nowego backendu.
+  // Historia. Wyłącznie ISTNIEJĄCE handlery/dane — zero nowego backendu.
   // Centrum (N-mode sekcje obserwacja/znaczenie/rekomendacja) pozostaje
   // nietknięte — ten panel tylko dokuje się z boku (NModeShell `rightPanel`).
   const panelDash = '—';
@@ -7980,20 +8220,90 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       // znika duplikat w panelu. Funkcja użytkownikowi nie znika — zmienia się
       // tylko liczba wejść z dwóch na jedno.
       //
-      // ⚠ DO ROZSTRZYGNIĘCIA PRZEZ WŁAŚCICIELA: po usunięciu trzech duplikatów
-      // w tej sekcji nie zostaje ŻADNA akcja, która nie byłaby duplikatem.
-      // Sekcja `actions` jest wymaganym kluczem panelu (SPEC-N §2.2), więc
-      // zostaje z uczciwym stanem pustym zamiast zniknąć po cichu — pustka jest
-      // widoczna na zrzucie i czeka na decyzję CO ma tu mieszkać. Strefa
-      // „Co dalej" (create-targets, ArtifactActionPanel) świadomie NIE jest tu
-      // przenoszona — to create-strip centrum wg §7.3a.
+      // ⚠ ROZSTRZYGNIĘCIE (właściciel, 2026-07-23, ETAP 2.5 pkt 3): „Akcje —
+      // osobno od Rezultatów: zmiana statusu, przypisanie, recenzja, forkowanie."
+      // Sekcja przestaje być pusta i dostaje JEDYNĄ akcję, która ma tu realne
+      // pokrycie: przejście stanu cyklu życia (`runStatusTransition` — ten sam
+      // handler, który do dziś siedział WYŁĄCZNIE jako niewidoczny `select`
+      // naciągnięty na pigułkę statusu we Właściwościach). Rozdział jest teraz
+      // czysty: Właściwości POKAZUJĄ stan, Akcje go ZMIENIAJĄ, Rezultaty mówią,
+      // co z wniosku powstało.
+      //
+      // ŚWIADOMIE NIEOBECNE (brak pokrycia — patrz raport ETAP 2.5, Z-3/Z-4):
+      //  · przypisanie — model wniosku nie ma pola właściciela/przypisanego,
+      //  · forkowanie  — handler forka żyje w kebabie wiersza tabeli Insights
+      //                  (InterviewHub → rowMenu), nie w tym komponencie,
+      //  · recenzja    — „wyślij do recenzji" to przejście stanu `in_review`,
+      //                  więc jest już w przejściach wyżej; osobny przycisk
+      //                  byłby drugim wejściem do tego samego handlera (§2.6).
       id: 'actions',
       label: t('interview.insightViewer.actions'),
       icon: Sparkles,
       defaultOpen: true,
-      isEmpty: true,
+      isEmpty: !statusEditable || statusBaseOptions.length === 0,
       emptyLabel: t('interview.insightViewer.actionsLiveInHeaderAndToolbar'),
-      children: null,
+      children: (
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap gap-1.5">
+            {statusBaseOptions
+              .filter((opt) => opt.value !== currentInsightStatus)
+              .map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => runStatusTransition(opt.value)}
+                  className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface-raised px-2.5 text-xs font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                >
+                  {t(`interview.insightViewer.statusOptionLabel.${opt.value}`, opt.label.en)}
+                </button>
+              ))}
+          </div>
+          <p className="text-[11px] leading-relaxed text-c-text-muted">
+            {t('interview.insightViewer.panelActionsHint')}
+          </p>
+        </div>
+      ),
+    },
+    {
+      // ── REZULTATY (właściciel 2026-07-23, ETAP 2.5 pkt 2) ─────────────────
+      // Kafelki „utwórz…" zostają w CENTRUM (sekcja `artifact-actions` = rdzeń
+      // kontraktu karty), więc panel ich NIE dubluje (§2.6). Panel pokazuje to,
+      // czego centrum nie pokazuje: co z tego wniosku JUŻ powstało — realne
+      // wpisy z `/api/artifact-conversions` — plus skok do sekcji, w której
+      // rezultaty się tworzy. Jedna funkcja, jedno miejsce; panel jest
+      // rejestrem, centrum jest warsztatem.
+      id: 'results',
+      label: t('interview.insightViewer.panelResults', 'Results'),
+      icon: Rocket,
+      defaultOpen: true,
+      badge: producedResults.length || undefined,
+      isEmpty: producedResults.length === 0,
+      emptyLabel: t(
+        'interview.insightViewer.panelResultsEmpty',
+        'Nothing has been produced from this insight yet.'
+      ),
+      children: (
+        <div className="flex flex-col gap-2">
+          {producedResults.map((conv) => (
+            <div key={conv.id} className="flex items-center justify-between gap-2">
+              <span className="inline-flex h-6 min-w-0 items-center gap-1.5 truncate rounded-md border border-c-border-subtle bg-c-surface-raised px-2 text-xs font-medium text-c-text">
+                <FileText size={12} className="shrink-0 text-c-text-muted" />
+                <span className="truncate">{conv.targetArtifactType}</span>
+              </span>
+              <span className="shrink-0 text-[11px] text-c-text-muted">
+                {conv.conversionStatus}
+              </span>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => setActiveNSection('artifact-actions')}
+            className="inline-flex h-7 items-center justify-center rounded-lg border border-c-border-subtle bg-c-surface-raised px-2.5 text-xs font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+          >
+            {t('interview.insightViewer.panelResultsGoto', 'Go to the Results section')}
+          </button>
+        </div>
+      ),
     },
     {
       id: 'properties',
@@ -8006,39 +8316,21 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           valueLabel={t('interview.insightViewer.value')}
           rows={[
             {
+              // SPEC-N §2.6 (2026-07-23): status POKAZUJEMY tu, ZMIENIAMY
+              // w sekcji Akcje. Do dziś na pigułkę był naciągnięty niewidzialny
+              // `<select>` — ten sam handler `runStatusTransition` co w Akcjach,
+              // tylko ukryty i nieodkrywalny (kliknięcie w „właściwość" otwierało
+              // listę wyboru). Zostaje jedno, widoczne wejście: przyciski przejść
+              // w Akcjach. Właściwość wraca do bycia właściwością.
               id: 'status',
               label: t('interview.insightViewer.status'),
               value: (
-                <div className="relative inline-flex justify-end w-full">
-                  <span
-                    className={`inline-flex h-6 items-center gap-1.5 px-2 rounded-md text-[11px] font-semibold ${statusPill.bg} ${statusPill.text}`}
-                  >
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusPill.dot}`}
-                    />
-                    <span className="truncate">{statusPillLabel || currentInsightStatus}</span>
-                    {statusEditable && (
-                      <ChevronDown size={10} className="flex-shrink-0 opacity-60" />
-                    )}
-                  </span>
-                  {statusEditable && (
-                    <select
-                      value={currentInsightStatus}
-                      onChange={(e) => runStatusTransition(e.target.value)}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      title={t('interview.insightViewer.changeStatus')}
-                    >
-                      {statusBaseOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {t(
-                            `interview.insightViewer.statusOptionLabel.${opt.value}`,
-                            opt.label.en
-                          )}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
+                <span
+                  className={`inline-flex h-6 items-center gap-1.5 px-2 rounded-md text-[11px] font-semibold ${statusPill.bg} ${statusPill.text}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusPill.dot}`} />
+                  <span className="truncate">{statusPillLabel || currentInsightStatus}</span>
+                </span>
               ),
             },
             {
@@ -8081,7 +8373,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       id: 'relations',
       label: t('interview.insightViewer.relations'),
       icon: Link2,
-      defaultOpen: true,
+      // Kanon n-Type: domyslnie rozwiniete TYLKO Akcje i Wlasciwosci.
+      defaultOpen: false,
       isEmpty: sourceSessions.length === 0,
       emptyLabel: t('interview.insightViewer.noRelations'),
       children: (
@@ -8209,9 +8502,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         }}
         presentationMode={presentationMode}
         onPresentationModeChange={setPresentationMode}
+        // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+        showModeSwitcher={false}
         rightPanel={
+          // ETAP 1.4 — bez klasy panel dziedziczyl `border-l` powloki, czyli
+          // sidebar doklejony do krawedzi. Teraz ten sam wyglad co Inicjatywa:
+          // jasna zaokraglona karta odsunieta od brzegu (wariant _DOCKED).
           <ArtifactRightPanel
             sections={rightPanelSections}
+            className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
             ariaLabel={t('interview.insightViewer.insightDetails')}
             statusBar={
               // HP-8 workflow-engine status bar — behind ff_artifactApprovalUi
@@ -8231,21 +8530,162 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         }
         buildArtifactCode={(type, id) => buildArtifactCode(type as ArtifactType, id)}
         renderActionBar={() => {
-          // Canon toolbar (BLOCK_TYPES_CANON §Toolbar artefaktu / INSIGHT_CANON §3):
-          //   [≡ Sections ▾] [New] [Export ▾]  · active section ·  │
-          //   [⚡ AI ▾ section]  ···spacer···  [⎊ Fork] [▶ Present]  │  [⚡ AI Consultant solid]
-          // Two zones split by a divider. ZERO crimson/primary; AI = teal only.
-          const activeSectionMeta = INSIGHT_SECTIONS.find((s) => s.id === activeNSection);
-          const activeSectionLabel = activeSectionMeta
-            ? t(
-                `interview.insightViewer.sectionLabel.${activeSectionMeta.id}`,
-                activeSectionMeta.label.en
-              )
-            : '';
+          // ETAP 1.2 standardu n-Type — MENU 2 = wspolny `NModeMenu2`, trzy strefy:
+          //   LEWA   Sekcje  |  SRODEK Edycja|Podglad  |  PRAWA Analizuj z AI
+          //
+          // ZDJETE z paska (zgloszenie wlasciciela pkt 2):
+          //   - "+ Nowa karta"  : karty sa predefiniowane, widocznoscia steruje Sekcje,
+          //   - "Eksport"       : czeka na decyzje produktowa gdzie ma zamieszkac
+          //                       (kebab vs sekcja Rezultaty); do tego czasu za flaga
+          //                       INSIGHT_EXPORT_IN_MENU2 (domyslnie OFF),
+          //   - nazwa aktywnej karty (m.in. "Dalsze akcje") : dublowala lewa nawigacje,
+          //   - "AI sekcji"     : kazda sekcja ma juz wlasny przycisk regeneracji
+          //                       (ten sam handleRegenerate), wiec pasek go dublowal,
+          //   - "Prezentuj"     : i tak wylaczone flaga VITE_PRESENT_MODE.
           return (
-            <div className="flex items-center gap-1 min-h-[36px] flex-wrap">
-              {/* ── LEFT ZONE: content work ───────────────────────────────── */}
-              {/* Slot 1 — ≡ Sections ▾ : visibility toggles for the left nav */}
+            <NModeMenu2
+              isPolish={isPolish}
+              readMode={readMode}
+              onReadModeChange={setReadMode}
+              aiButton={
+                readMode ? undefined : (
+                  // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera panel
+                  // wyników. Było: `openInsightConsultant()` — czat konsultanta
+                  // na poziomie CAŁEGO artefaktu, bez oceny konkretnej karty.
+                  // Konsultant nie zniknął: żyje w toolbarze (slot 9) i w panelu
+                  // Akcje, więc żadna zdolność nie została zabrana.
+                  // Nadpisanie etykiety zdjęte — przycisk niesie teraz nazwę ze
+                  // standardu („Analizuj z AI"), zgodną z tym, co robi.
+                  <Menu2AIButton
+                    isPolish={isPolish}
+                    busy={insightCardAnalysis.loading}
+                    aria-expanded={insightCardAnalysis.open}
+                    onClick={() => {
+                      setExportMenuOpen(false);
+                      setSectionsMenuOpen(false);
+                      setAiMenuOpen(false);
+                      insightCardAnalysis.run();
+                    }}
+                  />
+                )
+              }
+              overflowKebab={
+                INSIGHT_EXPORT_IN_MENU2 ? (
+                  <div className="relative" ref={exportMenuRef}>
+                    <ToolbarGhostButton
+                      icon={<ExternalLink size={14} />}
+                      onClick={() => {
+                        setExportMenuOpen((v) => !v);
+                        setAiMenuOpen(false);
+                        setSectionsMenuOpen(false);
+                      }}
+                    >
+                      {t('interview.insightViewer.export')}
+                      <ChevronDown
+                        size={13}
+                        className={`ml-0.5 transition-transform ${exportMenuOpen ? 'rotate-180' : ''}`}
+                      />
+                    </ToolbarGhostButton>
+                    {exportMenuOpen && (
+                      <div className="absolute left-0 z-30 mt-1 w-56 rounded-xl border border-c-border-subtle bg-white dark:bg-c-surface shadow-lg py-1">
+                        {/* Canon destinations: Notatki · Idee/Tools · Prezentacja · PDF */}
+                        <button
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            handleExportToNotebook();
+                          }}
+                          disabled={isExportingNotebook || insight?.status !== 'completed'}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
+                        >
+                          {isExportingNotebook ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <BookOpen size={14} />
+                          )}
+                          {t('interview.insightViewer.toNotebook')}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            handleExportToTools();
+                          }}
+                          disabled={isExportingTools || insight?.status !== 'completed'}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
+                        >
+                          {isExportingTools ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <Target size={14} />
+                          )}
+                          {t('interview.insightViewer.toIdeasTools')}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            setExportTarget('deck');
+                            setPresentOpen(true);
+                          }}
+                          disabled={insight?.status !== 'completed'}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
+                        >
+                          <LayoutGrid size={14} />
+                          {t('interview.insightViewer.toDeck')}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            setExportTarget('report');
+                            openExportDialog();
+                          }}
+                          disabled={insight?.status !== 'completed'}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
+                        >
+                          <FileText size={14} />
+                          {t('interview.insightViewer.pdfReport')}
+                        </button>
+                        <div className="my-1 h-px bg-c-surface-raised" />
+                        <button
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            openExportDialog();
+                          }}
+                          disabled={insight?.status !== 'completed'}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-state-hover disabled:opacity-50"
+                        >
+                          <Sparkles size={14} />
+                          {t('interview.insightViewer.smartExport')}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            handleExportMarkdown();
+                          }}
+                          disabled={insight?.status !== 'completed'}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-muted hover:bg-state-hover disabled:opacity-50"
+                        >
+                          <Download size={14} />
+                          {t('interview.insightViewer.downloadMd')}
+                        </button>
+                        <div className="my-1 h-px bg-c-surface-raised" />
+                        {/* Propose initiatives — moved here from the old AI dropdown so
+                            the feature stays reachable after the slot-9 rework. */}
+                        <button
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            setGenOpen(true);
+                          }}
+                          disabled={!insight?.id}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
+                        >
+                          <Rocket size={14} />
+                          {t('interview.insightViewer.proposeInitiatives')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : undefined
+              }
+              sectionsMenu={
               <div className="relative" ref={sectionsMenuRef}>
                 <ToolbarGhostButton
                   icon={<Layers size={14} />}
@@ -8265,16 +8705,27 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <div className="absolute left-0 z-30 mt-1 w-72 max-h-[70vh] overflow-y-auto rounded-xl border border-c-border-subtle bg-white dark:bg-c-surface shadow-lg py-1">
                     {(() => {
                       // Group like the left nav (#22b). Walk in canonical order.
+                      // MIGRACJA (domknięcie dedup Phase-D): gdy kontrakt kart ON,
+                      // „Sekcje ▾" respektuje katalog kanoniczny — sekcje spoza
+                      // katalogu (np. `executive-memo`/`recommendations`, scalone
+                      // z rdzeniem Faza 0 DEDUP) NIE pojawiają się tu, tak samo jak
+                      // już znikły z „+ Nowa karta ▾" (AddCardMenu → layout.availableToAdd
+                      // z tego samego katalogu). Flaga OFF ⇒ bez zmian (32 sekcje jak dotąd).
+                      const catalogIds = insightCardContractEnabled
+                        ? new Set(cardLayout.catalog.map((c) => c.id))
+                        : null;
                       const groups: { group: string; items: NModeSection[] }[] = [];
-                      orderedNModeSectionsWithContent.forEach((s) => {
-                        const g = s.group ?? '';
-                        let bucket = groups.find((b) => b.group === g);
-                        if (!bucket) {
-                          bucket = { group: g, items: [] };
-                          groups.push(bucket);
-                        }
-                        bucket.items.push(s);
-                      });
+                      orderedNModeSectionsWithContent
+                        .filter((s) => !catalogIds || catalogIds.has(s.id))
+                        .forEach((s) => {
+                          const g = s.group ?? '';
+                          let bucket = groups.find((b) => b.group === g);
+                          if (!bucket) {
+                            bucket = { group: g, items: [] };
+                            groups.push(bucket);
+                          }
+                          bucket.items.push(s);
+                        });
                       return groups.map((bucket) => (
                         <div key={bucket.group} className="px-1 py-1">
                           {bucket.group && (
@@ -8343,215 +8794,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 )}
               </div>
 
-              {/* Slot 2 — + Nowa karta ▾ : catalog of cards not yet on the
-                  artifact (wzorzec N §3.5). Klik → cardLayout.addCard →
-                  karta wraca do nav/canvas. Read = ukryte (podgląd czysty). */}
-              {!readMode && <AddCardMenu layout={cardLayout} isPolish={isPolish} />}
-
-              {/* Slot 3 — Export ▾ : canon destinations only */}
-              <div className="relative" ref={exportMenuRef}>
-                <ToolbarGhostButton
-                  icon={<ExternalLink size={14} />}
-                  onClick={() => {
-                    setExportMenuOpen((v) => !v);
-                    setAiMenuOpen(false);
-                    setSectionsMenuOpen(false);
-                  }}
-                >
-                  {t('interview.insightViewer.export')}
-                  <ChevronDown
-                    size={13}
-                    className={`ml-0.5 transition-transform ${exportMenuOpen ? 'rotate-180' : ''}`}
-                  />
-                </ToolbarGhostButton>
-                {exportMenuOpen && (
-                  <div className="absolute left-0 z-30 mt-1 w-56 rounded-xl border border-c-border-subtle bg-white dark:bg-c-surface shadow-lg py-1">
-                    {/* Canon destinations: Notatki · Idee/Tools · Prezentacja · PDF */}
-                    <button
-                      onClick={() => {
-                        setExportMenuOpen(false);
-                        handleExportToNotebook();
-                      }}
-                      disabled={isExportingNotebook || insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
-                    >
-                      {isExportingNotebook ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <BookOpen size={14} />
-                      )}
-                      {t('interview.insightViewer.toNotebook')}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setExportMenuOpen(false);
-                        handleExportToTools();
-                      }}
-                      disabled={isExportingTools || insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
-                    >
-                      {isExportingTools ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <Target size={14} />
-                      )}
-                      {t('interview.insightViewer.toIdeasTools')}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setExportMenuOpen(false);
-                        setExportTarget('deck');
-                        setPresentOpen(true);
-                      }}
-                      disabled={insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
-                    >
-                      <LayoutGrid size={14} />
-                      {t('interview.insightViewer.toDeck')}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setExportMenuOpen(false);
-                        setExportTarget('report');
-                        openExportDialog();
-                      }}
-                      disabled={insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
-                    >
-                      <FileText size={14} />
-                      {t('interview.insightViewer.pdfReport')}
-                    </button>
-                    <div className="my-1 h-px bg-c-surface-raised" />
-                    <button
-                      onClick={() => {
-                        setExportMenuOpen(false);
-                        openExportDialog();
-                      }}
-                      disabled={insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-state-hover disabled:opacity-50"
-                    >
-                      <Sparkles size={14} />
-                      {t('interview.insightViewer.smartExport')}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setExportMenuOpen(false);
-                        handleExportMarkdown();
-                      }}
-                      disabled={insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-muted hover:bg-state-hover disabled:opacity-50"
-                    >
-                      <Download size={14} />
-                      {t('interview.insightViewer.downloadMd')}
-                    </button>
-                    <div className="my-1 h-px bg-c-surface-raised" />
-                    {/* Propose initiatives — moved here from the old AI dropdown so
-                        the feature stays reachable after the slot-9 rework. */}
-                    <button
-                      onClick={() => {
-                        setExportMenuOpen(false);
-                        setGenOpen(true);
-                      }}
-                      disabled={!insight?.id}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
-                    >
-                      <Rocket size={14} />
-                      {t('interview.insightViewer.proposeInitiatives')}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Slot 4 — active section label (orientation, not a button) */}
-              <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
-              {activeSectionLabel && (
-                <span className="px-1 text-[12px] text-c-text-muted truncate max-w-[160px]">
-                  · {activeSectionLabel} ·
-                </span>
-              )}
-
-              {/* Slot 5 — section-level AI (teal-subtle split). Wired to the same
-                  per-section AI handler used by each section's `aiAction`.
-                  Read = ukryte: Podgląd „do pokazania klientowi" bez afordancji
-                  generowania/regeneracji AI. */}
-              {!readMode && (
-                <ToolbarAISplitButton
-                  icon={<Sparkles size={14} />}
-                  disabled={isRegenerating}
-                  onClick={handleRegenerate}
-                  title={t('interview.insightViewer.aiForSectionX', {
-                    section: activeSectionLabel,
-                  })}
-                >
-                  {isRegenerating && <Loader2 size={13} className="animate-spin" />}
-                  {t('interview.insightViewer.aiSection')}
-                </ToolbarAISplitButton>
-              )}
-
-              {/* ── spacer ─────────────────────────────────────────────────── */}
-              <div className="flex-1 min-w-0" />
-
-              {/* ── RIGHT ZONE: AI + modes ─────────────────────────────────── */}
-              {/* Tryb Read/Edit (§5A) — wspólny komponent „do pokazania
-                  klientowi" (ujednolicony z Task/Decision). Read = pasek akcji
-                  kart znika + afordancje AI/edycji gasną. Aktywny = c-focus. */}
-              <div className="mr-1">
-                <ReadEditToggle readMode={readMode} onChange={setReadMode} />
-              </div>
-
-              {/* Slot 7 — Present. Fork przeniesiony do kebaba wiersza w tabeli
-                  Insights (InterviewHub → rowMenu), zgodnie z kanonem §9
-                  (akcje obiektu żyją w kebabie, nie w toolbarze edytora).
-
-                  2026-07-20 (decyzja Piotra, przegląd MVP): UKRYTE.
-                  PresentMode renderuje strukturalną kartę jako zlepiony akapit —
-                  waga wchodzi w zdanie jako „(severity: high)" zamiast pilla,
-                  sekcje sklejone bez hierarchii, etykiety wewnętrzne
-                  („Perspective lenses", „Divergence") wyciekają do treści
-                  klienckiej, tekst urywa się w połowie zdania. Piotr: „lepiej to
-                  wyłączyć niż takie coś pokazywać".
-                  Przywrócić po zadaniu C10 (kontrakt renderu prezentacji) —
-                  Harvard/wdrozenie-100/_PLAN_WYKONAWCZY_2026-07-20.md */}
-              {PRESENT_MODE_ENABLED && (
-                <ToolbarIconButton
-                  icon={<Monitor size={14} />}
-                  tooltip={t('interview.insightViewer.present')}
-                  onClick={() => setPresentOpen(true)}
-                />
-              )}
-
-              {/* Slot 9 — AI Consultant. #56 (D17): otwiera JEDEN docked panel
-                  Teresy z kontekstem insightu + 5 akcji jako przyciski komend
-                  wewnątrz Teresy (openInsightConsultant), zamiast osobnego
-                  AIConsultantPanel.
-                  Read = ukryte: Podgląd „do pokazania klientowi" bez afordancji AI.
-
-                  2026-07-21 (SPEC-N §2.3): był `ToolbarAISolidButton` (solid teal).
-                  Formalnie zgodne — primary jest jeden, w nagłówku („Konwertuj na
-                  inicjatywę") — ale WIZUALNIE solid-teal konkurował z tym primary
-                  o uwagę. Reguła mówi o wyglądzie, nie o deklaracji: poza slotem
-                  primary żaden element nie jest solid/filled. Stąd stonowane do
-                  wariantu outline (`ToolbarAISplitButton` — teal border, ten sam
-                  akcent AI, zero czerwieni). Jedyne wejście do konsultanta AI —
-                  bliźniak w prawym panelu usunięty (§2.6). */}
-              {!readMode && (
-                <>
-                  <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
-                  <ToolbarAISplitButton
-                    icon={<Sparkles size={14} />}
-                    onClick={() => {
-                      setExportMenuOpen(false);
-                      setSectionsMenuOpen(false);
-                      setAiMenuOpen(false);
-                      openInsightConsultant();
-                    }}
-                    title={t('interview.insightViewer.aiConsultant')}
-                  >
-                    {t('interview.insightViewer.aiConsultant')}
-                  </ToolbarAISplitButton>
-                </>
-              )}
-            </div>
+              }
+            />
           );
         }}
       >
@@ -8954,6 +9198,25 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           kontekstem insightu i publikuje 5 akcji jako przyciski komend wewnątrz
           Teresy. Komponent AIConsultantPanel nie jest już renderowany (plik
           zostaje do sprzątnięcia martwego kodu po odbiorze). */}
+
+      {/* ── ETAP 3: panel wyników „Analizuj z AI" ─────────────────────────────
+          `writableFieldIds` jest PUSTE świadomie — backend nie ma endpointu
+          zapisu treści kart Insightu (patrz komentarz przy `insightAnalysisFields`).
+          Panel pokaże Braki/Ryzyka/Sugestie i da „Kopiuj treść" zamiast
+          „Zastosuj", z jawnym powodem — zamiast udawać zapis. */}
+      <NCardAIAnalysisPanel
+        open={insightCardAnalysis.open}
+        onClose={insightCardAnalysis.close}
+        loading={insightCardAnalysis.loading}
+        result={insightCardAnalysis.result}
+        errorCode={insightCardAnalysis.errorCode}
+        serverErrorCode={insightCardAnalysis.serverErrorCode}
+        onRerun={insightCardAnalysis.rerun}
+        onApplyChange={insightCardAnalysis.applyChange}
+        writableFieldIds={[]}
+        readMode={readMode}
+        isPolish={isPolish}
+      />
 
       {/* Phase A3 — fullscreen Present mode over the canonical insight sections */}
       {presentOpen && presentCards.length > 0 && (

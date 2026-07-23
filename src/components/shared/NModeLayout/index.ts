@@ -7,7 +7,7 @@
  *
  * Components:
  * - NModeShell        — Top-level layout composer
- * - NModeHeader       — Title bar with save, chat, mode switcher
+ * - NModeHeader       — Title bar with save, chat, primary CTA
  * - NModePropertiesStrip — Full-width property fields row
  * - NModeActionBar    — Primary + contextual AI action buttons
  * - NModeLeftNav      — Section navigation rail (242px)
@@ -34,8 +34,25 @@ export { NModeCanvas } from './NModeCanvas';
 export type { NModeCardStateProps, NModeCardStatus } from './NModeCardState';
 export { NModeCardBadge, NModeCardState } from './NModeCardState';
 export { NModeCBoard } from './NModeCBoard';
+export type { NModeContentBlockProps } from './NModeContentBlock';
+export { NModeContentBlock } from './NModeContentBlock';
 export { NModeHeader } from './NModeHeader';
 export { NModeLeftNav } from './NModeLeftNav';
+// ── Menu 2 (ETAP 1.2 standardu n-Type) ──────────────────────────────────────
+export type {
+  Menu2AIButtonProps,
+  Menu2HowToButtonProps,
+  Menu2ModeToggleProps,
+  NModeMenu2Props,
+} from './NModeMenu2';
+export { Menu2AIButton, Menu2HowToButton, Menu2ModeToggle, NModeMenu2 } from './NModeMenu2';
+// ── „Analizuj z AI" (ETAP 3 standardu n-Type) ───────────────────────────────
+// Panel wyników + szew stanu. Silnik (rubryka, prompt, wywołanie LLM) mieszka
+// w `src/services/cardAnalysis` — powłoka go tylko konsumuje.
+export type { NCardAIAnalysisPanelProps } from './NCardAIAnalysisPanel';
+export { NCardAIAnalysisPanel } from './NCardAIAnalysisPanel';
+export type { UseCardAIAnalysisOptions, UseCardAIAnalysisResult } from './useCardAIAnalysis';
+export { useCardAIAnalysis } from './useCardAIAnalysis';
 export { NModePropertiesStrip } from './NModePropertiesStrip';
 export type { QuoteRequirementLevel } from './NModeSectionWrapper';
 export { EvidenceBadge, NModeSectionWrapper } from './NModeSectionWrapper';

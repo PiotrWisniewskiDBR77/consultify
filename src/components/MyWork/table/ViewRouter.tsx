@@ -8,14 +8,19 @@
  */
 import {
   AlertTriangle,
+  AlignJustify,
   Calendar,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   Filter,
   GanttChart,
   Grid3X3,
   KanbanSquare,
   Layout,
   LayoutGrid,
+  Maximize2,
+  Minimize2,
   Plus,
   StickyNote,
   Table2,
@@ -36,6 +41,7 @@ import { CalendarView } from './CalendarView';
 import { CellEditor } from './CellEditor';
 import { ChatToSchemaPanel } from './ChatToSchemaPanel';
 import { type FormatRule, getConditionalStyle } from './ConditionalFormatting';
+import { EmptyFilterStateView } from './EmptyFilterStateView';
 import { EmptyStateView } from './EmptyStateView';
 import { FieldManager } from './FieldManager';
 import { GridView, isMissingField } from './GridView';
@@ -46,7 +52,7 @@ import { PlatformCellRenderer } from './PlatformCellRenderer';
 import { StickyNoteView } from './StickyNoteView';
 import { useTableData } from './TableDataProvider';
 import { tpViewToLegacy } from './tablePlatformMappers';
-import type { ColumnDef, TableEdge, TableNode } from './tableTypes';
+import type { ColumnDef, FilterGroup, SortConfig, TableEdge, TableNode } from './tableTypes';
 import { TimelineView } from './TimelineView';
 import type { ViewLayout } from './useTableViews';
 import ViewErrorBoundary from './ViewErrorBoundary';
@@ -89,6 +95,13 @@ function cellId(rowId: string, fieldId: string): string {
   return `${rowId}:${fieldId}`;
 }
 
+// Fala 7 — id prefix for the per-column "quick filter" rule under the header,
+// kept distinct from ids the advanced FilterBuilder assigns (`${fieldId}-${operator}`)
+// so both UIs can add rules for the same column without clobbering each other.
+const QUICK_FILTER_PREFIX = 'quick-filter:';
+const quickFilterRuleId = (colKey: string): string => `${QUICK_FILTER_PREFIX}${colKey}`;
+const EMPTY_FILTER_GROUP: FilterGroup = { logic: 'and', rules: [] };
+
 // ── Platform grid (table layout) ─────────────────────────────────────────────
 
 export interface PlatformGridViewProps {
@@ -116,6 +129,19 @@ export interface PlatformGridViewProps {
   handleDeleteRow: (id: string) => void;
   handleInsertRow: (referenceId: string, direction: 'above' | 'below') => void;
   onExpandRecord?: (id: string) => void;
+  /**
+   * Fala 7 — sortowanie/filtr po kolumnie (parytet Airtable). Optional: the
+   * client-side sort/filter machinery already lives in
+   * `useTablePlatformIntegration`/`useTablePlatformViews` (single-column
+   * `SortConfig`, `FilterGroup` with the shared `evaluateFilterRule`) and
+   * flows into `processedRows` before it ever reaches this component — these
+   * props just let the header UI drive that existing state. Optional so
+   * existing dev-render harnesses that don't pass them keep compiling.
+   */
+  sort?: SortConfig | null;
+  setSort?: (sort: SortConfig | null) => void;
+  filters?: FilterGroup;
+  setFilters?: (filters: FilterGroup) => void;
 }
 
 // Exported as a dev-render/visual-test seam (K1 Airtable-parity row kebab is
@@ -141,6 +167,10 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   handleDeleteRow,
   handleInsertRow,
   onExpandRecord,
+  sort = null,
+  setSort,
+  filters = EMPTY_FILTER_GROUP,
+  setFilters,
 }) => {
   const { t, i18n } = useTranslation();
   // The kebab + note editor render inline pl/en strings via `isPl` (same
@@ -158,6 +188,69 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
     fieldKey: string;
     value: string;
   } | null>(null);
+
+  // Fala 8 (parytet Airtable) — szerokości kolumn przez drag na uchwycie w
+  // prawej krawędzi nagłówka. Trzymane per-sesję w stanie komponentu (bez
+  // trwałego zapisu) — `useTablePlatformViews`/`ViewConfig` niosą kolejność i
+  // widoczność kolumn, ale nie ich szerokość w px, więc nie ma dokąd tego
+  // dopisać bez zmiany kontraktu widoku; patrz DOWODY zadania.
+  const MIN_COL_WIDTH = 60;
+  const [colWidths, setColWidths] = useState<Record<string, number>>({});
+  const resizingRef = useRef<{ colKey: string; startX: number; startWidth: number } | null>(null);
+
+  const beginColumnResize = useCallback(
+    (colKey: string) => (e: React.MouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const thEl = e.currentTarget.closest('th');
+      const startWidth = thEl?.getBoundingClientRect().width ?? 150;
+      resizingRef.current = { colKey, startX: e.clientX, startWidth };
+
+      const onMouseMove = (ev: MouseEvent) => {
+        const active = resizingRef.current;
+        if (!active) return;
+        const delta = ev.clientX - active.startX;
+        const next = Math.max(MIN_COL_WIDTH, Math.round(active.startWidth + delta));
+        setColWidths((prev) => ({ ...prev, [active.colKey]: next }));
+      };
+      const onMouseUp = () => {
+        resizingRef.current = null;
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+      };
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    },
+    []
+  );
+
+  // Fala 8 (parytet Airtable) — gęstość wierszy: kompakt/normalny/luźny.
+  // Zmienia tylko wysokość/padding komórek — czysto prezentacyjne, nie rusza
+  // sortu/filtra/zaznaczania/kopiuj-wklej.
+  type RowDensity = 'compact' | 'normal' | 'comfortable';
+  const [density, setDensity] = useState<RowDensity>('normal');
+  const densityCellMinH =
+    density === 'compact'
+      ? 'min-h-[24px]'
+      : density === 'comfortable'
+        ? 'min-h-[48px]'
+        : 'min-h-[36px]';
+  const densityRowPadY =
+    density === 'compact' ? 'py-0.5' : density === 'comfortable' ? 'py-2' : 'py-1';
+
+  // Fala 10 (parytet Airtable) — zwijanie/rozwijanie grup po grupowaniu.
+  // Czysto prezentacyjne (per-sesję, bez trwałego zapisu): nie rusza
+  // sortu/filtra/zaznaczania/paste/resize/gęstości. Domyślnie wszystkie
+  // grupy rozwinięte (pusty zbiór).
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const toggleGroupCollapsed = useCallback((groupLabel: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupLabel)) next.delete(groupLabel);
+      else next.add(groupLabel);
+      return next;
+    });
+  }, []);
 
   // "Dodaj notatkę" reuses the first non-computed long-text field as the note
   // target (falls back to a single-line text field); disabled with a note
@@ -188,6 +281,48 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
     return m;
   }, [rowsInRenderOrder]);
   const colKeys = useMemo(() => visibleColumns.map((c) => c.key), [visibleColumns]);
+
+  // Fala 7 — klik w nagłówek: cykl asc → desc → brak (natywna kolejność).
+  // Sort stanu jest scentralizowany w useTablePlatformIntegration (SortConfig
+  // pojedynczej kolumny) — to tylko UI trigger, patrz komentarz przy propsach.
+  const handleHeaderSortClick = useCallback(
+    (colKey: string) => {
+      if (!setSort) return;
+      if (!sort || sort.key !== colKey) {
+        setSort({ key: colKey, direction: 'asc' });
+      } else if (sort.direction === 'asc') {
+        setSort({ key: colKey, direction: 'desc' });
+      } else {
+        setSort(null);
+      }
+    },
+    [sort, setSort]
+  );
+
+  // Fala 7 — prosty filtr tekstowy "zawiera" pod nagłówkiem, per kolumna.
+  // Pusty input = brak reguły dla tej kolumny (usuwa ją z FilterGroup zamiast
+  // trzymać regułę z pustą wartością).
+  const quickFilterValue = useCallback(
+    (colKey: string): string => {
+      const rule = filters.rules.find((r) => r.id === quickFilterRuleId(colKey));
+      return typeof rule?.value === 'string' ? rule.value : '';
+    },
+    [filters]
+  );
+
+  const handleQuickFilterChange = useCallback(
+    (colKey: string, value: string) => {
+      if (!setFilters) return;
+      const id = quickFilterRuleId(colKey);
+      const rest = filters.rules.filter((r) => r.id !== id);
+      const rules =
+        value.trim().length > 0
+          ? [...rest, { id, column: colKey, operator: 'contains' as const, value }]
+          : rest;
+      setFilters({ logic: filters.logic ?? 'and', rules });
+    },
+    [filters, setFilters]
+  );
 
   const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
   const [focusedColKey, setFocusedColKey] = useState<string | null>(null);
@@ -378,6 +513,81 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
     [visibleColumns, isPl]
   );
 
+  // Z16b follow-up: Ctrl/Cmd+V mirrors copySelectionOrCell's TSV shape —
+  // rows split on \n, columns on \t. Pastes from the focused (anchor) cell
+  // down/right, writing through the same handleFieldChange path a single
+  // cell edit uses (CellEditor's onSave, line ~410). Never grows the grid —
+  // any cell the pasted rectangle would land outside of, or that maps to a
+  // computed field, is skipped and counted (logged via console.debug, not
+  // surfaced as an error toast — parity with copy's silent .catch()).
+  // A clipboard payload with no \t/\n (a single value) instead fills the
+  // whole active rangeBounds rectangle, spreadsheet-style; with no active
+  // range it just writes the one focused cell.
+  const pasteFromClipboard = useCallback(
+    (rowId: string, colKey: string) => {
+      if (locked) return;
+      void navigator.clipboard
+        ?.readText()
+        .then((text) => {
+          if (!text) return;
+          const rawRows = text.replace(/\r\n/g, '\n').split('\n');
+          // Drop one trailing empty row from a clipboard payload that ends
+          // in a newline (common with copies out of spreadsheet apps).
+          if (rawRows.length > 1 && rawRows[rawRows.length - 1] === '') rawRows.pop();
+          const grid = rawRows.map((r) => r.split('\t'));
+
+          const anchorRi = flatRowIds.indexOf(rowId);
+          const anchorCi = colKeys.indexOf(colKey);
+          if (anchorRi < 0 || anchorCi < 0) return;
+
+          const isSingleValue = grid.length === 1 && grid[0].length === 1;
+          let written = 0;
+          let skipped = 0;
+
+          const writeCell = (ri: number, ci: number, value: string) => {
+            if (ri >= flatRowIds.length || ci >= colKeys.length) {
+              skipped++;
+              return;
+            }
+            const targetColKey = colKeys[ci];
+            const pf = platformFieldById.get(targetColKey);
+            if (pf?.isComputed) {
+              skipped++;
+              return;
+            }
+            handleFieldChange(flatRowIds[ri], targetColKey, value);
+            written++;
+          };
+
+          if (isSingleValue && rangeBounds) {
+            const value = grid[0][0];
+            for (let ri = rangeBounds.minRi; ri <= rangeBounds.maxRi; ri++) {
+              for (let ci = rangeBounds.minCi; ci <= rangeBounds.maxCi; ci++) {
+                writeCell(ri, ci, value);
+              }
+            }
+          } else {
+            grid.forEach((rowValues, rOffset) => {
+              rowValues.forEach((value, cOffset) => {
+                writeCell(anchorRi + rOffset, anchorCi + cOffset, value);
+              });
+            });
+          }
+
+          if (skipped > 0) {
+            console.debug(
+              `[table-paste] pominięto ${skipped} komórek — poza siatką lub pole obliczane (nie tworzę nowych wierszy/kolumn)`
+            );
+          }
+          if (written > 0) {
+            toast.success(isPl ? 'Wklejono' : 'Pasted');
+          }
+        })
+        .catch(() => {});
+    },
+    [locked, flatRowIds, colKeys, platformFieldById, handleFieldChange, rangeBounds, isPl]
+  );
+
   const renderCell = (row: TableNode, col: ColumnDef) => {
     if (isMissingField(col.key, viewConfig)) {
       return (
@@ -456,7 +666,7 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
         }}
         role="gridcell"
         tabIndex={isFocused ? 0 : -1}
-        className={`min-w-0 min-h-[36px] flex items-stretch outline-none focus-visible:ring-1 focus-visible:ring-c-focus cursor-text ${
+        className={`min-w-0 ${densityCellMinH} flex items-stretch outline-none focus-visible:ring-1 focus-visible:ring-c-focus cursor-text ${
           isFocused ? 'ring-1 ring-c-focus' : ''
         } ${inRange ? 'bg-c-info/10' : ''}`}
         onFocus={() => focusCell(row.id, col.key)}
@@ -483,6 +693,11 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
           if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
             e.preventDefault();
             copySelectionOrCell(row.id, col.key);
+            return;
+          }
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+            e.preventDefault();
+            pasteFromClipboard(row.id, col.key);
             return;
           }
           switch (e.key) {
@@ -530,7 +745,9 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
         setRowMenu({ rowId: row.id, x: e.clientX, y: e.clientY });
       }}
     >
-      <td className="w-10 border-b border-r border-c-border-subtle px-1 py-1 align-middle text-center">
+      <td
+        className={`w-10 border-b border-r border-c-border-subtle px-1 ${densityRowPadY} align-middle text-center`}
+      >
         <input
           type="checkbox"
           className="rounded border-c-border-subtle"
@@ -546,10 +763,14 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
         const cfStyle = missing
           ? undefined
           : getConditionalStyle(formatRules, col.key, row.data?.[col.key]);
+        const customWidth = colWidths[col.key];
+        const widthStyle: React.CSSProperties | undefined = customWidth
+          ? { width: customWidth, minWidth: customWidth, maxWidth: customWidth }
+          : undefined;
         return (
           <td
             key={col.key}
-            style={cfStyle}
+            style={{ ...cfStyle, ...widthStyle }}
             className={
               missing
                 ? 'border-b border-r border-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] bg-[color-mix(in_srgb,var(--c-warning)_8%,transparent)] align-top min-w-[120px] max-w-[280px] px-3 py-2 text-xs text-c-warning italic'
@@ -565,23 +786,84 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
 
   const body =
     groupedRows && Object.keys(groupedRows).length > 0
-      ? Object.entries(groupedRows).map(([groupLabel, rows]) => (
-          <React.Fragment key={groupLabel}>
-            <tr className="bg-c-surface-raised">
-              <td
-                colSpan={visibleColumns.length + 1}
-                className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted border-b border-c-border-subtle"
-              >
-                {groupLabel}
-              </td>
-            </tr>
-            {rows.map((row) => renderRow(row))}
-          </React.Fragment>
-        ))
+      ? Object.entries(groupedRows).map(([groupLabel, rows]) => {
+          const isCollapsed = collapsedGroups.has(groupLabel);
+          return (
+            <React.Fragment key={groupLabel}>
+              <tr className="bg-c-surface-raised">
+                <td
+                  colSpan={visibleColumns.length + 1}
+                  className="p-0 border-b border-c-border-subtle"
+                >
+                  <button
+                    type="button"
+                    onClick={() => toggleGroupCollapsed(groupLabel)}
+                    aria-expanded={!isCollapsed}
+                    className="w-full flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted hover:text-c-text transition-colors outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    {isCollapsed ? (
+                      <ChevronRight className="h-3 w-3 shrink-0" aria-hidden />
+                    ) : (
+                      <ChevronDown className="h-3 w-3 shrink-0" aria-hidden />
+                    )}
+                    <span>
+                      {groupLabel} · {rows.length}
+                    </span>
+                  </button>
+                </td>
+              </tr>
+              {!isCollapsed && rows.map((row) => renderRow(row))}
+            </React.Fragment>
+          );
+        })
       : processedRows.map((row) => renderRow(row));
+
+  const densityOptions: { id: RowDensity; icon: typeof Minimize2; label: string }[] = [
+    {
+      id: 'compact',
+      icon: Minimize2,
+      label: t('ideas.table.viewRouter.densityCompact', 'Kompakt'),
+    },
+    {
+      id: 'normal',
+      icon: AlignJustify,
+      label: t('ideas.table.viewRouter.densityNormal', 'Normalny'),
+    },
+    {
+      id: 'comfortable',
+      icon: Maximize2,
+      label: t('ideas.table.viewRouter.densityComfortable', 'Luźny'),
+    },
+  ];
 
   return (
     <>
+      {/* Fala 8 (parytet Airtable) — przełącznik gęstości wierszy: kompakt/
+          normalny/luźny. Czysto prezentacyjne, domyślnie normalny. */}
+      <div className="flex items-center justify-end gap-1.5 px-0.5 pb-1">
+        <span className="text-[10px] text-c-text-muted">
+          {t('ideas.table.viewRouter.rowDensity', 'Gęstość wierszy')}
+        </span>
+        <div className="inline-flex items-center gap-0.5 rounded-lg border border-c-border-subtle bg-c-surface p-0.5">
+          {densityOptions.map(({ id, icon: Icon, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setDensity(id)}
+              title={label}
+              aria-label={label}
+              aria-pressed={density === id}
+              className={`flex h-6 w-6 items-center justify-center rounded outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                density === id
+                  ? 'bg-c-surface-raised text-c-text'
+                  : 'text-c-text-muted hover:text-c-text-secondary'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
         <table
           /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full border-collapse text-left text-[11px]"
@@ -624,12 +906,54 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
                     </th>
                   );
                 }
+                const activeSortDir = sort?.key === col.key ? sort.direction : null;
+                const filterValue = quickFilterValue(col.key);
+                const customWidth = colWidths[col.key];
+                const widthStyle: React.CSSProperties | undefined = customWidth
+                  ? { width: customWidth, minWidth: customWidth, maxWidth: customWidth }
+                  : undefined;
                 return (
                   <th
                     key={col.key}
-                    className="border-b border-r border-c-border-subtle px-2 py-2 font-semibold text-c-text-secondary whitespace-nowrap"
+                    style={widthStyle}
+                    className="relative border-b border-r border-c-border-subtle px-2 py-1.5 align-top font-semibold text-c-text-secondary whitespace-nowrap"
                   >
-                    {col.header}
+                    <button
+                      type="button"
+                      onClick={() => handleHeaderSortClick(col.key)}
+                      title={t('ideas.table.viewRouter.sortColumn', 'Sortuj wg {{name}}', {
+                        name: col.header,
+                      })}
+                      className="flex w-full items-center gap-1 rounded px-0.5 py-0.5 text-left outline-none hover:text-c-text focus-visible:ring-2 focus-visible:ring-c-focus"
+                    >
+                      <span className="truncate">{col.header}</span>
+                      {activeSortDir === 'asc' && (
+                        <ChevronUp className="h-3 w-3 shrink-0 text-c-text-muted" aria-hidden />
+                      )}
+                      {activeSortDir === 'desc' && (
+                        <ChevronDown className="h-3 w-3 shrink-0 text-c-text-muted" aria-hidden />
+                      )}
+                    </button>
+                    <input
+                      type="text"
+                      value={filterValue}
+                      onChange={(e) => handleQuickFilterChange(col.key, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      placeholder={t('ideas.table.viewRouter.filterColumn', 'Filtruj…')}
+                      aria-label={`${t('ideas.table.viewRouter.filterColumnAria', 'Filtruj wg')} ${col.header}`}
+                      className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[10px] font-normal normal-case tracking-normal text-c-text outline-none placeholder:text-c-text-muted focus-visible:ring-2 focus-visible:ring-c-focus"
+                    />
+                    {/* Fala 8 — uchwyt zmiany szerokości kolumny (drag, min 60px). */}
+                    <div
+                      role="separator"
+                      aria-orientation="vertical"
+                      aria-label={t(
+                        'ideas.table.viewRouter.resizeColumn',
+                        'Zmień szerokość kolumny'
+                      )}
+                      onMouseDown={beginColumnResize(col.key)}
+                      className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-c-info/40 active:bg-c-info/60"
+                    />
                   </th>
                 );
               })}
@@ -853,9 +1177,10 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
     handleInsertRow,
     selectedRowIds,
     toggleRowSelection,
-    sort: _sort,
-    setSort: _setSort,
-    filters: _filters,
+    sort,
+    setSort,
+    filters,
+    setFilters,
     groupBy,
     platformFields,
     ui,
@@ -1120,6 +1445,19 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
 
   const switchToGrid = useCallback(() => setViewLayout('grid'), [setViewLayout]);
 
+  // Fala 8 (parytet Airtable) — "0 wyników" ma dwie zupełnie różne przyczyny:
+  // (a) tabela naprawdę jest pusta → "Dodaj pierwszy rekord" ma sens; (b) są
+  // rekordy (`nodes.length > 0`) albo aktywne filtry, a mimo to wynik po
+  // filtrze/grupowaniu to zero → "Dodaj rekord" jest mylące, bo rekordy już
+  // istnieją, tylko filtr je ukrywa. Rozróżniamy po źródle (`nodes`), nie po
+  // samym `processedRows`, żeby złapać też przypadek pustego filtra z pustym
+  // inputem, ale niezerowym `nodes`.
+  const hasActiveFilters = (filters?.rules?.length ?? 0) > 0;
+  const isEmptyDueToFilter = processedRows.length === 0 && (hasActiveFilters || nodes.length > 0);
+  const clearAllFilters = useCallback(() => {
+    setFilters?.({ logic: filters?.logic ?? 'and', rules: [] });
+  }, [setFilters, filters?.logic]);
+
   const mainContent =
     loading && !nodes.length ? (
       <div className="flex flex-1 items-center justify-center p-12">
@@ -1131,6 +1469,10 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
           <div className="h-8 bg-c-surface-raised rounded-lg animate-pulse w-5/6" />
         </div>
       </div>
+    ) : isEmptyDueToFilter ? (
+      <ViewErrorBoundary viewName={viewLayout} onSwitchToGrid={switchToGrid} locale={i18n.language}>
+        <EmptyFilterStateView onClearFilters={clearAllFilters} />
+      </ViewErrorBoundary>
     ) : processedRows.length === 0 ? (
       <ViewErrorBoundary viewName={viewLayout} onSwitchToGrid={switchToGrid} locale={i18n.language}>
         <EmptyStateView
@@ -1162,6 +1504,10 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
           handleDeleteRow={handleDeleteRow}
           handleInsertRow={handleInsertRow}
           onExpandRecord={onExpandRecord}
+          sort={sort}
+          setSort={setSort}
+          filters={filters}
+          setFilters={setFilters}
         />
       </ViewErrorBoundary>
     ) : (

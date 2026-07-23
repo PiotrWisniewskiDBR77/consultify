@@ -146,7 +146,11 @@ export const DocChartBlock: React.FC<DocChartBlockProps> = ({ content, height, o
           style={{
             fontSize: 14,
             fontWeight: 600,
-            color: '#334155',
+            // Blok wykresu — w odróżnieniu od DocKpiStrip/DocTableBlock — NIE maluje
+            // własnego białego tła: siedzi wprost na `bg-c-surface` karty, więc
+            // sztywny slate-700 znikał na navy w ciemnym motywie. Token sam zmienia
+            // wartość z motywem (jasny #475569, ciemny #b8c4d6).
+            color: 'var(--c-text-secondary)',
             textAlign: 'center',
             marginBottom: 8,
           }}
@@ -158,7 +162,9 @@ export const DocChartBlock: React.FC<DocChartBlockProps> = ({ content, height, o
       {empty ? (
         <div
           className="doc-chart-block__empty"
-          style={{ padding: '24px 0', textAlign: 'center', color: '#64748b', fontSize: 13 }}
+          // `--c-text-muted` = dokładnie #64748b w jasnym motywie (jasny bez zmian),
+          // a w ciemnym #8a99b0 — czytelne na navy.
+          style={{ padding: '24px 0', textAlign: 'center', color: 'var(--c-text-muted)', fontSize: 13 }}
         >
           {t('documentStudio.blocks.noChartData', 'No chart data available')}
         </div>
@@ -327,7 +333,7 @@ export const DocChartBlock: React.FC<DocChartBlockProps> = ({ content, height, o
       {content.caption && (
         <figcaption
           className="doc-chart-block__caption"
-          style={{ fontSize: 12, color: '#64748b', textAlign: 'center', marginTop: 6 }}
+          style={{ fontSize: 12, color: 'var(--c-text-muted)', textAlign: 'center', marginTop: 6 }}
         >
           {content.caption}
         </figcaption>

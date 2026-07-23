@@ -31,6 +31,12 @@ export interface CreateSnapshotInput {
   label: string;
   nodes: unknown[];
   edges: unknown[];
+  // Tool-specific state (extensions.processFlow.lanes, extensions.whiteboard.*,
+  // extensions.table.*). Captured so restore rolls back the WHOLE tool, not just
+  // the shared nodes/edges. Optional + backward compatible: pre-existing snapshots
+  // (and callers that omit it) simply store no extensions, and restore falls back
+  // to preserving the live extensions via deep-merge.
+  extensions?: Record<string, unknown> | null;
 }
 
 export interface CreatedSnapshot {
@@ -49,7 +55,11 @@ export async function createIdeaMapSnapshot(input: CreateSnapshotInput): Promise
   const id = uuidv4();
   const nodes = Array.isArray(input.nodes) ? input.nodes : [];
   const edges = Array.isArray(input.edges) ? input.edges : [];
-  const dataJson = JSON.stringify({ nodes, edges });
+  const hasExtensions =
+    input.extensions && typeof input.extensions === 'object' && !Array.isArray(input.extensions);
+  const dataJson = JSON.stringify(
+    hasExtensions ? { nodes, edges, extensions: input.extensions } : { nodes, edges }
+  );
 
   await queryHelpers.run(
     `INSERT INTO my_idea_map_snapshots (id, idea_id, user_id, organization_id, label, node_count, edge_count, data_json, created_at)

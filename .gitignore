@@ -304,3 +304,4 @@ dev-render/.vite-cache/
 # covered by this and stay tracked.
 benchmark/answers/
 benchmark/results/
+/odbior-uwagi/

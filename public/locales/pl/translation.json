@@ -2454,7 +2454,13 @@
       "panelHistory": "Historia",
       "loading": "Wczytywanie…",
       "property": "Właściwość",
-      "value": "Wartość"
+      "value": "Wartość",
+      "panelActions": "Akcje",
+      "panelRelations": "Powiązania",
+      "panelSources": "Źródła i założenia",
+      "panelResults": "Rezultaty",
+      "noSources": "Brak informacji o źródle",
+      "noStepsYet": "Brak kroków"
     },
     "projects": {
       "failedToLoadProjects": "Nie udało się wczytać projektów",
@@ -2926,9 +2932,14 @@
       "label4": "Komentarze",
       "emptyLabel2": "Brak komentarzy",
       "user": "Użytkownik",
-      "label5": "Historia / AI",
+      "label5": "Historia",
       "emptyLabel3": "Brak historii",
-      "ariaLabel": "Szczegóły decyzji"
+      "ariaLabel": "Szczegóły decyzji",
+      "actionsHiddenInReadMode": "Akcje są ukryte w trybie Podgląd",
+      "sourcesAndAssumptions": "Źródła i założenia",
+      "sourceArtifact": "Artefakt źródłowy",
+      "sourceDocuments": "Dokumenty źródłowe",
+      "sessionsAndNotes": "Sesje, notatki i wnioski"
     },
     "taskDetail": {
       "label": "Powiadomienie tylko",
@@ -3081,7 +3092,7 @@
       "label11": "Komentarze",
       "emptyLabel2": "Brak komentarzy",
       "user": "Użytkownik",
-      "label12": "Historia / AI",
+      "label12": "Historia",
       "emptyLabel3": "Brak historii",
       "warningDeadlineApproachingOr": "Uwaga: zbliża się lub minął termin!",
       "blockedReason": "Powód blokady",
@@ -3248,7 +3259,15 @@
         "priority": "Priorytet"
       },
       "email": "E-mail",
-      "actionsLiveInHeader": "Wszystkie akcje są w nagłówku karty"
+      "actionsLiveInHeader": "Wszystkie akcje są w nagłówku karty",
+      "source": "Źródło",
+      "sourceIdea": "Pomysł",
+      "sourceNote": "Notatka",
+      "sourceDecision": "Decyzja",
+      "sourcesAndAssumptions": "Źródła i założenia",
+      "noSourceContext": "Brak kontekstu źródła",
+      "actionsHiddenInReadMode": "Akcje ukryte w trybie podglądu",
+      "created": "Utworzono"
     },
     "dependencies": {
       "toastError": "Wybierz zadanie źródłowe",
@@ -5113,7 +5132,7 @@
       "comments": "Komentarze",
       "noComments": "Brak komentarzy",
       "user": "Użytkownik",
-      "historyAi": "Historia / AI",
+      "historyAi": "Historia",
       "noHistory": "Brak historii",
       "insightDetails": "Szczegóły wniosku",
       "sections": "Sekcje",
@@ -9098,7 +9117,7 @@
       "commentPlaceholder": "Dodaj komentarz…",
       "addComment": "Dodaj",
       "analyzeComments": "Analizuj komentarze z AI",
-      "history": "Historia / AI",
+      "history": "Historia",
       "noHistory": "Brak historii",
       "ariaLabel": "Szczegóły inicjatywy",
       "tasks": "Zadania",
@@ -9106,6 +9125,7 @@
       "raid": "RAID",
       "attachments": "Załączniki",
       "presentationMode": "Tryb pokazu",
+      "outcomes": "Rezultaty",
       "deleteComment": "Usuń komentarz",
       "property": "Właściwość",
       "value": "Wartość"
@@ -24322,7 +24342,8 @@
         "analyzeConsequencesTitle": "Uruchom analizę konsekwencji przez AI",
         "analyzeConsequences": "Analizuj konsekwencje",
         "analyzeOptions": "Analizuj opcje",
-        "analyzeOptionsTitle": "Omów i przeanalizuj te opcje z Teresą"
+        "analyzeOptionsTitle": "Omów i przeanalizuj te opcje z Teresą",
+        "approveDecision": "Zatwierdź decyzję"
       },
       "scope": {
         "title": "Zakres decyzji",
@@ -24562,6 +24583,9 @@
       },
       "toolbar": {
         "moreActions": "Więcej akcji"
+      },
+      "field": {
+        "backToAutoFit": "Wróć do auto-dopasowania"
       }
     }
   },
@@ -30781,9 +30805,14 @@
       "generateSuccess": "Treść wygenerowana przez AI",
       "generateError": "Nie udało się wygenerować treści przez AI",
       "fallbackApplied": "Użyto trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne).",
-      "enhanceSuccess": "Treść zaktualizowana przez AI. Kliknij Undo AI aby cofnąć.",
+      "enhanceSuccess": "Treść zaktualizowana przez AI. Kliknij Cofnij AI aby cofnąć.",
       "enhanceError": "Nie udało się poprawić treści przez AI",
-      "undoSuccess": "Przywrócono poprzednią wersję tekstu"
+      "undoSuccess": "Przywrócono poprzednią wersję tekstu",
+      "proposalTitle": "Propozycja AI",
+      "apply": "Zastosuj",
+      "discard": "Odrzuć",
+      "undo": "Cofnij AI",
+      "fallbackProposed": "Propozycja z trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne)."
     },
     "nModeHeader": {
       "savedLabel": "Zapisano",
@@ -33464,7 +33493,14 @@
       "value": "Wartość",
       "statusActive": "Aktywne",
       "statusInactive": "Nieaktywne",
-      "statusComingSoon": "Wkrótce"
+      "statusComingSoon": "Wkrótce",
+      "propAccessLicensed": "Licencjonowane",
+      "propAccessOpen": "Otwarte",
+      "propSourceLibrary": "Biblioteka narzędzi Consultify",
+      "panelResults": "Rezultaty",
+      "panelResultsEmpty": "To narzędzie nie ma jeszcze zadeklarowanych rezultatów w bibliotece.",
+      "panelResultsHint": "Raporty, prezentacje i eksporty powstają w sesji narzędzia — uruchom ją przyciskiem w nagłówku.",
+      "panelRelationsSessions": "Sesje narzędzia"
     },
     "knownToolDetail": {
       "dynamicSwot": {

@@ -20,7 +20,6 @@ import {
   CheckCircle2,
   CheckSquare,
   ChevronDown,
-  ChevronUp,
   Clock,
   Copy,
   Crosshair,
@@ -72,12 +71,12 @@ import { useTranslation } from 'react-i18next';
 
 import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
 import type { CardBlock, DeckCard } from '@/components/Presentations/wizard/types';
-import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import {
+  ARTIFACT_PANEL_CARD_CLASS_STICKY,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
@@ -138,7 +137,6 @@ import {
   type TaskDependency,
   type WarningThresholds,
 } from '../MyWork/shared';
-import { ReadEditToggle } from '../MyWork/shared/ReadEditToggle';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { HubWorkAreaLoadError, HubWorkAreaLoading } from '../shared/ModuleHub';
 import {
@@ -151,16 +149,22 @@ import {
   type NModeSection,
   NModeSectionWrapper,
   // ToolbarAISolidButton celowo NIE importowany (SPEC-N §2.3 — poza slotem primary
-  // nic nie jest solid; AI Consultant zjechał na wariant outline/split, :10932).
-  ToolbarAISplitButton,
+  // nic nie jest solid). ETAP 1.2: AI Consultant to teraz Menu2AIButton (fiolet),
+  // a ToolbarSubtleButton odszedl razem z przyciskiem "Nowy" (akcje -> kebab).
   ToolbarGhostButton,
   ToolbarIconButton,
-  ToolbarSubtleButton,
 } from '../shared/NModeLayout';
 import {
   type AIConsultantAction,
   AIConsultantPanel,
 } from '../shared/NModeLayout/AIConsultantPanel';
+import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
+import { AutoFitTextarea } from '../shared/AutoFitTextarea';
+// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
+import { mergeChangeValue } from '@/services/cardAnalysis';
+import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
+import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
 import type { EscalationRuleWithConfig, ReminderRuleWithDelivery } from '../shared/NModeSections';
 import {
   type ActivityLogEntry as NModeActivityLogEntry,
@@ -397,73 +401,40 @@ interface ExpandableNarrativeFieldProps {
   onChange: (next: string) => void;
   placeholder: string;
   isPolish: boolean;
+  /** Tryb Podgląd (§5.1/§4.4) — uchwyt, ramka edycyjna i edycja wyłączone. */
+  previewMode?: boolean;
+  /** Tylko-do-odczytu z powodu uprawnień (bez chowania ramki edycyjnej). */
+  readOnly?: boolean;
 }
 
+/**
+ * Opisowe pole narracyjne sekcji inicjatywy = STANDARDOWY `AutoFitTextarea`
+ * (n-Type §5.1/§6.2/§6.3). Zastąpiło bespoke „ekspandowany textarea + toggle
+ * Więcej/Mniej": standard daje auto-fit w obie strony, ręczne przeciągnięcie
+ * uchwytu z zapamiętaniem wysokości, powrót do auto-fitu i tryb Podgląd
+ * (uchwyt/ramka ukryte). Wygląd = wyłącznie tokeny `c-*`; ramka edycyjna
+ * (podkreślenie) tylko w trybie Edycja przez `editClassName`.
+ */
 const ExpandableNarrativeField: React.FC<ExpandableNarrativeFieldProps> = ({
   value,
   onChange,
   placeholder,
   isPolish,
-}) => {
-  const { t } = useTranslation();
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isOverflowing, setIsOverflowing] = useState(false);
-
-  useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-
-    const updateOverflow = () => {
-      if (isExpanded) {
-        // While expanded, keep the toggle visible when content is non-trivial.
-        setIsOverflowing(value.trim().length > 220 || el.scrollHeight > 120);
-        return;
-      }
-      setIsOverflowing(el.scrollHeight > el.clientHeight + 2);
-    };
-
-    updateOverflow();
-    if (typeof ResizeObserver === 'undefined') return;
-
-    const observer = new ResizeObserver(updateOverflow);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [isExpanded, value]);
-
-  useEffect(() => {
-    if (!isOverflowing && isExpanded) {
-      setIsExpanded(false);
-    }
-  }, [isOverflowing, isExpanded]);
-
-  return (
-    <div className="relative">
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={3}
-        className={`w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder:text-c-text-muted border-b border-c-border-subtle focus:border-c-focus-solid transition-colors min-h-[60px] ${
-          isExpanded ? 'min-h-[220px] overflow-visible resize-y' : 'h-24 overflow-hidden resize-y'
-        }`}
-        placeholder={placeholder}
-      />
-      {isOverflowing && (
-        <button
-          type="button"
-          onClick={() => setIsExpanded((prev) => !prev)}
-          className="absolute -bottom-4 right-4 inline-flex items-center gap-1 px-1 py-0.5 text-[10px] font-medium text-c-text-muted hover:text-c-text-secondary transition-colors"
-        >
-          {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-          {isExpanded
-            ? t('initiatives.initiativeDocumentView.less')
-            : t('initiatives.initiativeDocumentView.more')}
-        </button>
-      )}
-    </div>
-  );
-};
+  previewMode = false,
+  readOnly = false,
+}) => (
+  <AutoFitTextarea
+    value={value}
+    onValueChange={onChange}
+    previewMode={previewMode}
+    readOnly={readOnly}
+    minRows={3}
+    placeholder={placeholder}
+    autoFitLabel={isPolish ? 'Auto-dopasowanie' : 'Auto-fit'}
+    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder:text-c-text-muted transition-colors"
+    editClassName="border-b border-c-border-subtle focus:border-c-focus-solid"
+  />
+);
 
 export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   initiativeId,
@@ -711,8 +682,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // autor, ani user) nie wie, którą włącza. Standard rozstrzyga: osobne nazwy
   // i osobne sloty.
   //
-  //   densityMode: 'n' | 'c'            → GĘSTOŚĆ widoku, przełącznik w Menu 1
-  //                                        (NModeHeader.showModeSwitcher).
+  //   densityMode: 'n' | 'c'            → GĘSTOŚĆ widoku. ETAP 1.1 n-Type
+  //                                        (2026-07-23): przełącznik ZDJĘTY
+  //                                        z Menu 1, karta ma jeden widok —
+  //                                        wartość jest twardo pinowana na 'n'
+  //                                        (strażnik pod tym hookiem).
   //   presentationMode: 'off'|'fullscreen' → TRYB POKAZU (PresentMode card-walk),
   //                                        wejście z menu kebab, nie z nagłówka.
   //
@@ -723,6 +697,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     entityType: 'initiative',
     syncURL: true,
   });
+
+  // ETAP 1.1 n-Type: przełącznik N/C zniknął z Menu 1, więc tryb 'c' nie ma już
+  // ani wejścia, ani wyjścia — a `usePresentationMode` wciąż potrafi go wczytać
+  // z `?view=c` / localStorage i wpaść w gałąź `densityMode === 'c'` niżej.
+  // Bez tego strażnika user, który kiedyś kliknął „C", utknąłby w nim na stałe.
+  // Ten sam wzorzec ma już Task/Decision/Notification (TaskDetailView ~758).
+  useEffect(() => {
+    if (densityMode === 'c') {
+      setDensityMode('n');
+    }
+  }, [densityMode, setDensityMode]);
 
   const [activeNSection, setActiveNSection] = useState<string>('initiative-definition');
   const [nModeSectionOrder, setNModeSectionOrder] = useState<string[] | null>(null);
@@ -752,7 +737,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   // Canon Toolbar dropdown open-state (Sections / New / Export / kebab).
   const [showSectionsMenu, setShowSectionsMenu] = useState(false);
-  const [showNewMenu, setShowNewMenu] = useState(false);
+  // ETAP 1.2: przycisk "Nowy ▾" zszedl z paska do kebaba, wiec wlasny stan
+  // otwarcia znika. Zmienna zostaje jako STALA false — czyta ja anyOverlayOpen
+  // (guard Esc); usuniecie jej z tamtej listy zmienialoby semantyke guardu.
+  const showNewMenu = false;
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showToolbarKebab, setShowToolbarKebab] = useState(false);
 
@@ -6467,6 +6455,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <ExpandableNarrativeField
                   value={symptomDraft}
                   onChange={setSymptomDraft}
+                  previewMode={readMode}
+                  readOnly={!canEditCards}
                   isPolish={isPolish}
                   placeholder={t('initiatives.whatProblemAreWeSolvingWhat2')}
                 />
@@ -6499,6 +6489,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <ExpandableNarrativeField
                   value={rootCauseDraft}
                   onChange={setRootCauseDraft}
+                  previewMode={readMode}
+                  readOnly={!canEditCards}
                   isPolish={isPolish}
                   placeholder={t('initiatives.whatSolutionDoWeProposeWhat2')}
                 />
@@ -6531,6 +6523,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <ExpandableNarrativeField
                   value={costOfInactionDraft}
                   onChange={setCostOfInactionDraft}
+                  previewMode={readMode}
+                  readOnly={!canEditCards}
                   isPolish={isPolish}
                   placeholder={t('initiatives.whatHappensIfWeDoNothing2')}
                 />
@@ -6563,6 +6557,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <ExpandableNarrativeField
                   value={marketContextDraft}
                   onChange={setMarketContextDraft}
+                  previewMode={readMode}
+                  readOnly={!canEditCards}
                   isPolish={isPolish}
                   placeholder={t('initiatives.marketContextCompetitionTrends2')}
                 />
@@ -7512,6 +7508,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <ExpandableNarrativeField
                 value={marketContextDraft}
                 onChange={setMarketContextDraft}
+                previewMode={readMode}
+                readOnly={!canEditCards}
                 isPolish={isPolish}
                 placeholder={
                   isAnalysis
@@ -7981,7 +7979,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                               <MoreVertical size={14} />
                             </button>
                             {kpiMenuId === kpi.id && (
-                              <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-c-border-subtle bg-c-surface p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
+                              <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-c-border-subtle bg-c-surface p-1.5 shadow-xl shadow-c-border-strong/10 dark:shadow-black/30">
                                 <button
                                   onClick={() => {
                                     setKpiMenuId(null);
@@ -8470,14 +8468,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <p className="text-xs text-c-text-muted">
                 {t('initiatives.theValueHypothesisWhatWeBelieve2')}
               </p>
-              <textarea
+              <AutoFitTextarea
                 value={hypothesisDraft}
+                previewMode={readMode}
                 readOnly={!canEditCards}
-                onChange={(e) => setHypothesisDraft(e.target.value)}
+                onValueChange={setHypothesisDraft}
                 onBlur={saveHypothesis}
-                rows={5}
+                minRows={5}
                 placeholder={t('initiatives.weBelieveThatBecauseWeWill2')}
-                className="w-full rounded-lg border border-c-border-subtle bg-transparent px-3 py-2 text-sm text-c-text-secondary focus:outline-none focus:border-teal-400 resize-y"
+                autoFitLabel={isPolish ? 'Auto-dopasowanie' : 'Auto-fit'}
+                className="w-full rounded-lg bg-transparent px-3 py-2 text-sm text-c-text-secondary focus:outline-none"
+                editClassName="border border-c-border-subtle focus:border-teal-400"
               />
             </div>
           );
@@ -8531,14 +8532,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <h2 className="text-lg font-semibold text-c-text">
                 {t('initiatives.lessonsLearned2')}
               </h2>
-              <textarea
+              <AutoFitTextarea
                 value={lessonsDraft}
+                previewMode={readMode}
                 readOnly={!canEditCards}
-                onChange={(e) => setLessonsDraft(e.target.value)}
+                onValueChange={setLessonsDraft}
                 onBlur={saveLessons}
-                rows={6}
+                minRows={6}
                 placeholder={t('initiatives.whatWorkedWhatDidnTWhat2')}
-                className="w-full rounded-lg border border-c-border-subtle bg-transparent px-3 py-2 text-sm text-c-text-secondary focus:outline-none focus:border-teal-400 resize-y"
+                autoFitLabel={isPolish ? 'Auto-dopasowanie' : 'Auto-fit'}
+                className="w-full rounded-lg bg-transparent px-3 py-2 text-sm text-c-text-secondary focus:outline-none"
+                editClassName="border border-c-border-subtle focus:border-teal-400"
               />
             </div>
           );
@@ -9630,7 +9634,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // zarezerwowanymi id, których §2.1 tam zabrania.
   //
   // KANONICZNA KOLEJNOŚĆ (§11.2, bez odstępstw):
-  //   Akcje · Właściwości · Powiązania · [Dowody] · Komentarze · Historia/AI
+  //   Akcje · Właściwości · Powiązania · Źródła i założenia · [Rezultaty] ·
+  //   Komentarze · Historia   (kanon n-Type = ARTIFACT_PANEL_SECTION_ORDER)
   // Sekcja `evidence` to JEDYNE dozwolone rozszerzenie poza piątkę i zawsze
   // stoi między Powiązaniami a Komentarzami (§2.2).
   //
@@ -9726,19 +9731,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: t('initiatives.panel.actions', 'Actions'),
         icon: Sparkles,
         defaultOpen: true,
+        // §6.4: sekcja „Akcje" niesie działania NA REKORDZIE. „Forkuj"
+        // (odnoga biznesowa — tworzy nową inicjatywę-wariant) zostaje tu.
+        // „Tryb pokazu" NIE jest działaniem na rekordzie, tylko sposobem
+        // PREZENTACJI wyniku → przeniesiony do sekcji „Rezultaty" (§6.4/§6.5).
         children: (
           <div className="flex flex-col gap-2">
             <button type="button" onClick={() => void handleFork()} className={panelBtn}>
               <GitFork size={14} className="text-c-text-muted" />
               {t('initiatives.fork2')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setPresentationMode('fullscreen')}
-              className={panelBtn}
-            >
-              <Monitor size={14} className="text-c-text-muted" />
-              {t('initiatives.panel.presentationMode', 'Presentation mode')}
             </button>
           </div>
         ),
@@ -9825,7 +9826,22 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <button
                 key={row.label}
                 type="button"
-                onClick={() => setActiveNSection(row.sectionId)}
+                onClick={() => {
+                  // MARTWY KLIK (2026-07-22): przy zwężeniu etap-2 sekcje spoza
+                  // rdzenia (RAID/Artefakty/Decyzje/Załączniki…) są schowane
+                  // (`hiddenSectionIds`) — samo `setActiveNSection` na schowaną
+                  // sekcję cofa efekt niżej (8896-8901) z powrotem na pierwszą
+                  // widoczną. Odkryj cel PRZED nawigacją (ten sam wzorzec co
+                  // `onPlanTasks` wyżej), tylko na jawny klik użytkownika —
+                  // seed-zwężenie (one-shot, 8862-8875) zostaje nietknięte.
+                  setHiddenSectionIds((prev) => {
+                    if (!prev.has(row.sectionId)) return prev;
+                    const next = new Set(prev);
+                    next.delete(row.sectionId);
+                    return next;
+                  });
+                  setActiveNSection(row.sectionId);
+                }}
                 // Brak dedykowanego klucza i18n dla tego tooltipu — budujemy
                 // go wprost z `isPolish` (ten sam wzorzec co pola właściwości
                 // powyżej), żeby nie ciągnąć angielskiego fallbacku do PL UI.
@@ -9855,6 +9871,29 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             artifactId={initiativeId}
             isPolish={isPolish}
           />
+        ),
+      },
+      {
+        // §6.5: sekcja „Rezultaty" — inicjatywa generuje prezentację (card-walk
+        // przez PresentMode) i inne wyniki. Tu mieszka działanie PREZENTACYJNE
+        // („Tryb pokazu"), zdjęte z „Akcji" zgodnie z §6.4. Pozycja KANONICZNA
+        // §7.2: Akcje · Właściwości · Powiązania · Źródła i założenia · REZULTATY
+        // · Komentarze · Historia (pozycja 5 — nie tuż po Akcjach).
+        id: 'outcomes',
+        label: t('initiatives.panel.outcomes', 'Outcomes'),
+        icon: Presentation,
+        defaultOpen: false,
+        children: (
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => setPresentationMode('fullscreen')}
+              className={panelBtn}
+            >
+              <Monitor size={14} className="text-c-text-muted" />
+              {t('initiatives.panel.presentationMode', 'Presentation mode')}
+            </button>
+          </div>
         ),
       },
       {
@@ -9945,7 +9984,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       },
       {
         id: 'history',
-        label: t('initiatives.panel.history', 'History / AI'),
+        label: t('initiatives.panel.history', 'History'),
         icon: History,
         defaultOpen: false,
         badge: nModeActivityEntries.length,
@@ -10005,6 +10044,269 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     requestCommentsAi,
     setActiveNSection,
   ]);
+
+  // ── ETAP 3 standardu n-Type: „Analizuj z AI" AKTYWNEJ KARTY ────────────────
+  // Kryteria oceny Inicjatywy (kontrakt właściciela 2026-07-23) żyją w rubryce
+  // silnika (`ARTIFACT_CRITERIA.initiative`): jasność celu · zakres i wyłączenia ·
+  // jakość KPI · kryteria sukcesu · kompletność zadań · zależności · ryzyka ·
+  // zgodność z decyzją/insightem źródłowym · gotowość do bramy.
+  //
+  // TREŚĆ KARTY czytamy przez ISTNIEJĄCE `buildSectionBody(sectionId)` — ten sam
+  // ekstraktor, którego używa eksport, więc analiza widzi DOKŁADNIE to, co widzi
+  // użytkownik i co wychodzi w dokumencie. Zero drugiego, rozjeżdżającego się
+  // odczytu. Osobno deklarujemy pola ZAPISYWALNE — tylko tam, gdzie karta ma
+  // realny setter drafta.
+  const initiativeAnalysisFields = useMemo<CardAnalysisField[]>(() => {
+    const asList = (items: { text: string }[]) =>
+      items
+        .filter((i) => (i.text || '').trim())
+        .map((i) => `- ${i.text.trim()}`)
+        .join('\n');
+    const asStrList = (items: string[]) =>
+      items
+        .filter((s) => (s || '').trim())
+        .map((s) => `- ${s.trim()}`)
+        .join('\n');
+
+    switch (activeNSection) {
+      case 'initiative-definition':
+        return [
+          {
+            id: 'symptom',
+            label: isPolish ? 'Problem' : 'Problem',
+            value: symptomDraft,
+            kind: 'text',
+            writable: true,
+          },
+          {
+            id: 'rootCause',
+            label: isPolish ? 'Proponowane rozwiązanie' : 'Proposed solution',
+            value: rootCauseDraft,
+            kind: 'text',
+            writable: true,
+          },
+          {
+            id: 'costOfInaction',
+            label: isPolish ? 'Koszt zaniechania' : 'Cost of inaction',
+            value: costOfInactionDraft,
+            kind: 'text',
+            writable: true,
+          },
+          {
+            id: 'marketContext',
+            label: isPolish ? 'Kontekst rynkowy' : 'Market context',
+            value: marketContextDraft,
+            kind: 'text',
+            writable: true,
+          },
+        ];
+
+      case 'target-state-scope':
+        return [
+          {
+            id: 'successCriteria',
+            label: isPolish ? 'Kryteria sukcesu' : 'Success criteria',
+            value: asList(successCriteriaItems),
+            kind: 'list',
+            writable: true,
+          },
+          {
+            id: 'targetState',
+            label: isPolish ? 'Stan docelowy' : 'Target state',
+            value: asList(targetStateItems),
+            kind: 'list',
+            writable: true,
+          },
+          {
+            id: 'deliverables',
+            label: isPolish ? 'Produkty' : 'Deliverables',
+            value: asList(deliverableItems),
+            kind: 'list',
+            writable: true,
+          },
+          {
+            id: 'inScope',
+            label: isPolish ? 'W zakresie' : 'In scope',
+            value: asStrList(inScopeItems),
+            kind: 'list',
+            writable: true,
+          },
+          {
+            id: 'outScope',
+            label: isPolish ? 'Poza zakresem' : 'Out of scope',
+            value: asStrList(outScopeItems),
+            kind: 'list',
+            writable: true,
+          },
+          {
+            id: 'killCriteria',
+            label: isPolish ? 'Kryteria zatrzymania' : 'Kill criteria',
+            value: asStrList(killCriteriaItems),
+            kind: 'list',
+            writable: true,
+          },
+        ];
+
+      default:
+        // Pozostałe karty (Zadania, KPI, RAID, Bramy, Finanse, Zespół…) niosą
+        // OBIEKTY z własnymi bramkami zapisu i powiązaniami po id — dopisanie
+        // ich prozą stworzyłoby atrapę wyglądającą jak dane. Analiza czyta je
+        // przez `buildSectionBody`, ale nie proponuje zapisu.
+        return [
+          {
+            id: `${activeNSection}-readonly`,
+            label: (() => {
+              const s = orderedNModeSectionsWithContent.find((x) => x.id === activeNSection);
+              return s ? (isPolish ? s.label.pl : s.label.en) : activeNSection;
+            })(),
+            value: buildSectionBody(activeNSection),
+            kind: 'text',
+            writable: false,
+          },
+        ];
+    }
+  }, [
+    activeNSection,
+    isPolish,
+    symptomDraft,
+    rootCauseDraft,
+    costOfInactionDraft,
+    marketContextDraft,
+    successCriteriaItems,
+    targetStateItems,
+    deliverableItems,
+    inScopeItems,
+    outScopeItems,
+    killCriteriaItems,
+    orderedNModeSectionsWithContent,
+    buildSectionBody,
+  ]);
+
+  const initiativeWritableFieldIds = useMemo(
+    () => initiativeAnalysisFields.filter((f) => f.writable).map((f) => f.id),
+    [initiativeAnalysisFields]
+  );
+
+  const buildInitiativeAnalysisInput = useCallback(() => {
+    const ctx = [
+      `${isPolish ? 'Status' : 'Status'}: ${status}`,
+      `${isPolish ? 'Priorytet' : 'Priority'}: ${priority}`,
+      `${isPolish ? 'Zadania' : 'Tasks'}: ${tasks.length}`,
+      `${isPolish ? 'KPI' : 'KPIs'}: ${localKpis.length}`,
+      // „gotowość do bramy" bez treści karty Bram byłaby zgadywaniem.
+      activeNSection !== 'gates'
+        ? `${isPolish ? 'Bramy' : 'Gates'}:\n${buildSectionBody('gates') || '—'}`
+        : '',
+      activeNSection !== 'initiative-definition'
+        ? `${isPolish ? 'Definicja inicjatywy' : 'Initiative definition'}:\n${buildSectionBody('initiative-definition')}`
+        : '',
+      activeNSection !== 'target-state-scope'
+        ? `${isPolish ? 'Stan docelowy i zakres' : 'Target state & scope'}:\n${buildSectionBody('target-state-scope')}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    return {
+      artifactType: 'initiative' as const,
+      cardId: activeNSection,
+      artifactTitle: initiative?.name || initiative?.title || '',
+      artifactContext: ctx,
+      fields: initiativeAnalysisFields,
+      isPolish,
+    };
+  }, [
+    activeNSection,
+    isPolish,
+    initiative,
+    status,
+    priority,
+    tasks,
+    localKpis,
+    buildSectionBody,
+    initiativeAnalysisFields,
+  ]);
+
+  const applyInitiativeAnalysisChange = useCallback(
+    (change: CardAnalysisChange): boolean => {
+      if (readMode) return false;
+      const newId = () => Math.random().toString(36).slice(2, 11);
+      const linesOf = (text: string) =>
+        String(text || '')
+          .split('\n')
+          .map((l) => l.trim().replace(/^(?:[-*•]\s+|\d+[.)]\s+)/, '').trim())
+          .filter(Boolean);
+
+      /** Listy „checklist-owe" ({id,text,done}) — wspólne scalanie. */
+      const applyItemList = (
+        setter: React.Dispatch<React.SetStateAction<{ id: string; text: string; done: boolean }[]>>
+      ): boolean => {
+        const incoming = linesOf(change.proposedValue);
+        if (incoming.length === 0) return false;
+        setter((prev) =>
+          change.mode === 'append'
+            ? [
+                ...prev,
+                ...incoming
+                  .filter((line) => !prev.some((p) => p.text.trim().toLowerCase() === line.toLowerCase()))
+                  .map((text) => ({ id: newId(), text, done: false })),
+              ]
+            : incoming.map((text) => ({ id: newId(), text, done: false }))
+        );
+        return true;
+      };
+
+      /** Listy tekstowe (zakres/wyłączenia/kryteria zatrzymania). */
+      const applyStrList = (
+        setter: React.Dispatch<React.SetStateAction<string[]>>
+      ): boolean => {
+        const incoming = linesOf(change.proposedValue);
+        if (incoming.length === 0) return false;
+        setter((prev) =>
+          change.mode === 'append'
+            ? [...prev, ...incoming.filter((line) => !prev.some((p) => p.trim().toLowerCase() === line.toLowerCase()))]
+            : incoming
+        );
+        return true;
+      };
+
+      switch (change.fieldId) {
+        case 'symptom':
+          setSymptomDraft((prev) => mergeChangeValue(change, prev));
+          return true;
+        case 'rootCause':
+          setRootCauseDraft((prev) => mergeChangeValue(change, prev));
+          return true;
+        case 'costOfInaction':
+          setCostOfInactionDraft((prev) => mergeChangeValue(change, prev));
+          return true;
+        case 'marketContext':
+          setMarketContextDraft((prev) => mergeChangeValue(change, prev));
+          return true;
+        case 'successCriteria':
+          return applyItemList(setSuccessCriteriaItems);
+        case 'targetState':
+          return applyItemList(setTargetStateItems);
+        case 'deliverables':
+          return applyItemList(setDeliverableItems);
+        case 'inScope':
+          return applyStrList(setInScopeItems);
+        case 'outScope':
+          return applyStrList(setOutScopeItems);
+        case 'killCriteria':
+          return applyStrList(setKillCriteriaItems);
+        default:
+          return false;
+      }
+    },
+    [readMode]
+  );
+
+  const initiativeCardAnalysis = useCardAIAnalysis({
+    activeCardId: activeNSection,
+    buildInput: buildInitiativeAnalysisInput,
+    applyChange: applyInitiativeAnalysisChange,
+  });
 
   // ==========================================
   // LOADING & ERROR STATES
@@ -10098,6 +10400,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 statusTone={statusPillTone}
                 presentationMode={densityMode}
                 onPresentationModeChange={setDensityMode}
+                // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+                showModeSwitcher={false}
                 buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
                 primaryAction={
                   primaryLifecycleAction
@@ -10136,7 +10440,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <div className="hidden xl:block shrink-0 sticky top-6 self-start">
                   <ArtifactRightPanel
                     sections={initiativeRightPanelSections}
-                    className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
+                    className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
                     ariaLabel={t('initiatives.panel.ariaLabel', 'Initiative details')}
                   />
                 </div>
@@ -10616,6 +10920,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 statusTone={statusPillTone}
                 presentationMode={densityMode}
                 onPresentationModeChange={setDensityMode}
+                // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+                showModeSwitcher={false}
                 buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
                 primaryAction={
                   primaryLifecycleAction
@@ -10709,14 +11015,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     so the Initiative toolbar reads identically to the Insight toolbar. */}
                 <div className="sticky top-0 z-30 bg-c-surface/95 backdrop-blur-sm border-b border-c-border-subtle -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2 mb-4">
                   {(() => {
-                    const activeSectionObj = orderedNModeSectionsWithContent.find(
-                      (s) => s.id === activeNSection
-                    );
-                    const activeSectionName = activeSectionObj
-                      ? isPolish
-                        ? activeSectionObj.label.pl
-                        : activeSectionObj.label.en
-                      : '';
+                    // ETAP 1.2: `activeSectionName` USUNIETA — nazwa aktywnej karty
+                    // nie nalezy do zadnej z trzech stref menu 2 (dubel lewej nawigacji).
                     // Grouped section list for the Sections dropdown (mirrors left nav).
                     const sectionGroups: { group: string; sections: NModeSection[] }[] = [];
                     for (const s of nModeSectionsWithContent) {
@@ -10728,471 +11028,334 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       }
                       bucket.sections.push(s);
                     }
+                    // ── MENU 2 (ETAP 1.2 standardu n-Type) ────────────────
+                    // Trzy strefy narzucone przez wspolny `NModeMenu2`:
+                    //   LEWA   Sekcje
+                    //   SRODEK Edycja | Podglad (srodek GEOMETRYCZNY paska)
+                    //   PRAWA  kebab + Analizuj z AI (fiolet) skrajnie
+                    //
+                    // ZDJETE (zgloszenie wlasciciela pkt 1 i 3):
+                    //   - pigulka nawigacji "Zakres" (Menu3DropdownChip) —
+                    //     dublowala lewa nawigacje, ktora juz pokazuje
+                    //     i podswietla te same sekcje,
+                    //   - nazwa aktywnej karty — ten sam dubel,
+                    //   - "Nowy" (kontekstowe tworzenie) — lewa strefa ma niesc
+                    //     WYLACZNIE Sekcje; akcje przeniesione do kebaba
+                    //     (grupa neutralna, nad Eksportem),
+                    //   - "AI sekcji" — te same akcje sa w panelu AI
+                    //     (Uzupelnij puste / Synteza / Kontrola jakosci),
+                    //     wiec pasek je dublowal.
+                    // "+ Nowa karta" ta karta nigdy nie miala.
                     return (
-                      <div className="flex items-center gap-1 flex-wrap min-h-[36px]">
-                        {/* ── Menu 3 · nawigacja wewn. jako kompaktowy dropdown ──
-                            Scope · Plan · Timeline · Finance · Gates → skacze do
-                            reprezentatywnej sekcji grupy. #75c: dawny rządek pill-i
-                            zamieniony na Menu3DropdownChip (kanon Menu 3). */}
-                        {(() => {
-                          const navPills: { id: string; label: { en: string; pl: string } }[] = [
-                            { id: 'initiative-definition', label: { en: 'Scope', pl: 'Zakres' } },
-                            { id: 'tasks', label: { en: 'Plan', pl: 'Plan' } },
-                            { id: 'timeline', label: { en: 'Timeline', pl: 'Harmonogram' } },
-                            {
-                              id: 'financial-analysis',
-                              label: { en: 'Finance', pl: 'Finanse' },
-                            },
-                            { id: 'gates', label: { en: 'Gates', pl: 'Bramy' } },
-                          ];
-                          const availableIds = new Set(
-                            orderedNModeSectionsWithContent.map((s) => s.id)
-                          );
-                          const visiblePills = navPills.filter((p) => availableIds.has(p.id));
-                          if (visiblePills.length === 0) return null;
-                          const activePill =
-                            visiblePills.find((p) => p.id === activeNSection) || visiblePills[0];
-                          return (
-                            <>
-                              <Menu3DropdownChip
-                                data-testid="initiative-nav-pill-chip"
-                                label={isPolish ? activePill.label.pl : activePill.label.en}
-                                active={activeNSection === activePill.id}
-                                ariaLabel={t('initiatives.initiativeDocumentView.switchView')}
-                                items={visiblePills.map((pill) => ({
-                                  id: pill.id,
-                                  label: isPolish ? pill.label.pl : pill.label.en,
-                                  active: activeNSection === pill.id,
-                                  onSelect: () => setActiveNSection(pill.id),
-                                }))}
-                              />
-                              <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
-                            </>
-                          );
-                        })()}
-                        {/* ── Left zone: Sections · New · Export ─────────────── */}
-                        <div className="relative">
-                          <ToolbarGhostButton
-                            icon={<Layers size={14} />}
-                            onClick={() => setShowSectionsMenu((v) => !v)}
-                            aria-expanded={showSectionsMenu}
-                          >
-                            <span>{t('initiatives.sections2')}</span>
-                            <ChevronDown size={12} className="opacity-60" />
-                          </ToolbarGhostButton>
-                          {showSectionsMenu && (
-                            <>
-                              <div
-                                className="fixed inset-0 z-40"
-                                onClick={() => setShowSectionsMenu(false)}
-                              />
-                              <div className="absolute left-0 top-full mt-1 z-50 w-72 max-h-[60vh] overflow-y-auto rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
-                                {/* MIGRACJA (D-8, ETAP 2): przełącznik zestawu domyślnego
-                                    Rdzeń / Pełny (za flagą). Stan aktywny = NEUTRALNY
-                                    (tokeny c-*, bez akcentu semantyki krytycznej). */}
-                                {initiativeCardContractEnabled &&
-                                  (() => {
-                                    const isRdzenActive =
-                                      hiddenSectionIds.size > 0 &&
-                                      nModeSectionsWithContent.every(
-                                        (s) =>
-                                          initiativeCoreBoardIdSet.has(s.id) ||
-                                          hiddenSectionIds.has(s.id)
-                                      ) &&
-                                      nModeSectionsWithContent.some((s) =>
-                                        hiddenSectionIds.has(s.id)
-                                      );
-                                    const isFullActive = hiddenSectionIds.size === 0;
-                                    const applyRdzen = () =>
-                                      setHiddenSectionIds(
-                                        new Set(
-                                          nModeSectionsWithContent
-                                            .map((s) => s.id)
-                                            .filter((id) => !initiativeCoreBoardIdSet.has(id))
-                                        )
-                                      );
-                                    const applyFull = () => setHiddenSectionIds(new Set());
-                                    const modeBtn = (active: boolean) =>
-                                      `flex-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
-                                        active
-                                          ? 'bg-c-surface-raised text-c-text'
-                                          : 'text-c-text-secondary hover:bg-c-surface-raised/60'
-                                      }`;
-                                    return (
-                                      <div className="border-b border-c-border-subtle px-3 pb-2 pt-1">
-                                        <div className="pb-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
-                                          {isPolish ? 'Zestaw domyślny' : 'Default set'}
-                                        </div>
-                                        <div className="flex gap-1 rounded-lg border border-c-border-subtle bg-c-surface p-0.5">
-                                          <button
-                                            type="button"
-                                            aria-pressed={isRdzenActive}
-                                            onClick={applyRdzen}
-                                            className={modeBtn(isRdzenActive)}
-                                          >
-                                            {isPolish ? 'Rdzeń inicjatywy' : 'Core'}
-                                          </button>
-                                          <button
-                                            type="button"
-                                            aria-pressed={isFullActive}
-                                            onClick={applyFull}
-                                            className={modeBtn(isFullActive)}
-                                          >
-                                            {isPolish ? 'Pełny' : 'Full'}
-                                          </button>
-                                        </div>
-                                      </div>
-                                    );
-                                  })()}
-                                {sectionGroups.map((grp) => (
-                                  <div key={grp.group} className="py-0.5">
-                                    <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
-                                      {grp.group}
-                                    </div>
-                                    {grp.sections.map((s) => {
-                                      const isEmpty = s.cHidden === true;
-                                      // MIGRACJA (D-8): RDZEŃ nieusuwalny pod flagą — sekcja boardu
-                                      // z rdzenia kontraktu (overview→`initiative-definition`) nie
-                                      // daje się ukryć; poza flagą zachowanie bez zmian.
-                                      const isCore =
-                                        initiativeCardContractEnabled &&
-                                        INITIATIVE_CORE_BOARD_IDS.has(s.id);
-                                      const isVisible = isCore || !hiddenSectionIds.has(s.id);
-                                      const SectionIcon = s.icon;
-                                      return (
-                                        <button
-                                          key={s.id}
-                                          type="button"
-                                          disabled={isCore}
-                                          title={
-                                            isCore
-                                              ? isPolish
-                                                ? 'Karta rdzenia — nieusuwalna'
-                                                : 'Core card — cannot be hidden'
-                                              : undefined
-                                          }
-                                          onClick={() => {
-                                            if (isCore) return; // rdzeń: brak akcji ukrycia
-                                            setHiddenSectionIds((prev) => {
-                                              const next = new Set(prev);
-                                              if (next.has(s.id)) next.delete(s.id);
-                                              else next.add(s.id);
-                                              return next;
-                                            });
-                                          }}
-                                          className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors ${
-                                            isCore ? 'cursor-default' : 'hover:bg-c-surface-raised/60'
-                                          } ${
-                                            isEmpty ? 'text-c-text-muted' : 'text-c-text-secondary'
-                                          }`}
-                                        >
-                                          <span
-                                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
-                                              isVisible
-                                                ? 'border-teal-500 bg-teal-500 text-white'
-                                                : 'border-c-border-strong'
-                                            }`}
-                                          >
-                                            {isVisible && <CheckCircle size={10} />}
-                                          </span>
-                                          <SectionIcon size={13} className="shrink-0 opacity-70" />
-                                          <span className="flex-1 truncate">
-                                            {isPolish ? s.label.pl : s.label.en}
-                                          </span>
-                                          {isCore && (
-                                            <span className="shrink-0 rounded bg-c-surface-raised px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-c-text-muted">
-                                              {isPolish ? 'Rdzeń' : 'Core'}
-                                            </span>
-                                          )}
-                                          {isEmpty && !isCore && (
-                                            <span className="shrink-0 rounded bg-c-surface-raised px-1.5 py-0.5 text-[9px] font-medium text-c-text-muted">
-                                              {t('initiatives.empty3')}
-                                            </span>
-                                          )}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                ))}
-                                {hiddenSectionIds.size > 0 && (
-                                  <div className="mt-1 border-t border-c-border-subtle pt-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => setHiddenSectionIds(new Set())}
-                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
-                                    >
-                                      <RotateCcw size={13} className="shrink-0" />
-                                      <span>{t('initiatives.restoreDefaults2')}</span>
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </div>
-
-                        {/* Slot 2 — New ▾ (context create actions).
-                            Read = ukryte: dodawanie zadań/decyzji/RAID to edycja,
-                            a Podgląd ma być czysty do pokazania klientowi. */}
-                        {!readMode && (
-                          <div className="relative">
-                            <ToolbarSubtleButton
-                              icon={<Plus size={14} />}
-                              onClick={() => setShowNewMenu((v) => !v)}
-                              disabled={newMenuActions.length === 0}
-                              aria-expanded={showNewMenu}
-                              title={
-                                newMenuActions.length === 0
-                                  ? t('initiatives.noCreateActionsAvailableInThis2')
-                                  : undefined
-                              }
-                            >
-                              <span>{t('initiatives.new2')}</span>
-                              <ChevronDown size={12} className="opacity-60" />
-                            </ToolbarSubtleButton>
-                            {showNewMenu && newMenuActions.length > 0 && (
-                              <>
-                                <div
-                                  className="fixed inset-0 z-40"
-                                  onClick={() => setShowNewMenu(false)}
-                                />
-                                <div className="absolute left-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
-                                  {newMenuActions.map((item) => (
-                                    <button
-                                      key={item.id}
-                                      type="button"
-                                      onClick={() => {
-                                        setShowNewMenu(false);
-                                        item.onClick();
-                                      }}
-                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised/60 transition-colors"
-                                    >
-                                      <Plus size={13} className="shrink-0 opacity-70" />
-                                      <span>{isPolish ? item.label.pl : item.label.en}</span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        )}
-
-                        {/* SPEC-N §2.4 / DOKTRYNA_GESTOSCI §1 — „Eksport ▾" ZDJĘTY z paska.
-                            Pasek miał 9 grup kontrolek przy limicie 5 widocznych.
-                            Eksport przeniesiony do kebaba jako JEDNO wejście
-                            („Eksport…"), które otwiera Smart Export — a ten jest
-                            NADZBIOREM dawnego rozwijanego menu (te same 4 cele:
-                            Markdown/PDF/Deck/Notatnik + wybór sekcji). Żadna
-                            zdolność nie znika, znika jeden slot z paska. */}
-
-                        {/* ── Divider · active section · ─────────────────────── */}
-                        <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
-                        {activeSectionName && (
-                          <span className="px-1 text-[12px] text-c-text-muted truncate max-w-[160px]">
-                            {activeSectionName}
-                          </span>
-                        )}
-
-                        {/* Slot 5 — section-level AI (teal split).
-                            Read = ukryte: „czysty do pokazania klientowi" bez
-                            afordancji generowania AI. */}
-                        {!readMode && activeNSection !== 'activity-log' && (
-                          <ToolbarAISplitButton
-                            onClick={() => void runActiveSectionAi()}
-                            disabled={
-                              !canUseAi || activeSectionAiBusy || activeSectionAiUnavailable
-                            }
-                            title={
-                              activeSectionAiUnavailable
-                                ? t('initiatives.aiGenerationNotAvailableForThis2')
-                                : !canUseAi
-                                  ? t('initiatives.noPermissionToUseAiIn2')
-                                  : t('initiatives.aiForThisSection2')
-                            }
-                            icon={
-                              activeSectionAiBusy ? (
-                                <Loader2 size={13} className="animate-spin" />
-                              ) : (
-                                <Sparkles size={13} />
-                              )
-                            }
-                          >
-                            <span>{t('initiatives.aiSection2')}</span>
-                          </ToolbarAISplitButton>
-                        )}
-
-                        {/* ── Spacer ─────────────────────────────────────────── */}
-                        <div className="flex-1 min-w-[8px]" />
-
-                        {/* Tryb Read/Edit (§5A) — wspólny komponent „do pokazania
-                            klientowi" (ujednolicony z Task/Decision). Read = pasek
-                            akcji kart znika + pola read-only + afordancje edycji/AI
-                            gasną. Neutralny; aktywny = c-focus (nie crimson). */}
-                        <div className="mr-1">
-                          <ReadEditToggle readMode={readMode} onChange={setReadMode} />
-                        </div>
-
-                        {/* SPEC-N §2.4 — Fork i Tryb pokazu ZDJĘTE z paska.
-                            Obie były przyciskami ikona-only z samym tooltipem, więc
-                            kosztowały slot, a i tak nie były odkrywalne bez najechania.
-                            Ich nowy dom to sekcja „Akcje" prawego panelu — z etykietą
-                            tekstową i widoczne zawsze (§2.6: jedna akcja = jedno
-                            miejsce, wygrywa to widoczne zawsze). */}
-
-                        {/* Kebab (Menu 3) — kolejność wg §6.4: najpierw akcja neutralna
-                            (Eksport…), potem separator, na końcu destrukcyjne
-                            (Block / Cancel / Archive / Delete). Kebab jest teraz
-                            bezwarunkowy: „Eksport…" istnieje zawsze, więc dawny warunek
-                            „są akcje destrukcyjne?" chowałby również eksport.
-
-                            GĘSTOŚĆ PASKA PO ZMIANIE (DOKTRYNA_GESTOSCI §1, limit 5):
-                            widoczne akcje = Sekcje ▾ · Nowy ▾ · AI sekcji ·
-                            Read/Edit · AI Consultant = 5. Poza limitem liczą się
-                            (bo nie są akcjami): pigułka nawigacji Menu 3, etykieta
-                            aktywnej sekcji i sam trigger kebaba. */}
-                        <div className="relative">
-                          <ToolbarIconButton
-                            icon={<MoreVertical size={14} />}
-                            tooltip={t('initiatives.more2')}
-                            onClick={() => setShowToolbarKebab((v) => !v)}
-                            aria-expanded={showToolbarKebab}
-                          />
-                          {showToolbarKebab && (
-                            <>
-                              <div
-                                className="fixed inset-0 z-40"
-                                onClick={() => setShowToolbarKebab(false)}
-                              />
-                              <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
-                                {/* Grupa neutralna (§6.4) — zeszła tu z paska.
-                                      JEDNO wejście „Eksport…" zamiast rozwijanego
-                                      menu z 5 pozycjami: otwiera Smart Export,
-                                      który jest nadzbiorem tamtych celów.
-                                      Fork i Tryb pokazu NIE są tutaj — mieszkają
-                                      w sekcji „Akcje" prawego panelu (§2.6: jedna
-                                      akcja = jedno miejsce, wygrywa to widoczne
-                                      zawsze). */}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setShowToolbarKebab(false);
-                                    setShowExportDialog(true);
-                                  }}
-                                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-                                >
-                                  <Download size={13} className="shrink-0 opacity-70" />
-                                  <span>{t('initiatives.export2')}…</span>
-                                </button>
-                                {(destructiveStatusActions.length > 0 ||
-                                  canArchiveDoc ||
-                                  canDeleteDoc) && (
-                                  <div className="my-1 border-t border-c-border-subtle" />
-                                )}
-                                {destructiveStatusActions.map((sa) => {
-                                  const KebabIcon =
-                                    sa.targetStatus === InitiativeStatus.CANCELLED
-                                      ? XCircle
-                                      : sa.targetStatus === InitiativeStatus.BLOCKED
-                                        ? Ban
-                                        : AlertTriangle;
-                                  return (
-                                    <button
-                                      key={sa.targetStatus}
-                                      type="button"
-                                      disabled={isMutating}
-                                      onClick={() => {
-                                        setShowToolbarKebab(false);
-                                        void handleStatusAction(sa);
-                                      }}
-                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors disabled:opacity-50"
-                                    >
-                                      <KebabIcon size={13} className="shrink-0" />
-                                      <span>{isPolish ? sa.labelPl : sa.label}</span>
-                                    </button>
-                                  );
-                                })}
-                                {canArchiveDoc && (
-                                  <button
-                                    type="button"
-                                    disabled={isMutating}
-                                    onClick={() => {
-                                      setShowToolbarKebab(false);
-                                      void handleArchive();
-                                    }}
-                                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
-                                  >
-                                    <Archive size={13} className="shrink-0" />
-                                    <span>{t('initiatives.archiveAction')}</span>
-                                  </button>
-                                )}
-                                {canDeleteDoc && (
-                                  <button
-                                    type="button"
-                                    disabled={isMutating}
-                                    onClick={() => {
-                                      setShowToolbarKebab(false);
-                                      void handleDelete();
-                                    }}
-                                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors disabled:opacity-50"
-                                  >
-                                    <Trash2 size={13} className="shrink-0" />
-                                    <span>{t('initiatives.delete2')}</span>
-                                  </button>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </div>
-
-                        {/* SPEC-N §2.6 + pakiet M7 pkt 5 — DWA WEJŚCIA AI-CHAT SCALONE.
-                            Był tu drugi przycisk („Propose next steps"), który otwierał
-                            Teresę przez useOpenChatWithContext, obok przycisku poniżej
-                            otwierającego AIConsultantPanel. Kod sam przyznawał ten dług:
-                            „Deliberately separate… out of scope migration". Dla
-                            użytkownika były to dwa nierozróżnialne przyciski z tą samą
-                            ikoną Sparkles.
-                            Rozstrzygnięcie: JEDNO wejście AI = przycisk poniżej.
-                            Funkcja nie znika — „Zaproponuj kolejne kroki" jest teraz
-                            pierwszą akcją w AIConsultantPanel (patrz aiConsultantActions),
-                            czyli dokładnie tam, gdzie użytkownik szuka akcji AI. */}
-
-                        {/* ── Slot 9: artifact-level AI.
-                            Read = ukryte: Podgląd ma być czysty do pokazania
-                            klientowi, bez afordancji AI.
-
-                            2026-07-21 (SPEC-N §2.3, R1): był `ToolbarAISolidButton`
-                            (solid teal). Zmierzone w harnessie: tło `rgb(0,127,142)`
-                            — DOKŁADNIE ten sam kolor co CTA „Zaplanuj zadania"
-                            w pasku szkicu, więc dwa elementy o równej wadze krzyczały
-                            na jednym ekranie, a slot primary nagłówka bywa pusty.
-                            Reguła mówi o WYGLĄDZIE, nie o deklaracji: poza slotem
-                            primary żaden element nie jest solid/filled. Stąd
-                            stonowane do wariantu outline (`ToolbarAISplitButton` —
-                            teal border, ten sam akcent AI, zero czerwieni).
-                            Ten sam ruch i ta sama para (sekcja + artefakt na jednym
-                            wariancie) co w InsightViewer :8409 — karty mają czytać
-                            się jednakowo MIĘDZY sobą, nie tylko wewnątrz siebie. */}
-                        {!readMode && (
-                          <>
-                            <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
-                            <ToolbarAISplitButton
+                      <NModeMenu2
+                        isPolish={isPolish}
+                        readMode={readMode}
+                        onReadModeChange={setReadMode}
+                        aiButton={
+                          readMode ? undefined : (
+                            // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera
+                            // panel wyników. Było: przełącznik `aiPanelOpen`
+                            // (AIConsultantPanel = czat całego artefaktu).
+                            // Konsultant NIE zniknął — `AIConsultantPanel` nadal
+                            // renderuje się niżej i ma swoje wejścia; zmienia się
+                            // tylko to, co robi TEN przycisk, zgodnie z jego nazwą.
+                            // Nadpisanie etykiety zdjęte: przycisk niesie nazwę
+                            // ze standardu („Analizuj z AI").
+                            <Menu2AIButton
+                              isPolish={isPolish}
+                              busy={initiativeCardAnalysis.loading}
+                              aria-expanded={initiativeCardAnalysis.open}
+                              disabled={!canUseAi}
                               onClick={() => {
                                 if (!canUseAi) {
                                   toast.error(t('initiatives.aiIsUnavailableBecauseYouHave2'));
                                   return;
                                 }
-                                setAiPanelOpen((v) => !v);
+                                initiativeCardAnalysis.run();
                               }}
-                              disabled={!canUseAi}
-                              title={t('initiatives.aiConsultant3')}
-                              aria-expanded={aiPanelOpen}
-                              icon={<Sparkles size={14} />}
+                            />
+                          )
+                        }
+                        overflowKebab={
+                          <div className="relative">
+                            <ToolbarIconButton
+                              icon={<MoreVertical size={14} />}
+                              tooltip={t('initiatives.more2')}
+                              onClick={() => setShowToolbarKebab((v) => !v)}
+                              aria-expanded={showToolbarKebab}
+                            />
+                            {showToolbarKebab && (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-40"
+                                  onClick={() => setShowToolbarKebab(false)}
+                                />
+                                <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
+                                    {/* ETAP 1.2 — akcje tworzenia („Nowy ▾") zeszly
+                                        tu z paska: lewa strefa menu 2 niesie WYLACZNIE
+                                        Sekcje. Zdolnosc nie znika, zmienia dom.
+                                        Read = ukryte (Podglad ma byc czysty). */}
+                                    {!readMode &&
+                                      newMenuActions.map((item) => (
+                                        <button
+                                          key={item.id}
+                                          type="button"
+                                          onClick={() => {
+                                            setShowToolbarKebab(false);
+                                            item.onClick();
+                                          }}
+                                          className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+                                        >
+                                          <Plus size={13} className="shrink-0 opacity-70" />
+                                          <span>{isPolish ? item.label.pl : item.label.en}</span>
+                                        </button>
+                                      ))}
+                                    {!readMode && newMenuActions.length > 0 && (
+                                      <div className="my-1 border-t border-c-border-subtle" />
+                                    )}
+                                  {/* Grupa neutralna (§6.4) — zeszła tu z paska.
+                                        JEDNO wejście „Eksport…" zamiast rozwijanego
+                                        menu z 5 pozycjami: otwiera Smart Export,
+                                        który jest nadzbiorem tamtych celów.
+                                        Fork i Tryb pokazu NIE są tutaj — Fork
+                                        mieszka w sekcji „Akcje", Tryb pokazu w
+                                        sekcji „Rezultaty" prawego panelu (§6.4:
+                                        akcje rekordu vs prezentacyjne; §2.6:
+                                        jedna akcja = jedno miejsce). */}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setShowToolbarKebab(false);
+                                      setShowExportDialog(true);
+                                    }}
+                                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+                                  >
+                                    <Download size={13} className="shrink-0 opacity-70" />
+                                    <span>{t('initiatives.export2')}…</span>
+                                  </button>
+                                  {(destructiveStatusActions.length > 0 ||
+                                    canArchiveDoc ||
+                                    canDeleteDoc) && (
+                                    <div className="my-1 border-t border-c-border-subtle" />
+                                  )}
+                                  {destructiveStatusActions.map((sa) => {
+                                    const KebabIcon =
+                                      sa.targetStatus === InitiativeStatus.CANCELLED
+                                        ? XCircle
+                                        : sa.targetStatus === InitiativeStatus.BLOCKED
+                                          ? Ban
+                                          : AlertTriangle;
+                                    return (
+                                      <button
+                                        key={sa.targetStatus}
+                                        type="button"
+                                        disabled={isMutating}
+                                        onClick={() => {
+                                          setShowToolbarKebab(false);
+                                          void handleStatusAction(sa);
+                                        }}
+                                        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors disabled:opacity-50"
+                                      >
+                                        <KebabIcon size={13} className="shrink-0" />
+                                        <span>{isPolish ? sa.labelPl : sa.label}</span>
+                                      </button>
+                                    );
+                                  })}
+                                  {canArchiveDoc && (
+                                    <button
+                                      type="button"
+                                      disabled={isMutating}
+                                      onClick={() => {
+                                        setShowToolbarKebab(false);
+                                        void handleArchive();
+                                      }}
+                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
+                                    >
+                                      <Archive size={13} className="shrink-0" />
+                                      <span>{t('initiatives.archiveAction')}</span>
+                                    </button>
+                                  )}
+                                  {canDeleteDoc && (
+                                    <button
+                                      type="button"
+                                      disabled={isMutating}
+                                      onClick={() => {
+                                        setShowToolbarKebab(false);
+                                        void handleDelete();
+                                      }}
+                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors disabled:opacity-50"
+                                    >
+                                      <Trash2 size={13} className="shrink-0" />
+                                      <span>{t('initiatives.delete2')}</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        }
+                        sectionsMenu={
+                          <div className="relative">
+                            <ToolbarGhostButton
+                              icon={<Layers size={14} />}
+                              onClick={() => setShowSectionsMenu((v) => !v)}
+                              aria-expanded={showSectionsMenu}
                             >
-                              <span>{t('initiatives.aiConsultant4')}</span>
-                            </ToolbarAISplitButton>
-                          </>
-                        )}
-                      </div>
+                              <span>{t('initiatives.sections2')}</span>
+                              <ChevronDown size={12} className="opacity-60" />
+                            </ToolbarGhostButton>
+                            {showSectionsMenu && (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-40"
+                                  onClick={() => setShowSectionsMenu(false)}
+                                />
+                                <div className="absolute left-0 top-full mt-1 z-50 w-72 max-h-[60vh] overflow-y-auto rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
+                                  {/* MIGRACJA (D-8, ETAP 2): przełącznik zestawu domyślnego
+                                      Rdzeń / Pełny (za flagą). Stan aktywny = NEUTRALNY
+                                      (tokeny c-*, bez akcentu semantyki krytycznej). */}
+                                  {initiativeCardContractEnabled &&
+                                    (() => {
+                                      const isRdzenActive =
+                                        hiddenSectionIds.size > 0 &&
+                                        nModeSectionsWithContent.every(
+                                          (s) =>
+                                            initiativeCoreBoardIdSet.has(s.id) ||
+                                            hiddenSectionIds.has(s.id)
+                                        ) &&
+                                        nModeSectionsWithContent.some((s) =>
+                                          hiddenSectionIds.has(s.id)
+                                        );
+                                      const isFullActive = hiddenSectionIds.size === 0;
+                                      const applyRdzen = () =>
+                                        setHiddenSectionIds(
+                                          new Set(
+                                            nModeSectionsWithContent
+                                              .map((s) => s.id)
+                                              .filter((id) => !initiativeCoreBoardIdSet.has(id))
+                                          )
+                                        );
+                                      const applyFull = () => setHiddenSectionIds(new Set());
+                                      const modeBtn = (active: boolean) =>
+                                        `flex-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                                          active
+                                            ? 'bg-c-surface-raised text-c-text'
+                                            : 'text-c-text-secondary hover:bg-c-surface-raised/60'
+                                        }`;
+                                      return (
+                                        <div className="border-b border-c-border-subtle px-3 pb-2 pt-1">
+                                          <div className="pb-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
+                                            {isPolish ? 'Zestaw domyślny' : 'Default set'}
+                                          </div>
+                                          <div className="flex gap-1 rounded-lg border border-c-border-subtle bg-c-surface p-0.5">
+                                            <button
+                                              type="button"
+                                              aria-pressed={isRdzenActive}
+                                              onClick={applyRdzen}
+                                              className={modeBtn(isRdzenActive)}
+                                            >
+                                              {isPolish ? 'Rdzeń inicjatywy' : 'Core'}
+                                            </button>
+                                            <button
+                                              type="button"
+                                              aria-pressed={isFullActive}
+                                              onClick={applyFull}
+                                              className={modeBtn(isFullActive)}
+                                            >
+                                              {isPolish ? 'Pełny' : 'Full'}
+                                            </button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })()}
+                                  {sectionGroups.map((grp) => (
+                                    <div key={grp.group} className="py-0.5">
+                                      <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
+                                        {grp.group}
+                                      </div>
+                                      {grp.sections.map((s) => {
+                                        const isEmpty = s.cHidden === true;
+                                        // MIGRACJA (D-8): RDZEŃ nieusuwalny pod flagą — sekcja boardu
+                                        // z rdzenia kontraktu (overview→`initiative-definition`) nie
+                                        // daje się ukryć; poza flagą zachowanie bez zmian.
+                                        const isCore =
+                                          initiativeCardContractEnabled &&
+                                          INITIATIVE_CORE_BOARD_IDS.has(s.id);
+                                        const isVisible = isCore || !hiddenSectionIds.has(s.id);
+                                        const SectionIcon = s.icon;
+                                        return (
+                                          <button
+                                            key={s.id}
+                                            type="button"
+                                            disabled={isCore}
+                                            title={
+                                              isCore
+                                                ? isPolish
+                                                  ? 'Karta rdzenia — nieusuwalna'
+                                                  : 'Core card — cannot be hidden'
+                                                : undefined
+                                            }
+                                            onClick={() => {
+                                              if (isCore) return; // rdzeń: brak akcji ukrycia
+                                              setHiddenSectionIds((prev) => {
+                                                const next = new Set(prev);
+                                                if (next.has(s.id)) next.delete(s.id);
+                                                else next.add(s.id);
+                                                return next;
+                                              });
+                                            }}
+                                            className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors ${
+                                              isCore ? 'cursor-default' : 'hover:bg-c-surface-raised/60'
+                                            } ${
+                                              isEmpty ? 'text-c-text-muted' : 'text-c-text-secondary'
+                                            }`}
+                                          >
+                                            <span
+                                              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                                                isVisible
+                                                  ? 'border-teal-500 bg-teal-500 text-white'
+                                                  : 'border-c-border-strong'
+                                              }`}
+                                            >
+                                              {isVisible && <CheckCircle size={10} />}
+                                            </span>
+                                            <SectionIcon size={13} className="shrink-0 opacity-70" />
+                                            <span className="flex-1 truncate">
+                                              {isPolish ? s.label.pl : s.label.en}
+                                            </span>
+                                            {isCore && (
+                                              <span className="shrink-0 rounded bg-c-surface-raised px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-c-text-muted">
+                                                {isPolish ? 'Rdzeń' : 'Core'}
+                                              </span>
+                                            )}
+                                            {isEmpty && !isCore && (
+                                              <span className="shrink-0 rounded bg-c-surface-raised px-1.5 py-0.5 text-[9px] font-medium text-c-text-muted">
+                                                {t('initiatives.empty3')}
+                                              </span>
+                                            )}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  ))}
+                                  {hiddenSectionIds.size > 0 && (
+                                    <div className="mt-1 border-t border-c-border-subtle pt-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => setHiddenSectionIds(new Set())}
+                                        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
+                                      >
+                                        <RotateCcw size={13} className="shrink-0" />
+                                        <span>{t('initiatives.restoreDefaults2')}</span>
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        }
+                      />
                     );
                   })()}
                 </div>
@@ -11251,7 +11414,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <div className="hidden xl:block shrink-0 sticky top-6 self-start">
                     <ArtifactRightPanel
                       sections={initiativeRightPanelSections}
-                      className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
+                      className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
                       ariaLabel={t('initiatives.panel.ariaLabel', 'Initiative details')}
                     />
                   </div>
@@ -11468,6 +11631,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         contextText={aiPanelContextText}
         actions={aiConsultantActions}
         isBusy={!canUseAi}
+        isPolish={isPolish}
+      />
+
+      {/* ── ETAP 3: panel wyników „Analizuj z AI" ─────────────────────────────
+          Analiza AKTYWNEJ KARTY (poziom karty), obok konsultanta artefaktu
+          (poziom 3, wyżej). Zapis wyłącznie przez „Zastosuj". */}
+      <NCardAIAnalysisPanel
+        open={initiativeCardAnalysis.open}
+        onClose={initiativeCardAnalysis.close}
+        loading={initiativeCardAnalysis.loading}
+        result={initiativeCardAnalysis.result}
+        errorCode={initiativeCardAnalysis.errorCode}
+        serverErrorCode={initiativeCardAnalysis.serverErrorCode}
+        onRerun={initiativeCardAnalysis.rerun}
+        onApplyChange={initiativeCardAnalysis.applyChange}
+        writableFieldIds={initiativeWritableFieldIds}
+        readMode={readMode}
         isPolish={isPolish}
       />
     </InitiativeContext.Provider>

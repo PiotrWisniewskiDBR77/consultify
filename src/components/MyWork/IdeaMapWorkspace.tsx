@@ -59,10 +59,10 @@ import {
   buildIdeaMenu3Actions,
 } from './ideaCanvasMelsChips';
 import { IdeaCanvasMelsView } from './IdeaCanvasMelsView';
-import { IdeaCanvasSecondBar } from './IdeaCanvasSecondBar';
-import { IdeaConvertMenu } from './IdeaConvertMenu';
 import { IdeaSaveIndicator, IdeaStageChip, IdeaToolIcon } from './IdeaCanvasMenu1Bits';
+import { IdeaCanvasSecondBar } from './IdeaCanvasSecondBar';
 import { IdeaContextPanel } from './IdeaContextPanel';
+import { IdeaConvertMenu } from './IdeaConvertMenu';
 import {
   IDEA_CONVERT_TARGETS,
   type IdeaConvertTarget,
@@ -107,6 +107,7 @@ import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
 import { AIGovernanceBadge, AIGovernancePanel } from './mindmap/AIGovernancePanel';
 import { CanvasLeftToolbar } from './mindmap/CanvasLeftToolbar';
 import { stabilizeMindmapInteractionMode } from './mindmap/mindmapInteractionGrammar';
+import { SnapshotHistory } from './mindmap/SnapshotHistory';
 import { type UnifiedNodeData, UnifiedNodeDetailDrawer } from './mindmap/UnifiedNodeDetailDrawer';
 import type { MyIdea } from './myIdeasTypes';
 import { buildAskAIMessage } from './shared/askAiHelper';
@@ -344,6 +345,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const [votingActive, setVotingActive] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [governancePanelOpen, setGovernancePanelOpen] = useState(false);
+  // Z-menu1-history: Menu 1 kebab "Historia" — mindmap-only (SnapshotHistory
+  // operates on mindmap nodes/edges; other tools stay honest-disabled).
+  const [snapshotHistoryOpen, setSnapshotHistoryOpen] = useState(false);
 
   // V5-IDEA-15: Focus modes
   type FocusMode = 'full' | 'system' | 'object';
@@ -2793,9 +2797,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const vf1CanvasSpecAEnabled = isVf1CanvasSpecAEnabled();
   // Z-menu1-delete: "Usuń" kebab entry — wires the same `Api.deleteMyIdea`
   // used by the ideas list (MyIdeasListContent) + the same confirm-dialog
-  // pattern. Historia/Duplikuj stay disabled: no workspace-level flow exists
-  // for either (a real SnapshotHistory component exists but is mindmap-only
-  // today — generalizing it to all 4 tools is separate, unscoped work).
+  // pattern. "Duplikuj" (Api.duplicateMyIdea → deep-link into the new copy)
+  // and "Historia" (SnapshotHistory) are wired below too — no kebab entry is
+  // permanently disabled anymore. Historia works for every canvas tool: all
+  // four share one per-idea graph and snapshots now capture extensions.
   const { dialog: deleteIdeaDialog, confirm: confirmDeleteIdea } = useConfirmDialog();
   const handleDeleteIdea = useCallback(async () => {
     if (!realId) return;
@@ -2817,9 +2822,67 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       toast.error(err?.message || (isPolish ? 'Nie udało się usunąć' : 'Failed to delete'));
     }
   }, [realId, confirmDeleteIdea, isPolish, title, navigate]);
+  // Duplicate: clone the idea + its map on the server, then deep-link into the
+  // NEW copy's workspace on the same tool the user is currently in (backend drops
+  // promotion state and suffixes the title with (kopia)/(copy)).
+  const handleDuplicateIdea = useCallback(async () => {
+    if (!realId) return;
+    try {
+      const dup = await Api.duplicateMyIdea(realId, { language: isPolish ? 'pl' : 'en' });
+      const newId = dup?.id ? String(dup.id) : null;
+      if (!newId) throw new Error(isPolish ? 'Brak id kopii' : 'No copy id returned');
+      toast.success(isPolish ? 'Zduplikowano' : 'Duplicated');
+      const toolSlug = activeTool === 'process_flow' ? 'process-flow' : activeTool;
+      navigate(`/my-work/ideas/${encodeURIComponent(newId)}/workspace/${toolSlug}`);
+    } catch (err: any) {
+      toast.error(err?.message || (isPolish ? 'Nie udało się zduplikować' : 'Failed to duplicate'));
+    }
+  }, [realId, isPolish, activeTool, navigate]);
+  // Z-menu1-history: "Historia" kebab entry — opens SnapshotHistory over the
+  // live mindmap graph. Restore replays the same captureToolGraph+flushGraph
+  // pattern as `handleImportGraph` (import), so it lands through the normal
+  // autosave/versioning pipeline instead of a side-channel state set.
+  const handleRestoreSnapshot = useCallback(
+    async (
+      restoredNodes: any[],
+      restoredEdges: any[],
+      restoredExtensions?: Record<string, unknown>
+    ) => {
+      // New snapshots carry the full tool-specific state (processFlow.lanes,
+      // whiteboard.drawingPaths/scenes/mode, table config), so restore rolls
+      // the WHOLE tool back — not just the shared nodes/edges. captureToolGraph
+      // deep-merges into the live extensions, and arrays (lanes, drawingPaths)
+      // are atomic so they replace the current value → a real rollback.
+      // Pre-extension snapshots have no extensions → fall back to re-asserting
+      // the live lanes (previous mindmap behaviour), which is non-destructive.
+      const hasExt =
+        restoredExtensions &&
+        typeof restoredExtensions === 'object' &&
+        Object.keys(restoredExtensions).length > 0;
+      const extensions = hasExt
+        ? restoredExtensions
+        : mergeWorkspaceExtensions({ processFlow: { lanes: graphLanes } }, {});
+      graphRuntime.captureToolGraph(
+        {
+          nodes: restoredNodes as any[],
+          edges: restoredEdges as any[],
+          extensions,
+        },
+        { reason: 'semantic', immediate: true }
+      );
+      await graphRuntime.flushGraph({
+        reason: 'manual',
+        createSnapshot: true,
+        snapshotLabel: 'restore',
+      });
+      setMapRefreshToken((v) => v + 1);
+    },
+    [graphRuntime, graphLanes]
+  );
   // ── Menu 1 (top bar) chips — Z7 anatomy ─────────────────────────────────
-  // Clean identity row: ghost Teresa (secondary) + kebab `⋯` (Eksport +
-  // Usuń real · Historia/Duplikuj disabled-with-"wkrótce" — see note above).
+  // Clean identity row: ghost Teresa (secondary) + kebab `⋯`. Real: Eksport +
+  // Historia (all canvas tools) + Duplikuj + Usuń. Snapshots capture the shared
+  // graph + extensions, so restore is a full rollback on every tool.
   // The sole primary "Konwertuj ▾" is `melsPrimaryActionSlot` below; the
   // per-tool VIEW actions moved to Menu 3 (`melsSecondBarNode`).
   const melsCanvasChips = useMemo(
@@ -2830,10 +2893,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             handlers: {
               onDiscuss: handleDiscussWithTeresa,
               onExport: () => setExportMenuOpen(true),
-              // onHistory / onDuplicate intentionally omitted — no
-              // workspace-level handler exists (verified 2026-07-22). The
-              // builder renders them DISABLED with a "wkrótce" hint, never
-              // hidden (ANATOMY: brakujące pozycje disabled z dopiskiem).
+              // Historia: enabled for every canvas tool. All four tools
+              // (mindmap/whiteboard/process_flow/table) share ONE per-idea graph
+              // (nodes/edges/extensions), and snapshots now capture extensions
+              // too — so restore rolls back the whole tool uniformly.
+              onHistory: () => setSnapshotHistoryOpen(true),
+              onDuplicate: handleDuplicateIdea,
               onDelete: handleDeleteIdea,
               onSearch: () => setSearchOpen(true),
               onShowHelp: () => setShortcutsHelpOpen(true),
@@ -2841,7 +2906,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           })
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [melsCanvasEnabled, isPolish, handleDiscussWithTeresa, handleDeleteIdea]
+    [
+      melsCanvasEnabled,
+      isPolish,
+      handleDiscussWithTeresa,
+      handleDuplicateIdea,
+      handleDeleteIdea,
+      activeTool,
+    ]
   );
   // ── Menu 3 (second bar) view actions — Z7 anatomy ───────────────────────
   const melsMenu3Actions = useMemo(
@@ -3211,10 +3283,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             titleTrailingSlot={
               <>
                 <IdeaStageChip stage={stage} isPolish={Boolean(isPolish)} />
-                <IdeaSaveIndicator
-                  state={graphRuntime.syncState}
-                  label={graphRuntime.syncLabel}
-                />
+                <IdeaSaveIndicator state={graphRuntime.syncState} label={graphRuntime.syncLabel} />
               </>
             }
             primaryActionSlot={
@@ -3655,7 +3724,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         ★ D16/D17/Z8 — JEDEN prawy panel idei (dok Teresy) = `<IdeaRightPanel>`
         (accordion ArtifactRightPanel), przebudowany (2026-07-22) na 5 sekcji
         kanonu SPEC-A: Akcje · Właściwości · Powiązania · Komentarze ·
-        Historia/AI (ARTIFACT_ANATOMY_STANDARD §10.2/§11.2). Zastępuje
+        Historia (ARTIFACT_ANATOMY_STANDARD §10.2/§11.2). Zastępuje
         archaiczny przełącznik 3 OSOBNYCH szuflad (#6q) dla WSZYSTKICH 4 narzędzi
         — bez flagi (default). Montuje się gdy pasek otworzy dowolną sekcję
         (parytet z self-hide szuflad: canvas rozszerza się po zamknięciu).
@@ -3669,7 +3738,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         {!melsCanvasEnabled && (toolsPanelOpen || contextPanelOpen || aiPanelOpen) && (
           <IdeaRightPanel
             isPolish={isPolish}
-            activeSection={toolsPanelOpen ? 'properties' : contextPanelOpen ? 'relations' : 'teresa'}
+            activeSection={
+              toolsPanelOpen ? 'properties' : contextPanelOpen ? 'relations' : 'teresa'
+            }
             onExport={() => setExportMenuOpen(true)}
             onConvert={() => handlePanelChange('tools')}
             // HP-17: `EvidencePanelSection` („Źródła i założenia") tylko za flagą
@@ -3866,6 +3937,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
         {/* Z-menu1-delete: Menu 1 kebab "Usuń" confirm dialog */}
         {deleteIdeaDialog}
+
+        {/* Z-menu1-history: Menu 1 kebab "Historia" — all canvas tools */}
+        <SnapshotHistory
+          open={snapshotHistoryOpen}
+          onClose={() => setSnapshotHistoryOpen(false)}
+          ideaId={realId || ''}
+          currentNodes={graphNodes}
+          currentEdges={graphEdges}
+          currentExtensions={graphRuntime.graph.extensions as Record<string, unknown>}
+          onRestore={handleRestoreSnapshot}
+        />
       </>
     );
   }

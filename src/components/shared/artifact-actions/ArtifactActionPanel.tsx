@@ -2,6 +2,7 @@ import {
   BookOpen,
   ExternalLink,
   FileText,
+  Gavel,
   Lightbulb,
   Loader2,
   Presentation,
@@ -23,7 +24,8 @@ export type ArtifactActionTarget =
   | 'table'
   | 'idea'
   | 'note'
-  | 'initiative';
+  | 'initiative'
+  | 'decision';
 
 interface ArtifactActionSource {
   type: 'interview_insight';
@@ -58,6 +60,14 @@ interface ArtifactActionPanelProps {
   source: ArtifactActionSource;
   isPolish: boolean;
   variant?: 'compact' | 'full';
+  /**
+   * Kontekst projektu — WYMAGANY przez `POST /api/decisions`
+   * (server/src/controllers/DecisionController.ts: „Missing decision context",
+   * gdy nie ma ani projektu, ani inicjatywy, ani zadania). Bez niego kafelek
+   * „Rozpocznij decyzję" renderuje się WYŁĄCZONY z jawnym powodem, zamiast
+   * zapraszać do kliknięcia, które skończy się błędem 400.
+   */
+  projectId?: string | null;
 }
 
 const TARGET_META: Record<
@@ -91,10 +101,14 @@ const TARGET_META: Record<
     icon: Rocket,
     tone: 'text-indigo-700 bg-indigo-50 border-indigo-200 dark:text-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/20',
   },
+  decision: {
+    icon: Gavel,
+    tone: 'text-teal-700 bg-teal-50 border-teal-200 dark:text-teal-200 dark:bg-teal-500/10 dark:border-teal-500/20',
+  },
 };
 
 const DOC_TARGETS: ArtifactActionTarget[] = ['report', 'presentation', 'table'];
-const APP_TARGETS: ArtifactActionTarget[] = ['idea', 'note', 'initiative'];
+const APP_TARGETS: ArtifactActionTarget[] = ['idea', 'note', 'initiative', 'decision'];
 
 function unwrapPayload(response: any): any {
   return response?.data || response;
@@ -251,6 +265,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
   source,
   isPolish,
   variant = 'full',
+  projectId = null,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -305,6 +320,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         idea: t('sharedComponents.artifactActionPanel.titlePrefix.idea'),
         note: t('sharedComponents.artifactActionPanel.titlePrefix.note'),
         initiative: t('sharedComponents.artifactActionPanel.titlePrefix.initiative'),
+        decision: t('sharedComponents.artifactActionPanel.titlePrefix.decision', 'Decision'),
       };
       const title = `${titlePrefix[target]}: ${source.title}`;
       let created: CreatedTarget | null = null;
@@ -531,6 +547,36 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         rawPayload = res;
       }
 
+      if (target === 'decision') {
+        // „Rozpocznij decyzję" (zgłoszenie właściciela 2026-07-23): wniosek jest
+        // materiałem decyzyjnym, więc decyzja jest jego REZULTATEM, nie akcją
+        // poboczną. Endpoint: POST /api/decisions (routes/pmo/decisions.routes.ts),
+        // wymaga tytułu ORAZ kontekstu (projekt/inicjatywa/zadanie) —
+        // dlatego bez `projectId` kafelek jest wyłączony (patrz `renderAction`).
+        if (!projectId) throw new Error('Missing decision context (projectId)');
+        const res = unwrapPayload(
+          await Api.createDecision({
+            title,
+            description: sourceMarkdown,
+            projectId,
+            relatedObjectType: 'project',
+            relatedObjectId: projectId,
+            priority: 'medium',
+            impact: 'medium',
+            decisionType: 'GENERAL',
+          })
+        );
+        const id = firstString(res?.id, res?.decision?.id, res?.data?.id);
+        if (!id) throw new Error('Decision id missing');
+        created = {
+          id,
+          type: target,
+          label: t('sharedComponents.artifactActionPanel.openDecision', 'Open decision'),
+          path: `/my-work/decisions/${id}`,
+        };
+        rawPayload = res;
+      }
+
       if (!created) throw new Error('Unsupported target');
       await recordConversion(created, {
         ...rawPayload,
@@ -548,12 +594,25 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
     }
   };
 
+  // Kafelek jest WYŁĄCZONY, gdy brakuje warunku, którego backend wymaga —
+  // z powodem w tooltipie, zamiast pozwalać kliknąć w błąd 400.
+  const blockedReason = (target: ArtifactActionTarget): string | null => {
+    if (target === 'decision' && !projectId) {
+      return t(
+        'sharedComponents.artifactActionPanel.decisionNeedsProject',
+        'Pick a project first — a decision must be anchored in a project.'
+      );
+    }
+    return null;
+  };
+
   const renderAction = (target: ArtifactActionTarget) => {
     const meta = TARGET_META[target];
     const Icon = meta.icon;
     const created = createdTargets[target];
     const loading = loadingTarget === target;
     const isDocumentTarget = DOC_TARGETS.includes(target);
+    const blocked = blockedReason(target);
 
     return (
       <div key={target} className={`rounded-2xl border p-3 ${meta.tone}`}>
@@ -582,7 +641,8 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   ? setComposerTarget(target)
                   : setProposalTarget(target)
             }
-            disabled={loading || isActionDisabled}
+            disabled={loading || isActionDisabled || !!blocked}
+            title={blocked || undefined}
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-white/80 px-3 py-2 text-xs font-semibold shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/[0.08] dark:hover:bg-white/[0.12]"
           >
             {loading ? (
@@ -612,9 +672,12 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
     const created = createdTargets[target];
     const loading = loadingTarget === target;
     const isDocumentTarget = DOC_TARGETS.includes(target);
+    const blocked = blockedReason(target);
     const stripped = t(`sharedComponents.artifactActionPanel.targetMeta.${target}.label`)
       .replace(/^Utwórz\s+/i, '')
-      .replace(/^Create\s+/i, '');
+      .replace(/^Rozpocznij\s+/i, '')
+      .replace(/^Create\s+/i, '')
+      .replace(/^Start\s+/i, '');
     const label = stripped.charAt(0).toUpperCase() + stripped.slice(1);
     return (
       <button
@@ -627,8 +690,8 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
               ? setComposerTarget(target)
               : setProposalTarget(target)
         }
-        disabled={loading || isActionDisabled}
-        title={t(`sharedComponents.artifactActionPanel.targetMeta.${target}.description`)}
+        disabled={loading || isActionDisabled || !!blocked}
+        title={blocked || t(`sharedComponents.artifactActionPanel.targetMeta.${target}.description`)}
         className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:brightness-110 ${meta.tone}`}
       >
         {loading ? (

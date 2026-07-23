@@ -3308,7 +3308,13 @@
       "panelHistory": "History",
       "loading": "Loading…",
       "property": "Property",
-      "value": "Value"
+      "value": "Value",
+      "panelActions": "Actions",
+      "panelRelations": "Relations",
+      "panelSources": "Sources & assumptions",
+      "panelResults": "Results",
+      "noSources": "No source information",
+      "noStepsYet": "No steps yet"
     },
     "projects": {
       "failedToLoadProjects": "Failed to load projects",
@@ -3780,9 +3786,14 @@
       "label4": "Comments",
       "emptyLabel2": "No comments",
       "user": "User",
-      "label5": "History / AI",
+      "label5": "History",
       "emptyLabel3": "No history",
-      "ariaLabel": "Decision details"
+      "ariaLabel": "Decision details",
+      "actionsHiddenInReadMode": "Actions are hidden in preview mode",
+      "sourcesAndAssumptions": "Sources & assumptions",
+      "sourceArtifact": "Source artifact",
+      "sourceDocuments": "Source documents",
+      "sessionsAndNotes": "Sessions, notes & findings"
     },
     "taskDetail": {
       "label": "Notify only",
@@ -3935,7 +3946,7 @@
       "label11": "Comments",
       "emptyLabel2": "No comments",
       "user": "User",
-      "label12": "History / AI",
+      "label12": "History",
       "emptyLabel3": "No history",
       "warningDeadlineApproachingOr": "Warning: deadline approaching or overdue!",
       "blockedReason": "Blocked Reason",
@@ -4102,7 +4113,15 @@
         "priority": "Priority"
       },
       "email": "Email",
-      "actionsLiveInHeader": "All actions live in the card header"
+      "actionsLiveInHeader": "All actions live in the card header",
+      "source": "Source",
+      "sourceIdea": "Idea",
+      "sourceNote": "Note",
+      "sourceDecision": "Decision",
+      "sourcesAndAssumptions": "Sources and assumptions",
+      "noSourceContext": "No source context",
+      "actionsHiddenInReadMode": "Actions are hidden in preview mode",
+      "created": "Created"
     },
     "dependencies": {
       "toastError": "Select a source task first",
@@ -5951,7 +5970,7 @@
       "comments": "Comments",
       "noComments": "No comments",
       "user": "User",
-      "historyAi": "History / AI",
+      "historyAi": "History",
       "noHistory": "No history",
       "insightDetails": "Insight details",
       "sections": "Sections",
@@ -9936,7 +9955,7 @@
       "commentPlaceholder": "Add a comment…",
       "addComment": "Add",
       "analyzeComments": "Analyze comments with AI",
-      "history": "History / AI",
+      "history": "History",
       "noHistory": "No history",
       "ariaLabel": "Initiative details",
       "tasks": "Tasks",
@@ -9944,6 +9963,7 @@
       "raid": "RAID",
       "attachments": "Attachments",
       "presentationMode": "Presentation mode",
+      "outcomes": "Outcomes",
       "deleteComment": "Delete comment",
       "property": "Property",
       "value": "Value"
@@ -23282,7 +23302,8 @@
         "analyzeConsequencesTitle": "Run AI consequence analysis",
         "analyzeConsequences": "Analyze consequences",
         "analyzeOptions": "Analyze options",
-        "analyzeOptionsTitle": "Discuss and analyze these options with Teresa"
+        "analyzeOptionsTitle": "Discuss and analyze these options with Teresa",
+        "approveDecision": "Approve decision"
       },
       "scope": {
         "title": "Decision Scope",
@@ -23522,6 +23543,9 @@
       },
       "toolbar": {
         "moreActions": "More actions"
+      },
+      "field": {
+        "backToAutoFit": "Back to auto-fit"
       }
     }
   },
@@ -29723,7 +29747,12 @@
       "fallbackApplied": "Fallback local edit applied (AI temporarily unavailable).",
       "enhanceSuccess": "Content updated by AI. Click Undo AI to revert.",
       "enhanceError": "Failed to refine content with AI",
-      "undoSuccess": "Previous text restored"
+      "undoSuccess": "Previous text restored",
+      "proposalTitle": "AI proposal",
+      "apply": "Apply",
+      "discard": "Discard",
+      "undo": "Undo AI",
+      "fallbackProposed": "Fallback local edit proposed (AI temporarily unavailable)."
     },
     "nModeHeader": {
       "savedLabel": "Saved",
@@ -32404,7 +32433,14 @@
       "value": "Value",
       "statusActive": "Active",
       "statusInactive": "Inactive",
-      "statusComingSoon": "Coming soon"
+      "statusComingSoon": "Coming soon",
+      "propAccessLicensed": "Licensed",
+      "propAccessOpen": "Open",
+      "propSourceLibrary": "Consultify tool library",
+      "panelResults": "Results",
+      "panelResultsEmpty": "This tool has no declared outputs in the library yet.",
+      "panelResultsHint": "Reports, decks and exports are produced inside a tool session — start one from the header.",
+      "panelRelationsSessions": "Tool sessions"
     },
     "knownToolDetail": {
       "dynamicSwot": {

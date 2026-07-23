@@ -3,9 +3,9 @@ import {
   ArrowRight,
   CheckCircle2,
   FileText,
-  HelpCircle,
   Lightbulb,
   Link2,
+  Package,
   RefreshCw,
   SlidersHorizontal,
   Target,
@@ -15,10 +15,13 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import {
+  ARTIFACT_PANEL_CARD_CLASS_DOCKED,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+// `ReadEditToggle` bez bezposredniego importu — przelacznik Edycja|Podglad
+// renderuje srodkowa strefa `NModeMenu2` (patrz `renderActionBar` nizej).
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
@@ -26,15 +29,22 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { TEXT_L1 } from '@/styles/typography';
 
+// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+import type { CardAnalysisField } from '@/services/cardAnalysis';
+
 import {
   type CardLayout,
-  type NModeAction,
   type NModeArtifactType,
   type NModePropertyField,
   type NModeSection,
-  NModeActionBar,
-  NModeCardManager,
+  Menu2AIButton,
+  Menu2HowToButton,
+  NCardAIAnalysisPanel,
+  NModeContentBlock,
+  NModeMenu2,
   NModeShell,
+  SectionsManagerMenu,
+  useCardAIAnalysis,
   useCardLayout,
 } from '../shared/NModeLayout';
 import { DynamicSwotLibraryGraphic } from './DynamicSwotLibraryGraphic';
@@ -117,6 +127,16 @@ export function KnownToolDetailView(props: {
 
   const { mode, setMode } = usePresentationMode({ entityType: 'tool', syncURL: false });
 
+  // ETAP 1.1 n-Type: przełącznik N/C zniknął z Menu 1 — tryb 'c' nie ma już ani
+  // wejścia, ani wyjścia, a `usePresentationMode` wciąż czyta go z localStorage.
+  // Bez tego strażnika user, który kiedyś kliknął „C", utknąłby w nim na stałe.
+  // Ten sam wzorzec ma już Task/Decision/Notification (TaskDetailView ~758).
+  useEffect(() => {
+    if (mode === 'c') {
+      setMode('n');
+    }
+  }, [mode, setMode]);
+
   const [activeSection, setActiveSection] = useState<string>('goal');
   const [loading, setLoading] = useState(true);
   const [tool, setTool] = useState<KnownTool | null>(null);
@@ -131,6 +151,49 @@ export function KnownToolDetailView(props: {
   // a nie wyciągnięty `useCallback` z loaderem: zero ryzyka TDZ/nieaktualnego
   // domknięcia (lekcja fali N — `ReferenceError` przechodzący esbuild i tsc).
   const [reloadKey, setReloadKey] = useState(0);
+
+  // ── Tryb Edycja/Podgląd (zgłoszenie właściciela 2026-07-23) ───────────────
+  // Karta biblioteczna jest CZYTANA (treść pochodzi z read-only `Api.getKnownTool`),
+  // więc domyślny tryb to PODGLĄD — czysty ekran do pokazania klientowi. Edycja
+  // odsłania kontrolki bloków centrum (auto-dopasuj + uchwyt wysokości).
+  const [readMode, setReadMode] = useState(true);
+
+  // ── Metryka użycia narzędzia (Właściwości) ────────────────────────────────
+  // Liczba sesji i data ostatniego użycia to JEDYNE realne dane o „użyciu"
+  // narzędzia, jakie system dziś ma (`Api.listToolSessions` filtrowane po
+  // `toolType`). Gdy zapytanie padnie, trzymamy `available: false` i pola
+  // pokazują „—", zamiast pokazywać 0 jako fakt (0 ≠ „nie wiem").
+  const [sessionStats, setSessionStats] = useState<{
+    available: boolean;
+    count: number;
+    lastUsedAt: string | null;
+  }>({ available: false, count: 0, lastUsedAt: null });
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await Api.listToolSessions({ toolType, limit: 100 });
+        if (!alive) return;
+        const items = Array.isArray(res?.items) ? res.items : [];
+        const stamps = items
+          .map((s) => s.updatedAt || s.createdAt || null)
+          .filter((v): v is string => typeof v === 'string' && v.length > 0)
+          .sort();
+        setSessionStats({
+          available: true,
+          count: typeof res?.total === 'number' ? res.total : items.length,
+          lastUsedAt: stamps.length > 0 ? stamps[stamps.length - 1] : null,
+        });
+      } catch {
+        if (!alive) return;
+        setSessionStats({ available: false, count: 0, lastUsedAt: null });
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [toolType, reloadKey]);
 
   useEffect(() => {
     let alive = true;
@@ -191,35 +254,131 @@ export function KnownToolDetailView(props: {
     }
   };
 
+  // ── WŁAŚCIWOŚCI (zgłoszenie właściciela 2026-07-23: „za mało pozycji, pełna
+  //    metryka") ─────────────────────────────────────────────────────────────
+  // Wzorzec = tabela Właściwości Zadania/Decyzji/Inicjatywy (ArtifactPropertiesTable).
+  // Były 3 wiersze, z czego jeden („Etap konsultingowy: Poznaj narzędzie") to
+  // stała tekstowa bez pokrycia w danych — usunięty, bo właściwość, która zawsze
+  // ma tę samą wartość, nie jest metryką, tylko dekoracją.
+  //
+  // KAŻDY wiersz poniżej ma pokrycie w REALNYM źródle:
+  //   · pola `tool.*`         → `Api.getKnownTool` (server: KnownToolsService.getKnownTool)
+  //   · liczba sesji / ost. użycie → `Api.listToolSessions({ toolType })`
+  //
+  // ŚWIADOMIE NIEOBECNE (właściciel prosił, danych NIE MA — patrz raport):
+  //   · Właściciel  — `tools` to katalog GLOBALNY (brak kolumny owner/author).
+  //   · Czas trwania sesji — brak pola w rejestrze narzędzi i brak pomiaru w
+  //     `tool_sessions`; wyliczanie go z updatedAt−createdAt byłoby zmyśleniem
+  //     (sesja bywa otwarta tygodniami).
+  const fmtDate = (v?: string | null) => {
+    if (!v) return '—';
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return v;
+    try {
+      return d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return d.toISOString().slice(0, 10);
+    }
+  };
+
   const properties: NModePropertyField[] = useMemo(() => {
-    const category = tool?.libraryCategory || '-';
+    const dash = '—';
+    const arr = (v: unknown) => (Array.isArray(v) ? v : []);
+    const statusText = tool?.isComingSoon
+      ? t('discoveryToolsMain.knownToolDetailView.statusComingSoon', 'Coming soon')
+      : tool?.isActive
+        ? t('discoveryToolsMain.knownToolDetailView.statusActive', 'Active')
+        : t('discoveryToolsMain.knownToolDetailView.statusInactive', 'Inactive');
+
+    const row = (
+      id: string,
+      en: string,
+      pl: string,
+      value: string
+    ): NModePropertyField => ({
+      id,
+      label: { en, pl },
+      type: 'text',
+      value,
+      onChange: () => {},
+      readOnly: true,
+    });
+
     return [
-      {
-        id: 'toolType',
-        label: { en: 'Tool type', pl: 'Typ narzędzia' },
-        type: 'text',
-        value: tool?.toolType || toolType,
-        onChange: () => {},
-        readOnly: true,
-      },
-      {
-        id: 'category',
-        label: { en: 'Category', pl: 'Kategoria' },
-        type: 'text',
-        value: category,
-        onChange: () => {},
-        readOnly: true,
-      },
-      {
-        id: 'stage',
-        label: { en: 'Consulting stage', pl: 'Etap konsultingowy' },
-        type: 'text',
-        value: t('discoveryToolsMain.knownToolDetailView.learnTheTool'),
-        onChange: () => {},
-        readOnly: true,
-      },
+      row('status', 'Status', 'Status', statusText),
+      row('category', 'Category', 'Kategoria', tool?.libraryCategory || dash),
+      row('toolType', 'Tool type', 'Typ narzędzia', tool?.toolType || toolType),
+      row(
+        'access',
+        'Access',
+        'Dostęp',
+        tool?.isLicensed
+          ? t('discoveryToolsMain.knownToolDetailView.propAccessLicensed', 'Licensed')
+          : t('discoveryToolsMain.knownToolDetailView.propAccessOpen', 'Open')
+      ),
+      row(
+        'tags',
+        'Tags',
+        'Tagi',
+        arr(tool?.tags).length > 0 ? (tool?.tags as string[]).join(' · ') : dash
+      ),
+      row(
+        'inputs',
+        'Inputs',
+        'Wejścia',
+        arr(tool?.inputs).length > 0 ? String(arr(tool?.inputs).length) : dash
+      ),
+      row(
+        'steps',
+        'Process steps',
+        'Kroki procesu',
+        arr(tool?.steps).length > 0 ? String(arr(tool?.steps).length) : dash
+      ),
+      row(
+        'outputs',
+        'Outputs',
+        'Rezultaty',
+        arr(tool?.outputs).length > 0 ? String(arr(tool?.outputs).length) : dash
+      ),
+      row(
+        'sessionsCount',
+        'Sessions run',
+        'Liczba użyć (sesje)',
+        sessionStats.available ? String(sessionStats.count) : dash
+      ),
+      row(
+        'lastUsed',
+        'Last used',
+        'Ostatnie użycie',
+        sessionStats.available ? fmtDate(sessionStats.lastUsedAt) : dash
+      ),
+      row('addedAt', 'Added to library', 'Dodane do biblioteki', fmtDate(tool?.createdAt)),
+      row(
+        'source',
+        'Source',
+        'Źródło',
+        t('discoveryToolsMain.knownToolDetailView.propSourceLibrary', 'Consultify tool library')
+      ),
     ];
-  }, [isPolish, tool, toolType, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
+  }, [
+    isPolish,
+    tool,
+    toolType,
+    sessionStats,
+    /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t,
+  ]);
+
+  // Rezultaty metody wprost z API (`tool.outputs`), z fallbackiem na
+  // `whatYouGet` — oba pola pochodzą z tego samego wpisu bibliotecznego.
+  const outcomeItems: string[] = useMemo(() => {
+    const outputs = Array.isArray(tool?.outputs) ? (tool?.outputs as string[]) : [];
+    if (outputs.length > 0) return outputs;
+    return Array.isArray(tool?.whatYouGet) ? (tool?.whatYouGet as string[]) : [];
+  }, [tool]);
 
   // SPEC-N §2.3 — dokładnie jeden primary, w nagłówku (Menu 1).
   // „Startuj sesję" to GŁÓWNE CTA tej karty: cała karta jest bazą wiedzy, której
@@ -242,19 +401,9 @@ export function KnownToolDetailView(props: {
   // SPEC-N §2.6 (anty-duplikacja): „Startuj sesję" ŚWIADOMIE nie występuje tutaj —
   // żyje wyłącznie w slocie primary nagłówka. Toolbar niesie już tylko akcję
   // drugorzędną. Jedna akcja = jedno miejsce.
-  const actions: NModeAction[] = useMemo(
-    () => [
-      {
-        id: 'help',
-        label: { en: 'How to / Knowledge base', pl: 'How to / Baza wiedzy' },
-        icon: HelpCircle,
-        variant: 'neutral',
-        onClick: openKb,
-        disabled: !tool,
-      },
-    ],
-    [tool, starting, toolType]
-  );
+  // ETAP 1.2: tablica `actions` (jedyna pozycja: „How to / Baza wiedzy") zniknela —
+  // akcja ma teraz wlasny, nazwany slot `howToButton` w menu 2, wiec nie musi
+  // udawac anonimowego wpisu paska akcji.
 
   const sections: NModeSection[] = useMemo(() => {
     const bullets = (items: string[] | undefined) => {
@@ -452,9 +601,9 @@ export function KnownToolDetailView(props: {
     );
 
     const dynamicSwotStepsMeta = [
-      { id: 1, accent: 'bg-c-info', tone: 'from-c-info/12 to-c-info/5' },
-      { id: 2, accent: 'bg-sky-500', tone: 'from-sky-500/12 to-blue-500/5' },
-      { id: 3, accent: 'bg-emerald-500', tone: 'from-emerald-500/12 to-blue-500/5' },
+      { id: 1, accent: 'bg-c-info', tone: 'from-c-info/[0.12] to-c-info/5' },
+      { id: 2, accent: 'bg-sky-500', tone: 'from-sky-500/[0.12] to-blue-500/5' },
+      { id: 3, accent: 'bg-emerald-500', tone: 'from-emerald-500/[0.12] to-blue-500/5' },
       { id: 4, accent: 'bg-amber-500', tone: 'from-amber-500/15 to-amber-500/5' },
       { id: 5, accent: 'bg-c-info', tone: 'from-c-info/15 to-c-info/5' },
     ];
@@ -1366,11 +1515,41 @@ export function KnownToolDetailView(props: {
     // edycji powłoki — więc deklaracja jest komentarzem, nie polem. Gdy fala F
     // doda `aiContract` do typu (SPEC-N §5.1), przenieś ją tutaj jako pole:
     // to jest jedyne miejsce, które trzeba zmienić.
+    //
+    // ── BLOKI CENTRUM (zgłoszenie właściciela 2026-07-23, pkt 2) ─────────────
+    // „Bloki są statycznymi kartami. W trybie Edycja każdy ma mieć: przycisk AI,
+    // bezpośrednią edycję, auto-fit, uchwyt zmiany wysokości. W Podglądzie
+    // kontrolki ukryte."
+    //
+    // Ten sam lejek `withGroup` obudowuje KAŻDĄ sekcję centrum wspólną powłoką
+    // `NModeContentBlock` — więc afordancje dostaje każdy z sześciu wariantów
+    // narzędzia naraz, bez kopiowania kodu per narzędzie („standard jest kodem").
+    // Dostarczone tutaj: auto-dopasuj + uchwyt wysokości + ukrycie kontrolek
+    // w Podglądzie.
+    //
+    // ⚠ ŚWIADOMIE NIE PODAJEMY `onAI` ani `onEdit`. Treść tej karty jest
+    // read-only na poziomie API: `/api/known-tools` wystawia WYŁĄCZNIE
+    // `GET /` i `GET /:toolType` (server/src/routes/knownTools.routes.ts) —
+    // nie ma PUT/PATCH, więc nie ma dokąd zapisać ani wyniku edycji, ani wyniku
+    // AI. Przycisk, który zmienia tekst do pierwszego odświeżenia, jest gorszy
+    // niż jego brak. Komponent przyjmuje oba handlery, więc podpięcie po
+    // dorobieniu endpointu to jedna linia. Patrz raport ETAP 2.2 (zgłoszenie Z-1).
     const withGroup = (list: NModeSection[]): NModeSection[] =>
       list.map((section) => ({
         ...section,
         group: groupLabels[groupIndexById[section.id] ?? 0],
         cSpan: cSpanById[section.id] ?? section.cSpan,
+        component: (
+          <NModeContentBlock
+            blockId={section.id}
+            scope={`tool:${tool?.toolType || toolType}`}
+            readMode={readMode}
+            isPolish={isPolish}
+            variant="plain"
+          >
+            {section.component}
+          </NModeContentBlock>
+        ),
       }));
 
     if (tool?.toolType === 'dynamic-swot') {
@@ -1544,7 +1723,7 @@ export function KnownToolDetailView(props: {
         component: exampleSection,
       },
     ]);
-  }, [tool, isPolish, toolType, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
+  }, [tool, isPolish, toolType, readMode, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
 
   // ── MIGRACJA (D-8): layout kart centrum z WIĄŻĄCEGO kontraktu karty ────────
   // Za flagą (default OFF). Gdy ON: katalog + zestawy płyną z TOOL_CARD_SPEC
@@ -1615,6 +1794,110 @@ export function KnownToolDetailView(props: {
     }
   }, [toolCardContractEnabled, sections]);
 
+  // ── ETAP 3 standardu n-Type: „Analizuj z AI" AKTYWNEJ KARTY ────────────────
+  // Kryteria oceny Narzędzia (kontrakt właściciela 2026-07-23) żyją w rubryce
+  // silnika (`ARTIFACT_CRITERIA.tool`): zgodność treści z celem · kompletność
+  // wejść · klarowność procesu · jakość rezultatu · ograniczenia · gotowość do
+  // sesji.
+  //
+  // ★ SLOT AI PRZESTAJE BYĆ PUSTY. Migracja ETAPU 1.2 zostawiła go świadomie
+  //   („karta nie ma żadnej akcji AI") — bo wtedy AI umiało tylko PISAĆ treść,
+  //   a wpis biblioteczny nie ma pól do pisania. Kontrakt ETAPU 3 wprowadza
+  //   funkcję, która niczego nie pisze: OCENIA gotowość karty przed sesją.
+  //   Dla wpisu bibliotecznego to jedyna sensowna akcja AI — i właściciel
+  //   wylicza dla Narzędzia sześć kryteriów, więc slot ma czym być wypełniony.
+  //
+  // ★ WSZYSTKIE POLA TYLKO-DO-ODCZYTU — karta Tool jest READ-ONLY z definicji
+  //   (wspólna baza wiedzy, zero pól edytowalnych; dlatego nie ma tu nawet
+  //   przełącznika Edycja|Podgląd). Panel pokaże Braki/Ryzyka/Sugestie i da
+  //   „Kopiuj treść" zamiast „Zastosuj". Zapis treści biblioteki wymagałby
+  //   endpointu edycji `known-tools` — patrz raport.
+  const toolAnalysisFields = useMemo<CardAnalysisField[]>(() => {
+    const list = (items: readonly string[] | undefined) =>
+      (items ?? [])
+        .filter(Boolean)
+        .map((s) => `- ${s}`)
+        .join('\n');
+
+    const ro = (id: string, label: string, value: string): CardAnalysisField => ({
+      id,
+      label,
+      value,
+      kind: 'text',
+      writable: false,
+    });
+
+    switch (activeSection) {
+      case 'goal':
+        return [
+          ro(
+            'description',
+            isPolish ? 'Opis narzędzia' : 'Tool description',
+            String(tool?.description ?? '')
+          ),
+          ro('whenToUse', isPolish ? 'Kiedy używać' : 'When to use', String(tool?.whenToUse ?? '')),
+        ];
+
+      case 'process':
+        return [
+          // „kompletność wejść" i „klarowność procesu" mają tu swoje realne dane.
+          ro('inputs', isPolish ? 'Wejścia' : 'Inputs', list(tool?.inputs)),
+          ro('steps', isPolish ? 'Kroki procesu' : 'Process steps', list(tool?.steps)),
+        ];
+
+      case 'outcomes':
+        return [
+          ro('outputs', isPolish ? 'Rezultaty' : 'Outputs', list(tool?.outputs)),
+          ro('whatYouGet', isPolish ? 'Co dostajesz' : 'What you get', list(tool?.whatYouGet)),
+          ro('nextSteps', isPolish ? 'Następne kroki' : 'Next steps', list(tool?.nextSteps)),
+        ];
+
+      case 'example':
+        return [
+          ro('example', isPolish ? 'Przykład' : 'Example', String(tool?.example ?? '')),
+          // „ograniczenia" z kryteriów właściciela = częste błędy tej metody.
+          ro(
+            'commonMistakes',
+            isPolish ? 'Ograniczenia i częste błędy' : 'Limitations & common mistakes',
+            list(tool?.commonMistakes)
+          ),
+        ];
+
+      default:
+        return [];
+    }
+  }, [activeSection, isPolish, tool]);
+
+  const buildToolAnalysisInput = useCallback(() => {
+    const ctx = [
+      `${isPolish ? 'Typ narzędzia' : 'Tool type'}: ${tool?.toolType ?? '—'}`,
+      `${isPolish ? 'Kategoria' : 'Category'}: ${tool?.libraryCategory ?? '—'}`,
+      `${isPolish ? 'Opis' : 'Description'}: ${tool?.description ?? '—'}`,
+      `${isPolish ? 'Kiedy używać' : 'When to use'}: ${tool?.whenToUse ?? '—'}`,
+      // „gotowość do sesji" bez liczby wejść/kroków/rezultatów byłaby zgadywaniem.
+      `${isPolish ? 'Wejścia' : 'Inputs'}: ${(tool?.inputs ?? []).length} · ${isPolish ? 'Kroki' : 'Steps'}: ${(tool?.steps ?? []).length} · ${isPolish ? 'Rezultaty' : 'Outputs'}: ${(tool?.outputs ?? []).length}`,
+      `${isPolish ? 'Aktywne' : 'Active'}: ${tool?.isActive ? 'tak/yes' : 'nie/no'} · ${isPolish ? 'Wkrótce' : 'Coming soon'}: ${tool?.isComingSoon ? 'tak/yes' : 'nie/no'}`,
+    ].join('\n');
+
+    return {
+      artifactType: 'tool' as const,
+      cardId: activeSection,
+      artifactTitle: String(tool?.name ?? ''),
+      artifactContext: ctx,
+      fields: toolAnalysisFields,
+      isPolish,
+    };
+  }, [activeSection, isPolish, tool, toolAnalysisFields]);
+
+  // Wpis biblioteczny nie ma pól do zapisu — zwracamy `false`, zamiast udawać.
+  const applyToolAnalysisChange = useCallback(() => false, []);
+
+  const toolCardAnalysis = useCardAIAnalysis({
+    activeCardId: activeSection,
+    buildInput: buildToolAnalysisInput,
+    applyChange: applyToolAnalysisChange,
+  });
+
   // ── SPEC-N §2.2 — PRAWY PANEL (wcześniej nie istniał w ogóle) ──────────────
   // Właściwości renderowały się jako `NModePropertiesStrip` (pozioma listwa pod
   // nagłówkiem) — dokładnie ten anty-wzorzec, który §2.2 nazywa „brakiem całej
@@ -1622,7 +1905,7 @@ export function KnownToolDetailView(props: {
   // NIE jest już przekazywane do NModeShell, więc listwa znika (§2.6: jedna
   // treść = jedno miejsce; powłoka pomija strip, gdy prop pominięty).
   //
-  // Kolejność sekcji wg kanonu §11.2: Właściwości · Powiązania.
+  // Kolejność sekcji wg kanonu §11.2: Właściwości · Rezultaty · Powiązania.
   // ŚWIADOMIE NIEOBECNE:
   //  · Akcje   — obie akcje karty mają już swoje jedyne miejsce (primary
   //              w nagłówku, „Baza wiedzy" w toolbarze). Sekcja Akcje byłaby
@@ -1652,22 +1935,75 @@ export function KnownToolDetailView(props: {
         ),
       },
       {
+        // ── REZULTATY (zgłoszenie właściciela 2026-07-23, pkt 3) ─────────────
+        // „Sekcja Rezultaty, jeśli narzędzie pozwala utworzyć raport/prezentację,
+        // wyeksportować lub wysłać wynik sesji."
+        //
+        // Co tu JEST: kanoniczna lista rezultatów metody (`tool.outputs`) — to
+        // realne dane z `Api.getKnownTool`, czyli odpowiedź na pytanie „co
+        // dostanę, gdy tę sesję doprowadzę do końca".
+        //
+        // Czego tu NIE MA i DLACZEGO: przycisków „Utwórz raport / prezentację /
+        // Eksportuj". Karta biblioteczna opisuje METODĘ, a nie wynik — dopóki
+        // sesja nie istnieje, nie ma czego eksportować ani wysyłać. Wstawienie
+        // tu tych przycisków dałoby kontrolki, które albo nic nie robią, albo
+        // po cichu tworzą sesję pod inną nazwą. Wejściem jest primary „Startuj
+        // sesję" w Menu 1; eksport/raport/prezentacja żyją w karcie SESJI
+        // (ToolDocumentView) — tam mają realny wynik do zapakowania.
+        id: 'results',
+        label: t('discoveryToolsMain.knownToolDetailView.panelResults', 'Results'),
+        icon: Package,
+        defaultOpen: true,
+        isEmpty: outcomeItems.length === 0,
+        emptyLabel: t(
+          'discoveryToolsMain.knownToolDetailView.panelResultsEmpty',
+          'This tool has no declared outputs in the library yet.'
+        ),
+        children: (
+          <div className="flex flex-col gap-2">
+            <ul className="flex flex-col gap-1.5">
+              {outcomeItems.map((item, idx) => (
+                <li key={idx} className="flex items-start gap-2 text-xs text-c-text-secondary">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-c-text-muted" />
+                  <span className="min-w-0">{item}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-[11px] leading-relaxed text-c-text-muted">
+              {t(
+                'discoveryToolsMain.knownToolDetailView.panelResultsHint',
+                'Reports, decks and exports are produced inside a tool session — start one from the header.'
+              )}
+            </p>
+          </div>
+        ),
+      },
+      {
         id: 'relations',
         label: t('discoveryToolsMain.knownToolDetailView.panelRelations', 'Relations'),
         icon: Link2,
         defaultOpen: false,
-        // UCZCIWIE PUSTE: `Api.getKnownTool` nie zwraca dziś żadnych powiązań
-        // (sesji/insightów/inicjatyw) dla narzędzia z biblioteki. Sekcja mówi
-        // wprost „brak", zamiast udawać dane albo znikać bez śladu.
-        isEmpty: true,
+        // Powiązania = realne sesje TEGO narzędzia (`Api.listToolSessions`).
+        // Gdy zapytanie padło albo sesji nie ma — uczciwy stan pusty, bez
+        // udawania danych.
+        isEmpty: !sessionStats.available || sessionStats.count === 0,
         emptyLabel: t(
           'discoveryToolsMain.knownToolDetailView.panelRelationsEmpty',
           'No linked items yet — relations appear once you start a session.'
         ),
-        children: null,
+        children: (
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs text-c-text-muted">
+              {t('discoveryToolsMain.knownToolDetailView.panelRelationsSessions', 'Tool sessions')}
+            </span>
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-c-surface-raised px-1.5 text-[11px] font-semibold tabular-nums text-c-text-muted">
+              {sessionStats.count}
+            </span>
+          </div>
+        ),
       },
     ];
-  }, [properties, isPolish, t]);
+  }, [properties, isPolish, t, outcomeItems, sessionStats]);
 
   // ── SPEC-N §2.2 / DoD §18.1 — uczciwy stan błędu ──────────────────────────
   // Musi stać PO wszystkich hookach (reguła kolejności hooków) i PRZED renderem
@@ -1711,10 +2047,13 @@ export function KnownToolDetailView(props: {
   }
 
   return (
-    <NModeShell
+    <>
+      <NModeShell
       loading={loading}
       presentationMode={mode}
       onPresentationModeChange={setMode}
+      // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+      showModeSwitcher={false}
       header={{
         title: tool?.name || toolType,
         onTitleChange: () => {},
@@ -1740,33 +2079,91 @@ export function KnownToolDetailView(props: {
         primaryAction,
       }}
       sections={orderedToolSections}
-      actions={actions}
-      actionsVisible={true}
-      // MIGRACJA (za flagą): dokłada picker kart „Sekcje ▾ / + Nowa karta ▾"
-      // obok istniejącej akcji „Baza wiedzy", bez zmiany domyślnego renderu
-      // toolbara gdy flaga OFF (replikuje `NModeActionBar` 1:1 — patrz
-      // NModeShell.tsx renderActionBar fallback).
+      /* ETAP 1.2: `actions`/`actionsVisible` USUNIETE — przy podanym
+         `renderActionBar` powloka i tak ich nie czyta (NModeShell.tsx), a
+         jedyna akcja („How to / Baza wiedzy") ma teraz wlasny slot w menu 2. */
+      // ETAP 1.2 standardu n-Type — MENU 2 = wspolny `NModeMenu2`.
+      // Zgloszenie wlasciciela pkt 4: picker "Sekcje" byl doklejony po PRAWEJ
+      // (`ml-auto`) — teraz jest po LEWEJ, nad lista kart. "+ Nowa karta"
+      // zdjete: karty sa predefiniowane, widocznoscia steruje Sekcje.
+      // "How to / Baza wiedzy" idzie do prawej strefy jako wlasny slot
+      // (przestaje byc anonimowa pozycja `NModeActionBar`).
+      //
+      // ZGLOSZONE, NIE WYMYSLONE:
+      // SCALENIE 2026-07-23 (fala menu2 + fala narzedzia/insightu): komentarz
+      // ETAP 1.2 mowil „brak przelacznika Edycja|Podglad — karta biblioteczna
+      // nie ma pol edytowalnych". To przestalo byc prawda: fala narzedzia dala
+      // centrum bloki `NModeContentBlock` z auto-fit i uchwytem, wiec przelacznik
+      // MA co przelaczac. Zamiast doklejac osobny `ReadEditToggle` obok paska
+      // (tak robila fala narzedzia) karmimy nim SRODKOWA strefe `NModeMenu2` —
+      // ten sam uklad co Task/Decision/Powiadomienie. Domyslnie Podglad
+      // (`useState(true)`), bo wpis biblioteczny jest czytany, nie wspoltworzony.
+      //
+      // ETAP 3: slot "Analizuj z AI" JEST juz wypelniony. Wczesniejsza uwaga
+      // ("karta nie ma zadnej akcji AI") byla prawdziwa dla AI-ktore-PISZE.
+      // Analiza niczego nie pisze — ocenia gotowosc karty przed sesja, a
+      // wlasciciel wylicza dla Narzedzia szesc kryteriow tej oceny.
       renderActionBar={() => (
-        <div className="flex items-center gap-2">
-          {actions.length > 0 && (
-            <NModeActionBar actions={actions} activeSection={activeSection} />
-          )}
-          {toolCardContractEnabled && (
-            <div className="ml-auto">
-              <NModeCardManager layout={toolCardLayout} isPolish={isPolish} />
-            </div>
-          )}
-        </div>
+        <NModeMenu2
+          isPolish={isPolish}
+          sectionsMenu={
+            toolCardContractEnabled ? (
+              <SectionsManagerMenu layout={toolCardLayout} isPolish={isPolish} />
+            ) : undefined
+          }
+          readMode={readMode}
+          onReadModeChange={setReadMode}
+          howToButton={
+            <Menu2HowToButton
+              variant="knowledge"
+              isPolish={isPolish}
+              label={isPolish ? 'How to / Baza wiedzy' : 'How to / Knowledge base'}
+              onClick={openKb}
+              disabled={!tool}
+            />
+          }
+          aiButton={
+            <Menu2AIButton
+              isPolish={isPolish}
+              busy={toolCardAnalysis.loading}
+              aria-expanded={toolCardAnalysis.open}
+              disabled={!tool}
+              onClick={toolCardAnalysis.run}
+            />
+          }
+        />
       )}
       activeSection={activeSection}
       onSectionChange={setActiveSection}
       rightPanel={
+        // ETAP 1.4 — bylo `border-l ... h-full`, czyli techniczny sidebar
+        // doklejony do krawedzi. Teraz ten sam wyglad co Inicjatywa: jasna
+        // zaokraglona karta odsunieta od brzegu (wariant _DOCKED, bo slot
+        // `rightPanel` w NModeShell jest pelnowysokosciowy).
         <ArtifactRightPanel
           sections={rightPanelSections}
-          className="border-l border-c-border-subtle h-full"
+          className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
           ariaLabel={t('discoveryToolsMain.knownToolDetailView.panelAriaLabel', 'Tool details')}
         />
       }
-    />
+      />
+
+      {/* ── ETAP 3: panel wyników „Analizuj z AI" ─────────────────────────────
+          `writableFieldIds` PUSTE świadomie — karta Tool jest READ-ONLY (wspólna
+          baza wiedzy). Panel pokaże Braki/Ryzyka/Sugestie i „Kopiuj treść"
+          zamiast „Zastosuj", z jawnym powodem. */}
+      <NCardAIAnalysisPanel
+        open={toolCardAnalysis.open}
+        onClose={toolCardAnalysis.close}
+        loading={toolCardAnalysis.loading}
+        result={toolCardAnalysis.result}
+        errorCode={toolCardAnalysis.errorCode}
+        serverErrorCode={toolCardAnalysis.serverErrorCode}
+        onRerun={toolCardAnalysis.rerun}
+        onApplyChange={toolCardAnalysis.applyChange}
+        writableFieldIds={[]}
+        isPolish={isPolish}
+      />
+    </>
   );
 }

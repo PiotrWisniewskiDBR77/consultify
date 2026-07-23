@@ -18,86 +18,114 @@ import '../src/index.css';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
+import PanelUwag from './PanelUwag';
+
 // Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
 import i18n from '../src/i18n';
-import AccentSoftTokenFixScreen from './screens/accent-soft-token-fix';
-import AdminCommandCenterPanelScreen from './screens/admin-command-center-panel';
-import AdminSsoSelfServiceCardScreen from './screens/admin-sso-self-service-card';
-import AgentPlanCanvasScreen from './screens/agent-plan-canvas';
-import AgentPlanViewScreen from './screens/agent-plan-view';
-import AssessmentInitiativesPanelScreen from './screens/assessment-initiatives-panel';
-import AssessmentInitiativesTableScreen from './screens/assessment-initiatives-table';
-import AssessmentListScreen from './screens/assessment-list';
-import AssessmentMenu3StatusChipsScreen from './screens/assessment-menu3-status-chips';
-import AssessmentReportsPanelScreen from './screens/assessment-reports-panel';
-import AssessmentReportsTableScreen from './screens/assessment-reports-table';
-import CanvasKebabRestructureScreen from './screens/canvas-kebab-restructure';
-import CanvasNewDocScreen from './screens/canvas-new-doc';
-import CanvasToolbarMdHistoryScreen from './screens/canvas-toolbar-md-history';
-import CapabilityGateDemoScreen from './screens/capability-gate-demo';
-import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
-import CrimsonMyWorkWave2Screen from './screens/crimson-mywork-wave2';
-import DecisionRecordScreen from './screens/decision-record';
-import DocumentStudioBlocksI18nScreen from './screens/document-studio-blocks-i18n';
-import ExceleEngineRevealScreen from './screens/excele-engine-reveal';
-import ExceleReopenVerifyScreen from './screens/excele-reopen-verify';
-import WordIntakeUseLlmDefaultScreen from './screens/word-intake-uselm-default';
-import DocumentStudioM1SharePrimaryScreen from './screens/document-studio-m1-share-primary';
-import EvFootballFieldScreen from './screens/ev-football-field';
-import ExecutionChangeSignalsScreen from './screens/execution-change-signals';
-import FinanceValuePanelsScreen from './screens/finance-value-panels';
-import GenDeckContentHintsScreen from './screens/gen-deck-content-hints';
-import GenExcelTemplatesTabScreen from './screens/gen-excel-templates-tab';
-import GenWordContentHintsScreen from './screens/gen-word-content-hints';
-import OdbiorScreen from './screens/odbior';
-import DeckQualityBadgeScreen from './screens/deck-quality-badge';
-import WordQualityBadgeScreen from './screens/word-quality-badge';
-import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
-import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
-import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
-import MelsCanvasWorkspaceScreen from './screens/melscanvas-workspace';
-import MindmapI18nSmokeScreen from './screens/mindmap-i18n-smoke';
-import ModelCatalogTableScreen from './screens/model-catalog-table';
-import NavDeclutterSidebarScreen from './screens/navdeclutter-sidebar';
-import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
-import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
-import PartnerSettlementsViewScreen from './screens/partner-settlements-view';
-import PromptRegistryTabScreen from './screens/prompt-registry-tab';
-import PublicBookingWidgetScreen from './screens/public-booking-widget';
-import ReportBuilderBlockTypesScreen from './screens/report-builder-block-types';
-import ReportBuilderTemplatesScreen from './screens/report-builder-templates';
-import ResultsThreePairsScreen from './screens/results-three-pairs';
-import RoseDangerTokenParityScreen from './screens/rose-danger-token-parity';
-import SettingsCrimsonNeutralizedScreen from './screens/settings-crimson-neutralized';
-import StandardKanbanCardScreen from './screens/standard-kanban-card';
-import TemplateBuilderDeckScreen from './screens/template-builder-deck';
-import TemplateBuilderDocScreen from './screens/template-builder-doc';
-import TemplateBuilderTableScreen from './screens/template-builder-table';
-import TemplateCreateWizardScreen from './screens/template-create-wizard';
-import TemplateLibraryNewEntryScreen from './screens/template-library-new-entry';
-import UnifiedCreateLauncherScreen from './screens/unified-create-launcher';
-import Wave3CreatorsCrimsonScreen from './screens/wave3-creators-crimson';
-import Wave4ChoicesCrimsonScreen from './screens/wave4-choices-crimson';
-import Wave5InternalCrimsonScreen from './screens/wave5-internal-crimson';
-import ZwornikProjectsScreen from './screens/zwornik-projects';
-import KartaToolScreen from './screens/karta-tool';
-import KartaInitiativeScreen from './screens/karta-initiative';
-import KartaInsightScreen from './screens/karta-insight';
-import KartaInterviewScreen from './screens/karta-interview';
-import KartaDecisionScreen from './screens/karta-decision';
-import KartaNotificationScreen from './screens/karta-notification';
-import KartaTaskScreen from './screens/karta-task';
-import PreviewZakladkiScreen from './screens/preview-4-zakladki';
-import IdeaTableToolKebabScreen from './screens/idea-table-tool-kebab';
-// VLT-003 — importem MUSI być ostatnia: każdy dev-render screen instaluje swój
-// window.fetch stub jako top-level side effect przy imporcie (niezależnie od
-// tego, który ?screen= jest renderowany — statyczne importy main.tsx odpalają
-// WSZYSTKIE moduły). Import na końcu = mój stub owija wszystkie poprzednie
-// jako fallback i jego warunki są sprawdzane PIERWSZE (patrz DZIENNIK VLT-003).
-import VaultScopeSelectorScreen from './screens/vault-scope-selector';
-
+import { useAppStore } from '../src/store/useAppStore';
+const AccentSoftTokenFixScreen = React.lazy(() => import('./screens/accent-soft-token-fix'));
+const AdminCommandCenterPanelScreen = React.lazy(() => import('./screens/admin-command-center-panel'));
+const AdminSsoSelfServiceCardScreen = React.lazy(() => import('./screens/admin-sso-self-service-card'));
+const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canvas'));
+const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
+const AssessmentInitiativesPanelScreen = React.lazy(() => import('./screens/assessment-initiatives-panel'));
+const AssessmentInitiativesTableScreen = React.lazy(() => import('./screens/assessment-initiatives-table'));
+const AssessmentListScreen = React.lazy(() => import('./screens/assessment-list'));
+const AssessmentMenu3StatusChipsScreen = React.lazy(() => import('./screens/assessment-menu3-status-chips'));
+const AssessmentReportsPanelScreen = React.lazy(() => import('./screens/assessment-reports-panel'));
+const AssessmentReportsTableScreen = React.lazy(() => import('./screens/assessment-reports-table'));
+const CanvasKebabRestructureScreen = React.lazy(() => import('./screens/canvas-kebab-restructure'));
+const CanvasNewDocScreen = React.lazy(() => import('./screens/canvas-new-doc'));
+const CanvasToolbarMdHistoryScreen = React.lazy(() => import('./screens/canvas-toolbar-md-history'));
+const CapabilityGateDemoScreen = React.lazy(() => import('./screens/capability-gate-demo'));
+const ChatSplitTeresaRightScreen = React.lazy(() => import('./screens/chat-split-teresa-right'));
+const CrimsonMyWorkWave2Screen = React.lazy(() => import('./screens/crimson-mywork-wave2'));
+const DecisionRecordScreen = React.lazy(() => import('./screens/decision-record'));
+const DocumentStudioBlocksI18nScreen = React.lazy(() => import('./screens/document-studio-blocks-i18n'));
+const ExceleEngineRevealScreen = React.lazy(() => import('./screens/excele-engine-reveal'));
+const WordIntakeUseLlmDefaultScreen = React.lazy(() => import('./screens/word-intake-uselm-default'));
+const DocumentStudioM1SharePrimaryScreen = React.lazy(() => import('./screens/document-studio-m1-share-primary'));
+const EvFootballFieldScreen = React.lazy(() => import('./screens/ev-football-field'));
+const ExecutionChangeSignalsScreen = React.lazy(() => import('./screens/execution-change-signals'));
+const FinanceValuePanelsScreen = React.lazy(() => import('./screens/finance-value-panels'));
+const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
+const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
+const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-content-hints'));
+const DeckQualityBadgeScreen = React.lazy(() => import('./screens/deck-quality-badge'));
+const WordQualityBadgeScreen = React.lazy(() => import('./screens/word-quality-badge'));
+const I18nFala1SmokeScreen = React.lazy(() => import('./screens/i18n-fala1-smoke'));
+const IdeaTemplatesCatalogScreen = React.lazy(() => import('./screens/idea-templates-catalog'));
+const IdeasTeresaPanelScreen = React.lazy(() => import('./screens/ideas-teresa-panel'));
+const MelsCanvasWorkspaceScreen = React.lazy(() => import('./screens/melscanvas-workspace'));
+const ProcessFlowCanvasScreen = React.lazy(() => import('./screens/processflow-canvas'));
+const WhiteboardCanvasScreen = React.lazy(() => import('./screens/whiteboard-canvas'));
+const MindmapI18nSmokeScreen = React.lazy(() => import('./screens/mindmap-i18n-smoke'));
+const ModelCatalogTableScreen = React.lazy(() => import('./screens/model-catalog-table'));
+const NavDeclutterSidebarScreen = React.lazy(() => import('./screens/navdeclutter-sidebar'));
+const NotatnikCentrumMysliScreen = React.lazy(() => import('./screens/notatnik-centrum-mysli'));
+const NotatnikOsieroconeGrafScreen = React.lazy(() => import('./screens/notatnik-osierocone-graf'));
+const PartnerSettlementsViewScreen = React.lazy(() => import('./screens/partner-settlements-view'));
+const PromptRegistryTabScreen = React.lazy(() => import('./screens/prompt-registry-tab'));
+const PublicBookingWidgetScreen = React.lazy(() => import('./screens/public-booking-widget'));
+const ReportBuilderBlockTypesScreen = React.lazy(() => import('./screens/report-builder-block-types'));
+const ReportBuilderTemplatesScreen = React.lazy(() => import('./screens/report-builder-templates'));
+const ResultsThreePairsScreen = React.lazy(() => import('./screens/results-three-pairs'));
+const RoseDangerTokenParityScreen = React.lazy(() => import('./screens/rose-danger-token-parity'));
+const SettingsCrimsonNeutralizedScreen = React.lazy(() => import('./screens/settings-crimson-neutralized'));
+const StandardKanbanCardScreen = React.lazy(() => import('./screens/standard-kanban-card'));
+const TemplateBuilderDeckScreen = React.lazy(() => import('./screens/template-builder-deck'));
+const TemplateBuilderDocScreen = React.lazy(() => import('./screens/template-builder-doc'));
+const TemplateBuilderTableScreen = React.lazy(() => import('./screens/template-builder-table'));
+const TemplateCreateWizardScreen = React.lazy(() => import('./screens/template-create-wizard'));
+const TemplateLibraryNewEntryScreen = React.lazy(() => import('./screens/template-library-new-entry'));
+const UnifiedCreateLauncherScreen = React.lazy(() => import('./screens/unified-create-launcher'));
+const Wave3CreatorsCrimsonScreen = React.lazy(() => import('./screens/wave3-creators-crimson'));
+const Wave4ChoicesCrimsonScreen = React.lazy(() => import('./screens/wave4-choices-crimson'));
+const Wave5InternalCrimsonScreen = React.lazy(() => import('./screens/wave5-internal-crimson'));
+const ZwornikProjectsScreen = React.lazy(() => import('./screens/zwornik-projects'));
+const KartaToolScreen = React.lazy(() => import('./screens/karta-tool'));
+const KartaInitiativeScreen = React.lazy(() => import('./screens/karta-initiative'));
+const KartaInsightScreen = React.lazy(() => import('./screens/karta-insight'));
+const KartaInterviewScreen = React.lazy(() => import('./screens/karta-interview'));
+const KartaDecisionScreen = React.lazy(() => import('./screens/karta-decision'));
+const KartaNotificationScreen = React.lazy(() => import('./screens/karta-notification'));
+const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
+const PreviewZakladkiScreen = React.lazy(() => import('./screens/preview-4-zakladki'));
+const IdeaTableToolKebabScreen = React.lazy(() => import('./screens/idea-table-tool-kebab'));
+const IdeaTableToolEmptyFilterScreen = React.lazy(() => import('./screens/idea-table-tool-empty-filter'));
+const IdeaTableToolPasteScreen = React.lazy(() => import('./screens/idea-table-tool-paste'));
+const IdeaTableToolSortFilterScreen = React.lazy(() => import('./screens/idea-table-tool-sortfilter'));
+const IdeaTableToolGroupingScreen = React.lazy(() => import('./screens/idea-table-tool-grouping'));
+const IdeaTableScreen = React.lazy(() => import('./screens/idea-table'));
+const MindmapCanvasScreen = React.lazy(() => import('./screens/mindmap-canvas'));
+const DeckArtifactScreen = React.lazy(() => import('./screens/deck-artifact'));
+const DocumentArtifactScreen = React.lazy(() => import('./screens/document-artifact'));
+const IdeasPreviewOverlayScreen = React.lazy(() => import('./screens/ideas-preview-overlay'));
+const SheetArtifactScreen = React.lazy(() => import('./screens/sheet-artifact'));
+const NTypeAnalizujAiScreen = React.lazy(() => import('./screens/ntype-analizuj-ai'));
+// Ekrany ładujemy LENIWIE (React.lazy) — i to jest wymóg poprawności, nie optymalizacja.
+// Każdy screen instaluje swój stub `window.fetch` jako efekt uboczny importu. Przy
+// statycznych importach ładowały się WSZYSTKIE moduły naraz, więc stub ekranu ładowanego
+// później przechwytywał żądania ekranu otwartego (np. mapa myśli zjadała dane karty
+// inicjatywy — „Nie udało się załadować karty"). Leniwy import = instaluje się stub
+// wyłącznie otwartego ekranu, a kolejność importów przestaje cokolwiek znaczyć.
+const VaultScopeSelectorScreen = React.lazy(() => import('./screens/vault-scope-selector'));
+// (Zdjeta 2026-07-23) Tu stal zapomniany blok 68 STATYCZNYCH importow ekranow —
+// pozostalosc po niedokonczonym scaleniu (zostal nawet znacznik `|||||||`), przez
+// co plik sie NIE PARSOWAL, a kazdy ekran mial dwie deklaracje: leniwa wyzej
+// i statyczna tutaj. Statyczne importy odpalaly stub `window.fetch` KAZDEGO
+// ekranu naraz — dokladnie defekt, ktory React.lazy wyzej ma likwidowac.
+// Uwaga historyczna VLT-003 („import musi byc ostatni, bo stuby sie nakladaja")
+// dotyczyla tamtego statycznego swiata i przy leniwym ladowaniu nie obowiazuje.
+const ExceleReopenVerifyScreen = React.lazy(() => import('./screens/excele-reopen-verify'));
+const OdbiorScreen = React.lazy(() => import('./screens/odbior'));
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'ntype-analizuj-ai': {
+    label:
+      'n-Type ETAP 3 — „Analizuj z AI": menu 2 + panel wyników (Braki · Ryzyka · Sugestie · Zmiany)',
+    render: () => <NTypeAnalizujAiScreen />,
+  },
   odbior: {
     label: '★ PANEL ODBIORU — wszystkie obszary (rejestr/3-DO-ODBIORU), żywe ekrany + werdykty',
     render: () => <OdbiorScreen />,
@@ -138,10 +166,33 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'DOKUMENTY — Excel: naprawa "nie mam czego otworzyć" — reopen wiszącego artifactId → honest error zamiast pustego fake-podglądu (2026-07-23)',
     render: () => <ExceleReopenVerifyScreen />,
   },
+  // (deck-artifact / sheet-artifact są zarejestrowane niżej, w bloku DOKUMENTY
+  // razem z document-artifact — scalenie fix/crimson-deck-sheet dołożyło tu ich
+  // duplikat, zdjęty przy rozwiązywaniu konfliktu.)
   'idea-table-tool-kebab': {
     label:
       'IDEE Table — K1 kebab wiersza (PlatformGridView, prawy-klik) — audyt-idee 2026-07-22',
     render: () => <IdeaTableToolKebabScreen />,
+  },
+  'idea-table-tool-paste': {
+    label:
+      'IDEE Table — Ctrl/Cmd+V wklejanie (PlatformGridView, Z16b domknięcie) — 2026-07-22',
+    render: () => <IdeaTableToolPasteScreen />,
+  },
+  'idea-table-tool-sortfilter': {
+    label:
+      'IDEE Table — Sortowanie po nagłówku + filtr per kolumna (PlatformGridView, Fala 7) — 2026-07-22',
+    render: () => <IdeaTableToolSortFilterScreen />,
+  },
+  'idea-table-tool-empty-filter': {
+    label:
+      'IDEE Table — Stan pustego filtra + resize kolumn + gęstość wierszy (PlatformGridView, Fala 8) — 2026-07-23',
+    render: () => <IdeaTableToolEmptyFilterScreen />,
+  },
+  'idea-table-tool-grouping': {
+    label:
+      'IDEE Table — Grupowanie: dropdown "Grupuj wg" + zwijanie grup (PlatformGridView, Fala 10) — 2026-07-23',
+    render: () => <IdeaTableToolGroupingScreen />,
   },
   'karta-tool': {
     label: 'KARTY N — Tool (harness odbioru 2026-07-21)',
@@ -357,6 +408,14 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'ODB O5 — REALNY <IdeaMapWorkspace> (melsCanvasFlag, default OFF); &ff_melsCanvas=1 dla ON',
     render: () => <MelsCanvasWorkspaceScreen />,
   },
+  'processflow-canvas': {
+    label: 'Fala 8 — Process Flow: krawędzie (strzałka domyślna + smoothstep + etykiety)',
+    render: () => <ProcessFlowCanvasScreen />,
+  },
+  'whiteboard-canvas': {
+    label: 'Fala 8 — Whiteboard: łączniki (4-str uchwyty magnetyczne)',
+    render: () => <WhiteboardCanvasScreen />,
+  },
   'i18n-fala1-smoke': {
     label:
       'Smoke i18n fala 1 — realne TemplateBuilder (M10) / FormulaEditor (M08); &part=interview|ideas',
@@ -402,6 +461,30 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'VLT-003 — REALNY <DocumentsRAGTab variant="client"> — selektor poziomu upload, badge, filtr, ostrzeżenie zmiany zakresu',
     render: () => <VaultScopeSelectorScreen />,
   },
+  'idea-table': {
+    label: 'IDEE — Idea jako tabela (pełny obiekt: lista + podgląd + prawy panel)',
+    render: () => <IdeaTableScreen />,
+  },
+  'mindmap-canvas': {
+    label: 'IDEE — Idea jako mapa myśli (pełny obiekt, archetyp Canvas)',
+    render: () => <MindmapCanvasScreen />,
+  },
+  'ideas-preview-overlay': {
+    label: 'IDEE — Idea: podgląd nakładkowy nad listą',
+    render: () => <IdeasPreviewOverlayScreen />,
+  },
+  'deck-artifact': {
+    label: 'DOKUMENTY — Prezentacja jako artefakt (pełny obiekt)',
+    render: () => <DeckArtifactScreen />,
+  },
+  'document-artifact': {
+    label: 'DOKUMENTY — Dokument tekstowy jako artefakt (pełny obiekt)',
+    render: () => <DocumentArtifactScreen />,
+  },
+  'sheet-artifact': {
+    label: 'DOKUMENTY — Arkusz jako artefakt (pełny obiekt: zakładki, siatka, formuły)',
+    render: () => <SheetArtifactScreen />,
+  },
 };
 
 const params = new URLSearchParams(window.location.search);
@@ -412,6 +495,21 @@ const theme = params.get('theme') || 'light';
 // Apply theme via the app's `.dark` class strategy (tailwind darkMode:'class').
 const root = document.documentElement;
 root.classList.toggle('dark', theme === 'dark');
+
+// Ekrany montujące `AppProviders` mają własny ThemeSync, który czyta motyw ze
+// store (domyślnie 'system') i NADPISUJE klasę ustawioną powyżej — wtedy
+// `?theme=dark` dawał jasny ekran, gdy przeglądarka miała jasny motyw systemowy.
+// Ustawiamy więc motyw w store, żeby ThemeSync doszedł do tego samego wniosku.
+useAppStore.setState({ theme: theme === 'dark' ? 'dark' : 'light' });
+
+// Dodatkowy bezpiecznik: gdyby jakikolwiek provider zdjął klasę po zamontowaniu,
+// przywracamy ją. Harness ma pokazywać motyw z adresu, zawsze.
+new MutationObserver(() => {
+  const powinnaByc = theme === 'dark';
+  if (root.classList.contains('dark') !== powinnaByc) {
+    root.classList.toggle('dark', powinnaByc);
+  }
+}).observe(root, { attributes: true, attributeFilter: ['class'] });
 document.body.style.background = 'var(--c-bg)';
 
 // Apply language (component reads i18n.language for its inline pl/en copy).
@@ -462,6 +560,13 @@ class DebugBoundary extends React.Component<
 
 createRoot(mount).render(
   <React.StrictMode>
-    <DebugBoundary>{entry ? entry.render() : <Fallback />}</DebugBoundary>
+    <DebugBoundary>
+      {/* Suspense: ekrany są leniwe, więc render czeka na pobranie modułu. */}
+      <React.Suspense fallback={<div style={{ padding: 24, color: '#64748b' }}>Ładowanie ekranu…</div>}>
+        {entry ? entry.render() : <Fallback />}
+      </React.Suspense>
+      {/* Panel uwag właściciela — obecny na KAŻDYM ekranie odbioru (zapis: /__uwagi). */}
+      <PanelUwag ekran={screenKey} />
+    </DebugBoundary>
   </React.StrictMode>
 );
