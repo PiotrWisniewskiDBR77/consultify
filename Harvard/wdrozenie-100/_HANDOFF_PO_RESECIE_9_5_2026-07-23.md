@@ -122,3 +122,17 @@ cd .worktrees/prv-mywork && git log --oneline origin/demo..HEAD   # 13 commitów
 Potem: **render-odbiór 7 kart** (harness 3220, light+dark) → napraw FAIL-e → **3 zrzuty + checklist dla Piotra** → akcept → promocja (Faza A). Następnie Faza B.
 
 **Notatki źródłowe:** `_NOCNA_PRACA_9_0_2026-07-23.md` (co zrobione nocą) · `_MERYTORYKA_PACZKA_AKCEPT_2026-07-23.md` (Faza B) · `_PLAN_9_5_ARTEFAKTY_N_2026-07-22.md` (rejestr zadań Z-0.1…Z-4.4) · `_MERYTORYKA_{INSIGHT,INTERVIEW,NOTIFICATION}_2026-07-22.md` (audyty).
+
+---
+
+## 6. ZMIANA METODY ODBIORU (2026-07-23, decyzja właściciela)
+
+Zrzuty odpadają („nie damy rady tego zrobić obrazami"). Odbiór idzie przez **klikanie jednej strony**:
+`http://localhost:3000/odbior.html`, worktree `.worktrees/odbior-hub` (gałąź `odbior/hub-2026-07-23`).
+
+Scalone w hubie: **Karty N** (16 commitów) + **IDEE fala 6-10** (41 commitów, konflikt rejestru ekranów
+rozwiązany) na bazie świeżego `origin/demo`. Pozostałe fronty (Agent+Vault, dorobki decyzji, Dokumenty)
+**są już na demo** — 0 commitów ahead — więc hub pokazuje je z bazy.
+
+Zasady i pułapki tej konstrukcji: `_PROTOKOL_ODBIORU_WSPOLNEGO_2026-07-23.md`.
+Decyzja właściciela zapada **per obszar**, nie per plik.
