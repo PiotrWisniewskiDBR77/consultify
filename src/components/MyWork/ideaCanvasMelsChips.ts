@@ -322,14 +322,51 @@ export const DEFAULT_IDEA_CANVAS_RIGHT_RAIL_LABELS: IdeaCanvasRightRailLabels = 
 export function buildIdeaCanvasRightRailTools(args?: {
   labels?: Partial<IdeaCanvasRightRailLabels>;
   disabled?: Partial<Record<IdeaCanvasRightToolId, boolean>>;
+  /**
+   * Why a tab is unavailable for the active representation. A tab whose section
+   * renders nothing MUST be disabled with a reason — a clickable icon that
+   * opens an empty panel is a dead click.
+   */
+  disabledReasons?: Partial<Record<IdeaCanvasRightToolId, string>>;
 }): RightRailToolDescriptor[] {
   const labels = { ...DEFAULT_IDEA_CANVAS_RIGHT_RAIL_LABELS, ...args?.labels };
   const disabled = args?.disabled ?? {};
+  const powody = args?.disabledReasons ?? {};
   return [
-    { id: 'problem', label: labels.problem, icon: HelpCircle, disabled: disabled.problem },
-    { id: 'status', label: labels.status, icon: GitBranch, disabled: disabled.status },
-    { id: 'inspector', label: labels.inspector, icon: Sparkles, disabled: disabled.inspector },
-    { id: 'convert', label: labels.convert, icon: Workflow, disabled: disabled.convert },
-    { id: 'health', label: labels.health, icon: LayoutTemplate, disabled: disabled.health },
+    {
+      id: 'problem',
+      label: labels.problem,
+      icon: HelpCircle,
+      disabled: disabled.problem,
+      disabledReason: powody.problem,
+    },
+    {
+      id: 'status',
+      label: labels.status,
+      icon: GitBranch,
+      disabled: disabled.status,
+      disabledReason: powody.status,
+    },
+    {
+      id: 'inspector',
+      label: labels.inspector,
+      icon: Sparkles,
+      disabled: disabled.inspector,
+      disabledReason: powody.inspector,
+    },
+    {
+      id: 'convert',
+      label: labels.convert,
+      icon: Workflow,
+      disabled: disabled.convert,
+      disabledReason: powody.convert,
+    },
+    {
+      id: 'health',
+      label: labels.health,
+      icon: LayoutTemplate,
+      disabled: disabled.health,
+      disabledReason: powody.health,
+    },
   ];
 }
