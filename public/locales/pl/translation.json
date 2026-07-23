@@ -33464,7 +33464,14 @@
       "value": "Wartość",
       "statusActive": "Aktywne",
       "statusInactive": "Nieaktywne",
-      "statusComingSoon": "Wkrótce"
+      "statusComingSoon": "Wkrótce",
+      "propAccessLicensed": "Licencjonowane",
+      "propAccessOpen": "Otwarte",
+      "propSourceLibrary": "Biblioteka narzędzi Consultify",
+      "panelResults": "Rezultaty",
+      "panelResultsEmpty": "To narzędzie nie ma jeszcze zadeklarowanych rezultatów w bibliotece.",
+      "panelResultsHint": "Raporty, prezentacje i eksporty powstają w sesji narzędzia — uruchom ją przyciskiem w nagłówku.",
+      "panelRelationsSessions": "Sesje narzędzia"
     },
     "knownToolDetail": {
       "dynamicSwot": {

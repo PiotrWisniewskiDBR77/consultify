@@ -32404,7 +32404,14 @@
       "value": "Value",
       "statusActive": "Active",
       "statusInactive": "Inactive",
-      "statusComingSoon": "Coming soon"
+      "statusComingSoon": "Coming soon",
+      "propAccessLicensed": "Licensed",
+      "propAccessOpen": "Open",
+      "propSourceLibrary": "Consultify tool library",
+      "panelResults": "Results",
+      "panelResultsEmpty": "This tool has no declared outputs in the library yet.",
+      "panelResultsHint": "Reports, decks and exports are produced inside a tool session — start one from the header.",
+      "panelRelationsSessions": "Tool sessions"
     },
     "knownToolDetail": {
       "dynamicSwot": {
