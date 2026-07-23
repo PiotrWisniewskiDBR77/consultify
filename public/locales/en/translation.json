@@ -23882,7 +23882,12 @@
       "idleHint": "Run a deterministic check for banned phrases, register, language consistency, and density. Results are advisory; the export pipeline soft-blocks when a category goes blocking on documents that require approval.",
       "generatedAt": "Generated at",
       "attention": "Attention required",
-      "allClear": "All clear"
+      "allClear": "All clear",
+      "fabrication": {
+        "verified": "Verified — no unsupported numbers",
+        "degraded": "Degraded ({{count}} unmarked numbers)",
+        "hint": "Verify these numbers against sources or mark them as an assumption \"(assumption)\" before partner/client delivery."
+      }
     },
     "panel": {
       "assumptionFlag": "Assumption — needs source",
@@ -24093,6 +24098,8 @@
       "diffChangedBlocks": "{{count}} changed blocks",
       "blockingCategories": "{{count}} blocking categories",
       "scoreFindings": "score {{score}}/100 · {{count}} findings",
+      "fabricationCategory": "fabrication",
+      "fabricationFindings": "{{count}} unsupported number(s) without an assumption tag",
       "presenceSources": "{{count}} sources",
       "presenceAssumptions": "{{count}} assumptions",
       "diffBaselinePicker": "Compare against snapshot",

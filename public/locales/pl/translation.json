@@ -24922,7 +24922,12 @@
       "idleHint": "Uruchom deterministyczną kontrolę zakazanych fraz, rejestru, spójności językowej i objętości. Wyniki mają charakter doradczy; potok eksportu miękko blokuje, gdy kategoria staje się blokująca dla dokumentów wymagających akceptacji.",
       "generatedAt": "Wygenerowano",
       "attention": "Wymaga uwagi",
-      "allClear": "Wszystko w porządku"
+      "allClear": "Wszystko w porządku",
+      "fabrication": {
+        "verified": "Zweryfikowane — brak niepopartych liczb",
+        "degraded": "Zdegradowane ({{count}} nieoznaczonych liczb)",
+        "hint": "Zweryfikuj te liczby wobec źródeł lub oznacz jako założenie „(założenie)\" przed eksportem partnerskim/klientowi."
+      }
     },
     "panel": {
       "assumptionFlag": "Założenie — wymaga źródła",
@@ -25151,6 +25156,8 @@
       "diffChangedBlocks": "{{count}} zmienionych bloków",
       "blockingCategories": "{{count}} kategorii blokujących",
       "scoreFindings": "wynik {{score}}/100 · {{count}} ustaleń",
+      "fabricationCategory": "fabrykacja",
+      "fabricationFindings": "{{count}} niepopartych liczb bez znacznika założenia",
       "presenceSources": "{{count}} źródeł",
       "presenceAssumptions": "{{count}} założeń",
       "diffBaselinePicker": "Porównaj z migawką",
