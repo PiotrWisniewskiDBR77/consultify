@@ -314,7 +314,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                             accent.bg
                           )}
                         />
-                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent dark:via-white/14" />
+                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent dark:via-white/[0.14]" />
                       </div>
                       <div className="relative flex h-full flex-col">
                         <div className="flex items-start justify-between gap-4">
