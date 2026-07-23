@@ -92,8 +92,16 @@ Legenda: ⬜ do zrobienia · 🔨 w budowie · ✅ scalone+zweryfikowane · 🅰
 
 ## ★ LOG FAL (dopisuj po każdej fali — najnowsza NA GÓRZE)
 
-### Fala 4 — URUCHOMIONA (workflow wbvv6a5le)
-Rdzeniowe narzędzia wyjściowe (Deck/Word/Excel, stały na ~7): deck-quality-surface, word-quality-surface, excel-quality-surface — pokazanie ISTNIEJĄCYCH sygnałów jakości w UI (addytywnie, nie-blokująco). 🔨 w budowie. UWAGA: dotykają rdzeniowych widoków wyniku — render-verify obowiązkowy, ostrożnie z regresją.
+### Fala 5 — URUCHOMIONA (workflow wv1f9olmj)
+gendeck-briefing (keyMessage/dataNeeded/suggestedVisual per slajd — pogłębienie Merytoryki), genword-briefing (analog Word),
+genexcel-save-template (zapis presetu parametrów — autorstwo/Funkcja). 🔨 w budowie.
+
+### Fala 4 — ✅ SCALONA (workflow wbvv6a5le, demo b9702dc356)
+3/3, 0 błędów. RDZENIOWE widoki wyniku — wszystkie 3 badge'y render-verify PASS (Deck „Jakość:3 ostrzeżeń·Score 62/100", Word „Zdegradowane (3 nieoznaczonych liczb)", Excel „1 uwag (wynik 92/100)"), amber/c-warning, nie-blokujące, console-clean. Testy: 886 Word (2 fail = pre-existing baseline), 101/21 Excel, 5 deck golden — wszystkie istotne zielone.
+- deck-quality-surface: critic/M19 warnings+qualityGates w odpowiedzi generacji (był stale snapshot) → badge w ResultStep + banner DeckBuilder. Za ENABLE_DECK_QUALITY_GATES.
+- word-quality-surface: fabrication badge (A3 detektor) w DocumentStudioQaPanel (Run QA). Bez nowej flagi.
+- excel-quality-surface: critiqueWorkbook (score+issues) dołożone do odpowiedzi /templates/:id/build → badge w karcie wyniku. Bez nowej flagi.
+Oceny (big-3 ruszyły): Deck 7,8→8,0, Word 7,2→7,4, Excel 7,0→7,2 (Merytoryka/transparencja jakości). Średnia 6,8→6,9.
 
 ### Fala 3 — ✅ SCALONA (workflow wkrp7w510, demo eae7fe4f21)
 3/3, 0 błędów. 84 testy backend + esbuild + render-verify (deck sylwetki light, word struktura dark — oba motywy pokryte).
@@ -125,7 +133,7 @@ Jeśli kontekst się kończy: następca czyta ten plik + memory `[[loop-do-9-202
 sprawdza `git worktree list`, kontynuuje z inwentarza (najniższe średnie najpierw: Gen.Excel → Gen.Deck → Gen.Word).
 
 ## STAN BIEŻĄCY (aktualizuj)
-Średnia: **6,8** → cel 9,0. Ostatni SHA demo: `eae7fe4f21` (fala 3). Fal ukończonych: 3. Fala 4 w toku (wbvv6a5le).
-Per narzędzie: Deck 7,8 · Word 7,2 · Excel 7,0 · Gen.Deck 5,8 · Gen.Word 6,8 · Gen.Excel 6,4.
+Średnia: **6,9** → cel 9,0. Ostatni SHA demo: `b9702dc356` (fala 4). Fal ukończonych: 4. Fala 5 w toku (wv1f9olmj).
+Per narzędzie: Deck 8,0 · Word 7,4 · Excel 7,2 · Gen.Deck 5,8 · Gen.Word 6,8 · Gen.Excel 6,4.
 UWAGA STRATEGICZNA: generatory rosną (Grafika/breadth), ale ich MERYTORYKA capped (Gen.Deck Meryt 4 — to wymaga realnej głębi treści LLM, nie tylko struktury). Big-3 (Deck/Word/Excel) stały na ~7 do fali 4. Do 9,0 średniej trzeba: big-3 →9 (+5) i generatory Meryt →9 (+8). Uczciwie: prawdziwe 9,0 może nie być osiągalne w nocy bez głębokiej generacji treści LLM + akceptów Piotra; pcham max i będę transparentny rano co jest realnie 9 vs. zbudowane-czeka-na-akcept.
 🅰️ Czeka na akcept Piotra: ff_workbook_templates. Dev-render ekrany: gen-deck-content-hints, gen-excel-templates-tab, gen-word-content-hints. Port ostatni 3028.
