@@ -5,7 +5,7 @@
  * animations, collaboration, data refresh, source traceability, media library.
  */
 
-import { Check } from 'lucide-react';
+import { AlertTriangle, Check, ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -366,6 +366,15 @@ export const DeckBuilder: React.FC = () => {
   const [loadingDeck, setLoadingDeck] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [deckReloadKey, setDeckReloadKey] = useState(0);
+  // A4 (2026-07-23) — nie-blokujący sygnał jakości (Critic kompozycji + M19
+  // walidacja strukturalna), zapisany na deckDocument.generation przy generacji
+  // (ENABLE_DECK_QUALITY_GATES, default ON). Czytany TYLKO z już policzonych
+  // danych persystowanych na decku — zero nowego liczenia w FE.
+  const [deckQualityInfo, setDeckQualityInfo] = useState<{
+    warnings: string[];
+    critic?: { overallScore: number; regenerateSlides: number[]; passed: boolean };
+  } | null>(null);
+  const [qualityBannerExpanded, setQualityBannerExpanded] = useState(false);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedInitialRef = useRef(false);
   const serverVersionRef = useRef<number>(1);
@@ -504,6 +513,7 @@ export const DeckBuilder: React.FC = () => {
       setLoadError(null);
       hasLoadedInitialRef.current = false;
       setDeck(null);
+      setDeckQualityInfo(null);
 
       try {
         const res = (await Api.get(`/presentations/decks/${deckId}`)) as any;
@@ -519,6 +529,27 @@ export const DeckBuilder: React.FC = () => {
 
         // 1) Prefer autosaved deck_json (builder-native).
         const deckJson = safeJsonParse<any>(row?.deck_json, null);
+
+        // A4 — surface already-persisted quality signal (Critic + M19), read
+        // straight off the loaded row: `validation_warnings` (normalizeDeckRow,
+        // parsed array) and deck_json.generation.qualityGates (canonical
+        // DeckDocument, additive field set by generateDeck when
+        // ENABLE_DECK_QUALITY_GATES !== 'false'). No new computation — pure read.
+        const persistedWarnings = Array.isArray(row?.validation_warnings)
+          ? row.validation_warnings.filter((w: unknown) => typeof w === 'string')
+          : [];
+        const persistedCritic = deckJson?.generation?.qualityGates?.critic;
+        if (!cancelled && (persistedWarnings.length > 0 || persistedCritic)) {
+          setDeckQualityInfo({
+            warnings: persistedWarnings,
+            critic:
+              persistedCritic &&
+              typeof persistedCritic.overallScore === 'number' &&
+              Array.isArray(persistedCritic.regenerateSlides)
+                ? persistedCritic
+                : undefined,
+          });
+        }
         if (deckJson && typeof deckJson === 'object' && Array.isArray(deckJson.cards)) {
           const loaded: Deck = {
             ...deckJson,
@@ -1352,6 +1383,43 @@ export const DeckBuilder: React.FC = () => {
                 >
                   {t('presentations.reject')}
                 </button>
+              </div>
+            ) : deckQualityInfo && deckQualityInfo.warnings.length > 0 ? (
+              <div className="border-b border-c-warning/20 bg-c-warning/5">
+                <button
+                  type="button"
+                  aria-expanded={qualityBannerExpanded}
+                  onClick={() => setQualityBannerExpanded((v) => !v)}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-left hover:bg-c-warning/10"
+                >
+                  {qualityBannerExpanded ? (
+                    <ChevronDown size={14} className="text-c-warning flex-shrink-0" />
+                  ) : (
+                    <ChevronRight size={14} className="text-c-warning flex-shrink-0" />
+                  )}
+                  <AlertTriangle size={14} className="text-c-warning flex-shrink-0" />
+                  <span className="text-xs font-medium text-c-warning">
+                    {t('presentations.qualitySignal.badge', 'Jakość: {{count}} ostrzeżeń', {
+                      count: deckQualityInfo.warnings.length,
+                    })}
+                  </span>
+                  {deckQualityInfo.critic && (
+                    <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-medium bg-c-warning/10 text-c-warning">
+                      {t('presentations.qualitySignal.score', 'Score {{score}}/100', {
+                        score: deckQualityInfo.critic.overallScore,
+                      })}
+                    </span>
+                  )}
+                </button>
+                {qualityBannerExpanded && (
+                  <ul className="px-4 pb-2.5 space-y-1">
+                    {deckQualityInfo.warnings.map((w, i) => (
+                      <li key={i} className="text-xs text-c-warning/90">
+                        &bull; {w}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             ) : null
           }

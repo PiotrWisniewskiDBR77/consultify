@@ -1,5 +1,5 @@
-import { ArrowLeft, Check, Download, ExternalLink } from 'lucide-react';
-import React from 'react';
+import { AlertTriangle, ArrowLeft, Check, ChevronDown, ChevronRight, Download, ExternalLink } from 'lucide-react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { WizardSettings } from './types';
@@ -9,6 +9,13 @@ interface GenerationResult {
   warnings: string[];
   exportPath?: string;
   deckId?: string;
+  // A4 (2026-07-23): nie-blokujący sygnał jakości (Critic kompozycji + M19
+  // walidacja strukturalna), liczony deterministycznie za ENABLE_DECK_QUALITY_GATES
+  // (default ON). Informacyjny — nigdy nie blokuje pobrania/otwarcia decka.
+  qualityGates?: {
+    critic: { overallScore: number; regenerateSlides: number[]; passed: boolean };
+    structural: { valid: boolean; errorCount: number; warningCount: number };
+  };
 }
 
 interface ResultStepProps {
@@ -27,6 +34,9 @@ export const ResultStep: React.FC<ResultStepProps> = ({
   onOpenBuilder,
 }) => {
   const { t } = useTranslation();
+  const [warningsExpanded, setWarningsExpanded] = useState(false);
+  const warningCount = result.warnings.length;
+  const critic = result.qualityGates?.critic;
 
   return (
     <div className="space-y-8">
@@ -43,18 +53,42 @@ export const ResultStep: React.FC<ResultStepProps> = ({
         </p>
       </div>
 
-      {result.warnings.length > 0 && (
-        <div className="bg-yellow-50 dark:bg-yellow-500/5 border border-yellow-200 dark:border-yellow-500/20 rounded-xl p-4">
-          <p className="font-medium text-yellow-800 dark:text-yellow-400 text-sm mb-2">
-            {t('presentations.result.warnings', 'Quality Warnings')}
-          </p>
-          <ul className="space-y-1">
-            {result.warnings.map((w, i) => (
-              <li key={i} className="text-sm text-yellow-700 dark:text-yellow-300/80">
-                &bull; {w}
-              </li>
-            ))}
-          </ul>
+      {warningCount > 0 && (
+        <div className="bg-c-warning/5 border border-c-warning/20 rounded-xl overflow-hidden">
+          <button
+            type="button"
+            aria-expanded={warningsExpanded}
+            onClick={() => setWarningsExpanded((v) => !v)}
+            className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-c-warning/10"
+          >
+            {warningsExpanded ? (
+              <ChevronDown size={16} className="text-c-warning flex-shrink-0" />
+            ) : (
+              <ChevronRight size={16} className="text-c-warning flex-shrink-0" />
+            )}
+            <AlertTriangle size={16} className="text-c-warning flex-shrink-0" />
+            <span className="font-medium text-c-warning text-sm">
+              {t('presentations.result.qualityBadge', 'Jakość: {{count}} ostrzeżeń', {
+                count: warningCount,
+              })}
+            </span>
+            {critic && (
+              <span className="ml-auto px-2 py-0.5 rounded-full text-[11px] font-medium bg-c-warning/10 text-c-warning">
+                {t('presentations.result.qualityScore', 'Score {{score}}/100', {
+                  score: critic.overallScore,
+                })}
+              </span>
+            )}
+          </button>
+          {warningsExpanded && (
+            <ul className="space-y-1 px-4 pb-4">
+              {result.warnings.map((w, i) => (
+                <li key={i} className="text-sm text-c-warning/90">
+                  &bull; {w}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
