@@ -7956,13 +7956,17 @@
         "noData": "No feasibility data available.",
         "updated": "Initiative updated",
         "updateFailed": "Failed to update",
-        "aiProposals": "AI optimization proposals",
         "total": "Initiatives",
         "highRisk": "High risk (<50%)",
         "criticalDims": "With critical dimension",
         "filterBy": "Filtered by:",
         "allGood": "All initiatives have healthy feasibility",
-        "priorityRanking": "AI Priority Ranking — recommended execution order"
+        "priorityRanking": "Priority ranking — recommended execution order",
+        "gapFixProposals": "Suggested fixes for weak dimensions",
+        "gapFixAction": "Fix weak spots",
+        "gapFixSubtitle": "Rule-based checks over the feasibility dimensions — apply a targeted fix per finding.",
+        "rankingAction": "Ranking",
+        "scoreExplainer": "Score breakdown"
       },
       "logic": {
         "title": "Logic",

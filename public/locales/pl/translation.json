@@ -7118,13 +7118,17 @@
         "noData": "Brak danych wykonalności.",
         "updated": "Inicjatywa zaktualizowana",
         "updateFailed": "Nie udało się zaktualizować",
-        "aiProposals": "Propozycje optymalizacji AI",
         "total": "Inicjatywy",
         "highRisk": "Wysokie ryzyko (<50%)",
         "criticalDims": "Z wymiarem krytycznym",
         "filterBy": "Filtrowane wg:",
         "allGood": "Wszystkie inicjatywy mają zdrową wykonalność",
-        "priorityRanking": "Ranking priorytetów AI — zalecana kolejność realizacji"
+        "priorityRanking": "Ranking priorytetów — zalecana kolejność realizacji",
+        "gapFixProposals": "Sugerowane poprawki słabych wymiarów",
+        "gapFixAction": "Popraw słabe punkty",
+        "gapFixSubtitle": "Reguły sprawdzające wymiary wykonalności — zastosuj celowaną poprawkę do każdego wykrycia.",
+        "rankingAction": "Ranking",
+        "scoreExplainer": "Rozbicie wyniku"
       },
       "logic": {
         "title": "Logika",

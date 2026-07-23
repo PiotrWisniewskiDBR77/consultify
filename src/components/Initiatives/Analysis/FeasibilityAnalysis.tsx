@@ -1,7 +1,10 @@
 /**
  * FeasibilityAnalysis — Initiative feasibility matrix with full management
- * V3-F02b: Sortable columns, clickable dimension filters, AI Optimizer,
- *          AI Score Explainer, AI Priority Ranking, inline editing
+ * V3-F02b: Sortable columns, clickable dimension filters, weak-spot fixer,
+ *          score breakdown, priority ranking, inline editing
+ *
+ * Wszystkie trzy pomocniki liczą się LOKALNIE (reguły RAG na wymiarach
+ * wykonalności) — żaden nie woła modelu, więc żaden nie nosi etykiety „AI".
  */
 
 import {
@@ -16,14 +19,14 @@ import {
   HelpCircle,
   ListOrdered,
   Loader2,
-  Sparkles,
+  Wrench,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { getMenu3AiButtonClass } from './menu3ActionButtonStyles';
+import { getMenu3DeterministicButtonClass } from './menu3ActionButtonStyles';
 import type {
   AnalysisIssue,
   InitiativeFeasibility,
@@ -41,7 +44,7 @@ type SortCol = 'initiative' | 'budget' | 'skills' | 'time' | 'risk' | 'score';
 type SortDir = 'asc' | 'desc';
 type DimKey = 'budget' | 'skills' | 'time' | 'risk';
 
-interface AiOptProposal {
+interface GapFixProposal {
   initiativeId: string;
   initiativeName: string;
   dimension: DimKey;
@@ -119,10 +122,9 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [dimFilter, setDimFilter] = useState<{ dim: DimKey; color: DimColor } | null>(null);
 
-  // AI panels
-  const [aiOptRunning, setAiOptRunning] = useState(false);
-  const [aiOptProposals, setAiOptProposals] = useState<AiOptProposal[] | null>(null);
-  const [applyingOptIdx, setApplyingOptIdx] = useState<number | null>(null);
+  // Panele pomocnicze (wszystkie liczone lokalnie)
+  const [gapFixProposals, setGapFixProposals] = useState<GapFixProposal[] | null>(null);
+  const [applyingGapFixIdx, setApplyingGapFixIdx] = useState<number | null>(null);
   const [explainerId, setExplainerId] = useState<string | null>(null);
   const [showRanking, setShowRanking] = useState(false);
 
@@ -227,12 +229,17 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
     [editBudget, editEndDate, editOwner, editStartDate, onQuickUpdate, t]
   );
 
-  /* ---------- AI Optimizer ---------- */
+  /* ---------- Braki wykonalności (DETERMINISTYCZNE, nie AI) ---------- */
+  //
+  // 2026-07-23 — wycięta atrapa AI. Do dziś: przycisk „AI Optimize" z ikoną
+  // Sparkles i `setTimeout(600)` udającym myślenie. Model nigdy nie był wołany —
+  // to jest przejście po `feasibilities` i wypisanie reguł RAG (budżet czerwony,
+  // brak właściciela, brak dat, ryzyko czerwone). Reguła jest jawna i poprawna,
+  // więc funkcja zostaje — znika tylko podpis „AI" i fałszywa zwłoka.
 
-  const computeAiOptimizer = useCallback(() => {
-    setAiOptRunning(true);
-    setTimeout(() => {
-      const proposals: AiOptProposal[] = [];
+  const computeGapFixes = useCallback(() => {
+    {
+      const proposals: GapFixProposal[] = [];
 
       for (const f of feasibilities) {
         if (f.dimensions.budget === 'red') {
@@ -280,29 +287,28 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
         }
       }
 
-      setAiOptProposals(proposals);
-      setAiOptRunning(false);
-    }, 600);
+      setGapFixProposals(proposals);
+    }
   }, [feasibilities]);
 
-  const handleApplyOptProposal = useCallback(
-    async (p: AiOptProposal, idx: number) => {
+  const handleApplyGapFix = useCallback(
+    async (p: GapFixProposal, idx: number) => {
       if (!onQuickUpdate || !p.autoPayload) return;
-      setApplyingOptIdx(idx);
+      setApplyingGapFixIdx(idx);
       try {
         await onQuickUpdate(p.initiativeId, p.autoPayload);
         toast.success(t('initiatives.analysis.fixApplied', 'Fix applied'));
-        setAiOptProposals((prev) => prev?.filter((_, i) => i !== idx) ?? null);
+        setGapFixProposals((prev) => prev?.filter((_, i) => i !== idx) ?? null);
       } catch {
         toast.error(t('initiatives.analysis.fixFailed', 'Failed'));
       } finally {
-        setApplyingOptIdx(null);
+        setApplyingGapFixIdx(null);
       }
     },
     [onQuickUpdate, t]
   );
 
-  /* ---------- AI Score Explainer ---------- */
+  /* ---------- Rozbicie wyniku (lokalne, nie AI) ---------- */
 
   const getExplanation = (f: InitiativeFeasibility) => {
     const parts: string[] = [];
@@ -336,7 +342,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
     return `Score ${f.overallScore}% because: ${parts.join(', ')}. Suggestion: ${suggestions.join(', ')}.`;
   };
 
-  /* ---------- AI Priority Ranking ---------- */
+  /* ---------- Ranking priorytetów (sort po wyniku, nie AI) ---------- */
 
   const priorityRanking = useMemo(() => {
     return [...feasibilities]
@@ -368,21 +374,24 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
       : null;
 
   const closeWorkspacePanels = useCallback(() => {
-    setAiOptProposals(null);
+    setGapFixProposals(null);
     setShowRanking(false);
     setExplainerId(null);
   }, []);
 
-  const aiOptimizerPanel =
-    aiOptProposals !== null ? (
+  const gapFixPanel =
+    gapFixProposals !== null ? (
       <div className="m-4 rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
         <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-c-info dark:text-c-info" />
+            <Wrench size={16} className="text-c-info dark:text-c-info" />
             <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
-              {t('initiatives.analysis.feasibility.aiProposals', 'AI optimization proposals')}
+              {t(
+                'initiatives.analysis.feasibility.gapFixProposals',
+                'Suggested fixes for weak dimensions'
+              )}
             </h3>
-            <span className="text-xs text-c-info dark:text-c-info">({aiOptProposals.length})</span>
+            <span className="text-xs text-c-info dark:text-c-info">({gapFixProposals.length})</span>
           </div>
           <button
             onClick={closeWorkspacePanels}
@@ -391,7 +400,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
             <X size={14} />
           </button>
         </div>
-        {aiOptProposals.length === 0 ? (
+        {gapFixProposals.length === 0 ? (
           <div className="px-4 py-6 text-center">
             <Check size={24} className="mx-auto mb-2 text-emerald-500" />
             <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -403,7 +412,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
           </div>
         ) : (
           <div className="divide-y divide-c-info/20 dark:divide-c-info/15">
-            {aiOptProposals.map((p, idx) => (
+            {gapFixProposals.map((p, idx) => (
               <div
                 key={`${p.initiativeId}-${p.dimension}-${idx}`}
                 className="flex items-center gap-3 px-4 py-3 text-sm"
@@ -424,11 +433,11 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                 </div>
                 {p.autoPayload && onQuickUpdate ? (
                   <button
-                    onClick={() => handleApplyOptProposal(p, idx)}
-                    disabled={applyingOptIdx === idx}
+                    onClick={() => handleApplyGapFix(p, idx)}
+                    disabled={applyingGapFixIdx === idx}
                     className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
                   >
-                    {applyingOptIdx === idx ? (
+                    {applyingGapFixIdx === idx ? (
                       <Loader2 size={12} className="animate-spin" />
                     ) : (
                       <Check size={12} />
@@ -459,7 +468,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
           <h3 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
             {t(
               'initiatives.analysis.feasibility.priorityRanking',
-              'AI Priority Ranking — recommended execution order'
+              'Priority ranking — recommended execution order'
             )}
           </h3>
         </div>
@@ -523,7 +532,9 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
       <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <HelpCircle size={16} className="text-c-info dark:text-c-info" />
-          <h3 className="text-sm font-semibold text-c-info dark:text-c-info">AI Score Explainer</h3>
+          <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
+            {t('initiatives.analysis.feasibility.scoreExplainer', 'Score breakdown')}
+          </h3>
         </div>
         <button
           onClick={closeWorkspacePanels}
@@ -559,64 +570,66 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
 
   useEffect(() => {
     if (!onRegisterActions) return;
-    const toggleAiOptimizerPanel = () => {
-      if (aiOptProposals !== null) {
+    const toggleGapFixPanel = () => {
+      if (gapFixProposals !== null) {
         closeWorkspacePanels();
         return;
       }
       setShowRanking(false);
       setExplainerId(null);
-      computeAiOptimizer();
+      computeGapFixes();
     };
     onRegisterActions(
       <>
         {onQuickUpdate && (
           <button
-            onClick={toggleAiOptimizerPanel}
-            disabled={aiOptRunning}
-            className={getMenu3AiButtonClass(aiOptProposals !== null)}
+            onClick={toggleGapFixPanel}
+            className={getMenu3DeterministicButtonClass(gapFixProposals !== null)}
           >
-            {aiOptRunning ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-            AI Optimize
+            <Wrench size={12} />
+            {t('initiatives.analysis.feasibility.gapFixAction', 'Fix weak spots')}
           </button>
         )}
         <button
           onClick={() => {
-            setAiOptProposals(null);
+            setGapFixProposals(null);
             setExplainerId(null);
             setShowRanking((v) => !v);
           }}
-          className={getMenu3AiButtonClass(showRanking)}
+          className={getMenu3DeterministicButtonClass(showRanking)}
         >
           <ListOrdered size={12} />
-          AI Ranking
+          {t('initiatives.analysis.feasibility.rankingAction', 'Ranking')}
         </button>
       </>
     );
   }, [
     onRegisterActions,
     onQuickUpdate,
-    computeAiOptimizer,
-    aiOptProposals,
-    aiOptRunning,
+    computeGapFixes,
+    gapFixProposals,
     showRanking,
     closeWorkspacePanels,
+    t,
   ]);
 
   useEffect(() => {
     if (!onRegisterWorkspacePanel) return;
-    if (aiOptimizerPanel) {
+    if (gapFixPanel) {
       onRegisterWorkspacePanel({
-        title: 'AI Optimize',
-        subtitle: 'Apply targeted fixes for weak feasibility dimensions.',
-        icon: <Sparkles size={16} />,
-        content: aiOptimizerPanel,
+        title: t('initiatives.analysis.feasibility.gapFixAction', 'Fix weak spots'),
+        subtitle: t(
+          'initiatives.analysis.feasibility.gapFixSubtitle',
+          'Rule-based checks over the feasibility dimensions — apply a targeted fix per finding.'
+        ),
+        icon: <Wrench size={16} />,
+        content: gapFixPanel,
       });
       return () => onRegisterWorkspacePanel(null);
     }
     if (rankingPanel) {
       onRegisterWorkspacePanel({
-        title: 'AI Ranking',
+        title: t('initiatives.analysis.feasibility.rankingAction', 'Ranking'),
         subtitle: 'Recommended execution order based on feasibility score.',
         icon: <ListOrdered size={16} />,
         content: rankingPanel,
@@ -634,7 +647,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
     }
     onRegisterWorkspacePanel(null);
     return undefined;
-  }, [aiOptimizerPanel, rankingPanel, explainerPanel, onRegisterWorkspacePanel]);
+  }, [gapFixPanel, rankingPanel, explainerPanel, onRegisterWorkspacePanel]);
 
   /* ---------- render ---------- */
 
@@ -688,10 +701,10 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
         </div>
       )}
 
-      {/* AI Optimizer proposals */}
-      {!onRegisterWorkspacePanel && aiOptimizerPanel}
+      {/* Weak-spot fix proposals */}
+      {!onRegisterWorkspacePanel && gapFixPanel}
 
-      {/* AI Priority Ranking */}
+      {/* Priority ranking */}
       {!onRegisterWorkspacePanel && rankingPanel}
 
       {/* Feasibility matrix — sortable, filterable, with explainer */}
@@ -795,7 +808,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                         onClick={(e) => {
                           e.stopPropagation();
                           if (!isExplaining) {
-                            setAiOptProposals(null);
+                            setGapFixProposals(null);
                             setShowRanking(false);
                           }
                           setExplainerId(isExplaining ? null : f.initiativeId);
@@ -805,20 +818,23 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                             ? 'text-c-info dark:text-c-info bg-c-info/10'
                             : 'text-slate-600 hover:text-c-info hover:bg-c-info/10'
                         }`}
-                        title="AI Score Explainer"
+                        title={t(
+                          'initiatives.analysis.feasibility.scoreExplainer',
+                          'Score breakdown'
+                        )}
                       >
                         <HelpCircle size={14} />
                       </button>
                     </td>
                   </tr>
 
-                  {/* AI Score Explainer tooltip row */}
+                  {/* Score breakdown tooltip row */}
                   {isExplaining && !isExpanded && !onRegisterWorkspacePanel && (
                     <tr>
                       <td colSpan={8} className="px-0 py-0">
                         <div className="px-12 py-2.5 bg-c-info/5 dark:bg-c-info/10 border-b border-c-info/50 dark:border-c-info/30">
                           <div className="flex items-start gap-2">
-                            <Sparkles size={12} className="text-c-info mt-0.5 shrink-0" />
+                            <HelpCircle size={12} className="text-c-info mt-0.5 shrink-0" />
                             <p className="text-xs text-slate-700 dark:text-slate-300">
                               {getExplanation(f)}
                             </p>
@@ -837,7 +853,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                           {!onRegisterWorkspacePanel && (
                             <div className="mb-3 px-1 py-2 rounded-lg bg-c-info/5 dark:bg-c-info/10">
                               <div className="flex items-start gap-2 px-2">
-                                <Sparkles size={12} className="text-c-info mt-0.5 shrink-0" />
+                                <HelpCircle size={12} className="text-c-info mt-0.5 shrink-0" />
                                 <p className="text-xs text-slate-700 dark:text-slate-300">
                                   {getExplanation(f)}
                                 </p>
