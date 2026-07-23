@@ -40,6 +40,7 @@ import CrimsonMyWorkWave2Screen from './screens/crimson-mywork-wave2';
 import DecisionRecordScreen from './screens/decision-record';
 import DocumentStudioBlocksI18nScreen from './screens/document-studio-blocks-i18n';
 import ExceleEngineRevealScreen from './screens/excele-engine-reveal';
+import ExceleReopenVerifyScreen from './screens/excele-reopen-verify';
 import WordIntakeUseLlmDefaultScreen from './screens/word-intake-uselm-default';
 import DocumentStudioM1SharePrimaryScreen from './screens/document-studio-m1-share-primary';
 import EvFootballFieldScreen from './screens/ev-football-field';
@@ -131,6 +132,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'excele-engine-reveal': {
     label: 'DOKUMENTY — Excel: silnik arkuszy pod /excele (home) (audyt 2026-07-22, Sheet #9)',
     render: () => <ExceleEngineRevealScreen />,
+  },
+  'excele-reopen-verify': {
+    label:
+      'DOKUMENTY — Excel: naprawa "nie mam czego otworzyć" — reopen wiszącego artifactId → honest error zamiast pustego fake-podglądu (2026-07-23)',
+    render: () => <ExceleReopenVerifyScreen />,
   },
   'idea-table-tool-kebab': {
     label:

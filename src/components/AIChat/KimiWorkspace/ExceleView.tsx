@@ -78,6 +78,13 @@ export const ExceleView: React.FC = () => {
 
   const [reopenPreview, setReopenPreview] = useState<ArtifactPreview | null>(null);
   const [reopenWorkbookId, setReopenWorkbookId] = useState<string | null>(null);
+  // Naprawa 2026-07-23 (Excel — "nie mam czego otworzyć"): GET /workbook/:id
+  // 404-uje dla artefaktów typu 'sheet', których origin to tp_tables (governed
+  // table), nie generated_workbooks — to większość arkuszy z listy Recent/Saved
+  // (audyt demo: 61/75 origin_runtime='sheet', tylko 6 mają realny wpis w
+  // generated_workbooks). Zamiast fabrykować pusty podgląd ("Spreadsheet" bez
+  // treści — wygląda na otwarte, w środku nic), sygnalizujemy realny błąd.
+  const [reopenError, setReopenError] = useState<string | null>(null);
   const reopenLoaded = useRef(false);
 
   // D3 (roboty tri-tryby): jawny wybór 3 trybów na wejściu `?view=new`, tylko za
@@ -129,6 +136,7 @@ export const ExceleView: React.FC = () => {
         const title = wbData?.title || wbData?.schema_json?.title || 'Spreadsheet';
         const sheets = wbData?.schema_json?.sheets || [];
         setReopenWorkbookId(artifactId);
+        setReopenError(null);
         setReopenPreview({
           type: 'xlsx',
           title,
@@ -148,19 +156,34 @@ export const ExceleView: React.FC = () => {
         });
       })
       .catch(() => {
-        setReopenWorkbookId(artifactId);
-        setReopenPreview({
-          type: 'xlsx',
-          title: 'Spreadsheet',
-          fileName: 'spreadsheet.xlsx',
-          summary: 'Workbook loaded from library.',
-          kpiItems: [],
-          sheetNames: ['Sheet1'],
-          workbookId: artifactId,
-          downloadUrl: `/api/workbook/${artifactId}/download`,
-        });
+        // Naprawa 2026-07-23: `artifactId` tu nie zawsze jest generated_workbooks.id.
+        // Dla origin_runtime === 'sheet' bywa to tp_tables.id (governed table) —
+        // spróbuj otworzyć prawdziwą treść w Table Studio zamiast fabrykować pusty
+        // podgląd. Dopiero gdy NIC się nie rozwiąże (dane usunięte/wygasłe) —
+        // pokaż jawny błąd zamiast fałszywego "otworzyło się" z pustą siatką.
+        void (async () => {
+          const workspaceId = await resolveTablePlatformWorkspaceIdForTable(artifactId);
+          if (workspaceId) {
+            navigate(buildMyWorkSheetTableOpenPath(workspaceId, artifactId), { replace: true });
+            return;
+          }
+          setReopenWorkbookId(null);
+          setReopenPreview(null);
+          setReopenError(
+            t(
+              'kimi.excele.reopenNotFound',
+              'Nie znaleziono treści tego arkusza — dane źródłowe zostały usunięte lub wygasły.'
+            )
+          );
+          toast.error(
+            t(
+              'kimi.excele.reopenNotFoundToast',
+              'Nie udało się otworzyć arkusza — treść nie została znaleziona.'
+            )
+          );
+        })();
       });
-  }, [artifactId]);
+  }, [artifactId, navigate, t]);
 
   useEffect(() => {
     if (!pipeline.isGenerating || pipeline.isBusy) return undefined;
@@ -352,8 +375,8 @@ export const ExceleView: React.FC = () => {
       completedSteps={pipeline.completedSteps}
       isGenerating={pipeline.isGenerating}
       isCompleted={effectiveCompleted}
-      isFailed={pipeline.isFailed}
-      failureReason={pipeline.failureReason}
+      isFailed={pipeline.isFailed || !!reopenError}
+      failureReason={pipeline.failureReason || reopenError || undefined}
       preview={effectivePreview}
       onReplay={pipeline.handleReplay}
       onRemix={pipeline.handleRemix}
