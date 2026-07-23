@@ -46,6 +46,7 @@ import ExecutionChangeSignalsScreen from './screens/execution-change-signals';
 import FinanceValuePanelsScreen from './screens/finance-value-panels';
 import GenDeckContentHintsScreen from './screens/gen-deck-content-hints';
 import GenExcelTemplatesTabScreen from './screens/gen-excel-templates-tab';
+import GenWordContentHintsScreen from './screens/gen-word-content-hints';
 import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
@@ -95,6 +96,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DOKUMENTY — Gen. Excel W1: zakładka huba "Generator szablonów Excel" (ff_workbook_templates, 3 wzorce)',
     render: () => <GenExcelTemplatesTabScreen />,
+  },
+  'gen-word-content-hints': {
+    label:
+      'DOKUMENTY — Gen. Word W2: content hints per sekcja w Word Template Architect (ff_tpl_editor)',
+    render: () => <GenWordContentHintsScreen />,
   },
   'word-intake-uselm-default': {
     label: 'DOKUMENTY — Word intake: domyślnie „Wygeneruj treść z AI" (audyt 2026-07-22, Word #8)',
