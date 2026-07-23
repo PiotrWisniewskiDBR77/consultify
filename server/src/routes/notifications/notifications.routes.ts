@@ -6,11 +6,16 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
+import { validateBody } from '../../middleware/validation.middleware.js';
 import { EscalationService } from '../../services/escalationService.js';
 import NotificationService from '../../services/notificationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import {
+  UpdateNotificationChecklistSchema,
+  UpdateNotificationWorksheetSchema,
+} from '../../validators/notifications.validators.js';
 
 function isMissingTableError(error: unknown): boolean {
   const message = (error as any)?.message;
@@ -761,10 +766,17 @@ router.post(
 /**
  * PATCH /api/notifications/:id/checklist
  * Update the action checklist for a notification
+ *
+ * ★ 2026-07-23: było `Array.isArray` i nic więcej — element mógł być czymkolwiek,
+ * a lista nie miała limitu. Teraz zod (kształt pozycji + cap 200 pozycji).
+ * ★ 2026-07-23: 0 dotkniętych wierszy (cudze/nieistniejące id) = 404, nie
+ * `{success:true}`. Wcześniej PATCH na cudze powiadomienie kończył się cichym
+ * „zapisano" — użytkownik widział sukces, a nie zapisało się nic.
  */
 router.patch(
   '/:id/checklist',
   verifyToken,
+  validateBody(UpdateNotificationChecklistSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const service = NotificationService;
     const userId = (req as any).userId || req.user?.id;
@@ -774,11 +786,12 @@ router.patch(
     try {
       const { checklist } = req.body;
 
-      if (!Array.isArray(checklist)) {
-        return res.status(400).json({ error: 'checklist must be an array' });
+      const updated = await service.updateChecklist(req.params.id, userId, checklist);
+      if (!updated) {
+        return res
+          .status(404)
+          .json({ error: 'Notification not found', code: 'NOTIFICATION_NOT_FOUND' });
       }
-
-      await service.updateChecklist(req.params.id, userId, checklist);
       return res.json({ success: true });
     } catch (err: any) {
       // Write — never fail-soft; surface a real error with a code.
@@ -799,10 +812,17 @@ router.patch(
  * Persist editable worksheet drafts from NotificationDetailView
  *
  * Body: { description?, whyImportant?, blocked?, expectedAction? }
+ *
+ * ★ 2026-07-23: trasa nie miała ŻADNEJ walidacji (tylko `String(...)`) ani limitu
+ * długości, a autozapis w karcie leci co 1,2 s ⇒ kolumna `notifications.data`
+ * mogła rosnąć bez ograniczeń. Teraz zod (`.strict()` + limit 20 000 znaków/pole).
+ * ★ 2026-07-23: `(service as any)` USUNIĘTE — metoda `updateWorksheetDraft`
+ * istnieje na serwisie; cast tylko maskował ewentualną literówkę.
  */
 router.patch(
   '/:id/worksheet',
   verifyToken,
+  validateBody(UpdateNotificationWorksheetSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const service = NotificationService;
     const userId = (req as any).userId || req.user?.id;
@@ -810,13 +830,19 @@ router.patch(
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     try {
+      // Po walidacji zod pola są już `string | undefined` — bez `String(...)`.
       const { description, whyImportant, blocked, expectedAction } = req.body || {};
-      await (service as any).updateWorksheetDraft(req.params.id, userId, {
-        ...(description !== undefined ? { description: String(description) } : {}),
-        ...(whyImportant !== undefined ? { whyImportant: String(whyImportant) } : {}),
-        ...(blocked !== undefined ? { blocked: String(blocked) } : {}),
-        ...(expectedAction !== undefined ? { expectedAction: String(expectedAction) } : {}),
+      const updated = await service.updateWorksheetDraft(req.params.id, userId, {
+        ...(description !== undefined ? { description } : {}),
+        ...(whyImportant !== undefined ? { whyImportant } : {}),
+        ...(blocked !== undefined ? { blocked } : {}),
+        ...(expectedAction !== undefined ? { expectedAction } : {}),
       });
+      if (!updated) {
+        return res
+          .status(404)
+          .json({ error: 'Notification not found', code: 'NOTIFICATION_NOT_FOUND' });
+      }
       return res.json({ success: true });
     } catch (err: any) {
       // Write — never fail-soft; surface a real error with a code.

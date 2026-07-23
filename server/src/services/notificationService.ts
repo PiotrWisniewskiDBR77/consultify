@@ -673,24 +673,50 @@ class NotificationService {
   }
 
   /**
-   * Update action checklist for a notification
+   * Update action checklist for a notification.
+   *
+   * ★ 2026-07-23 — zwraca `false`, gdy UPDATE nie dotknął żadnego wiersza
+   * (nieistniejące id albo powiadomienie NALEŻĄCE DO KOGOŚ INNEGO — klauzula
+   * `user_id = ?` po prostu nic nie dopasuje). Wcześniej metoda zwracała `void`,
+   * a trasa odpowiadała `{success:true}` również w tym przypadku: cichy no-op
+   * pokazywany użytkownikowi jako udany zapis. Trasa mapuje `false` na 404.
    */
   async updateChecklist(
     notificationId: string,
     userId: string,
     checklist: { id: string; text: string; completed: boolean }[]
-  ): Promise<void> {
+  ): Promise<boolean> {
     const db = await this.getDb();
 
-    await db.run(`UPDATE notifications SET checklist = ? WHERE id = ? AND user_id = ?`, [
-      JSON.stringify(checklist),
-      notificationId,
-      userId,
-    ]);
+    const result = await db.run(
+      `UPDATE notifications SET checklist = ? WHERE id = ? AND user_id = ?`,
+      [JSON.stringify(checklist), notificationId, userId]
+    );
+
+    return (result?.changes ?? 0) > 0;
   }
 
   /**
    * Update editable "worksheet" drafts for NotificationDetailView (persisted in notifications.data JSON)
+   *
+   * ★ 2026-07-23 — WYŚCIG UTRATY ZAPISU NAPRAWIONY.
+   * Było: czysty read-modify-write całej kolumny `data` (SELECT → merge w Node →
+   * bezwarunkowy UPDATE). Dwie zakładki tej samej karty (autozapis co 1,2 s)
+   * czytały ten sam stan i druga nadpisywała CAŁY JSON pierwszej — zapis znikał
+   * bez żadnego błędu.
+   * Jest: compare-and-swap — UPDATE wykonuje się TYLKO gdy `data` w bazie jest
+   * nadal tym, co przeczytaliśmy (`COALESCE(data,'') = ?`). Zero dotkniętych
+   * wierszy ⇒ ktoś zapisał w międzyczasie ⇒ czytamy świeżo i scalamy ponownie.
+   *
+   * DLACZEGO NIE TRANSAKCJA: `db.run('BEGIN')` NIE jest tu bezpieczne —
+   * PostgresDatabase.query/run idzie przez pulę bez przypięcia klienta
+   * (PostgresDatabase.ts:1284-1302), więc kolejne zapytania mogą trafić na inne
+   * połączenia i `BEGIN`/`COMMIT` nie obejmą jednej sesji. `SELECT … FOR UPDATE`
+   * ma ten sam problem. CAS działa poprawnie bez transakcji, bez zmiany schematu
+   * i identycznie na obu dialektach.
+   *
+   * @returns `false` gdy powiadomienie nie istnieje albo należy do innego użytkownika.
+   * @throws  gdy po `MAX_ATTEMPTS` próbach nadal trwa kolizja (uczciwy błąd → 500).
    */
   async updateWorksheetDraft(
     notificationId: string,
@@ -701,53 +727,75 @@ class NotificationService {
       blocked?: string;
       expectedAction?: string;
     }
-  ): Promise<void> {
+  ): Promise<boolean> {
     const db = await this.getDb();
-    const row = await db.get<{ data?: string }>(
-      `SELECT data FROM notifications WHERE id = ? AND user_id = ?`,
-      [notificationId, userId]
-    );
-    if (!row) {
-      throw new Error('Notification not found');
+    const MAX_ATTEMPTS = 4;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      const row = await db.get<{ data?: string | null }>(
+        `SELECT data FROM notifications WHERE id = ? AND user_id = ?`,
+        [notificationId, userId]
+      );
+      if (!row) return false;
+
+      // Wartość-świadek dla CAS. Normalizujemy NULL → '' tak samo po obu
+      // stronach porównania (kolumna bywa NULL, a `= ?` nigdy nie dopasuje NULL-a).
+      const witness = row.data ?? '';
+
+      let dataObj: Record<string, unknown> = {};
+      try {
+        const parsed = witness ? JSON.parse(witness) : {};
+        dataObj =
+          parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+            ? (parsed as Record<string, unknown>)
+            : {};
+      } catch {
+        dataObj = {};
+      }
+
+      const prevWorksheet =
+        dataObj.worksheet &&
+        typeof dataObj.worksheet === 'object' &&
+        !Array.isArray(dataObj.worksheet)
+          ? (dataObj.worksheet as Record<string, unknown>)
+          : {};
+
+      const nextWorksheet = {
+        ...prevWorksheet,
+        ...(draft.description !== undefined ? { description: draft.description } : {}),
+        ...(draft.whyImportant !== undefined ? { whyImportant: draft.whyImportant } : {}),
+        ...(draft.blocked !== undefined ? { blocked: draft.blocked } : {}),
+        ...(draft.expectedAction !== undefined ? { expectedAction: draft.expectedAction } : {}),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const nextData = JSON.stringify({ ...dataObj, worksheet: nextWorksheet });
+
+      const result = await db.run(
+        `UPDATE notifications SET data = ? WHERE id = ? AND user_id = ? AND COALESCE(data, '') = ?`,
+        [nextData, notificationId, userId, witness]
+      );
+
+      if ((result?.changes ?? 0) > 0) {
+        await this.addActivityLogEntry(
+          notificationId,
+          userId,
+          'worksheet_updated',
+          'Notification worksheet updated'
+        );
+        return true;
+      }
+
+      // 0 wierszy: albo ktoś zapisał w międzyczasie (retry scali na świeżo),
+      // albo wiersz zniknął (następna iteracja przeczyta `null` i zwróci false).
+      logger.warn('[NotificationService] worksheet CAS retry', {
+        notificationId,
+        attempt,
+      });
     }
 
-    let dataObj: Record<string, unknown> = {};
-    try {
-      dataObj = row.data ? JSON.parse(row.data) : {};
-    } catch {
-      dataObj = {};
-    }
-
-    const prevWorksheet =
-      dataObj.worksheet &&
-      typeof dataObj.worksheet === 'object' &&
-      !Array.isArray(dataObj.worksheet)
-        ? (dataObj.worksheet as Record<string, unknown>)
-        : {};
-
-    const nextWorksheet = {
-      ...prevWorksheet,
-      ...(draft.description !== undefined ? { description: draft.description } : {}),
-      ...(draft.whyImportant !== undefined ? { whyImportant: draft.whyImportant } : {}),
-      ...(draft.blocked !== undefined ? { blocked: draft.blocked } : {}),
-      ...(draft.expectedAction !== undefined ? { expectedAction: draft.expectedAction } : {}),
-      updatedAt: new Date().toISOString(),
-    };
-
-    dataObj = { ...dataObj, worksheet: nextWorksheet };
-
-    await db.run(`UPDATE notifications SET data = ? WHERE id = ? AND user_id = ?`, [
-      JSON.stringify(dataObj),
-      notificationId,
-      userId,
-    ]);
-
-    await this.addActivityLogEntry(
-      notificationId,
-      userId,
-      'worksheet_updated',
-      'Notification worksheet updated'
-    );
+    // Uczciwy błąd zamiast cichego „zapisano" — karta pokaże nieudany zapis.
+    throw new Error('WORKSHEET_WRITE_CONFLICT');
   }
 
   /**

@@ -467,6 +467,9 @@ export const AttachmentsLinksCanvas: React.FC<AttachmentsLinksCanvasProps> = ({
   const [internalLinkComment, setInternalLinkComment] = useState('');
   const [stagedInternalItem, setStagedInternalItem] = useState<LinkedItem | null>(null);
   const [isGeneratingLinkComment, setIsGeneratingLinkComment] = useState(false);
+  // Widoczny stan bledu generowania komentarza. „AI niedostepne" to POPRAWNY
+  // wynik — cisza nie jest. Toast znika, ten komunikat zostaje przy przycisku.
+  const [linkCommentError, setLinkCommentError] = useState<string | null>(null);
 
   // ── Cloud integrations ────────────────────────────────────────────────────
   const {
@@ -655,6 +658,7 @@ export const AttachmentsLinksCanvas: React.FC<AttachmentsLinksCanvasProps> = ({
     setSelectedLinkRelation('related');
     setSelectedLinkDirection('outgoing');
     setInternalLinkComment('');
+    setLinkCommentError(null);
   };
 
   /** Confirm and add the staged internal link */
@@ -672,6 +676,7 @@ export const AttachmentsLinksCanvas: React.FC<AttachmentsLinksCanvasProps> = ({
   /** AI-generate a comment that explains the chosen relationship */
   const handleAIGenerateLinkComment = async () => {
     setIsGeneratingLinkComment(true);
+    setLinkCommentError(null);
     try {
       const relLabel = LINK_RELATION_LABELS[selectedLinkRelation];
       const dirLabel =
@@ -694,21 +699,42 @@ Direction: ${dirLabel}
 Target item: ${targetName}${targetType ? ` (type: ${targetType})` : ''}
 Write a clear, professional comment explaining why this link exists and its significance. Respond ONLY with the comment, no headings.`;
 
-      const aiRes = await Api.post('/ai/chat', {
+      // ★ 2026-07-23 — NAPRAWA ATRAPY (wspóldzielona przez Decision/Task/Initiative).
+      // Bylo: POST /ai/chat — orkiestrator zwraca {role,intent,prompt,...} i NIGDY
+      // pola `text`/`content`. Warunek `if (raw)` byl zawsze falszywy => klikniecie
+      // nie robilo NIC: bez tresci, bez bledu, bez toastu.
+      // Jest: POST /ai/generate — jedyny endpoint zwracajacy {text} (ai.routes.ts
+      // :5829-5881; wzorzec: services/cardAnalysis/cardAnalysisService.ts).
+      // Pusta odpowiedz = UCZCIWY BLAD widoczny w karcie, nie ciche nic.
+      const aiRes = await Api.post('/ai/generate', {
         message: prompt,
-        history: [],
         systemInstruction: t(
           'sharedComponents.attachmentsLinksCanvas.aiLinkCommentSystemInstruction'
         ),
         roleName: 'Link Comment Advisor',
       });
 
-      const raw = String(aiRes?.text || aiRes?.content || '').trim();
-      if (raw) {
-        setInternalLinkComment(raw);
+      const raw = String(aiRes?.text ?? '').trim();
+      if (!raw) {
+        setLinkCommentError(
+          t('sharedComponents.attachmentsLinksCanvas.generateCommentEmpty', 'AI unavailable')
+        );
+        toast.error(
+          t('sharedComponents.attachmentsLinksCanvas.generateCommentEmpty', 'AI unavailable')
+        );
+        return;
       }
-    } catch {
-      toast.error(t('sharedComponents.attachmentsLinksCanvas.generateCommentFailed'));
+      setInternalLinkComment(raw);
+    } catch (err) {
+      // Kod bledu z backendu (AI_BUDGET_EXHAUSTED / EMPTY_LLM_RESPONSE / ...)
+      // pokazujemy wprost — konsultant ma wiedziec DLACZEGO nie ma wyniku.
+      const serverCode =
+        (err as { code?: string })?.code ??
+        (err as { response?: { data?: { code?: string } } })?.response?.data?.code;
+      const base = t('sharedComponents.attachmentsLinksCanvas.generateCommentFailed');
+      const msg = serverCode ? `${base} (${serverCode})` : base;
+      setLinkCommentError(msg);
+      toast.error(msg);
     } finally {
       setIsGeneratingLinkComment(false);
     }
@@ -979,6 +1005,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                   setSelectedLinkRelation('related');
                   setSelectedLinkDirection('outgoing');
                   setInternalLinkComment('');
+                  setLinkCommentError(null);
                   setIsInternalLinkModalOpen(true);
                 }}
                 className="inline-flex items-center gap-1 text-xs font-medium text-c-text-secondary dark:text-c-text-secondary hover:text-c-text dark:hover:text-c-text-muted transition-colors"
@@ -1477,6 +1504,23 @@ Write a clear, professional comment explaining why this link exists and its sign
                       {t('sharedComponents.attachmentsLinksCanvas.aiDescribeButton')}
                     </button>
                   </div>
+                  {/* Uczciwy, TRWALY stan bledu AI (toast znika, ten komunikat nie). */}
+                  {linkCommentError && (
+                    <div
+                      role="status"
+                      className="mb-2 flex items-start gap-2 rounded-lg border border-c-danger/40 bg-c-danger/10 px-2.5 py-1.5 text-[11px] text-c-danger"
+                    >
+                      <span className="flex-1">{linkCommentError}</span>
+                      <button
+                        type="button"
+                        onClick={() => setLinkCommentError(null)}
+                        className="shrink-0 opacity-70 hover:opacity-100"
+                        aria-label={t('sharedComponents.attachmentsLinksCanvas.cancelAction')}
+                      >
+                        <X size={11} />
+                      </button>
+                    </div>
+                  )}
                   <textarea
                     value={internalLinkComment}
                     onChange={(e) => setInternalLinkComment(e.target.value)}

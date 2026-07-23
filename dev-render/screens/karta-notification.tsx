@@ -196,7 +196,9 @@ if (__aiDelay > 0) {
   });
   const realPost = Api.post.bind(Api);
   Api.post = (async (url: string, body?: unknown) => {
-    if (String(url).includes('/ai/chat')) {
+    // ★ 2026-07-23: karta wola teraz /ai/generate (jedyny endpoint zwracajacy
+    // {text}); /ai/chat zostaje w warunku tylko dla starych linkow harnessu.
+    if (String(url).includes('/ai/generate') || String(url).includes('/ai/chat')) {
       await new Promise((r) => setTimeout(r, __aiDelay));
       return { text: AI_JSON };
     }
