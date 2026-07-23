@@ -66,6 +66,7 @@ import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
+import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import { LoadingState } from '@/components/ui/primitives';
 import { type SmartOpenConditions, useAccordionSections } from '@/hooks/useAccordionSections';
 import {
@@ -747,6 +748,23 @@ const DEMO_ESCALATION: EscalationRule = {
 // LLM provider is configured the service degrades honestly: model === 'placeholder'
 // and content is a bracketed "[…]" notice. We treat that as a soft failure so the
 // card lands on `error` (retry available) instead of persisting a placeholder draft.
+/**
+ * Typy powiązań, na których decyzja się OPIERA (wiedza wejściowa), a nie
+ * takie, które z niej wynikają lub jej towarzyszą. Sterują rozdziałem między
+ * sekcją „Powiązania" (③) a „Źródła i założenia" (④) w prawym panelu — n-Type
+ * §6.2. Bez tego rozdziału ten sam rekord stałby w obu sekcjach.
+ */
+const DECISION_SOURCE_LINK_TYPES = new Set([
+  'insight',
+  'report',
+  'assessment',
+  'notebook',
+  'note',
+  'document',
+  'interview',
+  'session',
+]);
+
 const isDecisionSectionPlaceholder = (res: any): boolean =>
   String(res?.model || '') === 'placeholder' || /^\s*\[.*\]\s*$/.test(String(res?.content || ''));
 
@@ -4910,6 +4928,18 @@ Use userId only from this list:
     ? null
     : (panelWorkflowActions.find((a) => a.tone === 'success' || a.tone === 'primary')?.id ?? null);
 
+  // ── Rozdział POWIĄZAŃ od ŹRÓDEŁ (n-Type §6.2 poz. 3 vs 4) ────────────────
+  // Panel dostał sekcję „Źródła i założenia", więc powiązania wiedzowe (wnioski
+  // z wywiadów, raporty, oceny, notatki/sesje) przestają być zwykłą listą
+  // powiązań — to na nich decyzja się OPIERA. Rozdzielamy je RAZ, żeby ten sam
+  // rekord nie pojawił się w dwóch sekcjach naraz.
+  const relationLinkedItems = linkedItems.filter(
+    (li) => !DECISION_SOURCE_LINK_TYPES.has(String(li.type))
+  );
+  const evidenceLinkedItems = linkedItems.filter((li) =>
+    DECISION_SOURCE_LINK_TYPES.has(String(li.type))
+  );
+
   const deciderUser = users.find((u) => u.id === deciderId);
   const deciderDisplayName =
     deciderName ||
@@ -5078,8 +5108,7 @@ Use userId only from this list:
         !initiativeName &&
         !(sourceType && sourceId) &&
         risks.length === 0 &&
-        linkedItems.length === 0 &&
-        attachments.length === 0,
+        relationLinkedItems.length === 0,
       emptyLabel: t('myWork.decisionDetail.emptyLabel', 'No relations'),
       children: (
         <div className="flex flex-col gap-2">
@@ -5142,7 +5171,10 @@ Use userId only from this list:
               </span>
             </button>
           ) : null}
-          {linkedItems.slice(0, 5).map((li) => (
+          {/* Powiązania NIE-źródłowe. Wnioski/raporty/oceny/notatki zjechały do
+              sekcji „Źródła i założenia" (n-Type §6.2) — decyzja się na nich
+              OPIERA, a nie tylko z nimi sąsiaduje. Rekord nie stoi w obu. */}
+          {relationLinkedItems.slice(0, 5).map((li) => (
             <button
               key={`${li.type}:${li.id}`}
               type="button"
@@ -5153,16 +5185,126 @@ Use userId only from this list:
               <span className="text-xs text-c-text truncate">{li.title}</span>
             </button>
           ))}
-          {attachments.length > 0 ? (
-            <div className="flex items-center justify-between gap-3">
+          {/* Załączniki: był tu sam LICZNIK, teraz jest imienna lista w sekcji
+              „Źródła i założenia" (to dokumenty źródłowe, nie relacja). */}
+        </div>
+      ),
+    },
+    {
+      // ── ④ Źródła i założenia (n-Type §6.2 / 01_DECYZJA §6.2) ───────────────
+      // Sekcji NIE BYŁO — decyzja pokazywała czym jest i z czym się wiąże, ale
+      // nie NA CZYM STOI. Zbiera cztery klasy wejść w jednym miejscu:
+      //   · źródłowy artefakt (z czego decyzja powstała),
+      //   · dokumenty źródłowe (załączniki — dotąd sam licznik w Powiązaniach),
+      //   · sesje, notatki, wnioski, raporty i oceny (powiązania wiedzowe),
+      //   · koperta dowodowa: cytaty, założenia (użytkownik / AI / Teresa /
+      //     benchmark), pozycje do weryfikacji i poziom pewności.
+      //
+      // `isEmpty` CELOWO nieustawione: `EvidencePanelSection` dociąga kopertę
+      // ASYNCHRONICZNIE i ma własny stan pusty, a `isEmpty` liczy się przy
+      // budowie tablicy sekcji (przed odpowiedzią sieci) — ustawione tu
+      // zjadłoby treść, która dopiero przyjdzie.
+      id: 'evidence',
+      label: t('myWork.decisionDetail.sourcesAndAssumptions', 'Sources & assumptions'),
+      icon: BookOpen,
+      defaultOpen: false,
+      children: (
+        <div className="flex flex-col gap-3">
+          {sourceType && sourceId ? (
+            <div className="flex items-center gap-2">
               <span className={rpKeyClass}>
-                {t('myWork.decisionDetail.attachments', 'Attachments')}
+                {t('myWork.decisionDetail.sourceArtifact', 'Source artifact')}
               </span>
-              <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums text-c-text-muted bg-c-surface-raised">
-                {attachments.length}
-              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  window.dispatchEvent(
+                    new CustomEvent('mywork-open-item', {
+                      detail: {
+                        type: sourceType === 'notebook' ? 'notebook' : sourceType,
+                        id: sourceId,
+                        name: `Source ${sourceType}`,
+                        initialTool: sourceType === 'idea' ? 'mindmap' : undefined,
+                      },
+                    })
+                  )
+                }
+                className={rpChipBtn}
+              >
+                <FileText size={12} className="text-c-text-muted shrink-0" />
+                <span className="truncate">{sourceType}</span>
+              </button>
             </div>
           ) : null}
+
+          {attachments.length > 0 ? (
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <FileText size={12} className="text-c-text-muted" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+                  {t('myWork.decisionDetail.sourceDocuments', 'Source documents')}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1">
+                {attachments.map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => {
+                      if (a.url) {
+                        window.open(a.url, '_blank', 'noopener,noreferrer');
+                        return;
+                      }
+                      // Załącznik bez URL (świeżo dodany, jeszcze nie wysłany) —
+                      // otwieramy kartę, w której da się nim zarządzać. Kanoniczne
+                      // `attachments` renderuje się w Decision pod id
+                      // `resources-links` (patrz decisionCardContract.ts).
+                      setActiveNotionSection('resources-links');
+                    }}
+                    className="flex items-center gap-2 text-left hover:bg-c-surface-raised rounded-md px-1 -mx-1 py-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                  >
+                    <FileText size={12} className="text-c-text-muted shrink-0" />
+                    <span className="text-xs text-c-text truncate">{a.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {evidenceLinkedItems.length > 0 ? (
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <Layers size={12} className="text-c-text-muted" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+                  {t('myWork.decisionDetail.sessionsAndNotes', 'Sessions, notes & findings')}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1">
+                {evidenceLinkedItems.map((li) => (
+                  <button
+                    key={`${li.type}:${li.id}`}
+                    type="button"
+                    onClick={() => openLinkedItemTarget(li)}
+                    className="flex items-center gap-2 text-left hover:bg-c-surface-raised rounded-md px-1 -mx-1 py-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                  >
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase text-c-text-muted bg-c-surface-raised shrink-0">
+                      {li.type}
+                    </span>
+                    <span className="text-xs text-c-text truncate">{li.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Cytaty i dowody, założenia (użytkownik / AI / Teresa / benchmark),
+              „do weryfikacji" i poziom pewności — wspólny komponent standardu,
+              ten sam, którego używa Insight. */}
+          <EvidencePanelSection
+            artifactType="decision"
+            artifactId={decisionId || undefined}
+            isPolish={isPolish}
+          />
         </div>
       ),
     },

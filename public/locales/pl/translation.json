@@ -2929,7 +2929,11 @@
       "label5": "Historia / AI",
       "emptyLabel3": "Brak historii",
       "ariaLabel": "Szczegóły decyzji",
-      "actionsHiddenInReadMode": "Akcje są ukryte w trybie Podgląd"
+      "actionsHiddenInReadMode": "Akcje są ukryte w trybie Podgląd",
+      "sourcesAndAssumptions": "Źródła i założenia",
+      "sourceArtifact": "Artefakt źródłowy",
+      "sourceDocuments": "Dokumenty źródłowe",
+      "sessionsAndNotes": "Sesje, notatki i wnioski"
     },
     "taskDetail": {
       "label": "Powiadomienie tylko",

@@ -3783,7 +3783,11 @@
       "label5": "History / AI",
       "emptyLabel3": "No history",
       "ariaLabel": "Decision details",
-      "actionsHiddenInReadMode": "Actions are hidden in preview mode"
+      "actionsHiddenInReadMode": "Actions are hidden in preview mode",
+      "sourcesAndAssumptions": "Sources & assumptions",
+      "sourceArtifact": "Source artifact",
+      "sourceDocuments": "Source documents",
+      "sessionsAndNotes": "Sessions, notes & findings"
     },
     "taskDetail": {
       "label": "Notify only",
