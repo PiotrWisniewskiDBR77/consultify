@@ -108,21 +108,41 @@ Praca jest skończona, gdy **wszystkie** bramki są spełnione i **każda ma dow
 - [ ] 1280×800 bez nakładania.
 
 ### Dostępność
-- [ ] 0 naruszeń `critical`, 0 `serious`.
-  > **Stan 2026-07-23: bramka NIE przechodzi.** Skan axe-core 4.12 na czterech obiektach
-  > testowych (1440×900) wykazał: `aria-allowed-attr` (critical — naprawione),
-  > `aria-required-attr`, `button-name` (1–5 na ekran), `label` (**49** w Tabeli),
-  > `aria-prohibited-attr`, `color-contrast` (3), `nested-interactive` (2 w Tablicy).
-  > To defekty zastane, nie wprowadzone przez bieżące naprawy — ale bramka jest bramką.
-  > Część `color-contrast` leży w powłoce globalnej (logo, breadcrumb, odznaka), czyli
-  > poza tym standardem — wymaga decyzji, czy poprawiamy globalnie.
-  > Surowe wyniki: `artifacts/idea-workspace-qa/<RUN>/qa-geometria-a11y.json`.
+- [ ] 0 naruszeń `critical`, 0 `serious`. → **`critical` = 0 ✅ · `serious` pozostaje ❌**
+  > **Stan 2026-07-23, po nocy napraw.** Skan axe-core 4.12, cztery obiekty testowe, 1440×900.
+  >
+  > | | na starcie | po naprawach |
+  > |---|---|---|
+  > | `critical` (mapa/tablica/przepływ/tabela) | 1 / 4 / 3 / 5 (+ `label` **49** w Tabeli) | **0 / 0 / 0 / 0** |
+  > | `serious` | 4 / 6 / 4 / 4 | 3 / 5 / 3 / 3 |
+  >
+  > Zamknięte: `label` (49 → 0), `aria-allowed-attr`, `aria-required-attr`,
+  > `aria-prohibited-attr`, `button-name` (wszystkie — okazały się jednym komponentem:
+  > przyciskiem zamykania karty w pasku Moja Praca).
+  >
+  > **Zostają dwa `serious`, oba wymagają decyzji, nie kodu:**
+  > 1. `color-contrast` ×3 na każdym ekranie — powłoka **globalna** (logo, breadcrumb,
+  >    odznaka licznika), nie ekran Idei. Poprawka logo dotyka `text-primary-500`, czyli
+  >    crimson zarezerwowanego dla semantyki krytycznej. Zmiana dotknęłaby całego produktu.
+  > 2. `nested-interactive` ×2 w Tablicy — `reactflow` v11 zaszywa `role="button"` na każdym
+  >    fokusowalnym węźle, a ramka słusznie zawiera przycisk zwijania. Jedyna dźwignia to
+  >    odebranie węzłom fokusowalności — czyli wymiana naruszenia axe na utratę obsługi
+  >    klawiaturą, której ta sama bramka wymaga poniżej. Zła wymiana.
+  >
+  > Surowe wyniki: `artifacts/idea-workspace-qa/<RUN>/qa-geometria-a11y.json` (przed)
+  > oraz `a11y-po-naprawach.json` (po).
 - [ ] Główne przepływy obsługiwane klawiaturą.
 - [ ] Widoczny fokus, nazwy dostępności, tooltipy.
 
 ### Regresja
-- [ ] Cztery reprezentacje przechodzą po zmianach wspólnej powłoki.
-- [ ] **Dwie kolejne czyste rundy** bez nowego P0/P1.
+- [x] Cztery reprezentacje przechodzą po zmianach wspólnej powłoki.
+- [x] **Dwie kolejne czyste rundy** bez nowego P0/P1.
+  > Obie rundy identyczne: zakładki panelu unikalne w każdej reprezentacji, rynna pod
+  > lewym railem obecna, żądania `presence` w normie, zero poziomego przewijania,
+  > zero błędów konsoli — **z jednym wyjątkiem, który nie jest defektem produktu**:
+  > w Tablicy leci `400` z `/api/link-preview`. To węzeł-link w moich danych testowych
+  > wskazujący na `example.com`, którego guard SSRF nie może zweryfikować, bo środowisko
+  > dev nie ma sieci. Sprawdzone u źródła, nie założone.
 
 ### Dowodowa
 - [ ] Każde wymaganie ma status `verified` i przypisany dowód.

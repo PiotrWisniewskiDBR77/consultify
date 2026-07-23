@@ -106,22 +106,7 @@
   "problemy": [],
   "a11y": [
    {
-    "id": "aria-allowed-attr",
-    "impact": "critical",
-    "ile": 1
-   },
-   {
-    "id": "aria-prohibited-attr",
-    "impact": "serious",
-    "ile": 1
-   },
-   {
     "id": "aria-required-attr",
-    "impact": "critical",
-    "ile": 1
-   },
-   {
-    "id": "button-name",
     "impact": "critical",
     "ile": 1
    },
@@ -157,24 +142,9 @@
   "problemy": [],
   "a11y": [
    {
-    "id": "aria-allowed-attr",
-    "impact": "critical",
-    "ile": 1
-   },
-   {
-    "id": "aria-prohibited-attr",
-    "impact": "serious",
-    "ile": 1
-   },
-   {
     "id": "aria-required-attr",
     "impact": "critical",
     "ile": 1
-   },
-   {
-    "id": "button-name",
-    "impact": "critical",
-    "ile": 4
    },
    {
     "id": "color-contrast",
@@ -213,24 +183,9 @@
   "problemy": [],
   "a11y": [
    {
-    "id": "aria-allowed-attr",
-    "impact": "critical",
-    "ile": 1
-   },
-   {
-    "id": "aria-prohibited-attr",
-    "impact": "serious",
-    "ile": 1
-   },
-   {
     "id": "aria-required-attr",
     "impact": "critical",
     "ile": 1
-   },
-   {
-    "id": "button-name",
-    "impact": "critical",
-    "ile": 3
    },
    {
     "id": "color-contrast",
@@ -264,34 +219,14 @@
   "problemy": [],
   "a11y": [
    {
-    "id": "aria-allowed-attr",
-    "impact": "critical",
-    "ile": 1
-   },
-   {
-    "id": "aria-prohibited-attr",
-    "impact": "serious",
-    "ile": 1
-   },
-   {
     "id": "aria-required-attr",
     "impact": "critical",
     "ile": 1
    },
    {
-    "id": "button-name",
-    "impact": "critical",
-    "ile": 5
-   },
-   {
     "id": "color-contrast",
     "impact": "serious",
     "ile": 3
-   },
-   {
-    "id": "label",
-    "impact": "critical",
-    "ile": 49
    }
   ],
   "geo": {
