@@ -246,12 +246,12 @@ function useNotificationCardContractEnabled(): boolean {
   }, []);
 }
 
-// 'notification' NIE istnieje w NModeArtifactType (shared cardSets.ts — poza zakresem
-// tej fali: nie edytuję wspóldzielonych plików równolegle). Pole `artifactType` jest
-// INERTNE, bo `spec` (NOTIFICATION_CARD_SPEC) zawsze zastępuje DEFAULT_CARD_SETS
-// (useCardLayout.ts:148-151). ★ DO POTWIERDZENIA PIOTRA: dodać 'notification' do
-// NModeArtifactType (osobny krok — wtedy placeholder znika).
-const NOTIFICATION_ARTIFACT_TYPE = 'notification' as unknown as NModeArtifactType;
+// ★ 2026-07-23 — rzutowanie `as unknown as NModeArtifactType` USUNIETE.
+// 'notification' jest teraz pelnoprawnym czlonkiem uniona (shared cardSets.ts),
+// wiec typ jest sprawdzany naprawde, a nie obchodzony. Pole `artifactType`
+// pozostaje INERTNE w runtime, bo `spec` (NOTIFICATION_CARD_SPEC) zawsze
+// zastepuje DEFAULT_CARD_SETS (useCardLayout.ts:148-151).
+const NOTIFICATION_ARTIFACT_TYPE: NModeArtifactType = 'notification';
 
 export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   notificationId,
@@ -380,6 +380,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
   // Worksheet analysis (AI fills the notification "sheet" fields)
   const [isAnalyzingWorksheet, setIsAnalyzingWorksheet] = useState(false);
+  // ★ 2026-07-23 — nieudana analiza AI musi byc WIDOCZNA rowniez w trybie
+  // auto (silent). Wczesniej auto-wywolanie po wejsciu w kartę gaslo w catch
+  // i konsultant nie wiedzial, ze pola po prostu nie zostaly wypelnione.
+  const [aiAnalysisError, setAiAnalysisError] = useState<string | null>(null);
 
   const worksheetDraft = useMemo(
     () => ({
@@ -875,6 +879,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     async (silent = false) => {
       if (!notification || isAnalyzingWorksheet) return;
       setIsAnalyzingWorksheet(true);
+      setAiAnalysisError(null);
 
       // Stan pol w chwili WYSLANIA zapytania. Odpowiedz AI wraca po kilku-kilkunastu
       // sekundach; w tym czasie konsultant moze juz pisac. Pole, ktore zmienilo sie
@@ -978,9 +983,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               .filter(Boolean)
               .join('\n');
 
-        const aiRes = await Api.post('/ai/chat', {
+        // ★ 2026-07-23 — NAPRAWA MARTWEGO WYWOLANIA AI.
+        // Bylo: POST /ai/chat — orkiestrator zwraca {role,intent,prompt,...},
+        // nigdy `text`/`content`. `raw` bylo zawsze puste => rzucalo
+        // 'AI returned no JSON' i (w trybie silent) gaslo bez sladu.
+        // Jest: POST /ai/generate — jedyny endpoint zwracajacy {text}.
+        const aiRes = await Api.post('/ai/generate', {
           message: prompt,
-          history: [],
           systemInstruction: t(
             'myWork.notificationDetail.systemInstruction',
             'You are a PMO assistant. Return only valid JSON. No commentary, no markdown. Write contextually — not generically.'
@@ -988,7 +997,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           roleName: 'Notification Context Builder',
         });
 
-        const raw = String(aiRes?.text || aiRes?.content || '').trim();
+        const raw = String(aiRes?.text ?? '').trim();
+        if (!raw) throw new Error('EMPTY_LLM_RESPONSE');
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error('AI returned no JSON');
 
@@ -1040,10 +1050,20 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         }
       } catch (err) {
         console.error('[NotificationDetailView] Analyze with AI failed:', err);
+        // ★ Uczciwy stan: „AI niedostepne" JEST poprawnym wynikiem, cisza nie
+        // jest. Toast tylko przy kliknieciu (silent=false, zeby auto-wejscie w
+        // karte nie sypalo toastami), ale INLINE komunikat pokazujemy zawsze.
+        const serverCode =
+          (err as { code?: string })?.code ??
+          (err as { response?: { data?: { code?: string } } })?.response?.data?.code ??
+          (err as Error)?.message;
+        const base = t(
+          'myWork.notificationDetail.failedToFillContext',
+          'Failed to fill context with AI'
+        );
+        setAiAnalysisError(serverCode ? `${base} (${serverCode})` : base);
         if (!silent) {
-          toast.error(
-            t('myWork.notificationDetail.failedToFillContext', 'Failed to fill context with AI')
-          );
+          toast.error(base);
         }
       } finally {
         setIsAnalyzingWorksheet(false);
@@ -1652,6 +1672,19 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   <span className="inline-flex items-center gap-1.5 text-[11px] text-c-info animate-pulse">
                     <Loader2 size={12} className="animate-spin" />
                     {t('myWork.notificationDetail.aIAnalyzing', 'AI analyzing...')}
+                  </span>
+                )}
+                {!isAnalyzingWorksheet && aiAnalysisError && (
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-c-danger/40 bg-c-danger/10 px-2 py-0.5 text-[11px] text-c-danger">
+                    <AlertTriangle size={11} />
+                    <span>{aiAnalysisError}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleAnalyzeWithAI(false)}
+                      className="underline underline-offset-2 hover:opacity-80"
+                    >
+                      {t('myWork.notificationDetail.retry', 'Retry')}
+                    </button>
                   </span>
                 )}
               </div>
@@ -2360,6 +2393,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     whyImportantDraft,
     blockedDraft,
     isAnalyzingWorksheet,
+    /* + widoczny stan bledu AI (2026-07-23) — bez tego banner „AI niedostepne" nigdy sie nie pokaze */
+    aiAnalysisError,
+    handleAnalyzeWithAI,
     /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t,
   ]);
 
@@ -2375,7 +2411,23 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     if (!notificationCardContractEnabled) return null;
     try {
       const raw = localStorage.getItem(notificationCardLayoutStorageKey);
-      return raw ? (JSON.parse(raw) as CardLayout) : null;
+      if (!raw) return null;
+      // ★ 2026-07-23 — WALIDACJA KSZTALTU (wzorzec: TaskDetailView.tsx).
+      // Bylo: `JSON.parse(raw) as CardLayout` — samo rzutowanie, zero kontroli.
+      // Skazony wpis (np. tablica stringow z innej wersji/rozszerzenia) przechodzil
+      // przez `.length > 0`, a `applyToSections` wycinalo WSZYSTKIE sekcje =>
+      // pusty ekran bez zadnego bledu. Teraz wpis nie-pasujacy do kontraktu jest
+      // odrzucany i karta wraca do domyslnego ukladu.
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return null;
+      const cleaned = parsed.filter(
+        (c: unknown): c is { id: string; visible: boolean; order: number } =>
+          !!c &&
+          typeof (c as { id?: unknown }).id === 'string' &&
+          typeof (c as { visible?: unknown }).visible === 'boolean' &&
+          typeof (c as { order?: unknown }).order === 'number'
+      );
+      return cleaned.length > 0 ? cleaned : null;
     } catch {
       return null;
     }

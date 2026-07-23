@@ -3183,6 +3183,7 @@
       "aIFilledNotificationContext": "AI filled notification context",
       "aiSkippedEditedFields": "AI did not overwrite fields you were editing",
       "failedToFillContext": "Failed to fill context with AI",
+      "retry": "Retry",
       "toastSuccess7": "Comment added",
       "toastError7": "Failed to add comment",
       "confirm": "Delete this comment?",

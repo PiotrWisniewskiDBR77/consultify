@@ -29,7 +29,24 @@
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type NModeArtifactType = 'insight' | 'initiative' | 'decision' | 'task';
+/**
+ * Typy artefaktów N.
+ *
+ * ★ 2026-07-23: dopisane `notification` i `tool`. Oba artefakty JUŻ używały
+ * `useCardLayout`, ale obchodziły ten union rzutowaniem
+ * `'notification' as unknown as NModeArtifactType` — typ „zgadzał się" tylko
+ * dlatego, że kompilator był oszukany. Oba wnoszą własny `spec`
+ * (NOTIFICATION_CARD_SPEC / TOOL_CARD_SPEC) i NIE mają wpisu w
+ * `DEFAULT_CARD_SETS` — stąd rejestr jest teraz `Partial<Record<…>>`,
+ * a `useCardLayout` ma już fallback `?? { catalog: [], sets: [] }`.
+ */
+export type NModeArtifactType =
+  | 'insight'
+  | 'initiative'
+  | 'decision'
+  | 'task'
+  | 'notification'
+  | 'tool';
 
 export interface CardCatalogEntry {
   /** Card id — MUST equal the artifact's section id. */
@@ -577,7 +594,9 @@ const TASK_SPEC: ArtifactCardSpec = {
 
 // ── Registry ────────────────────────────────────────────────────────────────────
 
-export const DEFAULT_CARD_SETS: Record<NModeArtifactType, ArtifactCardSpec> = {
+// `Partial<…>` — `notification` i `tool` wnoszą własny `spec` przez
+// `useCardLayout({ spec })` i celowo NIE mają wpisu domyślnego tutaj.
+export const DEFAULT_CARD_SETS: Partial<Record<NModeArtifactType, ArtifactCardSpec>> = {
   insight: INSIGHT_SPEC,
   initiative: INITIATIVE_SPEC,
   decision: DECISION_SPEC,

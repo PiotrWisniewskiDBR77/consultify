@@ -2329,6 +2329,7 @@
       "aIFilledNotificationContext": "AI wypełniło kontekst powiadomienia",
       "aiSkippedEditedFields": "AI nie nadpisało pól, które właśnie edytowałeś",
       "failedToFillContext": "Nie udało się wypełnić kontekstu przez AI",
+      "retry": "Ponów",
       "toastSuccess7": "Komentarz dodany",
       "toastError7": "Nie udało się dodać komentarza",
       "confirm": "Usunąć ten komentarz?",
