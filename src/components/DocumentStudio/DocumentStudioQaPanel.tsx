@@ -8,7 +8,14 @@
  * navigate quickly to the issue.
  */
 
-import { AlertTriangle, CheckCircle2, Loader2, ShieldCheck, ShieldQuestion } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+  Loader2,
+  ShieldCheck,
+  ShieldQuestion,
+} from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -32,6 +39,83 @@ const SEVERITY_STYLES: Record<DocumentQaSeverity, string> = {
     'border-amber-400/40 bg-amber-50 text-amber-800 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-300',
   low: 'border-c-border-subtle bg-c-surface-raised text-c-text',
 };
+
+/**
+ * A3 — badge grounding/fabrykacji, addytywny do reszty raportu QA. Sygnał
+ * jest JUŻ liczony deterministycznie (documentFabricationCheck) — ten
+ * komponent tylko go POKAZUJE. Nie blokuje niczego: informacyjny, tokeny
+ * c-* (c-warning dla zdegradowanego stanu; success dla zweryfikowanego).
+ * Crimson celowo pominięty — to advisory, twarda blokada ma osobny,
+ * czerwony banner przy samym eksporcie (DocumentStudioDocumentPanel).
+ */
+function FabricationBadge({
+  fabrication,
+}: {
+  fabrication: DocumentQaReport['fabrication'];
+}): React.ReactElement | null {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+  if (!fabrication) return null;
+  const { count, sample } = fabrication;
+
+  if (count === 0) {
+    return (
+      <div className="flex items-center gap-1.5 rounded-md border border-success-500/30 bg-success-500/10 px-2.5 py-1.5 text-xs font-medium text-success-700 dark:text-emerald-300">
+        <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        {t('documentStudio.qa.fabrication.verified', 'Zweryfikowane — brak niepopartych liczb')}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="rounded-md border border-c-warning/40 bg-c-warning/10 px-2.5 py-1.5 text-xs text-c-text"
+      data-testid="document-qa-fabrication-badge"
+    >
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        className="flex w-full items-center justify-between gap-2 text-left"
+      >
+        <span className="flex items-center gap-1.5 font-medium text-c-text">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-c-warning" aria-hidden />
+          {t('documentStudio.qa.fabrication.degraded', {
+            defaultValue: 'Zdegradowane ({{count}} nieoznaczonych liczb)',
+            count,
+          })}
+        </span>
+        <ChevronDown
+          className={`h-3.5 w-3.5 shrink-0 text-c-text-muted transition-transform ${
+            expanded ? 'rotate-180' : ''
+          }`}
+          aria-hidden
+        />
+      </button>
+      {expanded ? (
+        <div className="mt-2 space-y-2 border-t border-c-warning/20 pt-2">
+          {sample.length > 0 ? (
+            <ul className="space-y-1 text-c-text-secondary">
+              {sample.map((value, i) => (
+                <li key={`${value}-${i}`}>
+                  <code className="rounded bg-c-surface px-1 py-0.5 text-[11px] text-c-text">
+                    {value}
+                  </code>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <p className="text-c-text-muted">
+            {t(
+              'documentStudio.qa.fabrication.hint',
+              'Zweryfikuj te liczby wobec źródeł lub oznacz jako założenie „(założenie)" przed eksportem partnerskim/klientowi.'
+            )}
+          </p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function scoreColor(score: number): string {
   if (score >= 90) return 'text-success-600 dark:text-emerald-400';
@@ -190,6 +274,7 @@ export const DocumentStudioQaPanel: React.FC<DocumentStudioQaPanelProps> = ({ ar
               </span>
             )}
           </div>
+          <FabricationBadge fabrication={report.fabrication} />
           <div className="grid gap-2 md:grid-cols-2">
             {report.categories.map((cat) => (
               <CategoryReportView

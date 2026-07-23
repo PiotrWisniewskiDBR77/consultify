@@ -316,6 +316,16 @@ export interface DocumentQaReport {
   generatedAt: string;
   anyBlocking: boolean;
   categories: DocumentQaCategoryReport[];
+  /**
+   * A3 — deterministic fabrication signal (unsupported precise-looking
+   * numbers without an "(assumption)" marker). Additive, non-blocking
+   * unless the export-gate marks the export itself as blocked. Absent
+   * when the detector failed server-side (fail-soft).
+   */
+  fabrication?: {
+    count: number;
+    sample: string[];
+  };
 }
 
 export interface DocumentStudioPolicy {

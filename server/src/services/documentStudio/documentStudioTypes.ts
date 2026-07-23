@@ -859,6 +859,18 @@ export interface DocumentQaReport {
   /** True when ANY category report has `blocking === true`. */
   anyBlocking: boolean;
   categories: DocumentQaCategoryReport[];
+  /**
+   * A3 — deterministic fabrication signal (documentFabricationCheck),
+   * surfaced additively on the QA report so the on-demand QA panel and
+   * the export-blocked banner can show it without a dedicated endpoint.
+   * `count === 0` means no unsupported precise-looking numbers were
+   * found (already computed; this field only carries it through).
+   * Absent when the detector itself failed (fail-soft — never blocks).
+   */
+  fabrication?: {
+    count: number;
+    sample: string[];
+  };
 }
 
 export interface DocumentRunResult {
