@@ -32,14 +32,16 @@
  * z prawdziwym statusem wykonania — edycja już wykonanego/trwającego kroku
  * nie ma sensu operacyjnego.
  *
- * ★ BRAK ENDPOINTU BACKENDOWEGO do zapisu przestawionego schematu na
- * istniejącym planie (5 endpointów w agent-plan.routes.ts: POST/GET/GET:id/
- * approve-step/cancel — żadnego PATCH kroków). Dopóki go nie ma: edycja
- * trzymana lokalnie w komponencie + `localStorage` (klucz per planId, żeby
- * przeżyła odświeżenie strony — dowód "zmiana się utrwala" bez backendu).
- * Kliknięcie "Uruchom" woła opcjonalny prop `onRunEditedSchema` (przyszłe
- * wpięcie AGT-009/AGT-006 do realnego zapisu) i lokalnie zamraża canvas
- * (read-only) — nie wysyła nic do backendu, bo nie ma dokąd.
+ * ★ AGT-009 (2026-07-23) — zapis + uruchomienie realne. Backend dostał dwa
+ * endpointy (agent-plan.routes.ts): `PATCH /:id/steps` (zapis przestawionego
+ * schematu na planie w 'planning') i `POST /:id/run` (jawne "Uruchom": opc.
+ * zapis steps + dispatch w tle). Kliknięcie "Uruchom" (`handleRunSchema`)
+ * konwertuje klocki na kroki (`blocksToSteps` — odzyskuje `toolInput`
+ * oryginalnych kroków po id, żeby przestawienie nie gubiło argumentów) i woła
+ * `runAgentPlan(planId, steps)` — plan przechodzi z 'planning' do wykonania.
+ * `localStorage` zostaje jako pamięć edycji między odświeżeniami PRZED
+ * uruchomieniem; opcjonalny `onRunEditedSchema` jest teraz tylko notyfikacją
+ * po udanym dispatchu (nie jest już jedyną ścieżką zapisu).
  */
 import {
   CheckCircle2,
@@ -61,6 +63,7 @@ import {
   approveAgentPlanStep,
   cancelAgentPlan,
   getAgentPlan,
+  runAgentPlan,
 } from '@/services/api/agentPlan.api';
 
 import { AgentPlanCanvas, type PlanBlockKind, type PlanSchemaBlock } from './AgentPlanCanvas';
@@ -121,6 +124,44 @@ function stepsToBlocks(steps: AgentPlanStep[]): PlanSchemaBlock[] {
       kind,
       name: step.toolName,
       moduleType: typeof rawModule === 'string' ? rawModule : undefined,
+    };
+  });
+}
+
+/**
+ * AGT-009: konwersja edytowalnych klocków (`PlanSchemaBlock`) z powrotem na
+ * kroki wykonawcze `{toolName, toolInput}` do zapisu/uruchomienia. Klocek jest
+ * lossy (niesie tylko id/kind/name/moduleType — patrz `stepsToBlocks`), więc
+ * dla klocków POCHODZĄCYCH z realnego kroku odzyskujemy oryginalny `toolInput`
+ * po `id` (blok.id === step.id), zachowując argumenty narzędzia (query,
+ * calculation_type, …). Do tego dopisujemy metadane schematu (`blockKind`,
+ * `module`, `phase`) tak, by round-trip step→block→step był stabilny.
+ *
+ * Nowo DODANE klocki (brak dopasowania po id) dostają bezpieczny, wykonywalny
+ * `toolName` = `search_knowledge_base` (read-only, ten sam rejestr narzędzi co
+ * czat Teresy) z zapytaniem z nazwy klocka — plan pozostaje uruchamialny, a
+ * bramka akceptu i tak zadziała dla klocków side-effect wg SIDE_EFFECT_TOOLS.
+ */
+function blocksToSteps(
+  blocks: PlanSchemaBlock[],
+  planSteps: AgentPlanStep[]
+): Array<{ toolName: string; toolInput: Record<string, unknown> }> {
+  const byId = new Map(planSteps.map((s) => [s.id, s]));
+  return blocks.map((block) => {
+    const matched = byId.get(block.id);
+    const baseInput: Record<string, unknown> = matched ? { ...matched.toolInput } : {};
+    const toolName = matched?.toolName ?? 'search_knowledge_base';
+    if (!matched) {
+      baseInput.query = block.name;
+    }
+    return {
+      toolName,
+      toolInput: {
+        ...baseInput,
+        blockKind: block.kind,
+        module: block.moduleType ?? baseInput.module,
+        phase: block.name,
+      },
     };
   });
 }
@@ -225,12 +266,29 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
   );
 
   const handleRunSchema = useCallback(
-    (blocks: PlanSchemaBlock[]) => {
+    async (blocks: PlanSchemaBlock[]) => {
       saveStoredBlocks(planId, blocks);
-      setSchemaSubmitted(true);
-      onRunEditedSchema?.(blocks);
+      setSchemaSubmitted(true); // zamraża canvas natychmiast (optimistic)
+      setBusy('run');
+      try {
+        // AGT-009: jawne "Uruchom" — zapis przestawionego schematu + dispatch
+        // jednym żądaniem (POST /:id/run z ostatecznymi krokami). Odzyskujemy
+        // toolInput oryginalnych kroków po id (blocksToSteps), żeby przestawienie
+        // nie gubiło argumentów narzędzi.
+        const steps = blocksToSteps(blocks, plan?.steps ?? []);
+        const { plan: updated } = await runAgentPlan(planId, steps);
+        setPlan(updated);
+        setLoadError(null);
+        onRunEditedSchema?.(blocks);
+      } catch (error) {
+        // Nieudany dispatch: odmroź canvas, żeby user mógł poprawić i spróbować ponownie.
+        setSchemaSubmitted(false);
+        setLoadError(error instanceof Error ? error.message : 'Failed to run plan');
+      } finally {
+        setBusy(null);
+      }
     },
-    [planId, onRunEditedSchema]
+    [planId, plan, onRunEditedSchema]
   );
 
   const handleApprove = useCallback(
