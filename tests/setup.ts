@@ -730,6 +730,15 @@ vi.mock('@/store/useAppStore', () => ({
       isAuthenticated: true,
       login: vi.fn(),
       logout: vi.fn(),
+      // Panel Teresy (uiSlice). Atrapa ich nie miała, więc każdy artefakt
+      // wpinający akcje kontekstowe do czatu (InsightViewer) wywracał się
+      // w sprzątaniu na odmontowaniu: `setChatContextActions is not a function`.
+      // W produkcji obie akcje istnieją w `uiSlice` — brakowało ich wyłącznie
+      // w tej atrapie. (R2/defekt #4, 2026-07-23)
+      chatSystemPrompt: null,
+      setChatSystemPrompt: vi.fn(),
+      chatContextActions: null,
+      setChatContextActions: vi.fn(),
     };
     return selector ? selector(state) : state;
   },
@@ -749,6 +758,11 @@ vi.mock('../../src/store/useAppStore', () => ({
       theme: 'dark',
       setTheme: vi.fn(),
       isAuthenticated: true,
+      // Patrz komentarz przy atrapie '@/store/useAppStore' wyżej.
+      chatSystemPrompt: null,
+      setChatSystemPrompt: vi.fn(),
+      chatContextActions: null,
+      setChatContextActions: vi.fn(),
     };
     return selector ? selector(state) : state;
   },
