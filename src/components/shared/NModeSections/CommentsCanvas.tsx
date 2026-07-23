@@ -123,13 +123,13 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+        <h2 className="text-lg font-semibold text-c-text dark:text-white">
           {t('sharedComponents.commentsCanvas.title')}
         </h2>
         <button
           onClick={scrollToInput}
           disabled={locked}
-          className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-500 hover:text-c-text transition-colors"
+          className="inline-flex items-center gap-1 text-xs text-c-text-secondary dark:text-c-text-muted hover:text-c-text transition-colors"
         >
           <Plus size={13} />
           {t('sharedComponents.commentsCanvas.addComment')}
@@ -158,7 +158,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
 
         {/* Comment list */}
         {comments.length === 0 ? (
-          <p className="text-xs text-slate-600 dark:text-slate-500 py-4 text-center">
+          <p className="text-xs text-c-text-secondary dark:text-c-text-muted py-4 text-center">
             {t('sharedComponents.commentsCanvas.noComments')}
           </p>
         ) : (
@@ -171,7 +171,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      <span className="text-xs font-medium text-c-text dark:text-c-text-secondary">
                         {c.authorName}
                       </span>
                       <span
@@ -180,21 +180,21 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                           priority: getCommentPriority(c),
                         })}
                       />
-                      <span className="text-[10px] text-slate-600">
+                      <span className="text-[10px] text-c-text-secondary">
                         {new Date(c.createdAt).toLocaleDateString()}
                       </span>
                       {c.isAIGenerated && (
                         <span className="text-[9px] text-c-info font-medium">AI</span>
                       )}
                     </div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    <p className="text-sm text-c-text-secondary dark:text-c-text-secondary leading-relaxed">
                       {c.content}
                     </p>
                   </div>
                   <button
                     onClick={() => onDeleteComment(c.id)}
                     disabled={locked}
-                    className="p-0.5 text-slate-600 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                    className="p-0.5 text-c-text-secondary hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
                   >
                     <X size={12} />
                   </button>
@@ -209,7 +209,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
             <button
               type="button"
               onClick={() => setShowMoreComments((prev) => !prev)}
-              className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-c-text transition-colors"
+              className="text-xs font-medium text-c-text-secondary dark:text-c-text-muted hover:text-c-text transition-colors"
             >
               {isExpandedComments
                 ? t('sharedComponents.commentsCanvas.less')
@@ -219,7 +219,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
         )}
 
         {/* Inline comment input */}
-        <div className="flex items-center gap-3 pt-2 border-t border-slate-200/40 dark:border-navy-700/40">
+        <div className="flex items-center gap-3 pt-2 border-t border-c-border/40 dark:border-c-border/40">
           {/* Priority selector */}
           <div className="relative inline-flex items-center gap-1">
             {priorityOptions.map((prio) => (
@@ -241,12 +241,12 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
               </button>
             ))}
             {hoveredPriority && (
-              <div className="absolute left-0 -top-12 z-20 min-w-[190px] rounded-lg border border-slate-300/60 dark:border-navy-600/70 bg-white/95 dark:bg-navy-900/95 px-2.5 py-1.5 shadow-lg">
-                <div className="text-[10px] font-semibold text-slate-700 dark:text-slate-200">
+              <div className="absolute left-0 -top-12 z-20 min-w-[190px] rounded-lg border border-c-border-strong/60 dark:border-c-border-strong/70 bg-white/95 dark:bg-c-surface/95 px-2.5 py-1.5 shadow-lg">
+                <div className="text-[10px] font-semibold text-c-text dark:text-c-text">
                   {t('sharedComponents.commentsCanvas.priorityWord')}:{' '}
                   {getCommentPriorityLabel(hoveredPriority)}
                 </div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                <div className="text-[10px] text-c-text-secondary dark:text-c-text-secondary">
                   {getCommentPriorityHint(hoveredPriority)}
                 </div>
               </div>
@@ -261,7 +261,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
             onChange={(e) => onCommentDraftChange(e.target.value)}
             disabled={locked}
             placeholder={t('sharedComponents.commentsCanvas.placeholder')}
-            className="flex-1 text-sm bg-transparent text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600"
+            className="flex-1 text-sm bg-transparent text-c-text dark:text-c-text-secondary focus:outline-none placeholder-c-text-muted dark:placeholder-c-text-muted"
             onKeyDown={(e) => {
               if (!locked && e.key === 'Enter' && commentDraft.trim()) {
                 onSubmitComment();
@@ -273,7 +273,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
           <button
             onClick={onSubmitComment}
             disabled={locked || !commentDraft.trim()}
-            className="text-xs font-medium text-slate-700 dark:text-white hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-40 disabled:text-slate-400 dark:disabled:text-slate-500"
+            className="text-xs font-medium text-c-text dark:text-white hover:text-c-text dark:hover:text-white transition-colors disabled:opacity-40 disabled:text-c-text-muted dark:disabled:text-c-text-secondary"
             title={t('sharedComponents.commentsCanvas.sendTitle')}
           >
             {t('sharedComponents.commentsCanvas.send')}

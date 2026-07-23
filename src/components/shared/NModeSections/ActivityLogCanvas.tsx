@@ -77,7 +77,7 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+      <h2 className="text-lg font-semibold text-c-text dark:text-white">
         {t('sharedComponents.activityLogCanvas.title')}
       </h2>
 
@@ -87,12 +87,12 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
           {statCards.map((card) => (
             <div
               key={card.label}
-              className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2"
+              className="rounded-xl border border-c-border/60 dark:border-c-border/60 bg-white/70 dark:bg-c-surface/70 px-3 py-2"
             >
-              <p className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+              <p className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                 {card.label}
               </p>
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <p className="text-sm font-semibold text-c-text dark:text-c-text">
                 {card.value}
               </p>
             </div>
@@ -101,18 +101,18 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
 
         {/* Activity feed */}
         {entries.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300/60 dark:border-navy-700/70 bg-white/40 dark:bg-navy-900/40 p-6 text-center text-xs text-slate-600 dark:text-slate-500">
+          <div className="rounded-2xl border border-dashed border-c-border-strong/60 dark:border-c-border/70 bg-white/40 dark:bg-c-surface/40 p-6 text-center text-xs text-c-text-secondary dark:text-c-text-muted">
             {t('sharedComponents.activityLogCanvas.noEntries')}
           </div>
         ) : (
-          <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
+          <div className="rounded-2xl border border-c-border/60 dark:border-c-border/60 bg-white/70 dark:bg-c-surface/70 p-3">
             <div className="space-y-1">
               {entries.map((entry) => {
                 const meta = typeMeta(entry.type);
                 return (
                   <div
                     key={entry.id}
-                    className="grid grid-cols-[auto_1fr_auto] gap-3 items-start py-2.5 px-2 rounded-xl hover:bg-slate-50/70 dark:hover:bg-navy-800/40 transition-colors"
+                    className="grid grid-cols-[auto_1fr_auto] gap-3 items-start py-2.5 px-2 rounded-xl hover:bg-c-surface/70 dark:hover:bg-c-surface-raised/40 transition-colors"
                   >
                     <span
                       className={`inline-flex items-center justify-center w-6 h-6 rounded-lg border ${meta.style}`}
@@ -120,18 +120,18 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
                       {meta.icon}
                     </span>
                     <div className="min-w-0">
-                      <p className="text-sm text-slate-700 dark:text-slate-200">
+                      <p className="text-sm text-c-text dark:text-c-text">
                         {entry.description}
                       </p>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-600 dark:text-slate-500">
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-c-text-secondary dark:text-c-text-muted">
                         <span>{new Date(entry.timestamp).toLocaleString()}</span>
                         {entry.userName && <span>{`· ${entry.userName}`}</span>}
-                        <span className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60">
+                        <span className="px-1.5 py-0.5 rounded border border-c-border/60 dark:border-c-border/60">
                           {meta.label}
                         </span>
                       </div>
                       {(entry.oldValue || entry.newValue) && (
-                        <div className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                        <div className="mt-1.5 text-[11px] text-c-text-secondary dark:text-c-text-secondary">
                           {entry.oldValue
                             ? `${t('sharedComponents.activityLogCanvas.from')}: ${entry.oldValue}`
                             : ''}
@@ -142,7 +142,7 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
                         </div>
                       )}
                     </div>
-                    <span className="text-[10px] font-mono uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                    <span className="text-[10px] font-mono uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                       {entry.type}
                     </span>
                   </div>

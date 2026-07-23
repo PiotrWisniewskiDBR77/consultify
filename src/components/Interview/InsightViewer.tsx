@@ -8265,16 +8265,27 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <div className="absolute left-0 z-30 mt-1 w-72 max-h-[70vh] overflow-y-auto rounded-xl border border-c-border-subtle bg-white dark:bg-c-surface shadow-lg py-1">
                     {(() => {
                       // Group like the left nav (#22b). Walk in canonical order.
+                      // MIGRACJA (domknięcie dedup Phase-D): gdy kontrakt kart ON,
+                      // „Sekcje ▾" respektuje katalog kanoniczny — sekcje spoza
+                      // katalogu (np. `executive-memo`/`recommendations`, scalone
+                      // z rdzeniem Faza 0 DEDUP) NIE pojawiają się tu, tak samo jak
+                      // już znikły z „+ Nowa karta ▾" (AddCardMenu → layout.availableToAdd
+                      // z tego samego katalogu). Flaga OFF ⇒ bez zmian (32 sekcje jak dotąd).
+                      const catalogIds = insightCardContractEnabled
+                        ? new Set(cardLayout.catalog.map((c) => c.id))
+                        : null;
                       const groups: { group: string; items: NModeSection[] }[] = [];
-                      orderedNModeSectionsWithContent.forEach((s) => {
-                        const g = s.group ?? '';
-                        let bucket = groups.find((b) => b.group === g);
-                        if (!bucket) {
-                          bucket = { group: g, items: [] };
-                          groups.push(bucket);
-                        }
-                        bucket.items.push(s);
-                      });
+                      orderedNModeSectionsWithContent
+                        .filter((s) => !catalogIds || catalogIds.has(s.id))
+                        .forEach((s) => {
+                          const g = s.group ?? '';
+                          let bucket = groups.find((b) => b.group === g);
+                          if (!bucket) {
+                            bucket = { group: g, items: [] };
+                            groups.push(bucket);
+                          }
+                          bucket.items.push(s);
+                        });
                       return groups.map((bucket) => (
                         <div key={bucket.group} className="px-1 py-1">
                           {bucket.group && (

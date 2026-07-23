@@ -4,6 +4,9 @@
 
 @layer base {
   :root {
+    /* Natywne kontrolki (popup <select>, scrollbar, date picker) idą za motywem.
+     * Bez tego w dark rozwinięty select = jasny tekst na białym popupie. */
+    color-scheme: light;
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -198,6 +201,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
     --card: 222.2 84% 4.9%;

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Odbiór kart N — partia 1</title>
+<style>
+  /* Rozdzielnik trzyma JEDEN motyw (jasny) niezależnie od ustawień systemu —
+     motyw oceniamy w samych kartach, nie tutaj. */
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px;
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: #f7f8fa; color: #0f172a;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; color: #0f172a; }
+  .lead { color: #475569; margin: 0 0 28px; max-width: 70ch; }
+  .card {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: 18px 20px; margin-bottom: 18px;
+  }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 14px; color: #64748b; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid #eef1f6; }
+  th { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .05em; }
+  tr:last-child td { border-bottom: 0; }
+  td.name { font-weight: 600; }
+  .btn {
+    display: inline-block; padding: 6px 13px; border-radius: 7px;
+    border: 1px solid #d7dee9; background: #f1f5f9; color: #0f172a;
+    text-decoration: none; font-size: 13px; margin-right: 7px;
+  }
+  .btn:hover { background: #e2e8f0; }
+  ol { margin: 0; padding-left: 20px; }
+  ol li { margin-bottom: 9px; }
+  .hint { font-size: 13px; color: #64748b; margin-top: 14px; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+</style>
+</head>
+<body>
+
+<h1>Odbiór kart N — partia 1</h1>
+<p class="lead">
+  Siedem kart, każda w jasnym i ciemnym motywie. Dane są przykładowe (bez logowania i bez bazy) —
+  oceniamy wygląd i zachowanie, nie treść. Karty mają krótką animację wejścia, więc przez pierwszą
+  sekundę ekran wygląda na przygaszony; to nie usterka.
+</p>
+
+<div class="card">
+  <h2>Karty</h2>
+  <table>
+    <thead><tr><th>Karta</th><th>Otwórz</th></tr></thead>
+    <tbody>
+      <tr><td class="name">Decision</td><td>
+        <a class="btn" href="/?screen=karta-decision&cardContract=1&lang=pl&theme=light">jasny</a>
+        <a class="btn" href="/?screen=karta-decision&cardContract=1&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Task</td><td>
+        <a class="btn" href="/?screen=karta-task&cardContract=1&lang=pl&theme=light">jasny</a>
+        <a class="btn" href="/?screen=karta-task&cardContract=1&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Interview</td><td>
+        <a class="btn" href="/?screen=karta-interview&cardContract=1&lang=pl&theme=light">jasny</a>
+        <a class="btn" href="/?screen=karta-interview&cardContract=1&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Notification</td><td>
+        <a class="btn" href="/?screen=karta-notification&cardContract=1&lang=pl&theme=light">jasny</a>
+        <a class="btn" href="/?screen=karta-notification&cardContract=1&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Insight</td><td>
+        <a class="btn" href="/?screen=karta-insight&cardContract=1&lang=pl&theme=light">jasny</a>
+        <a class="btn" href="/?screen=karta-insight&cardContract=1&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Tool</td><td>
+        <a class="btn" href="/?screen=karta-tool&cardContract=1&lang=pl&theme=light">jasny</a>
+        <a class="btn" href="/?screen=karta-tool&cardContract=1&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Initiative</td><td>
+        <a class="btn" href="/?screen=karta-initiative&cardContract=1&lang=pl&theme=light">jasny</a>
+        <a class="btn" href="/?screen=karta-initiative&cardContract=1&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Podgląd 4 zakładek My Work</td><td>
+        <a class="btn" href="/?screen=preview-4-zakladki&cardContract=1&lang=pl&theme=light">jasny</a>
+        <a class="btn" href="/?screen=preview-4-zakladki&cardContract=1&lang=pl&theme=dark">ciemny</a></td></tr>
+    </tbody>
+  </table>
+  <p class="hint">Powrót tutaj: <code>/odbior.html</code></p>
+</div>
+
+<div class="card">
+  <h2>Na co patrzeć</h2>
+  <ol>
+    <li><strong>Kolory znaczą to, co powinny.</strong> Czerwień tylko przy rzeczach krytycznych,
+        zielony = zrobione/zatwierdź, bursztyn = w toku, główny przycisk neutralny.</li>
+    <li><strong>Ciemny motyw czytelny.</strong> Teksty i ramki widoczne, nic nie znika.
+        Rozwiń też listę „Status" w prawym panelu — popup ma być ciemny.</li>
+    <li><strong>Prawy panel identyczny wszędzie.</strong> Akcje → Właściwości (tabela) →
+        Powiązania → Komentarze → Historia. Ten sam układ w każdej z siedmiu kart.</li>
+    <li><strong>Powiązania klikalne.</strong> Klik w pozycję na liście powiązań ma reagować,
+        nie być martwy.</li>
+    <li><strong>Kebab (⋮) w prawym górnym rogu</strong> — otwiera się i ma sensowne pozycje.</li>
+  </ol>
+</div>
+
+<div class="card">
+  <h2>Czego tu nie oceniamy</h2>
+  <p class="lead" style="margin:0">
+    Treści pisanej przez AI (to osobna partia — Faza B), generatorów w karcie Initiative
+    (Faza C) oraz list poza kartami. Dane w kartach są przykładowe.
+  </p>
+</div>
+
+</body>
+</html>
