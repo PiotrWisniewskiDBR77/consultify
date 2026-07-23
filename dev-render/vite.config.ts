@@ -32,6 +32,32 @@ function pluginUwag() {
   return {
     name: 'odbior-uwagi',
     configureServer(server: any) {
+      // Oceny artefaktów (5 osi 0-10) — jeden plik, zapis przy każdej zmianie.
+      const plikOcen = path.join(katalog, '_oceny.json');
+      server.middlewares.use('/__oceny', (req: any, res: any) => {
+        res.setHeader('content-type', 'application/json; charset=utf-8');
+        try {
+          if (req.method === 'GET') {
+            res.end(fs.existsSync(plikOcen) ? fs.readFileSync(plikOcen, 'utf8') : '{}');
+            return;
+          }
+          if (req.method === 'POST') {
+            let body = '';
+            req.on('data', (c: any) => (body += c));
+            req.on('end', () => {
+              fs.mkdirSync(katalog, { recursive: true });
+              fs.writeFileSync(plikOcen, JSON.stringify(JSON.parse(body || '{}'), null, 2), 'utf8');
+              res.end(JSON.stringify({ ok: true }));
+            });
+            return;
+          }
+          res.statusCode = 405;
+          res.end('{"blad":"metoda"}');
+        } catch (e) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ blad: String(e) }));
+        }
+      });
       server.middlewares.use('/__uwagi', (req: any, res: any) => {
         res.setHeader('content-type', 'application/json; charset=utf-8');
         try {

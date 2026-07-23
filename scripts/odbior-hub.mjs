@@ -123,6 +123,68 @@ const GRUPY = [
   },
 ];
 
+
+/** Sześć kart N ocenianych w matrycy (Sesja wywiadu NIE jest kartą N). */
+const ARTEFAKTY_OCENA = [
+  ['karta-decision', 'Decyzja'],
+  ['karta-task', 'Zadanie'],
+  ['karta-notification', 'Powiadomienie'],
+  ['karta-insight', 'Insight'],
+  ['karta-tool', 'Narzędzie'],
+  ['karta-initiative', 'Inicjatywa'],
+];
+
+/** Osie oceny — te same co w dotychczasowej karcie oceny efektu. */
+const OSIE = [
+  ['menu', 'Menu'],
+  ['nawigacja', 'Nawigacja'],
+  ['funkcja', 'Funkcja'],
+  ['merytoryka', 'Merytoryka'],
+  ['grafika', 'Grafika'],
+];
+
+function sekcjaOcen() {
+  const wiersze = ARTEFAKTY_OCENA.map(
+    ([klucz, nazwa]) => `        <tr data-artefakt="${klucz}">
+          <td class="oc-nazwa">${esc(nazwa)}</td>
+${OSIE.map(
+  ([os]) =>
+    `          <td><input class="oc" type="number" min="0" max="10" step="0.5" data-a="${klucz}" data-os="${os}" /></td>`,
+).join('\n')}
+          <td class="oc-srednia" data-srednia-dla="${klucz}">—</td>
+        </tr>`,
+  ).join('\n');
+
+  return `
+  <section class="card" id="oceny">
+    <h2>Ocena artefaktów <span class="ile">6 × 5 osi</span></h2>
+    <p class="opis">
+      Skala 0–10 wobec standardu n-Type z 2026-07-23. Zapisuje się od razu, tak jak uwagi.
+      Puste pole = nie oceniono.
+    </p>
+    <table class="oceny">
+      <thead>
+        <tr>
+          <th>Artefakt</th>
+${OSIE.map(([, etykieta]) => `          <th>${esc(etykieta)}</th>`).join('\n')}
+          <th>średnia</th>
+        </tr>
+      </thead>
+      <tbody>
+${wiersze}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td class="oc-nazwa">średnia osi</td>
+${OSIE.map(([os]) => `          <td class="oc-srednia" data-srednia-os="${os}">—</td>`).join('\n')}
+          <td class="oc-srednia oc-total" data-srednia-total>—</td>
+        </tr>
+      </tfoot>
+    </table>
+    <div class="oc-stan"></div>
+  </section>`;
+}
+
 function znaneEkrany() {
   const src = fs.readFileSync(MAIN, 'utf8');
   const i0 = src.indexOf('const SCREENS');
@@ -298,6 +360,19 @@ ${g.obiekty.map((o) => wierszObiektu(o, znane)).join('\n')}
   .btn-dodaj { background: #2563eb; color: #fff; border-color: #2563eb; margin-left: 0; cursor: pointer; }
   .btn-dodaj:hover { background: #1d4ed8; }
   .uwagi-stan { color: #64748b; font-size: 11.5px; }
+  table.oceny { width: 100%; border-collapse: collapse; }
+  table.oceny th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: #64748b; padding: 6px 8px; }
+  table.oceny td { padding: 5px 8px; border-bottom: 1px solid #eef1f6; }
+  table.oceny tfoot td { border-bottom: 0; border-top: 2px solid #e2e8f0; font-weight: 600; padding-top: 9px; }
+  td.oc-nazwa { font-size: 14px; white-space: nowrap; }
+  input.oc {
+    width: 58px; padding: 5px 7px; border: 1px solid #d7dee9; border-radius: 7px;
+    font: inherit; font-size: 13.5px; text-align: center; background: #fff;
+  }
+  input.oc:focus { outline: 2px solid #2563eb; outline-offset: 1px; border-color: #2563eb; }
+  .oc-srednia { font-variant-numeric: tabular-nums; color: #334155; font-weight: 600; text-align: center; }
+  .oc-total { font-size: 16px; color: #0f172a; }
+  .oc-stan { color: #64748b; font-size: 12px; margin-top: 9px; min-height: 16px; }
   .stopka { color: #64748b; font-size: 12.5px; margin-top: 20px; }
   code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
 </style>
@@ -318,6 +393,8 @@ ${g.obiekty.map((o) => wierszObiektu(o, znane)).join('\n')}
 </div>
 
 ${grupyHtml}
+
+${sekcjaOcen()}
 
 <p class="stopka">
   ${wszystkie.length} obiektów${bezEkranu.length ? `, w tym ${bezEkranu.length} bez ekranu (oznaczone)` : ''}.
@@ -427,6 +504,68 @@ ${grupyHtml}
       if (box) box.querySelector('.btn-dodaj').click();
     }
   });
+
+  // ── Oceny ────────────────────────────────────────────────────────────────
+  var OCENY = {};
+  var OSIE_K = ['menu','nawigacja','funkcja','merytoryka','grafika'];
+
+  function sr(lista) {
+    var v = lista.filter(function (x) { return typeof x === 'number' && !isNaN(x); });
+    return v.length ? (v.reduce(function (a, b) { return a + b; }, 0) / v.length) : null;
+  }
+  function fmt(x) { return x === null ? '—' : x.toFixed(1).replace('.', ','); }
+
+  function przeliczOceny() {
+    var wszystkie = [];
+    document.querySelectorAll('[data-srednia-dla]').forEach(function (el) {
+      var a = el.getAttribute('data-srednia-dla');
+      var w = OSIE_K.map(function (o) { return (OCENY[a] || {})[o]; });
+      var s = sr(w);
+      el.textContent = fmt(s);
+      w.forEach(function (x) { if (typeof x === 'number') wszystkie.push(x); });
+    });
+    OSIE_K.forEach(function (o) {
+      var el = document.querySelector('[data-srednia-os="' + o + '"]');
+      if (!el) return;
+      el.textContent = fmt(sr(Object.keys(OCENY).map(function (a) { return OCENY[a][o]; })));
+    });
+    var total = document.querySelector('[data-srednia-total]');
+    if (total) total.textContent = fmt(sr(wszystkie));
+  }
+
+  function zapiszOceny() {
+    var stan = document.querySelector('.oc-stan');
+    if (stan) stan.textContent = 'zapisuję…';
+    fetch('/__oceny', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(OCENY),
+    }).then(function (r) {
+      if (stan) stan.textContent = r.ok ? 'zapisano' : 'błąd zapisu';
+      setTimeout(function () { if (stan && stan.textContent === 'zapisano') stan.textContent = ''; }, 1500);
+    }).catch(function () { if (stan) stan.textContent = 'błąd zapisu'; });
+  }
+
+  document.addEventListener('input', function (e) {
+    var inp = e.target.closest('input.oc');
+    if (!inp) return;
+    var a = inp.getAttribute('data-a'), o = inp.getAttribute('data-os');
+    var v = inp.value.trim() === '' ? null : Math.max(0, Math.min(10, parseFloat(inp.value.replace(',', '.'))));
+    OCENY[a] = OCENY[a] || {};
+    if (v === null || isNaN(v)) delete OCENY[a][o]; else OCENY[a][o] = v;
+    przeliczOceny();
+    zapiszOceny();
+  });
+
+  fetch('/__oceny')
+    .then(function (r) { return r.ok ? r.json() : {}; })
+    .then(function (d) {
+      OCENY = d || {};
+      document.querySelectorAll('input.oc').forEach(function (inp) {
+        var v = (OCENY[inp.getAttribute('data-a')] || {})[inp.getAttribute('data-os')];
+        if (typeof v === 'number') inp.value = v;
+      });
+      przeliczOceny();
+    })
+    .catch(function () {});
 
   fetch('/__uwagi/wszystkie')
     .then(function (r) { return r.ok ? r.json() : {}; })
