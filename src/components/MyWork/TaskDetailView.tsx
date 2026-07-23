@@ -203,8 +203,8 @@ function useTaskCardContractEnabled(): boolean {
 const STATUS_CONFIG = {
   todo: {
     label: { en: 'To Do', pl: 'Do zrobienia' },
-    color: 'bg-slate-400',
-    textColor: 'text-slate-500',
+    color: 'bg-c-text-muted',
+    textColor: 'text-c-text-secondary',
     icon: CheckSquare,
   },
   in_progress: {
@@ -258,8 +258,8 @@ const opensInPreview = (status: keyof typeof STATUS_CONFIG): boolean => status =
 const PRIORITY_CONFIG = {
   low: {
     label: { en: 'Low', pl: 'Niski' },
-    color: 'bg-slate-400',
-    textColor: 'text-slate-500',
+    color: 'bg-c-text-muted',
+    textColor: 'text-c-text-secondary',
   },
   medium: {
     label: { en: 'Medium', pl: 'Średni' },
@@ -574,11 +574,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   });
 
   const governanceTableCardClass =
-    'bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3 h-[340px] flex flex-col';
+    'bg-c-surface/70 rounded-2xl border border-c-border p-4 space-y-3 h-[340px] flex flex-col';
   const governanceModalClass =
-    'relative w-full max-w-2xl rounded-3xl border border-slate-200 dark:border-navy-700/50 bg-white/95 dark:bg-navy-900/95 shadow-2xl p-6 space-y-5';
+    'relative w-full max-w-2xl rounded-3xl border border-c-border bg-c-surface/95 shadow-2xl p-6 space-y-5';
   const governanceModalHintClass =
-    'rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 px-3 py-2 text-xs text-slate-600 dark:text-slate-300';
+    'rounded-xl border border-c-border bg-c-surface-raised px-3 py-2 text-xs text-c-text-secondary';
   const channelChipClass =
     'px-2 py-1 rounded-md border text-[11px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
 
@@ -2194,7 +2194,7 @@ Return ONLY the final comment text.`;
           : status === 'review'
             ? // VF1-1: review = c-info token (informational blue) — was crimson `primary-*`.
               'border-c-info/70 dark:border-c-info/50'
-            : 'border-slate-200 dark:border-navy-600/60';
+            : 'border-c-border';
   const priorityAlertBorderClass =
     priority === 'critical'
       ? 'border-danger-400/70 dark:border-danger-500/50'
@@ -2202,7 +2202,7 @@ Return ONLY the final comment text.`;
         ? 'border-amber-400/70 dark:border-amber-500/50'
         : priority === 'medium'
           ? 'border-blue-400/70 dark:border-blue-500/50'
-          : 'border-slate-200 dark:border-navy-600/60';
+          : 'border-c-border';
   const dueDateAlertBorderClass = useMemo(() => {
     if (!dueDate) return undefined;
     const d = new Date(dueDate);
@@ -2324,7 +2324,7 @@ Return ONLY the final comment text.`;
   );
 
   const getPriorityDotClass = (p: CommentPriority) =>
-    p === 'high' ? 'bg-danger-500' : p === 'low' ? 'bg-slate-400' : 'bg-blue-500';
+    p === 'high' ? 'bg-danger-500' : p === 'low' ? 'bg-c-text-muted' : 'bg-blue-500';
   const getCommentPriority = (_c: CommentItem): CommentPriority => 'normal';
   const getPriorityButtonClass = (p: CommentPriority, active: boolean) =>
     active
@@ -2333,7 +2333,7 @@ Return ONLY the final comment text.`;
         : p === 'low'
           ? 'border-emerald-400/80 text-emerald-300 bg-emerald-500/20 shadow-[0_0_0_1px_rgba(16,185,129,0.3)]'
           : 'border-indigo-400/70 text-indigo-300 bg-indigo-500/15 shadow-[0_0_0_1px_rgba(129,140,248,0.2)]'
-      : 'border-slate-300/55 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:border-slate-400/70 hover:text-slate-700 dark:text-slate-300';
+      : 'border-c-border text-c-text-secondary hover:border-c-border-strong hover:text-c-text';
   const getCommentPriorityLabel = (p: CommentPriority) =>
     p === 'high' ? 'High' : p === 'low' ? 'Low' : 'Normal';
   const getCommentPriorityHint = (p: CommentPriority) =>
@@ -2405,7 +2405,7 @@ Return ONLY the final comment text.`;
       edit: {
         icon: <Edit3 size={10} />,
         label: t('myWork.taskDetail.activityType.edit', 'Edit'),
-        style: 'border-slate-300/50 bg-slate-500/10 text-slate-600',
+        style: 'border-c-border bg-c-surface-raised text-c-text-secondary',
       },
       attachment: {
         icon: <FileText size={10} />,
@@ -2427,7 +2427,7 @@ Return ONLY the final comment text.`;
       MAP[type] || {
         icon: <Clock size={10} />,
         label: type,
-        style: 'border-slate-300/50 bg-slate-500/10 text-slate-600',
+        style: 'border-c-border bg-c-surface-raised text-c-text-secondary',
       }
     );
   };
@@ -2551,14 +2551,14 @@ Return ONLY the final comment text.`;
             component = (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  <h2 className="text-lg font-semibold text-c-text dark:text-white">
                     {t('myWork.taskDetail.descriptionScope', 'Description & Scope')}
                   </h2>
                 </div>
 
                 {/* 1) Related to — initiative, assessment, survey, etc. */}
                 <div className="space-y-2">
-                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                  <label className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                     {t('myWork.taskDetail.relatedTo', 'Related to')}
                   </label>
                   {relatedTaskItems.length === 0 ? (
@@ -2573,7 +2573,7 @@ Return ONLY the final comment text.`;
                       {relatedTaskItems.map((item) => (
                         <div
                           key={item.id}
-                          className="flex items-center justify-between gap-3 text-sm text-slate-700 dark:text-slate-300"
+                          className="flex items-center justify-between gap-3 text-sm text-c-text"
                         >
                           <div className="flex min-w-0 items-center gap-2">
                             <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-border text-c-text-secondary bg-c-surface-raised uppercase">
@@ -2581,7 +2581,7 @@ Return ONLY the final comment text.`;
                             </span>
                             <span className="truncate">{item.title}</span>
                           </div>
-                          <span className="shrink-0 text-[11px] font-mono text-slate-500/70 dark:text-slate-500/70">
+                          <span className="shrink-0 text-[11px] font-mono text-c-text-secondary/70">
                             {String(item.id).length > 24
                               ? `${String(item.id).slice(0, 24)}...`
                               : item.id}
@@ -2595,7 +2595,7 @@ Return ONLY the final comment text.`;
                 {/* 2) Task Description */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                    <label className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                       {t('myWork.taskDetail.taskDescription', 'Task description')}
                     </label>
                     {!readMode && (
@@ -2613,7 +2613,7 @@ Return ONLY the final comment text.`;
                     onChange={(e) => !readMode && setDescription(e.target.value)}
                     readOnly={readMode}
                     rows={10}
-                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus transition-colors min-h-[200px]"
+                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[200px]"
                     placeholder={t(
                       'myWork.taskDetail.describeWhatNeedsTo',
                       'Describe what needs to be done, why it matters, any constraints or dependencies...'
@@ -2625,11 +2625,11 @@ Return ONLY the final comment text.`;
                 {!readMode && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                      <label className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                         {t('myWork.ideas.suggestions', 'Relevant ideas')}
                       </label>
                       {suggestedIdeasLoading ? (
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                        <span className="text-[11px] text-c-text-secondary">
                           {t('common.loading', 'Loading…')}
                         </span>
                       ) : null}
@@ -2650,15 +2650,15 @@ Return ONLY the final comment text.`;
                         {suggestedIdeas.map((idea) => (
                           <div
                             key={idea.id}
-                            className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/60 px-4 py-3"
+                            className="rounded-xl border border-c-border bg-c-surface/60 px-4 py-3"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
-                                <div className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                                <div className="text-sm font-medium text-c-text truncate">
                                   {idea.title}
                                 </div>
                                 {idea.body ? (
-                                  <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                                  <div className="mt-1 text-xs text-c-text-secondary line-clamp-2">
                                     {idea.body}
                                   </div>
                                 ) : null}
@@ -2704,7 +2704,7 @@ Return ONLY the final comment text.`;
                                       /* ignore */
                                     }
                                   }}
-                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-c-surface border border-c-border text-c-text hover:bg-c-surface-raised transition-colors"
                                 >
                                   {t('myWork.ideas.open', 'Open')}
                                 </button>
@@ -2721,11 +2721,11 @@ Return ONLY the final comment text.`;
                 {!readMode && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                      <label className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                         {t('myWork.notebook.suggestions', 'Relevant notes')}
                       </label>
                       {suggestedNotesLoading ? (
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                        <span className="text-[11px] text-c-text-secondary">
                           {t('common.loading', 'Loading…')}
                         </span>
                       ) : null}
@@ -2746,15 +2746,15 @@ Return ONLY the final comment text.`;
                         {suggestedNotes.map((note) => (
                           <div
                             key={note.id}
-                            className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/60 px-4 py-3"
+                            className="rounded-xl border border-c-border bg-c-surface/60 px-4 py-3"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
-                                <div className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                                <div className="text-sm font-medium text-c-text truncate">
                                   {note.title}
                                 </div>
                                 {note.contentText ? (
-                                  <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                                  <div className="mt-1 text-xs text-c-text-secondary line-clamp-2">
                                     {note.contentText}
                                   </div>
                                 ) : null}
@@ -2806,7 +2806,7 @@ Return ONLY the final comment text.`;
                                       /* ignore */
                                     }
                                   }}
-                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-c-surface border border-c-border text-c-text hover:bg-c-surface-raised transition-colors"
                                 >
                                   {t('myWork.notebook.open', 'Open')}
                                 </button>
@@ -2822,7 +2822,7 @@ Return ONLY the final comment text.`;
                 {/* 3) Expected Outcome */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                    <label className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                       {t('myWork.taskDetail.expectedOutcome2', 'Expected outcome')}
                     </label>
                     {!readMode && (
@@ -2840,7 +2840,7 @@ Return ONLY the final comment text.`;
                     onChange={(e) => !readMode && setExpectedOutcome(e.target.value)}
                     readOnly={readMode}
                     rows={8}
-                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus transition-colors min-h-[160px]"
+                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[160px]"
                     placeholder={t(
                       'myWork.taskDetail.defineTheMeasurableOutcome',
                       'Define the measurable outcome — what does success look like, acceptance criteria...'
@@ -2861,13 +2861,13 @@ Return ONLY the final comment text.`;
             <div className="space-y-6">
               {/* Heading row */}
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                <h2 className="text-lg font-semibold text-c-text dark:text-white">
                   {t('myWork.taskDetail.checklist', 'Checklist')}
                 </h2>
                 {!readMode && (
                   <button
                     onClick={addChecklistItem}
-                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-c-focus transition-colors"
+                    className="inline-flex items-center gap-1 text-xs text-c-text-secondary dark:text-c-text-secondary hover:text-c-focus transition-colors"
                   >
                     <Plus size={13} />
                     {t('myWork.taskDetail.addItem', 'Add item')}
@@ -2878,7 +2878,7 @@ Return ONLY the final comment text.`;
               {/* Progress counter */}
               {totalCount > 0 && (
                 <div className="flex items-center justify-end">
-                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 tabular-nums">
+                  <span className="text-[11px] font-medium text-c-text-secondary dark:text-c-text-secondary tabular-nums">
                     {completedCount}/{totalCount}
                   </span>
                 </div>
@@ -2889,9 +2889,9 @@ Return ONLY the final comment text.`;
                 <div className="py-10 text-center">
                   <CheckSquare
                     size={28}
-                    className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
+                    className="mx-auto mb-2 text-c-text"
                   />
-                  <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                  <p className="text-sm text-c-text-secondary dark:text-c-text-secondary">
                     {t(
                       'myWork.taskDetail.noItemsYetGenerate',
                       'No items yet — generate with AI or add manually'
@@ -2908,7 +2908,7 @@ Return ONLY the final comment text.`;
                         className={`group flex items-start gap-3 px-3 py-2.5 rounded-lg transition duration-200 ${
                           done
                             ? 'opacity-50 hover:opacity-70'
-                            : 'hover:bg-slate-50/60 dark:hover:bg-navy-800/40'
+                            : 'hover:bg-c-surface-raised/60'
                         }`}
                       >
                         {/* Checkbox */}
@@ -2920,7 +2920,7 @@ Return ONLY the final comment text.`;
                           className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition duration-200 ${
                             done
                               ? 'bg-emerald-500 border-emerald-500 text-white'
-                              : 'border-slate-300 dark:border-navy-600 hover:border-emerald-400 dark:hover:border-emerald-500'
+                              : 'border-c-border hover:border-emerald-400 dark:hover:border-emerald-500'
                           }`}
                         >
                           {done && (
@@ -2940,8 +2940,8 @@ Return ONLY the final comment text.`;
                         <span
                           className={`text-[11px] font-medium mt-0.5 mr-0.5 tabular-nums select-none ${
                             done
-                              ? 'text-slate-700 dark:text-slate-400'
-                              : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'
+                              ? 'text-c-text'
+                              : 'text-c-text-secondary dark:text-c-text-secondary'
                           }`}
                         >
                           {idx + 1}.
@@ -2954,10 +2954,10 @@ Return ONLY the final comment text.`;
                           }
                           readOnly={readMode}
                           placeholder={t('myWork.taskDetail.placeholder', 'Enter item...')}
-                          className={`flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 transition-colors ${
+                          className={`flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-c-text-muted transition-colors ${
                             done
-                              ? 'line-through text-slate-500 dark:text-slate-400 dark:text-slate-500'
-                              : 'text-slate-700 dark:text-slate-300'
+                              ? 'line-through text-c-text-secondary dark:text-c-text-secondary'
+                              : 'text-c-text'
                           }`}
                         />
 
@@ -2965,7 +2965,7 @@ Return ONLY the final comment text.`;
                         {!readMode && (
                           <button
                             onClick={() => removeChecklistItem(item.id)}
-                            className="mt-0.5 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-danger-50 dark:hover:bg-danger-500/20 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition"
+                            className="mt-0.5 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-danger-50 dark:hover:bg-danger-500/20 text-c-text-secondary hover:text-danger-500 transition"
                           >
                             <Trash2 size={13} />
                           </button>
@@ -2980,7 +2980,7 @@ Return ONLY the final comment text.`;
               {totalCount > 0 && !readMode && (
                 <button
                   onClick={addChecklistItem}
-                  className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-emerald-500 dark:hover:text-emerald-400 py-1.5 px-3 rounded-lg hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-colors"
+                  className="flex items-center gap-2 text-xs text-c-text-secondary dark:text-c-text-secondary hover:text-emerald-500 dark:hover:text-emerald-400 py-1.5 px-3 rounded-lg hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-colors"
                 >
                   <Plus size={13} />
                   <span>{t('myWork.taskDetail.addAnotherItem', 'Add another item')}</span>
@@ -3006,9 +3006,9 @@ Return ONLY the final comment text.`;
           > = {
             idea: {
               label: t('myWork.taskDetail.label4', 'Idea'),
-              dot: 'bg-slate-400',
-              text: 'text-slate-500 dark:text-slate-400',
-              bg: 'bg-slate-100 dark:bg-slate-500/20',
+              dot: 'bg-c-text-muted',
+              text: 'text-c-text-secondary',
+              bg: 'bg-c-surface-raised',
             },
             considered: {
               label: t('myWork.taskDetail.label5', 'Considered'),
@@ -3034,13 +3034,13 @@ Return ONLY the final comment text.`;
             <div className="space-y-6">
               {/* Heading */}
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                <h2 className="text-lg font-semibold text-c-text dark:text-white">
                   {t('myWork.taskDetail.implementationIdeas', 'Implementation Ideas')}
                 </h2>
                 {!readMode && (
                   <button
                     onClick={addIdea}
-                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-c-focus transition-colors"
+                    className="inline-flex items-center gap-1 text-xs text-c-text-secondary dark:text-c-text-secondary hover:text-c-focus transition-colors"
                   >
                     <Plus size={13} />
                     {t('myWork.taskDetail.addIdea', 'Add idea')}
@@ -3050,7 +3050,7 @@ Return ONLY the final comment text.`;
 
               {/* Ideas list */}
               <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                <label className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                   {isPolish
                     ? `Propozycje (${implementationIdeas.length})`
                     : `Proposals (${implementationIdeas.length})`}
@@ -3060,9 +3060,9 @@ Return ONLY the final comment text.`;
                   <div className="py-8 text-center">
                     <Lightbulb
                       size={28}
-                      className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
+                      className="mx-auto mb-2 text-c-text"
                     />
-                    <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                    <p className="text-sm text-c-text-secondary dark:text-c-text-secondary">
                       {t(
                         'myWork.taskDetail.noIdeasYetGenerate',
                         'No ideas yet — generate with AI or add manually'
@@ -3082,7 +3082,7 @@ Return ONLY the final comment text.`;
                           className={`rounded-xl border transition ${
                             idea.status === 'selected'
                               ? 'border-emerald-300/60 dark:border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-500/5'
-                              : 'border-slate-200 dark:border-navy-700/50 hover:border-slate-300 dark:hover:border-navy-600'
+                              : 'border-c-border hover:border-c-border-strong'
                           }`}
                         >
                           <div className="px-4 py-4">
@@ -3104,13 +3104,13 @@ Return ONLY the final comment text.`;
                                   className={`p-1 rounded-md transition-colors disabled:cursor-default ${
                                     idea.votedByMe
                                       ? 'text-emerald-500 dark:text-emerald-400 bg-emerald-500/10'
-                                      : 'text-slate-500 dark:text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-emerald-500/10'
+                                      : 'text-c-text-secondary hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-emerald-500/10'
                                   }`}
                                   title={t('myWork.taskDetail.title5', 'Vote up')}
                                 >
                                   <ThumbsUp size={14} />
                                 </button>
-                                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 min-w-[14px] text-center">
+                                <span className="text-[11px] font-semibold text-c-text-secondary min-w-[14px] text-center">
                                   {idea.votes}
                                 </span>
                                 <button
@@ -3129,7 +3129,7 @@ Return ONLY the final comment text.`;
                                     )
                                   }
                                   disabled={readMode}
-                                  className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-500/10 transition-colors disabled:cursor-default"
+                                  className="p-1 rounded-md text-c-text-secondary hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-500/10 transition-colors disabled:cursor-default"
                                   title={t('myWork.taskDetail.title6', 'Vote down')}
                                 >
                                   <ThumbsDown size={14} />
@@ -3146,7 +3146,7 @@ Return ONLY the final comment text.`;
                                         ? 'bg-c-info/15 text-c-info'
                                         : isTeam
                                           ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
-                                          : 'bg-slate-100 dark:bg-slate-500/20 text-slate-500 dark:text-slate-400'
+                                          : 'bg-c-surface-raised text-c-text-secondary'
                                     }`}
                                   >
                                     {isAI ? <Sparkles size={9} /> : <User size={9} />}
@@ -3164,7 +3164,7 @@ Return ONLY the final comment text.`;
                                     {sConfig.label}
                                   </span>
                                   {idea.createdBy && (
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                    <span className="text-[10px] text-c-text-secondary dark:text-c-text-secondary">
                                       {idea.createdBy}
                                     </span>
                                   )}
@@ -3183,7 +3183,7 @@ Return ONLY the final comment text.`;
                                     )
                                   }
                                   readOnly={readMode}
-                                  className="w-full text-sm font-medium bg-transparent text-slate-800 dark:text-slate-200 focus:outline-none"
+                                  className="w-full text-sm font-medium bg-transparent text-c-text focus:outline-none"
                                   placeholder={t(
                                     'myWork.taskDetail.placeholder2',
                                     'Approach name...'
@@ -3203,7 +3203,7 @@ Return ONLY the final comment text.`;
                                   }
                                   readOnly={readMode}
                                   rows={3}
-                                  className="w-full mt-1 px-0 py-1 bg-transparent text-xs leading-relaxed text-slate-600 dark:text-slate-400 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y min-h-[48px]"
+                                  className="w-full mt-1 px-0 py-1 bg-transparent text-xs leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y min-h-[48px]"
                                   placeholder={t(
                                     'myWork.taskDetail.describeTheApproachSteps',
                                     'Describe the approach, steps, tools...'
@@ -3243,7 +3243,7 @@ Return ONLY the final comment text.`;
                                         implementationIdeas.filter((i) => i.id !== idea.id)
                                       )
                                     }
-                                    className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-500/20 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
+                                    className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-500/20 text-c-text-secondary hover:text-danger-500 transition-colors"
                                   >
                                     <Trash2 size={13} />
                                   </button>
@@ -3341,7 +3341,7 @@ Return ONLY the final comment text.`;
           component = (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                <h2 className="text-lg font-semibold text-c-text dark:text-white">
                   {t('myWork.taskDetail.evidenceAcceptance', 'Evidence & Acceptance')}
                 </h2>
               </div>
@@ -3399,14 +3399,14 @@ Return ONLY the final comment text.`;
         case 'governance':
           component = (
             <div className="space-y-8">
-              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+              <h2 className="text-lg font-semibold text-c-text dark:text-white">
                 {t('myWork.taskDetail.rACIEscalation', 'RACI & Escalation')}
               </h2>
               <div className="space-y-4">
                 {/* RACI table */}
                 <div className={governanceTableCardClass}>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                    <h3 className="text-base font-semibold text-c-text">
                       {t(
                         'myWork.taskDetail.rACIResponsibilityMatrix',
                         'RACI (responsibility matrix)'
@@ -3435,7 +3435,7 @@ Return ONLY the final comment text.`;
                             },
                           });
                         }}
-                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-text hover:border-c-border-strong transition-colors"
+                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-border text-c-text-secondary hover:text-c-text hover:border-c-border-strong transition-colors"
                       >
                         + {t('myWork.taskDetail.addPerson', 'Add person')}
                       </button>
@@ -3446,7 +3446,7 @@ Return ONLY the final comment text.`;
                       /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */ className="w-full text-sm"
                     >
                       <thead>
-                        <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                        <tr className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary border-b border-c-border">
                           <th className="text-left py-2 pr-2">
                             {t('myWork.taskDetail.person', 'Person')}
                           </th>
@@ -3464,12 +3464,12 @@ Return ONLY the final comment text.`;
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                      <tbody className="divide-y divide-c-border/40">
                         {stakeholders.length === 0 ? (
                           <tr>
                             <td
                               colSpan={5}
-                              className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                              className="py-6 text-center text-xs text-c-text-secondary"
                             >
                               {t('myWork.taskDetail.noStakeholdersYet', 'No stakeholders yet.')}
                             </td>
@@ -3477,13 +3477,13 @@ Return ONLY the final comment text.`;
                         ) : (
                           stakeholders.map((s) => (
                             <tr key={s.id}>
-                              <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
+                              <td className="py-2 pr-2 text-c-text">
                                 {s.userName || s.userId}
                               </td>
-                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                              <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                 {stakeholderRoleLabel(s.role)}
                               </td>
-                              <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                              <td className="py-2 pr-2 text-c-text-secondary">
                                 {s.userEmail || '—'}
                               </td>
                               <td className="py-2 pr-2 text-xs">
@@ -3491,7 +3491,7 @@ Return ONLY the final comment text.`;
                                   {stakeholderChannelLabels(s.notificationSettings).map((label) => (
                                     <span
                                       key={`${s.id}-${label}`}
-                                      className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                      className="px-1.5 py-0.5 rounded border border-c-border bg-c-surface-raised text-[10px] text-c-text-secondary"
                                     >
                                       {label}
                                     </span>
@@ -3506,7 +3506,7 @@ Return ONLY the final comment text.`;
                                         setEditingStakeholderId(s.id);
                                         setStakeholderDraft({ ...s });
                                       }}
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-c-text"
+                                      className="p-1 text-c-text-secondary hover:text-c-text"
                                       title={t('myWork.taskDetail.title7', 'Edit')}
                                     >
                                       <Edit3 size={13} />
@@ -3517,7 +3517,7 @@ Return ONLY the final comment text.`;
                                           stakeholders.filter((item) => item.id !== s.id)
                                         )
                                       }
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500"
+                                      className="p-1 text-c-text-secondary hover:text-danger-500"
                                       title={t('myWork.taskDetail.title8', 'Delete')}
                                     >
                                       <Trash2 size={13} />
@@ -3536,7 +3536,7 @@ Return ONLY the final comment text.`;
                 {/* Reminders table */}
                 <div className={governanceTableCardClass}>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                    <h3 className="text-base font-semibold text-c-text">
                       {t('myWork.taskDetail.reminders', 'Reminders')}
                     </h3>
                     {!readMode && (
@@ -3555,7 +3555,7 @@ Return ONLY the final comment text.`;
                             enabled: true,
                           });
                         }}
-                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-text hover:border-c-border-strong transition-colors"
+                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-border text-c-text-secondary hover:text-c-text hover:border-c-border-strong transition-colors"
                       >
                         + {t('myWork.taskDetail.addReminder', 'Add reminder')}
                       </button>
@@ -3564,7 +3564,7 @@ Return ONLY the final comment text.`;
                   <div className="overflow-auto flex-1">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                        <tr className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary border-b border-c-border">
                           <th className="text-left py-2 pr-2">
                             {t('myWork.taskDetail.type2', 'Type')}
                           </th>
@@ -3582,12 +3582,12 @@ Return ONLY the final comment text.`;
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                      <tbody className="divide-y divide-c-border/40">
                         {reminders.length === 0 ? (
                           <tr>
                             <td
                               colSpan={5}
-                              className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                              className="py-6 text-center text-xs text-c-text-secondary"
                             >
                               {t('myWork.taskDetail.noRemindersYet', 'No reminders yet.')}
                             </td>
@@ -3595,21 +3595,21 @@ Return ONLY the final comment text.`;
                         ) : (
                           reminders.map((r) => (
                             <tr key={r.id}>
-                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                              <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                 {r.type === 'before_due'
                                   ? t('myWork.taskDetail.beforeDue', 'Before due')
                                   : t('myWork.taskDetail.afterDue', 'After due')}
                               </td>
-                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                              <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                 {r.days}
                               </td>
-                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                              <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                 {r.recipients}
                               </td>
                               <td className="py-2 pr-2 text-xs">
                                 <div className="flex flex-wrap gap-1">
                                   {!r.enabled && (
-                                    <span className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400">
+                                    <span className="px-1.5 py-0.5 rounded border border-c-border bg-c-surface-raised text-[10px] text-c-text-secondary">
                                       {t('myWork.taskDetail.disabled2', 'Disabled')}
                                     </span>
                                   )}
@@ -3619,7 +3619,7 @@ Return ONLY the final comment text.`;
                                   ).map((label) => (
                                     <span
                                       key={`${r.id}-${label}`}
-                                      className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                      className="px-1.5 py-0.5 rounded border border-c-border bg-c-surface-raised text-[10px] text-c-text-secondary"
                                     >
                                       {label}
                                     </span>
@@ -3638,7 +3638,7 @@ Return ONLY the final comment text.`;
                                           } as ReminderRuleWithDelivery)
                                         );
                                       }}
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-c-text"
+                                      className="p-1 text-c-text-secondary hover:text-c-text"
                                       title={t('myWork.taskDetail.title9', 'Edit')}
                                     >
                                       <Edit3 size={13} />
@@ -3647,7 +3647,7 @@ Return ONLY the final comment text.`;
                                       onClick={() =>
                                         setReminders(reminders.filter((item) => item.id !== r.id))
                                       }
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500"
+                                      className="p-1 text-c-text-secondary hover:text-danger-500"
                                       title={t('myWork.taskDetail.title10', 'Delete')}
                                     >
                                       <Trash2 size={13} />
@@ -3666,7 +3666,7 @@ Return ONLY the final comment text.`;
                 {/* Escalation table */}
                 <div className={governanceTableCardClass}>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                    <h3 className="text-base font-semibold text-c-text">
                       {t('myWork.taskDetail.escalationAndRules', 'Escalation and rules')}
                     </h3>
                     {!readMode && (
@@ -3690,7 +3690,7 @@ Return ONLY the final comment text.`;
                           );
                           setEditingEscalationId('__new__');
                         }}
-                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-text hover:border-c-border-strong transition-colors"
+                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-border text-c-text-secondary hover:text-c-text hover:border-c-border-strong transition-colors"
                       >
                         + {t('myWork.taskDetail.addEscalation', 'Add escalation')}
                       </button>
@@ -3699,7 +3699,7 @@ Return ONLY the final comment text.`;
                   <div className="overflow-auto flex-1">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                        <tr className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary border-b border-c-border">
                           <th className="text-left py-2 pr-2">
                             {t('myWork.taskDetail.status', 'Status')}
                           </th>
@@ -3726,12 +3726,12 @@ Return ONLY the final comment text.`;
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                      <tbody className="divide-y divide-c-border/40">
                         {escalationRules.length === 0 ? (
                           <tr>
                             <td
                               colSpan={8}
-                              className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                              className="py-6 text-center text-xs text-c-text-secondary"
                             >
                               {t(
                                 'myWork.taskDetail.noEscalationRulesYet',
@@ -3742,24 +3742,24 @@ Return ONLY the final comment text.`;
                         ) : (
                           escalationRules.map((rule) => (
                             <tr key={rule.id}>
-                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                              <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                 {rule.enabled
                                   ? t('myWork.taskDetail.enabled', 'Enabled')
                                   : t('myWork.taskDetail.disabled3', 'Disabled')}
                               </td>
-                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                              <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                 {rule.warningDays}/{rule.criticalDays} d
                               </td>
-                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                              <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                 {rule.afterDays} d
                               </td>
-                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                              <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                 {rule.escalateToName || '—'}
                               </td>
-                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                              <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                 {rule.message || '—'}
                               </td>
-                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                              <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                 {rule.escalationMode === 'notify_only'
                                   ? t('myWork.taskDetail.notify', 'Notify')
                                   : rule.escalationMode === 'manager_review'
@@ -3771,7 +3771,7 @@ Return ONLY the final comment text.`;
                                   {deliveryBadgeLabels(rule.delivery).map((label) => (
                                     <span
                                       key={`${rule.id}-ch-${label}`}
-                                      className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                      className="px-1.5 py-0.5 rounded border border-c-border bg-c-surface-raised text-[10px] text-c-text-secondary"
                                     >
                                       {label}
                                     </span>
@@ -3786,7 +3786,7 @@ Return ONLY the final comment text.`;
                                         setEditingEscalationId(rule.id);
                                         setEscalationDraft({ ...rule });
                                       }}
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-c-text"
+                                      className="p-1 text-c-text-secondary hover:text-c-text"
                                       title={t('myWork.taskDetail.title11', 'Edit')}
                                     >
                                       <Edit3 size={13} />
@@ -3797,7 +3797,7 @@ Return ONLY the final comment text.`;
                                           escalationRules.filter((item) => item.id !== rule.id)
                                         )
                                       }
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500"
+                                      className="p-1 text-c-text-secondary hover:text-danger-500"
                                       title={t('myWork.taskDetail.title12', 'Delete')}
                                     >
                                       <Trash2 size={13} />
@@ -4148,7 +4148,7 @@ Return ONLY the final comment text.`;
       );
     }
     return (
-      <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
+      <div className="flex items-center justify-center h-full bg-c-surface">
         <LoadingState variant="spinner" />
       </div>
     );
@@ -4171,15 +4171,15 @@ Return ONLY the final comment text.`;
       );
     }
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4 bg-white dark:bg-navy-950 p-8 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-navy-800">
-          <AlertCircle size={26} className="text-slate-400 dark:text-slate-500" />
+      <div className="flex flex-col items-center justify-center h-full gap-4 bg-c-surface p-8 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-c-surface-raised">
+          <AlertCircle size={26} className="text-c-text-muted" />
         </div>
         <div className="space-y-1">
-          <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+          <h3 className="text-base font-semibold text-c-text">
             {t('myWork.taskDetail.taskNotFound', 'Task not found')}
           </h3>
-          <p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">
+          <p className="max-w-sm text-sm text-c-text-secondary">
             {t(
               'myWork.taskDetail.thisTaskHasBeen',
               'This task has been deleted or is no longer available to you. Refresh your task list.'
@@ -4190,7 +4190,7 @@ Return ONLY the final comment text.`;
           <button
             type="button"
             onClick={onClose}
-            className="mt-1 rounded-lg border border-slate-200 dark:border-navy-700 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
+            className="mt-1 rounded-lg border border-c-border px-4 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised"
           >
             {t('myWork.taskDetail.close', 'Close')}
           </button>
@@ -4310,10 +4310,31 @@ Return ONLY the final comment text.`;
                 <span className={panelKeyClass}>
                   {t('myWork.taskDetail.initiative2', 'Initiative')}
                 </span>
-                <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle truncate">
-                  <Target size={12} className="text-c-text-muted shrink-0" />
-                  <span className="truncate">{initiativeName}</span>
-                </span>
+                {initiativeId ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.dispatchEvent(
+                        new CustomEvent('mywork-open-item', {
+                          detail: {
+                            type: 'initiative',
+                            id: initiativeId,
+                            name: initiativeName,
+                          },
+                        })
+                      );
+                    }}
+                    className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-xs font-medium bg-c-surface-raised text-c-info border border-c-border-subtle truncate cursor-pointer hover:bg-c-surface-raised/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    <Target size={12} className="text-c-info shrink-0" />
+                    <span className="truncate">{initiativeName}</span>
+                  </button>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle truncate">
+                    <Target size={12} className="text-c-text-muted shrink-0" />
+                    <span className="truncate">{initiativeName}</span>
+                  </span>
+                )}
               </div>
             ) : null}
             {attachments.length > 0 ? (

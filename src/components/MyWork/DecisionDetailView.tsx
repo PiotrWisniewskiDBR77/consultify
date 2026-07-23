@@ -328,7 +328,7 @@ const WORKFLOW_STATUS_CONFIG: Record<
   proposed: {
     label: { en: 'Proposed', pl: 'Propozycja' },
     badgeClass:
-      'bg-slate-500/10 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-navy-700/60',
+      'bg-c-text-secondary/10 text-c-text-secondary border border-c-border/70 dark:border-c-border-subtle/60',
   },
   review: {
     label: { en: 'In review', pl: 'W przeglądzie' },
@@ -1064,11 +1064,11 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [isSuggestingEscalations, setIsSuggestingEscalations] = useState(false);
 
   const governanceModalClass =
-    'relative w-full max-w-2xl rounded-3xl border border-slate-200 dark:border-navy-700/50 bg-white/95 dark:bg-navy-900/95 shadow-2xl p-6 space-y-5';
+    'relative w-full max-w-2xl rounded-3xl border border-c-border-subtle/50 bg-c-surface/95 shadow-2xl p-6 space-y-5';
   const governanceTableCardClass =
-    'bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3 h-[340px] flex flex-col';
+    'bg-c-surface/70 rounded-2xl border border-c-border-subtle/60 p-4 space-y-3 h-[340px] flex flex-col';
   const governanceModalHintClass =
-    'rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 px-3 py-2 text-xs text-slate-600 dark:text-slate-300';
+    'rounded-xl border border-c-border-subtle/60 bg-c-surface/70 dark:bg-c-surface-raised/50 px-3 py-2 text-xs text-c-text-secondary';
   const channelChipClass =
     'px-2 py-1 rounded-md border text-[11px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
 
@@ -1692,7 +1692,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       return {
         icon: <Clock size={12} />,
         label: t('decisions.detail.activityLog.deferral', 'Deferral'),
-        style: 'text-slate-500 bg-slate-500/10 border-slate-400/30',
+        style: 'text-c-text-secondary bg-c-text-secondary/10 border-c-border-strong/30',
       };
     if (type === 'assignment')
       return {
@@ -1728,60 +1728,60 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     return {
       icon: <Plus size={12} />,
       label: t('decisions.detail.activityLog.created', 'Created'),
-      style: 'text-slate-500 bg-slate-500/10 border-slate-400/30',
+      style: 'text-c-text-secondary bg-c-text-secondary/10 border-c-border-strong/30',
     };
   };
 
   const renderActivityLogPanel = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-        <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+        <div className="rounded-xl border border-c-border-subtle/60 bg-c-surface/70 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
             {t('decisions.detail.activityLog.entriesTab', 'Entries')}
           </p>
-          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <p className="text-sm font-semibold text-c-text">
             {activityStats.total}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+        <div className="rounded-xl border border-c-border-subtle/60 bg-c-surface/70 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
             {t('decisions.detail.activityLog.changesTab', 'Changes')}
           </p>
-          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <p className="text-sm font-semibold text-c-text">
             {activityStats.edited}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+        <div className="rounded-xl border border-c-border-subtle/60 bg-c-surface/70 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
             {t('decisions.detail.activityLog.escalationsTab', 'Escalations')}
           </p>
-          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <p className="text-sm font-semibold text-c-text">
             {activityStats.escalations}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+        <div className="rounded-xl border border-c-border-subtle/60 bg-c-surface/70 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
             {t('decisions.detail.activityLog.collaborationTab', 'Collaboration')}
           </p>
-          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <p className="text-sm font-semibold text-c-text">
             {activityStats.collaboration}
           </p>
         </div>
       </div>
 
       {activityLogSorted.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300/60 dark:border-navy-700/70 bg-white/40 dark:bg-navy-900/40 p-6 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+        <div className="rounded-2xl border border-dashed border-c-border-subtle/60 dark:border-c-border-subtle/70 bg-c-surface/40 p-6 text-center text-xs text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
           {t('decisions.detail.activityLog.noEntries', 'No activity entries yet.')}
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
+        <div className="rounded-2xl border border-c-border-subtle/60 bg-c-surface/70 p-3">
           <div className="space-y-1">
             {activityLogSorted.map((entry) => {
               const meta = activityTypeMeta(entry.type);
               return (
                 <div
                   key={entry.id}
-                  className="grid grid-cols-[auto_1fr_auto] gap-3 items-start py-2.5 px-2 rounded-xl hover:bg-slate-50/70 dark:hover:bg-navy-800/40 transition-colors"
+                  className="grid grid-cols-[auto_1fr_auto] gap-3 items-start py-2.5 px-2 rounded-xl hover:bg-c-surface/70 dark:hover:bg-c-surface-raised/40 transition-colors"
                 >
                   <span
                     className={`inline-flex items-center justify-center w-6 h-6 rounded-lg border ${meta.style}`}
@@ -1789,18 +1789,18 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
                     {meta.icon}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-sm text-slate-700 dark:text-slate-200">
+                    <p className="text-sm text-c-text">
                       {entry.description}
                     </p>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
                       <span>{new Date(entry.timestamp).toLocaleString()}</span>
                       {entry.userName && <span>{`· ${entry.userName}`}</span>}
-                      <span className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60">
+                      <span className="px-1.5 py-0.5 rounded border border-c-border-subtle/60">
                         {meta.label}
                       </span>
                     </div>
                     {(entry.oldValue || entry.newValue) && (
-                      <div className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                      <div className="mt-1.5 text-[11px] text-c-text-secondary dark:text-c-text-muted">
                         {entry.oldValue
                           ? `${t('decisions.detail.activityLog.from', 'From')}: ${entry.oldValue}`
                           : ''}
@@ -1811,7 +1811,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
                       </div>
                     )}
                   </div>
-                  <span className="text-[10px] font-mono uppercase tracking-wide text-slate-700 dark:text-slate-400">
+                  <span className="text-[10px] font-mono uppercase tracking-wide text-c-text-muted">
                     {entry.type}
                   </span>
                 </div>
@@ -4206,7 +4206,7 @@ Use userId only from this list:
         AI
       </button>
       {aiMenuOpenField === fieldKey && !isDecisionStageLocked && !aiFieldLoading[fieldKey] && (
-        <div className="absolute right-0 top-[calc(100%+6px)] z-30 w-44 rounded-lg border border-slate-200 dark:border-navy-700/70 bg-white/95 dark:bg-navy-900/95 backdrop-blur p-1 shadow-xl">
+        <div className="absolute right-0 top-[calc(100%+6px)] z-30 w-44 rounded-lg border border-c-border-subtle/70 bg-c-surface/95 backdrop-blur p-1 shadow-xl">
           {[
             ['improve', t('decisions.detail.refine.improve', 'Improve')],
             ['shorten', t('decisions.detail.refine.shorten', 'Shorten')],
@@ -4224,7 +4224,7 @@ Use userId only from this list:
                   modeKey as 'improve' | 'shorten' | 'expand' | 'formal'
                 )
               }
-              className="w-full text-left px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-md transition-colors"
+              className="w-full text-left px-2.5 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised rounded-md transition-colors"
             >
               {label}
             </button>
@@ -4265,7 +4265,7 @@ Use userId only from this list:
         ? 'border-amber-400/70 dark:border-amber-500/50'
         : status === 'approved'
           ? 'border-emerald-400/70 dark:border-emerald-500/50'
-          : 'border-slate-200 dark:border-navy-600/60';
+          : 'border-c-border/60';
   const priorityAlertBorderClass =
     priority === 'critical'
       ? 'border-danger-400/70 dark:border-danger-500/50'
@@ -4273,13 +4273,13 @@ Use userId only from this list:
         ? 'border-amber-400/70 dark:border-amber-500/50'
         : priority === 'medium'
           ? 'border-blue-400/70 dark:border-blue-500/50'
-          : 'border-slate-200 dark:border-navy-600/60';
+          : 'border-c-border/60';
   const dueDateAlertBorderClass = useMemo(() => {
-    if (!dueDate) return 'border-slate-200 dark:border-navy-600/60';
+    if (!dueDate) return 'border-c-border/60';
     if (status === 'approved' || status === 'rejected')
-      return 'border-slate-200 dark:border-navy-600/60';
+      return 'border-c-border/60';
     const due = new Date(dueDate);
-    if (Number.isNaN(due.getTime())) return 'border-slate-200 dark:border-navy-600/60';
+    if (Number.isNaN(due.getTime())) return 'border-c-border/60';
     const now = new Date();
     const daysDiff = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     if (daysDiff < 0) return 'border-danger-400/70 dark:border-danger-500/50';
@@ -4390,7 +4390,7 @@ Use userId only from this list:
   const getPriorityDotClass = (priority: CommentPriorityLevel) => {
     if (priority === 'high') return 'bg-amber-400';
     if (priority === 'low') return 'bg-emerald-400';
-    return 'bg-slate-400';
+    return 'bg-c-text-muted';
   };
 
   const getCommentPriorityLabel = (priority: CommentPriorityLevel) => {
@@ -4425,7 +4425,7 @@ Use userId only from this list:
     if (isActive && priority === 'low') {
       return 'border-emerald-400/80 text-emerald-300 bg-emerald-500/20 shadow-[0_0_0_1px_rgba(16,185,129,0.3)]';
     }
-    return 'border-slate-300/55 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:border-slate-400/70 hover:text-slate-700 dark:text-slate-300';
+    return 'border-c-border-subtle/55 dark:border-c-border/60 text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary hover:border-c-border-strong/70 hover:text-c-text-secondary';
   };
 
   const enhanceCommentDraftWithAI = async () => {
@@ -5207,7 +5207,7 @@ Use userId only from this list:
       );
     }
     return (
-      <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
+      <div className="flex items-center justify-center h-full bg-c-surface">
         <LoadingState variant="spinner" />
       </div>
     );
@@ -5325,7 +5325,7 @@ Use userId only from this list:
     // (h-full overflow-y-auto), not via document scroll (min-h-screen) —
     // the parent shell renders this inside an overflow-hidden container so
     // min-h-screen content below the fold was unreachable.
-    <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+    <div className="h-full overflow-y-auto bg-gradient-to-br from-c-surface via-white to-c-surface dark:from-c-bg dark:via-c-bg dark:to-c-bg">
       <div className="p-6">
         <div className="max-w-[1500px] mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
           <div className="xl:flex-1 xl:min-w-0 space-y-0">
@@ -5383,8 +5383,8 @@ Use userId only from this list:
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
                     {sourceType === 'idea' && <Lightbulb size={14} className="text-amber-500" />}
                     {sourceType === 'notebook' && <FileText size={14} className="text-blue-500" />}
-                    {sourceType === 'task' && <Settings size={14} className="text-slate-500" />}
-                    <span className="text-slate-600 dark:text-slate-300">
+                    {sourceType === 'task' && <Settings size={14} className="text-c-text-secondary" />}
+                    <span className="text-c-text-secondary">
                       {sourceType === 'idea'
                         ? t('decisions.detail.source.createdFromIdea', 'Created from Idea')
                         : sourceType === 'notebook'
@@ -5543,7 +5543,7 @@ Use userId only from this list:
 
                               {/* 1) Related item from linked records */}
                               <div className="space-y-2">
-                                <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                <label className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
                                   {t('decisions.detail.scope.relatedTo', 'Related to')}
                                 </label>
                                 {relatedDecisionItems.length === 0 ? (
@@ -5555,7 +5555,7 @@ Use userId only from this list:
                                     {relatedDecisionItems.map((item) => (
                                       <div
                                         key={item.id}
-                                        className="flex items-center justify-between gap-3 text-sm text-slate-700 dark:text-slate-300"
+                                        className="flex items-center justify-between gap-3 text-sm text-c-text-secondary"
                                       >
                                         <div className="flex min-w-0 items-center gap-2">
                                           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-info/50 text-c-info bg-c-info/10 uppercase">
@@ -5563,7 +5563,7 @@ Use userId only from this list:
                                           </span>
                                           <span className="truncate">{item.title}</span>
                                         </div>
-                                        <span className="shrink-0 text-[11px] font-mono text-slate-500/70 dark:text-slate-500/70">
+                                        <span className="shrink-0 text-[11px] font-mono text-c-text-secondary/70">
                                           {getLinkedItemIndex(item)}
                                         </span>
                                       </div>
@@ -5575,7 +5575,7 @@ Use userId only from this list:
                               {/* 2) Decision scope */}
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                  <label className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
                                     {t(
                                       'decisions.detail.scope.decisionScopeLabel',
                                       'Decision scope'
@@ -5600,20 +5600,20 @@ Use userId only from this list:
                                     }}
                                     readOnly={isDecisionStageLocked}
                                     rows={isDescriptionExpanded ? 10 : 6}
-                                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
+                                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border-subtle/40 focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
                                     placeholder={t(
                                       'decisions.detail.scope.descriptionPlaceholder',
                                       'Describe the decision scope (what exactly is being decided)...'
                                     )}
                                   />
                                   {!isDescriptionExpanded && canExpandDescription && (
-                                    <div className="pointer-events-none absolute bottom-7 left-0 right-0 h-10 bg-gradient-to-t from-white/90 to-transparent dark:from-navy-900/90" />
+                                    <div className="pointer-events-none absolute bottom-7 left-0 right-0 h-10 bg-gradient-to-t from-white/90 to-transparent dark:from-c-bg/90" />
                                   )}
                                 </div>
                                 {canExpandDescription && (
                                   <button
                                     onClick={() => setIsDescriptionExpanded((prev) => !prev)}
-                                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                                    className="inline-flex items-center gap-1 text-xs text-c-text-secondary dark:text-c-text-muted hover:text-c-text transition-colors"
                                   >
                                     {isDescriptionExpanded ? (
                                       <>
@@ -5633,7 +5633,7 @@ Use userId only from this list:
                               {/* 3) Additional context */}
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                  <label className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
                                     {t(
                                       'decisions.detail.scope.additionalContext',
                                       'Additional context'
@@ -5656,20 +5656,20 @@ Use userId only from this list:
                                     }
                                     readOnly={isDecisionStageLocked}
                                     rows={isContextExpanded ? 8 : 5}
-                                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
+                                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border-subtle/40 focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
                                     placeholder={t(
                                       'decisions.detail.scope.contextPlaceholder',
                                       'Additional explanation, assumptions, constraints (optional)...'
                                     )}
                                   />
                                   {!isContextExpanded && canExpandContext && (
-                                    <div className="pointer-events-none absolute bottom-7 left-0 right-0 h-10 bg-gradient-to-t from-white/90 to-transparent dark:from-navy-900/90" />
+                                    <div className="pointer-events-none absolute bottom-7 left-0 right-0 h-10 bg-gradient-to-t from-white/90 to-transparent dark:from-c-bg/90" />
                                   )}
                                 </div>
                                 {canExpandContext && (
                                   <button
                                     onClick={() => setIsContextExpanded((prev) => !prev)}
-                                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                                    className="inline-flex items-center gap-1 text-xs text-c-text-secondary dark:text-c-text-muted hover:text-c-text transition-colors"
                                   >
                                     {isContextExpanded ? (
                                       <>
@@ -5723,9 +5723,9 @@ Use userId only from this list:
                                 <div className="py-10 text-center">
                                   <Lightbulb
                                     size={28}
-                                    className="mx-auto mb-3 text-slate-700 dark:text-slate-400"
+                                    className="mx-auto mb-3 text-c-text-muted"
                                   />
-                                  <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-3">
+                                  <p className="text-sm text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary mb-3">
                                     {t(
                                       'decisions.detail.options.noOptions',
                                       'No options defined yet.'
@@ -5740,7 +5740,7 @@ Use userId only from this list:
                                 </div>
                               ) : (
                                 /* InlineTable — flat comparison */
-                                <div className="space-y-0 divide-y divide-slate-300/55 dark:divide-navy-600/65">
+                                <div className="space-y-0 divide-y divide-c-border-subtle/55 dark:divide-c-border-subtle/65">
                                   {alternatives.map((alt) => (
                                     <div
                                       key={alt.id}
@@ -5762,7 +5762,7 @@ Use userId only from this list:
                                             onChange={(e) =>
                                               updateAlternative(alt.id, { title: e.target.value })
                                             }
-                                            className="w-full text-sm font-medium bg-transparent text-slate-800 dark:text-white focus:outline-none placeholder-slate-400"
+                                            className="w-full text-sm font-medium bg-transparent text-c-text dark:text-white focus:outline-none placeholder-c-text-muted"
                                             placeholder={t(
                                               'decisions.detail.options.namePlaceholder',
                                               'Option name...'
@@ -5773,7 +5773,7 @@ Use userId only from this list:
                                           {!alt.isRecommended && (
                                             <button
                                               onClick={() => setRecommendedAlternative(alt.id)}
-                                              className="p-1 text-slate-500 dark:text-slate-400 hover:text-emerald-500 transition-colors"
+                                              className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-emerald-500 transition-colors"
                                               title={t(
                                                 'decisions.detail.options.setRecommended',
                                                 'Set recommended'
@@ -5784,7 +5784,7 @@ Use userId only from this list:
                                           )}
                                           <button
                                             onClick={() => removeAlternative(alt.id)}
-                                            className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
+                                            className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-danger-500 transition-colors"
                                           >
                                             <Trash2 size={13} />
                                           </button>
@@ -5796,7 +5796,7 @@ Use userId only from this list:
                                           updateAlternative(alt.id, { description: e.target.value })
                                         }
                                         rows={2}
-                                        className="w-full text-xs bg-transparent text-slate-500 dark:text-slate-400 focus:outline-none placeholder-slate-300 dark:placeholder-slate-600 resize-none leading-relaxed"
+                                        className="w-full text-xs bg-transparent text-c-text-secondary dark:text-c-text-muted focus:outline-none placeholder-c-text-muted resize-none leading-relaxed"
                                         placeholder={t(
                                           'decisions.detail.options.descriptionPlaceholder',
                                           'Description...'
@@ -5836,7 +5836,7 @@ Use userId only from this list:
                                                 onChange={(e) =>
                                                   updateAlternativePro(alt.id, idx, e.target.value)
                                                 }
-                                                className="flex-1 text-[11px] bg-transparent border-b border-emerald-400/20 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
+                                                className="flex-1 text-[11px] bg-transparent border-b border-emerald-400/20 text-c-text-secondary focus:outline-none focus:border-emerald-400"
                                                 placeholder={t(
                                                   'decisions.detail.options.proArgumentPlaceholder',
                                                   'Pro argument...'
@@ -5844,7 +5844,7 @@ Use userId only from this list:
                                               />
                                               <button
                                                 onClick={() => removeAlternativePro(alt.id, idx)}
-                                                className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
+                                                className="p-0.5 text-c-text-secondary dark:text-c-text-muted hover:text-danger-500 transition-colors"
                                               >
                                                 <X size={11} />
                                               </button>
@@ -5868,7 +5868,7 @@ Use userId only from this list:
                                                   );
                                                 }
                                               }}
-                                              className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                                              className="flex-1 text-[11px] bg-transparent border-b border-c-border/60 text-c-text-secondary dark:text-c-text-muted focus:outline-none focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
                                               placeholder={t(
                                                 'decisions.detail.options.addProPlaceholder',
                                                 '+ Add pro'
@@ -5903,7 +5903,7 @@ Use userId only from this list:
                                                 onChange={(e) =>
                                                   updateAlternativeCon(alt.id, idx, e.target.value)
                                                 }
-                                                className="flex-1 text-[11px] bg-transparent border-b border-danger-400/20 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-danger-400"
+                                                className="flex-1 text-[11px] bg-transparent border-b border-danger-400/20 text-c-text-secondary focus:outline-none focus:border-danger-400"
                                                 placeholder={t(
                                                   'decisions.detail.options.conArgumentPlaceholder',
                                                   'Con argument...'
@@ -5911,7 +5911,7 @@ Use userId only from this list:
                                               />
                                               <button
                                                 onClick={() => removeAlternativeCon(alt.id, idx)}
-                                                className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
+                                                className="p-0.5 text-c-text-secondary dark:text-c-text-muted hover:text-danger-500 transition-colors"
                                               >
                                                 <X size={11} />
                                               </button>
@@ -5935,7 +5935,7 @@ Use userId only from this list:
                                                   );
                                                 }
                                               }}
-                                              className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                                              className="flex-1 text-[11px] bg-transparent border-b border-c-border/60 text-c-text-secondary dark:text-c-text-muted focus:outline-none focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
                                               placeholder={t(
                                                 'decisions.detail.options.addConPlaceholder',
                                                 '+ Add con'
@@ -5956,7 +5956,7 @@ Use userId only from this list:
                                         </div>
                                         {alt.riskLevel && (
                                           <span
-                                            className={`font-medium ${alt.riskLevel === 'high' ? 'text-danger-500' : alt.riskLevel === 'medium' ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'}`}
+                                            className={`font-medium ${alt.riskLevel === 'high' ? 'text-danger-500' : alt.riskLevel === 'medium' ? 'text-amber-500' : 'text-c-text-secondary dark:text-c-text-muted'}`}
                                           >
                                             {t('decisions.detail.options.riskLabel', 'risk')}:{' '}
                                             {alt.riskLevel}
@@ -5970,7 +5970,7 @@ Use userId only from this list:
 
                               <button
                                 onClick={addAlternative}
-                                className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-teal-500 transition-colors"
+                                className="text-xs font-medium text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary hover:text-teal-500 transition-colors"
                               >
                                 + {t('decisions.detail.options.addOption', 'Add option')}
                               </button>
@@ -6056,7 +6056,7 @@ Use userId only from this list:
                                 />
                               </div>
                               <div className="flex flex-wrap items-center justify-between gap-2">
-                                <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                <div className="flex items-center gap-2 text-[11px] text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
                                   <span>
                                     {t(
                                       'decisions.detail.consequencesSection.aiScenariosRealtime',
@@ -6075,7 +6075,7 @@ Use userId only from this list:
                                         )}
                                   </span>
                                 </div>
-                                <div className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                <div className="text-[11px] text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
                                   {isGeneratingConsequenceScenarios
                                     ? t(
                                         'decisions.detail.consequencesSection.aiUpdating',
@@ -6120,10 +6120,10 @@ Use userId only from this list:
                                       className={`rounded-xl border p-3 space-y-3 shadow-sm ${cardStyle}`}
                                     >
                                       <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                        <h3 className="text-sm font-semibold text-c-text">
                                           {label}
                                         </h3>
-                                        <span className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                        <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
                                           7 / 30 / 90
                                         </span>
                                       </div>
@@ -6137,9 +6137,9 @@ Use userId only from this list:
                                         ).map(([timelineKey, timelineLabel]) => (
                                           <div
                                             key={`${scenarioKey}-${timelineKey}`}
-                                            className="rounded-lg border border-slate-200 dark:border-navy-700/50 bg-white/30 dark:bg-navy-900/25 p-2"
+                                            className="rounded-lg border border-c-border-subtle/50 bg-c-surface/30 p-2"
                                           >
-                                            <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                            <p className="mb-1 text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
                                               {timelineLabel}
                                             </p>
                                             <textarea
@@ -6153,7 +6153,7 @@ Use userId only from this list:
                                               }
                                               readOnly={isDecisionStageLocked}
                                               rows={4}
-                                              className="w-full min-h-[92px] bg-transparent text-xs leading-relaxed text-slate-600 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y"
+                                              className="w-full min-h-[92px] bg-transparent text-xs leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y"
                                             />
                                           </div>
                                         ))}
@@ -6164,7 +6164,7 @@ Use userId only from this list:
                               </div>
                               <div className="pl-4 border-l-2 border-amber-400 dark:border-amber-500/60">
                                 <div className="mb-2 flex items-center justify-between">
-                                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                  <label className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
                                     {t(
                                       'decisions.detail.consequencesSection.decisionNote',
                                       'Decision note'
@@ -6188,7 +6188,7 @@ Use userId only from this list:
                                   }}
                                   readOnly={isDecisionStageLocked}
                                   rows={5}
-                                  className="w-full min-h-[120px] px-0 py-1 bg-transparent text-sm text-slate-700 dark:text-slate-300 focus:outline-none placeholder-amber-400/50 dark:placeholder-amber-600/40 resize-y leading-relaxed"
+                                  className="w-full min-h-[120px] px-0 py-1 bg-transparent text-sm text-c-text-secondary focus:outline-none placeholder-amber-400/50 dark:placeholder-amber-600/40 resize-y leading-relaxed"
                                   placeholder={t(
                                     'decisions.detail.consequencesSection.notePlaceholder',
                                     'What happens if the decision is not made?'
@@ -6202,14 +6202,14 @@ Use userId only from this list:
                         {/* ── Section: Governance & Escalation (flat) ───── */}
                         {activeNotionSection === 'governance-escalation' && (
                           <div className="space-y-8">
-                            <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                            <h2 className="text-lg font-semibold text-c-text dark:text-white">
                               {t('decisions.detail.governance.title', 'RACI & Escalation')}
                             </h2>
                             <div className="space-y-4">
                               {/* RACI table */}
                               <div className={governanceTableCardClass}>
                                 <div className="flex items-center justify-between">
-                                  <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                                  <h3 className="text-base font-semibold text-c-text">
                                     {t(
                                       'decisions.detail.governance.raciMatrixTitle',
                                       'RACI (responsibility matrix)'
@@ -6239,7 +6239,7 @@ Use userId only from this list:
                                           },
                                         });
                                       }}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-text hover:border-c-border-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-border-subtle/60 dark:border-c-border text-c-text-secondary hover:text-c-text hover:border-c-border-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                       + {t('decisions.detail.governance.addPerson', 'Add person')}
                                     </button>
@@ -6250,7 +6250,7 @@ Use userId only from this list:
                                     /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */ className="w-full text-sm"
                                   >
                                     <thead>
-                                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                      <tr className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary border-b border-c-border-subtle/50">
                                         <th className="text-left py-2 pr-2">
                                           {t('decisions.detail.governance.colPerson', 'Person')}
                                         </th>
@@ -6271,12 +6271,12 @@ Use userId only from this list:
                                         </th>
                                       </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                                    <tbody className="divide-y divide-c-border-subtle/40">
                                       {stakeholders.length === 0 ? (
                                         <tr>
                                           <td
                                             colSpan={5}
-                                            className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                                            className="py-6 text-center text-xs text-c-text-secondary dark:text-c-text-muted"
                                           >
                                             {t(
                                               'decisions.detail.governance.noStakeholders',
@@ -6287,13 +6287,13 @@ Use userId only from this list:
                                       ) : (
                                         stakeholders.map((s) => (
                                           <tr key={s.id}>
-                                            <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
+                                            <td className="py-2 pr-2 text-c-text-secondary">
                                               {s.userName || s.userId}
                                             </td>
-                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                               {stakeholderRoleLabel(s.role)}
                                             </td>
-                                            <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                            <td className="py-2 pr-2 text-c-text-secondary dark:text-c-text-muted">
                                               {s.userEmail || '—'}
                                             </td>
                                             <td className="py-2 pr-2 text-xs">
@@ -6303,7 +6303,7 @@ Use userId only from this list:
                                                 ).map((label) => (
                                                   <span
                                                     key={`${s.id}-${label}`}
-                                                    className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                                    className="px-1.5 py-0.5 rounded border border-c-border-subtle/60 bg-c-surface/50 dark:bg-c-surface-raised/50 text-[10px] text-c-text-secondary dark:text-c-text-muted"
                                                   >
                                                     {label}
                                                   </span>
@@ -6318,7 +6318,7 @@ Use userId only from this list:
                                                     setEditingStakeholderId(s.id);
                                                     setStakeholderDraft({ ...s });
                                                   }}
-                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-c-text disabled:opacity-40"
+                                                  className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-c-text disabled:opacity-40"
                                                   title={t(
                                                     'decisions.detail.activityLog.edit',
                                                     'Edit'
@@ -6335,7 +6335,7 @@ Use userId only from this list:
                                                       )
                                                     )
                                                   }
-                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 disabled:opacity-40"
+                                                  className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-danger-500 disabled:opacity-40"
                                                   title={t(
                                                     'decisions.detail.governance.delete',
                                                     'Delete'
@@ -6356,7 +6356,7 @@ Use userId only from this list:
                               {/* Reminders table */}
                               <div className={governanceTableCardClass}>
                                 <div className="flex items-center justify-between">
-                                  <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                                  <h3 className="text-base font-semibold text-c-text">
                                     {t('decisions.detail.governance.remindersTitle', 'Reminders')}
                                   </h3>
                                   <div className="inline-flex items-center gap-2">
@@ -6378,7 +6378,7 @@ Use userId only from this list:
                                           enabled: true,
                                         });
                                       }}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-text hover:border-c-border-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-border-subtle/60 dark:border-c-border text-c-text-secondary hover:text-c-text hover:border-c-border-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                       +{' '}
                                       {t('decisions.detail.governance.addReminder', 'Add reminder')}
@@ -6388,7 +6388,7 @@ Use userId only from this list:
                                 <div className="overflow-auto flex-1">
                                   <table className="w-full text-sm">
                                     <thead>
-                                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                      <tr className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary border-b border-c-border-subtle/50">
                                         <th className="text-left py-2 pr-2">
                                           {t('decisions.detail.governance.colType', 'Type')}
                                         </th>
@@ -6412,12 +6412,12 @@ Use userId only from this list:
                                         </th>
                                       </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                                    <tbody className="divide-y divide-c-border-subtle/40">
                                       {reminders.length === 0 ? (
                                         <tr>
                                           <td
                                             colSpan={5}
-                                            className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                                            className="py-6 text-center text-xs text-c-text-secondary dark:text-c-text-muted"
                                           >
                                             {t(
                                               'decisions.detail.governance.noReminders',
@@ -6428,7 +6428,7 @@ Use userId only from this list:
                                       ) : (
                                         reminders.map((r) => (
                                           <tr key={r.id}>
-                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                               {r.type === 'before_due'
                                                 ? t(
                                                     'decisions.detail.governance.beforeDue',
@@ -6439,16 +6439,16 @@ Use userId only from this list:
                                                     'After due'
                                                   )}
                                             </td>
-                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                               {r.days}
                                             </td>
-                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                               {r.recipients}
                                             </td>
                                             <td className="py-2 pr-2 text-xs">
                                               <div className="flex flex-wrap gap-1">
                                                 {!r.enabled && (
-                                                  <span className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400">
+                                                  <span className="px-1.5 py-0.5 rounded border border-c-border-subtle/60 bg-c-surface/50 dark:bg-c-surface-raised/50 text-[10px] text-c-text-secondary dark:text-c-text-muted">
                                                     {t(
                                                       'decisions.detail.channels.disabled',
                                                       'Disabled'
@@ -6458,7 +6458,7 @@ Use userId only from this list:
                                                 {deliveryBadgeLabels(r.delivery, r).map((label) => (
                                                   <span
                                                     key={`${r.id}-${label}`}
-                                                    className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                                    className="px-1.5 py-0.5 rounded border border-c-border-subtle/60 bg-c-surface/50 dark:bg-c-surface-raised/50 text-[10px] text-c-text-secondary dark:text-c-text-muted"
                                                   >
                                                     {label}
                                                   </span>
@@ -6475,7 +6475,7 @@ Use userId only from this list:
                                                       normalizeReminderRule({ ...r })
                                                     );
                                                   }}
-                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-c-text disabled:opacity-40"
+                                                  className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-c-text disabled:opacity-40"
                                                   title={t(
                                                     'decisions.detail.activityLog.edit',
                                                     'Edit'
@@ -6490,7 +6490,7 @@ Use userId only from this list:
                                                       reminders.filter((item) => item.id !== r.id)
                                                     )
                                                   }
-                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 disabled:opacity-40"
+                                                  className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-danger-500 disabled:opacity-40"
                                                   title={t(
                                                     'decisions.detail.governance.delete',
                                                     'Delete'
@@ -6511,7 +6511,7 @@ Use userId only from this list:
                               {/* Escalation table */}
                               <div className={governanceTableCardClass}>
                                 <div className="flex items-center justify-between">
-                                  <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                                  <h3 className="text-base font-semibold text-c-text">
                                     {t(
                                       'decisions.detail.governance.escalationTitle',
                                       'Escalation and rules'
@@ -6541,7 +6541,7 @@ Use userId only from this list:
                                         );
                                         setEditingEscalationId('__new__');
                                       }}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-text hover:border-c-border-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-border-subtle/60 dark:border-c-border text-c-text-secondary hover:text-c-text hover:border-c-border-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                       +{' '}
                                       {t(
@@ -6554,7 +6554,7 @@ Use userId only from this list:
                                 <div className="overflow-auto flex-1">
                                   <table className="w-full text-sm">
                                     <thead>
-                                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                      <tr className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary border-b border-c-border-subtle/50">
                                         <th className="text-left py-2 pr-2">
                                           {t('decisions.detail.governance.colStatus', 'Status')}
                                         </th>
@@ -6590,12 +6590,12 @@ Use userId only from this list:
                                         </th>
                                       </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                                    <tbody className="divide-y divide-c-border-subtle/40">
                                       {escalationRules.length === 0 ? (
                                         <tr>
                                           <td
                                             colSpan={8}
-                                            className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                                            className="py-6 text-center text-xs text-c-text-secondary dark:text-c-text-muted"
                                           >
                                             {t(
                                               'decisions.detail.governance.noEscalationRules',
@@ -6606,7 +6606,7 @@ Use userId only from this list:
                                       ) : (
                                         escalationRules.map((rule) => (
                                           <tr key={rule.id}>
-                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                               {rule.enabled
                                                 ? t(
                                                     'decisions.detail.governance.enabledStatus',
@@ -6617,19 +6617,19 @@ Use userId only from this list:
                                                     'Disabled'
                                                   )}
                                             </td>
-                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                               {rule.warningDays}/{rule.criticalDays} d
                                             </td>
-                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                               {rule.afterDays} d
                                             </td>
-                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                               {rule.escalateToName || '—'}
                                             </td>
-                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                               {rule.message || '—'}
                                             </td>
-                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                               {rule.escalationMode === 'notify_only'
                                                 ? t(
                                                     'decisions.detail.governance.escalationModeNotify',
@@ -6650,7 +6650,7 @@ Use userId only from this list:
                                                 {deliveryBadgeLabels(rule.delivery).map((label) => (
                                                   <span
                                                     key={`${rule.id}-ch-${label}`}
-                                                    className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                                    className="px-1.5 py-0.5 rounded border border-c-border-subtle/60 bg-c-surface/50 dark:bg-c-surface-raised/50 text-[10px] text-c-text-secondary dark:text-c-text-muted"
                                                   >
                                                     {label}
                                                   </span>
@@ -6665,7 +6665,7 @@ Use userId only from this list:
                                                     setEditingEscalationId(rule.id);
                                                     setEscalationDraft({ ...rule });
                                                   }}
-                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-c-text disabled:opacity-40"
+                                                  className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-c-text disabled:opacity-40"
                                                   title={t(
                                                     'decisions.detail.activityLog.edit',
                                                     'Edit'
@@ -6682,7 +6682,7 @@ Use userId only from this list:
                                                       )
                                                     )
                                                   }
-                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 disabled:opacity-40"
+                                                  className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-danger-500 disabled:opacity-40"
                                                   title={t(
                                                     'decisions.detail.governance.delete',
                                                     'Delete'
@@ -6713,7 +6713,7 @@ Use userId only from this list:
                                 />
                                 <div className={`${governanceModalClass} min-h-[380px]`}>
                                   <div className="flex items-center justify-between">
-                                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    <h4 className="text-sm font-semibold text-c-text">
                                       {editingStakeholderId === '__new__'
                                         ? t(
                                             'decisions.detail.stakeholderModal.addTitle',
@@ -6738,7 +6738,7 @@ Use userId only from this list:
                                         AI
                                       </button>
                                       <button
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
+                                        className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-c-text-secondary"
                                         onClick={() => {
                                           setEditingStakeholderId(null);
                                           setStakeholderDraft(null);
@@ -6755,7 +6755,7 @@ Use userId only from this list:
                                     )}
                                   </div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    <label className="text-xs text-c-text-secondary dark:text-c-text-muted">
                                       {t('decisions.detail.governance.colPerson', 'Person')}
                                       <select
                                         value={stakeholderDraft.userId}
@@ -6773,7 +6773,7 @@ Use userId only from this list:
                                               selected?.email || stakeholderDraft.userEmail,
                                           });
                                         }}
-                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface-raised border border-c-border"
                                       >
                                         {users.map((u) => (
                                           <option key={u.id} value={u.id}>
@@ -6782,7 +6782,7 @@ Use userId only from this list:
                                         ))}
                                       </select>
                                     </label>
-                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    <label className="text-xs text-c-text-secondary dark:text-c-text-muted">
                                       {t('decisions.detail.governance.colRole', 'Role')}
                                       <select
                                         value={stakeholderDraft.role}
@@ -6792,7 +6792,7 @@ Use userId only from this list:
                                             role: e.target.value as StakeholderRole,
                                           })
                                         }
-                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface-raised border border-c-border"
                                       >
                                         <option value="responsible">
                                           {t('decisions.detail.raci.responsible', 'Responsible')}
@@ -6810,21 +6810,21 @@ Use userId only from this list:
                                     </label>
                                   </div>
                                   <div className="space-y-2 flex-1">
-                                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                                    <div className="text-xs text-c-text-secondary dark:text-c-text-muted">
                                       {t(
                                         'decisions.detail.stakeholderModal.notificationChannels',
                                         'Notification channels'
                                       )}
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                      <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                                        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                      <div className="rounded-xl border border-c-border-subtle/60 bg-c-surface/70 dark:bg-c-surface-raised/50 p-3 space-y-2">
+                                        <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                                           {t(
                                             'decisions.detail.stakeholderModal.coreChannels',
                                             'Core channels'
                                           )}
                                         </div>
-                                        <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
+                                        <div className="flex flex-wrap gap-2 text-xs text-c-text-secondary">
                                           {[
                                             {
                                               key: 'enabled',
@@ -6884,7 +6884,7 @@ Use userId only from this list:
                                               className={`${channelChipClass} ${
                                                 channel.active
                                                   ? 'border-c-border-strong text-c-text bg-c-surface-raised'
-                                                  : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                                                  : 'border-c-border-subtle/70 text-c-text-secondary hover:border-c-border-strong/80'
                                               }`}
                                             >
                                               {channel.label}
@@ -6892,14 +6892,14 @@ Use userId only from this list:
                                           ))}
                                         </div>
                                       </div>
-                                      <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                                        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                      <div className="rounded-xl border border-c-border-subtle/60 bg-c-surface/70 dark:bg-c-surface-raised/50 p-3 space-y-2">
+                                        <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                                           {t(
                                             'decisions.detail.stakeholderModal.integrationChannels',
                                             'Integration channels'
                                           )}
                                         </div>
-                                        <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
+                                        <div className="flex flex-wrap gap-2 text-xs text-c-text-secondary">
                                           {integrationChannelCatalog.map((channel) => {
                                             const list =
                                               stakeholderDraft.notificationSettings
@@ -6927,7 +6927,7 @@ Use userId only from this list:
                                                 className={`${channelChipClass} ${
                                                   selected
                                                     ? 'border-c-border-strong text-c-text bg-c-surface-raised'
-                                                    : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                                                    : 'border-c-border-subtle/70 text-c-text-secondary hover:border-c-border-strong/80'
                                                 }`}
                                                 title={channel.scope}
                                               >
@@ -6938,7 +6938,7 @@ Use userId only from this list:
                                         </div>
                                       </div>
                                     </div>
-                                    <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                    <label className="text-xs text-c-text-secondary dark:text-c-text-muted block">
                                       {t(
                                         'decisions.detail.stakeholderModal.syncTargets',
                                         'Sync targets'
@@ -6959,7 +6959,7 @@ Use userId only from this list:
                                             },
                                           })
                                         }
-                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface-raised border border-c-border"
                                         placeholder={t(
                                           'decisions.detail.integrations.placeholderOps',
                                           'slack:#ops, jira:DRD'
@@ -6973,7 +6973,7 @@ Use userId only from this list:
                                         setEditingStakeholderId(null);
                                         setStakeholderDraft(null);
                                       }}
-                                      className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                                      className="px-3 py-1.5 rounded-md text-xs border border-c-border-subtle/60 dark:border-c-border text-c-text-secondary"
                                     >
                                       {t('decisions.detail.stakeholderModal.cancel', 'Cancel')}
                                     </button>
@@ -7025,7 +7025,7 @@ Use userId only from this list:
                                 />
                                 <div className={`${governanceModalClass} min-h-[380px]`}>
                                   <div className="flex items-center justify-between">
-                                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    <h4 className="text-sm font-semibold text-c-text">
                                       {editingReminderId === '__new__'
                                         ? t(
                                             'decisions.detail.governance.addReminder',
@@ -7050,7 +7050,7 @@ Use userId only from this list:
                                         AI
                                       </button>
                                       <button
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
+                                        className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-c-text-secondary"
                                         onClick={() => {
                                           setEditingReminderId(null);
                                           setReminderDraft(null);
@@ -7067,7 +7067,7 @@ Use userId only from this list:
                                     )}
                                   </div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    <label className="text-xs text-c-text-secondary dark:text-c-text-muted">
                                       {t('decisions.detail.governance.colType', 'Type')}
                                       <select
                                         value={reminderDraft.type}
@@ -7077,7 +7077,7 @@ Use userId only from this list:
                                             type: e.target.value as 'before_due' | 'after_due',
                                           })
                                         }
-                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface-raised border border-c-border"
                                       >
                                         <option value="before_due">
                                           {t('decisions.detail.governance.beforeDue', 'Before due')}
@@ -7087,7 +7087,7 @@ Use userId only from this list:
                                         </option>
                                       </select>
                                     </label>
-                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    <label className="text-xs text-c-text-secondary dark:text-c-text-muted">
                                       {t('decisions.detail.governance.colDays', 'Days')}
                                       <input
                                         type="number"
@@ -7099,11 +7099,11 @@ Use userId only from this list:
                                             days: Number(e.target.value) || 0,
                                           })
                                         }
-                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface-raised border border-c-border"
                                       />
                                     </label>
                                   </div>
-                                  <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                  <label className="text-xs text-c-text-secondary dark:text-c-text-muted block">
                                     {t('decisions.detail.governance.colRecipients', 'Recipients')}
                                     <select
                                       value={reminderDraft.recipients}
@@ -7117,7 +7117,7 @@ Use userId only from this list:
                                             | 'stakeholders',
                                         })
                                       }
-                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface-raised border border-c-border"
                                     >
                                       <option value="requester">
                                         {t('decisions.detail.reminderModal.requester', 'Requester')}
@@ -7137,7 +7137,7 @@ Use userId only from this list:
                                     </select>
                                   </label>
                                   <div className="space-y-3">
-                                    <label className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+                                    <label className="inline-flex items-center gap-1 text-xs text-c-text-secondary">
                                       <input
                                         type="checkbox"
                                         checked={reminderDraft.enabled}
@@ -7154,8 +7154,8 @@ Use userId only from this list:
                                       )}
                                     </label>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                      <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                                        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                      <div className="rounded-xl border border-c-border-subtle/60 bg-c-surface/70 dark:bg-c-surface-raised/50 p-3 space-y-2">
+                                        <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                                           {t(
                                             'decisions.detail.stakeholderModal.coreChannels',
                                             'Core channels'
@@ -7209,7 +7209,7 @@ Use userId only from this list:
                                                 className={`${channelChipClass} ${
                                                   enabled
                                                     ? 'border-c-border-strong text-c-text bg-c-surface-raised'
-                                                    : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                                                    : 'border-c-border-subtle/70 text-c-text-secondary hover:border-c-border-strong/80'
                                                 }`}
                                               >
                                                 {channel.label}
@@ -7218,8 +7218,8 @@ Use userId only from this list:
                                           })}
                                         </div>
                                       </div>
-                                      <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                                        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                      <div className="rounded-xl border border-c-border-subtle/60 bg-c-surface/70 dark:bg-c-surface-raised/50 p-3 space-y-2">
+                                        <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                                           {t(
                                             'decisions.detail.stakeholderModal.integrationChannels',
                                             'Integration channels'
@@ -7254,7 +7254,7 @@ Use userId only from this list:
                                                 className={`${channelChipClass} ${
                                                   enabled
                                                     ? 'border-c-border-strong text-c-text bg-c-surface-raised'
-                                                    : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                                                    : 'border-c-border-subtle/70 text-c-text-secondary hover:border-c-border-strong/80'
                                                 }`}
                                                 title={channel.scope}
                                               >
@@ -7265,7 +7265,7 @@ Use userId only from this list:
                                         </div>
                                       </div>
                                     </div>
-                                    <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                    <label className="text-xs text-c-text-secondary dark:text-c-text-muted block">
                                       {t(
                                         'decisions.detail.stakeholderModal.syncTargets',
                                         'Sync targets'
@@ -7290,7 +7290,7 @@ Use userId only from this list:
                                             },
                                           })
                                         }
-                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface-raised border border-c-border"
                                         placeholder={t(
                                           'decisions.detail.integrations.placeholderDelivery',
                                           'slack:#delivery, jira:PROJ, webhook:ops'
@@ -7298,7 +7298,7 @@ Use userId only from this list:
                                       />
                                     </label>
                                   </div>
-                                  <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                  <label className="text-xs text-c-text-secondary dark:text-c-text-muted block">
                                     {t('decisions.detail.governance.colMessage', 'Message')}
                                     <textarea
                                       value={reminderDraft.message || ''}
@@ -7309,7 +7309,7 @@ Use userId only from this list:
                                         })
                                       }
                                       rows={3}
-                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface-raised border border-c-border"
                                     />
                                   </label>
                                   <div className="flex justify-end gap-2">
@@ -7318,7 +7318,7 @@ Use userId only from this list:
                                         setEditingReminderId(null);
                                         setReminderDraft(null);
                                       }}
-                                      className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                                      className="px-3 py-1.5 rounded-md text-xs border border-c-border-subtle/60 dark:border-c-border text-c-text-secondary"
                                     >
                                       {t('decisions.detail.stakeholderModal.cancel', 'Cancel')}
                                     </button>
@@ -7371,7 +7371,7 @@ Use userId only from this list:
                                 />
                                 <div className={governanceModalClass}>
                                   <div className="flex items-center justify-between">
-                                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    <h4 className="text-sm font-semibold text-c-text">
                                       {editingEscalationId === '__new__'
                                         ? t(
                                             'decisions.detail.escalationModal.addTitle',
@@ -7396,7 +7396,7 @@ Use userId only from this list:
                                         AI
                                       </button>
                                       <button
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
+                                        className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-c-text-secondary"
                                         onClick={() => {
                                           setEditingEscalationId(null);
                                           setEscalationDraft(null);
@@ -7413,7 +7413,7 @@ Use userId only from this list:
                                     )}
                                   </div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    <label className="text-xs text-c-text-secondary dark:text-c-text-muted">
                                       {t(
                                         'decisions.detail.escalationModal.warningThreshold',
                                         'Warning threshold (days)'
@@ -7428,10 +7428,10 @@ Use userId only from this list:
                                             warningDays: Number(e.target.value) || 0,
                                           })
                                         }
-                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface-raised border border-c-border"
                                       />
                                     </label>
-                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    <label className="text-xs text-c-text-secondary dark:text-c-text-muted">
                                       {t(
                                         'decisions.detail.escalationModal.criticalThreshold',
                                         'Critical threshold (days)'
@@ -7446,10 +7446,10 @@ Use userId only from this list:
                                             criticalDays: Number(e.target.value) || 0,
                                           })
                                         }
-                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface-raised border border-c-border"
                                       />
                                     </label>
-                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    <label className="text-xs text-c-text-secondary dark:text-c-text-muted">
                                       {t(
                                         'decisions.detail.escalationModal.escalateAfterDays',
                                         'Escalate after (days)'
@@ -7464,10 +7464,10 @@ Use userId only from this list:
                                             afterDays: Number(e.target.value) || 1,
                                           })
                                         }
-                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface-raised border border-c-border"
                                       />
                                     </label>
-                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    <label className="text-xs text-c-text-secondary dark:text-c-text-muted">
                                       {t(
                                         'decisions.detail.governance.colEscalateTo',
                                         'Escalate to'
@@ -7486,7 +7486,7 @@ Use userId only from this list:
                                               : escalationDraft.escalateToName,
                                           });
                                         }}
-                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface-raised border border-c-border"
                                       >
                                         <option value="">
                                           {t('decisions.detail.escalationModal.select', 'Select')}
@@ -7499,7 +7499,7 @@ Use userId only from this list:
                                       </select>
                                     </label>
                                   </div>
-                                  <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                  <label className="text-xs text-c-text-secondary dark:text-c-text-muted block">
                                     {t(
                                       'decisions.detail.escalationModal.escalationMode',
                                       'Escalation mode'
@@ -7512,7 +7512,7 @@ Use userId only from this list:
                                           escalationMode: e.target.value as EscalationMode,
                                         })
                                       }
-                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface-raised border border-c-border"
                                     >
                                       {escalationModeOptions.map((mode) => (
                                         <option key={mode.value} value={mode.value}>
@@ -7521,7 +7521,7 @@ Use userId only from this list:
                                       ))}
                                     </select>
                                   </label>
-                                  <label className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+                                  <label className="inline-flex items-center gap-1 text-xs text-c-text-secondary">
                                     <input
                                       type="checkbox"
                                       checked={escalationDraft.enabled}
@@ -7538,8 +7538,8 @@ Use userId only from this list:
                                     )}
                                   </label>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                                      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                    <div className="rounded-xl border border-c-border-subtle/60 bg-c-surface/70 dark:bg-c-surface-raised/50 p-3 space-y-2">
+                                      <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                                         {t(
                                           'decisions.detail.stakeholderModal.coreChannels',
                                           'Core channels'
@@ -7584,7 +7584,7 @@ Use userId only from this list:
                                               className={`${channelChipClass} ${
                                                 enabled
                                                   ? 'border-c-border-strong text-c-text bg-c-surface-raised'
-                                                  : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                                                  : 'border-c-border-subtle/70 text-c-text-secondary hover:border-c-border-strong/80'
                                               }`}
                                             >
                                               {channel.label}
@@ -7593,8 +7593,8 @@ Use userId only from this list:
                                         })}
                                       </div>
                                     </div>
-                                    <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                                      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                    <div className="rounded-xl border border-c-border-subtle/60 bg-c-surface/70 dark:bg-c-surface-raised/50 p-3 space-y-2">
+                                      <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                                         {t(
                                           'decisions.detail.stakeholderModal.integrationChannels',
                                           'Integration channels'
@@ -7628,7 +7628,7 @@ Use userId only from this list:
                                               className={`${channelChipClass} ${
                                                 enabled
                                                   ? 'border-c-border-strong text-c-text bg-c-surface-raised'
-                                                  : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                                                  : 'border-c-border-subtle/70 text-c-text-secondary hover:border-c-border-strong/80'
                                               }`}
                                               title={channel.scope}
                                             >
@@ -7639,7 +7639,7 @@ Use userId only from this list:
                                       </div>
                                     </div>
                                   </div>
-                                  <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                  <label className="text-xs text-c-text-secondary dark:text-c-text-muted block">
                                     {t(
                                       'decisions.detail.stakeholderModal.syncTargets',
                                       'Sync targets'
@@ -7660,14 +7660,14 @@ Use userId only from this list:
                                           },
                                         })
                                       }
-                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface-raised border border-c-border"
                                       placeholder={t(
                                         'decisions.detail.integrations.placeholderIncident',
                                         'slack:#incident, jira:OPS, webhook:oncall'
                                       )}
                                     />
                                   </label>
-                                  <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                  <label className="text-xs text-c-text-secondary dark:text-c-text-muted block">
                                     {t(
                                       'decisions.detail.escalationModal.escalationMessage',
                                       'Escalation message'
@@ -7681,7 +7681,7 @@ Use userId only from this list:
                                         })
                                       }
                                       rows={3}
-                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface-raised border border-c-border"
                                     />
                                   </label>
                                   <div className="flex justify-end gap-2">
@@ -7690,7 +7690,7 @@ Use userId only from this list:
                                         setEditingEscalationId(null);
                                         setEscalationDraft(null);
                                       }}
-                                      className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                                      className="px-3 py-1.5 rounded-md text-xs border border-c-border-subtle/60 dark:border-c-border text-c-text-secondary"
                                     >
                                       {t('decisions.detail.stakeholderModal.cancel', 'Cancel')}
                                     </button>
@@ -7793,7 +7793,7 @@ Use userId only from this list:
             {/* ═══════════ CLICKUP MODE (action-first) ═════════════════════════ */}
             {presentationMode === 'c' && import.meta.env.VITE_ENABLE_LEGACY_C_MODE === 'true' && (
               <div className="col-span-full space-y-4">
-                <div className="flex flex-wrap items-center gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/60 border border-slate-200 dark:border-navy-700/60">
+                <div className="flex flex-wrap items-center gap-2 p-2 rounded-xl bg-c-surface/60 border border-c-border-subtle/60">
                   {(
                     [
                       ['overview', t('decisions.detail.clickupTabs.overview', 'Overview')],
@@ -7817,7 +7817,7 @@ Use userId only from this list:
                       className={`px-3 py-1.5 rounded-lg text-xs border transition-all ${
                         clickupTab === key
                           ? 'bg-c-surface-raised border-c-border text-c-text'
-                          : 'bg-transparent border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400'
+                          : 'bg-transparent border-c-border-subtle text-c-text-secondary dark:text-c-text-muted'
                       }`}
                     >
                       {label}
@@ -7828,9 +7828,9 @@ Use userId only from this list:
                 <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.9fr)_330px] gap-4">
                   <div className="space-y-4 min-w-0">
                     {clickupTab === 'overview' && (
-                      <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
+                      <div className="bg-c-surface/70 rounded-2xl border border-c-border-subtle/60 p-4 space-y-3">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          <h3 className="text-sm font-semibold text-c-text">
                             {t('decisions.detail.clickupOverview.title', 'Decision Overview')}
                           </h3>
                           <AIFieldEnhancer
@@ -7847,7 +7847,7 @@ Use userId only from this list:
                           onChange={(e) => !isDecisionStageLocked && setDescription(e.target.value)}
                           readOnly={isDecisionStageLocked}
                           rows={6}
-                          className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
+                          className="w-full px-3 py-2 rounded-xl bg-c-surface-raised border border-c-border text-sm"
                         />
                         <div className="flex items-center justify-between">
                           <label className="block text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
@@ -7912,9 +7912,9 @@ Use userId only from this list:
                     {clickupTab === 'governance' && (
                       <div className="space-y-4">
                         {/* RACI table */}
-                        <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
+                        <div className="bg-c-surface/70 rounded-2xl border border-c-border-subtle/60 p-4 space-y-3">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            <h3 className="text-sm font-semibold text-c-text">
                               {t('decisions.detail.governance.raciTitleShort', 'RACI')}
                             </h3>
                             <button
@@ -7940,7 +7940,7 @@ Use userId only from this list:
                                 };
                                 setStakeholders([...stakeholders, newStakeholder]);
                               }}
-                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-border-subtle/60 dark:border-c-border text-c-text-secondary hover:text-c-info hover:border-c-info/50 hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               + {t('decisions.detail.governance.add', 'Add')}
                             </button>
@@ -7948,7 +7948,7 @@ Use userId only from this list:
                           <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                               <thead>
-                                <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                <tr className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary border-b border-c-border-subtle/50">
                                   <th className="text-left py-2 pr-2">
                                     {t('decisions.detail.governance.colRole', 'Role')}
                                   </th>
@@ -7969,12 +7969,12 @@ Use userId only from this list:
                                   </th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                              <tbody className="divide-y divide-c-border-subtle/40">
                                 {stakeholders.length === 0 ? (
                                   <tr>
                                     <td
                                       colSpan={5}
-                                      className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                                      className="py-6 text-center text-xs text-c-text-secondary dark:text-c-text-muted"
                                     >
                                       {t(
                                         'decisions.detail.governance.noStakeholders',
@@ -8001,7 +8001,7 @@ Use userId only from this list:
                                               )
                                             )
                                           }
-                                          className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
+                                          className="w-full px-2 py-1 rounded-md text-xs bg-c-surface-raised border border-c-border disabled:opacity-60"
                                         >
                                           <option value="responsible">
                                             {t('decisions.detail.raci.responsible', 'Responsible')}
@@ -8017,19 +8017,19 @@ Use userId only from this list:
                                           </option>
                                         </select>
                                       </td>
-                                      <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
+                                      <td className="py-2 pr-2 text-c-text-secondary">
                                         {s.userName || s.userId}
                                       </td>
-                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                      <td className="py-2 pr-2 text-c-text-secondary dark:text-c-text-muted">
                                         {s.userEmail || '—'}
                                       </td>
-                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400 text-xs">
+                                      <td className="py-2 pr-2 text-c-text-secondary dark:text-c-text-muted text-xs">
                                         <div className="flex flex-wrap gap-1">
                                           {stakeholderChannelLabels(s.notificationSettings).map(
                                             (label) => (
                                               <span
                                                 key={`${s.id}-clickup-${label}`}
-                                                className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px]"
+                                                className="px-1.5 py-0.5 rounded border border-c-border-subtle/60 bg-c-surface/50 dark:bg-c-surface-raised/50 text-[10px]"
                                               >
                                                 {label}
                                               </span>
@@ -8045,7 +8045,7 @@ Use userId only from this list:
                                               stakeholders.filter((item) => item.id !== s.id)
                                             )
                                           }
-                                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                          className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                         >
                                           <Trash2 size={13} />
                                         </button>
@@ -8059,9 +8059,9 @@ Use userId only from this list:
                         </div>
 
                         {/* Reminders table */}
-                        <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
+                        <div className="bg-c-surface/70 rounded-2xl border border-c-border-subtle/60 p-4 space-y-3">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            <h3 className="text-sm font-semibold text-c-text">
                               {t('decisions.detail.governance.remindersTitle', 'Reminders')}
                             </h3>
                             <button
@@ -8081,7 +8081,7 @@ Use userId only from this list:
                                   },
                                 ])
                               }
-                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-border-subtle/60 dark:border-c-border text-c-text-secondary hover:text-c-info hover:border-c-info/50 hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               + {t('decisions.detail.governance.add', 'Add')}
                             </button>
@@ -8089,7 +8089,7 @@ Use userId only from this list:
                           <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                               <thead>
-                                <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                <tr className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary border-b border-c-border-subtle/50">
                                   <th className="text-left py-2 pr-2">
                                     {t('decisions.detail.governance.active', 'Active')}
                                   </th>
@@ -8113,12 +8113,12 @@ Use userId only from this list:
                                   </th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                              <tbody className="divide-y divide-c-border-subtle/40">
                                 {reminders.length === 0 ? (
                                   <tr>
                                     <td
                                       colSpan={7}
-                                      className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                                      className="py-6 text-center text-xs text-c-text-secondary dark:text-c-text-muted"
                                     >
                                       {t(
                                         'decisions.detail.governance.noReminders',
@@ -8163,7 +8163,7 @@ Use userId only from this list:
                                               )
                                             )
                                           }
-                                          className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
+                                          className="w-full px-2 py-1 rounded-md text-xs bg-c-surface-raised border border-c-border disabled:opacity-60"
                                         >
                                           <option value="before_due">
                                             {t(
@@ -8191,7 +8191,7 @@ Use userId only from this list:
                                               )
                                             )
                                           }
-                                          className="w-20 px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
+                                          className="w-20 px-2 py-1 rounded-md text-xs bg-c-surface-raised border border-c-border disabled:opacity-60"
                                         />
                                       </td>
                                       <td className="py-2 pr-2">
@@ -8214,7 +8214,7 @@ Use userId only from this list:
                                               )
                                             )
                                           }
-                                          className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
+                                          className="w-full px-2 py-1 rounded-md text-xs bg-c-surface-raised border border-c-border disabled:opacity-60"
                                         >
                                           <option value="requester">
                                             {t('decisions.detail.infoPane.requester', 'Requester')}
@@ -8233,7 +8233,7 @@ Use userId only from this list:
                                           </option>
                                         </select>
                                       </td>
-                                      <td className="py-2 pr-2 text-xs text-slate-500 dark:text-slate-400">
+                                      <td className="py-2 pr-2 text-xs text-c-text-secondary dark:text-c-text-muted">
                                         <label className="inline-flex items-center gap-1 mr-2">
                                           <input
                                             type="checkbox"
@@ -8288,7 +8288,7 @@ Use userId only from this list:
                                               )
                                             )
                                           }
-                                          className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
+                                          className="w-full px-2 py-1 rounded-md text-xs bg-c-surface-raised border border-c-border disabled:opacity-60"
                                           placeholder={t(
                                             'decisions.detail.governance.reminderTextPlaceholder',
                                             'Reminder text...'
@@ -8303,7 +8303,7 @@ Use userId only from this list:
                                               reminders.filter((item) => item.id !== r.id)
                                             )
                                           }
-                                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                          className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                         >
                                           <Trash2 size={13} />
                                         </button>
@@ -8317,9 +8317,9 @@ Use userId only from this list:
                         </div>
 
                         {/* Escalation table */}
-                        <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
+                        <div className="bg-c-surface/70 rounded-2xl border border-c-border-subtle/60 p-4 space-y-3">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            <h3 className="text-sm font-semibold text-c-text">
                               {t('decisions.detail.activityLog.escalation', 'Escalation')}
                             </h3>
                             {!escalation && (
@@ -8337,7 +8337,7 @@ Use userId only from this list:
                                     message: '',
                                   })
                                 }
-                                className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-border-subtle/60 dark:border-c-border text-c-text-secondary hover:text-c-info hover:border-c-info/50 hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                               >
                                 + {t('decisions.detail.governance.add', 'Add')}
                               </button>
@@ -8346,7 +8346,7 @@ Use userId only from this list:
                           <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                               <thead>
-                                <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                <tr className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary border-b border-c-border-subtle/50">
                                   <th className="text-left py-2 pr-2">
                                     {t('decisions.detail.governance.enabledStatus', 'Enabled')}
                                   </th>
@@ -8369,7 +8369,7 @@ Use userId only from this list:
                                   <tr>
                                     <td
                                       colSpan={4}
-                                      className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                                      className="py-6 text-center text-xs text-c-text-secondary dark:text-c-text-muted"
                                     >
                                       {t(
                                         'decisions.detail.governance.noEscalationRule',
@@ -8378,7 +8378,7 @@ Use userId only from this list:
                                     </td>
                                   </tr>
                                 ) : (
-                                  <tr className="border-b border-slate-200 dark:border-navy-700/40">
+                                  <tr className="border-b border-c-border-subtle/40">
                                     <td className="py-2 pr-2">
                                       <input
                                         type="checkbox"
@@ -8404,7 +8404,7 @@ Use userId only from this list:
                                             afterDays: Number(e.target.value) || 1,
                                           })
                                         }
-                                        className="w-24 px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
+                                        className="w-24 px-2 py-1 rounded-md text-xs bg-c-surface-raised border border-c-border disabled:opacity-60"
                                       />
                                     </td>
                                     <td className="py-2 pr-2">
@@ -8423,7 +8423,7 @@ Use userId only from this list:
                                               : escalation.escalateToName,
                                           });
                                         }}
-                                        className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
+                                        className="w-full px-2 py-1 rounded-md text-xs bg-c-surface-raised border border-c-border disabled:opacity-60"
                                       >
                                         <option value="">
                                           {t('decisions.detail.escalationModal.select', 'Select')}
@@ -8442,7 +8442,7 @@ Use userId only from this list:
                                         onChange={(e) =>
                                           setEscalation({ ...escalation, message: e.target.value })
                                         }
-                                        className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
+                                        className="w-full px-2 py-1 rounded-md text-xs bg-c-surface-raised border border-c-border disabled:opacity-60"
                                         placeholder={t(
                                           'decisions.detail.governance.escalationTextPlaceholder',
                                           'Escalation message...'
@@ -8477,16 +8477,16 @@ Use userId only from this list:
                     {clickupTab === 'resources' && (
                       <div className="space-y-4">
                         {/* Attachments table */}
-                        <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
+                        <div className="bg-c-surface/70 rounded-2xl border border-c-border-subtle/60 p-4 space-y-3">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            <h3 className="text-sm font-semibold text-c-text">
                               {t('decisions.detail.attachments.title', 'Attachments')}
                             </h3>
                             <label
                               className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
                                 isDecisionStageLocked
-                                  ? 'border-slate-300/40 dark:border-navy-700 text-slate-500 dark:text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                                  : 'border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 hover:bg-c-surface-raised cursor-pointer'
+                                  ? 'border-c-border-subtle/40 dark:border-c-border-subtle text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary cursor-not-allowed'
+                                  : 'border-c-border-subtle/60 dark:border-c-border text-c-text-secondary hover:text-c-info hover:border-c-info/50 hover:bg-c-surface-raised cursor-pointer'
                               }`}
                             >
                               + {t('decisions.detail.governance.add', 'Add')}
@@ -8505,7 +8505,7 @@ Use userId only from this list:
                           <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                               <thead>
-                                <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                <tr className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary border-b border-c-border-subtle/50">
                                   <th className="text-left py-2 pr-2">
                                     {t('decisions.detail.attachments.colName', 'Name')}
                                   </th>
@@ -8526,12 +8526,12 @@ Use userId only from this list:
                                   </th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                              <tbody className="divide-y divide-c-border-subtle/40">
                                 {attachments.length === 0 ? (
                                   <tr>
                                     <td
                                       colSpan={6}
-                                      className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                                      className="py-6 text-center text-xs text-c-text-secondary dark:text-c-text-muted"
                                     >
                                       {t('decisions.detail.attachments.none', 'No attachments.')}
                                     </td>
@@ -8539,28 +8539,28 @@ Use userId only from this list:
                                 ) : (
                                   attachments.map((a) => (
                                     <tr key={a.id}>
-                                      <td className="py-2 pr-2 text-slate-700 dark:text-slate-300 max-w-[280px] truncate">
+                                      <td className="py-2 pr-2 text-c-text-secondary max-w-[280px] truncate">
                                         {a.name}
                                       </td>
-                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400 text-xs">
+                                      <td className="py-2 pr-2 text-c-text-secondary dark:text-c-text-muted text-xs">
                                         {a.type || '—'}
                                       </td>
-                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                      <td className="py-2 pr-2 text-c-text-secondary dark:text-c-text-muted">
                                         {(a.size / 1024 / 1024).toFixed(1)} MB
                                       </td>
-                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                      <td className="py-2 pr-2 text-c-text-secondary dark:text-c-text-muted">
                                         {a.uploadedAt
                                           ? new Date(a.uploadedAt).toLocaleDateString()
                                           : '—'}
                                       </td>
-                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                      <td className="py-2 pr-2 text-c-text-secondary dark:text-c-text-muted">
                                         {a.uploadedBy || '—'}
                                       </td>
                                       <td className="py-2 text-right">
                                         <button
                                           disabled={isDecisionStageLocked}
                                           onClick={() => handleDeleteAttachment(a.id)}
-                                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                          className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                         >
                                           <Trash2 size={13} />
                                         </button>
@@ -8574,9 +8574,9 @@ Use userId only from this list:
                         </div>
 
                         {/* Linked items table */}
-                        <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
+                        <div className="bg-c-surface/70 rounded-2xl border border-c-border-subtle/60 p-4 space-y-3">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            <h3 className="text-sm font-semibold text-c-text">
                               {t('decisions.detail.linkedItems.title', 'Linked Items')}
                             </h3>
                             <button
@@ -8591,7 +8591,7 @@ Use userId only from this list:
                                   ),
                                 })
                               }
-                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-border-subtle/60 dark:border-c-border text-c-text-secondary hover:text-c-info hover:border-c-info/50 hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               + {t('decisions.detail.governance.add', 'Add')}
                             </button>
@@ -8600,7 +8600,7 @@ Use userId only from this list:
                           <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                               <thead>
-                                <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                <tr className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary border-b border-c-border-subtle/50">
                                   <th className="text-left py-2 pr-2">
                                     {t('decisions.detail.governance.colType', 'Type')}
                                   </th>
@@ -8618,12 +8618,12 @@ Use userId only from this list:
                                   </th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                              <tbody className="divide-y divide-c-border-subtle/40">
                                 {linkedItems.length === 0 ? (
                                   <tr>
                                     <td
                                       colSpan={5}
-                                      className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                                      className="py-6 text-center text-xs text-c-text-secondary dark:text-c-text-muted"
                                     >
                                       {t('decisions.detail.linkedItems.none', 'No linked items.')}
                                     </td>
@@ -8631,23 +8631,23 @@ Use userId only from this list:
                                 ) : (
                                   linkedItems.map((item) => (
                                     <tr key={item.id}>
-                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400 text-xs uppercase">
+                                      <td className="py-2 pr-2 text-c-text-secondary dark:text-c-text-muted text-xs uppercase">
                                         {item.type}
                                       </td>
-                                      <td className="py-2 pr-2 text-slate-700 dark:text-slate-300 max-w-[380px] truncate">
+                                      <td className="py-2 pr-2 text-c-text-secondary max-w-[380px] truncate">
                                         {item.title}
                                       </td>
-                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                      <td className="py-2 pr-2 text-c-text-secondary dark:text-c-text-muted">
                                         {item.status || '—'}
                                       </td>
-                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                      <td className="py-2 pr-2 text-c-text-secondary dark:text-c-text-muted">
                                         {item.priority || '—'}
                                       </td>
                                       <td className="py-2 text-right">
                                         <button
                                           disabled={isDecisionStageLocked}
                                           onClick={() => handleRemoveLinkedItem(item)}
-                                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                          className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                         >
                                           <Trash2 size={13} />
                                         </button>
@@ -8663,8 +8663,8 @@ Use userId only from this list:
                     )}
 
                     {clickupTab === 'logs' && (
-                      <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
-                        <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                      <div className="bg-c-surface/70 rounded-2xl border border-c-border-subtle/60 p-4 space-y-3">
+                        <h3 className="text-base font-semibold text-c-text">
                           {t('decisions.detail.activityLog.title', 'Activity Log')}
                         </h3>
                         {renderActivityLogPanel()}
@@ -8694,29 +8694,29 @@ Use userId only from this list:
                         </CapabilityGate>
                         <button
                           onClick={handleRequestMoreInfo}
-                          className="px-3 py-2 rounded-xl border border-slate-300 dark:border-navy-600 text-slate-500 text-sm"
+                          className="px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border text-c-text-secondary text-sm"
                         >
                           {t('decisions.detail.actions.requestInfo', 'Request info')}
                         </button>
                         <button
                           onClick={() => setShowDelegationModal(true)}
-                          className="px-3 py-2 rounded-xl border border-slate-300 dark:border-navy-600 text-slate-500 text-sm"
+                          className="px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border text-c-text-secondary text-sm"
                         >
                           {t('decisions.detail.actions.delegate', 'Delegate')}
                         </button>
                       </div>
                     )}
 
-                    <div className="bg-white/80 dark:bg-navy-900/80 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
-                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    <div className="bg-c-surface/80 rounded-2xl border border-c-border-subtle/60 p-4 space-y-3">
+                      <h3 className="text-sm font-semibold text-c-text">
                         {t('decisions.detail.infoPane.title', 'Information pane')}
                       </h3>
                       <div className="space-y-2.5 text-sm">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                          <span className="text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary text-xs uppercase tracking-wide">
                             {t('decisions.detail.governance.colStatus', 'Status')}
                           </span>
-                          <span className="text-slate-700 dark:text-slate-200 font-medium">
+                          <span className="text-c-text font-medium">
                             {t(
                               `decisions.detail.statusValue.${status}`,
                               STATUS_CONFIG[status].label.en
@@ -8724,10 +8724,10 @@ Use userId only from this list:
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                          <span className="text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary text-xs uppercase tracking-wide">
                             {t('decisions.detail.linkedItems.colPriority', 'Priority')}
                           </span>
-                          <span className="text-slate-700 dark:text-slate-200 font-medium">
+                          <span className="text-c-text font-medium">
                             {t(
                               `decisions.detail.priorityValue.${priority}`,
                               PRIORITY_CONFIG[priority].label.en
@@ -8735,26 +8735,26 @@ Use userId only from this list:
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                          <span className="text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary text-xs uppercase tracking-wide">
                             {t('decisions.detail.activityLog.deadline', 'Deadline')}
                           </span>
-                          <span className="text-slate-700 dark:text-slate-200">
+                          <span className="text-c-text">
                             {dueDate || '—'}
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                          <span className="text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary text-xs uppercase tracking-wide">
                             {t('decisions.detail.infoPane.requester', 'Requester')}
                           </span>
-                          <span className="text-slate-700 dark:text-slate-200 text-right truncate">
+                          <span className="text-c-text text-right truncate">
                             {requesterName || '—'}
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                          <span className="text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary text-xs uppercase tracking-wide">
                             {t('decisions.detail.infoPane.decider', 'Decider')}
                           </span>
-                          <span className="text-slate-700 dark:text-slate-200 text-right truncate">
+                          <span className="text-c-text text-right truncate">
                             {(() => {
                               const decider = users.find((u) => u.id === deciderId);
                               return decider ? `${decider.firstName} ${decider.lastName}` : '—';
@@ -8762,18 +8762,18 @@ Use userId only from this list:
                           </span>
                         </div>
                         <div className="flex items-start justify-between gap-3">
-                          <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                          <span className="text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary text-xs uppercase tracking-wide">
                             {t('decisions.detail.scope.relatedTo', 'Related to')}
                           </span>
-                          <span className="text-slate-700 dark:text-slate-200 text-right max-w-[65%] break-words">
+                          <span className="text-c-text text-right max-w-[65%] break-words">
                             {decisionScopeLabel}
                           </span>
                         </div>
                         <div className="flex items-start justify-between gap-3">
-                          <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                          <span className="text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary text-xs uppercase tracking-wide">
                             {t('decisions.detail.infoPane.decisionIndex', 'Decision index')}
                           </span>
-                          <span className="text-slate-700 dark:text-slate-200 text-right max-w-[65%] break-all text-xs font-mono">
+                          <span className="text-c-text text-right max-w-[65%] break-all text-xs font-mono">
                             {decisionIndexLabel}
                           </span>
                         </div>
@@ -8781,15 +8781,15 @@ Use userId only from this list:
                     </div>
 
                     {relatedNotes.length > 0 && (
-                      <div className="bg-white/80 dark:bg-navy-900/80 rounded-2xl border border-slate-200 dark:border-navy-700/60 overflow-hidden">
+                      <div className="bg-c-surface/80 rounded-2xl border border-c-border-subtle/60 overflow-hidden">
                         <motion.button
                           whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
                           whileTap={{ scale: 0.98 }}
                           onClick={() => setRelatedNotesExpanded((e) => !e)}
-                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
+                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-c-surface/80 dark:hover:bg-c-surface-raised/50 transition-colors duration-200"
                         >
-                          <div className="flex items-center gap-2.5 text-slate-700 dark:text-slate-200">
-                            <BookOpen size={16} className="text-slate-500 dark:text-slate-400" />
+                          <div className="flex items-center gap-2.5 text-c-text">
+                            <BookOpen size={16} className="text-c-text-secondary dark:text-c-text-muted" />
                             <span className="text-sm font-semibold">
                               {t('myWork.decisions.relatedNotes', 'Related Notes')}
                             </span>
@@ -8798,7 +8798,7 @@ Use userId only from this list:
                             animate={{ rotate: relatedNotesExpanded ? 180 : 0 }}
                             transition={{ duration: 0.2 }}
                           >
-                            <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
+                            <ChevronDown size={16} className="text-c-text-secondary dark:text-c-text-muted" />
                           </motion.div>
                         </motion.button>
                         <AnimatePresence>
@@ -8807,7 +8807,7 @@ Use userId only from this list:
                               initial={{ height: 0 }}
                               animate={{ height: 'auto' }}
                               exit={{ height: 0 }}
-                              className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                              className="border-t border-c-border-subtle overflow-hidden"
                             >
                               <div className="p-3 space-y-2">
                                 {relatedNotes.map((note) => (
@@ -8825,7 +8825,7 @@ Use userId only from this list:
                                         })
                                       );
                                     }}
-                                    className="w-full text-left p-2.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/50 dark:bg-navy-800/30 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors text-sm font-medium text-slate-700 dark:text-slate-200 truncate"
+                                    className="w-full text-left p-2.5 rounded-lg border border-c-border-subtle/60 bg-c-surface/50 hover:bg-c-surface-raised/60 transition-colors text-sm font-medium text-c-text truncate"
                                   >
                                     <span className="block truncate">{note.title}</span>
                                     <NotebookMetadataBadges
