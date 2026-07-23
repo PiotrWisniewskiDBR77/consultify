@@ -79,11 +79,10 @@ export interface AgentPlanPanelProps {
   pollIntervalMs?: number;
   onClose?: () => void;
   /**
-   * Wołane po kliknięciu "Uruchom" w edytowalnym schemacie (status
-   * `planning`) z ostatecznym, przestawionym układem klocków. Dziś brak
-   * backendu do wysyłki (patrz nagłówek pliku) — wołający (przyszłe AGT-009)
-   * decyduje co z tym zrobić. Gdy nieustawione, panel tylko zamraża canvas
-   * lokalnie po kliknięciu.
+   * Wołane PO udanym zapisie+dispatchu (AGT-009: `handleRunSchema` już
+   * wysłał `POST /:id/run` i backend przyjął plan) — czysta notyfikacja dla
+   * wołającego, nie jest już jedyną ścieżką zapisu (patrz nagłówek pliku).
+   * Gdy nieustawione, panel po prostu zamraża canvas lokalnie po kliknięciu.
    */
   onRunEditedSchema?: (blocks: PlanSchemaBlock[]) => void;
 }
@@ -243,8 +242,10 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
 
   // Seed edytowalny canvas raz, gdy plan wejdzie w `planning` — localStorage
   // wygrywa nad świeżymi krokami z serwera (user mógł już przestawić schemat
-  // przed odświeżeniem strony; to jest dowód "zmiana się utrwala" bez
-  // backendowego endpointu edycji, patrz nagłówek pliku).
+  // przed odświeżeniem strony, PRZED jawnym "Uruchom"). Trwały zapis w
+  // backendzie istnieje od AGT-009 (PATCH /:id/steps, POST /:id/run —
+  // patrz nagłówek pliku); localStorage jest tylko buforem edycji między
+  // odświeżeniami strony ZANIM user kliknie "Uruchom".
   useEffect(() => {
     if (plan && plan.status === 'planning' && canvasBlocks === null) {
       setCanvasBlocks(loadStoredBlocks(planId) ?? stepsToBlocks(plan.steps));
@@ -364,7 +365,7 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
                 <p className="text-[10px] text-c-text-muted pt-1">
                   {t(
                     'agentPlan.canvas.localOnlyNote',
-                    'Zapis lokalny w przeglądarce — zapis schematu w backendzie jeszcze nie istnieje.'
+                    'Zmiany zapisują się lokalnie w przeglądarce podczas edycji; „Uruchom" zapisuje schemat w backendzie i startuje wykonanie.'
                   )}
                 </p>
               ) : (
