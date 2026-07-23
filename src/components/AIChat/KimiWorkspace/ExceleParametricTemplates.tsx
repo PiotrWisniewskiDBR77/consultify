@@ -521,7 +521,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                               : 'text-c-text-secondary hover:text-c-text'
                           }`}
                         >
-                          {`Sheet ${i + 1}`}
+                          {sheet.name || `Sheet ${i + 1}`}
                         </button>
                       ))}
                     </div>
