@@ -91,7 +91,9 @@ import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 import { CapabilityGate } from '../shared/CapabilityGate';
 // #52 — card-management primitive (show/hide + reorder), same "nakładka"
 // wiring as InsightViewer.tsx / TaskDetailView.tsx (see `decisionCardLayout`).
-import { NModeCardManager } from '../shared/NModeLayout/NModeCardManager';
+// ETAP 1.2: menu 2 niesie SAM picker „Sekcje" — „+ Nowa karta" zdjęte.
+import { SectionsManagerMenu } from '../shared/NModeLayout/NModeCardManager';
+import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 import { NModeCardState, type NModeCardStatus } from '../shared/NModeLayout/NModeCardState';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
@@ -147,7 +149,6 @@ import {
 import { AIConnections } from './shared/AIConnections';
 import { buildAskAIMessage } from './shared/askAiHelper';
 import { PostDecisionFollowUp } from './shared/PostDecisionFollowUp';
-import { ReadEditToggle } from './shared/ReadEditToggle';
 import { RelatedContext } from './shared/RelatedContext';
 
 // ── Decision accordion section IDs ──────────────────────────────────────────
@@ -5223,13 +5224,11 @@ Use userId only from this list:
   // Mapowanie bespoke → sloty komponentu:
   //   badge etapu workflow      → sectionsDropdown (lewa grupa)
   //   przejscia workflow        → newButton        (lewa grupa)
-  //   etykieta aktywnej sekcji  → activeSectionLabel
   //   kontekstowe AI sekcji     → aiSectionButton
   //   Reject / Request info     → overflowActions  (drugorzedne, §2.4)
-
-  const activeSectionLabel = orderedNotionSections.find((s) => s.id === activeNotionSection)?.label[
-    isPolish ? 'pl' : 'en'
-  ];
+  //
+  // ETAP 1.2 (2026-07-23): `activeSectionLabel` USUNIETA — nazwa aktywnej karty
+  // dublowala lewa nawigacje i nie nalezy do zadnej z trzech stref menu 2.
 
   // Kontraktowy przycisk AI aktywnej sekcji (§2.5). Sekcja z `{kind:'none'}`
   // nie dostaje przycisku — dlatego mapa kontraktu jest realnym mechanizmem,
@@ -5369,15 +5368,24 @@ Use userId only from this list:
                ═══════════════════════════════════════════════════════════════════ */}
             {presentationMode === 'n' && (
               <div className="col-span-full space-y-4">
-                {/* ── Menu 1 (klasa S): card management (#52) + Read/Edit toggle ── */}
-                <div className="flex items-center justify-between">
-                  {!readMode ? (
-                    <NModeCardManager layout={decisionCardLayout} isPolish={isPolish} />
-                  ) : (
-                    <div />
-                  )}
-                  <ReadEditToggle readMode={readMode} onChange={setReadMode} />
-                </div>
+                {/* ── MENU 2 (ETAP 1.2 standardu n-Type) ─────────────────────
+                    Wspólny `NModeMenu2`: Sekcje po lewej · Edycja|Podgląd
+                    w dokładnym środku geometrycznym · Analizuj z AI (fiolet)
+                    skrajnie po prawej. „+ Nowa karta" zdjęte — karty są
+                    predefiniowane, widocznością steruje Sekcje.
+
+                    UWAGA (kontrakt właściciela pkt 6): pasek workflow
+                    (Draft/Analiza/Rekomendacja/Decyzja) NIE zastępuje menu 2.
+                    Żyje osobno, NIŻEJ, jako własny komponent karty. */}
+                <NModeMenu2
+                  isPolish={isPolish}
+                  sectionsMenu={
+                    <SectionsManagerMenu layout={decisionCardLayout} isPolish={isPolish} />
+                  }
+                  readMode={readMode}
+                  onReadModeChange={setReadMode}
+                  aiButton={<Menu2AIButton isPolish={isPolish} onClick={handleOpenChat} />}
+                />
                 {/* ── Origin Badge ──────────────────────────────────── */}
                 {sourceType && sourceId && (
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
@@ -5427,7 +5435,11 @@ Use userId only from this list:
                   <div className="px-3 py-2 rounded-xl border border-c-border-subtle bg-c-surface">
                     <NModeToolbar
                       isPolish={isPolish}
-                      activeSectionLabel={activeSectionLabel}
+                      /* ETAP 1.2: `activeSectionLabel` ZDJĘTA. Nazwa aktywnej
+                         karty dublowała lewą nawigację (ta sama pozycja jest
+                         tam podświetlona) i zjadała szerokość paska. Ten sam
+                         defekt zgłoszony przez właściciela w Insight
+                         i Inicjatywie — usuwamy go wszędzie tak samo. */
                       aiSectionButton={aiSectionButton}
                       overflowActions={
                         toolbarOverflowActions.length > 0 ? toolbarOverflowActions : undefined
