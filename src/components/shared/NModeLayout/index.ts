@@ -34,6 +34,8 @@ export { NModeCanvas } from './NModeCanvas';
 export type { NModeCardStateProps, NModeCardStatus } from './NModeCardState';
 export { NModeCardBadge, NModeCardState } from './NModeCardState';
 export { NModeCBoard } from './NModeCBoard';
+export type { NModeContentBlockProps } from './NModeContentBlock';
+export { NModeContentBlock } from './NModeContentBlock';
 export { NModeHeader } from './NModeHeader';
 export { NModeLeftNav } from './NModeLeftNav';
 export { NModePropertiesStrip } from './NModePropertiesStrip';
