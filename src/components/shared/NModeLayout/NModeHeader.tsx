@@ -424,7 +424,12 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onChat}
-              className="flex items-center gap-1.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm font-medium text-c-text transition-all duration-fast ease-standard hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+              /* h-9 (36 px) zamiast `py-2` (dawało 38 px z ramką): to JEDYNY
+                 przycisk Menu 1, który wyznaczał wysokość paska własnym
+                 paddingiem, przez co Menu 1 w Zadaniu mierzyło 62 px zamiast
+                 60 px jak w pozostałych kartach (pomiar 2026-07-23). Stała
+                 wysokość = jedna linia bazowa dla całego rzędu akcji. */
+              className="flex h-9 items-center gap-1.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 text-sm font-medium text-c-text transition-all duration-fast ease-standard hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
               title={t('sharedComponents.nModeHeader.aiAssistantTitle')}
             >
               <Sparkles size={16} className="text-c-text-muted" />
