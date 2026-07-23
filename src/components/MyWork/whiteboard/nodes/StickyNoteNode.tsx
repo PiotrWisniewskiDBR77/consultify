@@ -8,6 +8,7 @@ import {
   STICKY_COLORS,
   STICKY_SIZES,
   useIsDark,
+  WB_HANDLE_CLASS,
 } from './whiteboardNodeHelpers';
 import { WhiteboardNodeReactions } from './WhiteboardNodeReactions';
 
@@ -71,11 +72,25 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
         }
       }}
     >
+      {/* Fala 8: 4-side magnetic handles (Miro/FigJam parity). The two
+          UNNAMED handles (target/Top, source/Bottom) are kept id-less on
+          purpose — pre-Fala-8 persisted edges have no sourceHandle/
+          targetHandle and react-flow resolves an undefined handle id to the
+          sole id-less handle of that type on the node, so this keeps every
+          existing edge rendering unchanged. All new handles get an explicit
+          id so they never collide with that fallback. */}
+      <Handle type="target" position={Position.Top} className={WB_HANDLE_CLASS} />
+      <Handle type="source" id="top-source" position={Position.Top} className={WB_HANDLE_CLASS} />
+      <Handle type="target" id="left" position={Position.Left} className={WB_HANDLE_CLASS} />
+      <Handle type="source" id="left-source" position={Position.Left} className={WB_HANDLE_CLASS} />
+      <Handle type="target" id="right" position={Position.Right} className={WB_HANDLE_CLASS} />
       <Handle
-        type="target"
-        position={Position.Top}
-        className="!w-2 !h-2 !bg-c-border-strong !-top-1"
+        type="source"
+        id="right-source"
+        position={Position.Right}
+        className={WB_HANDLE_CLASS}
       />
+      <Handle type="target" id="bottom" position={Position.Bottom} className={WB_HANDLE_CLASS} />
       <CommentPinBadge nodeId={nodeId} count={commentCount} />
       {editing ? (
         <textarea
@@ -151,11 +166,7 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
             : undefined
         }
       />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="!w-2 !h-2 !bg-c-border-strong !-bottom-1"
-      />
+      <Handle type="source" position={Position.Bottom} className={WB_HANDLE_CLASS} />
     </div>
   );
 };

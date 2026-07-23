@@ -2,7 +2,11 @@ import React from 'react';
 import { Handle, type NodeProps, NodeResizer, Position } from 'reactflow';
 
 import { commentCountOf, CommentPinBadge } from './CommentPinBadge';
-import { resolveNodeAccentBg, resolveNodeFontStyle } from './whiteboardNodeHelpers';
+import {
+  resolveNodeAccentBg,
+  resolveNodeFontStyle,
+  WB_HANDLE_CLASS,
+} from './whiteboardNodeHelpers';
 
 export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
   // Z15: per-element style overrides written by the floating style bar.
@@ -32,7 +36,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
     <>
       <NodeResizer isVisible={selected && !data?.locked} minWidth={100} minHeight={40} />
       <div
-        className={`relative w-full h-full min-w-[100px] min-h-[40px] overflow-auto p-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:backdrop-blur-md shadow-lg dark:shadow-[0_0_12px_rgba(148,163,184,0.15)] transition-shadow ${selected ? 'ring-2 ring-c-border-strong shadow-xl' : ''}`}
+        className={`group relative w-full h-full min-w-[100px] min-h-[40px] overflow-auto p-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:backdrop-blur-md shadow-lg dark:shadow-[0_0_12px_rgba(148,163,184,0.15)] transition-shadow ${selected ? 'ring-2 ring-c-border-strong shadow-xl' : ''}`}
         style={accentBg || undefined}
         onDoubleClick={() => {
           if (!data?.locked) {
@@ -41,11 +45,25 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
           }
         }}
       >
+        {/* Fala 8: 4-side magnetic handles (Miro/FigJam parity) — see
+            StickyNoteNode for the id-less-handle backward-compat rationale. */}
+        <Handle type="target" position={Position.Top} className={WB_HANDLE_CLASS} />
+        <Handle type="source" id="top-source" position={Position.Top} className={WB_HANDLE_CLASS} />
+        <Handle type="target" id="left" position={Position.Left} className={WB_HANDLE_CLASS} />
         <Handle
-          type="target"
-          position={Position.Top}
-          className="!w-2 !h-2 !bg-c-border-strong !-top-1"
+          type="source"
+          id="left-source"
+          position={Position.Left}
+          className={WB_HANDLE_CLASS}
         />
+        <Handle type="target" id="right" position={Position.Right} className={WB_HANDLE_CLASS} />
+        <Handle
+          type="source"
+          id="right-source"
+          position={Position.Right}
+          className={WB_HANDLE_CLASS}
+        />
+        <Handle type="target" id="bottom" position={Position.Bottom} className={WB_HANDLE_CLASS} />
         <CommentPinBadge nodeId={nodeId} count={commentCount} positionClassName="top-1 left-1" />
         {editing ? (
           <textarea
@@ -100,11 +118,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
             ✓
           </div>
         )}
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          className="!w-2 !h-2 !bg-c-border-strong !-bottom-1"
-        />
+        <Handle type="source" position={Position.Bottom} className={WB_HANDLE_CLASS} />
       </div>
     </>
   );
