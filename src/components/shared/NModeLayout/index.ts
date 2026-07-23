@@ -44,6 +44,13 @@ export type {
   NModeMenu2Props,
 } from './NModeMenu2';
 export { Menu2AIButton, Menu2HowToButton, Menu2ModeToggle, NModeMenu2 } from './NModeMenu2';
+// ── „Analizuj z AI" (ETAP 3 standardu n-Type) ───────────────────────────────
+// Panel wyników + szew stanu. Silnik (rubryka, prompt, wywołanie LLM) mieszka
+// w `src/services/cardAnalysis` — powłoka go tylko konsumuje.
+export type { NCardAIAnalysisPanelProps } from './NCardAIAnalysisPanel';
+export { NCardAIAnalysisPanel } from './NCardAIAnalysisPanel';
+export type { UseCardAIAnalysisOptions, UseCardAIAnalysisResult } from './useCardAIAnalysis';
+export { useCardAIAnalysis } from './useCardAIAnalysis';
 export { NModePropertiesStrip } from './NModePropertiesStrip';
 export type { QuoteRequirementLevel } from './NModeSectionWrapper';
 export { EvidenceBadge, NModeSectionWrapper } from './NModeSectionWrapper';
