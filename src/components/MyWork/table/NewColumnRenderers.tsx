@@ -6,12 +6,24 @@ import { DollarSign, File, Globe, Link2, Mail, Palette, Phone, Sigma, Smile } fr
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { ColumnDef } from './tableTypes';
 import { ROW_ACCENT_COLORS } from './tableTypes';
 
 interface CellProps {
   value: any;
   onChange: (val: any) => void;
   locked?: boolean;
+  /** Kolumna i nazwa rekordu — do budowy nazw dostępności (aria-label) kontrolek bez widocznego tekstu. */
+  column?: ColumnDef;
+  rowLabel?: string;
+}
+
+/** Nazwa dostępności "kolumna — wiersz" dla kontrolek bez własnego tekstu (przyciski-ikony, inputy). */
+function cellA11yName(t: any, column?: ColumnDef, rowLabel?: string): string {
+  if (!column) return rowLabel || '';
+  return rowLabel
+    ? t('ideas.table.a11y.editCellFor', '{{column}} — {{row}}', { column: column.header, row: rowLabel })
+    : column.header;
 }
 
 const EMOJI_QUICK = [
@@ -138,16 +150,25 @@ export const RollupCell: React.FC<CellProps> = ({ value }) => {
   );
 };
 
-export const EmojiCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
+export const EmojiCell: React.FC<CellProps> = ({ value, onChange, locked, column, rowLabel }) => {
+  const { t } = useTranslation();
   const [showPicker, setShowPicker] = useState(false);
 
   return (
     <div className="relative">
       <button
         onClick={() => !locked && setShowPicker(!showPicker)}
+        aria-label={
+          value
+            ? cellA11yName(t, column, rowLabel)
+            : t('ideas.table.a11y.emojiPickerFor', '{{column}}: choose emoji — {{row}}', {
+                column: column?.header || '',
+                row: rowLabel || column?.header || '',
+              })
+        }
         className="text-lg hover:scale-110 transition-transform"
       >
-        {value || <Smile size={14} className="text-c-text-secondary" />}
+        {value || <Smile size={14} className="text-c-text-secondary" aria-hidden="true" />}
       </button>
       {showPicker && !locked && (
         <div className="absolute left-0 top-full mt-1 z-50 p-2 rounded-xl bg-c-surface shadow-xl border border-slate-200/60 dark:border-white/[0.03] flex flex-wrap gap-1 w-[180px]">
@@ -158,6 +179,7 @@ export const EmojiCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
                 onChange(e);
                 setShowPicker(false);
               }}
+              aria-label={t('ideas.table.a11y.emojiOption', 'Choose emoji {{emoji}}', { emoji: e })}
               className="text-lg hover:scale-125 transition-transform p-0.5"
             >
               {e}
@@ -169,13 +191,19 @@ export const EmojiCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
   );
 };
 
-export const ColorCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
+export const ColorCell: React.FC<CellProps> = ({ value, onChange, locked, column, rowLabel }) => {
+  const { t } = useTranslation();
   const [showPicker, setShowPicker] = useState(false);
 
   return (
     <div className="relative flex items-center gap-1.5">
       <button
         onClick={() => !locked && setShowPicker(!showPicker)}
+        aria-label={t('ideas.table.a11y.colorSwatchFor', '{{column}}: color {{hex}} — {{row}}', {
+          column: column?.header || '',
+          hex: value || '#—',
+          row: rowLabel || column?.header || '',
+        })}
         className="w-5 h-5 rounded-md border-2 border-c-border-subtle shadow-sm hover:scale-110 transition-transform"
         style={{ backgroundColor: value || '#e2e8f0' }}
       />
@@ -189,6 +217,7 @@ export const ColorCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
                 onChange(c);
                 setShowPicker(false);
               }}
+              aria-label={t('ideas.table.a11y.colorOption', 'Set color {{hex}}', { hex: c })}
               className="w-5 h-5 rounded-md border-2 border-c-border-subtle hover:scale-110 transition-transform"
               style={{ backgroundColor: c }}
             />
@@ -199,7 +228,7 @@ export const ColorCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
   );
 };
 
-export const CurrencyCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
+export const CurrencyCell: React.FC<CellProps> = ({ value, onChange, locked, column, rowLabel }) => {
   const { t } = useTranslation();
   return (
     <div className="flex items-center gap-1">
@@ -209,6 +238,7 @@ export const CurrencyCell: React.FC<CellProps> = ({ value, onChange, locked }) =
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
         disabled={locked}
+        aria-label={cellA11yName(t, column, rowLabel)}
         className="w-full bg-transparent border-0 outline-none text-[11px] text-c-text font-mono text-right"
         placeholder={t('ideas.table.currencyPlaceholder', '0.00')}
       />
@@ -216,7 +246,7 @@ export const CurrencyCell: React.FC<CellProps> = ({ value, onChange, locked }) =
   );
 };
 
-export const PhoneCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
+export const PhoneCell: React.FC<CellProps> = ({ value, onChange, locked, column, rowLabel }) => {
   const { t } = useTranslation();
   return (
     <div className="flex items-center gap-1">
@@ -226,6 +256,7 @@ export const PhoneCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
         value={String(value || '')}
         onChange={(e) => onChange(e.target.value)}
         disabled={locked}
+        aria-label={cellA11yName(t, column, rowLabel)}
         className="w-full bg-transparent border-0 outline-none text-[11px] text-c-text"
         placeholder={t('ideas.table.phonePlaceholder', '+48...')}
       />
@@ -233,7 +264,7 @@ export const PhoneCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
   );
 };
 
-export const EmailCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
+export const EmailCell: React.FC<CellProps> = ({ value, onChange, locked, column, rowLabel }) => {
   const { t } = useTranslation();
   return (
     <div className="flex items-center gap-1">
@@ -243,6 +274,7 @@ export const EmailCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
         value={String(value || '')}
         onChange={(e) => onChange(e.target.value)}
         disabled={locked}
+        aria-label={cellA11yName(t, column, rowLabel)}
         className="w-full bg-transparent border-0 outline-none text-[11px] text-blue-600 dark:text-blue-400"
         placeholder={t('ideas.table.emailPlaceholder', 'email@...')}
       />

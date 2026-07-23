@@ -765,6 +765,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
   if (!open || !node) return null;
 
+  // Nazwa rekordu do etykiet dostępności (aria-label) komórek edycji — a11y.
+  const rowA11yLabel =
+    String(node.data?.label || '').trim() || t('ideas.table.a11y.untitledRecord', 'Untitled');
+
   const TABS: {
     id: TabId;
     label: string;
@@ -988,6 +992,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                           onChange={(val) => onFieldChange(node.id, col.key, val)}
                           locked={locked}
                           allNodes={allNodes.map((n) => ({ id: n.id, label: n.data?.label }))}
+                          rowLabel={rowA11yLabel}
                         />
                       </div>
                     </div>
@@ -1187,6 +1192,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                         onChange={(val) => onFieldChange(node.id, col.key, val)}
                         locked={locked}
                         allNodes={allNodes.map((n) => ({ id: n.id, label: n.data?.label }))}
+                        rowLabel={rowA11yLabel}
                       />
                     </div>
                   </div>

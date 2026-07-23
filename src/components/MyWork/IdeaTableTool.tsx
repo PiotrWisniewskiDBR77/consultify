@@ -1278,6 +1278,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const renderRow = (row: TableNode, rowIdx: number) => {
     const isSelected = _selIds.has(row.id);
     const rowColor = row.data?.color;
+    // Nazwa rekordu do etykiet dostępności (checkbox wiersza, komórki edytowalne) — a11y.
+    const rowA11yLabel =
+      String(row.data?.label || '').trim() ||
+      t('ideas.table.a11y.untitledRow', 'Row {{n}}', { n: rowIdx + 1 });
     return (
       <tr
         key={row.id}
@@ -1315,6 +1319,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               (usePlatform ? platformIntegration.toggleRowSelection : toggleRowSelection)(row.id)
             }
             onClick={(e) => e.stopPropagation()}
+            aria-label={t('ideas.table.a11y.selectRow', 'Select row: {{name}}', {
+              name: rowA11yLabel,
+            })}
             className="w-3.5 h-3.5 rounded border-c-border-subtle text-c-text-muted focus:ring-c-focus"
           />
         </td>
@@ -1365,6 +1372,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       onChange={(val) => _fieldChange(row.id, col.key, val)}
                       locked={locked}
                       allNodes={effectiveNodes.map((n) => ({ id: n.id, label: n.data?.label }))}
+                      rowLabel={rowA11yLabel}
                     />
                   )}
                 </div>
@@ -1689,9 +1697,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {filterInput && (
                   <button
                     onClick={() => setFilterInput('')}
+                    aria-label={t('ideas.table.a11y.clearFilterInput', 'Clear filter input')}
                     className="absolute right-1.5 top-1/2 -translate-y-1/2 text-c-text-muted hover:text-c-text-secondary"
                   >
-                    <X size={10} />
+                    <X size={10} aria-hidden="true" />
                   </button>
                 )}
               </div>
@@ -1700,13 +1709,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               <div className="relative">
                 <button
                   onClick={() => setShowFilterPanel(!showFilterPanel)}
+                  aria-label={t('ideas.table.a11y.filterAdvanced', 'Advanced filters')}
                   className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
                     _filters.rules.length > 0
                       ? 'bg-c-surface-raised text-c-text'
                       : 'text-c-text-muted hover:bg-c-surface-raised'
                   }`}
                 >
-                  <Filter size={12} />
+                  <Filter size={12} aria-hidden="true" />
                   {_filters.rules.length > 0 && (
                     <span className="text-[9px]">({_filters.rules.length})</span>
                   )}
@@ -2877,6 +2887,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                 });
                               }
                             }}
+                            aria-label={t('ideas.table.a11y.selectAllRows', 'Select all rows')}
                             className="w-3.5 h-3.5 rounded border-c-border-subtle text-c-text-muted focus:ring-c-focus"
                           />
                         </th>
@@ -2897,6 +2908,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                               <input
                                 autoFocus
                                 defaultValue={col.header}
+                                aria-label={t('ideas.table.a11y.renameColumnFor', 'New column name: {{column}}', {
+                                  column: col.header,
+                                })}
                                 className="w-full bg-c-surface border border-c-border-subtle rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary outline-none"
                                 onBlur={(e) => {
                                   renameColumn(col.key, e.target.value);
@@ -3521,9 +3535,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               </h3>
               <button
                 onClick={() => setShowInterfaceDesigner(false)}
+                aria-label={t('ideas.table.a11y.closeInterfaceDesigner', 'Close Interface Designer')}
                 className="p-1 rounded-lg hover:bg-c-surface-raised"
               >
-                <X size={14} className="text-c-text-muted" />
+                <X size={14} className="text-c-text-muted" aria-hidden="true" />
               </button>
             </div>
             <InterfaceDesigner

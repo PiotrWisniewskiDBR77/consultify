@@ -26852,6 +26852,22 @@
         "aiPending": "AI w toku...",
         "regenerate": "Wygeneruj ponownie"
       },
+      "a11y": {
+        "selectAllRows": "Zaznacz wszystkie wiersze",
+        "selectRow": "Zaznacz wiersz: {{name}}",
+        "untitledRow": "Wiersz {{n}}",
+        "untitledRecord": "Bez nazwy",
+        "editCellFor": "{{column}} — {{row}}",
+        "ratingStarFor": "{{column}}: {{star}} z 5 — {{row}}",
+        "filterAdvanced": "Filtry zaawansowane",
+        "clearFilterInput": "Wyczyść pole filtra",
+        "closeInterfaceDesigner": "Zamknij Interface Designer",
+        "colorSwatchFor": "{{column}}: kolor {{hex}} — {{row}}",
+        "colorOption": "Ustaw kolor {{hex}}",
+        "emojiPickerFor": "{{column}}: wybierz emoji — {{row}}",
+        "emojiOption": "Wybierz emoji {{emoji}}",
+        "renameColumnFor": "Nowa nazwa kolumny: {{column}}"
+      },
       "distributionBuilder": {
         "webhookUrl": "URL webhooka"
       },
