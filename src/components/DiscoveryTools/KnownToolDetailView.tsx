@@ -121,6 +121,16 @@ export function KnownToolDetailView(props: {
 
   const { mode, setMode } = usePresentationMode({ entityType: 'tool', syncURL: false });
 
+  // ETAP 1.1 n-Type: przełącznik N/C zniknął z Menu 1 — tryb 'c' nie ma już ani
+  // wejścia, ani wyjścia, a `usePresentationMode` wciąż czyta go z localStorage.
+  // Bez tego strażnika user, który kiedyś kliknął „C", utknąłby w nim na stałe.
+  // Ten sam wzorzec ma już Task/Decision/Notification (TaskDetailView ~758).
+  useEffect(() => {
+    if (mode === 'c') {
+      setMode('n');
+    }
+  }, [mode, setMode]);
+
   const [activeSection, setActiveSection] = useState<string>('goal');
   const [loading, setLoading] = useState(true);
   const [tool, setTool] = useState<KnownTool | null>(null);
@@ -1931,6 +1941,8 @@ export function KnownToolDetailView(props: {
       loading={loading}
       presentationMode={mode}
       onPresentationModeChange={setMode}
+      // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+      showModeSwitcher={false}
       header={{
         title: tool?.name || toolType,
         onTitleChange: () => {},

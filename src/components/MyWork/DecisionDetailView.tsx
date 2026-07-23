@@ -140,7 +140,6 @@ import {
   type ImpactValues,
   type LinkedItem,
   LinkedItemsSection,
-  PresentationModeSwitcher,
   type ReminderRule,
   RiskAssessmentCompact,
   type RiskItem,
@@ -5587,6 +5586,8 @@ Use userId only from this list:
               statusTone={STATUS_TONE[status] || 'neutral'}
               presentationMode={presentationMode}
               onPresentationModeChange={setPresentationMode}
+              // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+              showModeSwitcher={false}
               buildArtifactCode={buildArtifactCode}
               /* n-Type §6.3 / 01_DECYZJA §2.2 (2026-07-23): `primaryAction`
                  CELOWO nieustawiony. Reguła „jedna oczywista akcja w nagłówku"

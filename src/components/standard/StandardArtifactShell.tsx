@@ -257,7 +257,6 @@ export function StandardArtifactShell<const S extends readonly StandardSekcjaDef
   onSectionReorder,
   densityMode,
   onDensityModeChange,
-  showDensitySwitcher = true,
   properties,
   propertiesMaxColumns,
   headerActions,
@@ -389,7 +388,7 @@ export function StandardArtifactShell<const S extends readonly StandardSekcjaDef
       onSectionReorder={onSectionReorder}
       presentationMode={densityMode}
       onPresentationModeChange={onDensityModeChange}
-      showModeSwitcher={showDensitySwitcher}
+      showModeSwitcher={false}
       buildArtifactCode={buildArtifactCode}
       loading={loading}
       reducedMotion={reducedMotion}

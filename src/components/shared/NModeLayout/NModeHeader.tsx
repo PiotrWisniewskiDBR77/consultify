@@ -3,8 +3,13 @@
  *
  * Standard header bar (Menu 1) for all N-mode artifact detail views.
  * Contains: back button, title (text→input on click), status pill, save-state
- * indicator, N/C mode switcher, ONE primary CTA, and an overflow (⋮) menu that
- * holds "copy object code" + "copy link".
+ * indicator, ONE primary CTA, and an overflow (⋮) menu that holds
+ * "copy object code" + "copy link".
+ *
+ * ETAP 1.1 standardu n-Type (2026-07-23) — przełącznik widoku N/C ZNIKA z Menu 1
+ * kart N (najczęstsza uwaga właściciela: „ikony między AI a akcją główną").
+ * `showModeSwitcher` domyślnie `false`; jedyny konsument, który go jeszcze włącza,
+ * to Interview (nie jest kartą N).
  *
  * Decisions 2026-07-22 (Piotr) implemented here:
  *   D-B — status = labelled pill (statusLabel/statusTone, c-* tokens), not a bare dot.
@@ -48,7 +53,12 @@ interface NModeHeaderProps extends NModeHeaderConfig {
   presentationMode: PresentationMode;
   /** Mode change handler */
   onPresentationModeChange: (mode: PresentationMode) => void;
-  /** If false, hides the N/C mode switcher (use N-only headers) */
+  /**
+   * Pokazuje przełącznik gęstości N/C w Menu 1. DOMYŚLNIE `false` — standard
+   * n-Type ETAP 1.1 (2026-07-23): karty N mają JEDEN widok, więc przełącznik
+   * znika z ich nagłówków. Zostaje wyłącznie dla konsumentów, którzy jawnie
+   * podadzą `true` (dziś: Interview — nie jest kartą N).
+   */
   showModeSwitcher?: boolean;
   /** Build artifact code string from type + id */
   buildArtifactCode?: (type: ArtifactType, id: string) => string;
@@ -223,7 +233,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   statusTone = 'neutral',
   presentationMode,
   onPresentationModeChange,
-  showModeSwitcher = true,
+  showModeSwitcher = false,
   buildArtifactCode,
   titleInputId,
   primaryAction,

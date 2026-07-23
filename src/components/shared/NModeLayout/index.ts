@@ -7,7 +7,7 @@
  *
  * Components:
  * - NModeShell        — Top-level layout composer
- * - NModeHeader       — Title bar with save, chat, mode switcher
+ * - NModeHeader       — Title bar with save, chat, primary CTA
  * - NModePropertiesStrip — Full-width property fields row
  * - NModeActionBar    — Primary + contextual AI action buttons
  * - NModeLeftNav      — Section navigation rail (242px)

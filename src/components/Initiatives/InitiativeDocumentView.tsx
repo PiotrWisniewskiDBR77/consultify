@@ -710,8 +710,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // autor, ani user) nie wie, którą włącza. Standard rozstrzyga: osobne nazwy
   // i osobne sloty.
   //
-  //   densityMode: 'n' | 'c'            → GĘSTOŚĆ widoku, przełącznik w Menu 1
-  //                                        (NModeHeader.showModeSwitcher).
+  //   densityMode: 'n' | 'c'            → GĘSTOŚĆ widoku. ETAP 1.1 n-Type
+  //                                        (2026-07-23): przełącznik ZDJĘTY
+  //                                        z Menu 1, karta ma jeden widok —
+  //                                        wartość jest twardo pinowana na 'n'
+  //                                        (strażnik pod tym hookiem).
   //   presentationMode: 'off'|'fullscreen' → TRYB POKAZU (PresentMode card-walk),
   //                                        wejście z menu kebab, nie z nagłówka.
   //
@@ -722,6 +725,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     entityType: 'initiative',
     syncURL: true,
   });
+
+  // ETAP 1.1 n-Type: przełącznik N/C zniknął z Menu 1, więc tryb 'c' nie ma już
+  // ani wejścia, ani wyjścia — a `usePresentationMode` wciąż potrafi go wczytać
+  // z `?view=c` / localStorage i wpaść w gałąź `densityMode === 'c'` niżej.
+  // Bez tego strażnika user, który kiedyś kliknął „C", utknąłby w nim na stałe.
+  // Ten sam wzorzec ma już Task/Decision/Notification (TaskDetailView ~758).
+  useEffect(() => {
+    if (densityMode === 'c') {
+      setDensityMode('n');
+    }
+  }, [densityMode, setDensityMode]);
 
   const [activeNSection, setActiveNSection] = useState<string>('initiative-definition');
   const [nModeSectionOrder, setNModeSectionOrder] = useState<string[] | null>(null);
@@ -10116,6 +10130,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 statusTone={statusPillTone}
                 presentationMode={densityMode}
                 onPresentationModeChange={setDensityMode}
+                // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+                showModeSwitcher={false}
                 buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
                 primaryAction={
                   primaryLifecycleAction
@@ -10634,6 +10650,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 statusTone={statusPillTone}
                 presentationMode={densityMode}
                 onPresentationModeChange={setDensityMode}
+                // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+                showModeSwitcher={false}
                 buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
                 primaryAction={
                   primaryLifecycleAction

@@ -89,10 +89,10 @@ import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '../standard/ArtifactRightPanel';
-import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
-// `ReadEditToggle` NIE jest juz importowany wprost — przelacznik Edycja|Podglad
-// renderuje wspolny `NModeMenu2` (strefa srodkowa), karmiony `readMode` /
-// `onReadModeChange`. Import zostal po bespoke pasku, ktory znikl przy scaleniu.
+// ETAP 1.1 n-Type: `PresentationModeSwitcher` NIE jest importowany — karta N ma
+// JEDEN widok, przelacznik N/C znika z naglowka (`showModeSwitcher={false}`).
+// `ReadEditToggle` tez nie wprost — przelacznik Edycja|Podglad renderuje wspolny
+// `NModeMenu2` (strefa srodkowa), karmiony `readMode` / `onReadModeChange`.
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -3012,6 +3012,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             statusTone={notifStatusTone}
             presentationMode={presentationMode}
             onPresentationModeChange={setPresentationMode}
+            // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+            showModeSwitcher={false}
             primaryAction={headerPrimaryAction}
             // Standard n-Type §3.5 — JEDNO menu trzech kropek na ekranie,
             // w Menu 1, na dzialania techniczne i administracyjne. Karta

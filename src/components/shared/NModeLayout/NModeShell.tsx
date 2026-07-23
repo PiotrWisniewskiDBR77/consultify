@@ -42,7 +42,9 @@ interface NModeShellExtraProps extends NModeShellProps {
   presentationMode: PresentationMode;
   /** Mode change handler */
   onPresentationModeChange: (mode: PresentationMode) => void;
-  /** If false, hides the mode switcher in the header */
+  /** Pokazuje przełącznik gęstości N/C w nagłówku. Domyślnie `false` (standard
+   *  n-Type ETAP 1.1 — karty N mają jeden widok). Włącza go tylko konsument,
+   *  który jawnie poda `true` (dziś: Interview, nie jest kartą N). */
   showModeSwitcher?: boolean;
   /** Build artifact code string from type + id */
   buildArtifactCode?: (type: string, id: string) => string;
@@ -77,7 +79,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   motionDuration = 0.22,
   presentationMode,
   onPresentationModeChange,
-  showModeSwitcher = true,
+  showModeSwitcher = false,
   buildArtifactCode,
   propertiesMaxColumns,
   loading = false,
