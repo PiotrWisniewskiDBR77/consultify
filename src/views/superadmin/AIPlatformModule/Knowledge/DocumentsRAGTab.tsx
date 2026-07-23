@@ -238,8 +238,14 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
     becameOrgVisibleCount: number | null;
   }>({ checking: false, becameOrgVisibleCount: null });
 
+  // DOROBKA B (2026-07-23, decyzja Piotra): selektor projektu w Vault (poziom
+  // "Projekt") pokazuje tylko projekty, w których wołający jest CZŁONKIEM —
+  // spójne z filtrem dokumentów projektowych (backend już liczy
+  // memberProjectIds per user, patrz knowledge.routes.ts:38
+  // getMemberProjectIds). Wcześniej `Api.getProjects()` ciągnął WSZYSTKIE
+  // projekty organizacji niezależnie od członkostwa.
   useEffect(() => {
-    Api.getProjects()
+    Api.getMyProjectMemberships()
       .then((data) => setProjects(normalizeProjects(data)))
       .catch(() => setProjects([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps

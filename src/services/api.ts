@@ -3164,6 +3164,28 @@ export const Api = {
   },
 
   /**
+   * DOROBKA B (2026-07-23, decyzja Piotra): projekty, w których wołający jest
+   * CZŁONKIEM — nie cała organizacja (`getProjects()` powyżej zwraca WSZYSTKIE
+   * projekty org, za dużo dla selektora Vault "Projekt"). Adoptuje istniejący
+   * endpoint `GET /api/projects/my-memberships`
+   * (server/src/controllers/ProjectController.ts:905 `getMyMemberships`,
+   * JOIN project_members->projects org-scoped) — był już zbudowany, ale bez
+   * konsumenta we froncie. Mapuje odpowiedź `{ memberships: [{projectId,
+   * projectName,...}] }` na płaski kształt `{id, name}`, zgodny z tym, czego
+   * oczekuje `normalizeProjects` w DocumentsRAGTab.tsx.
+   */
+  getMyProjectMemberships: async (): Promise<Array<{ id: string; name: string }>> => {
+    const res = await fetch(`${API_URL}/projects/my-memberships`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch project memberships');
+    const data = await res.json();
+    const memberships = Array.isArray(data?.memberships) ? data.memberships : [];
+    return memberships.map((m: any) => ({
+      id: String(m.projectId || ''),
+      name: String(m.projectName || ''),
+    }));
+  },
+
+  /**
    * Zwornik Delta B (§4.2) — project finance rollup (read-model only).
    * SSOT: Harvard/wdrozenie-100/_KONCEPT_ZWORNIK_2026-07-10.md.
    * Backend: `ProjectController.getProjectFinance` / `projectFinanceRollupService.ts`.

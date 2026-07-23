@@ -77,7 +77,19 @@ class AgentPlannerService {
     conversationId?: string;
     title: string;
     description?: string;
-    steps: Array<{ toolName: string; toolInput: Record<string, unknown> }>;
+    steps: Array<{
+      toolName: string;
+      toolInput: Record<string, unknown>;
+      /**
+       * DOROBKA C (2026-07-23, decyzja Piotra): jawny override bramki akceptu
+       * dla kroki którego `toolName` sam w sobie nie jest w `SIDE_EFFECT_TOOLS`
+       * (np. faza "Rekomendacje" procesu — `calculate_financial` to czysty
+       * odczyt/kalkulacja, ale Piotr chce zatwierdzenia rekomendacji zanim
+       * pójdą do wdrożenia). Gdy podane (boolean), wygrywa nad
+       * `SIDE_EFFECT_TOOLS.has(toolName)`. Gdy brak — zachowanie jak dotąd.
+       */
+      requiresApproval?: boolean;
+    }>;
     isBackground?: boolean;
     scheduledAt?: string;
   }): Promise<AgentPlan> {
@@ -88,7 +100,10 @@ class AgentPlannerService {
       toolName: s.toolName,
       toolInput: s.toolInput,
       status: 'pending' as StepStatus,
-      requiresApproval: SIDE_EFFECT_TOOLS.has(s.toolName),
+      requiresApproval:
+        typeof s.requiresApproval === 'boolean'
+          ? s.requiresApproval
+          : SIDE_EFFECT_TOOLS.has(s.toolName),
     }));
 
     await dbRun(
@@ -335,11 +350,18 @@ class AgentPlannerService {
    * Wymiana jest kompletna (nie merge): usuwa wszystkie stare wiersze kroków i
    * wstawia nowe z kolejnymi `step_index` w podanej kolejności, po czym
    * synchronizuje `plan_json`/`total_steps` i zeruje licznik postępu. Requires-
-   * approval jest przeliczany z `SIDE_EFFECT_TOOLS` (jak w `createPlan`).
+   * approval jest przeliczany z `SIDE_EFFECT_TOOLS` (jak w `createPlan`), chyba
+   * że krok niesie jawny override `requiresApproval` (DOROBKA C 2026-07-23) —
+   * wtedy ten wygrywa.
    */
   async replaceSteps(
     planId: string,
-    steps: Array<{ toolName: string; toolInput: Record<string, unknown> }>
+    steps: Array<{
+      toolName: string;
+      toolInput: Record<string, unknown>;
+      /** DOROBKA C: jawny override — patrz komentarz w `createPlan`. */
+      requiresApproval?: boolean;
+    }>
   ): Promise<AgentPlan> {
     const plan = await this.getPlan(planId);
     if (!plan) throw new Error('Plan not found');
@@ -353,7 +375,10 @@ class AgentPlannerService {
       toolName: s.toolName,
       toolInput: s.toolInput,
       status: 'pending' as StepStatus,
-      requiresApproval: SIDE_EFFECT_TOOLS.has(s.toolName),
+      requiresApproval:
+        typeof s.requiresApproval === 'boolean'
+          ? s.requiresApproval
+          : SIDE_EFFECT_TOOLS.has(s.toolName),
     }));
 
     await dbRun(`DELETE FROM ai_agent_plan_steps WHERE plan_id = ?`, [planId]);

@@ -236,6 +236,7 @@ describe('Agent Plan Routes (HP-4 fundament)', () => {
       const passedSteps = createPlan.mock.calls[0][0].steps as Array<{
         toolName: string;
         toolInput: Record<string, unknown>;
+        requiresApproval?: boolean;
       }>;
       // 5 faz klasycznego procesu we właściwej kolejności, z modułami/deliverables.
       expect(passedSteps).toHaveLength(5);
@@ -248,8 +249,22 @@ describe('Agent Plan Routes (HP-4 fundament)', () => {
       ]);
       expect(passedSteps.every((s) => typeof s.toolInput.module === 'string')).toBe(true);
       expect(passedSteps.every((s) => typeof s.toolInput.deliverable === 'string')).toBe(true);
-      // Tylko toolName/toolInput trafia do persystencji (bez rationale itp.).
-      expect(Object.keys(passedSteps[0]).sort()).toEqual(['toolInput', 'toolName']);
+      // toolName/toolInput/requiresApproval trafiają do persystencji (bez rationale itp.).
+      expect(Object.keys(passedSteps[0]).sort()).toEqual([
+        'requiresApproval',
+        'toolInput',
+        'toolName',
+      ]);
+      // DOROBKA C (decyzja Piotra 2026-07-23): DWA kroki niosą requiresApproval:true
+      // — Rekomendacje (override jawny) i Zamknięcie (SIDE_EFFECT_TOOLS naturalnie).
+      expect(passedSteps.map((s) => s.requiresApproval)).toEqual([
+        false,
+        false,
+        true,
+        false,
+        true,
+      ]);
+      expect(passedSteps.filter((s) => s.requiresApproval === true)).toHaveLength(2);
     });
 
     it('generates the 4-step DRD variant when processId=drd (AGT-006)', async () => {
@@ -422,14 +437,63 @@ describe('Agent Plan Routes (HP-4 fundament)', () => {
       expect(queueAdd).not.toHaveBeenCalled();
     });
 
-    it('bez draft (domyślnie) plan jest dispatchowany od razu — zachowanie wstecznie zgodne', async () => {
+    it('bez draft (domyślnie), ale z processId: ścieżka generatora domyślnie NIE dispatchuje (decyzja Piotra 2026-07-23, DOROBKA A)', async () => {
+      const plan = basePlan(); // status 'planning'
+      createPlan.mockResolvedValue(plan);
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({ title: 'Nowy projekt', processId: 'classic-5' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.dispatch).toBe('deferred');
+      expect(queueAdd).not.toHaveBeenCalled();
+    });
+
+    it('processId + draft:false jawnie wymusza natychmiastowy dispatch', async () => {
       const plan = basePlan();
       createPlan.mockResolvedValue(plan);
       queueAdd.mockResolvedValue(undefined);
 
       const res = await request(createApp())
         .post('/api/ai/agent-plan')
-        .send({ title: 'Nowy projekt', processId: 'classic-5' });
+        .send({ title: 'Nowy projekt', processId: 'classic-5', draft: false });
+
+      expect(res.status).toBe(201);
+      expect(res.body.dispatch).toBe('enqueued');
+      expect(queueAdd).toHaveBeenCalledTimes(1);
+    });
+
+    it('manifestId (ścieżka katalogu) bez draft: dispatch od razu — wstecznie zgodne, BEZ ZMIAN', async () => {
+      getDiscoveryAgentManifest.mockReturnValue({
+        id: 'market-forces',
+        status: 'built',
+        sourceType: 'discovery_tool',
+        displayName: { pl: 'x', en: 'x' },
+        wave: 'wave-1',
+        configDir: 'x',
+      });
+      const plan = basePlan();
+      createPlan.mockResolvedValue(plan);
+      queueAdd.mockResolvedValue(undefined);
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({ title: 'Nowy projekt', manifestId: 'market-forces' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.dispatch).toBe('enqueued');
+      expect(queueAdd).toHaveBeenCalledTimes(1);
+    });
+
+    it('jawne steps (bez processId/manifestId) bez draft: dispatch od razu — wstecznie zgodne', async () => {
+      const plan = basePlan();
+      createPlan.mockResolvedValue(plan);
+      queueAdd.mockResolvedValue(undefined);
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({ title: 'Test plan', steps: [{ toolName: 'search_web', toolInput: {} }] });
 
       expect(res.status).toBe(201);
       expect(res.body.dispatch).toBe('enqueued');
