@@ -76,6 +76,7 @@ import { buildArtifactCode } from '@/utils/artifactLinks';
 
 // ── AI Field Enhancer (shared) ───────────────────────────────────────────────
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
+import { AutoFitTextarea } from '../shared/AutoFitTextarea';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 import { CapabilityGate } from '../shared/CapabilityGate';
 import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
@@ -2603,34 +2604,36 @@ Return ONLY the final comment text.`;
                   )}
                 </div>
 
-                {/* 2) Task Description */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
+                {/* 2) Task Description — pole tekstowe standardu n-Type (§6.2/§6.3):
+                    auto-fit + ręczny resize z pamięcią wysokości + tryb Podgląd. */}
+                <AutoFitTextarea
+                  value={description}
+                  onValueChange={setDescription}
+                  previewMode={readMode}
+                  minRows={8}
+                  containerClassName="space-y-2"
+                  label={
+                    <span className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                       {t('myWork.taskDetail.taskDescription', 'Task description')}
-                    </label>
-                    {!readMode && (
-                      <AIFieldEnhancer
-                        fieldKey="task-description"
-                        sectionLabel={t('myWork.taskDetail.sectionLabel', 'Task Description')}
-                        currentValue={description}
-                        onApply={setDescription}
-                        artifactContext={{ title, status, priority, type: 'task' }}
-                      />
-                    )}
-                  </div>
-                  <textarea
-                    value={description}
-                    onChange={(e) => !readMode && setDescription(e.target.value)}
-                    readOnly={readMode}
-                    rows={10}
-                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[200px]"
-                    placeholder={t(
-                      'myWork.taskDetail.describeWhatNeedsTo',
-                      'Describe what needs to be done, why it matters, any constraints or dependencies...'
-                    )}
-                  />
-                </div>
+                    </span>
+                  }
+                  aiSlot={
+                    <AIFieldEnhancer
+                      fieldKey="task-description"
+                      sectionLabel={t('myWork.taskDetail.sectionLabel', 'Task Description')}
+                      currentValue={description}
+                      onApply={setDescription}
+                      artifactContext={{ title, status, priority, type: 'task' }}
+                    />
+                  }
+                  autoFitLabel={t('common.backToAutoFit', 'Back to auto-fit')}
+                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text focus:outline-none placeholder-c-text-muted"
+                  editClassName="border-b border-c-border focus:border-c-focus focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
+                  placeholder={t(
+                    'myWork.taskDetail.describeWhatNeedsTo',
+                    'Describe what needs to be done, why it matters, any constraints or dependencies...'
+                  )}
+                />
 
                 {/* 2.1) Relevant ideas (T009) — hidden in Read (do pokazania klientowi) */}
                 {!readMode && (
@@ -2830,34 +2833,35 @@ Return ONLY the final comment text.`;
                   </div>
                 )}
 
-                {/* 3) Expected Outcome */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
+                {/* 3) Expected Outcome — pole tekstowe standardu n-Type (§6.2/§6.3). */}
+                <AutoFitTextarea
+                  value={expectedOutcome}
+                  onValueChange={setExpectedOutcome}
+                  previewMode={readMode}
+                  minRows={6}
+                  containerClassName="space-y-2"
+                  label={
+                    <span className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                       {t('myWork.taskDetail.expectedOutcome2', 'Expected outcome')}
-                    </label>
-                    {!readMode && (
-                      <AIFieldEnhancer
-                        fieldKey="task-expected-outcome"
-                        sectionLabel={t('myWork.taskDetail.sectionLabel2', 'Expected Outcome')}
-                        currentValue={expectedOutcome}
-                        onApply={setExpectedOutcome}
-                        artifactContext={{ title, status, priority, type: 'task' }}
-                      />
-                    )}
-                  </div>
-                  <textarea
-                    value={expectedOutcome}
-                    onChange={(e) => !readMode && setExpectedOutcome(e.target.value)}
-                    readOnly={readMode}
-                    rows={8}
-                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[160px]"
-                    placeholder={t(
-                      'myWork.taskDetail.defineTheMeasurableOutcome',
-                      'Define the measurable outcome — what does success look like, acceptance criteria...'
-                    )}
-                  />
-                </div>
+                    </span>
+                  }
+                  aiSlot={
+                    <AIFieldEnhancer
+                      fieldKey="task-expected-outcome"
+                      sectionLabel={t('myWork.taskDetail.sectionLabel2', 'Expected Outcome')}
+                      currentValue={expectedOutcome}
+                      onApply={setExpectedOutcome}
+                      artifactContext={{ title, status, priority, type: 'task' }}
+                    />
+                  }
+                  autoFitLabel={t('common.backToAutoFit', 'Back to auto-fit')}
+                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text focus:outline-none placeholder-c-text-muted"
+                  editClassName="border-b border-c-border focus:border-c-focus focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
+                  placeholder={t(
+                    'myWork.taskDetail.defineTheMeasurableOutcome',
+                    'Define the measurable outcome — what does success look like, acceptance criteria...'
+                  )}
+                />
               </div>
             );
             break;
@@ -3201,20 +3205,22 @@ Return ONLY the final comment text.`;
                                   )}
                                 />
 
-                                {/* Description — editable */}
-                                <textarea
+                                {/* Description — editable (n-Type §6.2/§6.3) */}
+                                <AutoFitTextarea
                                   value={idea.description}
-                                  onChange={(e) =>
-                                    !readMode &&
+                                  onValueChange={(v) =>
                                     setImplementationIdeas(
                                       implementationIdeas.map((i) =>
-                                        i.id === idea.id ? { ...i, description: e.target.value } : i
+                                        i.id === idea.id ? { ...i, description: v } : i
                                       )
                                     )
                                   }
-                                  readOnly={readMode}
-                                  rows={3}
-                                  className="w-full mt-1 px-0 py-1 bg-transparent text-xs leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y min-h-[48px]"
+                                  previewMode={readMode}
+                                  minRows={3}
+                                  containerClassName="mt-1"
+                                  autoFitLabel={t('common.backToAutoFit', 'Back to auto-fit')}
+                                  className="w-full px-0 py-1 bg-transparent text-xs leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted"
+                                  editClassName="focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
                                   placeholder={t(
                                     'myWork.taskDetail.describeTheApproachSteps',
                                     'Describe the approach, steps, tools...'
