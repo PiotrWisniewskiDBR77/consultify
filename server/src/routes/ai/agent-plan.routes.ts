@@ -13,8 +13,11 @@
  *
  * Endpoints:
  * - POST   /api/ai/agent-plan                    -> utworzenie planu (deleguje agentPlannerService.createPlan)
+ *                                                   (AGT-009: `draft:true` => plan zostaje w 'planning', bez dispatchu)
  * - GET    /api/ai/agent-plan                     -> lista planów (org + opcjonalnie user-scoped)
  * - GET    /api/ai/agent-plan/:id                 -> status planu (org-scoped)
+ * - PATCH  /api/ai/agent-plan/:id/steps           -> AGT-009: zapis przestawionego schematu (tylko 'planning')
+ * - POST   /api/ai/agent-plan/:id/run             -> AGT-009: jawne "Uruchom" (opc. zapis steps + dispatch)
  * - POST   /api/ai/agent-plan/:id/approve-step    -> zatwierdzenie kroku awaiting_approval
  * - POST   /api/ai/agent-plan/:id/cancel          -> przerwanie planu
  *
@@ -101,6 +104,13 @@ const CreatePlanRequestSchema = z
     // Optional now: when omitted and manifestId is set, PlanBuilder generates
     // the steps (see header comment). Still capped at MAX_STEPS_PER_PLAN when provided explicitly.
     steps: z.array(PlanStepInputSchema).max(MAX_STEPS_PER_PLAN).optional(),
+    // AGT-009 (partia 2): rozdział tworzenia od uruchomienia. Gdy `draft:true`,
+    // router TWORZY plan (zostaje w 'planning'), ale NIE zleca wykonania w tle —
+    // schemat czeka na jawne "Uruchom" (POST /:id/run). To domyślna ścieżka
+    // generatora procesu: ① AI kładzie classic-5 → user przestawia klocki →
+    // dopiero wtedy dispatch. Bez flagi (default) zachowanie jest jak dotąd
+    // (natychmiastowy best-effort dispatch — wstecznie zgodne z HP-4).
+    draft: z.boolean().optional(),
   })
   .refine(
     (body) =>
@@ -219,13 +229,101 @@ router.post(
       isBackground: true, // HP-4 default (Piotr decision pending): background, patrz nagłówek pliku
     });
 
-    const dispatch = await tryDispatchBackgroundExecution({
-      planId: plan.id,
-      organizationId,
-      userId,
-    });
+    // AGT-009: draft => zostaw plan w 'planning' bez dispatchu (czeka na /run).
+    const dispatch: 'enqueued' | 'unavailable' | 'deferred' = body.draft
+      ? 'deferred'
+      : await tryDispatchBackgroundExecution({
+          planId: plan.id,
+          organizationId,
+          userId,
+        });
 
     return res.status(201).json({ success: true, plan, dispatch });
+  })
+);
+
+/**
+ * PATCH /api/ai/agent-plan/:id/steps
+ * AGT-009 (partia 2): zapis przestawionego/edytowanego schematu na planie, który
+ * jest jeszcze w 'planning' (przed "Uruchom"). Nadpisuje CAŁĄ listę kroków w
+ * podanej kolejności (canvas AgentPlanCanvas.tsx). Guard: plan musi być
+ * 'planning' (inaczej 409). Nie zleca wykonania — to robi dopiero POST /:id/run.
+ */
+router.patch(
+  '/:id/steps',
+  validateBody(z.object({ steps: z.array(PlanStepInputSchema).min(1).max(MAX_STEPS_PER_PLAN) })),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const userId = req.user?.id;
+    const organizationId = req.user?.organizationId;
+    if (!userId || !organizationId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const planId = String(req.params.id || '');
+    const existingPlan = await agentPlannerService.getPlan(planId);
+    if (!assertPlanInOrg(existingPlan, organizationId)) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
+    }
+    if (existingPlan.status !== 'planning') {
+      return res.status(409).json({
+        success: false,
+        error: `Plan not editable in status '${existingPlan.status}' (only 'planning')`,
+      });
+    }
+
+    const { steps } = req.body as {
+      steps: Array<{ toolName: string; toolInput: Record<string, unknown> }>;
+    };
+
+    const plan = await agentPlannerService.replaceSteps(planId, steps);
+    return res.json({ success: true, plan });
+  })
+);
+
+/**
+ * POST /api/ai/agent-plan/:id/run
+ * AGT-009 (partia 2): jawne "Uruchom" — dispatch planu, który czeka w 'planning'
+ * (utworzonego z `draft:true`). Opcjonalnie przyjmuje `steps` — wtedy najpierw
+ * zapisuje ostateczny przestawiony schemat (replaceSteps), potem zleca wykonanie
+ * w tle. Jednym żądaniem domyka ścieżkę canvas → "Uruchom" (zapis + dispatch).
+ * Guard: plan musi być 'planning' (inaczej 409 — już ruszył albo terminalny).
+ */
+router.post(
+  '/:id/run',
+  validateBody(
+    z.object({ steps: z.array(PlanStepInputSchema).min(1).max(MAX_STEPS_PER_PLAN).optional() })
+  ),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const userId = req.user?.id;
+    const organizationId = req.user?.organizationId;
+    if (!userId || !organizationId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const planId = String(req.params.id || '');
+    const existingPlan = await agentPlannerService.getPlan(planId);
+    if (!assertPlanInOrg(existingPlan, organizationId)) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
+    }
+    if (existingPlan.status !== 'planning') {
+      return res.status(409).json({
+        success: false,
+        error: `Plan not runnable in status '${existingPlan.status}' (only 'planning')`,
+      });
+    }
+
+    const { steps } = req.body as {
+      steps?: Array<{ toolName: string; toolInput: Record<string, unknown> }>;
+    };
+
+    if (steps && steps.length > 0) {
+      await agentPlannerService.replaceSteps(planId, steps);
+    }
+
+    const dispatch = await tryDispatchBackgroundExecution({ planId, organizationId, userId });
+    const plan = (await agentPlannerService.getPlan(planId)) ?? existingPlan;
+
+    return res.json({ success: true, plan, dispatch });
   })
 );
 

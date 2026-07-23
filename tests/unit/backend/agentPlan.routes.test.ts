@@ -26,9 +26,10 @@ const getPlan = vi.fn();
 const approveStep = vi.fn();
 const cancelPlan = vi.fn();
 const listPlans = vi.fn();
+const replaceSteps = vi.fn(); // AGT-009
 
 vi.mock('../../../server/src/services/ai/agentPlannerService.js', () => ({
-  agentPlannerService: { createPlan, getPlan, approveStep, cancelPlan, listPlans },
+  agentPlannerService: { createPlan, getPlan, approveStep, cancelPlan, listPlans, replaceSteps },
 }));
 
 const getDiscoveryAgentManifest = vi.fn();
@@ -401,6 +402,166 @@ describe('Agent Plan Routes (HP-4 fundament)', () => {
 
       expect(res.status).toBe(400);
       expect(getPlan).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── AGT-009: rozdział tworzenia od uruchomienia ─────────────────────────
+  describe('POST / — draft (AGT-009): tworzy plan bez auto-dispatch', () => {
+    it('draft:true zostawia plan w planning i NIE zleca wykonania (dispatch=deferred)', async () => {
+      const plan = basePlan(); // status 'planning'
+      createPlan.mockResolvedValue(plan);
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({ title: 'Nowy projekt', processId: 'classic-5', draft: true });
+
+      expect(res.status).toBe(201);
+      expect(res.body.plan.status).toBe('planning');
+      expect(res.body.dispatch).toBe('deferred');
+      // KLUCZ AGT-009: żaden job nie trafił do kolejki — plan czeka na "Uruchom".
+      expect(queueAdd).not.toHaveBeenCalled();
+    });
+
+    it('bez draft (domyślnie) plan jest dispatchowany od razu — zachowanie wstecznie zgodne', async () => {
+      const plan = basePlan();
+      createPlan.mockResolvedValue(plan);
+      queueAdd.mockResolvedValue(undefined);
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({ title: 'Nowy projekt', processId: 'classic-5' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.dispatch).toBe('enqueued');
+      expect(queueAdd).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('PATCH /:id/steps — zapis przestawionego schematu (AGT-009)', () => {
+    it('nadpisuje kroki planu w statusie planning (200) i deleguje do replaceSteps', async () => {
+      getPlan.mockResolvedValueOnce(basePlan({ status: 'planning' }));
+      const reordered = basePlan({
+        totalSteps: 2,
+        steps: [
+          { id: 's2', stepIndex: 0, toolName: 'get_assessment_data', toolInput: { phase: 'Diagnoza' }, status: 'pending', requiresApproval: false },
+          { id: 's1', stepIndex: 1, toolName: 'search_knowledge_base', toolInput: { phase: 'Wejście' }, status: 'pending', requiresApproval: false },
+        ],
+      });
+      replaceSteps.mockResolvedValue(reordered);
+
+      const res = await request(createApp())
+        .patch('/api/ai/agent-plan/plan-1/steps')
+        .send({
+          steps: [
+            { toolName: 'get_assessment_data', toolInput: { phase: 'Diagnoza' } },
+            { toolName: 'search_knowledge_base', toolInput: { phase: 'Wejście' } },
+          ],
+        });
+
+      expect(res.status).toBe(200);
+      expect(replaceSteps).toHaveBeenCalledWith('plan-1', [
+        { toolName: 'get_assessment_data', toolInput: { phase: 'Diagnoza' } },
+        { toolName: 'search_knowledge_base', toolInput: { phase: 'Wejście' } },
+      ]);
+      // Dowód przestawienia: nowy step_index odzwierciedla nową kolejność.
+      expect(res.body.plan.steps.map((s: { toolName: string }) => s.toolName)).toEqual([
+        'get_assessment_data',
+        'search_knowledge_base',
+      ]);
+    });
+
+    it('odmawia edycji planu, który już ruszył (409, bez replaceSteps)', async () => {
+      getPlan.mockResolvedValueOnce(basePlan({ status: 'executing' }));
+
+      const res = await request(createApp())
+        .patch('/api/ai/agent-plan/plan-1/steps')
+        .send({ steps: [{ toolName: 'search_web', toolInput: {} }] });
+
+      expect(res.status).toBe(409);
+      expect(replaceSteps).not.toHaveBeenCalled();
+    });
+
+    it('404 dla planu z innej organizacji (bez replaceSteps)', async () => {
+      getPlan.mockResolvedValueOnce(basePlan({ organizationId: 'other-org' }));
+
+      const res = await request(createApp())
+        .patch('/api/ai/agent-plan/plan-1/steps')
+        .send({ steps: [{ toolName: 'search_web', toolInput: {} }] });
+
+      expect(res.status).toBe(404);
+      expect(replaceSteps).not.toHaveBeenCalled();
+    });
+
+    it('odrzuca pustą listę kroków (400, walidacja przed getPlan)', async () => {
+      // validateBody odrzuca zanim handler dotknie getPlan — nie mockujemy go,
+      // żeby nie zostawić niekonsumowanego once w kolejce mocka.
+      const res = await request(createApp())
+        .patch('/api/ai/agent-plan/plan-1/steps')
+        .send({ steps: [] });
+
+      expect(res.status).toBe(400);
+      expect(getPlan).not.toHaveBeenCalled();
+      expect(replaceSteps).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('POST /:id/run — jawne "Uruchom" (AGT-009)', () => {
+    it('dispatchuje plan czekający w planning (queueAdd wywołane, dispatch=enqueued)', async () => {
+      // Guard i odczyt końcowy: oba getPlan zwracają planning — po samym enqueue
+      // status realnie NIE zmienia się synchronicznie (worker ustawi executing
+      // dopiero gdy podejmie job). Kluczem AGT-009 jest, że job trafił do kolejki.
+      getPlan.mockResolvedValue(basePlan({ status: 'planning' }));
+      queueAdd.mockResolvedValue(undefined);
+
+      const res = await request(createApp()).post('/api/ai/agent-plan/plan-1/run').send({});
+
+      expect(res.status).toBe(200);
+      expect(res.body.dispatch).toBe('enqueued');
+      expect(queueAdd).toHaveBeenCalledTimes(1);
+      expect(queueAdd).toHaveBeenCalledWith(
+        'AGENT_BACKGROUND_TASK',
+        expect.objectContaining({
+          payload: { planId: 'plan-1', organizationId: 'test-org', userId: 'test-user' },
+        })
+      );
+      expect(replaceSteps).not.toHaveBeenCalled(); // brak steps => tylko dispatch
+    });
+
+    it('gdy podano steps: najpierw zapisuje przestawiony schemat, potem dispatch', async () => {
+      getPlan.mockResolvedValueOnce(basePlan({ status: 'planning' }));
+      replaceSteps.mockResolvedValue(basePlan({ status: 'planning' }));
+      queueAdd.mockResolvedValue(undefined);
+      getPlan.mockResolvedValueOnce(basePlan({ status: 'executing' }));
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan/plan-1/run')
+        .send({ steps: [{ toolName: 'search_knowledge_base', toolInput: { phase: 'Wejście' } }] });
+
+      expect(res.status).toBe(200);
+      expect(replaceSteps).toHaveBeenCalledWith('plan-1', [
+        { toolName: 'search_knowledge_base', toolInput: { phase: 'Wejście' } },
+      ]);
+      expect(queueAdd).toHaveBeenCalledTimes(1);
+      expect(res.body.dispatch).toBe('enqueued');
+    });
+
+    it('odmawia uruchomienia planu, który już ruszył (409, bez dispatch)', async () => {
+      getPlan.mockResolvedValueOnce(basePlan({ status: 'executing' }));
+
+      const res = await request(createApp()).post('/api/ai/agent-plan/plan-1/run').send({});
+
+      expect(res.status).toBe(409);
+      expect(queueAdd).not.toHaveBeenCalled();
+      expect(replaceSteps).not.toHaveBeenCalled();
+    });
+
+    it('404 dla planu z innej organizacji (bez dispatch)', async () => {
+      getPlan.mockResolvedValueOnce(basePlan({ organizationId: 'other-org' }));
+
+      const res = await request(createApp()).post('/api/ai/agent-plan/plan-1/run').send({});
+
+      expect(res.status).toBe(404);
+      expect(queueAdd).not.toHaveBeenCalled();
     });
   });
 
