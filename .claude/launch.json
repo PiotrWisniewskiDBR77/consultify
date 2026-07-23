@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "dev-render",
+      "name": "fala8-table-parity",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3400"],
       "port": 3400
