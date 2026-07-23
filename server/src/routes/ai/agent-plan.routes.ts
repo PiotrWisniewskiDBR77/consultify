@@ -251,9 +251,7 @@ router.post(
  */
 router.patch(
   '/:id/steps',
-  validateBody(
-    z.object({ steps: z.array(PlanStepInputSchema).min(1).max(MAX_STEPS_PER_PLAN) })
-  ),
+  validateBody(z.object({ steps: z.array(PlanStepInputSchema).min(1).max(MAX_STEPS_PER_PLAN) })),
   asyncHandler(async (req: AuthRequest, res) => {
     const userId = req.user?.id;
     const organizationId = req.user?.organizationId;
