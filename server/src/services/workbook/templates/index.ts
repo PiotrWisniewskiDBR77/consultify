@@ -25,10 +25,13 @@
  *      (if the builder takes a nested shape) a `coerceParams` un-flattener.
  *   3. Add a focused read-back + math-verification test under `__tests__/`.
  *
- * Five templates are registered today: `threeScenarioPnL` (flagship 3-scenario
+ * Seven templates are registered today: `threeScenarioPnL` (flagship 3-scenario
  * P&L), `operatingBudget` (12-month operating budget), `dcfValuation`
  * (Discounted Cash Flow valuation), `breakEven` (break-even / BEP analysis),
- * and `cashflow12m` (12-month cash-flow forecast). The map is the extension point.
+ * `cashflow12m` (12-month cash-flow forecast), `unitEconomics` (SaaS unit
+ * economics: LTV/CAC/payback/NRR + 12m churn-decay projection), and
+ * `loanAmortization` (loan amortization schedule, annuity payment). The map
+ * is the extension point.
  */
 
 import { z } from 'zod';
@@ -66,6 +69,18 @@ import {
   CASHFLOW_DRIVER_DEFAULTS,
   type Cashflow12mParams,
 } from './cashflow12m.js';
+import {
+  buildUnitEconomicsSchema,
+  UNIT_ECONOMICS_GENERAL_DEFAULTS,
+  UNIT_ECONOMICS_DRIVER_DEFAULTS,
+  type UnitEconomicsParams,
+} from './unitEconomics.js';
+import {
+  buildLoanAmortizationSchema,
+  LOAN_AMORTIZATION_GENERAL_DEFAULTS,
+  LOAN_AMORTIZATION_DRIVER_DEFAULTS,
+  type LoanAmortizationParams,
+} from './loanAmortization.js';
 import type { WorkbookSchema } from '../WorkbookSchema.js';
 
 /** Stable identifiers for registered model templates. */
@@ -74,7 +89,9 @@ export type WorkbookTemplateId =
   | 'operatingBudget'
   | 'dcfValuation'
   | 'breakEven'
-  | 'cashflow12m';
+  | 'cashflow12m'
+  | 'unitEconomics'
+  | 'loanAmortization';
 
 /** A FE-renderable, zod-validatable parameter type. */
 export type WorkbookTemplateParamType =
@@ -563,6 +580,130 @@ function buildCashflow12mParams(): WorkbookTemplateParam[] {
 }
 
 // ---------------------------------------------------------------------------
+// unitEconomics — parameter descriptors
+// ---------------------------------------------------------------------------
+
+function buildUnitEconomicsParams(): WorkbookTemplateParam[] {
+  return [
+    {
+      name: 'companyName',
+      label: 'Nazwa spółki',
+      type: 'text',
+      default: UNIT_ECONOMICS_GENERAL_DEFAULTS.companyName,
+      group: 'Ogólne',
+    },
+    {
+      name: 'currencyCode',
+      label: 'Waluta',
+      type: 'enum',
+      options: ['PLN', 'EUR', 'USD'],
+      default: UNIT_ECONOMICS_GENERAL_DEFAULTS.currencyCode,
+      group: 'Ogólne',
+    },
+    {
+      name: 'startingMrr',
+      label: 'MRR startowy',
+      type: 'currency',
+      default: UNIT_ECONOMICS_GENERAL_DEFAULTS.startingMrr,
+      min: 0,
+      step: 1000,
+      group: 'Ogólne',
+    },
+    {
+      name: 'churnPctMonthly',
+      label: 'Churn m/m %',
+      type: 'percent',
+      default: UNIT_ECONOMICS_DRIVER_DEFAULTS.churnPctMonthly,
+      min: 0.001,
+      max: 1,
+      step: 0.005,
+      group: 'Metryki wejściowe',
+    },
+    {
+      name: 'cac',
+      label: 'CAC (koszt pozyskania klienta)',
+      type: 'currency',
+      default: UNIT_ECONOMICS_DRIVER_DEFAULTS.cac,
+      min: 0.01,
+      step: 50,
+      group: 'Metryki wejściowe',
+    },
+    {
+      name: 'grossMarginPct',
+      label: 'Marża brutto %',
+      type: 'percent',
+      default: UNIT_ECONOMICS_DRIVER_DEFAULTS.grossMarginPct,
+      min: 0.001,
+      max: 1,
+      step: 0.005,
+      group: 'Metryki wejściowe',
+    },
+    {
+      name: 'arpu',
+      label: 'ARPU (przychód / klient / m-c)',
+      type: 'currency',
+      default: UNIT_ECONOMICS_DRIVER_DEFAULTS.arpu,
+      min: 0.01,
+      step: 10,
+      group: 'Metryki wejściowe',
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// loanAmortization — parameter descriptors
+// ---------------------------------------------------------------------------
+
+function buildLoanAmortizationParams(): WorkbookTemplateParam[] {
+  return [
+    {
+      name: 'companyName',
+      label: 'Nazwa spółki',
+      type: 'text',
+      default: LOAN_AMORTIZATION_GENERAL_DEFAULTS.companyName,
+      group: 'Ogólne',
+    },
+    {
+      name: 'currencyCode',
+      label: 'Waluta',
+      type: 'enum',
+      options: ['PLN', 'EUR', 'USD'],
+      default: LOAN_AMORTIZATION_GENERAL_DEFAULTS.currencyCode,
+      group: 'Ogólne',
+    },
+    {
+      name: 'loanAmount',
+      label: 'Kwota kredytu',
+      type: 'currency',
+      default: LOAN_AMORTIZATION_GENERAL_DEFAULTS.loanAmount,
+      min: 0.01,
+      step: 1000,
+      group: 'Ogólne',
+    },
+    {
+      name: 'annualInterestRatePct',
+      label: 'Oprocentowanie roczne %',
+      type: 'percent',
+      default: LOAN_AMORTIZATION_DRIVER_DEFAULTS.annualInterestRatePct,
+      min: 0.0001,
+      max: 1,
+      step: 0.001,
+      group: 'Warunki kredytu',
+    },
+    {
+      name: 'termMonths',
+      label: 'Okres (miesiące)',
+      type: 'integer',
+      default: LOAN_AMORTIZATION_DRIVER_DEFAULTS.termMonths,
+      min: 1,
+      max: 360,
+      step: 1,
+      group: 'Warunki kredytu',
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -573,6 +714,8 @@ export const WORKBOOK_TEMPLATES: {
   dcfValuation: WorkbookTemplateEntry<DcfValuationParams>;
   breakEven: WorkbookTemplateEntry<BreakEvenParams>;
   cashflow12m: WorkbookTemplateEntry<Cashflow12mParams>;
+  unitEconomics: WorkbookTemplateEntry<UnitEconomicsParams>;
+  loanAmortization: WorkbookTemplateEntry<LoanAmortizationParams>;
 } = {
   threeScenarioPnL: {
     id: 'threeScenarioPnL',
@@ -618,6 +761,26 @@ export const WORKBOOK_TEMPLATES: {
       'wejścia na arkuszu Założenia, arkusz Podsumowanie.',
     params: buildCashflow12mParams(),
     build: buildCashflow12mSchema,
+  },
+  unitEconomics: {
+    id: 'unitEconomics',
+    title: 'Ekonomia jednostkowa SaaS',
+    description:
+      'Parametryczna ekonomia jednostkowa SaaS: LTV=ARPU×marża/churn, LTV/CAC, okres zwrotu CAC=CAC/(ARPU×marża), ' +
+      'NRR, oraz 12-miesięczna projekcja klientów/MRR z churnem m/m, każda pozycja jako formuła, wejścia na ' +
+      'arkuszu Założenia, arkusze Metryki i Projekcja 12m.',
+    params: buildUnitEconomicsParams(),
+    build: buildUnitEconomicsSchema,
+  },
+  loanAmortization: {
+    id: 'loanAmortization',
+    title: 'Harmonogram spłaty kredytu (amortyzacja)',
+    description:
+      'Parametryczny harmonogram kredytu: rata annuitetowa (formuła arytmetyczna, nie PMT), podział raty na ' +
+      'odsetki i kapitał, saldo malejące miesiąc po miesiącu do zera, wiersz RAZEM z sumami i saldem końcowym, ' +
+      'każda pozycja jako formuła, wejścia na arkuszu Założenia, arkusz Harmonogram.',
+    params: buildLoanAmortizationParams(),
+    build: buildLoanAmortizationSchema,
   },
 };
 
@@ -736,6 +899,8 @@ export {
   buildDcfValuationSchema,
   buildBreakEvenSchema,
   buildCashflow12mSchema,
+  buildUnitEconomicsSchema,
+  buildLoanAmortizationSchema,
 };
 export type {
   ThreeScenarioPnLParams,
@@ -743,4 +908,6 @@ export type {
   DcfValuationParams,
   BreakEvenParams,
   Cashflow12mParams,
+  UnitEconomicsParams,
+  LoanAmortizationParams,
 };
