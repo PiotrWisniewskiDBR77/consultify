@@ -84,6 +84,10 @@ const MAX_STEPS_PER_PLAN = 12; // koncept sekcja 1 "Limity (twarde)" — F6 doda
 const PlanStepInputSchema = z.object({
   toolName: z.string().trim().min(1).max(120),
   toolInput: z.record(z.string(), z.unknown()).default({}),
+  // DOROBKA C (2026-07-23, decyzja Piotra): jawny override bramki akceptu —
+  // patrz komentarz przy `agentPlannerService.createPlan`. Opcjonalny; gdy
+  // pominięty, requiresApproval liczone jak dotąd z SIDE_EFFECT_TOOLS.
+  requiresApproval: z.boolean().optional(),
 });
 
 const CreatePlanRequestSchema = z
@@ -209,9 +213,16 @@ router.post(
 
     // AGT-006: process generator — only when no explicit steps and no manifest
     // resolved them. Default schema = classic-5 (5 phases Kubr/ILO); drd = variant.
+    // DOROBKA C: requiresApproval passed through — ProcessLibrary phases carry
+    // an explicit override for phases that need a gate beyond SIDE_EFFECT_TOOLS
+    // (e.g. "Rekomendacje"); createPlan honours it over its own computation.
     if ((!steps || steps.length === 0) && body.processId) {
       const generated = buildStepsFromProcess(body.processId, body.processContext);
-      steps = generated.map(({ toolName, toolInput }) => ({ toolName, toolInput }));
+      steps = generated.map(({ toolName, toolInput, requiresApproval }) => ({
+        toolName,
+        toolInput,
+        requiresApproval,
+      }));
       logger.info('[AgentPlanRoutes] ProcessLibrary generated steps from process', {
         processId: body.processId,
         stepCount: steps.length,

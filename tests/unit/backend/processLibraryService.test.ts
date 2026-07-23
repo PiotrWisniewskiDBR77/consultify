@@ -70,9 +70,33 @@ describe('processLibraryService (AGT-006 generator procesu)', () => {
     ]);
     for (const p of buildProcessPlan('classic-5')) {
       expect(knownTools.has(p.toolName)).toBe(true);
-      // requiresApproval musi być spójne z rejestrem side-effect
-      expect(p.requiresApproval).toBe(SIDE_EFFECT_TOOLS.has(p.toolName));
+      // requiresApproval musi być spójne z rejestrem side-effect — WYJĄTEK:
+      // 'recommendations' niesie jawny override (DOROBKA C, patrz test niżej).
+      if (p.id !== 'recommendations') {
+        expect(p.requiresApproval).toBe(SIDE_EFFECT_TOOLS.has(p.toolName));
+      }
     }
+  });
+
+  it('DOROBKA C (decyzja Piotra 2026-07-23): faza Rekomendacje ma DRUGĄ bramkę akceptu, obok Zamknięcia', () => {
+    const phases = buildProcessPlan('classic-5');
+
+    const recommendations = phases.find((p) => p.id === 'recommendations');
+    const closing = phases.find((p) => p.id === 'closing');
+
+    // 'calculate_financial' sam w sobie NIE jest w SIDE_EFFECT_TOOLS (czysty
+    // odczyt/kalkulacja) — requiresApproval:true tu jest jawnym override.
+    expect(SIDE_EFFECT_TOOLS.has('calculate_financial')).toBe(false);
+    expect(recommendations?.requiresApproval).toBe(true);
+    // Zamknięcie ('generate_report_section') jest gate'owane naturalnie —
+    // niezmienione przez tę dorobkę.
+    expect(SIDE_EFFECT_TOOLS.has('generate_report_section')).toBe(true);
+    expect(closing?.requiresApproval).toBe(true);
+
+    // Dokładnie DWIE fazy z bramką akceptu w klasycznym 5-fazowym schemacie.
+    const gated = phases.filter((p) => p.requiresApproval);
+    expect(gated.map((p) => p.id)).toEqual(['recommendations', 'closing']);
+    expect(gated).toHaveLength(2);
   });
 
   it('wariant DRD = dokładnie 4 kroki we właściwej kolejności', () => {
@@ -106,6 +130,12 @@ describe('processLibraryService (AGT-006 generator procesu)', () => {
     }
     expect(steps[0].toolInput.phase).toBe('Wejście / Kontraktowanie');
     expect(steps[4].toolInput.deliverable).toBe('Efekty, deck, przekazanie');
+  });
+
+  it('DOROBKA C: buildStepsFromProcess niesie requiresApproval na DWÓCH krokach classic-5 (Rekomendacje + Zamknięcie)', () => {
+    const steps = buildStepsFromProcess('classic-5');
+    expect(steps.map((s) => s.requiresApproval)).toEqual([false, false, true, false, true]);
+    expect(steps.filter((s) => s.requiresApproval)).toHaveLength(2);
   });
 
   it('dostrajanie pod kontekst modyfikuje toolInput bez zmiany liczby/kolejności faz', () => {

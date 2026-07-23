@@ -236,6 +236,7 @@ describe('Agent Plan Routes (HP-4 fundament)', () => {
       const passedSteps = createPlan.mock.calls[0][0].steps as Array<{
         toolName: string;
         toolInput: Record<string, unknown>;
+        requiresApproval?: boolean;
       }>;
       // 5 faz klasycznego procesu we właściwej kolejności, z modułami/deliverables.
       expect(passedSteps).toHaveLength(5);
@@ -248,8 +249,22 @@ describe('Agent Plan Routes (HP-4 fundament)', () => {
       ]);
       expect(passedSteps.every((s) => typeof s.toolInput.module === 'string')).toBe(true);
       expect(passedSteps.every((s) => typeof s.toolInput.deliverable === 'string')).toBe(true);
-      // Tylko toolName/toolInput trafia do persystencji (bez rationale itp.).
-      expect(Object.keys(passedSteps[0]).sort()).toEqual(['toolInput', 'toolName']);
+      // toolName/toolInput/requiresApproval trafiają do persystencji (bez rationale itp.).
+      expect(Object.keys(passedSteps[0]).sort()).toEqual([
+        'requiresApproval',
+        'toolInput',
+        'toolName',
+      ]);
+      // DOROBKA C (decyzja Piotra 2026-07-23): DWA kroki niosą requiresApproval:true
+      // — Rekomendacje (override jawny) i Zamknięcie (SIDE_EFFECT_TOOLS naturalnie).
+      expect(passedSteps.map((s) => s.requiresApproval)).toEqual([
+        false,
+        false,
+        true,
+        false,
+        true,
+      ]);
+      expect(passedSteps.filter((s) => s.requiresApproval === true)).toHaveLength(2);
     });
 
     it('generates the 4-step DRD variant when processId=drd (AGT-006)', async () => {

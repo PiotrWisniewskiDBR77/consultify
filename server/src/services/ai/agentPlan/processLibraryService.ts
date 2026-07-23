@@ -68,8 +68,19 @@ export interface ProcessContext {
 
 type PhaseSeed = Omit<ProcessPhase, 'requiresApproval'>;
 
-function phase(seed: PhaseSeed): ProcessPhase {
-  return { ...seed, requiresApproval: SIDE_EFFECT_TOOLS.has(seed.toolName) };
+/**
+ * `forceRequiresApproval` (DOROBKA C, decyzja Piotra 2026-07-23): override
+ * jawny dla fazy, której `toolName` NIE jest w `SIDE_EFFECT_TOOLS`, ale ma
+ * jednak zatrzymać plan na bramce akceptu (np. faza "Rekomendacje" —
+ * `calculate_financial` to czysty odczyt/kalkulacja, nie ma efektu ubocznego,
+ * ale Piotr chce zatwierdzenia rekomendacji zanim pójdą do wdrożenia). Gdy
+ * nieustawione, zachowanie jak dotąd (SIDE_EFFECT_TOOLS.has(toolName)).
+ */
+function phase(seed: PhaseSeed, forceRequiresApproval?: boolean): ProcessPhase {
+  return {
+    ...seed,
+    requiresApproval: forceRequiresApproval ?? SIDE_EFFECT_TOOLS.has(seed.toolName),
+  };
 }
 
 export interface ProcessDefinition {
@@ -113,15 +124,23 @@ function buildClassicFivePhase(): ProcessPhase[] {
       toolInput: { include_benchmarks: true },
       rationale: 'Diagnoza: pobranie ocen/danych stanu obecnego i zdefiniowanie problemu.',
     }),
-    phase({
-      id: 'recommendations',
-      name: 'Rekomendacje',
-      module: 'Initiatives · Finance',
-      deliverable: 'Warianty, priorytety, ROI',
-      toolName: 'calculate_financial',
-      toolInput: { calculation_type: 'roi' },
-      rationale: 'Rekomendacje: wycena ROI wariantów i ustalenie priorytetów.',
-    }),
+    phase(
+      {
+        id: 'recommendations',
+        name: 'Rekomendacje',
+        module: 'Initiatives · Finance',
+        deliverable: 'Warianty, priorytety, ROI',
+        toolName: 'calculate_financial',
+        toolInput: { calculation_type: 'roi' },
+        rationale:
+          'Rekomendacje: wycena ROI wariantów i ustalenie priorytetów (bramka akceptu — ' +
+          'decyzja Piotra 2026-07-23: rekomendacje zatwierdza user zanim pójdą do wdrożenia).',
+      },
+      // DOROBKA C: `calculate_financial` sam w sobie nie jest w SIDE_EFFECT_TOOLS
+      // (czysty odczyt/kalkulacja) — jawny override wymusza drugą bramkę akceptu
+      // na tej fazie, obok istniejącej bramki Zamknięcia.
+      true
+    ),
     phase({
       id: 'execution',
       name: 'Wdrożenie',
@@ -295,7 +314,7 @@ export function buildProcessPlan(
 export function buildStepsFromProcess(
   processId?: string | null,
   context?: ProcessContext
-): Array<{ toolName: string; toolInput: Record<string, unknown> }> {
+): Array<{ toolName: string; toolInput: Record<string, unknown>; requiresApproval: boolean }> {
   return buildProcessPlan(processId, context).map((p) => ({
     toolName: p.toolName,
     toolInput: {
@@ -304,6 +323,9 @@ export function buildStepsFromProcess(
       module: p.module,
       deliverable: p.deliverable,
     },
+    // DOROBKA C: przekazane dalej do agentPlannerService.createPlan, które
+    // respektuje jawny override zamiast przeliczać wyłącznie z SIDE_EFFECT_TOOLS.
+    requiresApproval: p.requiresApproval,
   }));
 }
 
