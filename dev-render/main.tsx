@@ -87,6 +87,7 @@ import IdeaTableToolKebabScreen from './screens/idea-table-tool-kebab';
 import IdeaTableToolEmptyFilterScreen from './screens/idea-table-tool-empty-filter';
 import IdeaTableToolPasteScreen from './screens/idea-table-tool-paste';
 import IdeaTableToolSortFilterScreen from './screens/idea-table-tool-sortfilter';
+import IdeaTableToolGroupingScreen from './screens/idea-table-tool-grouping';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
@@ -122,6 +123,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'IDEE Table — Stan pustego filtra + resize kolumn + gęstość wierszy (PlatformGridView, Fala 8) — 2026-07-23',
     render: () => <IdeaTableToolEmptyFilterScreen />,
+  },
+  'idea-table-tool-grouping': {
+    label:
+      'IDEE Table — Grupowanie: dropdown "Grupuj wg" + zwijanie grup (PlatformGridView, Fala 10) — 2026-07-23',
+    render: () => <IdeaTableToolGroupingScreen />,
   },
   'karta-tool': {
     label: 'KARTY N — Tool (harness odbioru 2026-07-21)',
