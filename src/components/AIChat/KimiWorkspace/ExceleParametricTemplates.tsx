@@ -23,6 +23,15 @@
  * `src/utils/workbookGridPreview.ts`) — read-only, cells + formulas, row-capped
  * with a "show all" toggle, sheet tabs when the template has more than one sheet.
  *
+ * Quality badge (2026-07-23): the deterministic critic (`critiqueWorkbook`, already
+ * run server-side for EVERY template build — see `qualityReport` on
+ * `WorkbookGenerationResult` in WorkbookGeneratorService.generateFromTemplate) is
+ * now surfaced next to the grid preview as a NON-BLOCKING badge — "Model
+ * zweryfikowany ✓ (0 uwag)" when clean, or "N uwag" with an expandable list
+ * (severity + message + fix) when the critic found something. Purely additive:
+ * no generation/export logic changes, no new flag (the signal already computes
+ * unconditionally), never blocks download.
+ *
  * Styling: c-* tokens only, zero crimson (neutral CTA = bg-c-text; focus = c-focus).
  */
 
@@ -31,6 +40,7 @@ import {
   Loader2,
   Download,
   ChevronLeft,
+  ChevronDown,
   CheckCircle2,
   Sparkles,
   AlertTriangle,
@@ -65,12 +75,31 @@ interface TemplateEntry {
   params: TemplateParam[];
 }
 
+/** Mirrors server/src/services/workbook/workbookQualityGate.ts WorkbookIssue
+ *  (deterministic critic — fields we actually render; server may send more). */
+interface WorkbookQualityIssue {
+  code: string;
+  severity: 'CRITICAL' | 'MAJOR' | 'MINOR';
+  sheet: string;
+  cell?: string | null;
+  message: string;
+  fix?: string;
+}
+
+/** Mirrors WorkbookQualityReport — score 0-100, issues[], passed = brak CRITICAL. */
+interface WorkbookQualityReport {
+  score: number;
+  issues: WorkbookQualityIssue[];
+  passed: boolean;
+}
+
 interface BuildResult {
   id: string;
   title: string;
   fileName: string;
   downloadUrl: string;
   sheetCount: number;
+  qualityReport?: WorkbookQualityReport | null;
 }
 
 interface Props {
@@ -103,6 +132,10 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
   const [gridError, setGridError] = useState<string | null>(null);
   const [activeSheet, setActiveSheet] = useState(0);
   const [showAllRows, setShowAllRows] = useState(false);
+
+  // Quality badge (2026-07-23): deterministic critic already computed server-side
+  // for every template build — expandable list of issues, collapsed by default.
+  const [showQualityIssues, setShowQualityIssues] = useState(false);
 
   const t = useCallback(
     (pl: string, en: string) => (isPolish ? pl : en),
@@ -141,6 +174,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
     setGridSheets(null);
     setGridError(null);
     setGridLoading(false);
+    setShowQualityIssues(false);
     setSelected(tpl);
   }, []);
 
@@ -198,8 +232,10 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
         fileName: res?.fileName || 'workbook.xlsx',
         downloadUrl: res?.downloadUrl || `/api/workbook/${res?.id}/download`,
         sheetCount: Array.isArray(res?.sheets) ? res.sheets.length : 0,
+        qualityReport: res?.qualityReport ?? null,
       };
       setResult(built);
+      setShowQualityIssues(false);
       toast.success(t('Skoroszyt zbudowany', 'Workbook built'));
       onBuilt?.();
 
@@ -301,12 +337,79 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                   setGridSheets(null);
                   setGridError(null);
                   setGridLoading(false);
+                  setShowQualityIssues(false);
                 }}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-c-border text-c-text-secondary text-xs font-medium hover:bg-c-surface transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 {t('Zbuduj ponownie', 'Build again')}
               </button>
             </div>
+
+            {/* Quality badge — nieblokujący, oparty na już liczonym critiqueWorkbook
+                (server-side, template-path). Nie gate'uje pobrania/exportu — czysta
+                informacja, jak wzorzec deck-critic (warning-banner). */}
+            {result.qualityReport ? (
+              <div className="mt-3">
+                {result.qualityReport.issues.length === 0 ? (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-c-success/10 text-c-success text-xs font-medium">
+                    <CheckCircle2 size={13} />
+                    {t('Model zweryfikowany ✓ (0 uwag)', 'Model verified ✓ (0 notes)')}
+                  </div>
+                ) : (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setShowQualityIssues((v) => !v)}
+                      aria-expanded={showQualityIssues}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                        result.qualityReport.passed
+                          ? 'bg-c-warning/10 text-c-warning hover:bg-c-warning/20'
+                          : 'bg-c-danger/10 text-c-danger hover:bg-c-danger/20'
+                      }`}
+                    >
+                      <AlertTriangle size={13} />
+                      {t(
+                        `${result.qualityReport.issues.length} uwag (wynik ${result.qualityReport.score}/100)`,
+                        `${result.qualityReport.issues.length} note${result.qualityReport.issues.length === 1 ? '' : 's'} (score ${result.qualityReport.score}/100)`
+                      )}
+                      <ChevronDown
+                        size={12}
+                        className={`transition-transform ${showQualityIssues ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                    {showQualityIssues && (
+                      <ul className="mt-2 space-y-1.5">
+                        {result.qualityReport.issues.map((iss, i) => (
+                          <li
+                            key={`${iss.code}-${i}`}
+                            className="flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-xs"
+                          >
+                            <span
+                              className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                                iss.severity === 'CRITICAL'
+                                  ? 'bg-c-danger/10 text-c-danger'
+                                  : iss.severity === 'MAJOR'
+                                    ? 'bg-c-warning/10 text-c-warning'
+                                    : 'bg-c-surface-raised text-c-text-secondary'
+                              }`}
+                            >
+                              {iss.severity}
+                            </span>
+                            <span className="text-c-text-secondary">
+                              <span className="font-medium text-c-text">
+                                {iss.sheet}
+                                {iss.cell ? `!${iss.cell}` : ''}
+                              </span>{' '}
+                              — {iss.message}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : null}
 
             {/* Inline read-only grid preview of the built workbook (cells + formulas). */}
             <div className="mt-4">
