@@ -4407,7 +4407,7 @@ Return ONLY the final comment text.`;
     ];
 
     return (
-      <div className="h-full overflow-y-auto bg-gradient-to-br from-c-bg via-white to-c-bg dark:from-c-bg dark:via-c-surface dark:to-c-bg">
+      <div className="h-full overflow-y-auto bg-gradient-to-br from-c-bg via-c-surface to-c-bg">
         <div className="p-6">
           <div className="max-w-[1500px] mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
             {/* ── Lewa kolumna: header + treść (dokowany panel po prawej) ── */}

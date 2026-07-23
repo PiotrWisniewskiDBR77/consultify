@@ -5325,7 +5325,7 @@ Use userId only from this list:
     // (h-full overflow-y-auto), not via document scroll (min-h-screen) —
     // the parent shell renders this inside an overflow-hidden container so
     // min-h-screen content below the fold was unreachable.
-    <div className="h-full overflow-y-auto bg-gradient-to-br from-c-surface via-white to-c-surface dark:from-c-bg dark:via-c-bg dark:to-c-bg">
+    <div className="h-full overflow-y-auto bg-gradient-to-br from-c-surface via-c-surface to-c-surface dark:from-c-bg dark:to-c-bg">
       <div className="p-6">
         <div className="max-w-[1500px] mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
           <div className="xl:flex-1 xl:min-w-0 space-y-0">

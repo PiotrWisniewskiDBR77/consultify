@@ -2766,7 +2766,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   // ═══════════════════════════════════════════════════════════════════════════
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-c-surface-raised via-white to-c-surface-raised dark:from-c-bg dark:via-c-surface dark:to-c-bg">
+    <div className="min-h-screen bg-gradient-to-br from-c-surface-raised via-c-surface to-c-surface-raised dark:from-c-bg dark:to-c-bg">
       <div className="p-6">
         <div className="max-w-6xl mx-auto space-y-0">
           {/* ── Header — shared NModeHeader ───────────────────────────────
