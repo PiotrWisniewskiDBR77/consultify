@@ -83,6 +83,7 @@ import KartaNotificationScreen from './screens/karta-notification';
 import KartaTaskScreen from './screens/karta-task';
 import PreviewZakladkiScreen from './screens/preview-4-zakladki';
 import IdeaTableToolKebabScreen from './screens/idea-table-tool-kebab';
+import IdeaTableToolEmptyFilterScreen from './screens/idea-table-tool-empty-filter';
 import IdeaTableToolPasteScreen from './screens/idea-table-tool-paste';
 import IdeaTableToolSortFilterScreen from './screens/idea-table-tool-sortfilter';
 
@@ -115,6 +116,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'IDEE Table — Sortowanie po nagłówku + filtr per kolumna (PlatformGridView, Fala 7) — 2026-07-22',
     render: () => <IdeaTableToolSortFilterScreen />,
+  },
+  'idea-table-tool-empty-filter': {
+    label:
+      'IDEE Table — Stan pustego filtra + resize kolumn + gęstość wierszy (PlatformGridView, Fala 8) — 2026-07-23',
+    render: () => <IdeaTableToolEmptyFilterScreen />,
   },
   'karta-tool': {
     label: 'KARTY N — Tool (harness odbioru 2026-07-21)',

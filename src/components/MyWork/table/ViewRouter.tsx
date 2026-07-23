@@ -8,6 +8,7 @@
  */
 import {
   AlertTriangle,
+  AlignJustify,
   Calendar,
   ChevronDown,
   ChevronRight,
@@ -18,6 +19,8 @@ import {
   KanbanSquare,
   Layout,
   LayoutGrid,
+  Maximize2,
+  Minimize2,
   Plus,
   StickyNote,
   Table2,
@@ -38,6 +41,7 @@ import { CalendarView } from './CalendarView';
 import { CellEditor } from './CellEditor';
 import { ChatToSchemaPanel } from './ChatToSchemaPanel';
 import { type FormatRule, getConditionalStyle } from './ConditionalFormatting';
+import { EmptyFilterStateView } from './EmptyFilterStateView';
 import { EmptyStateView } from './EmptyStateView';
 import { FieldManager } from './FieldManager';
 import { GridView, isMissingField } from './GridView';
@@ -184,6 +188,55 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
     fieldKey: string;
     value: string;
   } | null>(null);
+
+  // Fala 8 (parytet Airtable) — szerokości kolumn przez drag na uchwycie w
+  // prawej krawędzi nagłówka. Trzymane per-sesję w stanie komponentu (bez
+  // trwałego zapisu) — `useTablePlatformViews`/`ViewConfig` niosą kolejność i
+  // widoczność kolumn, ale nie ich szerokość w px, więc nie ma dokąd tego
+  // dopisać bez zmiany kontraktu widoku; patrz DOWODY zadania.
+  const MIN_COL_WIDTH = 60;
+  const [colWidths, setColWidths] = useState<Record<string, number>>({});
+  const resizingRef = useRef<{ colKey: string; startX: number; startWidth: number } | null>(null);
+
+  const beginColumnResize = useCallback(
+    (colKey: string) => (e: React.MouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const thEl = e.currentTarget.closest('th');
+      const startWidth = thEl?.getBoundingClientRect().width ?? 150;
+      resizingRef.current = { colKey, startX: e.clientX, startWidth };
+
+      const onMouseMove = (ev: MouseEvent) => {
+        const active = resizingRef.current;
+        if (!active) return;
+        const delta = ev.clientX - active.startX;
+        const next = Math.max(MIN_COL_WIDTH, Math.round(active.startWidth + delta));
+        setColWidths((prev) => ({ ...prev, [active.colKey]: next }));
+      };
+      const onMouseUp = () => {
+        resizingRef.current = null;
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+      };
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    },
+    []
+  );
+
+  // Fala 8 (parytet Airtable) — gęstość wierszy: kompakt/normalny/luźny.
+  // Zmienia tylko wysokość/padding komórek — czysto prezentacyjne, nie rusza
+  // sortu/filtra/zaznaczania/kopiuj-wklej.
+  type RowDensity = 'compact' | 'normal' | 'comfortable';
+  const [density, setDensity] = useState<RowDensity>('normal');
+  const densityCellMinH =
+    density === 'compact'
+      ? 'min-h-[24px]'
+      : density === 'comfortable'
+        ? 'min-h-[48px]'
+        : 'min-h-[36px]';
+  const densityRowPadY =
+    density === 'compact' ? 'py-0.5' : density === 'comfortable' ? 'py-2' : 'py-1';
 
   // "Dodaj notatkę" reuses the first non-computed long-text field as the note
   // target (falls back to a single-line text field); disabled with a note
@@ -599,7 +652,7 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
         }}
         role="gridcell"
         tabIndex={isFocused ? 0 : -1}
-        className={`min-w-0 min-h-[36px] flex items-stretch outline-none focus-visible:ring-1 focus-visible:ring-c-focus cursor-text ${
+        className={`min-w-0 ${densityCellMinH} flex items-stretch outline-none focus-visible:ring-1 focus-visible:ring-c-focus cursor-text ${
           isFocused ? 'ring-1 ring-c-focus' : ''
         } ${inRange ? 'bg-c-info/10' : ''}`}
         onFocus={() => focusCell(row.id, col.key)}
@@ -678,7 +731,9 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
         setRowMenu({ rowId: row.id, x: e.clientX, y: e.clientY });
       }}
     >
-      <td className="w-10 border-b border-r border-c-border-subtle px-1 py-1 align-middle text-center">
+      <td
+        className={`w-10 border-b border-r border-c-border-subtle px-1 ${densityRowPadY} align-middle text-center`}
+      >
         <input
           type="checkbox"
           className="rounded border-c-border-subtle"
@@ -694,10 +749,14 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
         const cfStyle = missing
           ? undefined
           : getConditionalStyle(formatRules, col.key, row.data?.[col.key]);
+        const customWidth = colWidths[col.key];
+        const widthStyle: React.CSSProperties | undefined = customWidth
+          ? { width: customWidth, minWidth: customWidth, maxWidth: customWidth }
+          : undefined;
         return (
           <td
             key={col.key}
-            style={cfStyle}
+            style={{ ...cfStyle, ...widthStyle }}
             className={
               missing
                 ? 'border-b border-r border-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] bg-[color-mix(in_srgb,var(--c-warning)_8%,transparent)] align-top min-w-[120px] max-w-[280px] px-3 py-2 text-xs text-c-warning italic'
@@ -728,8 +787,52 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
         ))
       : processedRows.map((row) => renderRow(row));
 
+  const densityOptions: { id: RowDensity; icon: typeof Minimize2; label: string }[] = [
+    {
+      id: 'compact',
+      icon: Minimize2,
+      label: t('ideas.table.viewRouter.densityCompact', 'Kompakt'),
+    },
+    {
+      id: 'normal',
+      icon: AlignJustify,
+      label: t('ideas.table.viewRouter.densityNormal', 'Normalny'),
+    },
+    {
+      id: 'comfortable',
+      icon: Maximize2,
+      label: t('ideas.table.viewRouter.densityComfortable', 'Luźny'),
+    },
+  ];
+
   return (
     <>
+      {/* Fala 8 (parytet Airtable) — przełącznik gęstości wierszy: kompakt/
+          normalny/luźny. Czysto prezentacyjne, domyślnie normalny. */}
+      <div className="flex items-center justify-end gap-1.5 px-0.5 pb-1">
+        <span className="text-[10px] text-c-text-muted">
+          {t('ideas.table.viewRouter.rowDensity', 'Gęstość wierszy')}
+        </span>
+        <div className="inline-flex items-center gap-0.5 rounded-lg border border-c-border-subtle bg-c-surface p-0.5">
+          {densityOptions.map(({ id, icon: Icon, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setDensity(id)}
+              title={label}
+              aria-label={label}
+              aria-pressed={density === id}
+              className={`flex h-6 w-6 items-center justify-center rounded outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                density === id
+                  ? 'bg-c-surface-raised text-c-text'
+                  : 'text-c-text-muted hover:text-c-text-secondary'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
         <table
           /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full border-collapse text-left text-[11px]"
@@ -774,10 +877,15 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
                 }
                 const activeSortDir = sort?.key === col.key ? sort.direction : null;
                 const filterValue = quickFilterValue(col.key);
+                const customWidth = colWidths[col.key];
+                const widthStyle: React.CSSProperties | undefined = customWidth
+                  ? { width: customWidth, minWidth: customWidth, maxWidth: customWidth }
+                  : undefined;
                 return (
                   <th
                     key={col.key}
-                    className="border-b border-r border-c-border-subtle px-2 py-1.5 align-top font-semibold text-c-text-secondary whitespace-nowrap"
+                    style={widthStyle}
+                    className="relative border-b border-r border-c-border-subtle px-2 py-1.5 align-top font-semibold text-c-text-secondary whitespace-nowrap"
                   >
                     <button
                       type="button"
@@ -803,6 +911,17 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
                       placeholder={t('ideas.table.viewRouter.filterColumn', 'Filtruj…')}
                       aria-label={`${t('ideas.table.viewRouter.filterColumnAria', 'Filtruj wg')} ${col.header}`}
                       className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[10px] font-normal normal-case tracking-normal text-c-text outline-none placeholder:text-c-text-muted focus-visible:ring-2 focus-visible:ring-c-focus"
+                    />
+                    {/* Fala 8 — uchwyt zmiany szerokości kolumny (drag, min 60px). */}
+                    <div
+                      role="separator"
+                      aria-orientation="vertical"
+                      aria-label={t(
+                        'ideas.table.viewRouter.resizeColumn',
+                        'Zmień szerokość kolumny'
+                      )}
+                      onMouseDown={beginColumnResize(col.key)}
+                      className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-c-info/40 active:bg-c-info/60"
                     />
                   </th>
                 );
@@ -1295,6 +1414,19 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
 
   const switchToGrid = useCallback(() => setViewLayout('grid'), [setViewLayout]);
 
+  // Fala 8 (parytet Airtable) — "0 wyników" ma dwie zupełnie różne przyczyny:
+  // (a) tabela naprawdę jest pusta → "Dodaj pierwszy rekord" ma sens; (b) są
+  // rekordy (`nodes.length > 0`) albo aktywne filtry, a mimo to wynik po
+  // filtrze/grupowaniu to zero → "Dodaj rekord" jest mylące, bo rekordy już
+  // istnieją, tylko filtr je ukrywa. Rozróżniamy po źródle (`nodes`), nie po
+  // samym `processedRows`, żeby złapać też przypadek pustego filtra z pustym
+  // inputem, ale niezerowym `nodes`.
+  const hasActiveFilters = (filters?.rules?.length ?? 0) > 0;
+  const isEmptyDueToFilter = processedRows.length === 0 && (hasActiveFilters || nodes.length > 0);
+  const clearAllFilters = useCallback(() => {
+    setFilters?.({ logic: filters?.logic ?? 'and', rules: [] });
+  }, [setFilters, filters?.logic]);
+
   const mainContent =
     loading && !nodes.length ? (
       <div className="flex flex-1 items-center justify-center p-12">
@@ -1306,6 +1438,10 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
           <div className="h-8 bg-c-surface-raised rounded-lg animate-pulse w-5/6" />
         </div>
       </div>
+    ) : isEmptyDueToFilter ? (
+      <ViewErrorBoundary viewName={viewLayout} onSwitchToGrid={switchToGrid} locale={i18n.language}>
+        <EmptyFilterStateView onClearFilters={clearAllFilters} />
+      </ViewErrorBoundary>
     ) : processedRows.length === 0 ? (
       <ViewErrorBoundary viewName={viewLayout} onSwitchToGrid={switchToGrid} locale={i18n.language}>
         <EmptyStateView
