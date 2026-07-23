@@ -39,6 +39,7 @@ import {
   planDocumentStudioTemplate,
   reviseDocumentStudioTemplateStructure,
 } from './api';
+import { DocumentStructurePreview } from './DocumentStructurePreview';
 import {
   insertSection,
   makeBlankSection,
@@ -184,6 +185,41 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       if (index < 0 || index >= prev.length) return prev;
       const next = [...prev];
       next[index] = { ...next[index], contentHints: hints.length > 0 ? hints : undefined };
+      return next;
+    });
+  };
+
+  // C1 briefing fields — mirrors handleEditSectionHintsChange: keep the
+  // working copy raw while typing (server-side sanitizeAuthoredSection trims
+  // and caps on save), only fold to `undefined` when the field is emptied so
+  // the read-only view's "no guidance yet" branches stay correct.
+  const handleEditSectionKeyMessageChange = (index: number, value: string): void => {
+    setEditSections((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const next = [...prev];
+      next[index] = { ...next[index], keyMessage: value.length > 0 ? value : undefined };
+      return next;
+    });
+  };
+
+  const handleEditSectionDataNeededChange = (index: number, rawText: string): void => {
+    const items = rawText
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    setEditSections((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const next = [...prev];
+      next[index] = { ...next[index], dataNeeded: items.length > 0 ? items : undefined };
+      return next;
+    });
+  };
+
+  const handleEditSectionEvidenceChange = (index: number, value: string): void => {
+    setEditSections((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const next = [...prev];
+      next[index] = { ...next[index], suggestedEvidence: value.length > 0 ? value : undefined };
       return next;
     });
   };
@@ -581,7 +617,8 @@ export const DocumentStudioTemplateArchitectView: React.FC<
         />
 
         {selectedTemplate ? (
-          <div className="mt-4 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
+          <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start">
+          <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
             {isEditableDraft ? (
               <>
                 <div className="flex items-center justify-between gap-3">
@@ -697,6 +734,63 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                           className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
                         />
                       </div>
+                      <div className="pl-7">
+                        <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                          {t('documentStudio.templateArchitect.keyMessage', 'Key message')}
+                        </span>
+                        <input
+                          type="text"
+                          value={section.keyMessage ?? ''}
+                          onChange={(e) => handleEditSectionKeyMessageChange(idx, e.target.value)}
+                          aria-label={t(
+                            'documentStudio.templateArchitect.keyMessage',
+                            'Key message'
+                          )}
+                          placeholder={t(
+                            'documentStudio.templateArchitect.keyMessagePlaceholder',
+                            'The one-sentence thesis this section should argue (no invented conclusions).'
+                          )}
+                          className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                        />
+                      </div>
+                      <div className="pl-7">
+                        <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                          {t('documentStudio.templateArchitect.dataNeeded', 'Data needed')}
+                        </span>
+                        <textarea
+                          value={(section.dataNeeded ?? []).join('\n')}
+                          onChange={(e) => handleEditSectionDataNeededChange(idx, e.target.value)}
+                          rows={Math.max(2, (section.dataNeeded ?? []).length)}
+                          aria-label={t(
+                            'documentStudio.templateArchitect.dataNeeded',
+                            'Data needed'
+                          )}
+                          placeholder={t(
+                            'documentStudio.templateArchitect.dataNeededPlaceholder',
+                            'One data/input label per line — what to collect before writing this section (no invented values).'
+                          )}
+                          className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                        />
+                      </div>
+                      <div className="pl-7">
+                        <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                          {t('documentStudio.templateArchitect.suggestedEvidence', 'Suggested evidence')}
+                        </span>
+                        <input
+                          type="text"
+                          value={section.suggestedEvidence ?? ''}
+                          onChange={(e) => handleEditSectionEvidenceChange(idx, e.target.value)}
+                          aria-label={t(
+                            'documentStudio.templateArchitect.suggestedEvidence',
+                            'Suggested evidence'
+                          )}
+                          placeholder={t(
+                            'documentStudio.templateArchitect.suggestedEvidencePlaceholder',
+                            'The category of proof that should back this section (a source type, not a specific fabricated citation).'
+                          )}
+                          className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                        />
+                      </div>
                     </li>
                   ))}
                 </ol>
@@ -744,11 +838,53 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                           ))}
                         </div>
                       ) : null}
+                      {section.keyMessage ? (
+                        <div className="mt-1 text-[11px] text-c-text-secondary">
+                          <span className="font-medium uppercase tracking-wide text-c-text-muted">
+                            {t('documentStudio.templateArchitect.keyMessage', 'Key message')}:
+                          </span>{' '}
+                          <span className="italic">{section.keyMessage}</span>
+                        </div>
+                      ) : null}
+                      {section.dataNeeded && section.dataNeeded.length > 0 ? (
+                        <div className="mt-1 text-[11px] text-c-text-secondary">
+                          <span className="font-medium uppercase tracking-wide text-c-text-muted">
+                            {t('documentStudio.templateArchitect.dataNeeded', 'Data needed')}:
+                          </span>{' '}
+                          <div className="mt-0.5 flex flex-wrap gap-1.5">
+                            {section.dataNeeded.map((item, itemIdx) => (
+                              <span
+                                key={`${selectedTemplate.templateId}-section-${idx}-data-${itemIdx}`}
+                                className="rounded-full border border-c-border-subtle bg-c-surface px-2.5 py-0.5 text-[11px] text-c-text-secondary"
+                              >
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                      {section.suggestedEvidence ? (
+                        <div className="mt-1 text-[11px] text-c-text-secondary">
+                          <span className="font-medium uppercase tracking-wide text-c-text-muted">
+                            {t('documentStudio.templateArchitect.suggestedEvidence', 'Suggested evidence')}:
+                          </span>{' '}
+                          {section.suggestedEvidence}
+                        </div>
+                      ) : null}
                     </li>
                   ))}
                 </ol>
               </>
             )}
+          </div>
+          <div className="lg:sticky lg:top-0">
+            <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+              {t('documentStudio.templateArchitect.structurePreviewHeading', 'Structure preview')}
+            </div>
+            <DocumentStructurePreview
+              sections={isEditableDraft ? editSections : selectedTemplate.sectionBlueprint}
+            />
+          </div>
           </div>
         ) : null}
       </section>

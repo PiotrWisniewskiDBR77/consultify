@@ -507,6 +507,11 @@ const MAX_TEMPLATE_SECTIONS = 60;
 // (`presentationTemplateDraftService.ts`) — kept in sync manually.
 const MAX_CONTENT_HINTS_PER_SECTION = 4;
 const MAX_CONTENT_HINT_CHARS = 100;
+// Mirrors the caps in `documentTemplateRefiner.ts` — kept in sync manually.
+const MAX_KEY_MESSAGE_CHARS = 200;
+const MAX_DATA_NEEDED_ITEMS = 6;
+const MAX_DATA_NEEDED_CHARS = 100;
+const MAX_SUGGESTED_EVIDENCE_CHARS = 150;
 
 /**
  * Sanitize a single author-supplied section blueprint. Coerces the two
@@ -559,6 +564,24 @@ function sanitizeAuthoredSection(raw: unknown): TemplateSectionBlueprint {
   if (input.approvalRequired === true) section.approvalRequired = true;
   const contentHints = cleanContentHints(input.contentHints);
   if (contentHints) section.contentHints = contentHints;
+  // Lenient — analogous caps to `contentHints`, mirrors
+  // `documentTemplateRefiner.ts`'s sanitize* helpers.
+  if (typeof input.keyMessage === 'string' && input.keyMessage.trim().length > 0) {
+    section.keyMessage = input.keyMessage.trim().slice(0, MAX_KEY_MESSAGE_CHARS);
+  }
+  const dataNeeded = Array.isArray(input.dataNeeded)
+    ? input.dataNeeded
+        .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+        .map((v) => v.trim().slice(0, MAX_DATA_NEEDED_CHARS))
+        .slice(0, MAX_DATA_NEEDED_ITEMS)
+    : [];
+  if (dataNeeded.length > 0) section.dataNeeded = dataNeeded;
+  if (
+    typeof input.suggestedEvidence === 'string' &&
+    input.suggestedEvidence.trim().length > 0
+  ) {
+    section.suggestedEvidence = input.suggestedEvidence.trim().slice(0, MAX_SUGGESTED_EVIDENCE_CHARS);
+  }
   return section;
 }
 

@@ -859,6 +859,18 @@ export interface DocumentQaReport {
   /** True when ANY category report has `blocking === true`. */
   anyBlocking: boolean;
   categories: DocumentQaCategoryReport[];
+  /**
+   * A3 — deterministic fabrication signal (documentFabricationCheck),
+   * surfaced additively on the QA report so the on-demand QA panel and
+   * the export-blocked banner can show it without a dedicated endpoint.
+   * `count === 0` means no unsupported precise-looking numbers were
+   * found (already computed; this field only carries it through).
+   * Absent when the detector itself failed (fail-soft — never blocks).
+   */
+  fabrication?: {
+    count: number;
+    sample: string[];
+  };
 }
 
 export interface DocumentRunResult {
@@ -1477,6 +1489,37 @@ export interface TemplateSectionBlueprint {
    * persist author-typed guidance.
    */
   contentHints?: string[];
+  /**
+   * Optional one-sentence THESIS the section should argue/prove (e.g.
+   * "The current operating model cannot scale past 3x volume without a
+   * platform rebuild") — a content-guidance anchor for whoever drafts the
+   * section, never a fabricated conclusion (this is a reusable template,
+   * not a specific document's actual finding). Mirrors the Deck Template
+   * Architect's per-slide `keyMessage` guidance. `undefined` means "no
+   * guidance yet"; the deterministic draft never sets it,
+   * `refineTemplateWithLlm` may add it, and the manual structure editor
+   * (`reviseTemplateStructure`) may persist author-typed guidance.
+   */
+  keyMessage?: string;
+  /**
+   * Optional 2-6 short labels naming WHAT DATA/INPUT to collect before this
+   * section can be written (e.g. "Latest org chart", "Customer churn by
+   * segment, last 4 quarters") — structure guidance describing categories of
+   * evidence to gather, never invented values. Distinct from `requiredData`
+   * (E14.blueprint's machine-facing gating list feeding the Source Pack
+   * matrix): `dataNeeded` is free-text author/AI guidance shown read-only
+   * next to `contentHints`, not a gating mechanism. `undefined` means "no
+   * guidance yet".
+   */
+  dataNeeded?: string[];
+  /**
+   * Optional short description of the TYPE of evidence/source that should
+   * back this section's claims (e.g. "quote from stakeholder interview",
+   * "benchmark table from survey results") — describes a category of proof,
+   * never a specific fabricated citation. `undefined` means "no guidance
+   * yet".
+   */
+  suggestedEvidence?: string;
 }
 
 /**

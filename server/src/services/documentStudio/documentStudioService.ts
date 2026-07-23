@@ -2875,6 +2875,30 @@ export async function runQaForDocument(
     organizationId,
   });
   report.organizationId = organizationId;
+
+  // A3 — deterministyczny sygnał fabrykacji (documentFabricationCheck), już
+  // liczony na ścieżce eksportu partnerskiego; tutaj dołączamy go ADDYTYWNIE
+  // do RAPORTU QA (nie zmienia `anyBlocking` ani żadnej logiki generacji) tak,
+  // by panel QA (uruchamiany na życzenie, dla KAŻDEGO typu dokumentu, nie
+  // tylko approval-gated) mógł pokazać badge jakości. Fail-soft: błąd
+  // detektora nigdy nie psuje raportu QA.
+  try {
+    const { detectDocumentFabrication } = await import('./documentFabricationCheck.js');
+    const fab = detectDocumentFabrication(
+      schema as unknown as { sections?: unknown[]; sourceRefs?: unknown[] }
+    );
+    report.fabrication = {
+      count: fab.count,
+      sample: fab.hits.slice(0, 5).map((h) => h.value),
+    };
+  } catch (fabErr) {
+    logger.warn(
+      `[DocumentStudio] fabrication check skipped (fail-soft, qa-report): ${
+        fabErr instanceof Error ? fabErr.message : String(fabErr)
+      }`
+    );
+  }
+
   return report;
 }
 

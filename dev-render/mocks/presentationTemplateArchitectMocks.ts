@@ -70,6 +70,10 @@ const DRAFT_WITH_HINTS: MockTemplate = {
         'Contrast current status vs. target milestone',
         'Call out any newly escalated risks',
       ],
+      // W5 gendeck-briefing — richer per-slide briefing (read-only display).
+      keyMessage: 'Program jest na ścieżce, ale jedno ryzyko wymaga decyzji komitetu',
+      dataNeeded: ['status kamieni milowych vs. plan', 'lista otwartych ryzyk z oceną wpływu'],
+      suggestedVisual: 'tabela RAG + oś czasu kamieni',
     },
     { intent: 'risks_issues', title: 'Key Risks & Issues' },
     {

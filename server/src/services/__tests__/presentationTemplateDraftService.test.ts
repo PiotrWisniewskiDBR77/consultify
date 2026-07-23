@@ -148,3 +148,97 @@ describe('refinePresentationTemplateWithLlm — content hints (additive, 2026-07
     expect(refined!.outlineJson[0].contentHints).toBeUndefined();
   });
 });
+
+describe('refinePresentationTemplateWithLlm — structural briefing fields (additive, 2026-07-22)', () => {
+  beforeEach(() => {
+    generateChatResponseMock.mockReset();
+  });
+
+  it('accepts valid keyMessage/dataNeeded/suggestedVisual and attaches them per-slide', async () => {
+    const { template, input } = deterministicTemplate();
+    const payload = {
+      slides: template.outlineJson.map((s) => ({
+        intent: s.intent,
+        title: s.title,
+        keyMessage: 'Cost overrun concentrates in one area, not headcount',
+        dataNeeded: ['quarterly revenue by segment', 'customer churn rate by cohort'],
+        suggestedVisual: 'bar chart trend',
+      })),
+    };
+    mockLlmContent(JSON.stringify(payload));
+    const refined = await refinePresentationTemplateWithLlm(template, input);
+    expect(refined).not.toBeNull();
+    for (const slide of refined!.outlineJson) {
+      expect(slide.keyMessage).toBe('Cost overrun concentrates in one area, not headcount');
+      expect(slide.dataNeeded).toEqual([
+        'quarterly revenue by segment',
+        'customer churn rate by cohort',
+      ]);
+      expect(slide.suggestedVisual).toBe('bar chart trend');
+    }
+    // Intents/order unchanged.
+    expect(refined!.outlineJson.map((s) => s.intent)).toEqual(
+      template.outlineJson.map((s) => s.intent)
+    );
+  });
+
+  it('caps keyMessage at 160 chars, dataNeeded at 3 items/100 chars, suggestedVisual at 80 chars', async () => {
+    const { template, input } = deterministicTemplate();
+    const longMessage = 'm'.repeat(300);
+    const longVisual = 'v'.repeat(200);
+    const longDataItem = 'd'.repeat(200);
+    const payload = {
+      slides: template.outlineJson.map((s) => ({
+        intent: s.intent,
+        title: s.title,
+        keyMessage: longMessage,
+        dataNeeded: ['a', '', 42, 'b', longDataItem, 'c'],
+        suggestedVisual: longVisual,
+      })),
+    };
+    mockLlmContent(JSON.stringify(payload));
+    const refined = await refinePresentationTemplateWithLlm(template, input);
+    expect(refined).not.toBeNull();
+    const slide = refined!.outlineJson[0];
+    expect(slide.keyMessage).toBe(longMessage.slice(0, 160));
+    expect(slide.keyMessage!.length).toBe(160);
+    expect(slide.dataNeeded).toEqual(['a', 'b', longDataItem.slice(0, 100)]);
+    expect(slide.dataNeeded!.length).toBe(3);
+    expect(slide.suggestedVisual).toBe(longVisual.slice(0, 80));
+    expect(slide.suggestedVisual!.length).toBe(80);
+  });
+
+  it('omits keyMessage/dataNeeded/suggestedVisual (undefined) when the LLM does not supply them', async () => {
+    const { template, input } = deterministicTemplate();
+    const payload = {
+      slides: template.outlineJson.map((s) => ({ intent: s.intent, title: `${s.title} (refined)` })),
+    };
+    mockLlmContent(JSON.stringify(payload));
+    const refined = await refinePresentationTemplateWithLlm(template, input);
+    expect(refined).not.toBeNull();
+    for (const slide of refined!.outlineJson) {
+      expect(slide.keyMessage).toBeUndefined();
+      expect(slide.dataNeeded).toBeUndefined();
+      expect(slide.suggestedVisual).toBeUndefined();
+    }
+  });
+
+  it('invalid values (wrong types) for the new fields are lenient — still refines title/intent fine', async () => {
+    const { template, input } = deterministicTemplate();
+    const payload = {
+      slides: template.outlineJson.map((s) => ({
+        intent: s.intent,
+        title: s.title,
+        keyMessage: 12345,
+        dataNeeded: 'not an array',
+        suggestedVisual: { nope: true },
+      })),
+    };
+    mockLlmContent(JSON.stringify(payload));
+    const refined = await refinePresentationTemplateWithLlm(template, input);
+    expect(refined).not.toBeNull();
+    expect(refined!.outlineJson[0].keyMessage).toBeUndefined();
+    expect(refined!.outlineJson[0].dataNeeded).toBeUndefined();
+    expect(refined!.outlineJson[0].suggestedVisual).toBeUndefined();
+  });
+});

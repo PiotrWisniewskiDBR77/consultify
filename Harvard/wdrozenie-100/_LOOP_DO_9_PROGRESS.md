@@ -92,8 +92,41 @@ Legenda: ⬜ do zrobienia · 🔨 w budowie · ✅ scalone+zweryfikowane · 🅰
 
 ## ★ LOG FAL (dopisuj po każdej fali — najnowsza NA GÓRZE)
 
-### Fala 2 — URUCHOMIONA 2026-07-23 (workflow wavodm809)
-genexcel-templates2 (+2 wzorce backend), genexcel-preview (inline podgląd siatki), genword-hints (content hints per sekcja Word). Status: 🔨 w budowie.
+### Fala 6 — ✅ SCALONA (workflow wifxkq0qc, demo 2fb9ba437e)
+3/3, 0 błędów. Render-verify ×3 PASS: deck briefing EDYTOWALNY w draft (inputy ładują wartości, editable), word briefing EDYTOWALNY (ff_tpl_editor=1, wartości ładowane), excel mini-wykres słupkowy (3 słupki c-chart-1 nad siatką z wiersza Marża). 8 testów word. Console-clean. ⚠ worker excel poprawnie użył c-chart-1 (nie crimson — hook check-triada zablokował c-accent).
+- gendeck-briefing-editable: 3 pola briefingu edytowalne w draft (input/textarea/input), zapis przez istniejący PUT outlineJson (bez zmian backendu). Za ff_deck_architect.
+- genword-briefing-editable: 3 pola edytowalne per sekcja w draft, zapis reviseTemplateStructure. Za ff_tpl_editor. 2 nowe testy.
+- genexcel-preview-chart: MiniBarChart.tsx (pure SVG) nad podglądem siatki. Za ff_excele.
+Oceny: Gen.Deck 6,0→6,2 (Funkcja 7→8 autorstwo), Gen.Word 7,0→7,2 (Funkcja 7→8), Gen.Excel 6,6→6,8 (Grafika 6→7). Średnia 7,0→7,1.
+
+### Fala 5 — ✅ SCALONA (workflow wv1f9olmj, demo feba5a236f)
+3/3, 0 błędów. 40 testów + render-verify ×3 PASS (deck briefing „TEZA/DANE DO ZEBRANIA/SUGEROWANA WIZUALIZACJA" pod slajdem; word briefing „KEY MESSAGE/DATA NEEDED/SUGGESTED EVIDENCE" w read-only sekcji + współistnieje ze STRUCTURE PREVIEW; excel „Zapisz zestaw parametrów" → chip w ZAPISANE ZESTAWY, save/load/delete localStorage). Console-clean.
+- gendeck-briefing: 3 pola briefingu per slajd (keyMessage/dataNeeded/suggestedVisual) — refiner+sanitize lenient. Read-only w edytorze. Za ff_deck_architect.
+- genword-briefing: 3 pola per sekcja (keyMessage/dataNeeded/suggestedEvidence) — read-only w widoku sekcji. Za ff_tpl_editor. ⚠ etykiety EN (i18n gap — pl locale keys do dodania, drobny polish).
+- genexcel-save-template: preset params w localStorage (Variant A, zero backendu) — „Zapisz zestaw parametrów" + lista ZAPISANE ZESTAWY. Za ff_excele.
+Oceny: Gen.Deck 5,8→6,0 (Meryt 4→5), Gen.Word 6,8→7,0 (Meryt 6→7), Gen.Excel 6,4→6,6 (Funkcja 6→7 autorstwo). Średnia 6,9→7,0.
+⚠ OGRANICZENIE: briefing pola są READ-ONLY (nie edytowalne w draft) — edycja tylko przez refiner AI. Editable = przyszła robota (kandydat na falę 6).
+
+### Fala 4 — ✅ SCALONA (workflow wbvv6a5le, demo b9702dc356)
+3/3, 0 błędów. RDZENIOWE widoki wyniku — wszystkie 3 badge'y render-verify PASS (Deck „Jakość:3 ostrzeżeń·Score 62/100", Word „Zdegradowane (3 nieoznaczonych liczb)", Excel „1 uwag (wynik 92/100)"), amber/c-warning, nie-blokujące, console-clean. Testy: 886 Word (2 fail = pre-existing baseline), 101/21 Excel, 5 deck golden — wszystkie istotne zielone.
+- deck-quality-surface: critic/M19 warnings+qualityGates w odpowiedzi generacji (był stale snapshot) → badge w ResultStep + banner DeckBuilder. Za ENABLE_DECK_QUALITY_GATES.
+- word-quality-surface: fabrication badge (A3 detektor) w DocumentStudioQaPanel (Run QA). Bez nowej flagi.
+- excel-quality-surface: critiqueWorkbook (score+issues) dołożone do odpowiedzi /templates/:id/build → badge w karcie wyniku. Bez nowej flagi.
+Oceny (big-3 ruszyły): Deck 7,8→8,0, Word 7,2→7,4, Excel 7,0→7,2 (Merytoryka/transparencja jakości). Średnia 6,8→6,9.
+
+### Fala 3 — ✅ SCALONA (workflow wkrp7w510, demo eae7fe4f21)
+3/3, 0 błędów. 84 testy backend + esbuild + render-verify (deck sylwetki light, word struktura dark — oba motywy pokryte).
+- genexcel-templates3: WORKBOOK_TEMPLATES 5→7 (unitEconomics, loanAmortization; formuła annuitetowa, 103 testy). Backend.
+- gendeck-slide-preview: SlideSilhouette.tsx — sylwetka layoutu per slajd (intent→6 kształtów) w outline. Render PASS. Za ff_deck_architect.
+- genword-structure-preview: DocumentStructurePreview.tsx — sticky panel sylwetki dokumentu (level→wcięcie, lengthHint→linie, required→kropka). Render PASS dark. Za ff_tpl_editor.
+Oceny: Gen.Excel 6,2→6,4 (Meryt 7→8, 7 wzorców); Gen.Deck 5,6→5,8 (Grafika 5→6); Gen.Word 6,6→6,8 (Grafika 6→7). Średnia 6,7→6,8.
+
+### Fala 2 — ✅ SCALONA (workflow wavodm809, demo 498ce9d5ef)
+3/3, 0 błędów. Zweryfikowane niezależnie: 89 testów backend + esbuild + render-verify 3 powierzchni light+console-clean.
+- genexcel-templates2: WORKBOOK_TEMPLATES 3→5 (breakEven, cashflow12m; żywe formuły, krytyk 0 issues, 72 testy). Backend.
+- genexcel-preview: inline podgląd siatki wyniku po buildzie w ExceleParametricTemplates (reuse getWorkbookSchema+workbookGridPreview z B3). Render-verify PASS: siatka z zakładkami arkuszy + formuły mono (=y1*1.12, =SUM). Za ff_excele (istniejąca). ⚠ drobne: zakładki „Sheet 1/2" zamiast nazw arkuszy (pre-existing workbookGridPreview default).
+- genword-hints: contentHints per sekcja Word (analog deck) + edytor „Content guidance" per sekcja. Render-verify PASS (nowy ekran gen-word-content-hints, mock window.fetch). Za ff_tpl_editor (istniejąca). 17 testów.
+Oceny: Gen.Excel 5,6→6,2 (Meryt 6→7 5 wzorców, Funkcja 5→6 + Grafika 5→6 podgląd); Gen.Word 6,4→6,6 (Meryt 5→6, Grafika 5→6). Średnia 6,6→6,7.
 
 ### Fala 1 — ✅ ZAKOŃCZONA + SCALONA (workflow wrort4or3, demo d410918a1e)
 3 robotnicy, 0 błędów. Zweryfikowane NIEZALEŻNIE przez nadzorcę (nie ufając raportom): 44 testy backend (registry+regresja) + 3 testy FE (deprecate), esbuild wszystkich plików PASS, tree czysty.
@@ -110,7 +143,25 @@ Po każdej fali: (1) zaktualizuj status dźwigni w inwentarzu, (2) dopisz wpis d
 Jeśli kontekst się kończy: następca czyta ten plik + memory `[[loop-do-9-2026-07-23]]`, robi `git fetch origin demo`,
 sprawdza `git worktree list`, kontynuuje z inwentarza (najniższe średnie najpierw: Gen.Excel → Gen.Deck → Gen.Word).
 
-## STAN BIEŻĄCY (aktualizuj)
-Średnia: **6,6** → cel 9,0. Ostatni SHA demo: `d410918a1e` (fala 1). Fal ukończonych: 1. Fala 2 w toku (wavodm809).
-Per narzędzie: Deck 7,8 · Word 7,2 · Excel 7,0 · Gen.Deck 5,6 · Gen.Word 6,4 · Gen.Excel 5,6.
-🅰️ Czeka na akcept Piotra (flip flag): ff_workbook_templates (zakładka Gen.Excel). Zrzuty w rozmowie.
+## ★★ HANDOFF PORANNY DLA PIOTRA (pętla wstrzymana 2026-07-23 po fali 6)
+Średnia: **7,1/10** (start nocy 6,3). Ostatni SHA demo: `2fb9ba437e`. Fal ukończonych: **6** (18 robót armii, 0 błędów, wszystko zweryfikowane render+testy, wszystko na demo za flagami).
+Per narzędzie: Deck **8,0** · Word **7,4** · Excel **7,2** · Gen.Word **7,2** · Gen.Excel **6,8** · Gen.Deck **6,2**.
+
+### Dlaczego pętla WSTRZYMANA (nie porażka — świadoma decyzja):
+Zebrałem WSZYSTKIE tractable, samodzielnie-weryfikowalne dźwignie. Pozostały dystans do 9,0 (+1,9) uderza w 2 ściany których NIE wolno forsować bez Ciebie:
+1. **FLAGI DO FLIPU (Twoja decyzja, reguła #7):** osie Menu/Nawigacja generatorów są zsufitowane, bo ich powierzchnie żyją za flagami default-OFF czekając na Twój akcept na zrzutach. Flip = +Menu/+Nawig dla 3 generatorów natychmiast. Zrzuty złożone w rozmowie sesji. Flagi: `ff_workbook_templates` (zakładka Gen.Excel), `ff_deck_architect` (Architekt Deck — już ON), `ff_tpl_editor` (Architekt Word — już ON), `ff_excele` (Excel).
+2. **GŁĘBOKA GENERACJA TREŚCI LLM (Merytoryka→9):** prawdziwe „9" na Merytoryce = partnerska generacja treści (nie tylko struktura/wskazówki). To dotyka rdzeniowych silników (Narrative Engine, prose generators) — wysokie ryzyko regresji, wymaga Twojego osądu, NIE robota nocnego bez nadzoru.
+
+### CO JEST DO AKCEPTU (zrzuty w rozmowie, wszystko za flagą OFF/istniejącą):
+Gen.Excel: 7 modeli z żywymi formułami (było 1) · zakładka „Generator szablonów Excel" · podgląd siatki+formuł · badge jakości · mini-wykres · presety params · autorstwo.
+Gen.Deck+Word: wskazówki treści (edytowalne) per slajd/sekcja · pola briefingu (teza/dane/wizualizacja) · sylwetki podglądu · badge jakości.
+Deck/Word/Excel: badge'y jakości (critic/fabrykacja/critique) w widokach wyniku.
+
+### DROBIAZGI DO POPRAWY (nie-blokujące):
+- Word briefing read-only: etykiety EN zamiast PL (i18n — dodać pl locale keys).
+- Excel formularz params: percent×100 w polach (default 3%→„300") — pre-existing C3 bug, osobny audyt.
+- Excel podgląd: zakładki „Sheet 1/2" zamiast nazw arkuszy (pre-existing workbookGridPreview).
+
+### JAK WZNOWIĆ PĘTLĘ (następca/Piotr): git fetch origin demo, czytaj ten plik. Wzorzec fal w memory [[loop-do-9-2026-07-23]]. Kolejny sensowny ruch wymaga decyzji Piotra (flipy) LUB świadomej zgody na głęboką pracę nad silnikami treści.
+UWAGA STRATEGICZNA: generatory rosną (Grafika/breadth), ale ich MERYTORYKA capped (Gen.Deck Meryt 4 — to wymaga realnej głębi treści LLM, nie tylko struktury). Big-3 (Deck/Word/Excel) stały na ~7 do fali 4. Do 9,0 średniej trzeba: big-3 →9 (+5) i generatory Meryt →9 (+8). Uczciwie: prawdziwe 9,0 może nie być osiągalne w nocy bez głębokiej generacji treści LLM + akceptów Piotra; pcham max i będę transparentny rano co jest realnie 9 vs. zbudowane-czeka-na-akcept.
+🅰️ Czeka na akcept Piotra: ff_workbook_templates. Dev-render ekrany: gen-deck-content-hints, gen-excel-templates-tab, gen-word-content-hints. Port ostatni 3028.

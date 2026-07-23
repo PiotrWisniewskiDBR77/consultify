@@ -45,6 +45,7 @@ import {
   type PresentationTemplateOutlineItem,
   updatePresentationTemplate,
 } from '@/services/presentationTemplateArchitect';
+import { SlideSilhouette } from '@/components/Presentations/SlideSilhouette';
 
 const DECK_TYPE_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
   {
@@ -317,6 +318,36 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
     setEditOutline((prev) =>
       prev.map((item, i) =>
         i === index ? { ...item, contentHints: hints.length > 0 ? hints : undefined } : item
+      )
+    );
+  };
+
+  const handleOutlineKeyMessageChange = (index: number, value: string): void => {
+    const trimmed = value.trim();
+    setEditOutline((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, keyMessage: trimmed.length > 0 ? trimmed : undefined } : item
+      )
+    );
+  };
+
+  const handleOutlineDataNeededChange = (index: number, rawText: string): void => {
+    const items = rawText
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    setEditOutline((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, dataNeeded: items.length > 0 ? items : undefined } : item
+      )
+    );
+  };
+
+  const handleOutlineSuggestedVisualChange = (index: number, value: string): void => {
+    const trimmed = value.trim();
+    setEditOutline((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, suggestedVisual: trimmed.length > 0 ? trimmed : undefined } : item
       )
     );
   };
@@ -824,72 +855,172 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
                     key={`${selectedTemplate.id}-slide-${idx}`}
                     className="rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5"
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="w-5 shrink-0 text-xs text-c-text-muted">{idx + 1}</span>
-                      <input
-                        type="text"
-                        value={slide.title}
-                        onChange={(e) => handleOutlineTitleChange(idx, e.target.value)}
-                        disabled={!isEditable}
-                        className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 py-1 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
-                      />
-                      <select
-                        value={slide.intent}
-                        onChange={(e) => handleOutlineIntentChange(idx, e.target.value)}
-                        disabled={!isEditable}
-                        className="w-44 shrink-0 rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
-                      >
-                        {PRESENTATION_SLIDE_INTENTS.map((intent) => (
-                          <option key={intent} value={intent}>
-                            {intentLabel(intent)}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="flex shrink-0 items-center gap-0.5">
-                        <button
-                          type="button"
-                          onClick={() => handleOutlineMove(idx, -1)}
-                          disabled={!isEditable || idx === 0}
-                          title={t('presentations.templateArchitect.moveUp', 'Move up')}
-                          className="rounded p-1 text-c-text-muted hover:bg-state-hover hover:text-c-text disabled:opacity-30"
-                        >
-                          <ArrowUp className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleOutlineMove(idx, 1)}
-                          disabled={!isEditable || idx === editOutline.length - 1}
-                          title={t('presentations.templateArchitect.moveDown', 'Move down')}
-                          className="rounded p-1 text-c-text-muted hover:bg-state-hover hover:text-c-text disabled:opacity-30"
-                        >
-                          <ArrowDown className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleOutlineRemove(idx)}
-                          disabled={!isEditable}
-                          title={t('presentations.templateArchitect.removeSlide', 'Remove slide')}
-                          className="rounded p-1 text-danger-600 hover:bg-danger-500/10 disabled:opacity-30 dark:text-danger-400"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                    <div className="flex items-start gap-2">
+                      <SlideSilhouette intent={slide.intent} className="mt-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 shrink-0 text-xs text-c-text-muted">{idx + 1}</span>
+                          <input
+                            type="text"
+                            value={slide.title}
+                            onChange={(e) => handleOutlineTitleChange(idx, e.target.value)}
+                            disabled={!isEditable}
+                            className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 py-1 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
+                          />
+                          <select
+                            value={slide.intent}
+                            onChange={(e) => handleOutlineIntentChange(idx, e.target.value)}
+                            disabled={!isEditable}
+                            className="w-44 shrink-0 rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
+                          >
+                            {PRESENTATION_SLIDE_INTENTS.map((intent) => (
+                              <option key={intent} value={intent}>
+                                {intentLabel(intent)}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="flex shrink-0 items-center gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => handleOutlineMove(idx, -1)}
+                              disabled={!isEditable || idx === 0}
+                              title={t('presentations.templateArchitect.moveUp', 'Move up')}
+                              className="rounded p-1 text-c-text-muted hover:bg-state-hover hover:text-c-text disabled:opacity-30"
+                            >
+                              <ArrowUp className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOutlineMove(idx, 1)}
+                              disabled={!isEditable || idx === editOutline.length - 1}
+                              title={t('presentations.templateArchitect.moveDown', 'Move down')}
+                              className="rounded p-1 text-c-text-muted hover:bg-state-hover hover:text-c-text disabled:opacity-30"
+                            >
+                              <ArrowDown className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOutlineRemove(idx)}
+                              disabled={!isEditable}
+                              title={t('presentations.templateArchitect.removeSlide', 'Remove slide')}
+                              className="rounded p-1 text-danger-600 hover:bg-danger-500/10 disabled:opacity-30 dark:text-danger-400"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="mt-1.5 pl-7">
+                          <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                            {t('presentations.templateArchitect.contentHints', 'Content guidance')}
+                          </span>
+                          <textarea
+                            value={(slide.contentHints ?? []).join('\n')}
+                            onChange={(e) => handleOutlineHintsChange(idx, e.target.value)}
+                            disabled={!isEditable}
+                            rows={Math.max(2, (slide.contentHints ?? []).length)}
+                            placeholder={t(
+                              'presentations.templateArchitect.contentHintsPlaceholder',
+                              'One guidance phrase per line — what this slide should cover (no invented facts). Use "Refine with AI" on a new draft to auto-suggest.'
+                            )}
+                            className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface-raised px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
+                          />
+                        </div>
+                        {isEditable ? (
+                          <div className="mt-1.5 space-y-1.5 pl-7">
+                            <label className="block">
+                              <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                                {t('presentations.templateArchitect.keyMessage', 'Teza')}
+                              </span>
+                              <input
+                                type="text"
+                                value={slide.keyMessage ?? ''}
+                                onChange={(e) => handleOutlineKeyMessageChange(idx, e.target.value)}
+                                placeholder={t(
+                                  'presentations.templateArchitect.keyMessagePlaceholder',
+                                  'Jednozdaniowa teza tego slajdu (bez wymyślonych faktów).'
+                                )}
+                                className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface-raised px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                              />
+                            </label>
+                            <label className="block">
+                              <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                                {t('presentations.templateArchitect.dataNeeded', 'Dane do zebrania')}
+                              </span>
+                              <textarea
+                                value={(slide.dataNeeded ?? []).join('\n')}
+                                onChange={(e) => handleOutlineDataNeededChange(idx, e.target.value)}
+                                rows={Math.max(2, (slide.dataNeeded ?? []).length)}
+                                placeholder={t(
+                                  'presentations.templateArchitect.dataNeededPlaceholder',
+                                  'Jedna pozycja na linię — nazwy danych do zebrania, nie wartości.'
+                                )}
+                                className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface-raised px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                              />
+                            </label>
+                            <label className="block">
+                              <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                                {t(
+                                  'presentations.templateArchitect.suggestedVisual',
+                                  'Sugerowana wizualizacja'
+                                )}
+                              </span>
+                              <input
+                                type="text"
+                                value={slide.suggestedVisual ?? ''}
+                                onChange={(e) =>
+                                  handleOutlineSuggestedVisualChange(idx, e.target.value)
+                                }
+                                placeholder={t(
+                                  'presentations.templateArchitect.suggestedVisualPlaceholder',
+                                  'Np. wykres słupkowy, macierz priorytetów, oś czasu.'
+                                )}
+                                className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface-raised px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                              />
+                            </label>
+                          </div>
+                        ) : slide.keyMessage || slide.dataNeeded?.length || slide.suggestedVisual ? (
+                          <div className="mt-1.5 space-y-1 pl-7">
+                            {slide.keyMessage ? (
+                              <div>
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                                  {t('presentations.templateArchitect.keyMessage', 'Teza')}
+                                </span>
+                                <p className="mt-0.5 text-xs text-c-text-secondary">
+                                  {slide.keyMessage}
+                                </p>
+                              </div>
+                            ) : null}
+                            {slide.dataNeeded && slide.dataNeeded.length > 0 ? (
+                              <div>
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                                  {t(
+                                    'presentations.templateArchitect.dataNeeded',
+                                    'Dane do zebrania'
+                                  )}
+                                </span>
+                                <ul className="mt-0.5 list-inside list-disc text-xs text-c-text-secondary">
+                                  {slide.dataNeeded.map((item, i) => (
+                                    <li key={i}>{item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : null}
+                            {slide.suggestedVisual ? (
+                              <div>
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                                  {t(
+                                    'presentations.templateArchitect.suggestedVisual',
+                                    'Sugerowana wizualizacja'
+                                  )}
+                                </span>
+                                <p className="mt-0.5 text-xs text-c-text-secondary">
+                                  {slide.suggestedVisual}
+                                </p>
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
                       </div>
-                    </div>
-                    <div className="mt-1.5 pl-7">
-                      <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
-                        {t('presentations.templateArchitect.contentHints', 'Content guidance')}
-                      </span>
-                      <textarea
-                        value={(slide.contentHints ?? []).join('\n')}
-                        onChange={(e) => handleOutlineHintsChange(idx, e.target.value)}
-                        disabled={!isEditable}
-                        rows={Math.max(2, (slide.contentHints ?? []).length)}
-                        placeholder={t(
-                          'presentations.templateArchitect.contentHintsPlaceholder',
-                          'One guidance phrase per line — what this slide should cover (no invented facts). Use "Refine with AI" on a new draft to auto-suggest.'
-                        )}
-                        className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface-raised px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
-                      />
                     </div>
                   </li>
                 ))}

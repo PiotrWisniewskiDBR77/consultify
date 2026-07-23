@@ -2256,11 +2256,29 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                 <span className="rounded-full bg-danger-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger-700 dark:text-danger-300">
                   {t('documentStudio.panel.blockingCategories', {
                     defaultValue: '{{count}} blocking categories',
-                    count: qaBlock.report.categories.filter((c) => c.blocking).length,
+                    count:
+                      qaBlock.report.categories.filter((c) => c.blocking).length +
+                      (qaBlock.report.fabrication && qaBlock.report.fabrication.count > 0 ? 1 : 0),
                   })}
                 </span>
               </div>
               <ul className="mb-2 space-y-1 text-c-text">
+                {/* A3 — fabrykacja nie jest kategorią QA (dołączona addytywnie do
+                    raportu), więc bez tego wpisu twarda blokada bywała „bez powodu"
+                    na liście, gdy jedyną przyczyną była fabrykacja. */}
+                {qaBlock.report.fabrication && qaBlock.report.fabrication.count > 0 ? (
+                  <li key="fabrication">
+                    <span className="font-medium uppercase tracking-wide">
+                      {t('documentStudio.panel.fabricationCategory', 'fabrication')}
+                    </span>
+                    <span className="ml-2 text-c-text-secondary">
+                      {t('documentStudio.panel.fabricationFindings', {
+                        defaultValue: '{{count}} unsupported number(s) without an assumption tag',
+                        count: qaBlock.report.fabrication.count,
+                      })}
+                    </span>
+                  </li>
+                ) : null}
                 {qaBlock.report.categories
                   .filter((c) => c.blocking)
                   .map((c) => (

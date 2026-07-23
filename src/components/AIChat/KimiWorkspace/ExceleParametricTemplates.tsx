@@ -23,7 +23,33 @@
  * `src/utils/workbookGridPreview.ts`) — read-only, cells + formulas, row-capped
  * with a "show all" toggle, sheet tabs when the template has more than one sheet.
  *
+ * Quality badge (2026-07-23): the deterministic critic (`critiqueWorkbook`, already
+ * run server-side for EVERY template build — see `qualityReport` on
+ * `WorkbookGenerationResult` in WorkbookGeneratorService.generateFromTemplate) is
+ * now surfaced next to the grid preview as a NON-BLOCKING badge — "Model
+ * zweryfikowany ✓ (0 uwag)" when clean, or "N uwag" with an expandable list
+ * (severity + message + fix) when the critic found something. Purely additive:
+ * no generation/export logic changes, no new flag (the signal already computes
+ * unconditionally), never blocks download.
+ *
  * Styling: c-* tokens only, zero crimson (neutral CTA = bg-c-text; focus = c-focus).
+ *
+ * Saved parameter sets (2026-07-23): a real step of AUTHORSHIP — configuring a
+ * template's params (sometimes a dozen fields) is repeated work across builds,
+ * so the form now lets the user save the current values as a named preset and
+ * reload it later. There is no backend preset mechanism for workbook templates
+ * (checked server/src/routes/workbook.routes.ts — only /templates + /templates/:id/build
+ * exist), so this is FE-only, localStorage-backed per templateId — see
+ * `src/utils/exceleTemplatePresets.ts`. Zero backend risk, purely additive,
+ * no new flag (same ff_excele-gated surface).
+ *
+ * Mini bar chart (2026-07-23): above the grid preview, a small pure-SVG bar
+ * chart (`MiniBarChart.tsx`, zero charting library) gives a poglądowa
+ * ("at a glance") trend/comparison read of the FIRST sheet — it picks the
+ * first row with ≥2 numeric, non-formula value cells as its series (column
+ * headers become the labels underneath) and renders nothing when no row
+ * qualifies (all-formula/text sheets stay exactly as before). FE-only, reuses
+ * the already-fetched `gridSheets` state — no extra request, no new flag.
  */
 
 import {
@@ -31,17 +57,29 @@ import {
   Loader2,
   Download,
   ChevronLeft,
+  ChevronDown,
   CheckCircle2,
   Sparkles,
   AlertTriangle,
+  Bookmark,
+  BookmarkPlus,
+  Trash2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { API_URL } from '@/services/api';
 import { Api } from '@/services/api';
+import {
+  deleteTemplatePreset,
+  readTemplatePresets,
+  saveTemplatePreset,
+  type ExceleTemplatePreset,
+} from '@/utils/exceleTemplatePresets';
 import { buildWorkbookGridSheets, isFormulaDisplayValue } from '@/utils/workbookGridPreview';
 import type { WorkbookGridSheet } from '@/utils/workbookGridPreview';
+
+import { findBarChartSeries, MiniBarChart } from './MiniBarChart';
 
 type ParamType = 'text' | 'integer' | 'number' | 'percent' | 'currency' | 'enum';
 
@@ -65,12 +103,31 @@ interface TemplateEntry {
   params: TemplateParam[];
 }
 
+/** Mirrors server/src/services/workbook/workbookQualityGate.ts WorkbookIssue
+ *  (deterministic critic — fields we actually render; server may send more). */
+interface WorkbookQualityIssue {
+  code: string;
+  severity: 'CRITICAL' | 'MAJOR' | 'MINOR';
+  sheet: string;
+  cell?: string | null;
+  message: string;
+  fix?: string;
+}
+
+/** Mirrors WorkbookQualityReport — score 0-100, issues[], passed = brak CRITICAL. */
+interface WorkbookQualityReport {
+  score: number;
+  issues: WorkbookQualityIssue[];
+  passed: boolean;
+}
+
 interface BuildResult {
   id: string;
   title: string;
   fileName: string;
   downloadUrl: string;
   sheetCount: number;
+  qualityReport?: WorkbookQualityReport | null;
 }
 
 interface Props {
@@ -103,6 +160,16 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
   const [gridError, setGridError] = useState<string | null>(null);
   const [activeSheet, setActiveSheet] = useState(0);
   const [showAllRows, setShowAllRows] = useState(false);
+
+  // Quality badge (2026-07-23): deterministic critic already computed server-side
+  // for every template build — expandable list of issues, collapsed by default.
+  const [showQualityIssues, setShowQualityIssues] = useState(false);
+
+  // Saved parameter sets (2026-07-23): localStorage-backed per templateId —
+  // see src/utils/exceleTemplatePresets.ts. FE-only, no backend involved.
+  const [presets, setPresets] = useState<ExceleTemplatePreset[]>([]);
+  const [savingPresetOpen, setSavingPresetOpen] = useState(false);
+  const [presetName, setPresetName] = useState('');
 
   const t = useCallback(
     (pl: string, en: string) => (isPolish ? pl : en),
@@ -141,8 +208,21 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
     setGridSheets(null);
     setGridError(null);
     setGridLoading(false);
+    setShowQualityIssues(false);
+    setPresets(readTemplatePresets(tpl.id));
+    setSavingPresetOpen(false);
+    setPresetName('');
     setSelected(tpl);
   }, []);
+
+  // Mini bar chart (2026-07-23): poglądowa wizualizacja trendu/porównania nad
+  // siatką — zawsze z PIERWSZEGO arkusza (gridSheets[0]), niezależnie od
+  // aktywnej zakładki (activeSheet). Graceful: null gdy żaden wiersz nie ma
+  // ≥2 liczbowych komórek wartości (same formuły/tekst) — patrz MiniBarChart.tsx.
+  const chartSeries = useMemo(
+    () => findBarChartSeries(gridSheets?.[0] ?? null),
+    [gridSheets]
+  );
 
   const groups = useMemo(() => {
     if (!selected) return [];
@@ -166,6 +246,34 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
       return { ...prev, [name]: raw };
     });
   }, []);
+
+  const handleSavePreset = useCallback(() => {
+    if (!selected) return;
+    const name = presetName.trim();
+    if (!name) return;
+    const updated = saveTemplatePreset(selected.id, name, values);
+    setPresets(updated);
+    setPresetName('');
+    setSavingPresetOpen(false);
+    toast.success(t('Zapisano zestaw parametrów', 'Parameter set saved'));
+  }, [selected, presetName, values, t]);
+
+  const handleLoadPreset = useCallback((preset: ExceleTemplatePreset) => {
+    setValues({ ...preset.values });
+    toast.success(
+      t(`Wczytano zestaw „${preset.name}"`, `Loaded parameter set "${preset.name}"`)
+    );
+  }, [t]);
+
+  const handleDeletePreset = useCallback(
+    (preset: ExceleTemplatePreset, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!selected) return;
+      const updated = deleteTemplatePreset(selected.id, preset.id);
+      setPresets(updated);
+    },
+    [selected]
+  );
 
   const handleBuild = useCallback(async () => {
     if (!selected) return;
@@ -198,8 +306,10 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
         fileName: res?.fileName || 'workbook.xlsx',
         downloadUrl: res?.downloadUrl || `/api/workbook/${res?.id}/download`,
         sheetCount: Array.isArray(res?.sheets) ? res.sheets.length : 0,
+        qualityReport: res?.qualityReport ?? null,
       };
       setResult(built);
+      setShowQualityIssues(false);
       toast.success(t('Skoroszyt zbudowany', 'Workbook built'));
       onBuilt?.();
 
@@ -301,12 +411,79 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                   setGridSheets(null);
                   setGridError(null);
                   setGridLoading(false);
+                  setShowQualityIssues(false);
                 }}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-c-border text-c-text-secondary text-xs font-medium hover:bg-c-surface transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 {t('Zbuduj ponownie', 'Build again')}
               </button>
             </div>
+
+            {/* Quality badge — nieblokujący, oparty na już liczonym critiqueWorkbook
+                (server-side, template-path). Nie gate'uje pobrania/exportu — czysta
+                informacja, jak wzorzec deck-critic (warning-banner). */}
+            {result.qualityReport ? (
+              <div className="mt-3">
+                {result.qualityReport.issues.length === 0 ? (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-c-success/10 text-c-success text-xs font-medium">
+                    <CheckCircle2 size={13} />
+                    {t('Model zweryfikowany ✓ (0 uwag)', 'Model verified ✓ (0 notes)')}
+                  </div>
+                ) : (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setShowQualityIssues((v) => !v)}
+                      aria-expanded={showQualityIssues}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                        result.qualityReport.passed
+                          ? 'bg-c-warning/10 text-c-warning hover:bg-c-warning/20'
+                          : 'bg-c-danger/10 text-c-danger hover:bg-c-danger/20'
+                      }`}
+                    >
+                      <AlertTriangle size={13} />
+                      {t(
+                        `${result.qualityReport.issues.length} uwag (wynik ${result.qualityReport.score}/100)`,
+                        `${result.qualityReport.issues.length} note${result.qualityReport.issues.length === 1 ? '' : 's'} (score ${result.qualityReport.score}/100)`
+                      )}
+                      <ChevronDown
+                        size={12}
+                        className={`transition-transform ${showQualityIssues ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                    {showQualityIssues && (
+                      <ul className="mt-2 space-y-1.5">
+                        {result.qualityReport.issues.map((iss, i) => (
+                          <li
+                            key={`${iss.code}-${i}`}
+                            className="flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-xs"
+                          >
+                            <span
+                              className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                                iss.severity === 'CRITICAL'
+                                  ? 'bg-c-danger/10 text-c-danger'
+                                  : iss.severity === 'MAJOR'
+                                    ? 'bg-c-warning/10 text-c-warning'
+                                    : 'bg-c-surface-raised text-c-text-secondary'
+                              }`}
+                            >
+                              {iss.severity}
+                            </span>
+                            <span className="text-c-text-secondary">
+                              <span className="font-medium text-c-text">
+                                {iss.sheet}
+                                {iss.cell ? `!${iss.cell}` : ''}
+                              </span>{' '}
+                              — {iss.message}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : null}
 
             {/* Inline read-only grid preview of the built workbook (cells + formulas). */}
             <div className="mt-4">
@@ -328,6 +505,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                 </div>
               ) : gridSheets && gridSheets.length > 0 ? (
                 <div className="rounded-lg border border-c-border-subtle bg-c-surface overflow-hidden">
+                  {chartSeries && <MiniBarChart series={chartSeries} />}
                   {gridSheets.length > 1 && (
                     <div className="flex items-center gap-1 px-2 pt-2 overflow-x-auto border-b border-c-border-subtle">
                       {gridSheets.map((sheet, i) => (
@@ -433,6 +611,43 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
           </div>
         ) : (
           <>
+            {presets.length > 0 && (
+              <div className="mb-5">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-2">
+                  {t('Zapisane zestawy', 'Saved sets')}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {presets.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => handleLoadPreset(preset)}
+                      title={t('Wczytaj ten zestaw parametrów', 'Load this parameter set')}
+                      className="group inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full border border-c-border-subtle bg-c-surface-raised text-xs font-medium text-c-text hover:border-c-border-strong transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                    >
+                      <Bookmark size={12} className="text-c-text-secondary shrink-0" />
+                      {preset.name}
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => handleDeletePreset(preset, e)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleDeletePreset(preset, e as unknown as React.MouseEvent);
+                          }
+                        }}
+                        title={t('Usuń zestaw', 'Delete set')}
+                        className="shrink-0 p-0.5 rounded-full text-c-text-muted hover:text-c-danger hover:bg-c-danger/10 transition-colors"
+                      >
+                        <Trash2 size={11} />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-5">
               {groups.map(({ group, params }) => (
                 <div key={group}>
@@ -478,7 +693,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
               ))}
             </div>
 
-            <div className="flex items-center gap-2 mt-5">
+            <div className="flex flex-wrap items-center gap-2 mt-5">
               <button
                 onClick={handleBuild}
                 disabled={building}
@@ -491,6 +706,53 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                 )}
                 {t('Zbuduj skoroszyt', 'Build workbook')}
               </button>
+
+              {!savingPresetOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setSavingPresetOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-c-border text-c-text-secondary text-xs font-medium hover:bg-c-surface-raised transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  <BookmarkPlus size={14} />
+                  {t('Zapisz zestaw parametrów', 'Save parameter set')}
+                </button>
+              ) : (
+                <div className="inline-flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    autoFocus
+                    value={presetName}
+                    onChange={(e) => setPresetName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSavePreset();
+                      if (e.key === 'Escape') {
+                        setSavingPresetOpen(false);
+                        setPresetName('');
+                      }
+                    }}
+                    placeholder={t('Nazwa zestawu…', 'Set name…')}
+                    className="px-2.5 py-1.5 rounded-lg border border-c-border bg-c-surface text-xs text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus w-40"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSavePreset}
+                    disabled={!presetName.trim()}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-c-text text-c-bg text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    {t('Zapisz', 'Save')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSavingPresetOpen(false);
+                      setPresetName('');
+                    }}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-c-border text-c-text-secondary text-xs font-medium hover:bg-c-surface-raised transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    {t('Anuluj', 'Cancel')}
+                  </button>
+                </div>
+              )}
             </div>
           </>
         )}

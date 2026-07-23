@@ -14,6 +14,7 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { createP23Error } from '../services/v8/exceleCanon.js';
+import type { WorkbookQualityReport } from '../services/workbook/workbookQualityGate.js';
 import type { WorkbookSchema } from '../services/workbook/WorkbookSchema.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -207,6 +208,10 @@ async function finalizeGeneratedWorkbook(params: {
     validationErrors: string[];
     classifiedErrors?: unknown;
     qualityScore: number | null;
+    /** Deterministyczny krytyk jakości (critiqueWorkbook) — score 0-100 + issues[].
+     *  Addytywne pole (2026-07-23): liczone już wcześniej (template-path i free-form),
+     *  tu tylko dołączane do odpowiedzi, żeby FE mógł pokazać nieblokujący badge. */
+    qualityReport?: WorkbookQualityReport | null;
     pipelineLog: unknown;
     generatedAt: string;
   };
@@ -348,6 +353,7 @@ async function finalizeGeneratedWorkbook(params: {
     validationErrors: result.validationErrors,
     classifiedErrors: result.classifiedErrors,
     qualityScore: result.qualityScore,
+    qualityReport: result.qualityReport ?? null,
     pipelineLog: result.pipelineLog,
     artifactId,
     downloadUrl: `/api/workbook/${result.id}/download`,
