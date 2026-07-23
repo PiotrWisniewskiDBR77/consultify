@@ -5596,6 +5596,9 @@ Use userId only from this list:
                     activeSection={activeNotionSection}
                     onSectionChange={setActiveNotionSection}
                     onSectionReorder={(ids) => decisionCardLayout.reorderByIds(ids)}
+                    /* SPEC-A §4.4: w trybie Podgląd uchwyty przeciągania (GripVertical)
+                       są ukryte — nawigacja jest do czytania, nie do przestawiania. */
+                    readMode={readMode}
                   />
 
                   {/* Canvas (shows selected section only) */}

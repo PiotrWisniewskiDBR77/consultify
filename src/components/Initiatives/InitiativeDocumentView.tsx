@@ -11530,6 +11530,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           activeSection={activeNSection}
                           onSectionChange={setActiveNSection}
                           onSectionReorder={handleNModeSectionReorder}
+                          /* SPEC-A §4.4: w trybie Podgląd uchwyty przeciągania
+                             (GripVertical) są ukryte. */
+                          readMode={readMode}
                         />
                         <div className="flex-1 min-w-0 flex flex-col">
                           <NModeCanvas
