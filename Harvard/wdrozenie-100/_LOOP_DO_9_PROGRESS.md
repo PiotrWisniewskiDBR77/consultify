@@ -53,23 +53,24 @@ Sprzątanie worktree po scaleniu: `git worktree remove <path> --force`.
 ## ★ INWENTARZ DŹWIGNI DO 9,0 (per narzędzie — aktualizuj status)
 Legenda: ⬜ do zrobienia · 🔨 w budowie · ✅ scalone+zweryfikowane · 🅰️ czeka akcept Piotra (flaga OFF)
 
-### Gen. Excel (4,4 → 9) — największy dystans
-- 🔨 W1 registry: +2 szablony (Budżet operacyjny, DCF) — backend, żywe formuły
-- 🔨 W1 nav: zakładka „Generator szablonów Excel" w hubie (flaga ff_workbook_templates OFF)
+### Gen. Excel (4,4 → 5,6 po W1 → cel 9) — największy dystans
+- ✅ W1 registry: +2 szablony (operatingBudget, dcfValuation; 1→3 wzorce) — backend, żywe formuły, 44 testy. demo d410918a1e
+- 🅰️ W1 nav: zakładka „Generator szablonów Excel" w hubie (flaga ff_workbook_templates OFF) — render-verify PASS light+dark, CZEKA AKCEPT+flip
+- 🔨 W2 templates2: +2 wzorce (breakEven, cashflow12m) — backend
+- 🔨 W2 preview: inline podgląd siatki wyniku po buildzie (reuse getWorkbookSchema+workbookGridPreview) — Grafika
 - ⬜ LLM-asystent autorstwa szablonu (opis→params+formuły) — Merytoryka
 - ⬜ Meta-edytor params istniejącego wzorca (UI) — Funkcja
-- ⬜ Live-preview siatki wyniku przed buildem — Grafika
-- ⬜ +2-3 kolejne wzorce (5+ łącznie: cashflow, break-even, unit economics)
+- ⚠️ ZNALEZIONE: ExceleParametricTemplates pokazuje percent×100 w polach (default 3%→„300") — pre-existing C3 bug, do audytu osobno
 
-### Gen. Deck (5,2 → 9)
-- ✅ content hints per slajd (poprzednia tura, demo cc24229b4b)
-- 🔨 W1 delete/deprecate draftu + podgląd recommended_visuals/must_have_intents
+### Gen. Deck (5,2 → 5,6 po W1 → cel 9)
+- ✅ content hints per slajd (cc24229b4b)
+- ✅ W1 delete/deprecate draftu (przycisk danger) + podgląd recommended_visuals/must_have_intents (chipy c-*) — render-verify PASS. demo d410918a1e
 - ⬜ LLM głębia treści per slajd (bullet drafts, nie tylko tytuł+hint) — Merytoryka
 - ⬜ Podgląd miniatur/layoutu slajdów — Grafika
 - ⬜ Więcej rodzin bazowych + autorstwo nowej rodziny
 
-### Gen. Word (6,4 → 9)
-- ⬜ LLM głębia treści sekcji (prose drafts) — Merytoryka (analog do deck content hints)
+### Gen. Word (6,4 → cel 9)
+- 🔨 W2 content hints per sekcja (analog deck) — Merytoryka
 - ⬜ Podgląd struktury/bloków szablonu — Grafika
 - ⬜ Delete/deprecate + polish edytora struktury
 
@@ -91,9 +92,16 @@ Legenda: ⬜ do zrobienia · 🔨 w budowie · ✅ scalone+zweryfikowane · 🅰
 
 ## ★ LOG FAL (dopisuj po każdej fali — najnowsza NA GÓRZE)
 
-### Fala 1 — URUCHOMIONA 2026-07-23 ~00:xx (workflow wrort4or3)
-3 robotnicy równolegle: genexcel-registry (backend +2 szablony), genexcel-nav (zakładka huba flaga OFF),
-gendeck-architect-plus (delete draftu + podgląd wizualizacji). Status: 🔨 w budowie. Wyniki → uzupełnić po powrocie.
+### Fala 2 — URUCHOMIONA 2026-07-23 (workflow wavodm809)
+genexcel-templates2 (+2 wzorce backend), genexcel-preview (inline podgląd siatki), genword-hints (content hints per sekcja Word). Status: 🔨 w budowie.
+
+### Fala 1 — ✅ ZAKOŃCZONA + SCALONA (workflow wrort4or3, demo d410918a1e)
+3 robotnicy, 0 błędów. Zweryfikowane NIEZALEŻNIE przez nadzorcę (nie ufając raportom): 44 testy backend (registry+regresja) + 3 testy FE (deprecate), esbuild wszystkich plików PASS, tree czysty.
+- genexcel-registry: WORKBOOK_TEMPLATES 1→3 (operatingBudget, dcfValuation; żywe formuły ExcelJS, krytyk jakości 0 issues). Backend, brak flagi.
+- genexcel-nav: zakładka huba „Generator szablonów Excel" za flagą ff_workbook_templates (OFF). Render-verify PASS: 3 wzorce jako karty + formularz params + build CTA, light+dark. 🅰️ CZEKA na akcept Piotra + flip flagi.
+- gendeck-architect-plus: przycisk „Withdraw/delete draft" (danger, tylko draft) + bloki chipów „Suggested visualizations"/„Mandatory slides". Render-verify PASS light. Za istniejącą ff_deck_architect.
+Oceny: Gen.Excel 4,4→5,6 (Meryt 4→6 registry live, Menu/Nav 5→6 nav-za-flagą, Funkcja 4→5, Grafika 4→5); Gen.Deck 5,2→5,6 (Funkcja 6→7 delete, Grafika 4→5 chipy). Średnia 6,3→6,6.
+Dev-render: reuse gen-deck-content-hints (deck) + nowy gen-excel-templates-tab + mock workbookTemplatesMocks.
 
 ---
 ## ZASADY DOPISYWANIA DO TEGO PLIKU
@@ -103,4 +111,6 @@ Jeśli kontekst się kończy: następca czyta ten plik + memory `[[loop-do-9-202
 sprawdza `git worktree list`, kontynuuje z inwentarza (najniższe średnie najpierw: Gen.Excel → Gen.Deck → Gen.Word).
 
 ## STAN BIEŻĄCY (aktualizuj)
-Średnia: **6,3** → cel 9,0. Ostatni SHA demo zweryfikowany: `cc24229b4b`. Fal ukończonych: 0.
+Średnia: **6,6** → cel 9,0. Ostatni SHA demo: `d410918a1e` (fala 1). Fal ukończonych: 1. Fala 2 w toku (wavodm809).
+Per narzędzie: Deck 7,8 · Word 7,2 · Excel 7,0 · Gen.Deck 5,6 · Gen.Word 6,4 · Gen.Excel 5,6.
+🅰️ Czeka na akcept Piotra (flip flag): ff_workbook_templates (zakładka Gen.Excel). Zrzuty w rozmowie.
