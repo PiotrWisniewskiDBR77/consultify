@@ -28276,7 +28276,19 @@
       "externalSharingDisabledDeckReportExports": "Udostępnianie zewnętrzne jest wyłączone: deck/report pozostają niedostępne.",
       "importedNodesEdges": "Zaimportowano {{nodes}} węzłów i {{edges}} połączeń",
       "readyToImport": "Gotowe do importu: {{nodes}} węzłów, {{edges}} połączeń",
-      "elementsConnectionsCount": "{{elements}} elementów, {{connections}} połączeń"
+      "elementsConnectionsCount": "{{elements}} elementów, {{connections}} połączeń",
+      "confirmReplaceTitle": "Potwierdź zastąpienie przestrzeni roboczej",
+      "confirmReplaceBody": "Ten import ZASTĄPI całą zawartość: usunie {{currentNodes}} węzłów i {{currentEdges}} połączeń, a wstawi {{importNodes}} węzłów i {{importEdges}} połączeń.",
+      "confirmReplaceSource": "Źródło importu: {{format}}",
+      "confirmReplaceConfirm": "Potwierdź i zastąp",
+      "confirmReplaceCancel": "Anuluj",
+      "beforeImportSnapshotLabel": "Przed importem ({{sourceFormat}})",
+      "importSummaryTitle": "Import zakończony",
+      "importSummaryBody": "Zaimportowano {{importedNodes}} węzłów i {{importedEdges}} połączeń. Zastąpiono poprzednich {{previousNodes}} węzłów i {{previousEdges}} połączeń.",
+      "undoImport": "Cofnij import",
+      "undoImportDone": "Cofnięto import — przywrócono poprzednią zawartość",
+      "undoImportTitle": "Cofnięcie importu",
+      "startNewImport": "Nowy import"
     },
     "slashCommandMenu": {
       "typeCommand": "Wpisz polecenie…",

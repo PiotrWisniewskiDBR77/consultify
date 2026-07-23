@@ -27216,7 +27216,19 @@
       "externalSharingDisabledDeckReportExports": "External sharing is disabled: deck/report exports are unavailable.",
       "importedNodesEdges": "Imported {{nodes}} nodes and {{edges}} edges",
       "readyToImport": "Ready to import: {{nodes}} nodes, {{edges}} edges",
-      "elementsConnectionsCount": "{{elements}} elements, {{connections}} connections"
+      "elementsConnectionsCount": "{{elements}} elements, {{connections}} connections",
+      "confirmReplaceTitle": "Confirm workspace replacement",
+      "confirmReplaceBody": "This import will REPLACE all content: it removes {{currentNodes}} nodes and {{currentEdges}} edges, and inserts {{importNodes}} nodes and {{importEdges}} edges.",
+      "confirmReplaceSource": "Import source: {{format}}",
+      "confirmReplaceConfirm": "Confirm and replace",
+      "confirmReplaceCancel": "Cancel",
+      "beforeImportSnapshotLabel": "Before import ({{sourceFormat}})",
+      "importSummaryTitle": "Import complete",
+      "importSummaryBody": "Imported {{importedNodes}} nodes and {{importedEdges}} edges. Replaced the previous {{previousNodes}} nodes and {{previousEdges}} edges.",
+      "undoImport": "Undo import",
+      "undoImportDone": "Import undone — previous content restored",
+      "undoImportTitle": "Import undone",
+      "startNewImport": "New import"
     },
     "slashCommandMenu": {
       "typeCommand": "Type a command…",
