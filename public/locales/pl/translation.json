@@ -30462,6 +30462,10 @@
         "initiative": {
           "label": "Utwórz inicjatywę",
           "description": "Przenieś insight do intake inicjatyw."
+        },
+        "decision": {
+          "label": "Rozpocznij decyzję",
+          "description": "Zapisz decyzję do podjęcia w My Work."
         }
       },
       "titlePrefix": {
@@ -30470,8 +30474,11 @@
         "table": "Tabela",
         "idea": "Idea",
         "note": "Notatka",
-        "initiative": "Inicjatywa"
+        "initiative": "Inicjatywa",
+        "decision": "Decyzja"
       },
+      "openDecision": "Otwórz decyzję",
+      "decisionNeedsProject": "Najpierw wybierz projekt — decyzja musi być zakotwiczona w projekcie.",
       "readBackText": "Potwierdzam utworzenie artefaktu \"{{targetLabel}}\" z insightu \"{{title}}\". Widziałem/am ograniczenia, liczbę dowodów ({{evidenceCount}}) oraz poziom pewności ({{confidence}}).",
       "confidenceNone": "brak",
       "targetColumnLabel": "Cel"
