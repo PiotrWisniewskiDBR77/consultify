@@ -5268,7 +5268,7 @@ Use userId only from this list:
           {
             id: 'impactDescription',
             label: isPolish ? 'Opis wpływu' : 'Impact description',
-            value: impact.description,
+            value: impact.description ?? '',
             kind: 'text',
             writable: true,
           },
@@ -5393,7 +5393,10 @@ Use userId only from this list:
           return true;
 
         case 'impactDescription':
-          setImpact((prev) => ({ ...prev, description: mergeChangeValue(change, prev.description) }));
+          setImpact((prev) => ({
+            ...prev,
+            description: mergeChangeValue(change, prev.description ?? ''),
+          }));
           return true;
 
         case 'risks': {

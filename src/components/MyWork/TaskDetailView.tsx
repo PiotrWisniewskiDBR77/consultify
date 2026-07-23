@@ -4284,7 +4284,10 @@ Return ONLY the final comment text.`;
       // bez tego AI nie ma czego porównać i kryterium byłoby martwe.
       relatedDecisions.length
         ? `${isPolish ? 'Decyzje źródłowe' : 'Source decisions'}:\n${relatedDecisions
-            .map((d) => `- ${d.title ?? d.id}${d.note ? ` (${d.note})` : ''}`)
+            .map(
+              (d) =>
+                `- ${d.decisionTitle} [${d.relationshipType}, ${d.decisionStatus}]${d.note ? ` (${d.note})` : ''}`
+            )
             .join('\n')}`
         : `${isPolish ? 'Decyzje źródłowe' : 'Source decisions'}: —`,
       activeNSection !== 'description-scope'
