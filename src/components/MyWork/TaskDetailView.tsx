@@ -78,6 +78,11 @@ import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 import { CapabilityGate } from '../shared/CapabilityGate';
 import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
+// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
+import { mergeChangeValue } from '@/services/cardAnalysis';
+import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
+import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
 // #52 — card-management primitive (show/hide + reorder), same wiring as
 // InsightViewer.tsx (nakładka, see comment at `taskCardLayout` below).
 // ETAP 1.2: pasek niesie SAM picker „Sekcje" — „+ Nowa karta" zdjęte z menu 2
@@ -4136,6 +4141,297 @@ Return ONLY the final comment text.`;
     showPriorityDropdown,
   ]);
 
+  // ── ETAP 3 standardu n-Type: „Analizuj z AI" AKTYWNEJ KARTY ────────────────
+  // Kryteria oceny Zadania (kontrakt właściciela 2026-07-23) żyją w rubryce
+  // silnika (`ARTIFACT_CRITERIA.task`): kompletność opisu · jasność zakresu ·
+  // kryteria akceptacji · zależności · ryzyka blokady · kompletność dowodów ·
+  // spójność z decyzją źródłową. Tu deklarujemy TYLKO zawartość aktywnej karty
+  // i to, gdzie wolno zapisać.
+  const taskAnalysisFields = useMemo<CardAnalysisField[]>(() => {
+    switch (activeNSection) {
+      case 'description-scope':
+        return [
+          {
+            id: 'description',
+            label: isPolish ? 'Opis i zakres' : 'Description & scope',
+            value: description,
+            kind: 'text',
+            writable: true,
+          },
+          {
+            id: 'expectedOutcome',
+            label: isPolish ? 'Oczekiwany rezultat' : 'Expected outcome',
+            value: expectedOutcome,
+            kind: 'text',
+            writable: true,
+            hint: isPolish
+              ? 'Stan końcowy z liczbą, jednostką i kierunkiem zmiany — nie czynność.'
+              : 'End state with a number, unit and direction of change — not an activity.',
+          },
+        ];
+
+      case 'implementation':
+        return [
+          {
+            id: 'implementationIdeas',
+            label: isPolish ? 'Pomysły realizacji' : 'Implementation ideas',
+            value: implementationIdeas
+              .map((i) => `- ${i.title}${i.description ? `: ${i.description}` : ''}`)
+              .join('\n'),
+            kind: 'list',
+            writable: true,
+          },
+        ];
+
+      case 'risk-alternatives':
+        return [
+          {
+            id: 'risks',
+            label: isPolish ? 'Ryzyka' : 'Risks',
+            value: risks
+              .map(
+                (r) =>
+                  `- ${r.title} (${isPolish ? 'prawdop.' : 'prob.'} ${r.probability}, ${isPolish ? 'skutek' : 'impact'} ${r.impact})${r.mitigation ? ` — ${isPolish ? 'mitygacja' : 'mitigation'}: ${r.mitigation}` : ''}`
+              )
+              .join('\n'),
+            kind: 'list',
+            writable: true,
+          },
+          {
+            id: 'alternatives-readonly',
+            label: isPolish ? 'Alternatywy' : 'Alternatives',
+            // Alternatywa niesie wybór (`selectedAlternativeId`) — dopisanie jej
+            // przez AI zmieniałoby DECYZJĘ, nie treść. Tylko do odczytu.
+            value: alternatives.map((a) => `- ${a.title ?? ''}`).join('\n'),
+            kind: 'list',
+            writable: false,
+          },
+        ];
+
+      case 'checklist':
+        return [
+          {
+            id: 'checklist',
+            label: isPolish ? 'Lista kontrolna' : 'Checklist',
+            value: checklist
+              .map((c) => `${c.completed ? '[x]' : '[ ]'} ${String(c.text || '').trim()}`)
+              .join('\n'),
+            kind: 'list',
+            writable: true,
+          },
+        ];
+
+      case 'dependencies':
+        return [
+          {
+            id: 'dependencies-readonly',
+            label: isPolish ? 'Zależności' : 'Dependencies',
+            // Zależność wskazuje INNY obiekt po id. Treść wpisana z palca nie
+            // stworzy powiązania, a wyglądałaby jak istniejące — to gorsze niż brak.
+            value: dependencies.map((d) => `- ${JSON.stringify(d)}`).join('\n'),
+            kind: 'list',
+            writable: false,
+          },
+        ];
+
+      case 'evidence':
+        return [
+          {
+            id: 'evidence-readonly',
+            label: isPolish ? 'Dowody' : 'Evidence',
+            // Dowód to plik/link/fakt, nie proza. AI może wskazać, czego brakuje.
+            value: [
+              `${isPolish ? 'Wymagane typy' : 'Required types'}: ${evidenceRequired.join(', ') || '—'}`,
+              ...evidenceItems.map((e) => `- ${JSON.stringify(e)}`),
+            ].join('\n'),
+            kind: 'list',
+            writable: false,
+          },
+        ];
+
+      default:
+        // governance (RACI = decyzja organizacyjna człowieka) i
+        // attachments-links (fakty: pliki, powiązania) — bez pól do zapisu.
+        return [];
+    }
+  }, [
+    activeNSection,
+    isPolish,
+    description,
+    expectedOutcome,
+    implementationIdeas,
+    risks,
+    alternatives,
+    checklist,
+    dependencies,
+    evidenceRequired,
+    evidenceItems,
+  ]);
+
+  const taskWritableFieldIds = useMemo(
+    () => taskAnalysisFields.filter((f) => f.writable).map((f) => f.id),
+    [taskAnalysisFields]
+  );
+
+  const buildTaskAnalysisInput = useCallback(() => {
+    const ctx = [
+      `${isPolish ? 'Status' : 'Status'}: ${status}`,
+      `${isPolish ? 'Priorytet' : 'Priority'}: ${priority}`,
+      dueDate ? `${isPolish ? 'Termin' : 'Due date'}: ${dueDate}` : '',
+      blockedReason ? `${isPolish ? 'Powód blokady' : 'Blocked reason'}: ${blockedReason}` : '',
+      initiativeName ? `${isPolish ? 'Inicjatywa nadrzędna' : 'Parent initiative'}: ${initiativeName}` : '',
+      // Kryterium „spójność z decyzją źródłową" wymaga decyzji w kontekście —
+      // bez tego AI nie ma czego porównać i kryterium byłoby martwe.
+      relatedDecisions.length
+        ? `${isPolish ? 'Decyzje źródłowe' : 'Source decisions'}:\n${relatedDecisions
+            .map((d) => `- ${d.title ?? d.id}${d.note ? ` (${d.note})` : ''}`)
+            .join('\n')}`
+        : `${isPolish ? 'Decyzje źródłowe' : 'Source decisions'}: —`,
+      activeNSection !== 'description-scope'
+        ? `${isPolish ? 'Opis zadania' : 'Task description'}: ${description}`
+        : '',
+      activeNSection !== 'checklist' && checklist.length
+        ? `${isPolish ? 'Lista kontrolna' : 'Checklist'}: ${checklist.length} ${isPolish ? 'pozycji' : 'items'}`
+        : '',
+      activeNSection !== 'risk-alternatives' && risks.length
+        ? `${isPolish ? 'Ryzyka' : 'Risks'}: ${risks.map((r) => r.title).join('; ')}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    return {
+      artifactType: 'task' as const,
+      cardId: activeNSection,
+      artifactTitle: title,
+      artifactContext: ctx,
+      fields: taskAnalysisFields,
+      isPolish,
+    };
+  }, [
+    activeNSection,
+    isPolish,
+    title,
+    status,
+    priority,
+    dueDate,
+    blockedReason,
+    initiativeName,
+    relatedDecisions,
+    description,
+    checklist,
+    risks,
+    taskAnalysisFields,
+  ]);
+
+  /** Linie treści → pozycje listy (wspólne dla checklisty, ryzyk i pomysłów). */
+  const linesOf = useCallback(
+    (text: string): string[] =>
+      String(text || '')
+        .split('\n')
+        .map((l) =>
+          l
+            .trim()
+            .replace(/^\[(?:x|X| )\]\s*/, '')
+            .replace(/^(?:[-*•]\s+|\d+[.)]\s+)/, '')
+            .trim()
+        )
+        .filter(Boolean),
+    []
+  );
+
+  const applyTaskAnalysisChange = useCallback(
+    (change: CardAnalysisChange): boolean => {
+      if (readMode) return false;
+      const newId = () => Math.random().toString(36).slice(2, 11);
+
+      switch (change.fieldId) {
+        case 'description':
+          setDescription((prev) => mergeChangeValue(change, prev));
+          return true;
+
+        case 'expectedOutcome':
+          setExpectedOutcome((prev) => mergeChangeValue(change, prev));
+          return true;
+
+        case 'checklist': {
+          const incoming = linesOf(change.proposedValue);
+          if (incoming.length === 0) return false;
+          setChecklist((prev) =>
+            change.mode === 'append'
+              ? [
+                  ...prev,
+                  // Bez duplikatów — powtórzona pozycja to szum, nie treść.
+                  ...incoming
+                    .filter(
+                      (line) =>
+                        !prev.some((p) => String(p.text || '').trim().toLowerCase() === line.toLowerCase())
+                    )
+                    .map((text) => ({ id: newId(), text, completed: false })),
+                ]
+              : incoming.map((text) => ({ id: newId(), text, completed: false }))
+          );
+          return true;
+        }
+
+        case 'risks': {
+          const incoming = linesOf(change.proposedValue);
+          if (incoming.length === 0) return false;
+          // Waga/skutek/kategoria to OCENA, której AI tu nie podaje w strukturze —
+          // wstawiamy neutralne 'medium' i zostawiamy człowiekowi doprecyzowanie.
+          const toRisk = (title2: string): RiskItem => ({
+            id: newId(),
+            title: title2,
+            probability: 'medium',
+            impact: 'medium',
+            category: 'operational',
+            mitigation: '',
+            contingency: '',
+          });
+          setRisks((prev) =>
+            change.mode === 'append'
+              ? [...prev, ...incoming.map(toRisk)]
+              : incoming.map(toRisk)
+          );
+          return true;
+        }
+
+        case 'implementationIdeas': {
+          const incoming = linesOf(change.proposedValue);
+          if (incoming.length === 0) return false;
+          const toIdea = (line: string): ImplementationIdea => {
+            const [head, ...rest] = line.split(':');
+            return {
+              id: newId(),
+              title: head.trim(),
+              description: rest.join(':').trim(),
+              source: 'ai',
+              status: 'idea',
+              votes: 0,
+              votedByMe: false,
+            };
+          };
+          setImplementationIdeas((prev) =>
+            change.mode === 'append'
+              ? [...prev, ...incoming.map(toIdea)]
+              : incoming.map(toIdea)
+          );
+          return true;
+        }
+
+        default:
+          return false;
+      }
+    },
+    [readMode, linesOf]
+  );
+
+  const taskCardAnalysis = useCardAIAnalysis({
+    activeCardId: activeNSection,
+    buildInput: buildTaskAnalysisInput,
+    applyChange: applyTaskAnalysisChange,
+  });
+
   // ── Loading guard (AFTER all hooks to respect Rules of Hooks) ────────────
   // VF1-1 (SPEC-A): swap ad-hoc spinner/empty markup for the shared
   // shared/states library (record archetype) — gated (visible change,
@@ -4444,7 +4740,17 @@ Return ONLY the final comment text.`;
                   }
                   readMode={readMode}
                   onReadModeChange={setReadMode}
-                  aiButton={<Menu2AIButton isPolish={isPolish} onClick={handleOpenChat} />}
+                  aiButton={
+                    // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera panel
+                    // wyników. Było: `handleOpenChat` — otwarcie ogólnego czatu
+                    // Teresy, które nie oceniało karty ani nie proponowało zmian.
+                    <Menu2AIButton
+                      isPolish={isPolish}
+                      busy={taskCardAnalysis.loading}
+                      aria-expanded={taskCardAnalysis.open}
+                      onClick={taskCardAnalysis.run}
+                    />
+                  }
                 />
                 {/* Deadline Alert */}
                 {dueDate && dueDateAlertBorderClass && (
@@ -4802,6 +5108,23 @@ Return ONLY the final comment text.`;
             </div>
           </div>
         </div>
+
+        {/* ── ETAP 3: panel wyników „Analizuj z AI" ─────────────────────────
+            Slide-over przy prawej krawędzi (nie modal, nie przyciemnia kanwy).
+            Zapis wyłącznie przez „Zastosuj" → `applyTaskAnalysisChange`. */}
+        <NCardAIAnalysisPanel
+          open={taskCardAnalysis.open}
+          onClose={taskCardAnalysis.close}
+          loading={taskCardAnalysis.loading}
+          result={taskCardAnalysis.result}
+          errorCode={taskCardAnalysis.errorCode}
+          serverErrorCode={taskCardAnalysis.serverErrorCode}
+          onRerun={taskCardAnalysis.rerun}
+          onApplyChange={taskCardAnalysis.applyChange}
+          writableFieldIds={taskWritableFieldIds}
+          readMode={readMode}
+          isPolish={isPolish}
+        />
 
         {/* ── RACI Governance Modals (exact copy from Decision) ── */}
 
