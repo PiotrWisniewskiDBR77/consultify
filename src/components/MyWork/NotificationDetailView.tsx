@@ -27,13 +27,13 @@ import {
   FolderOpen,
   History,
   Info,
+  Link2,
   Loader2,
   MailOpen,
   Megaphone,
   MessageCircle,
   MessageSquare,
   Monitor,
-  MoreHorizontal,
   Scale,
   Sparkles,
   Target,
@@ -65,6 +65,7 @@ import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
 import { NModeCardManager } from '../shared/NModeLayout/NModeCardManager';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
+import { NModeTextField } from '../shared/NModeLayout/NModeTextField';
 import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLayout';
 import type { NModeArtifactType } from '../shared/NModeLayout/cardSets';
 import type { NModePropertyField, NModeSection } from '../shared/NModeLayout/types';
@@ -80,8 +81,10 @@ import TeresaMark from '../shared/TeresaMark';
 // Tu w wariancie SKROCONYM: Wlasciwosci + Historia (decyzja wlasciciela K2).
 // `NModePropertiesStrip` przestal byc importowany — 6 pol metadanych przenioslo sie
 // z poziomego paska pod naglowkiem do sekcji Wlasciwosci tego panelu.
+import { PreviewActionBar } from '../shared/PreviewPane/PreviewActionBar';
 import { ArtifactRightPanel, type ArtifactRightPanelSection } from '../standard/ArtifactRightPanel';
 import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
+import { ReadEditToggle } from './shared/ReadEditToggle';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -339,13 +342,16 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const [isSnoozed, setIsSnoozed] = useState(false);
   const [snoozedUntil, setSnoozedUntil] = useState<string | null>(null);
 
+  // ── Tryb Edycja / Podglad (ETAP 2.1) ────────────────────────────────────
+  // Kanon n-Type: pola opisowe maja tryb edycji, a w trybie Podglad kontrolki
+  // (AI, uchwyt wysokosci, edycja checklisty) sa ukryte. Wzorzec i komponent =
+  // `MyWork/shared/ReadEditToggle` (ten sam, ktorego uzywaja Task i Decision).
+  // D-A dla powiadomienia: karta = arkusz do wypelnienia → otwiera sie w EDYCJI.
+  const [readMode, setReadMode] = useState(false);
+
   // Mute dropdown (uzywany juz TYLKO przez stary tryb 'c'; w trybie N pozycje
   // "Wycisz to" / "Wycisz podobne" przeniesione do menu przepelnienia "…")
   const [showMuteMenu, setShowMuteMenu] = useState(false);
-
-  // SPEC-N §2.4 + DOKTRYNA_GESTOSCI §1 — menu przepelnienia paska akcji trybu N.
-  // Pasek mial 7 przyciskow plasko, bez "…". Widoczne zostaja maks 4, reszta tutaj.
-  const [showActionOverflow, setShowActionOverflow] = useState(false);
 
   // Save as note
   const [savingAsNote, setSavingAsNote] = useState(false);
@@ -1107,8 +1113,6 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             setShowSnoozeMenu(false);
           } else if (showMuteMenu) {
             setShowMuteMenu(false);
-          } else if (showActionOverflow) {
-            setShowActionOverflow(false);
           } else {
             onClose();
           }
@@ -1134,7 +1138,6 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     const handleClickOutside = () => {
       if (showSnoozeMenu) setShowSnoozeMenu(false);
       if (showMuteMenu) setShowMuteMenu(false);
-      if (showActionOverflow) setShowActionOverflow(false);
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -1143,7 +1146,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('click', handleClickOutside);
     };
-  }, [notification, showSnoozeMenu, showMuteMenu, showActionOverflow]);
+  }, [notification, showSnoozeMenu, showMuteMenu]);
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -1452,6 +1455,76 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   }, [actionChecklist, expectedActionDraft, contract?.expectedAction, notification?.message]);
   const canChecklistAI = Boolean(checklistAiValue.trim());
 
+  // ── POWIAZANIA + ZRODLO — jedna deklaracja, dwoje odbiorcow ───────────────
+  // ETAP 2.1: „Wynika z" (zrodlo/projekt) i „Dlaczego to dostales" zyly w
+  // CENTRUM sekcji „Co sie dzieje". Kanon panelu (ARTIFACT_ANATOMY §11.2) mowi,
+  // ze relacje i zrodla/zalozenia to sekcje PRAWEGO PANELU, a centrum to pola
+  // opisowe. Liczymy je raz, tutaj (przed guardami — Rules of Hooks), zeby
+  // panel mial dane, a centrum ich juz nie dublowalo (§2.6 anty-duplikacja).
+  const notifRelationItems = useMemo(() => {
+    const items: { id: string; type: string; title: string }[] = [];
+    if (!notification) return items;
+    if (sourceEntity && sourceEntity.title) {
+      items.push({
+        id: sourceEntity.id || notification.relatedObjectId || '',
+        type: isPolish
+          ? sourceEntity.type === 'task'
+            ? 'Zadanie'
+            : sourceEntity.type === 'decision'
+              ? 'Decyzja'
+              : sourceEntity.type || 'Źródło'
+          : sourceEntity.type || 'Source',
+        title: String(sourceEntity.title),
+      });
+    } else if (notification.relatedObjectType && notification.relatedObjectId) {
+      items.push({
+        id: notification.relatedObjectId,
+        type: notification.relatedObjectType,
+        title: notification.relatedObjectId,
+      });
+    }
+    if (notification.projectName && notification.projectId) {
+      items.push({
+        id: notification.projectId,
+        type: t('myWork.notificationDetail.type', 'Project'),
+        title: notification.projectName,
+      });
+    }
+    return items;
+  }, [notification, sourceEntity, isPolish, t]);
+
+  // Zrodlo powiadomienia (kto/co je wygenerowalo) — wiersz „Zrodlo" w tabeli
+  // Wlasciwosci. Wczesniej ta sama logika stala w centrum jako pigulka-badge.
+  const notifCreator = useMemo(() => {
+    const typeUpper = (notification?.type || '').toUpperCase();
+    const category = notification?.category;
+    const isAICreated =
+      typeUpper.startsWith('AI_') || category === 'ai' || Boolean(notification?.data?.aiGenerated);
+    const isSystemCreated =
+      !isAICreated &&
+      (category === 'system' ||
+        category === 'billing' ||
+        category === 'dbr77' ||
+        typeUpper === 'SYSTEM_ALERT' ||
+        typeUpper.startsWith('BILLING_') ||
+        typeUpper.startsWith('DBR77_') ||
+        typeUpper.startsWith('PAYMENT_') ||
+        typeUpper.startsWith('USAGE_') ||
+        typeUpper.startsWith('SUBSCRIPTION_') ||
+        typeUpper.startsWith('INVOICE_'));
+    return {
+      label: isAICreated
+        ? 'AI'
+        : isSystemCreated
+          ? 'System'
+          : notification?.data?.createdByName || t('myWork.notificationDetail.user', 'User'),
+      icon: (isAICreated ? Bot : isSystemCreated ? Monitor : Users) as React.FC<{
+        size?: number;
+        className?: string;
+      }>,
+    };
+  }, [notification, t]);
+
   // ── N-mode section definitions (MUST be before early returns — Rules of Hooks) ──
 
   const nModeSections: NModeSection[] = useMemo(() => {
@@ -1524,75 +1597,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       switch (section.id) {
         // ── 1. What's Happening (layout mirrors Task "Description & Scope") ──
         case 'whats-happening': {
-          // Build "Related to" items from source entity + context
-          const relatedNotifItems: { id: string; type: string; title: string }[] = [];
-          if (sourceEntity && sourceEntity.title) {
-            relatedNotifItems.push({
-              id: sourceEntity.id || notification.relatedObjectId || '',
-              type: isPolish
-                ? sourceEntity.type === 'task'
-                  ? 'Zadanie'
-                  : sourceEntity.type === 'decision'
-                    ? 'Decyzja'
-                    : sourceEntity.type || 'Źródło'
-                : sourceEntity.type || 'Source',
-              title: String(sourceEntity.title),
-            });
-          } else if (notification.relatedObjectType && notification.relatedObjectId) {
-            relatedNotifItems.push({
-              id: notification.relatedObjectId,
-              type: notification.relatedObjectType,
-              title: notification.relatedObjectId,
-            });
-          }
-          if (notification.projectName && notification.projectId) {
-            relatedNotifItems.push({
-              id: notification.projectId,
-              type: t('myWork.notificationDetail.type', 'Project'),
-              title: notification.projectName,
-            });
-          }
-          // Context line → merge into Related To as extra item
-          if (contract.contextLine) {
-            relatedNotifItems.push({
-              id: '_ctx',
-              type: t('myWork.notificationDetail.type2', 'Context'),
-              title: contract.contextLine,
-            });
-          }
-
-          // Determine creator: AI / System / User
-          const typeUpper = (notification.type || '').toUpperCase();
-          const category = notification.category;
-          const isAICreated =
-            typeUpper.startsWith('AI_') ||
-            category === 'ai' ||
-            Boolean(notification.data?.aiGenerated);
-          const isSystemCreated =
-            !isAICreated &&
-            (category === 'system' ||
-              category === 'billing' ||
-              category === 'dbr77' ||
-              typeUpper === 'SYSTEM_ALERT' ||
-              typeUpper.startsWith('BILLING_') ||
-              typeUpper.startsWith('DBR77_') ||
-              typeUpper.startsWith('PAYMENT_') ||
-              typeUpper.startsWith('USAGE_') ||
-              typeUpper.startsWith('SUBSCRIPTION_') ||
-              typeUpper.startsWith('INVOICE_'));
-          const creatorLabel = isAICreated
-            ? 'AI'
-            : isSystemCreated
-              ? 'System'
-              : notification.data?.createdByName || t('myWork.notificationDetail.user', 'User');
-          const CreatorIcon = isAICreated ? Bot : isSystemCreated ? Monitor : Users;
-          const creatorColor = isAICreated
-            ? 'text-c-info bg-c-info/10 border-c-info/40'
-            : isSystemCreated
-              ? 'text-c-text-secondary bg-c-surface-raised border-c-border'
-              : 'text-blue-500 bg-blue-500/10 border-blue-400/40';
-
-          // Severity border color for left accent
+          // ETAP 2.1 — CENTRUM = POLA n-Type, nie statyczny opis.
+          // Co STAD WYSZLO (do prawego panelu, kanon §11.2 — zero duplikatow §2.6):
+          //   • „Wynika z" (zrodlo/projekt)      → sekcja Powiazania
+          //   • „Dlaczego to dostales" (callout) → sekcja Zrodla i zalozenia
+          //   • pigulki Priorytet / Zrodlo       → tabela Wlasciwosci
+          // Co ZOSTALO: trzy POLA opisowe (`NModeTextField`) — kazde ma nazwe,
+          // przycisk AI w prawym gornym rogu, tryb edycji, auto-fit wysokosci
+          // i uchwyt zmiany wysokosci; w trybie Podglad kontrolki znikaja.
+          // Lewy akcent koloru = severity (sygnal wagi, nie zdublowane pole).
           const severityBorderAccent =
             notification.severity === 'CRITICAL'
               ? 'border-l-danger-500'
@@ -1600,196 +1613,102 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 ? 'border-l-amber-500'
                 : 'border-l-blue-400';
 
+          const notifAiContext = {
+            title: notification.title,
+            status: notification.isRead ? 'read' : 'unread',
+            priority: notification.severity || '',
+            type: 'notification',
+          };
+
           component = (
             <div className={`space-y-5 border-l-[3px] ${severityBorderAccent} pl-4`}>
-              {/* Section header: title + severity + creator badges */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-c-text">
-                    {t('myWork.notificationDetail.whatSHappening', "What's Happening")}
-                  </h2>
-                  {isAnalyzingWorksheet && (
-                    <span className="inline-flex items-center gap-1.5 text-[11px] text-c-info animate-pulse">
-                      <Loader2 size={12} className="animate-spin" />
-                      {t('myWork.notificationDetail.aIAnalyzing', 'AI analyzing...')}
-                    </span>
-                  )}
-                </div>
-                {/* Badge row: severity + creator */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${severityConfig.bgColor} ${severityConfig.textColor}`}
-                  >
-                    <SeverityIcon size={10} />
-                    {isPolish ? severityConfig.label.pl : severityConfig.label.en}
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg font-semibold text-c-text">
+                  {t('myWork.notificationDetail.whatSHappening', "What's Happening")}
+                </h2>
+                {isAnalyzingWorksheet && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] text-c-info animate-pulse">
+                    <Loader2 size={12} className="animate-spin" />
+                    {t('myWork.notificationDetail.aIAnalyzing', 'AI analyzing...')}
                   </span>
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${creatorColor}`}
-                  >
-                    <CreatorIcon size={11} />
-                    {creatorLabel}
-                  </span>
-                </div>
-              </div>
-
-              {/* 1) Related to — source entity, project, context (clickable) */}
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
-                  {t('myWork.notificationDetail.relatedTo', 'Related to')}
-                </label>
-                {relatedNotifItems.length === 0 ? (
-                  <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border border-amber-400/60 text-amber-600 dark:text-amber-300 bg-amber-500/10">
-                    {t(
-                      'myWork.notificationDetail.noLinkedSourceSystem',
-                      'No linked source — system notification'
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {relatedNotifItems.map((item) => {
-                      const isClickable = item.id !== '_ctx' && onNavigateToSource;
-                      const itemType = item.type.toLowerCase();
-                      return (
-                        <div
-                          key={item.id}
-                          className={`group flex items-center justify-between gap-3 text-sm text-c-text-secondary rounded-md px-1 py-0.5 -mx-1 transition-colors ${
-                            isClickable ? 'hover:bg-c-info/5 cursor-pointer' : ''
-                          }`}
-                          onClick={
-                            isClickable ? () => onNavigateToSource!(itemType, item.id) : undefined
-                          }
-                          role={isClickable ? 'button' : undefined}
-                          tabIndex={isClickable ? 0 : undefined}
-                        >
-                          <div className="flex min-w-0 items-center gap-2">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-border text-c-text-secondary bg-c-surface-raised uppercase">
-                              {item.type}
-                            </span>
-                            <span
-                              className={`truncate ${isClickable ? 'group-hover:text-c-info transition-colors' : ''}`}
-                            >
-                              {item.title}
-                            </span>
-                          </div>
-                          {item.id !== '_ctx' && (
-                            <button
-                              className="shrink-0 inline-flex items-center gap-1 text-[11px] font-mono text-c-text-muted hover:text-c-info transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigator.clipboard.writeText(item.id);
-                                toast.success(
-                                  t('myWork.notificationDetail.toastSuccess9', 'ID copied')
-                                );
-                              }}
-                              title={t('myWork.notificationDetail.title', 'Copy ID')}
-                            >
-                              {String(item.id).length > 24
-                                ? `${String(item.id).slice(0, 24)}...`
-                                : item.id}
-                              <Copy
-                                size={10}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity"
-                              />
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
                 )}
               </div>
 
-              {/* 2) Description — click-to-edit with AI enhancer */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
-                    {t('myWork.notificationDetail.description', 'Description')}
-                  </label>
+              {/* 1) Opis */}
+              <NModeTextField
+                id="notif-field-description"
+                label={t('myWork.notificationDetail.description', 'Description')}
+                value={descriptionDraft}
+                onChange={setDescriptionDraft}
+                readOnly={readMode}
+                minHeight={64}
+                placeholder={t(
+                  'myWork.notificationDetail.whatHappenedDescribeThe',
+                  'What happened — describe the notification event...'
+                )}
+                ai={
                   <AIFieldEnhancer
                     fieldKey="notif-description"
                     sectionLabel={t('myWork.notificationDetail.sectionLabel', 'Description')}
                     currentValue={descriptionDraft}
                     onApply={setDescriptionDraft}
-                    artifactContext={{
-                      title: notification.title,
-                      status: notification.isRead ? 'read' : 'unread',
-                      priority: notification.severity || '',
-                      type: 'notification',
-                    }}
+                    artifactContext={notifAiContext}
                     iconOnly
                   />
-                </div>
-                <textarea
-                  value={descriptionDraft}
-                  onChange={(e) => setDescriptionDraft(e.target.value)}
-                  rows={3}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[48px]"
-                  placeholder={t(
-                    'myWork.notificationDetail.whatHappenedDescribeThe',
-                    'What happened — describe the notification event...'
-                  )}
-                />
-              </div>
+                }
+              />
 
-              {/* 3) Why it matters — with AI enhancer */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
-                    {t('myWork.notificationDetail.whyItMatters', 'Why it matters')}
-                  </label>
+              {/* 2) Dlaczego to wazne */}
+              <NModeTextField
+                id="notif-field-why"
+                label={t('myWork.notificationDetail.whyItMatters', 'Why it matters')}
+                value={whyImportantDraft}
+                onChange={setWhyImportantDraft}
+                readOnly={readMode}
+                minHeight={48}
+                placeholder={t(
+                  'myWork.notificationDetail.explainTheImpactAnd',
+                  'Explain the impact and consequences...'
+                )}
+                ai={
                   <AIFieldEnhancer
                     fieldKey="notif-why-important"
                     sectionLabel={t('myWork.notificationDetail.sectionLabel2', 'Why It Matters')}
                     currentValue={whyImportantDraft}
                     onApply={setWhyImportantDraft}
-                    artifactContext={{
-                      title: notification.title,
-                      status: notification.isRead ? 'read' : 'unread',
-                      priority: notification.severity || '',
-                      type: 'notification',
-                    }}
+                    artifactContext={notifAiContext}
                     iconOnly
                   />
-                </div>
-                <textarea
-                  value={whyImportantDraft}
-                  onChange={(e) => setWhyImportantDraft(e.target.value)}
-                  rows={2}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[36px]"
+                }
+              />
+
+              {/* 3) Co jest blokowane — pole pelnoprawne (bylo bez AI i tylko
+                   gdy niepuste, wiec w praktyce nie do wypelnienia recznie).
+                   W Podgladzie puste pole sie nie renderuje (nie pokazujemy
+                   klientowi pustego miejsca). */}
+              {(!readMode || blockedDraft.trim()) && (
+                <NModeTextField
+                  id="notif-field-blocked"
+                  label={t('myWork.notificationDetail.whatIsBlocked', 'What is blocked')}
+                  value={blockedDraft}
+                  onChange={setBlockedDraft}
+                  readOnly={readMode}
+                  minHeight={48}
                   placeholder={t(
-                    'myWork.notificationDetail.explainTheImpactAnd',
-                    'Explain the impact and consequences...'
+                    'myWork.notificationDetail.whatIsBlockedBy',
+                    'What is blocked by this issue...'
                   )}
+                  ai={
+                    <AIFieldEnhancer
+                      fieldKey="notif-blocked"
+                      sectionLabel={t('myWork.notificationDetail.whatIsBlocked', 'What is blocked')}
+                      currentValue={blockedDraft}
+                      onApply={setBlockedDraft}
+                      artifactContext={notifAiContext}
+                      iconOnly
+                    />
+                  }
                 />
-              </div>
-
-              {/* 4) What is blocked — compact */}
-              {blockedDraft.trim() && (
-                <div className="space-y-1.5">
-                  <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
-                    {t('myWork.notificationDetail.whatIsBlocked', 'What is blocked')}
-                  </label>
-                  <textarea
-                    value={blockedDraft}
-                    onChange={(e) => setBlockedDraft(e.target.value)}
-                    rows={2}
-                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[36px]"
-                    placeholder={t(
-                      'myWork.notificationDetail.whatIsBlockedBy',
-                      'What is blocked by this issue...'
-                    )}
-                  />
-                </div>
-              )}
-
-              {/* 5) Why You Got It — subtle info line */}
-              {(contract.whyYouGotIt || notification.data?.whyYouGotIt) && (
-                <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-50/50 dark:bg-amber-500/5 border border-amber-200/40 dark:border-amber-500/20">
-                  <Info size={13} className="text-amber-500 mt-0.5 shrink-0" />
-                  <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
-                    {contract.whyYouGotIt || String(notification.data?.whyYouGotIt || '')}
-                  </p>
-                </div>
               )}
             </div>
           );
@@ -1907,12 +1826,17 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 {t('myWork.notificationDetail.expectedAction', 'Expected Action')}
               </h2>
 
-              {/* Expected action text — label + AI right-aligned */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
-                    {t('myWork.notificationDetail.whatNeedsToBe', 'What needs to be done')}
-                  </label>
+              {/* Oczekiwana akcja — POLE n-Type (nazwa · AI w prawym gornym
+                  rogu · edycja · auto-fit · uchwyt; w Podgladzie bez kontrolek) */}
+              <NModeTextField
+                id="notif-field-expected-action"
+                label={t('myWork.notificationDetail.whatNeedsToBe', 'What needs to be done')}
+                value={expectedActionDraft}
+                onChange={setExpectedActionDraft}
+                readOnly={readMode}
+                minHeight={48}
+                placeholder={t('myWork.notificationDetail.placeholder', 'Expected action...')}
+                ai={
                   <AIFieldEnhancer
                     fieldKey="notification-expected-action"
                     sectionLabel="Expected Action"
@@ -1927,36 +1851,31 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     iconOnly
                     disabled={!canExpectedActionAI}
                   />
-                </div>
-                <textarea
-                  value={expectedActionDraft}
-                  onChange={(e) => setExpectedActionDraft(e.target.value)}
-                  rows={2}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[36px]"
-                  placeholder={t('myWork.notificationDetail.placeholder', 'Expected action...')}
-                />
-              </div>
+                }
+              />
 
               {/* Checklist — label + AI right-aligned, count below */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between min-h-[22px]">
                   <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
                     {t('myWork.notificationDetail.checklist', 'Checklist')}
                   </label>
-                  <AIFieldEnhancer
-                    fieldKey="notification-checklist"
-                    sectionLabel="Checklist"
-                    currentValue={checklistAiValue || ' '}
-                    onApply={applyChecklistFromAIText}
-                    artifactContext={{
-                      title: notification.title,
-                      status: notification.isRead ? 'read' : 'unread',
-                      priority: aiAnalysis?.priority || 'medium',
-                      type: 'notification',
-                    }}
-                    iconOnly
-                    disabled={!canChecklistAI}
-                  />
+                  {!readMode && (
+                    <AIFieldEnhancer
+                      fieldKey="notification-checklist"
+                      sectionLabel="Checklist"
+                      currentValue={checklistAiValue || ' '}
+                      onApply={applyChecklistFromAIText}
+                      artifactContext={{
+                        title: notification.title,
+                        status: notification.isRead ? 'read' : 'unread',
+                        priority: aiAnalysis?.priority || 'medium',
+                        type: 'notification',
+                      }}
+                      iconOnly
+                      disabled={!canChecklistAI}
+                    />
+                  )}
                 </div>
 
                 {/* Progress bar */}
@@ -1984,10 +1903,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       className="mx-auto mb-2 text-c-text-muted"
                     />
                     <p className="text-xs text-c-text-muted">
-                      {t(
-                        'myWork.notificationDetail.noStepsClickAI',
-                        'No steps — click AI to generate a checklist'
-                      )}
+                      {readMode
+                        ? t('myWork.notificationDetail.noStepsYet', 'No steps yet')
+                        : t(
+                            'myWork.notificationDetail.noStepsClickAI',
+                            'No steps — click AI to generate a checklist'
+                          )}
                     </p>
                   </div>
                 ) : (
@@ -2021,8 +1942,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           }`}
                         >
                           <button
-                            onClick={() => toggleChecklistItem(item.id)}
-                            className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 ${
+                            onClick={() => !readMode && toggleChecklistItem(item.id)}
+                            disabled={readMode}
+                            className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 disabled:cursor-default ${
                               done
                                 ? 'bg-emerald-500 border-emerald-500 text-white'
                                 : urgency === 'critical'
@@ -2376,7 +2298,16 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     submittingComment,
     activityLog,
     activityLogLoading,
-    isSnoozed,, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
+    isSnoozed,
+    // ETAP 2.1 — pola opisowe centrum + tryb Podglad. Bez tych zaleznosci memo
+    // zwracalo stary komponent i pole „zamarzalo" na pierwszej wartosci.
+    readMode,
+    descriptionDraft,
+    whyImportantDraft,
+    blockedDraft,
+    isAnalyzingWorksheet,
+    /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t,
+  ]);
 
   // ── MIGRACJA (D-8): layout kart lewej nawigacji z WIĄŻĄCEGO kontraktu karty ──
   // Za flagą (default OFF). Gdy ON: katalog + zestawy płyną z NOTIFICATION_CARD_SPEC
@@ -2476,62 +2407,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   // ── N-mode properties strip fields (after guards — notification is guaranteed) ──
 
   const propertiesFields: NModePropertyField[] = [
-    {
-      id: 'type',
-      label: { en: 'Type', pl: 'Typ' },
-      type: 'custom' as const,
-      value: notification.type,
-      onChange: () => {},
-      readOnly: true,
-      render: () => (
-        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600/60 text-slate-700 dark:text-slate-200">
-          <TypeIcon size={12} className={typeConfig.color} />
-          <span className="truncate">{notification.type.replace(/_/g, ' ')}</span>
-        </div>
-      ),
-    },
-    {
-      id: 'severity',
-      label: { en: 'Severity', pl: 'Priorytet' },
-      type: 'custom' as const,
-      value: notification.severity,
-      onChange: () => {},
-      readOnly: true,
-      render: () => (
-        <div
-          className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium ${severityConfig.bgColor} border ${severityConfig.borderColor}`}
-        >
-          <div className={`w-2 h-2 rounded-full ${severityConfig.color}`} />
-          <span className={severityConfig.textColor}>
-            {isPolish ? severityConfig.label.pl : severityConfig.label.en}
-          </span>
-        </div>
-      ),
-    },
-    {
-      id: 'category',
-      label: { en: 'Category', pl: 'Kategoria' },
-      type: 'text' as const,
-      value: notification.category,
-      onChange: () => {},
-      readOnly: true,
-    },
-    {
-      id: 'project',
-      label: { en: 'Project', pl: 'Projekt' },
-      type: 'text' as const,
-      value: notification.projectName || (notification.data as any)?.projectName || '—',
-      onChange: () => {},
-      readOnly: true,
-    },
-    {
-      id: 'created',
-      label: { en: 'Created', pl: 'Utworzono' },
-      type: 'text' as const,
-      value: formatDate(notification.createdAt),
-      onChange: () => {},
-      readOnly: true,
-    },
+    // ETAP 2.1 — KOLEJNOSC KANONICZNA tabeli Wlasciwosci karty n-Type:
+    // Status · Priorytet/Waga · Zrodlo · Typ powiadomienia · Termin/data ·
+    // Wlasciciel (gdy wystepuje). „Projekt" zszedl do sekcji Powiazania (to
+    // relacja, nie wlasciwosc); „Kategoria" zostaje jako uszczegolowienie typu.
     {
       id: 'status',
       label: { en: 'Status', pl: 'Status' },
@@ -2564,6 +2443,89 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         </div>
       ),
     },
+    {
+      id: 'severity',
+      label: { en: 'Priority', pl: 'Priorytet' },
+      type: 'custom' as const,
+      value: notification.severity,
+      onChange: () => {},
+      readOnly: true,
+      render: () => (
+        <div
+          className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium ${severityConfig.bgColor} border ${severityConfig.borderColor}`}
+        >
+          <div className={`w-2 h-2 rounded-full ${severityConfig.color}`} />
+          <span className={severityConfig.textColor}>
+            {isPolish ? severityConfig.label.pl : severityConfig.label.en}
+          </span>
+        </div>
+      ),
+    },
+    {
+      id: 'source',
+      label: { en: 'Source', pl: 'Źródło' },
+      type: 'custom' as const,
+      value: notifCreator.label,
+      onChange: () => {},
+      readOnly: true,
+      render: () => {
+        const CreatorIcon = notifCreator.icon;
+        return (
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-c-surface-raised border border-c-border text-c-text-secondary">
+            <CreatorIcon size={12} className="text-c-text-muted" />
+            <span className="truncate">{notifCreator.label}</span>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'type',
+      label: { en: 'Notification type', pl: 'Typ powiadomienia' },
+      type: 'custom' as const,
+      value: notification.type,
+      onChange: () => {},
+      readOnly: true,
+      render: () => (
+        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-c-surface-raised border border-c-border text-c-text-secondary">
+          <TypeIcon size={12} className={typeConfig.color} />
+          <span className="truncate">{notification.type.replace(/_/g, ' ')}</span>
+        </div>
+      ),
+    },
+    {
+      id: 'category',
+      label: { en: 'Category', pl: 'Kategoria' },
+      type: 'text' as const,
+      value: notification.category,
+      onChange: () => {},
+      readOnly: true,
+    },
+    {
+      id: 'created',
+      label: { en: 'Date', pl: 'Data' },
+      type: 'text' as const,
+      value: formatDate(notification.createdAt),
+      onChange: () => {},
+      readOnly: true,
+    },
+    // Wlasciciel — TYLKO gdy dane go niosa. Powiadomienie systemowe wlasciciela
+    // nie ma; pusty wiersz „Wlasciciel: —" bylby ceremonia, nie informacja.
+    ...((notification.data as any)?.ownerName || (notification.data as any)?.createdByName
+      ? [
+          {
+            id: 'owner',
+            label: { en: 'Owner', pl: 'Właściciel' },
+            type: 'text' as const,
+            value: String(
+              (notification.data as any)?.ownerName ||
+                (notification.data as any)?.createdByName ||
+                ''
+            ),
+            onChange: () => {},
+            readOnly: true,
+          } as NModePropertyField,
+        ]
+      : []),
   ];
 
   // ── SPEC-N §2.3 — DOKLADNIE JEDEN primary, i to w Menu 1 ────────────────────
@@ -2606,12 +2568,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   ) as React.FC<{ size?: number; className?: string }>;
 
   // SPEC-N §2.8 — skrot musi byc odkrywalny. `M`/`D` mialy ZERO podpowiedzi na
-  // ekranie; `D` kasowal powiadomienie. Badge <kbd> renderujemy przy akcjach
-  // w pasku (nizej), a tooltip dubluje informacje dla czytnika ekranu i dla
-  // slotu primary, ktory badge'a nie ma — patrz DLUG w raporcie.
-  const markReadShortcutTitle = isPolish
-    ? 'Oznacz jako przeczytane (skrót: M)'
-    : 'Mark as read (shortcut: M)';
+  // ekranie; `D` kasowal powiadomienie. Po ETAPIE 2.1 badge `M` renderuje sie
+  // przy akcji „Oznacz przeczytane" w sekcji AKCJE prawego panelu, a badge `D`
+  // przy pozycji „Usun" w menu `⋮`; ponizszy tooltip dubluje `D` dla czytnika
+  // ekranu. (Tooltip `M` zniknal razem z paskowym przyciskiem — badge zostal.)
   const deleteShortcutTitle = isPolish
     ? 'Usuń powiadomienie (skrót: D — zapyta o potwierdzenie)'
     : 'Delete notification (shortcut: D — asks for confirmation)';
@@ -2680,7 +2640,128 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             : []),
         ];
 
+  // ── Menu trzech kropek Menu 1 (standard n-Type §3.5) ─────────────────────
+  // Dzialania TECHNICZNE i ADMINISTRACYJNE artefaktu. „Usun" na koncu, jako
+  // destrukcyjne (separator + ton c-danger rysuje powloka). Karta NIE rysuje
+  // juz wlasnego drugiego kebaba w pasku pod naglowkiem.
+  const headerOverflowItems = [
+    {
+      id: 'mute-this',
+      label: t('myWork.notificationDetail.muteThis', 'Mute this'),
+      icon: BellOff as React.FC<{ size?: number; className?: string }>,
+      onClick: () => void handleMuteThis(),
+    },
+    {
+      id: 'mute-similar',
+      label: t('myWork.notificationDetail.muteSimilarType', 'Mute similar (type)'),
+      icon: BellOff as React.FC<{ size?: number; className?: string }>,
+      onClick: () => void handleMuteSimilar(),
+    },
+    {
+      id: 'delete',
+      label: t('myWork.notificationDetail.delete', 'Delete'),
+      icon: Trash2 as React.FC<{ size?: number; className?: string }>,
+      onClick: () => void handleDelete(),
+      title: deleteShortcutTitle,
+      danger: true,
+    },
+  ];
+
+  // Zrodla i zalozenia — dlaczego ta karta w ogole powstala. Tresc: „Dlaczego
+  // to dostales" (regula silnika) + linia kontekstu z kontraktu. Oba wyszly
+  // z centrum (byly amber-calloutem i wierszem w „Wynika z").
+  const notifWhyYouGotIt =
+    contract.whyYouGotIt || String((notification.data as any)?.whyYouGotIt || '');
+  const notifContextLine = contract.contextLine || '';
+  const hasSourcesSection = Boolean(notifWhyYouGotIt || notifContextLine);
+
+  // ── Sekcja AKCJE (ETAP 2.1) ────────────────────────────────────────────────
+  // Wymaganie wlasciciela: „Przeczytane" i „Odloz" zjezdzaja z naglowka do
+  // prawego panelu — pionowo, pelna szerokosc, glowna wyrozniona. „Usun" idzie
+  // do menu trzech kropek (dzialanie destrukcyjne), a w naglowku zostaje JEDNA
+  // rekomendowana akcja (slot primary `NModeHeader.primaryAction`).
+  //
+  // Anty-duplikacja (§2.6): gdy powiadomienie NIE ma zrodla, slotem primary w
+  // naglowku jest wlasnie „Oznacz przeczytane" — wtedy panel go NIE powtarza.
+  // Wyrozniona (`colorScheme:'primary'` = neutralny wysoki kontrast, nigdy
+  // crimson) jest zawsze PIERWSZA akcja na liscie.
+  const showMarkReadInPanel = hasSourceCta;
+  const panelActionButtons = [
+    ...(showMarkReadInPanel
+      ? [
+          {
+            label: t('myWork.notificationDetail.primaryMarkRead', 'Mark as read'),
+            icon: MailOpen,
+            colorScheme: 'primary' as const,
+            onClick: handleMarkRead,
+            disabled: notification.isRead,
+            shortcut: 'M',
+          },
+        ]
+      : []),
+    {
+      label: isSnoozed
+        ? t('myWork.notificationDetail.snoozed3', 'Snoozed')
+        : t('myWork.notificationDetail.snooze', 'Snooze'),
+      icon: Clock,
+      colorScheme: (showMarkReadInPanel ? 'neutral' : 'primary') as 'neutral' | 'primary',
+      onClick: () => setShowSnoozeMenu((v) => !v),
+    },
+  ];
+
   const rightPanelSections: ArtifactRightPanelSection[] = [
+    // KOLEJNOSC KANONICZNA (standard n-Type §7.2): Akcje → Wlasciwosci →
+    // Powiazania → Zrodla i zalozenia → Rezultaty → [Komentarze] → Historia.
+    // Domyslnie rozwiniete TYLKO Akcje i Wlasciwosci (§8).
+    //   • „Komentarze" — sekcja skasowana wczesniejsza decyzja wlasciciela K2
+    //     („wiadomosc systemowa nie jest artefaktem wspolpracy"). Standard
+    //     n-Type §7.8 ja przewiduje → KOLIZJA DWOCH USTALEN. NIE wskrzeszam
+    //     jej samowolnie; zgloszone do decyzji w raporcie ETAPU 2.1.
+    {
+      id: 'actions',
+      label: t('myWork.notificationDetail.panelActions', 'Actions'),
+      icon: Zap,
+      defaultOpen: true,
+      children: (
+        // stopPropagation: globalny `click` na window zamyka rozwiniete presety
+        // odlozenia (patrz `handleClickOutside`). Bez tego kliknięcie „Odloz"
+        // otwieraloby i natychmiast zamykalo liste.
+        <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+          {/* Pionowo, pelna szerokosc: kazdy przycisk w osobnym wierszu. */}
+          <PreviewActionBar rows={panelActionButtons.map((b) => ({ buttons: [b] }))} />
+
+          {/* Presety odlozenia — rozwijane pod „Odloz", bez dropdownu
+              nachodzacego na waski panel. */}
+          {showSnoozeMenu && (
+            <div className="space-y-1.5 rounded-lg border border-c-border-subtle bg-c-surface p-2">
+              {[
+                { preset: '1h', label: t('myWork.notificationDetail.label', '1 hour') },
+                { preset: '4h', label: t('myWork.notificationDetail.label2', '4 hours') },
+                { preset: '1d', label: t('myWork.notificationDetail.label3', '1 day') },
+                { preset: '3d', label: t('myWork.notificationDetail.label4', '3 days') },
+              ].map((option) => (
+                <button
+                  key={option.preset}
+                  onClick={() => handleSnooze(option.preset)}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  <Clock size={12} className="shrink-0 text-c-text-muted" />
+                  {option.label}
+                </button>
+              ))}
+              {isSnoozed && snoozedUntil && (
+                <p className="px-2 pt-1 text-[10px] text-c-text-muted border-t border-c-border-subtle">
+                  {t('myWork.notificationDetail.snoozedUntil', 'Snoozed until')}:{' '}
+                  {new Date(snoozedUntil).toLocaleString(
+                    t('myWork.notificationDetail.toLocaleString', 'en-US')
+                  )}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      ),
+    },
     {
       id: 'properties',
       label: t('myWork.notificationDetail.panelProperties', 'Properties'),
@@ -2700,6 +2781,115 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             value: field.render ? field.render() : field.value || '—',
             mono: field.id === 'created',
           }))}
+        />
+      ),
+    },
+    {
+      id: 'relations',
+      label: t('myWork.notificationDetail.panelRelations', 'Relations'),
+      icon: Link2,
+      defaultOpen: false,
+      badge: notifRelationItems.length,
+      isEmpty: notifRelationItems.length === 0,
+      emptyLabel: t(
+        'myWork.notificationDetail.noLinkedSourceSystem',
+        'No linked source — system notification'
+      ),
+      children: (
+        <div className="space-y-1.5">
+          {notifRelationItems.map((item) => {
+            const isClickable = Boolean(onNavigateToSource);
+            const itemType = item.type.toLowerCase();
+            return (
+              <div
+                key={item.id}
+                className={`group flex flex-col gap-1 rounded-md px-1 py-1 -mx-1 transition-colors ${
+                  isClickable ? 'hover:bg-c-surface-raised cursor-pointer' : ''
+                }`}
+                onClick={isClickable ? () => onNavigateToSource!(itemType, item.id) : undefined}
+                role={isClickable ? 'button' : undefined}
+                tabIndex={isClickable ? 0 : undefined}
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-border text-c-text-muted bg-c-surface-raised uppercase shrink-0">
+                    {item.type}
+                  </span>
+                  <span className="truncate text-xs text-c-text">{item.title}</span>
+                </div>
+                <button
+                  className="self-start inline-flex items-center gap-1 text-[10px] font-mono text-c-text-muted hover:text-c-info transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(item.id);
+                    toast.success(t('myWork.notificationDetail.toastSuccess9', 'ID copied'));
+                  }}
+                  title={t('myWork.notificationDetail.title', 'Copy ID')}
+                >
+                  {String(item.id).length > 22 ? `${String(item.id).slice(0, 22)}...` : item.id}
+                  <Copy
+                    size={10}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      ),
+    },
+    {
+      id: 'sources',
+      label: t('myWork.notificationDetail.panelSources', 'Sources & assumptions'),
+      icon: BookOpen,
+      defaultOpen: false,
+      isEmpty: !hasSourcesSection,
+      emptyLabel: t('myWork.notificationDetail.noSources', 'No source information'),
+      children: (
+        <div className="space-y-3">
+          {notifWhyYouGotIt && (
+            <div className="space-y-1">
+              <p className="text-[11px] uppercase tracking-wide text-c-text-muted">
+                {t('myWork.notificationDetail.whyYouGotIt', 'Why you got it')}
+              </p>
+              <p className="text-xs leading-relaxed text-c-text-secondary">{notifWhyYouGotIt}</p>
+            </div>
+          )}
+          {notifContextLine && (
+            <div className="space-y-1">
+              <p className="text-[11px] uppercase tracking-wide text-c-text-muted">
+                {t('myWork.notificationDetail.type2', 'Context')}
+              </p>
+              <p className="text-xs leading-relaxed text-c-text-secondary">{notifContextLine}</p>
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      // REZULTATY (§7.7) — sekcja warunkowa: „dzialania wynikowe", ktore
+      // TWORZA lub WYSYLAJA efekt artefaktu (w odroznieniu od Akcji, ktore
+      // zmieniaja jego stan). Powiadomienie ma dokladnie jedno takie dzialanie:
+      // „Zapisz jako notatke" = utworz kolejny artefakt. Nic wiecej NIE
+      // dopisuje — czego dane nie niosa, tego nie wymyslam.
+      id: 'results',
+      label: t('myWork.notificationDetail.panelResults', 'Results'),
+      icon: FileText,
+      defaultOpen: false,
+      children: (
+        <PreviewActionBar
+          rows={[
+            {
+              buttons: [
+                {
+                  label: t('myWork.notificationDetail.saveAsNote', 'Save as note'),
+                  icon: FileText,
+                  colorScheme: 'neutral' as const,
+                  onClick: () => void handleSaveAsNote(),
+                  disabled: savingAsNote,
+                },
+              ],
+            },
+          ]}
         />
       ),
     },
@@ -2804,6 +2994,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             presentationMode={presentationMode}
             onPresentationModeChange={setPresentationMode}
             primaryAction={headerPrimaryAction}
+            // Standard n-Type §3.5 — JEDNO menu trzech kropek na ekranie,
+            // w Menu 1, na dzialania techniczne i administracyjne. Karta
+            // dokleja tu swoje pozycje zamiast rysowac wlasny drugi kebab.
+            extraOverflowItems={headerOverflowItems}
           />
 
           {/* ═══════════ N MODE ═══════════════════════════════════════════
@@ -2829,198 +3023,62 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                ═══════════════════════════════════════════════════════════════ */}
           {presentationMode === 'n' && (
             <div className="col-span-full space-y-4 mt-4">
-              {/* ── ActionBar ────────────────────────────────────────────────
-                   SPEC-N §2.3 — DOKLADNIE JEDEN primary i zyje on w Menu 1
-                   (naglowek, prop `NModeHeader.primaryAction` wyzej), nie tutaj.
-                   Reguly wyboru wg pakietu M2 pkt 3: jest zrodlo → "Otworz …";
-                   brak zrodla → "Oznacz przeczytane". Wczesniej karta miala ZERO
-                   primary: cztery warianty CTA zrodla renderowaly sie tu jako
-                   zwykle outline'y, wiec nic nie prowadzilo uzytkownika.
-                   Zaden przycisk w tym pasku nie jest solid — solid ma prawo byc
-                   wylacznie slot primary.
+              {/* ── MENU 2 (pasek pod naglowkiem) — standard n-Type §4.2 ────
+                   BYLO: „Przeczytane" + „Odloz" + „Usun" + „…" + AI — lista
+                   dzialan zamiast jednej rekomendowanej akcji (zarzut
+                   wlasciciela 2026-07-23), plus DRUGIE menu trzech kropek obok
+                   kebaba Menu 1.
+                   JEST — taksonomia akcji ze standardu §3.5:
+                     • naglowek (Menu 1)   → JEDNA rekomendowana akcja (slot primary);
+                     • panel / Akcje       → „Przeczytane", „Odloz" (biznes/workflow);
+                     • panel / Rezultaty   → „Zapisz jako notatke" (tworzy efekt);
+                     • kebab `⋮` Menu 1    → „Wycisz", „Usun" (techniczne/administracyjne)
+                                             — przez `extraOverflowItems`, jedno menu na ekranie.
+                   Ten pasek trzyma juz WYLACZNIE rzeczy nie-bedace akcjami
+                   artefaktu, w trzech strefach (§4.2): lewo = „Sekcje",
+                   srodek = „Edycja | Podglad", prawo = „Analizuj z AI".
+                   Skroty `M`/`D` dzialaja dalej (badge `M` przy akcji w panelu,
+                   badge `D` przy „Usun" w kebabie).
 
-                   SPEC-N §2.4 + DOKTRYNA_GESTOSCI §1 — bylo 7 przyciskow plasko,
-                   bez przepelnienia. Widoczne zostaja maks 4 (Oznacz przeczytane
-                   gdy nie jest primary · Odloz · Usun · kontekstowe AI), a
-                   Zapisz jako notatke / Wycisz to / Wycisz podobne schodza pod "…".
-
-                   SPEC-N §2.8 — skroty maja byc odkrywalne: `M` i `D` dostaja
-                   widoczny badge <kbd> przy swojej akcji. `D` jest destrukcyjny,
-                   wiec przechodzi przez confirm() w `handleDelete` (bylo juz
-                   wczesniej — potwierdzone, nie dodane na nowo).
-
-                   DLUG (do raportu): ten pasek jest bespoke (<div>), nie
-                   `NModeToolbar`. Zakres M2 to naprawa defektow w istniejacej
-                   strukturze; migracja na wspolny komponent (wraz z jego propem
-                   `overflowActions`, ktory zastapilby recznie pisane menu nizej)
-                   to osobny krok. */}
+                   DLUG (bez zmian): pasek jest bespoke (<div>), nie
+                   `NModeToolbar` — migracja na wspolny komponent to osobny krok. */}
               <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
-                <div className="flex items-center gap-2">
-                  {/* Oznacz przeczytane — TYLKO gdy nie jest primary w Menu 1
-                      (§2.6: jedna akcja = jedno miejsce). Badge [M] wg §2.8. */}
-                  {hasSourceCta && (
-                    <button
-                      onClick={handleMarkRead}
-                      disabled={notification.isRead}
-                      title={markReadShortcutTitle}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    >
-                      <MailOpen size={13} />
-                      {t('myWork.notificationDetail.markRead', 'Mark Read')}
-                      <kbd className="ml-1 px-1.5 py-0.5 rounded border border-c-border-subtle bg-c-surface-raised text-[10px] font-semibold leading-none text-c-text-muted">
-                        M
-                      </kbd>
-                    </button>
-                  )}
-
-                  {/* Odloz (dropdown) */}
-                  <div className="relative" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => setShowSnoozeMenu(!showSnoozeMenu)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                        isSnoozed
-                          ? 'border-amber-400/50 text-amber-600 dark:text-amber-400 bg-amber-500/10'
-                          : 'border-amber-300/50 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10'
-                      }`}
-                    >
-                      <Clock size={13} />
-                      {isSnoozed
-                        ? t('myWork.notificationDetail.snoozed3', 'Snoozed')
-                        : t('myWork.notificationDetail.snooze', 'Snooze')}
-                    </button>
-
-                    {/* Snooze dropdown */}
-                    {showSnoozeMenu && (
-                      <div className="absolute top-full left-0 mt-1 w-48 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/60 shadow-xl z-50 py-1">
-                        {[
-                          { preset: '1h', label: t('myWork.notificationDetail.label', '1 hour') },
-                          { preset: '4h', label: t('myWork.notificationDetail.label2', '4 hours') },
-                          { preset: '1d', label: t('myWork.notificationDetail.label3', '1 day') },
-                          { preset: '3d', label: t('myWork.notificationDetail.label4', '3 days') },
-                        ].map((option) => (
-                          <button
-                            key={option.preset}
-                            onClick={() => handleSnooze(option.preset)}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                          >
-                            <Clock size={12} className="text-amber-500 shrink-0" />
-                            {option.label}
-                          </button>
-                        ))}
-                        {isSnoozed && snoozedUntil && (
-                          <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-700/40">
-                            <p className="text-[10px] text-slate-600 dark:text-slate-500">
-                              {t('myWork.notificationDetail.snoozedUntil', 'Snoozed until')}:{' '}
-                              {new Date(snoozedUntil).toLocaleString(
-                                t('myWork.notificationDetail.toLocaleString', 'en-US')
-                              )}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Usun — badge [D] wg §2.8; potwierdzenie w handleDelete */}
-                  <button
-                    onClick={handleDelete}
-                    title={deleteShortcutTitle}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                  >
-                    <Trash2 size={13} />
-                    {t('myWork.notificationDetail.delete', 'Delete')}
-                    <kbd className="ml-1 px-1.5 py-0.5 rounded border border-danger-400/40 bg-danger-500/10 text-[10px] font-semibold leading-none text-danger-600 dark:text-danger-400">
-                      D
-                    </kbd>
-                  </button>
-
-                  {/* Przepelnienie "…" — akcje drugorzedne (§2.4) */}
-                  <div className="relative" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => setShowActionOverflow(!showActionOverflow)}
-                      aria-haspopup="menu"
-                      aria-expanded={showActionOverflow}
-                      aria-label={t('myWork.notificationDetail.moreActions', 'More actions')}
-                      title={t('myWork.notificationDetail.moreActions', 'More actions')}
-                      className="inline-flex items-center justify-center h-[30px] w-[30px] rounded-lg border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    >
-                      <MoreHorizontal size={14} />
-                    </button>
-
-                    {showActionOverflow && (
-                      <div
-                        role="menu"
-                        className="absolute top-full left-0 mt-1 w-56 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/60 shadow-xl z-50 py-1"
-                      >
-                        <button
-                          role="menuitem"
-                          onClick={() => {
-                            setShowActionOverflow(false);
-                            handleSaveAsNote();
-                          }}
-                          disabled={savingAsNote}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          {savingAsNote ? (
-                            <Loader2 size={12} className="animate-spin shrink-0" />
-                          ) : (
-                            <FileText size={12} className="text-slate-600 shrink-0" />
-                          )}
-                          {t('myWork.notificationDetail.saveAsNote', 'Save as note')}
-                        </button>
-                        <button
-                          role="menuitem"
-                          onClick={() => {
-                            setShowActionOverflow(false);
-                            handleMuteThis();
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                        >
-                          <BellOff size={12} className="text-slate-600 shrink-0" />
-                          {t('myWork.notificationDetail.muteThis', 'Mute this')}
-                        </button>
-                        <button
-                          role="menuitem"
-                          onClick={() => {
-                            setShowActionOverflow(false);
-                            handleMuteSimilar();
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                        >
-                          <BellOff size={12} className="text-slate-600 shrink-0" />
-                          {t('myWork.notificationDetail.muteSimilarType', 'Mute similar (type)')}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Kontekstowe AI dla aktywnej sekcji — slot AI (§18.1).
-                      Akcent AI = teal/c-info, NIGDY crimson (pulapka nr 1 CLAUDE.md;
-                      ten przycisk mial primary-* i zostal naprawiony 21.07). Tint 10%,
-                      nie solid — solid rezerwuje §2.3 dla slotu primary. */}
-                  {/* MIGRACJA (za flagą): picker kart „Sekcje ▾ / + Nowa karta ▾"
-                      (rdzeń nieusuwalny, węższy domyślny). Crimson-safe (teal/c-focus). */}
-                  {notificationCardContractEnabled && (
-                    <div className="ml-auto">
+                <div className="grid grid-cols-3 items-center gap-2">
+                  {/* LEWO — „Sekcje" (picker kart; dzis za flaga kontraktu karty) */}
+                  <div className="flex items-center gap-2 justify-self-start">
+                    {notificationCardContractEnabled && (
                       <NModeCardManager layout={notificationCardLayout} isPolish={isPolish} />
-                    </div>
-                  )}
-                  {(activeNSection === 'ai-analysis' ||
-                    activeNSection === 'whats-happening' ||
-                    activeNSection === 'expected-action') && (
-                    <button
-                      onClick={() => handleAnalyzeWithAI(false)}
-                      disabled={isAnalyzingWorksheet}
-                      className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-teal-400/50 text-teal-600 dark:text-teal-300 bg-teal-500/10 hover:bg-teal-500/15 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    >
-                      {isAnalyzingWorksheet ? (
-                        <Loader2 size={13} className="animate-spin" />
-                      ) : (
-                        <Sparkles size={13} />
+                    )}
+                  </div>
+
+                  {/* SRODEK — „Edycja | Podglad", geometrycznie na srodku paska
+                      (siatka 3 kolumn, nie `ml-auto` w wolnym miejscu — §4.2). */}
+                  <div className="justify-self-center">
+                    <ReadEditToggle readMode={readMode} onChange={setReadMode} />
+                  </div>
+
+                  {/* PRAWO (skrajnie) — „Analizuj z AI" dla aktywnej karty.
+                      Akcent AI = teal/c-info, NIGDY crimson (pulapka nr 1 CLAUDE.md).
+                      W trybie Podglad kontrolka AI jest ukryta (§4.4). */}
+                  <div className="flex items-center gap-2 justify-self-end">
+                    {!readMode &&
+                      (activeNSection === 'ai-analysis' ||
+                        activeNSection === 'whats-happening' ||
+                        activeNSection === 'expected-action') && (
+                        <button
+                          onClick={() => handleAnalyzeWithAI(false)}
+                          disabled={isAnalyzingWorksheet}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-teal-400/50 text-teal-600 dark:text-teal-300 bg-teal-500/10 hover:bg-teal-500/15 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        >
+                          {isAnalyzingWorksheet ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            <Sparkles size={13} />
+                          )}
+                          {t('myWork.notificationDetail.analyzeWithAI', 'Analyze with AI')}
+                        </button>
                       )}
-                      {t('myWork.notificationDetail.analyzeWithAI', 'Analyze with AI')}
-                    </button>
-                  )}
+                  </div>
                 </div>
               </div>
 

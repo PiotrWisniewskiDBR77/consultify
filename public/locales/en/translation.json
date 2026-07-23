@@ -3308,7 +3308,13 @@
       "panelHistory": "History",
       "loading": "Loading…",
       "property": "Property",
-      "value": "Value"
+      "value": "Value",
+      "panelActions": "Actions",
+      "panelRelations": "Relations",
+      "panelSources": "Sources & assumptions",
+      "panelResults": "Results",
+      "noSources": "No source information",
+      "noStepsYet": "No steps yet"
     },
     "projects": {
       "failedToLoadProjects": "Failed to load projects",

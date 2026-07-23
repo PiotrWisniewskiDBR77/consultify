@@ -2454,7 +2454,13 @@
       "panelHistory": "Historia",
       "loading": "Wczytywanie…",
       "property": "Właściwość",
-      "value": "Wartość"
+      "value": "Wartość",
+      "panelActions": "Akcje",
+      "panelRelations": "Powiązania",
+      "panelSources": "Źródła i założenia",
+      "panelResults": "Rezultaty",
+      "noSources": "Brak informacji o źródle",
+      "noStepsYet": "Brak kroków"
     },
     "projects": {
       "failedToLoadProjects": "Nie udało się wczytać projektów",
