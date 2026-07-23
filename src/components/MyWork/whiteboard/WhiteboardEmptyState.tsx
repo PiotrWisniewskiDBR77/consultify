@@ -2,6 +2,8 @@ import { Layers, LayoutGrid, Plus, Sparkles, StickyNote } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { FOCUS_RING } from '../canvas/motionTokens';
+
 export interface WhiteboardEmptyStateProps {
   isPl: boolean;
   locked: boolean;
@@ -37,14 +39,14 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
             >
               <button
                 onClick={() => onSeedQuickStart('brainstorm')}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised transition-colors ${FOCUS_RING}`}
               >
                 <Sparkles size={14} />
                 Brainstorm
               </button>
               <button
                 onClick={() => onSeedQuickStart('affinity')}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-c-info hover:brightness-110 transition-all"
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-c-info hover:brightness-110 transition-all ${FOCUS_RING}`}
                 style={{ backgroundColor: 'color-mix(in srgb, var(--c-info) 12%, transparent)' }}
               >
                 <Layers size={14} />
@@ -52,7 +54,7 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
               </button>
               <button
                 onClick={() => onSeedQuickStart('workshop')}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-warning-500/10 text-warning-600 dark:text-warning-400 hover:bg-warning-500/20 transition-colors"
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-warning-500/10 text-warning-600 dark:text-warning-400 hover:bg-warning-500/20 transition-colors ${FOCUS_RING}`}
               >
                 <LayoutGrid size={14} />
                 Workshop wall
@@ -60,7 +62,7 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
             </div>
             <button
               onClick={onAddSticky}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-text text-c-surface hover:brightness-110 transition-all"
+              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-text text-c-surface hover:brightness-110 transition-all ${FOCUS_RING}`}
             >
               <Plus size={14} />
               {t('myWork.whiteboard.empty.addSticky')}
