@@ -25,15 +25,21 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { TEXT_L1 } from '@/styles/typography';
 
+// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+import type { CardAnalysisField } from '@/services/cardAnalysis';
+
 import {
   type CardLayout,
   type NModeArtifactType,
   type NModePropertyField,
   type NModeSection,
+  Menu2AIButton,
   Menu2HowToButton,
+  NCardAIAnalysisPanel,
   NModeMenu2,
   NModeShell,
   SectionsManagerMenu,
+  useCardAIAnalysis,
   useCardLayout,
 } from '../shared/NModeLayout';
 import { DynamicSwotLibraryGraphic } from './DynamicSwotLibraryGraphic';
@@ -1604,6 +1610,110 @@ export function KnownToolDetailView(props: {
     }
   }, [toolCardContractEnabled, sections]);
 
+  // ── ETAP 3 standardu n-Type: „Analizuj z AI" AKTYWNEJ KARTY ────────────────
+  // Kryteria oceny Narzędzia (kontrakt właściciela 2026-07-23) żyją w rubryce
+  // silnika (`ARTIFACT_CRITERIA.tool`): zgodność treści z celem · kompletność
+  // wejść · klarowność procesu · jakość rezultatu · ograniczenia · gotowość do
+  // sesji.
+  //
+  // ★ SLOT AI PRZESTAJE BYĆ PUSTY. Migracja ETAPU 1.2 zostawiła go świadomie
+  //   („karta nie ma żadnej akcji AI") — bo wtedy AI umiało tylko PISAĆ treść,
+  //   a wpis biblioteczny nie ma pól do pisania. Kontrakt ETAPU 3 wprowadza
+  //   funkcję, która niczego nie pisze: OCENIA gotowość karty przed sesją.
+  //   Dla wpisu bibliotecznego to jedyna sensowna akcja AI — i właściciel
+  //   wylicza dla Narzędzia sześć kryteriów, więc slot ma czym być wypełniony.
+  //
+  // ★ WSZYSTKIE POLA TYLKO-DO-ODCZYTU — karta Tool jest READ-ONLY z definicji
+  //   (wspólna baza wiedzy, zero pól edytowalnych; dlatego nie ma tu nawet
+  //   przełącznika Edycja|Podgląd). Panel pokaże Braki/Ryzyka/Sugestie i da
+  //   „Kopiuj treść" zamiast „Zastosuj". Zapis treści biblioteki wymagałby
+  //   endpointu edycji `known-tools` — patrz raport.
+  const toolAnalysisFields = useMemo<CardAnalysisField[]>(() => {
+    const list = (items: readonly string[] | undefined) =>
+      (items ?? [])
+        .filter(Boolean)
+        .map((s) => `- ${s}`)
+        .join('\n');
+
+    const ro = (id: string, label: string, value: string): CardAnalysisField => ({
+      id,
+      label,
+      value,
+      kind: 'text',
+      writable: false,
+    });
+
+    switch (activeSection) {
+      case 'goal':
+        return [
+          ro(
+            'description',
+            isPolish ? 'Opis narzędzia' : 'Tool description',
+            String(tool?.description ?? '')
+          ),
+          ro('whenToUse', isPolish ? 'Kiedy używać' : 'When to use', String(tool?.whenToUse ?? '')),
+        ];
+
+      case 'process':
+        return [
+          // „kompletność wejść" i „klarowność procesu" mają tu swoje realne dane.
+          ro('inputs', isPolish ? 'Wejścia' : 'Inputs', list(tool?.inputs)),
+          ro('steps', isPolish ? 'Kroki procesu' : 'Process steps', list(tool?.steps)),
+        ];
+
+      case 'outcomes':
+        return [
+          ro('outputs', isPolish ? 'Rezultaty' : 'Outputs', list(tool?.outputs)),
+          ro('whatYouGet', isPolish ? 'Co dostajesz' : 'What you get', list(tool?.whatYouGet)),
+          ro('nextSteps', isPolish ? 'Następne kroki' : 'Next steps', list(tool?.nextSteps)),
+        ];
+
+      case 'example':
+        return [
+          ro('example', isPolish ? 'Przykład' : 'Example', String(tool?.example ?? '')),
+          // „ograniczenia" z kryteriów właściciela = częste błędy tej metody.
+          ro(
+            'commonMistakes',
+            isPolish ? 'Ograniczenia i częste błędy' : 'Limitations & common mistakes',
+            list(tool?.commonMistakes)
+          ),
+        ];
+
+      default:
+        return [];
+    }
+  }, [activeSection, isPolish, tool]);
+
+  const buildToolAnalysisInput = useCallback(() => {
+    const ctx = [
+      `${isPolish ? 'Typ narzędzia' : 'Tool type'}: ${tool?.toolType ?? '—'}`,
+      `${isPolish ? 'Kategoria' : 'Category'}: ${tool?.libraryCategory ?? '—'}`,
+      `${isPolish ? 'Opis' : 'Description'}: ${tool?.description ?? '—'}`,
+      `${isPolish ? 'Kiedy używać' : 'When to use'}: ${tool?.whenToUse ?? '—'}`,
+      // „gotowość do sesji" bez liczby wejść/kroków/rezultatów byłaby zgadywaniem.
+      `${isPolish ? 'Wejścia' : 'Inputs'}: ${(tool?.inputs ?? []).length} · ${isPolish ? 'Kroki' : 'Steps'}: ${(tool?.steps ?? []).length} · ${isPolish ? 'Rezultaty' : 'Outputs'}: ${(tool?.outputs ?? []).length}`,
+      `${isPolish ? 'Aktywne' : 'Active'}: ${tool?.isActive ? 'tak/yes' : 'nie/no'} · ${isPolish ? 'Wkrótce' : 'Coming soon'}: ${tool?.isComingSoon ? 'tak/yes' : 'nie/no'}`,
+    ].join('\n');
+
+    return {
+      artifactType: 'tool' as const,
+      cardId: activeSection,
+      artifactTitle: String(tool?.name ?? ''),
+      artifactContext: ctx,
+      fields: toolAnalysisFields,
+      isPolish,
+    };
+  }, [activeSection, isPolish, tool, toolAnalysisFields]);
+
+  // Wpis biblioteczny nie ma pól do zapisu — zwracamy `false`, zamiast udawać.
+  const applyToolAnalysisChange = useCallback(() => false, []);
+
+  const toolCardAnalysis = useCardAIAnalysis({
+    activeCardId: activeSection,
+    buildInput: buildToolAnalysisInput,
+    applyChange: applyToolAnalysisChange,
+  });
+
   // ── SPEC-N §2.2 — PRAWY PANEL (wcześniej nie istniał w ogóle) ──────────────
   // Właściwości renderowały się jako `NModePropertiesStrip` (pozioma listwa pod
   // nagłówkiem) — dokładnie ten anty-wzorzec, który §2.2 nazywa „brakiem całej
@@ -1700,7 +1810,8 @@ export function KnownToolDetailView(props: {
   }
 
   return (
-    <NModeShell
+    <>
+      <NModeShell
       loading={loading}
       presentationMode={mode}
       onPresentationModeChange={setMode}
@@ -1743,8 +1854,11 @@ export function KnownToolDetailView(props: {
       //   - brak przelacznika Edycja|Podglad — ta karta to WPIS BIBLIOTECZNY
       //     (opis narzedzia, zero pol edytowalnych), wiec przelacznik nie
       //     mialby czego przelaczac,
-      //   - brak "Analizuj z AI" — karta nie ma zadnej akcji AI; jej wyjsciem
-      //     do pracy jest primary "Startuj sesje" w Menu 1.
+      //   - brak przelacznika Edycja|Podglad zostaje w mocy.
+      // ETAP 3: slot "Analizuj z AI" JEST juz wypelniony. Wczesniejsza uwaga
+      // ("karta nie ma zadnej akcji AI") byla prawdziwa dla AI-ktore-PISZE.
+      // Analiza niczego nie pisze — ocenia gotowosc karty przed sesja, a
+      // wlasciciel wylicza dla Narzedzia szesc kryteriow tej oceny.
       renderActionBar={() => (
         <NModeMenu2
           isPolish={isPolish}
@@ -1762,6 +1876,15 @@ export function KnownToolDetailView(props: {
               disabled={!tool}
             />
           }
+          aiButton={
+            <Menu2AIButton
+              isPolish={isPolish}
+              busy={toolCardAnalysis.loading}
+              aria-expanded={toolCardAnalysis.open}
+              disabled={!tool}
+              onClick={toolCardAnalysis.run}
+            />
+          }
         />
       )}
       activeSection={activeSection}
@@ -1773,6 +1896,24 @@ export function KnownToolDetailView(props: {
           ariaLabel={t('discoveryToolsMain.knownToolDetailView.panelAriaLabel', 'Tool details')}
         />
       }
-    />
+      />
+
+      {/* ── ETAP 3: panel wyników „Analizuj z AI" ─────────────────────────────
+          `writableFieldIds` PUSTE świadomie — karta Tool jest READ-ONLY (wspólna
+          baza wiedzy). Panel pokaże Braki/Ryzyka/Sugestie i „Kopiuj treść"
+          zamiast „Zastosuj", z jawnym powodem. */}
+      <NCardAIAnalysisPanel
+        open={toolCardAnalysis.open}
+        onClose={toolCardAnalysis.close}
+        loading={toolCardAnalysis.loading}
+        result={toolCardAnalysis.result}
+        errorCode={toolCardAnalysis.errorCode}
+        serverErrorCode={toolCardAnalysis.serverErrorCode}
+        onRerun={toolCardAnalysis.rerun}
+        onApplyChange={toolCardAnalysis.applyChange}
+        writableFieldIds={[]}
+        isPolish={isPolish}
+      />
+    </>
   );
 }
