@@ -28,6 +28,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import { FOCUS_RING } from '../canvas/motionTokens';
 import type {
   CanvasToolType,
   IdeaWorkspaceSelection,
@@ -415,7 +416,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
             onClick={handlePointerToggle}
             title={pointerTooltip}
             aria-label={pointerTooltip}
-            className="flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text"
+            className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text ${FOCUS_RING}`}
           >
             <PointerIcon size={15} />
           </button>
@@ -451,7 +452,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           }}
           title={slotTitle}
           aria-label={slotTitle}
-          className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
+          className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${FOCUS_RING} ${
             isActive
               ? 'bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text'
               : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
@@ -538,7 +539,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
                   onClick={() => onToolChange(tool.id)}
                   title={label}
                   aria-label={label}
-                  className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
+                  className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${FOCUS_RING} ${
                     isActive
                       ? 'bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text'
                       : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
@@ -579,7 +580,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
               disabled={isDisabled}
               title={t(slot.tkey, slot.labelEn)}
               aria-label={t(slot.tkey, slot.labelEn)}
-              className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
+              className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${FOCUS_RING} ${
                 isDisabled
                   ? 'opacity-40 cursor-not-allowed text-c-text-secondary dark:text-c-text-muted'
                   : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
