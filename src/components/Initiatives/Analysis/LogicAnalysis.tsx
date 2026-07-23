@@ -672,334 +672,371 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     [onQuickUpdate, t]
   );
 
-  const discoveredDepsPanel =
-    discoveredDeps !== null ? (
-      <div className="m-4 rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
-        <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-c-info dark:text-c-info" />
-            <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
-              {t(
-                'initiatives.analysis.logic.discoveredDeps',
-                'AI discovered potential dependencies'
-              )}
-            </h3>
-            <span className="text-xs text-c-info dark:text-c-info">({discoveredDeps.length})</span>
-          </div>
-          <button
-            onClick={closeWorkspacePanels}
-            className="p-1 rounded text-c-info hover:bg-c-info/30 dark:hover:bg-c-info/30"
-          >
-            <X size={14} />
-          </button>
-        </div>
-        {discoveredDeps.length === 0 ? (
-          <div className="px-4 py-6 text-center">
-            <Check size={24} className="mx-auto mb-2 text-emerald-500" />
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              {t('initiatives.analysis.logic.noNewDeps', 'No additional dependencies discovered')}
-            </p>
-          </div>
-        ) : (
-          <div className="divide-y divide-c-info/20 dark:divide-c-info/15">
-            {discoveredDeps.map((dep, idx) => {
-              const key = `${dep.fromId}::${dep.toId}`;
-              const isAccepted = acceptedDiscovered.has(key);
-              return (
-                <div
-                  key={`${key}-${idx}`}
-                  className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
-                    isAccepted ? 'bg-emerald-500/5 dark:bg-emerald-500/10' : ''
-                  }`}
-                >
-                  <span
-                    className={`shrink-0 w-2 h-2 rounded-full ${
-                      dep.confidence === 'high'
-                        ? 'bg-emerald-500'
-                        : dep.confidence === 'medium'
-                          ? 'bg-amber-500'
-                          : 'bg-slate-400'
-                    }`}
-                    title={`Confidence: ${dep.confidence}`}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-slate-900 dark:text-white truncate max-w-[180px]">
-                        {dep.fromName}
-                      </span>
-                      <ArrowRight size={14} className="text-c-info shrink-0" />
-                      <span className="text-slate-600 dark:text-slate-400 truncate max-w-[180px]">
-                        {dep.toName}
-                      </span>
-                      <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                          dep.confidence === 'high'
-                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                            : dep.confidence === 'medium'
-                              ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                              : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
-                        }`}
-                      >
-                        {dep.confidence}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      {dep.reason}
-                    </p>
-                  </div>
-                  {isAccepted ? (
-                    <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                      <Check size={12} /> Accepted
-                    </span>
-                  ) : (
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => handleAcceptDiscovered(dep)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-                      >
-                        <Check size={12} /> Accept
-                      </button>
-                      <button
-                        onClick={() =>
-                          setDiscoveredDeps((prev) => prev?.filter((_, i) => i !== idx) ?? null)
-                        }
-                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    ) : null;
-
-  const cyclesPanel =
-    cycles !== null ? (
-      <div
-        className={`m-4 rounded-xl border overflow-hidden ${
-          cycles.length > 0
-            ? 'border-danger-200 dark:border-danger-900/50 bg-danger-500/5 dark:bg-danger-500/10'
-            : 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
-        }`}
-      >
-        <div
-          className={`px-4 py-3 border-b flex items-center justify-between ${
-            cycles.length > 0
-              ? 'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-900/50'
-              : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <Shuffle
-              size={16}
-              className={
-                cycles.length > 0
-                  ? 'text-danger-600 dark:text-danger-400'
-                  : 'text-emerald-600 dark:text-emerald-400'
-              }
-            />
-            <h3
-              className={`text-sm font-semibold ${
-                cycles.length > 0
-                  ? 'text-danger-700 dark:text-danger-300'
-                  : 'text-emerald-700 dark:text-emerald-300'
-              }`}
+  // ★ Cztery panele MUSZĄ być zapamiętane (useMemo).
+  //
+  // Defekt sprzed tej zmiany (potwierdzony na `odbior/hub-2026-07-23`, przed
+  // jakąkolwiek moją edytą): to były zwykłe wyrażenia warunkowe, więc każdy
+  // render tworzył NOWY obiekt. Efekt niżej ma je w tablicy zależności i woła
+  // `onRegisterWorkspacePanel` → `setWorkspacePanel` w rodzicu → rodzic
+  // renderuje → dziecko tworzy nowy obiekt panelu → zależności „się zmieniły" →
+  // efekt znowu… czyli pętla nieskończona. Objaw: „Maximum update depth
+  // exceeded" i wywalony <LogicAnalysis> po kliknięciu przycisku otwierającego
+  // panel. eslint ostrzegał o tym wprost (react-hooks/exhaustive-deps:
+  // „the conditional could make the dependencies change on every render”).
+  const discoveredDepsPanel = useMemo(
+    () =>
+      discoveredDeps !== null ? (
+        <div className="m-4 rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
+          <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles size={16} className="text-c-info dark:text-c-info" />
+              <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
+                {t(
+                  'initiatives.analysis.logic.discoveredDeps',
+                  'AI discovered potential dependencies'
+                )}
+              </h3>
+              <span className="text-xs text-c-info dark:text-c-info">
+                ({discoveredDeps.length})
+              </span>
+            </div>
+            <button
+              onClick={closeWorkspacePanels}
+              className="p-1 rounded text-c-info hover:bg-c-info/30 dark:hover:bg-c-info/30"
             >
-              {cycles.length > 0
-                ? t('initiatives.analysis.logic.cyclesFound', '{{count}} cycle(s) detected', {
-                    count: cycles.length,
-                  })
-                : t('initiatives.analysis.logic.noCycles', 'No cycles detected')}
-            </h3>
+              <X size={14} />
+            </button>
           </div>
-          <button
-            onClick={closeWorkspacePanels}
-            className="p-1 rounded text-slate-500 hover:bg-slate-200/30 dark:hover:bg-navy-700/50"
-          >
-            <X size={14} />
-          </button>
-        </div>
-        {cycles.map((c, idx) => (
-          <div
-            key={idx}
-            className="px-4 py-3 border-b border-danger-200/50 dark:border-danger-900/30"
-          >
-            <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
-              {c.pathNames.map((name, ni) => (
-                <React.Fragment key={ni}>
-                  <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded ${
-                      ni === 0 || ni === c.pathNames.length - 1
-                        ? 'bg-danger-500/20 text-danger-700 dark:text-danger-300'
-                        : 'bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
+          {discoveredDeps.length === 0 ? (
+            <div className="px-4 py-6 text-center">
+              <Check size={24} className="mx-auto mb-2 text-emerald-500" />
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {t('initiatives.analysis.logic.noNewDeps', 'No additional dependencies discovered')}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-c-info/20 dark:divide-c-info/15">
+              {discoveredDeps.map((dep, idx) => {
+                const key = `${dep.fromId}::${dep.toId}`;
+                const isAccepted = acceptedDiscovered.has(key);
+                return (
+                  <div
+                    key={`${key}-${idx}`}
+                    className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                      isAccepted ? 'bg-emerald-500/5 dark:bg-emerald-500/10' : ''
                     }`}
                   >
-                    {name}
-                  </span>
-                  {ni < c.pathNames.length - 1 && (
-                    <ArrowRight size={12} className="text-danger-400 shrink-0" />
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              <Wrench size={10} className="inline mr-1" />
-              {c.suggestion}
-            </p>
-          </div>
-        ))}
-      </div>
-    ) : null;
-
-  const criticalPathPanel = showCriticalPath ? (
-    <div className="m-4 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-500/5 dark:bg-amber-500/10 overflow-hidden">
-      <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Route size={16} className="text-amber-600 dark:text-amber-400" />
-          <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-            {t('initiatives.analysis.logic.criticalPathTitle', 'Critical Path')}
-            {criticalPath.totalDays > 0 && (
-              <span className="ml-2 text-xs font-normal text-amber-600/70 dark:text-amber-400/70">
-                ({criticalPath.totalDays} days)
-              </span>
-            )}
-          </h3>
-        </div>
-        <button
-          onClick={closeWorkspacePanels}
-          className="p-1 rounded text-amber-500 hover:bg-amber-200/30 dark:hover:bg-amber-800/30"
-        >
-          <X size={14} />
-        </button>
-      </div>
-      {criticalPath.path.length === 0 ? (
-        <div className="px-4 py-6 text-center">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            {t(
-              'initiatives.analysis.logic.noCriticalPath',
-              'No dependency chain found — add dependencies first'
-            )}
-          </p>
-        </div>
-      ) : (
-        <div className="p-4">
-          <div className="flex items-center gap-1 flex-wrap">
-            {criticalPath.path.map((step, idx) => (
-              <React.Fragment key={step.id}>
-                <button
-                  onClick={() => onOpenInitiative(step.id)}
-                  className="group relative px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-amber-200 dark:border-amber-800/50 hover:border-c-info dark:hover:border-c-info transition-colors shadow-sm"
-                >
-                  <div className="text-xs font-medium text-slate-900 dark:text-white">
-                    {step.name}
-                  </div>
-                  {step.startDate && step.endDate && (
-                    <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
-                      {new Date(step.startDate).toLocaleDateString()} —{' '}
-                      {new Date(step.endDate).toLocaleDateString()}
-                      <span className="ml-1 text-amber-500">
-                        ({daysBetween(step.startDate, step.endDate)}d)
-                      </span>
+                    <span
+                      className={`shrink-0 w-2 h-2 rounded-full ${
+                        dep.confidence === 'high'
+                          ? 'bg-emerald-500'
+                          : dep.confidence === 'medium'
+                            ? 'bg-amber-500'
+                            : 'bg-slate-400'
+                      }`}
+                      title={t('initiatives.analysis.logic.confidence', 'Confidence: {{level}}', {
+                        level: dep.confidence,
+                      })}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-slate-900 dark:text-white truncate max-w-[180px]">
+                          {dep.fromName}
+                        </span>
+                        <ArrowRight size={14} className="text-c-info shrink-0" />
+                        <span className="text-slate-600 dark:text-slate-400 truncate max-w-[180px]">
+                          {dep.toName}
+                        </span>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                            dep.confidence === 'high'
+                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                              : dep.confidence === 'medium'
+                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
+                          }`}
+                        >
+                          {dep.confidence}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {dep.reason}
+                      </p>
                     </div>
-                  )}
-                </button>
-                {idx < criticalPath.path.length - 1 && (
-                  <ArrowRight size={16} className="text-amber-400 shrink-0 mx-1" />
-                )}
-              </React.Fragment>
-            ))}
-          </div>
+                    {isAccepted ? (
+                      <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                        <Check size={12} /> {t('initiatives.analysis.logic.accepted', 'Accepted')}
+                      </span>
+                    ) : (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => handleAcceptDiscovered(dep)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                        >
+                          <Check size={12} /> {t('initiatives.analysis.logic.accept', 'Accept')}
+                        </button>
+                        <button
+                          onClick={() =>
+                            setDiscoveredDeps((prev) => prev?.filter((_, i) => i !== idx) ?? null)
+                          }
+                          className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
-      {blockers.length > 0 && (
-        <div className="border-t border-amber-200/50 dark:border-amber-900/30">
-          <div className="px-4 py-2 bg-amber-50/50 dark:bg-amber-900/10">
-            <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
-              {t('initiatives.analysis.logic.blockersTitle', 'Blockers')}
-            </h4>
-          </div>
-          <div className="divide-y divide-amber-200/40 dark:divide-amber-900/20">
-            {blockers.map((b) => (
-              <div key={b.initiativeId} className="flex items-center gap-3 px-4 py-2.5 text-sm">
-                <Zap size={14} className="text-amber-500 shrink-0" />
-                <button
-                  onClick={() => onOpenInitiative(b.initiativeId)}
-                  className="font-medium text-slate-900 dark:text-white hover:text-c-info dark:hover:text-c-info transition-colors truncate"
-                >
-                  {b.initiativeName}
-                </button>
-                <span className="ml-auto shrink-0 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-medium">
-                  {t('initiatives.analysis.logic.blockerBadge', '{{count}} dependent(s)', {
-                    count: b.dependentCount,
-                  })}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  ) : null;
+      ) : null,
+    [discoveredDeps, acceptedDiscovered, closeWorkspacePanels, handleAcceptDiscovered, t]
+  );
 
-  const sequencerPanel = showSequencer ? (
-    <div className="m-4 rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-500/5 dark:bg-indigo-500/10 overflow-hidden">
-      <div className="px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-900/50 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Network size={16} className="text-indigo-600 dark:text-indigo-400" />
-          <h3 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-            {t('initiatives.analysis.logic.sequencerTitle', 'Recommended execution sequence')}
-          </h3>
-        </div>
-        <button
-          onClick={closeWorkspacePanels}
-          className="p-1 rounded text-indigo-500 hover:bg-indigo-200/30 dark:hover:bg-indigo-800/30"
+  const cyclesPanel = useMemo(
+    () =>
+      cycles !== null ? (
+        <div
+          className={`m-4 rounded-xl border overflow-hidden ${
+            cycles.length > 0
+              ? 'border-danger-200 dark:border-danger-900/50 bg-danger-500/5 dark:bg-danger-500/10'
+              : 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
+          }`}
         >
-          <X size={14} />
-        </button>
-      </div>
-      {sequenceSteps.length === 0 ? (
-        <div className="px-4 py-6 text-center">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            {t('initiatives.analysis.logic.noInitiatives', 'No initiatives to sequence')}
-          </p>
-        </div>
-      ) : (
-        <div className="divide-y divide-indigo-200/50 dark:divide-indigo-900/30">
-          {sequenceSteps.map((step) => (
-            <div key={step.phase} className="px-4 py-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-7 h-7 rounded-full bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-xs font-bold">
-                  {step.phase}
-                </span>
-                <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-                  Phase {step.phase}
-                </span>
-              </div>
-              <div className="space-y-1 ml-9">
-                {step.initiatives.map((init) => (
-                  <div key={init.id} className="flex items-center gap-2 text-sm">
-                    <button
-                      onClick={() => onOpenInitiative(init.id)}
-                      className="font-medium text-slate-900 dark:text-white hover:text-c-info dark:hover:text-c-info transition-colors truncate max-w-[250px]"
+          <div
+            className={`px-4 py-3 border-b flex items-center justify-between ${
+              cycles.length > 0
+                ? 'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-900/50'
+                : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Shuffle
+                size={16}
+                className={
+                  cycles.length > 0
+                    ? 'text-danger-600 dark:text-danger-400'
+                    : 'text-emerald-600 dark:text-emerald-400'
+                }
+              />
+              <h3
+                className={`text-sm font-semibold ${
+                  cycles.length > 0
+                    ? 'text-danger-700 dark:text-danger-300'
+                    : 'text-emerald-700 dark:text-emerald-300'
+                }`}
+              >
+                {cycles.length > 0
+                  ? t('initiatives.analysis.logic.cyclesFound', '{{count}} cycle(s) detected', {
+                      count: cycles.length,
+                    })
+                  : t('initiatives.analysis.logic.noCycles', 'No cycles detected')}
+              </h3>
+            </div>
+            <button
+              onClick={closeWorkspacePanels}
+              className="p-1 rounded text-slate-500 hover:bg-slate-200/30 dark:hover:bg-navy-700/50"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          {cycles.map((c, idx) => (
+            <div
+              key={idx}
+              className="px-4 py-3 border-b border-danger-200/50 dark:border-danger-900/30"
+            >
+              <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+                {c.pathNames.map((name, ni) => (
+                  <React.Fragment key={ni}>
+                    <span
+                      className={`text-xs font-medium px-2 py-0.5 rounded ${
+                        ni === 0 || ni === c.pathNames.length - 1
+                          ? 'bg-danger-500/20 text-danger-700 dark:text-danger-300'
+                          : 'bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
+                      }`}
                     >
-                      {init.name}
+                      {name}
+                    </span>
+                    {ni < c.pathNames.length - 1 && (
+                      <ArrowRight size={12} className="text-danger-400 shrink-0" />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                <Wrench size={10} className="inline mr-1" />
+                {c.suggestion}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : null,
+    [cycles, closeWorkspacePanels, t]
+  );
+
+  const criticalPathPanel = useMemo(
+    () =>
+      showCriticalPath ? (
+        <div className="m-4 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-500/5 dark:bg-amber-500/10 overflow-hidden">
+          <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Route size={16} className="text-amber-600 dark:text-amber-400" />
+              <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                {t('initiatives.analysis.logic.criticalPathTitle', 'Critical Path')}
+                {criticalPath.totalDays > 0 && (
+                  <span className="ml-2 text-xs font-normal text-amber-600/70 dark:text-amber-400/70">
+                    ({criticalPath.totalDays} days)
+                  </span>
+                )}
+              </h3>
+            </div>
+            <button
+              onClick={closeWorkspacePanels}
+              className="p-1 rounded text-amber-500 hover:bg-amber-200/30 dark:hover:bg-amber-800/30"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          {criticalPath.path.length === 0 ? (
+            <div className="px-4 py-6 text-center">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {t(
+                  'initiatives.analysis.logic.noCriticalPath',
+                  'No dependency chain found — add dependencies first'
+                )}
+              </p>
+            </div>
+          ) : (
+            <div className="p-4">
+              <div className="flex items-center gap-1 flex-wrap">
+                {criticalPath.path.map((step, idx) => (
+                  <React.Fragment key={step.id}>
+                    <button
+                      onClick={() => onOpenInitiative(step.id)}
+                      className="group relative px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-amber-200 dark:border-amber-800/50 hover:border-c-info dark:hover:border-c-info transition-colors shadow-sm"
+                    >
+                      <div className="text-xs font-medium text-slate-900 dark:text-white">
+                        {step.name}
+                      </div>
+                      {step.startDate && step.endDate && (
+                        <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
+                          {new Date(step.startDate).toLocaleDateString()} —{' '}
+                          {new Date(step.endDate).toLocaleDateString()}
+                          <span className="ml-1 text-amber-500">
+                            ({daysBetween(step.startDate, step.endDate)}d)
+                          </span>
+                        </div>
+                      )}
                     </button>
-                    <span className="text-xs text-slate-600 dark:text-slate-500 truncate">
-                      {init.reason}
+                    {idx < criticalPath.path.length - 1 && (
+                      <ArrowRight size={16} className="text-amber-400 shrink-0 mx-1" />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          )}
+          {blockers.length > 0 && (
+            <div className="border-t border-amber-200/50 dark:border-amber-900/30">
+              <div className="px-4 py-2 bg-amber-50/50 dark:bg-amber-900/10">
+                <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+                  {t('initiatives.analysis.logic.blockersTitle', 'Blockers')}
+                </h4>
+              </div>
+              <div className="divide-y divide-amber-200/40 dark:divide-amber-900/20">
+                {blockers.map((b) => (
+                  <div key={b.initiativeId} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                    <Zap size={14} className="text-amber-500 shrink-0" />
+                    <button
+                      onClick={() => onOpenInitiative(b.initiativeId)}
+                      className="font-medium text-slate-900 dark:text-white hover:text-c-info dark:hover:text-c-info transition-colors truncate"
+                    >
+                      {b.initiativeName}
+                    </button>
+                    <span className="ml-auto shrink-0 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-medium">
+                      {t('initiatives.analysis.logic.blockerBadge', '{{count}} dependent(s)', {
+                        count: b.dependentCount,
+                      })}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
-          ))}
+          )}
         </div>
-      )}
-    </div>
-  ) : null;
+      ) : null,
+    [
+      showCriticalPath,
+      blockers,
+      criticalPath.path,
+      criticalPath.totalDays,
+      closeWorkspacePanels,
+      onOpenInitiative,
+      t,
+    ]
+  );
+
+  const sequencerPanel = useMemo(
+    () =>
+      showSequencer ? (
+        <div className="m-4 rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-500/5 dark:bg-indigo-500/10 overflow-hidden">
+          <div className="px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-900/50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Network size={16} className="text-indigo-600 dark:text-indigo-400" />
+              <h3 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                {t('initiatives.analysis.logic.sequencerTitle', 'Recommended execution sequence')}
+              </h3>
+            </div>
+            <button
+              onClick={closeWorkspacePanels}
+              className="p-1 rounded text-indigo-500 hover:bg-indigo-200/30 dark:hover:bg-indigo-800/30"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          {sequenceSteps.length === 0 ? (
+            <div className="px-4 py-6 text-center">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {t('initiatives.analysis.logic.noInitiatives', 'No initiatives to sequence')}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-indigo-200/50 dark:divide-indigo-900/30">
+              {sequenceSteps.map((step) => (
+                <div key={step.phase} className="px-4 py-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-7 h-7 rounded-full bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-xs font-bold">
+                      {step.phase}
+                    </span>
+                    <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                      Phase {step.phase}
+                    </span>
+                  </div>
+                  <div className="space-y-1 ml-9">
+                    {step.initiatives.map((init) => (
+                      <div key={init.id} className="flex items-center gap-2 text-sm">
+                        <button
+                          onClick={() => onOpenInitiative(init.id)}
+                          className="font-medium text-slate-900 dark:text-white hover:text-c-info dark:hover:text-c-info transition-colors truncate max-w-[250px]"
+                        >
+                          {init.name}
+                        </button>
+                        <span className="text-xs text-slate-600 dark:text-slate-500 truncate">
+                          {init.reason}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null,
+    [showSequencer, sequenceSteps, closeWorkspacePanels, onOpenInitiative, t]
+  );
 
   useEffect(() => {
     if (!onRegisterActions) return;
@@ -1090,16 +1127,19 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     if (!onRegisterWorkspacePanel) return;
     if (discoveredDepsPanel) {
       onRegisterWorkspacePanel({
-        title: 'AI Discover Dependencies',
-        subtitle: 'Review and accept potential cross-initiative dependencies.',
-        icon: <Search size={16} />,
+        title: t('initiatives.analysis.logic.aiDiscover', 'AI Discover Dependencies'),
+        subtitle: t(
+          'initiatives.analysis.logic.aiDiscoverSubtitle',
+          'Proposed by AI from initiative names and descriptions — review and accept the ones that are real.'
+        ),
+        icon: <Sparkles size={16} />,
         content: discoveredDepsPanel,
       });
       return () => onRegisterWorkspacePanel(null);
     }
     if (cyclesPanel) {
       onRegisterWorkspacePanel({
-        title: 'Detect Cycles',
+        title: t('initiatives.analysis.logic.detectCyclesAction', 'Detect Cycles'),
         subtitle: 'Resolve circular dependency chains before sequencing work.',
         icon: <Shuffle size={16} />,
         content: cyclesPanel,
@@ -1108,7 +1148,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     }
     if (criticalPathPanel) {
       onRegisterWorkspacePanel({
-        title: 'Critical Path',
+        title: t('initiatives.analysis.logic.criticalPathAction', 'Critical Path'),
         subtitle: 'See the longest dependency chain and the main blockers.',
         icon: <Route size={16} />,
         content: criticalPathPanel,
@@ -1306,7 +1346,9 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                             ? 'bg-amber-500'
                             : 'bg-slate-400'
                       }`}
-                      title={`Confidence: ${dep.confidence}`}
+                      title={t('initiatives.analysis.logic.confidence', 'Confidence: {{level}}', {
+                        level: dep.confidence,
+                      })}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -1335,7 +1377,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                     </div>
                     {isAccepted ? (
                       <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                        <Check size={12} /> Accepted
+                        <Check size={12} /> {t('initiatives.analysis.logic.accepted', 'Accepted')}
                       </span>
                     ) : (
                       <div className="flex items-center gap-1 shrink-0">
@@ -1345,7 +1387,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                             bg-emerald-500/10 text-emerald-600 dark:text-emerald-400
                             hover:bg-emerald-500/20 transition-colors"
                         >
-                          <Check size={12} /> Accept
+                          <Check size={12} /> {t('initiatives.analysis.logic.accept', 'Accept')}
                         </button>
                         <button
                           onClick={() =>

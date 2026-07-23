@@ -7942,7 +7942,10 @@
         "balanceSubtitle": "Computed from current assignments and capacity — reassign ownership to remove overload.",
         "applying": "Applying…",
         "noCapacity": "No available team member — consider hiring or postponing",
-        "balanced": "Workload is balanced — no changes needed"
+        "balanced": "Workload is balanced — no changes needed",
+        "suggested": "suggested",
+        "reasonHasCapacity": "{{name}} has capacity ({{load}})",
+        "reasonUnassigned": "{{name}} is currently unassigned"
       },
       "feasibility": {
         "title": "Feasibility",
@@ -7966,7 +7969,15 @@
         "gapFixAction": "Fix weak spots",
         "gapFixSubtitle": "Rule-based checks over the feasibility dimensions — apply a targeted fix per finding.",
         "rankingAction": "Ranking",
-        "scoreExplainer": "Score breakdown"
+        "scoreExplainer": "Score breakdown",
+        "probBudget": "Budget is 0 or negative",
+        "sugBudget": "Set a starting budget — 50,000 is a placeholder, replace with a real estimate",
+        "probOwner": "No business owner assigned",
+        "sugOwner": "Assign an owner to improve skills coverage",
+        "probDates": "Missing planned dates",
+        "sugDates": "Set dates: {{start}} → {{end}} (90-day default)",
+        "probRisk": "Risk score very high ({{score}}%)",
+        "sugRisk": "Consider splitting into phases or reducing scope"
       },
       "logic": {
         "title": "Logic",
@@ -8015,7 +8026,11 @@
         "aiErrUnavailable": "AI is temporarily unavailable",
         "detectCyclesAction": "Detect Cycles",
         "criticalPathAction": "Critical Path",
-        "sequencerAction": "Sequencer"
+        "sequencerAction": "Sequencer",
+        "aiDiscoverSubtitle": "Proposed by AI from initiative names and descriptions — review and accept the ones that are real.",
+        "accept": "Accept",
+        "accepted": "Accepted",
+        "confidence": "Confidence: {{level}}"
       },
       "timeline": {
         "title": "Timeline",
@@ -8035,7 +8050,10 @@
         "conflictsAction": "Conflicts",
         "optimizerAction": "Optimizer",
         "optimizerPanelTitle": "Timeline optimization",
-        "delayImpactAction": "Delay Impact"
+        "delayImpactAction": "Delay Impact",
+        "reasonAfterDep": "after dependency completes ({{d}})",
+        "reasonOwnerFree": "owner available after {{d}}",
+        "reasonNoBlockers": "no blockers — can start immediately"
       },
       "completeness": {
         "title": "Completeness",

@@ -247,8 +247,12 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
             initiativeId: f.initiativeId,
             initiativeName: f.initiativeName,
             dimension: 'budget',
-            problem: 'Budget is 0 or negative',
-            suggestion: 'Set minimum budget based on initiative scope',
+            problem: t('initiatives.analysis.feasibility.probBudget', 'Budget is 0 or negative'),
+            // 50 000 to STAŁA, nie wynik liczenia z zakresu — mówimy to wprost.
+            suggestion: t(
+              'initiatives.analysis.feasibility.sugBudget',
+              'Set a starting budget — 50,000 is a placeholder, replace with a real estimate'
+            ),
             autoPayload: { budget: 50000 },
           });
         }
@@ -257,8 +261,11 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
             initiativeId: f.initiativeId,
             initiativeName: f.initiativeName,
             dimension: 'skills',
-            problem: 'No business owner assigned',
-            suggestion: 'Assign an available owner to improve skills coverage',
+            problem: t('initiatives.analysis.feasibility.probOwner', 'No business owner assigned'),
+            suggestion: t(
+              'initiatives.analysis.feasibility.sugOwner',
+              'Assign an owner to improve skills coverage'
+            ),
           });
         }
         if (f.dimensions.time === 'amber') {
@@ -271,8 +278,12 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
             initiativeId: f.initiativeId,
             initiativeName: f.initiativeName,
             dimension: 'time',
-            problem: 'Missing planned dates',
-            suggestion: `Set dates: ${start} → ${end} (90-day default)`,
+            problem: t('initiatives.analysis.feasibility.probDates', 'Missing planned dates'),
+            suggestion: t(
+              'initiatives.analysis.feasibility.sugDates',
+              'Set dates: {{start}} → {{end}} (90-day default)',
+              { start, end }
+            ),
             autoPayload: { plannedStartDate: start, plannedEndDate: end },
           });
         }
@@ -281,15 +292,22 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
             initiativeId: f.initiativeId,
             initiativeName: f.initiativeName,
             dimension: 'risk',
-            problem: `Risk score very high (${f.overallScore}%)`,
-            suggestion: 'Consider splitting into phases or reducing scope',
+            problem: t(
+              'initiatives.analysis.feasibility.probRisk',
+              'Risk score very high ({{score}}%)',
+              { score: f.overallScore }
+            ),
+            suggestion: t(
+              'initiatives.analysis.feasibility.sugRisk',
+              'Consider splitting into phases or reducing scope'
+            ),
           });
         }
       }
 
       setGapFixProposals(proposals);
     }
-  }, [feasibilities]);
+  }, [feasibilities, t]);
 
   const handleApplyGapFix = useCallback(
     async (p: GapFixProposal, idx: number) => {

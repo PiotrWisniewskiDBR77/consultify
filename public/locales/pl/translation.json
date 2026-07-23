@@ -7104,7 +7104,10 @@
         "balanceSubtitle": "Policzone z bieżących przypisań i dostępności — przepisz właścicieli, aby zdjąć przeciążenie.",
         "applying": "Stosuję…",
         "noCapacity": "Brak dostępnego członka zespołu — rozważ rekrutację lub przesunięcie w czasie",
-        "balanced": "Obciążenie jest zrównoważone — żadne zmiany nie są potrzebne"
+        "balanced": "Obciążenie jest zrównoważone — żadne zmiany nie są potrzebne",
+        "suggested": "podpowiedź",
+        "reasonHasCapacity": "{{name}} ma zapas ({{load}})",
+        "reasonUnassigned": "{{name}} nie ma obecnie przypisań"
       },
       "feasibility": {
         "title": "Wykonalność",
@@ -7128,7 +7131,15 @@
         "gapFixAction": "Popraw słabe punkty",
         "gapFixSubtitle": "Reguły sprawdzające wymiary wykonalności — zastosuj celowaną poprawkę do każdego wykrycia.",
         "rankingAction": "Ranking",
-        "scoreExplainer": "Rozbicie wyniku"
+        "scoreExplainer": "Rozbicie wyniku",
+        "probBudget": "Budżet wynosi 0 lub jest ujemny",
+        "sugBudget": "Ustaw budżet startowy — 50 000 to wartość zastępcza, zastąp realnym szacunkiem",
+        "probOwner": "Brak właściciela biznesowego",
+        "sugOwner": "Przypisz właściciela, aby poprawić pokrycie kompetencji",
+        "probDates": "Brak planowanych dat",
+        "sugDates": "Ustaw daty: {{start}} → {{end}} (domyślnie 90 dni)",
+        "probRisk": "Bardzo wysokie ryzyko ({{score}}%)",
+        "sugRisk": "Rozważ podział na fazy lub ograniczenie zakresu"
       },
       "logic": {
         "title": "Logika",
@@ -7177,7 +7188,11 @@
         "aiErrUnavailable": "AI jest chwilowo niedostępne",
         "detectCyclesAction": "Wykryj cykle",
         "criticalPathAction": "Ścieżka krytyczna",
-        "sequencerAction": "Sekwencer"
+        "sequencerAction": "Sekwencer",
+        "aiDiscoverSubtitle": "Zaproponowane przez AI na podstawie nazw i opisów inicjatyw — sprawdź i zaakceptuj te, które są prawdziwe.",
+        "accept": "Akceptuj",
+        "accepted": "Zaakceptowana",
+        "confidence": "Pewność: {{level}}"
       },
       "timeline": {
         "title": "Harmonogram",
@@ -7197,7 +7212,10 @@
         "conflictsAction": "Konflikty",
         "optimizerAction": "Optymalizator",
         "optimizerPanelTitle": "Optymalizacja harmonogramu",
-        "delayImpactAction": "Wpływ opóźnień"
+        "delayImpactAction": "Wpływ opóźnień",
+        "reasonAfterDep": "po zakończeniu zależności ({{d}})",
+        "reasonOwnerFree": "właściciel dostępny po {{d}}",
+        "reasonNoBlockers": "brak blokad — może ruszyć od razu"
       },
       "completeness": {
         "title": "Kompletność",

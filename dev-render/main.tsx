@@ -17,6 +17,7 @@ import '../src/index.css';
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { Toaster } from 'react-hot-toast';
 
 import PanelUwag from './PanelUwag';
 
@@ -119,8 +120,16 @@ const VaultScopeSelectorScreen = React.lazy(() => import('./screens/vault-scope-
 // dotyczyla tamtego statycznego swiata i przy leniwym ladowaniu nie obowiazuje.
 const ExceleReopenVerifyScreen = React.lazy(() => import('./screens/excele-reopen-verify'));
 const OdbiorScreen = React.lazy(() => import('./screens/odbior'));
+const InitiativesPortfolioAnalysisScreen = React.lazy(
+  () => import('./screens/initiatives-portfolio-analysis')
+);
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'initiatives-portfolio-analysis': {
+    label:
+      'Inicjatywy → analiza portfela — 5 podwidoków po wycięciu atrap AI (&sub=…, &ai=ok|fail|empty)',
+    render: () => <InitiativesPortfolioAnalysisScreen />,
+  },
   'ntype-analizuj-ai': {
     label:
       'n-Type ETAP 3 — „Analizuj z AI": menu 2 + panel wyników (Braki · Ryzyka · Sugestie · Zmiany)',
@@ -567,6 +576,11 @@ createRoot(mount).render(
       </React.Suspense>
       {/* Panel uwag właściciela — obecny na KAŻDYM ekranie odbioru (zapis: /__uwagi). */}
       <PanelUwag ekran={screenKey} />
+      {/* Toasty (react-hot-toast). Do 2026-07-23 harness NIE montował <Toaster/>,
+          więc każdy `toast.error(...)` z ekranu był NIEWIDOCZNY — a to właśnie
+          toastem produkt mówi „AI niedostępne, oto powód". Bez tego nie dało się
+          zweryfikować oczami ścieżki awaryjnej. */}
+      <Toaster position="bottom-center" />
     </DebugBoundary>
   </React.StrictMode>
 );

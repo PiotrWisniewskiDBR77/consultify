@@ -290,11 +290,24 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
               toUserName: target.resourceName,
               role: overRes.role,
               reason: sameRoleFree
-                ? `${target.resourceName} has capacity (${formatUtilizationPercent(
-                    (sameRoleFree as ResourceAllocation).utilizationPercent,
-                    i18n.language
-                  )})`
-                : `${target.resourceName} is currently unassigned`,
+                ? t(
+                    'initiatives.analysis.resources.reasonHasCapacity',
+                    '{{name}} has capacity ({{load}})',
+                    {
+                      name: target.resourceName,
+                      load: formatUtilizationPercent(
+                        (sameRoleFree as ResourceAllocation).utilizationPercent,
+                        i18n.language
+                      ),
+                    }
+                  )
+                : t(
+                    'initiatives.analysis.resources.reasonUnassigned',
+                    '{{name}} is currently unassigned',
+                    {
+                      name: target.resourceName,
+                    }
+                  ),
             });
 
             // Update available capacity in-memory. One reassigned initiative adds
@@ -498,7 +511,12 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                     }`}
                   >
                     {proposal.toUserId && (
-                      <option value={proposal.toUserId}>{proposal.toUserName} (AI)</option>
+                      // Znacznik osoby PODPOWIEDZIANEJ przez wyliczenie. Do 2026-07-23
+                      // było tu „(AI)" — przy propozycji, której nie policzył żaden model.
+                      <option value={proposal.toUserId}>
+                        {proposal.toUserName} (
+                        {t('initiatives.analysis.resources.suggested', 'suggested')})
+                      </option>
                     )}
                     {!proposal.toUserId && (
                       <option value="">

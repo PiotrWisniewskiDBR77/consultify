@@ -283,11 +283,23 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
 
         if (depEnd && new Date(depEnd) > new Date(suggestedStart)) {
           suggestedStart = addDays(depEnd, 1);
-          reasons.push(`after dependency completes (${formatDate(depEnd)})`);
+          reasons.push(
+            t(
+              'initiatives.analysis.timeline.reasonAfterDep',
+              'after dependency completes ({{d}})',
+              {
+                d: formatDate(depEnd),
+              }
+            )
+          );
         }
         if (ownerEnd && new Date(ownerEnd) > new Date(suggestedStart)) {
           suggestedStart = addDays(ownerEnd, 1);
-          reasons.push(`owner available after ${formatDate(ownerEnd)}`);
+          reasons.push(
+            t('initiatives.analysis.timeline.reasonOwnerFree', 'owner available after {{d}}', {
+              d: formatDate(ownerEnd),
+            })
+          );
         }
         if (new Date(suggestedStart) < new Date(nextSlot)) {
           suggestedStart = nextSlot;
@@ -297,7 +309,13 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
           init.priority === 'CRITICAL' ? 60 : init.priority === 'HIGH' ? 90 : 120;
         const suggestedEnd = addDays(suggestedStart, durationDays);
 
-        if (reasons.length === 0) reasons.push('no blockers — can start immediately');
+        if (reasons.length === 0)
+          reasons.push(
+            t(
+              'initiatives.analysis.timeline.reasonNoBlockers',
+              'no blockers — can start immediately'
+            )
+          );
 
         proposals.push({
           initiativeId: init.id,
@@ -318,7 +336,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
 
       setScheduleProposals(proposals);
     }
-  }, [dependencies, initiatives]);
+  }, [dependencies, initiatives, t]);
 
   const handleApplySchedule = useCallback(
     async (p: ScheduleProposal, idx: number) => {
