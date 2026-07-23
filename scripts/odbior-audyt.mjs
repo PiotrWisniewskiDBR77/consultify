@@ -63,7 +63,14 @@ function pomiar() {
           let p = el;
           let bg = 'rgba(0, 0, 0, 0)';
           while (p && /rgba\(0, 0, 0, 0\)|transparent/.test(bg)) {
-            bg = w.getComputedStyle(p).backgroundColor;
+            const ps = w.getComputedStyle(p);
+            bg = ps.backgroundColor;
+            // Gradient siedzi w background-image, nie -color: bez tego spacer mijał
+            // kartę z gradientem i mierzył kontrast wobec tła aplikacji (fałszywy negatyw).
+            if (/rgba\(0, 0, 0, 0\)|transparent/.test(bg) && ps.backgroundImage !== 'none') {
+              const stop = ps.backgroundImage.match(/rgba?\([^)]+\)/);
+              if (stop) bg = stop[0];
+            }
             p = p.parentElement;
           }
           const b = bg.match(/\d+/g) || [255, 255, 255];
