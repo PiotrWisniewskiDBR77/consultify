@@ -4267,6 +4267,9 @@ Return ONLY the final comment text.`;
             aiGenerated={cardAI[cKey]}
             isPolish={isPolish}
             hideActions={readMode}
+            /* Podgląd = widok dla klienta: znika też badge stanu redakcyjnego
+               („Szkic AI"/„Edytowane"/„Gotowe"). W Edycji bez zmian. */
+            hideBadge={readMode}
             onRegenerate={() => generateCard(cKey)}
             onGenerate={() => generateCard(cKey)}
             onFillManually={() => setCard(cKey, 'edited')}
@@ -4969,7 +4972,11 @@ Return ONLY the final comment text.`;
     // `danger` = blokada (semantyka krytyczna), reszta neutralna c-*.
     const rpActionBtn =
       'w-full inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg text-xs font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50';
-    const rpActionPrimary = `${rpActionBtn} bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500`;
+    // Akcja główna = neutralna (c-text na c-bg), jak w pozostałych 4 kartach N.
+    // Zieleń `emerald-600` miała kontrast 4,35:1 z białym tekstem — poniżej
+    // progu WCAG AA 4,5:1. `bg-c-text` daje 17,85:1 w jasnym i tyleż w ciemnym,
+    // a „sukces" niesie ikona + treść, nie kolor tła przycisku.
+    const rpActionPrimary = `${rpActionBtn} bg-c-text border-c-text text-c-bg hover:bg-c-text-secondary hover:border-c-text-secondary`;
     const rpActionDestructive = `${rpActionBtn} bg-transparent border-danger-400/60 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10`;
     const rpActionNeutral = `${rpActionBtn} bg-c-surface-raised border-c-border-subtle text-c-text hover:bg-c-surface`;
 
@@ -5518,6 +5525,10 @@ Return ONLY the final comment text.`;
                     activeSection={activeNSection}
                     onSectionChange={setActiveNSection}
                     onSectionReorder={(ids) => taskCardLayout.reorderByIds(ids)}
+                    /* SPEC-A §4.4: w trybie Podgląd uchwyty przeciągania (GripVertical)
+                       są ukryte — nawigacja jest do czytania, nie do przestawiania.
+                       Wzór: Decyzja/Inicjatywa (fala 2). */
+                    readMode={readMode}
                   />
                   <NModeCanvas
                     sections={visibleTaskNModeSections}

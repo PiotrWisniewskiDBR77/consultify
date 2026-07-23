@@ -5638,6 +5638,9 @@ Use userId only from this list:
                               cardStates.description === 'edited'
                             }
                             hideActions={isDecisionStageLocked}
+                            /* Podgląd = widok dla klienta: badge stanu redakcyjnego znika.
+                               Edycja bez zmian (badge zależy tylko od readMode, nie od blokady etapu). */
+                            hideBadge={readMode}
                             onRegenerate={generateDescriptionAI}
                             onEdit={() => setCardState('description', 'edited')}
                             onAccept={() => setCardState('description', 'done')}
@@ -5789,6 +5792,9 @@ Use userId only from this list:
                               cardStates.alternatives === 'edited'
                             }
                             hideActions={isDecisionStageLocked}
+                            /* Podgląd = widok dla klienta: badge stanu redakcyjnego znika.
+                               Edycja bez zmian (badge zależy tylko od readMode, nie od blokady etapu). */
+                            hideBadge={readMode}
                             onRegenerate={generateAlternativesAI}
                             onEdit={() => setCardState('alternatives', 'edited')}
                             onAccept={() => setCardState('alternatives', 'done')}
@@ -6089,6 +6095,9 @@ Use userId only from this list:
                               cardStates.risk === 'ai-draft' || cardStates.risk === 'edited'
                             }
                             hideActions={isDecisionStageLocked}
+                            /* Podgląd = widok dla klienta: badge stanu redakcyjnego znika.
+                               Edycja bez zmian (badge zależy tylko od readMode, nie od blokady etapu). */
+                            hideBadge={readMode}
                             onRegenerate={generateRisksAI}
                             onEdit={() => setCardState('risk', 'edited')}
                             onAccept={() => setCardState('risk', 'done')}
@@ -6131,6 +6140,9 @@ Use userId only from this list:
                               cardStates.consequences === 'edited'
                             }
                             hideActions={isDecisionStageLocked}
+                            /* Podgląd = widok dla klienta: badge stanu redakcyjnego znika.
+                               Edycja bez zmian (badge zależy tylko od readMode, nie od blokady etapu). */
+                            hideBadge={readMode}
                             onRegenerate={() => generateConsequenceScenariosAI()}
                             onEdit={() => setCardState('consequences', 'edited')}
                             onAccept={() => setCardState('consequences', 'done')}

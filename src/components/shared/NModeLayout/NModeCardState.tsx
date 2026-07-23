@@ -320,6 +320,16 @@ export interface NModeCardStateProps {
   hideActions?: boolean;
 
   /**
+   * Ukrycie badge'a stanu w nagłówku karty („Szkic AI" / „Edytowane" / „Gotowe").
+   * Osobno od `hideActions`, bo to inna oś: akcje bywają zdejmowane także przy
+   * zablokowanym etapie w trybie Edycja (`isDecisionStageLocked`), a badge ma
+   * znikać WYŁĄCZNIE w Podglądzie — to informacja o kuchni redakcyjnej, której
+   * klient patrzący na artefakt nie ma prawa widzieć. W trybie Edycja badge
+   * zostaje bez zmian.
+   */
+  hideBadge?: boolean;
+
+  /**
    * Treść karty (pola strukturalne / listy / edytor). Renderowana w stanach
    * `ai-draft` · `edited` · `done`. W `generating`/`empty`/`error` komponent
    * pokazuje własny stan zamiast children.
@@ -346,6 +356,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
   confirmOverwrite = true,
   isPolish: isPolishProp,
   hideActions = false,
+  hideBadge = false,
   children,
 }) => {
   const { t: tHook, i18n } = useTranslation();
@@ -384,7 +395,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
             aria-label={t('sharedComponents.nModeCardState.aiGeneratedLabel')}
           />
         )}
-        <NModeCardBadge status={state} isPolish={isPolish} />
+        {!hideBadge && <NModeCardBadge status={state} isPolish={isPolish} />}
       </h3>
     </div>
   );

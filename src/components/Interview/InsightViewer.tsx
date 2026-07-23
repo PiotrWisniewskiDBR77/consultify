@@ -959,6 +959,10 @@ const InsightSectionCardHeader: React.FC<InsightSectionCardHeaderProps> = ({
   // Pusta karta nie ma stanu do pokazania (empty badge = null) i nie ma treści
   // do regeneracji/akceptacji — pasek nic by nie wnosił.
   if (state === 'empty') return null;
+  // Podgląd (readOnly): pasek nie ma już czego pokazać — akcje są schowane, a
+  // badge stanu redakcyjnego („Szkic AI"/„Edytowane") to kuchnia, nie treść dla
+  // klienta. Spójne z `hideBadge` w NModeCardState. Edycja bez zmian.
+  if (readOnly) return null;
 
   const isDone = state === 'done';
   const actionBase =

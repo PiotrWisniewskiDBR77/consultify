@@ -8758,6 +8758,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             aiGenerated={cardState === 'ai-draft'}
             isPolish={isPolish}
             hideActions={!canEditCards}
+            /* Podgląd = widok dla klienta: badge stanu redakcyjnego znika.
+               `canEditCards` łączy readMode z uprawnieniami bramki, więc badge
+               wiążemy wprost z readMode — w Edycji bez uprawnień badge zostaje. */
+            hideBadge={readMode}
             onRegenerate={
               canUseAi && sectionAiDispatchable
                 ? () => void runSectionAiRef.current(section.id)
