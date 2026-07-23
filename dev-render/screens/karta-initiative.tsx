@@ -154,8 +154,9 @@ const INITIATIVE = {
   tags: ['SMED', 'OEE', 'linia L3', 'lean', 'quick win'],
 
   summary:
-    'Skrócenie średniego czasu przezbrojenia linii pakowania L3 z 96 do 45 minut, aby odblokować ' +
-    'dodatkowe zdolności produkcyjne bez inwestycji w nową linię.',
+    'Skrócenie średniego czasu przezbrojenia linii pakowania L3 z 96 minut (stan wyjściowy; ' +
+    'dziś 71) do 45 minut, aby odblokować dodatkowe zdolności produkcyjne bez inwestycji ' +
+    'w nową linię.',
   description:
     'Inicjatywa obejmuje pełen cykl SMED na linii L3: nagranie i rozbiór wideo trzech przezbrojeń, ' +
     'rozdzielenie czynności wewnętrznych od zewnętrznych, standaryzację wózka narzędziowego oraz ' +
@@ -177,9 +178,14 @@ const INITIATIVE = {
   problemDefinition: {
     // → karta „PROBLEM · Jaki problem rozwiązuje ta inicjatywa"
     symptom:
-      'Linia L3 traci ok. 8,4 godziny dostępności tygodniowo, bo przezbrojenie trwa średnio ' +
-      '96 minut przy normie zakładowej 60 minut (nadmiar 36 minut × 14 przezbrojeń w tygodniu). ' +
-      'Rozrzut między zmianami sięga 40 minut, więc planowanie zabezpiecza się dłuższymi seriami — ' +
+      'STAN WYJŚCIOWY (przed inicjatywą, VI 2026): przezbrojenie trwało średnio 96 minut przy ' +
+      'normie zakładowej 60 minut — nadmiar 36 minut × 14 przezbrojeń tygodniowo = 8,4 godziny ' +
+      'utraconej dostępności linii L3 w tygodniu. Rozrzut między zmianami sięgał 40 minut.\n' +
+      'STAN OBECNY (pomiar z MES, ostatnie 3 tygodnie): 71 minut, czyli nadmiar 11 minut × 14 = ' +
+      '2,6 godziny utraconej dostępności tygodniowo; rozrzut 27 minut. Kroki 1-2 zadziałały, ' +
+      'ale do normy 60 minut i do celu 45 minut wciąż brakuje.\n' +
+      'CEL: 45 minut i rozrzut poniżej 10 minut.\n\n' +
+      'Dopóki rozrzut zostaje na poziomie 27 minut, planowanie zabezpiecza się dłuższymi seriami — ' +
       'rosną zapasy wyrobu gotowego, spada zdolność obsłużenia krótkich serii promocyjnych.\n\n' +
       'ANALIZA PRZYCZYN (rozbiór wideo trzech przezbrojeń, 47 czynności elementarnych, VI 2026):\n' +
       '• Brak standardu — każda z trzech zmian pracuje wg własnej praktyki, stąd rozrzut 40 minut.\n' +
@@ -188,9 +194,12 @@ const INITIATIVE = {
       'maszynie (31 z 47 czynności).\n' +
       '• Brak miejsc na narzędzia — samo szukanie kluczy i podkładek zajmuje w obserwacjach ' +
       '11-18 minut na przezbrojenie.\n\n' +
-      'Co obaliłoby tę diagnozę: gdyby po uporządkowaniu czynności zewnętrznych i narzędzi czas ' +
-      'nie spadł poniżej 75 minut, przyczyna leży w konstrukcji maszyny, nie w organizacji pracy — ' +
-      'wtedy SMED jest niewłaściwym narzędziem i wracamy do rozmowy o modernizacji.',
+      'TEST DIAGNOZY — PRZESZEDŁ: próg brzmiał „jeśli po uporządkowaniu czynności zewnętrznych ' +
+      'i narzędzi czas nie spadnie poniżej 75 minut, przyczyna leży w konstrukcji maszyny, nie ' +
+      'w organizacji pracy". Pomiar dał 71 minut, więc diagnoza organizacyjna się broni.\n' +
+      'CO OBALIŁOBY JĄ TERAZ: zatrzymanie się powyżej 65 minut mimo standardu wdrożonego na ' +
+      'wszystkich trzech zmianach — wtedy reszta nadmiaru siedzi w konstrukcji maszyny i wracamy ' +
+      'do rozmowy o modernizacji zamiast dokładać kolejne kroki SMED.',
 
     // → karta „OPIS ROZWIĄZANIA · Proponowane podejście i sposób realizacji"
     rootCause:
@@ -205,33 +214,46 @@ const INITIATIVE = {
       'szukania narzędzi.\n' +
       '4. Szkolenie trzech zmian w oknach sobotnich + pomiar potwierdzający z MES przez trzy ' +
       'kolejne tygodnie.\n\n' +
-      'CEL ETAPOWY: średni czas przezbrojenia 96 → 45 minut i rozrzut między zmianami poniżej ' +
-      '10 minut, potwierdzone pomiarem z MES w trzech kolejnych tygodniach.\n\n' +
+      'CEL ETAPOWY: średni czas przezbrojenia 96 (baza) → 71 (dziś) → 45 minut i rozrzut między ' +
+      'zmianami 40 (baza) → 27 (dziś) → poniżej 10 minut, potwierdzone pomiarem z MES w trzech ' +
+      'kolejnych tygodniach.\n\n' +
       'POZA ZAKRESEM: linie L1/L2/L4 (osobna decyzja po pomiarze potwierdzającym), wymiana ' +
       'sterowania i modernizacja PLC, renegocjacja umów na folię, zmiana systemu premiowego.\n\n' +
-      'WARUNEK FALSYFIKUJĄCY: jeśli po wdrożeniu kroków 1-3 pomiar z trzech tygodni pokaże ' +
-      'skrócenie mniejsze niż 15% (czyli czas powyżej 82 minut), uznajemy podejście za nieskuteczne ' +
-      'na tej linii i zamykamy inicjatywę zamiast rozszerzać ją na kolejne linie.',
+      'WARUNEK FALSYFIKUJĄCY (etap 1 — PRZESZEDŁ): próg brzmiał „skrócenie mniejsze niż 15% ' +
+      'względem bazy 96 minut, czyli czas powyżej 82 minut, zamyka inicjatywę". Pomiar z trzech ' +
+      'tygodni dał 71 minut (−26%), więc podejście zostaje.\n' +
+      'WARUNEK FALSYFIKUJĄCY (etap 2 — OTWARTY): jeśli po kroku 4 (szkolenie trzech zmian) ' +
+      'mediana z trzech kolejnych tygodni nie zejdzie poniżej 60 minut, czyli poniżej normy ' +
+      'zakładowej, nie rozszerzamy SMED na L1/L2/L4 — zamiast tego wracamy do rozmowy ' +
+      'o konstrukcji maszyny.',
 
     // → karta „KOSZT BEZCZYNNOŚCI · Konsekwencje braku działania"
     costOfInaction:
-      'Utrzymanie status quo kosztuje ok. 1,74 mln PLN utraconej marży pokrycia rocznie.\n\n' +
+      'DZIŚ (przy 71 minutach) zatrzymanie inicjatywy kosztuje ok. 0,53 mln PLN utraconej marży ' +
+      'pokrycia rocznie. Ta liczba maleje razem z czasem przezbrojenia — nie jest stała.\n\n' +
       'PODSTAWA WYLICZENIA (jawne założenia, wszystkie do podważenia):\n' +
-      '• Nadmiar ponad normę: 96 − 60 = 36 minut na przezbrojenie (źródło: MES, mediana z 90 dni).\n' +
+      '• Nadmiar ponad normę DZIŚ: 71 − 60 = 11 minut na przezbrojenie (źródło: MES, mediana ' +
+      'z ostatnich 3 tygodni).\n' +
       '• Liczba przezbrojeń: 14 tygodniowo (źródło: harmonogram produkcji L3, II kw. 2026).\n' +
-      '  → 36 min × 14 = 8,4 godziny utraconej dostępności tygodniowo.\n' +
+      '  → 11 min × 14 = 2,6 godziny utraconej dostępności tygodniowo.\n' +
       '• Tygodnie produkcyjne: 46 w roku (52 minus postój sierpniowy, przeglądy i święta).\n' +
-      '  → 8,4 h × 46 = 386 godzin rocznie.\n' +
+      '  → 2,6 h × 46 = 118 godzin rocznie.\n' +
       '• Marża pokrycia linii L3: 4 500 PLN za godzinę (ZAŁOŻENIE — kontroling, arkusz z VII 2026; ' +
       'nie zweryfikowane niezależnie).\n' +
-      '  → 386 h × 4 500 PLN = ok. 1,74 mln PLN rocznie.\n\n' +
+      '  → 118 h × 4 500 PLN = ok. 0,53 mln PLN rocznie.\n\n' +
+      'DLA PORÓWNANIA — STAN WYJŚCIOWY (96 minut, przed inicjatywą): nadmiar 36 minut × 14 = ' +
+      '8,4 h tygodniowo → 386 h rocznie → ok. 1,74 mln PLN. Tyle kosztował problem w punkcie ' +
+      'startu i tyle inicjatywa już odzyskała w ujęciu rocznym (1,74 − 0,53 = ok. 1,21 mln PLN). ' +
+      'Kwota 1,74 mln NIE opisuje stanu obecnego — mylenie tych dwóch liczb zawyża koszt ' +
+      'bezczynności ponad trzykrotnie.\n\n' +
       'UCZCIWA NIEPEWNOŚĆ: liczba obowiązuje tylko wtedy, gdy popyt wypełnia uwolnioną zdolność. ' +
-      'Jeśli zamówień brakuje, strata jest kosztem gotowości (ok. 1 100 PLN/h), czyli ok. 0,43 mln PLN ' +
-      'rocznie — dlatego do biznes case przyjęliśmy konserwatywnie 25% konwersji uwolnionych godzin ' +
-      'na sprzedaż, nie 100%.\n\n' +
+      'Jeśli zamówień brakuje, strata jest kosztem gotowości (ok. 1 100 PLN/h), czyli ok. 0,13 mln PLN ' +
+      'rocznie dziś (0,43 mln PLN w stanie wyjściowym) — dlatego do biznes case przyjęliśmy ' +
+      'konserwatywnie 25% konwersji uwolnionych godzin na sprzedaż, nie 100%.\n\n' +
       'Co obaliłoby wyliczenie: odczyt marży pokrycia poniżej 2 500 PLN/h w zamknięciu III kw. 2026. ' +
-      'Drugi, niezależny koszt: bez skrócenia przezbrojeń wraca wniosek CAPEX na czwartą linię ' +
-      'w budżecie 2027 (rząd wielkości 6-8 mln PLN).',
+      'Drugi, niezależny koszt: bez zejścia do celu wraca wniosek CAPEX na czwartą linię ' +
+      'w budżecie 2027 (rząd wielkości 6-8 mln PLN) — i to on, nie 0,53 mln, jest głównym ' +
+      'argumentem za dokończeniem inicjatywy.',
   },
   marketContext:
     'Dwie największe sieci handlowe skróciły horyzont zamówień promocyjnych z 6 do 3 tygodni. ' +
