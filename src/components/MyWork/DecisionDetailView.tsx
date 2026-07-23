@@ -3598,7 +3598,9 @@ Use userId only from this list:
   // wszystkie readOnly/hideActions/disabled już wpięte w isDecisionStageLocked
   // automatycznie respektują tryb Read bez zmiany każdego call-site.
   const isDecisionStageLocked = readMode || (WORKFLOW_LOCKS_ENABLED && isPending);
-  const workflowMeta = WORKFLOW_STATUS_CONFIG[workflowStatus] || WORKFLOW_STATUS_CONFIG.proposed;
+  // `workflowMeta` (badge etapu) usunięty razem z belką workflow (§3.2) — stan
+  // etapu czyta się ze Statusu w Właściwościach; WORKFLOW_STATUS_CONFIG dalej
+  // steruje tonem przycisków przejść w sekcji Akcje przez `workflowActions`.
   const workflowActions = (() => {
     switch (workflowStatus) {
       case 'proposed':
@@ -5668,55 +5670,33 @@ Use userId only from this list:
                     tylko TRESC slotow, a komponent narzuca uklad, gestosc i overflow.
                     Read mode ("do pokazania klientowi"): caly pasek akcji znika.
 
-                    2026-07-23: po zabraniu przejsc workflow do prawego panelu
-                    pasek moze nie miec ZADNEJ tresci (karta bez AI + decyzja
-                    niezapisana) — wtedy nie renderujemy pustej ramki. */}
-                {!readMode &&
-                  (aiSectionButton || decisionId || toolbarOverflowActions.length > 0) && (
-                    <div className="px-3 py-2 rounded-xl border border-c-border-subtle bg-c-surface">
-                      <NModeToolbar
-                        isPolish={isPolish}
-                        /* ETAP 1.2 (menu2): `activeSectionLabel` ZDJĘTA. Nazwa
-                           aktywnej karty dublowała lewą nawigację (ta sama
-                           pozycja jest tam podświetlona) i zjadała szerokość
-                           paska — usuwamy ją wszędzie tak samo (Insight,
-                           Inicjatywa, Decyzja). */
-                        aiSectionButton={aiSectionButton}
-                        overflowActions={
-                          toolbarOverflowActions.length > 0 ? toolbarOverflowActions : undefined
-                        }
-                        overflowLabel={t('decisions.detail.toolbar.moreActions', 'More actions')}
-                        /* Sloty lewej grupy niosa GRUPY kontrolek, wiec licznik gestosci
-                         komponentu policzylby je jako 1 — podajemy realna liczbe
-                         widocznych akcji, zeby dev-warn nie klamal w dol. */
-                        visibleActionCount={aiSectionButton ? 1 : 0}
-                        sectionsDropdown={
-                          decisionId ? (
-                            <span className="inline-flex items-center gap-2">
-                              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-                                {t('decisions.detail.workflow.label', 'Workflow')}
-                              </span>
-                              <span
-                                className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${workflowMeta.badgeClass}`}
-                              >
-                                {t(
-                                  `decisions.detail.workflowStage.${workflowStatus}`,
-                                  workflowMeta.label.en
-                                )}
-                              </span>
-                            </span>
-                          ) : undefined
-                        }
-                        /* `newButton` (przejścia etapu workflow) CELOWO pusty od
-                         2026-07-23 — n-Type §6.3 / 01_DECYZJA §2.2: wszystkie
-                         działania decyzji mają JEDNO miejsce, sekcję AKCJE
-                         prawego panelu. Tu zostaje wyłącznie BADGE etapu
-                         (`sectionsDropdown`), bo to informacja o stanie, a nie
-                         działanie. Pasek nie znika — niesie kontekstowe AI
-                         aktywnej karty. */
-                      />
-                    </div>
-                  )}
+                    2026-07-23 (§3.2 / 01_DECYZJA §8): pasek NIE jest trzecim
+                    paskiem szkieletu. Stan workflow czyta się ze Statusu
+                    (Właściwości) a przejścia z sekcji Akcje — wcześniejszy
+                    BADGE etapu w tym pasku dublował Status i tworzył pełną,
+                    pustą-poza-badgem trzecią belkę pod menu 2 (zgłoszenie
+                    właściciela). Dlatego `sectionsDropdown` (badge workflow)
+                    ZDJĘTY, a pasek renderuje się WYŁĄCZNIE gdy niesie realną
+                    treść karty (kontekstowe AI sekcji lub akcje overflow).
+                    Gdy jej nie ma — brak belki, nie pusta ramka. */}
+                {!readMode && (aiSectionButton || toolbarOverflowActions.length > 0) && (
+                  <div className="px-3 py-2 rounded-xl border border-c-border-subtle bg-c-surface">
+                    <NModeToolbar
+                      isPolish={isPolish}
+                      /* ETAP 1.2 (menu2): `activeSectionLabel` ZDJĘTA — nazwa
+                         aktywnej karty dublowała lewą nawigację. */
+                      aiSectionButton={aiSectionButton}
+                      overflowActions={
+                        toolbarOverflowActions.length > 0 ? toolbarOverflowActions : undefined
+                      }
+                      overflowLabel={t('decisions.detail.toolbar.moreActions', 'More actions')}
+                      visibleActionCount={aiSectionButton ? 1 : 0}
+                      /* `newButton`/`sectionsDropdown` (przejścia + badge etapu
+                         workflow) CELOWO puste — workflow żyje w Statusie
+                         (Właściwości) i w sekcji Akcje prawego panelu (§3.2). */
+                    />
+                  </div>
+                )}
 
                 {/* ── 2-Pane: LeftNav + Canvas — shared NModeLeftNav ───────── */}
                 <div className="flex gap-0 min-h-[60vh]">
