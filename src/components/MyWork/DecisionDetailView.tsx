@@ -5080,6 +5080,22 @@ Use userId only from this list:
               ),
             },
             {
+              // §3.2 / 01_DECYZJA §8: etap workflow (Draft/Analiza/Rekomendacja/
+              // Decyzja) NIE jest trzecim paskiem szkieletu — jego STAN czyta
+              // się tu, we Właściwościach; przejścia żyją w sekcji Akcje.
+              id: 'workflow',
+              label: t('decisions.detail.workflow.label', 'Workflow'),
+              value: (
+                <span className={rpPill}>
+                  {t(
+                    `decisions.detail.workflowStage.${workflowStatus}`,
+                    (WORKFLOW_STATUS_CONFIG[workflowStatus] || WORKFLOW_STATUS_CONFIG.proposed).label
+                      .en
+                  )}
+                </span>
+              ),
+            },
+            {
               id: 'priority',
               label: t('myWork.decisionDetail.priority', 'Priority'),
               value: (
