@@ -5141,7 +5141,7 @@
       "source": "Źródło",
       "date": "Data",
       "confidence": "Pewność",
-      "findings": "Findingi",
+      "findings": "Ustalenia",
       "tag": "Tag",
       "relations": "Powiązania",
       "noRelations": "Brak powiązań",
@@ -5270,18 +5270,18 @@
         "failed": "Błąd"
       },
       "insightTypeLabel": {
-        "summary": "Podsumowanie Wykonawcze",
-        "general_analysis": "Analiza Ogólna",
-        "trends": "Analiza Trendów",
-        "problems": "Odkrywanie Problemów",
+        "summary": "Podsumowanie wykonawcze",
+        "general_analysis": "Analiza ogólna",
+        "trends": "Analiza trendów",
+        "problems": "Odkrywanie problemów",
         "recommendations": "Rekomendacje",
-        "comparison": "Porównanie Wywiadów",
-        "gaps": "Analiza Luk",
-        "risk_assessment": "Ocena Ryzyk",
-        "opportunity_scan": "Skan Szans",
-        "maturity": "Ocena Dojrzałości",
-        "stakeholder_map": "Mapa Interesariuszy",
-        "between_the_lines": "Czytanie Między Wierszami"
+        "comparison": "Porównanie wywiadów",
+        "gaps": "Analiza luk",
+        "risk_assessment": "Ocena ryzyk",
+        "opportunity_scan": "Skan szans",
+        "maturity": "Ocena dojrzałości",
+        "stakeholder_map": "Mapa interesariuszy",
+        "between_the_lines": "Czytanie między wierszami"
       },
       "sessionsCount": "{{count}} sesji",
       "exportTargetLabel": {
