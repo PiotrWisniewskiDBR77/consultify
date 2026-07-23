@@ -4240,6 +4240,59 @@ Return ONLY the final comment text.`;
     const pill =
       'inline-flex items-center h-5 px-2 rounded-md text-xs bg-c-surface-raised text-c-text';
 
+    // ── Pochodzenie zadania (n-Type §6.6) ────────────────────────────────────
+    // Dane, które do 2026-07-23 niósł banner „Created from …". Banner usunięty;
+    // te same informacje zasilają teraz trzy miejsca prawego panelu:
+    // Właściwości („Źródło"), Powiązania (klikalny link), Źródła i założenia.
+    const hasSource = Boolean(sourceType && sourceId);
+    const sourceTypeLabel = (() => {
+      if (!sourceType) return dash;
+      if (sourceType === 'idea') return t('myWork.taskDetail.sourceIdea', 'Idea');
+      if (sourceType === 'notebook') return t('myWork.taskDetail.sourceNote', 'Note');
+      if (sourceType === 'decision') return t('myWork.taskDetail.sourceDecision', 'Decision');
+      return sourceType;
+    })();
+    const SourceIcon =
+      sourceType === 'idea' ? Lightbulb : sourceType === 'decision' ? Scale : FileText;
+    const openSourceArtifact = () => {
+      if (!sourceType || !sourceId) return;
+      window.dispatchEvent(
+        new CustomEvent('mywork-open-item', {
+          detail: {
+            type: sourceType === 'notebook' ? 'notebook' : sourceType,
+            id: sourceId,
+            name: `Source ${sourceType}`,
+            initialTool: sourceType === 'idea' ? 'mindmap' : undefined,
+          },
+        })
+      );
+    };
+
+    // ── Akcje workflow w prawym panelu (n-Type §7.3) ─────────────────────────
+    // Pionowo, pełna szerokość, główna akcja wyróżniona, destrukcyjna osobnym
+    // stylem. Crimson (`primary-*`) świadomie NIEUŻYWANY — zielony = sukces,
+    // `danger` = blokada (semantyka krytyczna), reszta neutralna c-*.
+    const rpActionBtn =
+      'w-full inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg text-xs font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50';
+    const rpActionPrimary = `${rpActionBtn} bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500`;
+    const rpActionDestructive = `${rpActionBtn} bg-transparent border-danger-400/60 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10`;
+    const rpActionNeutral = `${rpActionBtn} bg-c-surface-raised border-c-border-subtle text-c-text hover:bg-c-surface`;
+
+    // „Ukończ" jest w panelu tylko gdy NIE jest już akcją główną nagłówka
+    // (przy status='review' Complete = taskPrimaryAction → §7.3 zakaz dublowania).
+    const canCompleteFromPanel = status === 'in_progress';
+    const canBlockFromPanel = status !== 'blocked' && status !== 'done';
+
+    // Po zabraniu Ukończ/Zablokuj/Przydziel pasek pod nagłówkiem niesie już
+    // WYŁĄCZNIE kontekstowe akcje AI aktywnej karty — gdy karta ich nie ma,
+    // nie renderujemy pustej ramki.
+    const hasSectionAIAction = [
+      'implementation',
+      'risk-alternatives',
+      'checklist',
+      'governance',
+    ].includes(activeNSection);
+
     const rightPanelSections: ArtifactRightPanelSection[] = [
       {
         id: 'actions',
@@ -4247,18 +4300,83 @@ Return ONLY the final comment text.`;
         // SPEC-N §2.6 (anty-duplikacja): Save też ZNIKA stąd — ten sam handler
         // `handleSave` renderował się w nagłówku (NModeHeader onSave, wraz ze
         // wskaźnikiem „Zapisano HH:MM") i drugi raz tutaj. Zostaje ten, który
-        // jest widoczny ZAWSZE, czyli nagłówek; panel traci duplikat. Sekcja
-        // zostaje w kanonie §11.2 (Akcje jako pierwsza, jedyna otwarta) ze
-        // stanem pustym mówiącym wprost, gdzie akcje żyją.
+        // jest widoczny ZAWSZE, czyli nagłówek; panel traci duplikat.
+        //
+        // ── n-Type §7.3 / 02_ZADANIE §5 (2026-07-23) ──
+        // Sekcja przestaje być pusta: rozproszony pasek „Ukończ · Zablokuj ·
+        // Przydziel" spod nagłówka zjechał TUTAJ. Układ pionowy, przyciski
+        // pełnej szerokości, główna akcja (Ukończ) wyróżniona, Zablokuj ma
+        // osobny styl destrukcyjny. Akcji z nagłówka (Start / Wyślij do
+        // przeglądu / Wznów, a przy status='review' także Ukończ) NIE
+        // dublujemy — patrz canCompleteFromPanel.
         label: t('myWork.taskDetail.label8', 'Actions'),
         icon: Save,
         defaultOpen: true,
-        isEmpty: true,
+        // Pusto TYLKO w trybie Podgląd („do pokazania klientowi") — w trybie
+        // Edycja zawsze zostaje co najmniej „Przydziel".
+        isEmpty: readMode,
         emptyLabel: t(
-          'myWork.taskDetail.actionsLiveInHeader',
-          'All actions live in the card header'
+          'myWork.taskDetail.actionsHiddenInReadMode',
+          'Actions are hidden in preview mode'
         ),
-        children: null,
+        children: readMode ? null : (
+          <div className="flex flex-col gap-2">
+            {canCompleteFromPanel && (
+              <button
+                type="button"
+                onClick={() => {
+                  const old = status;
+                  setStatus('done');
+                  addActivityLogEntry(
+                    'status_change',
+                    t('myWork.taskDetail.taskCompleted', 'Task completed'),
+                    old,
+                    'done'
+                  );
+                }}
+                className={rpActionPrimary}
+              >
+                <CheckCircle2 size={14} /> {t('myWork.taskDetail.complete', 'Complete')}
+              </button>
+            )}
+            {canBlockFromPanel && (
+              <button
+                type="button"
+                onClick={() => {
+                  const old = status;
+                  setStatus('blocked');
+                  addActivityLogEntry(
+                    'status_change',
+                    t('myWork.taskDetail.taskBlocked', 'Task blocked'),
+                    old,
+                    'blocked'
+                  );
+                }}
+                className={rpActionDestructive}
+              >
+                <AlertCircle size={14} /> {t('myWork.taskDetail.block', 'Block')}
+              </button>
+            )}
+            {/* Przydziel — FAZA C: bramka task.reassign (fail-open, shadow = bez zmian) */}
+            <CapabilityGate capability="task.reassign" projectId={projectId || undefined}>
+              <button
+                type="button"
+                onClick={() => {
+                  toast(
+                    t(
+                      'myWork.taskDetail.changeAssigneeInThe',
+                      'Change assignee in the Assignee field above'
+                    )
+                  );
+                }}
+                className={rpActionNeutral}
+              >
+                <Share2 size={14} className="text-c-text-muted" />{' '}
+                {t('myWork.taskDetail.reassign', 'Reassign')}
+              </button>
+            </CapabilityGate>
+          </div>
+        ),
       },
       {
         id: 'properties',
@@ -4296,6 +4414,12 @@ Return ONLY the final comment text.`;
                 label: t('myWork.taskDetail.initiative', 'Initiative'),
                 value: initiativeName || dash,
               },
+              // n-Type §6.6: „Źródło" — pochodzenie zadania po usunięciu bannera.
+              {
+                id: 'source',
+                label: t('myWork.taskDetail.source', 'Source'),
+                value: hasSource ? sourceTypeLabel : dash,
+              },
             ]}
           />
         ),
@@ -4306,10 +4430,31 @@ Return ONLY the final comment text.`;
         icon: Link2,
         // Kanon n-Type: domyslnie rozwiniete TYLKO Akcje i Wlasciwosci.
         defaultOpen: false,
-        isEmpty: !initiativeName && attachments.length === 0,
+        // n-Type §6.6: sekcja niepusta takze gdy zadanie ma pochodzenie (Zrodlo).
+        isEmpty: !initiativeName && attachments.length === 0 && !hasSource,
         emptyLabel: t('myWork.taskDetail.emptyLabel', 'No relations'),
         children: (
           <div className="flex flex-col gap-2">
+            {/* n-Type §6.6: link do artefaktu źródłowego (decyzja / pomysł /
+                notatka) — przeniesiony z usuniętego bannera „Created from …". */}
+            {hasSource ? (
+              <div className="flex items-center gap-2">
+                <span className={panelKeyClass}>{t('myWork.taskDetail.source', 'Source')}</span>
+                <button
+                  type="button"
+                  onClick={openSourceArtifact}
+                  title={
+                    sourceType === 'idea'
+                      ? t('myWork.taskDetail.viewSourceInMindmap', 'View source in mindmap →')
+                      : t('myWork.taskDetail.viewSource', 'View source →')
+                  }
+                  className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle truncate hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                >
+                  <SourceIcon size={12} className="text-c-text-muted shrink-0" />
+                  <span className="truncate">{sourceTypeLabel}</span>
+                </button>
+              </div>
+            ) : null}
             {initiativeName ? (
               <div className="flex items-center gap-2">
                 <span className={panelKeyClass}>
@@ -4352,6 +4497,40 @@ Return ONLY the final comment text.`;
                 </span>
               </div>
             ) : null}
+          </div>
+        ),
+      },
+      {
+        // ── Źródła i założenia (n-Type §7.2 poz. 4 / §6.6) ──────────────────
+        // Trzecie miejsce, do którego zjechała treść usuniętego bannera:
+        // KONTEKST UTWORZENIA zadania (z czego i kiedy powstało).
+        id: 'sources-assumptions',
+        label: t('myWork.taskDetail.sourcesAndAssumptions', 'Sources and assumptions'),
+        icon: FileText,
+        defaultOpen: false,
+        isEmpty: !hasSource,
+        emptyLabel: t('myWork.taskDetail.noSourceContext', 'No source context'),
+        children: (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs leading-relaxed text-c-text-secondary">
+              {isPolish
+                ? `Zadanie zostało utworzone na podstawie artefaktu typu „${sourceTypeLabel}".`
+                : `This task was created from a ${sourceTypeLabel.toLowerCase()} artifact.`}
+            </p>
+            <div className="flex items-center justify-between gap-3">
+              <span className={panelKeyClass}>{t('myWork.taskDetail.created', 'Created')}</span>
+              <span className="text-xs text-c-text tabular-nums">{fmtDate(createdAt)}</span>
+            </div>
+            <button
+              type="button"
+              onClick={openSourceArtifact}
+              className="self-start inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+            >
+              <SourceIcon size={12} className="text-c-text-muted shrink-0" />
+              {sourceType === 'idea'
+                ? t('myWork.taskDetail.viewSourceInMindmap', 'View source in mindmap →')
+                : t('myWork.taskDetail.viewSource', 'View source →')}
+            </button>
           </div>
         ),
       },
@@ -4494,111 +4673,32 @@ Return ONLY the final comment text.`;
                   </div>
                 )}
 
-                {/* ── Origin Badge ──────────────────────────────────── */}
-                {sourceType && sourceId && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
-                    {sourceType === 'idea' && <Lightbulb size={14} className="text-amber-500" />}
-                    {sourceType === 'notebook' && <FileText size={14} className="text-blue-500" />}
-                    {sourceType === 'decision' && <Scale size={14} className="text-blue-500" />}
-                    <span className="text-c-text-secondary dark:text-c-text">
-                      {sourceType === 'idea'
-                        ? t('myWork.taskDetail.createdFromIdea', 'Created from Idea')
-                        : sourceType === 'notebook'
-                          ? t('myWork.taskDetail.createdFromNote', 'Created from Note')
-                          : `Created from ${sourceType}`}
-                    </span>
-                    <button
-                      onClick={() => {
-                        window.dispatchEvent(
-                          new CustomEvent('mywork-open-item', {
-                            detail: {
-                              type: sourceType === 'notebook' ? 'notebook' : sourceType,
-                              id: sourceId,
-                              name: `Source ${sourceType}`,
-                              initialTool: sourceType === 'idea' ? 'mindmap' : undefined,
-                            },
-                          })
-                        );
-                      }}
-                      className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
-                    >
-                      {sourceType === 'idea'
-                        ? t('myWork.taskDetail.viewSourceInMindmap', 'View source in mindmap →')
-                        : t('myWork.taskDetail.viewSource', 'View source →')}
-                    </button>
-                  </div>
-                )}
+                {/* ── Origin Badge — USUNIĘTY (n-Type §6.6 / 02_ZADANIE §4) ──
+                    Stały banner „Created from decision/idea/note" znikł z układu.
+                    Pochodzenie zadania żyje teraz WYŁĄCZNIE w prawym panelu:
+                      · Właściwości → wiersz „Źródło",
+                      · Powiązania → klikalny link do źródła,
+                      · Źródła i założenia → kontekst utworzenia.
+                    Banner dopuszczalny tylko jako krótkotrwałe ostrzeżenie
+                    (deadline / blokada powyżej), nie jako stały element. ── */}
 
                 {/* ── Task Action Bar ──────────────────────────────── */}
                 {/* Read mode ("do pokazania klientowi"): ukryj cały pasek akcji stanu. */}
-                {!readMode && (
+                {!readMode && hasSectionAIAction && (
                   <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-c-surface/80 backdrop-blur-xl border border-c-border dark:border-c-border/60">
                     <div className="flex items-center gap-2">
-                      {/* Start/Resume, Send to Review and Reopen are now the M1 primary
-                          CTA (NModeHeader.primaryAction, computed in taskPrimaryAction
-                          above from `status`) — kept here only when they are NOT the
-                          current primary, so the same transition is never offered twice. */}
+                      {/* Start/Resume, Send to Review i Reopen = M1 primary CTA
+                          (NModeHeader.primaryAction, liczone w taskPrimaryAction
+                          powyżej z `status`) — nagłówek jest jedynym miejscem
+                          głównej akcji workflow.
 
-                      {/* Complete — secondary "skip ahead" shortcut while in_progress;
-                          when status is 'review', Complete IS the primary action already
-                          shown in the header, so it is intentionally not duplicated here. */}
-                      {status === 'in_progress' && (
-                        <button
-                          onClick={() => {
-                            const old = status;
-                            setStatus('done');
-                            addActivityLogEntry(
-                              'status_change',
-                              t('myWork.taskDetail.taskCompleted', 'Task completed'),
-                              old,
-                              'done'
-                            );
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
-                        >
-                          <CheckCircle2 size={13} /> {t('myWork.taskDetail.complete', 'Complete')}
-                        </button>
-                      )}
-
-                      {/* Block — shown when not blocked and not done */}
-                      {status !== 'blocked' && status !== 'done' && (
-                        <button
-                          onClick={() => {
-                            const old = status;
-                            setStatus('blocked');
-                            addActivityLogEntry(
-                              'status_change',
-                              t('myWork.taskDetail.taskBlocked', 'Task blocked'),
-                              old,
-                              'blocked'
-                            );
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors"
-                        >
-                          <AlertCircle size={13} /> {t('myWork.taskDetail.block', 'Block')}
-                        </button>
-                      )}
-
-                      {/* Reopen (done → in_progress) is the M1 primary CTA when status
-                          is 'done' (see taskPrimaryAction) — no local duplicate. */}
-
-                      {/* Reassign — FAZA C: bramka task.reassign (fail-open, shadow = bez zmian) */}
-                      <CapabilityGate capability="task.reassign" projectId={projectId || undefined}>
-                        <button
-                          onClick={() => {
-                            // scroll to assignee field or open a quick picker
-                            toast(
-                              t(
-                                'myWork.taskDetail.changeAssigneeInThe',
-                                'Change assignee in the Assignee field above'
-                              )
-                            );
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border/60 dark:border-c-border/60 text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
-                        >
-                          <Share2 size={13} /> {t('myWork.taskDetail.reassign', 'Reassign')}
-                        </button>
-                      </CapabilityGate>
+                          ── n-Type §7.3 / 02_ZADANIE §5 (2026-07-23) ──
+                          Rozproszony pasek akcji „Ukończ · Zablokuj · Przydziel"
+                          ZNIKŁ stąd i żyje w sekcji AKCJE prawego panelu
+                          (pionowo, przyciski pełnej szerokości, główna akcja
+                          wyróżniona). Tutaj zostają WYŁĄCZNIE kontekstowe akcje
+                          AI zależne od aktywnej karty — nie są to działania
+                          workflow i nie podlegają §7.3. */}
 
                       {/* ── Section-specific AI actions (right-aligned) ── */}
                       {activeNSection === 'implementation' && (

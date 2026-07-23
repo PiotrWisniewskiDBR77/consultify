@@ -4102,7 +4102,15 @@
         "priority": "Priority"
       },
       "email": "Email",
-      "actionsLiveInHeader": "All actions live in the card header"
+      "actionsLiveInHeader": "All actions live in the card header",
+      "source": "Source",
+      "sourceIdea": "Idea",
+      "sourceNote": "Note",
+      "sourceDecision": "Decision",
+      "sourcesAndAssumptions": "Sources and assumptions",
+      "noSourceContext": "No source context",
+      "actionsHiddenInReadMode": "Actions are hidden in preview mode",
+      "created": "Created"
     },
     "dependencies": {
       "toastError": "Select a source task first",
