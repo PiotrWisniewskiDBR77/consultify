@@ -4236,6 +4236,34 @@ Return ONLY the final comment text.`;
     const pill =
       'inline-flex items-center h-5 px-2 rounded-md text-xs bg-c-surface-raised text-c-text';
 
+    // ── Pochodzenie zadania (n-Type §6.6) ────────────────────────────────────
+    // Dane, które do 2026-07-23 niósł banner „Created from …". Banner usunięty;
+    // te same informacje zasilają teraz trzy miejsca prawego panelu:
+    // Właściwości („Źródło"), Powiązania (klikalny link), Źródła i założenia.
+    const hasSource = Boolean(sourceType && sourceId);
+    const sourceTypeLabel = (() => {
+      if (!sourceType) return dash;
+      if (sourceType === 'idea') return t('myWork.taskDetail.sourceIdea', 'Idea');
+      if (sourceType === 'notebook') return t('myWork.taskDetail.sourceNote', 'Note');
+      if (sourceType === 'decision') return t('myWork.taskDetail.sourceDecision', 'Decision');
+      return sourceType;
+    })();
+    const SourceIcon =
+      sourceType === 'idea' ? Lightbulb : sourceType === 'decision' ? Scale : FileText;
+    const openSourceArtifact = () => {
+      if (!sourceType || !sourceId) return;
+      window.dispatchEvent(
+        new CustomEvent('mywork-open-item', {
+          detail: {
+            type: sourceType === 'notebook' ? 'notebook' : sourceType,
+            id: sourceId,
+            name: `Source ${sourceType}`,
+            initialTool: sourceType === 'idea' ? 'mindmap' : undefined,
+          },
+        })
+      );
+    };
+
     const rightPanelSections: ArtifactRightPanelSection[] = [
       {
         id: 'actions',
@@ -4292,6 +4320,12 @@ Return ONLY the final comment text.`;
                 label: t('myWork.taskDetail.initiative', 'Initiative'),
                 value: initiativeName || dash,
               },
+              // n-Type §6.6: „Źródło" — pochodzenie zadania po usunięciu bannera.
+              {
+                id: 'source',
+                label: t('myWork.taskDetail.source', 'Source'),
+                value: hasSource ? sourceTypeLabel : dash,
+              },
             ]}
           />
         ),
@@ -4301,10 +4335,30 @@ Return ONLY the final comment text.`;
         label: t('myWork.taskDetail.label10', 'Relations'),
         icon: Link2,
         defaultOpen: true,
-        isEmpty: !initiativeName && attachments.length === 0,
+        isEmpty: !initiativeName && attachments.length === 0 && !hasSource,
         emptyLabel: t('myWork.taskDetail.emptyLabel', 'No relations'),
         children: (
           <div className="flex flex-col gap-2">
+            {/* n-Type §6.6: link do artefaktu źródłowego (decyzja / pomysł /
+                notatka) — przeniesiony z usuniętego bannera „Created from …". */}
+            {hasSource ? (
+              <div className="flex items-center gap-2">
+                <span className={panelKeyClass}>{t('myWork.taskDetail.source', 'Source')}</span>
+                <button
+                  type="button"
+                  onClick={openSourceArtifact}
+                  title={
+                    sourceType === 'idea'
+                      ? t('myWork.taskDetail.viewSourceInMindmap', 'View source in mindmap →')
+                      : t('myWork.taskDetail.viewSource', 'View source →')
+                  }
+                  className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle truncate hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                >
+                  <SourceIcon size={12} className="text-c-text-muted shrink-0" />
+                  <span className="truncate">{sourceTypeLabel}</span>
+                </button>
+              </div>
+            ) : null}
             {initiativeName ? (
               <div className="flex items-center gap-2">
                 <span className={panelKeyClass}>
@@ -4326,6 +4380,40 @@ Return ONLY the final comment text.`;
                 </span>
               </div>
             ) : null}
+          </div>
+        ),
+      },
+      {
+        // ── Źródła i założenia (n-Type §7.2 poz. 4 / §6.6) ──────────────────
+        // Trzecie miejsce, do którego zjechała treść usuniętego bannera:
+        // KONTEKST UTWORZENIA zadania (z czego i kiedy powstało).
+        id: 'sources-assumptions',
+        label: t('myWork.taskDetail.sourcesAndAssumptions', 'Sources and assumptions'),
+        icon: FileText,
+        defaultOpen: false,
+        isEmpty: !hasSource,
+        emptyLabel: t('myWork.taskDetail.noSourceContext', 'No source context'),
+        children: (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs leading-relaxed text-c-text-secondary">
+              {isPolish
+                ? `Zadanie zostało utworzone na podstawie artefaktu typu „${sourceTypeLabel}".`
+                : `This task was created from a ${sourceTypeLabel.toLowerCase()} artifact.`}
+            </p>
+            <div className="flex items-center justify-between gap-3">
+              <span className={panelKeyClass}>{t('myWork.taskDetail.created', 'Created')}</span>
+              <span className="text-xs text-c-text tabular-nums">{fmtDate(createdAt)}</span>
+            </div>
+            <button
+              type="button"
+              onClick={openSourceArtifact}
+              className="self-start inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+            >
+              <SourceIcon size={12} className="text-c-text-muted shrink-0" />
+              {sourceType === 'idea'
+                ? t('myWork.taskDetail.viewSourceInMindmap', 'View source in mindmap →')
+                : t('myWork.taskDetail.viewSource', 'View source →')}
+            </button>
           </div>
         ),
       },
@@ -4468,40 +4556,14 @@ Return ONLY the final comment text.`;
                   </div>
                 )}
 
-                {/* ── Origin Badge ──────────────────────────────────── */}
-                {sourceType && sourceId && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
-                    {sourceType === 'idea' && <Lightbulb size={14} className="text-amber-500" />}
-                    {sourceType === 'notebook' && <FileText size={14} className="text-blue-500" />}
-                    {sourceType === 'decision' && <Scale size={14} className="text-blue-500" />}
-                    <span className="text-c-text-secondary dark:text-c-text">
-                      {sourceType === 'idea'
-                        ? t('myWork.taskDetail.createdFromIdea', 'Created from Idea')
-                        : sourceType === 'notebook'
-                          ? t('myWork.taskDetail.createdFromNote', 'Created from Note')
-                          : `Created from ${sourceType}`}
-                    </span>
-                    <button
-                      onClick={() => {
-                        window.dispatchEvent(
-                          new CustomEvent('mywork-open-item', {
-                            detail: {
-                              type: sourceType === 'notebook' ? 'notebook' : sourceType,
-                              id: sourceId,
-                              name: `Source ${sourceType}`,
-                              initialTool: sourceType === 'idea' ? 'mindmap' : undefined,
-                            },
-                          })
-                        );
-                      }}
-                      className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
-                    >
-                      {sourceType === 'idea'
-                        ? t('myWork.taskDetail.viewSourceInMindmap', 'View source in mindmap →')
-                        : t('myWork.taskDetail.viewSource', 'View source →')}
-                    </button>
-                  </div>
-                )}
+                {/* ── Origin Badge — USUNIĘTY (n-Type §6.6 / 02_ZADANIE §4) ──
+                    Stały banner „Created from decision/idea/note" znikł z układu.
+                    Pochodzenie zadania żyje teraz WYŁĄCZNIE w prawym panelu:
+                      · Właściwości → wiersz „Źródło",
+                      · Powiązania → klikalny link do źródła,
+                      · Źródła i założenia → kontekst utworzenia.
+                    Banner dopuszczalny tylko jako krótkotrwałe ostrzeżenie
+                    (deadline / blokada powyżej), nie jako stały element. ── */}
 
                 {/* ── Task Action Bar ──────────────────────────────── */}
                 {/* Read mode ("do pokazania klientowi"): ukryj cały pasek akcji stanu. */}
