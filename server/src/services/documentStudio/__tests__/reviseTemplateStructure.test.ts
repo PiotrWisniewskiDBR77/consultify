@@ -143,6 +143,68 @@ describe('reviseTemplateStructure — author manual structure editor', () => {
     expect(hints).toEqual(['a', 'b', 'c', longHint.slice(0, 100)]);
   });
 
+  it('persists author-typed briefing fields (keyMessage/dataNeeded/suggestedEvidence) and caps them', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      input: { purpose: 'Briefing fields test', documentType: 'executive_memo' },
+    });
+
+    const longKeyMessage = 'k'.repeat(300);
+    const longEvidence = 'e'.repeat(200);
+    const longDataItem = 'd'.repeat(150);
+    const next = reviseTemplateStructure({
+      templateId: template.templateId,
+      organizationId: 'org-A',
+      userId: 'user-1',
+      sections: [
+        {
+          ...section('Intro'),
+          keyMessage: `  ${longKeyMessage}  `,
+          dataNeeded: ['a', '', 'b', 'c', 'd', longDataItem, 'f', 'g'] as unknown as string[],
+          suggestedEvidence: `  ${longEvidence}  `,
+        },
+      ],
+    });
+
+    const persisted = next.sectionBlueprint[0];
+    expect(persisted.keyMessage).toBe(longKeyMessage.slice(0, 200));
+    expect(persisted.dataNeeded).toEqual(['a', 'b', 'c', 'd', longDataItem.slice(0, 100), 'f']);
+    expect(persisted.suggestedEvidence).toBe(longEvidence.slice(0, 150));
+
+    // Re-fetched from the registry so the FE round trip (revise → refresh) is covered too.
+    const reloaded = getTemplate(template.templateId, 'org-A');
+    expect(reloaded?.sectionBlueprint[0].keyMessage).toBe(longKeyMessage.slice(0, 200));
+  });
+
+  it('clears briefing fields when the author empties them', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      input: { purpose: 'Briefing clear test', documentType: 'executive_memo' },
+    });
+
+    reviseTemplateStructure({
+      templateId: template.templateId,
+      organizationId: 'org-A',
+      userId: 'user-1',
+      sections: [
+        { ...section('Intro'), keyMessage: 'Some thesis', dataNeeded: ['x'], suggestedEvidence: 'Some proof' },
+      ],
+    });
+
+    const cleared = reviseTemplateStructure({
+      templateId: template.templateId,
+      organizationId: 'org-A',
+      userId: 'user-1',
+      sections: [{ ...section('Intro'), keyMessage: '', dataNeeded: [], suggestedEvidence: '' }],
+    });
+
+    expect(cleared.sectionBlueprint[0].keyMessage).toBeUndefined();
+    expect(cleared.sectionBlueprint[0].dataNeeded).toBeUndefined();
+    expect(cleared.sectionBlueprint[0].suggestedEvidence).toBeUndefined();
+  });
+
   it('does not leak across tenants', () => {
     const { template } = draftTemplate({
       organizationId: 'org-A',

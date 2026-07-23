@@ -189,6 +189,41 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     });
   };
 
+  // C1 briefing fields — mirrors handleEditSectionHintsChange: keep the
+  // working copy raw while typing (server-side sanitizeAuthoredSection trims
+  // and caps on save), only fold to `undefined` when the field is emptied so
+  // the read-only view's "no guidance yet" branches stay correct.
+  const handleEditSectionKeyMessageChange = (index: number, value: string): void => {
+    setEditSections((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const next = [...prev];
+      next[index] = { ...next[index], keyMessage: value.length > 0 ? value : undefined };
+      return next;
+    });
+  };
+
+  const handleEditSectionDataNeededChange = (index: number, rawText: string): void => {
+    const items = rawText
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    setEditSections((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const next = [...prev];
+      next[index] = { ...next[index], dataNeeded: items.length > 0 ? items : undefined };
+      return next;
+    });
+  };
+
+  const handleEditSectionEvidenceChange = (index: number, value: string): void => {
+    setEditSections((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const next = [...prev];
+      next[index] = { ...next[index], suggestedEvidence: value.length > 0 ? value : undefined };
+      return next;
+    });
+  };
+
   const handleSaveStructure = async (): Promise<void> => {
     if (!selectedTemplate) return;
     setSavingStructure(true);
@@ -695,6 +730,63 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                           placeholder={t(
                             'documentStudio.templateArchitect.contentHintsPlaceholder',
                             'One guidance phrase per line — what this section should cover (no invented facts). Use "Refine with AI" on a new draft to auto-suggest.'
+                          )}
+                          className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                        />
+                      </div>
+                      <div className="pl-7">
+                        <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                          {t('documentStudio.templateArchitect.keyMessage', 'Key message')}
+                        </span>
+                        <input
+                          type="text"
+                          value={section.keyMessage ?? ''}
+                          onChange={(e) => handleEditSectionKeyMessageChange(idx, e.target.value)}
+                          aria-label={t(
+                            'documentStudio.templateArchitect.keyMessage',
+                            'Key message'
+                          )}
+                          placeholder={t(
+                            'documentStudio.templateArchitect.keyMessagePlaceholder',
+                            'The one-sentence thesis this section should argue (no invented conclusions).'
+                          )}
+                          className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                        />
+                      </div>
+                      <div className="pl-7">
+                        <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                          {t('documentStudio.templateArchitect.dataNeeded', 'Data needed')}
+                        </span>
+                        <textarea
+                          value={(section.dataNeeded ?? []).join('\n')}
+                          onChange={(e) => handleEditSectionDataNeededChange(idx, e.target.value)}
+                          rows={Math.max(2, (section.dataNeeded ?? []).length)}
+                          aria-label={t(
+                            'documentStudio.templateArchitect.dataNeeded',
+                            'Data needed'
+                          )}
+                          placeholder={t(
+                            'documentStudio.templateArchitect.dataNeededPlaceholder',
+                            'One data/input label per line — what to collect before writing this section (no invented values).'
+                          )}
+                          className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                        />
+                      </div>
+                      <div className="pl-7">
+                        <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                          {t('documentStudio.templateArchitect.suggestedEvidence', 'Suggested evidence')}
+                        </span>
+                        <input
+                          type="text"
+                          value={section.suggestedEvidence ?? ''}
+                          onChange={(e) => handleEditSectionEvidenceChange(idx, e.target.value)}
+                          aria-label={t(
+                            'documentStudio.templateArchitect.suggestedEvidence',
+                            'Suggested evidence'
+                          )}
+                          placeholder={t(
+                            'documentStudio.templateArchitect.suggestedEvidencePlaceholder',
+                            'The category of proof that should back this section (a source type, not a specific fabricated citation).'
                           )}
                           className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
                         />
