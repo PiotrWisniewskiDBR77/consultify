@@ -692,16 +692,20 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         }
         disabled={loading || isActionDisabled || !!blocked}
         title={blocked || t(`sharedComponents.artifactActionPanel.targetMeta.${target}.description`)}
-        className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:brightness-110 ${meta.tone}`}
+        // `max-w-full min-w-0` + truncate: od 2026-07-23 wariant compact żyje w
+        // prawym panelu artefaktu (stała, wąska szerokość). Bez tego długa
+        // etykieta („Rozpocznij decyzję") rozpychała pigułkę POZA panel i robiła
+        // poziomy scroll — a panel ma być przewidywalny, nie rozjeżdżalny.
+        className={`inline-flex h-8 max-w-full min-w-0 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:brightness-110 ${meta.tone}`}
       >
         {loading ? (
-          <Loader2 size={13} className="animate-spin" />
+          <Loader2 size={13} className="shrink-0 animate-spin" />
         ) : created ? (
-          <ExternalLink size={13} />
+          <ExternalLink size={13} className="shrink-0" />
         ) : (
-          <Icon size={13} />
+          <Icon size={13} className="shrink-0" />
         )}
-        {created ? created.label : label}
+        <span className="truncate">{created ? created.label : label}</span>
       </button>
     );
   };
@@ -709,19 +713,21 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
   return (
     <>
       {isCompact ? (
-        <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-2.5 dark:border-white/[0.08] dark:bg-white/[0.03]">
+        // `min-w-0` na kontenerze i wierszach — bez tego flexbox nie pozwala
+        // pigułkom się skurczyć i cały blok rozpycha wąski prawy panel.
+        <div className="min-w-0 rounded-2xl border border-slate-200/70 bg-white/70 p-2.5 dark:border-white/[0.08] dark:bg-white/[0.03]">
           <div className="mb-2 inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
             <BookOpen size={11} />
             {t('sharedComponents.artifactActionPanel.whatNextWithThisInsight')}
           </div>
-          <div className="space-y-1.5">
-            <div className="flex flex-wrap items-center gap-1.5">
+          <div className="min-w-0 space-y-1.5">
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
               <span className="mr-0.5 w-[68px] shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
                 {t('sharedComponents.artifactActionPanel.documents')}
               </span>
               {DOC_TARGETS.map(renderCompactButton)}
             </div>
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
               <span className="mr-0.5 w-[68px] shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
                 {t('sharedComponents.artifactActionPanel.inApp')}
               </span>

@@ -5622,6 +5622,8 @@
       "theUserFallback": "the user"
     },
     "insightViewer": {
+      "panelResults": "Results",
+      "panelResultsEmpty": "Nothing has been produced from this insight yet.",
       "manualFieldHint": "Text edited by hand. Stored separately from the AI content — regeneration does not erase it.",
       "manualFieldPlaceholder": "Write this section yourself, or correct what the AI produced…",
       "manualFieldAutoFit": "Back to auto-fit",
@@ -29392,6 +29394,10 @@
         "reportPackDegraded": "Report Pack is degraded; limitations must remain visible in the artifact."
       },
       "targetMeta": {
+        "decision": {
+          "label": "Start a decision",
+          "description": "Turn this insight into a decision to be made — with context and evidence."
+        },
         "report": {
           "label": "Create report",
           "description": "Document for audit readout."

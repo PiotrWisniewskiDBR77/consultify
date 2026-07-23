@@ -4784,6 +4784,8 @@
       "theUserFallback": "użytkownika"
     },
     "insightViewer": {
+      "panelResults": "Rezultaty",
+      "panelResultsEmpty": "Z tego wniosku nic jeszcze nie powstało.",
       "manualFieldHint": "Tekst redagowany ręcznie. Zapisuje się osobno od treści z AI — regeneracja go nie kasuje.",
       "manualFieldPlaceholder": "Napisz tę sekcję sam albo popraw to, co wygenerowało AI…",
       "manualFieldAutoFit": "Powrót do auto-dopasowania",
@@ -30452,6 +30454,10 @@
         "reportPackDegraded": "Report Pack jest zdegradowany; ograniczenia muszą pozostać widoczne w artefakcie."
       },
       "targetMeta": {
+        "decision": {
+          "label": "Rozpocznij decyzję",
+          "description": "Zamień wniosek w decyzję do podjęcia — z kontekstem i dowodami."
+        },
         "report": {
           "label": "Utwórz raport",
           "description": "Dokument do omówienia wyników audytu."
