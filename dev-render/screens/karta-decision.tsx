@@ -41,23 +41,44 @@ seedRealisticSession();
 
 const DECISION_ID = 'decision-prv-mywork-1';
 
+/**
+ * ★ LICZBY MUSZĄ BYĆ WIDOCZNE NA EKRANIE, NIE TYLKO W DANYCH.
+ *
+ * Karta ma na celu pokazać trade-offy, ale `DecisionDetailView` renderuje
+ * z każdej opcji wyłącznie tytuł, opis, argumenty za/przeciw, znaczniki
+ * i „ryzyko: <poziom>". Pola `estimatedCost`, `estimatedDuration`,
+ * `confidence`, `impactScore` oraz `isRecommended` (poza kropką przy tytule)
+ * NIE MAJĄ dziś miejsca w widoku — sprawdzone na żywym renderze harnessu.
+ * Zgłoszone jako wymagane do dorobienia PO STRONIE KOMPONENTU.
+ *
+ * Do czasu tej poprawki liczby wchodzą do pierwszego wiersza `description`
+ * (koszt · czas · pewność wyceny · rekomendacja) wraz z JAWNYM ZAŁOŻENIEM
+ * wyliczenia — inaczej karta o kompromisach nie pokazuje ani jednej liczby.
+ * Pola strukturalne zostają nietknięte i zgodne co do grosza z opisem.
+ */
 const MOCK_ALTERNATIVES = [
   {
     id: 'alt-1',
     title: 'Migracja na własną instancję w EU (Frankfurt)',
     description:
+      'KOSZT 168 000 PLN · CZAS 6 tygodni · PEWNOŚĆ WYCENY wysoka · REKOMENDOWANY.\n' +
+      'Podstawa wyceny: 6 tygodni × 2 osoby = 12 osobotygodni zespołu platformowego ' +
+      '× 14 000 PLN za osobotydzień (stawka wewnętrzna, kontroling VI 2026).\n\n' +
       'Przeniesienie całego przetwarzania danych wywiadowczych na dedykowaną instancję ' +
       'w regionie EU. Pełna kontrola nad rezydencją danych, własny klucz szyfrowania, ' +
-      'brak transferu poza EOG. Wymaga przebudowy warstwy kolejkowania i re-certyfikacji.',
+      'brak transferu poza EOG. Wymaga przebudowy warstwy kolejkowania i re-certyfikacji.\n\n' +
+      'Co obaliłoby tę rekomendację: gdyby dział prawny obu klientów pisemnie zaakceptował ' +
+      'pseudonimizację jako wystarczającą, wariant B daje ten sam efekt za 44% kosztu ' +
+      'i o 3 tygodnie szybciej. Odpowiedź kancelarii spodziewana przed 5 sierpnia.',
     pros: [
-      'Zdejmuje blokadę prawną z dwóch klientów z sektora publicznego',
+      'Zdejmuje blokadę prawną 2 klientów: 3 z 3 zastrzeżeń',
       'Rezydencja danych w EU bez klauzul transferowych',
-      'Własny klucz szyfrowania — argument w przetargach',
+      'Własny klucz szyfrowania — argument w przetargach publicznych 2027',
     ],
     cons: [
-      'Najwyższy koszt wdrożenia i utrzymania',
-      'Ok. 6 tygodni pracy zespołu platformowego',
-      'Konieczna ponowna certyfikacja dostawcy',
+      'Najwyższy koszt: 168 000 PLN, czyli 2,3× wariantu B',
+      '6 tygodni zespołu platformowego — wolne okno 10-24 sierpnia',
+      'Ponowna certyfikacja dostawcy — poza naszym harmonogramem',
     ],
     estimatedCost: 168000,
     estimatedDuration: '6 tygodni',
@@ -70,18 +91,22 @@ const MOCK_ALTERNATIVES = [
     id: 'alt-2',
     title: 'Model hybrydowy — anonimizacja przed przetwarzaniem',
     description:
+      'KOSZT 74 000 PLN · CZAS 3 tygodnie · PEWNOŚĆ WYCENY średnia · niezalecany dziś.\n' +
+      'Podstawa wyceny: 4 osobotygodnie × 14 000 PLN = 56 000 PLN + 18 000 PLN za opinię ' +
+      'zewnętrznej kancelarii o pseudonimizacji. Pewność średnia, bo zakres warstwy ' +
+      'pseudonimizacji zależy od uwag prawnych, których jeszcze nie mamy.\n\n' +
       'Dane pozostają u obecnego dostawcy, ale przed przetwarzaniem przechodzą przez ' +
       'warstwę pseudonimizacji (usuwanie PII, podmiana nazw podmiotów na identyfikatory). ' +
       'Mapowanie trzymane wyłącznie po naszej stronie.',
     pros: [
-      'Wdrożenie w 3 tygodnie, bez przebudowy platformy',
-      'Około połowy kosztu wariantu pełnej migracji',
-      'Odwracalny — można później dołożyć migrację',
+      'Wdrożenie w 3 tygodnie zamiast 6, bez przebudowy platformy',
+      '74 000 PLN, czyli 44% kosztu wariantu A',
+      'Odwracalny — migrację można dołożyć później bez straty wykonanej pracy',
     ],
     cons: [
-      'Nie zamyka tematu rezydencji danych formalnie',
-      'Ryzyko utraty kontekstu w cytatach z wywiadów',
-      'Wymaga akceptacji działu prawnego klienta',
+      'Zamyka 2 z 3 zastrzeżeń — rezydencja danych zostaje otwarta',
+      'Ryzyko utraty kontekstu w cytatach — pilot na 40 wywiadach',
+      'Wymaga pisemnej zgody działu prawnego klienta — brak',
     ],
     estimatedCost: 74000,
     estimatedDuration: '3 tygodnie',
@@ -94,16 +119,21 @@ const MOCK_ALTERNATIVES = [
     id: 'alt-3',
     title: 'Status quo z aneksem umownym (DPA)',
     description:
+      'KOSZT 9 000 PLN · CZAS 1 tydzień (5 dni roboczych) · PEWNOŚĆ WYCENY wysoka · odrzucony.\n' +
+      'Podstawa wyceny: 2 dni pracy radcy prawnego × 4 500 PLN za dzień. Zero pracy ' +
+      'zespołu platformowego.\n\n' +
       'Utrzymanie obecnej architektury, uzupełnione o aneks powierzenia przetwarzania ' +
-      'oraz standardowe klauzule umowne. Zmiana wyłącznie formalno-prawna.',
+      'oraz standardowe klauzule umowne. Zmiana wyłącznie formalno-prawna.\n\n' +
+      'Wariant trzymamy w zestawieniu jako punkt odniesienia kosztowy, nie jako opcję ' +
+      'do wyboru — obaj klienci odrzucili go już na etapie due diligence.',
     pros: [
-      'Brak kosztu technicznego i zero pracy zespołu',
-      'Możliwe do zamknięcia w 5 dni roboczych',
+      'Najniższy koszt: 9 000 PLN, zero pracy zespołu platformowego',
+      'Możliwe do zamknięcia w 5 dni roboczych, przed terminem 5 sierpnia',
     ],
     cons: [
-      'Dwaj klienci już odrzucili tę ścieżkę na etapie due diligence',
-      'Odsuwa problem, nie rozwiązuje go',
-      'Blokuje wejście w przetargi publiczne w 2027',
+      'Odrzucony przez 2 klientów w due diligence: 0 z 3 zastrzeżeń',
+      'Odsuwa problem, nie rozwiązuje go — wraca przy kolejnym odbiorze etapu',
+      'Blokuje przetargi publiczne 2027 — wymóg rezydencji w EOG',
     ],
     estimatedCost: 9000,
     estimatedDuration: '1 tydzień',
@@ -368,10 +398,16 @@ const MOCK_DECISION = {
   createdAt: '2026-07-10T08:00:00Z',
   updatedAt: '2026-07-18T15:30:00Z',
   rationale:
-    'Zwłoka blokuje odbiór etapu w dwóch projektach o łącznej wartości 1,4 mln zł oraz ' +
-    'wstrzymuje podpisanie aneksu z trzecim klientem. Każdy tydzień opóźnienia to około ' +
-    '32 tys. zł niezafakturowanej pracy i rosnące ryzyko eskalacji na poziom zarządu klienta. ' +
-    'Termin twardy wynika z komitetu inwestycyjnego 5 sierpnia.',
+    'Decyzję trzeba zamknąć do 5 sierpnia, bo zwłoka kosztuje więcej niż różnica między ' +
+    'wariantami.\n\n' +
+    'Podstawa: zwłoka blokuje odbiór etapu w dwóch projektach o łącznej wartości 1,4 mln PLN ' +
+    'i wstrzymuje podpisanie aneksu z trzecim klientem. Każdy tydzień opóźnienia to ok. ' +
+    '32 000 PLN niezafakturowanej pracy (ZAŁOŻENIE: 2,3 etatu konsultanta × 5 dni × ' +
+    '2 800 PLN dziennej stawki rozliczeniowej — rozliczenie programu za II kw. 2026).\n\n' +
+    'Termin twardy wynika z komitetu inwestycyjnego 5 sierpnia: po tej dacie budżet na ' +
+    'wariant A wypada z rezerwy programu i wraca dopiero w planie na 2027.\n\n' +
+    'Uczciwa niepewność: nie znamy jeszcze stanowiska kancelarii w sprawie pseudonimizacji. ' +
+    'Jeśli przyjdzie przed 5 sierpnia i będzie pozytywne, rekomendacja zmienia się na wariant B.',
   requestedByName: 'Anna Kowalska',
   deciderId: 'user-piotr-demo',
   projectName: 'Program zgodności danych klienckich 2026',
