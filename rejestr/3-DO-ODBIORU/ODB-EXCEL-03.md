@@ -11,6 +11,9 @@ narzedzie: Gen. Excel
 flaga: ff_excele (istniejąca, ON)
 zrzut: rejestr/_zrzuty/ODB-EXCEL-03.png
 zrzut_dark: rejestr/_zrzuty/ODB-EXCEL-03-dark.png
+ekran: gen-excel-templates-tab
+wysokosc: 700
+klik: "Kliknij „Model P&L" → „Zbuduj skoroszyt", rozwiń badge."
 utworzone: 2026-07-23
 ---
 

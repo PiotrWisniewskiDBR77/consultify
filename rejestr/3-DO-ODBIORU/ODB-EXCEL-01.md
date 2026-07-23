@@ -11,6 +11,9 @@ narzedzie: Gen. Excel
 flaga: ff_workbook_templates (domyślnie OFF — czeka na Twój flip)
 zrzut: rejestr/_zrzuty/ODB-EXCEL-01.png
 zrzut_dark: rejestr/_zrzuty/ODB-EXCEL-01-dark.png
+ekran: gen-excel-templates-tab
+wysokosc: 460
+klik: "Kliknij wzorzec → formularz parametrów."
 utworzone: 2026-07-23
 ---
 

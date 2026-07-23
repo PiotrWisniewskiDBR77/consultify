@@ -11,6 +11,10 @@ narzedzie: Gen. Word
 flaga: ff_tpl_editor (istniejąca, ON)
 zrzut: rejestr/_zrzuty/ODB-WORD-01.png
 zrzut_dark: rejestr/_zrzuty/ODB-WORD-01-dark.png
+ekran: gen-word-content-hints
+query: "&ff_tpl_editor=1"
+wysokosc: 720
+klik: "Kliknij „Raport zarządczy", POPISZ w polach briefingu."
 utworzone: 2026-07-23
 ---
 

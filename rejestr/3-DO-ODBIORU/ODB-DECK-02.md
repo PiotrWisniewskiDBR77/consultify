@@ -11,6 +11,9 @@ narzedzie: Gen. Deck
 flaga: ff_deck_architect (istniejąca, ON)
 zrzut: rejestr/_zrzuty/ODB-DECK-02.png
 zrzut_dark: rejestr/_zrzuty/ODB-DECK-02-dark.png
+ekran: gen-deck-content-hints
+wysokosc: 620
+klik: "Kliknij szkic → chipy i czerwony przycisk u góry."
 utworzone: 2026-07-23
 ---
 
