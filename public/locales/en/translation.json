@@ -6137,6 +6137,7 @@
       "groupAudit": "Audit",
       "derivedFromPerspectives": "Derived from {{count}} distinct perspectives. Shared topics are hard consensus; local topics are single-voice; contradicted topics need operator adjudication.",
       "actionsLiveInHeaderAndToolbar": "Actions for this insight live in the header and toolbar.",
+      "panelActionsHint": "Pick a state to move this insight forward in its lifecycle.",
       "statusOptionLabel": {
         "draft": "Draft",
         "generating": "Generating",

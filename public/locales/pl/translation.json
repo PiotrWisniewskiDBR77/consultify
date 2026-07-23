@@ -5299,6 +5299,7 @@
       "groupAudit": "Audyt",
       "derivedFromPerspectives": "Zbudowane z {{count}} odrębnych perspektyw. Wspólne tematy to twardy konsensus; lokalne to pojedyncze głosy; sprzeczne wymagają rozstrzygnięcia operatora.",
       "actionsLiveInHeaderAndToolbar": "Akcje tego wniosku żyją w nagłówku i na pasku narzędzi.",
+      "panelActionsHint": "Wybierz stan, aby przenieść wniosek dalej w cyklu życia.",
       "statusOptionLabel": {
         "draft": "Szkic",
         "generating": "Generowanie",

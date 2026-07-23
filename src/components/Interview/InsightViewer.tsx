@@ -8259,7 +8259,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               ))}
           </div>
           <p className="text-[11px] leading-relaxed text-c-text-muted">
-            {t('interview.insightViewer.panelActionsHint')}
+            {t(
+              'interview.insightViewer.panelActionsHint',
+              'Pick a state to move this insight forward in its lifecycle.'
+            )}
           </p>
         </div>
       ),
