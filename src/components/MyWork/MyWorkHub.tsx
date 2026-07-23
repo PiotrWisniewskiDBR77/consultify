@@ -13,6 +13,7 @@
 import {
   AlertCircle,
   Bell,
+  Bot,
   Calendar,
   CalendarClock,
   CalendarDays,
@@ -96,6 +97,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext, type WorkspaceType } from '@/types/workspace';
+import { isAgentPlanEnabled } from '@/utils/agentPlanFlag';
 import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
 import {
   dispatchBetaAccessBlocked,
@@ -193,6 +195,12 @@ const ClientDocumentsVault = lazyWithRetry(() =>
     default: m.ClientDocumentsVault,
   }))
 );
+// AGT-003 (relokacja Run agent z menu głównego do My Work). Renders the
+// launcher/panel directly (no self-gating) — the tab entry below is filtered
+// out when isAgentPlanEnabled() is false, mirroring menuConfig.ts.
+const AgentPlanWorkspace = lazyWithRetry(() =>
+  import('../AIChat/AgentPlanWorkspace').then((m) => ({ default: m.AgentPlanWorkspace }))
+);
 
 // Types
 type ModuleTab =
@@ -204,7 +212,8 @@ type ModuleTab =
   | 'tasks'
   | 'decisions'
   | 'manager'
-  | 'vault';
+  | 'vault'
+  | 'agent';
 
 // Radar (the My Work "home" surface) is temporarily HIDDEN and PAUSED: it is
 // memory-heavy and still under active development. Flipping RADAR_ENABLED back to
@@ -455,11 +464,13 @@ function getInitialMyWorkTab(
   if (searchParams.get('taskId') || searchParams.get('task')) return 'tasks';
   if (searchParams.get('decisionId') || searchParams.get('decision')) return 'decisions';
   if (searchParams.get('notebook')) return 'notebook';
-  // VLT-004 (relokacja z menu głównego): deep-link `?tab=vault`, used by the old
-  // /vault route redirect below. Falls through to the default tab if the vault
-  // flag is off, so a stale link never lands on a hidden/empty tab.
+  // VLT-004/AGT-003 (relokacja z menu głównego): deep-link `?tab=vault`/`?tab=agent`,
+  // used by the old /vault and /agent-plan route redirects below. Falls through to
+  // the default tab if the surface's flag is off, so a stale link never lands on a
+  // hidden/empty tab.
   const tabParam = searchParams.get('tab');
   if (tabParam === 'vault' && isClientVaultEnabled()) return 'vault';
+  if (tabParam === 'agent' && isAgentPlanEnabled()) return 'agent';
 
   return RADAR_ENABLED ? 'home' : MY_WORK_FALLBACK_TAB;
 }
@@ -1520,6 +1531,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         requiresManagerAccess: false,
         requiresVaultFlag: true,
       },
+      // AGT-003 (relokacja Run agent). Same gate as the old sidebar entry
+      // (isAgentPlanEnabled).
+      {
+        id: 'agent' as ModuleTab,
+        label: t('sidebar.agentPlan', 'Run agent'),
+        icon: <Bot size={16} />,
+        color: 'bg-slate-500',
+        requiresManagerAccess: false,
+        requiresAgentFlag: true,
+      },
       {
         id: 'manager' as ModuleTab,
         label: 'Manager',
@@ -1534,6 +1555,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       if (tab.id === 'home' && !RADAR_ENABLED) return false;
       if (tab.requiresManagerAccess && !canViewManager) return false;
       if ('requiresVaultFlag' in tab && tab.requiresVaultFlag && !isClientVaultEnabled())
+        return false;
+      if ('requiresAgentFlag' in tab && tab.requiresAgentFlag && !isAgentPlanEnabled())
         return false;
       return true;
     });
@@ -3669,6 +3692,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         return (
           <React.Suspense fallback={lazyFallback}>
             <ClientDocumentsVault />
+          </React.Suspense>
+        );
+      case 'agent':
+        // AGT-003 (relokacja Run agent z menu głównego). Sama relokacja —
+        // funkcjonalność (katalog manifestów, plan builder) zostaje 1:1.
+        return (
+          <React.Suspense fallback={lazyFallback}>
+            <AgentPlanWorkspace />
           </React.Suspense>
         );
       default:

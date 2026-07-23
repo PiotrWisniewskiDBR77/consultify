@@ -27,7 +27,6 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
-import { isAgentPlanEnabled } from '@/utils/agentPlanFlag';
 import { isClientReaderEnabled } from '@/utils/clientReaderFlag';
 import { canUseInternalTools } from '@/utils/internalToolsAccess';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
@@ -51,17 +50,11 @@ const StudioView = lazyWithRetry(() =>
 const MyWorkView = lazyWithRetry(() =>
   import('@/views/MyWorkView').then((m) => ({ default: m.MyWorkView }))
 );
-// HP-22 Harvey-Parity: org-scoped client document vault. VLT-004 (relokacja
-// 2026-07-23) removed the lazy view component and route-level flag gate here
-// — the surface now renders from the My Work "Vault" tab (MyWorkHub.tsx);
-// ROUTES.CLIENT_VAULT below is redirect-only so old /vault links don't 404.
-// HP-4 F3 Harvey-Parity: run-agent workspace entry (AgentPlanWorkspace).
-// Gated OFF by default (agentPlanFlag) — component self-gates and renders
-// null, the route below additionally redirects away when disabled so the
-// URL never shows a blank shell.
-const AgentPlanView = lazyWithRetry(() =>
-  import('@/views/AgentPlanView').then((m) => ({ default: m.AgentPlanView }))
-);
+// HP-22 / HP-4 F3 (Client Vault, Run agent): the lazy view components and
+// their route-level flag gates were removed here in VLT-004/AGT-003
+// (relokacja 2026-07-23) — both surfaces now render from the My Work tab
+// (MyWorkHub.tsx); ROUTES.CLIENT_VAULT/ROUTES.AGENT_PLAN below are
+// redirect-only so old links don't 404.
 // M16 P0-4: ContextBuilderView is no longer routed standalone — /context/* now
 // redirects to the canonical /organization/* workspace. The view file is retained
 // because quick-step entry paths still resolve through these (redirected) routes.
@@ -1292,28 +1285,14 @@ export const AppRoutes: React.FC = () => {
           element={<Navigate to={`${ROUTES.MY_WORK}?tab=vault`} replace />}
         />
 
-        {/* Run agent (HP-4 F3, Harvey-Parity) — AgentPlanWorkspace entry
-            point. Gated OFF by default (agentPlanFlag, reguła #7/#9): when
-            disabled the route redirects to /chat so hitting /agent-plan by
-            URL never shows a blank shell. No visual/behavioral change for
-            anyone until the flag is flipped after Piotr's screenshot accept. */}
+        {/* Run agent (HP-4 F3, Harvey-Parity) — AGT-003 (relokacja
+            2026-07-23): the surface moved from its own route into the My
+            Work "Agent" tab (MyWorkHub.tsx). This route is kept only so old
+            /agent-plan links never 404 — it always redirects to the tab;
+            MyWorkHub itself gates the tab on isAgentPlanEnabled(). */}
         <Route
           path={ROUTES.AGENT_PLAN}
-          element={
-            isAgentPlanEnabled() ? (
-              <MainLayout breadcrumbs={breadcrumbs || ['Agent']}>
-                <RouteErrorBoundary>
-                  <AnimationWrapper variant="fade">
-                    <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                      <AgentPlanView />
-                    </Suspense>
-                  </AnimationWrapper>
-                </RouteErrorBoundary>
-              </MainLayout>
-            ) : (
-              <Navigate to={ROUTES.AI_CHAT} replace />
-            )
-          }
+          element={<Navigate to={`${ROUTES.MY_WORK}?tab=agent`} replace />}
         />
 
         {/* Audit Orchestrator (audit #19 family) — authenticated, inside the
