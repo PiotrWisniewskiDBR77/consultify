@@ -89,6 +89,8 @@ import KartaNotificationScreen from './screens/karta-notification';
 import KartaTaskScreen from './screens/karta-task';
 import PreviewZakladkiScreen from './screens/preview-4-zakladki';
 import IdeaTableToolKebabScreen from './screens/idea-table-tool-kebab';
+import DocumentArtifactScreen from './screens/document-artifact';
+import DeckArtifactScreen from './screens/deck-artifact';
 // VLT-003 — importem MUSI być ostatnia: każdy dev-render screen instaluje swój
 // window.fetch stub jako top-level side effect przy imporcie (niezależnie od
 // tego, który ?screen= jest renderowany — statyczne importy main.tsx odpalają
@@ -137,6 +139,14 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DOKUMENTY — Excel: naprawa "nie mam czego otworzyć" — reopen wiszącego artifactId → honest error zamiast pustego fake-podglądu (2026-07-23)',
     render: () => <ExceleReopenVerifyScreen />,
+  },
+  'document-artifact': {
+    label: 'ARTEFAKT Dokument (SPEC-A archetyp B) — realny DocumentStudioDocumentPanel na bogatym mocku',
+    render: () => <DocumentArtifactScreen />,
+  },
+  'deck-artifact': {
+    label: 'ARTEFAKT Prezentacja (SPEC-A archetyp E) — realna powłoka decka na bogatym mocku',
+    render: () => <DeckArtifactScreen />,
   },
   'idea-table-tool-kebab': {
     label:
