@@ -92,8 +92,15 @@ Legenda: ⬜ do zrobienia · 🔨 w budowie · ✅ scalone+zweryfikowane · 🅰
 
 ## ★ LOG FAL (dopisuj po każdej fali — najnowsza NA GÓRZE)
 
-### Fala 3 — URUCHOMIONA (workflow wkrp7w510)
-genexcel-templates3 (+2 wzorce: unitEconomics, loanAmortization), gendeck-slide-preview (sylwetka layoutu/slajd), genword-structure-preview (sylwetka struktury dok.). 🔨 w budowie.
+### Fala 4 — URUCHOMIONA (workflow wbvv6a5le)
+Rdzeniowe narzędzia wyjściowe (Deck/Word/Excel, stały na ~7): deck-quality-surface, word-quality-surface, excel-quality-surface — pokazanie ISTNIEJĄCYCH sygnałów jakości w UI (addytywnie, nie-blokująco). 🔨 w budowie. UWAGA: dotykają rdzeniowych widoków wyniku — render-verify obowiązkowy, ostrożnie z regresją.
+
+### Fala 3 — ✅ SCALONA (workflow wkrp7w510, demo eae7fe4f21)
+3/3, 0 błędów. 84 testy backend + esbuild + render-verify (deck sylwetki light, word struktura dark — oba motywy pokryte).
+- genexcel-templates3: WORKBOOK_TEMPLATES 5→7 (unitEconomics, loanAmortization; formuła annuitetowa, 103 testy). Backend.
+- gendeck-slide-preview: SlideSilhouette.tsx — sylwetka layoutu per slajd (intent→6 kształtów) w outline. Render PASS. Za ff_deck_architect.
+- genword-structure-preview: DocumentStructurePreview.tsx — sticky panel sylwetki dokumentu (level→wcięcie, lengthHint→linie, required→kropka). Render PASS dark. Za ff_tpl_editor.
+Oceny: Gen.Excel 6,2→6,4 (Meryt 7→8, 7 wzorców); Gen.Deck 5,6→5,8 (Grafika 5→6); Gen.Word 6,6→6,8 (Grafika 6→7). Średnia 6,7→6,8.
 
 ### Fala 2 — ✅ SCALONA (workflow wavodm809, demo 498ce9d5ef)
 3/3, 0 błędów. Zweryfikowane niezależnie: 89 testów backend + esbuild + render-verify 3 powierzchni light+console-clean.
@@ -118,7 +125,7 @@ Jeśli kontekst się kończy: następca czyta ten plik + memory `[[loop-do-9-202
 sprawdza `git worktree list`, kontynuuje z inwentarza (najniższe średnie najpierw: Gen.Excel → Gen.Deck → Gen.Word).
 
 ## STAN BIEŻĄCY (aktualizuj)
-Średnia: **6,7** → cel 9,0. Ostatni SHA demo: `498ce9d5ef` (fala 2). Fal ukończonych: 2. Fala 3 w toku (wkrp7w510).
-Per narzędzie: Deck 7,8 · Word 7,2 · Excel 7,0 · Gen.Deck 5,6 · Gen.Word 6,6 · Gen.Excel 6,2.
-🅰️ Czeka na akcept Piotra (flip flag po zrzutach): ff_workbook_templates (zakładka Gen.Excel). Reszta iteracji za istniejącymi flagami ON.
-Dev-render ekrany: gen-deck-content-hints, gen-excel-templates-tab, gen-word-content-hints. Port bieżący 3027 (--force gdy HMR gubi).
+Średnia: **6,8** → cel 9,0. Ostatni SHA demo: `eae7fe4f21` (fala 3). Fal ukończonych: 3. Fala 4 w toku (wbvv6a5le).
+Per narzędzie: Deck 7,8 · Word 7,2 · Excel 7,0 · Gen.Deck 5,8 · Gen.Word 6,8 · Gen.Excel 6,4.
+UWAGA STRATEGICZNA: generatory rosną (Grafika/breadth), ale ich MERYTORYKA capped (Gen.Deck Meryt 4 — to wymaga realnej głębi treści LLM, nie tylko struktury). Big-3 (Deck/Word/Excel) stały na ~7 do fali 4. Do 9,0 średniej trzeba: big-3 →9 (+5) i generatory Meryt →9 (+8). Uczciwie: prawdziwe 9,0 może nie być osiągalne w nocy bez głębokiej generacji treści LLM + akceptów Piotra; pcham max i będę transparentny rano co jest realnie 9 vs. zbudowane-czeka-na-akcept.
+🅰️ Czeka na akcept Piotra: ff_workbook_templates. Dev-render ekrany: gen-deck-content-hints, gen-excel-templates-tab, gen-word-content-hints. Port ostatni 3028.
