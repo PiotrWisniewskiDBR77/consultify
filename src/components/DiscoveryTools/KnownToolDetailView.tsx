@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import {
+  ARTIFACT_PANEL_CARD_CLASS_DOCKED,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
@@ -1761,9 +1762,13 @@ export function KnownToolDetailView(props: {
       activeSection={activeSection}
       onSectionChange={setActiveSection}
       rightPanel={
+        // ETAP 1.4 — bylo `border-l ... h-full`, czyli techniczny sidebar
+        // doklejony do krawedzi. Teraz ten sam wyglad co Inicjatywa: jasna
+        // zaokraglona karta odsunieta od brzegu (wariant _DOCKED, bo slot
+        // `rightPanel` w NModeShell jest pelnowysokosciowy).
         <ArtifactRightPanel
           sections={rightPanelSections}
-          className="border-l border-c-border-subtle h-full"
+          className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
           ariaLabel={t('discoveryToolsMain.knownToolDetailView.panelAriaLabel', 'Tool details')}
         />
       }

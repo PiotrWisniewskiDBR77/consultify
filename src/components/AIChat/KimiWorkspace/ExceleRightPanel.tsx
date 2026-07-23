@@ -5,7 +5,7 @@
  * SSOT: Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md §10.2/§11.2 —
  * powłoka wspólna wszystkich artefaktów: prawy panel = `㉝`accordion, sekcje
  * w STAŁEJ kolejności Akcje · Właściwości · Powiązania · Komentarze ·
- * Historia/AI (§10.2 pkt 3, §11.2 "Prawy panel ⑪").
+ * Historia (§10.2 pkt 3, §11.2 "Prawy panel ⑪").
  *
  * Renderowane WYŁĄCZNIE na widoku otwartego artefaktu (KimiWorkspaceShell,
  * gałąź `!showHome` w ExceleView.tsx) — nigdy na home z kartami startowymi
@@ -151,7 +151,7 @@ export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = ({
     },
     {
       id: 'history',
-      label: t('excele.rightPanel.history', 'Historia / AI'),
+      label: t('excele.rightPanel.history', 'Historia'),
       icon: Sparkles,
       isEmpty: taskSteps.length === 0,
       emptyLabel: isFailed

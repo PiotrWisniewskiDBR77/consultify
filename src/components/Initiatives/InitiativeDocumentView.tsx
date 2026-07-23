@@ -78,6 +78,7 @@ import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import {
+  ARTIFACT_PANEL_CARD_CLASS_STICKY,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
@@ -9630,7 +9631,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // zarezerwowanymi id, których §2.1 tam zabrania.
   //
   // KANONICZNA KOLEJNOŚĆ (§11.2, bez odstępstw):
-  //   Akcje · Właściwości · Powiązania · [Dowody] · Komentarze · Historia/AI
+  //   Akcje · Właściwości · Powiązania · Źródła i założenia · [Rezultaty] ·
+  //   Komentarze · Historia   (kanon n-Type = ARTIFACT_PANEL_SECTION_ORDER)
   // Sekcja `evidence` to JEDYNE dozwolone rozszerzenie poza piątkę i zawsze
   // stoi między Powiązaniami a Komentarzami (§2.2).
   //
@@ -9960,7 +9962,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       },
       {
         id: 'history',
-        label: t('initiatives.panel.history', 'History / AI'),
+        label: t('initiatives.panel.history', 'History'),
         icon: History,
         defaultOpen: false,
         badge: nModeActivityEntries.length,
@@ -10151,7 +10153,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <div className="hidden xl:block shrink-0 sticky top-6 self-start">
                   <ArtifactRightPanel
                     sections={initiativeRightPanelSections}
-                    className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
+                    className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
                     ariaLabel={t('initiatives.panel.ariaLabel', 'Initiative details')}
                   />
                 </div>
@@ -11266,7 +11268,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <div className="hidden xl:block shrink-0 sticky top-6 self-start">
                     <ArtifactRightPanel
                       sections={initiativeRightPanelSections}
-                      className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
+                      className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
                       ariaLabel={t('initiatives.panel.ariaLabel', 'Initiative details')}
                     />
                   </div>

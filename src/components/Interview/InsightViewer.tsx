@@ -104,6 +104,7 @@ import {
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import {
+  ARTIFACT_PANEL_CARD_CLASS_DOCKED,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
@@ -7938,7 +7939,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   // ── SPEC-A prawy panel artefaktu (ArtifactRightPanel) ─────────────────────
   // Stała kolejność: Akcje · Właściwości · Powiązania · Komentarze ·
-  // Historia/AI. Wyłącznie ISTNIEJĄCE handlery/dane — zero nowego backendu.
+  // Historia. Wyłącznie ISTNIEJĄCE handlery/dane — zero nowego backendu.
   // Centrum (N-mode sekcje obserwacja/znaczenie/rekomendacja) pozostaje
   // nietknięte — ten panel tylko dokuje się z boku (NModeShell `rightPanel`).
   const panelDash = '—';
@@ -8081,7 +8082,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       id: 'relations',
       label: t('interview.insightViewer.relations'),
       icon: Link2,
-      defaultOpen: true,
+      // Kanon n-Type: domyslnie rozwiniete TYLKO Akcje i Wlasciwosci.
+      defaultOpen: false,
       isEmpty: sourceSessions.length === 0,
       emptyLabel: t('interview.insightViewer.noRelations'),
       children: (
@@ -8210,8 +8212,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         presentationMode={presentationMode}
         onPresentationModeChange={setPresentationMode}
         rightPanel={
+          // ETAP 1.4 — bez klasy panel dziedziczyl `border-l` powloki, czyli
+          // sidebar doklejony do krawedzi. Teraz ten sam wyglad co Inicjatywa:
+          // jasna zaokraglona karta odsunieta od brzegu (wariant _DOCKED).
           <ArtifactRightPanel
             sections={rightPanelSections}
+            className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
             ariaLabel={t('interview.insightViewer.insightDetails')}
             statusBar={
               // HP-8 workflow-engine status bar — behind ff_artifactApprovalUi

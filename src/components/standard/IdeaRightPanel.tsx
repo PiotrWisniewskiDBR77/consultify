@@ -9,7 +9,7 @@
  * (Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md §10.2/§11.2) — powłoka
  * wspólna wszystkich artefaktów, nie własny 3-kartowy układ Idei:
  *
- *     Akcje · Właściwości · Powiązania · Komentarze · Historia/AI
+ *     Akcje · Właściwości · Powiązania · Komentarze · Historia
  *
  * Mapowanie starych 3 kart → 5 kanonicznych (wzór dev-render/screens/idea-table.tsx):
  *   - Akcje         NOWA — `PreviewActionBar` z realnymi akcjami workspace
@@ -28,7 +28,7 @@
  *                   Thread/ProcessFlowNodeCommentThread to inny zakres: wątek
  *                   NA WĘŹLE, nie na artefakcie). Sekcja renderuje się jako
  *                   pusta (`isEmpty`, emptyLabel „Brak komentarzy").
- *   - Historia/AI   dawna karta „Teresa" (`teresaContent`, <IdeaTeresaSection>)
+ *   - Historia      dawna karta „Teresa" (`teresaContent`, <IdeaTeresaSection>)
  *                   — bez zmian funkcji, nowa etykieta wg kanonu.
  *
  * Zasady (reużycie 1:1, NIE bespoke):
@@ -66,7 +66,7 @@ export interface IdeaRightPanelProps {
    * KPI, podobne idee).
    */
   relationsContent: React.ReactNode;
-  /** Treść karty „Historia / AI" (komendy + strumień sugestii — <IdeaTeresaSection>). */
+  /** Treść karty „Historia" (komendy + strumień sugestii — <IdeaTeresaSection>). */
   teresaContent: React.ReactNode;
   /**
    * HP-17: id artefaktu canvas (tool_session/mindmap id) — gdy podane (flaga
@@ -179,7 +179,7 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
       },
       {
         id: 'history',
-        label: isPolish ? 'Historia / AI' : 'History / AI',
+        label: isPolish ? 'Historia' : 'History',
         icon: Sparkles,
         children: teresaContent,
         defaultOpen: activeSection === 'teresa',
