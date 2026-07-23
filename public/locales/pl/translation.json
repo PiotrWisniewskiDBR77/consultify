@@ -30998,6 +30998,19 @@
     },
     "previewCompletenessRing": {
       "missingFields": "Brakujące pola"
+    },
+    "artifactApprovalStatusBar": {
+      "stateDraft": "Szkic",
+      "stateReview": "W recenzji",
+      "stateApproved": "Zatwierdzone",
+      "stateRejected": "Odrzucone",
+      "loading": "Wczytywanie stanu zatwierdzenia…",
+      "saving": "Zapisywanie…",
+      "submitForReview": "Zgłoś do recenzji",
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "confirmReject": "Potwierdź odrzucenie",
+      "rejectReasonPlaceholder": "Powód (opcjonalnie)"
     }
   },
   "reportBuilder": {
