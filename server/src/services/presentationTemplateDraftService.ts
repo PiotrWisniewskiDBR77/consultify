@@ -17,13 +17,16 @@
  *     to be a runnable recipe (known intents, known layouts).
  *   - `draftPresentationTemplateAsync({ useLlm: true })` optionally lets an
  *     LLM rewrite slide titles + the template name/description, and add
- *     optional per-slide `contentHints` (thematic structure guidance, never
- *     invented facts/numbers — this is a template, not a specific deck) —
- *     never intents, never slide order/count, never governance metadata.
- *     Any LLM failure or schema-violating response falls back to the
- *     deterministic draft unchanged (mirrors `documentTemplateRefiner.ts`'s
- *     narrow, hallucination-resistant contract); an invalid/missing
- *     `contentHints` value is lenient (falls back to "no hints"), it never
+ *     optional per-slide structural briefing fields — `contentHints`
+ *     (thematic structure guidance), `keyMessage` (one-sentence thesis
+ *     SHAPE), `dataNeeded` (what data categories to gather), and
+ *     `suggestedVisual` (visualization type) — never invented facts/numbers
+ *     (this is a template, not a specific deck) — never intents, never
+ *     slide order/count, never governance metadata. Any LLM failure or
+ *     schema-violating response falls back to the deterministic draft
+ *     unchanged (mirrors `documentTemplateRefiner.ts`'s narrow,
+ *     hallucination-resistant contract); an invalid/missing value for any
+ *     of these fields is lenient (falls back to "no value"), it never
  *     invalidates the whole refinement the way an intent violation does.
  *
  * Persistence: this module is pure (no DB access). The route layer
@@ -76,6 +79,26 @@ export interface PresentationTemplateOutlineItem {
    * "no guidance yet" and is safe to omit anywhere this type is used.
    */
   contentHints?: string[];
+  /**
+   * Optional one-sentence thesis/take-away for this slide (e.g. "Cost overrun
+   * concentrates in Q3 procurement, not headcount") — a STRUCTURAL claim
+   * shape for whoever fills the template later, never an invented fact
+   * itself (this is a reusable template, not a specific deck). LLM-only,
+   * same lenient/optional contract as `contentHints`.
+   */
+  keyMessage?: string;
+  /**
+   * Optional 2-3 short items naming WHAT data must be gathered to fill this
+   * slide (e.g. "quarterly revenue by segment") — never actual values.
+   * LLM-only, same lenient/optional contract as `contentHints`.
+   */
+  dataNeeded?: string[];
+  /**
+   * Optional short label for the recommended visualization type (e.g. "bar
+   * chart trend", "RAG status table") — never chart data itself. LLM-only,
+   * same lenient/optional contract as `contentHints`.
+   */
+  suggestedVisual?: string;
 }
 
 export interface DraftedPresentationTemplate {
@@ -245,11 +268,22 @@ export async function draftPresentationTemplateAsync(
 interface LlmDeckTemplateResponse {
   name?: unknown;
   description?: unknown;
-  slides?: Array<{ intent?: unknown; title?: unknown; contentHints?: unknown }>;
+  slides?: Array<{
+    intent?: unknown;
+    title?: unknown;
+    contentHints?: unknown;
+    keyMessage?: unknown;
+    dataNeeded?: unknown;
+    suggestedVisual?: unknown;
+  }>;
 }
 
 const MAX_CONTENT_HINTS_PER_SLIDE = 4;
 const MAX_CONTENT_HINT_CHARS = 100;
+const MAX_KEY_MESSAGE_CHARS = 160;
+const MAX_DATA_NEEDED_PER_SLIDE = 3;
+const MAX_DATA_NEEDED_CHARS = 100;
+const MAX_SUGGESTED_VISUAL_CHARS = 80;
 
 /** Lenient — an invalid/missing value just means "no hints", never fails the refinement. */
 function sanitizeContentHints(raw: unknown): string[] | undefined {
@@ -259,6 +293,30 @@ function sanitizeContentHints(raw: unknown): string[] | undefined {
     .map((item) => item.trim().slice(0, MAX_CONTENT_HINT_CHARS))
     .slice(0, MAX_CONTENT_HINTS_PER_SLIDE);
   return hints.length > 0 ? hints : undefined;
+}
+
+/** Lenient — an invalid/missing value just means "no key message", never fails the refinement. */
+function sanitizeKeyMessage(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed.slice(0, MAX_KEY_MESSAGE_CHARS) : undefined;
+}
+
+/** Lenient — an invalid/missing value just means "no data needed list", never fails the refinement. */
+function sanitizeDataNeeded(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const items = raw
+    .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    .map((item) => item.trim().slice(0, MAX_DATA_NEEDED_CHARS))
+    .slice(0, MAX_DATA_NEEDED_PER_SLIDE);
+  return items.length > 0 ? items : undefined;
+}
+
+/** Lenient — an invalid/missing value just means "no suggested visual", never fails the refinement. */
+function sanitizeSuggestedVisual(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed.slice(0, MAX_SUGGESTED_VISUAL_CHARS) : undefined;
 }
 
 function safeParseJson(raw: string): LlmDeckTemplateResponse | null {
@@ -284,9 +342,12 @@ function buildSystemPrompt(): string {
     'You MAY rewrite the "title" of each slide, in the same language as the brief.',
     'You MAY propose a refined "name" and a one-sentence "description" for the template.',
     'You MAY add "contentHints": 2-4 short phrases per slide guiding WHAT KIND of content belongs there (e.g. "Contrast current-state pain points with target state", "Show a 3-scenario cost sensitivity range") — this is a REUSABLE TEMPLATE, not a specific deck, so hints MUST describe content structure/themes only and MUST NOT invent specific numbers, dates, client names, or other facts.',
+    'You MAY add "keyMessage": a one-sentence thesis/take-away SHAPE for the slide (e.g. "Cost overrun concentrates in one area, not headcount") — describe the STRUCTURE of the claim (comparison/contrast/trend shape), never a specific invented number, date, or client fact.',
+    'You MAY add "dataNeeded": 2-3 short items naming WHAT DATA must be gathered to fill this slide (e.g. "quarterly revenue by segment", "customer churn rate by cohort") — name the data category only, MUST NOT include any actual value/number.',
+    'You MAY add "suggestedVisual": a short label for the recommended visualization type (e.g. "bar chart trend", "RAG status table", "waterfall chart") — a visualization TYPE only, never actual chart data.',
     'You MUST keep exactly the same set of slide intents you receive, in the same order (no add, no remove, no reorder, no intent rename).',
     'You MUST NOT change audience, goal, language, theme, slide counts, or any other governance field.',
-    'You MUST respond with strict JSON in this shape: {"name":"<optional refined name>","description":"<optional refined description>","slides":[{"intent":"<exact original intent>","title":"<refined title>","contentHints":["<optional phrase>", ...]}, ...]}',
+    'You MUST respond with strict JSON in this shape: {"name":"<optional refined name>","description":"<optional refined description>","slides":[{"intent":"<exact original intent>","title":"<refined title>","contentHints":["<optional phrase>", ...],"keyMessage":"<optional one-sentence thesis shape>","dataNeeded":["<optional data item>", ...],"suggestedVisual":"<optional visual type>"}, ...]}',
     'No prose, no commentary, JSON only.',
   ].join(' ');
 }
@@ -354,7 +415,17 @@ export async function refinePresentationTemplateWithLlm(
         ? entry.title.trim()
         : original.title;
     const contentHints = sanitizeContentHints(entry.contentHints) ?? original.contentHints;
-    refinedOutline.push({ intent: original.intent, title, contentHints });
+    const keyMessage = sanitizeKeyMessage(entry.keyMessage) ?? original.keyMessage;
+    const dataNeeded = sanitizeDataNeeded(entry.dataNeeded) ?? original.dataNeeded;
+    const suggestedVisual = sanitizeSuggestedVisual(entry.suggestedVisual) ?? original.suggestedVisual;
+    refinedOutline.push({
+      intent: original.intent,
+      title,
+      contentHints,
+      keyMessage,
+      dataNeeded,
+      suggestedVisual,
+    });
   }
 
   const name =
