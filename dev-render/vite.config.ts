@@ -107,7 +107,6 @@ function pluginUwag() {
 }
 
 
-||||||| 7b1ba021c2
 /**
  * Endpoint odbioru (2026-07-23) — panel `?screen=odbior` zapisuje werdykty
  * Piotra PROSTO do repo, zamiast przez pobieranie pliku. Dzięki temu pętla
@@ -226,9 +225,7 @@ export default defineConfig({
   // Serve the app's real /locales/** so i18n HttpBackend loads cleanly.
   publicDir: path.resolve(repoRoot, 'public'),
   plugins: [react(), pluginUwag(), odbiorPlugin()],
-||||||| 7b1ba021c2
-  plugins: [react()],
-  plugins: [react(), odbiorPlugin()],  resolve: {
+  resolve: {
     alias: {
       '@': path.resolve(repoRoot, 'src'),
       // Dedupe React exactly like the main config to avoid two-copies errors.
