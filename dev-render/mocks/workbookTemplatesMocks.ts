@@ -64,7 +64,12 @@ const TEMPLATES = [
 
 /** Mock WorkbookSchema (server/src/services/workbook/WorkbookSchema.ts shape)
  *  for `getWorkbookSchema` — 2 sheets, one with a live formula column, so the
- *  inline grid preview has something real to render (mono formula + tooltip). */
+ *  inline grid preview has something real to render (mono formula + tooltip).
+ *  Mini bar chart (2026-07-23): "Założenia" also carries a Marża row with
+ *  plain (non-formula) numeric values on y1/y2/y3 — the first row with ≥2
+ *  numeric value cells, so it's the one MiniBarChart.tsx picks for the inline
+ *  chart above the grid preview (the earlier Przychód/Koszty rows only carry
+ *  ONE numeric cell each, y1, the rest being live formulas). */
 function mockSchemaForTemplate(templateId: string) {
   return {
     id: `wb-dev-render-${templateId}`,
@@ -102,6 +107,17 @@ function mockSchemaForTemplate(templateId: string) {
               y1: { formula: 'y1-y1' },
               y2: { formula: 'SUM(B2:B3)' },
               y3: { formula: 'SUM(C2:C3)' },
+            },
+          },
+          // Marża — plain (non-formula) values on all 3 years, so this is the
+          // first row with ≥2 numeric value cells: the row MiniBarChart.tsx
+          // picks for the inline bar chart above the grid preview.
+          {
+            cells: {
+              label: { value: 'Marża' },
+              y1: { value: 380000 },
+              y2: { value: 410000 },
+              y3: { value: 442000 },
             },
           },
         ],

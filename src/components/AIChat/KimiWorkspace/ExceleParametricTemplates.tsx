@@ -42,6 +42,14 @@
  * exist), so this is FE-only, localStorage-backed per templateId — see
  * `src/utils/exceleTemplatePresets.ts`. Zero backend risk, purely additive,
  * no new flag (same ff_excele-gated surface).
+ *
+ * Mini bar chart (2026-07-23): above the grid preview, a small pure-SVG bar
+ * chart (`MiniBarChart.tsx`, zero charting library) gives a poglądowa
+ * ("at a glance") trend/comparison read of the FIRST sheet — it picks the
+ * first row with ≥2 numeric, non-formula value cells as its series (column
+ * headers become the labels underneath) and renders nothing when no row
+ * qualifies (all-formula/text sheets stay exactly as before). FE-only, reuses
+ * the already-fetched `gridSheets` state — no extra request, no new flag.
  */
 
 import {
@@ -70,6 +78,8 @@ import {
 } from '@/utils/exceleTemplatePresets';
 import { buildWorkbookGridSheets, isFormulaDisplayValue } from '@/utils/workbookGridPreview';
 import type { WorkbookGridSheet } from '@/utils/workbookGridPreview';
+
+import { findBarChartSeries, MiniBarChart } from './MiniBarChart';
 
 type ParamType = 'text' | 'integer' | 'number' | 'percent' | 'currency' | 'enum';
 
@@ -204,6 +214,15 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
     setPresetName('');
     setSelected(tpl);
   }, []);
+
+  // Mini bar chart (2026-07-23): poglądowa wizualizacja trendu/porównania nad
+  // siatką — zawsze z PIERWSZEGO arkusza (gridSheets[0]), niezależnie od
+  // aktywnej zakładki (activeSheet). Graceful: null gdy żaden wiersz nie ma
+  // ≥2 liczbowych komórek wartości (same formuły/tekst) — patrz MiniBarChart.tsx.
+  const chartSeries = useMemo(
+    () => findBarChartSeries(gridSheets?.[0] ?? null),
+    [gridSheets]
+  );
 
   const groups = useMemo(() => {
     if (!selected) return [];
@@ -486,6 +505,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                 </div>
               ) : gridSheets && gridSheets.length > 0 ? (
                 <div className="rounded-lg border border-c-border-subtle bg-c-surface overflow-hidden">
+                  {chartSeries && <MiniBarChart series={chartSeries} />}
                   {gridSheets.length > 1 && (
                     <div className="flex items-center gap-1 px-2 pt-2 overflow-x-auto border-b border-c-border-subtle">
                       {gridSheets.map((sheet, i) => (
