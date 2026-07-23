@@ -10,6 +10,9 @@ blokuje: [AGT-006, AGT-007, AGT-008]
 zablokowane_przez: []
 zrodlo: "Piotr 2026-07-22 (agent=generator procesu) + SPEC _SPEC_AGENT_VAULT_2026-07-22.md + DEC-002 + AGT-002"
 utworzone: 2026-07-22
+ekran: agent-plan-canvas
+wysokosc: 900
+klik: "① gotowy schemat 5-fazowy ② pusty start z klocków."
 ---
 
 ## 1. PROBLEM

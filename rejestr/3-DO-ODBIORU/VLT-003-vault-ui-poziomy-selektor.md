@@ -11,6 +11,9 @@ zablokowane_przez: []
 zrodlo: "Piotr 2026-07-22 (3 poziomy Vault) + audyt origin/demo; przepisane z placeholdera D10c przez Mastera"
 stare_id: D10c
 utworzone: 2026-07-21
+ekran: vault-scope-selector
+wysokosc: 780
+klik: "Kliknij selektor „Level", przełącz filtr, zobacz badge na dokumentach."
 ---
 
 ## 1. PROBLEM

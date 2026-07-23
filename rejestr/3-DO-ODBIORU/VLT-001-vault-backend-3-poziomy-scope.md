@@ -11,6 +11,9 @@ zablokowane_przez: []
 zrodlo: "Piotr 2026-07-22 (3 poziomy Vault) + audyt origin/demo + DEC-003; przepisane z placeholdera D10a przez Mastera"
 stare_id: D10a
 utworzone: 2026-07-21
+ekran: vault-scope-selector
+wysokosc: 700
+klik: "Sprawdź 3 poziomy przypisania (osoba/projekt/organizacja)."
 ---
 
 ## 1. PROBLEM

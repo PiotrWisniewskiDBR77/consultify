@@ -10,6 +10,9 @@ blokuje: [AGT-009]
 zablokowane_przez: []
 zrodlo: "SPEC _SPEC_AGENT_VAULT_2026-07-22.md §4 + koncept AGT-005 (zaakceptowany)"
 utworzone: 2026-07-22
+ekran: agent-plan-canvas
+wysokosc: 900
+klik: "Przestawiaj klocki, dodawaj/usuwaj kroki."
 ---
 
 ## 1. PROBLEM
