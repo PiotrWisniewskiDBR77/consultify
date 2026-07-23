@@ -124,6 +124,14 @@ export const resolveNodeFontStyle = (data: unknown): React.CSSProperties => {
   return style;
 };
 
+// Fala 8: magnetic 4-side connector handles — Miro/FigJam parity, same visual
+// language as Process Flow's HANDLE_CLASS (FlowNodeComponent.tsx). Dots stay
+// invisible until the node is hovered (parent needs the `group` class) or a
+// connection is actively being dragged (react-flow's own `connectionindicator`
+// class toggles pointer-events so locked/read-only canvases stay non-connectable).
+export const WB_HANDLE_CLASS =
+  '!w-2.5 !h-2.5 !bg-c-border-strong !border !border-c-bg opacity-0 group-hover:opacity-100 transition-opacity duration-150';
+
 export const useIsDark = () => {
   const [isDark, setIsDark] = React.useState(
     () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark')

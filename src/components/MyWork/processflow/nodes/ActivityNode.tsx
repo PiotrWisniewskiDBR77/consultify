@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
 import { Handle, Position } from 'reactflow';
 
-import { DEFAULT_LANE_COLOR } from '../FlowNodeComponent';
+import { DEFAULT_LANE_COLOR, HANDLE_CLASS } from '../FlowNodeComponent';
 
 const STATUS_COLORS: Record<string, string> = {
   todo: 'bg-c-border-strong',
@@ -30,7 +30,7 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center min-w-[120px] min-h-[56px] px-3 py-2 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-sm transition-shadow ${
+      className={`group relative flex flex-col items-center justify-center min-w-[120px] min-h-[56px] px-3 py-2 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-sm transition-shadow ${
         selected ? 'ring-2 ring-c-border-strong' : ''
       }`}
       style={{
@@ -49,7 +49,22 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
         }
       }}
     >
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-c-border-strong" />
+      {/* Z23 (Fala 7): 4-side magnetic handles (Z17 parity). The two
+          UNNAMED handles (Left/target, Right/source) are kept id-less on
+          purpose — pre-existing L→R edges have no sourceHandle/targetHandle
+          and react-flow resolves an undefined id to the sole id-less handle
+          of that type, so old edges keep rendering unchanged. */}
+      <Handle type="target" position={Position.Left} className={HANDLE_CLASS} />
+      <Handle type="source" id="left" position={Position.Left} className={HANDLE_CLASS} />
+      <Handle type="target" id="top" position={Position.Top} className={HANDLE_CLASS} />
+      <Handle type="source" id="top-source" position={Position.Top} className={HANDLE_CLASS} />
+      <Handle type="target" id="bottom" position={Position.Bottom} className={HANDLE_CLASS} />
+      <Handle
+        type="source"
+        id="bottom-source"
+        position={Position.Bottom}
+        className={HANDLE_CLASS}
+      />
 
       {data?.status && data.status !== 'todo' && (
         <div
@@ -114,7 +129,8 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
         </div>
       )}
 
-      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-c-border-strong" />
+      <Handle type="source" position={Position.Right} className={HANDLE_CLASS} />
+      <Handle type="target" id="right" position={Position.Right} className={HANDLE_CLASS} />
     </div>
   );
 };

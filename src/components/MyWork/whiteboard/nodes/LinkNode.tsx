@@ -3,6 +3,7 @@ import React from 'react';
 import { Handle, type NodeProps, Position } from 'reactflow';
 
 import { commentCountOf, CommentPinBadge } from './CommentPinBadge';
+import { WB_HANDLE_CLASS } from './whiteboardNodeHelpers';
 
 export const LinkNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
   const [meta, setMeta] = React.useState<{
@@ -42,14 +43,38 @@ export const LinkNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) =>
           isn't cropped by the rounded corners / og-image crop below. */}
       <CommentPinBadge nodeId={nodeId} count={commentCount} />
       <div
-        className={`relative w-[220px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:backdrop-blur-md shadow-sm dark:shadow-[0_0_12px_rgba(59,130,246,0.15)] transition-shadow overflow-hidden cursor-pointer hover:shadow-md ${selected ? 'ring-2 ring-c-border-strong shadow-lg' : ''}`}
+        className={`group relative w-[220px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:backdrop-blur-md shadow-sm dark:shadow-[0_0_12px_rgba(59,130,246,0.15)] transition-shadow overflow-hidden cursor-pointer hover:shadow-md ${selected ? 'ring-2 ring-c-border-strong shadow-lg' : ''}`}
         onClick={handleClick}
       >
+        {/* Fala 10: 4-side magnetic handles, matching StickyNoteNode (Fala 8).
+            The two UNNAMED handles (target/Top, source/Bottom) are kept
+            id-less on purpose — pre-Fala-10 persisted edges have no
+            sourceHandle/targetHandle and react-flow resolves an undefined
+            handle id to the sole id-less handle of that type on the node,
+            so this keeps every existing edge rendering unchanged. All new
+            handles get an explicit id so they never collide with that
+            fallback. */}
         <Handle
           type="target"
           position={Position.Top}
           className="!w-2 !h-2 !bg-c-border-strong !-top-1"
         />
+        <Handle type="source" id="top-source" position={Position.Top} className={WB_HANDLE_CLASS} />
+        <Handle type="target" id="left" position={Position.Left} className={WB_HANDLE_CLASS} />
+        <Handle
+          type="source"
+          id="left-source"
+          position={Position.Left}
+          className={WB_HANDLE_CLASS}
+        />
+        <Handle type="target" id="right" position={Position.Right} className={WB_HANDLE_CLASS} />
+        <Handle
+          type="source"
+          id="right-source"
+          position={Position.Right}
+          className={WB_HANDLE_CLASS}
+        />
+        <Handle type="target" id="bottom" position={Position.Bottom} className={WB_HANDLE_CLASS} />
         {ogImage && (
           <div className="w-full h-[100px] bg-c-surface-raised overflow-hidden">
             <img src={ogImage} alt="" className="w-full h-full object-cover" />

@@ -68,6 +68,7 @@ import { getCanvasBg } from './canvas/canvasBackground';
 import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 import { CanvasSnapGuides } from './canvas/CanvasSnapGuides';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import { FOCUS_RING } from './canvas/motionTokens';
 import { useCanvasSnappingRef } from './canvas/useCanvasSnapping';
 import { formatIdeaMapSyncLabel, resolveIdeaMapHydration } from './canvas/useIdeaMapSync';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
@@ -2740,19 +2741,22 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           {filteredNodes.length === 0 && filteredGhostNodes.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
               <div className="text-center pointer-events-auto">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
-                  <GitMerge size={24} className="text-indigo-500" />
+                <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-c-surface-raised flex items-center justify-center">
+                  <GitMerge size={24} className="text-c-info" />
                 </div>
-                <div className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                <div className="text-sm font-semibold text-c-text-secondary mb-1">
                   {t('myWorkIdeas.processFlowTool.emptyProcessFlow')}
                 </div>
-                <div className="text-[11px] text-slate-600 dark:text-slate-500 mb-3 max-w-[220px]">
+                <div className="text-[11px] text-c-text-secondary mb-3 max-w-[220px]">
                   {t('myWorkIdeas.processFlowTool.addStepsFromToolbarPressEnter')}
                 </div>
                 {!locked && (
                   <button
                     onClick={() => addNode(flowMode === 'vsm' ? 'vsm_process' : 'start')}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+                    className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-c-info hover:brightness-110 transition-all ${FOCUS_RING}`}
+                    style={{
+                      backgroundColor: 'color-mix(in srgb, var(--c-info) 12%, transparent)',
+                    }}
                   >
                     <Plus size={14} />
                     {t('myWorkIdeas.processFlowTool.addStart')}

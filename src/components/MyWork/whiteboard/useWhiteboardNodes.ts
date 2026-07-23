@@ -9,6 +9,7 @@ import type { Edge, Node } from 'reactflow';
 
 export interface UseWhiteboardNodesOpts {
   nodes: Node[];
+  edges: Edge[];
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   locked: boolean;
@@ -100,7 +101,7 @@ function buildDuplicatedEdgesFromSelection(
 }
 
 export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
-  const { nodes, setNodes, setEdges, locked, isPl, pushSnapshot } = opts;
+  const { nodes, edges, setNodes, setEdges, locked, isPl, pushSnapshot } = opts;
   const { t } = useTranslation();
 
   const deleteSelected = useCallback(() => {
@@ -110,7 +111,11 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
         .filter((node: Node) => node.selected && !isNodeLocked(node))
         .map((node: Node) => node.id)
     );
-    if (removedIds.size === 0) return;
+    // Fala 8: a lone selected connector (no node selected) must still delete
+    // on Delete/Backspace — previously this bailed out here before the edges
+    // filter below ever ran, so an edge-only selection was a silent no-op.
+    const hasSelectedEdge = edges.some((edge: Edge) => edge.selected);
+    if (removedIds.size === 0 && !hasSelectedEdge) return;
     pushSnapshot?.();
     setNodes((prev: Node[]) =>
       prev.filter((node: Node) => !(node.selected && removedIds.has(node.id)))
@@ -121,7 +126,7 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
           !edge.selected && !removedIds.has(edge.source) && !removedIds.has(edge.target)
       )
     );
-  }, [locked, nodes, pushSnapshot, setEdges, setNodes]);
+  }, [edges, locked, nodes, pushSnapshot, setEdges, setNodes]);
 
   const duplicateSelected = useCallback(() => {
     if (locked) return;

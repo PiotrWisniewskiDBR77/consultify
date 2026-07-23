@@ -30,8 +30,8 @@ export const CanvasToolbarBtn: React.FC<{
       danger
         ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
         : active
-          ? 'bg-slate-200 dark:bg-navy-700 text-slate-900 dark:text-slate-100'
-          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+          ? 'bg-c-surface-raised text-c-text'
+          : 'text-c-text-secondary hover:bg-c-surface-raised'
     }`}
     title={label}
   >
@@ -103,7 +103,7 @@ export const CanvasToolbarDropdown: React.FC<{
           type="button"
           onClick={onMainClick}
           disabled={disabled}
-          className="inline-flex items-center gap-1 rounded-l-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
+          className={`inline-flex items-center gap-1 rounded-l-lg px-2 py-1.5 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-40 ${FOCUS_RING}`}
           aria-label={label}
           title={label}
         >
@@ -114,7 +114,7 @@ export const CanvasToolbarDropdown: React.FC<{
           type="button"
           onClick={toggleOpen}
           disabled={disabled}
-          className="inline-flex items-center rounded-r-lg px-0.5 py-1.5 text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
+          className={`inline-flex items-center rounded-r-lg px-0.5 py-1.5 text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-40 ${FOCUS_RING}`}
           aria-haspopup="true"
           aria-expanded={open}
           aria-label={`${label} options`}
@@ -127,7 +127,7 @@ export const CanvasToolbarDropdown: React.FC<{
         createPortal(
           <div
             ref={menuRef}
-            className="fixed z-[1000] bg-white dark:bg-navy-950/95 border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] py-1 min-w-[140px] max-h-[70vh] overflow-y-auto"
+            className="fixed z-[1000] bg-c-surface border border-c-border-subtle rounded-xl shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] py-1 min-w-[140px] max-h-[70vh] overflow-y-auto"
             style={{ top: coords.top, left: coords.left }}
             role="menu"
           >
@@ -140,11 +140,11 @@ export const CanvasToolbarDropdown: React.FC<{
                   item.onClick();
                   setOpen(false);
                 }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                className={`w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-c-text-secondary hover:bg-c-surface-raised transition-colors ${FOCUS_RING}`}
               >
                 {item.swatch && (
                   <span
-                    className="w-4 h-4 rounded border border-slate-200 dark:border-navy-600 shrink-0"
+                    className="w-4 h-4 rounded border border-c-border-subtle shrink-0"
                     style={{ backgroundColor: item.swatch }}
                   />
                 )}

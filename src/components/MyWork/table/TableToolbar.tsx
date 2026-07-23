@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Brain,
   Calendar,
+  Check,
   ChevronDown,
   ClipboardCopy,
   Columns3,
@@ -245,6 +246,9 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
   const [renamingViewName, setRenamingViewName] = useState('');
   const [showColumnConfig, setShowColumnConfig] = useState(false);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
+  // Fala 10 (parytet Airtable) — dropdown wyboru kolumny grupującej.
+  const [showGroupMenu, setShowGroupMenu] = useState(false);
+  const groupMenuRef = useRef<HTMLDivElement>(null);
   const [showColorPalette, setShowColorPalette] = useState(false);
   const [showBulkConvertMenu, setShowBulkConvertMenu] = useState(false);
   const [showToolsMenu, setShowToolsMenu] = useState(false);
@@ -297,6 +301,18 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [showMoreMenu]);
+
+  /** Group-by menu closes on outside click. */
+  useEffect(() => {
+    if (!showGroupMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (groupMenuRef.current && !groupMenuRef.current.contains(e.target as Node)) {
+        setShowGroupMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showGroupMenu]);
 
   const onProposalApproved = useCallback(
     async (accepted: { columns?: ColumnDef[]; views?: SavedView[]; rows?: TableNode[] }) => {
@@ -610,17 +626,56 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         )}
       </div>
 
-      {/* Group by */}
-      <button
-        onClick={() => setGroupBy(groupBy ? null : 'status')}
-        className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-          groupBy ? 'bg-c-surface text-c-text' : 'text-c-text-secondary hover:bg-c-surface-raised'
-        }`}
-        title={t('ideas.table.group', 'Group')}
-      >
-        <Group size={12} />
-        <span className="hidden sm:inline">{t('ideas.table.group', 'Group')}</span>
-      </button>
+      {/* Group by — Fala 10 (parytet Airtable): wybór dowolnej kolumny grupującej. */}
+      <div className="relative" ref={groupMenuRef}>
+        <button
+          onClick={() => setShowGroupMenu((p) => !p)}
+          className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
+            groupBy ? 'bg-c-surface text-c-text' : 'text-c-text-secondary hover:bg-c-surface-raised'
+          }`}
+          title={t('ideas.table.group', 'Group')}
+        >
+          <Group size={12} />
+          <span className="hidden sm:inline">
+            {groupBy
+              ? (columns.find((c) => c.key === groupBy)?.header ?? t('ideas.table.group', 'Group'))
+              : t('ideas.table.group', 'Group')}
+          </span>
+          <ChevronDown size={10} className="text-c-text-muted" />
+        </button>
+        {showGroupMenu && (
+          <div className="absolute left-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl p-2">
+            <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+              {t('ideas.table.groupBy', 'Grupuj wg')}
+            </div>
+            <button
+              onClick={() => {
+                setGroupBy(null);
+                setShowGroupMenu(false);
+              }}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text hover:bg-c-surface-raised transition-colors"
+            >
+              <span className="w-3">{!groupBy && <Check size={12} />}</span>
+              {t('ideas.table.noGrouping', 'Bez grupowania')}
+            </button>
+            <div className="max-h-64 overflow-auto">
+              {columns.map((col) => (
+                <button
+                  key={col.key}
+                  onClick={() => {
+                    setGroupBy(col.key);
+                    setShowGroupMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text hover:bg-c-surface-raised transition-colors"
+                >
+                  <span className="w-3">{groupBy === col.key && <Check size={12} />}</span>
+                  <span className="truncate">{col.header}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* View layout switcher — FROZEN order */}
       <div className="flex items-center rounded-lg border border-c-border-subtle overflow-hidden">

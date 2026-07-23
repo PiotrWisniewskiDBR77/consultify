@@ -7,6 +7,7 @@ import {
   hexToGlow,
   resolveNodeFontStyle,
   useIsDark,
+  WB_HANDLE_CLASS,
 } from './whiteboardNodeHelpers';
 
 export const ShapeNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
@@ -52,7 +53,7 @@ export const ShapeNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) =
         keepAspectRatio={isCircle}
       />
       <div
-        className={`relative flex items-center justify-center transition-all ${selected ? 'ring-2 ring-c-border-strong shadow-lg' : 'shadow-md'}`}
+        className={`group relative flex items-center justify-center transition-all ${selected ? 'ring-2 ring-c-border-strong shadow-lg' : 'shadow-md'}`}
         style={{
           width: '100%',
           height: '100%',
@@ -80,11 +81,25 @@ export const ShapeNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) =
           }
         }}
       >
+        {/* Fala 8: 4-side magnetic handles (Miro/FigJam parity) — see
+            StickyNoteNode for the id-less-handle backward-compat rationale. */}
+        <Handle type="target" position={Position.Top} className={WB_HANDLE_CLASS} />
+        <Handle type="source" id="top-source" position={Position.Top} className={WB_HANDLE_CLASS} />
+        <Handle type="target" id="left" position={Position.Left} className={WB_HANDLE_CLASS} />
         <Handle
-          type="target"
-          position={Position.Top}
-          className="!w-2 !h-2 !bg-c-border-strong !-top-1"
+          type="source"
+          id="left-source"
+          position={Position.Left}
+          className={WB_HANDLE_CLASS}
         />
+        <Handle type="target" id="right" position={Position.Right} className={WB_HANDLE_CLASS} />
+        <Handle
+          type="source"
+          id="right-source"
+          position={Position.Right}
+          className={WB_HANDLE_CLASS}
+        />
+        <Handle type="target" id="bottom" position={Position.Bottom} className={WB_HANDLE_CLASS} />
         <div
           style={{ transform: isDiamond ? 'rotate(-45deg)' : undefined }}
           className="px-2 text-center w-full"
@@ -108,11 +123,7 @@ export const ShapeNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) =
             </div>
           )}
         </div>
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          className="!w-2 !h-2 !bg-c-border-strong !-bottom-1"
-        />
+        <Handle type="source" position={Position.Bottom} className={WB_HANDLE_CLASS} />
       </div>
       {/* Comment badge lives in a non-transformed overlay so shape rotation
           (diamond) and clipPath (hexagon) never rotate or clip it. */}

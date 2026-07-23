@@ -3262,6 +3262,229 @@ router.delete(
   })
 );
 
+/**
+ * POST /api/my-work/my-ideas/:id/duplicate
+ * Clone an idea + its canonical mind-map into a brand-new record owned by the
+ * caller. Guarded to the OWNER (user_id + organization_id) → a foreign / cross-org
+ * id resolves to no row and returns 404, so nobody can duplicate someone else's idea.
+ *
+ * The copy is a FRESH idea: new uuid, `title` gets a " (kopia)"/" (copy)" suffix,
+ * content columns are copied verbatim, but promotion state (promoted_to /
+ * promoted_entity_id) is deliberately dropped and a 'promoted' stage is reset to
+ * 'seed' — a duplicate has never been promoted.
+ *
+ * Transactionality: there is no dedicated-connection transaction API here, and a
+ * pool-level BEGIN/COMMIT is the known write-loss antipattern in this repo. So the
+ * two writes run sequentially with COMPENSATION — if the map copy throws, the
+ * just-created idea row is deleted so we never leave a half-clone behind.
+ */
+router.post(
+  '/my-ideas/:id/duplicate',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas']))) return;
+
+    const sourceId = String(req.params.id || '').trim();
+    if (!sourceId || sourceId === 'all') {
+      return res.status(400).json({ error: 'Invalid idea id' });
+    }
+
+    const language = String(req.query.language || req.body?.language || 'en').toLowerCase();
+    const isPl = language.startsWith('pl');
+
+    // OWNER guard: user_id + organization_id. A cross-user / cross-org id → no row → 404.
+    const source = await queryHelpers.queryOne<any>(
+      `SELECT * FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [sourceId, userId, orgId]
+    );
+    if (!source) return res.status(404).json({ error: 'Idea not found' });
+
+    const ideaColumns = await getTableColumns('my_ideas');
+    const hasIdeaColumn = (column: string) => ideaColumns.has(column);
+
+    const newId = uuidv4();
+    const suffix = isPl ? ' (kopia)' : ' (copy)';
+    const newTitle = `${String(source.title || '').trim()}${suffix}`;
+
+    // Content columns copied verbatim. Identity (id/user/org/timestamps) is fresh;
+    // promotion state (promoted_to / promoted_entity_id) is intentionally omitted.
+    const copyableColumns = [
+      'body',
+      'tags',
+      'source_type',
+      'source_conversation_id',
+      'source_message_id',
+      'seed_text',
+      'ai_expansion',
+      'research_data',
+      'creative_proposals',
+      'summary_data',
+      'potential',
+      'complexity',
+      'area',
+      'priority',
+      'branch',
+      'action_contract_json',
+      'source_pack_json',
+      'evidence_refs_json',
+      'folder_id',
+    ];
+
+    const insertColumns = ['id', 'user_id', 'organization_id', 'title'];
+    const insertValues: unknown[] = [newId, userId, orgId, newTitle];
+    for (const col of copyableColumns) {
+      if (hasIdeaColumn(col) && source[col] !== undefined) {
+        insertColumns.push(col);
+        insertValues.push(source[col] ?? null);
+      }
+    }
+    // stage: copy through, but a 'promoted' source resets to 'seed' so it stays
+    // consistent with the dropped promotion state.
+    if (hasIdeaColumn('stage')) {
+      const srcStage = source.stage ? String(source.stage) : null;
+      insertColumns.push('stage');
+      insertValues.push(srcStage === 'promoted' ? 'seed' : srcStage);
+    }
+
+    await queryHelpers.queryRun(
+      `INSERT INTO my_ideas (${insertColumns.join(', ')}) VALUES (${insertColumns
+        .map(() => '?')
+        .join(', ')})`,
+      insertValues
+    );
+
+    // Copy the canonical map (nodes / edges / extensions / preferred_tool) if one
+    // exists. Mirrors the same shared-vs-legacy row resolution as GET /:id/map.
+    const mapCols = await getTableColumns('my_idea_maps');
+    if (mapCols.size > 0) {
+      const sharedMode = sharedIdeaMapsActive(mapCols);
+      const extColSelect = mapCols.has('extensions_json')
+        ? ', extensions_json as "extensionsJson"'
+        : '';
+      const preferredToolSelect = mapCols.has('preferred_tool')
+        ? ', preferred_tool as "preferredTool"'
+        : '';
+      const schemaVersionSelect = mapCols.has('schema_version')
+        ? ', schema_version as "schemaVersion"'
+        : '';
+      const sourceMap = sharedMode
+        ? await queryHelpers.queryOne<any>(
+            `SELECT nodes_json as "nodesJson", edges_json as "edgesJson"${extColSelect}${preferredToolSelect}${schemaVersionSelect} FROM my_idea_maps WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE LIMIT 1`,
+            [sourceId, orgId]
+          )
+        : await queryHelpers.queryOne<any>(
+            `SELECT nodes_json as "nodesJson", edges_json as "edgesJson"${extColSelect}${preferredToolSelect}${schemaVersionSelect} FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+            [sourceId, userId, orgId]
+          );
+
+      if (sourceMap && (sourceMap.nodesJson || sourceMap.edgesJson)) {
+        try {
+          const mapId = uuidv4();
+          const nowMap = new Date().toISOString();
+          const mapInsertCols: string[] = ['id'];
+          const mapInsertVals: string[] = ['?'];
+          const mapInsertParams: unknown[] = [mapId];
+          const addMap = (col: string, val: unknown) => {
+            if (!mapCols.has(col)) return;
+            mapInsertCols.push(col);
+            mapInsertVals.push('?');
+            mapInsertParams.push(val);
+          };
+          addMap('idea_id', newId);
+          addMap('user_id', userId);
+          addMap('organization_id', orgId);
+          addMap('nodes_json', sourceMap.nodesJson ?? '[]');
+          addMap('edges_json', sourceMap.edgesJson ?? '[]');
+          addMap('version', 1);
+          addMap('schema_version', Number(sourceMap.schemaVersion) || 3);
+          if (sourceMap.preferredTool) addMap('preferred_tool', sourceMap.preferredTool);
+          if (sourceMap.extensionsJson) addMap('extensions_json', sourceMap.extensionsJson);
+          // In shared mode the fresh copy is the canonical row from birth.
+          if (sharedMode) {
+            addMap('is_canonical', true);
+            addMap('last_editor_user_id', userId);
+          }
+          addMap('created_at', nowMap);
+          addMap('updated_at', nowMap);
+          await queryHelpers.queryRun(
+            `INSERT INTO my_idea_maps (${mapInsertCols.join(', ')}) VALUES (${mapInsertVals.join(
+              ', '
+            )})`,
+            mapInsertParams
+          );
+        } catch (mapErr: any) {
+          // Compensation: drop the orphaned idea so we never leave a half-clone.
+          await queryHelpers
+            .queryRun(`DELETE FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ?`, [
+              newId,
+              userId,
+              orgId,
+            ])
+            .catch((delErr: any) =>
+              logger.error('[MyIdeas] Duplicate compensation delete failed:', delErr?.message)
+            );
+          logger.error('[MyIdeas] Duplicate map copy failed, compensated:', mapErr?.message);
+          return res.status(500).json({ error: 'Failed to duplicate idea map' });
+        }
+      }
+    }
+
+    const row = await queryHelpers.queryOne<any>(
+      `
+      SELECT
+        id,
+        title,
+        body,
+        tags,
+        source_type as "sourceType",
+        source_conversation_id as "sourceConversationId",
+        source_message_id as "sourceMessageId",
+        stage,
+        potential,
+        complexity,
+        area,
+        priority,
+        branch,
+        promoted_to as "promotedTo",
+        ${hasIdeaColumn('action_contract_json') ? 'action_contract_json' : "'{}' as action_contract_json"},
+        ${hasIdeaColumn('source_pack_json') ? 'source_pack_json' : "'{}' as source_pack_json"},
+        ${hasIdeaColumn('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json"},
+        ${hasIdeaColumn('folder_id') ? 'folder_id as "folderId"' : 'NULL as "folderId"'},
+        ${hasIdeaColumn('is_favorite') ? 'is_favorite as "isFavorite"' : '0 as "isFavorite"'},
+        ${hasIdeaColumn('last_opened_at') ? 'last_opened_at as "lastOpenedAt"' : 'NULL as "lastOpenedAt"'},
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM my_ideas
+      WHERE id = ? AND user_id = ? AND organization_id = ?
+      LIMIT 1
+    `,
+      [newId, userId, orgId]
+    );
+
+    req
+      .emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'IDEA_CREATE',
+        resourceType: 'idea',
+        resourceId: newId,
+        after: { title: newTitle, duplicatedFrom: sourceId },
+        metadata: { duplicatedFrom: sourceId },
+      })
+      .catch((err: any) => logger.warn('[MyIdeas] Audit log failed (duplicate):', err?.message));
+
+    res.status(201).json(
+      decorateIdeaLineage({
+        ...row,
+        tags: parseTagsArray((row as any)?.tags),
+        isFavorite: !!(row as any)?.isFavorite,
+      })
+    );
+  })
+);
+
 // ============================================================================
 // T009 Enhancement — My Ideas Mind Map Edges (persistent relationships)
 // ============================================================================
@@ -5288,6 +5511,11 @@ router.get(
         timestamp: new Date(r.createdAt).getTime(),
         nodes: data.nodes || [],
         edges: data.edges || [],
+        // Tool-specific state captured at snapshot time (may be absent on
+        // snapshots taken before extension-capture landed → restore falls back
+        // to preserving the live extensions).
+        extensions:
+          data.extensions && typeof data.extensions === 'object' ? data.extensions : undefined,
       };
     });
 
@@ -5316,6 +5544,9 @@ router.post(
       label: z.string().min(1).max(200),
       nodes: z.array(z.any()),
       edges: z.array(z.any()),
+      // Optional tool-specific state so restore rolls back the whole tool
+      // (whiteboard drawings/scenes, process-flow lanes, table config).
+      extensions: z.record(z.any()).optional(),
     });
 
     const parsed = schema.safeParse(req.body);
@@ -5329,6 +5560,7 @@ router.post(
       label: parsed.data.label,
       nodes: parsed.data.nodes,
       edges: parsed.data.edges,
+      extensions: parsed.data.extensions ?? null,
     });
 
     await req.emitAuditEvent?.({

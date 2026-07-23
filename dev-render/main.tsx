@@ -54,6 +54,8 @@ import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import MelsCanvasWorkspaceScreen from './screens/melscanvas-workspace';
+import ProcessFlowCanvasScreen from './screens/processflow-canvas';
+import WhiteboardCanvasScreen from './screens/whiteboard-canvas';
 import MindmapI18nSmokeScreen from './screens/mindmap-i18n-smoke';
 import ModelCatalogTableScreen from './screens/model-catalog-table';
 import NavDeclutterSidebarScreen from './screens/navdeclutter-sidebar';
@@ -87,6 +89,10 @@ import KartaNotificationScreen from './screens/karta-notification';
 import KartaTaskScreen from './screens/karta-task';
 import PreviewZakladkiScreen from './screens/preview-4-zakladki';
 import IdeaTableToolKebabScreen from './screens/idea-table-tool-kebab';
+import IdeaTableToolEmptyFilterScreen from './screens/idea-table-tool-empty-filter';
+import IdeaTableToolPasteScreen from './screens/idea-table-tool-paste';
+import IdeaTableToolSortFilterScreen from './screens/idea-table-tool-sortfilter';
+import IdeaTableToolGroupingScreen from './screens/idea-table-tool-grouping';
 // VLT-003 — importem MUSI być ostatnia: każdy dev-render screen instaluje swój
 // window.fetch stub jako top-level side effect przy imporcie (niezależnie od
 // tego, który ?screen= jest renderowany — statyczne importy main.tsx odpalają
@@ -131,6 +137,26 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'IDEE Table — K1 kebab wiersza (PlatformGridView, prawy-klik) — audyt-idee 2026-07-22',
     render: () => <IdeaTableToolKebabScreen />,
+  },
+  'idea-table-tool-paste': {
+    label:
+      'IDEE Table — Ctrl/Cmd+V wklejanie (PlatformGridView, Z16b domknięcie) — 2026-07-22',
+    render: () => <IdeaTableToolPasteScreen />,
+  },
+  'idea-table-tool-sortfilter': {
+    label:
+      'IDEE Table — Sortowanie po nagłówku + filtr per kolumna (PlatformGridView, Fala 7) — 2026-07-22',
+    render: () => <IdeaTableToolSortFilterScreen />,
+  },
+  'idea-table-tool-empty-filter': {
+    label:
+      'IDEE Table — Stan pustego filtra + resize kolumn + gęstość wierszy (PlatformGridView, Fala 8) — 2026-07-23',
+    render: () => <IdeaTableToolEmptyFilterScreen />,
+  },
+  'idea-table-tool-grouping': {
+    label:
+      'IDEE Table — Grupowanie: dropdown "Grupuj wg" + zwijanie grup (PlatformGridView, Fala 10) — 2026-07-23',
+    render: () => <IdeaTableToolGroupingScreen />,
   },
   'karta-tool': {
     label: 'KARTY N — Tool (harness odbioru 2026-07-21)',
@@ -345,6 +371,14 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'ODB O5 — REALNY <IdeaMapWorkspace> (melsCanvasFlag, default OFF); &ff_melsCanvas=1 dla ON',
     render: () => <MelsCanvasWorkspaceScreen />,
+  },
+  'processflow-canvas': {
+    label: 'Fala 8 — Process Flow: krawędzie (strzałka domyślna + smoothstep + etykiety)',
+    render: () => <ProcessFlowCanvasScreen />,
+  },
+  'whiteboard-canvas': {
+    label: 'Fala 8 — Whiteboard: łączniki (4-str uchwyty magnetyczne)',
+    render: () => <WhiteboardCanvasScreen />,
   },
   'i18n-fala1-smoke': {
     label:
