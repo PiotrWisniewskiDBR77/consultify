@@ -11,6 +11,9 @@ narzedzie: Gen. Excel
 flaga: ff_excele (istniejąca, ON)
 zrzut: rejestr/_zrzuty/ODB-EXCEL-02.png
 zrzut_dark: rejestr/_zrzuty/ODB-EXCEL-02-dark.png
+ekran: gen-excel-templates-tab
+wysokosc: 620
+klik: "Kliknij „Budżet operacyjny" → „Zapisz zestaw parametrów"."
 utworzone: 2026-07-23
 ---
 

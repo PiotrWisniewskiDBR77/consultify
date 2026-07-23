@@ -113,6 +113,19 @@ const EKRANY = [
     steps: `const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Uruchom QA')); if(b) b.click();
             await new Promise(r=>setTimeout(r,500));`,
   },
+  // ── Partia Agent + Vault (2026-07-23) ──────────────────────────────────
+  {
+    id: 'ODB-VAULT-01',
+    tytul: 'Client Vault: 3 poziomy przypisania — selektor „Level", filtr „All Levels", badge na dokumentach',
+    screen: 'vault-scope-selector',
+    viewport: { width: 1280, height: 1000 },
+  },
+  {
+    id: 'ODB-AGENT-01',
+    tytul: 'Agent — generator procesu: ① gotowy schemat klasyczny 5-fazowy (przestawialny) · ② pusty start z klocków',
+    screen: 'agent-plan-canvas',
+    viewport: { width: 1400, height: 1100 },
+  },
 ];
 
 const THEMES = ['light', 'dark'];

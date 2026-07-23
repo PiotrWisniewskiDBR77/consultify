@@ -11,6 +11,9 @@ narzedzie: Word
 flaga: bez flagi (sygnał liczy się zawsze)
 zrzut: rejestr/_zrzuty/ODB-WORD-03.png
 zrzut_dark: rejestr/_zrzuty/ODB-WORD-03-dark.png
+ekran: word-quality-badge
+wysokosc: 420
+klik: "Kliknij „Uruchom QA" → badge, rozwiń."
 utworzone: 2026-07-23
 ---
 

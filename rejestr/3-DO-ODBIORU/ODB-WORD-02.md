@@ -11,6 +11,10 @@ narzedzie: Gen. Word
 flaga: ff_tpl_editor (istniejąca, ON)
 zrzut: rejestr/_zrzuty/ODB-WORD-02.png
 zrzut_dark: rejestr/_zrzuty/ODB-WORD-02-dark.png
+ekran: gen-word-content-hints
+query: "&ff_tpl_editor=0"
+wysokosc: 620
+klik: "Kliknij szablon → panel struktury po prawej."
 utworzone: 2026-07-23
 ---
 

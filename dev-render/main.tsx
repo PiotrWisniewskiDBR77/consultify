@@ -48,6 +48,7 @@ import FinanceValuePanelsScreen from './screens/finance-value-panels';
 import GenDeckContentHintsScreen from './screens/gen-deck-content-hints';
 import GenExcelTemplatesTabScreen from './screens/gen-excel-templates-tab';
 import GenWordContentHintsScreen from './screens/gen-word-content-hints';
+import OdbiorScreen from './screens/odbior';
 import DeckQualityBadgeScreen from './screens/deck-quality-badge';
 import WordQualityBadgeScreen from './screens/word-quality-badge';
 import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
@@ -103,6 +104,10 @@ import VaultScopeSelectorScreen from './screens/vault-scope-selector';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  odbior: {
+    label: '★ PANEL ODBIORU — wszystkie obszary (rejestr/3-DO-ODBIORU), żywe ekrany + werdykty',
+    render: () => <OdbiorScreen />,
+  },
   'gen-deck-content-hints': {
     label:
       'DOKUMENTY — Gen. Deck catch-up: per-slide content hints w Deck Template Architect (audyt 2026-07-22)',
