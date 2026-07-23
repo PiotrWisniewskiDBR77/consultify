@@ -759,21 +759,22 @@ const STATUS_PILL: Record<string, { bg: string; text: string; dot: string }> = {
 // NEW analytical "between the lines" sections (#22c / #23d) derive purely from
 // data already in scope (no new backend calls); each shows an informative
 // empty-state until the underlying multi-respondent data exists.
+// ── ROZSTRZYGNIĘCIE (właściciel, 2026-07-23, decyzja nr 2) ───────────────────
+// Kafelki „Rozpocznij decyzję" / „Rozpocznij inicjatywę" (i reszta rodziny:
+// raport, prezentacja, tabela, idea, notatka) BYŁY sekcją centrum
+// `artifact-actions` (etykieta „Rezultaty"). Teraz mieszkają w PRAWYM PANELU,
+// w sekcji Rezultaty na pozycji 5 (standard n-Type §7.2/§7.7 +
+// 04_INSIGHT_BLEDY_I_ZMIANY §6.2/§6.3).
+//
+// Sekcja centrum ZNIKA — właściciel powiedział wprost: „Nie dubluj: jeśli kafel
+// idzie do Rezultatów, znika z centrum". Wpis nawigacji usunięty stąd; JSX
+// kafelków powstaje teraz w JEDNYM miejscu — `resultTilesNode` przy budowie
+// prawego panelu (wariant `compact` pod szerokość panelu).
+// `insightCardContract.ts` (flaga default OFF) zostaje NIETKNIĘTY — id żyje
+// dalej w katalogu kanonicznym; `applyToSections` po prostu nie znajdzie dla
+// niego sekcji, a picker „Sekcje ▾" chodzi po sekcjach, nie po katalogu, więc
+// nie pokaże fantomu.
 const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
-  {
-    // KLASYFIKACJA (zgłoszenie właściciela 2026-07-23, pkt 1): utworzenie
-    // kolejnego artefaktu (decyzja / inicjatywa / raport / prezentacja) to
-    // REZULTAT wniosku, a nie „dalsza akcja". Etykieta była „Dalsze akcje"
-    // i mieszała dwie różne rzeczy: co z tego wniosku POWSTAJE (tu) z tym, co
-    // można na nim ZROBIĆ (status, recenzja — prawy panel, sekcja Akcje).
-    // Zmieniona jest WYŁĄCZNIE etykieta; `id` zostaje, bo `artifact-actions`
-    // ma rolę `rdzen` w kontrakcie karty (insightCardContract.ts) i jest
-    // nieusuwalne typem — zmiana id zerwałaby katalog kart.
-    id: 'artifact-actions',
-    icon: Rocket,
-    label: { en: 'Results', pl: 'Rezultaty' },
-    cSpan: 2,
-  },
   {
     id: 'executive-summary',
     icon: Star,
@@ -1205,11 +1206,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const { currentUser, currentOrganization, currentProjectId } = useAppStore();
 
   // ── REZULTATY tego wniosku (prawy panel, sekcja `results`) ─────────────────
-  // Zgłoszenie właściciela 2026-07-23 (ETAP 2.5 pkt 1+2): kafelki tworzenia
-  // artefaktów zostają w CENTRUM (sekcja `artifact-actions`, rola `rdzen`
-  // w kontrakcie karty — nieusuwalna typem), więc panel NIE MOŻE ich dublować
-  // (SPEC-N §2.6). Panel dostaje to, czego centrum nie pokazuje: REJESTR tego,
-  // co z tego wniosku JUŻ powstało — realne dane z
+  // Decyzja właściciela nr 2 (2026-07-23): kafelki tworzenia artefaktów zjechały
+  // z centrum DO tej sekcji panelu (pozycja 5 wg §7.2) i w centrum ich już nie
+  // ma (§2.6 — jedna funkcja, jedno miejsce). Pod kafelkami zostaje REJESTR
+  // tego, co z tego wniosku JUŻ powstało — realne dane z
   // `GET /api/artifact-conversions?sourceArtifactType=interview_insight&sourceArtifactId=…`
   // (server/src/routes/artifact-conversions.routes.ts). Zero nowego backendu,
   // zero zmyślonych liczb: gdy zapytanie padnie, sekcja jest uczciwie pusta.
@@ -3575,8 +3575,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     return sorted;
   }, [nComments, commentDateFilter, commentSortOrder]);
 
-  // ── Right-panel "Właściwości" confidence (same derivation as the
-  //    artifact-actions section below — read-only, no new backend). ─────────
+  // ── Right-panel "Właściwości" confidence (same derivation as the Results
+  //    tiles below — read-only, no new backend). ────────────────────────────
   const panelConfidence = useMemo(
     () =>
       findings[0]?.confidence_level ||
@@ -3718,6 +3718,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       'truth-review-summary',
       'source-sessions',
       'traceability',
+      // `artifact-actions` celowo NIEOBECNE — od 2026-07-23 kafelki „utwórz…"
+      // renderuje prawy panel (sekcja Rezultaty), nie centrum.
     ];
 
     const componentById: Record<string, React.ReactNode> = {};
@@ -3727,48 +3729,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       let component: React.ReactNode = null;
 
       switch (section.id) {
-        case 'artifact-actions': {
-          const primaryConfidence =
-            findings[0]?.confidence_level ||
-            analysis?.topics?.[0]?.confidenceLevel ||
-            (insight as any)?.confidence ||
-            null;
-          const limits = uniqueNonEmpty(findings.map((finding) => finding.limits)).join('\n');
-          component = (
-            <ArtifactActionPanel
-              isPolish={isPolish}
-              // Kontekst projektu — bez niego `POST /api/decisions` odrzuca żądanie
-              // („Missing decision context"), więc kafelek „Rozpocznij decyzję"
-              // renderuje się wyłączony z powodem zamiast zapraszać w błąd.
-              projectId={currentProjectId || null}
-              source={{
-                type: 'interview_insight',
-                id: insight?.id || insightId,
-                title: insight?.title || title || t('interview.insightViewer.insight'),
-                status: insight?.status,
-                content: insight?.content || executiveSummary,
-                confidence: primaryConfidence,
-                limits: limits || null,
-                evidenceCount: sourcePack?.activePointerCount ?? findingsSummary.activeEvidence,
-                sourceSessionCount:
-                  sourcePack?.sourceSessionIds.length || insight?.sourceSessionIds?.length || 0,
-                sourcePack: sourcePack ? (sourcePack as unknown as Record<string, unknown>) : null,
-                reportPack: reportPack
-                  ? {
-                      id: reportPack.id,
-                      status: reportPack.status,
-                      readinessStatus: reportReadiness?.status || undefined,
-                      completenessScore:
-                        reportReadiness?.completenessScore ?? reportPack.completenessScore,
-                      degraded: reportPack.degraded,
-                      degradedReasons: reportPack.degradedReasons,
-                    }
-                  : null,
-              }}
-            />
-          );
-          break;
-        }
+        // `artifact-actions` NIE MA już case'a w centrum — kafelki „utwórz…"
+        // przeniosły się do prawego panelu, sekcja Rezultaty (§7.2 poz. 5).
+        // Ich JSX powstaje raz, w `resultTilesNode` (jeden `ArtifactActionPanel`,
+        // wariant `compact` pod szerokość panelu), więc nie ma dwóch kopii
+        // konfiguracji `source` do rozjechania się.
 
         case 'truth-review-summary': {
           const postureMeta = {
@@ -7763,12 +7728,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         (analysis?.people.sessionLenses || []).length,
     };
     // alwaysShow: the two most important differentiators stay visible even empty.
-    const alwaysShowSet = new Set([
-      'artifact-actions',
-      'executive-summary',
-      'consensus-divergence',
-      'silences',
-    ]);
+    // (`artifact-actions` zdjęte 2026-07-23 — kafelki są w prawym panelu.)
+    const alwaysShowSet = new Set(['executive-summary', 'consensus-divergence', 'silences']);
 
     // Sidebar grouping (#22b/#22): 5 themed groups.
     const groupLabels = [
@@ -7782,7 +7743,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       // 0 — Wgląd / Insight
       'executive-summary': 0,
       'consulting-readout': 0,
-      'artifact-actions': 0,
       themes: 0,
       'issues-risks': 0,
       opportunities: 0,
@@ -8611,6 +8571,46 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // (usunięte) fmtPanelDateTime — obsługiwało wyłącznie skróty komentarzy
   // i historii w panelu; oba skróty zastąpione pełnymi canvasami (SPEC-N §2.1),
   // które formatują daty same.
+
+  // ── Kafelki „utwórz z tego wniosku" (decyzja właściciela nr 2, 2026-07-23) ──
+  // Jedyne miejsce, w którym powstaje `ArtifactActionPanel` dla Insightu.
+  // Wariant `compact` (dwie grupy pigułek: Dokumenty / W aplikacji) jest tym,
+  // który mieści się w stałej szerokości prawego panelu — pełne kafle 2xN
+  // rozsadzałyby go w poziomie.
+  const resultTilesNode = (
+    <ArtifactActionPanel
+      isPolish={isPolish}
+      variant="compact"
+      // Kontekst projektu — bez niego `POST /api/decisions` odrzuca żądanie
+      // („Missing decision context"), więc kafelek „Rozpocznij decyzję"
+      // renderuje się wyłączony z powodem zamiast zapraszać w błąd.
+      projectId={currentProjectId || null}
+      source={{
+        type: 'interview_insight',
+        id: insight?.id || insightId,
+        title: insight?.title || title || t('interview.insightViewer.insight'),
+        status: insight?.status,
+        content: insight?.content || executiveSummary,
+        confidence: panelConfidence,
+        limits: uniqueNonEmpty(findings.map((finding) => finding.limits)).join('\n') || null,
+        evidenceCount: sourcePack?.activePointerCount ?? findingsSummary.activeEvidence,
+        sourceSessionCount:
+          sourcePack?.sourceSessionIds.length || insight?.sourceSessionIds?.length || 0,
+        sourcePack: sourcePack ? (sourcePack as unknown as Record<string, unknown>) : null,
+        reportPack: reportPack
+          ? {
+              id: reportPack.id,
+              status: reportPack.status,
+              readinessStatus: reportReadiness?.status || undefined,
+              completenessScore: reportReadiness?.completenessScore ?? reportPack.completenessScore,
+              degraded: reportPack.degraded,
+              degradedReasons: reportPack.degradedReasons,
+            }
+          : null,
+      }}
+    />
+  );
+
   const rightPanelSections: ArtifactRightPanelSection[] = [
     {
       // SPEC-N §2.6 (anty-duplikacja: jedna akcja = jedno miejsce). Ta sekcja
@@ -8667,47 +8667,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               'Pick a state to move this insight forward in its lifecycle.'
             )}
           </p>
-        </div>
-      ),
-    },
-    {
-      // ── REZULTATY (właściciel 2026-07-23, ETAP 2.5 pkt 2) ─────────────────
-      // Kafelki „utwórz…" zostają w CENTRUM (sekcja `artifact-actions` = rdzeń
-      // kontraktu karty), więc panel ich NIE dubluje (§2.6). Panel pokazuje to,
-      // czego centrum nie pokazuje: co z tego wniosku JUŻ powstało — realne
-      // wpisy z `/api/artifact-conversions` — plus skok do sekcji, w której
-      // rezultaty się tworzy. Jedna funkcja, jedno miejsce; panel jest
-      // rejestrem, centrum jest warsztatem.
-      id: 'results',
-      label: t('interview.insightViewer.panelResults', 'Results'),
-      icon: Rocket,
-      defaultOpen: true,
-      badge: producedResults.length || undefined,
-      isEmpty: producedResults.length === 0,
-      emptyLabel: t(
-        'interview.insightViewer.panelResultsEmpty',
-        'Nothing has been produced from this insight yet.'
-      ),
-      children: (
-        <div className="flex flex-col gap-2">
-          {producedResults.map((conv) => (
-            <div key={conv.id} className="flex items-center justify-between gap-2">
-              <span className="inline-flex h-6 min-w-0 items-center gap-1.5 truncate rounded-md border border-c-border-subtle bg-c-surface-raised px-2 text-xs font-medium text-c-text">
-                <FileText size={12} className="shrink-0 text-c-text-muted" />
-                <span className="truncate">{conv.targetArtifactType}</span>
-              </span>
-              <span className="shrink-0 text-[11px] text-c-text-muted">
-                {conv.conversionStatus}
-              </span>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => setActiveNSection('artifact-actions')}
-            className="inline-flex h-7 items-center justify-center rounded-lg border border-c-border-subtle bg-c-surface-raised px-2.5 text-xs font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
-          >
-            {t('interview.insightViewer.panelResultsGoto', 'Go to the Results section')}
-          </button>
         </div>
       ),
     },
@@ -8815,6 +8774,60 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       defaultOpen: false,
       children: (
         <EvidencePanelSection artifactType="insight" artifactId={insight?.id} isPolish={isPolish} />
+      ),
+    },
+    {
+      // ── REZULTATY — pozycja 5 (decyzja właściciela nr 2, 2026-07-23) ───────
+      // Standard n-Type §7.2 wiąże kolejność: Akcje · Właściwości · Powiązania ·
+      // Źródła i założenia · REZULTATY · Komentarze · Historia. Sekcja stała do
+      // teraz na pozycji 2 (zaraz po Akcjach) — przesunięta tutaj, bez wyjątków.
+      //
+      // §7.7: Rezultaty TWORZĄ lub WYSYŁAJĄ efekt artefaktu; Akcje zmieniają
+      // jego stan. Dlatego kafelki „utwórz…" (raport · prezentacja · tabela ·
+      // idea · notatka · inicjatywa · decyzja) zjechały TU z centrum — i tam ich
+      // już NIE MA (§2.6: jedna funkcja, jedno miejsce). Pod kafelkami zostaje
+      // rejestr tego, co z wniosku już powstało (`/api/artifact-conversions`).
+      //
+      // ⚠ DO DECYZJI WŁAŚCICIELA (raport): „Konwertuj na inicjatywę" jest
+      // JEDNOCZEŚNIE akcją główną w nagłówku (generator inicjatywy, `setGenOpen`)
+      // i kafelkiem `initiative` w tej sekcji (bezpośredni `POST /initiatives`).
+      // To dwie różne ścieżki kodu o tym samym celu; 04_INSIGHT §6.3 mówi
+      // „Konwertuj na inicjatywę — jeśli nie pozostaje w nagłówku". Nie usuwam
+      // kafelka samowolnie, bo to odebranie działającej zdolności — zgłaszam.
+      id: 'results',
+      label: t('interview.insightViewer.panelResults', 'Results'),
+      icon: Rocket,
+      defaultOpen: false,
+      badge: producedResults.length || undefined,
+      children: (
+        <div className="flex flex-col gap-3">
+          {resultTilesNode}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
+              {t('interview.insightViewer.panelResultsProduced', 'Already produced')}
+            </span>
+            {producedResults.length === 0 ? (
+              <span className="text-[11px] leading-snug text-c-text-muted">
+                {t(
+                  'interview.insightViewer.panelResultsEmpty',
+                  'Nothing has been produced from this insight yet.'
+                )}
+              </span>
+            ) : (
+              producedResults.map((conv) => (
+                <div key={conv.id} className="flex items-center justify-between gap-2">
+                  <span className="inline-flex h-6 min-w-0 items-center gap-1.5 truncate rounded-md border border-c-border-subtle bg-c-surface-raised px-2 text-xs font-medium text-c-text">
+                    <FileText size={12} className="shrink-0 text-c-text-muted" />
+                    <span className="truncate">{conv.targetArtifactType}</span>
+                  </span>
+                  <span className="shrink-0 text-[11px] text-c-text-muted">
+                    {conv.conversionStatus}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       ),
     },
     {
