@@ -29162,6 +29162,7 @@
       "targetNotSelected": "(item not yet selected)",
       "aiLinkCommentSystemInstruction": "You are a project analyst. Write concisely and professionally.",
       "generateCommentFailed": "Failed to generate comment",
+      "generateCommentEmpty": "AI unavailable — the model returned no text. Write the comment manually or try again.",
       "heading": "Attachments, Internal Links & External Links",
       "attachmentsSectionTitle": "Attachments",
       "sortOldestFirst": "Oldest first",

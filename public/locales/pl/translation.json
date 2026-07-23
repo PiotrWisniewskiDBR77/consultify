@@ -30222,6 +30222,7 @@
       "targetNotSelected": "(element jeszcze nie wybrany)",
       "aiLinkCommentSystemInstruction": "Jesteś analitykiem projektowym. Piszesz zwięźle i profesjonalnie po polsku.",
       "generateCommentFailed": "Nie udało się wygenerować komentarza",
+      "generateCommentEmpty": "AI niedostępne — model nie zwrócił treści. Wpisz komentarz ręcznie lub spróbuj ponownie.",
       "heading": "Załączniki, linki wewnętrzne i zewnętrzne",
       "attachmentsSectionTitle": "Załączniki",
       "sortOldestFirst": "Najstarsze",
