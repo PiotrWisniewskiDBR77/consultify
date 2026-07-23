@@ -35,10 +35,6 @@ const GRUPY = [
       { nazwa: 'Insight', ekran: 'karta-insight' },
       { nazwa: 'Narzędzie', ekran: 'karta-tool' },
       { nazwa: 'Inicjatywa', ekran: 'karta-initiative' },
-      {
-        nazwa: 'Cztery zakładki My Work (kontekst kart)',
-        ekran: 'preview-4-zakladki',
-      },
     ],
   },
   {
