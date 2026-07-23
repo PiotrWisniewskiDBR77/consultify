@@ -304,7 +304,9 @@ describe('registry — breakEven + cashflow12m are registered', () => {
     expect(ids).toContain('threeScenarioPnL');
     expect(ids).toContain('operatingBudget');
     expect(ids).toContain('dcfValuation');
-    expect(ids).toHaveLength(5);
+    // NOTE: length is a lower bound, not an exact count — the registry keeps growing
+    // (see newTemplates3.test.ts for the exact-count assertion at the current total).
+    expect(ids.length).toBeGreaterThanOrEqual(5);
   });
 
   it('WORKBOOK_TEMPLATES exposes both entries with id/build wired correctly', () => {
