@@ -1940,6 +1940,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       runSavingsAnalysis,
       createFromPrompt,
       runProcessCoach: handleAICoach,
+      // P1-1: „Auto-układ" z Menu 3 → realny układ Przepływu (wcześniej Menu 3
+      // wysyłało zdarzenie Mapy myśli, więc w Przepływie klik nie robił nic).
+      autoLayout: handleAutoLayout,
     },
     setters: {
       setFlowMode,
@@ -2375,8 +2378,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         />
       </div>
 
-      {loadError && !loading && nodes.length === 0 && (
-        vf1CanvasSpecAEnabled ? (
+      {loadError &&
+        !loading &&
+        nodes.length === 0 &&
+        (vf1CanvasSpecAEnabled ? (
           // VF1 SPEC-A (flag OFF default): canonical full-surface canvas error
           // with retry EXIT; legacy inline block stays default.
           <div className="flex-1">
@@ -2402,8 +2407,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               className="mb-2"
             />
           </div>
-        )
-      )}
+        ))}
 
       {locked && (
         <div className="px-4 pt-3">

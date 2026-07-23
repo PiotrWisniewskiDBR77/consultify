@@ -91,6 +91,19 @@ interface ToolSlot {
   labelEn: string;
   action?: string;
   popover?: PopoverId;
+  /**
+   * P1-1 (Z3 — zero cichych braków reakcji): reprezentacje, w których ten slot
+   * MA realny odbiornik. Rail jest wspólny dla czterech reprezentacji, ale jego
+   * wspólne sloty (import/eksport, „więcej narzędzi", wskaźnik trybu kursora)
+   * wysyłają ciągi `mm_*`, które obsługuje wyłącznie `useMindMapQuickActions`
+   * (zamontowany tylko w IdeaRecommendationMap). Poza tą listą slot renderuje
+   * się jako WYŁĄCZONY z podanym powodem w tooltipie — zamiast wyglądać na
+   * czynny i nie robić nic. Brak pola = slot żyje wszędzie.
+   */
+  liveIn?: CanvasToolType[];
+  /** Powód wyłączenia (PL/EN) pokazywany w tooltipie wyłączonego slotu. */
+  offReasonPl?: string;
+  offReasonEn?: string;
 }
 
 const SHARED_TOP: ToolSlot[] = [
@@ -100,6 +113,13 @@ const SHARED_TOP: ToolSlot[] = [
     tkey: 'myWorkMindmap.toolbar.cursorMode',
     labelEn: 'Cursor mode',
     action: 'mm_toggle_pointer',
+    // Tryb kursora (SEL/PAN/LNK) jest stanem Mapy myśli — `mm_select_mode` /
+    // `mm_pan_mode` przestawiają `mindMapInteractionMode`, który czyta wyłącznie
+    // IdeaRecommendationMap. W pozostałych reprezentacjach pstryczek zmieniał
+    // tylko własną ikonę = kłamał o stanie płótna.
+    liveIn: ['mindmap'],
+    offReasonPl: 'tryb kursora (zaznacz / przesuń / połącz) jest stanem Mapy myśli',
+    offReasonEn: 'cursor mode (select / pan / connect) is a Mind Map state',
   },
   // #6j: AI na samej górze raila, zaraz pod wskaźnikiem trybu chwytu —
   // najcenniejsza część raila, ma być widoczna od razu z góry.
@@ -281,6 +301,12 @@ const SHARED_BOTTOM: ToolSlot[] = [
     tkey: 'myWorkMindmap.toolbar.importExport',
     labelEn: 'Import / Export',
     popover: 'importExport',
+    // ImportExportPopover wystawia wyłącznie `mm_import_*` / `mm_export_*` /
+    // `mm_snapshot_history`. Poza Mapą myśli żaden z nich nie ma odbiornika;
+    // realny eksport tych reprezentacji jest w Menu 3 („Eksport") i w kebabie.
+    liveIn: ['mindmap'],
+    offReasonPl: 'import/eksport z raila obsługuje Mapa myśli — tu użyj „Eksport" w Menu 3',
+    offReasonEn: 'rail import/export is Mind Map only — use "Export" in Menu 3 here',
   },
   {
     id: 'more',
@@ -288,6 +314,11 @@ const SHARED_BOTTOM: ToolSlot[] = [
     tkey: 'myWorkMindmap.toolbar.moreTools',
     labelEn: 'More tools',
     popover: 'more',
+    // MoreToolsPanel to wyłącznie narzędzia Mapy myśli (układ, struktura,
+    // poziomy zwijania, prezentacja, minimapa, migawki, udostępnianie).
+    liveIn: ['mindmap'],
+    offReasonPl: 'narzędzia dodatkowe (układ, zwijanie, prezentacja) są właściwością Mapy myśli',
+    offReasonEn: 'extra tools (layout, folding, presentation) belong to the Mind Map',
   },
 ];
 
@@ -415,7 +446,41 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
 
   const pointerTooltip = getMindmapPointerToggleTooltip(interactionMode, isPl);
 
+  /**
+   * P1-1: slot bez odbiornika w bieżącej reprezentacji. Zwraca powód (do
+   * tooltipa) albo null, gdy slot jest żywy. Wzór za commitem e2ad0cc85b
+   * (prawy rail: `disabledReason` + powód w tooltipie wyłączonej ikony).
+   */
+  const powodWylaczenia = (slot: ToolSlot): string | null => {
+    if (!slot.liveIn || slot.liveIn.includes(activeTool)) return null;
+    return (
+      (isPl ? slot.offReasonPl : slot.offReasonEn) ??
+      (isPl ? 'Niedostępne tutaj' : 'Not available here')
+    );
+  };
+
   const renderSlot = (slot: ToolSlot, idx: number) => {
+    const offReason = powodWylaczenia(slot);
+    if (offReason) {
+      const Icon = slot.icon;
+      const label = t(slot.tkey, slot.labelEn);
+      const title = `${label} — ${offReason}`;
+      return (
+        <div key={slot.id} className="relative">
+          <button
+            type="button"
+            disabled
+            data-testid={`canvas-left-toolbar-${slot.id}`}
+            title={title}
+            aria-label={title}
+            aria-disabled="true"
+            className="flex h-9 w-9 items-center justify-center rounded-hig-xl opacity-40 cursor-not-allowed text-c-text-secondary dark:text-c-text-muted"
+          >
+            <Icon size={15} />
+          </button>
+        </div>
+      );
+    }
     if (slot.id === 'pointer_toggle') {
       const PointerIcon = interactionMode === 'pan' ? Hand : MousePointer2;
       return (
@@ -505,6 +570,10 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
             {slot.popover === 'ai' && (
               <AIActionsPopover
                 isPl={!!isPl}
+                // P1-1: popover AI musi znać reprezentację — inaczej wystawia
+                // generatory mm_* także w Whiteboardzie/Przepływie/Tabeli,
+                // gdzie nie mają odbiornika.
+                activeTool={activeTool}
                 selection={selection}
                 heuristicAiEnabled={heuristicAiEnabled}
                 onAction={handlePopoverAction}
@@ -524,6 +593,11 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const toolbarNode = (
     <div
       ref={toolbarRef}
+      // Kontrakt z ExecutiveModuleShell: rail idzie przez `createPortal` do
+      // document.body, wiec powloka NIE znajdzie go po drzewie. Po tym atrybucie
+      // powloka mierzy jego szerokosc i rezerwuje rynne, zeby rail nie zaslanial
+      // paskow reprezentacji. Nie usuwaj bez poprawienia pomiaru w powloce.
+      data-mels-floating-rail-surface="true"
       className={`fixed z-context-menu pointer-events-auto flex flex-col items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter overflow-y-auto overflow-x-hidden${
         railBox == null ? ' top-1/2 -translate-y-1/2 left-3' : ''
       }`}
