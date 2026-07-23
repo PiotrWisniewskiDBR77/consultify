@@ -50,6 +50,7 @@ import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import MelsCanvasWorkspaceScreen from './screens/melscanvas-workspace';
 import ProcessFlowCanvasScreen from './screens/processflow-canvas';
+import WhiteboardCanvasScreen from './screens/whiteboard-canvas';
 import MindmapI18nSmokeScreen from './screens/mindmap-i18n-smoke';
 import ModelCatalogTableScreen from './screens/model-catalog-table';
 import NavDeclutterSidebarScreen from './screens/navdeclutter-sidebar';
@@ -334,6 +335,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'processflow-canvas': {
     label: 'Fala 8 — Process Flow: krawędzie (strzałka domyślna + smoothstep + etykiety)',
     render: () => <ProcessFlowCanvasScreen />,
+  },
+  'whiteboard-canvas': {
+    label: 'Fala 8 — Whiteboard: łączniki (4-str uchwyty magnetyczne)',
+    render: () => <WhiteboardCanvasScreen />,
   },
   'i18n-fala1-smoke': {
     label:
