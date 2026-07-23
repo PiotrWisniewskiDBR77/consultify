@@ -1,0 +1,35 @@
+{
+ "mapa": [
+  {
+   "id": "color-contrast",
+   "impact": "serious",
+   "ile": 3
+  }
+ ],
+ "tablica": [
+  {
+   "id": "color-contrast",
+   "impact": "serious",
+   "ile": 3
+  },
+  {
+   "id": "nested-interactive",
+   "impact": "serious",
+   "ile": 2
+  }
+ ],
+ "proces": [
+  {
+   "id": "color-contrast",
+   "impact": "serious",
+   "ile": 3
+  }
+ ],
+ "tabela": [
+  {
+   "id": "color-contrast",
+   "impact": "serious",
+   "ile": 3
+  }
+ ]
+}
