@@ -27,6 +27,12 @@ export interface RightRailToolDescriptor {
   icon: LucideIcon;
   active?: boolean;
   disabled?: boolean;
+  /**
+   * Why the tool is unavailable here. Shown as the tooltip instead of `label`
+   * when `disabled`. Required by the shared action-state standard: a disabled
+   * surface must say WHY, never fail silently.
+   */
+  disabledReason?: string;
   /** Optional `data-testid` override. */
   testId?: string;
   /** Optional badge string ("3", "•") rendered top-right. */
@@ -72,7 +78,8 @@ const ToolIcon: React.FC<{
   active: boolean;
   onClick: () => void;
 }> = ({ tool, active, onClick }) => {
-  const { icon: Icon, label, disabled, badge, dotTone, id, testId } = tool;
+  const { icon: Icon, label, disabled, disabledReason, badge, dotTone, id, testId } = tool;
+  const tooltip = disabled && disabledReason ? `${label} — ${disabledReason}` : label;
 
   const baseClasses =
     'relative w-10 h-10 flex items-center justify-center rounded-lg transition-colors';
@@ -85,8 +92,8 @@ const ToolIcon: React.FC<{
       type="button"
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
-      title={label}
-      aria-label={label}
+      title={tooltip}
+      aria-label={tooltip}
       aria-pressed={active}
       className={`${baseClasses} ${stateClasses} disabled:opacity-40 disabled:cursor-not-allowed`}
       data-testid={testId ?? `mels-right-rail-tool-${id}`}

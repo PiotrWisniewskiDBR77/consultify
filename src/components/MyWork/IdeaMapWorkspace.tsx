@@ -103,7 +103,11 @@ import { IdeaUnifiedSearch } from './IdeaUnifiedSearch';
 import { IdeaVotingMode } from './IdeaVotingMode';
 import { IdeaWhiteboardTool } from './IdeaWhiteboardTool';
 import { getIdeaWorkspaceToolLabel, IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
-import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
+import {
+  IdeaWorkspaceTools,
+  IDEA_PANEL_SECTIONS,
+  type IdeaPanelSection,
+} from './IdeaWorkspaceTools';
 import { AIGovernanceBadge, AIGovernancePanel } from './mindmap/AIGovernancePanel';
 import { CanvasLeftToolbar } from './mindmap/CanvasLeftToolbar';
 import { stabilizeMindmapInteractionMode } from './mindmap/mindmapInteractionGrammar';
@@ -2951,25 +2955,39 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       setExportMenuOpen,
     ]
   );
-  const melsCanvasRightRailTools = useMemo(
-    () =>
-      melsCanvasEnabled
-        ? buildIdeaCanvasRightRailTools(
-            isPolish
-              ? {
-                  labels: {
-                    problem: 'Problem',
-                    status: 'Status',
-                    inspector: 'Inspektor',
-                    convert: 'Konwersja',
-                    health: 'Kondycja',
-                  },
-                }
-              : undefined
-          )
-        : [],
-    [melsCanvasEnabled, isPolish]
-  );
+  // P0-4 / Z3: Inspektor i Kondycja mają treść tylko dla części reprezentacji.
+  // Zakładka bez treści nie może być klikalna — wyłączamy ją z podanym powodem,
+  // zamiast otwierać pusty panel. Źródło prawdy to warunki `activeTool` w
+  // <IdeaWorkspaceTools> (sekcje inspector/health): jeśli tam dojdzie kolejna
+  // reprezentacja, dopisz ją tutaj — inaczej wróci martwy klik.
+  const melsCanvasRightRailTools = useMemo(() => {
+    if (!melsCanvasEnabled) return [];
+    const inspektorJest =
+      activeTool === 'mindmap' || activeTool === 'whiteboard' || activeTool === 'process_flow';
+    const kondycjaJest = activeTool === 'mindmap' || activeTool === 'process_flow';
+    return buildIdeaCanvasRightRailTools({
+      ...(isPolish
+        ? {
+            labels: {
+              problem: 'Problem',
+              status: 'Status',
+              inspector: 'Inspektor',
+              convert: 'Konwersja',
+              health: 'Kondycja',
+            },
+          }
+        : {}),
+      disabled: { inspector: !inspektorJest, health: !kondycjaJest },
+      disabledReasons: {
+        inspector: isPolish
+          ? 'w Tabeli właściwości edytujesz w menu kolumny i wiersza'
+          : 'in Table, properties are edited from the column and row menus',
+        health: isPolish
+          ? 'liczona dla Mapy myśli i Przepływu'
+          : 'computed for Mind Map and Process Flow',
+      },
+    });
+  }, [melsCanvasEnabled, isPolish, activeTool]);
 
   // ── Shared IdeaWorkspaceTools props (single source) ─────────────────────
   // The workspace inspector (5 sections: Problem · Status · Inspector · Convert
@@ -3222,21 +3240,28 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     ]
   );
 
-  // EditorShell right-rail panel body. All five inspector icons (problem ·
-  // status · inspector · convert · health) address the five sections that
-  // already live inside <IdeaWorkspaceTools>, so every id renders that same
-  // inspector (its sections are the in-panel navigation). Rendered `embedded`
-  // so it drops its own drawer chrome and fills the shell's rail column. The
-  // matching legacy drawer is suppressed below when the flag is ON (no dupes).
+  // EditorShell right-rail panel body. P0-4: each of the five rail icons
+  // (problem · status · inspector · convert · health) is a TAB — it must render
+  // only its own section. The ids from `buildIdeaCanvasRightRailTools` match the
+  // `IdeaPanelSection` union 1:1, so the id is passed straight through as
+  // `onlySection`. Rendered `embedded` so it drops its own drawer chrome and
+  // fills the shell's rail column. The matching legacy drawer is suppressed
+  // below when the flag is ON (no dupes).
   const renderMelsCanvasRightRailPanel = useCallback(
-    (_activeToolId: string | null): React.ReactNode => (
-      <IdeaWorkspaceTools
-        {...ideaWorkspaceToolsSharedProps}
-        open
-        embedded
-        onClose={() => handlePanelChange(null)}
-      />
-    ),
+    (activeToolId: string | null): React.ReactNode => {
+      const section = IDEA_PANEL_SECTIONS.includes(activeToolId as IdeaPanelSection)
+        ? (activeToolId as IdeaPanelSection)
+        : 'problem';
+      return (
+        <IdeaWorkspaceTools
+          {...ideaWorkspaceToolsSharedProps}
+          open
+          embedded
+          onlySection={section}
+          onClose={() => handlePanelChange(null)}
+        />
+      );
+    },
     [ideaWorkspaceToolsSharedProps, handlePanelChange]
   );
 
