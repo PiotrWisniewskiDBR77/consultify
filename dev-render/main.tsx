@@ -47,6 +47,8 @@ import FinanceValuePanelsScreen from './screens/finance-value-panels';
 import GenDeckContentHintsScreen from './screens/gen-deck-content-hints';
 import GenExcelTemplatesTabScreen from './screens/gen-excel-templates-tab';
 import GenWordContentHintsScreen from './screens/gen-word-content-hints';
+import DeckQualityBadgeScreen from './screens/deck-quality-badge';
+import WordQualityBadgeScreen from './screens/word-quality-badge';
 import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
@@ -101,6 +103,14 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DOKUMENTY — Gen. Word W2: content hints per sekcja w Word Template Architect (ff_tpl_editor)',
     render: () => <GenWordContentHintsScreen />,
+  },
+  'deck-quality-badge': {
+    label: 'DOKUMENTY — Deck W4: badge jakości (critic/M19) na kroku wyniku kreatora (&clean=1 dla 0 uwag)',
+    render: () => <DeckQualityBadgeScreen />,
+  },
+  'word-quality-badge': {
+    label: 'DOKUMENTY — Word W4: badge fabrykacji w panelu QA Document Studio (&clean=1 dla zweryfikowane)',
+    render: () => <WordQualityBadgeScreen />,
   },
   'word-intake-uselm-default': {
     label: 'DOKUMENTY — Word intake: domyślnie „Wygeneruj treść z AI" (audyt 2026-07-22, Word #8)',

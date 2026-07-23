@@ -137,6 +137,23 @@ export function installWorkbookTemplatesApiMock(): () => void {
       columnCount: s.columns.length,
       rowCount: s.rows.length,
     })),
+    // W4 excel-quality-surface: critiqueWorkbook runs on every build. dcfValuation
+    // shows a clean pass; others carry one illustrative MAJOR note so both badge
+    // states (0 issues / N issues) can be screenshotted.
+    qualityReport:
+      id === 'dcfValuation'
+        ? { passed: true, score: 100, issues: [] }
+        : {
+            passed: true,
+            score: 92,
+            issues: [
+              {
+                code: 'WQ-07-STYLE',
+                severity: 'MINOR',
+                message: 'Kolumna RAZEM mogłaby użyć formatu walutowego dla czytelności.',
+              },
+            ],
+          },
   })) as typeof Api.buildWorkbookTemplate;
   Api.getWorkbookSchema = (async (workbookId: string) => {
     const templateId = workbookId.replace(/^wb-dev-render-/, '');
