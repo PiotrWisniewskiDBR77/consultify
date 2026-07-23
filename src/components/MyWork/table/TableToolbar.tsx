@@ -566,8 +566,10 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           <button
             onClick={() => props.onFilterInputChange('')}
             className="absolute right-1.5 top-1/2 -translate-y-1/2 text-c-text-secondary hover:text-c-text-secondary"
+            title={t('ideas.table.clearFilter', 'Clear filter')}
+            aria-label={t('ideas.table.clearFilter', 'Clear filter')}
           >
-            <X size={10} />
+            <X size={10} aria-hidden="true" />
           </button>
         )}
       </div>

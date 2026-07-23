@@ -2685,7 +2685,9 @@
         "defaultKpi": "KPI",
         "defaultScore": "Score",
         "defaultProgress": "Progress",
-        "defaultSummary": "Summary"
+        "defaultSummary": "Summary",
+        "collapseFrame": "Collapse section",
+        "expandFrame": "Expand section"
       },
       "sessionPanel": {
         "layer": "Session layer",
@@ -5004,7 +5006,8 @@
       "toastReviewRequested": "Review requested",
       "toastInputRequested": "Input requested",
       "toastCoDecisionRequested": "Co-decision requested"
-    }
+    },
+    "closeOpenDocument": "Close: {{nazwa}}"
   },
   "step1": {
     "title": "Step 1",
@@ -24902,6 +24905,7 @@
       "viewDeleted": "View deleted",
       "delete": "Delete",
       "filter": "Filter…",
+      "clearFilter": "Clear filter",
       "group": "Group",
       "calendar": "Calendar",
       "gallery": "Gallery",
@@ -27167,7 +27171,7 @@
       "readyToImport": "Ready to import: {{nodes}} nodes, {{edges}} edges",
       "elementsConnectionsCount": "{{elements}} elements, {{connections}} connections",
       "confirmReplaceTitle": "Confirm workspace replacement",
-      "confirmReplaceBody": "This import will REPLACE all content: it removes {{currentNodes}} nodes and {{currentEdges}} edges, and inserts {{importNodes}} nodes and {{importEdges}} edges.",
+      "confirmReplaceBody": "This import will REPLACE everything: it removes {{obecne}} and inserts {{przychodzace}}.",
       "confirmReplaceSource": "Import source: {{format}}",
       "confirmReplaceConfirm": "Confirm and replace",
       "confirmReplaceCancel": "Cancel",
@@ -27177,7 +27181,11 @@
       "undoImport": "Undo import",
       "undoImportDone": "Import undone — previous content restored",
       "undoImportTitle": "Import undone",
-      "startNewImport": "New import"
+      "startNewImport": "New import",
+      "nodeCount_one": "{{count}} node",
+      "nodeCount_other": "{{count}} nodes",
+      "edgeCount_one": "{{count}} connection",
+      "edgeCount_other": "{{count}} connections"
     },
     "slashCommandMenu": {
       "typeCommand": "Type a command…",
@@ -27345,7 +27353,8 @@
       "askAi": "Ask AI",
       "delete": "Delete",
       "linkedArtifacts": "Linked artifacts",
-      "noLinksYet": "No links yet"
+      "noLinksYet": "No links yet",
+      "removeLink": "Remove link"
     },
     "validationPanel": {
       "valid": "Valid",
@@ -27405,7 +27414,8 @@
     "laneSystem": {
       "expandLane": "Expand lane",
       "collapseLane": "Collapse lane",
-      "resizeLane": "Resize lane"
+      "resizeLane": "Resize lane",
+      "setColor": "Set lane color"
     },
     "exportDialog": {
       "jsonDesc": "Typed graph for integration",

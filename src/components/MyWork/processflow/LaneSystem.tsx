@@ -227,10 +227,13 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
           {LANE_COLORS.map((c) => (
             <button
               key={c}
+              type="button"
               onClick={() => {
                 onColorChange?.(lane.id, c);
                 setShowColorPicker(false);
               }}
+              title={t('processFlow.laneSystem.setColor', 'Set lane color')}
+              aria-label={t('processFlow.laneSystem.setColor', 'Set lane color')}
               className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${c === lane.color ? 'border-c-text scale-110' : 'border-transparent'}`}
               style={{ backgroundColor: c }}
             />

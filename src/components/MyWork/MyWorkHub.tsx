@@ -2490,13 +2490,18 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
                   {/* Close Button */}
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleCloseDocument(doc.id);
                     }}
+                    // Sam „X" nie mowi czytnikowi ekranu NIC, a takich przyciskow
+                    // jest tyle, ile otwartych kart — nazwa musi wskazywac ktora.
+                    title={t('myWork.closeOpenDocument', { nazwa: doc.name })}
+                    aria-label={t('myWork.closeOpenDocument', { nazwa: doc.name })}
                     className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
                   >
-                    <X size={14} />
+                    <X size={14} aria-hidden="true" />
                   </button>
                 </div>
               );

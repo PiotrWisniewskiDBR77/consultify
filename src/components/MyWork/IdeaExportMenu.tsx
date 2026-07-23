@@ -826,11 +826,15 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
                     {t('myWorkIdeas.exportMenu.confirmReplaceTitle')}
                   </div>
                   <div className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 mt-1.5">
+                    {/*
+                      Polski ma trzy formy liczby mnogiej (1 / 2-4 / 5+), wiec
+                      liczb NIE wolno wstawiac w jedno zdanie z zaszyta koncowka
+                      — dawalo „wstawi 2 wezlow i 1 polaczen". Kazda liczebnosc
+                      jest osobnym kluczem z odmiana, zdanie tylko je sklada.
+                    */}
                     {t('myWorkIdeas.exportMenu.confirmReplaceBody', {
-                      currentNodes: graphNodes.length,
-                      currentEdges: graphEdges.length,
-                      importNodes: pendingImport.parsed.nodes.length,
-                      importEdges: pendingImport.parsed.edges.length,
+                      obecne: `${t('myWorkIdeas.exportMenu.nodeCount', { count: graphNodes.length })} i ${t('myWorkIdeas.exportMenu.edgeCount', { count: graphEdges.length })}`,
+                      przychodzace: `${t('myWorkIdeas.exportMenu.nodeCount', { count: pendingImport.parsed.nodes.length })} i ${t('myWorkIdeas.exportMenu.edgeCount', { count: pendingImport.parsed.edges.length })}`,
                     })}
                   </div>
                   <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5">
