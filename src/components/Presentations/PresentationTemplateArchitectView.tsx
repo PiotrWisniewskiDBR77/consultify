@@ -895,6 +895,48 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
                             className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface-raised px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
                           />
                         </div>
+                        {slide.keyMessage || slide.dataNeeded?.length || slide.suggestedVisual ? (
+                          <div className="mt-1.5 space-y-1 pl-7">
+                            {slide.keyMessage ? (
+                              <div>
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                                  {t('presentations.templateArchitect.keyMessage', 'Teza')}
+                                </span>
+                                <p className="mt-0.5 text-xs text-c-text-secondary">
+                                  {slide.keyMessage}
+                                </p>
+                              </div>
+                            ) : null}
+                            {slide.dataNeeded && slide.dataNeeded.length > 0 ? (
+                              <div>
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                                  {t(
+                                    'presentations.templateArchitect.dataNeeded',
+                                    'Dane do zebrania'
+                                  )}
+                                </span>
+                                <ul className="mt-0.5 list-inside list-disc text-xs text-c-text-secondary">
+                                  {slide.dataNeeded.map((item, i) => (
+                                    <li key={i}>{item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : null}
+                            {slide.suggestedVisual ? (
+                              <div>
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                                  {t(
+                                    'presentations.templateArchitect.suggestedVisual',
+                                    'Sugerowana wizualizacja'
+                                  )}
+                                </span>
+                                <p className="mt-0.5 text-xs text-c-text-secondary">
+                                  {slide.suggestedVisual}
+                                </p>
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   </li>

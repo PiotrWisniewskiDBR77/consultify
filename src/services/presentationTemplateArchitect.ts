@@ -80,6 +80,12 @@ export interface PresentationTemplateOutlineItem {
   title: string;
   /** Optional 2-4 short thematic guidance phrases (LLM-refined templates only). */
   contentHints?: string[];
+  /** Optional one-sentence thesis/take-away shape for the slide (LLM-refined templates only). */
+  keyMessage?: string;
+  /** Optional 2-3 items naming what data must be gathered — never actual values (LLM-refined templates only). */
+  dataNeeded?: string[];
+  /** Optional short label for the recommended visualization type (LLM-refined templates only). */
+  suggestedVisual?: string;
 }
 
 export type PresentationTemplateLifecycleState = 'draft' | 'approved' | 'deprecated';
