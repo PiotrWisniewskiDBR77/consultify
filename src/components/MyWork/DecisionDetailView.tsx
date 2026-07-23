@@ -1056,9 +1056,6 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   // parę „Pokaż więcej / Pokaż mniej" nad polem o stałej liczbie wierszy. Auto-fit
   // (n-Type §6.3) pokazuje całą treść bez tego przełącznika, więc stan osierocił
   // się w tym samym commicie, w którym zniknął jego jedyny konsument.
-  const [aiFieldLoading, setAiFieldLoading] = useState<Record<string, boolean>>({});
-  const [aiMenuOpenField, setAiMenuOpenField] = useState<string | null>(null);
-  const [aiUndoByField, setAiUndoByField] = useState<Record<string, string>>({});
   const [altProsDraft, setAltProsDraft] = useState<Record<string, string>>({});
   const [altConsDraft, setAltConsDraft] = useState<Record<string, string>>({});
   const [isGeneratingAltProsCons, setIsGeneratingAltProsCons] = useState<Record<string, boolean>>(
@@ -1618,17 +1615,6 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     return () => window.removeEventListener('scroll', onScroll);
   }, [notionSections, presentationMode]);
 
-  useEffect(() => {
-    const onPointerDown = (event: MouseEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (!target?.closest('[data-ai-menu-root="true"]')) {
-        setAiMenuOpenField(null);
-      }
-    };
-    document.addEventListener('mousedown', onPointerDown);
-    return () => document.removeEventListener('mousedown', onPointerDown);
-  }, []);
-
   const loadUsers = async () => {
     try {
       const response = await Api.get('/users');
@@ -1955,11 +1941,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       }
       // Use API data; demo fallback only in demo sessions
       const apiAlternatives = decision.alternatives || [];
-      setAlternatives(
-        withProsConsFallback(
-          apiAlternatives.length > 0 ? apiAlternatives : isDemo ? DEMO_ALTERNATIVES : []
-        )
-      );
+      // Bez dosypywania zaszytych plusów/minusów: pusta lista argumentów jest
+      // uczciwym stanem opcji, wymyślony argument decyzyjny nie jest.
+      setAlternatives(apiAlternatives.length > 0 ? apiAlternatives : isDemo ? DEMO_ALTERNATIVES : []);
       setSelectedAlternativeId(decision.selectedAlternativeId || '');
       if (decision.impact) {
         setImpact(decision.impact);
@@ -2066,7 +2050,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
             setLinkedItems(local.linkedItems);
           if (Array.isArray(local.risks) && local.risks.length > 0) setRisks(local.risks);
           if (Array.isArray(local.alternatives) && local.alternatives.length > 0)
-            setAlternatives(withProsConsFallback(local.alternatives));
+            setAlternatives(local.alternatives);
           if (Array.isArray(local.reminders) && local.reminders.length > 0)
             setReminders(
               local.reminders.map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule))
@@ -2546,6 +2530,113 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     );
   };
 
+  // ── AI karty DECYZJA: jeden DZIAŁAJĄCY endpoint + UCZCIWY błąd ──────────────
+  // Do 2026-07-23 wszystkie akcje AI tej karty wołały `/ai/chat`, czyli
+  // ORKIESTRATOR (`server/src/routes/ai.routes.ts` → `{role, intent, prompt…}`).
+  // Ten endpoint NIGDY nie zwraca `text`/`content`, więc każde takie wywołanie
+  // było martwe: token spalony, odpowiedź wyrzucona, front szedł w `catch`,
+  // a `catch` podstawiał ZASZYTĄ treść i meldował sukces. Dwie naprawy naraz:
+  //  1) wołamy `/ai/generate` (kontrakt `{ text }`, bramka dostępu, mapowanie błędów),
+  //  2) gdy AI nie odpowie — mówimy to WPROST i NIE ruszamy treści użytkownika.
+  // „AI niedostępne" to poprawny wynik. Zmyślona treść podpisana AI — nie jest.
+  const aiFailureReason = (err: unknown): string => {
+    const code = String(
+      (err as { data?: { code?: string } })?.data?.code || (err as { code?: string })?.code || ''
+    ).toUpperCase();
+    switch (code) {
+      case 'NO_LLM_PROVIDER':
+        return t('decisions.detail.ai.errNoProvider', 'no AI provider is configured');
+      case 'AI_BUDGET_EXHAUSTED':
+        return t('decisions.detail.ai.errBudget', 'the AI budget is exhausted');
+      case 'ACCESS_BLOCKED':
+        return t('decisions.detail.ai.errAccessBlocked', 'AI access is blocked for this workspace');
+      case 'EMPTY_LLM_RESPONSE':
+      case 'EMPTY_AI_RESPONSE':
+        return t('decisions.detail.ai.errEmpty', 'AI returned an empty response');
+      case 'LLM_CALL_FAILED':
+        return t('decisions.detail.ai.errCallFailed', 'the AI call failed');
+      case 'AI_BAD_JSON':
+        return t('decisions.detail.ai.errBadJson', 'the AI response could not be parsed');
+      default:
+        return (
+          String((err as Error)?.message || '').trim() ||
+          t('decisions.detail.ai.errUnavailable', 'AI is temporarily unavailable')
+        );
+    }
+  };
+
+  /**
+   * Uczciwy komunikat porażki AI: CO się nie udało + DLACZEGO.
+   * Wywołanie tej funkcji jest jedyną dozwoloną reakcją na brak odpowiedzi AI —
+   * żadna gałąź awaryjna nie może dopisywać treści do karty.
+   */
+  const notifyAiFailure = (whatFailed: string, err: unknown) => {
+    console.error('[DecisionDetailView] AI request failed:', whatFailed, err);
+    toast.error(
+      t('decisions.detail.toast.aiFailedWithReason', '{{what}} — {{reason}}.', {
+        what: whatFailed,
+        reason: aiFailureReason(err),
+      })
+    );
+  };
+
+  /** Pojedyncze wywołanie AI zwracające czysty tekst (`/ai/generate` → `{ text }`). */
+  const requestAiText = async (opts: {
+    message: string;
+    systemInstruction: string;
+    roleName: string;
+  }): Promise<string> => {
+    const res = await Api.post('/ai/generate', {
+      message: opts.message,
+      systemInstruction: opts.systemInstruction,
+      roleName: opts.roleName,
+    });
+    const text = String(res?.text ?? '')
+      .replace(/^```[\w-]*\n?/g, '')
+      .replace(/```$/g, '')
+      .replace(/^["']|["']$/g, '')
+      .trim();
+    if (!text) {
+      const err = new Error('Empty AI response') as Error & { code?: string };
+      err.code = 'EMPTY_AI_RESPONSE';
+      throw err;
+    }
+    return text;
+  };
+
+  /** To samo, ale wynik ma być JSON-em wg schematu podanego w prompcie. */
+  const requestAiJson = async <T,>(opts: {
+    message: string;
+    systemInstruction?: string;
+    roleName: string;
+  }): Promise<T> => {
+    const raw = await requestAiText({
+      message: opts.message,
+      systemInstruction:
+        opts.systemInstruction ||
+        t(
+          'decisions.detail.ai.pmoJsonSystemInstruction',
+          'You are a PMO assistant. Return valid JSON only, no markdown.'
+        ),
+      roleName: opts.roleName,
+    });
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    try {
+      return JSON.parse(jsonMatch ? jsonMatch[0] : raw) as T;
+    } catch {
+      const err = new Error('AI response is not valid JSON') as Error & { code?: string };
+      err.code = 'AI_BAD_JSON';
+      throw err;
+    }
+  };
+
+  /** Rzuca uczciwy błąd „pusto", gdy AI odpowiedziało, ale bez użytecznej treści. */
+  const emptyAiResult = (detail: string) => {
+    const err = new Error(detail) as Error & { code?: string };
+    err.code = 'EMPTY_AI_RESPONSE';
+    return err;
+  };
+
   const generateProsConsForAlternative = async (alt: Alternative) => {
     if (isDecisionStageLocked) return;
     setIsGeneratingAltProsCons((prev) => ({ ...prev, [alt.id]: true }));
@@ -2560,35 +2651,18 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         }
       );
 
-      let nextPros: string[] = [];
-      let nextCons: string[] = [];
-
-      try {
-        const aiRes = await Api.post('/ai/chat', {
-          message: prompt,
-          history: [],
-          systemInstruction: t(
-            'decisions.detail.ai.pmoJsonSystemInstruction',
-            'You are a PMO assistant. Return valid JSON only, no markdown.'
-          ),
-          roleName: 'Decision Option Analyzer',
-        });
-        const rawText = String(aiRes?.text || aiRes?.content || '').trim();
-        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-        const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(rawText);
-        nextPros = Array.isArray(parsed?.pros) ? parsed.pros.map((p: any) => String(p).trim()) : [];
-        nextCons = Array.isArray(parsed?.cons) ? parsed.cons.map((c: any) => String(c).trim()) : [];
-      } catch {
-        nextPros = [
-          t('decisions.detail.ai.fallbackProsShort', 'Shorter implementation time'),
-          t('decisions.detail.ai.fallbackProsScale', 'Better scalability'),
-          t('decisions.detail.ai.fallbackProsPredictability', 'Higher outcome predictability'),
-        ];
-        nextCons = [
-          t('decisions.detail.ai.fallbackConsCost', 'Higher initial cost'),
-          t('decisions.detail.ai.fallbackConsCapability', 'Requires team capability'),
-          t('decisions.detail.ai.fallbackConsIntegrationRisk', 'Integration risk'),
-        ];
+      const parsed = await requestAiJson<{ pros?: unknown; cons?: unknown }>({
+        message: prompt,
+        roleName: 'Decision Option Analyzer',
+      });
+      const nextPros = Array.isArray(parsed?.pros)
+        ? parsed.pros.map((p: unknown) => String(p).trim()).filter(Boolean)
+        : [];
+      const nextCons = Array.isArray(parsed?.cons)
+        ? parsed.cons.map((c: unknown) => String(c).trim()).filter(Boolean)
+        : [];
+      if (nextPros.length === 0 && nextCons.length === 0) {
+        throw emptyAiResult('No pros/cons returned by AI');
       }
 
       setAlternatives((prev) =>
@@ -2610,6 +2684,11 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       );
       toast.success(
         t('decisions.detail.toast.aiAddedProsCons', 'AI added suggested pros and cons')
+      );
+    } catch (err) {
+      notifyAiFailure(
+        t('decisions.detail.toast.aiProsConsFailed', 'AI could not generate pros and cons'),
+        err
       );
     } finally {
       setIsGeneratingAltProsCons((prev) => ({ ...prev, [alt.id]: false }));
@@ -2704,7 +2783,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         isRecommended: false,
       }));
 
-      setAlternatives(withProsConsFallback([...alternatives, ...generatedAlternatives]));
+      setAlternatives([...alternatives, ...generatedAlternatives]);
       setCardState('alternatives', 'ai-draft');
       toast.success(t('decisions.detail.toast.alternativesGenerated', 'Alternatives generated'));
     } catch (error) {
@@ -2808,26 +2887,14 @@ Return ONLY the final comment text.`,
         }
       );
 
-      const aiRes = await Api.post('/ai/chat', {
+      const generatedComment = await requestAiText({
         message: prompt,
-        history: [],
         systemInstruction: t(
           'decisions.detail.ai.decisionCoachSystemInstruction',
           'You are a practical PMO decision coach. Be concrete and avoid generic filler.'
         ),
         roleName: 'Decision Comment Advisor',
       });
-
-      const raw = String(aiRes?.text || aiRes?.content || '').trim();
-      const generatedComment = raw
-        .replace(/^```[\w-]*\n?/g, '')
-        .replace(/```$/g, '')
-        .replace(/^["']|["']$/g, '')
-        .trim();
-
-      if (!generatedComment) {
-        throw new Error('Empty AI response');
-      }
 
       const recentAIMessages = comments
         .filter((c) => c.authorId === 'ai-assistant')
@@ -2850,25 +2917,13 @@ Return ONLY the final comment text.`,
 
       setComments([...comments, newComment]);
       toast.success(t('decisions.detail.toast.aiCommentGenerated', 'AI comment generated'));
-    } catch {
-      const fallback = t(
-        'decisions.detail.ai.commentFallback',
-        'Before finalizing this decision, clarify one critical acceptance condition and assign an owner for the next step. This will reduce delay risk and responsibility ambiguity.'
-      );
-
-      const newComment: Comment = {
-        id: Math.random().toString(36).substr(2, 9),
-        content: fallback,
-        authorId: 'ai-assistant',
-        authorName: 'AI Assistant',
-        createdAt: new Date().toISOString(),
-        likes: 0,
-        isAIGenerated: true,
-      };
-
-      setComments((prev) => [...prev, newComment]);
-      toast.success(
-        t('decisions.detail.toast.aiCommentFallbackAdded', 'Added a fallback AI comment')
+    } catch (err) {
+      // Żaden komentarz NIE powstaje, gdy AI nie odpowiedziało. Dopisanie tu
+      // zaszytego zdania podpisanego „AI Assistant" (isAIGenerated: true) było
+      // najcięższą atrapą tej karty — fałszowało wkład AI w wątku decyzji.
+      notifyAiFailure(
+        t('decisions.detail.toast.aiCommentFailed', 'AI could not generate a comment'),
+        err
       );
     } finally {
       setIsGeneratingAIComment(false);
@@ -2942,19 +2997,10 @@ Users (prefer project members):
         }
       );
 
-      const aiRes = await Api.post('/ai/chat', {
+      const parsed = await requestAiJson<{ stakeholders?: unknown }>({
         message: prompt,
-        history: [],
-        systemInstruction: t(
-          'decisions.detail.ai.pmoJsonSystemInstruction',
-          'You are a PMO assistant. Return valid JSON only, no markdown.'
-        ),
         roleName: 'RACI Team Advisor',
       });
-
-      const raw = String(aiRes?.text || aiRes?.content || '').trim();
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
       const aiList = Array.isArray(parsed?.stakeholders) ? parsed.stakeholders : [];
 
       const next: Stakeholder[] = aiList
@@ -2984,7 +3030,7 @@ Users (prefer project members):
         .filter(Boolean) as Stakeholder[];
 
       if (next.length === 0) {
-        throw new Error('No valid AI stakeholder suggestions');
+        throw emptyAiResult('No valid AI stakeholder suggestions');
       }
 
       // Replace list (not append): user asked for proposal that can be adjusted manually.
@@ -2996,10 +3042,10 @@ Users (prefer project members):
           { count: next.length }
         )
       );
-    } catch (e) {
-      console.error('Failed to suggest stakeholders via AI', e);
-      toast.error(
-        t('decisions.detail.toast.aiRaciSuggestFailed', 'Failed to generate AI RACI suggestions')
+    } catch (err) {
+      notifyAiFailure(
+        t('decisions.detail.toast.aiRaciSuggestFailed', 'AI could not propose a RACI team'),
+        err
       );
     } finally {
       setIsSuggestingStakeholders(false);
@@ -3019,18 +3065,10 @@ Users (prefer project members):
 Consider priority {{priority}}, due date {{dueDate}} and status {{status}}.`,
         { schema: remindersSchema, priority, dueDate: dueDate || '-', status }
       );
-      const aiRes = await Api.post('/ai/chat', {
+      const parsed = await requestAiJson<{ reminders?: unknown }>({
         message: prompt,
-        history: [],
-        systemInstruction: t(
-          'decisions.detail.ai.pmoJsonSystemInstruction',
-          'You are a PMO assistant. Return valid JSON only, no markdown.'
-        ),
         roleName: 'Reminder Rules Advisor',
       });
-      const raw = String(aiRes?.text || aiRes?.content || '').trim();
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
       const next = (Array.isArray(parsed?.reminders) ? parsed.reminders : [])
         .map((r: any, idx: number) => ({
           id: `ai-rem-${Date.now()}-${idx}`,
@@ -3061,7 +3099,7 @@ Consider priority {{priority}}, due date {{dueDate}} and status {{status}}.`,
           enabled: r?.enabled !== false,
         }))
         .slice(0, 6);
-      if (next.length === 0) throw new Error('No reminders returned');
+      if (next.length === 0) throw emptyAiResult('No reminders returned by AI');
       setReminders(next.map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule)));
       toast.success(
         t(
@@ -3070,41 +3108,13 @@ Consider priority {{priority}}, due date {{dueDate}} and status {{status}}.`,
           { count: next.length }
         )
       );
-    } catch (e) {
-      console.error('Failed to suggest reminders via AI', e);
-      const fallback: ReminderRuleWithDelivery[] = [
-        {
-          id: `rem-fb-${Date.now()}-1`,
-          type: 'before_due',
-          days: 3,
-          recipients: 'both',
-          inAppNotification: true,
-          emailNotification: true,
-          delivery: ensureDeliveryConfig({ coreChannels: ['in_app', 'email'] }),
-          message: t('decisions.detail.decisionDueIn3Days', 'Decision due in 3 days.'),
-          enabled: true,
-        },
-        {
-          id: `rem-fb-${Date.now()}-2`,
-          type: 'after_due',
-          days: 1,
-          recipients: 'stakeholders',
-          inAppNotification: true,
-          emailNotification: false,
-          delivery: ensureDeliveryConfig({ coreChannels: ['in_app'] }),
-          message: t(
-            'decisions.detail.decisionOverdueActionNeeded',
-            'Decision overdue - action needed.'
-          ),
-          enabled: true,
-        },
-      ];
-      setReminders(fallback.map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule)));
-      toast.success(
-        t(
-          'decisions.detail.toast.remindersFallbackApplied',
-          'Applied fallback reminder suggestions.'
-        )
+    } catch (err) {
+      // Brak odpowiedzi AI NIE tworzy reguł. Wcześniej wstawiane były dwie
+      // zaszyte reguły (3 dni przed / 1 dzień po) i meldowany sukces — użytkownik
+      // dostawał konfigurację powiadomień, o którą nikt nie prosił.
+      notifyAiFailure(
+        t('decisions.detail.toast.aiRemindersFailed', 'AI could not propose reminders'),
+        err
       );
     } finally {
       setIsSuggestingReminders(false);
@@ -3129,18 +3139,10 @@ Use userId only from users list:
 {{userList}}`,
         { schema: escalationsSchema, userList }
       );
-      const aiRes = await Api.post('/ai/chat', {
+      const parsed = await requestAiJson<{ rules?: unknown }>({
         message: prompt,
-        history: [],
-        systemInstruction: t(
-          'decisions.detail.ai.pmoJsonSystemInstruction',
-          'You are a PMO assistant. Return valid JSON only, no markdown.'
-        ),
         roleName: 'Escalation Rules Advisor',
       });
-      const raw = String(aiRes?.text || aiRes?.content || '').trim();
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
       const next = (Array.isArray(parsed?.rules) ? parsed.rules : [])
         .map((r: any, idx: number) => {
           const selected = users.find((u) => u.id === r?.escalateToUserId) || users[0];
@@ -3179,7 +3181,7 @@ Use userId only from users list:
         })
         .filter(Boolean)
         .slice(0, 5) as EscalationRuleWithConfig[];
-      if (next.length === 0) throw new Error('No escalation rules returned');
+      if (next.length === 0) throw emptyAiResult('No escalation rules returned by AI');
       setEscalationRules(next);
       toast.success(
         t(
@@ -3188,30 +3190,11 @@ Use userId only from users list:
           { count: next.length }
         )
       );
-    } catch (e) {
-      console.error('Failed to suggest escalations via AI', e);
-      const selected = users[0];
-      if (selected) {
-        setEscalationRules([
-          normalizeEscalationRule({
-            id: `esc-fb-${Date.now()}-1`,
-            enabled: true,
-            escalateTo: selected.id,
-            escalateToName: `${selected.firstName} ${selected.lastName}`,
-            afterDays: 5,
-            warningDays: 3,
-            criticalDays: 1,
-            escalationMode: 'manager_review',
-            delivery: ensureDeliveryConfig({ coreChannels: ['in_app', 'email'] }),
-            message: t(
-              'decisions.detail.decisionEscalatedDueToInactivity',
-              'Decision escalated due to inactivity.'
-            ),
-          }),
-        ]);
-      }
-      toast.success(
-        t('decisions.detail.toast.escalationFallbackApplied', 'Applied fallback escalation rule.')
+    } catch (err) {
+      // Nie wstawiamy zaszytej reguły eskalacji na losową osobę (`users[0]`).
+      notifyAiFailure(
+        t('decisions.detail.toast.aiEscalationsFailed', 'AI could not propose escalation rules'),
+        err
       );
     } finally {
       setIsSuggestingEscalations(false);
@@ -3231,20 +3214,14 @@ Use userId only from users list:
 Context: priority={{priority}}, status={{status}}, deadline={{dueDate}}`,
         { schema: raciPersonSchema, priority, status, dueDate: dueDate || '-' }
       );
-      const aiRes = await Api.post('/ai/chat', {
+      const parsed = await requestAiJson<{ role?: string; notifications?: any }>({
         message: prompt,
-        history: [],
-        systemInstruction: t(
-          'decisions.detail.ai.pmoJsonSystemInstruction',
-          'You are a PMO assistant. Return valid JSON only, no markdown.'
-        ),
         roleName: 'RACI Person Form Assistant',
       });
-      const raw = String(aiRes?.text || aiRes?.content || '').trim();
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
-      const role = ['accountable', 'responsible', 'consulted', 'informed'].includes(parsed?.role)
-        ? parsed.role
+      const role: StakeholderRole = ['accountable', 'responsible', 'consulted', 'informed'].includes(
+        String(parsed?.role)
+      )
+        ? (String(parsed.role) as StakeholderRole)
         : stakeholderDraft.role;
       const notifications = parsed?.notifications || {};
       const integrationChannels = Array.isArray(notifications.integrationChannels)
@@ -3284,26 +3261,11 @@ Context: priority={{priority}}, status={{status}}, deadline={{dueDate}}`,
       toast.success(
         t('decisions.detail.toast.aiRaciPersonFormFilled', 'AI filled the RACI person form.')
       );
-    } catch (e) {
-      console.error('Failed to suggest stakeholder draft via AI', e);
-      setStakeholderDraft((prev) =>
-        prev
-          ? {
-              ...prev,
-              notificationSettings: {
-                ...prev.notificationSettings,
-                enabled: true,
-                inAppEnabled: true,
-                emailEnabled: prev.role === 'accountable',
-              },
-            }
-          : prev
-      );
-      toast.success(
-        t(
-          'decisions.detail.toast.raciPersonFallbackApplied',
-          'Applied fallback RACI person configuration.'
-        )
+    } catch (err) {
+      // Formularz zostaje dokładnie taki, jaki wypełnił użytkownik.
+      notifyAiFailure(
+        t('decisions.detail.toast.aiRaciPersonFailed', 'AI could not fill the RACI person form'),
+        err
       );
     } finally {
       setIsSuggestingStakeholders(false);
@@ -3323,18 +3285,10 @@ Context: priority={{priority}}, status={{status}}, deadline={{dueDate}}`,
 Context: priority={{priority}}, status={{status}}, deadline={{dueDate}}`,
         { schema: reminderFormSchema, priority, status, dueDate: dueDate || '-' }
       );
-      const aiRes = await Api.post('/ai/chat', {
+      const r = await requestAiJson<any>({
         message: prompt,
-        history: [],
-        systemInstruction: t(
-          'decisions.detail.ai.pmoJsonSystemInstruction',
-          'You are a PMO assistant. Return valid JSON only, no markdown.'
-        ),
         roleName: 'Reminder Form Assistant',
       });
-      const raw = String(aiRes?.text || aiRes?.content || '').trim();
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      const r = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
       setReminderDraft((prev) =>
         prev
           ? {
@@ -3370,29 +3324,10 @@ Context: priority={{priority}}, status={{status}}, deadline={{dueDate}}`,
       toast.success(
         t('decisions.detail.toast.aiReminderFormFilled', 'AI filled the reminder form.')
       );
-    } catch (e) {
-      console.error('Failed to suggest reminder draft via AI', e);
-      setReminderDraft((prev) =>
-        prev
-          ? {
-              ...prev,
-              type: 'before_due',
-              days: 3,
-              recipients: 'both',
-              inAppNotification: true,
-              emailNotification: true,
-              delivery: ensureDeliveryConfig({ coreChannels: ['in_app', 'email'] }),
-              enabled: true,
-              message:
-                prev.message || t('decisions.detail.decisionDueIn3Days', 'Decision due in 3 days.'),
-            }
-          : prev
-      );
-      toast.success(
-        t(
-          'decisions.detail.toast.reminderFormFallbackApplied',
-          'Applied fallback reminder form values.'
-        )
+    } catch (err) {
+      notifyAiFailure(
+        t('decisions.detail.toast.aiReminderFormFailed', 'AI could not fill the reminder form'),
+        err
       );
     } finally {
       setIsSuggestingReminders(false);
@@ -3417,20 +3352,12 @@ Use userId only from this list:
 {{userList}}`,
         { schema: escalationFormSchema, userList }
       );
-      const aiRes = await Api.post('/ai/chat', {
+      const r = await requestAiJson<any>({
         message: prompt,
-        history: [],
-        systemInstruction: t(
-          'decisions.detail.ai.pmoJsonSystemInstruction',
-          'You are a PMO assistant. Return valid JSON only, no markdown.'
-        ),
         roleName: 'Escalation Form Assistant',
       });
-      const raw = String(aiRes?.text || aiRes?.content || '').trim();
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      const r = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
       const selected = users.find((u) => u.id === r?.escalateToUserId) || users[0];
-      if (!selected) throw new Error('No eligible user');
+      if (!selected) throw emptyAiResult('No eligible user for escalation');
       setEscalationDraft((prev) =>
         prev
           ? {
@@ -3469,41 +3396,10 @@ Use userId only from this list:
       toast.success(
         t('decisions.detail.toast.aiEscalationFormFilled', 'AI filled the escalation form.')
       );
-    } catch (e) {
-      console.error('Failed to suggest escalation draft via AI', e);
-      const selected = users[0];
-      if (selected) {
-        setEscalationDraft((prev) =>
-          prev
-            ? {
-                ...prev,
-                afterDays: 5,
-                warningDays: 3,
-                criticalDays: 1,
-                escalationMode: prev.escalationMode || 'manager_review',
-                delivery: ensureDeliveryConfig({
-                  coreChannels: ['in_app', 'email'],
-                  integrationChannels: prev.delivery?.integrationChannels || [],
-                  syncTargets: prev.delivery?.syncTargets || [],
-                }),
-                escalateTo: selected.id,
-                escalateToName: `${selected.firstName} ${selected.lastName}`,
-                enabled: true,
-                message:
-                  prev.message ||
-                  t(
-                    'decisions.detail.decisionEscalatedDueToInactivity',
-                    'Decision escalated due to inactivity.'
-                  ),
-              }
-            : prev
-        );
-      }
-      toast.success(
-        t(
-          'decisions.detail.toast.escalationFormFallbackApplied',
-          'Applied fallback escalation form values.'
-        )
+    } catch (err) {
+      notifyAiFailure(
+        t('decisions.detail.toast.aiEscalationFormFailed', 'AI could not fill the escalation form'),
+        err
       );
     } finally {
       setIsSuggestingEscalations(false);
@@ -3870,50 +3766,19 @@ Use userId only from this list:
     );
   };
 
-  const buildFallbackConsequenceScenarios = (): ConsequenceScenarios => ({
+  /**
+   * PUSTE scenariusze — stan wyjściowy sekcji „Konsekwencje bezczynności".
+   * Wcześniej funkcja zwracała dziewięć gotowych zdań-wypełniaczy („Execution
+   * uncertainty persists…"), pokazywanych pod nagłówkiem „AI scenarios" — czyli
+   * zmyśloną analizę wyglądającą jak wynik pracy silnika. Puste pola do wpisania
+   * są uczciwe; treść bierze się z AI albo od użytkownika.
+   */
+  const buildEmptyConsequenceScenarios = (): ConsequenceScenarios => ({
     updatedAt: new Date().toISOString(),
     source: 'fallback',
-    pessimistic: {
-      d7: t('decisions.detail.consequences.pessimisticD7', 'Immediate blockage risk: {{d7}}.', {
-        d7: pressureSummary.d7,
-      }),
-      d30: t(
-        'decisions.detail.consequences.pessimisticD30',
-        'Cost of inaction increases: {{d30}}.',
-        { d30: pressureSummary.d30 }
-      ),
-      d90: t('decisions.detail.consequences.pessimisticD90', 'Critical scenario: {{d90}}.', {
-        d90: pressureSummary.d90,
-      }),
-    },
-    neutral: {
-      d7: t(
-        'decisions.detail.consequences.neutralD7',
-        'Execution uncertainty persists and decision velocity drops.'
-      ),
-      d30: t(
-        'decisions.detail.consequences.neutralD30',
-        'Task dependencies grow, causing localized delays.'
-      ),
-      d90: t(
-        'decisions.detail.consequences.neutralD90',
-        'The project requires plan correction and additional resources.'
-      ),
-    },
-    optimistic: {
-      d7: t(
-        'decisions.detail.consequences.optimisticD7',
-        'Materialization risk remains limited with daily monitoring.'
-      ),
-      d30: t(
-        'decisions.detail.consequences.optimisticD30',
-        'With partial decisions, impact can remain under control.'
-      ),
-      d90: t(
-        'decisions.detail.consequences.optimisticD90',
-        'Impact remains moderate if owner and deadline are enforced.'
-      ),
-    },
+    pessimistic: { d7: '', d30: '', d90: '' },
+    neutral: { d7: '', d30: '', d90: '' },
+    optimistic: { d7: '', d30: '', d90: '' },
   });
 
   const generateConsequenceScenariosAI = async (options?: { silent?: boolean }) => {
@@ -3946,15 +3811,11 @@ Use userId only from this list:
         { schema: consequenceScenariosSchema, context: JSON.stringify(projectContext) }
       );
 
-      const aiRes = await Api.post('/ai/chat', {
+      const parsed = await requestAiJson<any>({
         message: prompt,
-        history: [],
         systemInstruction,
         roleName: 'Decision Consequence Analyst',
       });
-      const raw = String(aiRes?.text || aiRes?.content || '').trim();
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
       const normalizeTimeline = (v: any): ConsequenceTimeline => ({
         d7: String(v?.d7 || ''),
         d30: String(v?.d30 || ''),
@@ -3969,7 +3830,7 @@ Use userId only from this list:
         optimistic: normalizeTimeline(parsed?.optimistic),
       };
       if (!next.pessimistic.d7 || !next.neutral.d30 || !next.optimistic.d90) {
-        throw new Error('Incomplete AI scenario response');
+        throw emptyAiResult('Incomplete AI scenario response');
       }
       setConsequenceScenarios(next);
       setCardState('consequences', 'ai-draft');
@@ -3981,18 +3842,20 @@ Use userId only from this list:
           )
         );
       }
-    } catch {
-      const fallback = buildFallbackConsequenceScenarios();
-      setConsequenceScenarios(fallback);
-      setCardState('consequences', 'ai-draft');
+    } catch (err) {
+      // Nie oznaczamy karty jako `ai-draft` i nie wstawiamy szablonu — inaczej
+      // użytkownik dostawał dziewięć zmyślonych zdań opisanych jako scenariusze AI.
+      setCardState('consequences', 'error');
       if (!silent) {
-        toast(
+        notifyAiFailure(
           t(
-            'decisions.detail.toast.consequenceScenariosFallback',
-            'Fallback scenarios applied. AI temporarily unavailable.'
+            'decisions.detail.toast.aiConsequenceScenariosFailed',
+            'AI could not generate consequence scenarios'
           ),
-          { icon: '⚠️' }
+          err
         );
+      } else {
+        console.error('[DecisionDetailView] AI consequence scenarios failed (silent)', err);
       }
     } finally {
       setIsGeneratingConsequenceScenarios(false);
@@ -4000,8 +3863,8 @@ Use userId only from this list:
   };
 
   const displayedConsequenceScenarios = useMemo(
-    () => consequenceScenarios || buildFallbackConsequenceScenarios(),
-    [consequenceScenarios, pressureSummary, i18n.language]
+    () => consequenceScenarios || buildEmptyConsequenceScenarios(),
+    [consequenceScenarios, i18n.language]
   );
 
   const updateConsequenceScenarioCell = (
@@ -4011,7 +3874,7 @@ Use userId only from this list:
   ) => {
     if (isDecisionStageLocked) return;
     setConsequenceScenarios((prev) => {
-      const base = prev || buildFallbackConsequenceScenarios();
+      const base = prev || buildEmptyConsequenceScenarios();
       return {
         ...base,
         source: 'fallback',
@@ -4031,258 +3894,13 @@ Use userId only from this list:
     return normalized.length > 24 ? `${normalized.slice(0, 24)}...` : normalized;
   };
 
-  const withProsConsFallback = (alts: Alternative[]) =>
-    alts.map((alt, idx) => {
-      const hasPros = Array.isArray(alt.pros) && alt.pros.length > 0;
-      const hasCons = Array.isArray(alt.cons) && alt.cons.length > 0;
-      if (hasPros && hasCons) return alt;
-
-      const fallbackPros = [
-        t('decisions.detail.altFallback.prosFaster', 'Faster delivery of business value'),
-        t('decisions.detail.altFallback.prosPredictability', 'Better execution predictability'),
-        t('decisions.detail.altFallback.prosAccountability', 'Clearer team accountability'),
-      ];
-      const fallbackCons = [
-        t('decisions.detail.altFallback.consCost', 'Risk of higher initial cost'),
-        t('decisions.detail.altFallback.consCoordination', 'Requires additional coordination'),
-        t('decisions.detail.altFallback.consCapability', 'Needs additional capability support'),
-      ];
-
-      return {
-        ...alt,
-        pros: hasPros ? alt.pros : [fallbackPros[idx % fallbackPros.length]],
-        cons: hasCons ? alt.cons : [fallbackCons[idx % fallbackCons.length]],
-      };
-    });
-
-  const fallbackRefineText = (input: string, mode: 'improve' | 'shorten' | 'expand' | 'formal') => {
-    const normalized = input
-      .replace(/\s+\n/g, '\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
-    if (!normalized) return input;
-
-    if (mode === 'shorten') {
-      const target = Math.max(120, Math.floor(normalized.length * 0.65));
-      const compact = normalized.slice(0, target).trim();
-      return compact.endsWith('.') || compact.endsWith('!') || compact.endsWith('?')
-        ? compact
-        : `${compact}...`;
-    }
-
-    if (mode === 'expand') {
-      const appendix = t(
-        'decisions.detail.refine.expandAppendix',
-        '\n\nBusiness rationale: this decision affects delivery timing, operational risk, and outcome quality. It is recommended to define an implementation owner and key control checkpoints.'
-      );
-      return `${normalized}${appendix}`;
-    }
-
-    if (mode === 'formal') {
-      return t('decisions.detail.refine.formalPrefix', 'It is hereby noted that {{rest}}', {
-        rest: `${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`,
-      });
-    }
-
-    // improve
-    return normalized
-      .replace(/\s{2,}/g, ' ')
-      .replace(/\.\s*\./g, '.')
-      .replace(/(^\w)/, (m) => m.toUpperCase());
-  };
-
-  const enhanceFieldWithAI = async (
-    fieldKey: string,
-    sectionLabel: string,
-    currentValue: string,
-    applyValue: (value: string) => void,
-    mode: 'improve' | 'shorten' | 'expand' | 'formal'
-  ) => {
-    if (isDecisionStageLocked) {
-      toast.error(
-        t(
-          'decisions.detail.toast.aiGenAvailableOnlyBeforeDecision',
-          'AI generation is available only before decision stage'
-        )
-      );
-      return;
-    }
-    if (!currentValue.trim()) {
-      toast.error(
-        t('decisions.detail.toast.enterContentFirst', 'Enter some content first to edit with AI')
-      );
-      return;
-    }
-
-    setAiFieldLoading((prev) => ({ ...prev, [fieldKey]: true }));
-    setAiMenuOpenField(null);
-    try {
-      const instructionByMode = {
-        improve: t(
-          'decisions.detail.ai.refineImprove',
-          'Improve the text to be clear, professional, and concise. Keep the meaning and remove repetition.'
-        ),
-        shorten: t(
-          'decisions.detail.ai.refineShorten',
-          'Shorten the text by about 30-40% while keeping key meaning and decision-relevant information.'
-        ),
-        expand: t(
-          'decisions.detail.ai.refineExpand',
-          'Expand the text with useful context, risks, and business implications without filler.'
-        ),
-        formal: t(
-          'decisions.detail.ai.refineFormal',
-          'Rewrite the text in a more formal executive tone.'
-        ),
-      } as const;
-      const prompt = t(
-        'decisions.detail.ai.refineTextPrompt',
-        'Section: {{sectionLabel}}\nEdit mode: {{mode}}\nDecision title: {{title}}\nStatus: {{status}}\nPriority: {{priority}}\n\nInstruction: {{instruction}}\n\nText to edit:\n{{currentValue}}',
-        {
-          sectionLabel,
-          mode,
-          title: title || '-',
-          status,
-          priority,
-          instruction: instructionByMode[mode],
-          currentValue,
-        }
-      );
-
-      let refinedText = '';
-      try {
-        const systemInstruction = t(
-          'decisions.detail.ai.contentEditorSystemInstruction',
-          'You are a PMO decision content editor. Return only the revised text, no commentary.'
-        );
-
-        // 1) Prefer authenticated API path used across app
-        const aiRes = await Api.post('/ai/chat', {
-          message: prompt,
-          history: [],
-          systemInstruction,
-          roleName: 'Decision Text Editor',
-        });
-        refinedText = String(aiRes?.text || aiRes?.content || '').trim();
-
-        // 2) Fallback to confirm endpoint (some deployments gate /ai/chat responses)
-        if (!refinedText) {
-          const confirmRes = await Api.chatConfirm(
-            prompt,
-            [],
-            systemInstruction,
-            undefined,
-            undefined
-          );
-          refinedText = String(
-            confirmRes?.text ||
-              confirmRes?.content ||
-              confirmRes?.response ||
-              confirmRes?.confirm?.suggestedResponse ||
-              ''
-          ).trim();
-        }
-      } catch {
-        refinedText = '';
-      }
-
-      if (!refinedText) {
-        refinedText = fallbackRefineText(currentValue, mode);
-        toast(
-          t(
-            'decisions.detail.toast.aiEditFallbackApplied',
-            'Fallback local edit applied (AI temporarily unavailable).'
-          ),
-          { icon: '⚠️' }
-        );
-      }
-
-      if (!refinedText) {
-        throw new Error('Empty AI response');
-      }
-
-      setAiUndoByField((prev) => ({ ...prev, [fieldKey]: currentValue }));
-      applyValue(refinedText);
-      toast.success(
-        t(
-          'decisions.detail.toast.contentUpdatedByAI',
-          'Content updated by AI. If you do not like it, click Undo AI.'
-        )
-      );
-    } catch (error) {
-      toast.error(t('decisions.detail.toast.aiRefineFailed', 'Failed to refine content with AI'));
-    } finally {
-      setAiFieldLoading((prev) => ({ ...prev, [fieldKey]: false }));
-    }
-  };
-
-  const renderFieldAIButton = (
-    fieldKey: string,
-    sectionLabel: string,
-    currentValue: string,
-    applyValue: (value: string) => void
-  ) => (
-    <div className="relative" data-ai-menu-root="true">
-      <button
-        onClick={() => setAiMenuOpenField((prev) => (prev === fieldKey ? null : fieldKey))}
-        disabled={isDecisionStageLocked || !!aiFieldLoading[fieldKey]}
-        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-c-info hover:bg-c-info/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        title={t('decisions.detail.refine.aiActionsTitle', 'AI actions for this field')}
-      >
-        {aiFieldLoading[fieldKey] ? (
-          <Loader2 size={11} className="animate-spin" />
-        ) : (
-          <Sparkles size={11} />
-        )}
-        AI
-      </button>
-      {aiMenuOpenField === fieldKey && !isDecisionStageLocked && !aiFieldLoading[fieldKey] && (
-        <div className="absolute right-0 top-[calc(100%+6px)] z-30 w-44 rounded-lg border border-c-border-subtle/70 bg-c-surface/95 backdrop-blur p-1 shadow-xl">
-          {[
-            ['improve', t('decisions.detail.refine.improve', 'Improve')],
-            ['shorten', t('decisions.detail.refine.shorten', 'Shorten')],
-            ['expand', t('decisions.detail.refine.expand', 'Expand')],
-            ['formal', t('decisions.detail.refine.formalTone', 'Formal tone')],
-          ].map(([modeKey, label]) => (
-            <button
-              key={modeKey}
-              onClick={() =>
-                enhanceFieldWithAI(
-                  fieldKey,
-                  sectionLabel,
-                  currentValue,
-                  applyValue,
-                  modeKey as 'improve' | 'shorten' | 'expand' | 'formal'
-                )
-              }
-              className="w-full text-left px-2.5 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised rounded-md transition-colors"
-            >
-              {label}
-            </button>
-          ))}
-          {aiUndoByField[fieldKey] !== undefined && (
-            <button
-              onClick={() => {
-                applyValue(aiUndoByField[fieldKey]);
-                setAiUndoByField((prev) => {
-                  const next = { ...prev };
-                  delete next[fieldKey];
-                  return next;
-                });
-                setAiMenuOpenField(null);
-                toast.success(
-                  t('decisions.detail.toast.previousTextRestored', 'Previous text restored')
-                );
-              }}
-              className="mt-1 w-full text-left px-2.5 py-1.5 text-xs text-amber-700 dark:text-amber-300 hover:bg-amber-50/70 dark:hover:bg-amber-500/10 rounded-md transition-colors"
-            >
-              Undo AI
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  // Lokalny przycisk AI przy polu (menu Popraw/Skróć/Rozwiń/Formalnie) usunięty
+  // 2026-07-23. Był to MARTWY KOD: `renderFieldAIButton` nie miał ani jednego
+  // wywołania w drzewie renderu — wszystkie pola karty używają współdzielonego
+  // `AIFieldEnhancer`. Trzymał przy tym dwie martwe ścieżki (`/ai/chat` i
+  // `Api.chatConfirm` → `/ai/chat/confirm`, żadna nie zwraca tekstu) oraz
+  // lokalny `fallbackRefineText`, w którym „Skróć" = `slice(0, 65%)`, czyli
+  // ucięcie zdania użytkownika w połowie podane jako wynik AI.
   const createdDateDisplay = useMemo(() => {
     if (!createdAt) return '—';
     const d = new Date(createdAt);
@@ -4473,37 +4091,23 @@ Use userId only from this list:
           draft: commentDraft || '-',
         }
       );
-      const aiRes = await Api.post('/ai/chat', {
+      const next = await requestAiText({
         message: prompt,
-        history: [],
         systemInstruction: t(
           'decisions.detail.ai.pmConsultantSystemInstruction',
           'You are a PM consultant. Return a short comment ready to publish.'
         ),
         roleName: 'Comment Writing Assistant',
       });
-      const next = String(aiRes?.text || aiRes?.content || '').trim();
-      if (next) {
-        setCommentDraft(next);
-        toast.success(t('decisions.detail.toast.aiCommentPrepared', 'AI prepared comment text'));
-      } else {
-        throw new Error('Empty AI output');
-      }
-    } catch {
-      if (!commentDraft.trim()) {
-        const fallback = t(
-          'decisions.detail.ai.commentDraftFallback',
-          'I suggest a short validation of this option on historical data and clarifying execution ownership.'
-        );
-        setCommentDraft(fallback);
-      } else {
-        setCommentDraft((prev) =>
-          `${prev.trim()} ${t('decisions.detail.ai.commentDraftAppend', 'It is also worth clarifying owner and deadline.')}`.trim()
-        );
-      }
-      toast(t('decisions.detail.toast.localAiFallbackUsed', 'Applied local AI fallback hint'), {
-        icon: '⚠️',
-      });
+      setCommentDraft(next);
+      toast.success(t('decisions.detail.toast.aiCommentPrepared', 'AI prepared comment text'));
+    } catch (err) {
+      // Szkic użytkownika zostaje nietknięty — bez podmiany na zaszyte zdanie
+      // i bez doklejania „warto doprecyzować właściciela i termin".
+      notifyAiFailure(
+        t('decisions.detail.toast.aiCommentDraftFailed', 'AI could not prepare comment text'),
+        err
+      );
     } finally {
       setIsEnhancingCommentDraft(false);
     }
@@ -5442,8 +5046,7 @@ Use userId only from this list:
         showPriorityDropdown ||
         showCategoryDropdown ||
         showDelegationModal ||
-        showFollowUp ||
-        aiMenuOpenField
+        showFollowUp
       ) {
         return;
       }
@@ -5463,7 +5066,6 @@ Use userId only from this list:
     showCategoryDropdown,
     showDelegationModal,
     showFollowUp,
-    aiMenuOpenField,
   ]);
 
   // ── ETAP 3 standardu n-Type: „Analizuj z AI" AKTYWNEJ KARTY ────────────────
@@ -6535,16 +6137,27 @@ Use userId only from this list:
                                       'AI scenarios (real-time)'
                                     )}
                                   </span>
+                                  {/* Etykieta źródła mówi prawdę o TYCH komórkach:
+                                      „AI" po udanym wygenerowaniu, „ręcznie" po
+                                      edycji użytkownika, a przy pustej siatce —
+                                      „brak danych" (dawniej stało tu „Źródło:
+                                      fallback" nad dziewięcioma zdaniami, których
+                                      nie napisał ani AI, ani użytkownik). */}
                                   <span className="text-[10px]">
-                                    {displayedConsequenceScenarios.source === 'ai'
+                                    {!consequenceScenarios
                                       ? t(
-                                          'decisions.detail.consequencesSection.sourceAI',
-                                          'Source: AI'
+                                          'decisions.detail.consequencesSection.sourceNone',
+                                          'Source: no data yet'
                                         )
-                                      : t(
-                                          'decisions.detail.consequencesSection.sourceFallback',
-                                          'Source: fallback'
-                                        )}
+                                      : displayedConsequenceScenarios.source === 'ai'
+                                        ? t(
+                                            'decisions.detail.consequencesSection.sourceAI',
+                                            'Source: AI'
+                                          )
+                                        : t(
+                                            'decisions.detail.consequencesSection.sourceManual',
+                                            'Source: manual entry'
+                                          )}
                                   </span>
                                 </div>
                                 <div className="text-[11px] text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
