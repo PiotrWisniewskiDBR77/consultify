@@ -23309,14 +23309,15 @@
         "title": "Consequences of Inaction",
         "aiScenariosRealtime": "AI scenarios (real-time)",
         "sourceAI": "Source: AI",
-        "sourceFallback": "Source: fallback",
         "aiUpdating": "AI is updating scenarios...",
         "optimistic": "Optimistic",
         "neutral": "Neutral",
         "pessimistic": "Pessimistic",
         "decisionNote": "Decision note",
         "notePlaceholder": "What happens if the decision is not made?",
-        "placeholderClickup": "Consequences of inaction..."
+        "placeholderClickup": "Consequences of inaction...",
+        "sourceNone": "Source: no data yet",
+        "sourceManual": "Source: manual entry"
       },
       "governance": {
         "title": "RACI & Escalation",

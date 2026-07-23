@@ -24349,14 +24349,15 @@
         "title": "Konsekwencje braku decyzji",
         "aiScenariosRealtime": "Scenariusze AI (real-time)",
         "sourceAI": "Źródło: AI",
-        "sourceFallback": "Źródło: fallback",
         "aiUpdating": "AI aktualizuje scenariusze...",
         "optimistic": "Optymistyczny",
         "neutral": "Neutralny",
         "pessimistic": "Pesymistyczny",
         "decisionNote": "Notatka decyzyjna",
         "notePlaceholder": "Co się stanie, jeśli decyzja nie zostanie podjęta?",
-        "placeholderClickup": "Konsekwencje braku decyzji..."
+        "placeholderClickup": "Konsekwencje braku decyzji...",
+        "sourceNone": "Źródło: brak danych",
+        "sourceManual": "Źródło: wpis ręczny"
       },
       "governance": {
         "title": "RACI i eskalacja",

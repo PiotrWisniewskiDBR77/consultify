@@ -6137,16 +6137,27 @@ Use userId only from this list:
                                       'AI scenarios (real-time)'
                                     )}
                                   </span>
+                                  {/* Etykieta źródła mówi prawdę o TYCH komórkach:
+                                      „AI" po udanym wygenerowaniu, „ręcznie" po
+                                      edycji użytkownika, a przy pustej siatce —
+                                      „brak danych" (dawniej stało tu „Źródło:
+                                      fallback" nad dziewięcioma zdaniami, których
+                                      nie napisał ani AI, ani użytkownik). */}
                                   <span className="text-[10px]">
-                                    {displayedConsequenceScenarios.source === 'ai'
+                                    {!consequenceScenarios
                                       ? t(
-                                          'decisions.detail.consequencesSection.sourceAI',
-                                          'Source: AI'
+                                          'decisions.detail.consequencesSection.sourceNone',
+                                          'Source: no data yet'
                                         )
-                                      : t(
-                                          'decisions.detail.consequencesSection.sourceFallback',
-                                          'Source: fallback'
-                                        )}
+                                      : displayedConsequenceScenarios.source === 'ai'
+                                        ? t(
+                                            'decisions.detail.consequencesSection.sourceAI',
+                                            'Source: AI'
+                                          )
+                                        : t(
+                                            'decisions.detail.consequencesSection.sourceManual',
+                                            'Source: manual entry'
+                                          )}
                                   </span>
                                 </div>
                                 <div className="text-[11px] text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
