@@ -2928,7 +2928,12 @@
       "user": "Użytkownik",
       "label5": "Historia / AI",
       "emptyLabel3": "Brak historii",
-      "ariaLabel": "Szczegóły decyzji"
+      "ariaLabel": "Szczegóły decyzji",
+      "actionsHiddenInReadMode": "Akcje są ukryte w trybie Podgląd",
+      "sourcesAndAssumptions": "Źródła i założenia",
+      "sourceArtifact": "Artefakt źródłowy",
+      "sourceDocuments": "Dokumenty źródłowe",
+      "sessionsAndNotes": "Sesje, notatki i wnioski"
     },
     "taskDetail": {
       "label": "Powiadomienie tylko",
@@ -24322,7 +24327,8 @@
         "analyzeConsequencesTitle": "Uruchom analizę konsekwencji przez AI",
         "analyzeConsequences": "Analizuj konsekwencje",
         "analyzeOptions": "Analizuj opcje",
-        "analyzeOptionsTitle": "Omów i przeanalizuj te opcje z Teresą"
+        "analyzeOptionsTitle": "Omów i przeanalizuj te opcje z Teresą",
+        "approveDecision": "Zatwierdź decyzję"
       },
       "scope": {
         "title": "Zakres decyzji",
@@ -24562,6 +24568,9 @@
       },
       "toolbar": {
         "moreActions": "Więcej akcji"
+      },
+      "field": {
+        "backToAutoFit": "Wróć do auto-dopasowania"
       }
     }
   },
@@ -30781,9 +30790,14 @@
       "generateSuccess": "Treść wygenerowana przez AI",
       "generateError": "Nie udało się wygenerować treści przez AI",
       "fallbackApplied": "Użyto trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne).",
-      "enhanceSuccess": "Treść zaktualizowana przez AI. Kliknij Undo AI aby cofnąć.",
+      "enhanceSuccess": "Treść zaktualizowana przez AI. Kliknij Cofnij AI aby cofnąć.",
       "enhanceError": "Nie udało się poprawić treści przez AI",
-      "undoSuccess": "Przywrócono poprzednią wersję tekstu"
+      "undoSuccess": "Przywrócono poprzednią wersję tekstu",
+      "proposalTitle": "Propozycja AI",
+      "apply": "Zastosuj",
+      "discard": "Odrzuć",
+      "undo": "Cofnij AI",
+      "fallbackProposed": "Propozycja z trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne)."
     },
     "nModeHeader": {
       "savedLabel": "Zapisano",

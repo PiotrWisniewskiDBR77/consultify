@@ -3782,7 +3782,12 @@
       "user": "User",
       "label5": "History / AI",
       "emptyLabel3": "No history",
-      "ariaLabel": "Decision details"
+      "ariaLabel": "Decision details",
+      "actionsHiddenInReadMode": "Actions are hidden in preview mode",
+      "sourcesAndAssumptions": "Sources & assumptions",
+      "sourceArtifact": "Source artifact",
+      "sourceDocuments": "Source documents",
+      "sessionsAndNotes": "Sessions, notes & findings"
     },
     "taskDetail": {
       "label": "Notify only",
@@ -23282,7 +23287,8 @@
         "analyzeConsequencesTitle": "Run AI consequence analysis",
         "analyzeConsequences": "Analyze consequences",
         "analyzeOptions": "Analyze options",
-        "analyzeOptionsTitle": "Discuss and analyze these options with Teresa"
+        "analyzeOptionsTitle": "Discuss and analyze these options with Teresa",
+        "approveDecision": "Approve decision"
       },
       "scope": {
         "title": "Decision Scope",
@@ -23522,6 +23528,9 @@
       },
       "toolbar": {
         "moreActions": "More actions"
+      },
+      "field": {
+        "backToAutoFit": "Back to auto-fit"
       }
     }
   },
@@ -29723,7 +29732,12 @@
       "fallbackApplied": "Fallback local edit applied (AI temporarily unavailable).",
       "enhanceSuccess": "Content updated by AI. Click Undo AI to revert.",
       "enhanceError": "Failed to refine content with AI",
-      "undoSuccess": "Previous text restored"
+      "undoSuccess": "Previous text restored",
+      "proposalTitle": "AI proposal",
+      "apply": "Apply",
+      "discard": "Discard",
+      "undo": "Undo AI",
+      "fallbackProposed": "Fallback local edit proposed (AI temporarily unavailable)."
     },
     "nModeHeader": {
       "savedLabel": "Saved",
