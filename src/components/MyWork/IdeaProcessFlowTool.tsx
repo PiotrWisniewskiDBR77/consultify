@@ -2324,10 +2324,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       role="region"
       aria-label={t('myWorkIdeas.processFlowTool.processFlowEditor')}
     >
-      {/* z-[60] wrapper: keep the FLOW MODE / shape toolbar above the workspace
-          breadcrumb card (IdeaMapWorkspace, z-57) which otherwise overlaps and
-          blocks the Start / End / Action buttons. (M07 live-debug 2026-06-20) */}
-      <div className="relative z-[60]">
+      {/* Pasek trybu/ksztaltow to pasek chrome, wiec `z-sticky` (20) wg skali
+          warstw z tailwind.config.
+
+          Bylo tu surowe `z-[60]` — obejscie z 2026-06-20, zeby pasek nie chowal
+          sie pod kartka odkrywania (IdeaCanvasDiscovery, z-[57]). Powod odpadl:
+          IdeaCanvasDiscovery nie jest juz nigdzie renderowany (martwy kod, P3-1
+          w backlogu). Obejscie zostalo i szkodzilo: 60 == `z-modal`, wiec pasek
+          rysowal sie NAD oknem Eksport/Import i przecinal je w polowie. */}
+      <div className="relative z-sticky">
         <ProcessFlowToolbar
           isPl={!!isPl}
           locked={locked}
