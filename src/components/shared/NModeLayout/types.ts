@@ -248,6 +248,33 @@ export interface NModeHeaderConfig {
    * unchanged (back-compat default for Task/Decision/other consumers).
    */
   primaryAction?: NModeHeaderPrimaryAction;
+  /**
+   * Dodatkowe pozycje menu trzech kropek (⋮) Menu 1 — DOKLEJANE pod stałymi
+   * pozycjami powłoki (Kopiuj kod obiektu · Kopiuj link).
+   *
+   * Standard n-Type §3.5 (2026-07-23): kebab Menu 1 jest jedynym miejscem na
+   * działania techniczne i administracyjne artefaktu (Duplikuj, Archiwizuj,
+   * Wycisz, Usuń…). Bez tego propu każda karta budowała własny drugi kebab
+   * w pasku pod nagłówkiem — czyli dwa menu trzech kropek na jednym ekranie.
+   *
+   * W pełni addytywne: pominięte (domyślnie) = menu jak dotąd. Pozycję
+   * destrukcyjną oznacz `danger: true` — powłoka rysuje separator nad nią
+   * i ton c-danger (jedyne dozwolone miejsce czerwieni w Menu 1).
+   */
+  extraOverflowItems?: NModeHeaderOverflowItem[];
+}
+
+/** Pozycja dodatkowa menu ⋮ Menu 1 (patrz `extraOverflowItems`). */
+export interface NModeHeaderOverflowItem {
+  id: string;
+  /** Etykieta już przetłumaczona przez wywołującego. */
+  label: string;
+  icon: React.FC<{ size?: number; className?: string }>;
+  onClick: () => void;
+  /** Podpowiedź (np. informacja o skrócie klawiszowym). */
+  title?: string;
+  /** Destrukcyjna — separator nad pozycją + ton c-danger. */
+  danger?: boolean;
 }
 
 // ── Shell (top-level) Configuration ─────────────────────────────────────────
