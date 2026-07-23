@@ -93,6 +93,10 @@ interface OverflowMenuItem {
   label: string;
   icon: React.FC<{ size?: number; className?: string }>;
   onClick: () => void;
+  /** Optional tooltip (e.g. keyboard-shortcut hint). */
+  title?: string;
+  /** Destructive item — separator above + c-danger tone (see `extraOverflowItems`). */
+  danger?: boolean;
 }
 
 const HeaderOverflowMenu: React.FC<{ items: OverflowMenuItem[]; ariaLabel: string }> = ({
@@ -160,22 +164,37 @@ const HeaderOverflowMenu: React.FC<{ items: OverflowMenuItem[]; ariaLabel: strin
               className="fixed z-context-menu min-w-[200px] rounded-lg border border-c-border-subtle bg-c-surface p-1 shadow-lg"
               style={{ top: pos.top, right: pos.right }}
             >
-              {items.map((it) => {
+              {items.map((it, idx) => {
                 const Icon = it.icon;
+                // Separator nad pierwszą pozycją destrukcyjną — oddziela
+                // działania techniczne od nieodwracalnych (standard n-Type §3.5).
+                const needsSeparator = Boolean(it.danger) && idx > 0 && !items[idx - 1]?.danger;
                 return (
-                  <button
-                    key={it.id}
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      it.onClick();
-                      setOpen(false);
-                    }}
-                    className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-c-text transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
-                  >
-                    <Icon size={14} className="shrink-0 text-c-text-muted" />
-                    <span className="min-w-0 flex-1 truncate">{it.label}</span>
-                  </button>
+                  <React.Fragment key={it.id}>
+                    {needsSeparator ? (
+                      <div className="my-1 border-t border-c-border-subtle" aria-hidden="true" />
+                    ) : null}
+                    <button
+                      type="button"
+                      role="menuitem"
+                      title={it.title}
+                      onClick={() => {
+                        it.onClick();
+                        setOpen(false);
+                      }}
+                      className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ${
+                        it.danger
+                          ? 'text-c-danger hover:bg-[color-mix(in_srgb,var(--c-danger)_10%,transparent)]'
+                          : 'text-c-text hover:bg-c-surface-raised'
+                      }`}
+                    >
+                      <Icon
+                        size={14}
+                        className={`shrink-0 ${it.danger ? 'text-c-danger' : 'text-c-text-muted'}`}
+                      />
+                      <span className="min-w-0 flex-1 truncate">{it.label}</span>
+                    </button>
+                  </React.Fragment>
                 );
               })}
             </div>
@@ -208,6 +227,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   buildArtifactCode,
   titleInputId,
   primaryAction,
+  extraOverflowItems,
   showChatButton = false,
   // NOTE: `statusDotColor` (deprecated, D-B) is intentionally NOT destructured
   // or rendered — the bare dot is replaced by the status pill above. The prop
@@ -250,22 +270,27 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
     }
   }, [artifactId, artifactType, t]);
 
-  const overflowItems: OverflowMenuItem[] = artifactId
-    ? [
-        {
-          id: 'copy-code',
-          label: t('sharedComponents.nModeHeader.copyObjectCode'),
-          icon: Copy,
-          onClick: () => void copyObjectCode(),
-        },
-        {
-          id: 'copy-link',
-          label: t('sharedComponents.nModeHeader.copyLink'),
-          icon: Link2,
-          onClick: () => void copyPermalink(),
-        },
-      ]
-    : [];
+  const overflowItems: OverflowMenuItem[] = [
+    ...(artifactId
+      ? [
+          {
+            id: 'copy-code',
+            label: t('sharedComponents.nModeHeader.copyObjectCode'),
+            icon: Copy,
+            onClick: () => void copyObjectCode(),
+          },
+          {
+            id: 'copy-link',
+            label: t('sharedComponents.nModeHeader.copyLink'),
+            icon: Link2,
+            onClick: () => void copyPermalink(),
+          },
+        ]
+      : []),
+    // Pozycje karty (standard n-Type §3.5) — techniczne/administracyjne.
+    // Doklejane, nigdy nie zastępują pozycji powłoki.
+    ...(extraOverflowItems ?? []),
+  ];
 
   // Save state — non-clickable text (D-C). Autosave still fires on title blur.
   const effectiveSaveState = saveState || (saving ? 'saving' : isDirty ? 'dirty' : 'saved');

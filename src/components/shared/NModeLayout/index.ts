@@ -47,6 +47,8 @@ export { Menu2AIButton, Menu2HowToButton, Menu2ModeToggle, NModeMenu2 } from './
 export { NModePropertiesStrip } from './NModePropertiesStrip';
 export type { QuoteRequirementLevel } from './NModeSectionWrapper';
 export { EvidenceBadge, NModeSectionWrapper } from './NModeSectionWrapper';
+export type { NModeTextFieldProps } from './NModeTextField';
+export { NModeTextField } from './NModeTextField';
 // ── Card management (wzorzec N §3.5) ────────────────────────────────────────
 export type { ArtifactCardSpec, CardCatalogEntry, CardSet, NModeArtifactType } from './cardSets';
 export { DEFAULT_CARD_SETS, getCardSpec } from './cardSets';
