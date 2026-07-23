@@ -3908,7 +3908,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-xl border border-danger-200/40 dark:border-danger-900/30 bg-danger-50/60 dark:bg-danger-500/10 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.danger.400)]">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-danger-500 dark:text-danger-400">
+                  {/* AA (sędzia grafiki, pkt 6): `danger-500` (#E80538) na jasnym
+                      tle dawał 4,21:1 przy 11 px — poniżej progu 4,5. `danger-700`
+                      (#910A28) to odcień opisany w palecie jako „AA text on white".
+                      Ciemny motyw zmierzony na 7,3:1 → `danger-400` zostaje. */}
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-danger-700 dark:text-danger-400">
                     {t('interview.insightViewer.issuesRisks')}
                   </div>
                   <div className="mt-1 text-2xl font-bold text-c-text">
@@ -3916,7 +3920,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-xl border border-emerald-200/40 dark:border-emerald-900/30 bg-emerald-50/60 dark:bg-emerald-500/10 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.emerald.400)]">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
+                  {/* AA (sędzia grafiki, pkt 6): `emerald-600` (#388A22) dawał
+                      4,08:1 przy 11 px. `emerald-700` (#026833) = HBS Green 1,
+                      w palecie opisany jako AA na białym. Dark bez zmian. */}
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
                     {t('interview.insightViewer.signalsOpportunities')}
                   </div>
                   <div className="mt-1 text-2xl font-bold text-c-text">
@@ -3991,7 +3998,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-danger-500 dark:text-danger-400">
+                  {/* AA (pkt 6) — ta sama zamiana co w kaflach wyżej. */}
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-danger-700 dark:text-danger-400">
                     {t('interview.insightViewer.issuesRisks2')}
                   </div>
                   {issuesReadout.length > 0 ? (
@@ -4012,7 +4020,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
+                  {/* AA (pkt 6) — ta sama zamiana co w kaflach wyżej. */}
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
                     {t('interview.insightViewer.signalsOpportunities2')}
                   </div>
                   {uniqueNonEmpty([...hiddenSignals, ...opportunityReadout]).length > 0 ? (
@@ -8924,12 +8933,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         sections={visibleNModeSections}
         activeSection={activeNSection}
         onSectionChange={setActiveNSection}
-        onSectionReorder={(ids) => {
-          // Left-nav drag → cardLayout is SSOT. Keep the legacy order key in
-          // sync for back-compat; the layout persist owns the real order.
-          cardLayout.reorderByIds(ids);
-          handleNModeSectionReorder(ids);
-        }}
+        // ⚠ 2026-07-23 (sędzia grafiki, pkt 9): `NModeLeftNav` rysuje uchwyt
+        // `GripVertical` przy KAŻDEJ pozycji, gdy tylko dostanie
+        // `onSectionReorder`. Karta otwiera się w PODGLĄDZIE, więc na wejściu
+        // widać było 11 uchwytów przeciągania — zaproszenie do edycji układu
+        // w trybie, który z definicji niczego nie zmienia. Przekazujemy
+        // handler wyłącznie w Edycji: w Podglądzie prop znika, uchwyty razem
+        // z nim, a sama zdolność (zmiana kolejności sekcji) zostaje o jedno
+        // kliknięcie dalej — w Edycji, gdzie jej miejsce.
+        onSectionReorder={
+          readMode
+            ? undefined
+            : (ids) => {
+                // Left-nav drag → cardLayout is SSOT. Keep the legacy order key
+                // in sync for back-compat; the layout persist owns the real order.
+                cardLayout.reorderByIds(ids);
+                handleNModeSectionReorder(ids);
+              }
+        }
         presentationMode={presentationMode}
         onPresentationModeChange={setPresentationMode}
         // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
@@ -8972,32 +8993,51 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           //   - "AI sekcji"     : kazda sekcja ma juz wlasny przycisk regeneracji
           //                       (ten sam handleRegenerate), wiec pasek go dublowal,
           //   - "Prezentuj"     : i tak wylaczone flaga VITE_PRESENT_MODE.
+          //
+          // ⚠ 2026-07-23 (sędzia grafiki, pkt 8) — SZEROKOŚĆ MENU 2 = SZEROKOŚĆ
+          // MENU 1. Powłoka `NModeShell` hostuje pasek w kontenerze
+          // `max-w-6xl mx-auto px-6 py-2`; te `px-6` zwężały Menu 2 o 2×24 px
+          // względem nagłówka i centrum (zmierzone: Menu 1 x=28 w=1152,
+          // Menu 2 x=52 w=1104). Pasek czytał się jak element DOKLEJONY, nie
+          // jak drugie menu tego samego ekranu. `-mx-6` znosi dokładnie to
+          // wcięcie i wyrównuje krawędzie do reszty kolumny. Robimy to po
+          // stronie karty, a nie w `NModeShell`, bo powłoka jest wspólna dla
+          // Inicjatywy / Narzędzia / Wywiadu (osobne karty, osobny odbiór).
           return (
+            <div className="-mx-6">
             <NModeMenu2
               isPolish={isPolish}
               readMode={readMode}
               onReadModeChange={setReadMode}
               aiButton={
-                readMode ? undefined : (
-                  // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera panel
-                  // wyników. Było: `openInsightConsultant()` — czat konsultanta
-                  // na poziomie CAŁEGO artefaktu, bez oceny konkretnej karty.
-                  // Konsultant nie zniknął: żyje w toolbarze (slot 9) i w panelu
-                  // Akcje, więc żadna zdolność nie została zabrana.
-                  // Nadpisanie etykiety zdjęte — przycisk niesie teraz nazwę ze
-                  // standardu („Analizuj z AI"), zgodną z tym, co robi.
-                  <Menu2AIButton
-                    isPolish={isPolish}
-                    busy={insightCardAnalysis.loading}
-                    aria-expanded={insightCardAnalysis.open}
-                    onClick={() => {
-                      setExportMenuOpen(false);
-                      setSectionsMenuOpen(false);
-                      setAiMenuOpen(false);
-                      insightCardAnalysis.run();
-                    }}
-                  />
-                )
+                // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera panel
+                // wyników. Było: `openInsightConsultant()` — czat konsultanta
+                // na poziomie CAŁEGO artefaktu, bez oceny konkretnej karty.
+                // Konsultant nie zniknął: żyje w toolbarze (slot 9) i w panelu
+                // Akcje, więc żadna zdolność nie została zabrana.
+                // Nadpisanie etykiety zdjęte — przycisk niesie teraz nazwę ze
+                // standardu („Analizuj z AI"), zgodną z tym, co robi.
+                //
+                // ⚠ 2026-07-23 (sędzia grafiki, pkt 3): było `readMode ?
+                // undefined : (...)`, a karta OTWIERA SIĘ w Podglądzie
+                // (`insightOpensInPreview` → readMode=true). Efekt: prawa
+                // strefa Menu 2 była PUSTA przy wejściu, a najważniejsza
+                // zdolność karty (analiza AI) nie istniała, dopóki użytkownik
+                // sam nie przełączył się na Edycję — czego nie miał powodu
+                // zrobić. Analiza jest operacją CZYTAJĄCĄ (nie modyfikuje
+                // treści), więc w Podglądzie jest równie legalna jak w Edycji.
+                // Wzór: KnownToolDetailView.tsx (aiButton bezwarunkowo).
+                <Menu2AIButton
+                  isPolish={isPolish}
+                  busy={insightCardAnalysis.loading}
+                  aria-expanded={insightCardAnalysis.open}
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    setSectionsMenuOpen(false);
+                    setAiMenuOpen(false);
+                    insightCardAnalysis.run();
+                  }}
+                />
               }
               overflowKebab={
                 INSIGHT_EXPORT_IN_MENU2 ? (
@@ -9226,6 +9266,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               }
             />
+            </div>
           );
         }}
       >
