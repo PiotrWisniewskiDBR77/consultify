@@ -636,9 +636,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       const updated = prev.map((item) =>
         item.id === id ? { ...item, completed: !item.completed } : item
       );
-      Api.updateNotificationChecklist(notificationId, updated).catch((err) =>
-        console.error('Failed to persist checklist', err)
-      );
+      // ★ 2026-07-23 — nieudany zapis MUSI byc widoczny. Backend odrzuca teraz
+      // zly ksztalt (400) i cudze/nieistniejace id (404) zamiast udawac sukces;
+      // sam console.error zostawialby konsultanta z odhaczona pozycja, ktorej
+      // nikt nie zapisal.
+      Api.updateNotificationChecklist(notificationId, updated).catch((err) => {
+        console.error('Failed to persist checklist', err);
+        toast.error(t('myWork.notificationDetail.toastError2', 'Failed to save'));
+      });
       return updated;
     });
   };
@@ -741,11 +746,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
       isAutoChecklistRef.current = false;
       setActionChecklist(next);
-      Api.updateNotificationChecklist(notificationId, next).catch((err) =>
-        console.error('Failed to persist checklist', err)
-      );
+      // ★ 2026-07-23 — jak wyzej: bez toastu nieudany zapis checklisty z AI
+      // znikal w konsoli, a ekran pokazywal tresc, ktorej nie ma w bazie.
+      Api.updateNotificationChecklist(notificationId, next).catch((err) => {
+        console.error('Failed to persist checklist', err);
+        toast.error(t('myWork.notificationDetail.toastError2', 'Failed to save'));
+      });
     },
-    [actionChecklist, notificationId]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [actionChecklist, notificationId, t]
   );
 
   // ── Handlers ─────────────────────────────────────────────────────────────
