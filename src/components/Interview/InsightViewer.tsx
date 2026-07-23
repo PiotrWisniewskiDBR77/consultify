@@ -1030,6 +1030,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     entityType: 'insight',
   });
 
+  // ETAP 1.1 n-Type: po zdjęciu przełącznika N/C z Menu 1 tryb 'c' nie ma już
+  // wejścia ANI wyjścia — a `usePresentationMode` czyta go z `?view=c` i z
+  // localStorage. Bez tego strażnika user, który kiedyś kliknął „C", zostaje w
+  // nim na zawsze, bez kontrolki powrotu. Ten sam wzorzec ma już Task/Decision/
+  // Notification (TaskDetailView ~758).
+  useEffect(() => {
+    if (presentationMode === 'c') {
+      setPresentationMode('n');
+    }
+  }, [presentationMode, setPresentationMode]);
+
   // Core state
   const [insight, setInsight] = useState<Insight | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -8209,6 +8220,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         }}
         presentationMode={presentationMode}
         onPresentationModeChange={setPresentationMode}
+        // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+        showModeSwitcher={false}
         rightPanel={
           <ArtifactRightPanel
             sections={rightPanelSections}

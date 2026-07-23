@@ -724,6 +724,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     syncURL: true,
   });
 
+  // ETAP 1.1 n-Type: przełącznik N/C zniknął z Menu 1, więc tryb 'c' nie ma już
+  // ani wejścia, ani wyjścia — a `usePresentationMode` wciąż potrafi go wczytać
+  // z `?view=c` / localStorage i wpaść w gałąź `densityMode === 'c'` niżej.
+  // Bez tego strażnika user, który kiedyś kliknął „C", utknąłby w nim na stałe.
+  // Ten sam wzorzec ma już Task/Decision/Notification (TaskDetailView ~758).
+  useEffect(() => {
+    if (densityMode === 'c') {
+      setDensityMode('n');
+    }
+  }, [densityMode, setDensityMode]);
+
   const [activeNSection, setActiveNSection] = useState<string>('initiative-definition');
   const [nModeSectionOrder, setNModeSectionOrder] = useState<string[] | null>(null);
   // Canon Toolbar (Layer 3) — user-toggled section visibility for the left nav.
@@ -10098,6 +10109,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 statusTone={statusPillTone}
                 presentationMode={densityMode}
                 onPresentationModeChange={setDensityMode}
+                // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+                showModeSwitcher={false}
                 buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
                 primaryAction={
                   primaryLifecycleAction
@@ -10616,6 +10629,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 statusTone={statusPillTone}
                 presentationMode={densityMode}
                 onPresentationModeChange={setDensityMode}
+                // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+                showModeSwitcher={false}
                 buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
                 primaryAction={
                   primaryLifecycleAction
