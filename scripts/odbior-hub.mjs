@@ -163,16 +163,36 @@ function wierszObiektu(o, znane) {
         .join('')}</div>`
     : '';
 
-  return `      <div class="obiekt${brakuje ? ' obiekt-brak' : ''}" data-ekran="${esc(o.ekran || '')}">
+  // Klucz uwag: ekran, a dla obiektu bez ekranu — stabilny klucz z nazwy,
+  // żeby braki też dało się skomentować.
+  const kluczUwag = o.ekran || 'obiekt-' + o.nazwa.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+  return `      <div class="obiekt${brakuje ? ' obiekt-brak' : ''}" data-klucz="${esc(kluczUwag)}">
         <div class="obiekt-glowna">
           <div class="obiekt-nazwa">
             ${esc(o.nazwa)}
-            <span class="stan" data-stan-dla="${esc(o.ekran || '')}"></span>
+            <span class="stan" data-stan-dla="${esc(kluczUwag)}"></span>
           </div>
-          <div class="obiekt-akcje">${otworz}</div>
+          <div class="obiekt-akcje">
+            <button class="btn btn-uwaga" data-uwaga-dla="${esc(kluczUwag)}">uwaga</button>
+            ${otworz}
+          </div>
         </div>
         ${brakuje ? `<div class="powod">${esc(powod)}</div>` : ''}
         ${szczegolyHtml}
+        <div class="uwagi-box" data-box-dla="${esc(kluczUwag)}" hidden>
+          <div class="uwagi-lista"></div>
+          <div class="werdykty">
+            <button class="w" data-w="bierzemy">bierzemy</button>
+            <button class="w" data-w="popraw">popraw</button>
+            <button class="w" data-w="nie">nie</button>
+          </div>
+          <textarea rows="2" placeholder="Co jest nie tak w tym obiekcie…"></textarea>
+          <div class="uwagi-stopka">
+            <button class="btn btn-dodaj">Dodaj uwagę</button>
+            <span class="uwagi-stan"></span>
+          </div>
+        </div>
       </div>`;
 }
 
@@ -244,6 +264,35 @@ ${g.obiekty.map((o) => wierszObiektu(o, znane)).join('\n')}
   .stan-bierzemy { background: #dcfce7; color: #166534; }
   .stan-popraw { background: #ffedd5; color: #9a3412; }
   .stan-nie { background: #fee2e2; color: #991b1b; }
+  .btn-uwaga { background: #fff; }
+  .uwagi-box {
+    margin-top: 10px; padding: 12px 13px; background: #f8fafc;
+    border: 1px solid #e2e8f0; border-radius: 10px;
+  }
+  .uwagi-lista { margin-bottom: 9px; }
+  .uwagi-lista .u {
+    background: #fff; border: 1px solid #e8edf3; border-radius: 7px;
+    padding: 6px 9px; margin-bottom: 5px; font-size: 13px; line-height: 1.45;
+  }
+  .uwagi-lista .u i { color: #94a3b8; font-style: normal; font-size: 11.5px; margin-right: 5px; }
+  .uwagi-lista .pusto { color: #94a3b8; font-size: 12.5px; margin-bottom: 8px; }
+  .werdykty { display: flex; gap: 6px; margin-bottom: 9px; }
+  .werdykty .w {
+    flex: 1; padding: 5px 6px; border-radius: 7px; border: 1px solid #d7dee9;
+    background: #fff; color: #334155; font-size: 12.5px; cursor: pointer;
+  }
+  .werdykty .w:hover { background: #eef2f7; }
+  .werdykty .w[data-wybrany="1"][data-w="bierzemy"] { background: #dcfce7; border-color: #86efac; color: #166534; font-weight: 600; }
+  .werdykty .w[data-wybrany="1"][data-w="popraw"] { background: #ffedd5; border-color: #fdba74; color: #9a3412; font-weight: 600; }
+  .werdykty .w[data-wybrany="1"][data-w="nie"] { background: #fee2e2; border-color: #fca5a5; color: #991b1b; font-weight: 600; }
+  .uwagi-box textarea {
+    width: 100%; resize: vertical; border: 1px solid #d7dee9; border-radius: 8px;
+    padding: 7px 9px; font: inherit; font-size: 13px; margin-bottom: 8px; background: #fff;
+  }
+  .uwagi-stopka { display: flex; align-items: center; gap: 10px; }
+  .btn-dodaj { background: #2563eb; color: #fff; border-color: #2563eb; margin-left: 0; cursor: pointer; }
+  .btn-dodaj:hover { background: #1d4ed8; }
+  .uwagi-stan { color: #64748b; font-size: 11.5px; }
   .stopka { color: #64748b; font-size: 12.5px; margin-top: 20px; }
   code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
 </style>
@@ -272,20 +321,101 @@ ${grupyHtml}
 
 </div>
 <script>
-  // Liczniki uwag/werdyktów obok nazw — czytane z tego samego źródła co panel na ekranach.
+  // Uwagi zapisujemy tam samo, co panel na ekranach (/__uwagi) — jedno źródło prawdy,
+  // więc uwaga dodana z listy i z ekranu trafia do tego samego pliku.
+  var STAN = {};
+
+  function odswiezWiersz(klucz) {
+    var z = STAN[klucz] || { ekran: klucz, werdykt: null, uwagi: [] };
+
+    var chip = document.querySelector('[data-stan-dla="' + klucz + '"]');
+    if (chip) {
+      var czesci = [];
+      if (z.werdykt) czesci.push(z.werdykt);
+      if (z.uwagi.length) czesci.push(z.uwagi.length + (z.uwagi.length === 1 ? ' uwaga' : ' uwagi'));
+      chip.textContent = czesci.join(' · ');
+      chip.className = 'stan ' + (czesci.length ? (z.werdykt ? 'stan-' + z.werdykt : 'stan-uwagi') : '');
+    }
+
+    var box = document.querySelector('[data-box-dla="' + klucz + '"]');
+    if (!box) return;
+    var lista = box.querySelector('.uwagi-lista');
+    lista.innerHTML = z.uwagi.length
+      ? z.uwagi.map(function (u, i) {
+          var d = document.createElement('div');
+          d.textContent = u.tekst;
+          return '<div class="u"><i>' + (i + 1) + '.</i>' + d.innerHTML + '</div>';
+        }).join('')
+      : '<div class="pusto">Brak uwag do tego obiektu.</div>';
+    box.querySelectorAll('.w').forEach(function (b) {
+      if (z.werdykt === b.getAttribute('data-w')) b.setAttribute('data-wybrany', '1');
+      else b.removeAttribute('data-wybrany');
+    });
+  }
+
+  function zapisz(klucz, zmiana, stanEl) {
+    var z = STAN[klucz] || { ekran: klucz, werdykt: null, uwagi: [] };
+    var nowy = { ekran: klucz, werdykt: 'werdykt' in zmiana ? zmiana.werdykt : z.werdykt,
+                 uwagi: zmiana.uwagi || z.uwagi };
+    if (stanEl) stanEl.textContent = 'zapisuję…';
+    return fetch('/__uwagi', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(nowy),
+    }).then(function (r) {
+      if (!r.ok) throw new Error(String(r.status));
+      STAN[klucz] = nowy;
+      odswiezWiersz(klucz);
+      if (stanEl) { stanEl.textContent = 'zapisano'; setTimeout(function () { stanEl.textContent = ''; }, 1500); }
+    }).catch(function () { if (stanEl) stanEl.textContent = 'błąd zapisu'; });
+  }
+
+  document.addEventListener('click', function (e) {
+    var przycisk = e.target.closest('.btn-uwaga');
+    if (przycisk) {
+      var k = przycisk.getAttribute('data-uwaga-dla');
+      var box = document.querySelector('[data-box-dla="' + k + '"]');
+      box.hidden = !box.hidden;
+      if (!box.hidden) box.querySelector('textarea').focus();
+      return;
+    }
+    var w = e.target.closest('.werdykty .w');
+    if (w) {
+      var box2 = w.closest('.uwagi-box');
+      var k2 = box2.getAttribute('data-box-dla');
+      var biezacy = (STAN[k2] || {}).werdykt;
+      var nowy = w.getAttribute('data-w');
+      zapisz(k2, { werdykt: biezacy === nowy ? null : nowy }, box2.querySelector('.uwagi-stan'));
+      return;
+    }
+    var dodaj = e.target.closest('.btn-dodaj');
+    if (dodaj) {
+      var box3 = dodaj.closest('.uwagi-box');
+      var k3 = box3.getAttribute('data-box-dla');
+      var ta = box3.querySelector('textarea');
+      var tekst = ta.value.trim();
+      if (!tekst) return;
+      var poprzednie = (STAN[k3] || {}).uwagi || [];
+      zapisz(k3, { uwagi: poprzednie.concat([{ tekst: tekst, czas: new Date().toISOString() }]) },
+             box3.querySelector('.uwagi-stan'));
+      ta.value = '';
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && e.target.tagName === 'TEXTAREA') {
+      var box = e.target.closest('.uwagi-box');
+      if (box) box.querySelector('.btn-dodaj').click();
+    }
+  });
+
   fetch('/__uwagi/wszystkie')
     .then(function (r) { return r.ok ? r.json() : {}; })
     .then(function (dane) {
-      document.querySelectorAll('[data-stan-dla]').forEach(function (el) {
-        var k = el.getAttribute('data-stan-dla');
-        var z = k && dane[k];
-        if (!z) return;
-        var czesci = [];
-        if (z.werdykt) czesci.push(z.werdykt);
-        if (z.uwagi && z.uwagi.length) czesci.push(z.uwagi.length + ' uwag');
-        if (!czesci.length) return;
-        el.textContent = czesci.join(' · ');
-        el.className = 'stan ' + (z.werdykt ? 'stan-' + z.werdykt : 'stan-uwagi');
+      STAN = dane || {};
+      Object.keys(STAN).forEach(odswiezWiersz);
+      document.querySelectorAll('[data-box-dla]').forEach(function (b) {
+        odswiezWiersz(b.getAttribute('data-box-dla'));
       });
     })
     .catch(function () {});
