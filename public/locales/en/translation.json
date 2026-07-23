@@ -32452,7 +32452,16 @@
       "panelResults": "Results",
       "panelResultsEmpty": "This tool has no declared outputs in the library yet.",
       "panelResultsHint": "Reports, decks and exports are produced inside a tool session — start one from the header.",
-      "panelRelationsSessions": "Tool sessions"
+      "panelRelationsSessions": "Tool sessions",
+      "panelActions": "Actions",
+      "panelActionStartSession": "Start session",
+      "panelActionStarting": "Starting…",
+      "panelActionKnowledge": "How to / Knowledge base",
+      "panelEvidence": "Sources & assumptions",
+      "panelEvidenceEmpty": "The library entry declares no required inputs or limitations for this method yet.",
+      "panelEvidenceInputs": "Evidence the method consumes",
+      "panelEvidenceLimits": "Where the method stops working",
+      "panelEvidenceProvenance": "Source of this entry: the Consultify tool library — a shared, read-only catalogue of methods."
     },
     "knownToolDetail": {
       "dynamicSwot": {
