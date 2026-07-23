@@ -84,6 +84,14 @@
     --c-danger-rgb: 232 5 56;
     --c-info: #3b2883; /* was #2563eb — HBS Blue 1 */
     --c-info-rgb: 59 40 131;
+    /* AI — kolor SYSTEMOWY sztucznej inteligencji (standard n-Type §4.6).
+     * Fioletowy, świadomie ODDZIELNY od statusów (success/warning/danger/info):
+     * „to zrobiła AI" nie jest stanem obiektu, więc nie może pożyczać barwy
+     * stanu — inaczej podpowiedź AI czyta się jak alarm albo jak sukces.
+     * Odrębny też od crimson (#85182F = marka/CTA) i od --c-tag-3 (violet jako
+     * KATEGORIA danych). Kontrast na białym ≈ 6.4:1 (AA dla tekstu). */
+    --c-ai: #6d28d9;
+    --c-ai-rgb: 109 40 217;
     /* Tag/identity palette (light) — MUTED, equal-weight hues for category/type/
      * source chips. Deliberately distinct from the signal tones above so a tag
      * NEVER reads as status/alarm. Used only as a thin left accent / dot. */
@@ -275,6 +283,9 @@
     --c-danger-rgb: 237 85 101;
     --c-info: #58a6ff; /* was #aac8eb (powder blue) */
     --c-info-rgb: 88 166 255;
+    /* AI (dark) — podniesiony fiolet; #6D28D9 na granacie schodzi poniżej AA. */
+    --c-ai: #a78bfa;
+    --c-ai-rgb: 167 139 250;
     /* Tag/identity palette (dark) — lifted for contrast on navy. */
     --c-tag-1: #5ab0c4;
     --c-tag-1-rgb: 90 176 196;

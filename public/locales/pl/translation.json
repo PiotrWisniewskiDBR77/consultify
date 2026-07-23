@@ -30790,9 +30790,14 @@
       "generateSuccess": "Treść wygenerowana przez AI",
       "generateError": "Nie udało się wygenerować treści przez AI",
       "fallbackApplied": "Użyto trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne).",
-      "enhanceSuccess": "Treść zaktualizowana przez AI. Kliknij Undo AI aby cofnąć.",
+      "enhanceSuccess": "Treść zaktualizowana przez AI. Kliknij Cofnij AI aby cofnąć.",
       "enhanceError": "Nie udało się poprawić treści przez AI",
-      "undoSuccess": "Przywrócono poprzednią wersję tekstu"
+      "undoSuccess": "Przywrócono poprzednią wersję tekstu",
+      "proposalTitle": "Propozycja AI",
+      "apply": "Zastosuj",
+      "discard": "Odrzuć",
+      "undo": "Cofnij AI",
+      "fallbackProposed": "Propozycja z trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne)."
     },
     "nModeHeader": {
       "savedLabel": "Zapisano",

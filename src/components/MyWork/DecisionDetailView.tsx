@@ -5734,20 +5734,14 @@ Use userId only from this list:
                             onRetry={generateDescriptionAI}
                           >
                             <div className="space-y-6">
-                              <div className="hidden">
-                                <button
-                                  onClick={generateDescriptionAI}
-                                  disabled={isDecisionStageLocked || isGeneratingDescription}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                  {isGeneratingDescription ? (
-                                    <Loader2 size={13} className="animate-spin" />
-                                  ) : (
-                                    <Sparkles size={13} />
-                                  )}{' '}
-                                  AI
-                                </button>
-                              </div>
+                              {/* Był tu drugi, RĘCZNIE zrobiony przycisk AI opisu,
+                                  schowany pod `className="hidden"` — nigdy nie
+                                  widoczny, w kolorze teal (n-Type §4.6 wymaga
+                                  jednego tokenu `c-ai`) i poza wspólnym menu
+                                  operacji. Usunięty 2026-07-23; funkcję niesie
+                                  `AIFieldEnhancer` w prawym górnym rogu pola,
+                                  a `generateDescriptionAI` żyje dalej w
+                                  `NModeCardState` (onGenerate/onRegenerate/onRetry). */}
 
                               {/* 1) Related item from linked records */}
                               <div className="space-y-2">

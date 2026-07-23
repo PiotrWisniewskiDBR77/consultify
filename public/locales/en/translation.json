@@ -29732,7 +29732,12 @@
       "fallbackApplied": "Fallback local edit applied (AI temporarily unavailable).",
       "enhanceSuccess": "Content updated by AI. Click Undo AI to revert.",
       "enhanceError": "Failed to refine content with AI",
-      "undoSuccess": "Previous text restored"
+      "undoSuccess": "Previous text restored",
+      "proposalTitle": "AI proposal",
+      "apply": "Apply",
+      "discard": "Discard",
+      "undo": "Undo AI",
+      "fallbackProposed": "Fallback local edit proposed (AI temporarily unavailable)."
     },
     "nModeHeader": {
       "savedLabel": "Saved",

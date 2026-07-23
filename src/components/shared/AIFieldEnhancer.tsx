@@ -2,10 +2,23 @@
  * AIFieldEnhancer
  *
  * Shared AI-powered text enhancement dropdown for any text field.
- * Provides: Improve, Shorten, Expand, Formal tone actions + Undo.
+ * Provides: Generate, Improve, Shorten, Expand, Formal tone + Undo.
  *
  * Used in N-mode artifact detail views (Decision, Task, etc.)
  * for all textarea / text input fields that support AI editing.
+ *
+ * ── Standard n-Type (2026-07-23) ─────────────────────────────────────────────
+ * SSOT: Harvard/wdrozenie-100/_STANDARD_N_TYPE_2026-07-23/00_STANDARD_N_TYPE.md
+ * §4.5/§4.6/§6.4 + 01_DECYZJA_BLEDY_I_ZMIANY §5.2. Dwie reguły wiążące ten plik:
+ *
+ *  1. KOLOR AI = FIOLET, token `c-ai` (§4.6). Był `teal-*`, czyli surowa
+ *     paleta Tailwind kolidująca z tokenami stanu — teal niesie w tym systemie
+ *     „gotowe/ok". Token `c-ai` jest jeden dla całego produktu (nagłówek,
+ *     „Analizuj z AI", ikony przy polach, panel sugestii).
+ *  2. AI NIE NADPISUJE TREŚCI BEZ AKCEPTACJI (§4.5 ostatni punkt, §6.4).
+ *     Wynik ląduje najpierw w PROPOZYCJI z akcjami Zastosuj / Odrzuć —
+ *     dotąd `onApply` szło prosto w pole i jedynym ratunkiem było „Undo AI"
+ *     schowane w menu (a po zamknięciu menu — nic).
  *
  * @example
  * <AIFieldEnhancer
@@ -165,9 +178,17 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [undoValue, setUndoValue] = useState<string | undefined>(undefined);
+  /**
+   * §4.5/§6.4: wynik AI czeka TU na decyzję użytkownika. Dopóki jest ustawiony,
+   * pole trzyma swoją treść — akceptacja jest warunkiem nadpisania, nie
+   * czynnością naprawczą po fakcie.
+   */
+  const [proposal, setProposal] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close menu on click outside
+  // Close menu on click outside. Propozycja NIE znika od kliknięcia obok —
+  // przypadkowe kliknięcie w tle nie może cicho odrzucić wyniku AI, o który
+  // użytkownik poprosił (odrzucenie jest jawną akcją w panelu propozycji).
   useEffect(() => {
     if (!isOpen) return;
     const handleClick = (e: MouseEvent) => {
@@ -234,15 +255,14 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
         throw new Error('Empty AI response');
       }
 
-      setUndoValue(currentValue);
-      onApply(generatedText);
-      toast.success(t('sharedComponents.aiFieldEnhancer.generateSuccess'));
+      // §4.5: propozycja, nie nadpisanie — pole zmieni się dopiero po „Zastosuj".
+      setProposal(generatedText);
     } catch {
       toast.error(t('sharedComponents.aiFieldEnhancer.generateError'));
     } finally {
       setLoading(false);
     }
-  }, [currentValue, onApply, t, sectionLabel, artifactContext, outputFormat]);
+  }, [t, sectionLabel, artifactContext, outputFormat]);
 
   const handleEnhance = useCallback(
     async (mode: AIEnhanceMode) => {
@@ -332,24 +352,38 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
         // Fallback only when API is truly unavailable
         if (!refinedText) {
           refinedText = fallbackRefineText(currentValue, mode, outputFormat);
-          toast(t('sharedComponents.aiFieldEnhancer.fallbackApplied'), { icon: '⚠️' });
+          // Tekst mówi „zaproponowano", nie „zastosowano" — od 2026-07-23 wynik
+          // trybu awaryjnego też czeka na akceptację, jak każda propozycja AI.
+          toast(t('sharedComponents.aiFieldEnhancer.fallbackProposed'), { icon: '⚠️' });
         }
 
         if (!refinedText) {
           throw new Error('Empty AI response');
         }
 
-        setUndoValue(currentValue);
-        onApply(refinedText);
-        toast.success(t('sharedComponents.aiFieldEnhancer.enhanceSuccess'));
+        // §4.5: propozycja, nie nadpisanie — pole zmieni się po „Zastosuj".
+        setProposal(refinedText);
       } catch {
         toast.error(t('sharedComponents.aiFieldEnhancer.enhanceError'));
       } finally {
         setLoading(false);
       }
     },
-    [currentValue, onApply, t, sectionLabel, artifactContext, handleGenerate, outputFormat]
+    [currentValue, t, sectionLabel, artifactContext, handleGenerate, outputFormat]
   );
+
+  /** Akceptacja propozycji — dopiero tu treść pola zostaje nadpisana. */
+  const handleAcceptProposal = useCallback(() => {
+    if (proposal === null) return;
+    setUndoValue(currentValue);
+    onApply(proposal);
+    setProposal(null);
+    toast.success(t('sharedComponents.aiFieldEnhancer.enhanceSuccess'));
+  }, [proposal, currentValue, onApply, t]);
+
+  const handleDiscardProposal = useCallback(() => {
+    setProposal(null);
+  }, []);
 
   const handleUndo = useCallback(() => {
     if (undoValue !== undefined) {
@@ -362,11 +396,13 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
 
   return (
     <div className="relative" ref={menuRef}>
-      {/* AI trigger button */}
+      {/* Wyzwalacz AI — JEDEN rozmiar i JEDEN kolor (`c-ai`) we wszystkich polach
+          wszystkich kart N (§4.6). Nigdy crimson, nigdy barwa statusu. */}
       <button
+        type="button"
         onClick={() => !disabled && !loading && setIsOpen((prev) => !prev)}
         disabled={disabled || loading}
-        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-c-ai hover:bg-c-ai/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
         title={disabledTooltip || t('sharedComponents.aiFieldEnhancer.triggerTitle')}
         aria-label="AI"
       >
@@ -374,19 +410,20 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
         {!iconOnly && 'AI'}
       </button>
 
-      {/* Dropdown menu */}
-      {isOpen && !disabled && !loading && (
-        <div className="absolute right-0 top-[calc(100%+6px)] z-30 w-44 rounded-lg border border-slate-200/70 dark:border-navy-700/70 bg-white/95 dark:bg-navy-900/95 backdrop-blur p-1 shadow-xl">
+      {/* Menu operacji — wspólne dla wszystkich pól (§6.4). */}
+      {isOpen && !disabled && !loading && proposal === null && (
+        <div className="absolute right-0 top-[calc(100%+6px)] z-30 w-44 rounded-lg border border-c-border-subtle bg-c-surface/95 backdrop-blur p-1 shadow-xl">
           {MENU_ITEMS.map(({ mode, labelKey }) => {
             const isGenerate = mode === 'generate';
             return (
               <button
                 key={mode}
+                type="button"
                 onClick={() => handleEnhance(mode)}
                 className={
                   isGenerate
-                    ? 'w-full text-left px-2.5 py-1.5 text-xs text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-md transition-colors font-medium flex items-center gap-1.5'
-                    : 'w-full text-left px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-md transition-colors'
+                    ? 'w-full text-left px-2.5 py-1.5 text-xs text-c-ai hover:bg-c-ai/10 rounded-md transition-colors font-medium flex items-center gap-1.5'
+                    : 'w-full text-left px-2.5 py-1.5 text-xs text-c-text-secondary hover:bg-state-hover rounded-md transition-colors'
                 }
               >
                 {isGenerate ? <Sparkles size={14} /> : null}
@@ -396,12 +433,47 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
           })}
           {undoValue !== undefined && (
             <button
+              type="button"
               onClick={handleUndo}
-              className="mt-1 w-full text-left px-2.5 py-1.5 text-xs text-amber-700 dark:text-amber-300 hover:bg-amber-50/70 dark:hover:bg-amber-500/10 rounded-md transition-colors"
+              className="mt-1 w-full text-left px-2.5 py-1.5 text-xs text-c-warning hover:bg-c-warning/10 rounded-md transition-colors"
             >
-              Undo AI
+              {t('sharedComponents.aiFieldEnhancer.undo', 'Undo AI')}
             </button>
           )}
+        </div>
+      )}
+
+      {/* Propozycja AI (§4.5/§6.4) — treść pola JESZCZE się nie zmieniła.
+          Nadpisanie następuje wyłącznie po „Zastosuj"; „Odrzuć" zamyka bez
+          śladu. Panel nie zamyka się kliknięciem obok, żeby przypadkowe
+          kliknięcie w tle nie skasowało wyniku, o który użytkownik poprosił. */}
+      {proposal !== null && !disabled && (
+        <div className="absolute right-0 top-[calc(100%+6px)] z-30 w-72 rounded-lg border border-c-ai/40 bg-c-surface/95 backdrop-blur p-2 shadow-xl">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Sparkles size={13} className="text-c-ai" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-c-ai">
+              {t('sharedComponents.aiFieldEnhancer.proposalTitle', 'AI proposal')}
+            </span>
+          </div>
+          <p className="max-h-40 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-c-text">
+            {proposal}
+          </p>
+          <div className="mt-2 flex items-center justify-end gap-1.5">
+            <button
+              type="button"
+              onClick={handleDiscardProposal}
+              className="inline-flex items-center h-7 px-2.5 rounded-md text-xs font-medium border border-c-border-subtle text-c-text-secondary hover:bg-state-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+            >
+              {t('sharedComponents.aiFieldEnhancer.discard', 'Discard')}
+            </button>
+            <button
+              type="button"
+              onClick={handleAcceptProposal}
+              className="inline-flex items-center h-7 px-2.5 rounded-md text-xs font-medium border border-c-ai/50 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+            >
+              {t('sharedComponents.aiFieldEnhancer.apply', 'Apply')}
+            </button>
+          </div>
         </div>
       )}
     </div>
