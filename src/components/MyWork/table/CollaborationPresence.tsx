@@ -397,18 +397,32 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
     }
   }, [currentUserId, enabled, ideaId, onPresenceUpdate, t]);
 
+  // Najswiezsze wersje callbackow trzymamy w refach, zeby efekt ponizej NIE
+  // zalezal od ich tozsamosci.
+  const broadcastRef = useRef(broadcastPresence);
+  const fetchRef = useRef(fetchPresence);
+  broadcastRef.current = broadcastPresence;
+  fetchRef.current = fetchPresence;
+
+  // Sprzezenie zwrotne, ktore tu bylo: rodzic podaje `onPresenceUpdate` jako
+  // funkcje inline (nowa referencja przy KAZDYM renderze) → nowy
+  // broadcastPresence/fetchPresence → efekt sie restartuje → czysci interwal i
+  // NATYCHMIAST wysyla POST /presence → odpowiedz ustawia stan rodzica → render
+  // → od poczatku. Interwal 5 s nigdy nie zdazyl wystrzelic, a pomiar w runtime
+  // pokazal 156-880 POST-ow na kilkanascie sekund (~55/s).
+  // Efekt zalezy teraz WYLACZNIE od tozsamosci sesji (`ideaId`) i wlacznika.
   useEffect(() => {
     if (!enabled) return;
-    broadcastPresence();
-    fetchPresence();
+    broadcastRef.current();
+    fetchRef.current();
     pollRef.current = setInterval(() => {
-      broadcastPresence();
-      fetchPresence();
+      broadcastRef.current();
+      fetchRef.current();
     }, POLL_INTERVAL_MS);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [broadcastPresence, enabled, fetchPresence]);
+  }, [enabled, ideaId]);
 
   const activeUsers = remoteUsers.filter((u) => Date.now() - u.lastSeen < STALE_THRESHOLD_MS);
 
