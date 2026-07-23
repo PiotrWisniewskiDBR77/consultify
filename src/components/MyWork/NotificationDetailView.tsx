@@ -80,7 +80,11 @@ import TeresaMark from '../shared/TeresaMark';
 // Tu w wariancie SKROCONYM: Wlasciwosci + Historia (decyzja wlasciciela K2).
 // `NModePropertiesStrip` przestal byc importowany — 6 pol metadanych przenioslo sie
 // z poziomego paska pod naglowkiem do sekcji Wlasciwosci tego panelu.
-import { ArtifactRightPanel, type ArtifactRightPanelSection } from '../standard/ArtifactRightPanel';
+import {
+  ARTIFACT_PANEL_CARD_CLASS_STICKY,
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '../standard/ArtifactRightPanel';
 import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -3037,14 +3041,20 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   reducedMotion={reducedMotion}
                   motionDuration={motionDuration}
                 />
-                <ArtifactRightPanel
-                  ariaLabel={t(
-                    'myWork.notificationDetail.rightPanelAria',
-                    'Notification details panel'
-                  )}
-                  width={320}
-                  sections={rightPanelSections}
-                />
+                {/* ETAP 1.4 — panel jak w Inicjatywie: jasna zaokraglona karta
+                    odsunieta od krawedzi (wrapper `sticky top-6 self-start`),
+                    a nie sidebar doklejony do brzegu. Szerokosc domyslna 360
+                    jak w pozostalych kartach N (bylo wlasne 320). */}
+                <div className="shrink-0 sticky top-6 self-start">
+                  <ArtifactRightPanel
+                    ariaLabel={t(
+                      'myWork.notificationDetail.rightPanelAria',
+                      'Notification details panel'
+                    )}
+                    className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
+                    sections={rightPanelSections}
+                  />
+                </div>
               </div>
             </div>
           )}

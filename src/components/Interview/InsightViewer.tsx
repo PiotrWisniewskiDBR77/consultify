@@ -104,6 +104,7 @@ import {
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import {
+  ARTIFACT_PANEL_CARD_CLASS_DOCKED,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
@@ -8211,8 +8212,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         presentationMode={presentationMode}
         onPresentationModeChange={setPresentationMode}
         rightPanel={
+          // ETAP 1.4 — bez klasy panel dziedziczyl `border-l` powloki, czyli
+          // sidebar doklejony do krawedzi. Teraz ten sam wyglad co Inicjatywa:
+          // jasna zaokraglona karta odsunieta od brzegu (wariant _DOCKED).
           <ArtifactRightPanel
             sections={rightPanelSections}
+            className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
             ariaLabel={t('interview.insightViewer.insightDetails')}
             statusBar={
               // HP-8 workflow-engine status bar — behind ff_artifactApprovalUi

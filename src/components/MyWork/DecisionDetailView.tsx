@@ -63,6 +63,7 @@ import { SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import {
+  ARTIFACT_PANEL_CARD_CLASS_STICKY,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
@@ -8856,7 +8857,7 @@ Use userId only from this list:
           <div className="hidden xl:block shrink-0 sticky top-6 self-start">
             <ArtifactRightPanel
               sections={rightPanelSections}
-              className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
+              className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
               ariaLabel={t('myWork.decisionDetail.ariaLabel', 'Decision details')}
               statusBar={
                 // HP-8 workflow-engine status bar — behind ff_artifactApprovalUi

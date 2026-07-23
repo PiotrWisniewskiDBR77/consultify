@@ -78,6 +78,7 @@ import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import {
+  ARTIFACT_PANEL_CARD_CLASS_STICKY,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
@@ -10137,7 +10138,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <div className="hidden xl:block shrink-0 sticky top-6 self-start">
                   <ArtifactRightPanel
                     sections={initiativeRightPanelSections}
-                    className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
+                    className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
                     ariaLabel={t('initiatives.panel.ariaLabel', 'Initiative details')}
                   />
                 </div>
@@ -11252,7 +11253,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <div className="hidden xl:block shrink-0 sticky top-6 self-start">
                     <ArtifactRightPanel
                       sections={initiativeRightPanelSections}
-                      className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
+                      className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
                       ariaLabel={t('initiatives.panel.ariaLabel', 'Initiative details')}
                     />
                   </div>

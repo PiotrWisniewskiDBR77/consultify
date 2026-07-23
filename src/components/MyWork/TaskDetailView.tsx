@@ -57,6 +57,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Callout } from '@/components/shared/NModeBlocks';
 import {
+  ARTIFACT_PANEL_CARD_CLASS_STICKY,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
@@ -4789,7 +4790,7 @@ Return ONLY the final comment text.`;
             <div className="hidden xl:block shrink-0 sticky top-6 self-start">
               <ArtifactRightPanel
                 sections={rightPanelSections}
-                className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
+                className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
                 ariaLabel={t('myWork.taskDetail.ariaLabel', 'Task details')}
               />
             </div>
