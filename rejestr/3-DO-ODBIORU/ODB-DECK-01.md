@@ -11,6 +11,9 @@ narzedzie: Gen. Deck
 flaga: ff_deck_architect (istniejąca, ON)
 zrzut: rejestr/_zrzuty/ODB-DECK-01.png
 zrzut_dark: rejestr/_zrzuty/ODB-DECK-01-dark.png
+ekran: gen-deck-content-hints
+wysokosc: 720
+klik: "Kliknij „Steering Committee Deck Template", POPISZ w polach."
 utworzone: 2026-07-23
 ---
 

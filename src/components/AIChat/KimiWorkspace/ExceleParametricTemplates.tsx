@@ -140,6 +140,40 @@ interface Props {
 const pctToDisplay = (native: number): number => Math.round(native * 1000) / 10;
 const displayToPct = (shown: number): number => shown / 100;
 
+/** Zakresy parametrów (2026-07-23): template min/max come from the registry in
+ *  NATIVE units (fractions for percent, same as `default`) — convert them to
+ *  the same display scale the input/value already use (×100 for percent,
+ *  unchanged otherwise) so both the hint text and the HTML min/max line up
+ *  with what the user actually types. */
+const getDisplayRange = (p: TemplateParam): { min?: number; max?: number } => {
+  if (p.type === 'percent') {
+    return {
+      min: typeof p.min === 'number' ? pctToDisplay(p.min) : undefined,
+      max: typeof p.max === 'number' ? pctToDisplay(p.max) : undefined,
+    };
+  }
+  return { min: p.min, max: p.max };
+};
+
+/** Small "zakres: min – max" hint shown next to a field — only when the
+ *  template actually defines a bound (many params have none). */
+const formatRangeHint = (
+  displayMin: number | undefined,
+  displayMax: number | undefined,
+  isPercent: boolean,
+  t: (pl: string, en: string) => string
+): string | null => {
+  if (displayMin === undefined && displayMax === undefined) return null;
+  const suffix = isPercent ? '%' : '';
+  const range =
+    displayMin !== undefined && displayMax !== undefined
+      ? `${displayMin} – ${displayMax}${suffix}`
+      : displayMin !== undefined
+        ? `≥ ${displayMin}${suffix}`
+        : `≤ ${displayMax}${suffix}`;
+  return `${t('zakres', 'range')}: ${range}`;
+};
+
 /** Inline preview keeps the grid compact — cap rows, offer "show all" like the
  *  full-size KimiWorkspaceShell grid (src/utils/workbookGridPreview.ts consumer). */
 const PREVIEW_ROW_CAP = 50;
@@ -238,6 +272,35 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
     }
     return order.map((g) => ({ group: g, params: map.get(g)! }));
   }, [selected, t]);
+
+  // Zakresy parametrów (2026-07-23): soft client-side validation against the
+  // template's own min/max (in DISPLAY scale — see getDisplayRange) so an
+  // out-of-range value is caught before the build call instead of surfacing
+  // only as a zod rejection from the server. Empty fields are exempt (server
+  // falls back to the template default), same as handleBuild's own omission
+  // logic below.
+  const outOfRangeParams = useMemo(() => {
+    if (!selected) return [] as { name: string; label: string }[];
+    const bad: { name: string; label: string }[] = [];
+    for (const p of selected.params) {
+      if (p.type === 'text' || p.type === 'enum') continue;
+      const { min, max } = getDisplayRange(p);
+      if (min === undefined && max === undefined) continue;
+      const raw = values[p.name];
+      if (raw === '' || raw === undefined || raw === null) continue;
+      const num = typeof raw === 'number' ? raw : Number(raw);
+      if (!Number.isFinite(num)) continue;
+      if ((min !== undefined && num < min) || (max !== undefined && num > max)) {
+        bad.push({ name: p.name, label: p.label });
+      }
+    }
+    return bad;
+  }, [selected, values]);
+
+  const outOfRangeNames = useMemo(
+    () => new Set(outOfRangeParams.map((o) => o.name)),
+    [outOfRangeParams]
+  );
 
   const setValue = useCallback((name: string, raw: string, type: ParamType) => {
     setValues((prev) => {
@@ -521,7 +584,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                               : 'text-c-text-secondary hover:text-c-text'
                           }`}
                         >
-                          {`Sheet ${i + 1}`}
+                          {sheet.name || `Sheet ${i + 1}`}
                         </button>
                       ))}
                     </div>
@@ -655,39 +718,63 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                     {group}
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {params.map((p) => (
-                      <label key={p.name} className="flex flex-col gap-1">
-                        <span className="text-xs text-c-text-secondary">
-                          {p.label}
-                          {p.type === 'percent' ? ' (%)' : ''}
-                        </span>
-                        {p.type === 'enum' ? (
-                          <select
-                            value={String(values[p.name] ?? '')}
-                            onChange={(e) => setValue(p.name, e.target.value, p.type)}
-                            className="px-2.5 py-1.5 rounded-lg border border-c-border bg-c-surface text-sm text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                          >
-                            {(p.options || []).map((opt) => (
-                              <option key={opt} value={opt}>
-                                {opt}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <input
-                            type={p.type === 'text' ? 'text' : 'number'}
-                            inputMode={p.type === 'text' ? undefined : 'decimal'}
-                            step={p.type === 'percent' ? 0.5 : p.step}
-                            value={String(values[p.name] ?? '')}
-                            onChange={(e) => setValue(p.name, e.target.value, p.type)}
-                            className="px-2.5 py-1.5 rounded-lg border border-c-border bg-c-surface text-sm text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                          />
-                        )}
-                        {p.help ? (
-                          <span className="text-[11px] text-c-text-muted">{p.help}</span>
-                        ) : null}
-                      </label>
-                    ))}
+                    {params.map((p) => {
+                      const { min: displayMin, max: displayMax } = getDisplayRange(p);
+                      const rangeHint = formatRangeHint(
+                        displayMin,
+                        displayMax,
+                        p.type === 'percent',
+                        t
+                      );
+                      const isOutOfRange = outOfRangeNames.has(p.name);
+                      return (
+                        <label key={p.name} className="flex flex-col gap-1">
+                          <span className="text-xs text-c-text-secondary">
+                            {p.label}
+                            {p.type === 'percent' ? ' (%)' : ''}
+                          </span>
+                          {p.type === 'enum' ? (
+                            <select
+                              value={String(values[p.name] ?? '')}
+                              onChange={(e) => setValue(p.name, e.target.value, p.type)}
+                              className="px-2.5 py-1.5 rounded-lg border border-c-border bg-c-surface text-sm text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                            >
+                              {(p.options || []).map((opt) => (
+                                <option key={opt} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              type={p.type === 'text' ? 'text' : 'number'}
+                              inputMode={p.type === 'text' ? undefined : 'decimal'}
+                              step={p.type === 'percent' ? 0.5 : p.step}
+                              min={displayMin}
+                              max={displayMax}
+                              value={String(values[p.name] ?? '')}
+                              onChange={(e) => setValue(p.name, e.target.value, p.type)}
+                              aria-invalid={isOutOfRange}
+                              className={`px-2.5 py-1.5 rounded-lg border bg-c-surface text-sm text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                                isOutOfRange ? 'border-c-warning' : 'border-c-border'
+                              }`}
+                            />
+                          )}
+                          {rangeHint ? (
+                            <span
+                              className={`text-[11px] ${
+                                isOutOfRange ? 'text-c-warning font-medium' : 'text-c-text-muted'
+                              }`}
+                            >
+                              {rangeHint}
+                            </span>
+                          ) : null}
+                          {p.help ? (
+                            <span className="text-[11px] text-c-text-muted">{p.help}</span>
+                          ) : null}
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -696,7 +783,15 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
             <div className="flex flex-wrap items-center gap-2 mt-5">
               <button
                 onClick={handleBuild}
-                disabled={building}
+                disabled={building || outOfRangeParams.length > 0}
+                title={
+                  outOfRangeParams.length > 0
+                    ? t(
+                        'Popraw wartości poza dozwolonym zakresem, aby zbudować skoroszyt',
+                        'Fix the out-of-range values to build the workbook'
+                      )
+                    : undefined
+                }
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-c-text text-c-bg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 {building ? (
@@ -754,6 +849,16 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                 </div>
               )}
             </div>
+
+            {outOfRangeParams.length > 0 && (
+              <p className="flex items-start gap-1.5 mt-2 text-xs text-c-warning">
+                <AlertTriangle size={13} className="shrink-0 mt-0.5" />
+                {t(
+                  `Poza dozwolonym zakresem: ${outOfRangeParams.map((o) => o.label).join(', ')}. Popraw wartości, aby zbudować skoroszyt.`,
+                  `Out of allowed range: ${outOfRangeParams.map((o) => o.label).join(', ')}. Fix the values to build the workbook.`
+                )}
+              </p>
+            )}
           </>
         )}
       </section>

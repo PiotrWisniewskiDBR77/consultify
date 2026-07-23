@@ -18,6 +18,13 @@
  * value/formula, server/src/services/workbook/WorkbookSchema.ts) so
  * buildWorkbookGridSheets (src/utils/workbookGridPreview.ts) has real cells to
  * turn into the grid.
+ *
+ * Zakresy parametrów (2026-07-23): percent params here are FRACTIONS (0.03 =
+ * 3%), matching the real backend contract (server keeps percent params as
+ * fractions; ExceleParametricTemplates' pctToDisplay ×100s them for the form).
+ * Defaults/min/max used to be whole-number percents (12, -50, 200), which made
+ * the FE render "1200%" style nonsense — fixed so the harness reflects the
+ * real contract 1:1.
  */
 import { Api } from '@/services/api';
 
@@ -29,9 +36,9 @@ const TEMPLATES = [
     params: [
       { name: 'companyName', label: 'Nazwa spółki', type: 'text', default: 'Spółka', group: 'Ogólne' },
       { name: 'base.revenue', label: 'Przychód (baza)', type: 'currency', default: 1000000, min: 0, group: 'Scenariusz bazowy' },
-      { name: 'base.growth', label: 'Wzrost r/r (baza)', type: 'percent', default: 12, min: -50, max: 200, group: 'Scenariusz bazowy' },
-      { name: 'bull.growth', label: 'Wzrost r/r (optymistyczny)', type: 'percent', default: 25, group: 'Scenariusz optymistyczny' },
-      { name: 'bear.growth', label: 'Wzrost r/r (pesymistyczny)', type: 'percent', default: 3, group: 'Scenariusz pesymistyczny' },
+      { name: 'base.growth', label: 'Wzrost r/r (baza)', type: 'percent', default: 0.12, min: -0.5, max: 2, group: 'Scenariusz bazowy' },
+      { name: 'bull.growth', label: 'Wzrost r/r (optymistyczny)', type: 'percent', default: 0.25, group: 'Scenariusz optymistyczny' },
+      { name: 'bear.growth', label: 'Wzrost r/r (pesymistyczny)', type: 'percent', default: 0.03, group: 'Scenariusz pesymistyczny' },
     ],
   },
   {
@@ -41,8 +48,8 @@ const TEMPLATES = [
     params: [
       { name: 'companyName', label: 'Nazwa spółki', type: 'text', default: 'Spółka', group: 'Ogólne' },
       { name: 'startRevenue', label: 'Przychód m-c 1', type: 'currency', default: 80000, min: 0, group: 'Przychody' },
-      { name: 'revenueGrowth', label: 'Wzrost m/m', type: 'percent', default: 3, min: -20, max: 50, group: 'Przychody' },
-      { name: 'varCostPct', label: 'Koszty zmienne (% przychodu)', type: 'percent', default: 35, min: 0, max: 100, group: 'Koszty' },
+      { name: 'revenueGrowth', label: 'Wzrost m/m', type: 'percent', default: 0.03, min: -0.2, max: 0.5, group: 'Przychody' },
+      { name: 'varCostPct', label: 'Koszty zmienne (% przychodu)', type: 'percent', default: 0.35, min: 0, max: 1, group: 'Koszty' },
       { name: 'fixedPayroll', label: 'Wynagrodzenia (stałe)', type: 'currency', default: 30000, min: 0, group: 'Koszty stałe' },
       { name: 'fixedRent', label: 'Najem (stały)', type: 'currency', default: 8000, min: 0, group: 'Koszty stałe' },
     ],
@@ -54,10 +61,10 @@ const TEMPLATES = [
     params: [
       { name: 'companyName', label: 'Nazwa spółki', type: 'text', default: 'Spółka', group: 'Ogólne' },
       { name: 'fcf0', label: 'FCF rok 0', type: 'currency', default: 500000, min: 0, group: 'Projekcja' },
-      { name: 'growth', label: 'Wzrost FCF r/r', type: 'percent', default: 10, min: -20, max: 100, group: 'Projekcja' },
+      { name: 'growth', label: 'Wzrost FCF r/r', type: 'percent', default: 0.10, min: -0.2, max: 1, group: 'Projekcja' },
       { name: 'years', label: 'Horyzont (lata)', type: 'integer', default: 5, min: 3, max: 10, group: 'Projekcja' },
-      { name: 'wacc', label: 'WACC', type: 'percent', default: 11, min: 1, max: 40, group: 'Dyskonto' },
-      { name: 'terminalGrowth', label: 'Wzrost rezydualny', type: 'percent', default: 2.5, min: 0, max: 5, group: 'Dyskonto' },
+      { name: 'wacc', label: 'WACC', type: 'percent', default: 0.11, min: 0.01, max: 0.4, group: 'Dyskonto' },
+      { name: 'terminalGrowth', label: 'Wzrost rezydualny', type: 'percent', default: 0.025, min: 0, max: 0.05, group: 'Dyskonto' },
     ],
   },
 ];

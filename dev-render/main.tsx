@@ -109,9 +109,88 @@ const SheetArtifactScreen = React.lazy(() => import('./screens/sheet-artifact'))
 // inicjatywy — „Nie udało się załadować karty"). Leniwy import = instaluje się stub
 // wyłącznie otwartego ekranu, a kolejność importów przestaje cokolwiek znaczyć.
 const VaultScopeSelectorScreen = React.lazy(() => import('./screens/vault-scope-selector'));
-
+||||||| 7b1ba021c2
+import AccentSoftTokenFixScreen from './screens/accent-soft-token-fix';
+import AdminCommandCenterPanelScreen from './screens/admin-command-center-panel';
+import AdminSsoSelfServiceCardScreen from './screens/admin-sso-self-service-card';
+import AgentPlanCanvasScreen from './screens/agent-plan-canvas';
+import AgentPlanViewScreen from './screens/agent-plan-view';
+import AssessmentInitiativesPanelScreen from './screens/assessment-initiatives-panel';
+import AssessmentInitiativesTableScreen from './screens/assessment-initiatives-table';
+import AssessmentListScreen from './screens/assessment-list';
+import AssessmentMenu3StatusChipsScreen from './screens/assessment-menu3-status-chips';
+import AssessmentReportsPanelScreen from './screens/assessment-reports-panel';
+import AssessmentReportsTableScreen from './screens/assessment-reports-table';
+import CanvasKebabRestructureScreen from './screens/canvas-kebab-restructure';
+import CanvasNewDocScreen from './screens/canvas-new-doc';
+import CanvasToolbarMdHistoryScreen from './screens/canvas-toolbar-md-history';
+import CapabilityGateDemoScreen from './screens/capability-gate-demo';
+import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
+import CrimsonMyWorkWave2Screen from './screens/crimson-mywork-wave2';
+import DecisionRecordScreen from './screens/decision-record';
+import DocumentStudioBlocksI18nScreen from './screens/document-studio-blocks-i18n';
+import ExceleEngineRevealScreen from './screens/excele-engine-reveal';
+import WordIntakeUseLlmDefaultScreen from './screens/word-intake-uselm-default';
+import DocumentStudioM1SharePrimaryScreen from './screens/document-studio-m1-share-primary';
+import EvFootballFieldScreen from './screens/ev-football-field';
+import ExecutionChangeSignalsScreen from './screens/execution-change-signals';
+import FinanceValuePanelsScreen from './screens/finance-value-panels';
+import GenDeckContentHintsScreen from './screens/gen-deck-content-hints';
+import GenExcelTemplatesTabScreen from './screens/gen-excel-templates-tab';
+import GenWordContentHintsScreen from './screens/gen-word-content-hints';
+import DeckQualityBadgeScreen from './screens/deck-quality-badge';
+import WordQualityBadgeScreen from './screens/word-quality-badge';
+import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
+import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
+import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
+import MelsCanvasWorkspaceScreen from './screens/melscanvas-workspace';
+import MindmapI18nSmokeScreen from './screens/mindmap-i18n-smoke';
+import ModelCatalogTableScreen from './screens/model-catalog-table';
+import NavDeclutterSidebarScreen from './screens/navdeclutter-sidebar';
+import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
+import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
+import PartnerSettlementsViewScreen from './screens/partner-settlements-view';
+import PromptRegistryTabScreen from './screens/prompt-registry-tab';
+import PublicBookingWidgetScreen from './screens/public-booking-widget';
+import ReportBuilderBlockTypesScreen from './screens/report-builder-block-types';
+import ReportBuilderTemplatesScreen from './screens/report-builder-templates';
+import ResultsThreePairsScreen from './screens/results-three-pairs';
+import RoseDangerTokenParityScreen from './screens/rose-danger-token-parity';
+import SettingsCrimsonNeutralizedScreen from './screens/settings-crimson-neutralized';
+import StandardKanbanCardScreen from './screens/standard-kanban-card';
+import TemplateBuilderDeckScreen from './screens/template-builder-deck';
+import TemplateBuilderDocScreen from './screens/template-builder-doc';
+import TemplateBuilderTableScreen from './screens/template-builder-table';
+import TemplateCreateWizardScreen from './screens/template-create-wizard';
+import TemplateLibraryNewEntryScreen from './screens/template-library-new-entry';
+import UnifiedCreateLauncherScreen from './screens/unified-create-launcher';
+import Wave3CreatorsCrimsonScreen from './screens/wave3-creators-crimson';
+import Wave4ChoicesCrimsonScreen from './screens/wave4-choices-crimson';
+import Wave5InternalCrimsonScreen from './screens/wave5-internal-crimson';
+import ZwornikProjectsScreen from './screens/zwornik-projects';
+import KartaToolScreen from './screens/karta-tool';
+import KartaInitiativeScreen from './screens/karta-initiative';
+import KartaInsightScreen from './screens/karta-insight';
+import KartaInterviewScreen from './screens/karta-interview';
+import KartaDecisionScreen from './screens/karta-decision';
+import KartaNotificationScreen from './screens/karta-notification';
+import KartaTaskScreen from './screens/karta-task';
+import PreviewZakladkiScreen from './screens/preview-4-zakladki';
+import IdeaTableToolKebabScreen from './screens/idea-table-tool-kebab';
+// VLT-003 — importem MUSI być ostatnia: każdy dev-render screen instaluje swój
+// window.fetch stub jako top-level side effect przy imporcie (niezależnie od
+// tego, który ?screen= jest renderowany — statyczne importy main.tsx odpalają
+// WSZYSTKIE moduły). Import na końcu = mój stub owija wszystkie poprzednie
+// jako fallback i jego warunki są sprawdzane PIERWSZE (patrz DZIENNIK VLT-003).
+import VaultScopeSelectorScreen from './screens/vault-scope-selector';
+const ExceleReopenVerifyScreen = React.lazy(() => import('./screens/excele-reopen-verify'));
+const OdbiorScreen = React.lazy(() => import('./screens/odbior'));
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  odbior: {
+    label: '★ PANEL ODBIORU — wszystkie obszary (rejestr/3-DO-ODBIORU), żywe ekrany + werdykty',
+    render: () => <OdbiorScreen />,
+  },
   'gen-deck-content-hints': {
     label:
       'DOKUMENTY — Gen. Deck catch-up: per-slide content hints w Deck Template Architect (audyt 2026-07-22)',
@@ -142,6 +221,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'excele-engine-reveal': {
     label: 'DOKUMENTY — Excel: silnik arkuszy pod /excele (home) (audyt 2026-07-22, Sheet #9)',
     render: () => <ExceleEngineRevealScreen />,
+  },
+  'excele-reopen-verify': {
+    label:
+      'DOKUMENTY — Excel: naprawa "nie mam czego otworzyć" — reopen wiszącego artifactId → honest error zamiast pustego fake-podglądu (2026-07-23)',
+    render: () => <ExceleReopenVerifyScreen />,
   },
   'idea-table-tool-kebab': {
     label:

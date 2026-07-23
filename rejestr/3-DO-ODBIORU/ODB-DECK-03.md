@@ -11,6 +11,9 @@ narzedzie: Deck
 flaga: ENABLE_DECK_QUALITY_GATES (ON)
 zrzut: rejestr/_zrzuty/ODB-DECK-03.png
 zrzut_dark: rejestr/_zrzuty/ODB-DECK-03-dark.png
+ekran: deck-quality-badge
+wysokosc: 420
+klik: "Kliknij badge, żeby rozwinąć ostrzeżenia."
 utworzone: 2026-07-23
 ---
 

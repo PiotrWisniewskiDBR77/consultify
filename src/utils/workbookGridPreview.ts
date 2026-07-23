@@ -9,9 +9,23 @@
  * nothing built the grid shape from the real schema (GET /api/workbook/:id/schema).
  * A formula cell is shown as the string "=<formula>" so it reads as a formula in
  * the grid without any extra column-typing on the render side.
+ *
+ * Sheet-name fix (2026-07-23, workstream Excel): the mapper used to read
+ * `sheet.name` off the raw schema but never carried it into the output shape
+ * — `WorkbookGridSheet` had no `name` field — so every consumer that renders
+ * per-sheet tabs off this function's output (ExceleParametricTemplates' inline
+ * build-result grid) had nothing but the array index to label a tab with and
+ * fell back to "Sheet 1"/"Sheet 2". Now `name` is carried through (with a
+ * "Sheet <n>" fallback only if the schema itself omits it) so real sheet
+ * names ("Założenia", "Podsumowanie", "Przepływy"…) reach the tab UI.
  */
 
 export interface WorkbookGridSheet {
+  /** Real sheet name from WorkbookSchema (e.g. "Założenia", "Podsumowanie").
+   *  Falls back to "Sheet <n>" (1-based) only when the schema is missing a
+   *  name — callers (ExceleParametricTemplates, KimiWorkspaceShell) render
+   *  this directly as the tab label instead of a generic "Sheet N". */
+  name: string;
   columns: string[];
   rows: Array<Record<string, unknown>>;
 }
@@ -45,7 +59,8 @@ export function isFormulaDisplayValue(value: unknown): value is string {
 export function buildWorkbookGridSheets(sheets: unknown): WorkbookGridSheet[] {
   if (!Array.isArray(sheets)) return [];
 
-  return (sheets as RawSheet[]).map((sheet) => {
+  return (sheets as RawSheet[]).map((sheet, sheetIndex) => {
+    const name = sheet?.name?.trim() || `Sheet ${sheetIndex + 1}`;
     const cols = Array.isArray(sheet?.columns) ? sheet.columns : [];
     const headers = cols.map(
       (c, i) => c?.header?.trim() || c?.key?.trim() || `Col ${i + 1}`
@@ -74,6 +89,6 @@ export function buildWorkbookGridSheets(sheets: unknown): WorkbookGridSheet[] {
         })
       : [];
 
-    return { columns: headers, rows };
+    return { name, columns: headers, rows };
   });
 }
