@@ -197,7 +197,16 @@ export function useTablePlatformBridge(
   // depth exceeded" (wykryte na pierwszym flag-ON renderze, 2026-07-22).
   const nodes = useMemo(() => records.map((r) => recordToNode(r, fields)), [records, fields]);
 
-  const ensureBaseAndTable = useCallback(async (): Promise<{
+  // Współdzielona „obietnica w locie": bez tego dwa równoległe wywołania (dwa
+  // efekty / przełączenie narzędzia) widzą PUSTĄ listę baz i OBA wołają
+  // createBase → powstają dwie bazy i treść się dubluje (9 kroków procesu
+  // renderowało się jako 18 wierszy tabeli). Jedno wywołanie na ideaId.
+  const ensureInFlightRef = useRef<{
+    ideaId: string;
+    promise: Promise<{ baseId: string; tableId: string; base?: Record<string, unknown> } | null>;
+  } | null>(null);
+
+  const ensureBaseAndTableInner = useCallback(async (): Promise<{
     baseId: string;
     tableId: string;
     base?: Record<string, unknown>;
@@ -233,6 +242,21 @@ export function useTablePlatformBridge(
       return null;
     }
   }, [ideaId]);
+
+  /** Publiczne wejście — deduplikuje równoległe wywołania dla tego samego pomysłu. */
+  const ensureBaseAndTable = useCallback((): Promise<{
+    baseId: string;
+    tableId: string;
+    base?: Record<string, unknown>;
+  } | null> => {
+    const cached = ensureInFlightRef.current;
+    if (cached && cached.ideaId === ideaId) return cached.promise;
+    const promise = ensureBaseAndTableInner().finally(() => {
+      if (ensureInFlightRef.current?.promise === promise) ensureInFlightRef.current = null;
+    });
+    ensureInFlightRef.current = { ideaId, promise };
+    return promise;
+  }, [ideaId, ensureBaseAndTableInner]);
 
   const loadData = useCallback(
     async (filtersOverride?: TPFilterGroup, sortsOverride?: TPSortRule[]) => {
