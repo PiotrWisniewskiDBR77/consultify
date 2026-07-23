@@ -13,15 +13,35 @@
  * Mounted ONLY inside ArtifactModuleHome for the `excele` lane (which is itself
  * behind the ff_excele flag), so no new flag is introduced.
  *
+ * Inline grid preview (2026-07-23): after a successful build the result card no
+ * longer offers only a download link — it fetches the built workbook's real
+ * WorkbookSchema via `Api.getWorkbookSchema(built.id)` (same read endpoint and
+ * `built.id` from `POST /templates/:id/build`'s response as the download URL —
+ * see finalizeGeneratedWorkbook in server/src/routes/workbook.routes.ts) and
+ * renders it with the SAME grid-shaping util as the B3 KimiWorkspaceShell xlsx
+ * preview (`buildWorkbookGridSheets`/`isFormulaDisplayValue` from
+ * `src/utils/workbookGridPreview.ts`) — read-only, cells + formulas, row-capped
+ * with a "show all" toggle, sheet tabs when the template has more than one sheet.
+ *
  * Styling: c-* tokens only, zero crimson (neutral CTA = bg-c-text; focus = c-focus).
  */
 
-import { FileSpreadsheet, Loader2, Download, ChevronLeft, CheckCircle2, Sparkles } from 'lucide-react';
+import {
+  FileSpreadsheet,
+  Loader2,
+  Download,
+  ChevronLeft,
+  CheckCircle2,
+  Sparkles,
+  AlertTriangle,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { API_URL } from '@/services/api';
 import { Api } from '@/services/api';
+import { buildWorkbookGridSheets, isFormulaDisplayValue } from '@/utils/workbookGridPreview';
+import type { WorkbookGridSheet } from '@/utils/workbookGridPreview';
 
 type ParamType = 'text' | 'integer' | 'number' | 'percent' | 'currency' | 'enum';
 
@@ -63,6 +83,10 @@ interface Props {
 const pctToDisplay = (native: number): number => Math.round(native * 1000) / 10;
 const displayToPct = (shown: number): number => shown / 100;
 
+/** Inline preview keeps the grid compact — cap rows, offer "show all" like the
+ *  full-size KimiWorkspaceShell grid (src/utils/workbookGridPreview.ts consumer). */
+const PREVIEW_ROW_CAP = 50;
+
 export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }) => {
   const [templates, setTemplates] = useState<TemplateEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +94,15 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
   const [values, setValues] = useState<Record<string, string | number>>({});
   const [building, setBuilding] = useState(false);
   const [result, setResult] = useState<BuildResult | null>(null);
+
+  // Inline read-only grid preview of the built workbook (reuses B3's
+  // getWorkbookSchema + buildWorkbookGridSheets — same source as the KimiWorkspaceShell
+  // xlsx grid — instead of leaving the user with only a download link).
+  const [gridSheets, setGridSheets] = useState<WorkbookGridSheet[] | null>(null);
+  const [gridLoading, setGridLoading] = useState(false);
+  const [gridError, setGridError] = useState<string | null>(null);
+  const [activeSheet, setActiveSheet] = useState(0);
+  const [showAllRows, setShowAllRows] = useState(false);
 
   const t = useCallback(
     (pl: string, en: string) => (isPolish ? pl : en),
@@ -105,6 +138,9 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
     }
     setValues(initial);
     setResult(null);
+    setGridSheets(null);
+    setGridError(null);
+    setGridLoading(false);
     setSelected(tpl);
   }, []);
 
@@ -166,6 +202,33 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
       setResult(built);
       toast.success(t('Skoroszyt zbudowany', 'Workbook built'));
       onBuilt?.();
+
+      // Load the real cell/formula grid so the build result shows the actual
+      // content inline instead of only a download link (same shape/endpoint as
+      // the B3 KimiWorkspaceShell xlsx preview: GET /api/workbook/:id/schema).
+      if (built.id) {
+        setGridSheets(null);
+        setGridError(null);
+        setActiveSheet(0);
+        setShowAllRows(false);
+        setGridLoading(true);
+        Api.getWorkbookSchema(built.id)
+          .then((schema) => {
+            setGridSheets(buildWorkbookGridSheets(schema?.sheets));
+          })
+          .catch((err) => {
+            console.warn('[ExceleParametricTemplates] Failed to load workbook grid schema:', err);
+            setGridError(
+              t(
+                'Nie udało się wczytać podglądu komórek. Pobierz plik, aby zobaczyć zawartość.',
+                'Failed to load the cell preview. Download the file to see the content.'
+              )
+            );
+          })
+          .finally(() => {
+            setGridLoading(false);
+          });
+      }
     } catch (err: any) {
       const msg =
         err?.data?.issues?.map((i: any) => `${i.path}: ${i.message}`).join('; ') ||
@@ -233,11 +296,139 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                 {result.fileName}
               </button>
               <button
-                onClick={() => setResult(null)}
+                onClick={() => {
+                  setResult(null);
+                  setGridSheets(null);
+                  setGridError(null);
+                  setGridLoading(false);
+                }}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-c-border text-c-text-secondary text-xs font-medium hover:bg-c-surface transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 {t('Zbuduj ponownie', 'Build again')}
               </button>
+            </div>
+
+            {/* Inline read-only grid preview of the built workbook (cells + formulas). */}
+            <div className="mt-4">
+              {gridLoading ? (
+                <div className="rounded-lg border border-c-border-subtle bg-c-surface overflow-hidden">
+                  <div className="p-6 text-center text-c-text-secondary">
+                    <Loader2 size={24} className="mx-auto mb-2 animate-spin" />
+                    <p className="text-xs font-medium">
+                      {t('Wczytywanie komórek i formuł…', 'Loading cells and formulas…')}
+                    </p>
+                  </div>
+                </div>
+              ) : gridError ? (
+                <div className="rounded-lg border border-c-border-subtle bg-c-surface overflow-hidden">
+                  <div className="p-6 text-center text-c-text-secondary">
+                    <AlertTriangle size={24} className="mx-auto mb-2 text-c-warning" />
+                    <p className="text-xs font-medium text-c-text">{gridError}</p>
+                  </div>
+                </div>
+              ) : gridSheets && gridSheets.length > 0 ? (
+                <div className="rounded-lg border border-c-border-subtle bg-c-surface overflow-hidden">
+                  {gridSheets.length > 1 && (
+                    <div className="flex items-center gap-1 px-2 pt-2 overflow-x-auto border-b border-c-border-subtle">
+                      {gridSheets.map((sheet, i) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            setActiveSheet(i);
+                            setShowAllRows(false);
+                          }}
+                          className={`px-2.5 py-1.5 text-xs font-medium rounded-t-md whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                            activeSheet === i
+                              ? 'text-c-text border-b-2 border-c-text'
+                              : 'text-c-text-secondary hover:text-c-text'
+                          }`}
+                        >
+                          {`Sheet ${i + 1}`}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {(() => {
+                    const sheetData = gridSheets[activeSheet] || gridSheets[0];
+                    if (!sheetData || sheetData.columns.length === 0) return null;
+                    const visibleRows = showAllRows
+                      ? sheetData.rows
+                      : sheetData.rows.slice(0, PREVIEW_ROW_CAP);
+                    return (
+                      <>
+                        <div className="overflow-x-auto max-h-[360px] overflow-y-auto">
+                          <table className="w-full text-xs">
+                            <thead className="sticky top-0 z-10">
+                              <tr className="bg-c-surface-raised">
+                                {sheetData.columns.map((col, ci) => (
+                                  <th
+                                    key={`${col}-${ci}`}
+                                    className="px-3 py-2 text-left font-medium text-c-text-secondary border-b border-c-border-subtle whitespace-nowrap"
+                                  >
+                                    {col}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {visibleRows.map((row, ri) => (
+                                <tr
+                                  key={ri}
+                                  className="border-b border-c-border-subtle hover:bg-c-surface-raised"
+                                >
+                                  {sheetData.columns.map((col, ci) => {
+                                    const raw = row[col];
+                                    const isFormula = isFormulaDisplayValue(raw);
+                                    return (
+                                      <td
+                                        key={`${col}-${ci}`}
+                                        title={isFormula ? raw : undefined}
+                                        className={`px-3 py-1.5 whitespace-nowrap max-w-[200px] truncate ${
+                                          isFormula
+                                            ? 'font-mono text-c-text-secondary'
+                                            : 'text-c-text'
+                                        }`}
+                                      >
+                                        {String(raw ?? '')}
+                                      </td>
+                                    );
+                                  })}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        {sheetData.rows.length > PREVIEW_ROW_CAP && (
+                          <div className="px-3 py-2 flex items-center justify-center gap-3 text-[11px] text-c-text-secondary border-t border-c-border-subtle">
+                            <span>
+                              {showAllRows
+                                ? t('Pokazano wszystkie {{n}} wierszy', 'Showing all {{n}} rows').replace(
+                                    '{{n}}',
+                                    String(sheetData.rows.length)
+                                  )
+                                : t(
+                                    'Pokazano pierwsze {{cap}} z {{n}} wierszy',
+                                    'Showing first {{cap}} of {{n}} rows'
+                                  )
+                                    .replace('{{cap}}', String(PREVIEW_ROW_CAP))
+                                    .replace('{{n}}', String(sheetData.rows.length))}
+                            </span>
+                            {!showAllRows && (
+                              <button
+                                type="button"
+                                onClick={() => setShowAllRows(true)}
+                                className="px-2 py-0.5 rounded font-medium text-c-text hover:bg-c-surface-raised transition-colors"
+                              >
+                                {t('Pokaż wszystkie', 'Show all')}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              ) : null}
             </div>
           </div>
         ) : (
