@@ -8028,7 +8028,16 @@
         "missingTotal": "Missing total",
         "actions": "Actions",
         "notGateReady": "{{count}} initiative(s) not gate-ready",
-        "noData": "No completeness data available."
+        "noData": "No completeness data available.",
+        "autoFillAction": "Fill missing fields",
+        "autoFillPanelTitle": "Missing field defaults",
+        "autoFillSubtitle": "Detected empty fields with default values — review each one before applying.",
+        "bulkFixAction": "Bulk Fix",
+        "triageAction": "Priority Triage",
+        "triagePanelTitle": "Priority Triage — where to focus effort",
+        "reasonNoOwner": "No owner assigned — critical for gate readiness. Pick the right person before applying.",
+        "reasonNoDates": "Missing timeline — default 90-day window, adjust to the real plan.",
+        "reasonNoBudget": "No budget defined — placeholder value, replace with a real estimate."
       },
       "issues": "Issues",
       "openInitiative": "Open initiative",

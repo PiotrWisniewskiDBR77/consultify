@@ -7190,7 +7190,16 @@
         "missingTotal": "Brak łącznie",
         "actions": "Akcje",
         "notGateReady": "{{count}} inicjatyw niegotowych do bramki",
-        "noData": "Brak danych kompletności."
+        "noData": "Brak danych kompletności.",
+        "autoFillAction": "Uzupełnij brakujące pola",
+        "autoFillPanelTitle": "Wartości domyślne dla pustych pól",
+        "autoFillSubtitle": "Wykryte puste pola z wartościami domyślnymi — sprawdź każdą przed zastosowaniem.",
+        "bulkFixAction": "Poprawki zbiorcze",
+        "triageAction": "Triage priorytetów",
+        "triagePanelTitle": "Triage priorytetów — na czym skupić wysiłek",
+        "reasonNoOwner": "Brak właściciela — krytyczne dla gotowości do bramki. Wybierz właściwą osobę przed zastosowaniem.",
+        "reasonNoDates": "Brak harmonogramu — domyślne okno 90 dni, dostosuj do realnego planu.",
+        "reasonNoBudget": "Brak budżetu — wartość zastępcza, zastąp realnym szacunkiem."
       },
       "issues": "Problemy",
       "openInitiative": "Otwórz inicjatywę",
