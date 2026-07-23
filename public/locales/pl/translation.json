@@ -24568,6 +24568,9 @@
       },
       "toolbar": {
         "moreActions": "Więcej akcji"
+      },
+      "field": {
+        "backToAutoFit": "Wróć do auto-dopasowania"
       }
     }
   },

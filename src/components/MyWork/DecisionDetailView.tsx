@@ -18,7 +18,6 @@ import {
   Check,
   ChevronDown,
   ChevronLeft,
-  ChevronsUpDown,
   Clock,
   Cloud,
   Edit3,
@@ -88,6 +87,9 @@ import { buildArtifactCode } from '@/utils/artifactLinks';
 import { Api } from '../../services/api';
 import { CloudFilePicker } from '../AIChat/CloudFilePicker';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
+// n-Type §6.2/§6.3: standardowe opisowe pole tekstowe (auto-fit + uchwyt +
+// pamięć ręcznej wysokości + tryb Podgląd). Jedna droga budowy pola karty.
+import { AutoFitTextarea } from '../shared/AutoFitTextarea';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 import { CapabilityGate } from '../shared/CapabilityGate';
 // #52 — card-management primitive (show/hide + reorder), same "nakładka"
@@ -1044,8 +1046,10 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [activeNotionSection, setActiveNotionSection] = useState('context-problem');
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  const [isContextExpanded, setIsContextExpanded] = useState(false);
+  // `isDescriptionExpanded` / `isContextExpanded` usunięte 2026-07-23 — obsługiwały
+  // parę „Pokaż więcej / Pokaż mniej" nad polem o stałej liczbie wierszy. Auto-fit
+  // (n-Type §6.3) pokazuje całą treść bez tego przełącznika, więc stan osierocił
+  // się w tym samym commicie, w którym zniknął jego jedyny konsument.
   const [aiFieldLoading, setAiFieldLoading] = useState<Record<string, boolean>>({});
   const [aiMenuOpenField, setAiMenuOpenField] = useState<string | null>(null);
   const [aiUndoByField, setAiUndoByField] = useState<Record<string, string>>({});
@@ -3665,14 +3669,8 @@ Use userId only from this list:
     () => linkedItems.filter((item) => item.type === 'task' || item.type === 'decision'),
     [linkedItems]
   );
-  const canExpandDescription = useMemo(
-    () => description.length > 260 || description.split('\n').length > 5,
-    [description]
-  );
-  const canExpandContext = useMemo(
-    () => contextDetails.length > 220 || contextDetails.split('\n').length > 4,
-    [contextDetails]
-  );
+  // `canExpandDescription` / `canExpandContext` (progi „czy pokazać Pokaż więcej")
+  // usunięte razem z samym przełącznikiem — patrz komentarz przy stanie wyżej.
   const quickProArguments = useMemo(
     () => [
       t('decisions.detail.quickArgs.proLowerCost', 'Lower cost'),
@@ -5782,15 +5780,30 @@ Use userId only from this list:
                                 )}
                               </div>
 
-                              {/* 2) Decision scope */}
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                              {/* 2) Decision scope
+                                  n-Type §6.2/§6.3: auto-fit zamiast pary
+                                  „stały `rows` + Pokaż więcej/mniej + gradient".
+                                  Tamta para UKRYWAŁA treść (gradient nakładał się
+                                  na ostatnie linie), a standard wymaga, by cała
+                                  treść była widoczna bez wewnętrznego scrolla. */}
+                              <AutoFitTextarea
+                                value={description}
+                                onValueChange={(v) => {
+                                  setDescription(v);
+                                  markCardEdited('description');
+                                }}
+                                previewMode={isDecisionStageLocked}
+                                minRows={6}
+                                containerClassName="space-y-2"
+                                label={
+                                  <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                                     {t(
                                       'decisions.detail.scope.decisionScopeLabel',
                                       'Decision scope'
                                     )}
-                                  </label>
+                                  </span>
+                                }
+                                aiSlot={
                                   <AIFieldEnhancer
                                     fieldKey="n-description"
                                     sectionLabel="Decision Scope"
@@ -5799,56 +5812,35 @@ Use userId only from this list:
                                     artifactContext={{ title, status, priority, type: 'decision' }}
                                     disabled={isDecisionStageLocked}
                                   />
-                                </div>
-                                <div className="relative">
-                                  <textarea
-                                    value={description}
-                                    onChange={(e) => {
-                                      if (isDecisionStageLocked) return;
-                                      setDescription(e.target.value);
-                                      markCardEdited('description');
-                                    }}
-                                    readOnly={isDecisionStageLocked}
-                                    rows={isDescriptionExpanded ? 10 : 6}
-                                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
-                                    placeholder={t(
-                                      'decisions.detail.scope.descriptionPlaceholder',
-                                      'Describe the decision scope (what exactly is being decided)...'
-                                    )}
-                                  />
-                                  {!isDescriptionExpanded && canExpandDescription && (
-                                    <div className="pointer-events-none absolute bottom-7 left-0 right-0 h-10 bg-gradient-to-t from-white/90 to-transparent dark:from-navy-900/90" />
-                                  )}
-                                </div>
-                                {canExpandDescription && (
-                                  <button
-                                    onClick={() => setIsDescriptionExpanded((prev) => !prev)}
-                                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                                  >
-                                    {isDescriptionExpanded ? (
-                                      <>
-                                        <ChevronsUpDown size={12} />
-                                        {t('decisions.detail.scope.seeLess', 'See less')}
-                                      </>
-                                    ) : (
-                                      <>
-                                        <ChevronsUpDown size={12} />
-                                        {t('decisions.detail.scope.seeMore', 'See more')}
-                                      </>
-                                    )}
-                                  </button>
+                                }
+                                autoFitLabel={t(
+                                  'decisions.detail.field.backToAutoFit',
+                                  'Back to auto-fit'
                                 )}
-                              </div>
+                                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600"
+                                editClassName="border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
+                                placeholder={t(
+                                  'decisions.detail.scope.descriptionPlaceholder',
+                                  'Describe the decision scope (what exactly is being decided)...'
+                                )}
+                              />
 
                               {/* 3) Additional context */}
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                              <AutoFitTextarea
+                                value={contextDetails}
+                                onValueChange={setContextDetails}
+                                previewMode={isDecisionStageLocked}
+                                minRows={5}
+                                containerClassName="space-y-2"
+                                label={
+                                  <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                                     {t(
                                       'decisions.detail.scope.additionalContext',
                                       'Additional context'
                                     )}
-                                  </label>
+                                  </span>
+                                }
+                                aiSlot={
                                   <AIFieldEnhancer
                                     fieldKey="n-context"
                                     sectionLabel="Additional Context"
@@ -5857,44 +5849,18 @@ Use userId only from this list:
                                     artifactContext={{ title, status, priority, type: 'decision' }}
                                     disabled={isDecisionStageLocked}
                                   />
-                                </div>
-                                <div className="relative">
-                                  <textarea
-                                    value={contextDetails}
-                                    onChange={(e) =>
-                                      !isDecisionStageLocked && setContextDetails(e.target.value)
-                                    }
-                                    readOnly={isDecisionStageLocked}
-                                    rows={isContextExpanded ? 8 : 5}
-                                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
-                                    placeholder={t(
-                                      'decisions.detail.scope.contextPlaceholder',
-                                      'Additional explanation, assumptions, constraints (optional)...'
-                                    )}
-                                  />
-                                  {!isContextExpanded && canExpandContext && (
-                                    <div className="pointer-events-none absolute bottom-7 left-0 right-0 h-10 bg-gradient-to-t from-white/90 to-transparent dark:from-navy-900/90" />
-                                  )}
-                                </div>
-                                {canExpandContext && (
-                                  <button
-                                    onClick={() => setIsContextExpanded((prev) => !prev)}
-                                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                                  >
-                                    {isContextExpanded ? (
-                                      <>
-                                        <ChevronsUpDown size={12} />
-                                        {t('decisions.detail.scope.seeLess', 'See less')}
-                                      </>
-                                    ) : (
-                                      <>
-                                        <ChevronsUpDown size={12} />
-                                        {t('decisions.detail.scope.seeMore', 'See more')}
-                                      </>
-                                    )}
-                                  </button>
+                                }
+                                autoFitLabel={t(
+                                  'decisions.detail.field.backToAutoFit',
+                                  'Back to auto-fit'
                                 )}
-                              </div>
+                                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600"
+                                editClassName="border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
+                                placeholder={t(
+                                  'decisions.detail.scope.contextPlaceholder',
+                                  'Additional explanation, assumptions, constraints (optional)...'
+                                )}
+                              />
                             </div>
                           </NModeCardState>
                         )}
@@ -6000,35 +5966,47 @@ Use userId only from this list:
                                           </button>
                                         </div>
                                       </div>
-                                      <textarea
-                                        value={alt.description}
-                                        onChange={(e) =>
-                                          updateAlternative(alt.id, { description: e.target.value })
+                                      {/* n-Type §6.2: AI wędruje SPOD pola do jego
+                                          PRAWEGO GÓRNEGO ROGU — jedna pozycja we
+                                          wszystkich polach karty. Pole dostaje
+                                          auto-fit i uchwyt (było `resize-none`
+                                          + `rows=2`, czyli opis ucinany bez
+                                          jakiegokolwiek sposobu na podejrzenie). */}
+                                      <AutoFitTextarea
+                                        value={alt.description || ''}
+                                        onValueChange={(v) =>
+                                          updateAlternative(alt.id, { description: v })
                                         }
-                                        rows={2}
-                                        className="w-full text-xs bg-transparent text-slate-500 dark:text-slate-400 focus:outline-none placeholder-slate-300 dark:placeholder-slate-600 resize-none leading-relaxed"
+                                        previewMode={isDecisionStageLocked}
+                                        minRows={2}
+                                        autoFitLabel={t(
+                                          'decisions.detail.field.backToAutoFit',
+                                          'Back to auto-fit'
+                                        )}
+                                        className="w-full text-xs bg-transparent text-slate-500 dark:text-slate-400 focus:outline-none placeholder-slate-300 dark:placeholder-slate-600 leading-relaxed"
+                                        editClassName="focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
                                         placeholder={t(
                                           'decisions.detail.options.descriptionPlaceholder',
                                           'Description...'
                                         )}
+                                        aiSlot={
+                                          <AIFieldEnhancer
+                                            fieldKey={`n-alt-${alt.id}`}
+                                            sectionLabel={`Option: ${alt.title || 'Option description'}`}
+                                            currentValue={alt.description || ''}
+                                            onApply={(value) =>
+                                              updateAlternative(alt.id, { description: value })
+                                            }
+                                            artifactContext={{
+                                              title,
+                                              status,
+                                              priority,
+                                              type: 'decision',
+                                            }}
+                                            disabled={isDecisionStageLocked}
+                                          />
+                                        }
                                       />
-                                      <div className="mt-1 flex justify-end gap-2">
-                                        <AIFieldEnhancer
-                                          fieldKey={`n-alt-${alt.id}`}
-                                          sectionLabel={`Option: ${alt.title || 'Option description'}`}
-                                          currentValue={alt.description || ''}
-                                          onApply={(value) =>
-                                            updateAlternative(alt.id, { description: value })
-                                          }
-                                          artifactContext={{
-                                            title,
-                                            status,
-                                            priority,
-                                            type: 'decision',
-                                          }}
-                                          disabled={isDecisionStageLocked}
-                                        />
-                                      </div>
                                       {/* Inline pros/cons */}
                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 text-[11px]">
                                         <div className="space-y-1.5">
@@ -6349,21 +6327,54 @@ Use userId only from this list:
                                             key={`${scenarioKey}-${timelineKey}`}
                                             className="rounded-lg border border-slate-200 dark:border-navy-700/50 bg-white/30 dark:bg-navy-900/25 p-2"
                                           >
-                                            <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                                              {timelineLabel}
-                                            </p>
-                                            <textarea
+                                            {/* n-Type §6.2: komórka scenariusza to też
+                                                opisowe pole tekstowe — dostaje AI w
+                                                prawym górnym rogu (dotąd JEDYNE pole
+                                                karty całkiem bez AI) i auto-fit. */}
+                                            <AutoFitTextarea
                                               value={scenario[timelineKey]}
-                                              onChange={(e) =>
+                                              onValueChange={(v) =>
                                                 updateConsequenceScenarioCell(
                                                   scenarioKey,
                                                   timelineKey,
-                                                  e.target.value
+                                                  v
                                                 )
                                               }
-                                              readOnly={isDecisionStageLocked}
-                                              rows={4}
-                                              className="w-full min-h-[92px] bg-transparent text-xs leading-relaxed text-slate-600 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y"
+                                              previewMode={isDecisionStageLocked}
+                                              minRows={4}
+                                              label={
+                                                <span className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                                  {timelineLabel}
+                                                </span>
+                                              }
+                                              aiSlot={
+                                                <AIFieldEnhancer
+                                                  fieldKey={`n-consequence-${scenarioKey}-${timelineKey}`}
+                                                  sectionLabel={`Consequence scenario ${label} — ${timelineLabel}`}
+                                                  currentValue={scenario[timelineKey] || ''}
+                                                  onApply={(v) =>
+                                                    updateConsequenceScenarioCell(
+                                                      scenarioKey,
+                                                      timelineKey,
+                                                      v
+                                                    )
+                                                  }
+                                                  artifactContext={{
+                                                    title,
+                                                    status,
+                                                    priority,
+                                                    type: 'decision',
+                                                  }}
+                                                  disabled={isDecisionStageLocked}
+                                                  iconOnly
+                                                />
+                                              }
+                                              autoFitLabel={t(
+                                                'decisions.detail.field.backToAutoFit',
+                                                'Back to auto-fit'
+                                              )}
+                                              className="w-full bg-transparent text-xs leading-relaxed text-slate-600 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600"
+                                              editClassName="focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
                                             />
                                           </div>
                                         ))}
@@ -6373,32 +6384,38 @@ Use userId only from this list:
                                 })}
                               </div>
                               <div className="pl-4 border-l-2 border-amber-400 dark:border-amber-500/60">
-                                <div className="mb-2 flex items-center justify-between">
-                                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                                    {t(
-                                      'decisions.detail.consequencesSection.decisionNote',
-                                      'Decision note'
-                                    )}
-                                  </label>
-                                  <AIFieldEnhancer
-                                    fieldKey="n-rationale-note"
-                                    sectionLabel="Consequences of Inaction"
-                                    currentValue={rationale}
-                                    onApply={setRationale}
-                                    artifactContext={{ title, status, priority, type: 'decision' }}
-                                    disabled={isDecisionStageLocked}
-                                  />
-                                </div>
-                                <textarea
+                                <AutoFitTextarea
                                   value={rationale}
-                                  onChange={(e) => {
-                                    if (isDecisionStageLocked) return;
-                                    setRationale(e.target.value);
+                                  onValueChange={(v) => {
+                                    setRationale(v);
                                     markCardEdited('consequences');
                                   }}
-                                  readOnly={isDecisionStageLocked}
-                                  rows={5}
-                                  className="w-full min-h-[120px] px-0 py-1 bg-transparent text-sm text-slate-700 dark:text-slate-300 focus:outline-none placeholder-amber-400/50 dark:placeholder-amber-600/40 resize-y leading-relaxed"
+                                  previewMode={isDecisionStageLocked}
+                                  minRows={5}
+                                  label={
+                                    <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                      {t(
+                                        'decisions.detail.consequencesSection.decisionNote',
+                                        'Decision note'
+                                      )}
+                                    </span>
+                                  }
+                                  aiSlot={
+                                    <AIFieldEnhancer
+                                      fieldKey="n-rationale-note"
+                                      sectionLabel="Consequences of Inaction"
+                                      currentValue={rationale}
+                                      onApply={setRationale}
+                                      artifactContext={{ title, status, priority, type: 'decision' }}
+                                      disabled={isDecisionStageLocked}
+                                    />
+                                  }
+                                  autoFitLabel={t(
+                                    'decisions.detail.field.backToAutoFit',
+                                    'Back to auto-fit'
+                                  )}
+                                  className="w-full px-0 py-1 bg-transparent text-sm text-slate-700 dark:text-slate-300 focus:outline-none placeholder-amber-400/50 dark:placeholder-amber-600/40 leading-relaxed"
+                                  editClassName="focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
                                   placeholder={t(
                                     'decisions.detail.consequencesSection.notePlaceholder',
                                     'What happens if the decision is not made?'

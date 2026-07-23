@@ -23528,6 +23528,9 @@
       },
       "toolbar": {
         "moreActions": "More actions"
+      },
+      "field": {
+        "backToAutoFit": "Back to auto-fit"
       }
     }
   },
