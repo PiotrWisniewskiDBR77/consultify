@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 
 import TeresaMark from '../../shared/TeresaMark';
 import { type ProcessFlowSemanticKit } from '../canvas/canvasOsContract';
+import { FOCUS_RING } from '../canvas/motionTokens';
 import { type FlowShape, SHAPE_CONFIG } from './FlowNodeComponent';
 
 // M07 F2: useProcessFlowAIProposal / AIProposalPanel now consume the real
@@ -174,14 +175,11 @@ export interface ProcessFlowToolbarProps {
 // Hover uses c-surface (deeper) because the buttons now sit directly on the
 // raised toolbar bar — the old cards (bg-c-surface) are gone, so a raised hover
 // would be invisible.
-const BTN =
-  'inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface transition-colors disabled:opacity-40';
+const BTN = `inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface transition-colors disabled:opacity-40 ${FOCUS_RING}`;
 
-const OVERFLOW_ITEM =
-  'flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-40';
+const OVERFLOW_ITEM = `flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-40 ${FOCUS_RING}`;
 
-const MENU_HEADER =
-  'px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-c-text-muted';
+const MENU_HEADER = 'px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-c-text-muted';
 
 export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   isPl,
@@ -276,7 +274,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                     onClick={() => setFlowMode(mode)}
                     title={tooltip}
                     aria-label={tooltip}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${FOCUS_RING} ${
                       flowMode === mode
                         ? 'bg-c-surface-raised text-c-text shadow-sm'
                         : 'text-c-text-muted hover:text-c-text-secondary'
@@ -391,7 +389,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
             type="button"
             onClick={undo}
             disabled={!canUndo || locked}
-            className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface transition-colors disabled:opacity-30"
+            className={`inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface transition-colors disabled:opacity-30 ${FOCUS_RING}`}
             title={t('processFlow.toolbar.undoTitle', 'Undo (Ctrl+Z)')}
             aria-label={t('processFlow.toolbar.undo', 'Undo')}
           >
@@ -401,7 +399,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
             type="button"
             onClick={redo}
             disabled={!canRedo || locked}
-            className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface transition-colors disabled:opacity-30"
+            className={`inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface transition-colors disabled:opacity-30 ${FOCUS_RING}`}
             title={t('processFlow.toolbar.redoTitle', 'Redo (Ctrl+Shift+Z)')}
             aria-label={t('processFlow.toolbar.redo', 'Redo')}
           >
@@ -422,7 +420,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 type="button"
                 onClick={handleSave}
                 disabled={saving || locked}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${FOCUS_RING} ${
                   saving || locked
                     ? 'bg-c-surface-raised text-c-text-muted'
                     : 'bg-c-text text-c-surface hover:brightness-110'
@@ -630,9 +628,15 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                           'pf_convert_initiative',
                           t('processFlow.toolbar.convertInitiative', 'Initiative'),
                         ],
-                        ['pf_convert_task_set', t('processFlow.toolbar.convertTaskSet', 'Task set')],
+                        [
+                          'pf_convert_task_set',
+                          t('processFlow.toolbar.convertTaskSet', 'Task set'),
+                        ],
                         ['pf_convert_report', t('processFlow.toolbar.convertReport', 'Report')],
-                        ['pf_convert_analysis', t('processFlow.toolbar.convertAnalysis', 'Analysis')],
+                        [
+                          'pf_convert_analysis',
+                          t('processFlow.toolbar.convertAnalysis', 'Analysis'),
+                        ],
                       ] as [string, string][]
                     ).map(([action, label]) => (
                       <button

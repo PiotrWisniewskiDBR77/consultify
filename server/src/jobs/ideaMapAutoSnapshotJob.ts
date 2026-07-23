@@ -191,6 +191,7 @@ async function runInner(options: {
             m.organization_id AS "organizationId",
             m.nodes_json AS "nodesJson",
             m.edges_json AS "edgesJson",
+            m.extensions_json AS "extensionsJson",
             m.updated_at AS "updatedAt",
             (SELECT MAX(s.created_at)
                FROM my_idea_map_snapshots s
@@ -209,6 +210,7 @@ async function runInner(options: {
     try {
       const nodes = parseMaybeJson<unknown[]>(r.nodesJson, []);
       const edges = parseMaybeJson<unknown[]>(r.edgesJson, []);
+      const extensions = parseMaybeJson<Record<string, unknown>>(r.extensionsJson, {});
       const nodeCount = Array.isArray(nodes) ? nodes.length : 0;
       const edgeCount = Array.isArray(edges) ? edges.length : 0;
 
@@ -235,6 +237,7 @@ async function runInner(options: {
         label: AUTO_SNAPSHOT_LABEL,
         nodes: Array.isArray(nodes) ? nodes : [],
         edges: Array.isArray(edges) ? edges : [],
+        extensions: extensions && typeof extensions === 'object' ? extensions : null,
       });
       result.snapshotted++;
 

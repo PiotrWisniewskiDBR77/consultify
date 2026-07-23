@@ -28,6 +28,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import { FOCUS_RING } from '../canvas/motionTokens';
 import type {
   CanvasToolType,
   IdeaWorkspaceSelection,
@@ -338,19 +339,27 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const [openPopover, setOpenPopover] = useState<PopoverId>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
-  // UI-L1: track the canvas container's left edge so the portaled rail floats on the
-  // canvas — not on the app sidebar. Falls back to viewport edge when no ref is given.
-  const [railLeftPx, setRailLeftPx] = useState<number | null>(null);
+  // UI-L1: track the canvas container's box so the portaled rail floats INSIDE the
+  // canvas — not on the app sidebar (x) and not over Menu 1 / Menu 3 (y).
+  // Falls back to viewport centering when no ref is given (legacy chrome path).
+  const [railBox, setRailBox] = useState<{ left: number; top: number; height: number } | null>(
+    null
+  );
   useEffect(() => {
     const el = canvasContainerRef?.current;
     if (!el || typeof window === 'undefined') {
-      setRailLeftPx(null);
+      setRailBox(null);
       return;
     }
     const measure = () => {
-      const rect = el.getBoundingClientRect();
-      // +12px inset (Tailwind left-3) from the canvas's own left edge.
-      setRailLeftPx(rect.left + 12);
+      // In the EditorShell (mels) path the passed container also wraps Menu 1 /
+      // Menu 3, so measuring it puts the rail ABOVE the bars. Prefer the real
+      // canvas band when the shell is mounted; fall back to the legacy container.
+      const shellCanvas = document.querySelector('[data-testid="mels-canvas"]');
+      const rect = (shellCanvas ?? el).getBoundingClientRect();
+      // +12px inset (Tailwind left-3) from the canvas's own left edge; top/height
+      // bound the rail to the canvas band so it never rides over the shell bars.
+      setRailBox({ left: rect.left + 12, top: rect.top, height: rect.height });
     };
     measure();
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
@@ -415,7 +424,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
             onClick={handlePointerToggle}
             title={pointerTooltip}
             aria-label={pointerTooltip}
-            className="flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text"
+            className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text ${FOCUS_RING}`}
           >
             <PointerIcon size={15} />
           </button>
@@ -451,7 +460,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           }}
           title={slotTitle}
           aria-label={slotTitle}
-          className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
+          className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${FOCUS_RING} ${
             isActive
               ? 'bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text'
               : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
@@ -515,10 +524,24 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const toolbarNode = (
     <div
       ref={toolbarRef}
-      className={`fixed top-1/2 -translate-y-1/2 z-context-menu pointer-events-auto flex flex-col items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter${
-        railLeftPx == null ? ' left-3' : ''
+      className={`fixed z-context-menu pointer-events-auto flex flex-col items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter overflow-y-auto overflow-x-hidden${
+        railBox == null ? ' top-1/2 -translate-y-1/2 left-3' : ''
       }`}
-      style={railLeftPx == null ? undefined : { left: `${railLeftPx}px` }}
+      style={
+        railBox == null
+          ? undefined
+          : {
+              left: `${railBox.left}px`,
+              // Anchor to the TOP of the canvas band (Miro-style) instead of
+              // centring on the viewport. The rail can be taller than the canvas
+              // (many tools), so centring always spilled upward over Menu 1 /
+              // Menu 3 and clipped their first characters. Top-anchoring makes
+              // the overlap structurally impossible; the overflow scrolls.
+              top: `${railBox.top + 12}px`,
+              transform: 'none',
+              maxHeight: `${Math.max(160, railBox.height - 24)}px`,
+            }
+      }
     >
       {/* #6a: canvas tool switcher (RAIL zone) — relocated from the top-right
           IdeaWorkspaceToolbar widget. Same icons/tooltips (TOOL_CONFIG),
@@ -538,7 +561,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
                   onClick={() => onToolChange(tool.id)}
                   title={label}
                   aria-label={label}
-                  className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
+                  className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${FOCUS_RING} ${
                     isActive
                       ? 'bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text'
                       : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
@@ -579,7 +602,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
               disabled={isDisabled}
               title={t(slot.tkey, slot.labelEn)}
               aria-label={t(slot.tkey, slot.labelEn)}
-              className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
+              className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${FOCUS_RING} ${
                 isDisabled
                   ? 'opacity-40 cursor-not-allowed text-c-text-secondary dark:text-c-text-muted'
                   : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'

@@ -114,11 +114,14 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
   // message edges, 'dashed' forces it on for sequence/conditional edges.
   const strokeStyleOverride = data?.strokeStyleOverride as 'solid' | 'dashed' | undefined;
   const isDashed = strokeStyleOverride ? strokeStyleOverride === 'dashed' : isMessage;
-  // #6p: arrow direction (none/start/end/both) — rendered via per-edge SVG
-  // markers below. Default 'none' keeps every existing flow byte-identical
-  // (no flow has ever had arrowheads) until a user opts in via the popover.
+  // #6p/F8: arrow direction (none/start/end/both) — rendered via per-edge SVG
+  // markers below. Default 'end' (Lucidchart-parity: flow direction must read
+  // at a glance without opening the popover). Edges only stay arrow-less when
+  // the user explicitly picks "None" in the popover (data.arrowDirection ===
+  // 'none' is then persisted and respected) — unset/legacy edges (no field at
+  // all) pick up the new default automatically.
   const arrowDirection =
-    (data?.arrowDirection as 'none' | 'start' | 'end' | 'both' | undefined) ?? 'none';
+    (data?.arrowDirection as 'none' | 'start' | 'end' | 'both' | undefined) ?? 'end';
   const showEndArrow = arrowDirection === 'end' || arrowDirection === 'both';
   const showStartArrow = arrowDirection === 'start' || arrowDirection === 'both';
   const markerColor = edgeStroke || EDGE_NEUTRAL_STROKE;

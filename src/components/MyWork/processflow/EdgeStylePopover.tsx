@@ -97,8 +97,11 @@ export const EdgeStylePopover: React.FC<EdgeStylePopoverProps> = ({
   const currentColor = (edge.data?.edgeColor as string | undefined) ?? null;
   const currentStyle: EdgeStrokeStyle =
     edge.data?.strokeStyleOverride === 'dashed' ? 'dashed' : 'solid';
+  // F8: keep the popover's "current" selection in sync with the component's
+  // actual default (see FlowEdgeComponent) — unset edges now render an end
+  // arrow, so the popover must show "End" as selected, not "None".
   const currentArrow: EdgeArrowDirection =
-    (edge.data?.arrowDirection as EdgeArrowDirection | undefined) ?? 'none';
+    (edge.data?.arrowDirection as EdgeArrowDirection | undefined) ?? 'end';
 
   // Clamp so the popover doesn't render off the right/bottom edge of the viewport.
   const left = typeof window !== 'undefined' ? Math.min(x, window.innerWidth - 240) : x;

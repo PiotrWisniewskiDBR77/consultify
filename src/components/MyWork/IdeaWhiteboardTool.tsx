@@ -470,6 +470,11 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
           externalOnContextMenu?.(event);
         }}
         {...getIdeasToolInteractionProps('whiteboard', { locked })}
+        // Fala 8: connectionMode="loose" already comes from
+        // getIdeasToolInteractionProps (spread above); connectionRadius widens
+        // the drop-snap zone around each 4-side handle (parity with Process
+        // Flow's IdeaProcessFlowTool, same magnetic-connector feel).
+        connectionRadius={40}
         deleteKeyCode={null}
         fitView
         className="bg-c-surface-raised"
@@ -2227,6 +2232,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   const { deleteSelected, duplicateSelected, groupSelected, ungroupSelected, distributeNodes } =
     useWhiteboardNodes({
       nodes,
+      edges,
       setNodes,
       setEdges,
       locked: locked || false,
