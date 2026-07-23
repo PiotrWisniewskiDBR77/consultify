@@ -101,31 +101,49 @@ export default function PanelUwag({ ekran }: { ekran: string }): React.ReactElem
     </button>
   );
 
+  const stylPigulki: React.CSSProperties = {
+    padding: '10px 15px',
+    borderRadius: 999,
+    border: 'none',
+    background: KOLOR.tlo,
+    color: KOLOR.tekst,
+    fontSize: 13.5,
+    fontWeight: 600,
+    cursor: 'pointer',
+    boxShadow: '0 4px 14px rgba(0,0,0,.35)',
+    fontFamily: 'system-ui, -apple-system, sans-serif',
+    textDecoration: 'none',
+    display: 'inline-block',
+  };
+
+  // Powrót do listy obiektów. Uwagi lecą na dysk przy każdym dodaniu, więc
+  // wyjście z ekranu (ani odświeżenie) niczego nie gubi.
+  const powrot = (
+    <a href="/odbior.html" style={{ ...stylPigulki, background: '#334155' }} title="Wróć do listy obiektów">
+      ← Lista
+    </a>
+  );
+
   if (!otwarty) {
     const ile = zapis.uwagi.length;
     return (
-      <button
-        onClick={() => setOtwarty(true)}
+      <div
         style={{
           position: 'fixed',
           right: 16,
           bottom: 16,
           zIndex: 2147483000,
-          padding: '10px 15px',
-          borderRadius: 999,
-          border: 'none',
-          background: KOLOR.tlo,
-          color: KOLOR.tekst,
-          fontSize: 13.5,
-          fontWeight: 600,
-          cursor: 'pointer',
-          boxShadow: '0 4px 14px rgba(0,0,0,.35)',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
+          display: 'flex',
+          gap: 8,
+          alignItems: 'center',
         }}
       >
-        Uwagi{ile ? ` · ${ile}` : ''}
-        {zapis.werdykt ? ` · ${zapis.werdykt}` : ''}
-      </button>
+        {powrot}
+        <button onClick={() => setOtwarty(true)} style={stylPigulki}>
+          Uwagi{ile ? ` · ${ile}` : ''}
+          {zapis.werdykt ? ` · ${zapis.werdykt}` : ''}
+        </button>
+      </div>
     );
   }
 
@@ -161,6 +179,19 @@ export default function PanelUwag({ ekran }: { ekran: string }): React.ReactElem
         <strong style={{ fontSize: 13.5 }}>
           Uwagi do ekranu{zapis.uwagi.length ? ` (${zapis.uwagi.length})` : ''}
         </strong>
+        <a
+          href="/odbior.html"
+          style={{
+            marginLeft: 'auto',
+            marginRight: 10,
+            color: KOLOR.tekstMuted,
+            fontSize: 12.5,
+            textDecoration: 'none',
+          }}
+          title="Wróć do listy obiektów"
+        >
+          ← Lista
+        </a>
         <button
           onClick={() => setOtwarty(false)}
           style={{
@@ -273,7 +304,7 @@ export default function PanelUwag({ ekran }: { ekran: string }): React.ReactElem
           </button>
           <span style={{ color: KOLOR.tekstMuted, fontSize: 11.5 }}>
             {stan || (zapis.uwagi.length
-              ? `${zapis.uwagi.length} ${zapis.uwagi.length === 1 ? 'uwaga' : 'uwagi'} · Cmd+Enter dodaje`
+              ? `${zapis.uwagi.length} ${zapis.uwagi.length === 1 ? 'uwaga' : 'uwagi'} · zapisane na dysku`
               : 'Cmd+Enter dodaje')}
           </span>
         </div>
