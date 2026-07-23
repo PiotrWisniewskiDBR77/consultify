@@ -33,6 +33,15 @@
  * unconditionally), never blocks download.
  *
  * Styling: c-* tokens only, zero crimson (neutral CTA = bg-c-text; focus = c-focus).
+ *
+ * Saved parameter sets (2026-07-23): a real step of AUTHORSHIP — configuring a
+ * template's params (sometimes a dozen fields) is repeated work across builds,
+ * so the form now lets the user save the current values as a named preset and
+ * reload it later. There is no backend preset mechanism for workbook templates
+ * (checked server/src/routes/workbook.routes.ts — only /templates + /templates/:id/build
+ * exist), so this is FE-only, localStorage-backed per templateId — see
+ * `src/utils/exceleTemplatePresets.ts`. Zero backend risk, purely additive,
+ * no new flag (same ff_excele-gated surface).
  */
 
 import {
@@ -44,12 +53,21 @@ import {
   CheckCircle2,
   Sparkles,
   AlertTriangle,
+  Bookmark,
+  BookmarkPlus,
+  Trash2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { API_URL } from '@/services/api';
 import { Api } from '@/services/api';
+import {
+  deleteTemplatePreset,
+  readTemplatePresets,
+  saveTemplatePreset,
+  type ExceleTemplatePreset,
+} from '@/utils/exceleTemplatePresets';
 import { buildWorkbookGridSheets, isFormulaDisplayValue } from '@/utils/workbookGridPreview';
 import type { WorkbookGridSheet } from '@/utils/workbookGridPreview';
 
@@ -137,6 +155,12 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
   // for every template build — expandable list of issues, collapsed by default.
   const [showQualityIssues, setShowQualityIssues] = useState(false);
 
+  // Saved parameter sets (2026-07-23): localStorage-backed per templateId —
+  // see src/utils/exceleTemplatePresets.ts. FE-only, no backend involved.
+  const [presets, setPresets] = useState<ExceleTemplatePreset[]>([]);
+  const [savingPresetOpen, setSavingPresetOpen] = useState(false);
+  const [presetName, setPresetName] = useState('');
+
   const t = useCallback(
     (pl: string, en: string) => (isPolish ? pl : en),
     [isPolish]
@@ -175,6 +199,9 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
     setGridError(null);
     setGridLoading(false);
     setShowQualityIssues(false);
+    setPresets(readTemplatePresets(tpl.id));
+    setSavingPresetOpen(false);
+    setPresetName('');
     setSelected(tpl);
   }, []);
 
@@ -200,6 +227,34 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
       return { ...prev, [name]: raw };
     });
   }, []);
+
+  const handleSavePreset = useCallback(() => {
+    if (!selected) return;
+    const name = presetName.trim();
+    if (!name) return;
+    const updated = saveTemplatePreset(selected.id, name, values);
+    setPresets(updated);
+    setPresetName('');
+    setSavingPresetOpen(false);
+    toast.success(t('Zapisano zestaw parametrów', 'Parameter set saved'));
+  }, [selected, presetName, values, t]);
+
+  const handleLoadPreset = useCallback((preset: ExceleTemplatePreset) => {
+    setValues({ ...preset.values });
+    toast.success(
+      t(`Wczytano zestaw „${preset.name}"`, `Loaded parameter set "${preset.name}"`)
+    );
+  }, [t]);
+
+  const handleDeletePreset = useCallback(
+    (preset: ExceleTemplatePreset, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!selected) return;
+      const updated = deleteTemplatePreset(selected.id, preset.id);
+      setPresets(updated);
+    },
+    [selected]
+  );
 
   const handleBuild = useCallback(async () => {
     if (!selected) return;
@@ -536,6 +591,43 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
           </div>
         ) : (
           <>
+            {presets.length > 0 && (
+              <div className="mb-5">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-2">
+                  {t('Zapisane zestawy', 'Saved sets')}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {presets.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => handleLoadPreset(preset)}
+                      title={t('Wczytaj ten zestaw parametrów', 'Load this parameter set')}
+                      className="group inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full border border-c-border-subtle bg-c-surface-raised text-xs font-medium text-c-text hover:border-c-border-strong transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                    >
+                      <Bookmark size={12} className="text-c-text-secondary shrink-0" />
+                      {preset.name}
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => handleDeletePreset(preset, e)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleDeletePreset(preset, e as unknown as React.MouseEvent);
+                          }
+                        }}
+                        title={t('Usuń zestaw', 'Delete set')}
+                        className="shrink-0 p-0.5 rounded-full text-c-text-muted hover:text-c-danger hover:bg-c-danger/10 transition-colors"
+                      >
+                        <Trash2 size={11} />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-5">
               {groups.map(({ group, params }) => (
                 <div key={group}>
@@ -581,7 +673,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
               ))}
             </div>
 
-            <div className="flex items-center gap-2 mt-5">
+            <div className="flex flex-wrap items-center gap-2 mt-5">
               <button
                 onClick={handleBuild}
                 disabled={building}
@@ -594,6 +686,53 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                 )}
                 {t('Zbuduj skoroszyt', 'Build workbook')}
               </button>
+
+              {!savingPresetOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setSavingPresetOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-c-border text-c-text-secondary text-xs font-medium hover:bg-c-surface-raised transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  <BookmarkPlus size={14} />
+                  {t('Zapisz zestaw parametrów', 'Save parameter set')}
+                </button>
+              ) : (
+                <div className="inline-flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    autoFocus
+                    value={presetName}
+                    onChange={(e) => setPresetName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSavePreset();
+                      if (e.key === 'Escape') {
+                        setSavingPresetOpen(false);
+                        setPresetName('');
+                      }
+                    }}
+                    placeholder={t('Nazwa zestawu…', 'Set name…')}
+                    className="px-2.5 py-1.5 rounded-lg border border-c-border bg-c-surface text-xs text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus w-40"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSavePreset}
+                    disabled={!presetName.trim()}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-c-text text-c-bg text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    {t('Zapisz', 'Save')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSavingPresetOpen(false);
+                      setPresetName('');
+                    }}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-c-border text-c-text-secondary text-xs font-medium hover:bg-c-surface-raised transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    {t('Anuluj', 'Cancel')}
+                  </button>
+                </div>
+              )}
             </div>
           </>
         )}
