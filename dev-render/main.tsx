@@ -22,6 +22,7 @@ import PanelUwag from './PanelUwag';
 
 // Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
 import i18n from '../src/i18n';
+import { useAppStore } from '../src/store/useAppStore';
 const AccentSoftTokenFixScreen = React.lazy(() => import('./screens/accent-soft-token-fix'));
 const AdminCommandCenterPanelScreen = React.lazy(() => import('./screens/admin-command-center-panel'));
 const AdminSsoSelfServiceCardScreen = React.lazy(() => import('./screens/admin-sso-self-service-card'));
@@ -468,6 +469,21 @@ const theme = params.get('theme') || 'light';
 // Apply theme via the app's `.dark` class strategy (tailwind darkMode:'class').
 const root = document.documentElement;
 root.classList.toggle('dark', theme === 'dark');
+
+// Ekrany montujące `AppProviders` mają własny ThemeSync, który czyta motyw ze
+// store (domyślnie 'system') i NADPISUJE klasę ustawioną powyżej — wtedy
+// `?theme=dark` dawał jasny ekran, gdy przeglądarka miała jasny motyw systemowy.
+// Ustawiamy więc motyw w store, żeby ThemeSync doszedł do tego samego wniosku.
+useAppStore.setState({ theme: theme === 'dark' ? 'dark' : 'light' });
+
+// Dodatkowy bezpiecznik: gdyby jakikolwiek provider zdjął klasę po zamontowaniu,
+// przywracamy ją. Harness ma pokazywać motyw z adresu, zawsze.
+new MutationObserver(() => {
+  const powinnaByc = theme === 'dark';
+  if (root.classList.contains('dark') !== powinnaByc) {
+    root.classList.toggle('dark', powinnaByc);
+  }
+}).observe(root, { attributes: true, attributeFilter: ['class'] });
 document.body.style.background = 'var(--c-bg)';
 
 // Apply language (component reads i18n.language for its inline pl/en copy).
