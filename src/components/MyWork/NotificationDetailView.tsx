@@ -50,6 +50,7 @@ import {
   type SuggestedChecklistItem,
 } from '@/components/Notifications/notificationContent';
 import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
+import { AutoFitTextarea } from '@/components/shared/AutoFitTextarea';
 import { Callout } from '@/components/shared/NModeBlocks';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import { LoadingState } from '@/components/ui/primitives';
@@ -1708,12 +1709,20 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 )}
               </div>
 
-              {/* 2) Description — click-to-edit with AI enhancer */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
+              {/* 2) Description — pole tekstowe standardu n-Type (§6.2/§6.3):
+                  auto-fit + ręczny resize z pamięcią + tryb Podgląd. */}
+              <AutoFitTextarea
+                value={descriptionDraft}
+                onValueChange={setDescriptionDraft}
+                previewMode={readMode}
+                minRows={3}
+                containerClassName="space-y-1.5"
+                label={
+                  <span className="text-[11px] uppercase tracking-wide text-c-text-muted">
                     {t('myWork.notificationDetail.description', 'Description')}
-                  </label>
+                  </span>
+                }
+                aiSlot={
                   <AIFieldEnhancer
                     fieldKey="notif-description"
                     sectionLabel={t('myWork.notificationDetail.sectionLabel', 'Description')}
@@ -1726,28 +1735,30 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       type: 'notification',
                     }}
                     iconOnly
-                    disabled={readMode}
                   />
-                </div>
-                <textarea
-                  value={descriptionDraft}
-                  onChange={(e) => setDescriptionDraft(e.target.value)}
-                  readOnly={readMode}
-                  rows={3}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[48px]"
-                  placeholder={t(
-                    'myWork.notificationDetail.whatHappenedDescribeThe',
-                    'What happened — describe the notification event...'
-                  )}
-                />
-              </div>
+                }
+                autoFitLabel={t('common.backToAutoFit', 'Back to auto-fit')}
+                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted"
+                editClassName="border-b border-c-border focus:border-c-focus focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
+                placeholder={t(
+                  'myWork.notificationDetail.whatHappenedDescribeThe',
+                  'What happened — describe the notification event...'
+                )}
+              />
 
-              {/* 3) Why it matters — with AI enhancer */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
+              {/* 3) Why it matters — pole tekstowe standardu n-Type (§6.2/§6.3). */}
+              <AutoFitTextarea
+                value={whyImportantDraft}
+                onValueChange={setWhyImportantDraft}
+                previewMode={readMode}
+                minRows={2}
+                containerClassName="space-y-1.5"
+                label={
+                  <span className="text-[11px] uppercase tracking-wide text-c-text-muted">
                     {t('myWork.notificationDetail.whyItMatters', 'Why it matters')}
-                  </label>
+                  </span>
+                }
+                aiSlot={
                   <AIFieldEnhancer
                     fieldKey="notif-why-important"
                     sectionLabel={t('myWork.notificationDetail.sectionLabel2', 'Why It Matters')}
@@ -1760,40 +1771,38 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       type: 'notification',
                     }}
                     iconOnly
-                    disabled={readMode}
                   />
-                </div>
-                <textarea
-                  value={whyImportantDraft}
-                  onChange={(e) => setWhyImportantDraft(e.target.value)}
-                  readOnly={readMode}
-                  rows={2}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[36px]"
+                }
+                autoFitLabel={t('common.backToAutoFit', 'Back to auto-fit')}
+                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted"
+                editClassName="border-b border-c-border focus:border-c-focus focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
+                placeholder={t(
+                  'myWork.notificationDetail.explainTheImpactAnd',
+                  'Explain the impact and consequences...'
+                )}
+              />
+
+              {/* 4) What is blocked — pole tekstowe standardu n-Type (§6.2/§6.3). */}
+              {blockedDraft.trim() && (
+                <AutoFitTextarea
+                  value={blockedDraft}
+                  onValueChange={setBlockedDraft}
+                  previewMode={readMode}
+                  minRows={2}
+                  containerClassName="space-y-1.5"
+                  label={
+                    <span className="text-[11px] uppercase tracking-wide text-c-text-muted">
+                      {t('myWork.notificationDetail.whatIsBlocked', 'What is blocked')}
+                    </span>
+                  }
+                  autoFitLabel={t('common.backToAutoFit', 'Back to auto-fit')}
+                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted"
+                  editClassName="border-b border-c-border focus:border-c-focus focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
                   placeholder={t(
-                    'myWork.notificationDetail.explainTheImpactAnd',
-                    'Explain the impact and consequences...'
+                    'myWork.notificationDetail.whatIsBlockedBy',
+                    'What is blocked by this issue...'
                   )}
                 />
-              </div>
-
-              {/* 4) What is blocked — compact */}
-              {blockedDraft.trim() && (
-                <div className="space-y-1.5">
-                  <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
-                    {t('myWork.notificationDetail.whatIsBlocked', 'What is blocked')}
-                  </label>
-                  <textarea
-                    value={blockedDraft}
-                    onChange={(e) => setBlockedDraft(e.target.value)}
-                    readOnly={readMode}
-                    rows={2}
-                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[36px]"
-                    placeholder={t(
-                      'myWork.notificationDetail.whatIsBlockedBy',
-                      'What is blocked by this issue...'
-                    )}
-                  />
-                </div>
               )}
 
               {/* 5) Why You Got It — subtle info line */}
@@ -1921,12 +1930,19 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 {t('myWork.notificationDetail.expectedAction', 'Expected Action')}
               </h2>
 
-              {/* Expected action text — label + AI right-aligned */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
+              {/* Expected action text — pole tekstowe standardu n-Type (§6.2/§6.3). */}
+              <AutoFitTextarea
+                value={expectedActionDraft}
+                onValueChange={setExpectedActionDraft}
+                previewMode={readMode}
+                minRows={2}
+                containerClassName="space-y-1.5"
+                label={
+                  <span className="text-[11px] uppercase tracking-wide text-c-text-muted">
                     {t('myWork.notificationDetail.whatNeedsToBe', 'What needs to be done')}
-                  </label>
+                  </span>
+                }
+                aiSlot={
                   <AIFieldEnhancer
                     fieldKey="notification-expected-action"
                     sectionLabel="Expected Action"
@@ -1939,18 +1955,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       type: 'notification',
                     }}
                     iconOnly
-                    disabled={readMode || !canExpectedActionAI}
+                    disabled={!canExpectedActionAI}
                   />
-                </div>
-                <textarea
-                  value={expectedActionDraft}
-                  onChange={(e) => setExpectedActionDraft(e.target.value)}
-                  readOnly={readMode}
-                  rows={2}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[36px]"
-                  placeholder={t('myWork.notificationDetail.placeholder', 'Expected action...')}
-                />
-              </div>
+                }
+                autoFitLabel={t('common.backToAutoFit', 'Back to auto-fit')}
+                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted"
+                editClassName="border-b border-c-border focus:border-c-focus focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
+                placeholder={t('myWork.notificationDetail.placeholder', 'Expected action...')}
+              />
 
               {/* Checklist — label + AI right-aligned, count below */}
               <div className="space-y-2">

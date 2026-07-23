@@ -1429,6 +1429,7 @@
     }
   },
   "common": {
+    "backToAutoFit": "Back to auto-fit",
     "more": "More",
     "save": "Save",
     "saving": "Saving...",
