@@ -26,6 +26,7 @@ export const IdeaToolIcon: React.FC<{ tool: CanvasToolType; label: string }> = (
       className="flex-shrink-0 inline-flex items-center text-c-text-muted"
       title={label}
       aria-label={label}
+      role="img"
       data-testid="idea-menu1-tool-icon"
     >
       <Icon size={16} aria-hidden="true" />

@@ -190,12 +190,14 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
                   <button
                     type="button"
                     className="text-danger-400 hover:text-danger-600 ml-1"
+                    title={t('processFlow.floatingToolbar.removeLink', 'Remove link')}
+                    aria-label={t('processFlow.floatingToolbar.removeLink', 'Remove link')}
                     onClick={() => {
                       const next = artifactLinks!.filter((_, i) => i !== idx);
                       onArtifactLinksChange(next);
                     }}
                   >
-                    <Trash2 size={10} />
+                    <Trash2 size={10} aria-hidden="true" />
                   </button>
                 </li>
               ))}

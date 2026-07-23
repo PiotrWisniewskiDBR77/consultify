@@ -1,11 +1,13 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { type NodeProps, NodeResizer } from 'reactflow';
 
 import { commentCountOf, CommentPinBadge } from './CommentPinBadge';
 import { useIsDark } from './whiteboardNodeHelpers';
 
 export const FrameNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
+  const { t } = useTranslation();
   const isDark = useIsDark();
   const commentCount = commentCountOf(data);
   const lightBg = data?.bgColor || 'rgba(241,245,249,0.6)';
@@ -58,12 +60,22 @@ export const FrameNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) =
             <button
               type="button"
               onClick={toggleCollapse}
+              title={
+                collapsed
+                  ? t('myWork.whiteboard.nodes.expandFrame', 'Expand section')
+                  : t('myWork.whiteboard.nodes.collapseFrame', 'Collapse section')
+              }
+              aria-label={
+                collapsed
+                  ? t('myWork.whiteboard.nodes.expandFrame', 'Expand section')
+                  : t('myWork.whiteboard.nodes.collapseFrame', 'Collapse section')
+              }
               className="flex items-center justify-center w-5 h-5 rounded hover:bg-c-surface-raised transition-colors shrink-0"
             >
               {collapsed ? (
-                <ChevronRight size={12} className="text-c-text-muted" />
+                <ChevronRight size={12} className="text-c-text-muted" aria-hidden="true" />
               ) : (
-                <ChevronDown size={12} className="text-c-text-muted" />
+                <ChevronDown size={12} className="text-c-text-muted" aria-hidden="true" />
               )}
             </button>
           )}
