@@ -320,6 +320,72 @@ class AgentPlannerService {
     );
   }
 
+  /**
+   * AGT-009 (partia 2): nadpisuje listę kroków planu, który jest jeszcze w
+   * statusie 'planning' — tzn. schemat zaproponowany przez generator, PRZED
+   * jawnym "Uruchom". Zapisuje przestawiony/edytowany schemat z canvasu
+   * (`AgentPlanCanvas.tsx`) do bazy (`ai_agent_plan_steps` + `plan_json`), tak
+   * by przeżył odświeżenie i był widoczny w sondzie HTTP.
+   *
+   * Guard TWARDY: tylko `planning`. Gdy plan już ruszył (executing/…/terminal),
+   * kroki są w toku albo wykonane i edycja nie ma sensu operacyjnego — rzuca.
+   * To domyka regułę rozdziału create/run: schemat edytowalny WYŁĄCZNIE zanim
+   * dispatch przeniesie plan poza `planning`.
+   *
+   * Wymiana jest kompletna (nie merge): usuwa wszystkie stare wiersze kroków i
+   * wstawia nowe z kolejnymi `step_index` w podanej kolejności, po czym
+   * synchronizuje `plan_json`/`total_steps` i zeruje licznik postępu. Requires-
+   * approval jest przeliczany z `SIDE_EFFECT_TOOLS` (jak w `createPlan`).
+   */
+  async replaceSteps(
+    planId: string,
+    steps: Array<{ toolName: string; toolInput: Record<string, unknown> }>
+  ): Promise<AgentPlan> {
+    const plan = await this.getPlan(planId);
+    if (!plan) throw new Error('Plan not found');
+    if (plan.status !== 'planning') {
+      throw new Error(`Plan not editable in status '${plan.status}' (only 'planning')`);
+    }
+
+    const newSteps: PlanStep[] = steps.map((s, i) => ({
+      id: randomUUID(),
+      stepIndex: i,
+      toolName: s.toolName,
+      toolInput: s.toolInput,
+      status: 'pending' as StepStatus,
+      requiresApproval: SIDE_EFFECT_TOOLS.has(s.toolName),
+    }));
+
+    await dbRun(`DELETE FROM ai_agent_plan_steps WHERE plan_id = ?`, [planId]);
+    for (const step of newSteps) {
+      await dbRun(
+        `INSERT INTO ai_agent_plan_steps
+          (id, plan_id, step_index, tool_name, tool_input_json, status,
+           requires_approval, created_at)
+         VALUES (?, ?, ?, ?, ?, 'pending', ?, datetime('now'))`,
+        [
+          step.id,
+          planId,
+          step.stepIndex,
+          step.toolName,
+          JSON.stringify(step.toolInput),
+          step.requiresApproval ? 1 : 0,
+        ]
+      );
+    }
+    await dbRun(
+      `UPDATE ai_agent_plans
+       SET plan_json = ?, total_steps = ?, completed_steps = 0, current_step_index = 0,
+           updated_at = datetime('now')
+       WHERE id = ?`,
+      [JSON.stringify(newSteps), newSteps.length, planId]
+    );
+
+    const updated = await this.getPlan(planId);
+    if (!updated) throw new Error('Plan disappeared after step replace');
+    return updated;
+  }
+
   async getPlan(planId: string): Promise<AgentPlan | null> {
     const row = (await dbGet(`SELECT * FROM ai_agent_plans WHERE id = ?`, [planId])) as any;
     if (!row) return null;
