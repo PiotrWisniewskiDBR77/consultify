@@ -945,6 +945,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       const task = await Api.getPersonalTask(id);
       setTitle(task.title || '');
       setDescription(task.description || '');
+      // R2/defekt #1 (2026-07-23): `expectedOutcome` NIE był mapowany przy
+      // wczytaniu — stan startował z useState('') i zapisywał go wyłącznie
+      // generator AI. Efekt: najlepszy blok falsyfikowalnych kryteriów akceptacji
+      // był niewidoczny (użytkownik widział placeholder mimo treści w bazie).
+      setExpectedOutcome(task.expectedOutcome || '');
       setStatus(task.status || 'todo');
       setPriority(normalizePriority(task.priority));
       setDueDate(task.dueDate ? task.dueDate.split('T')[0] : '');
@@ -992,6 +997,9 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         const baseline = {
           title: task.title || '',
           description: task.description || '',
+          // Musi siedzieć w baseline razem z polem w `persistedDraft` — inaczej
+          // pole wczyta się, ale jego edycja nie ruszy dirty-checka (brak zapisu).
+          expectedOutcome: task.expectedOutcome || '',
           status: task.status || 'todo',
           priority: normalizePriority(task.priority),
           // Z28: normalize empty dates to null to match the draft/payload snapshot
@@ -1063,6 +1071,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       const payload = {
         title,
         description,
+        expectedOutcome,
         status,
         priority,
         dueDate: dueDate || null,
@@ -1078,6 +1087,9 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       const personalPayload = {
         title,
         description,
+        // Bez tego pola PUT nie ma czego zapisać — „Oczekiwany rezultat"
+        // wczytywałby się, ale każda edycja ginęła po odświeżeniu.
+        expectedOutcome,
         status,
         priority,
         dueDate: dueDate || null,
@@ -4417,6 +4429,9 @@ Return ONLY the final comment text.`;
     () => ({
       title,
       description,
+      // Kolejność kluczy MUSI odpowiadać `baseline` w `loadTask` — porównanie
+      // idzie przez JSON.stringify, więc przestawienie pola = wieczny dirty.
+      expectedOutcome,
       status,
       priority,
       dueDate: dueDate || null,
@@ -4431,6 +4446,7 @@ Return ONLY the final comment text.`;
     [
       title,
       description,
+      expectedOutcome,
       status,
       priority,
       dueDate,
