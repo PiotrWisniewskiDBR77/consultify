@@ -24,13 +24,13 @@ const OUT = path.join(ROOT, 'dev-render/odbior.html');
  */
 const GRUPY = [
   {
-    tytul: 'Artefakty (karty N)',
-    opis: 'Siedem typów obiektów w My Work. Wspólna powłoka: nagłówek, lewy spis sekcji, ' +
+    tytul: 'Artefakty (karty N) — sześć typów',
+    opis: 'Sześć typów obiektów w My Work (Sesja wywiadu NIE jest kartą N — to narzędzie, ' +
+      'a moduł Interview ma własny model artefaktu). Wspólna powłoka: nagłówek, lewy spis sekcji, ' +
       'prawy panel (Akcje → Właściwości → Powiązania → Komentarze → Historia), kebab.',
     obiekty: [
       { nazwa: 'Decyzja', ekran: 'karta-decision' },
       { nazwa: 'Zadanie', ekran: 'karta-task' },
-      { nazwa: 'Sesja wywiadu', ekran: 'karta-interview' },
       { nazwa: 'Powiadomienie', ekran: 'karta-notification' },
       { nazwa: 'Insight', ekran: 'karta-insight' },
       { nazwa: 'Narzędzie', ekran: 'karta-tool' },

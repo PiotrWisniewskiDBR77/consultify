@@ -18,7 +18,6 @@ const BAZA = 'http://localhost:3000';
 const OBIEKTY = [
   ['Decyzja', 'karta-decision', 'artefakt'],
   ['Zadanie', 'karta-task', 'artefakt'],
-  ['Sesja wywiadu', 'karta-interview', 'artefakt'],
   ['Powiadomienie', 'karta-notification', 'artefakt'],
   ['Insight', 'karta-insight', 'artefakt'],
   ['Narzędzie', 'karta-tool', 'artefakt'],
