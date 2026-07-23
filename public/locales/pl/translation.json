@@ -33501,7 +33501,16 @@
       "panelResults": "Rezultaty",
       "panelResultsEmpty": "To narzędzie nie ma jeszcze zadeklarowanych rezultatów w bibliotece.",
       "panelResultsHint": "Raporty, prezentacje i eksporty powstają w sesji narzędzia — uruchom ją przyciskiem w nagłówku.",
-      "panelRelationsSessions": "Sesje narzędzia"
+      "panelRelationsSessions": "Sesje narzędzia",
+      "panelActions": "Akcje",
+      "panelActionStartSession": "Startuj sesję",
+      "panelActionStarting": "Uruchamiam…",
+      "panelActionKnowledge": "How to / Baza wiedzy",
+      "panelEvidence": "Źródła i założenia",
+      "panelEvidenceEmpty": "Wpis biblioteczny nie deklaruje jeszcze wejść ani ograniczeń tej metody.",
+      "panelEvidenceInputs": "Materiał, który metoda zużywa",
+      "panelEvidenceLimits": "Gdzie metoda przestaje działać",
+      "panelEvidenceProvenance": "Źródło wpisu: biblioteka narzędzi Consultify — wspólny katalog metod tylko do odczytu."
     },
     "knownToolDetail": {
       "dynamicSwot": {

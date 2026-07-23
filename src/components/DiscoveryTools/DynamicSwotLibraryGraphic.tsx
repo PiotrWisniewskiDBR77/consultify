@@ -156,14 +156,14 @@ export function DynamicSwotLibraryGraphic({
       <div className="border-b border-c-border-subtle px-5 py-5 dark:border-white/10">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-full border border-c-info/30 bg-c-info/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-c-info">
+            <span className="inline-flex items-center rounded-full border border-c-info/30 bg-c-info/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-c-info">
               {labels.eyebrow}
             </span>
-            <span className="inline-flex items-center rounded-full border border-c-border-subtle bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted dark:bg-white/[0.04]">
+            <span className="inline-flex items-center rounded-full border border-c-border-subtle bg-white/70 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary dark:bg-white/[0.04]">
               {labels.flow}
             </span>
           </div>
-          <span className="inline-flex rounded-full border border-c-border-strong bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-c-text-muted dark:bg-white/[0.05]">
+          <span className="inline-flex rounded-full border border-c-border-strong bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary dark:bg-white/[0.05]">
             Tool
           </span>
         </div>
@@ -177,7 +177,7 @@ export function DynamicSwotLibraryGraphic({
 
       <div className="grid gap-4 border-b border-c-border-subtle px-5 py-4 dark:border-white/10 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-[22px] border border-c-border-subtle bg-white/85 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary">
             {labels.scenario}
           </div>
           <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
@@ -200,19 +200,19 @@ export function DynamicSwotLibraryGraphic({
         <div className="rounded-[26px] border border-c-border-subtle bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary">
                 {labels.stagesTitle}
               </div>
               <div className="mt-1 text-sm text-c-text-secondary">
                 {labels.stagesSubtitle}
               </div>
             </div>
-            <span className="inline-flex shrink-0 rounded-full border border-c-border-strong bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-c-text-muted dark:bg-white/[0.05]">
+            <span className="inline-flex shrink-0 rounded-full border border-c-border-strong bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary dark:bg-white/[0.05]">
               Process
             </span>
           </div>
 
-          <div className="mt-3 text-[10px] uppercase tracking-[0.18em] text-c-text-muted">
+          <div className="mt-3 text-[11px] uppercase tracking-[0.18em] text-c-text-secondary">
             {labels.legend}
           </div>
 
@@ -223,7 +223,7 @@ export function DynamicSwotLibraryGraphic({
                 className={`rounded-2xl border border-c-border-subtle bg-gradient-to-br ${stage.tone} p-3 shadow-sm dark:border-white/10`}
               >
                 <div className="flex items-center gap-2">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-c-text text-[10px] font-bold text-c-bg">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-c-text text-[11px] font-bold text-c-bg">
                     {stage.id}
                   </div>
                   <div className="text-xs font-semibold leading-tight text-c-text">
@@ -246,14 +246,22 @@ export function DynamicSwotLibraryGraphic({
                 className={`rounded-2xl border border-c-border-subtle bg-gradient-to-br ${stage.tone} p-3 shadow-sm ring-1 ring-white/30 dark:border-white/10 dark:ring-c-info/20`}
               >
                 <div className="flex items-center gap-2">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-c-text text-[10px] font-bold text-c-bg">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-c-text text-[11px] font-bold text-c-bg">
                     {stage.id}
                   </div>
                   <div className="text-xs font-semibold leading-tight text-c-text">
                     {stage.title}
                   </div>
                   {stage.badge ? (
-                    <span className="ml-auto inline-flex shrink-0 rounded-full border border-white/50 bg-white/60 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-c-text-muted dark:bg-white/[0.05]">
+                    {/* NAPRAWA 2026-07-23 (kontrast): było 8 px `text-c-text-muted`
+                        na `bg-white/60` NAD GRADIENTEM kafla — zmierzone 2,94:1
+                        („Decision") i 3,58:1 („Insight") przy progu AA 4,5:1.
+                        Półprzezroczyste tło nad gradientem sprawiało, że realny
+                        kontrast zależał od miejsca w gradiencie. Teraz tło jest
+                        NIEPRZEZROCZYSTYM tokenem, tekst `c-text-secondary`,
+                        a rozmiar 11 px (8 px było poniżej progu czytelności
+                        niezależnie od kontrastu). */}
+                    <span className="ml-auto inline-flex shrink-0 rounded-full border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-secondary">
                       {stage.badge}
                     </span>
                   ) : null}
@@ -273,10 +281,10 @@ export function DynamicSwotLibraryGraphic({
         <div className="rounded-[26px] border border-c-border-subtle bg-c-surface-raised p-4 dark:border-white/10 dark:bg-white/[0.03]">
           <div className="mb-3">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary">
                 {labels.signals}
               </div>
-              <span className="inline-flex shrink-0 rounded-full border border-c-border-strong bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-c-text-muted dark:bg-white/[0.05]">
+              <span className="inline-flex shrink-0 rounded-full border border-c-border-strong bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary dark:bg-white/[0.05]">
                 Matrix
               </span>
             </div>
@@ -297,7 +305,7 @@ export function DynamicSwotLibraryGraphic({
                   >
                     {card.title}
                   </div>
-                  <div className="text-[10px] uppercase tracking-[0.14em] text-current/65">
+                  <div className="text-[11px] uppercase tracking-[0.14em] text-current">
                     {card.hint}
                   </div>
                 </div>
@@ -326,7 +334,7 @@ export function DynamicSwotLibraryGraphic({
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
               {labels.tensionPanel}
             </div>
-            <span className="inline-flex rounded-full border border-amber-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-amber-800 dark:border-amber-800/50 dark:bg-white/[0.05] dark:text-amber-200">
+            <span className="inline-flex rounded-full border border-amber-300/50 bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-800 dark:border-amber-800/50 dark:bg-white/[0.05] dark:text-amber-200">
               {labels.stage4Badge}
             </span>
           </div>
@@ -348,7 +356,7 @@ export function DynamicSwotLibraryGraphic({
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-info">
               {labels.moves}
             </div>
-            <span className="inline-flex rounded-full border border-c-info/40 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-c-info dark:bg-white/[0.05]">
+            <span className="inline-flex rounded-full border border-c-info/40 bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-info dark:bg-white/[0.05]">
               {labels.stage5Badge}
             </span>
           </div>
@@ -370,7 +378,7 @@ export function DynamicSwotLibraryGraphic({
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
               {labels.outputs}
             </div>
-            <span className="inline-flex rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">
+            <span className="inline-flex rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">
               Output
             </span>
           </div>
@@ -381,7 +389,7 @@ export function DynamicSwotLibraryGraphic({
             {outputs.map((item) => (
               <span
                 key={item}
-                className="inline-flex rounded-full border border-emerald-200/70 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary shadow-sm dark:border-white/10 dark:bg-white/[0.04]"
+                className="inline-flex rounded-full border border-emerald-200/70 bg-white/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary shadow-sm dark:border-white/10 dark:bg-white/[0.04]"
               >
                 {item}
               </span>
@@ -397,7 +405,7 @@ export function DynamicSwotLibraryGraphic({
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-c-border-subtle bg-white/80 px-4 py-3 text-[11px] uppercase tracking-[0.16em] text-c-text-muted dark:border-white/10 dark:bg-white/[0.04]">
+        <div className="rounded-2xl border border-c-border-subtle bg-white/80 px-4 py-3 text-[11px] uppercase tracking-[0.16em] text-c-text-secondary dark:border-white/10 dark:bg-white/[0.04]">
           {labels.legend}
         </div>
       </div>
