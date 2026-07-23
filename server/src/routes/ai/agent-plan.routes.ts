@@ -13,7 +13,11 @@
  *
  * Endpoints:
  * - POST   /api/ai/agent-plan                    -> utworzenie planu (deleguje agentPlannerService.createPlan)
- *                                                   (AGT-009: `draft:true` => plan zostaje w 'planning', bez dispatchu)
+ *                                                   (AGT-009: `draft:true` => plan zostaje w 'planning', bez dispatchu.
+ *                                                   Decyzja Piotra 2026-07-23 (DOROBKA A): gdy `draft` NIE podano
+ *                                                   jawnie, ścieżka generatora — `processId` obecne — domyślnie
+ *                                                   liczy się jak `draft:true`; ścieżka katalogu — `manifestId` —
+ *                                                   zostaje wstecznie zgodna, dispatch od razu.)
  * - GET    /api/ai/agent-plan                     -> lista planów (org + opcjonalnie user-scoped)
  * - GET    /api/ai/agent-plan/:id                 -> status planu (org-scoped)
  * - PATCH  /api/ai/agent-plan/:id/steps           -> AGT-009: zapis przestawionego schematu (tylko 'planning')
@@ -104,12 +108,16 @@ const CreatePlanRequestSchema = z
     // Optional now: when omitted and manifestId is set, PlanBuilder generates
     // the steps (see header comment). Still capped at MAX_STEPS_PER_PLAN when provided explicitly.
     steps: z.array(PlanStepInputSchema).max(MAX_STEPS_PER_PLAN).optional(),
-    // AGT-009 (partia 2): rozdział tworzenia od uruchomienia. Gdy `draft:true`,
-    // router TWORZY plan (zostaje w 'planning'), ale NIE zleca wykonania w tle —
-    // schemat czeka na jawne "Uruchom" (POST /:id/run). To domyślna ścieżka
-    // generatora procesu: ① AI kładzie classic-5 → user przestawia klocki →
-    // dopiero wtedy dispatch. Bez flagi (default) zachowanie jest jak dotąd
-    // (natychmiastowy best-effort dispatch — wstecznie zgodne z HP-4).
+    // AGT-009 (partia 2) + decyzja Piotra 2026-07-23 (DOROBKA A): rozdział
+    // tworzenia od uruchomienia. Gdy `draft:true` (jawnie), router TWORZY
+    // plan (zostaje w 'planning'), ale NIE zleca wykonania w tle — schemat
+    // czeka na jawne "Uruchom" (POST /:id/run). Jawne `draft:false` wymusza
+    // natychmiastowy dispatch niezależnie od ścieżki. Gdy `draft` NIE podano
+    // wcale: ścieżka GENERATORA procesu (`processId` obecne) domyślnie liczy
+    // się jak `draft:true` — ① AI kładzie schemat (np. classic-5) → user
+    // przestawia klocki → dopiero jawne "Uruchom" dispatchuje. Ścieżka
+    // KATALOGU (`manifestId`) i jawne `steps` bez `processId` zostają
+    // wstecznie zgodne — natychmiastowy best-effort dispatch jak dotąd.
     draft: z.boolean().optional(),
   })
   .refine(
@@ -229,8 +237,14 @@ router.post(
       isBackground: true, // HP-4 default (Piotr decision pending): background, patrz nagłówek pliku
     });
 
-    // AGT-009: draft => zostaw plan w 'planning' bez dispatchu (czeka na /run).
-    const dispatch: 'enqueued' | 'unavailable' | 'deferred' = body.draft
+    // AGT-009 + decyzja Piotra 2026-07-23 (DOROBKA A): jawne `draft` zawsze
+    // wygrywa. Gdy nie podano jawnie, ścieżka GENERATORA (`processId` obecne)
+    // domyślnie NIE dispatchuje — plan zostaje w 'planning' do jawnego
+    // "Uruchom" (① AI kładzie schemat ② user przestawia klocki ③ dopiero wtedy
+    // dispatch). Ścieżka katalogu (`manifestId`) i jawne `steps` BEZ ZMIAN —
+    // dispatch od razu, wstecznie zgodnie z HP-4.
+    const effectiveDraft = body.draft ?? Boolean(body.processId);
+    const dispatch: 'enqueued' | 'unavailable' | 'deferred' = effectiveDraft
       ? 'deferred'
       : await tryDispatchBackgroundExecution({
           planId: plan.id,

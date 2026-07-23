@@ -422,14 +422,63 @@ describe('Agent Plan Routes (HP-4 fundament)', () => {
       expect(queueAdd).not.toHaveBeenCalled();
     });
 
-    it('bez draft (domyślnie) plan jest dispatchowany od razu — zachowanie wstecznie zgodne', async () => {
+    it('bez draft (domyślnie), ale z processId: ścieżka generatora domyślnie NIE dispatchuje (decyzja Piotra 2026-07-23, DOROBKA A)', async () => {
+      const plan = basePlan(); // status 'planning'
+      createPlan.mockResolvedValue(plan);
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({ title: 'Nowy projekt', processId: 'classic-5' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.dispatch).toBe('deferred');
+      expect(queueAdd).not.toHaveBeenCalled();
+    });
+
+    it('processId + draft:false jawnie wymusza natychmiastowy dispatch', async () => {
       const plan = basePlan();
       createPlan.mockResolvedValue(plan);
       queueAdd.mockResolvedValue(undefined);
 
       const res = await request(createApp())
         .post('/api/ai/agent-plan')
-        .send({ title: 'Nowy projekt', processId: 'classic-5' });
+        .send({ title: 'Nowy projekt', processId: 'classic-5', draft: false });
+
+      expect(res.status).toBe(201);
+      expect(res.body.dispatch).toBe('enqueued');
+      expect(queueAdd).toHaveBeenCalledTimes(1);
+    });
+
+    it('manifestId (ścieżka katalogu) bez draft: dispatch od razu — wstecznie zgodne, BEZ ZMIAN', async () => {
+      getDiscoveryAgentManifest.mockReturnValue({
+        id: 'market-forces',
+        status: 'built',
+        sourceType: 'discovery_tool',
+        displayName: { pl: 'x', en: 'x' },
+        wave: 'wave-1',
+        configDir: 'x',
+      });
+      const plan = basePlan();
+      createPlan.mockResolvedValue(plan);
+      queueAdd.mockResolvedValue(undefined);
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({ title: 'Nowy projekt', manifestId: 'market-forces' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.dispatch).toBe('enqueued');
+      expect(queueAdd).toHaveBeenCalledTimes(1);
+    });
+
+    it('jawne steps (bez processId/manifestId) bez draft: dispatch od razu — wstecznie zgodne', async () => {
+      const plan = basePlan();
+      createPlan.mockResolvedValue(plan);
+      queueAdd.mockResolvedValue(undefined);
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({ title: 'Test plan', steps: [{ toolName: 'search_web', toolInput: {} }] });
 
       expect(res.status).toBe(201);
       expect(res.body.dispatch).toBe('enqueued');
