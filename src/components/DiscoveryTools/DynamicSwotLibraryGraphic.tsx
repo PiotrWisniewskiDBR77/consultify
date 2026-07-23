@@ -252,15 +252,15 @@ export function DynamicSwotLibraryGraphic({
                   <div className="text-xs font-semibold leading-tight text-c-text">
                     {stage.title}
                   </div>
+                  {/* NAPRAWA 2026-07-23 (kontrast): było 8 px `text-c-text-muted`
+                      na `bg-white/60` NAD GRADIENTEM kafla — zmierzone 2,94:1
+                      („Decision") i 3,58:1 („Insight") przy progu AA 4,5:1.
+                      Półprzezroczyste tło nad gradientem sprawiało, że realny
+                      kontrast zależał od miejsca w gradiencie. Teraz tło jest
+                      NIEPRZEZROCZYSTYM tokenem, tekst `c-text-secondary`,
+                      a rozmiar 11 px (8 px było poniżej progu czytelności
+                      niezależnie od kontrastu). */}
                   {stage.badge ? (
-                    {/* NAPRAWA 2026-07-23 (kontrast): było 8 px `text-c-text-muted`
-                        na `bg-white/60` NAD GRADIENTEM kafla — zmierzone 2,94:1
-                        („Decision") i 3,58:1 („Insight") przy progu AA 4,5:1.
-                        Półprzezroczyste tło nad gradientem sprawiało, że realny
-                        kontrast zależał od miejsca w gradiencie. Teraz tło jest
-                        NIEPRZEZROCZYSTYM tokenem, tekst `c-text-secondary`,
-                        a rozmiar 11 px (8 px było poniżej progu czytelności
-                        niezależnie od kontrastu). */}
                     <span className="ml-auto inline-flex shrink-0 rounded-full border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-secondary">
                       {stage.badge}
                     </span>
@@ -331,7 +331,7 @@ export function DynamicSwotLibraryGraphic({
         {/* Tensions, Moves, Outputs — stacked full width below the matrix */}
         <div className="rounded-[26px] border border-amber-200/70 bg-amber-500/5 p-4 shadow-sm dark:border-amber-900/40">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-800 dark:text-amber-200">
               {labels.tensionPanel}
             </div>
             <span className="inline-flex rounded-full border border-amber-300/50 bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-800 dark:border-amber-800/50 dark:bg-white/[0.05] dark:text-amber-200">
@@ -375,7 +375,7 @@ export function DynamicSwotLibraryGraphic({
 
         <div className="rounded-[26px] border border-emerald-200/70 bg-emerald-500/5 p-4 shadow-sm dark:border-emerald-900/40">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:text-emerald-200">
               {labels.outputs}
             </div>
             <span className="inline-flex rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">

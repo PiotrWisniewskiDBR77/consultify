@@ -2006,6 +2006,12 @@ export function KnownToolDetailView(props: {
   //    (brak audytu na `known_tools`, brak PUT/PATCH → nie ma nawet czego
   //    zapisywać). → ZGŁOSZONE w raporcie.
   const rightPanelSections: ArtifactRightPanelSection[] = useMemo(() => {
+    // Obrona przed kształtem stanu bez `items` (np. stan przeniesiony przez
+    // hot-reload sprzed dodania pola). `sessionItems.length` na
+    // `undefined` wywalało cały widok do error-boundary — dokładnie ta klasa
+    // błędu, którą skill `consultify-artefakty` opisuje jako „lekcję fali N":
+    // przechodzi esbuild i tsc, a wysypuje się dopiero w przeglądarce.
+    const sessionItems = Array.isArray(sessionStats.items) ? sessionStats.items : [];
     return [
       {
         // ── ① AKCJE (kanon: pierwsza, defaultOpen) ─────────────────────────
@@ -2094,7 +2100,7 @@ export function KnownToolDetailView(props: {
         icon: Link2,
         defaultOpen: false,
         badge: sessionStats.available ? sessionStats.count : undefined,
-        isEmpty: !sessionStats.available || sessionStats.items.length === 0,
+        isEmpty: !sessionStats.available || sessionItems.length === 0,
         emptyLabel: t(
           'discoveryToolsMain.knownToolDetailView.panelRelationsEmpty',
           'No linked items yet — relations appear once you start a session.'
@@ -2105,7 +2111,7 @@ export function KnownToolDetailView(props: {
               'discoveryToolsMain.knownToolDetailView.panelRelationsSessions',
               'Tool sessions'
             )}
-            items={sessionStats.items.map((s) => ({
+            items={sessionItems.map((s) => ({
               id: s.id,
               label: s.name,
               type: 'tool-session',
@@ -2356,13 +2362,25 @@ export function KnownToolDetailView(props: {
       // Stan `readMode` zostaje (stale `true` = Podglad) i dalej karmi
       // `NModeContentBlock`, wiec bloki wiedza, ze sa w trybie czytania.
       //
-      // ── NAPRAWA 2026-07-23 (b): SZEROKOSC MENU 2 == SZEROKOSC MENU 1 ───────
-      // Zmierzone: Menu 2 mialo 1104 px w pasku 1208 px (24 px luzu z kazdej
-      // strony). Powod: w `NModeShell` Menu 1 siedzi w `max-w-6xl mx-auto`, a
-      // Menu 2 w `max-w-6xl mx-auto px-6` — te `px-6` zwezaja tylko Menu 2.
-      // `-mx-6` znosi je dokladnie, bez dotykania powloki (ktora wspoldzieli
-      // szesc kart N). Tlo samego paska (`bg-white/95` w NMODE_TOOLBAR_SHELL_CLASS)
-      // NIE jest tutaj sterowalne — patrz raport.
+      // ── ZGLOSZENIE (b): SZEROKOSC MENU 2 — NAPRAWA NALEZY DO POWLOKI ───────
+      // Zmierzone w runtime (viewport 1700, kolumna centrum 1308 px):
+      //   Menu 1 → x 78 · szer. 1152 · prawa 1230
+      //   Menu 2 → x 102 · szer. 1104 · prawa 1206   (24 px luzu z KAZDEJ strony)
+      // PRZYCZYNA jest w `NModeShell`, nie tutaj: Menu 1 siedzi w
+      // `px-6 > max-w-6xl mx-auto` (padding NA ZEWNATRZ limitu), a Menu 2 w
+      // `max-w-6xl mx-auto px-6` (padding WEWNATRZ limitu) — NModeShell.tsx:102
+      // vs :119. Gdy limit 6xl dziala, `px-6` zjada 48 px tylko Menu 2.
+      //
+      // PROBOWALEM zalatac to z tej strony (`className="-mx-6 w-auto"`) i
+      // ZMIERZYLEM, ze to POLOWICZNE: przy szerokim oknie owszem wyrownuje
+      // (1152/x=78, co do piksela jak Menu 1), ale przy oknie WEZSZYM niz limit
+      // 6xl (kolumna 888 px) Menu 1 i Menu 2 sa juz zgodne (oba x=24 szer.=840),
+      // a `-mx-6` wypycha wtedy Menu 2 na x=0 — czyli tworzy NOWA rozjezdzke
+      // i dokleja pasek do krawedzi. Nie da sie tego wyrazic samymi klasami z
+      // wnetrza komponentu, bo warunek zalezy od szerokosci DZIADKA.
+      // Poprawka to jedna linia w powloce (px-6 na zewnatrz limitu, jak w Menu 1),
+      // wspolna dla szesciu kart N — poza zakresem tej paczki. PATRZ RAPORT.
+      // Tam tez tlo paska (`bg-white/95` w NMODE_TOOLBAR_SHELL_CLASS).
       //
       // ETAP 3: slot "Analizuj z AI" JEST juz wypelniony. Wczesniejsza uwaga
       // ("karta nie ma zadnej akcji AI") byla prawdziwa dla AI-ktore-PISZE.
@@ -2370,7 +2388,6 @@ export function KnownToolDetailView(props: {
       // wlasciciel wylicza dla Narzedzia szesc kryteriow tej oceny.
       renderActionBar={() => (
         <NModeMenu2
-          className="-mx-6 w-auto"
           isPolish={isPolish}
           sectionsMenu={
             toolCardContractEnabled ? (
