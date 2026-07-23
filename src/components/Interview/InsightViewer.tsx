@@ -1103,13 +1103,24 @@ const InsightSectionManualField: React.FC<InsightSectionManualFieldProps> = ({
   })();
 
   return (
-    <div className="mb-4 rounded-2xl border border-c-border-subtle bg-c-surface-raised/40 p-3">
+    // §4.4 — w Podglądzie ZNIKAJĄ ramki edycyjne. Zostaje sam tekst z etykietą
+    // pola; obwódka i tło „pojemnika do pisania" należą do trybu Edycja.
+    <div
+      className={
+        previewMode
+          ? 'mb-4'
+          : 'mb-4 rounded-2xl border border-c-border-subtle bg-c-surface-raised/40 p-3'
+      }
+    >
       <AutoFitTextarea
         value={value}
         onValueChange={onValueChange}
         onBlur={onSave}
         previewMode={previewMode}
-        minRows={4}
+        // Edycja rezerwuje miejsce do pisania (4 wiersze); Podgląd jest
+        // czytelnią i nie ma powodu ciągnąć pustego prostokąta pod krótkim
+        // akapitem — wysokość idzie wtedy czysto z treści.
+        minRows={previewMode ? 1 : 4}
         containerClassName="space-y-1"
         label={
           <span className="flex flex-col gap-0.5">
