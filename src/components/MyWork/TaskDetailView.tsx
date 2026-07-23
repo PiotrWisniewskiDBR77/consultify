@@ -566,6 +566,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [editingEscalationId, setEditingEscalationId] = useState<string | null>(null);
   const [escalationDraft, setEscalationDraft] = useState<EscalationRuleWithConfig | null>(null);
   const [isSuggestingStakeholders, setIsSuggestingStakeholders] = useState(false);
+  // Osobne stany per przycisk — przyciski AI w modalach przypomnienia/eskalacji
+  // wcześniej dziedziczyły `isSuggestingStakeholders` (stan generatora RACI),
+  // czyli blokowały się od zupełnie innej funkcji.
+  const [isFillingReminderAI, setIsFillingReminderAI] = useState(false);
+  const [isFillingEscalationAI, setIsFillingEscalationAI] = useState(false);
   const [escalationRules, setEscalationRules] = useState<EscalationRuleWithConfig[]>(() => {
     if (escalation) {
       return [
@@ -1774,6 +1779,94 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     setRisks(risks.map((r) => (r.id === id ? { ...r, ...updates } : r)));
   const removeRisk = (id: string) => setRisks(risks.filter((r) => r.id !== id));
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // AI PLUMBING — jeden uczciwy kanał do modelu (2026-07-23)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // POWÓD: karta wołała `POST /ai/chat`, czyli ORKIESTRATOR. Ten endpoint zwraca
+  // `{ role, intent, prompt, … }` — BEZ pola `text`. Walidator nie jest `strict`,
+  // więc odpowiedź wracała ze statusem 200, front czytał `undefined` i wchodził
+  // w gałąź awaryjną. Token spalony, użytkownik dostawał zmyśloną treść.
+  // Działający endpoint dla narzędzi w aplikacji to `POST /ai/generate` → `{ text }`
+  // (wzorzec: src/services/cardAnalysis/cardAnalysisService.ts).
+  //
+  // ZASADA KARTY: karta jest UCZCIWA. „AI niedostępne" to poprawny wynik —
+  // pokazujemy powód i NIE dotykamy treści. Zero zaszytych fallbacków.
+  const requestAiText = async (opts: {
+    message: string;
+    systemInstruction: string;
+    roleName: string;
+  }): Promise<string> => {
+    const res = await Api.post('/ai/generate', {
+      message: opts.message,
+      systemInstruction: opts.systemInstruction,
+      roleName: opts.roleName,
+    });
+    const cleaned = String((res as { text?: unknown })?.text ?? '')
+      .trim()
+      .replace(/^```[\w-]*\n?/, '')
+      .replace(/```$/, '')
+      .replace(/^["']|["']$/g, '')
+      .trim();
+    if (!cleaned) throw new Error('EMPTY_AI_RESPONSE');
+    return cleaned;
+  };
+
+  const requestAiJson = async <T,>(opts: {
+    message: string;
+    systemInstruction: string;
+    roleName: string;
+  }): Promise<T> => {
+    const raw = await requestAiText(opts);
+    const match = raw.match(/[[{][\s\S]*[\]}]/);
+    if (!match) throw new Error('NO_JSON_IN_AI_RESPONSE');
+    return JSON.parse(match[0]) as T;
+  };
+
+  /** Czytelny powód niepowodzenia — bez „coś poszło nie tak". */
+  const describeAiError = (err: unknown): string => {
+    const code = String(
+      (err as { data?: { code?: string } })?.data?.code ||
+        (err as { code?: string })?.code ||
+        (err as Error)?.message ||
+        ''
+    ).toUpperCase();
+    if (code.includes('AI_BUDGET_EXHAUSTED'))
+      return isPolish ? 'wyczerpany budżet AI' : 'AI budget exhausted';
+    if (code.includes('NO_AI_PROVIDER') || code.includes('AI_PROVIDER'))
+      return isPolish ? 'brak skonfigurowanego dostawcy AI' : 'no AI provider configured';
+    if (code.includes('EMPTY_AI_RESPONSE') || code.includes('EMPTY_LLM_RESPONSE'))
+      return isPolish ? 'model zwrócił pustą odpowiedź' : 'model returned an empty response';
+    if (code.includes('NO_JSON_IN_AI_RESPONSE') || code.includes('JSON'))
+      return isPolish
+        ? 'odpowiedź modelu nie ma oczekiwanego formatu'
+        : 'model response was not in the expected format';
+    const status = (err as { status?: number })?.status;
+    if (status === 429) return isPolish ? 'limit zapytań (429)' : 'rate limited (429)';
+    if (status === 401 || status === 403)
+      return isPolish ? 'brak uprawnień do AI' : 'no permission to use AI';
+    const message = (err as Error)?.message;
+    return message ? String(message) : isPolish ? 'brak połączenia z AI' : 'AI is not reachable';
+  };
+
+  /** Wspólny kontekst zadania dla wszystkich promptów tej karty. */
+  const buildTaskContext = (): string =>
+    isPolish
+      ? `Zadanie: ${title || 'bez tytułu'}\nOpis: ${description || 'brak'}\nStatus: ${status}\nPriorytet: ${priority}\nTermin: ${dueDate || 'brak'}`
+      : `Task: ${title || 'untitled'}\nDescription: ${description || 'none'}\nStatus: ${status}\nPriority: ${priority}\nDue date: ${dueDate || 'none'}`;
+
+  /**
+   * Uczciwy komunikat porażki. NIE modyfikuje żadnej treści — użytkownik
+   * dostaje dokładnie ten sam stan karty, który miał przed kliknięciem.
+   */
+  const notifyAiUnavailable = (err: unknown) => {
+    const reason = describeAiError(err);
+    toast.error(
+      isPolish
+        ? `AI niedostępne (${reason}). Nic nie zostało zmienione.`
+        : `AI unavailable (${reason}). Nothing was changed.`
+    );
+  };
+
   // Risk handlers
   const addRisk = () => {
     const newRisk: RiskItem = {
@@ -1788,32 +1881,70 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     setRisks([...risks, newRisk]);
   };
 
+  // Było: `setTimeout(1500)` + dwa zaszyte ryzyka („Delivery delay",
+  // „Resource shortage") niezależne od treści zadania, meldowane jako
+  // „AI risks generated". Teraz: realne wywołanie modelu.
   const generateRisksAI = async () => {
     setIsGeneratingRisks(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    const aiRisks: RiskItem[] = [
-      {
-        id: Math.random().toString(36).substr(2, 9),
-        title: t('myWork.taskDetail.title', 'Delivery delay'),
-        probability: 'medium',
-        impact: 'high',
-        category: 'operational',
-        mitigation: '',
-        contingency: '',
-      },
-      {
-        id: Math.random().toString(36).substr(2, 9),
-        title: t('myWork.taskDetail.title2', 'Resource shortage'),
-        probability: 'low',
-        impact: 'medium',
-        category: 'business',
-        mitigation: '',
-        contingency: '',
-      },
-    ];
-    setRisks([...risks, ...aiRisks]);
-    setIsGeneratingRisks(false);
-    toast.success(t('myWork.taskDetail.toastSuccess4', 'AI risks generated'));
+    try {
+      const levels = ['low', 'medium', 'high', 'critical'];
+      const categories = ['technical', 'business', 'operational', 'financial', 'legal', 'other'];
+      const parsed = await requestAiJson<{
+        risks?: Array<Record<string, unknown>>;
+      }>({
+        message: isPolish
+          ? `Na podstawie danych zadania wskaż 2-4 KONKRETNE ryzyka. Zwróć WYŁĄCZNIE JSON:\n{"risks":[{"title":"...","probability":"low|medium|high|critical","impact":"low|medium|high|critical","category":"technical|business|operational|financial|legal|other","mitigation":"...","contingency":"..."}]}\nRyzyka mają wynikać z treści zadania, nie być ogólnikami.\n\n${buildTaskContext()}`
+          : `Based on the task data, identify 2-4 SPECIFIC risks. Return JSON ONLY:\n{"risks":[{"title":"...","probability":"low|medium|high|critical","impact":"low|medium|high|critical","category":"technical|business|operational|financial|legal|other","mitigation":"...","contingency":"..."}]}\nRisks must follow from the task content, not be generic filler.\n\n${buildTaskContext()}`,
+        systemInstruction: t(
+          'myWork.taskDetail.systemInstructionRisks',
+          'You are a delivery risk analyst. Return valid JSON only.'
+        ),
+        roleName: 'Task Risk Analyst',
+      });
+
+      const aiRisks: RiskItem[] = (Array.isArray(parsed.risks) ? parsed.risks : []).flatMap((r) => {
+        const riskTitle = String(r?.title ?? '').trim();
+        if (!riskTitle) return [];
+        const probability = String(r?.probability ?? '').toLowerCase();
+        const impact = String(r?.impact ?? '').toLowerCase();
+        const category = String(r?.category ?? '').toLowerCase();
+        return [
+          {
+            id: Math.random().toString(36).substr(2, 9),
+            title: riskTitle.slice(0, 200),
+            probability: (levels.includes(probability)
+              ? probability
+              : 'medium') as RiskItem['probability'],
+            impact: (levels.includes(impact) ? impact : 'medium') as RiskItem['impact'],
+            category: (categories.includes(category)
+              ? category
+              : 'other') as RiskItem['category'],
+            mitigation: String(r?.mitigation ?? '')
+              .trim()
+              .slice(0, 600),
+            contingency: String(r?.contingency ?? '')
+              .trim()
+              .slice(0, 600),
+          },
+        ];
+      });
+
+      if (aiRisks.length === 0) {
+        toast.error(
+          isPolish
+            ? 'AI nie zwróciło żadnego ryzyka — lista bez zmian.'
+            : 'AI returned no risks — the list is unchanged.'
+        );
+        return;
+      }
+
+      setRisks([...risks, ...aiRisks]);
+      toast.success(t('myWork.taskDetail.toastSuccess4', 'AI risks generated'));
+    } catch (error) {
+      notifyAiUnavailable(error);
+    } finally {
+      setIsGeneratingRisks(false);
+    }
   };
 
   // Alternative handlers
@@ -1829,30 +1960,65 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     setAlternatives([...alternatives, newAlt]);
   };
 
+  // Było: „Approach A / Approach B" z zaszytymi plusami „Fast/Cheap"
+  // i minusami „Expensive/Slow" — puste opisy, zero związku z zadaniem.
   const generateAlternativesAI = async () => {
     setIsGeneratingAlternatives(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    const aiAlts: Alternative[] = [
-      {
-        id: Math.random().toString(36).substr(2, 9),
-        title: t('myWork.taskDetail.title3', 'Approach A'),
-        description: '',
-        pros: [t('myWork.taskDetail.fast', 'Fast')],
-        cons: [t('myWork.taskDetail.expensive', 'Expensive')],
-        isRecommended: true,
-      },
-      {
-        id: Math.random().toString(36).substr(2, 9),
-        title: t('myWork.taskDetail.title4', 'Approach B'),
-        description: '',
-        pros: [t('myWork.taskDetail.cheap', 'Cheap')],
-        cons: [t('myWork.taskDetail.slow', 'Slow')],
-        isRecommended: false,
-      },
-    ];
-    setAlternatives([...alternatives, ...aiAlts]);
-    setIsGeneratingAlternatives(false);
-    toast.success(t('myWork.taskDetail.toastSuccess5', 'AI alternatives generated'));
+    try {
+      const parsed = await requestAiJson<{
+        alternatives?: Array<Record<string, unknown>>;
+      }>({
+        message: isPolish
+          ? `Zaproponuj 2-3 realne warianty realizacji tego zadania. Zwróć WYŁĄCZNIE JSON:\n{"alternatives":[{"title":"...","description":"...","pros":["..."],"cons":["..."],"isRecommended":true|false}]}\nDokładnie JEDEN wariant ma isRecommended=true. Warianty mają wynikać z treści zadania.\n\n${buildTaskContext()}`
+          : `Propose 2-3 real options for delivering this task. Return JSON ONLY:\n{"alternatives":[{"title":"...","description":"...","pros":["..."],"cons":["..."],"isRecommended":true|false}]}\nExactly ONE option must have isRecommended=true. Options must follow from the task content.\n\n${buildTaskContext()}`,
+        systemInstruction: t(
+          'myWork.taskDetail.systemInstructionAlternatives',
+          'You are a delivery options analyst. Return valid JSON only.'
+        ),
+        roleName: 'Task Alternatives Advisor',
+      });
+
+      const toStringList = (value: unknown): string[] =>
+        (Array.isArray(value) ? value : [])
+          .map((item) => String(item ?? '').trim())
+          .filter(Boolean)
+          .slice(0, 6);
+
+      const aiAlts: Alternative[] = (
+        Array.isArray(parsed.alternatives) ? parsed.alternatives : []
+      ).flatMap((a) => {
+        const altTitle = String(a?.title ?? '').trim();
+        if (!altTitle) return [];
+        return [
+          {
+            id: Math.random().toString(36).substr(2, 9),
+            title: altTitle.slice(0, 200),
+            description: String(a?.description ?? '')
+              .trim()
+              .slice(0, 800),
+            pros: toStringList(a?.pros),
+            cons: toStringList(a?.cons),
+            isRecommended: a?.isRecommended === true,
+          },
+        ];
+      });
+
+      if (aiAlts.length === 0) {
+        toast.error(
+          isPolish
+            ? 'AI nie zwróciło wariantów — lista bez zmian.'
+            : 'AI returned no options — the list is unchanged.'
+        );
+        return;
+      }
+
+      setAlternatives([...alternatives, ...aiAlts]);
+      toast.success(t('myWork.taskDetail.toastSuccess5', 'AI alternatives generated'));
+    } catch (error) {
+      notifyAiUnavailable(error);
+    } finally {
+      setIsGeneratingAlternatives(false);
+    }
   };
 
   // Implementation ideas handlers
@@ -1869,173 +2035,185 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     setImplementationIdeas([...implementationIdeas, newIdea]);
   };
 
+  // Było: `setTimeout(1800)` + trzy zaszyte "Podejścia" (automatyzacja /
+  // outsourcing / sprinty) z tytułem zadania wklejonym w środek gotowego
+  // akapitu. Teraz: realne propozycje z modelu.
   const generateIdeasAI = async () => {
     setIsGeneratingIdeas(true);
-    await new Promise((r) => setTimeout(r, 1800));
+    try {
+      const parsed = await requestAiJson<{
+        ideas?: Array<Record<string, unknown>>;
+      }>({
+        message: isPolish
+          ? `Zaproponuj 3 różne pomysły na realizację tego zadania. Zwróć WYŁĄCZNIE JSON:\n{"ideas":[{"title":"...","description":"..."}]}\nKażdy pomysł ma być osadzony w treści zadania — bez ogólników typu "zrób PoC".\n\n${buildTaskContext()}`
+          : `Propose 3 distinct ideas for delivering this task. Return JSON ONLY:\n{"ideas":[{"title":"...","description":"..."}]}\nEach idea must be grounded in the task content — no generic filler like "build a PoC".\n\n${buildTaskContext()}`,
+        systemInstruction: t(
+          'myWork.taskDetail.systemInstructionIdeas',
+          'You are a delivery planning assistant. Return valid JSON only.'
+        ),
+        roleName: 'Task Implementation Advisor',
+      });
 
-    const taskContext = title || 'task';
-    const aiIdeas: ImplementationIdea[] = isPolish
-      ? [
+      const aiIdeas: ImplementationIdea[] = (
+        Array.isArray(parsed.ideas) ? parsed.ideas : []
+      ).flatMap((idea) => {
+        const ideaTitle = String(idea?.title ?? '').trim();
+        if (!ideaTitle) return [];
+        return [
           {
             id: Math.random().toString(36).substr(2, 9),
-            title: `Podejście 1: Automatyzacja z wykorzystaniem istniejących narzędzi`,
-            description: `Wykorzystaj obecną infrastrukturę i narzędzia zespołu do realizacji "${taskContext}". Skonfiguruj pipeline CI/CD, dodaj testy automatyczne i wdróż monitoring. Estymacja: 3-5 dni roboczych.`,
-            source: 'ai',
-            status: 'idea',
-            votes: 0,
-            votedByMe: false,
-          },
-          {
-            id: Math.random().toString(36).substr(2, 9),
-            title: `Podejście 2: Outsourcing do specjalisty / zewnętrznego zespołu`,
-            description: `Zlecenie realizacji "${taskContext}" wyspecjalizowanemu dostawcy. Wymaga przygotowania specyfikacji i kryteriów akceptacji. Zaleta: szybsze dostarczenie, brak obciążenia zespołu wewnętrznego.`,
-            source: 'ai',
-            status: 'idea',
-            votes: 0,
-            votedByMe: false,
-          },
-          {
-            id: Math.random().toString(36).substr(2, 9),
-            title: `Podejście 3: Iteracyjne wdrożenie w sprintach`,
-            description: `Podziel zadanie na mniejsze deliverables i realizuj w 2-3 sprintach. Sprint 1: PoC/MVP, Sprint 2: integracja, Sprint 3: hardening + dokumentacja. Minimalizuje ryzyko przez wczesne feedback loops.`,
-            source: 'ai',
-            status: 'idea',
-            votes: 0,
-            votedByMe: false,
-          },
-        ]
-      : [
-          {
-            id: Math.random().toString(36).substr(2, 9),
-            title: `Approach 1: Automate using existing toolchain`,
-            description: `Leverage the team's current infrastructure to implement "${taskContext}". Set up CI/CD pipeline, add automated tests, and deploy monitoring. Estimated effort: 3-5 working days.`,
-            source: 'ai',
-            status: 'idea',
-            votes: 0,
-            votedByMe: false,
-          },
-          {
-            id: Math.random().toString(36).substr(2, 9),
-            title: `Approach 2: Outsource to specialist / external team`,
-            description: `Delegate "${taskContext}" to a specialized vendor. Requires preparing specs and acceptance criteria. Advantage: faster delivery, no internal team load.`,
-            source: 'ai',
-            status: 'idea',
-            votes: 0,
-            votedByMe: false,
-          },
-          {
-            id: Math.random().toString(36).substr(2, 9),
-            title: `Approach 3: Iterative delivery across sprints`,
-            description: `Break the task into smaller deliverables across 2-3 sprints. Sprint 1: PoC/MVP, Sprint 2: integration, Sprint 3: hardening + documentation. Minimizes risk through early feedback loops.`,
-            source: 'ai',
-            status: 'idea',
+            title: ideaTitle.slice(0, 200),
+            description: String(idea?.description ?? '')
+              .trim()
+              .slice(0, 800),
+            source: 'ai' as const,
+            status: 'idea' as const,
             votes: 0,
             votedByMe: false,
           },
         ];
+      });
 
-    setImplementationIdeas([...implementationIdeas, ...aiIdeas]);
-    setIsGeneratingIdeas(false);
-    toast.success(
-      t('myWork.taskDetail.aIGenerated3Implementation', 'AI generated 3 implementation proposals')
-    );
+      if (aiIdeas.length === 0) {
+        toast.error(
+          isPolish
+            ? 'AI nie zwróciło pomysłów — lista bez zmian.'
+            : 'AI returned no ideas — the list is unchanged.'
+        );
+        return;
+      }
+
+      setImplementationIdeas([...implementationIdeas, ...aiIdeas]);
+      toast.success(
+        isPolish
+          ? `AI zaproponowało pomysły na realizację (${aiIdeas.length}).`
+          : `AI proposed implementation ideas (${aiIdeas.length}).`
+      );
+    } catch (error) {
+      notifyAiUnavailable(error);
+    } finally {
+      setIsGeneratingIdeas(false);
+    }
   };
 
-  // AI Description handler
+  // Było: `setTimeout(1500)` + losowanie z dwóch zaszytych szablonów opisu,
+  // do których wklejano tylko tytuł. Teraz: realny opis z modelu.
   const generateAIDescription = async () => {
     if (!title.trim()) {
       toast.error(t('myWork.taskDetail.toastError4', 'Enter title first'));
       return;
     }
     setIsGeneratingDescription(true);
-    await new Promise((r) => setTimeout(r, 1500));
+    try {
+      const generated = await requestAiText({
+        message: isPolish
+          ? `Napisz opis zadania projektowego: co trzeba zrobić, dlaczego to ważne, jaki jest zakres i co jest poza zakresem.\nZasady: 4-8 zdań lub krótkie punkty, bez markdown, bez emoji, po polsku, konkretnie i bez ogólników.\n\n${buildTaskContext()}\n\nZwróć WYŁĄCZNIE gotowy tekst opisu.`
+          : `Write a project task description: what must be done, why it matters, what is in scope and what is out of scope.\nRules: 4-8 sentences or short bullets, no markdown, no emoji, in English, concrete and free of filler.\n\n${buildTaskContext()}\n\nReturn ONLY the final description text.`,
+        systemInstruction: t(
+          'myWork.taskDetail.systemInstructionDescription',
+          'You are a practical PMO writer. Be concrete and avoid generic filler.'
+        ),
+        roleName: 'Task Description Writer',
+      });
 
-    const descriptions = [
-      isPolish
-        ? `Zadanie "${title}" obejmuje następujące działania:\n\n1. Analiza wymagań i określenie zakresu prac\n2. Przygotowanie niezbędnych zasobów i narzędzi\n3. Realizacja głównych kroków zgodnie z planem\n4. Weryfikacja i testowanie rezultatów\n5. Dokumentacja i przekazanie do akceptacji`
-        : `Task "${title}" involves the following activities:\n\n1. Requirements analysis and scope definition\n2. Preparation of necessary resources and tools\n3. Execution of main steps according to plan\n4. Verification and testing of results\n5. Documentation and handover for acceptance`,
-      isPolish
-        ? `Cel: Realizacja "${title}"\n\nZakres prac:\n- Określenie szczegółowych wymagań\n- Koordynacja z zespołem i interesariuszami\n- Implementacja zgodnie z przyjętymi standardami\n- Kontrola jakości i walidacja\n\nUwagi: Zadanie wymaga regularnej komunikacji z zespołem.`
-        : `Goal: Complete "${title}"\n\nScope of work:\n- Define detailed requirements\n- Coordinate with team and stakeholders\n- Implement according to established standards\n- Quality control and validation\n\nNotes: Task requires regular team communication.`,
-    ];
-
-    setDescription(descriptions[Math.floor(Math.random() * descriptions.length)]);
-    setIsGeneratingDescription(false);
-    addActivityLogEntry(
-      'edit',
-      t('myWork.taskDetail.aIGeneratedDescription', 'AI generated description')
-    );
-    toast.success(t('myWork.taskDetail.toastSuccess6', 'AI generated description'));
+      setDescription(generated);
+      addActivityLogEntry(
+        'edit',
+        t('myWork.taskDetail.aIGeneratedDescription', 'AI generated description')
+      );
+      toast.success(t('myWork.taskDetail.toastSuccess6', 'AI generated description'));
+    } catch (error) {
+      notifyAiUnavailable(error);
+    } finally {
+      setIsGeneratingDescription(false);
+    }
   };
 
-  // AI Expected Outcome handler
+  // Było: `setTimeout(1200)` + losowanie z dwóch zaszytych list kryteriów
+  // („Wszystkie wymagania spełnione…") — identycznych dla każdego zadania.
   const generateAIOutcome = async () => {
     if (!title.trim()) {
       toast.error(t('myWork.taskDetail.toastError5', 'Enter title first'));
       return;
     }
     setIsGeneratingOutcome(true);
-    await new Promise((r) => setTimeout(r, 1200));
+    try {
+      const generated = await requestAiText({
+        message: isPolish
+          ? `Zdefiniuj oczekiwany rezultat tego zadania: mierzalne kryteria akceptacji, po których poznamy, że zadanie jest zrobione.\nZasady: 3-5 punktów, każdy sprawdzalny (liczba, artefakt, decyzja), bez markdown, bez emoji, po polsku.\n\n${buildTaskContext()}\n\nZwróć WYŁĄCZNIE gotowy tekst.`
+          : `Define the expected outcome of this task: measurable acceptance criteria that prove it is done.\nRules: 3-5 bullets, each verifiable (a number, an artifact, a decision), no markdown, no emoji, in English.\n\n${buildTaskContext()}\n\nReturn ONLY the final text.`,
+        systemInstruction: t(
+          'myWork.taskDetail.systemInstructionOutcome',
+          'You define measurable acceptance criteria. Be concrete and avoid generic filler.'
+        ),
+        roleName: 'Task Outcome Writer',
+      });
 
-    const outcomes = [
-      isPolish
-        ? `✅ Kryteria sukcesu dla "${title}":\n• Wszystkie wymagania spełnione i zweryfikowane\n• Dokumentacja kompletna i zatwierdzona\n• Brak błędów krytycznych\n• Akceptacja przez interesariuszy`
-        : `✅ Success criteria for "${title}":\n• All requirements met and verified\n• Documentation complete and approved\n• No critical errors\n• Stakeholder acceptance`,
-      isPolish
-        ? `Oczekiwany rezultat:\n1. Zadanie ukończone w terminie\n2. Jakość zgodna ze standardami\n3. Pozytywna walidacja przez zespół QA\n4. Gotowość do wdrożenia/przekazania`
-        : `Expected outcome:\n1. Task completed on time\n2. Quality meets standards\n3. Positive QA validation\n4. Ready for deployment/handover`,
-    ];
-
-    setExpectedOutcome(outcomes[Math.floor(Math.random() * outcomes.length)]);
-    setIsGeneratingOutcome(false);
-    addActivityLogEntry('edit', t('myWork.taskDetail.aIGeneratedOutcome', 'AI generated outcome'));
-    toast.success(
-      t('myWork.taskDetail.aIGeneratedExpectedOutcome', 'AI generated expected outcome')
-    );
+      setExpectedOutcome(generated);
+      addActivityLogEntry(
+        'edit',
+        t('myWork.taskDetail.aIGeneratedOutcome', 'AI generated outcome')
+      );
+      toast.success(
+        t('myWork.taskDetail.aIGeneratedExpectedOutcome', 'AI generated expected outcome')
+      );
+    } catch (error) {
+      notifyAiUnavailable(error);
+    } finally {
+      setIsGeneratingOutcome(false);
+    }
   };
 
-  // AI Checklist handler
+  // Było: `setTimeout(1500)` + siedem zaszytych pozycji („Przeanalizować
+  // wymagania", „Wykonać główne zadanie"…) niezależnych od zadania.
   const generateAIChecklist = async () => {
     if (!title.trim()) {
       toast.error(t('myWork.taskDetail.toastError6', 'Enter title first'));
       return;
     }
     setIsGeneratingChecklist(true);
-    await new Promise((r) => setTimeout(r, 1500));
+    try {
+      const parsed = await requestAiJson<{ items?: unknown }>({
+        message: isPolish
+          ? `Rozpisz to zadanie na listę kontrolną 5-8 kroków. Zwróć WYŁĄCZNIE JSON:\n{"items":["...","..."]}\nKażdy krok ma być czynnością wynikającą z treści zadania, nie ogólnikiem w stylu "wykonać główne zadanie".\n\n${buildTaskContext()}`
+          : `Break this task into a 5-8 step checklist. Return JSON ONLY:\n{"items":["...","..."]}\nEach step must be an action that follows from the task content, not filler like "execute main task".\n\n${buildTaskContext()}`,
+        systemInstruction: t(
+          'myWork.taskDetail.systemInstructionChecklist',
+          'You break work down into concrete steps. Return valid JSON only.'
+        ),
+        roleName: 'Task Checklist Planner',
+      });
 
-    const checklistItems = isPolish
-      ? [
-          'Przeanalizować wymagania',
-          'Przygotować plan działania',
-          'Zebrać niezbędne zasoby',
-          'Wykonać główne zadanie',
-          'Przetestować rezultaty',
-          'Udokumentować wykonane prace',
-          'Przekazać do przeglądu',
-        ]
-      : [
-          'Analyze requirements',
-          'Prepare action plan',
-          'Gather necessary resources',
-          'Execute main task',
-          'Test results',
-          'Document completed work',
-          'Submit for review',
-        ];
+      const newItems = (Array.isArray(parsed.items) ? parsed.items : [])
+        .map((item) => String(item ?? '').trim())
+        .filter(Boolean)
+        .slice(0, 12)
+        .map((text) => ({
+          id: Math.random().toString(36).substr(2, 9),
+          text: text.slice(0, 300),
+          completed: false,
+        }));
 
-    const newItems = checklistItems.map((text) => ({
-      id: Math.random().toString(36).substr(2, 9),
-      text,
-      completed: false,
-    }));
+      if (newItems.length === 0) {
+        toast.error(
+          isPolish
+            ? 'AI nie zwróciło kroków — lista kontrolna bez zmian.'
+            : 'AI returned no steps — the checklist is unchanged.'
+        );
+        return;
+      }
 
-    setChecklist([...checklist, ...newItems]);
-    setIsGeneratingChecklist(false);
-    addActivityLogEntry(
-      'edit',
-      t('myWork.taskDetail.aIGeneratedChecklist', 'AI generated checklist')
-    );
-    toast.success(t('myWork.taskDetail.toastSuccess7', 'AI generated checklist'));
+      setChecklist([...checklist, ...newItems]);
+      addActivityLogEntry(
+        'edit',
+        t('myWork.taskDetail.aIGeneratedChecklist', 'AI generated checklist')
+      );
+      toast.success(t('myWork.taskDetail.toastSuccess7', 'AI generated checklist'));
+    } catch (error) {
+      notifyAiUnavailable(error);
+    } finally {
+      setIsGeneratingChecklist(false);
+    }
   };
 
   // AI Comment handler
@@ -2106,26 +2284,15 @@ ${recentComments || 'No comments yet'}
 
 Return ONLY the final comment text.`;
 
-      const aiRes = await Api.post('/ai/chat', {
+      // `/ai/generate` → `{ text }`. NIE `/ai/chat` (orkiestrator, bez `text`).
+      const generatedComment = await requestAiText({
         message: prompt,
-        history: [],
         systemInstruction: t(
           'myWork.taskDetail.systemInstruction',
           'You are a practical PMO coach. Respond briefly, concretely, and avoid generic filler.'
         ),
         roleName: 'Task Comment Advisor',
       });
-
-      const raw = String(aiRes?.text || aiRes?.content || '').trim();
-      const generatedComment = raw
-        .replace(/^```[\w-]*\n?/g, '')
-        .replace(/```$/g, '')
-        .replace(/^["']|["']$/g, '')
-        .trim();
-
-      if (!generatedComment) {
-        throw new Error('Empty AI response');
-      }
 
       const recentAIMessages = comments
         .filter((c) => c.authorId === 'ai-assistant')
@@ -2134,7 +2301,14 @@ Return ONLY the final comment text.`;
 
       const isDuplicate = recentAIMessages.includes(generatedComment.toLowerCase());
       if (isDuplicate) {
-        throw new Error('Duplicate AI comment');
+        // Uczciwie: model powtórzył istniejący komentarz. Nie dodajemy duplikatu
+        // i NIE podstawiamy niczego w zamian.
+        toast.error(
+          isPolish
+            ? 'AI powtórzyło istniejący komentarz — nic nie dodano.'
+            : 'AI repeated an existing comment — nothing was added.'
+        );
+        return;
       }
 
       const newComment: Comment = {
@@ -2155,39 +2329,234 @@ Return ONLY the final comment text.`;
       );
       toast.success(t('myWork.taskDetail.toastSuccess8', 'AI comment generated'));
     } catch (error) {
-      const fallback = isPolish
-        ? `Proponuję doprecyzować jeden najbliższy krok i właściciela zadania na dziś. Dla priorytetu "${priority}" warto też potwierdzić blocker oraz termin, żeby uniknąć opóźnienia.`
-        : `I suggest clarifying one immediate next step and assigning a clear owner today. For "${priority}" priority, also confirm blocker status and due date to reduce delivery risk.`;
-
-      const lastAI = comments
-        .filter((c) => c.authorId === 'ai-assistant')
-        .slice(-1)[0]
-        ?.content?.trim()
-        .toLowerCase();
-      const fallbackWithVariant =
-        lastAI === fallback.trim().toLowerCase()
-          ? `${fallback} ${t('myWork.taskDetail.focusOnAMeasurable', 'Focus on a measurable outcome by end of day.')}`
-          : fallback;
-
-      const newComment: Comment = {
-        id: Math.random().toString(36).substr(2, 9),
-        content: fallbackWithVariant,
-        authorId: 'ai-assistant',
-        authorName: 'AI Assistant',
-        createdAt: new Date().toISOString(),
-        likes: 0,
-        likedByMe: false,
-        isAIGenerated: true,
-      };
-
-      setComments((prev) => [...prev, newComment]);
-      addActivityLogEntry(
-        'comment',
-        t('myWork.taskDetail.aIAddedFallbackComment', 'AI added fallback comment')
-      );
-      toast.success(t('myWork.taskDetail.toastSuccess9', 'Added a fallback AI comment'));
+      // ZERO ZASZYTYCH FALLBACKÓW. Wcześniej `catch` doklejał zmyślony komentarz
+      // podpisany „AI Assistant" — użytkownik dostawał treść, której model nigdy
+      // nie wygenerował. Teraz: uczciwy powód, treść karty nietknięta.
+      notifyAiUnavailable(error);
     } finally {
       setIsGeneratingAIComment(false);
+    }
+  };
+
+  // ── AI: propozycja składu RACI ────────────────────────────────────────────
+  // Było: `/ai/chat` (orkiestrator, bez `text`) + `catch`, który wstawiał
+  // pierwsze 4 osoby z listy jako „skład RACI" i meldował SUKCES. Teraz:
+  // `/ai/generate`, twarda walidacja odpowiedzi (tylko realne userId i tylko
+  // dozwolone role) i uczciwy błąd zamiast wymyślonego zespołu.
+  const suggestStakeholdersWithAI = async () => {
+    if (users.length === 0) {
+      toast.error(
+        isPolish
+          ? 'Brak listy osób — nie ma z czego zbudować RACI.'
+          : 'No people available — RACI cannot be built.'
+      );
+      return;
+    }
+    setIsSuggestingStakeholders(true);
+    try {
+      const roster = users
+        .map((u) => `${u.id}: ${u.firstName} ${u.lastName} (${u.email})`)
+        .join('\n');
+      const taskContext = isPolish
+        ? `Zadanie: ${title || 'bez tytułu'}\nOpis: ${description || 'brak'}\nPriorytet: ${priority}\nTermin: ${dueDate || 'brak'}`
+        : `Task: ${title || 'untitled'}\nDescription: ${description || 'none'}\nPriority: ${priority}\nDue date: ${dueDate || 'none'}`;
+      const message = isPolish
+        ? `Na podstawie danych zadania zaproponuj skład RACI. Zwróć WYŁĄCZNIE JSON:\n{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}\nUżywaj WYŁĄCZNIE identyfikatorów z listy poniżej.\n\n${taskContext}\n\nDostępne osoby:\n${roster}`
+        : `Based on task data, propose a RACI team. Return JSON ONLY:\n{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}\nUse ONLY identifiers from the list below.\n\n${taskContext}\n\nAvailable people:\n${roster}`;
+
+      const parsed = await requestAiJson<{
+        stakeholders?: Array<{ userId?: string; role?: string }>;
+      }>({
+        message,
+        systemInstruction: t(
+          'myWork.taskDetail.systemInstruction2',
+          'You are a PMO assistant. Return valid JSON only.'
+        ),
+        roleName: 'RACI Team Advisor',
+      });
+
+      const allowedRoles: StakeholderRole[] = [
+        'accountable',
+        'responsible',
+        'consulted',
+        'informed',
+      ];
+      const next: Stakeholder[] = (
+        Array.isArray(parsed.stakeholders) ? parsed.stakeholders : []
+      ).flatMap((s) => {
+        const user = users.find((u) => u.id === s?.userId);
+        const role = String(s?.role || '').toLowerCase() as StakeholderRole;
+        // Halucynacja (nieznany userId / nieznana rola) jest ODRZUCANA,
+        // nie „naprawiana" domyślną wartością.
+        if (!user || !allowedRoles.includes(role)) return [];
+        return [
+          {
+            id: Math.random().toString(36).substr(2, 9),
+            decisionId: taskId || 'new',
+            userId: user.id,
+            userName: `${user.firstName} ${user.lastName}`,
+            userEmail: user.email,
+            role,
+            notificationSettings: {
+              enabled: true,
+              triggers: ['on_status_change'] as StakeholderNotificationSettings['triggers'],
+              emailEnabled: false,
+              inAppEnabled: true,
+              integrationChannels: [],
+              syncTargets: [],
+            },
+          } as Stakeholder,
+        ];
+      });
+
+      if (next.length === 0) {
+        toast.error(
+          isPolish
+            ? 'AI nie zwróciło poprawnego składu RACI — skład bez zmian.'
+            : 'AI returned no valid RACI team — the team is unchanged.'
+        );
+        return;
+      }
+
+      setStakeholders(next);
+      toast.success(
+        isPolish
+          ? `AI zaproponowało skład RACI (${next.length} osób).`
+          : `AI proposed RACI team (${next.length} people).`
+      );
+    } catch (error) {
+      notifyAiUnavailable(error);
+    } finally {
+      setIsSuggestingStakeholders(false);
+    }
+  };
+
+  // ── AI: wypełnienie formularza przypomnienia / reguły eskalacji ───────────
+  // Było: `onClick={() => toast('AI will fill the form...')}` — czysta ATRAPA,
+  // zero logiki, do tego `disabled` spięty ze stanem generatora RACI
+  // (`isSuggestingStakeholders`) — błąd kopiuj-wklej. Teraz: realna generacja
+  // przez `/ai/generate`, własny stan ładowania per modal, sanityzacja pól
+  // i brak jakiejkolwiek zmiany draftu, gdy AI nie odpowie.
+  const clampDays = (value: unknown, min: number, max: number, fallback: number): number => {
+    const n = Math.round(Number(value));
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(max, Math.max(min, n));
+  };
+  const cleanMessage = (value: unknown, current: string): string => {
+    const text = String(value ?? '').trim();
+    return text ? text.slice(0, 600) : current;
+  };
+
+  const fillReminderWithAI = async () => {
+    if (!reminderDraft) return;
+    setIsFillingReminderAI(true);
+    try {
+      const message = isPolish
+        ? `Zaproponuj ustawienia przypomnienia dla zadania projektowego. Zwróć WYŁĄCZNIE JSON:\n{"type":"before_due|after_due","days":<liczba 0-30>,"recipients":"both|stakeholders|owner","message":"<treść przypomnienia, max 300 znaków, po polsku>"}\n\nZadanie: ${title || 'bez tytułu'}\nOpis: ${description || 'brak'}\nStatus: ${status}\nPriorytet: ${priority}\nTermin: ${dueDate || 'brak'}`
+        : `Propose reminder settings for a project task. Return JSON ONLY:\n{"type":"before_due|after_due","days":<number 0-30>,"recipients":"both|stakeholders|owner","message":"<reminder text, max 300 chars, in English>"}\n\nTask: ${title || 'untitled'}\nDescription: ${description || 'none'}\nStatus: ${status}\nPriority: ${priority}\nDue date: ${dueDate || 'none'}`;
+
+      const parsed = await requestAiJson<{
+        type?: string;
+        days?: unknown;
+        recipients?: string;
+        message?: unknown;
+      }>({
+        message,
+        systemInstruction: t(
+          'myWork.taskDetail.systemInstructionReminder',
+          'You are a PMO assistant configuring a task reminder. Return valid JSON only.'
+        ),
+        roleName: 'Task Reminder Advisor',
+      });
+
+      const type = parsed.type === 'after_due' ? 'after_due' : 'before_due';
+      // Dopuszczamy WYŁĄCZNIE wartości, które ma pole <select> w tym modalu.
+      const recipientOptions = ['both', 'stakeholders', 'owner'];
+      const recipients = recipientOptions.includes(String(parsed.recipients))
+        ? (parsed.recipients as ReminderRuleWithDelivery['recipients'])
+        : reminderDraft.recipients;
+
+      setReminderDraft((prev) =>
+        prev
+          ? {
+              ...prev,
+              type,
+              days: clampDays(parsed.days, 0, 30, prev.days),
+              recipients,
+              message: cleanMessage(parsed.message, prev.message || ''),
+            }
+          : prev
+      );
+      toast.success(
+        isPolish
+          ? 'AI wypełniło formularz — sprawdź i zapisz.'
+          : 'AI filled the form — review and save.'
+      );
+    } catch (error) {
+      notifyAiUnavailable(error);
+    } finally {
+      setIsFillingReminderAI(false);
+    }
+  };
+
+  const fillEscalationWithAI = async () => {
+    if (!escalationDraft) return;
+    setIsFillingEscalationAI(true);
+    try {
+      const roster = users
+        .map((u) => `${u.id}: ${u.firstName} ${u.lastName}`)
+        .join('\n');
+      const message = isPolish
+        ? `Zaproponuj ustawienia reguły eskalacji dla zadania projektowego. Zwróć WYŁĄCZNIE JSON:\n{"warningDays":<0-60>,"criticalDays":<0-60>,"afterDays":<1-60>,"escalationMode":"notify_only|manager_review|executive_alert","escalateTo":"<userId z listy lub pusty string>","message":"<treść eskalacji, max 300 znaków, po polsku>"}\n\nZadanie: ${title || 'bez tytułu'}\nOpis: ${description || 'brak'}\nStatus: ${status}\nPriorytet: ${priority}\nTermin: ${dueDate || 'brak'}\n\nDostępne osoby:\n${roster || 'brak'}`
+        : `Propose escalation rule settings for a project task. Return JSON ONLY:\n{"warningDays":<0-60>,"criticalDays":<0-60>,"afterDays":<1-60>,"escalationMode":"notify_only|manager_review|executive_alert","escalateTo":"<userId from the list or empty string>","message":"<escalation text, max 300 chars, in English>"}\n\nTask: ${title || 'untitled'}\nDescription: ${description || 'none'}\nStatus: ${status}\nPriority: ${priority}\nDue date: ${dueDate || 'none'}\n\nAvailable people:\n${roster || 'none'}`;
+
+      const parsed = await requestAiJson<{
+        warningDays?: unknown;
+        criticalDays?: unknown;
+        afterDays?: unknown;
+        escalationMode?: string;
+        escalateTo?: string;
+        message?: unknown;
+      }>({
+        message,
+        systemInstruction: t(
+          'myWork.taskDetail.systemInstructionEscalation',
+          'You are a PMO assistant configuring a task escalation rule. Return valid JSON only.'
+        ),
+        roleName: 'Task Escalation Advisor',
+      });
+
+      const modes: EscalationMode[] = ['notify_only', 'manager_review', 'executive_alert'];
+      const suggestedUser = users.find((u) => u.id === parsed.escalateTo);
+
+      setEscalationDraft((prev) =>
+        prev
+          ? {
+              ...prev,
+              warningDays: clampDays(parsed.warningDays, 0, 60, prev.warningDays),
+              criticalDays: clampDays(parsed.criticalDays, 0, 60, prev.criticalDays),
+              afterDays: clampDays(parsed.afterDays, 1, 60, prev.afterDays),
+              escalationMode: modes.includes(parsed.escalationMode as EscalationMode)
+                ? (parsed.escalationMode as EscalationMode)
+                : prev.escalationMode,
+              // Nieznany userId → zostawiamy wybór użytkownika, NIE zgadujemy.
+              escalateTo: suggestedUser ? suggestedUser.id : prev.escalateTo,
+              escalateToName: suggestedUser
+                ? `${suggestedUser.firstName} ${suggestedUser.lastName}`
+                : prev.escalateToName,
+              message: cleanMessage(parsed.message, prev.message || ''),
+            }
+          : prev
+      );
+      toast.success(
+        isPolish
+          ? 'AI wypełniło formularz — sprawdź i zapisz.'
+          : 'AI filled the form — review and save.'
+      );
+    } catch (error) {
+      notifyAiUnavailable(error);
+    } finally {
+      setIsFillingEscalationAI(false);
     }
   };
 
@@ -5105,99 +5474,7 @@ Return ONLY the final comment text.`;
 
                       {activeNSection === 'governance' && (
                         <button
-                          onClick={async () => {
-                            setIsSuggestingStakeholders(true);
-                            try {
-                              const roster = users
-                                .map((u) => `${u.id}: ${u.firstName} ${u.lastName} (${u.email})`)
-                                .join('\n');
-                              const prompt = isPolish
-                                ? `Na podstawie danych zadania zaproponuj skład RACI. Zwróć WYŁĄCZNIE JSON:\n{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}\nDostępne osoby:\n${roster}`
-                                : `Based on task data, propose a RACI team. Return JSON ONLY:\n{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}\nAvailable people:\n${roster}`;
-                              const aiRes = await Api.post('/ai/chat', {
-                                message: prompt,
-                                history: [],
-                                systemInstruction: t(
-                                  'myWork.taskDetail.systemInstruction2',
-                                  'You are a PMO assistant. Return valid JSON only.'
-                                ),
-                                roleName: 'RACI Team Advisor',
-                              });
-                              const raw = String(aiRes?.text || aiRes?.content || '').trim();
-                              const jsonMatch = raw.match(/\{[\s\S]*\}/);
-                              if (jsonMatch) {
-                                const parsed = JSON.parse(jsonMatch[0]);
-                                if (Array.isArray(parsed.stakeholders)) {
-                                  const next = parsed.stakeholders.map((s: any) => {
-                                    const user = users.find((u) => u.id === s.userId);
-                                    return {
-                                      id: Math.random().toString(36).substr(2, 9),
-                                      decisionId: taskId || 'new',
-                                      userId: s.userId,
-                                      userName: user
-                                        ? `${user.firstName} ${user.lastName}`
-                                        : s.userId,
-                                      userEmail: user?.email || '',
-                                      role: s.role as StakeholderRole,
-                                      notificationSettings: {
-                                        enabled: true,
-                                        triggers: ['on_status_change'],
-                                        emailEnabled: false,
-                                        inAppEnabled: true,
-                                        integrationChannels: [],
-                                        syncTargets: [],
-                                      },
-                                    };
-                                  });
-                                  setStakeholders(next);
-                                  toast.success(
-                                    isPolish
-                                      ? `AI zaproponowało skład RACI (${next.length} osób).`
-                                      : `AI proposed RACI team (${next.length} people).`
-                                  );
-                                }
-                              }
-                            } catch {
-                              // fallback
-                              const fallbackTeam = users
-                                .slice(0, Math.min(4, users.length))
-                                .map((u, i) => ({
-                                  id: Math.random().toString(36).substr(2, 9),
-                                  decisionId: taskId || 'new',
-                                  userId: u.id,
-                                  userName: `${u.firstName} ${u.lastName}`,
-                                  userEmail: u.email,
-                                  role:
-                                    (
-                                      [
-                                        'accountable',
-                                        'responsible',
-                                        'consulted',
-                                        'informed',
-                                      ] as StakeholderRole[]
-                                    )[i] || 'informed',
-                                  notificationSettings: {
-                                    enabled: true,
-                                    triggers: [
-                                      'on_status_change',
-                                    ] as StakeholderNotificationSettings['triggers'],
-                                    emailEnabled: false,
-                                    inAppEnabled: true,
-                                    integrationChannels: [],
-                                    syncTargets: [],
-                                  },
-                                }));
-                              setStakeholders(fallbackTeam);
-                              toast.success(
-                                t(
-                                  'myWork.taskDetail.appliedFallbackRACITeam',
-                                  'Applied fallback RACI team.'
-                                )
-                              );
-                            } finally {
-                              setIsSuggestingStakeholders(false);
-                            }
-                          }}
+                          onClick={suggestStakeholdersWithAI}
                           disabled={isSuggestingStakeholders}
                           className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                             isSuggestingStakeholders
@@ -5536,11 +5813,18 @@ Return ONLY the final comment text.`;
                 </h4>
                 <div className="inline-flex items-center gap-2">
                   <button
-                    disabled={isSuggestingStakeholders}
-                    onClick={() => toast(t('myWork.taskDetail.toast3', 'AI will fill the form...'))}
+                    type="button"
+                    disabled={isFillingReminderAI}
+                    onClick={fillReminderWithAI}
+                    title={t('myWork.taskDetail.aiFillReminder', 'Fill the form with AI')}
                     className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-info/40 text-c-info hover:border-c-info/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                   >
-                    <Sparkles size={12} /> AI
+                    {isFillingReminderAI ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={12} />
+                    )}{' '}
+                    AI
                   </button>
                   <button
                     className="p-1 text-c-text-secondary dark:text-c-text-secondary hover:text-c-text"
@@ -5808,11 +6092,18 @@ Return ONLY the final comment text.`;
                 </h4>
                 <div className="inline-flex items-center gap-2">
                   <button
-                    disabled={isSuggestingStakeholders}
-                    onClick={() => toast(t('myWork.taskDetail.toast4', 'AI will fill the form...'))}
+                    type="button"
+                    disabled={isFillingEscalationAI}
+                    onClick={fillEscalationWithAI}
+                    title={t('myWork.taskDetail.aiFillEscalation', 'Fill the form with AI')}
                     className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-info/40 text-c-info hover:border-c-info/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                   >
-                    <Sparkles size={12} /> AI
+                    {isFillingEscalationAI ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={12} />
+                    )}{' '}
+                    AI
                   </button>
                   <button
                     className="p-1 text-c-text-secondary dark:text-c-text-secondary hover:text-c-text"

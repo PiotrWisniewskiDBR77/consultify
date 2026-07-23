@@ -260,6 +260,130 @@ Api.get = (async (url: string) => {
   return realApiGet(url);
 }) as typeof Api.get;
 
+// ── Stub AI (weryfikacja naprawy atrap, 2026-07-23) ─────────────────────────
+// `?ai=ok`   → `/ai/generate` odpowiada realnym kształtem `{ text }` (ścieżka sukcesu)
+// `?ai=down` → `/ai/generate` rzuca błędem serwera (ścieżka „AI niedostępne")
+// bez parametru → zachowanie jak dotąd (siatka bezpieczeństwa window.fetch).
+// ★ Patchujemy METODĘ `Api.post`, nie `window.fetch` — window.fetch jest tu
+// wspólną siatką dla wszystkich ekranów i zwraca `{data:[],items:[]}`.
+const __aiTryb = new URLSearchParams(window.location.search).get('ai');
+if (__aiTryb === 'ok' || __aiTryb === 'down') {
+  const realApiPost = Api.post.bind(Api);
+  const odpowiedziAi: Record<string, string> = {
+    'Task Reminder Advisor': JSON.stringify({
+      type: 'before_due',
+      days: 3,
+      recipients: 'stakeholders',
+      message:
+        'Za 3 dni termin mapy AS-IS. Bez niej warsztat 29.07 nie ma wsadu liczbowego — potwierdź walidację z Markiem.',
+    }),
+    'Task Escalation Advisor': JSON.stringify({
+      warningDays: 2,
+      criticalDays: 5,
+      afterDays: 3,
+      escalationMode: 'manager_review',
+      escalateTo: 'user-marek',
+      message:
+        'Mapa AS-IS przekroczyła termin. Eskalacja do partnera prowadzącego — warsztat 29.07 jest zagrożony.',
+    }),
+    'Task Comment Advisor':
+      'Najwęższym gardłem jest akcept partnera (mediana 6 dni), nie redakcja. Zanim domkniesz mapę, ustal z Markiem docelowy SLA akceptu — inaczej oszczędność pokazana zarządowi będzie nie do dowiezienia.',
+    'Task Description Writer':
+      'Zmapować obecny przebieg powstawania raportu DRD dla 4 projektów klienckich: Grupa Termika, NordFarm, Bielmar, Kolej Wschodnia. Dla każdego kroku zanotować właściciela, lead time, narzędzie i punkt oczekiwania. Wynik jest wsadem liczbowym do warsztatu 29.07 — bez niego nie da się obronić szacunku oszczędności przed zarządem. Poza zakresem: projektowanie stanu TO-BE.',
+    'Task Outcome Writer':
+      'Mapa AS-IS obejmuje 4 projekty i wszystkie kroki od zamknięcia wywiadów po wysyłkę do klienta.\nDla każdego kroku podany lead time (mediana) i właściciel.\nWąskie gardła oznaczone, w tym akcept partnera (mediana 6 dni).\nMarek (partner prowadzący) potwierdził zgodność mapy z rzeczywistością.\nPre-read wysłany uczestnikom warsztatu na 48h przed 29.07.',
+    'Task Checklist Planner': JSON.stringify({
+      items: [
+        'Wyeksportować timestampy etapów raportu z 4 projektów',
+        'Policzyć medianę lead time i czasu oczekiwania per krok',
+        'Wyodrębnić obieg prawny Kolei Wschodniej jako wariant, nie regułę',
+        'Narysować mapę AS-IS w Process Flow i oznaczyć wąskie gardła',
+        'Zwalidować mapę z Markiem przed warsztatem',
+        'Wysłać pre-read uczestnikom na 48h przed 29.07',
+      ],
+    }),
+    'Task Implementation Advisor': JSON.stringify({
+      ideas: [
+        {
+          title: 'Mapa z eksportu danych, wywiad tylko na weryfikację',
+          description:
+            'Podstawą mapy są timestampy z bazy (4 projekty), a wywiady z Anną i Kasią służą wyłącznie potwierdzeniu spornych kroków. Skraca pracę o ~2 dni i usuwa ryzyko mapy „jak powinno być".',
+        },
+        {
+          title: 'Dwie ścieżki: standard + wariant prawny Kolei Wschodniej',
+          description:
+            'Jedna mapa główna dla trzech projektów i oznaczony wariant z obiegiem prawnym. Zapobiega zawyżeniu średniego lead time całego portfela.',
+        },
+        {
+          title: 'Mapa pod decyzję budżetową, nie pod kompletność',
+          description:
+            'Zakres ograniczony do kroków, które wchodzą do rachunku oszczędności — w tym akcept partnera (mediana 6 dni). Reszta jako aneks.',
+        },
+      ],
+    }),
+    'Task Risk Analyst': JSON.stringify({
+      risks: [
+        {
+          title: 'Akcept partnera (mediana 6 dni) zostaje ręczny mimo automatyzacji redakcji',
+          probability: 'high',
+          impact: 'critical',
+          category: 'operational',
+          mitigation: 'Pokazać rozbicie 11 dni na warsztacie i ustalić docelowy SLA akceptu.',
+          contingency: 'Zawęzić obietnicę dla zarządu do 2,5 dnia redakcji.',
+        },
+        {
+          title: 'Mapa nieprzewalidowana z Markiem przed 29.07',
+          probability: 'medium',
+          impact: 'high',
+          category: 'business',
+          mitigation: 'Slot walidacyjny 27.07 w kalendarzu partnera.',
+          contingency: 'Warsztat prowadzony na danych surowych zamiast na mapie.',
+        },
+      ],
+    }),
+    'Task Alternatives Advisor': JSON.stringify({
+      alternatives: [
+        {
+          title: 'Mapa na danych z eksportu (mediany)',
+          description: 'Lead time liczony z timestampów, wywiady tylko jako weryfikacja spornych kroków.',
+          pros: ['Odporna na „jak powinno być"', 'Krótsza o ~2 dni'],
+          cons: ['Braki w projektach bez kompletnych timestampów'],
+          isRecommended: true,
+        },
+        {
+          title: 'Mapa z warsztatu z zespołem dostarczania',
+          description: 'Mapowanie na żywo z Anną, Kasią i Markiem zamiast pracy na eksporcie.',
+          pros: ['Wysoka akceptacja zespołu'],
+          cons: ['Ryzyko mapy życzeniowej', 'Blokuje 3 osoby na pół dnia'],
+          isRecommended: false,
+        },
+      ],
+    }),
+    'RACI Team Advisor': JSON.stringify({
+      stakeholders: [
+        { userId: 'user-piotr-demo', role: 'accountable' },
+        { userId: 'user-anna', role: 'responsible' },
+        { userId: 'user-marek', role: 'consulted' },
+        { userId: 'user-kasia', role: 'informed' },
+      ],
+    }),
+  };
+  Api.post = (async (url: string, data: any) => {
+    if (String(url).includes('/ai/generate')) {
+      if (__aiTryb === 'down') {
+        const err: any = new Error('LLM provider unavailable');
+        err.status = 503;
+        err.data = { code: 'NO_AI_PROVIDER' };
+        throw err;
+      }
+      const text = odpowiedziAi[String(data?.roleName)] ?? 'OK';
+      await new Promise((r) => setTimeout(r, 300));
+      return { text } as any;
+    }
+    return realApiPost(url, data);
+  }) as typeof Api.post;
+}
+
 // Picker "dodaj powiązanie" (Promise.allSettled na 8 źródłach) — niech ma
 // czym wypełnić listy wyboru zamiast lecieć w błąd sieci.
 Api.getPersonalTasks = (async () => []) as typeof Api.getPersonalTasks;
