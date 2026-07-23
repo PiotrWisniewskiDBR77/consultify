@@ -39,6 +39,7 @@ import {
   planDocumentStudioTemplate,
   reviseDocumentStudioTemplateStructure,
 } from './api';
+import { DocumentStructurePreview } from './DocumentStructurePreview';
 import {
   insertSection,
   makeBlankSection,
@@ -581,7 +582,8 @@ export const DocumentStudioTemplateArchitectView: React.FC<
         />
 
         {selectedTemplate ? (
-          <div className="mt-4 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
+          <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start">
+          <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
             {isEditableDraft ? (
               <>
                 <div className="flex items-center justify-between gap-3">
@@ -749,6 +751,15 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                 </ol>
               </>
             )}
+          </div>
+          <div className="lg:sticky lg:top-0">
+            <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+              {t('documentStudio.templateArchitect.structurePreviewHeading', 'Structure preview')}
+            </div>
+            <DocumentStructurePreview
+              sections={isEditableDraft ? editSections : selectedTemplate.sectionBlueprint}
+            />
+          </div>
           </div>
         ) : null}
       </section>
