@@ -92,8 +92,15 @@ Legenda: ⬜ do zrobienia · 🔨 w budowie · ✅ scalone+zweryfikowane · 🅰
 
 ## ★ LOG FAL (dopisuj po każdej fali — najnowsza NA GÓRZE)
 
-### Fala 2 — URUCHOMIONA 2026-07-23 (workflow wavodm809)
-genexcel-templates2 (+2 wzorce backend), genexcel-preview (inline podgląd siatki), genword-hints (content hints per sekcja Word). Status: 🔨 w budowie.
+### Fala 3 — URUCHOMIONA (workflow wkrp7w510)
+genexcel-templates3 (+2 wzorce: unitEconomics, loanAmortization), gendeck-slide-preview (sylwetka layoutu/slajd), genword-structure-preview (sylwetka struktury dok.). 🔨 w budowie.
+
+### Fala 2 — ✅ SCALONA (workflow wavodm809, demo 498ce9d5ef)
+3/3, 0 błędów. Zweryfikowane niezależnie: 89 testów backend + esbuild + render-verify 3 powierzchni light+console-clean.
+- genexcel-templates2: WORKBOOK_TEMPLATES 3→5 (breakEven, cashflow12m; żywe formuły, krytyk 0 issues, 72 testy). Backend.
+- genexcel-preview: inline podgląd siatki wyniku po buildzie w ExceleParametricTemplates (reuse getWorkbookSchema+workbookGridPreview z B3). Render-verify PASS: siatka z zakładkami arkuszy + formuły mono (=y1*1.12, =SUM). Za ff_excele (istniejąca). ⚠ drobne: zakładki „Sheet 1/2" zamiast nazw arkuszy (pre-existing workbookGridPreview default).
+- genword-hints: contentHints per sekcja Word (analog deck) + edytor „Content guidance" per sekcja. Render-verify PASS (nowy ekran gen-word-content-hints, mock window.fetch). Za ff_tpl_editor (istniejąca). 17 testów.
+Oceny: Gen.Excel 5,6→6,2 (Meryt 6→7 5 wzorców, Funkcja 5→6 + Grafika 5→6 podgląd); Gen.Word 6,4→6,6 (Meryt 5→6, Grafika 5→6). Średnia 6,6→6,7.
 
 ### Fala 1 — ✅ ZAKOŃCZONA + SCALONA (workflow wrort4or3, demo d410918a1e)
 3 robotnicy, 0 błędów. Zweryfikowane NIEZALEŻNIE przez nadzorcę (nie ufając raportom): 44 testy backend (registry+regresja) + 3 testy FE (deprecate), esbuild wszystkich plików PASS, tree czysty.
@@ -111,6 +118,7 @@ Jeśli kontekst się kończy: następca czyta ten plik + memory `[[loop-do-9-202
 sprawdza `git worktree list`, kontynuuje z inwentarza (najniższe średnie najpierw: Gen.Excel → Gen.Deck → Gen.Word).
 
 ## STAN BIEŻĄCY (aktualizuj)
-Średnia: **6,6** → cel 9,0. Ostatni SHA demo: `d410918a1e` (fala 1). Fal ukończonych: 1. Fala 2 w toku (wavodm809).
-Per narzędzie: Deck 7,8 · Word 7,2 · Excel 7,0 · Gen.Deck 5,6 · Gen.Word 6,4 · Gen.Excel 5,6.
-🅰️ Czeka na akcept Piotra (flip flag): ff_workbook_templates (zakładka Gen.Excel). Zrzuty w rozmowie.
+Średnia: **6,7** → cel 9,0. Ostatni SHA demo: `498ce9d5ef` (fala 2). Fal ukończonych: 2. Fala 3 w toku (wkrp7w510).
+Per narzędzie: Deck 7,8 · Word 7,2 · Excel 7,0 · Gen.Deck 5,6 · Gen.Word 6,6 · Gen.Excel 6,2.
+🅰️ Czeka na akcept Piotra (flip flag po zrzutach): ff_workbook_templates (zakładka Gen.Excel). Reszta iteracji za istniejącymi flagami ON.
+Dev-render ekrany: gen-deck-content-hints, gen-excel-templates-tab, gen-word-content-hints. Port bieżący 3027 (--force gdy HMR gubi).
