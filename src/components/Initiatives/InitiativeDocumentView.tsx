@@ -159,6 +159,7 @@ import {
   AIConsultantPanel,
 } from '../shared/NModeLayout/AIConsultantPanel';
 import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
+import { AutoFitTextarea } from '../shared/AutoFitTextarea';
 import type { EscalationRuleWithConfig, ReminderRuleWithDelivery } from '../shared/NModeSections';
 import {
   type ActivityLogEntry as NModeActivityLogEntry,
@@ -395,73 +396,40 @@ interface ExpandableNarrativeFieldProps {
   onChange: (next: string) => void;
   placeholder: string;
   isPolish: boolean;
+  /** Tryb Podgląd (§5.1/§4.4) — uchwyt, ramka edycyjna i edycja wyłączone. */
+  previewMode?: boolean;
+  /** Tylko-do-odczytu z powodu uprawnień (bez chowania ramki edycyjnej). */
+  readOnly?: boolean;
 }
 
+/**
+ * Opisowe pole narracyjne sekcji inicjatywy = STANDARDOWY `AutoFitTextarea`
+ * (n-Type §5.1/§6.2/§6.3). Zastąpiło bespoke „ekspandowany textarea + toggle
+ * Więcej/Mniej": standard daje auto-fit w obie strony, ręczne przeciągnięcie
+ * uchwytu z zapamiętaniem wysokości, powrót do auto-fitu i tryb Podgląd
+ * (uchwyt/ramka ukryte). Wygląd = wyłącznie tokeny `c-*`; ramka edycyjna
+ * (podkreślenie) tylko w trybie Edycja przez `editClassName`.
+ */
 const ExpandableNarrativeField: React.FC<ExpandableNarrativeFieldProps> = ({
   value,
   onChange,
   placeholder,
   isPolish,
-}) => {
-  const { t } = useTranslation();
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isOverflowing, setIsOverflowing] = useState(false);
-
-  useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-
-    const updateOverflow = () => {
-      if (isExpanded) {
-        // While expanded, keep the toggle visible when content is non-trivial.
-        setIsOverflowing(value.trim().length > 220 || el.scrollHeight > 120);
-        return;
-      }
-      setIsOverflowing(el.scrollHeight > el.clientHeight + 2);
-    };
-
-    updateOverflow();
-    if (typeof ResizeObserver === 'undefined') return;
-
-    const observer = new ResizeObserver(updateOverflow);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [isExpanded, value]);
-
-  useEffect(() => {
-    if (!isOverflowing && isExpanded) {
-      setIsExpanded(false);
-    }
-  }, [isOverflowing, isExpanded]);
-
-  return (
-    <div className="relative">
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={3}
-        className={`w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder:text-c-text-muted border-b border-c-border-subtle focus:border-c-focus-solid transition-colors min-h-[60px] ${
-          isExpanded ? 'min-h-[220px] overflow-visible resize-y' : 'h-24 overflow-hidden resize-y'
-        }`}
-        placeholder={placeholder}
-      />
-      {isOverflowing && (
-        <button
-          type="button"
-          onClick={() => setIsExpanded((prev) => !prev)}
-          className="absolute -bottom-4 right-4 inline-flex items-center gap-1 px-1 py-0.5 text-[10px] font-medium text-c-text-muted hover:text-c-text-secondary transition-colors"
-        >
-          {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-          {isExpanded
-            ? t('initiatives.initiativeDocumentView.less')
-            : t('initiatives.initiativeDocumentView.more')}
-        </button>
-      )}
-    </div>
-  );
-};
+  previewMode = false,
+  readOnly = false,
+}) => (
+  <AutoFitTextarea
+    value={value}
+    onValueChange={onChange}
+    previewMode={previewMode}
+    readOnly={readOnly}
+    minRows={3}
+    placeholder={placeholder}
+    autoFitLabel={isPolish ? 'Auto-dopasowanie' : 'Auto-fit'}
+    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder:text-c-text-muted transition-colors"
+    editClassName="border-b border-c-border-subtle focus:border-c-focus-solid"
+  />
+);
 
 export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   initiativeId,
@@ -6468,6 +6436,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <ExpandableNarrativeField
                   value={symptomDraft}
                   onChange={setSymptomDraft}
+                  previewMode={readMode}
+                  readOnly={!canEditCards}
                   isPolish={isPolish}
                   placeholder={t('initiatives.whatProblemAreWeSolvingWhat2')}
                 />
@@ -6500,6 +6470,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <ExpandableNarrativeField
                   value={rootCauseDraft}
                   onChange={setRootCauseDraft}
+                  previewMode={readMode}
+                  readOnly={!canEditCards}
                   isPolish={isPolish}
                   placeholder={t('initiatives.whatSolutionDoWeProposeWhat2')}
                 />
@@ -6532,6 +6504,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <ExpandableNarrativeField
                   value={costOfInactionDraft}
                   onChange={setCostOfInactionDraft}
+                  previewMode={readMode}
+                  readOnly={!canEditCards}
                   isPolish={isPolish}
                   placeholder={t('initiatives.whatHappensIfWeDoNothing2')}
                 />
@@ -6564,6 +6538,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <ExpandableNarrativeField
                   value={marketContextDraft}
                   onChange={setMarketContextDraft}
+                  previewMode={readMode}
+                  readOnly={!canEditCards}
                   isPolish={isPolish}
                   placeholder={t('initiatives.marketContextCompetitionTrends2')}
                 />
@@ -7513,6 +7489,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <ExpandableNarrativeField
                 value={marketContextDraft}
                 onChange={setMarketContextDraft}
+                previewMode={readMode}
+                readOnly={!canEditCards}
                 isPolish={isPolish}
                 placeholder={
                   isAnalysis
@@ -8471,14 +8449,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <p className="text-xs text-c-text-muted">
                 {t('initiatives.theValueHypothesisWhatWeBelieve2')}
               </p>
-              <textarea
+              <AutoFitTextarea
                 value={hypothesisDraft}
+                previewMode={readMode}
                 readOnly={!canEditCards}
-                onChange={(e) => setHypothesisDraft(e.target.value)}
+                onValueChange={setHypothesisDraft}
                 onBlur={saveHypothesis}
-                rows={5}
+                minRows={5}
                 placeholder={t('initiatives.weBelieveThatBecauseWeWill2')}
-                className="w-full rounded-lg border border-c-border-subtle bg-transparent px-3 py-2 text-sm text-c-text-secondary focus:outline-none focus:border-teal-400 resize-y"
+                autoFitLabel={isPolish ? 'Auto-dopasowanie' : 'Auto-fit'}
+                className="w-full rounded-lg bg-transparent px-3 py-2 text-sm text-c-text-secondary focus:outline-none"
+                editClassName="border border-c-border-subtle focus:border-teal-400"
               />
             </div>
           );
@@ -8532,14 +8513,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <h2 className="text-lg font-semibold text-c-text">
                 {t('initiatives.lessonsLearned2')}
               </h2>
-              <textarea
+              <AutoFitTextarea
                 value={lessonsDraft}
+                previewMode={readMode}
                 readOnly={!canEditCards}
-                onChange={(e) => setLessonsDraft(e.target.value)}
+                onValueChange={setLessonsDraft}
                 onBlur={saveLessons}
-                rows={6}
+                minRows={6}
                 placeholder={t('initiatives.whatWorkedWhatDidnTWhat2')}
-                className="w-full rounded-lg border border-c-border-subtle bg-transparent px-3 py-2 text-sm text-c-text-secondary focus:outline-none focus:border-teal-400 resize-y"
+                autoFitLabel={isPolish ? 'Auto-dopasowanie' : 'Auto-fit'}
+                className="w-full rounded-lg bg-transparent px-3 py-2 text-sm text-c-text-secondary focus:outline-none"
+                editClassName="border border-c-border-subtle focus:border-teal-400"
               />
             </div>
           );
@@ -9728,11 +9712,30 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: Sparkles,
         defaultOpen: true,
         children: (
+          // §6.4: sekcja „Akcje" niesie działania NA REKORDZIE. „Forkuj"
+          // (odnoga biznesowa — tworzy nową inicjatywę-wariant) zostaje tu.
+          // „Tryb pokazu" NIE jest działaniem na rekordzie, tylko sposobem
+          // PREZENTACJI wyniku → przeniesiony do sekcji „Rezultaty" (§6.4/§6.5).
           <div className="flex flex-col gap-2">
             <button type="button" onClick={() => void handleFork()} className={panelBtn}>
               <GitFork size={14} className="text-c-text-muted" />
               {t('initiatives.fork2')}
             </button>
+          </div>
+        ),
+      },
+      {
+        // §6.5: sekcja „Rezultaty" — inicjatywa generuje prezentację (card-walk
+        // przez PresentMode) i inne wyniki. Tu mieszka działanie PREZENTACYJNE
+        // („Tryb pokazu"), zdjęte z „Akcji" zgodnie z §6.4. Archetypowe
+        // rozszerzenie karty Inicjatywa (cięższa niż Task/Decision) — placement
+        // w kanonie panelu do potwierdzenia przez właściciela (zgłoszenie).
+        id: 'outcomes',
+        label: t('initiatives.panel.outcomes', 'Outcomes'),
+        icon: Presentation,
+        defaultOpen: false,
+        children: (
+          <div className="flex flex-col gap-2">
             <button
               type="button"
               onClick={() => setPresentationMode('fullscreen')}
@@ -9946,7 +9949,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       },
       {
         id: 'history',
-        label: t('initiatives.panel.history', 'History / AI'),
+        // n-Type §6.3: sekcja to „Historia" (log zdarzeń). AI ma osobne
+        // wejście — fioletowy „Analizuj z AI" w menu 2 — więc „Historia / AI"
+        // sugerowało nieistniejącą drugą drogę do AI.
+        label: t('initiatives.panel.history', 'History'),
         icon: History,
         defaultOpen: false,
         badge: nModeActivityEntries.length,
@@ -10805,10 +10811,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                         JEDNO wejście „Eksport…" zamiast rozwijanego
                                         menu z 5 pozycjami: otwiera Smart Export,
                                         który jest nadzbiorem tamtych celów.
-                                        Fork i Tryb pokazu NIE są tutaj — mieszkają
-                                        w sekcji „Akcje" prawego panelu (§2.6: jedna
-                                        akcja = jedno miejsce, wygrywa to widoczne
-                                        zawsze). */}
+                                        Fork i Tryb pokazu NIE są tutaj — Fork
+                                        mieszka w sekcji „Akcje", Tryb pokazu w
+                                        sekcji „Rezultaty" prawego panelu (§6.4:
+                                        akcje rekordu vs prezentacyjne; §2.6:
+                                        jedna akcja = jedno miejsce). */}
                                   <button
                                     type="button"
                                     onClick={() => {
