@@ -383,7 +383,7 @@ const ArtifactRightPanelDemo: React.FC = () => (
         },
         {
           id: 'history',
-          label: 'Historia / AI',
+          label: 'Historia',
           defaultOpen: false,
           children: <p className="text-xs text-c-text-muted">Utworzono przez Teresę · 2 dni temu</p>,
         },
@@ -457,7 +457,7 @@ export const ComponentsSection: React.FC = () => {
         />
       </div>
 
-      <SectionHeading note="SPEC-A powłoka wspólna (§10.2/§11.2) — accordion 5 sekcji w stałej kolejności: Akcje·Właściwości·Powiązania·Komentarze·Historia/AI.">
+      <SectionHeading note="SPEC-A powłoka wspólna (§10.2/§11.2) — accordion w stałej kolejności n-Type: Akcje·Właściwości·Powiązania·Źródła i założenia·[Rezultaty]·Komentarze·Historia.">
         ArtifactRightPanel
       </SectionHeading>
       <ArtifactRightPanelDemo />

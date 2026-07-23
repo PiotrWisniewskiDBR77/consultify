@@ -9630,7 +9630,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // zarezerwowanymi id, których §2.1 tam zabrania.
   //
   // KANONICZNA KOLEJNOŚĆ (§11.2, bez odstępstw):
-  //   Akcje · Właściwości · Powiązania · [Dowody] · Komentarze · Historia/AI
+  //   Akcje · Właściwości · Powiązania · Źródła i założenia · [Rezultaty] ·
+  //   Komentarze · Historia   (kanon n-Type = ARTIFACT_PANEL_SECTION_ORDER)
   // Sekcja `evidence` to JEDYNE dozwolone rozszerzenie poza piątkę i zawsze
   // stoi między Powiązaniami a Komentarzami (§2.2).
   //
@@ -9945,7 +9946,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       },
       {
         id: 'history',
-        label: t('initiatives.panel.history', 'History / AI'),
+        label: t('initiatives.panel.history', 'History'),
         icon: History,
         defaultOpen: false,
         badge: nModeActivityEntries.length,

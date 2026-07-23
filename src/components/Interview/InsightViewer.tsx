@@ -7938,7 +7938,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   // ── SPEC-A prawy panel artefaktu (ArtifactRightPanel) ─────────────────────
   // Stała kolejność: Akcje · Właściwości · Powiązania · Komentarze ·
-  // Historia/AI. Wyłącznie ISTNIEJĄCE handlery/dane — zero nowego backendu.
+  // Historia. Wyłącznie ISTNIEJĄCE handlery/dane — zero nowego backendu.
   // Centrum (N-mode sekcje obserwacja/znaczenie/rekomendacja) pozostaje
   // nietknięte — ten panel tylko dokuje się z boku (NModeShell `rightPanel`).
   const panelDash = '—';

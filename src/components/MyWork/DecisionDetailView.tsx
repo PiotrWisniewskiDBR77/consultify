@@ -4865,7 +4865,10 @@ Use userId only from this list:
   };
 
   // ── Prawy panel artefaktu (SPEC-A) — 5 sekcji z realnych danych, konsolidacja ──
-  // Kanon: Akcje · Właściwości · Powiązania · Komentarze · Historia/AI.
+  // Kanon n-Type (ARTIFACT_PANEL_SECTION_ORDER): Akcje · Właściwości ·
+  // Powiązania · [Źródła i założenia] · [Rezultaty] · Komentarze · Historia.
+  // Decyzja nie ma dziś sekcji Źródła/Rezultaty — są POMINIĘTE (nie puste
+  // ramki); obecne sekcje trzymają kanoniczną kolejność.
   // Wyłącznie odczyt istniejących stanów/handlerów; treść tokenami c-*.
   const dash = '—';
   // `fmtDateTime` usuniete 2026-07-21 — jego JEDYNYMI konsumentami byly skrocone
@@ -5126,7 +5129,7 @@ Use userId only from this list:
     },
     {
       id: 'history',
-      label: t('myWork.decisionDetail.label5', 'History / AI'),
+      label: t('myWork.decisionDetail.label5', 'History'),
       icon: History,
       defaultOpen: false,
       badge: activityLogSorted.length,
@@ -7781,7 +7784,7 @@ Use userId only from this list:
                         )}
 
                         {/* SPEC-N §2.1: sekcja Logu aktywnosci przeniesiona STAD do
-                            prawego panelu (sekcja "History / AI"). Zarezerwowane id
+                            prawego panelu (sekcja "History"). Zarezerwowane id
                             `activity-log` nie moze byc sekcja lewej nawigacji. */}
                       </motion.div>
                     </AnimatePresence>

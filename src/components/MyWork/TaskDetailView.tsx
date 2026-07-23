@@ -3849,7 +3849,7 @@ Return ONLY the final comment text.`;
           break;
 
         // ── 9. Aktywność: SPEC-N §2.1 — zarezerwowane id, sekcja przeniesiona
-        //      do prawego panelu (sekcja „Historia / AI"). Tu jej nie ma.
+        //      do prawego panelu (sekcja „Historia"). Tu jej nie ma.
       }
 
       // ── Wzorzec N: opakuj sekcje AI-zapisywalne w NModeCardState ──────────
@@ -4205,7 +4205,10 @@ Return ONLY the final comment text.`;
 
   if (presentationMode === 'n') {
     // ── Dokowany prawy panel artefaktu (SPEC-A) — 5 sekcji z REALNYCH danych ──
-    // Kanon: Akcje · Właściwości · Powiązania · Komentarze · Historia/AI.
+    // Kanon n-Type (ARTIFACT_PANEL_SECTION_ORDER): Akcje · Właściwości ·
+    // Powiązania · [Źródła i założenia] · [Rezultaty] · Komentarze · Historia.
+    // Zadanie nie ma dziś sekcji Źródła/Rezultaty — są POMINIĘTE (nie puste
+    // ramki); obecne sekcje trzymają kanoniczną kolejność.
     // Tylko odczyt istniejących stanów/handlerów; treść tokenami c-* .
     const ownerFullName = (() => {
       const u = users.find((usr) => usr.id === ownerId);
@@ -4369,7 +4372,7 @@ Return ONLY the final comment text.`;
         // SPEC-N §2.1: `activity-log` również zeszło tu z lewej nawigacji.
         // Pełny ActivityLogCanvas (statystyki + filtry typów), bo skrót
         // „8 ostatnich wpisów" gubił oba.
-        label: t('myWork.taskDetail.label12', 'History / AI'),
+        label: t('myWork.taskDetail.label12', 'History'),
         icon: History,
         defaultOpen: false,
         badge: activityLog.length,

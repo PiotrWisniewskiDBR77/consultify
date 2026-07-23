@@ -197,7 +197,8 @@ export type PanelSekcjaSlot = PanelSekcjaTresc | PominietaSekcjaPanelu;
  * Prawy panel jako REKORD O STAŁYCH KLUCZACH (SPEC-N §2.2, §5.1).
  *
  * Kolejność renderu narzuca komponent, nie kolejność deklaracji:
- *   Akcje · Właściwości · Powiązania · [Dowody] · Komentarze · Historia/AI.
+ *   Akcje · Właściwości · Powiązania · Źródła i założenia · [Rezultaty] ·
+ *   Komentarze · Historia   (kanon n-Type = ARTIFACT_PANEL_SECTION_ORDER).
  *
  * `evidence` — JEDYNE dozwolone rozszerzenie poza piątkę, zawsze między Powiązaniami
  * a Komentarzami (SPEC-N §2.2). Obowiązuje karty, których treść pisze AI: Insight

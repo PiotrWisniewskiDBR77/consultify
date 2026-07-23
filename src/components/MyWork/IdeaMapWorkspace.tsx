@@ -3655,7 +3655,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         ★ D16/D17/Z8 — JEDEN prawy panel idei (dok Teresy) = `<IdeaRightPanel>`
         (accordion ArtifactRightPanel), przebudowany (2026-07-22) na 5 sekcji
         kanonu SPEC-A: Akcje · Właściwości · Powiązania · Komentarze ·
-        Historia/AI (ARTIFACT_ANATOMY_STANDARD §10.2/§11.2). Zastępuje
+        Historia (ARTIFACT_ANATOMY_STANDARD §10.2/§11.2). Zastępuje
         archaiczny przełącznik 3 OSOBNYCH szuflad (#6q) dla WSZYSTKICH 4 narzędzi
         — bez flagi (default). Montuje się gdy pasek otworzy dowolną sekcję
         (parytet z self-hide szuflad: canvas rozszerza się po zamknięciu).

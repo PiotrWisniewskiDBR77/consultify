@@ -5,8 +5,20 @@
  * Powłoka wspólna dla WSZYSTKICH 5 archetypów (A Canvas · B Dokument · C Rekord
  * · D Matryca · E Deck) — to jest dla ARTEFAKTU tym, czym StandardPreview dla LISTY.
  *
- * Sekcje w STAŁEJ kolejności (moduł deklaruje treść, komponent narzuca wygląd):
- *   Akcje · Właściwości · Powiązania · Komentarze · Historia/AI.
+ * Sekcje w STAŁEJ kolejności (moduł deklaruje treść, komponent narzuca wygląd) —
+ * standard n-Type ETAP 1.3/1.4, wzorzec = karta Inicjatywy:
+ *
+ *   ① Akcje  ② Właściwości  ③ Powiązania  ④ Źródła i założenia
+ *   ⑤ Rezultaty (warunkowo)  ⑥ Komentarze  ⑦ Historia
+ *
+ * Reguły kolejności/nazewnictwa (obowiązują WSZYSTKIE 6 kart N — Decyzja, Zadanie,
+ * Powiadomienie, Wniosek, Narzędzie, Inicjatywa):
+ *  - Sekcja BEZ ZASTOSOWANIA może być NIEOBECNA (lepiej brak niż pusty akordeon
+ *    udający funkcję), ale sekcje OBECNE zachowują powyższą kolejność.
+ *  - Sekcja historii nazywa się „Historia" — bez „/ AI". AI zostaje jako TYP WPISU
+ *    i filtr wewnątrz strumienia, nie w nazwie sekcji.
+ *  - Domyślnie ROZWINIĘTE: Akcje i Właściwości. Reszta `defaultOpen: false`.
+ *  - Kanoniczne id sekcji: patrz `ARTIFACT_PANEL_SECTION_ORDER` niżej.
  *
  * Zasady (jak StandardTable/StandardPreview):
  *  - Moduł podaje `sections` (id + label + treść). Wygląd (nagłówek h-11 L1 +
@@ -19,6 +31,43 @@
  */
 import { ChevronDown, type LucideIcon } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+
+/**
+ * KANONICZNA kolejność sekcji prawego panelu (standard n-Type ETAP 1.3).
+ * Wzorzec = karta Inicjatywy. Karta może POMINĄĆ sekcję (brak zastosowania),
+ * ale NIE MOŻE zmienić kolejności obecnych. Test kolejności czyta tę stałą.
+ */
+export const ARTIFACT_PANEL_SECTION_ORDER = [
+  'actions', // ① Akcje            — defaultOpen: true
+  'properties', // ② Właściwości       — defaultOpen: true
+  'relations', // ③ Powiązania        — defaultOpen: false
+  'evidence', // ④ Źródła i założenia — defaultOpen: false
+  'results', // ⑤ Rezultaty (warunkowo) — defaultOpen: false
+  'comments', // ⑥ Komentarze        — defaultOpen: false
+  'history', // ⑦ Historia (nazwa bez dopisku o AI) — defaultOpen: false
+] as const;
+
+export type ArtifactPanelSectionId = (typeof ARTIFACT_PANEL_SECTION_ORDER)[number];
+
+/**
+ * Wygląd wzorcowy panelu karty N (ETAP 1.4): JASNY ZAOKRĄGLONY KOMPONENT
+ * ODSUNIĘTY OD KRAWĘDZI — nie techniczny sidebar przyklejony do brzegu ekranu.
+ *
+ * Dwa warianty to ten SAM wygląd w dwóch kontekstach layoutu:
+ *  - `_STICKY`  — karta w kolumnie ze scrollem STRONY (Inicjatywa/Decyzja/
+ *    Zadanie/Powiadomienie). Wołający owija w `sticky top-6 self-start`,
+ *    więc odsunięcie daje wrapper, a max-h liczy się od viewportu.
+ *  - `_DOCKED`  — karta w slocie `rightPanel` powłoki `NModeShell` (Wniosek/
+ *    Narzędzie). Slot jest pełnowysokościowy i dociśnięty do krawędzi, więc
+ *    odsunięcie musi dać sam panel (`m-4`), a max-h liczy się od kontenera.
+ *
+ * Powłoka NEUTRALNA: wyłącznie tokeny `c-*`, czerwień tylko semantyka krytyczna.
+ */
+export const ARTIFACT_PANEL_CARD_CLASS_STICKY =
+  'rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]';
+
+export const ARTIFACT_PANEL_CARD_CLASS_DOCKED =
+  'rounded-2xl border border-c-border-subtle m-4 max-h-[calc(100%-2rem)]';
 
 export interface ArtifactRightPanelSection {
   /** Stabilny id sekcji (np. 'actions' | 'properties' | 'relations' | 'comments' | 'history'). */
@@ -42,7 +91,11 @@ export interface ArtifactRightPanelSection {
 }
 
 export interface ArtifactRightPanelProps {
-  /** Sekcje w kolejności deklaracji (kanon: Akcje·Właściwości·Powiązania·Komentarze·Historia/AI). */
+  /**
+   * Sekcje w kolejności deklaracji. Kanon n-Type (patrz
+   * `ARTIFACT_PANEL_SECTION_ORDER`): Akcje · Właściwości · Powiązania ·
+   * Źródła i założenia · Rezultaty (warunkowo) · Komentarze · Historia.
+   */
   sections: ArtifactRightPanelSection[];
   /** Szerokość panelu w px (default 360; kanon §11.2 zakres 320–420). */
   width?: number;
