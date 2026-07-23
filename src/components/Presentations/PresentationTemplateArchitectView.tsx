@@ -322,6 +322,36 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
     );
   };
 
+  const handleOutlineKeyMessageChange = (index: number, value: string): void => {
+    const trimmed = value.trim();
+    setEditOutline((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, keyMessage: trimmed.length > 0 ? trimmed : undefined } : item
+      )
+    );
+  };
+
+  const handleOutlineDataNeededChange = (index: number, rawText: string): void => {
+    const items = rawText
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    setEditOutline((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, dataNeeded: items.length > 0 ? items : undefined } : item
+      )
+    );
+  };
+
+  const handleOutlineSuggestedVisualChange = (index: number, value: string): void => {
+    const trimmed = value.trim();
+    setEditOutline((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, suggestedVisual: trimmed.length > 0 ? trimmed : undefined } : item
+      )
+    );
+  };
+
   const handleOutlineMove = (index: number, direction: -1 | 1): void => {
     setEditOutline((prev) => moveItem(prev, index, index + direction));
   };
@@ -895,7 +925,60 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
                             className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface-raised px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
                           />
                         </div>
-                        {slide.keyMessage || slide.dataNeeded?.length || slide.suggestedVisual ? (
+                        {isEditable ? (
+                          <div className="mt-1.5 space-y-1.5 pl-7">
+                            <label className="block">
+                              <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                                {t('presentations.templateArchitect.keyMessage', 'Teza')}
+                              </span>
+                              <input
+                                type="text"
+                                value={slide.keyMessage ?? ''}
+                                onChange={(e) => handleOutlineKeyMessageChange(idx, e.target.value)}
+                                placeholder={t(
+                                  'presentations.templateArchitect.keyMessagePlaceholder',
+                                  'Jednozdaniowa teza tego slajdu (bez wymyślonych faktów).'
+                                )}
+                                className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface-raised px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                              />
+                            </label>
+                            <label className="block">
+                              <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                                {t('presentations.templateArchitect.dataNeeded', 'Dane do zebrania')}
+                              </span>
+                              <textarea
+                                value={(slide.dataNeeded ?? []).join('\n')}
+                                onChange={(e) => handleOutlineDataNeededChange(idx, e.target.value)}
+                                rows={Math.max(2, (slide.dataNeeded ?? []).length)}
+                                placeholder={t(
+                                  'presentations.templateArchitect.dataNeededPlaceholder',
+                                  'Jedna pozycja na linię — nazwy danych do zebrania, nie wartości.'
+                                )}
+                                className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface-raised px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                              />
+                            </label>
+                            <label className="block">
+                              <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                                {t(
+                                  'presentations.templateArchitect.suggestedVisual',
+                                  'Sugerowana wizualizacja'
+                                )}
+                              </span>
+                              <input
+                                type="text"
+                                value={slide.suggestedVisual ?? ''}
+                                onChange={(e) =>
+                                  handleOutlineSuggestedVisualChange(idx, e.target.value)
+                                }
+                                placeholder={t(
+                                  'presentations.templateArchitect.suggestedVisualPlaceholder',
+                                  'Np. wykres słupkowy, macierz priorytetów, oś czasu.'
+                                )}
+                                className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface-raised px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                              />
+                            </label>
+                          </div>
+                        ) : slide.keyMessage || slide.dataNeeded?.length || slide.suggestedVisual ? (
                           <div className="mt-1.5 space-y-1 pl-7">
                             {slide.keyMessage ? (
                               <div>
