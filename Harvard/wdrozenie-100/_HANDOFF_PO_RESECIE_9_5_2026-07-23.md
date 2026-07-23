@@ -27,6 +27,31 @@
 
 ---
 
+## 0b. RENDER-ODBIÓR FAZY A — WYKONANY (2026-07-23)
+
+Przeskanowane **7 kart × light + dark = 14 kombinacji** (harness 3220, realny render, computed style):
+
+| Sprawdzane | Wynik |
+|---|---|
+| crimson `rgb(133,24,47)` w centrum | **0 / 14** |
+| tabela właściwości (`ArtifactPropertiesTable`) | **obecna 14 / 14** |
+| błąd renderu / pusty ekran | **0 / 14** |
+| tekst o kontraście < 45 (zbladły po sweepie) | **0 / 14** |
+| powiązania w prawym panelu | `<button>`, cursor pointer, klik odpala realną nawigację (nie martwy) |
+
+**Znaleziony i naprawiony 1 realny FAIL** (`a01b342f9b`): brak globalnego `color-scheme` →
+w dark rozwinięty natywny `<select>` (m.in. w tabeli właściwości) renderował jasny tekst na
+**białym** popupie systemowym. Po fixie tło popupu `rgb(255,255,255)` → `rgb(59,59,59)`.
+Zasięg: cała aplikacja (popupy, scrollbary, date picker), nie tylko karty N.
+
+★ **Pułapka zrzutów:** karty mają animację wejścia (opacity 0.18 → 1). Zrzut zrobiony od razu po
+nawigacji łapie mid-fade i wygląda na „wyblakły ekran". Przed zrzutem odbiorowym **odczekaj ~5 s**
+albo sprawdź `document.getAnimations().filter(a=>a.playState==='running')`.
+
+Pre-flight merge z `origin/demo` (244 commity do przodu): **0 konfliktów**.
+
+---
+
 ## 1. ★ METODA ODBIORU (to jest odpowiedź na „jak Piotr ma to zatwierdzać")
 
 Problem: nie da się kazać właścicielowi oglądać 50 zrzutów. Rozwiązanie — **dwie ścieżki, zależnie od typu zmiany.**
