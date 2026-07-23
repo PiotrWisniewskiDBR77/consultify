@@ -65,6 +65,9 @@ import { InitiativeGeneratorModal } from '@/components/Initiatives/Wizard/Initia
 import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
 import type { DeckCard } from '@/components/Presentations/wizard/types';
 import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
+// n-Type §6.2–6.4 — ręczna edycja treści sekcji Insightu (właściciel 2026-07-23).
+import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
+import { AutoFitTextarea } from '@/components/shared/AutoFitTextarea';
 import { Select } from '@/components/shared/forms';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
@@ -1017,12 +1020,178 @@ const InsightSectionCardHeader: React.FC<InsightSectionCardHeaderProps> = ({
   );
 };
 
+// ── Ręczna edycja treści sekcji (n-Type §6.2–6.4, właściciel 2026-07-23) ─────
+//
+// DECYZJA WŁAŚCICIELA: „każda sekcja Insightu dostaje pole do ręcznej edycji".
+// Do dziś treść Insightu była read-only markdownem z AI, a „edycja" oznaczała
+// otwarcie czatu (`onEdit={handleOpenChat}`) — czyli prośbę do modelu, nie
+// edycję. Tu jest realne pole ze standardem: `AutoFitTextarea` (auto-fit,
+// ręczny uchwyt z pamięcią wysokości, powrót do auto — §6.3), przycisk AI
+// FIOLETOWY w prawym górnym rogu (§6.4, `AIFieldEnhancer` = propozycja +
+// Zastosuj/Odrzuć, nigdy ciche nadpisanie) i `previewMode` pod trybem
+// Edycja/Podgląd (§4.4 — w Podglądzie znikają uchwyt, AI i ramki edycyjne).
+//
+// ZAKRES ŚWIADOMIE WĄSKI (patrz raport, punkt „do decyzji"): pole NIE zastępuje
+// bloku wygenerowanego przez AI — leży NAD nim jako redakcja konsultanta.
+// Czy ręczna treść ma WYPIERAĆ treść AI w Podglądzie/eksporcie/PDF, to decyzja
+// produktowa właściciela, a nie coś, co wolno domyślić kodem.
+//
+// Kolory: zero `primary-*` (crimson) — tokeny `c-*`, akcent AI z `AIFieldEnhancer`
+// (`c-ai`, fiolet), fokus `c-focus`.
+interface InsightSectionManualFieldProps {
+  sectionId: string;
+  sectionLabel: string;
+  /** Wartość robocza (draft) — nie to samo co zapisane nadpisanie. */
+  value: string;
+  onValueChange: (value: string) => void;
+  /** Zapis do backendu (blur / „Zapisz"). */
+  onSave: () => void;
+  /** Usunięcie nadpisania — sekcja wraca do czystej treści z AI. */
+  onRevert: () => void;
+  /** Czy na wniosku jest ZAPISANE nadpisanie tej sekcji. */
+  hasOverride: boolean;
+  saving: boolean;
+  dirty: boolean;
+  /** Tryb Podgląd (§4.4) — czytelnia, bez uchwytu/AI/ramek. */
+  previewMode: boolean;
+  isPolish: boolean;
+  artifactTitle: string;
+  artifactStatus?: string;
+  savedAt?: string;
+  /** Ref na textarea — „✎ Edytuj" w pasku karty ustawia tu fokus. */
+  textareaRef?: React.MutableRefObject<HTMLTextAreaElement | null>;
+}
+
+const InsightSectionManualField: React.FC<InsightSectionManualFieldProps> = ({
+  sectionId,
+  sectionLabel,
+  value,
+  onValueChange,
+  onSave,
+  onRevert,
+  hasOverride,
+  saving,
+  dirty,
+  previewMode,
+  isPolish,
+  artifactTitle,
+  artifactStatus,
+  savedAt,
+  textareaRef,
+}) => {
+  const { t } = useTranslation();
+
+  // Podgląd bez treści = nic do pokazania. Klientowi nie pokazujemy pustego
+  // okienka „tu mogłaby być treść" (§4.4 — Podgląd jest czytelnią).
+  if (previewMode && !value.trim()) return null;
+
+  const savedLabel = (() => {
+    if (saving) return t('interview.insightViewer.manualFieldSaving', 'Saving…');
+    if (dirty) return t('interview.insightViewer.manualFieldUnsaved', 'Unsaved changes');
+    if (!savedAt) return null;
+    const d = new Date(savedAt);
+    if (Number.isNaN(d.getTime())) return null;
+    try {
+      return `${t('interview.insightViewer.manualFieldSavedAt', 'Saved')} ${d.toLocaleString(
+        isPolish ? 'pl-PL' : 'en-US',
+        { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }
+      )}`;
+    } catch {
+      return null;
+    }
+  })();
+
+  return (
+    <div className="mb-4 rounded-2xl border border-c-border-subtle bg-c-surface-raised/40 p-3">
+      <AutoFitTextarea
+        value={value}
+        onValueChange={onValueChange}
+        onBlur={onSave}
+        previewMode={previewMode}
+        minRows={4}
+        containerClassName="space-y-1"
+        label={
+          <span className="flex flex-col gap-0.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary">
+              {sectionLabel}
+            </span>
+            {!previewMode && (
+              <span className="text-[11px] leading-snug text-c-text-muted">
+                {t(
+                  'interview.insightViewer.manualFieldHint',
+                  'Text edited by hand. Stored separately from the AI content — regeneration does not erase it.'
+                )}
+              </span>
+            )}
+          </span>
+        }
+        aiSlot={
+          <AIFieldEnhancer
+            fieldKey={`insight-section-${sectionId}`}
+            sectionLabel={sectionLabel}
+            currentValue={value}
+            onApply={onValueChange}
+            artifactContext={{ title: artifactTitle, status: artifactStatus, type: 'insight' }}
+          />
+        }
+        textareaRef={textareaRef}
+        autoFitLabel={t('interview.insightViewer.manualFieldAutoFit', 'Back to auto-fit')}
+        className="w-full rounded-xl bg-transparent px-3 py-2 text-sm leading-relaxed text-c-text placeholder-c-text-muted focus:outline-none"
+        editClassName="border border-c-border-subtle focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
+        placeholder={t(
+          'interview.insightViewer.manualFieldPlaceholder',
+          'Write this section yourself, or correct what the AI produced…'
+        )}
+      />
+
+      {!previewMode && (
+        <div className="mt-1 flex items-center justify-between gap-2">
+          <span className="text-[11px] text-c-text-muted">{savedLabel}</span>
+          <div className="flex items-center gap-1.5">
+            {hasOverride && (
+              <button
+                type="button"
+                onClick={onRevert}
+                disabled={saving}
+                className="inline-flex h-7 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                title={t(
+                  'interview.insightViewer.manualFieldRevertHint',
+                  'Remove the manual text — the section goes back to the AI content only.'
+                )}
+              >
+                <RefreshCw size={12} />
+                {t('interview.insightViewer.manualFieldRevert', 'Discard manual text')}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={saving || !dirty}
+              className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface-raised px-2.5 text-[11px] font-medium text-c-text transition-colors hover:bg-c-surface disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+            >
+              {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+              {t('interview.insightViewer.manualFieldSave', 'Save section')}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 // Phase E — id of the hidden, print-only container captured by the Report (PDF)
 // export. Holds the canonical insight sections so the PDF is always complete
 // regardless of which C-board section is currently active on screen.
 const REPORT_PRINT_ELEMENT_ID = 'insight-report-print-root';
+
+/**
+ * Id pola widzianego przez „Analizuj z AI" jako ZAPISYWALNE — ręczna redakcja
+ * aktywnej sekcji. Pola z generacji zostają read-only (brak endpointu zapisu),
+ * więc to jedyny cel, dla którego „Zastosuj" ma prawo być aktywne.
+ */
+const INSIGHT_MANUAL_FIELD_ID = 'manual-section-text';
 
 export const InsightViewer: React.FC<InsightViewerProps> = ({
   insightId,
@@ -2454,6 +2623,138 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [insight, sectionCompletions, isPolish]
   );
 
+  // ── Ręczna redakcja treści sekcji (n-Type §6.2–6.4; właściciel 2026-07-23) ──
+  // ZAPISANE nadpisania czytamy z wniosku (`section_overrides`, kolumna dodana
+  // migracją 931 + lazy-guardem po stronie serwera). Wersja ROBOCZA (to, co
+  // użytkownik ma w polu) żyje osobno w `sectionDrafts`, żeby przeładowanie
+  // wniosku nie kasowało niezapisanego tekstu, a udany zapis nie zostawiał
+  // dwóch źródeł prawdy (po zapisie draft znika i pole czyta z wniosku).
+  const sectionOverrides = useMemo<
+    Record<string, { content: string; updatedAt?: string; updatedBy?: string | null }>
+  >(() => {
+    const raw = (insight as any)?.sectionOverrides ?? (insight as any)?.section_overrides;
+    if (!raw) return {};
+    const parsed = typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
+    if (!parsed || typeof parsed !== 'object') return {};
+    const out: Record<string, { content: string; updatedAt?: string; updatedBy?: string | null }> = {};
+    for (const [id, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (typeof value === 'string') out[id] = { content: value };
+      else if (value && typeof value === 'object' && typeof (value as any).content === 'string') {
+        out[id] = value as { content: string; updatedAt?: string; updatedBy?: string | null };
+      }
+    }
+    return out;
+  }, [insight]);
+
+  const [sectionDrafts, setSectionDrafts] = useState<Record<string, string>>({});
+  const [savingSectionId, setSavingSectionId] = useState<string | null>(null);
+  /** Fokus z „✎ Edytuj" w pasku karty — bez tego przycisk nie miałby dokąd prowadzić. */
+  const manualFieldRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const setSectionDraft = useCallback((sectionId: string, value: string) => {
+    setSectionDrafts((prev) => ({ ...prev, [sectionId]: value }));
+  }, []);
+
+  /**
+   * Zapis JEDNEJ sekcji. Wysyłamy mapę CZĘŚCIOWĄ (`{ [sectionId]: … }`) — serwer
+   * scala, więc równoległa redakcja innej sekcji przez drugą osobę nie ginie.
+   * Pusty tekst = świadome cofnięcie redakcji ⇒ `null` ⇒ sekcja wraca do AI.
+   */
+  const handleSaveSectionOverride = useCallback(
+    async (sectionId: string, explicitValue?: string) => {
+      if (!insight) return;
+      // `explicitValue` obsługuje wołających, którzy DOPIERO co ustawili draft
+      // (setState jest asynchroniczne — closure widziałby jeszcze starą mapę).
+      const draft = explicitValue !== undefined ? explicitValue : sectionDrafts[sectionId];
+      if (draft === undefined) return; // pole nietknięte — nie ruszamy serwera
+      const persisted = sectionOverrides[sectionId]?.content ?? '';
+      if (draft === persisted) {
+        setSectionDrafts((prev) => {
+          const next = { ...prev };
+          delete next[sectionId];
+          return next;
+        });
+        return;
+      }
+      setSavingSectionId(sectionId);
+      try {
+        await V8InterviewApi.updateInsight(insight.id, {
+          sectionOverrides: { [sectionId]: draft.trim() ? draft : null },
+        });
+        const nextMap = { ...sectionOverrides };
+        if (draft.trim()) {
+          nextMap[sectionId] = { content: draft, updatedAt: new Date().toISOString() };
+        } else {
+          delete nextMap[sectionId];
+        }
+        setInsight((prev) =>
+          prev ? ({ ...prev, sectionOverrides: nextMap, section_overrides: nextMap } as any) : prev
+        );
+        setSectionDrafts((prev) => {
+          const next = { ...prev };
+          delete next[sectionId];
+          return next;
+        });
+        toast.success(t('interview.insightViewer.manualFieldSaved', 'Section saved'));
+      } catch {
+        // Draft ZOSTAJE — użytkownik nie traci tekstu przez nieudany zapis.
+        toast.error(t('interview.insightViewer.manualFieldSaveFailed', 'Failed to save section'));
+      } finally {
+        setSavingSectionId(null);
+      }
+    },
+    [insight, sectionDrafts, sectionOverrides, t]
+  );
+
+  const handleRevertSectionOverride = useCallback(
+    (sectionId: string) => {
+      setSectionDrafts((prev) => ({ ...prev, [sectionId]: '' }));
+      // Zapis pustki idzie tą samą drogą (serwer zamienia ją na `null`), więc
+      // „cofnij" nie jest osobną ścieżką backendową, którą trzeba by utrzymywać.
+      void (async () => {
+        if (!insight) return;
+        setSavingSectionId(sectionId);
+        try {
+          await V8InterviewApi.updateInsight(insight.id, { sectionOverrides: { [sectionId]: null } });
+          const nextMap = { ...sectionOverrides };
+          delete nextMap[sectionId];
+          setInsight((prev) =>
+            prev ? ({ ...prev, sectionOverrides: nextMap, section_overrides: nextMap } as any) : prev
+          );
+          setSectionDrafts((prev) => {
+            const next = { ...prev };
+            delete next[sectionId];
+            return next;
+          });
+        } catch {
+          toast.error(t('interview.insightViewer.manualFieldSaveFailed', 'Failed to save section'));
+        } finally {
+          setSavingSectionId(null);
+        }
+      })();
+    },
+    [insight, sectionOverrides, t]
+  );
+
+  /**
+   * „✎ Edytuj" w pasku karty. Pole ręcznej edycji jest już na ekranie (nad
+   * treścią sekcji) — przycisk ma je pokazać i postawić w nim kursor, a nie
+   * otwierać drugiego, konkurencyjnego wejścia (§2.6 anty-duplikacja).
+   */
+  const focusManualField = useCallback(() => {
+    const el = manualFieldRef.current;
+    if (!el) return;
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.focus();
+    // Kursor na końcu — użytkownik dopisuje, nie nadpisuje zaznaczeniem.
+    const end = el.value.length;
+    try {
+      el.setSelectionRange(end, end);
+    } catch {
+      /* niektóre przeglądarki blokują selection na świeżo sfokusowanym polu */
+    }
+  }, []);
+
   const handleRegenerate = async () => {
     if (!insight) return;
     setIsRegenerating(true);
@@ -2585,7 +2886,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // stanu (AI-draft/Edytowane/Gotowe/Błąd) + akcje ✨Regeneruj · ✎Edytuj ·
   // ✓Zaakceptuj pod nagłówkiem sekcji. Stan liczony ze statusu artefaktu +
   // sygnałów per-sekcja (odświeżanie, obecność treści, ręczna akceptacja).
-  //   • Edytuj → czat z kontekstem (Insight nie ma inline-edit sekcji)
+  //   • Edytuj → FOKUS w polu ręcznej edycji tej sekcji (n-Type §6.2; właściciel
+  //     2026-07-23). BYŁO: `handleOpenChat` — „edycja" oznaczała otwarcie czatu,
+  //     czyli prośbę do modelu, a nie edycję. Czat nie zniknął: żyje w nagłówku
+  //     (`onChat`) i w toolbarze, więc żadna zdolność nie została zabrana.
   //   • Zaakceptuj → toggle completion (już persystowany per sekcja)
   //   • Regeneruj → whole-artifact regenerate (jedyny dostępny backend)
   // UWAGA: MUSI być zadeklarowany PO sectionCompletions/handleRegenerate/
@@ -2608,7 +2912,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           readOnly={readMode}
           onRegenerate={handleRegenerate}
           regenerating={isRegenerating}
-          onEdit={handleOpenChat}
+          onEdit={focusManualField}
           onAccept={() => handleToggleSectionComplete(sectionId)}
         />
       );
@@ -2620,7 +2924,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       isPolish,
       readMode,
       handleRegenerate,
-      handleOpenChat,
+      focusManualField,
       handleToggleSectionComplete,
     ]
   );
@@ -7644,8 +7948,55 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [sectionCompletions, handleToggleSectionComplete, isPolish]
   );
 
+  // ── Pole ręcznej edycji AKTYWNEJ sekcji (n-Type §6.2–6.4) ─────────────────
+  // Tryb 'c' (C-board, wszystkie sekcje naraz) jest w Insighcie martwy — strażnik
+  // przy `usePresentationMode` sprowadza go do 'n', więc renderowana jest zawsze
+  // dokładnie JEDNA sekcja. Wstrzyknięcie w aktywną sekcję = „każda sekcja ma
+  // pole" w praktyce, tym samym szwem, którym żyje już Mark-complete.
+  const renderSectionManualField = useCallback(
+    (sectionId: string) => {
+      const meta = INSIGHT_SECTIONS.find((s) => s.id === sectionId);
+      const label = meta ? (isPolish ? meta.label.pl : meta.label.en) : sectionId;
+      const persisted = sectionOverrides[sectionId]?.content ?? '';
+      const draft = sectionDrafts[sectionId];
+      const value = draft ?? persisted;
+      return (
+        <InsightSectionManualField
+          sectionId={sectionId}
+          sectionLabel={label}
+          value={value}
+          onValueChange={(v) => setSectionDraft(sectionId, v)}
+          onSave={() => void handleSaveSectionOverride(sectionId)}
+          onRevert={() => handleRevertSectionOverride(sectionId)}
+          hasOverride={Boolean(persisted)}
+          saving={savingSectionId === sectionId}
+          dirty={draft !== undefined && draft !== persisted}
+          previewMode={readMode}
+          isPolish={isPolish}
+          artifactTitle={insight?.title || title}
+          artifactStatus={insight?.status}
+          savedAt={sectionOverrides[sectionId]?.updatedAt}
+          textareaRef={manualFieldRef}
+        />
+      );
+    },
+    [
+      isPolish,
+      sectionOverrides,
+      sectionDrafts,
+      savingSectionId,
+      readMode,
+      insight,
+      title,
+      setSectionDraft,
+      handleSaveSectionOverride,
+      handleRevertSectionOverride,
+    ]
+  );
+
   // Apply Sections-dropdown visibility toggles + inject the Mark-complete control
-  // into the active section. Hidden sections drop out of the nav/canvas entirely.
+  // and the manual-edit field into the active section. Hidden sections drop out
+  // of the nav/canvas entirely.
   const visibleNModeSections = useMemo<NModeSection[]>(
     () =>
       orderedNModeSectionsWithContent
@@ -7657,13 +8008,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 component: (
                   <>
                     {renderSectionCompleteToggle(section.id)}
+                    {renderSectionManualField(section.id)}
                     {section.component}
                   </>
                 ),
               }
             : section
         ),
-    [orderedNModeSectionsWithContent, hiddenSectionIds, activeNSection, renderSectionCompleteToggle]
+    [
+      orderedNModeSectionsWithContent,
+      hiddenSectionIds,
+      activeNSection,
+      renderSectionCompleteToggle,
+      renderSectionManualField,
+    ]
   );
 
   useEffect(() => {
@@ -7982,17 +8340,18 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // poziom pewności · brakujące źródła · sprzeczności · potencjalny wpływ ·
   // gotowość do konwersji.
   //
-  // ★ WSZYSTKIE POLA SĄ TYLKO-DO-ODCZYTU — i to jest STAN FAKTYCZNY, nie wybór:
-  //   backend NIE MA endpointu zapisu treści kart Insightu. `updateInsight`
-  //   (src/services/api/v8/interview.ts:790) przyjmuje wyłącznie
-  //   title/status/exportedTo*/archived/sectionCompletions; treść analityczna
-  //   (executiveSummary, themes, issues, opportunities, signals) powstaje z
-  //   generacji i jedyną drogą jej zmiany jest `regenerateInsight` — czyli
-  //   przepisanie CAŁOŚCI, nie pojedynczej poprawki.
-  //   Skutkiem: panel pokazuje Braki/Ryzyka/Sugestie w pełni, a „Proponowane
-  //   zmiany" dostają „Kopiuj treść" zamiast „Zastosuj", z jawnym powodem.
-  //   Czego brakuje po stronie backendu, żeby „Zastosuj" zadziałało:
-  //   PATCH /interview/insights/:id z polami treści kart (patrz raport).
+  // ★ POLA WYGENEROWANE PRZEZ AI (executiveSummary, themes, issues,
+  //   opportunities, signals) POZOSTAJĄ TYLKO-DO-ODCZYTU — i to nadal jest stan
+  //   faktyczny, nie wybór: jedyną drogą ich zmiany jest `regenerateInsight`,
+  //   czyli przepisanie CAŁOŚCI. Panel pokaże dla nich „Kopiuj treść" zamiast
+  //   „Zastosuj", z jawnym powodem.
+  //
+  // ★ ZMIANA (właściciel 2026-07-23 + zapis sekcji na serwerze): doszło JEDNO
+  //   pole ZAPISYWALNE — ręczna treść aktywnej sekcji (`section_overrides`,
+  //   PATCH /interview/insights/:id). Dzięki temu „Zastosuj" w Proponowanych
+  //   zmianach robi coś realnego: wkłada propozycję AI do pola redakcyjnego
+  //   sekcji i zapisuje ją — zamiast być trwale wyszarzone. AI nadal NIE
+  //   nadpisuje niczego bez kliknięcia człowieka (kontrakt cardAnalysis).
   const insightAnalysisFields = useMemo<CardAnalysisField[]>(() => {
     const asLines = (items: unknown[], toText: (x: any) => string) =>
       (items || []).map((x) => `- ${toText(x)}`).join('\n');
@@ -8005,6 +8364,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       writable: false,
     });
 
+    const generated: CardAnalysisField[] = ((): CardAnalysisField[] => {
     switch (activeNSection) {
       case 'executive-summary':
         return [
@@ -8073,6 +8433,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           ),
         ];
     }
+    })();
+
+    // Jedyne pole, do którego karta POTRAFI zapisać — ręczna redakcja sekcji.
+    return [
+      ...generated,
+      {
+        id: INSIGHT_MANUAL_FIELD_ID,
+        label: isPolish
+          ? 'Treść ręczna tej sekcji (redakcja konsultanta)'
+          : 'Manual text of this section (consultant edit)',
+        value: sectionDrafts[activeNSection] ?? sectionOverrides[activeNSection]?.content ?? '',
+        kind: 'text',
+        writable: true,
+        hint: isPolish
+          ? 'Pole redakcyjne sekcji. Tu wpisz gotowy tekst do zastosowania — leży obok treści z AI i jest zapisywane na wniosku.'
+          : 'The section editing field. Put ready-to-use text here — it lives next to the AI content and is persisted on the insight.',
+      },
+    ];
   }, [
     activeNSection,
     isPolish,
@@ -8082,6 +8460,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     v6Issues,
     v6Opportunities,
     v6Signals,
+    sectionDrafts,
+    sectionOverrides,
   ]);
 
   const buildInsightAnalysisInput = useCallback(() => {
@@ -8123,10 +8503,33 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     insightAnalysisFields,
   ]);
 
-  // Brak endpointu zapisu treści karty ⇒ żadna zmiana nie jest zapisywalna.
-  // Zwracamy `false`, a nie „true na niby" — panel i tak nie pokaże „Zastosuj",
-  // bo `writableFieldIds` jest puste; to drugi zamek na wypadek regresji.
-  const applyInsightAnalysisChange = useCallback(() => false, []);
+  /**
+   * Jedyna droga zapisu z panelu „Analizuj z AI". Przyjmuje WYŁĄCZNIE pole
+   * ręcznej redakcji sekcji — pola wygenerowane przez AI nadal nie mają
+   * endpointu zapisu i muszą zwrócić `false` (panel oznaczy pozycję jako
+   * nieudaną zamiast udawać sukces).
+   *
+   * Zapis idzie przez ten sam handler co ręczna edycja, więc nie powstaje druga,
+   * konkurencyjna ścieżka do backendu.
+   */
+  const applyInsightAnalysisChange = useCallback(
+    (change: { fieldId: string; proposedValue: string; mode?: string }) => {
+      if (change.fieldId !== INSIGHT_MANUAL_FIELD_ID) return false;
+      const sectionId = activeNSection;
+      const current = sectionDrafts[sectionId] ?? sectionOverrides[sectionId]?.content ?? '';
+      const next =
+        change.mode === 'append' && current.trim()
+          ? `${current.replace(/\s+$/, '')}\n${change.proposedValue}`
+          : change.proposedValue;
+      setSectionDraft(sectionId, next);
+      // Zapis w tle z JAWNĄ wartością (setState jeszcze nie zdążył wejść w stan);
+      // błąd sieci zgłasza toast z `handleSaveSectionOverride` i NIE kasuje
+      // wpisanego tekstu — draft zostaje w polu do ponowienia.
+      void handleSaveSectionOverride(sectionId, next);
+      return true;
+    },
+    [activeNSection, sectionDrafts, sectionOverrides, setSectionDraft, handleSaveSectionOverride]
+  );
 
   const insightCardAnalysis = useCardAIAnalysis({
     activeCardId: activeNSection,
@@ -9203,10 +9606,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           zostaje do sprzątnięcia martwego kodu po odbiorze). */}
 
       {/* ── ETAP 3: panel wyników „Analizuj z AI" ─────────────────────────────
-          `writableFieldIds` jest PUSTE świadomie — backend nie ma endpointu
-          zapisu treści kart Insightu (patrz komentarz przy `insightAnalysisFields`).
-          Panel pokaże Braki/Ryzyka/Sugestie i da „Kopiuj treść" zamiast
-          „Zastosuj", z jawnym powodem — zamiast udawać zapis. */}
+          `writableFieldIds` zawiera DOKŁADNIE JEDNO pole — ręczną redakcję
+          aktywnej sekcji (`section_overrides`; zapis dodany 2026-07-23). Pola
+          wygenerowane przez AI nadal nie mają endpointu zapisu, więc dla nich
+          panel pokazuje „Kopiuj treść" zamiast „Zastosuj", z jawnym powodem
+          (patrz komentarz przy `insightAnalysisFields`) — zamiast udawać zapis. */}
       <NCardAIAnalysisPanel
         open={insightCardAnalysis.open}
         onClose={insightCardAnalysis.close}
@@ -9216,7 +9620,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         serverErrorCode={insightCardAnalysis.serverErrorCode}
         onRerun={insightCardAnalysis.rerun}
         onApplyChange={insightCardAnalysis.applyChange}
-        writableFieldIds={[]}
+        writableFieldIds={[INSIGHT_MANUAL_FIELD_ID]}
         readMode={readMode}
         isPolish={isPolish}
       />
