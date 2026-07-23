@@ -324,7 +324,10 @@ describe('registry — operatingBudget + dcfValuation are registered', () => {
     expect(ids).toContain('dcfValuation');
     // The flagship must still be there too — additive, not a replacement.
     expect(ids).toContain('threeScenarioPnL');
-    expect(ids).toHaveLength(3);
+    // Registry grows additively (breakEven + cashflow12m added later) — assert
+    // "at least these 3", not an exact count, so this test doesn't need to be
+    // touched every time a new template is registered.
+    expect(ids.length).toBeGreaterThanOrEqual(3);
   });
 
   it('WORKBOOK_TEMPLATES exposes both entries with id/build wired correctly', () => {

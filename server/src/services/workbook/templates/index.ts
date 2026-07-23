@@ -25,9 +25,10 @@
  *      (if the builder takes a nested shape) a `coerceParams` un-flattener.
  *   3. Add a focused read-back + math-verification test under `__tests__/`.
  *
- * Three templates are registered today: `threeScenarioPnL` (flagship 3-scenario
- * P&L), `operatingBudget` (12-month operating budget), and `dcfValuation`
- * (Discounted Cash Flow valuation). The map is the extension point.
+ * Five templates are registered today: `threeScenarioPnL` (flagship 3-scenario
+ * P&L), `operatingBudget` (12-month operating budget), `dcfValuation`
+ * (Discounted Cash Flow valuation), `breakEven` (break-even / BEP analysis),
+ * and `cashflow12m` (12-month cash-flow forecast). The map is the extension point.
  */
 
 import { z } from 'zod';
@@ -53,10 +54,27 @@ import {
   DCF_DRIVER_DEFAULTS,
   type DcfValuationParams,
 } from './dcfValuation.js';
+import {
+  buildBreakEvenSchema,
+  BREAK_EVEN_GENERAL_DEFAULTS,
+  BREAK_EVEN_DRIVER_DEFAULTS,
+  type BreakEvenParams,
+} from './breakEven.js';
+import {
+  buildCashflow12mSchema,
+  CASHFLOW_GENERAL_DEFAULTS,
+  CASHFLOW_DRIVER_DEFAULTS,
+  type Cashflow12mParams,
+} from './cashflow12m.js';
 import type { WorkbookSchema } from '../WorkbookSchema.js';
 
 /** Stable identifiers for registered model templates. */
-export type WorkbookTemplateId = 'threeScenarioPnL' | 'operatingBudget' | 'dcfValuation';
+export type WorkbookTemplateId =
+  | 'threeScenarioPnL'
+  | 'operatingBudget'
+  | 'dcfValuation'
+  | 'breakEven'
+  | 'cashflow12m';
 
 /** A FE-renderable, zod-validatable parameter type. */
 export type WorkbookTemplateParamType =
@@ -395,6 +413,156 @@ function buildDcfValuationParams(): WorkbookTemplateParam[] {
 }
 
 // ---------------------------------------------------------------------------
+// breakEven — parameter descriptors
+// ---------------------------------------------------------------------------
+
+function buildBreakEvenParams(): WorkbookTemplateParam[] {
+  return [
+    {
+      name: 'companyName',
+      label: 'Nazwa spółki',
+      type: 'text',
+      default: BREAK_EVEN_GENERAL_DEFAULTS.companyName,
+      group: 'Ogólne',
+    },
+    {
+      name: 'currencyCode',
+      label: 'Waluta',
+      type: 'enum',
+      options: ['PLN', 'EUR', 'USD'],
+      default: BREAK_EVEN_GENERAL_DEFAULTS.currencyCode,
+      group: 'Ogólne',
+    },
+    {
+      name: 'unitPrice',
+      label: 'Cena jednostkowa',
+      type: 'currency',
+      default: BREAK_EVEN_GENERAL_DEFAULTS.unitPrice,
+      min: 0.01,
+      step: 1,
+      group: 'Ogólne',
+    },
+    {
+      name: 'variableCostPerUnit',
+      label: 'Koszt zmienny na sztukę',
+      type: 'currency',
+      default: BREAK_EVEN_DRIVER_DEFAULTS.variableCostPerUnit,
+      min: 0,
+      step: 1,
+      group: 'Koszty',
+    },
+    {
+      name: 'fixedCosts',
+      label: 'Koszty stałe',
+      type: 'currency',
+      default: BREAK_EVEN_DRIVER_DEFAULTS.fixedCosts,
+      min: 0,
+      step: 1000,
+      group: 'Koszty',
+    },
+    {
+      name: 'plannedVolume',
+      label: 'Planowany wolumen sprzedaży (szt.)',
+      type: 'integer',
+      default: BREAK_EVEN_DRIVER_DEFAULTS.plannedVolume,
+      min: 0,
+      step: 100,
+      group: 'Sprzedaż',
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// cashflow12m — parameter descriptors
+// ---------------------------------------------------------------------------
+
+function buildCashflow12mParams(): WorkbookTemplateParam[] {
+  return [
+    {
+      name: 'companyName',
+      label: 'Nazwa spółki',
+      type: 'text',
+      default: CASHFLOW_GENERAL_DEFAULTS.companyName,
+      group: 'Ogólne',
+    },
+    {
+      name: 'currencyCode',
+      label: 'Waluta',
+      type: 'enum',
+      options: ['PLN', 'EUR', 'USD'],
+      default: CASHFLOW_GENERAL_DEFAULTS.currencyCode,
+      group: 'Ogólne',
+    },
+    {
+      name: 'startYear',
+      label: 'Rok prognozy',
+      type: 'integer',
+      default: new Date().getFullYear(),
+      min: 2000,
+      max: 2100,
+      step: 1,
+      group: 'Ogólne',
+    },
+    {
+      name: 'openingBalance',
+      label: 'Saldo początkowe',
+      type: 'currency',
+      default: CASHFLOW_GENERAL_DEFAULTS.openingBalance,
+      step: 1000,
+      group: 'Ogólne',
+    },
+    {
+      name: 'baseMonthlyRevenue',
+      label: 'Przychód m-c 1',
+      type: 'currency',
+      default: CASHFLOW_DRIVER_DEFAULTS.baseMonthlyRevenue,
+      min: 0,
+      step: 1000,
+      group: 'Przychody',
+    },
+    {
+      name: 'monthlyRevenueGrowthPct',
+      label: 'Wzrost przychodów m/m %',
+      type: 'percent',
+      default: CASHFLOW_DRIVER_DEFAULTS.monthlyRevenueGrowthPct,
+      min: -1,
+      max: 2,
+      step: 0.005,
+      group: 'Przychody',
+    },
+    {
+      name: 'paymentDelayMonths',
+      label: 'Opóźnienie płatności (miesiące)',
+      type: 'integer',
+      default: CASHFLOW_DRIVER_DEFAULTS.paymentDelayMonths,
+      min: 0,
+      max: 3,
+      step: 1,
+      group: 'Przychody',
+    },
+    {
+      name: 'monthlyCosts',
+      label: 'Koszty m-c 1',
+      type: 'currency',
+      default: CASHFLOW_DRIVER_DEFAULTS.monthlyCosts,
+      min: 0,
+      step: 1000,
+      group: 'Koszty',
+    },
+    {
+      name: 'costGrowthPct',
+      label: 'Wzrost kosztów m/m %',
+      type: 'percent',
+      default: CASHFLOW_DRIVER_DEFAULTS.costGrowthPct,
+      min: -1,
+      max: 2,
+      step: 0.005,
+      group: 'Koszty',
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -403,6 +571,8 @@ export const WORKBOOK_TEMPLATES: {
   threeScenarioPnL: WorkbookTemplateEntry<ThreeScenarioPnLParams>;
   operatingBudget: WorkbookTemplateEntry<OperatingBudgetParams>;
   dcfValuation: WorkbookTemplateEntry<DcfValuationParams>;
+  breakEven: WorkbookTemplateEntry<BreakEvenParams>;
+  cashflow12m: WorkbookTemplateEntry<Cashflow12mParams>;
 } = {
   threeScenarioPnL: {
     id: 'threeScenarioPnL',
@@ -428,6 +598,26 @@ export const WORKBOOK_TEMPLATES: {
       'Prosta wycena metodą DCF: projekcja FCF na zadany horyzont→współczynnik dyskontowy→zdyskontowany FCF→wartość rezydualna (Gordon)→Enterprise Value→Equity Value→wartość na akcję, każda pozycja jako formuła, wejścia na arkuszu Założenia, arkusze Projekcja FCF i Wycena.',
     params: buildDcfValuationParams(),
     build: buildDcfValuationSchema,
+  },
+  breakEven: {
+    id: 'breakEven',
+    title: 'Analiza progu rentowności (Break-Even)',
+    description:
+      'Parametryczna analiza progu rentowności: marża jednostkowa→wolumen BEP→przychód BEP→margines ' +
+      'bezpieczeństwa, tabela wrażliwości wyniku dla kilku poziomów wolumenu, każda pozycja jako formuła, ' +
+      'wejścia na arkuszu Założenia.',
+    params: buildBreakEvenParams(),
+    build: buildBreakEvenSchema,
+  },
+  cashflow12m: {
+    id: 'cashflow12m',
+    title: 'Prognoza przepływów pieniężnych — 12 miesięcy',
+    description:
+      'Parametryczna prognoza cash-flow 12-miesięczna: wpływy (przychód z opóźnieniem płatności)→wypływy ' +
+      '(koszty)→przepływ netto m/m→saldo narastające, każda pozycja jako formuła, kolumna RAZEM (rok), ' +
+      'wejścia na arkuszu Założenia, arkusz Podsumowanie.',
+    params: buildCashflow12mParams(),
+    build: buildCashflow12mSchema,
   },
 };
 
@@ -544,5 +734,13 @@ export {
   buildThreeScenarioPnLSchema,
   buildOperatingBudgetSchema,
   buildDcfValuationSchema,
+  buildBreakEvenSchema,
+  buildCashflow12mSchema,
 };
-export type { ThreeScenarioPnLParams, OperatingBudgetParams, DcfValuationParams };
+export type {
+  ThreeScenarioPnLParams,
+  OperatingBudgetParams,
+  DcfValuationParams,
+  BreakEvenParams,
+  Cashflow12mParams,
+};
