@@ -87,10 +87,10 @@ import { buildArtifactCode } from '@/utils/artifactLinks';
 import { Api } from '../../services/api';
 import { CloudFilePicker } from '../AIChat/CloudFilePicker';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
+import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 // n-Type §6.2/§6.3: standardowe opisowe pole tekstowe (auto-fit + uchwyt +
 // pamięć ręcznej wysokości + tryb Podgląd). Jedna droga budowy pola karty.
 import { AutoFitTextarea } from '../shared/AutoFitTextarea';
-import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 import { CapabilityGate } from '../shared/CapabilityGate';
 // #52 — card-management primitive (show/hide + reorder), same "nakładka"
 // wiring as InsightViewer.tsx / TaskDetailView.tsx (see `decisionCardLayout`).
@@ -102,9 +102,6 @@ import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import { NModeToolbar, type NModeToolbarAction } from '../shared/NModeLayout/NModeToolbar';
 import type { NModeSection } from '../shared/NModeLayout/types';
 import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLayout';
-// POC (D-8): kompozycja kart Decision wyprowadzona z WIĄŻĄCEGO kontraktu karty
-// (cardContract.types.ts) zamiast z luźnego DECISION_SPEC — patrz decisionCardContract.ts.
-import { DECISION_CARD_RENDER_IDS, DECISION_CARD_SPEC } from './decisionCardContract';
 import type {
   ActivityLogEntry as NModeActivityLogEntry,
   ActivityStats,
@@ -120,6 +117,9 @@ import type {
 } from '../shared/NModeSections/CommentsCanvas';
 import { CommentsCanvas } from '../shared/NModeSections/CommentsCanvas';
 import { RiskCanvas } from '../shared/NModeSections/RiskCanvas';
+// POC (D-8): kompozycja kart Decision wyprowadzona z WIĄŻĄCEGO kontraktu karty
+// (cardContract.types.ts) zamiast z luźnego DECISION_SPEC — patrz decisionCardContract.ts.
+import { DECISION_CARD_RENDER_IDS, DECISION_CARD_SPEC } from './decisionCardContract';
 import { NotebookMetadataBadges } from './notebook/NotebookMetadataBadges';
 import {
   type Alternative,
@@ -1303,7 +1303,8 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   // ale nadal sa sekcjami tej karty i podlegaja temu samemu wymogowi.
   const decisionAiContract: Record<
     string,
-    { kind: 'ai'; handler: 'options' | 'risk' | 'consequences' | 'raci' | 'comment' } | { kind: 'none'; reason: string }
+    | { kind: 'ai'; handler: 'options' | 'risk' | 'consequences' | 'raci' | 'comment' }
+    | { kind: 'none'; reason: string }
   > = useMemo(
     () => ({
       // — sekcje z realnym kontraktem AI (NModeCardState w centrum) —
@@ -1318,7 +1319,8 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       // wejscia lamaloby §2.6.
       'context-problem': {
         kind: 'none',
-        reason: 'generacja prowadzona przez NModeCardState sekcji (onRegenerate), nie przez toolbar',
+        reason:
+          'generacja prowadzona przez NModeCardState sekcji (onRegenerate), nie przez toolbar',
       },
       'resources-links': {
         kind: 'none',
@@ -3792,7 +3794,12 @@ Use userId only from this list:
         'High risk of escalation and loss of delivery momentum'
       ),
     };
-  }, [i18n.language, blockedItemsCount, sortedRisks.length, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
+  }, [
+    i18n.language,
+    blockedItemsCount,
+    sortedRisks.length,
+    /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t,
+  ]);
 
   const buildConsequencesTemplate = (
     style: 'conservative' | 'executive' | 'action_forcing'
@@ -5018,11 +5025,7 @@ Use userId only from this list:
                   {t('decisions.detail.actions.reject', 'Reject')}
                 </button>
               </CapabilityGate>
-              <button
-                type="button"
-                onClick={handleRequestMoreInfo}
-                className={rpActionNeutral}
-              >
+              <button type="button" onClick={handleRequestMoreInfo} className={rpActionNeutral}>
                 <HelpCircle size={14} className="text-c-text-muted" />
                 {t('decisions.detail.actions.requestInfo', 'Request info')}
               </button>
@@ -5357,7 +5360,9 @@ Use userId only from this list:
             isAIEnhancing={isEnhancingCommentDraft}
             locked={isDecisionStageLocked}
             getPriorityDotClass={(p) => getPriorityDotClass(p as CommentPriorityLevel)}
-            getCommentPriority={(c) => getCommentPriority(c as unknown as Comment) as CommentPriority}
+            getCommentPriority={(c) =>
+              getCommentPriority(c as unknown as Comment) as CommentPriority
+            }
             getPriorityButtonClass={(p, a) => getPriorityButtonClass(p as CommentPriorityLevel, a)}
             getCommentPriorityLabel={(p) => getCommentPriorityLabel(p as CommentPriorityLevel)}
             getCommentPriorityHint={(p) => getCommentPriorityHint(p as CommentPriorityLevel)}
@@ -5655,47 +5660,48 @@ Use userId only from this list:
                     2026-07-23: po zabraniu przejsc workflow do prawego panelu
                     pasek moze nie miec ZADNEJ tresci (karta bez AI + decyzja
                     niezapisana) — wtedy nie renderujemy pustej ramki. */}
-                {!readMode && (aiSectionButton || decisionId || toolbarOverflowActions.length > 0) && (
-                  <div className="px-3 py-2 rounded-xl border border-c-border-subtle bg-c-surface">
-                    <NModeToolbar
-                      isPolish={isPolish}
-                      activeSectionLabel={activeSectionLabel}
-                      aiSectionButton={aiSectionButton}
-                      overflowActions={
-                        toolbarOverflowActions.length > 0 ? toolbarOverflowActions : undefined
-                      }
-                      overflowLabel={t('decisions.detail.toolbar.moreActions', 'More actions')}
-                      /* Sloty lewej grupy niosa GRUPY kontrolek, wiec licznik gestosci
+                {!readMode &&
+                  (aiSectionButton || decisionId || toolbarOverflowActions.length > 0) && (
+                    <div className="px-3 py-2 rounded-xl border border-c-border-subtle bg-c-surface">
+                      <NModeToolbar
+                        isPolish={isPolish}
+                        activeSectionLabel={activeSectionLabel}
+                        aiSectionButton={aiSectionButton}
+                        overflowActions={
+                          toolbarOverflowActions.length > 0 ? toolbarOverflowActions : undefined
+                        }
+                        overflowLabel={t('decisions.detail.toolbar.moreActions', 'More actions')}
+                        /* Sloty lewej grupy niosa GRUPY kontrolek, wiec licznik gestosci
                          komponentu policzylby je jako 1 — podajemy realna liczbe
                          widocznych akcji, zeby dev-warn nie klamal w dol. */
-                      visibleActionCount={aiSectionButton ? 1 : 0}
-                      sectionsDropdown={
-                        decisionId ? (
-                          <span className="inline-flex items-center gap-2">
-                            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-                              {t('decisions.detail.workflow.label', 'Workflow')}
+                        visibleActionCount={aiSectionButton ? 1 : 0}
+                        sectionsDropdown={
+                          decisionId ? (
+                            <span className="inline-flex items-center gap-2">
+                              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
+                                {t('decisions.detail.workflow.label', 'Workflow')}
+                              </span>
+                              <span
+                                className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${workflowMeta.badgeClass}`}
+                              >
+                                {t(
+                                  `decisions.detail.workflowStage.${workflowStatus}`,
+                                  workflowMeta.label.en
+                                )}
+                              </span>
                             </span>
-                            <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${workflowMeta.badgeClass}`}
-                            >
-                              {t(
-                                `decisions.detail.workflowStage.${workflowStatus}`,
-                                workflowMeta.label.en
-                              )}
-                            </span>
-                          </span>
-                        ) : undefined
-                      }
-                      /* `newButton` (przejścia etapu workflow) CELOWO pusty od
+                          ) : undefined
+                        }
+                        /* `newButton` (przejścia etapu workflow) CELOWO pusty od
                          2026-07-23 — n-Type §6.3 / 01_DECYZJA §2.2: wszystkie
                          działania decyzji mają JEDNO miejsce, sekcję AKCJE
                          prawego panelu. Tu zostaje wyłącznie BADGE etapu
                          (`sectionsDropdown`), bo to informacja o stanie, a nie
                          działanie. Pasek nie znika — niesie kontekstowe AI
                          aktywnej karty. */
-                    />
-                  </div>
-                )}
+                      />
+                    </div>
+                  )}
 
                 {/* ── 2-Pane: LeftNav + Canvas — shared NModeLeftNav ───────── */}
                 <div className="flex gap-0 min-h-[60vh]">
@@ -6400,7 +6406,12 @@ Use userId only from this list:
                                       sectionLabel="Consequences of Inaction"
                                       currentValue={rationale}
                                       onApply={setRationale}
-                                      artifactContext={{ title, status, priority, type: 'decision' }}
+                                      artifactContext={{
+                                        title,
+                                        status,
+                                        priority,
+                                        type: 'decision',
+                                      }}
                                       disabled={isDecisionStageLocked}
                                     />
                                   }

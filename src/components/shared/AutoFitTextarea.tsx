@@ -34,11 +34,10 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 /** Tolerancja porównań wysokości w px (subpiksele/zaokrąglenia przeglądarki). */
 const EPSILON_PX = 1;
 
-export interface AutoFitTextareaProps
-  extends Omit<
-    React.TextareaHTMLAttributes<HTMLTextAreaElement>,
-    'style' | 'rows' | 'value' | 'onChange'
-  > {
+export interface AutoFitTextareaProps extends Omit<
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>,
+  'style' | 'rows' | 'value' | 'onChange'
+> {
   value: string;
   onValueChange?: (value: string) => void;
   /** Dolna granica auto-fitu w wierszach (pole nie skurczy się poniżej). Default 3. */
@@ -87,8 +86,7 @@ export const AutoFitTextarea: React.FC<AutoFitTextareaProps> = ({
     const el = ref.current;
     if (!el) return 0;
     const cs = window.getComputedStyle(el);
-    const border =
-      (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
+    const border = (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
     const padding = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
     let lineHeight = parseFloat(cs.lineHeight);
     if (!Number.isFinite(lineHeight)) {
