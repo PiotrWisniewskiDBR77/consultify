@@ -140,14 +140,64 @@ Api.getKnownTool = (async () => ({ tool: MOCK_KNOWN_TOOL })) as typeof Api.getKn
 
 // Akcja „Startuj sesję" (Menu 1) — bez backendu tworzymy sesję lokalnie,
 // żeby kliknięcie na zrzucie nie kończyło się czerwonym toastem.
+//
+// 2026-07-23 (zgłoszenie właściciela, ETAP 2.2 pkt 4: „nie da się przetestować
+// Startuj sesję"): mock istniał, ale `onSessionCreated` w harnessie był pustą
+// funkcją — po kliknięciu NIC się nie działo poza zielonym toastem, więc
+// klikający nie widział, czy akcja zadziałała. Teraz sesja ląduje w widocznym
+// pasku potwierdzenia pod kartą (id + typ + nazwa + znacznik czasu), więc
+// przycisk da się przeklikać i odebrać oczami, bez backendu.
 Api.createToolSession = (async (payload: any) => ({
-  id: 'tool-session-dynamic-swot-demo',
+  id: `tool-session-${TOOL_TYPE}-${Date.now().toString(36)}`,
   name: payload?.name || 'Dynamiczny SWOT — Sesja',
   toolType: TOOL_TYPE,
   status: 'draft',
   progress: 0,
   confidenceAvg: 0,
 })) as unknown as typeof Api.createToolSession;
+
+// Historia sesji tego narzędzia — zasila „Liczba użyć" / „Ostatnie użycie"
+// w tabeli Właściwości oraz licznik w sekcji Powiązania. Bez tego mocka karta
+// pokazywałaby „—" (uczciwie, ale zrzut nie pokazywałby pełnej metryki).
+const MOCK_TOOL_SESSIONS = [
+  {
+    id: 'tool-session-swot-01',
+    name: 'Dynamiczny SWOT — zarząd Q1',
+    toolType: TOOL_TYPE,
+    status: 'completed',
+    progress: 100,
+    confidenceAvg: 0.82,
+    createdAt: '2026-03-04T09:15:00Z',
+    updatedAt: '2026-03-06T14:40:00Z',
+  },
+  {
+    id: 'tool-session-swot-02',
+    name: 'Dynamiczny SWOT — linia komponentów',
+    toolType: TOOL_TYPE,
+    status: 'in_progress',
+    progress: 55,
+    confidenceAvg: 0.61,
+    createdAt: '2026-06-18T08:00:00Z',
+    updatedAt: '2026-07-11T16:20:00Z',
+  },
+  {
+    id: 'tool-session-swot-03',
+    name: 'Dynamiczny SWOT — przegląd budżetu',
+    toolType: TOOL_TYPE,
+    status: 'draft',
+    progress: 12,
+    confidenceAvg: 0,
+    createdAt: '2026-07-19T11:05:00Z',
+    updatedAt: '2026-07-21T10:02:00Z',
+  },
+];
+
+Api.listToolSessions = (async () => ({
+  items: MOCK_TOOL_SESSIONS,
+  total: MOCK_TOOL_SESSIONS.length,
+  limit: 100,
+  offset: 0,
+})) as unknown as typeof Api.listToolSessions;
 
 // ── Siatka bezpieczeństwa dla wywołań w tle ────────────────────────────────
 // Providery (Org/Trial/AccessPolicy/notyfikacje/presence) strzelają po sieci
@@ -215,20 +265,52 @@ function useI18nReady(): boolean {
   return ready;
 }
 
+type StartedSession = { id: string; toolType: string; name: string; at: string };
+
 export function KartaToolScreen(): React.ReactElement {
   const i18nReady = useI18nReady();
+  // Widoczny dowód, że „Startuj sesję" zadziałało — bez tego harness przyjmował
+  // kliknięcie i milczał (zgłoszenie właściciela 2026-07-23).
+  const [started, setStarted] = React.useState<StartedSession | null>(null);
   return (
     <AppProviders>
       <FeatureFlagsProvider showDevTools={false}>
-        <div style={{ height: '100vh', width: '100vw', overflow: 'hidden' }} className="bg-c-bg">
-          {i18nReady ? (
-            <KnownToolDetailView
-              key={`karta-tool-${TOOL_TYPE}`}
-              toolType={TOOL_TYPE}
-              onClose={() => {}}
-              onSessionCreated={() => {}}
-            />
-          ) : null}
+        <div
+          style={{ height: '100vh', width: '100vw', overflow: 'hidden' }}
+          className="flex flex-col bg-c-bg"
+        >
+          <div className="min-h-0 flex-1">
+            {i18nReady ? (
+              <KnownToolDetailView
+                key={`karta-tool-${TOOL_TYPE}`}
+                toolType={TOOL_TYPE}
+                onClose={() => {}}
+                onSessionCreated={(sessionId, toolType, name) =>
+                  setStarted({
+                    id: sessionId,
+                    toolType,
+                    name,
+                    at: new Date().toLocaleTimeString(),
+                  })
+                }
+              />
+            ) : null}
+          </div>
+          {started && (
+            <div className="shrink-0 border-t border-c-border-subtle bg-c-surface-raised px-4 py-2 text-xs text-c-text-secondary">
+              <span className="font-semibold text-c-text">Sesja utworzona (harness):</span>{' '}
+              <span className="tabular-nums">{started.at}</span> · {started.name} ·{' '}
+              <span className="font-mono">{started.toolType}</span> ·{' '}
+              <span className="font-mono">{started.id}</span>
+              <button
+                type="button"
+                onClick={() => setStarted(null)}
+                className="ml-3 rounded-md px-2 py-0.5 text-c-text-muted hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+              >
+                wyczyść
+              </button>
+            </div>
+          )}
         </div>
       </FeatureFlagsProvider>
     </AppProviders>
