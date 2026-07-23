@@ -27,7 +27,7 @@ Czy preset parametrów to realna oszczędność w Twojej pracy? Czy zapis lokaln
 
 ## 3. RYZYKO / ZNANE OGRANICZENIA
 
-ZNANY BŁĄD (nie z tej nocy): pola procentowe pokazują wartość ×100 (3% → „300"). Do naprawy osobno — powiedz czy priorytetowo.
+SPROSTOWANIE (2026-07-23): wcześniej zgłosiłem tu „błąd ×100" — to była MOJA pomyłka w danych testowych harnessu, nie defekt produktu. Backend trzyma procenty jako ułamki (0,03 = 3%), a formularz poprawnie pokazuje 3. Mój mock podawał 3 zamiast 0,03, stąd „300" na zrzucie. Produkt jest OK. Realna luka obok: formularz nie pokazuje ani nie egzekwuje dozwolonych zakresów — wartość spoza zakresu odrzuca dopiero serwer (w naprawie).
 
 ## 4. JAK ZWERYFIKOWANO
 
