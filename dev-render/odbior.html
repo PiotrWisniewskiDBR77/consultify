@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Odbiór kart N — partia 1</title>
+<title>Odbiór lokalny — 4 obszary aplikacji</title>
 <style>
   /* Rozdzielnik trzyma JEDEN motyw (jasny) niezależnie od ustawień systemu —
      motyw oceniamy w samych kartach, nie tutaj. */
@@ -40,15 +40,28 @@
 </head>
 <body>
 
-<h1>Odbiór kart N — partia 1</h1>
+<h1>Odbiór lokalny — 4 obszary aplikacji</h1>
 <p class="lead">
-  Siedem kart, każda w jasnym i ciemnym motywie. Dane są przykładowe (bez logowania i bez bazy) —
-  oceniamy wygląd i zachowanie, nie treść. Karty mają krótką animację wejścia, więc przez pierwszą
-  sekundę ekran wygląda na przygaszony; to nie usterka.
+  Cztery zespoły domknęły prace w okolicach <strong>8/10</strong> i czekają na odbiór. To jeden
+  rozdzielnik do wszystkiego. Dane są przykładowe (bez logowania i bez bazy) — oceniamy
+  <strong>wygląd i zachowanie</strong>, nie treść. Ekrany mają krótką animację wejścia, więc przez
+  pierwszą sekundę wyglądają na przygaszone; to nie usterka.
 </p>
+<div class="card" style="background:#f0f6ff;border-color:#c7ddf7">
+  <h2 style="color:#2563eb">Stan obszarów</h2>
+  <table>
+    <thead><tr><th>Obszar</th><th>Ocena</th><th>Kod</th></tr></thead>
+    <tbody>
+      <tr><td class="name">Karty N — 7 artefaktów</td><td>8,0</td><td>częściowo na demo + partia oczekująca</td></tr>
+      <tr><td class="name">IDEE — 4 narzędzia płótna</td><td>8,0</td><td>NIE na demo — czeka na odbiór</td></tr>
+      <tr><td class="name">DOKUMENTY — 6 narzędzi</td><td>~8</td><td>na demo</td></tr>
+      <tr><td class="name">Agent + Vault</td><td>~8</td><td>na demo</td></tr>
+    </tbody>
+  </table>
+</div>
 
 <div class="card">
-  <h2>Karty</h2>
+  <h2>Obszar 1 — Karty N (7 artefaktów)</h2>
   <table>
     <thead><tr><th>Karta</th><th>Otwórz</th></tr></thead>
     <tbody>
@@ -82,6 +95,54 @@
 </div>
 
 <div class="card">
+  <h2>Obszar 2 — IDEE (4 narzędzia płótna)</h2>
+  <table>
+    <thead><tr><th>Ekran</th><th>Otwórz</th></tr></thead>
+    <tbody>
+      <tr><td class="name">Mind Map — pełne płótno</td><td><a class="btn" href="/?screen=mindmap-canvas&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=mindmap-canvas&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Whiteboard — płótno + łączniki</td><td><a class="btn" href="/?screen=whiteboard-canvas&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=whiteboard-canvas&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Process Flow — płótno + strzałki</td><td><a class="btn" href="/?screen=processflow-canvas&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=processflow-canvas&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Powłoka płótna (Menu 1 + rail)</td><td><a class="btn" href="/?screen=melscanvas-workspace&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=melscanvas-workspace&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Tabela — sortowanie i filtr</td><td><a class="btn" href="/?screen=idea-table-tool-sortfilter&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=idea-table-tool-sortfilter&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Tabela — grupowanie</td><td><a class="btn" href="/?screen=idea-table-tool-grouping&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=idea-table-tool-grouping&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Tabela — pusty filtr / resize / gęstość</td><td><a class="btn" href="/?screen=idea-table-tool-empty-filter&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=idea-table-tool-empty-filter&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Tabela — wklejanie z Excela</td><td><a class="btn" href="/?screen=idea-table-tool-paste&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=idea-table-tool-paste&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Tabela — kebab wiersza</td><td><a class="btn" href="/?screen=idea-table-tool-kebab&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=idea-table-tool-kebab&lang=pl&theme=dark">ciemny</a></td></tr>
+    </tbody>
+  </table>
+  <p class="hint">Tu patrz na: pasek narzędzi po lewej <strong>nie zasłania</strong> menu u góry (naprawione), kebab ma trzy żywe pozycje (Usuń/Duplikuj/Historia), a na whiteboardzie po najechaniu na element widać <strong>4 uchwyty do łączenia</strong>.</p>
+</div>
+
+<div class="card">
+  <h2>Obszar 3 — DOKUMENTY (6 narzędzi)</h2>
+  <table>
+    <thead><tr><th>Ekran</th><th>Otwórz</th></tr></thead>
+    <tbody>
+      <tr><td class="name">Gen. Deck — podpowiedzi treści</td><td><a class="btn" href="/?screen=gen-deck-content-hints&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=gen-deck-content-hints&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Gen. Word — podpowiedzi treści</td><td><a class="btn" href="/?screen=gen-word-content-hints&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=gen-word-content-hints&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Gen. Excel — zakładka szablonów</td><td><a class="btn" href="/?screen=gen-excel-templates-tab&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=gen-excel-templates-tab&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Excel — silnik arkuszy</td><td><a class="btn" href="/?screen=excele-engine-reveal&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=excele-engine-reveal&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Word — wejście z AI</td><td><a class="btn" href="/?screen=word-intake-uselm-default&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=word-intake-uselm-default&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Deck — odznaka jakości</td><td><a class="btn" href="/?screen=deck-quality-badge&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=deck-quality-badge&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Word — odznaka jakości</td><td><a class="btn" href="/?screen=word-quality-badge&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=word-quality-badge&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Kreator szablonów — Deck / Dok / Tabela</td><td><a class="btn" href="/?screen=template-builder-deck&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=template-builder-deck&lang=pl&theme=dark">ciemny</a></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Obszar 4 — Agent + Vault</h2>
+  <table>
+    <thead><tr><th>Ekran</th><th>Otwórz</th></tr></thead>
+    <tbody>
+      <tr><td class="name">Vault — selektor zakresu (3 poziomy)</td><td><a class="btn" href="/?screen=vault-scope-selector&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=vault-scope-selector&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Agent — plan (widok)</td><td><a class="btn" href="/?screen=agent-plan-view&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=agent-plan-view&lang=pl&theme=dark">ciemny</a></td></tr>
+      <tr><td class="name">Agent — plan na płótnie</td><td><a class="btn" href="/?screen=agent-plan-canvas&lang=pl&theme=light">jasny</a><a class="btn" href="/?screen=agent-plan-canvas&lang=pl&theme=dark">ciemny</a></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
   <h2>Na co patrzeć</h2>
   <ol>
     <li><strong>Kolory znaczą to, co powinny.</strong> Czerwień tylko przy rzeczach krytycznych,
@@ -99,8 +160,9 @@
 <div class="card">
   <h2>Czego tu nie oceniamy</h2>
   <p class="lead" style="margin:0">
-    Treści pisanej przez AI (to osobna partia — Faza B), generatorów w karcie Initiative
-    (Faza C) oraz list poza kartami. Dane w kartach są przykładowe.
+    Treści pisanej przez AI (osobna partia), generatorów w karcie Initiative oraz
+    „elegancji lidera" (K8) — to świadomie osobny etap, który dopiero się zaczyna.
+    Dane na wszystkich ekranach są przykładowe.
   </p>
 </div>
 
