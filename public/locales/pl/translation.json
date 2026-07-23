@@ -30824,7 +30824,6 @@
       "menuFormal": "Formalny ton",
       "generateSuccess": "Treść wygenerowana przez AI",
       "generateError": "Nie udało się wygenerować treści przez AI",
-      "fallbackApplied": "Użyto trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne).",
       "enhanceSuccess": "Treść zaktualizowana przez AI. Kliknij Cofnij AI aby cofnąć.",
       "enhanceError": "Nie udało się poprawić treści przez AI",
       "undoSuccess": "Przywrócono poprzednią wersję tekstu",
@@ -30832,7 +30831,13 @@
       "apply": "Zastosuj",
       "discard": "Odrzuć",
       "undo": "Cofnij AI",
-      "fallbackProposed": "Propozycja z trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne)."
+      "failedWithReason": "{{what}} — {{reason}}.",
+      "errNoProvider": "nie skonfigurowano dostawcy AI",
+      "errBudget": "wyczerpany budżet AI",
+      "errAccessBlocked": "dostęp do AI jest zablokowany dla tej organizacji",
+      "errEmpty": "AI zwróciło pustą odpowiedź",
+      "errCallFailed": "wywołanie AI nie powiodło się",
+      "errUnavailable": "AI jest chwilowo niedostępne"
     },
     "nModeHeader": {
       "savedLabel": "Zapisano",
