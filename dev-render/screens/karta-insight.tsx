@@ -155,6 +155,21 @@ const MOCK_INSIGHT = {
   sourceSessionCount: SESSION_IDS.length,
   tokensUsed: 18_420,
   generationTimeMs: 41_300,
+  /**
+   * ★ „PEWNOŚĆ: —" przy jawnym zastrzeżeniu w treści była sprzecznością:
+   * karta mówiła „liczby niezweryfikowane", a pole pewności milczało.
+   * `panelConfidence` (InsightViewer.tsx:3276) czyta łańcuch
+   * findings[0].confidence_level → analysis.topics[0] → insight.confidence,
+   * więc podajemy WARTOŚĆ i uzasadniamy ją liczbą źródeł (patrz MOCK_FINDINGS
+   * poniżej oraz `confidenceRationale`).
+   */
+  confidence: 'medium',
+  confidenceRationale:
+    'Średnia (medium): 3 niezależne sesje wywiadowcze, 13 odpowiedzi w mapie dowodów, ' +
+    '2 wzorce potwierdzone we wszystkich trzech perspektywach. Obniżone z wysokiej, bo ' +
+    '2 kluczowe liczby (95 minut przezbrojenia, 20% wypełnionych przyczyn) pochodzą ' +
+    'z pamięci rozmówców, a nie z systemów źródłowych, i brakuje czwartej perspektywy ' +
+    '(sprzedaż), która generuje sporny strumień zamówień pilnych.',
   createdBy: 'user-piotr-demo',
   createdAt: daysAgoIso(12),
   updatedAt: daysAgoIso(2),
@@ -167,16 +182,103 @@ const MOCK_INSIGHT = {
     'CAPEX: uwspólnienie definicji wskaźników i przeniesienie sygnału o awarii z porannej odprawy ' +
     'do momentu zdarzenia. Szacowany odzysk to 6-9 punktów OEE w horyzoncie dwóch kwartałów, ' +
     'przy czym liczba wymaga potwierdzenia w logach CMMS przed wpisaniem jej do biznes case.',
+  /**
+   * ★ ROZDZIELENIE „ODCZYTU" OD „NARRACJI" (naprawa duplikatu 1:1).
+   *
+   * `InsightViewer` w podglądzie tnie `insight.content` na sekcje przez
+   * `buildFilteredMarkdown` (InsightViewer.tsx:2632-2661): dopasowuje NAGŁÓWKI
+   * markdown do etykiet sekcji („Odczyt konsultingowy", „Narracja konsultingowa",
+   * „Podsumowanie", „Memo zarządcze"). Gdy żaden nagłówek nie pasuje, funkcja
+   * zwraca null, a OBIE sekcje spadają na ten sam fallback = całe `content` —
+   * i dlatego „Odczyt konsultingowy" był znak w znak równy „Narracji
+   * konsultingowej" (złamane MECE).
+   *
+   * Treść ma teraz nagłówki nazwane dokładnie jak sekcje, więc każda sekcja
+   * dostaje SWÓJ, inny fragment:
+   *   Podsumowanie            → wniosek + liczba + dźwignia (dla zarządu)
+   *   Odczyt konsultingowy    → co mówią rozmówcy vs co z tego wynika
+   *   Narracja konsultingowa  → pełny wywód z mechanizmem i falsyfikacją
+   *   Memo zarządcze          → decyzja do podjęcia i o co prosimy
+   * Pierwszy akapit (bez nagłówka) jest wiodącym zdaniem karty.
+   */
   content:
-    '## Kontekst\n\nOcena gotowości operacyjnej przeprowadzona na zlecenie zarządu MZT Komponenty ' +
-    'przed decyzją o rozbudowie czwartej linii montażowej. Trzy wywiady strukturalne z kadrą ' +
-    'kierowniczą, przeprowadzone między 2 a 7 lipca 2026.\n\n' +
-    '## Główny wniosek\n\nProblem nie leży w zdolności maszynowej, lecz w obiegu informacji ' +
-    'między planowaniem, produkcją i utrzymaniem ruchu. Uruchomienie czwartej linii bez ' +
-    'uporządkowania tego obiegu powieli istniejące straty na większej skali.\n\n' +
-    '## Zastrzeżenie\n\nWnioski opierają się na deklaracjach rozmówców. Kluczowe liczby ' +
-    '(czas przezbrojenia, udział zleceń reaktywnych) nie zostały jeszcze zweryfikowane w ' +
-    'systemach źródłowych — patrz sekcja „Do weryfikacji".',
+    'Zakład nie jest ograniczony maszynowo — jest ograniczony obiegiem informacji między ' +
+    'planowaniem, produkcją i utrzymaniem ruchu. Rozbudowa czwartej linii bez naprawy tego ' +
+    'obiegu powieli istniejące straty na większej skali.\n\n' +
+
+    '## Podsumowanie\n\n' +
+    'Wniosek: pieniądze leżą w organizacji, nie w maszynach. Trzy niezależne wywiady wskazały ' +
+    'ten sam mechanizm — decyzje operacyjne zapadają na danych z wczoraj, bo sygnał o awarii ' +
+    'dociera do planisty dopiero na porannej odprawie (deklarowane opóźnienie ok. 16 godzin).\n\n' +
+    'Skutek widoczny w liczbach: przezbrojenie 95 minut przy standardzie 40 (2,4×) oraz 62% ' +
+    'zleceń serwisowych realizowanych reaktywnie.\n\n' +
+    'Największa dostępna dźwignia nie wymaga nakładów inwestycyjnych: uwspólnienie definicji ' +
+    'dostępności maszyn i przesunięcie powiadomienia o awarii z odprawy na moment zdarzenia ' +
+    '(konfiguracja w istniejącym CMMS). Szacowany odzysk 6-9 punktów OEE w dwa kwartały — ' +
+    'to OSZACOWANIE MODELOWE z benchmarku, nie pomiar u tego klienta; do biznes case wchodzi ' +
+    'dopiero po pomiarze bazowym.\n\n' +
+
+    '## Odczyt konsultingowy\n\n' +
+    'Co mówią rozmówcy (deklaracje) — i co z tego wynika (interpretacja):\n\n' +
+    '• Dyrektor Produkcji: „Dostępność maszyn to nie jest mój wskaźnik". Utrzymanie Ruchu: ' +
+    '„Rozliczam się z liczby zamkniętych zleceń". Planowanie: z terminowości dostaw.\n' +
+    '  → Żaden z trzech wskaźników nie premiuje dostępności linii. Nikt nie odpowiada za nią ' +
+    'wprost, więc nikt jej nie broni. To nie jest spór o dobre chęci, to luka w rozliczeniu.\n\n' +
+    '• Wszyscy trzej opisali ten sam moment: informacja o zdarzeniu dociera rano.\n' +
+    '  → Planista przeplanowuje po fakcie. Zmiana nocna jest stracona, zanim ktokolwiek ' +
+    'zdąży zareagować.\n\n' +
+    '• Planowanie: „Pilne psują cały tydzień". Produkcja: „Pilne to zwykła praca".\n' +
+    '  → Ta rozbieżność jest sama w sobie ustaleniem, nie szumem. Bez wspólnej definicji ' +
+    'zamówienia pilnego spór jest nierozstrzygalny, więc wraca co tydzień.\n\n' +
+    'Czego NIE mówi ten odczyt: nie wiemy, ile realnie kosztuje godzina przestoju — żaden ' +
+    'z rozmówców nie podał tej liczby, a bez niej nie da się uszeregować działań po zwrocie.\n\n' +
+
+    '## Narracja konsultingowa\n\n' +
+    'Mechanizm, który tłumaczy wszystkie trzy wywiady naraz, wygląda tak: sygnał o zdarzeniu ' +
+    'powstaje na hali, ale trafia do CMMS, a nie do planowania. Planista dowiaduje się na ' +
+    'odprawie, więc jego reakcją jest bufor — dłuższe serie i zamrożony plan. Zamrożony plan ' +
+    'nie wytrzymuje zamówień pilnych od sprzedaży, więc plan zmienia się i tak, trzy razy ' +
+    'w tygodniu. Skoro plan i tak się zmienia, przygotowanie przezbrojenia z wyprzedzeniem ' +
+    'traci sens — i przezbrojenie trwa 95 minut zamiast 40. Utrzymanie ruchu, obciążone ' +
+    'skutkami przestojów, gasi pożary (62% prac reaktywnych) i nie ma czasu na prewencję, ' +
+    'co domyka pętlę: awarii jest więcej.\n\n' +
+    'Konsekwencja dla decyzji o czwartej linii: przy tym obiegu informacji każda dodatkowa ' +
+    'linia zwiększa liczbę zdarzeń, o których planowanie dowiaduje się z opóźnieniem. ' +
+    'Rozbudowa nie rozwiązuje wąskiego gardła, tylko je skaluje.\n\n' +
+    'Co obaliłoby tę narrację: gdyby po włączeniu powiadomień z CMMS w czasie rzeczywistym ' +
+    'liczba zmian planu w tygodniu nie spadła w ciągu dwóch miesięcy, znaczy to, że źródłem ' +
+    'rozjazdu jest sprzedaż, a nie obieg informacji — wtedy priorytetem staje się umowa ' +
+    'z handlowcami o definicji zamówienia pilnego, nie integracja systemów.\n\n' +
+
+    /*
+     * Ta sekcja domyka trzecią kolumnę „Odczytu konsultingowego" (Sygnały
+     * i szanse). `opportunityReadout` (InsightViewer.tsx:1903-1912) zbiera
+     * akapity i punkty z bloków, których NAGŁÓWEK pasuje do wzorca — tytuł
+     * poniżej jest naturalnie polski i jednocześnie trafia w ten wzorzec,
+     * więc kolumna przestaje być pusta bez sztucznych zabiegów.
+     */
+    '## Trendy i przestrzenie szans\n\n' +
+    'Wspólna definicja dostępności maszyn dla trzech funkcji: jeden wskaźnik raportowany ' +
+    'codziennie zamiast trzech rozłącznych miar. Bez nakładów inwestycyjnych — potrzebne są ' +
+    'dwa tygodnie pracy warsztatowej i decyzja o właścicielu wskaźnika.\n\n' +
+    'Powiadomienie o awarii w momencie zdarzenia zamiast na porannej odprawie: skraca czas ' +
+    'reakcji planowania z ok. 16 godzin do minut. Konfiguracja w istniejącym systemie CMMS.\n\n' +
+    'SMED na linii o największej liczbie przezbrojeń jako dowód wykonalności: cel 95 → 60 minut ' +
+    'w 8 tygodni, przed rozszerzeniem na pozostałe linie.\n\n' +
+    'Minimum magazynowe dla 20 pozycji krytycznych: skraca przestój awaryjny o czas oczekiwania ' +
+    'na dostawę, dziś 11 dni roboczych.\n\n' +
+    'Oddolny sygnał, na którym można oprzeć wdrożenie: mistrzowie prowadzą już własne arkusze ' +
+    'dostępności maszyn poza systemem. Potrzeba jest realna, brakuje wspólnego narzędzia.\n\n' +
+
+    '## Memo zarządcze\n\n' +
+    'Do decyzji zarządu na najbliższym posiedzeniu: wstrzymać decyzję o czwartej linii ' +
+    'na jeden kwartał i uruchomić w tym czasie dwa działania bez nakładów inwestycyjnych — ' +
+    'wspólną definicję dostępności maszyn oraz powiadomienie o awarii w momencie zdarzenia.\n\n' +
+    'O co prosimy: (1) decyzję o właścicielu wskaźnika dostępności — jedna osoba, nie komitet; ' +
+    '(2) zgodę na pomiar bazowy OEE i czasu przezbrojenia z rejestratora linii przez 90 dni; ' +
+    '(3) czwarty wywiad ze sprzedażą przed domknięciem raportu.\n\n' +
+    'Czego NIE rekomendujemy dziś: wpisywania odzysku 6-9 punktów OEE do budżetu 2027. ' +
+    'Ta liczba pochodzi z benchmarku branżowego, nie z pomiaru w tym zakładzie.',
   themes: [
     {
       title: 'Decyzje operacyjne oparte na danych z wczoraj',
@@ -459,6 +561,96 @@ const MOCK_INSIGHT = {
   ],
 };
 
+/**
+ * ★ UZGODNIENIE LICZNIKÓW (naprawa sprzeczności „Dowody: 0" obok „Mapa dowodów: 13").
+ *
+ * Karta pokazywała jednocześnie: Mapa dowodów 13 · Źródła 3 · Problemy i ryzyka 5,
+ * a obok „Dowody: 0" i „Findingi: 0". Powód: liczniki „Dowody"/„Findingi" nie
+ * czytają `evidenceMap`/`issues`, tylko dwa OSOBNE zasoby, których harness
+ * wcześniej nie podawał:
+ *   • „Dowody"   ← `sourcePack.activePointerCount`  (V8InterviewApi.getSourcePack)
+ *   • „Findingi" ← `findings.length`                (V8InterviewApi.listFindings)
+ * Oba są tu wyprowadzone Z TYCH SAMYCH danych co reszta karty, żeby liczby nie
+ * mogły się rozjechać: pakiet źródeł powstaje z `evidenceMap` (13 pozycji),
+ * a ustalenia odpowiadają 1:1 pięciu pozycjom z `issues`.
+ */
+const wskaznikDowodu = (answerId: string, i: number) => ({
+  pointerId: `ptr-${answerId}`,
+  type: 'interview_answer',
+  sourceRef: answerId,
+  capturedAt: daysAgoIso(12),
+  sourceFingerprint: `fp-${answerId}`,
+  capturedExcerpt:
+    MOCK_INSIGHT.evidenceMap[i]?.answer_snippet?.slice(0, 160) ?? null,
+  removalReason: null,
+  isTombstone: false,
+});
+
+/** Do której sesji należy dana odpowiedź — po prefiksie identyfikatora. */
+const sesjaOdpowiedzi = (answerId: string): string => {
+  if (answerId.startsWith('ans-prod')) return SESSION_IDS[0];
+  if (answerId.startsWith('ans-utr')) return SESSION_IDS[1];
+  return SESSION_IDS[2];
+};
+
+const MOCK_SOURCE_PACK = {
+  insightId: INSIGHT_ID,
+  sourceSessionIds: SESSION_IDS,
+  entries: MOCK_INSIGHT.evidenceMap.map((e, i) => ({
+    answerId: e.answer_id,
+    questionText: e.question_text,
+    answerSnippet: e.answer_snippet,
+    respondentLabel: MOCK_SESSIONS[sesjaOdpowiedzi(e.answer_id)].respondentRole,
+    respondentRole: MOCK_SESSIONS[sesjaOdpowiedzi(e.answer_id)].respondentRole,
+    department: MOCK_SESSIONS[sesjaOdpowiedzi(e.answer_id)].department,
+    sourceSessionId: sesjaOdpowiedzi(e.answer_id),
+    linkedThemes: e.linked_themes,
+    linkedIssues: e.linked_issues,
+    linkedOpportunities: [],
+    capturedPointers: [wskaznikDowodu(e.answer_id, i)],
+  })),
+  degraded: false,
+  degradedReasons: [] as string[],
+  // 13 = tyle samo, co „Mapa dowodów"; liczba wyprowadzona, nie wpisana ręcznie.
+  activePointerCount: MOCK_INSIGHT.evidenceMap.length,
+};
+
+/**
+ * Ustalenia (findings) — po jednym na każdą pozycję z „Problemy i ryzyka",
+ * żeby licznik „Findingi" = 5 zgadzał się z licznikiem sekcji. Poziom pewności
+ * per ustalenie odpowiada polu `confidence` w `issues`; pierwszy element
+ * (medium) zasila też „Pewność" w prawym panelu.
+ */
+const MOCK_FINDINGS = MOCK_INSIGHT.issues.map((issue, i) => ({
+  id: `finding-${i + 1}`,
+  insightId: INSIGHT_ID,
+  organizationId: ORG_ID,
+  finding_statement: issue.title,
+  confidence_level: (issue.confidence === 'high' ? 'high' : 'medium') as 'high' | 'medium',
+  limits:
+    issue.limits?.[0] ??
+    'Ustalenie oparte na deklaracjach z wywiadu; do potwierdzenia w systemie źródłowym.',
+  next_action:
+    i === 0
+      ? 'Odczyt czasów przezbrojenia z rejestratora linii za ostatnie 90 dni.'
+      : 'Potwierdzić wartość w systemie źródłowym przed wpisaniem do biznes case.',
+  evidence_pointers: (issue.evidence_refs || []).map((ref) =>
+    wskaznikDowodu(
+      ref,
+      MOCK_INSIGHT.evidenceMap.findIndex((e) => e.answer_id === ref)
+    )
+  ),
+  source_section_type: 'issue',
+  source_section_index: i,
+  source_key: `issue-${i}`,
+  review_status: 'in_review' as const,
+  readback_status: 'draft_interpretation' as const,
+  readback_summary: null,
+  readback_updated_at: null,
+  created_at: daysAgoIso(12),
+  updated_at: daysAgoIso(2),
+}));
+
 // ── Historia (prawy panel → Historia) ────────────────────────────────────
 const MOCK_ACTIVITY = [
   {
@@ -551,6 +743,17 @@ V8InterviewApi.getInsightActivity = (async () => ({
 V8InterviewApi.getInsightComments = (async () => ({
   comments: MOCK_COMMENTS,
 })) as unknown as typeof V8InterviewApi.getInsightComments;
+
+// Liczniki „Dowody" i „Findingi" — patrz komentarz przy MOCK_SOURCE_PACK.
+V8InterviewApi.getSourcePack = (async () => ({
+  sourcePack: MOCK_SOURCE_PACK,
+  insightId: INSIGHT_ID,
+})) as unknown as typeof V8InterviewApi.getSourcePack;
+
+V8InterviewApi.listFindings = (async () => ({
+  findings: MOCK_FINDINGS,
+  insightId: INSIGHT_ID,
+})) as unknown as typeof V8InterviewApi.listFindings;
 
 const MOCK_EVIDENCE_ENVELOPE = {
   envelope: {
