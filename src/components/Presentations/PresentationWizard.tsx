@@ -54,6 +54,12 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
     slideCount: number;
     warnings: string[];
     exportPath?: string;
+    // A4: nie-blokujący sygnał jakości (Critic + M19), gdy
+    // ENABLE_DECK_QUALITY_GATES !== 'false'. Brak pola = bramki pominięte.
+    qualityGates?: {
+      critic: { overallScore: number; regenerateSlides: number[]; passed: boolean };
+      structural: { valid: boolean; errorCount: number; warningCount: number };
+    };
   } | null>(null);
   const [brandKitColors, setBrandKitColors] = useState<{
     primary: string;

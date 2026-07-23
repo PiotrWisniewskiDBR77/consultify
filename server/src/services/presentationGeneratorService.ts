@@ -194,6 +194,18 @@ export interface OutlineItem {
   warnings?: string[];
 }
 
+/**
+ * A4 (2026-07-23, sesja "deck-quality-surface") — kształt nie-blokujących
+ * sygnałów jakości (Critic kompozycji + M19 walidacja strukturalna),
+ * dotąd liczonych ale gubionych po drodze do odpowiedzi API (patrz
+ * `deckQualityGates` w `generateDeck`). Wydzielone jako typ, by FE
+ * (ResultStep/DeckBuilder) mogło pokazać badge/banner bez zgadywania kształtu.
+ */
+export interface DeckQualityGatesSummary {
+  critic: { overallScore: number; regenerateSlides: number[]; passed: boolean };
+  structural: { valid: boolean; errorCount: number; warningCount: number };
+}
+
 export interface GenerationResult {
   deckId: string;
   slideCount: number;
@@ -201,6 +213,13 @@ export interface GenerationResult {
   exportPath?: string;
   /** HP-16: realny EvidenceContract — patrz `buildDeckEvidenceContract`. */
   evidence?: EvidenceContract;
+  /**
+   * A4: nie-blokujące sygnały jakości (Critic + M19), gdy
+   * ENABLE_DECK_QUALITY_GATES !== 'false'. Addytywne — brak pola = bramki
+   * pominięte (flaga OFF lub błąd fail-open), FE traktuje jako "brak sygnału",
+   * NIGDY jako błąd.
+   */
+  qualityGates?: DeckQualityGatesSummary;
 }
 
 /**
@@ -1854,12 +1873,7 @@ export async function generateDeck(
     // wywołania, default ON; awaryjne wyłączenie ='false' (wzór
     // ENABLE_DECK_CONCLUSION_SLIDE). Fail-open: dowolny błąd pomija bramki.
     // ──────────────────────────────────────────────────────────────
-    let deckQualityGates:
-      | {
-          critic: { overallScore: number; regenerateSlides: number[]; passed: boolean };
-          structural: { valid: boolean; errorCount: number; warningCount: number };
-        }
-      | undefined;
+    let deckQualityGates: DeckQualityGatesSummary | undefined;
     if (process.env.ENABLE_DECK_QUALITY_GATES !== 'false') {
       try {
         const [{ critiqueDeck }, { validateReport }] = await Promise.all([
@@ -2151,14 +2165,26 @@ export async function generateDeck(
     return {
       deckId,
       slideCount: result.slideCount,
+      // A4 fix (2026-07-23): was `...extraWarnings` — a snapshot taken BEFORE
+      // the F1.4 content-gate and A4 quality-gates sections ran (`warnings`
+      // is `[...extraWarnings]` at declaration, then gets content-gate +
+      // deck-quality/M19 items pushed onto it). Those items were already
+      // reaching deckDocument.generation.warnings (persisted, visible via
+      // GET /decks/:id) but never the synchronous generate/deck response the
+      // Wizard's ResultStep reads — so the existing "Quality Warnings" banner
+      // there silently never showed them. Using `warnings` closes that gap
+      // without touching generation logic (same computed data, now delivered).
       warnings: [
         ...(result.warnings || []),
-        ...extraWarnings,
+        ...warnings,
         ...sourcePackPreflight.warnings,
         ...narrativePlan.warnings,
       ],
       exportPath,
       evidence: deckEvidence,
+      // A4: non-blocking quality signal (Critic + M19), gated by
+      // ENABLE_DECK_QUALITY_GATES (default ON). Additive field.
+      qualityGates: deckQualityGates,
     };
   } catch (err: any) {
     logger.error(`[PresentationGen] Generation failed for ${deckId}: ${err.message}`);
