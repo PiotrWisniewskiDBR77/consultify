@@ -62,7 +62,9 @@ import { muteNotificationTypeForSession } from '@/utils/notificationMuteSession'
 
 import { Api } from '../../services/api';
 import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
-import { NModeCardManager } from '../shared/NModeLayout/NModeCardManager';
+// ETAP 1.2: menu 2 niesie SAM picker „Sekcje" — „+ Nowa karta" zdjęte.
+import { SectionsManagerMenu } from '../shared/NModeLayout/NModeCardManager';
+import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLayout';
@@ -279,6 +281,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
   // N-mode active section
   const [activeNSection, setActiveNSection] = useState('whats-happening');
+
+  // ETAP 1.2 — tryb Edycja | Podgląd (menu 2). Powiadomienie jako JEDYNA karta N
+  // nie miało tego przełącznika (zgłoszenie właściciela pkt 5). Podgląd = „do
+  // pokazania klientowi": pola arkusza tylko do odczytu, afordancje AI przy
+  // polach wygaszone. Domyślnie EDYCJA — powiadomienie to arkusz do wypełnienia
+  // (decyzja D-A, komentarz przy `titleReadOnly` niżej).
+  const [readMode, setReadMode] = useState(false);
 
   // Expanded sections state (C-mode accordion)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -1733,11 +1742,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       type: 'notification',
                     }}
                     iconOnly
+                    disabled={readMode}
                   />
                 </div>
                 <textarea
                   value={descriptionDraft}
                   onChange={(e) => setDescriptionDraft(e.target.value)}
+                  readOnly={readMode}
                   rows={3}
                   className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[48px]"
                   placeholder={t(
@@ -1765,11 +1776,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       type: 'notification',
                     }}
                     iconOnly
+                    disabled={readMode}
                   />
                 </div>
                 <textarea
                   value={whyImportantDraft}
                   onChange={(e) => setWhyImportantDraft(e.target.value)}
+                  readOnly={readMode}
                   rows={2}
                   className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[36px]"
                   placeholder={t(
@@ -1788,6 +1801,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   <textarea
                     value={blockedDraft}
                     onChange={(e) => setBlockedDraft(e.target.value)}
+                    readOnly={readMode}
                     rows={2}
                     className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[36px]"
                     placeholder={t(
@@ -1941,12 +1955,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       type: 'notification',
                     }}
                     iconOnly
-                    disabled={!canExpectedActionAI}
+                    disabled={readMode || !canExpectedActionAI}
                   />
                 </div>
                 <textarea
                   value={expectedActionDraft}
                   onChange={(e) => setExpectedActionDraft(e.target.value)}
+                  readOnly={readMode}
                   rows={2}
                   className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[36px]"
                   placeholder={t('myWork.notificationDetail.placeholder', 'Expected action...')}
@@ -1971,7 +1986,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       type: 'notification',
                     }}
                     iconOnly
-                    disabled={!canChecklistAI}
+                    disabled={readMode || !canChecklistAI}
                   />
                 </div>
 
@@ -3010,35 +3025,43 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     )}
                   </div>
 
-                  {/* Kontekstowe AI dla aktywnej sekcji — slot AI (§18.1).
-                      Akcent AI = teal/c-info, NIGDY crimson (pulapka nr 1 CLAUDE.md;
-                      ten przycisk mial primary-* i zostal naprawiony 21.07). Tint 10%,
-                      nie solid — solid rezerwuje §2.3 dla slotu primary. */}
-                  {/* MIGRACJA (za flagą): picker kart „Sekcje ▾ / + Nowa karta ▾"
-                      (rdzeń nieusuwalny, węższy domyślny). Crimson-safe (teal/c-focus). */}
-                  {notificationCardContractEnabled && (
-                    <div className="ml-auto">
-                      <NModeCardManager layout={notificationCardLayout} isPolish={isPolish} />
-                    </div>
-                  )}
-                  {(activeNSection === 'ai-analysis' ||
-                    activeNSection === 'whats-happening' ||
-                    activeNSection === 'expected-action') && (
-                    <button
-                      onClick={() => handleAnalyzeWithAI(false)}
-                      disabled={isAnalyzingWorksheet}
-                      className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-teal-400/50 text-teal-600 dark:text-teal-300 bg-teal-500/10 hover:bg-teal-500/15 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    >
-                      {isAnalyzingWorksheet ? (
-                        <Loader2 size={13} className="animate-spin" />
-                      ) : (
-                        <Sparkles size={13} />
-                      )}
-                      {t('myWork.notificationDetail.analyzeWithAI', 'Analyze with AI')}
-                    </button>
-                  )}
+                  {/* ETAP 1.2 — picker „Sekcje" i „Analizuj z AI" ZESZŁY z tego
+                      paska do wspólnego MENU 2 (poniżej). Tu zostają wyłącznie
+                      akcje cyklu życia powiadomienia (Oznacz przeczytane ·
+                      Odłóż · Usuń · „…"), bo to NIE jest menu 2 — to własny
+                      pasek akcji karty. */}
                 </div>
               </div>
+
+              {/* ── MENU 2 (ETAP 1.2 standardu n-Type) ──────────────────────
+                  Trzy strefy narzucone przez wspólny `NModeMenu2`:
+                    LEWA   — Sekcje (było po PRAWEJ, `ml-auto` — zgłoszenie
+                             właściciela pkt 4),
+                    ŚRODEK — Edycja | Podgląd (karta NIE MIAŁA przełącznika
+                             w ogóle — zgłoszenie pkt 5),
+                    PRAWA  — Analizuj z AI (fiolet). Wcześniej ten przycisk
+                             pokazywał się tylko na 3 z 6 sekcji, choć
+                             `handleAnalyzeWithAI` wypełnia CAŁY arkusz —
+                             teraz jest wejściem na poziomie karty.
+                  „+ Nowa karta" zdjęte — karty są predefiniowane. */}
+              <NModeMenu2
+                isPolish={isPolish}
+                sectionsMenu={
+                  notificationCardContractEnabled ? (
+                    <SectionsManagerMenu layout={notificationCardLayout} isPolish={isPolish} />
+                  ) : undefined
+                }
+                readMode={readMode}
+                onReadModeChange={setReadMode}
+                aiButton={
+                  <Menu2AIButton
+                    isPolish={isPolish}
+                    busy={isAnalyzingWorksheet}
+                    disabled={isAnalyzingWorksheet}
+                    onClick={() => handleAnalyzeWithAI(false)}
+                  />
+                }
+              />
 
               {/* ── 3-Pane: LeftNav + Canvas + prawy panel (SPEC-N §2.2) ── */}
               <div className="flex gap-0 min-h-[60vh]">

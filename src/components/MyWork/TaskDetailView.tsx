@@ -81,7 +81,11 @@ import { CapabilityGate } from '../shared/CapabilityGate';
 import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
 // #52 — card-management primitive (show/hide + reorder), same wiring as
 // InsightViewer.tsx (nakładka, see comment at `taskCardLayout` below).
-import { NModeCardManager } from '../shared/NModeLayout/NModeCardManager';
+// ETAP 1.2: pasek niesie SAM picker „Sekcje" — „+ Nowa karta" zdjęte z menu 2
+// (karty są predefiniowane, widocznością steruje Sekcje), więc zamiast
+// `NModeCardManager` (Sekcje + Nowa karta) importujemy `SectionsManagerMenu`.
+import { SectionsManagerMenu } from '../shared/NModeLayout/NModeCardManager';
+import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 // ── N-Mode Layout (shared) ──────────────────────────────────────────────────
 import { NModeCardState, type NModeCardStatus } from '../shared/NModeLayout/NModeCardState';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
@@ -139,7 +143,6 @@ import { AIConnections } from './shared/AIConnections';
 import { buildAskAIMessage } from './shared/askAiHelper';
 // ── Presentation Mode Switcher ───────────────────────────────────────────────
 import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
-import { ReadEditToggle } from './shared/ReadEditToggle';
 import { RelatedContext } from './shared/RelatedContext';
 
 interface TaskDetailViewProps {
@@ -4632,14 +4635,22 @@ Return ONLY the final comment text.`;
                     Stara etykieta („Menu 1 (klasa S)") dublowała nazwę powłoki
                     i niosła błędną klasę; Task jest klasą L (plan K1 do
                     SPEC-N §2.1: 8 sekcji > limit 4 dla klasy S). ── */}
-                <div className="flex items-center justify-between">
-                  {!readMode ? (
-                    <NModeCardManager layout={taskCardLayout} isPolish={isPolish} />
-                  ) : (
-                    <div />
-                  )}
-                  <ReadEditToggle readMode={readMode} onChange={setReadMode} />
-                </div>
+                {/* ETAP 1.2 standardu n-Type — MENU 2 = wspólny `NModeMenu2`.
+                    Było: bespoke <div justify-between> z pickerem „Sekcje ▾ /
+                    + Nowa karta ▾" po lewej i przełącznikiem trybu dosuniętym
+                    do prawej krawędzi. Teraz: trzy strefy narzucone przez
+                    komponent (Sekcje | Edycja|Podgląd w środku geometrycznym |
+                    Analizuj z AI). „+ Nowa karta" ZDJĘTE — karty są
+                    predefiniowane, widocznością steruje Sekcje. */}
+                <NModeMenu2
+                  isPolish={isPolish}
+                  sectionsMenu={
+                    <SectionsManagerMenu layout={taskCardLayout} isPolish={isPolish} />
+                  }
+                  readMode={readMode}
+                  onReadModeChange={setReadMode}
+                  aiButton={<Menu2AIButton isPolish={isPolish} onClick={handleOpenChat} />}
+                />
                 {/* Deadline Alert */}
                 {dueDate && dueDateAlertBorderClass && (
                   <div className="mb-3 px-4 py-2 rounded-xl bg-danger-500/5 dark:bg-danger-500/10 border border-danger-200/60 dark:border-danger-500/30 text-sm text-danger-600 dark:text-danger-400 flex items-center gap-2">

@@ -3,7 +3,6 @@ import {
   ArrowRight,
   CheckCircle2,
   FileText,
-  HelpCircle,
   Lightbulb,
   Link2,
   RefreshCw,
@@ -29,13 +28,13 @@ import { TEXT_L1 } from '@/styles/typography';
 
 import {
   type CardLayout,
-  type NModeAction,
   type NModeArtifactType,
   type NModePropertyField,
   type NModeSection,
-  NModeActionBar,
-  NModeCardManager,
+  Menu2HowToButton,
+  NModeMenu2,
   NModeShell,
+  SectionsManagerMenu,
   useCardLayout,
 } from '../shared/NModeLayout';
 import { DynamicSwotLibraryGraphic } from './DynamicSwotLibraryGraphic';
@@ -243,19 +242,9 @@ export function KnownToolDetailView(props: {
   // SPEC-N §2.6 (anty-duplikacja): „Startuj sesję" ŚWIADOMIE nie występuje tutaj —
   // żyje wyłącznie w slocie primary nagłówka. Toolbar niesie już tylko akcję
   // drugorzędną. Jedna akcja = jedno miejsce.
-  const actions: NModeAction[] = useMemo(
-    () => [
-      {
-        id: 'help',
-        label: { en: 'How to / Knowledge base', pl: 'How to / Baza wiedzy' },
-        icon: HelpCircle,
-        variant: 'neutral',
-        onClick: openKb,
-        disabled: !tool,
-      },
-    ],
-    [tool, starting, toolType]
-  );
+  // ETAP 1.2: tablica `actions` (jedyna pozycja: „How to / Baza wiedzy") zniknela —
+  // akcja ma teraz wlasny, nazwany slot `howToButton` w menu 2, wiec nie musi
+  // udawac anonimowego wpisu paska akcji.
 
   const sections: NModeSection[] = useMemo(() => {
     const bullets = (items: string[] | undefined) => {
@@ -1741,23 +1730,40 @@ export function KnownToolDetailView(props: {
         primaryAction,
       }}
       sections={orderedToolSections}
-      actions={actions}
-      actionsVisible={true}
-      // MIGRACJA (za flagą): dokłada picker kart „Sekcje ▾ / + Nowa karta ▾"
-      // obok istniejącej akcji „Baza wiedzy", bez zmiany domyślnego renderu
-      // toolbara gdy flaga OFF (replikuje `NModeActionBar` 1:1 — patrz
-      // NModeShell.tsx renderActionBar fallback).
+      /* ETAP 1.2: `actions`/`actionsVisible` USUNIETE — przy podanym
+         `renderActionBar` powloka i tak ich nie czyta (NModeShell.tsx), a
+         jedyna akcja („How to / Baza wiedzy") ma teraz wlasny slot w menu 2. */
+      // ETAP 1.2 standardu n-Type — MENU 2 = wspolny `NModeMenu2`.
+      // Zgloszenie wlasciciela pkt 4: picker "Sekcje" byl doklejony po PRAWEJ
+      // (`ml-auto`) — teraz jest po LEWEJ, nad lista kart. "+ Nowa karta"
+      // zdjete: karty sa predefiniowane, widocznoscia steruje Sekcje.
+      // "How to / Baza wiedzy" idzie do prawej strefy jako wlasny slot
+      // (przestaje byc anonimowa pozycja `NModeActionBar`).
+      //
+      // ZGLOSZONE, NIE WYMYSLONE:
+      //   - brak przelacznika Edycja|Podglad — ta karta to WPIS BIBLIOTECZNY
+      //     (opis narzedzia, zero pol edytowalnych), wiec przelacznik nie
+      //     mialby czego przelaczac,
+      //   - brak "Analizuj z AI" — karta nie ma zadnej akcji AI; jej wyjsciem
+      //     do pracy jest primary "Startuj sesje" w Menu 1.
       renderActionBar={() => (
-        <div className="flex items-center gap-2">
-          {actions.length > 0 && (
-            <NModeActionBar actions={actions} activeSection={activeSection} />
-          )}
-          {toolCardContractEnabled && (
-            <div className="ml-auto">
-              <NModeCardManager layout={toolCardLayout} isPolish={isPolish} />
-            </div>
-          )}
-        </div>
+        <NModeMenu2
+          isPolish={isPolish}
+          sectionsMenu={
+            toolCardContractEnabled ? (
+              <SectionsManagerMenu layout={toolCardLayout} isPolish={isPolish} />
+            ) : undefined
+          }
+          howToButton={
+            <Menu2HowToButton
+              variant="knowledge"
+              isPolish={isPolish}
+              label={isPolish ? 'How to / Baza wiedzy' : 'How to / Knowledge base'}
+              onClick={openKb}
+              disabled={!tool}
+            />
+          }
+        />
       )}
       activeSection={activeSection}
       onSectionChange={setActiveSection}

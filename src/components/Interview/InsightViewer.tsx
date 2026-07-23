@@ -35,7 +35,6 @@ import {
   Loader2,
   Map as MapIcon,
   MessageSquare,
-  Monitor,
   Network,
   Pencil,
   Plus,
@@ -63,7 +62,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { InitiativeGeneratorModal } from '@/components/Initiatives/Wizard/InitiativeGeneratorModal';
-import { ReadEditToggle } from '@/components/MyWork/shared/ReadEditToggle';
 import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
 import type { DeckCard } from '@/components/Presentations/wizard/types';
 import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
@@ -75,14 +73,12 @@ import {
   NModeCardBadge,
   type NModeCardStatus,
   NModeSectionWrapper,
-  ToolbarIconButton,
 } from '@/components/shared/NModeLayout';
-import { AddCardMenu } from '@/components/shared/NModeLayout/NModeCardManager';
+import { Menu2AIButton, NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 // ToolbarAISolidButton celowo NIE importowany (SPEC-N §2.3 — poza slotem primary
 // nic nie jest solid; AI Consultant zjechał na wariant outline/split).
 import {
-  ToolbarAISplitButton,
   ToolbarGhostButton,
 } from '@/components/shared/NModeLayout/NModeToolbar';
 import { SectionErrorBoundary } from '@/components/shared/NModeLayout/SectionErrorBoundary';
@@ -218,7 +214,26 @@ function useInsightCardContractEnabled(): boolean {
  * Kod zostaje — przywrócić (`true`) po zadaniu C10 z planu wykonawczego
  * (kontrakt renderu prezentacji): Harvard/wdrozenie-100/_PLAN_WYKONAWCZY_2026-07-20.md
  */
-const PRESENT_MODE_ENABLED = import.meta.env.VITE_PRESENT_MODE === 'true';
+// ETAP 1.2 (2026-07-23): staly PRESENT_MODE_ENABLED USUNIETY razem z przyciskiem
+// "Prezentuj" w pasku — kontrakt menu 2 zna trzy strefy i nie ma w nich ikony
+// prezentacji, a flaga i tak byla OFF. Wejscie do prezentacji zostaje w Eksporcie
+// ("Do prezentacji" -> setExportTarget('deck')), wiec zdolnosc nie znika.
+
+/**
+ * ETAP 1.2 standardu n-Type (2026-07-23) — „Eksport ▾" ZDJĘTY z menu 2.
+ *
+ * Właściciel: „Eksportuj → kebab lub Rezultaty. Jeśli przeniesienie wymaga
+ * decyzji produktowej — usuń z paska i ZGŁOŚ, nie wymyślaj." Kontrakt menu 2
+ * zna trzy strefy (Sekcje | Edycja|Podgląd | How-to + Analizuj z AI) i nie ma
+ * w nich miejsca na eksport, a docelowy dom (kebab Menu 1 vs sekcja
+ * „Rezultaty") to decyzja właściciela, nie robotnika.
+ *
+ * Dlatego kod eksportu NIE jest kasowany — zostaje kompletny za tą flagą
+ * (domyślnie OFF). Po decyzji: albo `true` (wraca do paska), albo jeden ruch
+ * do kebaba/Rezultatów. Do tego czasu Insight NIE MA wejścia do eksportu —
+ * to świadoma, zgłoszona luka, nie przeoczenie.
+ */
+const INSIGHT_EXPORT_IN_MENU2 = false;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -8237,21 +8252,154 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         }
         buildArtifactCode={(type, id) => buildArtifactCode(type as ArtifactType, id)}
         renderActionBar={() => {
-          // Canon toolbar (BLOCK_TYPES_CANON §Toolbar artefaktu / INSIGHT_CANON §3):
-          //   [≡ Sections ▾] [New] [Export ▾]  · active section ·  │
-          //   [⚡ AI ▾ section]  ···spacer···  [⎊ Fork] [▶ Present]  │  [⚡ AI Consultant solid]
-          // Two zones split by a divider. ZERO crimson/primary; AI = teal only.
-          const activeSectionMeta = INSIGHT_SECTIONS.find((s) => s.id === activeNSection);
-          const activeSectionLabel = activeSectionMeta
-            ? t(
-                `interview.insightViewer.sectionLabel.${activeSectionMeta.id}`,
-                activeSectionMeta.label.en
-              )
-            : '';
+          // ETAP 1.2 standardu n-Type — MENU 2 = wspolny `NModeMenu2`, trzy strefy:
+          //   LEWA   Sekcje  |  SRODEK Edycja|Podglad  |  PRAWA Analizuj z AI
+          //
+          // ZDJETE z paska (zgloszenie wlasciciela pkt 2):
+          //   - "+ Nowa karta"  : karty sa predefiniowane, widocznoscia steruje Sekcje,
+          //   - "Eksport"       : czeka na decyzje produktowa gdzie ma zamieszkac
+          //                       (kebab vs sekcja Rezultaty); do tego czasu za flaga
+          //                       INSIGHT_EXPORT_IN_MENU2 (domyslnie OFF),
+          //   - nazwa aktywnej karty (m.in. "Dalsze akcje") : dublowala lewa nawigacje,
+          //   - "AI sekcji"     : kazda sekcja ma juz wlasny przycisk regeneracji
+          //                       (ten sam handleRegenerate), wiec pasek go dublowal,
+          //   - "Prezentuj"     : i tak wylaczone flaga VITE_PRESENT_MODE.
           return (
-            <div className="flex items-center gap-1 min-h-[36px] flex-wrap">
-              {/* ── LEFT ZONE: content work ───────────────────────────────── */}
-              {/* Slot 1 — ≡ Sections ▾ : visibility toggles for the left nav */}
+            <NModeMenu2
+              isPolish={isPolish}
+              readMode={readMode}
+              onReadModeChange={setReadMode}
+              aiButton={
+                readMode ? undefined : (
+                  <Menu2AIButton
+                    isPolish={isPolish}
+                    label={t('interview.insightViewer.aiConsultant')}
+                    onClick={() => {
+                      setExportMenuOpen(false);
+                      setSectionsMenuOpen(false);
+                      setAiMenuOpen(false);
+                      openInsightConsultant();
+                    }}
+                  />
+                )
+              }
+              overflowKebab={
+                INSIGHT_EXPORT_IN_MENU2 ? (
+                  <div className="relative" ref={exportMenuRef}>
+                    <ToolbarGhostButton
+                      icon={<ExternalLink size={14} />}
+                      onClick={() => {
+                        setExportMenuOpen((v) => !v);
+                        setAiMenuOpen(false);
+                        setSectionsMenuOpen(false);
+                      }}
+                    >
+                      {t('interview.insightViewer.export')}
+                      <ChevronDown
+                        size={13}
+                        className={`ml-0.5 transition-transform ${exportMenuOpen ? 'rotate-180' : ''}`}
+                      />
+                    </ToolbarGhostButton>
+                    {exportMenuOpen && (
+                      <div className="absolute left-0 z-30 mt-1 w-56 rounded-xl border border-c-border-subtle bg-white dark:bg-c-surface shadow-lg py-1">
+                        {/* Canon destinations: Notatki · Idee/Tools · Prezentacja · PDF */}
+                        <button
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            handleExportToNotebook();
+                          }}
+                          disabled={isExportingNotebook || insight?.status !== 'completed'}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
+                        >
+                          {isExportingNotebook ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <BookOpen size={14} />
+                          )}
+                          {t('interview.insightViewer.toNotebook')}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            handleExportToTools();
+                          }}
+                          disabled={isExportingTools || insight?.status !== 'completed'}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
+                        >
+                          {isExportingTools ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <Target size={14} />
+                          )}
+                          {t('interview.insightViewer.toIdeasTools')}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            setExportTarget('deck');
+                            setPresentOpen(true);
+                          }}
+                          disabled={insight?.status !== 'completed'}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
+                        >
+                          <LayoutGrid size={14} />
+                          {t('interview.insightViewer.toDeck')}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            setExportTarget('report');
+                            openExportDialog();
+                          }}
+                          disabled={insight?.status !== 'completed'}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
+                        >
+                          <FileText size={14} />
+                          {t('interview.insightViewer.pdfReport')}
+                        </button>
+                        <div className="my-1 h-px bg-c-surface-raised" />
+                        <button
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            openExportDialog();
+                          }}
+                          disabled={insight?.status !== 'completed'}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-state-hover disabled:opacity-50"
+                        >
+                          <Sparkles size={14} />
+                          {t('interview.insightViewer.smartExport')}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            handleExportMarkdown();
+                          }}
+                          disabled={insight?.status !== 'completed'}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-muted hover:bg-state-hover disabled:opacity-50"
+                        >
+                          <Download size={14} />
+                          {t('interview.insightViewer.downloadMd')}
+                        </button>
+                        <div className="my-1 h-px bg-c-surface-raised" />
+                        {/* Propose initiatives — moved here from the old AI dropdown so
+                            the feature stays reachable after the slot-9 rework. */}
+                        <button
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            setGenOpen(true);
+                          }}
+                          disabled={!insight?.id}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
+                        >
+                          <Rocket size={14} />
+                          {t('interview.insightViewer.proposeInitiatives')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : undefined
+              }
+              sectionsMenu={
               <div className="relative" ref={sectionsMenuRef}>
                 <ToolbarGhostButton
                   icon={<Layers size={14} />}
@@ -8360,215 +8508,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 )}
               </div>
 
-              {/* Slot 2 — + Nowa karta ▾ : catalog of cards not yet on the
-                  artifact (wzorzec N §3.5). Klik → cardLayout.addCard →
-                  karta wraca do nav/canvas. Read = ukryte (podgląd czysty). */}
-              {!readMode && <AddCardMenu layout={cardLayout} isPolish={isPolish} />}
-
-              {/* Slot 3 — Export ▾ : canon destinations only */}
-              <div className="relative" ref={exportMenuRef}>
-                <ToolbarGhostButton
-                  icon={<ExternalLink size={14} />}
-                  onClick={() => {
-                    setExportMenuOpen((v) => !v);
-                    setAiMenuOpen(false);
-                    setSectionsMenuOpen(false);
-                  }}
-                >
-                  {t('interview.insightViewer.export')}
-                  <ChevronDown
-                    size={13}
-                    className={`ml-0.5 transition-transform ${exportMenuOpen ? 'rotate-180' : ''}`}
-                  />
-                </ToolbarGhostButton>
-                {exportMenuOpen && (
-                  <div className="absolute left-0 z-30 mt-1 w-56 rounded-xl border border-c-border-subtle bg-white dark:bg-c-surface shadow-lg py-1">
-                    {/* Canon destinations: Notatki · Idee/Tools · Prezentacja · PDF */}
-                    <button
-                      onClick={() => {
-                        setExportMenuOpen(false);
-                        handleExportToNotebook();
-                      }}
-                      disabled={isExportingNotebook || insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
-                    >
-                      {isExportingNotebook ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <BookOpen size={14} />
-                      )}
-                      {t('interview.insightViewer.toNotebook')}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setExportMenuOpen(false);
-                        handleExportToTools();
-                      }}
-                      disabled={isExportingTools || insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
-                    >
-                      {isExportingTools ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <Target size={14} />
-                      )}
-                      {t('interview.insightViewer.toIdeasTools')}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setExportMenuOpen(false);
-                        setExportTarget('deck');
-                        setPresentOpen(true);
-                      }}
-                      disabled={insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
-                    >
-                      <LayoutGrid size={14} />
-                      {t('interview.insightViewer.toDeck')}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setExportMenuOpen(false);
-                        setExportTarget('report');
-                        openExportDialog();
-                      }}
-                      disabled={insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
-                    >
-                      <FileText size={14} />
-                      {t('interview.insightViewer.pdfReport')}
-                    </button>
-                    <div className="my-1 h-px bg-c-surface-raised" />
-                    <button
-                      onClick={() => {
-                        setExportMenuOpen(false);
-                        openExportDialog();
-                      }}
-                      disabled={insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-state-hover disabled:opacity-50"
-                    >
-                      <Sparkles size={14} />
-                      {t('interview.insightViewer.smartExport')}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setExportMenuOpen(false);
-                        handleExportMarkdown();
-                      }}
-                      disabled={insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-muted hover:bg-state-hover disabled:opacity-50"
-                    >
-                      <Download size={14} />
-                      {t('interview.insightViewer.downloadMd')}
-                    </button>
-                    <div className="my-1 h-px bg-c-surface-raised" />
-                    {/* Propose initiatives — moved here from the old AI dropdown so
-                        the feature stays reachable after the slot-9 rework. */}
-                    <button
-                      onClick={() => {
-                        setExportMenuOpen(false);
-                        setGenOpen(true);
-                      }}
-                      disabled={!insight?.id}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
-                    >
-                      <Rocket size={14} />
-                      {t('interview.insightViewer.proposeInitiatives')}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Slot 4 — active section label (orientation, not a button) */}
-              <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
-              {activeSectionLabel && (
-                <span className="px-1 text-[12px] text-c-text-muted truncate max-w-[160px]">
-                  · {activeSectionLabel} ·
-                </span>
-              )}
-
-              {/* Slot 5 — section-level AI (teal-subtle split). Wired to the same
-                  per-section AI handler used by each section's `aiAction`.
-                  Read = ukryte: Podgląd „do pokazania klientowi" bez afordancji
-                  generowania/regeneracji AI. */}
-              {!readMode && (
-                <ToolbarAISplitButton
-                  icon={<Sparkles size={14} />}
-                  disabled={isRegenerating}
-                  onClick={handleRegenerate}
-                  title={t('interview.insightViewer.aiForSectionX', {
-                    section: activeSectionLabel,
-                  })}
-                >
-                  {isRegenerating && <Loader2 size={13} className="animate-spin" />}
-                  {t('interview.insightViewer.aiSection')}
-                </ToolbarAISplitButton>
-              )}
-
-              {/* ── spacer ─────────────────────────────────────────────────── */}
-              <div className="flex-1 min-w-0" />
-
-              {/* ── RIGHT ZONE: AI + modes ─────────────────────────────────── */}
-              {/* Tryb Read/Edit (§5A) — wspólny komponent „do pokazania
-                  klientowi" (ujednolicony z Task/Decision). Read = pasek akcji
-                  kart znika + afordancje AI/edycji gasną. Aktywny = c-focus. */}
-              <div className="mr-1">
-                <ReadEditToggle readMode={readMode} onChange={setReadMode} />
-              </div>
-
-              {/* Slot 7 — Present. Fork przeniesiony do kebaba wiersza w tabeli
-                  Insights (InterviewHub → rowMenu), zgodnie z kanonem §9
-                  (akcje obiektu żyją w kebabie, nie w toolbarze edytora).
-
-                  2026-07-20 (decyzja Piotra, przegląd MVP): UKRYTE.
-                  PresentMode renderuje strukturalną kartę jako zlepiony akapit —
-                  waga wchodzi w zdanie jako „(severity: high)" zamiast pilla,
-                  sekcje sklejone bez hierarchii, etykiety wewnętrzne
-                  („Perspective lenses", „Divergence") wyciekają do treści
-                  klienckiej, tekst urywa się w połowie zdania. Piotr: „lepiej to
-                  wyłączyć niż takie coś pokazywać".
-                  Przywrócić po zadaniu C10 (kontrakt renderu prezentacji) —
-                  Harvard/wdrozenie-100/_PLAN_WYKONAWCZY_2026-07-20.md */}
-              {PRESENT_MODE_ENABLED && (
-                <ToolbarIconButton
-                  icon={<Monitor size={14} />}
-                  tooltip={t('interview.insightViewer.present')}
-                  onClick={() => setPresentOpen(true)}
-                />
-              )}
-
-              {/* Slot 9 — AI Consultant. #56 (D17): otwiera JEDEN docked panel
-                  Teresy z kontekstem insightu + 5 akcji jako przyciski komend
-                  wewnątrz Teresy (openInsightConsultant), zamiast osobnego
-                  AIConsultantPanel.
-                  Read = ukryte: Podgląd „do pokazania klientowi" bez afordancji AI.
-
-                  2026-07-21 (SPEC-N §2.3): był `ToolbarAISolidButton` (solid teal).
-                  Formalnie zgodne — primary jest jeden, w nagłówku („Konwertuj na
-                  inicjatywę") — ale WIZUALNIE solid-teal konkurował z tym primary
-                  o uwagę. Reguła mówi o wyglądzie, nie o deklaracji: poza slotem
-                  primary żaden element nie jest solid/filled. Stąd stonowane do
-                  wariantu outline (`ToolbarAISplitButton` — teal border, ten sam
-                  akcent AI, zero czerwieni). Jedyne wejście do konsultanta AI —
-                  bliźniak w prawym panelu usunięty (§2.6). */}
-              {!readMode && (
-                <>
-                  <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
-                  <ToolbarAISplitButton
-                    icon={<Sparkles size={14} />}
-                    onClick={() => {
-                      setExportMenuOpen(false);
-                      setSectionsMenuOpen(false);
-                      setAiMenuOpen(false);
-                      openInsightConsultant();
-                    }}
-                    title={t('interview.insightViewer.aiConsultant')}
-                  >
-                    {t('interview.insightViewer.aiConsultant')}
-                  </ToolbarAISplitButton>
-                </>
-              )}
-            </div>
+              }
+            />
           );
         }}
       >
