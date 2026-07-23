@@ -158,7 +158,9 @@ export default function PanelUwag({ ekran }: { ekran: string }): React.ReactElem
           borderBottom: `1px solid ${KOLOR.ramka}`,
         }}
       >
-        <strong style={{ fontSize: 13.5 }}>Uwagi do ekranu</strong>
+        <strong style={{ fontSize: 13.5 }}>
+          Uwagi do ekranu{zapis.uwagi.length ? ` (${zapis.uwagi.length})` : ''}
+        </strong>
         <button
           onClick={() => setOtwarty(false)}
           style={{
@@ -200,9 +202,30 @@ export default function PanelUwag({ ekran }: { ekran: string }): React.ReactElem
                 marginBottom: 7,
                 fontSize: 13,
                 lineHeight: 1.45,
+                display: 'flex',
+                gap: 8,
+                alignItems: 'flex-start',
               }}
             >
-              <span style={{ color: KOLOR.tekstMuted, fontSize: 11.5 }}>{i + 1}.</span> {u.tekst}
+              <span style={{ color: KOLOR.tekstMuted, fontSize: 11.5, paddingTop: 2 }}>{i + 1}.</span>
+              <span style={{ flex: 1 }}>{u.tekst}</span>
+              <button
+                onClick={() =>
+                  void wyslij({ ...zapis, ekran, uwagi: zapis.uwagi.filter((_, j) => j !== i) })
+                }
+                title="Usuń tę uwagę"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: KOLOR.tekstMuted,
+                  cursor: 'pointer',
+                  fontSize: 15,
+                  lineHeight: 1,
+                  padding: 0,
+                }}
+              >
+                ×
+              </button>
             </div>
           ))
         )}
@@ -215,7 +238,9 @@ export default function PanelUwag({ ekran }: { ekran: string }): React.ReactElem
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) dodaj();
           }}
-          placeholder="Co jest nie tak na tym ekranie…"
+          placeholder={
+            zapis.uwagi.length ? 'Dodaj kolejną uwagę…' : 'Co jest nie tak na tym ekranie…'
+          }
           rows={3}
           style={{
             width: '100%',
@@ -244,10 +269,12 @@ export default function PanelUwag({ ekran }: { ekran: string }): React.ReactElem
               cursor: 'pointer',
             }}
           >
-            Dodaj uwagę
+            {zapis.uwagi.length ? 'Dodaj kolejną' : 'Dodaj uwagę'}
           </button>
           <span style={{ color: KOLOR.tekstMuted, fontSize: 11.5 }}>
-            {stan || 'Cmd+Enter dodaje'}
+            {stan || (zapis.uwagi.length
+              ? `${zapis.uwagi.length} ${zapis.uwagi.length === 1 ? 'uwaga' : 'uwagi'} · Cmd+Enter dodaje`
+              : 'Cmd+Enter dodaje')}
           </span>
         </div>
       </div>

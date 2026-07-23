@@ -273,7 +273,13 @@ ${g.obiekty.map((o) => wierszObiektu(o, znane)).join('\n')}
     background: #fff; border: 1px solid #e8edf3; border-radius: 7px;
     padding: 6px 9px; margin-bottom: 5px; font-size: 13px; line-height: 1.45;
   }
-  .uwagi-lista .u i { color: #94a3b8; font-style: normal; font-size: 11.5px; margin-right: 5px; }
+  .uwagi-lista .u { display: flex; gap: 8px; align-items: flex-start; }
+  .uwagi-lista .u span { flex: 1; }
+  .uwagi-lista .u i { color: #94a3b8; font-style: normal; font-size: 11.5px; }
+  .uwagi-lista .usun {
+    background: none; border: 0; color: #94a3b8; cursor: pointer; font-size: 15px; line-height: 1; padding: 0;
+  }
+  .uwagi-lista .usun:hover { color: #b91c1c; }
   .uwagi-lista .pusto { color: #94a3b8; font-size: 12.5px; margin-bottom: 8px; }
   .werdykty { display: flex; gap: 6px; margin-bottom: 9px; }
   .werdykty .w {
@@ -343,9 +349,14 @@ ${grupyHtml}
       ? z.uwagi.map(function (u, i) {
           var d = document.createElement('div');
           d.textContent = u.tekst;
-          return '<div class="u"><i>' + (i + 1) + '.</i>' + d.innerHTML + '</div>';
+          return '<div class="u"><i>' + (i + 1) + '.</i><span>' + d.innerHTML +
+                 '</span><button class="usun" data-usun="' + i + '" title="Usuń tę uwagę">×</button></div>';
         }).join('')
-      : '<div class="pusto">Brak uwag do tego obiektu.</div>';
+      : '<div class="pusto">Brak uwag do tego obiektu. Możesz dodać ich dowolnie wiele.</div>';
+    var dodajBtn = box.querySelector('.btn-dodaj');
+    if (dodajBtn) dodajBtn.textContent = z.uwagi.length ? 'Dodaj kolejną' : 'Dodaj uwagę';
+    var ta = box.querySelector('textarea');
+    if (ta) ta.placeholder = z.uwagi.length ? 'Dodaj kolejną uwagę…' : 'Co jest nie tak w tym obiekcie…';
     box.querySelectorAll('.w').forEach(function (b) {
       if (z.werdykt === b.getAttribute('data-w')) b.setAttribute('data-wybrany', '1');
       else b.removeAttribute('data-wybrany');
@@ -385,6 +396,15 @@ ${grupyHtml}
       var biezacy = (STAN[k2] || {}).werdykt;
       var nowy = w.getAttribute('data-w');
       zapisz(k2, { werdykt: biezacy === nowy ? null : nowy }, box2.querySelector('.uwagi-stan'));
+      return;
+    }
+    var usun = e.target.closest('.usun');
+    if (usun) {
+      var boxU = usun.closest('.uwagi-box');
+      var kU = boxU.getAttribute('data-box-dla');
+      var idx = Number(usun.getAttribute('data-usun'));
+      var listaU = ((STAN[kU] || {}).uwagi || []).filter(function (_, j) { return j !== idx; });
+      zapisz(kU, { uwagi: listaU }, boxU.querySelector('.uwagi-stan'));
       return;
     }
     var dodaj = e.target.closest('.btn-dodaj');
