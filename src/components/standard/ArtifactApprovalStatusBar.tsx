@@ -17,6 +17,7 @@
  */
 import { Check, Send, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useArtifactApprovalStatus } from '@/hooks/useArtifactApprovalStatus';
 import type { ArtifactApprovalState } from '@/services/api/artifactApprovals.api';
@@ -45,11 +46,28 @@ export interface ArtifactApprovalStatusBarProps {
   className?: string;
 }
 
-const STATE_LABEL: Record<ArtifactApprovalState, string> = {
-  draft: 'Draft',
-  review: 'In review',
-  approved: 'Approved',
-  rejected: 'Rejected',
+/**
+ * Klucze i18n stanu (2026-07-23, naprawa „angielski pasek w polskim UI").
+ *
+ * BYŁO: `STATE_LABEL` trzymał na sztywno angielskie napisy („Draft"/„In review"/
+ * „Approved"/„Rejected") i tak samo literał „Submit for review". Pasek jest
+ * osadzony w prawym panelu Decyzji, Wglądu i Inicjatywy, więc polski użytkownik
+ * widział angielski status na trzech kartach naraz.
+ *
+ * DLACZEGO translation.json, a nie lokalne pary { en, pl } (wzór `NModeMenu2`):
+ * ten komponent mieszka w `src/components/standard/`, gdzie WSZYSTKIE komponenty
+ * z tekstem (StandardTable, StandardPreview, StandardKanban, StandardKanbanCard)
+ * lokalizują się przez `useTranslation()` + `translation.json`; ani jeden nie
+ * trzyma lokalnych par. Pary `{ en, pl }` to wzorzec powłoki N (NModeMenu2,
+ * NModeCardState) i został tam wprowadzony jako obejście braku kluczy — tu
+ * klucze dopisujemy, więc idziemy konwencją katalogu `standard/`.
+ * Gałąź: `sharedComponents.artifactApprovalStatusBar.*`.
+ */
+const STATE_LABEL_KEY: Record<ArtifactApprovalState, string> = {
+  draft: 'sharedComponents.artifactApprovalStatusBar.stateDraft',
+  review: 'sharedComponents.artifactApprovalStatusBar.stateReview',
+  approved: 'sharedComponents.artifactApprovalStatusBar.stateApproved',
+  rejected: 'sharedComponents.artifactApprovalStatusBar.stateRejected',
 };
 
 const STATE_PILL_CLASS: Record<ArtifactApprovalState, string> = {
@@ -70,6 +88,7 @@ export const ArtifactApprovalStatusBar: React.FC<ArtifactApprovalStatusBarProps>
   hideSubmitAction = false,
   className,
 }) => {
+  const { t } = useTranslation();
   const { state, loading, error, actionPending, submitForReview, approve, reject } =
     useArtifactApprovalStatus(artifactType, artifactId);
   const [rejectReason, setRejectReason] = useState('');
@@ -77,7 +96,9 @@ export const ArtifactApprovalStatusBar: React.FC<ArtifactApprovalStatusBarProps>
 
   if (loading && !state) {
     return (
-      <div className={`text-xs text-c-text-muted ${className ?? ''}`}>Loading approval state…</div>
+      <div className={`text-xs text-c-text-muted ${className ?? ''}`}>
+        {t('sharedComponents.artifactApprovalStatusBar.loading')}
+      </div>
     );
   }
 
@@ -89,9 +110,13 @@ export const ArtifactApprovalStatusBar: React.FC<ArtifactApprovalStatusBarProps>
         <span
           className={`inline-flex items-center h-5 px-2 rounded-md text-[11px] font-medium ${STATE_PILL_CLASS[effectiveState]}`}
         >
-          {STATE_LABEL[effectiveState]}
+          {t(STATE_LABEL_KEY[effectiveState])}
         </span>
-        {actionPending ? <span className="text-[11px] text-c-text-muted">Saving…</span> : null}
+        {actionPending ? (
+          <span className="text-[11px] text-c-text-muted">
+            {t('sharedComponents.artifactApprovalStatusBar.saving')}
+          </span>
+        ) : null}
       </div>
 
       {error ? <p className="text-[11px] text-c-danger">{error}</p> : null}
@@ -107,7 +132,7 @@ export const ArtifactApprovalStatusBar: React.FC<ArtifactApprovalStatusBarProps>
             onClick={() => void submitForReview(currentUserId)}
           >
             <Send size={12} />
-            Submit for review
+            {t('sharedComponents.artifactApprovalStatusBar.submitForReview')}
           </button>
         ) : null}
 
@@ -120,7 +145,7 @@ export const ArtifactApprovalStatusBar: React.FC<ArtifactApprovalStatusBarProps>
               onClick={() => void approve()}
             >
               <Check size={12} />
-              Approve
+              {t('sharedComponents.artifactApprovalStatusBar.approve')}
             </button>
             {showRejectInput ? (
               <span className="inline-flex items-center gap-1">
@@ -128,7 +153,9 @@ export const ArtifactApprovalStatusBar: React.FC<ArtifactApprovalStatusBarProps>
                   type="text"
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="Reason (optional)"
+                  placeholder={t(
+                    'sharedComponents.artifactApprovalStatusBar.rejectReasonPlaceholder'
+                  )}
                   className="h-7 px-2 rounded-lg text-xs border border-c-border-subtle bg-c-surface text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
                 />
                 <button
@@ -145,7 +172,7 @@ export const ArtifactApprovalStatusBar: React.FC<ArtifactApprovalStatusBarProps>
                   }}
                 >
                   <X size={12} />
-                  Confirm reject
+                  {t('sharedComponents.artifactApprovalStatusBar.confirmReject')}
                 </button>
               </span>
             ) : (
@@ -156,7 +183,7 @@ export const ArtifactApprovalStatusBar: React.FC<ArtifactApprovalStatusBarProps>
                 onClick={() => setShowRejectInput(true)}
               >
                 <X size={12} />
-                Reject
+                {t('sharedComponents.artifactApprovalStatusBar.reject')}
               </button>
             )}
           </>

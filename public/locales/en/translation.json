@@ -29957,6 +29957,19 @@
     },
     "previewCompletenessRing": {
       "missingFields": "Missing fields"
+    },
+    "artifactApprovalStatusBar": {
+      "stateDraft": "Draft",
+      "stateReview": "In review",
+      "stateApproved": "Approved",
+      "stateRejected": "Rejected",
+      "loading": "Loading approval state…",
+      "saving": "Saving…",
+      "submitForReview": "Submit for review",
+      "approve": "Approve",
+      "reject": "Reject",
+      "confirmReject": "Confirm reject",
+      "rejectReasonPlaceholder": "Reason (optional)"
     }
   },
   "reportBuilder": {
