@@ -452,9 +452,9 @@ export function KnownToolDetailView(props: {
     );
 
     const dynamicSwotStepsMeta = [
-      { id: 1, accent: 'bg-c-info', tone: 'from-c-info/12 to-c-info/5' },
-      { id: 2, accent: 'bg-sky-500', tone: 'from-sky-500/12 to-blue-500/5' },
-      { id: 3, accent: 'bg-emerald-500', tone: 'from-emerald-500/12 to-blue-500/5' },
+      { id: 1, accent: 'bg-c-info', tone: 'from-c-info/[0.12] to-c-info/5' },
+      { id: 2, accent: 'bg-sky-500', tone: 'from-sky-500/[0.12] to-blue-500/5' },
+      { id: 3, accent: 'bg-emerald-500', tone: 'from-emerald-500/[0.12] to-blue-500/5' },
       { id: 4, accent: 'bg-amber-500', tone: 'from-amber-500/15 to-amber-500/5' },
       { id: 5, accent: 'bg-c-info', tone: 'from-c-info/15 to-c-info/5' },
     ];
