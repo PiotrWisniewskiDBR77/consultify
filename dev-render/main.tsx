@@ -89,6 +89,7 @@ import KartaNotificationScreen from './screens/karta-notification';
 import KartaTaskScreen from './screens/karta-task';
 import PreviewZakladkiScreen from './screens/preview-4-zakladki';
 import IdeaTableToolKebabScreen from './screens/idea-table-tool-kebab';
+import NTypeAnalizujAiScreen from './screens/ntype-analizuj-ai';
 // VLT-003 — importem MUSI być ostatnia: każdy dev-render screen instaluje swój
 // window.fetch stub jako top-level side effect przy imporcie (niezależnie od
 // tego, który ?screen= jest renderowany — statyczne importy main.tsx odpalają
@@ -98,6 +99,11 @@ import VaultScopeSelectorScreen from './screens/vault-scope-selector';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'ntype-analizuj-ai': {
+    label:
+      'n-Type ETAP 3 — „Analizuj z AI": menu 2 + panel wyników (Braki · Ryzyka · Sugestie · Zmiany)',
+    render: () => <NTypeAnalizujAiScreen />,
+  },
   odbior: {
     label: '★ PANEL ODBIORU — wszystkie obszary (rejestr/3-DO-ODBIORU), żywe ekrany + werdykty',
     render: () => <OdbiorScreen />,
