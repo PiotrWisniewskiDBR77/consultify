@@ -72,7 +72,7 @@ import { SectionsManagerMenu } from '../shared/NModeLayout/NModeCardManager';
 import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
-import { NModeTextField } from '../shared/NModeLayout/NModeTextField';
+import { AutoFitTextarea } from '../shared/AutoFitTextarea';
 import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLayout';
 import type { NModeArtifactType } from '../shared/NModeLayout/cardSets';
 import type { NModePropertyField, NModeSection } from '../shared/NModeLayout/types';
@@ -298,7 +298,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   // polach wygaszone. Domyślnie EDYCJA — powiadomienie to arkusz do wypełnienia
   // (decyzja D-A, komentarz przy `titleReadOnly` niżej).
   //
-  // ETAP 2.1 (scalenie 2026-07-23): ten sam stan obsługuje pola `NModeTextField`
+  // ETAP 2.1 (scalenie 2026-07-23): ten sam stan obsługuje pola `AutoFitTextarea`
   // — w trybie Podgląd znikają uchwyt wysokości i sloty AI. Wzorzec i komponent
   // przełącznika = `MyWork/shared/ReadEditToggle` (ten sam, którego używają Task
   // i Decision). JEDNA deklaracja na cały widok — nie duplikować niżej.
@@ -1624,7 +1624,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           //   • „Wynika z" (zrodlo/projekt)      → sekcja Powiazania
           //   • „Dlaczego to dostales" (callout) → sekcja Zrodla i zalozenia
           //   • pigulki Priorytet / Zrodlo       → tabela Wlasciwosci
-          // Co ZOSTALO: trzy POLA opisowe (`NModeTextField`) — kazde ma nazwe,
+          // Co ZOSTALO: trzy POLA opisowe (`AutoFitTextarea`) — kazde ma nazwe,
           // przycisk AI w prawym gornym rogu, tryb edycji, auto-fit wysokosci
           // i uchwyt zmiany wysokosci; w trybie Podglad kontrolki znikaja.
           // Lewy akcent koloru = severity (sygnal wagi, nie zdublowane pole).
@@ -1656,19 +1656,21 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 )}
               </div>
 
-              {/* 1) Opis */}
-              <NModeTextField
+              {/* 1) Opis — pole tekstowe standardu n-Type (§6.2/§6.3):
+                  auto-fit + ręczny resize z pamięcią + tryb Podgląd. */}
+              <AutoFitTextarea
                 id="notif-field-description"
-                label={t('myWork.notificationDetail.description', 'Description')}
                 value={descriptionDraft}
-                onChange={setDescriptionDraft}
-                readOnly={readMode}
-                minHeight={64}
-                placeholder={t(
-                  'myWork.notificationDetail.whatHappenedDescribeThe',
-                  'What happened — describe the notification event...'
-                )}
-                ai={
+                onValueChange={setDescriptionDraft}
+                previewMode={readMode}
+                minRows={3}
+                containerClassName="space-y-1.5"
+                label={
+                  <span className="text-[11px] uppercase tracking-wide text-c-text-muted">
+                    {t('myWork.notificationDetail.description', 'Description')}
+                  </span>
+                }
+                aiSlot={
                   <AIFieldEnhancer
                     fieldKey="notif-description"
                     sectionLabel={t('myWork.notificationDetail.sectionLabel', 'Description')}
@@ -1676,24 +1678,31 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     onApply={setDescriptionDraft}
                     artifactContext={notifAiContext}
                     iconOnly
-                    disabled={readMode}
                   />
                 }
+                autoFitLabel={t('common.backToAutoFit', 'Back to auto-fit')}
+                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted"
+                editClassName="border-b border-c-border focus:border-c-focus focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
+                placeholder={t(
+                  'myWork.notificationDetail.whatHappenedDescribeThe',
+                  'What happened — describe the notification event...'
+                )}
               />
 
-              {/* 2) Dlaczego to wazne */}
-              <NModeTextField
+              {/* 2) Dlaczego to wazne — pole tekstowe standardu n-Type (§6.2/§6.3). */}
+              <AutoFitTextarea
                 id="notif-field-why"
-                label={t('myWork.notificationDetail.whyItMatters', 'Why it matters')}
                 value={whyImportantDraft}
-                onChange={setWhyImportantDraft}
-                readOnly={readMode}
-                minHeight={48}
-                placeholder={t(
-                  'myWork.notificationDetail.explainTheImpactAnd',
-                  'Explain the impact and consequences...'
-                )}
-                ai={
+                onValueChange={setWhyImportantDraft}
+                previewMode={readMode}
+                minRows={2}
+                containerClassName="space-y-1.5"
+                label={
+                  <span className="text-[11px] uppercase tracking-wide text-c-text-muted">
+                    {t('myWork.notificationDetail.whyItMatters', 'Why it matters')}
+                  </span>
+                }
+                aiSlot={
                   <AIFieldEnhancer
                     fieldKey="notif-why-important"
                     sectionLabel={t('myWork.notificationDetail.sectionLabel2', 'Why It Matters')}
@@ -1701,9 +1710,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     onApply={setWhyImportantDraft}
                     artifactContext={notifAiContext}
                     iconOnly
-                    disabled={readMode}
                   />
                 }
+                autoFitLabel={t('common.backToAutoFit', 'Back to auto-fit')}
+                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted"
+                editClassName="border-b border-c-border focus:border-c-focus focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
+                placeholder={t(
+                  'myWork.notificationDetail.explainTheImpactAnd',
+                  'Explain the impact and consequences...'
+                )}
               />
 
               {/* 3) Co jest blokowane — pole pelnoprawne (bylo bez AI i tylko
@@ -1711,18 +1726,19 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                    W Podgladzie puste pole sie nie renderuje (nie pokazujemy
                    klientowi pustego miejsca). */}
               {(!readMode || blockedDraft.trim()) && (
-                <NModeTextField
+                <AutoFitTextarea
                   id="notif-field-blocked"
-                  label={t('myWork.notificationDetail.whatIsBlocked', 'What is blocked')}
                   value={blockedDraft}
-                  onChange={setBlockedDraft}
-                  readOnly={readMode}
-                  minHeight={48}
-                  placeholder={t(
-                    'myWork.notificationDetail.whatIsBlockedBy',
-                    'What is blocked by this issue...'
-                  )}
-                  ai={
+                  onValueChange={setBlockedDraft}
+                  previewMode={readMode}
+                  minRows={2}
+                  containerClassName="space-y-1.5"
+                  label={
+                    <span className="text-[11px] uppercase tracking-wide text-c-text-muted">
+                      {t('myWork.notificationDetail.whatIsBlocked', 'What is blocked')}
+                    </span>
+                  }
+                  aiSlot={
                     <AIFieldEnhancer
                       fieldKey="notif-blocked"
                       sectionLabel={t('myWork.notificationDetail.whatIsBlocked', 'What is blocked')}
@@ -1732,6 +1748,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       iconOnly
                     />
                   }
+                  autoFitLabel={t('common.backToAutoFit', 'Back to auto-fit')}
+                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted"
+                  editClassName="border-b border-c-border focus:border-c-focus focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
+                  placeholder={t(
+                    'myWork.notificationDetail.whatIsBlockedBy',
+                    'What is blocked by this issue...'
+                  )}
                 />
               )}
             </div>
@@ -1850,17 +1873,20 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 {t('myWork.notificationDetail.expectedAction', 'Expected Action')}
               </h2>
 
-              {/* Oczekiwana akcja — POLE n-Type (nazwa · AI w prawym gornym
-                  rogu · edycja · auto-fit · uchwyt; w Podgladzie bez kontrolek) */}
-              <NModeTextField
+              {/* Oczekiwana akcja — pole tekstowe standardu n-Type (§6.2/§6.3). */}
+              <AutoFitTextarea
                 id="notif-field-expected-action"
-                label={t('myWork.notificationDetail.whatNeedsToBe', 'What needs to be done')}
                 value={expectedActionDraft}
-                onChange={setExpectedActionDraft}
-                readOnly={readMode}
-                minHeight={48}
-                placeholder={t('myWork.notificationDetail.placeholder', 'Expected action...')}
-                ai={
+                onValueChange={setExpectedActionDraft}
+                previewMode={readMode}
+                minRows={2}
+                containerClassName="space-y-1.5"
+                label={
+                  <span className="text-[11px] uppercase tracking-wide text-c-text-muted">
+                    {t('myWork.notificationDetail.whatNeedsToBe', 'What needs to be done')}
+                  </span>
+                }
+                aiSlot={
                   <AIFieldEnhancer
                     fieldKey="notification-expected-action"
                     sectionLabel="Expected Action"
@@ -1873,9 +1899,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       type: 'notification',
                     }}
                     iconOnly
-                    disabled={readMode || !canExpectedActionAI}
+                    disabled={!canExpectedActionAI}
                   />
                 }
+                autoFitLabel={t('common.backToAutoFit', 'Back to auto-fit')}
+                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted"
+                editClassName="border-b border-c-border focus:border-c-focus focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
+                placeholder={t('myWork.notificationDetail.placeholder', 'Expected action...')}
               />
 
               {/* Checklist — label + AI right-aligned, count below */}
