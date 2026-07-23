@@ -105,12 +105,35 @@ const MOCK_KNOWN_TOOL = {
     'Dane o udziałach rynkowych i ruchach konkurencji',
     'Rejestr utraconych i wygranych postępowań ofertowych',
   ],
+  /**
+   * ★ SPRZECZNOŚĆ LICZBY KROKÓW — częściowo poza mockiem.
+   *
+   * Ekran pokazuje trzy źródła tej samej informacji i dwa z nich są w kodzie:
+   *   (a) „5 KROKÓW PRACY" + pięć ponumerowanych kafli
+   *       ← i18n `discoveryToolsMain.dynamicSwotLibraryGraphic.stagesTitleProcess`
+   *         oraz stage1..stage5 (DynamicSwotLibraryGraphic.tsx:76-118)
+   *   (b) legenda „Dynamic SWOT = brief -> evidence -> matrix -> tension ->
+   *       move -> output" — SZEŚĆ etapów
+   *       ← i18n `discoveryToolsMain.dynamicSwotLibraryGraphic.legend`
+   *   (c) wiersz „Kroki procesu: 5" w tabeli Właściwości
+   *       ← DŁUGOŚĆ TEJ TABLICY (KnownToolDetailView.tsx:335-340)
+   *
+   * Kanonem jest PIĘĆ kroków: piąty łączy ruchy i materiały wyjściowe
+   * („Recommended moves" / „Przełóż napięcia na rekomendowane ruchy i materiał
+   * do dalszego użycia"). Sprzeczna jest wyłącznie legenda (b), która rozbija
+   * krok 5 na dwa i daje sześć. To jedyny element poza tym plikiem —
+   * ZGŁOSZONE do poprawki w i18n.
+   *
+   * Kroki poniżej są teraz nazwane 1:1 jak pięć kafli na ekranie, żeby licznik
+   * „Kroki procesu: 5" i treść mówiły dokładnie to samo.
+   */
   steps: [
-    'Zebranie sygnałów rynkowych i wewnętrznych z twardych źródeł',
-    'Warsztat pozycjonowania — co jest faktem, a co przekonaniem',
-    'Zestawienie mocnych stron z zagrożeniami w pary napięć',
-    'Wybór napięć krytycznych i przypisanie właścicieli',
-    'Sformułowanie ruchów pierwszego kroku z horyzontem 90 dni',
+    'Brief: ustawienie pytania decyzyjnego, zakresu, sygnału sukcesu i ograniczeń',
+    'Mapa dowodów: zebranie faktów, obserwacji i hipotez z wnętrza firmy oraz z rynku',
+    'Budowa macierzy: przypisanie sygnałów do czterech ćwiartek, usunięcie szumu',
+    'Napięcia strategiczne: pokazanie, gdzie przewaga zderza się z ograniczeniem lub ryzykiem',
+    'Ruchy i materiały wyjściowe: 2-4 rekomendowane ruchy z sekwencją oraz podsumowanie ' +
+      'gotowe do raportu, prezentacji lub inicjatywy',
   ],
   outputs: [
     'Macierz SWOT z dowodami przy każdej pozycji',
