@@ -20,11 +20,11 @@ interface HomeBlockShellProps {
 }
 
 const ACCENT_STYLES: Record<HomeBlock['accent'], string> = {
-  ai: 'from-primary-500/15 via-primary-500/8 to-blue-500/12 border-primary-400/20',
-  warm: 'from-amber-500/15 via-amber-500/8 to-danger-500/12 border-amber-400/20',
-  cool: 'from-indigo-500/15 via-blue-500/8 to-blue-500/12 border-indigo-400/20',
-  alert: 'from-danger-500/16 via-amber-500/10 to-amber-500/10 border-danger-400/20',
-  success: 'from-emerald-500/15 via-blue-500/8 to-blue-500/10 border-emerald-400/20',
+  ai: 'from-primary-500/15 via-primary-500/8 to-blue-500/[0.12] border-primary-400/20',
+  warm: 'from-amber-500/15 via-amber-500/[0.08] to-danger-500/[0.12] border-amber-400/20',
+  cool: 'from-indigo-500/15 via-blue-500/[0.08] to-blue-500/[0.12] border-indigo-400/20',
+  alert: 'from-danger-500/[0.16] via-amber-500/10 to-amber-500/10 border-danger-400/20',
+  success: 'from-emerald-500/15 via-blue-500/[0.08] to-blue-500/10 border-emerald-400/20',
   neutral: 'from-white/[0.06] via-white/[0.03] to-white/[0.02] border-white/[0.08]',
 };
 

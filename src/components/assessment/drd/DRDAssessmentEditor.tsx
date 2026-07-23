@@ -930,7 +930,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                           onAreaChange?.(area.id);
                           setViewMode('surveys');
                         }}
-                        className="sticky bottom-0 z-20 rounded-xl border border-white/10 bg-gradient-to-b from-white/10 to-white/6 backdrop-blur p-2 text-left hover:from-white/14 hover:to-white/8 transition-colors shadow-[0_-10px_30px_rgba(0,0,0,0.22)]"
+                        className="sticky bottom-0 z-20 rounded-xl border border-white/10 bg-gradient-to-b from-white/10 to-white/[0.06] backdrop-blur p-2 text-left hover:from-white/[0.14] hover:to-white/[0.08] transition-colors shadow-[0_-10px_30px_rgba(0,0,0,0.22)]"
                       >
                         {/* Top line: ID + badges */}
                         <div className="flex items-center justify-between gap-1 mb-1">
@@ -2189,7 +2189,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                               setViewMode('surveys');
                               setIsMatrixFullscreen(false);
                             }}
-                            className="sticky bottom-0 z-20 rounded-xl border border-white/10 bg-gradient-to-b from-white/10 to-white/6 backdrop-blur p-2 text-left hover:from-white/14 hover:to-white/8 transition-colors shadow-[0_-10px_30px_rgba(0,0,0,0.22)]"
+                            className="sticky bottom-0 z-20 rounded-xl border border-white/10 bg-gradient-to-b from-white/10 to-white/[0.06] backdrop-blur p-2 text-left hover:from-white/[0.14] hover:to-white/[0.08] transition-colors shadow-[0_-10px_30px_rgba(0,0,0,0.22)]"
                           >
                             {/* Top line: ID + badges */}
                             <div className="flex items-center justify-between gap-1 mb-1">
