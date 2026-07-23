@@ -15,14 +15,19 @@ const BASE = '/api/document-studio';
 function section(
   title: string,
   purpose: string,
-  contentHints?: string[]
+  contentHints?: string[],
+  opts?: {
+    level?: 1 | 2 | 3;
+    required?: boolean;
+    expectedLengthHint?: 'short' | 'medium' | 'long';
+  }
 ) {
   return {
     title,
-    level: 1 as const,
+    level: opts?.level ?? (1 as const),
     purpose,
-    required: true,
-    expectedLengthHint: 'medium' as const,
+    required: opts?.required ?? true,
+    expectedLengthHint: opts?.expectedLengthHint ?? ('medium' as const),
     requiredData: [],
     optionalData: [],
     contentHints,
@@ -44,19 +49,46 @@ const DRAFT_TEMPLATE = {
   confidentiality: 'internal',
   requiredInputs: [],
   sectionBlueprint: [
-    section('Streszczenie zarządcze', 'Zwięzłe podsumowanie statusu i kluczowej decyzji.', [
-      'Zacznij od jednego zdania o ogólnym statusie programu',
-      'Wyróżnij decyzję wymaganą od komitetu',
-    ]),
-    section('Status realizacji', 'Postęp vs. plan, kamienie milowe.', [
-      'Zestaw obecny status z docelowym kamieniem milowym',
-      'Wskaż odchylenia i ich przyczyny',
-      'Podaj prognozę na kolejny okres',
-    ]),
-    section('Ryzyka i problemy', 'Kluczowe ryzyka wymagające uwagi.'),
-    section('Następne kroki', 'Działania i decyzje na kolejny okres.', [
-      'Zakończ jawną prośbą o decyzję, nie tylko aktualizacją',
-    ]),
+    section(
+      'Streszczenie zarządcze',
+      'Zwięzłe podsumowanie statusu i kluczowej decyzji.',
+      ['Zacznij od jednego zdania o ogólnym statusie programu', 'Wyróżnij decyzję wymaganą od komitetu'],
+      { level: 1, required: true, expectedLengthHint: 'long' }
+    ),
+    section(
+      'Status realizacji',
+      'Postęp vs. plan, kamienie milowe.',
+      [
+        'Zestaw obecny status z docelowym kamieniem milowym',
+        'Wskaż odchylenia i ich przyczyny',
+        'Podaj prognozę na kolejny okres',
+      ],
+      { level: 1, required: true, expectedLengthHint: 'medium' }
+    ),
+    section(
+      'Postęp wg obszarów',
+      'Skrócony status per obszar/strumień prac.',
+      undefined,
+      { level: 2, required: true, expectedLengthHint: 'short' }
+    ),
+    section(
+      'Ryzyka i problemy',
+      'Kluczowe ryzyka wymagające uwagi.',
+      undefined,
+      { level: 1, required: false, expectedLengthHint: 'medium' }
+    ),
+    section(
+      'Szczegóły ryzyka wysokiego priorytetu',
+      'Rozwinięcie pojedynczego ryzyka, jeśli dotyczy.',
+      undefined,
+      { level: 3, required: false, expectedLengthHint: 'short' }
+    ),
+    section(
+      'Następne kroki',
+      'Działania i decyzje na kolejny okres.',
+      ['Zakończ jawną prośbą o decyzję, nie tylko aktualizacją'],
+      { level: 1, required: true, expectedLengthHint: 'short' }
+    ),
   ],
   exportRules: { docx: true, pdf: true, markdown: true, approvalRequiredForExport: false },
   status: 'draft',
