@@ -726,7 +726,10 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
             <div className="flex items-center gap-2">
               <ClipboardList size={16} className="text-c-info dark:text-c-info" />
               <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
-                {t('initiatives.analysis.completeness.autoFillPanelTitle', 'Missing field defaults')}
+                {t(
+                  'initiatives.analysis.completeness.autoFillPanelTitle',
+                  'Missing field defaults'
+                )}
               </h3>
               <span className="text-xs text-c-info">({autoFillSuggestions.length})</span>
             </div>

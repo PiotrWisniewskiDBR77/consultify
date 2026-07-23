@@ -7977,12 +7977,12 @@
         "depAccepted": "Dependency saved: {{from}} → {{to}}",
         "depAcceptFailed": "Failed to save dependency",
         "noCycles": "No cycles detected",
-        "noNewDeps": "No additional dependencies discovered",
+        "noNewDeps": "AI found no additional dependencies",
         "cyclesFound": "{{count}} cycle(s) detected",
         "criticalPathTitle": "Critical Path",
         "blockersTitle": "Blockers",
         "blockerBadge": "{{count}} dependent(s)",
-        "sequencerTitle": "AI Recommended Execution Sequence",
+        "sequencerTitle": "Recommended execution sequence",
         "noInitiatives": "No initiatives to sequence",
         "totalDeps": "Total dependencies",
         "timingConflicts": "Timing conflicts",
@@ -8003,7 +8003,19 @@
         },
         "discoveredDeps": "AI discovered potential dependencies",
         "noCriticalPath": "No dependency chain found — add dependencies first",
-        "emptyHint": "Click \"AI Discover Dependencies\" to let AI analyze your initiatives and suggest connections."
+        "emptyHint": "Click \"AI Discover Dependencies\" to let AI analyze the names and descriptions of your initiatives and suggest connections.",
+        "aiDiscovering": "Asking AI…",
+        "aiDiscoverFailed": "Dependency discovery failed — {{reason}}.",
+        "aiErrNoProvider": "no AI provider is configured",
+        "aiErrBudget": "the AI budget is exhausted",
+        "aiErrAccessBlocked": "AI access is blocked for this workspace",
+        "aiErrEmpty": "AI returned an empty response",
+        "aiErrCallFailed": "the AI call failed",
+        "aiErrBadJson": "the AI response could not be parsed",
+        "aiErrUnavailable": "AI is temporarily unavailable",
+        "detectCyclesAction": "Detect Cycles",
+        "criticalPathAction": "Critical Path",
+        "sequencerAction": "Sequencer"
       },
       "timeline": {
         "title": "Timeline",
@@ -8048,9 +8060,10 @@
       },
       "issues": "Issues",
       "openInitiative": "Open initiative",
-      "fixApplied": "AI suggestion applied",
+      "fixApplied": "Fix applied",
       "fixFailed": "Failed to apply fix",
-      "previewInitiative": "Preview"
+      "previewInitiative": "Preview",
+      "applyFix": "Apply fix"
     },
     "templates": {
       "quick_win": {

@@ -7139,12 +7139,12 @@
         "depAccepted": "Zależność zapisana: {{from}} → {{to}}",
         "depAcceptFailed": "Nie udało się zapisać zależności",
         "noCycles": "Nie wykryto cykli",
-        "noNewDeps": "Nie odkryto dodatkowych zależności",
+        "noNewDeps": "AI nie znalazła dodatkowych zależności",
         "cyclesFound": "Wykryto {{count}} cykl(i)",
         "criticalPathTitle": "Ścieżka krytyczna",
         "blockersTitle": "Blokady",
         "blockerBadge": "{{count}} zależnych",
-        "sequencerTitle": "Rekomendowana przez AI sekwencja realizacji",
+        "sequencerTitle": "Rekomendowana sekwencja realizacji",
         "noInitiatives": "Brak inicjatyw do uszeregowania",
         "totalDeps": "Wszystkie zależności",
         "timingConflicts": "Konflikty terminów",
@@ -7165,7 +7165,19 @@
         },
         "discoveredDeps": "AI wykryła potencjalne zależności",
         "noCriticalPath": "Nie znaleziono łańcucha zależności — najpierw dodaj zależności",
-        "emptyHint": "Kliknij „Wykryj zależności z AI”, aby AI przeanalizowała Twoje inicjatywy i zasugerowała powiązania."
+        "emptyHint": "Kliknij „Wykryj zależności przez AI”, aby AI przeanalizowała nazwy i opisy Twoich inicjatyw i zaproponowała powiązania.",
+        "aiDiscovering": "Pytam AI…",
+        "aiDiscoverFailed": "Wykrywanie zależności nie powiodło się — {{reason}}.",
+        "aiErrNoProvider": "nie skonfigurowano dostawcy AI",
+        "aiErrBudget": "wyczerpany budżet AI",
+        "aiErrAccessBlocked": "dostęp do AI jest zablokowany dla tej przestrzeni",
+        "aiErrEmpty": "AI zwróciło pustą odpowiedź",
+        "aiErrCallFailed": "wywołanie AI się nie powiodło",
+        "aiErrBadJson": "nie udało się odczytać odpowiedzi AI",
+        "aiErrUnavailable": "AI jest chwilowo niedostępne",
+        "detectCyclesAction": "Wykryj cykle",
+        "criticalPathAction": "Ścieżka krytyczna",
+        "sequencerAction": "Sekwencer"
       },
       "timeline": {
         "title": "Harmonogram",
@@ -7210,9 +7222,10 @@
       },
       "issues": "Problemy",
       "openInitiative": "Otwórz inicjatywę",
-      "fixApplied": "Sugestia AI zastosowana",
+      "fixApplied": "Poprawka zastosowana",
       "fixFailed": "Nie udało się zastosować poprawki",
-      "previewInitiative": "Podgląd"
+      "previewInitiative": "Podgląd",
+      "applyFix": "Zastosuj poprawkę"
     },
     "templates": {
       "quick_win": {

@@ -1,7 +1,13 @@
 /**
- * LogicAnalysis — AI-powered dependency discovery, conflict detection,
- * cycle detection, critical path analysis, and sequencing optimizer.
- * V3-F02c: Full dependency management with AI intelligence.
+ * LogicAnalysis — dependency discovery, conflict detection, cycle detection,
+ * critical path analysis, and sequencing optimizer.
+ * V3-F02c: Full dependency management.
+ *
+ * JEDYNE realne AI w tym module: „Wykryj zależności przez AI" woła
+ * `POST /api/ai/generate` i wnioskuje kolejność z NAZW I OPISÓW inicjatyw
+ * (zadanie językowe — patrz nota nad `discoverDependenciesWithAi`).
+ * Wszystkie pozostałe pomocniki (cykle, ścieżka krytyczna, sekwencer) to
+ * algorytmy grafowe liczone lokalnie i NIE noszą etykiety „AI".
  */
 
 import {
@@ -22,6 +28,7 @@ import {
   Shuffle,
   Sparkles,
   Trash2,
+  Wrench,
   X,
   Zap,
 } from 'lucide-react';
@@ -29,10 +36,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '@/services/api';
 import type { PortfolioInitiative } from '@/types';
 
 import { DependencyGraphCanvas } from './DependencyGraphCanvas';
-import { getMenu3AiButtonClass } from './menu3ActionButtonStyles';
+import { getMenu3AiButtonClass, getMenu3DeterministicButtonClass } from './menu3ActionButtonStyles';
 import type {
   AnalysisIssue,
   DependencyLink,
@@ -113,28 +121,10 @@ const SortIcon: React.FC<{ col: SortCol; cur: SortCol; dir: SortDir }> = ({ col,
   );
 };
 
-const KEYWORD_GROUPS: Record<string, string[]> = {
-  crm: ['crm', 'customer', 'sales', 'lead', 'pipeline', 'klient'],
-  digital: ['digital', 'online', 'website', 'web', 'ecommerce', 'cyfrowy'],
-  data: ['data', 'analytics', 'bi', 'report', 'dashboard', 'dane', 'raport'],
-  hr: ['hr', 'talent', 'hiring', 'onboarding', 'people', 'recruitment', 'rekrutacja'],
-  ops: ['operations', 'process', 'automation', 'workflow', 'lean', 'proces', 'automatyzacja'],
-  finance: ['finance', 'budget', 'cost', 'revenue', 'pricing', 'finanse', 'koszty'],
-  infra: ['infrastructure', 'cloud', 'migration', 'security', 'devops', 'infrastruktura'],
-  product: ['product', 'feature', 'launch', 'mvp', 'roadmap', 'produkt'],
-  strategy: ['strategy', 'transformation', 'vision', 'okr', 'strategia', 'transformacja'],
-};
-
-function getKeywordGroups(text: string): string[] {
-  const lower = text.toLowerCase();
-  const groups: string[] = [];
-  for (const [group, keywords] of Object.entries(KEYWORD_GROUPS)) {
-    if (keywords.some((kw) => lower.includes(kw))) {
-      groups.push(group);
-    }
-  }
-  return groups;
-}
+// 2026-07-23: usunięte `KEYWORD_GROUPS` + `getKeywordGroups` — sztywna lista
+// 9 grup słów kluczowych (crm/hr/finance/…), na której opierała się atrapa
+// „AI Discover Dependencies". Wykrywała wspólne słowo, nie zależność.
+// Zastąpione realnym wywołaniem modelu — patrz `discoverDependenciesWithAi`.
 
 function daysBetween(a: string | null | undefined, b: string | null | undefined): number {
   if (!a || !b) return 0;
@@ -160,7 +150,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
   onRegisterActions,
   onRegisterWorkspacePanel,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Sort
   const [sortCol, setSortCol] = useState<SortCol>('status');
@@ -228,9 +218,65 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     (i) => i.severity === 'critical' || i.severity === 'high'
   ).length;
 
-  /* ---------- AI Discover Dependencies ---------- */
+  /* ---------- Wykrywanie zależności przez REALNE AI ---------- */
+  //
+  // 2026-07-23 — jedyna z pięciu atrap, którą PODŁĄCZONO do modelu (wariant A),
+  // a nie odarto z etykiety. Powód: to jedyna z nich, która naprawdę jest
+  // zadaniem językowym. „Czy «Migracja ERP» musi poprzedzić «Automatyzację
+  // raportowania»?" wynika ze ZNACZENIA nazw i opisów, nie z arytmetyki.
+  //
+  // Poprzednia wersja: `setTimeout(800)` udający myślenie + `getKeywordGroups`,
+  // czyli szukanie wspólnego słowa ze sztywnej listy 9 grup (`crm`, `hr`,
+  // `finance`…). Ta heurystyka nie „wykrywała zależności" — wykrywała, że dwie
+  // inicjatywy mają w nazwie słowo z tej samej szufladki, po czym o kierunku
+  // strzałki decydowała po priorytecie. Dwie inicjatywy HR bez żadnego związku
+  // dostawały „zależność" z pewnością `high`.
+  //
+  // Teraz: `POST /api/ai/generate` (kontrakt `{ text }`, bramka dostępu,
+  // mapowanie kodów błędu — wzorzec z `DecisionDetailView.requestAiText`).
+  // Gdy AI nie odpowie: mówimy WPROST co i dlaczego się nie udało, panel się nie
+  // otwiera, a ŻADNA zależność nie jest tworzona ani ruszana. „AI niedostępne"
+  // to poprawny wynik — podstawienie wyniku keyword-matchingu i podpisanie go
+  // „AI" nim NIE jest, dlatego stara heurystyka nie została tu zostawiona jako
+  // cicha ścieżka awaryjna.
 
-  const computeDiscoverDeps = useCallback(() => {
+  /** Uczciwy powód porażki AI na podstawie kodu błędu z backendu. */
+  const aiFailureReason = useCallback(
+    (err: unknown): string => {
+      const code = String(
+        (err as { data?: { code?: string } })?.data?.code || (err as { code?: string })?.code || ''
+      ).toUpperCase();
+      switch (code) {
+        case 'NO_LLM_PROVIDER':
+          return t('initiatives.analysis.logic.aiErrNoProvider', 'no AI provider is configured');
+        case 'AI_BUDGET_EXHAUSTED':
+          return t('initiatives.analysis.logic.aiErrBudget', 'the AI budget is exhausted');
+        case 'ACCESS_BLOCKED':
+          return t(
+            'initiatives.analysis.logic.aiErrAccessBlocked',
+            'AI access is blocked for this workspace'
+          );
+        case 'EMPTY_LLM_RESPONSE':
+        case 'EMPTY_AI_RESPONSE':
+          return t('initiatives.analysis.logic.aiErrEmpty', 'AI returned an empty response');
+        case 'LLM_CALL_FAILED':
+          return t('initiatives.analysis.logic.aiErrCallFailed', 'the AI call failed');
+        case 'AI_BAD_JSON':
+          return t(
+            'initiatives.analysis.logic.aiErrBadJson',
+            'the AI response could not be parsed'
+          );
+        default:
+          return (
+            String((err as Error)?.message || '').trim() ||
+            t('initiatives.analysis.logic.aiErrUnavailable', 'AI is temporarily unavailable')
+          );
+      }
+    },
+    [t]
+  );
+
+  const discoverDependenciesWithAi = useCallback(async () => {
     if (initiatives.length < 2) {
       toast.error(t('initiatives.analysis.logic.needMore', 'Need at least 2 initiatives'));
       return;
@@ -238,73 +284,110 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     setDiscoverRunning(true);
     setAcceptedDiscovered(new Set());
 
-    setTimeout(() => {
-      const existingPairs = new Set(dependencies.map((d) => `${d.fromId}::${d.toId}`));
+    // Pary już istniejące (w obie strony) — model ich nie zobaczy, żeby nie
+    // proponował duplikatów, a walidacja i tak je odrzuci.
+    const existingPairs = new Set<string>();
+    for (const d of dependencies) {
+      existingPairs.add(`${d.fromId}::${d.toId}`);
+      existingPairs.add(`${d.toId}::${d.fromId}`);
+    }
+
+    // Kontekst dla modelu: krótki, bez PII, tylko to co potrzebne do wniosku.
+    const byId = new Map(initiatives.map((i) => [i.id, i]));
+    const roster = initiatives.slice(0, 40).map((i) => ({
+      id: i.id,
+      name: i.name,
+      description: String(i.description ?? i.summary ?? '').slice(0, 300),
+      priority: i.priority ?? 'MEDIUM',
+      plannedStart: i.plannedStartDate ?? null,
+      plannedEnd: i.plannedEndDate ?? null,
+    }));
+
+    // Prompt celowo NIE przechodzi przez i18n: to instrukcja dla modelu, nie
+    // tekst dla użytkownika. Ma być identyczna niezależnie od języka interfejsu
+    // (tłumaczenie promptu = inny wynik modelu przy tych samych danych).
+    // Język ODPOWIEDZI wymuszamy osobno, z aktualnego locale.
+    const answerLanguage = i18n.language?.startsWith('pl') ? 'Polish' : 'English';
+    const systemInstruction =
+      'You are a portfolio management assistant. You identify genuine execution ' +
+      'dependencies between initiatives — cases where one must finish before another ' +
+      'can sensibly start (a prerequisite, data or a system it produces, a capability ' +
+      'it builds). Do NOT invent a dependency just because two initiatives touch a ' +
+      'similar topic or share a keyword. If there is no real dependency, return an ' +
+      `empty list. Write every "reason" in ${answerLanguage}. Return valid JSON only, no markdown.`;
+
+    const prompt =
+      'Below is a list of initiatives from one portfolio. Identify only genuine ' +
+      'finish-to-start dependencies that are NOT already recorded.\n\n' +
+      'Return JSON only, exactly this shape:\n' +
+      '{"dependencies":[{"fromId":"<id of the initiative that must finish first>",' +
+      '"toId":"<id of the initiative that depends on it>",' +
+      '"reason":"<one sentence, max 140 chars, why>",' +
+      '"confidence":"high|medium|low"}]}\n\n' +
+      'Rules: use only ids from the list; fromId must differ from toId; at most 20 ' +
+      'items; if there are no real dependencies return {"dependencies":[]}.\n\n' +
+      `Initiatives:\n${JSON.stringify(roster, null, 1)}\n\n` +
+      'Already recorded (do not repeat):\n' +
+      (dependencies.length > 0
+        ? dependencies.map((d) => `${d.fromId} -> ${d.toId}`).join('\n')
+        : '(none)');
+
+    try {
+      const res = await Api.post('/ai/generate', {
+        message: prompt,
+        systemInstruction,
+        roleName: 'Initiative Dependency Analyzer',
+      });
+
+      const raw = String(res?.text ?? '')
+        .replace(/^```[\w-]*\n?/g, '')
+        .replace(/```$/g, '')
+        .trim();
+      if (!raw) {
+        const err = new Error('Empty AI response') as Error & { code?: string };
+        err.code = 'EMPTY_AI_RESPONSE';
+        throw err;
+      }
+
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      let parsed: { dependencies?: unknown };
+      try {
+        parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+      } catch {
+        const err = new Error('AI response is not valid JSON') as Error & { code?: string };
+        err.code = 'AI_BAD_JSON';
+        throw err;
+      }
+
+      // Walidacja: model może zmyślić id albo powtórzyć istniejącą parę.
+      // Do UI trafia WYŁĄCZNIE to, co przeszło przez ten filtr.
+      const seen = new Set<string>();
       const proposals: DiscoveredDep[] = [];
+      for (const item of Array.isArray(parsed?.dependencies) ? parsed.dependencies : []) {
+        const row = item as Record<string, unknown>;
+        const fromId = String(row?.fromId ?? '');
+        const toId = String(row?.toId ?? '');
+        if (!fromId || !toId || fromId === toId) continue;
+        const from = byId.get(fromId);
+        const to = byId.get(toId);
+        if (!from || !to) continue; // zmyślone id — odrzucamy w ciszy
+        const key = `${fromId}::${toId}`;
+        if (existingPairs.has(key) || seen.has(key) || seen.has(`${toId}::${fromId}`)) continue;
+        seen.add(key);
 
-      for (let i = 0; i < initiatives.length; i++) {
-        for (let j = 0; j < initiatives.length; j++) {
-          if (i === j) continue;
-          const a = initiatives[i];
-          const b = initiatives[j];
-          const pairKey = `${a.id}::${b.id}`;
-          const reversePairKey = `${b.id}::${a.id}`;
-          if (existingPairs.has(pairKey) || existingPairs.has(reversePairKey)) continue;
-          if (proposals.some((p) => p.fromId === a.id && p.toId === b.id)) continue;
-          if (proposals.some((p) => p.fromId === b.id && p.toId === a.id)) continue;
+        const confidenceRaw = String(row?.confidence ?? '').toLowerCase();
+        const confidence: DiscoveredDep['confidence'] =
+          confidenceRaw === 'high' || confidenceRaw === 'low' ? confidenceRaw : 'medium';
 
-          const textA = `${a.name} ${a.description ?? ''} ${a.summary ?? ''} ${a.axis ?? ''}`;
-          const textB = `${b.name} ${b.description ?? ''} ${b.summary ?? ''} ${b.axis ?? ''}`;
-          const groupsA = getKeywordGroups(textA);
-          const groupsB = getKeywordGroups(textB);
-          const overlap = groupsA.filter((g) => groupsB.includes(g));
-
-          if (overlap.length === 0) continue;
-
-          const priorityOrder = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
-          const aPrio = priorityOrder[a.priority] ?? 2;
-          const bPrio = priorityOrder[b.priority] ?? 2;
-
-          let predecessor = a;
-          let successor = b;
-          let reason = '';
-
-          if (
-            a.plannedEndDate &&
-            b.plannedStartDate &&
-            new Date(a.plannedEndDate) <= new Date(b.plannedStartDate)
-          ) {
-            reason = `"${a.name}" should precede "${b.name}" — natural sequence in ${overlap.join(', ')} domain`;
-          } else if (
-            b.plannedEndDate &&
-            a.plannedStartDate &&
-            new Date(b.plannedEndDate) <= new Date(a.plannedStartDate)
-          ) {
-            predecessor = b;
-            successor = a;
-            reason = `"${b.name}" should precede "${a.name}" — natural sequence in ${overlap.join(', ')} domain`;
-          } else if (aPrio < bPrio) {
-            reason = `"${a.name}" is higher priority (${a.priority}) and likely unlocks "${b.name}" in ${overlap.join(', ')} domain`;
-          } else if (bPrio < aPrio) {
-            predecessor = b;
-            successor = a;
-            reason = `"${b.name}" is higher priority (${b.priority}) and likely unlocks "${a.name}" in ${overlap.join(', ')} domain`;
-          } else {
-            reason = `Both share ${overlap.join(', ')} domain — "${a.name}" may need to precede "${b.name}"`;
-          }
-
-          const confidence: DiscoveredDep['confidence'] =
-            overlap.length >= 2 ? 'high' : reason.includes('natural sequence') ? 'high' : 'medium';
-
-          proposals.push({
-            fromId: predecessor.id,
-            fromName: predecessor.name,
-            toId: successor.id,
-            toName: successor.name,
-            reason,
-            confidence,
-          });
-        }
+        proposals.push({
+          fromId,
+          fromName: from.name,
+          toId,
+          toName: to.name,
+          reason: String(row?.reason ?? '').slice(0, 200),
+          confidence,
+        });
+        if (proposals.length >= 20) break;
       }
 
       proposals.sort((a, b) => {
@@ -312,10 +395,26 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
         return order[a.confidence] - order[b.confidence];
       });
 
-      setDiscoveredDeps(proposals.slice(0, 20));
+      setDiscoveredDeps(proposals);
+    } catch (err) {
+      // Jedyna dozwolona reakcja na brak odpowiedzi AI: powiedzieć to wprost.
+      // Panel NIE zostaje otwarty, dane zostają nietknięte.
+      // eslint-disable-next-line no-console
+      console.error('[LogicAnalysis] AI dependency discovery failed:', err);
+      setDiscoveredDeps(null);
+      toast.error(
+        t(
+          'initiatives.analysis.logic.aiDiscoverFailed',
+          'Dependency discovery failed — {{reason}}.',
+          {
+            reason: aiFailureReason(err),
+          }
+        )
+      );
+    } finally {
       setDiscoverRunning(false);
-    }, 800);
-  }, [dependencies, initiatives, t]);
+    }
+  }, [aiFailureReason, dependencies, i18n.language, initiatives, t]);
 
   const handleAcceptDiscovered = useCallback(
     async (dep: DiscoveredDep) => {
@@ -555,9 +654,9 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     return steps;
   }, [dependencies, initiatives]);
 
-  /* ---------- Apply AI fix ---------- */
+  /* ---------- Apply fix (poprawka z reguł, nie z AI) ---------- */
 
-  const handleApplyAiFix = useCallback(
+  const handleApplyFix = useCallback(
     async (issue: AnalysisIssue) => {
       if (!onQuickUpdate || !issue.initiativeId || !issue.autoFixPayload) return;
       setApplyingFix(issue.id);
@@ -748,7 +847,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
               ))}
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400">
-              <Sparkles size={10} className="inline mr-1" />
+              <Wrench size={10} className="inline mr-1" />
               {c.suggestion}
             </p>
           </div>
@@ -852,7 +951,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
         <div className="flex items-center gap-2">
           <Network size={16} className="text-indigo-600 dark:text-indigo-400" />
           <h3 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-            {t('initiatives.analysis.logic.sequencerTitle', 'AI Recommended Execution Sequence')}
+            {t('initiatives.analysis.logic.sequencerTitle', 'Recommended execution sequence')}
           </h3>
         </div>
         <button
@@ -912,17 +1011,25 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
       setCycles(null);
       setShowCriticalPath(false);
       setShowSequencer(false);
-      computeDiscoverDeps();
+      void discoverDependenciesWithAi();
     };
     onRegisterActions(
       <>
+        {/* JEDYNY przycisk AI w tym module — woła realny model. Spinner jest
+            uczciwy: czeka na odpowiedź sieci, nie na `setTimeout`. */}
         <button
           onClick={toggleDiscoveredDepsPanel}
           disabled={discoverRunning}
           className={getMenu3AiButtonClass(discoveredDeps !== null)}
         >
-          {discoverRunning ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
-          AI Discover Dependencies
+          {discoverRunning ? (
+            <Loader2 size={12} className="animate-spin" />
+          ) : (
+            <Sparkles size={12} />
+          )}
+          {discoverRunning
+            ? t('initiatives.analysis.logic.aiDiscovering', 'Asking AI…')
+            : t('initiatives.analysis.logic.aiDiscover', 'AI Discover Dependencies')}
         </button>
         <button
           onClick={() => {
@@ -935,10 +1042,10 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             setShowSequencer(false);
             detectCycles();
           }}
-          className={getMenu3AiButtonClass(cycles !== null)}
+          className={getMenu3DeterministicButtonClass(cycles !== null)}
         >
           <Shuffle size={12} />
-          Detect Cycles
+          {t('initiatives.analysis.logic.detectCyclesAction', 'Detect Cycles')}
         </button>
         <button
           onClick={() => {
@@ -947,10 +1054,10 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             setShowSequencer(false);
             setShowCriticalPath((v) => !v);
           }}
-          className={getMenu3AiButtonClass(showCriticalPath)}
+          className={getMenu3DeterministicButtonClass(showCriticalPath)}
         >
           <Route size={12} />
-          Critical Path
+          {t('initiatives.analysis.logic.criticalPathAction', 'Critical Path')}
         </button>
         <button
           onClick={() => {
@@ -959,16 +1066,16 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             setShowCriticalPath(false);
             setShowSequencer((v) => !v);
           }}
-          className={getMenu3AiButtonClass(showSequencer)}
+          className={getMenu3DeterministicButtonClass(showSequencer)}
         >
           <Network size={12} />
-          AI Sequencer
+          {t('initiatives.analysis.logic.sequencerAction', 'Sequencer')}
         </button>
       </>
     );
   }, [
     onRegisterActions,
-    computeDiscoverDeps,
+    discoverDependenciesWithAi,
     discoveredDeps,
     discoverRunning,
     showCriticalPath,
@@ -976,6 +1083,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     cycles,
     detectCycles,
     closeWorkspacePanels,
+    t,
   ]);
 
   useEffect(() => {
@@ -1009,7 +1117,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     }
     if (sequencerPanel) {
       onRegisterWorkspacePanel({
-        title: 'AI Sequencer',
+        title: t('initiatives.analysis.logic.sequencerAction', 'Sequencer'),
         subtitle: 'Recommended execution phases based on dependencies and priority.',
         icon: <Network size={16} />,
         content: sequencerPanel,
@@ -1024,6 +1132,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     criticalPathPanel,
     sequencerPanel,
     onRegisterWorkspacePanel,
+    t,
   ]);
 
   /* ---------- render ---------- */
@@ -1323,7 +1432,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 ))}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                <Sparkles size={10} className="inline mr-1" />
+                <Wrench size={10} className="inline mr-1" />
                 {c.suggestion}
               </p>
             </div>
@@ -1435,10 +1544,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             <div className="flex items-center gap-2">
               <Network size={16} className="text-indigo-600 dark:text-indigo-400" />
               <h3 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-                {t(
-                  'initiatives.analysis.logic.sequencerTitle',
-                  'AI Recommended Execution Sequence'
-                )}
+                {t('initiatives.analysis.logic.sequencerTitle', 'Recommended execution sequence')}
               </h3>
             </div>
             <button
@@ -1622,7 +1728,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                                   </p>
                                   {relatedIssue.fixSuggestion && (
                                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                                      <Sparkles size={10} className="inline mr-1 text-c-info" />
+                                      <Wrench size={10} className="inline mr-1 text-c-info" />
                                       {relatedIssue.fixSuggestion}
                                     </p>
                                   )}
@@ -1630,7 +1736,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        handleApplyAiFix(relatedIssue);
+                                        handleApplyFix(relatedIssue);
                                       }}
                                       disabled={applyingFix === relatedIssue.id}
                                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
@@ -1640,9 +1746,9 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                                       {applyingFix === relatedIssue.id ? (
                                         <Loader2 size={12} className="animate-spin" />
                                       ) : (
-                                        <Sparkles size={12} />
+                                        <Wrench size={12} />
                                       )}
-                                      Apply fix
+                                      {t('initiatives.analysis.applyFix', 'Apply fix')}
                                     </button>
                                   )}
                                 </div>
@@ -1708,7 +1814,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             </p>
             {initiatives.length >= 2 && (
               <button
-                onClick={computeDiscoverDeps}
+                onClick={() => void discoverDependenciesWithAi()}
                 disabled={discoverRunning}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold
                 bg-gradient-to-r from-c-info to-c-info text-white
