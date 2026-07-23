@@ -56,7 +56,7 @@ const GRUPY = [
       },
       { nazwa: 'Idea jako mapa myśli', ekran: 'mindmap-canvas' },
       {
-        nazwa: 'Idea jako tablica',
+        nazwa: 'Idea jako tablica (whiteboard)',
         ekran: 'whiteboard-canvas',
         szczegoly: [['Katalog szablonów startowych', 'idea-templates-catalog']],
       },
