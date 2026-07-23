@@ -48,6 +48,19 @@ interface NModeLeftNavProps {
   onSectionChange: (sectionId: string) => void;
   /** Optional reorder handler (enables drag and drop in nav) */
   onSectionReorder?: (sectionIds: string[]) => void;
+  /**
+   * Karta otwarta w trybie „Podgląd" (Menu 2 → Edycja | Podgląd).
+   *
+   * W Podglądzie nawigacja jest TYLKO do czytania — standard §4.4: uchwyty
+   * przeciągania są ukryte, bo w trybie „do pokazania klientowi" nie ma czego
+   * przestawiać, a kolumna 12-pikselowych kropek przy każdej pozycji zabierała
+   * uwagę tytułom sekcji (pomiar 2026-07-23: 4 uchwyty w Decyzji/Zadaniu,
+   * 11 we Wglądzie, gdzie Podgląd bywa trybem wejściowym).
+   *
+   * Opcjonalny i domyślnie `false` → konsument, który go nie poda, zachowuje
+   * dzisiejsze zachowanie 1:1 (uchwyty widoczne, drag działa).
+   */
+  readMode?: boolean;
 }
 
 interface SortableNavItemProps {
@@ -55,6 +68,8 @@ interface SortableNavItemProps {
   isActive: boolean;
   isPolish: boolean;
   onSectionChange: (sectionId: string) => void;
+  /** Podgląd → bez uchwytu (drag i tak nie ma za co złapać). */
+  readMode?: boolean;
 }
 
 const SortableNavItem: React.FC<SortableNavItemProps> = ({
@@ -62,6 +77,7 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
   isActive,
   isPolish,
   onSectionChange,
+  readMode = false,
 }) => {
   const { t } = useTranslation();
   const Icon = section.icon;
@@ -86,15 +102,20 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
         } ${isDragging ? 'opacity-90 shadow-lg' : ''}`}
       >
         <span className="flex items-center gap-2">
-          <span
-            className="inline-flex items-center text-c-text-secondary hover:text-c-text-muted cursor-grab active:cursor-grabbing"
-            onClick={(e) => e.stopPropagation()}
-            {...attributes}
-            {...listeners}
-            aria-label={t('sharedComponents.nModeLeftNav.dragSection')}
-          >
-            <GripVertical size={12} />
-          </span>
+          {/* Uchwyt przeciągania — TYLKO w Edycji (standard §4.4). W Podglądzie
+              nie renderujemy go wcale: nie ma za co złapać, więc drag jest
+              bezwiedny, a wiersz przestaje mieć 12 px szumu przed ikoną. */}
+          {!readMode && (
+            <span
+              className="inline-flex items-center text-c-text-secondary hover:text-c-text-muted cursor-grab active:cursor-grabbing"
+              onClick={(e) => e.stopPropagation()}
+              {...attributes}
+              {...listeners}
+              aria-label={t('sharedComponents.nModeLeftNav.dragSection')}
+            >
+              <GripVertical size={12} />
+            </span>
+          )}
           <Icon
             size={14}
             className={isActive ? 'text-c-focus-solid' : 'text-c-text-muted group-hover:text-c-text-secondary'}
@@ -126,6 +147,7 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
   activeSection,
   onSectionChange,
   onSectionReorder,
+  readMode = false,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -273,6 +295,7 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
               isActive={activeSection === section.id}
               isPolish={isPolish}
               onSectionChange={onSectionChange}
+              readMode={readMode}
             />
           ))}
         </div>
@@ -285,7 +308,14 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
     ? groups.map((g, gi) => (
         <div key={g.label ?? `__ungrouped_${gi}`} className={gi > 0 ? 'pt-3' : ''}>
           {g.label && (
-            <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-600">
+            /* Nagłówek grupy („Wgląd/Dowody/Dostarczane", „Zakres i plan/Rezultaty").
+               BYŁO: surowa szarość z palety Tailwinda (jasny wariant + jeszcze
+               ciemniejszy w `dark:`), 10 px — pomiar 2026-07-23: 2,34:1 (light)
+               i 2,52:1 (dark), czyli grubo poniżej progu AA 4,5:1; w ciemnym
+               motywie nagłówek gasł zupełnie, bo był ciemniejszy od tła obok.
+               JEST: token `c-text-secondary` (theme-aware, bez wariantu `dark:`)
+               + 11 px, żeby wersaliki z rozstrzeleniem 0.14em dały się czytać. */
+            <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-secondary">
               {g.label}
             </div>
           )}
@@ -325,10 +355,12 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
         {showProgress && (
           <div className="mt-3 px-3 pb-1 space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+              {/* Ta sama wada kontrastu co nagłówki grup (surowa szarość, 10 px)
+                  — token + 11 px, żeby cała nawigacja miała jeden poziom AA. */}
+              <span className="text-[11px] text-c-text-secondary">
                 {t('sharedComponents.nModeLeftNav.sectionsComplete')}
               </span>
-              <span className="text-[10px] font-medium text-success-600 dark:text-success-400">
+              <span className="text-[11px] font-medium text-success-600 dark:text-success-400">
                 {completedCount}&thinsp;/&thinsp;{completableSections.length}
               </span>
             </div>
