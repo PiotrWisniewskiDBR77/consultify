@@ -7178,7 +7178,14 @@
         "noData": "Brak danych harmonogramu.",
         "invalidDates": "Początek musi być przed końcem",
         "datesUpdated": "Daty zaktualizowane",
-        "updateFailed": "Niepowodzenie"
+        "updateFailed": "Niepowodzenie",
+        "autoScheduleAction": "Zaproponuj terminy",
+        "autoSchedulePanelTitle": "Zaproponowane terminy",
+        "autoScheduleSubtitle": "Terminy policzone z priorytetu, zależności i dostępności właściciela — sprawdź przed zastosowaniem.",
+        "conflictsAction": "Konflikty",
+        "optimizerAction": "Optymalizator",
+        "optimizerPanelTitle": "Optymalizacja harmonogramu",
+        "delayImpactAction": "Wpływ opóźnień"
       },
       "completeness": {
         "title": "Kompletność",
