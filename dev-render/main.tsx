@@ -100,6 +100,7 @@ import MindmapCanvasScreen from './screens/mindmap-canvas';
 import DeckArtifactScreen from './screens/deck-artifact';
 import DocumentArtifactScreen from './screens/document-artifact';
 import IdeasPreviewOverlayScreen from './screens/ideas-preview-overlay';
+import SheetArtifactScreen from './screens/sheet-artifact';
 // VLT-003 — importem MUSI być ostatnia: każdy dev-render screen instaluje swój
 // window.fetch stub jako top-level side effect przy imporcie (niezależnie od
 // tego, który ?screen= jest renderowany — statyczne importy main.tsx odpalają
@@ -451,6 +452,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'document-artifact': {
     label: 'DOKUMENTY — Dokument tekstowy jako artefakt (pełny obiekt)',
     render: () => <DocumentArtifactScreen />,
+  },
+  'sheet-artifact': {
+    label: 'DOKUMENTY — Arkusz jako artefakt (pełny obiekt: zakładki, siatka, formuły)',
+    render: () => <SheetArtifactScreen />,
   },
 };
 

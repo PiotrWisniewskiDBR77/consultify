@@ -83,9 +83,8 @@ const GRUPY = [
       },
       {
         nazwa: 'Arkusz',
-        ekran: null,
-        brak: 'Arkusz nie ma jeszcze ekranu „gotowy obiekt" — jest tylko strona główna silnika.',
-        szczegoly: [['Strona główna silnika arkuszy', 'excele-engine-reveal']],
+        ekran: 'sheet-artifact',
+        szczegoly: [['Wejście do modułu arkuszy', 'excele-engine-reveal']],
       },
     ],
   },
