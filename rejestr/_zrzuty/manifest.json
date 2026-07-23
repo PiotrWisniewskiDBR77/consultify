@@ -1,0 +1,38 @@
+[
+  {
+    "id": "ODB-DECK-02",
+    "tytul": "Gen. Deck: chipy wizualizacji + wycofanie draftu (danger)",
+    "theme": "light",
+    "png": "rejestr/_zrzuty/ODB-DECK-02.png",
+    "mini": "rejestr/_zrzuty/mini/ODB-DECK-02.jpg",
+    "url": "http://localhost:3040/?screen=gen-deck-content-hints&lang=pl&theme=light",
+    "consoleErrors": []
+  },
+  {
+    "id": "ODB-DECK-02",
+    "tytul": "Gen. Deck: chipy wizualizacji + wycofanie draftu (danger)",
+    "theme": "dark",
+    "png": "rejestr/_zrzuty/ODB-DECK-02-dark.png",
+    "mini": "rejestr/_zrzuty/mini/ODB-DECK-02-dark.jpg",
+    "url": "http://localhost:3040/?screen=gen-deck-content-hints&lang=pl&theme=dark",
+    "consoleErrors": []
+  },
+  {
+    "id": "ODB-WORD-01",
+    "tytul": "Gen. Word: Architekt — wskazówki treści + briefing edytowalny (draft)",
+    "theme": "light",
+    "png": "rejestr/_zrzuty/ODB-WORD-01.png",
+    "mini": "rejestr/_zrzuty/mini/ODB-WORD-01.jpg",
+    "url": "http://localhost:3040/?screen=gen-word-content-hints&lang=pl&theme=light&ff_tpl_editor=1",
+    "consoleErrors": []
+  },
+  {
+    "id": "ODB-WORD-01",
+    "tytul": "Gen. Word: Architekt — wskazówki treści + briefing edytowalny (draft)",
+    "theme": "dark",
+    "png": "rejestr/_zrzuty/ODB-WORD-01-dark.png",
+    "mini": "rejestr/_zrzuty/mini/ODB-WORD-01-dark.jpg",
+    "url": "http://localhost:3040/?screen=gen-word-content-hints&lang=pl&theme=dark&ff_tpl_editor=1",
+    "consoleErrors": []
+  }
+]
