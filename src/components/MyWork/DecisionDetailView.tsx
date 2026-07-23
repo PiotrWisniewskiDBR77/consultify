@@ -4975,7 +4975,8 @@ Use userId only from this list:
       id: 'relations',
       label: t('myWork.decisionDetail.label3', 'Relations'),
       icon: Link2,
-      defaultOpen: true,
+      // Kanon n-Type: domyslnie rozwiniete TYLKO Akcje i Wlasciwosci.
+      defaultOpen: false,
       isEmpty:
         !initiativeName &&
         !(sourceType && sourceId) &&

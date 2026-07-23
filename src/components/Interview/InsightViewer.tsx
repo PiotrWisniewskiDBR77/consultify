@@ -8081,7 +8081,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       id: 'relations',
       label: t('interview.insightViewer.relations'),
       icon: Link2,
-      defaultOpen: true,
+      // Kanon n-Type: domyslnie rozwiniete TYLKO Akcje i Wlasciwosci.
+      defaultOpen: false,
       isEmpty: sourceSessions.length === 0,
       emptyLabel: t('interview.insightViewer.noRelations'),
       children: (

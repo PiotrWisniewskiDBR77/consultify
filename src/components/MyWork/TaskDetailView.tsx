@@ -4303,7 +4303,8 @@ Return ONLY the final comment text.`;
         id: 'relations',
         label: t('myWork.taskDetail.label10', 'Relations'),
         icon: Link2,
-        defaultOpen: true,
+        // Kanon n-Type: domyslnie rozwiniete TYLKO Akcje i Wlasciwosci.
+        defaultOpen: false,
         isEmpty: !initiativeName && attachments.length === 0,
         emptyLabel: t('myWork.taskDetail.emptyLabel', 'No relations'),
         children: (
