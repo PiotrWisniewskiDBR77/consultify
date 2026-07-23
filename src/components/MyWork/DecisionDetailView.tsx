@@ -5373,7 +5373,10 @@ Use userId only from this list:
     },
     {
       id: 'history',
-      label: t('myWork.decisionDetail.label5', 'History / AI'),
+      // n-Type §6.3 / 01_DECYZJA §8: sekcja to „Historia" — log zdarzeń
+      // (AI ma własne wejście: fioletowy „Analizuj z AI" w menu 2). Nazwa
+      // „Historia / AI" sugerowała drugą drogę do AI, której tu nie ma.
+      label: t('myWork.decisionDetail.label5', 'History'),
       icon: History,
       defaultOpen: false,
       badge: activityLogSorted.length,
