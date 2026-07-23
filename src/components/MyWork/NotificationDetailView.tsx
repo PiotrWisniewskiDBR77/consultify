@@ -1673,28 +1673,35 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
           component = (
             <div className={`space-y-5 border-l-[3px] ${severityBorderAccent} pl-4`}>
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-c-text">
-                  {t('myWork.notificationDetail.whatSHappening', "What's Happening")}
-                </h2>
-                {isAnalyzingWorksheet && (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] text-c-info animate-pulse">
-                    <Loader2 size={12} className="animate-spin" />
-                    {t('myWork.notificationDetail.aIAnalyzing', 'AI analyzing...')}
-                  </span>
-                )}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-lg font-semibold text-c-text">
+                    {t('myWork.notificationDetail.whatSHappening', "What's Happening")}
+                  </h2>
+                  {isAnalyzingWorksheet && (
+                    <span className="inline-flex shrink-0 items-center gap-1.5 text-[11px] text-c-info animate-pulse">
+                      <Loader2 size={12} className="animate-spin" />
+                      {t('myWork.notificationDetail.aIAnalyzing', 'AI analyzing...')}
+                    </span>
+                  )}
+                </div>
+                {/* Uczciwy stan „AI niedostepne" — WLASNY wiersz pod naglowkiem,
+                    zeby dlugi komunikat z kodem serwera nie lamal tytulu sekcji. */}
                 {!isAnalyzingWorksheet && aiAnalysisError && (
-                  <span className="inline-flex items-center gap-1.5 rounded-md border border-c-danger/40 bg-c-danger/10 px-2 py-0.5 text-[11px] text-c-danger">
-                    <AlertTriangle size={11} />
-                    <span>{aiAnalysisError}</span>
+                  <div
+                    role="status"
+                    className="flex items-start gap-2 rounded-md border border-c-danger/40 bg-c-danger/10 px-2.5 py-1.5 text-[11px] text-c-danger"
+                  >
+                    <AlertTriangle size={12} className="mt-px shrink-0" />
+                    <span className="flex-1">{aiAnalysisError}</span>
                     <button
                       type="button"
                       onClick={() => handleAnalyzeWithAI(false)}
-                      className="underline underline-offset-2 hover:opacity-80"
+                      className="shrink-0 underline underline-offset-2 hover:opacity-80"
                     >
                       {t('myWork.notificationDetail.retry', 'Retry')}
                     </button>
-                  </span>
+                  </div>
                 )}
               </div>
 

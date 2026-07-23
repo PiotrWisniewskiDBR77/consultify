@@ -1005,6 +1005,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                   setSelectedLinkRelation('related');
                   setSelectedLinkDirection('outgoing');
                   setInternalLinkComment('');
+                  setLinkCommentError(null);
                   setIsInternalLinkModalOpen(true);
                 }}
                 className="inline-flex items-center gap-1 text-xs font-medium text-c-text-secondary dark:text-c-text-secondary hover:text-c-text dark:hover:text-c-text-muted transition-colors"
