@@ -711,8 +711,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // autor, ani user) nie wie, którą włącza. Standard rozstrzyga: osobne nazwy
   // i osobne sloty.
   //
-  //   densityMode: 'n' | 'c'            → GĘSTOŚĆ widoku, przełącznik w Menu 1
-  //                                        (NModeHeader.showModeSwitcher).
+  //   densityMode: 'n' | 'c'            → GĘSTOŚĆ widoku. ETAP 1.1 n-Type
+  //                                        (2026-07-23): przełącznik ZDJĘTY
+  //                                        z Menu 1, karta ma jeden widok —
+  //                                        wartość jest twardo pinowana na 'n'
+  //                                        (strażnik pod tym hookiem).
   //   presentationMode: 'off'|'fullscreen' → TRYB POKAZU (PresentMode card-walk),
   //                                        wejście z menu kebab, nie z nagłówka.
   //
