@@ -3248,7 +3248,15 @@
         "priority": "Priorytet"
       },
       "email": "E-mail",
-      "actionsLiveInHeader": "Wszystkie akcje są w nagłówku karty"
+      "actionsLiveInHeader": "Wszystkie akcje są w nagłówku karty",
+      "source": "Źródło",
+      "sourceIdea": "Pomysł",
+      "sourceNote": "Notatka",
+      "sourceDecision": "Decyzja",
+      "sourcesAndAssumptions": "Źródła i założenia",
+      "noSourceContext": "Brak kontekstu źródła",
+      "actionsHiddenInReadMode": "Akcje ukryte w trybie podglądu",
+      "created": "Utworzono"
     },
     "dependencies": {
       "toastError": "Wybierz zadanie źródłowe",
