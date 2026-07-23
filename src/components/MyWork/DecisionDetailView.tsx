@@ -4527,13 +4527,22 @@ Use userId only from this list:
   // WSZYSTKIE działania (zatwierdzenie etapu, cofnięcie do draftu, zatwierdzenie
   // decyzji, odrzucenie, prośba o informacje, delegowanie) żyją TU.
   // Układ: pionowo, przyciski pełnej szerokości, JEDNA akcja wyróżniona.
-  // Crimson (`primary-*`) świadomie nieużywany: zielony = sukces, `danger` =
-  // odrzucenie (semantyka krytyczna), reszta neutralna `c-*`.
+  // Crimson (`primary-*`) świadomie nieużywany; `danger` = odrzucenie
+  // (semantyka krytyczna), reszta neutralna `c-*`.
   const rpActionBtn =
     'w-full inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg text-xs font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50 disabled:cursor-not-allowed';
   /* karty-n-ok — po zdjęciu `primaryAction` z nagłówka to JEDYNY solid CTA karty
-     (SPEC-N §2.3 dopuszcza dokładnie jeden; tu jego miejscem jest panel). */
-  const rpActionPrimary = `${rpActionBtn} bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500`;
+     (SPEC-N §2.3 dopuszcza dokładnie jeden; tu jego miejscem jest panel).
+     ── 2026-07-24: ZIELEŃ ZDJĘTA Z CTA ────────────────────────────────────────
+     BYŁO: `bg-emerald-600` + biały tekst = kontrast 4,35:1 — PONIŻEJ progu WCAG
+     AA 4,5:1, zmierzone na żywym renderze. Do tego kolor na CTA łamie CLAUDE.md
+     #3 („CTA/stany aktywne = neutralne; kolor tylko semantyka krytyczna"), a na
+     6 kart-artefaktów tylko 2 robiły to na zielono — to był BRAK, nie konwencja.
+     JEST: neutralny solid `bg-c-text`/`text-c-bg` — ten sam wzorzec, którym
+     wyróżniają CTA pozostałe karty (por. NotificationDetailView). Kontrast
+     17,6:1 w light i tyle samo w dark (tokeny odwracają się razem z motywem).
+     Sukces zostaje semantyką STANU (badge etapu, pigułki), nie tła przycisku. */
+  const rpActionPrimary = `${rpActionBtn} bg-c-text border-c-text text-c-bg hover:bg-c-text-secondary hover:border-c-text-secondary`;
   const rpActionDestructive = `${rpActionBtn} bg-transparent border-danger-400/60 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10`;
   const rpActionNeutral = `${rpActionBtn} bg-c-surface-raised border-c-border-subtle text-c-text hover:bg-c-surface`;
 
@@ -4547,6 +4556,14 @@ Use userId only from this list:
   const highlightedWorkflowActionId = canApproveDecision
     ? null
     : (panelWorkflowActions.find((a) => a.tone === 'success' || a.tone === 'primary')?.id ?? null);
+
+  // Czy mountować `ArtifactApprovalStatusBar` — uzasadnienie przy samym slocie
+  // `statusBar` niżej (sprzeczne stany w Podglądzie + zmyślony „Szkic").
+  const showApprovalBar =
+    isArtifactApprovalUiEnabled() &&
+    Boolean(decisionId) &&
+    !readMode &&
+    workflowStatus === 'proposed';
 
   // ── Rozdział POWIĄZAŃ od ŹRÓDEŁ (n-Type §6.2 poz. 3 vs 4) ────────────────
   // Panel dostał sekcję „Źródła i założenia", więc powiązania wiedzowe (wnioski
@@ -5596,6 +5613,9 @@ Use userId only from this list:
                     activeSection={activeNotionSection}
                     onSectionChange={setActiveNotionSection}
                     onSectionReorder={(ids) => decisionCardLayout.reorderByIds(ids)}
+                    /* SPEC-A §4.4: w trybie Podgląd uchwyty przeciągania (GripVertical)
+                       są ukryte — nawigacja jest do czytania, nie do przestawiania. */
+                    readMode={readMode}
                   />
 
                   {/* Canvas (shows selected section only) */}
@@ -8984,14 +9004,28 @@ Use userId only from this list:
               className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
               ariaLabel={t('myWork.decisionDetail.ariaLabel', 'Decision details')}
               statusBar={
-                // HP-8 workflow-engine status bar — behind ff_artifactApprovalUi
-                // (default OFF, see src/utils/artifactApprovalUiFlag.ts). At OFF
-                // this is `undefined` and ArtifactRightPanel renders 1:1 as
-                // before (no new DOM, no visual change).
-                isArtifactApprovalUiEnabled() && decisionId ? (
+                // HP-8 workflow-engine status bar — za `ff_artifactApprovalUi`.
+                //
+                // ── 2026-07-24: DWIE BRAMKI DOŁOŻONE (zmierzone na renderze) ──
+                // (a) `!readMode` — w Podglądzie sekcja „Akcje" mówi wprost
+                //     „Akcje są ukryte w trybie Podgląd", a NAD nią stał aktywny
+                //     przycisk „Zgłoś do recenzji" z tego paska. Dwa sprzeczne
+                //     komunikaty w jednym panelu. Podgląd = „do pokazania
+                //     klientowi", więc wewnętrzny obieg akceptacji tam nie należy.
+                // (b) `showApprovalBar` — pasek pokazywał „Szkic" na decyzji,
+                //     której własny status brzmiał „Oczekująca" / etap
+                //     „W przeglądzie". Powód: `ArtifactApprovalStatusBar` czyta
+                //     WŁASNY rekord HP-7 i przy jego braku (albo błędzie
+                //     endpointu) spada na `state ?? 'draft'` — czyli ZMYŚLA
+                //     „Szkic". Dopóki pasek nie przyjmuje stanu z zewnątrz,
+                //     mountujemy go tylko wtedy, gdy własny cykl życia karty
+                //     JEST szkicem (`workflowStatus === 'proposed'`) — wtedy
+                //     pasek i status karty mówią to samo. Poza szkicem prawdą
+                //     jest status karty (Właściwości + przejścia w „Akcje").
+                showApprovalBar ? (
                   <ArtifactApprovalStatusBar
                     artifactType="decision"
-                    artifactId={decisionId}
+                    artifactId={decisionId as string}
                     currentUserId={currentUser?.id}
                     canReview
                   />
