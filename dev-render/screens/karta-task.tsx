@@ -260,6 +260,59 @@ Api.get = (async (url: string) => {
   return realApiGet(url);
 }) as typeof Api.get;
 
+// ── Stub AI (weryfikacja naprawy atrap, 2026-07-23) ─────────────────────────
+// `?ai=ok`   → `/ai/generate` odpowiada realnym kształtem `{ text }` (ścieżka sukcesu)
+// `?ai=down` → `/ai/generate` rzuca błędem serwera (ścieżka „AI niedostępne")
+// bez parametru → zachowanie jak dotąd (siatka bezpieczeństwa window.fetch).
+// ★ Patchujemy METODĘ `Api.post`, nie `window.fetch` — window.fetch jest tu
+// wspólną siatką dla wszystkich ekranów i zwraca `{data:[],items:[]}`.
+const __aiTryb = new URLSearchParams(window.location.search).get('ai');
+if (__aiTryb === 'ok' || __aiTryb === 'down') {
+  const realApiPost = Api.post.bind(Api);
+  const odpowiedziAi: Record<string, string> = {
+    'Task Reminder Advisor': JSON.stringify({
+      type: 'before_due',
+      days: 3,
+      recipients: 'stakeholders',
+      message:
+        'Za 3 dni termin mapy AS-IS. Bez niej warsztat 29.07 nie ma wsadu liczbowego — potwierdź walidację z Markiem.',
+    }),
+    'Task Escalation Advisor': JSON.stringify({
+      warningDays: 2,
+      criticalDays: 5,
+      afterDays: 3,
+      escalationMode: 'manager_review',
+      escalateTo: 'user-marek',
+      message:
+        'Mapa AS-IS przekroczyła termin. Eskalacja do partnera prowadzącego — warsztat 29.07 jest zagrożony.',
+    }),
+    'Task Comment Advisor':
+      'Najwęższym gardłem jest akcept partnera (mediana 6 dni), nie redakcja. Zanim domkniesz mapę, ustal z Markiem docelowy SLA akceptu — inaczej oszczędność pokazana zarządowi będzie nie do dowiezienia.',
+    'RACI Team Advisor': JSON.stringify({
+      stakeholders: [
+        { userId: 'user-piotr-demo', role: 'accountable' },
+        { userId: 'user-anna', role: 'responsible' },
+        { userId: 'user-marek', role: 'consulted' },
+        { userId: 'user-kasia', role: 'informed' },
+      ],
+    }),
+  };
+  Api.post = (async (url: string, data: any) => {
+    if (String(url).includes('/ai/generate')) {
+      if (__aiTryb === 'down') {
+        const err: any = new Error('LLM provider unavailable');
+        err.status = 503;
+        err.data = { code: 'NO_AI_PROVIDER' };
+        throw err;
+      }
+      const text = odpowiedziAi[String(data?.roleName)] ?? 'OK';
+      await new Promise((r) => setTimeout(r, 300));
+      return { text } as any;
+    }
+    return realApiPost(url, data);
+  }) as typeof Api.post;
+}
+
 // Picker "dodaj powiązanie" (Promise.allSettled na 8 źródłach) — niech ma
 // czym wypełnić listy wyboru zamiast lecieć w błąd sieci.
 Api.getPersonalTasks = (async () => []) as typeof Api.getPersonalTasks;
