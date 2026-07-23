@@ -3,644 +3,363 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Odbiór — partia 2026-07-23</title>
+<title>Odbiór — 2026-07-23</title>
 <style>
-  /* Rozdzielnik trzyma JEDEN motyw (jasny) niezależnie od ustawień systemu —
-     motyw oceniamy w samych ekranach, nie tutaj. */
   :root { color-scheme: light; }
   * { box-sizing: border-box; }
   body {
-    margin: 0; padding: 32px 32px 64px;
+    margin: 0; padding: 30px 28px 70px;
     font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     background: #f7f8fa; color: #0f172a;
   }
-  .wrap { max-width: 980px; margin: 0 auto; }
+  .wrap { max-width: 940px; margin: 0 auto; }
   h1 { font-size: 23px; margin: 0 0 6px; letter-spacing: -0.01em; }
-  .lead { color: #475569; margin: 0 0 26px; max-width: 78ch; }
+  .lead { color: #475569; margin: 0 0 10px; max-width: 76ch; }
+  .jak {
+    background: #fff; border: 1px solid #e2e8f0; border-left: 3px solid #2563eb;
+    border-radius: 10px; padding: 14px 17px; margin: 0 0 22px;
+  }
+  .jak b { font-weight: 600; }
   .card {
     background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
-    padding: 18px 20px; margin-bottom: 16px;
+    padding: 17px 19px; margin-bottom: 15px;
   }
-  h2 { font-size: 15px; margin: 0 0 6px; display: flex; align-items: center; gap: 9px; }
-  .ile {
-    font-size: 12px; font-weight: 600; color: #475569;
-    background: #eef2f7; border-radius: 20px; padding: 2px 9px;
-  }
-  .czego { color: #475569; font-size: 13.5px; margin: 0 0 14px; max-width: 80ch; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { text-align: left; padding: 8px 8px; border-bottom: 1px solid #eef1f6; vertical-align: middle; }
-  th { font-size: 11.5px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .05em; }
-  tr:last-child td { border-bottom: 0; }
-  td.nazwa { font-size: 14px; }
-  .kol-otworz { width: 190px; white-space: nowrap; }
+  h2 { font-size: 15.5px; margin: 0 0 5px; display: flex; align-items: center; gap: 9px; }
+  .ile { font-size: 12px; font-weight: 600; color: #475569; background: #eef2f7; border-radius: 20px; padding: 2px 9px; }
+  .opis { color: #475569; font-size: 13.5px; margin: 0 0 14px; max-width: 82ch; }
+  .obiekt { border-top: 1px solid #eef1f6; padding: 11px 0 9px; }
+  .obiekt:first-of-type { border-top: 0; }
+  .obiekt-glowna { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .obiekt-nazwa { font-size: 14.5px; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+  .obiekt-akcje { white-space: nowrap; }
   .btn {
     display: inline-block; padding: 5px 12px; border-radius: 7px;
     border: 1px solid #d7dee9; background: #f1f5f9; color: #0f172a;
-    text-decoration: none; font-size: 13px; margin-right: 6px;
+    text-decoration: none; font-size: 13px; margin-left: 6px;
   }
   .btn:hover { background: #e2e8f0; }
-  summary { cursor: pointer; font-size: 14px; font-weight: 600; color: #475569; }
-  details[open] summary { margin-bottom: 12px; }
-  ol { margin: 0; padding-left: 20px; } ol li { margin-bottom: 8px; }
-  .stopka { color: #64748b; font-size: 13px; margin-top: 22px; }
+  .brak { color: #b45309; font-size: 12.5px; font-weight: 600; }
+  .obiekt-brak .obiekt-nazwa { color: #64748b; }
+  .powod { color: #b45309; font-size: 12.5px; margin-top: 5px; max-width: 80ch; }
+  .szczegoly { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .mini {
+    font-size: 12px; color: #475569; text-decoration: none;
+    border: 1px solid #e2e8f0; border-radius: 20px; padding: 3px 10px; background: #fbfcfe;
+  }
+  .mini:hover { background: #eef2f7; }
+  .stan { font-size: 11.5px; font-weight: 600; border-radius: 20px; padding: 2px 8px; }
+  .stan-uwagi { background: #fef3c7; color: #92400e; }
+  .stan-bierzemy { background: #dcfce7; color: #166534; }
+  .stan-popraw { background: #ffedd5; color: #9a3412; }
+  .stan-nie { background: #fee2e2; color: #991b1b; }
+  .stopka { color: #64748b; font-size: 12.5px; margin-top: 20px; }
   code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-<h1>Odbiór — partia 2026-07-23</h1>
+<h1>Odbiór — 2026-07-23</h1>
 <p class="lead">
-  Wszystkie obszary w jednym miejscu, do przeklikania. Dane są przykładowe (bez logowania i bez bazy) —
-  oceniamy wygląd i zachowanie, nie treść. Ekrany mają krótką animację wejścia, więc przez pierwszą
-  sekundę wyglądają na przygaszone; to nie usterka. Powrót tutaj: <code>/odbior.html</code>.
+  Każdy obiekt otwierasz w całości i przeklikujesz. Dane są przykładowe (bez logowania i bez bazy).
 </p>
 
+<div class="jak">
+  <b>Uwagi zgłaszasz na ekranie</b>, nie tutaj. W prawym dolnym rogu każdego ekranu jest przycisk
+  <b>„Uwagi"</b>: wpisujesz co jest nie tak i ustawiasz werdykt (bierzemy / popraw / nie).
+  Zapisuje się od razu na dysk — odczytam wszystko co zostawisz. Możesz zgłosić dowolnie dużo uwag
+  do jednego ekranu. Na tej liście przy obiektach pojawiają się liczniki tego, co już zgłosiłeś.
+</div>
+
 
   <section class="card">
-    <h2>Karty N (7 typów artefaktów) <span class="ile">8</span></h2>
-    <p class="czego">Prawy panel identyczny wszędzie (Akcje → Właściwości → Powiązania → Komentarze → Historia), kolory znaczą to co powinny (czerwień tylko krytyczne), ciemny motyw czytelny, powiązania klikalne.</p>
-    <table>
-      <thead><tr><th>Ekran</th><th class="kol-otworz">Otwórz</th></tr></thead>
-      <tbody>
-        <tr>
-          <td class="nazwa">Narzędzie</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=karta-tool&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=karta-tool&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Inicjatywa</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=karta-initiative&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=karta-initiative&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Insight</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=karta-insight&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=karta-insight&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Sesja wywiadu</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=karta-interview&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=karta-interview&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Decyzja</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=karta-decision&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=karta-decision&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Powiadomienie</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=karta-notification&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=karta-notification&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Zadanie</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=karta-task&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=karta-task&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Podgląd czterech zakładek My Work</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=preview-4-zakladki&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=preview-4-zakladki&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <h2>Artefakty (karty N) <span class="ile">8</span></h2>
+    <p class="opis">Siedem typów obiektów w My Work. Wspólna powłoka: nagłówek, lewy spis sekcji, prawy panel (Akcje → Właściwości → Powiązania → Komentarze → Historia), kebab.</p>
+      <div class="obiekt" data-ekran="karta-decision">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Decyzja
+            <span class="stan" data-stan-dla="karta-decision"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=karta-decision&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=karta-decision&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        
+      </div>
+      <div class="obiekt" data-ekran="karta-task">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Zadanie
+            <span class="stan" data-stan-dla="karta-task"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=karta-task&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=karta-task&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        
+      </div>
+      <div class="obiekt" data-ekran="karta-interview">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Sesja wywiadu
+            <span class="stan" data-stan-dla="karta-interview"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=karta-interview&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=karta-interview&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        
+      </div>
+      <div class="obiekt" data-ekran="karta-notification">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Powiadomienie
+            <span class="stan" data-stan-dla="karta-notification"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=karta-notification&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=karta-notification&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        
+      </div>
+      <div class="obiekt" data-ekran="karta-insight">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Insight
+            <span class="stan" data-stan-dla="karta-insight"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=karta-insight&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=karta-insight&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        
+      </div>
+      <div class="obiekt" data-ekran="karta-tool">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Narzędzie
+            <span class="stan" data-stan-dla="karta-tool"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=karta-tool&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=karta-tool&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        
+      </div>
+      <div class="obiekt" data-ekran="karta-initiative">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Inicjatywa
+            <span class="stan" data-stan-dla="karta-initiative"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=karta-initiative&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=karta-initiative&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        
+      </div>
+      <div class="obiekt" data-ekran="preview-4-zakladki">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Cztery zakładki My Work (kontekst kart)
+            <span class="stan" data-stan-dla="preview-4-zakladki"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=preview-4-zakladki&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=preview-4-zakladki&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        
+      </div>
   </section>
 
   <section class="card">
-    <h2>Idee — tabela, whiteboard, process flow <span class="ile">8</span></h2>
-    <p class="czego">Tabela: sortowanie, filtr, wklejanie, grupowanie, kebab wiersza, zmiana szerokości kolumn. Płótna: uchwyty łączników, strzałki kierunku.</p>
-    <table>
-      <thead><tr><th>Ekran</th><th class="kol-otworz">Otwórz</th></tr></thead>
-      <tbody>
-        <tr>
-          <td class="nazwa">Tabela — menu wiersza pod prawym klikiem</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=idea-table-tool-kebab&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=idea-table-tool-kebab&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Tabela — wklejanie danych (Cmd+V)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=idea-table-tool-paste&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=idea-table-tool-paste&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Tabela — sortowanie klikiem w nagłówek i filtr kolumny</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=idea-table-tool-sortfilter&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=idea-table-tool-sortfilter&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Tabela — pusty wynik filtra, szerokość kolumn, gęstość wierszy</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=idea-table-tool-empty-filter&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=idea-table-tool-empty-filter&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Tabela — grupowanie wierszy i zwijanie grup</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=idea-table-tool-grouping&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=idea-table-tool-grouping&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Diagram procesu — strzałki kierunku i etykiety połączeń</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=processflow-canvas&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=processflow-canvas&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Tablica — magnetyczne uchwyty łączników</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=whiteboard-canvas&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=whiteboard-canvas&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Prawy panel idei jako dokument Teresy</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=ideas-teresa-panel&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=ideas-teresa-panel&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <h2>Idea — cztery postacie tego samego obiektu <span class="ile">4</span></h2>
+    <p class="opis">Ta sama idea oglądana jako tabela, mapa myśli, tablica i diagram procesu.</p>
+      <div class="obiekt" data-ekran="idea-table">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Idea jako tabela
+            <span class="stan" data-stan-dla="idea-table"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=idea-table&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=idea-table&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        <div class="szczegoly"><a class="mini" href="/?screen=idea-table-tool-kebab&amp;cardContract=1&amp;lang=pl&amp;theme=light">Menu wiersza (prawy klik)</a><a class="mini" href="/?screen=idea-table-tool-paste&amp;cardContract=1&amp;lang=pl&amp;theme=light">Wklejanie danych</a><a class="mini" href="/?screen=idea-table-tool-sortfilter&amp;cardContract=1&amp;lang=pl&amp;theme=light">Sortowanie i filtr kolumny</a><a class="mini" href="/?screen=idea-table-tool-empty-filter&amp;cardContract=1&amp;lang=pl&amp;theme=light">Pusty filtr, szerokość kolumn, gęstość</a><a class="mini" href="/?screen=idea-table-tool-grouping&amp;cardContract=1&amp;lang=pl&amp;theme=light">Grupowanie wierszy</a><a class="mini" href="/?screen=ideas-preview-overlay&amp;cardContract=1&amp;lang=pl&amp;theme=light">Podgląd nakładkowy</a><a class="mini" href="/?screen=ideas-teresa-panel&amp;cardContract=1&amp;lang=pl&amp;theme=light">Prawy panel jako dokument Teresy</a></div>
+      </div>
+      <div class="obiekt" data-ekran="mindmap-canvas">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Idea jako mapa myśli
+            <span class="stan" data-stan-dla="mindmap-canvas"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=mindmap-canvas&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=mindmap-canvas&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        
+      </div>
+      <div class="obiekt" data-ekran="whiteboard-canvas">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Idea jako tablica
+            <span class="stan" data-stan-dla="whiteboard-canvas"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=whiteboard-canvas&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=whiteboard-canvas&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        <div class="szczegoly"><a class="mini" href="/?screen=idea-templates-catalog&amp;cardContract=1&amp;lang=pl&amp;theme=light">Katalog szablonów startowych</a></div>
+      </div>
+      <div class="obiekt" data-ekran="processflow-canvas">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Idea jako diagram procesu
+            <span class="stan" data-stan-dla="processflow-canvas"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=processflow-canvas&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=processflow-canvas&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        
+      </div>
   </section>
 
   <section class="card">
-    <h2>Dokumenty — generatory Deck / Word / Excel <span class="ile">7</span></h2>
-    <p class="czego">Briefing per slajd/sekcja, podgląd struktury, badge jakości, wejście do generatora szablonów.</p>
-    <table>
-      <thead><tr><th>Ekran</th><th class="kol-otworz">Otwórz</th></tr></thead>
-      <tbody>
-        <tr>
-          <td class="nazwa">Generator prezentacji — briefing treści per slajd</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=gen-deck-content-hints&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=gen-deck-content-hints&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Generator arkuszy — zakładka szablonów</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=gen-excel-templates-tab&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=gen-excel-templates-tab&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Generator dokumentu — briefing treści per sekcja</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=gen-word-content-hints&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=gen-word-content-hints&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Prezentacja — oznaczenie jakości na wyniku kreatora</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=deck-quality-badge&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=deck-quality-badge&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Dokument — oznaczenie zmyślonych danych w panelu kontroli</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=word-quality-badge&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=word-quality-badge&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Dokument — generowanie treści AI włączone domyślnie</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=word-intake-uselm-default&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=word-intake-uselm-default&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Arkusze — strona główna silnika</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=excele-engine-reveal&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=excele-engine-reveal&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <h2>Dokumenty — gotowy wynik <span class="ile">3</span></h2>
+    <p class="opis">Dokument, prezentacja i arkusz jako obiekty, które klient dostaje do ręki.</p>
+      <div class="obiekt" data-ekran="document-artifact">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Dokument tekstowy
+            <span class="stan" data-stan-dla="document-artifact"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=document-artifact&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=document-artifact&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        <div class="szczegoly"><a class="mini" href="/?screen=word-quality-badge&amp;cardContract=1&amp;lang=pl&amp;theme=light">Oznaczenie zmyślonych danych</a><a class="mini" href="/?screen=word-intake-uselm-default&amp;cardContract=1&amp;lang=pl&amp;theme=light">Generowanie treści AI domyślnie</a><a class="mini" href="/?screen=document-studio-blocks-i18n&amp;cardContract=1&amp;lang=pl&amp;theme=light">Puste stany bloków</a></div>
+      </div>
+      <div class="obiekt" data-ekran="deck-artifact">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Prezentacja
+            <span class="stan" data-stan-dla="deck-artifact"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=deck-artifact&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=deck-artifact&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        <div class="szczegoly"><a class="mini" href="/?screen=deck-quality-badge&amp;cardContract=1&amp;lang=pl&amp;theme=light">Oznaczenie jakości na wyniku kreatora</a></div>
+      </div>
+      <div class="obiekt obiekt-brak" data-ekran="">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Arkusz
+            <span class="stan" data-stan-dla=""></span>
+          </div>
+          <div class="obiekt-akcje"><span class="brak">brak ekranu</span></div>
+        </div>
+        <div class="powod">Arkusz nie ma jeszcze ekranu „gotowy obiekt&quot; — jest tylko strona główna silnika.</div>
+        <div class="szczegoly"><a class="mini" href="/?screen=excele-engine-reveal&amp;cardContract=1&amp;lang=pl&amp;theme=light">Strona główna silnika arkuszy</a></div>
+      </div>
   </section>
 
   <section class="card">
-    <h2>Agent i Vault <span class="ile">3</span></h2>
-    <p class="czego">Schemat kroków agenta (przestawialny), selektor poziomu dostępu dokumentów.</p>
-    <table>
-      <thead><tr><th>Ekran</th><th class="kol-otworz">Otwórz</th></tr></thead>
-      <tbody>
-        <tr>
-          <td class="nazwa">Agent — wejście do planu działania</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=agent-plan-view&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=agent-plan-view&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Agent — przestawialny schemat kroków</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=agent-plan-canvas&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=agent-plan-canvas&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Vault — wybór poziomu dostępu przy wgrywaniu dokumentu</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=vault-scope-selector&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=vault-scope-selector&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <h2>Generatory dokumentów <span class="ile">3</span></h2>
+    <p class="opis">Miejsce, w którym powstaje szablon: co ma się znaleźć w każdej sekcji, slajdzie, arkuszu.</p>
+      <div class="obiekt" data-ekran="gen-word-content-hints">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Generator dokumentu (Word)
+            <span class="stan" data-stan-dla="gen-word-content-hints"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=gen-word-content-hints&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=gen-word-content-hints&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        <div class="szczegoly"><a class="mini" href="/?screen=template-builder-doc&amp;cardContract=1&amp;lang=pl&amp;theme=light">Builder dokumentu</a></div>
+      </div>
+      <div class="obiekt" data-ekran="gen-deck-content-hints">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Generator prezentacji (Deck)
+            <span class="stan" data-stan-dla="gen-deck-content-hints"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=gen-deck-content-hints&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=gen-deck-content-hints&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        <div class="szczegoly"><a class="mini" href="/?screen=template-builder-deck&amp;cardContract=1&amp;lang=pl&amp;theme=light">Builder prezentacji</a></div>
+      </div>
+      <div class="obiekt" data-ekran="gen-excel-templates-tab">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Generator arkusza (Excel)
+            <span class="stan" data-stan-dla="gen-excel-templates-tab"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=gen-excel-templates-tab&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=gen-excel-templates-tab&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        <div class="szczegoly"><a class="mini" href="/?screen=template-builder-table&amp;cardContract=1&amp;lang=pl&amp;theme=light">Builder arkusza</a></div>
+      </div>
   </section>
 
-<section class="card">
-  <h2>Jak to odbieramy</h2>
-  <ol>
-    <li>Klikasz obszar po obszarze. Przy każdym mówisz <strong>bierzemy</strong> /
-        <strong>popraw &lt;co&gt;</strong> / <strong>nie</strong>.</li>
-    <li>„Bierzemy" dla obszaru = ten obszar idzie na demo. Obszary są niezależne —
-        odrzucenie jednego nie blokuje reszty.</li>
-    <li>Nie oceniamy tu treści pisanej przez AI ani danych — to osobna partia.</li>
-  </ol>
-</section>
-
-
-  <details class="card">
-    <summary>Pozostałe ekrany harnessu (48) — spoza dzisiejszej partii</summary>
-    <table>
-      <tbody>
-        <tr>
-          <td class="nazwa">J23 — bg-c-accent-soft opacity bug fix (cTok): odznaka REKOMENDACJA tint vs pełny crimson</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=accent-soft-token-fix&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=accent-soft-token-fix&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">F-CC1…F-CC4 Command Center — Overview (już zdjęte)/Audyt SOC2/DLP/Rezydencja/Retencja/Polityka AI (&amp;tab=)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=admin-command-center-panel&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=admin-command-center-panel&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">HP-24 SSO self-service — SAML skonfigurowany (2 domeny) + panel wyniku testu</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=admin-sso-self-service-card&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=admin-sso-self-service-card&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=capability-gate-demo&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=capability-gate-demo&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">#83c START kreatora szablonu (nazwa → typ → dostępność)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=template-create-wizard&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=template-create-wizard&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">#24c Publiczny widget booking (Calendly-like, niezalogowany) — CTA neutralny</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=public-booking-widget&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=public-booking-widget&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">M18 #3 — Document Studio bloki: puste stany i18n (Table/Kpi/Chart)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=document-studio-blocks-i18n&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=document-studio-blocks-i18n&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">M18 #2 — Document Studio M1: &quot;Udostępnij&quot; primary, Export DOCX obok (kanon Formuły)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=document-studio-m1-share-primary&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=document-studio-m1-share-primary&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Fala 3 — ReportBuilder+AIChat+Meeting: crimson-fill CTA sweep (swatch, PO naprawie)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=wave3-creators-crimson&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=wave3-creators-crimson&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Wpięcie „Nowy szablon&quot; (Biblioteka wzorców → TemplateBuilderFlow)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=template-library-new-entry&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=template-library-new-entry&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">#83c/#83d Builder DOKUMENT (Word) — wspólna powłoka MELS</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=template-builder-doc&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=template-builder-doc&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">#83c/#83d Builder PREZENTACJA (Deck) — wspólna powłoka MELS</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=template-builder-deck&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=template-builder-deck&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">#83c/#83d Builder ARKUSZ (Excel) — wspólna powłoka MELS</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=template-builder-table&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=template-builder-table&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">#81 Results — 3 pary (KPI/ROI/OKR)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=results-three-pairs&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=results-three-pairs&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Notatnik = CENTRUM MYŚLI (#16 auto-notatka · #21 przypomnij · #23 presence)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=notatnik-centrum-mysli&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=notatnik-centrum-mysli&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">#18 Notatnik — graf połączeń (naprawiony) + osierocone notatki</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=notatnik-osierocone-graf&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=notatnik-osierocone-graf&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">EV Basket Football Field (Finance)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=ev-football-field&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=ev-football-field&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Section B — M16 ValueOffice + DriverPlanner: real-data wiring, POPULATED vs EMPTY (&amp;panel=value|driver &amp;state=populated|empty)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=finance-value-panels&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=finance-value-panels&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">M14-wire — ExecutionChangeSignalsPanel (capacity signals · ADKAR readiness · champions), flaga changeSignals default OFF</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=execution-change-signals&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=execution-change-signals&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Assessment list (TRIADA: StandardModuleBar + StandardTable)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=assessment-list&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=assessment-list&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">#71 REALNY AssessmentHub — Menu 3 klikalne chipy statusu</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=assessment-menu3-status-chips&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=assessment-menu3-status-chips&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">§27-todo: InitiativesManagementPanel (Assessment→Manage→Initiatives) → StandardTable</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=assessment-initiatives-panel&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=assessment-initiatives-panel&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">§27-todo: ReportsManagementPanel (Assessment→Manage→Reports) → StandardTable</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=assessment-reports-panel&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=assessment-reports-panel&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">§27-todo batch2: InitiativesTable (Assessment→Board→Initiatives) → StandardTable</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=assessment-initiatives-table&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=assessment-initiatives-table&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">§27-todo: BlockTypesManager (Report Builder → Block Types) → StandardTable</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=report-builder-block-types&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=report-builder-block-types&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">§27-todo: TemplatesManager (Report Builder → Templates) → StandardTable</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=report-builder-templates&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=report-builder-templates&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">§27-todo: ModelCatalogTable (SuperAdmin → Model Registry) → StandardTable</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=model-catalog-table&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=model-catalog-table&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">§27-todo: PartnerSettlementsView (SuperAdmin → Revenue) → StandardTable ×4</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=partner-settlements-view&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=partner-settlements-view&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Oxford O5.5: PromptRegistryTab (SuperAdmin → AI Platform → Development) → StandardTable</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=prompt-registry-tab&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=prompt-registry-tab&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">§27-todo batch2: ReportsTable (Assessment→Board→Reports, global) → StandardTable</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=assessment-reports-table&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=assessment-reports-table&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">#87a Canvas &quot;+&quot; New — 3 opcje startu (Czysty/Z szablonu/Z canvasa) → Teresa</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=canvas-new-doc&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=canvas-new-doc&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">#87c naprawa: Import Markdown + Historia przeniesiona do kebaba (#87d wciąż otwarte)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=canvas-toolbar-md-history&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=canvas-toolbar-md-history&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">#87d: restrukturyzacja kebaba „⋯&quot; — 14 sekcji → 8 nazwanych grup (PRZED/PO)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=canvas-kebab-restructure&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=canvas-kebab-restructure&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">D17 /chat split ODWRÓCONY — artefakt po LEWEJ, Teresa po PRAWEJ</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=chat-split-teresa-right&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=chat-split-teresa-right&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Crimson Wave #2 (MyWork) — CTA/aktywne bg-c-accent → neutralne (PRZED/PO)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=crimson-mywork-wave2&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=crimson-mywork-wave2&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">VF1-4 — REALNY &lt;DecisionDetailView&gt; (archetyp C·Rekord, SPEC-A powłoka) N-mode; &amp;ff_vf1DecisionSpeca=1 wraz z VITE_VF1_DECISION_SPECA=true dla stanów gated</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=decision-record&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=decision-record&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">#75b JEDEN kanon karty kanban (StandardKanbanCard)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=standard-kanban-card&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=standard-kanban-card&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Smoke i18n fala 2 — M06 Mind Map modale (ideas.mindmap.*)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=mindmap-i18n-smoke&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=mindmap-i18n-smoke&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">ODB O5 — REALNY &lt;Sidebar&gt; (navDeclutterFlag, default OFF); &amp;ff_navDeclutter=1 dla ON</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=navdeclutter-sidebar&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=navdeclutter-sidebar&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">ODB O5 — REALNY &lt;IdeaMapWorkspace&gt; (melsCanvasFlag, default OFF); &amp;ff_melsCanvas=1 dla ON</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=melscanvas-workspace&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=melscanvas-workspace&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Smoke i18n fala 1 — realne TemplateBuilder (M10) / FormulaEditor (M08); &amp;part=interview|ideas</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=i18n-fala1-smoke&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=i18n-fala1-smoke&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">#10-AB Baza ~40 startowych szablonów konsultingowych (7 kategorii)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=idea-templates-catalog&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=idea-templates-catalog&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">#78 Zwornik /projects — Stakeholderzy · Finanse · Zespół · Role · Zadania</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=zwornik-projects&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=zwornik-projects&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Fala 1 Settings — crimson CTA/toggle/selected → neutralne (PRZED/PO, kanon #1)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=settings-crimson-neutralized&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=settings-crimson-neutralized&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">fix/rose-regression — dowód parytetu rose-* vs danger-* (Execution+Settings sweep)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=rose-danger-token-parity&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=rose-danger-token-parity&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">Fala 4: bg-c-accent CTA/wybor → neutralne (Assessment/Initiatives/Execution/Results/Decisions)</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=wave4-choices-crimson&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=wave4-choices-crimson&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">wave5-internal-crimson: naprawa bg-c-accent w Studio (Export/Link modal) — CTA/toggle/selected-tab</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=wave5-internal-crimson&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=wave5-internal-crimson&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="nazwa">I1-I3 Faza 0/1 — UnifiedCreateLauncher &quot;+ Nowy&quot; (Insight/Initiative/Decision), Krok 0 — &amp;context=mywork|interview|initiatives</td>
-          <td class="kol-otworz">
-            <a class="btn" href="/?screen=unified-create-launcher&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
-            <a class="btn" href="/?screen=unified-create-launcher&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </details>
+  <section class="card">
+    <h2>Agent i Vault <span class="ile">2</span></h2>
+    <p class="opis">Agent układa proces z klocków; Vault trzyma dokumenty klienta z poziomami dostępu.</p>
+      <div class="obiekt" data-ekran="agent-plan-canvas">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Agent — schemat kroków
+            <span class="stan" data-stan-dla="agent-plan-canvas"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=agent-plan-canvas&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=agent-plan-canvas&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        <div class="szczegoly"><a class="mini" href="/?screen=agent-plan-view&amp;cardContract=1&amp;lang=pl&amp;theme=light">Wejście do planu działania</a></div>
+      </div>
+      <div class="obiekt" data-ekran="vault-scope-selector">
+        <div class="obiekt-glowna">
+          <div class="obiekt-nazwa">
+            Vault — poziomy dostępu dokumentów
+            <span class="stan" data-stan-dla="vault-scope-selector"></span>
+          </div>
+          <div class="obiekt-akcje"><a class="btn" href="/?screen=vault-scope-selector&amp;cardContract=1&amp;lang=pl&amp;theme=light">jasny</a>
+       <a class="btn" href="/?screen=vault-scope-selector&amp;cardContract=1&amp;lang=pl&amp;theme=dark">ciemny</a></div>
+        </div>
+        
+        
+      </div>
+  </section>
 
 <p class="stopka">
-  26 ekranów w partii, 48 archiwalnych.
-  Stronę generuje <code>scripts/odbior-hub.mjs</code> z rejestru <code>dev-render/main.tsx</code> —
-  nie edytuj jej ręcznie.
+  20 obiektów, w tym 1 bez ekranu (oznaczone).
+  Strona generowana przez <code>scripts/odbior-hub.mjs</code> — nie edytuj ręcznie.
 </p>
 
 </div>
+<script>
+  // Liczniki uwag/werdyktów obok nazw — czytane z tego samego źródła co panel na ekranach.
+  fetch('/__uwagi/wszystkie')
+    .then(function (r) { return r.ok ? r.json() : {}; })
+    .then(function (dane) {
+      document.querySelectorAll('[data-stan-dla]').forEach(function (el) {
+        var k = el.getAttribute('data-stan-dla');
+        var z = k && dane[k];
+        if (!z) return;
+        var czesci = [];
+        if (z.werdykt) czesci.push(z.werdykt);
+        if (z.uwagi && z.uwagi.length) czesci.push(z.uwagi.length + ' uwag');
+        if (!czesci.length) return;
+        el.textContent = czesci.join(' · ');
+        el.className = 'stan ' + (z.werdykt ? 'stan-' + z.werdykt : 'stan-uwagi');
+      });
+    })
+    .catch(function () {});
+</script>
 </body>
 </html>

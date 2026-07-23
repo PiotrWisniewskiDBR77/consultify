@@ -18,6 +18,8 @@ import '../src/index.css';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
+import PanelUwag from './PanelUwag';
+
 // Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
 import i18n from '../src/i18n';
 import AccentSoftTokenFixScreen from './screens/accent-soft-token-fix';
@@ -93,6 +95,11 @@ import IdeaTableToolEmptyFilterScreen from './screens/idea-table-tool-empty-filt
 import IdeaTableToolPasteScreen from './screens/idea-table-tool-paste';
 import IdeaTableToolSortFilterScreen from './screens/idea-table-tool-sortfilter';
 import IdeaTableToolGroupingScreen from './screens/idea-table-tool-grouping';
+import IdeaTableScreen from './screens/idea-table';
+import MindmapCanvasScreen from './screens/mindmap-canvas';
+import DeckArtifactScreen from './screens/deck-artifact';
+import DocumentArtifactScreen from './screens/document-artifact';
+import IdeasPreviewOverlayScreen from './screens/ideas-preview-overlay';
 // VLT-003 — importem MUSI być ostatnia: każdy dev-render screen instaluje swój
 // window.fetch stub jako top-level side effect przy imporcie (niezależnie od
 // tego, który ?screen= jest renderowany — statyczne importy main.tsx odpalają
@@ -425,6 +432,26 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'VLT-003 — REALNY <DocumentsRAGTab variant="client"> — selektor poziomu upload, badge, filtr, ostrzeżenie zmiany zakresu',
     render: () => <VaultScopeSelectorScreen />,
   },
+  'idea-table': {
+    label: 'IDEE — Idea jako tabela (pełny obiekt: lista + podgląd + prawy panel)',
+    render: () => <IdeaTableScreen />,
+  },
+  'mindmap-canvas': {
+    label: 'IDEE — Idea jako mapa myśli (pełny obiekt, archetyp Canvas)',
+    render: () => <MindmapCanvasScreen />,
+  },
+  'ideas-preview-overlay': {
+    label: 'IDEE — Idea: podgląd nakładkowy nad listą',
+    render: () => <IdeasPreviewOverlayScreen />,
+  },
+  'deck-artifact': {
+    label: 'DOKUMENTY — Prezentacja jako artefakt (pełny obiekt)',
+    render: () => <DeckArtifactScreen />,
+  },
+  'document-artifact': {
+    label: 'DOKUMENTY — Dokument tekstowy jako artefakt (pełny obiekt)',
+    render: () => <DocumentArtifactScreen />,
+  },
 };
 
 const params = new URLSearchParams(window.location.search);
@@ -485,6 +512,10 @@ class DebugBoundary extends React.Component<
 
 createRoot(mount).render(
   <React.StrictMode>
-    <DebugBoundary>{entry ? entry.render() : <Fallback />}</DebugBoundary>
+    <DebugBoundary>
+      {entry ? entry.render() : <Fallback />}
+      {/* Panel uwag właściciela — obecny na KAŻDYM ekranie odbioru (zapis: /__uwagi). */}
+      <PanelUwag ekran={screenKey} />
+    </DebugBoundary>
   </React.StrictMode>
 );
