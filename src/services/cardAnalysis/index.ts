@@ -3,8 +3,27 @@
  * Karty importują WYŁĄCZNIE stąd — nie z plików wewnętrznych.
  */
 
-export type { AnalysisCriterion, CardStandard } from './cardAnalysisRubric';
-export { ARTIFACT_CRITERIA, buildCardStandard, criteriaFor, findCanonicalCard } from './cardAnalysisRubric';
+export type {
+  AnalysisCriterion,
+  Bilingual,
+  CardStandard,
+  CompletenessBand,
+  DoctrineRule,
+  ResolvedCriterion,
+  SeverityAnchor,
+} from './cardAnalysisRubric';
+export {
+  ARTIFACT_CRITERIA,
+  buildCardStandard,
+  completenessBandsFor,
+  COMPLETENESS_BANDS,
+  criteriaFor,
+  doctrineFor,
+  DOCTRINE_RULES,
+  findCanonicalCard,
+  severityAnchorsFor,
+  SEVERITY_ANCHORS,
+} from './cardAnalysisRubric';
 export type { CardAnalysisErrorCode } from './cardAnalysisService';
 export { analyzeCard, buildAnalysisPrompt, CardAnalysisError, mergeChangeValue } from './cardAnalysisService';
 export type {
