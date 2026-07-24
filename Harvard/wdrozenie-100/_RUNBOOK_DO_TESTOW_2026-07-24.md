@@ -86,3 +86,12 @@ punkt cofania, znane ograniczenia. Piotr klika, nie odkrywa zepsucia.
   Wszystkie 9 napraw doby zweryfikowane fizycznie PO merge — przetrwały. Demo = przodek huba ✓.
   ★ Potwierdza regułę: demo żyje pod wieloma sesjami — ZAWSZE fetch przed pracą i przed promocją.
 - Stan: hub 33 ponad demo. Zostaje: front enumów (w toku), geometria kart (D), potem promocja.
+- Geometria scalona. Werdykt o sprzeczności: sędzia miał rację co do Inicjatywy (Menu1 1088 vs
+  Menu2 712 = 376 px, potwierdzone), mylił się co do skoku pionowego (podział szedł po RODZINIE
+  powłok 24 vs 16, nie po jednej karcie); mój agent mierzył kontener limitu, nie realne pasy.
+  Marginesy 24 px w Insight/Narzędziu = NIE defekt (panel `_DOCKED` zwęża kolumnę poniżej limitu).
+  Naprawione: Inicjatywa, Powiadomienie, skok pionowy→16, rytm Menu1→Menu2→16. Zweryfikowane
+  12 renderów (1280+1440) + dodatkowo 1024/1152.
+  ★ DŁUG: identyczna szerokość WSZYSTKICH 6 wymaga przepisania powłoki (dotknęłoby też
+  InterviewWorkspace/ToolDocumentView) — zgłoszone, nie forsowane. Tryb C Inicjatywy
+  (`InitiativeDocumentView:10666`) zachowuje stary padding — kanoniczny tryb N naprawiony.
