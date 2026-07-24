@@ -30,12 +30,12 @@ Gałąź `odbior/lokalny-2026-07-23`. Nic nie idzie na demo.
 ## P2 — powłoka i panel
 | ID | Stan | Nota |
 |---|---|---|
-| P2-1 | ⬜ | Menu 1 wg rozdz. 04 (stany zapisu + standard konfliktu) |
+| P2-1 | ✅ (stan konfliktu jawny; readonly=backend) | Menu 1 wg rozdz. 04 (stany zapisu + standard konfliktu) |
 | P2-2 | ✅ | Menu 3 renderuje się z rejestru |
 | P2-3 | ✅ (flaga OFF; K2 minimapa-ikona otwarte) | przełącznik reprezentacji → prawy dolny róg (D2); minimapa ikoną |
-| P2-4 | ⬜ | prawy panel: 5 zakładek wg rozdz. 07 + język wizualny (Z2 „wsiowo") |
-| P2-5 | 🔄 | lewy rail z rejestru wg rozdz. 06; Table data-rail |
-| P2-6 | 🔄 | WB menu krawedzi ✅; MM juz byl; PF + menu komorki Tabeli otwarte |
+| P2-4 | ✅ (flaga OFF; Z2 karty) | prawy panel: 5 zakładek wg rozdz. 07 + język wizualny (Z2 „wsiowo") |
+| P2-5 | ✅ (część; Table data-rail flaga OFF; rail-mode WB/PF otwarte) |
+| P2-6 | ✅ | WB+MM+PF menu krawędzi, menu komórki Tabeli |
 
 ## P3 — dług i sprzątanie
 | ID | Stan | Nota |
@@ -46,8 +46,8 @@ Gałąź `odbior/lokalny-2026-07-23`. Nic nie idzie na demo.
 | P3-4 | 🔒 | Table legacy → P15 + migracja danych — osobny projekt (D5), duża migracja |
 | P3-5 | 🔒 | 7 kart N na kanon panelu (D1) — „jedną partią PO zamknięciu Idei" (jawnie odroczone) |
 | P3-6 | ⬜ | persystencja Whiteboardu na wspólny silnik; 3 kanały realtime |
-| P3-7 | 🔄 | braki tłumaczeń (collaboration.*, „Lane N", diakrytyki) |
-| P3-8 | ⬜ | polityka flag: jedna flaga = jeden efekt; usunięcie martwych ścieżek |
+| P3-7 | ✅ | braki tłumaczeń (collaboration.*, „Lane N", diakrytyki) |
+| P3-8 | ✅ (fantom usunięty; reszta=rekomendacje) |
 
 ## Zasada
 Przy blokadzie NIE deklaruję sukcesu — zapisuję przyczynę i decyzję człowieka potrzebną do odblokowania (doc 12).
