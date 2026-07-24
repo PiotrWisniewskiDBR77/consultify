@@ -592,7 +592,43 @@ export async function getGlobalUsageStats(): Promise<GlobalUsageStats> {
 }
 
 /**
+ * ★ Limity storage PER PROJEKT nie istnieją w schemacie (2026-07-24).
+ *
+ * `projects` NIE ma kolumn `storage_limit_gb` / `storage_used_bytes` — ani w
+ * `server/migrations/000_initdb_core_tables.sql`, ani w baseline
+ * `server/migrations-v2/001_baseline_20260413.sql` (te kolumny żyją wyłącznie na
+ * `subscription_plans`, czyli na poziomie ORGANIZACJI). Zapytania poniżej były
+ * więc pewnym błędem SQL (42703 undefined_column) na każdym środowisku.
+ *
+ * Skutek dla użytkownika: `enforceProjectQuota` (middleware POST
+ * /api/knowledge/documents) łapał wyjątek, „fail closed" i zwracał 500
+ * `Failed to verify project quota` — czerwony błąd we wnętrzu sejfu Vault przy
+ * KAŻDYM wgraniu dokumentu na poziomie „Projekt". Limit organizacji
+ * (`enforceStorageQuota`) jest sprawdzany osobno, WCZEŚNIEJ w łańcuchu, więc
+ * brak limitu projektowego nie otwiera żadnej dziury — to po prostu funkcja,
+ * której schemat nie ma.
+ *
+ * Rozwiązanie: wykryj brak kolumn RAZ (cache) i traktuj to jak „limit nie
+ * skonfigurowany" = unlimited — dokładnie tak, jak kod już traktuje
+ * `storage_limit_gb IS NULL`. Gdy kolumny kiedyś powstaną (migracja), kod bez
+ * zmiany wraca do liczenia realnego limitu.
+ */
+let projectStorageColumnsAvailable: boolean | null = null;
+
+const PROJECT_QUOTA_UNLIMITED: ProjectQuotaResult = {
+  allowed: true,
+  remaining: Infinity,
+  limit: null,
+  used: 0,
+  percentage: 0,
+};
+
+/**
  * Record project-level storage usage
+ *
+ * `DbPromise.run` z domyślnym `fallback: true` NIE rzuca — zwraca
+ * `{ success:false, error }`. Brak kolumny wyglądał więc jak cicha porażka
+ * zapisu; teraz zapamiętujemy to raz i przestajemy próbować (zero szumu w logach).
  */
 export async function recordProjectStorageUsage(
   projectId: string,
@@ -600,11 +636,21 @@ export async function recordProjectStorageUsage(
   _action: string
 ): Promise<{ projectId: string; bytes: number }> {
   await initDeps();
-  await DbPromise.run(
+  if (projectStorageColumnsAvailable === false) {
+    return { projectId, bytes };
+  }
+  const result = await DbPromise.run(
     db,
     `UPDATE projects SET storage_used_bytes = storage_used_bytes + ? WHERE id = ?`,
     [bytes, projectId]
   );
+  if (!result?.success) {
+    projectStorageColumnsAvailable = false;
+    logger.warn(
+      '[usage] projects.storage_used_bytes niedostępne — pomijam licznik storage per projekt (limity storage są na poziomie organizacji)',
+      { error: result?.error }
+    );
+  }
 
   return { projectId, bytes };
 }
@@ -614,19 +660,42 @@ export async function recordProjectStorageUsage(
  */
 export async function checkProjectQuota(projectId: string): Promise<ProjectQuotaResult> {
   await initDeps();
-  const row = await DbPromise.get<ProjectRow>(
-    db,
-    `SELECT storage_limit_gb, storage_used_bytes FROM projects WHERE id = ?`,
-    [projectId]
-  );
 
-  if (!row) {
+  if (projectStorageColumnsAvailable === false) return PROJECT_QUOTA_UNLIMITED;
+
+  // KROK 1 — czy projekt w ogóle istnieje. Zapytanie po samym `id` nie może paść
+  // na brakującej kolumnie, więc rozróżnia „nie ma projektu" od „nie ma limitów".
+  const exists = await DbPromise.get<{ id: string }>(db, `SELECT id FROM projects WHERE id = ?`, [
+    projectId,
+  ]);
+  if (!exists) {
     throw new Error('Project not found');
   }
 
+  // KROK 2 — limit projektowy. `fallback: false`, żeby błąd SQL był błędem, a nie
+  // niemym `null` nieodróżnialnym od „brak wiersza" (to właśnie ta zamiana dawała
+  // 500 „Failed to verify project quota" przy uploadzie do sejfu projektowego).
+  let row: ProjectRow | null = null;
+  try {
+    row = await DbPromise.get<ProjectRow>(
+      db,
+      `SELECT storage_limit_gb, storage_used_bytes FROM projects WHERE id = ?`,
+      [projectId],
+      { fallback: false }
+    );
+    projectStorageColumnsAvailable = true;
+  } catch (error: unknown) {
+    projectStorageColumnsAvailable = false;
+    logger.warn(
+      '[usage] projects.storage_limit_gb niedostępne — limit storage per projekt nieskonfigurowany, obowiązuje limit organizacji',
+      { error: error instanceof Error ? error.message : String(error) }
+    );
+    return PROJECT_QUOTA_UNLIMITED;
+  }
+
   // If limit is NULL, it means unlimited (or falls back to Org quota which is checked separately)
-  if (row.storage_limit_gb === null) {
-    return { allowed: true, remaining: Infinity, limit: null, used: 0, percentage: 0 };
+  if (!row || row.storage_limit_gb === null || row.storage_limit_gb === undefined) {
+    return PROJECT_QUOTA_UNLIMITED;
   }
 
   const limitBytes = (row.storage_limit_gb || 0) * 1024 * 1024 * 1024;
