@@ -190,3 +190,28 @@ export async function cancelAgentPlan(planId: string): Promise<{ plan: AgentPlan
   });
   return handleResponse<{ plan: AgentPlan }>(res, 'Failed to cancel agent plan');
 }
+
+/**
+ * AGT-011: pozycja biblioteki procesów (ProcessLibrary,
+ * server/src/services/ai/agentPlan/processLibraryService.ts `listProcesses`)
+ * — dla galerii szablonów w zakładce "Szablony" (AgentHubShell).
+ */
+export interface AgentProcessSummary {
+  id: string;
+  label: string;
+  description: string;
+  isDefault: boolean;
+  phaseCount: number;
+}
+
+/** GET /api/ai/agent-plan/processes — biblioteka procesów (classic-5 domyślny, drd wariant). */
+export async function listAgentProcesses(): Promise<{
+  total: number;
+  processes: AgentProcessSummary[];
+}> {
+  const res = await fetch(`${API_URL}/ai/agent-plan/processes`, { headers: getHeaders() });
+  return handleResponse<{ total: number; processes: AgentProcessSummary[] }>(
+    res,
+    'Failed to load process library'
+  );
+}
