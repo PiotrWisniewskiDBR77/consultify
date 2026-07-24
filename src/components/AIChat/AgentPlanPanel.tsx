@@ -138,7 +138,9 @@ function saveStoredBlocks(planId: string, blocks: PlanSchemaBlock[]): void {
  * w select "Narzędzie" w `AgentPlanCanvas` (brak potrzeby duplikować go też
  * w tytule klocka).
  */
-function readablePhaseName(toolInput: Record<string, unknown> | undefined): string | undefined {
+export function readablePhaseName(
+  toolInput: Record<string, unknown> | undefined
+): string | undefined {
   const phase = toolInput?.phase;
   if (typeof phase === 'string' && phase.trim().length > 0) return phase;
   const name = toolInput?.name;

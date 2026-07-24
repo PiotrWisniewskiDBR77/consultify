@@ -8,17 +8,19 @@
  *
  * Ta powłoka wchodzi PRZED AgentPlanWorkspace:
  *   "Moje procesy" — StandardTable nad `listAgentPlans` (GET /api/ai/agent-plan).
- *     Klik w wiersz otwiera AgentPlanWorkspace z `initialPlanId` (ten sam
- *     canvas/panel co dotąd — flow AGT-006/007/009 bez zmian).
+ *     Klik w wiersz otwiera PREVIEW (StandardPreview); "Otwórz" w preview albo
+ *     w kebabie otwiera AgentPlanWorkspace jako KARTĘ w Menu 3 (dynamiczny tab
+ *     z ×) — patrz niżej, poprawka odbioru triady 2026-07-24.
  *   "Szablony" (AGT-011) — StandardTable łącząca dwa źródła:
  *     - bibliotekę PROCESÓW (`listAgentProcesses`, ProcessLibrary — classic-5
  *       domyślny + wariant drd),
  *     - katalog GOTOWYCH ANALIZ (`listAgentManifests({status:'built'})` — 19
  *       wykonalnych z 31 manifestów Discovery Tools).
  *     Kolumna "Typ" (chip) rozróżnia Proces/Gotowa analiza; klik w wiersz
- *     tworzy nowy plan i otwiera canvas — patrz `handleSelectTemplate`.
+ *     otwiera preview, "Użyj szablonu" tworzy nowy plan i otwiera go jako
+ *     kartę — patrz `handleSelectTemplate`.
  *
- * "Nowy proces" (Moje procesy) i wybór wiersza w Szablonach dzielą JEDEN
+ * "Nowy proces" (Moje procesy) i "Użyj szablonu" (Szablony) dzielą JEDEN
  * handler tworzenia (`handleCreatePlan`) — patrz komentarz przy nim.
  * Ścieżka procesu (`processId`) zawsze `draft: true`: backend kładzie
  * schemat i zostawia plan w statusie 'planning' (NIE dispatchuje wykonania —
@@ -27,32 +29,69 @@
  * (`manifestId`) zostaje wstecznie zgodna z katalogiem sprzed AGT-010 —
  * dispatch od razu (canvas otwiera się na już wystartowanym planie).
  *
- * Kanon: consultify-triada (StandardModuleBar Menu2 pigułki + StandardTable
- * facada — zero własnej tabeli/menu) + consultify-gestosc (hub 2 zakładki
- * ≤ 6; jedna akcja "Nowy proces" ma jeden dom — Menu2 primary CTA, nie
- * duplikat w kebabie).
+ * ★ POPRAWKA ODBIORU TRIADY (2026-07-24, zrzuty demo Piotra):
+ * 1. Pigułki "Moje procesy"/"Szablony" przeniesione z lewej strony Menu 2
+ *    (`tabs`) na PRAWĄ, obok CTA (`filterControls` + `Segmented` — jedyny
+ *    gotowy segmented-switcher w repo, `TemplateBuilder/templateBuilderFields`,
+ *    dotąd używany tylko w formularzach, tu pierwszy raz w Menu 2 — zgodnie
+ *    z życzeniem właściciela "jako przełącznik widoku").
+ * 2. Klik w wiersz = PREVIEW (StandardPreview: status, postęp, kroki z
+ *    czytelnymi nazwami, bramki akceptu) — nie od razu pełny ekran.
+ * 3. Kebab uzupełniony do kontraktu `rowMenu` (StandardTable dokłada SAMO
+ *    "Otwórz podgląd/Edytuj/Archiwizuj" + destrukcyjne na końcu) — "Anuluj"
+ *    JEST "Zatrzymaj" (jeden dom akcji, nie dublujemy — gestosc §"jedna akcja
+ *    = jeden dom"). "Duplikuj"/"Uruchom ponownie" pominięte: brak backendu
+ *    (AgentPlan nie niesie processId/manifestId źródłowego, `runAgentPlan`
+ *    działa tylko na planie w statusie 'planning') — zgłoszone w raporcie.
+ * 4. "Otwórz" (preview/kebab) NIE podmienia całego ekranu — dokłada kartę do
+ *    Menu 3 (`openItems`/`activeItemId`/`onSelectItem`/`onCloseItem`,
+ *    mechanizm już wpięty w `StandardModuleBar`→`ModuleNavBar`→`DynamicTabs`,
+ *    dotąd nieużywany przez żaden hub — pierwszy realny konsument).
+ *    Treść karty: `AgentPlanWorkspace` (ArtifactRightPanel — z NATURY wąski
+ *    prawy dok, doktryna "panel-Teresy-zawsze-po-prawej") dostaje TOWARZYSZA
+ *    z lewej — `PlanSummaryCard` (też reużywana w preview) — bo bez niego
+ *    ekran renderował wąski panel przy lewej krawędzi i pustkę z prawej
+ *    (zgłoszony defekt). To NIE jest pełna migracja do `StandardArtifactShell`
+ *    (SPEC-A/Karta-N) — ten kontrakt wymaga sections+aiContract+rightPanel o
+ *    stałych kluczach, czyli osobnego, większego zadania; zgłoszone w raporcie
+ *    z oszacowaniem zamiast robić połowicznie.
+ *
+ * Kanon: consultify-triada (StandardModuleBar Menu2/3 + StandardTable +
+ * StandardPreview — zero własnej tabeli/menu/preview) + consultify-gestosc
+ * (hub 2 zakładki ≤ 6; "Nowy proces" ma jeden dom — Menu2 primary CTA; NIE ma
+ * globalnego "+ New" w topbarze aplikacji — sprawdzone w `MainLayout.tsx`,
+ * każdy hub ma WŁASNY primaryCta w Menu2, identycznie jak AssessmentHub/
+ * DiscoveryToolsHub — więc "Nowy proces" zostaje, nie jest duplikatem).
  */
-import { FileStack, ListChecks, PlayCircle } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import { FileStack, ListChecks, PlayCircle, XCircle } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { OpenDocument } from '@/components/shared/ModuleHub/types';
 import { EmptyState, LoadingState } from '@/components/shared/states';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
+import { StandardPreview } from '@/components/standard/StandardPreview';
 import {
+  type StandardRowMenu,
   StandardTable,
   type TableColumn,
   type TableRow,
 } from '@/components/standard/StandardTable';
+import { Segmented } from '@/components/TemplateBuilder/templateBuilderFields';
 import { EntityStatusChip, MetaChip, StatusChip } from '@/components/ui/primitives/chips';
 import { listAgentManifests } from '@/services/api/agentManifests.api';
 import {
   type AgentPlan,
+  type AgentPlanStatus,
   cancelAgentPlan,
   createAgentPlan,
+  getAgentPlan,
   listAgentPlans,
   listAgentProcesses,
 } from '@/services/api/agentPlan.api';
 
+import { readablePhaseName } from './AgentPlanPanel';
 import { AgentPlanWorkspace } from './AgentPlanWorkspace';
 
 type AgentHubTab = 'processes' | 'templates';
@@ -78,6 +117,127 @@ const formatPlanDate = (iso: string, isPolish: boolean): string => {
   });
 };
 
+const PLAN_STATUS_TONE: Record<
+  AgentPlanStatus,
+  'info' | 'warning' | 'success' | 'danger' | 'neutral'
+> = {
+  planning: 'info',
+  awaiting_approval: 'warning',
+  executing: 'info',
+  paused: 'warning',
+  completed: 'success',
+  completed_with_errors: 'warning',
+  failed: 'danger',
+  cancelled: 'neutral',
+};
+
+// Menu 3 dynamiczny tab wymaga `ItemStatus` (unia zamknięta, inna niż
+// `AgentPlanStatus`) wyłącznie do koloru kropki — najbliższe dopasowanie,
+// nie krytyczne semantycznie (patrz DynamicTabs.tsx `STATUS_COLORS`).
+const PLAN_STATUS_TO_ITEM_STATUS: Record<AgentPlanStatus, OpenDocument['status']> = {
+  planning: 'PLANNING',
+  awaiting_approval: 'PENDING_REVIEW',
+  executing: 'EXECUTING',
+  paused: 'BLOCKED',
+  completed: 'DONE',
+  completed_with_errors: 'DONE',
+  failed: 'BLOCKED',
+  cancelled: 'CANCELLED',
+};
+
+const CANCELLABLE_STATUSES: AgentPlanStatus[] = [
+  'planning',
+  'executing',
+  'awaiting_approval',
+  'paused',
+];
+
+function planStatusLabel(status: AgentPlanStatus, isPolish: boolean): string {
+  const pl: Record<AgentPlanStatus, string> = {
+    planning: 'Planowanie',
+    awaiting_approval: 'Czeka na akceptację',
+    executing: 'W toku',
+    paused: 'Wstrzymany',
+    completed: 'Zakończony',
+    completed_with_errors: 'Zakończony z błędami',
+    failed: 'Nieudany',
+    cancelled: 'Anulowany',
+  };
+  const en: Record<AgentPlanStatus, string> = {
+    planning: 'Planning',
+    awaiting_approval: 'Awaiting approval',
+    executing: 'Executing',
+    paused: 'Paused',
+    completed: 'Completed',
+    completed_with_errors: 'Completed with errors',
+    failed: 'Failed',
+    cancelled: 'Cancelled',
+  };
+  return (isPolish ? pl : en)[status];
+}
+
+/**
+ * Podgląd planu — reużywany w preview (StandardPreview.details/meta) I w
+ * karcie towarzyszącej obok AgentPlanWorkspace (punkt 9). Jeden komponent,
+ * dwa miejsca użycia (gestosc: reuse, nie duplikacja).
+ */
+const PlanSummaryCard: React.FC<{ plan: AgentPlan; isPolish: boolean; compact?: boolean }> = ({
+  plan,
+  isPolish,
+  compact,
+}) => (
+  <div
+    className={
+      compact ? 'space-y-3' : 'space-y-4 rounded-xl border border-c-border-subtle bg-c-surface p-4'
+    }
+  >
+    {!compact ? (
+      <div>
+        <div className="text-sm font-semibold text-c-text">{plan.title}</div>
+        <div className="mt-1 text-xs text-c-text-secondary">
+          {formatPlanDate(plan.createdAt, isPolish)}
+        </div>
+      </div>
+    ) : null}
+    <div className="flex flex-wrap items-center gap-2">
+      <EntityStatusChip status={plan.status} />
+      <MetaChip
+        icon={ListChecks}
+        label={`${plan.completedSteps}/${plan.totalSteps} ${isPolish ? 'kroków' : 'steps'}`}
+      />
+    </div>
+    <div>
+      <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+        {isPolish ? 'Kroki i bramki' : 'Steps and gates'}
+      </div>
+      <ol className="space-y-1 text-xs text-c-text-secondary">
+        {plan.steps.map((step, idx) => (
+          <li key={step.id} className="flex items-start gap-1.5">
+            <span className="tabular-nums text-c-text-muted">{idx + 1}.</span>
+            <span className="flex-1">
+              {readablePhaseName(step.toolInput) ?? step.toolName}
+              {step.requiresApproval ? (
+                <span className="ml-1.5 text-[10px] text-[var(--c-warning)]">
+                  · {isPolish ? 'wymaga akceptacji' : 'requires approval'}
+                </span>
+              ) : null}
+            </span>
+            <span className="shrink-0 text-c-text-muted">{step.status}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+    {plan.resultSummary ? (
+      <div>
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+          {isPolish ? 'Podsumowanie' : 'Summary'}
+        </div>
+        <p className="text-xs text-c-text-secondary">{plan.resultSummary}</p>
+      </div>
+    ) : null}
+  </div>
+);
+
 export const AgentHubShell: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
@@ -85,11 +245,18 @@ export const AgentHubShell: React.FC = () => {
   const [tab, setTab] = useState<AgentHubTab>('processes');
   const [plans, setPlans] = useState<AgentPlan[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [openPlanId, setOpenPlanId] = useState<string | null>(null);
+  const [previewPlanId, setPreviewPlanId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [templates, setTemplates] = useState<TemplateRow[] | null>(null);
   const [templatesError, setTemplatesError] = useState<string | null>(null);
+  const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
+
+  // Menu 3 — karty otwarte (punkt 9: "Otwórz" dokłada tab, nie podmienia ekranu).
+  const [openItems, setOpenItems] = useState<OpenDocument[]>([]);
+  const [activeItemId, setActiveItemId] = useState<string | null>(null);
+  const [activePlanDetail, setActivePlanDetail] = useState<AgentPlan | null>(null);
+  const [activePlanError, setActivePlanError] = useState<string | null>(null);
 
   const fetchPlans = useCallback(() => {
     setLoadError(null);
@@ -101,10 +268,10 @@ export const AgentHubShell: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (tab === 'processes' && !openPlanId) {
+    if (tab === 'processes' && !activeItemId) {
       fetchPlans();
     }
-  }, [tab, openPlanId, fetchPlans]);
+  }, [tab, activeItemId, fetchPlans]);
 
   const fetchTemplates = useCallback(() => {
     setTemplatesError(null);
@@ -136,25 +303,99 @@ export const AgentHubShell: React.FC = () => {
   }, [isPolish]);
 
   useEffect(() => {
-    if (tab === 'templates' && !openPlanId && templates === null) {
+    if (tab === 'templates' && !activeItemId && templates === null) {
       fetchTemplates();
     }
-  }, [tab, openPlanId, templates, fetchTemplates]);
+  }, [tab, activeItemId, templates, fetchTemplates]);
 
-  const handleOpenPlan = useCallback((planId: string) => {
-    setOpenPlanId(planId);
-  }, []);
+  // ── Karta w Menu 3 (punkt 9) ──────────────────────────────────────────────
+  const buildOpenDoc = useCallback(
+    (plan: Pick<AgentPlan, 'id' | 'title' | 'status'>): OpenDocument => ({
+      id: plan.id,
+      type: 'tool',
+      subType: 'agent-plan',
+      name: plan.title,
+      status: PLAN_STATUS_TO_ITEM_STATUS[plan.status],
+    }),
+    []
+  );
 
-  const handleClosePlan = useCallback(() => {
-    setOpenPlanId(null);
+  const openPlanTab = useCallback(
+    (plan: Pick<AgentPlan, 'id' | 'title' | 'status'>) => {
+      setOpenItems((prev) => {
+        const doc = buildOpenDoc(plan);
+        const exists = prev.some((d) => d.id === plan.id);
+        return exists ? prev.map((d) => (d.id === plan.id ? doc : d)) : [...prev, doc];
+      });
+      setActiveItemId(plan.id);
+      setPreviewPlanId(null);
+      setPreviewTemplateId(null);
+    },
+    [buildOpenDoc]
+  );
+
+  const handleOpenPlan = useCallback(
+    (planId: string) => {
+      const existing = plans?.find((p) => p.id === planId);
+      if (existing) {
+        openPlanTab(existing);
+        return;
+      }
+      openPlanTab({
+        id: planId,
+        title: t('agentPlan.hub.openingPlan', isPolish ? 'Proces' : 'Process'),
+        status: 'planning',
+      });
+    },
+    [plans, openPlanTab, t, isPolish]
+  );
+
+  const handleSelectItem = useCallback((id: string) => setActiveItemId(id), []);
+
+  const handleCloseItem = useCallback(
+    (id: string) => {
+      setOpenItems((prev) => prev.filter((d) => d.id !== id));
+      setActiveItemId((current) => (current === id ? null : current));
+      fetchPlans();
+    },
+    [fetchPlans]
+  );
+
+  const handleShowList = useCallback(() => {
+    setActiveItemId(null);
     fetchPlans();
   }, [fetchPlans]);
 
+  // Dociąga pełny plan (kroki, resultSummary) dla karty-towarzysza obok
+  // AgentPlanWorkspace — nie polega WYŁĄCZNIE na liście `plans` (świeżo
+  // utworzony plan z "Nowy proces"/"Użyj szablonu" ma to od razu z odpowiedzi
+  // create; reopens z tabeli/tabów dociągają tu).
+  useEffect(() => {
+    if (!activeItemId) {
+      setActivePlanDetail(null);
+      setActivePlanError(null);
+      return;
+    }
+    let cancelled = false;
+    setActivePlanError(null);
+    getAgentPlan(activeItemId)
+      .then(({ plan }) => {
+        if (!cancelled) setActivePlanDetail(plan);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setActivePlanError(error instanceof Error ? error.message : 'Failed to load plan');
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeItemId]);
+
   /**
    * Jeden handler tworzenia planu — dzielony przez "Nowy proces" (Moje
-   * procesy) i wybór wiersza w Szablonach (AGT-011), tak by nie duplikować
-   * logiki createAgentPlan/setOpenPlanId. `processId` => draft:true (canvas
-   * edytowalny); `manifestId` => brak draft (dispatch od razu, jak dotąd).
+   * procesy) i "Użyj szablonu" (Szablony, AGT-011). `processId` => draft:true
+   * (canvas edytowalny); `manifestId` => brak draft (dispatch od razu).
    */
   const handleCreatePlan = useCallback(
     async (input: { title: string; processId?: string; manifestId?: string; draft?: boolean }) => {
@@ -167,14 +408,15 @@ export const AgentHubShell: React.FC = () => {
           manifestId: input.manifestId,
           draft: input.draft,
         });
-        setOpenPlanId(plan.id);
+        openPlanTab(plan);
+        setActivePlanDetail(plan);
       } catch (error) {
         setCreateError(error instanceof Error ? error.message : 'Failed to create process');
       } finally {
         setCreating(false);
       }
     },
-    []
+    [openPlanTab]
   );
 
   const handleNewProcess = useCallback(
@@ -203,17 +445,13 @@ export const AgentHubShell: React.FC = () => {
       try {
         await cancelAgentPlan(planId);
         fetchPlans();
+        setPreviewPlanId(null);
       } catch {
         /* best-effort — row stays until next refresh */
       }
     },
     [fetchPlans]
   );
-
-  // Plan otwarty → ten sam canvas/panel co dotąd (AGT-007/009), bez zmian.
-  if (openPlanId) {
-    return <AgentPlanWorkspace initialPlanId={openPlanId} onClose={handleClosePlan} />;
-  }
 
   const columns: TableColumn[] = [
     {
@@ -268,6 +506,10 @@ export const AgentHubShell: React.FC = () => {
   ];
 
   const tableRows = (plans ?? []) as unknown as TableRow[];
+  const previewPlan = useMemo(
+    () => plans?.find((p) => p.id === previewPlanId) ?? null,
+    [plans, previewPlanId]
+  );
 
   const renderProcesses = () => {
     if (loadError) {
@@ -312,52 +554,95 @@ export const AgentHubShell: React.FC = () => {
       );
     }
     return (
-      <div className="p-4 pt-3">
-        {createError ? <p className="mb-2 text-xs text-c-danger">{createError}</p> : null}
-        <StandardTable
-          columns={columns}
-          data={tableRows}
-          onRowClick={(row) => handleOpenPlan(String(row.id))}
-          rowActions={(row) => {
-            const plan = row as unknown as AgentPlan;
-            const cancellable = ['planning', 'executing', 'awaiting_approval', 'paused'].includes(
-              plan.status
+      <div className="h-full min-h-0">
+        {createError ? <p className="px-4 pt-3 text-xs text-c-danger">{createError}</p> : null}
+        <TableWithPreviewLayout<{ id: string; title: string }>
+          selectedId={previewPlanId}
+          selectedItem={previewPlan ? { id: previewPlan.id, title: previewPlan.title } : null}
+          onSelect={setPreviewPlanId}
+          onOpenFull={(id) => handleOpenPlan(id)}
+          itemIds={tableRows.map((r) => String(r.id))}
+          renderPreview={() => {
+            if (!previewPlan) return null;
+            const cancellable = CANCELLABLE_STATUSES.includes(previewPlan.status);
+            return (
+              <StandardPreview
+                title={previewPlan.title}
+                onClose={() => setPreviewPlanId(null)}
+                onOpenFull={() => handleOpenPlan(previewPlan.id)}
+                openLabel={t('agentPlan.hub.rowOpen', isPolish ? 'Otwórz' : 'Open')}
+                meta={{
+                  pills: [
+                    {
+                      label: isPolish ? 'Status' : 'Status',
+                      value: planStatusLabel(previewPlan.status, isPolish),
+                      tone: PLAN_STATUS_TONE[previewPlan.status],
+                    },
+                    {
+                      label: isPolish ? 'Postęp' : 'Progress',
+                      value: `${previewPlan.completedSteps}/${previewPlan.totalSteps}`,
+                    },
+                  ],
+                }}
+                actions={
+                  cancellable
+                    ? {
+                        resolutions: [
+                          {
+                            id: 'cancel',
+                            variant: 'destructive',
+                            label: t('agentPlan.hub.rowCancel', isPolish ? 'Anuluj' : 'Cancel'),
+                            icon: XCircle,
+                            onClick: () => void handleCancelPlan(previewPlan.id),
+                          },
+                        ],
+                      }
+                    : undefined
+                }
+              >
+                <PlanSummaryCard plan={previewPlan} isPolish={isPolish} compact />
+              </StandardPreview>
             );
-            return [
-              {
-                id: 'open',
-                kind: 'open',
-                actions: [
-                  {
-                    id: 'open',
-                    label: t('agentPlan.hub.rowOpen', isPolish ? 'Otwórz' : 'Open'),
-                    onClick: () => handleOpenPlan(plan.id),
+          }}
+        >
+          <div className="p-4 pt-3">
+            <StandardTable
+              columns={columns}
+              data={tableRows}
+              selectedRowId={previewPlanId}
+              onRowClick={(row) => setPreviewPlanId(String(row.id))}
+              onRowDoubleClick={(row) => handleOpenPlan(String(row.id))}
+              rowMenu={(row): StandardRowMenu => {
+                const plan = row as unknown as AgentPlan;
+                const cancellable = CANCELLABLE_STATUSES.includes(plan.status);
+                return {
+                  primary: [
+                    {
+                      id: 'open',
+                      label: t('agentPlan.hub.rowOpen', isPolish ? 'Otwórz' : 'Open'),
+                      onClick: () => handleOpenPlan(plan.id),
+                    },
+                  ],
+                  universalHandlers: {
+                    preview: () => setPreviewPlanId(plan.id),
                   },
-                ],
-              },
-              {
-                id: 'danger',
-                kind: 'danger',
-                actions: [
-                  {
-                    id: 'cancel',
+                  destructive: {
                     label: t('agentPlan.hub.rowCancel', isPolish ? 'Anuluj' : 'Cancel'),
-                    variant: 'danger' as const,
-                    disabled: !cancellable,
-                    description: cancellable
+                    icon: XCircle,
+                    onClick: cancellable ? () => void handleCancelPlan(plan.id) : undefined,
+                    note: cancellable
                       ? undefined
                       : t(
                           'agentPlan.hub.rowCancelNote',
                           isPolish ? 'Plan już zakończony' : 'Plan already finished'
                         ),
-                    onClick: () => void handleCancelPlan(plan.id),
                   },
-                ],
-              },
-            ];
-          }}
-          persistKey="agent.myprocesses.list"
-        />
+                };
+              }}
+              persistKey="agent.myprocesses.list"
+            />
+          </div>
+        </TableWithPreviewLayout>
       </div>
     );
   };
@@ -435,6 +720,10 @@ export const AgentHubShell: React.FC = () => {
   ];
 
   const templateRows = (templates ?? []) as unknown as TableRow[];
+  const previewTemplate = useMemo(
+    () => templates?.find((t2) => t2.id === previewTemplateId) ?? null,
+    [templates, previewTemplateId]
+  );
 
   const renderTemplates = () => {
     if (templatesError) {
@@ -472,33 +761,97 @@ export const AgentHubShell: React.FC = () => {
       );
     }
     return (
-      <div className="p-4 pt-3">
-        {createError ? <p className="mb-2 text-xs text-c-danger">{createError}</p> : null}
-        <StandardTable
-          columns={templateColumns}
-          data={templateRows}
-          onRowClick={(row) => handleSelectTemplate(row as unknown as TemplateRow)}
-          rowActions={(row) => {
-            const tpl = row as unknown as TemplateRow;
-            return [
-              {
-                id: 'primary',
-                kind: 'open' as const,
-                actions: [
-                  {
-                    id: 'use',
-                    label: t(
-                      'agentPlan.hub.templates.rowUse',
-                      isPolish ? 'Użyj szablonu' : 'Use template'
-                    ),
-                    onClick: () => handleSelectTemplate(tpl),
-                  },
-                ],
-              },
-            ];
+      <div className="h-full min-h-0">
+        {createError ? <p className="px-4 pt-3 text-xs text-c-danger">{createError}</p> : null}
+        <TableWithPreviewLayout<{ id: string; title: string }>
+          selectedId={previewTemplateId}
+          selectedItem={
+            previewTemplate ? { id: previewTemplate.id, title: previewTemplate.name } : null
+          }
+          onSelect={setPreviewTemplateId}
+          onOpenFull={(id) => {
+            const tpl = templates.find((x) => x.id === id);
+            if (tpl) handleSelectTemplate(tpl);
           }}
-          persistKey="agent.templates.list"
-        />
+          itemIds={templateRows.map((r) => String(r.id))}
+          renderPreview={() => {
+            if (!previewTemplate) return null;
+            return (
+              <StandardPreview
+                title={previewTemplate.name}
+                onClose={() => setPreviewTemplateId(null)}
+                onOpenFull={() => handleSelectTemplate(previewTemplate)}
+                openLabel={t(
+                  'agentPlan.hub.templates.rowUse',
+                  isPolish ? 'Użyj szablonu' : 'Use template'
+                )}
+                meta={{
+                  pills: [
+                    {
+                      label: isPolish ? 'Typ' : 'Type',
+                      value:
+                        previewTemplate.kind === 'process'
+                          ? isPolish
+                            ? 'Proces'
+                            : 'Process'
+                          : isPolish
+                            ? 'Gotowa analiza'
+                            : 'Ready-made analysis',
+                      tone: previewTemplate.kind === 'process' ? 'info' : 'neutral',
+                    },
+                    { label: isPolish ? 'Kroki' : 'Steps', value: previewTemplate.stepCount },
+                  ],
+                }}
+                details={{ text: previewTemplate.description }}
+                actions={{
+                  resolutions: [
+                    {
+                      id: 'use',
+                      variant: 'positive',
+                      label: t(
+                        'agentPlan.hub.templates.rowUse',
+                        isPolish ? 'Użyj szablonu' : 'Use template'
+                      ),
+                      onClick: () => handleSelectTemplate(previewTemplate),
+                    },
+                  ],
+                }}
+              />
+            );
+          }}
+        >
+          <div className="p-4 pt-3">
+            <StandardTable
+              columns={templateColumns}
+              data={templateRows}
+              selectedRowId={previewTemplateId}
+              onRowClick={(row) => setPreviewTemplateId(String(row.id))}
+              onRowDoubleClick={(row) => {
+                const tpl = row as unknown as TemplateRow;
+                handleSelectTemplate(tpl);
+              }}
+              rowMenu={(row): StandardRowMenu => {
+                const tpl = row as unknown as TemplateRow;
+                return {
+                  primary: [
+                    {
+                      id: 'use',
+                      label: t(
+                        'agentPlan.hub.templates.rowUse',
+                        isPolish ? 'Użyj szablonu' : 'Use template'
+                      ),
+                      onClick: () => handleSelectTemplate(tpl),
+                    },
+                  ],
+                  universalHandlers: {
+                    preview: () => setPreviewTemplateId(tpl.id),
+                  },
+                };
+              }}
+              persistKey="agent.templates.list"
+            />
+          </div>
+        </TableWithPreviewLayout>
       </div>
     );
   };
@@ -506,18 +859,26 @@ export const AgentHubShell: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
       <StandardModuleBar
-        tabs={[
-          {
-            id: 'processes',
-            label: t('agentPlan.hub.tabs.processes', isPolish ? 'Moje procesy' : 'My processes'),
-          },
-          {
-            id: 'templates',
-            label: t('agentPlan.hub.tabs.templates', isPolish ? 'Szablony' : 'Templates'),
-          },
-        ]}
-        activeTab={tab}
-        onTabChange={(id) => setTab(id as AgentHubTab)}
+        filterControls={
+          <Segmented<AgentHubTab>
+            value={tab}
+            options={[
+              {
+                value: 'processes',
+                label: t(
+                  'agentPlan.hub.tabs.processes',
+                  isPolish ? 'Moje procesy' : 'My processes'
+                ),
+              },
+              {
+                value: 'templates',
+                label: t('agentPlan.hub.tabs.templates', isPolish ? 'Szablony' : 'Templates'),
+              },
+            ]}
+            onChange={(id) => setTab(id)}
+            testId="agent-hub-mode-switch"
+          />
+        }
         primaryCta={
           tab === 'processes'
             ? {
@@ -529,9 +890,35 @@ export const AgentHubShell: React.FC = () => {
               }
             : undefined
         }
+        openItems={openItems}
+        activeItemId={activeItemId}
+        onSelectItem={handleSelectItem}
+        onCloseItem={handleCloseItem}
+        onShowList={handleShowList}
       />
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {tab === 'processes' ? renderProcesses() : renderTemplates()}
+        {activeItemId ? (
+          <div className="flex h-full min-h-0 overflow-hidden">
+            <div className="flex-1 min-w-0 overflow-y-auto p-4">
+              {activePlanError ? (
+                <EmptyState variant="error" title={activePlanError} className="h-full" />
+              ) : activePlanDetail && activePlanDetail.id === activeItemId ? (
+                <PlanSummaryCard plan={activePlanDetail} isPolish={isPolish} />
+              ) : (
+                <LoadingState template="list" rows={4} />
+              )}
+            </div>
+            <AgentPlanWorkspace
+              key={activeItemId}
+              initialPlanId={activeItemId}
+              onClose={() => handleCloseItem(activeItemId)}
+            />
+          </div>
+        ) : tab === 'processes' ? (
+          renderProcesses()
+        ) : (
+          renderTemplates()
+        )}
       </div>
     </div>
   );

@@ -206,7 +206,19 @@ router.post(
       }
       if (!steps || steps.length === 0) {
         const generated = buildPlanFromManifest(manifest);
-        steps = generated.map(({ toolName, toolInput }) => ({ toolName, toolInput }));
+        // Punkt 10 (odbiór AGT-010/011, 2026-07-24): plany z KATALOGU manifestów
+        // nie niosły `toolInput.phase` — `readablePhaseName()` (frontend,
+        // AgentPlanPanel.tsx/planBuilderService konwersja bloków) spada wtedy na
+        // surowy `toolName` (np. `search_knowledge_base`, `calculate_financial`).
+        // Generator procesu (processLibraryService.buildExecutableSteps) już
+        // wstrzykuje czytelną nazwę do `toolInput.phase` — tu robimy to samo z
+        // `rationale`, które PlanBuilder liczy per-krok już DZIŚ (human-readable,
+        // np. "Growth Paths (Ansoff): gather context on current growth strategy
+        // options") ale dotąd gubiło się w mapowaniu do `{toolName, toolInput}`.
+        steps = generated.map(({ toolName, toolInput, rationale }) => ({
+          toolName,
+          toolInput: { ...toolInput, phase: rationale },
+        }));
         logger.info('[AgentPlanRoutes] PlanBuilder generated steps from manifest', {
           manifestId: body.manifestId,
           stepCount: steps.length,
