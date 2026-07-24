@@ -4610,14 +4610,15 @@ Use userId only from this list:
       // te same handlery renderowały się w 2-3 miejscach naraz.
       label: t('myWork.decisionDetail.label', 'Actions'),
       icon: Save,
-      defaultOpen: true,
       // Pusto TYLKO w trybie Podgląd („do pokazania klientowi") — w Edycji
-      // zawsze zostaje co najmniej „Deleguj".
+      // zawsze zostaje co najmniej „Deleguj". Etap 4 gridu n-Type
+      // (_GRID_STABILIZATION_COMMAND_2026-07-24.md): w Podglądzie sekcja jest
+      // ZWINIĘTA z licznikiem 0, bez komunikatu opisowego (był tu tekst
+      // „Actions are hidden in preview mode" — SSOT go zakazuje wprost).
+      defaultOpen: !readMode,
       isEmpty: readMode,
-      emptyLabel: t(
-        'myWork.decisionDetail.actionsHiddenInReadMode',
-        'Actions are hidden in preview mode'
-      ),
+      badge: readMode ? 0 : undefined,
+      showZeroBadge: true,
       children: readMode ? null : (
         <div className="flex flex-col gap-2">
           {/* 1) Zatwierdzenie decyzji — akcja, po której karta zmienia status.

@@ -9920,22 +9920,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         id: 'actions',
         label: t('initiatives.panel.actions', 'Actions'),
         icon: Sparkles,
-        defaultOpen: true,
         // §6.4: sekcja „Akcje" niesie działania NA REKORDZIE. „Utwórz wariant"
         // (odnoga biznesowa — tworzy nową inicjatywę-wariant) zostaje tu.
         // „Tryb pokazu" NIE jest działaniem na rekordzie, tylko sposobem
         // PREZENTACJI wyniku → przeniesiony do sekcji „Rezultaty" (§6.4/§6.5).
         //
         // ── PODGLĄD = TYLKO CZYTANIE (decyzja właściciela 2026-07-24) ──
-        // Sekcja jest PUSTA w Podglądzie — dokładnie jak w Zadaniu i Decyzji
-        // (wzorzec: `isEmpty: readMode` + `actionsHiddenInReadMode`). Wcześniej
-        // stał tu aktywny „Utwórz wariant", czyli akcja TWORZĄCA nowy obiekt
-        // w trybie, który ma nic nie zmieniać. Chcesz wariant → przełącz na Edycję.
+        // Sekcja jest PUSTA w Podglądzie — dokładnie jak w Zadaniu i Decyzji.
+        // Wcześniej stał tu aktywny „Utwórz wariant", czyli akcja TWORZĄCA
+        // nowy obiekt w trybie, który ma nic nie zmieniać. Chcesz wariant →
+        // przełącz na Edycję. Etap 4 gridu n-Type
+        // (_GRID_STABILIZATION_COMMAND_2026-07-24.md): w Podglądzie sekcja jest
+        // ZWINIĘTA z licznikiem 0, bez komunikatu opisowego (był tu tekst
+        // „Actions are hidden in preview mode" — SSOT go zakazuje wprost).
+        defaultOpen: !readMode,
         isEmpty: readMode,
-        emptyLabel: t(
-          'initiatives.panel.actionsHiddenInReadMode',
-          'Actions are hidden in preview mode'
-        ),
+        badge: readMode ? 0 : undefined,
+        showZeroBadge: true,
         children: readMode ? null : (
           <div className="flex flex-col gap-2">
             <button type="button" onClick={() => void handleFork()} className={panelBtn}>
