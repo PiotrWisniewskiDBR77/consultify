@@ -5462,7 +5462,12 @@ Use userId only from this list:
     // the parent shell renders this inside an overflow-hidden container so
     // min-h-screen content below the fold was unreachable.
     <div className="h-full overflow-y-auto bg-gradient-to-br from-c-surface via-c-surface to-c-surface dark:from-c-bg dark:to-c-bg">
-      <div className="p-6">
+      {/* GEOMETRIA CHROMU (2026-07-24): `pt-4` zamiast `pt-6` — ten sam odstęp
+          od góry co w powłoce `NModeShell` (:153), której trzymają się Wniosek
+          i Narzędzie. Zmierzone na renderze: Menu 1 stało na 24 px w Decyzji /
+          Zadaniu / Powiadomieniu i na 16 px w pozostałych trzech kartach.
+          Boki (`px-6`) i dół (`pb-6`) bez zmian. */}
+      <div className="px-6 pt-4 pb-6">
         <div className="max-w-6xl mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
           <div className="xl:flex-1 xl:min-w-0 space-y-0">
             {/* Main */}
@@ -5505,7 +5510,12 @@ Use userId only from this list:
                Left nav click → shows ONE section at a time (no scroll-all).
                ═══════════════════════════════════════════════════════════════════ */}
             {presentationMode === 'n' && (
-              <div className="col-span-full space-y-4">
+              <div className="col-span-full space-y-4 pt-4">
+                {/* RYTM PIONOWY (2026-07-24): `pt-4` = 16 px między Menu 1 a Menu 2 —
+                    tyle, ile daje powłoka `NModeShell` (mt-2 na pasku + py-2 w środku)
+                    Wnioskowi i Narzędziu. `mt-*` tu NIE DZIAŁA: rodzic ma `space-y-0`,
+                    które nadpisuje margin-top dzieci (wyższa specyficzność selektora
+                    `.space-y-0 > * ~ *`). Dlatego padding, nie margines. */}
                 {/* ── MENU 2 (ETAP 1.2 standardu n-Type) ─────────────────────
                     Wspólny `NModeMenu2`: Sekcje po lewej · Edycja|Podgląd
                     w dokładnym środku geometrycznym · Analizuj z AI (fiolet)
@@ -8995,7 +9005,7 @@ Use userId only from this list:
             )}
           </div>
           {/* ── Dokowany prawy panel artefaktu (xl+; ukryty na <xl) ── */}
-          <div className="hidden xl:block shrink-0 sticky top-6 self-start">
+          <div className="hidden xl:block shrink-0 sticky top-4 self-start">
             <ArtifactRightPanel
               sections={rightPanelSections}
               className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
