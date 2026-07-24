@@ -1,15 +1,42 @@
 # HANDOFF dla następcy sesji (2026-07-24, koniec dnia)
 
-> Piotr przechodzi na drugi plan taryfowy (nowa sesja/kontekst). Ten dokument to pełny stan
-> na moment przekazania. Czytaj PIERWSZY, przed czymkolwiek innym.
+> Piotr przechodzi na drugi plan taryfowy (nowa sesja/kontekst) — obecna sesja skończyła tokeny.
+> Ten dokument to pełny stan na moment przekazania. Czytaj PIERWSZY, przed czymkolwiek innym.
 
-## 0. STAN DEMO TERAZ (zweryfikowane samodzielnie na żywym serwerze)
+## ★★★ STATUS: PIOTR WRACA W NIEDZIELĘ WIECZOREM (jedzie na kajaki)
+
+**Testów NIE BĘDZIE do niedzieli wieczorem.** To zmienia tryb pracy następcy względem tego, co
+było aktywne przez cały ten dzień („daj wszystkie zmiany na demo do testowania jak zrobisz" —
+ten mandat zakładał, że Piotr jest przy komputerze i klika na bieżąco). Teraz nikogo nie ma po
+drugiej stronie przez kilka dni. Konsekwencje praktyczne:
+
+- **Reguła #7 (Piotr nigdy pierwszym testerem) obowiązuje z jeszcze większą siłą** — skoro
+  fizycznie nie ma go, żeby zareagować na coś złego na demo, tym bardziej każda zmiana musi być
+  zweryfikowana renderem WŁASNYM przed jakimkolwiek pushem.
+- **Nie ma potrzeby gonić z promocjami** tak jak dziś (gdzie promowałem partię za partią, bo
+  ktoś czekał po drugiej stronie z gotowością kliknięcia). Następca MOŻE dalej promować
+  zweryfikowane, bezpieczne partie na demo (mandat stały tego nie cofa) — ale rozsądniej jest
+  pracować spokojniej, kończyć spójne całości, i zostawić demo w dobrym, przetestowanym stanie
+  NA NIEDZIELĘ, zamiast wysyłać coś w piątek w nocy i mieć nadzieję, że nikt tego nie zobaczy
+  zepsutego przez 2 dni.
+- **Priorytet:** jeśli następca skończy jakiś spójny kawałek pracy w czwartek/piątek/sobotę,
+  wart jest jeden ostatni przegląd w niedzielę po południu — świeży `git fetch`, świeży render
+  wszystkich dotkniętych ekranów, dopiero potem ewentualny ostatni push — żeby to, co Piotr
+  zobaczy w niedzielę wieczorem, było najlepszą możliwą wersją, nie przypadkowym stanem z
+  środka nocy.
+- Jeśli następca dostanie od Piotra WIADOMOŚĆ (nie feedback z klikania, tylko tekst) w tym
+  okresie — to oczywiście ma pierwszeństwo przed wszystkim tutaj.
+
+## 0. STAN DEMO NA MOMENT PRZEKAZANIA (zweryfikowane samodzielnie na żywym serwerze)
 `https://demo.consultify.ai/api/health` → **gitSha `553fbf3015`**, branch `demo`, database+redis
 connected, HTTP 200. Ostatni commit: „merge(grid): stabilizacja gridu n-Type — 6 kart do wspólnej
 powłoki (Etap 7 — zamknięcie zakresu)".
 
-**Piotr właśnie zaczyna testować ten stan.** Jego feedback z klikania jeszcze NIE dotarł do tego
-dokumentu — jeśli następca dostanie od niego uwagi, mają PIERWSZEŃSTWO przed wszystkim poniżej.
+★ **To jest stan NIEZATESTOWANY przez Piotra.** Ostatni stan, który on realnie zaakceptował
+oczami, to tag `demo-safe-2026-07-24` (`97f466bd98`) z rana — wszystko po tym (cała fala napraw
++ cały program stabilizacji gridu) poszło na jego STAŁĄ autoryzację promocji, nie na jego
+bezpośrednie „widziałem, akceptuję". To nie jest problem — taki był dogadany tryb pracy tego
+dnia — ale następca powinien to rozumieć: „gotowe do testowania" ≠ „przetestowane".
 
 ## 1. CO SIĘ WYDARZYŁO TEGO DNIA (chronologia)
 
@@ -164,35 +191,126 @@ Dokumenty źródłowe (czytaj w tej kolejności jeśli potrzeba więcej detalu):
 ## 7. ★★★ PROMPT DLA NASTĘPCY (wklej na start nowej sesji) ★★★
 
 ```
-Kontynuuję pracę nad Consultify po przekazaniu sesji (2026-07-24, koniec dnia, poprzednia
-sesja skończyła tokeny). PRZECZYTAJ NAJPIERW w całości:
-Harvard/wdrozenie-100/_HANDOFF_NASTEPCA_2026-07-24.md
+Kontynuuję pracę nad Consultify po przekazaniu sesji. Poprzednia sesja skończyła tokeny
+2026-07-24 wieczorem, w trakcie mandatu obejmującego naprawę produktu po nocnej pętli i pełny
+program stabilizacji gridu n-Type. Zanim zrobię cokolwiek, czytam w całości:
+Harvard/wdrozenie-100/_HANDOFF_NASTEPCA_2026-07-24.md — ten prompt jest jego streszczeniem,
+nie zastępstwem; szczegóły, dowody i numery linii są tam.
 
-Skrót: demo = 553fbf3015 (zweryfikuj samodzielnie na /api/health, mogło ruszyć dalej pod
-innymi sesjami — sprawdź git fetch od razu). Cały dzień: noc naprawcza (5,9→7,1) → promocja
-poranna zaakceptowana (demo-safe-2026-07-24) → mandat "jedź aż wszystko gotowe" → fala napraw
-(atrapy AI, bramki fałszywej zieleni, crimson, polszczyzna) → runda 3 sędziów 8,37 → "gotowe
-do testowania" → PEŁNY program stabilizacji gridu n-Type wg specyfikacji Piotra (7 etapów,
-wszystkie wykonane i zweryfikowane) → promocja finalna.
+## Kim jest Piotr i jak z nim pracować
 
-PIERWSZE KROKI:
-1. Sprawdź, czy Piotr dał feedback z testów (jeśli tak — ma PIERWSZEŃSTWO przed wszystkim
-   w handoff docu, zacznij od niego).
-2. Sprawdź status 3 równoległych sesji Piotra (sekcja 3 handoff docu) — mogły się skończyć.
-3. git fetch origin — demo mogło uciec pod innymi sesjami (wzorzec z całego dnia: uciekało
-   ~6×). Zweryfikuj SAMODZIELNIE gitSha na https://demo.consultify.ai/api/health, nie ufaj
-   liczbie z pamięci.
-4. Jeśli Piotr zgłosi regresję wizualną — sprawdź najpierw czy to zmiana Z DZISIAJ (grid
-   stabilization zmienił WSZYSTKIE 6 kart naraz — panele 216/320px, scroll lewego panelu,
-   jeden fiolet AI, brak "Actions hidden" w Preview) zanim uznasz to za bug. To mogła być
-   zamierzona zmiana, o której nie wie.
+Piotr jest właścicielem i CEO Consultify — AI-native systemu realizacji doradztwa, nie
+generycznego SaaS-dashboardu. Nie jest programistą — myśli produktowo i strategicznie, mówi
+po polsku, krótko, i najlepiej rozumie rzeczy pokazane obrazkiem niż opisane słowami. Nadał mi
+(poprzedniej sesji) mandat CTO: decyzje techniczne — architektura, kompromisy, kolejność prac —
+podejmuję sam i raportuję z uzasadnieniem, zamiast odsyłać każde pytanie do niego. To wciąż
+obowiązuje. Nie pytaj go o rzeczy techniczne, które możesz rozstrzygnąć sam z dobrym uzasadnieniem
+— pytaj tylko o decyzje produktowe/wizualne, których nie da się wywnioskować z kontekstu.
 
-ZASADY NIENARUSZALNE (z CLAUDE.md + dzisiejszych lekcji, sekcja 5 handoff docu):
-- Piotr NIGDY nie jest pierwszym testerem wizualnym — renderuj i sprawdzaj sam PRZED pokazaniem.
-- Demo = święte, merge nie force/reset. Migracje tylko ręcznie na trolley:28146, NIGDY centerbeam.
-- Crimson-check na CAŁYM diffie vs origin/demo, nie tylko własnych plikach.
-- Bramki mogą dawać fałszywą zieleń na czystym drzewie — sprawdź że faktycznie coś zbadały.
-- Jesteś CTO — decyzje techniczne podejmuj sam z uzasadnieniem, nie odsyłaj bez potrzeby.
+Dwie zasady w CLAUDE.md mają za sobą prawdziwe incydenty, więc nie są formalnością:
+- **Piotr nigdy nie jest pierwszym testerem wizualnym.** Powód: załamanie 11 lipca, nazwane w
+  dokumentacji „gwiazda" — Piotr zobaczył zepsuty ekran jako pierwszy i było to bolesne dla
+  zaufania do całej pracy. Od tamtej pory: ZAWSZE render + zrzut własny, ZANIM cokolwiek trafi
+  przed jego oczy, nawet na demo za flagą.
+- **Zakaz masowego włączania.** Powód: krach 12 lipca, „tabelki jak dla trzylatka" — ktoś
+  włączył naraz wiele flag wizualnych na żywo i rozjechało to ekrany. Odtąd: jeden ekran na
+  raz, po akcepcie, nigdy hurtem.
 
-Czekam na Twoje pierwsze pytanie/zadanie.
+## Czym jest ten dzień pracy, którą przejmuję
+
+To była jedna, bardzo długa sesja, która przeszła przez kilka faz, każda z innym mandatem od
+Piotra, i każda budowała na poprzedniej:
+
+Zaczęło się od **nocnej pętli naprawczej** — Piotr poszedł spać z poleceniem „pracuj w kółko,
+aż trzej niezależni sędziowie (Grafika, Merytoryka, IT) ocenią produkt średnio na 9,5 z 10".
+Nie udało się dobić do 9,5 — skończyło na 7,1 (start był 5,9) — i to zostało powiedziane wprost
+w porannym raporcie, żadnego naciągania liczb. Ale sama noc była wartościowa: wycięto dwanaście
+rodzin kodu, który UDAWAŁ, że sztuczna inteligencja działa — zaszyte na sztywno odpowiedzi,
+sztuczne opóźnienia symulujące „myślenie", fallbacki które po cichu meldowały sukces mimo awarii.
+To jest temat, który wraca przez cały dzień: produkt miał tendencję do UDAWANIA, że coś działa,
+zamiast albo działać naprawdę, albo uczciwie powiedzieć że nie działa. Duża część dzisiejszej
+pracy to tropienie i likwidowanie tego wzorca w różnych miejscach.
+
+Rano Piotr obejrzał wyniki, zaakceptował promocję na demo (tag `demo-safe-2026-07-24` — to jest
+JEGO OSTATNI realny, oczami zweryfikowany akcept w tym dniu, zapamiętaj ten fakt) i wydał nowy,
+szerszy mandat: „jedź tak długo, aż zrealizujesz wszystko, wypchnij na demo, posprzątaj gałęzie,
+i dopiero wtedy daj mi jasny sygnał że jesteśmy gotowi do testowania". Chwilę później rozszerzył
+to jeszcze: „każdą kolejną gotową partię wypychaj na demo sama, bez pytania mnie za każdym razem
+o zgodę — chcę móc kliknąć i dać feedback, kiedy będę gotowy". To jest WAŻNE rozróżnienie od
+zasady #7 — nie chodzi o to, że Piotr zgodził się być pierwszym testerem. Chodzi o to, że
+zdjął wymóg pytania go o zgodę na PROMOCJĘ, pod warunkiem że JA nadal jestem pierwszym
+testerem (render + zrzut własny) PRZED każdym pushem. Ta autoryzacja jest wciąż aktywna i nie
+wygasła — ale teraz, gdy Piotr wyjeżdża na kilka dni, sensowniej jest pracować spokojniej niż
+gonić z każdą partią, bo nikt po drugiej stronie nie czeka z kliknięciem (patrz sekcja „STATUS"
+na górze dokumentu handoff).
+
+Pod tym mandatem poszła długa fala napraw produktu: przywrócony ślad audytowy AI (wywołania
+modelu przestały trafiać do rejestru administratora — regresja z nocy, teraz naprawiona jednym
+punktem w kodzie, który obsługuje WSZYSTKIE narzędzia naraz), pasek statusu przestał zmyślać
+„Szkic" gdy nie ma prawdziwego rekordu, eksport danych przestał obiecywać e-mail którego nikt
+nie wysyła, jeden kolor został przywrócony tam gdzie łamał zakaz czerwieni jako koloru marki
+(reguła #3 CLAUDE.md), sto dziewięćdziesiąt angielskich fraz w polskim pliku tłumaczeń zostało
+przetłumaczonych, tysiąc pięćset linii martwego kodu usunięte (przy czym jeden plik omal nie
+padł niesłusznie — sędzia IT twierdził że jest martwy, a był żywy, uratowany bo ktoś sprawdził
+zamiast zaufać raportowi). Po drodze naprawiono też DWIE bramki jakości, które od jakiegoś
+czasu kłamały — dawały zielone światło, nie sprawdzając w rzeczywistości niczego (jedna miała
+wzorzec wyszukiwania, który wywalał się cicho na tym systemie operacyjnym; druga uznawała
+„zero sprawdzonych plików" za sukces zamiast za ostrzeżenie). To jest wzorzec, na który warto
+uważać dalej: narzędzia, którym ufamy, że nas ostrzegą, same potrafią kłamać, i trzeba to
+sprawdzać, nie zakładać.
+
+Trzecia runda trzech sędziów (pierwszy uczciwy pomiar od czasu 7,1) dała **8,37** — realny
+postęp, choć wciąż poniżej pierwotnego celu 9,5. To zostało zamknięte jako „gotowe do
+testowania", nie jako „ideał osiągnięty" — te dwa stany nie są tożsame i warto je rozróżniać
+przy rozmowie z Piotrem.
+
+Na koniec Piotr sam dostarczył **pełną, bardzo precyzyjną specyfikację** — dokument opisujący
+dokładnie, jak ma wyglądać wspólny „grid" (układ, szerokości, menu, prawy panel) wszystkich
+sześciu kart typu n (Zadanie, Decyzja, Insight, Inicjatywa, Narzędzie, Powiadomienie) — z
+poleceniem „wykonaj zmiany, trzeba to zamknąć i ustabilizować". Ten dokument
+(`_GRID_STABILIZATION_COMMAND_2026-07-24.md`) został wykonany od deski do deski, w siedmiu
+etapach dokładnie takich, jak sam zalecał: audyt, tokeny, menu, prawy panel, karta po karcie,
+QA na trzech szerokościach ekranu, i zamknięcie. Po drodze złapano i naprawiono realną
+regresję, której żaden pojedynczy etap by nie zobaczył — prawy panel z Akcjami/Właściwościami/
+Komentarzami/Historią CAŁKOWICIE ZNIKAŁ na najwęższej, wciąż wspieranej szerokości ekranu w
+trzech z sześciu kart. Złapało to dopiero QA testujące trzecią szerokość, bo wcześniejsze
+fronty testowały tylko dwie. To jest dobry przykład na to, dlaczego etap „QA na wszystkich
+wymaganych szerokościach" nie jest formalnością — to jedyny moment, który znajduje błędy
+powstające na PRZECIĘCIU dobrych zmian, nie w żadnej z nich osobno.
+
+## Co jest otwarte i wymaga uwagi następcy
+
+Trzy sesje, które Piotr sam odpalił lokalnie i które działają niezależnie ode mnie — nie mam
+wglądu w ich postęp, trzeba sprawdzić czy żyją i co zrobiły: poprawka kontrastu tekstu na
+tabeli pomysłów w trybie ciemnym; zamiana surowej angielskiej wartości „medium" na tłumaczenie
+w polu pewności karty Insight; i największa z nich — modernizacja komponentu `StandardArtifactShell`
+(dzisiejszy program ujednolicił SZEROKOŚCI i geometrię sześciu kart, ale sam komponent wspólnej
+powłoki wciąż nie przyjmuje ich dzisiejszego menu ani gotowego prawego panelu — to osobny,
+większy projekt architektoniczny, nie mylić z dzisiejszą stabilizacją gridu).
+
+Zanim dotkniesz plików, które mogły być w zakresie tamtych trzech sesji, sprawdź czy nie
+kolidujesz — dziś kilka razy różne fronty pracy wchodziły sobie w drogę na tych samych plikach,
+i za każdym razem kosztowało to dodatkową rundę weryfikacji.
+
+## Pierwsze kroki po przeczytaniu handoff docu
+
+Sprawdź najpierw, czy w tej rozmowie jest już jakaś wiadomość od Piotra — jeśli tak, ma
+pierwszeństwo przed wszystkim powyżej, potraktuj to jako aktualizację, nie jako coś do
+zignorowania na rzecz starego planu. Jeśli nie ma — zrób `git fetch` i zweryfikuj SAMODZIELNIE
+(nie z pamięci) aktualny `gitSha` na `https://demo.consultify.ai/api/health`, bo demo potrafiło
+w ciągu jednego dnia uciec pod innymi sesjami sześć razy. Jeśli Piotr w niedzielę zgłosi coś,
+co wygląda jak zepsucie — sprawdź najpierw, czy to nie jest ZAMIERZONA zmiana z dzisiejszego
+programu gridu (inne szerokości paneli, panel który teraz przewija się zamiast rosnąć bez
+końca, zniknięty komunikat o ukrytych akcjach w trybie podglądu, jeden spójny fiolet zamiast
+dwóch) — o czym może po prostu nie wiedzieć, bo nie widział jeszcze na oczy.
+
+Zasady, których nie łamię niezależnie od tego, co robię dalej: demo jest święte — nigdy force
+push, nigdy reset, migracje bazy tylko ręcznie na właściwym hoście (trolley, nigdy centerbeam/
+produkcja) i tylko po świadomej decyzji. Sprawdzam CAŁY diff względem demo pod kątem
+niedozwolonego koloru marki, nie tylko pliki które sam dotknąłem — bo scalenie cudzej pracy
+potrafi po cichu cofnąć czyjąś wcześniejszą naprawę. I nie ufam bramce jakości, dopóki nie
+sprawdzę, że faktycznie coś sprawdziła, a nie tylko powiedziała „OK" bo nic nie miała do
+zbadania.
+
+Czekam na Twoje pierwsze pytanie albo zadanie.
 ```
