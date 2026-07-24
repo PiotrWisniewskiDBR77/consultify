@@ -3516,12 +3516,17 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     activeSection={activeNSection}
                     onSectionChange={setActiveNSection}
                   />
-                  <NModeCanvas
-                    sections={orderedNModeSections}
-                    activeSection={activeNSection}
-                    reducedMotion={reducedMotion}
-                    motionDuration={motionDuration}
-                  />
+                  <div
+                    className="flex-1 min-w-0"
+                    style={{ maxWidth: 'var(--ntype-content-document-max-width)' }}
+                  >
+                    <NModeCanvas
+                      sections={orderedNModeSections}
+                      activeSection={activeNSection}
+                      reducedMotion={reducedMotion}
+                      motionDuration={motionDuration}
+                    />
+                  </div>
                 </div>
 
                 {/* ── ETAP 3: panel wyników „Analizuj z AI" ──────────────────

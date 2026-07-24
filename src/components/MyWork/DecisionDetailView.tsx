@@ -5710,7 +5710,10 @@ Use userId only from this list:
                       kanwy (nie NModeCanvas), więc duplikat pl-6 trzeba było zdjąć
                       tu osobno, inaczej odstęp podwajał się do 48px (SSOT:
                       _GRID_STABILIZATION_COMMAND_2026-07-24). */}
-                  <div className="flex-1 pt-1 min-w-0">
+                  <div
+                    className="flex-1 pt-1 min-w-0"
+                    style={{ maxWidth: 'var(--ntype-content-document-max-width)' }}
+                  >
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={activeNotionSection}

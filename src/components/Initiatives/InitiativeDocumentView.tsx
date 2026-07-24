@@ -11558,7 +11558,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                (GripVertical) są ukryte. */
                             readMode={readMode}
                           />
-                          <div className="flex-1 min-w-0 flex flex-col">
+                          <div
+                            className="flex-1 min-w-0 flex flex-col"
+                            style={{ maxWidth: 'var(--ntype-content-document-max-width)' }}
+                          >
                             <NModeCanvas
                               sections={orderedNModeSectionsWithContent}
                               activeSection={activeNSection}
