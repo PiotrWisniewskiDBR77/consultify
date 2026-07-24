@@ -2887,7 +2887,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     if (!lastSavedAt) return 'Draft';
     const sec = Math.max(1, Math.round((Date.now() - lastSavedAt) / 1000));
     return t('mindmap.savedSecondsAgo', { count: sec });
-  }, [isPolish, lastSavedAt, saving]);
+    // `t` MUSI byc w zaleznosciach: tlumaczenia doladowuja sie asynchronicznie
+    // (HttpBackend), wiec memo policzone przy pierwszym renderze zwracalo SUROWY
+    // KLUCZ („mindmap.savedSecondsAgo") i bez `t` nigdy sie nie przeliczalo.
+  }, [t, isPolish, lastSavedAt, saving]);
   const activeToolLabel = useMemo(
     () => getIdeaWorkspaceToolLabel(activeTool, Boolean(isPolish)),
     [activeTool, isPolish]
