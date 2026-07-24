@@ -259,5 +259,13 @@ if [ "$fail" -eq 1 ]; then
   echo "  DOKTRYNA GĘSTOŚCI: docs/ui-standards/DOKTRYNA_GESTOSCI.md §3/§1." >&2
   exit 1
 fi
+if [ "$checked" -eq 0 ]; then
+  # ★ Zero sprawdzonych plików ≠ "czysto" (ta sama choroba co w check-triada.sh,
+  # §8 audytu 2026-07-24). Na czystym drzewie diff jest pusty i bramka nie widzi
+  # NICZEGO — samo "✓ sprawdzono 0" czytało się jako zielone światło.
+  echo "⚠ check-gestosc: sprawdzono 0 plików — NIC nie zweryfikowano (nie mylić z 'czysto')." >&2
+  echo "  Uruchom z treścią w stagingu lub podaj pliki jawnie: check-gestosc.sh <plik...>." >&2
+  exit 0
+fi
 echo "✓ check-gestosc: brak regresji mechanicznych (sprawdzono plików: $checked)"
 exit 0
