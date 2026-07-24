@@ -117,6 +117,71 @@ export function getGeneratorStatus(
   return GENERATOR_STATUS_MAP[generatorType] || 'partial';
 }
 
+// ── Język odpowiedzi AI ───────────────────────────────────────────────────────
+// Wszystkie ekrany Idei wysyłają `context.language = i18n.language`, czyli USTAWIENIE
+// INTERFEJSU. Przy polskiej mapie i interfejsie EN model dostawał angielski prompt i
+// odpowiadał po angielsku (defekt: „AI Blind Spots" po angielsku nad mapą „Wejście na
+// rynek DACH"). Tutaj — w JEDNYM miejscu dla wszystkich generatorów — nadpisujemy
+// `language` językiem wywnioskowanym z TREŚCI, gdy treść rozstrzyga.
+// Backend robi to samo (`server/src/services/ai/responseLanguage.ts`) i tam leży
+// ostateczna decyzja; ta warstwa dba o to, żeby żądanie wychodziło już spójne.
+
+const PL_DIACRITICS = /[ąćęłńóśźż]/i;
+
+const PL_MARKERS =
+  /(^|[^\p{L}])(i|w|we|na|do|od|nie|tak|jest|są|być|dla|oraz|albo|lub|że|się|przez|pod|nad|przy|po|za|ten|ta|to|te|który|która|które|jak|czy|ale|już|może|mamy|nasz|nasza|nasze|rynek|rynku|wejście|klient|klienci|klientów|firma|firmy|koszt|koszty|ryzyko|ryzyka|cel|cele|produkt|sprzedaż|wdrożenie|analiza|proces|dane|zespół|plan|etap|etapy)([^\p{L}]|$)/giu;
+
+const EN_MARKERS =
+  /(^|[^\p{L}])(the|and|of|to|for|with|is|are|be|this|that|these|those|from|into|about|our|your|their|which|what|how|market|customer|customers|company|cost|costs|risk|risks|goal|goals|product|sales|rollout|analysis|process|data|team|plan|stage|stages)([^\p{L}]|$)/giu;
+
+/** Wykrywa język treści; `null` = sygnał za słaby, żeby cokolwiek rozstrzygać. */
+export function detectContentLanguage(
+  samples: Array<string | null | undefined>
+): 'pl' | 'en' | null {
+  const text = samples
+    .map((s) => String(s || '').trim())
+    .filter(Boolean)
+    .join(' \n ')
+    .slice(0, 4000);
+
+  if (text.replace(/[^\p{L}]/gu, '').length < 12) return null;
+
+  const plHits = (text.match(PL_MARKERS)?.length || 0) + (PL_DIACRITICS.test(text) ? 3 : 0);
+  const enHits = text.match(EN_MARKERS)?.length || 0;
+
+  if (plHits >= 2 && plHits > enHits) return 'pl';
+  if (enHits >= 2 && enHits > plHits) return 'en';
+  return null;
+}
+
+/**
+ * Zwraca kontekst z językiem ustalonym wg reguły: TREŚĆ → ustawienie UI → 'en'.
+ * Stosowane w każdym eksporcie tego modułu, więc żaden ekran nie musi tego powtarzać.
+ */
+export function withResolvedLanguage(context: GeneratorContext): GeneratorContext {
+  const detected = detectContentLanguage([
+    context.title,
+    context.seedText,
+    context.branch,
+    context.area,
+    context.targetNodeLabel,
+    ...(Array.isArray(context.existingNodes) ? context.existingNodes : [])
+      .slice(0, 60)
+      .map((n: any) => String(n?.data?.label || n?.label || '')),
+    ...(Array.isArray(context.existingLanes) ? context.existingLanes : [])
+      .slice(0, 20)
+      .map((l: any) => String(l?.label || '')),
+  ]);
+
+  const fallback = String(context.language || '')
+    .toLowerCase()
+    .startsWith('pl')
+    ? 'pl'
+    : 'en';
+
+  return { ...context, language: detected || fallback };
+}
+
 export async function generateAIProposal(params: {
   ideaId: string;
   generatorType: GeneratorType;
@@ -126,7 +191,7 @@ export async function generateAIProposal(params: {
   const result = await Api.generateIdeaAI(params.ideaId, {
     generatorType: params.generatorType,
     tool: params.tool,
-    context: params.context,
+    context: withResolvedLanguage(params.context),
   });
   const batch = result as AIProposalBatch;
   return {
@@ -156,7 +221,7 @@ export async function generateAISuggestions(params: {
   const result = await Api.generateIdeaAI(params.ideaId, {
     generatorType: 'suggestions',
     tool: params.tool,
-    context: params.context,
+    context: withResolvedLanguage(params.context),
   });
   const suggestions = (result as any)?.suggestions;
   if (Array.isArray(suggestions)) {
@@ -181,8 +246,15 @@ export async function expandNodeWithAI(params: {
   const result = await Api.generateIdeaAI(params.ideaId, {
     generatorType: 'node_expand',
     tool: params.tool,
+    // Język ustalamy na ORYGINALNEJ treści (etykieta/opis węzła + mapa) PRZED podmianą
+    // seedText — inaczej angielski szablon „Focus on node: …" sam przechyliłby detekcję na EN.
     context: {
-      ...params.context,
+      ...withResolvedLanguage({
+        ...params.context,
+        targetNodeLabel:
+          params.context.targetNodeLabel ||
+          [params.nodeData.label, params.nodeData.description].filter(Boolean).join(' — '),
+      }),
       seedText: `Focus on node: "${params.nodeData.label}"${params.nodeData.description ? `\nDescription: ${params.nodeData.description}` : ''}`,
     },
   });
@@ -196,7 +268,7 @@ export async function runProcessCoach(params: {
   const result = await Api.generateIdeaAI(params.ideaId, {
     generatorType: 'process_coach',
     tool: 'process_flow',
-    context: params.context,
+    context: withResolvedLanguage(params.context),
   });
   return result;
 }
@@ -208,7 +280,7 @@ export async function generateProcessSummary(params: {
   const result = await Api.generateIdeaAI(params.ideaId, {
     generatorType: 'process_summary',
     tool: 'process_flow',
-    context: params.context,
+    context: withResolvedLanguage(params.context),
   });
   return result;
 }
