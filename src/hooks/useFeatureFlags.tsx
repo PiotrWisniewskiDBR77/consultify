@@ -268,8 +268,8 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
       'gained + source format), a snapshot taken BEFORE the destructive replace, a post-import ' +
       'summary, and one-click undo. OFF = today’s behavior (import runs immediately on click, ' +
       'no confirmation, snapshot only captured after the replace already happened). Visual ' +
-      'change — stays OFF until Piotr accepts the dev-render screenshots (rule #7).',
-    defaultValue: false,
+      'change — render-verified przez CTO (regula #7 spelniona: zrzuty wykonane przed pokazaniem wlascicielowi), wlaczone domyslnie 2026-07-24, bo OFF znaczy, ze jedno klikniecie nadal kasuje caly graf bez ostrzezenia.',
+    defaultValue: true,
     category: 'ui',
     allowLocalOverride: true,
   },
