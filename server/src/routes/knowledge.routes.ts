@@ -893,6 +893,138 @@ router.get(
 );
 
 /**
+ * GET /api/knowledge/vault-safes
+ * ★ VLT-005 — warstwa tabeli sejfów PRZED narzędziem Vault (menu → tabela → dokumenty).
+ * Sejf = klient/projekt (decyzja Piotra, zero nowej tabeli) — reużywa `knowledge_docs.scope`
+ * + `project_members` (ta sama lista co `/projects/my-memberships`, patrz
+ * getMemberProjectIds powyżej). Zwraca [Mój sejf] (scope=user, tylko dokumenty
+ * właściciela) + [Sejf organizacji] (scope=organization) + po jednym na projekt, w
+ * którym wołający jest członkiem — z licznikiem dokumentów i datą ostatniej zmiany,
+ * jednym zapytaniem GROUP BY (bez N+1).
+ */
+router.get(
+  '/vault-safes',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+      const memberProjectIds = await getMemberProjectIds(userId);
+
+      const grouped = await DbPromise.all<{
+        scope: string | null;
+        project_id: string | null;
+        owner_id: string | null;
+        cnt: number;
+        last_modified: string | null;
+      }>(
+        `SELECT scope, project_id, owner_id, COUNT(*) as cnt, MAX(updated_at) as last_modified
+         FROM knowledge_docs
+         WHERE (organization_id = ? OR organization_id IS NULL) AND deleted_at IS NULL
+         GROUP BY scope, project_id, owner_id`,
+        [orgId],
+        { fallback: true } as any
+      );
+      const rows = grouped || [];
+
+      const mergeLatest = (a: string | null, b: string | null): string | null => {
+        if (!a) return b;
+        if (!b) return a;
+        return new Date(a).getTime() >= new Date(b).getTime() ? a : b;
+      };
+
+      // [Mój sejf] — WYŁĄCZNIE dokumenty prywatne (scope='user'), których
+      // właścicielem jest wołający (nie inni userzy organizacji).
+      let myCount = 0;
+      let myLast: string | null = null;
+      // [Sejf organizacji] — scope='organization' (albo NULL, patrz KnowledgeService.getDocuments).
+      let orgCount = 0;
+      let orgLast: string | null = null;
+      // Sejfy per projekt — scope='project', policzone tylko dla projektów,
+      // w których wołający jest członkiem (memberProjectIds).
+      const projectCounts = new Map<string, { cnt: number; last: string | null }>();
+
+      for (const row of rows) {
+        const cnt = Number(row.cnt) || 0;
+        if (row.scope === 'user') {
+          if (String(row.owner_id || '') === String(userId)) {
+            myCount += cnt;
+            myLast = mergeLatest(myLast, row.last_modified);
+          }
+        } else if (row.scope === 'organization' || !row.scope) {
+          orgCount += cnt;
+          orgLast = mergeLatest(orgLast, row.last_modified);
+        } else if (row.scope === 'project' && row.project_id) {
+          const pid = String(row.project_id);
+          if (memberProjectIds.includes(pid)) {
+            const prev = projectCounts.get(pid) || { cnt: 0, last: null };
+            projectCounts.set(pid, {
+              cnt: prev.cnt + cnt,
+              last: mergeLatest(prev.last, row.last_modified),
+            });
+          }
+        }
+      }
+
+      let projectNames = new Map<string, string>();
+      if (memberProjectIds.length > 0) {
+        const placeholders = memberProjectIds.map(() => '?').join(',');
+        const projectRows = await DbPromise.all<{ id: string; name: string }>(
+          `SELECT id, name FROM projects WHERE id IN (${placeholders})`,
+          memberProjectIds,
+          { fallback: true } as any
+        );
+        projectNames = new Map((projectRows || []).map((p) => [String(p.id), String(p.name)]));
+      }
+
+      const safes = [
+        {
+          id: 'user',
+          type: 'user' as const,
+          projectId: null,
+          name: 'Mój sejf',
+          documentCount: myCount,
+          lastModified: myLast,
+        },
+        {
+          id: 'organization',
+          type: 'organization' as const,
+          projectId: null,
+          name: 'Sejf organizacji',
+          documentCount: orgCount,
+          lastModified: orgLast,
+        },
+        ...memberProjectIds.map((pid) => {
+          const counted = projectCounts.get(pid) || { cnt: 0, last: null };
+          return {
+            id: `project:${pid}`,
+            type: 'project' as const,
+            projectId: pid,
+            name: projectNames.get(pid) || 'Untitled project',
+            documentCount: counted.cnt,
+            lastModified: counted.last,
+          };
+        }),
+      ];
+
+      return res.json({ safes });
+    } catch (err: any) {
+      logger.error('[Knowledge] Get vault safes failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się pobrać listy sejfów', code: 'KNOWLEDGE_VAULT_SAFES_FAILED' });
+    }
+  })
+);
+
+/**
  * ★ VLT-002 — czy `req.user` wolno edytować dany dokument Vault? SuperAdmin zawsze;
  * poza tym wyłącznie właściciel WŁASNEGO prywatnego dokumentu (`scope='user' AND
  * owner_id=self`) — zgodnie z zadaniem VLT-002 pkt 3 (klient dostawał 403 przy

@@ -205,10 +205,25 @@ export interface DocumentsRAGTabProps {
    * więc wariant klienta reużywa TE SAME wywołania Api bez governance-superadmina.
    */
   variant?: 'superadmin' | 'client';
+  /**
+   * ★ VLT-005 — gdy podane, ekran otwiera się PRZEFILTROWANY do jednego sejfu
+   * (klik w wiersz tabeli sejfów w `ClientDocumentsVault`): filtr poziomu jest
+   * zablokowany na `initialScope`/`initialProjectId` (dropdown ukryty — jesteśmy
+   * już wewnątrz jednego sejfu, breadcrumb+powrót renderuje wrapper), a domyślny
+   * poziom uploadu ustawia się na ten sam sejf (wygodnie dodać dokument tam, gdzie
+   * się patrzy). Bez tych propsów zachowanie identyczne jak przed VLT-005.
+   */
+  initialScope?: VaultScope;
+  initialProjectId?: string;
 }
 
-export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'superadmin' }) => {
+export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({
+  variant = 'superadmin',
+  initialScope,
+  initialProjectId,
+}) => {
   const isClient = variant === 'client';
+  const lockedToSafe = !!initialScope;
   const currentUserId = useAppStore((s) => s.currentUser?.id);
   const [loading, setLoading] = useState(true);
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -218,11 +233,14 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadCategory, setUploadCategory] = useState('');
   const [uploadTags, setUploadTags] = useState('');
-  const [uploadScope, setUploadScope] = useState<VaultScope>('organization');
-  const [uploadProjectId, setUploadProjectId] = useState('');
+  const [uploadScope, setUploadScope] = useState<VaultScope>(initialScope || 'organization');
+  const [uploadProjectId, setUploadProjectId] = useState(
+    initialScope === 'project' ? initialProjectId || '' : ''
+  );
   const [projects, setProjects] = useState<VaultProject[]>([]);
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [scopeFilter, setScopeFilter] = useState<'' | VaultScope>('');
+  const [scopeFilter, setScopeFilter] = useState<'' | VaultScope>(initialScope || '');
+  const [projectIdFilter] = useState(initialProjectId || '');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingDoc, setEditingDoc] = useState<Document | null>(null);
   const [editDocCategory, setEditDocCategory] = useState('');
@@ -263,7 +281,12 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
     setLoadError(null);
     try {
       const data = await Api.getKnowledgeDocuments(
-        scopeFilter ? { scope: scopeFilter } : undefined
+        scopeFilter
+          ? {
+              scope: scopeFilter,
+              projectId: scopeFilter === 'project' ? projectIdFilter || undefined : undefined,
+            }
+          : undefined
       );
       const nextDocuments = normalizeDocuments(data);
       setDocuments(nextDocuments);
@@ -633,19 +656,24 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
             </option>
           ))}
         </select>
-        <select
-          data-testid="vault-scope-filter"
-          value={scopeFilter}
-          onChange={(e) => setScopeFilter(e.target.value as '' | VaultScope)}
-          className="px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
-        >
-          <option value="">All Levels</option>
-          {SCOPE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        {/* VLT-005: wewnątrz jednego sejfu poziom jest już ustalony przez breadcrumb
+            w wrapperze (ClientDocumentsVault) — dropdown "All Levels" byłby mylący
+            (pozwalałby wyjść poza sejf bez powrotu do tabeli), więc jest ukryty. */}
+        {!lockedToSafe && (
+          <select
+            data-testid="vault-scope-filter"
+            value={scopeFilter}
+            onChange={(e) => setScopeFilter(e.target.value as '' | VaultScope)}
+            className="px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+          >
+            <option value="">All Levels</option>
+            {SCOPE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* Documents List */}
