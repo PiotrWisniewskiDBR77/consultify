@@ -61,6 +61,7 @@ import { useTranslation } from 'react-i18next';
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
 
 import { IdeaContextPanel } from './IdeaContextPanel';
+import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { IdeaPanelComments } from './panel/IdeaPanelComments';
 import { IdeaPanelHistory } from './panel/IdeaPanelHistory';
 import { isIdeaPanelVisualEnabled } from './panel/ideaPanelVisualFlag';
@@ -393,15 +394,13 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
     [onPriorityChange, onSave]
   );
 
-  const toolLabel = useMemo(() => {
-    const labels: Record<CanvasToolType, string> = {
-      mindmap: t('myWorkIdeas.workspaceTools.recommendationMap'),
-      process_flow: t('myWorkIdeas.workspaceTools.processFlow'),
-      table: t('myWorkIdeas.workspaceTools.table'),
-      whiteboard: t('myWorkIdeas.workspaceTools.whiteboard'),
-    };
-    return labels[activeTool] || activeTool;
-  }, [activeTool, isPl]);
+  // PIATA kopia etykiet narzedzi — i jedyna, ktora zostala z „Mapa rekomendacji"
+  // (zgloszenie Piotra 2026-07-24: w kolumnie ma byc czytelnie „Mapa mysli").
+  // Czytamy z tego samego SSOT co lista, przelacznik i rail.
+  const toolLabel = useMemo(
+    () => getIdeaWorkspaceToolLabel(activeTool, Boolean(isPl)),
+    [activeTool, isPl]
+  );
 
   const normalizedPriority = Math.max(25, Math.min(100, Math.round(priority / 25) * 25)) || 25;
   const priorityOptions = [

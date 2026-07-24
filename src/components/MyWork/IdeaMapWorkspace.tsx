@@ -1742,10 +1742,32 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       keywords: [labelPl, labelEn, 'tool', 'narzędzie', id],
     });
     return [
-      toolCmd('mindmap', 'Mapa rekomendacji', 'Mind Map', <GitBranch size={18} />),
-      toolCmd('whiteboard', 'Tablica', 'Whiteboard', <StickyNote size={18} />),
-      toolCmd('process_flow', 'Przepływ', 'Process Flow', <Workflow size={18} />),
-      toolCmd('table', 'Tabela', 'Table', <Table2 size={18} />),
+      // SZOSTA kopia etykiet narzedzi — czytamy z SSOT (`getIdeaWorkspaceToolLabel`),
+      // zeby paleta polecen nie byla ostatnim miejscem z „Mapa rekomendacji".
+      toolCmd(
+        'mindmap',
+        getIdeaWorkspaceToolLabel('mindmap', true),
+        getIdeaWorkspaceToolLabel('mindmap', false),
+        <GitBranch size={18} />
+      ),
+      toolCmd(
+        'whiteboard',
+        getIdeaWorkspaceToolLabel('whiteboard', true),
+        getIdeaWorkspaceToolLabel('whiteboard', false),
+        <StickyNote size={18} />
+      ),
+      toolCmd(
+        'process_flow',
+        getIdeaWorkspaceToolLabel('process_flow', true),
+        getIdeaWorkspaceToolLabel('process_flow', false),
+        <Workflow size={18} />
+      ),
+      toolCmd(
+        'table',
+        getIdeaWorkspaceToolLabel('table', true),
+        getIdeaWorkspaceToolLabel('table', false),
+        <Table2 size={18} />
+      ),
       {
         id: 'ws-search',
         title: t('mindmap.searchThisIdea'),
