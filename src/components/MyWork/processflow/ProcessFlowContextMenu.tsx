@@ -107,6 +107,8 @@ export function getNodeContextActions(opts: {
   locked: boolean;
   onEditLabel: () => void;
   onDuplicate: () => void;
+  /** P1-4: bez kopiowania schowek nie ma jak sie zapelnic, a „Wklej" jest atrapa. */
+  onCopy?: () => void;
   onDelete: () => void;
   onOpenProperties: () => void;
   onAutoLayout?: () => void;
@@ -139,6 +141,16 @@ export function getNodeContextActions(opts: {
       disabled: opts.locked,
     },
   ];
+
+  if (opts.onCopy) {
+    items.splice(items.length - 1, 0, {
+      id: 'copy',
+      label: tr(opts.isPl, 'copy', 'Copy'),
+      icon: <Copy size={14} />,
+      onClick: opts.onCopy,
+      disabled: opts.locked,
+    });
+  }
 
   if (opts.onAutoLayout) {
     items.push({
@@ -194,6 +206,8 @@ export function getCanvasContextActions(opts: {
   locked: boolean;
   onAddNode: (shape: string) => void;
   onPaste: () => void;
+  /** P1-4: pusty schowek = pozycja wyszarzona z powodem, nie cichy brak reakcji. */
+  pasteDisabled?: boolean;
   onAutoLayout: () => void;
 }): ContextMenuAction[] {
   return [
@@ -216,7 +230,7 @@ export function getCanvasContextActions(opts: {
       label: tr(opts.isPl, 'paste', 'Paste'),
       icon: <ClipboardPaste size={14} />,
       onClick: opts.onPaste,
-      disabled: opts.locked,
+      disabled: opts.locked || opts.pasteDisabled === true,
     },
     {
       id: 'layout',

@@ -28540,7 +28540,8 @@
       "delete": "Usuń",
       "addAction": "Dodaj akcję",
       "addDecision": "Dodaj decyzję",
-      "paste": "Wklej"
+      "paste": "Wklej",
+      "copy": "Kopiuj"
     },
     "laneSystem": {
       "expandLane": "Rozwiń tor",

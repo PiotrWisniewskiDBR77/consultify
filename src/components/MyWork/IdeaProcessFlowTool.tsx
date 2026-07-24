@@ -1507,7 +1507,36 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   // ── V5-IDEA-21: Insert step between two connected nodes ─────────────────
   const insertBetween = useCallback(() => {
     if (locked) return;
-    const selectedEdge = (edges as Edge[]).find((e) => e.selected);
+    // P1-4: akcja wymagala zaznaczonej KRAWEDZI, ale jej jedyny przycisk wisi na
+    // plywajacym pasku WEZLA — a pasek pokazuje sie tylko przy zaznaczonym wezle.
+    // Te dwa stany sie wykluczaja, wiec przycisk KAZDORAZOWO konczyl sie bledem.
+    // Gdy krawedzi nie zaznaczono, wnioskujemy ja z zaznaczonego wezla — ale
+    // tylko gdy wybor jest JEDNOZNACZNY (dokladnie jedno wyjscie). Przy wielu
+    // wyjsciach nie zgadujemy, tylko mowimy, czego brakuje.
+    let selectedEdge = (edges as Edge[]).find((e) => e.selected);
+    if (!selectedEdge) {
+      const zaznaczoneWezly = (nodes as Node[]).filter((n) => n.selected);
+      if (zaznaczoneWezly.length === 1) {
+        const wyjscia = (edges as Edge[]).filter((e) => e.source === zaznaczoneWezly[0].id);
+        if (wyjscia.length === 1) {
+          selectedEdge = wyjscia[0];
+        } else if (wyjscia.length > 1) {
+          toast.error(
+            isPl
+              ? 'Ten krok ma kilka wyjść — zaznacz połączenie, na którym mam wstawić krok.'
+              : 'This step has several outgoing paths — select the connection to insert into.'
+          );
+          return;
+        } else {
+          toast.error(
+            isPl
+              ? 'Ten krok nie ma jeszcze połączenia wyjściowego — nie ma między czym wstawiać.'
+              : 'This step has no outgoing connection yet — there is nothing to insert between.'
+          );
+          return;
+        }
+      }
+    }
     if (!selectedEdge) {
       toast.error(t('myWorkIdeas.processFlowTool.selectEdgeFirst'));
       return;
@@ -1766,6 +1795,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const {
     deleteSelected,
     duplicateSelected,
+    copySelected,
+    copyNodeById,
+    pasteClipboard,
+    clipboardCount,
     handleLaneRename,
     handleLaneDelete,
     handleLaneColorChange,
@@ -3245,6 +3278,21 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                     );
                   },
                   onDuplicate: () => duplicateSelected(),
+                  onCopy: () => {
+                    // Kopiujemy wezel, na ktorym otwarto menu — nie zaznaczenie,
+                    // bo prawy klik go nie zaznacza. Jesli jest wieksze
+                    // zaznaczenie i klikniety wezel do niego nalezy, kopiujemy
+                    // cale zaznaczenie; w przeciwnym razie sam wezel.
+                    const zazn = nodes.filter((n) => n.selected);
+                    const klikniety = contextMenu.nodeId!;
+                    const ile =
+                      zazn.length > 1 && zazn.some((n) => n.id === klikniety)
+                        ? copySelected()
+                        : copyNodeById(klikniety);
+                    if (ile > 0) {
+                      toast.success(isPl ? `Skopiowano: ${ile}` : `Copied: ${ile}`);
+                    }
+                  },
                   onDelete: () => deleteSelected(),
                   onOpenProperties: () => {
                     setShowPropertiesPanel(true);
@@ -3259,7 +3307,21 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   isPl: !!isPl,
                   locked,
                   onAddNode: (shape) => addNode(shape as FlowShape),
-                  onPaste: () => duplicateSelected(),
+                  // P1-4: „Wklej" bylo podpiete pod duplicateSelected(), wiec
+                  // duplikowalo zaznaczenie zamiast wkleic schowek — a w menu TLA
+                  // zaznaczenia zwykle nie ma, wiec byl to martwy klik. Teraz
+                  // wkleja realny schowek i mowi, gdy jest pusty.
+                  onPaste: () => {
+                    const ile = pasteClipboard();
+                    if (ile === 0) {
+                      toast(
+                        isPl
+                          ? 'Schowek jest pusty — najpierw skopiuj zaznaczone elementy.'
+                          : 'Clipboard is empty — copy a selection first.'
+                      );
+                    }
+                  },
+                  pasteDisabled: clipboardCount() === 0,
                   onAutoLayout: () => handleAutoLayout(),
                 })
           }
