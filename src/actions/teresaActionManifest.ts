@@ -34,10 +34,28 @@
  *     detektory: nazwa narzędzia → akcja z rejestru → ten sam handler,
  *     którego używa UI (Z4: Teresa nie ma nic, czego nie ma w interfejsie).
  *
- * CZEGO TU NIE MA (jawnie): transportu manifestu na serwer. Dziś żaden
- * front-endowy caller nie przekazuje własnych `tools` do `/chat/stream`, więc
- * podłączenie tego manifestu do modelu wymaga jednej zmiany po stronie czatu —
- * to następna fala, nie ta.
+ * TRANSPORT (fala „Teresa steruje Ideą przez rejestr", 2026-07-24 — ADDYTYWNY,
+ * za flagą, DEFAULT OFF):
+ *   ↑ w górę: `UnifiedChatPanel` woła `buildTeresaToolManifest({ tool })` (patrz
+ *     niżej — filtr po OTWARTYM narzędziu) i wkłada wynik do `context.
+ *     ideaActionManifest` zapytania `/chat/stream`. Pole `context` jest
+ *     przepuszczalne przez walidator (z.record), więc NIE trzeba zmieniać
+ *     schematu. Gate frontu: `VITE_ENABLE_TERESA_IDEA_ACTIONS`.
+ *   ↓ do modelu: route (`server/src/routes/ai.routes.ts`, gate
+ *     `featureFlags.ENABLE_TERESA_IDEA_ACTIONS`) przekazuje manifest jako
+ *     `clientTools` do `llmService.callStream`. Model widzi je obok narzędzi
+ *     deliverable.
+ *   ↺ powrót: `execute` narzędzia klienckiego NIE działa na serwerze (serwer nie
+ *     ma dostępu do płótna) — emituje SSE `idea_action { toolName, args }`.
+ *     `useAIStream` routuje je do `onIdeaAction`, a `UnifiedChatPanel` wykonuje
+ *     je przez `executeTeresaTool()` — TĄ SAMĄ ścieżką, co klik człowieka
+ *     (runIdeaAction → handler → szyna 'idea-workspace-quick-action').
+ *   Bezpieczeństwo (confirmBeforeRun, „akcja nie istnieje w tej reprezentacji")
+ *   egzekwuje sam rejestr w `runIdeaAction`, po stronie frontu.
+ *
+ * DWIE FLAGI, OBIE OFF DOMYŚLNIE: gdy którakolwiek OFF (albo manifest pusty),
+ * czat działa DOKŁADNIE jak dziś — regexowe detektory intencji zostają jako
+ * zapas i NIE są w tej fali usuwane.
  */
 
 import type { ActionContext, ActionDef, ActionResult, Tool } from './ideaActionRegistry';

@@ -92,6 +92,14 @@ import { buildPersistedAiResponseMetadata } from '../../utils/chatPersistence';
 import { detectMessageLanguage } from '../../utils/detectMessageLanguage';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
+// Z4 transport (fala „Teresa steruje Ideą przez rejestr") — manifest narzędzi z
+// rejestru akcji + wykonawca (ta sama ścieżka, co klik człowieka).
+import {
+  buildTeresaToolManifest,
+  executeTeresaTool,
+} from '../../actions/teresaActionManifest';
+import type { CanvasToolType } from '../MyWork/ideaSelectionTypes';
+import { EMPTY_SELECTION } from '../MyWork/ideaSelectionTypes';
 import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
 import TeresaMark from '../shared/TeresaMark';
 import { detectCanvasWriteIntent } from './canvasStreamIntentDetector';
@@ -839,6 +847,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     window.addEventListener('idea-workspace-active-tool', onActiveIdeaTool);
     return () => window.removeEventListener('idea-workspace-active-tool', onActiveIdeaTool);
   }, []);
+
+  // Z4 transport — kontekst Idei zapamiętany W CHWILI WYSYŁKI (tool + ideaId), z
+  // którym wróci tool-call. Dzięki temu wykonanie na froncie dotyczy dokładnie
+  // tej reprezentacji, którą model widział (manifest jest po niej filtrowany).
+  const teresaIdeaCtxRef = useRef<{ ideaId: string; tool: CanvasToolType } | null>(null);
+  // Flaga BUILDOWA (default OFF). OFF ⇒ nie budujemy ani nie wysyłamy manifestu,
+  // a `context` zapytania jest bajt-w-bajt jak dziś. Serwer ma DRUGĄ flagę
+  // (ENABLE_TERESA_IDEA_ACTIONS) — dopiero obie ON włączają transport.
+  const teresaIdeaActionsEnabled =
+    import.meta.env.VITE_ENABLE_TERESA_IDEA_ACTIONS === 'true';
 
   // ========================================================================
   // Local state (must be declared before hooks that depend on them)
@@ -1922,6 +1940,41 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       setIsWorkPanelOpen(true);
       registerChatDeliverable(kind, draftId, title);
       announceDeliverableDraftReady(draftId);
+    },
+    // Z4 transport — model wywołał narzędzie akcji OTWARTEJ Idei. Wykonujemy je
+    // TĄ SAMĄ ścieżką co klik człowieka: executeTeresaTool → runIdeaAction →
+    // handler → szyna 'idea-workspace-quick-action'. Bezpieczeństwo (confirm-
+    // BeforeRun, „akcja nie istnieje w tej reprezentacji") egzekwuje sam rejestr;
+    // odmowę/komunikat pokazujemy w czacie. Detektory regexowe zostają jako
+    // zapas — ta ścieżka ich nie usuwa.
+    onIdeaAction: async (payload) => {
+      const ideaCtx = teresaIdeaCtxRef.current;
+      if (!ideaCtx) {
+        // Manifest był wysłany bez znanego kontekstu Idei — nie zgadujemy.
+        return;
+      }
+      const uiLang = (i18n.language || 'en').split('-')[0] === 'pl' ? 'pl' : 'en';
+      try {
+        const result = await executeTeresaTool(payload.toolName, {
+          ideaId: ideaCtx.ideaId,
+          tool: ideaCtx.tool,
+          selection: EMPTY_SELECTION,
+          language: uiLang,
+          params: payload.args,
+        });
+        // Rejestr sam mówi, czego NIE potrafi / że wymaga potwierdzenia — nie
+        // udajemy sukcesu. Komunikat (PL) trafia do czatu tylko gdy jest treść.
+        if (result?.message) {
+          addChatMessage({
+            id: `idea-action-${Date.now()}`,
+            role: 'ai',
+            content: result.message,
+            timestamp: new Date(),
+          });
+        }
+      } catch (err) {
+        console.warn('[UnifiedChatPanel] idea-action execute failed', err);
+      }
     },
   });
 
@@ -3856,9 +3909,41 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
       }
 
+      // Z4 transport — manifest akcji OTWARTEJ reprezentacji Idei, FILTROWANY po
+      // aktualnie otwartym narzędziu (w Tablicy Teresa nie dostaje akcji Mapy).
+      // Budujemy tylko gdy flaga buildowa ON i idea-canvas jest otwarty; inaczej
+      // NIC nie dokładamy do `context` (zapytanie bajt-w-bajt jak dziś). Kontekst
+      // wykonania zapamiętujemy w ref na powrót tool-calla. Serwer i tak ignoruje
+      // manifest bez swojej flagi ENABLE_TERESA_IDEA_ACTIONS.
+      const teresaIdeaTool =
+        teresaIdeaActionsEnabled &&
+        (activeIdeaWorkspaceTool === 'mindmap' ||
+          activeIdeaWorkspaceTool === 'whiteboard' ||
+          activeIdeaWorkspaceTool === 'process_flow' ||
+          activeIdeaWorkspaceTool === 'table')
+          ? (activeIdeaWorkspaceTool as CanvasToolType)
+          : null;
+      const teresaIdeaId =
+        typeof workspaceContext?.entityId === 'string' ? workspaceContext.entityId : '';
+      const teresaIdeaManifest = teresaIdeaTool
+        ? buildTeresaToolManifest({ tool: teresaIdeaTool }).map((t) => t.function)
+        : null;
+      teresaIdeaCtxRef.current = teresaIdeaTool
+        ? { ideaId: teresaIdeaId, tool: teresaIdeaTool }
+        : null;
+
       // Build context for AI — include file metadata so the model can cite/reference attachments (C4.1)
       const context = {
         focusMode,
+        // Z4 transport — payload manifestu (tylko gdy zbudowany). Pole
+        // przepuszczalne przez walidator (context = z.record), więc bez zmian
+        // w schemacie. Serwer czyta je za swoją flagą.
+        ...(teresaIdeaManifest && teresaIdeaManifest.length > 0
+          ? {
+              ideaActionManifest: teresaIdeaManifest,
+              ideaContext: { ideaId: teresaIdeaId, tool: teresaIdeaTool },
+            }
+          : {}),
         attachments: uploadedAttachments,
         failedAttachments,
         attachmentDocIds,
