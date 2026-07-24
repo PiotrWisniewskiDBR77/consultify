@@ -71,6 +71,20 @@ export interface CreateAgentPlanInput {
   conversationId?: string;
   manifestId?: string;
   /**
+   * AGT-006/AGT-010: generator PROCESU konsultingowego (nie katalogu
+   * manifestów) — `classic-5` (domyślny, 5 faz Kubr/ILO) lub wariant `drd`.
+   * Backend (agent-plan.routes.ts) kładzie cały schemat via ProcessLibrary.
+   * Gdy `draft` nie podano jawnie, ta ścieżka domyślnie liczy się jak
+   * `draft:true` (plan zostaje w 'planning' do jawnego "Uruchom").
+   */
+  processId?: string;
+  processContext?: {
+    focusAxis?: string;
+    industry?: string;
+    hasVaultDocs?: boolean;
+    projectSummary?: string;
+  };
+  /**
    * Optional when `manifestId` is set — the backend's PlanBuilder
    * (server/src/services/ai/agentPlan/planBuilderService.ts) generates the
    * step list from the manifest. Provide explicit steps to override.
