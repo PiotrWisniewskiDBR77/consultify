@@ -58,6 +58,11 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
+import {
+  linkedTypeLabel,
+  notificationCategoryLabel,
+  notificationTypeLabel,
+} from '@/utils/enumLabels';
 import { muteNotificationTypeForSession } from '@/utils/notificationMuteSession';
 
 import { Api } from '../../services/api';
@@ -1536,37 +1541,38 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   // ze relacje i zrodla/zalozenia to sekcje PRAWEGO PANELU, a centrum to pola
   // opisowe. Liczymy je raz, tutaj (przed guardami — Rules of Hooks), zeby
   // panel mial dane, a centrum ich juz nie dublowalo (§2.6 anty-duplikacja).
+  // ★ `type` trzyma SUROWY typ obiektu ('task' | 'decision' | 'project' | …) —
+  //   bo ta sama wartosc jedzie do `onNavigateToSource(type, id)`. Etykiete PL
+  //   robi `linkedTypeLabel` dopiero w renderze (2026-07-24). Wczesniej pole
+  //   niosło juz PRZETLUMACZONA nazwe, wiec nawigacja w PL dostawala 'zadanie'
+  //   zamiast 'task' — a wariant bez `sourceEntity` pokazywal surowe 'DECISION'
+  //   i identyfikator podstawiony pod tytul.
   const notifRelationItems = useMemo(() => {
     const items: { id: string; type: string; title: string }[] = [];
     if (!notification) return items;
     if (sourceEntity && sourceEntity.title) {
       items.push({
         id: sourceEntity.id || notification.relatedObjectId || '',
-        type: isPolish
-          ? sourceEntity.type === 'task'
-            ? 'Zadanie'
-            : sourceEntity.type === 'decision'
-              ? 'Decyzja'
-              : sourceEntity.type || 'Źródło'
-          : sourceEntity.type || 'Source',
+        type: String(sourceEntity.type || ''),
         title: String(sourceEntity.title),
       });
     } else if (notification.relatedObjectType && notification.relatedObjectId) {
+      // Tytulu NIE MA — nie podstawiamy pod niego id (to nie nazwa obiektu).
       items.push({
         id: notification.relatedObjectId,
-        type: notification.relatedObjectType,
-        title: notification.relatedObjectId,
+        type: String(notification.relatedObjectType),
+        title: '',
       });
     }
     if (notification.projectName && notification.projectId) {
       items.push({
         id: notification.projectId,
-        type: t('myWork.notificationDetail.type', 'Project'),
+        type: 'project',
         title: notification.projectName,
       });
     }
     return items;
-  }, [notification, sourceEntity, isPolish, t]);
+  }, [notification, sourceEntity]);
 
   // Zrodlo powiadomienia (kto/co je wygenerowalo) — wiersz „Zrodlo" w tabeli
   // Wlasciwosci. Wczesniej ta sama logika stala w centrum jako pigulka-badge.
@@ -2818,7 +2824,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       render: () => (
         <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-c-surface-raised border border-c-border text-c-text-secondary">
           <TypeIcon size={12} className={typeConfig.color} />
-          <span className="truncate">{notification.type.replace(/_/g, ' ')}</span>
+          {/* Było: `notification.type.replace(/_/g,' ')` → „AI RISK DETECTED".
+              To surowy enum bazy, a nie język produktu (2026-07-24). */}
+          <span className="truncate">{notificationTypeLabel(notification.type, isPolish)}</span>
         </div>
       ),
     },
@@ -2826,7 +2834,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       id: 'category',
       label: { en: 'Category', pl: 'Kategoria' },
       type: 'text' as const,
-      value: notification.category,
+      // Było: gołe `ai` / `task` / `pmo` wprost z kolumny bazy.
+      value: notificationCategoryLabel(notification.category, isPolish),
       onChange: () => {},
       readOnly: true,
     },
@@ -3162,13 +3171,19 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 tabIndex={isClickable ? 0 : undefined}
               >
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-border text-c-text-muted bg-c-surface-raised uppercase shrink-0">
-                    {item.type}
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-border text-c-text-muted bg-c-surface-raised shrink-0">
+                    {linkedTypeLabel(item.type, isPolish)}
                   </span>
-                  <span className="truncate text-xs text-c-text">{item.title}</span>
+                  {item.title ? (
+                    <span className="truncate text-xs text-c-text">{item.title}</span>
+                  ) : null}
                 </div>
+                {/* Wiersz DRUKOWAŁ surowy identyfikator („decision-dbr77-demo-1")
+                    tylko po to, żeby dało się go skopiować. Funkcja zostaje —
+                    znika WYPISANY na ekranie identyfikator deweloperski
+                    (2026-07-24). */}
                 <button
-                  className="self-start inline-flex items-center gap-1 text-[10px] font-mono text-c-text-muted hover:text-c-info transition-colors"
+                  className="self-start inline-flex items-center gap-1 text-[10px] text-c-text-muted hover:text-c-info transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigator.clipboard.writeText(item.id);
@@ -3176,11 +3191,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   }}
                   title={t('myWork.notificationDetail.title', 'Copy ID')}
                 >
-                  {String(item.id).length > 22 ? `${String(item.id).slice(0, 22)}...` : item.id}
-                  <Copy
-                    size={10}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  />
+                  <Copy size={10} />
+                  {t('myWork.notificationDetail.title', 'Copy ID')}
                 </button>
               </div>
             );
