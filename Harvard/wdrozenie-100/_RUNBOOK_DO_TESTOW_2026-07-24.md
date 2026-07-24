@@ -279,3 +279,16 @@ niezłapane wcześniej (fronty Etapu 5 testowały tylko 1280/1440):
 (#15/16 interakcja resize, #18 tooltip) / 2 z zastrzeżeniem.
 ★ Dobra wiadomość: obie naprawy P0 MAJĄ już gotowy wzorzec w kodzie (Notification dla P0-1, Task dla
 P0-2) — to kopiowanie sprawdzonego rozwiązania, nie nowy projekt. Fala naprawcza w toku.
+
+## NAPRAWA P0-1/P0-2 (po Etapie 6 QA) ✅ SCALONA I ZWERYFIKOWANA
+Panel widoczny na 1024px w 4 kartach (Zadanie/Decyzja/Inicjatywa×2 ścieżki) — wzorzec skopiowany
+1:1 z Powiadomienia, który miał to naprawione od dawna. Kolumna dokumentowa skaluje się 592→760px
+w 3 kartach (Decyzja/Inicjatywa/Powiadomienie) — token z Etapu 2 wreszcie podłączony wszędzie,
+wzorzec skopiowany z Zadania. Zmierzone dokładnie: przy 1920px suma = 216+24+760+24+320=1344px.
+**P1 (przycisk Sekcje w Powiadomieniu) ŚWIADOMIE NIE RUSZONY** — CTO decyzja: to nie błąd gridu,
+tylko wyłączona flaga stopniowego wdrożenia osobnej migracji (D-8, kontrolowana z innej sesji).
+Agent słusznie nie włączył jej sam — reguła #7/#9: żadna funkcja wizualna bez akceptu na czystym
+zrzucie. Zostaje poza zakresem tego programu.
+Crimson=0 na całym diffie, esbuild 4/4 OK, bramki zielone. Hub 27 commitów ponad demo.
+→ Następny krok: powtórzyć Etap 6 QA na tych 4 kartach × 3 viewporty, potwierdzić zero regresji
+na 1280/1440 (gdzie wcześniej było OK), dopiero potem Etap 7 (zamknięcie).
