@@ -21,6 +21,9 @@ import { Toaster } from 'react-hot-toast';
 
 import PanelUwag from './PanelUwag';
 const MaterialyLauncherScreen = React.lazy(() => import('./screens/materialy-launcher'));
+const MaterialyTemplateLibrarySliceScreen = React.lazy(
+  () => import('./screens/materialy-template-library-slice')
+);
 
 // Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
 import i18n from '../src/i18n';
@@ -129,6 +132,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'materialy-launcher': {
     label: 'MATERIAŁY — tablica Dodaj (format×tryb) &variant=materials|templates',
     render: () => <MaterialyLauncherScreen />,
+  },
+  'materialy-template-library-slice': {
+    label:
+      'MATERIAŁY — Biblioteka wzorców, slice „szablon dokumentu": Legacy · osierocony (bez użycia) · brak metadanych',
+    render: () => <MaterialyTemplateLibrarySliceScreen />,
   },
   'initiatives-portfolio-analysis': {
     label:
