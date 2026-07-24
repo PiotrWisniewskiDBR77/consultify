@@ -3347,9 +3347,21 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           Wiersz flex z prawym panelem obejmuje RÓWNIEŻ Menu 1 i Menu 2
           (było: panel siedział w wierszu 3-pane POD menu, więc oba menu biegły
           na całe 1152 px NAD panelem, a panel startował 148 px od góry).
-          Teraz karta ma tę samą geometrię co Decyzja/Zadanie/Inicjatywa. */}
+          Teraz karta ma tę samą geometrię co Decyzja/Zadanie/Inicjatywa.
+          GRID ETAP 6 (2026-07-24, naprawa P0-2): `max-w-6xl` (1152px stałe)
+          zamrażał centrum na ~592px, martwe marginesy na 1920px. Wzorzec
+          z Zadania (TaskDetailView.tsx:5306-5311) — token
+          `--ntype-content-document-max-width` zamiast stałej. Ta karta nie
+          gatuje wiersza za `xl:` (panel zawsze widoczny, patrz komentarz
+          niżej przy prawym panelu) — `flex` zostaje bez prefiksu. */}
       <div className="px-6 pt-4 pb-6">
-        <div className="max-w-6xl mx-auto flex gap-6 items-start space-y-0">
+        <div
+          className="mx-auto flex gap-6 items-start space-y-0"
+          style={{
+            maxWidth:
+              'calc(var(--ntype-left-panel-width) + var(--ntype-column-gap) + var(--ntype-content-document-max-width) + var(--ntype-column-gap) + var(--ntype-right-panel-width))',
+          }}
+        >
           <div className="flex-1 min-w-0 space-y-0">
             {/* ── Header — shared NModeHeader ───────────────────────────────
                  SPEC-N §2.3/§2.7 — USUNIETO prop `draftSavedLabel`. Jego typ mowi
