@@ -9,15 +9,18 @@ import { useTrustState } from '../useTrustState';
 
 const SCOPE_LABELS: Record<string, { label: string; labelPl: string }> = {
   personal: { label: 'Personal', labelPl: 'Osobisty' },
-  application: { label: 'Application', labelPl: 'System' },
+  system: { label: 'System', labelPl: 'System' },
+  // legacy alias (wpisy sprzed kanonu materials.ts)
+  application: { label: 'System', labelPl: 'System' },
   organization: { label: 'Organization', labelPl: 'Organizacja' },
+  unknown: { label: 'Unknown', labelPl: 'Nieznany' },
 };
 
 export const TemplatePreviewBody: React.FC<{ template: TemplateItem }> = ({ template }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const typeMeta = TEMPLATE_TYPE_META[template.type];
-  const statusMeta = TEMPLATE_STATUS_META[template.status] || TEMPLATE_STATUS_META.active;
+  const statusMeta = TEMPLATE_STATUS_META[template.status] || TEMPLATE_STATUS_META.unknown;
   const scopeLabel = SCOPE_LABELS[template.scope];
   const { context: orgCtx } = useOrganizationContext();
   const governance = useTrustState(template.id, template.governance ?? null);
@@ -155,12 +158,16 @@ export const TemplatePreviewBody: React.FC<{ template: TemplateItem }> = ({ temp
 export const TemplatePreviewFooter: React.FC<{ template: TemplateItem }> = ({ template }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
-  const d = new Date(template.updatedAt);
-  const formatted = d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+  // Brak daty = „—". Nie podstawiamy dnia dzisiejszego (patrz mapper w useRapData).
+  const d = template.updatedAt ? new Date(template.updatedAt) : null;
+  const formatted =
+    d && !Number.isNaN(d.getTime())
+      ? d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        })
+      : '—';
 
   return (
     <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">

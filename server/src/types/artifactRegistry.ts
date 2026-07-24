@@ -26,6 +26,10 @@ export const ArtifactOriginRuntimeValues = [
   // rows) — the TS enum just hadn't caught up. Mirrors report_template /
   // presentation_template for sheet (Excel/arkusz) templates.
   'sheet_template',
+  // R11 (doc slice, 2026-07-24): canonical Document Studio templates
+  // (`document_studio_templates`). DB CHECK extended by
+  // server/migrations/20260724_origin_runtime_document_template.sql.
+  'document_template',
   'work_canvas',
 ] as const;
 export type ArtifactOriginRuntime = (typeof ArtifactOriginRuntimeValues)[number];

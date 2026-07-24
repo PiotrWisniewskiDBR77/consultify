@@ -359,3 +359,86 @@ tamta sesja świadomie je wmergowała. **Zawsze `git fetch` + pre-flight.**
 - **Sprzątanie worktree'ów** — ~20 drzew w `/private/tmp`. NIE sprzątałem, bo inne
   sesje pracowały równolegle; usunięcie drzewa pod żywą sesją zrywa jej pracę.
   Kryterium bezpieczne: gałąź w całości na `origin/demo` + brak zmian lokalnych.
+
+---
+
+## 11. RUNDA 3 — etapy + Teresa Z4 (2026-07-24, po decyzjach Piotra)
+
+**Decyzje właściciela w tej rundzie:**
+1. Pomysł ma **PIĘĆ etapów** — model z listy (Iskra · Rośnie · Kształtuje się · Gotowy · Promowany).
+2. Priorytet po testach: **Teresa Z4 — żywa runda**, bo to jedyna z czterech zasad nigdy niesprawdzona.
+
+### Etapy — jeden słownik
+Zmieniona **wyłącznie warstwa prezentacji**. Kolumna `my_ideas.stage`, walidator
+`IdeaStageEnum` (7 wartości V5), `normalizeStageToV5` i logika przejść — nietknięte.
+Panel czyta przez `V5_TO_LIST_BUCKET` → `IDEA_STAGE_BUCKET_LABELS`.
+
+★ **Poprawka nadzorcy po symulacji przejść:** krok „o jeden V5" dawał DWA kliknięcia
+wyglądające na bezczynne (`framing` i `validating` — następna wartość w TYM SAMYM
+kubełku, więc przycisk mówił „→ Gotowy" przy plakietce „Gotowy"). Przycisk skacze
+teraz do najbliższego etapu **widocznie innego**.
+Sprawdzone przed tą decyzją: konwersja NIE jest bramkowana na `ready_to_convert`;
+nudge na `exploring` siedzi w `IdeaPinnedCard` (zero odwołań w repo).
+**KOSZT:** `IdeaFunnelAnalytics` (żywy) nie zobaczy `exploring`/`ready_to_convert`
+ustawionych TYM przyciskiem — inne ścieżki nadal je ustawiają.
+
+★ **Fałszywy alarm:** podejrzewałem, że mapowanie nie jest monotoniczne i nazwa cofa
+się z „Kształtuje się" na „Rośnie". Symulacja na PRAWDZIWYCH stałych (kolejność V5 to
+`spark·framing·exploring·structuring·…`, nie ta, którą wpisałem z pamięci) pokazała,
+że mapowanie JEST monotoniczne. Nic nie zmieniono.
+
+### Teresa Z4 — WYNIK ŻYWEJ RUNDY
+13 poleceń × 3 modele = **39 przebiegów, 36 wywołań narzędzi**. Realny manifest
+z rejestru + realna persona. Zero zapisów do bazy, bez stawiania aplikacji.
+
+| model | trafność | fałszywe wywołania |
+|---|---|---|
+| gpt-4o (STANDARD wg `modelRouter`) | 10/13 | 2 |
+| sonnet-4-6 (fallback) | 10/13 | 2 |
+| sonnet-4-5 (kontrolnie) | 11/13 | 0 |
+
+★★ **HALUCYNACJA NAZWY NARZĘDZIA: 0 na 36 wywołań.** Model nigdy nie wymyślił nazwy
+spoza rejestru — teza „rejestr = jedyne źródło prawdy" się broni.
+
+**Naprawione (na demo):**
+1. **Serwer wyrzucał kontekst otwartej Idei.** Front wysyłał `context.ideaContext`,
+   `grep ideaContext server/src/` = ZERO. Model odmawiał („nie widzę otwartego
+   Przepływu"), mając go otwartego. Blok `## OTWARTA REPREZENTACJA IDEI` w
+   `ai.routes.ts`. Kontrolny przebieg przestał odmawiać.
+2. **Dwie granice negatywne** w `teresa.description` (`table_categorize`,
+   `find_themes`) — modele podstawiały akcję Tabeli na prośbę o karteczki Tablicy
+   i meldowały nieprawdę o tym, co zrobiły.
+
+**NIE naprawione świadomie — `idea_workspace_convert` / `_duplicate` martwe przez
+Teresę:** rejestr wymaga `ctx.confirmed` przy `source:'teresa'`
+(`ideaActionRegistry:802`), a `UnifiedChatPanel:1958` woła `executeTeresaTool` bez
+tego pola i nikt w `src/` go nie ustawia. **Nie przekazuję `confirmed: true` z czatu**
+— zdjęłoby to bramkę całkiem, akcja wykonywałaby się na wniosek MODELU, nie na jawną
+zgodę człowieka. Właściwa naprawa = kontrolka potwierdzenia w czacie (decyzja
+produktowa).
+
+### ★ FLAGA `ENABLE_TERESA_IDEA_ACTIONS` NADAL WYŁĄCZONA — i dlaczego
+Zweryfikowana jest POŁOWA łańcucha: model → SSE `idea_action {toolName,args}`.
+Druga połowa (`executeTeresaTool → runIdeaAction → handler` rusza węzeł na płótnie)
+wymaga testu w przeglądarce. Włączenie teraz = Piotr pierwszy odkrywa, czy działa
+(reguła #7). **Następny krok: domknąć drugą połowę w przeglądarce, potem flaga.**
+Pułapka operacyjna: flaga frontu to `VITE_ENABLE_TERESA_IDEA_ACTIONS` — **build-time**,
+sama zmienna na serwerze nic nie da bez przebudowy frontu.
+
+### ★ POMYŁKA, KTÓRĄ SAM ZŁAPAŁEM I COFNĄŁEM
+Zgłosiłem „rozjazd flagi `ENABLE_TERESA_MINDMAP`" jako żywy defekt (trzy odczyty,
+przeciwne domyślne). **To było błędne.** Pod tą nazwą żyją DWIE funkcje:
+*wyszukiwanie* map (`persona.ts` + `orgRetrievalShared.ts` + `ai.routes` wantsMindmap
+— celowo domyślnie OFF, co-gated z `ENABLE_TERESA_RETRIEVAL`) i *generowanie* mapy
+(`FeatureFlags` + `generateDeliverable` + `mcpServer` — domyślnie ON). Każda
+wewnętrznie spójna. „Naprawa" sprawiłaby, że persona zapowiada modelowi narzędzie,
+którego nie ma. Zmiany cofnięte. **Zostaje dług nazewniczy: jedna nazwa flagi na dwie
+funkcje o przeciwnych domyślnych.**
+
+### OTWARTE po tej rundzie
+- Druga połowa łańcucha Z4 w przeglądarce → potem flaga.
+- Kontrolka potwierdzenia w czacie (odblokowuje convert/duplicate przez Teresę).
+- Trzeci zdryfowany słownik etapów: `IdeaCanvasMenu1Bits.tsx` — „Kształtuje" bez „ się".
+- Dług nazewniczy `ENABLE_TERESA_MINDMAP` (dwie funkcje, jedna nazwa).
+- Pozycje z §10: martwy kod, 12 niepotwierdzonych `useMemo`, zwijanie „Zapisano Ns temu",
+  sprzątanie worktree'ów.

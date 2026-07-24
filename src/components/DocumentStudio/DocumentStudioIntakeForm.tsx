@@ -123,6 +123,11 @@ interface DocumentStudioIntakeFormProps {
   /** Non-blocking notice when the approved-template list could not be loaded.
    *  Mode 1 (free generation) stays fully available; the picker is just hidden. */
   templatesNotice?: string | null;
+  /** Kanoniczne id szablonu wybranego POZA tym formularzem (Biblioteka wzorców →
+   *  „Użyj wzorca" → `/document-studio?entry=template&templateId=…`). Gdy trafi na
+   *  zatwierdzony szablon, formularz startuje od razu w Mode 3 z tym wzorcem.
+   *  Brak / nietrafione id = zachowanie jak dotąd (ręczny wybór). */
+  initialTemplateId?: string | null;
   /** D1 tri-tryby: gdy true i są szablony — po wejściu ustaw fokus na pickerze
    *  szablonów (użytkownik wybrał „Z szablonu"). Domyślnie false = bez zmiany. */
   autoFocusTemplatePicker?: boolean;
@@ -137,6 +142,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
   error,
   approvedTemplates,
   templatesNotice,
+  initialTemplateId = null,
   autoFocusTemplatePicker = false,
   onBackToModes,
 }) => {
@@ -155,7 +161,23 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
   const [useLlm, setUseLlm] = useState(true);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
 
+  const preselectApplied = useRef(false);
+
   const hasTemplates = Boolean(approvedTemplates && approvedTemplates.length > 0);
+
+  // Preselekcja z URL (?templateId=): stosowana RAZ, dopiero gdy lista
+  // zatwierdzonych szablonów zawiera ten rekord. Gdy nie zawiera — nic nie
+  // ustawiamy (widok pokazuje notkę zamiast udawać, że wybór zadziałał).
+  useEffect(() => {
+    if (preselectApplied.current) return;
+    const wanted = (initialTemplateId || '').trim();
+    if (!wanted) return;
+    if (!approvedTemplates || approvedTemplates.length === 0) return;
+    if (!approvedTemplates.some((tpl) => tpl.templateId === wanted)) return;
+    preselectApplied.current = true;
+    setSelectedTemplateId(wanted);
+  }, [initialTemplateId, approvedTemplates]);
+
   const inTemplateMode = selectedTemplateId.length > 0;
   const selectedTemplate =
     approvedTemplates?.find((t) => t.templateId === selectedTemplateId) ?? null;

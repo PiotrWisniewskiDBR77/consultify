@@ -727,6 +727,73 @@ export async function getDocumentStudioTemplate(templateId: string): Promise<Doc
   return json.template;
 }
 
+/**
+ * R1 doc slice (2026-07-24) — trusted translation of a Template Library row
+ * into a canonical Document Studio template id.
+ *
+ * The Library only ever holds the INDEX id (`artifactIndexId`). Handing a
+ * canonical registry id around in the URL would mean trusting a client-supplied
+ * pointer straight into generation, so the translation happens server-side:
+ * `POST /document-studio/templates/resolve` validates org access, scope,
+ * status and that the canonical record still exists (orphan check).
+ *
+ * Rejections arrive as a typed code so the view can render an honest message
+ * instead of silently falling back to the picker or to AI generation.
+ */
+export type TemplateResolveErrorCode =
+  | 'TEMPLATE_NOT_INDEXED'
+  | 'TEMPLATE_ORPHANED'
+  | 'TEMPLATE_FORBIDDEN'
+  | 'TEMPLATE_DEPRECATED'
+  | 'TEMPLATE_FORMAT_UNSUPPORTED';
+
+export class TemplateResolveClientError extends Error {
+  readonly code: TemplateResolveErrorCode | 'TEMPLATE_RESOLVE_FAILED';
+  constructor(code: TemplateResolveErrorCode | 'TEMPLATE_RESOLVE_FAILED', message?: string) {
+    super(message ?? code);
+    this.name = 'TemplateResolveClientError';
+    this.code = code;
+  }
+}
+
+export interface ResolvedLibraryTemplate {
+  canonicalTemplateId: string;
+  originRuntime: string;
+  format: 'document';
+  scope: string;
+  status: string;
+  source: 'canonical' | 'legacy';
+  legacy: boolean;
+  sectionCount: number;
+}
+
+export async function resolveDocumentStudioTemplate(
+  templateArtifactId: string
+): Promise<ResolvedLibraryTemplate> {
+  const res = await fetchWithRetry(`${BASE}/templates/resolve`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ templateArtifactId }),
+  });
+  if (!res.ok) {
+    // Decode the typed rejection before handleResponse turns it into a generic
+    // Error — the code is what drives the honest, non-fallback error state.
+    let code: TemplateResolveErrorCode | 'TEMPLATE_RESOLVE_FAILED' = 'TEMPLATE_RESOLVE_FAILED';
+    try {
+      const body = (await res.clone().json()) as { error?: string };
+      if (body?.error) code = body.error as TemplateResolveErrorCode;
+    } catch {
+      /* non-JSON body — keep the generic code */
+    }
+    throw new TemplateResolveClientError(code);
+  }
+  const json = await handleResponse<{ template: ResolvedLibraryTemplate }>(
+    res,
+    'DocumentStudio resolve template'
+  );
+  return json.template;
+}
+
 export async function approveDocumentStudioTemplate(
   templateId: string,
   notes?: string

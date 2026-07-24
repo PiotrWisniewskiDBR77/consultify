@@ -9,6 +9,7 @@
  */
 
 import {
+  AlertTriangle,
   BookTemplate,
   Copy,
   FileSpreadsheet,
@@ -17,7 +18,7 @@ import {
   Play,
   Presentation,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -100,6 +101,33 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     return data;
   }, [templates, searchQuery, activeFilters]);
 
+  // Etykieta zakresu wg kanonu materials.ts (system|organization|personal|unknown).
+  // Legacy 'application' zostaje obsłużone dla wpisów sprzed migracji.
+  const scopeLabel = useCallback(
+    (scope: TemplateItem['scope']): string => {
+      if (scope === 'personal') return t('reports.personal');
+      if (scope === 'system' || scope === 'application') return t('reports.application');
+      if (scope === 'organization') return t('reports.organization');
+      return t('rap.templates.scopeUnknown', 'Nieznany');
+    },
+    [t]
+  );
+
+  // ★ Jedno miejsce, w którym wiersz biblioteki zamienia się w trasę użycia —
+  // z JAWNYM rozdziałem id indeksu i kanonicznego id szablonu. `null` = wzorca
+  // nie da się uczciwie użyć (sierota / brak kanonicznego rekordu dokumentu).
+  const usePathFor = useCallback(
+    (row: TemplateItem): string | null =>
+      resolveTemplateUsePath({
+        artifactIndexId: row.artifactIndexId ?? row.id,
+        templateType: row.type,
+        canonicalTemplateId: row.canonicalTemplateId,
+        originRuntime: row.originRuntime,
+        orphaned: row.orphaned,
+      }),
+    []
+  );
+
   const columns: StandardTableColumn[] = useMemo(
     () => [
       {
@@ -115,7 +143,42 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             ) : (
               <Presentation size={14} className="text-c-text-muted shrink-0" />
             )}
-            <span className="text-sm font-medium text-c-text truncate">{row.title}</span>
+            <span
+              className={`text-sm font-medium truncate ${
+                row.orphaned ? 'text-c-text-muted' : 'text-c-text'
+              }`}
+            >
+              {row.title}
+            </span>
+            {/* Legacy (report_builder_templates) — dyskretne, neutralne oznaczenie:
+                wzorzec zostaje widoczny i użyteczny, ale jawnie opisany. Zero crimson. */}
+            {row.source === 'legacy' || row.legacy ? (
+              <span
+                data-testid="template-legacy-badge"
+                title={t(
+                  'rap.templates.legacyHint',
+                  'Wzorzec ze starego rejestru (report_builder_templates) — generacja bez zmian.'
+                )}
+                className="shrink-0 rounded border border-c-border px-1.5 py-px text-[10px] font-medium uppercase tracking-wide text-c-text-muted"
+              >
+                {t('rap.templates.legacyBadge', 'Legacy')}
+              </span>
+            ) : null}
+            {/* Osierocony wpis: kanoniczny rekord szablonu nie istnieje — mówimy to
+                wprost zamiast oferować akcję, która i tak nie zadziała. */}
+            {row.orphaned ? (
+              <span
+                data-testid="template-orphaned-badge"
+                title={t(
+                  'rap.templates.orphanedHint',
+                  'Brak kanonicznego rekordu wzorca — nie można go użyć do generacji.'
+                )}
+                className="inline-flex shrink-0 items-center gap-1 rounded border border-c-border bg-c-surface-raised px-1.5 py-px text-[10px] font-medium text-c-text-muted"
+              >
+                <AlertTriangle size={10} />
+                {t('rap.templates.orphanedBadge', 'Brak źródła')}
+              </span>
+            ) : null}
           </div>
         ),
       },
@@ -173,17 +236,12 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         filterable: true,
         filterOptions: [
           { value: 'personal', label: t('reports.personal') },
-          { value: 'application', label: t('reports.application') },
+          { value: 'system', label: t('reports.application') },
           { value: 'organization', label: t('reports.organization') },
+          { value: 'unknown', label: t('rap.templates.scopeUnknown', 'Nieznany') },
         ],
         render: (row: TemplateItem) => (
-          <span className="text-sm text-c-text-secondary">
-            {row.scope === 'application'
-              ? t('reports.application')
-              : row.scope === 'personal'
-                ? t('reports.personal')
-                : t('reports.organization')}
-          </span>
+          <span className="text-sm text-c-text-secondary">{scopeLabel(row.scope)}</span>
         ),
       },
       {
@@ -192,7 +250,16 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         width: '120px',
         filterable: true,
         filterOptions: [
-          { value: 'active', label: t('reports.active'), color: 'bg-emerald-400' },
+          {
+            value: 'approved',
+            label: t('rap.templates.statusApproved', 'Zatwierdzony'),
+            color: 'bg-emerald-400',
+          },
+          {
+            value: 'published',
+            label: t('rap.templates.statusPublished', 'Opublikowany'),
+            color: 'bg-emerald-400',
+          },
           { value: 'draft', label: t('reports.draft'), color: 'bg-slate-400' },
           {
             value: 'deprecated',
@@ -200,13 +267,13 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             color: 'bg-amber-500',
           },
           {
-            value: 'archived',
-            label: t('reports.archived'),
+            value: 'unknown',
+            label: t('rap.templates.statusUnknown', 'Nieznany'),
             color: 'bg-slate-500',
           },
         ],
         render: (row: TemplateItem) => {
-          const meta = TEMPLATE_STATUS_META[row.status] || TEMPLATE_STATUS_META.active;
+          const meta = TEMPLATE_STATUS_META[row.status] || TEMPLATE_STATUS_META.unknown;
           return <StatusChip label={isPolish ? meta.labelPl : meta.label} tone={meta.tone} />;
         },
       },
@@ -220,7 +287,14 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           return raw ? new Date(raw).getTime() : 0;
         },
         render: (row: TemplateItem) => {
+          // Brak daty pokazujemy wprost („—"), zamiast malować dzisiejszą datę.
+          if (!row.updatedAt) {
+            return <span className="text-sm text-c-text-muted">—</span>;
+          }
           const d = new Date(row.updatedAt);
+          if (Number.isNaN(d.getTime())) {
+            return <span className="text-sm text-c-text-muted">—</span>;
+          }
           return (
             <span className="text-sm text-c-text-muted">
               {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
@@ -233,7 +307,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         },
       },
     ],
-    [t, isPolish]
+    [t, isPolish, scopeLabel]
   );
 
   // Triada standard (canon A6 / ANEKS #4): moduł deklaruje TYLKO bloki 1-3;
@@ -242,12 +316,25 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   // (backend)", automatycznie przez StandardTable, NIE ukryte).
   const buildRowMenu = (row: TemplateItem): StandardRowMenu => ({
     primary: [
-      {
-        id: 'use',
-        label: t('rap.actions.useTemplate', 'Użyj wzorca'),
-        icon: Play,
-        onClick: () => navigate(resolveTemplateUsePath(row.id, row.type)),
-      },
+      // ★ Wpis osierocony / bez kanonicznego rekordu NIE jest oferowany jako
+      // gotowy do użycia — pozycja disabled z jawnym powodem, zamiast trasy,
+      // która po kliknięciu i tak nie miałaby czego wygenerować.
+      (() => {
+        const usePath = usePathFor(row);
+        return {
+          id: 'use',
+          label: t('rap.actions.useTemplate', 'Użyj wzorca'),
+          icon: Play,
+          disabled: !usePath,
+          note: usePath
+            ? undefined
+            : t(
+                'rap.templates.useBlocked',
+                'Brak kanonicznego rekordu wzorca — nie ma czego użyć.'
+              ),
+          onClick: usePath ? () => navigate(usePath) : undefined,
+        };
+      })(),
       {
         id: 'clone',
         label: t('rap.actions.clone', 'Klonuj'),
@@ -307,7 +394,12 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
 
   useEffect(() => {
     if (!initialArtifactId || deepLinkConsumed.current || filteredData.length === 0) return;
-    const match = filteredData.find((r) => r.artifactId === initialArtifactId);
+    // ★ Deep-link celuje w id WIERSZA INDEKSU. Poprzednio porównywano do
+    // `r.artifactId` — pola, którego mapper nigdy nie ustawia (przechodziło przez
+    // indeks sygnaturowy TemplateItem), więc deep-link nigdy nie trafiał.
+    const match = filteredData.find(
+      (r) => (r.artifactIndexId ?? r.id) === initialArtifactId || r.artifactId === initialArtifactId
+    );
     if (match) {
       setSelectedId(match.id);
       deepLinkConsumed.current = true;
@@ -330,7 +422,12 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                 label: t('rap.actions.useTemplate', 'Użyj wzorca'),
                 icon: Play,
                 shortcut: 'O',
-                onClick: () => navigate(resolveTemplateUsePath(selectedItem.id, selectedItem.type)),
+                // Sierota → akcja wyłączona (bez cichego fallbacku).
+                disabled: !usePathFor(selectedItem),
+                onClick: () => {
+                  const usePath = usePathFor(selectedItem);
+                  if (usePath) navigate(usePath);
+                },
               },
               {
                 id: 'clone',
@@ -363,7 +460,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             ],
           }
         : undefined,
-    [selectedItem, t, navigate, openChat]
+    [selectedItem, t, navigate, openChat, usePathFor]
   );
 
   // Esc closes preview; single-key shortcut (O) active while preview open (kanon B.24/B.31).
@@ -474,10 +571,13 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
 
   if (viewMode === 'grid') {
     const gridStatusMap: Record<string, string> = {
+      approved: 'READY',
+      published: 'READY',
       active: 'READY',
       draft: 'DRAFT',
       deprecated: 'ARCHIVED',
       archived: 'ARCHIVED',
+      unknown: 'DRAFT',
     };
 
     const gridItems: GridItem[] = filteredData.map((item) => ({
@@ -488,7 +588,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         item.type === 'report' ? 'operational' : item.type === 'sheet' ? 'financial' : 'digital',
       status: gridStatusMap[item.status] || 'DRAFT',
       progress: 0,
-      updatedAt: item.updatedAt,
+      updatedAt: item.updatedAt ?? '',
       description: item.description,
       category: item.category,
       scope: item.scope,
@@ -502,7 +602,10 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         onItemAction={(actionId, item) => {
           const tpl = filteredData.find((t) => t.id === item.id);
           if (!tpl) return;
-          if (actionId === 'open') navigate(resolveTemplateUsePath(tpl.id, tpl.type));
+          if (actionId === 'open') {
+            const usePath = usePathFor(tpl);
+            if (usePath) navigate(usePath);
+          }
           if (actionId === 'duplicate') navigate(resolveTemplateClonePath(tpl.id, tpl.type));
           if (actionId === 'edit') navigate(resolveTemplateEditPath(tpl.id, tpl.type));
         }}
@@ -517,7 +620,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   // 'list' / Interview Inbox / Results KPI catalog adopters.
   const typeMeta = selectedItem ? TEMPLATE_TYPE_META[selectedItem.type] : null;
   const statusMeta = selectedItem
-    ? TEMPLATE_STATUS_META[selectedItem.status] || TEMPLATE_STATUS_META.active
+    ? TEMPLATE_STATUS_META[selectedItem.status] || TEMPLATE_STATUS_META.unknown
     : null;
 
   return (
@@ -530,7 +633,8 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           onRowClick={(row) => setSelectedId(String((row as unknown as TemplateItem).id))}
           onRowDoubleClick={(row) => {
             const item = row as unknown as TemplateItem;
-            navigate(resolveTemplateUsePath(item.id, item.type));
+            const usePath = usePathFor(item);
+            if (usePath) navigate(usePath);
           }}
           rowDescription={(row) => (row as unknown as TemplateItem).description ?? null}
           defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
@@ -553,7 +657,10 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           <StandardPreview
             title={selectedItem.title}
             onClose={() => setSelectedId(null)}
-            onOpenFull={() => navigate(resolveTemplateUsePath(selectedItem.id, selectedItem.type))}
+            onOpenFull={() => {
+              const usePath = usePathFor(selectedItem);
+              if (usePath) navigate(usePath);
+            }}
             openLabel={t('rap.actions.useTemplate', 'Użyj wzorca')}
             meta={{
               pills: [
@@ -576,26 +683,39 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
               ] as MetaPill[],
               trailing: (
                 <span className="text-[11px] font-semibold text-c-text-secondary">
-                  {new Date(selectedItem.updatedAt).toLocaleDateString(
-                    isPolish ? 'pl-PL' : 'en-US',
-                    {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    }
-                  )}
+                  {selectedItem.updatedAt &&
+                  !Number.isNaN(new Date(selectedItem.updatedAt).getTime())
+                    ? new Date(selectedItem.updatedAt).toLocaleDateString(
+                        isPolish ? 'pl-PL' : 'en-US',
+                        {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        }
+                      )
+                    : '—'}
                 </span>
               ),
             }}
             details={{
               text: [
-                `${t('rap.preview.scope', 'Zakres')}: ${
-                  selectedItem.scope === 'application'
-                    ? t('reports.application')
-                    : selectedItem.scope === 'personal'
-                      ? t('reports.personal')
-                      : t('reports.organization')
-                }`,
+                `${t('rap.preview.scope', 'Zakres')}: ${scopeLabel(selectedItem.scope)}`,
+                ...(selectedItem.source === 'legacy' || selectedItem.legacy
+                  ? [
+                      `${t('rap.preview.source', 'Źródło')}: ${t(
+                        'rap.templates.legacySourceLine',
+                        'Legacy (report_builder_templates)'
+                      )}`,
+                    ]
+                  : []),
+                ...(selectedItem.orphaned
+                  ? [
+                      t(
+                        'rap.templates.orphanedHint',
+                        'Brak kanonicznego rekordu wzorca — nie można go użyć do generacji.'
+                      ),
+                    ]
+                  : []),
                 `${t('rap.preview.category', 'Kategoria')}: ${selectedItem.category}`,
                 ...(selectedItem.sectionCount != null
                   ? [`${t('rap.preview.sections', 'Sekcje')}: ${selectedItem.sectionCount}`]

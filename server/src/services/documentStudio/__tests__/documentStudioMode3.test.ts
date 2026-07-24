@@ -128,6 +128,53 @@ describe('Document Studio Mode 3 (template-driven)', () => {
     ).rejects.toThrow('template_not_usable');
   });
 
+  // ---------------------------------------------------------------------
+  // R1 doc slice (2026-07-24) — SYSTEM catalogue must be usable by any tenant.
+  //
+  // `getTemplate` deliberately falls back to the SYSTEM org so curated
+  // templates are visible to every tenant, but the Mode 3 usability gate
+  // used strict org equality and rejected them with `template_not_usable`.
+  // On demo that was 44 of 45 document templates — precisely the rows the
+  // Template Library surfaces, so "Użyj wzorca" was a broken promise.
+  //
+  // `'__system__'` is duplicated as a literal here (not imported from
+  // documentTemplateRegistryDao) so this test never pulls the real
+  // Postgres/DbPromise import chain — same convention as
+  // deliverableTemplateService.ts.
+  // ---------------------------------------------------------------------
+  const SYSTEM_ORG = '__system__';
+
+  it('uses an approved SYSTEM template for a different tenant and drives sections from its blueprint', async () => {
+    const { template } = draftTemplate({
+      organizationId: SYSTEM_ORG,
+      userId: 'curator',
+      input: {
+        name: 'Curated system memo',
+        documentType: 'executive_memo',
+        purpose: 'System catalogue template shared with every tenant',
+      },
+    });
+    const approved = approveTemplate({
+      templateId: template.templateId,
+      organizationId: SYSTEM_ORG,
+      userId: 'curator',
+    });
+
+    // Consumer is a NORMAL tenant, not the system org.
+    const result = await materializeDocumentArtifact({
+      organizationId: 'org-A',
+      userId: 'consult-user',
+      intake: baseIntake,
+      templateId: approved.templateId,
+    });
+
+    // DoD #4: the resulting draft's sections match the record's sectionBlueprint.
+    expect(result.schema.sections.map((s) => s.title)).toEqual(
+      approved.sectionBlueprint.map((s) => s.title)
+    );
+    expect(approved.sectionBlueprint.length).toBeGreaterThan(0);
+  });
+
   it('rejects cross-tenant template usage', async () => {
     const { template } = draftTemplate({
       organizationId: 'org-A',

@@ -3,6 +3,13 @@
  * V8.1 Outputs Library taxonomy (same shell; route alias /presentations).
  */
 
+import type {
+  TemplateOriginRuntime,
+  TemplateScope as MaterialTemplateScope,
+  TemplateSource,
+  TemplateStatus as MaterialTemplateStatus,
+} from '@/types/materials';
+
 export type RapTab =
   | 'outputs_all'
   | 'outputs_mine'
@@ -52,8 +59,15 @@ export type TemplateCategory =
   | 'financial_review'
   | 'assessment_results'
   | 'custom';
-export type TemplateScope = 'personal' | 'application' | 'organization';
-export type TemplateStatus = 'active' | 'deprecated' | 'archived' | 'draft';
+/**
+ * Zakres/status szablonu — SSOT w `src/types/materials.ts` (kontrakt indeksu).
+ * Zachowujemy legacy warianty (`'application'`, `'active'`, `'archived'`) jako
+ * część unionu WYŁĄCZNIE po to, żeby stare, jeszcze niezmigrowane miejsca w UI
+ * dalej się kompilowały — mapper indeksu ich NIE produkuje (patrz
+ * `mapTemplateScope`/`mapTemplateStatus` w useRapData.ts).
+ */
+export type TemplateScope = MaterialTemplateScope | 'application';
+export type TemplateStatus = MaterialTemplateStatus | 'active' | 'archived';
 
 export type ReportType = 'R1' | 'R2' | 'R3' | 'R4' | 'custom';
 export type ReportStatus = 'draft' | 'ready' | 'exported' | 'archived';
@@ -167,14 +181,39 @@ export interface ArtifactGovernanceSummary {
 }
 
 export interface TemplateItem {
+  /**
+   * Id WIERSZA INDEKSU artefaktów (historyczna nazwa `id`, zachowana bo używa
+   * jej StandardTable jako klucza wiersza). ★ To NIE jest id kanonicznego
+   * szablonu — patrz `canonicalTemplateId`.
+   */
   id: string;
+  /** Jawna, nieomylna nazwa tego samego identyfikatora co `id` (index artifact id). */
+  artifactIndexId?: string;
+  /**
+   * Id KANONICZNEGO rekordu szablonu w jego runtime (document_templates,
+   * report_builder_templates, …). To jego oczekuje generator przy „Użyj wzorca".
+   * `null` = indeks nie zna kanonicznego rekordu (zwykle wpis osierocony).
+   */
+  canonicalTemplateId?: string | null;
+  /** Runtime pochodzenia kanonicznego rekordu (rozstrzyga trasę „Użyj wzorca"). */
+  originRuntime?: TemplateOriginRuntime | null;
+  /** `'legacy'` = report_builder_templates; `'canonical'` = nowy rejestr. */
+  source?: TemplateSource | null;
+  /** Skrót na `source === 'legacy'` (backend podaje jawnie). */
+  legacy?: boolean;
+  /** true = brak kanonicznego rekordu → wpisu NIE wolno oferować do użycia. */
+  orphaned?: boolean;
   title: string;
   description?: string;
   type: TemplateType;
   category: TemplateCategory;
   scope: TemplateScope;
   status: TemplateStatus;
-  updatedAt: string;
+  /**
+   * ISO data ostatniej zmiany albo `null`, gdy indeks jej nie zna.
+   * ★ NIE fabrykujemy „teraz" — brak daty ma być widoczny.
+   */
+  updatedAt: string | null;
   createdBy: string;
   slideCount?: number;
   sectionCount?: number;
@@ -323,6 +362,19 @@ export const TEMPLATE_STATUS_META: Record<
   TemplateStatus,
   { label: string; labelPl: string; dotColor: string; tone: StatusChipTone }
 > = {
+  approved: {
+    label: 'Approved',
+    labelPl: 'Zatwierdzony',
+    dotColor: 'bg-emerald-400',
+    tone: 'success',
+  },
+  published: {
+    label: 'Published',
+    labelPl: 'Opublikowany',
+    dotColor: 'bg-emerald-400',
+    tone: 'success',
+  },
+  unknown: { label: 'Unknown', labelPl: 'Nieznany', dotColor: 'bg-slate-400', tone: 'neutral' },
   active: { label: 'Active', labelPl: 'Aktywny', dotColor: 'bg-emerald-400', tone: 'success' },
   draft: { label: 'Draft', labelPl: 'Szkic', dotColor: 'bg-slate-400', tone: 'neutral' },
   deprecated: {

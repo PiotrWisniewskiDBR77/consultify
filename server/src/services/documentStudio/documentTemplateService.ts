@@ -754,13 +754,29 @@ export function listTemplateAuditEntries(
  * MVP-2 boundary helper: callers in the orchestrator use this to confirm a
  * template is usable for Mode 3 generation. Defensively returns false for
  * mismatched tenants.
+ *
+ * R1 (doc slice, 2026-07-24) — SYSTEM catalogue fix. `getTemplate` above
+ * deliberately falls back to the SYSTEM org so the curated catalogue is
+ * visible to every tenant "without per-tenant duplication" (see :484-490).
+ * A strict `organizationId` equality here contradicted that: every curated
+ * template resolved through the fallback carries `organizationId ===
+ * SYSTEM_ORG_ID` and therefore failed Mode 3 with `template_not_usable`.
+ * On demo that is 44 of 45 document templates — i.e. the exact rows the
+ * Template Library surfaces. Accepting the SYSTEM org restores the
+ * documented intent while keeping the approval requirement.
+ *
+ * Cross-tenant access remains impossible: `getTemplate` never returns
+ * another tenant's row, so the only extra rows admitted here are the
+ * curated system ones this module already publishes to all tenants.
  */
 export function isTemplateUsableForGeneration(
   template: DocumentTemplate | null,
   organizationId: string
 ): boolean {
   if (!template) return false;
-  if (template.organizationId !== organizationId) return false;
+  if (template.organizationId !== organizationId && template.organizationId !== SYSTEM_ORG_ID) {
+    return false;
+  }
   return template.status === 'approved';
 }
 

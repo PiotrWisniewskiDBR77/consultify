@@ -21,6 +21,12 @@ import { Toaster } from 'react-hot-toast';
 
 import PanelUwag from './PanelUwag';
 const MaterialyLauncherScreen = React.lazy(() => import('./screens/materialy-launcher'));
+const MaterialyTemplateLibrarySliceScreen = React.lazy(
+  () => import('./screens/materialy-template-library-slice')
+);
+const DocumentStudioTemplateResolveErrorScreen = React.lazy(
+  () => import('./screens/document-studio-template-resolve-error')
+);
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -134,6 +140,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'materialy-launcher': {
     label: 'MATERIAŁY — tablica Dodaj (format×tryb) &variant=materials|templates',
     render: () => <MaterialyLauncherScreen />,
+  },
+  'materialy-template-library-slice': {
+    label:
+      'MATERIAŁY — Biblioteka wzorców, slice „szablon dokumentu": Legacy · osierocony (bez użycia) · brak metadanych',
+    render: () => <MaterialyTemplateLibrarySliceScreen />,
+  },
+  'document-studio-template-resolve-error': {
+    label:
+      'DOCUMENT STUDIO — „Użyj wzorca" odrzucone serwerowo: stan blokujący (bez pickera, bez AI). ?case=orphaned|forbidden|deprecated|not_indexed|resolving',
+    render: () => <DocumentStudioTemplateResolveErrorScreen />,
   },
   'initiatives-portfolio-analysis': {
     label:
