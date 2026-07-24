@@ -30,6 +30,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3413"],
       "port": 3413
+    },
+    {
+      "name": "grid-etap3-menu",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3207"],
+      "port": 3207
     }
   ]
 }
