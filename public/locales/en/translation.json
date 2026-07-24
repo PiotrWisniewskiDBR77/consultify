@@ -27409,7 +27409,8 @@
       "delete": "Delete",
       "addAction": "Add action",
       "addDecision": "Add decision",
-      "paste": "Paste"
+      "paste": "Paste",
+      "copy": "Copy"
     },
     "laneSystem": {
       "expandLane": "Expand lane",

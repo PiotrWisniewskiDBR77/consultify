@@ -2,7 +2,7 @@
  * useProcessFlowNodes — Extracted node CRUD, lane management, and selection
  * for the Process Flow component.
  */
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
 import type { Edge, Node } from 'reactflow';
 
@@ -69,7 +69,12 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
 
   const deleteSelected = useCallback(async () => {
     if (locked) return;
-    const selectedCount = nodes.filter((n: Node) => n.selected).length;
+    // P1-4: liczylo WYLACZNIE wezly, wiec przy zaznaczonej samej krawedzi
+    // funkcja wychodzila na `selectedCount === 0` i Delete nie robil NIC —
+    // cichy brak reakcji na widocznej akcji. Krawedz to tez element.
+    const zaznaczoneWezly = nodes.filter((n: Node) => n.selected).length;
+    const zaznaczoneKrawedzie = edges.filter((e: Edge) => e.selected).length;
+    const selectedCount = zaznaczoneWezly + zaznaczoneKrawedzie;
     if (selectedCount === 0) return;
     if (selectedCount >= 2 && confirmBulkDelete) {
       const ok = await confirmBulkDelete(selectedCount);
@@ -100,7 +105,114 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
         ...removedNodeIdList.map((id) => ({ op: 'remove_node', data: { id } })),
       ]);
     }
-  }, [locked, nodes, confirmBulkDelete, onNodesDeleted, pushUndo, setEdges, setNodes, collab]);
+  }, [locked, nodes, edges, confirmBulkDelete, onNodesDeleted, pushUndo, setEdges, setNodes, collab]);
+
+  /**
+   * Wkleja podane wezly (z krawedziami miedzy nimi) jako NOWE elementy.
+   * Wspolna mechanika dla „Duplikuj" i „Wklej" — rozni je tylko zrodlo:
+   * duplikat bierze aktualne zaznaczenie, wklejenie bierze schowek.
+   */
+  const wstawKopie = useCallback(
+    (zrodloweWezly: Node[], zrodloweKrawedzie: Edge[], przesuniecie: { x: number; y: number }) => {
+      if (locked) return;
+      if (zrodloweWezly.length === 0) return;
+      pushUndo();
+
+      const idMap = new Map<string, string>();
+      const zrodloweId = new Set(zrodloweWezly.map((node) => node.id));
+
+      const newNodes: Node[] = zrodloweWezly.map((n) => {
+        const newId = `pf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        idMap.set(n.id, newId);
+        return {
+          ...n,
+          id: newId,
+          position: { x: n.position.x + przesuniecie.x, y: n.position.y + przesuniecie.y },
+          selected: false,
+          data: {
+            ...n.data,
+            onLabelChange: (next: string) => {
+              setNodes((nds: Node[]) =>
+                nds.map((nd: Node) =>
+                  nd.id === newId ? { ...nd, data: { ...nd.data, label: next } } : nd
+                )
+              );
+            },
+            onNodeDetail: onNodeDetail || undefined,
+          },
+        };
+      });
+
+      const newEdges: Edge[] = zrodloweKrawedzie
+        .filter((edge) => zrodloweId.has(edge.source) && zrodloweId.has(edge.target))
+        .map((edge) => ({
+          ...edge,
+          id: `pf-edge-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          source: idMap.get(edge.source) || edge.source,
+          target: idMap.get(edge.target) || edge.target,
+          selected: false,
+        }));
+
+      setNodes((prev) => [...prev, ...newNodes]);
+      if (newEdges.length > 0) setEdges((prev) => [...prev, ...newEdges]);
+      collab?.broadcastOps?.([
+        ...newNodes.map((n) => ({ op: 'add_node', data: n })),
+        ...newEdges.map((e) => ({ op: 'add_edge', data: e })),
+      ]);
+    },
+    [locked, onNodeDetail, pushUndo, setEdges, setNodes, collab]
+  );
+
+  /**
+   * Schowek narzedzia. Trzymany w ref, bo ma przezyc rerender, ale NIE ma byc
+   * stanem — jego zmiana niczego nie przerysowuje.
+   */
+  const schowekRef = useRef<{ nodes: Node[]; edges: Edge[] }>({ nodes: [], edges: [] });
+
+  /**
+   * Kopiuje podany zbior wezlow do schowka. Zwraca ich liczbe.
+   * Wspolny rdzen dla „kopiuj zaznaczenie" i „kopiuj wezel spod menu".
+   */
+  const kopiujWezly = useCallback(
+    (doKopiowania: Node[]) => {
+      if (doKopiowania.length === 0) return 0;
+      const ids = new Set(doKopiowania.map((n) => n.id));
+      schowekRef.current = {
+        nodes: doKopiowania.map((n) => ({ ...n, selected: false })),
+        edges: edges.filter((e) => ids.has(e.source) && ids.has(e.target)),
+      };
+      return doKopiowania.length;
+    },
+    [edges]
+  );
+
+  const copySelected = useCallback(
+    () => kopiujWezly(nodes.filter((n) => n.selected)),
+    [kopiujWezly, nodes]
+  );
+
+  /**
+   * Kopiuje konkretny wezel po id — dla menu kontekstowego, ktore otwiera sie na
+   * wezle BEZ zaznaczania go (prawy klik nie zaznacza). Bez tego „Kopiuj" w menu
+   * elementu kopiowalo puste zaznaczenie i schowek zostawal pusty.
+   */
+  const copyNodeById = useCallback(
+    (nodeId: string) => {
+      const wezel = nodes.find((n) => n.id === nodeId);
+      return wezel ? kopiujWezly([wezel]) : 0;
+    },
+    [kopiujWezly, nodes]
+  );
+
+  /** Ile elementow czeka w schowku — powierzchnie pytaja o to, zeby wyszarzyc „Wklej". */
+  const clipboardCount = useCallback(() => schowekRef.current.nodes.length, []);
+
+  const pasteClipboard = useCallback(() => {
+    const { nodes: skopiowane, edges: skopiowaneKrawedzie } = schowekRef.current;
+    if (skopiowane.length === 0) return 0;
+    wstawKopie(skopiowane, skopiowaneKrawedzie, { x: 40, y: 40 });
+    return skopiowane.length;
+  }, [wstawKopie]);
 
   const duplicateSelected = useCallback(() => {
     if (locked) return;
@@ -255,6 +367,10 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
   return {
     deleteSelected,
     duplicateSelected,
+    copySelected,
+    copyNodeById,
+    pasteClipboard,
+    clipboardCount,
     handleLaneRename,
     handleLaneDelete,
     handleLaneColorChange,
