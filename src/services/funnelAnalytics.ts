@@ -116,6 +116,7 @@ export type FunnelEventName =
   | 'ideas_table_sort_applied'
   | 'ideas_table_autofill_triggered'
   | 'ideas_table_refresh_triggered'
+  | 'ideas_table_field_fill_applied'
   // Notebook — extra UI actions used in My Work notebook
   | 'notebook_action_item_created'
   | 'notebook_action_items_bulk_created'
