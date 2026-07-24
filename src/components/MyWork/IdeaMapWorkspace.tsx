@@ -110,6 +110,7 @@ import {
 } from './IdeaWorkspaceTools';
 import { AIGovernanceBadge, AIGovernancePanel } from './mindmap/AIGovernancePanel';
 import { CanvasLeftToolbar } from './mindmap/CanvasLeftToolbar';
+import { IdeaViewSwitcher } from './mindmap/IdeaViewSwitcher';
 import { stabilizeMindmapInteractionMode } from './mindmap/mindmapInteractionGrammar';
 import { SnapshotHistory } from './mindmap/SnapshotHistory';
 import { type UnifiedNodeData, UnifiedNodeDetailDrawer } from './mindmap/UnifiedNodeDetailDrawer';
@@ -326,6 +327,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const { setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
   const { isEnabled } = useFeatureFlagsContext();
   const mindmapTeresaBridgeEnabled = isEnabled('ENABLE_TERESA_MINDMAP');
+  // D2: przelacznik reprezentacji w prawym dolnym rogu (flaga OFF do akceptu).
+  const switcherBottomRight = isEnabled('ideaSwitcherBottomRight');
   // M06 Fala 4.1b: canonical unified node-detail drawer (idea variant). OFF
   // (default) keeps today's IdeaNodeDetailDrawer, no change.
   const drawerUnifiedEnabled = isEnabled('mindmapDrawerUnified');
@@ -3337,6 +3340,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // declarations defined at the end of the component.
   const canvasToolsNode = renderCanvasToolsNode();
   const floatingLeftRailNode = renderFloatingLeftRail();
+  // D2: przelacznik w prawym dolnym rogu — portal do body, wiec jeden wezel
+  // dziala w obu sciezkach renderu (mels i legacy). OFF => null.
+  const viewSwitcherNode = switcherBottomRight ? (
+    <IdeaViewSwitcher
+      activeTool={activeTool}
+      onToolChange={setActiveTool}
+      isPl={isPolish}
+      familyCounts={familyCounts}
+    />
+  ) : null;
   const workspaceSiblingsNode = renderWorkspaceSiblings();
 
   if (melsCanvasEnabled) {
@@ -3388,7 +3401,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                     command-row (melsCanvasChips). Nothing left to float here. */}
               </>
             }
-            floatingLeftRail={floatingLeftRailNode}
+            floatingLeftRail={
+              <>
+                {floatingLeftRailNode}
+                {viewSwitcherNode}
+              </>
+            }
             siblings={workspaceSiblingsNode}
             onRunPrimary={() => handleQuickAction('mm_add_child')}
             onOpenCommandPalette={cmdPalette.open}
@@ -3530,6 +3548,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
         {/* UI overlays rendered AFTER canvas tools so they appear on top */}
         {floatingLeftRailNode}
+        {viewSwitcherNode}
 
         {/* #6a/#6e: top chrome (governance badge + global actions: search/
             help/Discuss with Teresa) hides in fullscreen — cała góra znika.
@@ -3797,7 +3816,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         }}
         onApplyTemplate={handleApplyTemplate}
         onOpenTemplateGallery={() => setTemplateGalleryOpen(true)}
-        onToolChange={setActiveTool}
+        // D2: gdy przelacznik jest w prawym dolnym rogu, zdejmujemy go z railа.
+        onToolChange={switcherBottomRight ? undefined : setActiveTool}
         familyCounts={familyCounts}
       />
     );
