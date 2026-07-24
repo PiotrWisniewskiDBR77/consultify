@@ -109,8 +109,17 @@ function saveStoredBlocks(planId: string, blocks: PlanSchemaBlock[]): void {
   }
 }
 
-/** Konwersja realnych kroków planu (`AgentPlanStep`, backend) na edytowalne klocki schematu. */
-function stepsToBlocks(steps: AgentPlanStep[]): PlanSchemaBlock[] {
+/**
+ * Konwersja realnych kroków planu (`AgentPlanStep`, backend) na edytowalne
+ * klocki schematu.
+ *
+ * ★ AGT-008: teraz przenosimy też `toolName`/`toolInput` na blok (poprzednio
+ * blok niósł WYŁĄCZNIE id/kind/name/moduleType — stąd `blocksToSteps` niżej
+ * nie miała jak poznać wybór usera dla klocka i musiała zgadywać). Dzięki
+ * temu select "Narzędzie"/"Poziom Vault" w `AgentPlanCanvas` pokazuje
+ * PRAWDZIWY stan istniejącego kroku zamiast zawsze startować od placeholdera.
+ */
+export function stepsToBlocks(steps: AgentPlanStep[]): PlanSchemaBlock[] {
   return steps.map((step) => {
     const rawKind = step.toolInput?.blockKind;
     const kind: PlanBlockKind =
@@ -123,34 +132,45 @@ function stepsToBlocks(steps: AgentPlanStep[]): PlanSchemaBlock[] {
       kind,
       name: step.toolName,
       moduleType: typeof rawModule === 'string' ? rawModule : undefined,
+      toolName: step.toolName,
+      toolInput: step.toolInput,
     };
   });
 }
 
 /**
  * AGT-009: konwersja edytowalnych klocków (`PlanSchemaBlock`) z powrotem na
- * kroki wykonawcze `{toolName, toolInput}` do zapisu/uruchomienia. Klocek jest
- * lossy (niesie tylko id/kind/name/moduleType — patrz `stepsToBlocks`), więc
- * dla klocków POCHODZĄCYCH z realnego kroku odzyskujemy oryginalny `toolInput`
- * po `id` (blok.id === step.id), zachowując argumenty narzędzia (query,
- * calculation_type, …). Do tego dopisujemy metadane schematu (`blockKind`,
- * `module`, `phase`) tak, by round-trip step→block→step był stabilny.
+ * kroki wykonawcze `{toolName, toolInput}` do zapisu/uruchomienia.
  *
- * Nowo DODANE klocki (brak dopasowania po id) dostają bezpieczny, wykonywalny
- * `toolName` = `search_knowledge_base` (read-only, ten sam rejestr narzędzi co
- * czat Teresy) z zapytaniem z nazwy klocka — plan pozostaje uruchamialny, a
- * bramka akceptu i tak zadziała dla klocków side-effect wg SIDE_EFFECT_TOOLS.
+ * Dla klocków POCHODZĄCYCH z realnego kroku (dopasowanie po `id`) nadal
+ * priorytetowo odzyskujemy oryginalny `toolName`/`toolInput` z planu — to
+ * jest źródło prawdy dla kroku, który już istnieje (przestawienie/usunięcie
+ * NIE gubi argumentów narzędzia: query, calculation_type, vault_scope, …).
+ *
+ * ★ AGT-008 (naprawa): dla klocków BEZ dopasowania po id (nowo dodane w
+ * canvas) PRZED tą zmianą blok nie miał jak przenieść wybranego narzędzia
+ * w ogóle (`PlanSchemaBlock` nie miała pola na to) — więc każdy nowy klocek
+ * dostawał sztywny, niewidoczny dla usera fallback `search_knowledge_base`,
+ * niezależnie od tego, co user wybrał w UI (bo UI nie miało jak nic wybrać).
+ * Teraz blok niesie `toolName`/`toolInput` (patrz AgentPlanCanvas.tsx —
+ * select "Narzędzie" dla większości `kind`, select "Poziom Vault" dla
+ * `vault-kontekst`), więc kolejność pierwszeństwa jest: (1) realny krok po
+ * id, (2) WYBÓR usera na klocku, (3) bezpieczny fallback read-only —
+ * fallback (3) teraz odpala TYLKO dla schematów sprzed AGT-008 (klocki bez
+ * `toolName` w ogóle), nie dla każdego nowego klocka jak dotąd.
  */
-function blocksToSteps(
+export function blocksToSteps(
   blocks: PlanSchemaBlock[],
   planSteps: AgentPlanStep[]
 ): Array<{ toolName: string; toolInput: Record<string, unknown> }> {
   const byId = new Map(planSteps.map((s) => [s.id, s]));
   return blocks.map((block) => {
     const matched = byId.get(block.id);
-    const baseInput: Record<string, unknown> = matched ? { ...matched.toolInput } : {};
-    const toolName = matched?.toolName ?? 'search_knowledge_base';
-    if (!matched) {
+    const baseInput: Record<string, unknown> = matched
+      ? { ...matched.toolInput }
+      : { ...(block.toolInput ?? {}) };
+    const toolName = matched?.toolName ?? block.toolName ?? 'search_knowledge_base';
+    if (!baseInput.query && toolName === 'search_knowledge_base') {
       baseInput.query = block.name;
     }
     return {

@@ -12,6 +12,11 @@
  * Only intercepts GET /api/ai/agent-plan/:id — nothing else is called by
  * this screen (no approve/cancel exercised here, that is already proven by
  * the agent-plan-view.tsx harness).
+ *
+ * ★ AGT-008 — also intercepts GET /api/knowledge/vault-safes so the new
+ * "Poziom Vault" picker on the 'vault-kontekst' block (AgentPlanCanvas.tsx)
+ * has real safe names to show instead of an empty/error select. Mirrors the
+ * shape of GET /api/knowledge/vault-safes (server/src/routes/knowledge.routes.ts).
  */
 
 interface MockStep {
@@ -73,11 +78,46 @@ function respond(body: unknown, status = 200): Response {
   });
 }
 
+const MOCK_VAULT_SAFES = [
+  {
+    id: 'user',
+    type: 'user',
+    projectId: null,
+    name: 'Mój sejf',
+    documentCount: 4,
+    lastModified: null,
+  },
+  {
+    id: 'organization',
+    type: 'organization',
+    projectId: null,
+    name: 'Sejf organizacji',
+    documentCount: 12,
+    lastModified: null,
+  },
+  {
+    id: 'project:proj-elkomtech',
+    type: 'project',
+    projectId: 'proj-elkomtech',
+    name: 'Elkomtech',
+    documentCount: 7,
+    lastModified: null,
+  },
+];
+
 export function installAgentPlanCanvasFetchMock(): void {
   const originalFetch = window.fetch.bind(window);
 
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input.toString();
+
+    // AGT-008 — "Poziom Vault" picker na klocku 'vault-kontekst'.
+    if (
+      url.includes('/api/knowledge/vault-safes') &&
+      (!init || !init.method || init.method === 'GET')
+    ) {
+      return respond({ safes: MOCK_VAULT_SAFES });
+    }
 
     const getMatch = url.match(/\/api\/ai\/agent-plan\/([^/?]+)$/);
     if (getMatch && (!init || !init.method || init.method === 'GET')) {
