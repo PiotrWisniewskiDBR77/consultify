@@ -11,7 +11,8 @@
 | Miara | Wynik | Uwaga |
 |---|:--:|---|
 | Audyt środowiska (18 obiektów × 2 motywy) | **18/18** | zmierzone 2026-07-24, po scaleniu fali 2 |
-| Bramki (`artefakt` · `list-canon` · `triada`) | **zielone** | |
+| Bramki `artefakt` · `triada` · `gestosc` · `sqlsql` | **zielone** | |
+| Bramka `list-canon` | **CZERWONA** | 11 naruszeń, ★ dług **zastany na demo** — identyczny zbiór przed i po promocji (§7) |
 | Testy rubryki analizy AI | **18/18** | `cardAnalysisRubric.test.ts` |
 | Uchwyty edycji w trybie Podgląd | **0 na wszystkich kartach** | było: Decyzja 6, Zadanie 8, Inicjatywa 24, Insight 22 |
 | Atrapy AI (kod udający działanie modelu) | **12 rodzin wyciętych** | |
