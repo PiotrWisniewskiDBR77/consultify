@@ -30,13 +30,17 @@ Trzy osobne sposoby na ciche zepsucie danych.
 
 **Stan widoku** — preferencja przeniesiona do pamięci przeglądarki, per użytkownik. Link `/workspace/<narzędzie>` zawsze wygrywa.
 
-## 3. STAN — CO CZEKA NA CIEBIE
+## 3. STAN — WYKONANE, NIC NIE CZEKA
 
 | Co | Stan |
 |---|---|
-| Historia konwersji | kod gotowy, **migracja bazy NIEURUCHOMIONA** — czeka na twoją zgodę |
-| Import z potwierdzeniem | za flagą `ideaImportGuardRail`, **domyślnie wyłączoną** — to zmiana wizualna, czeka na akcept |
-| Stan widoku lokalny | działa od razu, bez flagi |
+| Historia konwersji | migracja **uruchomiona na staging**; ścieżka sprawdzona realną konwersją przez API |
+| Import z potwierdzeniem | **włączone domyślnie** — render zweryfikowany przed pokazaniem właścicielowi |
+| Stan widoku lokalny | działa, bez flagi |
+
+Konwersję sprawdziłem obiema ścieżkami na obiekcie testowym: konwersja **fragmentu** dopisała wpis historii i **nie ruszyła** etapu całej Idei; konwersja **całości** dopisała drugi wpis i przestawiła etap. Oba wpisy współistnieją — przed naprawą drugi kasował ślad pierwszego. Rekordy próbne posprzątane, staging czysty.
+
+Zabezpieczenie importu włączyłem domyślnie, bo wyłączone znaczyło, że jedno kliknięcie nadal kasuje cały graf bez ostrzeżenia. Komunikat podaje konkretne liczby, np. „usunie 9 węzłów i 9 połączeń, a wstawi 2 węzły i 1 połączenie".
 
 ## 4. OGRANICZENIA, KTÓRE ZGŁASZAM ZAMIAST PRZEMILCZEĆ
 

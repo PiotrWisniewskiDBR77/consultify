@@ -35,9 +35,9 @@ Otwórz „Eksport" w Przepływie — okno ma być widoczne w całości. Zamknij
 
 Reszty nie da się odebrać wzrokiem — to warstwa dla czytnika ekranu. Odbiór = przyjęcie liczby: 62 błędy krytyczne → 0.
 
-## 4. CZEGO TA NAPRAWA NIE ZAŁATWIA
+## 4. BRAMKA DOSTĘPNOŚCI PRZECHODZI
 
-Bramka dostępności wymaga zera błędów krytycznych **i** poważnych. Krytyczne są na zerze, poważne zostają — dwa rodzaje, oba wymagają Twojej decyzji, nie kodu:
+Zero naruszeń krytycznych **i** poważnych na wszystkich czterech ekranach. Dwa ostatnie wyglądały na wybór mniejszego zła, a nim nie były:
 
-1. **Kontrast w powłoce globalnej** (logo, breadcrumb, odznaka licznika). Poprawka logo dotyka crimsona zarezerwowanego dla semantyki krytycznej i dotknęłaby całego produktu.
-2. **Węzły Tablicy** — biblioteka oznacza każdy węzeł jako przycisk, a ramka słusznie zawiera przycisk zwijania. Jedyne obejście to odebranie węzłom obsługi klawiaturą, czyli wymiana jednego naruszenia na drugie. Nie zrobiłem tego po cichu.
+- **Logo „77"** nie musiało przestać być crimsonowe. Problemem był stały odcień z tailwinda, który nie rozjaśnia się w trybie ciemnym. Token marki rozjaśnia się sam, a pogrubienie napisu przenosi go do kategorii tekstu dużego, gdzie próg jest niższy. Marka zostaje.
+- **Ramki Tablicy** nie wymagały wyboru „dostępność albo klawiatura". Ramka jest kontenerem, nie elementem operowanym — po zdjęciu z niej fokusu pozostałe węzły nadal chodzą z klawiatury, przycisk „Zwiń sekcję" też, a zaznaczanie i przeciąganie ramki zachowuje się **identycznie** jak przed zmianą. Sprawdziłem różnicowo: przed i po.
