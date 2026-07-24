@@ -70,6 +70,12 @@ export const DocumentStudioView: React.FC = () => {
   // Mode 2 (Document Template Architect) — wejście z Biblioteki szablonów.
   const entryParam = searchParams.get('entry');
   const tabParam = searchParams.get('tab');
+  // Biblioteka wzorców → „Użyj wzorca" dla szablonu DOKUMENTU przychodzi jako
+  // `?entry=template&templateId=<canonicalTemplateId>`. Dotąd id ginęło (link
+  // szedł do /wordy?templateArtifactId=…, czyli id WIERSZA INDEKSU, nie
+  // kanonicznego szablonu) i użytkownik i tak musiał wybierać wzorzec ręcznie.
+  // Teraz preselekcjonujemy Mode 3 tym konkretnym szablonem.
+  const templateIdFromQuery = (searchParams.get('templateId') || '').trim() || null;
 
   // D1 (roboty tri-tryby): jawny wybór 3 trybów na wejściu, tylko za flagą
   // `ff_tri_tryby`. OFF → `triMode` false → gałąź intake renderuje wyłącznie
@@ -141,6 +147,22 @@ export const DocumentStudioView: React.FC = () => {
   useEffect(() => {
     void refreshApprovedTemplates();
   }, [refreshApprovedTemplates]);
+
+  // ★ Uczciwy stan preselekcji: jeśli Biblioteka przysłała `?templateId=`, ale
+  // wśród zatwierdzonych szablonów nie ma takiego rekordu — mówimy to wprost.
+  // Bez tego użytkownik trafiłby na formularz z pustym pickerem i myślał, że
+  // jego wybór został przyjęty (cichy fallback do Mode 1).
+  const templatePreselectNotice = useMemo((): string | null => {
+    if (!templateIdFromQuery) return null;
+    if (approvedTemplates.length === 0) return null; // lista jeszcze nieznana → templatesError to pokrywa
+    const found = approvedTemplates.some((tpl) => tpl.templateId === templateIdFromQuery);
+    if (found) return null;
+    return t('documentStudio.view.templatePreselectMissing', {
+      defaultValue:
+        'The template chosen in the library ({{templateId}}) is not among the approved templates. Pick one below or generate without a template.',
+      templateId: templateIdFromQuery,
+    });
+  }, [templateIdFromQuery, approvedTemplates, t]);
 
   useEffect(() => {
     if (!artifactIdFromUrl || artifactIdFromUrl === artifactId) return;
@@ -529,8 +551,15 @@ export const DocumentStudioView: React.FC = () => {
               loading={planning || generating}
               error={phase === 'intake' ? error : null}
               approvedTemplates={approvedTemplates}
-              templatesNotice={phase === 'intake' ? templatesError : null}
-              autoFocusTemplatePicker={triMode && docEntryMode === 'template'}
+              templatesNotice={
+                phase === 'intake' ? (templatesError ?? templatePreselectNotice) : null
+              }
+              // ★ Preselekcja Mode 3 wzorcem wybranym w Bibliotece (?templateId=).
+              initialTemplateId={templateIdFromQuery}
+              autoFocusTemplatePicker={
+                (triMode && docEntryMode === 'template') ||
+                (entryParam === 'template' && !templateIdFromQuery)
+              }
               onBackToModes={triMode ? handleBackToModes : undefined}
             />
           )
