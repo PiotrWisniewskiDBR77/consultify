@@ -147,15 +147,11 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     category: 'beta',
     allowLocalOverride: true,
   },
-  {
-    id: 'tablePlatformRecordsApi',
-    name: 'Table Platform: Records API',
-    description:
-      'Enables the new /api/v1/bases and /api/v1/tables endpoints for the table platform',
-    defaultValue: true,
-    category: 'beta',
-    allowLocalOverride: true,
-  },
+  // P3-8: `tablePlatformRecordsApi` usunieta jako FANTOM — zero czytelnikow
+  // `isEnabled('tablePlatformRecordsApi')` w calym repo (FE i backend), a
+  // endpointy /api/v1/bases i /api/v1/tables sa zamontowane BEZWARUNKOWO
+  // (table-platform.routes.ts). Flaga niczego nie bramkowala. Zlota regula:
+  // flaga bez implementacji to dlug, ktory myli — usunieta.
   {
     id: 'assessmentInitiativesWizard',
     name: 'Assessment: Initiatives Wizard',
