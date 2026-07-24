@@ -232,3 +232,10 @@ nawet po skasowaniu gałęzi:
   zgadywaniem trybu). Skutek: sekcja Akcje mogła utknąć zwinięta z ukrytymi żywymi przyciskami, albo
   otwarta pokazując nieaktualną treść. Złapane na żywym renderze PRZED wysłaniem, nie w code review.
   Crimson=0, bramki zielone, JSON pl/en poprawny. Hub 11 commitów ponad demo.
+- **Etap 5 (karta po karcie), front Zadanie+Decyzja** ✅ SCALONY. Zadanie: centrum poszerzone
+  598→760px (1440) / 678px (1280) — pierwszy realny użytkownik tokenu `--ntype-content-document-*`
+  z Etapu 2. Decyzja: hierarchia akcji naprawiona — było do 6 przycisków naraz w panelu, teraz
+  1 primary + destructive (czerwony outline) + „More N" zwinięte. Duplikat Submit/Send-to-review i
+  szerokość Decyzji potwierdzone jako już zgodne (nietknięte). ★ Agent znalazł „pustą listę kontrolną",
+  zbadał, ustalił że to fałszywy alarm (klatka animacji) i WYCOFAŁ zgłoszenie — nie trafiło do kolejki.
+  Crimson=0, esbuild OK. Hub 14 commitów ponad demo.
