@@ -158,6 +158,10 @@ import { AIConnections } from './shared/AIConnections';
 import { buildAskAIMessage } from './shared/askAiHelper';
 import { PostDecisionFollowUp } from './shared/PostDecisionFollowUp';
 import { RelatedContext } from './shared/RelatedContext';
+// Wspólny wzór listy powiązań (Decyzja „Dotyczy" = Zadanie „Wynika z").
+// Import wprost z pliku, nie przez `./shared/index.ts` — barrel jest dziś
+// równolegle edytowany przez inne fronty.
+import { RelatedItemsList } from './shared/RelatedItemsList';
 
 // ── Decision accordion section IDs ──────────────────────────────────────────
 const DECISION_SECTION_IDS = [
@@ -3887,12 +3891,10 @@ Use userId only from this list:
     });
   };
 
-  const getLinkedItemIndex = (item: LinkedItem) => {
-    const raw = String(item.id || '').trim();
-    if (!raw) return '';
-    const normalized = raw.replace(/^.*\//, '');
-    return normalized.length > 24 ? `${normalized.slice(0, 24)}...` : normalized;
-  };
+  // `getLinkedItemIndex` USUNIĘTY 2026-07-24 — jego jedynym zadaniem było
+  // pokazać właścicielowi surowy identyfikator powiązania („link-2", „link-3")
+  // obok tytułu. Sekcja „Dotyczy" renderuje dziś `RelatedItemsList`
+  // (typ po polsku + tytuł), więc funkcja nie miała już wywołań.
 
   // Lokalny przycisk AI przy polu (menu Popraw/Skróć/Rozwiń/Formalnie) usunięty
   // 2026-07-23. Był to MARTWY KOD: `renderFieldAIButton` nie miał ani jednego
@@ -5668,24 +5670,7 @@ Use userId only from this list:
                                     {t('decisions.detail.scope.noLinkedItem', 'No linked item')}
                                   </div>
                                 ) : (
-                                  <div className="space-y-1">
-                                    {relatedDecisionItems.map((item) => (
-                                      <div
-                                        key={item.id}
-                                        className="flex items-center justify-between gap-3 text-sm text-c-text-secondary"
-                                      >
-                                        <div className="flex min-w-0 items-center gap-2">
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-info/50 text-c-info bg-c-info/10 uppercase">
-                                            {item.type}
-                                          </span>
-                                          <span className="truncate">{item.title}</span>
-                                        </div>
-                                        <span className="shrink-0 text-[11px] font-mono text-c-text-secondary/70">
-                                          {getLinkedItemIndex(item)}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
+                                  <RelatedItemsList items={relatedDecisionItems} />
                                 )}
                               </div>
 
