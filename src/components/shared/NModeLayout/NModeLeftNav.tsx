@@ -37,7 +37,11 @@ const isSectionVisible = (s: NModeSection, showAll: boolean) =>
 // Canon A4: the rail collapses below the lg breakpoint (< 1024px) so the
 // 2-pane layout never breaks on tablet/mobile. Section switching there falls
 // back to the toolbar's Sections dropdown.
-const N_MODE_LEFT_NAV_WIDTH_CLASS = 'hidden lg:block w-[242px]';
+// Szerokość z tokenu gridu n-Type (--ntype-left-panel-width: 216px) — wspólna
+// dla sześciu kart, żeby lewy panel nie zmieniał szerokości między kartami ani
+// zależnie od długości nazw sekcji (SSOT: _GRID_STABILIZATION_COMMAND_2026-07-24).
+const N_MODE_LEFT_NAV_WIDTH_CLASS =
+  'hidden lg:block w-[var(--ntype-left-panel-width)]';
 
 interface NModeLeftNavProps {
   /** Available sections */
@@ -324,8 +328,14 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
       ))
     : renderGroupItems(visibleSections);
 
+  // Odstęp lewy panel ↔ centrum = JEDEN token --ntype-column-gap (24px).
+  // Wcześniej: pr-4 (16px) TU + pl-6 (24px) w NModeCanvas = 40px podwójnego
+  // marginesu; teraz odstęp niesie wyłącznie ten pas (pr), a NModeCanvas nie ma
+  // już własnego pl (SSOT: _GRID_STABILIZATION_COMMAND_2026-07-24).
   return (
-    <nav className={`${N_MODE_LEFT_NAV_WIDTH_CLASS} flex-shrink-0 pr-4`}>
+    <nav
+      className={`${N_MODE_LEFT_NAV_WIDTH_CLASS} flex-shrink-0 pr-[var(--ntype-column-gap)]`}
+    >
       <div className="sticky top-28 pt-1 space-y-1">
         {onSectionReorder ? (
           <DndContext

@@ -2434,25 +2434,15 @@ export function KnownToolDetailView(props: {
       // do przelacznika trybu — dokladanie tam czegokolwiek innego zlamaloby
       // wspolny standard szesciu kart N).
       //
-      // ── ZGLOSZENIE (b): SZEROKOSC MENU 2 — NAPRAWA NALEZY DO POWLOKI ───────
-      // Zmierzone w runtime (viewport 1700, kolumna centrum 1308 px):
-      //   Menu 1 → x 78 · szer. 1152 · prawa 1230
-      //   Menu 2 → x 102 · szer. 1104 · prawa 1206   (24 px luzu z KAZDEJ strony)
-      // PRZYCZYNA jest w `NModeShell`, nie tutaj: Menu 1 siedzi w
-      // `px-6 > max-w-6xl mx-auto` (padding NA ZEWNATRZ limitu), a Menu 2 w
-      // `max-w-6xl mx-auto px-6` (padding WEWNATRZ limitu) — NModeShell.tsx:102
-      // vs :119. Gdy limit 6xl dziala, `px-6` zjada 48 px tylko Menu 2.
-      //
-      // PROBOWALEM zalatac to z tej strony (`className="-mx-6 w-auto"`) i
-      // ZMIERZYLEM, ze to POLOWICZNE: przy szerokim oknie owszem wyrownuje
-      // (1152/x=78, co do piksela jak Menu 1), ale przy oknie WEZSZYM niz limit
-      // 6xl (kolumna 888 px) Menu 1 i Menu 2 sa juz zgodne (oba x=24 szer.=840),
-      // a `-mx-6` wypycha wtedy Menu 2 na x=0 — czyli tworzy NOWA rozjezdzke
-      // i dokleja pasek do krawedzi. Nie da sie tego wyrazic samymi klasami z
-      // wnetrza komponentu, bo warunek zalezy od szerokosci DZIADKA.
-      // Poprawka to jedna linia w powloce (px-6 na zewnatrz limitu, jak w Menu 1),
-      // wspolna dla szesciu kart N — poza zakresem tej paczki. PATRZ RAPORT.
-      // Tam tez tlo paska (`bg-white/95` w NMODE_TOOLBAR_SHELL_CLASS).
+      // ── ZGLOSZENIE (b): SZEROKOSC MENU 2 — NAPRAWIONE W POWLOCE ───────────
+      // HISTORYCZNE: Menu 2 bywalo wezsze od Menu 1 o 2×24 px, bo w `NModeShell`
+      // padding `px-6` Menu 2 siedzial WEWNATRZ limitu `max-w-6xl` (a Menu 1
+      // mial go NA ZEWNATRZ). Naprawione 2026-07-24 po stronie powloki: wszystkie
+      // trzy segmenty (Menu 1 · Menu 2 · Sekcje) maja teraz `px-6` na zewnatrz
+      // limitu i wspolna os lewej krawedzi — patrz NModeShell.tsx (komentarz przy
+      // segmencie Menu 2). Ta karta nie musi juz nic kompensowac; probowany tu
+      // kiedys workaround `-mx-6 w-auto` zostal zdjety (tworzyl nowa rozjezdzke
+      // przy waskim oknie).
       //
       // ETAP 3: slot "Analizuj z AI" JEST juz wypelniony. Wczesniejsza uwaga
       // ("karta nie ma zadnej akcji AI") byla prawdziwa dla AI-ktore-PISZE.

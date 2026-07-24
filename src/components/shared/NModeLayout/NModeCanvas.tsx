@@ -35,8 +35,11 @@ export const NModeCanvas: React.FC<NModeCanvasProps> = ({
   const isPolish = i18n.language === 'pl';
   const activeSectionDef = sections.find((s) => s.id === activeSection);
 
+  // Brak pl-* celowo: odstęp lewy panel ↔ centrum (24px) niesie wyłącznie
+  // NModeLeftNav przez token --ntype-column-gap (pr). Trzymanie tu drugiego
+  // pl-6 dawało 40px podwójnego marginesu (SSOT: _GRID_STABILIZATION_COMMAND_2026-07-24).
   return (
-    <div className="flex-1 pl-6 pt-1 min-w-0">
+    <div className="flex-1 pt-1 min-w-0">
       <AnimatePresence mode="wait">
         <motion.div
           key={activeSection}

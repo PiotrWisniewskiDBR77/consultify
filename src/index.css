@@ -71,6 +71,22 @@
     --c-focus-rgb: 37 99 235;
     --c-focus-solid: #2563eb; /* focus border color */
     --c-focus-solid-rgb: 37 99 235;
+    /* ── n-Type grid geometry (SSOT: _GRID_STABILIZATION_COMMAND_2026-07-24.md) ──
+     * Wspólna geometria powłoki sześciu kart n-Type (Zadanie · Decyzja · Insight ·
+     * Inicjatywa · Narzędzie · Powiadomienie). Jedno źródło szerokości paneli i
+     * odstępów kolumn — zmiana tu przesuwa WSZYSTKIE karty naraz, więc żaden ekran
+     * nie może zaszywać tych wartości u siebie. Etap 2 podłącza lewy panel i
+     * odstęp (NModeLeftNav/NModeCanvas) oraz prawy panel (ArtifactRightPanel).
+     * Dwa tryby szerokości centralnej kolumny (dokumentowy/analityczny) czekają na
+     * Etap 5 — tokeny są tu z góry, ale jeszcze nieużyte. Wartości theme-neutralne
+     * (geometria nie zależy od motywu), więc żyją tylko w :root. */
+    --ntype-left-panel-width: 216px;
+    --ntype-right-panel-width: 320px;
+    --ntype-column-gap: 24px;
+    --ntype-content-document-width: 720px;
+    --ntype-content-document-max-width: 760px;
+    --ntype-content-analytics-width: 800px;
+    --ntype-content-analytics-max-width: 900px;
     /* Status tokens — Harvard complementary anchors (light mode).
      * Each value is the DARK family member (HBS "1") so text-on-white is AA.
      * Approx contrast on #ffffff:

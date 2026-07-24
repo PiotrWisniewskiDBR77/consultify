@@ -97,8 +97,13 @@ export interface ArtifactRightPanelProps {
    * Źródła i założenia · Rezultaty (warunkowo) · Komentarze · Historia.
    */
   sections: ArtifactRightPanelSection[];
-  /** Szerokość panelu w px (default 360; kanon §11.2 zakres 320–420). */
-  width?: number;
+  /**
+   * Szerokość panelu. Domyślnie token gridu n-Type
+   * (`--ntype-right-panel-width: 320px`) — stała szerokość wspólna dla sześciu
+   * kart (SSOT: _GRID_STABILIZATION_COMMAND_2026-07-24). Można nadpisać liczbą
+   * (px) tam, gdzie powłoka steruje szerokością własnym stanem.
+   */
+  width?: number | string;
   /** Dodatkowa klasa kontenera. */
   className?: string;
   /** Aria-label kontenera (a11y). */
@@ -178,7 +183,7 @@ const SectionRow: React.FC<{
 
 export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
   sections,
-  width = 360,
+  width = 'var(--ntype-right-panel-width)',
   className,
   ariaLabel,
   statusBar,
