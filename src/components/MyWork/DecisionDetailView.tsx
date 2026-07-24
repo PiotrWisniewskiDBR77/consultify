@@ -5532,7 +5532,17 @@ Use userId only from this list:
           Zadaniu / Powiadomieniu i na 16 px w pozostałych trzech kartach.
           Boki (`px-6`) i dół (`pb-6`) bez zmian. */}
       <div className="px-6 pt-4 pb-6">
-        <div className="max-w-6xl mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
+        {/* GRID ETAP 6 (2026-07-24, naprawa P0-2): `max-w-6xl` (1152px stałe)
+            zamrażał centrum na ~592px i zostawiał martwe marginesy na 1920px.
+            Wzorzec z Zadania (TaskDetailView.tsx:5306-5311) — token
+            `--ntype-content-document-max-width` zamiast stałej. */}
+        <div
+          className="mx-auto xl:flex xl:gap-6 xl:items-start space-y-0"
+          style={{
+            maxWidth:
+              'calc(var(--ntype-left-panel-width) + var(--ntype-column-gap) + var(--ntype-content-document-max-width) + var(--ntype-column-gap) + var(--ntype-right-panel-width))',
+          }}
+        >
           <div className="xl:flex-1 xl:min-w-0 space-y-0">
             {/* Main */}
             {/* Title Header — uses shared NModeHeader component */}
@@ -9073,8 +9083,14 @@ Use userId only from this list:
               </div>
             )}
           </div>
-          {/* ── Dokowany prawy panel artefaktu (xl+; ukryty na <xl) ── */}
-          <div className="hidden xl:block shrink-0 sticky top-4 self-start">
+          {/* ── Dokowany prawy panel artefaktu ──────────────────────────
+              GRID ETAP 6 (2026-07-24, naprawa P0-1): BEZ `hidden xl:block`
+              (wzorzec z Powiadomienia, NotificationDetailView.tsx:4196) —
+              ta karta pokazywała panel tylko od 1280px, ukrywając na
+              1024px (minimalny wspierany desktop) całe Akcje/Właściwości/
+              Komentarze/Historię. Regresja funkcji pod pretekstem
+              geometrii, nie estetyka. */}
+          <div className="shrink-0 sticky top-4 self-start">
             <ArtifactRightPanel
               sections={rightPanelSections}
               className={ARTIFACT_PANEL_CARD_CLASS_STICKY}

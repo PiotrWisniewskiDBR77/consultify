@@ -5571,8 +5571,14 @@ Return ONLY the final comment text.`;
               {/* ── /Lewa kolumna ── */}
             </div>
 
-            {/* ── Dokowany prawy panel artefaktu (lg+; ukryty na <lg) ── */}
-            <div className="hidden xl:block shrink-0 sticky top-4 self-start">
+            {/* ── Dokowany prawy panel artefaktu ──────────────────────────
+                GRID ETAP 6 (2026-07-24, naprawa P0-1): BEZ `hidden xl:block`
+                (wzorzec z Powiadomienia, NotificationDetailView.tsx:4196) —
+                ta karta pokazywała panel tylko od 1280px, ukrywając na
+                1024px (minimalny wspierany desktop) całe Akcje/Właściwości/
+                Komentarze/Historię. Regresja funkcji pod pretekstem
+                geometrii, nie estetyka. */}
+            <div className="shrink-0 sticky top-4 self-start">
               <ArtifactRightPanel
                 sections={rightPanelSections}
                 className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
