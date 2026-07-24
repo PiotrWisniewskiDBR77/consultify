@@ -710,6 +710,19 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     x: number;
     y: number;
   } | null>(null);
+  // P2-6 (rozdz. 08 §7b): menu komorki — prawy klik na pojedynczej komorce.
+  // Wczesniej prawy klik na komorce bąbelkowal do menu wiersza; teraz komorka
+  // ma wlasne menu (kopiuj wartosc / wklej / wyczysc / rozwin). `editable` = false
+  // dla kolumny „type" (wartosc pochodna, nie do edycji).
+  const [cellContextMenu, setCellContextMenu] = useState<{
+    rowId: string;
+    colKey: string;
+    value: unknown;
+    editable: boolean;
+    rect: DOMRect;
+    x: number;
+    y: number;
+  } | null>(null);
   const [platformViewConfig, setPlatformViewConfig] = useState<ViewConfigState>({
     viewType: 'grid',
     visibleFieldIds: [],
@@ -1391,6 +1404,28 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 ...(heatmapStyles?.get(row.id)?.get(col.key) || {}),
               }}
               className="px-2 py-1.5 md:py-1.5 relative group/cell min-h-[44px] md:min-h-0"
+              onContextMenu={(e) => {
+                // P2-6: menu komorki wygrywa z menu wiersza (stopPropagation),
+                // zeby prawy klik na komorce dawal akcje komorki, nie wiersza.
+                e.preventDefault();
+                e.stopPropagation();
+                const cellValue =
+                  col.type === 'formula' && formulaResults
+                    ? (formulaResults.get(row.id)?.[col.key] ?? row?.data?.[col.key])
+                    : col.key === 'type'
+                      ? (row.data?.nodeType || row.type || 'idea')
+                      : row?.data?.[col.key];
+                setCellContextMenu({
+                  rowId: row.id,
+                  colKey: col.key,
+                  value: cellValue,
+                  // kolumna „type" i „formula" = wartosc pochodna, nie do edycji recznej
+                  editable: col.key !== 'type' && col.type !== 'formula',
+                  rect: (e.currentTarget as HTMLElement).getBoundingClientRect(),
+                  x: e.clientX,
+                  y: e.clientY,
+                });
+              }}
             >
               <CellCursor remoteUsers={remotePresenceUsers} nodeId={row.id} colKey={col.key} />
               <div className="flex items-center gap-0.5">
@@ -3315,6 +3350,96 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       }}
                     >
                       {t('ideas.table.deleteRow', 'Delete row')}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* P2-6 (rozdz. 08 §7b): menu komorki. Kazda pozycja ma realny handler
+              (Z3): kopiuj wartosc = schowek systemowy, wklej = odczyt schowka →
+              _fieldChange, wyczysc = _fieldChange('') , rozwin = handleCellExpand.
+              Brak „AI: uzupełnij" i „Wklej specjalnie" — te wymagaja flow
+              propozycji/parsera formatu, ktorych ta komorka jeszcze nie ma; nie
+              dokladam pozycji-atrapy. */}
+          {cellContextMenu && (
+            <div className="fixed inset-0 z-[60]" onClick={() => setCellContextMenu(null)}>
+              <div
+                className="absolute bg-c-surface rounded-lg shadow-xl border border-c-border-subtle py-1 min-w-[160px]"
+                style={{ left: cellContextMenu.x, top: cellContextMenu.y }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
+                  onClick={() => {
+                    const v = cellContextMenu.value;
+                    const text =
+                      v == null
+                        ? ''
+                        : typeof v === 'object'
+                          ? JSON.stringify(v)
+                          : String(v);
+                    void navigator.clipboard
+                      ?.writeText(text)
+                      .then(() => toast.success(t('ideas.table.copied', 'Copied')))
+                      .catch(() => toast.error(t('ideas.table.copyFailed', 'Copy failed')));
+                    setCellContextMenu(null);
+                  }}
+                >
+                  {t('ideas.table.copyValue', 'Copy value')}
+                </button>
+                {cellContextMenu.editable && !locked && (
+                  <button
+                    className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
+                    onClick={() => {
+                      const { rowId, colKey } = cellContextMenu;
+                      void (async () => {
+                        try {
+                          const text = await navigator.clipboard?.readText();
+                          if (text != null) _fieldChange(rowId, colKey, text);
+                        } catch {
+                          toast.error(
+                            t('ideas.table.pasteFailed', 'Could not read clipboard')
+                          );
+                        }
+                      })();
+                      setCellContextMenu(null);
+                    }}
+                  >
+                    {t('ideas.table.paste', 'Paste')}
+                  </button>
+                )}
+                {cellContextMenu.colKey !== 'type' && (
+                  <button
+                    className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
+                    onClick={() => {
+                      handleCellExpand(
+                        cellContextMenu.rowId,
+                        cellContextMenu.colKey,
+                        cellContextMenu.rect
+                      );
+                      setCellContextMenu(null);
+                    }}
+                  >
+                    {t('ideas.table.expandCell', 'Expand cell')}
+                  </button>
+                )}
+                {cellContextMenu.editable && !locked && (
+                  <>
+                    <div className="h-px bg-c-surface-raised my-1" />
+                    <button
+                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger disabled:opacity-40"
+                      disabled={
+                        cellContextMenu.value == null || cellContextMenu.value === ''
+                      }
+                      onClick={() => {
+                        _fieldChange(cellContextMenu.rowId, cellContextMenu.colKey, '');
+                        toast.success(t('ideas.table.cellCleared', 'Cell cleared'));
+                        setCellContextMenu(null);
+                      }}
+                    >
+                      {t('ideas.table.clearCell', 'Clear cell')}
                     </button>
                   </>
                 )}
