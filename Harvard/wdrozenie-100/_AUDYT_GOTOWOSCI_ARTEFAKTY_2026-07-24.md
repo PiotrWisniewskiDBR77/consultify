@@ -92,7 +92,14 @@ Otwarte, znane, nieocenione:
    wejście → 0 wywołań AI, klik „Analizuj z AI" → 1. Ścieżka ręczna nietknięta.
 4. **Pasek „Szkic"** zabramkowany po stronie wywołań, **nie naprawiony u źródła.**
 5. **Cztery różne szerokości powłoki** (1488/1332/1496/1364) — karty nie dzielą jednej powłoki.
-6. **`StandardArtifactShell`** — 590 linii bez żadnego konsumenta: podpiąć albo skasować.
+   ★ ROZPOZNANE: źródłem są różne tokeny `max-w-*` per karta (`[1500px]` Decyzja/Zadanie,
+   `7xl` Inicjatywa, `6xl` Powiadomienie/Insight/Narzędzie) + rozjazd 48 px Menu 1 vs Menu 2
+   wewnątrz `NModeShell:170` (px wewnątrz vs zewnątrz limitu). **W TOKU** — prerekwizyt
+   (Etap 0 NModeShell + Etap 1 podpięcie Insight/Narzędzie) na gałęzi `fix/powloka-etap0-etap1`.
+6. **`StandardArtifactShell`** — 0 konsumentów, ★ ale **NIE martwy kod** (moje „skasować" było błędne):
+   to celowo zbudowana, niepodpięta **powłoka docelowa** (Fala F) nad `NModeShell`. Kasowanie =
+   wyrzucenie rusztowania, które ujednolica karty. Plan migracji M1–M7 istnieje w `registry.ts`.
+   Kolejność wg ciężaru: tool → notification → interview → decision → insight → task → **initiative (Opus)**.
 7. **Poza kartami:** „Eksport danych" w ustawieniach melduje *„otrzymasz e-mail"* i nie robi nic.
 
 ---
