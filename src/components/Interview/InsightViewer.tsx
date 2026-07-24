@@ -7959,6 +7959,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // badge + progress keep working via the `completed` flag on each section.
   const renderSectionCompleteToggle = useCallback(
     (sectionId: string) => {
+      // PODGLĄD = TYLKO CZYTANIE (decyzja właściciela 2026-07-24): „Oznacz
+      // gotowe" ZAPISUJE stan ukończenia sekcji (zmienia badge ✓ w nawigacji
+      // i sygnał dla AI). W Podglądzie nie ma go wcale — tak samo jak
+      // Inicjatywa ukrywa swój odpowiednik. Chcesz oznaczyć → Edycja.
+      if (readMode) return null;
       const done = !!sectionCompletions[sectionId];
       return (
         <div className="flex justify-end mb-3">
@@ -7981,7 +7986,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         </div>
       );
     },
-    [sectionCompletions, handleToggleSectionComplete, isPolish]
+    [sectionCompletions, handleToggleSectionComplete, isPolish, readMode, t]
   );
 
   // ── Pole ręcznej edycji AKTYWNEJ sekcji (n-Type §6.2–6.4) ─────────────────
@@ -8719,9 +8724,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       label: t('interview.insightViewer.actions'),
       icon: Sparkles,
       defaultOpen: true,
-      isEmpty: !statusEditable || statusBaseOptions.length === 0,
-      emptyLabel: t('interview.insightViewer.actionsLiveInHeaderAndToolbar'),
-      children: (
+      // ── PODGLĄD = TYLKO CZYTANIE (decyzja właściciela 2026-07-24) ──
+      // `readMode` jest PIERWSZYM warunkiem pustki: przyciski niżej wywołują
+      // `runStatusTransition`, czyli ZAPIS statusu wniosku. W Podglądzie
+      // sekcja mówi to samo, co w Zadaniu i Decyzji — akcje są w Edycji.
+      isEmpty: readMode || !statusEditable || statusBaseOptions.length === 0,
+      emptyLabel: readMode
+        ? t('interview.insightViewer.actionsHiddenInReadMode', 'Actions are hidden in preview mode')
+        : t('interview.insightViewer.actionsLiveInHeaderAndToolbar'),
+      children: readMode ? null : (
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap gap-1.5">
             {statusBaseOptions
@@ -8877,7 +8888,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       badge: producedResults.length || undefined,
       children: (
         <div className="flex flex-col gap-3">
-          {resultTilesNode}
+          {/* PODGLĄD = TYLKO CZYTANIE (2026-07-24): kafelki „utwórz raport /
+              prezentację / tabelę / ideę / notatkę / inicjatywę / decyzję"
+              robią `POST` i TWORZĄ nowy artefakt. W Podglądzie znikają.
+              ZOSTAJE rejestr „Już powstało" niżej — to czyste czytanie
+              (co z tego wniosku już zrobiono), więc nie ma powodu go zdejmować. */}
+          {readMode ? null : resultTilesNode}
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
               {t('interview.insightViewer.panelResultsProduced', 'Already produced')}
@@ -8921,6 +8937,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       children: (
         <CommentsCanvas
           comments={filteredComments}
+          /* PODGLĄD = TYLKO CZYTANIE (2026-07-24): `locked` to TEN SAM prop,
+             którym Zadanie (`isDone || readMode`) i Decyzja
+             (`isDecisionStageLocked`) blokują kompozytor komentarzy. Bez niego
+             Insight był jedyną z sześciu kart z ŻYWYM polem „Napisz komentarz…"
+             w Podglądzie (zmierzone: 1 edytowalny input vs 0 w pozostałych).
+             Filtr i sortowanie też gasną — ale to zachowanie wspólnego
+             komponentu, identyczne u Zadania i Decyzji, więc karta nie
+             wprowadza tu własnej odmiany. */
+          locked={readMode}
           onDeleteComment={handleDeleteComment}
           dateFilter={commentDateFilter}
           onDateFilterChange={setCommentDateFilter}
@@ -8979,12 +9004,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           // D-B: status = etykieta-pigułka (zlokalizowana + ton c-*), NIE kropka.
           statusLabel: statusPillLabel,
           statusTone: headerStatusTone,
-          primaryAction: {
-            label: { en: 'Convert to initiative', pl: 'Konwertuj na inicjatywę' },
-            icon: Rocket,
-            onClick: () => setGenOpen(true),
-            disabled: !insight?.id,
-          },
+          // PODGLĄD = TYLKO CZYTANIE (2026-07-24): „Konwertuj na inicjatywę"
+          // otwiera generator, który TWORZY nowy artefakt (Inicjatywę) —
+          // typowa akcja zmieniająca stan systemu, więc w Podglądzie znika.
+          // Zdolność zostaje o jedno kliknięcie dalej (przełącz na Edycję),
+          // a Menu 1 w Podglądzie jest puste tak jak w Zadaniu i Decyzji.
+          primaryAction: readMode
+            ? undefined
+            : {
+                label: { en: 'Convert to initiative', pl: 'Konwertuj na inicjatywę' },
+                icon: Rocket,
+                onClick: () => setGenOpen(true),
+                disabled: !insight?.id,
+              },
         }}
         sections={visibleNModeSections}
         activeSection={activeNSection}
@@ -9024,7 +9056,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               // (default OFF, see src/utils/artifactApprovalUiFlag.ts). At
               // OFF this is `undefined` and ArtifactRightPanel renders 1:1
               // as before (no new DOM, no visual change).
-              isArtifactApprovalUiEnabled() && insight?.id ? (
+              //
+              // PODGLĄD = TYLKO CZYTANIE (2026-07-24): dołożony warunek
+              // `!readMode` — pasek niesie „Zgłoś do recenzji" (zapis obiegu
+              // akceptacji) i stał AKTYWNY nad sekcją „Akcje", która w tym
+              // samym panelu mówiła, że akcji nie ma. Ta sama bramka, którą
+              // Decyzja dostała dzień wcześniej (`showApprovalBar`).
+              isArtifactApprovalUiEnabled() && insight?.id && !readMode ? (
                 <ArtifactApprovalStatusBar
                   artifactType="insight"
                   artifactId={insight.id}

@@ -1734,13 +1734,20 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   >
                     <AlertTriangle size={12} className="mt-px shrink-0" />
                     <span className="flex-1">{aiAnalysisError}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleAnalyzeWithAI(false)}
-                      className="shrink-0 underline underline-offset-2 hover:opacity-80"
-                    >
-                      {t('myWork.notificationDetail.retry', 'Retry')}
-                    </button>
+                    {/* PODGLĄD = TYLKO CZYTANIE (2026-07-24): „Ponów" wywołuje
+                        `handleAnalyzeWithAI(false)`, które NADPISUJE pięć pól
+                        karty. Sam komunikat o błędzie zostaje (to uczciwa
+                        informacja, czyste czytanie) — znika tylko przycisk,
+                        który by zapisał. */}
+                    {!readMode && (
+                      <button
+                        type="button"
+                        onClick={() => handleAnalyzeWithAI(false)}
+                        className="shrink-0 underline underline-offset-2 hover:opacity-80"
+                      >
+                        {t('myWork.notificationDetail.retry', 'Retry')}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -2915,6 +2922,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     ? 'Usuń powiadomienie (skrót: D — zapyta o potwierdzenie)'
     : 'Delete notification (shortcut: D — asks for confirmation)';
 
+  // PODGLĄD = TYLKO CZYTANIE (2026-07-24). Rozgraniczenie w tym slocie:
+  //   · „Otwórz źródło/dokument" = NAWIGACJA do powiązanego obiektu, niczego
+  //     nie zapisuje → ZOSTAJE także w Podglądzie (jak „Kopiuj link" w kebabie);
+  //   · „Oznacz jako przeczytane" = ZAPIS `isRead` na rekordzie → w Podglądzie
+  //     znika (ten sam handler zniknął też z sekcji „Akcje" panelu).
   const headerPrimaryAction = hasSourceCta
     ? {
         label: {
@@ -2924,6 +2936,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         icon: primarySourceIcon,
         onClick: openPrimarySource,
       }
+    : readMode
+    ? undefined
     : {
         // Osobny klucz od paskowego `markRead` ("Przeczytane" w pl to status,
         // nie czasownik — slot primary musi mowic, co sie stanie po kliknieciu).
@@ -2983,7 +2997,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   // Dzialania TECHNICZNE i ADMINISTRACYJNE artefaktu. „Usun" na koncu, jako
   // destrukcyjne (separator + ton c-danger rysuje powloka). Karta NIE rysuje
   // juz wlasnego drugiego kebaba w pasku pod naglowkiem.
-  const headerOverflowItems = [
+  //
+  // PODGLĄD = TYLKO CZYTANIE (decyzja właściciela 2026-07-24): wszystkie trzy
+  // pozycje ZMIENIAJĄ STAN („Wycisz to" / „Wycisz podobne" zapisują regułę
+  // wyciszenia, „Usuń" kasuje rekord), więc w Podglądzie kebab zostaje z samym
+  // czytaniem, które dokłada powłoka („Skopiuj kod obiektu" / „Kopiuj link").
+  const headerOverflowItems = readMode ? [] : [
     {
       id: 'mute-this',
       label: t('myWork.notificationDetail.muteThis', 'Mute this'),
@@ -3061,7 +3080,16 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       label: t('myWork.notificationDetail.panelActions', 'Actions'),
       icon: Zap,
       defaultOpen: true,
-      children: (
+      // ── PODGLĄD = TYLKO CZYTANIE (decyzja właściciela 2026-07-24) ──
+      // „Oznacz przeczytane" zapisuje `isRead`, „Odłóż" zapisuje `snoozedUntil`
+      // — obie zmieniają stan rekordu. Sekcja pustoszeje dokładnie tak jak
+      // w Zadaniu i Decyzji (`isEmpty: readMode` + ten sam komunikat).
+      isEmpty: readMode,
+      emptyLabel: t(
+        'myWork.notificationDetail.actionsHiddenInReadMode',
+        'Actions are hidden in preview mode'
+      ),
+      children: readMode ? null : (
         // stopPropagation: globalny `click` na window zamyka rozwiniete presety
         // odlozenia (patrz `handleClickOutside`). Bez tego kliknięcie „Odloz"
         // otwieraloby i natychmiast zamykalo liste.
@@ -3214,6 +3242,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       label: t('myWork.notificationDetail.panelResults', 'Results'),
       icon: FileText,
       defaultOpen: false,
+      // PODGLĄD = TYLKO CZYTANIE (2026-07-24): „Zapisz jako notatkę" TWORZY
+      // nowy artefakt — to nie jest wyjątek od reguły tylko dlatego, że siedzi
+      // w „Rezultatach" zamiast w „Akcjach". Ta sama bramka co przy kafelkach
+      // tworzenia w Insighcie.
+      isEmpty: readMode,
+      emptyLabel: t(
+        'myWork.notificationDetail.actionsHiddenInReadMode',
+        'Actions are hidden in preview mode'
+      ),
       children: (
         <PreviewActionBar
           rows={[
