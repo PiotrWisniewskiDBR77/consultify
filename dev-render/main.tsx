@@ -20,6 +20,7 @@ import { createRoot } from 'react-dom/client';
 import { Toaster } from 'react-hot-toast';
 
 import PanelUwag from './PanelUwag';
+const MaterialyLauncherScreen = React.lazy(() => import('./screens/materialy-launcher'));
 
 // Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
 import i18n from '../src/i18n';
@@ -125,6 +126,10 @@ const InitiativesPortfolioAnalysisScreen = React.lazy(
 );
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'materialy-launcher': {
+    label: 'MATERIAŁY — tablica Dodaj (format×tryb) &variant=materials|templates',
+    render: () => <MaterialyLauncherScreen />,
+  },
   'initiatives-portfolio-analysis': {
     label:
       'Inicjatywy → analiza portfela — 5 podwidoków po wycięciu atrap AI (&sub=…, &ai=ok|fail|empty)',
