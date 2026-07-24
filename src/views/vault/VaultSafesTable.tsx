@@ -40,6 +40,7 @@ import { Building2, FolderKanban, User } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PreviewDetailsSection, PreviewMetaCard } from '../../components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '../../components/shared/TableWithPreviewLayout';
 import {
   type StandardRowMenu,
@@ -47,7 +48,6 @@ import {
   type TableColumn,
   type TableRow,
 } from '../../components/standard';
-import { StandardPreview } from '../../components/standard/StandardPreview';
 import { Api } from '../../services/api';
 
 export interface VaultSafe {
@@ -256,14 +256,14 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe, se
       itemIds={tableRows.map((r) => String(r.id))}
       renderPreview={() => {
         if (!previewSafe) return null;
+        // ★ Uwaga (jak w AgentHubShell.tsx): `TableWithPreviewLayout` renderuje
+        // WŁASNY `PreviewPaneShell` (tytuł/Otwórz/× — blok 1 kanonu) wokół
+        // tego, co zwróci `renderPreview` — pełny `StandardPreview` dawał tu
+        // PODWÓJNY nagłówek. Treść składamy z tych samych prymitywów.
         return (
-          <StandardPreview
-            title={previewSafe.name}
-            onClose={() => setPreviewSafeId(null)}
-            onOpenFull={() => onOpenSafe(previewSafe)}
-            openLabel={t('vault.safes.rowOpen', isPolish ? 'Otwórz' : 'Open')}
-            meta={{
-              pills: [
+          <div className="space-y-4">
+            <PreviewMetaCard
+              pills={[
                 {
                   label: isPolish ? 'Poziom' : 'Level',
                   value: safeLevelLabel(previewSafe.type, isPolish),
@@ -272,21 +272,22 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe, se
                   label: t('vault.safes.documents', isPolish ? 'Dokumenty' : 'Documents'),
                   value: previewSafe.documentCount,
                 },
-              ],
-            }}
-            details={{
-              label: isPolish ? 'Ostatnie dokumenty' : 'Recent documents',
-              loading: recentDocsLoading,
-              text:
+              ]}
+            />
+            <PreviewDetailsSection
+              label={isPolish ? 'Ostatnie dokumenty' : 'Recent documents'}
+              loading={recentDocsLoading}
+              text={
                 recentDocs && recentDocs.length > 0
                   ? recentDocs
                       .map((d) => `- ${d.filename} — ${formatDate(d.created_at, isPolish)}`)
                       .join('\n')
                   : isPolish
                     ? 'Brak dokumentów w tym sejfie.'
-                    : 'No documents in this safe yet.',
-            }}
-          />
+                    : 'No documents in this safe yet.'
+              }
+            />
+          </div>
         );
       }}
     >

@@ -140,6 +140,74 @@ let plans: MockAgentPlan[] = [
 let newPlanSeq = 0;
 
 /**
+ * ★ Punkt 10 (odbiór triady 2026-07-24) — mirror MINIMALNY dwóch wpisów z
+ * `CURATED_PLAYBOOKS` (server/src/services/ai/agentPlan/planBuilderService.ts)
+ * żeby dev-render mógł DOWIEŚĆ fixa: PRZED (agent-plan.routes.ts sprzed
+ * poprawki) `toolInput` niósł WYŁĄCZNIE `{toolName, toolInput}` bez `phase` —
+ * `readablePhaseName()` spadał na surowy `toolName` (`search_knowledge_base`
+ * itd.). PO poprawce backend wstrzykuje `rationale` do `toolInput.phase` —
+ * ten mock robi TO SAMO (`phase: step.rationale`), więc "Użyj szablonu" na
+ * Ansoff/Porter w tym harnessu pokazuje realny efekt fixa, nie zgadywanie.
+ */
+const MOCK_MANIFEST_PLAYBOOKS: Record<
+  string,
+  Array<{ toolName: string; rationale: string; requiresApproval?: boolean }>
+> = {
+  'growth-paths': [
+    {
+      toolName: 'search_knowledge_base',
+      rationale: 'Growth Paths (Ansoff): gather context on current growth strategy options',
+    },
+    {
+      toolName: 'get_initiative_status',
+      rationale: 'Growth Paths (Ansoff): review initiatives already in flight for each growth path',
+    },
+    {
+      toolName: 'calculate_financial',
+      rationale: 'Growth Paths (Ansoff): size the ROI of the strongest growth path',
+    },
+    {
+      toolName: 'generate_report_section',
+      rationale: 'Growth Paths (Ansoff): recommend a prioritized growth path',
+      requiresApproval: true,
+    },
+  ],
+  'market-forces': [
+    {
+      toolName: 'search_knowledge_base',
+      rationale:
+        'Market Forces (Porter 5 Forces): gather internal evidence on the five competitive forces',
+    },
+    {
+      toolName: 'compare_benchmarks',
+      rationale:
+        'Market Forces (Porter 5 Forces): compare competitive position against industry benchmarks',
+    },
+    {
+      toolName: 'generate_report_section',
+      rationale:
+        'Market Forces (Porter 5 Forces): synthesize findings into a Porter Five Forces analysis',
+      requiresApproval: true,
+    },
+  ],
+};
+
+function makeManifestSteps(manifestId: string): MockAgentPlanStep[] | null {
+  const playbook = MOCK_MANIFEST_PLAYBOOKS[manifestId];
+  if (!playbook) return null;
+  return playbook.map((step, index) => ({
+    id: `step-manifest-${index}`,
+    stepIndex: index,
+    toolName: step.toolName,
+    // `phase: step.rationale` — dokładnie to, co agent-plan.routes.ts robi
+    // teraz PO fixie (`toolInput: { ...toolInput, phase: rationale }`).
+    toolInput: { phase: step.rationale },
+    status: 'pending',
+    requiresApproval: !!step.requiresApproval,
+  }));
+}
+
+/**
  * AGT-011: mock biblioteki procesów (ProcessLibrary — mirror `PROCESS_LIBRARY`
  * z server/src/services/ai/agentPlan/processLibraryService.ts) dla zakładki
  * "Szablony". Statyczne — ta biblioteka jest deterministyczna (bez auto-advance).
@@ -261,14 +329,19 @@ export function installAgentHubFetchMock(): void {
     ) {
       const parsedBody = init?.body ? JSON.parse(String(init.body)) : {};
       newPlanSeq += 1;
+      const manifestSteps = parsedBody.manifestId
+        ? makeManifestSteps(String(parsedBody.manifestId))
+        : null;
+      const steps =
+        manifestSteps ?? makeClassicSteps(['pending', 'pending', 'pending', 'pending', 'pending']);
       const plan: MockAgentPlan = {
         id: `plan-mock-new-${newPlanSeq}`,
         organizationId: 'org-dbr77-demo',
         userId: 'user-piotr-demo',
         title: String(parsedBody.title || 'New process'),
         status: parsedBody.draft ? 'planning' : 'executing',
-        steps: makeClassicSteps(['pending', 'pending', 'pending', 'pending', 'pending']),
-        totalSteps: 5,
+        steps,
+        totalSteps: steps.length,
         completedSteps: 0,
         currentStepIndex: 0,
         isBackground: true,

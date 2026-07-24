@@ -68,10 +68,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { OpenDocument } from '@/components/shared/ModuleHub/types';
+import {
+  PreviewActionButton,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+} from '@/components/shared/PreviewPane';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
-import { StandardPreview } from '@/components/standard/StandardPreview';
 import {
   type StandardRowMenu,
   StandardTable,
@@ -181,11 +185,15 @@ function planStatusLabel(status: AgentPlanStatus, isPolish: boolean): string {
  * karcie towarzyszącej obok AgentPlanWorkspace (punkt 9). Jeden komponent,
  * dwa miejsca użycia (gestosc: reuse, nie duplikacja).
  */
-const PlanSummaryCard: React.FC<{ plan: AgentPlan; isPolish: boolean; compact?: boolean }> = ({
-  plan,
-  isPolish,
-  compact,
-}) => (
+const PlanSummaryCard: React.FC<{
+  plan: AgentPlan;
+  isPolish: boolean;
+  compact?: boolean;
+  /** Pomija chipy status/postęp — gdy wołający JUŻ pokazał je wyżej (np.
+   * `PreviewMetaCard` w preview tabeli) — jedna karta meta, nie dwie
+   * (gestosc §"żadna akcja/dana nie występuje w 2 miejscach"). */
+  hideMeta?: boolean;
+}> = ({ plan, isPolish, compact, hideMeta }) => (
   <div
     className={
       compact ? 'space-y-3' : 'space-y-4 rounded-xl border border-c-border-subtle bg-c-surface p-4'
@@ -199,13 +207,15 @@ const PlanSummaryCard: React.FC<{ plan: AgentPlan; isPolish: boolean; compact?: 
         </div>
       </div>
     ) : null}
-    <div className="flex flex-wrap items-center gap-2">
-      <EntityStatusChip status={plan.status} />
-      <MetaChip
-        icon={ListChecks}
-        label={`${plan.completedSteps}/${plan.totalSteps} ${isPolish ? 'kroków' : 'steps'}`}
-      />
-    </div>
+    {!hideMeta ? (
+      <div className="flex flex-wrap items-center gap-2">
+        <EntityStatusChip status={plan.status} />
+        <MetaChip
+          icon={ListChecks}
+          label={`${plan.completedSteps}/${plan.totalSteps} ${isPolish ? 'kroków' : 'steps'}`}
+        />
+      </div>
+    ) : null}
     <div>
       <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
         {isPolish ? 'Kroki i bramki' : 'Steps and gates'}
@@ -564,15 +574,19 @@ export const AgentHubShell: React.FC = () => {
           itemIds={tableRows.map((r) => String(r.id))}
           renderPreview={() => {
             if (!previewPlan) return null;
-            const cancellable = CANCELLABLE_STATUSES.includes(previewPlan.status);
+            // ★ Uwaga: `TableWithPreviewLayout` renderuje WŁASNY `PreviewPaneShell`
+            // (tytuł/pin/Otwórz/× — blok 1 kanonu) wokół tego, co zwróci
+            // `renderPreview` — użycie tu PEŁNEGO `StandardPreview` (który sam
+            // jest `PreviewPaneShell`-em) dawało PODWÓJNY nagłówek. Zamiast
+            // tego składamy treść z tych samych prymitywów co `StandardPreview`
+            // (`PreviewMetaCard`) + `PlanSummaryCard` (reużyta z karty-towarzysza),
+            // a akcje idą przez `renderPreviewFooter` (patrz niżej) — dokładnie
+            // wzór `DecisionsPanelContent.tsx` (jedyny ekran, który realnie łączy
+            // tę fasadę z bogatym preview).
             return (
-              <StandardPreview
-                title={previewPlan.title}
-                onClose={() => setPreviewPlanId(null)}
-                onOpenFull={() => handleOpenPlan(previewPlan.id)}
-                openLabel={t('agentPlan.hub.rowOpen', isPolish ? 'Otwórz' : 'Open')}
-                meta={{
-                  pills: [
+              <div className="space-y-4">
+                <PreviewMetaCard
+                  pills={[
                     {
                       label: isPolish ? 'Status' : 'Status',
                       value: planStatusLabel(previewPlan.status, isPolish),
@@ -582,26 +596,25 @@ export const AgentHubShell: React.FC = () => {
                       label: isPolish ? 'Postęp' : 'Progress',
                       value: `${previewPlan.completedSteps}/${previewPlan.totalSteps}`,
                     },
-                  ],
-                }}
-                actions={
-                  cancellable
-                    ? {
-                        resolutions: [
-                          {
-                            id: 'cancel',
-                            variant: 'destructive',
-                            label: t('agentPlan.hub.rowCancel', isPolish ? 'Anuluj' : 'Cancel'),
-                            icon: XCircle,
-                            onClick: () => void handleCancelPlan(previewPlan.id),
-                          },
-                        ],
-                      }
-                    : undefined
-                }
-              >
-                <PlanSummaryCard plan={previewPlan} isPolish={isPolish} compact />
-              </StandardPreview>
+                  ]}
+                />
+                <PlanSummaryCard plan={previewPlan} isPolish={isPolish} compact hideMeta />
+              </div>
+            );
+          }}
+          renderPreviewFooter={() => {
+            if (!previewPlan) return null;
+            const cancellable = CANCELLABLE_STATUSES.includes(previewPlan.status);
+            if (!cancellable) return null;
+            return (
+              <div className="grid grid-cols-2 gap-2">
+                <PreviewActionButton
+                  variant="destructive"
+                  label={t('agentPlan.hub.rowCancel', isPolish ? 'Anuluj' : 'Cancel')}
+                  icon={XCircle}
+                  onClick={() => void handleCancelPlan(previewPlan.id)}
+                />
+              </div>
             );
           }}
         >
@@ -776,17 +789,12 @@ export const AgentHubShell: React.FC = () => {
           itemIds={templateRows.map((r) => String(r.id))}
           renderPreview={() => {
             if (!previewTemplate) return null;
+            // (patrz komentarz w renderProcesses powyżej — bez podwójnego
+            // PreviewPaneShell, treść składana z prymitywów, akcje w footerze).
             return (
-              <StandardPreview
-                title={previewTemplate.name}
-                onClose={() => setPreviewTemplateId(null)}
-                onOpenFull={() => handleSelectTemplate(previewTemplate)}
-                openLabel={t(
-                  'agentPlan.hub.templates.rowUse',
-                  isPolish ? 'Użyj szablonu' : 'Use template'
-                )}
-                meta={{
-                  pills: [
+              <div className="space-y-4">
+                <PreviewMetaCard
+                  pills={[
                     {
                       label: isPolish ? 'Typ' : 'Type',
                       value:
@@ -800,23 +808,25 @@ export const AgentHubShell: React.FC = () => {
                       tone: previewTemplate.kind === 'process' ? 'info' : 'neutral',
                     },
                     { label: isPolish ? 'Kroki' : 'Steps', value: previewTemplate.stepCount },
-                  ],
-                }}
-                details={{ text: previewTemplate.description }}
-                actions={{
-                  resolutions: [
-                    {
-                      id: 'use',
-                      variant: 'positive',
-                      label: t(
-                        'agentPlan.hub.templates.rowUse',
-                        isPolish ? 'Użyj szablonu' : 'Use template'
-                      ),
-                      onClick: () => handleSelectTemplate(previewTemplate),
-                    },
-                  ],
-                }}
-              />
+                  ]}
+                />
+                <PreviewDetailsSection text={previewTemplate.description} />
+              </div>
+            );
+          }}
+          renderPreviewFooter={() => {
+            if (!previewTemplate) return null;
+            return (
+              <div className="grid grid-cols-2 gap-2">
+                <PreviewActionButton
+                  variant="positive"
+                  label={t(
+                    'agentPlan.hub.templates.rowUse',
+                    isPolish ? 'Użyj szablonu' : 'Use template'
+                  )}
+                  onClick={() => handleSelectTemplate(previewTemplate)}
+                />
+              </div>
             );
           }}
         >
