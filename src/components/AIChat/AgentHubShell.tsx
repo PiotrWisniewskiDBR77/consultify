@@ -10,13 +10,22 @@
  *   "Moje procesy" — StandardTable nad `listAgentPlans` (GET /api/ai/agent-plan).
  *     Klik w wiersz otwiera AgentPlanWorkspace z `initialPlanId` (ten sam
  *     canvas/panel co dotąd — flow AGT-006/007/009 bez zmian).
- *   "Szablony" — placeholder; AGT-011 wypełnia galerią wzorców procesu.
+ *   "Szablony" (AGT-011) — StandardTable łącząca dwa źródła:
+ *     - bibliotekę PROCESÓW (`listAgentProcesses`, ProcessLibrary — classic-5
+ *       domyślny + wariant drd),
+ *     - katalog GOTOWYCH ANALIZ (`listAgentManifests({status:'built'})` — 19
+ *       wykonalnych z 31 manifestów Discovery Tools).
+ *     Kolumna "Typ" (chip) rozróżnia Proces/Gotowa analiza; klik w wiersz
+ *     tworzy nowy plan i otwiera canvas — patrz `handleSelectTemplate`.
  *
- * "Nowy proces" tworzy plan generatorem procesu (ProcessLibrary, domyślny
- * `classic-5` — 5 faz Kubr/ILO) w trybie `draft: true`: backend kładzie
+ * "Nowy proces" (Moje procesy) i wybór wiersza w Szablonach dzielą JEDEN
+ * handler tworzenia (`handleCreatePlan`) — patrz komentarz przy nim.
+ * Ścieżka procesu (`processId`) zawsze `draft: true`: backend kładzie
  * schemat i zostawia plan w statusie 'planning' (NIE dispatchuje wykonania —
  * patrz agent-plan.routes.ts `effectiveDraft`), user przestawia klocki na
- * canvasie i dopiero jawne "Uruchom" startuje wykonanie.
+ * canvasie i dopiero jawne "Uruchom" startuje wykonanie. Ścieżka manifestu
+ * (`manifestId`) zostaje wstecznie zgodna z katalogiem sprzed AGT-010 —
+ * dispatch od razu (canvas otwiera się na już wystartowanym planie).
  *
  * Kanon: consultify-triada (StandardModuleBar Menu2 pigułki + StandardTable
  * facada — zero własnej tabeli/menu) + consultify-gestosc (hub 2 zakładki
@@ -34,17 +43,30 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard/StandardTable';
-import { EntityStatusChip, MetaChip } from '@/components/ui/primitives/chips';
+import { EntityStatusChip, MetaChip, StatusChip } from '@/components/ui/primitives/chips';
+import { listAgentManifests } from '@/services/api/agentManifests.api';
 import {
   type AgentPlan,
   cancelAgentPlan,
   createAgentPlan,
   listAgentPlans,
+  listAgentProcesses,
 } from '@/services/api/agentPlan.api';
 
 import { AgentPlanWorkspace } from './AgentPlanWorkspace';
 
 type AgentHubTab = 'processes' | 'templates';
+
+type TemplateKind = 'process' | 'manifest';
+
+interface TemplateRow {
+  id: string;
+  kind: TemplateKind;
+  name: string;
+  description: string;
+  stepCount: number;
+  isDefault: boolean;
+}
 
 const formatPlanDate = (iso: string, isPolish: boolean): string => {
   const date = new Date(iso);
@@ -66,6 +88,8 @@ export const AgentHubShell: React.FC = () => {
   const [openPlanId, setOpenPlanId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<TemplateRow[] | null>(null);
+  const [templatesError, setTemplatesError] = useState<string | null>(null);
 
   const fetchPlans = useCallback(() => {
     setLoadError(null);
@@ -82,6 +106,41 @@ export const AgentHubShell: React.FC = () => {
     }
   }, [tab, openPlanId, fetchPlans]);
 
+  const fetchTemplates = useCallback(() => {
+    setTemplatesError(null);
+    Promise.all([listAgentProcesses(), listAgentManifests({ status: 'built' })])
+      .then(([processesRes, manifestsRes]) => {
+        const processRows: TemplateRow[] = processesRes.processes.map((p) => ({
+          id: p.id,
+          kind: 'process',
+          name: p.label,
+          description: p.description,
+          stepCount: p.phaseCount,
+          isDefault: p.isDefault,
+        }));
+        const manifestRows: TemplateRow[] = manifestsRes.manifests.map((m) => ({
+          id: m.id,
+          kind: 'manifest',
+          name: isPolish ? m.displayName.pl : m.displayName.en,
+          description: isPolish
+            ? 'Gotowa analiza z katalogu Discovery Tools'
+            : 'Ready-made Discovery Tools analysis',
+          stepCount: m.stepCount ?? 0,
+          isDefault: false,
+        }));
+        setTemplates([...processRows, ...manifestRows]);
+      })
+      .catch((error) => {
+        setTemplatesError(error instanceof Error ? error.message : 'Failed to load templates');
+      });
+  }, [isPolish]);
+
+  useEffect(() => {
+    if (tab === 'templates' && !openPlanId && templates === null) {
+      fetchTemplates();
+    }
+  }, [tab, openPlanId, templates, fetchTemplates]);
+
   const handleOpenPlan = useCallback((planId: string) => {
     setOpenPlanId(planId);
   }, []);
@@ -91,22 +150,53 @@ export const AgentHubShell: React.FC = () => {
     fetchPlans();
   }, [fetchPlans]);
 
-  const handleNewProcess = useCallback(async () => {
-    setCreating(true);
-    setCreateError(null);
-    try {
-      const { plan } = await createAgentPlan({
+  /**
+   * Jeden handler tworzenia planu — dzielony przez "Nowy proces" (Moje
+   * procesy) i wybór wiersza w Szablonach (AGT-011), tak by nie duplikować
+   * logiki createAgentPlan/setOpenPlanId. `processId` => draft:true (canvas
+   * edytowalny); `manifestId` => brak draft (dispatch od razu, jak dotąd).
+   */
+  const handleCreatePlan = useCallback(
+    async (input: { title: string; processId?: string; manifestId?: string; draft?: boolean }) => {
+      setCreating(true);
+      setCreateError(null);
+      try {
+        const { plan } = await createAgentPlan({
+          title: input.title,
+          processId: input.processId,
+          manifestId: input.manifestId,
+          draft: input.draft,
+        });
+        setOpenPlanId(plan.id);
+      } catch (error) {
+        setCreateError(error instanceof Error ? error.message : 'Failed to create process');
+      } finally {
+        setCreating(false);
+      }
+    },
+    []
+  );
+
+  const handleNewProcess = useCallback(
+    () =>
+      handleCreatePlan({
         title: t('agentPlan.hub.newProcessTitle', 'New consulting process'),
         processId: 'classic-5',
         draft: true,
-      });
-      setOpenPlanId(plan.id);
-    } catch (error) {
-      setCreateError(error instanceof Error ? error.message : 'Failed to create process');
-    } finally {
-      setCreating(false);
-    }
-  }, [t]);
+      }),
+    [handleCreatePlan, t]
+  );
+
+  const handleSelectTemplate = useCallback(
+    (row: TemplateRow) => {
+      if (row.kind === 'process') {
+        void handleCreatePlan({ title: row.name, processId: row.id, draft: true });
+      } else {
+        void handleCreatePlan({ title: row.name, manifestId: row.id });
+      }
+    },
+    [handleCreatePlan]
+  );
 
   const handleCancelPlan = useCallback(
     async (planId: string) => {
@@ -272,19 +362,146 @@ export const AgentHubShell: React.FC = () => {
     );
   };
 
-  const renderTemplatesPlaceholder = () => (
-    <EmptyState
-      icon={FileStack}
-      title={t('agentPlan.hub.templatesTitle', isPolish ? 'Szablony' : 'Templates')}
-      description={t(
-        'agentPlan.hub.templatesDescription',
-        isPolish
-          ? 'Galeria gotowych wzorców procesu — w przygotowaniu (AGT-011).'
-          : 'Ready-made process template gallery — coming soon (AGT-011).'
-      )}
-      className="h-full"
-    />
-  );
+  const templateColumns: TableColumn[] = [
+    {
+      id: 'name',
+      label: t('agentPlan.hub.templates.columns.name', isPolish ? 'Nazwa' : 'Name'),
+      width: '320px',
+      render: (row: TableRow) => {
+        const tpl = row as unknown as TemplateRow;
+        return (
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-c-text">{tpl.name}</span>
+            {tpl.isDefault ? (
+              <StatusChip
+                label={t('agentPlan.hub.templates.default', isPolish ? 'Domyślny' : 'Default')}
+                tone="info"
+                hideDot
+                size="sm"
+              />
+            ) : null}
+          </div>
+        );
+      },
+    },
+    {
+      id: 'type',
+      label: t('agentPlan.hub.templates.columns.type', isPolish ? 'Typ' : 'Type'),
+      width: '160px',
+      render: (row: TableRow) => {
+        const tpl = row as unknown as TemplateRow;
+        return tpl.kind === 'process' ? (
+          <StatusChip
+            label={t('agentPlan.hub.templates.kindProcess', isPolish ? 'Proces' : 'Process')}
+            tone="info"
+          />
+        ) : (
+          <StatusChip
+            label={t(
+              'agentPlan.hub.templates.kindManifest',
+              isPolish ? 'Gotowa analiza' : 'Ready-made analysis'
+            )}
+            tone="neutral"
+          />
+        );
+      },
+    },
+    {
+      id: 'description',
+      label: t('agentPlan.hub.templates.columns.description', isPolish ? 'Opis' : 'Description'),
+      render: (row: TableRow) => {
+        const tpl = row as unknown as TemplateRow;
+        return <span className="text-xs text-c-text-secondary">{tpl.description}</span>;
+      },
+    },
+    {
+      id: 'steps',
+      label: t('agentPlan.hub.templates.columns.steps', isPolish ? 'Liczba kroków' : 'Steps'),
+      width: '150px',
+      render: (row: TableRow) => {
+        const tpl = row as unknown as TemplateRow;
+        return (
+          <MetaChip
+            icon={ListChecks}
+            label={String(tpl.stepCount)}
+            title={t(
+              'agentPlan.hub.templates.columns.stepsTitle',
+              isPolish ? 'Liczba kroków szablonu' : 'Template step count'
+            )}
+          />
+        );
+      },
+    },
+  ];
+
+  const templateRows = (templates ?? []) as unknown as TableRow[];
+
+  const renderTemplates = () => {
+    if (templatesError) {
+      return (
+        <EmptyState
+          variant="error"
+          title={t(
+            'agentPlan.hub.templates.loadErrorTitle',
+            isPolish ? 'Nie udało się wczytać szablonów' : 'Failed to load templates'
+          )}
+          description={templatesError}
+          onRetry={fetchTemplates}
+          className="h-full"
+        />
+      );
+    }
+    if (templates === null) {
+      return (
+        <div className="p-4">
+          <LoadingState template="list" rows={4} />
+        </div>
+      );
+    }
+    if (templates.length === 0) {
+      return (
+        <EmptyState
+          icon={FileStack}
+          title={t('agentPlan.hub.templatesTitle', isPolish ? 'Szablony' : 'Templates')}
+          description={t(
+            'agentPlan.hub.templates.emptyDescription',
+            isPolish ? 'Brak dostępnych szablonów.' : 'No templates available.'
+          )}
+          className="h-full"
+        />
+      );
+    }
+    return (
+      <div className="p-4 pt-3">
+        {createError ? <p className="mb-2 text-xs text-c-danger">{createError}</p> : null}
+        <StandardTable
+          columns={templateColumns}
+          data={templateRows}
+          onRowClick={(row) => handleSelectTemplate(row as unknown as TemplateRow)}
+          rowActions={(row) => {
+            const tpl = row as unknown as TemplateRow;
+            return [
+              {
+                id: 'primary',
+                kind: 'open' as const,
+                actions: [
+                  {
+                    id: 'use',
+                    label: t(
+                      'agentPlan.hub.templates.rowUse',
+                      isPolish ? 'Użyj szablonu' : 'Use template'
+                    ),
+                    onClick: () => handleSelectTemplate(tpl),
+                  },
+                ],
+              },
+            ];
+          }}
+          persistKey="agent.templates.list"
+        />
+      </div>
+    );
+  };
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
@@ -314,7 +531,7 @@ export const AgentHubShell: React.FC = () => {
         }
       />
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {tab === 'processes' ? renderProcesses() : renderTemplatesPlaceholder()}
+        {tab === 'processes' ? renderProcesses() : renderTemplates()}
       </div>
     </div>
   );
