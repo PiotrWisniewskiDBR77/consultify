@@ -1,3 +1,4 @@
+import type { TemplateOriginRuntime } from '@/types/materials';
 import { getArtifactPath } from '@/utils/artifactLinks';
 
 import type { ArtifactGovernanceSummary, TemplateType } from './types';
@@ -38,14 +39,52 @@ export function resolveArtifactOpenPath(params: {
   return null;
 }
 
-export function resolveTemplateUsePath(templateId: string, templateType: TemplateType): string {
+/**
+ * Cel akcji „Użyj wzorca". ★ Dwa RÓŻNE identyfikatory:
+ *  - `artifactIndexId` — wiersz indeksu artefaktów (dotychczasowe `templateArtifactId`),
+ *  - `canonicalTemplateId` — rekord szablonu w runtime, którego oczekuje generator.
+ */
+export interface TemplateUseTarget {
+  artifactIndexId: string;
+  templateType: TemplateType;
+  canonicalTemplateId?: string | null;
+  originRuntime?: TemplateOriginRuntime | null;
+  orphaned?: boolean;
+}
+
+/**
+ * Trasa „Użyj wzorca".
+ *
+ * Zwraca `null`, gdy wzorca NIE da się uczciwie użyć:
+ *  - wpis osierocony (`orphaned`) — brak kanonicznego rekordu,
+ *  - szablon DOKUMENTU bez `canonicalTemplateId` — nie ma czego preselekcjonować
+ *    w Document Studio, a wysłanie pustego id byłoby cichym fallbackiem.
+ *
+ * Szablon dokumentu (`originRuntime === 'document_template'`) kieruje do
+ * Document Studio Mode 3 z KONKRETNYM kanonicznym id. Legacy `report_template`
+ * (report_builder_templates) zachowuje dotychczasową trasę generacji bez zmian.
+ */
+export function resolveTemplateUsePath(target: TemplateUseTarget): string | null {
+  const artifactIndexId = String(target.artifactIndexId || '').trim();
+  if (!artifactIndexId) return null;
+  if (target.orphaned) return null;
+
+  const canonicalTemplateId = String(target.canonicalTemplateId || '').trim();
+
+  if (target.originRuntime === 'document_template') {
+    if (!canonicalTemplateId) return null;
+    return `/document-studio?entry=template&templateId=${encodeURIComponent(canonicalTemplateId)}`;
+  }
+
+  // Legacy report_template + wszystko, czego indeks jeszcze nie oznaczył:
+  // dotychczasowa trasa, bez zmiany generacji.
   const routeMap: Record<TemplateType, string> = {
     report: '/wordy',
     sheet: '/tabele',
     presentation: '/prezentacje',
   };
-  const base = routeMap[templateType] || '/wordy';
-  return `${base}?templateArtifactId=${encodeURIComponent(templateId)}`;
+  const base = routeMap[target.templateType] || '/wordy';
+  return `${base}?templateArtifactId=${encodeURIComponent(artifactIndexId)}`;
 }
 
 export function resolveTemplateEditPath(templateId: string, templateType: TemplateType): string {
