@@ -1498,28 +1498,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     contract?.expectedAction,
   ]);
 
-  // ── Auto-trigger AI context enrichment on load ────────────────────────────
-  // Runs once per notification after data is loaded. Silently enriches all fields.
-  const aiAutoTriggeredRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (
-      !notification ||
-      loading ||
-      sourceEntityLoading ||
-      isAnalyzingWorksheet ||
-      aiAutoTriggeredRef.current === notificationId
-    ) {
-      return;
-    }
-    // Mark as triggered for this notification
-    aiAutoTriggeredRef.current = notificationId;
-    // Small delay to let rule-engine defaults render first
-    const timer = setTimeout(() => {
-      handleAnalyzeWithAI(true);
-    }, 600);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notificationId, notification, loading, sourceEntityLoading]);
+  // ── AI context enrichment is USER-INITIATED ONLY ──────────────────────────
+  // ★ 2026-07-24 — REGRESJA R2: usunieto auto-wywolanie AI przy montowaniu
+  // ekranu. Wczesniej useEffect odpalal handleAnalyzeWithAI(true) po 600ms od
+  // zaladowania powiadomienia => KAZDE wejscie w karte generowalo wywolanie AI
+  // (i EMPTY_LLM_RESPONSE w konsoli) bez akcji uzytkownika. Analiza startuje
+  // teraz WYLACZNIE z klikniecia „Analizuj z AI" (handleAnalyzeWithAI(false)).
 
   const expectedActionValue = (
     expectedActionDraft ||
