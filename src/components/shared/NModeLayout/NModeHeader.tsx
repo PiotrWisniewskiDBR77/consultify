@@ -328,7 +328,19 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="col-span-full bg-c-surface-raised/90 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl overflow-hidden"
+      /* Pasek Menu 1 — powierzchnia „podniesiona" MUSI mieć granicę.
+       * Zmierzone PRZED (dev-render, getComputedStyle): tło paska vs otoczenie
+       * dawało kontrast 1,00–1,05:1 w LIGHT **i** w DARK, przy `border: 0px`
+       * i `box-shadow: none` → tytuł „wisiał w powietrzu".
+       * Powód w dark: nadpisanie `dark:bg-c-surface/70` odbierało paskowi token
+       * `--c-surface-raised` i malowało go kolorem karty (dosłownie 1,000:1).
+       * Naprawa systemowa (ten sam wzorzec co dropdowny/NModeMenu2 —
+       * `border border-c-border` + `bg-c-surface-raised`): granica z tokenu
+       * bordera + `shadow-elevation-1` (kanoniczna „raised card, resting”,
+       * theme-aware). Token `--c-surface-raised` ZOSTAJE bez zmian — jego
+       * przyciemnienie zbiłoby `text-c-text-muted` na tej powierzchni poniżej
+       * progu WCAG AA (zmierzone 4,55:1, próg 4,5:1). */
+      className="col-span-full border border-c-border bg-c-surface-raised/90 backdrop-blur-xl rounded-2xl overflow-hidden shadow-elevation-1"
     >
       <div className="flex items-center gap-4 px-5 py-3">
         {/* Back button */}
