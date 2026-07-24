@@ -65,3 +65,9 @@ punkt cofania, znane ograniczenia. Piotr klika, nie odkrywa zepsucia.
 
 ## LOG POSTĘPU (dopisuj po każdej fazie)
 - 2026-07-24: partia 1 scalona (17 ponad demo). §4 6/7. Runbook założony. Faza A w toku.
+
+## LOG (ciąg dalszy)
+- 2026-07-24: Etap 0 powłoki scalony (Menu2 wyrównane). Szerokość 3 kart → 6xl scalona (partia).
+  §4.5 DOMKNIĘTE (jedna szerokość 1152, 2 viewporty, treść OK — caveat: gęste tabele Decyzji/Zadania
+  na analogii Inicjatywy, nie na bezpośrednim mocku). §4.6 odłożone (chip StandardArtifactShell).
+  §4: 6/7 domknięte + 1 świadomie odłożone. Hub 23 ponad demo. → Faza D: trzecia runda sędziów.
