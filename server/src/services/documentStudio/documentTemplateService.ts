@@ -30,6 +30,7 @@ import type {
   DocumentConfidentiality,
   DocumentDensity,
   DocumentLanguageStyle,
+  DocumentSchema,
   DocumentTemplate,
   DocumentTypeKey,
   TemplateAuditAction,
@@ -322,6 +323,109 @@ export function draftTemplate(params: DraftTemplateParams): DraftTemplateResult 
     actorId: params.userId,
     occurredAt: now,
     details: { documentType, category },
+  });
+  return { template };
+}
+
+/** Coarse block-count → length-hint heuristic for cloned sections (no word-count pass). */
+function lengthHintFromBlockCount(blockCount: number): TemplateSectionBlueprint['expectedLengthHint'] {
+  if (blockCount <= 2) return 'short';
+  if (blockCount <= 5) return 'medium';
+  return 'long';
+}
+
+export interface CreateTemplateFromArtifactParams {
+  organizationId: string;
+  userId: string;
+  /** Full schema of the source native artifact (Document Studio), as returned by `getDocumentArtifact`. */
+  schema: DocumentSchema;
+  /** Optional template name override; defaults to `${schema.title} (Copy)`. */
+  name?: string;
+  notes?: string;
+}
+
+/**
+ * CLONE — Word (Document Studio) native artifact → draft template.
+ *
+ * Companion to `draftTemplate` (which plans a template from a taxonomy
+ * probe with no real content). This one carries over the ACTUAL structure
+ * of an existing document (`schema.sections`) into `sectionBlueprint`, so
+ * "save an existing document as a template" (clone → edit → save-as-new)
+ * produces a template that mirrors what the author already built instead
+ * of a generic deterministic outline.
+ *
+ * Persists through the same draft/registry/DAO path as `draftTemplate`
+ * (in-process registry + best-effort write-through to
+ * `document_studio_templates`); the resulting draft template is
+ * immediately usable via `POST /document-studio/generate` with
+ * `templateId` (Mode 3), same as any other drafted template.
+ */
+export function createTemplateFromArtifact(
+  params: CreateTemplateFromArtifactParams
+): DraftTemplateResult {
+  if (!params.organizationId) throw new Error('organizationId is required');
+  if (!params.userId) throw new Error('userId is required');
+  const schema = params.schema;
+  if (!schema || typeof schema !== 'object') {
+    throw new Error('source document schema is required');
+  }
+
+  const documentType: DocumentTypeKey = schema.documentType ?? 'generic_document';
+  const category = categoryForDocumentType(documentType);
+  const density: DocumentDensity = schema.density ?? 'standard';
+
+  const sourceSections = Array.isArray(schema.sections) ? schema.sections : [];
+  const clonedBlueprint: TemplateSectionBlueprint[] = sourceSections
+    .slice()
+    .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+    .map((section) => ({
+      title: section.title,
+      level: section.level,
+      purpose: section.purpose?.trim() || section.title,
+      required: true,
+      expectedLengthHint: lengthHintFromBlockCount(
+        Array.isArray(section.blocks) ? section.blocks.length : 0
+      ),
+    }));
+  const blueprint =
+    clonedBlueprint.length > 0 ? clonedBlueprint : deriveBlueprintFromDocumentType(documentType, density);
+
+  const now = nowIso();
+  const template: DocumentTemplate = {
+    templateId: makeId('doc-template'),
+    organizationId: params.organizationId,
+    name: params.name?.trim() || `${schema.title || 'Untitled document'} (Copy)`,
+    category,
+    documentType,
+    purpose: schema.title?.trim() || `${documentType.replace(/_/g, ' ')} template`,
+    audience: Array.isArray(schema.audience) ? schema.audience : [],
+    language: schema.language ?? 'pl',
+    languageStyle: schema.languageStyle ?? defaultLanguageStyleFor(category),
+    communicationRegister: schema.communicationRegister ?? defaultRegisterFor(category),
+    density,
+    confidentiality: schema.confidentiality ?? defaultConfidentialityFor(category),
+    requiredInputs: [],
+    sectionBlueprint: blueprint,
+    formattingSchema: schema.formattingSchema ?? { ...DEFAULT_CONSULTING_FORMATTING_SCHEMA },
+    exportRules: defaultExportRules(category),
+    status: 'draft',
+    version: '0.1',
+    createdBy: params.userId,
+    createdAt: now,
+    updatedAt: now,
+    notes: params.notes?.trim() || `Cloned from artifact ${schema.artifactId || schema.documentId}`,
+  };
+
+  registryStore.set(templateKey(params.organizationId, template.templateId), template);
+  void persistTemplate(template).catch(() => undefined);
+  pushAudit({
+    auditId: makeId('doc-template-audit'),
+    templateId: template.templateId,
+    organizationId: params.organizationId,
+    action: 'template_drafted',
+    actorId: params.userId,
+    occurredAt: now,
+    details: { documentType, category, clonedFromArtifactId: schema.artifactId || null },
   });
   return { template };
 }
