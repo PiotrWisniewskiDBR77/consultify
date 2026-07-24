@@ -292,8 +292,6 @@ function makeIntegration(
     handleDeleteRow: vi.fn(),
     handleDuplicateRow: vi.fn(),
     handleBulkDelete: vi.fn(),
-    handleDuplicateRow: vi.fn(),
-    handleDeleteRow: vi.fn(),
     handleInsertRow: vi.fn(),
     viewLayout: 'table',
     setViewLayout: vi.fn(),

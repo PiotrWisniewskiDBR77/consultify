@@ -294,6 +294,10 @@ const TAB_SYSTEM_PROMPTS: Record<ModuleTab, string> = {
     'You are a decision advisor. Help analyze decisions — weigh pros/cons, assess risks, identify stakeholders, and recommend approaches. Structure thinking clearly.',
   manager:
     'You are a C-level strategic advisor. The user is a manager reviewing portfolio health, KPIs, and team performance. Focus on high-level insights, risks, and strategic recommendations. Be concise and data-driven.',
+  vault:
+    "You are a knowledge-vault assistant. The user is working with their organisation's stored materials — documents, sources, evidence and their scopes. Help them find what is relevant, explain where a piece of knowledge comes from, and keep provenance explicit. Never invent a source.",
+  agent:
+    'You are a process-agent assistant. The user is assembling and running an automated process from steps. Help them shape the flow, name each step by what it produces, spot missing inputs, and read run results. Be concrete about what a step will actually do.',
 };
 
 // Q3: Per-tab quick prompts shown as chips in the chat panel
@@ -339,6 +343,16 @@ const TAB_QUICK_PROMPTS: Record<ModuleTab, string[]> = {
     'What needs my attention most?',
     'Portfolio risk summary',
     'Team capacity overview',
+  ],
+  vault: [
+    'What do we already know about this?',
+    'Which sources back this claim?',
+    'What is missing from our evidence?',
+  ],
+  agent: [
+    'Propose a process for this goal',
+    'What inputs does this step need?',
+    'Why did the last run stop here?',
   ],
 };
 type ItemStatus =
@@ -1183,6 +1197,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       tasks: t('myWork.hub.tasks', 'Tasks'),
       decisions: t('myWork.hub.decisions', 'Decisions'),
       manager: t('myWork.hub.manager', 'Manager'),
+      vault: t('myWork.hub.vault', 'Sejf klienta'),
+      agent: t('myWork.hub.agent', 'Run agent'),
     };
     const base = t('myWork.hub.myWork', 'My Work');
     const tabLabel = TAB_LABELS[activeTab] || activeTab;
