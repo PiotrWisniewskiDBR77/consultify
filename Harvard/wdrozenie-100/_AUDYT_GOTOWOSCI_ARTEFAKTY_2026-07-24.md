@@ -90,7 +90,13 @@ Otwarte, znane, nieocenione:
 3. ~~**Powiadomienie loguje błąd pustej odpowiedzi modelu przy wejściu**~~ **→ NAPRAWIONE** (ta sama gałąź).
    `useEffect` odpalał `handleAnalyzeWithAI` przez `setTimeout` przy montażu — usunięty. Zmierzone:
    wejście → 0 wywołań AI, klik „Analizuj z AI" → 1. Ścieżka ręczna nietknięta.
-4. **Pasek „Szkic"** zabramkowany po stronie wywołań, **nie naprawiony u źródła.**
+4. ~~**Pasek „Szkic"** zabramkowany po stronie wywołań~~ **→ NAPRAWIONE U ŹRÓDŁA** (gałąź
+   `fix/pasek-szkic-zrodlo` @ `f925e5108c`, czeka scalenia). `ArtifactApprovalStatusBar:105`
+   spadał na `state ?? 'draft'`; hook odrzucał sygnał `assignment: null` (= brak rekordu). Teraz
+   hook wystawia `hasRecord`, pasek renderuje pigułkę TYLKO z prawdziwym rekordem, inaczej pokazuje
+   akcję wejścia w obieg albo znika (null). Zweryfikowane na Decyzji/Inicjatywie, light+dark.
+   ★ Do decyzji: 3 bramki-obejścia z nocy stają się zbędne — 2 bezpieczne do zdjęcia, 1
+   (`DecisionDetailView:4562`) zmienia KIEDY pasek się montuje, wymaga świadomej zgody. Cleanup PO scaleniu.
 5. **Cztery różne szerokości powłoki** (1488/1332/1496/1364) — karty nie dzielą jednej powłoki.
    ★ ROZPOZNANE: źródłem są różne tokeny `max-w-*` per karta (`[1500px]` Decyzja/Zadanie,
    `7xl` Inicjatywa, `6xl` Powiadomienie/Insight/Narzędzie) + rozjazd 48 px Menu 1 vs Menu 2
