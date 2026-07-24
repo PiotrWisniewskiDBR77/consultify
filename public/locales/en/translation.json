@@ -27004,7 +27004,17 @@
       "processHealth": "Process health",
       "mapInspector": "Map inspector",
       "mapHealth": "Map health",
-      "convertSelectionCount": "Convert selection ({{value}})"
+      "convertSelectionCount": "Convert selection ({{value}})",
+      "overview": "Overview",
+      "properties": "Properties",
+      "relations": "Relations",
+      "comments": "Comments",
+      "history": "History",
+      "statistics": "Statistics",
+      "statElements": "Elements",
+      "statRelations": "Relations",
+      "statRoots": "Root branches",
+      "statEvidence": "Evidence"
     },
     "contextPanel": {
       "contextStatistics": "Context & statistics",
