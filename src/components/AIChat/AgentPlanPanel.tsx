@@ -118,7 +118,34 @@ function saveStoredBlocks(planId: string, blocks: PlanSchemaBlock[]): void {
  * nie miała jak poznać wybór usera dla klocka i musiała zgadywać). Dzięki
  * temu select "Narzędzie"/"Poziom Vault" w `AgentPlanCanvas` pokazuje
  * PRAWDZIWY stan istniejącego kroku zamiast zawsze startować od placeholdera.
+ *
+ * ★ NAPRAWA CZYTELNOŚCI (2026-07-24, defekt zgłoszony przy odbiorze AGT-008):
+ * `name` klocka był ustawiany WPROST na `step.toolName` — dla realnych planów
+ * z generatora (`processLibraryService.buildExecutableSteps`) `toolName` to
+ * nazwa techniczna narzędzia (np. `search_knowledge_base`,
+ * `get_assessment_data`), więc user widział w canvasie klocki nazwane po
+ * nazwie API zamiast czytelnej fazy procesu. Generator wstrzykuje czytelną
+ * nazwę fazy do `toolInput.phase` (patrz `processLibraryService.ts` —
+ * `buildExecutableSteps`: `toolInput: { ...p.toolInput, phase: p.name, ... }`,
+ * gdzie `p.name` to np. "Wejście / Kontraktowanie", "Diagnoza", "Rekomendacje",
+ * "Wdrożenie", "Zamknięcie") — te dane trafiają do `ai_agent_plan_steps.
+ * tool_input_json`, więc frontend je ma. Kolejność pierwszeństwa nazwy
+ * wyświetlanej: (1) `toolInput.phase` — czytelna nazwa fazy z generatora,
+ * (2) `toolInput.name` — na wypadek innej ścieżki, która niesie nazwę kroku
+ * pod tym kluczem zamiast `phase`, (3) `toolName` — ostateczny techniczny
+ * fallback (np. dla kroków bez metadanych fazy). Nazwa techniczna narzędzia
+ * NIE ginie — `toolName` jest nadal niesiony osobno na bloku i pokazywany
+ * w select "Narzędzie" w `AgentPlanCanvas` (brak potrzeby duplikować go też
+ * w tytule klocka).
  */
+function readablePhaseName(toolInput: Record<string, unknown> | undefined): string | undefined {
+  const phase = toolInput?.phase;
+  if (typeof phase === 'string' && phase.trim().length > 0) return phase;
+  const name = toolInput?.name;
+  if (typeof name === 'string' && name.trim().length > 0) return name;
+  return undefined;
+}
+
 export function stepsToBlocks(steps: AgentPlanStep[]): PlanSchemaBlock[] {
   return steps.map((step) => {
     const rawKind = step.toolInput?.blockKind;
@@ -130,7 +157,7 @@ export function stepsToBlocks(steps: AgentPlanStep[]): PlanSchemaBlock[] {
     return {
       id: step.id,
       kind,
-      name: step.toolName,
+      name: readablePhaseName(step.toolInput) ?? step.toolName,
       moduleType: typeof rawModule === 'string' ? rawModule : undefined,
       toolName: step.toolName,
       toolInput: step.toolInput,

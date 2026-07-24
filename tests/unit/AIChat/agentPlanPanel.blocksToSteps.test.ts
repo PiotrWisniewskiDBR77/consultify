@@ -168,4 +168,38 @@ describe('AgentPlanPanel.blocksToSteps (AGT-008 — klocek niesie wybrane narzę
     expect(block.toolInput?.vault_scope).toBe('organization');
     expect(block.toolInput?.vault_safe_name).toBe('Sejf organizacji');
   });
+
+  it('NAPRAWA CZYTELNOŚCI: krok z generatora (toolInput.phase) dostaje czytelną nazwę fazy, nie nazwę techniczną narzędzia', () => {
+    const step = makeStep({
+      id: 'step-diag',
+      toolName: 'get_assessment_data',
+      toolInput: {
+        include_benchmarks: true,
+        phase: 'Diagnoza',
+        module: 'Interview · Assessment',
+        deliverable: 'Stan obecny, dane, zdefiniowany problem',
+      },
+    });
+
+    const [block] = stepsToBlocks([step]);
+
+    expect(block.name).toBe('Diagnoza');
+    expect(block.name).not.toBe('get_assessment_data');
+    expect(block.moduleType).toBe('Interview · Assessment');
+    // toolName nadal niesiony osobno na bloku (select "Narzędzie" w
+    // AgentPlanCanvas) — nie ginie, tylko przestaje być tytułem klocka.
+    expect(block.toolName).toBe('get_assessment_data');
+  });
+
+  it('FALLBACK: krok bez toolInput.phase (np. sprzed generatora faz) nadal pokazuje toolName jako nazwę', () => {
+    const step = makeStep({
+      id: 'step-legacy',
+      toolName: 'search_knowledge_base',
+      toolInput: { query: 'coś' },
+    });
+
+    const [block] = stepsToBlocks([step]);
+
+    expect(block.name).toBe('search_knowledge_base');
+  });
 });
