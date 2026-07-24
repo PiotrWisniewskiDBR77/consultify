@@ -73,10 +73,13 @@ import {
   type IdeaConvertTarget,
 } from './ideaConvertTargets';
 import {
+  bucketIdeaStageForList,
+  IDEA_STAGE_BUCKET_LABELS,
   IDEA_STAGE_COLORS,
-  IDEA_STAGE_LABELS,
   IDEA_STAGES_V5,
   normalizeStageToV5,
+  type IdeaStageListBucket,
+  type IdeaStageV5,
 } from './ideaEntryTypes';
 import type { CanvasToolType, IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import { MapHealthScore } from './mindmap/MapHealthScore';
@@ -90,6 +93,33 @@ const FIELD_CLASS =
 
 // Convert-target union is owned by the SSOT registry (ideaConvertTargets.ts).
 type ConvertTarget = IdeaConvertTarget;
+
+/**
+ * 2026-07-24 SSOT unification: the panel used to show the 7-level V5 stage
+ * vocabulary (`IDEA_STAGE_LABELS` — "Strukturyzacja", "Walidacja"...) while the
+ * Ideas list showed the 5-bucket vocabulary (`IDEA_STAGE_BUCKET_LABELS` —
+ * "Kształtuje się", "Gotowy"...). Same idea, two dictionaries. Data model and
+ * transition logic (`IDEA_STAGES_V5` order, `onStageChange`, gating elsewhere)
+ * are untouched — only what's PRINTED changes. The manual stage picker below
+ * still writes a V5 enum value (`stage` column, `IdeaStageEnum` server-side),
+ * but the dropdown now lists one row per BUCKET (not per V5 stage) so it
+ * doesn't show two rows with identical bucket text (framing/exploring both
+ * "Rośnie", validating/ready_to_convert both "Gotowy"). Picking a bucket the
+ * user is already in is a no-op (keeps the current granular V5 value);
+ * picking a different bucket jumps to that bucket's first V5 stage.
+ */
+const STAGE_BUCKET_OPTIONS: { bucket: IdeaStageListBucket; representative: IdeaStageV5 }[] = (() => {
+  const seen = new Set<IdeaStageListBucket>();
+  const opts: { bucket: IdeaStageListBucket; representative: IdeaStageV5 }[] = [];
+  for (const s of IDEA_STAGES_V5) {
+    const bucket = bucketIdeaStageForList(s);
+    if (!seen.has(bucket)) {
+      seen.add(bucket);
+      opts.push({ bucket, representative: s });
+    }
+  }
+  return opts;
+})();
 
 /**
  * P0-4: zakladki prawego panelu. Powloka (EditorShell) przekazuje identyfikator
@@ -366,10 +396,37 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   const [stageDropdownOpen, setStageDropdownOpen] = useState(false);
 
   const v5Stage = normalizeStageToV5(stage);
-  const stageLabel = isPl ? IDEA_STAGE_LABELS[v5Stage].pl : IDEA_STAGE_LABELS[v5Stage].en;
+  const stageBucket = bucketIdeaStageForList(stage);
+  const stageLabel = isPl
+    ? IDEA_STAGE_BUCKET_LABELS[stageBucket].pl
+    : IDEA_STAGE_BUCKET_LABELS[stageBucket].en;
   const stageColor = IDEA_STAGE_COLORS[v5Stage];
   const stageIdx = IDEA_STAGES_V5.indexOf(v5Stage);
-  const canAdvance = stageIdx >= 0 && stageIdx < IDEA_STAGES_V5.length - 1;
+  /**
+   * ★ Właściciel zdecydował (2026-07-24): użytkownik widzi PIĘĆ etapów.
+   * Wewnątrz wciąż żyje siedem wartości V5, a dwa przejścia są niewidoczne
+   * (`framing→exploring` i `validating→ready_to_convert` NIE zmieniają nazwy).
+   * Przy kroku „o jeden V5" te dwa kliknięcia wyglądałyby na bezczynne —
+   * przycisk mówiłby „→ Gotowy", gdy plakietka już mówi „Gotowy".
+   *
+   * Dlatego przycisk przeskakuje do najbliższego etapu, który jest WIDOCZNIE
+   * inny. Każde kliknięcie realnie przesuwa to, co użytkownik widzi.
+   *
+   * Sprawdzone przed decyzją: konwersja NIE jest bramkowana na `ready_to_convert`
+   * (brak takiej bramki w `my-work.routes.ts` i w `IdeaConvertMenu`), a nudge na
+   * `exploring` siedzi w `IdeaPinnedCard`, który nie jest nigdzie używany.
+   * KOSZT DO ŚWIADOMOŚCI: `IdeaFunnelAnalytics` (żywy, 6 odwołań) nie zobaczy już
+   * `exploring`/`ready_to_convert` USTAWIONYCH TYM przyciskiem — inne ścieżki
+   * (AI, akceptacja wyzwania) nadal je ustawiają.
+   */
+  const nextVisibleStageIdx = (() => {
+    if (stageIdx < 0) return -1;
+    for (let i = stageIdx + 1; i < IDEA_STAGES_V5.length; i++) {
+      if (bucketIdeaStageForList(IDEA_STAGES_V5[i]) !== stageBucket) return i;
+    }
+    return -1;
+  })();
+  const canAdvance = nextVisibleStageIdx >= 0;
 
   const [branchEditing, setBranchEditing] = useState(false);
   const [areaEditing, setAreaEditing] = useState(false);
@@ -639,25 +696,34 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               </button>
               {canAdvance && onStageChange && v5Stage !== 'converted' && (
                 <button
-                  onClick={() => onStageChange(IDEA_STAGES_V5[stageIdx + 1])}
+                  onClick={() => onStageChange(IDEA_STAGES_V5[nextVisibleStageIdx])}
                   className="ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-c-info hover:bg-c-info/5 transition-colors"
                 >
                   →{' '}
                   {isPl
-                    ? IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].pl
-                    : IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].en}
+                    ? IDEA_STAGE_BUCKET_LABELS[
+                        bucketIdeaStageForList(IDEA_STAGES_V5[nextVisibleStageIdx])
+                      ].pl
+                    : IDEA_STAGE_BUCKET_LABELS[
+                        bucketIdeaStageForList(IDEA_STAGES_V5[nextVisibleStageIdx])
+                      ].en}
                 </button>
               )}
               {stageDropdownOpen && (
                 <div className="absolute top-full left-0 mt-1 z-[120] w-48 rounded-xl bg-white dark:bg-navy-900 shadow-xl py-1">
-                  {IDEA_STAGES_V5.map((s) => {
-                    const label = isPl ? IDEA_STAGE_LABELS[s].pl : IDEA_STAGE_LABELS[s].en;
-                    const isActive = s === v5Stage;
+                  {STAGE_BUCKET_OPTIONS.map(({ bucket, representative }) => {
+                    const label = isPl
+                      ? IDEA_STAGE_BUCKET_LABELS[bucket].pl
+                      : IDEA_STAGE_BUCKET_LABELS[bucket].en;
+                    const isActive = bucket === stageBucket;
                     return (
                       <button
-                        key={s}
+                        key={bucket}
                         onClick={() => {
-                          onStageChange?.(s);
+                          // Re-picking the current bucket keeps today's granular
+                          // V5 value (no silent regression to the bucket's first
+                          // sub-stage); picking a different bucket jumps to it.
+                          onStageChange?.(isActive ? v5Stage : representative);
                           setStageDropdownOpen(false);
                         }}
                         className={`w-full text-left px-3 py-1.5 text-[11px] transition-colors ${
@@ -667,7 +733,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                         }`}
                       >
                         <span
-                          className={`inline-block w-1.5 h-1.5 rounded-full mr-2 bg-gradient-to-r ${IDEA_STAGE_COLORS[s].split(' ')[0]} ${IDEA_STAGE_COLORS[s].split(' ')[1]}`}
+                          className={`inline-block w-1.5 h-1.5 rounded-full mr-2 bg-gradient-to-r ${IDEA_STAGE_COLORS[representative].split(' ')[0]} ${IDEA_STAGE_COLORS[representative].split(' ')[1]}`}
                         />
                         {label}
                       </button>
