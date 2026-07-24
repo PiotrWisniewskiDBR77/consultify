@@ -258,3 +258,13 @@ Dwie rzeczy do naprawy osobno (decyzja właściciela), NIE w tym przebiegu:
    bramka crimson jest na macOS martwa. Klasa błędu bliźniacza do „fantomowej flagi".
 2. `check-list-canon` — trwale czerwony dług zastany (8 plików). Bramka stale czerwona nie
    chroni już przed niczym.
+
+### §8a. NARZĘDZIE NAPRAWIONE (2026-07-24, po ustaleniach §8)
+`check-triada.sh` ożywiona i zweryfikowana czynnie:
+- `grep -v '^\+\+\+'` (BRE, wywalał BSD grep) → `grep -Ev` — **test negatywny: crimson w zakresie
+  daje teraz exit 1** (wcześniej 0, ślepa). Probe `bg-primary-600`/`c-accent` złapany.
+- „sprawdzono 0 plików" **ostrzega** zamiast meldować sukces — zero sprawdzonych ≠ zielone.
+Commit na hubie (nie na demo — demo nietknięte pod `97f466bd98`).
+★ **Do sprawdzenia osobno:** czy siostrzane bramki (`check-artefakt`, `check-list-canon`,
+`check-gestosc`, `check-sqlsql`) mają ten sam mechanizm „0 plików = fałszywa zieleń" na czystym
+drzewie. `grep` BRE był tylko w `check-triada`, ale pusty-payload-na-czystym-drzewie może być wspólny.
