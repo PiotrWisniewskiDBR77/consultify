@@ -9,7 +9,7 @@
  * - warning (amber) — attention needed, approaching deadlines
  * - critical (red)  — blockers, overdue, errors
  * - success (emerald) — completed actions, positive outcomes
- * - purple (purple) — AI-generated content, insights
+ * - purple (c-ai violet) — AI-generated content, insights
  *
  * @see docs/ui-standards/02-components/building-blocks.md
  * @see docs/ui-standards/00-foundation/color-system.md
@@ -72,9 +72,14 @@ const VARIANT_STYLES: Record<CalloutVariant, { bg: string; text: string; icon: L
     text: 'text-emerald-700 dark:text-emerald-300',
     icon: CheckCircle2,
   },
+  // AI / insights — token systemowy `c-ai` (fiolet #6d28d9 light / #a78bfa dark).
+  // BYŁO `primary-*`, ale w tym repo `primary` = crimson #85182F (marka), więc
+  // callout informacyjny renderował się na czerwono — złamanie kanonu
+  // („czerwień TYLKO semantyka krytyczna"). `c-ai` jest świadomie oddzielny od
+  // sygnałów (success/warning/danger/info) i od crimson — patrz standard n-Type §4.6.
   purple: {
-    bg: 'bg-primary-500/[0.06] dark:bg-primary-500/10',
-    text: 'text-primary-700 dark:text-primary-300',
+    bg: 'bg-c-ai/[0.06] dark:bg-c-ai/10',
+    text: 'text-c-ai',
     icon: Sparkles,
   },
 };
