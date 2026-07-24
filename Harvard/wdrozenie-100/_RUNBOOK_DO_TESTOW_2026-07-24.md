@@ -221,3 +221,14 @@ nawet po skasowaniu gałęzi:
 - **Do Etapu 4** (zgłoszone przez agenta Etapu 3): komunikat „Akcje są ukryte w trybie Podgląd" żyje
   w `ArtifactRightPanel`, nie w Menu — to dokładnie zakazany wzorzec SSOT, widoczny na Insight+Inicjatywie
   (i wg audytu Etapu 1 też Zadanie/Decyzja/Powiadomienie — 5/6 kart, jeden wzorzec pisany ręcznie).
+- **Etap 4 (prawy panel)** ✅ SCALONY, zweryfikowany. Komunikat „Akcje są ukryte w trybie Podgląd"
+  usunięty w JEDNYM miejscu (`ArtifactRightPanel.tsx`, nowy prop `showZeroBadge`) zamiast łatania
+  6 kart osobno. Narzędzie dostało Akcje/Komentarze/Historię (widoczne, puste, 0 — bez nowego backendu),
+  Powiadomienie dostało Komentarze (widoczne, puste, 0) — rozwiązuje obie kolizje decyzji z Etapu 1
+  jednym mechanizmem, zgodnym z SSOT „puste sekcje = zwinięte z licznikiem 0".
+  ★ **ZNALEZIONY I NAPRAWIONY ŻYWY BŁĄD** (nie w zleceniu): akordeon prawego panelu ustalał stan
+  otwarty/zamknięty raz przy montażu i nigdy się nie synchronizował, gdy `readMode` zmieniał się
+  asynchronicznie po załadowaniu (Zadanie/Decyzja/Powiadomienie/Inicjatywa startują z optymistycznym
+  zgadywaniem trybu). Skutek: sekcja Akcje mogła utknąć zwinięta z ukrytymi żywymi przyciskami, albo
+  otwarta pokazując nieaktualną treść. Złapane na żywym renderze PRZED wysłaniem, nie w code review.
+  Crimson=0, bramki zielone, JSON pl/en poprawny. Hub 11 commitów ponad demo.
