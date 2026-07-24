@@ -31,6 +31,22 @@ import type { RunState } from '../../types/executionSpine.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { AppError } from '../../utils/ErrorHandler.js';
 import logger from '../../utils/Logger.js';
+import type {
+  TemplateOriginRuntime,
+  TemplateOriginSummaryFields,
+  TemplateScope,
+  TemplateStatus,
+} from '../materials/templateContract.js';
+import {
+  SYSTEM_TEMPLATE_ORG_ID as DOC_STUDIO_SYSTEM_ORG_ID,
+  TEMPLATE_ORIGIN_RUNTIMES,
+  deriveTemplateScope,
+  isTemplateOriginRuntime,
+  normalizeTemplateScope,
+  normalizeTemplateStatus,
+  templateSourceForRuntime,
+  toBool,
+} from '../materials/templateContract.js';
 import {
   buildWave5LineDiffForPreview,
   mirrorLegacyArtifactIntoWave5,
@@ -208,6 +224,8 @@ interface ArtifactListRow extends ArtifactRow {
     | 'native_artifact'
     | 'report_template'
     | 'presentation_template'
+    | 'sheet_template'
+    | 'document_template'
     | null;
   origin_record_id: string | null;
   report_title: string | null;
@@ -236,7 +254,9 @@ interface OriginLinkRow {
     | 'sheet'
     | 'native_artifact'
     | 'report_template'
-    | 'presentation_template';
+    | 'presentation_template'
+    | 'sheet_template'
+    | 'document_template';
   origin_record_id: string;
   is_primary_origin: number;
   created_at: string;
@@ -330,6 +350,27 @@ interface PresentationTemplateBackfillRow {
   outline_json: string | null;
   is_system: number | null;
   is_active: number | null;
+  created_by: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+/**
+ * R11 (doc slice) — canonical Document Studio template registry
+ * (`document_studio_templates`, migration 769). Column names mirror the table
+ * exactly; `template_id` is the PK (NOT `id`).
+ */
+interface DocStudioTemplateBackfillRow {
+  template_id: string;
+  organization_id: string | null;
+  name: string | null;
+  purpose: string | null;
+  category: string | null;
+  document_type: string | null;
+  section_blueprint: unknown;
+  status: string | null;
+  version: string | null;
+  is_system: unknown;
   created_by: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -1655,8 +1696,16 @@ async function backfillReportTemplatesForOrg(organizationId: string): Promise<nu
         visibilityScope: 'organization',
         originSummary: {
           template: {
-            scope: row.is_system ? 'app' : 'org',
-            status: 'published',
+            // R11: locked identity block (canonicalTemplateId / originRuntime /
+            // source / legacy / orphaned / scope / status). `report_template`
+            // has no status column — `is_active` is the only lifecycle signal.
+            ...buildTemplateOriginSummaryFields({
+              canonicalTemplateId: row.id,
+              originRuntime: 'report_template',
+              orphaned: false,
+              scope: deriveTemplateScope(row),
+              status: toBool(row.is_active) === false ? 'deprecated' : 'published',
+            }),
             description: row.description || '',
             reportType: row.report_type || 'custom',
             structureBlueprint: {
@@ -1717,8 +1766,15 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
         visibilityScope: 'organization',
         originSummary: {
           template: {
-            scope: row.is_system ? 'app' : 'org',
-            status: 'published',
+            // R11: locked identity block. `presentation_templates` likewise has
+            // no status column — `is_active` is the lifecycle signal.
+            ...buildTemplateOriginSummaryFields({
+              canonicalTemplateId: row.id,
+              originRuntime: 'presentation_template',
+              orphaned: false,
+              scope: deriveTemplateScope(row),
+              status: toBool(row.is_active) === false ? 'deprecated' : 'published',
+            }),
             description: row.description || '',
             deckType: row.deck_type || 'custom',
             structureBlueprint: {
@@ -1741,6 +1797,353 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
     }
   }
   return inserted;
+}
+
+// =============================================================================
+// R11 (doc slice) — Document Studio templates in the Template Library index
+// =============================================================================
+
+/**
+ * JSONB columns come back as a parsed object/array under Postgres and as TEXT
+ * under SQLite. `safeJsonParse` only handles the string case.
+ */
+function parseMaybeJsonArray(raw: unknown): unknown[] {
+  if (Array.isArray(raw)) return raw;
+  if (raw === null || raw === undefined) return [];
+  if (typeof raw === 'string') return safeJsonParse<unknown[]>(raw, []);
+  return [];
+}
+
+/**
+ * Build the locked `originSummary.template` identity block. Every field is
+ * REAL: `scope` / `status` come from the source row, `orphaned` from an
+ * existence check against the canonical registry. Missing signal → `'unknown'`,
+ * never a flattering default.
+ */
+export function buildTemplateOriginSummaryFields(params: {
+  canonicalTemplateId: string;
+  originRuntime: TemplateOriginRuntime;
+  orphaned: boolean;
+  scope: TemplateScope;
+  status: TemplateStatus;
+}): TemplateOriginSummaryFields {
+  const source = templateSourceForRuntime(params.originRuntime);
+  return {
+    canonicalTemplateId: params.canonicalTemplateId,
+    originRuntime: params.originRuntime,
+    source,
+    legacy: source === 'legacy',
+    orphaned: params.orphaned,
+    scope: params.scope,
+    status: params.status,
+  };
+}
+
+/**
+ * Index the approved Document Studio templates that are visible to `organizationId`.
+ *
+ * Visibility mirrors `documentTemplateRegistryDao.loadTemplatesForOrg`: the org's
+ * own rows plus the system catalogue seeded under the `__system__` sentinel org
+ * with `is_system = TRUE`. Only `status = 'approved'` rows are offered as
+ * ready-to-use library cards.
+ *
+ * Idempotent: the LEFT JOIN + `l.link_id IS NULL` guard means an already indexed
+ * template is skipped, so repeated runs insert nothing. Never deletes.
+ */
+async function backfillDocStudioTemplatesForOrg(organizationId: string): Promise<number> {
+  const rows = await dbAll<DocStudioTemplateBackfillRow>(
+    `SELECT t.template_id, t.organization_id, t.name, t.purpose, t.category, t.document_type,
+            t.section_blueprint, t.status, t.version, t.is_system, t.created_by,
+            t.created_at, t.updated_at
+     FROM document_studio_templates t
+     LEFT JOIN v8_artifact_origin_links l
+       ON l.organization_id = ?
+      AND l.origin_runtime = 'document_template'
+      AND l.origin_record_id = t.template_id
+     WHERE (t.organization_id = ? OR (t.organization_id = ? AND t.is_system = TRUE))
+       AND t.status = 'approved'
+       AND l.link_id IS NULL`,
+    [organizationId, organizationId, DOC_STUDIO_SYSTEM_ORG_ID],
+    { fallback: true }
+  );
+
+  let inserted = 0;
+  for (const row of rows || []) {
+    try {
+      const blueprint = parseMaybeJsonArray(row.section_blueprint);
+      const scope = deriveTemplateScope(row);
+      const status = normalizeTemplateStatus(row.status);
+      const result = await registerArtifactOrigin({
+        organizationId,
+        // Documents live under the `report` output type (see mapArtifactRow:
+        // anything that is not presentation/sheet infers the `document` family).
+        outputType: 'report',
+        artifactFamily: 'template',
+        originRuntime: 'document_template',
+        originRecordId: row.template_id,
+        titleSnapshot: row.name || 'Untitled document template',
+        ownerUserId: null,
+        createdBy: row.created_by || FALLBACK_ACTOR,
+        deliveryState: 'ready',
+        visibilityScope: 'organization',
+        originSummary: {
+          template: {
+            ...buildTemplateOriginSummaryFields({
+              canonicalTemplateId: row.template_id,
+              originRuntime: 'document_template',
+              orphaned: false,
+              scope,
+              status,
+            }),
+            description: row.purpose || '',
+            documentType: row.document_type || 'custom',
+            category: row.category || 'custom',
+            structureBlueprint: {
+              sections: blueprint.map((section: any) => ({
+                key: section?.key || section?.sectionKey || section?.section_key || section?.id || '',
+                title: section?.title || section?.name || '',
+              })),
+            },
+            metadata: {
+              createdBy: row.created_by || FALLBACK_ACTOR,
+              createdAt: row.created_at,
+              updatedAt: row.updated_at,
+              version: row.version || null,
+              canonicalTemplateId: row.template_id,
+            },
+          },
+        },
+      });
+      if (result) inserted++;
+    } catch (err: any) {
+      logger.warn(`${LOG_PREFIX} Failed to backfill document template ${row.template_id}: ${err?.message}`);
+    }
+  }
+  return inserted;
+}
+
+/**
+ * Per-runtime description of the canonical registry a template link points at.
+ * `null` = no canonical registry exists for that runtime (the seeded
+ * `sheet_template` cards are artifact-native), so orphan state is NOT decidable
+ * and we must not guess.
+ */
+const TEMPLATE_CANONICAL_REGISTRY: Record<
+  TemplateOriginRuntime,
+  { table: string; idColumn: string; statusColumn: string | null; activeColumn: string | null } | null
+> = {
+  document_template: {
+    table: 'document_studio_templates',
+    idColumn: 'template_id',
+    statusColumn: 'status',
+    activeColumn: null,
+  },
+  report_template: {
+    table: 'report_builder_templates',
+    idColumn: 'id',
+    statusColumn: null,
+    activeColumn: 'is_active',
+  },
+  presentation_template: {
+    table: 'presentation_templates',
+    idColumn: 'id',
+    statusColumn: null,
+    activeColumn: 'is_active',
+  },
+  sheet_template: null,
+};
+
+interface CanonicalTemplateRow {
+  canonical_id: string;
+  organization_id: string | null;
+  is_system: unknown;
+  status_value: string | null;
+  active_value: unknown;
+}
+
+/**
+ * Bulk-load the canonical rows behind a set of template ids. Read-only.
+ * Returns a map keyed by canonical id; ids absent from the map are ORPHANED.
+ * `null` means the runtime has no canonical registry to check against.
+ */
+async function loadCanonicalTemplateRows(
+  originRuntime: TemplateOriginRuntime,
+  ids: string[]
+): Promise<Map<string, CanonicalTemplateRow> | null> {
+  const registry = TEMPLATE_CANONICAL_REGISTRY[originRuntime];
+  if (!registry) return null;
+  const unique = Array.from(new Set(ids.filter((id) => typeof id === 'string' && id.length > 0)));
+  if (unique.length === 0) return new Map();
+
+  const placeholders = unique.map(() => '?').join(', ');
+  const statusSelect = registry.statusColumn ? `t.${registry.statusColumn}` : 'NULL';
+  const activeSelect = registry.activeColumn ? `t.${registry.activeColumn}` : 'NULL';
+
+  const rows = await dbAll<CanonicalTemplateRow>(
+    `SELECT t.${registry.idColumn} AS canonical_id,
+            t.organization_id AS organization_id,
+            t.is_system AS is_system,
+            ${statusSelect} AS status_value,
+            ${activeSelect} AS active_value
+     FROM ${registry.table} t
+     WHERE t.${registry.idColumn} IN (${placeholders})`,
+    unique,
+    { fallback: true }
+  );
+
+  const map = new Map<string, CanonicalTemplateRow>();
+  for (const row of rows || []) {
+    if (row?.canonical_id) map.set(String(row.canonical_id), row);
+  }
+  return map;
+}
+
+/** Lifecycle status of a canonical row, honouring the per-registry signal. */
+function statusFromCanonicalRow(
+  originRuntime: TemplateOriginRuntime,
+  row: CanonicalTemplateRow
+): TemplateStatus {
+  const registry = TEMPLATE_CANONICAL_REGISTRY[originRuntime];
+  if (registry?.statusColumn) return normalizeTemplateStatus(row.status_value);
+  if (registry?.activeColumn) {
+    const active = toBool(row.active_value);
+    if (active === false) return 'deprecated';
+    if (active === true) return 'published';
+  }
+  return 'unknown';
+}
+
+/**
+ * READ-TIME enrichment of `originSummary.template` for template list items.
+ *
+ * Two things the write-time snapshot cannot know: (a) whether the canonical
+ * record still exists (orphan detection), (b) whether scope/status drifted
+ * since indexing. Both are recomputed here from the canonical registries.
+ *
+ * ★ Strictly read-only: NOTHING is deleted or updated in the database, and the
+ * input items are not mutated (fresh objects are returned).
+ */
+export async function enrichTemplateOriginSummaries(
+  organizationId: string,
+  items: ArtifactListItem[]
+): Promise<ArtifactListItem[]> {
+  const byRuntime = new Map<TemplateOriginRuntime, string[]>();
+  for (const item of items) {
+    if (item.artifactFamily !== 'template') continue;
+    if (!isTemplateOriginRuntime(item.originRuntime)) continue;
+    if (!item.originRecordId) continue;
+    const bucket = byRuntime.get(item.originRuntime) ?? [];
+    bucket.push(item.originRecordId);
+    byRuntime.set(item.originRuntime, bucket);
+  }
+  if (byRuntime.size === 0) return items;
+
+  const loaded = new Map<TemplateOriginRuntime, Map<string, CanonicalTemplateRow> | null>();
+  await Promise.all(
+    Array.from(byRuntime.entries()).map(async ([runtime, ids]) => {
+      try {
+        loaded.set(runtime, await loadCanonicalTemplateRows(runtime, ids));
+      } catch (err: any) {
+        // Unknown orphan state is better than a false "orphaned" badge.
+        logger.warn(
+          `${LOG_PREFIX} Orphan probe failed for ${runtime} in org ${organizationId}: ${err?.message}`
+        );
+        loaded.set(runtime, null);
+      }
+    })
+  );
+
+  return items.map((item) => {
+    if (item.artifactFamily !== 'template') return item;
+    if (!isTemplateOriginRuntime(item.originRuntime) || !item.originRecordId) return item;
+
+    const canonicalRows = loaded.get(item.originRuntime);
+    const canonicalRow = canonicalRows ? canonicalRows.get(item.originRecordId) : undefined;
+    // No registry to check against (sheet_template) or the probe failed →
+    // orphan state is unknown, so we do NOT flag it.
+    const orphaned = canonicalRows ? !canonicalRow : false;
+
+    const snapshot = (item.originSummary?.template ?? {}) as Record<string, unknown>;
+    const scope = canonicalRow
+      ? deriveTemplateScope(canonicalRow)
+      : normalizeTemplateScope(snapshot.scope);
+    const status = canonicalRow
+      ? statusFromCanonicalRow(item.originRuntime, canonicalRow)
+      : normalizeTemplateStatus(snapshot.status);
+
+    return {
+      ...item,
+      originSummary: {
+        ...(item.originSummary ?? {}),
+        template: {
+          ...snapshot,
+          ...buildTemplateOriginSummaryFields({
+            canonicalTemplateId: item.originRecordId,
+            originRuntime: item.originRuntime,
+            orphaned,
+            scope,
+            status,
+          }),
+        },
+      },
+    };
+  });
+}
+
+export interface OrphanedTemplateLinkCounts {
+  total: number;
+  byRuntime: Record<TemplateOriginRuntime, number>;
+  /** Runtimes with no canonical registry to verify against (not counted). */
+  unverifiable: TemplateOriginRuntime[];
+}
+
+/**
+ * MEASURE orphaned template origin links for an organization — telemetry only.
+ *
+ * ★ Read-only by design: this function performs SELECTs exclusively. It never
+ * issues DELETE or UPDATE against `v8_artifact_origin_links` (or anything else).
+ * Cleaning up orphans is a separate, deliberate decision — measuring first.
+ */
+export async function countOrphanedTemplateLinks(
+  organizationId: string
+): Promise<OrphanedTemplateLinkCounts> {
+  const byRuntime: Record<TemplateOriginRuntime, number> = {
+    document_template: 0,
+    report_template: 0,
+    presentation_template: 0,
+    sheet_template: 0,
+  };
+  const unverifiable: TemplateOriginRuntime[] = [];
+
+  const runtimePlaceholders = TEMPLATE_ORIGIN_RUNTIMES.map(() => '?').join(', ');
+  const links = await dbAll<{ origin_runtime: string; origin_record_id: string }>(
+    `SELECT origin_runtime, origin_record_id
+       FROM v8_artifact_origin_links
+      WHERE organization_id = ?
+        AND origin_runtime IN (${runtimePlaceholders})`,
+    [organizationId, ...TEMPLATE_ORIGIN_RUNTIMES],
+    { fallback: true }
+  );
+
+  const grouped = new Map<TemplateOriginRuntime, string[]>();
+  for (const link of links || []) {
+    if (!isTemplateOriginRuntime(link.origin_runtime) || !link.origin_record_id) continue;
+    const bucket = grouped.get(link.origin_runtime) ?? [];
+    bucket.push(String(link.origin_record_id));
+    grouped.set(link.origin_runtime, bucket);
+  }
+
+  for (const [runtime, ids] of grouped.entries()) {
+    const canonicalRows = await loadCanonicalTemplateRows(runtime, ids);
+    if (!canonicalRows) {
+      unverifiable.push(runtime);
+      continue;
+    }
+    byRuntime[runtime] = ids.filter((id) => !canonicalRows.has(id)).length;
+  }
+
+  const total = TEMPLATE_ORIGIN_RUNTIMES.reduce((sum, runtime) => sum + byRuntime[runtime], 0);
+  return { total, byRuntime, unverifiable };
 }
 
 /**
@@ -1826,11 +2229,13 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
     presentationsInserted,
     reportTemplatesInserted,
     presentationTemplatesInserted,
+    docStudioTemplatesInserted,
   ] = await Promise.all([
     backfillReportsForOrg(organizationId),
     backfillPresentationsForOrg(organizationId),
     backfillReportTemplatesForOrg(organizationId),
     backfillPresentationTemplatesForOrg(organizationId),
+    backfillDocStudioTemplatesForOrg(organizationId),
   ]);
 
   backfillWatermark.set(organizationId, now);
@@ -1838,12 +2243,13 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
     reportsInserted ||
     presentationsInserted ||
     reportTemplatesInserted ||
-    presentationTemplatesInserted
+    presentationTemplatesInserted ||
+    docStudioTemplatesInserted
   ) {
     logger.info(
       `${LOG_PREFIX} Backfilled ${reportsInserted} reports, ${presentationsInserted} presentations, ` +
-        `${reportTemplatesInserted} report templates, and ${presentationTemplatesInserted} presentation templates ` +
-        `for org ${organizationId}`
+        `${reportTemplatesInserted} report templates, ${presentationTemplatesInserted} presentation templates, ` +
+        `and ${docStudioTemplatesInserted} document templates for org ${organizationId}`
     );
   }
 }
@@ -2163,7 +2569,13 @@ export async function listArtifactsForUser(params: {
     { fallback: true }
   );
 
-  const items = (rows || []).map(rowToListItem);
+  // R11 (doc slice): template cards carry a REAL identity block — canonical id,
+  // runtime, source/legacy, live scope/status and an orphan flag recomputed from
+  // the canonical registries. Read-only; nothing is deleted or rewritten.
+  const items = await enrichTemplateOriginSummaries(
+    organizationId,
+    (rows || []).map(rowToListItem)
+  );
   const accessMap = await getArtifactAccessGrants(
     organizationId,
     items.map((item) => item.artifactId)
