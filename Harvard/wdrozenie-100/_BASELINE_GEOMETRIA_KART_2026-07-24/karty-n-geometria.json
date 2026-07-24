@@ -1,0 +1,979 @@
+{
+  "wygenerowano": "2026-07-24T09:23:17.950Z",
+  "baza": "http://localhost:3201",
+  "viewporty": [
+    1280,
+    1440
+  ],
+  "motyw": "light",
+  "karty": [
+    "karta-decision",
+    "karta-task",
+    "karta-notification",
+    "karta-insight",
+    "karta-tool",
+    "karta-initiative"
+  ],
+  "pomiary": [
+    {
+      "nazwa": "Decyzja",
+      "ekran": "karta-decision",
+      "viewport": 1280,
+      "pasy": {
+        "menu1": {
+          "zrodlo": "klasa:backdrop+rounded-2xl",
+          "tag": "div",
+          "klasa": "col-span-full bg-c-surface-raised/90 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl ove",
+          "l": 64,
+          "r": 832,
+          "w": 768,
+          "h": 60,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "menu2": {
+          "zrodlo": "testid:nmode-menu2",
+          "tag": "div",
+          "klasa": "relative flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-c-bo",
+          "l": 64,
+          "r": 832,
+          "w": 768,
+          "h": 48,
+          "t": 92,
+          "podejrzanyKontener": false
+        },
+        "sekcje": {
+          "zrodlo": "rodzic-nawigacji",
+          "tag": "div",
+          "klasa": "flex gap-0 min-h-[60vh]",
+          "l": 64,
+          "r": 832,
+          "w": 768,
+          "h": 703,
+          "t": 156,
+          "podejrzanyKontener": false
+        },
+        "prawyPanel": {
+          "zrodlo": "aside",
+          "tag": "aside",
+          "klasa": "shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle rounded-2xl b",
+          "l": 856,
+          "r": 1216,
+          "w": 360,
+          "h": 818,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "lewaNawigacja": {
+          "zrodlo": "nav",
+          "tag": "nav",
+          "klasa": "hidden lg:block w-[242px] flex-shrink-0 pr-4",
+          "l": 64,
+          "r": 306,
+          "w": 242,
+          "h": 703,
+          "t": 156,
+          "podejrzanyKontener": false
+        }
+      },
+      "prawyPanelEtykieta": "Szczegóły decyzji",
+      "sekcjePanelu": [
+        "AKCJE",
+        "WŁAŚCIWOŚCI",
+        "POWIĄZANIA",
+        "ŹRÓDŁA I ZAŁOŻENIA",
+        "KOMENTARZE",
+        "HISTORIA"
+      ],
+      "liczbaSekcjiPanelu": 6,
+      "crimson": 0,
+      "crimsonPrzyklady": [],
+      "bladNaEkranie": false,
+      "znaki": 853,
+      "klikalne": 42,
+      "enumy": [],
+      "bledyKonsoli": [],
+      "bledyKonsoliSurowo": 0
+    },
+    {
+      "nazwa": "Decyzja",
+      "ekran": "karta-decision",
+      "viewport": 1440,
+      "pasy": {
+        "menu1": {
+          "zrodlo": "klasa:backdrop+rounded-2xl",
+          "tag": "div",
+          "klasa": "col-span-full bg-c-surface-raised/90 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl ove",
+          "l": 144,
+          "r": 912,
+          "w": 768,
+          "h": 60,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "menu2": {
+          "zrodlo": "testid:nmode-menu2",
+          "tag": "div",
+          "klasa": "relative flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-c-bo",
+          "l": 144,
+          "r": 912,
+          "w": 768,
+          "h": 48,
+          "t": 92,
+          "podejrzanyKontener": false
+        },
+        "sekcje": {
+          "zrodlo": "rodzic-nawigacji",
+          "tag": "div",
+          "klasa": "flex gap-0 min-h-[60vh]",
+          "l": 144,
+          "r": 912,
+          "w": 768,
+          "h": 703,
+          "t": 156,
+          "podejrzanyKontener": false
+        },
+        "prawyPanel": {
+          "zrodlo": "aside",
+          "tag": "aside",
+          "klasa": "shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle rounded-2xl b",
+          "l": 936,
+          "r": 1296,
+          "w": 360,
+          "h": 818,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "lewaNawigacja": {
+          "zrodlo": "nav",
+          "tag": "nav",
+          "klasa": "hidden lg:block w-[242px] flex-shrink-0 pr-4",
+          "l": 144,
+          "r": 386,
+          "w": 242,
+          "h": 703,
+          "t": 156,
+          "podejrzanyKontener": false
+        }
+      },
+      "prawyPanelEtykieta": "Szczegóły decyzji",
+      "sekcjePanelu": [
+        "AKCJE",
+        "WŁAŚCIWOŚCI",
+        "POWIĄZANIA",
+        "ŹRÓDŁA I ZAŁOŻENIA",
+        "KOMENTARZE",
+        "HISTORIA"
+      ],
+      "liczbaSekcjiPanelu": 6,
+      "crimson": 0,
+      "crimsonPrzyklady": [],
+      "bladNaEkranie": false,
+      "znaki": 853,
+      "klikalne": 42,
+      "enumy": [],
+      "bledyKonsoli": [],
+      "bledyKonsoliSurowo": 0
+    },
+    {
+      "nazwa": "Zadanie",
+      "ekran": "karta-task",
+      "viewport": 1280,
+      "pasy": {
+        "menu1": {
+          "zrodlo": "klasa:backdrop+rounded-2xl",
+          "tag": "div",
+          "klasa": "col-span-full bg-c-surface-raised/90 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl ove",
+          "l": 64,
+          "r": 832,
+          "w": 768,
+          "h": 60,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "menu2": {
+          "zrodlo": "testid:nmode-menu2",
+          "tag": "div",
+          "klasa": "relative flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-c-bo",
+          "l": 64,
+          "r": 832,
+          "w": 768,
+          "h": 48,
+          "t": 92,
+          "podejrzanyKontener": false
+        },
+        "sekcje": {
+          "zrodlo": "rodzic-nawigacji",
+          "tag": "div",
+          "klasa": "flex gap-0 min-h-[60vh]",
+          "l": 64,
+          "r": 832,
+          "w": 768,
+          "h": 1521,
+          "t": 156,
+          "podejrzanyKontener": false
+        },
+        "prawyPanel": {
+          "zrodlo": "aside",
+          "tag": "aside",
+          "klasa": "shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle rounded-2xl b",
+          "l": 856,
+          "r": 1216,
+          "w": 360,
+          "h": 642,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "lewaNawigacja": {
+          "zrodlo": "nav",
+          "tag": "nav",
+          "klasa": "hidden lg:block w-[242px] flex-shrink-0 pr-4",
+          "l": 64,
+          "r": 306,
+          "w": 242,
+          "h": 1521,
+          "t": 156,
+          "podejrzanyKontener": false
+        }
+      },
+      "prawyPanelEtykieta": "Szczegóły zadania",
+      "sekcjePanelu": [
+        "AKCJE",
+        "WŁAŚCIWOŚCI",
+        "POWIĄZANIA",
+        "ŹRÓDŁA I ZAŁOŻENIA",
+        "KOMENTARZE",
+        "HISTORIA"
+      ],
+      "liczbaSekcjiPanelu": 6,
+      "crimson": 0,
+      "crimsonPrzyklady": [],
+      "bladNaEkranie": false,
+      "znaki": 1017,
+      "klikalne": 41,
+      "enumy": [],
+      "bledyKonsoli": [],
+      "bledyKonsoliSurowo": 0
+    },
+    {
+      "nazwa": "Zadanie",
+      "ekran": "karta-task",
+      "viewport": 1440,
+      "pasy": {
+        "menu1": {
+          "zrodlo": "klasa:backdrop+rounded-2xl",
+          "tag": "div",
+          "klasa": "col-span-full bg-c-surface-raised/90 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl ove",
+          "l": 144,
+          "r": 912,
+          "w": 768,
+          "h": 60,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "menu2": {
+          "zrodlo": "testid:nmode-menu2",
+          "tag": "div",
+          "klasa": "relative flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-c-bo",
+          "l": 144,
+          "r": 912,
+          "w": 768,
+          "h": 48,
+          "t": 92,
+          "podejrzanyKontener": false
+        },
+        "sekcje": {
+          "zrodlo": "rodzic-nawigacji",
+          "tag": "div",
+          "klasa": "flex gap-0 min-h-[60vh]",
+          "l": 144,
+          "r": 912,
+          "w": 768,
+          "h": 1521,
+          "t": 156,
+          "podejrzanyKontener": false
+        },
+        "prawyPanel": {
+          "zrodlo": "aside",
+          "tag": "aside",
+          "klasa": "shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle rounded-2xl b",
+          "l": 936,
+          "r": 1296,
+          "w": 360,
+          "h": 642,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "lewaNawigacja": {
+          "zrodlo": "nav",
+          "tag": "nav",
+          "klasa": "hidden lg:block w-[242px] flex-shrink-0 pr-4",
+          "l": 144,
+          "r": 386,
+          "w": 242,
+          "h": 1521,
+          "t": 156,
+          "podejrzanyKontener": false
+        }
+      },
+      "prawyPanelEtykieta": "Szczegóły zadania",
+      "sekcjePanelu": [
+        "AKCJE",
+        "WŁAŚCIWOŚCI",
+        "POWIĄZANIA",
+        "ŹRÓDŁA I ZAŁOŻENIA",
+        "KOMENTARZE",
+        "HISTORIA"
+      ],
+      "liczbaSekcjiPanelu": 6,
+      "crimson": 0,
+      "crimsonPrzyklady": [],
+      "bladNaEkranie": false,
+      "znaki": 1017,
+      "klikalne": 41,
+      "enumy": [],
+      "bledyKonsoli": [],
+      "bledyKonsoliSurowo": 0
+    },
+    {
+      "nazwa": "Powiadomienie",
+      "ekran": "karta-notification",
+      "viewport": 1280,
+      "pasy": {
+        "menu1": {
+          "zrodlo": "klasa:backdrop+rounded-2xl",
+          "tag": "div",
+          "klasa": "col-span-full bg-c-surface-raised/90 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl ove",
+          "l": 64,
+          "r": 832,
+          "w": 768,
+          "h": 60,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "menu2": {
+          "zrodlo": "testid:nmode-menu2",
+          "tag": "div",
+          "klasa": "relative flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-c-bo",
+          "l": 64,
+          "r": 832,
+          "w": 768,
+          "h": 48,
+          "t": 92,
+          "podejrzanyKontener": false
+        },
+        "sekcje": {
+          "zrodlo": "rodzic-nawigacji",
+          "tag": "div",
+          "klasa": "flex gap-0 min-h-[60vh]",
+          "l": 64,
+          "r": 832,
+          "w": 768,
+          "h": 719,
+          "t": 156,
+          "podejrzanyKontener": false
+        },
+        "prawyPanel": {
+          "zrodlo": "aside",
+          "tag": "aside",
+          "klasa": "shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle rounded-2xl b",
+          "l": 856,
+          "r": 1216,
+          "w": 360,
+          "h": 689,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "lewaNawigacja": {
+          "zrodlo": "nav",
+          "tag": "nav",
+          "klasa": "hidden lg:block w-[242px] flex-shrink-0 pr-4",
+          "l": 64,
+          "r": 306,
+          "w": 242,
+          "h": 719,
+          "t": 156,
+          "podejrzanyKontener": false
+        }
+      },
+      "prawyPanelEtykieta": "Panel szczegółów powiadomienia",
+      "sekcjePanelu": [
+        "AKCJE",
+        "WŁAŚCIWOŚCI",
+        "POWIĄZANIA",
+        "ŹRÓDŁA I ZAŁOŻENIA",
+        "REZULTATY",
+        "HISTORIA"
+      ],
+      "liczbaSekcjiPanelu": 6,
+      "crimson": 0,
+      "crimsonPrzyklady": [],
+      "bladNaEkranie": false,
+      "znaki": 491,
+      "klikalne": 22,
+      "enumy": [],
+      "bledyKonsoli": [],
+      "bledyKonsoliSurowo": 0
+    },
+    {
+      "nazwa": "Powiadomienie",
+      "ekran": "karta-notification",
+      "viewport": 1440,
+      "pasy": {
+        "menu1": {
+          "zrodlo": "klasa:backdrop+rounded-2xl",
+          "tag": "div",
+          "klasa": "col-span-full bg-c-surface-raised/90 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl ove",
+          "l": 144,
+          "r": 912,
+          "w": 768,
+          "h": 60,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "menu2": {
+          "zrodlo": "testid:nmode-menu2",
+          "tag": "div",
+          "klasa": "relative flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-c-bo",
+          "l": 144,
+          "r": 912,
+          "w": 768,
+          "h": 48,
+          "t": 92,
+          "podejrzanyKontener": false
+        },
+        "sekcje": {
+          "zrodlo": "rodzic-nawigacji",
+          "tag": "div",
+          "klasa": "flex gap-0 min-h-[60vh]",
+          "l": 144,
+          "r": 912,
+          "w": 768,
+          "h": 719,
+          "t": 156,
+          "podejrzanyKontener": false
+        },
+        "prawyPanel": {
+          "zrodlo": "aside",
+          "tag": "aside",
+          "klasa": "shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle rounded-2xl b",
+          "l": 936,
+          "r": 1296,
+          "w": 360,
+          "h": 689,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "lewaNawigacja": {
+          "zrodlo": "nav",
+          "tag": "nav",
+          "klasa": "hidden lg:block w-[242px] flex-shrink-0 pr-4",
+          "l": 144,
+          "r": 386,
+          "w": 242,
+          "h": 719,
+          "t": 156,
+          "podejrzanyKontener": false
+        }
+      },
+      "prawyPanelEtykieta": "Panel szczegółów powiadomienia",
+      "sekcjePanelu": [
+        "AKCJE",
+        "WŁAŚCIWOŚCI",
+        "POWIĄZANIA",
+        "ŹRÓDŁA I ZAŁOŻENIA",
+        "REZULTATY",
+        "HISTORIA"
+      ],
+      "liczbaSekcjiPanelu": 6,
+      "crimson": 0,
+      "crimsonPrzyklady": [],
+      "bladNaEkranie": false,
+      "znaki": 491,
+      "klikalne": 22,
+      "enumy": [],
+      "bledyKonsoli": [],
+      "bledyKonsoliSurowo": 0
+    },
+    {
+      "nazwa": "Insight",
+      "ekran": "karta-insight",
+      "viewport": 1280,
+      "pasy": {
+        "menu1": {
+          "zrodlo": "klasa:backdrop+rounded-2xl",
+          "tag": "div",
+          "klasa": "col-span-full bg-c-surface-raised/90 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl ove",
+          "l": 24,
+          "r": 864,
+          "w": 840,
+          "h": 60,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "menu2": {
+          "zrodlo": "testid:nmode-menu2",
+          "tag": "div",
+          "klasa": "relative flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-c-bo",
+          "l": 24,
+          "r": 864,
+          "w": 840,
+          "h": 48,
+          "t": 92,
+          "podejrzanyKontener": false
+        },
+        "sekcje": {
+          "zrodlo": "rodzic-nawigacji",
+          "tag": "div",
+          "klasa": "flex gap-0 min-h-[60vh] pt-4",
+          "l": 24,
+          "r": 864,
+          "w": 840,
+          "h": 1156,
+          "t": 149,
+          "podejrzanyKontener": false
+        },
+        "prawyPanel": {
+          "zrodlo": "aside",
+          "tag": "aside",
+          "klasa": "shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle rounded-2xl b",
+          "l": 904,
+          "r": 1264,
+          "w": 360,
+          "h": 868,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "lewaNawigacja": {
+          "zrodlo": "nav",
+          "tag": "nav",
+          "klasa": "hidden lg:block w-[242px] flex-shrink-0 pr-4",
+          "l": 24,
+          "r": 266,
+          "w": 242,
+          "h": 1140,
+          "t": 165,
+          "podejrzanyKontener": false
+        }
+      },
+      "prawyPanelEtykieta": "Szczegóły wniosku",
+      "sekcjePanelu": [
+        "AKCJE",
+        "WŁAŚCIWOŚCI",
+        "POWIĄZANIA",
+        "ŹRÓDŁA I ZAŁOŻENIA",
+        "REZULTATY",
+        "KOMENTARZE",
+        "HISTORIA"
+      ],
+      "liczbaSekcjiPanelu": 7,
+      "crimson": 0,
+      "crimsonPrzyklady": [],
+      "bladNaEkranie": false,
+      "znaki": 5914,
+      "klikalne": 38,
+      "enumy": [],
+      "bledyKonsoli": [],
+      "bledyKonsoliSurowo": 0
+    },
+    {
+      "nazwa": "Insight",
+      "ekran": "karta-insight",
+      "viewport": 1440,
+      "pasy": {
+        "menu1": {
+          "zrodlo": "klasa:backdrop+rounded-2xl",
+          "tag": "div",
+          "klasa": "col-span-full bg-c-surface-raised/90 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl ove",
+          "l": 24,
+          "r": 1024,
+          "w": 1000,
+          "h": 60,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "menu2": {
+          "zrodlo": "testid:nmode-menu2",
+          "tag": "div",
+          "klasa": "relative flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-c-bo",
+          "l": 24,
+          "r": 1024,
+          "w": 1000,
+          "h": 48,
+          "t": 92,
+          "podejrzanyKontener": false
+        },
+        "sekcje": {
+          "zrodlo": "rodzic-nawigacji",
+          "tag": "div",
+          "klasa": "flex gap-0 min-h-[60vh] pt-4",
+          "l": 24,
+          "r": 1024,
+          "w": 1000,
+          "h": 1156,
+          "t": 149,
+          "podejrzanyKontener": false
+        },
+        "prawyPanel": {
+          "zrodlo": "aside",
+          "tag": "aside",
+          "klasa": "shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle rounded-2xl b",
+          "l": 1064,
+          "r": 1424,
+          "w": 360,
+          "h": 868,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "lewaNawigacja": {
+          "zrodlo": "nav",
+          "tag": "nav",
+          "klasa": "hidden lg:block w-[242px] flex-shrink-0 pr-4",
+          "l": 24,
+          "r": 266,
+          "w": 242,
+          "h": 1140,
+          "t": 165,
+          "podejrzanyKontener": false
+        }
+      },
+      "prawyPanelEtykieta": "Szczegóły wniosku",
+      "sekcjePanelu": [
+        "AKCJE",
+        "WŁAŚCIWOŚCI",
+        "POWIĄZANIA",
+        "ŹRÓDŁA I ZAŁOŻENIA",
+        "REZULTATY",
+        "KOMENTARZE",
+        "HISTORIA"
+      ],
+      "liczbaSekcjiPanelu": 7,
+      "crimson": 0,
+      "crimsonPrzyklady": [],
+      "bladNaEkranie": false,
+      "znaki": 5914,
+      "klikalne": 38,
+      "enumy": [],
+      "bledyKonsoli": [],
+      "bledyKonsoliSurowo": 0
+    },
+    {
+      "nazwa": "Narzędzie",
+      "ekran": "karta-tool",
+      "viewport": 1280,
+      "pasy": {
+        "menu1": {
+          "zrodlo": "klasa:backdrop+rounded-2xl",
+          "tag": "div",
+          "klasa": "col-span-full bg-c-surface-raised/90 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl ove",
+          "l": 24,
+          "r": 864,
+          "w": 840,
+          "h": 60,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "menu2": {
+          "zrodlo": "testid:nmode-menu2",
+          "tag": "div",
+          "klasa": "relative flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-c-bo",
+          "l": 24,
+          "r": 864,
+          "w": 840,
+          "h": 48,
+          "t": 92,
+          "podejrzanyKontener": false
+        },
+        "sekcje": {
+          "zrodlo": "rodzic-nawigacji",
+          "tag": "div",
+          "klasa": "flex gap-0 min-h-[60vh] pt-4",
+          "l": 24,
+          "r": 864,
+          "w": 840,
+          "h": 3864,
+          "t": 149,
+          "podejrzanyKontener": false
+        },
+        "prawyPanel": {
+          "zrodlo": "aside",
+          "tag": "aside",
+          "klasa": "shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle rounded-2xl b",
+          "l": 904,
+          "r": 1264,
+          "w": 360,
+          "h": 868,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "lewaNawigacja": {
+          "zrodlo": "nav",
+          "tag": "nav",
+          "klasa": "hidden lg:block w-[242px] flex-shrink-0 pr-4",
+          "l": 24,
+          "r": 266,
+          "w": 242,
+          "h": 3848,
+          "t": 165,
+          "podejrzanyKontener": false
+        }
+      },
+      "prawyPanelEtykieta": "Szczegóły narzędzia",
+      "sekcjePanelu": [
+        "WŁAŚCIWOŚCI",
+        "POWIĄZANIA",
+        "ŹRÓDŁA I ZAŁOŻENIA",
+        "REZULTATY"
+      ],
+      "liczbaSekcjiPanelu": 4,
+      "crimson": 0,
+      "crimsonPrzyklady": [],
+      "bladNaEkranie": false,
+      "znaki": 6246,
+      "klikalne": 16,
+      "enumy": [],
+      "bledyKonsoli": [],
+      "bledyKonsoliSurowo": 0
+    },
+    {
+      "nazwa": "Narzędzie",
+      "ekran": "karta-tool",
+      "viewport": 1440,
+      "pasy": {
+        "menu1": {
+          "zrodlo": "klasa:backdrop+rounded-2xl",
+          "tag": "div",
+          "klasa": "col-span-full bg-c-surface-raised/90 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl ove",
+          "l": 24,
+          "r": 1024,
+          "w": 1000,
+          "h": 60,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "menu2": {
+          "zrodlo": "testid:nmode-menu2",
+          "tag": "div",
+          "klasa": "relative flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-c-bo",
+          "l": 24,
+          "r": 1024,
+          "w": 1000,
+          "h": 48,
+          "t": 92,
+          "podejrzanyKontener": false
+        },
+        "sekcje": {
+          "zrodlo": "rodzic-nawigacji",
+          "tag": "div",
+          "klasa": "flex gap-0 min-h-[60vh] pt-4",
+          "l": 24,
+          "r": 1024,
+          "w": 1000,
+          "h": 3182,
+          "t": 149,
+          "podejrzanyKontener": false
+        },
+        "prawyPanel": {
+          "zrodlo": "aside",
+          "tag": "aside",
+          "klasa": "shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle rounded-2xl b",
+          "l": 1064,
+          "r": 1424,
+          "w": 360,
+          "h": 868,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "lewaNawigacja": {
+          "zrodlo": "nav",
+          "tag": "nav",
+          "klasa": "hidden lg:block w-[242px] flex-shrink-0 pr-4",
+          "l": 24,
+          "r": 266,
+          "w": 242,
+          "h": 3166,
+          "t": 165,
+          "podejrzanyKontener": false
+        }
+      },
+      "prawyPanelEtykieta": "Szczegóły narzędzia",
+      "sekcjePanelu": [
+        "WŁAŚCIWOŚCI",
+        "POWIĄZANIA",
+        "ŹRÓDŁA I ZAŁOŻENIA",
+        "REZULTATY"
+      ],
+      "liczbaSekcjiPanelu": 4,
+      "crimson": 0,
+      "crimsonPrzyklady": [],
+      "bladNaEkranie": false,
+      "znaki": 6246,
+      "klikalne": 16,
+      "enumy": [],
+      "bledyKonsoli": [],
+      "bledyKonsoliSurowo": 0
+    },
+    {
+      "nazwa": "Inicjatywa",
+      "ekran": "karta-initiative",
+      "viewport": 1280,
+      "pasy": {
+        "menu1": {
+          "zrodlo": "klasa:backdrop+rounded-2xl",
+          "tag": "div",
+          "klasa": "col-span-full bg-c-surface-raised/90 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl ove",
+          "l": 64,
+          "r": 832,
+          "w": 768,
+          "h": 60,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "menu2": {
+          "zrodlo": "testid:nmode-menu2",
+          "tag": "div",
+          "klasa": "relative flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-c-bo",
+          "l": 64,
+          "r": 832,
+          "w": 768,
+          "h": 48,
+          "t": 92,
+          "podejrzanyKontener": false
+        },
+        "sekcje": {
+          "zrodlo": "rodzic-nawigacji",
+          "tag": "div",
+          "klasa": "flex-1 min-w-0 flex gap-0",
+          "l": 64,
+          "r": 832,
+          "w": 768,
+          "h": 2732,
+          "t": 156,
+          "podejrzanyKontener": false
+        },
+        "prawyPanel": {
+          "zrodlo": "aside",
+          "tag": "aside",
+          "klasa": "shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle rounded-2xl b",
+          "l": 856,
+          "r": 1216,
+          "w": 360,
+          "h": 640,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "lewaNawigacja": {
+          "zrodlo": "nav",
+          "tag": "nav",
+          "klasa": "hidden lg:block w-[242px] flex-shrink-0 pr-4",
+          "l": 64,
+          "r": 306,
+          "w": 242,
+          "h": 2732,
+          "t": 156,
+          "podejrzanyKontener": false
+        }
+      },
+      "prawyPanelEtykieta": "Szczegóły inicjatywy",
+      "sekcjePanelu": [
+        "AKCJE",
+        "WŁAŚCIWOŚCI",
+        "POWIĄZANIA",
+        "ŹRÓDŁA I ZAŁOŻENIA",
+        "REZULTATY",
+        "KOMENTARZE",
+        "HISTORIA"
+      ],
+      "liczbaSekcjiPanelu": 7,
+      "crimson": 0,
+      "crimsonPrzyklady": [],
+      "bladNaEkranie": false,
+      "znaki": 1033,
+      "klikalne": 39,
+      "enumy": [],
+      "bledyKonsoli": [],
+      "bledyKonsoliSurowo": 0
+    },
+    {
+      "nazwa": "Inicjatywa",
+      "ekran": "karta-initiative",
+      "viewport": 1440,
+      "pasy": {
+        "menu1": {
+          "zrodlo": "klasa:backdrop+rounded-2xl",
+          "tag": "div",
+          "klasa": "col-span-full bg-c-surface-raised/90 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl ove",
+          "l": 144,
+          "r": 912,
+          "w": 768,
+          "h": 60,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "menu2": {
+          "zrodlo": "testid:nmode-menu2",
+          "tag": "div",
+          "klasa": "relative flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-c-bo",
+          "l": 144,
+          "r": 912,
+          "w": 768,
+          "h": 48,
+          "t": 92,
+          "podejrzanyKontener": false
+        },
+        "sekcje": {
+          "zrodlo": "rodzic-nawigacji",
+          "tag": "div",
+          "klasa": "flex-1 min-w-0 flex gap-0",
+          "l": 144,
+          "r": 912,
+          "w": 768,
+          "h": 2732,
+          "t": 156,
+          "podejrzanyKontener": false
+        },
+        "prawyPanel": {
+          "zrodlo": "aside",
+          "tag": "aside",
+          "klasa": "shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle rounded-2xl b",
+          "l": 936,
+          "r": 1296,
+          "w": 360,
+          "h": 640,
+          "t": 16,
+          "podejrzanyKontener": false
+        },
+        "lewaNawigacja": {
+          "zrodlo": "nav",
+          "tag": "nav",
+          "klasa": "hidden lg:block w-[242px] flex-shrink-0 pr-4",
+          "l": 144,
+          "r": 386,
+          "w": 242,
+          "h": 2732,
+          "t": 156,
+          "podejrzanyKontener": false
+        }
+      },
+      "prawyPanelEtykieta": "Szczegóły inicjatywy",
+      "sekcjePanelu": [
+        "AKCJE",
+        "WŁAŚCIWOŚCI",
+        "POWIĄZANIA",
+        "ŹRÓDŁA I ZAŁOŻENIA",
+        "REZULTATY",
+        "KOMENTARZE",
+        "HISTORIA"
+      ],
+      "liczbaSekcjiPanelu": 7,
+      "crimson": 0,
+      "crimsonPrzyklady": [],
+      "bladNaEkranie": false,
+      "znaki": 1033,
+      "klikalne": 39,
+      "enumy": [],
+      "bledyKonsoli": [],
+      "bledyKonsoliSurowo": 0
+    }
+  ]
+}
