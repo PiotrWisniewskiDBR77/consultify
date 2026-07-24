@@ -157,6 +157,18 @@ type CallParams = {
   stream?: boolean;
   schema?: string | z.ZodSchema<unknown>;
   tools?: ToolDefinition[];
+  /**
+   * Z4 transport (fala „Teresa steruje Ideą") — narzędzia, których wykonanie NIE
+   * odbywa się na serwerze. Model widzi je razem z `tools`, ale ich `execute`
+   * tylko ZGŁASZA wywołanie przez `context.onClientToolCall(name, args)` (route
+   * zamienia to na SSE `idea_action`) i zwraca krótkie potwierdzenie, żeby model
+   * dokończył turę. Powód: otwarta reprezentacja Idei żyje w przeglądarce
+   * (płótno, `window.dispatchEvent`), więc serwer nie ma czego wykonać — realny
+   * handler (executeTeresaTool) uruchamia się na froncie. Pusta/niepodana lista
+   * = ścieżka bez zmian. Wykonanie serwerowe (mcpServer.execute) dotyczy WYŁĄCZNIE
+   * `tools`, nigdy `clientTools`.
+   */
+  clientTools?: ToolDefinition[];
   context?: unknown;
   maxTokens?: number;
   temperature?: number;
@@ -1181,6 +1193,48 @@ export class LLMService {
               /* never let result inspection break tool execution */
             }
             return r;
+          },
+        } as any);
+      }
+    }
+
+    // Z4 transport — narzędzia klienckie (akcje otwartej Idei). Rejestrujemy je
+    // OBOK narzędzi mcp, ale ich `execute` NIC nie robi na serwerze: zgłasza
+    // wywołanie przez `context.onClientToolCall(name, args)` (route → SSE
+    // `idea_action`) i zwraca krótkie potwierdzenie, żeby model dokończył turę.
+    // Realny handler (executeTeresaTool) uruchamia się na froncie. Blok jest w
+    // pełni addytywny: bez `clientTools` nic się nie zmienia; gdy są, ale nie ma
+    // `tools`, inicjujemy tu `streamToolDefinitions`, żeby `useFullStream` +
+    // `stopWhen` włączyły się tak samo jak dla narzędzi deliverable.
+    if (params.clientTools?.length && !wantsReasoning) {
+      const onClientToolCall = (params.context as any)?.onClientToolCall as
+        | ((name: string, args: unknown) => void)
+        | undefined;
+      if (!streamToolDefinitions) streamToolDefinitions = {};
+      for (const def of params.clientTools) {
+        // Nie nadpisuj narzędzia mcp o tej samej nazwie (mcp ma pierwszeństwo —
+        // to ono realnie wykonuje po stronie serwera).
+        if (streamToolDefinitions[def.name]) continue;
+        streamToolDefinitions[def.name] = tool({
+          description: def.description,
+          inputSchema: jsonSchema(def.parameters as any),
+          execute: async (args: unknown) => {
+            try {
+              onClientToolCall?.(def.name, args);
+            } catch {
+              /* zgłoszenie do klienta nie może wywrócić strumienia */
+            }
+            // Krótkie, deterministyczne potwierdzenie dla modelu. NIE twierdzimy,
+            // że akcja się wykonała — front dopiero ją uruchomi (i może odmówić,
+            // np. przy confirmBeforeRun). Model ma tylko domknąć turę.
+            return {
+              status: 'DISPATCHED_TO_CLIENT',
+              tool: def.name,
+              message:
+                confirmationLang === 'en'
+                  ? 'Requested in the open Idea view; the interface will apply it.'
+                  : 'Przekazano do otwartej reprezentacji Idei; interfejs zaraz to wykona.',
+            };
           },
         } as any);
       }

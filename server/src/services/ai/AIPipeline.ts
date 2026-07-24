@@ -442,6 +442,21 @@ export class AIPipeline {
           }
         }
 
+        // Z4 transport (fala „Teresa steruje Ideą przez rejestr") — narzędzia
+        // akcji OTWARTEJ reprezentacji Idei. Route opt-in przez
+        // options.ideaTools = { defs, context: { onClientToolCall } }, gated
+        // route-side na featureFlags.ENABLE_TERESA_IDEA_ACTIONS (default OFF).
+        // Wyłączone przy reasoningu (jak deliverable). Wykonanie NIE jest
+        // serwerowe — patrz `clientTools` w llmService.callStream.
+        const ideaTools = (request.options as any)?.ideaTools;
+        let ideaClientToolDefs:
+          | Array<{ name: string; description: string; parameters: Record<string, unknown> }>
+          | undefined;
+        if (!showReasoning && Array.isArray(ideaTools?.defs) && ideaTools.defs.length > 0) {
+          ideaClientToolDefs = ideaTools.defs;
+          logger.info(`[AIPipeline] idea-action client tools: ${ideaTools.defs.length}`);
+        }
+
         // Try primary model, with automatic cross-provider fallback on failure.
         // Important: having multiple API keys (e.g. OpenAI + Gemini) must actually enable failover.
         const tierForFallback = ((request.options as any)?.selectedTier || 'STANDARD') as any;
@@ -528,10 +543,21 @@ export class AIPipeline {
               // SPEC_01 (Tryb A): pass the deliverable tool + emit context when
               // enabled. callStream registers it and the model can call it to
               // create+open an artifact mid-stream.
-              ...(deliverableToolDefs
+              // Z4 transport: dokładamy `clientTools` (akcje otwartej Idei) i
+              // scalamy `onClientToolCall` do wspólnego kontekstu. Kontekst musi
+              // nieść OBA callbacki: onDeliverable (mcp) i onClientToolCall (Idea).
+              ...(deliverableToolDefs || ideaClientToolDefs
                 ? {
-                    tools: deliverableToolDefs,
-                    context: deliverableTools?.context,
+                    ...(deliverableToolDefs ? { tools: deliverableToolDefs } : {}),
+                    ...(ideaClientToolDefs ? { clientTools: ideaClientToolDefs } : {}),
+                    context: {
+                      ...((deliverableTools?.context as Record<string, unknown>) || {}),
+                      ...(ideaTools?.context
+                        ? {
+                            onClientToolCall: (ideaTools.context as any)?.onClientToolCall,
+                          }
+                        : {}),
+                    },
                     maxIterations: 4,
                   }
                 : {}),

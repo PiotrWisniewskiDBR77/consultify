@@ -40,6 +40,14 @@ const FeatureFlagsSchema = z.object({
   ENABLE_TERESA_CANVAS_TOOLS: z.boolean().default(true),
   ENABLE_TERESA_NOTE_CREATE: z.boolean().default(true),
   ENABLE_TERESA_RECORD_CREATE: z.boolean().default(true),
+  // Z4 transport (fala „Teresa steruje Ideą przez rejestr"): pozwala frontowi
+  // dołożyć do zapytania czatu manifest akcji OTWARTEJ reprezentacji Idei
+  // (src/actions/teresaActionManifest.ts). Model widzi je jako narzędzia; ich
+  // wywołanie NIE wykonuje się na serwerze (nie ma dostępu do płótna w
+  // przeglądarce) — wraca SSE `idea_action`, a front wykonuje je przez
+  // executeTeresaTool() (ta sama ścieżka, co klik człowieka). DEFAULT OFF:
+  // przy OFF route ignoruje manifest, więc czat działa dokładnie jak dziś.
+  ENABLE_TERESA_IDEA_ACTIONS: z.boolean().default(false),
 });
 
 export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
@@ -202,6 +210,10 @@ export function loadFeatureFlags(): FeatureFlags {
     // handler emits a `deliverable` event so the FE navigates to My Work
     // (Tasks / Decisions). Default ON; set to 'false' to omit both tools.
     ENABLE_TERESA_RECORD_CREATE: process.env.ENABLE_TERESA_RECORD_CREATE !== 'false',
+
+    // Z4 transport dla akcji otwartej Idei — DEFAULT OFF (opt-in przez env).
+    // OFF ⇒ route nie czyta manifestu z body, czat bez zmian.
+    ENABLE_TERESA_IDEA_ACTIONS: process.env.ENABLE_TERESA_IDEA_ACTIONS === 'true',
   };
 
   // Validate configuration

@@ -4384,6 +4384,65 @@ router.post(
         );
       }
 
+      // Z4 transport (fala „Teresa steruje Ideą przez rejestr") — front dołącza
+      // manifest akcji OTWARTEJ reprezentacji Idei w `context.ideaActionManifest`
+      // (przepuszczalne pole `context`, więc bez zmian w walidatorze). Model widzi
+      // je jako narzędzia; ich wywołanie NIE wykonuje się tu (serwer nie ma
+      // dostępu do płótna w przeglądarce) — emitujemy SSE `idea_action`, a front
+      // wykonuje je przez executeTeresaTool(). Gated: flaga OFF ⇒ manifest jest
+      // ignorowany i czat działa dokładnie jak dziś.
+      try {
+        if (featureFlags.ENABLE_TERESA_IDEA_ACTIONS && !aiModes?.deepResearch) {
+          const rawManifest = (context as any)?.ideaActionManifest;
+          // Defensywne przyjęcie: tylko poprawne wpisy {name, description,
+          // parameters:{type:'object'}}, twardy limit liczby narzędzi.
+          const defs = Array.isArray(rawManifest)
+            ? rawManifest
+                .filter(
+                  (t: any) =>
+                    t &&
+                    typeof t.name === 'string' &&
+                    t.name.length > 0 &&
+                    typeof t.description === 'string' &&
+                    t.parameters &&
+                    typeof t.parameters === 'object'
+                )
+                .slice(0, 40)
+                .map((t: any) => ({
+                  name: String(t.name),
+                  description: String(t.description),
+                  parameters:
+                    t.parameters && typeof t.parameters === 'object'
+                      ? t.parameters
+                      : { type: 'object', properties: {} },
+                }))
+            : [];
+          if (defs.length > 0) {
+            (pipelineRequest as any).options = {
+              ...((pipelineRequest as any).options || {}),
+              ideaTools: {
+                defs,
+                context: {
+                  onClientToolCall: (toolName: string, args: unknown) => {
+                    // SSE do frontu — UnifiedChatPanel wykona akcję przez
+                    // executeTeresaTool() na żywym płótnie. Nie twierdzimy tu, że
+                    // akcja się wykonała; to potwierdzi (albo odrzuci) front.
+                    emitSSE({ type: 'idea_action', toolName, args });
+                  },
+                },
+              },
+            };
+            logger.info(`[AI Stream] idea-action manifest wired: ${defs.length} tools`);
+          }
+        }
+      } catch (ideaWireErr) {
+        logger.warn(
+          `[AI Stream] idea-action tool wiring skipped: ${String(
+            (ideaWireErr as Error)?.message || ideaWireErr
+          ).slice(0, 160)}`
+        );
+      }
+
       const aiPipeline = await getAIPipeline();
       const response = await (aiPipeline as any).process(
         pipelineRequest,
