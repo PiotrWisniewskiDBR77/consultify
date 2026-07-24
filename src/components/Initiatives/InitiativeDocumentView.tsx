@@ -10593,7 +10593,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     if (isVf1InitSpecAEnabled()) {
       return (
         <div className="h-full overflow-y-auto bg-c-bg">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <SkeletonState variant="record" />
           </div>
         </div>
@@ -10658,7 +10658,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       <InitiativeContext.Provider value={contextValue}>
         <div className="h-full overflow-y-auto bg-c-bg">
           <div className="min-h-screen">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
               <NModeHeader
                 title={titleDraft || initiative?.name || ''}
                 onTitleChange={setTitleDraft}
@@ -11168,7 +11168,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             ═══════════════════════════════════════════════════════════════ */}
         {densityMode === 'n' ? (
           <div className="min-h-screen">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
               <NModeHeader
                 title={titleDraft || initiative?.name || ''}
                 onTitleChange={setTitleDraft}
