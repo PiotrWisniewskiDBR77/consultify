@@ -49,19 +49,20 @@ export function IdeaViewSwitcher({
       const r = canvas.getBoundingClientRect();
       // Każda reprezentacja renderuje własny klaster zoom/dopasuj/minimapy w
       // prawym-dolnym rogu (React Flow / kontrolki Tabeli). D2 chce przełącznik
-      // OBOK nich, a twardy wymóg zakazuje nakładania. Szukamy tego klastra i
-      // siadamy DOKŁADNIE nad nim; gdy go nie ma (np. Tabela bez minimapy),
-      // kotwiczymy do dolnej krawędzi płótna.
-      // Fallback: nawet gdy nie zmierzymy klastra (montuje się później niż my),
-      // siadamy 60px nad dolną krawędzią — NIGDY dokładnie na rogu, gdzie są
-      // kontrolki. Gdy klaster znajdziemy, kotwiczymy dokładnie nad nim.
-      let bottomOffset = window.innerHeight - r.bottom + 60;
+      // OBOK nich — właściciel 2026-07-24: „zrób je koło siebie, a nie jeden na
+      // drugim". Szukamy klastra i siadamy W TYM SAMYM RZĘDZIE, na lewo od
+      // niego, wyrównani DOŁEM. Gdy klastra nie ma (np. Tabela bez minimapy),
+      // kotwiczymy do prawego-dolnego rogu płótna.
+      let rightOffset = window.innerWidth - r.right + rightInset;
+      let bottomOffset = window.innerHeight - r.bottom + 12;
       const rogi = [
         ...document.querySelectorAll<HTMLElement>(
           '.z-dropdown, .react-flow__controls, [class*="bottom-3"][class*="right-3"]'
         ),
       ];
-      let najwyzszyGorny = Infinity;
+      let lewaKrawedzKlastra = Infinity;
+      let dolKlastra = -Infinity;
+      let gornaKrawedzKlastra = Infinity;
       for (const el of rogi) {
         if (el.getAttribute('data-testid') === 'idea-view-switcher') continue;
         if (el.closest('[data-testid="idea-view-switcher"]')) continue;
@@ -69,15 +70,63 @@ export function IdeaViewSwitcher({
         if (er.width < 20 || er.height < 15) continue;
         // tylko elementy realnie w prawym-dolnym rogu płótna
         if (er.right > r.right - 320 && er.bottom > r.bottom - 140) {
-          najwyzszyGorny = Math.min(najwyzszyGorny, er.top);
+          lewaKrawedzKlastra = Math.min(lewaKrawedzKlastra, er.left);
+          dolKlastra = Math.max(dolKlastra, er.bottom);
+          gornaKrawedzKlastra = Math.min(gornaKrawedzKlastra, er.top);
         }
       }
-      if (najwyzszyGorny !== Infinity) {
-        // nad klastrem: dół przełącznika = góra klastra + 8px odstępu
-        bottomOffset = window.innerHeight - najwyzszyGorny + 8;
+      if (lewaKrawedzKlastra !== Infinity) {
+        const wlasnaSzerokosc = anchorRef.current?.offsetWidth ?? 148;
+        const wlasnaWysokosc = anchorRef.current?.offsetHeight ?? 42;
+
+        // Inne pływające karty przy dolnej krawędzi płótna (podpowiedź AI jest
+        // wyśrodkowana `left-1/2`, więc na wąskim oknie sięga aż tutaj). Rząd
+        // obok klastra nie może ich przykryć — „Działaj" musi zostać klikalny.
+        const przeszkody: DOMRect[] = [];
+        for (const el of document.querySelectorAll<HTMLElement>('body *')) {
+          if (el.closest('[data-testid="idea-view-switcher"]')) continue;
+          const cs = getComputedStyle(el);
+          if (cs.position !== 'absolute' && cs.position !== 'fixed') continue;
+          if (cs.pointerEvents === 'none' || cs.visibility === 'hidden') continue;
+          const er = el.getBoundingClientRect();
+          if (er.width < 40 || er.height < 20) continue;
+          // Przeszkodą jest pływająca KARTA, nie wielka warstwa tła płótna
+          // (`react-flow__pane`/`__renderer` też są absolute i pokrywają cały
+          // dolny pas — bez tego filtra rząd nigdy by się nie ułożył).
+          if (er.width > r.width * 0.6 || er.height > 160) continue;
+          if (el.contains(canvas)) continue;
+          if (er.bottom < r.bottom - 160 || er.top > r.bottom) continue;
+          // sam klaster kotwiczący nie jest przeszkodą — obok niego siadamy
+          if (er.left >= lewaKrawedzKlastra - 1 && er.bottom >= dolKlastra - 1) continue;
+          przeszkody.push(er);
+        }
+
+        // Kotwiczymy PRAWĄ krawędź przełącznika 8px na lewo od LEWEJ krawędzi
+        // klastra — dzięki temu nie musimy znać własnej szerokości do pozycji.
+        const obokPrawa = lewaKrawedzKlastra - 8;
+        const obokLewa = obokPrawa - wlasnaSzerokosc;
+        const obokDol = dolKlastra;
+        const obokGora = obokDol - wlasnaWysokosc;
+
+        const miesciSieWPlotnie = obokLewa >= r.left + 8;
+        const wchodziNaKogos = przeszkody.some(
+          (p) => !(obokPrawa <= p.left || obokLewa >= p.right || obokDol <= p.top || obokGora >= p.bottom)
+        );
+
+        if (miesciSieWPlotnie && !wchodziNaKogos) {
+          // ★ Układ preferowany (właściciel 2026-07-24: „zrób je koło siebie,
+          //   a nie jeden na drugim") — jeden rząd, wyrównany dołem.
+          rightOffset = window.innerWidth - lewaKrawedzKlastra + 8;
+          bottomOffset = window.innerHeight - dolKlastra;
+        } else {
+          // Nie ma miejsca w rzędzie (wąskie płótno albo karta podpowiedzi) —
+          // wracamy na piętro nad klaster. Lepiej piętro niż nachodzenie.
+          rightOffset = window.innerWidth - r.right + rightInset;
+          bottomOffset = window.innerHeight - gornaKrawedzKlastra + 8;
+        }
       }
       setBox({
-        right: Math.max(0, window.innerWidth - r.right + rightInset),
+        right: Math.max(0, rightOffset),
         bottom: Math.max(0, bottomOffset),
       });
     };
