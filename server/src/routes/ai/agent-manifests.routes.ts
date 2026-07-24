@@ -15,6 +15,7 @@
 import { Router } from 'express';
 
 import { verifyToken } from '../../middleware/auth.middleware.js';
+import { buildPlanFromManifest } from '../../services/ai/agentPlan/planBuilderService.js';
 import {
   DiscoveryAgentManifestStatus,
   getDiscoveryAgentManifest,
@@ -40,10 +41,19 @@ router.get(
 
     const manifests = listDiscoveryAgentManifests({ status, wave });
 
+    // AGT-011: liczba kroków dla zakładki "Szablony" (kolumna "liczba kroków"
+    // wspólna dla procesów i gotowych analiz) — używa tego samego
+    // PlanBuilder, którego POST /api/ai/agent-plan woła przy manifestId.
+    // Addytywne pole — nie zmienia istniejących konsumentów (AgentManifestLauncher).
+    const withStepCount = manifests.map((manifest) => ({
+      ...manifest,
+      stepCount: buildPlanFromManifest(manifest).length,
+    }));
+
     return res.json({
       success: true,
-      total: manifests.length,
-      manifests,
+      total: withStepCount.length,
+      manifests: withStepCount,
     });
   })
 );

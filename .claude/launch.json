@@ -18,6 +18,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3410"],
       "port": 3410
+    },
+    {
+      "name": "agt-010-agent-hub",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3411"],
+      "port": 3411
     }
   ]
 }

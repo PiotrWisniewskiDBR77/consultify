@@ -20,6 +20,8 @@ export interface AgentManifestSummary {
   displayName: { pl: string; en: string };
   wave: string;
   configDir: string | null;
+  /** AGT-011: liczba kroków wygenerowanych przez PlanBuilder (kolumna tabeli szablonów). */
+  stepCount?: number;
 }
 
 export async function listAgentManifests(filters?: {
