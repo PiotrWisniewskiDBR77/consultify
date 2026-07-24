@@ -26966,7 +26966,8 @@
       "saveMetrics": "Save metrics",
       "validationFailedRetry": "Flow validation failed. Try again.",
       "deleteNodesConfirm": "{{value}} nodes and their connections will be deleted. You can undo with Ctrl+Z.",
-      "warningsCount": "{{value}} warning(s)"
+      "warningsCount": "{{value}} warning(s)",
+      "laneDefaultName": "Lane {{index}}"
     },
     "nodeDetailDrawer": {
       "failedAddComment": "Failed to add comment",
@@ -33794,5 +33795,16 @@
     "c": "C",
     "cTooltip": "C view: dense (maximum information)",
     "switchLabel": "View style"
+  },
+  "collaboration": {
+    "connecting": "Connecting collaboration",
+    "reconnecting": "Reconnecting collaboration",
+    "connectionDegraded": "Connection degraded",
+    "establishingSession": "Establishing session",
+    "singleUserMode": "Single-user mode",
+    "realtimeConnecting": "Realtime connecting",
+    "realtimeReconnecting": "Realtime reconnecting",
+    "realtimeDegraded": "Realtime degraded",
+    "recoveryInProgress": "Recovery in progress"
   }
 }
