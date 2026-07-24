@@ -27,7 +27,7 @@ export function getWhiteboardModeCopy(
       modeLabel: isPolish ? 'Tryb rysowania' : 'Draw mode',
       toggleLabel: isPolish ? 'Canvas' : 'Canvas',
       helper: isPolish
-        ? 'Rysujesz po warstwie boardu. Elementy tablicy sa chwilowo zablokowane, aby uniknac przypadkowych przesuniec.'
+        ? 'Rysujesz po warstwie boardu. Elementy tablicy są chwilowo zablokowane, aby uniknąć przypadkowych przesunięć.'
         : 'You are drawing on top of the board. Board elements are temporarily locked to avoid accidental moves.',
       exitHint: isPolish
         ? 'Esc lub Canvas wraca do boardu.'
@@ -40,13 +40,13 @@ export function getWhiteboardModeCopy(
     toggleLabel: isPolish ? 'Rysuj' : 'Draw',
     helper: locked
       ? isPolish
-        ? 'Board jest tylko do odczytu. Mozesz przegladac uklad, ale nie edytowac elementow.'
+        ? 'Board jest tylko do odczytu. Możesz przeglądać układ, ale nie edytować elementów.'
         : 'The board is read-only. You can inspect the layout, but not edit elements.'
       : isPolish
-        ? 'Ukladasz i edytujesz elementy tablicy. Uzyj Rysuj tylko wtedy, gdy chcesz dopisac odrebna warstwe od reki.'
+        ? 'Układasz i edytujesz elementy tablicy. Użyj Rysuj tylko wtedy, gdy chcesz dopisać odrębną warstwę od ręki.'
         : 'You are arranging and editing board elements. Use Draw only when you want a separate freehand layer.',
     exitHint: isPolish
-      ? 'Dwuklik edytuje tresc, a Cmd/Ctrl+S zapisuje stan boardu.'
+      ? 'Dwuklik edytuje treść, a Cmd/Ctrl+S zapisuje stan boardu.'
       : 'Double-click edits content, and Cmd/Ctrl+S saves the board state.',
   };
 }
@@ -55,13 +55,13 @@ export function getWhiteboardShortcuts(isPolish: boolean): ShortcutHelp[] {
   return [
     {
       key: '?',
-      description: isPolish ? 'Pokaz / ukryj pomoc whiteboardu' : 'Show / hide whiteboard help',
+      description: isPolish ? 'Pokaż / ukryj pomoc whiteboardu' : 'Show / hide whiteboard help',
       category: 'navigation',
     },
     {
       key: 'Escape',
       description: isPolish
-        ? 'Zamknij pomoc albo wyjdz z trybu rysowania'
+        ? 'Zamknij pomoc albo wyjdź z trybu rysowania'
         : 'Close help or leave draw mode',
       category: 'navigation',
     },
@@ -72,12 +72,12 @@ export function getWhiteboardShortcuts(isPolish: boolean): ShortcutHelp[] {
     },
     {
       key: 'Ctrl/Cmd+Z',
-      description: isPolish ? 'Cofnij ostatnia zmiane' : 'Undo the latest change',
+      description: isPolish ? 'Cofnij ostatnią zmianę' : 'Undo the latest change',
       category: 'actions',
     },
     {
       key: 'Ctrl/Cmd+Shift+Z',
-      description: isPolish ? 'Ponow cofniecie (redo)' : 'Redo the previously undone change',
+      description: isPolish ? 'Ponów cofnięcie (redo)' : 'Redo the previously undone change',
       category: 'actions',
     },
     {
@@ -87,7 +87,7 @@ export function getWhiteboardShortcuts(isPolish: boolean): ShortcutHelp[] {
     },
     {
       key: 'Ctrl/Cmd+Shift+G',
-      description: isPolish ? 'Rozgrupuj zaznaczona grupe' : 'Ungroup selected frame/group',
+      description: isPolish ? 'Rozgrupuj zaznaczoną grupę' : 'Ungroup selected frame/group',
       category: 'actions',
     },
     {
@@ -97,12 +97,12 @@ export function getWhiteboardShortcuts(isPolish: boolean): ShortcutHelp[] {
     },
     {
       key: 'Delete / Backspace',
-      description: isPolish ? 'Usun zaznaczone elementy' : 'Delete selected elements',
+      description: isPolish ? 'Usuń zaznaczone elementy' : 'Delete selected elements',
       category: 'actions',
     },
     {
       key: '/',
-      description: isPolish ? 'Otworz menu szybkich komend' : 'Open quick command menu',
+      description: isPolish ? 'Otwórz menu szybkich komend' : 'Open quick command menu',
       category: 'navigation',
     },
   ];

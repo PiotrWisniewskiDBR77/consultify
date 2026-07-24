@@ -27959,7 +27959,8 @@
       "saveMetrics": "Zapisz metryki",
       "validationFailedRetry": "Walidacja przepływu nie powiodła się. Spróbuj ponownie.",
       "deleteNodesConfirm": "Zostaną usunięte {{value}} węzły i ich połączenia. Możesz cofnąć przez Ctrl+Z.",
-      "warningsCount": "{{value}} ostrzeżeń"
+      "warningsCount": "{{value}} ostrzeżeń",
+      "laneDefaultName": "Tor {{index}}"
     },
     "nodeDetailDrawer": {
       "failedAddComment": "Nie udało się dodać komentarza",
@@ -34747,5 +34748,16 @@
     "c": "C",
     "cTooltip": "Widok C: gęsty (maksimum informacji)",
     "switchLabel": "Styl widoku"
+  },
+  "collaboration": {
+    "connecting": "Łączenie ze współpracą",
+    "reconnecting": "Ponowne łączenie ze współpracą",
+    "connectionDegraded": "Połączenie osłabione",
+    "establishingSession": "Nawiązywanie sesji",
+    "singleUserMode": "Tryb jednego użytkownika",
+    "realtimeConnecting": "Łączenie w czasie rzeczywistym",
+    "realtimeReconnecting": "Ponowne łączenie w czasie rzeczywistym",
+    "realtimeDegraded": "Praca w czasie rzeczywistym osłabiona",
+    "recoveryInProgress": "Trwa przywracanie połączenia"
   }
 }
