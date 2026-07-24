@@ -258,3 +258,9 @@ nawet po skasowaniu gałęzi:
   Comments/History z Etapu 4) potwierdzona jako już zgodna, nietknięta. Crimson=0, bramki zielone.
   **ETAP 5 KOMPLETNY — wszystkie 3 fronty (Zadanie+Decyzja, Inicjatywa+Powiadomienie, Insight+Narzędzie)
   scalone.** Hub 20 commitów ponad demo.
+- **Naprawa dodatkowa (zgłoszona przez Etap 5)**: lewy panel dostał własny scroll (`max-h`+
+  `overflow-y-auto`) i zwijanie grup (chevron + sticky nagłówek + localStorage). ★ Odkrycie: grupowanie
+  sekcji JUŻ ISTNIAŁO w danych dla Inicjatywy/Insight/Narzędzia — dodano tylko UI. Zadanie/Decyzja/
+  Powiadomienie NIE mają grup w danych — świadomie BEZ zmiany (nie wymyślono sztucznego grupowania,
+  to decyzja produktowa, nie techniczna). Inicjatywa: panel przestał rosnąć ze stroną do ~2437px,
+  teraz przewija się niezależnie w ograniczonej wysokości. Crimson=0, bramki zielone. Hub 23 ponad demo.
