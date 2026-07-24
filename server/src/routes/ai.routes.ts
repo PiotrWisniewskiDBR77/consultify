@@ -1847,8 +1847,52 @@ router.post(
       'When asked to act without approval, explain that governed_execution requires approval first.',
     ].join('\n');
 
+    /**
+     * ★ Z4 — OTWARTA REPREZENTACJA IDEI (naprawa 2026-07-24).
+     *
+     * Front wysyła `context.ideaContext = {ideaId, tool}` razem z manifestem
+     * akcji (UnifiedChatPanel.tsx:3944), ale serwer NIGDY tego nie czytał —
+     * `grep ideaContext server/src/` dawał zero trafień. Model nie miał w
+     * prompcie ani słowa o tym, co użytkownik ma otwarte; orientował się
+     * wyłącznie po tym, jakie narzędzia dostał.
+     *
+     * Skutek zmierzony w żywej rundzie (13 poleceń × 3 modele): na „gdzie są
+     * wąskie gardła?" model ODMAWIAŁ — „nie widzę otwartego Przepływu, otwórz
+     * moduł Ideas" — mimo że Przepływ był otwarty, a narzędzie dostępne. Dla
+     * użytkownika wygląda to na zepsutą Teresę. Po dołożeniu tego bloku
+     * kontrolny przebieg przestał odmawiać i wywołał właściwą akcję.
+     */
+    const ideaCtx =
+      (context as any)?.ideaContext && typeof (context as any).ideaContext === 'object'
+        ? ((context as any).ideaContext as { ideaId?: unknown; tool?: unknown })
+        : null;
+    const IDEA_TOOL_NAMES: Record<string, { pl: string; en: string }> = {
+      mindmap: { pl: 'Mapa myśli', en: 'Mind Map' },
+      whiteboard: { pl: 'Whiteboard', en: 'Whiteboard' },
+      process_flow: { pl: 'Process Flow', en: 'Process Flow' },
+      table: { pl: 'Tabela', en: 'Table' },
+    };
+    const ideaToolKey = typeof ideaCtx?.tool === 'string' ? ideaCtx.tool : '';
+    const ideaContextInstruction =
+      ideaCtx && ideaToolKey && IDEA_TOOL_NAMES[ideaToolKey]
+        ? [
+            '## OTWARTA REPREZENTACJA IDEI',
+            `Użytkownik ma OTWARTĄ reprezentację: ${IDEA_TOOL_NAMES[ideaToolKey][isPolish ? 'pl' : 'en']} (\`${ideaToolKey}\`)${
+              typeof ideaCtx.ideaId === 'string' && ideaCtx.ideaId ? ` — Idea \`${ideaCtx.ideaId}\`.` : '.'
+            }`,
+            'Narzędzia `idea_*`, które dostałeś, działają WŁAŚNIE na tej otwartej reprezentacji.',
+            'Nie proś użytkownika, żeby ją otworzył, i nie twierdź, że jej nie widzisz — jest otwarta.',
+            'Dostałeś tylko te narzędzia, które ta reprezentacja realnie obsługuje. Jeśli użytkownik prosi o coś, czego nie ma na tej liście, powiedz wprost, że tej akcji nie ma w tej reprezentacji — NIE podstawiaj innego narzędzia.',
+          ].join('\n')
+        : '';
+
     let enhancedSystemInstruction =
-      [teresaWorkspaceInstruction, canvasContextInstruction, systemInstruction || '']
+      [
+        teresaWorkspaceInstruction,
+        canvasContextInstruction,
+        ideaContextInstruction,
+        systemInstruction || '',
+      ]
         .filter((part) => String(part || '').trim().length > 0)
         .join('\n\n') + languageInstruction;
 

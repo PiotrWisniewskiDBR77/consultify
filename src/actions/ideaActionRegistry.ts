@@ -502,7 +502,10 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     teresa: {
       description:
-        'Grupuje karteczki na Tablicy w tematy i proponuje ramkę dla każdego. Propozycje pokazuję do akceptacji — nic nie wskakuje samo.',
+        // ★ GRANICA NEGATYWNA (2026-07-24): na „ułóż tablicę automatycznie" dwa
+        // z trzech modeli podstawiały tę akcję zamiast powiedzieć, że Tablica
+        // nie ma auto-układu — zmierzone w żywej rundzie.
+        'Grupuje karteczki na Tablicy w tematy i proponuje ramkę dla każdego. Propozycje pokazuję do akceptacji — nic nie wskakuje samo. Grupuje TYLKO tematycznie; nie układa elementów na płótnie — Tablica nie ma automatycznego układu, więc na prośbę o ułożenie powiedz to wprost.',
     },
     runtime: RUNTIME_AI_FIND_THEMES,
     source:
@@ -613,7 +616,10 @@ const IDEA_ACTIONS: ActionDef[] = [
     requiresPreview: false,
     teresa: {
       description:
-        'Otwiera kategoryzację AI dla Tabeli — proponuje pogrupowanie wierszy, każdą grupę zatwierdzasz osobno.',
+        // ★ GRANICA NEGATYWNA (2026-07-24): bez ostatniego zdania gpt-4o i
+        // sonnet-4-6 wołały tę akcję na prośbę o KARTECZKI TABLICY i meldowały
+        // „Otworzyłam kategoryzację AI dla Tablicy" — zmierzone w żywej rundzie.
+        'Otwiera kategoryzację AI dla Tabeli — proponuje pogrupowanie WIERSZY tej Tabeli, każdą grupę zatwierdzasz osobno. Nie dotyczy karteczek Tablicy ani gałęzi Mapy myśli — jeśli użytkownik prosi o nie, powiedz wprost, że tej akcji nie ma w Tabeli.',
     },
     runtime: RUNTIME_AI_TABLE_CATEGORIZE,
     source: 'src/components/MyWork/table/useTableQuickActions.ts:85',
