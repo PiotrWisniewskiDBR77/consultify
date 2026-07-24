@@ -8,7 +8,7 @@
  * SSOT: FINAL_IMPLEMENTATION_PLAN_23_EXCELE_2026-03-29.md
  */
 
-import { Copy, Link2 } from 'lucide-react';
+import { Copy, Link2, Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -61,6 +61,10 @@ export const ExceleView: React.FC = () => {
   const templateArtifactId = searchParams.get('templateArtifactId');
   const templatePrompt = searchParams.get('templatePrompt');
   const viewParam = searchParams.get('view');
+  // Materiały wspólny launcher (2026-07-24) — `?entry=blank|ai` sygnalizuje
+  // tryb wybrany w KROK 2 tablicy Materiałów, żeby wejście z Materiałów lądowało
+  // od razu w tym trybie zamiast ponownie pytać o wybór na tym ekranie.
+  const entryParam = searchParams.get('entry');
 
   const showHome =
     !artifactId &&
@@ -91,7 +95,11 @@ export const ExceleView: React.FC = () => {
   // flagą `ff_tri_tryby`. OFF → `triMode` false → widok bajt-identyczny (od razu
   // czat/pipeline AI). 'choose' = ekran wyboru; 'ai' = przejście do czatu.
   const triMode = isTriModeEnabled();
-  const [entryMode, setEntryMode] = useState<'choose' | 'ai'>('choose');
+  // 'blank' = auto-tworzenie pustej siatki (wejście z Materiałów, `?entry=blank`
+  // + `?view=new` — patrz efekt niżej i _MATERIALY_INWENTARYZACJA_2026-07-24.md §8).
+  const [entryMode, setEntryMode] = useState<'choose' | 'ai' | 'blank'>(
+    entryParam === 'ai' ? 'ai' : entryParam === 'blank' ? 'blank' : 'choose'
+  );
   const [creatingBlank, setCreatingBlank] = useState(false);
 
   // Auto-trigger from builtin template prompt
@@ -324,8 +332,30 @@ export const ExceleView: React.FC = () => {
     }
   }, [creatingBlank, navigate]);
 
+  // Materiały wspólny launcher — `?entry=blank`: materializuj pustą siatkę
+  // automatycznie, bez wymagania drugiego kliknięcia „Czysto" na tym ekranie.
+  // Ref guard: fire-once (StrictMode double-invoke / re-renders bezpieczne).
+  const blankAutoTriggered = useRef(false);
+  useEffect(() => {
+    if (entryMode !== 'blank' || blankAutoTriggered.current) return;
+    blankAutoTriggered.current = true;
+    void handleCreateEmptyGrid();
+  }, [entryMode, handleCreateEmptyGrid]);
+
   if (showHome) {
     return <ArtifactModuleHome lane="excele" />;
+  }
+
+  // Materiały wspólny launcher — `?entry=blank`: pokaż lekki loading zamiast
+  // brama-wyboru/czatu, dopóki handleCreateEmptyGrid (efekt wyżej) nie
+  // przełączy nawigacji do realnego arkusza (`?artifactId=...`).
+  if (entryMode === 'blank') {
+    return (
+      <div className="flex h-full flex-1 items-center justify-center gap-2 text-c-text-secondary">
+        <Loader2 size={18} className="animate-spin" />
+        <span className="text-sm">Tworzenie pustego arkusza…</span>
+      </div>
+    );
   }
 
   // D3 tri-tryby: brama wyboru na wejściu „Start new" (`?view=new`). Poprzedza
