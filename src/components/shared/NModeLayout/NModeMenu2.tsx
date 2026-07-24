@@ -26,8 +26,13 @@
  * ZAKAZY (CLAUDE.md pułapka nr 1 + skill consultify-artefakty):
  *   • zero rodziny crimson w powłoce (cała skala = czerwień brandowa),
  *   • fokus wyłącznie `c-focus`,
- *   • akcent AI = FIOLET (skala `violet-*` w tailwind.config.js jest
- *     przemapowana na HBS Purple — to prawdziwy fiolet, nie czerwień),
+ *   • akcent AI = wyłącznie token `c-ai` (standard n-Type §4.6) — TEN SAM
+ *     token, którego używa `AIFieldEnhancer` (przycisk AI przy polu) i
+ *     `Callout` (wariant `purple`). ETAP 3 (2026-07-24) naprawił rozjazd: ten
+ *     przycisk używał wcześniej surowych klas `violet-*` z tailwind.config.js,
+ *     a ta skala jest w tym repo przemapowana na „HBS Purple" — INNY,
+ *     bardziej stonowany fiolet niż `c-ai`. Efekt: „Analizuj z AI" w Menu 2 i
+ *     przycisk AI przy polu renderowały się dwoma różnymi odcieniami fioletu,
  *     konsekwentnie w całym systemie AI,
  *   • przycisk AI jest OUTLINE (tint), nie solid — solid/filled CTA rezerwuje
  *     SPEC-N §2.3 wyłącznie dla głównego slotu CTA w Menu 1.
@@ -80,8 +85,10 @@ export interface Menu2AIButtonProps extends React.ButtonHTMLAttributes<HTMLButto
 }
 
 /**
- * „Analizuj z AI" — JEDYNY dozwolony kolor AI w powłoce: fiolet.
+ * „Analizuj z AI" — JEDYNY dozwolony kolor AI w powłoce: token `c-ai`.
  * Outline/tint, nie solid (SPEC-N §2.3 + reguła R1 `check-artefakt.sh`).
+ * Token, nie surowa skala `violet-*` (patrz komentarz pliku) — tak samo jak
+ * `AIFieldEnhancer` (przycisk AI przy polu) i `Callout` (wariant `purple`).
  */
 export const Menu2AIButton: React.FC<Menu2AIButtonProps> = ({
   busy = false,
@@ -93,7 +100,7 @@ export const Menu2AIButton: React.FC<Menu2AIButtonProps> = ({
   <button
     type="button"
     data-menu2-slot="ai"
-    className={`${BTN_BASE} border border-violet-400/50 bg-violet-500/10 text-violet-700 hover:bg-violet-500/[0.18] dark:text-violet-300 dark:border-violet-400/40 ${className}`}
+    className={`${BTN_BASE} border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 ${className}`}
     {...rest}
   >
     {busy ? (
