@@ -29514,6 +29514,10 @@
         "initiative": {
           "label": "Create initiative",
           "description": "Move the insight into initiative intake."
+        },
+        "decision": {
+          "label": "Start decision",
+          "description": "Capture a decision to make in My Work."
         }
       },
       "titlePrefix": {
@@ -29522,8 +29526,11 @@
         "table": "Table",
         "idea": "Idea",
         "note": "Note",
-        "initiative": "Initiative"
+        "initiative": "Initiative",
+        "decision": "Decision"
       },
+      "openDecision": "Open decision",
+      "decisionNeedsProject": "Pick a project first — a decision must be anchored in a project.",
       "readBackText": "I confirm creating \"{{targetLabel}}\" from insight \"{{title}}\". I reviewed the limits, evidence count ({{evidenceCount}}), and confidence ({{confidence}}).",
       "confidenceNone": "none",
       "targetColumnLabel": "Target"
