@@ -89,12 +89,12 @@ export const ArtifactApprovalStatusBar: React.FC<ArtifactApprovalStatusBarProps>
   className,
 }) => {
   const { t } = useTranslation();
-  const { state, loading, error, actionPending, submitForReview, approve, reject } =
+  const { state, hasRecord, loading, error, actionPending, submitForReview, approve, reject } =
     useArtifactApprovalStatus(artifactType, artifactId);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
 
-  if (loading && !state) {
+  if (loading && !hasRecord && !state) {
     return (
       <div className={`text-xs text-c-text-muted ${className ?? ''}`}>
         {t('sharedComponents.artifactApprovalStatusBar.loading')}
@@ -102,16 +102,44 @@ export const ArtifactApprovalStatusBar: React.FC<ArtifactApprovalStatusBarProps>
     );
   }
 
-  const effectiveState: ArtifactApprovalState = state ?? 'draft';
+  // ── ŹRÓDŁO prawdomówności paska (naprawa 2026-07-24, 12. atrapa nocy) ───────
+  // BYŁO: `const effectiveState = state ?? 'draft'` — przy BRAKU rekordu obiegu
+  // (albo błędzie endpointu) pasek fabrykował pigułkę „Szkic" na KAŻDYM
+  // artefakcie, niezależnie od jego prawdziwego statusu (Decyzja „Oczekująca"
+  // pokazywała „Szkic", Inicjatywa „W realizacji" pokazywała „Szkic").
+  //
+  // JEST: pigułkę renderujemy WYŁĄCZNIE gdy istnieje realny rekord zatwierdzenia
+  // (`hasRecord`) — wtedy `state` niesie prawdę z bazy HP-7. Bez rekordu pasek
+  // NIE zmyśla stanu: pokazuje co najwyżej akcję wejścia w obieg („Zgłoś do
+  // recenzji"), a gdy i tej nie ma — nie renderuje nic (kanon: lepiej brak niż
+  // pusty/kłamliwy element). To znosi obejścia po stronie wywołań z nocy
+  // (bramki `workflowStatus === 'proposed'` / `status === DRAFT`), które
+  // istniały tylko po to, by zmyślony „Szkic" przypadkiem zgadzał się z kartą.
+  const recordState: ArtifactApprovalState | null = hasRecord ? state : null;
+
+  const canSubmit =
+    !hideSubmitAction &&
+    Boolean(currentUserId) &&
+    !error &&
+    (recordState === null || recordState === 'draft' || recordState === 'rejected');
+  const canReviewNow = recordState === 'review' && canReview;
+
+  // Nie ma prawdziwego stanu, żadnej akcji, błędu ani zapisu w toku →
+  // pasek nie ma czego pokazać, więc znika zamiast zostawiać pustą ramkę.
+  if (!recordState && !canSubmit && !canReviewNow && !error && !actionPending) {
+    return null;
+  }
 
   return (
     <div className={`flex flex-col gap-2 ${className ?? ''}`}>
       <div className="flex items-center gap-2">
-        <span
-          className={`inline-flex items-center h-5 px-2 rounded-md text-[11px] font-medium ${STATE_PILL_CLASS[effectiveState]}`}
-        >
-          {t(STATE_LABEL_KEY[effectiveState])}
-        </span>
+        {recordState ? (
+          <span
+            className={`inline-flex items-center h-5 px-2 rounded-md text-[11px] font-medium ${STATE_PILL_CLASS[recordState]}`}
+          >
+            {t(STATE_LABEL_KEY[recordState])}
+          </span>
+        ) : null}
         {actionPending ? (
           <span className="text-[11px] text-c-text-muted">
             {t('sharedComponents.artifactApprovalStatusBar.saving')}
@@ -122,9 +150,7 @@ export const ArtifactApprovalStatusBar: React.FC<ArtifactApprovalStatusBarProps>
       {error ? <p className="text-[11px] text-c-danger">{error}</p> : null}
 
       <div className="flex flex-wrap items-center gap-1.5">
-        {(effectiveState === 'draft' || effectiveState === 'rejected') &&
-        currentUserId &&
-        !hideSubmitAction ? (
+        {canSubmit ? (
           <button
             type="button"
             className={buttonClass}
@@ -136,7 +162,7 @@ export const ArtifactApprovalStatusBar: React.FC<ArtifactApprovalStatusBarProps>
           </button>
         ) : null}
 
-        {effectiveState === 'review' && canReview ? (
+        {canReviewNow ? (
           <>
             <button
               type="button"

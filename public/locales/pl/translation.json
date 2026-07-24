@@ -1523,7 +1523,7 @@
           "stale": "Dane mogą być nieaktualne. Rozważ odświeżenie źródeł.",
           "permission": "Dostęp ograniczony. Część informacji jest ukryta."
         },
-        "hardGate": "Hard gate",
+        "hardGate": "Twarda bramka",
         "score": "Wynik"
       },
       "empty": "Brak sygnałów. Teresa skanuje.",
@@ -1590,7 +1590,7 @@
       "deleteDesc": "Zadanie zostanie trwale usunięte.",
       "bulkDeleteTitle": "Usunąć wybrane zadania?",
       "bulkDeleteDesc": "Wybrane zadania zostaną trwale usunięte. Tej operacji nie można cofnąć.",
-      "smartSort": "Smart sort",
+      "smartSort": "Inteligentne sortowanie",
       "smartSortTooltip": "Smart sort: Zaległe → Dzisiaj → Wysoki priorytet → wg terminu",
       "columns": "Kolumny",
       "toggleColumns": "Pokaż/ukryj kolumny"
@@ -1816,8 +1816,8 @@
         "insertLibraryFragment": "Wstawiono fragment z biblioteki",
         "importExternal": "Zaimportowano elementy zewnętrzne",
         "manualSave": "Ręczny zapis",
-        "quickStart": "Quick start: {{mode}}",
-        "checkpoint": "Whiteboard checkpoint"
+        "quickStart": "Szybki start: {{mode}}",
+        "checkpoint": "Punkt kontrolny tablicy"
       },
       "nodes": {
         "groupLabel": "Grupa",
@@ -1846,7 +1846,7 @@
         "followOn": "Follow-me włączone",
         "followOff": "Follow-me wyłączone",
         "spotlightActive": "Spotlight aktywny",
-        "opsGovernance": "Ops + governance",
+        "opsGovernance": "Operacje i nadzór",
         "cyclePolicy": "Zmień policy",
         "libraryPrefix": "Biblioteka:",
         "restorePrefix": "Przywróć:"
@@ -1867,7 +1867,7 @@
       },
       "toolbarExtra": {
         "ariaLabel": "Pasek narzędzi tablicy",
-        "title": "Tablica",
+        "title": "Whiteboard",
         "create": "Utwórz",
         "role": "Rola",
         "bgDots": "Kropki",
@@ -1891,7 +1891,7 @@
         "toolsHint": "Więcej akcji organizacji i AI znajdziesz w panelu Tools po prawej stronie."
       },
       "outlineImport": {
-        "title": "Import outline",
+        "title": "Import konspektu",
         "description": "Wklej punkty, po jednym w linii. Zostaną dodane jako notatki lub krótkie bloki tekstu.",
         "placeholder": "Punkt 1\nPunkt 2\nPunkt 3",
         "confirm": "Importuj",
@@ -1911,7 +1911,7 @@
           "goals": "Cele warsztatu",
           "discuss": "Do omówienia",
           "decisions": "Decyzje",
-          "parkingLot": "Parking lot"
+          "parkingLot": "Parking pomysłów"
         }
       },
       "facilitationError": "Sesja facylitacji niedostępna"
@@ -1947,7 +1947,7 @@
       "templateMeeting": "Notatki ze spotkania",
       "templateHypothesis": "Hipoteza biznesowa",
       "templateResearch": "Notatki z researchu",
-      "knowledgePulse": "Knowledge Pulse",
+      "knowledgePulse": "Puls wiedzy",
       "noConnections": "Brak powiązań",
       "addContentForConnections": "Dodaj tagi i treść, aby odkryć powiązania",
       "insertReference": "Wstaw odniesienie",
@@ -2100,7 +2100,7 @@
       "label36": "Otwarte",
       "label37": "Gotowe",
       "label38": "Zapisane",
-      "aITriage": "AI Triage",
+      "aITriage": "Triage AI",
       "aIDecisions": "AI Decyzje",
       "selected3": "zaznaczonych",
       "selectAll3": "Zaznacz wszystkie",
@@ -2177,7 +2177,7 @@
       "en": "pl",
       "label9": "Kopiuj dla Slack",
       "en2": "pl",
-      "inboxItem": "Inbox item",
+      "inboxItem": "Element skrzynki",
       "open": "Otwórz",
       "snooze": "Odłóż na…",
       "undoLastAISuggestion": "Cofnij ostatnią sugestię AI",
@@ -2463,7 +2463,8 @@
       "panelSources": "Źródła i założenia",
       "panelResults": "Rezultaty",
       "noSources": "Brak informacji o źródle",
-      "noStepsYet": "Brak kroków"
+      "noStepsYet": "Brak kroków",
+      "actionsHiddenInReadMode": "Akcje są ukryte w trybie Podgląd"
     },
     "projects": {
       "failedToLoadProjects": "Nie udało się wczytać projektów",
@@ -3902,7 +3903,7 @@
       "failedToGeneratePlan": "Nie udało się wygenerować planu"
     },
     "aiCoachPanel": {
-      "aICoach": "AI Coach",
+      "aICoach": "Coach AI",
       "analyzing": "Analizuję..."
     },
     "nudgeStrip": {},
@@ -3961,7 +3962,7 @@
       "desc2": "Z next steps (jeśli są)",
       "label21": "Decyzja",
       "desc3": "Artefakt decyzyjny",
-      "label22": "Team Chat",
+      "label22": "Czat zespołu",
       "desc4": "Wątek do omówienia",
       "close": "Zamknij",
       "creating": "Tworzę…",
@@ -4467,7 +4468,7 @@
       "openPreview": "Otwórz podgląd",
       "edit": "Edytuj",
       "due2": "Due",
-      "aiInsight": "AI insight",
+      "aiInsight": "Insight AI",
       "exportedToTools": "Wyeksportowano do Tools",
       "failedToExport": "Nie udało się wyeksportować",
       "exportedToAssessment": "Wyeksportowano do Assessment",
@@ -4882,7 +4883,7 @@
       "readyForGovernedPublish": "Gotowe do governed publish",
       "operatorReviewNeeded": "Wymaga review operatora",
       "weakDecisionMaterial": "Słaby materiał decyzyjny",
-      "truthReviewSummary": "Truth & Review Summary",
+      "truthReviewSummary": "Podsumowanie: prawda i review",
       "evidence": "Dowody",
       "safeClaims": "Co można twierdzić",
       "ev": "dow.",
@@ -4895,17 +4896,17 @@
       "noExplicitContradictionSignals": "Brak jawnych contradiction signals.",
       "readThisAsAConsulting": "Czytaj jak brief konsultingowy",
       "noSummaryAvailable": "Brak podsumowania.",
-      "officialAnswers": "Official answers",
-      "issuesRisks": "Issues / Risks",
-      "signalsOpportunities": "Signals / Opportunities",
+      "officialAnswers": "Odpowiedzi oficjalne",
+      "issuesRisks": "Problemy / Ryzyka",
+      "signalsOpportunities": "Sygnały / Szanse",
       "contradictionsDetected": "Sprzeczności wykryte",
       "interpretationScope": "Zakres interpretacji",
       "thisIsTheConsultingLayer": "To jest warstwa konsultingowa: issues, opportunities i sygnały ukryte w odpowiedziach. Bez automatycznych action planów.",
-      "officialAnswers2": "Official Answers",
+      "officialAnswers2": "Odpowiedzi oficjalne",
       "noSourceFactsAvailable": "Brak zebranych faktów źródłowych",
-      "issuesRisks2": "Issues / Risks",
+      "issuesRisks2": "Problemy / Ryzyka",
       "noClearIssuesToSurface": "Brak wyraźnych issue do pokazania",
-      "signalsOpportunities2": "Signals / Opportunities",
+      "signalsOpportunities2": "Sygnały / Szanse",
       "noSignalsOrOpportunitiesYet": "Brak sygnałów i opportunities do pokazania",
       "materialQualityIsNotA": "Material Quality nie blokuje insightu",
       "thisCardExplainsHowFar": "Ta karta mówi, jak daleko można bezpiecznie ufać analizie. Słabszy materiał nie zatrzymuje pracy, ale musi jawnie pokazać ograniczenia.",
@@ -4960,7 +4961,7 @@
       "worksheetMarkedDegradedByOperator": "Arkusz oznaczony jako zdegradowany przez operatora.",
       "saving": "Zapis...",
       "reportPackIsNotAvailable": "Pakiet raportu nie jest jeszcze dostępny dla tego insightu.",
-      "sourceEvidencePack": "Source / Evidence Pack",
+      "sourceEvidencePack": "Źródła / Pakiet dowodów",
       "thisIsTheExplicitSource": "To jest jawny pakiet źródeł dla insightu: sesje, pytania, odpowiedzi, respondent/rola i wskaźniki dowodowe. Brak dowodu jest pokazany jako stan zdegradowany.",
       "sessions": "Sesje",
       "fragments": "Fragmenty",
@@ -4969,7 +4970,7 @@
       "auditable": "Audytowalny",
       "readbackOk": "Readback OK",
       "challenged": "Zakwestionowane",
-      "needsEvidence": "Potrzeba evidence",
+      "needsEvidence": "Potrzeba dowodów",
       "unresolved": "Niepotwierdzone",
       "sourceGaps": "Braki źródeł",
       "noRespondentMetadata": "Brak metadanych respondenta",
@@ -4982,22 +4983,22 @@
       "notObserved": "Brak sygnału",
       "analysisCanonPersonXTopic": "Kanon analizy: osoba x temat x zakres",
       "thisLayerDoesNotCreate": "Ta warstwa nie tworzy nowych truth objectów. Pokazuje, jak persisted findings rozkładają się po rolach, osobach i szerokości pokrycia.",
-      "posture": "Posture",
+      "posture": "Postawa",
       "organizationSynthesis": "Szeroka synteza",
       "crossPerspective": "Wiele perspektyw",
       "singlePerspective": "Jedna perspektywa",
       "sourceSessions": "Sesje źródłowe",
-      "lenses": "Lenses",
-      "consensus": "Consensus",
+      "lenses": "Perspektywy",
+      "consensus": "Konsensus",
       "coverageGaps": "Luki pokrycia",
-      "stakeholderLenses": "Stakeholder lenses",
+      "stakeholderLenses": "Perspektywy interesariuszy",
       "sessionsPeople": "Sesje / osoby",
       "allRoles": "Wszystkie role",
       "allDepartments": "Wszystkie działy",
-      "consensusTopics": "Consensus topics",
+      "consensusTopics": "Tematy konsensusu",
       "noLenses": "Brak lensów",
       "noConfirmedConsensusYet": "Brak potwierdzonego konsensusu",
-      "localOnlySignals": "Local-only signals",
+      "localOnlySignals": "Sygnały lokalne",
       "sessions2": "sesje",
       "noLocalOnlySignals": "Brak lokalnych sygnałów",
       "noLensesBuiltYet": "Brak zbudowanych lensów",
@@ -5049,15 +5050,15 @@
       "workingLayerBeforeAP10": "Warstwa robocza przed findingiem P10",
       "candidatesAreNotPublishableTruth": "Kandydaci nie są publishable truth. To przestrzeń operatora do decyzji: dopnij evidence, rozbij sprzeczność, przygotuj do recenzji albo promuj do findingu.",
       "candidates": "Kandydaci",
-      "ready": "Ready",
-      "needsEvidence3": "Braki evidence",
+      "ready": "Gotowe",
+      "needsEvidence3": "Braki dowodów",
       "linkedFinding": "Powiązany finding",
       "recommendedNextStep": "Rekomendowany następny krok",
-      "clientReadback": "Client readback",
+      "clientReadback": "Readback klienta",
       "shareReadback": "Wyślij readback",
       "confirmed": "Potwierdzone",
       "needsEvidence4": "Więcej evidence",
-      "needsEvidence5": "Needs evidence",
+      "needsEvidence5": "Potrzeba dowodów",
       "reject": "Odrzuć",
       "promoteToFinding": "Promuj do findingu",
       "reviewFirst": "Najpierw recenzja",
@@ -5065,7 +5066,7 @@
       "readTheInsightThroughPeople": "Czytaj insight przez perspektywy ludzi",
       "thisSectionShowsWhichTopics": "Ta sekcja pokazuje, które tematy wspiera dana osoba lub stakeholder lens i gdzie pojawiają się lokalne albo sprzeczne spojrzenia.",
       "sourceSession": "Sesja źródłowa",
-      "stakeholderLens": "Stakeholder lens",
+      "stakeholderLens": "Perspektywa interesariusza",
       "topics": "tem.",
       "contradictedTopicsForThisPerspective": "Sprzeczne tematy dla tej perspektywy",
       "supportedTopics": "Wspierane tematy",
@@ -5079,7 +5080,7 @@
       "noSourceSessions": "Brak sesji źródłowych",
       "addOrCompleteSessionsTo": "Dodaj lub dokończ sesje, aby zbudować evidence trail.",
       "noFactsCaptured": "Brak zebranych faktów",
-      "gapsConstraints": "Gaps / constraints",
+      "gapsConstraints": "Luki / ograniczenia",
       "noGapsOrConstraints": "Brak luk lub ograniczeń",
       "sourceUnavailable": "Źródło niedostępne",
       "noSessions": "Brak sesji",
@@ -5251,7 +5252,7 @@
       },
       "dividerTruthReview": "Prawda i review",
       "dividerSourceSessions": "Sesje źródłowe",
-      "dividerTraceability": "Traceability",
+      "dividerTraceability": "Identyfikowalność",
       "v6SignalType": {
         "tension": "Napięcie",
         "gap": "Luka",
@@ -5329,7 +5330,8 @@
         "published": "Opublikowano",
         "failed": "Błąd"
       },
-      "confidenceLevelLabel": "Poziom pewności"
+      "confidenceLevelLabel": "Poziom pewności",
+      "actionsHiddenInReadMode": "Akcje są ukryte w trybie Podgląd"
     },
     "templateBuilder": {
       "freeTextAnswer": "Pole tekstowe na odpowiedź…",
@@ -5543,15 +5545,15 @@
       "reviewerMode": "Tryb recenzenta",
       "youAreReviewingAnswersFor": "Przeglądasz odpowiedzi do zatwierdzenia. Użyj przycisków \"Zatwierdź\" lub \"Odeślij\" w pasku akcji.",
       "managerFeedback": "Feedback od managera",
-      "aiQualityReview": "AI quality review",
+      "aiQualityReview": "Kontrola jakości AI",
       "running": "Analiza...",
       "refresh": "Odśwież",
       "aiIsReviewingAnswerQuality": "AI analizuje jakość odpowiedzi...",
       "verdict": "Werdykt:",
       "score": "Ocena:",
-      "structuredWeakAnswerMap": "Structured weak-answer map:",
+      "structuredWeakAnswerMap": "Mapa słabych odpowiedzi:",
       "latestReviewDecision": "Ostatnia decyzja review:",
-      "aiAlignment": "AI alignment:",
+      "aiAlignment": "Zgodność AI:",
       "aiRecommendations": "Sugestie AI:",
       "lastReview": "Ostatnia analiza:",
       "reasonForSendingBack": "Powód odesłania:",
@@ -6446,7 +6448,7 @@
       "noLevelSuggestions": "Brak sugestii poziomów do wyświetlenia",
       "noTechSuggestions": "Brak sugestii technologii do wyświetlenia",
       "noGaps": "Brak luk do wyświetlenia",
-      "topPerformers": "Top performers:",
+      "topPerformers": "Najlepsze wyniki:",
       "quickWins": "Quick Wins",
       "complexityLevels": {
         "low": "Niska",
@@ -6516,14 +6518,14 @@
       "runAiPrompt": "Uruchom jeden z promptów AI aby uzyskać insighty.",
       "selectSession": "Wybierz sesję, aby zobaczyć szczegóły.",
       "openSessionHint": "Otwórz sesję assessment aby kontynuować.",
-      "execBrief": "Executive brief",
+      "execBrief": "Brief zarządczy",
       "title": "Sesja assessmentu",
       "aiHints": "Podpowiedzi AI",
       "frameworkLabel": "Framework",
       "assessmentLabel": "Assessment",
       "descriptionLabel": "Opis",
       "whatYouGet": "Co dostajesz",
-      "startAssessment": "Start assessment"
+      "startAssessment": "Rozpocznij assessment"
     },
     "form": {
       "current": "Aktualny",
@@ -7577,7 +7579,7 @@
     "resultsKpiReports": "Wyniki i raporty KPI",
     "ideaWorkspace": "Workspace pomysłu",
     "assessment": "Ocena",
-    "interviewInsight": "Interview Insight",
+    "interviewInsight": "Insight z wywiadu",
     "insight": "Insight",
     "auditReadout": "Readout audytu",
     "vendor": "Dostawca",
@@ -9204,7 +9206,8 @@
       "outcomes": "Rezultaty",
       "deleteComment": "Usuń komentarz",
       "property": "Właściwość",
-      "value": "Wartość"
+      "value": "Wartość",
+      "actionsHiddenInReadMode": "Akcje są ukryte w trybie Podgląd"
     }
   },
   "execution": {
@@ -10099,10 +10102,10 @@
     "shared2": "Udostępniona",
     "archived2": "Zarchiwizowana",
     "slides": "slajdów",
-    "weeklyExecution": "Weekly Execution",
-    "steeringCommittee": "Steering Committee",
-    "benefitsTracking": "Benefits Tracking",
-    "portfolioOverview": "Portfolio Overview",
+    "weeklyExecution": "Wykonanie tygodniowe",
+    "steeringCommittee": "Komitet sterujący",
+    "benefitsTracking": "Śledzenie korzyści",
+    "portfolioOverview": "Przegląd portfela",
     "report": "Raport",
     "sheet": "Tabela",
     "presentation": "Prezentacja",
@@ -10111,7 +10114,7 @@
     "organization": "Organizacja",
     "active": "Aktywny",
     "deprecated": "Wycofany",
-    "executiveSteering": "Executive Steering",
+    "executiveSteering": "Sterowanie zarządcze",
     "governanceReportsAndSteeringCommitteePre": "Raporty zarządcze i prezentacje dla komitetu sterującego",
     "transformationStatus": "Status Transformacji",
     "weeklyStatusReportsAndProgressReviews": "Cotygodniowe raporty statusowe i przeglądy postępów",
@@ -13094,40 +13097,40 @@
       "cost30Days": "koszt 30 dni",
       "loadingDiagnostics": "Ładowanie diagnostyki AI...",
       "callsAndRuns": "{{calls}} wywołań, {{runs}} ostatnich runów",
-      "canonicalInbox": "Canonical inbox",
+      "canonicalInbox": "Kanoniczna skrzynka",
       "totalItems": "łączna liczba pozycji",
       "actionRequired": "wymaga akcji",
       "canonicalHelp": "Inbox materializuje canonical items przed odświeżeniem tych statystyk.",
       "quickContext": "Szybki kontekst",
       "recentEvalRuns": "Ostatnie runy eval",
       "costWindow": "Koszt okna",
-      "manualReview": "Manual review"
+      "manualReview": "Przegląd ręczny"
     },
     "orgContext": {
       "rebuiltToast": "Snapshot kontekstu został przebudowany.",
       "rebuildFailedToast": "Nie udało się przebudować snapshotu kontekstu.",
-      "title": "Organization Context OS",
+      "title": "Kontekst organizacji",
       "loading": "Ładowanie aktualnego stanu kontekstu organizacji...",
       "countsSummary": "Aktywnych wpisów: {{items}}, claimów: {{claims}}, konfliktów: {{conflicts}}.",
-      "contextHealth": "Context Health",
-      "rebuildSnapshot": "Rebuild snapshot",
-      "entries": "Entries",
-      "claims": "Claims",
-      "conflicts": "Conflicts",
+      "contextHealth": "Kondycja kontekstu",
+      "rebuildSnapshot": "Przebuduj migawkę",
+      "entries": "Wpisy",
+      "claims": "Twierdzenia",
+      "conflicts": "Konflikty",
       "claimsNeedingReview": "Claims wymagające przeglądu",
       "noConflicts": "Brak wykrytych konfliktów w aktualnym snapshotcie.",
-      "recentClaims": "Recent Claims",
-      "colClaim": "Claim",
-      "colValue": "Value",
-      "colReview": "Review",
-      "colType": "Type",
+      "recentClaims": "Ostatnie twierdzenia",
+      "colClaim": "Twierdzenie",
+      "colValue": "Wartość",
+      "colReview": "Przegląd",
+      "colType": "Typ",
       "noClaims": "Brak claimów.",
-      "recentSources": "Recent Sources",
-      "colSource": "Source",
-      "colChannel": "Channel",
-      "colUpdated": "Updated",
+      "recentSources": "Ostatnie źródła",
+      "colSource": "Źródło",
+      "colChannel": "Kanał",
+      "colUpdated": "Zaktualizowano",
       "noTimelineEntries": "Brak wpisów w timeline kontekstu.",
-      "sourceProvenance": "Source Provenance",
+      "sourceProvenance": "Pochodzenie źródeł",
       "provenanceHelp": "Każdy zapis do Context OS zachowuje źródło, kanał i explicitness, dzięki czemu AI może pracować na trwałym kontekście zamiast na pojedynczym prompt snapshot."
     },
     "approvalPatterns": {
@@ -16202,7 +16205,7 @@
       }
     },
     "aiOperator": {
-      "title": "AI Operator",
+      "title": "Operator AI",
       "subtitle": "Relacja, nawigacja, wykonanie i wartość w jednym cockpitcie",
       "readiness": "gotowość operatora",
       "stage": "Etap",
@@ -16215,7 +16218,7 @@
       "open": "Otwórz",
       "noActions": "Brak pilnych akcji operatora.",
       "cadence": "Kadencja i workstreamy",
-      "executiveBrief": "Executive brief",
+      "executiveBrief": "Brief zarządczy",
       "noBrief": "Brak briefu.",
       "sequence": "Sekwencja operatora",
       "noPlan": "Brak planu operatora.",
@@ -16393,7 +16396,7 @@
       "adminAssignsUserSubmits": "Admin przypisuje, user zatwierdza",
       "user": "Użytkownik",
       "select": "Wybierz...",
-      "templateApproved": "Template (approved)",
+      "templateApproved": "Szablon (zatwierdzony)",
       "dueDateOptional": "Termin (opcjonalnie)",
       "processOptional": "Proces (opcjonalnie)",
       "eGOrderToCash": "np. Order-to-Cash",
@@ -16403,12 +16406,12 @@
       "assignmentsList": "Lista przypisań",
       "loading": "Ładowanie...",
       "noData": "Brak danych",
-      "template": "Template",
+      "template": "Szablon",
       "status": "Status",
       "progress": "Postęp",
       "due": "Termin",
       "actions": "Akcje",
-      "sendBack": "Send Back"
+      "sendBack": "Odeślij"
     },
     "refresh": "Odśwież",
     "desktopOnly": {
@@ -19618,7 +19621,7 @@
     "trend_declining": "Spadkowy",
     "belowThreshold": "Poniżej progu anonimowości (wymagane 5+)",
     "activeAlerts": "Aktywne alerty",
-    "pulseCheckin": "Pulse check-in",
+    "pulseCheckin": "Szybki przegląd (pulse)",
     "submitPulse": "Wyślij pulse",
     "howDoYouFeel": "Jak się czujesz z bieżącą zmianą?",
     "commentPlaceholder": "Opcjonalny komentarz...",
@@ -20221,7 +20224,7 @@
       "skipped": "Pominięto"
     },
     "alertChannel": {
-      "in_app": "In-app",
+      "in_app": "W aplikacji",
       "slack": "Slack",
       "email": "E-mail",
       "whatsapp": "WhatsApp"
@@ -20858,7 +20861,7 @@
       "funnelValueAtRisk": "Wartość zagrożona",
       "signals": "Sygnały do M14 Wdrożenie",
       "goToM14": "Przejdź do M14 Wdrożenie",
-      "runRate": "Run-rate vs in-year",
+      "runRate": "Run-rate vs bieżący rok",
       "annualizedRunRate": "Run-rate annualizowany",
       "projectedFullYear": "Prognoza do końca roku",
       "alreadyRealized": "Zrealizowane",
@@ -22857,7 +22860,7 @@
     "completed": "Zamknięte",
     "scheduled": "Zaplanowane",
     "followUp2": "Follow-up",
-    "operatorBrief": "Operator brief",
+    "operatorBrief": "Brief operatora",
     "preparingMeetingBrief": "Przygotowuję briefing spotkania...",
     "noOperatorBriefForThisMeeting": "Brak briefingu operatora dla tego spotkania.",
     "previousMonth": "Poprzedni miesiąc",
@@ -23638,10 +23641,10 @@
     "roles": {
       "other": "Inne / role historyczne",
       "SPONSOR": "Sponsor (Właściciel biznesowy)",
-      "PROJECT_LEADER": "Project Leader",
+      "PROJECT_LEADER": "Lider projektu",
       "INITIATIVE_OWNER": "Właściciel inicjatywy",
       "TEAM_MEMBER": "Członek zespołu",
-      "PMO": "Project Office (PMO)",
+      "PMO": "Biuro projektów (PMO)",
       "PORTFOLIO_OWNER": "Właściciel portfela",
       "BUSINESS_OWNER": "Business Owner (Korzyści)",
       "STEERING_COMMITTEE": "Komitet sterujący"
@@ -23945,7 +23948,7 @@
       "untitledCanvas": "Canvas roboczy bez nazwy",
       "currentConversation": "Bieżąca rozmowa",
       "startNote": "Rozpocznij firmową notatkę roboczą",
-      "workCanvas": "Work Canvas",
+      "workCanvas": "Kanwa pracy",
       "newWorkCanvas": "Nowy canvas roboczy",
       "chatTitle": "Firmowy czat AI",
       "closeChat": "Zamknij czat",
@@ -24475,11 +24478,11 @@
         "enabledStatus": "Aktywna",
         "disabledStatus": "Wyłączona",
         "escalationModeNotify": "Powiadomienie",
-        "escalationModeManagerReview": "Manager review",
-        "escalationModeExecutiveAlert": "Executive alert",
+        "escalationModeManagerReview": "Przegląd menedżera",
+        "escalationModeExecutiveAlert": "Alert zarządczy",
         "raciTitleShort": "RACI",
         "active": "Aktywne",
-        "enabled": "Enabled",
+        "enabled": "Włączone",
         "when": "Kiedy",
         "toWhom": "Do kogo",
         "reminderTextPlaceholder": "Treść remindera...",
@@ -25953,7 +25956,7 @@
     "directionReversed": "Kierunek odwrócony",
     "acceptTheChallengeFirst": "Najpierw zaakceptuj wyzwanie.",
     "noSelectedChanges": "Brak wybranych zmian",
-    "aiExpandBranch": "AI expand branch",
+    "aiExpandBranch": "AI rozwiń gałąź",
     "failedToApplyProposals": "Nie udało się zastosować propozycji",
     "aiRequiresBackend": "AI wymaga działającego backendu.",
     "noNewSuggestions": "Brak nowych propozycji",
@@ -26042,7 +26045,7 @@
       "exportToPresentation": "Eksport do prezentacji",
       "ideaPipeline": "Pipeline pomysłów",
       "aiCopilot": {
-        "label": "AI Copilot",
+        "label": "Copilot AI",
         "title": "Kopilot AI"
       },
       "voiceImage": "Głos / Obraz",
@@ -26247,7 +26250,7 @@
       "tabComments": "Komentarze",
       "tabAttachments": "Załączniki",
       "tabActivity": "Aktywność",
-      "tabAiInsights": "AI Insights",
+      "tabAiInsights": "Insighty AI",
       "tabDrawing": "Rysunek",
       "tabFields": "Pola",
       "tabAudit": "Audyt",
@@ -26784,7 +26787,7 @@
       "smartSuggestions": {
         "incompleteRowsTitle": "Niekompletne wiersze",
         "incompleteRowsDetail": "{{count}} wiersz(y) ma mniej niż 30% wypełnionych pól. Rozważ uzupełnienie lub użyj AI do auto-fill.",
-        "aiAutoFill": "AI Auto-fill",
+        "aiAutoFill": "AI Autouzupełnianie",
         "dominantPatternTitle": "Dominujący wzorzec: {{header}}",
         "dominantPatternDetail": "{{pct}}% wierszy ma wartość \"{{value}}\". Rozważ dodanie większej różnorodności.",
         "addRatingColumnTitle": "Dodaj kolumnę oceny",
@@ -26999,7 +27002,7 @@
       "aiActions": "Akcji AI",
       "aiActivityTimeline": "Oś czasu AI",
       "aiAnalyzesRelationshipsBetweenNodesAcross": "AI analizuje powiązania między nodami z różnych gałęzi.",
-      "aiAutoClustering": "AI: Auto-Clustering",
+      "aiAutoClustering": "AI: automatyczne grupowanie",
       "aiBlindSpots": "Blind Spots AI",
       "aiCompetitiveLandscape": "AI: Krajobraz konkurencyjny",
       "aiContext": "Kontekst AI",
@@ -27434,7 +27437,7 @@
       "label42": "Załaduj więcej",
       "label43": "Nie udało się wczytać notatek.",
       "label44": "Spróbuj ponownie",
-      "label45": "Living Notebook",
+      "label45": "Żywy notatnik",
       "label46": "Twoje notatki rosną, łączą się i pomagają podejmować decyzje",
       "label47": "Pusta strona",
       "label48": "Zacznij od zera",
@@ -27474,9 +27477,9 @@
       "label67": "Nieaktualna",
       "label68": "Sprawdzono",
       "label69": "Oznacz sprawdzone",
-      "label70": "Mini outline",
+      "label70": "Mini konspekt",
       "label71": "Nie udało się załadować propozycji AI dla tej notatki. Odśwież stronę lub spróbuj ponownie za chwilę.",
-      "label72": "AI propose -> accept",
+      "label72": "AI proponuje → akceptujesz",
       "label73": "Propozycja AI",
       "label74": "Akceptuj",
       "label75": "Odrzuć",
@@ -27490,7 +27493,7 @@
       "label83": "Plan działań AI",
       "label84": "Graf powiązań",
       "toastSuccess12": "Plik wgrano, utworzono notatkę",
-      "label85": "Outline first",
+      "label85": "Najpierw konspekt",
       "label86": "Przejrzyj i popraw outline przed utworzeniem artefaktu.",
       "label87": "Tytuł",
       "label88": "Typ oceny",
@@ -27543,14 +27546,14 @@
       "label7": "Attachments",
       "title2": "2. Zrób propozycję AI",
       "label8": "Uruchom AI action plan dla tej notatki.",
-      "label9": "AI proposal",
+      "label9": "Propozycja AI",
       "title3": "3. Review propozycji",
       "label10": "Masz propozycje gotowe do akceptacji lub odrzucenia.",
       "label11": "Najpierw utwórz propozycję AI.",
       "label12": "Review",
       "title4": "4. Konwertuj",
       "label13": "Konwertuj do raportu, gdy outline jest gotowy.",
-      "label14": "To report",
+      "label14": "Do raportu",
       "label15": "Przekaż do:",
       "label16": "Inicjatywy"
     },
@@ -27618,7 +27621,7 @@
     },
     "captureSourceSummary": {
       "title": "Źródło: Canvas (rozmowa)",
-      "label": "Web clip",
+      "label": "Wycinek z sieci",
       "label2": "Notatka utworzona z zapisanej strony",
       "label3": "Email",
       "label4": "Notatka utworzona z przesłanego maila",
@@ -27646,7 +27649,7 @@
       "residency": "Rezydencja danych",
       "retention": "Retencja",
       "aiPolicy": "Polityka AI",
-      "benchmark": "Consulting Bench"
+      "benchmark": "Benchmark konsultingowy"
     },
     "overview": {
       "linksTitle": "Powierzchnie zaufania",
@@ -27943,7 +27946,7 @@
       }
     },
     "benchmark": {
-      "title": "Consulting Bench",
+      "title": "Benchmark konsultingowy",
       "description": "Benchmark regresyjny jakości outputu konsultingowego — bank zadań, rubryka i sędzia LLM.",
       "status": {
         "builtLabel": "Status harnessu",
@@ -27987,7 +27990,7 @@
       "autoLayoutApplied": "Układ automatyczny zastosowany",
       "failed": "Nie udało się",
       "stepAccepted": "Krok zaakceptowany",
-      "processFlowCheckpoint": "Process flow checkpoint",
+      "processFlowCheckpoint": "Punkt kontrolny procesu",
       "saved": "Zapisano",
       "failedSave": "Nie udało się zapisać",
       "processFlowEditor": "Edytor przepływu procesu",
@@ -27998,12 +28001,12 @@
       "youCanReviewFlowButEditing": "Możesz przeglądać przepływ, ale edycja i zapis są obecnie zablokowane.",
       "close": "Zamknij",
       "aiCoachProcessAnalysis": "AI Coach — Analiza procesu",
-      "structuredBrief": "Structured brief",
+      "structuredBrief": "Ustrukturyzowany brief",
       "objective": "Cel:",
       "gaps": "Luki",
       "moves": "Ruchy",
       "checkpoints": "Checkpointy",
-      "savingsAnalysis": "Savings analysis",
+      "savingsAnalysis": "Analiza oszczędności",
       "processSummary": "Podsumowanie procesu",
       "steps": "Kroków",
       "decisions": "Decyzji",
@@ -28131,7 +28134,17 @@
       "processHealth": "Zdrowie procesu",
       "mapInspector": "Inspektor mapy",
       "mapHealth": "Zdrowie mapy",
-      "convertSelectionCount": "Konwertuj zaznaczenie ({{value}})"
+      "convertSelectionCount": "Konwertuj zaznaczenie ({{value}})",
+      "overview": "Przegląd",
+      "properties": "Właściwości",
+      "relations": "Powiązania",
+      "comments": "Komentarze",
+      "history": "Historia",
+      "statistics": "Statystyki",
+      "statElements": "Elementy",
+      "statRelations": "Relacje",
+      "statRoots": "Gałęzie główne",
+      "statEvidence": "Dowody"
     },
     "contextPanel": {
       "contextStatistics": "Kontekst i statystyki",
@@ -28296,7 +28309,7 @@
     "exportMenu": {
       "importFailed": "Import nie powiódł się",
       "exportMap": "Eksport mapy",
-      "importInterop": "Import / Interop",
+      "importInterop": "Import / Interoperacyjność",
       "pasteDrawIoXmlBpmnXml": "Wklej `draw.io XML`, `BPMN XML` lub `diagram package`.",
       "pasteImportPayload": "Wklej payload do importu…",
       "importIntoWorkspace": "Importuj do workspace",
@@ -29983,7 +29996,7 @@
         "frame": "Ramka"
       },
       "pf": {
-        "startEnd": "Start/End",
+        "startEnd": "Start/Koniec",
         "task": "Task",
         "decision": "Decyzja",
         "lane": "Lane"
@@ -30037,7 +30050,7 @@
       "ctx_paste_nodes": "Wklej",
       "ctx_toggle_collapse": "Zwiń / rozwiń",
       "ctx_focus_subtree": "Skup poddrzewo",
-      "ctx_drill_down": "Drill down",
+      "ctx_drill_down": "Drąż w dół",
       "ctx_connect_to_selected": "Połącz z zaznaczonym",
       "ctx_detach_branch": "Odłącz gałąź",
       "ctx_duplicate_branch": "Duplikuj gałąź",
@@ -30518,9 +30531,9 @@
       "downstreamLimits": "Ograniczenia downstream",
       "template": "Template",
       "noTemplateAiComposesStructure": "Bez template - AI układa strukturę",
-      "executiveReadout": "Executive readout",
+      "executiveReadout": "Read-out zarządczy",
       "consultingWorkpaper": "Workpaper konsultingowy",
-      "decisionPack": "Decision pack",
+      "decisionPack": "Pakiet decyzyjny",
       "composerConfirmText": "Potwierdzam utworzenie draftu/propozycji z widocznym lineage i ograniczeniami Report Pack.",
       "cancel": "Anuluj",
       "runGenerator": "Uruchom generator",
@@ -30697,7 +30710,7 @@
           "Hotfix natychmiast",
           "Eskalacja do sponsora",
           "Rollback",
-          "War room"
+          "Sztab kryzysowy"
         ],
         "dependency": [
           "Spotkanie synchronizacyjne",
@@ -31166,7 +31179,7 @@
       "diagnosis": "Diagnoza",
       "roadmap": "Roadmap",
       "investment": "Decyzja inwest.",
-      "update": "Update",
+      "update": "Aktualizuj",
       "summary": "Podsumowanie",
       "tone": "Ton",
       "consulting": "Konsultingowy",
@@ -31417,7 +31430,7 @@
       "additionalSettingsControllingContentGeneration": "Dodatkowe ustawienia sterujące generowaniem treści",
       "audience": "Odbiorca",
       "executiveCLevel": "Zarząd / C-level",
-      "itEngineering": "IT / Engineering",
+      "itEngineering": "IT / Inżynieria",
       "operations": "Operacje",
       "mixed": "Mieszany",
       "tone": "Ton",
@@ -31940,8 +31953,8 @@
           "thinkDeeper": "Pogłęb",
           "implement": "Wprowadź",
           "close": "Zamknij",
-          "next": "Next",
-          "previous": "Previous",
+          "next": "Dalej",
+          "previous": "Wstecz",
           "confirm": "Potwierdź",
           "selectedMany": "Możesz zaznaczyć wiele odpowiedzi"
         },
@@ -32036,7 +32049,7 @@
           "consultantProposal": "Propozycja konsultanta",
           "aiWorking": "AI pracuje",
           "alignIntent": "Najpierw uzgadniamy, jak rozumiem intencję tej sesji i jaki typ kierunku strategicznego próbujemy zaprojektować.",
-          "aiUnderstanding": "AI understanding",
+          "aiUnderstanding": "Rozumienie AI",
           "question1Heading": "1. Jaki kierunek strategiczny projektujemy?",
           "question1Description": "Wybierz, jaki rodzaj kierunku strategicznego naprawdę próbujemy tutaj zbudować.",
           "question2Heading": "2. Co ma być w centrum tej analizy?",
@@ -32084,7 +32097,7 @@
       "dynamicSwot": {
         "sections": {
           "executiveSummary": {
-            "label": "Executive Summary",
+            "label": "Podsumowanie zarządcze",
             "description": "Podsumowanie całej analizy"
           },
           "swotMatrix": {
@@ -32116,7 +32129,7 @@
           "initiativesDefined": "Inicjatywy zdefiniowane"
         },
         "outputsActions": {
-          "title": "Outputs & Actions",
+          "title": "Wyniki i działania",
           "badge": "Zarządzanie wynikami",
           "description": "Zamień wyniki analizy w konkretne deliverables: inicjatywy do realizacji, raporty, prezentacje i idee do dalszej eksploracji."
         },
@@ -32170,8 +32183,8 @@
       },
       "generic": {
         "title": "Final Summary i inicjatywy",
-        "finalSourceSummaryProposal": "Final source summary (AI proposal)",
-        "finalSourceSummary": "Final source summary",
+        "finalSourceSummaryProposal": "Końcowe podsumowanie źródeł (propozycja AI)",
+        "finalSourceSummary": "Końcowe podsumowanie źródeł",
         "generateAnalysisHint": "Kliknij \"Generuj analizę\" aby otrzymać podsumowanie AI.",
         "metrics": {
           "industryAttractiveness": "Atrakcyjność branży",
@@ -32181,8 +32194,8 @@
           "productDev": "Rozwój produktu",
           "diversification": "Dywersyfikacja",
           "stars": "Stars",
-          "cashCows": "Cash Cows",
-          "questionMarks": "Question Marks",
+          "cashCows": "Dojne krowy",
+          "questionMarks": "Znaki zapytania",
           "dogs": "Dogs",
           "assumptions": "Założenia",
           "risks": "Ryzyka",
@@ -32371,11 +32384,11 @@
       "volumePerWeekPlaceholder": "np. 250",
       "baselineMinutesPerCycle": "Baseline: min/cykl",
       "baselineMinutesPlaceholder": "np. 12",
-      "baselineErrorRate": "Baseline: error rate (%)",
+      "baselineErrorRate": "Baza: wskaźnik błędów (%)",
       "baselineErrorRatePlaceholder": "np. 3.5",
       "targetMinutesPerCycle": "Target: min/cykl",
       "targetMinutesPlaceholder": "np. 5",
-      "targetErrorRate": "Target: error rate (%)",
+      "targetErrorRate": "Cel: wskaźnik błędów (%)",
       "targetErrorRatePlaceholder": "np. 1",
       "estimatedHoursPerWeek": "Szacowane godziny / tydzień",
       "baselineLabel": "Baseline",
@@ -32462,12 +32475,12 @@
       "openChat": "Otwórz chat",
       "generatedInitiatives": "Wygenerowane inicjatywy",
       "noInitiativesHint": "Brak inicjatyw. Użyj AI do wygenerowania rekomendacji, a następnie utwórz inicjatywy w module Initiatives.",
-      "toolType": "Tool type: {{toolType}}"
+      "toolType": "Typ narzędzia: {{toolType}}"
     },
     "toolPhaseAiActions": {
-      "aiCopilot": "AI Copilot",
+      "aiCopilot": "Copilot AI",
       "reviewWaitingTitle": "{{count}} kart AI czeka na review",
-      "reviewAiCount": "Review AI ({{count}})",
+      "reviewAiCount": "Przejrzyj AI ({{count}})",
       "stopGenerationTitle": "Zatrzymaj bieżące generowanie AI",
       "stopAi": "Zatrzymaj AI"
     },
@@ -32511,23 +32524,23 @@
     },
     "toolHeader": {
       "help": "Pomoc",
-      "requestReview": "Request review",
+      "requestReview": "Poproś o przegląd",
       "export": "Eksportuj",
       "createInitiative": "Utwórz inicjatywę",
       "glossary": "Słownik"
     },
     "generateInitiativesModal": {
-      "title": "Generate initiatives",
+      "title": "Generuj inicjatywy",
       "initiativesCount": "Liczba inicjatyw",
       "customPlaceholder": "Custom (1-7)",
       "methodology": "Metodyka",
-      "decisionOwner": "Decision Owner",
+      "decisionOwner": "Właściciel decyzji",
       "optional": "(opcjonalnie)",
       "selectPlaceholder": "-- Wybierz --",
-      "includeChatContext": "Include AI chat context",
-      "previewList": "Preview list",
+      "includeChatContext": "Dołącz kontekst czatu AI",
+      "previewList": "Lista podglądu",
       "cancel": "Anuluj",
-      "generateDrafts": "Generate drafts"
+      "generateDrafts": "Generuj szkice"
     },
     "riskUncertaintyLibraryGraphic": {
       "titleProcess": "Jak Risk & Uncertainty prowadzi od sygnałów do zabezpieczeń",
@@ -32550,7 +32563,7 @@
         ],
         [
           "Moves",
-          "Validate, mitigate, monitor, hedge, escalate"
+          "Waliduj, ograniczaj, monitoruj, zabezpieczaj, eskaluj"
         ]
       ]
     },
@@ -32566,11 +32579,11 @@
           "Wysoki wzrost i mocna pozycja: inwestuj selektywnie"
         ],
         [
-          "Question Marks",
+          "Znaki zapytania",
           "Wysoki wzrost i słaba pozycja: testuj lub wybierz bet"
         ],
         [
-          "Cash Cows",
+          "Dojne krowy",
           "Stabilna pozycja: utrzymuj i finansuj wzrost"
         ],
         [
@@ -32886,7 +32899,7 @@
         ],
         [
           "Macierz",
-          "Quick wins, big bets, fill-ins, money pit",
+          "Szybkie wygrane, duże zakłady, wypełniacze, studnia bez dna",
           "bg-amber-500"
         ],
         [
@@ -32901,11 +32914,11 @@
       "axisEffort": "Wysiłek",
       "quadrants": [
         [
-          "Quick wins",
+          "Szybkie wygrane",
           "Wys. wartość, niski wysiłek"
         ],
         [
-          "Big bets",
+          "Duże zakłady",
           "Wys. wartość, wysoki wysiłek"
         ],
         [
@@ -32913,7 +32926,7 @@
           "Nis. wartość, niski wysiłek"
         ],
         [
-          "Money pit",
+          "Studnia bez dna",
           "Nis. wartość, wysoki wysiłek"
         ]
       ],
@@ -33238,26 +33251,26 @@
       "legend": "Dynamiczny SWOT: brief → dowody → macierz → napięcia → ruchy i materiały"
     },
     "toolSessionPreviewV3": {
-      "intentExecBrief": "Executive brief",
+      "intentExecBrief": "Brief zarządczy",
       "intentKeyRisks": "Kluczowe ryzyka",
       "intentInitiativeAngles": "Kąty inicjatyw"
     },
     "toolWorkspace": {
       "dodNotSatisfied": "Brak wymagan DoD",
-      "reviewRequested": "Review requested",
-      "toolApproved": "Tool approved",
-      "sentBackToDraft": "Sent back to draft",
+      "reviewRequested": "Poproszono o przegląd",
+      "toolApproved": "Narzędzie zatwierdzone",
+      "sentBackToDraft": "Odesłano do szkicu",
       "permissionDenied": "Brak uprawnien",
-      "generatedInitiatives": "Generated initiatives",
+      "generatedInitiatives": "Wygenerowane inicjatywy",
       "loadingTool": "Ładowanie narzędzia…",
-      "requestReviewTitle": "Request review",
+      "requestReviewTitle": "Poproś o przegląd",
       "requestReviewSubtitle": "Sprawdz kompletność i potwierdz wysłanie do review.",
       "noDodGaps": "Brak braków w DoD.",
       "gapsLabel": "Braki",
-      "decisionOwner": "Decision Owner",
+      "decisionOwner": "Właściciel decyzji",
       "optional": "(opcjonalnie)",
       "selectPlaceholder": "-- Wybierz --",
-      "dueDate": "Due date",
+      "dueDate": "Termin",
       "priority": "Priorytet",
       "priorityLow": "Niski",
       "priorityMedium": "Sredni",
@@ -33290,16 +33303,16 @@
       "summaryTitle": "Podsumowanie",
       "gapsTitle": "Braki (gaps)",
       "noGapsReady": "Brak brakow. Gotowe do zatwierdzenia.",
-      "generateInitiativesTitle": "Generate initiatives",
+      "generateInitiativesTitle": "Generuj inicjatywy",
       "methodology": "Metodyka",
       "count": "Liczba",
       "configure": "Konfiguruj",
-      "decisionGatesTitle": "Decision gates",
+      "decisionGatesTitle": "Bramki decyzyjne",
       "comment": "Komentarz",
       "sendBackReasonPlaceholder": "Powod odeslania do Draft",
       "confirmApproval": "Potwierdzam zatwierdzenie",
       "approve": "Approve",
-      "sendBackToDraft": "Send back to Draft"
+      "sendBackToDraft": "Odeślij do szkicu"
     },
     "knownToolPreviewV3": {
       "intentWhenToUse": "Kiedy użyć",
@@ -33396,7 +33409,7 @@
       "aiWorkspaceSubtitle": "Tu trafiają wszystkie podpowiedzi, rekomendacje i uzasadnienia AI. Panel nie zabiera już szerokości canvasowi narzędzia.",
       "openChat": "Otwórz chat",
       "clarifyMissingInputs": "Doprecyzuj brakujące dane wejściowe, zaakceptuj wartościowe karty AI i przejdź do syntezy outputów.",
-      "organizationContext": "Organization context",
+      "organizationContext": "Kontekst organizacji",
       "noOrganizationProfile": "Brak profilu organizacji",
       "aiRationale": "Uzasadnienie AI: rekomendacje powinny być interpretowane przez pryzmat organizacji, jej aktualnego kontekstu i celu sesji, a nie jako generyczna lista dobrych praktyk.",
       "aiProposalQueue": "Kolejka propozycji AI",
@@ -33426,7 +33439,7 @@
       "moveToFullSessionDescription": "Jeśli framing po lewej stronie jest wystarczająco dobry, AI przygotuje dalsze części sesji: input map, macierz SWOT, napięcia, ruchy i outputy.",
       "aiBuildingSession": "AI buduje pełną sesję...",
       "acceptFramingGenerate": "Akceptuj ten framing i generuj dalej",
-      "aiCollaborationPanel": "AI Collaboration Panel",
+      "aiCollaborationPanel": "Panel współpracy z AI",
       "aiPreparingSession": "AI przygotowuje sesję...",
       "aiPreparingSessionDescription": "Konsultant AI generuje pełną propozycję: sygnały, macierz SWOT, napięcia, ruchy strategiczne i propozycje outputów.",
       "aiProposals": "Propozycje AI",
@@ -33437,22 +33450,22 @@
       "readiness": "Readiness",
       "ready": "gotowe",
       "needsWork": "wymaga pracy",
-      "aiCoachBrief": "AI coach brief",
+      "aiCoachBrief": "Brief coacha AI",
       "panelShowsNextMove": "Panel pokazuje następny najlepszy ruch i luki jakościowe dla bieżącej fazy.",
-      "nextQuestion": "Next question",
+      "nextQuestion": "Następne pytanie",
       "whyNow": "Dlaczego teraz:",
-      "proposalQueue": "Proposal queue",
+      "proposalQueue": "Kolejka propozycji",
       "noUnacceptedProposals": "Brak niezaakceptowanych propozycji AI.",
-      "missingEvidence": "Missing evidence",
-      "sessionCounters": "Session counters",
+      "missingEvidence": "Brakujące dowody",
+      "sessionCounters": "Liczniki sesji",
       "acceptedCards": "Akceptowane karty",
       "proposals": "Propozycje",
       "readyOutputs": "Gotowe outputy",
-      "outputRoutes": "Output routes",
+      "outputRoutes": "Ścieżki wyników",
       "open": "Otwórz",
       "noOutputCandidates": "Brak kandydatów do outputów.",
-      "generatedFromThisTool": "Generated from this tool",
-      "recentInitiatives": "Recent initiatives"
+      "generatedFromThisTool": "Wygenerowane z tego narzędzia",
+      "recentInitiatives": "Ostatnie inicjatywy"
     },
     "toolCanvas": {
       "stepBeingPrepared": "Ten krok jest w przygotowaniu",
@@ -33488,54 +33501,54 @@
       "conversationCapture": "Rozmowa i zbieranie",
       "analysis": "Analiza",
       "conclusionsSummary": "Wnioski i summary",
-      "visibleHumanAILoop": "Visible human + AI loop",
+      "visibleHumanAILoop": "Widoczna pętla człowiek + AI",
       "currentStage": "Aktualny etap",
       "analysisBenchmarking": "Analiza i benchmarking",
       "conclusionsFinalSummary": "Wnioski i final summary",
       "noSessionData": "Brak danych sesji",
-      "previous": "Previous",
+      "previous": "Wstecz",
       "step": "Krok",
-      "next": "Next",
+      "next": "Dalej",
       "appliedConclusionsReadiness": "Applied conclusions i gotowość",
       "status": "Status",
       "progress": "Progress",
       "created2": "Created",
-      "lastModified": "Last modified",
-      "appliedConclusions": "Applied conclusions",
-      "finalSourceSummary": "Final source summary",
+      "lastModified": "Ostatnia zmiana",
+      "appliedConclusions": "Zastosowane wnioski",
+      "finalSourceSummary": "Końcowe podsumowanie źródeł",
       "missingItems": "Brakujące elementy",
-      "generationSettings": "Generation settings",
+      "generationSettings": "Ustawienia generowania",
       "methodology": "Methodology",
-      "initiativesCount": "Initiatives count",
-      "includeChatContext": "Include chat context",
-      "gateDecisions": "Gate decisions",
-      "sourceArtifact": "Source artifact",
+      "initiativesCount": "Liczba inicjatyw",
+      "includeChatContext": "Dołącz kontekst czatu",
+      "gateDecisions": "Decyzje bramek",
+      "sourceArtifact": "Artefakt źródłowy",
       "outputContract": "Kontrakt outputów",
       "initiativesFromThisSession": "Inicjatywy z tej sesji",
-      "generatedInitiatives": "Generated initiatives",
+      "generatedInitiatives": "Wygenerowane inicjatywy",
       "noInitiativesGeneratedYet": "Brak wygenerowanych inicjatyw",
-      "recommendedMoves": "Recommended moves",
+      "recommendedMoves": "Rekomendowane ruchy",
       "noMovesGeneratedYet": "Brak wygenerowanych ruchów.",
-      "outputCandidates": "Output candidates",
+      "outputCandidates": "Kandydaci na wyniki",
       "noOutputCandidatesYet": "Brak kandydatów outputów.",
-      "aIConsultantFlow": "AI consultant flow",
+      "aIConsultantFlow": "Przepływ konsultanta AI",
       "previous2": "Poprzedni",
       "backlinks": "Powiązania",
       "noLinksYet": "Brak powiązań",
-      "requestReview": "Request Review",
+      "requestReview": "Poproś o przegląd",
       "approveThisSession": "Zatwierdź sesję",
       "approve": "Approve",
       "sendBackToDraftWithAComment": "Odeślij do draftu z komentarzem",
-      "sendBack": "Send back",
-      "generateInitiatives": "Generate initiatives",
+      "sendBack": "Odeślij",
+      "generateInitiatives": "Generuj inicjatywy",
       "loading": "Ładowanie...",
-      "requestReview2": "Request review",
-      "decisionOwner": "Decision owner",
+      "requestReview2": "Poproś o przegląd",
+      "decisionOwner": "Właściciel decyzji",
       "select": "-- Wybierz --",
-      "dueDate": "Due date",
+      "dueDate": "Termin",
       "priority": "Priority",
-      "cancel": "Cancel",
-      "sendReview": "Send review",
+      "cancel": "Anuluj",
+      "sendReview": "Wyślij prośbę o przegląd",
       "sessionVisibilityDescription": "Sesja ma pokazywać pytanie decyzyjne, jakość dowodów, warstwę syntezy i gotowość outputów bez ukrywania pracy AI.",
       "readyStatus": "Gotowe",
       "needsWorkStatus": "Wymaga pracy",
@@ -33899,23 +33912,23 @@
           "intro": "Siły Rynkowe działają w pięciu fazach analogicznych do Dynamicznego SWOT: cel, wejścia, siły, insights i outputs. Każda faza ma inny poziom decyzji i inne zadanie dla AI.",
           "steps": [
             {
-              "title": "Mission & Market Context",
+              "title": "Misja i kontekst rynkowy",
               "text": "Branża, geografia, pozycja, pytanie i success signal"
             },
             {
-              "title": "Input & Exploration",
+              "title": "Dane wejściowe i eksploracja",
               "text": "Sygnały z wywiadu, benchmarków, plików i obserwacji"
             },
             {
-              "title": "Five Forces Build",
+              "title": "Budowa pięciu sił",
               "text": "Ocena każdej siły: score, trend, drivery, evidence i confidence"
             },
             {
-              "title": "Strategic Implications",
+              "title": "Implikacje strategiczne",
               "text": "Presja marży, defensibility, napięcia rynkowe i rekomendacje"
             },
             {
-              "title": "Outputs & Actions",
+              "title": "Wyniki i działania",
               "text": "Source summary, output candidates i drafty inicjatyw"
             }
           ]
@@ -33936,7 +33949,7 @@
               "text": "2-4 ruchy z uzasadnieniem, wysiłkiem, ryzykiem i pierwszym krokiem."
             },
             {
-              "title": "Output candidates",
+              "title": "Kandydaci na wyniki",
               "text": "Materiał do inicjatywy, raportu, prezentacji lub dalszej eksploracji."
             }
           ]
@@ -34027,7 +34040,7 @@
               "text": "Sekwencja: co robić teraz, co testować, co odłożyć."
             },
             {
-              "title": "Output candidates",
+              "title": "Kandydaci na wyniki",
               "text": "Materiał do inicjatywy, raportu, decka lub dalszej eksploracji."
             }
           ]
@@ -34408,7 +34421,7 @@
       "noAcceptedCapabilities": "Brak zaakceptowanych kompetencji.",
       "outputsTitle": "Outputy i inicjatywy",
       "outputsSubtitle": "Final source summary i kandydaci outputów powstają z zatwierdzonej diagnozy.",
-      "finalSourceSummary": "Final source summary",
+      "finalSourceSummary": "Końcowe podsumowanie źródeł",
       "card": {
         "namePlaceholder": "Nazwa kompetencji...",
         "domainPlaceholder": "Domena (np. technologia, talenty)...",
@@ -34447,7 +34460,7 @@
       "acceptedActivities": "Zaakceptowane aktywności",
       "outputsTitle": "Outputy i inicjatywy",
       "outputsSubtitle": "Final source summary i kandydaci outputów powstają z zatwierdzonej diagnozy.",
-      "finalSourceSummary": "Final source summary",
+      "finalSourceSummary": "Końcowe podsumowanie źródeł",
       "card": {
         "costContribution": "Udział w kosztach",
         "valueContribution": "Wkład w wartość",
@@ -34473,7 +34486,7 @@
       "noAcceptedPillars": "Brak zaakceptowanych filarów.",
       "outputsTitle": "Outputy i inicjatywy",
       "outputsSubtitle": "Final source summary i kandydaci outputów powstają z zatwierdzonej narracji.",
-      "finalSourceSummary": "Final source summary",
+      "finalSourceSummary": "Końcowe podsumowanie źródeł",
       "card": {
         "titlePlaceholder": "Nazwa filaru...",
         "removePillar": "Usuń filar",
@@ -34509,7 +34522,7 @@
       "noAcceptedPriorities": "Brak zaakceptowanych priorytetów.",
       "outputsTitle": "Outputy i inicjatywy",
       "outputsSubtitle": "Final source summary i kandydaci outputów powstają z zatwierdzonej diagnozy.",
-      "finalSourceSummary": "Final source summary",
+      "finalSourceSummary": "Końcowe podsumowanie źródeł",
       "card": {
         "titlePlaceholder": "Nazwa priorytetu...",
         "descPlaceholder": "Opis priorytetu...",
@@ -34543,7 +34556,7 @@
       "noAcceptedThemes": "Brak zaakceptowanych tematów.",
       "outputsTitle": "Outputy i inicjatywy",
       "outputsSubtitle": "Final source summary i kandydaci outputów powstają z zatwierdzonej diagnozy.",
-      "finalSourceSummary": "Final source summary",
+      "finalSourceSummary": "Końcowe podsumowanie źródeł",
       "card": {
         "titlePlaceholder": "Nazwa tematu...",
         "descPlaceholder": "Krótki opis tematu...",
@@ -34578,7 +34591,7 @@
       "acceptedForces": "Zaakceptowane siły",
       "outputsTitle": "Outputy i inicjatywy",
       "outputsSubtitle": "Final source summary i kandydaci outputów powstają z zatwierdzonej diagnozy.",
-      "finalSourceSummary": "Final source summary",
+      "finalSourceSummary": "Końcowe podsumowanie źródeł",
       "step": {
         "forceIntensity": "Intensywność siły",
         "scoreVeryLow": "Bardzo niska",
@@ -34800,7 +34813,7 @@
     "roles": {
       "member": "Członek",
       "admin": "Administrator",
-      "projectLeader": "Project Leader",
+      "projectLeader": "Lider projektu",
       "initiativeOwner": "Właściciel inicjatywy",
       "workstreamOwner": "Właściciel strumienia",
       "reviewer": "Recenzent",

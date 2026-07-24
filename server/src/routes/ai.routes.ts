@@ -5936,6 +5936,35 @@ router.post(
         .json({ error: 'LLM returned empty response', code: 'EMPTY_LLM_RESPONSE' });
     }
 
+    // ★ 2026-07-24 — REGRESJA R1: slad audytowy AI. Noc przepiela wywolania
+    // narzedzi z /ai/chat (ktory logowal przez AIAuditLogger.logSuggestion) na
+    // /ai/generate, ktory audytu NIE prowadzil => wpisy znikly z panelu admina.
+    // Audyt jest per-handler (nie w warstwie middleware), wiec /generate musi
+    // logowac sam — tym samym kontraktem co /chat (actionType SUGGESTION).
+    // Best-effort: awaria audytu nie moze zablokowac odpowiedzi narzedzia.
+    try {
+      const roleName = String((req.body as { roleName?: string }).roleName || '').trim();
+      const AIAuditLogger = await getAIAuditLogger();
+      await AIAuditLogger.logSuggestion(
+        req.userId!,
+        req.organizationId!,
+        null,
+        roleName || 'AI_TOOL',
+        text,
+        {
+          source: 'ai/generate',
+          intent: roleName || null,
+          userMessage: message,
+          systemInstruction: systemInstruction || null,
+          model: modelCfg.id,
+          provider: modelCfg.provider,
+          tokenUsage: result?.usage || null,
+        }
+      );
+    } catch (auditErr: any) {
+      logger.warn('[AI Generate] Audit log failed:', auditErr?.message || auditErr);
+    }
+
     return res.json({ text });
   })
 );

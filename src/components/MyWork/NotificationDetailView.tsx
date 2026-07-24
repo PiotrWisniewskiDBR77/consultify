@@ -58,6 +58,11 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
+import {
+  linkedTypeLabel,
+  notificationCategoryLabel,
+  notificationTypeLabel,
+} from '@/utils/enumLabels';
 import { muteNotificationTypeForSession } from '@/utils/notificationMuteSession';
 
 import { Api } from '../../services/api';
@@ -1498,28 +1503,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     contract?.expectedAction,
   ]);
 
-  // ── Auto-trigger AI context enrichment on load ────────────────────────────
-  // Runs once per notification after data is loaded. Silently enriches all fields.
-  const aiAutoTriggeredRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (
-      !notification ||
-      loading ||
-      sourceEntityLoading ||
-      isAnalyzingWorksheet ||
-      aiAutoTriggeredRef.current === notificationId
-    ) {
-      return;
-    }
-    // Mark as triggered for this notification
-    aiAutoTriggeredRef.current = notificationId;
-    // Small delay to let rule-engine defaults render first
-    const timer = setTimeout(() => {
-      handleAnalyzeWithAI(true);
-    }, 600);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notificationId, notification, loading, sourceEntityLoading]);
+  // ── AI context enrichment is USER-INITIATED ONLY ──────────────────────────
+  // ★ 2026-07-24 — REGRESJA R2: usunieto auto-wywolanie AI przy montowaniu
+  // ekranu. Wczesniej useEffect odpalal handleAnalyzeWithAI(true) po 600ms od
+  // zaladowania powiadomienia => KAZDE wejscie w karte generowalo wywolanie AI
+  // (i EMPTY_LLM_RESPONSE w konsoli) bez akcji uzytkownika. Analiza startuje
+  // teraz WYLACZNIE z klikniecia „Analizuj z AI" (handleAnalyzeWithAI(false)).
 
   const expectedActionValue = (
     expectedActionDraft ||
@@ -1552,37 +1541,38 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   // ze relacje i zrodla/zalozenia to sekcje PRAWEGO PANELU, a centrum to pola
   // opisowe. Liczymy je raz, tutaj (przed guardami — Rules of Hooks), zeby
   // panel mial dane, a centrum ich juz nie dublowalo (§2.6 anty-duplikacja).
+  // ★ `type` trzyma SUROWY typ obiektu ('task' | 'decision' | 'project' | …) —
+  //   bo ta sama wartosc jedzie do `onNavigateToSource(type, id)`. Etykiete PL
+  //   robi `linkedTypeLabel` dopiero w renderze (2026-07-24). Wczesniej pole
+  //   niosło juz PRZETLUMACZONA nazwe, wiec nawigacja w PL dostawala 'zadanie'
+  //   zamiast 'task' — a wariant bez `sourceEntity` pokazywal surowe 'DECISION'
+  //   i identyfikator podstawiony pod tytul.
   const notifRelationItems = useMemo(() => {
     const items: { id: string; type: string; title: string }[] = [];
     if (!notification) return items;
     if (sourceEntity && sourceEntity.title) {
       items.push({
         id: sourceEntity.id || notification.relatedObjectId || '',
-        type: isPolish
-          ? sourceEntity.type === 'task'
-            ? 'Zadanie'
-            : sourceEntity.type === 'decision'
-              ? 'Decyzja'
-              : sourceEntity.type || 'Źródło'
-          : sourceEntity.type || 'Source',
+        type: String(sourceEntity.type || ''),
         title: String(sourceEntity.title),
       });
     } else if (notification.relatedObjectType && notification.relatedObjectId) {
+      // Tytulu NIE MA — nie podstawiamy pod niego id (to nie nazwa obiektu).
       items.push({
         id: notification.relatedObjectId,
-        type: notification.relatedObjectType,
-        title: notification.relatedObjectId,
+        type: String(notification.relatedObjectType),
+        title: '',
       });
     }
     if (notification.projectName && notification.projectId) {
       items.push({
         id: notification.projectId,
-        type: t('myWork.notificationDetail.type', 'Project'),
+        type: 'project',
         title: notification.projectName,
       });
     }
     return items;
-  }, [notification, sourceEntity, isPolish, t]);
+  }, [notification, sourceEntity]);
 
   // Zrodlo powiadomienia (kto/co je wygenerowalo) — wiersz „Zrodlo" w tabeli
   // Wlasciwosci. Wczesniej ta sama logika stala w centrum jako pigulka-badge.
@@ -1734,13 +1724,20 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   >
                     <AlertTriangle size={12} className="mt-px shrink-0" />
                     <span className="flex-1">{aiAnalysisError}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleAnalyzeWithAI(false)}
-                      className="shrink-0 underline underline-offset-2 hover:opacity-80"
-                    >
-                      {t('myWork.notificationDetail.retry', 'Retry')}
-                    </button>
+                    {/* PODGLĄD = TYLKO CZYTANIE (2026-07-24): „Ponów" wywołuje
+                        `handleAnalyzeWithAI(false)`, które NADPISUJE pięć pól
+                        karty. Sam komunikat o błędzie zostaje (to uczciwa
+                        informacja, czyste czytanie) — znika tylko przycisk,
+                        który by zapisał. */}
+                    {!readMode && (
+                      <button
+                        type="button"
+                        onClick={() => handleAnalyzeWithAI(false)}
+                        className="shrink-0 underline underline-offset-2 hover:opacity-80"
+                      >
+                        {t('myWork.notificationDetail.retry', 'Retry')}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -2827,7 +2824,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       render: () => (
         <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-c-surface-raised border border-c-border text-c-text-secondary">
           <TypeIcon size={12} className={typeConfig.color} />
-          <span className="truncate">{notification.type.replace(/_/g, ' ')}</span>
+          {/* Było: `notification.type.replace(/_/g,' ')` → „AI RISK DETECTED".
+              To surowy enum bazy, a nie język produktu (2026-07-24). */}
+          <span className="truncate">{notificationTypeLabel(notification.type, isPolish)}</span>
         </div>
       ),
     },
@@ -2835,7 +2834,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       id: 'category',
       label: { en: 'Category', pl: 'Kategoria' },
       type: 'text' as const,
-      value: notification.category,
+      // Było: gołe `ai` / `task` / `pmo` wprost z kolumny bazy.
+      value: notificationCategoryLabel(notification.category, isPolish),
       onChange: () => {},
       readOnly: true,
     },
@@ -2915,6 +2915,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     ? 'Usuń powiadomienie (skrót: D — zapyta o potwierdzenie)'
     : 'Delete notification (shortcut: D — asks for confirmation)';
 
+  // PODGLĄD = TYLKO CZYTANIE (2026-07-24). Rozgraniczenie w tym slocie:
+  //   · „Otwórz źródło/dokument" = NAWIGACJA do powiązanego obiektu, niczego
+  //     nie zapisuje → ZOSTAJE także w Podglądzie (jak „Kopiuj link" w kebabie);
+  //   · „Oznacz jako przeczytane" = ZAPIS `isRead` na rekordzie → w Podglądzie
+  //     znika (ten sam handler zniknął też z sekcji „Akcje" panelu).
   const headerPrimaryAction = hasSourceCta
     ? {
         label: {
@@ -2924,6 +2929,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         icon: primarySourceIcon,
         onClick: openPrimarySource,
       }
+    : readMode
+    ? undefined
     : {
         // Osobny klucz od paskowego `markRead` ("Przeczytane" w pl to status,
         // nie czasownik — slot primary musi mowic, co sie stanie po kliknieciu).
@@ -2983,7 +2990,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   // Dzialania TECHNICZNE i ADMINISTRACYJNE artefaktu. „Usun" na koncu, jako
   // destrukcyjne (separator + ton c-danger rysuje powloka). Karta NIE rysuje
   // juz wlasnego drugiego kebaba w pasku pod naglowkiem.
-  const headerOverflowItems = [
+  //
+  // PODGLĄD = TYLKO CZYTANIE (decyzja właściciela 2026-07-24): wszystkie trzy
+  // pozycje ZMIENIAJĄ STAN („Wycisz to" / „Wycisz podobne" zapisują regułę
+  // wyciszenia, „Usuń" kasuje rekord), więc w Podglądzie kebab zostaje z samym
+  // czytaniem, które dokłada powłoka („Skopiuj kod obiektu" / „Kopiuj link").
+  const headerOverflowItems = readMode ? [] : [
     {
       id: 'mute-this',
       label: t('myWork.notificationDetail.muteThis', 'Mute this'),
@@ -3061,7 +3073,16 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       label: t('myWork.notificationDetail.panelActions', 'Actions'),
       icon: Zap,
       defaultOpen: true,
-      children: (
+      // ── PODGLĄD = TYLKO CZYTANIE (decyzja właściciela 2026-07-24) ──
+      // „Oznacz przeczytane" zapisuje `isRead`, „Odłóż" zapisuje `snoozedUntil`
+      // — obie zmieniają stan rekordu. Sekcja pustoszeje dokładnie tak jak
+      // w Zadaniu i Decyzji (`isEmpty: readMode` + ten sam komunikat).
+      isEmpty: readMode,
+      emptyLabel: t(
+        'myWork.notificationDetail.actionsHiddenInReadMode',
+        'Actions are hidden in preview mode'
+      ),
+      children: readMode ? null : (
         // stopPropagation: globalny `click` na window zamyka rozwiniete presety
         // odlozenia (patrz `handleClickOutside`). Bez tego kliknięcie „Odloz"
         // otwieraloby i natychmiast zamykalo liste.
@@ -3150,13 +3171,19 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 tabIndex={isClickable ? 0 : undefined}
               >
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-border text-c-text-muted bg-c-surface-raised uppercase shrink-0">
-                    {item.type}
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-border text-c-text-muted bg-c-surface-raised shrink-0">
+                    {linkedTypeLabel(item.type, isPolish)}
                   </span>
-                  <span className="truncate text-xs text-c-text">{item.title}</span>
+                  {item.title ? (
+                    <span className="truncate text-xs text-c-text">{item.title}</span>
+                  ) : null}
                 </div>
+                {/* Wiersz DRUKOWAŁ surowy identyfikator („decision-dbr77-demo-1")
+                    tylko po to, żeby dało się go skopiować. Funkcja zostaje —
+                    znika WYPISANY na ekranie identyfikator deweloperski
+                    (2026-07-24). */}
                 <button
-                  className="self-start inline-flex items-center gap-1 text-[10px] font-mono text-c-text-muted hover:text-c-info transition-colors"
+                  className="self-start inline-flex items-center gap-1 text-[10px] text-c-text-muted hover:text-c-info transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigator.clipboard.writeText(item.id);
@@ -3164,11 +3191,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   }}
                   title={t('myWork.notificationDetail.title', 'Copy ID')}
                 >
-                  {String(item.id).length > 22 ? `${String(item.id).slice(0, 22)}...` : item.id}
-                  <Copy
-                    size={10}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  />
+                  <Copy size={10} />
+                  {t('myWork.notificationDetail.title', 'Copy ID')}
                 </button>
               </div>
             );
@@ -3214,6 +3238,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       label: t('myWork.notificationDetail.panelResults', 'Results'),
       icon: FileText,
       defaultOpen: false,
+      // PODGLĄD = TYLKO CZYTANIE (2026-07-24): „Zapisz jako notatkę" TWORZY
+      // nowy artefakt — to nie jest wyjątek od reguły tylko dlatego, że siedzi
+      // w „Rezultatach" zamiast w „Akcjach". Ta sama bramka co przy kafelkach
+      // tworzenia w Insighcie.
+      isEmpty: readMode,
+      emptyLabel: t(
+        'myWork.notificationDetail.actionsHiddenInReadMode',
+        'Actions are hidden in preview mode'
+      ),
       children: (
         <PreviewActionBar
           rows={[
@@ -3284,448 +3317,412 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-c-surface-raised via-c-surface to-c-surface-raised dark:from-c-bg dark:to-c-bg">
-      <div className="p-6">
-        <div className="max-w-6xl mx-auto space-y-0">
-          {/* ── Header — shared NModeHeader ───────────────────────────────
-               SPEC-N §2.3/§2.7 — USUNIETO prop `draftSavedLabel`. Jego typ mowi
-               wprost "Do not use for persistence state", a ta karta uzywala go do
-               live-timestampu zapisu ("Zapisano 14:32"). Powiadomienie jest
-               read-only (tytul ma `titleReadOnly`), wiec wskaznik zapisu w naglowku
-               wprowadzal w blad — zwlaszcza obok osobnego statusu cyklu zycia.
-               Edytowalna checklista ma wlasny, poprawny kanal: `isDirty`/`saving`.
-               `lastWorksheetSavedAt` nadal jest ustawiany w logice zapisu — nie
-               renderujemy go tylko w powloce. */}
-          <NModeHeader
-            title={
-              notification.title || t('myWork.notificationDetail.notification', 'Notification')
-            }
-            onTitleChange={() => {}}
-            // D-A (tryb otwarcia): powiadomienie = arkusz do wypelnienia → karta
-            // otwiera sie w EDYCJI. Powierzchnia edycji to worksheet/checklista
-            // (edytowalna od razu, autozapis onBlur — kanaly `isDirty`/`saving`
-            // ponizej), a NIE tytul: tytul powiadomienia to naglowek generowany
-            // przez silnik ryzyka, bez kanalu utrwalenia (onTitleChange to no-op),
-            // wiec zostaje read-only. Edytowalny tytul udawalby zapis, ktorego nie ma.
-            titleReadOnly={true}
-            artifactId={notificationId}
-            artifactType="notification"
-            onSave={handleSaveWorksheet}
-            saving={worksheetSaving}
-            isDirty={worksheetIsDirty}
-            // Gdy ostatni zapis padl, wskaznik ma mowic "Blad zapisu" (klikalny,
-            // ponawia) zamiast "Zapisano". Karta nie moze twierdzic, ze utrwalila
-            // tresc, ktorej backend nie przyjal.
-            saveState={
-              worksheetSaving
-                ? 'saving'
-                : worksheetSaveFailed
-                  ? 'error'
-                  : worksheetIsDirty
-                    ? 'dirty'
-                    : 'saved'
-            }
-            onChat={handleOpenChat}
-            onClose={onClose}
-            // D-B: status = etykieta-pigulka z tekstem + ton c-* (nie naga kropka).
-            // statusDotColor USUNIETY (@deprecated, nie renderowany).
-            statusLabel={notifStatusLabel}
-            statusTone={notifStatusTone}
-            presentationMode={presentationMode}
-            onPresentationModeChange={setPresentationMode}
-            // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
-            showModeSwitcher={false}
-            primaryAction={headerPrimaryAction}
-            // Standard n-Type §3.5 — JEDNO menu trzech kropek na ekranie,
-            // w Menu 1, na dzialania techniczne i administracyjne. Karta
-            // dokleja tu swoje pozycje zamiast rysowac wlasny drugi kebab.
-            extraOverflowItems={headerOverflowItems}
-          />
+      {/* ── GEOMETRIA CHROMU (2026-07-24) ──────────────────────────────────
+          `pt-4` (nie `pt-6`) = ten sam odstęp od góry co w powłoce
+          `NModeShell` (:153) — Menu 1 wszystkich sześciu kart N stoi teraz
+          na 16 px, nie 16/24 zależnie od karty.
+          Wiersz flex z prawym panelem obejmuje RÓWNIEŻ Menu 1 i Menu 2
+          (było: panel siedział w wierszu 3-pane POD menu, więc oba menu biegły
+          na całe 1152 px NAD panelem, a panel startował 148 px od góry).
+          Teraz karta ma tę samą geometrię co Decyzja/Zadanie/Inicjatywa. */}
+      <div className="px-6 pt-4 pb-6">
+        <div className="max-w-6xl mx-auto flex gap-6 items-start space-y-0">
+          <div className="flex-1 min-w-0 space-y-0">
+            {/* ── Header — shared NModeHeader ───────────────────────────────
+                 SPEC-N §2.3/§2.7 — USUNIETO prop `draftSavedLabel`. Jego typ mowi
+                 wprost "Do not use for persistence state", a ta karta uzywala go do
+                 live-timestampu zapisu ("Zapisano 14:32"). Powiadomienie jest
+                 read-only (tytul ma `titleReadOnly`), wiec wskaznik zapisu w naglowku
+                 wprowadzal w blad — zwlaszcza obok osobnego statusu cyklu zycia.
+                 Edytowalna checklista ma wlasny, poprawny kanal: `isDirty`/`saving`.
+                 `lastWorksheetSavedAt` nadal jest ustawiany w logice zapisu — nie
+                 renderujemy go tylko w powloce. */}
+            <NModeHeader
+              title={
+                notification.title || t('myWork.notificationDetail.notification', 'Notification')
+              }
+              onTitleChange={() => {}}
+              // D-A (tryb otwarcia): powiadomienie = arkusz do wypelnienia → karta
+              // otwiera sie w EDYCJI. Powierzchnia edycji to worksheet/checklista
+              // (edytowalna od razu, autozapis onBlur — kanaly `isDirty`/`saving`
+              // ponizej), a NIE tytul: tytul powiadomienia to naglowek generowany
+              // przez silnik ryzyka, bez kanalu utrwalenia (onTitleChange to no-op),
+              // wiec zostaje read-only. Edytowalny tytul udawalby zapis, ktorego nie ma.
+              titleReadOnly={true}
+              artifactId={notificationId}
+              artifactType="notification"
+              onSave={handleSaveWorksheet}
+              saving={worksheetSaving}
+              isDirty={worksheetIsDirty}
+              // Gdy ostatni zapis padl, wskaznik ma mowic "Blad zapisu" (klikalny,
+              // ponawia) zamiast "Zapisano". Karta nie moze twierdzic, ze utrwalila
+              // tresc, ktorej backend nie przyjal.
+              saveState={
+                worksheetSaving
+                  ? 'saving'
+                  : worksheetSaveFailed
+                    ? 'error'
+                    : worksheetIsDirty
+                      ? 'dirty'
+                      : 'saved'
+              }
+              onChat={handleOpenChat}
+              onClose={onClose}
+              // D-B: status = etykieta-pigulka z tekstem + ton c-* (nie naga kropka).
+              // statusDotColor USUNIETY (@deprecated, nie renderowany).
+              statusLabel={notifStatusLabel}
+              statusTone={notifStatusTone}
+              presentationMode={presentationMode}
+              onPresentationModeChange={setPresentationMode}
+              // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+              showModeSwitcher={false}
+              primaryAction={headerPrimaryAction}
+              // Standard n-Type §3.5 — JEDNO menu trzech kropek na ekranie,
+              // w Menu 1, na dzialania techniczne i administracyjne. Karta
+              // dokleja tu swoje pozycje zamiast rysowac wlasny drugi kebab.
+              extraOverflowItems={headerOverflowItems}
+            />
 
-          {/* ═══════════ N MODE ═══════════════════════════════════════════
-               Uklad: ActionBar → 3-Pane (LeftNav + Canvas + PRAWY PANEL).
+            {/* ═══════════ N MODE ═══════════════════════════════════════════
+                 Uklad: ActionBar → 3-Pane (LeftNav + Canvas + PRAWY PANEL).
 
-               SPEC-N §2.2 — prawy panel jest czescia OBOWIAZKOWA powloki, a ta
-               karta nie miala go w ogole (jedna z 5 na 8). Wariant SKROCONY wg
-               decyzji wlasciciela (K2 planu wdrozenia): wiadomosc systemowa nie
-               jest artefaktem wspolpracy, wiec panel ma tylko Wlasciwosci
-               + Historie — bez Komentarzy (sekcja skasowana, nie przeniesiona)
-               i bez Powiazan (powiadomienie nie ma realnych relacji; pusta sekcja
-               "Powiazania" bylaby ceremonia, nie informacja — zrodlo pokazujemy
-               w tresci sekcji "Co sie dzieje").
+                 SPEC-N §2.2 — prawy panel jest czescia OBOWIAZKOWA powloki, a ta
+                 karta nie miala go w ogole (jedna z 5 na 8). Wariant SKROCONY wg
+                 decyzji wlasciciela (K2 planu wdrozenia): wiadomosc systemowa nie
+                 jest artefaktem wspolpracy, wiec panel ma tylko Wlasciwosci
+                 + Historie — bez Komentarzy (sekcja skasowana, nie przeniesiona)
+                 i bez Powiazan (powiadomienie nie ma realnych relacji; pusta sekcja
+                 "Powiazania" bylaby ceremonia, nie informacja — zrodlo pokazujemy
+                 w tresci sekcji "Co sie dzieje").
 
-               SPEC-N §2.6 (anty-duplikacja) — poziomy `NModePropertiesStrip`
-               (6 pol pod naglowkiem) ZNIKA z trybu N. Te same 6 pol zyje teraz
-               w sekcji Wlasciwosci prawego panelu, ktory jest widoczny ZAWSZE.
-               To dokladnie defekt, ktory §2.2 wytyka Initiative ("poziomа siatka
-               7 pol pod naglowkiem" zamiast panelu). `propertiesFields` zostaje
-               jako jedyna deklaracja tych pol — karmi teraz sekcje Wlasciwosci
-               panelu (stary tryb 'c' ma wlasny akordeon, nie uzywal tego paska),
-               dlatego import `NModePropertiesStrip` znika z tego pliku.
-               ═══════════════════════════════════════════════════════════════ */}
-          {presentationMode === 'n' && (
-            <div className="col-span-full space-y-4 mt-4">
-              {/* ── MENU 2 (pasek pod naglowkiem) — standard n-Type §4.2 ────
-                   BYLO: „Przeczytane" + „Odloz" + „Usun" + „…" + AI — lista
-                   dzialan zamiast jednej rekomendowanej akcji (zarzut
-                   wlasciciela 2026-07-23), plus DRUGIE menu trzech kropek obok
-                   kebaba Menu 1.
-                   JEST — taksonomia akcji ze standardu §3.5:
-                     • naglowek (Menu 1)   → JEDNA rekomendowana akcja (slot primary);
-                     • panel / Akcje       → „Przeczytane", „Odloz" (biznes/workflow);
-                     • panel / Rezultaty   → „Zapisz jako notatke" (tworzy efekt);
-                     • kebab `⋮` Menu 1    → „Wycisz", „Usun" (techniczne/administracyjne)
-                                             — przez `extraOverflowItems`, jedno menu na ekranie.
-                   Ten pasek trzyma juz WYLACZNIE rzeczy nie-bedace akcjami
-                   artefaktu, w trzech strefach (§4.2): lewo = „Sekcje",
-                   srodek = „Edycja | Podglad", prawo = „Analizuj z AI".
-                   Skroty `M`/`D` dzialaja dalej (badge `M` przy akcji w panelu,
-                   badge `D` przy „Usun" w kebabie).
+                 SPEC-N §2.6 (anty-duplikacja) — poziomy `NModePropertiesStrip`
+                 (6 pol pod naglowkiem) ZNIKA z trybu N. Te same 6 pol zyje teraz
+                 w sekcji Wlasciwosci prawego panelu, ktory jest widoczny ZAWSZE.
+                 To dokladnie defekt, ktory §2.2 wytyka Initiative ("poziomа siatka
+                 7 pol pod naglowkiem" zamiast panelu). `propertiesFields` zostaje
+                 jako jedyna deklaracja tych pol — karmi teraz sekcje Wlasciwosci
+                 panelu (stary tryb 'c' ma wlasny akordeon, nie uzywal tego paska),
+                 dlatego import `NModePropertiesStrip` znika z tego pliku.
+                 ═══════════════════════════════════════════════════════════════ */}
+            {presentationMode === 'n' && (
+              <div className="col-span-full space-y-4 pt-4">
+                {/* RYTM PIONOWY (2026-07-24): `pt-4` = 16 px między Menu 1 a Menu 2 —
+                    tyle, ile daje powłoka `NModeShell` (mt-2 na pasku + py-2 w środku)
+                    Wnioskowi i Narzędziu. `mt-*` tu NIE DZIAŁA: rodzic ma `space-y-0`,
+                    które nadpisuje margin-top dzieci (wyższa specyficzność selektora
+                    `.space-y-0 > * ~ *`). Dlatego padding, nie margines. */}
+                {/* ── MENU 2 (pasek pod naglowkiem) — standard n-Type §4.2 ────
+                     BYLO: „Przeczytane" + „Odloz" + „Usun" + „…" + AI — lista
+                     dzialan zamiast jednej rekomendowanej akcji (zarzut
+                     wlasciciela 2026-07-23), plus DRUGIE menu trzech kropek obok
+                     kebaba Menu 1.
+                     JEST — taksonomia akcji ze standardu §3.5:
+                       • naglowek (Menu 1)   → JEDNA rekomendowana akcja (slot primary);
+                       • panel / Akcje       → „Przeczytane", „Odloz" (biznes/workflow);
+                       • panel / Rezultaty   → „Zapisz jako notatke" (tworzy efekt);
+                       • kebab `⋮` Menu 1    → „Wycisz", „Usun" (techniczne/administracyjne)
+                                               — przez `extraOverflowItems`, jedno menu na ekranie.
+                     Ten pasek trzyma juz WYLACZNIE rzeczy nie-bedace akcjami
+                     artefaktu, w trzech strefach (§4.2): lewo = „Sekcje",
+                     srodek = „Edycja | Podglad", prawo = „Analizuj z AI".
+                     Skroty `M`/`D` dzialaja dalej (badge `M` przy akcji w panelu,
+                     badge `D` przy „Usun" w kebabie).
 
 
-                   SCALENIE 2026-07-23 (fala menu2 + fala powiadomienia) — pasek
-                   akcji ZNIKA STAD W CALOSCI, a menu 2 to juz nie bespoke <div>,
-                   tylko WSPOLNY komponent `NModeMenu2` (renderowany nizej). Dwie
-                   intencje zlozone razem:
-                     • fala powiadomienia — „Oznacz przeczytane / Odloz / Usun /
-                       Zapisz jako notatke / Wycisz" zeszly do prawego panelu
-                       (Akcje · Rezultaty) i do kebaba Menu 1 (`extraOverflowItems`),
-                       wiec bespoke pasek akcji nie ma juz czego trzymac;
-                     • fala menu2 — trzy strefy (Sekcje | Edycja·Podglad | AI) daje
-                       `NModeMenu2`, ten sam we wszystkich 6 kartach N, zamiast
-                       recznej siatki `grid-cols-3` z lokalnymi klasami slate/navy.
-                   Tym samym znika tez DLUG „pasek jest bespoke" — jest wspolny. */}
+                     SCALENIE 2026-07-23 (fala menu2 + fala powiadomienia) — pasek
+                     akcji ZNIKA STAD W CALOSCI, a menu 2 to juz nie bespoke <div>,
+                     tylko WSPOLNY komponent `NModeMenu2` (renderowany nizej). Dwie
+                     intencje zlozone razem:
+                       • fala powiadomienia — „Oznacz przeczytane / Odloz / Usun /
+                         Zapisz jako notatke / Wycisz" zeszly do prawego panelu
+                         (Akcje · Rezultaty) i do kebaba Menu 1 (`extraOverflowItems`),
+                         wiec bespoke pasek akcji nie ma juz czego trzymac;
+                       • fala menu2 — trzy strefy (Sekcje | Edycja·Podglad | AI) daje
+                         `NModeMenu2`, ten sam we wszystkich 6 kartach N, zamiast
+                         recznej siatki `grid-cols-3` z lokalnymi klasami slate/navy.
+                     Tym samym znika tez DLUG „pasek jest bespoke" — jest wspolny. */}
 
-              {/* ── MENU 2 (ETAP 1.2 standardu n-Type) ──────────────────────
-                  Trzy strefy narzucone przez wspólny `NModeMenu2`:
-                    LEWA   — Sekcje (było po PRAWEJ, `ml-auto` — zgłoszenie
-                             właściciela pkt 4),
-                    ŚRODEK — Edycja | Podgląd (karta NIE MIAŁA przełącznika
-                             w ogóle — zgłoszenie pkt 5),
-                    PRAWA  — Analizuj z AI (fiolet). Wcześniej ten przycisk
-                             pokazywał się tylko na 3 z 6 sekcji, choć
-                             `handleAnalyzeWithAI` wypełnia CAŁY arkusz —
-                             teraz jest wejściem na poziomie karty.
-                  „+ Nowa karta" zdjęte — karty są predefiniowane. */}
-              <NModeMenu2
-                isPolish={isPolish}
-                sectionsMenu={
-                  notificationCardContractEnabled ? (
-                    <SectionsManagerMenu layout={notificationCardLayout} isPolish={isPolish} />
-                  ) : undefined
-                }
-                readMode={readMode}
-                onReadModeChange={setReadMode}
-                aiButton={
-                  // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera panel
-                  // wyników. Nie pisze do pól — zapis wyłącznie przez „Zastosuj".
-                  <Menu2AIButton
-                    isPolish={isPolish}
-                    busy={notificationCardAnalysis.loading}
-                    aria-expanded={notificationCardAnalysis.open}
-                    onClick={notificationCardAnalysis.run}
+                {/* ── MENU 2 (ETAP 1.2 standardu n-Type) ──────────────────────
+                    Trzy strefy narzucone przez wspólny `NModeMenu2`:
+                      LEWA   — Sekcje (było po PRAWEJ, `ml-auto` — zgłoszenie
+                               właściciela pkt 4),
+                      ŚRODEK — Edycja | Podgląd (karta NIE MIAŁA przełącznika
+                               w ogóle — zgłoszenie pkt 5),
+                      PRAWA  — Analizuj z AI (fiolet). Wcześniej ten przycisk
+                               pokazywał się tylko na 3 z 6 sekcji, choć
+                               `handleAnalyzeWithAI` wypełnia CAŁY arkusz —
+                               teraz jest wejściem na poziomie karty.
+                    „+ Nowa karta" zdjęte — karty są predefiniowane. */}
+                <NModeMenu2
+                  isPolish={isPolish}
+                  sectionsMenu={
+                    notificationCardContractEnabled ? (
+                      <SectionsManagerMenu layout={notificationCardLayout} isPolish={isPolish} />
+                    ) : undefined
+                  }
+                  readMode={readMode}
+                  onReadModeChange={setReadMode}
+                  aiButton={
+                    // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera panel
+                    // wyników. Nie pisze do pól — zapis wyłącznie przez „Zastosuj".
+                    <Menu2AIButton
+                      isPolish={isPolish}
+                      busy={notificationCardAnalysis.loading}
+                      aria-expanded={notificationCardAnalysis.open}
+                      onClick={notificationCardAnalysis.run}
+                    />
+                  }
+                />
+
+                {/* ── 3-Pane: LeftNav + Canvas + prawy panel (SPEC-N §2.2) ── */}
+                <div className="flex gap-0 min-h-[60vh]">
+                  <NModeLeftNav
+                    sections={orderedNModeSections}
+                    activeSection={activeNSection}
+                    onSectionChange={setActiveNSection}
                   />
-                }
-              />
-
-              {/* ── 3-Pane: LeftNav + Canvas + prawy panel (SPEC-N §2.2) ── */}
-              <div className="flex gap-0 min-h-[60vh]">
-                <NModeLeftNav
-                  sections={orderedNModeSections}
-                  activeSection={activeNSection}
-                  onSectionChange={setActiveNSection}
-                />
-                <NModeCanvas
-                  sections={orderedNModeSections}
-                  activeSection={activeNSection}
-                  reducedMotion={reducedMotion}
-                  motionDuration={motionDuration}
-                />
-                {/* ETAP 1.4 — panel jak w Inicjatywie: jasna zaokraglona karta
-                    odsunieta od krawedzi (wrapper `sticky top-6 self-start`),
-                    a nie sidebar doklejony do brzegu. Szerokosc domyslna 360
-                    jak w pozostalych kartach N (bylo wlasne 320). */}
-                <div className="shrink-0 sticky top-6 self-start">
-                  <ArtifactRightPanel
-                    ariaLabel={t(
-                      'myWork.notificationDetail.rightPanelAria',
-                      'Notification details panel'
-                    )}
-                    className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
-                    sections={rightPanelSections}
+                  <NModeCanvas
+                    sections={orderedNModeSections}
+                    activeSection={activeNSection}
+                    reducedMotion={reducedMotion}
+                    motionDuration={motionDuration}
                   />
                 </div>
+
+                {/* ── ETAP 3: panel wyników „Analizuj z AI" ──────────────────
+                    Slide-over przy prawej krawędzi (nie modal, nie przyciemnia).
+                    Renderowany tylko przy `open` — komponent sam się chowa. */}
+                <NCardAIAnalysisPanel
+                  open={notificationCardAnalysis.open}
+                  onClose={notificationCardAnalysis.close}
+                  loading={notificationCardAnalysis.loading}
+                  result={notificationCardAnalysis.result}
+                  errorCode={notificationCardAnalysis.errorCode}
+                  serverErrorCode={notificationCardAnalysis.serverErrorCode}
+                  onRerun={notificationCardAnalysis.rerun}
+                  onApplyChange={notificationCardAnalysis.applyChange}
+                  writableFieldIds={notificationWritableFieldIds}
+                  readMode={readMode}
+                  isPolish={isPolish}
+                />
               </div>
+            )}
 
-              {/* ── ETAP 3: panel wyników „Analizuj z AI" ──────────────────
-                  Slide-over przy prawej krawędzi (nie modal, nie przyciemnia).
-                  Renderowany tylko przy `open` — komponent sam się chowa. */}
-              <NCardAIAnalysisPanel
-                open={notificationCardAnalysis.open}
-                onClose={notificationCardAnalysis.close}
-                loading={notificationCardAnalysis.loading}
-                result={notificationCardAnalysis.result}
-                errorCode={notificationCardAnalysis.errorCode}
-                serverErrorCode={notificationCardAnalysis.serverErrorCode}
-                onRerun={notificationCardAnalysis.rerun}
-                onApplyChange={notificationCardAnalysis.applyChange}
-                writableFieldIds={notificationWritableFieldIds}
-                readMode={readMode}
-                isPolish={isPolish}
-              />
-            </div>
-          )}
-
-          {/* ═══════════ C MODE (legacy accordion / D-style) ═══════════════
-               Preserved for backward compatibility — full accordion layout.
-               ═══════════════════════════════════════════════════════════════ */}
-          {presentationMode === 'c' && import.meta.env.VITE_ENABLE_LEGACY_C_MODE === 'true' && (
-            <div className="mt-6">
-              <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column - 2/3 width */}
-                <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
-                  {/* What's Happening */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
-                  >
-                    <button
-                      onClick={() => toggleSection('whats-happening')}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
+            {/* ═══════════ C MODE (legacy accordion / D-style) ═══════════════
+                 Preserved for backward compatibility — full accordion layout.
+                 ═══════════════════════════════════════════════════════════════ */}
+            {presentationMode === 'c' && import.meta.env.VITE_ENABLE_LEGACY_C_MODE === 'true' && (
+              <div className="mt-6">
+                <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Left Column - 2/3 width */}
+                  <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
+                    {/* What's Happening */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20">
-                          <Info size={18} className="text-blue-500 dark:text-blue-400" />
-                        </div>
-                        <span className="text-sm font-semibold text-c-text-secondary">
-                          {t('myWork.notificationDetail.whatSHappening2', "What's happening")}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${severityConfig.bgColor} ${severityConfig.textColor}`}
-                        >
-                          <SeverityIcon size={10} />
-                          {isPolish ? severityConfig.label.pl : severityConfig.label.en}
-                        </span>
-                        <motion.div
-                          animate={{ rotate: expandedSections.has('whats-happening') ? 180 : 0 }}
-                        >
-                          <ChevronDown size={18} className="text-c-text-muted" />
-                        </motion.div>
-                      </div>
-                    </button>
-                    <AnimatePresence>
-                      {expandedSections.has('whats-happening') && (
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={{ height: 'auto' }}
-                          exit={{ height: 0 }}
-                          className="border-t border-c-border overflow-hidden"
-                        >
-                          <div className="p-5 space-y-4">
-                            <div className="text-lg font-semibold text-c-text">
-                              {contract.what}
-                            </div>
-                            <div>
-                              <div className="text-xs uppercase tracking-wide text-c-text-muted mb-1">
-                                {t('myWork.notificationDetail.whyItMatters2', 'Why it matters')}
-                              </div>
-                              <div className="text-sm text-c-text-secondary leading-relaxed">
-                                {contract.whyImportant}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-xs uppercase tracking-wide text-c-text-muted mb-1">
-                                {t('myWork.notificationDetail.whatIsBlocked2', 'What is blocked')}
-                              </div>
-                              <div className="text-sm text-c-text-secondary leading-relaxed">
-                                {contract.blocked}
-                              </div>
-                            </div>
+                      <button
+                        onClick={() => toggleSection('whats-happening')}
+                        className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20">
+                            <Info size={18} className="text-blue-500 dark:text-blue-400" />
                           </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-
-                  {/* AI Analysis */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.05 }}
-                    className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
-                  >
-                    <button
-                      onClick={() => toggleSection('ai-analysis')}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-c-info/10 to-c-info/10 dark:from-c-info/20 dark:to-c-info/20">
-                          <TeresaMark
-                            size={18}
-                            className="text-c-info"
-                          />
+                          <span className="text-sm font-semibold text-c-text-secondary">
+                            {t('myWork.notificationDetail.whatSHappening2', "What's happening")}
+                          </span>
                         </div>
-                        <span className="text-sm font-semibold text-c-text-secondary">
-                          {t('myWork.notificationDetail.aIAnalysis2', 'AI Analysis')}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Sparkles size={14} className="text-c-info" />
-                        <motion.div
-                          animate={{ rotate: expandedSections.has('ai-analysis') ? 180 : 0 }}
-                        >
-                          <ChevronDown size={18} className="text-c-text-muted" />
-                        </motion.div>
-                      </div>
-                    </button>
-                    <AnimatePresence>
-                      {expandedSections.has('ai-analysis') && aiAnalysis && (
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={{ height: 'auto' }}
-                          exit={{ height: 0 }}
-                          className="border-t border-c-border overflow-hidden"
-                        >
-                          <div className="p-5 space-y-4">
-                            <div className="flex items-center gap-3">
-                              <span
-                                className={`px-2.5 py-1 rounded-full text-xs font-bold ${aiAnalysis.riskLevel === 'critical' ? 'bg-danger-500/10 text-danger-500' : aiAnalysis.riskLevel === 'high' ? 'bg-amber-500/10 text-amber-500' : aiAnalysis.riskLevel === 'medium' ? 'bg-blue-500/10 text-blue-500' : 'bg-c-surface-raised0/10 text-c-text-muted'}`}
-                              >
-                                {t('myWork.notificationDetail.priority2', 'Priority')}:{' '}
-                                {aiAnalysis.priority}
-                              </span>
-                              {aiAnalysis.confidence && (
-                                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-c-info/10 text-c-info">
-                                  {t('myWork.notificationDetail.confidence2', 'Confidence')}:{' '}
-                                  {aiAnalysis.confidence}
-                                </span>
-                              )}
-                              {aiAnalysis.aiGenerated && (
-                                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-500">
-                                  AI Generated
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-sm text-c-text-secondary leading-relaxed">
-                              {aiAnalysis.impact}
-                            </div>
-                            <div className="p-3 rounded-xl bg-c-info/10 border border-c-info/20">
-                              <div className="flex items-start gap-2">
-                                <Zap size={16} className="text-c-info mt-0.5 shrink-0" />
-                                <div className="text-sm text-c-info">
-                                  {aiAnalysis.recommendation}
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${severityConfig.bgColor} ${severityConfig.textColor}`}
+                          >
+                            <SeverityIcon size={10} />
+                            {isPolish ? severityConfig.label.pl : severityConfig.label.en}
+                          </span>
+                          <motion.div
+                            animate={{ rotate: expandedSections.has('whats-happening') ? 180 : 0 }}
+                          >
+                            <ChevronDown size={18} className="text-c-text-muted" />
+                          </motion.div>
+                        </div>
+                      </button>
+                      <AnimatePresence>
+                        {expandedSections.has('whats-happening') && (
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: 'auto' }}
+                            exit={{ height: 0 }}
+                            className="border-t border-c-border overflow-hidden"
+                          >
+                            <div className="p-5 space-y-4">
+                              <div className="text-lg font-semibold text-c-text">
+                                {contract.what}
+                              </div>
+                              <div>
+                                <div className="text-xs uppercase tracking-wide text-c-text-muted mb-1">
+                                  {t('myWork.notificationDetail.whyItMatters2', 'Why it matters')}
+                                </div>
+                                <div className="text-sm text-c-text-secondary leading-relaxed">
+                                  {contract.whyImportant}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs uppercase tracking-wide text-c-text-muted mb-1">
+                                  {t('myWork.notificationDetail.whatIsBlocked2', 'What is blocked')}
+                                </div>
+                                <div className="text-sm text-c-text-secondary leading-relaxed">
+                                  {contract.blocked}
                                 </div>
                               </div>
                             </div>
-                            <button
-                              onClick={handleAskAI}
-                              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-c-info/10 text-c-info hover:bg-c-info/20 transition-colors text-sm font-medium"
-                            >
-                              <MessageSquare size={14} />
-                              {t(
-                                'myWork.notificationDetail.askAIForMore2',
-                                'Ask AI for more details'
-                              )}
-                            </button>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
 
-                  {/* Expected Action / Checklist */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
-                  >
-                    <button
-                      onClick={() => toggleSection('expected-action')}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
+                    {/* AI Analysis */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.05 }}
+                      className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/10 to-blue-500/10 dark:from-emerald-500/20 dark:to-blue-500/20">
-                          <CheckSquare
-                            size={18}
-                            className="text-emerald-500 dark:text-emerald-400"
-                          />
-                        </div>
-                        <span className="text-sm font-semibold text-c-text-secondary">
-                          {t('myWork.notificationDetail.expectedAction2', 'Expected Action')}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-c-text-muted">
-                          {actionChecklist.filter((i) => i.completed).length}/
-                          {actionChecklist.length}
-                        </span>
-                        <motion.div
-                          animate={{ rotate: expandedSections.has('expected-action') ? 180 : 0 }}
-                        >
-                          <ChevronDown size={18} className="text-c-text-muted" />
-                        </motion.div>
-                      </div>
-                    </button>
-                    <AnimatePresence>
-                      {expandedSections.has('expected-action') && (
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={{ height: 'auto' }}
-                          exit={{ height: 0 }}
-                          className="border-t border-c-border overflow-hidden"
-                        >
-                          <div className="p-5 space-y-4">
-                            <div className="flex items-center justify-between">
-                              <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
-                                {t(
-                                  'myWork.notificationDetail.whatNeedsToBe2',
-                                  'What needs to be done'
-                                )}
-                              </label>
-                              <AIFieldEnhancer
-                                fieldKey="c-notification-expected-action"
-                                sectionLabel="Expected Action"
-                                currentValue={expectedActionValue || ' '}
-                                onApply={setExpectedActionDraft}
-                                artifactContext={{
-                                  title: notification.title,
-                                  status: notification.isRead ? 'read' : 'unread',
-                                  priority: aiAnalysis?.priority || 'medium',
-                                  type: 'notification',
-                                }}
-                                iconOnly
-                                disabled={!canExpectedActionAI}
-                              />
-                            </div>
-
-                            <textarea
-                              value={expectedActionDraft}
-                              onChange={(e) => setExpectedActionDraft(e.target.value)}
-                              rows={3}
-                              className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors"
-                              placeholder={t(
-                                'myWork.notificationDetail.placeholder2',
-                                'Expected action...'
-                              )}
+                      <button
+                        onClick={() => toggleSection('ai-analysis')}
+                        className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-c-info/10 to-c-info/10 dark:from-c-info/20 dark:to-c-info/20">
+                            <TeresaMark
+                              size={18}
+                              className="text-c-info"
                             />
-
-                            <div className="flex items-center justify-between pt-1">
-                              <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
-                                {t('myWork.notificationDetail.checklist2', 'Checklist')}
-                              </label>
-                              <div className="flex items-center gap-2">
-                                <span className="text-[11px] font-medium text-c-text-muted tabular-nums">
-                                  {actionChecklist.filter((i) => i.completed).length}/
-                                  {actionChecklist.length}
+                          </div>
+                          <span className="text-sm font-semibold text-c-text-secondary">
+                            {t('myWork.notificationDetail.aIAnalysis2', 'AI Analysis')}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Sparkles size={14} className="text-c-info" />
+                          <motion.div
+                            animate={{ rotate: expandedSections.has('ai-analysis') ? 180 : 0 }}
+                          >
+                            <ChevronDown size={18} className="text-c-text-muted" />
+                          </motion.div>
+                        </div>
+                      </button>
+                      <AnimatePresence>
+                        {expandedSections.has('ai-analysis') && aiAnalysis && (
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: 'auto' }}
+                            exit={{ height: 0 }}
+                            className="border-t border-c-border overflow-hidden"
+                          >
+                            <div className="p-5 space-y-4">
+                              <div className="flex items-center gap-3">
+                                <span
+                                  className={`px-2.5 py-1 rounded-full text-xs font-bold ${aiAnalysis.riskLevel === 'critical' ? 'bg-danger-500/10 text-danger-500' : aiAnalysis.riskLevel === 'high' ? 'bg-amber-500/10 text-amber-500' : aiAnalysis.riskLevel === 'medium' ? 'bg-blue-500/10 text-blue-500' : 'bg-c-surface-raised0/10 text-c-text-muted'}`}
+                                >
+                                  {t('myWork.notificationDetail.priority2', 'Priority')}:{' '}
+                                  {aiAnalysis.priority}
                                 </span>
+                                {aiAnalysis.confidence && (
+                                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-c-info/10 text-c-info">
+                                    {t('myWork.notificationDetail.confidence2', 'Confidence')}:{' '}
+                                    {aiAnalysis.confidence}
+                                  </span>
+                                )}
+                                {aiAnalysis.aiGenerated && (
+                                  <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-500">
+                                    AI Generated
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-sm text-c-text-secondary leading-relaxed">
+                                {aiAnalysis.impact}
+                              </div>
+                              <div className="p-3 rounded-xl bg-c-info/10 border border-c-info/20">
+                                <div className="flex items-start gap-2">
+                                  <Zap size={16} className="text-c-info mt-0.5 shrink-0" />
+                                  <div className="text-sm text-c-info">
+                                    {aiAnalysis.recommendation}
+                                  </div>
+                                </div>
+                              </div>
+                              <button
+                                onClick={handleAskAI}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-c-info/10 text-c-info hover:bg-c-info/20 transition-colors text-sm font-medium"
+                              >
+                                <MessageSquare size={14} />
+                                {t(
+                                  'myWork.notificationDetail.askAIForMore2',
+                                  'Ask AI for more details'
+                                )}
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+
+                    {/* Expected Action / Checklist */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
+                    >
+                      <button
+                        onClick={() => toggleSection('expected-action')}
+                        className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/10 to-blue-500/10 dark:from-emerald-500/20 dark:to-blue-500/20">
+                            <CheckSquare
+                              size={18}
+                              className="text-emerald-500 dark:text-emerald-400"
+                            />
+                          </div>
+                          <span className="text-sm font-semibold text-c-text-secondary">
+                            {t('myWork.notificationDetail.expectedAction2', 'Expected Action')}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-c-text-muted">
+                            {actionChecklist.filter((i) => i.completed).length}/
+                            {actionChecklist.length}
+                          </span>
+                          <motion.div
+                            animate={{ rotate: expandedSections.has('expected-action') ? 180 : 0 }}
+                          >
+                            <ChevronDown size={18} className="text-c-text-muted" />
+                          </motion.div>
+                        </div>
+                      </button>
+                      <AnimatePresence>
+                        {expandedSections.has('expected-action') && (
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: 'auto' }}
+                            exit={{ height: 0 }}
+                            className="border-t border-c-border overflow-hidden"
+                          >
+                            <div className="p-5 space-y-4">
+                              <div className="flex items-center justify-between">
+                                <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
+                                  {t(
+                                    'myWork.notificationDetail.whatNeedsToBe2',
+                                    'What needs to be done'
+                                  )}
+                                </label>
                                 <AIFieldEnhancer
-                                  fieldKey="c-notification-checklist"
-                                  sectionLabel="Checklist"
-                                  currentValue={checklistAiValue || ' '}
-                                  onApply={applyChecklistFromAIText}
+                                  fieldKey="c-notification-expected-action"
+                                  sectionLabel="Expected Action"
+                                  currentValue={expectedActionValue || ' '}
+                                  onApply={setExpectedActionDraft}
                                   artifactContext={{
                                     title: notification.title,
                                     status: notification.isRead ? 'read' : 'unread',
@@ -3733,400 +3730,460 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                     type: 'notification',
                                   }}
                                   iconOnly
-                                  disabled={!canChecklistAI}
+                                  disabled={!canExpectedActionAI}
                                 />
                               </div>
-                            </div>
 
-                            <div className="space-y-2">
-                              {actionChecklist.map((item) => (
-                                <button
-                                  key={item.id}
-                                  onClick={() => toggleChecklistItem(item.id)}
-                                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-c-surface-raised hover:bg-c-surface-raised transition-colors text-left"
-                                >
-                                  <div
-                                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${item.completed ? 'bg-emerald-500 border-emerald-500' : 'border-c-border'}`}
-                                  >
-                                    {item.completed && <Check size={12} className="text-white" />}
-                                  </div>
-                                  <span
-                                    className={`text-sm ${item.completed ? 'text-c-text-muted line-through' : 'text-c-text-secondary'}`}
-                                  >
-                                    {item.text}
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-
-                  {/* Comments */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
-                  >
-                    <button
-                      onClick={() => toggleSection('comments')}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/10 dark:from-amber-500/20 dark:to-amber-500/20">
-                          <MessageCircle size={18} className="text-amber-500 dark:text-amber-400" />
-                        </div>
-                        <span className="text-sm font-semibold text-c-text-secondary">
-                          {t('myWork.notificationDetail.comments3', 'Comments')}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-c-surface-raised text-c-text-muted">
-                          0
-                        </span>
-                        <motion.div
-                          animate={{ rotate: expandedSections.has('comments') ? 180 : 0 }}
-                        >
-                          <ChevronDown size={18} className="text-c-text-muted" />
-                        </motion.div>
-                      </div>
-                    </button>
-                    <AnimatePresence>
-                      {expandedSections.has('comments') && (
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={{ height: 'auto' }}
-                          exit={{ height: 0 }}
-                          className="border-t border-c-border overflow-hidden"
-                        >
-                          <div className="p-5 space-y-3">
-                            <p className="text-sm text-c-text-muted text-center py-3">
-                              {t('myWork.notificationDetail.noCommentsYet2', 'No comments yet')}
-                            </p>
-                            <button
-                              onClick={handleOpenChat}
-                              className="w-full px-4 py-2.5 rounded-xl border border-dashed border-c-info/30 text-c-info hover:border-c-info/50 hover:bg-c-info/5 transition-colors text-sm flex items-center justify-center gap-2"
-                            >
-                              <MessageSquare size={14} />
-                              {t(
-                                'myWork.notificationDetail.openContextualChat2',
-                                'Open contextual chat'
-                              )}
-                            </button>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-
-                  {/* Activity Log */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.25 }}
-                    className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
-                  >
-                    <button
-                      onClick={() => toggleSection('activity-log')}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-c-text-muted/10 to-gray-500/10 dark:from-c-text-muted/20 dark:to-gray-500/20">
-                          <History size={18} className="text-c-text-muted" />
-                        </div>
-                        <span className="text-sm font-semibold text-c-text-secondary">
-                          {t('myWork.notificationDetail.activityLog2', 'Activity Log')}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-c-surface-raised text-c-text-muted">
-                          1
-                        </span>
-                        <motion.div
-                          animate={{ rotate: expandedSections.has('activity-log') ? 180 : 0 }}
-                        >
-                          <ChevronDown size={18} className="text-c-text-muted" />
-                        </motion.div>
-                      </div>
-                    </button>
-                    <AnimatePresence>
-                      {expandedSections.has('activity-log') && (
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={{ height: 'auto' }}
-                          exit={{ height: 0 }}
-                          className="border-t border-c-border overflow-hidden"
-                        >
-                          <div className="p-5 space-y-3">
-                            <div className="flex items-start gap-3">
-                              <div className="w-8 h-8 rounded-full bg-c-surface-raised flex items-center justify-center shrink-0">
-                                <Bell size={14} className="text-c-text-muted" />
-                              </div>
-                              <div>
-                                <p className="text-sm text-c-text-secondary">
-                                  {t(
-                                    'myWork.notificationDetail.notificationCreated',
-                                    'Notification created'
-                                  )}
-                                </p>
-                                <p className="text-xs text-c-text-muted">
-                                  {formatDate(notification.createdAt)}
-                                </p>
-                              </div>
-                            </div>
-                            {notification.readAt && (
-                              <div className="flex items-start gap-3">
-                                <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center shrink-0">
-                                  <MailOpen size={14} className="text-emerald-500" />
-                                </div>
-                                <div>
-                                  <p className="text-sm text-c-text-secondary">
-                                    {t('myWork.notificationDetail.markedAsRead', 'Marked as read')}
-                                  </p>
-                                  <p className="text-xs text-c-text-muted">
-                                    {formatDate(notification.readAt)}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                </div>
-
-                {/* Right Column - 1/3 width */}
-                <div className="space-y-4 lg:sticky lg:top-6 self-start order-1 lg:order-2">
-                  {/* Control Panel */}
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.15 }}
-                    className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
-                  >
-                    <button
-                      onClick={() => toggleSection('control')}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-c-info/10 to-c-info/10 dark:from-c-info/20 dark:to-c-info/20">
-                          <Flag size={18} className="text-c-info" />
-                        </div>
-                        <span className="text-sm font-semibold text-c-text-secondary">
-                          Control
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono text-c-text-muted bg-c-surface-raised/80 px-2 py-0.5 rounded-lg">
-                          #notif-{notificationId.slice(0, 8)}
-                        </span>
-                        <motion.div animate={{ rotate: expandedSections.has('control') ? 180 : 0 }}>
-                          <ChevronDown size={18} className="text-c-text-muted" />
-                        </motion.div>
-                      </div>
-                    </button>
-                    <AnimatePresence>
-                      {expandedSections.has('control') && (
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={{ height: 'auto' }}
-                          exit={{ height: 0 }}
-                          className="border-t border-c-border overflow-hidden"
-                        >
-                          <div className="p-4 space-y-3">
-                            <div>
-                              <label className="block text-xs text-c-text-muted mb-1">
-                                {t('myWork.notificationDetail.type3', 'Type')}
-                              </label>
-                              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface-raised border border-c-border">
-                                <TypeIcon size={14} className={typeConfig.color} />
-                                <span className="text-sm font-medium text-c-text-secondary">
-                                  {notification.type.replace(/_/g, ' ')}
-                                </span>
-                              </div>
-                            </div>
-                            <div>
-                              <label className="block text-xs text-c-text-muted mb-1">
-                                {t('myWork.notificationDetail.severity', 'Severity')}
-                              </label>
-                              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface-raised border border-c-border">
-                                <div
-                                  className={`w-2.5 h-2.5 rounded-full ${severityConfig.color}`}
-                                />
-                                <span className={`text-sm font-medium ${severityConfig.textColor}`}>
-                                  {isPolish ? severityConfig.label.pl : severityConfig.label.en}
-                                </span>
-                              </div>
-                            </div>
-                            <div>
-                              <label className="block text-xs text-c-text-muted mb-1">
-                                {t('myWork.notificationDetail.category', 'Category')}
-                              </label>
-                              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface-raised border border-c-border">
-                                <span className="text-sm font-medium text-c-text-secondary capitalize">
-                                  {notification.category}
-                                </span>
-                              </div>
-                            </div>
-                            {(notification.projectName ||
-                              (notification.data as any)?.projectName) && (
-                              <div>
-                                <label className="block text-xs text-c-text-muted mb-1">
-                                  {t('myWork.notificationDetail.project', 'Project')}
-                                </label>
-                                <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface-raised border border-c-border">
-                                  <FolderOpen size={14} className="text-indigo-400" />
-                                  <span className="text-sm font-medium text-c-text-secondary">
-                                    {notification.projectName ||
-                                      (notification.data as any)?.projectName}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-                            <div>
-                              <label className="block text-xs text-c-text-muted mb-1">
-                                {t('myWork.notificationDetail.created', 'Created')}
-                              </label>
-                              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface-raised border border-c-border">
-                                <Clock size={14} className="text-c-text-muted" />
-                                <span className="text-sm text-c-text-secondary">
-                                  {formatDate(notification.createdAt)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="pt-2 border-t border-c-border space-y-2">
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={handleMuteSimilar}
-                                  className="flex-1 px-3 py-2 rounded-lg bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised transition-colors flex items-center justify-center gap-2 text-sm"
-                                >
-                                  <BellOff size={14} />
-                                  <span>{t('myWork.notificationDetail.mute2', 'Mute')}</span>
-                                </button>
-                                <button
-                                  onClick={handleDelete}
-                                  className="flex-1 px-3 py-2 rounded-lg bg-danger-50 dark:bg-danger-500/10 text-danger-600 dark:text-danger-400 hover:bg-danger-100 dark:hover:bg-danger-500/20 transition-colors flex items-center justify-center gap-2 text-sm"
-                                >
-                                  <Trash2 size={14} />
-                                  <span>{t('myWork.notificationDetail.delete2', 'Delete')}</span>
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-
-                  {/* Stakeholders */}
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
-                  >
-                    <button
-                      onClick={() => toggleSection('stakeholders')}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20">
-                          <Users size={18} className="text-blue-500 dark:text-blue-400" />
-                        </div>
-                        <span className="text-sm font-semibold text-c-text-secondary">
-                          {t('myWork.notificationDetail.stakeholders', 'Stakeholders')}
-                        </span>
-                      </div>
-                      <motion.div
-                        animate={{ rotate: expandedSections.has('stakeholders') ? 180 : 0 }}
-                      >
-                        <ChevronDown size={18} className="text-c-text-muted" />
-                      </motion.div>
-                    </button>
-                    <AnimatePresence>
-                      {expandedSections.has('stakeholders') && (
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={{ height: 'auto' }}
-                          exit={{ height: 0 }}
-                          className="border-t border-c-border overflow-hidden"
-                        >
-                          <div className="p-4 space-y-2">
-                            {sourceEntity?.assignee && (
-                              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-c-surface-raised">
-                                <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-500">
-                                  {String(sourceEntity.assignee).charAt(0).toUpperCase()}
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-c-text-secondary">
-                                    {sourceEntity.assignee}
-                                  </p>
-                                  <p className="text-[10px] text-c-text-muted">
-                                    {t('myWork.notificationDetail.assignee', 'Assignee')}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                            {sourceEntity?.decider && (
-                              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-c-surface-raised">
-                                <div className="w-7 h-7 rounded-full bg-c-info/20 flex items-center justify-center text-xs font-bold text-c-info">
-                                  {String(sourceEntity.decider).charAt(0).toUpperCase()}
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-c-text-secondary">
-                                    {sourceEntity.decider}
-                                  </p>
-                                  <p className="text-[10px] text-c-text-muted">
-                                    {t('myWork.notificationDetail.decider', 'Decider')}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                            {!sourceEntity?.assignee && !sourceEntity?.decider && (
-                              <p className="text-sm text-c-text-muted text-center py-2">
-                                {t(
-                                  'myWork.notificationDetail.noStakeholdersAssigned',
-                                  'No stakeholders assigned'
+                              <textarea
+                                value={expectedActionDraft}
+                                onChange={(e) => setExpectedActionDraft(e.target.value)}
+                                rows={3}
+                                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors"
+                                placeholder={t(
+                                  'myWork.notificationDetail.placeholder2',
+                                  'Expected action...'
                                 )}
-                              </p>
-                            )}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
+                              />
 
-                  {/* Why You Got It */}
-                  {(contract.whyYouGotIt || notification.data?.whyYouGotIt) && (
+                              <div className="flex items-center justify-between pt-1">
+                                <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
+                                  {t('myWork.notificationDetail.checklist2', 'Checklist')}
+                                </label>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] font-medium text-c-text-muted tabular-nums">
+                                    {actionChecklist.filter((i) => i.completed).length}/
+                                    {actionChecklist.length}
+                                  </span>
+                                  <AIFieldEnhancer
+                                    fieldKey="c-notification-checklist"
+                                    sectionLabel="Checklist"
+                                    currentValue={checklistAiValue || ' '}
+                                    onApply={applyChecklistFromAIText}
+                                    artifactContext={{
+                                      title: notification.title,
+                                      status: notification.isRead ? 'read' : 'unread',
+                                      priority: aiAnalysis?.priority || 'medium',
+                                      type: 'notification',
+                                    }}
+                                    iconOnly
+                                    disabled={!canChecklistAI}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                {actionChecklist.map((item) => (
+                                  <button
+                                    key={item.id}
+                                    onClick={() => toggleChecklistItem(item.id)}
+                                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-c-surface-raised hover:bg-c-surface-raised transition-colors text-left"
+                                  >
+                                    <div
+                                      className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${item.completed ? 'bg-emerald-500 border-emerald-500' : 'border-c-border'}`}
+                                    >
+                                      {item.completed && <Check size={12} className="text-white" />}
+                                    </div>
+                                    <span
+                                      className={`text-sm ${item.completed ? 'text-c-text-muted line-through' : 'text-c-text-secondary'}`}
+                                    >
+                                      {item.text}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+
+                    {/* Comments */}
                     <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
+                    >
+                      <button
+                        onClick={() => toggleSection('comments')}
+                        className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/10 dark:from-amber-500/20 dark:to-amber-500/20">
+                            <MessageCircle size={18} className="text-amber-500 dark:text-amber-400" />
+                          </div>
+                          <span className="text-sm font-semibold text-c-text-secondary">
+                            {t('myWork.notificationDetail.comments3', 'Comments')}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-c-surface-raised text-c-text-muted">
+                            0
+                          </span>
+                          <motion.div
+                            animate={{ rotate: expandedSections.has('comments') ? 180 : 0 }}
+                          >
+                            <ChevronDown size={18} className="text-c-text-muted" />
+                          </motion.div>
+                        </div>
+                      </button>
+                      <AnimatePresence>
+                        {expandedSections.has('comments') && (
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: 'auto' }}
+                            exit={{ height: 0 }}
+                            className="border-t border-c-border overflow-hidden"
+                          >
+                            <div className="p-5 space-y-3">
+                              <p className="text-sm text-c-text-muted text-center py-3">
+                                {t('myWork.notificationDetail.noCommentsYet2', 'No comments yet')}
+                              </p>
+                              <button
+                                onClick={handleOpenChat}
+                                className="w-full px-4 py-2.5 rounded-xl border border-dashed border-c-info/30 text-c-info hover:border-c-info/50 hover:bg-c-info/5 transition-colors text-sm flex items-center justify-center gap-2"
+                              >
+                                <MessageSquare size={14} />
+                                {t(
+                                  'myWork.notificationDetail.openContextualChat2',
+                                  'Open contextual chat'
+                                )}
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+
+                    {/* Activity Log */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.25 }}
                       className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
                     >
-                      <div className="flex items-center justify-between px-5 py-4">
+                      <button
+                        onClick={() => toggleSection('activity-log')}
+                        className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
+                      >
                         <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/10 dark:from-amber-500/20 dark:to-amber-500/20">
-                            <Info size={18} className="text-amber-500 dark:text-amber-400" />
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-c-text-muted/10 to-gray-500/10 dark:from-c-text-muted/20 dark:to-gray-500/20">
+                            <History size={18} className="text-c-text-muted" />
                           </div>
                           <span className="text-sm font-semibold text-c-text-secondary">
-                            {t('myWork.notificationDetail.whyYouGotIt', 'Why you got it')}
+                            {t('myWork.notificationDetail.activityLog2', 'Activity Log')}
                           </span>
                         </div>
-                      </div>
-                      <div className="border-t border-c-border p-4">
-                        <p className="text-sm text-c-text-secondary leading-relaxed">
-                          {contract.whyYouGotIt || String(notification.data?.whyYouGotIt || '')}
-                        </p>
-                      </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-c-surface-raised text-c-text-muted">
+                            1
+                          </span>
+                          <motion.div
+                            animate={{ rotate: expandedSections.has('activity-log') ? 180 : 0 }}
+                          >
+                            <ChevronDown size={18} className="text-c-text-muted" />
+                          </motion.div>
+                        </div>
+                      </button>
+                      <AnimatePresence>
+                        {expandedSections.has('activity-log') && (
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: 'auto' }}
+                            exit={{ height: 0 }}
+                            className="border-t border-c-border overflow-hidden"
+                          >
+                            <div className="p-5 space-y-3">
+                              <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-full bg-c-surface-raised flex items-center justify-center shrink-0">
+                                  <Bell size={14} className="text-c-text-muted" />
+                                </div>
+                                <div>
+                                  <p className="text-sm text-c-text-secondary">
+                                    {t(
+                                      'myWork.notificationDetail.notificationCreated',
+                                      'Notification created'
+                                    )}
+                                  </p>
+                                  <p className="text-xs text-c-text-muted">
+                                    {formatDate(notification.createdAt)}
+                                  </p>
+                                </div>
+                              </div>
+                              {notification.readAt && (
+                                <div className="flex items-start gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center shrink-0">
+                                    <MailOpen size={14} className="text-emerald-500" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-c-text-secondary">
+                                      {t('myWork.notificationDetail.markedAsRead', 'Marked as read')}
+                                    </p>
+                                    <p className="text-xs text-c-text-muted">
+                                      {formatDate(notification.readAt)}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </motion.div>
-                  )}
+                  </div>
+
+                  {/* Right Column - 1/3 width */}
+                  <div className="space-y-4 lg:sticky lg:top-6 self-start order-1 lg:order-2">
+                    {/* Control Panel */}
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.15 }}
+                      className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
+                    >
+                      <button
+                        onClick={() => toggleSection('control')}
+                        className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-c-info/10 to-c-info/10 dark:from-c-info/20 dark:to-c-info/20">
+                            <Flag size={18} className="text-c-info" />
+                          </div>
+                          <span className="text-sm font-semibold text-c-text-secondary">
+                            Control
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono text-c-text-muted bg-c-surface-raised/80 px-2 py-0.5 rounded-lg">
+                            #notif-{notificationId.slice(0, 8)}
+                          </span>
+                          <motion.div animate={{ rotate: expandedSections.has('control') ? 180 : 0 }}>
+                            <ChevronDown size={18} className="text-c-text-muted" />
+                          </motion.div>
+                        </div>
+                      </button>
+                      <AnimatePresence>
+                        {expandedSections.has('control') && (
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: 'auto' }}
+                            exit={{ height: 0 }}
+                            className="border-t border-c-border overflow-hidden"
+                          >
+                            <div className="p-4 space-y-3">
+                              <div>
+                                <label className="block text-xs text-c-text-muted mb-1">
+                                  {t('myWork.notificationDetail.type3', 'Type')}
+                                </label>
+                                <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface-raised border border-c-border">
+                                  <TypeIcon size={14} className={typeConfig.color} />
+                                  <span className="text-sm font-medium text-c-text-secondary">
+                                    {notification.type.replace(/_/g, ' ')}
+                                  </span>
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-xs text-c-text-muted mb-1">
+                                  {t('myWork.notificationDetail.severity', 'Severity')}
+                                </label>
+                                <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface-raised border border-c-border">
+                                  <div
+                                    className={`w-2.5 h-2.5 rounded-full ${severityConfig.color}`}
+                                  />
+                                  <span className={`text-sm font-medium ${severityConfig.textColor}`}>
+                                    {isPolish ? severityConfig.label.pl : severityConfig.label.en}
+                                  </span>
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-xs text-c-text-muted mb-1">
+                                  {t('myWork.notificationDetail.category', 'Category')}
+                                </label>
+                                <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface-raised border border-c-border">
+                                  <span className="text-sm font-medium text-c-text-secondary capitalize">
+                                    {notification.category}
+                                  </span>
+                                </div>
+                              </div>
+                              {(notification.projectName ||
+                                (notification.data as any)?.projectName) && (
+                                <div>
+                                  <label className="block text-xs text-c-text-muted mb-1">
+                                    {t('myWork.notificationDetail.project', 'Project')}
+                                  </label>
+                                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface-raised border border-c-border">
+                                    <FolderOpen size={14} className="text-indigo-400" />
+                                    <span className="text-sm font-medium text-c-text-secondary">
+                                      {notification.projectName ||
+                                        (notification.data as any)?.projectName}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                              <div>
+                                <label className="block text-xs text-c-text-muted mb-1">
+                                  {t('myWork.notificationDetail.created', 'Created')}
+                                </label>
+                                <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface-raised border border-c-border">
+                                  <Clock size={14} className="text-c-text-muted" />
+                                  <span className="text-sm text-c-text-secondary">
+                                    {formatDate(notification.createdAt)}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="pt-2 border-t border-c-border space-y-2">
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={handleMuteSimilar}
+                                    className="flex-1 px-3 py-2 rounded-lg bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised transition-colors flex items-center justify-center gap-2 text-sm"
+                                  >
+                                    <BellOff size={14} />
+                                    <span>{t('myWork.notificationDetail.mute2', 'Mute')}</span>
+                                  </button>
+                                  <button
+                                    onClick={handleDelete}
+                                    className="flex-1 px-3 py-2 rounded-lg bg-danger-50 dark:bg-danger-500/10 text-danger-600 dark:text-danger-400 hover:bg-danger-100 dark:hover:bg-danger-500/20 transition-colors flex items-center justify-center gap-2 text-sm"
+                                  >
+                                    <Trash2 size={14} />
+                                    <span>{t('myWork.notificationDetail.delete2', 'Delete')}</span>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+
+                    {/* Stakeholders */}
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
+                    >
+                      <button
+                        onClick={() => toggleSection('stakeholders')}
+                        className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20">
+                            <Users size={18} className="text-blue-500 dark:text-blue-400" />
+                          </div>
+                          <span className="text-sm font-semibold text-c-text-secondary">
+                            {t('myWork.notificationDetail.stakeholders', 'Stakeholders')}
+                          </span>
+                        </div>
+                        <motion.div
+                          animate={{ rotate: expandedSections.has('stakeholders') ? 180 : 0 }}
+                        >
+                          <ChevronDown size={18} className="text-c-text-muted" />
+                        </motion.div>
+                      </button>
+                      <AnimatePresence>
+                        {expandedSections.has('stakeholders') && (
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: 'auto' }}
+                            exit={{ height: 0 }}
+                            className="border-t border-c-border overflow-hidden"
+                          >
+                            <div className="p-4 space-y-2">
+                              {sourceEntity?.assignee && (
+                                <div className="flex items-center gap-3 p-2.5 rounded-lg bg-c-surface-raised">
+                                  <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-500">
+                                    {String(sourceEntity.assignee).charAt(0).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium text-c-text-secondary">
+                                      {sourceEntity.assignee}
+                                    </p>
+                                    <p className="text-[10px] text-c-text-muted">
+                                      {t('myWork.notificationDetail.assignee', 'Assignee')}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                              {sourceEntity?.decider && (
+                                <div className="flex items-center gap-3 p-2.5 rounded-lg bg-c-surface-raised">
+                                  <div className="w-7 h-7 rounded-full bg-c-info/20 flex items-center justify-center text-xs font-bold text-c-info">
+                                    {String(sourceEntity.decider).charAt(0).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium text-c-text-secondary">
+                                      {sourceEntity.decider}
+                                    </p>
+                                    <p className="text-[10px] text-c-text-muted">
+                                      {t('myWork.notificationDetail.decider', 'Decider')}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                              {!sourceEntity?.assignee && !sourceEntity?.decider && (
+                                <p className="text-sm text-c-text-muted text-center py-2">
+                                  {t(
+                                    'myWork.notificationDetail.noStakeholdersAssigned',
+                                    'No stakeholders assigned'
+                                  )}
+                                </p>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+
+                    {/* Why You Got It */}
+                    {(contract.whyYouGotIt || notification.data?.whyYouGotIt) && (
+                      <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.25 }}
+                        className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
+                      >
+                        <div className="flex items-center justify-between px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/10 dark:from-amber-500/20 dark:to-amber-500/20">
+                              <Info size={18} className="text-amber-500 dark:text-amber-400" />
+                            </div>
+                            <span className="text-sm font-semibold text-c-text-secondary">
+                              {t('myWork.notificationDetail.whyYouGotIt', 'Why you got it')}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="border-t border-c-border p-4">
+                          <p className="text-sm text-c-text-secondary leading-relaxed">
+                            {contract.whyYouGotIt || String(notification.data?.whyYouGotIt || '')}
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
                 </div>
               </div>
+            )}
+          </div>
+          {/* ── Dokowany prawy panel (SPEC-N §2.2) ──────────────────────────
+              ETAP 1.4 — jasna zaokrąglona karta odsunięta od krawędzi
+              (wrapper `sticky top-4 self-start`), nie sidebar doklejony do
+              brzegu. SIOSTRA kolumny roboczej: panel zaczyna się na górnej
+              krawędzi Menu 1 i oba menu kończą się przed nim — jak w Decyzji,
+              Zadaniu i Inicjatywie. Tryb C ma własny akordeon, więc panel
+              renderujemy tylko w trybie N.
+              BEZ `hidden xl:block` (inaczej niż Decyzja/Zadanie) — ta karta
+              pokazywała panel na KAŻDEJ szerokości; ukrycie <1280 zabrałoby
+              użytkownikowi Właściwości i Historię, czyli byłaby to regresja
+              funkcji pod pretekstem geometrii. */}
+          {presentationMode === 'n' && (
+            <div className="shrink-0 sticky top-4 self-start">
+              <ArtifactRightPanel
+                ariaLabel={t(
+                  'myWork.notificationDetail.rightPanelAria',
+                  'Notification details panel'
+                )}
+                className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
+                sections={rightPanelSections}
+              />
             </div>
           )}
         </div>

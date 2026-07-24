@@ -158,6 +158,10 @@ import { AIConnections } from './shared/AIConnections';
 import { buildAskAIMessage } from './shared/askAiHelper';
 import { PostDecisionFollowUp } from './shared/PostDecisionFollowUp';
 import { RelatedContext } from './shared/RelatedContext';
+// Wspólny wzór listy powiązań (Decyzja „Dotyczy" = Zadanie „Wynika z").
+// Import wprost z pliku, nie przez `./shared/index.ts` — barrel jest dziś
+// równolegle edytowany przez inne fronty.
+import { RelatedItemsList } from './shared/RelatedItemsList';
 
 // ── Decision accordion section IDs ──────────────────────────────────────────
 const DECISION_SECTION_IDS = [
@@ -3585,7 +3589,7 @@ Use userId only from this list:
       t('decisions.detail.quickArgs.proBetterQuality', 'Better quality'),
       t('decisions.detail.quickArgs.proScalability', 'Scalability'),
     ],
-    [i18n.language]
+    [i18n.language, t]
   );
   const quickConArguments = useMemo(
     () => [
@@ -3595,7 +3599,7 @@ Use userId only from this list:
       t('decisions.detail.quickArgs.conComplexity', 'Higher complexity'),
       t('decisions.detail.quickArgs.conVendorDependency', 'Vendor dependency'),
     ],
-    [i18n.language]
+    [i18n.language, t]
   );
   const riskLevelOptions = useMemo(() => ['low', 'medium', 'high', 'critical'] as const, []);
   const riskCategoryOptions = useMemo(
@@ -3887,12 +3891,10 @@ Use userId only from this list:
     });
   };
 
-  const getLinkedItemIndex = (item: LinkedItem) => {
-    const raw = String(item.id || '').trim();
-    if (!raw) return '';
-    const normalized = raw.replace(/^.*\//, '');
-    return normalized.length > 24 ? `${normalized.slice(0, 24)}...` : normalized;
-  };
+  // `getLinkedItemIndex` USUNIĘTY 2026-07-24 — jego jedynym zadaniem było
+  // pokazać właścicielowi surowy identyfikator powiązania („link-2", „link-3")
+  // obok tytułu. Sekcja „Dotyczy" renderuje dziś `RelatedItemsList`
+  // (typ po polsku + tytuł), więc funkcja nie miała już wywołań.
 
   // Lokalny przycisk AI przy polu (menu Popraw/Skróć/Rozwiń/Formalnie) usunięty
   // 2026-07-23. Był to MARTWY KOD: `renderFieldAIButton` nie miał ani jednego
@@ -5460,8 +5462,13 @@ Use userId only from this list:
     // the parent shell renders this inside an overflow-hidden container so
     // min-h-screen content below the fold was unreachable.
     <div className="h-full overflow-y-auto bg-gradient-to-br from-c-surface via-c-surface to-c-surface dark:from-c-bg dark:to-c-bg">
-      <div className="p-6">
-        <div className="max-w-[1500px] mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
+      {/* GEOMETRIA CHROMU (2026-07-24): `pt-4` zamiast `pt-6` — ten sam odstęp
+          od góry co w powłoce `NModeShell` (:153), której trzymają się Wniosek
+          i Narzędzie. Zmierzone na renderze: Menu 1 stało na 24 px w Decyzji /
+          Zadaniu / Powiadomieniu i na 16 px w pozostałych trzech kartach.
+          Boki (`px-6`) i dół (`pb-6`) bez zmian. */}
+      <div className="px-6 pt-4 pb-6">
+        <div className="max-w-6xl mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
           <div className="xl:flex-1 xl:min-w-0 space-y-0">
             {/* Main */}
             {/* Title Header — uses shared NModeHeader component */}
@@ -5503,7 +5510,12 @@ Use userId only from this list:
                Left nav click → shows ONE section at a time (no scroll-all).
                ═══════════════════════════════════════════════════════════════════ */}
             {presentationMode === 'n' && (
-              <div className="col-span-full space-y-4">
+              <div className="col-span-full space-y-4 pt-4">
+                {/* RYTM PIONOWY (2026-07-24): `pt-4` = 16 px między Menu 1 a Menu 2 —
+                    tyle, ile daje powłoka `NModeShell` (mt-2 na pasku + py-2 w środku)
+                    Wnioskowi i Narzędziu. `mt-*` tu NIE DZIAŁA: rodzic ma `space-y-0`,
+                    które nadpisuje margin-top dzieci (wyższa specyficzność selektora
+                    `.space-y-0 > * ~ *`). Dlatego padding, nie margines. */}
                 {/* ── MENU 2 (ETAP 1.2 standardu n-Type) ─────────────────────
                     Wspólny `NModeMenu2`: Sekcje po lewej · Edycja|Podgląd
                     w dokładnym środku geometrycznym · Analizuj z AI (fiolet)
@@ -5668,24 +5680,7 @@ Use userId only from this list:
                                     {t('decisions.detail.scope.noLinkedItem', 'No linked item')}
                                   </div>
                                 ) : (
-                                  <div className="space-y-1">
-                                    {relatedDecisionItems.map((item) => (
-                                      <div
-                                        key={item.id}
-                                        className="flex items-center justify-between gap-3 text-sm text-c-text-secondary"
-                                      >
-                                        <div className="flex min-w-0 items-center gap-2">
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-info/50 text-c-info bg-c-info/10 uppercase">
-                                            {item.type}
-                                          </span>
-                                          <span className="truncate">{item.title}</span>
-                                        </div>
-                                        <span className="shrink-0 text-[11px] font-mono text-c-text-secondary/70">
-                                          {getLinkedItemIndex(item)}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
+                                  <RelatedItemsList items={relatedDecisionItems} />
                                 )}
                               </div>
 
@@ -9010,7 +9005,7 @@ Use userId only from this list:
             )}
           </div>
           {/* ── Dokowany prawy panel artefaktu (xl+; ukryty na <xl) ── */}
-          <div className="hidden xl:block shrink-0 sticky top-6 self-start">
+          <div className="hidden xl:block shrink-0 sticky top-4 self-start">
             <ArtifactRightPanel
               sections={rightPanelSections}
               className={ARTIFACT_PANEL_CARD_CLASS_STICKY}

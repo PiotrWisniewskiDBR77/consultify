@@ -58,6 +58,10 @@ import TeresaMark from '../shared/TeresaMark';
 import { getCanvasBg } from './canvas/canvasBackground';
 import { CanvasSnapGuides } from './canvas/CanvasSnapGuides';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import {
+  getIdeaCanvasCursorClass,
+  getIdeaCanvasCursorProps,
+} from './canvas/ideaCanvasCursorMode';
 import { useCanvasSnapping } from './canvas/useCanvasSnapping';
 import { useIdeaCollab } from './canvas/useIdeaCollab';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
@@ -5441,8 +5445,20 @@ function MindMapInner({
                 locked,
                 connectMode: interactionMode === 'connect',
               })}
+              // Z1 (parytet z Tablicą/Przepływem): tryb kursora z lewego raila
+              // REALNIE przestawia płótno, nie tylko afordancję węzła. `select`
+              // = zero nadpisań (Z10 nietknięte). `connect` mapujemy na `select`
+              // helpera (helper zna tylko select/pan/draw) — helper nie nadpisuje
+              // niczego dla select, więc uchwyty/`nodesConnectable`/crosshair
+              // trybu connect zostają nietknięte. `pan` = rączka (nic się nie
+              // rusza ani nie zaznacza). Spread MUSI być po
+              // getIdeasToolInteractionProps, żeby wygrał z domyślnymi.
+              {...getIdeaCanvasCursorProps(interactionMode === 'pan' ? 'pan' : 'select')}
               className={`bg-c-bg ${
-                interactionMode === 'connect' ? 'cursor-crosshair' : 'cursor-default'
+                interactionMode === 'connect'
+                  ? 'cursor-crosshair'
+                  : getIdeaCanvasCursorClass(interactionMode === 'pan' ? 'pan' : 'select') ||
+                    'cursor-default'
               }`}
               aria-label={t('mindmap.ideaRecommendationMapArrowNavigationEnte')}
               defaultEdgeOptions={reactFlowDefaultEdgeOptions}

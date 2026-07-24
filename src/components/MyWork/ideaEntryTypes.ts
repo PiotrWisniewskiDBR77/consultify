@@ -80,6 +80,31 @@ export function bucketIdeaStageForList(raw?: string | null): IdeaStageListBucket
   return V5_TO_LIST_BUCKET[normalizeStageToV5(raw)];
 }
 
+// ── List-facing stage labels (2026-07-24 SSOT unification) ─────────────────
+// The Ideas list shows the coarse 5-bucket stage (`IdeaStageListBucket`), not
+// the fine-grained V5 stage the right-side panel shows (`IDEA_STAGE_LABELS`
+// above). Those are two different granularities by design — see
+// `V5_TO_LIST_BUCKET` — so they will never read byte-identical to the panel.
+// Within the list itself, though, every renderer (badge/filter/preview) must
+// use this ONE dictionary instead of its own inline copy — before this, three
+// near-duplicate dicts had drifted apart on Polish diacritics ("Rosnie" vs
+// "Rośnie", "Ksztaltuje" vs "Kształtuje się").
+export const IDEA_STAGE_BUCKET_LABELS: Record<IdeaStageListBucket, { en: string; pl: string }> = {
+  spark: { en: 'Spark', pl: 'Iskra' },
+  incubating: { en: 'Growing', pl: 'Rośnie' },
+  shaping: { en: 'Shaping', pl: 'Kształtuje się' },
+  ready: { en: 'Ready', pl: 'Gotowy' },
+  promoted: { en: 'Promoted', pl: 'Promowany' },
+};
+
+export function getIdeaStageBucketLabel(
+  bucket: IdeaStageListBucket,
+  isPolish: boolean
+): string {
+  const entry = IDEA_STAGE_BUCKET_LABELS[bucket];
+  return isPolish ? entry.pl : entry.en;
+}
+
 // ── Entry types ─────────────────────────────────────────────────────────────
 export type IdeaStartMode = 'describe_with_ai' | 'blank_canvas' | 'use_template';
 

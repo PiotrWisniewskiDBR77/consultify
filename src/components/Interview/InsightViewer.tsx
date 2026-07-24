@@ -158,6 +158,17 @@ import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoDa
 // ARTIFACT_ANATOMY_STANDARD.md §18.1.
 const VF1_INSIGHT_SPECA = import.meta.env.VITE_VF1_INSIGHT_SPECA === 'true';
 
+/**
+ * Wspólny log „cichej" awarii danych wtórnych (aktywność, komentarze, sesje,
+ * streszczenia, packi, persystencja layoutu). ŚWIADOMIE tylko `console.warn` —
+ * te ścieżki mają fail-soft UI (pusta lista / null) i NIE mają krzyczeć do
+ * użytkownika. Cel: realna awaria backendu przestaje być niewidoczna dla
+ * developera (dotąd `catch {}` / `.catch(() => [])` połykały ją bez śladu).
+ */
+function warnInsightSilentFailure(context: string, err?: unknown): void {
+  console.warn(`[InsightViewer] ${context}`, err);
+}
+
 // MIGRACJA — kompozycja kart Insight przez WIĄŻĄCY kontrakt karty (D-8, KONTRAKT §9).
 // Default OFF (zero regresji na demo). Kolejność opt-in (wzór Initiative
 // `isInitiativeCardContractEnabled`): URL `?cardContract=1` → localStorage
@@ -1329,8 +1340,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       setNModeSectionOrder(sectionIds);
       try {
         localStorage.setItem(nModeOrderStorageKey, JSON.stringify(sectionIds));
-      } catch {
+      } catch (err) {
         // Ignore storage errors; drag-and-drop still works for this session.
+        warnInsightSilentFailure(`persisting section order (${nModeOrderStorageKey}) failed`, err);
       }
     },
     [nModeOrderStorageKey]
@@ -1374,8 +1386,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     (next: CardLayout) => {
       try {
         localStorage.setItem(cardLayoutStorageKey, JSON.stringify(next));
-      } catch {
+      } catch (err) {
         // Ignore storage errors; card management still works for this session.
+        warnInsightSilentFailure(`persisting card layout (${cardLayoutStorageKey}) failed`, err);
       }
     },
     [cardLayoutStorageKey]
@@ -1548,9 +1561,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     try {
       const findingsRes = await V8InterviewApi.listFindings(currentInsightId)
         .then((r) => r.findings)
-        .catch(() => []);
+        .catch((err) => {
+          warnInsightSilentFailure(`listFindings(${currentInsightId}) failed`, err);
+          return [];
+        });
       setFindings(Array.isArray(findingsRes) ? findingsRes : []);
-    } catch {
+    } catch (err) {
+      warnInsightSilentFailure(`loadPersistedFindings(${currentInsightId}) failed`, err);
       setFindings([]);
     }
   }, []);
@@ -1559,9 +1576,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     try {
       const analysisRes = await V8InterviewApi.getAnalysis(currentInsightId)
         .then((r) => r.analysis)
-        .catch(() => null);
+        .catch((err) => {
+          warnInsightSilentFailure(`getAnalysis(${currentInsightId}) failed`, err);
+          return null;
+        });
       setAnalysis(analysisRes || null);
-    } catch {
+    } catch (err) {
+      warnInsightSilentFailure(`loadInsightAnalysis(${currentInsightId}) failed`, err);
       setAnalysis(null);
     }
   }, []);
@@ -1570,9 +1591,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     try {
       const candidatesRes = await V8InterviewApi.listCandidates(currentInsightId)
         .then((r) => r.candidates)
-        .catch(() => []);
+        .catch((err) => {
+          warnInsightSilentFailure(`listCandidates(${currentInsightId}) failed`, err);
+          return [];
+        });
       setCandidates(Array.isArray(candidatesRes) ? candidatesRes : []);
-    } catch {
+    } catch (err) {
+      warnInsightSilentFailure(`loadCandidates(${currentInsightId}) failed`, err);
       setCandidates([]);
     }
   }, []);
@@ -1581,9 +1606,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     try {
       const sourcePackRes = await V8InterviewApi.getSourcePack(currentInsightId)
         .then((r) => r.sourcePack)
-        .catch(() => null);
+        .catch((err) => {
+          warnInsightSilentFailure(`getSourcePack(${currentInsightId}) failed`, err);
+          return null;
+        });
       setSourcePack(sourcePackRes || null);
-    } catch {
+    } catch (err) {
+      warnInsightSilentFailure(`loadSourcePack(${currentInsightId}) failed`, err);
       setSourcePack(null);
     }
   }, []);
@@ -1592,9 +1621,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     try {
       const reportPackRes = await V8InterviewApi.getInsightReportPack(currentInsightId)
         .then((r) => r.reportPack)
-        .catch(() => null);
+        .catch((err) => {
+          warnInsightSilentFailure(`getInsightReportPack(${currentInsightId}) failed`, err);
+          return null;
+        });
       setReportPack(reportPackRes || null);
-    } catch {
+    } catch (err) {
+      warnInsightSilentFailure(`loadReportPack(${currentInsightId}) failed`, err);
       setReportPack(null);
     }
   }, []);
@@ -1603,9 +1636,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     try {
       const readinessRes = await V8InterviewApi.getInsightReportReadiness(currentInsightId)
         .then((r) => r.readiness)
-        .catch(() => null);
+        .catch((err) => {
+          warnInsightSilentFailure(`getInsightReportReadiness(${currentInsightId}) failed`, err);
+          return null;
+        });
       setReportReadiness(readinessRes || null);
-    } catch {
+    } catch (err) {
+      warnInsightSilentFailure(`loadReportReadiness(${currentInsightId}) failed`, err);
       setReportReadiness(null);
     }
   }, []);
@@ -1859,7 +1896,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               data.sourceSessionIds.slice(0, 10).map((id: string) =>
                 V8InterviewApi.getSession(id)
                   .then((r) => r.session)
-                  .catch(() => Api.get(`/interview/sessions/${id}`).catch(() => null))
+                  .catch(() =>
+                    Api.get(`/interview/sessions/${id}`).catch((err) => {
+                      warnInsightSilentFailure(`getSession(${id}) failed (source session)`, err);
+                      return null;
+                    })
+                  )
               )
             );
             // Dedup po id — powiązania nie mogą renderować dwóch wpisów o tym
@@ -1877,7 +1919,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             const summaryEntries = await Promise.all(
               validSessions.map(async (session: SourceSession) => {
                 const summary = await V8InterviewApi.getSessionSummary(session.id).catch(() =>
-                  Api.get(`/interview/sessions/${session.id}/summary`).catch(() => null)
+                  Api.get(`/interview/sessions/${session.id}/summary`).catch((err) => {
+                    warnInsightSilentFailure(`getSessionSummary(${session.id}) failed`, err);
+                    return null;
+                  })
                 );
                 return [session.id, summary] as const;
               })
@@ -1899,8 +1944,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 {}
               )
             );
-          } catch {
-            // sessions are optional
+          } catch (err) {
+            // Sesje źródłowe są opcjonalne dla UI (fail-soft), ale awaria musi
+            // być widoczna w konsoli — inaczej pusty blok „Sesje" wygląda jak
+            // brak danych, a nie jak padnięty backend.
+            warnInsightSilentFailure(
+              `loading source sessions/summaries for insight ${insightId} failed`,
+              err
+            );
           }
         } else {
           setSourceSessions([]);
@@ -1910,10 +1961,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         const [activityRes, commentsRes] = await Promise.all([
           V8InterviewApi.getInsightActivity(insightId)
             .then((r) => r.activity)
-            .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])),
+            .catch(() =>
+              Api.get(`/interview/insights/${insightId}/activity`).catch((err) => {
+                warnInsightSilentFailure(`getInsightActivity(${insightId}) failed`, err);
+                return [];
+              })
+            ),
           V8InterviewApi.getInsightComments(insightId)
             .then((r) => r.comments)
-            .catch(() => Api.get(`/interview/insights/${insightId}/comments`).catch(() => [])),
+            .catch(() =>
+              Api.get(`/interview/insights/${insightId}/comments`).catch((err) => {
+                warnInsightSilentFailure(`getInsightComments(${insightId}) failed`, err);
+                return [];
+              })
+            ),
         ]);
         setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
         setNComments(Array.isArray(commentsRes) ? commentsRes : []);
@@ -2634,8 +2695,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             activeDocumentId: session.id || activeDocumentId,
           })
         );
-      } catch {
-        // ignore
+      } catch (err) {
+        // Fail-soft: nawigujemy i tak, ale brak zapisu = zakładka sesji się nie
+        // otworzy w hubie — to musi być widoczne w konsoli, nie połknięte.
+        warnInsightSilentFailure(
+          `handing off source session ${session.id} to Interview hub (sessionStorage) failed`,
+          err
+        );
       }
       navigate(ROUTES.INTERVIEW);
     },
@@ -2820,7 +2886,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       await V8InterviewApi.regenerateInsight(insight.id).catch(() =>
         Api.post(`/interview/insights/${insight.id}/regenerate`, {})
       );
-      toast.success(t('interview.insightViewer.regenerationStarted'));
       const data = await V8InterviewApi.getInsight(insightId)
         .then((r) => r.insight)
         .catch(() => Api.get(`/interview/insights/${insightId}`));
@@ -2830,10 +2895,22 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       await loadInsightAnalysis(insightId);
       const activityRes = await V8InterviewApi.getInsightActivity(insightId)
         .then((r) => r.activity)
-        .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
+        .catch(() =>
+          Api.get(`/interview/insights/${insightId}/activity`).catch((err) => {
+            warnInsightSilentFailure(
+              `getInsightActivity(${insightId}) after regenerate failed`,
+              err
+            );
+            return [];
+          })
+        );
       setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
+      // Sukces DOPIERO po udanym przeładowaniu — inaczej nieudany reload dawał
+      // użytkownikowi najpierw „rozpoczęto", a chwilę później „nie udało się".
+      toast.success(t('interview.insightViewer.regenerationStarted'));
       onRegenerate?.();
-    } catch {
+    } catch (err) {
+      warnInsightSilentFailure(`handleRegenerate(${insightId}) failed`, err);
       toast.error(t('interview.insightViewer.failedToRegenerate'));
     } finally {
       setIsRegenerating(false);
@@ -2856,8 +2933,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         );
         window.dispatchEvent(new CustomEvent('consultify:teresa-pending-prompt'));
       }
-    } catch {
-      // Non-critical
+    } catch (err) {
+      // Non-critical dla użytkownika, ale prompt Teresy się NIE zasieje —
+      // developer musi to zobaczyć zamiast zgadywać, czemu czat jest pusty.
+      warnInsightSilentFailure('seeding Teresa pending prompt (sessionStorage) failed', err);
     }
   }, []);
 
@@ -7959,6 +8038,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // badge + progress keep working via the `completed` flag on each section.
   const renderSectionCompleteToggle = useCallback(
     (sectionId: string) => {
+      // PODGLĄD = TYLKO CZYTANIE (decyzja właściciela 2026-07-24): „Oznacz
+      // gotowe" ZAPISUJE stan ukończenia sekcji (zmienia badge ✓ w nawigacji
+      // i sygnał dla AI). W Podglądzie nie ma go wcale — tak samo jak
+      // Inicjatywa ukrywa swój odpowiednik. Chcesz oznaczyć → Edycja.
+      if (readMode) return null;
       const done = !!sectionCompletions[sectionId];
       return (
         <div className="flex justify-end mb-3">
@@ -7981,7 +8065,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         </div>
       );
     },
-    [sectionCompletions, handleToggleSectionComplete, isPolish]
+    [sectionCompletions, handleToggleSectionComplete, isPolish, readMode, t]
   );
 
   // ── Pole ręcznej edycji AKTYWNEJ sekcji (n-Type §6.2–6.4) ─────────────────
@@ -8719,9 +8803,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       label: t('interview.insightViewer.actions'),
       icon: Sparkles,
       defaultOpen: true,
-      isEmpty: !statusEditable || statusBaseOptions.length === 0,
-      emptyLabel: t('interview.insightViewer.actionsLiveInHeaderAndToolbar'),
-      children: (
+      // ── PODGLĄD = TYLKO CZYTANIE (decyzja właściciela 2026-07-24) ──
+      // `readMode` jest PIERWSZYM warunkiem pustki: przyciski niżej wywołują
+      // `runStatusTransition`, czyli ZAPIS statusu wniosku. W Podglądzie
+      // sekcja mówi to samo, co w Zadaniu i Decyzji — akcje są w Edycji.
+      isEmpty: readMode || !statusEditable || statusBaseOptions.length === 0,
+      emptyLabel: readMode
+        ? t('interview.insightViewer.actionsHiddenInReadMode', 'Actions are hidden in preview mode')
+        : t('interview.insightViewer.actionsLiveInHeaderAndToolbar'),
+      children: readMode ? null : (
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap gap-1.5">
             {statusBaseOptions
@@ -8877,7 +8967,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       badge: producedResults.length || undefined,
       children: (
         <div className="flex flex-col gap-3">
-          {resultTilesNode}
+          {/* PODGLĄD = TYLKO CZYTANIE (2026-07-24): kafelki „utwórz raport /
+              prezentację / tabelę / ideę / notatkę / inicjatywę / decyzję"
+              robią `POST` i TWORZĄ nowy artefakt. W Podglądzie znikają.
+              ZOSTAJE rejestr „Już powstało" niżej — to czyste czytanie
+              (co z tego wniosku już zrobiono), więc nie ma powodu go zdejmować. */}
+          {readMode ? null : resultTilesNode}
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
               {t('interview.insightViewer.panelResultsProduced', 'Already produced')}
@@ -8921,6 +9016,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       children: (
         <CommentsCanvas
           comments={filteredComments}
+          /* PODGLĄD = TYLKO CZYTANIE (2026-07-24): `locked` to TEN SAM prop,
+             którym Zadanie (`isDone || readMode`) i Decyzja
+             (`isDecisionStageLocked`) blokują kompozytor komentarzy. Bez niego
+             Insight był jedyną z sześciu kart z ŻYWYM polem „Napisz komentarz…"
+             w Podglądzie (zmierzone: 1 edytowalny input vs 0 w pozostałych).
+             Filtr i sortowanie też gasną — ale to zachowanie wspólnego
+             komponentu, identyczne u Zadania i Decyzji, więc karta nie
+             wprowadza tu własnej odmiany. */
+          locked={readMode}
           onDeleteComment={handleDeleteComment}
           dateFilter={commentDateFilter}
           onDateFilterChange={setCommentDateFilter}
@@ -8979,12 +9083,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           // D-B: status = etykieta-pigułka (zlokalizowana + ton c-*), NIE kropka.
           statusLabel: statusPillLabel,
           statusTone: headerStatusTone,
-          primaryAction: {
-            label: { en: 'Convert to initiative', pl: 'Konwertuj na inicjatywę' },
-            icon: Rocket,
-            onClick: () => setGenOpen(true),
-            disabled: !insight?.id,
-          },
+          // PODGLĄD = TYLKO CZYTANIE (2026-07-24): „Konwertuj na inicjatywę"
+          // otwiera generator, który TWORZY nowy artefakt (Inicjatywę) —
+          // typowa akcja zmieniająca stan systemu, więc w Podglądzie znika.
+          // Zdolność zostaje o jedno kliknięcie dalej (przełącz na Edycję),
+          // a Menu 1 w Podglądzie jest puste tak jak w Zadaniu i Decyzji.
+          primaryAction: readMode
+            ? undefined
+            : {
+                label: { en: 'Convert to initiative', pl: 'Konwertuj na inicjatywę' },
+                icon: Rocket,
+                onClick: () => setGenOpen(true),
+                disabled: !insight?.id,
+              },
         }}
         sections={visibleNModeSections}
         activeSection={activeNSection}
@@ -9024,7 +9135,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               // (default OFF, see src/utils/artifactApprovalUiFlag.ts). At
               // OFF this is `undefined` and ArtifactRightPanel renders 1:1
               // as before (no new DOM, no visual change).
-              isArtifactApprovalUiEnabled() && insight?.id ? (
+              //
+              // PODGLĄD = TYLKO CZYTANIE (2026-07-24): dołożony warunek
+              // `!readMode` — pasek niesie „Zgłoś do recenzji" (zapis obiegu
+              // akceptacji) i stał AKTYWNY nad sekcją „Akcje", która w tym
+              // samym panelu mówiła, że akcji nie ma. Ta sama bramka, którą
+              // Decyzja dostała dzień wcześniej (`showApprovalBar`).
+              isArtifactApprovalUiEnabled() && insight?.id && !readMode ? (
                 <ArtifactApprovalStatusBar
                   artifactType="insight"
                   artifactId={insight.id}
@@ -9051,16 +9168,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           //   - "Prezentuj"     : i tak wylaczone flaga VITE_PRESENT_MODE.
           //
           // ⚠ 2026-07-23 (sędzia grafiki, pkt 8) — SZEROKOŚĆ MENU 2 = SZEROKOŚĆ
-          // MENU 1. Powłoka `NModeShell` hostuje pasek w kontenerze
-          // `max-w-6xl mx-auto px-6 py-2`; te `px-6` zwężały Menu 2 o 2×24 px
-          // względem nagłówka i centrum (zmierzone: Menu 1 x=28 w=1152,
-          // Menu 2 x=52 w=1104). Pasek czytał się jak element DOKLEJONY, nie
-          // jak drugie menu tego samego ekranu. `-mx-6` znosi dokładnie to
-          // wcięcie i wyrównuje krawędzie do reszty kolumny. Robimy to po
-          // stronie karty, a nie w `NModeShell`, bo powłoka jest wspólna dla
-          // Inicjatywy / Narzędzia / Wywiadu (osobne karty, osobny odbiór).
+          // MENU 1. NAPRAWIONE 2026-07-24 W POWŁOCE (Etap 0): `NModeShell`
+          // przeniósł `px-6` NA ZEWNĄTRZ limitu `max-w-6xl` (Segment 2), więc
+          // Menu 2 ma teraz tę samą geometrię co Menu 1 i Sekcje bez żadnej
+          // korekty po stronie karty. Poprzedni obejściowy `<div className="-mx-6">`
+          // ZDJĘTY: po naprawie powłoki nadmiernie korygował (wypychał pasek
+          // 24 px w lewo i poszerzał o 48 px), tworząc rozjazd w drugą stronę
+          // i doklejając menu do krawędzi przy wąskim oknie.
           return (
-            <div className="-mx-6">
             <NModeMenu2
               isPolish={isPolish}
               readMode={readMode}
@@ -9322,7 +9437,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               }
             />
-            </div>
           );
         }}
       >

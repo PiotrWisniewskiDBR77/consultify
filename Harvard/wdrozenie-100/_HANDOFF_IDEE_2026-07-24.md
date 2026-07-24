@@ -240,3 +240,53 @@ potem `curl https://demo.consultify.ai/api/health` — sprawdź `gitSha`.
   z localStorage jest IGNOROWANY; render-verify flagi z rejestru wymaga
   tymczasowej zmiany `defaultValue`.
 - Dane demo = twarz produktu: probe'y sprzątają po sobie, zero rekordów testowych.
+
+---
+
+## 9. AKTUALIZACJA — koniec sesji 2026-07-24 (po recenzji Piotra)
+
+### Wykonane po napisaniu tego handoffu
+- **Naprawiona regresja typu narzędzia** (§0) — fallback na `preferredTool` Idei.
+- **Naprawione uszkodzone dane** „Procesu ofertowania": `preferred_tool` i
+  `surfaceState.activeTool` → `process_flow`, oraz **przywrócony `type:'flowNode'`
+  w 12 węzłach** (mapa zdarła typ; kształty/tory/etykiety ocalały).
+- **Test ścieżką użytkownika** (z listy, BEZ sluga, czysta przeglądarka):
+  wszystkie 4 Idee otwierają się właściwym narzędziem.
+- **★ WŁĄCZONE FLAGI WIZUALNE** — bo Piotr testuje i słusznie widział stary ekran:
+  `ideaSwitcherBottomRight` (przełącznik w prawym dolnym rogu, D2),
+  `ff_ideaPanelVisual` (panel kartowy, Z2), `ff_tableDataRail`.
+  Zweryfikowane: przełącznik w rogu (4 przyciski), zniknął z lewego railа.
+- **Wypchnięte na demo**: commit `8bef69248a` (jest w `origin/demo`; inna sesja
+  pchnęła po nas — deploy `e84c3c4c08` zawiera naszą pracę). Punkt cofania: `5e35d8a76c`.
+
+### ★ ANALIZA LUK WOBEC GŁÓWNYCH WYTYCZNYCH (o to prosił Piotr)
+
+| Wytyczna | Stan | Co brakuje |
+|---|---|---|
+| **D2** przełącznik w prawym dolnym rogu | ✅ **teraz włączone** | — (minimapa-ikona K2 już była live) |
+| **D1** kanon panelu (Przegląd·Właściwości·Powiązania·Komentarze·Historia) | ❌ **NIE ZBUDOWANE** | zakładki to nadal `problem·status·inspector·convert·health`; **Powiązania i Komentarze nie istnieją w kodzie**. To NAJWIĘKSZA otwarta pozycja |
+| **Z2** panel nie „wsiowo" | ⚠ częściowo | kartowy wygląd włączony, ale struktura zakładek wciąż stara (patrz D1) |
+| **Z3** zero placeholderów | ❌ **łamane na żywo** | 6 pozycji „SOON" w Convert (`ideaConvertTargets.ts`, `status:'soon'`) |
+| **Z4** Teresa steruje wszystkim | ⚠ zbudowane, OFF | transport gotowy, ale żywa runda z LLM NIGDY nie zweryfikowana → flaga OFF |
+| **Z1** analogiczność 4 narzędzi | ⚠ częściowo | tryb kursora w Tablicy i Przepływie **dekoracyjny** (rozdz. 06 §3: „naprawa wymagana") |
+| **rozdz. 06** lewy rail | ⚠ częściowo | zrobiony tylko data-rail Tabeli; Szablony/Import wciąż w railu wszystkich narzędzi wbrew §2 |
+| **Język** | ❌ | interfejs po angielsku przy polskiej treści; **AI Blind Spots odpowiada po angielsku na polską mapę** |
+| **Słownictwo etapów** | ❌ | lista „Shaping" vs panel „STRUCTURING → Validating" |
+| **Kolumna „Tool" na liście** | ❌ | pokazuje „Recommendation map"; Piotr chce czytelnie: Mapa myśli / Whiteboard / Process Flow / Tabela |
+
+### KOLEJKA NA NASTĘPNĄ SESJĘ (priorytet malejący)
+1. **Kanon panelu D1** — zbudować Powiązania i Komentarze od zera, przemianować
+   zakładki. To jest to, po czym Piotr ocenia produkt.
+2. **Usunąć 6 „SOON"** z Convert — podłączyć albo skasować (Z3).
+3. **Kolumna „Tool"** — czytelne nazwy typów narzędzi na liście.
+4. **Język**: interfejs + AI odpowiadające w języku mapy.
+5. **Słownictwo etapów** — jedna nazwa na jeden etap.
+6. **Tryb kursora** realnie sterujący płótnem w WB/PF (Z1).
+7. **Zabezpieczenie przed ponowną korupcją** `preferred_tool` (§0 pkt 3).
+
+### ★ LEKCJA METODYCZNA Z TEJ SESJI
+Raportowałem **odhaczone pozycje backlogu** zamiast **zmian widocznych na ekranie**
+— i przez to zawyżałem postęp. Piotr dwukrotnie i słusznie to skorygował.
+Następna sesja: meldować **zrzut przed/po**, nie listę ✅.
+Druga lekcja: **praca za flagą OFF nie istnieje dla właściciela** — jeśli on testuje,
+flagi muszą być ON, inaczej cała robota jest niewidoczna i wygląda na niezrobioną.

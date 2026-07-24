@@ -329,7 +329,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
     return result;
   }, [liveGraphNodes, liveGraphEdges, isPl]);
 
-  const subtitle = useMemo(() => t('myWorkIdeas.contextPanel.contextStatistics'), [isPl]);
+  const subtitle = useMemo(() => t('myWorkIdeas.contextPanel.contextStatistics'), [isPl, t]);
 
   const toggleSection = useCallback((key: SectionKey) => {
     setExpandedSections((prev) => {
