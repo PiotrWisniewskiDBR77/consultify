@@ -11,10 +11,44 @@ import toast from 'react-hot-toast';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
+import type { FieldFillProposal, FieldFillRowChange } from './AITableFieldProposal';
 import { downloadCSV, exportToCSV } from './csvUtils';
+import { isTableFieldProposalEnabled } from './tableFieldProposalFlag';
 import type { ColumnDef, TableNode } from './tableTypes';
 import type { ViewLayout } from './useTableViews';
 import type { UseUndoRedoReturn } from './useUndoRedo';
+
+/**
+ * Buduje propozycję różnicy (przed → po) z mapowań AI, BEZ zapisu do danych.
+ * Zwraca tylko wiersze i pola, które faktycznie się zmieniają. Pusty wynik = brak zmian.
+ */
+function buildFieldFillProposal(
+  source: FieldFillProposal['source'],
+  nodes: TableNode[],
+  columns: ColumnDef[],
+  mappings: Array<{ nodeId?: string; rowId?: string; fields?: Record<string, unknown> }>
+): FieldFillProposal {
+  const headerFor = (key: string): string =>
+    columns.find((c) => c.key === key)?.header ?? key;
+
+  const rows: FieldFillRowChange[] = [];
+  for (const node of nodes) {
+    const mapping = mappings.find((m) => m.nodeId === node.id || m.rowId === node.id);
+    if (!mapping?.fields) continue;
+    const cells = [] as FieldFillRowChange['cells'];
+    for (const [key, val] of Object.entries(mapping.fields)) {
+      if (val === undefined || val === null || val === '') continue;
+      const before = node.data?.[key];
+      // Pomijamy „zmiany", które nic nie zmieniają (ta sama wartość).
+      if (before === val) continue;
+      cells.push({ key, header: headerFor(key), before, after: val });
+    }
+    if (cells.length > 0) {
+      rows.push({ rowId: node.id, label: String(node.data?.label ?? node.id), cells });
+    }
+  }
+  return { source, rows };
+}
 
 export interface QuickActionHandlers {
   handleAddRow: () => void;
@@ -38,6 +72,11 @@ export interface QuickActionHandlers {
   setShowHeatmap: (v: boolean) => void;
   onUndo: () => void | Promise<void>;
   onRedo: () => void;
+  /**
+   * P1-6: pokazuje podgląd propozycji autofill/odświeżania (przed → po) zamiast
+   * pisać prosto do komórek. Ustawiane tylko gdy flaga `ff_tableFieldProposal` = ON.
+   */
+  onFieldFillProposal?: (proposal: FieldFillProposal) => void;
 }
 
 export interface UseTableQuickActionsOpts {
@@ -175,6 +214,20 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
           });
           const mappings = (result as any)?.view_patch?.autofillMappings;
           if (Array.isArray(mappings) && mappings.length > 0) {
+            // P1-6: gdy flaga ON — nie piszemy do komórek, pokazujemy podgląd propozycji.
+            if (isTableFieldProposalEnabled() && handlers.onFieldFillProposal) {
+              const proposal = buildFieldFillProposal('autofill', nodes, columns, mappings);
+              if (proposal.rows.length === 0) {
+                toast(
+                  i18n.t('ideas.table.quickActions.noChangesToApply', 'No changes to apply'),
+                  { icon: 'ℹ️' }
+                );
+              } else {
+                handlers.onFieldFillProposal(proposal);
+              }
+              return;
+            }
+            // OFF (domyślnie): zachowanie jak dziś — auto-apply (do akceptu Piotra na zrzutach).
             let appliedCount = 0;
             nodesUndo.push(
               nodes.map((n) => {
@@ -260,6 +313,25 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
             });
             const refreshMappings = (refreshResult as any)?.view_patch?.autofillMappings;
             if (Array.isArray(refreshMappings) && refreshMappings.length > 0) {
+              // P1-6: gdy flaga ON — podgląd propozycji zamiast nadpisania komórek.
+              if (isTableFieldProposalEnabled() && handlers.onFieldFillProposal) {
+                const proposal = buildFieldFillProposal(
+                  'refresh',
+                  nodes,
+                  columns,
+                  refreshMappings
+                );
+                if (proposal.rows.length === 0) {
+                  toast(
+                    i18n.t('ideas.table.quickActions.noChangesToApply', 'No changes to apply'),
+                    { icon: 'ℹ️' }
+                  );
+                } else {
+                  handlers.onFieldFillProposal(proposal);
+                }
+                return;
+              }
+              // OFF (domyślnie): zachowanie jak dziś — auto-apply.
               let refreshedCount = 0;
               nodesUndo.push(
                 nodes.map((n) => {
