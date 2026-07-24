@@ -5066,74 +5066,6 @@ export const Api = {
     return handleResponse(res, 'Failed to generate AI content');
   },
 
-  developMyIdeaSSE: (
-    ideaId: string,
-    payload: {
-      focusBranch?: string;
-      seedText?: string;
-      language?: string;
-    },
-    callbacks: {
-      onChunk: (data: any) => void;
-      onDone: () => void;
-      onError: (err: Error) => void;
-    }
-  ): { abort: () => void } => {
-    const controller = new AbortController();
-    const url = `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/develop`;
-    const headers = getHeaders();
-
-    (async () => {
-      try {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        });
-        if (!res.ok) {
-          callbacks.onError(new Error(`SSE failed: ${res.status}`));
-          return;
-        }
-        const reader = res.body?.getReader();
-        if (!reader) {
-          callbacks.onError(new Error('No response body'));
-          return;
-        }
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed.startsWith('data: ')) {
-              const jsonStr = trimmed.slice(6);
-              if (jsonStr === '[DONE]') {
-                callbacks.onDone();
-                return;
-              }
-              try {
-                callbacks.onChunk(JSON.parse(jsonStr));
-              } catch {
-                /* skip malformed */
-              }
-            }
-          }
-        }
-        callbacks.onDone();
-      } catch (err: any) {
-        if (err?.name !== 'AbortError') callbacks.onError(err);
-      }
-    })();
-
-    return { abort: () => controller.abort() };
-  },
-
   // --- My Ideas: Convert/Promote ---
   convertMyIdea: async (
     ideaId: string,
@@ -5148,59 +5080,6 @@ export const Api = {
       body: JSON.stringify(payload),
     });
     return handleResponse(res, 'Failed to convert idea');
-  },
-
-  // --- V4-IDEA-05: Cluster / Outcome ---
-  materializeIdeaClusters: async (
-    ideaId: string,
-    clusters: Array<{ id: string; name: string; nodeIds: string[]; color?: string }>
-  ): Promise<{ graph: any; clusterIds: string[]; version: number }> => {
-    const res = await fetch(
-      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/clusters/materialize`,
-      {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ clusters }),
-      }
-    );
-    return handleResponse(res, 'Failed to materialize clusters');
-  },
-
-  createClusterOutcome: async (
-    ideaId: string,
-    clusterId: string,
-    payload: { outcomeType: 'task' | 'decision' | 'initiative' | 'insight'; label: string }
-  ): Promise<{ outcome: any; version: number }> => {
-    const res = await fetch(
-      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/clusters/${encodeURIComponent(clusterId)}/outcome`,
-      {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(payload),
-      }
-    );
-    return handleResponse(res, 'Failed to create outcome');
-  },
-
-  convertOutcome: async (
-    ideaId: string,
-    outcomeId: string,
-    payload: { target: 'task' | 'decision' | 'initiative' }
-  ): Promise<{
-    entityId: string;
-    entityType: string;
-    outcomeId: string;
-    sourceSessionId?: string;
-  }> => {
-    const res = await fetch(
-      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/outcomes/${encodeURIComponent(outcomeId)}/convert`,
-      {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(payload),
-      }
-    );
-    return handleResponse(res, 'Failed to convert outcome');
   },
 
   // ==========================================

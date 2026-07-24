@@ -102,15 +102,8 @@ export function useWhiteboardQuickActions(opts: UseWhiteboardQuickActionsOpts): 
       handlers.addElement('text', { semanticType: 'decision', label: 'Decision' });
     if (action === 'wb_add_action')
       handlers.addElement('sticky', { semanticType: 'action', label: 'Action' });
-    if (action === 'wb_add_kpi') handlers.addElement('kpi_badge');
-    if (action === 'wb_add_score') handlers.addElement('score');
-    if (action === 'wb_add_progress') handlers.addElement('progress');
-    if (action === 'wb_add_summary') handlers.addElement('summary');
     if (action === 'wb_duplicate') handlers.duplicateSelected();
-    if (action === 'wb_group') handlers.groupSelected();
     if (action === 'wb_ungroup') handlers.ungroupSelected();
-    if (action === 'wb_distribute_h') handlers.distributeNodes('horizontal');
-    if (action === 'wb_distribute_v') handlers.distributeNodes('vertical');
     if (action === 'wb_delete') handlers.deleteSelected();
     if (action === 'wb_undo') handlers.undo?.();
     if (action === 'wb_redo') handlers.redo?.();
