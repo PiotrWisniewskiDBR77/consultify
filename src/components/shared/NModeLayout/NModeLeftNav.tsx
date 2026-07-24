@@ -25,8 +25,8 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CheckCircle2, GripVertical } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { CheckCircle2, ChevronDown, GripVertical } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { NModeSection } from './types';
@@ -42,6 +42,33 @@ const isSectionVisible = (s: NModeSection, showAll: boolean) =>
 // zależnie od długości nazw sekcji (SSOT: _GRID_STABILIZATION_COMMAND_2026-07-24).
 const N_MODE_LEFT_NAV_WIDTH_CLASS =
   'hidden lg:block w-[var(--ntype-left-panel-width)]';
+
+// Panel ma WŁASNE przewijanie zamiast rosnąć z całą stroną (SSOT „Lewy panel
+// sekcji": Inicjatywa = 26 sekcji rosła do ~2437px i przewijała się razem ze
+// stroną). `top-28` = 7rem odstępu od góry scrollującego przodka; odejmujemy
+// dodatkowy oddech na dole (1.5rem), żeby panel nie stykał się z krawędzią
+// widoku, gdy jest długi.
+const N_MODE_LEFT_NAV_SCROLL_CLASS =
+  'max-h-[calc(100vh-8.5rem)] overflow-y-auto app-table-scrollbar';
+
+// Klucz localStorage dla zwinięcia grup — namespaced po ZESTAWIE etykiet grup
+// danej karty (Inicjatywa: „Zakres i plan/…"; Insight: „Insight/…"), więc każda
+// karta pamięta swój stan niezależnie bez potrzeby osobnego propa identyfikującego
+// artefakt (wzorzec kluczy: `mels.rail.{moduleKey}` w useRailState.ts).
+const collapsedGroupsStorageKey = (groupLabelsKey: string) =>
+  `ntype.leftNav.collapsedGroups.${groupLabelsKey}`;
+
+function readCollapsedGroups(groupLabelsKey: string): Record<string, boolean> {
+  if (typeof window === 'undefined' || !groupLabelsKey) return {};
+  try {
+    const raw = window.localStorage.getItem(collapsedGroupsStorageKey(groupLabelsKey));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
 
 interface NModeLeftNavProps {
   /** Available sections */
@@ -201,6 +228,38 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
   }, [visibleSections]);
   const hasGroups = useMemo(() => visibleSections.some((s) => s.group), [visibleSections]);
 
+  // Stabilny klucz namespace'ujący localStorage po ZESTAWIE etykiet grup tej
+  // karty (liczony z `sections`, nie z `visibleSections`, żeby przełącznik
+  // „Pokaż wszystkie" nie przesuwał klucza). Puste, gdy karta nie ma grup —
+  // wtedy nic się nie zapisuje/odczytuje (5 kart bez grupowania = bez zmian).
+  const groupLabelsKey = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of sections) if (s.group) set.add(s.group);
+    return Array.from(set).sort().join('|');
+  }, [sections]);
+
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(() =>
+    readCollapsedGroups(groupLabelsKey)
+  );
+
+  useEffect(() => {
+    if (!groupLabelsKey) return;
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        collapsedGroupsStorageKey(groupLabelsKey),
+        JSON.stringify(collapsedGroups)
+      );
+    } catch {
+      // localStorage może być pełny/wyłączony (tryb prywatny) — zapamiętywanie
+      // jest best-effort, nie blokuje działania nawigacji.
+    }
+  }, [collapsedGroups, groupLabelsKey]);
+
+  const toggleGroup = useCallback((label: string) => {
+    setCollapsedGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+  }, []);
+
   const sectionById = useMemo(() => {
     const map = new Map<string, NModeSection>();
     for (const s of sections) map.set(s.id, s);
@@ -309,23 +368,50 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
     );
 
   const navBody = hasGroups
-    ? groups.map((g, gi) => (
-        <div key={g.label ?? `__ungrouped_${gi}`} className={gi > 0 ? 'pt-3' : ''}>
-          {g.label && (
-            /* Nagłówek grupy („Wgląd/Dowody/Dostarczane", „Zakres i plan/Rezultaty").
-               BYŁO: surowa szarość z palety Tailwinda (jasny wariant + jeszcze
-               ciemniejszy w `dark:`), 10 px — pomiar 2026-07-23: 2,34:1 (light)
-               i 2,52:1 (dark), czyli grubo poniżej progu AA 4,5:1; w ciemnym
-               motywie nagłówek gasł zupełnie, bo był ciemniejszy od tła obok.
-               JEST: token `c-text-secondary` (theme-aware, bez wariantu `dark:`)
-               + 11 px, żeby wersaliki z rozstrzeleniem 0.14em dały się czytać. */
-            <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-secondary">
-              {g.label}
-            </div>
-          )}
-          {renderGroupItems(g.items)}
-        </div>
-      ))
+    ? groups.map((g, gi) => {
+        const label = g.label;
+        // Grupa zawierająca aktywną sekcję zostaje rozwinięta niezależnie od
+        // zapamiętanego stanu zwinięcia — użytkownik nie może wylądować na
+        // sekcji, której nagłówek grupy ją ukrywa.
+        const containsActive = label ? g.items.some((s) => s.id === activeSection) : false;
+        const isGroupCollapsed = label ? Boolean(collapsedGroups[label]) && !containsActive : false;
+        return (
+          <div key={label ?? `__ungrouped_${gi}`} className={gi > 0 ? 'pt-3' : ''}>
+            {label && (
+              /* Nagłówek grupy („Wgląd/Dowody/Dostarczane", „Zakres i plan/Rezultaty").
+                 BYŁO: surowa szarość z palety Tailwinda (jasny wariant + jeszcze
+                 ciemniejszy w `dark:`), 10 px — pomiar 2026-07-23: 2,34:1 (light)
+                 i 2,52:1 (dark), czyli grubo poniżej progu AA 4,5:1; w ciemnym
+                 motywie nagłówek gasł zupełnie, bo był ciemniejszy od tła obok.
+                 JEST: token `c-text-secondary` (theme-aware, bez wariantu `dark:`)
+                 + 11 px, żeby wersaliki z rozstrzeleniem 0.14em dały się czytać.
+                 Nagłówek jest teraz też przyciskiem zwijającym grupę (SSOT
+                 „Lewy panel sekcji": grupy mogą być zwijane, Inicjatywa ma mieć
+                 sticky nagłówki) — `sticky top-0` + tło tokenu `c-surface-raised`
+                 z przezroczystością (VA0.5 alpha-enabled token, wzorzec
+                 `FilterableTable`/`NModeShell`), bo panel siedzi na przekątnym
+                 gradiencie strony, którego nie da się dopasować jednym płaskim
+                 kolorem — a raw `slate-*`/`navy-*` jest zakazane w powłoce
+                 artefaktu (check-artefakt.sh). */
+              <button
+                type="button"
+                onClick={() => toggleGroup(label)}
+                aria-expanded={!isGroupCollapsed}
+                className="sticky top-0 z-10 flex w-full items-center justify-between gap-1 bg-c-surface-raised/90 backdrop-blur-sm px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-secondary transition-colors hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--c-focus)] rounded-sm"
+              >
+                <span className="truncate">{label}</span>
+                <ChevronDown
+                  size={12}
+                  className={`shrink-0 text-c-text-muted transition-transform duration-fast ${
+                    isGroupCollapsed ? '-rotate-90' : ''
+                  }`}
+                />
+              </button>
+            )}
+            {!isGroupCollapsed && renderGroupItems(g.items)}
+          </div>
+        );
+      })
     : renderGroupItems(visibleSections);
 
   // Odstęp lewy panel ↔ centrum = JEDEN token --ntype-column-gap (24px).
@@ -336,52 +422,58 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
     <nav
       className={`${N_MODE_LEFT_NAV_WIDTH_CLASS} flex-shrink-0 pr-[var(--ntype-column-gap)]`}
     >
-      <div className="sticky top-28 pt-1 space-y-1">
-        {onSectionReorder ? (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            {navBody}
-          </DndContext>
-        ) : (
-          navBody
-        )}
+      {/* Panel dostaje WŁASNE przewijanie zamiast rosnąć z całą stroną (SSOT
+          „Lewy panel sekcji": Inicjatywa = 26 sekcji rosła do ~2437px). Karty
+          z małą liczbą sekcji (4-7) nigdy nie sięgają `max-h`, więc dla nich
+          `overflow-y-auto` jest bezwiedny — zero regresji wyglądu. */}
+      <div className="sticky top-28 pt-1">
+        <div className={`${N_MODE_LEFT_NAV_SCROLL_CLASS} space-y-1`}>
+          {onSectionReorder ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              {navBody}
+            </DndContext>
+          ) : (
+            navBody
+          )}
 
-        {(hiddenCount > 0 || showAll) && (
-          <button
-            type="button"
-            onClick={() => setShowAll((v) => !v)}
-            className="mt-1 w-full px-3 py-1.5 text-left text-[11px] text-c-text-muted transition-colors hover:text-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] rounded"
-          >
-            {showAll
-              ? t('sharedComponents.nModeLeftNav.hideEmptySections')
-              : t('sharedComponents.nModeLeftNav.showAllSections', { count: hiddenCount })}
-          </button>
-        )}
+          {(hiddenCount > 0 || showAll) && (
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="mt-1 w-full px-3 py-1.5 text-left text-[11px] text-c-text-muted transition-colors hover:text-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] rounded"
+            >
+              {showAll
+                ? t('sharedComponents.nModeLeftNav.hideEmptySections')
+                : t('sharedComponents.nModeLeftNav.showAllSections', { count: hiddenCount })}
+            </button>
+          )}
 
-        {/* ── Mark Complete progress bar ─────────────────────────── */}
-        {showProgress && (
-          <div className="mt-3 px-3 pb-1 space-y-1.5">
-            <div className="flex items-center justify-between">
-              {/* Ta sama wada kontrastu co nagłówki grup (surowa szarość, 10 px)
-                  — token + 11 px, żeby cała nawigacja miała jeden poziom AA. */}
-              <span className="text-[11px] text-c-text-secondary">
-                {t('sharedComponents.nModeLeftNav.sectionsComplete')}
-              </span>
-              <span className="text-[11px] font-medium text-success-600 dark:text-success-400">
-                {completedCount}&thinsp;/&thinsp;{completableSections.length}
-              </span>
+          {/* ── Mark Complete progress bar ─────────────────────────── */}
+          {showProgress && (
+            <div className="mt-3 px-3 pb-1 space-y-1.5">
+              <div className="flex items-center justify-between">
+                {/* Ta sama wada kontrastu co nagłówki grup (surowa szarość, 10 px)
+                    — token + 11 px, żeby cała nawigacja miała jeden poziom AA. */}
+                <span className="text-[11px] text-c-text-secondary">
+                  {t('sharedComponents.nModeLeftNav.sectionsComplete')}
+                </span>
+                <span className="text-[11px] font-medium text-success-600 dark:text-success-400">
+                  {completedCount}&thinsp;/&thinsp;{completableSections.length}
+                </span>
+              </div>
+              <div className="h-1 w-full rounded-full bg-c-border-subtle overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-success-500 dark:bg-success-400 transition-all duration-500"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
             </div>
-            <div className="h-1 w-full rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-success-500 dark:bg-success-400 transition-all duration-500"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </nav>
   );
