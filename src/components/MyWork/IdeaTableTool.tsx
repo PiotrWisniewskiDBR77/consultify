@@ -81,6 +81,11 @@ import { AddColumnDialog } from './table/AddColumnDialog';
 import { AICategorizeTool } from './table/AICategorizeTool';
 import { AICopilotMode } from './table/AICopilotMode';
 import { AITableAssistant } from './table/AITableAssistant';
+import {
+  AITableFieldProposal,
+  type FieldFillProposal,
+  type FieldFillRowChange,
+} from './table/AITableFieldProposal';
 import { AITableProposal, type TableProposal } from './table/AITableProposal';
 import { AuditTrailPanel } from './table/AuditTrailPanel';
 import { AutomationsManager } from './table/automations/AutomationsManager';
@@ -643,6 +648,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   /** Which tab RowDetailPanel should land on when it (re)opens — e.g. "Add note" deep-links to Comments. */
   const [detailInitialTab, setDetailInitialTab] = useState<'properties' | 'comments'>('properties');
   const [aiProposal, setAiProposal] = useState<TableProposal | null>(null);
+  // P1-6: propozycja autofill/odświeżania (przed → po) — zamiast pisać prosto do komórek.
+  const [fieldFillProposal, setFieldFillProposal] = useState<FieldFillProposal | null>(null);
   const [showColorPalette, setShowColorPalette] = useState(false);
   const [activePalette, setActivePalette] = useState('vibrant');
   const [, setShowSummaryDashboard] = useState(false);
@@ -937,8 +944,46 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       setShowHeatmap,
       onUndo: () => platformUndoRef.current(),
       onRedo: () => nodesUndo.redo(),
+      onFieldFillProposal: setFieldFillProposal,
     },
   });
+
+  // ── P1-6: zastosowanie zaakceptowanych wierszy propozycji autofill/odświeżania ──
+  // Migawka zdejmowana PRZED zapisem (nodesUndo.push zapamiętuje poprzedni stan),
+  // dzięki czemu Cofnij przywraca dane sprzed zastosowania.
+  const handleApplyFieldFill = useCallback(
+    (acceptedRows: FieldFillRowChange[]) => {
+      if (acceptedRows.length === 0) {
+        setFieldFillProposal(null);
+        return;
+      }
+      const byRowId = new Map(acceptedRows.map((r) => [r.rowId, r]));
+      let appliedFields = 0;
+      const next = nodes.map((n) => {
+        const change = byRowId.get(n.id);
+        if (!change) return n;
+        const updatedData = { ...n.data };
+        for (const cell of change.cells) {
+          updatedData[cell.key] = cell.after;
+          appliedFields++;
+        }
+        return { ...n, data: updatedData };
+      });
+      nodesUndo.push(next);
+      trackFunnelEvent('ideas_table_field_fill_applied', {
+        ideaId,
+        rowCount: acceptedRows.length,
+        fieldCount: appliedFields,
+      });
+      toast.success(
+        t('myWorkTable.fieldProposal.applied', 'Zastosowano {{count}} pól', {
+          count: appliedFields,
+        })
+      );
+      setFieldFillProposal(null);
+    },
+    [ideaId, nodes, nodesUndo, t]
+  );
 
   // ── Framework apply ────────────────────────────────────────────────────────
   const handleFrameworkApply = useCallback(
@@ -2576,6 +2621,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   setAiProposal(null);
                 }}
                 onReject={() => setAiProposal(null)}
+              />
+            </div>
+          )}
+
+          {/* P1-6: podgląd propozycji autofill/odświeżania (przed → po) — flaga ff_tableFieldProposal */}
+          {fieldFillProposal && (
+            <div className="absolute left-4 right-4 top-14 z-50">
+              <AITableFieldProposal
+                proposal={fieldFillProposal}
+                onApply={handleApplyFieldFill}
+                onReject={() => setFieldFillProposal(null)}
               />
             </div>
           )}
