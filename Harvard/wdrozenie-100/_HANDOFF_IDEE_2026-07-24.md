@@ -442,3 +442,159 @@ funkcje o przeciwnych domyślnych.**
 - Dług nazewniczy `ENABLE_TERESA_MINDMAP` (dwie funkcje, jedna nazwa).
 - Pozycje z §10: martwy kod, 12 niepotwierdzonych `useMemo`, zwijanie „Zapisano Ns temu",
   sprzątanie worktree'ów.
+
+---
+
+## 12. ZAMKNIĘCIE SESJI 2026-07-24 (przed przerwą Piotra — testy w niedzielę wieczorem)
+
+### Co doszło po §11
+
+**Naprawa menu konta (poza modułem IDEE, ale ta sama sesja):** Piotr zgłosił zrzutem
+„menu wchodzi na panel" — dropdown konta (avatar, prawy górny róg) kolidował wizualnie
+z inną zawartością ekranu. Przyczyna: `UserProfileMenu.tsx` był JEDYNYM dropdownem w
+całym repo bez `createPortal` do `document.body` (Select/MultiSelect/DatePicker/
+Menu3DropdownChip/TableSettingsPopover — wszystkie portalują). Nagłówek dostaje
+lokalny `z-sticky`(20) przez regułę „z-index działa na flex-item bez position", ale to
+NIE przebija realnych body-level elementów z wyższym z-index (np. `global-fab-rail` w
+`MainLayout.tsx`, `fixed z-dropdown`=40, ikony pomoc/feedback/dokument).
+
+**Dowód, nie domysł:** zbudowany żywy harness (realny `UserProfileMenu` + realny
+nagłówek `MainLayout` + mock `global-fab-rail` 1:1 z kodu) — PRZED naprawą ikony rail
+WYRAŹNIE cięły przez otwarte menu (zrzut). PO naprawie (portal do body, pozycja z
+`getBoundingClientRect`, `z-modal`=60, dual-ref outside-click) — zero kolizji.
+Naprawiony plik: `src/components/layout/UserProfileMenu.tsx`. Na demo.
+
+**★ Ślepy zaułek po drodze (uczciwie odnotowany):** pierwsza teoria (zły z-index na
+samym dropdownie) była zła — syntetyczny test pokazał, że architektura header-vs-
+content jest poprawna. Dopiero żywa replika z prawdziwym komponentem ujawniła
+prawdziwą przyczynę (brak portalu). Nie wdrożyłem naprawy na fałszywej podstawie.
+
+### Samoaudyt zgodności z regułami (na żądanie Piotra, 2026-07-24)
+
+Wykonany pełny przegląd sesji względem CLAUDE.md. Wynik: **zgodne, z trzema
+zastrzeżeniami**, wszystkie ujawnione wprost Piotrowi:
+
+1. Agenci tej sesji dzielili JEDEN worktree bez izolacji git (higiena wykonania każe
+   osobny worktree per krok) — pilnowane ręcznie przez jawne „nie dotykaj pliku X",
+   zero cichej utraty pracy (każdy diff przejrzany osobno), ale nie podręcznikowe.
+2. Brakowało tagu cofnięcia dla ostatniej promocji (naprawa menu konta) — DOPISANY:
+   `demo-rollback-pre-account-menu-fix-2026-07-24` (SHA `9218962778`).
+3. **★★ SHA-e commitów IDEE PRZESUNĘŁY SIĘ.** Demo to gałąź, na którą push miały
+   RÓWNOLEGLE inne sesje (Materiały, karty-n, agt-008…) — każdy retry mojej pętli
+   promocji (fetch→cherry-pick na nowy czubek→push) nadawał moim commitom NOWY hash.
+   Treść identyczna, numer inny. Jeśli szukasz SHA cytowanego wcześniej w tym
+   dokumencie i go nie znajdziesz na `git log origin/demo` — szukaj po TREŚCI
+   komunikatu (`git log origin/demo --grep="..."`), nie po samym SHA.
+
+Zero sekretów, zero zapisu do bazy (test Teresy = bezpośrednie wywołania API modelu,
+nigdy serwera/trolley), zero crimson (pełny skan diffu sesji), zero PROD, zero
+force-push, zero `--no-verify`. Główny checkout repo nietknięty przez całą sesję.
+
+### Tagi cofnięcia z tej sesji (najnowsze na dole)
+- `demo-rollback-pre-idee-2026-07-24` — przed pierwszą turą promocji (§9→§10)
+- `demo-rollback-pre-idee-runda2-2026-07-24` — SHA `e84c3c4c08`, przed rundą 2 (17 commitów: D1/Z1/Z3/język/etykiety)
+- `demo-rollback-pre-etapy-teresa-2026-07-24` — SHA `dbabea9c16`, przed rundą 3 (etapy+Teresa)
+- `demo-rollback-pre-account-menu-fix-2026-07-24` — SHA `9218962778`, przed naprawą menu konta (dopisany retroaktywnie)
+
+### CO ZOSTAJE DO ZROBIENIA (kolejność wg priorytetu, nie kolejność odkrycia)
+
+1. **Feedback Piotra z testów niedziela wieczór** — ŹRÓDŁO PRAWDY na start następnej
+   sesji. Przeczytaj NAJPIERW, zanim ruszysz cokolwiek — może zmienić priorytety
+   poniżej.
+2. **Teresa Z4 — druga połowa łańcucha.** Zweryfikowana jest tylko połowa: model→SSE
+   `idea_action`. NIE zweryfikowane: czy `executeTeresaTool → runIdeaAction → handler`
+   faktycznie rusza węzeł na płótnie w przeglądarce. Zrób to PRZED włączeniem flagi
+   `ENABLE_TERESA_IDEA_ACTIONS` (dziś OFF, słusznie — reguła #7: Piotr nie może być
+   pierwszym, kto odkrywa, czy działa). Flaga frontu `VITE_ENABLE_TERESA_IDEA_ACTIONS`
+   jest BUILD-TIME — sama zmienna serwera nic nie da bez przebudowy frontu.
+3. **Kontrolka potwierdzenia w czacie** — bez niej `idea_workspace_convert`/
+   `_duplicate` są trwale martwe przez Teresę (rejestr żąda `ctx.confirmed`, czat go
+   nie wysyła). To DECYZJA PRODUKTOWA (jak ma wyglądać potwierdzenie), nie sama
+   naprawa kodu — może wymagać pytania do Piotra.
+4. **Trzeci zdryfowany słownik etapów**: `IdeaCanvasMenu1Bits.tsx:39-44` ma własną
+   kopię `STAGE_BUCKET_LABEL` z literówką „Kształtuje" (bez „ się"), zamiast czytać
+   `IDEA_STAGE_BUCKET_LABELS` z `ideaEntryTypes.ts`. Tania poprawka, znaleziona ale
+   celowo nieruszona (poza zakresem zlecenia w danym momencie).
+5. **Dług nazewniczy `ENABLE_TERESA_MINDMAP`** — jedna nazwa flagi na DWIE różne
+   funkcje (wyszukiwanie map vs generowanie mapy) o przeciwnych domyślnych. Nie jest
+   to błąd dziś (każda ścieżka wewnętrznie spójna), ale pułapka na następnego
+   czytelnika. Rozdzielić na dwie nazwy przy najbliższej okazji dotykania tego pliku.
+6. **12 niepotwierdzonych podejrzeń `useMemo` z zamrożonym i18n** (lista w §11
+   poprzedniego agenta) — brak taniego dowodu w dostępnych harnessach. Nie ruszać na
+   ślepo, tylko gdy pojawi się tani sposób weryfikacji per przypadek.
+7. **Martwy kod**: `IdeaPinnedCard.tsx` — cały komponent, zero odwołań w repo.
+   Kandydat do skasowania (osobny, bezpieczny commit).
+8. **Kosmetyka**: „Zapisano 424034s temu" — zwijanie do minut/godzin w
+   `IdeaMapWorkspace.tsx` (`draftSavedLabel`), nie tylko naprawiony wcześniej surowy
+   klucz i18n.
+9. **Pełny 40-punktowy checklist Harvard/DoD SPEC-A** — NIE przejechany od zera dla
+   każdej dotkniętej powierzchni tej sesji (np. przycisk „Przywróć wersję" w
+   Historii, wątki odpowiedzi w Komentarzach, wszystkie 4 narzędzia × light/dark ×
+   każda zakładka panelu). Zweryfikowane zrzutem było to, co realnie zmieniane —
+   nie cały moduł od zera.
+10. Poza IDEE: Materiały mają rozpisaną kolejną falę (Word `from_template`,
+    menu-cleanup Menu2→5 typów), DOKUMENTY mają otwartą pętlę do 9,0 (patrz pamięć
+    sesji: `loop-do-9-2026-07-23`).
+
+---
+
+## 13. PROMPT DLA NASTĘPCY (wklej to na start nowej sesji)
+
+Kontynuujesz pracę nad modułem **IDEE** (cztery narzędzia płótna Idei: Mapa myśli ·
+Whiteboard · Process Flow · Tabela) w Consultify. Poprzednia sesja domknęła rundy 2 i
+3 z listy właściciela (Piotra) i jest już WYPCHNIĘTA na `origin/demo` — sprawdź to
+sam (`git fetch origin demo && git log origin/demo --oneline -30`), nie ufaj samym
+SHA cytowanym w tym dokumencie: **demo to gałąź współdzielona z innymi równoległymi
+sesjami, więc numery commitów mogły się przesunąć przy cherry-picku — szukaj po
+treści komunikatu, nie po samym hashu, jeśli któregoś nie znajdziesz.**
+
+**Zanim cokolwiek zrobisz:**
+1. Przeczytaj CAŁY ten plik (`Harvard/wdrozenie-100/_HANDOFF_IDEE_2026-07-24.md`) od
+   początku — sekcje 0-12 mają kontekst, którego nie chcesz odkrywać po raz drugi
+   (zwłaszcza §0 o dawnej regresji korupcji danych i §8 o twardych zasadach).
+2. **Sprawdź, czy Piotr zostawił feedback z testów** (obiecał wieczór niedzieli
+   2026-07-26) — to jest teraz ŹRÓDŁO PRAWDY o priorytetach, ważniejsze niż kolejka w
+   §12. Szukaj w `rejestr/3-DO-ODBIORU/` (pozycje IDE-*) i w wiadomościach czatu.
+3. Zweryfikuj REALNY runtime, nie dokumentację — audyty starzeją się w ~3 dni.
+   `grep` realnego callera w `src/`/`server/src/`, sprawdź czy flaga ma
+   implementację, czytaj stan danych z ŻYWEJ bazy (trolley), nie z kodu.
+
+**Twarde zasady tego projektu (nie negocjowalne, złamanie = zatrzymaj się i zapytaj):**
+- **Piotr nigdy nie jest pierwszym testerem wizualnym.** Każdą zmianę ekranu
+  renderujesz i sprawdzasz zrzutem SAM, w harnessie dev-render (worktree
+  `/private/tmp/odbior-4`, `npx vite --config dev-render/vite.config.ts --port 3195`),
+  ZANIM Piotr ją zobaczy. Zmiany wizualne wchodzą za flagą domyślnie OFF do akceptu.
+- **Baza gałęzi promocji = zawsze `origin/demo`, ZAWSZE forward-port per-SHA
+  (cherry-pick), NIGDY merge** — gałąź robocza IDEE ma niepowiązaną historię z demo;
+  merge cofnąłby dziesiątki plików cudzej mechaniki. Worktree izolowany na
+  `origin/demo`, `git cherry-pick -x <sha>`, esbuild + strażniki na finalnym drzewie,
+  PUSH z retry-loop (fetch→cherry-pick na nowy czubek→push) jeśli demo ruszyło pod
+  Tobą w międzyczasie — to normalne, dzieje się często.
+- **Tag cofnięcia PRZED każdym pushem na demo** — `git tag -a demo-rollback-<opis>-<data> <sha_przed>`, `git push origin <tag>`. Bez wyjątków, nawet dla „małych" zmian.
+- **Crimson (`bg-primary-*`, `focus:ring-primary`) tylko dla semantyki krytycznej** —
+  `bash scripts/check-triada.sh <zmienione_pliki>` po KAŻDEJ zmianie. Uwaga: ten
+  strażnik na czystym drzewie (bez realnego diffu) melduje „sprawdzono 0 plików" —
+  to NIE znaczy „czysto", tylko że nic nie zbadał. Ufaj tylko wynikom z realnym
+  diffem w trakcie pracy.
+- **Zero zapisów do bazy demo (trolley) bez wyraźnej potrzeby** — dane demo to twarz
+  produktu. Jeśli test wymaga wywołania modelu AI, wołaj API dostawcy bezpośrednio
+  (klucz z `.env.staging.local`), nie serwer aplikacji — to test bez zapisu.
+- **PROD (centerbeam) — nigdy, bez jawnej zgody Piotra.**
+
+**Gdzie zaczynasz technicznie** (worktree `/private/tmp/odbior-4`, gałąź
+`odbior/lokalny-2026-07-23`): harness weryfikacyjny zarejestrowany w
+`.claude/launch.json` jako `idee-verify-3195` (port 3195); ekrany dev-render:
+`?screen=mindmap-canvas`, `whiteboard-canvas`, `processflow-canvas`, `idea-table`
+(parametry `&lang=pl|en&theme=light|dark`).
+
+**Pierwsza konkretna robota do zrobienia** (patrz §12 pkt 2-3 dla pełnego
+uzasadnienia): dokończyć weryfikację **Teresy Z4** — sprawdzić w przeglądarce (nie
+tylko teoretycznie), czy `executeTeresaTool → runIdeaAction → handler` faktycznie
+wykonuje akcję na płótnie, gdy wywołanie przychodzi od modelu przez SSE
+`idea_action`. Transport i trafność modelu są już potwierdzone (13 poleceń × 3
+modele, 0 halucynacji nazw narzędzi) — brakuje tylko dowodu, że wykonanie po stronie
+przeglądarki działa identycznie jak klik człowieka. Dopiero po tym włącz
+`ENABLE_TERESA_IDEA_ACTIONS` (uwaga: `VITE_ENABLE_TERESA_IDEA_ACTIONS` po stronie
+frontu jest build-time).
+
+Jeśli Piotr zostawił feedback z testów — to on rządzi kolejnością, nie ta lista.
