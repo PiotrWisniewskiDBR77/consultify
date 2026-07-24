@@ -1249,11 +1249,12 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                               <button
                                 key={n.id}
                                 onClick={() => {
-                                  window.dispatchEvent(
-                                    new CustomEvent('idea-workspace-add-edge', {
-                                      detail: { source: node.id, target: n.id },
-                                    })
-                                  );
+                                  // P1-3 (Z3): zdarzenie `idea-workspace-add-edge` bylo nadawane
+                                  // w prozne — NIKT go nie nasluchiwal w calym `src/`. Realnym
+                                  // odbiorca jest prop `onAddRelation` ponizej: IdeaTableTool
+                                  // dopisuje krawedz przez `setEdges`, a ta plynie w gore przez
+                                  // `onGraphChange` do zapisu grafu. Przycisk zostaje (dziala),
+                                  // usuniety jest wylacznie martwy dispatch.
                                   const prev =
                                     (node.data?._relations as {
                                       source: string;
@@ -1563,13 +1564,15 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                                 <button
                                   key={n.id}
                                   onClick={() => {
+                                    // P1-3 (Z3): zdarzenie `idea-workspace-link-artifact` nie
+                                    // mialo zadnego odbiorcy w `src/`. Realny skutek daje
+                                    // `onFieldChange(..., 'artifactLinks', ...)` powyzej (link
+                                    // laduje w danych wiersza i renderuje sie na liscie
+                                    // powiazanych artefaktow) plus prop `onLinkArtifact`
+                                    // (telemetria w IdeaTableTool). Usuniety jest wylacznie
+                                    // martwy dispatch — przycisk dziala i zostaje.
                                     const prev = (node.data?.artifactLinks as string[]) || [];
                                     onFieldChange(node.id, 'artifactLinks', [...prev, n.id]);
-                                    window.dispatchEvent(
-                                      new CustomEvent('idea-workspace-link-artifact', {
-                                        detail: { nodeId: node.id, artifactId: n.id },
-                                      })
-                                    );
                                     onLinkArtifact?.(node.id);
                                     setArtifactDropdownOpen(false);
                                     setArtifactSearch('');
