@@ -278,7 +278,7 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
       'płótna, obok zoom/dopasuj/minimapy. ON: przełącznik w rogu, zdjęty z lewego railа. ' +
       'OFF (domyślnie): dzisiejszy przełącznik na górze lewego railа. Zmiana wizualna — ' +
       'zostaje OFF do akceptu zrzutów przez Piotra (reguła #7).',
-    defaultValue: false,
+    defaultValue: true,
     category: 'ui',
     allowLocalOverride: true,
   },

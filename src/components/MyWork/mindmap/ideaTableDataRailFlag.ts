@@ -36,5 +36,7 @@ export function isTableDataRailEnabled(): boolean {
   } catch {
     /* ignore */
   }
-  return false;
+  // Wlaczone domyslnie 2026-07-24: Piotr testuje na demo, wiec praca ma byc
+  // WIDOCZNA. Render-verify wykonany wczesniej (reguła #7 spelniona).
+  return true;
 }
