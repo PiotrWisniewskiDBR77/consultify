@@ -2252,6 +2252,27 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
         `and ${docStudioTemplatesInserted} document templates for org ${organizationId}`
     );
   }
+
+  // R1 correction #5 — orphaned links are DETECTED and MEASURED, never deleted.
+  // The measurement has to actually run somewhere or the requirement is only
+  // met on paper, so it rides this already-throttled block (same
+  // `BACKFILL_TTL_MS` watermark) rather than every list request. Read-only:
+  // `countOrphanedTemplateLinks` issues SELECTs exclusively.
+  // Failure here must never break listing — orphan telemetry is diagnostic.
+  try {
+    const orphans = await countOrphanedTemplateLinks(organizationId);
+    if (orphans.total > 0) {
+      logger.warn(
+        `${LOG_PREFIX} Orphaned template links for org ${organizationId}: ${orphans.total} ` +
+          `(${TEMPLATE_ORIGIN_RUNTIMES.map((rt) => `${rt}=${orphans.byRuntime[rt]}`).join(', ')})` +
+          (orphans.unverifiable.length
+            ? ` · unverifiable: ${orphans.unverifiable.join(', ')}`
+            : '')
+      );
+    }
+  } catch (err) {
+    logger.warn(`${LOG_PREFIX} Orphan measurement skipped for org ${organizationId}: ${err}`);
+  }
 }
 
 async function getProjectMembershipSet(

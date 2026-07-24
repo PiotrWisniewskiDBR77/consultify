@@ -27,6 +27,20 @@ vi.mock('../featureFlagService.js', () => ({
   isV8Enabled: vi.fn().mockResolvedValue(false),
 }));
 
+// Orphan telemetry is emitted through the logger, so the logger is the seam
+// that proves the MEASUREMENT actually runs inside the production backfill
+// path (correction #5) — not merely that the counting function exists.
+const mockLogWarn = vi.fn();
+const mockLogInfo = vi.fn();
+vi.mock('../../../utils/Logger.js', () => ({
+  default: {
+    warn: (...args: unknown[]) => mockLogWarn(...args),
+    info: (...args: unknown[]) => mockLogInfo(...args),
+    error: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
+
 import type { ArtifactListItem } from '../../../types/artifactRegistry.js';
 import {
   buildTemplateOriginSummaryFields,
@@ -321,5 +335,81 @@ describe('orphan detection (measurement only)', () => {
     // ★ Measurement only — zero writes.
     expect(mockDbRun).not.toHaveBeenCalled();
     expect(allSql().some((sql) => /DELETE|UPDATE/i.test(sql))).toBe(false);
+  });
+});
+
+/**
+ * ★ WIRING PROOF (architect review P1, second instance).
+ *
+ * `countOrphanedTemplateLinks` was exported and unit-tested but had NO
+ * production caller — so correction #5's "measure their number" was satisfied
+ * only on paper. A unit test of the counter cannot catch that: it passes
+ * whether or not anything ever invokes it.
+ *
+ * This suite therefore drives the PRODUCTION entry point
+ * (`ensureBackfilledOutputsForOrg`) and asserts the measurement is emitted,
+ * and that measuring still writes nothing.
+ */
+describe('orphan measurement is wired into the production backfill path', () => {
+  beforeEach(() => {
+    mockLogWarn.mockReset();
+    mockLogInfo.mockReset();
+  });
+
+  // `ensureBackfilledOutputsForOrg` throttles per organization via a
+  // module-level watermark, so every invocation needs its own org id —
+  // otherwise a vitest retry silently short-circuits and the assertion
+  // flips for a reason that has nothing to do with the code under test.
+  let orgSeq = 0;
+  const freshOrg = (label: string) => `org-${label}-${++orgSeq}`;
+
+  it('emits the orphan count while backfilling', async () => {
+    mockDbAll.mockImplementation(async (sql: string) => {
+      // One indexed template link whose canonical record no longer exists.
+      if (sql.includes('FROM v8_artifact_origin_links')) {
+        return [{ origin_runtime: 'document_template', origin_record_id: 'dst-gone' }];
+      }
+      return [];
+    });
+    mockDbGet.mockResolvedValue(undefined);
+
+    const org = freshOrg('orphan-telemetry');
+    await ensureBackfilledOutputsForOrg(org);
+
+    const warned = mockLogWarn.mock.calls.map((c) => String(c[0])).join('\n');
+    expect(warned).toContain('Orphaned template links');
+    expect(warned).toContain(org);
+    expect(warned).toContain('document_template=1');
+  });
+
+  it('never issues a write against the links table while measuring', async () => {
+    mockDbAll.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM v8_artifact_origin_links')) {
+        return [{ origin_runtime: 'document_template', origin_record_id: 'dst-gone' }];
+      }
+      return [];
+    });
+    mockDbGet.mockResolvedValue(undefined);
+
+    await ensureBackfilledOutputsForOrg(freshOrg('orphan-nowrite'));
+
+    // Scoped deliberately: the backfill itself legitimately INSERTs artifacts
+    // and UPDATEs the draft flag. What must never happen is a DELETE/UPDATE
+    // touching `v8_artifact_origin_links` — cleanup is a separate decision.
+    const writesOnLinks = mockDbRun.mock.calls
+      .map((c) => String(c[0] ?? ''))
+      .filter((sql) => /v8_artifact_origin_links/i.test(sql))
+      .filter((sql) => /\bDELETE\b|\bUPDATE\b/i.test(sql));
+    expect(writesOnLinks).toEqual([]);
+  });
+
+  it('stays silent when there is nothing orphaned', async () => {
+    mockDbAll.mockResolvedValue([]);
+    mockDbGet.mockResolvedValue(undefined);
+
+    await ensureBackfilledOutputsForOrg(freshOrg('orphan-clean'));
+
+    const warned = mockLogWarn.mock.calls.map((c) => String(c[0])).join('\n');
+    expect(warned).not.toContain('Orphaned template links');
   });
 });
