@@ -1,5 +1,5 @@
 /**
- * Dev-render: AGT-010 proof — powłoka "Run agent" (Moje procesy | Szablony).
+ * Dev-render: AGT-010/AGT-011 proof — powłoka "Run agent" (Moje procesy | Szablony).
  *
  * Mounts the REAL `AgentHubShell` (src/components/AIChat/AgentHubShell.tsx)
  * with the agent-plan endpoints mocked (dev-render/mocks/agentHubMocks.ts) —
@@ -10,9 +10,12 @@
  *  - "Moje procesy" tabela: 5 wierszy, statusy planning/executing/
  *    awaiting_approval/completed/failed, kolumna postęp (x/5 kroków).
  *  - Klik w wiersz → AgentPlanWorkspace (ArtifactRightPanel) tego planu.
- *  - "Szablony" pigułka → placeholder (AGT-011).
+ *  - "Szablony" pigułka (AGT-011) → tabela łącząca ProcessLibrary (classic-5
+ *    domyślny, chip "Domyślny" + drd) z próbką katalogu manifestów (chip
+ *    "Gotowa analiza"), kolumna "Liczba kroków".
  *  - "Nowy proces" → tworzy plan classic-5 w trybie draft, otwiera canvas
- *    edytowalny (AgentPlanCanvas, status 'planning').
+ *    edytowalny (AgentPlanCanvas, status 'planning'). Klik w wiersz Szablonów
+ *    robi to samo dla procesu (draft) albo tworzy plan od razu dla manifestu.
  */
 import React, { useEffect, useState } from 'react';
 

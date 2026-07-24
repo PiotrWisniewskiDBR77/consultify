@@ -1,10 +1,10 @@
 /**
- * Fetch mock for the AGT-010 dev-render screen (agent-hub).
+ * Fetch mock for the AGT-010/AGT-011 dev-render screen (agent-hub).
  *
  * Intercepts only the endpoints AgentHubShell/AgentPlanWorkspace actually
- * call (`GET/POST /api/ai/agent-plan*`) — everything else (locale JSON,
- * app CSS, …) passes through to the real `fetch` untouched. No backend, no
- * DB, no login.
+ * call (`GET/POST /api/ai/agent-plan*`, `GET /api/ai/agent-plan/processes`,
+ * `GET /api/ai/agent-manifests`) — everything else (locale JSON, app CSS, …)
+ * passes through to the real `fetch` untouched. No backend, no DB, no login.
  *
  * Seeds a fixed list of plans covering the 4 statuses named in the
  * acceptance criterion (planning / executing / awaiting_approval /
@@ -13,6 +13,11 @@
  * agentPlanCanvasMocks.ts) so the harness screenshot is stable when a row
  * is opened — the deep run/canvas behaviour already has its own proof
  * (dev-render/screens/agent-plan-canvas.tsx).
+ *
+ * AGT-011 adds `MOCK_PROCESSES` (mirror of ProcessLibrary) and
+ * `MOCK_MANIFESTS` (representative sample of the built-manifest catalog,
+ * with `stepCount` like the real /api/ai/agent-manifests route) so the
+ * "Szablony" tab renders both template kinds without a backend.
  */
 
 export interface MockAgentPlanStep {
@@ -134,6 +139,84 @@ let plans: MockAgentPlan[] = [
 
 let newPlanSeq = 0;
 
+/**
+ * AGT-011: mock biblioteki procesów (ProcessLibrary — mirror `PROCESS_LIBRARY`
+ * z server/src/services/ai/agentPlan/processLibraryService.ts) dla zakładki
+ * "Szablony". Statyczne — ta biblioteka jest deterministyczna (bez auto-advance).
+ */
+const MOCK_PROCESSES = [
+  {
+    id: 'classic-5',
+    label: 'Klasyczny konsulting (5 faz, Kubr/ILO)',
+    description:
+      'Wejście/Kontraktowanie → Diagnoza → Rekomendacje → Wdrożenie → Zamknięcie. ' +
+      'Uniwersalny, rozpoznawalny, zbieżny z McKinsey/BCG.',
+    isDefault: true,
+    phaseCount: 5,
+  },
+  {
+    id: 'drd',
+    label: 'DRD (4 kroki)',
+    description: 'Discovery → Ocena → Inicjatywy → Efekty. Wariant skrócony.',
+    isDefault: false,
+    phaseCount: 4,
+  },
+];
+
+/**
+ * AGT-011: mock katalogu manifestów (mirror kilku wpisów `built` z
+ * discoveryAgentManifestCatalog.ts + `stepCount` dokładany przez route
+ * /api/ai/agent-manifests po stronie realnego backendu). Reprezentatywna
+ * próbka (nie pełne 19) — wystarczająca do dowodu tabeli/scroll.
+ */
+const MOCK_MANIFESTS = [
+  {
+    id: 'market-forces',
+    sourceType: 'discovery_tool',
+    status: 'built',
+    displayName: { pl: 'Siły Rynkowe (5 Sił Portera)', en: 'Market Forces (Porter 5 Forces)' },
+    wave: 'wave-1',
+    configDir: 'src/config/porter',
+    stepCount: 3,
+  },
+  {
+    id: 'growth-paths',
+    sourceType: 'discovery_tool',
+    status: 'built',
+    displayName: { pl: 'Ścieżki Wzrostu (Ansoff)', en: 'Growth Paths (Ansoff)' },
+    wave: 'wave-1',
+    configDir: 'src/config/ansoff',
+    stepCount: 3,
+  },
+  {
+    id: 'portfolio-priority',
+    sourceType: 'discovery_tool',
+    status: 'built',
+    displayName: { pl: 'Priorytetyzacja Portfela', en: 'Portfolio Priority' },
+    wave: 'wave-1',
+    configDir: 'src/config/portfolio',
+    stepCount: 4,
+  },
+  {
+    id: 'risk-uncertainty',
+    sourceType: 'discovery_tool',
+    status: 'built',
+    displayName: { pl: 'Ryzyko i Niepewność', en: 'Risk & Uncertainty' },
+    wave: 'wave-1',
+    configDir: 'src/config/riskuncertainty',
+    stepCount: 3,
+  },
+  {
+    id: 'siri-readiness',
+    sourceType: 'discovery_tool',
+    status: 'built',
+    displayName: { pl: 'Ocena gotowości SIRI 2.0', en: 'SIRI 2.0 Readiness Assessment' },
+    wave: 'wave-2',
+    configDir: 'src/config/siri',
+    stepCount: 4,
+  },
+];
+
 function respond(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -148,6 +231,18 @@ export function installAgentHubFetchMock(): void {
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input.toString();
     const method = (init?.method || 'GET').toUpperCase();
+
+    // GET /api/ai/agent-plan/processes — AGT-011 "Szablony": biblioteka
+    // procesów. MUSI być sprawdzone PRZED "Moje procesy"/getMatch niżej
+    // (inaczej 'processes' zostałby wzięty za id planu -> 404).
+    if (url.includes('/api/ai/agent-plan/processes') && method === 'GET') {
+      return respond({ total: MOCK_PROCESSES.length, processes: MOCK_PROCESSES });
+    }
+
+    // GET /api/ai/agent-manifests — AGT-011 "Szablony": katalog gotowych analiz.
+    if (url.includes('/api/ai/agent-manifests') && method === 'GET') {
+      return respond({ total: MOCK_MANIFESTS.length, manifests: MOCK_MANIFESTS });
+    }
 
     // GET /api/ai/agent-plan?mine=1 — "Moje procesy" table.
     if (
