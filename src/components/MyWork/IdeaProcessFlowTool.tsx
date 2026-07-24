@@ -2362,9 +2362,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
           Bylo tu surowe `z-[60]` — obejscie z 2026-06-20, zeby pasek nie chowal
           sie pod kartka odkrywania (IdeaCanvasDiscovery, z-[57]). Powod odpadl:
-          IdeaCanvasDiscovery nie jest juz nigdzie renderowany (martwy kod, P3-1
-          w backlogu). Obejscie zostalo i szkodzilo: 60 == `z-modal`, wiec pasek
-          rysowal sie NAD oknem Eksport/Import i przecinal je w polowie. */}
+          IdeaCanvasDiscovery zostal usuniety jako martwy kod (P3-1). Obejscie
+          zostalo i szkodzilo: 60 == `z-modal`, wiec pasek rysowal sie NAD oknem
+          Eksport/Import i przecinal je w polowie. */}
       <div className="relative z-sticky">
         <ProcessFlowToolbar
           isPl={!!isPl}
