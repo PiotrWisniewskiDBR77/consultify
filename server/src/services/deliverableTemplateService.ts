@@ -175,7 +175,11 @@ const LEGACY_DOC_SQL = `SELECT id, name, description, is_system, is_public, repo
        WHERE (is_system = true OR is_public = true OR organization_id = $1)
        ORDER BY is_system DESC, name`;
 
-async function listDocTemplates(orgId: string, userId?: string): Promise<DeliverableTemplate[]> {
+/** Legacy source: report_builder_templates (pre-existing "doc" template table). */
+async function listReportBuilderDocTemplates(
+  orgId: string,
+  userId?: string
+): Promise<DeliverableTemplate[]> {
   try {
     const rows = await queryAll<DocRow>(
       `SELECT id, name, description, is_system, is_public, report_type, sections_json, organization_id
@@ -202,6 +206,139 @@ async function listDocTemplates(orgId: string, userId?: string): Promise<Deliver
     }
     return [];
   }
+}
+
+// ------------------------------------------------------------------
+// document_studio_templates federation ("Most Word Architect → Biblioteka",
+// 2026-07-24 — brief §7/§8, decyzja Piotra "Most document_studio → rejestr").
+//
+// Templates authored via the Word Template Architect
+// (`DocumentStudioTemplateArchitectView` → `POST /api/document-studio/templates/plan`
+// → `draftTemplate()` in `documentStudio/documentTemplateService.ts`) persist to
+// the CANONICAL `document_studio_templates` table (migration
+// `769_document_studio_templates.sql`), via
+// `documentStudio/documentTemplateRegistryDao.ts#persistTemplate`. That table
+// has never been wired into `listDocTemplates` — only the LEGACY
+// `report_builder_templates` table was, so architect-created templates were
+// invisible in the shared Template Library (`GET /api/deliverables/templates?type=doc`,
+// consumed by `useDeliverableTemplates.ts` / `OutputsLauncherModal`).
+//
+// Fix = READ ADAPTER, not a migration (brief §8: "adapter odczytu, nie
+// migracja" — mirrors the `_KONCEPT_TEMPLATE_OUTPUTS_2026-07-10.md` doctrine
+// "Delta ≠ scalać tabele"): `listDocTemplates` now federates BOTH sources and
+// concatenates them; no rows are moved or duplicated across tables.
+//
+// Scope boundary (intentional, matches "adapter odczytu"): only the LIST path
+// is federated here. `getDeliverableTemplate` / `updateDeliverableTemplate` /
+// `deleteDeliverableTemplate` still only search the 3 legacy tables —
+// document_studio-sourced rows are read-only from this service's point of
+// view; editing/approving/deprecating them stays on the Document Studio's own
+// dedicated routes (`/api/document-studio/templates/:id/{approve,deprecate,structure}`).
+//
+// Visibility gate: only `status = 'approved'` rows are surfaced. The Architect
+// UI itself states "Drafts must be approved before they can drive Mode 3
+// generation" (`DocumentStudioTemplateArchitectView.tsx`) — an unapproved,
+// unreviewed draft is not yet a usable template and would be misleading (and
+// non-functional, see `isTemplateUsableForGeneration`) if surfaced in a
+// cross-tool picker that immediately kicks off generation
+// (`OutputsLauncherModal` → `deliverableKickoff`).
+//
+// `SYSTEM_ORG_ID` below is a **manually-kept-in-sync literal**, mirroring the
+// export of the same name in `documentStudio/documentTemplateRegistryDao.ts`
+// — duplicated intentionally rather than imported, so this service (and its
+// unit tests) never pull in that module's real Postgres/DbPromise import
+// chain just for one string constant.
+// ------------------------------------------------------------------
+
+/** Mirrors `SYSTEM_ORG_ID` in `documentStudio/documentTemplateRegistryDao.ts`. */
+const DOC_STUDIO_SYSTEM_ORG_ID = '__system__';
+
+type DocStudioTemplateRow = {
+  template_id: string;
+  name: string;
+  purpose: string | null;
+  notes: string | null;
+  is_system: boolean;
+  organization_id: string;
+  section_blueprint: unknown;
+  document_type: string | null;
+};
+
+function safeStringifyArray(raw: unknown): string {
+  if (Array.isArray(raw)) return JSON.stringify(raw);
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return JSON.stringify(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      return '[]';
+    }
+  }
+  return '[]';
+}
+
+function mapDocStudioRow(r: DocStudioTemplateRow): DeliverableTemplate {
+  const isSystem = Boolean(r.is_system);
+  const meta: Record<string, unknown> = {
+    report_type: r.document_type,
+    sections_json: safeStringifyArray(r.section_blueprint),
+    // Tags this row's origin so callers (and future migrations) can tell
+    // canonical rows apart from the legacy report_builder_templates ones —
+    // brief §8: "report_builder_templates i presentation_templates ...
+    // (legacy, oznaczone)".
+    source: 'document_studio_templates',
+  };
+  return {
+    id: r.template_id,
+    type: 'doc' as DeliverableTemplateType,
+    name: r.name,
+    description: (r.notes && r.notes.trim()) || r.purpose || null,
+    isSystem,
+    isBlank: detectIsBlank(r.name, meta),
+    // System-catalogue rows live under the SYSTEM_ORG_ID sentinel, not a real
+    // org — normalize to `null`, matching how mapDeckRow/mapDocRow represent
+    // system ownership for the legacy tables.
+    organizationId: isSystem ? null : r.organization_id,
+    meta,
+  };
+}
+
+/**
+ * Canonical source: document_studio_templates (Word Template Architect).
+ * Fail-open, mirrors the other list* helpers in this file — a missing table
+ * / schema drift never blocks the legacy report_builder_templates rows from
+ * showing up.
+ */
+async function listDocStudioDocTemplates(orgId: string): Promise<DeliverableTemplate[]> {
+  try {
+    const rows = await queryAll<DocStudioTemplateRow>(
+      `SELECT template_id, name, purpose, notes, is_system, organization_id, section_blueprint, document_type
+       FROM document_studio_templates
+       WHERE status = 'approved'
+         AND (organization_id = $1 OR (organization_id = $2 AND is_system = TRUE))
+       ORDER BY is_system DESC, name`,
+      [orgId, DOC_STUDIO_SYSTEM_ORG_ID]
+    );
+    return rows.map(mapDocStudioRow);
+  } catch {
+    return [];
+  }
+}
+
+function sortDocLikeTemplates(templates: DeliverableTemplate[]): DeliverableTemplate[] {
+  return [...templates].sort((a, b) => {
+    if (a.isSystem !== b.isSystem) return a.isSystem ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+async function listDocTemplates(orgId: string, userId?: string): Promise<DeliverableTemplate[]> {
+  // Sequential, not Promise.all: keeps call ordering (and therefore test
+  // mocking) simple/deterministic, and each source is already independently
+  // fail-open — there's no latency benefit worth the added complexity here.
+  const legacyRows = await listReportBuilderDocTemplates(orgId, userId);
+  const docStudioRows = await listDocStudioDocTemplates(orgId);
+  return sortDocLikeTemplates([...legacyRows, ...docStudioRows]);
 }
 
 type TableRow = {
