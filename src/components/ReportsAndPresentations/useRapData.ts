@@ -16,6 +16,14 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  isTemplateOriginRuntime,
+  type TemplateOriginRuntime,
+  type TemplateScope as MaterialTemplateScope,
+  type TemplateSource,
+  type TemplateStatus as MaterialTemplateStatus,
+} from '@/types/materials';
+
 import { API_URL, getHeaders, shouldAllowDemoData } from '../../services/api';
 import type {
   ArtifactGovernanceSummary,
@@ -1084,26 +1092,46 @@ export function useSheetOutputs() {
 
 // ─── Templates (merged: report + presentation) ───────────────────
 
-function mapTemplateStatus(statusRaw: unknown): TemplateItem['status'] {
-  const normalized = String(statusRaw || '')
+/**
+ * Status wzorca wg kontraktu `src/types/materials.ts`.
+ * ★ Brak danych → `'unknown'`. Poprzednia wersja zwracała `'active'` także dla
+ * pustego wejścia, więc wzorzec bez statusu wyglądał w tabeli na sprawny.
+ * Legacy `'active'`/`'archived'` mapujemy na najbliższe kanoniczne znaczenie.
+ */
+export function mapTemplateStatus(statusRaw: unknown): MaterialTemplateStatus {
+  const normalized = String(statusRaw ?? '')
     .trim()
     .toLowerCase();
+  if (normalized === 'approved') return 'approved';
+  if (normalized === 'published' || normalized === 'active') return 'published';
   if (normalized === 'draft') return 'draft';
-  if (normalized === 'deprecated') return 'deprecated';
-  if (normalized === 'archived') return 'archived';
-  if (normalized === 'published' || normalized === 'active') return 'active';
-  return 'active';
+  if (normalized === 'deprecated' || normalized === 'archived') return 'deprecated';
+  return 'unknown';
 }
 
-function mapTemplateScope(scopeRaw: unknown): TemplateItem['scope'] {
-  const normalized = String(scopeRaw || '')
+/**
+ * Zakres wzorca wg kontraktu `src/types/materials.ts`.
+ * ★ Brak danych → `'unknown'` (było: `'organization'` — czyli szablon bez
+ * zakresu udawał firmowy). ★ `'application'`/`'app'` → kanoniczne `'system'`.
+ */
+export function mapTemplateScope(scopeRaw: unknown): MaterialTemplateScope {
+  const normalized = String(scopeRaw ?? '')
     .trim()
     .toLowerCase();
   if (normalized === 'user' || normalized === 'personal') return 'personal';
   if (normalized === 'app' || normalized === 'application' || normalized === 'system') {
-    return 'application';
+    return 'system';
   }
-  return 'organization';
+  if (normalized === 'org' || normalized === 'organization') return 'organization';
+  return 'unknown';
+}
+
+/** Runtime pochodzenia kanonicznego szablonu; nieznana wartość → `null`. */
+export function mapTemplateOriginRuntime(raw: unknown): TemplateOriginRuntime | null {
+  const normalized = String(raw ?? '')
+    .trim()
+    .toLowerCase();
+  return isTemplateOriginRuntime(normalized) ? normalized : null;
 }
 
 const TEMPLATE_CATEGORIES: Array<TemplateItem['category']> = [
@@ -1124,7 +1152,7 @@ function coerceTemplateCategory(value: unknown, fallback: TemplateItem['category
   return TEMPLATE_CATEGORIES.includes(normalized) ? normalized : fallback;
 }
 
-function mapCanonicalTemplateArtifact(raw: any): TemplateItem | null {
+export function mapCanonicalTemplateArtifact(raw: any): TemplateItem | null {
   const template = raw?.originSummary?.template;
   const outputType = String(raw?.outputType || '').toLowerCase();
   const resolvedTitle = String(raw?.resolvedTitle || raw?.titleSnapshot || raw?.title || '').trim();
@@ -1135,10 +1163,18 @@ function mapCanonicalTemplateArtifact(raw: any): TemplateItem | null {
 
   const metadata =
     template?.metadata && typeof template.metadata === 'object' ? template.metadata : {};
+  // ★ Brak daty = brak daty. Poprzednio podstawialiśmy `new Date().toISOString()`,
+  // więc każdy wzorzec bez znanej daty wyglądał na „zmieniony dzisiaj".
   const updatedAt =
     String((metadata as any).updatedAt || '').trim() ||
-    String(raw?.lastTransitionAt || raw?.createdAt || new Date().toISOString());
+    String(raw?.lastTransitionAt || '').trim() ||
+    String(raw?.createdAt || '').trim() ||
+    null;
 
+  // ★ `structureBlueprint` z INDEKSU służy WYŁĄCZNIE do liczników w widoku
+  // (ile sekcji / slajdów). Nie jest źródłem prawdy dla generacji i celowo
+  // NIE jest przekazywany dalej w TemplateItem — generator ma czytać kanoniczny
+  // rekord szablonu po `canonicalTemplateId`.
   const structureBlueprint =
     template?.structureBlueprint && typeof template.structureBlueprint === 'object'
       ? template.structureBlueprint
@@ -1150,8 +1186,30 @@ function mapCanonicalTemplateArtifact(raw: any): TemplateItem | null {
     ? (structureBlueprint as any).outline
     : [];
 
+  // ★ ROZDZIAŁ TOŻSAMOŚCI: `artifactId` to wiersz indeksu, `canonicalTemplateId`
+  // to rekord szablonu w jego runtime. Dotąd istniało tylko jedno `id`, więc
+  // „Użyj wzorca" wysyłało id indeksu tam, gdzie oczekiwano id kanonicznego.
+  const artifactIndexId = String(raw?.artifactId || '');
+  const canonicalTemplateId = String(template?.canonicalTemplateId || '').trim() || null;
+  const originRuntime = mapTemplateOriginRuntime(template?.originRuntime);
+  const legacy =
+    template?.legacy === true || String(template?.source || '').toLowerCase() === 'legacy';
+  const source: TemplateSource = legacy ? 'legacy' : 'canonical';
+  // Osierocony = indeks wie o wpisie, ale kanonicznego rekordu już nie ma.
+  // ★ Czytamy WYŁĄCZNIE jawną flagę backendu. Domyślanie sieroty z samego braku
+  // `canonicalTemplateId` unieruchomiłoby całą bibliotekę w chwili, gdy backend
+  // jeszcze nie wystawia tego pola. Brak id i tak blokuje trasę użycia po
+  // stronie `resolveTemplateUsePath` (zwraca null zamiast cichego fallbacku).
+  const orphaned = template?.orphaned === true;
+
   return {
-    id: String(raw.artifactId),
+    id: artifactIndexId,
+    artifactIndexId,
+    canonicalTemplateId,
+    originRuntime,
+    source,
+    legacy,
+    orphaned,
     title: resolvedTitle,
     description: String(template?.description || '').trim(),
     type: outputType === 'report' ? 'report' : outputType === 'sheet' ? 'sheet' : 'presentation',
@@ -1231,7 +1289,13 @@ export function useTemplates() {
         return;
       }
 
-      merged.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+      // Wzorce bez znanej daty (updatedAt === null) lądują na końcu listy —
+      // nie udajemy, że zmieniono je „teraz", żeby wskoczyły na górę.
+      const updatedTs = (item: TemplateItem): number => {
+        const ts = item.updatedAt ? new Date(item.updatedAt).getTime() : NaN;
+        return Number.isFinite(ts) ? ts : -Infinity;
+      };
+      merged.sort((a, b) => updatedTs(b) - updatedTs(a));
       setTemplates(merged);
       setError(null);
     } catch {
