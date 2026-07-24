@@ -30,6 +30,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3413"],
       "port": 3413
+    },
+    {
+      "name": "vault-sejf-wnetrze",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3415"],
+      "port": 3415
     }
   ]
 }

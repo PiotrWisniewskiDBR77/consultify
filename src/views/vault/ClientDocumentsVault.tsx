@@ -13,13 +13,16 @@
  * ★ VLT-005 — warstwa tabeli sejfów PRZED narzędziem (cytat Piotra: „potrzebujemy
  * mieć poziom segregowania pomiędzy przyciskiem z menu głównego a samym
  * narzędziem"). Wejście w zakładkę pokazuje TABELĘ sejfów (`VaultSafesTable`,
- * kanon `StandardTable`) zamiast od razu uploadu; klik w wiersz otwiera
- * `DocumentsRAGTab` przefiltrowany do tego sejfu (`initialScope`/
- * `initialProjectId`), z breadcrumbem „Sejf klienta › [nazwa]" i przyciskiem
- * powrotu do tabeli (`StandardModuleBar` breadcrumb, pierwszy człon klikalny).
- * Zakres uploadu/3 poziomów bez zmian (VLT-001..003) — to WYŁĄCZNIE warstwa
- * nawigacji, stan lokalny (nieprzeżywa odświeżenia strony, tak jak reszta
- * nawigacji w My Work).
+ * kanon `StandardTable`) zamiast od razu uploadu; klik w wiersz otwiera wnętrze
+ * sejfu, z breadcrumbem „Sejf klienta › [nazwa]" i powrotem do tabeli. Stan
+ * lokalny (nie przeżywa odświeżenia strony, tak jak reszta nawigacji My Work).
+ *
+ * ★ 2026-07-24 — wnętrze sejfu to `VaultDocumentsView` (triada: Menu 1/2/3 +
+ * StandardTable + StandardPreview + panel boczny dodawania), a NIE dawny
+ * `DocumentsRAGTab` w wariancie 'client'. Powód: ten drugi był ekranem
+ * administracyjnym wklejonym w kartę — wielki formularz uploadu zajmował pół
+ * widoku, lista była kafelkami. `DocumentsRAGTab` zostaje wyłącznie panelem
+ * superadmina (Knowledge → Documents/RAG), bez zmian.
  */
 
 import React, { useCallback, useState } from 'react';
@@ -27,7 +30,7 @@ import { useTranslation } from 'react-i18next';
 
 import { StandardModuleBar } from '../../components/standard';
 import { isClientVaultEnabled } from '../../utils/clientVaultFlag';
-import { DocumentsRAGTab } from '../superadmin/AIPlatformModule/Knowledge/DocumentsRAGTab';
+import { VaultDocumentsView } from './VaultDocumentsView';
 import { type VaultSafe, VaultSafesTable } from './VaultSafesTable';
 
 export const ClientDocumentsVault: React.FC = () => {
@@ -40,31 +43,22 @@ export const ClientDocumentsVault: React.FC = () => {
 
   if (!isClientVaultEnabled()) return null;
 
+  // Wnętrze sejfu ma WŁASNĄ pełną triadę (Menu 1 z breadcrumbem i kebabem karty
+  // + Menu 2 + Menu 3 + tabela + preview), więc renderuje się samodzielnie —
+  // wrapper nie dokłada drugiego paska (byłyby dwa Menu 1 nad sobą).
+  if (openSafe) {
+    return <VaultDocumentsView safe={openSafe} onBack={handleBackToSafes} />;
+  }
+
   return (
     <div className="h-full flex flex-col">
       <StandardModuleBar
-        breadcrumbs={
-          openSafe
-            ? [
-                {
-                  label: t('vault.breadcrumb.root', isPolish ? 'Sejf klienta' : 'Client Vault'),
-                  onClick: handleBackToSafes,
-                },
-                { label: openSafe.name },
-              ]
-            : [{ label: t('vault.breadcrumb.root', isPolish ? 'Sejf klienta' : 'Client Vault') }]
-        }
+        breadcrumbs={[
+          { label: t('vault.breadcrumb.root', isPolish ? 'Sejf klienta' : 'Client Vault') },
+        ]}
       />
       <div className="flex-1 min-h-0 overflow-auto">
-        {openSafe ? (
-          <DocumentsRAGTab
-            variant="client"
-            initialScope={openSafe.type}
-            initialProjectId={openSafe.projectId || undefined}
-          />
-        ) : (
-          <VaultSafesTable onOpenSafe={handleOpenSafe} />
-        )}
+        <VaultSafesTable onOpenSafe={handleOpenSafe} />
       </div>
     </div>
   );
