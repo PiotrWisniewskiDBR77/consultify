@@ -11,18 +11,43 @@
  * Wiersze: [Mój sejf] (scope=user, tylko własne) + [Sejf organizacji]
  * (scope=organization) + po jednym na projekt, w którym wołający jest
  * członkiem. Kolumny: nazwa, liczba dokumentów, ostatnia zmiana. Klik w
- * wiersz → `onOpenSafe` (wrapper `ClientDocumentsVault` przełącza na
- * `DocumentsRAGTab` przefiltrowany do tego sejfu, z breadcrumbem powrotu).
+ * wiersz → PREVIEW (poprawka odbioru triady 2026-07-24, patrz niżej);
+ * "Otwórz" → `onOpenSafe` (wrapper `ClientDocumentsVault` przełącza na
+ * `DocumentsRAGTab` przefiltrowany do tego sejfu, jako karta w Menu 3).
  *
- * Kanon Triada: WYŁĄCZNIE `StandardTable` (zakaz bespoke tabeli per ekran) —
- * skill `consultify-triada`.
+ * ★ POPRAWKA ODBIORU TRIADY (2026-07-24, zrzuty demo Piotra: "cała ta
+ * tabela jest super biedna — nie mamy preview, nie mamy prawego przycisku
+ * menu / hamburgera z prawej strony linii"):
+ * - Kebab (wcześniej brak w ogóle) — kontrakt `rowMenu`: Otwórz (primary) +
+ *   Otwórz podgląd (universalHandlers.preview); Edytuj/Archiwizuj/Usuń
+ *   pozostają disabled z dopiskiem — sejfy powstają automatycznie (mój/
+ *   organizacji/po jednym na projekt), nie da się ich edytować/usuwać z tego
+ *   poziomu (zgłoszone w raporcie, nie wymyślone akcje bez backendu).
+ * - Preview (StandardPreview przez `TableWithPreviewLayout`, ta sama fasada
+ *   co My Work Decisions): nazwa, poziom, liczba dokumentów, ostatnie
+ *   dokumenty (dociągnięte leniwie `Api.getKnowledgeDocuments` per sejf).
+ * - Pstryczek kolumn (Settings2/"VISIBLE COLUMNS") już istniał — `StandardTable`
+ *   ma `enableColumnSettings` zawsze włączone (patrz `StandardTable.tsx`);
+ *   nie było go widać, bo tabela nie miała żadnej innej struktury Menu wokół
+ *   niej (naprawione w `ClientDocumentsVault.tsx`).
+ *
+ * Kanon Triada: WYŁĄCZNIE `StandardTable`/`TableWithPreviewLayout`/
+ * `StandardPreview` (zakaz bespoke tabeli/preview per ekran) — skill
+ * `consultify-triada`.
  */
 
 import { Building2, FolderKanban, User } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { StandardTable, type TableColumn, type TableRow } from '../../components/standard';
+import { TableWithPreviewLayout } from '../../components/shared/TableWithPreviewLayout';
+import {
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '../../components/standard';
+import { StandardPreview } from '../../components/standard/StandardPreview';
 import { Api } from '../../services/api';
 
 export interface VaultSafe {
@@ -36,6 +61,14 @@ export interface VaultSafe {
 
 export interface VaultSafesTableProps {
   onOpenSafe: (safe: VaultSafe) => void;
+  /** Lupa Menu 2 (ClientDocumentsVault) — filtruje sejfy po nazwie. */
+  searchQuery?: string;
+}
+
+interface RecentDoc {
+  id: string;
+  filename: string;
+  created_at: string;
 }
 
 const SAFE_ICON: Record<VaultSafe['type'], typeof User> = {
@@ -55,12 +88,30 @@ const formatDate = (value: unknown, isPolish: boolean): string => {
   });
 };
 
-export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe }) => {
+const safeLevelLabel = (type: VaultSafe['type'], isPolish: boolean): string => {
+  const pl: Record<VaultSafe['type'], string> = {
+    user: 'Mój sejf',
+    organization: 'Sejf organizacji',
+    project: 'Sejf projektu',
+  };
+  const en: Record<VaultSafe['type'], string> = {
+    user: 'My safe',
+    organization: 'Organization safe',
+    project: 'Project safe',
+  };
+  return (isPolish ? pl : en)[type];
+};
+
+export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe, searchQuery }) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const [safes, setSafes] = useState<VaultSafe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [previewSafeId, setPreviewSafeId] = useState<string | null>(null);
+  const [recentDocs, setRecentDocs] = useState<RecentDoc[] | null>(null);
+  const [recentDocsLoading, setRecentDocsLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -83,6 +134,48 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe }) 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const filteredSafes = useMemo(() => {
+    const q = (searchQuery ?? '').trim().toLowerCase();
+    if (!q) return safes;
+    return safes.filter((s) => s.name.toLowerCase().includes(q));
+  }, [safes, searchQuery]);
+
+  const previewSafe = useMemo(
+    () => filteredSafes.find((s) => s.id === previewSafeId) ?? null,
+    [filteredSafes, previewSafeId]
+  );
+
+  // Dociąga "ostatnie dokumenty" leniwie — dopiero gdy user otwiera preview
+  // konkretnego sejfu (kanon preview §punkt 3: nazwa/poziom/liczba/ostatnie).
+  useEffect(() => {
+    if (!previewSafe) {
+      setRecentDocs(null);
+      return;
+    }
+    let cancelled = false;
+    setRecentDocsLoading(true);
+    Api.getKnowledgeDocuments({
+      scope: previewSafe.type === 'project' ? 'project' : previewSafe.type,
+      projectId: previewSafe.projectId || undefined,
+    })
+      .then((docs: RecentDoc[]) => {
+        if (cancelled) return;
+        const sorted = [...(docs || [])].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        setRecentDocs(sorted.slice(0, 5));
+      })
+      .catch(() => {
+        if (!cancelled) setRecentDocs([]);
+      })
+      .finally(() => {
+        if (!cancelled) setRecentDocsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [previewSafe]);
 
   const columns: TableColumn[] = [
     {
@@ -125,27 +218,117 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe }) 
     },
   ];
 
+  if (loading || error || (filteredSafes.length === 0 && safes.length === 0)) {
+    return (
+      <StandardTable
+        columns={columns}
+        data={[]}
+        loading={loading}
+        error={error}
+        onRetry={load}
+        empty={{
+          icon: FolderKanban,
+          title: t('vault.safes.emptyTitle', isPolish ? 'Brak sejfów' : 'No safes yet'),
+          description: t(
+            'vault.safes.emptyDescription',
+            isPolish
+              ? 'Sejfy pojawiają się automatycznie — mój, organizacji i po jednym na projekt.'
+              : 'Safes appear automatically — yours, the organization’s, and one per project.'
+          ),
+        }}
+        defaultSort={{ columnId: 'name', direction: 'asc' }}
+        persistKey="vault.safes.list"
+      />
+    );
+  }
+
+  const tableRows = filteredSafes as unknown as TableRow[];
+
   return (
-    <StandardTable
-      columns={columns}
-      data={safes as unknown as TableRow[]}
-      loading={loading}
-      error={error}
-      onRetry={load}
-      empty={{
-        icon: FolderKanban,
-        title: t('vault.safes.emptyTitle', isPolish ? 'Brak sejfów' : 'No safes yet'),
-        description: t(
-          'vault.safes.emptyDescription',
-          isPolish
-            ? 'Sejfy pojawiają się automatycznie — mój, organizacji i po jednym na projekt.'
-            : 'Safes appear automatically — yours, the organization’s, and one per project.'
-        ),
+    <TableWithPreviewLayout<{ id: string; title: string }>
+      selectedId={previewSafeId}
+      selectedItem={previewSafe ? { id: previewSafe.id, title: previewSafe.name } : null}
+      onSelect={setPreviewSafeId}
+      onOpenFull={(id) => {
+        const safe = filteredSafes.find((s) => s.id === id);
+        if (safe) onOpenSafe(safe);
       }}
-      onRowClick={(row) => onOpenSafe(row as unknown as VaultSafe)}
-      defaultSort={{ columnId: 'name', direction: 'asc' }}
-      persistKey="vault.safes.list"
-    />
+      itemIds={tableRows.map((r) => String(r.id))}
+      renderPreview={() => {
+        if (!previewSafe) return null;
+        return (
+          <StandardPreview
+            title={previewSafe.name}
+            onClose={() => setPreviewSafeId(null)}
+            onOpenFull={() => onOpenSafe(previewSafe)}
+            openLabel={t('vault.safes.rowOpen', isPolish ? 'Otwórz' : 'Open')}
+            meta={{
+              pills: [
+                {
+                  label: isPolish ? 'Poziom' : 'Level',
+                  value: safeLevelLabel(previewSafe.type, isPolish),
+                },
+                {
+                  label: t('vault.safes.documents', isPolish ? 'Dokumenty' : 'Documents'),
+                  value: previewSafe.documentCount,
+                },
+              ],
+            }}
+            details={{
+              label: isPolish ? 'Ostatnie dokumenty' : 'Recent documents',
+              loading: recentDocsLoading,
+              text:
+                recentDocs && recentDocs.length > 0
+                  ? recentDocs
+                      .map((d) => `- ${d.filename} — ${formatDate(d.created_at, isPolish)}`)
+                      .join('\n')
+                  : isPolish
+                    ? 'Brak dokumentów w tym sejfie.'
+                    : 'No documents in this safe yet.',
+            }}
+          />
+        );
+      }}
+    >
+      <StandardTable
+        columns={columns}
+        data={tableRows}
+        selectedRowId={previewSafeId}
+        onRowClick={(row) => setPreviewSafeId(String(row.id))}
+        onRowDoubleClick={(row) => {
+          const safe = filteredSafes.find((s) => s.id === row.id);
+          if (safe) onOpenSafe(safe);
+        }}
+        rowMenu={(row): StandardRowMenu => {
+          const safe = row as unknown as VaultSafe;
+          return {
+            primary: [
+              {
+                id: 'open',
+                label: t('vault.safes.rowOpen', isPolish ? 'Otwórz' : 'Open'),
+                onClick: () => onOpenSafe(safe),
+              },
+            ],
+            universalHandlers: {
+              preview: () => setPreviewSafeId(safe.id),
+              // Edytuj/Archiwizuj/Usuń: sejfy powstają automatycznie (mój/
+              // organizacji/po jednym na projekt) — brak endpointu edycji/
+              // usuwania na tym poziomie, disabled z dopiskiem (nie ukryte).
+            },
+            destructive: {
+              note: t(
+                'vault.safes.rowDeleteNote',
+                isPolish
+                  ? 'Sejfy są automatyczne — nie da się ich usunąć'
+                  : 'Safes are automatic — cannot be deleted'
+              ),
+            },
+          };
+        }}
+        defaultSort={{ columnId: 'name', direction: 'asc' }}
+        persistKey="vault.safes.list"
+      />
+    </TableWithPreviewLayout>
   );
 };
 
