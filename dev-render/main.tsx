@@ -112,6 +112,7 @@ const NTypeAnalizujAiScreen = React.lazy(() => import('./screens/ntype-analizuj-
 // inicjatywy — „Nie udało się załadować karty"). Leniwy import = instaluje się stub
 // wyłącznie otwartego ekranu, a kolejność importów przestaje cokolwiek znaczyć.
 const VaultScopeSelectorScreen = React.lazy(() => import('./screens/vault-scope-selector'));
+const VaultSafesTableScreen = React.lazy(() => import('./screens/vault-safes-table'));
 // (Zdjeta 2026-07-23) Tu stal zapomniany blok 68 STATYCZNYCH importow ekranow —
 // pozostalosc po niedokonczonym scaleniu (zostal nawet znacznik `|||||||`), przez
 // co plik sie NIE PARSOWAL, a kazdy ekran mial dwie deklaracje: leniwa wyzej
@@ -474,6 +475,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'VLT-003 — REALNY <DocumentsRAGTab variant="client"> — selektor poziomu upload, badge, filtr, ostrzeżenie zmiany zakresu',
     render: () => <VaultScopeSelectorScreen />,
+  },
+  'vault-safes-table': {
+    label:
+      'VLT-005 — REALNY <ClientDocumentsVault> — tabela sejfów (Mój/Organizacji/per projekt) → klik otwiera dokumenty sejfu, breadcrumb + powrót',
+    render: () => <VaultSafesTableScreen />,
   },
   'idea-table': {
     label: 'IDEE — Idea jako tabela (pełny obiekt: lista + podgląd + prawy panel)',

@@ -12,6 +12,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3150"],
       "port": 3150
+    },
+    {
+      "name": "dev-render-vlt005",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3410"],
+      "port": 3410
     }
   ]
 }
