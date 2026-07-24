@@ -15,6 +15,19 @@
  *     team_chat, report, presentation). A vitest contract test enforces FE-live ⊆ server.
  *   - `status: 'soon'` = roadmap; surfaced DISABLED with an honest "coming soon" affordance.
  *     NEVER sent to the server, NEVER produces a 400.
+ *
+ * Z3 audit (2026-07-24, docs standard rozdz. 01 §3 zakaz 8 / rozdz. 02 Z3 — zero
+ * placeholderów "wkrótce" bez powodu): the 6 `soon` targets that used to live here
+ * (action_plan, raid_log, financial_model, budget, valuation, analysis) were checked
+ * one by one against server/src/routes/my-work.routes.ts's `LIVE_CONVERT_TARGETS`
+ * allowlist — NONE has a convert handler (the route 400s on anything outside the
+ * 6-item allowlist above), so they were REMOVED from the registry rather than kept
+ * as "soon". The `IdeaConvertTarget` type union below still carries their ids —
+ * intentionally NOT pruned — because IdeaWorkspaceTools.tsx keys an exhaustive
+ * `Record<IdeaConvertTarget, …>` (CONVERT_VISUALS) off this union and that file is
+ * owned by another workstream (do not touch); narrowing the union would make that
+ * Record ill-typed. The array below (the actual runtime/UI-facing list) is the
+ * source of truth for what renders — it now only contains `live` entries.
  */
 
 export type IdeaConvertTarget =
@@ -120,60 +133,13 @@ export const IDEA_CONVERT_TARGETS: IdeaConvertTargetMeta[] = [
     descPl: 'Generuj slajdy z gałęzi',
     descEn: 'Generate slides from branches',
   },
-  {
-    id: 'action_plan',
-    status: 'soon',
-    group: 'work',
-    labelPl: 'Plan działania',
-    labelEn: 'Action Plan',
-    descPl: 'Plan z timeline',
-    descEn: 'Plan with timeline',
-  },
-  {
-    id: 'raid_log',
-    status: 'soon',
-    group: 'work',
-    labelPl: 'RAID Log',
-    labelEn: 'RAID Log',
-    descPl: 'Risks, Actions, Issues, Dependencies',
-    descEn: 'Risks, Actions, Issues, Dependencies',
-  },
-  {
-    id: 'financial_model',
-    status: 'soon',
-    group: 'models',
-    labelPl: 'Model finansowy',
-    labelEn: 'Financial Model',
-    descPl: 'Projekcje finansowe',
-    descEn: 'Financial projections',
-  },
-  {
-    id: 'budget',
-    status: 'soon',
-    group: 'models',
-    labelPl: 'Budżet',
-    labelEn: 'Budget',
-    descPl: 'Plan budżetowy',
-    descEn: 'Budget plan',
-  },
-  {
-    id: 'valuation',
-    status: 'soon',
-    group: 'models',
-    labelPl: 'Wycena',
-    labelEn: 'Valuation',
-    descPl: 'Model wyceny',
-    descEn: 'Valuation model',
-  },
-  {
-    id: 'analysis',
-    status: 'soon',
-    group: 'models',
-    labelPl: 'Analiza',
-    labelEn: 'Analysis',
-    descPl: 'Analiza pogłębiona',
-    descEn: 'Deep analysis',
-  },
+  // Z3 audit (2026-07-24): action_plan / raid_log / financial_model / budget /
+  // valuation / analysis were REMOVED here — each checked against the server
+  // convert allowlist (my-work.routes.ts LIVE_CONVERT_TARGETS) and none has a
+  // handler. Standard rozdz. 02 Z3: no "wkrótce" without a real, funded plan —
+  // an idle placeholder in a live convert panel is a silent non-action. See the
+  // file-header Z3 audit note above for the full rationale and what stays intact
+  // (the IdeaConvertTarget type union, kept for a file this task must not touch).
 ];
 
 /** Server-backed targets (handler exists). Derived — do not hand-edit the membership. */
