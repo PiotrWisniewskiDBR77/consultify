@@ -179,7 +179,6 @@ import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
 import { upsertFinancialBlock } from './financialNarrativeBlocks';
 import { GateOverrideModal } from './gate-ai';
 import { normalizeGateReadinessPayload } from './gateReadinessPayload';
-import { draftJourneyDismissKey, InitiativeDraftJourney } from './InitiativeDraftJourney';
 import {
   extractInitiativeKpiRows,
   type InitiativeKpiEditorRow,
@@ -791,22 +790,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // Toggled by the solid-teal toolbar button; replaces the old one-shot generate.
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
-  // M13 flow redesign — DRAFT journey strip ("co dalej") dismissal, per initiative.
-  const [draftJourneyDismissed, setDraftJourneyDismissed] = useState<boolean>(() => {
-    try {
-      return window.localStorage.getItem(draftJourneyDismissKey(initiativeId)) === '1';
-    } catch {
-      return false;
-    }
-  });
-  const dismissDraftJourney = useCallback(() => {
-    setDraftJourneyDismissed(true);
-    try {
-      window.localStorage.setItem(draftJourneyDismissKey(initiativeId), '1');
-    } catch {
-      /* storage unavailable — session-only dismissal */
-    }
-  }, [initiativeId]);
+  // Etap 5 gridu n-Type (_GRID_STABILIZATION_COMMAND_2026-07-24.md, sekcja
+  // „Inicjatywa"): banner "co dalej" (InitiativeDraftJourney — „To jest
+  // dokument roboczy inicjatywy — trzy kroki do startu") USUNIĘTY. SSOT
+  // zakazuje instrukcyjnych pasków dublujących informacje ze statusu/
+  // Properties/Actions — a etap/status i najbliższa akcja (brama) już żyją
+  // w `nModePropertyFields` (pola „Status" i „Następna brama") oraz w
+  // primary CTA Menu 1 (`primaryLifecycleAction`), więc banner był czystą
+  // duplikacją. Stan dismissal + komponent usunięte razem z rendererem
+  // niżej (był jedynym callerem InitiativeDraftJourney w repo).
 
   // SPEC-N §2.7 — TRYB POKAZU (fullscreen card-walk), pojęcie ROZŁĄCZNE
   // z `densityMode` ('n'|'c'). Typ jawny 'off'|'fullscreen' zamiast boolean
@@ -11261,37 +11253,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     </Callout>
                   ) : null}
 
-                  {/* M13 flow redesign — DRAFT "co dalej" journey strip. */}
-                  {status === InitiativeStatus.DRAFT && !draftJourneyDismissed && (
-                    <InitiativeDraftJourney
-                      hasContent={!!(summary?.trim() || description?.trim() || symptomDraft?.trim())}
-                      taskCount={tasks.length}
-                      onFillWithAi={() => setAiPanelOpen(true)}
-                      onPlanTasks={() => {
-                        setHiddenSectionIds((prev) => {
-                          if (!prev.has('tasks')) return prev;
-                          const next = new Set(prev);
-                          next.delete('tasks');
-                          return next;
-                        });
-                        setActiveNSection('tasks');
-                      }}
-                      /* SPEC-N §2.6 (anty-duplikacja) — `onAdvance` USUNIĘTE.
-                         Był to DOKŁADNIE ten sam handler co primary w Menu 1
-                         (handleStatusAction(stripStatusActions[0]) ≡
-                         handleStatusAction(primaryLifecycleAction)), renderowany
-                         drugi raz w pasku journey. Reguła: akcja zostaje tam,
-                         gdzie jest widoczna ZAWSZE — a pasek journey pokazuje się
-                         tylko w statusie DRAFT i tylko póki user go nie zamknie.
-                         Primary w nagłówku jest bezwarunkowy, więc to on zostaje.
-                         `advanceActionLabel` też zdjęte: bez `onAdvance` krok i tak
-                         nie miał akcji, a etykieta obiecywała przycisk (patrz
-                         InitiativeDraftJourney.tsx — `cta` bez handlera).
-                         Kroki „Uzupełnij AI" i „Zaplanuj zadania" zostają: one NIE
-                         mają odpowiednika w nagłówku. */
-                      onDismiss={dismissDraftJourney}
-                    />
-                  )}
+                  {/* Etap 5 gridu n-Type: banner „co dalej" (InitiativeDraftJourney)
+                      USUNIĘTY stąd — patrz uzasadnienie przy stanie
+                      `draftJourneyDismissed` (teraz nieistniejącym), ok. linii 793.
+                      Status/faza/następna brama żyją w „Właściwościach"
+                      (nModePropertyFields), primary CTA w Menu 1. */}
 
                   {/* Action Bar — grouped: primary | context-create | secondary + danger | AI right-aligned.
                       Container matches the shared NModeShell action-bar standard (slate, borderless)
