@@ -239,3 +239,15 @@ nawet po skasowaniu gałęzi:
   szerokość Decyzji potwierdzone jako już zgodne (nietknięte). ★ Agent znalazł „pustą listę kontrolną",
   zbadał, ustalił że to fałszywy alarm (klatka animacji) i WYCOFAŁ zgłoszenie — nie trafiło do kolejki.
   Crimson=0, esbuild OK. Hub 14 commitów ponad demo.
+- **Etap 5, front Inicjatywa+Powiadomienie** ✅ SCALONY. ★★ AUDYT ETAPU 1 SIĘ MYLIŁ: banner
+  „initiative working document" ISTNIAŁ (`InitiativeDraftJourney`, widoczny tylko przy status DRAFT) —
+  audyt grepował angielski string, realny tekst był po polsku. Złapane na ŻYWYM RENDERZE (wymuszono
+  status DRAFT w mocku, zaobserwowano przed/po), nie grepem. Usunięty, informacje o etapie już
+  zdublowane w Properties (Status/Faza/Następna brama). Powiadomienie: potwierdzone w pełni zgodne
+  (7 sekcji panelu, centrum 592px identyczne z Inicjatywą, hierarchia akcji poprawna) — nic nie ruszone.
+  ★★ ZNALEZIONY DŁUG WSPÓLNY (zgłoszony, nie naprawiony — plik poza zakresem tego frontu):
+  `NModeLeftNav.tsx` NIE MA własnego przewijania ani zwijania grup — audyt Etapu 1 twierdził że ma
+  (PRAWDA), realnie tylko `sticky`, żadnego `overflow-y-auto`/zwijania. Dla Inicjatywy (26 sekcji)
+  oznacza to lewy panel rosnący do ~2437px. Dotyczy WSZYSTKICH 6 kart (wspólny plik) — do naprawy
+  osobno, niskie ryzyko (dodanie klas CSS), wysoki zwrot.
+  Crimson=0, esbuild OK. Hub 17 commitów ponad demo.
