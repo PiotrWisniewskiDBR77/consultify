@@ -67,6 +67,7 @@ import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout
 import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
+import { WhiteboardEdgeContextMenu } from './whiteboard/WhiteboardEdgeContextMenu';
 import { whiteboardEdgeTypes, whiteboardNodeTypes } from './whiteboard/nodes/nodeTypes';
 import {
   appendComment as appendNodeComment,
@@ -142,6 +143,8 @@ interface WhiteboardCanvasProps {
   onFullscreenToggle?: () => void;
   isFullscreen?: boolean;
   onContextMenu?: (e: React.MouseEvent, nodeId?: string, nodeData?: any) => void;
+  // P2-6 (rozdz. 08 §4): prawy klik na krawędzi otwiera menu krawędzi.
+  onEdgeContextMenu?: (e: React.MouseEvent, edgeId: string) => void;
   // Z15: patch a single node's style (accent/fontSize/fontWeight) onto node.data.
   onNodeStyleChange?: (nodeId: string, patch: Record<string, unknown>) => void;
 }
@@ -164,6 +167,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   onFullscreenToggle: externalOnFullscreenToggle,
   isFullscreen: externalIsFullscreen = false,
   onContextMenu: externalOnContextMenu,
+  onEdgeContextMenu: externalOnEdgeContextMenu,
   onNodeStyleChange,
 }) => {
   const { screenToFlowPosition, setViewport, fitView } = useReactFlow();
@@ -465,6 +469,10 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
           event.preventDefault();
           externalOnContextMenu?.(event, node.id, node.data);
         }}
+        onEdgeContextMenu={(event: any, edge: any) => {
+          event.preventDefault();
+          externalOnEdgeContextMenu?.(event, edge.id);
+        }}
         onPaneContextMenu={(event: any) => {
           event.preventDefault();
           externalOnContextMenu?.(event);
@@ -728,6 +736,12 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     nodeType?: string;
     nodeLocked?: boolean;
   }>({});
+  // P2-6 (rozdz. 08 §4): menu krawędzi — prawy klik na połączeniu.
+  const [edgeContextMenu, setEdgeContextMenu] = useState<{
+    edgeId: string;
+    x: number;
+    y: number;
+  } | null>(null);
   // Node comment threads — comments live in `node.data.comments[]` and ride the
   // existing setNodes → onGraphChange → PUT /map autosave (blob contract,
   // identical to Process Flow). Opened from the canvas context menu (PPM).
@@ -1101,6 +1115,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             type: normalizedNode?.type || 'stickyNote',
             position: normalizedNode?.position || { x: 100, y: 100 },
             data: nodeData,
+            // Ramka jest KONTENEREM, nie elementem operowanym. React Flow nadaje
+            // kazdemu fokusowalnemu wezlowi `role="button"`, a ramka slusznie
+            // zawiera wlasny przycisk zwijania — powstawal przycisk w przycisku
+            // (axe: nested-interactive). Zdejmujemy fokus z samej ramki; jej
+            // przycisk zwijania i tak zostaje w kolejnosci tabulacji, bo jest
+            // prawdziwym <button>. Pozostale typy wezlow bez zmian.
+            ...(normalizedNode?.type === 'frameNode' ? { focusable: false } : {}),
             ...(normalizedNode?.parentNode ||
             normalizedNode?.parentId ||
             normalizedNode?.data?.parentId
@@ -2879,6 +2900,83 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     [setNodes]
   );
 
+  // ── Edge context menu (P2-6, rozdz. 08 §4) ────────────────────────────────
+  const handleEdgeContextMenu = useCallback(
+    (e: React.MouseEvent, edgeId: string) => {
+      e.preventDefault();
+      setContextMenuPos(null);
+      setEdgeContextMenu({ edgeId, x: e.clientX, y: e.clientY });
+    },
+    []
+  );
+
+  // edge.set_label — realny handler: aktualizuje data.label, autosave przez
+  // onGraphChange, realtime przez collab update_edge.
+  const handleEdgeEditLabel = useCallback(() => {
+    if (!edgeContextMenu) return;
+    const edge = edges.find((ed) => ed.id === edgeContextMenu.edgeId);
+    if (!edge) return;
+    const current = String(edge.data?.label || '');
+    const next = window.prompt(isPl ? 'Etykieta połączenia:' : 'Connection label:', current);
+    if (next === null || next === current) return;
+    pushUndoSnapshot();
+    let updated: Edge | undefined;
+    setEdges((prev) =>
+      prev.map((ed) => {
+        if (ed.id !== edgeContextMenu.edgeId) return ed;
+        updated = { ...ed, data: { ...(ed.data || {}), label: next } };
+        return updated;
+      })
+    );
+    if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
+  }, [collab, edgeContextMenu, edges, isPl, pushUndoSnapshot, setEdges]);
+
+  // edge.set_style — cykl styli obsługiwanych przez LabeledEdge.
+  const handleEdgeCycleStyle = useCallback(() => {
+    if (!edgeContextMenu) return;
+    const order = ['solid', 'dashed', 'dotted', 'wavy'] as const;
+    pushUndoSnapshot();
+    let updated: Edge | undefined;
+    setEdges((prev) =>
+      prev.map((ed) => {
+        if (ed.id !== edgeContextMenu.edgeId) return ed;
+        const cur = String(ed.data?.edgeStyle || 'solid');
+        const nextStyle = order[(order.indexOf(cur as any) + 1) % order.length];
+        updated = { ...ed, data: { ...(ed.data || {}), edgeStyle: nextStyle } };
+        return updated;
+      })
+    );
+    if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
+  }, [collab, edgeContextMenu, pushUndoSnapshot, setEdges]);
+
+  // edge.reverse — zamiana source/target (i uchwytów), kierunek strzałki podąża.
+  const handleEdgeReverse = useCallback(() => {
+    if (!edgeContextMenu) return;
+    pushUndoSnapshot();
+    let updated: Edge | undefined;
+    setEdges((prev) =>
+      prev.map((ed) => {
+        if (ed.id !== edgeContextMenu.edgeId) return ed;
+        updated = {
+          ...ed,
+          source: ed.target,
+          target: ed.source,
+          sourceHandle: ed.targetHandle ?? null,
+          targetHandle: ed.sourceHandle ?? null,
+        };
+        return updated;
+      })
+    );
+    if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
+  }, [collab, edgeContextMenu, pushUndoSnapshot, setEdges]);
+
+  // edge.delete — routujemy przez onEdgesChange, żeby dostać undo + collab
+  // broadcast (remove_edge) + persist tą samą ścieżką co reszta zmian krawędzi.
+  const handleEdgeDelete = useCallback(() => {
+    if (!edgeContextMenu) return;
+    onEdgesChange([{ id: edgeContextMenu.edgeId, type: 'remove' }]);
+  }, [edgeContextMenu, onEdgesChange]);
+
   const handleSlashCommand = useCallback(
     (action: string) => {
       setSlashMenuOpen(false);
@@ -3459,9 +3557,24 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               onFullscreenToggle={externalOnFullscreenToggle}
               isFullscreen={externalIsFullscreen}
               onContextMenu={handleCanvasContextMenu}
+              onEdgeContextMenu={handleEdgeContextMenu}
               onNodeStyleChange={handleNodeStyleChange}
             />
           </ReactFlowProvider>
+
+          {edgeContextMenu && (
+            <WhiteboardEdgeContextMenu
+              x={edgeContextMenu.x}
+              y={edgeContextMenu.y}
+              isPl={isPl}
+              isLocked={locked}
+              onClose={() => setEdgeContextMenu(null)}
+              onEditLabel={handleEdgeEditLabel}
+              onCycleStyle={handleEdgeCycleStyle}
+              onReverse={handleEdgeReverse}
+              onDelete={handleEdgeDelete}
+            />
+          )}
 
           <IdeaCanvasContextMenu
             position={contextMenuPos}
@@ -3652,17 +3765,23 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               isAccepted
               graphNodes={nodes as any[]}
               graphEdges={edges as any[]}
+              // P1-1 (Z3): pasek podpowiedzi AI wysyłał `mm_ai_expand` /
+              // `mm_ai_summarize`, które obsługuje WYŁĄCZNIE
+              // useMindMapQuickActions (montowany tylko w Mapie myśli) — w
+              // Whiteboardzie oba przyciski nie robiły NIC. Podpięte do realnych
+              // generatorów tablicy (useWhiteboardQuickActions → AI_ACTION_MAP,
+              // ścieżka propozycja→akceptacja).
               onActionExpand={() =>
                 window.dispatchEvent(
                   new CustomEvent('idea-workspace-quick-action', {
-                    detail: { action: 'mm_ai_expand', ideaId },
+                    detail: { action: 'wb_ai_find_themes', ideaId },
                   })
                 )
               }
               onActionConvert={() =>
                 window.dispatchEvent(
                   new CustomEvent('idea-workspace-quick-action', {
-                    detail: { action: 'mm_ai_summarize', ideaId },
+                    detail: { action: 'wb_ai_to_map', ideaId },
                   })
                 )
               }

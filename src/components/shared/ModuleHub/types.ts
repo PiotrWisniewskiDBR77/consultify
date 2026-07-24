@@ -6,7 +6,18 @@
  * Documentation: wdrozenia/standards/03-STATUS-WORKFLOW.md
  */
 
-export type ModuleTab =
+/**
+ * Identyfikatory zakladek wspoldzielonej powloki hubow.
+ *
+ * Lista wylicza znane wartosci, zeby dzialalo podpowiadanie i wychwytywanie
+ * literowek, ale NIE jest zamknieta: `(string & {})` dopuszcza wlasne
+ * identyfikatory konsumenta. Powod: powloka jest wspolna dla kilkunastu hubow,
+ * a zamknieta lista wymuszala dopisywanie do niej kazdej zakladki kazdego huba.
+ * PresentationsHub mial wlasny `PresentationTab`, ktorego tu nie bylo — i cala
+ * kontrola typow projektu byla przez to czerwona. Powloka nie ma prawa
+ * decydowac, jakie zakladki wolno miec konsumentowi.
+ */
+type ZnanaZakladkaHuba =
   | 'library'
   | 'list'
   | 'sessions'
@@ -82,6 +93,8 @@ export type ModuleTab =
   | 'documents'
   // Execution module — Rollout sub-tab (Module 06 Realizacja)
   | 'rollout';
+
+export type ModuleTab = ZnanaZakladkaHuba | (string & {});
 
 export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'calendar' | 'matrix';
 

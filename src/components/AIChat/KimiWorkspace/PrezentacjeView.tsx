@@ -8,6 +8,7 @@
  * SSOT: FINAL_IMPLEMENTATION_PLAN_20_PREZENTACJE_2026-03-29.md
  */
 
+import { Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -147,6 +148,10 @@ export const PrezentacjeView: React.FC = () => {
   const templateArtifactId = searchParams.get('templateArtifactId');
   const templatePrompt = searchParams.get('templatePrompt');
   const viewParam = searchParams.get('view');
+  // Materiały wspólny launcher (2026-07-24) — `?entry=blank|ai` sygnalizuje
+  // tryb wybrany w KROK 2 tablicy Materiałów, żeby wejście z Materiałów lądowało
+  // od razu w tym trybie zamiast ponownie pytać o wybór na tym ekranie.
+  const entryParam = searchParams.get('entry');
 
   const showHome =
     !artifactId &&
@@ -171,7 +176,11 @@ export const PrezentacjeView: React.FC = () => {
   // identycznie (od razu czat/pipeline AI). 'choose' = ekran wyboru; 'ai' =
   // przejście do dotychczasowego czatu (pipeline AI).
   const triMode = isTriModeEnabled();
-  const [entryMode, setEntryMode] = useState<'choose' | 'ai'>('choose');
+  // 'blank' = auto-tworzenie pustego decku (wejście z Materiałów, `?entry=blank`
+  // + `?view=new` — patrz efekt niżej i _MATERIALY_INWENTARYZACJA_2026-07-24.md §8).
+  const [entryMode, setEntryMode] = useState<'choose' | 'ai' | 'blank'>(
+    entryParam === 'ai' ? 'ai' : entryParam === 'blank' ? 'blank' : 'choose'
+  );
   const [creatingBlank, setCreatingBlank] = useState(false);
 
   // Auto-trigger from builtin template prompt
@@ -374,6 +383,16 @@ export const PrezentacjeView: React.FC = () => {
     }
   }, [creatingBlank, openInDeckBuilder, t]);
 
+  // Materiały wspólny launcher — `?entry=blank`: materializuj pusty deck
+  // automatycznie, bez wymagania drugiego kliknięcia „Czysto" na tym ekranie.
+  // Ref guard: fire-once (StrictMode double-invoke / re-renders bezpieczne).
+  const blankAutoTriggered = useRef(false);
+  useEffect(() => {
+    if (entryMode !== 'blank' || blankAutoTriggered.current) return;
+    blankAutoTriggered.current = true;
+    void handleCreateEmptyDeck();
+  }, [entryMode, handleCreateEmptyDeck]);
+
   // Post-generation chat intent routing (P20 audit §1.1)
   const lastRoutedMsgRef = useRef<string | null>(null);
   useEffect(() => {
@@ -530,6 +549,20 @@ export const PrezentacjeView: React.FC = () => {
 
   if (showHome) {
     return <ArtifactModuleHome lane="prezentacje" />;
+  }
+
+  // Materiały wspólny launcher — `?entry=blank`: pokaż lekki loading zamiast
+  // brama-wyboru/czatu, dopóki handleCreateEmptyDeck (efekt wyżej) nie
+  // przełączy nawigacji do Deck Buildera z realną, pustą prezentacją.
+  if (entryMode === 'blank') {
+    return (
+      <div className="flex h-full flex-1 items-center justify-center gap-2 text-c-text-secondary">
+        <Loader2 size={18} className="animate-spin" />
+        <span className="text-sm">
+          {t('prezentacje.blank.creating', 'Tworzenie pustej prezentacji…')}
+        </span>
+      </div>
+    );
   }
 
   // D2 tri-tryby: brama wyboru na wejściu „Start new" (`?view=new`). Poprzedza

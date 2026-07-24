@@ -10,6 +10,7 @@
  */
 
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 
 import { bucketIdeaStageForList, type IdeaStageListBucket } from './ideaEntryTypes';
 import { IDEA_TOOL_ICON } from './ideaCanvasMelsChips';
@@ -26,6 +27,7 @@ export const IdeaToolIcon: React.FC<{ tool: CanvasToolType; label: string }> = (
       className="flex-shrink-0 inline-flex items-center text-c-text-muted"
       title={label}
       aria-label={label}
+      role="img"
       data-testid="idea-menu1-tool-icon"
     >
       <Icon size={16} aria-hidden="true" />
@@ -62,10 +64,15 @@ export const IdeaStageChip: React.FC<{ stage: string; isPolish: boolean }> = ({
 };
 
 // ── Quiet save indicator ────────────────────────────────────────────────────
+// Standard 04 §4: the workspace save machine (`IdeaMapSyncState`) emits 6 of the
+// 7 target states — `saved`/`saving`/`queued`/`idle`(local draft)/`offline`/
+// `conflict`. The 7th, `readonly` (lock icon, "Tylko odczyt"), is intentionally
+// absent: there is NO permission model feeding it today (audit gap L7), so it is
+// reported as backend-required rather than rendered as a phantom branch nothing
+// can ever trigger.
 export type IdeaSaveState = 'idle' | 'queued' | 'saving' | 'saved' | 'offline' | 'conflict';
 
 function saveDotClass(state: IdeaSaveState): string {
-  if (state === 'conflict') return 'bg-c-danger';
   if (state === 'offline') return 'bg-c-warning';
   if (state === 'saving' || state === 'queued') return 'bg-c-text-muted animate-pulse';
   return 'bg-c-text-muted';
@@ -75,11 +82,33 @@ function saveDotClass(state: IdeaSaveState): string {
  * Quiet, non-interactive save indicator. `label` is the host's ready-made
  * `graphRuntime.syncLabel` (e.g. "Zapisano 3s temu" / "Zapisuję…"). Hidden
  * entirely while idle with nothing to report.
+ *
+ * `conflict` is the one exception to "quiet": it is a data-integrity state (the
+ * server rejected the write with a 409 — local edits and the server graph have
+ * diverged, and after the bounded self-heal retries the pending payload is
+ * dropped). Standard 04 §4.1 requires this to be an EXPLICIT, legible message,
+ * not the same muted grey dot the benign states use — otherwise the divergence
+ * reads as a silent loss. Crimson (`c-danger`) here is sanctioned: critical
+ * semantics only. The label itself stays localized (host-supplied).
  */
 export const IdeaSaveIndicator: React.FC<{ state: IdeaSaveState; label: string }> = ({
   state,
   label,
 }) => {
+  if (state === 'conflict') {
+    return (
+      <span
+        className="flex-shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-c-danger"
+        data-testid="idea-menu1-save-indicator"
+        data-save-state="conflict"
+        role="alert"
+        aria-live="assertive"
+      >
+        <AlertTriangle size={13} aria-hidden="true" />
+        {label || 'Konflikt zmian'}
+      </span>
+    );
+  }
   if (!label) return null;
   return (
     <span

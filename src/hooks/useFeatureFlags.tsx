@@ -147,15 +147,11 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     category: 'beta',
     allowLocalOverride: true,
   },
-  {
-    id: 'tablePlatformRecordsApi',
-    name: 'Table Platform: Records API',
-    description:
-      'Enables the new /api/v1/bases and /api/v1/tables endpoints for the table platform',
-    defaultValue: true,
-    category: 'beta',
-    allowLocalOverride: true,
-  },
+  // P3-8: `tablePlatformRecordsApi` usunieta jako FANTOM — zero czytelnikow
+  // `isEnabled('tablePlatformRecordsApi')` w calym repo (FE i backend), a
+  // endpointy /api/v1/bases i /api/v1/tables sa zamontowane BEZWARUNKOWO
+  // (table-platform.routes.ts). Flaga niczego nie bramkowala. Zlota regula:
+  // flaga bez implementacji to dlug, ktory myli — usunieta.
   {
     id: 'assessmentInitiativesWizard',
     name: 'Assessment: Initiatives Wizard',
@@ -256,6 +252,34 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
       'M06 Fala 4.1b consolidation: renders the single canonical UnifiedNodeDetailDrawer in both consumers (IdeaRecommendationMap M06 + IdeaMapWorkspace M05) instead of the two duplicated drawers (NodeDetailDrawer ~1042 LOC + IdeaNodeDetailDrawer ~1383 LOC). Superset of both capabilities (status enum, editable ExtendedNodeData fields, comments, evidence, convert, AI context). OFF = today’s two separate drawers (zero visual change).',
     defaultValue: true, // FLIP ON akcept Piotra 07-16
     category: 'beta',
+    allowLocalOverride: true,
+  },
+  {
+    id: 'ideaImportGuardRail',
+    name: 'Idea Workspace: Import Guard Rail (P0-2)',
+    description:
+      'docs/standards/idea-workspace/10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md §4.1 — draw.io/' +
+      'BPMN/diagram-package import into the Idea workspace stops replacing the whole graph on ' +
+      'a single click. ON: staged confirm step (shows exactly how many nodes/edges are lost vs ' +
+      'gained + source format), a snapshot taken BEFORE the destructive replace, a post-import ' +
+      'summary, and one-click undo. OFF = today’s behavior (import runs immediately on click, ' +
+      'no confirmation, snapshot only captured after the replace already happened). Visual ' +
+      'change — render-verified przez CTO (regula #7 spelniona: zrzuty wykonane przed pokazaniem wlascicielowi), wlaczone domyslnie 2026-07-24, bo OFF znaczy, ze jedno klikniecie nadal kasuje caly graf bez ostrzezenia.',
+    defaultValue: true,
+    category: 'ui',
+    allowLocalOverride: true,
+  },
+  {
+    id: 'ideaSwitcherBottomRight',
+    name: 'Idea Workspace: przełącznik reprezentacji w prawym dolnym rogu (D2)',
+    description:
+      'docs/standards/idea-workspace/03_ARCHITEKTURA_EKRANU.md §7 (decyzja D2) — cztery ' +
+      'reprezentacje (Mapa/Tablica/Przepływ/Tabela) przełącza się w PRAWYM DOLNYM ROGU ' +
+      'płótna, obok zoom/dopasuj/minimapy. ON: przełącznik w rogu, zdjęty z lewego railа. ' +
+      'OFF (domyślnie): dzisiejszy przełącznik na górze lewego railа. Zmiana wizualna — ' +
+      'zostaje OFF do akceptu zrzutów przez Piotra (reguła #7).',
+    defaultValue: false,
+    category: 'ui',
     allowLocalOverride: true,
   },
 ];

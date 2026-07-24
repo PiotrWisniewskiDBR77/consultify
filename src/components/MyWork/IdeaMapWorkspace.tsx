@@ -103,9 +103,14 @@ import { IdeaUnifiedSearch } from './IdeaUnifiedSearch';
 import { IdeaVotingMode } from './IdeaVotingMode';
 import { IdeaWhiteboardTool } from './IdeaWhiteboardTool';
 import { getIdeaWorkspaceToolLabel, IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
-import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
+import {
+  IdeaWorkspaceTools,
+  IDEA_PANEL_SECTIONS,
+  type IdeaPanelSection,
+} from './IdeaWorkspaceTools';
 import { AIGovernanceBadge, AIGovernancePanel } from './mindmap/AIGovernancePanel';
 import { CanvasLeftToolbar } from './mindmap/CanvasLeftToolbar';
+import { IdeaViewSwitcher } from './mindmap/IdeaViewSwitcher';
 import { stabilizeMindmapInteractionMode } from './mindmap/mindmapInteractionGrammar';
 import { SnapshotHistory } from './mindmap/SnapshotHistory';
 import { type UnifiedNodeData, UnifiedNodeDetailDrawer } from './mindmap/UnifiedNodeDetailDrawer';
@@ -191,6 +196,44 @@ function isSameSelection(left: IdeaWorkspaceSelection, right: IdeaWorkspaceSelec
   );
 }
 
+// P0-5 (docs/standards/idea-workspace/12_BACKLOG_I_ODBIOR.md): the active
+// representation (Mind Map / Whiteboard / Process Flow / Table) is a LOCAL
+// view preference — per user, per browser — never a global property of the
+// Idea. `my_idea_maps.preferred_tool` / `extensions.surfaceState.activeTool`
+// live on the ONE shared canonical map row per idea (server reads it
+// "regardless of who last edited it" — see GET /my-ideas/:id/map) and get
+// re-stamped with whichever tool is active on every autosave, so adopting
+// them as "the tool to open with" silently hands one teammate's view to
+// everyone else. We persist the real preference here instead, scoped to this
+// idea + this browser, and never write it back to the server.
+const IDEA_TOOL_PREF_ALLOWED = ['mindmap', 'process_flow', 'table', 'whiteboard'] as const;
+
+function ideaToolPrefStorageKey(ideaId: string) {
+  return `consultify.idea-active-tool.${ideaId}`;
+}
+
+function readLocalToolPreference(ideaId: string): CanvasToolType | null {
+  if (typeof window === 'undefined' || !ideaId) return null;
+  try {
+    const raw = window.localStorage.getItem(ideaToolPrefStorageKey(ideaId));
+    if (raw && (IDEA_TOOL_PREF_ALLOWED as readonly string[]).includes(raw)) {
+      return raw as CanvasToolType;
+    }
+  } catch {
+    /* private mode / storage disabled — fall through to default */
+  }
+  return null;
+}
+
+function writeLocalToolPreference(ideaId: string, tool: CanvasToolType) {
+  if (typeof window === 'undefined' || !ideaId) return;
+  try {
+    window.localStorage.setItem(ideaToolPrefStorageKey(ideaId), tool);
+  } catch {
+    /* ignore — quota / private mode */
+  }
+}
+
 type IdeaMapWorkspaceProps = {
   ideaId: string;
   initialOpenMap?: boolean;
@@ -248,6 +291,10 @@ function buildStartupExtensions(
   };
 }
 
+// P1-1 (martwe kliknięcia powłoki): mapa „dodaj" per reprezentacja przeniesiona
+// do rejestru akcji jako `RUNTIME_ADD_ELEMENT` (src/actions/ideaActionRegistry.ts).
+// Menu 3 renderuje się teraz z rejestru, więc host nie potrzebuje własnej kopii.
+
 export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   ideaId,
   initialOpenMap,
@@ -280,6 +327,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const { setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
   const { isEnabled } = useFeatureFlagsContext();
   const mindmapTeresaBridgeEnabled = isEnabled('ENABLE_TERESA_MINDMAP');
+  // D2: przelacznik reprezentacji w prawym dolnym rogu (flaga OFF do akceptu).
+  const switcherBottomRight = isEnabled('ideaSwitcherBottomRight');
   // M06 Fala 4.1b: canonical unified node-detail drawer (idea variant). OFF
   // (default) keeps today's IdeaNodeDetailDrawer, no change.
   const drawerUnifiedEnabled = isEnabled('mindmapDrawerUnified');
@@ -290,6 +339,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   const [loading, setLoading] = useState(true);
   const [realId, setRealId] = useState(ideaId);
+  // Stable read of the current idea id for callbacks that must not churn their
+  // identity every time realId changes (e.g. new-idea temp id → real id).
+  const realIdRef = useRef(realId);
+  useEffect(() => {
+    realIdRef.current = realId;
+  }, [realId]);
   const [title, setTitle] = useState('');
   const [seedText, setSeedText] = useState('');
   const [stage, setStage] = useState<string>('seed');
@@ -415,6 +470,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     (tool: CanvasToolType) => {
       if (onActiveToolChange) onActiveToolChange(tool);
       else setInternalActiveTool(tool);
+      // P0-5: persist the view preference LOCALLY (this browser only) so it
+      // survives reloads/reopens for THIS user without ever touching the
+      // shared idea map row other org members read.
+      writeLocalToolPreference(realIdRef.current || ideaId, tool);
       try {
         const url = new URL(window.location.href);
         url.searchParams.set('tool', tool);
@@ -423,7 +482,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         /* ignore */
       }
     },
-    [onActiveToolChange]
+    [ideaId, onActiveToolChange]
   );
 
   const setActivePanel = useCallback(
@@ -909,6 +968,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setExportMenuOpen(true);
         return;
       }
+      // Odbiornik dla akcji rejestru `idea.templates.open` (Menu 3 „Szablony").
+      // Rejestr nadaje ten string na szynę, bo otwarcie modala żyje w stanie
+      // React hosta — analogicznie do `open_export_menu` wyżej.
+      if (action === 'open_template_gallery') {
+        setTemplateGalleryOpen(true);
+        return;
+      }
       if (action === 'accept_challenge') {
         handleAcceptChallengeRef.current();
         return;
@@ -1036,6 +1102,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         action === 'open_linked_artifacts' ||
         action === 'accept_challenge' ||
         action === 'open_export_menu' ||
+        action === 'open_template_gallery' ||
         action.startsWith('convert_') ||
         action.startsWith('wb_convert_') ||
         action.startsWith('pf_convert_') ||
@@ -1470,29 +1537,23 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           const mapRes = await Api.getMyIdeaMap(String(idea?.id || ideaId), {
             language: i18n.language,
           });
-          const savedPref = mapRes?.map?.preferredTool ? String(mapRes.map.preferredTool) : null;
-          if (
-            !initialTool &&
-            savedPref &&
-            ['mindmap', 'process_flow', 'table', 'whiteboard'].includes(savedPref) &&
-            !userSelectedToolRef.current
-          ) {
-            setActiveTool(savedPref as CanvasToolType);
+          // P0-5: the tool to open with is resolved LOCALLY, never from the
+          // shared map row (`preferredTool` / `surfaceState.activeTool` — see
+          // the module-level note above `readLocalToolPreference`). A deep
+          // link always wins; otherwise fall back to this browser's own
+          // remembered choice for this idea, defaulting to Mind Map when
+          // neither is present — never to whatever another org member last
+          // had open.
+          if (!initialTool && !userSelectedToolRef.current) {
+            const localPref = readLocalToolPreference(String(idea?.id || ideaId));
+            if (localPref) setActiveTool(localPref);
           }
 
-          // V5-IDEA-16: Restore surface state
+          // V5-IDEA-16: Restore surface state (focus mode / viewport only —
+          // the active TOOL is deliberately excluded, see above).
           const ss = mapRes?.map?.extensions?.surfaceState;
           if (ss && typeof ss === 'object') {
             const ssObj = ss as Record<string, unknown>;
-            if (
-              ssObj.activeTool &&
-              typeof ssObj.activeTool === 'string' &&
-              ['mindmap', 'process_flow', 'table', 'whiteboard'].includes(ssObj.activeTool) &&
-              !initialTool &&
-              !userSelectedToolRef.current
-            ) {
-              setActiveTool(ssObj.activeTool as CanvasToolType);
-            }
             if (ssObj.focusMode === 'system' || ssObj.focusMode === 'object') {
               setFocusMode(ssObj.focusMode as 'system' | 'object');
             }
@@ -1557,13 +1618,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // (`key={idea-workspace-<id>}`) while the SPA URL persists, reading `?tool=` on
   // mount pulled the PREVIOUSLY-opened idea's tool into the newly-opened idea AND
   // set `userSelectedToolRef=true`, which then SUPPRESSED the idea's real,
-  // server-saved `preferredTool` / `surfaceState.activeTool` restore in
-  // `hydrate()`. Net effect: open a Process-Flow idea, then open a Mind-Map idea
-  // → the Mind-Map idea wrongly opened in Process Flow. Tool selection is fully
-  // governed by `initialTool` (deep-link) + server `preferredTool`/`surfaceState`
-  // (idea identity, restored on hydrate) + genuine in-session user clicks, so
-  // this stale cross-idea param read is pure liability and is removed. The
-  // `setActiveTool` write keeps `?tool=` in the address bar for shareability.
+  // locally-saved tool preference restore in `hydrate()`. Net effect: open a
+  // Process-Flow idea, then open a Mind-Map idea → the Mind-Map idea wrongly
+  // opened in Process Flow. Tool selection is fully governed by `initialTool`
+  // (deep-link) + this browser's own `readLocalToolPreference` (P0-5 — per
+  // idea, per user, restored on hydrate; NEVER the shared server map) +
+  // genuine in-session user clicks, so this stale cross-idea param read is
+  // pure liability and is removed. The `setActiveTool` write keeps `?tool=`
+  // in the address bar for shareability.
 
   // ── V4-IDEA-07: Keyboard shortcuts ─────────────────────────────────────────
   const {
@@ -1776,13 +1838,18 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     graphEdgesRef.current = graphEdges;
   }, [graphEdges]);
 
+  // P0-5: `activeTool` is deliberately EXCLUDED from `surfaceState` — that
+  // field lives on the ONE shared canonical map row per idea (read by every
+  // org member, see the note above `readLocalToolPreference`), so writing the
+  // active tool there on every switch was broadcasting this user's view to
+  // everyone else. focusMode/focusObjectId/viewport are unrelated to which
+  // representation is open and keep syncing as before.
   useEffect(() => {
     latestSurfaceStateRef.current = {
       focusMode,
       focusObjectId: focusObjectId || null,
-      activeTool,
     };
-  }, [activeTool, focusMode, focusObjectId]);
+  }, [focusMode, focusObjectId]);
 
   useEffect(() => {
     if (!realId || isDraft) return;
@@ -1795,7 +1862,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       },
       { reason: 'draft' }
     );
-  }, [activeTool, applyRuntimeExtensionsPatch, focusMode, focusObjectId, isDraft, realId]);
+  }, [applyRuntimeExtensionsPatch, focusMode, focusObjectId, isDraft, realId]);
 
   // ── Chat ────────────────────────────────────────────────────────────────────
   const openChat = useCallback(
@@ -2916,6 +2983,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     ]
   );
   // ── Menu 3 (second bar) view actions — Z7 anatomy ───────────────────────
+  // PRZEPIĘTE NA RENDER Z REJESTRU AKCJI (pierwsza powierzchnia, wzorzec dla
+  // kolejnych). Host NIE trzyma już własnej listy pozycji ani ich handlerów —
+  // `buildIdeaMenu3Actions` pobiera zestaw z `getActionsForSurface('menu3', …)`
+  // (filtr surfaces⊇menu3 + tools⊇aktywne narzędzie, kolejność wg rozdz. 05), a
+  // każdy klik wykonuje `runIdeaAction(id, …)` — ten sam tor, którego użyje
+  // Teresa (Z4). Rozjazdy „dodaj/auto-układ/AI rozwiń" (P1-1) są teraz zaszyte
+  // w samych deklaracjach rejestru (`RUNTIME_*`, handler `idea.view.auto_layout`),
+  // więc nie ma już potrzeby rozgałęziać ich tutaj po `activeTool`.
   const melsMenu3Actions = useMemo(
     () =>
       melsCanvasEnabled
@@ -2923,53 +2998,45 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             tool: activeTool,
             hasContent: mapHasNodes,
             isPolish: Boolean(isPolish),
-            handlers: {
-              onAddPrimary: () =>
-                handleQuickAction(activeTool === 'mindmap' ? 'mm_add_child' : 'add_node'),
-              onAutoLayout: () =>
-                window.dispatchEvent(
-                  new CustomEvent('idea-mindmap-node-quick-action', {
-                    detail: { action: 'pane_auto_layout' },
-                  })
-                ),
-              onAIExpand: () => handleQuickAction('mm_ai_expand'),
-              onOpenTemplateGallery: () => setTemplateGalleryOpen(true),
-              onExport: () => setExportMenuOpen(true),
-              onConvertFromMap: () => handlePanelChange('tools'),
-            },
+            ideaId: realId,
+            selection,
           })
         : { left: [], right: [] },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      melsCanvasEnabled,
-      activeTool,
-      mapHasNodes,
-      isPolish,
-      handleQuickAction,
-      handlePanelChange,
-      setTemplateGalleryOpen,
-      setExportMenuOpen,
-    ]
+    [melsCanvasEnabled, activeTool, mapHasNodes, isPolish, realId, selection]
   );
-  const melsCanvasRightRailTools = useMemo(
-    () =>
-      melsCanvasEnabled
-        ? buildIdeaCanvasRightRailTools(
-            isPolish
-              ? {
-                  labels: {
-                    problem: 'Problem',
-                    status: 'Status',
-                    inspector: 'Inspektor',
-                    convert: 'Konwersja',
-                    health: 'Kondycja',
-                  },
-                }
-              : undefined
-          )
-        : [],
-    [melsCanvasEnabled, isPolish]
-  );
+  // P0-4 / Z3: Inspektor i Kondycja mają treść tylko dla części reprezentacji.
+  // Zakładka bez treści nie może być klikalna — wyłączamy ją z podanym powodem,
+  // zamiast otwierać pusty panel. Źródło prawdy to warunki `activeTool` w
+  // <IdeaWorkspaceTools> (sekcje inspector/health): jeśli tam dojdzie kolejna
+  // reprezentacja, dopisz ją tutaj — inaczej wróci martwy klik.
+  const melsCanvasRightRailTools = useMemo(() => {
+    if (!melsCanvasEnabled) return [];
+    const inspektorJest =
+      activeTool === 'mindmap' || activeTool === 'whiteboard' || activeTool === 'process_flow';
+    const kondycjaJest = activeTool === 'mindmap' || activeTool === 'process_flow';
+    return buildIdeaCanvasRightRailTools({
+      ...(isPolish
+        ? {
+            labels: {
+              problem: 'Problem',
+              status: 'Status',
+              inspector: 'Inspektor',
+              convert: 'Konwersja',
+              health: 'Kondycja',
+            },
+          }
+        : {}),
+      disabled: { inspector: !inspektorJest, health: !kondycjaJest },
+      disabledReasons: {
+        inspector: isPolish
+          ? 'w Tabeli właściwości edytujesz w menu kolumny i wiersza'
+          : 'in Table, properties are edited from the column and row menus',
+        health: isPolish
+          ? 'liczona dla Mapy myśli i Przepływu'
+          : 'computed for Mind Map and Process Flow',
+      },
+    });
+  }, [melsCanvasEnabled, isPolish, activeTool]);
 
   // ── Shared IdeaWorkspaceTools props (single source) ─────────────────────
   // The workspace inspector (5 sections: Problem · Status · Inspector · Convert
@@ -3021,8 +3088,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       graphNodes,
       graphEdges,
       evidenceCount: graphNodes.filter((n: any) => n?.data?.evidenceLinks?.length > 0).length,
-      onAISummarize: () => handleQuickAction('mm_ai_summarize'),
-      onAIExpand: () => handleQuickAction('mm_ai_expand'),
+      // P1-1 (Z3): wiersz „Podsumuj AI / Rozwiń AI" w sekcji Status prawego
+      // panelu wysyła mm_ai_summarize / mm_ai_expand — obsługuje je wyłącznie
+      // useMindMapQuickActions (zamontowany tylko w Mapie myśli). Poza Mapą
+      // przyciski były klikalne i nie robiły NIC. IdeaWorkspaceTools rysuje je
+      // tylko wtedy, gdy handler istnieje, więc `undefined` = brak przycisku.
+      onAISummarize:
+        activeTool === 'mindmap' ? () => handleQuickAction('mm_ai_summarize') : undefined,
+      onAIExpand: activeTool === 'mindmap' ? () => handleQuickAction('mm_ai_expand') : undefined,
       onLayoutChange: (mode: string) => {
         window.dispatchEvent(
           new CustomEvent('idea-mindmap-node-quick-action', {
@@ -3222,21 +3295,28 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     ]
   );
 
-  // EditorShell right-rail panel body. All five inspector icons (problem ·
-  // status · inspector · convert · health) address the five sections that
-  // already live inside <IdeaWorkspaceTools>, so every id renders that same
-  // inspector (its sections are the in-panel navigation). Rendered `embedded`
-  // so it drops its own drawer chrome and fills the shell's rail column. The
-  // matching legacy drawer is suppressed below when the flag is ON (no dupes).
+  // EditorShell right-rail panel body. P0-4: each of the five rail icons
+  // (problem · status · inspector · convert · health) is a TAB — it must render
+  // only its own section. The ids from `buildIdeaCanvasRightRailTools` match the
+  // `IdeaPanelSection` union 1:1, so the id is passed straight through as
+  // `onlySection`. Rendered `embedded` so it drops its own drawer chrome and
+  // fills the shell's rail column. The matching legacy drawer is suppressed
+  // below when the flag is ON (no dupes).
   const renderMelsCanvasRightRailPanel = useCallback(
-    (_activeToolId: string | null): React.ReactNode => (
-      <IdeaWorkspaceTools
-        {...ideaWorkspaceToolsSharedProps}
-        open
-        embedded
-        onClose={() => handlePanelChange(null)}
-      />
-    ),
+    (activeToolId: string | null): React.ReactNode => {
+      const section = IDEA_PANEL_SECTIONS.includes(activeToolId as IdeaPanelSection)
+        ? (activeToolId as IdeaPanelSection)
+        : 'problem';
+      return (
+        <IdeaWorkspaceTools
+          {...ideaWorkspaceToolsSharedProps}
+          open
+          embedded
+          onlySection={section}
+          onClose={() => handlePanelChange(null)}
+        />
+      );
+    },
     [ideaWorkspaceToolsSharedProps, handlePanelChange]
   );
 
@@ -3260,6 +3340,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // declarations defined at the end of the component.
   const canvasToolsNode = renderCanvasToolsNode();
   const floatingLeftRailNode = renderFloatingLeftRail();
+  // D2: przelacznik w prawym dolnym rogu — portal do body, wiec jeden wezel
+  // dziala w obu sciezkach renderu (mels i legacy). OFF => null.
+  const viewSwitcherNode = switcherBottomRight ? (
+    <IdeaViewSwitcher
+      activeTool={activeTool}
+      onToolChange={setActiveTool}
+      isPl={isPolish}
+      familyCounts={familyCounts}
+    />
+  ) : null;
   const workspaceSiblingsNode = renderWorkspaceSiblings();
 
   if (melsCanvasEnabled) {
@@ -3311,7 +3401,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                     command-row (melsCanvasChips). Nothing left to float here. */}
               </>
             }
-            floatingLeftRail={floatingLeftRailNode}
+            floatingLeftRail={
+              <>
+                {floatingLeftRailNode}
+                {viewSwitcherNode}
+              </>
+            }
             siblings={workspaceSiblingsNode}
             onRunPrimary={() => handleQuickAction('mm_add_child')}
             onOpenCommandPalette={cmdPalette.open}
@@ -3453,6 +3548,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
         {/* UI overlays rendered AFTER canvas tools so they appear on top */}
         {floatingLeftRailNode}
+        {viewSwitcherNode}
 
         {/* #6a/#6e: top chrome (governance badge + global actions: search/
             help/Discuss with Teresa) hides in fullscreen — cała góra znika.
@@ -3517,8 +3613,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               extensions={mapExtensions}
               onPreferredToolLoaded={(tool) => {
                 if (!tool) return;
+                // Deep link always wins — never self-heal away from it.
+                if (initialTool) return;
                 if (userSelectedToolRef.current) return;
                 if (tool === activeTool) return;
+                // P0-5: `tool` here is read by the mind-map canvas's OWN map
+                // fetch from the SHARED canonical map row (`preferredTool` —
+                // see the module note above `readLocalToolPreference`). Only
+                // self-heal toward THIS browser's own remembered choice for
+                // this idea — never toward whatever another org member
+                // happened to have active when they last saved.
+                if (tool !== readLocalToolPreference(realId)) return;
                 setTimeout(() => setActiveTool(tool), 0);
               }}
               variant={mapOpen && !melsCanvasEnabled ? 'overlay' : 'embedded'}
@@ -3711,7 +3816,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         }}
         onApplyTemplate={handleApplyTemplate}
         onOpenTemplateGallery={() => setTemplateGalleryOpen(true)}
-        onToolChange={setActiveTool}
+        // D2: gdy przelacznik jest w prawym dolnym rogu, zdejmujemy go z railа.
+        onToolChange={switcherBottomRight ? undefined : setActiveTool}
         familyCounts={familyCounts}
       />
     );

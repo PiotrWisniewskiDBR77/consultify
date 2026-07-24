@@ -22,8 +22,6 @@ import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { assertIdeaMembership, selectCanonicalMapRow } from '../realtime/ideaMapAccess.js';
 import auditEventsService from '../services/AuditEventsService.js';
-import type { OutcomeType } from '../services/ideaClusterService.js';
-import { createOutcomeFromCluster, materializeClusters } from '../services/ideaClusterService.js';
 import { createIdeaMapSnapshot } from '../services/ideaMapSnapshotService.js';
 import { InboxAiAssistItemSchema, runInboxAiAssist } from '../services/inboxAiAssistService.js';
 import inboxService from '../services/inboxService.js';
@@ -6507,468 +6505,6 @@ router.post(
   })
 );
 
-// ============================================================================
-// V4-IDEA-05: Cluster / Outcome model
-// ============================================================================
-
-/**
- * POST /api/my-work/my-ideas/:id/clusters/materialize
- * Convert AI cluster assignments to first-class cluster nodes in the graph.
- * Body: { clusters: [{ id, name, nodeIds, color? }] }
- */
-router.post(
-  '/my-ideas/:id/clusters/materialize',
-  requireAudit,
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const identity = requireUser(req, res);
-    if (!identity) return;
-    const { userId, orgId } = identity;
-    if (!(await requireTables(res, ['my_ideas', 'my_idea_maps']))) return;
-
-    const ideaId = String(req.params.id || '').trim();
-    if (!ideaId) return res.status(400).json({ error: 'Missing idea id' });
-
-    const clusters = req.body?.clusters;
-    if (!Array.isArray(clusters) || clusters.length === 0) {
-      return res.status(400).json({ error: 'clusters array is required' });
-    }
-
-    // A1 (D-WB-2): canonical (owner) row write-through so org members can materialize clusters.
-    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
-    if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
-
-    // B1 (M09): observers in an active facilitation session are read-only on the shared board.
-    if (await isWhiteboardObserver(ideaId, orgId, userId)) {
-      return res
-        .status(WHITEBOARD_OBSERVER_READONLY.status)
-        .json(WHITEBOARD_OBSERVER_READONLY.body);
-    }
-
-    const mapRow = await queryHelpers.queryOne<any>(
-      `SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, canonicalUserId, orgId]
-    );
-    if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
-
-    let existingNodes: any[] = [];
-    let existingEdges: any[] = [];
-    try {
-      existingNodes =
-        typeof mapRow.nodesJson === 'string'
-          ? JSON.parse(mapRow.nodesJson)
-          : mapRow.nodesJson || [];
-      existingEdges =
-        typeof mapRow.edgesJson === 'string'
-          ? JSON.parse(mapRow.edgesJson)
-          : mapRow.edgesJson || [];
-    } catch {
-      /* keep defaults */
-    }
-
-    const assignments = clusters.map((c: any) => ({
-      id: String(c.id || ''),
-      name: String(c.name || 'Cluster'),
-      nodeIds: Array.isArray(c.nodeIds) ? c.nodeIds.map(String) : [],
-      color: c.color ? String(c.color) : undefined,
-    }));
-
-    const { clusterNodes, edges: newEdges } = materializeClusters(existingNodes, assignments);
-
-    const mergedNodes = [...existingNodes, ...clusterNodes];
-    const existingEdgeIds = new Set(existingEdges.map((e: any) => e.id));
-    const mergedEdges = [...existingEdges, ...newEdges.filter((e) => !existingEdgeIds.has(e.id))];
-
-    const { normalized } = validateAndNormalizeGraph({
-      nodes: mergedNodes,
-      edges: mergedEdges,
-    });
-
-    const nextVersion = Number(mapRow.version || 1) + 1;
-    const now = new Date().toISOString();
-
-    await queryHelpers.queryRun(
-      `UPDATE my_idea_maps SET nodes_json = ?, edges_json = ?, version = ?, updated_at = ? WHERE idea_id = ? AND user_id = ? AND organization_id = ?`,
-      [
-        JSON.stringify(normalized.nodes),
-        JSON.stringify(normalized.edges),
-        nextVersion,
-        now,
-        ideaId,
-        canonicalUserId,
-        orgId,
-      ]
-    );
-
-    req.emitAuditEvent?.({
-      actorType: 'USER',
-      action: 'IDEA_CLUSTERS_MATERIALIZE',
-      resourceType: 'idea_map',
-      resourceId: ideaId,
-      after: { clusterCount: clusterNodes.length, version: nextVersion },
-    });
-
-    res.json({
-      graph: normalized,
-      clusterIds: clusterNodes.map((n) => n.id),
-      version: nextVersion,
-    });
-  })
-);
-
-/**
- * POST /api/my-work/my-ideas/:id/clusters/:clusterId/outcome
- * Create an outcome node from a cluster.
- * Body: { outcomeType: 'task' | 'decision' | 'initiative' | 'insight', label: string }
- */
-router.post(
-  '/my-ideas/:id/clusters/:clusterId/outcome',
-  requireAudit,
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const identity = requireUser(req, res);
-    if (!identity) return;
-    const { userId, orgId } = identity;
-    if (!(await requireTables(res, ['my_ideas', 'my_idea_maps']))) return;
-
-    const ideaId = String(req.params.id || '').trim();
-    const clusterId = String(req.params.clusterId || '').trim();
-    if (!ideaId) return res.status(400).json({ error: 'Missing idea id' });
-    if (!clusterId) return res.status(400).json({ error: 'Missing cluster id' });
-
-    const outcomeType = String(req.body?.outcomeType || '').trim() as OutcomeType;
-    const label = String(req.body?.label || '').trim();
-    if (!['task', 'decision', 'initiative', 'insight'].includes(outcomeType)) {
-      return res.status(400).json({ error: 'Invalid outcomeType' });
-    }
-    if (!label) return res.status(400).json({ error: 'label is required' });
-
-    // A1 (D-WB-2): canonical (owner) row write-through so org members can create outcomes.
-    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
-    if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
-
-    // B1 (M09): observers in an active facilitation session are read-only on the shared board.
-    if (await isWhiteboardObserver(ideaId, orgId, userId)) {
-      return res
-        .status(WHITEBOARD_OBSERVER_READONLY.status)
-        .json(WHITEBOARD_OBSERVER_READONLY.body);
-    }
-
-    const mapRow = await queryHelpers.queryOne<any>(
-      `SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, canonicalUserId, orgId]
-    );
-    if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
-
-    let existingNodes: any[] = [];
-    let existingEdges: any[] = [];
-    try {
-      existingNodes =
-        typeof mapRow.nodesJson === 'string'
-          ? JSON.parse(mapRow.nodesJson)
-          : mapRow.nodesJson || [];
-      existingEdges =
-        typeof mapRow.edgesJson === 'string'
-          ? JSON.parse(mapRow.edgesJson)
-          : mapRow.edgesJson || [];
-    } catch {
-      /* keep defaults */
-    }
-
-    const clusterNode = existingNodes.find(
-      (n: any) => n.id === clusterId && (n.kind === 'cluster' || n.type === 'cluster')
-    );
-    if (!clusterNode) return res.status(404).json({ error: 'Cluster node not found in graph' });
-
-    const outcomeNode = createOutcomeFromCluster(clusterId, outcomeType, label, clusterNode);
-
-    const outcomeEdge = {
-      id: `e-${clusterId}-${outcomeNode.id}`,
-      fromNodeId: clusterId,
-      toNodeId: outcomeNode.id,
-      relationType: 'flow' as const,
-      label: outcomeType,
-    };
-
-    const mergedNodes = [...existingNodes, outcomeNode];
-    const mergedEdges = [...existingEdges, outcomeEdge];
-
-    const { normalized } = validateAndNormalizeGraph({
-      nodes: mergedNodes,
-      edges: mergedEdges,
-    });
-
-    const nextVersion = Number(mapRow.version || 1) + 1;
-    const now = new Date().toISOString();
-
-    await queryHelpers.queryRun(
-      `UPDATE my_idea_maps SET nodes_json = ?, edges_json = ?, version = ?, updated_at = ? WHERE idea_id = ? AND user_id = ? AND organization_id = ?`,
-      [
-        JSON.stringify(normalized.nodes),
-        JSON.stringify(normalized.edges),
-        nextVersion,
-        now,
-        ideaId,
-        canonicalUserId,
-        orgId,
-      ]
-    );
-
-    req.emitAuditEvent?.({
-      actorType: 'USER',
-      action: 'IDEA_OUTCOME_CREATE',
-      resourceType: 'idea_map',
-      resourceId: ideaId,
-      after: { outcomeId: outcomeNode.id, outcomeType, clusterId },
-    });
-
-    res.json({ outcome: outcomeNode, version: nextVersion });
-  })
-);
-
-/**
- * POST /api/my-work/my-ideas/:id/outcomes/:outcomeId/convert
- * Convert an outcome node to a real entity (task/decision/initiative).
- * Body: { target: 'task' | 'decision' | 'initiative' }
- */
-router.post(
-  '/my-ideas/:id/outcomes/:outcomeId/convert',
-  requireAudit,
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const identity = requireUser(req, res);
-    if (!identity) return;
-    const { userId, orgId } = identity;
-    if (!(await requireTables(res, ['my_ideas', 'my_idea_maps']))) return;
-
-    const ideaId = String(req.params.id || '').trim();
-    const outcomeId = String(req.params.outcomeId || '').trim();
-    if (!ideaId) return res.status(400).json({ error: 'Missing idea id' });
-    if (!outcomeId) return res.status(400).json({ error: 'Missing outcome id' });
-
-    const target = String(req.body?.target || '').trim();
-    if (!['task', 'decision', 'initiative'].includes(target)) {
-      return res
-        .status(400)
-        .json({ error: 'Invalid target — must be task, decision, or initiative' });
-    }
-
-    // A1 (D-WB-2): canonical (owner) row write-through so org members can convert outcomes.
-    // Idea metadata (title/body/etc.) is org-scoped here; ownership only picks the map row.
-    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
-    if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
-
-    // B1 (M09): observers in an active facilitation session are read-only on the shared board.
-    if (await isWhiteboardObserver(ideaId, orgId, userId)) {
-      return res
-        .status(WHITEBOARD_OBSERVER_READONLY.status)
-        .json(WHITEBOARD_OBSERVER_READONLY.body);
-    }
-
-    const idea = await queryHelpers.queryOne<any>(
-      `SELECT id, title, body, seed_text as "seedText", ai_expansion as "aiExpansion" FROM my_ideas WHERE id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, orgId]
-    );
-    if (!idea) return res.status(404).json({ error: 'Idea not found' });
-
-    const mapRow = await queryHelpers.queryOne<any>(
-      `SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, canonicalUserId, orgId]
-    );
-    if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
-
-    let existingNodes: any[] = [];
-    let existingEdges: any[] = [];
-    try {
-      existingNodes =
-        typeof mapRow.nodesJson === 'string'
-          ? JSON.parse(mapRow.nodesJson)
-          : mapRow.nodesJson || [];
-      existingEdges =
-        typeof mapRow.edgesJson === 'string'
-          ? JSON.parse(mapRow.edgesJson)
-          : mapRow.edgesJson || [];
-    } catch {
-      /* keep defaults */
-    }
-
-    const outcomeNode = existingNodes.find(
-      (n: any) => n.id === outcomeId && (n.kind === 'outcome' || n.type === 'outcome')
-    );
-    if (!outcomeNode) return res.status(404).json({ error: 'Outcome node not found in graph' });
-
-    // F15 (data-integrity): outcomeNode.label / idea.title may already carry
-    // entities escaped by the global sanitizer on a prior save. Decode once here
-    // — this value feeds initiatives.name/decisions.title/tasks.title below.
-    const safeTitle = decodeHtmlEntities(
-      String(outcomeNode.label || idea.title || 'Outcome')
-        .trim()
-        .slice(0, 255)
-    );
-    const safeBody = String(idea.body || '').trim();
-    const safeExpansion = String(idea.aiExpansion || '').trim();
-
-    const toolSessionId = await createMyWorkToolSession({
-      userId,
-      orgId,
-      sourceType: 'idea',
-      sourceId: ideaId,
-      title: safeTitle,
-      summary: safeExpansion || safeBody,
-    });
-
-    let entityId: string | null = null;
-    const entityType = target;
-
-    if (target === 'initiative') {
-      if (!(await requireTables(res, ['initiatives']))) return;
-      // Uspójnienie F1.5 — przez kanoniczny lejek (DRAFT + name/title + lineage).
-      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
-        const __r = await funnelCreateInitiative(
-          orgId,
-          {
-            title: safeTitle,
-            summary: (safeExpansion || safeBody).slice(0, 5000) || null,
-            ownerExecutionId: userId,
-            sourceType: 'tool',
-            sourceId: toolSessionId,
-          },
-          { validate: false, actor: { id: userId } }
-        );
-        entityId = __r.id;
-      } else {
-        const cols = await getTableColumns('initiatives');
-        entityId = uuidv4();
-        const insertCols: string[] = ['id'];
-        const insertVals: string[] = ['?'];
-        const insertParams: any[] = [entityId];
-        const add = (col: string, val: any) => {
-          if (!cols.has(col)) return;
-          insertCols.push(col);
-          insertVals.push('?');
-          insertParams.push(val);
-        };
-        add('organization_id', orgId);
-        add('name', safeTitle);
-        add('summary', (safeExpansion || safeBody).slice(0, 5000) || null);
-        add('owner_execution_id', userId);
-        add('source_type', 'tool');
-        add('source_id', toolSessionId);
-        await queryHelpers.queryRun(
-          `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-          insertParams
-        );
-      }
-    } else if (target === 'decision') {
-      if (!(await requireTables(res, ['decisions']))) return;
-      const cols = await getTableColumns('decisions');
-      entityId = uuidv4();
-      const insertCols: string[] = ['id'];
-      const insertVals: string[] = ['?'];
-      const insertParams: any[] = [entityId];
-      const add = (col: string, val: any) => {
-        if (!cols.has(col)) return;
-        insertCols.push(col);
-        insertVals.push('?');
-        insertParams.push(val);
-      };
-      add('organization_id', orgId);
-      add('title', safeTitle);
-      add('description', (safeExpansion || safeBody).slice(0, 12000) || null);
-      add('type', 'general');
-      add('decision_maker_id', userId);
-      add('created_by', userId);
-      add('status', 'pending');
-      add('source_type', 'idea');
-      add('source_id', ideaId);
-      await queryHelpers.queryRun(
-        `INSERT INTO decisions (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
-    } else if (target === 'task') {
-      if (!(await requireTables(res, ['tasks']))) return;
-      const cols = await getTableColumns('tasks');
-      entityId = uuidv4();
-      const insertCols: string[] = ['id'];
-      const insertVals: string[] = ['?'];
-      const insertParams: any[] = [entityId];
-      const add = (col: string, val: any) => {
-        if (!cols.has(col)) return;
-        insertCols.push(col);
-        insertVals.push('?');
-        insertParams.push(val);
-      };
-      add('organization_id', orgId);
-      add('title', safeTitle);
-      add(
-        'description',
-        `Origin idea: ${String(idea.title || '')}\n${safeBody}`.slice(0, 9000) || null
-      );
-      add('status', 'todo');
-      add('priority', 'medium');
-      add('assignee_id', userId);
-      add('reporter_id', userId);
-      add('source_type', 'idea');
-      add('source_id', ideaId);
-      await queryHelpers.queryRun(
-        `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
-    }
-
-    if (entityId) {
-      await linkGraphAddEdge({
-        orgId,
-        userId,
-        sourceType: entityType,
-        sourceId: entityId,
-        targetType: 'idea',
-        targetId: ideaId,
-        relation: 'ref',
-        containerType: 'mywork_convert',
-        containerId: toolSessionId,
-        nodeId: outcomeId,
-      });
-
-      const updatedNodes = existingNodes.map((n: any) => {
-        if (n.id !== outcomeId) return n;
-        return {
-          ...n,
-          artifactRef: { type: entityType, id: entityId },
-          metadata: { ...(n.metadata || {}), convertedAt: new Date().toISOString() },
-        };
-      });
-
-      const { normalized } = validateAndNormalizeGraph({
-        nodes: updatedNodes,
-        edges: existingEdges,
-      });
-
-      const nextVersion = Number(mapRow.version || 1) + 1;
-      const now = new Date().toISOString();
-
-      await queryHelpers.queryRun(
-        `UPDATE my_idea_maps SET nodes_json = ?, edges_json = ?, version = ?, updated_at = ? WHERE idea_id = ? AND user_id = ? AND organization_id = ?`,
-        [
-          JSON.stringify(normalized.nodes),
-          JSON.stringify(normalized.edges),
-          nextVersion,
-          now,
-          ideaId,
-          canonicalUserId,
-          orgId,
-        ]
-      );
-
-      req.emitAuditEvent?.({
-        actorType: 'USER',
-        action: 'IDEA_OUTCOME_CONVERT',
-        resourceType: entityType,
-        resourceId: entityId,
-        after: { outcomeId, entityType, entityId, ideaId },
-      });
-    }
-
-    res.json({ entityId, entityType, outcomeId, sourceSessionId: toolSessionId });
-  })
-);
 
 // ============================================================================
 // T009 Enhancement — My Ideas Convert/Promote
@@ -7078,13 +6614,60 @@ router.post(
       }
     }
 
+    // P0-1 (docs/standards/idea-workspace/12_BACKLOG_I_ODBIOR.md, model docelowy:
+    // 10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md §2.3): backend dziś NIE dostaje jawnego
+    // zakresu konwersji z FE (żadne z trzech wejść — Menu 1 / prawy panel / menu
+    // kontekstowe — nie wysyła `options.scope`, patrz IdeaMapWorkspace.tsx:2045-2052).
+    // Naprawa: akceptujemy `options.scope` jeśli kiedyś zacznie być wysyłany
+    // ('workspace' = cała Idea), a przy jego braku wnioskujemy best-effort z obecności
+    // `nodeIds` — dokładnie ten sam sygnał, którego dziś używa FE do rozróżnienia
+    // "konwertuj całość" (Menu 1 bez zaznaczenia, nodeIds puste) od "konwertuj
+    // zaznaczenie/węzeł/gałąź" (nodeIds niepuste). To NIE jest doskonałe (np. Table
+    // bulk-convert bywa niespójny ze `selection.ids` — patrz audyt §4.5), ale jest
+    // ścisłym nadzbiorem informacji, którą backend miał do tej pory (żadnej).
+    const explicitScope = typeof options?.scope === 'string' ? options.scope.trim() : '';
+    const isWholeIdeaScope = explicitScope ? explicitScope === 'workspace' : nodeIds.length === 0;
+    const conversionScope = isWholeIdeaScope ? 'workspace' : 'selection';
+
     const promote = async (promotedTo: string, promotedEntityId: string | null) => {
-      await queryHelpers.queryRun(
-        `UPDATE my_ideas
-         SET promoted_to = ?, promoted_entity_id = ?, stage = 'promoted', updated_at = CURRENT_TIMESTAMP
-         WHERE id = ? AND user_id = ? AND organization_id = ?`,
-        [promotedTo, promotedEntityId, ideaId, userId, orgId]
-      );
+      // Historia KAŻDEJ konwersji — insert, NIGDY update. Zastępuje pojedyncze pole
+      // `promoted_to`, które nadpisywało się bezwarunkowo niezależnie od zakresu
+      // (defekt P0-1). Best-effort: brak tabeli (migracja 20260723_idea_conversion_history
+      // jeszcze nie uruchomiona) nie może zablokować samej konwersji.
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO my_idea_conversions
+             (id, idea_id, organization_id, target, entity_id, scope, node_ids_json, created_by)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            uuidv4(),
+            ideaId,
+            orgId,
+            promotedTo,
+            promotedEntityId,
+            conversionScope,
+            JSON.stringify(nodeIds),
+            userId,
+          ]
+        );
+      } catch (err: any) {
+        logger.warn(
+          `[my-work.convert] nie udało się zapisać wpisu my_idea_conversions (migracja 20260723 odpalona?): ${err?.message}`
+        );
+      }
+
+      // `promoted_to`/`promoted_entity_id`/`stage` Idei zostają dla zgodności wstecznej,
+      // ale zmieniają się TYLKO przy konwersji CAŁEJ Idei (scope='workspace'). Konwersja
+      // fragmentu (zaznaczenie/węzeł/gałąź) dostaje wyłącznie wpis w historii powyżej —
+      // status i etap całej Idei zostają nietknięte.
+      if (isWholeIdeaScope) {
+        await queryHelpers.queryRun(
+          `UPDATE my_ideas
+           SET promoted_to = ?, promoted_entity_id = ?, stage = 'promoted', updated_at = CURRENT_TIMESTAMP
+           WHERE id = ? AND user_id = ? AND organization_id = ?`,
+          [promotedTo, promotedEntityId, ideaId, userId, orgId]
+        );
+      }
     };
 
     // ----- Convert: Initiative -----
@@ -7732,235 +7315,6 @@ router.post(
         promotedEntityId: conversationId,
         created: { conversationId, chatProjectId },
       });
-    }
-  })
-);
-
-// ============================================================================
-// T009 Enhancement — AI Idea Incubator (develop endpoint)
-// ============================================================================
-
-router.post(
-  '/my-ideas/:id/develop',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const identity = requireUser(req, res);
-    if (!identity) return;
-    const { userId, orgId } = identity;
-    if (!(await requireTables(res, ['my_ideas']))) return;
-
-    const { id } = req.params;
-    const existing = await queryHelpers.queryOne<any>(
-      `SELECT * FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [id, userId, orgId]
-    );
-    if (!existing) return res.status(404).json({ error: 'Idea not found' });
-
-    const seedText = String(req.body.seedText || existing.body || existing.title || '').trim();
-    if (!seedText) return res.status(400).json({ error: 'Seed text is required' });
-    const language = String(req.body.language || 'en').toLowerCase();
-    const isPl = language.startsWith('pl');
-
-    // SSE setup
-    if (req.socket) {
-      req.socket.setTimeout(120_000);
-      req.socket.setNoDelay(true);
-    }
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-    res.flushHeaders();
-
-    const emit = (type: string, data: any) => {
-      try {
-        res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`);
-      } catch {}
-    };
-
-    emit('stage', {
-      stage: 'expanding',
-      label: isPl ? 'Rozwijam Twój pomysł...' : 'Expanding your idea...',
-    });
-
-    try {
-      const { llmService } = await import('../services/ai/llmService.js');
-      const modelRouter = (await import('../services/ai/modelRouter.js')).default;
-      const modelCfg = await modelRouter.select({
-        capability: 'chat',
-        organizationId: orgId,
-        options: { tier: 'STANDARD' },
-      });
-
-      // STAGE 1: AI Expansion
-      const expansionPrompt = isPl
-        ? `Jesteś kreatywnym konsultantem strategicznym. Użytkownik ma pomysł:\n\n"${seedText}"\n\nRozwiń ten pomysł w 3-4 akapitach. Opisz:\n1. Na czym dokładnie polega ten pomysł\n2. Jaką wartość przyniesie\n3. Jak mógłby wyglądać w praktyce\n4. Co czyni go wyjątkowym\n\nBądź entuzjastyczny ale rzeczowy. Pisz po polsku.`
-        : `You are a creative strategic consultant. The user has an idea:\n\n"${seedText}"\n\nExpand this idea in 3-4 paragraphs. Describe:\n1. What exactly this idea entails\n2. What value it would bring\n3. How it could look in practice\n4. What makes it unique\n\nBe enthusiastic but grounded.`;
-
-      const expansionResult = await llmService.callText({
-        type: 'text',
-        modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
-        systemPrompt: isPl
-          ? 'Jesteś kreatywnym partnerem do rozwoju pomysłów.'
-          : 'You are a creative idea development partner.',
-        messages: [{ role: 'user', content: expansionPrompt }],
-      });
-      const aiExpansion = String((expansionResult as any)?.content || '');
-      emit('expansion', { content: aiExpansion });
-
-      // Save expansion to DB
-      await queryHelpers.queryRun(
-        // M08 L-03: full org+user scope (defense-in-depth; id already verified owned above).
-        `UPDATE my_ideas SET seed_text = ?, ai_expansion = ?, stage = 'expanding', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND organization_id = ?`,
-        [seedText, aiExpansion, id, userId, orgId]
-      );
-
-      // STAGE 2: Web Research
-      emit('stage', {
-        stage: 'researching',
-        label: isPl ? 'Szukam informacji w sieci...' : 'Researching the web...',
-      });
-
-      let researchResults: any[] = [];
-      try {
-        const tavilyKey = process.env.TAVILY_API_KEY;
-        if (tavilyKey) {
-          const { TavilyWebSearchService } =
-            await import('../services/ai/tavilyWebSearchService.js');
-          const tavily = new (TavilyWebSearchService as any)(tavilyKey);
-
-          const searchQuery = aiExpansion.split('\n').slice(0, 2).join(' ').slice(0, 200);
-          const searchRes = await tavily.search(searchQuery, {
-            maxResults: 5,
-            searchDepth: 'advanced',
-          });
-          researchResults = (searchRes?.results || []).map((r: any) => ({
-            title: String(r?.title || '').slice(0, 200),
-            url: String(r?.url || ''),
-            snippet: String(r?.content || '').slice(0, 400),
-          }));
-          emit('research', { results: researchResults, answer: searchRes?.answer || null });
-        }
-      } catch (err: any) {
-        logger.warn('[IdeaDevelop] Web search failed:', err?.message);
-        emit('research', { results: [], answer: null, error: 'Web search unavailable' });
-      }
-
-      // Save research
-      await queryHelpers.queryRun(
-        // M08 L-03: full org+user scope (defense-in-depth).
-        `UPDATE my_ideas SET research_data = ?, stage = 'researching', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND organization_id = ?`,
-        [JSON.stringify(researchResults), id, userId, orgId]
-      );
-
-      // STAGE 3: Creative Proposals
-      emit('stage', {
-        stage: 'proposing',
-        label: isPl ? 'Generuję kreatywne propozycje...' : 'Generating creative proposals...',
-      });
-
-      const researchContext = researchResults.map((r) => `- ${r.title}: ${r.snippet}`).join('\n');
-      const proposalsPrompt = isPl
-        ? `Na podstawie pomysłu użytkownika i badań, zaproponuj 4 kreatywne warianty/rozszerzenia.\n\nPomysł: "${seedText}"\n\nRozwinięcie:\n${aiExpansion}\n\nBadania:\n${researchContext}\n\nDla każdego wariantu podaj:\n- Tytuł (krótki, chwytliwy)\n- Opis (2-3 zdania)\n- Dlaczego warto (1 zdanie)\n\nOdpowiedz jako JSON array: [{"title":"...","description":"...","whyItMatters":"..."}]\nTylko JSON, bez markdown.`
-        : `Based on the user's idea and research, propose 4 creative variants/extensions.\n\nIdea: "${seedText}"\n\nExpansion:\n${aiExpansion}\n\nResearch:\n${researchContext}\n\nFor each variant provide:\n- Title (short, catchy)\n- Description (2-3 sentences)\n- Why it matters (1 sentence)\n\nRespond as JSON array: [{"title":"...","description":"...","whyItMatters":"..."}]\nOnly JSON, no markdown.`;
-
-      const proposalsResult = await llmService.callText({
-        type: 'text',
-        modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
-        systemPrompt: isPl
-          ? 'Jesteś kreatywnym generatorem pomysłów. Odpowiadasz tylko poprawnym JSON.'
-          : 'You are a creative idea generator. You respond only with valid JSON.',
-        messages: [{ role: 'user', content: proposalsPrompt }],
-      });
-
-      let proposals: any[] = [];
-      try {
-        const raw = String((proposalsResult as any)?.content || '[]');
-        const jsonMatch = raw.match(/\[[\s\S]*\]/);
-        proposals = JSON.parse(jsonMatch ? jsonMatch[0] : '[]');
-      } catch {
-        proposals = [];
-      }
-
-      emit('proposals', { proposals });
-
-      await queryHelpers.queryRun(
-        // M08 L-03: full org+user scope (defense-in-depth).
-        `UPDATE my_ideas SET creative_proposals = ?, stage = 'proposing', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND organization_id = ?`,
-        [JSON.stringify(proposals), id, userId, orgId]
-      );
-
-      // STAGE 4: Summary
-      emit('stage', {
-        stage: 'summary',
-        label: isPl ? 'Tworzę podsumowanie...' : 'Creating summary...',
-      });
-
-      const summaryPrompt = isPl
-        ? `Podsumuj ten pomysł jako kreatywny konsultant.\n\nPomysł: "${seedText}"\nRozwinięcie: ${aiExpansion.slice(0, 500)}\nPropozycje: ${proposals.map((p) => p.title).join(', ')}\n\nOdpowiedz jako JSON:\n{"verdict":"...(1-2 zdania entuzjastycznej oceny)","potential":"high|medium|low","complexity":"low|medium|high","timeToValue":"...(np. 2-4 tygodnie)","nextSteps":["krok1","krok2","krok3"]}\nTylko JSON.`
-        : `Summarize this idea as a creative consultant.\n\nIdea: "${seedText}"\nExpansion: ${aiExpansion.slice(0, 500)}\nProposals: ${proposals.map((p) => p.title).join(', ')}\n\nRespond as JSON:\n{"verdict":"...(1-2 sentence enthusiastic assessment)","potential":"high|medium|low","complexity":"low|medium|high","timeToValue":"...(e.g. 2-4 weeks)","nextSteps":["step1","step2","step3"]}\nOnly JSON.`;
-
-      const summaryResult = await llmService.callText({
-        type: 'text',
-        modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
-        systemPrompt: isPl
-          ? 'Jesteś pozytywnym konsultantem strategicznym. Odpowiadasz JSON.'
-          : 'You are a positive strategic consultant. You respond with JSON.',
-        messages: [{ role: 'user', content: summaryPrompt }],
-      });
-
-      let summary: any = {};
-      try {
-        const raw = String((summaryResult as any)?.content || '{}');
-        const jsonMatch = raw.match(/\{[\s\S]*\}/);
-        summary = JSON.parse(jsonMatch ? jsonMatch[0] : '{}');
-      } catch {
-        summary = {
-          verdict: '',
-          potential: 'medium',
-          complexity: 'medium',
-          timeToValue: '?',
-          nextSteps: [],
-        };
-      }
-
-      emit('summary', { summary });
-
-      // Auto-priority: calculate from AI assessment
-      let autoPriority = 50;
-      const pot = summary.potential || 'medium';
-      const cmplx = summary.complexity || 'medium';
-      if (pot === 'high') autoPriority += 25;
-      else if (pot === 'low') autoPriority -= 15;
-      if (cmplx === 'low') autoPriority += 10;
-      else if (cmplx === 'high') autoPriority -= 5;
-      if (proposals.length >= 3) autoPriority += 5;
-      if (researchResults.length >= 3) autoPriority += 5;
-      autoPriority = Math.max(10, Math.min(100, autoPriority));
-
-      // Auto-detect area from content
-      let autoArea: string | null = null;
-      const allText = `${seedText} ${aiExpansion}`.toLowerCase();
-      if (/strateg|vision|roadmap|competitive/.test(allText)) autoArea = 'strategy';
-      else if (/product|feature|ux|user experience|interface/.test(allText)) autoArea = 'product';
-      else if (/process|workflow|operations|efficiency|automat/.test(allText)) autoArea = 'process';
-      else if (/culture|team|hr|hiring|talent|wellbeing/.test(allText)) autoArea = 'culture';
-      else if (/tech|architecture|infra|devops|security|code/.test(allText)) autoArea = 'tech';
-      else if (/growth|market|sales|revenue|customer|acqui/.test(allText)) autoArea = 'growth';
-
-      await queryHelpers.queryRun(
-        // M08 L-03: full org+user scope (defense-in-depth).
-        `UPDATE my_ideas
-         SET summary_data = ?, potential = ?, complexity = ?, stage = 'ready', priority = ?, area = COALESCE(area, ?), updated_at = CURRENT_TIMESTAMP
-         WHERE id = ? AND user_id = ? AND organization_id = ?`,
-        [JSON.stringify(summary), pot, cmplx, autoPriority, autoArea, id, userId, orgId]
-      );
-
-      emit('done', { stage: 'ready', priority: autoPriority, area: autoArea });
-      res.end();
-    } catch (err: any) {
-      logger.error('[IdeaDevelop] Error:', err);
-      emit('error', { message: err?.message || 'Development failed' });
-      res.end();
     }
   })
 );

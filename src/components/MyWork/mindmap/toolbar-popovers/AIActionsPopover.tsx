@@ -12,11 +12,19 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { IdeaWorkspaceSelection } from '../../ideaSelectionTypes';
+import type { CanvasToolType, IdeaWorkspaceSelection } from '../../ideaSelectionTypes';
 import type { SidekickContext } from '../aiSidekickContext';
 
 interface AIActionsPopoverProps {
   isPl: boolean;
+  /**
+   * P1-1: rail jest wspólny dla czterech reprezentacji, więc popover AI MUSI
+   * wiedzieć, w której jest. Wcześniej pokazywał generatory `mm_ai_*` wszędzie
+   * — a obsługuje je wyłącznie `useMindMapQuickActions` (montowany tylko w
+   * Mapie myśli), więc w Whiteboardzie / Przepływie / Tabeli każda pozycja
+   * była martwym klikiem. Domyślnie 'mindmap' dla starych wywołań.
+   */
+  activeTool?: CanvasToolType;
   selection: IdeaWorkspaceSelection;
   onAction: (action: string) => void;
   onOpenChat: () => void;
@@ -99,8 +107,57 @@ const NODE_SPECIFIC_GENERATORS = [
   },
 ];
 
+/**
+ * P1-1: generatory AI POZOSTAŁYCH reprezentacji. Każdy ciąg ma realny handler:
+ *   wb_ai_*   → whiteboard/useWhiteboardQuickActions.ts (AI_ACTION_MAP → generate→preview→apply)
+ *   pf_analyze→ processflow/useProcessFlowQuickActions.ts (runProcessCoach = AI Coach)
+ *   tbl_*     → table/useTableQuickActions.ts (toggleMap → realne modale IdeaTableTool)
+ * Etykiety są zapisane wprost PL/EN, bo dla tych akcji nie istnieją jeszcze
+ * klucze i18n — lepszy jawny polski napis niż pusty klucz.
+ */
+const TOOL_GENERATORS: Partial<
+  Record<CanvasToolType, Array<{ action: string; iconEl: typeof Zap; pl: string; en: string }>>
+> = {
+  whiteboard: [
+    { action: 'wb_ai_find_themes', iconEl: Search, pl: 'Znajdź tematy', en: 'Find themes' },
+    { action: 'wb_ai_name_clusters', iconEl: GitMerge, pl: 'Nazwij skupiska', en: 'Name clusters' },
+    {
+      action: 'wb_ai_extract_actions',
+      iconEl: Target,
+      pl: 'Wyciągnij działania',
+      en: 'Extract action items',
+    },
+    { action: 'wb_ai_to_map', iconEl: Zap, pl: 'Zamień na mapę myśli', en: 'Convert to mind map' },
+    { action: 'wb_ai_to_table', iconEl: Brain, pl: 'Zamień na tabelę', en: 'Convert to table' },
+  ],
+  process_flow: [
+    {
+      action: 'pf_analyze',
+      iconEl: Search,
+      pl: 'Analiza procesu (wąskie gardła)',
+      en: 'Process analysis (bottlenecks)',
+    },
+  ],
+  table: [
+    {
+      action: 'tbl_ai_assistant',
+      iconEl: Wand2,
+      pl: 'Asystent AI tabeli',
+      en: 'Table AI assistant',
+    },
+    { action: 'tbl_categorize', iconEl: GitMerge, pl: 'Skategoryzuj AI', en: 'AI categorize' },
+    {
+      action: 'tbl_framework',
+      iconEl: Lightbulb,
+      pl: 'Generator frameworka',
+      en: 'Framework generator',
+    },
+  ],
+};
+
 export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
   isPl,
+  activeTool = 'mindmap',
   selection,
   onAction,
   onOpenChat,
@@ -123,7 +180,11 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
     sidekickHintProp ??
     (eventCtx ? (isPl ? eventCtx.promptHintPl : eventCtx.promptHint) : undefined);
 
-  const hasNodeSelected = selection.type === 'node' && selection.count >= 1;
+  const isMindmap = activeTool === 'mindmap';
+  // Sekcja „dla zaznaczonego węzła" (mm_ai_expand_node / deepen / summarize_branch
+  // / what_if) istnieje tylko w Mapie myśli — poza nią nie ma odbiornika.
+  const hasNodeSelected = isMindmap && selection.type === 'node' && selection.count >= 1;
+  const toolGenerators = TOOL_GENERATORS[activeTool] ?? [];
 
   const dispatch = (action: string) => {
     onAction(action);
@@ -176,36 +237,62 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
         </div>
       )}
 
-      <div className="border-t border-c-border-subtle dark:border-c-border-subtle px-1 py-1">
-        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
-          <Sparkles size={10} className="inline mr-1" />
-          {t('ideas.mindmap.aiGenerators', 'AI generators')}
+      {/* P1-1: poza Mapą myśli pokazujemy generatory TEJ reprezentacji
+          (whiteboard/przepływ/tabela) — każdy ma realny handler w swoim hooku. */}
+      {!isMindmap && (
+        <div className="border-t border-c-border-subtle dark:border-c-border-subtle px-1 py-1">
+          <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
+            <Sparkles size={10} className="inline mr-1" />
+            {t('ideas.mindmap.aiGenerators', 'AI generators')}
+          </div>
+          {toolGenerators.map((a) => {
+            const Icon = a.iconEl;
+            return (
+              <button
+                key={a.action}
+                onClick={() => dispatch(a.action)}
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
+              >
+                <Icon size={12} className="text-c-text-secondary shrink-0" />
+                <span className="flex-1 text-left">{isPl ? a.pl : a.en}</span>
+              </button>
+            );
+          })}
         </div>
-        {GENERAL_GENERATORS.map((a) => {
-          const Icon = a.iconEl;
-          const comingSoon = !heuristicAiEnabled && HEURISTIC_ACTIONS.has(a.action);
-          return (
-            <button
-              key={a.action}
-              disabled={comingSoon}
-              onClick={() => dispatch(a.action)}
-              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] transition-colors ${
-                comingSoon
-                  ? 'text-c-text-secondary/60 dark:text-c-text-secondary/60 cursor-not-allowed'
-                  : 'text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
-              }`}
-            >
-              <Icon size={12} className="text-c-text-secondary shrink-0" />
-              <span className="flex-1 text-left">{t(a.tkey, a.labelEn)}</span>
-              {comingSoon && (
-                <span className="text-[9px] italic text-c-text-secondary dark:text-c-text-secondary shrink-0">
-                  {t('ideas.mindmap.comingSoon', 'Coming soon')}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+      )}
+
+      {isMindmap && (
+        <div className="border-t border-c-border-subtle dark:border-c-border-subtle px-1 py-1">
+          <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
+            <Sparkles size={10} className="inline mr-1" />
+            {t('ideas.mindmap.aiGenerators', 'AI generators')}
+          </div>
+          {GENERAL_GENERATORS.map((a) => {
+            const Icon = a.iconEl;
+            const comingSoon = !heuristicAiEnabled && HEURISTIC_ACTIONS.has(a.action);
+            return (
+              <button
+                key={a.action}
+                disabled={comingSoon}
+                onClick={() => dispatch(a.action)}
+                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] transition-colors ${
+                  comingSoon
+                    ? 'text-c-text-secondary/60 dark:text-c-text-secondary/60 cursor-not-allowed'
+                    : 'text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
+                }`}
+              >
+                <Icon size={12} className="text-c-text-secondary shrink-0" />
+                <span className="flex-1 text-left">{t(a.tkey, a.labelEn)}</span>
+                {comingSoon && (
+                  <span className="text-[9px] italic text-c-text-secondary dark:text-c-text-secondary shrink-0">
+                    {t('ideas.mindmap.comingSoon', 'Coming soon')}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

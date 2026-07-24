@@ -54,13 +54,16 @@ describe('deliverableTemplateService', () => {
     expect(result[0].isSystem).toBe(true);
   });
 
-  // FT-1.2 — doc wywołuje właściwy SQL
+  // FT-1.2 — doc wywołuje właściwy SQL (report_builder_templates), plus the
+  // document_studio_templates federation query (FT-4.x below) — 2 calls total.
   it('queries report_builder_templates for type=doc', async () => {
-    queryAllMock.mockResolvedValue([
-      { id: 'r1', name: 'Audit Report', description: 'Full audit', is_system: true, is_public: false, report_type: 'ASSESSMENT_DRD', sections_json: '[{"id":1}]', organization_id: null },
-    ]);
+    queryAllMock
+      .mockResolvedValueOnce([
+        { id: 'r1', name: 'Audit Report', description: 'Full audit', is_system: true, is_public: false, report_type: 'ASSESSMENT_DRD', sections_json: '[{"id":1}]', organization_id: null },
+      ])
+      .mockResolvedValueOnce([]); // document_studio_templates — empty for this test
     const result = await listDeliverableTemplates('doc', 'org-x');
-    expect(queryAllMock).toHaveBeenCalledOnce();
+    expect(queryAllMock).toHaveBeenCalledTimes(2);
     const [sql, params] = queryAllMock.mock.calls[0];
     expect(sql).toContain('report_builder_templates');
     expect(params).toContain('org-x');
@@ -86,9 +89,11 @@ describe('deliverableTemplateService', () => {
 
   // FT-1.5 — isBlank = true gdy name zawiera 'pusty'
   it('sets isBlank=true when name contains "pusty"', async () => {
-    queryAllMock.mockResolvedValue([
-      { id: 'b2', name: 'Pusty raport', description: null, is_system: false, is_public: false, report_type: null, sections_json: '[]', organization_id: null },
-    ]);
+    queryAllMock
+      .mockResolvedValueOnce([
+        { id: 'b2', name: 'Pusty raport', description: null, is_system: false, is_public: false, report_type: null, sections_json: '[]', organization_id: null },
+      ])
+      .mockResolvedValueOnce([]); // document_studio_templates
     const result = await listDeliverableTemplates('doc', 'org-x');
     expect(result[0].isBlank).toBe(true);
   });
@@ -237,9 +242,16 @@ describe('deliverableTemplateService — 3-level visibility (System/Organization
           sections_json: '[]',
           organization_id: null,
         },
-      ]);
+      ])
+      // 3rd call = document_studio_templates federation query — explicit []
+      // rather than relying on the mock's post-queue fallback (which is
+      // shared/mutable file-wide state via plain `.mockResolvedValue(...)`
+      // calls elsewhere in this file and must not leak here).
+      .mockResolvedValueOnce([]);
     const result = await listDeliverableTemplates('doc', 'org-x', 'user-1');
-    expect(queryAllMock).toHaveBeenCalledTimes(2);
+    // 3 calls: report_builder_templates main (fails) → fallback (succeeds) →
+    // document_studio_templates federation query.
+    expect(queryAllMock).toHaveBeenCalledTimes(3);
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('r-legacy');
   });
@@ -457,5 +469,159 @@ describe('deliverableTemplateService — createDeliverableTemplate registry regi
 
     expect(result.id).toBe('tpl-doc-2');
     expect(registerArtifactOriginMock).toHaveBeenCalledOnce();
+  });
+});
+
+// FT-4.x — document_studio_templates federation ("Most Word Architect →
+// Biblioteka", 2026-07-24). A template created via the Word Template
+// Architect (DocumentStudioTemplateArchitectView → POST
+// /api/document-studio/templates/plan → persisted to document_studio_templates)
+// must be returned by the "doc" library list path
+// (GET /api/deliverables/templates?type=doc → listDeliverableTemplates('doc', …)),
+// alongside — not instead of — legacy report_builder_templates rows.
+describe('deliverableTemplateService — document_studio_templates federation (doc library bridge)', () => {
+  let listDeliverableTemplates: (
+    type: any,
+    orgId: string,
+    userId?: string
+  ) => Promise<any[]>;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    vi.resetModules();
+    const mod = await import('../../../server/src/services/deliverableTemplateService.js');
+    listDeliverableTemplates = mod.listDeliverableTemplates;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // FT-4.1 — an approved document_studio_templates row is returned alongside
+  // a legacy report_builder_templates row (the core acceptance criterion:
+  // "szablon stworzony w Word Architect POJAWIŁ SIĘ w Bibliotece").
+  it('returns an approved document_studio_templates row alongside a legacy report_builder_templates row', async () => {
+    queryAllMock
+      .mockResolvedValueOnce([
+        {
+          id: 'r-legacy-1',
+          name: 'Legacy Audit Report',
+          description: 'Legacy desc',
+          is_system: false,
+          is_public: false,
+          report_type: 'custom',
+          sections_json: '[{"key":"intro"}]',
+          organization_id: 'org-x',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          template_id: 'doc-template-1234-abcd',
+          name: 'Steering Committee Report (Architect)',
+          purpose: 'Monthly steering update',
+          notes: null,
+          is_system: false,
+          organization_id: 'org-x',
+          section_blueprint: [{ title: 'Executive Summary', level: 1, purpose: 'p', required: true, expectedLengthHint: 'medium' }],
+          document_type: 'steering_committee_report',
+        },
+      ]);
+
+    const result = await listDeliverableTemplates('doc', 'org-x', 'user-1');
+
+    expect(queryAllMock).toHaveBeenCalledTimes(2);
+    const [docStudioSql, docStudioParams] = queryAllMock.mock.calls[1];
+    expect(docStudioSql).toContain('document_studio_templates');
+    expect(docStudioSql).toContain("status = 'approved'");
+    expect(docStudioParams).toEqual(['org-x', '__system__']);
+
+    expect(result).toHaveLength(2);
+    const ids = result.map((r: any) => r.id);
+    expect(ids).toContain('r-legacy-1');
+    expect(ids).toContain('doc-template-1234-abcd');
+
+    const architectRow = result.find((r: any) => r.id === 'doc-template-1234-abcd');
+    expect(architectRow.type).toBe('doc');
+    expect(architectRow.name).toBe('Steering Committee Report (Architect)');
+    expect(architectRow.isSystem).toBe(false);
+    expect(architectRow.organizationId).toBe('org-x');
+    expect(architectRow.meta.source).toBe('document_studio_templates');
+    expect(architectRow.meta).toHaveProperty('sections_json');
+  });
+
+  // FT-4.2 — system-catalogue document_studio_templates rows (SYSTEM_ORG_ID,
+  // is_system=TRUE) map to isSystem=true / organizationId=null, mirroring
+  // how the legacy tables represent system ownership.
+  it('maps a system-catalogue document_studio_templates row to isSystem=true, organizationId=null', async () => {
+    queryAllMock
+      .mockResolvedValueOnce([]) // report_builder_templates
+      .mockResolvedValueOnce([
+        {
+          template_id: 'doc-template-system-1',
+          name: 'Curated Board Report',
+          purpose: 'System-curated template',
+          notes: null,
+          is_system: true,
+          organization_id: '__system__',
+          section_blueprint: [],
+          document_type: 'board_report',
+        },
+      ]);
+
+    const result = await listDeliverableTemplates('doc', 'org-x', 'user-1');
+    expect(result).toHaveLength(1);
+    expect(result[0].isSystem).toBe(true);
+    expect(result[0].organizationId).toBeNull();
+  });
+
+  // FT-4.3 — governance gate: a DRAFT (not yet approved) document_studio_templates
+  // row must not leak into the shared Library, since it isn't usable for
+  // generation yet (isTemplateUsableForGeneration requires status='approved').
+  // The SQL itself filters status='approved' server-side — this test locks
+  // that filter in place so a future edit can't silently drop it.
+  it('SQL filters document_studio_templates to status=approved (drafts excluded server-side)', async () => {
+    queryAllMock.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    await listDeliverableTemplates('doc', 'org-x', 'user-1');
+    const [docStudioSql] = queryAllMock.mock.calls[1];
+    expect(docStudioSql).toMatch(/WHERE\s+status\s*=\s*'approved'/);
+  });
+
+  // FT-4.4 — fail-open: document_studio_templates query throwing must not
+  // blow up the doc list — legacy report_builder_templates rows still come
+  // through (mirrors the fail-open contract documented at the top of this
+  // file for the other 2 legacy tables).
+  it('fail-open: document_studio_templates error does not blow up the legacy rows', async () => {
+    queryAllMock
+      .mockResolvedValueOnce([
+        {
+          id: 'r-legacy-2',
+          name: 'Still Visible Legacy Report',
+          description: null,
+          is_system: true,
+          is_public: false,
+          report_type: 'custom',
+          sections_json: '[]',
+          organization_id: null,
+        },
+      ])
+      .mockRejectedValueOnce(new Error('relation "document_studio_templates" does not exist'));
+
+    const result = await listDeliverableTemplates('doc', 'org-x', 'user-1');
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('r-legacy-2');
+  });
+
+  // FT-4.5 — deck/table types are unaffected by the doc-only federation
+  // (regression guard: still exactly 1 queryAll call, no document_studio_templates
+  // query fired for non-doc types).
+  it('deck/table list paths are unaffected — still a single queryAll call', async () => {
+    queryAllMock.mockResolvedValueOnce([]);
+    await listDeliverableTemplates('deck', 'org-x', 'user-1');
+    expect(queryAllMock).toHaveBeenCalledTimes(1);
+
+    vi.clearAllMocks();
+    queryAllMock.mockResolvedValueOnce([]);
+    await listDeliverableTemplates('table', 'org-x', 'user-1');
+    expect(queryAllMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -27,6 +27,12 @@ export interface RightRailToolDescriptor {
   icon: LucideIcon;
   active?: boolean;
   disabled?: boolean;
+  /**
+   * Why the tool is unavailable here. Shown as the tooltip instead of `label`
+   * when `disabled`. Required by the shared action-state standard: a disabled
+   * surface must say WHY, never fail silently.
+   */
+  disabledReason?: string;
   /** Optional `data-testid` override. */
   testId?: string;
   /** Optional badge string ("3", "•") rendered top-right. */
@@ -72,7 +78,8 @@ const ToolIcon: React.FC<{
   active: boolean;
   onClick: () => void;
 }> = ({ tool, active, onClick }) => {
-  const { icon: Icon, label, disabled, badge, dotTone, id, testId } = tool;
+  const { icon: Icon, label, disabled, disabledReason, badge, dotTone, id, testId } = tool;
+  const tooltip = disabled && disabledReason ? `${label} — ${disabledReason}` : label;
 
   const baseClasses =
     'relative w-10 h-10 flex items-center justify-center rounded-lg transition-colors';
@@ -85,8 +92,8 @@ const ToolIcon: React.FC<{
       type="button"
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
-      title={label}
-      aria-label={label}
+      title={tooltip}
+      aria-label={tooltip}
       aria-pressed={active}
       className={`${baseClasses} ${stateClasses} disabled:opacity-40 disabled:cursor-not-allowed`}
       data-testid={testId ?? `mels-right-rail-tool-${id}`}
@@ -125,6 +132,9 @@ export const RightRail: React.FC<RightRailProps> = ({
 }) => {
   const activeTool = activeToolId ? (tools.find((t) => t.id === activeToolId) ?? null) : null;
   const showPanel = !collapsed && Boolean(activeTool) && Boolean(panelContent);
+  // `aria-expanded` opisuje PRZYCISK sterujacy, nie region — na <aside> (rola
+  // complementary) jest niedozwolone i axe raportuje to jako critical.
+  const panelDomId = 'mels-right-rail-panel';
 
   if (collapsed) {
     return (
@@ -133,7 +143,6 @@ export const RightRail: React.FC<RightRailProps> = ({
         style={{ width: 16 }}
         data-testid={testId ?? 'mels-right-rail'}
         data-collapsed="true"
-        aria-expanded="false"
       >
         <button
           type="button"
@@ -141,7 +150,7 @@ export const RightRail: React.FC<RightRailProps> = ({
           className="p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
           title={collapseLabel ?? 'Expand right rail'}
           aria-label={collapseLabel ?? 'Expand right rail'}
-          aria-pressed={collapsed}
+          aria-expanded={false}
           data-testid="mels-right-rail-toggle"
         >
           <ChevronLeft size={14} />
@@ -158,12 +167,12 @@ export const RightRail: React.FC<RightRailProps> = ({
       style={{ width: containerWidth }}
       data-testid={testId ?? 'mels-right-rail'}
       data-collapsed="false"
-      aria-expanded="true"
     >
       {showPanel ? (
         <div
           className="relative border-r border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col"
           style={{ width: panelWidth }}
+          id={panelDomId}
           data-testid="mels-right-rail-panel"
           data-mels-panel-of={activeTool?.id ?? ''}
         >
@@ -185,7 +194,8 @@ export const RightRail: React.FC<RightRailProps> = ({
           className="p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 mb-1"
           title={collapseLabel ?? 'Collapse right rail'}
           aria-label={collapseLabel ?? 'Collapse right rail'}
-          aria-pressed={collapsed}
+          aria-expanded
+          aria-controls={showPanel ? panelDomId : undefined}
           data-testid="mels-right-rail-toggle"
         >
           <ChevronRight size={14} />

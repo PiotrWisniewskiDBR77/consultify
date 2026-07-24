@@ -260,8 +260,10 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                     type="button"
                     onClick={() => setCreating(false)}
                     className="p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors"
+                    title={t('common.cancel', 'Cancel')}
+                    aria-label={t('common.cancel', 'Cancel')}
                   >
-                    <X size={12} />
+                    <X size={12} aria-hidden="true" />
                   </button>
                 </div>
               </div>

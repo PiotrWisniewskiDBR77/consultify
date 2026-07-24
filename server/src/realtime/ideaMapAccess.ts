@@ -49,7 +49,11 @@ export async function assertIdeaMembership(
   if (!idea) return NO_ACCESS;
 
   const member = await db.get<{ id: string }>(
-    "SELECT id FROM organization_members WHERE organization_id = ? AND user_id = ? AND status = 'ACTIVE'",
+    // Porównanie bez wielkości liter: w bazie trafiły się wiersze ze statusem
+    // 'active' zamiast 'ACTIVE' (2 na 1140). Dokładne porównanie odcinało
+    // takiemu użytkownikowi zapis mapy — każdy PUT /map kończył się 404
+    // „Idea not found", mimo że był OWNER-em swojej organizacji.
+    "SELECT id FROM organization_members WHERE organization_id = ? AND user_id = ? AND UPPER(status) = 'ACTIVE'",
     [organizationId, userId]
   );
   if (!member) return NO_ACCESS;

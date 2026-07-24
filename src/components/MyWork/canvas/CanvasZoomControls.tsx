@@ -5,7 +5,7 @@
  * Provides: zoom in/out, visible zoom level, fit view, fullscreen, optional focus/restore,
  * and a toggle link for opening the full-field mini map.
  */
-import { Focus, Grid3x3, Maximize2, Minimize2, Minus, Plus, RotateCcw } from 'lucide-react';
+import { Focus, Grid3x3, Map, Maximize2, Minimize2, Minus, Plus, RotateCcw } from 'lucide-react';
 import React, { useCallback } from 'react';
 import { useReactFlow } from 'reactflow';
 
@@ -169,10 +169,18 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
         {onToggleMiniMap && (
           <>
             <Divider />
+            {/* K2 (decyzja D2, rozdz. 03 §7): minimapa jako IKONA, nie tekst
+                „Mini mapa" — spójnie z resztą kontrolek rogu, ktore sa ikonami.
+                Nazwa idzie do tooltipa i aria-label, stan aktywny podswietla. */}
             <button
               type="button"
               onClick={onToggleMiniMap}
-              className="px-2 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+              aria-pressed={showMiniMap}
+              className={`p-1.5 rounded transition-colors ${
+                showMiniMap
+                  ? 'text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-white/[0.08]'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
+              }`}
               title={
                 showMiniMap
                   ? isPolish
@@ -182,14 +190,17 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
                     ? 'Pokaż mini mapę'
                     : 'Show mini map'
               }
+              aria-label={
+                showMiniMap
+                  ? isPolish
+                    ? 'Ukryj mini mapę'
+                    : 'Hide mini map'
+                  : isPolish
+                    ? 'Pokaż mini mapę'
+                    : 'Show mini map'
+              }
             >
-              {showMiniMap
-                ? isPolish
-                  ? 'Ukryj mini mapę'
-                  : 'Hide mini map'
-                : isPolish
-                  ? 'Mini mapa'
-                  : 'Mini map'}
+              <Map size={14} aria-hidden="true" />
             </button>
           </>
         )}

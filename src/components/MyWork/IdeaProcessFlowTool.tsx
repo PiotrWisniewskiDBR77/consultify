@@ -119,6 +119,7 @@ import { PoolNode } from './processflow/nodes/PoolNode';
 import { SubprocessNode } from './processflow/nodes/SubprocessNode';
 import {
   getCanvasContextActions,
+  getEdgeContextActions,
   getNodeContextActions,
   ProcessFlowContextMenu,
 } from './processflow/ProcessFlowContextMenu';
@@ -910,6 +911,31 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     [collab, locked, pushUndo]
   );
 
+  // P2-6 (menu krawedzi): odwroc kierunek = zamiana source<->target (i uchwytow).
+  // Realna operacja strukturalna, odrebna od arrowDirection (ktory tylko rysuje
+  // grot). Reszta danych krawedzi (etykieta/warunek/kolor/styl) bez zmian.
+  const handleEdgeReverse = useCallback(
+    (edgeId: string) => {
+      if (locked) return;
+      pushUndo();
+      setEdges((eds) =>
+        eds.map((e) => {
+          if (e.id !== edgeId) return e;
+          const nextEdge: Edge = {
+            ...e,
+            source: e.target,
+            target: e.source,
+            sourceHandle: e.targetHandle ?? null,
+            targetHandle: e.sourceHandle ?? null,
+          };
+          collab.broadcastEdgeUpdate(nextEdge);
+          return nextEdge;
+        })
+      );
+    },
+    [collab, locked, pushUndo]
+  );
+
   // ── F5a A1: waypoint editing ───────────────────────────────────────────
   // Waypoints live in edge.data.waypoints[] and persist through the existing
   // graph blob (edges in the payload) — no persistence-layer change (F4 stands).
@@ -1507,7 +1533,36 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   // ── V5-IDEA-21: Insert step between two connected nodes ─────────────────
   const insertBetween = useCallback(() => {
     if (locked) return;
-    const selectedEdge = (edges as Edge[]).find((e) => e.selected);
+    // P1-4: akcja wymagala zaznaczonej KRAWEDZI, ale jej jedyny przycisk wisi na
+    // plywajacym pasku WEZLA — a pasek pokazuje sie tylko przy zaznaczonym wezle.
+    // Te dwa stany sie wykluczaja, wiec przycisk KAZDORAZOWO konczyl sie bledem.
+    // Gdy krawedzi nie zaznaczono, wnioskujemy ja z zaznaczonego wezla — ale
+    // tylko gdy wybor jest JEDNOZNACZNY (dokladnie jedno wyjscie). Przy wielu
+    // wyjsciach nie zgadujemy, tylko mowimy, czego brakuje.
+    let selectedEdge = (edges as Edge[]).find((e) => e.selected);
+    if (!selectedEdge) {
+      const zaznaczoneWezly = (nodes as Node[]).filter((n) => n.selected);
+      if (zaznaczoneWezly.length === 1) {
+        const wyjscia = (edges as Edge[]).filter((e) => e.source === zaznaczoneWezly[0].id);
+        if (wyjscia.length === 1) {
+          selectedEdge = wyjscia[0];
+        } else if (wyjscia.length > 1) {
+          toast.error(
+            isPl
+              ? 'Ten krok ma kilka wyjść — zaznacz połączenie, na którym mam wstawić krok.'
+              : 'This step has several outgoing paths — select the connection to insert into.'
+          );
+          return;
+        } else {
+          toast.error(
+            isPl
+              ? 'Ten krok nie ma jeszcze połączenia wyjściowego — nie ma między czym wstawiać.'
+              : 'This step has no outgoing connection yet — there is nothing to insert between.'
+          );
+          return;
+        }
+      }
+    }
     if (!selectedEdge) {
       toast.error(t('myWorkIdeas.processFlowTool.selectEdgeFirst'));
       return;
@@ -1644,7 +1699,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     const idx = lanes.length;
     const newLane: Lane = {
       id: `lane-${Date.now()}`,
-      label: `Lane ${idx + 1}`,
+      label: t('myWorkIdeas.processFlowTool.laneDefaultName', 'Lane {{index}}', {
+        index: idx + 1,
+      }),
       color: LANE_COLORS[idx % LANE_COLORS.length],
     };
     setLanes((prev: Lane[]) => {
@@ -1652,7 +1709,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       collab.broadcastLanes(nextLanes); // F3: full Lane[] replacement
       return nextLanes;
     });
-  }, [collab, lanes.length, locked, pushUndo]);
+  }, [collab, lanes.length, locked, pushUndo, t]);
 
   const insertAutomationTrigger = useCallback(() => {
     if (locked) return;
@@ -1766,6 +1823,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const {
     deleteSelected,
     duplicateSelected,
+    copySelected,
+    copyNodeById,
+    pasteClipboard,
+    clipboardCount,
     handleLaneRename,
     handleLaneDelete,
     handleLaneColorChange,
@@ -1940,6 +2001,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       runSavingsAnalysis,
       createFromPrompt,
       runProcessCoach: handleAICoach,
+      // P1-1: „Auto-układ" z Menu 3 → realny układ Przepływu (wcześniej Menu 3
+      // wysyłało zdarzenie Mapy myśli, więc w Przepływie klik nie robił nic).
+      autoLayout: handleAutoLayout,
     },
     setters: {
       setFlowMode,
@@ -2321,10 +2385,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       role="region"
       aria-label={t('myWorkIdeas.processFlowTool.processFlowEditor')}
     >
-      {/* z-[60] wrapper: keep the FLOW MODE / shape toolbar above the workspace
-          breadcrumb card (IdeaMapWorkspace, z-57) which otherwise overlaps and
-          blocks the Start / End / Action buttons. (M07 live-debug 2026-06-20) */}
-      <div className="relative z-[60]">
+      {/* Pasek trybu/ksztaltow to pasek chrome, wiec `z-sticky` (20) wg skali
+          warstw z tailwind.config.
+
+          Bylo tu surowe `z-[60]` — obejscie z 2026-06-20, zeby pasek nie chowal
+          sie pod kartka odkrywania (IdeaCanvasDiscovery, z-[57]). Powod odpadl:
+          IdeaCanvasDiscovery zostal usuniety jako martwy kod (P3-1). Obejscie
+          zostalo i szkodzilo: 60 == `z-modal`, wiec pasek rysowal sie NAD oknem
+          Eksport/Import i przecinal je w polowie. */}
+      <div className="relative z-sticky">
         <ProcessFlowToolbar
           isPl={!!isPl}
           locked={locked}
@@ -2375,8 +2444,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         />
       </div>
 
-      {loadError && !loading && nodes.length === 0 && (
-        vf1CanvasSpecAEnabled ? (
+      {loadError &&
+        !loading &&
+        nodes.length === 0 &&
+        (vf1CanvasSpecAEnabled ? (
           // VF1 SPEC-A (flag OFF default): canonical full-surface canvas error
           // with retry EXIT; legacy inline block stays default.
           <div className="flex-1">
@@ -2402,8 +2473,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               className="mb-2"
             />
           </div>
-        )
-      )}
+        ))}
 
       {locked && (
         <div className="px-4 pt-3">
@@ -2824,6 +2894,25 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 event.preventDefault();
                 setContextMenu({ x: event.clientX, y: event.clientY, nodeId: node.id });
               }}
+              // P2-6: prawy klik na krawedzi → menu krawedzi. Wczesniej
+              // `onEdgeContextMenu` nie bylo w ogole podpiete (prawy klik na
+              // krawedzi robil nic). Zaznaczamy klietkta krawedz (odznaczajac
+              // wezly i inne krawedzie), zeby akcje „Usuń"/„Wstaw węzeł" mogly
+              // dzialac przez istniejace deleteSelected()/insertBetween(), ktore
+              // operuja na zaznaczonej krawedzi — bez duplikowania ich logiki.
+              onEdgeContextMenu={(event: React.MouseEvent, edge: Edge) => {
+                event.preventDefault();
+                setEdgeStylePopover(null);
+                setNodes((prev) =>
+                  prev.some((n) => n.selected)
+                    ? prev.map((n) => (n.selected ? { ...n, selected: false } : n))
+                    : prev
+                );
+                setEdges((prev) =>
+                  prev.map((e) => ({ ...e, selected: e.id === edge.id }))
+                );
+                setContextMenu({ x: event.clientX, y: event.clientY, edgeId: edge.id });
+              }}
               onPaneContextMenu={(event: React.MouseEvent) => {
                 event.preventDefault();
                 setContextMenu({
@@ -3236,6 +3325,21 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                     );
                   },
                   onDuplicate: () => duplicateSelected(),
+                  onCopy: () => {
+                    // Kopiujemy wezel, na ktorym otwarto menu — nie zaznaczenie,
+                    // bo prawy klik go nie zaznacza. Jesli jest wieksze
+                    // zaznaczenie i klikniety wezel do niego nalezy, kopiujemy
+                    // cale zaznaczenie; w przeciwnym razie sam wezel.
+                    const zazn = nodes.filter((n) => n.selected);
+                    const klikniety = contextMenu.nodeId!;
+                    const ile =
+                      zazn.length > 1 && zazn.some((n) => n.id === klikniety)
+                        ? copySelected()
+                        : copyNodeById(klikniety);
+                    if (ile > 0) {
+                      toast.success(isPl ? `Skopiowano: ${ile}` : `Copied: ${ile}`);
+                    }
+                  },
                   onDelete: () => deleteSelected(),
                   onOpenProperties: () => {
                     setShowPropertiesPanel(true);
@@ -3246,11 +3350,50 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                     ? () => handleConvert('pf_convert_initiative')
                     : undefined,
                 })
+              : contextMenu.edgeId
+              ? getEdgeContextActions({
+                  edgeId: contextMenu.edgeId,
+                  isPl: !!isPl,
+                  locked,
+                  currentCondition: String(
+                    (edges as Edge[]).find((e) => e.id === contextMenu.edgeId)?.data
+                      ?.conditionType ?? ''
+                  ),
+                  // Etykieta + styl: otwiera ten sam EdgeStylePopover co lewy
+                  // klik (label/kolor/styl linii/strzalka) — jedno zrodlo prawdy.
+                  onEditProps: () =>
+                    setEdgeStylePopover({
+                      edgeId: contextMenu.edgeId!,
+                      x: contextMenu.x,
+                      y: contextMenu.y,
+                    }),
+                  // Krawedz jest zaznaczona (patrz onEdgeContextMenu), wiec
+                  // insertBetween/deleteSelected dzialaja na niej — bez duplikatu.
+                  onInsertNode: () => insertBetween(),
+                  onReverse: () => handleEdgeReverse(contextMenu.edgeId!),
+                  onSetCondition: (cond) =>
+                    handleEdgeConditionChange(contextMenu.edgeId!, cond),
+                  onDelete: () => deleteSelected(),
+                })
               : getCanvasContextActions({
                   isPl: !!isPl,
                   locked,
                   onAddNode: (shape) => addNode(shape as FlowShape),
-                  onPaste: () => duplicateSelected(),
+                  // P1-4: „Wklej" bylo podpiete pod duplicateSelected(), wiec
+                  // duplikowalo zaznaczenie zamiast wkleic schowek — a w menu TLA
+                  // zaznaczenia zwykle nie ma, wiec byl to martwy klik. Teraz
+                  // wkleja realny schowek i mowi, gdy jest pusty.
+                  onPaste: () => {
+                    const ile = pasteClipboard();
+                    if (ile === 0) {
+                      toast(
+                        isPl
+                          ? 'Schowek jest pusty — najpierw skopiuj zaznaczone elementy.'
+                          : 'Clipboard is empty — copy a selection first.'
+                      );
+                    }
+                  },
+                  pasteDisabled: clipboardCount() === 0,
                   onAutoLayout: () => handleAutoLayout(),
                 })
           }

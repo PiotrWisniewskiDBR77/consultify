@@ -32,6 +32,14 @@ export interface ProcessFlowQuickActionHandlers {
    * Coach button.
    */
   runProcessCoach: () => void;
+  /**
+   * P1-1 (martwe kliknięcia powłoki): „Auto-układ" z Menu 3 wysyłał zdarzenie
+   * Mapy myśli (`idea-mindmap-node-quick-action` / `pane_auto_layout`), którego
+   * w Przepływie nikt nie słucha — przycisk nie robił NIC. Przepływ ma własny
+   * silnik układu (`handleAutoLayout` w IdeaProcessFlowTool: autoLayout + undo +
+   * broadcast do kolaboracji); tu go tylko udostępniamy pod `pf_auto_layout`.
+   */
+  autoLayout?: () => void;
 }
 
 export interface ProcessFlowQuickActionSetters {
@@ -136,6 +144,9 @@ export function useProcessFlowQuickActions(opts: UseProcessFlowQuickActionsOpts)
     if (action === 'pf_analyze') {
       handlers.runProcessCoach();
     }
+
+    // P1-1: „Auto-układ" (Menu 3) w reprezentacji Przepływ.
+    if (action === 'pf_auto_layout') handlers.autoLayout?.();
 
     if (action === 'pf_undo') handlers.undo();
     if (action === 'pf_redo') handlers.redo();

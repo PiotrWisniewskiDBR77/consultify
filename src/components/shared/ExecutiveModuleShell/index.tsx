@@ -18,7 +18,7 @@
  * belongs to the module-specific wrappers (e.g. `TabeleArtifactView`).
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type TopBarChipDescriptor } from './ChipDescriptor';
 import { LeftRail } from './LeftRail';
@@ -230,6 +230,50 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
     [renderRightRailPanel, activeToolId]
   );
 
+  // Szerokosc rynny pod plywajacy lewy rail. Mierzona, nie zgadywana: rail
+  // zmienia szerokosc (popovery, inny zestaw narzedzi), a przede wszystkim
+  // pozycjonuje sie `position: fixed` wzgledem plotna — czyli WYCHODZI poza
+  // swoje opakowanie w drzewie. Zmierzenie opakowania dawaloby zero i rynna
+  // bylaby pozorna. Liczymy realny prawy brzeg railа wzgledem lewej krawedzi
+  // plotna.
+  const leftRailRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLElement | null>(null);
+  const [railGutter, setRailGutter] = useState(0);
+  useEffect(() => {
+    if (!floatingLeftRail) {
+      setRailGutter(0);
+      return;
+    }
+    let zywy = true;
+    const zmierz = () => {
+      if (!zywy) return;
+      const plotno = canvasRef.current;
+      if (!plotno) return;
+      // Rail bywa renderowany przez `createPortal` do document.body (tak robi
+      // CanvasLeftToolbar), wiec NIE jest potomkiem swojego opakowania i pomiar
+      // po drzewie zwracalby zero. Szukamy go po jawnym atrybucie-kontrakcie.
+      const rail = document.querySelector<HTMLElement>('[data-mels-floating-rail-surface]');
+      if (!rail) return;
+      const rr = rail.getBoundingClientRect();
+      if (rr.width === 0) return;
+      const pr = plotno.getBoundingClientRect();
+      setRailGutter(Math.max(0, Math.ceil(rr.right - pr.left + 8)));
+    };
+    zmierz();
+    const obs = new ResizeObserver(zmierz);
+    const rail = document.querySelector<HTMLElement>('[data-mels-floating-rail-surface]');
+    if (rail) obs.observe(rail);
+    if (canvasRef.current) obs.observe(canvasRef.current);
+    // Rail dolicza swoja pozycje po pierwszym pomiarze plotna — jedno domkniecie
+    // po nastepnej klatce wystarcza, zeby rynna zgadzala sie od razu.
+    const id = requestAnimationFrame(zmierz);
+    return () => {
+      zywy = false;
+      cancelAnimationFrame(id);
+      obs.disconnect();
+    };
+  }, [floatingLeftRail, centerMode]);
+
   const isCanvasMode = centerMode === 'canvas';
 
   return (
@@ -275,14 +319,31 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
 
         {isCanvasMode ? (
           <main
+            ref={canvasRef}
             className="relative flex-1 min-w-0 overflow-hidden bg-slate-50 dark:bg-navy-950"
             data-testid="mels-canvas"
             data-center-mode="canvas"
             aria-label={`${moduleLabel} canvas`}
           >
-            {canvas}
+            {/*
+              Rail plywa NAD plotnem, wiec bez rezerwacji miejsca zaslania wlasne
+              paski reprezentacji — widoczne jako ucieta tresc („Klasyczny
+              przeplyw" → „…czny przeplyw", „Framework" → „mework"). Rezerwujemy
+              rynne o szerokosci railа na zawartosci, a sam rail zostawiamy przy
+              krawedzi: padding jest na WEWNETRZNYM opakowaniu, nie na <main> —
+              padding na <main> przesunalby takze absolutnie pozycjonowany rail
+              (jego `left:0` liczy sie od krawedzi padding-boxa).
+            */}
+            <div
+              className="h-full w-full"
+              style={floatingLeftRail ? { paddingLeft: railGutter } : undefined}
+              data-testid="mels-canvas-content"
+            >
+              {canvas}
+            </div>
             {floatingLeftRail ? (
               <div
+                ref={leftRailRef}
                 className="pointer-events-none absolute inset-y-0 left-0 z-sticky flex items-center"
                 data-testid="mels-floating-left-rail"
               >

@@ -78,4 +78,20 @@ if [ -n "$STAGED_CLAUDEMD" ]; then
   fi
 fi
 
+# 7) Rejestr akcji Idei (docs/standards/idea-workspace/02_REJESTR_AKCJI.md, Z3) —
+#    akcja zadeklarowana bez odbiornika w hooku swojej reprezentacji = martwe
+#    kliknięcie u klienta. Dokładnie ta klasa dała ~40 martwych pozycji na
+#    reprezentację (naprawione 2026-07-23 punktowo; ten guard jest po to, żeby
+#    nie wróciło). Odpala się tylko gdy commit dotyka rejestru albo hooka akcji.
+STAGED_AKCJE=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '^src/actions/ideaActionRegistry\.ts$|use(MindMap|Whiteboard|ProcessFlow|Table)QuickActions\.ts$')
+if [ -n "$STAGED_AKCJE" ]; then
+  if ! bash scripts/check-actions.sh; then
+    echo "" >&2
+    echo "  ⛔ Commit zablokowany: rejestr akcji narusza kontrakt Z3 (zero martwych kliknięć)." >&2
+    echo "     Akcja bez odbiornika / bez handlera / bez cofnięcia przy mutacji nie ma prawa wejść." >&2
+    echo "     SSOT: docs/standards/idea-workspace/02_REJESTR_AKCJI.md" >&2
+    exit 1
+  fi
+fi
+
 exit 0

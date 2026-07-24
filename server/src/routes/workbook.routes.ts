@@ -4,6 +4,8 @@
  * POST /api/workbook/generate — LLM generates WorkbookSchema → ExcelJS builds .xlsx
  * GET  /api/workbook/:id/download — download a previously generated workbook
  * POST /api/workbook/generate-and-download — one-shot: generate + immediate download
+ * POST /api/workbook/:id/clone — CLONE: duplicate an existing workbook's schema into
+ *      a new generated_workbooks row (editable starting point)
  */
 
 import { Router } from 'express';
@@ -905,6 +907,109 @@ router.get(
       description: schema?.description ?? null,
       sheets: Array.isArray(schema?.sheets) ? schema!.sheets : [],
     });
+  })
+);
+
+/**
+ * POST /api/workbook/:id/clone
+ *
+ * CLONE mode — brief §1/§10, "Komplet od razu". Duplicates an existing
+ * workbook's schema into a NEW `generated_workbooks` row (fresh id, fresh
+ * .xlsx buffer) as an editable starting point — the Excel counterpart of
+ * Deck's `POST /templates/:id/clone` and WORD's
+ * `POST /document-studio/templates/from-artifact/:artifactId`. Reuses the
+ * exact same build/persist/register tail (`finalizeGeneratedWorkbook`) as
+ * `/generate`, `/blank` and `/templates/:id/build` — one card per clone,
+ * no duplicated persistence logic.
+ *
+ * Body: { title? } — optional override; defaults to "<source title> (Copy)".
+ * Returns: same payload shape as `/generate` (201).
+ * Errors: 404 when the source workbook doesn't exist for this organization.
+ */
+router.post(
+  '/:id/clone',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { id } = req.params;
+    await ensureWorkbookSchema();
+
+    const source = await queryHelpers.queryOne<{
+      title: string;
+      description: string | null;
+      schema_json: string | null;
+    }>(
+      `SELECT title, description, schema_json FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+
+    if (!source?.schema_json) {
+      res.status(404).json({
+        error: 'Workbook not found',
+        classified: createP23Error(
+          'access_denied',
+          `Workbook ${id} not found for this organization`
+        ),
+      });
+      return;
+    }
+
+    let sourceSchema: WorkbookSchema;
+    try {
+      sourceSchema = JSON.parse(source.schema_json);
+    } catch (err) {
+      logger.error(`[WorkbookRoutes] Stored schema for ${id} is not valid JSON:`, err);
+      res.status(500).json({ error: 'Stored workbook schema is corrupted' });
+      return;
+    }
+
+    const rawTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
+    const title =
+      rawTitle || `${sourceSchema.title || source.title || 'Untitled workbook'} (Copy)`;
+    const schema: WorkbookSchema = { ...sourceSchema, title };
+
+    const { buildWorkbookBuffer } = await import('../services/workbook/WorkbookBuilder.js');
+
+    let buffer: Buffer;
+    try {
+      buffer = await buildWorkbookBuffer(schema);
+    } catch (err) {
+      logger.error('[WorkbookRoutes] Failed to build cloned workbook:', err);
+      res.status(500).json({
+        error: 'Failed to build cloned workbook',
+        classified: createP23Error(
+          'export_failed',
+          err instanceof Error ? err.message : String(err)
+        ),
+      });
+      return;
+    }
+
+    const newId = uuidv4();
+    const fileName = `${title.replace(/\s+/g, '_')}.xlsx`;
+    const generatedAt = new Date().toISOString();
+
+    const payload = await finalizeGeneratedWorkbook({
+      result: {
+        id: newId,
+        schema,
+        buffer,
+        fileName,
+        validationErrors: [],
+        qualityScore: null,
+        pipelineLog: [`cloned from workbook ${id}`],
+        generatedAt,
+      },
+      user,
+      promptText: `(klon skoroszytu ${id})`,
+      source: 'workbook_clone',
+    });
+
+    res.status(201).json({ ...payload, clonedFrom: id });
   })
 );
 

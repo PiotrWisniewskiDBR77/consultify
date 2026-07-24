@@ -63,14 +63,31 @@ export const DocumentStudioView: React.FC = () => {
   const artifactIdFromQuery = searchParams.get('artifactId');
   const artifactIdFromUrl = artifactIdFromPath || artifactIdFromQuery || undefined;
 
+  // Materiały wspólny launcher (2026-07-24) — `?entry=blank|ai|template` sygnalizuje
+  // tryb wybrany w KROK 2 tablicy (Harvard/wdrozenie-100/_MATERIALY_INWENTARYZACJA_2026-07-24.md
+  // §8), tak żeby wybór w Materiałach lądował od razu w tym trybie zamiast
+  // ponownie pytać o wybór w tym widoku. `?tab=templates` skacze prosto do
+  // Mode 2 (Document Template Architect) — wejście z Biblioteki szablonów.
+  const entryParam = searchParams.get('entry');
+  const tabParam = searchParams.get('tab');
+
   // D1 (roboty tri-tryby): jawny wybór 3 trybów na wejściu, tylko za flagą
   // `ff_tri_tryby`. OFF → `triMode` false → gałąź intake renderuje wyłącznie
   // dotychczasowy `DocumentStudioIntakeForm` (bajt-identycznie).
   const triMode = isTriModeEnabled();
-  // 'choose' = ekran wyboru (Czysto/Z AI/Z szablonu); 'ai'/'template' = intake.
-  const [docEntryMode, setDocEntryMode] = useState<'choose' | 'ai' | 'template'>('choose');
+  // 'choose' = ekran wyboru (Czysto/Z AI/Z szablonu); 'ai'/'template' = intake;
+  // 'blank' = auto-tworzenie pustego dokumentu (wejście z Materiałów, patrz efekt niżej).
+  const [docEntryMode, setDocEntryMode] = useState<'choose' | 'ai' | 'template' | 'blank'>(
+    entryParam === 'ai'
+      ? 'ai'
+      : entryParam === 'template'
+        ? 'template'
+        : entryParam === 'blank'
+          ? 'blank'
+          : 'choose'
+  );
 
-  const [activeTab, setActiveTab] = useState<Tab>('generate');
+  const [activeTab, setActiveTab] = useState<Tab>(tabParam === 'templates' ? 'templates' : 'generate');
   const [phase, setPhase] = useState<Phase>('intake');
   const [intake, setIntake] = useState<DocumentIntake | null>(null);
   const [outline, setOutline] = useState<DocumentOutline | null>(null);
@@ -354,6 +371,16 @@ export const DocumentStudioView: React.FC = () => {
     );
   }, [runStreamingGeneration, t]);
 
+  // Materiały wspólny launcher — `?entry=blank`: materializuj pusty dokument
+  // automatycznie, bez wymagania drugiego kliknięcia „Czysto" na tym ekranie.
+  // Ref guard: fire-once (StrictMode double-invoke / re-renders bezpieczne).
+  const blankAutoTriggered = React.useRef(false);
+  useEffect(() => {
+    if (docEntryMode !== 'blank' || blankAutoTriggered.current) return;
+    blankAutoTriggered.current = true;
+    void handleCreateEmptyDoc();
+  }, [docEntryMode, handleCreateEmptyDoc]);
+
   const handleStartOver = (): void => {
     setPhase('intake');
     setDocEntryMode('choose');
@@ -456,7 +483,13 @@ export const DocumentStudioView: React.FC = () => {
             className="flex-1"
           />
         ) : phase === 'intake' ? (
-          triMode && docEntryMode === 'choose' ? (
+          docEntryMode === 'blank' ? (
+            <LoadingState
+              variant="spinner"
+              label={t('documentStudio.blank.creating', 'Tworzenie pustego dokumentu…')}
+              className="flex-1"
+            />
+          ) : triMode && docEntryMode === 'choose' ? (
             <TriModeChooser
               busy={generating}
               showTemplate={approvedTemplates.length > 0}

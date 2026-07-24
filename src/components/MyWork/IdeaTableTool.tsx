@@ -81,6 +81,11 @@ import { AddColumnDialog } from './table/AddColumnDialog';
 import { AICategorizeTool } from './table/AICategorizeTool';
 import { AICopilotMode } from './table/AICopilotMode';
 import { AITableAssistant } from './table/AITableAssistant';
+import {
+  AITableFieldProposal,
+  type FieldFillProposal,
+  type FieldFillRowChange,
+} from './table/AITableFieldProposal';
 import { AITableProposal, type TableProposal } from './table/AITableProposal';
 import { AuditTrailPanel } from './table/AuditTrailPanel';
 import { AutomationsManager } from './table/automations/AutomationsManager';
@@ -643,6 +648,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   /** Which tab RowDetailPanel should land on when it (re)opens — e.g. "Add note" deep-links to Comments. */
   const [detailInitialTab, setDetailInitialTab] = useState<'properties' | 'comments'>('properties');
   const [aiProposal, setAiProposal] = useState<TableProposal | null>(null);
+  // P1-6: propozycja autofill/odświeżania (przed → po) — zamiast pisać prosto do komórek.
+  const [fieldFillProposal, setFieldFillProposal] = useState<FieldFillProposal | null>(null);
   const [showColorPalette, setShowColorPalette] = useState(false);
   const [activePalette, setActivePalette] = useState('vibrant');
   const [, setShowSummaryDashboard] = useState(false);
@@ -700,6 +707,19 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   } | null>(null);
   const [rowContextMenu, setRowContextMenu] = useState<{
     rowId: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  // P2-6 (rozdz. 08 §7b): menu komorki — prawy klik na pojedynczej komorce.
+  // Wczesniej prawy klik na komorce bąbelkowal do menu wiersza; teraz komorka
+  // ma wlasne menu (kopiuj wartosc / wklej / wyczysc / rozwin). `editable` = false
+  // dla kolumny „type" (wartosc pochodna, nie do edycji).
+  const [cellContextMenu, setCellContextMenu] = useState<{
+    rowId: string;
+    colKey: string;
+    value: unknown;
+    editable: boolean;
+    rect: DOMRect;
     x: number;
     y: number;
   } | null>(null);
@@ -937,8 +957,46 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       setShowHeatmap,
       onUndo: () => platformUndoRef.current(),
       onRedo: () => nodesUndo.redo(),
+      onFieldFillProposal: setFieldFillProposal,
     },
   });
+
+  // ── P1-6: zastosowanie zaakceptowanych wierszy propozycji autofill/odświeżania ──
+  // Migawka zdejmowana PRZED zapisem (nodesUndo.push zapamiętuje poprzedni stan),
+  // dzięki czemu Cofnij przywraca dane sprzed zastosowania.
+  const handleApplyFieldFill = useCallback(
+    (acceptedRows: FieldFillRowChange[]) => {
+      if (acceptedRows.length === 0) {
+        setFieldFillProposal(null);
+        return;
+      }
+      const byRowId = new Map(acceptedRows.map((r) => [r.rowId, r]));
+      let appliedFields = 0;
+      const next = nodes.map((n) => {
+        const change = byRowId.get(n.id);
+        if (!change) return n;
+        const updatedData = { ...n.data };
+        for (const cell of change.cells) {
+          updatedData[cell.key] = cell.after;
+          appliedFields++;
+        }
+        return { ...n, data: updatedData };
+      });
+      nodesUndo.push(next);
+      trackFunnelEvent('ideas_table_field_fill_applied', {
+        ideaId,
+        rowCount: acceptedRows.length,
+        fieldCount: appliedFields,
+      });
+      toast.success(
+        t('myWorkTable.fieldProposal.applied', 'Zastosowano {{count}} pól', {
+          count: appliedFields,
+        })
+      );
+      setFieldFillProposal(null);
+    },
+    [ideaId, nodes, nodesUndo, t]
+  );
 
   // ── Framework apply ────────────────────────────────────────────────────────
   const handleFrameworkApply = useCallback(
@@ -1278,6 +1336,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const renderRow = (row: TableNode, rowIdx: number) => {
     const isSelected = _selIds.has(row.id);
     const rowColor = row.data?.color;
+    // Nazwa rekordu do etykiet dostępności (checkbox wiersza, komórki edytowalne) — a11y.
+    const rowA11yLabel =
+      String(row.data?.label || '').trim() ||
+      t('ideas.table.a11y.untitledRow', 'Row {{n}}', { n: rowIdx + 1 });
     return (
       <tr
         key={row.id}
@@ -1315,6 +1377,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               (usePlatform ? platformIntegration.toggleRowSelection : toggleRowSelection)(row.id)
             }
             onClick={(e) => e.stopPropagation()}
+            aria-label={t('ideas.table.a11y.selectRow', 'Select row: {{name}}', {
+              name: rowA11yLabel,
+            })}
             className="w-3.5 h-3.5 rounded border-c-border-subtle text-c-text-muted focus:ring-c-focus"
           />
         </td>
@@ -1339,6 +1404,28 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 ...(heatmapStyles?.get(row.id)?.get(col.key) || {}),
               }}
               className="px-2 py-1.5 md:py-1.5 relative group/cell min-h-[44px] md:min-h-0"
+              onContextMenu={(e) => {
+                // P2-6: menu komorki wygrywa z menu wiersza (stopPropagation),
+                // zeby prawy klik na komorce dawal akcje komorki, nie wiersza.
+                e.preventDefault();
+                e.stopPropagation();
+                const cellValue =
+                  col.type === 'formula' && formulaResults
+                    ? (formulaResults.get(row.id)?.[col.key] ?? row?.data?.[col.key])
+                    : col.key === 'type'
+                      ? (row.data?.nodeType || row.type || 'idea')
+                      : row?.data?.[col.key];
+                setCellContextMenu({
+                  rowId: row.id,
+                  colKey: col.key,
+                  value: cellValue,
+                  // kolumna „type" i „formula" = wartosc pochodna, nie do edycji recznej
+                  editable: col.key !== 'type' && col.type !== 'formula',
+                  rect: (e.currentTarget as HTMLElement).getBoundingClientRect(),
+                  x: e.clientX,
+                  y: e.clientY,
+                });
+              }}
             >
               <CellCursor remoteUsers={remotePresenceUsers} nodeId={row.id} colKey={col.key} />
               <div className="flex items-center gap-0.5">
@@ -1365,6 +1452,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       onChange={(val) => _fieldChange(row.id, col.key, val)}
                       locked={locked}
                       allNodes={effectiveNodes.map((n) => ({ id: n.id, label: n.data?.label }))}
+                      rowLabel={rowA11yLabel}
                     />
                   )}
                 </div>
@@ -1689,9 +1777,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {filterInput && (
                   <button
                     onClick={() => setFilterInput('')}
+                    aria-label={t('ideas.table.a11y.clearFilterInput', 'Clear filter input')}
                     className="absolute right-1.5 top-1/2 -translate-y-1/2 text-c-text-muted hover:text-c-text-secondary"
                   >
-                    <X size={10} />
+                    <X size={10} aria-hidden="true" />
                   </button>
                 )}
               </div>
@@ -1700,13 +1789,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               <div className="relative">
                 <button
                   onClick={() => setShowFilterPanel(!showFilterPanel)}
+                  aria-label={t('ideas.table.a11y.filterAdvanced', 'Advanced filters')}
                   className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
                     _filters.rules.length > 0
                       ? 'bg-c-surface-raised text-c-text'
                       : 'text-c-text-muted hover:bg-c-surface-raised'
                   }`}
                 >
-                  <Filter size={12} />
+                  <Filter size={12} aria-hidden="true" />
                   {_filters.rules.length > 0 && (
                     <span className="text-[9px]">({_filters.rules.length})</span>
                   )}
@@ -2570,6 +2660,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             </div>
           )}
 
+          {/* P1-6: podgląd propozycji autofill/odświeżania (przed → po) — flaga ff_tableFieldProposal */}
+          {fieldFillProposal && (
+            <div className="absolute left-4 right-4 top-14 z-50">
+              <AITableFieldProposal
+                proposal={fieldFillProposal}
+                onApply={handleApplyFieldFill}
+                onReject={() => setFieldFillProposal(null)}
+              />
+            </div>
+          )}
+
           {locked && (
             <div className="px-3 md:px-4 pt-3">
               <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 text-sm text-c-text-muted">
@@ -2877,6 +2978,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                 });
                               }
                             }}
+                            aria-label={t('ideas.table.a11y.selectAllRows', 'Select all rows')}
                             className="w-3.5 h-3.5 rounded border-c-border-subtle text-c-text-muted focus:ring-c-focus"
                           />
                         </th>
@@ -2897,6 +2999,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                               <input
                                 autoFocus
                                 defaultValue={col.header}
+                                aria-label={t('ideas.table.a11y.renameColumnFor', 'New column name: {{column}}', {
+                                  column: col.header,
+                                })}
                                 className="w-full bg-c-surface border border-c-border-subtle rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary outline-none"
                                 onBlur={(e) => {
                                   renameColumn(col.key, e.target.value);
@@ -3251,6 +3356,96 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               </div>
             </div>
           )}
+
+          {/* P2-6 (rozdz. 08 §7b): menu komorki. Kazda pozycja ma realny handler
+              (Z3): kopiuj wartosc = schowek systemowy, wklej = odczyt schowka →
+              _fieldChange, wyczysc = _fieldChange('') , rozwin = handleCellExpand.
+              Brak „AI: uzupełnij" i „Wklej specjalnie" — te wymagaja flow
+              propozycji/parsera formatu, ktorych ta komorka jeszcze nie ma; nie
+              dokladam pozycji-atrapy. */}
+          {cellContextMenu && (
+            <div className="fixed inset-0 z-[60]" onClick={() => setCellContextMenu(null)}>
+              <div
+                className="absolute bg-c-surface rounded-lg shadow-xl border border-c-border-subtle py-1 min-w-[160px]"
+                style={{ left: cellContextMenu.x, top: cellContextMenu.y }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
+                  onClick={() => {
+                    const v = cellContextMenu.value;
+                    const text =
+                      v == null
+                        ? ''
+                        : typeof v === 'object'
+                          ? JSON.stringify(v)
+                          : String(v);
+                    void navigator.clipboard
+                      ?.writeText(text)
+                      .then(() => toast.success(t('ideas.table.copied', 'Copied')))
+                      .catch(() => toast.error(t('ideas.table.copyFailed', 'Copy failed')));
+                    setCellContextMenu(null);
+                  }}
+                >
+                  {t('ideas.table.copyValue', 'Copy value')}
+                </button>
+                {cellContextMenu.editable && !locked && (
+                  <button
+                    className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
+                    onClick={() => {
+                      const { rowId, colKey } = cellContextMenu;
+                      void (async () => {
+                        try {
+                          const text = await navigator.clipboard?.readText();
+                          if (text != null) _fieldChange(rowId, colKey, text);
+                        } catch {
+                          toast.error(
+                            t('ideas.table.pasteFailed', 'Could not read clipboard')
+                          );
+                        }
+                      })();
+                      setCellContextMenu(null);
+                    }}
+                  >
+                    {t('ideas.table.paste', 'Paste')}
+                  </button>
+                )}
+                {cellContextMenu.colKey !== 'type' && (
+                  <button
+                    className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
+                    onClick={() => {
+                      handleCellExpand(
+                        cellContextMenu.rowId,
+                        cellContextMenu.colKey,
+                        cellContextMenu.rect
+                      );
+                      setCellContextMenu(null);
+                    }}
+                  >
+                    {t('ideas.table.expandCell', 'Expand cell')}
+                  </button>
+                )}
+                {cellContextMenu.editable && !locked && (
+                  <>
+                    <div className="h-px bg-c-surface-raised my-1" />
+                    <button
+                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger disabled:opacity-40"
+                      disabled={
+                        cellContextMenu.value == null || cellContextMenu.value === ''
+                      }
+                      onClick={() => {
+                        _fieldChange(cellContextMenu.rowId, cellContextMenu.colKey, '');
+                        toast.success(t('ideas.table.cellCleared', 'Cell cleared'));
+                        setCellContextMenu(null);
+                      }}
+                    >
+                      {t('ideas.table.clearCell', 'Clear cell')}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </TableDataProvider>
       </div>
 
@@ -3521,9 +3716,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               </h3>
               <button
                 onClick={() => setShowInterfaceDesigner(false)}
+                aria-label={t('ideas.table.a11y.closeInterfaceDesigner', 'Close Interface Designer')}
                 className="p-1 rounded-lg hover:bg-c-surface-raised"
               >
-                <X size={14} className="text-c-text-muted" />
+                <X size={14} className="text-c-text-muted" aria-hidden="true" />
               </button>
             </div>
             <InterfaceDesigner

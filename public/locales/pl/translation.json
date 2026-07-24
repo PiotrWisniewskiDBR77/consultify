@@ -1831,7 +1831,9 @@
         "defaultKpi": "KPI",
         "defaultScore": "Wynik",
         "defaultProgress": "Postęp",
-        "defaultSummary": "Podsumowanie"
+        "defaultSummary": "Podsumowanie",
+        "collapseFrame": "Zwiń sekcję",
+        "expandFrame": "Rozwiń sekcję"
       },
       "sessionPanel": {
         "layer": "Warstwa sesji",
@@ -4189,7 +4191,8 @@
       "toastReviewRequested": "Prośba o przegląd wysłana",
       "toastInputRequested": "Prośba o opinię wysłana",
       "toastCoDecisionRequested": "Prośba o współdecyzję wysłana"
-    }
+    },
+    "closeOpenDocument": "Zamknij: {{nazwa}}"
   },
   "step1": {
     "title": "Krok 1",
@@ -26032,6 +26035,7 @@
       "viewDeleted": "Widok usunięty",
       "delete": "Usuń",
       "filter": "Filtruj…",
+      "clearFilter": "Wyczyść filtr",
       "group": "Grupuj",
       "calendar": "Kalendarz",
       "gallery": "Galeria",
@@ -26922,6 +26926,22 @@
         "aiPending": "AI w toku...",
         "regenerate": "Wygeneruj ponownie"
       },
+      "a11y": {
+        "selectAllRows": "Zaznacz wszystkie wiersze",
+        "selectRow": "Zaznacz wiersz: {{name}}",
+        "untitledRow": "Wiersz {{n}}",
+        "untitledRecord": "Bez nazwy",
+        "editCellFor": "{{column}} — {{row}}",
+        "ratingStarFor": "{{column}}: {{star}} z 5 — {{row}}",
+        "filterAdvanced": "Filtry zaawansowane",
+        "clearFilterInput": "Wyczyść pole filtra",
+        "closeInterfaceDesigner": "Zamknij Interface Designer",
+        "colorSwatchFor": "{{column}}: kolor {{hex}} — {{row}}",
+        "colorOption": "Ustaw kolor {{hex}}",
+        "emojiPickerFor": "{{column}}: wybierz emoji — {{row}}",
+        "emojiOption": "Wybierz emoji {{emoji}}",
+        "renameColumnFor": "Nowa nazwa kolumny: {{column}}"
+      },
       "distributionBuilder": {
         "webhookUrl": "URL webhooka"
       },
@@ -26935,7 +26955,14 @@
       "ideaStartupTemplates": {
         "blankCanvas": "Pusty canvas",
         "startWithAi": "Zacznij z AI"
-      }
+      },
+      "copyValue": "Kopiuj wartość",
+      "paste": "Wklej",
+      "expandCell": "Rozwiń komórkę",
+      "clearCell": "Wyczyść komórkę",
+      "cellCleared": "Komórka wyczyszczona",
+      "copyFailed": "Nie udało się skopiować",
+      "pasteFailed": "Nie udało się odczytać schowka"
     },
     "mindmap": {
       "addNodeTab": "Dodaj węzeł (Tab)",
@@ -28009,7 +28036,8 @@
       "saveMetrics": "Zapisz metryki",
       "validationFailedRetry": "Walidacja przepływu nie powiodła się. Spróbuj ponownie.",
       "deleteNodesConfirm": "Zostaną usunięte {{value}} węzły i ich połączenia. Możesz cofnąć przez Ctrl+Z.",
-      "warningsCount": "{{value}} ostrzeżeń"
+      "warningsCount": "{{value}} ostrzeżeń",
+      "laneDefaultName": "Tor {{index}}"
     },
     "nodeDetailDrawer": {
       "failedAddComment": "Nie udało się dodać komentarza",
@@ -28279,7 +28307,27 @@
       "externalSharingDisabledDeckReportExports": "Udostępnianie zewnętrzne jest wyłączone: deck/report pozostają niedostępne.",
       "importedNodesEdges": "Zaimportowano {{nodes}} węzłów i {{edges}} połączeń",
       "readyToImport": "Gotowe do importu: {{nodes}} węzłów, {{edges}} połączeń",
-      "elementsConnectionsCount": "{{elements}} elementów, {{connections}} połączeń"
+      "elementsConnectionsCount": "{{elements}} elementów, {{connections}} połączeń",
+      "confirmReplaceTitle": "Potwierdź zastąpienie przestrzeni roboczej",
+      "confirmReplaceBody": "Ten import ZASTĄPI całą zawartość: usunie {{obecne}}, a wstawi {{przychodzace}}.",
+      "confirmReplaceSource": "Źródło importu: {{format}}",
+      "confirmReplaceConfirm": "Potwierdź i zastąp",
+      "confirmReplaceCancel": "Anuluj",
+      "beforeImportSnapshotLabel": "Przed importem ({{sourceFormat}})",
+      "importSummaryTitle": "Import zakończony",
+      "importSummaryBody": "Zaimportowano {{importedNodes}} węzłów i {{importedEdges}} połączeń. Zastąpiono poprzednich {{previousNodes}} węzłów i {{previousEdges}} połączeń.",
+      "undoImport": "Cofnij import",
+      "undoImportDone": "Cofnięto import — przywrócono poprzednią zawartość",
+      "undoImportTitle": "Cofnięcie importu",
+      "startNewImport": "Nowy import",
+      "nodeCount_one": "{{count}} węzeł",
+      "nodeCount_few": "{{count}} węzły",
+      "nodeCount_many": "{{count}} węzłów",
+      "nodeCount_other": "{{count}} węzła",
+      "edgeCount_one": "{{count}} połączenie",
+      "edgeCount_few": "{{count}} połączenia",
+      "edgeCount_many": "{{count}} połączeń",
+      "edgeCount_other": "{{count}} połączenia"
     },
     "slashCommandMenu": {
       "typeCommand": "Wpisz polecenie…",
@@ -28447,7 +28495,8 @@
       "askAi": "Zapytaj AI",
       "delete": "Usuń",
       "linkedArtifacts": "Powiązane artefakty",
-      "noLinksYet": "Brak powiązań"
+      "noLinksYet": "Brak powiązań",
+      "removeLink": "Usuń powiązanie"
     },
     "validationPanel": {
       "valid": "Poprawny",
@@ -28502,12 +28551,19 @@
       "delete": "Usuń",
       "addAction": "Dodaj akcję",
       "addDecision": "Dodaj decyzję",
-      "paste": "Wklej"
+      "paste": "Wklej",
+      "copy": "Kopiuj",
+      "edgeProps": "Etykieta i styl",
+      "edgeInsertNode": "Wstaw węzeł na połączeniu",
+      "edgeReverse": "Odwróć kierunek",
+      "edgeCondition": "Warunek",
+      "edgeDelete": "Usuń połączenie"
     },
     "laneSystem": {
       "expandLane": "Rozwiń tor",
       "collapseLane": "Zwiń tor",
-      "resizeLane": "Zmień wysokość toru"
+      "resizeLane": "Zmień wysokość toru",
+      "setColor": "Ustaw kolor toru"
     },
     "exportDialog": {
       "jsonDesc": "Typowany graf do integracji",
@@ -34818,5 +34874,16 @@
     "c": "C",
     "cTooltip": "Widok C: gęsty (maksimum informacji)",
     "switchLabel": "Styl widoku"
+  },
+  "collaboration": {
+    "connecting": "Łączenie ze współpracą",
+    "reconnecting": "Ponowne łączenie ze współpracą",
+    "connectionDegraded": "Połączenie osłabione",
+    "establishingSession": "Nawiązywanie sesji",
+    "singleUserMode": "Tryb jednego użytkownika",
+    "realtimeConnecting": "Łączenie w czasie rzeczywistym",
+    "realtimeReconnecting": "Ponowne łączenie w czasie rzeczywistym",
+    "realtimeDegraded": "Praca w czasie rzeczywistym osłabiona",
+    "recoveryInProgress": "Trwa przywracanie połączenia"
   }
 }

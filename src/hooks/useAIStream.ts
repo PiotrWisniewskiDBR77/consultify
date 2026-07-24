@@ -334,6 +334,14 @@ type StreamOptions = {
     /** Which canvas tool the skeleton `graph` targets (mindmap/process_flow/table/whiteboard). */
     preferredSystem?: string;
   }) => void;
+  /**
+   * Z4 transport (fala „Teresa steruje Ideą przez rejestr"): model wywołał
+   * narzędzie akcji OTWARTEJ reprezentacji Idei. Serwer NIE wykonuje tego (nie
+   * ma dostępu do płótna) — przekazuje `{toolName, args}`, a front uruchamia je
+   * przez executeTeresaTool() (ta sama ścieżka co klik człowieka). Callback jest
+   * opcjonalny: gdy go nie ma, zdarzenie jest ignorowane i czat działa jak dziś.
+   */
+  onIdeaAction?: (payload: { toolName: string; args?: Record<string, unknown> }) => void;
 };
 
 export type UseAIStreamReturn = {
@@ -921,6 +929,25 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
               // shared across all 4 canvas tools.
               preferredSystem: (evt as any).preferredSystem,
             } as any);
+          }
+          return;
+        }
+
+        // Z4 transport — model wywołał narzędzie akcji OTWARTEJ Idei. Serwer nie
+        // wykonuje go (patrz clientTools w llmService); przekazuje toolName+args,
+        // a front uruchamia akcję przez executeTeresaTool() (ta sama ścieżka co
+        // klik). Brak `onIdeaAction` ⇒ zdarzenie jest ignorowane (czat jak dziś).
+        if (evt.type === 'idea_action') {
+          const toolName = String((evt as any).toolName || '').trim();
+          if (toolName) {
+            const rawArgs = (evt as any).args;
+            options.onIdeaAction?.({
+              toolName,
+              args:
+                rawArgs && typeof rawArgs === 'object'
+                  ? (rawArgs as Record<string, unknown>)
+                  : undefined,
+            });
           }
           return;
         }

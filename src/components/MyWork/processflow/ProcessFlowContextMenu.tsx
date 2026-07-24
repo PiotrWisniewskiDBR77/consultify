@@ -1,4 +1,6 @@
 import {
+  ArrowLeftRight,
+  Check,
   ClipboardPaste,
   Copy,
   GitBranch,
@@ -7,6 +9,7 @@ import {
   Plus,
   Rocket,
   Settings,
+  Split,
   Sparkles,
   Trash2,
 } from 'lucide-react';
@@ -107,6 +110,8 @@ export function getNodeContextActions(opts: {
   locked: boolean;
   onEditLabel: () => void;
   onDuplicate: () => void;
+  /** P1-4: bez kopiowania schowek nie ma jak sie zapelnic, a „Wklej" jest atrapa. */
+  onCopy?: () => void;
   onDelete: () => void;
   onOpenProperties: () => void;
   onAutoLayout?: () => void;
@@ -139,6 +144,16 @@ export function getNodeContextActions(opts: {
       disabled: opts.locked,
     },
   ];
+
+  if (opts.onCopy) {
+    items.splice(items.length - 1, 0, {
+      id: 'copy',
+      label: tr(opts.isPl, 'copy', 'Copy'),
+      icon: <Copy size={14} />,
+      onClick: opts.onCopy,
+      disabled: opts.locked,
+    });
+  }
 
   if (opts.onAutoLayout) {
     items.push({
@@ -188,12 +203,95 @@ export function getNodeContextActions(opts: {
   return items;
 }
 
+// Kolejnosc warunkow krawedzi = ta sama lista co CONDITION_TYPES w
+// FlowEdgeComponent ('' | 'yes' | 'no' | 'default' | 'exception'). Etykieta
+// per jezyk; '' = krawedz sekwencyjna (bez warunku).
+const EDGE_CONDITIONS: Array<{ id: string; plKey: string; pl: string; en: string }> = [
+  { id: '', plKey: 'condNone', pl: 'Bez warunku', en: 'No condition' },
+  { id: 'yes', plKey: 'condYes', pl: 'Tak', en: 'Yes' },
+  { id: 'no', plKey: 'condNo', pl: 'Nie', en: 'No' },
+  { id: 'default', plKey: 'condDefault', pl: 'Domyślny', en: 'Default' },
+  { id: 'exception', plKey: 'condException', pl: 'Wyjątek', en: 'Exception' },
+];
+
+// Helper to build EDGE context menu actions (prawy klik na krawedzi).
+// Kanon rozdz. 08 §4: etykieta/styl -> wstaw wezel -> odwroc kierunek ->
+// (typ warunku) -> usun. Kazda pozycja ma realny handler (Z3) — nie ma atrap.
+// „Usuń" i „Wstaw węzeł" korzystaja z istniejacych deleteSelected/insertBetween
+// (krawedz jest zaznaczana przy otwarciu menu), nie duplikuja ich logiki.
+export function getEdgeContextActions(opts: {
+  edgeId: string;
+  isPl: boolean;
+  locked: boolean;
+  currentCondition: string;
+  /** Otwiera EdgeStylePopover (etykieta + kolor + styl linii + strzalka). */
+  onEditProps: () => void;
+  /** insertBetween() — dziala na zaznaczonej krawedzi (D2). */
+  onInsertNode: () => void;
+  /** Zamienia source<->target krawedzi. */
+  onReverse: () => void;
+  /** handleEdgeConditionChange(edgeId, cond). */
+  onSetCondition: (condition: string) => void;
+  /** deleteSelected() — krawedz jest zaznaczona przy otwarciu menu (D3). */
+  onDelete: () => void;
+}): ContextMenuAction[] {
+  const items: ContextMenuAction[] = [
+    {
+      id: 'edge-props',
+      label: tr(opts.isPl, 'edgeProps', 'Label & style'),
+      icon: <Pencil size={14} />,
+      onClick: opts.onEditProps,
+    },
+    {
+      id: 'edge-insert',
+      label: tr(opts.isPl, 'edgeInsertNode', 'Insert node on connection'),
+      icon: <Split size={14} />,
+      onClick: opts.onInsertNode,
+      disabled: opts.locked,
+    },
+    {
+      id: 'edge-reverse',
+      label: tr(opts.isPl, 'edgeReverse', 'Reverse direction'),
+      icon: <ArrowLeftRight size={14} />,
+      onClick: opts.onReverse,
+      disabled: opts.locked,
+    },
+  ];
+
+  // Grupa: typ warunku (PF wspiera przez data.conditionType). Aktywny = Check.
+  EDGE_CONDITIONS.forEach((c, idx) => {
+    const active = (opts.currentCondition ?? '') === c.id;
+    items.push({
+      id: `edge-cond-${c.id || 'none'}`,
+      label: `${tr(opts.isPl, 'edgeCondition', 'Condition')}: ${opts.isPl ? c.pl : c.en}`,
+      icon: active ? <Check size={14} /> : <span style={{ width: 14, display: 'inline-block' }} />,
+      onClick: () => opts.onSetCondition(c.id),
+      disabled: opts.locked,
+      separatorBefore: idx === 0,
+    });
+  });
+
+  items.push({
+    id: 'edge-delete',
+    label: tr(opts.isPl, 'edgeDelete', 'Delete connection'),
+    icon: <Trash2 size={14} />,
+    onClick: opts.onDelete,
+    danger: true,
+    disabled: opts.locked,
+    separatorBefore: true,
+  });
+
+  return items;
+}
+
 // Helper to build canvas context menu actions
 export function getCanvasContextActions(opts: {
   isPl: boolean;
   locked: boolean;
   onAddNode: (shape: string) => void;
   onPaste: () => void;
+  /** P1-4: pusty schowek = pozycja wyszarzona z powodem, nie cichy brak reakcji. */
+  pasteDisabled?: boolean;
   onAutoLayout: () => void;
 }): ContextMenuAction[] {
   return [
@@ -216,7 +314,7 @@ export function getCanvasContextActions(opts: {
       label: tr(opts.isPl, 'paste', 'Paste'),
       icon: <ClipboardPaste size={14} />,
       onClick: opts.onPaste,
-      disabled: opts.locked,
+      disabled: opts.locked || opts.pasteDisabled === true,
     },
     {
       id: 'layout',

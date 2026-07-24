@@ -43,6 +43,11 @@
  *     Body: { input: TemplateDraftInput }
  *     Returns: { template: DocumentTemplate }
  *
+ *   POST /api/document-studio/templates/from-artifact/:artifactId
+ *     CLONE — save an existing native-artifact document as a new draft
+ *     template (clone → edit → save-as-new). Body: { name?, notes? }
+ *     Returns: { template: DocumentTemplate } (201). 404 document_not_found.
+ *
  *   GET  /api/document-studio/templates/:templateId
  *     Returns: { template }
  *
@@ -351,6 +356,7 @@ import type {
 } from '../services/documentStudio/documentStudioTypes.js';
 import {
   approveTemplate,
+  createTemplateFromArtifact,
   deprecateTemplate,
   draftTemplate,
   draftTemplateAsync,
@@ -857,6 +863,73 @@ router.post(
       const rawMessage = err instanceof Error ? err.message : 'template_plan_failed';
       const message = isSafeErrorCode(rawMessage) ? rawMessage : 'template_plan_failed';
       res.status(400).json({ error: 'template_plan_failed', message });
+    }
+  })
+);
+
+/**
+ * POST /api/document-studio/templates/from-artifact/:artifactId
+ *
+ * CLONE mode for Word (Document Studio) — brief §1/§10, "Komplet od razu".
+ * Saves an existing native-artifact document as a new draft template
+ * (clone → edit → save-as-new), the Document Studio counterpart of
+ * Deck's `POST /templates/:id/clone` and the sheet/presentation branches
+ * of `POST /api/artifacts/:id/save-as-template`.
+ *
+ * `save-as-template` was NOT extended to cover this case: Document Studio
+ * artifacts carry `originRuntime='native_artifact'` and their schema
+ * (sections/blocks) has no equivalent in `report_builder_templates`
+ * (the table `save-as-template`'s 'report' branch writes into) — mapping
+ * would either misuse that table or require a new
+ * `origin_runtime` CHECK-constraint value on `v8_artifact_origin_links`
+ * (migration; out of scope here). This dedicated route instead writes
+ * through the existing Document Template Architect surface
+ * (`document_studio_templates`, already reachable via `templateId` on
+ * `POST /document-studio/generate`) — no schema change needed.
+ *
+ * Body: { name?, notes? }
+ * Returns: { template: DocumentTemplate } (201)
+ * Errors: 404 document_not_found (source artifact missing/cross-tenant)
+ */
+router.post(
+  '/templates/from-artifact/:artifactId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    const schema = await getDocumentArtifact(artifactId, organizationId);
+    if (!schema) {
+      res.status(404).json({ error: 'document_not_found' });
+      return;
+    }
+    const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+    const notes = typeof req.body?.notes === 'string' ? req.body.notes.trim() : undefined;
+
+    await ensureTemplateRegistryHydrated(organizationId);
+    try {
+      const result = createTemplateFromArtifact({
+        organizationId,
+        userId,
+        schema,
+        name: name || undefined,
+        notes,
+      });
+      res.status(201).json({ template: result.template });
+    } catch (err) {
+      logger.warn('[DocumentStudio] template-from-artifact failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      const rawMessage = err instanceof Error ? err.message : 'template_from_artifact_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'template_from_artifact_failed';
+      res.status(400).json({ error: 'template_from_artifact_failed', message });
     }
   })
 );

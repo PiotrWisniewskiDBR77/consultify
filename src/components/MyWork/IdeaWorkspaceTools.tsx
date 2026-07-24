@@ -29,11 +29,12 @@ import {
   Sparkles,
   Star,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
 
+import { isIdeaPanelVisualEnabled } from './panel/ideaPanelVisualFlag';
 import {
   IDEA_CONVERT_GROUP_LABELS,
   IDEA_CONVERT_GROUP_ORDER,
@@ -60,9 +61,24 @@ const FIELD_CLASS =
 // Convert-target union is owned by the SSOT registry (ideaConvertTargets.ts).
 type ConvertTarget = IdeaConvertTarget;
 
+/**
+ * P0-4: zakladki prawego panelu. Powloka (EditorShell) przekazuje identyfikator
+ * aktywnej ikony do `renderRightRailPanel`, host mapuje go na `onlySection`.
+ * `undefined` = renderuj wszystkie sekcje (tryb legacy / szuflada).
+ * Bez tego piec ikon railа pokazywalo TE SAMA tresc.
+ *
+ * Identyfikatory MUSZA odpowiadac 1:1 ikonom z
+ * `buildIdeaCanvasRightRailTools` (ideaCanvasMelsChips.ts) — powloka przekazuje
+ * identyfikator aktywnej ikony wprost jako `onlySection`.
+ */
+export const IDEA_PANEL_SECTIONS = ['problem', 'status', 'inspector', 'convert', 'health'] as const;
+export type IdeaPanelSection = (typeof IDEA_PANEL_SECTIONS)[number];
+
 interface IdeaWorkspaceToolsProps {
   open: boolean;
   onClose: () => void;
+  /** P0-4: renderuj TYLKO wskazana sekcje (zakladka prawego panelu). */
+  onlySection?: IdeaPanelSection;
   /**
    * EditorShell Wave W (W-1): render inside the shell right-rail column
    * (drops the panel's own fixed-width / bordered drawer chrome + close
@@ -132,6 +148,22 @@ interface IdeaWorkspaceToolsProps {
 }
 
 /* ── Collapsible section wrapper ── */
+/**
+ * P0-4: gdy panel pracuje jako zakladka (`onlySection`), widoczna jest dokladnie
+ * jedna sekcja i JEST ona trescia zakladki — nie pozycja akordeonu. Zwijanie
+ * jedynej sekcji dawaloby pusta zakladke, wiec w tym trybie naglowek przestaje
+ * byc przyciskiem, a tresc jest zawsze widoczna.
+ */
+const TrybZakladki = React.createContext(false);
+
+/**
+ * P2-4 (Z2): warstwa wizualna panelu. `false` = dzisiejszy płaski akordeon (OFF, 1:1).
+ * `true` = kartowy język wizualny z zaakceptowanego prototypu (07_PRAWY_PANEL.md §3).
+ * Sterowane flagą `isIdeaPanelVisualEnabled()` — patrz `panel/ideaPanelVisualFlag.ts`.
+ * Zmieniamy WYŁĄCZNIE wygląd; treść, `onlySection`, `data-testid` i funkcje bez zmian.
+ */
+const PanelVisual = React.createContext(false);
+
 const Section: React.FC<{
   title: string;
   icon: React.ReactNode;
@@ -139,23 +171,49 @@ const Section: React.FC<{
   badge?: React.ReactNode;
   children: React.ReactNode;
 }> = ({ title, icon, defaultOpen = false, badge, children }) => {
+  const wZakladce = useContext(TrybZakladki);
+  const v2 = useContext(PanelVisual);
   const [open, setOpen] = useState(defaultOpen);
+  const otwarte = wZakladce || open;
+
+  // OFF = klasy dzisiejsze (bez zmian). ON = język prototypu na tokenach c-*.
+  const iconCls = v2 ? 'text-c-text-muted shrink-0' : 'text-slate-600 dark:text-slate-500 shrink-0';
+  const labelCls = v2
+    ? 'text-[10.5px] font-bold uppercase tracking-[0.08em] text-c-text-muted flex-1'
+    : 'text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex-1';
+  const containerCls = v2
+    ? 'rounded-[11px] border border-c-border-subtle bg-c-surface-raised overflow-hidden'
+    : 'border-b border-slate-200/50 dark:border-white/[0.04] last:border-b-0';
+  const headHoverCls = v2
+    ? 'hover:bg-c-surface'
+    : 'hover:bg-slate-50/50 dark:hover:bg-white/[0.02]';
+  const bodyPadCls = v2 ? 'px-3.5 pb-3.5' : 'px-3 pb-3';
+
+  const naglowek = (
+    <>
+      {!wZakladce && (
+        <span className={iconCls}>
+          {otwarte ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        </span>
+      )}
+      <span className={iconCls}>{icon}</span>
+      <span className={labelCls}>{title}</span>
+      {badge}
+    </>
+  );
   return (
-    <div className="border-b border-slate-200/50 dark:border-white/[0.04] last:border-b-0">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors"
-      >
-        <span className="text-slate-600 dark:text-slate-500 shrink-0">
-          {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-        </span>
-        <span className="text-slate-600 dark:text-slate-500 shrink-0">{icon}</span>
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex-1">
-          {title}
-        </span>
-        {badge}
-      </button>
-      {open && <div className="px-3 pb-3">{children}</div>}
+    <div className={containerCls}>
+      {wZakladce ? (
+        <div className="w-full flex items-center gap-2 px-3 py-2.5 text-left">{naglowek}</div>
+      ) : (
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className={`w-full flex items-center gap-2 px-3 py-2.5 text-left ${headHoverCls} transition-colors`}
+        >
+          {naglowek}
+        </button>
+      )}
+      {otwarte && <div className={bodyPadCls}>{children}</div>}
     </div>
   );
 };
@@ -210,11 +268,14 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   onProcessFlowNodeMetricsChange,
   onProcessFlowEdgeConditionChange,
   onProcessFlowNodeMetadataChange,
+  onlySection,
   whiteboardSession,
   whiteboardOutcomes,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
+  // P2-4 (Z2): warstwa wizualna panelu za flagą (domyślnie OFF = dzisiejszy wygląd 1:1).
+  const visualV2 = isIdeaPanelVisualEnabled();
   const [stageDropdownOpen, setStageDropdownOpen] = useState(false);
 
   const v5Stage = normalizeStageToV5(stage);
@@ -352,6 +413,10 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   // Legacy sliding-drawer path is gated by `open`. In embedded (EditorShell
   // right-rail) mode the shell only mounts the panel when its icon is active,
   // so visibility is the shell's responsibility — don't self-hide here.
+  // P0-4: gdy powloka poda aktywna zakladke, renderujemy TYLKO ja.
+  // Brak `onlySection` = tryb legacy (wszystkie sekcje w jednym scrollu).
+  const pokaz = (sekcja: IdeaPanelSection) => !onlySection || onlySection === sekcja;
+
   if (!embedded && !open) return null;
 
   return (
@@ -366,7 +431,16 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       }
       onClose={onClose}
     >
+      <TrybZakladki.Provider value={!!onlySection}>
+      <PanelVisual.Provider value={visualV2}>
+      {/*
+       * P2-4 (Z2): OFF → `contents` (kontener znika z layoutu, struktura 1:1 z dziś).
+       * ON → kontener z paddingiem + odstępem 12 px między kartami; `[&>*]:shrink-0`
+       * gwarantuje, że karty NIE kurczą się przy przewijaniu (07_PRAWY_PANEL.md §3).
+       */}
+      <div className={visualV2 ? 'flex flex-col gap-3 p-3.5 [&>*]:shrink-0' : 'contents'}>
       {/* ── 1. Problem ── */}
+      {pokaz('problem') && (
       <Section
         title={t('myWorkIdeas.workspaceTools.problem')}
         icon={<Pencil size={12} />}
@@ -418,8 +492,10 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           </div>
         </div>
       </Section>
+      )}
 
       {/* ── 2. Status ── */}
+      {pokaz('status') && (
       <Section
         title={t('myWorkIdeas.workspaceTools.status')}
         icon={<CheckCircle2 size={12} />}
@@ -622,8 +698,10 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           </div>
         </div>
       </Section>
+      )}
 
       {/* ── 3. Convert ── */}
+      {pokaz('convert') && (
       <Section title={t('myWorkIdeas.workspaceTools.convert')} icon={<Rocket size={12} />}>
         {selection.type !== 'none' && selection.count > 0 && (
           <div className="mb-2 text-[10px] font-medium text-c-info bg-c-info/5 rounded-lg px-2 py-1.5">
@@ -697,8 +775,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           ))}
         </div>
       </Section>
+      )}
 
-      {activeTool === 'whiteboard' && (
+      {activeTool === 'whiteboard' && pokaz('inspector') && (
         <Section
           title={t('myWorkIdeas.workspaceTools.whiteboardInspector')}
           icon={<Activity size={12} />}
@@ -800,7 +879,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         </Section>
       )}
 
-      {activeTool === 'process_flow' && (
+      {activeTool === 'process_flow' && pokaz('inspector') && (
         <Section
           title={t('myWorkIdeas.workspaceTools.processInspector')}
           icon={<Activity size={12} />}
@@ -831,7 +910,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         </Section>
       )}
 
-      {activeTool === 'process_flow' && (
+      {activeTool === 'process_flow' && pokaz('health') && (
         <Section
           title={t('myWorkIdeas.workspaceTools.processHealth')}
           icon={<Activity size={13} />}
@@ -843,6 +922,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       {activeTool === 'mindmap' && (
         <>
           {/* ── 5. Mindmap Inspector (Style / Layout / Theme) ── */}
+          {pokaz('inspector') && (
           <Section
             title={t('myWorkIdeas.workspaceTools.mapInspector')}
             icon={<Sparkles size={12} />}
@@ -863,8 +943,10 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               onApplyTheme={(t) => onThemeChange?.(t)}
             />
           </Section>
+          )}
 
           {/* ── 6. Map Health ── */}
+          {pokaz('health') && (
           <Section title={t('myWorkIdeas.workspaceTools.mapHealth')} icon={<Activity size={13} />}>
             <MapHealthScore
               nodes={graphNodes.map((n: any) => ({ id: n.id, data: n.data, type: n.type }))}
@@ -872,8 +954,12 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               visible
             />
           </Section>
+          )}
         </>
       )}
+      </div>
+      </PanelVisual.Provider>
+      </TrybZakladki.Provider>
     </ToolsPanelShell>
   );
 };

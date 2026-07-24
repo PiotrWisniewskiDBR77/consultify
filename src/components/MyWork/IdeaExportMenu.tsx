@@ -7,17 +7,17 @@
 import {
   Code2,
   Download,
-  FileBarChart2,
   FileImage,
   FileJson,
   FileText,
   Loader2,
-  Presentation,
+  RotateCcw,
   X,
 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api } from '@/services/api';
 
 import {
@@ -39,7 +39,8 @@ import type { IdeaWorkspaceImportPayload } from './ideaSelectionTypes';
  * gated behind THIS client flag: when off (default), no request is fired at all and
  * no "server export" affordance is presented as a working action — all genuinely
  * working exports run entirely CLIENT-side (PNG/SVG/PDF/Markdown/JSON/package/mapping/
- * share + report/presentation conversion) and never depend on the server round-trip.
+ * share) and never depend on the server round-trip. Report/presentation NIE naleza
+ * juz tutaj — to Konwersja (P1-7/D6), przeniesiona do panelu Konwertuj.
  */
 export const IDEA_SERVER_EXPORT_ENABLED = import.meta.env.VITE_ENABLE_IDEA_SERVER_EXPORT === 'true';
 
@@ -126,26 +127,25 @@ const FORMATS: ExportFormat[] = [
     descEn: 'Permission-safe manifest for embeds and share flows.',
     ext: 'share.json',
   },
-  // V5-IDEA-40: Report/deck export from workspace
-  {
-    id: 'report',
-    icon: FileBarChart2,
-    labelPl: 'Raport',
-    labelEn: 'Report',
-    descPl: 'Generuj raport z zaznaczenia lub całości',
-    descEn: 'Generate report from selection or whole idea',
-    ext: 'report',
-  },
-  {
-    id: 'presentation',
-    icon: Presentation,
-    labelPl: 'Prezentacja (deck)',
-    labelEn: 'Presentation (deck)',
-    descPl: 'Generuj deck z zaznaczenia lub całości',
-    descEn: 'Generate deck from selection or whole idea',
-    ext: 'deck',
-  },
+  // P1-7 / D6 (docs/standards/idea-workspace/10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md §3):
+  // pozycje „Raport" i „Prezentacja (deck)" (V5-IDEA-40) zostaly STAD USUNIETE.
+  // Nie produkowaly pliku — dispatchowaly `convert_report`/`convert_presentation`,
+  // czyli tworzyly TRWALY REKORD w module Reports/Presentations. To jest Konwersja,
+  // nie Eksport. Byly zarazem duplikatem: rejestr konwersji (`ideaConvertTargets.ts`)
+  // ma `report` i `presentation` jako `live`, a panel Konwersji (IdeaWorkspaceTools,
+  // grupa „Generatory dokumentow") wola dokladnie ten sam `handleConvert`.
+  // Ten dropdown zawiera odtad WYLACZNIE formaty tworzace plik do pobrania.
 ];
+
+// P0-2 (docs/standards/idea-workspace/10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md §4.1):
+// human-readable source labels for the destructive-import guard rail. Mirrors
+// the <option> labels below — kept as a separate map so the confirm/summary
+// copy can quote the source format without re-deriving it from the <select>.
+const IMPORT_FORMAT_LABELS: Record<'drawio_xml' | 'bpmn_xml' | 'diagram_package', string> = {
+  drawio_xml: 'draw.io XML',
+  bpmn_xml: 'BPMN XML',
+  diagram_package: 'Diagram package JSON',
+};
 
 export interface IdeaExportMenuProps {
   open: boolean;
@@ -172,12 +172,37 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+  // P0-2 guard rail (docs/standards/idea-workspace/10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md
+  // §4.1) is a visual change → stays behind a flag OFF by default until Piotr accepts the
+  // dev-render screenshots (rule #7, CLAUDE.md). OFF preserves today's exact behavior
+  // (immediate, unconfirmed replace) via legacyImport below.
+  const { isEnabled } = useFeatureFlagsContext();
+  const importGuardRailEnabled = isEnabled('ideaImportGuardRail');
   const [exporting, setExporting] = useState<string | null>(null);
   const [importFormat, setImportFormat] = useState<'drawio_xml' | 'bpmn_xml' | 'diagram_package'>(
     'drawio_xml'
   );
   const [importPayload, setImportPayload] = useState('');
   const [importStatus, setImportStatus] = useState<string | null>(null);
+  // P0-2 guard rail: parsing no longer imports immediately — it stages the
+  // parsed graph here until the user explicitly confirms the replacement.
+  const [pendingImport, setPendingImport] = useState<{
+    parsed: { nodes: any[]; edges: any[]; extensions?: Record<string, unknown>; mappingReport?: string[] };
+    sourceFormat: 'drawio_xml' | 'bpmn_xml' | 'diagram_package';
+  } | null>(null);
+  const [importBusy, setImportBusy] = useState(false);
+  // Post-import summary + one-click undo. beforeSnapshot is the graph as it
+  // stood immediately before the destructive replace — kept in memory so
+  // "Cofnij" works instantly even if the best-effort server snapshot below
+  // failed to persist.
+  const [importSummary, setImportSummary] = useState<{
+    importedNodes: number;
+    importedEdges: number;
+    previousNodes: number;
+    previousEdges: number;
+    sourceLabel: string;
+    beforeSnapshot: { nodes: any[]; edges: any[]; extensions?: Record<string, unknown> };
+  } | null>(null);
   const whiteboardPolicy =
     extensions?.whiteboard &&
     typeof extensions.whiteboard === 'object' &&
@@ -190,7 +215,10 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
       ? `${String(whiteboardPolicy.classification || 'internal').toUpperCase()} • ${whiteboardPolicy.watermark}`
       : 'Consultify Idea Workspace';
   const exportAllowed = whiteboardPolicy?.exportAllowed !== false;
-  const shareAllowed = whiteboardPolicy?.shareAllowed !== false;
+  // P1-7: `sharePolicy.shareAllowed` bramkowalo TYLKO pozycje „Raport"/„Prezentacja",
+  // ktore wyjechaly stad do Konwersji (D6). W tym oknie nie ma juz czego bramkowac,
+  // wiec pole nie jest tu czytane. UWAGA — bramka NIE zostala przeniesiona na sciezke
+  // Konwersji (panel Konwertuj nie dostaje `extensions`); to osobne zadanie.
 
   const importPreview = useMemo(() => {
     if (!importPayload.trim()) return null;
@@ -460,7 +488,10 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
     whiteboardPolicy,
   ]);
 
-  const handleImport = useCallback(() => {
+  // Flag OFF (default): today's exact behavior — parse and replace immediately,
+  // no confirmation, no pre-change snapshot. Kept only so the guard rail above
+  // stays an additive, reversible change (flip the flag off → old behavior back).
+  const legacyImport = useCallback(() => {
     if (!importPayload.trim() || !onImportGraph) return;
     try {
       const parsed = importPreview?.ok
@@ -482,38 +513,111 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
     } catch (err: any) {
       setImportStatus(err?.message || t('myWorkIdeas.exportMenu.importFailed'));
     }
-  }, [importFormat, importPayload, importPreview, isPl, onClose, onImportGraph]);
+  }, [importFormat, importPayload, importPreview, onClose, onImportGraph, t]);
 
-  // V5-IDEA-40: Report/deck export via conversion system
-  const exportToReport = useCallback(() => {
-    setExporting('report');
-    window.dispatchEvent(
-      new CustomEvent('idea-workspace-quick-action', {
-        detail: { action: 'convert_report', ideaId },
-      })
-    );
-    setExporting(null);
-    onClose();
-  }, [ideaId, onClose]);
+  // Flag ON — P0-2 guard rail.
+  // Step 1 (podgląd już istnieje w importPreview powyżej) → Step 2: staging.
+  // Parses eagerly (so a bad payload fails here, not after the user confirms)
+  // but does NOT touch the workspace graph yet — that only happens in
+  // confirmImport, after the user has seen exactly what will be lost/gained.
+  const requestGuardedImport = useCallback(() => {
+    if (!importPayload.trim() || !onImportGraph) return;
+    try {
+      const parsed = importPreview?.ok
+        ? importPreview.parsed
+        : importFormat === 'drawio_xml'
+          ? parseDrawIoXml(importPayload)
+          : importFormat === 'bpmn_xml'
+            ? parseBpmnXml(importPayload)
+            : parseDiagramPackage(importPayload);
+      setImportStatus(null);
+      setPendingImport({ parsed, sourceFormat: importFormat });
+    } catch (err: any) {
+      setImportStatus(err?.message || t('myWorkIdeas.exportMenu.importFailed'));
+    }
+  }, [importFormat, importPayload, importPreview, onImportGraph, t]);
 
-  const exportToPresentation = useCallback(() => {
-    setExporting('presentation');
-    window.dispatchEvent(
-      new CustomEvent('idea-workspace-quick-action', {
-        detail: { action: 'convert_presentation', ideaId },
-      })
-    );
-    setExporting(null);
-    onClose();
-  }, [ideaId, onClose]);
+  const requestImport = importGuardRailEnabled ? requestGuardedImport : legacyImport;
 
+  const cancelPendingImport = useCallback(() => {
+    setPendingImport(null);
+  }, []);
+
+  // Step 3+4: jawne potwierdzenie już się dokonało (użytkownik kliknął
+  // "Potwierdź i zastąp") → snapshot PRZED zmianą (best-effort na backendzie,
+  // zawsze trzymany lokalnie), DOPIERO POTEM wykonanie importu (P0-2).
+  const confirmImport = useCallback(async () => {
+    if (!pendingImport || !onImportGraph) return;
+    setImportBusy(true);
+    const beforeSnapshot = {
+      nodes: graphNodes,
+      edges: graphEdges,
+      extensions,
+    };
+    try {
+      await Api.createMyIdeaMapSnapshot(ideaId, {
+        label: t('myWorkIdeas.exportMenu.beforeImportSnapshotLabel', {
+          sourceFormat: IMPORT_FORMAT_LABELS[pendingImport.sourceFormat],
+        }),
+        nodes: graphNodes,
+        edges: graphEdges,
+        ...(extensions ? { extensions } : {}),
+      }).catch(() => null);
+
+      onImportGraph({
+        ideaId,
+        sourceFormat: pendingImport.sourceFormat,
+        nodes: pendingImport.parsed.nodes,
+        edges: pendingImport.parsed.edges,
+        extensions: pendingImport.parsed.extensions,
+        mappingReport: pendingImport.parsed.mappingReport,
+      });
+
+      setImportSummary({
+        importedNodes: pendingImport.parsed.nodes.length,
+        importedEdges: pendingImport.parsed.edges.length,
+        previousNodes: graphNodes.length,
+        previousEdges: graphEdges.length,
+        sourceLabel: IMPORT_FORMAT_LABELS[pendingImport.sourceFormat],
+        beforeSnapshot,
+      });
+      setImportPayload('');
+      setPendingImport(null);
+      setImportStatus(null);
+    } finally {
+      setImportBusy(false);
+    }
+  }, [pendingImport, onImportGraph, graphNodes, graphEdges, extensions, ideaId, t]);
+
+  // Step 7: cofnięcie jednym klikiem — replays the pre-import snapshot through
+  // the SAME import path (captures a fresh checkpoint too, so redo stays
+  // possible from Historia).
+  const undoImport = useCallback(() => {
+    if (!importSummary || !onImportGraph) return;
+    onImportGraph({
+      ideaId,
+      sourceFormat: 'diagram_package',
+      title: t('myWorkIdeas.exportMenu.undoImportTitle'),
+      nodes: importSummary.beforeSnapshot.nodes,
+      edges: importSummary.beforeSnapshot.edges,
+      extensions: importSummary.beforeSnapshot.extensions,
+    });
+    setImportStatus(t('myWorkIdeas.exportMenu.undoImportDone'));
+    setImportSummary(null);
+  }, [importSummary, onImportGraph, ideaId, t]);
+
+  // P1-7 / D6: `exportToReport` i `exportToPresentation` (dispatch `convert_report` /
+  // `convert_presentation`) usuniete razem z pozycjami menu — konwersja odbywa sie
+  // wylacznie sciezka Konwersji (panel „Konwertuj" → `handleConvert`).
   const canExportFormat = useCallback(
     (formatId: string) => {
-      if (!exportAllowed) return false;
-      if (!shareAllowed && (formatId === 'report' || formatId === 'presentation')) return false;
-      return true;
+      // P1-7: warunek na `shareAllowed` dotyczyl wylacznie usunietych pozycji
+      // `report`/`presentation` — po ich usunieciu byl martwy. Zostaje jedyna
+      // realna bramka governance dla PLIKOW: `sharePolicy.exportAllowed`.
+      void formatId;
+      return exportAllowed;
     },
-    [exportAllowed, shareAllowed]
+    [exportAllowed]
   );
 
   const recordExportRequest = useCallback(
@@ -560,12 +664,6 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
         case 'share_manifest':
           exportShareManifest();
           break;
-        case 'report':
-          exportToReport();
-          break;
-        case 'presentation':
-          exportToPresentation();
-          break;
       }
     },
     [
@@ -578,8 +676,6 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
       exportPNG,
       exportShareManifest,
       exportSVG,
-      exportToPresentation,
-      exportToReport,
       recordExportRequest,
     ]
   );
@@ -641,57 +737,156 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
           </div>
 
           <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3">
-            <div>
-              <div className="text-[12px] font-bold text-slate-800 dark:text-slate-100">
-                {t('myWorkIdeas.exportMenu.importInterop')}
-              </div>
-              <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                {t('myWorkIdeas.exportMenu.pasteDrawIoXmlBpmnXml')}
-              </div>
-            </div>
-            <select
-              value={importFormat}
-              onChange={(e) => setImportFormat(e.target.value as any)}
-              className="w-full rounded-lg border border-slate-200/70 bg-white px-3 py-2 text-xs dark:border-navy-700/70 dark:bg-navy-950"
-            >
-              <option value="drawio_xml">draw.io XML</option>
-              <option value="bpmn_xml">BPMN XML</option>
-              <option value="diagram_package">Diagram package JSON</option>
-            </select>
-            <textarea
-              value={importPayload}
-              onChange={(e) => setImportPayload(e.target.value)}
-              rows={11}
-              placeholder={t('myWorkIdeas.exportMenu.pasteImportPayload')}
-              className="w-full rounded-lg border border-slate-200/70 bg-white px-3 py-2 text-[11px] font-mono dark:border-navy-700/70 dark:bg-navy-950"
-            />
-            {importPreview?.ok && (
-              <div className="rounded-lg bg-emerald-50 px-3 py-2 text-[10px] text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
-                {t('myWorkIdeas.exportMenu.readyToImport', {
-                  nodes: importPreview.parsed.nodes.length,
-                  edges: importPreview.parsed.edges.length,
-                })}
-              </div>
+            {importGuardRailEnabled && importSummary ? (
+              // Step 6 (podsumowanie) + Step 7 (cofnięcie) — P0-2 §4.1.
+              <>
+                <div>
+                  <div className="text-[12px] font-bold text-slate-800 dark:text-slate-100">
+                    {t('myWorkIdeas.exportMenu.importSummaryTitle')}
+                  </div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                    {t('myWorkIdeas.exportMenu.importSummaryBody', {
+                      importedNodes: importSummary.importedNodes,
+                      importedEdges: importSummary.importedEdges,
+                      previousNodes: importSummary.previousNodes,
+                      previousEdges: importSummary.previousEdges,
+                    })}
+                  </div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                    {t('myWorkIdeas.exportMenu.confirmReplaceSource', {
+                      format: importSummary.sourceLabel,
+                    })}
+                  </div>
+                </div>
+                {importStatus && (
+                  <div className="rounded-lg bg-emerald-50 px-3 py-2 text-[10px] text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+                    {importStatus}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={undoImport}
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200/70 dark:border-navy-700/70 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
+                  >
+                    <RotateCcw size={14} />
+                    {t('myWorkIdeas.exportMenu.undoImport')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImportSummary(null)}
+                    className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
+                  >
+                    {t('myWorkIdeas.exportMenu.startNewImport')}
+                  </button>
+                </div>
+              </>
+            ) : importGuardRailEnabled && pendingImport ? (
+              // Step 1 (podgląd) already happened via importPreview above; this
+              // is Step 2 (źródło) + Step 3 (jawne potwierdzenie) — P0-2 §4.1.
+              // Nothing in the workspace graph has changed yet at this point.
+              <>
+                <div>
+                  <div className="text-[12px] font-bold text-slate-800 dark:text-slate-100">
+                    {t('myWorkIdeas.exportMenu.confirmReplaceTitle')}
+                  </div>
+                  <div className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 mt-1.5">
+                    {/*
+                      Polski ma trzy formy liczby mnogiej (1 / 2-4 / 5+), wiec
+                      liczb NIE wolno wstawiac w jedno zdanie z zaszyta koncowka
+                      — dawalo „wstawi 2 wezlow i 1 polaczen". Kazda liczebnosc
+                      jest osobnym kluczem z odmiana, zdanie tylko je sklada.
+                    */}
+                    {t('myWorkIdeas.exportMenu.confirmReplaceBody', {
+                      obecne: `${t('myWorkIdeas.exportMenu.nodeCount', { count: graphNodes.length })} i ${t('myWorkIdeas.exportMenu.edgeCount', { count: graphEdges.length })}`,
+                      przychodzace: `${t('myWorkIdeas.exportMenu.nodeCount', { count: pendingImport.parsed.nodes.length })} i ${t('myWorkIdeas.exportMenu.edgeCount', { count: pendingImport.parsed.edges.length })}`,
+                    })}
+                  </div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5">
+                    {t('myWorkIdeas.exportMenu.confirmReplaceSource', {
+                      format: IMPORT_FORMAT_LABELS[pendingImport.sourceFormat],
+                    })}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={confirmImport}
+                    disabled={importBusy}
+                    className="inline-flex items-center gap-2 rounded-lg bg-danger-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 hover:bg-danger-700 dark:bg-danger-500 dark:hover:bg-danger-600"
+                  >
+                    {importBusy ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Download size={14} />
+                    )}
+                    {t('myWorkIdeas.exportMenu.confirmReplaceConfirm')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelPendingImport}
+                    disabled={importBusy}
+                    className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-50"
+                  >
+                    {t('myWorkIdeas.exportMenu.confirmReplaceCancel')}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <div className="text-[12px] font-bold text-slate-800 dark:text-slate-100">
+                    {t('myWorkIdeas.exportMenu.importInterop')}
+                  </div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                    {t('myWorkIdeas.exportMenu.pasteDrawIoXmlBpmnXml')}
+                  </div>
+                </div>
+                <select
+                  value={importFormat}
+                  onChange={(e) => setImportFormat(e.target.value as any)}
+                  className="w-full rounded-lg border border-slate-200/70 bg-white px-3 py-2 text-xs dark:border-navy-700/70 dark:bg-navy-950"
+                >
+                  <option value="drawio_xml">draw.io XML</option>
+                  <option value="bpmn_xml">BPMN XML</option>
+                  <option value="diagram_package">Diagram package JSON</option>
+                </select>
+                <textarea
+                  value={importPayload}
+                  onChange={(e) => setImportPayload(e.target.value)}
+                  rows={11}
+                  placeholder={t('myWorkIdeas.exportMenu.pasteImportPayload')}
+                  className="w-full rounded-lg border border-slate-200/70 bg-white px-3 py-2 text-[11px] font-mono dark:border-navy-700/70 dark:bg-navy-950"
+                />
+                {importPreview?.ok && (
+                  <div className="rounded-lg bg-emerald-50 px-3 py-2 text-[10px] text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+                    {t('myWorkIdeas.exportMenu.readyToImport', {
+                      nodes: importPreview.parsed.nodes.length,
+                      edges: importPreview.parsed.edges.length,
+                    })}
+                  </div>
+                )}
+                {importPreview && !importPreview.ok && (
+                  <div className="rounded-lg bg-danger-50 px-3 py-2 text-[10px] text-danger-700 dark:bg-danger-900/30 dark:text-danger-300">
+                    {importPreview.error}
+                  </div>
+                )}
+                {importStatus && (
+                  <div className="rounded-lg bg-slate-100 px-3 py-2 text-[10px] text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+                    {importStatus}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={requestImport}
+                  disabled={!importPayload.trim() || !onImportGraph}
+                  className="inline-flex items-center gap-2 rounded-lg bg-navy-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
+                >
+                  <Download size={14} />
+                  {t('myWorkIdeas.exportMenu.importIntoWorkspace')}
+                </button>
+              </>
             )}
-            {importPreview && !importPreview.ok && (
-              <div className="rounded-lg bg-danger-50 px-3 py-2 text-[10px] text-danger-700 dark:bg-danger-900/30 dark:text-danger-300">
-                {importPreview.error}
-              </div>
-            )}
-            {importStatus && (
-              <div className="rounded-lg bg-slate-100 px-3 py-2 text-[10px] text-slate-600 dark:bg-navy-800 dark:text-slate-300">
-                {importStatus}
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={handleImport}
-              disabled={!importPayload.trim() || !onImportGraph}
-              className="inline-flex items-center gap-2 rounded-lg bg-navy-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
-            >
-              <Download size={14} />
-              {t('myWorkIdeas.exportMenu.importIntoWorkspace')}
-            </button>
           </div>
         </div>
 
@@ -707,11 +902,11 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
               {t('myWorkIdeas.exportMenu.exportBlockedWhiteboardGovernance')}
             </div>
           )}
-          {exportAllowed && !shareAllowed && (
-            <div className="mt-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-              {t('myWorkIdeas.exportMenu.externalSharingDisabledDeckReportExports')}
-            </div>
-          )}
+          {/*
+            P1-7: komunikat „zewnetrzne udostepnianie wylaczone — eksport deck/raport"
+            zniknal razem z pozycjami, ktorych dotyczyl. Zostawienie go tutaj byloby
+            informacja o czyms, czego w tym oknie juz nie ma.
+          */}
         </div>
       </div>
     </div>

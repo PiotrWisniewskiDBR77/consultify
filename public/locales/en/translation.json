@@ -2685,7 +2685,9 @@
         "defaultKpi": "KPI",
         "defaultScore": "Score",
         "defaultProgress": "Progress",
-        "defaultSummary": "Summary"
+        "defaultSummary": "Summary",
+        "collapseFrame": "Collapse section",
+        "expandFrame": "Expand section"
       },
       "sessionPanel": {
         "layer": "Session layer",
@@ -5027,7 +5029,8 @@
       "toastReviewRequested": "Review requested",
       "toastInputRequested": "Input requested",
       "toastCoDecisionRequested": "Co-decision requested"
-    }
+    },
+    "closeOpenDocument": "Close: {{nazwa}}"
   },
   "step1": {
     "title": "Step 1",
@@ -24972,6 +24975,7 @@
       "viewDeleted": "View deleted",
       "delete": "Delete",
       "filter": "Filter…",
+      "clearFilter": "Clear filter",
       "group": "Group",
       "calendar": "Calendar",
       "gallery": "Gallery",
@@ -25862,6 +25866,22 @@
         "aiPending": "AI pending...",
         "regenerate": "Regenerate"
       },
+      "a11y": {
+        "selectAllRows": "Select all rows",
+        "selectRow": "Select row: {{name}}",
+        "untitledRow": "Row {{n}}",
+        "untitledRecord": "Untitled",
+        "editCellFor": "{{column}} — {{row}}",
+        "ratingStarFor": "{{column}}: {{star}} of 5 — {{row}}",
+        "filterAdvanced": "Advanced filters",
+        "clearFilterInput": "Clear filter input",
+        "closeInterfaceDesigner": "Close Interface Designer",
+        "colorSwatchFor": "{{column}}: color {{hex}} — {{row}}",
+        "colorOption": "Set color {{hex}}",
+        "emojiPickerFor": "{{column}}: choose emoji — {{row}}",
+        "emojiOption": "Choose emoji {{emoji}}",
+        "renameColumnFor": "New column name: {{column}}"
+      },
       "distributionBuilder": {
         "webhookUrl": "Webhook URL"
       },
@@ -25875,7 +25895,14 @@
       "ideaStartupTemplates": {
         "blankCanvas": "Blank canvas",
         "startWithAi": "Start with AI"
-      }
+      },
+      "copyValue": "Copy value",
+      "paste": "Paste",
+      "expandCell": "Expand cell",
+      "clearCell": "Clear cell",
+      "cellCleared": "Cell cleared",
+      "copyFailed": "Copy failed",
+      "pasteFailed": "Could not read clipboard"
     },
     "mindmap": {
       "addNodeTab": "Add node (Tab)",
@@ -26949,7 +26976,8 @@
       "saveMetrics": "Save metrics",
       "validationFailedRetry": "Flow validation failed. Try again.",
       "deleteNodesConfirm": "{{value}} nodes and their connections will be deleted. You can undo with Ctrl+Z.",
-      "warningsCount": "{{value}} warning(s)"
+      "warningsCount": "{{value}} warning(s)",
+      "laneDefaultName": "Lane {{index}}"
     },
     "nodeDetailDrawer": {
       "failedAddComment": "Failed to add comment",
@@ -27219,7 +27247,23 @@
       "externalSharingDisabledDeckReportExports": "External sharing is disabled: deck/report exports are unavailable.",
       "importedNodesEdges": "Imported {{nodes}} nodes and {{edges}} edges",
       "readyToImport": "Ready to import: {{nodes}} nodes, {{edges}} edges",
-      "elementsConnectionsCount": "{{elements}} elements, {{connections}} connections"
+      "elementsConnectionsCount": "{{elements}} elements, {{connections}} connections",
+      "confirmReplaceTitle": "Confirm workspace replacement",
+      "confirmReplaceBody": "This import will REPLACE everything: it removes {{obecne}} and inserts {{przychodzace}}.",
+      "confirmReplaceSource": "Import source: {{format}}",
+      "confirmReplaceConfirm": "Confirm and replace",
+      "confirmReplaceCancel": "Cancel",
+      "beforeImportSnapshotLabel": "Before import ({{sourceFormat}})",
+      "importSummaryTitle": "Import complete",
+      "importSummaryBody": "Imported {{importedNodes}} nodes and {{importedEdges}} edges. Replaced the previous {{previousNodes}} nodes and {{previousEdges}} edges.",
+      "undoImport": "Undo import",
+      "undoImportDone": "Import undone — previous content restored",
+      "undoImportTitle": "Import undone",
+      "startNewImport": "New import",
+      "nodeCount_one": "{{count}} node",
+      "nodeCount_other": "{{count}} nodes",
+      "edgeCount_one": "{{count}} connection",
+      "edgeCount_other": "{{count}} connections"
     },
     "slashCommandMenu": {
       "typeCommand": "Type a command…",
@@ -27387,7 +27431,8 @@
       "askAi": "Ask AI",
       "delete": "Delete",
       "linkedArtifacts": "Linked artifacts",
-      "noLinksYet": "No links yet"
+      "noLinksYet": "No links yet",
+      "removeLink": "Remove link"
     },
     "validationPanel": {
       "valid": "Valid",
@@ -27442,12 +27487,19 @@
       "delete": "Delete",
       "addAction": "Add action",
       "addDecision": "Add decision",
-      "paste": "Paste"
+      "paste": "Paste",
+      "copy": "Copy",
+      "edgeProps": "Label & style",
+      "edgeInsertNode": "Insert node on connection",
+      "edgeReverse": "Reverse direction",
+      "edgeCondition": "Condition",
+      "edgeDelete": "Delete connection"
     },
     "laneSystem": {
       "expandLane": "Expand lane",
       "collapseLane": "Collapse lane",
-      "resizeLane": "Resize lane"
+      "resizeLane": "Resize lane",
+      "setColor": "Set lane color"
     },
     "exportDialog": {
       "jsonDesc": "Typed graph for integration",
@@ -33758,5 +33810,16 @@
     "c": "C",
     "cTooltip": "C view: dense (maximum information)",
     "switchLabel": "View style"
+  },
+  "collaboration": {
+    "connecting": "Connecting collaboration",
+    "reconnecting": "Reconnecting collaboration",
+    "connectionDegraded": "Connection degraded",
+    "establishingSession": "Establishing session",
+    "singleUserMode": "Single-user mode",
+    "realtimeConnecting": "Realtime connecting",
+    "realtimeReconnecting": "Realtime reconnecting",
+    "realtimeDegraded": "Realtime degraded",
+    "recoveryInProgress": "Recovery in progress"
   }
 }

@@ -13,10 +13,13 @@ import {
   FileText,
   Filter,
   LayoutGrid,
+  LayoutTemplate,
   MessageSquare,
   Package2,
+  PenLine,
   Plus,
   Presentation,
+  Sparkles,
   Table2,
   Wand2,
 } from 'lucide-react';
@@ -27,7 +30,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { ExceleParametricTemplates } from '@/components/AIChat/KimiWorkspace/ExceleParametricTemplates';
 import { PresentationTemplateArchitectView } from '@/components/Presentations/PresentationTemplateArchitectView';
-import { isTemplateBuilderEnabled, TemplateBuilderFlow } from '@/components/TemplateBuilder';
+import { CreateFormatModeLauncher } from '@/components/shared/CreateFormatModeLauncher';
+import { TemplateBuilderFlow } from '@/components/TemplateBuilder';
 import { isDeckArchitectEnabled } from '@/utils/deckArchitectFlag';
 import { isWorkbookTemplatesEnabled } from '@/utils/workbookTemplatesFlag';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
@@ -49,13 +53,7 @@ import {
   MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
 import { BundleHistoryPanel } from './BundleHistoryPanel';
-import { deliverableKickoffSeed, deliverableTypeLabel } from './deliverableKickoff';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
-import {
-  type CanvasOutputResource,
-  type LauncherSelection,
-  OutputsLauncherModal,
-} from './OutputsLauncherModal';
 import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import { PresentationsTabContent } from './PresentationsTabContent';
 import { ReportsTabContent } from './ReportsTabContent';
@@ -240,7 +238,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       outputs_review: t('rap.outputs.cta.new', 'New output'),
       outputs_documents: t('rap.actions.newReport', 'New report'),
       presentations: t('rap.actions.newPresentation', 'New presentation'),
-      outputs_sheets: '',
+      // Odblokowane 2026-07-24 (item 3 briefu Materiały-entry) — Sheets dostaje
+      // realne „Dodaj" (tablica format→tryb), tak jak Documents/Presentations/All.
+      outputs_sheets: t('rap.actions.newSheet', 'New sheet'),
       templates: t('rap.actions.newTemplate', 'New template'),
       template_architect: '',
       workbook_templates: '',
@@ -248,79 +248,212 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     [t]
   );
 
-  const [launcherOpen, setLauncherOpen] = useState(false);
+  // Materiały wspólny launcher (2026-07-24, Harvard/wdrozenie-100/_MATERIALY_INWENTARYZACJA_2026-07-24.md
+  // §8) — dwustopniowa tablica KROK 1 (format) → KROK 2 (tryb), nawiguje do
+  // REALNEGO edytora zamiast openChatWithContext (dawne handleLauncherSelect
+  // z templateId ginącym w kontekście czatu — martwa ścieżka, usunięta).
+  type MaterialFormat = 'document' | 'presentation' | 'spreadsheet';
+  type MaterialStart = 'blank' | 'ai' | 'from_template';
 
-  // E1: wspólne wejście routuje per typ do istniejącego kreatora.
-  // Spięcie z silnikiem generacji + „paczką kontekstu" = sub-moduł E3.
-  const handleLauncherSelect = useCallback(
-    ({ type, templateId }: LauncherSelection) => {
-      // E3: „Nowy → uruchamia Teresę". Otwieramy czat z pre-wypełnionym openerem
-      // (pendingPrompt) dopasowanym do detektora intencji danego typu — Teresa od razu
-      // wie, jaki deliverable wygenerować; użytkownik dopisuje temat i wysyła (Tryb B).
-      // Konsumpcja templateId (szkielet) = seria T (rozszerzenie plan*Generation).
-      const lang: 'pl' | 'en' = i18n.language === 'pl' ? 'pl' : 'en';
-      void openChatWithContext({
-        entityType: 'deliverable_launch',
-        entityId: `${type}-${templateId}`,
-        entityName: deliverableTypeLabel(type, lang),
-        contextData: {
-          teresaPrompt: deliverableKickoffSeed(type, lang),
-          deliverableType: type,
-          templateId,
-        },
-      });
-    },
-    [i18n, openChatWithContext]
-  );
+  const [materialsLauncherOpen, setMaterialsLauncherOpen] = useState(false);
+  const [materialsLauncherFormat, setMaterialsLauncherFormat] =
+    useState<MaterialFormat | null>(null);
 
-  // #83e — "From canvas" wizard option: the launcher already converted the
-  // picked canvas into a real output via Api.workCanvasCreateOutput (content
-  // included, no Teresa seeding needed) — just take the user to it.
-  const handleCanvasOutputCreated = useCallback(
-    (output: CanvasOutputResource) => {
-      const successMsg = t('rap.outputs.launcher.canvasConvertSuccess', 'Created from canvas');
-      toast.success(`${output.title} — ${successMsg}`);
-      if (output.url) {
-        navigate(output.url);
+  const openMaterialsLauncher = useCallback((defaultFormat: MaterialFormat | null) => {
+    setMaterialsLauncherFormat(defaultFormat);
+    setMaterialsLauncherOpen(true);
+  }, []);
+
+  // KROK 1 → KROK 2 → nawigacja do realnego silnika (mapa: brief §"FAKTY Z
+  // INWENTARYZACJI"). `entry`/`view=new` — sygnał trybu czytany przez
+  // DocumentStudioView/PrezentacjeView/ExceleView (patrz te pliki, 2026-07-24).
+  const handleMaterialsLauncherSelect = useCallback(
+    (format: MaterialFormat, start: MaterialStart) => {
+      setMaterialsLauncherOpen(false);
+      if (format === 'document') {
+        navigate(
+          start === 'blank'
+            ? '/document-studio?entry=blank'
+            : start === 'ai'
+              ? '/document-studio?entry=ai'
+              : '/document-studio?entry=template'
+        );
+      } else if (format === 'presentation') {
+        navigate(
+          start === 'blank'
+            ? '/prezentacje?view=new&entry=blank'
+            : start === 'ai'
+              ? '/prezentacje?view=new&entry=ai'
+              // "Z szablonu" — brak konkretnego templateId na tym kroku (KROK 2
+              // nie wybiera pojedynczego szablonu), więc lądujemy na ekranie
+              // wyboru szablonu Decka (ArtifactModuleHome „Templates"), zgodnie
+              // z tym, co robi własny TriModeChooser Prezentacji (onTemplate).
+              : '/prezentacje'
+        );
+      } else {
+        navigate(
+          start === 'blank'
+            ? '/excele?view=new&entry=blank'
+            : start === 'ai'
+              ? '/excele?view=new&entry=ai'
+              // "Z szablonu" — jw., ekran wyboru szablonu Excela (ArtifactModuleHome).
+              : '/excele'
+        );
       }
     },
-    [navigate, t]
+    [navigate]
   );
 
-  // #83c/#83d wpięcie: „Nowy szablon" w Bibliotece wzorców otwiera
-  // TemplateBuilderFlow (wizard→builder) za flagą; OFF ⇒ stare zachowanie
-  // (fail-safe, navigate do /reports/builder?tab=templates).
+  const materialsFormatTiles = useMemo(
+    () => [
+      {
+        id: 'document' as MaterialFormat,
+        icon: FileText,
+        title: t('rap.materialsLauncher.document', 'Dokument'),
+      },
+      {
+        id: 'presentation' as MaterialFormat,
+        icon: Presentation,
+        title: t('rap.materialsLauncher.presentation', 'Prezentacja'),
+      },
+      {
+        id: 'spreadsheet' as MaterialFormat,
+        icon: FileSpreadsheet,
+        title: t('rap.materialsLauncher.spreadsheet', 'Arkusz Excel'),
+      },
+    ],
+    [t]
+  );
+
+  const materialsModeTiles = useMemo(
+    () => [
+      {
+        id: 'blank' as MaterialStart,
+        icon: PenLine,
+        title: t('rap.materialsLauncher.blankTitle', 'Czysto'),
+        desc: t(
+          'rap.materialsLauncher.blankDesc',
+          'Ręczny start — pusty artefakt w edytorze, bez AI.'
+        ),
+      },
+      {
+        id: 'ai' as MaterialStart,
+        icon: Sparkles,
+        title: t('rap.materialsLauncher.aiTitle', 'Z AI'),
+        desc: t('rap.materialsLauncher.aiDesc', 'Opisz brief — AI zbuduje pierwszą wersję.'),
+      },
+      {
+        id: 'from_template' as MaterialStart,
+        icon: LayoutTemplate,
+        title: t('rap.materialsLauncher.templateTitle', 'Z szablonu'),
+        desc: t('rap.materialsLauncher.templateDesc', 'Wybierz istniejący szablon i dostosuj.'),
+      },
+    ],
+    [t]
+  );
+
+  // Analogiczna tablica dla Biblioteki szablonów (item 4 briefu): typ szablonu
+  // → tryb → architekt danego formatu (nie artefakt — kolejny SZABLON).
+  // Architekci mają dziś JEDEN przepływ (AI-plan + wybór+klon istniejącego w
+  // tej samej liście) — 3 kafle trybu prowadzą świadomie do TEGO SAMEGO
+  // ekranu; realne różnicowanie wejścia per tryb w architekcie = osobna
+  // robota (poza zakresem entry-only, patrz renderNotes handoffu).
+  type TemplateFormat = 'document' | 'presentation' | 'spreadsheet';
+  type TemplateStart = 'blank' | 'ai' | 'from_existing';
+
+  const [templateLauncherOpen, setTemplateLauncherOpen] = useState(false);
+
+  const handleTemplateLauncherSelect = useCallback(
+    (format: TemplateFormat, _start: TemplateStart) => {
+      setTemplateLauncherOpen(false);
+      if (format === 'document') {
+        navigate('/document-studio?tab=templates');
+        return;
+      }
+      const targetTab = format === 'presentation' ? 'template_architect' : 'workbook_templates';
+      const params = new URLSearchParams(location.search || '');
+      params.set('tab', targetTab);
+      navigate(`${location.pathname}?${params.toString()}`);
+    },
+    [navigate, location.pathname, location.search]
+  );
+
+  const templateFormatTiles = useMemo(
+    () => [
+      { id: 'document' as TemplateFormat, icon: FileText, title: t('rap.templatesLauncher.document', 'Word') },
+      {
+        id: 'presentation' as TemplateFormat,
+        icon: Presentation,
+        title: t('rap.templatesLauncher.presentation', 'Prezentacja'),
+      },
+      {
+        id: 'spreadsheet' as TemplateFormat,
+        icon: FileSpreadsheet,
+        title: t('rap.templatesLauncher.spreadsheet', 'Excel'),
+      },
+    ],
+    [t]
+  );
+
+  const templateModeTiles = useMemo(
+    () => [
+      {
+        id: 'blank' as TemplateStart,
+        icon: PenLine,
+        title: t('rap.templatesLauncher.blankTitle', 'Od czystego'),
+        desc: t('rap.templatesLauncher.blankDesc', 'Nowy szablon od zera w architekcie.'),
+      },
+      {
+        id: 'ai' as TemplateStart,
+        icon: Sparkles,
+        title: t('rap.templatesLauncher.aiTitle', 'Z AI'),
+        desc: t('rap.templatesLauncher.aiDesc', 'Opisz szablon — architekt zaplanuje strukturę.'),
+      },
+      {
+        id: 'from_existing' as TemplateStart,
+        icon: LayoutTemplate,
+        title: t('rap.templatesLauncher.existingTitle', 'Na bazie istniejącego'),
+        desc: t('rap.templatesLauncher.existingDesc', 'Sklonuj zatwierdzony szablon i dostosuj.'),
+      },
+    ],
+    [t]
+  );
+
+  // #83c/#83d legacy: TemplateBuilderFlow (wizard→builder) pozostaje w kodzie
+  // (state + render niżej, NIE kasowany) ale od 2026-07-24 „Dodaj" w Bibliotece
+  // szablonów otwiera zamiast niego tablicę format→tryb→architekt (item 4
+  // briefu Materiały-entry — decyzja świadoma, patrz handoff/renderNotes).
   const [templateBuilderOpen, setTemplateBuilderOpen] = useState(false);
 
   const handleNewItem = useCallback(() => {
     switch (activeTab) {
+      // Documents/Presentations/Sheets/All(+Mine/Review) — wspólna dwustopniowa
+      // tablica Materiałów (KROK 1 format, KROK 2 tryb), NIE gated przez
+      // isDeliverablesLightEnabled już (bramka była martwa: flaga nigdy nie ON
+      // w env). Tablica to zwykły React-modal bez zależności zewnętrznych, więc
+      // nie ma dziś warunku „niedostępności" do fallbacku — jeśli kiedyś
+      // zajdzie taka potrzeba, dopisać awaryjny navigate() tutaj.
       case 'outputs_documents':
-        navigate('/reports/builder');
+        openMaterialsLauncher('document');
         break;
       case 'presentations':
-        navigate('/presentations/wizard');
+        openMaterialsLauncher('presentation');
+        break;
+      case 'outputs_sheets':
+        openMaterialsLauncher('spreadsheet');
         break;
       case 'templates':
-        if (isTemplateBuilderEnabled()) {
-          setTemplateBuilderOpen(true);
-        } else {
-          navigate('/reports/builder?tab=templates');
-        }
+        setTemplateLauncherOpen(true);
         break;
       case 'outputs_all':
       case 'outputs_mine':
       case 'outputs_review':
-        // Wspólny launcher za flagą; OFF ⇒ stare zachowanie (fail-safe).
-        if (isDeliverablesLightEnabled()) {
-          setLauncherOpen(true);
-        } else {
-          navigate('/presentations?tab=templates');
-        }
+        openMaterialsLauncher(null);
         break;
       default:
         break;
     }
-  }, [activeTab, navigate]);
+  }, [activeTab, openMaterialsLauncher]);
 
   // Keep route-driven entry stable (e.g. /presentations should open "presentations" tab).
   // This also supports direct links like /reports?tab=templates.
@@ -1220,9 +1353,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         onNewItem={
-          activeTab === 'outputs_sheets' ||
-          activeTab === 'template_architect' ||
-          activeTab === 'workbook_templates'
+          // Sheets odblokowane 2026-07-24 (item 3) — dostaje tablicę jak
+          // Documents/Presentations/All. template_architect/workbook_templates
+          // to zakładki-NARZĘDZIA (Menu 2 sprzątanie = poza zakresem entry-only),
+          // bez semantyki „nowy" — CTA zostaje ukryte jak dziś.
+          activeTab === 'template_architect' || activeTab === 'workbook_templates'
             ? undefined
             : handleNewItem
         }
@@ -1234,15 +1369,41 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       >
         <div className="h-full min-h-0 overflow-hidden">{renderTabContent()}</div>
       </ModuleHub>
-      <OutputsLauncherModal
-        open={launcherOpen}
-        onClose={() => setLauncherOpen(false)}
-        onSelect={handleLauncherSelect}
-        onCanvasOutputCreated={handleCanvasOutputCreated}
-        onBundleGenerated={() => {
-          setBundleRefresh((n) => n + 1);
-          setBundleHistoryOpen(true); // rozwiń historię, żeby świeży bundle był widoczny
-        }}
+      {/* Materiały — wspólne „Dodaj" (Documents/Presentations/Sheets/All), item 1-3
+          briefu Materiały-entry 2026-07-24. Zastępuje martwy OutputsLauncherModal
+          (nadal istnieje w repo, `./OutputsLauncherModal.tsx`, nieużywany z tego
+          miejsca — legacy nie skasowany, tylko odpięty). */}
+      <CreateFormatModeLauncher<MaterialFormat, MaterialStart>
+        isOpen={materialsLauncherOpen}
+        onClose={() => setMaterialsLauncherOpen(false)}
+        title={t('rap.materialsLauncher.title', 'Nowy materiał')}
+        stepOneHint={t('rap.materialsLauncher.subtitle', 'Wybierz format')}
+        stepTwoTitle={() => t('rap.materialsLauncher.chooseMode', 'Jak chcesz zacząć?')}
+        stepTwoHint={() =>
+          t('rap.materialsLauncher.modeHint', 'Wybierz tryb — wszystkie trzy są równorzędne.')
+        }
+        formatTiles={materialsFormatTiles}
+        modeTiles={materialsModeTiles}
+        defaultFormat={materialsLauncherFormat}
+        onSelect={handleMaterialsLauncherSelect}
+        testId="materials-create-launcher"
+      />
+
+      {/* Biblioteka szablonów — „Dodaj" analogiczny, item 4 briefu Materiały-entry
+          2026-07-24: typ szablonu → tryb → architekt danego formatu. */}
+      <CreateFormatModeLauncher<TemplateFormat, TemplateStart>
+        isOpen={templateLauncherOpen}
+        onClose={() => setTemplateLauncherOpen(false)}
+        title={t('rap.templatesLauncher.title', 'Nowy szablon')}
+        stepOneHint={t('rap.templatesLauncher.subtitle', 'Wybierz typ szablonu')}
+        stepTwoTitle={() => t('rap.materialsLauncher.chooseMode', 'Jak chcesz zacząć?')}
+        stepTwoHint={() =>
+          t('rap.materialsLauncher.modeHint', 'Wybierz tryb — wszystkie trzy są równorzędne.')
+        }
+        formatTiles={templateFormatTiles}
+        modeTiles={templateModeTiles}
+        onSelect={handleTemplateLauncherSelect}
+        testId="template-library-create-launcher"
       />
 
       {/* #83c/#83d — „Nowy szablon" (Biblioteka wzorców) → wizard→builder, za flagą
