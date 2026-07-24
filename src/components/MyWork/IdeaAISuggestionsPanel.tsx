@@ -69,42 +69,38 @@ const MM_GENERATOR_ACTIONS = [
   },
 ];
 
+// P1-5: ta sekcja nazywa sie „AI Generators", a wczesniej dispatchowala
+// `wb_add_cluster/theme/outcome` — czyli wstawiala PUSTE elementy z etykieta
+// „Cluster"/„Theme", NIE wolajac modelu. Etykiety obiecywaly „Auto-klasteryzacja"
+// / „Wyodrębnij tematy", wiec byl to falsz (Z1 §3 zakaz 7: funkcja bez wywolania
+// modelu nie nazywa sie „AI"). Teraz kazda pozycja dispatchuje realny generator
+// `wb_ai_*`, ktory idzie przez `generateAIProposal` (LLM + model propozycji:
+// podglad → akceptuj/odrzuc). Puste wstawki (Dodaj karteczke/decyzje/akcje) to
+// narzedzia tworzenia z LEWEGO raila, nie generatory AI — nie maja tu miejsca.
 const WB_GENERATOR_ACTIONS = [
   {
-    action: 'wb_add_sticky',
-    iconEl: Sparkles,
-    labelPl: 'Dodaj notatki (AI)',
-    labelEn: 'Add notes (AI)',
+    action: 'wb_ai_find_themes',
+    iconEl: Target,
+    labelPl: 'Wyodrębnij tematy (AI)',
+    labelEn: 'Find themes (AI)',
   },
   {
-    action: 'wb_add_cluster',
+    action: 'wb_ai_name_clusters',
     iconEl: GitBranch,
-    labelPl: 'Auto-klasteryzacja',
-    labelEn: 'Auto-clustering',
+    labelPl: 'Nazwij klastry (AI)',
+    labelEn: 'Name clusters (AI)',
   },
   {
-    action: 'wb_add_theme',
-    iconEl: Target,
-    labelPl: 'Wyodrębnij tematy',
-    labelEn: 'Extract themes',
-  },
-  {
-    action: 'wb_add_outcome',
-    iconEl: Lightbulb,
-    labelPl: 'Zidentyfikuj wyniki',
-    labelEn: 'Identify outcomes',
-  },
-  {
-    action: 'wb_add_decision',
+    action: 'wb_ai_extract_actions',
     iconEl: ListChecks,
-    labelPl: 'Zapisz decyzję',
-    labelEn: 'Record decision',
+    labelPl: 'Wyodrębnij działania (AI)',
+    labelEn: 'Extract action items (AI)',
   },
   {
-    action: 'wb_add_action',
-    iconEl: Target,
-    labelPl: 'Dodaj akcję',
-    labelEn: 'Add action item',
+    action: 'wb_ai_to_map',
+    iconEl: Lightbulb,
+    labelPl: 'Zamień w mapę (AI)',
+    labelEn: 'Convert to map (AI)',
   },
 ];
 
