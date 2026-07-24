@@ -166,18 +166,29 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
         </div>
 
         {/* ── Segment 2: Sticky toolbar ──────────────────────────────────────────── */}
+        {/* Padding `px-6` siedzi NA ZEWNĄTRZ limitu `max-w-6xl`, identycznie jak
+            Segment 1 (Menu 1, :153) i Segment 3 (Sekcje, :188). Wcześniej `px-6`
+            było WEWNĄTRZ limitu (`max-w-6xl mx-auto px-6`) i zjadało 48 px tylko
+            Menu 2 przy szerokim oknie — pasek akcji rozjeżdżał się względem
+            nagłówka o 2×24 px (zmierzone 2026-07-24: Menu 1 szer. 1152, Menu 2
+            szer. 1104). Tło/ramka/`mt-2` zostają na pełnowymiarowym pasku
+            (`NMODE_TOOLBAR_SHELL_CLASS`), więc sticky-tło dalej biegnie od
+            krawędzi do krawędzi. Zmiana jest wspólna dla wszystkich sześciu
+            kart N na tej powłoce. */}
         <div className={NMODE_TOOLBAR_SHELL_CLASS}>
-          <div className="max-w-6xl mx-auto px-6 py-2">
-            {renderActionBar
-              ? actionBarNode
-              : ((actionsVisible && actions.length > 0) || toolAIActions.length > 0) && (
-                  <NModeActionBar
-                    actions={actionsVisible ? actions : []}
-                    aiContextActions={aiContextActions}
-                    toolAIActions={toolAIActions}
-                    activeSection={activeSection}
-                  />
-                )}
+          <div className="px-6 py-2">
+            <div className="max-w-6xl mx-auto">
+              {renderActionBar
+                ? actionBarNode
+                : ((actionsVisible && actions.length > 0) || toolAIActions.length > 0) && (
+                    <NModeActionBar
+                      actions={actionsVisible ? actions : []}
+                      aiContextActions={aiContextActions}
+                      toolAIActions={toolAIActions}
+                      activeSection={activeSection}
+                    />
+                  )}
+            </div>
           </div>
         </div>
 

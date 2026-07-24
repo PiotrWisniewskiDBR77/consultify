@@ -9089,16 +9089,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           //   - "Prezentuj"     : i tak wylaczone flaga VITE_PRESENT_MODE.
           //
           // ⚠ 2026-07-23 (sędzia grafiki, pkt 8) — SZEROKOŚĆ MENU 2 = SZEROKOŚĆ
-          // MENU 1. Powłoka `NModeShell` hostuje pasek w kontenerze
-          // `max-w-6xl mx-auto px-6 py-2`; te `px-6` zwężały Menu 2 o 2×24 px
-          // względem nagłówka i centrum (zmierzone: Menu 1 x=28 w=1152,
-          // Menu 2 x=52 w=1104). Pasek czytał się jak element DOKLEJONY, nie
-          // jak drugie menu tego samego ekranu. `-mx-6` znosi dokładnie to
-          // wcięcie i wyrównuje krawędzie do reszty kolumny. Robimy to po
-          // stronie karty, a nie w `NModeShell`, bo powłoka jest wspólna dla
-          // Inicjatywy / Narzędzia / Wywiadu (osobne karty, osobny odbiór).
+          // MENU 1. NAPRAWIONE 2026-07-24 W POWŁOCE (Etap 0): `NModeShell`
+          // przeniósł `px-6` NA ZEWNĄTRZ limitu `max-w-6xl` (Segment 2), więc
+          // Menu 2 ma teraz tę samą geometrię co Menu 1 i Sekcje bez żadnej
+          // korekty po stronie karty. Poprzedni obejściowy `<div className="-mx-6">`
+          // ZDJĘTY: po naprawie powłoki nadmiernie korygował (wypychał pasek
+          // 24 px w lewo i poszerzał o 48 px), tworząc rozjazd w drugą stronę
+          // i doklejając menu do krawędzi przy wąskim oknie.
           return (
-            <div className="-mx-6">
             <NModeMenu2
               isPolish={isPolish}
               readMode={readMode}
@@ -9360,7 +9358,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               }
             />
-            </div>
           );
         }}
       >
