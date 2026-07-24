@@ -431,6 +431,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const [mapRefreshToken, setMapRefreshToken] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const userSelectedToolRef = React.useRef(false);
+  /**
+   * Narzedzie ZALADOWANE z serwera dla tej Idei (jej wlasna natura).
+   * Sluzy jako tarcza przed korupcja: autozapis nie moze nadpisac typu Idei
+   * wartoscia, ktora wziela sie z fallbacku, a nie ze swiadomego wyboru.
+   */
+  const zaladowaneNarzedzieRef = React.useRef<CanvasToolType | null>(null);
   const aiKickoffTriggeredRef = React.useRef(false);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const workspaceRootRef = useRef<HTMLDivElement>(null);
@@ -588,7 +594,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     ideaId: realId,
     open: Boolean(realId && (!isNewInitial || realId !== ideaId)),
     locked: canvasLocked,
-    preferredTool: activeTool,
+    // ★ TARCZA PRZED KORUPCJA (2026-07-24): autozapis pisze `preferred_tool`
+    // przy KAZDYM zapisie. Gdy widok wynikl z fallbacku (a nie z wyboru
+    // uzytkownika) i fallback byl zly, ten zapis NADPISYWAL prawdziwy typ Idei
+    // w bazie — tak Proces ofertowania stal sie „mapa rekomendacji", a mapa
+    // zdarla `type:'flowNode'` z 12 krokow. Odtad typ nadpisujemy WYLACZNIE gdy
+    // uzytkownik swiadomie przelaczyl narzedzie; inaczej oddajemy to, co
+    // przyszlo z serwera.
+    preferredTool: userSelectedToolRef.current
+      ? activeTool
+      : zaladowaneNarzedzieRef.current || activeTool,
     language: i18n.language || 'en',
     onConflict: handleGraphConflict,
   });
@@ -1561,6 +1576,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               // uzywamy go wylacznie gdy TEN uzytkownik nie ma wlasnego zdania
               // o tej Idei, wiec nikomu nic sie nie przelacza.
               const wlasnaNatura = mapRes?.map?.preferredTool;
+              if (wlasnaNatura) zaladowaneNarzedzieRef.current = wlasnaNatura as CanvasToolType;
               if (
                 wlasnaNatura === 'mindmap' ||
                 wlasnaNatura === 'whiteboard' ||
