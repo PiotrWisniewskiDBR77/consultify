@@ -21,8 +21,8 @@ Wszystkie pięć pozycji P0 tknięte. Dowody to pomiary w działającej aplikacj
 
 | ID | Stan | Dowód |
 |---|---|---|
-| `P0-1` | naprawione, **migracja nieuruchomiona** | tabela `my_idea_conversions`; `promoted_to`/`stage` zmienia się tylko przy konwersji całej Idei. Ograniczenie: frontend nie wysyła jawnego `scope`, backend wnioskuje z `nodeIds` |
-| `P0-2` | naprawione **za flagą `ideaImportGuardRail` (domyślnie OFF)** | podgląd z liczbami → potwierdzenie → snapshot przed zmianą → cofnięcie. Czeka na akcept właściciela |
+| `P0-1` | **zamknięte, migracja na staging** | Sprawdzone realną konwersją przez API: fragment (`nodeIds`) → wpis historii `scope='selection'`, etap Idei **nietknięty** (`seed`, `promoted_to` NULL); całość → drugi wpis `scope='workspace'` + etap `promoted`. Dwa wpisy współistnieją — przed naprawą drugi kasował ślad pierwszego. Rekordy próbne posprzątane. Ograniczenie: frontend nie wysyła jawnego `scope`, backend wnioskuje z `nodeIds` |
+| `P0-2` | **zamknięte, flaga ON** | podgląd z konkretnymi liczbami → potwierdzenie → snapshot przed zmianą → cofnięcie. Zweryfikowane renderem: komunikat mówi wprost, ile elementów usunie i ile wstawi. Flaga włączona domyślnie 2026-07-24 — OFF znaczyło, że jedno kliknięcie nadal kasuje cały graf bez ostrzeżenia |
 | `P0-3` | **zamknięte** | repro na Idei bez bazy: dokładnie 1 `POST /table-platform/bases`, 1 tabela, 19 węzłów bez duplikatu (było 2 bazy → treść podwojona) |
 | `P0-4` | **zamknięte** | 5 ikon = 5 różnych treści (odciski treści unikalne: mapa 5/5, tablica 4/4, proces 5/5, tabela 3/3). Zakładki bez treści wyłączone z podanym powodem |
 | `P0-5` | naprawione | wektorem nie był WebSocket, tylko współdzielony wiersz `my_idea_maps` (`preferred_tool` + `surfaceState.activeTool`) czytany przez każdego członka organizacji. Stan widoku przeniesiony do `localStorage` per użytkownik |
