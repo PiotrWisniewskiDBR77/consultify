@@ -3663,7 +3663,7 @@ Use userId only from this list:
       t('decisions.detail.quickArgs.proBetterQuality', 'Better quality'),
       t('decisions.detail.quickArgs.proScalability', 'Scalability'),
     ],
-    [i18n.language]
+    [i18n.language, t]
   );
   const quickConArguments = useMemo(
     () => [
@@ -3673,7 +3673,7 @@ Use userId only from this list:
       t('decisions.detail.quickArgs.conComplexity', 'Higher complexity'),
       t('decisions.detail.quickArgs.conVendorDependency', 'Vendor dependency'),
     ],
-    [i18n.language]
+    [i18n.language, t]
   );
   const riskLevelOptions = useMemo(() => ['low', 'medium', 'high', 'critical'] as const, []);
   const riskCategoryOptions = useMemo(

@@ -18,6 +18,9 @@ import '../src/index.css';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
+// TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
+// `?slowLocale=<ms>`; no effect otherwise.
+import './slowLocaleFetch';
 // Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
 import i18n from '../src/i18n';
 import AccentSoftTokenFixScreen from './screens/accent-soft-token-fix';
