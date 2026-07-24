@@ -56,6 +56,12 @@ export interface AutoFitTextareaProps extends Omit<
   editClassName?: string;
   /** Klasy kontenera pola (etykieta + AI + textarea + powrót do auto-fitu). */
   containerClassName?: string;
+  /**
+   * Dodatkowy ref na `textarea` — dla wołających, którzy muszą ustawić fokus
+   * z zewnątrz (np. „✎ Edytuj" w pasku karty). Komponent NIE oddaje swojego
+   * wewnętrznego refa (auto-fit go potrzebuje), tylko synchronizuje ten podany.
+   */
+  textareaRef?: React.MutableRefObject<HTMLTextAreaElement | null>;
 }
 
 export const AutoFitTextarea: React.FC<AutoFitTextareaProps> = ({
@@ -70,9 +76,17 @@ export const AutoFitTextarea: React.FC<AutoFitTextareaProps> = ({
   editClassName = '',
   containerClassName = '',
   readOnly,
+  textareaRef,
   ...rest
 }) => {
   const ref = useRef<HTMLTextAreaElement | null>(null);
+  const attachRef = useCallback(
+    (node: HTMLTextAreaElement | null) => {
+      ref.current = node;
+      if (textareaRef) textareaRef.current = node;
+    },
+    [textareaRef]
+  );
   /** Wysokość, którą komponent sam ostatnio nadał (odróżnia własne od cudzych zmian). */
   const appliedHeightRef = useRef<number | null>(null);
   /** Wysokość zamrożona uchwytem; `null` = tryb auto-fit. */
@@ -189,7 +203,7 @@ export const AutoFitTextarea: React.FC<AutoFitTextareaProps> = ({
 
       <textarea
         {...rest}
-        ref={ref}
+        ref={attachRef}
         value={value}
         readOnly={previewMode || readOnly}
         onChange={(e) => {

@@ -2,12 +2,12 @@
 
 Obiektów: 18 × 2 motywy = 36 sprawdzeń.
 
-- **Decyzja** — gotowe (treść 865 zn., 39 elementów klikalnych)
+- **Decyzja** — gotowe (treść 841 zn., 38 elementów klikalnych)
 - **Zadanie** — gotowe (treść 1048 zn., 33 elementów klikalnych)
-- **Powiadomienie** — gotowe (treść 469 zn., 22 elementów klikalnych)
-- **Insight** — gotowe (treść 3117 zn., 52 elementów klikalnych)
-- **Narzędzie** — gotowe (treść 6273 zn., 16 elementów klikalnych)
-- **Inicjatywa** — gotowe (treść 956 zn., 36 elementów klikalnych)
+- **Powiadomienie** — gotowe (treść 538 zn., 23 elementów klikalnych)
+- **Insight** — gotowe (treść 5849 zn., 34 elementów klikalnych)
+- **Narzędzie** — gotowe (treść 6229 zn., 15 elementów klikalnych)
+- **Inicjatywa** — gotowe (treść 729 zn., 21 elementów klikalnych)
 - **Idea jako tabela** — gotowe (treść 1111 zn., 40 elementów klikalnych)
 - **Idea jako mapa myśli** — gotowe (treść 1002 zn., 74 elementów klikalnych)
 - **Idea jako tablica** — gotowe (treść 935 zn., 59 elementów klikalnych)

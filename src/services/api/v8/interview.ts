@@ -189,6 +189,16 @@ export interface V8InterviewInsight {
   exportedToTools?: boolean;
   exportedToAssessment?: boolean;
   archivedAt?: string | null;
+  /** Mark Complete per sekcja — sygnał dla AI, nigdy blokada pola. */
+  sectionCompletions?: Record<string, boolean> | null;
+  /**
+   * Ręczna redakcja treści sekcji (n-Type §6.2). Klucz = render-id sekcji
+   * z `INSIGHT_SECTIONS`. Leży OBOK treści AI — regeneracja jej nie kasuje.
+   */
+  sectionOverrides?: Record<
+    string,
+    { content: string; updatedAt: string; updatedBy?: string | null }
+  > | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -797,6 +807,16 @@ export const V8InterviewApi = {
       archived?: boolean;
       /** Mark Complete signal — AI only. { sectionId: boolean, ... } */
       sectionCompletions?: Record<string, boolean>;
+      /**
+       * Ręczna redakcja treści sekcji (standard n-Type §6.2; decyzja właściciela
+       * 2026-07-23). Mapa CZĘŚCIOWA — serwer scala z tym, co już zapisane:
+       *  · `{ themes: 'tekst' }` → ustawia/aktualizuje sekcję `themes`,
+       *  · `{ themes: null }`    → usuwa nadpisanie (sekcja wraca do treści AI),
+       *  · klucz nieobecny       → NIETKNIĘTY (dwie osoby mogą redagować różne
+       *                            sekcje bez kasowania sobie zmian).
+       * `updatedAt`/`updatedBy` wyprowadza SERWER — klient ich nie wysyła.
+       */
+      sectionOverrides?: Record<string, string | null>;
     }
   ) => v8Patch<{ success: boolean }>(`/interview/insights/${encodeURIComponent(id)}`, payload),
 

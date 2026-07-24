@@ -65,6 +65,9 @@ import { InitiativeGeneratorModal } from '@/components/Initiatives/Wizard/Initia
 import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
 import type { DeckCard } from '@/components/Presentations/wizard/types';
 import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
+// n-Type §6.2–6.4 — ręczna edycja treści sekcji Insightu (właściciel 2026-07-23).
+import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
+import { AutoFitTextarea } from '@/components/shared/AutoFitTextarea';
 import { Select } from '@/components/shared/forms';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
@@ -756,21 +759,22 @@ const STATUS_PILL: Record<string, { bg: string; text: string; dot: string }> = {
 // NEW analytical "between the lines" sections (#22c / #23d) derive purely from
 // data already in scope (no new backend calls); each shows an informative
 // empty-state until the underlying multi-respondent data exists.
+// ── ROZSTRZYGNIĘCIE (właściciel, 2026-07-23, decyzja nr 2) ───────────────────
+// Kafelki „Rozpocznij decyzję" / „Rozpocznij inicjatywę" (i reszta rodziny:
+// raport, prezentacja, tabela, idea, notatka) BYŁY sekcją centrum
+// `artifact-actions` (etykieta „Rezultaty"). Teraz mieszkają w PRAWYM PANELU,
+// w sekcji Rezultaty na pozycji 5 (standard n-Type §7.2/§7.7 +
+// 04_INSIGHT_BLEDY_I_ZMIANY §6.2/§6.3).
+//
+// Sekcja centrum ZNIKA — właściciel powiedział wprost: „Nie dubluj: jeśli kafel
+// idzie do Rezultatów, znika z centrum". Wpis nawigacji usunięty stąd; JSX
+// kafelków powstaje teraz w JEDNYM miejscu — `resultTilesNode` przy budowie
+// prawego panelu (wariant `compact` pod szerokość panelu).
+// `insightCardContract.ts` (flaga default OFF) zostaje NIETKNIĘTY — id żyje
+// dalej w katalogu kanonicznym; `applyToSections` po prostu nie znajdzie dla
+// niego sekcji, a picker „Sekcje ▾" chodzi po sekcjach, nie po katalogu, więc
+// nie pokaże fantomu.
 const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
-  {
-    // KLASYFIKACJA (zgłoszenie właściciela 2026-07-23, pkt 1): utworzenie
-    // kolejnego artefaktu (decyzja / inicjatywa / raport / prezentacja) to
-    // REZULTAT wniosku, a nie „dalsza akcja". Etykieta była „Dalsze akcje"
-    // i mieszała dwie różne rzeczy: co z tego wniosku POWSTAJE (tu) z tym, co
-    // można na nim ZROBIĆ (status, recenzja — prawy panel, sekcja Akcje).
-    // Zmieniona jest WYŁĄCZNIE etykieta; `id` zostaje, bo `artifact-actions`
-    // ma rolę `rdzen` w kontrakcie karty (insightCardContract.ts) i jest
-    // nieusuwalne typem — zmiana id zerwałaby katalog kart.
-    id: 'artifact-actions',
-    icon: Rocket,
-    label: { en: 'Results', pl: 'Rezultaty' },
-    cSpan: 2,
-  },
   {
     id: 'executive-summary',
     icon: Star,
@@ -955,6 +959,10 @@ const InsightSectionCardHeader: React.FC<InsightSectionCardHeaderProps> = ({
   // Pusta karta nie ma stanu do pokazania (empty badge = null) i nie ma treści
   // do regeneracji/akceptacji — pasek nic by nie wnosił.
   if (state === 'empty') return null;
+  // Podgląd (readOnly): pasek nie ma już czego pokazać — akcje są schowane, a
+  // badge stanu redakcyjnego („Szkic AI"/„Edytowane") to kuchnia, nie treść dla
+  // klienta. Spójne z `hideBadge` w NModeCardState. Edycja bez zmian.
+  if (readOnly) return null;
 
   const isDone = state === 'done';
   const actionBase =
@@ -1017,12 +1025,189 @@ const InsightSectionCardHeader: React.FC<InsightSectionCardHeaderProps> = ({
   );
 };
 
+// ── Ręczna edycja treści sekcji (n-Type §6.2–6.4, właściciel 2026-07-23) ─────
+//
+// DECYZJA WŁAŚCICIELA: „każda sekcja Insightu dostaje pole do ręcznej edycji".
+// Do dziś treść Insightu była read-only markdownem z AI, a „edycja" oznaczała
+// otwarcie czatu (`onEdit={handleOpenChat}`) — czyli prośbę do modelu, nie
+// edycję. Tu jest realne pole ze standardem: `AutoFitTextarea` (auto-fit,
+// ręczny uchwyt z pamięcią wysokości, powrót do auto — §6.3), przycisk AI
+// FIOLETOWY w prawym górnym rogu (§6.4, `AIFieldEnhancer` = propozycja +
+// Zastosuj/Odrzuć, nigdy ciche nadpisanie) i `previewMode` pod trybem
+// Edycja/Podgląd (§4.4 — w Podglądzie znikają uchwyt, AI i ramki edycyjne).
+//
+// ZAKRES ŚWIADOMIE WĄSKI (patrz raport, punkt „do decyzji"): pole NIE zastępuje
+// bloku wygenerowanego przez AI — leży NAD nim jako redakcja konsultanta.
+// Czy ręczna treść ma WYPIERAĆ treść AI w Podglądzie/eksporcie/PDF, to decyzja
+// produktowa właściciela, a nie coś, co wolno domyślić kodem.
+//
+// Kolory: zero `primary-*` (crimson) — tokeny `c-*`, akcent AI z `AIFieldEnhancer`
+// (`c-ai`, fiolet), fokus `c-focus`.
+interface InsightSectionManualFieldProps {
+  sectionId: string;
+  sectionLabel: string;
+  /** Wartość robocza (draft) — nie to samo co zapisane nadpisanie. */
+  value: string;
+  onValueChange: (value: string) => void;
+  /** Zapis do backendu (blur / „Zapisz"). */
+  onSave: () => void;
+  /** Usunięcie nadpisania — sekcja wraca do czystej treści z AI. */
+  onRevert: () => void;
+  /** Czy na wniosku jest ZAPISANE nadpisanie tej sekcji. */
+  hasOverride: boolean;
+  saving: boolean;
+  dirty: boolean;
+  /** Tryb Podgląd (§4.4) — czytelnia, bez uchwytu/AI/ramek. */
+  previewMode: boolean;
+  isPolish: boolean;
+  artifactTitle: string;
+  artifactStatus?: string;
+  savedAt?: string;
+  /** Ref na textarea — „✎ Edytuj" w pasku karty ustawia tu fokus. */
+  textareaRef?: React.MutableRefObject<HTMLTextAreaElement | null>;
+}
+
+const InsightSectionManualField: React.FC<InsightSectionManualFieldProps> = ({
+  sectionId,
+  sectionLabel,
+  value,
+  onValueChange,
+  onSave,
+  onRevert,
+  hasOverride,
+  saving,
+  dirty,
+  previewMode,
+  isPolish,
+  artifactTitle,
+  artifactStatus,
+  savedAt,
+  textareaRef,
+}) => {
+  const { t } = useTranslation();
+
+  // Podgląd bez treści = nic do pokazania. Klientowi nie pokazujemy pustego
+  // okienka „tu mogłaby być treść" (§4.4 — Podgląd jest czytelnią).
+  if (previewMode && !value.trim()) return null;
+
+  const savedLabel = (() => {
+    if (saving) return t('interview.insightViewer.manualFieldSaving', 'Saving…');
+    if (dirty) return t('interview.insightViewer.manualFieldUnsaved', 'Unsaved changes');
+    if (!savedAt) return null;
+    const d = new Date(savedAt);
+    if (Number.isNaN(d.getTime())) return null;
+    try {
+      return `${t('interview.insightViewer.manualFieldSavedAt', 'Saved')} ${d.toLocaleString(
+        isPolish ? 'pl-PL' : 'en-US',
+        { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }
+      )}`;
+    } catch {
+      return null;
+    }
+  })();
+
+  return (
+    // §4.4 — w Podglądzie ZNIKAJĄ ramki edycyjne. Zostaje sam tekst z etykietą
+    // pola; obwódka i tło „pojemnika do pisania" należą do trybu Edycja.
+    <div
+      className={
+        previewMode
+          ? 'mb-4'
+          : 'mb-4 rounded-2xl border border-c-border-subtle bg-c-surface-raised/40 p-3'
+      }
+    >
+      <AutoFitTextarea
+        value={value}
+        onValueChange={onValueChange}
+        onBlur={onSave}
+        previewMode={previewMode}
+        // Edycja rezerwuje miejsce do pisania (4 wiersze); Podgląd jest
+        // czytelnią i nie ma powodu ciągnąć pustego prostokąta pod krótkim
+        // akapitem — wysokość idzie wtedy czysto z treści.
+        minRows={previewMode ? 1 : 4}
+        containerClassName="space-y-1"
+        label={
+          <span className="flex flex-col gap-0.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary">
+              {sectionLabel}
+            </span>
+            {!previewMode && (
+              <span className="text-[11px] leading-snug text-c-text-muted">
+                {t(
+                  'interview.insightViewer.manualFieldHint',
+                  'Text edited by hand. Stored separately from the AI content — regeneration does not erase it.'
+                )}
+              </span>
+            )}
+          </span>
+        }
+        aiSlot={
+          <AIFieldEnhancer
+            fieldKey={`insight-section-${sectionId}`}
+            sectionLabel={sectionLabel}
+            currentValue={value}
+            onApply={onValueChange}
+            artifactContext={{ title: artifactTitle, status: artifactStatus, type: 'insight' }}
+          />
+        }
+        textareaRef={textareaRef}
+        autoFitLabel={t('interview.insightViewer.manualFieldAutoFit', 'Back to auto-fit')}
+        className="w-full rounded-xl bg-transparent px-3 py-2 text-sm leading-relaxed text-c-text placeholder-c-text-muted focus:outline-none"
+        editClassName="border border-c-border-subtle focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
+        placeholder={t(
+          'interview.insightViewer.manualFieldPlaceholder',
+          'Write this section yourself, or correct what the AI produced…'
+        )}
+      />
+
+      {!previewMode && (
+        <div className="mt-1 flex items-center justify-between gap-2">
+          <span className="text-[11px] text-c-text-muted">{savedLabel}</span>
+          <div className="flex items-center gap-1.5">
+            {hasOverride && (
+              <button
+                type="button"
+                onClick={onRevert}
+                disabled={saving}
+                className="inline-flex h-7 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                title={t(
+                  'interview.insightViewer.manualFieldRevertHint',
+                  'Remove the manual text — the section goes back to the AI content only.'
+                )}
+              >
+                <RefreshCw size={12} />
+                {t('interview.insightViewer.manualFieldRevert', 'Discard manual text')}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={saving || !dirty}
+              className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface-raised px-2.5 text-[11px] font-medium text-c-text transition-colors hover:bg-c-surface disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+            >
+              {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+              {t('interview.insightViewer.manualFieldSave', 'Save section')}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 // Phase E — id of the hidden, print-only container captured by the Report (PDF)
 // export. Holds the canonical insight sections so the PDF is always complete
 // regardless of which C-board section is currently active on screen.
 const REPORT_PRINT_ELEMENT_ID = 'insight-report-print-root';
+
+/**
+ * Id pola widzianego przez „Analizuj z AI" jako ZAPISYWALNE — ręczna redakcja
+ * aktywnej sekcji. Pola z generacji zostają read-only (brak endpointu zapisu),
+ * więc to jedyny cel, dla którego „Zastosuj" ma prawo być aktywne.
+ */
+const INSIGHT_MANUAL_FIELD_ID = 'manual-section-text';
 
 export const InsightViewer: React.FC<InsightViewerProps> = ({
   insightId,
@@ -1036,11 +1221,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const { currentUser, currentOrganization, currentProjectId } = useAppStore();
 
   // ── REZULTATY tego wniosku (prawy panel, sekcja `results`) ─────────────────
-  // Zgłoszenie właściciela 2026-07-23 (ETAP 2.5 pkt 1+2): kafelki tworzenia
-  // artefaktów zostają w CENTRUM (sekcja `artifact-actions`, rola `rdzen`
-  // w kontrakcie karty — nieusuwalna typem), więc panel NIE MOŻE ich dublować
-  // (SPEC-N §2.6). Panel dostaje to, czego centrum nie pokazuje: REJESTR tego,
-  // co z tego wniosku JUŻ powstało — realne dane z
+  // Decyzja właściciela nr 2 (2026-07-23): kafelki tworzenia artefaktów zjechały
+  // z centrum DO tej sekcji panelu (pozycja 5 wg §7.2) i w centrum ich już nie
+  // ma (§2.6 — jedna funkcja, jedno miejsce). Pod kafelkami zostaje REJESTR
+  // tego, co z tego wniosku JUŻ powstało — realne dane z
   // `GET /api/artifact-conversions?sourceArtifactType=interview_insight&sourceArtifactId=…`
   // (server/src/routes/artifact-conversions.routes.ts). Zero nowego backendu,
   // zero zmyślonych liczb: gdy zapytanie padnie, sekcja jest uczciwie pusta.
@@ -2078,6 +2262,49 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [findings]
   );
 
+  /**
+   * ── JEDNO ŹRÓDŁO LICZNIKÓW (R2/defekt #3, 2026-07-23) ──────────────────────
+   *
+   * Ta sama metryka miała na JEDNYM ekranie trzy różne wartości, bo trzy
+   * miejsca liczyły ją z trzech różnych tablic:
+   *   · kafle „Podsumowania"  → `issuesReadout` / `hiddenSignals` /
+   *     `opportunityReadout` — HEURYSTYKA z narracji (regexp po nagłówkach
+   *     sekcji + bullety), obcinana do 10/8/10 pozycji,
+   *   · plakietki nawigacji    → `v6Issues` / `v6Opportunities` / `v6Signals`
+   *     — STRUKTURA V6 z bazy,
+   *   · widoczność sekcji      → jeszcze inny zestaw (`definiteCounts`).
+   * Efekt: „ISSUES/RISKS 10" obok „Problemy i ryzyka 5".
+   *
+   * Rozwiązanie nie polega na poprawieniu liczb, tylko na usunięciu
+   * możliwości rozjazdu: KAŻDY licznik wychodzi teraz stąd. Struktura V6 jest
+   * źródłem prawdy; heurystyka z narracji wchodzi wyłącznie jako awaryjny
+   * fallback dla wniosków zaimportowanych/zaseedowanych, które nigdy nie
+   * przeszły materializacji V6 (patrz #57 niżej) — i wtedy obowiązuje
+   * jednakowo w kaflach, w nawigacji i w bramce widoczności.
+   */
+  const insightCounts = useMemo(
+    () => ({
+      themes: v6Themes.length,
+      issues: v6Issues.length > 0 ? v6Issues.length : issuesReadout.length,
+      opportunities:
+        v6Opportunities.length > 0 ? v6Opportunities.length : opportunityReadout.length,
+      signals: v6Signals.length > 0 ? v6Signals.length : hiddenSignals.length,
+      evidence: v6EvidenceMap.length,
+      officialAnswers: officialAnswers.length,
+    }),
+    [
+      v6Themes.length,
+      v6Issues.length,
+      v6Opportunities.length,
+      v6Signals.length,
+      v6EvidenceMap.length,
+      issuesReadout.length,
+      opportunityReadout.length,
+      hiddenSignals.length,
+      officialAnswers.length,
+    ]
+  );
+
   const candidateSummary = useMemo(
     () => ({
       total: candidates.length,
@@ -2454,6 +2681,138 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [insight, sectionCompletions, isPolish]
   );
 
+  // ── Ręczna redakcja treści sekcji (n-Type §6.2–6.4; właściciel 2026-07-23) ──
+  // ZAPISANE nadpisania czytamy z wniosku (`section_overrides`, kolumna dodana
+  // migracją 931 + lazy-guardem po stronie serwera). Wersja ROBOCZA (to, co
+  // użytkownik ma w polu) żyje osobno w `sectionDrafts`, żeby przeładowanie
+  // wniosku nie kasowało niezapisanego tekstu, a udany zapis nie zostawiał
+  // dwóch źródeł prawdy (po zapisie draft znika i pole czyta z wniosku).
+  const sectionOverrides = useMemo<
+    Record<string, { content: string; updatedAt?: string; updatedBy?: string | null }>
+  >(() => {
+    const raw = (insight as any)?.sectionOverrides ?? (insight as any)?.section_overrides;
+    if (!raw) return {};
+    const parsed = typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
+    if (!parsed || typeof parsed !== 'object') return {};
+    const out: Record<string, { content: string; updatedAt?: string; updatedBy?: string | null }> = {};
+    for (const [id, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (typeof value === 'string') out[id] = { content: value };
+      else if (value && typeof value === 'object' && typeof (value as any).content === 'string') {
+        out[id] = value as { content: string; updatedAt?: string; updatedBy?: string | null };
+      }
+    }
+    return out;
+  }, [insight]);
+
+  const [sectionDrafts, setSectionDrafts] = useState<Record<string, string>>({});
+  const [savingSectionId, setSavingSectionId] = useState<string | null>(null);
+  /** Fokus z „✎ Edytuj" w pasku karty — bez tego przycisk nie miałby dokąd prowadzić. */
+  const manualFieldRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const setSectionDraft = useCallback((sectionId: string, value: string) => {
+    setSectionDrafts((prev) => ({ ...prev, [sectionId]: value }));
+  }, []);
+
+  /**
+   * Zapis JEDNEJ sekcji. Wysyłamy mapę CZĘŚCIOWĄ (`{ [sectionId]: … }`) — serwer
+   * scala, więc równoległa redakcja innej sekcji przez drugą osobę nie ginie.
+   * Pusty tekst = świadome cofnięcie redakcji ⇒ `null` ⇒ sekcja wraca do AI.
+   */
+  const handleSaveSectionOverride = useCallback(
+    async (sectionId: string, explicitValue?: string) => {
+      if (!insight) return;
+      // `explicitValue` obsługuje wołających, którzy DOPIERO co ustawili draft
+      // (setState jest asynchroniczne — closure widziałby jeszcze starą mapę).
+      const draft = explicitValue !== undefined ? explicitValue : sectionDrafts[sectionId];
+      if (draft === undefined) return; // pole nietknięte — nie ruszamy serwera
+      const persisted = sectionOverrides[sectionId]?.content ?? '';
+      if (draft === persisted) {
+        setSectionDrafts((prev) => {
+          const next = { ...prev };
+          delete next[sectionId];
+          return next;
+        });
+        return;
+      }
+      setSavingSectionId(sectionId);
+      try {
+        await V8InterviewApi.updateInsight(insight.id, {
+          sectionOverrides: { [sectionId]: draft.trim() ? draft : null },
+        });
+        const nextMap = { ...sectionOverrides };
+        if (draft.trim()) {
+          nextMap[sectionId] = { content: draft, updatedAt: new Date().toISOString() };
+        } else {
+          delete nextMap[sectionId];
+        }
+        setInsight((prev) =>
+          prev ? ({ ...prev, sectionOverrides: nextMap, section_overrides: nextMap } as any) : prev
+        );
+        setSectionDrafts((prev) => {
+          const next = { ...prev };
+          delete next[sectionId];
+          return next;
+        });
+        toast.success(t('interview.insightViewer.manualFieldSaved', 'Section saved'));
+      } catch {
+        // Draft ZOSTAJE — użytkownik nie traci tekstu przez nieudany zapis.
+        toast.error(t('interview.insightViewer.manualFieldSaveFailed', 'Failed to save section'));
+      } finally {
+        setSavingSectionId(null);
+      }
+    },
+    [insight, sectionDrafts, sectionOverrides, t]
+  );
+
+  const handleRevertSectionOverride = useCallback(
+    (sectionId: string) => {
+      setSectionDrafts((prev) => ({ ...prev, [sectionId]: '' }));
+      // Zapis pustki idzie tą samą drogą (serwer zamienia ją na `null`), więc
+      // „cofnij" nie jest osobną ścieżką backendową, którą trzeba by utrzymywać.
+      void (async () => {
+        if (!insight) return;
+        setSavingSectionId(sectionId);
+        try {
+          await V8InterviewApi.updateInsight(insight.id, { sectionOverrides: { [sectionId]: null } });
+          const nextMap = { ...sectionOverrides };
+          delete nextMap[sectionId];
+          setInsight((prev) =>
+            prev ? ({ ...prev, sectionOverrides: nextMap, section_overrides: nextMap } as any) : prev
+          );
+          setSectionDrafts((prev) => {
+            const next = { ...prev };
+            delete next[sectionId];
+            return next;
+          });
+        } catch {
+          toast.error(t('interview.insightViewer.manualFieldSaveFailed', 'Failed to save section'));
+        } finally {
+          setSavingSectionId(null);
+        }
+      })();
+    },
+    [insight, sectionOverrides, t]
+  );
+
+  /**
+   * „✎ Edytuj" w pasku karty. Pole ręcznej edycji jest już na ekranie (nad
+   * treścią sekcji) — przycisk ma je pokazać i postawić w nim kursor, a nie
+   * otwierać drugiego, konkurencyjnego wejścia (§2.6 anty-duplikacja).
+   */
+  const focusManualField = useCallback(() => {
+    const el = manualFieldRef.current;
+    if (!el) return;
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.focus();
+    // Kursor na końcu — użytkownik dopisuje, nie nadpisuje zaznaczeniem.
+    const end = el.value.length;
+    try {
+      el.setSelectionRange(end, end);
+    } catch {
+      /* niektóre przeglądarki blokują selection na świeżo sfokusowanym polu */
+    }
+  }, []);
+
   const handleRegenerate = async () => {
     if (!insight) return;
     setIsRegenerating(true);
@@ -2585,7 +2944,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // stanu (AI-draft/Edytowane/Gotowe/Błąd) + akcje ✨Regeneruj · ✎Edytuj ·
   // ✓Zaakceptuj pod nagłówkiem sekcji. Stan liczony ze statusu artefaktu +
   // sygnałów per-sekcja (odświeżanie, obecność treści, ręczna akceptacja).
-  //   • Edytuj → czat z kontekstem (Insight nie ma inline-edit sekcji)
+  //   • Edytuj → FOKUS w polu ręcznej edycji tej sekcji (n-Type §6.2; właściciel
+  //     2026-07-23). BYŁO: `handleOpenChat` — „edycja" oznaczała otwarcie czatu,
+  //     czyli prośbę do modelu, a nie edycję. Czat nie zniknął: żyje w nagłówku
+  //     (`onChat`) i w toolbarze, więc żadna zdolność nie została zabrana.
   //   • Zaakceptuj → toggle completion (już persystowany per sekcja)
   //   • Regeneruj → whole-artifact regenerate (jedyny dostępny backend)
   // UWAGA: MUSI być zadeklarowany PO sectionCompletions/handleRegenerate/
@@ -2608,7 +2970,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           readOnly={readMode}
           onRegenerate={handleRegenerate}
           regenerating={isRegenerating}
-          onEdit={handleOpenChat}
+          onEdit={focusManualField}
           onAccept={() => handleToggleSectionComplete(sectionId)}
         />
       );
@@ -2620,7 +2982,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       isPolish,
       readMode,
       handleRegenerate,
-      handleOpenChat,
+      focusManualField,
       handleToggleSectionComplete,
     ]
   );
@@ -3271,8 +3633,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     return sorted;
   }, [nComments, commentDateFilter, commentSortOrder]);
 
-  // ── Right-panel "Właściwości" confidence (same derivation as the
-  //    artifact-actions section below — read-only, no new backend). ─────────
+  // ── Right-panel "Właściwości" confidence (same derivation as the Results
+  //    tiles below — read-only, no new backend). ────────────────────────────
   const panelConfidence = useMemo(
     () =>
       findings[0]?.confidence_level ||
@@ -3414,6 +3776,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       'truth-review-summary',
       'source-sessions',
       'traceability',
+      // `artifact-actions` celowo NIEOBECNE — od 2026-07-23 kafelki „utwórz…"
+      // renderuje prawy panel (sekcja Rezultaty), nie centrum.
     ];
 
     const componentById: Record<string, React.ReactNode> = {};
@@ -3423,48 +3787,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       let component: React.ReactNode = null;
 
       switch (section.id) {
-        case 'artifact-actions': {
-          const primaryConfidence =
-            findings[0]?.confidence_level ||
-            analysis?.topics?.[0]?.confidenceLevel ||
-            (insight as any)?.confidence ||
-            null;
-          const limits = uniqueNonEmpty(findings.map((finding) => finding.limits)).join('\n');
-          component = (
-            <ArtifactActionPanel
-              isPolish={isPolish}
-              // Kontekst projektu — bez niego `POST /api/decisions` odrzuca żądanie
-              // („Missing decision context"), więc kafelek „Rozpocznij decyzję"
-              // renderuje się wyłączony z powodem zamiast zapraszać w błąd.
-              projectId={currentProjectId || null}
-              source={{
-                type: 'interview_insight',
-                id: insight?.id || insightId,
-                title: insight?.title || title || t('interview.insightViewer.insight'),
-                status: insight?.status,
-                content: insight?.content || executiveSummary,
-                confidence: primaryConfidence,
-                limits: limits || null,
-                evidenceCount: sourcePack?.activePointerCount ?? findingsSummary.activeEvidence,
-                sourceSessionCount:
-                  sourcePack?.sourceSessionIds.length || insight?.sourceSessionIds?.length || 0,
-                sourcePack: sourcePack ? (sourcePack as unknown as Record<string, unknown>) : null,
-                reportPack: reportPack
-                  ? {
-                      id: reportPack.id,
-                      status: reportPack.status,
-                      readinessStatus: reportReadiness?.status || undefined,
-                      completenessScore:
-                        reportReadiness?.completenessScore ?? reportPack.completenessScore,
-                      degraded: reportPack.degraded,
-                      degradedReasons: reportPack.degradedReasons,
-                    }
-                  : null,
-              }}
-            />
-          );
-          break;
-        }
+        // `artifact-actions` NIE MA już case'a w centrum — kafelki „utwórz…"
+        // przeniosły się do prawego panelu, sekcja Rezultaty (§7.2 poz. 5).
+        // Ich JSX powstaje raz, w `resultTilesNode` (jeden `ArtifactActionPanel`,
+        // wariant `compact` pod szerokość panelu), więc nie ma dwóch kopii
+        // konfiguracji `source` do rozjechania się.
 
         case 'truth-review-summary': {
           const postureMeta = {
@@ -3623,24 +3950,36 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-muted">
                     {t('interview.insightViewer.officialAnswers')}
                   </div>
+                  {/* Wszystkie trzy kafle czytają `insightCounts` — te same
+                      liczby, co plakietki nawigacji (R2/defekt #3). */}
                   <div className="mt-1 text-2xl font-bold text-c-text">
-                    {officialAnswers.length}
+                    {insightCounts.officialAnswers}
                   </div>
                 </div>
                 <div className="rounded-xl border border-danger-200/40 dark:border-danger-900/30 bg-danger-50/60 dark:bg-danger-500/10 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.danger.400)]">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-danger-500 dark:text-danger-400">
+                  {/* AA (sędzia grafiki, pkt 6): `danger-500` (#E80538) na jasnym
+                      tle dawał 4,21:1 przy 11 px — poniżej progu 4,5. `danger-700`
+                      (#910A28) to odcień opisany w palecie jako „AA text on white".
+                      Ciemny motyw zmierzony na 7,3:1 → `danger-400` zostaje. */}
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-danger-700 dark:text-danger-400">
                     {t('interview.insightViewer.issuesRisks')}
                   </div>
                   <div className="mt-1 text-2xl font-bold text-c-text">
-                    {issuesReadout.length}
+                    {insightCounts.issues}
                   </div>
                 </div>
                 <div className="rounded-xl border border-emerald-200/40 dark:border-emerald-900/30 bg-emerald-50/60 dark:bg-emerald-500/10 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.emerald.400)]">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
+                  {/* AA (sędzia grafiki, pkt 6): `emerald-600` (#388A22) dawał
+                      4,08:1 przy 11 px. `emerald-700` (#026833) = HBS Green 1,
+                      w palecie opisany jako AA na białym. Dark bez zmian. */}
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
                     {t('interview.insightViewer.signalsOpportunities')}
                   </div>
+                  {/* Kafel łączy dwie sekcje nawigacji („Sygnały" +
+                      „Przestrzenie szans"), więc jego wartość musi być SUMĄ
+                      dokładnie tych dwóch liczników — nie trzeciego zestawu. */}
                   <div className="mt-1 text-2xl font-bold text-c-text">
-                    {hiddenSignals.length + opportunityReadout.length}
+                    {insightCounts.signals + insightCounts.opportunities}
                   </div>
                 </div>
               </div>
@@ -3711,7 +4050,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-danger-500 dark:text-danger-400">
+                  {/* AA (pkt 6) — ta sama zamiana co w kaflach wyżej. */}
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-danger-700 dark:text-danger-400">
                     {t('interview.insightViewer.issuesRisks2')}
                   </div>
                   {issuesReadout.length > 0 ? (
@@ -3732,7 +4072,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
+                  {/* AA (pkt 6) — ta sama zamiana co w kaflach wyżej. */}
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
                     {t('interview.insightViewer.signalsOpportunities2')}
                   </div>
                   {uniqueNonEmpty([...hiddenSignals, ...opportunityReadout]).length > 0 ? (
@@ -7412,11 +7753,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       // ich liczniki żyją na sekcjach prawego panelu.
       'material-quality': truthReviewSummary.publishBlockers.length || undefined,
       'source-pack': sourceSessions.length || undefined,
-      themes: v6Themes.length || undefined,
-      'issues-risks': v6Issues.length || undefined,
-      opportunities: v6Opportunities.length || undefined,
-      signals: v6Signals.length || undefined,
-      'evidence-map': v6EvidenceMap.length || undefined,
+      // R2/defekt #3: te same liczniki co kafle „Podsumowania" — `insightCounts`.
+      themes: insightCounts.themes || undefined,
+      'issues-risks': insightCounts.issues || undefined,
+      opportunities: insightCounts.opportunities || undefined,
+      signals: insightCounts.signals || undefined,
+      'evidence-map': insightCounts.evidence || undefined,
       'hypothesis-board': candidates.length || undefined,
     };
 
@@ -7428,11 +7770,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     // the one or two flagged alwaysShow.
     const definiteCounts: Record<string, number> = {
       'candidate-triage': candidates.length,
-      themes: v6Themes.length,
-      'issues-risks': v6Issues.length,
-      opportunities: v6Opportunities.length,
-      signals: v6Signals.length,
-      'evidence-map': v6EvidenceMap.length,
+      // R2/defekt #3: bramka widoczności czyta ten sam licznik, co plakietka —
+      // inaczej sekcja mogła zniknąć z nawigacji mimo niezerowego kafla.
+      themes: insightCounts.themes,
+      'issues-risks': insightCounts.issues,
+      opportunities: insightCounts.opportunities,
+      signals: insightCounts.signals,
+      'evidence-map': insightCounts.evidence,
       // derived analytical sections — hidden until their data exists
       'consensus-divergence':
         consensusTopics.length + localOnlyTopics.length + contradictedTopics.length,
@@ -7459,12 +7803,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         (analysis?.people.sessionLenses || []).length,
     };
     // alwaysShow: the two most important differentiators stay visible even empty.
-    const alwaysShowSet = new Set([
-      'artifact-actions',
-      'executive-summary',
-      'consensus-divergence',
-      'silences',
-    ]);
+    // (`artifact-actions` zdjęte 2026-07-23 — kafelki są w prawym panelu.)
+    const alwaysShowSet = new Set(['executive-summary', 'consensus-divergence', 'silences']);
 
     // Sidebar grouping (#22b/#22): 5 themed groups.
     const groupLabels = [
@@ -7478,7 +7818,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       // 0 — Wgląd / Insight
       'executive-summary': 0,
       'consulting-readout': 0,
-      'artifact-actions': 0,
       themes: 0,
       'issues-risks': 0,
       opportunities: 0,
@@ -7573,6 +7912,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     getPriorityDotClass,
     openSourceSessionInInterviewHub,
     activityEntries,
+    insightCounts,
     v6Themes,
     v6Issues,
     v6Opportunities,
@@ -7644,8 +7984,55 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [sectionCompletions, handleToggleSectionComplete, isPolish]
   );
 
+  // ── Pole ręcznej edycji AKTYWNEJ sekcji (n-Type §6.2–6.4) ─────────────────
+  // Tryb 'c' (C-board, wszystkie sekcje naraz) jest w Insighcie martwy — strażnik
+  // przy `usePresentationMode` sprowadza go do 'n', więc renderowana jest zawsze
+  // dokładnie JEDNA sekcja. Wstrzyknięcie w aktywną sekcję = „każda sekcja ma
+  // pole" w praktyce, tym samym szwem, którym żyje już Mark-complete.
+  const renderSectionManualField = useCallback(
+    (sectionId: string) => {
+      const meta = INSIGHT_SECTIONS.find((s) => s.id === sectionId);
+      const label = meta ? (isPolish ? meta.label.pl : meta.label.en) : sectionId;
+      const persisted = sectionOverrides[sectionId]?.content ?? '';
+      const draft = sectionDrafts[sectionId];
+      const value = draft ?? persisted;
+      return (
+        <InsightSectionManualField
+          sectionId={sectionId}
+          sectionLabel={label}
+          value={value}
+          onValueChange={(v) => setSectionDraft(sectionId, v)}
+          onSave={() => void handleSaveSectionOverride(sectionId)}
+          onRevert={() => handleRevertSectionOverride(sectionId)}
+          hasOverride={Boolean(persisted)}
+          saving={savingSectionId === sectionId}
+          dirty={draft !== undefined && draft !== persisted}
+          previewMode={readMode}
+          isPolish={isPolish}
+          artifactTitle={insight?.title || title}
+          artifactStatus={insight?.status}
+          savedAt={sectionOverrides[sectionId]?.updatedAt}
+          textareaRef={manualFieldRef}
+        />
+      );
+    },
+    [
+      isPolish,
+      sectionOverrides,
+      sectionDrafts,
+      savingSectionId,
+      readMode,
+      insight,
+      title,
+      setSectionDraft,
+      handleSaveSectionOverride,
+      handleRevertSectionOverride,
+    ]
+  );
+
   // Apply Sections-dropdown visibility toggles + inject the Mark-complete control
-  // into the active section. Hidden sections drop out of the nav/canvas entirely.
+  // and the manual-edit field into the active section. Hidden sections drop out
+  // of the nav/canvas entirely.
   const visibleNModeSections = useMemo<NModeSection[]>(
     () =>
       orderedNModeSectionsWithContent
@@ -7657,13 +8044,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 component: (
                   <>
                     {renderSectionCompleteToggle(section.id)}
+                    {renderSectionManualField(section.id)}
                     {section.component}
                   </>
                 ),
               }
             : section
         ),
-    [orderedNModeSectionsWithContent, hiddenSectionIds, activeNSection, renderSectionCompleteToggle]
+    [
+      orderedNModeSectionsWithContent,
+      hiddenSectionIds,
+      activeNSection,
+      renderSectionCompleteToggle,
+      renderSectionManualField,
+    ]
   );
 
   useEffect(() => {
@@ -7982,17 +8376,18 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // poziom pewności · brakujące źródła · sprzeczności · potencjalny wpływ ·
   // gotowość do konwersji.
   //
-  // ★ WSZYSTKIE POLA SĄ TYLKO-DO-ODCZYTU — i to jest STAN FAKTYCZNY, nie wybór:
-  //   backend NIE MA endpointu zapisu treści kart Insightu. `updateInsight`
-  //   (src/services/api/v8/interview.ts:790) przyjmuje wyłącznie
-  //   title/status/exportedTo*/archived/sectionCompletions; treść analityczna
-  //   (executiveSummary, themes, issues, opportunities, signals) powstaje z
-  //   generacji i jedyną drogą jej zmiany jest `regenerateInsight` — czyli
-  //   przepisanie CAŁOŚCI, nie pojedynczej poprawki.
-  //   Skutkiem: panel pokazuje Braki/Ryzyka/Sugestie w pełni, a „Proponowane
-  //   zmiany" dostają „Kopiuj treść" zamiast „Zastosuj", z jawnym powodem.
-  //   Czego brakuje po stronie backendu, żeby „Zastosuj" zadziałało:
-  //   PATCH /interview/insights/:id z polami treści kart (patrz raport).
+  // ★ POLA WYGENEROWANE PRZEZ AI (executiveSummary, themes, issues,
+  //   opportunities, signals) POZOSTAJĄ TYLKO-DO-ODCZYTU — i to nadal jest stan
+  //   faktyczny, nie wybór: jedyną drogą ich zmiany jest `regenerateInsight`,
+  //   czyli przepisanie CAŁOŚCI. Panel pokaże dla nich „Kopiuj treść" zamiast
+  //   „Zastosuj", z jawnym powodem.
+  //
+  // ★ ZMIANA (właściciel 2026-07-23 + zapis sekcji na serwerze): doszło JEDNO
+  //   pole ZAPISYWALNE — ręczna treść aktywnej sekcji (`section_overrides`,
+  //   PATCH /interview/insights/:id). Dzięki temu „Zastosuj" w Proponowanych
+  //   zmianach robi coś realnego: wkłada propozycję AI do pola redakcyjnego
+  //   sekcji i zapisuje ją — zamiast być trwale wyszarzone. AI nadal NIE
+  //   nadpisuje niczego bez kliknięcia człowieka (kontrakt cardAnalysis).
   const insightAnalysisFields = useMemo<CardAnalysisField[]>(() => {
     const asLines = (items: unknown[], toText: (x: any) => string) =>
       (items || []).map((x) => `- ${toText(x)}`).join('\n');
@@ -8005,6 +8400,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       writable: false,
     });
 
+    const generated: CardAnalysisField[] = ((): CardAnalysisField[] => {
     switch (activeNSection) {
       case 'executive-summary':
         return [
@@ -8073,6 +8469,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           ),
         ];
     }
+    })();
+
+    // Jedyne pole, do którego karta POTRAFI zapisać — ręczna redakcja sekcji.
+    return [
+      ...generated,
+      {
+        id: INSIGHT_MANUAL_FIELD_ID,
+        label: isPolish
+          ? 'Treść ręczna tej sekcji (redakcja konsultanta)'
+          : 'Manual text of this section (consultant edit)',
+        value: sectionDrafts[activeNSection] ?? sectionOverrides[activeNSection]?.content ?? '',
+        kind: 'text',
+        writable: true,
+        hint: isPolish
+          ? 'Pole redakcyjne sekcji. Tu wpisz gotowy tekst do zastosowania — leży obok treści z AI i jest zapisywane na wniosku.'
+          : 'The section editing field. Put ready-to-use text here — it lives next to the AI content and is persisted on the insight.',
+      },
+    ];
   }, [
     activeNSection,
     isPolish,
@@ -8082,6 +8496,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     v6Issues,
     v6Opportunities,
     v6Signals,
+    sectionDrafts,
+    sectionOverrides,
   ]);
 
   const buildInsightAnalysisInput = useCallback(() => {
@@ -8123,10 +8539,33 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     insightAnalysisFields,
   ]);
 
-  // Brak endpointu zapisu treści karty ⇒ żadna zmiana nie jest zapisywalna.
-  // Zwracamy `false`, a nie „true na niby" — panel i tak nie pokaże „Zastosuj",
-  // bo `writableFieldIds` jest puste; to drugi zamek na wypadek regresji.
-  const applyInsightAnalysisChange = useCallback(() => false, []);
+  /**
+   * Jedyna droga zapisu z panelu „Analizuj z AI". Przyjmuje WYŁĄCZNIE pole
+   * ręcznej redakcji sekcji — pola wygenerowane przez AI nadal nie mają
+   * endpointu zapisu i muszą zwrócić `false` (panel oznaczy pozycję jako
+   * nieudaną zamiast udawać sukces).
+   *
+   * Zapis idzie przez ten sam handler co ręczna edycja, więc nie powstaje druga,
+   * konkurencyjna ścieżka do backendu.
+   */
+  const applyInsightAnalysisChange = useCallback(
+    (change: { fieldId: string; proposedValue: string; mode?: string }) => {
+      if (change.fieldId !== INSIGHT_MANUAL_FIELD_ID) return false;
+      const sectionId = activeNSection;
+      const current = sectionDrafts[sectionId] ?? sectionOverrides[sectionId]?.content ?? '';
+      const next =
+        change.mode === 'append' && current.trim()
+          ? `${current.replace(/\s+$/, '')}\n${change.proposedValue}`
+          : change.proposedValue;
+      setSectionDraft(sectionId, next);
+      // Zapis w tle z JAWNĄ wartością (setState jeszcze nie zdążył wejść w stan);
+      // błąd sieci zgłasza toast z `handleSaveSectionOverride` i NIE kasuje
+      // wpisanego tekstu — draft zostaje w polu do ponowienia.
+      void handleSaveSectionOverride(sectionId, next);
+      return true;
+    },
+    [activeNSection, sectionDrafts, sectionOverrides, setSectionDraft, handleSaveSectionOverride]
+  );
 
   const insightCardAnalysis = useCardAIAnalysis({
     activeCardId: activeNSection,
@@ -8208,6 +8647,46 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // (usunięte) fmtPanelDateTime — obsługiwało wyłącznie skróty komentarzy
   // i historii w panelu; oba skróty zastąpione pełnymi canvasami (SPEC-N §2.1),
   // które formatują daty same.
+
+  // ── Kafelki „utwórz z tego wniosku" (decyzja właściciela nr 2, 2026-07-23) ──
+  // Jedyne miejsce, w którym powstaje `ArtifactActionPanel` dla Insightu.
+  // Wariant `compact` (dwie grupy pigułek: Dokumenty / W aplikacji) jest tym,
+  // który mieści się w stałej szerokości prawego panelu — pełne kafle 2xN
+  // rozsadzałyby go w poziomie.
+  const resultTilesNode = (
+    <ArtifactActionPanel
+      isPolish={isPolish}
+      variant="compact"
+      // Kontekst projektu — bez niego `POST /api/decisions` odrzuca żądanie
+      // („Missing decision context"), więc kafelek „Rozpocznij decyzję"
+      // renderuje się wyłączony z powodem zamiast zapraszać w błąd.
+      projectId={currentProjectId || null}
+      source={{
+        type: 'interview_insight',
+        id: insight?.id || insightId,
+        title: insight?.title || title || t('interview.insightViewer.insight'),
+        status: insight?.status,
+        content: insight?.content || executiveSummary,
+        confidence: panelConfidence,
+        limits: uniqueNonEmpty(findings.map((finding) => finding.limits)).join('\n') || null,
+        evidenceCount: sourcePack?.activePointerCount ?? findingsSummary.activeEvidence,
+        sourceSessionCount:
+          sourcePack?.sourceSessionIds.length || insight?.sourceSessionIds?.length || 0,
+        sourcePack: sourcePack ? (sourcePack as unknown as Record<string, unknown>) : null,
+        reportPack: reportPack
+          ? {
+              id: reportPack.id,
+              status: reportPack.status,
+              readinessStatus: reportReadiness?.status || undefined,
+              completenessScore: reportReadiness?.completenessScore ?? reportPack.completenessScore,
+              degraded: reportPack.degraded,
+              degradedReasons: reportPack.degradedReasons,
+            }
+          : null,
+      }}
+    />
+  );
+
   const rightPanelSections: ArtifactRightPanelSection[] = [
     {
       // SPEC-N §2.6 (anty-duplikacja: jedna akcja = jedno miejsce). Ta sekcja
@@ -8264,47 +8743,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               'Pick a state to move this insight forward in its lifecycle.'
             )}
           </p>
-        </div>
-      ),
-    },
-    {
-      // ── REZULTATY (właściciel 2026-07-23, ETAP 2.5 pkt 2) ─────────────────
-      // Kafelki „utwórz…" zostają w CENTRUM (sekcja `artifact-actions` = rdzeń
-      // kontraktu karty), więc panel ich NIE dubluje (§2.6). Panel pokazuje to,
-      // czego centrum nie pokazuje: co z tego wniosku JUŻ powstało — realne
-      // wpisy z `/api/artifact-conversions` — plus skok do sekcji, w której
-      // rezultaty się tworzy. Jedna funkcja, jedno miejsce; panel jest
-      // rejestrem, centrum jest warsztatem.
-      id: 'results',
-      label: t('interview.insightViewer.panelResults', 'Results'),
-      icon: Rocket,
-      defaultOpen: true,
-      badge: producedResults.length || undefined,
-      isEmpty: producedResults.length === 0,
-      emptyLabel: t(
-        'interview.insightViewer.panelResultsEmpty',
-        'Nothing has been produced from this insight yet.'
-      ),
-      children: (
-        <div className="flex flex-col gap-2">
-          {producedResults.map((conv) => (
-            <div key={conv.id} className="flex items-center justify-between gap-2">
-              <span className="inline-flex h-6 min-w-0 items-center gap-1.5 truncate rounded-md border border-c-border-subtle bg-c-surface-raised px-2 text-xs font-medium text-c-text">
-                <FileText size={12} className="shrink-0 text-c-text-muted" />
-                <span className="truncate">{conv.targetArtifactType}</span>
-              </span>
-              <span className="shrink-0 text-[11px] text-c-text-muted">
-                {conv.conversionStatus}
-              </span>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => setActiveNSection('artifact-actions')}
-            className="inline-flex h-7 items-center justify-center rounded-lg border border-c-border-subtle bg-c-surface-raised px-2.5 text-xs font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
-          >
-            {t('interview.insightViewer.panelResultsGoto', 'Go to the Results section')}
-          </button>
         </div>
       ),
     },
@@ -8415,6 +8853,60 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       ),
     },
     {
+      // ── REZULTATY — pozycja 5 (decyzja właściciela nr 2, 2026-07-23) ───────
+      // Standard n-Type §7.2 wiąże kolejność: Akcje · Właściwości · Powiązania ·
+      // Źródła i założenia · REZULTATY · Komentarze · Historia. Sekcja stała do
+      // teraz na pozycji 2 (zaraz po Akcjach) — przesunięta tutaj, bez wyjątków.
+      //
+      // §7.7: Rezultaty TWORZĄ lub WYSYŁAJĄ efekt artefaktu; Akcje zmieniają
+      // jego stan. Dlatego kafelki „utwórz…" (raport · prezentacja · tabela ·
+      // idea · notatka · inicjatywa · decyzja) zjechały TU z centrum — i tam ich
+      // już NIE MA (§2.6: jedna funkcja, jedno miejsce). Pod kafelkami zostaje
+      // rejestr tego, co z wniosku już powstało (`/api/artifact-conversions`).
+      //
+      // ⚠ DO DECYZJI WŁAŚCICIELA (raport): „Konwertuj na inicjatywę" jest
+      // JEDNOCZEŚNIE akcją główną w nagłówku (generator inicjatywy, `setGenOpen`)
+      // i kafelkiem `initiative` w tej sekcji (bezpośredni `POST /initiatives`).
+      // To dwie różne ścieżki kodu o tym samym celu; 04_INSIGHT §6.3 mówi
+      // „Konwertuj na inicjatywę — jeśli nie pozostaje w nagłówku". Nie usuwam
+      // kafelka samowolnie, bo to odebranie działającej zdolności — zgłaszam.
+      id: 'results',
+      label: t('interview.insightViewer.panelResults', 'Results'),
+      icon: Rocket,
+      defaultOpen: false,
+      badge: producedResults.length || undefined,
+      children: (
+        <div className="flex flex-col gap-3">
+          {resultTilesNode}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
+              {t('interview.insightViewer.panelResultsProduced', 'Already produced')}
+            </span>
+            {producedResults.length === 0 ? (
+              <span className="text-[11px] leading-snug text-c-text-muted">
+                {t(
+                  'interview.insightViewer.panelResultsEmpty',
+                  'Nothing has been produced from this insight yet.'
+                )}
+              </span>
+            ) : (
+              producedResults.map((conv) => (
+                <div key={conv.id} className="flex items-center justify-between gap-2">
+                  <span className="inline-flex h-6 min-w-0 items-center gap-1.5 truncate rounded-md border border-c-border-subtle bg-c-surface-raised px-2 text-xs font-medium text-c-text">
+                    <FileText size={12} className="shrink-0 text-c-text-muted" />
+                    <span className="truncate">{conv.targetArtifactType}</span>
+                  </span>
+                  <span className="shrink-0 text-[11px] text-c-text-muted">
+                    {conv.conversionStatus}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
       // SPEC-N §2.1 + §2.6 — komentarze mieszkają WYŁĄCZNIE tutaj. Do 2026-07-21
       // panel pokazywał skrót (6 pozycji, tylko do odczytu), a pełny CommentsCanvas
       // stał drugi raz w lewej nawigacji. Skasowanie centrum bez przeniesienia
@@ -8497,12 +8989,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         sections={visibleNModeSections}
         activeSection={activeNSection}
         onSectionChange={setActiveNSection}
-        onSectionReorder={(ids) => {
-          // Left-nav drag → cardLayout is SSOT. Keep the legacy order key in
-          // sync for back-compat; the layout persist owns the real order.
-          cardLayout.reorderByIds(ids);
-          handleNModeSectionReorder(ids);
-        }}
+        // ⚠ 2026-07-23 (sędzia grafiki, pkt 9): `NModeLeftNav` rysuje uchwyt
+        // `GripVertical` przy KAŻDEJ pozycji, gdy tylko dostanie
+        // `onSectionReorder`. Karta otwiera się w PODGLĄDZIE, więc na wejściu
+        // widać było 11 uchwytów przeciągania — zaproszenie do edycji układu
+        // w trybie, który z definicji niczego nie zmienia. Przekazujemy
+        // handler wyłącznie w Edycji: w Podglądzie prop znika, uchwyty razem
+        // z nim, a sama zdolność (zmiana kolejności sekcji) zostaje o jedno
+        // kliknięcie dalej — w Edycji, gdzie jej miejsce.
+        onSectionReorder={
+          readMode
+            ? undefined
+            : (ids) => {
+                // Left-nav drag → cardLayout is SSOT. Keep the legacy order key
+                // in sync for back-compat; the layout persist owns the real order.
+                cardLayout.reorderByIds(ids);
+                handleNModeSectionReorder(ids);
+              }
+        }
         presentationMode={presentationMode}
         onPresentationModeChange={setPresentationMode}
         // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
@@ -8545,32 +9049,51 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           //   - "AI sekcji"     : kazda sekcja ma juz wlasny przycisk regeneracji
           //                       (ten sam handleRegenerate), wiec pasek go dublowal,
           //   - "Prezentuj"     : i tak wylaczone flaga VITE_PRESENT_MODE.
+          //
+          // ⚠ 2026-07-23 (sędzia grafiki, pkt 8) — SZEROKOŚĆ MENU 2 = SZEROKOŚĆ
+          // MENU 1. Powłoka `NModeShell` hostuje pasek w kontenerze
+          // `max-w-6xl mx-auto px-6 py-2`; te `px-6` zwężały Menu 2 o 2×24 px
+          // względem nagłówka i centrum (zmierzone: Menu 1 x=28 w=1152,
+          // Menu 2 x=52 w=1104). Pasek czytał się jak element DOKLEJONY, nie
+          // jak drugie menu tego samego ekranu. `-mx-6` znosi dokładnie to
+          // wcięcie i wyrównuje krawędzie do reszty kolumny. Robimy to po
+          // stronie karty, a nie w `NModeShell`, bo powłoka jest wspólna dla
+          // Inicjatywy / Narzędzia / Wywiadu (osobne karty, osobny odbiór).
           return (
+            <div className="-mx-6">
             <NModeMenu2
               isPolish={isPolish}
               readMode={readMode}
               onReadModeChange={setReadMode}
               aiButton={
-                readMode ? undefined : (
-                  // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera panel
-                  // wyników. Było: `openInsightConsultant()` — czat konsultanta
-                  // na poziomie CAŁEGO artefaktu, bez oceny konkretnej karty.
-                  // Konsultant nie zniknął: żyje w toolbarze (slot 9) i w panelu
-                  // Akcje, więc żadna zdolność nie została zabrana.
-                  // Nadpisanie etykiety zdjęte — przycisk niesie teraz nazwę ze
-                  // standardu („Analizuj z AI"), zgodną z tym, co robi.
-                  <Menu2AIButton
-                    isPolish={isPolish}
-                    busy={insightCardAnalysis.loading}
-                    aria-expanded={insightCardAnalysis.open}
-                    onClick={() => {
-                      setExportMenuOpen(false);
-                      setSectionsMenuOpen(false);
-                      setAiMenuOpen(false);
-                      insightCardAnalysis.run();
-                    }}
-                  />
-                )
+                // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera panel
+                // wyników. Było: `openInsightConsultant()` — czat konsultanta
+                // na poziomie CAŁEGO artefaktu, bez oceny konkretnej karty.
+                // Konsultant nie zniknął: żyje w toolbarze (slot 9) i w panelu
+                // Akcje, więc żadna zdolność nie została zabrana.
+                // Nadpisanie etykiety zdjęte — przycisk niesie teraz nazwę ze
+                // standardu („Analizuj z AI"), zgodną z tym, co robi.
+                //
+                // ⚠ 2026-07-23 (sędzia grafiki, pkt 3): było `readMode ?
+                // undefined : (...)`, a karta OTWIERA SIĘ w Podglądzie
+                // (`insightOpensInPreview` → readMode=true). Efekt: prawa
+                // strefa Menu 2 była PUSTA przy wejściu, a najważniejsza
+                // zdolność karty (analiza AI) nie istniała, dopóki użytkownik
+                // sam nie przełączył się na Edycję — czego nie miał powodu
+                // zrobić. Analiza jest operacją CZYTAJĄCĄ (nie modyfikuje
+                // treści), więc w Podglądzie jest równie legalna jak w Edycji.
+                // Wzór: KnownToolDetailView.tsx (aiButton bezwarunkowo).
+                <Menu2AIButton
+                  isPolish={isPolish}
+                  busy={insightCardAnalysis.loading}
+                  aria-expanded={insightCardAnalysis.open}
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    setSectionsMenuOpen(false);
+                    setAiMenuOpen(false);
+                    insightCardAnalysis.run();
+                  }}
+                />
               }
               overflowKebab={
                 INSIGHT_EXPORT_IN_MENU2 ? (
@@ -8799,6 +9322,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               }
             />
+            </div>
           );
         }}
       >
@@ -9203,10 +9727,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           zostaje do sprzątnięcia martwego kodu po odbiorze). */}
 
       {/* ── ETAP 3: panel wyników „Analizuj z AI" ─────────────────────────────
-          `writableFieldIds` jest PUSTE świadomie — backend nie ma endpointu
-          zapisu treści kart Insightu (patrz komentarz przy `insightAnalysisFields`).
-          Panel pokaże Braki/Ryzyka/Sugestie i da „Kopiuj treść" zamiast
-          „Zastosuj", z jawnym powodem — zamiast udawać zapis. */}
+          `writableFieldIds` zawiera DOKŁADNIE JEDNO pole — ręczną redakcję
+          aktywnej sekcji (`section_overrides`; zapis dodany 2026-07-23). Pola
+          wygenerowane przez AI nadal nie mają endpointu zapisu, więc dla nich
+          panel pokazuje „Kopiuj treść" zamiast „Zastosuj", z jawnym powodem
+          (patrz komentarz przy `insightAnalysisFields`) — zamiast udawać zapis. */}
       <NCardAIAnalysisPanel
         open={insightCardAnalysis.open}
         onClose={insightCardAnalysis.close}
@@ -9216,7 +9741,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         serverErrorCode={insightCardAnalysis.serverErrorCode}
         onRerun={insightCardAnalysis.rerun}
         onApplyChange={insightCardAnalysis.applyChange}
-        writableFieldIds={[]}
+        writableFieldIds={[INSIGHT_MANUAL_FIELD_ID]}
         readMode={readMode}
         isPolish={isPolish}
       />

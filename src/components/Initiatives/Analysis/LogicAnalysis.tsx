@@ -1,7 +1,13 @@
 /**
- * LogicAnalysis — AI-powered dependency discovery, conflict detection,
- * cycle detection, critical path analysis, and sequencing optimizer.
- * V3-F02c: Full dependency management with AI intelligence.
+ * LogicAnalysis — dependency discovery, conflict detection, cycle detection,
+ * critical path analysis, and sequencing optimizer.
+ * V3-F02c: Full dependency management.
+ *
+ * JEDYNE realne AI w tym module: „Wykryj zależności przez AI" woła
+ * `POST /api/ai/generate` i wnioskuje kolejność z NAZW I OPISÓW inicjatyw
+ * (zadanie językowe — patrz nota nad `discoverDependenciesWithAi`).
+ * Wszystkie pozostałe pomocniki (cykle, ścieżka krytyczna, sekwencer) to
+ * algorytmy grafowe liczone lokalnie i NIE noszą etykiety „AI".
  */
 
 import {
@@ -22,6 +28,7 @@ import {
   Shuffle,
   Sparkles,
   Trash2,
+  Wrench,
   X,
   Zap,
 } from 'lucide-react';
@@ -29,10 +36,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '@/services/api';
 import type { PortfolioInitiative } from '@/types';
 
 import { DependencyGraphCanvas } from './DependencyGraphCanvas';
-import { getMenu3AiButtonClass } from './menu3ActionButtonStyles';
+import { getMenu3AiButtonClass, getMenu3DeterministicButtonClass } from './menu3ActionButtonStyles';
 import type {
   AnalysisIssue,
   DependencyLink,
@@ -113,28 +121,10 @@ const SortIcon: React.FC<{ col: SortCol; cur: SortCol; dir: SortDir }> = ({ col,
   );
 };
 
-const KEYWORD_GROUPS: Record<string, string[]> = {
-  crm: ['crm', 'customer', 'sales', 'lead', 'pipeline', 'klient'],
-  digital: ['digital', 'online', 'website', 'web', 'ecommerce', 'cyfrowy'],
-  data: ['data', 'analytics', 'bi', 'report', 'dashboard', 'dane', 'raport'],
-  hr: ['hr', 'talent', 'hiring', 'onboarding', 'people', 'recruitment', 'rekrutacja'],
-  ops: ['operations', 'process', 'automation', 'workflow', 'lean', 'proces', 'automatyzacja'],
-  finance: ['finance', 'budget', 'cost', 'revenue', 'pricing', 'finanse', 'koszty'],
-  infra: ['infrastructure', 'cloud', 'migration', 'security', 'devops', 'infrastruktura'],
-  product: ['product', 'feature', 'launch', 'mvp', 'roadmap', 'produkt'],
-  strategy: ['strategy', 'transformation', 'vision', 'okr', 'strategia', 'transformacja'],
-};
-
-function getKeywordGroups(text: string): string[] {
-  const lower = text.toLowerCase();
-  const groups: string[] = [];
-  for (const [group, keywords] of Object.entries(KEYWORD_GROUPS)) {
-    if (keywords.some((kw) => lower.includes(kw))) {
-      groups.push(group);
-    }
-  }
-  return groups;
-}
+// 2026-07-23: usunięte `KEYWORD_GROUPS` + `getKeywordGroups` — sztywna lista
+// 9 grup słów kluczowych (crm/hr/finance/…), na której opierała się atrapa
+// „AI Discover Dependencies". Wykrywała wspólne słowo, nie zależność.
+// Zastąpione realnym wywołaniem modelu — patrz `discoverDependenciesWithAi`.
 
 function daysBetween(a: string | null | undefined, b: string | null | undefined): number {
   if (!a || !b) return 0;
@@ -160,7 +150,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
   onRegisterActions,
   onRegisterWorkspacePanel,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Sort
   const [sortCol, setSortCol] = useState<SortCol>('status');
@@ -228,9 +218,65 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     (i) => i.severity === 'critical' || i.severity === 'high'
   ).length;
 
-  /* ---------- AI Discover Dependencies ---------- */
+  /* ---------- Wykrywanie zależności przez REALNE AI ---------- */
+  //
+  // 2026-07-23 — jedyna z pięciu atrap, którą PODŁĄCZONO do modelu (wariant A),
+  // a nie odarto z etykiety. Powód: to jedyna z nich, która naprawdę jest
+  // zadaniem językowym. „Czy «Migracja ERP» musi poprzedzić «Automatyzację
+  // raportowania»?" wynika ze ZNACZENIA nazw i opisów, nie z arytmetyki.
+  //
+  // Poprzednia wersja: `setTimeout(800)` udający myślenie + `getKeywordGroups`,
+  // czyli szukanie wspólnego słowa ze sztywnej listy 9 grup (`crm`, `hr`,
+  // `finance`…). Ta heurystyka nie „wykrywała zależności" — wykrywała, że dwie
+  // inicjatywy mają w nazwie słowo z tej samej szufladki, po czym o kierunku
+  // strzałki decydowała po priorytecie. Dwie inicjatywy HR bez żadnego związku
+  // dostawały „zależność" z pewnością `high`.
+  //
+  // Teraz: `POST /api/ai/generate` (kontrakt `{ text }`, bramka dostępu,
+  // mapowanie kodów błędu — wzorzec z `DecisionDetailView.requestAiText`).
+  // Gdy AI nie odpowie: mówimy WPROST co i dlaczego się nie udało, panel się nie
+  // otwiera, a ŻADNA zależność nie jest tworzona ani ruszana. „AI niedostępne"
+  // to poprawny wynik — podstawienie wyniku keyword-matchingu i podpisanie go
+  // „AI" nim NIE jest, dlatego stara heurystyka nie została tu zostawiona jako
+  // cicha ścieżka awaryjna.
 
-  const computeDiscoverDeps = useCallback(() => {
+  /** Uczciwy powód porażki AI na podstawie kodu błędu z backendu. */
+  const aiFailureReason = useCallback(
+    (err: unknown): string => {
+      const code = String(
+        (err as { data?: { code?: string } })?.data?.code || (err as { code?: string })?.code || ''
+      ).toUpperCase();
+      switch (code) {
+        case 'NO_LLM_PROVIDER':
+          return t('initiatives.analysis.logic.aiErrNoProvider', 'no AI provider is configured');
+        case 'AI_BUDGET_EXHAUSTED':
+          return t('initiatives.analysis.logic.aiErrBudget', 'the AI budget is exhausted');
+        case 'ACCESS_BLOCKED':
+          return t(
+            'initiatives.analysis.logic.aiErrAccessBlocked',
+            'AI access is blocked for this workspace'
+          );
+        case 'EMPTY_LLM_RESPONSE':
+        case 'EMPTY_AI_RESPONSE':
+          return t('initiatives.analysis.logic.aiErrEmpty', 'AI returned an empty response');
+        case 'LLM_CALL_FAILED':
+          return t('initiatives.analysis.logic.aiErrCallFailed', 'the AI call failed');
+        case 'AI_BAD_JSON':
+          return t(
+            'initiatives.analysis.logic.aiErrBadJson',
+            'the AI response could not be parsed'
+          );
+        default:
+          return (
+            String((err as Error)?.message || '').trim() ||
+            t('initiatives.analysis.logic.aiErrUnavailable', 'AI is temporarily unavailable')
+          );
+      }
+    },
+    [t]
+  );
+
+  const discoverDependenciesWithAi = useCallback(async () => {
     if (initiatives.length < 2) {
       toast.error(t('initiatives.analysis.logic.needMore', 'Need at least 2 initiatives'));
       return;
@@ -238,73 +284,110 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     setDiscoverRunning(true);
     setAcceptedDiscovered(new Set());
 
-    setTimeout(() => {
-      const existingPairs = new Set(dependencies.map((d) => `${d.fromId}::${d.toId}`));
+    // Pary już istniejące (w obie strony) — model ich nie zobaczy, żeby nie
+    // proponował duplikatów, a walidacja i tak je odrzuci.
+    const existingPairs = new Set<string>();
+    for (const d of dependencies) {
+      existingPairs.add(`${d.fromId}::${d.toId}`);
+      existingPairs.add(`${d.toId}::${d.fromId}`);
+    }
+
+    // Kontekst dla modelu: krótki, bez PII, tylko to co potrzebne do wniosku.
+    const byId = new Map(initiatives.map((i) => [i.id, i]));
+    const roster = initiatives.slice(0, 40).map((i) => ({
+      id: i.id,
+      name: i.name,
+      description: String(i.description ?? i.summary ?? '').slice(0, 300),
+      priority: i.priority ?? 'MEDIUM',
+      plannedStart: i.plannedStartDate ?? null,
+      plannedEnd: i.plannedEndDate ?? null,
+    }));
+
+    // Prompt celowo NIE przechodzi przez i18n: to instrukcja dla modelu, nie
+    // tekst dla użytkownika. Ma być identyczna niezależnie od języka interfejsu
+    // (tłumaczenie promptu = inny wynik modelu przy tych samych danych).
+    // Język ODPOWIEDZI wymuszamy osobno, z aktualnego locale.
+    const answerLanguage = i18n.language?.startsWith('pl') ? 'Polish' : 'English';
+    const systemInstruction =
+      'You are a portfolio management assistant. You identify genuine execution ' +
+      'dependencies between initiatives — cases where one must finish before another ' +
+      'can sensibly start (a prerequisite, data or a system it produces, a capability ' +
+      'it builds). Do NOT invent a dependency just because two initiatives touch a ' +
+      'similar topic or share a keyword. If there is no real dependency, return an ' +
+      `empty list. Write every "reason" in ${answerLanguage}. Return valid JSON only, no markdown.`;
+
+    const prompt =
+      'Below is a list of initiatives from one portfolio. Identify only genuine ' +
+      'finish-to-start dependencies that are NOT already recorded.\n\n' +
+      'Return JSON only, exactly this shape:\n' +
+      '{"dependencies":[{"fromId":"<id of the initiative that must finish first>",' +
+      '"toId":"<id of the initiative that depends on it>",' +
+      '"reason":"<one sentence, max 140 chars, why>",' +
+      '"confidence":"high|medium|low"}]}\n\n' +
+      'Rules: use only ids from the list; fromId must differ from toId; at most 20 ' +
+      'items; if there are no real dependencies return {"dependencies":[]}.\n\n' +
+      `Initiatives:\n${JSON.stringify(roster, null, 1)}\n\n` +
+      'Already recorded (do not repeat):\n' +
+      (dependencies.length > 0
+        ? dependencies.map((d) => `${d.fromId} -> ${d.toId}`).join('\n')
+        : '(none)');
+
+    try {
+      const res = await Api.post('/ai/generate', {
+        message: prompt,
+        systemInstruction,
+        roleName: 'Initiative Dependency Analyzer',
+      });
+
+      const raw = String(res?.text ?? '')
+        .replace(/^```[\w-]*\n?/g, '')
+        .replace(/```$/g, '')
+        .trim();
+      if (!raw) {
+        const err = new Error('Empty AI response') as Error & { code?: string };
+        err.code = 'EMPTY_AI_RESPONSE';
+        throw err;
+      }
+
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      let parsed: { dependencies?: unknown };
+      try {
+        parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+      } catch {
+        const err = new Error('AI response is not valid JSON') as Error & { code?: string };
+        err.code = 'AI_BAD_JSON';
+        throw err;
+      }
+
+      // Walidacja: model może zmyślić id albo powtórzyć istniejącą parę.
+      // Do UI trafia WYŁĄCZNIE to, co przeszło przez ten filtr.
+      const seen = new Set<string>();
       const proposals: DiscoveredDep[] = [];
+      for (const item of Array.isArray(parsed?.dependencies) ? parsed.dependencies : []) {
+        const row = item as Record<string, unknown>;
+        const fromId = String(row?.fromId ?? '');
+        const toId = String(row?.toId ?? '');
+        if (!fromId || !toId || fromId === toId) continue;
+        const from = byId.get(fromId);
+        const to = byId.get(toId);
+        if (!from || !to) continue; // zmyślone id — odrzucamy w ciszy
+        const key = `${fromId}::${toId}`;
+        if (existingPairs.has(key) || seen.has(key) || seen.has(`${toId}::${fromId}`)) continue;
+        seen.add(key);
 
-      for (let i = 0; i < initiatives.length; i++) {
-        for (let j = 0; j < initiatives.length; j++) {
-          if (i === j) continue;
-          const a = initiatives[i];
-          const b = initiatives[j];
-          const pairKey = `${a.id}::${b.id}`;
-          const reversePairKey = `${b.id}::${a.id}`;
-          if (existingPairs.has(pairKey) || existingPairs.has(reversePairKey)) continue;
-          if (proposals.some((p) => p.fromId === a.id && p.toId === b.id)) continue;
-          if (proposals.some((p) => p.fromId === b.id && p.toId === a.id)) continue;
+        const confidenceRaw = String(row?.confidence ?? '').toLowerCase();
+        const confidence: DiscoveredDep['confidence'] =
+          confidenceRaw === 'high' || confidenceRaw === 'low' ? confidenceRaw : 'medium';
 
-          const textA = `${a.name} ${a.description ?? ''} ${a.summary ?? ''} ${a.axis ?? ''}`;
-          const textB = `${b.name} ${b.description ?? ''} ${b.summary ?? ''} ${b.axis ?? ''}`;
-          const groupsA = getKeywordGroups(textA);
-          const groupsB = getKeywordGroups(textB);
-          const overlap = groupsA.filter((g) => groupsB.includes(g));
-
-          if (overlap.length === 0) continue;
-
-          const priorityOrder = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
-          const aPrio = priorityOrder[a.priority] ?? 2;
-          const bPrio = priorityOrder[b.priority] ?? 2;
-
-          let predecessor = a;
-          let successor = b;
-          let reason = '';
-
-          if (
-            a.plannedEndDate &&
-            b.plannedStartDate &&
-            new Date(a.plannedEndDate) <= new Date(b.plannedStartDate)
-          ) {
-            reason = `"${a.name}" should precede "${b.name}" — natural sequence in ${overlap.join(', ')} domain`;
-          } else if (
-            b.plannedEndDate &&
-            a.plannedStartDate &&
-            new Date(b.plannedEndDate) <= new Date(a.plannedStartDate)
-          ) {
-            predecessor = b;
-            successor = a;
-            reason = `"${b.name}" should precede "${a.name}" — natural sequence in ${overlap.join(', ')} domain`;
-          } else if (aPrio < bPrio) {
-            reason = `"${a.name}" is higher priority (${a.priority}) and likely unlocks "${b.name}" in ${overlap.join(', ')} domain`;
-          } else if (bPrio < aPrio) {
-            predecessor = b;
-            successor = a;
-            reason = `"${b.name}" is higher priority (${b.priority}) and likely unlocks "${a.name}" in ${overlap.join(', ')} domain`;
-          } else {
-            reason = `Both share ${overlap.join(', ')} domain — "${a.name}" may need to precede "${b.name}"`;
-          }
-
-          const confidence: DiscoveredDep['confidence'] =
-            overlap.length >= 2 ? 'high' : reason.includes('natural sequence') ? 'high' : 'medium';
-
-          proposals.push({
-            fromId: predecessor.id,
-            fromName: predecessor.name,
-            toId: successor.id,
-            toName: successor.name,
-            reason,
-            confidence,
-          });
-        }
+        proposals.push({
+          fromId,
+          fromName: from.name,
+          toId,
+          toName: to.name,
+          reason: String(row?.reason ?? '').slice(0, 200),
+          confidence,
+        });
+        if (proposals.length >= 20) break;
       }
 
       proposals.sort((a, b) => {
@@ -312,10 +395,26 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
         return order[a.confidence] - order[b.confidence];
       });
 
-      setDiscoveredDeps(proposals.slice(0, 20));
+      setDiscoveredDeps(proposals);
+    } catch (err) {
+      // Jedyna dozwolona reakcja na brak odpowiedzi AI: powiedzieć to wprost.
+      // Panel NIE zostaje otwarty, dane zostają nietknięte.
+      // eslint-disable-next-line no-console
+      console.error('[LogicAnalysis] AI dependency discovery failed:', err);
+      setDiscoveredDeps(null);
+      toast.error(
+        t(
+          'initiatives.analysis.logic.aiDiscoverFailed',
+          'Dependency discovery failed — {{reason}}.',
+          {
+            reason: aiFailureReason(err),
+          }
+        )
+      );
+    } finally {
       setDiscoverRunning(false);
-    }, 800);
-  }, [dependencies, initiatives, t]);
+    }
+  }, [aiFailureReason, dependencies, i18n.language, initiatives, t]);
 
   const handleAcceptDiscovered = useCallback(
     async (dep: DiscoveredDep) => {
@@ -555,9 +654,9 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     return steps;
   }, [dependencies, initiatives]);
 
-  /* ---------- Apply AI fix ---------- */
+  /* ---------- Apply fix (poprawka z reguł, nie z AI) ---------- */
 
-  const handleApplyAiFix = useCallback(
+  const handleApplyFix = useCallback(
     async (issue: AnalysisIssue) => {
       if (!onQuickUpdate || !issue.initiativeId || !issue.autoFixPayload) return;
       setApplyingFix(issue.id);
@@ -573,334 +672,371 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     [onQuickUpdate, t]
   );
 
-  const discoveredDepsPanel =
-    discoveredDeps !== null ? (
-      <div className="m-4 rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
-        <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-c-info dark:text-c-info" />
-            <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
-              {t(
-                'initiatives.analysis.logic.discoveredDeps',
-                'AI discovered potential dependencies'
-              )}
-            </h3>
-            <span className="text-xs text-c-info dark:text-c-info">({discoveredDeps.length})</span>
-          </div>
-          <button
-            onClick={closeWorkspacePanels}
-            className="p-1 rounded text-c-info hover:bg-c-info/30 dark:hover:bg-c-info/30"
-          >
-            <X size={14} />
-          </button>
-        </div>
-        {discoveredDeps.length === 0 ? (
-          <div className="px-4 py-6 text-center">
-            <Check size={24} className="mx-auto mb-2 text-emerald-500" />
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              {t('initiatives.analysis.logic.noNewDeps', 'No additional dependencies discovered')}
-            </p>
-          </div>
-        ) : (
-          <div className="divide-y divide-c-info/20 dark:divide-c-info/15">
-            {discoveredDeps.map((dep, idx) => {
-              const key = `${dep.fromId}::${dep.toId}`;
-              const isAccepted = acceptedDiscovered.has(key);
-              return (
-                <div
-                  key={`${key}-${idx}`}
-                  className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
-                    isAccepted ? 'bg-emerald-500/5 dark:bg-emerald-500/10' : ''
-                  }`}
-                >
-                  <span
-                    className={`shrink-0 w-2 h-2 rounded-full ${
-                      dep.confidence === 'high'
-                        ? 'bg-emerald-500'
-                        : dep.confidence === 'medium'
-                          ? 'bg-amber-500'
-                          : 'bg-slate-400'
-                    }`}
-                    title={`Confidence: ${dep.confidence}`}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-slate-900 dark:text-white truncate max-w-[180px]">
-                        {dep.fromName}
-                      </span>
-                      <ArrowRight size={14} className="text-c-info shrink-0" />
-                      <span className="text-slate-600 dark:text-slate-400 truncate max-w-[180px]">
-                        {dep.toName}
-                      </span>
-                      <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                          dep.confidence === 'high'
-                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                            : dep.confidence === 'medium'
-                              ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                              : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
-                        }`}
-                      >
-                        {dep.confidence}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      {dep.reason}
-                    </p>
-                  </div>
-                  {isAccepted ? (
-                    <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                      <Check size={12} /> Accepted
-                    </span>
-                  ) : (
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => handleAcceptDiscovered(dep)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-                      >
-                        <Check size={12} /> Accept
-                      </button>
-                      <button
-                        onClick={() =>
-                          setDiscoveredDeps((prev) => prev?.filter((_, i) => i !== idx) ?? null)
-                        }
-                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    ) : null;
-
-  const cyclesPanel =
-    cycles !== null ? (
-      <div
-        className={`m-4 rounded-xl border overflow-hidden ${
-          cycles.length > 0
-            ? 'border-danger-200 dark:border-danger-900/50 bg-danger-500/5 dark:bg-danger-500/10'
-            : 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
-        }`}
-      >
-        <div
-          className={`px-4 py-3 border-b flex items-center justify-between ${
-            cycles.length > 0
-              ? 'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-900/50'
-              : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <Shuffle
-              size={16}
-              className={
-                cycles.length > 0
-                  ? 'text-danger-600 dark:text-danger-400'
-                  : 'text-emerald-600 dark:text-emerald-400'
-              }
-            />
-            <h3
-              className={`text-sm font-semibold ${
-                cycles.length > 0
-                  ? 'text-danger-700 dark:text-danger-300'
-                  : 'text-emerald-700 dark:text-emerald-300'
-              }`}
+  // ★ Cztery panele MUSZĄ być zapamiętane (useMemo).
+  //
+  // Defekt sprzed tej zmiany (potwierdzony na `odbior/hub-2026-07-23`, przed
+  // jakąkolwiek moją edytą): to były zwykłe wyrażenia warunkowe, więc każdy
+  // render tworzył NOWY obiekt. Efekt niżej ma je w tablicy zależności i woła
+  // `onRegisterWorkspacePanel` → `setWorkspacePanel` w rodzicu → rodzic
+  // renderuje → dziecko tworzy nowy obiekt panelu → zależności „się zmieniły" →
+  // efekt znowu… czyli pętla nieskończona. Objaw: „Maximum update depth
+  // exceeded" i wywalony <LogicAnalysis> po kliknięciu przycisku otwierającego
+  // panel. eslint ostrzegał o tym wprost (react-hooks/exhaustive-deps:
+  // „the conditional could make the dependencies change on every render”).
+  const discoveredDepsPanel = useMemo(
+    () =>
+      discoveredDeps !== null ? (
+        <div className="m-4 rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
+          <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles size={16} className="text-c-info dark:text-c-info" />
+              <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
+                {t(
+                  'initiatives.analysis.logic.discoveredDeps',
+                  'AI discovered potential dependencies'
+                )}
+              </h3>
+              <span className="text-xs text-c-info dark:text-c-info">
+                ({discoveredDeps.length})
+              </span>
+            </div>
+            <button
+              onClick={closeWorkspacePanels}
+              className="p-1 rounded text-c-info hover:bg-c-info/30 dark:hover:bg-c-info/30"
             >
-              {cycles.length > 0
-                ? t('initiatives.analysis.logic.cyclesFound', '{{count}} cycle(s) detected', {
-                    count: cycles.length,
-                  })
-                : t('initiatives.analysis.logic.noCycles', 'No cycles detected')}
-            </h3>
+              <X size={14} />
+            </button>
           </div>
-          <button
-            onClick={closeWorkspacePanels}
-            className="p-1 rounded text-slate-500 hover:bg-slate-200/30 dark:hover:bg-navy-700/50"
-          >
-            <X size={14} />
-          </button>
-        </div>
-        {cycles.map((c, idx) => (
-          <div
-            key={idx}
-            className="px-4 py-3 border-b border-danger-200/50 dark:border-danger-900/30"
-          >
-            <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
-              {c.pathNames.map((name, ni) => (
-                <React.Fragment key={ni}>
-                  <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded ${
-                      ni === 0 || ni === c.pathNames.length - 1
-                        ? 'bg-danger-500/20 text-danger-700 dark:text-danger-300'
-                        : 'bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
+          {discoveredDeps.length === 0 ? (
+            <div className="px-4 py-6 text-center">
+              <Check size={24} className="mx-auto mb-2 text-emerald-500" />
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {t('initiatives.analysis.logic.noNewDeps', 'No additional dependencies discovered')}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-c-info/20 dark:divide-c-info/15">
+              {discoveredDeps.map((dep, idx) => {
+                const key = `${dep.fromId}::${dep.toId}`;
+                const isAccepted = acceptedDiscovered.has(key);
+                return (
+                  <div
+                    key={`${key}-${idx}`}
+                    className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                      isAccepted ? 'bg-emerald-500/5 dark:bg-emerald-500/10' : ''
                     }`}
                   >
-                    {name}
-                  </span>
-                  {ni < c.pathNames.length - 1 && (
-                    <ArrowRight size={12} className="text-danger-400 shrink-0" />
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              <Sparkles size={10} className="inline mr-1" />
-              {c.suggestion}
-            </p>
-          </div>
-        ))}
-      </div>
-    ) : null;
-
-  const criticalPathPanel = showCriticalPath ? (
-    <div className="m-4 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-500/5 dark:bg-amber-500/10 overflow-hidden">
-      <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Route size={16} className="text-amber-600 dark:text-amber-400" />
-          <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-            {t('initiatives.analysis.logic.criticalPathTitle', 'Critical Path')}
-            {criticalPath.totalDays > 0 && (
-              <span className="ml-2 text-xs font-normal text-amber-600/70 dark:text-amber-400/70">
-                ({criticalPath.totalDays} days)
-              </span>
-            )}
-          </h3>
-        </div>
-        <button
-          onClick={closeWorkspacePanels}
-          className="p-1 rounded text-amber-500 hover:bg-amber-200/30 dark:hover:bg-amber-800/30"
-        >
-          <X size={14} />
-        </button>
-      </div>
-      {criticalPath.path.length === 0 ? (
-        <div className="px-4 py-6 text-center">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            {t(
-              'initiatives.analysis.logic.noCriticalPath',
-              'No dependency chain found — add dependencies first'
-            )}
-          </p>
-        </div>
-      ) : (
-        <div className="p-4">
-          <div className="flex items-center gap-1 flex-wrap">
-            {criticalPath.path.map((step, idx) => (
-              <React.Fragment key={step.id}>
-                <button
-                  onClick={() => onOpenInitiative(step.id)}
-                  className="group relative px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-amber-200 dark:border-amber-800/50 hover:border-c-info dark:hover:border-c-info transition-colors shadow-sm"
-                >
-                  <div className="text-xs font-medium text-slate-900 dark:text-white">
-                    {step.name}
-                  </div>
-                  {step.startDate && step.endDate && (
-                    <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
-                      {new Date(step.startDate).toLocaleDateString()} —{' '}
-                      {new Date(step.endDate).toLocaleDateString()}
-                      <span className="ml-1 text-amber-500">
-                        ({daysBetween(step.startDate, step.endDate)}d)
-                      </span>
+                    <span
+                      className={`shrink-0 w-2 h-2 rounded-full ${
+                        dep.confidence === 'high'
+                          ? 'bg-emerald-500'
+                          : dep.confidence === 'medium'
+                            ? 'bg-amber-500'
+                            : 'bg-slate-400'
+                      }`}
+                      title={t('initiatives.analysis.logic.confidence', 'Confidence: {{level}}', {
+                        level: dep.confidence,
+                      })}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-slate-900 dark:text-white truncate max-w-[180px]">
+                          {dep.fromName}
+                        </span>
+                        <ArrowRight size={14} className="text-c-info shrink-0" />
+                        <span className="text-slate-600 dark:text-slate-400 truncate max-w-[180px]">
+                          {dep.toName}
+                        </span>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                            dep.confidence === 'high'
+                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                              : dep.confidence === 'medium'
+                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
+                          }`}
+                        >
+                          {dep.confidence}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {dep.reason}
+                      </p>
                     </div>
-                  )}
-                </button>
-                {idx < criticalPath.path.length - 1 && (
-                  <ArrowRight size={16} className="text-amber-400 shrink-0 mx-1" />
-                )}
-              </React.Fragment>
-            ))}
-          </div>
+                    {isAccepted ? (
+                      <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                        <Check size={12} /> {t('initiatives.analysis.logic.accepted', 'Accepted')}
+                      </span>
+                    ) : (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => handleAcceptDiscovered(dep)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                        >
+                          <Check size={12} /> {t('initiatives.analysis.logic.accept', 'Accept')}
+                        </button>
+                        <button
+                          onClick={() =>
+                            setDiscoveredDeps((prev) => prev?.filter((_, i) => i !== idx) ?? null)
+                          }
+                          className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
-      {blockers.length > 0 && (
-        <div className="border-t border-amber-200/50 dark:border-amber-900/30">
-          <div className="px-4 py-2 bg-amber-50/50 dark:bg-amber-900/10">
-            <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
-              {t('initiatives.analysis.logic.blockersTitle', 'Blockers')}
-            </h4>
-          </div>
-          <div className="divide-y divide-amber-200/40 dark:divide-amber-900/20">
-            {blockers.map((b) => (
-              <div key={b.initiativeId} className="flex items-center gap-3 px-4 py-2.5 text-sm">
-                <Zap size={14} className="text-amber-500 shrink-0" />
-                <button
-                  onClick={() => onOpenInitiative(b.initiativeId)}
-                  className="font-medium text-slate-900 dark:text-white hover:text-c-info dark:hover:text-c-info transition-colors truncate"
-                >
-                  {b.initiativeName}
-                </button>
-                <span className="ml-auto shrink-0 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-medium">
-                  {t('initiatives.analysis.logic.blockerBadge', '{{count}} dependent(s)', {
-                    count: b.dependentCount,
-                  })}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  ) : null;
+      ) : null,
+    [discoveredDeps, acceptedDiscovered, closeWorkspacePanels, handleAcceptDiscovered, t]
+  );
 
-  const sequencerPanel = showSequencer ? (
-    <div className="m-4 rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-500/5 dark:bg-indigo-500/10 overflow-hidden">
-      <div className="px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-900/50 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Network size={16} className="text-indigo-600 dark:text-indigo-400" />
-          <h3 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-            {t('initiatives.analysis.logic.sequencerTitle', 'AI Recommended Execution Sequence')}
-          </h3>
-        </div>
-        <button
-          onClick={closeWorkspacePanels}
-          className="p-1 rounded text-indigo-500 hover:bg-indigo-200/30 dark:hover:bg-indigo-800/30"
+  const cyclesPanel = useMemo(
+    () =>
+      cycles !== null ? (
+        <div
+          className={`m-4 rounded-xl border overflow-hidden ${
+            cycles.length > 0
+              ? 'border-danger-200 dark:border-danger-900/50 bg-danger-500/5 dark:bg-danger-500/10'
+              : 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
+          }`}
         >
-          <X size={14} />
-        </button>
-      </div>
-      {sequenceSteps.length === 0 ? (
-        <div className="px-4 py-6 text-center">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            {t('initiatives.analysis.logic.noInitiatives', 'No initiatives to sequence')}
-          </p>
-        </div>
-      ) : (
-        <div className="divide-y divide-indigo-200/50 dark:divide-indigo-900/30">
-          {sequenceSteps.map((step) => (
-            <div key={step.phase} className="px-4 py-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-7 h-7 rounded-full bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-xs font-bold">
-                  {step.phase}
-                </span>
-                <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-                  Phase {step.phase}
-                </span>
-              </div>
-              <div className="space-y-1 ml-9">
-                {step.initiatives.map((init) => (
-                  <div key={init.id} className="flex items-center gap-2 text-sm">
-                    <button
-                      onClick={() => onOpenInitiative(init.id)}
-                      className="font-medium text-slate-900 dark:text-white hover:text-c-info dark:hover:text-c-info transition-colors truncate max-w-[250px]"
+          <div
+            className={`px-4 py-3 border-b flex items-center justify-between ${
+              cycles.length > 0
+                ? 'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-900/50'
+                : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Shuffle
+                size={16}
+                className={
+                  cycles.length > 0
+                    ? 'text-danger-600 dark:text-danger-400'
+                    : 'text-emerald-600 dark:text-emerald-400'
+                }
+              />
+              <h3
+                className={`text-sm font-semibold ${
+                  cycles.length > 0
+                    ? 'text-danger-700 dark:text-danger-300'
+                    : 'text-emerald-700 dark:text-emerald-300'
+                }`}
+              >
+                {cycles.length > 0
+                  ? t('initiatives.analysis.logic.cyclesFound', '{{count}} cycle(s) detected', {
+                      count: cycles.length,
+                    })
+                  : t('initiatives.analysis.logic.noCycles', 'No cycles detected')}
+              </h3>
+            </div>
+            <button
+              onClick={closeWorkspacePanels}
+              className="p-1 rounded text-slate-500 hover:bg-slate-200/30 dark:hover:bg-navy-700/50"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          {cycles.map((c, idx) => (
+            <div
+              key={idx}
+              className="px-4 py-3 border-b border-danger-200/50 dark:border-danger-900/30"
+            >
+              <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+                {c.pathNames.map((name, ni) => (
+                  <React.Fragment key={ni}>
+                    <span
+                      className={`text-xs font-medium px-2 py-0.5 rounded ${
+                        ni === 0 || ni === c.pathNames.length - 1
+                          ? 'bg-danger-500/20 text-danger-700 dark:text-danger-300'
+                          : 'bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
+                      }`}
                     >
-                      {init.name}
+                      {name}
+                    </span>
+                    {ni < c.pathNames.length - 1 && (
+                      <ArrowRight size={12} className="text-danger-400 shrink-0" />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                <Wrench size={10} className="inline mr-1" />
+                {c.suggestion}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : null,
+    [cycles, closeWorkspacePanels, t]
+  );
+
+  const criticalPathPanel = useMemo(
+    () =>
+      showCriticalPath ? (
+        <div className="m-4 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-500/5 dark:bg-amber-500/10 overflow-hidden">
+          <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Route size={16} className="text-amber-600 dark:text-amber-400" />
+              <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                {t('initiatives.analysis.logic.criticalPathTitle', 'Critical Path')}
+                {criticalPath.totalDays > 0 && (
+                  <span className="ml-2 text-xs font-normal text-amber-600/70 dark:text-amber-400/70">
+                    ({criticalPath.totalDays} days)
+                  </span>
+                )}
+              </h3>
+            </div>
+            <button
+              onClick={closeWorkspacePanels}
+              className="p-1 rounded text-amber-500 hover:bg-amber-200/30 dark:hover:bg-amber-800/30"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          {criticalPath.path.length === 0 ? (
+            <div className="px-4 py-6 text-center">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {t(
+                  'initiatives.analysis.logic.noCriticalPath',
+                  'No dependency chain found — add dependencies first'
+                )}
+              </p>
+            </div>
+          ) : (
+            <div className="p-4">
+              <div className="flex items-center gap-1 flex-wrap">
+                {criticalPath.path.map((step, idx) => (
+                  <React.Fragment key={step.id}>
+                    <button
+                      onClick={() => onOpenInitiative(step.id)}
+                      className="group relative px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-amber-200 dark:border-amber-800/50 hover:border-c-info dark:hover:border-c-info transition-colors shadow-sm"
+                    >
+                      <div className="text-xs font-medium text-slate-900 dark:text-white">
+                        {step.name}
+                      </div>
+                      {step.startDate && step.endDate && (
+                        <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
+                          {new Date(step.startDate).toLocaleDateString()} —{' '}
+                          {new Date(step.endDate).toLocaleDateString()}
+                          <span className="ml-1 text-amber-500">
+                            ({daysBetween(step.startDate, step.endDate)}d)
+                          </span>
+                        </div>
+                      )}
                     </button>
-                    <span className="text-xs text-slate-600 dark:text-slate-500 truncate">
-                      {init.reason}
+                    {idx < criticalPath.path.length - 1 && (
+                      <ArrowRight size={16} className="text-amber-400 shrink-0 mx-1" />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          )}
+          {blockers.length > 0 && (
+            <div className="border-t border-amber-200/50 dark:border-amber-900/30">
+              <div className="px-4 py-2 bg-amber-50/50 dark:bg-amber-900/10">
+                <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+                  {t('initiatives.analysis.logic.blockersTitle', 'Blockers')}
+                </h4>
+              </div>
+              <div className="divide-y divide-amber-200/40 dark:divide-amber-900/20">
+                {blockers.map((b) => (
+                  <div key={b.initiativeId} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                    <Zap size={14} className="text-amber-500 shrink-0" />
+                    <button
+                      onClick={() => onOpenInitiative(b.initiativeId)}
+                      className="font-medium text-slate-900 dark:text-white hover:text-c-info dark:hover:text-c-info transition-colors truncate"
+                    >
+                      {b.initiativeName}
+                    </button>
+                    <span className="ml-auto shrink-0 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-medium">
+                      {t('initiatives.analysis.logic.blockerBadge', '{{count}} dependent(s)', {
+                        count: b.dependentCount,
+                      })}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
-          ))}
+          )}
         </div>
-      )}
-    </div>
-  ) : null;
+      ) : null,
+    [
+      showCriticalPath,
+      blockers,
+      criticalPath.path,
+      criticalPath.totalDays,
+      closeWorkspacePanels,
+      onOpenInitiative,
+      t,
+    ]
+  );
+
+  const sequencerPanel = useMemo(
+    () =>
+      showSequencer ? (
+        <div className="m-4 rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-500/5 dark:bg-indigo-500/10 overflow-hidden">
+          <div className="px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-900/50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Network size={16} className="text-indigo-600 dark:text-indigo-400" />
+              <h3 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                {t('initiatives.analysis.logic.sequencerTitle', 'Recommended execution sequence')}
+              </h3>
+            </div>
+            <button
+              onClick={closeWorkspacePanels}
+              className="p-1 rounded text-indigo-500 hover:bg-indigo-200/30 dark:hover:bg-indigo-800/30"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          {sequenceSteps.length === 0 ? (
+            <div className="px-4 py-6 text-center">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {t('initiatives.analysis.logic.noInitiatives', 'No initiatives to sequence')}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-indigo-200/50 dark:divide-indigo-900/30">
+              {sequenceSteps.map((step) => (
+                <div key={step.phase} className="px-4 py-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-7 h-7 rounded-full bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-xs font-bold">
+                      {step.phase}
+                    </span>
+                    <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                      Phase {step.phase}
+                    </span>
+                  </div>
+                  <div className="space-y-1 ml-9">
+                    {step.initiatives.map((init) => (
+                      <div key={init.id} className="flex items-center gap-2 text-sm">
+                        <button
+                          onClick={() => onOpenInitiative(init.id)}
+                          className="font-medium text-slate-900 dark:text-white hover:text-c-info dark:hover:text-c-info transition-colors truncate max-w-[250px]"
+                        >
+                          {init.name}
+                        </button>
+                        <span className="text-xs text-slate-600 dark:text-slate-500 truncate">
+                          {init.reason}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null,
+    [showSequencer, sequenceSteps, closeWorkspacePanels, onOpenInitiative, t]
+  );
 
   useEffect(() => {
     if (!onRegisterActions) return;
@@ -912,17 +1048,25 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
       setCycles(null);
       setShowCriticalPath(false);
       setShowSequencer(false);
-      computeDiscoverDeps();
+      void discoverDependenciesWithAi();
     };
     onRegisterActions(
       <>
+        {/* JEDYNY przycisk AI w tym module — woła realny model. Spinner jest
+            uczciwy: czeka na odpowiedź sieci, nie na `setTimeout`. */}
         <button
           onClick={toggleDiscoveredDepsPanel}
           disabled={discoverRunning}
           className={getMenu3AiButtonClass(discoveredDeps !== null)}
         >
-          {discoverRunning ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
-          AI Discover Dependencies
+          {discoverRunning ? (
+            <Loader2 size={12} className="animate-spin" />
+          ) : (
+            <Sparkles size={12} />
+          )}
+          {discoverRunning
+            ? t('initiatives.analysis.logic.aiDiscovering', 'Asking AI…')
+            : t('initiatives.analysis.logic.aiDiscover', 'AI Discover Dependencies')}
         </button>
         <button
           onClick={() => {
@@ -935,10 +1079,10 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             setShowSequencer(false);
             detectCycles();
           }}
-          className={getMenu3AiButtonClass(cycles !== null)}
+          className={getMenu3DeterministicButtonClass(cycles !== null)}
         >
           <Shuffle size={12} />
-          Detect Cycles
+          {t('initiatives.analysis.logic.detectCyclesAction', 'Detect Cycles')}
         </button>
         <button
           onClick={() => {
@@ -947,10 +1091,10 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             setShowSequencer(false);
             setShowCriticalPath((v) => !v);
           }}
-          className={getMenu3AiButtonClass(showCriticalPath)}
+          className={getMenu3DeterministicButtonClass(showCriticalPath)}
         >
           <Route size={12} />
-          Critical Path
+          {t('initiatives.analysis.logic.criticalPathAction', 'Critical Path')}
         </button>
         <button
           onClick={() => {
@@ -959,16 +1103,16 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             setShowCriticalPath(false);
             setShowSequencer((v) => !v);
           }}
-          className={getMenu3AiButtonClass(showSequencer)}
+          className={getMenu3DeterministicButtonClass(showSequencer)}
         >
           <Network size={12} />
-          AI Sequencer
+          {t('initiatives.analysis.logic.sequencerAction', 'Sequencer')}
         </button>
       </>
     );
   }, [
     onRegisterActions,
-    computeDiscoverDeps,
+    discoverDependenciesWithAi,
     discoveredDeps,
     discoverRunning,
     showCriticalPath,
@@ -976,22 +1120,26 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     cycles,
     detectCycles,
     closeWorkspacePanels,
+    t,
   ]);
 
   useEffect(() => {
     if (!onRegisterWorkspacePanel) return;
     if (discoveredDepsPanel) {
       onRegisterWorkspacePanel({
-        title: 'AI Discover Dependencies',
-        subtitle: 'Review and accept potential cross-initiative dependencies.',
-        icon: <Search size={16} />,
+        title: t('initiatives.analysis.logic.aiDiscover', 'AI Discover Dependencies'),
+        subtitle: t(
+          'initiatives.analysis.logic.aiDiscoverSubtitle',
+          'Proposed by AI from initiative names and descriptions — review and accept the ones that are real.'
+        ),
+        icon: <Sparkles size={16} />,
         content: discoveredDepsPanel,
       });
       return () => onRegisterWorkspacePanel(null);
     }
     if (cyclesPanel) {
       onRegisterWorkspacePanel({
-        title: 'Detect Cycles',
+        title: t('initiatives.analysis.logic.detectCyclesAction', 'Detect Cycles'),
         subtitle: 'Resolve circular dependency chains before sequencing work.',
         icon: <Shuffle size={16} />,
         content: cyclesPanel,
@@ -1000,7 +1148,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     }
     if (criticalPathPanel) {
       onRegisterWorkspacePanel({
-        title: 'Critical Path',
+        title: t('initiatives.analysis.logic.criticalPathAction', 'Critical Path'),
         subtitle: 'See the longest dependency chain and the main blockers.',
         icon: <Route size={16} />,
         content: criticalPathPanel,
@@ -1009,7 +1157,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     }
     if (sequencerPanel) {
       onRegisterWorkspacePanel({
-        title: 'AI Sequencer',
+        title: t('initiatives.analysis.logic.sequencerAction', 'Sequencer'),
         subtitle: 'Recommended execution phases based on dependencies and priority.',
         icon: <Network size={16} />,
         content: sequencerPanel,
@@ -1024,6 +1172,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     criticalPathPanel,
     sequencerPanel,
     onRegisterWorkspacePanel,
+    t,
   ]);
 
   /* ---------- render ---------- */
@@ -1197,7 +1346,9 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                             ? 'bg-amber-500'
                             : 'bg-slate-400'
                       }`}
-                      title={`Confidence: ${dep.confidence}`}
+                      title={t('initiatives.analysis.logic.confidence', 'Confidence: {{level}}', {
+                        level: dep.confidence,
+                      })}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -1226,7 +1377,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                     </div>
                     {isAccepted ? (
                       <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                        <Check size={12} /> Accepted
+                        <Check size={12} /> {t('initiatives.analysis.logic.accepted', 'Accepted')}
                       </span>
                     ) : (
                       <div className="flex items-center gap-1 shrink-0">
@@ -1236,7 +1387,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                             bg-emerald-500/10 text-emerald-600 dark:text-emerald-400
                             hover:bg-emerald-500/20 transition-colors"
                         >
-                          <Check size={12} /> Accept
+                          <Check size={12} /> {t('initiatives.analysis.logic.accept', 'Accept')}
                         </button>
                         <button
                           onClick={() =>
@@ -1323,7 +1474,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 ))}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                <Sparkles size={10} className="inline mr-1" />
+                <Wrench size={10} className="inline mr-1" />
                 {c.suggestion}
               </p>
             </div>
@@ -1435,10 +1586,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             <div className="flex items-center gap-2">
               <Network size={16} className="text-indigo-600 dark:text-indigo-400" />
               <h3 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-                {t(
-                  'initiatives.analysis.logic.sequencerTitle',
-                  'AI Recommended Execution Sequence'
-                )}
+                {t('initiatives.analysis.logic.sequencerTitle', 'Recommended execution sequence')}
               </h3>
             </div>
             <button
@@ -1622,7 +1770,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                                   </p>
                                   {relatedIssue.fixSuggestion && (
                                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                                      <Sparkles size={10} className="inline mr-1 text-c-info" />
+                                      <Wrench size={10} className="inline mr-1 text-c-info" />
                                       {relatedIssue.fixSuggestion}
                                     </p>
                                   )}
@@ -1630,7 +1778,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        handleApplyAiFix(relatedIssue);
+                                        handleApplyFix(relatedIssue);
                                       }}
                                       disabled={applyingFix === relatedIssue.id}
                                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
@@ -1640,9 +1788,9 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                                       {applyingFix === relatedIssue.id ? (
                                         <Loader2 size={12} className="animate-spin" />
                                       ) : (
-                                        <Sparkles size={12} />
+                                        <Wrench size={12} />
                                       )}
-                                      Apply fix
+                                      {t('initiatives.analysis.applyFix', 'Apply fix')}
                                     </button>
                                   )}
                                 </div>
@@ -1708,7 +1856,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             </p>
             {initiatives.length >= 2 && (
               <button
-                onClick={computeDiscoverDeps}
+                onClick={() => void discoverDependenciesWithAi()}
                 disabled={discoverRunning}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold
                 bg-gradient-to-r from-c-info to-c-info text-white

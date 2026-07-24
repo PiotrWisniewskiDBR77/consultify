@@ -57,11 +57,55 @@ interface NModeShellExtraProps extends NModeShellProps {
    *  `<ArtifactRightPanel sections={…} />`. Gdy pominięty, powłoka renderuje się
    *  bez zmian (wstecznie zgodne). Ukryty <lg (mobile), by nie ściskać centrum. */
   rightPanel?: React.ReactNode;
+  /**
+   * Karta otwarta w trybie „Podgląd" (Menu 2 → Edycja | Podgląd).
+   *
+   * Powłoka przekazuje to dalej do `NModeLeftNav`, który w Podglądzie chowa
+   * uchwyty przeciągania (standard §4.4). Opcjonalny — gdy konsument go nie
+   * poda, powłoka próbuje ODCZYTAĆ tryb z paska Menu 2 zwróconego przez
+   * `renderActionBar()` (patrz `resolveReadMode` niżej), a gdy i tego nie ma,
+   * zachowuje dzisiejsze zachowanie 1:1.
+   */
+  readMode?: boolean;
 }
 
-/** Sticky toolbar host — import this when building a custom toolbar container outside NModeShell */
+/**
+ * Fallback trybu Podglądu, gdy konsument nie podał `readMode` powłoce.
+ *
+ * DLACZEGO: stan „Edycja | Podgląd" mieszka dziś w karcie (lokalny `useState`)
+ * i wędruje wyłącznie do `NModeMenu2` przez `renderActionBar()`. Powłoka nie ma
+ * do niego innego dojścia, a Podgląd bez uchwytów to wymóg standardu — więc
+ * zamiast wymuszać zmianę w sześciu kartach naraz, powłoka zagląda do
+ * ELEMENTU Reacta, który sama za chwilę wyrenderuje. To zwykły odczyt propsów
+ * elementu (nie DOM, nie ref, nie hack na czasie), w pełni bezpieczny: gdy
+ * pasek nie niesie `readMode`, wynik to `false`, czyli stan sprzed zmiany.
+ *
+ * Docelowo (po fali kart): karta poda `readMode` powłoce wprost i ten fallback
+ * będzie martwy — dlatego prop jawny ma pierwszeństwo.
+ */
+const resolveReadMode = (bar: React.ReactNode): boolean => {
+  if (!React.isValidElement(bar)) return false;
+  const props = bar.props as { readMode?: unknown; children?: React.ReactNode };
+  if (typeof props.readMode === 'boolean') return props.readMode;
+  // Pasek opakowany we fragment / kontener — sprawdź bezpośrednie dzieci.
+  return React.Children.toArray(props.children).some((child) => {
+    if (!React.isValidElement(child)) return false;
+    return (child.props as { readMode?: unknown }).readMode === true;
+  });
+};
+
+/**
+ * Sticky toolbar host — import this when building a custom toolbar container
+ * outside NModeShell.
+ *
+ * `mt-2` (8 px) = JEDEN odstęp Menu 1 ↔ Menu 2 dla wszystkich kart. Pomiar
+ * 2026-07-23 dał 0/0/0/8/8/68 px w sześciu kartach — dwa zaokrąglone paski
+ * stykały się krawędziami, jakby były jednym elementem. Wartość siedzi w tej
+ * stałej (a nie w każdej karcie z osobna), bo stałą importują też karty
+ * budujące własny kontener paska — więc jedna zmiana ustawia je wszystkie.
+ */
 export const NMODE_TOOLBAR_SHELL_CLASS =
-  'sticky top-0 z-30 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/40';
+  'sticky top-0 z-30 mt-2 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/40';
 
 export const NModeShell: React.FC<NModeShellExtraProps> = ({
   header,
@@ -84,6 +128,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   propertiesMaxColumns,
   loading = false,
   rightPanel,
+  readMode,
   children,
 }) => {
   if (loading) {
@@ -93,6 +138,12 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
       </div>
     );
   }
+
+  // Pasek Menu 2 budujemy RAZ (a nie dwa razy: pod odczyt trybu i pod render),
+  // żeby nie tworzyć dwóch drzew i nie ryzykować rozjazdu. Liczone PO bramce
+  // `loading`, bo dawniej `renderActionBar()` też nie było wołane w ładowaniu.
+  const actionBarNode = renderActionBar ? renderActionBar() : null;
+  const effectiveReadMode = readMode ?? resolveReadMode(actionBarNode);
 
   return (
     <div className="h-full min-h-0 flex">
@@ -118,7 +169,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
         <div className={NMODE_TOOLBAR_SHELL_CLASS}>
           <div className="max-w-6xl mx-auto px-6 py-2">
             {renderActionBar
-              ? renderActionBar()
+              ? actionBarNode
               : ((actionsVisible && actions.length > 0) || toolAIActions.length > 0) && (
                   <NModeActionBar
                     actions={actionsVisible ? actions : []}
@@ -141,6 +192,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
                   activeSection={activeSection}
                   onSectionChange={onSectionChange}
                   onSectionReorder={onSectionReorder}
+                  readMode={effectiveReadMode}
                 />
                 <NModeCanvas
                   sections={sections}

@@ -83,6 +83,48 @@ const MOCK_NOTIFICATION = {
       'Program DRD — faza wyboru architektury po zakończonym POC (5 tygodni, 3 warianty).',
     daysWaiting: 9,
     owner: 'Anna Kowalska',
+
+    /**
+     * ★ POLE „OPIS" NIE MOŻE BYĆ KOPIĄ TYTUŁU.
+     *
+     * `NotificationDetailView` hydratuje trzy pierwsze pola karty łańcuchem
+     * `data.worksheet.<pole> ?? contract.<pole> ?? notification.message`
+     * (NotificationDetailView.tsx:1383-1391), a `contract.what` to DOSŁOWNIE
+     * `normalize(n.title)` (notificationContent.ts:1083). Bez `worksheet`
+     * pierwsze pole karty przepisywało tytuł, czyli nie niosło ani jednej
+     * nowej informacji. `worksheet` ma pierwszeństwo — i tu go podajemy.
+     *
+     * Układ: wniosek najpierw (ile czeka i co z tego wynika), potem skutek
+     * na terminie, potem zasięg blokady, na końcu twardy skutek biznesowy.
+     */
+    worksheet: {
+      description:
+        'Decyzja o architekturze generowania raportów czeka 9 dni przy buforze 3 dni. ' +
+        'Bramka G2 przesuwa się z 12.03 na 24.03, czyli o 12 dni roboczych. ' +
+        'Zablokowane są 4 zadania wdrożeniowe. Dwaj klienci enterprise mają umowne terminy ' +
+        'dostarczenia raportów w marcu — przy tym przesunięciu wchodzimy w ryzyko kar.',
+      whyImportant:
+        'Nie chodzi o samą zwłokę, tylko o to, że czekanie nic już nie wnosi. POC zamknięty ' +
+        '(5 tygodni, 3 warianty), wariant hybrydowy wypadł najlepiej: 92% raportów bez poprawek ' +
+        'konsultanta. Brakuje wyłącznie formalnej akceptacji właściciela programu — ' +
+        'każdy kolejny dzień kupuje zero nowej wiedzy, a kosztuje jeden dzień bramki G2.\n\n' +
+        'Skala: przy stawce 32 tys. PLN za tydzień niezafakturowanej pracy 12 dni roboczych ' +
+        'to ok. 77 tys. PLN (ZAŁOŻENIE: stawka z rozliczenia programu za II kw. 2026).',
+      blocked:
+        'Bezpośrednio zablokowane (4 zadania): integracja szablonów raportu, pipeline eksportu, ' +
+        'testy UAT u klienta, szkolenie zespołu klienta.\n' +
+        'Pośrednio: bramka G2 całego programu DRD i dwa odbiory etapu u klientów enterprise.\n' +
+        'NIE jest zablokowane: prace na module wywiadów i migracja danych historycznych — ' +
+        'te idą niezależnie od wyboru architektury.',
+      expectedAction:
+        'Zwołać 45-minutową sesję decyzyjną z właścicielem programu do piątku i zamknąć wybór ' +
+        'na modelu hybrydowym (AI + recenzja konsultanta). Slot na czwartek 10:00 jest ' +
+        'zarezerwowany, czeka na potwierdzenie.\n\n' +
+        'Co obaliłoby tę rekomendację: gdyby walidacja danych źródłowych dla modelu w pełni ' +
+        'automatycznego dała się zamknąć w mniej niż 3 tygodnie — wtedy warto poczekać ' +
+        'i wybrać wariant docelowy zamiast pośredniego. Marek Zieliński ocenia to jako nierealne ' +
+        'przy terminie marcowym; to jedyne założenie, które trzeba potwierdzić przed sesją.',
+    },
   },
 };
 
@@ -196,7 +238,9 @@ if (__aiDelay > 0) {
   });
   const realPost = Api.post.bind(Api);
   Api.post = (async (url: string, body?: unknown) => {
-    if (String(url).includes('/ai/chat')) {
+    // ★ 2026-07-23: karta wola teraz /ai/generate (jedyny endpoint zwracajacy
+    // {text}); /ai/chat zostaje w warunku tylko dla starych linkow harnessu.
+    if (String(url).includes('/ai/generate') || String(url).includes('/ai/chat')) {
       await new Promise((r) => setTimeout(r, __aiDelay));
       return { text: AI_JSON };
     }

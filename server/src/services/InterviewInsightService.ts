@@ -76,6 +76,120 @@ export const INSIGHT_PATCH_SETTABLE_STATUSES: ReadonlySet<InsightStatus> = new S
   'failed',
 ]);
 
+// ── Ręczna redakcja sekcji Insightu (n-Type §6.2, właściciel 2026-07-23) ─────
+//
+// Twarde limity — pole jest wolnym tekstem od użytkownika i ląduje w JEDNEJ
+// kolumnie TEXT wspólnej dla wszystkich sekcji, więc bez sufitu jeden wiersz
+// mógłby urosnąć bez ograniczeń (i zablokować odczyt całego wniosku).
+/** Maks. długość ręcznej treści JEDNEJ sekcji (znaki). */
+export const INSIGHT_SECTION_OVERRIDE_MAX_CHARS = 20000;
+/** Maks. liczba sekcji z ręczną treścią na jednym wniosku (INSIGHT_SECTIONS ma 32). */
+export const INSIGHT_SECTION_OVERRIDE_MAX_SECTIONS = 64;
+/** Dozwolony kształt render-id sekcji (`executive-summary`, `issues-risks`, …). */
+const INSIGHT_SECTION_ID_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
+
+export interface InsightSectionOverridesMergeError {
+  error: string;
+  code:
+    | 'INSIGHT_SECTION_OVERRIDES_INVALID'
+    | 'INSIGHT_SECTION_ID_INVALID'
+    | 'INSIGHT_SECTION_OVERRIDE_TOO_LONG'
+    | 'INSIGHT_SECTION_OVERRIDES_TOO_MANY';
+}
+
+/**
+ * Scala CZĘŚCIOWĄ mapę nadpisań z żądania w mapę zapisaną na wniosku.
+ *
+ * Semantyka wybrana świadomie (PATCH = łata, nie podmiana całości):
+ *  · `{ "themes": "nowa treść" }`               → ustawia/aktualizuje sekcję `themes`,
+ *  · `{ "themes": { content: "…" } }`           → to samo (forma obiektowa),
+ *  · `{ "themes": null }` lub pusty/biały tekst → USUWA nadpisanie (sekcja wraca
+ *                                                 do czystej treści z AI),
+ *  · sekcje nieobecne w żądaniu                 → NIETKNIĘTE.
+ *
+ * Dzięki temu dwie osoby redagujące RÓŻNE sekcje tego samego wniosku nie kasują
+ * sobie nawzajem pracy (przy podmianie całej mapy — jak w `sectionCompletions` —
+ * kasowałyby). `updatedAt`/`updatedBy` wyprowadza SERWER; klient ich nie podaje.
+ */
+export function mergeInsightSectionOverrides(
+  existing: Record<string, InsightSectionOverride> | null | undefined,
+  incoming: unknown,
+  userId?: string | null
+): { ok: true; value: Record<string, InsightSectionOverride> } | { ok: false } & InsightSectionOverridesMergeError {
+  let payload: unknown = incoming;
+  if (typeof payload === 'string') {
+    try {
+      payload = JSON.parse(payload);
+    } catch {
+      return {
+        ok: false,
+        error: 'sectionOverrides must be a JSON object',
+        code: 'INSIGHT_SECTION_OVERRIDES_INVALID',
+      };
+    }
+  }
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return {
+      ok: false,
+      error: 'sectionOverrides must be an object keyed by section id',
+      code: 'INSIGHT_SECTION_OVERRIDES_INVALID',
+    };
+  }
+
+  const next: Record<string, InsightSectionOverride> = { ...(existing || {}) };
+  const now = new Date().toISOString();
+
+  for (const [rawId, rawValue] of Object.entries(payload as Record<string, unknown>)) {
+    const sectionId = String(rawId);
+    if (!INSIGHT_SECTION_ID_RE.test(sectionId)) {
+      return {
+        ok: false,
+        error: `Invalid section id: ${sectionId}`,
+        code: 'INSIGHT_SECTION_ID_INVALID',
+      };
+    }
+
+    let content: string | null;
+    if (rawValue === null || rawValue === undefined) {
+      content = null;
+    } else if (typeof rawValue === 'string') {
+      content = rawValue;
+    } else if (typeof rawValue === 'object' && typeof (rawValue as any).content === 'string') {
+      content = String((rawValue as any).content);
+    } else {
+      return {
+        ok: false,
+        error: `Invalid value for section ${sectionId} — expected string, { content } or null`,
+        code: 'INSIGHT_SECTION_OVERRIDES_INVALID',
+      };
+    }
+
+    // Pusty / sam biały znak = świadome cofnięcie redakcji, nie „zapisz pustkę".
+    if (content === null || content.trim().length === 0) {
+      delete next[sectionId];
+      continue;
+    }
+    if (content.length > INSIGHT_SECTION_OVERRIDE_MAX_CHARS) {
+      return {
+        ok: false,
+        error: `Section ${sectionId} exceeds ${INSIGHT_SECTION_OVERRIDE_MAX_CHARS} characters`,
+        code: 'INSIGHT_SECTION_OVERRIDE_TOO_LONG',
+      };
+    }
+    next[sectionId] = { content, updatedAt: now, updatedBy: userId || null };
+  }
+
+  if (Object.keys(next).length > INSIGHT_SECTION_OVERRIDE_MAX_SECTIONS) {
+    return {
+      ok: false,
+      error: `Too many edited sections (max ${INSIGHT_SECTION_OVERRIDE_MAX_SECTIONS})`,
+      code: 'INSIGHT_SECTION_OVERRIDES_TOO_MANY',
+    };
+  }
+
+  return { ok: true, value: next };
+}
+
 /** Statuses reachable only via the lifecycle gate, never via plain PATCH. */
 export const INSIGHT_GATED_STATUSES: ReadonlySet<string> = new Set<string>([
   'in_review',
@@ -443,6 +557,20 @@ export function buildInterviewInsightEvidenceContract(
   return { sources, assumptions: [], risks, confidence, toVerify };
 }
 
+/**
+ * Ręczna redakcja treści JEDNEJ sekcji Insightu (standard n-Type §6.2–6.4;
+ * decyzja właściciela 2026-07-23). Do dziś treść Insightu była wyłącznie
+ * generowana (`content`/`*_json`) i jedyną drogą zmiany była pełna regeneracja.
+ * Nadpisanie jest ADDYTYWNE: nie kasuje treści AI, leży obok niej i jest
+ * kluczowane render-id sekcji z `INSIGHT_SECTIONS` (ten sam słownik id,
+ * którego używa `section_completions`).
+ */
+export interface InsightSectionOverride {
+  content: string;
+  updatedAt: string;
+  updatedBy?: string | null;
+}
+
 export interface Insight {
   id: string;
   organizationId: string;
@@ -476,6 +604,8 @@ export interface Insight {
   exportedToAssessment?: boolean;
   archivedAt?: string | null;
   sectionCompletions?: Record<string, boolean> | null;
+  /** Ręczna redakcja per sekcja (n-Type §6.2). `null` = brak nadpisań. */
+  sectionOverrides?: Record<string, InsightSectionOverride> | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -3017,6 +3147,12 @@ ${answerText}
       archivedAt: row.archived_at || null,
       sectionCompletions: row.section_completions
         ? safeJsonObject<Record<string, boolean>>(row.section_completions, {})
+        : null,
+      // Kolumna `section_overrides` jest ADDYTYWNA i może jeszcze nie istnieć
+      // (migracja 931 nieuruchomiona) — `SELECT *` po prostu jej nie zwróci,
+      // więc `row.section_overrides` będzie `undefined` ⇒ `null`. Zero rzutów.
+      sectionOverrides: row.section_overrides
+        ? safeJsonObject<Record<string, InsightSectionOverride>>(row.section_overrides, {})
         : null,
       createdBy: row.created_by,
       createdAt: row.created_at,

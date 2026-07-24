@@ -199,6 +199,41 @@ const TYPE_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
   DBR77_INSTRUCTION: { icon: BookOpen, color: 'text-amber-400' },
 };
 
+// ── Formatowanie pewności ────────────────────────────────────────────────────
+
+/**
+ * Zamienia surową „pewność" z danych powiadomienia na etykietę procentową.
+ *
+ * Producenci nie są spójni: silniki AI zwracają UŁAMEK (0.82), reguły
+ * biznesowe — punkty procentowe (82), a treści autorskie potrafią przysłać
+ * gotowy string („82%"). Do 2026-07-23 karta doklejała gołe „%" do wartości
+ * wprost, więc 0.82 renderowało się jako „0.82%" (defekt R2 #2). Jedna
+ * funkcja = jedno miejsce, w którym ta konwersja może się zepsuć.
+ *
+ * Umowa: wartość z przedziału (0, 1] traktujemy jako ułamek i mnożymy ×100;
+ * powyżej 1 traktujemy jako punkty procentowe. 0 / brak / śmieci → ''.
+ */
+export function formatConfidencePercent(raw: unknown): string {
+  if (raw === null || raw === undefined || raw === '') return '';
+
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (!trimmed) return '';
+    // Już sformatowane („82%", „82 %") — nie ruszamy, tylko normalizujemy odstęp.
+    if (trimmed.endsWith('%')) return trimmed.replace(/\s+%$/, '%');
+    const parsed = Number(trimmed.replace(',', '.'));
+    if (!Number.isFinite(parsed)) return trimmed;
+    return formatConfidencePercent(parsed);
+  }
+
+  if (typeof raw !== 'number' || !Number.isFinite(raw) || raw <= 0) return '';
+
+  const percent = raw <= 1 ? raw * 100 : raw;
+  // Bez sztucznej precyzji: 82 zamiast „82.0", ale 82,5 nie znika.
+  const rounded = Math.round(percent * 10) / 10;
+  return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}%`;
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 // MIGRACJA — kompozycja kart Notification przez WIĄŻĄCY kontrakt karty (D-8).
@@ -246,12 +281,12 @@ function useNotificationCardContractEnabled(): boolean {
   }, []);
 }
 
-// 'notification' NIE istnieje w NModeArtifactType (shared cardSets.ts — poza zakresem
-// tej fali: nie edytuję wspóldzielonych plików równolegle). Pole `artifactType` jest
-// INERTNE, bo `spec` (NOTIFICATION_CARD_SPEC) zawsze zastępuje DEFAULT_CARD_SETS
-// (useCardLayout.ts:148-151). ★ DO POTWIERDZENIA PIOTRA: dodać 'notification' do
-// NModeArtifactType (osobny krok — wtedy placeholder znika).
-const NOTIFICATION_ARTIFACT_TYPE = 'notification' as unknown as NModeArtifactType;
+// ★ 2026-07-23 — rzutowanie `as unknown as NModeArtifactType` USUNIETE.
+// 'notification' jest teraz pelnoprawnym czlonkiem uniona (shared cardSets.ts),
+// wiec typ jest sprawdzany naprawde, a nie obchodzony. Pole `artifactType`
+// pozostaje INERTNE w runtime, bo `spec` (NOTIFICATION_CARD_SPEC) zawsze
+// zastepuje DEFAULT_CARD_SETS (useCardLayout.ts:148-151).
+const NOTIFICATION_ARTIFACT_TYPE: NModeArtifactType = 'notification';
 
 export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   notificationId,
@@ -380,6 +415,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
   // Worksheet analysis (AI fills the notification "sheet" fields)
   const [isAnalyzingWorksheet, setIsAnalyzingWorksheet] = useState(false);
+  // ★ 2026-07-23 — nieudana analiza AI musi byc WIDOCZNA rowniez w trybie
+  // auto (silent). Wczesniej auto-wywolanie po wejsciu w kartę gaslo w catch
+  // i konsultant nie wiedzial, ze pola po prostu nie zostaly wypelnione.
+  const [aiAnalysisError, setAiAnalysisError] = useState<string | null>(null);
 
   const worksheetDraft = useMemo(
     () => ({
@@ -632,9 +671,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       const updated = prev.map((item) =>
         item.id === id ? { ...item, completed: !item.completed } : item
       );
-      Api.updateNotificationChecklist(notificationId, updated).catch((err) =>
-        console.error('Failed to persist checklist', err)
-      );
+      // ★ 2026-07-23 — nieudany zapis MUSI byc widoczny. Backend odrzuca teraz
+      // zly ksztalt (400) i cudze/nieistniejace id (404) zamiast udawac sukces;
+      // sam console.error zostawialby konsultanta z odhaczona pozycja, ktorej
+      // nikt nie zapisal.
+      Api.updateNotificationChecklist(notificationId, updated).catch((err) => {
+        console.error('Failed to persist checklist', err);
+        toast.error(t('myWork.notificationDetail.toastError2', 'Failed to save'));
+      });
       return updated;
     });
   };
@@ -737,11 +781,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
       isAutoChecklistRef.current = false;
       setActionChecklist(next);
-      Api.updateNotificationChecklist(notificationId, next).catch((err) =>
-        console.error('Failed to persist checklist', err)
-      );
+      // ★ 2026-07-23 — jak wyzej: bez toastu nieudany zapis checklisty z AI
+      // znikal w konsoli, a ekran pokazywal tresc, ktorej nie ma w bazie.
+      Api.updateNotificationChecklist(notificationId, next).catch((err) => {
+        console.error('Failed to persist checklist', err);
+        toast.error(t('myWork.notificationDetail.toastError2', 'Failed to save'));
+      });
     },
-    [actionChecklist, notificationId]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [actionChecklist, notificationId, t]
   );
 
   // ── Handlers ─────────────────────────────────────────────────────────────
@@ -875,6 +923,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     async (silent = false) => {
       if (!notification || isAnalyzingWorksheet) return;
       setIsAnalyzingWorksheet(true);
+      setAiAnalysisError(null);
 
       // Stan pol w chwili WYSLANIA zapytania. Odpowiedz AI wraca po kilku-kilkunastu
       // sekundach; w tym czasie konsultant moze juz pisac. Pole, ktore zmienilo sie
@@ -978,9 +1027,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               .filter(Boolean)
               .join('\n');
 
-        const aiRes = await Api.post('/ai/chat', {
+        // ★ 2026-07-23 — NAPRAWA MARTWEGO WYWOLANIA AI.
+        // Bylo: POST /ai/chat — orkiestrator zwraca {role,intent,prompt,...},
+        // nigdy `text`/`content`. `raw` bylo zawsze puste => rzucalo
+        // 'AI returned no JSON' i (w trybie silent) gaslo bez sladu.
+        // Jest: POST /ai/generate — jedyny endpoint zwracajacy {text}.
+        const aiRes = await Api.post('/ai/generate', {
           message: prompt,
-          history: [],
           systemInstruction: t(
             'myWork.notificationDetail.systemInstruction',
             'You are a PMO assistant. Return only valid JSON. No commentary, no markdown. Write contextually — not generically.'
@@ -988,7 +1041,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           roleName: 'Notification Context Builder',
         });
 
-        const raw = String(aiRes?.text || aiRes?.content || '').trim();
+        const raw = String(aiRes?.text ?? '').trim();
+        if (!raw) throw new Error('EMPTY_LLM_RESPONSE');
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error('AI returned no JSON');
 
@@ -1040,10 +1094,20 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         }
       } catch (err) {
         console.error('[NotificationDetailView] Analyze with AI failed:', err);
+        // ★ Uczciwy stan: „AI niedostepne" JEST poprawnym wynikiem, cisza nie
+        // jest. Toast tylko przy kliknieciu (silent=false, zeby auto-wejscie w
+        // karte nie sypalo toastami), ale INLINE komunikat pokazujemy zawsze.
+        const serverCode =
+          (err as { code?: string })?.code ??
+          (err as { response?: { data?: { code?: string } } })?.response?.data?.code ??
+          (err as Error)?.message;
+        const base = t(
+          'myWork.notificationDetail.failedToFillContext',
+          'Failed to fill context with AI'
+        );
+        setAiAnalysisError(serverCode ? `${base} (${serverCode})` : base);
         if (!silent) {
-          toast.error(
-            t('myWork.notificationDetail.failedToFillContext', 'Failed to fill context with AI')
-          );
+          toast.error(base);
         }
       } finally {
         setIsAnalyzingWorksheet(false);
@@ -1240,7 +1304,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     const enrichedRiskLevel = (data.riskLevel as string) || '';
     const enrichedRecommendation = (data.recommendation as string) || '';
     const enrichedImpact = (data.impact as string) || '';
-    const enrichedConfidence = data.confidence ? `${data.confidence}%` : '';
+    // R2/defekt #2 (2026-07-23): `confidence` przychodzi z silnika jako UŁAMEK
+    // (0.82), a doklejaliśmy gołe „%" → karta pokazywała „Pewność: 0.82%”
+    // zamiast „82%”. Producenci nie są spójni (0..1 z modeli, 0..100 z reguł,
+    // czasem string „82%”), więc normalizujemy w JEDNYM miejscu — obie karty
+    // (nagłówek i sekcja analizy) czytają ten sam wynik.
+    const enrichedConfidence = formatConfidencePercent(data.confidence);
 
     let computedPriority = 'MEDIUM';
     let computedRiskLevel = 'medium';
@@ -1644,15 +1713,35 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
           component = (
             <div className={`space-y-5 border-l-[3px] ${severityBorderAccent} pl-4`}>
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-c-text">
-                  {t('myWork.notificationDetail.whatSHappening', "What's Happening")}
-                </h2>
-                {isAnalyzingWorksheet && (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] text-c-info animate-pulse">
-                    <Loader2 size={12} className="animate-spin" />
-                    {t('myWork.notificationDetail.aIAnalyzing', 'AI analyzing...')}
-                  </span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-lg font-semibold text-c-text">
+                    {t('myWork.notificationDetail.whatSHappening', "What's Happening")}
+                  </h2>
+                  {isAnalyzingWorksheet && (
+                    <span className="inline-flex shrink-0 items-center gap-1.5 text-[11px] text-c-info animate-pulse">
+                      <Loader2 size={12} className="animate-spin" />
+                      {t('myWork.notificationDetail.aIAnalyzing', 'AI analyzing...')}
+                    </span>
+                  )}
+                </div>
+                {/* Uczciwy stan „AI niedostepne" — WLASNY wiersz pod naglowkiem,
+                    zeby dlugi komunikat z kodem serwera nie lamal tytulu sekcji. */}
+                {!isAnalyzingWorksheet && aiAnalysisError && (
+                  <div
+                    role="status"
+                    className="flex items-start gap-2 rounded-md border border-c-danger/40 bg-c-danger/10 px-2.5 py-1.5 text-[11px] text-c-danger"
+                  >
+                    <AlertTriangle size={12} className="mt-px shrink-0" />
+                    <span className="flex-1">{aiAnalysisError}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleAnalyzeWithAI(false)}
+                      className="shrink-0 underline underline-offset-2 hover:opacity-80"
+                    >
+                      {t('myWork.notificationDetail.retry', 'Retry')}
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -2360,6 +2449,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     whyImportantDraft,
     blockedDraft,
     isAnalyzingWorksheet,
+    /* + widoczny stan bledu AI (2026-07-23) — bez tego banner „AI niedostepne" nigdy sie nie pokaze */
+    aiAnalysisError,
+    handleAnalyzeWithAI,
     /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t,
   ]);
 
@@ -2375,7 +2467,23 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     if (!notificationCardContractEnabled) return null;
     try {
       const raw = localStorage.getItem(notificationCardLayoutStorageKey);
-      return raw ? (JSON.parse(raw) as CardLayout) : null;
+      if (!raw) return null;
+      // ★ 2026-07-23 — WALIDACJA KSZTALTU (wzorzec: TaskDetailView.tsx).
+      // Bylo: `JSON.parse(raw) as CardLayout` — samo rzutowanie, zero kontroli.
+      // Skazony wpis (np. tablica stringow z innej wersji/rozszerzenia) przechodzil
+      // przez `.length > 0`, a `applyToSections` wycinalo WSZYSTKIE sekcje =>
+      // pusty ekran bez zadnego bledu. Teraz wpis nie-pasujacy do kontraktu jest
+      // odrzucany i karta wraca do domyslnego ukladu.
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return null;
+      const cleaned = parsed.filter(
+        (c: unknown): c is { id: string; visible: boolean; order: number } =>
+          !!c &&
+          typeof (c as { id?: unknown }).id === 'string' &&
+          typeof (c as { visible?: unknown }).visible === 'boolean' &&
+          typeof (c as { order?: unknown }).order === 'number'
+      );
+      return cleaned.length > 0 ? cleaned : null;
     } catch {
       return null;
     }

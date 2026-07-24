@@ -64,6 +64,30 @@ export type NModeCardStatus = 'empty' | 'generating' | 'ai-draft' | 'edited' | '
 
 type BilingualText = { en: string; pl: string };
 
+// ── Wybór funkcji tłumaczącej ────────────────────────────────────────────────
+
+type TFunc = ReturnType<typeof useTranslation>['t'];
+type I18nInstance = ReturnType<typeof useTranslation>['i18n'];
+
+/**
+ * Wybiera `t` przypięte do języka wymuszonego propem `isPolish`, a gdy propu
+ * nie ma — zwykłe `t` z hooka.
+ *
+ * R2/defekt #4 (2026-07-23): `i18n.getFixedT` było wołane bez guardu. Pełna
+ * instancja i18next zawsze ją ma, ale testy (i każdy `I18nextProvider`
+ * z atrapą/okrojoną instancją) podstawiają obiekt bez tej metody — wtedy
+ * KAŻDA karta wzorca N wywracała się na `TypeError: i18n.getFixedT is not
+ * a function`, co przewracało cały render Insightu (38 błędów, 10 czerwonych
+ * testów z JEDNEJ linii). Zachowanie produkcyjne bez zmian: przy sprawnej
+ * instancji nadal dostajemy `getFixedT`; awaryjnie schodzimy na `t` z hooka,
+ * czyli język bieżącej instancji zamiast wywrotki komponentu.
+ */
+function useFixedT(i18n: I18nInstance, tHook: TFunc, isPolishProp?: boolean): TFunc {
+  if (typeof isPolishProp !== 'boolean') return tHook;
+  if (typeof i18n?.getFixedT !== 'function') return tHook;
+  return i18n.getFixedT(isPolishProp ? 'pl' : 'en') as TFunc;
+}
+
 // ── Badge stanu ──────────────────────────────────────────────────────────────
 
 /**
@@ -76,7 +100,7 @@ export const NModeCardBadge: React.FC<{ status: NModeCardStatus; isPolish?: bool
   isPolish: isPolishProp,
 }) => {
   const { t: tHook, i18n } = useTranslation();
-  const t = typeof isPolishProp === 'boolean' ? i18n.getFixedT(isPolishProp ? 'pl' : 'en') : tHook;
+  const t = useFixedT(i18n, tHook, isPolishProp);
 
   // Wspólna baza pastylki badge.
   const base =
@@ -296,6 +320,16 @@ export interface NModeCardStateProps {
   hideActions?: boolean;
 
   /**
+   * Ukrycie badge'a stanu w nagłówku karty („Szkic AI" / „Edytowane" / „Gotowe").
+   * Osobno od `hideActions`, bo to inna oś: akcje bywają zdejmowane także przy
+   * zablokowanym etapie w trybie Edycja (`isDecisionStageLocked`), a badge ma
+   * znikać WYŁĄCZNIE w Podglądzie — to informacja o kuchni redakcyjnej, której
+   * klient patrzący na artefakt nie ma prawa widzieć. W trybie Edycja badge
+   * zostaje bez zmian.
+   */
+  hideBadge?: boolean;
+
+  /**
    * Treść karty (pola strukturalne / listy / edytor). Renderowana w stanach
    * `ai-draft` · `edited` · `done`. W `generating`/`empty`/`error` komponent
    * pokazuje własny stan zamiast children.
@@ -322,10 +356,11 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
   confirmOverwrite = true,
   isPolish: isPolishProp,
   hideActions = false,
+  hideBadge = false,
   children,
 }) => {
   const { t: tHook, i18n } = useTranslation();
-  const t = typeof isPolishProp === 'boolean' ? i18n.getFixedT(isPolishProp ? 'pl' : 'en') : tHook;
+  const t = useFixedT(i18n, tHook, isPolishProp);
   const isPolish = isPolishProp ?? i18n.language === 'pl';
 
   const [regenerating, setRegenerating] = useState(false);
@@ -360,7 +395,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
             aria-label={t('sharedComponents.nModeCardState.aiGeneratedLabel')}
           />
         )}
-        <NModeCardBadge status={state} isPolish={isPolish} />
+        {!hideBadge && <NModeCardBadge status={state} isPolish={isPolish} />}
       </h3>
     </div>
   );

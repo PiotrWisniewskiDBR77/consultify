@@ -60,6 +60,21 @@ const daysFromNow = (days: number): string => {
   return d.toISOString();
 };
 
+/**
+ * Ta sama oś czasu, ale z JAWNĄ godziną. `daysFromNow` bierze bieżącą godzinę
+ * uruchomienia harnessu, więc WSZYSTKIE komentarze i wpisy historii dostawały
+ * identyczny znacznik (np. „22:49") — od razu widać, że dane są generowane,
+ * a nie zapisane przez ludzi w trakcie pracy. Godziny poniżej są dobrane
+ * ręcznie i układają się w wiarygodny rytm dnia roboczego (odprawa, hala,
+ * przegląd popołudniowy).
+ */
+const dniTemuOGodz = (days: number, hh: number, mm: number): string => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  d.setHours(hh, mm, 0, 0);
+  return d.toISOString();
+};
+
 // ── OSOBY (realny zespół doradczy + strona klienta) ────────────────────────
 const USERS = [
   {
@@ -122,7 +137,11 @@ const INITIATIVE = {
   organizationId: 'org-dbr77-demo',
   riskScore: 46,
   valueScore: 81,
-  expectedRoi: 210,
+  // Spójne z `costOfInaction`: 547 h uwolnionych rocznie (51 min × 14 × 46) × 25%
+  // konwersji na sprzedaż × 4 500 PLN/h = 615 tys. PLN korzyści w 12 miesięcy;
+  // (615 − 185) / 185 = 233%. Pole nie jest dziś renderowane przez kartę, ale
+  // ma się zgadzać z narracją, a nie żyć własnym życiem.
+  expectedRoi: 233,
   estimatedBudget: '185000',
   budget: 185000,
   currency: 'PLN',
@@ -135,28 +154,106 @@ const INITIATIVE = {
   tags: ['SMED', 'OEE', 'linia L3', 'lean', 'quick win'],
 
   summary:
-    'Skrócenie średniego czasu przezbrojenia linii pakowania L3 z 96 do 45 minut, aby odblokować ' +
-    'dodatkowe zdolności produkcyjne bez inwestycji w nową linię.',
+    'Skrócenie średniego czasu przezbrojenia linii pakowania L3 z 96 minut (stan wyjściowy; ' +
+    'dziś 71) do 45 minut, aby odblokować dodatkowe zdolności produkcyjne bez inwestycji ' +
+    'w nową linię.',
   description:
     'Inicjatywa obejmuje pełen cykl SMED na linii L3: nagranie i rozbiór wideo trzech przezbrojeń, ' +
     'rozdzielenie czynności wewnętrznych od zewnętrznych, standaryzację wózka narzędziowego oraz ' +
     'przeszkolenie trzech zmian. Zakres celowo ograniczony do jednej linii i dwóch rodzin SKU, ' +
     'żeby zweryfikować efekt w jednym kwartale przed decyzją o rozszerzeniu na L1, L2 i L4.',
 
+  /**
+   * ★ UWAGA NA MAPOWANIE PÓL (defekt komponentu, nie mocka):
+   * `InitiativeDocumentView` renderuje kartę „OPIS ROZWIĄZANIA / Proponowane
+   * podejście i sposób realizacji" z pola `problemDefinition.rootCause`
+   * (InitiativeDocumentView.tsx:6464-6497 — `rootCauseDraft`, hydratowany
+   * w linii 2306 z `pd.rootCause`). Nazwa pola mówi „przyczyna źródłowa",
+   * etykieta na ekranie mówi „rozwiązanie". Dopóki komponent nie dostanie
+   * osobnego pola `proposedSolution`, TREŚĆ ROZWIĄZANIA MUSI SIEDZIEĆ
+   * w `rootCause` — inaczej karta odpowiada na inne pytanie niż zadaje.
+   * Diagnoza (objaw + przyczyna źródłowa) idzie więc w całości do `symptom`,
+   * które renderuje się pod etykietą „PROBLEM".
+   */
   problemDefinition: {
+    // → karta „PROBLEM · Jaki problem rozwiązuje ta inicjatywa"
     symptom:
-      'Przezbrojenia na L3 trwają średnio 96 minut przy normie zakładowej 60 minut, a rozrzut między ' +
-      'zmianami sięga 40 minut. Planowanie kompensuje to dłuższymi seriami, przez co rosną zapasy ' +
-      'wyrobu gotowego i spada elastyczność wobec zamówień promocyjnych sieci handlowych.',
+      'STAN WYJŚCIOWY (przed inicjatywą, VI 2026): przezbrojenie trwało średnio 96 minut przy ' +
+      'normie zakładowej 60 minut — nadmiar 36 minut × 14 przezbrojeń tygodniowo = 8,4 godziny ' +
+      'utraconej dostępności linii L3 w tygodniu. Rozrzut między zmianami sięgał 40 minut.\n' +
+      'STAN OBECNY (pomiar z MES, ostatnie 3 tygodnie): 71 minut, czyli nadmiar 11 minut × 14 = ' +
+      '2,6 godziny utraconej dostępności tygodniowo; rozrzut 27 minut. Kroki 1-2 zadziałały, ' +
+      'ale do normy 60 minut i do celu 45 minut wciąż brakuje.\n' +
+      'CEL: 45 minut i rozrzut poniżej 10 minut.\n\n' +
+      'Dopóki rozrzut zostaje na poziomie 27 minut, planowanie zabezpiecza się dłuższymi seriami — ' +
+      'rosną zapasy wyrobu gotowego, spada zdolność obsłużenia krótkich serii promocyjnych.\n\n' +
+      'ANALIZA PRZYCZYN (rozbiór wideo trzech przezbrojeń, 47 czynności elementarnych, VI 2026):\n' +
+      '• Brak standardu — każda z trzech zmian pracuje wg własnej praktyki, stąd rozrzut 40 minut.\n' +
+      '• Czynności zewnętrzne robione wewnętrznie — przygotowanie formatu, kompletacja narzędzi ' +
+      'i pobranie folii wykonywane są po zatrzymaniu linii, choć da się je zrobić przy pracującej ' +
+      'maszynie (31 z 47 czynności).\n' +
+      '• Brak miejsc na narzędzia — samo szukanie kluczy i podkładek zajmuje w obserwacjach ' +
+      '11-18 minut na przezbrojenie.\n\n' +
+      'TEST DIAGNOZY — PRZESZEDŁ: próg brzmiał „jeśli po uporządkowaniu czynności zewnętrznych ' +
+      'i narzędzi czas nie spadnie poniżej 75 minut, przyczyna leży w konstrukcji maszyny, nie ' +
+      'w organizacji pracy". Pomiar dał 71 minut, więc diagnoza organizacyjna się broni.\n' +
+      'CO OBALIŁOBY JĄ TERAZ: zatrzymanie się powyżej 65 minut mimo standardu wdrożonego na ' +
+      'wszystkich trzech zmianach — wtedy reszta nadmiaru siedzi w konstrukcji maszyny i wracamy ' +
+      'do rozmowy o modernizacji zamiast dokładać kolejne kroki SMED.',
+
+    // → karta „OPIS ROZWIĄZANIA · Proponowane podejście i sposób realizacji"
     rootCause:
-      'Brak standardu przezbrojenia — każda zmiana pracuje wg własnej praktyki. Czynności możliwe do ' +
-      'wykonania przy pracującej maszynie (przygotowanie formatu, kompletacja narzędzi, pobranie folii) ' +
-      'wykonywane są po zatrzymaniu linii. Narzędzia nie mają wyznaczonych miejsc, a szukanie kluczy ' +
-      'i podkładek zajmuje w obserwacjach 11-18 minut na przezbrojenie.',
+      'Wdrażamy pełny cykl SMED na jednej linii i jednej rodzinie problemów, żeby efekt był ' +
+      'mierzalny w jednym kwartale, zanim zapadnie decyzja o rozszerzeniu na L1, L2 i L4.\n\n' +
+      'JAK (cztery kroki, w tej kolejności):\n' +
+      '1. Rozdział czynności wewnętrznych i zewnętrznych — 31 z 47 czynności przenosimy przed ' +
+      'zatrzymanie linii (przygotowanie formatu, kompletacja narzędzi, pobranie folii).\n' +
+      '2. Karta standardu przezbrojenia (A3 na halę) oparta na sekwencji zmiany B, która już dziś ' +
+      'ma najlepsze czasy — standard opisujemy z praktyki, nie piszemy go od zera.\n' +
+      '3. Wózek SMED z obrysami narzędzi (shadow-board) przy stanowisku L3 — likwiduje 11-18 minut ' +
+      'szukania narzędzi.\n' +
+      '4. Szkolenie trzech zmian w oknach sobotnich + pomiar potwierdzający z MES przez trzy ' +
+      'kolejne tygodnie.\n\n' +
+      'CEL ETAPOWY: średni czas przezbrojenia 96 (baza) → 71 (dziś) → 45 minut i rozrzut między ' +
+      'zmianami 40 (baza) → 27 (dziś) → poniżej 10 minut, potwierdzone pomiarem z MES w trzech ' +
+      'kolejnych tygodniach.\n\n' +
+      'POZA ZAKRESEM: linie L1/L2/L4 (osobna decyzja po pomiarze potwierdzającym), wymiana ' +
+      'sterowania i modernizacja PLC, renegocjacja umów na folię, zmiana systemu premiowego.\n\n' +
+      'WARUNEK FALSYFIKUJĄCY (etap 1 — PRZESZEDŁ): próg brzmiał „skrócenie mniejsze niż 15% ' +
+      'względem bazy 96 minut, czyli czas powyżej 82 minut, zamyka inicjatywę". Pomiar z trzech ' +
+      'tygodni dał 71 minut (−26%), więc podejście zostaje.\n' +
+      'WARUNEK FALSYFIKUJĄCY (etap 2 — OTWARTY): jeśli po kroku 4 (szkolenie trzech zmian) ' +
+      'mediana z trzech kolejnych tygodni nie zejdzie poniżej 60 minut, czyli poniżej normy ' +
+      'zakładowej, nie rozszerzamy SMED na L1/L2/L4 — zamiast tego wracamy do rozmowy ' +
+      'o konstrukcji maszyny.',
+
+    // → karta „KOSZT BEZCZYNNOŚCI · Konsekwencje braku działania"
     costOfInaction:
-      'Przy 14 przezbrojeniach tygodniowo strata to ok. 8,4 godziny dostępności linii tygodniowo, ' +
-      'czyli ok. 1,9 mln PLN utraconej marży pokrycia rocznie. Utrzymanie status quo oznacza też ' +
-      'konieczność powrotu do wniosku CAPEX na czwartą linię w budżecie 2027.',
+      'DZIŚ (przy 71 minutach) zatrzymanie inicjatywy kosztuje ok. 0,53 mln PLN utraconej marży ' +
+      'pokrycia rocznie. Ta liczba maleje razem z czasem przezbrojenia — nie jest stała.\n\n' +
+      'PODSTAWA WYLICZENIA (jawne założenia, wszystkie do podważenia):\n' +
+      '• Nadmiar ponad normę DZIŚ: 71 − 60 = 11 minut na przezbrojenie (źródło: MES, mediana ' +
+      'z ostatnich 3 tygodni).\n' +
+      '• Liczba przezbrojeń: 14 tygodniowo (źródło: harmonogram produkcji L3, II kw. 2026).\n' +
+      '  → 11 min × 14 = 2,6 godziny utraconej dostępności tygodniowo.\n' +
+      '• Tygodnie produkcyjne: 46 w roku (52 minus postój sierpniowy, przeglądy i święta).\n' +
+      '  → 2,6 h × 46 = 118 godzin rocznie.\n' +
+      '• Marża pokrycia linii L3: 4 500 PLN za godzinę (ZAŁOŻENIE — kontroling, arkusz z VII 2026; ' +
+      'nie zweryfikowane niezależnie).\n' +
+      '  → 118 h × 4 500 PLN = ok. 0,53 mln PLN rocznie.\n\n' +
+      'DLA PORÓWNANIA — STAN WYJŚCIOWY (96 minut, przed inicjatywą): nadmiar 36 minut × 14 = ' +
+      '8,4 h tygodniowo → 386 h rocznie → ok. 1,74 mln PLN. Tyle kosztował problem w punkcie ' +
+      'startu i tyle inicjatywa już odzyskała w ujęciu rocznym (1,74 − 0,53 = ok. 1,21 mln PLN). ' +
+      'Kwota 1,74 mln NIE opisuje stanu obecnego — mylenie tych dwóch liczb zawyża koszt ' +
+      'bezczynności ponad trzykrotnie.\n\n' +
+      'UCZCIWA NIEPEWNOŚĆ: liczba obowiązuje tylko wtedy, gdy popyt wypełnia uwolnioną zdolność. ' +
+      'Jeśli zamówień brakuje, strata jest kosztem gotowości (ok. 1 100 PLN/h), czyli ok. 0,13 mln PLN ' +
+      'rocznie dziś (0,43 mln PLN w stanie wyjściowym) — dlatego do biznes case przyjęliśmy ' +
+      'konserwatywnie 25% konwersji uwolnionych godzin na sprzedaż, nie 100%.\n\n' +
+      'Co obaliłoby wyliczenie: odczyt marży pokrycia poniżej 2 500 PLN/h w zamknięciu III kw. 2026. ' +
+      'Drugi, niezależny koszt: bez zejścia do celu wraca wniosek CAPEX na czwartą linię ' +
+      'w budżecie 2027 (rząd wielkości 6-8 mln PLN) — i to on, nie 0,53 mln, jest głównym ' +
+      'argumentem za dokończeniem inicjatywy.',
   },
   marketContext:
     'Dwie największe sieci handlowe skróciły horyzont zamówień promocyjnych z 6 do 3 tygodni. ' +
@@ -168,11 +265,14 @@ const INITIATIVE = {
       'Przezbrojenie L3 wykonywane wg jednego standardu przez wszystkie trzy zmiany\n' +
       'Czynności zewnętrzne przygotowane przed zatrzymaniem linii, wózek SMED skompletowany\n' +
       'Czas przezbrojenia mierzony automatycznie z MES i przeglądany na odprawie zmianowej',
+    // Kryteria falsyfikowalne: każde ma metrykę, próg i źródło pomiaru.
+    // Wartości „dziś" zgodne z KPI-1/2/3 poniżej (71 min · 66% · 27 min).
     successCriteria: [
-      'Średni czas przezbrojenia ≤ 45 minut w trzech kolejnych tygodniach pomiaru',
-      'Rozrzut między zmianami poniżej 10 minut',
-      'OEE linii L3 powyżej 72% (dziś 61%)',
-      'Standard SMED zatwierdzony przez kierownika produkcji i wdrożony na trzech zmianach',
+      'Średni czas przezbrojenia ≤ 45 minut (mediana z MES) w trzech kolejnych tygodniach — dziś 71 minut',
+      'Rozrzut między zmianami poniżej 10 minut (najszybsza vs najwolniejsza zmiana) — dziś 27 minut',
+      'OEE linii L3 powyżej 72% (baza 61%, dziś 66%)',
+      'Standard SMED zatwierdzony podpisem kierownika produkcji i wdrożony na trzech zmianach ' +
+        '(lista obecności ze szkoleń)',
     ],
     deliverables: [
       'Analiza wideo trzech przezbrojeń z rozbiorem czynności',
@@ -815,7 +915,7 @@ const COMMENTS = [
       'w sobie daje ok. 34 minuty, jeszcze przed jakąkolwiek zmianą techniczną.',
     authorId: 'user-piotr-demo',
     authorName: 'Piotr Wiśniewski',
-    createdAt: daysFromNow(-17),
+    createdAt: dniTemuOGodz(-17, 17, 20),
     likes: 4,
     likedByMe: true,
   },
@@ -826,7 +926,7 @@ const COMMENTS = [
       'sekwencji, zamiast pisać go od zera — łatwiej to sprzedać pozostałym zmianom.',
     authorId: 'user-marek-zielinski',
     authorName: 'Marek Zieliński',
-    createdAt: daysFromNow(-12),
+    createdAt: dniTemuOGodz(-12, 6, 55),
     likes: 6,
     likedByMe: false,
   },
@@ -837,7 +937,7 @@ const COMMENTS = [
       'straci wiarę w standard. Rekomenduję zostać przy 45 i wrócić do tematu po pierwszym pomiarze.',
     authorId: 'user-tomasz-baran',
     authorName: 'Tomasz Baran',
-    createdAt: daysFromNow(-3),
+    createdAt: dniTemuOGodz(-3, 13, 10),
     likes: 3,
     likedByMe: false,
   },
@@ -848,61 +948,85 @@ const COMMENTS = [
       'potwierdzenie liczby uczestników do piątku.',
     authorId: 'user-katarzyna-nowak',
     authorName: 'Katarzyna Nowak',
-    createdAt: daysFromNow(-1),
+    createdAt: dniTemuOGodz(-1, 9, 5),
     likes: 2,
     likedByMe: false,
   },
 ];
 
 // ── HISTORIA ──────────────────────────────────────────────────────────────
+/**
+ * Historia: każda zmiana wartości MA PODPISANĄ METRYKĘ I JEDNOSTKĘ. Wcześniej
+ * wpisy pokazywały gołe „84 → 71" i „35 → 42" — czytelnik nie wiedział, czego
+ * dotyczą, a liczby zdawały się kłócić z opisem (96 minut). Ciąg jest teraz
+ * jawny i zgodny z KPI-1: 96 (baza) → 84 → 71 (dziś) → 45 (cel).
+ * Godziny zróżnicowane (dniTemuOGodz), bo wpisy powstawały w różnych momentach
+ * dnia — wspólny znacznik zdradzał, że dane są generowane.
+ */
 const HISTORY_EVENTS = [
   {
     id: 'h-1',
     initiativeId: INITIATIVE_ID,
     eventType: 'initiative_created',
     actorId: 'user-piotr-demo',
-    createdAt: daysFromNow(-52),
-    notes: 'Inicjatywa utworzona z wniosku po przeglądzie OEE zakładu.',
+    createdAt: dniTemuOGodz(-52, 8, 40),
+    notes: 'Inicjatywa utworzona z wniosku po przeglądzie OEE zakładu (OEE L3 = 61%).',
   },
   {
     id: 'h-2',
     initiativeId: INITIATIVE_ID,
     eventType: 'field_changed',
     actorId: 'user-anna-kowalczyk',
-    createdAt: daysFromNow(-38),
+    createdAt: dniTemuOGodz(-38, 14, 15),
     oldValue: 'PLANNING',
     newValue: 'EXECUTING',
-    notes: 'Zatwierdzenie budżetu 185 000 PLN i start prac.',
+    notes: 'Status inicjatywy: zatwierdzony budżet 185 000 PLN, zespół obsadzony, start prac.',
   },
   {
     id: 'h-3',
     initiativeId: INITIATIVE_ID,
     eventType: 'field_changed',
     actorId: 'user-piotr-demo',
-    createdAt: daysFromNow(-34),
+    createdAt: dniTemuOGodz(-34, 11, 5),
     oldValue: 'L3 + L4',
     newValue: 'L3',
-    notes: 'Zawężenie zakresu do jednej linii (decyzja DEC-1).',
+    notes: 'Zakres pilotażu (linie objęte): zawężony do jednej linii — decyzja DEC-1.',
   },
   {
     id: 'h-4',
     initiativeId: INITIATIVE_ID,
     eventType: 'kpi_updated',
     actorId: 'user-tomasz-baran',
-    createdAt: daysFromNow(-10),
-    oldValue: '84',
-    newValue: '71',
-    notes: 'Średni czas przezbrojenia po pierwszych zmianach organizacyjnych.',
+    createdAt: dniTemuOGodz(-24, 16, 50),
+    oldValue: '96 min',
+    newValue: '84 min',
+    notes:
+      'KPI-1 „Średni czas przezbrojenia L3" (mediana tygodniowa z MES): 96 → 84 min ' +
+      'po rozdzieleniu czynności zewnętrznych na zmianie B. Cel: 45 min.',
   },
   {
     id: 'h-5',
     initiativeId: INITIATIVE_ID,
+    eventType: 'kpi_updated',
+    actorId: 'user-tomasz-baran',
+    createdAt: dniTemuOGodz(-10, 9, 25),
+    oldValue: '84 min',
+    newValue: '71 min',
+    notes:
+      'KPI-1 „Średni czas przezbrojenia L3" (mediana tygodniowa z MES): 84 → 71 min ' +
+      'po wdrożeniu sekwencji z warsztatu na trzech zmianach. Do celu 45 min brakuje 26 min.',
+  },
+  {
+    id: 'h-6',
+    initiativeId: INITIATIVE_ID,
     eventType: 'progress_updated',
     actorId: 'user-marek-zielinski',
-    createdAt: daysFromNow(-2),
-    oldValue: '35',
-    newValue: '42',
-    notes: 'Warsztat zamknięty, karta standardu w opracowaniu.',
+    createdAt: dniTemuOGodz(-2, 15, 30),
+    oldValue: '35%',
+    newValue: '42%',
+    notes:
+      'Postęp inicjatywy (udział ukończonych produktów: 2 z 5): warsztat zamknięty, ' +
+      'karta standardu w opracowaniu.',
   },
 ];
 
@@ -915,9 +1039,9 @@ const STATUS_HISTORY = [
     changedBy: 'user-piotr-demo',
     changedByFirstName: 'Piotr',
     changedByLastName: 'Wiśniewski',
-    reason: 'Wstępna kwalifikacja jako quick win po przeglądzie OEE.',
+    reason: 'Wstępna kwalifikacja jako quick win po przeglądzie OEE (L3 najniższe OEE z czterech linii).',
     gateType: null,
-    createdAt: daysFromNow(-48),
+    createdAt: dniTemuOGodz(-48, 10, 15),
   },
   {
     id: 'sh-2',
@@ -927,9 +1051,9 @@ const STATUS_HISTORY = [
     changedBy: 'user-anna-kowalczyk',
     changedByFirstName: 'Anna',
     changedByLastName: 'Kowalczyk',
-    reason: 'Budżet zatwierdzony, zespół obsadzony, bramka G2 zamknięta.',
+    reason: 'Budżet 185 000 PLN zatwierdzony, zespół obsadzony, bramka G2 zamknięta.',
     gateType: 'G2',
-    createdAt: daysFromNow(-38),
+    createdAt: dniTemuOGodz(-38, 14, 20),
   },
 ];
 

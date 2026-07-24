@@ -1,9 +1,11 @@
 /**
  * ResourcesAnalysis — Team workload management view
- * V3-F02b: Team-centric resource view with AI rebalancing
+ * V3-F02b: Team-centric resource view with deterministic rebalancing
  *
  * Shows team members with their initiative assignments and workload.
- * AI button at top proposes reassignments to balance the load.
+ * The „Balance workload" button proposes reassignments computed LOCALLY from
+ * allocation arithmetic (no model call, no fake delay) — see the note above
+ * `computeRebalanceProposals`.
  */
 
 import {
@@ -17,7 +19,7 @@ import {
   ExternalLink,
   Filter,
   Loader2,
-  Sparkles,
+  Scale,
   UserPlus,
   X,
 } from 'lucide-react';
@@ -27,7 +29,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { PortfolioInitiative } from '@/types';
 
-import { getMenu3AiButtonClass } from './menu3ActionButtonStyles';
+import { getMenu3DeterministicButtonClass } from './menu3ActionButtonStyles';
 import { DEFAULT_CONCURRENT_CAPACITY, formatUtilizationPercent } from './resourceLoadMath';
 import type {
   OrgUser,
@@ -40,7 +42,7 @@ import type {
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-interface AiReassignment {
+interface RebalanceProposal {
   initiativeId: string;
   initiativeName: string;
   fromUserId: string;
@@ -125,9 +127,10 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
   const [reassigningInitId, setReassigningInitId] = useState<string | null>(null);
   const [selectedNewOwner, setSelectedNewOwner] = useState<string>('');
 
-  // AI rebalancing state
-  const [aiProposals, setAiProposals] = useState<AiReassignment[] | null>(null);
-  const [aiRunning, setAiRunning] = useState(false);
+  // Rebalancing state. `applyingAll` covers ONLY the real async apply-all round
+  // trip — computing the proposals is synchronous and never shows a spinner.
+  const [rebalanceProposals, setRebalanceProposals] = useState<RebalanceProposal[] | null>(null);
+  const [applyingAll, setApplyingAll] = useState(false);
   const [applyingProposalIdx, setApplyingProposalIdx] = useState<number | null>(null);
   const [proposalOverrides, setProposalOverrides] = useState<Record<number, string>>({});
 
@@ -207,8 +210,8 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
 
   const getUserLabel = (u: OrgUser) => `${u.firstName} ${u.lastName}`;
 
-  const closeAiWorkspace = useCallback(() => {
-    setAiProposals(null);
+  const closeRebalancePanel = useCallback(() => {
+    setRebalanceProposals(null);
     setProposalOverrides({});
   }, []);
 
@@ -233,13 +236,18 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
     [onQuickUpdate, t]
   );
 
-  /* ---------- AI rebalancing ---------- */
+  /* ---------- Rozkład obciążenia (DETERMINISTYCZNY, nie AI) ---------- */
+  //
+  // 2026-07-23 — wycięta atrapa AI. Do dziś ta funkcja nazywała się „AI Balance
+  // workload", miała ikonę Sparkles, spinner „Analyzing…" i `setTimeout(800)`
+  // z komentarzem `Simulate a short delay for "thinking"`. Żaden model nigdy nie
+  // był wołany: wynik to ARYTMETYKA na `allocations` (status przeciążenia, rola,
+  // `utilizationPercent`, wolne osoby). Reguła: wynik policzony lokalnie NIE MOŻE
+  // być podpisany „AI". Liczy się natychmiast → pokazuje się natychmiast.
+  // Rachunek zostaje bez zmian (był poprawny) — zmienia się tylko uczciwa etykieta.
 
-  const computeAiProposals = useCallback(() => {
-    setAiRunning(true);
-
-    // Simulate a short delay for "thinking"
-    setTimeout(() => {
+  const computeRebalanceProposals = useCallback(() => {
+    {
       const overloaded = allocations.filter((a) => a.status === 'overallocated');
       const available = allocations.filter(
         (a) => a.status === 'ok' || a.status === 'underutilized'
@@ -249,7 +257,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
       const assignedUserIds = new Set(allocations.map((a) => a.resourceId));
       const unassignedUsers = users.filter((u) => !assignedUserIds.has(u.id));
 
-      const proposals: AiReassignment[] = [];
+      const proposals: RebalanceProposal[] = [];
 
       for (const overRes of overloaded) {
         const excessCount = overRes.allocatedInitiatives.length - 1;
@@ -282,11 +290,24 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
               toUserName: target.resourceName,
               role: overRes.role,
               reason: sameRoleFree
-                ? `${target.resourceName} has capacity (${formatUtilizationPercent(
-                    (sameRoleFree as ResourceAllocation).utilizationPercent,
-                    i18n.language
-                  )})`
-                : `${target.resourceName} is currently unassigned`,
+                ? t(
+                    'initiatives.analysis.resources.reasonHasCapacity',
+                    '{{name}} has capacity ({{load}})',
+                    {
+                      name: target.resourceName,
+                      load: formatUtilizationPercent(
+                        (sameRoleFree as ResourceAllocation).utilizationPercent,
+                        i18n.language
+                      ),
+                    }
+                  )
+                : t(
+                    'initiatives.analysis.resources.reasonUnassigned',
+                    '{{name}} is currently unassigned',
+                    {
+                      name: target.resourceName,
+                    }
+                  ),
             });
 
             // Update available capacity in-memory. One reassigned initiative adds
@@ -312,7 +333,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
               toUserName: '',
               role: overRes.role,
               reason: t(
-                'initiatives.analysis.resources.aiNoCapacity',
+                'initiatives.analysis.resources.noCapacity',
                 'No available team member — consider hiring or postponing'
               ),
             });
@@ -320,14 +341,13 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
         }
       }
 
-      setAiProposals(proposals.length > 0 ? proposals : []);
+      setRebalanceProposals(proposals.length > 0 ? proposals : []);
       setProposalOverrides({});
-      setAiRunning(false);
-    }, 800);
+    }
   }, [allocations, users, initiatives, t]);
 
   const handleApplyProposal = useCallback(
-    async (proposal: AiReassignment, idx: number) => {
+    async (proposal: RebalanceProposal, idx: number) => {
       if (!onQuickUpdate || !proposal.toUserId) return;
       setApplyingProposalIdx(idx);
       try {
@@ -338,7 +358,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
         await onQuickUpdate(proposal.initiativeId, updates);
         toast.success(t('initiatives.analysis.resources.proposalApplied', 'Reassignment applied'));
         // Remove applied proposal
-        setAiProposals((prev) => prev?.filter((_, i) => i !== idx) ?? null);
+        setRebalanceProposals((prev) => prev?.filter((_, i) => i !== idx) ?? null);
       } catch {
         toast.error(t('initiatives.analysis.resources.reassignFailed', 'Failed to reassign'));
       } finally {
@@ -349,8 +369,8 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
   );
 
   const handleApplyAllProposals = useCallback(async () => {
-    if (!onQuickUpdate || !aiProposals) return;
-    const resolvedProposals = aiProposals.map((p, idx) => {
+    if (!onQuickUpdate || !rebalanceProposals) return;
+    const resolvedProposals = rebalanceProposals.map((p, idx) => {
       const overrideId = proposalOverrides[idx];
       return overrideId ? { ...p, toUserId: overrideId } : p;
     });
@@ -364,7 +384,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
       );
       return;
     }
-    setAiRunning(true);
+    setApplyingAll(true);
     let success = 0;
     let failed = 0;
     for (const proposal of actionable) {
@@ -395,29 +415,32 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
         })
       );
     }
-    setAiProposals(null);
+    setRebalanceProposals(null);
     setProposalOverrides({});
-    setAiRunning(false);
-  }, [aiProposals, proposalOverrides, onQuickUpdate, t]);
+    setApplyingAll(false);
+  }, [rebalanceProposals, proposalOverrides, onQuickUpdate, t]);
 
-  const aiProposalsPanel =
-    aiProposals !== null ? (
+  const rebalancePanel =
+    rebalanceProposals !== null ? (
       <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] overflow-hidden m-4">
         <div className="px-4 py-3 bg-white dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-[var(--c-info)]" />
+            <Scale size={16} className="text-[var(--c-info)]" />
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-              {t('initiatives.analysis.resources.aiProposals', 'AI rebalancing proposals')}
+              {t(
+                'initiatives.analysis.resources.rebalanceProposals',
+                'Workload rebalancing proposals'
+              )}
             </h3>
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              ({aiProposals.length})
+              ({rebalanceProposals.length})
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {aiProposals.some((p, i) => p.toUserId || proposalOverrides[i]) && (
+            {rebalanceProposals.some((p, i) => p.toUserId || proposalOverrides[i]) && (
               <button
                 onClick={handleApplyAllProposals}
-                disabled={aiRunning}
+                disabled={applyingAll}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50 transition-colors"
               >
                 <Check size={12} />
@@ -425,7 +448,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
               </button>
             )}
             <button
-              onClick={closeAiWorkspace}
+              onClick={closeRebalancePanel}
               className="p-1 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
             >
               <X size={14} />
@@ -433,19 +456,19 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
           </div>
         </div>
 
-        {aiProposals.length === 0 ? (
+        {rebalanceProposals.length === 0 ? (
           <div className="px-4 py-6 text-center">
             <Check size={24} className="mx-auto mb-2 text-emerald-500" />
             <p className="text-sm text-slate-600 dark:text-slate-400">
               {t(
-                'initiatives.analysis.resources.aiBalanced',
+                'initiatives.analysis.resources.balanced',
                 'Workload is balanced — no changes needed'
               )}
             </p>
           </div>
         ) : (
           <div className="divide-y divide-slate-200 dark:divide-white/5">
-            {aiProposals.map((proposal, idx) => {
+            {rebalanceProposals.map((proposal, idx) => {
               const overrideUserId = proposalOverrides[idx];
               const effectiveUserId = overrideUserId ?? proposal.toUserId;
               const effectiveUserName = overrideUserId
@@ -488,7 +511,12 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                     }`}
                   >
                     {proposal.toUserId && (
-                      <option value={proposal.toUserId}>{proposal.toUserName} (AI)</option>
+                      // Znacznik osoby PODPOWIEDZIANEJ przez wyliczenie. Do 2026-07-23
+                      // było tu „(AI)" — przy propozycji, której nie policzył żaden model.
+                      <option value={proposal.toUserId}>
+                        {proposal.toUserName} (
+                        {t('initiatives.analysis.resources.suggested', 'suggested')})
+                      </option>
                     )}
                     {!proposal.toUserId && (
                       <option value="">
@@ -507,7 +535,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                   <button
                     onClick={() => {
                       if (!effectiveUserId) return;
-                      const effectiveProposal: AiReassignment = {
+                      const effectiveProposal: RebalanceProposal = {
                         ...proposal,
                         toUserId: effectiveUserId,
                         toUserName: effectiveUserName,
@@ -539,45 +567,50 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
       return;
     }
     const toggleAiProposalsPanel = () => {
-      if (aiProposals !== null) {
-        closeAiWorkspace();
+      if (rebalanceProposals !== null) {
+        closeRebalancePanel();
         return;
       }
-      computeAiProposals();
+      computeRebalanceProposals();
     };
     onRegisterActions(
       <button
         onClick={toggleAiProposalsPanel}
-        disabled={aiRunning}
-        className={getMenu3AiButtonClass(aiProposals !== null)}
+        disabled={applyingAll}
+        className={getMenu3DeterministicButtonClass(rebalanceProposals !== null)}
       >
-        {aiRunning ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-        {aiRunning ? 'Analyzing...' : 'AI Balance workload'}
+        {applyingAll ? <Loader2 size={12} className="animate-spin" /> : <Scale size={12} />}
+        {applyingAll
+          ? t('initiatives.analysis.resources.applying', 'Applying…')
+          : t('initiatives.analysis.resources.balanceAction', 'Balance workload')}
       </button>
     );
   }, [
     onRegisterActions,
     onQuickUpdate,
-    computeAiProposals,
-    aiProposals,
-    aiRunning,
-    closeAiWorkspace,
+    computeRebalanceProposals,
+    rebalanceProposals,
+    applyingAll,
+    closeRebalancePanel,
   ]);
 
   useEffect(() => {
     if (!onRegisterWorkspacePanel) return;
-    if (!aiProposalsPanel) {
+    if (!rebalancePanel) {
       onRegisterWorkspacePanel(null);
       return;
     }
     onRegisterWorkspacePanel({
-      title: 'AI Balance Workload',
-      subtitle: 'Reassign ownership to reduce overload and restore capacity.',
-      icon: <Sparkles size={16} />,
-      content: aiProposalsPanel,
+      title: t('initiatives.analysis.resources.balanceAction', 'Balance workload'),
+      subtitle: t(
+        'initiatives.analysis.resources.balanceSubtitle',
+        'Computed from current assignments and capacity — reassign ownership to remove overload.'
+      ),
+      icon: <Scale size={16} />,
+      content: rebalancePanel,
     });
     return () => onRegisterWorkspacePanel(null);
-  }, [aiProposalsPanel, onRegisterWorkspacePanel]);
+  }, [rebalancePanel, onRegisterWorkspacePanel, t]);
 
   /* ---------- render ---------- */
 
@@ -637,7 +670,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
       </div>
 
       {/* AI Proposals panel */}
-      {!onRegisterWorkspacePanel && aiProposalsPanel}
+      {!onRegisterWorkspacePanel && rebalancePanel}
 
       {/* Team workload table */}
       <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">

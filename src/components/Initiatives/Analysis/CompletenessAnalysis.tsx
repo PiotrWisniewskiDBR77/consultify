@@ -1,7 +1,10 @@
 /**
- * CompletenessAnalysis — AI-powered completeness management
- * V3-F02c: AI Auto-Fill, Gate Readiness Check, Bulk Fixer,
+ * CompletenessAnalysis — completeness management
+ * V3-F02c: Fill missing fields, Gate Readiness Check, Bulk Fixer,
  *          Priority Triage, Completeness Heatmap, sortable table
+ *
+ * Wszystkie pomocniki liczą się LOKALNIE (wykrycie pustych pól, sortowanie po
+ * liczbie braków) — żaden nie woła modelu, więc żaden nie nosi etykiety „AI".
  */
 
 import {
@@ -13,9 +16,9 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardCheck,
+  ClipboardList,
   ExternalLink,
   Loader2,
-  Sparkles,
   Target,
   TrendingUp,
   X,
@@ -28,7 +31,7 @@ import { useTranslation } from 'react-i18next';
 import type { InitiativeLevel } from '@/components/Initiatives/templates/types';
 import type { PortfolioInitiative } from '@/types';
 
-import { getMenu3AiButtonClass } from './menu3ActionButtonStyles';
+import { getMenu3DeterministicButtonClass } from './menu3ActionButtonStyles';
 import type {
   AnalysisIssue,
   OrgUser,
@@ -123,8 +126,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // AI panels
-  const [autoFillRunning, setAutoFillRunning] = useState(false);
+  // Panele pomocnicze (wszystkie liczone lokalnie)
   const [autoFillSuggestions, setAutoFillSuggestions] = useState<AutoFillSuggestion[] | null>(null);
   const [applyingAutoFill, setApplyingAutoFill] = useState<number | null>(null);
 
@@ -190,11 +192,17 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
     return list;
   }, [initiatives, sortCol, sortDir]);
 
-  /* ---------- AI Auto-Fill ---------- */
+  /* ---------- Uzupełnianie braków (DETERMINISTYCZNE, nie AI) ---------- */
+  //
+  // 2026-07-23 — wycięta atrapa AI. Do dziś: przycisk „AI Auto-Fill" z ikoną
+  // Sparkles i `setTimeout(700)` udającym myślenie. Model nigdy nie był wołany —
+  // to jest wykrycie PUSTYCH PÓL (właściciel / daty / budżet) i podstawienie
+  // wartości domyślnych. Wykrycie braku jest w 100% pewne, więc funkcja zostaje;
+  // znika podpis „AI" i fałszywa zwłoka. Wartości domyślne są teraz opisane
+  // WPROST jako domyślne do edycji, a nie jako „sugestia AI".
 
   const computeAutoFill = useCallback(() => {
-    setAutoFillRunning(true);
-    setTimeout(() => {
+    {
       const suggestions: AutoFillSuggestion[] = [];
       const idToRaw = new Map(rawInitiatives.map((i) => [i.id, i]));
 
@@ -203,14 +211,21 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
         const raw = idToRaw.get(row.initiativeId);
 
         if (raw && !raw.ownerBusiness?.id && users.length > 0) {
-          const leastUsed = users[0];
+          // UWAGA: to jest PIERWSZA osoba z listy, nie „najmniej obciążona".
+          // Do 2026-07-23 zmienna nazywała się `leastUsed`, a uzasadnienie
+          // sugerowało dobór — to była nieprawda. Podpowiedź jest jawnie
+          // oznaczona jako wymagająca wyboru człowieka.
+          const firstUser = users[0];
           suggestions.push({
             initiativeId: row.initiativeId,
             initiativeName: row.initiativeName,
             field: 'Business Owner',
-            suggestedValue: `${leastUsed.firstName} ${leastUsed.lastName}`,
-            reason: 'No owner assigned — critical for gate readiness',
-            autoPayload: { ownerBusinessId: leastUsed.id },
+            suggestedValue: `${firstUser.firstName} ${firstUser.lastName}`,
+            reason: t(
+              'initiatives.analysis.completeness.reasonNoOwner',
+              'No owner assigned — critical for gate readiness. Pick the right person before applying.'
+            ),
+            autoPayload: { ownerBusinessId: firstUser.id },
           });
         }
 
@@ -222,7 +237,10 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
             initiativeName: row.initiativeName,
             field: 'Planned Dates',
             suggestedValue: `${today} → ${end90}`,
-            reason: 'Missing timeline — default 90-day plan',
+            reason: t(
+              'initiatives.analysis.completeness.reasonNoDates',
+              'Missing timeline — default 90-day window, adjust to the real plan.'
+            ),
             autoPayload: { plannedStartDate: today, plannedEndDate: end90 },
           });
         }
@@ -233,16 +251,21 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
             initiativeName: row.initiativeName,
             field: 'Budget',
             suggestedValue: '50,000',
-            reason: 'No budget defined — estimated minimum based on scope',
+            // Do 2026-07-23 uzasadnienie brzmiało „estimated minimum based on
+            // scope" — nieprawda: 50 000 to STAŁA w kodzie, nic nie jest liczone
+            // z zakresu inicjatywy. Nazywamy to po imieniu.
+            reason: t(
+              'initiatives.analysis.completeness.reasonNoBudget',
+              'No budget defined — placeholder value, replace with a real estimate.'
+            ),
             autoPayload: { budget: 50000 },
           });
         }
       }
 
       setAutoFillSuggestions(suggestions.slice(0, 30));
-      setAutoFillRunning(false);
-    }, 700);
-  }, [initiatives, rawInitiatives, users]);
+    }
+  }, [initiatives, rawInitiatives, users, t]);
 
   const handleApplyAutoFill = useCallback(
     async (s: AutoFillSuggestion, idx: number) => {
@@ -261,7 +284,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
     [onQuickUpdate]
   );
 
-  /* ---------- AI Bulk Fix ---------- */
+  /* ---------- Bulk Fix (grupowe uzupełnienia, nie AI) ---------- */
 
   const bulkFixGroups = useMemo(() => {
     const groups: { label: string; count: number; field: string; ids: string[] }[] = [];
@@ -322,7 +345,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
     [onQuickUpdate, users]
   );
 
-  /* ---------- AI Priority Triage ---------- */
+  /* ---------- Triage priorytetów (sort po brakach, nie AI) ---------- */
 
   const triageItems = useMemo((): TriageItem[] => {
     return [...initiatives]
@@ -392,9 +415,9 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
       <div className="m-4 rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
         <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-c-info dark:text-c-info" />
+            <ClipboardList size={16} className="text-c-info dark:text-c-info" />
             <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
-              AI Auto-Fill suggestions
+              {t('initiatives.analysis.completeness.autoFillPanelTitle', 'Missing field defaults')}
             </h3>
             <span className="text-xs text-c-info">({autoFillSuggestions.length})</span>
           </div>
@@ -509,7 +532,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
         <div className="flex items-center gap-2">
           <Target size={16} className="text-indigo-600 dark:text-indigo-400" />
           <h3 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-            AI Priority Triage
+            {t('initiatives.analysis.completeness.triageAction', 'Priority Triage')}
           </h3>
         </div>
         <button
@@ -569,15 +592,10 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
         {onQuickUpdate && (
           <button
             onClick={toggleAutoFillPanel}
-            disabled={autoFillRunning}
-            className={getMenu3AiButtonClass(autoFillSuggestions !== null)}
+            className={getMenu3DeterministicButtonClass(autoFillSuggestions !== null)}
           >
-            {autoFillRunning ? (
-              <Loader2 size={12} className="animate-spin" />
-            ) : (
-              <Sparkles size={12} />
-            )}
-            AI Auto-Fill
+            <ClipboardList size={12} />
+            {t('initiatives.analysis.completeness.autoFillAction', 'Fill missing fields')}
           </button>
         )}
         {onQuickUpdate && (
@@ -587,10 +605,10 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
               setShowTriage(false);
               setShowBulkFix((v) => !v);
             }}
-            className={getMenu3AiButtonClass(showBulkFix)}
+            className={getMenu3DeterministicButtonClass(showBulkFix)}
           >
             <Zap size={12} />
-            Bulk Fix
+            {t('initiatives.analysis.completeness.bulkFixAction', 'Bulk Fix')}
           </button>
         )}
         <button
@@ -599,10 +617,10 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
             setShowBulkFix(false);
             setShowTriage((v) => !v);
           }}
-          className={getMenu3AiButtonClass(showTriage)}
+          className={getMenu3DeterministicButtonClass(showTriage)}
         >
           <Target size={12} />
-          AI Priority Triage
+          {t('initiatives.analysis.completeness.triageAction', 'Priority Triage')}
         </button>
       </>
     );
@@ -610,20 +628,23 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
     onRegisterActions,
     onQuickUpdate,
     computeAutoFill,
-    autoFillRunning,
     autoFillSuggestions,
     showBulkFix,
     showTriage,
     closeWorkspacePanels,
+    t,
   ]);
 
   useEffect(() => {
     if (!onRegisterWorkspacePanel) return;
     if (autoFillPanel) {
       onRegisterWorkspacePanel({
-        title: 'AI Auto-Fill',
-        subtitle: 'Fill missing owner, dates, and budget fields with one-click suggestions.',
-        icon: <Sparkles size={16} />,
+        title: t('initiatives.analysis.completeness.autoFillAction', 'Fill missing fields'),
+        subtitle: t(
+          'initiatives.analysis.completeness.autoFillSubtitle',
+          'Detected empty fields with default values — review each one before applying.'
+        ),
+        icon: <ClipboardList size={16} />,
         content: autoFillPanel,
       });
       return () => onRegisterWorkspacePanel(null);
@@ -639,7 +660,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
     }
     if (triagePanel) {
       onRegisterWorkspacePanel({
-        title: 'AI Priority Triage',
+        title: t('initiatives.analysis.completeness.triageAction', 'Priority Triage'),
         subtitle: 'Identify which initiatives need attention first and how much effort they need.',
         icon: <Target size={16} />,
         content: triagePanel,
@@ -648,7 +669,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
     }
     onRegisterWorkspacePanel(null);
     return undefined;
-  }, [autoFillPanel, bulkFixPanel, triagePanel, onRegisterWorkspacePanel]);
+  }, [autoFillPanel, bulkFixPanel, triagePanel, onRegisterWorkspacePanel, t]);
 
   return (
     <div className="space-y-6">
@@ -698,14 +719,17 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
         </div>
       </div>
 
-      {/* AI Auto-Fill panel */}
+      {/* Missing-field defaults panel */}
       {!onRegisterWorkspacePanel && autoFillSuggestions !== null && (
         <div className="rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
           <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-c-info dark:text-c-info" />
+              <ClipboardList size={16} className="text-c-info dark:text-c-info" />
               <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
-                AI Auto-Fill suggestions
+                {t(
+                  'initiatives.analysis.completeness.autoFillPanelTitle',
+                  'Missing field defaults'
+                )}
               </h3>
               <span className="text-xs text-c-info">({autoFillSuggestions.length})</span>
             </div>
@@ -826,14 +850,17 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
         </div>
       )}
 
-      {/* AI Priority Triage panel */}
+      {/* Priority triage panel */}
       {!onRegisterWorkspacePanel && showTriage && (
         <div className="rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-500/5 dark:bg-indigo-500/10 overflow-hidden">
           <div className="px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Target size={16} className="text-indigo-600 dark:text-indigo-400" />
               <h3 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-                AI Priority Triage — where to focus effort
+                {t(
+                  'initiatives.analysis.completeness.triagePanelTitle',
+                  'Priority Triage — where to focus effort'
+                )}
               </h3>
             </div>
             <button

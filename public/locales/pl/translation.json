@@ -2329,6 +2329,7 @@
       "aIFilledNotificationContext": "AI wypełniło kontekst powiadomienia",
       "aiSkippedEditedFields": "AI nie nadpisało pól, które właśnie edytowałeś",
       "failedToFillContext": "Nie udało się wypełnić kontekstu przez AI",
+      "retry": "Ponów",
       "toastSuccess7": "Komentarz dodany",
       "toastError7": "Nie udało się dodać komentarza",
       "confirm": "Usunąć ten komentarz?",
@@ -3144,7 +3145,8 @@
       "save2": "Zapisz",
       "addReminder2": "Dodaj reminder",
       "editReminder": "Edytuj reminder",
-      "toast3": "AI uzupełni formularz...",
+      "aiFillReminder": "Wypełnij formularz przez AI",
+      "systemInstructionReminder": "Jesteś asystentem PMO konfigurującym przypomnienie do zadania. Zwróć tylko prawidłowy JSON.",
       "useThisWindowTo2": "Tutaj opisujemy cel remindera: kiedy ma się uruchamiać, do kogo trafić i jaką wiadomość wysłać.",
       "type3": "Typ",
       "beforeDue2": "Przed terminem",
@@ -3162,7 +3164,8 @@
       "save3": "Zapisz",
       "addEscalationRule": "Dodaj regułę eskalacji",
       "editEscalationRule": "Edytuj regułę eskalacji",
-      "toast4": "AI uzupełni formularz...",
+      "aiFillEscalation": "Wypełnij formularz przez AI",
+      "systemInstructionEscalation": "Jesteś asystentem PMO konfigurującym regułę eskalacji zadania. Zwróć tylko prawidłowy JSON.",
       "useThisWindowTo3": "Tutaj opisujemy regułę eskalacji: progi, czas eskalacji, osobę docelową i komunikat.",
       "warningThresholdDays": "Próg ostrzeżenia (dni)",
       "criticalThresholdDays": "Próg krytyczny (dni)",
@@ -4784,6 +4787,21 @@
       "theUserFallback": "użytkownika"
     },
     "insightViewer": {
+      "panelResults": "Rezultaty",
+      "panelResultsEmpty": "Z tego wniosku nic jeszcze nie powstało.",
+      "manualFieldHint": "Tekst redagowany ręcznie. Zapisuje się osobno od treści z AI — regeneracja go nie kasuje.",
+      "manualFieldPlaceholder": "Napisz tę sekcję sam albo popraw to, co wygenerowało AI…",
+      "manualFieldAutoFit": "Powrót do auto-dopasowania",
+      "manualFieldSave": "Zapisz sekcję",
+      "manualFieldSaving": "Zapisywanie…",
+      "manualFieldUnsaved": "Niezapisane zmiany",
+      "manualFieldSavedAt": "Zapisano",
+      "manualFieldSaved": "Sekcja zapisana",
+      "manualFieldSaveFailed": "Nie udało się zapisać sekcji",
+      "manualFieldRevert": "Odrzuć treść ręczną",
+      "manualFieldRevertHint": "Usuwa ręczny tekst — sekcja wraca do samej treści wygenerowanej przez AI.",
+      "panelResultsCreate": "Utwórz z tego wniosku",
+      "panelResultsProduced": "Już powstało",
       "regenerateThisSectionWithAi": "Napisz sekcję od nowa z AI",
       "regenerate": "Regeneruj",
       "editThisSection": "Edytuj tę sekcję",
@@ -5123,7 +5141,7 @@
       "source": "Źródło",
       "date": "Data",
       "confidence": "Pewność",
-      "findings": "Findingi",
+      "findings": "Ustalenia",
       "tag": "Tag",
       "relations": "Powiązania",
       "noRelations": "Brak powiązań",
@@ -5252,18 +5270,18 @@
         "failed": "Błąd"
       },
       "insightTypeLabel": {
-        "summary": "Podsumowanie Wykonawcze",
-        "general_analysis": "Analiza Ogólna",
-        "trends": "Analiza Trendów",
-        "problems": "Odkrywanie Problemów",
+        "summary": "Podsumowanie wykonawcze",
+        "general_analysis": "Analiza ogólna",
+        "trends": "Analiza trendów",
+        "problems": "Odkrywanie problemów",
         "recommendations": "Rekomendacje",
-        "comparison": "Porównanie Wywiadów",
-        "gaps": "Analiza Luk",
-        "risk_assessment": "Ocena Ryzyk",
-        "opportunity_scan": "Skan Szans",
-        "maturity": "Ocena Dojrzałości",
-        "stakeholder_map": "Mapa Interesariuszy",
-        "between_the_lines": "Czytanie Między Wierszami"
+        "comparison": "Porównanie wywiadów",
+        "gaps": "Analiza luk",
+        "risk_assessment": "Ocena ryzyk",
+        "opportunity_scan": "Skan szans",
+        "maturity": "Ocena dojrzałości",
+        "stakeholder_map": "Mapa interesariuszy",
+        "between_the_lines": "Czytanie między wierszami"
       },
       "sessionsCount": "{{count}} sesji",
       "exportTargetLabel": {
@@ -7065,7 +7083,6 @@
         "ownerReassigned": "Właściciel przepisany",
         "reassignFailed": "Nie udało się przepisać właściciela",
         "proposalApplied": "Przepisanie zastosowane",
-        "aiProposals": "Propozycje rebalansowania AI",
         "applyAll": "Zastosuj wszystkie",
         "selectPerson": "— Wybierz osobę —",
         "accept": "Akceptuj",
@@ -7080,10 +7097,17 @@
         "reassign": "Przepisz",
         "allApplied": "Zastosowano wszystkie przepisania ({{count}})",
         "partialApplied": "Zastosowano {{success}}, nie powiodło się {{failed}}",
-        "aiNoCapacity": "Brak dostępnego członka zespołu — rozważ rekrutację lub przesunięcie w czasie",
         "noActionable": "Brak propozycji do realizacji — najpierw wybierz osobę dla każdego wiersza",
-        "aiBalanced": "Obciążenie jest zrównoważone — żadne zmiany nie są potrzebne",
-        "selectOwner": "Wybierz nowego właściciela..."
+        "selectOwner": "Wybierz nowego właściciela...",
+        "rebalanceProposals": "Propozycje rozłożenia obciążenia",
+        "balanceAction": "Zrównoważ obciążenie",
+        "balanceSubtitle": "Policzone z bieżących przypisań i dostępności — przepisz właścicieli, aby zdjąć przeciążenie.",
+        "applying": "Stosuję…",
+        "noCapacity": "Brak dostępnego członka zespołu — rozważ rekrutację lub przesunięcie w czasie",
+        "balanced": "Obciążenie jest zrównoważone — żadne zmiany nie są potrzebne",
+        "suggested": "podpowiedź",
+        "reasonHasCapacity": "{{name}} ma zapas ({{load}})",
+        "reasonUnassigned": "{{name}} nie ma obecnie przypisań"
       },
       "feasibility": {
         "title": "Wykonalność",
@@ -7097,13 +7121,25 @@
         "noData": "Brak danych wykonalności.",
         "updated": "Inicjatywa zaktualizowana",
         "updateFailed": "Nie udało się zaktualizować",
-        "aiProposals": "Propozycje optymalizacji AI",
         "total": "Inicjatywy",
         "highRisk": "Wysokie ryzyko (<50%)",
         "criticalDims": "Z wymiarem krytycznym",
         "filterBy": "Filtrowane wg:",
         "allGood": "Wszystkie inicjatywy mają zdrową wykonalność",
-        "priorityRanking": "Ranking priorytetów AI — zalecana kolejność realizacji"
+        "priorityRanking": "Ranking priorytetów — zalecana kolejność realizacji",
+        "gapFixProposals": "Sugerowane poprawki słabych wymiarów",
+        "gapFixAction": "Popraw słabe punkty",
+        "gapFixSubtitle": "Reguły sprawdzające wymiary wykonalności — zastosuj celowaną poprawkę do każdego wykrycia.",
+        "rankingAction": "Ranking",
+        "scoreExplainer": "Rozbicie wyniku",
+        "probBudget": "Budżet wynosi 0 lub jest ujemny",
+        "sugBudget": "Ustaw budżet startowy — 50 000 to wartość zastępcza, zastąp realnym szacunkiem",
+        "probOwner": "Brak właściciela biznesowego",
+        "sugOwner": "Przypisz właściciela, aby poprawić pokrycie kompetencji",
+        "probDates": "Brak planowanych dat",
+        "sugDates": "Ustaw daty: {{start}} → {{end}} (domyślnie 90 dni)",
+        "probRisk": "Bardzo wysokie ryzyko ({{score}}%)",
+        "sugRisk": "Rozważ podział na fazy lub ograniczenie zakresu"
       },
       "logic": {
         "title": "Logika",
@@ -7114,12 +7150,12 @@
         "depAccepted": "Zależność zapisana: {{from}} → {{to}}",
         "depAcceptFailed": "Nie udało się zapisać zależności",
         "noCycles": "Nie wykryto cykli",
-        "noNewDeps": "Nie odkryto dodatkowych zależności",
+        "noNewDeps": "AI nie znalazła dodatkowych zależności",
         "cyclesFound": "Wykryto {{count}} cykl(i)",
         "criticalPathTitle": "Ścieżka krytyczna",
         "blockersTitle": "Blokady",
         "blockerBadge": "{{count}} zależnych",
-        "sequencerTitle": "Rekomendowana przez AI sekwencja realizacji",
+        "sequencerTitle": "Rekomendowana sekwencja realizacji",
         "noInitiatives": "Brak inicjatyw do uszeregowania",
         "totalDeps": "Wszystkie zależności",
         "timingConflicts": "Konflikty terminów",
@@ -7140,7 +7176,23 @@
         },
         "discoveredDeps": "AI wykryła potencjalne zależności",
         "noCriticalPath": "Nie znaleziono łańcucha zależności — najpierw dodaj zależności",
-        "emptyHint": "Kliknij „Wykryj zależności z AI”, aby AI przeanalizowała Twoje inicjatywy i zasugerowała powiązania."
+        "emptyHint": "Kliknij „Wykryj zależności przez AI”, aby AI przeanalizowała nazwy i opisy Twoich inicjatyw i zaproponowała powiązania.",
+        "aiDiscovering": "Pytam AI…",
+        "aiDiscoverFailed": "Wykrywanie zależności nie powiodło się — {{reason}}.",
+        "aiErrNoProvider": "nie skonfigurowano dostawcy AI",
+        "aiErrBudget": "wyczerpany budżet AI",
+        "aiErrAccessBlocked": "dostęp do AI jest zablokowany dla tej przestrzeni",
+        "aiErrEmpty": "AI zwróciło pustą odpowiedź",
+        "aiErrCallFailed": "wywołanie AI się nie powiodło",
+        "aiErrBadJson": "nie udało się odczytać odpowiedzi AI",
+        "aiErrUnavailable": "AI jest chwilowo niedostępne",
+        "detectCyclesAction": "Wykryj cykle",
+        "criticalPathAction": "Ścieżka krytyczna",
+        "sequencerAction": "Sekwencer",
+        "aiDiscoverSubtitle": "Zaproponowane przez AI na podstawie nazw i opisów inicjatyw — sprawdź i zaakceptuj te, które są prawdziwe.",
+        "accept": "Akceptuj",
+        "accepted": "Zaakceptowana",
+        "confidence": "Pewność: {{level}}"
       },
       "timeline": {
         "title": "Harmonogram",
@@ -7153,7 +7205,17 @@
         "noData": "Brak danych harmonogramu.",
         "invalidDates": "Początek musi być przed końcem",
         "datesUpdated": "Daty zaktualizowane",
-        "updateFailed": "Niepowodzenie"
+        "updateFailed": "Niepowodzenie",
+        "autoScheduleAction": "Zaproponuj terminy",
+        "autoSchedulePanelTitle": "Zaproponowane terminy",
+        "autoScheduleSubtitle": "Terminy policzone z priorytetu, zależności i dostępności właściciela — sprawdź przed zastosowaniem.",
+        "conflictsAction": "Konflikty",
+        "optimizerAction": "Optymalizator",
+        "optimizerPanelTitle": "Optymalizacja harmonogramu",
+        "delayImpactAction": "Wpływ opóźnień",
+        "reasonAfterDep": "po zakończeniu zależności ({{d}})",
+        "reasonOwnerFree": "właściciel dostępny po {{d}}",
+        "reasonNoBlockers": "brak blokad — może ruszyć od razu"
       },
       "completeness": {
         "title": "Kompletność",
@@ -7165,13 +7227,23 @@
         "missingTotal": "Brak łącznie",
         "actions": "Akcje",
         "notGateReady": "{{count}} inicjatyw niegotowych do bramki",
-        "noData": "Brak danych kompletności."
+        "noData": "Brak danych kompletności.",
+        "autoFillAction": "Uzupełnij brakujące pola",
+        "autoFillPanelTitle": "Wartości domyślne dla pustych pól",
+        "autoFillSubtitle": "Wykryte puste pola z wartościami domyślnymi — sprawdź każdą przed zastosowaniem.",
+        "bulkFixAction": "Poprawki zbiorcze",
+        "triageAction": "Triage priorytetów",
+        "triagePanelTitle": "Triage priorytetów — na czym skupić wysiłek",
+        "reasonNoOwner": "Brak właściciela — krytyczne dla gotowości do bramki. Wybierz właściwą osobę przed zastosowaniem.",
+        "reasonNoDates": "Brak harmonogramu — domyślne okno 90 dni, dostosuj do realnego planu.",
+        "reasonNoBudget": "Brak budżetu — wartość zastępcza, zastąp realnym szacunkiem."
       },
       "issues": "Problemy",
       "openInitiative": "Otwórz inicjatywę",
-      "fixApplied": "Sugestia AI zastosowana",
+      "fixApplied": "Poprawka zastosowana",
       "fixFailed": "Nie udało się zastosować poprawki",
-      "previewInitiative": "Podgląd"
+      "previewInitiative": "Podgląd",
+      "applyFix": "Zastosuj poprawkę"
     },
     "templates": {
       "quick_win": {
@@ -24134,43 +24206,37 @@
         "descriptionGenerated": "Opis wygenerowany przez AI",
         "descriptionGenerationError": "Błąd generowania opisu",
         "aiCommentGenerated": "Komentarz AI wygenerowany",
-        "aiCommentFallbackAdded": "Dodano komentarz pomocniczy AI",
         "aiRaciApplied": "AI zaproponowało i zastosowało skład RACI ({{count}} osób).",
-        "aiRaciSuggestFailed": "Nie udało się wygenerować składu RACI przez AI",
+        "aiRaciSuggestFailed": "AI nie zaproponowało zespołu RACI",
         "aiRemindersApplied": "AI zaproponowało i zastosowało reminders ({{count}}).",
-        "remindersFallbackApplied": "Zastosowano domyślne reminders.",
         "aiEscalationsApplied": "AI zaproponowało i zastosowało eskalacje ({{count}}).",
-        "escalationFallbackApplied": "Zastosowano domyślną regułę eskalacji.",
         "aiRaciPersonFormFilled": "AI uzupełniło formularz osoby RACI.",
-        "raciPersonFallbackApplied": "Zastosowano domyślną konfigurację osoby RACI.",
         "aiReminderFormFilled": "AI uzupełniło formularz remindera.",
-        "reminderFormFallbackApplied": "Zastosowano domyślne uzupełnienie remindera.",
         "aiEscalationFormFilled": "AI uzupełniło formularz eskalacji.",
-        "escalationFormFallbackApplied": "Zastosowano domyślne uzupełnienie eskalacji.",
         "consequencesGenerated": "Wygenerowano konsekwencje braku decyzji",
         "riskAnalysisGenerated": "Wygenerowano analizę ryzyka",
         "consequenceScenariosUpdated": "Scenariusze konsekwencji zaktualizowane przez AI",
-        "consequenceScenariosFallback": "Użyto scenariuszy awaryjnych. AI chwilowo niedostępne.",
         "enterContentFirst": "Najpierw wpisz treść do edycji AI",
-        "aiEditFallbackApplied": "Użyto trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne).",
         "contentUpdatedByAI": "Treść zaktualizowana przez AI. Jeśli efekt Ci nie pasuje, kliknij Undo AI.",
         "aiRefineFailed": "Nie udało się poprawić treści przez AI",
-        "previousTextRestored": "Przywrócono poprzednią wersję tekstu",
         "aiCommentPrepared": "AI przygotowało treść komentarza",
-        "localAiFallbackUsed": "Użyto lokalnej podpowiedzi AI",
         "linkAlreadyExists": "To powiązanie już istnieje",
         "linkAddedSyncFailed": "Link dodany, ale nie udało się zsynchronizować danych. To sygnał, że linkowanie może nie działać poprawnie.",
         "noTargetLink": "Brak docelowego linku",
         "delegationSavedRefreshFailed": "Delegacja zapisana, ale nie udało się odświeżyć danych",
-        "tasksCreated": "Utworzono {{count}} zadań"
+        "tasksCreated": "Utworzono {{count}} zadań",
+        "aiFailedWithReason": "{{what}} — {{reason}}.",
+        "aiProsConsFailed": "AI nie wygenerowało plusów i minusów",
+        "aiCommentFailed": "AI nie wygenerowało komentarza",
+        "aiRemindersFailed": "AI nie zaproponowało przypomnień",
+        "aiEscalationsFailed": "AI nie zaproponowało reguł eskalacji",
+        "aiRaciPersonFailed": "AI nie wypełniło formularza osoby RACI",
+        "aiReminderFormFailed": "AI nie wypełniło formularza przypomnienia",
+        "aiEscalationFormFailed": "AI nie wypełniło formularza eskalacji",
+        "aiConsequenceScenariosFailed": "AI nie wygenerowało scenariuszy konsekwencji",
+        "aiCommentDraftFailed": "AI nie przygotowało treści komentarza"
       },
       "ai": {
-        "fallbackProsShort": "Krótszy czas wdrożenia",
-        "fallbackProsScale": "Lepsza skalowalność",
-        "fallbackProsPredictability": "Wyższa przewidywalność efektu",
-        "fallbackConsCost": "Wyższy koszt początkowy",
-        "fallbackConsCapability": "Wymaga kompetencji zespołu",
-        "fallbackConsIntegrationRisk": "Ryzyko integracyjne",
         "prosConsPrompt": "Dla opcji decyzyjnej wygeneruj 3 konkretne \"za\" i 3 konkretne \"przeciw\". Zwróć wyłącznie JSON: {\"pros\":[\"...\"],\"cons\":[\"...\"]}.\n\nTytuł opcji: {{altTitle}}\nOpis: {{altDescription}}\nKontekst decyzji: {{decisionTitle}}",
         "pmoJsonSystemInstruction": "Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.",
         "commentPrompt": "Wygeneruj JEDEN konkretny komentarz do decyzji projektowej.\nCel: pomóc zespołowi podjąć najlepszy kolejny krok decyzyjny.\n\nZasady:\n- 2-4 krótkie zdania.\n- Maksymalnie 450 znaków.\n- Bez markdown, bez emoji, bez list numerowanych.\n- Nie powtarzaj treści podobnej do ostatnich komentarzy.\n- Komentarz ma być praktyczny i oparty na podanym kontekście.\n\nKontekst decyzji:\n- Tytuł: {{title}}\n- Opis: {{description}}\n- Status: {{status}}\n- Priorytet: {{priority}}\n- Termin: {{dueDate}}\n- Interesariusze: {{stakeholdersCount}}\n- Ryzyka: {{risksCount}}\n- Alternatywy: {{alternativesCount}}\n\nOstatnie komentarze:\n{{recentComments}}\n\nZwróć WYŁĄCZNIE gotowy tekst komentarza.",
@@ -24178,7 +24244,6 @@
         "commentNoStatus": "brak statusu",
         "commentNoPriority": "brak priorytetu",
         "duplicateCommentAppend": "Skoncentrujmy się na jednym mierzalnym kroku do końca dnia.",
-        "commentFallback": "Przed finalną decyzją doprecyzujmy jeden krytyczny warunek akceptacji i przypiszmy właściciela następnego kroku. To obniży ryzyko opóźnień i niejasności odpowiedzialności.",
         "raciTeamPrompt": "Na podstawie danych decyzji zaproponuj skład RACI. Zwróć WYŁĄCZNIE JSON:\n{{schema}}\nWymagania:\n- Dokładnie 1 osoba accountable\n- 1-2 osoby responsible\n- 1-3 osoby consulted/informed\n- Użyj TYLKO userId z listy użytkowników\n\nDecyzja:\n- Tytuł: {{title}}\n- Opis: {{description}}\n- Kategoria: {{category}}\n- Priorytet: {{priority}}\n- Termin: {{dueDate}}\n- Requester: {{requesterName}}\n- Aktualny deciderId: {{deciderId}}\n\nUżytkownicy (preferuj członków projektu):\n{{roster}}",
         "remindersPrompt": "Zaproponuj przypomnienia dla decyzji. Zwróć WYŁĄCZNIE JSON:\n{{schema}}\nUwzględnij priorytet {{priority}}, termin {{dueDate}} i status {{status}}.",
         "escalationsPrompt": "Zaproponuj 1-3 reguły eskalacji dla decyzji. Zwróć WYŁĄCZNIE JSON:\n{{schema}}\nUżyj userId wyłącznie z listy użytkowników:\n{{userList}}",
@@ -24197,10 +24262,15 @@
         "contentEditorSystemInstruction": "Jesteś redaktorem treści decyzyjnych PMO. Zwróć tylko poprawiony tekst, bez komentarzy.",
         "commentDraftPrompt": "Przygotuj zwięzły i profesjonalny komentarz do decyzji. Priorytet komentarza: {{priority}}. Tytuł decyzji: \"{{title}}\". Opis: \"{{description}}\". Obecny szkic użytkownika: \"{{draft}}\". Zwróć sam tekst komentarza (bez cudzysłowów i bez listy).",
         "pmConsultantSystemInstruction": "Jesteś konsultantem PM. Zwracaj krótki komentarz gotowy do publikacji.",
-        "commentDraftFallback": "Proponuję krótką walidację opcji na danych historycznych oraz doprecyzowanie właściciela wykonania.",
-        "commentDraftAppend": "Warto też doprecyzować właściciela i termin.",
         "analyzeOptionsKickoff": "Przeanalizuj opcje decyzji „{{title}}”: porównaj plusy i minusy, ryzyka oraz zaproponuj rekomendację.",
-        "analyzeOptionsKickoffUntitled": "bez tytułu"
+        "analyzeOptionsKickoffUntitled": "bez tytułu",
+        "errNoProvider": "brak skonfigurowanego dostawcy AI",
+        "errBudget": "budżet AI został wyczerpany",
+        "errAccessBlocked": "dostęp do AI jest zablokowany w tej organizacji",
+        "errEmpty": "AI zwróciło pustą odpowiedź",
+        "errCallFailed": "wywołanie AI nie powiodło się",
+        "errBadJson": "nie udało się odczytać odpowiedzi AI",
+        "errUnavailable": "AI jest chwilowo niedostępne"
       },
       "altGen": {
         "option1Title": "Opcja 1: Podejście konserwatywne",
@@ -24282,33 +24352,7 @@
         "riskLineFallback": "ryzyka operacyjne i jakościowe",
         "conservativeTemplate": "1) Jeśli decyzja nie zapadnie do {{due}}, w ciągu 7 dni:\n- {{d7}}\n\n2) W ciągu 30 dni:\n- {{d30}}\n- Najbardziej narażone obszary: {{riskLine}}\n\n3) W ciągu 90 dni:\n- {{d90}}\n\n4) Minimalna decyzja na teraz:\n- Zatwierdzić: {{recommendation}}\n- Właściciel: {{decider}}",
         "executiveTemplate": "Podsumowanie zarządcze:\nBrak decyzji do {{due}} zwiększa koszt bezczynności i ryzyko opóźnień wykonawczych.\n\nWpływ:\n- 7 dni: {{d7}}\n- 30 dni: {{d30}}\n- 90 dni: {{d90}}\n\nRekomendacja:\nZatwierdzić {{recommendation}} oraz przypisać odpowiedzialność do: {{decider}}.",
-        "actionForcingTemplate": "ALERT: brak decyzji do {{due}} uruchamia negatywny scenariusz.\n\nCo stracimy:\n- Natychmiast: {{d7}}\n- 30 dni: {{d30}}\n- 90 dni: {{d90}}\n\nNajwyższe ryzyka: {{riskLine}}.\n\nDecyzja wymagana TERAZ:\n- Zatwierdzić {{recommendation}}\n- Potwierdzić właściciela: {{decider}}\n- Utrzymać termin: {{due}}",
-        "pessimisticD7": "Natychmiastowe ryzyko blokady: {{d7}}.",
-        "pessimisticD30": "Koszt bezczynności rośnie: {{d30}}.",
-        "pessimisticD90": "Scenariusz krytyczny: {{d90}}.",
-        "neutralD7": "Utrzymuje się niepewność wykonawcza i spada tempo decyzji.",
-        "neutralD30": "Rosną zależności między zadaniami, możliwe lokalne opóźnienia.",
-        "neutralD90": "Projekt wymaga korekty planu i dodatkowych zasobów.",
-        "optimisticD7": "Ryzyko materializacji ograniczone przy monitoringu dziennym.",
-        "optimisticD30": "Przy częściowych decyzjach wpływ można utrzymać pod kontrolą.",
-        "optimisticD90": "Skutki umiarkowane, jeśli właściciel i termin będą egzekwowane."
-      },
-      "altFallback": {
-        "prosFaster": "Szybsze dostarczenie wartości biznesowej",
-        "prosPredictability": "Lepsza przewidywalność wykonania",
-        "prosAccountability": "Czytelna odpowiedzialność zespołu",
-        "consCost": "Ryzyko wzrostu kosztów początkowych",
-        "consCoordination": "Wymaga dodatkowej koordynacji",
-        "consCapability": "Potrzebne wsparcie kompetencyjne"
-      },
-      "refine": {
-        "expandAppendix": "\n\nUzasadnienie biznesowe: decyzja wpływa na terminowość, ryzyko operacyjne i jakość dostarczanych rezultatów. Rekomendowane jest określenie właściciela wdrożenia oraz punktów kontrolnych.",
-        "formalPrefix": "Niniejszym wskazuje się, że {{rest}}",
-        "aiActionsTitle": "Akcje AI dla tego pola",
-        "improve": "Improve",
-        "shorten": "Shorten",
-        "expand": "Expand",
-        "formalTone": "Formal tone"
+        "actionForcingTemplate": "ALERT: brak decyzji do {{due}} uruchamia negatywny scenariusz.\n\nCo stracimy:\n- Natychmiast: {{d7}}\n- 30 dni: {{d30}}\n- 90 dni: {{d90}}\n\nNajwyższe ryzyka: {{riskLine}}.\n\nDecyzja wymagana TERAZ:\n- Zatwierdzić {{recommendation}}\n- Potwierdzić właściciela: {{decider}}\n- Utrzymać termin: {{due}}"
       },
       "commentPriority": {
         "high": "Wysoki",
@@ -24377,14 +24421,15 @@
         "title": "Konsekwencje braku decyzji",
         "aiScenariosRealtime": "Scenariusze AI (real-time)",
         "sourceAI": "Źródło: AI",
-        "sourceFallback": "Źródło: fallback",
         "aiUpdating": "AI aktualizuje scenariusze...",
         "optimistic": "Optymistyczny",
         "neutral": "Neutralny",
         "pessimistic": "Pesymistyczny",
         "decisionNote": "Notatka decyzyjna",
         "notePlaceholder": "Co się stanie, jeśli decyzja nie zostanie podjęta?",
-        "placeholderClickup": "Konsekwencje braku decyzji..."
+        "placeholderClickup": "Konsekwencje braku decyzji...",
+        "sourceNone": "Źródło: brak danych",
+        "sourceManual": "Źródło: wpis ręczny"
       },
       "governance": {
         "title": "RACI i eskalacja",
@@ -24541,9 +24586,6 @@
       "noDescription": "Brak opisu",
       "noDeadline": "Brak terminu",
       "noCommentsYet": "Brak komentarzy",
-      "decisionDueIn3Days": "Termin decyzji za 3 dni.",
-      "decisionOverdueActionNeeded": "Decyzja po terminie - wymagane działanie.",
-      "decisionEscalatedDueToInactivity": "Decyzja eskalowana z powodu braku aktywności.",
       "statusValue": {
         "pending": "Oczekująca",
         "approved": "Zatwierdzona",
@@ -30222,6 +30264,7 @@
       "targetNotSelected": "(element jeszcze nie wybrany)",
       "aiLinkCommentSystemInstruction": "Jesteś analitykiem projektowym. Piszesz zwięźle i profesjonalnie po polsku.",
       "generateCommentFailed": "Nie udało się wygenerować komentarza",
+      "generateCommentEmpty": "AI niedostępne — model nie zwrócił treści. Wpisz komentarz ręcznie lub spróbuj ponownie.",
       "heading": "Załączniki, linki wewnętrzne i zewnętrzne",
       "attachmentsSectionTitle": "Załączniki",
       "sortOldestFirst": "Najstarsze",
@@ -30439,6 +30482,10 @@
         "reportPackDegraded": "Report Pack jest zdegradowany; ograniczenia muszą pozostać widoczne w artefakcie."
       },
       "targetMeta": {
+        "decision": {
+          "label": "Rozpocznij decyzję",
+          "description": "Zamień wniosek w decyzję do podjęcia — z kontekstem i dowodami."
+        },
         "report": {
           "label": "Utwórz raport",
           "description": "Dokument do omówienia wyników audytu."
@@ -30805,7 +30852,6 @@
       "menuFormal": "Formalny ton",
       "generateSuccess": "Treść wygenerowana przez AI",
       "generateError": "Nie udało się wygenerować treści przez AI",
-      "fallbackApplied": "Użyto trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne).",
       "enhanceSuccess": "Treść zaktualizowana przez AI. Kliknij Cofnij AI aby cofnąć.",
       "enhanceError": "Nie udało się poprawić treści przez AI",
       "undoSuccess": "Przywrócono poprzednią wersję tekstu",
@@ -30813,7 +30859,13 @@
       "apply": "Zastosuj",
       "discard": "Odrzuć",
       "undo": "Cofnij AI",
-      "fallbackProposed": "Propozycja z trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne)."
+      "failedWithReason": "{{what}} — {{reason}}.",
+      "errNoProvider": "nie skonfigurowano dostawcy AI",
+      "errBudget": "wyczerpany budżet AI",
+      "errAccessBlocked": "dostęp do AI jest zablokowany dla tej organizacji",
+      "errEmpty": "AI zwróciło pustą odpowiedź",
+      "errCallFailed": "wywołanie AI nie powiodło się",
+      "errUnavailable": "AI jest chwilowo niedostępne"
     },
     "nModeHeader": {
       "savedLabel": "Zapisano",
@@ -30998,6 +31050,19 @@
     },
     "previewCompletenessRing": {
       "missingFields": "Brakujące pola"
+    },
+    "artifactApprovalStatusBar": {
+      "stateDraft": "Szkic",
+      "stateReview": "W recenzji",
+      "stateApproved": "Zatwierdzone",
+      "stateRejected": "Odrzucone",
+      "loading": "Wczytywanie stanu zatwierdzenia…",
+      "saving": "Zapisywanie…",
+      "submitForReview": "Zgłoś do recenzji",
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "confirmReject": "Potwierdź odrzucenie",
+      "rejectReasonPlaceholder": "Powód (opcjonalnie)"
     }
   },
   "reportBuilder": {
@@ -33023,22 +33088,22 @@
       "legendHint": "kolor każdej aktywności pokazuje, czy tworzy marżę, jest neutralna, czy ją drenuje. Wielkość i adnotacje wynikają z wkładu w koszt i wartość."
     },
     "dynamicSwotLibraryGraphic": {
-      "titleProcess": "Jak Dynamic SWOT prowadzi od pytania do decyzji",
+      "titleProcess": "Jak Dynamiczny SWOT prowadzi od pytania do decyzji",
       "titleExample": "Przykład: od pytania zarządu do logicznej sekwencji ruchów",
-      "subtitleProcess": "To nie jest zwykła tabela 2x2. Najpierw ustawiamy decyzję i porządkujemy evidence, potem budujemy macierz, interpretujemy napięcia i dopiero wtedy przechodzimy do ruchów oraz outputów.",
-      "subtitleExample": "Ten case pokazuje, że dobra sesja SWOT nie kończy się na nazwaniu czterech ćwiartek. Najpierw ustawia decyzję, potem porządkuje evidence, a dopiero później buduje napięcie, ruch i materiał dla zarządu.",
+      "subtitleProcess": "To nie jest zwykła tabela 2x2. Najpierw ustawiamy decyzję i porządkujemy dowody, potem budujemy macierz, interpretujemy napięcia i dopiero wtedy przechodzimy do ruchów oraz materiałów wyjściowych.",
+      "subtitleExample": "Ten case pokazuje, że dobra sesja SWOT nie kończy się na nazwaniu czterech ćwiartek. Najpierw ustawia decyzję, potem porządkuje dowody, a dopiero później buduje napięcie, ruch i materiał dla zarządu.",
       "scenarioLabelProcess": "Punkt wyjścia",
       "scenarioLabelExample": "Sytuacja",
-      "scenarioValueProcess": "Dynamic SWOT startuje od pytania strategicznego, zakresu, success signal i ograniczeń. Bez tego kolejne kroki zamieniają się w zbiór luźnych opinii.",
+      "scenarioValueProcess": "Dynamiczny SWOT startuje od pytania strategicznego, zakresu, sygnału sukcesu i ograniczeń. Bez tego kolejne kroki zamieniają się w zbiór luźnych opinii.",
       "scenarioValueExample": "Ateliertoy po spadku marży rozważa automatyzację. Prawdziwe pytanie brzmi: czy kupować technologię już teraz, czy najpierw zrozumieć, gdzie naprawdę wycieka wartość i które procesy blokują skalę.",
       "flow": "Oś pracy",
       "decisionLabelProcess": "Efekt sesji",
       "decisionLabelExample": "Pytanie decyzyjne",
-      "decisionValueProcess": "Wspólna diagnoza, logiczne napięcia, rekomendowane ruchy i materiał gotowy do raportu, decka oraz inicjatyw.",
-      "decisionValueExample": "Od czego zacząć transformację: od CAPEX-u czy od diagnozy?",
+      "decisionValueProcess": "Wspólna diagnoza, logiczne napięcia, rekomendowane ruchy i materiał gotowy do raportu, prezentacji oraz inicjatyw.",
+      "decisionValueExample": "Od czego zacząć transformację: od nakładów inwestycyjnych (CAPEX) czy od diagnozy?",
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
-      "stagesSubtitle": "Każdy krok ma inny poziom decyzji: od ustawienia pytania po ruch i output.",
+      "stagesSubtitle": "Każdy krok ma inny poziom decyzji: od ustawienia pytania po ruch i materiał wyjściowy.",
       "signals": "Macierz czynników",
       "matrixLead": "Macierz porządkuje sygnały, ale nie jest finałem. Każda karta powinna być krótka, konkretna, mieć źródło i wpływać na logikę decyzji.",
       "matrixNote": "Dobra macierz nie zbiera wszystkiego. Zostawia tylko te czynniki, które naprawdę przesuwają wybór strategiczny.",
@@ -33046,27 +33111,27 @@
       "tensionLead": "Najważniejsze miejsce, w którym przewaga zderza się z ograniczeniem albo ryzykiem.",
       "moves": "Rekomendowany ruch",
       "movesLead": "Ruch musi wynikać z napięcia, a nie z intuicji autora.",
-      "outputsPanelTitle": "Most do outputów",
-      "outputsLead": "Wynik sesji musi nadawać się do dalszego użycia przez management i execution.",
-      "stage1": "Mission brief",
-      "stage1Value": "Cel, zakres, success signal, constraints",
-      "stage2": "Evidence map",
+      "outputsPanelTitle": "Most do materiałów wyjściowych",
+      "outputsLead": "Wynik sesji musi nadawać się do dalszego użycia przez zarząd i zespoły wykonawcze.",
+      "stage1": "Brief decyzji",
+      "stage1Value": "Cel, zakres, sygnał sukcesu, ograniczenia",
+      "stage2": "Mapa dowodów",
       "stage2Value": "Fakty, obserwacje, hipotezy z wnętrza firmy i rynku",
-      "stage3": "SWOT build",
-      "stage3Value": "Karty S/W/O/T z confidence i source",
-      "stage4": "Strategic tensions",
+      "stage3": "Budowa macierzy SWOT",
+      "stage3Value": "Karty S/W/O/T z poziomem pewności i źródłem",
+      "stage4": "Napięcia strategiczne",
       "stage4Value": "Gdzie przewaga zderza się z ograniczeniem lub ryzykiem",
-      "stage5": "Recommended moves",
+      "stage5": "Rekomendowane ruchy",
       "stage5Value": "Co zrobić teraz, co odłożyć, co jeszcze sprawdzić",
-      "stage4Badge": "Insight",
-      "stage5Badge": "Decision",
+      "stage4Badge": "Wniosek",
+      "stage5Badge": "Decyzja",
       "strengths": "Mocne strony",
       "weaknesses": "Słabe strony",
       "opportunities": "Szanse",
       "threats": "Zagrożenia",
       "strengthsHint": "Przewagi wewnętrzne",
       "weaknessesHint": "Luki wewnętrzne",
-      "opportunitiesHint": "Upside zewnętrzny",
+      "opportunitiesHint": "Potencjał zewnętrzny",
       "threatsHint": "Ryzyko zewnętrzne",
       "strengthItemsExample": [
         "Silna marka i zaufanie rynku B2B",
@@ -33094,7 +33159,7 @@
       ],
       "threatItemsExample": [
         "Presja cenowa i wzrost kosztów",
-        "Ryzyko przepalenia CAPEX-u na zły problem"
+        "Ryzyko przepalenia nakładów inwestycyjnych (CAPEX) na zły problem"
       ],
       "threatItemsProcess": [
         "czynniki zewnętrzne, które mogą pogorszyć wynik, ograniczyć wybór albo podważyć plan działania",
@@ -33105,16 +33170,16 @@
         "Automatyzacja wydaje się atrakcyjna, ale bez prawdy o procesie może tylko przyspieszyć chaos."
       ],
       "moveItems": [
-        "Najpierw zmapować wycieki wartości, bottlenecks i luki danych.",
-        "Dopiero potem układać kolejność: dane -> automatyzacja -> governance inwestycji.",
+        "Najpierw zmapować wycieki wartości, wąskie gardła i luki w danych.",
+        "Dopiero potem układać kolejność: dane → automatyzacja → nadzór nad inwestycjami.",
         "Zamknąć wynik w materiale dla zarządu, a nie w długiej liście obserwacji."
       ],
       "outputItems": [
-        "Executive summary sytuacji",
+        "Streszczenie zarządcze sytuacji",
         "Priorytety na 90 dni",
-        "Raport / deck / inicjatywa"
+        "Raport / prezentacja / inicjatywa"
       ],
-      "legend": "Dynamic SWOT = brief -> evidence -> matrix -> tension -> move -> output"
+      "legend": "Dynamiczny SWOT: brief → dowody → macierz → napięcia → ruchy i materiały"
     },
     "toolSessionPreviewV3": {
       "intentExecBrief": "Executive brief",
@@ -33442,11 +33507,11 @@
       "thisToolIsNotActiveYet": "To narzędzie nie jest jeszcze aktywne.",
       "toolSessionCreated": "Sesja narzędzia utworzona",
       "learnTheTool": "Poznanie narzędzia",
-      "case": "Case",
+      "case": "Przypadek",
       "context": "Kontekst: ",
       "question": "Pytanie: ",
-      "evidence": "Evidence: ",
-      "aIDraft": "AI draft: ",
+      "evidence": "Dowody: ",
+      "aIDraft": "Propozycja AI: ",
       "afterApproval": "Po akceptacji: ",
       "outcome": "Rezultat: ",
       "toolPositioning": "Pozycjonowanie narzędzia",
@@ -33455,11 +33520,11 @@
       "whenToUse": "Kiedy użyć",
       "whenNotToStartWithSWOT": "Kiedy nie zaczynać od SWOT",
       "whatToPrepareBeforeStarting": "Co przygotować przed startem",
-      "missionBrief": "Mission Brief",
-      "signalsEvidence": "Sygnały i evidence",
+      "missionBrief": "Brief decyzji",
+      "signalsEvidence": "Sygnały i dowody",
       "matrixBuild": "Budowa macierzy",
       "strategicTensions": "Napięcia strategiczne",
-      "movesOutputs": "Ruchy i outputy",
+      "movesOutputs": "Ruchy i materiały wyjściowe",
       "workLogic": "Logika pracy",
       "4CommonDecisionSituations": "4 typowe sytuacje decyzyjne",
       "workingNotes": "Uwagi do pracy",
@@ -33474,10 +33539,10 @@
       "howTheMatrixLooks": "Jak wygląda macierz",
       "tensionAndInterpretation": "Napięcie i interpretacja",
       "recommendedMoves": "Rekomendowane ruchy",
-      "outputsFromTheSession": "Outputy z sesji",
+      "outputsFromTheSession": "Materiały wyjściowe z sesji",
       "aIPhilosophy": "Filozofia AI",
       "whyUseIt": "Po co używać",
-      "approvedBCGPortfolioMatrix": "Zaakceptowana macierz portfolio BCG",
+      "approvedBCGPortfolioMatrix": "Zaakceptowana macierz portfela BCG",
       "sectionPendingExpansion": "Ta sekcja zostanie uzupełniona w kolejnych iteracjach.",
       "groupOverview": "Przegląd",
       "groupHowItWorks": "Jak to działa",
@@ -33501,22 +33566,31 @@
       "panelResults": "Rezultaty",
       "panelResultsEmpty": "To narzędzie nie ma jeszcze zadeklarowanych rezultatów w bibliotece.",
       "panelResultsHint": "Raporty, prezentacje i eksporty powstają w sesji narzędzia — uruchom ją przyciskiem w nagłówku.",
-      "panelRelationsSessions": "Sesje narzędzia"
+      "panelRelationsSessions": "Sesje narzędzia",
+      "panelActions": "Akcje",
+      "panelActionStartSession": "Startuj sesję",
+      "panelActionStarting": "Uruchamiam…",
+      "panelActionKnowledge": "How to / Baza wiedzy",
+      "panelEvidence": "Źródła i założenia",
+      "panelEvidenceEmpty": "Wpis biblioteczny nie deklaruje jeszcze wejść ani ograniczeń tej metody.",
+      "panelEvidenceInputs": "Materiał, który metoda zużywa",
+      "panelEvidenceLimits": "Gdzie metoda przestaje działać",
+      "panelEvidenceProvenance": "Źródło wpisu: biblioteka narzędzi Consultify — wspólny katalog metod tylko do odczytu."
     },
     "knownToolDetail": {
       "dynamicSwot": {
         "goal": {
-          "positioningHeadline": "Dynamic SWOT nie służy do wypełnienia macierzy. Służy do zamiany rozproszonej rozmowy strategicznej w decyzję, napięcia i ruchy gotowe do dalszego użycia.",
-          "positioningBody": "To narzędzie typu conversation-first, structure-backed. Najpierw ustawia pytanie strategiczne i porządkuje evidence z wnętrza firmy oraz z rynku. Dopiero potem buduje macierz, wyciąga napięcia, układa rekomendowane ruchy i przygotowuje materiał, który może przejść do raportu, prezentacji, inicjatyw lub dalszej pracy decyzyjnej.",
+          "positioningHeadline": "Dynamiczny SWOT nie służy do wypełnienia macierzy. Służy do zamiany rozproszonej rozmowy strategicznej w decyzję, napięcia i ruchy gotowe do dalszego użycia.",
+          "positioningBody": "To narzędzie prowadzone rozmową i oparte na strukturze. Najpierw ustawia pytanie strategiczne i porządkuje dowody z wnętrza firmy oraz z rynku. Dopiero potem buduje macierz, wyciąga napięcia, układa rekomendowane ruchy i przygotowuje materiał, który może przejść do raportu, prezentacji, inicjatyw lub dalszej pracy decyzyjnej.",
           "whatItDoes": [
             "oddziela sygnały ważne od szumu, opinii i marketingowych ogólników",
             "ustawia wspólny obraz sytuacji wewnętrznej i zewnętrznej",
-            "zamienia klasyczny SWOT w logikę napięć, trade-offów i decyzji",
-            "prowadzi od diagnozy do rekomendowanego ruchu oraz outputów"
+            "zamienia klasyczny SWOT w logikę napięć, kompromisów (trade-off) i decyzji",
+            "prowadzi od diagnozy do rekomendowanego ruchu oraz materiałów wyjściowych"
           ],
           "whatItIsNot": [
             "nie jest szkolnym ćwiczeniem polegającym na zapełnieniu czterech pól",
-            "nie jest miejscem na wrzucenie wszystkiego bez oceny jakości evidence",
+            "nie jest miejscem na wrzucenie wszystkiego bez oceny jakości dowodów",
             "nie jest narzędziem do udawania decyzji, gdy pytanie strategiczne nadal jest nieostre",
             "nie jest końcowym artefaktem, tylko źródłem dla dalszych materiałów i przejścia do działania"
           ],
@@ -33524,7 +33598,7 @@
             "gdy zarząd lub zespół ma dużo sygnałów, ale nie ma jednej logiki decyzji",
             "gdy trzeba połączyć realia firmy z rynkiem i nazwać, co naprawdę zmienia kierunek",
             "gdy decyzja jest ważna, ale sytuacja nadal wygląda jak zbiór luźnych obserwacji",
-            "gdy wynik ma przejść dalej do raportu, decka, inicjatywy albo materiału decyzyjnego"
+            "gdy wynik ma przejść dalej do raportu, prezentacji, inicjatywy albo materiału decyzyjnego"
           ],
           "whenNotToUse": [
             "gdy najpierw trzeba zrozumieć makrootoczenie, trendy i regulacje: wtedy najpierw PESTEL",
@@ -33534,21 +33608,21 @@
           ],
           "prepare": [
             "konkretne pytanie strategiczne, które naprawdę wymaga decyzji",
-            "zakres, horyzont czasu, success signal i najważniejsze constraints",
+            "zakres, horyzont czasu, sygnał sukcesu i najważniejsze ograniczenia",
             "znane sygnały wewnętrzne i zewnętrzne, nawet jeśli są jeszcze niepełne",
             "pliki, linki, benchmarki, notatki z rozmów albo wcześniejsze analizy"
           ],
           "dynamicLabel": "Co sprawia, że SWOT jest tutaj dynamiczny",
-          "dynamicBody": "Klasyczna macierz jest tylko etapem pośrodku. Dynamiczna wersja wymusza najpierw lepsze ustawienie pytania, potem higienę sygnałów i evidence, a następnie przejście do TOWS-owej logiki połączeń, napięć i ruchów strategicznych."
+          "dynamicBody": "Klasyczna macierz jest tylko etapem pośrodku. Dynamiczna wersja wymusza najpierw lepsze ustawienie pytania, potem higienę sygnałów i dowodów, a następnie przejście do logiki połączeń TOWS: napięć i ruchów strategicznych."
         },
         "process": {
-          "intro": "Dobry Dynamic SWOT prowadzi przez pięć kroków biznesowych. Flow jest prosty dla użytkownika, ale rygorystyczny merytorycznie: najpierw ustawienie decyzji, potem higiena sygnałów, potem porządna macierz, a dopiero na końcu napięcia, ruchy i outputy.",
+          "intro": "Dobry Dynamiczny SWOT prowadzi przez pięć kroków biznesowych. Przebieg jest prosty dla użytkownika, ale rygorystyczny merytorycznie: najpierw ustawienie decyzji, potem higiena sygnałów, potem porządna macierz, a dopiero na końcu napięcia, ruchy i materiały wyjściowe.",
           "steps": [
             {
-              "oneLiner": "Ustaw pytanie decyzyjne, zakres i success signal",
+              "oneLiner": "Ustaw pytanie decyzyjne, zakres i sygnał sukcesu",
               "items": [
                 "nazwij decyzję, która naprawdę ma zostać podjęta",
-                "ustal zakres, horyzont czasu, success signal i constraints",
+                "ustal zakres, horyzont czasu, sygnał sukcesu i ograniczenia",
                 "odróżnij temat sesji od wszystkiego, co jest dziś poza zakresem"
               ],
               "note": "Jakość całej sesji zależy od jakości pytania otwierającego. Jeśli punkt wyjścia jest mglisty, macierz będzie tylko ładnie uporządkowanym chaosem."
@@ -33565,7 +33639,7 @@
             {
               "oneLiner": "Przypisz sygnały do S/W/O/T, usuń szum, zostaw to co zmienia decyzję",
               "items": [
-                "przypisz sygnały do Strengths, Weaknesses, Opportunities i Threats",
+                "przypisz sygnały do mocnych stron, słabości, szans i zagrożeń (S/W/O/T)",
                 "usuń duplikaty, rozdziel objawy od przyczyn i podważaj ogólniki",
                 "zostaw tylko karty, które rzeczywiście zmieniają pole decyzji"
               ],
@@ -33584,19 +33658,19 @@
               "oneLiner": "Przełóż napięcia na rekomendowane ruchy i materiał do dalszego użycia",
               "items": [
                 "przełóż napięcia na 2-4 rekomendowane ruchy z jasną sekwencją",
-                "odróżnij quick win od ruchu strategicznego i od elementu, który wymaga jeszcze walidacji",
-                "zamknij sesję source summary gotowym do raportu, decka, inicjatywy lub dalszej eksploracji"
+                "odróżnij szybką wygraną (quick win) od ruchu strategicznego i od elementu, który wymaga jeszcze walidacji",
+                "zamknij sesję podsumowaniem źródeł gotowym do raportu, prezentacji, inicjatywy lub dalszej eksploracji"
               ],
-              "note": "Dynamic SWOT jest dobry dopiero wtedy, gdy kończy się decyzją, ruchem albo sensownym mostem do działania."
+              "note": "Dynamiczny SWOT jest dobry dopiero wtedy, gdy kończy się decyzją, ruchem albo sensownym mostem do działania."
             }
           ],
           "sessionQualityLabel": "Jak wygląda dobra sesja końcowa",
           "sessionQualityItems": [
-            "macierz z 6-12 wyselekcjonowanymi czynnikami rozłożonymi w 4 ćwiartkach (S/W/O/T) — każdy z oznaczonym źródłem i typem evidence, zamiast długiej listy wszystkiego",
+            "macierz z 6-12 wyselekcjonowanymi czynnikami rozłożonymi w 4 ćwiartkach (S/W/O/T) — każdy z oznaczonym źródłem i rodzajem dowodu, zamiast długiej listy wszystkiego",
             "3-6 napięć strategicznych, które naprawdę tłumaczą pole decyzji",
             "2-4 rekomendowane ruchy z jasną sekwencją i pierwszym krokiem",
-            "co najmniej 1 output candidate gotowy do dalszej decyzji lub akceptacji sponsora",
-            "final source summary, z którego da się bezpośrednio zbudować raport lub deck"
+            "co najmniej 1 kandydat na materiał wyjściowy gotowy do dalszej decyzji lub akceptacji sponsora",
+            "końcowe podsumowanie źródeł, z którego da się bezpośrednio zbudować raport lub prezentację"
           ],
           "decisionSituationsIntro": "W kroku 4 łączysz czynniki wewnętrzne z zewnętrznymi. Każde takie połączenie tworzy jedną z czterech sytuacji decyzyjnych. Rozpoznanie typu sytuacji pomaga szybko zdecydować, jaki ruch jest logiczny.",
           "decisionSituationsCards": [
@@ -33631,67 +33705,67 @@
           ]
         },
         "outcomes": {
-          "intro": "Dobrze wykonany Dynamic SWOT kończy się materiałem gotowym do użycia: pytanie decyzyjne, jakość evidence, kluczowe napięcia i sekwencja ruchów.",
+          "intro": "Dobrze wykonany Dynamiczny SWOT kończy się materiałem gotowym do użycia: pytanie decyzyjne, jakość dowodów, kluczowe napięcia i sekwencja ruchów.",
           "blocks": [
             {
               "title": "Rama decyzji",
-              "what": "Pytanie strategiczne, zakres, horyzont czasu i success signal. Jasne przypomnienie, czego analiza dotyczy, a czego nie.",
+              "what": "Pytanie strategiczne, zakres, horyzont czasu i sygnał sukcesu. Jasne przypomnienie, czego analiza dotyczy, a czego nie.",
               "why": "Bez ramy nawet dobra macierz zamienia się w ogólny opis firmy oderwany od decyzji.",
-              "next": "Executive summary z logiką decyzji dla sponsora lub zarządu."
+              "next": "Streszczenie zarządcze z logiką decyzji dla sponsora lub zarządu."
             },
             {
-              "title": "Obraz czynników i evidence",
+              "title": "Obraz czynników i dowodów",
               "what": "Najmocniejsze karty S/W/O/T ze źródłami. Rozdzielenie faktów, obserwacji i hipotez.",
               "why": "Decydent widzi nie tylko wniosek, ale też jakość materiału, na którym ten wniosek stoi.",
-              "next": "Uzasadniona macierz i defensible story do rozmowy decyzyjnej."
+              "next": "Uzasadniona macierz i obroniona narracja do rozmowy decyzyjnej."
             },
             {
               "title": "Napięcia strategiczne",
               "what": "Najważniejsze połączenia między kartami wewnętrznymi i zewnętrznymi. Sytuacje decyzyjne, które zmieniają logikę ruchu.",
-              "why": "Obserwacje przestają być listą i zaczynają tłumaczyć, gdzie leży prawdziwy trade-off.",
+              "why": "Obserwacje przestają być listą i zaczynają tłumaczyć, gdzie leży prawdziwy kompromis (trade-off).",
               "next": "Warstwa interpretacji do dyskusji z managementem i wyboru priorytetów."
             },
             {
               "title": "Rekomendowane ruchy",
-              "what": "2-4 ruchy wynikające z napięć z jasną sekwencją. Rozróżnienie: quick win, big bet, ruch obronny, capability build.",
+              "what": "2-4 ruchy wynikające z napięć z jasną sekwencją. Rozróżnienie: szybka wygrana, duży zakład, ruch obronny, budowa kompetencji.",
               "why": "Przejście od diagnozy do ruchu, który ma sens biznesowy, ma pierwszy krok i da się obronić logicznie.",
-              "next": "Shortlista ruchów do decka, sponsor decision lub rozwinięcia w inicjatywę."
+              "next": "Krótka lista ruchów do prezentacji, decyzji sponsora lub rozwinięcia w inicjatywę."
             },
             {
               "title": "Most do działania",
-              "what": "Source summary gotowy do raportu lub prezentacji. Wybór: co na inicjatywę, co na deck, co zostaje ideą.",
+              "what": "Podsumowanie źródeł gotowe do raportu lub prezentacji. Wybór: co na inicjatywę, co na prezentację, co zostaje ideą.",
               "why": "SWOT bez tego etapu zostawia zespół z ciekawą analizą, ale bez ruchu.",
               "next": "Raport, prezentacja, inicjatywa albo dalsza eksploracja z tego samego materiału."
             }
           ],
-          "qualityBody": "Dobry wynik jest selektywny, evidence-backed i decyzyjny. Nie pokazuje wszystkiego, co udało się zebrać, tylko to, co naprawdę zmienia logikę wyboru i pozwala przejść do kolejnego kroku."
+          "qualityBody": "Dobry wynik jest selektywny, poparty dowodami i decyzyjny. Nie pokazuje wszystkiego, co udało się zebrać, tylko to, co naprawdę zmienia logikę wyboru i pozwala przejść do kolejnego kroku."
         },
         "example": {
           "intro": "Przykład pokazuje sytuację typową dla firm w transformacji: presja rośnie i technologia kusi jako szybka odpowiedź, ale najpierw trzeba ustalić, czy problemem jest naprawdę brak rozwiązania, czy brak prawdy o sytuacji.",
           "cases": [
             {
-              "title": "Premium producent przed CAPEX-em",
-              "context": "Marża spada, lead times są niestabilne, a zarząd rozważa automatyzację.",
-              "question": "Czy zaczynać od inwestycji technologicznej, czy od diagnozy strat i bottlenecków?",
+              "title": "Producent premium przed inwestycją (CAPEX)",
+              "context": "Marża spada, terminy realizacji są niestabilne, a zarząd rozważa automatyzację.",
+              "question": "Czy zaczynać od inwestycji technologicznej, czy od diagnozy strat i wąskich gardeł?",
               "evidence": [
                 "Wywiady pokazują silną markę i zaufanie klientów premium, ale też decyzje operacyjne podejmowane intuicyjnie.",
-                "Dane wskazują straty w przepływie, brak wspólnej definicji bottlenecków i rosnące koszty ekspresowych dostaw."
+                "Dane wskazują straty w przepływie, brak wspólnej definicji wąskich gardeł i rosnące koszty ekspresowych dostaw."
               ],
               "aiDraft": "AI proponuje SWOT z mocnymi stronami w reputacji i relacjach B2B, słabościami w widoczności procesu, szansą w diagnostyce danych oraz zagrożeniem automatyzacji złego problemu.",
-              "approvedUse": "Użytkownik akceptuje tylko te karty, które mają evidence, a odrzuca ogólniki typu “wdrożyć AI”. Zaakceptowane elementy przechodzą do napięć i ruchów.",
-              "outcome": "Powstaje decyzja: przed CAPEX-em uruchomić diagnozę strat, mapę bottlenecków i warstwę danych, a automatyzację potraktować jako drugi etap."
+              "approvedUse": "Użytkownik akceptuje tylko te karty, które mają pokrycie w dowodach, a odrzuca ogólniki typu “wdrożyć AI”. Zaakceptowane elementy przechodzą do napięć i ruchów.",
+              "outcome": "Powstaje decyzja: przed nakładami inwestycyjnymi uruchomić diagnozę strat, mapę wąskich gardeł i warstwę danych, a automatyzację potraktować jako drugi etap."
             },
             {
               "title": "Software house po utracie dużego klienta",
-              "context": "Firma ma mocny zespół ekspercki, ale pipeline sprzedażowy jest zbyt zależny od rekomendacji.",
-              "question": "Czy skalować sprzedaż outbound, czy najpierw zawęzić pozycjonowanie oferty?",
+              "context": "Firma ma mocny zespół ekspercki, ale lejek sprzedaży jest zbyt zależny od rekomendacji.",
+              "question": "Czy skalować sprzedaż wychodzącą (outbound), czy najpierw zawęzić pozycjonowanie oferty?",
               "evidence": [
                 "CRM pokazuje długi cykl sprzedaży poza rekomendacjami, a rozmowy z klientami wskazują niejasne rozróżnienie oferty.",
                 "Zespół ma mocne kompetencje techniczne, ale materiały sprzedażowe nie pokazują mierzalnych efektów projektów."
               ],
-              "aiDraft": "AI proponuje czynniki SWOT dotyczące eksperckiego delivery, słabej narracji wartości, szansy w pionizacji oferty i zagrożenia dalszą zależnością od pojedynczych kont.",
-              "approvedUse": "Po akceptacji kart AI buduje napięcie między jakością delivery a brakiem ostrego ICP oraz proponuje ruchy przed skalowaniem outboundu.",
-              "outcome": "Powstaje sekwencja: zawęzić ICP, stworzyć proof pack z efektami klientów, przetestować 2 kampanie segmentowe i dopiero potem zwiększać sprzedaż."
+              "aiDraft": "AI proponuje czynniki SWOT dotyczące eksperckiej realizacji projektów, słabej narracji wartości, szansy w pionizacji oferty i zagrożenia dalszą zależnością od pojedynczych kont.",
+              "approvedUse": "Po akceptacji kart AI buduje napięcie między jakością realizacji a brakiem ostrego profilu klienta (ICP) oraz proponuje ruchy przed skalowaniem sprzedaży wychodzącej.",
+              "outcome": "Powstaje sekwencja: zawęzić profil klienta (ICP), stworzyć pakiet dowodów z efektami klientów, przetestować 2 kampanie segmentowe i dopiero potem zwiększać sprzedaż."
             },
             {
               "title": "Sieć usług lokalnych przed ekspansją",
@@ -33699,32 +33773,32 @@
               "question": "Czy otwierać kolejne punkty, czy najpierw standaryzować model działania?",
               "evidence": [
                 "Opinie klientów są bardzo dobre w najlepszych lokalizacjach, ale reklamacje koncentrują się wokół kilku powtarzalnych etapów usługi.",
-                "Managerowie lokalni różnie rozumieją standard jakości, a onboarding nowych pracowników trwa zbyt długo."
+                "Kierownicy lokalni różnie rozumieją standard jakości, a wdrożenie nowych pracowników trwa zbyt długo."
               ],
               "aiDraft": "AI proponuje mocne strony w marce lokalnej i relacji z klientem, słabości w standardzie operacyjnym, szansę w playbooku ekspansji i zagrożenie utraty jakości przy skalowaniu.",
               "approvedUse": "Zaakceptowane karty są używane do wyboru, czy przewaga jest naprawdę skalowalna, czy zależy od pojedynczych ludzi i lokalnych praktyk.",
-              "outcome": "Rekomendacja: najpierw stworzyć standard usługi, dashboard jakości i model szkolenia, a dopiero potem otwierać kolejne punkty."
+              "outcome": "Rekomendacja: najpierw stworzyć standard usługi, tablicę wskaźników jakości i model szkolenia, a dopiero potem otwierać kolejne punkty."
             }
           ],
           "situationLabel": "Sytuacja i pytanie decyzyjne",
           "situationItems": [
             "Ateliertoy to firma premium z własną produkcją i silną reputacją w B2B",
-            "marża spada, lead times są niestabilne, a zarząd rozważa wejście w kosztowną automatyzację",
-            "pytanie sesji brzmi: czy zaczynać transformację od CAPEX-u, czy najpierw od diagnozy strat, bottlenecków i blind spotów danych"
+            "marża spada, terminy realizacji są niestabilne, a zarząd rozważa wejście w kosztowną automatyzację",
+            "pytanie sesji brzmi: czy zaczynać transformację od nakładów inwestycyjnych (CAPEX), czy najpierw od diagnozy strat, wąskich gardeł i martwych pól w danych"
           ],
           "signalsLabel": "Kluczowe sygnały wejściowe",
           "signalsItems": [
             "mocna marka i zaufanie klientów premium są realną przewagą",
-            "decyzje operacyjne są nadal intuicyjne, a firma nie ma wspólnej prawdy o stratach i bottleneckach",
+            "decyzje operacyjne są nadal intuicyjne, a firma nie ma wspólnej prawdy o stratach i wąskich gardłach",
             "na rynku rośnie oczekiwanie szybszych wdrożeń i większej przewidywalności",
             "istnieje ryzyko przepalenia inwestycji, jeśli automatyzacja zostanie uruchomiona przed diagnozą procesu"
           ],
           "matrixLabel": "Jak wygląda macierz",
           "matrixItems": [
-            "Strengths: marka, relacje B2B, własna produkcja, kontrola IP",
-            "Weaknesses: brak wspólnej diagnozy, analogowe zarządzanie, słaba widoczność strat",
-            "Opportunities: diagnoza cyfrowa, warstwa danych, lepsze sekwencjonowanie inwestycji",
-            "Threats: presja cenowa, rosnące koszty i ryzyko automatyzacji złego problemu"
+            "Mocne strony: marka, relacje B2B, własna produkcja, kontrola nad własnością intelektualną",
+            "Słabe strony: brak wspólnej diagnozy, analogowe zarządzanie, słaba widoczność strat",
+            "Szanse: diagnoza cyfrowa, warstwa danych, lepsze sekwencjonowanie inwestycji",
+            "Zagrożenia: presja cenowa, rosnące koszty i ryzyko automatyzacji złego problemu"
           ],
           "tensionLabel": "Napięcie i interpretacja",
           "tensionItems": [
@@ -33734,15 +33808,15 @@
           ],
           "movesLabel": "Rekomendowane ruchy",
           "movesItems": [
-            "uruchomić diagnozę strat, bottlenecków i blind spotów danych przed CAPEX-em",
+            "uruchomić diagnozę strat, wąskich gardeł i martwych pól w danych przed nakładami inwestycyjnymi (CAPEX)",
             "zbudować wspólny obraz procesu oraz priorytetów transformacyjnych dla zarządu",
-            "dopiero potem ułożyć sekwencję: dane -> automatyzacja -> governance inwestycji"
+            "dopiero potem ułożyć sekwencję: dane → automatyzacja → nadzór nad inwestycjami"
           ],
-          "outputsLabel": "Outputy z sesji",
+          "outputsLabel": "Materiały wyjściowe z sesji",
           "outputsItems": [
-            "board-ready materiał tłumaczący, dlaczego transformację należy zacząć od diagnozy, a nie od zakupu technologii",
+            "materiał gotowy dla zarządu, tłumaczący, dlaczego transformację należy zacząć od diagnozy, a nie od zakupu technologii",
             "krótka lista priorytetów i ryzyk do najbliższych decyzji transformacyjnych",
-            "materiał źródłowy do roadmapy, decka i wygenerowania inicjatyw w platformie"
+            "materiał źródłowy do mapy drogowej, prezentacji i wygenerowania inicjatyw w platformie"
           ],
           "closingNote": "To jest dobry case, bo nie kończy się na opisaniu czterech ćwiartek. Pokazuje, jak z sygnałów powstaje decyzja o kolejności ruchów oraz materiał, z którego można od razu przejść do działania."
         }
@@ -33766,7 +33840,7 @@
           "aiPhilosophyBody": "AI jest konsultantem wspierającym, nie źródłem prawdy. Proponuje sygnały, oceny sił, implikacje, ruchy i outputy, ale użytkownik akceptuje, odrzuca albo prosi o przemyślenie kart przed przejściem do inicjatyw."
         },
         "process": {
-          "intro": "Market Forces działa w pięciu fazach analogicznych do Dynamic SWOT: mission, input, forces, insights i outputs. Każda faza ma inny poziom decyzji i inne zadanie dla AI.",
+          "intro": "Siły Rynkowe działają w pięciu fazach analogicznych do Dynamicznego SWOT: cel, wejścia, siły, insights i outputs. Każda faza ma inny poziom decyzji i inne zadanie dla AI.",
           "steps": [
             {
               "title": "Mission & Market Context",

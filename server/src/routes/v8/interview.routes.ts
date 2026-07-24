@@ -39,6 +39,7 @@ import {
 import {
   INSIGHT_GATED_STATUSES,
   INSIGHT_PATCH_SETTABLE_STATUSES,
+  mergeInsightSectionOverrides,
 } from '../../services/InterviewInsightService.js';
 import { resolveInterviewManagerScope } from '../../services/interviewManagerScope.js';
 import contextDocumentService from '../../services/organizationContext/ContextDocumentService.js';
@@ -555,8 +556,43 @@ router.get(
 );
 
 /**
+ * Lazy guard kolumny `section_overrides` (ręczna redakcja sekcji, n-Type §6.2).
+ * Ten sam wzór, którym w tym pliku żyje `section_completions`: sprawdzenie przez
+ * `pg_attribute` (katalog, BEZ locka na tabelę), ALTER tylko gdy kolumny nie ma.
+ * Dzięki temu endpoint działa również na bazie, na której migracja 931 jeszcze
+ * nie poszła — i NIE wykonuje DDL, gdy kolumna już istnieje (typowy przypadek).
+ */
+let _insightSectionOverridesEnsured = false;
+async function ensureInsightSectionOverridesColumn(): Promise<void> {
+  if (_insightSectionOverridesEnsured) return;
+  try {
+    const rows = await queryHelpers.queryAll<{ attname: string }>(
+      `SELECT attname FROM pg_attribute
+       WHERE attrelid = 'interview_insights'::regclass
+         AND attname = 'section_overrides'
+         AND attnum > 0 AND NOT attisdropped`,
+      []
+    );
+    if (rows && rows.length > 0) {
+      _insightSectionOverridesEnsured = true;
+      return;
+    }
+    await queryHelpers.queryRun(`ALTER TABLE interview_insights ADD COLUMN section_overrides TEXT`);
+    _insightSectionOverridesEnsured = true;
+  } catch (err: any) {
+    const m = String(err?.message || err).toLowerCase();
+    if (m.includes('already exists') || m.includes('duplicate column')) {
+      _insightSectionOverridesEnsured = true;
+      return;
+    }
+    throw err;
+  }
+}
+
+/**
  * PATCH /api/v8/interview/insights/:id
- * Update insight — supports sectionCompletions (Mark Complete), title, status, archived.
+ * Update insight — supports sectionCompletions (Mark Complete), sectionOverrides
+ * (ręczna redakcja treści sekcji — n-Type §6.2), title, status, archived.
  * Mirrors InterviewController.updateInsight but registered in the v8 namespace so
  * that v8Patch('/interview/insights/:id') reaches a real route (without this the
  * request fell through the v8 router without matching → 503 Vite proxy timeout).
@@ -565,10 +601,17 @@ router.patch(
   '/insights/:id',
   requirePermission('INTERVIEW_INSIGHTS_REVIEW'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const { id } = req.params;
-    const { title, status, exportedToTools, exportedToAssessment, archived, sectionCompletions } =
-      req.body || {};
+    const {
+      title,
+      status,
+      exportedToTools,
+      exportedToAssessment,
+      archived,
+      sectionCompletions,
+      sectionOverrides,
+    } = req.body || {};
 
     const interviewInsightService = await import('../../services/InterviewInsightService.js');
     const insight = await interviewInsightService.getById(id);
@@ -663,6 +706,24 @@ router.patch(
         typeof sectionCompletions === 'string'
           ? sectionCompletions
           : JSON.stringify(sectionCompletions)
+      );
+    }
+
+    // ── Ręczna redakcja treści sekcji (n-Type §6.2; właściciel 2026-07-23) ────
+    // ADDYTYWNE: nie dotyka `content` ani `*_json` z generacji — nadpisania leżą
+    // OBOK treści AI, więc regeneracja nie kasuje ręcznej pracy, a wyłączenie
+    // funkcji sprowadza się do zignorowania jednej kolumny. Scalanie jest
+    // CZĘŚCIOWE (patrz `mergeInsightSectionOverrides`), żeby dwie osoby
+    // redagujące różne sekcje nie kasowały sobie nawzajem zmian.
+    if (sectionOverrides !== undefined) {
+      const merged = mergeInsightSectionOverrides(insight.sectionOverrides, sectionOverrides, userId);
+      if (!merged.ok) {
+        return res.status(400).json({ data: null, error: merged.error, code: merged.code });
+      }
+      await ensureInsightSectionOverridesColumn();
+      updates.push('section_overrides = ?');
+      values.push(
+        Object.keys(merged.value).length === 0 ? null : JSON.stringify(merged.value)
       );
     }
 

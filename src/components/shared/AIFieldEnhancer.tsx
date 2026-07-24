@@ -80,71 +80,35 @@ interface AIFieldEnhancerProps {
   outputFormat?: AIEnhancerOutputFormat;
 }
 
-// ── Fallback local refinement (when API unavailable) ─────────────────────────
+// ── Awaria AI = komunikat, NIE podmieniona treść (2026-07-23) ────────────────
+//
+// USUNIĘTO `fallbackRefineText`. Ta funkcja podawała użytkownikowi JAKO
+// PROPOZYCJĘ AI treść wyprodukowaną lokalnie: „skróć" ucinało zdanie na 65%
+// długości i doklejało „...", „rozwiń" doklejało zawsze ten sam akapit,
+// „formalnie" doklejało angielskie „It is hereby noted that…" w polskim UI.
+// Komponent jest współdzielony przez ~12 kart, więc atrapa wyciekała wszędzie.
+//
+// Reguła obowiązująca ten plik: „AI niedostępne" jest poprawnym wynikiem.
+// Zmyślona odpowiedź podana jako propozycja AI nim nie jest. Gdy
+// `/ai/refine-text` zawiedzie — pokazujemy POWÓD z backendu, a treść pola
+// zostaje BIT W BIT nietknięta (żadna gałąź nie woła `onApply`).
 
-function fallbackRefineText(
-  input: string,
-  mode: AIEnhanceMode,
-  outputFormat: AIEnhancerOutputFormat
-): string {
-  if (outputFormat === 'list') {
-    const lines = String(input || '')
-      .split('\n')
-      .map((l) => l.trim())
-      .filter(Boolean);
-    if (lines.length === 0) return input;
-    const refined = lines.map((l) => fallbackRefineText(l, mode, 'short'));
-    return refined.join('\n');
-  }
+type AiError = Error & {
+  code?: string;
+  status?: number;
+  data?: { code?: string; error?: string };
+};
 
-  const normalized = input
-    .replace(/\s+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-  if (!normalized) return input;
+/** Kod błędu z odpowiedzi backendu (`err.data.code`) albo z błędu lokalnego. */
+function aiErrorCode(err: unknown): string {
+  return String((err as AiError)?.data?.code || (err as AiError)?.code || '').toUpperCase();
+}
 
-  if (outputFormat === 'short') {
-    if (mode === 'shorten') {
-      return normalized.length > 90 ? `${normalized.slice(0, 87).trim()}...` : normalized;
-    }
-    if (mode === 'formal') {
-      return normalized.replace(/(^\w)/, (m) => m.toUpperCase());
-    }
-    // improve / expand (fallback): basic cleanup only
-    return normalized
-      .replace(/\s{2,}/g, ' ')
-      .replace(/\.\s*\./g, '.')
-      .replace(/(^\w)/, (m) => m.toUpperCase());
-  }
-
-  if (mode === 'shorten') {
-    const target = Math.max(120, Math.floor(normalized.length * 0.65));
-    const compact = normalized.slice(0, target).trim();
-    return compact.endsWith('.') || compact.endsWith('!') || compact.endsWith('?')
-      ? compact
-      : `${compact}...`;
-  }
-
-  if (mode === 'expand') {
-    const appendix =
-      '\n\nBusiness rationale: this item affects delivery timing, operational risk, and outcome quality. It is recommended to define an implementation owner and key control checkpoints.';
-    return `${normalized}${appendix}`;
-  }
-
-  if (mode === 'formal') {
-    return `It is hereby noted that ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
-  }
-
-  // improve — basic cleanup (real AI does the heavy lifting)
-  let improved = normalized
-    .replace(/\s{2,}/g, ' ')
-    .replace(/\.\s*\./g, '.')
-    .replace(/(^\w)/, (m) => m.toUpperCase());
-  // Ensure ends with period
-  if (improved && !/[.!?]$/.test(improved)) {
-    improved += '.';
-  }
-  return improved;
+/** Błąd „AI odpowiedziało, ale pusto" — traktowany jak każda inna awaria AI. */
+function emptyAiResponseError(): AiError {
+  const err = new Error('Empty AI response') as AiError;
+  err.code = 'EMPTY_AI_RESPONSE';
+  return err;
 }
 
 // ── Menu items configuration ─────────────────────────────────────────────────
@@ -200,6 +164,57 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [isOpen]);
 
+  /** Powód awarii AI po polsku — z kodu backendu, a jak brak, to z komunikatu. */
+  const aiFailureReason = useCallback(
+    (err: unknown): string => {
+      switch (aiErrorCode(err)) {
+        case 'NO_LLM_PROVIDER':
+          return t(
+            'sharedComponents.aiFieldEnhancer.errNoProvider',
+            'nie skonfigurowano dostawcy AI'
+          );
+        case 'AI_BUDGET_EXHAUSTED':
+          return t('sharedComponents.aiFieldEnhancer.errBudget', 'wyczerpany budżet AI');
+        case 'ACCESS_BLOCKED':
+          return t(
+            'sharedComponents.aiFieldEnhancer.errAccessBlocked',
+            'dostęp do AI jest zablokowany dla tej organizacji'
+          );
+        case 'EMPTY_LLM_RESPONSE':
+        case 'EMPTY_AI_RESPONSE':
+          return t('sharedComponents.aiFieldEnhancer.errEmpty', 'AI zwróciło pustą odpowiedź');
+        case 'LLM_CALL_FAILED':
+          return t(
+            'sharedComponents.aiFieldEnhancer.errCallFailed',
+            'wywołanie AI nie powiodło się'
+          );
+        default:
+          return (
+            String((err as Error)?.message || '').trim() ||
+            t('sharedComponents.aiFieldEnhancer.errUnavailable', 'AI jest chwilowo niedostępne')
+          );
+      }
+    },
+    [t]
+  );
+
+  /**
+   * Jedyna dozwolona reakcja na brak odpowiedzi AI: powiedz CO się nie udało
+   * i DLACZEGO. Żadna gałąź awaryjna nie podmienia treści pola.
+   */
+  const notifyAiFailure = useCallback(
+    (whatFailed: string, err: unknown) => {
+      console.error('[AIFieldEnhancer] AI request failed:', whatFailed, err);
+      toast.error(
+        t('sharedComponents.aiFieldEnhancer.failedWithReason', '{{what}} — {{reason}}.', {
+          what: whatFailed,
+          reason: aiFailureReason(err),
+        })
+      );
+    },
+    [t, aiFailureReason]
+  );
+
   const handleGenerate = useCallback(async () => {
     setLoading(true);
     setIsOpen(false);
@@ -222,7 +237,9 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
 
       const systemInstruction = [
         `You are a senior PMO consultant and an expert business writer.`,
-        `Generate professional content for the field "${sectionLabel}" in the context of the artifact "${artifactContext.title || 'initiative'}".`,
+        artifactContext.title
+          ? `Generate professional content for the field "${sectionLabel}" in the context of the artifact "${artifactContext.title}".`
+          : `Generate professional content for the field "${sectionLabel}" of a "${artifactContext.type}" artifact.`,
         `Rules:`,
         `- Output language MUST be ${targetLanguageName}. If the input/context is in another language, translate as needed.`,
         `- Do NOT invent new facts, numbers, dates, systems, or KPI values that are not present in the provided context. If information is missing, keep it generic and/or explicitly mark what needs confirmation in a single short sentence.`,
@@ -230,39 +247,44 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
         formatInstruction,
       ].join('\n');
 
-      let generatedText = '';
-      try {
-        const aiRes = await Api.post('/ai/refine-text', {
-          text: [
-            `[GENERATE FROM SCRATCH]`,
-            `Field: ${sectionLabel}`,
-            `Artifact: ${artifactContext.title || 'initiative'} (${artifactContext.type})`,
-            `Status: ${artifactContext.status || 'draft'}`,
-            `Priority: ${artifactContext.priority || 'medium'}`,
-          ].join('\n'),
-          mode: 'generate',
-          systemInstruction,
-          fieldLabel: sectionLabel,
-          artifactContext,
-          language: aiLanguage,
-        });
-        generatedText = String(aiRes?.text || '').trim();
-      } catch {
-        generatedText = '';
-      }
+      // Błąd transportu NIE jest tu połykany — powód z backendu musi dojść
+      // do użytkownika (kiedyś `catch { generatedText = '' }` gubił kod błędu).
+      const aiRes = await Api.post('/ai/refine-text', {
+        // Do promptu idą TYLKO pola, które faktycznie mamy. Wcześniejsze
+        // `|| 'draft'` / `|| 'medium'` wmawiały modelowi status i priorytet,
+        // których karta nie ma — to ta sama choroba co atrapa w wyniku.
+        text: [
+          `[GENERATE FROM SCRATCH]`,
+          `Field: ${sectionLabel}`,
+          artifactContext.title
+            ? `Artifact: ${artifactContext.title} (${artifactContext.type})`
+            : `Artifact type: ${artifactContext.type}`,
+          artifactContext.status ? `Status: ${artifactContext.status}` : '',
+          artifactContext.priority ? `Priority: ${artifactContext.priority}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n'),
+        mode: 'generate',
+        systemInstruction,
+        fieldLabel: sectionLabel,
+        artifactContext,
+        language: aiLanguage,
+      });
+      const generatedText = String(aiRes?.text || '').trim();
 
       if (!generatedText) {
-        throw new Error('Empty AI response');
+        throw emptyAiResponseError();
       }
 
       // §4.5: propozycja, nie nadpisanie — pole zmieni się dopiero po „Zastosuj".
       setProposal(generatedText);
-    } catch {
-      toast.error(t('sharedComponents.aiFieldEnhancer.generateError'));
+    } catch (err) {
+      // Pole zostaje puste/nietknięte — nie podstawiamy żadnej treści zastępczej.
+      notifyAiFailure(t('sharedComponents.aiFieldEnhancer.generateError'), err);
     } finally {
       setLoading(false);
     }
-  }, [t, sectionLabel, artifactContext, outputFormat]);
+  }, [t, notifyAiFailure, sectionLabel, artifactContext, outputFormat]);
 
   const handleEnhance = useCallback(
     async (mode: AIEnhanceMode) => {
@@ -334,42 +356,33 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
           instructionByMode[mode] || '',
         ].join('\n');
 
-        let refinedText = '';
-        try {
-          const aiRes = await Api.post('/ai/refine-text', {
-            text: currentValue,
-            mode,
-            systemInstruction,
-            fieldLabel: sectionLabel,
-            artifactContext,
-            language: aiLanguage,
-          });
-          refinedText = String(aiRes?.text || '').trim();
-        } catch {
-          refinedText = '';
-        }
-
-        // Fallback only when API is truly unavailable
-        if (!refinedText) {
-          refinedText = fallbackRefineText(currentValue, mode, outputFormat);
-          // Tekst mówi „zaproponowano", nie „zastosowano" — od 2026-07-23 wynik
-          // trybu awaryjnego też czeka na akceptację, jak każda propozycja AI.
-          toast(t('sharedComponents.aiFieldEnhancer.fallbackProposed'), { icon: '⚠️' });
-        }
+        // Błąd transportu NIE jest tu połykany — powód z backendu musi dojść
+        // do użytkownika (kiedyś `catch { refinedText = '' }` gubił kod błędu,
+        // a pusty wynik uruchamiał lokalną atrapę `fallbackRefineText`).
+        const aiRes = await Api.post('/ai/refine-text', {
+          text: currentValue,
+          mode,
+          systemInstruction,
+          fieldLabel: sectionLabel,
+          artifactContext,
+          language: aiLanguage,
+        });
+        const refinedText = String(aiRes?.text || '').trim();
 
         if (!refinedText) {
-          throw new Error('Empty AI response');
+          throw emptyAiResponseError();
         }
 
         // §4.5: propozycja, nie nadpisanie — pole zmieni się po „Zastosuj".
         setProposal(refinedText);
-      } catch {
-        toast.error(t('sharedComponents.aiFieldEnhancer.enhanceError'));
+      } catch (err) {
+        // Treść pola zostaje BIT W BIT taka, jak ją zostawił użytkownik.
+        notifyAiFailure(t('sharedComponents.aiFieldEnhancer.enhanceError'), err);
       } finally {
         setLoading(false);
       }
     },
-    [currentValue, t, sectionLabel, artifactContext, handleGenerate, outputFormat]
+    [currentValue, t, notifyAiFailure, sectionLabel, artifactContext, handleGenerate, outputFormat]
   );
 
   /** Akceptacja propozycji — dopiero tu treść pola zostaje nadpisana. */

@@ -1,17 +1,20 @@
 /**
- * TimelineAnalysis — AI-powered timeline management
- * V3-F02c: Auto-schedule, conflict detection, timeline optimizer,
+ * TimelineAnalysis — timeline management
+ * V3-F02c: Date proposals, conflict detection, timeline optimizer,
  *          delay impact analysis, filterable stat cards, Gantt chart
+ *
+ * Wszystkie cztery pomocniki to ARYTMETYKA DAT liczona lokalnie — żaden nie
+ * woła modelu, więc żaden nie nosi etykiety „AI".
  */
 
 import {
   AlertTriangle,
   ArrowRight,
   Calendar,
+  CalendarClock,
   Check,
   Clock,
   Loader2,
-  Sparkles,
   Timer,
   TrendingUp,
   X,
@@ -23,7 +26,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { PortfolioInitiative } from '@/types';
 
-import { getMenu3AiButtonClass } from './menu3ActionButtonStyles';
+import { getMenu3DeterministicButtonClass } from './menu3ActionButtonStyles';
 import type {
   AnalysisIssue,
   DependencyLink,
@@ -130,8 +133,8 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
   // Status filter
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
-  // AI panels
-  const [scheduleRunning, setScheduleRunning] = useState(false);
+  // Panele pomocnicze (wszystkie liczone lokalnie)
+  const [applyingAllSchedule, setApplyingAllSchedule] = useState(false);
   const [scheduleProposals, setScheduleProposals] = useState<ScheduleProposal[] | null>(null);
   const [applyingScheduleIdx, setApplyingScheduleIdx] = useState<number | null>(null);
 
@@ -221,11 +224,21 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
     [editEnd, editStart, onQuickUpdate, t]
   );
 
-  /* ---------- AI Auto-Schedule ---------- */
+  /* ---------- Propozycja terminów (DETERMINISTYCZNA, nie AI) ---------- */
+  //
+  // 2026-07-23 — wycięta atrapa AI. Do dziś: przycisk „AI Auto-Schedule" z ikoną
+  // Sparkles i `setTimeout(700)` udającym myślenie. Model nigdy nie był wołany —
+  // to jest ARYTMETYKA DAT: kolejność wg priorytetu, start po zakończeniu
+  // zależności i po zwolnieniu właściciela, czas trwania wg priorytetu
+  // (CRITICAL 60 / HIGH 90 / reszta 120 dni).
+  //
+  // Świadomie NIE podłączamy tu modelu: liczenie dat to dokładnie ta klasa
+  // zadań, w której model jest gorszy od arytmetyki (myli się w dodawaniu dni,
+  // gubi kolejność zależności), a wynik ląduje bezpośrednio w `plannedStartDate`
+  // / `plannedEndDate` realnych rekordów. Zostaje rachunek, znika podpis „AI".
 
   const computeAutoSchedule = useCallback(() => {
-    setScheduleRunning(true);
-    setTimeout(() => {
+    {
       const noDates = initiatives.filter((i) => !i.plannedStartDate || !i.plannedEndDate);
       const withDates = initiatives.filter((i) => i.plannedStartDate && i.plannedEndDate);
 
@@ -270,11 +283,23 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
 
         if (depEnd && new Date(depEnd) > new Date(suggestedStart)) {
           suggestedStart = addDays(depEnd, 1);
-          reasons.push(`after dependency completes (${formatDate(depEnd)})`);
+          reasons.push(
+            t(
+              'initiatives.analysis.timeline.reasonAfterDep',
+              'after dependency completes ({{d}})',
+              {
+                d: formatDate(depEnd),
+              }
+            )
+          );
         }
         if (ownerEnd && new Date(ownerEnd) > new Date(suggestedStart)) {
           suggestedStart = addDays(ownerEnd, 1);
-          reasons.push(`owner available after ${formatDate(ownerEnd)}`);
+          reasons.push(
+            t('initiatives.analysis.timeline.reasonOwnerFree', 'owner available after {{d}}', {
+              d: formatDate(ownerEnd),
+            })
+          );
         }
         if (new Date(suggestedStart) < new Date(nextSlot)) {
           suggestedStart = nextSlot;
@@ -284,7 +309,13 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
           init.priority === 'CRITICAL' ? 60 : init.priority === 'HIGH' ? 90 : 120;
         const suggestedEnd = addDays(suggestedStart, durationDays);
 
-        if (reasons.length === 0) reasons.push('no blockers — can start immediately');
+        if (reasons.length === 0)
+          reasons.push(
+            t(
+              'initiatives.analysis.timeline.reasonNoBlockers',
+              'no blockers — can start immediately'
+            )
+          );
 
         proposals.push({
           initiativeId: init.id,
@@ -304,9 +335,8 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
       }
 
       setScheduleProposals(proposals);
-      setScheduleRunning(false);
-    }, 700);
-  }, [dependencies, initiatives]);
+    }
+  }, [dependencies, initiatives, t]);
 
   const handleApplySchedule = useCallback(
     async (p: ScheduleProposal, idx: number) => {
@@ -330,7 +360,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
 
   const handleApplyAllSchedule = useCallback(async () => {
     if (!onQuickUpdate || !scheduleProposals) return;
-    setScheduleRunning(true);
+    setApplyingAllSchedule(true);
     let ok = 0;
     for (const p of scheduleProposals) {
       try {
@@ -345,10 +375,10 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
     }
     toast.success(`Applied dates to ${ok} initiative(s)`);
     setScheduleProposals(null);
-    setScheduleRunning(false);
+    setApplyingAllSchedule(false);
   }, [onQuickUpdate, scheduleProposals]);
 
-  /* ---------- AI Conflict Detector ---------- */
+  /* ---------- Wykrywanie konfliktów (nakładanie dat, nie AI) ---------- */
 
   const conflicts = useMemo((): ConflictInfo[] => {
     const result: ConflictInfo[] = [];
@@ -390,7 +420,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
     return result.sort((a, b) => b.overlapDays - a.overlapDays);
   }, [initiatives]);
 
-  /* ---------- AI Timeline Optimizer ---------- */
+  /* ---------- Optymalizator harmonogramu (heurystyki dat, nie AI) ---------- */
 
   const optimizationTips = useMemo((): OptimizationTip[] => {
     const tips: OptimizationTip[] = [];
@@ -459,7 +489,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
     return tips;
   }, [dependencies, initiatives]);
 
-  /* ---------- AI Delay Impact ---------- */
+  /* ---------- Wpływ opóźnień (przejście po grafie zależności, nie AI) ---------- */
 
   const delayImpacts = useMemo((): DelayImpact[] => {
     const delayed = bars.filter((b) => b.status === 'delayed');
@@ -526,19 +556,19 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
           <div className="rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
             <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-c-info dark:text-c-info" />
+                <CalendarClock size={16} className="text-c-info dark:text-c-info" />
                 <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
-                  AI Auto-Schedule proposals
+                  {t('initiatives.analysis.timeline.autoSchedulePanelTitle', 'Proposed dates')}
                 </h3>
               </div>
               <div className="flex items-center gap-2">
                 {scheduleProposals.length > 1 && onQuickUpdate && (
                   <button
                     onClick={handleApplyAllSchedule}
-                    disabled={scheduleRunning}
+                    disabled={applyingAllSchedule}
                     className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50 transition-colors"
                   >
-                    {scheduleRunning ? (
+                    {applyingAllSchedule ? (
                       <Loader2 size={12} className="animate-spin" />
                     ) : (
                       <Check size={12} />
@@ -650,7 +680,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
         <div className="flex items-center gap-2">
           <TrendingUp size={16} className="text-emerald-600 dark:text-emerald-400" />
           <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-            AI Timeline Optimization
+            {t('initiatives.analysis.timeline.optimizerPanelTitle', 'Timeline optimization')}
           </h3>
         </div>
         <button
@@ -756,15 +786,15 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
         {onQuickUpdate && (
           <button
             onClick={toggleAutoSchedulePanel}
-            disabled={scheduleRunning}
-            className={getMenu3AiButtonClass(scheduleProposals !== null)}
+            disabled={applyingAllSchedule}
+            className={getMenu3DeterministicButtonClass(scheduleProposals !== null)}
           >
-            {scheduleRunning ? (
+            {applyingAllSchedule ? (
               <Loader2 size={12} className="animate-spin" />
             ) : (
-              <Sparkles size={12} />
+              <CalendarClock size={12} />
             )}
-            AI Auto-Schedule
+            {t('initiatives.analysis.timeline.autoScheduleAction', 'Propose dates')}
           </button>
         )}
         <button
@@ -774,10 +804,10 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
             setShowDelayImpact(false);
             setShowConflicts((v) => !v);
           }}
-          className={getMenu3AiButtonClass(showConflicts)}
+          className={getMenu3DeterministicButtonClass(showConflicts)}
         >
           <AlertTriangle size={12} />
-          Conflicts ({conflicts.length})
+          {t('initiatives.analysis.timeline.conflictsAction', 'Conflicts')} ({conflicts.length})
         </button>
         <button
           onClick={() => {
@@ -786,10 +816,10 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
             setShowDelayImpact(false);
             setShowOptimizer((v) => !v);
           }}
-          className={getMenu3AiButtonClass(showOptimizer)}
+          className={getMenu3DeterministicButtonClass(showOptimizer)}
         >
           <TrendingUp size={12} />
-          AI Optimizer
+          {t('initiatives.analysis.timeline.optimizerAction', 'Optimizer')}
         </button>
         <button
           onClick={() => {
@@ -798,10 +828,10 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
             setShowOptimizer(false);
             setShowDelayImpact((v) => !v);
           }}
-          className={getMenu3AiButtonClass(showDelayImpact)}
+          className={getMenu3DeterministicButtonClass(showDelayImpact)}
         >
           <Zap size={12} />
-          Delay Impact
+          {t('initiatives.analysis.timeline.delayImpactAction', 'Delay Impact')}
         </button>
       </>
     );
@@ -810,21 +840,25 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
     onQuickUpdate,
     computeAutoSchedule,
     scheduleProposals,
-    scheduleRunning,
+    applyingAllSchedule,
     showConflicts,
     conflicts.length,
     showOptimizer,
     showDelayImpact,
     closeWorkspacePanels,
+    t,
   ]);
 
   useEffect(() => {
     if (!onRegisterWorkspacePanel) return;
     if (schedulePanel) {
       onRegisterWorkspacePanel({
-        title: 'AI Auto-Schedule',
-        subtitle: 'Generate and apply timeline proposals for initiatives without dates.',
-        icon: <Sparkles size={16} />,
+        title: t('initiatives.analysis.timeline.autoScheduleAction', 'Propose dates'),
+        subtitle: t(
+          'initiatives.analysis.timeline.autoScheduleSubtitle',
+          'Dates computed from priority, dependencies and owner availability — review before applying.'
+        ),
+        icon: <CalendarClock size={16} />,
         content: schedulePanel,
       });
       return () => onRegisterWorkspacePanel(null);
@@ -840,7 +874,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
     }
     if (optimizerPanel) {
       onRegisterWorkspacePanel({
-        title: 'AI Optimizer',
+        title: t('initiatives.analysis.timeline.optimizerAction', 'Optimizer'),
         subtitle: 'Compress gaps, parallelize work, and improve the portfolio timeline.',
         icon: <TrendingUp size={16} />,
         content: optimizerPanel,
@@ -948,14 +982,14 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
         </div>
       )}
 
-      {/* AI Auto-Schedule proposals */}
+      {/* Proposed dates */}
       {!onRegisterWorkspacePanel && scheduleProposals !== null && (
         <div className="rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
           <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-c-info dark:text-c-info" />
+              <CalendarClock size={16} className="text-c-info dark:text-c-info" />
               <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
-                AI Auto-Schedule proposals
+                {t('initiatives.analysis.timeline.autoSchedulePanelTitle', 'Proposed dates')}
               </h3>
               <span className="text-xs text-c-info">({scheduleProposals.length})</span>
             </div>
@@ -963,11 +997,11 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
               {scheduleProposals.length > 1 && onQuickUpdate && (
                 <button
                   onClick={handleApplyAllSchedule}
-                  disabled={scheduleRunning}
+                  disabled={applyingAllSchedule}
                   className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
                     bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50 transition-colors"
                 >
-                  {scheduleRunning ? (
+                  {applyingAllSchedule ? (
                     <Loader2 size={12} className="animate-spin" />
                   ) : (
                     <Check size={12} />
@@ -1104,14 +1138,14 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
         </div>
       )}
 
-      {/* AI Optimizer tips */}
+      {/* Optimizer tips */}
       {!onRegisterWorkspacePanel && showOptimizer && (
         <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10 overflow-hidden">
           <div className="px-4 py-3 bg-emerald-50 dark:bg-emerald-900/20 border-b border-emerald-200 dark:border-emerald-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <TrendingUp size={16} className="text-emerald-600 dark:text-emerald-400" />
               <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-                AI Timeline Optimization
+                {t('initiatives.analysis.timeline.optimizerPanelTitle', 'Timeline optimization')}
               </h3>
             </div>
             <button
@@ -1144,7 +1178,6 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                     >
                       {tip.type}
                     </span>
-                    <Sparkles size={10} className="text-emerald-500" />
                   </div>
                   <p className="text-xs text-slate-700 dark:text-slate-300">{tip.description}</p>
                 </div>

@@ -1020,6 +1020,43 @@ async function ensureInsightSectionCompletionsColumn(): Promise<void> {
   }
 }
 
+// Module-level flag: true once we've confirmed section_overrides exists.
+let _insightSectionOverridesEnsured = false;
+
+/**
+ * Lazy ALTER — dokłada kolumnę `section_overrides` (JSON w TEXT) do
+ * `interview_insights`. Wzór 1:1 jak `ensureInsightSectionCompletionsColumn`:
+ * sprawdzenie w `pg_attribute` (bez locka na tabelę), ALTER wyłącznie gdy
+ * kolumny brak. Formalny zapis schematu żyje w migracji
+ * `server/migrations/931_interview_insight_section_overrides.sql`.
+ */
+async function ensureInsightSectionOverridesColumn(): Promise<void> {
+  if (_insightSectionOverridesEnsured) return;
+  try {
+    const rows = await queryHelpers.queryAll<{ attname: string }>(
+      `SELECT attname FROM pg_attribute
+       WHERE attrelid = 'interview_insights'::regclass
+         AND attname = 'section_overrides'
+         AND attnum > 0
+         AND NOT attisdropped`,
+      []
+    );
+    if (rows && rows.length > 0) {
+      _insightSectionOverridesEnsured = true;
+      return;
+    }
+    await queryHelpers.queryRun(`ALTER TABLE interview_insights ADD COLUMN section_overrides TEXT`);
+    _insightSectionOverridesEnsured = true;
+  } catch (err: any) {
+    const m = String(err?.message || err).toLowerCase();
+    if (m.includes('already exists') || m.includes('duplicate column')) {
+      _insightSectionOverridesEnsured = true;
+      return;
+    }
+    throw err;
+  }
+}
+
 async function ensureInterviewQuestionTemplatesTable(): Promise<void> {
   await queryHelpers.queryRun(
     `CREATE TABLE IF NOT EXISTS interview_question_templates (
@@ -8708,8 +8745,15 @@ ${JSON.stringify(questions || [], null, 2)}
   updateInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
-    const { title, status, exportedToTools, exportedToAssessment, archived, sectionCompletions } =
-      req.body;
+    const {
+      title,
+      status,
+      exportedToTools,
+      exportedToAssessment,
+      archived,
+      sectionCompletions,
+      sectionOverrides,
+    } = req.body;
 
     const updates: string[] = [];
     const values: any[] = [];
@@ -8772,6 +8816,31 @@ ${JSON.stringify(questions || [], null, 2)}
           ? sectionCompletions
           : JSON.stringify(sectionCompletions)
       );
+    }
+
+    // Ręczna redakcja treści sekcji (n-Type §6.2) — parytet z trasą v8
+    // (routes/v8/interview.routes.ts, PATCH /insights/:id), z której korzysta
+    // front. Ta trasa (legacy /api/interview) zostaje zgodna, żeby ten sam
+    // payload działał niezależnie od namespace'u.
+    if (sectionOverrides !== undefined) {
+      const insightSvc = await import('../services/InterviewInsightService.js');
+      const current = await insightSvc.getById(id);
+      if (!current || String(current.organizationId) !== String(user.organizationId)) {
+        res.status(404).json({ error: 'Insight not found' });
+        return;
+      }
+      const merged = insightSvc.mergeInsightSectionOverrides(
+        current.sectionOverrides,
+        sectionOverrides,
+        user.id
+      );
+      if (!merged.ok) {
+        res.status(400).json({ error: merged.error, code: merged.code });
+        return;
+      }
+      await ensureInsightSectionOverridesColumn();
+      updates.push('section_overrides = ?');
+      values.push(Object.keys(merged.value).length === 0 ? null : JSON.stringify(merged.value));
     }
 
     if (updates.length === 0) {
