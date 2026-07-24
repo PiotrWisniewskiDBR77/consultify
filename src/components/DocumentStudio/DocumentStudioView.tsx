@@ -198,29 +198,29 @@ export const DocumentStudioView: React.FC = () => {
       case 'TEMPLATE_ORPHANED':
         return t('documentStudio.view.templateOrphaned', {
           defaultValue:
-            'This template no longer has a canonical record — there is nothing to generate from. Pick another template in the library.',
+            'Ten wzorzec nie ma już kanonicznego rekordu — nie ma z czego generować. Wybierz inny wzorzec w Bibliotece.',
         });
       case 'TEMPLATE_NOT_INDEXED':
         return t('documentStudio.view.templateNotIndexed', {
           defaultValue:
-            'This template is not available in your library index. Pick another template in the library.',
+            'Tego wzorca nie ma w Twoim indeksie Biblioteki. Wybierz inny wzorzec.',
         });
       case 'TEMPLATE_FORBIDDEN':
         return t('documentStudio.view.templateForbidden', {
-          defaultValue: 'You do not have access to this template.',
+          defaultValue: 'Nie masz dostępu do tego wzorca.',
         });
       case 'TEMPLATE_DEPRECATED':
         return t('documentStudio.view.templateDeprecated', {
           defaultValue:
-            'This template has been deprecated and can no longer drive generation. Pick a current template.',
+            'Ten wzorzec został wycofany i nie może już sterować generacją. Wybierz aktualny wzorzec.',
         });
       case 'TEMPLATE_FORMAT_UNSUPPORTED':
         return t('documentStudio.view.templateFormatUnsupported', {
-          defaultValue: 'This template does not produce a document.',
+          defaultValue: 'Ten wzorzec nie tworzy dokumentu.',
         });
       default:
         return t('documentStudio.view.templateResolveFailed', {
-          defaultValue: 'The template could not be resolved. Please try again.',
+          defaultValue: 'Nie udało się rozwiązać wzorca. Spróbuj ponownie.',
         });
     }
   }, [templateResolveState, templateResolveErrorCode, t]);

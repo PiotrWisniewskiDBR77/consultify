@@ -24,6 +24,9 @@ const MaterialyLauncherScreen = React.lazy(() => import('./screens/materialy-lau
 const MaterialyTemplateLibrarySliceScreen = React.lazy(
   () => import('./screens/materialy-template-library-slice')
 );
+const DocumentStudioTemplateResolveErrorScreen = React.lazy(
+  () => import('./screens/document-studio-template-resolve-error')
+);
 
 // Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
 import i18n from '../src/i18n';
@@ -137,6 +140,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'MATERIAŁY — Biblioteka wzorców, slice „szablon dokumentu": Legacy · osierocony (bez użycia) · brak metadanych',
     render: () => <MaterialyTemplateLibrarySliceScreen />,
+  },
+  'document-studio-template-resolve-error': {
+    label:
+      'DOCUMENT STUDIO — „Użyj wzorca" odrzucone serwerowo: stan blokujący (bez pickera, bez AI). ?case=orphaned|forbidden|deprecated|not_indexed|resolving',
+    render: () => <DocumentStudioTemplateResolveErrorScreen />,
   },
   'initiatives-portfolio-analysis': {
     label:
