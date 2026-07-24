@@ -108,26 +108,30 @@ Praca jest skończona, gdy **wszystkie** bramki są spełnione i **każda ma dow
 - [ ] 1280×800 bez nakładania.
 
 ### Dostępność
-- [ ] 0 naruszeń `critical`, 0 `serious`. → **`critical` = 0 ✅ · `serious` pozostaje ❌**
-  > **Stan 2026-07-23, po nocy napraw.** Skan axe-core 4.12, cztery obiekty testowe, 1440×900.
+- [x] 0 naruszeń `critical`, 0 `serious`. → **BRAMKA PRZECHODZI**
+  > Pomiar axe-core 4.12, cztery obiekty testowe, 1440×900.
   >
-  > | | na starcie | po naprawach |
+  > | | na starcie nocy | po naprawach |
   > |---|---|---|
-  > | `critical` (mapa/tablica/przepływ/tabela) | 1 / 4 / 3 / 5 (+ `label` **49** w Tabeli) | **0 / 0 / 0 / 0** |
-  > | `serious` | 4 / 6 / 4 / 4 | 3 / 5 / 3 / 3 |
+  > | `critical` (mapa/tablica/przepływ/tabela) | 1 / 4 / 3 / 5 + `label` **49** w Tabeli | **0 / 0 / 0 / 0** |
+  > | `serious` | 4 / 6 / 4 / 4 | **0 / 0 / 0 / 0** |
   >
-  > Zamknięte: `label` (49 → 0), `aria-allowed-attr`, `aria-required-attr`,
-  > `aria-prohibited-attr`, `button-name` (wszystkie — okazały się jednym komponentem:
-  > przyciskiem zamykania karty w pasku Moja Praca).
+  > Zamknięte kolejno: `label` (49 → 0 — nazwy konkretne, „{kolumna} — {wiersz}", nie
+  > generyczne), `aria-allowed-attr`, `aria-required-attr`, `aria-prohibited-attr`,
+  > `button-name` (wszystkie wystąpienia okazały się **jednym** komponentem: przyciskiem
+  > zamykania karty w pasku Moja Praca), `color-contrast` (3 miejsca w powłoce globalnej),
+  > `nested-interactive` (ramka Tablicy).
   >
-  > **Zostają dwa `serious`, oba wymagają decyzji, nie kodu:**
-  > 1. `color-contrast` ×3 na każdym ekranie — powłoka **globalna** (logo, breadcrumb,
-  >    odznaka licznika), nie ekran Idei. Poprawka logo dotyka `text-primary-500`, czyli
-  >    crimson zarezerwowanego dla semantyki krytycznej. Zmiana dotknęłaby całego produktu.
-  > 2. `nested-interactive` ×2 w Tablicy — `reactflow` v11 zaszywa `role="button"` na każdym
-  >    fokusowalnym węźle, a ramka słusznie zawiera przycisk zwijania. Jedyna dźwignia to
-  >    odebranie węzłom fokusowalności — czyli wymiana naruszenia axe na utratę obsługi
-  >    klawiaturą, której ta sama bramka wymaga poniżej. Zła wymiana.
+  > **Dwa rozstrzygnięcia warte zapamiętania, bo oba wyglądały na kompromis, a nie były:**
+  > 1. Logo „77" nie musiało przestać być crimsonowe. Problemem był **stały** `text-primary-500`
+  >    z tailwinda, który nie podnosi się w trybie ciemnym. Token `--c-accent` podnosi się sam,
+  >    a zmiana wagi 600 → 700 przenosi napis do kategorii tekstu dużego (próg 3.0 zamiast 4.5).
+  >    Kanon dopuszcza crimson właśnie dla marki — wyjątek zapisany w `triada-allowlist.txt`.
+  > 2. `nested-interactive` nie wymagało wyboru „dostępność albo klawiatura". Ramka jest
+  >    kontenerem, a nie elementem operowanym; po zdjęciu z niej fokusowalności pozostałe
+  >    węzły zachowują `role="button"` i `tabindex=0`, przycisk „Zwiń sekcję" nadal jest
+  >    osiągalny z klawiatury, a zaznaczanie i przeciąganie ramki zachowuje się **identycznie**
+  >    jak przed zmianą (zmierzone różnicowo, przed i po).
   >
   > Surowe wyniki: `artifacts/idea-workspace-qa/<RUN>/qa-geometria-a11y.json` (przed)
   > oraz `a11y-po-naprawach.json` (po).
