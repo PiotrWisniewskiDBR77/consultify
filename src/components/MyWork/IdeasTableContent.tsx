@@ -60,6 +60,9 @@ import { ColumnResizer, FilterDropdown } from '@/components/ui/ResizableTable';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import type { IdeaConvertTarget as SsotConvertTarget } from './ideaConvertTargets';
+import { IDEA_STAGE_BUCKET_LABELS } from './ideaEntryTypes';
+import type { CanvasToolType } from './ideaSelectionTypes';
+import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import type { IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
 
 // Narrowed subset of the SSOT convert union (ideaConvertTargets.ts) — the row kebab
@@ -138,46 +141,38 @@ function saveIdeaRowDescriptionSetting(showDescription: boolean) {
   }
 }
 
+// Icon/badge styling only — label TEXT comes from IDEA_STAGE_BUCKET_LABELS
+// (ideaEntryTypes.ts, 2026-07-24 SSOT unification: this dict used to carry its
+// own "Rosnie"/"Ksztaltuje" (no diacritics), drifted from the other Ideas-list
+// renderers that spelled them "Rośnie"/"Kształtuje się").
 const STAGE_META: Record<
   IdeaStage,
   {
-    label: string;
-    labelPl: string;
     icon: React.ElementType;
     badge: string;
   }
 > = {
   spark: {
-    label: 'Spark',
-    labelPl: 'Iskra',
     icon: Lightbulb,
     badge:
       'border border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100',
   },
   incubating: {
-    label: 'Growing',
-    labelPl: 'Rosnie',
     icon: Sprout,
     badge:
       'border border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100',
   },
   shaping: {
-    label: 'Shaping',
-    labelPl: 'Ksztaltuje',
     icon: TreePine,
     badge:
       'border border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100',
   },
   ready: {
-    label: 'Ready',
-    labelPl: 'Gotowy',
     icon: CheckCircle2,
     badge:
       'border border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100',
   },
   promoted: {
-    label: 'Promoted',
-    labelPl: 'Promowany',
     icon: Rocket,
     // Canon §4.0: "Promoted" = pozytywny stan końcowy (idea → inicjatywa), NIE alarm.
     // Crimson-leak fix (VF1-11): was raw `primary-*` (bypassed the design tokens AND
@@ -188,11 +183,13 @@ const STAGE_META: Record<
   },
 };
 
+// Icon/badge styling only — label TEXT comes from the single SSOT
+// `getIdeaWorkspaceToolLabel` (IdeaWorkspaceToolbar.tsx), so this table agrees
+// with the list's card/grid views and the canvas rail (2026-07-24: was
+// "Recommendation map"/"Mapa rekomendacji" here, drifted from other copies).
 const TOOL_META: Record<
   string,
   {
-    label: string;
-    labelPl: string;
     icon: React.ElementType;
     badge: string;
     /** Canonical ToolChip icon color — semantic `c.*` var. */
@@ -200,8 +197,6 @@ const TOOL_META: Record<
   }
 > = {
   mindmap: {
-    label: 'Recommendation map',
-    labelPl: 'Mapa rekomendacji',
     icon: Network,
     badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     // Crimson-leak fix (VF1-11): tool identity is a DATA category, not a brand/CTA
@@ -210,22 +205,16 @@ const TOOL_META: Record<
     iconColorVar: 'var(--c-tag-3)',
   },
   table: {
-    label: 'Table',
-    labelPl: 'Tabela',
     icon: Table2,
     badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     iconColorVar: 'var(--c-info)',
   },
   process_flow: {
-    label: 'Process Flow',
-    labelPl: 'Proces',
     icon: Workflow,
     badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     iconColorVar: 'var(--c-success)',
   },
   whiteboard: {
-    label: 'Whiteboard',
-    labelPl: 'Whiteboard',
     icon: PenTool,
     badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     iconColorVar: 'var(--c-warning)',
@@ -506,24 +495,27 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   );
 
   const renderStageBadge = (stage?: IdeaStage) => {
-    const meta = getStageMeta(stage);
-    const dotVar = STAGE_DOT_VAR[(stage || 'spark') as IdeaStage];
+    const resolvedStage = (stage || 'spark') as IdeaStage;
+    const dotVar = STAGE_DOT_VAR[resolvedStage];
     // Canon §4.0a: neutral chip shell, color only in the leading signal dot.
     return (
       <ChipBase size="sm" leading={<ChipDot colorVar={dotVar} size="sm" />}>
-        {isPolish ? meta.labelPl : meta.label}
+        {isPolish
+          ? IDEA_STAGE_BUCKET_LABELS[resolvedStage].pl
+          : IDEA_STAGE_BUCKET_LABELS[resolvedStage].en}
       </ChipBase>
     );
   };
 
   const renderToolBadge = (tool?: string | null) => {
     const meta = getToolMeta(tool);
+    const key = String(tool || 'mindmap').toLowerCase() as CanvasToolType;
     // Canonical ToolChip: colored tool icon on a neutral (c-token) surface.
     return (
       <ToolChip
         icon={meta.icon as LucideIcon}
         iconColor={meta.iconColorVar}
-        label={isPolish ? meta.labelPl : meta.label}
+        label={getIdeaWorkspaceToolLabel(key, isPolish)}
       />
     );
   };
@@ -545,19 +537,23 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   };
 
   const renderPreview = (idea: MyIdea) => {
+    const resolvedStage = (idea.stage || 'spark') as IdeaStage;
     const stageMeta = getStageMeta(idea.stage);
     const StageIcon = stageMeta.icon;
     const toolMeta = getToolMeta(idea.preferredTool);
     const ToolIcon = toolMeta.icon;
+    const toolKey = String(idea.preferredTool || 'mindmap').toLowerCase() as CanvasToolType;
 
     const metaPills: MetaPill[] = [
       {
-        label: isPolish ? stageMeta.labelPl : stageMeta.label,
+        label: isPolish
+          ? IDEA_STAGE_BUCKET_LABELS[resolvedStage].pl
+          : IDEA_STAGE_BUCKET_LABELS[resolvedStage].en,
         className: stageMeta.badge,
         icon: StageIcon,
       },
       {
-        label: isPolish ? toolMeta.labelPl : toolMeta.label,
+        label: getIdeaWorkspaceToolLabel(toolKey, isPolish),
         className: toolMeta.badge,
         icon: ToolIcon,
       },

@@ -63,7 +63,14 @@ import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import { useFavoriteIdeas } from './hooks/useFavoriteIdeas';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useRecentIdeas } from './hooks/useRecentIdeas';
-import { bucketIdeaStageForList, type IdeaStageV5, normalizeStageToV5 } from './ideaEntryTypes';
+import {
+  bucketIdeaStageForList,
+  IDEA_STAGE_BUCKET_LABELS,
+  type IdeaStageV5,
+  normalizeStageToV5,
+} from './ideaEntryTypes';
+import type { CanvasToolType } from './ideaSelectionTypes';
+import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { IdeasTableContent } from './IdeasTableContent';
 import type {
   IdeasBulkBarPayload,
@@ -168,6 +175,12 @@ const STAGE_CONFIG: Record<
   },
 };
 
+// Icon/color styling only — the label TEXT is not duplicated here. It comes
+// from the single SSOT `getIdeaWorkspaceToolLabel` (IdeaWorkspaceToolbar.tsx),
+// so the list, the canvas rail, and every other tool-name reader agree
+// (2026-07-24: was three drifted copies — "Recommendation map"/"Mapa
+// rekomendacji" here, "Proces"/"Przepływ" elsewhere — now "Mind Map"/"Mapa
+// myśli", "Process Flow" everywhere).
 const TOOL_CONFIG: Record<
   string,
   {
@@ -175,8 +188,6 @@ const TOOL_CONFIG: Record<
     color: string;
     bgColor: string;
     borderColor: string;
-    label: string;
-    labelPl: string;
     badgeClass: string;
     badgeIconClass: string;
   }
@@ -186,18 +197,17 @@ const TOOL_CONFIG: Record<
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10 dark:bg-blue-500/15',
     borderColor: 'border-blue-400/30',
-    label: 'Recommendation map',
-    labelPl: 'Mapa rekomendacji',
     badgeClass: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary',
-    badgeIconClass: 'text-primary-600 dark:text-primary-300',
+    // Crimson-leak fix (canon rule #3, the brand token is banned outside
+    // critical semantics): this dead/unused field now matches the mindmap
+    // `color` above (blue) instead of the brand accent shade.
+    badgeIconClass: 'text-blue-600 dark:text-blue-300',
   },
   table: {
     icon: Table2,
     color: 'text-sky-500',
     bgColor: 'bg-sky-500/10 dark:bg-sky-500/15',
     borderColor: 'border-sky-400/30',
-    label: 'Table',
-    labelPl: 'Tabela',
     badgeClass: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-sky-600 dark:text-sky-300',
   },
@@ -206,8 +216,6 @@ const TOOL_CONFIG: Record<
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500/10 dark:bg-emerald-500/15',
     borderColor: 'border-emerald-400/30',
-    label: 'Process Flow',
-    labelPl: 'Proces',
     badgeClass: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-emerald-600 dark:text-emerald-300',
   },
@@ -216,8 +224,6 @@ const TOOL_CONFIG: Record<
     color: 'text-amber-500',
     bgColor: 'bg-amber-500/10 dark:bg-amber-500/15',
     borderColor: 'border-amber-400/30',
-    label: 'Whiteboard',
-    labelPl: 'Whiteboard',
     badgeClass: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-amber-600 dark:text-amber-300',
   },
@@ -621,13 +627,6 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const availableStageOptions = useMemo<FilterOption[]>(() => {
     const seen = new Set<string>();
     const order: IdeaStage[] = ['spark', 'incubating', 'shaping', 'ready', 'promoted'];
-    const labels: Record<IdeaStage, { en: string; pl: string }> = {
-      spark: { en: 'Spark', pl: 'Iskra' },
-      incubating: { en: 'Growing', pl: 'Rosnie' },
-      shaping: { en: 'Shaping', pl: 'Ksztaltuje' },
-      ready: { en: 'Ready', pl: 'Gotowy' },
-      promoted: { en: 'Promoted', pl: 'Promowany' },
-    };
     for (const idea of baseFilteredIdeas) {
       seen.add((idea.stage || 'spark') as IdeaStage);
     }
@@ -635,17 +634,13 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       .filter((stage) => seen.has(stage))
       .map((stage) => ({
         value: stage,
-        label: isPolish ? labels[stage].pl : labels[stage].en,
+        label: isPolish
+          ? IDEA_STAGE_BUCKET_LABELS[stage].pl
+          : IDEA_STAGE_BUCKET_LABELS[stage].en,
       }));
   }, [baseFilteredIdeas, isPolish]);
 
   const availableToolOptions = useMemo<FilterOption[]>(() => {
-    const labels: Record<string, { en: string; pl: string }> = {
-      mindmap: { en: 'Recommendation map', pl: 'Mapa rekomendacji' },
-      table: { en: 'Table', pl: 'Tabela' },
-      process_flow: { en: 'Process Flow', pl: 'Proces' },
-      whiteboard: { en: 'Whiteboard', pl: 'Whiteboard' },
-    };
     const seen = new Set<string>();
     for (const idea of baseFilteredIdeas) {
       const tool = String(idea.preferredTool || 'mindmap').toLowerCase();
@@ -653,7 +648,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     }
     return Array.from(seen).map((tool) => ({
       value: tool,
-      label: isPolish ? labels[tool]?.pl || tool : labels[tool]?.en || tool,
+      label: getIdeaWorkspaceToolLabel(tool as CanvasToolType, isPolish),
     }));
   }, [baseFilteredIdeas, isPolish]);
 
@@ -1095,16 +1090,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   // Canon §4.0a: neutral chip shell, color only in the leading signal dot.
   const renderStageBadge = (stage: IdeaStage) => {
-    const labels: Record<IdeaStage, { en: string; pl: string }> = {
-      spark: { en: 'Spark', pl: 'Iskra' },
-      incubating: { en: 'Growing', pl: 'Rośnie' },
-      shaping: { en: 'Shaping', pl: 'Kształtuje się' },
-      ready: { en: 'Ready', pl: 'Gotowy' },
-      promoted: { en: 'Promoted', pl: 'Promowany' },
-    };
     return (
       <ChipBase size="sm" leading={<ChipDot colorVar={STAGE_DOT_VAR[stage]} size="sm" />}>
-        {isPolish ? labels[stage].pl : labels[stage].en}
+        {isPolish ? IDEA_STAGE_BUCKET_LABELS[stage].pl : IDEA_STAGE_BUCKET_LABELS[stage].en}
       </ChipBase>
     );
   };
@@ -1117,7 +1105,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       <ToolChip
         icon={tc.icon as LucideIcon}
         iconColor={TOOL_ICON_COLOR_VAR[key] || TOOL_ICON_COLOR_VAR.mindmap}
-        label={isPolish ? tc.labelPl : tc.label}
+        label={getIdeaWorkspaceToolLabel(key as CanvasToolType, isPolish)}
       />
     );
   };
@@ -1151,17 +1139,14 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   const renderIdeaPreview = (idea: MyIdea) => {
     const stage = (idea.stage || 'spark') as IdeaStage;
-    const stageLabels: Record<IdeaStage, { en: string; pl: string }> = {
-      spark: { en: 'Spark', pl: 'Iskra' },
-      incubating: { en: 'Growing', pl: 'Rośnie' },
-      shaping: { en: 'Shaping', pl: 'Kształtuje się' },
-      ready: { en: 'Ready', pl: 'Gotowy' },
-      promoted: { en: 'Promoted', pl: 'Promowany' },
-    };
     const tc = getToolConfig(idea.preferredTool);
+    const toolKey = String(idea.preferredTool || 'mindmap').toLowerCase() as CanvasToolType;
     const metaPills: MetaPill[] = [
-      { label: isPolish ? stageLabels[stage].pl : stageLabels[stage].en, icon: tc.icon },
-      { label: isPolish ? tc.labelPl : tc.label, icon: tc.icon },
+      {
+        label: isPolish ? IDEA_STAGE_BUCKET_LABELS[stage].pl : IDEA_STAGE_BUCKET_LABELS[stage].en,
+        icon: tc.icon,
+      },
+      { label: getIdeaWorkspaceToolLabel(toolKey, isPolish), icon: tc.icon },
     ];
     const metaTrailing = (
       <span className="text-[11px] font-medium text-c-text-muted">

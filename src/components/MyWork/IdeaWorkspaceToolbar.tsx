@@ -48,9 +48,13 @@ export const TOOL_CONFIG: Array<{
   labelEn: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
 }> = [
-  { id: 'mindmap', labelPl: 'Mapa rekomendacji', labelEn: 'Recommendation map', icon: GitBranch },
-  { id: 'whiteboard', labelPl: 'Tablica', labelEn: 'Whiteboard', icon: StickyNote },
-  { id: 'process_flow', labelPl: 'Przepływ', labelEn: 'Process Flow', icon: Workflow },
+  // 2026-07-24: canonical tool names (owner request — "Mapa myśli · Whiteboard ·
+  // Process Flow · Tabela" / "Mind Map · Whiteboard · Process Flow · Table").
+  // This is the SSOT for tool labels — `getIdeaWorkspaceToolLabel` below reads
+  // it, and the Ideas list consumes that function instead of its own copies.
+  { id: 'mindmap', labelPl: 'Mapa myśli', labelEn: 'Mind Map', icon: GitBranch },
+  { id: 'whiteboard', labelPl: 'Whiteboard', labelEn: 'Whiteboard', icon: StickyNote },
+  { id: 'process_flow', labelPl: 'Process Flow', labelEn: 'Process Flow', icon: Workflow },
   { id: 'table', labelPl: 'Tabela', labelEn: 'Table', icon: Table2 },
 ];
 
