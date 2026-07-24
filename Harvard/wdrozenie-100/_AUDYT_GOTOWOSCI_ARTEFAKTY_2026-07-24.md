@@ -106,7 +106,22 @@ Otwarte, znane, nieocenione:
    to celowo zbudowana, niepodpięta **powłoka docelowa** (Fala F) nad `NModeShell`. Kasowanie =
    wyrzucenie rusztowania, które ujednolica karty. Plan migracji M1–M7 istnieje w `registry.ts`.
    Kolejność wg ciężaru: tool → notification → interview → decision → insight → task → **initiative (Opus)**.
-7. **Poza kartami:** „Eksport danych" w ustawieniach melduje *„otrzymasz e-mail"* i nie robi nic.
+7. ~~**Poza kartami:** „Eksport danych" melduje „otrzymasz e-mail" i nie robi nic~~ **→ NAPRAWIONE**
+   (gałąź `fix/eksport-danych-atrapa`, scalona partią 1). Podłączony do działającego synchronicznego
+   endpointu `GET /api/user/data-controls/data-export` → pobiera realny JSON, komunikat mówi prawdę.
+   ★ Zgłoszone osobno: 2 pokrewne atrapy eksportu w sąsiednich komponentach (`Api.exportUserData`
+   zwraca pusty obiekt; `DataControlsSettings` woła niezamontowaną ścieżkę) — do ujednolicenia.
+
+---
+
+## §9. PARTIA 1 SCALONA NA HUB (nie na demo)
+Trzy gotowe gałęzie scalone jedną falą z twardą weryfikacją plików, zero konfliktów (rozłączne pliki):
+`fix/ai-regresje-audyt-powiadomienie` + `fix/pasek-szkic-zrodlo` + `fix/eksport-danych-atrapa`.
+Twarda weryfikacja po scaleniu (lekcja o dwóch delecjach): wszystkie 4 kluczowe zmiany fizycznie
+obecne — `logSuggestion` w `/generate`, auto-trigger AI usunięty z Powiadomienia, `?? 'draft'`
+zniknął (`hasRecord`), obietnica e-maila zniknęła. esbuild parse-only 5/5 czysto (błąd `--bundle`
+na `ai.routes` to nierozwiązany `cheerio`, nie składnia). Crimson na diff vs demo = **0**.
+Hub **16 commitów ponad `origin/demo`**. Demo nietknięte (`97f466bd98`).
 
 ---
 
