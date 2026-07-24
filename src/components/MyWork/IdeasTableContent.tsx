@@ -66,10 +66,12 @@ import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import type { IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
 
 // Narrowed subset of the SSOT convert union (ideaConvertTargets.ts) — the row kebab
-// offers only these four live targets.
+// offers these six live targets (Z3 audit 2026-07-24: 'report'/'presentation' added —
+// both are `status: 'live'` in the SSOT with a real server handler; 'table' stays out,
+// it isn't a convert target anywhere in the system, see IdeasTableContent output_table).
 type IdeaConvertTarget = Extract<
   SsotConvertTarget,
-  'initiative' | 'task_set' | 'decision' | 'team_chat'
+  'initiative' | 'task_set' | 'decision' | 'team_chat' | 'report' | 'presentation'
 >;
 type IdeasTableOptionalColumn = 'stage' | 'tags' | 'tool' | 'date';
 type IdeasResizableColumn = 'title' | IdeasTableOptionalColumn;
@@ -1101,22 +1103,40 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                     kind: 'output',
                     actions: [
                       {
+                        // Z3 audit (2026-07-24): 'presentation' jest `status: 'live'`
+                        // w SSOT (ideaConvertTargets.ts) i ma realny handler na
+                        // serwerze (server/src/routes/my-work.routes.ts, gałąź
+                        // `target === 'presentation'` — tworzy rekord w `presentations`
+                        // + link graph). Wcześniejszy `disabled: true` + „wkrótce" był
+                        // atrapą obiecującą funkcję, która już działa — usunięte.
                         id: 'output_presentation',
                         label: isPolish ? 'Prezentacja' : 'Presentation',
                         icon: Presentation,
-                        disabled: true,
-                        rightLabel: isPolish ? 'wkrótce' : 'soon',
-                        onClick: () => undefined,
+                        onClick: () =>
+                          onConvertIdeaToTarget
+                            ? onConvertIdeaToTarget(idea, 'presentation')
+                            : onStartConvert(idea),
                       },
                       {
+                        // Z3 audit (2026-07-24): 'report' jest `status: 'live'` w SSOT
+                        // i ma realny handler na serwerze (`target === 'report'` —
+                        // tworzy rekord w `reports` + link graph). Odblokowane z tego
+                        // samego powodu co Prezentacja powyżej.
                         id: 'output_report',
                         label: isPolish ? 'Raport' : 'Report',
                         icon: FileText,
-                        disabled: true,
-                        rightLabel: isPolish ? 'wkrótce' : 'soon',
-                        onClick: () => undefined,
+                        onClick: () =>
+                          onConvertIdeaToTarget
+                            ? onConvertIdeaToTarget(idea, 'report')
+                            : onStartConvert(idea),
                       },
                       {
+                        // Z3 audit (2026-07-24): 'table' NIE istnieje jako convert
+                        // target NIGDZIE w systemie — brak w `IdeaConvertTarget` (SSOT
+                        // ideaConvertTargets.ts), brak w `LIVE_CONVERT_TARGETS`
+                        // (server/src/routes/my-work.routes.ts) — serwer zwróciłby 400
+                        // „Invalid target". To jedyny z trzech, który zostaje
+                        // wyłączony — bo naprawdę nie ma odbiornika, nie „na wiarę".
                         id: 'output_table',
                         label: isPolish ? 'Tabela' : 'Table',
                         icon: Table2,

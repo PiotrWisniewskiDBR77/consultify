@@ -980,7 +980,15 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   }, [onCreateIdea, openConvertForSelection, openFocusedIdea]);
 
   const handleConvert = useCallback(
-    async (target: 'initiative' | 'task_set' | 'decision' | 'team_chat', ideaOverride?: MyIdea) => {
+    // Z3 audit (2026-07-24): widened from the original 4-target union to also
+    // accept 'report'/'presentation' — the row kebab (IdeasTableContent.tsx
+    // "output" zone) now passes these through onConvertIdeaToTarget. The body
+    // below is a generic passthrough to Api.convertMyIdea (already typed for
+    // all 6 live targets), so no behavioral change is needed, only the type.
+    async (
+      target: 'initiative' | 'task_set' | 'decision' | 'team_chat' | 'report' | 'presentation',
+      ideaOverride?: MyIdea
+    ) => {
       const sourceIdea = ideaOverride ?? convertIdea;
       if (!sourceIdea?.id) return;
       try {
@@ -1363,22 +1371,29 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       kind: 'output',
       actions: [
         {
+          // Z3 audit (2026-07-24): 'presentation' is `status: 'live'` in the SSOT
+          // (ideaConvertTargets.ts) with a real server handler (my-work.routes.ts,
+          // `target === 'presentation'`). Card kebab canon §8.0 requires this to
+          // stay IDENTICAL to the Ideas table row kebab (IdeasTableContent.tsx) —
+          // fixed there in the same pass, mirrored here.
           id: 'output_presentation',
           label: t('myWork.ideasList.label15', 'Presentation'),
           icon: Presentation,
-          disabled: true,
-          rightLabel: t('myWork.ideasList.rightLabel', 'soon'),
-          onClick: () => undefined,
+          onClick: () => handleConvert('presentation', idea),
         },
         {
+          // Z3 audit (2026-07-24): 'report' is `status: 'live'` in the SSOT with a
+          // real server handler (`target === 'report'`). See note above.
           id: 'output_report',
           label: t('myWork.ideasList.label16', 'Report'),
           icon: GitBranch,
-          disabled: true,
-          rightLabel: t('myWork.ideasList.rightLabel2', 'soon'),
-          onClick: () => undefined,
+          onClick: () => handleConvert('report', idea),
         },
         {
+          // Z3 audit (2026-07-24): 'table' is NOT a convert target anywhere in the
+          // system — absent from IdeaConvertTarget (SSOT) and from
+          // LIVE_CONVERT_TARGETS on the server; a real request would 400. Stays
+          // disabled — this one is genuinely "soon", not a placeholder removed on faith.
           id: 'output_table',
           label: t('myWork.ideasList.label17', 'Table'),
           icon: Table2,
