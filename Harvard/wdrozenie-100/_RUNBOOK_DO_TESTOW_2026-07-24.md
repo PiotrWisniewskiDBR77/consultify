@@ -22,11 +22,19 @@ Wszystkie prawdziwe:
 - bramki fałszywa zieleń (sesja Piotra) — 4 check-*.sh
 CZEKAM na task-notifications. Nie odpalać Etapu 2 przed prerekwizytem.
 
-### FAZA B — Etap 2 powłoki (4 karty ręczne na StandardArtifactShell)
-Kolejność wg ciężaru (registry M-fale): notification → decision → task → **initiative (Opus)**.
-Jedna karta = jedna gałąź od huba (po scaleniu prerekwizytu). Zdejmij własny max-w-*, wepnij w
-StandardArtifactShell, flip statusMigracji. Weryfikacja: 2 viewporty, 3 pasy równe, wąski nie rozjechany.
-★ Initiative = 26 sekcji, ~10.8k linii, prawy panel do zbudowania — Opus, osobno, na końcu.
+### FAZA B — Ujednolicenie SZEROKOŚCI (nie pełna powłoka) [ZMIENIONE 2026-07-24]
+★ ODKRYCIE: `StandardArtifactShell` jest PRZESTARZAŁY wobec kart — powstał przeciw staremu
+`NModeToolbar`, zanim n-Type przeniósł karty na `NModeMenu2`. Podpięcie = przepisanie kontraktu
+wspólnej powłoki (Menu2 zablokowane typem, panel gubi `className`/`statusBar`, nagłówek/aiContract).
+To zmiana wszystkich 6 kart naraz = ryzyko regresji hurtem tuż przed testami (łamie regułę #9).
+**DECYZJA CTO: rozdzielić cel wizualny (jedna szerokość) od architektonicznego (jedna powłoka).**
+- Etap 0 (NModeShell Menu2) — ✅ SCALONY, wyrównał Insight/Narzędzie.
+- Cel wizualny TERAZ: ujednolicić `max-w-*` 3 kart ręcznych do kanonicznej `max-w-6xl` (1152, jak
+  NModeShell): Decyzja `[1500px]`→`6xl`, Zadanie `[1500px]`→`6xl`, Inicjatywa `7xl`→`6xl`.
+  Powiadomienie już `6xl`. Render-verify Decyzji/Zadania (zwężenie −348 px — czy treść nie cierpi).
+  Jeśli treść wygląda źle przy 1152 → eskalacja do Piotra (docelowa szerokość = decyzja wizualna).
+- Pełna powłoka `StandardArtifactShell` (aktualizacja kontraktu + migracja 6 kart) = OSOBNY PROJEKT
+  architektoniczny, NIE blokuje testów. Zgłoszony chipem.
 
 ### FAZA C — scalać partiami z twardą weryfikacją
 Po każdej partii: merge --no-ff, grep fizycznej obecności kluczowych zmian (lekcja 2 delecji),
