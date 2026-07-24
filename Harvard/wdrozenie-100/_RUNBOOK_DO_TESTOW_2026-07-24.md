@@ -18,7 +18,7 @@ Wszystkie prawdziwe:
 
 ### FAZA A — domknąć powłokę prerekwizyt + prace Piotra  [W TOKU]
 - powłoka Etap 0+1 (`fix/powloka-etap0-etap1`, Opus) — wyrównanie NModeShell:170 + podpięcie Insight/Narzędzie do StandardArtifactShell
-- fallbackRefineText (sesja Piotra) — atrapa AIFieldEnhancer
+- fallbackRefineText — ★ JUŻ SCALONE na hub (fix/atrapa-aifieldenhancer, zweryfikowane przez sędziego IT); druga galaz fix/atrapy-ai-fieldenhancer NIEscalona — sprawdzic co wnosi
 - bramki fałszywa zieleń (sesja Piotra) — 4 check-*.sh
 CZEKAM na task-notifications. Nie odpalać Etapu 2 przed prerekwizytem.
 
