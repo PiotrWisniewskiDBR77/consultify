@@ -8,22 +8,7 @@ import { Router } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import type { MindmapNodeOperation } from '../../services/v8/mindmapCanon.js';
-import {
-  P12_ACCEPTANCE_CHECKLIST,
-  P12_AI_COBUILDING_RULES,
-  P12_CALM_LOOP_RULES,
-  P12_DEGRADED_SCENARIOS,
-  P12_EXPORT_FORMATS,
-  P12_EXPORT_RULES,
-  P12_NODE_KINDS,
-  P12_NODE_OPERATIONS,
-  P12_UNDO_REDO_RULES,
-} from '../../services/v8/mindmapCanon.js';
-import type {
-  MindmapAIProposal,
-  MindmapOperationResult,
-} from '../../services/v8/mindmapService.js';
+import type { MindmapAIProposal } from '../../services/v8/mindmapService.js';
 import * as mindmapService from '../../services/v8/mindmapService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
@@ -41,65 +26,6 @@ const router = Router();
 function mindmapMeta(extra?: Record<string, unknown>) {
   return { version: 'v8' as const, surface: 'mindmap' as const, ...extra };
 }
-
-function httpStatusForOpResult(r: MindmapOperationResult): number {
-  if (r.success) return P12_MINDMAP_HTTP_STATUSES.OK;
-  const c = r.error_code;
-  if (
-    c === 'INVALID_LABEL' ||
-    c === 'ROOT_EXISTS' ||
-    c === 'SIZE_LIMIT' ||
-    c === 'VALIDATION_FAILED'
-  ) {
-    return P12_MINDMAP_HTTP_STATUSES.BAD_REQUEST;
-  }
-  if (c === 'NOT_FOUND' || c === 'PARENT_NOT_FOUND' || c === 'PROPOSAL_NOT_FOUND') {
-    return P12_MINDMAP_HTTP_STATUSES.NOT_FOUND;
-  }
-  if (c === 'CYCLE_DETECTED' || c === 'INVALID_STATE') {
-    return P12_MINDMAP_HTTP_STATUSES.CONFLICT;
-  }
-  if (c === 'TABLE_MISSING' || c === 'DB_ERROR') {
-    return P12_MINDMAP_HTTP_STATUSES.SERVICE_UNAVAILABLE;
-  }
-  return P12_MINDMAP_HTTP_STATUSES.BAD_REQUEST;
-}
-
-function sendOpFailure(res: Response, r: MindmapOperationResult) {
-  return res.status(httpStatusForOpResult(r)).json({
-    error: r.error ?? 'Operation failed',
-    code: r.error_code ?? 'UNKNOWN',
-    meta: mindmapMeta({ degraded: r.error_code === 'TABLE_MISSING' }),
-  });
-}
-
-function isMindmapOperation(value: unknown): value is MindmapNodeOperation {
-  return typeof value === 'string' && (P12_NODE_OPERATIONS as readonly string[]).includes(value);
-}
-
-// ---------------------------------------------------------------------------
-// GET /contract — full P12 canon (static)
-// ---------------------------------------------------------------------------
-
-router.get(
-  '/contract',
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
-    return res.json({
-      data: {
-        acceptanceChecklist: P12_ACCEPTANCE_CHECKLIST,
-        degradedScenarios: P12_DEGRADED_SCENARIOS,
-        nodeOperations: P12_NODE_OPERATIONS,
-        nodeKinds: P12_NODE_KINDS,
-        calmLoopRules: P12_CALM_LOOP_RULES,
-        exportFormats: P12_EXPORT_FORMATS,
-        exportRules: P12_EXPORT_RULES,
-        aiCobuildingRules: P12_AI_COBUILDING_RULES,
-        undoRedoRules: P12_UNDO_REDO_RULES,
-      },
-      meta: mindmapMeta({ contract: 'P12' }),
-    });
-  })
-);
 
 // ---------------------------------------------------------------------------
 // POST /ai-proposals/:proposalId/resolve
@@ -139,116 +65,6 @@ router.post(
         action: `proposal_${result.proposal?.status}`,
         applied: result.applied_count,
       }),
-    });
-  })
-);
-
-// ---------------------------------------------------------------------------
-// PUT /nodes/:nodeId/rename
-// ---------------------------------------------------------------------------
-
-router.put(
-  '/nodes/:nodeId/rename',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const label = req.body?.label;
-    const result = await mindmapService.renameNode(req.params.nodeId, organizationId, label);
-    if (!result.success) return sendOpFailure(res, result);
-    return res.json({ data: result, meta: mindmapMeta({ action: 'renamed' }) });
-  })
-);
-
-// ---------------------------------------------------------------------------
-// PUT /nodes/:nodeId/move
-// ---------------------------------------------------------------------------
-
-router.put(
-  '/nodes/:nodeId/move',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const raw = req.body?.new_parent_id;
-    if (raw !== null && (typeof raw !== 'string' || raw === '')) {
-      return res.status(P12_MINDMAP_HTTP_STATUSES.BAD_REQUEST).json({
-        error: 'new_parent_id must be a non-empty string (target parent node id)',
-        code: 'VALIDATION',
-        meta: mindmapMeta(),
-      });
-    }
-    if (typeof raw !== 'string') {
-      return res.status(P12_MINDMAP_HTTP_STATUSES.BAD_REQUEST).json({
-        error: 'new_parent_id required',
-        code: 'VALIDATION',
-        meta: mindmapMeta(),
-      });
-    }
-    const result = await mindmapService.moveNode(req.params.nodeId, organizationId, raw);
-    if (!result.success) return sendOpFailure(res, result);
-    return res.json({ data: result, meta: mindmapMeta({ action: 'moved' }) });
-  })
-);
-
-// ---------------------------------------------------------------------------
-// DELETE /nodes/:nodeId
-// ---------------------------------------------------------------------------
-
-router.delete(
-  '/nodes/:nodeId',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const result = await mindmapService.deleteNode(req.params.nodeId, organizationId);
-    if (!result.success) return sendOpFailure(res, result);
-    return res.json({ data: result, meta: mindmapMeta({ action: 'deleted' }) });
-  })
-);
-
-// ---------------------------------------------------------------------------
-// PUT /nodes/:nodeId/collapse
-// ---------------------------------------------------------------------------
-
-router.put(
-  '/nodes/:nodeId/collapse',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const result = await mindmapService.toggleCollapse(req.params.nodeId, organizationId);
-    if (!result.success) return sendOpFailure(res, result);
-    return res.json({ data: result, meta: mindmapMeta({ action: 'collapse_toggled' }) });
-  })
-);
-
-// ---------------------------------------------------------------------------
-// GET /:mindmapId/nodes
-// ---------------------------------------------------------------------------
-
-router.get(
-  '/:mindmapId/nodes',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const { nodes, degraded } = await mindmapService.getNodes(req.params.mindmapId, organizationId);
-    return res.json({
-      data: nodes,
-      meta: mindmapMeta({ degraded }),
-    });
-  })
-);
-
-// ---------------------------------------------------------------------------
-// POST /:mindmapId/nodes
-// ---------------------------------------------------------------------------
-
-router.post(
-  '/:mindmapId/nodes',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const body = req.body ?? {};
-    const result = await mindmapService.createNode(req.params.mindmapId, organizationId, {
-      parent_id: body.parent_id,
-      label: body.label,
-      kind: body.kind,
-    });
-    if (!result.success) return sendOpFailure(res, result);
-    return res.status(P12_MINDMAP_HTTP_STATUSES.CREATED).json({
-      data: result,
-      meta: mindmapMeta({ action: 'node_created' }),
     });
   })
 );
@@ -304,55 +120,6 @@ router.post(
       data: proposal,
       meta: mindmapMeta({ action: 'ai_proposal_created' }),
     });
-  })
-);
-
-// ---------------------------------------------------------------------------
-// POST /:mindmapId/validate
-// ---------------------------------------------------------------------------
-
-router.post(
-  '/:mindmapId/validate',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const { operation, node_id, params } = req.body ?? {};
-    if (!isMindmapOperation(operation) || !node_id || typeof node_id !== 'string') {
-      return res.status(P12_MINDMAP_HTTP_STATUSES.BAD_REQUEST).json({
-        error: 'operation (P12 op) and node_id required',
-        code: 'VALIDATION',
-        meta: mindmapMeta(),
-      });
-    }
-    const p =
-      params && typeof params === 'object' && !Array.isArray(params)
-        ? {
-            ...params,
-            newParentId:
-              (params as Record<string, unknown>).new_parent_id ??
-              (params as Record<string, unknown>).newParentId,
-          }
-        : undefined;
-    const vr = await mindmapService.validateOperation(
-      operation,
-      node_id,
-      req.params.mindmapId,
-      organizationId,
-      p
-    );
-    if (!vr.valid) {
-      const isCycle = vr.reason?.toLowerCase().includes('cycle');
-      const status = isCycle
-        ? P12_MINDMAP_HTTP_STATUSES.CONFLICT
-        : vr.reason?.includes('not available')
-          ? P12_MINDMAP_HTTP_STATUSES.SERVICE_UNAVAILABLE
-          : P12_MINDMAP_HTTP_STATUSES.BAD_REQUEST;
-      return res.status(status).json({
-        error: vr.reason ?? 'Validation failed',
-        code: isCycle ? 'CYCLE' : 'VALIDATION',
-        meta: mindmapMeta(),
-      });
-    }
-    return res.json({ data: { valid: true }, meta: mindmapMeta({ action: 'validated' }) });
   })
 );
 
