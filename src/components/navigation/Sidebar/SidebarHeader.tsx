@@ -60,7 +60,12 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
       ) : (
         <>
           <motion.span
-            className="text-xl font-semibold tracking-tighter text-primary-500"
+            // `text-primary-500` to STALY crimson z tailwinda — w trybie ciemnym
+            // dawal ~2.5:1 na ciemnym tle i axe zglaszal to jako color-contrast.
+            // `--c-accent` jest udokumentowanym jedynym akcentem marki i sam sie
+            // podnosi w ciemnym (#85182f -> #c8324a), wiec znak marki zostaje
+            // crimsonowy, a kontrast przestaje zalezec od motywu.
+            className="text-xl font-bold tracking-tighter text-c-accent"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}

@@ -284,7 +284,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 </button>
                 <nav
                   aria-label={t('layout.breadcrumb', 'Breadcrumb')}
-                  className="flex items-center text-sm font-medium text-slate-600 dark:text-slate-500"
+                  // dark:text-slate-500 (#64748b) na #0f172a dawalo 3.75 — ponizej progu 4.5.
+                  // slate-400 podnosi do ~7:1 bez zmiany hierarchii (nadal drugorzedny).
+                  className="flex items-center text-sm font-medium text-slate-600 dark:text-slate-400"
                 >
                   <span
                     className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors"

@@ -1101,6 +1101,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             type: normalizedNode?.type || 'stickyNote',
             position: normalizedNode?.position || { x: 100, y: 100 },
             data: nodeData,
+            // Ramka jest KONTENEREM, nie elementem operowanym. React Flow nadaje
+            // kazdemu fokusowalnemu wezlowi `role="button"`, a ramka slusznie
+            // zawiera wlasny przycisk zwijania — powstawal przycisk w przycisku
+            // (axe: nested-interactive). Zdejmujemy fokus z samej ramki; jej
+            // przycisk zwijania i tak zostaje w kolejnosci tabulacji, bo jest
+            // prawdziwym <button>. Pozostale typy wezlow bez zmian.
+            ...(normalizedNode?.type === 'frameNode' ? { focusable: false } : {}),
             ...(normalizedNode?.parentNode ||
             normalizedNode?.parentId ||
             normalizedNode?.data?.parentId
