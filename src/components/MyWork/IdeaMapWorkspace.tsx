@@ -1546,7 +1546,30 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           // had open.
           if (!initialTool && !userSelectedToolRef.current) {
             const localPref = readLocalToolPreference(String(idea?.id || ideaId));
-            if (localPref) setActiveTool(localPref);
+            if (localPref) {
+              setActiveTool(localPref);
+            } else {
+              // ★ REGRESJA P0-5 (naprawiona 2026-07-24): tu wczesniej nie bylo
+              // NICZEGO — brak lokalnej preferencji zostawial `internalActiveTool`
+              // na domyslnym 'mindmap', wiec Idea zapisana jako Przeplyw/Tablica/
+              // Tabela otwierala sie JAKO MAPA MYSLI przy pierwszym wejsciu z listy
+              // (deep-link maskowal blad, bo ustawia initialTool).
+              //
+              // `preferredTool` Idei to JEJ WLASNA natura, nie cudzy stan sesji —
+              // i jako fallback nalezy go uszanowac. Wyciek, przed ktorym bronilo
+              // P0-5, polegal na tym, ze cudzy wybor PRZESTAWIAL ekran; tutaj
+              // uzywamy go wylacznie gdy TEN uzytkownik nie ma wlasnego zdania
+              // o tej Idei, wiec nikomu nic sie nie przelacza.
+              const wlasnaNatura = mapRes?.map?.preferredTool;
+              if (
+                wlasnaNatura === 'mindmap' ||
+                wlasnaNatura === 'whiteboard' ||
+                wlasnaNatura === 'process_flow' ||
+                wlasnaNatura === 'table'
+              ) {
+                setActiveTool(wlasnaNatura);
+              }
+            }
           }
 
           // V5-IDEA-16: Restore surface state (focus mode / viewport only —
