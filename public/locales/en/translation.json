@@ -3317,7 +3317,8 @@
       "panelSources": "Sources & assumptions",
       "panelResults": "Results",
       "noSources": "No source information",
-      "noStepsYet": "No steps yet"
+      "noStepsYet": "No steps yet",
+      "actionsHiddenInReadMode": "Actions are hidden in preview mode"
     },
     "projects": {
       "failedToLoadProjects": "Failed to load projects",
@@ -6167,7 +6168,8 @@
         "published": "Published",
         "failed": "Failed"
       },
-      "confidenceLevelLabel": "Confidence level"
+      "confidenceLevelLabel": "Confidence level",
+      "actionsHiddenInReadMode": "Actions are hidden in preview mode"
     },
     "templateBuilder": {
       "freeTextAnswer": "Free text answer…",
@@ -10042,7 +10044,8 @@
       "outcomes": "Outcomes",
       "deleteComment": "Delete comment",
       "property": "Property",
-      "value": "Value"
+      "value": "Value",
+      "actionsHiddenInReadMode": "Actions are hidden in preview mode"
     }
   },
   "execution": {

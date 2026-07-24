@@ -147,6 +147,10 @@ import {
 } from './shared';
 import { AIConnections } from './shared/AIConnections';
 import { buildAskAIMessage } from './shared/askAiHelper';
+// Wspólny wzór listy powiązań (Zadanie „Wynika z" = Decyzja „Dotyczy").
+// Import wprost z pliku, nie przez `./shared/index.ts` — barrel jest dziś
+// równolegle edytowany przez inne fronty.
+import { type RelatedItemEntry, RelatedItemsList } from './shared/RelatedItemsList';
 // ETAP 1.1 n-Type: `PresentationModeSwitcher` NIE jest importowany — karta N ma
 // JEDEN widok, przelacznik N/C znika z naglowka (`showModeSwitcher={false}`).
 // `ReadEditToggle` tez nie wprost — przelacznik Edycja|Podglad renderuje wspolny
@@ -2925,11 +2929,13 @@ Return ONLY the final comment text.`;
         case 'description-scope':
           {
             // Build related items list (initiative + linked items)
-            const relatedTaskItems: { id: string; type: string; title: string }[] = [];
+            // ★ Typ trzymamy SUROWY ('initiative' | 'task' | …) — na etykietę PL
+            //   tłumaczy go `RelatedItemsList` (wspólny wzór z kartą Decyzji).
+            const relatedTaskItems: RelatedItemEntry[] = [];
             if (initiativeName && initiativeId) {
               relatedTaskItems.push({
                 id: initiativeId,
-                type: t('myWork.taskDetail.type', 'Initiative'),
+                type: 'initiative',
                 title: initiativeName,
               });
             }
@@ -2937,7 +2943,7 @@ Return ONLY the final comment text.`;
               relatedTaskItems.push({
                 id: item.id,
                 type: item.type || 'item',
-                title: item.title || item.id,
+                title: item.title || '',
               });
             });
 
@@ -2962,26 +2968,7 @@ Return ONLY the final comment text.`;
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-1">
-                      {relatedTaskItems.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between gap-3 text-sm text-c-text"
-                        >
-                          <div className="flex min-w-0 items-center gap-2">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-border text-c-text-secondary bg-c-surface-raised uppercase">
-                              {item.type}
-                            </span>
-                            <span className="truncate">{item.title}</span>
-                          </div>
-                          <span className="shrink-0 text-[11px] font-mono text-c-text-secondary/70">
-                            {String(item.id).length > 24
-                              ? `${String(item.id).slice(0, 24)}...`
-                              : item.id}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    <RelatedItemsList items={relatedTaskItems} />
                   )}
                 </div>
 
@@ -5111,11 +5098,18 @@ Return ONLY the final comment text.`;
                 label: t('myWork.taskDetail.owner', 'Owner'),
                 value: ownerFullName || dash,
               },
-              {
-                id: 'initiative',
-                label: t('myWork.taskDetail.initiative', 'Initiative'),
-                value: initiativeName || dash,
-              },
+              // „Inicjatywa" TYLKO gdy zadanie realnie do jakiejś należy.
+              // Wiersz „Inicjatywa —" nie jest informacją, tylko ceremonią:
+              // zajmuje linię tabeli i nic nie mówi (2026-07-24).
+              ...(initiativeName
+                ? [
+                    {
+                      id: 'initiative',
+                      label: t('myWork.taskDetail.initiative', 'Initiative'),
+                      value: initiativeName,
+                    },
+                  ]
+                : []),
               // n-Type §6.6: „Źródło" — pochodzenie zadania po usunięciu bannera.
               {
                 id: 'source',
@@ -5294,8 +5288,13 @@ Return ONLY the final comment text.`;
 
     return (
       <div className="h-full overflow-y-auto bg-gradient-to-br from-c-bg via-c-surface to-c-bg">
-        <div className="p-6">
-          <div className="max-w-[1500px] mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
+        {/* GEOMETRIA CHROMU (2026-07-24): `pt-4` zamiast `pt-6` — ten sam odstęp
+            od góry co w powłoce `NModeShell` (:153), której trzymają się Wniosek
+            i Narzędzie. Zmierzone na renderze: Menu 1 stało na 24 px w Decyzji /
+            Zadaniu / Powiadomieniu i na 16 px w pozostałych trzech kartach.
+            Boki (`px-6`) i dół (`pb-6`) bez zmian. */}
+        <div className="px-6 pt-4 pb-6">
+          <div className="max-w-6xl mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
             {/* ── Lewa kolumna: header + treść (dokowany panel po prawej) ── */}
             <div className="xl:flex-1 xl:min-w-0 space-y-0">
               {/* ── Header ──────────────────────────────────────── */}
@@ -5330,7 +5329,12 @@ Return ONLY the final comment text.`;
               />
 
               {/* ── N-Mode Content ──────────────────────────────── */}
-              <div className="col-span-full space-y-4 mt-4">
+              <div className="col-span-full space-y-4 pt-4">
+                {/* RYTM PIONOWY (2026-07-24): `pt-4` = 16 px między Menu 1 a Menu 2 —
+                    tyle, ile daje powłoka `NModeShell` (mt-2 na pasku + py-2 w środku)
+                    Wnioskowi i Narzędziu. `mt-*` tu NIE DZIAŁA: rodzic ma `space-y-0`,
+                    które nadpisuje margin-top dzieci (wyższa specyficzność selektora
+                    `.space-y-0 > * ~ *`). Dlatego padding, nie margines. */}
                 {/* ── Pasek kart + tryb Read/Edit ─────────────────────────────
                     NIE „Menu 1" — prawdziwe Menu 1 to NModeHeader powyżej.
                     Stara etykieta („Menu 1 (klasa S)") dublowała nazwę powłoki
@@ -5542,7 +5546,7 @@ Return ONLY the final comment text.`;
             </div>
 
             {/* ── Dokowany prawy panel artefaktu (lg+; ukryty na <lg) ── */}
-            <div className="hidden xl:block shrink-0 sticky top-6 self-start">
+            <div className="hidden xl:block shrink-0 sticky top-4 self-start">
               <ArtifactRightPanel
                 sections={rightPanelSections}
                 className={ARTIFACT_PANEL_CARD_CLASS_STICKY}

@@ -8,8 +8,7 @@
  * - InitiativeDocumentView: Full initiative view for DynamicTabs
  *
  * LEGACY (deprecated, will be removed):
- * - InitiativeDetailCard
- * - InitiativeFullView
+ * - InitiativeFullView (still imported directly by MyWork/MyWorkHub.tsx — do NOT delete)
  */
 
 // V3-F01 — Initiative level templates
@@ -31,5 +30,7 @@ export { InitiativesHub } from './InitiativesHub';
 export { InitiativesTimelineView } from './InitiativesTimelineView';
 
 // Legacy exports removed (P11 contract §2.7 — InitiativeDocumentView is the canonical full view).
-// InitiativeDetailCard and InitiativeFullView are deprecated and no longer exported.
-// If you need these, import directly from the file (not recommended).
+// InitiativeFullView is deprecated and no longer exported here, but it is STILL LIVE:
+// MyWork/MyWorkHub.tsx imports it directly (lazy) for the in-context initiative document tab
+// (My Work → Calendar → onInitiativeClick). Do not delete it as "dead code".
+// InitiativeDetailCard / InitiativeNotionView / InitiativeScrollView were removed (0 importers).

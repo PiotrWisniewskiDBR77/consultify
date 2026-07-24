@@ -34,6 +34,7 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { TEXT_L1 } from '@/styles/typography';
+import { humanizeEnum } from '@/utils/enumLabels';
 
 // ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
 import type { CardAnalysisField } from '@/services/cardAnalysis';
@@ -356,7 +357,12 @@ export function KnownToolDetailView(props: {
     return [
       row('status', 'Status', 'Status', statusText),
       row('category', 'Category', 'Kategoria', tool?.libraryCategory || dash),
-      row('toolType', 'Tool type', 'Typ narzędzia', tool?.toolType || toolType),
+      // „Typ narzędzia" pokazywał SLUG techniczny („dynamic-swot") — identyfikator
+      // katalogu, nie nazwa dla czytelnika (2026-07-24). `tool.name` przychodzi
+      // z tego samego zapytania `Api.getKnownTool(toolType, { lang })`, więc jest
+      // już w języku interfejsu („Dynamiczny SWOT"). Gdy katalog nie odpowiedział,
+      // humanizujemy slug zamiast go pokazywać wprost — nic nie zmyślamy.
+      row('toolType', 'Tool type', 'Typ narzędzia', tool?.name || humanizeEnum(toolType) || dash),
       row(
         'access',
         'Access',
