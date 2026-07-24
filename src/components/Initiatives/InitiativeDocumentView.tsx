@@ -9426,7 +9426,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         onClick: () => void handleArchive(),
       });
     }
-    for (const sa of destructiveStatusActions) {
+    // PODGLĄD = TYLKO CZYTANIE (2026-07-24): przejścia destrukcyjne
+    // („Oznacz jako zablokowane", „Anuluj") ZMIENIAJĄ STATUS rekordu, więc
+    // znikają razem z resztą akcji. Wcześniej kebab filtrował w Podglądzie
+    // tylko „Nowe…"/„Archiwizuj", a tę grupę zostawiał — jedyna aktywna
+    // zmiana stanu w menu, które poza tym miało już wyłącznie czytanie.
+    for (const sa of readMode ? [] : destructiveStatusActions) {
       items.push({
         id: `status-${sa.targetStatus}`,
         label: isPolish ? sa.labelPl : sa.label,
@@ -9920,7 +9925,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         // (odnoga biznesowa — tworzy nową inicjatywę-wariant) zostaje tu.
         // „Tryb pokazu" NIE jest działaniem na rekordzie, tylko sposobem
         // PREZENTACJI wyniku → przeniesiony do sekcji „Rezultaty" (§6.4/§6.5).
-        children: (
+        //
+        // ── PODGLĄD = TYLKO CZYTANIE (decyzja właściciela 2026-07-24) ──
+        // Sekcja jest PUSTA w Podglądzie — dokładnie jak w Zadaniu i Decyzji
+        // (wzorzec: `isEmpty: readMode` + `actionsHiddenInReadMode`). Wcześniej
+        // stał tu aktywny „Utwórz wariant", czyli akcja TWORZĄCA nowy obiekt
+        // w trybie, który ma nic nie zmieniać. Chcesz wariant → przełącz na Edycję.
+        isEmpty: readMode,
+        emptyLabel: t(
+          'initiatives.panel.actionsHiddenInReadMode',
+          'Actions are hidden in preview mode'
+        ),
+        children: readMode ? null : (
           <div className="flex flex-col gap-2">
             <button type="button" onClick={() => void handleFork()} className={panelBtn}>
               <GitFork size={14} className="text-c-text-muted" />
@@ -11174,8 +11190,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 /* Pozycje zwinięte tu z kebaba Menu 2 — uzasadnienie przy
                    `menu1ExtraOverflowItems`. Jeden kebab na ekranie. */
                 extraOverflowItems={menu1ExtraOverflowItems}
+                /* PODGLĄD = TYLKO CZYTANIE (2026-07-24): CTA Menu 1 to przejście
+                   cyklu życia („Oznacz jako ukończone" / „Zgłoś do przeglądu" …),
+                   czyli ZAPIS statusu na rekordzie. W Podglądzie znika — tak jak
+                   znikły akcje panelu. Zadanie i Decyzja nie mają w Podglądzie
+                   żadnego primary w Menu 1; Inicjatywa była jedyną kartą, która
+                   zostawiała tam żywy przycisk zmieniający stan. */
                 primaryAction={
-                  primaryLifecycleAction
+                  primaryLifecycleAction && !readMode
                     ? {
                         label: {
                           en: primaryLifecycleAction.label,

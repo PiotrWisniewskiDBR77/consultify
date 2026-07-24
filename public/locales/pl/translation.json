@@ -2461,7 +2461,8 @@
       "panelSources": "Źródła i założenia",
       "panelResults": "Rezultaty",
       "noSources": "Brak informacji o źródle",
-      "noStepsYet": "Brak kroków"
+      "noStepsYet": "Brak kroków",
+      "actionsHiddenInReadMode": "Akcje są ukryte w trybie Podgląd"
     },
     "projects": {
       "failedToLoadProjects": "Nie udało się wczytać projektów",
@@ -5326,7 +5327,8 @@
         "published": "Opublikowano",
         "failed": "Błąd"
       },
-      "confidenceLevelLabel": "Poziom pewności"
+      "confidenceLevelLabel": "Poziom pewności",
+      "actionsHiddenInReadMode": "Akcje są ukryte w trybie Podgląd"
     },
     "templateBuilder": {
       "freeTextAnswer": "Pole tekstowe na odpowiedź…",
@@ -9201,7 +9203,8 @@
       "outcomes": "Rezultaty",
       "deleteComment": "Usuń komentarz",
       "property": "Właściwość",
-      "value": "Wartość"
+      "value": "Wartość",
+      "actionsHiddenInReadMode": "Akcje są ukryte w trybie Podgląd"
     }
   },
   "execution": {
