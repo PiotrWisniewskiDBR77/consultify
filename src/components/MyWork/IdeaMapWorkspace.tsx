@@ -290,23 +290,9 @@ function buildStartupExtensions(
   };
 }
 
-/**
- * P1-1 (martwe kliknięcia powłoki): akcja „dodaj" Menu 3 per reprezentacja.
- * Powłoka (Menu 3 / rail / prawy panel) nie może wysyłać ciągów Mapy myśli do
- * wszystkich narzędzi — `mm_*` obsługuje WYŁĄCZNIE useMindMapQuickActions,
- * zamontowany tylko w IdeaRecommendationMap. Każdy ciąg poniżej ma realny
- * handler w hooku swojej reprezentacji:
- *   mm_add_child   → mindmap/useMindMapQuickActions.ts
- *   wb_add_sticky  → whiteboard/useWhiteboardQuickActions.ts
- *   pf_add_step    → processflow/useProcessFlowQuickActions.ts
- *   tbl_add_row    → table/useTableQuickActions.ts
- */
-const MENU3_ADD_ACTION_PER_TOOL: Record<CanvasToolType, string> = {
-  mindmap: 'mm_add_child',
-  whiteboard: 'wb_add_sticky',
-  process_flow: 'pf_add_step',
-  table: 'tbl_add_row',
-};
+// P1-1 (martwe kliknięcia powłoki): mapa „dodaj" per reprezentacja przeniesiona
+// do rejestru akcji jako `RUNTIME_ADD_ELEMENT` (src/actions/ideaActionRegistry.ts).
+// Menu 3 renderuje się teraz z rejestru, więc host nie potrzebuje własnej kopii.
 
 export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   ideaId,
@@ -979,6 +965,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setExportMenuOpen(true);
         return;
       }
+      // Odbiornik dla akcji rejestru `idea.templates.open` (Menu 3 „Szablony").
+      // Rejestr nadaje ten string na szynę, bo otwarcie modala żyje w stanie
+      // React hosta — analogicznie do `open_export_menu` wyżej.
+      if (action === 'open_template_gallery') {
+        setTemplateGalleryOpen(true);
+        return;
+      }
       if (action === 'accept_challenge') {
         handleAcceptChallengeRef.current();
         return;
@@ -1106,6 +1099,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         action === 'open_linked_artifacts' ||
         action === 'accept_challenge' ||
         action === 'open_export_menu' ||
+        action === 'open_template_gallery' ||
         action.startsWith('convert_') ||
         action.startsWith('wb_convert_') ||
         action.startsWith('pf_convert_') ||
@@ -2986,6 +2980,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     ]
   );
   // ── Menu 3 (second bar) view actions — Z7 anatomy ───────────────────────
+  // PRZEPIĘTE NA RENDER Z REJESTRU AKCJI (pierwsza powierzchnia, wzorzec dla
+  // kolejnych). Host NIE trzyma już własnej listy pozycji ani ich handlerów —
+  // `buildIdeaMenu3Actions` pobiera zestaw z `getActionsForSurface('menu3', …)`
+  // (filtr surfaces⊇menu3 + tools⊇aktywne narzędzie, kolejność wg rozdz. 05), a
+  // każdy klik wykonuje `runIdeaAction(id, …)` — ten sam tor, którego użyje
+  // Teresa (Z4). Rozjazdy „dodaj/auto-układ/AI rozwiń" (P1-1) są teraz zaszyte
+  // w samych deklaracjach rejestru (`RUNTIME_*`, handler `idea.view.auto_layout`),
+  // więc nie ma już potrzeby rozgałęziać ich tutaj po `activeTool`.
   const melsMenu3Actions = useMemo(
     () =>
       melsCanvasEnabled
@@ -2993,51 +2995,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             tool: activeTool,
             hasContent: mapHasNodes,
             isPolish: Boolean(isPolish),
-            handlers: {
-              // P1-1 (Z3): każda reprezentacja ma WŁASNĄ akcję „dodaj". Wcześniej
-              // wszystko poza Mapą myśli wysyłało `add_node`, którego nie obsługuje
-              // ŻADEN hook (mm/wb/pf/tbl) — „Dodaj kształt/wiersz/karteczkę" był
-              // martwym klikiem. Etykietę per narzędzie daje już buildIdeaMenu3Actions.
-              onAddPrimary: () =>
-                handleQuickAction(MENU3_ADD_ACTION_PER_TOOL[activeTool] ?? 'mm_add_child'),
-              // P1-1: Auto-układ widnieje tylko dla Mapy myśli i Przepływu. Mapa
-              // słucha zdarzenia węzłowego, Przepływ ma własny silnik układu
-              // (pf_auto_layout → handleAutoLayout) — wcześniej dostawał zdarzenie
-              // Mapy myśli, którego nikt w Przepływie nie słucha.
-              onAutoLayout:
-                activeTool === 'process_flow'
-                  ? () => handleQuickAction('pf_auto_layout')
-                  : () =>
-                      window.dispatchEvent(
-                        new CustomEvent('idea-mindmap-node-quick-action', {
-                          detail: { action: 'pane_auto_layout' },
-                        })
-                      ),
-              // P1-1: „AI rozwiń" to czasownik Mapy myśli (mm_ai_expand obsługuje
-              // wyłącznie useMindMapQuickActions). Whiteboard/Przepływ/Tabela mają
-              // własne generatory AI, ale nie mają „rozwinięcia" — chip nie może
-              // być klikalny, więc w tych reprezentacjach go NIE wystawiamy
-              // (buildIdeaMenu3Actions pomija akcję bez handlera). Wejście do AI
-              // tych narzędzi jest w lewym railu (popover AI, per reprezentacja).
-              onAIExpand:
-                activeTool === 'mindmap' ? () => handleQuickAction('mm_ai_expand') : undefined,
-              onOpenTemplateGallery: () => setTemplateGalleryOpen(true),
-              onExport: () => setExportMenuOpen(true),
-              onConvertFromMap: () => handlePanelChange('tools'),
-            },
+            ideaId: realId,
+            selection,
           })
         : { left: [], right: [] },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      melsCanvasEnabled,
-      activeTool,
-      mapHasNodes,
-      isPolish,
-      handleQuickAction,
-      handlePanelChange,
-      setTemplateGalleryOpen,
-      setExportMenuOpen,
-    ]
+    [melsCanvasEnabled, activeTool, mapHasNodes, isPolish, realId, selection]
   );
   // P0-4 / Z3: Inspektor i Kondycja mają treść tylko dla części reprezentacji.
   // Zakładka bez treści nie może być klikalna — wyłączamy ją z podanym powodem,

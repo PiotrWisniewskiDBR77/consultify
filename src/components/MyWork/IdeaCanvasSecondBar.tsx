@@ -2,12 +2,13 @@
  * IdeaCanvasSecondBar — Menu 3 (druga listwa POD Menu 1) for the Ideas
  * EditorShell (Z7). Carries the per-tool VIEW actions moved off Menu 1:
  * left cluster (Dodaj · Auto-układ · AI rozwiń · Szablony) + right cluster
- * (Eksport · Utwórz z mapy). Rendered by `IdeaMapWorkspace` into the shell's
- * `secondBar` slot.
+ * (Eksport). Rendered by `IdeaMapWorkspace` into the shell's `secondBar` slot.
  *
  * PRESENTATIONAL — driven entirely by `IdeaMenu3Action` descriptors built by
- * `buildIdeaMenu3Actions`. Ghost buttons only; no primary CTA lives here (the
- * sole primary is Menu 1's "Konwertuj ▾").
+ * `buildIdeaMenu3Actions`, które od 2026-07 pochodzą Z REJESTRU AKCJI
+ * (`getActionsForSurface('menu3', …)`) — nie z ręcznej listy hosta. Ghost
+ * buttons only; no primary CTA lives here (the sole primary is Menu 1's
+ * "Konwertuj ▾"). „Utwórz z mapy" świadomie zniknęło z Menu 3 (D6, rozdz. 05 §4.1).
  *
  * CRIMSON-SAFE: neutral ghost tokens + `c-focus` focus ring; no crimson.
  */
