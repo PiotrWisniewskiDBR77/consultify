@@ -290,3 +290,155 @@ Raportowałem **odhaczone pozycje backlogu** zamiast **zmian widocznych na ekran
 Następna sesja: meldować **zrzut przed/po**, nie listę ✅.
 Druga lekcja: **praca za flagą OFF nie istnieje dla właściciela** — jeśli on testuje,
 flagi muszą być ON, inaczej cała robota jest niewidoczna i wygląda na niezrobioną.
+
+---
+
+## 10. RUNDA 2 — WYKONANA I NA DEMO (2026-07-24, po recenzji Piotra)
+
+**Demo:** partia wypchnięta jako `2400b496e5` (forward-port per-SHA, 17/18 commitów
+czysto; 18. dotyczył wyłącznie harnessu i był zbędny — jego treść przyszła
+z późniejszymi). Punkt cofnięcia: tag **`demo-rollback-pre-idee-runda2-2026-07-24`**
+= `e84c3c4c08`. Deploy SUCCESS, `/` i `/api/health` = 200, nowy build potwierdzony
+na żywym pliku `/locales/pl/translation.json`.
+
+**Uwaga:** demo żyje pod wieloma sesjami — zaraz po pushu doszła partia n-Type.
+Moje commity są przodkiem obecnego HEAD (sprawdzone `merge-base --is-ancestor`),
+tamta sesja świadomie je wmergowała. **Zawsze `git fetch` + pre-flight.**
+
+### Kolejka 1–7 z §9 — ZAMKNIĘTA W CAŁOŚCI
+
+| # | Pozycja | Stan | Dowód |
+|---|---|---|---|
+| 1 | Kanon panelu D1 | ✅ | 5 zakładek klikniętych w harnessie; Powiązania/Komentarze/Historia na żywych źródłach |
+| 2 | 6 × „SOON" w Convert | ✅ | 0 wystąpień na ekranie; 12 celów → 6, wszystkie live |
+| 3 | Kolumna „Tool" | ✅ | jedno źródło etykiet; „Mapa rekomendacji" = 0 wystąpień |
+| 4 | Język AI | ✅ | treść wygrywa z flagą UI; 8/8 backend + 4/4 front na realnych danych |
+| 5 | Słownictwo etapów | ✅ | `IDEA_STAGE_BUCKET_LABELS`; rozjazd był NAWET wewnątrz jednego pliku |
+| 6 | Tryb kursora Z1 | ✅ | kursor `grab`, węzeł przeciągnięty myszą NIE zmienił pozycji |
+| 7 | Tarcza `preferred_tool` | ✅ | zapis v7→8, `preferred_tool` i `type:'flowNode'` nietknięte |
+
+### Domknięte PONAD kolejkę
+- **Z3 w railu i kebabie**: martwe sloty Import/Więcej **znikają** z Tablicy/
+  Przepływu/Tabeli (nie wiszą wyszarzone). Kebab: Prezentacja i Raport odblokowane.
+- **Parytet Z1 w Mapie**: Mapa była SŁABSZA po naprawie WB/PF — dociągnięta do
+  tego samego SSOT (`ideaCanvasCursorMode.ts`).
+- **Przełącznik D2 OBOK klastra zoomu** (zgłoszenie Piotra ze zrzutem), nie nad nim.
+- **5 surowych/zamrożonych kluczy i18n** usuniętych z ekranu.
+
+### ★ TRZY LEKCJE METODYCZNE (droższe niż same naprawy)
+
+1. **Sprawdź hipotezę, zanim ją ogłosisz.** Surowy klucz `mindmap.savedSecondsAgo`
+   wyglądał na brak polskich form mnogich — naliczyłem 324 „podejrzane" klucze
+   w całej aplikacji. Próba na i18next v25 w izolacji **obaliła hipotezę**
+   (biblioteka poprawnie schodzi do klucza bazowego). Prawdziwa przyczyna była
+   węższa: `t` poza zależnościami `useMemo` → etykieta liczona przed
+   doładowaniem tłumaczeń i nigdy nieprzeliczana. Gdybym zgłosił „324 błędy",
+   byłoby to dokładnie to zawyżanie, za które Piotr mnie skorygował.
+2. **Weryfikacja własnej poprawki wykryła moją własną regresję.** Ustawienie
+   przełącznika obok zoomu przykryło przycisk „Działaj" w podpowiedzi AI
+   (zmierzone: 417–561 vs 489–558). Układ obok jest teraz PREFERENCJĄ z odwrotem
+   na piętro, nie regułą na siłę. Druga pułapka: filtr przeszkód łapał wielkie
+   warstwy tła płótna, więc układ obok **nigdy się nie włączał**.
+3. **`check-triada` cicho unieważniała pomiar.** Skrypt kończył się „✓ czysto
+   (sprawdzono plików: 0)". Inna sesja naprawiła go tego dnia (grep BRE→ERE);
+   teraz uczciwie ostrzega „NIC nie zweryfikowano". **Ta partia została
+   przebadana regułą strażnika puszczoną wprost na dodane linie:
+   1672 linie w `src/components|src/views`, 0 naruszeń crimson.**
+
+### OTWARTE (nie blokuje testów Piotra)
+- **Rozjazd modeli etapów**: lista ma 5 kubełków, panel 7 etapów V5 — zamierzone
+  mapowanie (`V5_TO_LIST_BUCKET`), ale użytkownik widzi dwa słowniki. Wymaga
+  decyzji o modelu etapów, nie poprawki tekstu.
+- **12 podejrzanych `useMemo`** z `t()` bez `t` w zależnościach — zostawione
+  ŚWIADOMIE, bo nie dało się ich pokazać na ekranie. Zasada: mniej zmian
+  z dowodem > dużo na wiarę. Lista w commicie `6a530c3b7e`.
+- **Martwy kod**: `IdeaPinnedCard.tsx` nie jest używany nigdzie w repo; 5 zmiennych
+  `useMemo` zadeklarowanych i nieużywanych (`TaskDetailView`, `DecisionDetailView`).
+- **Etykieta „Zapisano 424034s temu"** — brak zwijania sekund do minut/godzin.
+  Widoczne dopiero przy długo otwartej sesji.
+- **Sprzątanie worktree'ów** — ~20 drzew w `/private/tmp`. NIE sprzątałem, bo inne
+  sesje pracowały równolegle; usunięcie drzewa pod żywą sesją zrywa jej pracę.
+  Kryterium bezpieczne: gałąź w całości na `origin/demo` + brak zmian lokalnych.
+
+---
+
+## 11. RUNDA 3 — etapy + Teresa Z4 (2026-07-24, po decyzjach Piotra)
+
+**Decyzje właściciela w tej rundzie:**
+1. Pomysł ma **PIĘĆ etapów** — model z listy (Iskra · Rośnie · Kształtuje się · Gotowy · Promowany).
+2. Priorytet po testach: **Teresa Z4 — żywa runda**, bo to jedyna z czterech zasad nigdy niesprawdzona.
+
+### Etapy — jeden słownik
+Zmieniona **wyłącznie warstwa prezentacji**. Kolumna `my_ideas.stage`, walidator
+`IdeaStageEnum` (7 wartości V5), `normalizeStageToV5` i logika przejść — nietknięte.
+Panel czyta przez `V5_TO_LIST_BUCKET` → `IDEA_STAGE_BUCKET_LABELS`.
+
+★ **Poprawka nadzorcy po symulacji przejść:** krok „o jeden V5" dawał DWA kliknięcia
+wyglądające na bezczynne (`framing` i `validating` — następna wartość w TYM SAMYM
+kubełku, więc przycisk mówił „→ Gotowy" przy plakietce „Gotowy"). Przycisk skacze
+teraz do najbliższego etapu **widocznie innego**.
+Sprawdzone przed tą decyzją: konwersja NIE jest bramkowana na `ready_to_convert`;
+nudge na `exploring` siedzi w `IdeaPinnedCard` (zero odwołań w repo).
+**KOSZT:** `IdeaFunnelAnalytics` (żywy) nie zobaczy `exploring`/`ready_to_convert`
+ustawionych TYM przyciskiem — inne ścieżki nadal je ustawiają.
+
+★ **Fałszywy alarm:** podejrzewałem, że mapowanie nie jest monotoniczne i nazwa cofa
+się z „Kształtuje się" na „Rośnie". Symulacja na PRAWDZIWYCH stałych (kolejność V5 to
+`spark·framing·exploring·structuring·…`, nie ta, którą wpisałem z pamięci) pokazała,
+że mapowanie JEST monotoniczne. Nic nie zmieniono.
+
+### Teresa Z4 — WYNIK ŻYWEJ RUNDY
+13 poleceń × 3 modele = **39 przebiegów, 36 wywołań narzędzi**. Realny manifest
+z rejestru + realna persona. Zero zapisów do bazy, bez stawiania aplikacji.
+
+| model | trafność | fałszywe wywołania |
+|---|---|---|
+| gpt-4o (STANDARD wg `modelRouter`) | 10/13 | 2 |
+| sonnet-4-6 (fallback) | 10/13 | 2 |
+| sonnet-4-5 (kontrolnie) | 11/13 | 0 |
+
+★★ **HALUCYNACJA NAZWY NARZĘDZIA: 0 na 36 wywołań.** Model nigdy nie wymyślił nazwy
+spoza rejestru — teza „rejestr = jedyne źródło prawdy" się broni.
+
+**Naprawione (na demo):**
+1. **Serwer wyrzucał kontekst otwartej Idei.** Front wysyłał `context.ideaContext`,
+   `grep ideaContext server/src/` = ZERO. Model odmawiał („nie widzę otwartego
+   Przepływu"), mając go otwartego. Blok `## OTWARTA REPREZENTACJA IDEI` w
+   `ai.routes.ts`. Kontrolny przebieg przestał odmawiać.
+2. **Dwie granice negatywne** w `teresa.description` (`table_categorize`,
+   `find_themes`) — modele podstawiały akcję Tabeli na prośbę o karteczki Tablicy
+   i meldowały nieprawdę o tym, co zrobiły.
+
+**NIE naprawione świadomie — `idea_workspace_convert` / `_duplicate` martwe przez
+Teresę:** rejestr wymaga `ctx.confirmed` przy `source:'teresa'`
+(`ideaActionRegistry:802`), a `UnifiedChatPanel:1958` woła `executeTeresaTool` bez
+tego pola i nikt w `src/` go nie ustawia. **Nie przekazuję `confirmed: true` z czatu**
+— zdjęłoby to bramkę całkiem, akcja wykonywałaby się na wniosek MODELU, nie na jawną
+zgodę człowieka. Właściwa naprawa = kontrolka potwierdzenia w czacie (decyzja
+produktowa).
+
+### ★ FLAGA `ENABLE_TERESA_IDEA_ACTIONS` NADAL WYŁĄCZONA — i dlaczego
+Zweryfikowana jest POŁOWA łańcucha: model → SSE `idea_action {toolName,args}`.
+Druga połowa (`executeTeresaTool → runIdeaAction → handler` rusza węzeł na płótnie)
+wymaga testu w przeglądarce. Włączenie teraz = Piotr pierwszy odkrywa, czy działa
+(reguła #7). **Następny krok: domknąć drugą połowę w przeglądarce, potem flaga.**
+Pułapka operacyjna: flaga frontu to `VITE_ENABLE_TERESA_IDEA_ACTIONS` — **build-time**,
+sama zmienna na serwerze nic nie da bez przebudowy frontu.
+
+### ★ POMYŁKA, KTÓRĄ SAM ZŁAPAŁEM I COFNĄŁEM
+Zgłosiłem „rozjazd flagi `ENABLE_TERESA_MINDMAP`" jako żywy defekt (trzy odczyty,
+przeciwne domyślne). **To było błędne.** Pod tą nazwą żyją DWIE funkcje:
+*wyszukiwanie* map (`persona.ts` + `orgRetrievalShared.ts` + `ai.routes` wantsMindmap
+— celowo domyślnie OFF, co-gated z `ENABLE_TERESA_RETRIEVAL`) i *generowanie* mapy
+(`FeatureFlags` + `generateDeliverable` + `mcpServer` — domyślnie ON). Każda
+wewnętrznie spójna. „Naprawa" sprawiłaby, że persona zapowiada modelowi narzędzie,
+którego nie ma. Zmiany cofnięte. **Zostaje dług nazewniczy: jedna nazwa flagi na dwie
+funkcje o przeciwnych domyślnych.**
+
+### OTWARTE po tej rundzie
+- Druga połowa łańcucha Z4 w przeglądarce → potem flaga.
+- Kontrolka potwierdzenia w czacie (odblokowuje convert/duplicate przez Teresę).
+- Trzeci zdryfowany słownik etapów: `IdeaCanvasMenu1Bits.tsx` — „Kształtuje" bez „ się".
+- Dług nazewniczy `ENABLE_TERESA_MINDMAP` (dwie funkcje, jedna nazwa).
+- Pozycje z §10: martwy kod, 12 niepotwierdzonych `useMemo`, zwijanie „Zapisano Ns temu",
+  sprzątanie worktree'ów.

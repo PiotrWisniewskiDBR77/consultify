@@ -109,8 +109,44 @@ function saveStoredBlocks(planId: string, blocks: PlanSchemaBlock[]): void {
   }
 }
 
-/** Konwersja realnych kroków planu (`AgentPlanStep`, backend) na edytowalne klocki schematu. */
-function stepsToBlocks(steps: AgentPlanStep[]): PlanSchemaBlock[] {
+/**
+ * Konwersja realnych kroków planu (`AgentPlanStep`, backend) na edytowalne
+ * klocki schematu.
+ *
+ * ★ AGT-008: teraz przenosimy też `toolName`/`toolInput` na blok (poprzednio
+ * blok niósł WYŁĄCZNIE id/kind/name/moduleType — stąd `blocksToSteps` niżej
+ * nie miała jak poznać wybór usera dla klocka i musiała zgadywać). Dzięki
+ * temu select "Narzędzie"/"Poziom Vault" w `AgentPlanCanvas` pokazuje
+ * PRAWDZIWY stan istniejącego kroku zamiast zawsze startować od placeholdera.
+ *
+ * ★ NAPRAWA CZYTELNOŚCI (2026-07-24, defekt zgłoszony przy odbiorze AGT-008):
+ * `name` klocka był ustawiany WPROST na `step.toolName` — dla realnych planów
+ * z generatora (`processLibraryService.buildExecutableSteps`) `toolName` to
+ * nazwa techniczna narzędzia (np. `search_knowledge_base`,
+ * `get_assessment_data`), więc user widział w canvasie klocki nazwane po
+ * nazwie API zamiast czytelnej fazy procesu. Generator wstrzykuje czytelną
+ * nazwę fazy do `toolInput.phase` (patrz `processLibraryService.ts` —
+ * `buildExecutableSteps`: `toolInput: { ...p.toolInput, phase: p.name, ... }`,
+ * gdzie `p.name` to np. "Wejście / Kontraktowanie", "Diagnoza", "Rekomendacje",
+ * "Wdrożenie", "Zamknięcie") — te dane trafiają do `ai_agent_plan_steps.
+ * tool_input_json`, więc frontend je ma. Kolejność pierwszeństwa nazwy
+ * wyświetlanej: (1) `toolInput.phase` — czytelna nazwa fazy z generatora,
+ * (2) `toolInput.name` — na wypadek innej ścieżki, która niesie nazwę kroku
+ * pod tym kluczem zamiast `phase`, (3) `toolName` — ostateczny techniczny
+ * fallback (np. dla kroków bez metadanych fazy). Nazwa techniczna narzędzia
+ * NIE ginie — `toolName` jest nadal niesiony osobno na bloku i pokazywany
+ * w select "Narzędzie" w `AgentPlanCanvas` (brak potrzeby duplikować go też
+ * w tytule klocka).
+ */
+function readablePhaseName(toolInput: Record<string, unknown> | undefined): string | undefined {
+  const phase = toolInput?.phase;
+  if (typeof phase === 'string' && phase.trim().length > 0) return phase;
+  const name = toolInput?.name;
+  if (typeof name === 'string' && name.trim().length > 0) return name;
+  return undefined;
+}
+
+export function stepsToBlocks(steps: AgentPlanStep[]): PlanSchemaBlock[] {
   return steps.map((step) => {
     const rawKind = step.toolInput?.blockKind;
     const kind: PlanBlockKind =
@@ -121,36 +157,47 @@ function stepsToBlocks(steps: AgentPlanStep[]): PlanSchemaBlock[] {
     return {
       id: step.id,
       kind,
-      name: step.toolName,
+      name: readablePhaseName(step.toolInput) ?? step.toolName,
       moduleType: typeof rawModule === 'string' ? rawModule : undefined,
+      toolName: step.toolName,
+      toolInput: step.toolInput,
     };
   });
 }
 
 /**
  * AGT-009: konwersja edytowalnych klocków (`PlanSchemaBlock`) z powrotem na
- * kroki wykonawcze `{toolName, toolInput}` do zapisu/uruchomienia. Klocek jest
- * lossy (niesie tylko id/kind/name/moduleType — patrz `stepsToBlocks`), więc
- * dla klocków POCHODZĄCYCH z realnego kroku odzyskujemy oryginalny `toolInput`
- * po `id` (blok.id === step.id), zachowując argumenty narzędzia (query,
- * calculation_type, …). Do tego dopisujemy metadane schematu (`blockKind`,
- * `module`, `phase`) tak, by round-trip step→block→step był stabilny.
+ * kroki wykonawcze `{toolName, toolInput}` do zapisu/uruchomienia.
  *
- * Nowo DODANE klocki (brak dopasowania po id) dostają bezpieczny, wykonywalny
- * `toolName` = `search_knowledge_base` (read-only, ten sam rejestr narzędzi co
- * czat Teresy) z zapytaniem z nazwy klocka — plan pozostaje uruchamialny, a
- * bramka akceptu i tak zadziała dla klocków side-effect wg SIDE_EFFECT_TOOLS.
+ * Dla klocków POCHODZĄCYCH z realnego kroku (dopasowanie po `id`) nadal
+ * priorytetowo odzyskujemy oryginalny `toolName`/`toolInput` z planu — to
+ * jest źródło prawdy dla kroku, który już istnieje (przestawienie/usunięcie
+ * NIE gubi argumentów narzędzia: query, calculation_type, vault_scope, …).
+ *
+ * ★ AGT-008 (naprawa): dla klocków BEZ dopasowania po id (nowo dodane w
+ * canvas) PRZED tą zmianą blok nie miał jak przenieść wybranego narzędzia
+ * w ogóle (`PlanSchemaBlock` nie miała pola na to) — więc każdy nowy klocek
+ * dostawał sztywny, niewidoczny dla usera fallback `search_knowledge_base`,
+ * niezależnie od tego, co user wybrał w UI (bo UI nie miało jak nic wybrać).
+ * Teraz blok niesie `toolName`/`toolInput` (patrz AgentPlanCanvas.tsx —
+ * select "Narzędzie" dla większości `kind`, select "Poziom Vault" dla
+ * `vault-kontekst`), więc kolejność pierwszeństwa jest: (1) realny krok po
+ * id, (2) WYBÓR usera na klocku, (3) bezpieczny fallback read-only —
+ * fallback (3) teraz odpala TYLKO dla schematów sprzed AGT-008 (klocki bez
+ * `toolName` w ogóle), nie dla każdego nowego klocka jak dotąd.
  */
-function blocksToSteps(
+export function blocksToSteps(
   blocks: PlanSchemaBlock[],
   planSteps: AgentPlanStep[]
 ): Array<{ toolName: string; toolInput: Record<string, unknown> }> {
   const byId = new Map(planSteps.map((s) => [s.id, s]));
   return blocks.map((block) => {
     const matched = byId.get(block.id);
-    const baseInput: Record<string, unknown> = matched ? { ...matched.toolInput } : {};
-    const toolName = matched?.toolName ?? 'search_knowledge_base';
-    if (!matched) {
+    const baseInput: Record<string, unknown> = matched
+      ? { ...matched.toolInput }
+      : { ...(block.toolInput ?? {}) };
+    const toolName = matched?.toolName ?? block.toolName ?? 'search_knowledge_base';
+    if (!baseInput.query && toolName === 'search_knowledge_base') {
       baseInput.query = block.name;
     }
     return {
@@ -380,7 +427,12 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
                 <li key={step.id} className="flex items-start gap-2 text-xs">
                   <span className="mt-0.5 shrink-0">{STEP_ICON[step.status]}</span>
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium text-c-text truncate">{step.toolName}</div>
+                    <div className="font-medium text-c-text truncate">
+                      {readablePhaseName(step.toolInput) ?? step.toolName}
+                    </div>
+                    {readablePhaseName(step.toolInput) ? (
+                      <div className="text-[10px] text-c-text-muted truncate">{step.toolName}</div>
+                    ) : null}
                     {step.errorMessage ? (
                       <div className="text-c-danger mt-0.5">{step.errorMessage}</div>
                     ) : null}
@@ -446,7 +498,12 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
             <div className="space-y-2">
               {awaitingSteps.map((step) => (
                 <div key={step.id} className="rounded-lg border border-c-border-subtle p-2">
-                  <div className="text-xs font-medium text-c-text mb-1.5">{step.toolName}</div>
+                  <div className="text-xs font-medium text-c-text mb-1.5">
+                    {readablePhaseName(step.toolInput) ?? step.toolName}
+                  </div>
+                  {readablePhaseName(step.toolInput) ? (
+                    <div className="text-[10px] text-c-text-muted mb-1.5">{step.toolName}</div>
+                  ) : null}
                   <PreviewActionButton
                     variant="positive"
                     icon={CheckCircle2}

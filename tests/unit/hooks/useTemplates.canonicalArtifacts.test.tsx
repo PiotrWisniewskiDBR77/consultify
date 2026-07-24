@@ -136,22 +136,26 @@ describe('useTemplates (canonical artifacts)', () => {
 
     expect(result.current.error).toBeNull();
     expect(result.current.templates).toEqual([
+      // Kontrakt `src/types/materials.ts`: 'app' → 'system' (nigdy 'application'),
+      // 'published' zostaje 'published' (nie jest spłaszczane do 'active').
       expect.objectContaining({
         id: 'tmpl-deck-1',
+        artifactIndexId: 'tmpl-deck-1',
         title: 'Executive update deck',
         type: 'presentation',
         category: 'executive_update',
-        scope: 'application',
-        status: 'active',
+        scope: 'system',
+        status: 'published',
         slideCount: 3,
       }),
       expect.objectContaining({
         id: 'tmpl-report-1',
+        artifactIndexId: 'tmpl-report-1',
         title: 'Steering report template',
         type: 'report',
         category: 'R2',
         scope: 'organization',
-        status: 'active',
+        status: 'published',
         sectionCount: 2,
       }),
     ]);
