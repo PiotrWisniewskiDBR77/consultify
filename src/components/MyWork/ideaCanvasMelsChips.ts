@@ -25,27 +25,38 @@ import {
   Copy,
   Download,
   GitBranch,
+  GitMerge,
   HelpCircle,
   History,
   LayoutDashboard,
+  LayoutGrid,
   LayoutTemplate,
+  Lightbulb,
   MessagesSquare,
+  MousePointer2,
   Plus,
   Search,
   Sparkles,
   StickyNote,
   Table2,
+  Target,
   Trash2,
+  Wand2,
   Workflow,
   type LucideIcon,
 } from 'lucide-react';
 
+import {
+  getActionsForSurface,
+  runIdeaAction,
+  type IconName,
+} from '@/actions/ideaActionRegistry';
 import type {
   RightRailToolDescriptor,
   TopBarChipDescriptor,
 } from '@/components/shared/ExecutiveModuleShell';
 
-import type { CanvasToolType } from './ideaSelectionTypes';
+import type { CanvasToolType, IdeaWorkspaceSelection } from './ideaSelectionTypes';
 
 // ── Per-tool identity icon (SSOT: superCanvasTypes.OBJECT_FAMILY_ICONS) ──────
 export const IDEA_TOOL_ICON: Record<CanvasToolType, LucideIcon> = {
@@ -186,21 +197,9 @@ export interface IdeaMenu3Action {
   testId?: string;
 }
 
-export interface IdeaMenu3Handlers {
-  /** Primary "add" verb for the active tool. */
-  onAddPrimary?: () => void;
-  /** Auto-layout / tidy (mind map + process flow only). */
-  onAutoLayout?: () => void;
-  /** AI expand / suggestions. */
-  onAIExpand?: () => void;
-  /** Template gallery. */
-  onOpenTemplateGallery?: () => void;
-  /** Export (real; mirrors the kebab entry). */
-  onExport?: () => void;
-  /** Open the Convert panel ("Utwórz z mapy"). */
-  onConvertFromMap?: () => void;
-}
-
+// Etykieta i ikona przycisku „Dodaj" zależą od aktywnego narzędzia (rozdz. 05:
+// „ten sam builder, inny wynik") — to JEDYNA jawna różnica per reprezentacja w
+// warstwie prezentacji Menu 3. Reszta pozycji ma jedną etykietę/ikonę.
 const MENU3_ADD_LABEL: Record<CanvasToolType, { en: string; pl: string }> = {
   mindmap: { en: 'Add node', pl: 'Dodaj węzeł' },
   process_flow: { en: 'Add shape', pl: 'Dodaj kształt' },
@@ -216,81 +215,166 @@ const MENU3_ADD_ICON: Record<CanvasToolType, LucideIcon> = {
 };
 
 /**
- * Build the Menu-3 view actions, split into a left cluster (create / shape the
- * view) and a right cluster (Eksport · Utwórz z mapy). `hasContent` gates the
- * actions that need a non-empty canvas.
+ * Fallback ikon dla akcji, które w przyszłości dojdą do Menu 3 w rejestrze,
+ * ale nie mają jeszcze wpisu w `MENU3_PRESENTATION`. Dzięki temu nowa akcja
+ * `surfaces:['menu3']` pojawi się w pasku AUTOMATYCZNIE (o to chodzi w migracji
+ * na render z rejestru), a nie zniknie po cichu.
+ */
+const ICON_BY_NAME: Record<IconName, LucideIcon> = {
+  Plus,
+  LayoutGrid,
+  LayoutTemplate,
+  Sparkles,
+  Wand2,
+  GitMerge,
+  Search,
+  Lightbulb,
+  Target,
+  MousePointer2,
+  Workflow,
+  Download,
+  Copy,
+};
+
+/**
+ * Prezentacja Menu 3 per identyfikator akcji z rejestru. Rejestr decyduje, KTÓRE
+ * akcje się pokazują (filtr `surfaces`⊇`menu3` + `tools`⊇aktywne narzędzie) oraz
+ * o ich KOLEJNOŚCI (porządek deklaracji w `IDEA_ACTIONS`). Ta tabela dokłada
+ * warstwę widoczną (etykieta/ikona/klaster/stan pusty) tak, by po przepięciu
+ * pasek wyglądał 1:1 jak stan zaakceptowany 2026-07-23 (kontrakt regresji, reguła
+ * projektu #7 — zero cichej zmiany wyglądu).
+ *
+ * ⚠ ROZJAZD Z ETYKIETĄ/IKONĄ REJESTRU (świadomy, do decyzji wizualnej Piotra):
+ *   • `idea.element.add` — rejestr ma jedną etykietę „Dodaj element"/ikonę `Plus`;
+ *     UI zachowuje etykietę PER NARZĘDZIE („Dodaj węzeł/kształt/wiersz/karteczkę")
+ *     i ikonę per narzędzie (MENU3_ADD_*), bo tak było dziś na ekranie.
+ *   • `idea.view.auto_layout` — rejestr `LayoutGrid`, UI zachowuje `LayoutDashboard`.
+ *   • `idea.ai.expand_map` — rejestr „AI: rozwiń mapę", UI zachowuje „AI rozwiń".
+ * Ujednolicenie etykiet/ikon rejestr↔UI to zmiana WIZUALNA — nie robimy jej po
+ * cichu przy migracji mechaniki.
+ */
+interface Menu3Presentation {
+  itemId: string;
+  testId: string;
+  icon: LucideIcon;
+  labelPl: string;
+  labelEn: string;
+  cluster: 'left' | 'right';
+  /** Wyłączony, gdy reprezentacja pusta (dziś: „Eksport"). */
+  needsContent?: boolean;
+}
+
+const MENU3_PRESENTATION: Record<string, Menu3Presentation> = {
+  // labelPl/En dla „Dodaj" są nadpisywane per narzędzie niżej (MENU3_ADD_*).
+  'idea.element.add': {
+    itemId: 'menu3-add',
+    testId: 'idea-menu3-add',
+    icon: Plus,
+    labelPl: 'Dodaj',
+    labelEn: 'Add',
+    cluster: 'left',
+  },
+  'idea.view.auto_layout': {
+    itemId: 'menu3-auto-layout',
+    testId: 'idea-menu3-auto-layout',
+    icon: LayoutDashboard,
+    labelPl: 'Auto-układ',
+    labelEn: 'Auto-layout',
+    cluster: 'left',
+  },
+  'idea.ai.expand_map': {
+    itemId: 'menu3-ai-expand',
+    testId: 'idea-menu3-ai-expand',
+    icon: Sparkles,
+    labelPl: 'AI rozwiń',
+    labelEn: 'AI expand',
+    cluster: 'left',
+  },
+  'idea.templates.open': {
+    itemId: 'menu3-templates',
+    testId: 'idea-menu3-templates',
+    icon: LayoutTemplate,
+    labelPl: 'Szablony',
+    labelEn: 'Templates',
+    cluster: 'left',
+  },
+  'idea.export.open': {
+    itemId: 'menu3-export',
+    testId: 'idea-menu3-export',
+    icon: Download,
+    labelPl: 'Eksport',
+    labelEn: 'Export',
+    cluster: 'right',
+    needsContent: true,
+  },
+};
+
+/**
+ * Buduje pozycje Menu 3 Z REJESTRU AKCJI (pierwsza powierzchnia renderowana z
+ * rejestru — wzorzec dla kolejnych). Host NIE trzyma już własnej listy pozycji:
+ *   1. `getActionsForSurface('menu3', { tool })` zwraca zestaw akcji dostępnych
+ *      w tej reprezentacji (filtr `surfaces`⊇`menu3` + `tools`) w kolejności
+ *      deklaracji w rejestrze — czyli kolejność i grupowanie z rozdz. 05.
+ *   2. Każda pozycja dostaje `onClick = runIdeaAction(id, ctx)` — TEN SAM tor
+ *      wykonania, którego użyje Teresa (Z4); handlery żyją w rejestrze, nie tu.
+ *   3. Warstwa widoczna (etykieta/ikona/klaster) z `MENU3_PRESENTATION`, z
+ *      etykietą/ikoną „Dodaj" per narzędzie — żeby wygląd był 1:1 jak dziś.
+ * `hasContent` wyłącza pozycje wymagające niepustej reprezentacji (Eksport).
  */
 export function buildIdeaMenu3Actions(args: {
   tool: CanvasToolType;
-  handlers: IdeaMenu3Handlers;
   hasContent: boolean;
   isPolish: boolean;
+  ideaId: string;
+  selection: IdeaWorkspaceSelection;
 }): { left: IdeaMenu3Action[]; right: IdeaMenu3Action[] } {
-  const { tool, handlers, hasContent, isPolish } = args;
+  const { tool, hasContent, isPolish, ideaId, selection } = args;
   const pl = isPolish;
-  const supportsAutoLayout = tool === 'mindmap' || tool === 'process_flow';
 
   const left: IdeaMenu3Action[] = [];
   const right: IdeaMenu3Action[] = [];
 
-  if (handlers.onAddPrimary) {
-    left.push({
-      id: 'menu3-add',
-      label: MENU3_ADD_LABEL[tool][pl ? 'pl' : 'en'],
-      icon: MENU3_ADD_ICON[tool],
-      onClick: handlers.onAddPrimary,
-      testId: 'idea-menu3-add',
-    });
-  }
-  if (supportsAutoLayout && handlers.onAutoLayout) {
-    left.push({
-      id: 'menu3-auto-layout',
-      label: pl ? 'Auto-układ' : 'Auto-layout',
-      icon: LayoutDashboard,
-      onClick: handlers.onAutoLayout,
-      testId: 'idea-menu3-auto-layout',
-    });
-  }
-  if (handlers.onAIExpand) {
-    left.push({
-      id: 'menu3-ai-expand',
-      label: pl ? 'AI rozwiń' : 'AI expand',
-      icon: Sparkles,
-      onClick: handlers.onAIExpand,
-      testId: 'idea-menu3-ai-expand',
-    });
-  }
-  if (handlers.onOpenTemplateGallery) {
-    left.push({
-      id: 'menu3-templates',
-      label: pl ? 'Szablony' : 'Templates',
-      icon: LayoutTemplate,
-      onClick: handlers.onOpenTemplateGallery,
-      testId: 'idea-menu3-templates',
-    });
-  }
+  for (const { def } of getActionsForSurface('menu3', { tool })) {
+    const pres = MENU3_PRESENTATION[def.id];
+    const isAdd = def.id === 'idea.element.add';
 
-  if (handlers.onExport) {
-    right.push({
-      id: 'menu3-export',
-      label: pl ? 'Eksport' : 'Export',
-      icon: Download,
-      onClick: handlers.onExport,
-      disabled: !hasContent,
-      tooltip: hasContent ? undefined : pl ? 'Pusta mapa' : 'Empty map',
-      testId: 'idea-menu3-export',
-    });
-  }
-  if (handlers.onConvertFromMap) {
-    right.push({
-      id: 'menu3-convert-from-map',
-      label: pl ? 'Utwórz z mapy' : 'Create from map',
-      icon: GitBranch,
-      onClick: handlers.onConvertFromMap,
-      disabled: !hasContent,
-      tooltip: hasContent ? undefined : pl ? 'Pusta mapa' : 'Empty map',
-      testId: 'idea-menu3-convert-from-map',
-    });
+    const label = isAdd
+      ? MENU3_ADD_LABEL[tool][pl ? 'pl' : 'en']
+      : pres
+        ? pl
+          ? pres.labelPl
+          : pres.labelEn
+        : def.label[pl ? 'pl' : 'en'];
+
+    const icon = isAdd ? MENU3_ADD_ICON[tool] : pres ? pres.icon : ICON_BY_NAME[def.icon];
+
+    const needsContent = pres?.needsContent ?? false;
+    const disabled = needsContent && !hasContent;
+
+    const action: IdeaMenu3Action = {
+      id: pres?.itemId ?? `menu3-${def.id}`,
+      label,
+      icon,
+      // Wykonanie idzie przez rejestr — jedno źródło prawdy dla kliknięcia w UI
+      // i polecenia Teresy. Rejestrowy handler odmawia z komunikatem, gdy akcja
+      // nie istnieje w tej reprezentacji, więc martwy klik jest niemożliwy.
+      onClick: () => {
+        void runIdeaAction(def.id, {
+          ideaId,
+          tool,
+          selection,
+          surface: 'menu3',
+          source: 'ui',
+          language: pl ? 'pl' : 'en',
+        });
+      },
+      disabled,
+      tooltip: disabled ? (pl ? 'Pusta mapa' : 'Empty map') : undefined,
+      testId: pres?.testId,
+    };
+
+    if ((pres?.cluster ?? 'left') === 'right') right.push(action);
+    else left.push(action);
   }
 
   return { left, right };

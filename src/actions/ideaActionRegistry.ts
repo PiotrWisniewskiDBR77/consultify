@@ -63,6 +63,7 @@ export type Surface = 'menu1' | 'menu3' | 'rail' | 'panel' | 'context' | 'floati
 export type IconName =
   | 'Plus'
   | 'LayoutGrid'
+  | 'LayoutTemplate'
   | 'Sparkles'
   | 'Wand2'
   | 'GitMerge'
@@ -71,6 +72,7 @@ export type IconName =
   | 'Target'
   | 'MousePointer2'
   | 'Workflow'
+  | 'Download'
   | 'Copy';
 
 /** Minimalny JSON Schema — kształt zgodny z `parameters` w toolDefinitions.ts. */
@@ -404,6 +406,64 @@ const IDEA_ACTIONS: ActionDef[] = [
     source: 'src/components/MyWork/mindmap/useMindMapQuickActions.ts:761',
   },
   {
+    // „Szablony" — otwiera galerię szablonów widoku (`IdeaTemplateGallery`),
+    // filtrowaną po aktywnym narzędziu. Wspólna dla wszystkich 4 reprezentacji
+    // (Menu 3, lewy slot). NIE mutuje grafu — tylko otwiera modal; sama
+    // aplikacja szablonu ma własny podgląd w środku galerii.
+    id: 'idea.templates.open',
+    label: {
+      pl: 'Szablony',
+      en: 'Templates',
+    },
+    icon: 'LayoutTemplate',
+    scope: 'current_view',
+    tools: 'all',
+    surfaces: ['menu3'],
+    handler: async (ctx) => {
+      // Otwarcie modala żyje w stanie React hosta, więc rejestr sięga do niego
+      // przez tę samą szynę co reszta akcji — string `open_template_gallery`
+      // ma odbiornik w IdeaMapWorkspace.handleQuickAction (setTemplateGalleryOpen).
+      dispatchQuickAction('open_template_gallery', ctx);
+      return { ok: true, actionId: 'idea.templates.open', data: { runtime: 'open_template_gallery' } };
+    },
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera galerię gotowych szablonów dla otwartej reprezentacji — szybki start z gotowej struktury zamiast pustego płótna/tabeli.',
+    },
+    source:
+      'src/components/MyWork/IdeaMapWorkspace.tsx setTemplateGalleryOpen (Menu 3 „Szablony", buildIdeaMenu3Actions) + IdeaTemplateGallery.tsx',
+  },
+  {
+    // „Eksport" — otwiera `IdeaExportMenu` z pełnym grafem + rozszerzeniami.
+    // To samo wejście, co pozycja „Eksport" w kebabie Menu 1 (dwa wejścia, jeden
+    // mechanizm). Prawy slot Menu 3, wyłączony gdy reprezentacja pusta (gate w UI).
+    id: 'idea.export.open',
+    label: {
+      pl: 'Eksport',
+      en: 'Export',
+    },
+    icon: 'Download',
+    scope: 'workspace',
+    tools: 'all',
+    surfaces: ['menu3'],
+    handler: async (ctx) => {
+      // `open_export_menu` ma gotowy odbiornik w IdeaMapWorkspace.handleQuickAction
+      // (setExportMenuOpen) i w routerze zdarzeń szyny (lista dozwolonych akcji).
+      dispatchQuickAction('open_export_menu', ctx);
+      return { ok: true, actionId: 'idea.export.open', data: { runtime: 'open_export_menu' } };
+    },
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera okno eksportu otwartej reprezentacji do pliku (obraz/PDF/pakiet — zależnie od narzędzia).',
+    },
+    source:
+      'src/components/MyWork/IdeaMapWorkspace.tsx setExportMenuOpen (Menu 3 „Eksport" + kebab Menu 1) + IdeaExportMenu.tsx',
+  },
+  {
     id: 'idea.ai.summarize_map',
     label: {
       pl: 'AI: podsumuj mapę',
@@ -587,7 +647,14 @@ const IDEA_ACTIONS: ActionDef[] = [
     icon: 'Workflow',
     scope: 'workspace',
     tools: 'all',
-    surfaces: ['menu1', 'menu3', 'panel'],
+    // Konwersja CAŁEJ Idei to zakres `workspace` → jej miejsce to Menu 1
+    // (primary „Konwertuj ▾", `IdeaConvertMenu`) i prawy panel, NIGDY Menu 3.
+    // Menu 3 renderuje się teraz z rejestru (filtr surfaces⊇menu3), więc
+    // pozostawienie 'menu3' tutaj wstawiłoby do drugiej listwy przycisk bez
+    // dropdownu (handler wymaga `target`+potwierdzenia → klik bez efektu) —
+    // dokładnie martwy klik, którego pilnuje strażnik. Zgodne z rozdz. 05 §2
+    // (workspace = Menu 1) i §4.1/D6 (skrót „Utwórz z mapy" ZAKAZANY w Menu 3).
+    surfaces: ['menu1', 'panel'],
     handler: async (ctx) => {
       const target = String(ctx.params?.target || '');
       const allowed = ['initiative', 'task_set', 'decision', 'report', 'presentation'];
