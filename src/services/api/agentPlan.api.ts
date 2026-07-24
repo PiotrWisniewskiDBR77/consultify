@@ -65,6 +65,22 @@ export interface AgentPlan {
   createdAt: string;
 }
 
+/**
+ * Krok wysyłany do backendu (`PlanStepInputSchema`
+ * w server/src/routes/ai/agent-plan.routes.ts).
+ *
+ * `requiresApproval` to JAWNY override bramki akceptu (DOROBKA C 2026-07-23):
+ * gdy pominięty, backend liczy go z `SIDE_EFFECT_TOOLS`; gdy podany, wygrywa.
+ * Warsztat agenta wysyła `true` dla klocków „Zgoda (bramka)" i „Automat" —
+ * pisarze My Work (`create_task`/`update_task`/`create_decision`) NIE są w
+ * `SIDE_EFFECT_TOOLS`, więc bez tego wykonałyby się bez pytania użytkownika.
+ */
+export interface AgentPlanStepPayload {
+  toolName: string;
+  toolInput: Record<string, unknown>;
+  requiresApproval?: boolean;
+}
+
 export interface CreateAgentPlanInput {
   title: string;
   description?: string;
@@ -123,7 +139,7 @@ export async function createAgentPlan(
  */
 export async function updateAgentPlanSteps(
   planId: string,
-  steps: Array<{ toolName: string; toolInput: Record<string, unknown> }>
+  steps: AgentPlanStepPayload[]
 ): Promise<{ plan: AgentPlan }> {
   const res = await fetch(`${API_URL}/ai/agent-plan/${encodeURIComponent(planId)}/steps`, {
     method: 'PATCH',
@@ -140,7 +156,7 @@ export async function updateAgentPlanSteps(
  */
 export async function runAgentPlan(
   planId: string,
-  steps?: Array<{ toolName: string; toolInput: Record<string, unknown> }>
+  steps?: AgentPlanStepPayload[]
 ): Promise<{ plan: AgentPlan; dispatch: AgentPlanDispatch }> {
   const res = await fetch(`${API_URL}/ai/agent-plan/${encodeURIComponent(planId)}/run`, {
     method: 'POST',
