@@ -109,3 +109,29 @@ Trzy razy tej nocy ogłosiłem defekt systemowy, który nie istniał; dwa razy o
 - Raport poranny (wynik, decyzje, moje błędy): `_RANO_2026-07-24.md`
 - Audyt środowiska (surowy): `AUDYT_SRODOWISKA_ODBIORU.md`
 - Standard: `_STANDARD_N_TYPE_2026-07-23/`
+
+---
+
+## 7. PROMOCJA NA DEMO — WYKONANA (2026-07-24, autoryzacja właściciela)
+
+**SHA na demo:** `97f466bd98` — potwierdzony na `/api/health` (zgodny z wypchniętym).
+Deploy SUCCESS, baza i cache podłączone. **Nowy punkt cofania: `demo-safe-2026-07-24`**;
+poprzedni `demo-safe-2026-07-23` (`9b143bc913`) nietknięty. Fast-forward, bez force.
+88 commitów (86 nocnych + docs + merge). Historia demo zachowana.
+
+**Migracja Insightu — ręcznie na DEMO/trolley, przed pushem kodu.** Kolumna
+`interview_insights.section_overrides` dodana, 19 wierszy, wszystkie NULL (zero zmiany zachowania).
+★ Bramka hosta przetestowana negatywnie: podanie PROD (centerbeam) **odmówiło wykonania**.
+Produkcja nietknięta.
+
+**Automat dorabiający kolumnę ZOSTAWIONY — wbrew mojej rekomendacji, z lepszym powodem.**
+Migracja 931 nie poszła na PROD. Ten kod pojedzie kiedyś forward-portem demo → Londyn → prod;
+zdjęcie guardu teraz wysypałoby zapis Insightu na produkcji do czasu, aż ktoś sobie przypomni
+o migracji. Koszt zostawienia zerowy (jedno tanie sprawdzenie raz na proces, potem flaga zwiera).
+**Do zdjęcia dopiero po uruchomieniu 931 na produkcji.**
+
+**Czerwona bramka przepuszczona świadomie, z dowodem.** `check-list-canon.sh` = 11 naruszeń
+(surowe tabele). A/B na tym samym zestawie plików w drzewie `origin/demo` sprzed merge'a:
+**11 przed, 11 po, zbiory identyczne**, skrypt bramki niezmieniony. To dług zastany na demo,
+nie coś, co ta promocja wnosi. Zatrzymanie cofnęłoby całą noc za błąd, którego demo już nie łapie.
+★ **Do naprawy osobno** — bramka, która jest trwale czerwona, przestaje cokolwiek chronić.
