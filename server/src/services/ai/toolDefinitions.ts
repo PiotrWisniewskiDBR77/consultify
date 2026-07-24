@@ -69,6 +69,21 @@ export const AI_TOOLS: ToolDefinition[] = [
             enum: ['all', 'policy', 'report', 'procedure', 'strategy'],
             description: 'Filter by document type',
           },
+          // AGT-008 — klocek "Vault-kontekst" (AgentPlanCanvas.tsx): gdy podane,
+          // retrieval jest ograniczony do JEDNEGO poziomu sejfu Vault (VLT-001)
+          // zamiast domyślnego widoku łączonego. Egzekwowane w executeKBSearch
+          // przez tę samą regułę dostępu co GET /api/knowledge/vault-safes.
+          vault_scope: {
+            type: 'string',
+            enum: ['user', 'organization', 'project'],
+            description:
+              'Optional Vault level restriction (agent-plan "Vault-kontekst" block): "user" restricts to the caller\'s own private safe, "organization" to the shared org safe, "project" to one project safe. When set, retrieval never crosses into another safe\'s documents.',
+          },
+          vault_project_id: {
+            type: 'string',
+            description:
+              'Project id for vault_scope="project". When omitted, falls back to the projects the caller is a member of.',
+          },
         },
         required: ['query'],
       },
@@ -866,7 +881,7 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
     const ragService = (ragMod.default || ragMod) as {
       hybridSearch?: (
         query: string,
-        opts?: { organizationId?: string; limit?: number }
+        opts?: { organizationId?: string; limit?: number; documentIds?: string[] }
       ) => Promise<
         Array<{
           content?: string;
@@ -882,13 +897,67 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
         note: 'RAG service not available',
       });
     }
+
+    // AGT-008 — klocek "Vault-kontekst" (AgentPlanCanvas.tsx) niesie
+    // `toolInput.vault_scope` (+ opcjonalnie `vault_project_id`) wybrany przez
+    // usera z listy `GET /api/knowledge/vault-safes`. Gdy podane, ograniczamy
+    // retrieval do dokumentów TEGO JEDNEGO sejfu przez `documentIds` allow-list
+    // — TĄ SAMĄ regułą dostępu co `KnowledgeService.getDocuments` używaną przez
+    // tabelę sejfów (scope='user' => WYŁĄCZNIE owner_id === ctx.userId;
+    // scope='project' => WYŁĄCZNIE projekty, w których wołający jest członkiem).
+    // To jest test izolacji z KRYTERIUM ODBIORU AGT-008: prywatny dokument
+    // właściciela wchodzi w JEGO proces, nigdy w cudzy.
+    let documentIds: string[] | undefined;
+    const vaultScope =
+      args?.vault_scope === 'user' ||
+      args?.vault_scope === 'organization' ||
+      args?.vault_scope === 'project'
+        ? (args.vault_scope as 'user' | 'organization' | 'project')
+        : undefined;
+
+    if (vaultScope) {
+      const { default: KnowledgeService } = await import('../KnowledgeService.js');
+      let memberProjectIds: string[] = [];
+      const explicitProjectId =
+        typeof args.vault_project_id === 'string' && args.vault_project_id
+          ? args.vault_project_id
+          : null;
+      if (vaultScope === 'project' && !explicitProjectId) {
+        const { all: dbAll } = await import('../../utils/DbPromise.js');
+        const rows = await dbAll<{ project_id: string }>(
+          `SELECT project_id FROM project_members WHERE user_id = ?`,
+          [ctx.userId]
+        );
+        memberProjectIds = (rows || []).map((r: any) => String(r.project_id)).filter(Boolean);
+      }
+      const scopedDocs = await KnowledgeService.getDocuments(
+        ctx.organizationId,
+        ctx.userId,
+        undefined,
+        { scope: vaultScope, projectId: explicitProjectId, memberProjectIds }
+      );
+      documentIds = (scopedDocs || []).map((d: any) => String(d.id)).filter(Boolean);
+
+      if (documentIds.length === 0) {
+        return JSON.stringify({
+          source: 'knowledge_base',
+          query: args.query,
+          vaultScope,
+          results: [],
+          note: 'Brak dokumentów w wybranym sejfie Vault',
+        });
+      }
+    }
+
     const results = await ragService.hybridSearch(args.query, {
       organizationId: ctx.organizationId,
       limit: 5,
+      documentIds,
     });
     return JSON.stringify({
       source: 'knowledge_base',
       query: args.query,
+      ...(vaultScope ? { vaultScope } : {}),
       results: (results || []).slice(0, 5).map((r: any) => ({
         content: r.content?.slice(0, 500),
         documentTitle: r.metadata?.documentTitle || r.documentId,
