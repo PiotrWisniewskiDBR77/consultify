@@ -32,23 +32,31 @@ export const AgentPlanView: React.FC = () => {
 
   if (!isAgentPlanEnabled()) return null;
 
+  // ★ 2026-07-24 (warsztat agenta): AgentPlanWorkspace przestał być wąskim
+  // panelem dokowanym po prawej — po otwarciu procesu jest teraz trzykolumnowym
+  // warsztatem (sterowanie · schemat · paleta), który potrzebuje CAŁEJ
+  // szerokości. Dawny układ „intro po lewej, panel po prawej" zjadał połowę
+  // ekranu i wciskał schemat w kilkaset pikseli. Intro zjeżdża więc do zwięzłej
+  // belki nad warsztatem.
   return (
-    <div className="flex h-full min-h-[560px] flex-col gap-6 lg:flex-row">
-      <div className="flex min-w-0 flex-1 flex-col justify-center lg:max-w-xl">
-        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-c-surface-raised text-c-text-muted">
-          <Bot size={22} />
+    <div className="flex h-full min-h-[560px] flex-col">
+      <div className="mb-3 flex items-center gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-c-surface-raised text-c-text-muted">
+          <Bot size={18} />
         </div>
-        <h1 className="mb-2 text-xl font-semibold text-c-text">
-          {t('agentPlan.view.title', 'Run agent')}
-        </h1>
-        <p className="text-sm text-c-text-muted">
-          {t(
-            'agentPlan.view.body',
-            'Pick a ready-made agent from the catalog and launch it as a background plan. Steps that need your sign-off wait in the Approvals section until you confirm them.'
-          )}
-        </p>
+        <div className="min-w-0">
+          <h1 className="text-base font-semibold text-c-text">
+            {t('agentPlan.view.title', 'Run agent')}
+          </h1>
+          <p className="truncate text-xs text-c-text-muted">
+            {t(
+              'agentPlan.view.body',
+              'Pick a ready-made agent from the catalog and launch it as a background plan. Steps that need your sign-off wait in the Approvals section until you confirm them.'
+            )}
+          </p>
+        </div>
       </div>
-      <div className="shrink-0">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-c-border-subtle">
         <AgentPlanWorkspace />
       </div>
     </div>

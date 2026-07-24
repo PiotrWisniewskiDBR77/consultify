@@ -40,6 +40,7 @@ const AdminSsoSelfServiceCardScreen = React.lazy(() => import('./screens/admin-s
 const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canvas'));
 const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
 const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
+const AgentWarsztatScreen = React.lazy(() => import('./screens/agent-warsztat'));
 const AssessmentInitiativesPanelScreen = React.lazy(() => import('./screens/assessment-initiatives-panel'));
 const AssessmentInitiativesTableScreen = React.lazy(() => import('./screens/assessment-initiatives-table'));
 const AssessmentListScreen = React.lazy(() => import('./screens/assessment-list'));
@@ -288,6 +289,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'AGT-010 — powłoka Run agent (Moje procesy | Szablony) PRZED AgentPlanWorkspace, tabela planning/executing/awaiting_approval/completed/failed',
     render: () => <AgentHubScreen />,
+  },
+  'agent-warsztat': {
+    label:
+      'WARSZTAT AGENTA — 3 kolumny (sterowanie · schemat blokowy · paleta klocków); &case=planning|executing|approval',
+    render: () => <AgentWarsztatScreen />,
   },
   'capability-gate-demo': {
     label: 'Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)',

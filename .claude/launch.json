@@ -30,6 +30,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3413"],
       "port": 3413
+    },
+    {
+      "name": "agent-warsztat",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3416"],
+      "port": 3416
     }
   ]
 }

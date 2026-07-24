@@ -515,11 +515,20 @@ export const AGENT_BLOCK_ENTRIES: AgentBlockCatalogEntry[] = AGENT_BLOCK_CATALOG
 /**
  * Czytelna etykieta narzędzia po `toolName` — używana na klocku i w liście
  * kroków, żeby nigdzie nie świecił snake_case rejestru.
+ *
+ * ⚠ Jedno narzędzie bywa opakowane przez KILKA pozycji palety — np.
+ * `search_knowledge_base` stoi zarówno za „Vault — wybrany sejf" (opakowanie
+ * z wyborem sejfu), za „Zgoda (bramka)" (opakowanie z bramką), jak i za
+ * zwykłym „Szukaj w wiedzy". Nazwą NARZĘDZIA jest to ostatnie, więc pozycje
+ * wyspecjalizowane (`vault-kontekst`, `brama-akceptu`) są przy budowie mapy
+ * pomijane — inaczej krok wyszukujący w wiedzy nazywałby się „Vault — wybrany
+ * sejf" wszędzie tam, gdzie nie jest klockiem Vault.
  */
 export const TOOL_LABEL_BY_NAME: Record<string, string> = AGENT_BLOCK_ENTRIES.reduce<
   Record<string, string>
 >((acc, entry) => {
-  if (entry.status === 'active' && entry.toolName && !acc[entry.toolName]) {
+  const specialized = entry.kind === 'vault-kontekst' || entry.kind === 'brama-akceptu';
+  if (entry.status === 'active' && entry.toolName && !specialized && !acc[entry.toolName]) {
     acc[entry.toolName] = entry.label;
   }
   return acc;
@@ -544,7 +553,9 @@ export const TOOL_CATALOG: ToolCatalogEntry[] = (() => {
   const seen = new Set<string>();
   const out: ToolCatalogEntry[] = [];
   AGENT_BLOCK_ENTRIES.forEach((entry) => {
-    if (entry.status !== 'active' || !entry.toolName || seen.has(entry.toolName)) return;
+    const specialized = entry.kind === 'vault-kontekst' || entry.kind === 'brama-akceptu';
+    if (entry.status !== 'active' || !entry.toolName || specialized) return;
+    if (seen.has(entry.toolName)) return;
     seen.add(entry.toolName);
     out.push({
       name: entry.toolName,
