@@ -193,3 +193,22 @@ nawet po skasowaniu gałęzi:
 8. **Sprawdź hipotezę próbą, zanim ją ogłosisz.** 324 „błędy" okazały się jednym.
 9. **Nie „poprawiaj przy okazji" sekcji panelu ani etykiet** — DoD karze ubytek, a niezamierzone
    przetasowanie kolejności trudno potem odróżnić od zamierzonego.
+
+## STABILIZACJA GRIDU n-Type (SSOT: `_GRID_STABILIZATION_COMMAND_2026-07-24.md`)
+- **Etap 1 (audyt)** ✅ — nazwy z dokumentu (`NType*`) nie istnieją w kodzie, realna rodzina to `NMode*`,
+  zmapowane 1:1. 2/6 kart (Insight, Narzędzie) idą przez `NModeShell`, 4/6 hand-rollują ten sam layout
+  ręcznie (duplikacja, nie bug). Wiele z SSOT już naprawione wcześniejszymi falami (baner Zadania,
+  duplikat CTA Decyzji, baner Inicjatywy). 20 kryteriów: 10 PRAWDA / 2 FAŁSZ / 3 CZĘŚCIOWO / 5 nie zbadane
+  (treść, nie struktura — Etap 5). Otwarte systemowo: „Akcje ukryte w Podglądzie" w 5/6 kart (jeden
+  wzorzec, nie lokalna wada); Comments/History brakujące w Narzędziu i Powiadomieniu (udokumentowane
+  wcześniejsze decyzje kolidujące z SSOT — CTO decyzja: sekcje zostają WIDOCZNE, puste, zamiast budować
+  nowy backend poza zakresem).
+- **Etap 2 (tokeny + szerokości paneli)** ✅ SCALONY, zweryfikowany podwójnie (agent + ja osobno).
+  7 tokenów `--ntype-*` w `src/index.css`. Lewy panel 242→**216px**, prawy panel 360→**320px**
+  (jedna zmiana defaultu naprawiła 6/6 kart — żadna nie nadpisywała). ★ Znaleziony i zdjęty DRUGI
+  podwojony margines (Decyzja ma bespoke kanwę zamiast `NModeCanvas`, też miała `pl-6`) — nie było
+  w zleceniu, agent znalazł sam przez aparat pomiarowy. Zweryfikowane: 6 kart × 2 viewporty × 2 motywy,
+  zero regresji, crimson=0 na CAŁYM diffie, `check-list-canon` zielona (414=414). Hub 4 commity ponad demo.
+  Dwa tryby centrum (dokument/analityczny) zadeklarowane jako tokeny, NIEUŻYTE — czekają na Etap 5.
+- **Do Etapu 5, nie blokuje Etapu 3**: Decyzja ma bespoke kanwę zamiast `NModeCanvas` (dwie kopie do
+  utrzymania); Narzędzie 4/7 sekcji panelu; Insight „Akcje ukryte" komunikat do zdjęcia.
