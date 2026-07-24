@@ -81,9 +81,15 @@ Otwarte, znane, nieocenione:
 1. **Tryb Podgląd niespójny** — Inicjatywa zostawia aktywne „Utwórz wariant" i „Oznacz jako ukończone",
    Insight „Zgłoś do recenzji" i przełącznik stanu. Decyzja właściciela: **Podgląd = tylko czytanie,
    wszędzie.** Do wykonania.
-2. **Ślad audytowy AI zniknął** — przepięcie na działający endpoint sprawiło, że wywołania AI nie
-   trafiają do rejestru w panelu administratora. **Nasza regresja z tej nocy.**
-3. **Powiadomienie loguje błąd pustej odpowiedzi modelu** przy samym wejściu na ekran, bez akcji użytkownika.
+2. ~~**Ślad audytowy AI zniknął**~~ **→ NAPRAWIONE** (gałąź `fix/ai-regresje-audyt-powiadomienie`
+   @ `6e88aa4975`, czeka scalenia). Audyt jest per-handler w `ai.routes.ts`; `/generate` nie wołał
+   `AIAuditLogger.logSuggestion`, które `/chat` wołał. Jedna wstawka na endpoincie przywraca ślad dla
+   CAŁEJ floty (wszystkie narzędzia idą przez `/generate`). Dowód: test route-level na prawdziwym
+   routerze, 2/2 PASS. ★ Do decyzji: wpisy z `/generate` mają `project_id=NULL` (kontrakt nie niesie
+   projectId) — jeśli audyt ma być scope'owany per-projekt, dosłać opcjonalne `projectId`.
+3. ~~**Powiadomienie loguje błąd pustej odpowiedzi modelu przy wejściu**~~ **→ NAPRAWIONE** (ta sama gałąź).
+   `useEffect` odpalał `handleAnalyzeWithAI` przez `setTimeout` przy montażu — usunięty. Zmierzone:
+   wejście → 0 wywołań AI, klik „Analizuj z AI" → 1. Ścieżka ręczna nietknięta.
 4. **Pasek „Szkic"** zabramkowany po stronie wywołań, **nie naprawiony u źródła.**
 5. **Cztery różne szerokości powłoki** (1488/1332/1496/1364) — karty nie dzielą jednej powłoki.
 6. **`StandardArtifactShell`** — 590 linii bez żadnego konsumenta: podpiąć albo skasować.
