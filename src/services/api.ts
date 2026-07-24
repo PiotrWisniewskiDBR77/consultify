@@ -7673,6 +7673,28 @@ export const Api = {
     return data;
   },
 
+  /**
+   * ★ VLT-005 — warstwa tabeli sejfów PRZED narzędziem Vault. Jeden zapytanie
+   * (GROUP BY po stronie serwera, patrz knowledge.routes.ts `/vault-safes`)
+   * zwraca [Mój sejf] + [Sejf organizacji] + po jednym na projekt, w którym
+   * wołający jest członkiem — z licznikiem dokumentów i datą ostatniej zmiany.
+   */
+  getVaultSafes: async (): Promise<
+    Array<{
+      id: string;
+      type: 'user' | 'organization' | 'project';
+      projectId: string | null;
+      name: string;
+      documentCount: number;
+      lastModified: string | null;
+    }>
+  > => {
+    const res = await fetch(`${API_URL}/knowledge/vault-safes`, { headers: getHeaders() });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to fetch vault safes');
+    return Array.isArray(data?.safes) ? data.safes : [];
+  },
+
   getKnowledgeDocuments: async (filters?: {
     scope?: 'user' | 'project' | 'organization';
     projectId?: string;

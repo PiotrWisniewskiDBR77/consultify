@@ -143,9 +143,9 @@ while IFS= read -r f; do
       PAYLOAD=$(cat "$f")
       ;;
     *)
-      PAYLOAD=$(git diff --cached -U0 -- "$f" 2>/dev/null | grep -E '^\+' | grep -v '^\+\+\+' | sed 's/^\+//')
+      PAYLOAD=$(git diff --cached -U0 -- "$f" 2>/dev/null | grep -E '^\+' | grep -Ev '^\+\+\+' | sed 's/^\+//')
       if [ -z "$PAYLOAD" ]; then
-        PAYLOAD=$(git diff -U0 -- "$f" 2>/dev/null | grep -E '^\+' | grep -v '^\+\+\+' | sed 's/^\+//')
+        PAYLOAD=$(git diff -U0 -- "$f" 2>/dev/null | grep -E '^\+' | grep -Ev '^\+\+\+' | sed 's/^\+//')
       fi
       ;;
   esac
@@ -168,6 +168,14 @@ if [ "$fail" -eq 1 ]; then
   echo "  SSOT: docs/ui-standards/TRIADA_KANON.md (część C). Świadomy wyjątek brand/logo →" >&2
   echo "  dopisz ścieżkę do scripts/triada-allowlist.txt." >&2
   exit 1
+fi
+if [ "$checked" -eq 0 ]; then
+  # ★ Zero sprawdzonych plików ≠ "czysto". Na czystym drzewie (po commicie) diff jest
+  # pusty i bramka nie widzi NICZEGO — to nie jest zielone światło. Uruchamiaj z treścią
+  # w stagingu (jak hook pre-commit) albo podaj pliki jawnie: check-triada.sh <plik...>.
+  echo "⚠ check-triada: sprawdzono 0 plików — NIC nie zweryfikowano (nie mylić z 'czysto')." >&2
+  echo "  Uruchom z treścią w stagingu lub podaj pliki jawnie. Patrz §8 audytu 2026-07-24." >&2
+  exit 0
 fi
 echo "✓ check-triada: brak nowych naruszeń crimson (sprawdzono plików: $checked)"
 exit 0

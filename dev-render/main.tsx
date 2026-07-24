@@ -28,6 +28,9 @@ const DocumentStudioTemplateResolveErrorScreen = React.lazy(
   () => import('./screens/document-studio-template-resolve-error')
 );
 
+// TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
+// `?slowLocale=<ms>`; no effect otherwise.
+import './slowLocaleFetch';
 // Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
 import i18n from '../src/i18n';
 import { useAppStore } from '../src/store/useAppStore';
@@ -36,6 +39,7 @@ const AdminCommandCenterPanelScreen = React.lazy(() => import('./screens/admin-c
 const AdminSsoSelfServiceCardScreen = React.lazy(() => import('./screens/admin-sso-self-service-card'));
 const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canvas'));
 const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
+const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
 const AssessmentInitiativesPanelScreen = React.lazy(() => import('./screens/assessment-initiatives-panel'));
 const AssessmentInitiativesTableScreen = React.lazy(() => import('./screens/assessment-initiatives-table'));
 const AssessmentListScreen = React.lazy(() => import('./screens/assessment-list'));
@@ -118,6 +122,7 @@ const NTypeAnalizujAiScreen = React.lazy(() => import('./screens/ntype-analizuj-
 // inicjatywy — „Nie udało się załadować karty"). Leniwy import = instaluje się stub
 // wyłącznie otwartego ekranu, a kolejność importów przestaje cokolwiek znaczyć.
 const VaultScopeSelectorScreen = React.lazy(() => import('./screens/vault-scope-selector'));
+const VaultSafesTableScreen = React.lazy(() => import('./screens/vault-safes-table'));
 // (Zdjeta 2026-07-23) Tu stal zapomniany blok 68 STATYCZNYCH importow ekranow —
 // pozostalosc po niedokonczonym scaleniu (zostal nawet znacznik `|||||||`), przez
 // co plik sie NIE PARSOWAL, a kazdy ekran mial dwie deklaracje: leniwa wyzej
@@ -278,6 +283,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'AGT-007 — AgentPlanCanvas przestawialny schemat (ścieżka ① 5-fazowy vs ② pusty), status planning',
     render: () => <AgentPlanCanvasScreen />,
+  },
+  'agent-hub': {
+    label:
+      'AGT-010 — powłoka Run agent (Moje procesy | Szablony) PRZED AgentPlanWorkspace, tabela planning/executing/awaiting_approval/completed/failed',
+    render: () => <AgentHubScreen />,
   },
   'capability-gate-demo': {
     label: 'Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)',
@@ -490,6 +500,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'VLT-003 — REALNY <DocumentsRAGTab variant="client"> — selektor poziomu upload, badge, filtr, ostrzeżenie zmiany zakresu',
     render: () => <VaultScopeSelectorScreen />,
+  },
+  'vault-safes-table': {
+    label:
+      'VLT-005 — REALNY <ClientDocumentsVault> — tabela sejfów (Mój/Organizacji/per projekt) → klik otwiera dokumenty sejfu, breadcrumb + powrót',
+    render: () => <VaultSafesTableScreen />,
   },
   'idea-table': {
     label: 'IDEE — Idea jako tabela (pełny obiekt: lista + podgląd + prawy panel)',

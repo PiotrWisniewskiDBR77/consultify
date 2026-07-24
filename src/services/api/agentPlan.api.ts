@@ -71,6 +71,20 @@ export interface CreateAgentPlanInput {
   conversationId?: string;
   manifestId?: string;
   /**
+   * AGT-006/AGT-010: generator PROCESU konsultingowego (nie katalogu
+   * manifestów) — `classic-5` (domyślny, 5 faz Kubr/ILO) lub wariant `drd`.
+   * Backend (agent-plan.routes.ts) kładzie cały schemat via ProcessLibrary.
+   * Gdy `draft` nie podano jawnie, ta ścieżka domyślnie liczy się jak
+   * `draft:true` (plan zostaje w 'planning' do jawnego "Uruchom").
+   */
+  processId?: string;
+  processContext?: {
+    focusAxis?: string;
+    industry?: string;
+    hasVaultDocs?: boolean;
+    projectSummary?: string;
+  };
+  /**
    * Optional when `manifestId` is set — the backend's PlanBuilder
    * (server/src/services/ai/agentPlan/planBuilderService.ts) generates the
    * step list from the manifest. Provide explicit steps to override.
@@ -175,4 +189,29 @@ export async function cancelAgentPlan(planId: string): Promise<{ plan: AgentPlan
     headers: getHeaders(),
   });
   return handleResponse<{ plan: AgentPlan }>(res, 'Failed to cancel agent plan');
+}
+
+/**
+ * AGT-011: pozycja biblioteki procesów (ProcessLibrary,
+ * server/src/services/ai/agentPlan/processLibraryService.ts `listProcesses`)
+ * — dla galerii szablonów w zakładce "Szablony" (AgentHubShell).
+ */
+export interface AgentProcessSummary {
+  id: string;
+  label: string;
+  description: string;
+  isDefault: boolean;
+  phaseCount: number;
+}
+
+/** GET /api/ai/agent-plan/processes — biblioteka procesów (classic-5 domyślny, drd wariant). */
+export async function listAgentProcesses(): Promise<{
+  total: number;
+  processes: AgentProcessSummary[];
+}> {
+  const res = await fetch(`${API_URL}/ai/agent-plan/processes`, { headers: getHeaders() });
+  return handleResponse<{ total: number; processes: AgentProcessSummary[] }>(
+    res,
+    'Failed to load process library'
+  );
 }

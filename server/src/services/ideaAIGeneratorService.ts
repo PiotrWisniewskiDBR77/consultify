@@ -1194,7 +1194,30 @@ function buildUserMessage(ctx: GeneratorContext): string {
 
 export async function generateIdeaAI(request: GeneratorRequest): Promise<any> {
   const { generatorType, tool, context, userId, orgId } = request;
-  const scopedContext = getScopedGeneratorContext(generatorType, context);
+  const rawScopedContext = getScopedGeneratorContext(generatorType, context);
+
+  // Język odpowiedzi ustalamy RAZ, na wejściu, z TREŚCI użytkownika (tytuł, seed,
+  // etykiety węzłów/lane'ów) — flaga UI (`context.language` = `i18n.language`) jest
+  // tylko fallbackiem. Bez tego polska mapa przy interfejsie EN dostawała angielskie
+  // propozycje. Dalszy kod (buildSystemPrompt / buildUserMessage / formatIdeaGeneratorOutput)
+  // czyta `context.language`, więc podmiana tutaj naprawia WSZYSTKIE generatory naraz.
+  const { resolveResponseLanguage, withLanguageInstruction } = await import(
+    './ai/responseLanguage.js'
+  );
+  const responseLanguage = resolveResponseLanguage({
+    requested: rawScopedContext.language,
+    samples: [
+      rawScopedContext.title,
+      rawScopedContext.seedText,
+      rawScopedContext.branch,
+      rawScopedContext.area,
+      ...(rawScopedContext.existingNodes || [])
+        .slice(0, 60)
+        .map((n: any) => String(n?.data?.label || n?.label || '')),
+      ...(rawScopedContext.existingLanes || []).slice(0, 20).map((l: any) => String(l?.label || '')),
+    ],
+  });
+  const scopedContext: GeneratorContext = { ...rawScopedContext, language: responseLanguage };
 
   const schema = SCHEMA_MAP[generatorType];
   if (!schema) {
@@ -1202,7 +1225,10 @@ export async function generateIdeaAI(request: GeneratorRequest): Promise<any> {
   }
 
   const orgCtx = await buildOrgContext(orgId);
-  const systemPrompt = buildSystemPrompt(generatorType, scopedContext, orgCtx);
+  const systemPrompt = withLanguageInstruction(
+    buildSystemPrompt(generatorType, scopedContext, orgCtx),
+    responseLanguage
+  );
   const userMessage = buildUserMessage(scopedContext);
 
   const { llmService } = await import('./ai/llmService.js');

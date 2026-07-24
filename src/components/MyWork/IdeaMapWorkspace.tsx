@@ -431,6 +431,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const [mapRefreshToken, setMapRefreshToken] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const userSelectedToolRef = React.useRef(false);
+  /**
+   * Narzedzie ZALADOWANE z serwera dla tej Idei (jej wlasna natura).
+   * Sluzy jako tarcza przed korupcja: autozapis nie moze nadpisac typu Idei
+   * wartoscia, ktora wziela sie z fallbacku, a nie ze swiadomego wyboru.
+   */
+  const zaladowaneNarzedzieRef = React.useRef<CanvasToolType | null>(null);
   const aiKickoffTriggeredRef = React.useRef(false);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const workspaceRootRef = useRef<HTMLDivElement>(null);
@@ -588,7 +594,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     ideaId: realId,
     open: Boolean(realId && (!isNewInitial || realId !== ideaId)),
     locked: canvasLocked,
-    preferredTool: activeTool,
+    // ★ TARCZA PRZED KORUPCJA (2026-07-24): autozapis pisze `preferred_tool`
+    // przy KAZDYM zapisie. Gdy widok wynikl z fallbacku (a nie z wyboru
+    // uzytkownika) i fallback byl zly, ten zapis NADPISYWAL prawdziwy typ Idei
+    // w bazie — tak Proces ofertowania stal sie „mapa rekomendacji", a mapa
+    // zdarla `type:'flowNode'` z 12 krokow. Odtad typ nadpisujemy WYLACZNIE gdy
+    // uzytkownik swiadomie przelaczyl narzedzie; inaczej oddajemy to, co
+    // przyszlo z serwera.
+    preferredTool: userSelectedToolRef.current
+      ? activeTool
+      : zaladowaneNarzedzieRef.current || activeTool,
     language: i18n.language || 'en',
     onConflict: handleGraphConflict,
   });
@@ -1546,7 +1561,31 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           // had open.
           if (!initialTool && !userSelectedToolRef.current) {
             const localPref = readLocalToolPreference(String(idea?.id || ideaId));
-            if (localPref) setActiveTool(localPref);
+            if (localPref) {
+              setActiveTool(localPref);
+            } else {
+              // ★ REGRESJA P0-5 (naprawiona 2026-07-24): tu wczesniej nie bylo
+              // NICZEGO — brak lokalnej preferencji zostawial `internalActiveTool`
+              // na domyslnym 'mindmap', wiec Idea zapisana jako Przeplyw/Tablica/
+              // Tabela otwierala sie JAKO MAPA MYSLI przy pierwszym wejsciu z listy
+              // (deep-link maskowal blad, bo ustawia initialTool).
+              //
+              // `preferredTool` Idei to JEJ WLASNA natura, nie cudzy stan sesji —
+              // i jako fallback nalezy go uszanowac. Wyciek, przed ktorym bronilo
+              // P0-5, polegal na tym, ze cudzy wybor PRZESTAWIAL ekran; tutaj
+              // uzywamy go wylacznie gdy TEN uzytkownik nie ma wlasnego zdania
+              // o tej Idei, wiec nikomu nic sie nie przelacza.
+              const wlasnaNatura = mapRes?.map?.preferredTool;
+              if (wlasnaNatura) zaladowaneNarzedzieRef.current = wlasnaNatura as CanvasToolType;
+              if (
+                wlasnaNatura === 'mindmap' ||
+                wlasnaNatura === 'whiteboard' ||
+                wlasnaNatura === 'process_flow' ||
+                wlasnaNatura === 'table'
+              ) {
+                setActiveTool(wlasnaNatura);
+              }
+            }
           }
 
           // V5-IDEA-16: Restore surface state (focus mode / viewport only —
@@ -1703,10 +1742,32 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       keywords: [labelPl, labelEn, 'tool', 'narzędzie', id],
     });
     return [
-      toolCmd('mindmap', 'Mapa rekomendacji', 'Mind Map', <GitBranch size={18} />),
-      toolCmd('whiteboard', 'Tablica', 'Whiteboard', <StickyNote size={18} />),
-      toolCmd('process_flow', 'Przepływ', 'Process Flow', <Workflow size={18} />),
-      toolCmd('table', 'Tabela', 'Table', <Table2 size={18} />),
+      // SZOSTA kopia etykiet narzedzi — czytamy z SSOT (`getIdeaWorkspaceToolLabel`),
+      // zeby paleta polecen nie byla ostatnim miejscem z „Mapa rekomendacji".
+      toolCmd(
+        'mindmap',
+        getIdeaWorkspaceToolLabel('mindmap', true),
+        getIdeaWorkspaceToolLabel('mindmap', false),
+        <GitBranch size={18} />
+      ),
+      toolCmd(
+        'whiteboard',
+        getIdeaWorkspaceToolLabel('whiteboard', true),
+        getIdeaWorkspaceToolLabel('whiteboard', false),
+        <StickyNote size={18} />
+      ),
+      toolCmd(
+        'process_flow',
+        getIdeaWorkspaceToolLabel('process_flow', true),
+        getIdeaWorkspaceToolLabel('process_flow', false),
+        <Workflow size={18} />
+      ),
+      toolCmd(
+        'table',
+        getIdeaWorkspaceToolLabel('table', true),
+        getIdeaWorkspaceToolLabel('table', false),
+        <Table2 size={18} />
+      ),
       {
         id: 'ws-search',
         title: t('mindmap.searchThisIdea'),
@@ -2848,7 +2909,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     if (!lastSavedAt) return 'Draft';
     const sec = Math.max(1, Math.round((Date.now() - lastSavedAt) / 1000));
     return t('mindmap.savedSecondsAgo', { count: sec });
-  }, [isPolish, lastSavedAt, saving]);
+    // `t` MUSI byc w zaleznosciach: tlumaczenia doladowuja sie asynchronicznie
+    // (HttpBackend), wiec memo policzone przy pierwszym renderze zwracalo SUROWY
+    // KLUCZ („mindmap.savedSecondsAgo") i bez `t` nigdy sie nie przeliczalo.
+  }, [t, isPolish, lastSavedAt, saving]);
   const activeToolLabel = useMemo(
     () => getIdeaWorkspaceToolLabel(activeTool, Boolean(isPolish)),
     [activeTool, isPolish]

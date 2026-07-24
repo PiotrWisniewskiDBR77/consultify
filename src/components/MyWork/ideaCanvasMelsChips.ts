@@ -32,10 +32,13 @@ import {
   LayoutGrid,
   LayoutTemplate,
   Lightbulb,
+  Link2,
+  MessageSquare,
   MessagesSquare,
   MousePointer2,
   Plus,
   Search,
+  SlidersHorizontal,
   Sparkles,
   StickyNote,
   Table2,
@@ -381,76 +384,150 @@ export function buildIdeaMenu3Actions(args: {
 }
 
 /**
- * Right-rail inspector tabs (≤5, D-W-2): Problem · Status · Inspector(tool) ·
- * Convert · Health. Descriptors only carry id/label/icon; the host renders the
- * matching existing panel content via `renderRightRailPanel(activeToolId)`.
+ * KANON PRAWEGO PANELU (decyzja właściciela D1 —
+ * docs/standards/idea-workspace/07_PRAWY_PANEL.md §1):
+ *
+ *     Przegląd · Właściwości · Powiązania · Komentarze · Historia
+ *
+ * Te same pięć zakładek obowiązuje w Idei i w kartach N (dawny SPEC-A §708).
+ * Poprzedni zestaw (`problem · status · inspector · convert · health`) znika:
+ *   • Problem + Status + Kondycja  → wchłania **Przegląd** (§4: zdrowie NIE jest
+ *     osobną zakładką),
+ *   • Inspektor                    → **Właściwości** (§1: termin z produktu,
+ *     „Inspektor" to żargon narzędzi graficznych),
+ *   • Konwersja                    → **Menu 1** (`IdeaConvertMenu` w
+ *     `primaryActionSlot` powłoki) — §9: konwersja to akcja, nie zakładka.
+ *
+ * Identyfikatory MUSZĄ zgadzać się 1:1 z `IDEA_PANEL_SECTIONS`
+ * (`IdeaWorkspaceTools.tsx`) — powłoka podaje id aktywnej ikony wprost jako
+ * `onlySection`, więc rozjazd = pusty panel.
  */
-export type IdeaCanvasRightToolId = 'problem' | 'status' | 'inspector' | 'convert' | 'health';
+export type IdeaCanvasRightToolId =
+  | 'overview'
+  | 'properties'
+  | 'relations'
+  | 'comments'
+  | 'history';
+
+/**
+ * Stare identyfikatory sprzed kanonu D1. Przyjmujemy je nadal w `labels` /
+ * `disabled` / `disabledReasons`, bo host (`IdeaMapWorkspace`, poza zakresem
+ * tej zmiany) woła builder starymi kluczami. Mapowanie: patrz `LEGACY_NA_KANON`.
+ */
+export type IdeaCanvasRightToolLegacyId =
+  | 'problem'
+  | 'status'
+  | 'inspector'
+  | 'convert'
+  | 'health';
+
+const LEGACY_NA_KANON: Record<IdeaCanvasRightToolLegacyId, IdeaCanvasRightToolId | null> = {
+  problem: 'overview',
+  status: 'overview',
+  inspector: 'properties',
+  // Kondycja żyje w Przeglądzie, Konwersja w Menu 1 — nie mają już własnej ikony.
+  health: null,
+  convert: null,
+};
 
 export interface IdeaCanvasRightRailLabels {
-  problem: string;
-  status: string;
-  inspector: string;
-  convert: string;
-  health: string;
+  overview: string;
+  properties: string;
+  relations: string;
+  comments: string;
+  history: string;
 }
 
 export const DEFAULT_IDEA_CANVAS_RIGHT_RAIL_LABELS: IdeaCanvasRightRailLabels = {
-  problem: 'Problem',
-  status: 'Status',
-  inspector: 'Inspector',
-  convert: 'Convert',
-  health: 'Health',
+  overview: 'Overview',
+  properties: 'Properties',
+  relations: 'Relations',
+  comments: 'Comments',
+  history: 'History',
 };
 
+export const IDEA_CANVAS_RIGHT_RAIL_LABELS_PL: IdeaCanvasRightRailLabels = {
+  overview: 'Przegląd',
+  properties: 'Właściwości',
+  relations: 'Powiązania',
+  comments: 'Komentarze',
+  history: 'Historia',
+};
+
+type KluczEtykiety = IdeaCanvasRightToolId | IdeaCanvasRightToolLegacyId;
+
+/**
+ * MOSTEK JĘZYKOWY (do usunięcia razem z aktualizacją hosta): host nie podaje
+ * `isPolish`, tylko — gdy interfejs jest po polsku — komplet STARYCH etykiet
+ * („Inspektor" / „Konwersja" / „Kondycja"). Ich obecność jednoznacznie
+ * identyfikuje wywołanie polskie, więc dopóki host nie zacznie podawać
+ * `isPolish` wprost, wykrywamy język po tych słowach. Nowe etykiety kanonu i
+ * tak biorą się stąd (stare nazywały INNE zakładki — nie da się ich przenieść).
+ */
+function wykryjPolski(labels?: Partial<Record<KluczEtykiety, string>>): boolean {
+  if (!labels) return false;
+  return (
+    labels.inspector === 'Inspektor' ||
+    labels.convert === 'Konwersja' ||
+    labels.health === 'Kondycja'
+  );
+}
+
 export function buildIdeaCanvasRightRailTools(args?: {
-  labels?: Partial<IdeaCanvasRightRailLabels>;
-  disabled?: Partial<Record<IdeaCanvasRightToolId, boolean>>;
+  /** Etykiety kanonu; klucze sprzed D1 są przyjmowane i ignorowane (patrz wyżej). */
+  labels?: Partial<Record<KluczEtykiety, string>>;
+  /** Jawny język — preferowany nad mostkiem `wykryjPolski`. */
+  isPolish?: boolean;
+  disabled?: Partial<Record<KluczEtykiety, boolean>>;
   /**
    * Why a tab is unavailable for the active representation. A tab whose section
    * renders nothing MUST be disabled with a reason — a clickable icon that
    * opens an empty panel is a dead click.
    */
-  disabledReasons?: Partial<Record<IdeaCanvasRightToolId, string>>;
+  disabledReasons?: Partial<Record<KluczEtykiety, string>>;
 }): RightRailToolDescriptor[] {
-  const labels = { ...DEFAULT_IDEA_CANVAS_RIGHT_RAIL_LABELS, ...args?.labels };
-  const disabled = args?.disabled ?? {};
-  const powody = args?.disabledReasons ?? {};
+  const polski = args?.isPolish ?? wykryjPolski(args?.labels);
+  const bazowe = polski
+    ? IDEA_CANVAS_RIGHT_RAIL_LABELS_PL
+    : DEFAULT_IDEA_CANVAS_RIGHT_RAIL_LABELS;
+
+  // Z kluczy starych bierzemy WYŁĄCZNIE stan wyłączenia i powód — etykiety
+  // opisywały inne zakładki, więc byłyby mylące.
+  const stan: Partial<Record<IdeaCanvasRightToolId, { disabled?: boolean; reason?: string }>> = {};
+  const przypisz = (id: IdeaCanvasRightToolId | null, wyl?: boolean, powod?: string) => {
+    if (!id) return;
+    const biezacy = stan[id] ?? {};
+    stan[id] = {
+      disabled: biezacy.disabled || wyl,
+      reason: wyl ? (powod ?? biezacy.reason) : biezacy.reason,
+    };
+  };
+  for (const [klucz, wyl] of Object.entries(args?.disabled ?? {})) {
+    const powod = args?.disabledReasons?.[klucz as KluczEtykiety];
+    const kanon = (LEGACY_NA_KANON as Record<string, IdeaCanvasRightToolId | null>)[klucz];
+    przypisz(kanon !== undefined ? kanon : (klucz as IdeaCanvasRightToolId), wyl, powod);
+  }
+
+  const etykieta = (id: IdeaCanvasRightToolId) => args?.labels?.[id] ?? bazowe[id];
+
+  const opis = (id: IdeaCanvasRightToolId, icon: LucideIcon): RightRailToolDescriptor => ({
+    id,
+    label: etykieta(id),
+    icon,
+    disabled: stan[id]?.disabled,
+    disabledReason: stan[id]?.reason,
+  });
+
   return [
-    {
-      id: 'problem',
-      label: labels.problem,
-      icon: HelpCircle,
-      disabled: disabled.problem,
-      disabledReason: powody.problem,
-    },
-    {
-      id: 'status',
-      label: labels.status,
-      icon: GitBranch,
-      disabled: disabled.status,
-      disabledReason: powody.status,
-    },
-    {
-      id: 'inspector',
-      label: labels.inspector,
-      icon: Sparkles,
-      disabled: disabled.inspector,
-      disabledReason: powody.inspector,
-    },
-    {
-      id: 'convert',
-      label: labels.convert,
-      icon: Workflow,
-      disabled: disabled.convert,
-      disabledReason: powody.convert,
-    },
-    {
-      id: 'health',
-      label: labels.health,
-      icon: LayoutTemplate,
-      disabled: disabled.health,
-      disabledReason: powody.health,
-    },
+    // Przegląd — brief, etap, kompletność, statystyki, kondycja (§4).
+    opis('overview', LayoutDashboard),
+    // Właściwości — inspektor zaznaczenia / ustawienia reprezentacji (§5).
+    opis('properties', SlidersHorizontal),
+    // Powiązania — artefakty, źródła, backlinki (§6).
+    opis('relations', Link2),
+    // Komentarze — rozmowa zespołu i Teresy (§7).
+    opis('comments', MessageSquare),
+    // Historia — oś czasu zdarzeń i wersji (§8).
+    opis('history', History),
   ];
 }

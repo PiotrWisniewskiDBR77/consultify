@@ -69,7 +69,10 @@ import { z } from 'zod';
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import { buildPlanFromManifest } from '../../services/ai/agentPlan/planBuilderService.js';
-import { buildStepsFromProcess } from '../../services/ai/agentPlan/processLibraryService.js';
+import {
+  buildStepsFromProcess,
+  listProcesses,
+} from '../../services/ai/agentPlan/processLibraryService.js';
 import { agentPlannerService } from '../../services/ai/agentPlannerService.js';
 import { getDiscoveryAgentManifest } from '../../services/ai/agentRuntime/discoveryAgentManifestCatalog.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -372,6 +375,22 @@ router.get(
     );
 
     return res.json({ success: true, total: plans.length, plans });
+  })
+);
+
+/**
+ * GET /api/ai/agent-plan/processes
+ * AGT-011: biblioteka procesów (ProcessLibrary) do zakładki "Szablony" —
+ * `classic-5` (domyślny, 5 faz Kubr/ILO) + wariant `drd` (4 kroki). Musi być
+ * zarejestrowany PRZED `GET /:id` (inaczej Express dopasuje 'processes' jako
+ * `:id`). Read-only, bez organizationId-scope — to statyczna biblioteka, nie
+ * dane usera.
+ */
+router.get(
+  '/processes',
+  asyncHandler(async (_req: AuthRequest, res) => {
+    const processes = listProcesses();
+    return res.json({ success: true, total: processes.length, processes });
   })
 );
 

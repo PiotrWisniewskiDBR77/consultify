@@ -1,25 +1,51 @@
 /**
- * IdeaWorkspaceTools — Right-side inspector for the Idea Map Workspace.
+ * IdeaWorkspaceTools — prawy panel Idei (płótno: Mapa · Przepływ · Tablica · Tabela).
  *
- * Editor Shell Canon §2 PRAWA (UI-L16): ≤5 visible sections; primary open, secondary
- * collapsed. Metadata (branch/area/priority) is folded into Status as a sub-group so
- * the inspector stays at 5 top-level sections per tool:
- *   1. Problem  — title + description + save/accept                (primary, open)
- *   2. Status   — stage, completeness, evidence, + Metadata subgroup (primary, open)
- *   3. Convert  — initiative, tasks, decision, report, deck, …      (secondary, collapsed)
- *   4. Inspector — tool-specific (Map/Process/Whiteboard) properties (primary, open)
- *   5. Health   — tool-specific health score                        (secondary, collapsed)
+ * ★ KANON PRAWEGO PANELU (decyzja właściciela D1) —
+ *   docs/standards/idea-workspace/07_PRAWY_PANEL.md:
+ *
+ *       Przegląd · Właściwości · Powiązania · Komentarze · Historia
+ *
+ * Odwzorowanie dawnych pięciu zakładek (`problem·status·inspector·convert·health`):
+ *   1. **Przegląd**    ← Problem + Status + Statystyki + Kondycja (§4: zdrowie NIE
+ *                        jest osobną zakładką, jest częścią Przeglądu).
+ *   2. **Właściwości** ← dawny Inspektor (mapa/przepływ/tablica). Bez zaznaczenia
+ *                        pokazuje ustawienia reprezentacji (§5).
+ *   3. **Powiązania**  ← NOWA. Treść = `<IdeaContextPanel embedded>` (backlinki,
+ *                        artefakty, inicjatywy, luki, insighty, KPI, podobne idee)
+ *                        — reużycie, nie drugi komponent (§6).
+ *   4. **Komentarze**  ← NOWA. `panel/IdeaPanelComments` (§7).
+ *   5. **Historia**    ← NOWA. `panel/IdeaPanelHistory` (§8).
+ *
+ * Gdzie poszła KONWERSJA: do Menu 1 (`IdeaConvertMenu` w `primaryActionSlot`
+ * powłoki) — §9 mówi wprost, że konwersja to akcja, nie zakładka. Sekcja
+ * „Konwertuj" zostaje w kodzie i renderuje się WYŁĄCZNIE w trybie legacy
+ * (szuflada bez `onlySection`), bo tam Menu 1 nie istnieje, a przycisk
+ * „Konwertuj" w `IdeaRightPanel` prowadzi właśnie do tej sekcji — usunięcie
+ * zgubiłoby funkcję.
+ *
+ * DWA TRYBY (bez regresji):
+ *   • `onlySection` podane (powłoka MELS, rail) → renderujemy DOKŁADNIE jedną
+ *     zakładkę kanonu.
+ *   • brak `onlySection` (legacy szuflada wewnątrz `IdeaRightPanel`) → jak dziś:
+ *     Problem · Status · Konwersja · Inspektor · Kondycja. Powiązań/Komentarzy/
+ *     Historii tam NIE dokładamy — `IdeaRightPanel` ma już własne sekcje o tych
+ *     nazwach i powstałby dubel.
  */
 import {
   Activity,
+  BarChart3,
   CheckCircle2,
   CheckSquare,
   ChevronDown,
   ChevronRight,
+  Clock,
   FileText,
   GitBranch,
   Lightbulb,
+  Link2,
   ListChecks,
+  MessageSquare,
   MessageSquarePlus,
   Pencil,
   Presentation,
@@ -34,6 +60,10 @@ import { useTranslation } from 'react-i18next';
 
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
 
+import { IdeaContextPanel } from './IdeaContextPanel';
+import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
+import { IdeaPanelComments } from './panel/IdeaPanelComments';
+import { IdeaPanelHistory } from './panel/IdeaPanelHistory';
 import { isIdeaPanelVisualEnabled } from './panel/ideaPanelVisualFlag';
 import {
   IDEA_CONVERT_GROUP_LABELS,
@@ -71,8 +101,47 @@ type ConvertTarget = IdeaConvertTarget;
  * `buildIdeaCanvasRightRailTools` (ideaCanvasMelsChips.ts) — powloka przekazuje
  * identyfikator aktywnej ikony wprost jako `onlySection`.
  */
-export const IDEA_PANEL_SECTIONS = ['problem', 'status', 'inspector', 'convert', 'health'] as const;
-export type IdeaPanelSection = (typeof IDEA_PANEL_SECTIONS)[number];
+export const IDEA_PANEL_TABS = [
+  'overview',
+  'properties',
+  'relations',
+  'comments',
+  'history',
+] as const;
+export type IdeaPanelTab = (typeof IDEA_PANEL_TABS)[number];
+
+/**
+ * Identyfikatory sprzed kanonu D1. Nadal PRZYJMOWANE (host i zapamiętany stan
+ * railа mogą podać stary klucz — np. `convert` z localStorage), normalizowane
+ * przez `normalizujZakladke`. Nie zostawiamy martwego panelu za starym id.
+ */
+export const IDEA_PANEL_LEGACY_SECTIONS = [
+  'problem',
+  'status',
+  'inspector',
+  'convert',
+  'health',
+] as const;
+export type IdeaPanelLegacySection = (typeof IDEA_PANEL_LEGACY_SECTIONS)[number];
+
+/** Zbiór wszystkich akceptowanych id (kanon + stare aliasy). */
+export const IDEA_PANEL_SECTIONS = [...IDEA_PANEL_TABS, ...IDEA_PANEL_LEGACY_SECTIONS];
+export type IdeaPanelSection = IdeaPanelTab | IdeaPanelLegacySection;
+
+const LEGACY_NA_ZAKLADKE: Record<IdeaPanelLegacySection, IdeaPanelTab> = {
+  problem: 'overview',
+  status: 'overview',
+  // Kondycja jest częścią Przeglądu (§4), Konwersja przeniosła się do Menu 1 (§9).
+  health: 'overview',
+  convert: 'overview',
+  inspector: 'properties',
+};
+
+export function normalizujZakladke(sekcja: IdeaPanelSection): IdeaPanelTab {
+  return (IDEA_PANEL_TABS as readonly string[]).includes(sekcja)
+    ? (sekcja as IdeaPanelTab)
+    : LEGACY_NA_ZAKLADKE[sekcja as IdeaPanelLegacySection];
+}
 
 interface IdeaWorkspaceToolsProps {
   open: boolean;
@@ -145,6 +214,21 @@ interface IdeaWorkspaceToolsProps {
     participantCount?: number;
   };
   whiteboardOutcomes?: Array<{ type: string; label: string }>;
+
+  /**
+   * Zakładka Historia (§8) — „Przywróć wersję". Handler należy do płótna
+   * (ten sam, którym host karmi modal `SnapshotHistory`). Gdy host go NIE poda,
+   * przycisk się nie renderuje — nigdy nie rysujemy martwej akcji (Z3).
+   */
+  onRestoreSnapshot?: (
+    nodes: any[],
+    edges: any[],
+    extensions?: Record<string, unknown>
+  ) => void;
+  /** Zakładka Powiązania (§6) — wstawienie pozycji kontekstu na płótno. */
+  onInsertContextToCanvas?: (item: { text: string; type: string; detail?: string }) => void;
+  /** Rozszerzenia grafu (`graphRuntime.graph.extensions`) dla panelu kontekstu. */
+  mapExtensions?: Record<string, any>;
 }
 
 /* ── Collapsible section wrapper ── */
@@ -271,6 +355,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   onlySection,
   whiteboardSession,
   whiteboardOutcomes,
+  onRestoreSnapshot,
+  onInsertContextToCanvas,
+  mapExtensions,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
@@ -307,15 +394,13 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
     [onPriorityChange, onSave]
   );
 
-  const toolLabel = useMemo(() => {
-    const labels: Record<CanvasToolType, string> = {
-      mindmap: t('myWorkIdeas.workspaceTools.recommendationMap'),
-      process_flow: t('myWorkIdeas.workspaceTools.processFlow'),
-      table: t('myWorkIdeas.workspaceTools.table'),
-      whiteboard: t('myWorkIdeas.workspaceTools.whiteboard'),
-    };
-    return labels[activeTool] || activeTool;
-  }, [activeTool, isPl]);
+  // PIATA kopia etykiet narzedzi — i jedyna, ktora zostala z „Mapa rekomendacji"
+  // (zgloszenie Piotra 2026-07-24: w kolumnie ma byc czytelnie „Mapa mysli").
+  // Czytamy z tego samego SSOT co lista, przelacznik i rail.
+  const toolLabel = useMemo(
+    () => getIdeaWorkspaceToolLabel(activeTool, Boolean(isPl)),
+    [activeTool, isPl]
+  );
 
   const normalizedPriority = Math.max(25, Math.min(100, Math.round(priority / 25) * 25)) || 25;
   const priorityOptions = [
@@ -413,9 +498,36 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   // Legacy sliding-drawer path is gated by `open`. In embedded (EditorShell
   // right-rail) mode the shell only mounts the panel when its icon is active,
   // so visibility is the shell's responsibility — don't self-hide here.
-  // P0-4: gdy powloka poda aktywna zakladke, renderujemy TYLKO ja.
-  // Brak `onlySection` = tryb legacy (wszystkie sekcje w jednym scrollu).
-  const pokaz = (sekcja: IdeaPanelSection) => !onlySection || onlySection === sekcja;
+  //
+  // P0-4 + kanon D1: gdy powłoka poda aktywną zakładkę, renderujemy TYLKO jej
+  // treść. Stare id (`problem`/`status`/`inspector`/`convert`/`health`) są
+  // normalizowane do kanonu, więc zapamiętany stan railа nie daje pustki.
+  // Brak `onlySection` = tryb legacy (wszystkie DZISIEJSZE sekcje w jednym
+  // scrollu, 1:1 jak przed zmianą).
+  const trybZakladek = !!onlySection;
+  const zakladka: IdeaPanelTab | null = onlySection ? normalizujZakladke(onlySection) : null;
+  /** Czy renderować blok należący do zakładki kanonu (tryb zakładek). */
+  const wZakladce = (id: IdeaPanelTab) => zakladka === id;
+  /** Czy renderować blok w trybie legacy (szuflada = wszystkie stare sekcje). */
+  const wLegacy = !trybZakladek;
+  /** Blok wspólny: legacy pokazuje go zawsze, tryb zakładek — w swojej zakładce. */
+  const pokaz = (id: IdeaPanelTab) => wLegacy || wZakladce(id);
+
+  // Statystyki Przeglądu (§4 pkt 3) — liczone z żywego grafu, który panel i tak
+  // dostaje. Bez zaokrągleń i bez „liczb-atrap": gdy grafu nie ma, karta się
+  // nie renderuje.
+  const statystyki = useMemo(() => {
+    const nodes = graphNodes ?? [];
+    const edges = graphEdges ?? [];
+    const zWejsciem = new Set(edges.map((e: any) => e?.target));
+    return {
+      elementy: nodes.length,
+      relacje: edges.length,
+      // Gałęzie/kroki/wiersze = elementy bez krawędzi wchodzącej (korzenie).
+      korzenie: nodes.filter((n: any) => !zWejsciem.has(n?.id)).length,
+      dowody: evidenceCount,
+    };
+  }, [graphNodes, graphEdges, evidenceCount]);
 
   if (!embedded && !open) return null;
 
@@ -440,7 +552,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
        */}
       <div className={visualV2 ? 'flex flex-col gap-3 p-3.5 [&>*]:shrink-0' : 'contents'}>
       {/* ── 1. Problem ── */}
-      {pokaz('problem') && (
+      {pokaz('overview') && (
       <Section
         title={t('myWorkIdeas.workspaceTools.problem')}
         icon={<Pencil size={12} />}
@@ -495,7 +607,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       )}
 
       {/* ── 2. Status ── */}
-      {pokaz('status') && (
+      {pokaz('overview') && (
       <Section
         title={t('myWorkIdeas.workspaceTools.status')}
         icon={<CheckCircle2 size={12} />}
@@ -700,8 +812,40 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       </Section>
       )}
 
+      {/*
+       * ── Przegląd · Statystyki (07_PRAWY_PANEL.md §4 pkt 3) ──
+       * Siatka 2×2 liczona z żywego grafu. Tylko w trybie zakładek — w szufladzie
+       * legacy zachowujemy dzisiejszy układ 1:1 (zero zmian wizualnych bez akceptu).
+       */}
+      {wZakladce('overview') && statystyki.elementy > 0 && (
+        <Section
+          title={t('myWorkIdeas.workspaceTools.statistics')}
+          icon={<BarChart3 size={12} />}
+          defaultOpen
+        >
+          <div className="grid grid-cols-2 gap-2" data-testid="idea-panel-overview-stats">
+            {[
+              { k: 'statElements', v: statystyki.elementy },
+              { k: 'statRelations', v: statystyki.relacje },
+              { k: 'statRoots', v: statystyki.korzenie },
+              { k: 'statEvidence', v: statystyki.dowody },
+            ].map(({ k, v }) => (
+              <div
+                key={k}
+                className="rounded-[11px] border border-c-border-subtle bg-c-surface-raised px-3 py-2"
+              >
+                <div className="text-[15px] font-bold tabular-nums text-c-text">{v}</div>
+                <div className="text-[10px] text-c-text-muted">
+                  {t(`myWorkIdeas.workspaceTools.${k}`)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
       {/* ── 3. Convert ── */}
-      {pokaz('convert') && (
+      {wLegacy && (
       <Section title={t('myWorkIdeas.workspaceTools.convert')} icon={<Rocket size={12} />}>
         {selection.type !== 'none' && selection.count > 0 && (
           <div className="mb-2 text-[10px] font-medium text-c-info bg-c-info/5 rounded-lg px-2 py-1.5">
@@ -777,7 +921,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       </Section>
       )}
 
-      {activeTool === 'whiteboard' && pokaz('inspector') && (
+      {activeTool === 'whiteboard' && pokaz('properties') && (
         <Section
           title={t('myWorkIdeas.workspaceTools.whiteboardInspector')}
           icon={<Activity size={12} />}
@@ -879,7 +1023,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         </Section>
       )}
 
-      {activeTool === 'process_flow' && pokaz('inspector') && (
+      {activeTool === 'process_flow' && pokaz('properties') && (
         <Section
           title={t('myWorkIdeas.workspaceTools.processInspector')}
           icon={<Activity size={12} />}
@@ -910,7 +1054,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         </Section>
       )}
 
-      {activeTool === 'process_flow' && pokaz('health') && (
+      {activeTool === 'process_flow' && pokaz('overview') && (
         <Section
           title={t('myWorkIdeas.workspaceTools.processHealth')}
           icon={<Activity size={13} />}
@@ -922,7 +1066,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       {activeTool === 'mindmap' && (
         <>
           {/* ── 5. Mindmap Inspector (Style / Layout / Theme) ── */}
-          {pokaz('inspector') && (
+          {pokaz('properties') && (
           <Section
             title={t('myWorkIdeas.workspaceTools.mapInspector')}
             icon={<Sparkles size={12} />}
@@ -946,7 +1090,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           )}
 
           {/* ── 6. Map Health ── */}
-          {pokaz('health') && (
+          {pokaz('overview') && (
           <Section title={t('myWorkIdeas.workspaceTools.mapHealth')} icon={<Activity size={13} />}>
             <MapHealthScore
               nodes={graphNodes.map((n: any) => ({ id: n.id, data: n.data, type: n.type }))}
@@ -956,6 +1100,75 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           </Section>
           )}
         </>
+      )}
+
+      {/*
+       * ── Powiązania (§6) ──
+       * Treść to REUŻYCIE `<IdeaContextPanel embedded>` — ten sam komponent,
+       * który w ścieżce legacy siedzi w sekcji „Powiązania" `IdeaRightPanel`
+       * (backlinki · artefakty · inicjatywy · luki assessmentu · insighty · KPI ·
+       * podobne idee · notatki i dowody). Nie budujemy drugiego widoku powiązań.
+       * Dlatego renderujemy go WYŁĄCZNIE w trybie zakładek — w szufladzie legacy
+       * ta treść już jest piętro wyżej i powstałby dubel.
+       */}
+      {wZakladce('relations') && (
+        <Section
+          title={t('myWorkIdeas.workspaceTools.relations')}
+          icon={<Link2 size={12} />}
+          defaultOpen
+        >
+          <div data-testid="idea-panel-relations">
+            <IdeaContextPanel
+              open
+              embedded
+              onClose={onClose}
+              ideaId={ideaId}
+              title={title}
+              selectedNodeId={selection.type === 'node' ? selection.primaryId : null}
+              selectionMeta={selection.meta ?? null}
+              liveGraphNodes={graphNodes}
+              liveGraphEdges={graphEdges}
+              mapExtensions={mapExtensions}
+              activeTool={activeTool}
+              stage={stage}
+              seedText={seedText}
+              onInsertToCanvas={onInsertContextToCanvas}
+            />
+          </div>
+        </Section>
+      )}
+
+      {/* ── Komentarze (§7) — first-class, nie szczegół elementu. ── */}
+      {wZakladce('comments') && (
+        <Section
+          title={t('myWorkIdeas.workspaceTools.comments')}
+          icon={<MessageSquare size={12} />}
+          defaultOpen
+        >
+          <IdeaPanelComments
+            ideaId={ideaId}
+            isDraft={isDraft}
+            isPl={!!isPl}
+            selection={selection}
+            graphNodes={graphNodes ?? []}
+          />
+        </Section>
+      )}
+
+      {/* ── Historia (§8) — zdarzenia + wersje, AI = typ zdarzenia. ── */}
+      {wZakladce('history') && (
+        <Section
+          title={t('myWorkIdeas.workspaceTools.history')}
+          icon={<Clock size={12} />}
+          defaultOpen
+        >
+          <IdeaPanelHistory
+            ideaId={ideaId}
+            isDraft={isDraft}
+            isPl={!!isPl}
+            onRestoreSnapshot={onRestoreSnapshot}
+          />
+        </Section>
       )}
       </div>
       </PanelVisual.Provider>

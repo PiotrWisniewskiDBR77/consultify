@@ -28,6 +28,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import {
+  IDEA_CANVAS_CURSOR_MODE_EVENT,
+  type IdeaCanvasCursorMode,
+  type IdeaCanvasCursorModeDetail,
+} from '../canvas/ideaCanvasCursorMode';
 import { FOCUS_RING } from '../canvas/motionTokens';
 import type {
   CanvasToolType,
@@ -94,15 +99,21 @@ interface ToolSlot {
   popover?: PopoverId;
   /**
    * P1-1 (Z3 — zero cichych braków reakcji): reprezentacje, w których ten slot
-   * MA realny odbiornik. Rail jest wspólny dla czterech reprezentacji, ale jego
-   * wspólne sloty (import/eksport, „więcej narzędzi", wskaźnik trybu kursora)
-   * wysyłają ciągi `mm_*`, które obsługuje wyłącznie `useMindMapQuickActions`
-   * (zamontowany tylko w IdeaRecommendationMap). Poza tą listą slot renderuje
-   * się jako WYŁĄCZONY z podanym powodem w tooltipie — zamiast wyglądać na
-   * czynny i nie robić nic. Brak pola = slot żyje wszędzie.
+   * MA realny odbiornik. Rail jest wspólny dla czterech reprezentacji.
+   * Brak pola = slot żyje wszędzie.
+   *
+   * Dwa różne traktowania, zależnie od PRZYCZYNY braku (2026-07-24, standard
+   * `docs/standards/idea-workspace/06_LEWY_RAIL.md` §2/§7):
+   *  - slot niesie prawdziwą informację dziedzinową o aktywnej reprezentacji,
+   *    gdy wyłączony (dziś tylko `pointer_toggle` w Tabeli — „to siatka danych,
+   *    nie płótno") → zostaje WYŁĄCZONY z `offReason*` w tooltipie;
+   *  - slot to po prostu funkcja, której dana reprezentacja nie ma wcale
+   *    (dziś `import`, `more` poza Mapą myśli) → slot ZNIKA z raila tej
+   *    reprezentacji (patrz `usunNieobslugiwaneSloty`), nie wisi wyszarzony —
+   *    to była atrapa „wkrótce", usunięta decyzją właściciela (Z3).
    */
   liveIn?: CanvasToolType[];
-  /** Powód wyłączenia (PL/EN) pokazywany w tooltipie wyłączonego slotu. */
+  /** Powód wyłączenia (PL/EN) — tylko dla slotów z prawdziwą informacją dziedzinową. */
   offReasonPl?: string;
   offReasonEn?: string;
 }
@@ -114,13 +125,16 @@ const SHARED_TOP: ToolSlot[] = [
     tkey: 'myWorkMindmap.toolbar.cursorMode',
     labelEn: 'Cursor mode',
     action: 'mm_toggle_pointer',
-    // Tryb kursora (SEL/PAN/LNK) jest stanem Mapy myśli — `mm_select_mode` /
-    // `mm_pan_mode` przestawiają `mindMapInteractionMode`, który czyta wyłącznie
-    // IdeaRecommendationMap. W pozostałych reprezentacjach pstryczek zmieniał
-    // tylko własną ikonę = kłamał o stanie płótna.
-    liveIn: ['mindmap'],
-    offReasonPl: 'tryb kursora (zaznacz / przesuń / połącz) jest stanem Mapy myśli',
-    offReasonEn: 'cursor mode (select / pan / connect) is a Mind Map state',
+    // Z1 (rozdz. 06 §3, 2026-07-23): tryb kursora działa REALNIE w trzech
+    // płótnach. Mapa myśli czyta `mindMapInteractionMode`; Tablica i Przepływ
+    // przyjmują `mm_select_mode` / `mm_pan_mode` we własnych hookach quick
+    // actions i tłumaczą je na propsy ReactFlow (canvas/ideaCanvasCursorMode.ts).
+    // Wcześniej slot był tu wyłączony, bo poza Mapą zmieniał tylko własną ikonę.
+    // Tabela zostaje wyłączona świadomie — rozdz. 06 §7 zakazuje pojęć
+    // canvasowych (rączka/pan) w siatce danych.
+    liveIn: ['mindmap', 'whiteboard', 'process_flow'],
+    offReasonPl: 'tryb kursora dotyczy płótna — Tabela to siatka danych, nie płótno',
+    offReasonEn: 'cursor mode belongs to a canvas — Table is a data grid, not a canvas',
   },
   // #6j: AI na samej górze raila, zaraz pod wskaźnikiem trybu chwytu —
   // najcenniejsza część raila, ma być widoczna od razu z góry.
@@ -303,11 +317,13 @@ const SHARED_BOTTOM: ToolSlot[] = [
     labelEn: 'Import / Export',
     popover: 'importExport',
     // ImportExportPopover wystawia wyłącznie `mm_import_*` / `mm_export_*` /
-    // `mm_snapshot_history`. Poza Mapą myśli żaden z nich nie ma odbiornika;
-    // realny eksport tych reprezentacji jest w Menu 3 („Eksport") i w kebabie.
+    // `mm_snapshot_history`. Poza Mapą myśli żaden z nich nie ma odbiornika.
+    // Standard rozdz. 06 §2: Import/Eksport NIE jest pozycją raila narzędzi —
+    // mieszka w Menu 3 / Menu 1. Decyzja właściciela (Z3, 2026-07-24): slot bez
+    // implementacji w danym narzędziu ZNIKA z raila tego narzędzia, nie wisi
+    // wyszarzony — stąd `liveIn` tu też steruje WIDOCZNOŚCIĄ (patrz
+    // `usunNieobslugiwaneSloty` niżej), nie tylko stanem disabled.
     liveIn: ['mindmap'],
-    offReasonPl: 'import/eksport z raila obsługuje Mapa myśli — tu użyj „Eksport" w Menu 3',
-    offReasonEn: 'rail import/export is Mind Map only — use "Export" in Menu 3 here',
   },
   {
     id: 'more',
@@ -316,10 +332,11 @@ const SHARED_BOTTOM: ToolSlot[] = [
     labelEn: 'More tools',
     popover: 'more',
     // MoreToolsPanel to wyłącznie narzędzia Mapy myśli (układ, struktura,
-    // poziomy zwijania, prezentacja, minimapa, migawki, udostępnianie).
+    // poziomy zwijania, prezentacja, minimapa, migawki, udostępnianie) — reszta
+    // reprezentacji nie ma tu handlera. Standard rozdz. 06 §2: te narzędzia
+    // dodatkowe nie należą do raila innych reprezentacji. Patrz komentarz przy
+    // `import` powyżej — ten slot znika (nie wyszarza się) poza Mapą myśli.
     liveIn: ['mindmap'],
-    offReasonPl: 'narzędzia dodatkowe (układ, zwijanie, prezentacja) są właściwością Mapy myśli',
-    offReasonEn: 'extra tools (layout, folding, presentation) belong to the Mind Map',
   },
 ];
 
@@ -371,6 +388,35 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const [openPopover, setOpenPopover] = useState<PopoverId>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * Z1 (rozdz. 06 §3): realny tryb płótna zgłaszany przez reprezentacje, które
+   * trzymają go u siebie (Tablica ma dodatkowo 'draw'). Rail dostaje
+   * `interactionMode` propsem z IdeaMapWorkspace — to stan Mapy myśli, więc bez
+   * tego nasłuchu pstryczek pokazywałby SEL, gdy Tablica jest w trybie
+   * rysowania. Pętla domknięta: rail wysyła akcję w dół, reprezentacja
+   * odsyła stan, który NAPRAWDĘ przyjęła.
+   */
+  const [canvasCursorModes, setCanvasCursorModes] = useState<
+    Partial<Record<CanvasToolType, IdeaCanvasCursorMode>>
+  >({});
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail as IdeaCanvasCursorModeDetail | undefined;
+      if (!detail?.tool || !detail?.mode) return;
+      setCanvasCursorModes((prev) =>
+        prev[detail.tool] === detail.mode ? prev : { ...prev, [detail.tool]: detail.mode }
+      );
+    };
+    window.addEventListener(IDEA_CANVAS_CURSOR_MODE_EVENT, handler);
+    return () => window.removeEventListener(IDEA_CANVAS_CURSOR_MODE_EVENT, handler);
+  }, []);
+
+  /** Tryb pokazywany na pstryczku: własny stan płótna tam, gdzie płótno go zgłasza. */
+  const effectiveMode: MindMapInteractionMode | 'draw' =
+    activeTool === 'whiteboard' || activeTool === 'process_flow'
+      ? (canvasCursorModes[activeTool] ?? 'select')
+      : interactionMode;
+
   // UI-L1: track the canvas container's box so the portaled rail floats INSIDE the
   // canvas — not on the app sidebar (x) and not over Menu 1 / Menu 3 (y).
   // Falls back to viewport centering when no ref is given (legacy chrome path).
@@ -414,6 +460,18 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const filtrujDataRail = (slots: ToolSlot[]) =>
     dataRail ? slots.filter((sl) => !SLOTY_SPOZA_DATA_RAILA.has(sl.id)) : slots;
 
+  /**
+   * Z3 (2026-07-24, standard `docs/standards/idea-workspace/06_LEWY_RAIL.md` §2):
+   * usuwa CAŁKOWICIE (nie wyszarza) sloty bez odbiornika w aktywnej reprezentacji —
+   * dziś `import`/`more` poza Mapą myśli. W odróżnieniu od `powodWylaczenia` (który
+   * renderuje slot jako disabled z powodem — właściwe TYLKO dla `pointer_toggle` w
+   * Tabeli, gdzie wyszarzenie niesie prawdziwą informację dziedzinową), te sloty po
+   * prostu nie istnieją w railu tego narzędzia — zawsze aktywne (bez `liveIn`) albo
+   * odfiltrowane, nigdy wyszarzone „na wiarę".
+   */
+  const usunNieobslugiwaneSloty = (slots: ToolSlot[]) =>
+    slots.filter((sl) => !sl.liveIn || sl.liveIn.includes(activeTool));
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
@@ -449,12 +507,19 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const closePopover = useCallback(() => setOpenPopover(null), []);
 
   const handlePointerToggle = useCallback(() => {
-    const next = interactionMode === 'select' ? 'pan' : 'select';
+    // Z zaznaczania → przesuwanie; z KAŻDEGO innego trybu (przesuwanie,
+    // łączenie, rysowanie w Tablicy) → powrót do zaznaczania.
+    const next = effectiveMode === 'select' ? 'pan' : 'select';
     onAction(next === 'select' ? 'mm_select_mode' : 'mm_pan_mode');
     setOpenPopover(null);
-  }, [interactionMode, onAction]);
+  }, [effectiveMode, onAction]);
 
-  const pointerTooltip = getMindmapPointerToggleTooltip(interactionMode, isPl);
+  const pointerTooltip =
+    effectiveMode === 'draw'
+      ? isPl
+        ? 'Rysowanie — kliknij, aby wrócić do zaznaczania'
+        : 'Draw — click to return to select'
+      : getMindmapPointerToggleTooltip(effectiveMode, isPl);
 
   /**
    * P1-1: slot bez odbiornika w bieżącej reprezentacji. Zwraca powód (do
@@ -492,10 +557,12 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
       );
     }
     if (slot.id === 'pointer_toggle') {
-      const PointerIcon = interactionMode === 'pan' ? Hand : MousePointer2;
+      const PointerIcon =
+        effectiveMode === 'pan' ? Hand : effectiveMode === 'draw' ? Pen : MousePointer2;
       return (
         <div key={slot.id} className="relative">
           <button
+            data-testid={`canvas-left-toolbar-${slot.id}`}
             onClick={handlePointerToggle}
             title={pointerTooltip}
             aria-label={pointerTooltip}
@@ -505,11 +572,13 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           </button>
           <div className="absolute left-[calc(100%+6px)] top-1/2 -translate-y-1/2 pointer-events-none">
             <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text">
-              {interactionMode === 'pan'
+              {effectiveMode === 'pan'
                 ? 'PAN'
-                : interactionMode === 'connect'
-                  ? t('ideas.mindmap.lnk', 'LNK')
-                  : t('ideas.mindmap.sel', 'SEL')}
+                : effectiveMode === 'draw'
+                  ? t('ideas.mindmap.drw', 'DRW')
+                  : effectiveMode === 'connect'
+                    ? t('ideas.mindmap.lnk', 'LNK')
+                    : t('ideas.mindmap.sel', 'SEL')}
             </span>
           </div>
         </div>
@@ -600,6 +669,11 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     );
   };
 
+  // Sloty dolne po odfiltrowaniu — poza Mapą myśli dziś puste (import/more nie
+  // mają odbiornika, patrz komentarz przy `usunNieobslugiwaneSloty`). Pusta
+  // tablica pomija swój separator niżej, żeby nie zostawić podwójnej kreski.
+  const dolneSloty = usunNieobslugiwaneSloty(filtrujDataRail(SHARED_BOTTOM));
+
   const toolbarNode = (
     <div
       ref={toolbarRef}
@@ -670,9 +744,12 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
 
       {contextSlots.map(renderSlot)}
 
-      <div className="w-5 border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
-
-      {filtrujDataRail(SHARED_BOTTOM).map(renderSlot)}
+      {dolneSloty.length > 0 && (
+        <>
+          <div className="w-5 border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
+          {dolneSloty.map(renderSlot)}
+        </>
+      )}
 
       <div className="w-5 border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
 

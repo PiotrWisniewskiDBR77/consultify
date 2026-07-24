@@ -195,11 +195,14 @@ const ClientDocumentsVault = lazyWithRetry(() =>
     default: m.ClientDocumentsVault,
   }))
 );
-// AGT-003 (relokacja Run agent z menu głównego do My Work). Renders the
-// launcher/panel directly (no self-gating) — the tab entry below is filtered
-// out when isAgentPlanEnabled() is false, mirroring menuConfig.ts.
-const AgentPlanWorkspace = lazyWithRetry(() =>
-  import('../AIChat/AgentPlanWorkspace').then((m) => ({ default: m.AgentPlanWorkspace }))
+// AGT-003 (relokacja Run agent z menu głównego do My Work) + AGT-010 (powłoka
+// z 2 zakładkami "Moje procesy"/"Szablony" PRZED launcherem — Piotr 2026-07-24:
+// wejście pokazywało od razu 31 gotowców, brakowało warstwy tabeli pozycji jak
+// w Decisions). AgentHubShell renderuje AgentPlanWorkspace dopiero po wybraniu
+// pozycji z tabeli / utworzeniu nowego procesu — the tab entry below is
+// filtered out when isAgentPlanEnabled() is false, mirroring menuConfig.ts.
+const AgentHubShell = lazyWithRetry(() =>
+  import('../AIChat/AgentHubShell').then((m) => ({ default: m.AgentHubShell }))
 );
 
 // Types
@@ -3716,11 +3719,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           </React.Suspense>
         );
       case 'agent':
-        // AGT-003 (relokacja Run agent z menu głównego). Sama relokacja —
-        // funkcjonalność (katalog manifestów, plan builder) zostaje 1:1.
+        // AGT-010: powłoka (Moje procesy | Szablony) PRZED AgentPlanWorkspace —
+        // patrz komentarz przy lazy import AgentHubShell powyżej.
         return (
           <React.Suspense fallback={lazyFallback}>
-            <AgentPlanWorkspace />
+            <AgentHubShell />
           </React.Suspense>
         );
       default:

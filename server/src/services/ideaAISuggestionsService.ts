@@ -185,7 +185,6 @@ export async function generateSuggestions(
   queryHelpers: any,
   language: string
 ): Promise<SuggestionsResult> {
-  const isPl = language.startsWith('pl');
   const companyCtx = await buildCompanyContext(userId, orgId, queryHelpers);
   const hasCompanyData =
     companyCtx.initiatives.length > 0 ||
@@ -197,6 +196,16 @@ export async function generateSuggestions(
     .map((n) => n.label || '')
     .filter(Boolean)
     .slice(0, 50);
+
+  // Język odpowiedzi z TREŚCI (tytuł/opis/etykiety), flaga UI tylko jako fallback.
+  const { resolveResponseLanguage, languageInstruction } = await import(
+    './ai/responseLanguage.js'
+  );
+  const respLang = resolveResponseLanguage({
+    requested: language,
+    samples: [context.title, context.seedText, ...existingLabels],
+  });
+  const isPl = respLang === 'pl';
 
   const systemPrompt = `You are a consulting AI assistant helping to develop business ideas and strategies.
 You generate actionable suggestions for an idea workspace.
@@ -223,7 +232,7 @@ ${
     : ''
 }
 
-Respond in ${isPl ? 'Polish' : 'English'}.
+${languageInstruction(respLang)}
 Return a JSON array of suggestions. Each suggestion has:
 - category: one of "branch_suggestions", "row_suggestions", "risk_flags", "framework_recommendations", "topics", "findings", "next_steps"
 - text: short actionable text (max 100 chars)
@@ -391,7 +400,16 @@ export async function generateTableAction(
   orgId: string,
   language: string
 ): Promise<{ type: string; [key: string]: any }> {
-  const isPl = language.startsWith('pl');
+  // Język odpowiedzi z TREŚCI komendy i nagłówków tabeli (akcje `summarize` / `add_rows`
+  // zwracają tekst dla użytkownika), flaga UI jako fallback.
+  const { resolveResponseLanguage, languageInstruction } = await import(
+    './ai/responseLanguage.js'
+  );
+  const respLang = resolveResponseLanguage({
+    requested: language,
+    samples: [naturalLanguage, ...tableSchema.map((c) => String(c?.header || ''))],
+  });
+  const isPl = respLang === 'pl';
 
   // ── B4: Premium schema enrichment (flag-gated, fail-open) ──────────────────
   try {
@@ -429,7 +447,9 @@ Possible action types:
 - { "type": "add_rows", "rows": [{ "label": "...", "status": "...", ... }] }
 - { "type": "summarize", "summary": "..." }
 
-Return exactly one JSON action object.`;
+Return exactly one JSON action object.
+
+${languageInstruction(respLang)}`;
 
   try {
     const { llmService } = await import('./ai/llmService.js');
@@ -475,8 +495,16 @@ export async function generateAIFill(
   queryHelpers: any,
   language: string
 ): Promise<Array<{ rowId: string; value: string }>> {
-  const isPl = language.startsWith('pl');
   const companyCtx = await buildCompanyContext(userId, orgId, queryHelpers);
+
+  // Język odpowiedzi z TREŚCI (polecenie kolumny + dane wierszy), flaga UI jako fallback.
+  const { resolveResponseLanguage, languageInstruction } = await import(
+    './ai/responseLanguage.js'
+  );
+  const respLang = resolveResponseLanguage({
+    requested: language,
+    samples: [columnPrompt, ...rows.slice(0, 20).map((r) => JSON.stringify(r?.data || {}))],
+  });
 
   const systemPrompt = `You are an AI column filler. For each row, generate a value based on the prompt and row data.
 Prompt: "${columnPrompt}"
@@ -488,7 +516,7 @@ ${
         .join(', ')}`
     : ''
 }
-Respond in ${isPl ? 'Polish' : 'English'}.
+${languageInstruction(respLang)}
 Return a JSON array: [{ "rowId": "...", "value": "..." }]`;
 
   const rowsDesc = rows

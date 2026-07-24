@@ -37,6 +37,12 @@ import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 import { getCanvasBg } from './canvas/canvasBackground';
 import { CanvasSnapGuides } from './canvas/CanvasSnapGuides';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import {
+  getIdeaCanvasCursorClass,
+  getIdeaCanvasCursorProps,
+  type IdeaCanvasCursorMode,
+  publishIdeaCanvasCursorMode,
+} from './canvas/ideaCanvasCursorMode';
 import { useCanvasSnapping } from './canvas/useCanvasSnapping';
 import {
   formatIdeaMapSyncLabel,
@@ -132,6 +138,11 @@ interface WhiteboardCanvasProps {
   nodes: Node[];
   edges: Edge[];
   locked: boolean;
+  /**
+   * Z1 (rozdz. 06 §3): tryb kursora płótna sterowany pstryczkiem lewego raila.
+   * Do 2026-07-23 Tablica w ogóle go nie odbierała — pstryczek kłamał o stanie.
+   */
+  cursorMode?: IdeaCanvasCursorMode;
   isPolish?: boolean;
   onNodesChange?: (changes: NodeChange[]) => void;
   onEdgesChange?: (changes: EdgeChange[]) => void;
@@ -156,6 +167,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   nodes,
   edges,
   locked,
+  cursorMode = 'select',
   isPolish = false,
   onNodesChange,
   onEdgesChange,
@@ -478,6 +490,11 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
           externalOnContextMenu?.(event);
         }}
         {...getIdeasToolInteractionProps('whiteboard', { locked })}
+        // Z1 (rozdz. 06 §3): tryb kursora z lewego raila REALNIE przestawia
+        // płótno. `select` = zero nadpisań (zachowanie Z10), `pan` = rączka
+        // (nic nie da się ruszyć ani zaznaczyć). Spread MUSI być po
+        // getIdeasToolInteractionProps, żeby wygrał z domyślnymi.
+        {...getIdeaCanvasCursorProps(cursorMode)}
         // Fala 8: connectionMode="loose" already comes from
         // getIdeasToolInteractionProps (spread above); connectionRadius widens
         // the drop-snap zone around each 4-side handle (parity with Process
@@ -485,7 +502,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
         connectionRadius={40}
         deleteKeyCode={null}
         fitView
-        className="bg-c-surface-raised"
+        className={`bg-c-surface-raised ${getIdeaCanvasCursorClass(cursorMode)}`}
         defaultEdgeOptions={{ type: 'labeled' }}
         onMoveEnd={(_event: unknown, viewport: { x: number; y: number; zoom: number }) =>
           onViewportChange?.(viewport)
@@ -700,7 +717,20 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   const [loading, setLoading] = useState(false);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const [whiteboardMode, setWhiteboardMode] = useState<'board' | 'draw'>('board');
+  /**
+   * Z1 (rozdz. 06 §3) — JEDEN stan trybu zamiast dwóch.
+   *
+   * Do 2026-07-23 Tablica trzymała `whiteboardMode` ('board' | 'draw') sterowany
+   * wyłącznie przyciskiem „Rysuj", a lewy rail przestawiał NIEZALEŻNY, niczego
+   * nieświadomy `interactionMode` ('select' | 'pan') w IdeaMapWorkspace. Dwa
+   * równoległe przełączniki tego samego pojęcia = pstryczek raila kłamał.
+   *
+   * Teraz stanem jest `canvasMode` ('select' | 'pan' | 'draw'); 'board' z
+   * dawnego kontraktu (persystencja, toolbar, kopie) to po prostu „nie draw" i
+   * jest z niego WYLICZANE, nie trzymane osobno.
+   */
+  const [canvasMode, setCanvasMode] = useState<IdeaCanvasCursorMode>('select');
+  const whiteboardMode: 'board' | 'draw' = canvasMode === 'draw' ? 'draw' : 'board';
   const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
   const [drawingPaths, setDrawingPaths] = useState<DrawingPath[]>([]);
   const [scenes, setScenes] = useState<Scene[]>([]);
@@ -1163,7 +1193,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       if (Array.isArray(wbExt.drawingPaths)) setDrawingPaths(wbExt.drawingPaths);
       if (Array.isArray(wbExt.scenes)) setScenes(wbExt.scenes);
       if (wbExt.mode === 'board' || wbExt.mode === 'draw') {
-        setWhiteboardMode(wbExt.mode);
+        // Kontrakt persystencji zostaje 'board' | 'draw' (zapisane tablice) —
+        // mapujemy na jeden stan trybu; 'board' wraca jako 'select'.
+        setCanvasMode(wbExt.mode === 'draw' ? 'draw' : 'select');
       }
       if (wbExt.sessionState && typeof wbExt.sessionState === 'object') {
         setSessionState({
@@ -1418,9 +1450,14 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     [currentUserId]
   );
 
+  /**
+   * Wejście „Rysuj / Canvas" (przycisk paska Tablicy + skrót Esc + quick action
+   * `wb_mode_draw`). Zachowuje dotychczasowy kontrakt 'board' | 'draw', ale
+   * ustawia JEDEN stan: 'draw' albo powrót do zaznaczania.
+   */
   const setBoardMode = useCallback(
     (mode: 'board' | 'draw') => {
-      setWhiteboardMode(mode);
+      setCanvasMode(mode === 'draw' ? 'draw' : 'select');
       appendActivity(
         createWhiteboardActivityEntry(
           'session',
@@ -1433,6 +1470,23 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     },
     [appendActivity, currentUserId, isPl]
   );
+
+  /**
+   * Z1: wejście z lewego raila (`mm_select_mode` / `mm_pan_mode`). Ten sam,
+   * jedyny stan trybu — więc wybranie Zaznaczania/Przesuwania automatycznie
+   * wychodzi z trybu rysowania, zamiast zostawiać dwa sprzeczne stany.
+   */
+  const setCursorMode = useCallback((mode: 'select' | 'pan') => {
+    setCanvasMode(mode);
+  }, []);
+
+  // Rail dostaje `interactionMode` z IdeaMapWorkspace i nie wie nic o trybie
+  // „Rysuj" Tablicy — rozgłaszamy realny tryb, żeby ikona pstryczka nie kłamała.
+  useEffect(() => {
+    if (!open) return;
+    publishIdeaCanvasCursorMode('whiteboard', canvasMode);
+  }, [canvasMode, open]);
+
   const whiteboardModeCopy = useMemo(
     () => getWhiteboardModeCopy(whiteboardMode, isPl, locked),
     [isPl, locked, whiteboardMode]
@@ -2275,6 +2329,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       ungroupSelected,
       distributeNodes,
       setMode: setBoardMode,
+      setCursorMode,
       cycleSessionRole,
       toggleSessionTimer,
       toggleSessionVoting,
@@ -3546,6 +3601,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               nodes={canvasNodes}
               edges={displayEdges}
               locked={locked || whiteboardMode === 'draw'}
+              cursorMode={canvasMode}
               isPolish={isPl}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}

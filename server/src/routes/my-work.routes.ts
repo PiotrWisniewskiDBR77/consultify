@@ -5113,6 +5113,19 @@ router.post(
     const seed = String(idea?.seedText || idea?.body || idea?.title || '').trim();
     const expansion = String(idea?.aiExpansion || '').trim();
 
+    // Język odpowiedzi z TREŚCI mapy (isPl wyżej steruje SZKIELETEM domyślnej mapy —
+    // to osobna decyzja, zostaje na fladze UI; tu chodzi tylko o język od modelu).
+    const { resolveResponseLanguage, languageInstruction } = await import(
+      '../services/ai/responseLanguage.js'
+    );
+    const respLang = resolveResponseLanguage({
+      requested: language,
+      // `expansion` (ai_expansion) pomijamy — to WYNIK AI, więc mógł już powstać w złym
+      // języku; próbkujemy tylko materiał wpisany przez użytkownika.
+      samples: [idea?.title, seed, ...existingLabels.slice(0, 40)],
+    });
+    const isPlResponse = respLang === 'pl';
+
     // Ask LLM for new node titles (JSON only)
     let suggestions: { title: string; nodeType?: string }[] = [];
     try {
@@ -5137,7 +5150,7 @@ router.post(
                   ? 'experiment'
                   : 'option';
 
-      const prompt = isPl
+      const prompt = isPlResponse
         ? `Użytkownik pracuje na mapie rekomendacji biznesowych dla pomysłu/wyzwania.
 
 Kontekst pomysłu:
@@ -5174,9 +5187,11 @@ No markdown, no extra text.`;
       const r = await llmService.callText({
         type: 'text',
         modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
-        systemPrompt: isPl
-          ? 'Jesteś konsultantem biznesowym. Odpowiadasz wyłącznie poprawnym JSON.'
-          : 'You are a business consultant. You respond only with valid JSON.',
+        systemPrompt: `${
+          isPlResponse
+            ? 'Jesteś konsultantem biznesowym. Odpowiadasz wyłącznie poprawnym JSON.'
+            : 'You are a business consultant. You respond only with valid JSON.'
+        }\n\n${languageInstruction(respLang)}`,
         messages: [{ role: 'user', content: prompt }],
       });
       const raw = String((r as any)?.content || '[]');
@@ -5284,12 +5299,25 @@ router.post(
     const seedText = String(req.body?.seedText || idea?.seedText || '').trim();
     const mapNodes = Array.isArray(req.body?.mapNodes) ? req.body.mapNodes : [];
     const language = String(req.body?.language || 'en').toLowerCase();
-    const isPl = language.startsWith('pl');
 
     const existingLabels = mapNodes
       .map((n: any) => String(n?.data?.label || '').trim())
       .filter(Boolean)
       .slice(0, 100);
+
+    // Język odpowiedzi z TREŚCI mapy (nakładki AIAutoClustering / AIDependencyDetector /
+    // AIPriorityRecommender / AISentimentOverlay / AIWhatIfScenarios / AICompetitiveLandscape
+    // wysyłają tu `i18n.language`, który przy polskiej mapie bywa `en`).
+    const { resolveResponseLanguage, languageInstruction } = await import(
+      '../services/ai/responseLanguage.js'
+    );
+    const respLang = resolveResponseLanguage({
+      requested: language,
+      // Bez `req.body.seedText`: nakładki (AIAutoClustering, AIWhatIfScenarios, …) wpisują
+      // tam angielskie polecenie („Group these ideas into…"), a nie treść użytkownika.
+      samples: [idea?.title, idea?.seedText, ...existingLabels],
+    });
+    const isPl = respLang === 'pl';
 
     let suggestions: Array<{
       id: string;
@@ -5321,9 +5349,11 @@ Return ONLY JSON array: [{"id":"s1","category":"topics|findings|next_steps","tex
       const r = await llmService.callText({
         type: 'text',
         modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
-        systemPrompt: isPl
-          ? 'Jesteś konsultantem biznesowym. Odpowiadasz wyłącznie poprawnym JSON.'
-          : 'You are a business consultant. You respond only with valid JSON.',
+        systemPrompt: `${
+          isPl
+            ? 'Jesteś konsultantem biznesowym. Odpowiadasz wyłącznie poprawnym JSON.'
+            : 'You are a business consultant. You respond only with valid JSON.'
+        }\n\n${languageInstruction(respLang)}`,
         messages: [{ role: 'user', content: prompt }],
       });
       const raw = String((r as any)?.content || '[]');
@@ -5381,12 +5411,25 @@ router.post(
     const mapNodes = Array.isArray(req.body?.mapNodes) ? req.body.mapNodes : [];
     const branchKeys = Array.isArray(req.body?.branchKeys) ? req.body.branchKeys : [];
     const language = String(req.body?.language || 'en').toLowerCase();
-    const isPl = language.startsWith('pl');
 
     const existingLabels = mapNodes
       .map((n: any) => String(n?.data?.label || '').trim())
       .filter(Boolean)
       .slice(0, 100);
+
+    // Język odpowiedzi: TREŚĆ MAPY wygrywa z flagą UI (mapa po polsku + i18n=en
+    // dawała angielskie „AI Blind Spots" nad polską mapą). Patrz responseLanguage.ts.
+    // Próbkujemy WYŁĄCZNIE materiał użytkownika (tytuł/seed z bazy + etykiety węzłów).
+    // `req.body.seedText` celowo pomijamy — nakładki AI potrafią wstawić tam angielski
+    // szablon polecenia, który przechyliłby detekcję na EN przy polskiej mapie.
+    const { resolveResponseLanguage, languageInstruction } = await import(
+      '../services/ai/responseLanguage.js'
+    );
+    const respLang = resolveResponseLanguage({
+      requested: language,
+      samples: [idea?.title, idea?.seedText, ...existingLabels],
+    });
+    const isPl = respLang === 'pl';
 
     const gapNodes: any[] = [];
     const gapEdges: any[] = [];
@@ -5416,9 +5459,11 @@ Return ONLY JSON: {"rationale":"...","gaps":[{"title":"...","branchKey":"risks|g
       const r = await llmService.callText({
         type: 'text',
         modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
-        systemPrompt: isPl
-          ? 'Jesteś konsultantem biznesowym. Odpowiadasz wyłącznie poprawnym JSON.'
-          : 'You are a business consultant. You respond only with valid JSON.',
+        systemPrompt: `${
+          isPl
+            ? 'Jesteś konsultantem biznesowym. Odpowiadasz wyłącznie poprawnym JSON.'
+            : 'You are a business consultant. You respond only with valid JSON.'
+        }\n\n${languageInstruction(respLang)}`,
         messages: [{ role: 'user', content: prompt }],
       });
       const raw = String((r as any)?.content || '{}');
