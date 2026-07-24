@@ -99,15 +99,21 @@ interface ToolSlot {
   popover?: PopoverId;
   /**
    * P1-1 (Z3 — zero cichych braków reakcji): reprezentacje, w których ten slot
-   * MA realny odbiornik. Rail jest wspólny dla czterech reprezentacji, ale jego
-   * wspólne sloty (import/eksport, „więcej narzędzi", wskaźnik trybu kursora)
-   * wysyłają ciągi `mm_*`, które obsługuje wyłącznie `useMindMapQuickActions`
-   * (zamontowany tylko w IdeaRecommendationMap). Poza tą listą slot renderuje
-   * się jako WYŁĄCZONY z podanym powodem w tooltipie — zamiast wyglądać na
-   * czynny i nie robić nic. Brak pola = slot żyje wszędzie.
+   * MA realny odbiornik. Rail jest wspólny dla czterech reprezentacji.
+   * Brak pola = slot żyje wszędzie.
+   *
+   * Dwa różne traktowania, zależnie od PRZYCZYNY braku (2026-07-24, standard
+   * `docs/standards/idea-workspace/06_LEWY_RAIL.md` §2/§7):
+   *  - slot niesie prawdziwą informację dziedzinową o aktywnej reprezentacji,
+   *    gdy wyłączony (dziś tylko `pointer_toggle` w Tabeli — „to siatka danych,
+   *    nie płótno") → zostaje WYŁĄCZONY z `offReason*` w tooltipie;
+   *  - slot to po prostu funkcja, której dana reprezentacja nie ma wcale
+   *    (dziś `import`, `more` poza Mapą myśli) → slot ZNIKA z raila tej
+   *    reprezentacji (patrz `usunNieobslugiwaneSloty`), nie wisi wyszarzony —
+   *    to była atrapa „wkrótce", usunięta decyzją właściciela (Z3).
    */
   liveIn?: CanvasToolType[];
-  /** Powód wyłączenia (PL/EN) pokazywany w tooltipie wyłączonego slotu. */
+  /** Powód wyłączenia (PL/EN) — tylko dla slotów z prawdziwą informacją dziedzinową. */
   offReasonPl?: string;
   offReasonEn?: string;
 }
@@ -311,11 +317,13 @@ const SHARED_BOTTOM: ToolSlot[] = [
     labelEn: 'Import / Export',
     popover: 'importExport',
     // ImportExportPopover wystawia wyłącznie `mm_import_*` / `mm_export_*` /
-    // `mm_snapshot_history`. Poza Mapą myśli żaden z nich nie ma odbiornika;
-    // realny eksport tych reprezentacji jest w Menu 3 („Eksport") i w kebabie.
+    // `mm_snapshot_history`. Poza Mapą myśli żaden z nich nie ma odbiornika.
+    // Standard rozdz. 06 §2: Import/Eksport NIE jest pozycją raila narzędzi —
+    // mieszka w Menu 3 / Menu 1. Decyzja właściciela (Z3, 2026-07-24): slot bez
+    // implementacji w danym narzędziu ZNIKA z raila tego narzędzia, nie wisi
+    // wyszarzony — stąd `liveIn` tu też steruje WIDOCZNOŚCIĄ (patrz
+    // `usunNieobslugiwaneSloty` niżej), nie tylko stanem disabled.
     liveIn: ['mindmap'],
-    offReasonPl: 'import/eksport z raila obsługuje Mapa myśli — tu użyj „Eksport" w Menu 3',
-    offReasonEn: 'rail import/export is Mind Map only — use "Export" in Menu 3 here',
   },
   {
     id: 'more',
@@ -324,10 +332,11 @@ const SHARED_BOTTOM: ToolSlot[] = [
     labelEn: 'More tools',
     popover: 'more',
     // MoreToolsPanel to wyłącznie narzędzia Mapy myśli (układ, struktura,
-    // poziomy zwijania, prezentacja, minimapa, migawki, udostępnianie).
+    // poziomy zwijania, prezentacja, minimapa, migawki, udostępnianie) — reszta
+    // reprezentacji nie ma tu handlera. Standard rozdz. 06 §2: te narzędzia
+    // dodatkowe nie należą do raila innych reprezentacji. Patrz komentarz przy
+    // `import` powyżej — ten slot znika (nie wyszarza się) poza Mapą myśli.
     liveIn: ['mindmap'],
-    offReasonPl: 'narzędzia dodatkowe (układ, zwijanie, prezentacja) są właściwością Mapy myśli',
-    offReasonEn: 'extra tools (layout, folding, presentation) belong to the Mind Map',
   },
 ];
 
@@ -450,6 +459,18 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const SLOTY_SPOZA_DATA_RAILA = new Set(['pointer_toggle', 'templates', 'import']);
   const filtrujDataRail = (slots: ToolSlot[]) =>
     dataRail ? slots.filter((sl) => !SLOTY_SPOZA_DATA_RAILA.has(sl.id)) : slots;
+
+  /**
+   * Z3 (2026-07-24, standard `docs/standards/idea-workspace/06_LEWY_RAIL.md` §2):
+   * usuwa CAŁKOWICIE (nie wyszarza) sloty bez odbiornika w aktywnej reprezentacji —
+   * dziś `import`/`more` poza Mapą myśli. W odróżnieniu od `powodWylaczenia` (który
+   * renderuje slot jako disabled z powodem — właściwe TYLKO dla `pointer_toggle` w
+   * Tabeli, gdzie wyszarzenie niesie prawdziwą informację dziedzinową), te sloty po
+   * prostu nie istnieją w railu tego narzędzia — zawsze aktywne (bez `liveIn`) albo
+   * odfiltrowane, nigdy wyszarzone „na wiarę".
+   */
+  const usunNieobslugiwaneSloty = (slots: ToolSlot[]) =>
+    slots.filter((sl) => !sl.liveIn || sl.liveIn.includes(activeTool));
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -648,6 +669,11 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     );
   };
 
+  // Sloty dolne po odfiltrowaniu — poza Mapą myśli dziś puste (import/more nie
+  // mają odbiornika, patrz komentarz przy `usunNieobslugiwaneSloty`). Pusta
+  // tablica pomija swój separator niżej, żeby nie zostawić podwójnej kreski.
+  const dolneSloty = usunNieobslugiwaneSloty(filtrujDataRail(SHARED_BOTTOM));
+
   const toolbarNode = (
     <div
       ref={toolbarRef}
@@ -718,9 +744,12 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
 
       {contextSlots.map(renderSlot)}
 
-      <div className="w-5 border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
-
-      {filtrujDataRail(SHARED_BOTTOM).map(renderSlot)}
+      {dolneSloty.length > 0 && (
+        <>
+          <div className="w-5 border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
+          {dolneSloty.map(renderSlot)}
+        </>
+      )}
 
       <div className="w-5 border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
 
