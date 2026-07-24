@@ -7,12 +7,10 @@
 import {
   Code2,
   Download,
-  FileBarChart2,
   FileImage,
   FileJson,
   FileText,
   Loader2,
-  Presentation,
   RotateCcw,
   X,
 } from 'lucide-react';
@@ -41,7 +39,8 @@ import type { IdeaWorkspaceImportPayload } from './ideaSelectionTypes';
  * gated behind THIS client flag: when off (default), no request is fired at all and
  * no "server export" affordance is presented as a working action — all genuinely
  * working exports run entirely CLIENT-side (PNG/SVG/PDF/Markdown/JSON/package/mapping/
- * share + report/presentation conversion) and never depend on the server round-trip.
+ * share) and never depend on the server round-trip. Report/presentation NIE naleza
+ * juz tutaj — to Konwersja (P1-7/D6), przeniesiona do panelu Konwertuj.
  */
 export const IDEA_SERVER_EXPORT_ENABLED = import.meta.env.VITE_ENABLE_IDEA_SERVER_EXPORT === 'true';
 
@@ -128,25 +127,14 @@ const FORMATS: ExportFormat[] = [
     descEn: 'Permission-safe manifest for embeds and share flows.',
     ext: 'share.json',
   },
-  // V5-IDEA-40: Report/deck export from workspace
-  {
-    id: 'report',
-    icon: FileBarChart2,
-    labelPl: 'Raport',
-    labelEn: 'Report',
-    descPl: 'Generuj raport z zaznaczenia lub całości',
-    descEn: 'Generate report from selection or whole idea',
-    ext: 'report',
-  },
-  {
-    id: 'presentation',
-    icon: Presentation,
-    labelPl: 'Prezentacja (deck)',
-    labelEn: 'Presentation (deck)',
-    descPl: 'Generuj deck z zaznaczenia lub całości',
-    descEn: 'Generate deck from selection or whole idea',
-    ext: 'deck',
-  },
+  // P1-7 / D6 (docs/standards/idea-workspace/10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md §3):
+  // pozycje „Raport" i „Prezentacja (deck)" (V5-IDEA-40) zostaly STAD USUNIETE.
+  // Nie produkowaly pliku — dispatchowaly `convert_report`/`convert_presentation`,
+  // czyli tworzyly TRWALY REKORD w module Reports/Presentations. To jest Konwersja,
+  // nie Eksport. Byly zarazem duplikatem: rejestr konwersji (`ideaConvertTargets.ts`)
+  // ma `report` i `presentation` jako `live`, a panel Konwersji (IdeaWorkspaceTools,
+  // grupa „Generatory dokumentow") wola dokladnie ten sam `handleConvert`.
+  // Ten dropdown zawiera odtad WYLACZNIE formaty tworzace plik do pobrania.
 ];
 
 // P0-2 (docs/standards/idea-workspace/10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md §4.1):
@@ -227,7 +215,10 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
       ? `${String(whiteboardPolicy.classification || 'internal').toUpperCase()} • ${whiteboardPolicy.watermark}`
       : 'Consultify Idea Workspace';
   const exportAllowed = whiteboardPolicy?.exportAllowed !== false;
-  const shareAllowed = whiteboardPolicy?.shareAllowed !== false;
+  // P1-7: `sharePolicy.shareAllowed` bramkowalo TYLKO pozycje „Raport"/„Prezentacja",
+  // ktore wyjechaly stad do Konwersji (D6). W tym oknie nie ma juz czego bramkowac,
+  // wiec pole nie jest tu czytane. UWAGA — bramka NIE zostala przeniesiona na sciezke
+  // Konwersji (panel Konwertuj nie dostaje `extensions`); to osobne zadanie.
 
   const importPreview = useMemo(() => {
     if (!importPayload.trim()) return null;
@@ -615,36 +606,18 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
     setImportSummary(null);
   }, [importSummary, onImportGraph, ideaId, t]);
 
-  // V5-IDEA-40: Report/deck export via conversion system
-  const exportToReport = useCallback(() => {
-    setExporting('report');
-    window.dispatchEvent(
-      new CustomEvent('idea-workspace-quick-action', {
-        detail: { action: 'convert_report', ideaId },
-      })
-    );
-    setExporting(null);
-    onClose();
-  }, [ideaId, onClose]);
-
-  const exportToPresentation = useCallback(() => {
-    setExporting('presentation');
-    window.dispatchEvent(
-      new CustomEvent('idea-workspace-quick-action', {
-        detail: { action: 'convert_presentation', ideaId },
-      })
-    );
-    setExporting(null);
-    onClose();
-  }, [ideaId, onClose]);
-
+  // P1-7 / D6: `exportToReport` i `exportToPresentation` (dispatch `convert_report` /
+  // `convert_presentation`) usuniete razem z pozycjami menu — konwersja odbywa sie
+  // wylacznie sciezka Konwersji (panel „Konwertuj" → `handleConvert`).
   const canExportFormat = useCallback(
     (formatId: string) => {
-      if (!exportAllowed) return false;
-      if (!shareAllowed && (formatId === 'report' || formatId === 'presentation')) return false;
-      return true;
+      // P1-7: warunek na `shareAllowed` dotyczyl wylacznie usunietych pozycji
+      // `report`/`presentation` — po ich usunieciu byl martwy. Zostaje jedyna
+      // realna bramka governance dla PLIKOW: `sharePolicy.exportAllowed`.
+      void formatId;
+      return exportAllowed;
     },
-    [exportAllowed, shareAllowed]
+    [exportAllowed]
   );
 
   const recordExportRequest = useCallback(
@@ -691,12 +664,6 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
         case 'share_manifest':
           exportShareManifest();
           break;
-        case 'report':
-          exportToReport();
-          break;
-        case 'presentation':
-          exportToPresentation();
-          break;
       }
     },
     [
@@ -709,8 +676,6 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
       exportPNG,
       exportShareManifest,
       exportSVG,
-      exportToPresentation,
-      exportToReport,
       recordExportRequest,
     ]
   );
@@ -937,11 +902,11 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
               {t('myWorkIdeas.exportMenu.exportBlockedWhiteboardGovernance')}
             </div>
           )}
-          {exportAllowed && !shareAllowed && (
-            <div className="mt-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-              {t('myWorkIdeas.exportMenu.externalSharingDisabledDeckReportExports')}
-            </div>
-          )}
+          {/*
+            P1-7: komunikat „zewnetrzne udostepnianie wylaczone — eksport deck/raport"
+            zniknal razem z pozycjami, ktorych dotyczyl. Zostawienie go tutaj byloby
+            informacja o czyms, czego w tym oknie juz nie ma.
+          */}
         </div>
       </div>
     </div>
