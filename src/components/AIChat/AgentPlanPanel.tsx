@@ -427,7 +427,12 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
                 <li key={step.id} className="flex items-start gap-2 text-xs">
                   <span className="mt-0.5 shrink-0">{STEP_ICON[step.status]}</span>
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium text-c-text truncate">{step.toolName}</div>
+                    <div className="font-medium text-c-text truncate">
+                      {readablePhaseName(step.toolInput) ?? step.toolName}
+                    </div>
+                    {readablePhaseName(step.toolInput) ? (
+                      <div className="text-[10px] text-c-text-muted truncate">{step.toolName}</div>
+                    ) : null}
                     {step.errorMessage ? (
                       <div className="text-c-danger mt-0.5">{step.errorMessage}</div>
                     ) : null}
@@ -493,7 +498,12 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
             <div className="space-y-2">
               {awaitingSteps.map((step) => (
                 <div key={step.id} className="rounded-lg border border-c-border-subtle p-2">
-                  <div className="text-xs font-medium text-c-text mb-1.5">{step.toolName}</div>
+                  <div className="text-xs font-medium text-c-text mb-1.5">
+                    {readablePhaseName(step.toolInput) ?? step.toolName}
+                  </div>
+                  {readablePhaseName(step.toolInput) ? (
+                    <div className="text-[10px] text-c-text-muted mb-1.5">{step.toolName}</div>
+                  ) : null}
                   <PreviewActionButton
                     variant="positive"
                     icon={CheckCircle2}
