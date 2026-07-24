@@ -5000,14 +5000,15 @@ Return ONLY the final comment text.`;
         // dublujemy — patrz canCompleteFromPanel.
         label: t('myWork.taskDetail.label8', 'Actions'),
         icon: Save,
-        defaultOpen: true,
         // Pusto TYLKO w trybie Podgląd („do pokazania klientowi") — w trybie
-        // Edycja zawsze zostaje co najmniej „Przydziel".
+        // Edycja zawsze zostaje co najmniej „Przydziel". Etap 4 gridu n-Type
+        // (_GRID_STABILIZATION_COMMAND_2026-07-24.md): w Podglądzie sekcja jest
+        // ZWINIĘTA z licznikiem 0, bez komunikatu opisowego (był tu tekst
+        // „Actions are hidden in preview mode" — SSOT go zakazuje wprost).
+        defaultOpen: !readMode,
         isEmpty: readMode,
-        emptyLabel: t(
-          'myWork.taskDetail.actionsHiddenInReadMode',
-          'Actions are hidden in preview mode'
-        ),
+        badge: readMode ? 0 : undefined,
+        showZeroBadge: true,
         children: readMode ? null : (
           <div className="flex flex-col gap-2">
             {canCompleteFromPanel && (

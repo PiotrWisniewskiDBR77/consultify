@@ -8802,14 +8802,22 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       id: 'actions',
       label: t('interview.insightViewer.actions'),
       icon: Sparkles,
-      defaultOpen: true,
       // ── PODGLĄD = TYLKO CZYTANIE (decyzja właściciela 2026-07-24) ──
       // `readMode` jest PIERWSZYM warunkiem pustki: przyciski niżej wywołują
       // `runStatusTransition`, czyli ZAPIS statusu wniosku. W Podglądzie
       // sekcja mówi to samo, co w Zadaniu i Decyzji — akcje są w Edycji.
+      // Etap 4 gridu n-Type (_GRID_STABILIZATION_COMMAND_2026-07-24.md): w
+      // Podglądzie sekcja jest ZWINIĘTA z licznikiem 0, bez komunikatu
+      // opisowego (był tu tekst „Actions are hidden in preview mode" — SSOT
+      // go zakazuje wprost). Drugi powód pustki (`!statusEditable` /
+      // brak opcji statusu) zachowuje swój własny, opisowy komunikat — to
+      // NIE jest tryb Podgląd, więc reguła go nie dotyczy.
+      defaultOpen: !(readMode || !statusEditable || statusBaseOptions.length === 0),
       isEmpty: readMode || !statusEditable || statusBaseOptions.length === 0,
+      badge: readMode ? 0 : undefined,
+      showZeroBadge: true,
       emptyLabel: readMode
-        ? t('interview.insightViewer.actionsHiddenInReadMode', 'Actions are hidden in preview mode')
+        ? undefined
         : t('interview.insightViewer.actionsLiveInHeaderAndToolbar'),
       children: readMode ? null : (
         <div className="flex flex-col gap-2">

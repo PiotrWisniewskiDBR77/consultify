@@ -3,12 +3,15 @@ import {
   ArrowRight,
   CheckCircle2,
   FileText,
+  History,
   Lightbulb,
   Link2,
+  MessageSquare,
   Package,
   RefreshCw,
   ShieldCheck,
   SlidersHorizontal,
+  Sparkles,
   Target,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -2128,6 +2131,28 @@ export function KnownToolDetailView(props: {
     const sessionItems = Array.isArray(sessionStats.items) ? sessionStats.items : [];
     return [
       {
+        // AKCJE (Etap 4 gridu n-Type, _GRID_STABILIZATION_COMMAND_2026-07-24.md
+        // §Prawy panel + rozstrzygnięcie CTO 2026-07-24): sekcja BYŁA
+        // nieobecna (fala 2, anty-duplikacja §2.6) — powód wciąż stoi, „Startuj
+        // sesję" i „How to" mają już swój dom w Menu 1 / Menu 2, więc panel
+        // nie ma żadnej NIEZDUBLOWANEJ akcji do pokazania. Rozstrzygnięcie:
+        // przewidywalność kanonu (sekcja obecna na WSZYSTKICH 6 kartach)
+        // wygrywa nad „lepiej brak niż pusty akordeon" — sekcja zostaje
+        // WIDOCZNA, ale ZWINIĘTA z licznikiem 0. Zero nowego backendu.
+        id: 'actions',
+        label: t('discoveryToolsMain.knownToolDetailView.panelActions', 'Actions'),
+        icon: Sparkles,
+        defaultOpen: false,
+        isEmpty: true,
+        badge: 0,
+        showZeroBadge: true,
+        emptyLabel: t(
+          'discoveryToolsMain.knownToolDetailView.panelActionsEmpty',
+          'This library entry has no actions of its own — start a session from the header.'
+        ),
+        children: null,
+      },
+      {
         id: 'properties',
         label: t('discoveryToolsMain.knownToolDetailView.panelProperties', 'Properties'),
         icon: SlidersHorizontal,
@@ -2304,6 +2329,44 @@ export function KnownToolDetailView(props: {
             </p>
           </div>
         ),
+      },
+      {
+        // KOMENTARZE (Etap 4 gridu n-Type — SSOT §Prawy panel: „nie usuwać
+        // losowo Comments i History z wybranych kart" + rozstrzygnięcie CTO
+        // 2026-07-24). Karta biblioteczna to katalog GLOBALNY, bez wpisu
+        // per-organizacja — nie ma tu do czego podpiąć wątku komentarzy bez
+        // wymyślenia nowej encji (ten sam powód co przy sesjach narzędzia,
+        // patrz komentarz `ToolController.ts` gdzie indziej w repo). Sekcja
+        // zostaje WIDOCZNA dla przewidywalności kanonu, ZWINIĘTA z licznikiem
+        // 0 — zero nowego backendu, zero kompozytora.
+        id: 'comments',
+        label: t('discoveryToolsMain.knownToolDetailView.panelComments', 'Comments'),
+        icon: MessageSquare,
+        defaultOpen: false,
+        isEmpty: true,
+        badge: 0,
+        showZeroBadge: true,
+        emptyLabel: t(
+          'discoveryToolsMain.knownToolDetailView.panelCommentsEmpty',
+          'Comments are not available for shared library entries.'
+        ),
+        children: null,
+      },
+      {
+        // HISTORIA — tak samo: katalog globalny, bez per-organizacja logu
+        // zmian tego wpisu. Widoczna, zwinięta, licznik 0.
+        id: 'history',
+        label: t('discoveryToolsMain.knownToolDetailView.panelHistory', 'History'),
+        icon: History,
+        defaultOpen: false,
+        isEmpty: true,
+        badge: 0,
+        showZeroBadge: true,
+        emptyLabel: t(
+          'discoveryToolsMain.knownToolDetailView.panelHistoryEmpty',
+          'No history for this library entry.'
+        ),
+        children: null,
       },
     ];
   }, [
