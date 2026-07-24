@@ -95,3 +95,75 @@ punkt cofania, znane ograniczenia. Piotr klika, nie odkrywa zepsucia.
   ★ DŁUG: identyczna szerokość WSZYSTKICH 6 wymaga przepisania powłoki (dotknęłoby też
   InterviewWorkspace/ToolDocumentView) — zgłoszone, nie forsowane. Tryb C Inicjatywy
   (`InitiativeDocumentView:10666`) zachowuje stary padding — kanoniczny tryb N naprawiony.
+
+## DoD migracji powłoki (6 kart n-Type) — dopisane 2026-07-24, sesja aparatu pomiarowego
+
+> Migracja dotyka 6 kart naraz, więc „wygląda dobrze" nie wystarcza. Dowodem jest pomiar
+> `scripts/karty-n-geometria.mjs` przeciwko baseline'owi zdjętemu z `origin/demo 12826509a2`:
+> `Harvard/wdrozenie-100/_BASELINE_GEOMETRIA_KART_2026-07-24.md` (+ JSON i 12 zrzutów obok).
+
+### Bramka 0 — najpierw sprawdź PRZYRZĄD, potem ekran
+- [ ] `node scripts/karty-n-geometria.mjs --self-test` = **12/12**. Kontrolki wstrzykują sztuczny
+      błąd konsoli, crimson, enum, komunikat błędu i usuwają kotwicę Menu 2. Czerwony self-test →
+      pomiar bez wartości dowodowej, nie wolno nim niczego odbierać.
+      (Powód reguły: `check-triada` była trwale ślepa przez `grep` w BRE na macOS — narzędzie
+      pomiarowe cicho unieważniło pomiar.)
+
+### Bramka 1 — geometria (6 kart × viewporty 1280 i 1440, light)
+- [ ] W KAŻDEJ karcie i KAŻDYM viewporcie: `Menu1.left == Menu2.left == Sekcje.left` (co do piksela).
+- [ ] W KAŻDEJ karcie i KAŻDYM viewporcie: `Menu1.width == Menu2.width` (co do piksela).
+- [ ] Żaden z 5 pasów nie ma flagi `podejrzanyKontener` (= nie zmierzono kontenera `max-w-*`
+      zamiast realnego pasa — tak powstał fałszywy „zgodny" pomiar 24.07).
+- [ ] Komplet 5 pasów zmierzony w każdej karcie (Menu 1, Menu 2, pas sekcji, lewa nawigacja,
+      prawy panel). Zniknięcie pasa = regresja, nawet jeśli ekran „wygląda".
+- [ ] **Jedna szerokość MIĘDZY kartami** (cel migracji): przy 1440 wszystkie 6 kart mają tę samą
+      `Menu1.width` i tę samą `Menu1.left`; to samo przy 1280.
+      ★ Baseline ma tu DWIE RODZINY (768 stałe vs 840/1000 płynne) — kryterium wewnątrzkartowe
+      tego NIE wykryje, dlatego to osobny punkt.
+- [ ] `prawyPanel.width` niezmieniony vs baseline (dziś 360 px w każdej karcie).
+- [ ] `prawyPanel.left >= Sekcje.right` — panel nie nachodzi na centrum w żadnym viewporcie.
+
+### Bramka 2 — brak regresji vs baseline (automat: `--porownaj=<baseline.json>`, exit 1 = stop)
+- [ ] **Zero nowych błędów konsoli** — liczba po odfiltrowaniu szumu nie większa niż w baseline
+      (baseline = 0 w każdej z 12 kombinacji).
+- [ ] **Zero error-boundary** — brak „Coś poszło nie tak"/`Cannot read propert…`/`ChunkLoadError`
+      na którymkolwiek ekranie.
+- [ ] **Crimson nie wzrósł** (baseline = 0). Wzrost = naruszenie prawa nadrzędnego UI #3.
+- [ ] **Zero surowych enumów** (`SCREAMING_SNAKE`, slugi `a-z-a-z`) — baseline = 0.
+      Wyjątki są w skrypcie i są zamknięte: `trade-off`, daty ISO, nazwy plików/URL,
+      utrwalone złożenia, `shadow-board` (Lean/5S). Nowy wyjątek dopisuje się z komentarzem
+      i wskazaniem pliku źródłowego, NIE po to, żeby wyciszyć realny wyciek.
+- [ ] **Komplet sekcji prawego panelu nie zmalał** w żadnej karcie i żadna nazwana sekcja
+      nie zniknęła (baseline: Decyzja 6, Zadanie 6, Powiadomienie 6, Insight 7, Narzędzie 4,
+      Inicjatywa 7). Wzrost jest dozwolony (np. dorobienie AKCJI w Narzędziu).
+- [ ] Kolejność sekcji panelu bez przetasowań niezamierzonych (WŁAŚCIWOŚCI zawsze przed
+      POWIĄZANIA, HISTORIA na końcu tam, gdzie jest).
+- [ ] `aria-label` prawego panelu nadal polski i per karta — nie zdegradowany do domyślnego
+      `Artifact details` z `ArtifactRightPanel`.
+
+### Bramka 3 — oczy, nie liczby (reguła #7: Piotr nie jest pierwszym testerem wizualnym)
+- [ ] 12 zrzutów po migracji (6 kart × 1280/1440) obejrzanych przeze mnie i porównanych ze
+      zrzutami baseline `_BASELINE_GEOMETRIA_KART_2026-07-24/zrzuty/`.
+- [ ] Treść nie zniknęła: `znaki` i `klikalne` w JSON nie spadły istotnie (>20%) vs baseline.
+- [ ] Dark mode sprawdzony wzrokiem na min. 2 kartach (aparat mierzy light — to jego znany limit).
+- [ ] Dopiero po tym Piotr patrzy — do AKCEPTU, nie do odkrywania zepsucia.
+
+### ★ Pułapki tej doby, których migrator ma unikać
+1. **Mierzenie kontenera `max-w-*` zamiast realnego pasa.** Tak powstał fałszywy dowód zgodności,
+   podczas gdy Menu 2 było węższe od Menu 1 o 2×24 px. Zawsze rect elementu z tłem/ramką.
+2. **`innerText` nie pokazuje `.value` pól formularza.** Enumy potrafią siedzieć w inputach
+   i „nie istnieć" w pomiarze. Aparat czyta też `.value`, `selectedOptions` i `placeholder`.
+3. **Harness, który nie montuje badanego komponentu.** Zielony wynik z ekranu, na którym
+   badanej rzeczy nie ma, to nie wynik. Stąd kontrolka „komplet 5 pasów zmierzony".
+4. **Bramka ślepa z powodu narzędzia, nie kodu** (`grep` BRE na macOS w `check-triada`;
+   `check-triada` skanuje tylko NOWE linie — na czystym drzewie nie bada NIC).
+   Przed użyciem jakiejkolwiek bramki: udowodnij, że łapie wstrzyknięty defekt.
+5. **`primary-*` (każdy numer) = crimson.** W powłoce zabroniony; hook `check-artefakt.sh` blokuje.
+   Czerwień tylko dla semantyki krytycznej.
+6. **Diff liczony tylko na własnych plikach.** Regresja `SidebarHeader` przyszła ze scalenia,
+   nie z edycji. Crimson-check rób na CAŁYM diffie vs `origin/demo`.
+7. **Demo żyje pod wieloma sesjami.** `git fetch` przed pracą i przed promocją; baseline zdjęty
+   z `12826509a2` — jeśli demo poszło dalej, zdejmij baseline ponownie zanim orzekniesz regresję.
+8. **Sprawdź hipotezę próbą, zanim ją ogłosisz.** 324 „błędy" okazały się jednym.
+9. **Nie „poprawiaj przy okazji" sekcji panelu ani etykiet** — DoD karze ubytek, a niezamierzone
+   przetasowanie kolejności trudno potem odróżnić od zamierzonego.
