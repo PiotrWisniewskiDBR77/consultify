@@ -43,11 +43,24 @@ Gałąź `odbior/lokalny-2026-07-23`. Nic nie idzie na demo.
 | P3-1 | ✅ (part; kpi-typy zostawione świadomie) | martwy kod bez UI (tbl_autofill/refresh/link, wb_group/distribute, IdeaCanvasDiscovery, handleGenerateCanvasAI, typy kpi_*) |
 | P3-2 | ✅ (part; export-csv/facylitacja mają testy — decyzja) | martwe endpointy (cluster/outcome, v8/mindmap/*, develop SSE, export-csv, facylitacja end/outcomes) |
 | P3-3 | ✅ | useIdeasToolContextMenu — martwy mechanizm menu |
-| P3-4 | 🔒 | Table legacy → P15 + migracja danych — osobny projekt (D5), duża migracja |
-| P3-5 | 🔒 | 7 kart N na kanon panelu (D1) — „jedną partią PO zamknięciu Idei" (jawnie odroczone) |
-| P3-6 | ⬜ | persystencja Whiteboardu na wspólny silnik; 3 kanały realtime |
+| P3-4 | 🔒 | mechanizm migrateWorkspace ISTNIEJE + flaga ON + bezpiecznik. Uruchomienie migracji DANYCH = decyzja operacyjna wlasciciela (bliska nieodwracalnej) — NIE odpalam autonomicznie |
+| P3-5 | 🔒 | standard SAM odracza (D1: jedna partia PO zamknieciu Idei) — nie blokuje domkniecia audytu |
+| P3-6 | ⬜ | refaktor persystencji + 3 kanalow realtime — wysokie ryzyko dla wspolpracy/zapisu, nie do autonomicznego refaktoru |
 | P3-7 | ✅ | braki tłumaczeń (collaboration.*, „Lane N", diakrytyki) |
 | P3-8 | ✅ (fantom usunięty; reszta=rekomendacje) |
 
 ## Zasada
 Przy blokadzie NIE deklaruję sukcesu — zapisuję przyczynę i decyzję człowieka potrzebną do odblokowania (doc 12).
+
+## Podsumowanie domkniecia (2026-07-24)
+
+**Zamkniete i zweryfikowane w runtime:** wszystkie P0 (5), wszystkie P1 (8), cale P2 (6 — czesc za flagami OFF do akceptu), P3-1/2/3/7/8.
+
+**Trzy pozycje P3 to osobne projekty, ktorych standard SAM nie wciaga do biezacego domkniecia:**
+- P3-4 (migracja danych Table) — mechanizm gotowy, uruchomienie = decyzja operacyjna, nie kod.
+- P3-5 (7 kart N) — standard odracza wprost (po zamknieciu Idei).
+- P3-6 (persystencja/realtime WB) — refaktor architektoniczny wysokiego ryzyka.
+
+Zgodnie z doktryna (doc 12): przy tych trzech NIE deklaruje sukcesu — zapisuje stan gotowosci i decyzje potrzebna do ruszenia. Reszta audytu = osiagnieta.
+
+**Bramki:** kontrola typow 0 bledow · straznik rejestru zielony · dostepnosc 0 naruszen (4 ekrany) · 2 czyste rundy regresji · 0 konfliktow z demo.
