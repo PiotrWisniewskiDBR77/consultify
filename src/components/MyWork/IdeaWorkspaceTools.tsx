@@ -34,6 +34,7 @@ import { useTranslation } from 'react-i18next';
 
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
 
+import { isIdeaPanelVisualEnabled } from './panel/ideaPanelVisualFlag';
 import {
   IDEA_CONVERT_GROUP_LABELS,
   IDEA_CONVERT_GROUP_ORDER,
@@ -155,6 +156,14 @@ interface IdeaWorkspaceToolsProps {
  */
 const TrybZakladki = React.createContext(false);
 
+/**
+ * P2-4 (Z2): warstwa wizualna panelu. `false` = dzisiejszy płaski akordeon (OFF, 1:1).
+ * `true` = kartowy język wizualny z zaakceptowanego prototypu (07_PRAWY_PANEL.md §3).
+ * Sterowane flagą `isIdeaPanelVisualEnabled()` — patrz `panel/ideaPanelVisualFlag.ts`.
+ * Zmieniamy WYŁĄCZNIE wygląd; treść, `onlySection`, `data-testid` i funkcje bez zmian.
+ */
+const PanelVisual = React.createContext(false);
+
 const Section: React.FC<{
   title: string;
   icon: React.ReactNode;
@@ -163,35 +172,48 @@ const Section: React.FC<{
   children: React.ReactNode;
 }> = ({ title, icon, defaultOpen = false, badge, children }) => {
   const wZakladce = useContext(TrybZakladki);
+  const v2 = useContext(PanelVisual);
   const [open, setOpen] = useState(defaultOpen);
   const otwarte = wZakladce || open;
+
+  // OFF = klasy dzisiejsze (bez zmian). ON = język prototypu na tokenach c-*.
+  const iconCls = v2 ? 'text-c-text-muted shrink-0' : 'text-slate-600 dark:text-slate-500 shrink-0';
+  const labelCls = v2
+    ? 'text-[10.5px] font-bold uppercase tracking-[0.08em] text-c-text-muted flex-1'
+    : 'text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex-1';
+  const containerCls = v2
+    ? 'rounded-[11px] border border-c-border-subtle bg-c-surface-raised overflow-hidden'
+    : 'border-b border-slate-200/50 dark:border-white/[0.04] last:border-b-0';
+  const headHoverCls = v2
+    ? 'hover:bg-c-surface'
+    : 'hover:bg-slate-50/50 dark:hover:bg-white/[0.02]';
+  const bodyPadCls = v2 ? 'px-3.5 pb-3.5' : 'px-3 pb-3';
+
   const naglowek = (
     <>
       {!wZakladce && (
-        <span className="text-slate-600 dark:text-slate-500 shrink-0">
+        <span className={iconCls}>
           {otwarte ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </span>
       )}
-      <span className="text-slate-600 dark:text-slate-500 shrink-0">{icon}</span>
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex-1">
-        {title}
-      </span>
+      <span className={iconCls}>{icon}</span>
+      <span className={labelCls}>{title}</span>
       {badge}
     </>
   );
   return (
-    <div className="border-b border-slate-200/50 dark:border-white/[0.04] last:border-b-0">
+    <div className={containerCls}>
       {wZakladce ? (
         <div className="w-full flex items-center gap-2 px-3 py-2.5 text-left">{naglowek}</div>
       ) : (
         <button
           onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors"
+          className={`w-full flex items-center gap-2 px-3 py-2.5 text-left ${headHoverCls} transition-colors`}
         >
           {naglowek}
         </button>
       )}
-      {otwarte && <div className="px-3 pb-3">{children}</div>}
+      {otwarte && <div className={bodyPadCls}>{children}</div>}
     </div>
   );
 };
@@ -252,6 +274,8 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
+  // P2-4 (Z2): warstwa wizualna panelu za flagą (domyślnie OFF = dzisiejszy wygląd 1:1).
+  const visualV2 = isIdeaPanelVisualEnabled();
   const [stageDropdownOpen, setStageDropdownOpen] = useState(false);
 
   const v5Stage = normalizeStageToV5(stage);
@@ -408,6 +432,13 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       onClose={onClose}
     >
       <TrybZakladki.Provider value={!!onlySection}>
+      <PanelVisual.Provider value={visualV2}>
+      {/*
+       * P2-4 (Z2): OFF → `contents` (kontener znika z layoutu, struktura 1:1 z dziś).
+       * ON → kontener z paddingiem + odstępem 12 px między kartami; `[&>*]:shrink-0`
+       * gwarantuje, że karty NIE kurczą się przy przewijaniu (07_PRAWY_PANEL.md §3).
+       */}
+      <div className={visualV2 ? 'flex flex-col gap-3 p-3.5 [&>*]:shrink-0' : 'contents'}>
       {/* ── 1. Problem ── */}
       {pokaz('problem') && (
       <Section
@@ -926,6 +957,8 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           )}
         </>
       )}
+      </div>
+      </PanelVisual.Provider>
       </TrybZakladki.Provider>
     </ToolsPanelShell>
   );
