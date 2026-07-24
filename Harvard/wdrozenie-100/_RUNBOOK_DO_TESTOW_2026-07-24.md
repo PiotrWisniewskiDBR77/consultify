@@ -71,3 +71,18 @@ punkt cofania, znane ograniczenia. Piotr klika, nie odkrywa zepsucia.
   §4.5 DOMKNIĘTE (jedna szerokość 1152, 2 viewporty, treść OK — caveat: gęste tabele Decyzji/Zadania
   na analogii Inicjatywy, nie na bezpośrednim mocku). §4.6 odłożone (chip StandardArtifactShell).
   §4: 6/7 domknięte + 1 świadomie odłożone. Hub 23 ponad demo. → Faza D: trzecia runda sędziów.
+
+## LOG — faza E (naprawy po rundzie 3)
+- Scalone na hub: martwy kod Inicjatywy (3 pliki, 1503 l. — ★ `InitiativeFullView` ZOSTAŁ, sędzia IT
+  się mylił: żywy lazy-import w `MyWorkHub:166/3447`, ścieżka My Work→Kalendarz→inicjatywa);
+  logi zamiast 21 cichych `catch`; crimson Callout→`c-ai` (BLOKER zdjęty); 190 polskich wartości.
+- ★★ **ZŁAPANA REGRESJA NA HUBIE:** `SidebarHeader` miał STARSZĄ wersję (`text-primary-500`, stały
+  crimson ~2,5:1 w ciemnym, axe color-contrast) — demo ma naprawę `text-c-accent`. Nocne scalenie
+  `origin/demo→hub` (9b143bc913) rozstrzygnęło na korzyść starszej strony. Demo nietknięte, ale
+  poszłoby przy NASTĘPNEJ promocji. Przywrócone z origin/demo.
+  ★ LEKCJA: crimson-check tylko na WŁASNYCH plikach nie wystarcza — sprawdzaj CAŁY diff vs demo.
+- ★★ **DEMO POSZŁO DO PRZODU O 57 COMMITÓW** (sesja IDEE: P0-P3, menu/panel/rail, fantom
+  `tablePlatformRecordsApi`). demo `97f466bd98`→`5e35d8a76c`. Scalone do huba BEZ konfliktów.
+  Wszystkie 9 napraw doby zweryfikowane fizycznie PO merge — przetrwały. Demo = przodek huba ✓.
+  ★ Potwierdza regułę: demo żyje pod wieloma sesjami — ZAWSZE fetch przed pracą i przed promocją.
+- Stan: hub 33 ponad demo. Zostaje: front enumów (w toku), geometria kart (D), potem promocja.
