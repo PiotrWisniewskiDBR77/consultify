@@ -368,6 +368,11 @@ import {
   recordTemplateUsage,
   reviseTemplateStructure,
 } from '../services/documentStudio/documentTemplateService.js';
+import {
+  isTemplateResolveError,
+  resolveDocumentTemplateForCreation,
+  type TemplateResolveErrorCode,
+} from '../services/materials/creationIntent.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -891,6 +896,84 @@ router.post(
  * Returns: { template: DocumentTemplate } (201)
  * Errors: 404 document_not_found (source artifact missing/cross-tenant)
  */
+/**
+ * R1 doc slice (2026-07-24) — SERVER-SIDE template resolution for "Użyj wzorca".
+ *
+ * The Template Library is an INDEX, not a source of truth. Its rows are keyed
+ * by `artifactIndexId` (`v8_artifact_origin_links.artifact_id`). The generator,
+ * however, needs the CANONICAL registry id (`document_studio_templates.id`).
+ *
+ * The client must never bridge that gap itself: a canonical id arriving as a
+ * URL parameter would be an unvalidated, client-supplied pointer straight into
+ * generation. Instead the client sends only the index id it legitimately has,
+ * and THIS route performs the trusted translation via
+ * `resolveDocumentTemplateForCreation` — which validates org access, scope,
+ * status and that the canonical record still exists (orphan check).
+ *
+ * The resolved `sectionBlueprint` is deliberately NOT returned: the client has
+ * no use for it and Mode 3 re-reads it from the canonical registry at
+ * generation time. Only the validated canonical id crosses back.
+ *
+ * Body: { templateArtifactId: string }
+ * Returns 200: { template: { canonicalTemplateId, originRuntime, format,
+ *                            scope, status, source, legacy, sectionCount } }
+ * Errors: 400 templateArtifactId_required · 401 Unauthorized
+ *         404 TEMPLATE_NOT_INDEXED | TEMPLATE_ORPHANED
+ *         403 TEMPLATE_FORBIDDEN · 409 TEMPLATE_DEPRECATED
+ *         422 TEMPLATE_FORMAT_UNSUPPORTED
+ */
+const TEMPLATE_RESOLVE_STATUS: Record<TemplateResolveErrorCode, number> = {
+  TEMPLATE_NOT_INDEXED: 404,
+  TEMPLATE_ORPHANED: 404,
+  TEMPLATE_FORBIDDEN: 403,
+  TEMPLATE_DEPRECATED: 409,
+  TEMPLATE_FORMAT_UNSUPPORTED: 422,
+};
+
+router.post(
+  '/templates/resolve',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const templateArtifactId = String(req.body?.templateArtifactId || '').trim();
+    if (!templateArtifactId) {
+      res.status(400).json({ error: 'templateArtifactId_required' });
+      return;
+    }
+
+    try {
+      const resolved = await resolveDocumentTemplateForCreation(
+        { kind: 'library', templateArtifactId },
+        { organizationId }
+      );
+      res.json({
+        template: {
+          canonicalTemplateId: resolved.canonicalTemplateId,
+          originRuntime: resolved.originRuntime,
+          format: resolved.format,
+          scope: resolved.scope,
+          status: resolved.status,
+          source: resolved.source,
+          legacy: resolved.legacy,
+          sectionCount: resolved.sectionBlueprint.length,
+        },
+      });
+    } catch (err) {
+      if (isTemplateResolveError(err)) {
+        logger.info(
+          `[DocumentStudio] template resolve rejected: ${err.code} (artifact ${templateArtifactId})`
+        );
+        res.status(TEMPLATE_RESOLVE_STATUS[err.code]).json({ error: err.code });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
 router.post(
   '/templates/from-artifact/:artifactId',
   asyncHandler(async (req: Request, res: Response) => {

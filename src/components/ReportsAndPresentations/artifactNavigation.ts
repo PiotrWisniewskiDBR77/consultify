@@ -56,24 +56,26 @@ export interface TemplateUseTarget {
  * Trasa „Użyj wzorca".
  *
  * Zwraca `null`, gdy wzorca NIE da się uczciwie użyć:
- *  - wpis osierocony (`orphaned`) — brak kanonicznego rekordu,
- *  - szablon DOKUMENTU bez `canonicalTemplateId` — nie ma czego preselekcjonować
- *    w Document Studio, a wysłanie pustego id byłoby cichym fallbackiem.
+ *  - wpis osierocony (`orphaned`) — brak kanonicznego rekordu.
  *
- * Szablon dokumentu (`originRuntime === 'document_template'`) kieruje do
- * Document Studio Mode 3 z KONKRETNYM kanonicznym id. Legacy `report_template`
- * (report_builder_templates) zachowuje dotychczasową trasę generacji bez zmian.
+ * ★ Szablon dokumentu (`originRuntime === 'document_template'`) kieruje do
+ * Document Studio Mode 3 z identyfikatorem INDEKSU (`templateArtifactId`).
+ * Kanonicznego id NIE wolno tu przekazywać: parametr URL pochodzi od klienta,
+ * więc byłby niezweryfikowanym wskaźnikiem prosto do generatora. Tłumaczenie
+ * indeks → rekord kanoniczny robi serwer (`POST /document-studio/templates/resolve`
+ * → `resolveDocumentTemplateForCreation`), który sprawdza dostęp organizacji,
+ * scope, status i istnienie rekordu źródłowego.
+ *
+ * Legacy `report_template` (report_builder_templates) zachowuje dotychczasową
+ * trasę generacji bez zmian.
  */
 export function resolveTemplateUsePath(target: TemplateUseTarget): string | null {
   const artifactIndexId = String(target.artifactIndexId || '').trim();
   if (!artifactIndexId) return null;
   if (target.orphaned) return null;
 
-  const canonicalTemplateId = String(target.canonicalTemplateId || '').trim();
-
   if (target.originRuntime === 'document_template') {
-    if (!canonicalTemplateId) return null;
-    return `/document-studio?entry=template&templateId=${encodeURIComponent(canonicalTemplateId)}`;
+    return `/document-studio?entry=template&templateArtifactId=${encodeURIComponent(artifactIndexId)}`;
   }
 
   // Legacy report_template + wszystko, czego indeks jeszcze nie oznaczył:

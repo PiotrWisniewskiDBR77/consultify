@@ -29,6 +29,8 @@ import {
   listDocumentStudioTemplates,
   MissingRequiredSourceError,
   planDocumentStudioOutline,
+  resolveDocumentStudioTemplate,
+  TemplateResolveClientError,
 } from './api';
 import { DocumentStudioDocumentPanel } from './DocumentStudioDocumentPanel';
 import {
@@ -71,11 +73,21 @@ export const DocumentStudioView: React.FC = () => {
   const entryParam = searchParams.get('entry');
   const tabParam = searchParams.get('tab');
   // Biblioteka wzorców → „Użyj wzorca" dla szablonu DOKUMENTU przychodzi jako
-  // `?entry=template&templateId=<canonicalTemplateId>`. Dotąd id ginęło (link
-  // szedł do /wordy?templateArtifactId=…, czyli id WIERSZA INDEKSU, nie
-  // kanonicznego szablonu) i użytkownik i tak musiał wybierać wzorzec ręcznie.
-  // Teraz preselekcjonujemy Mode 3 tym konkretnym szablonem.
-  const templateIdFromQuery = (searchParams.get('templateId') || '').trim() || null;
+  // `?entry=template&templateArtifactId=<id WIERSZA INDEKSU>`.
+  //
+  // ★ Świadomie NIE przyjmujemy tu kanonicznego `templateId` z URL: parametr
+  // pochodzi od klienta, więc byłby niezweryfikowanym wskaźnikiem prosto do
+  // generatora. Tłumaczenie indeks → rekord kanoniczny wykonuje SERWER
+  // (`POST /document-studio/templates/resolve` → `resolveDocumentTemplateForCreation`),
+  // który sprawdza dostęp organizacji, scope, status i to, czy rekord źródłowy
+  // nadal istnieje. Dopiero wynik serwera zasila Mode 3.
+  const templateArtifactIdFromQuery =
+    (searchParams.get('templateArtifactId') || '').trim() || null;
+  const [resolvedTemplateId, setResolvedTemplateId] = useState<string | null>(null);
+  const [templateResolveState, setTemplateResolveState] = useState<
+    'idle' | 'resolving' | 'resolved' | 'error'
+  >('idle');
+  const [templateResolveErrorCode, setTemplateResolveErrorCode] = useState<string | null>(null);
 
   // D1 (roboty tri-tryby): jawny wybór 3 trybów na wejściu, tylko za flagą
   // `ff_tri_tryby`. OFF → `triMode` false → gałąź intake renderuje wyłącznie
@@ -148,21 +160,70 @@ export const DocumentStudioView: React.FC = () => {
     void refreshApprovedTemplates();
   }, [refreshApprovedTemplates]);
 
-  // ★ Uczciwy stan preselekcji: jeśli Biblioteka przysłała `?templateId=`, ale
-  // wśród zatwierdzonych szablonów nie ma takiego rekordu — mówimy to wprost.
-  // Bez tego użytkownik trafiłby na formularz z pustym pickerem i myślał, że
-  // jego wybór został przyjęty (cichy fallback do Mode 1).
-  const templatePreselectNotice = useMemo((): string | null => {
-    if (!templateIdFromQuery) return null;
-    if (approvedTemplates.length === 0) return null; // lista jeszcze nieznana → templatesError to pokrywa
-    const found = approvedTemplates.some((tpl) => tpl.templateId === templateIdFromQuery);
-    if (found) return null;
-    return t('documentStudio.view.templatePreselectMissing', {
-      defaultValue:
-        'The template chosen in the library ({{templateId}}) is not among the approved templates. Pick one below or generate without a template.',
-      templateId: templateIdFromQuery,
-    });
-  }, [templateIdFromQuery, approvedTemplates, t]);
+  // ★ SERWEROWE rozwiązanie wzorca z Biblioteki (R1 doc slice).
+  // Klient dostał tylko id wiersza indeksu; kanoniczny rekord ustala serwer,
+  // sprawdzając dostęp organizacji, scope, status i istnienie źródła. Dopiero
+  // wynik tego wywołania trafia do Mode 3 — nic z URL-a nie jest zaufane.
+  useEffect(() => {
+    if (!templateArtifactIdFromQuery) return;
+    let cancelled = false;
+    setTemplateResolveState('resolving');
+    setTemplateResolveErrorCode(null);
+    void (async () => {
+      try {
+        const resolved = await resolveDocumentStudioTemplate(templateArtifactIdFromQuery);
+        if (cancelled) return;
+        setResolvedTemplateId(resolved.canonicalTemplateId);
+        setTemplateResolveState('resolved');
+      } catch (err) {
+        if (cancelled) return;
+        const code =
+          err instanceof TemplateResolveClientError ? err.code : 'TEMPLATE_RESOLVE_FAILED';
+        setResolvedTemplateId(null);
+        setTemplateResolveErrorCode(code);
+        setTemplateResolveState('error');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [templateArtifactIdFromQuery]);
+
+  // Uczciwy komunikat per kod odrzucenia. ★ Żaden z tych stanów NIE prowadzi do
+  // pickera ani do generacji z AI — wzorzec, którego nie da się rozwiązać, musi
+  // zatrzymać przepływ, a nie po cichu zamienić się w Mode 1.
+  const templateResolveMessage = useMemo((): string | null => {
+    if (templateResolveState !== 'error') return null;
+    switch (templateResolveErrorCode) {
+      case 'TEMPLATE_ORPHANED':
+        return t('documentStudio.view.templateOrphaned', {
+          defaultValue:
+            'This template no longer has a canonical record — there is nothing to generate from. Pick another template in the library.',
+        });
+      case 'TEMPLATE_NOT_INDEXED':
+        return t('documentStudio.view.templateNotIndexed', {
+          defaultValue:
+            'This template is not available in your library index. Pick another template in the library.',
+        });
+      case 'TEMPLATE_FORBIDDEN':
+        return t('documentStudio.view.templateForbidden', {
+          defaultValue: 'You do not have access to this template.',
+        });
+      case 'TEMPLATE_DEPRECATED':
+        return t('documentStudio.view.templateDeprecated', {
+          defaultValue:
+            'This template has been deprecated and can no longer drive generation. Pick a current template.',
+        });
+      case 'TEMPLATE_FORMAT_UNSUPPORTED':
+        return t('documentStudio.view.templateFormatUnsupported', {
+          defaultValue: 'This template does not produce a document.',
+        });
+      default:
+        return t('documentStudio.view.templateResolveFailed', {
+          defaultValue: 'The template could not be resolved. Please try again.',
+        });
+    }
+  }, [templateResolveState, templateResolveErrorCode, t]);
 
   useEffect(() => {
     if (!artifactIdFromUrl || artifactIdFromUrl === artifactId) return;
@@ -545,20 +606,42 @@ export const DocumentStudioView: React.FC = () => {
               onAi={() => setDocEntryMode('ai')}
               onTemplate={() => setDocEntryMode('template')}
             />
+          ) : templateResolveState === 'resolving' ? (
+            // Serwer właśnie tłumaczy id indeksu na rekord kanoniczny — nie
+            // pokazujemy pickera, żeby użytkownik nie zaczął wybierać ręcznie
+            // wzorca, który za chwilę i tak zostanie ustawiony.
+            <LoadingState
+              message={t('documentStudio.view.templateResolving', 'Sprawdzam wybrany wzorzec…')}
+            />
+          ) : templateResolveState === 'error' ? (
+            // ★ Stan blokujący: wzorzec nie do rozwiązania (osierocony, brak
+            // dostępu, wycofany, niezaindeksowany). ŻADNEGO fallbacku do
+            // pickera ani do generacji z AI — uczciwy komunikat i wyjście.
+            <div
+              data-testid="template-resolve-error"
+              className="mx-auto max-w-xl rounded-xl border border-c-border bg-c-surface p-6 text-center"
+            >
+              <p className="text-sm text-c-text">{templateResolveMessage}</p>
+              <button
+                type="button"
+                onClick={() => navigate('/presentations?tab=templates')}
+                className="mt-4 rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                {t('documentStudio.view.backToLibrary', 'Wróć do Biblioteki wzorców')}
+              </button>
+            </div>
           ) : (
             <DocumentStudioIntakeForm
               onSubmit={handleIntakeSubmit}
               loading={planning || generating}
               error={phase === 'intake' ? error : null}
               approvedTemplates={approvedTemplates}
-              templatesNotice={
-                phase === 'intake' ? (templatesError ?? templatePreselectNotice) : null
-              }
-              // ★ Preselekcja Mode 3 wzorcem wybranym w Bibliotece (?templateId=).
-              initialTemplateId={templateIdFromQuery}
+              templatesNotice={phase === 'intake' ? templatesError : null}
+              // ★ Preselekcja Mode 3 wzorcem ROZWIĄZANYM PRZEZ SERWER.
+              initialTemplateId={resolvedTemplateId}
               autoFocusTemplatePicker={
                 (triMode && docEntryMode === 'template') ||
-                (entryParam === 'template' && !templateIdFromQuery)
+                (entryParam === 'template' && !templateArtifactIdFromQuery)
               }
               onBackToModes={triMode ? handleBackToModes : undefined}
             />

@@ -152,16 +152,18 @@ describe('mapCanonicalTemplateArtifact — legacy report_builder_templates', () 
 });
 
 describe('resolveTemplateUsePath', () => {
-  it('szablon DOKUMENTU → Document Studio Mode 3 z kanonicznym id', () => {
+  it('szablon DOKUMENTU → Document Studio Mode 3 z id INDEKSU (serwer rozwiązuje kanoniczne)', () => {
     const path = resolveTemplateUsePath({
       artifactIndexId: ARTIFACT_INDEX_ID,
       templateType: 'report',
       canonicalTemplateId: CANONICAL_ID,
       originRuntime: 'document_template',
     });
-    expect(path).toBe(`/document-studio?entry=template&templateId=${CANONICAL_ID}`);
-    // ★ id indeksu NIE może wyciec do trasy generacji
-    expect(path).not.toContain(ARTIFACT_INDEX_ID);
+    expect(path).toBe(`/document-studio?entry=template&templateArtifactId=${ARTIFACT_INDEX_ID}`);
+    // ★ P1 (odbiór architekta): kanoniczne id NIE może trafić do URL-a. Parametr
+    // adresu pochodzi od klienta, więc byłby niezweryfikowanym wskaźnikiem
+    // prosto do generatora. Tłumaczenie robi serwer (`/templates/resolve`).
+    expect(path).not.toContain(CANONICAL_ID);
   });
 
   it('legacy report_template zachowuje dotychczasową trasę generacji', () => {
@@ -212,7 +214,13 @@ describe('resolveTemplateUsePath', () => {
     ).toBeNull();
   });
 
-  it('szablon dokumentu bez kanonicznego id → null zamiast pustego templateId', () => {
+  it('szablon dokumentu BEZ kanonicznego id w indeksie nadal daje trasę — rozstrzyga serwer', () => {
+    // Zmiana kontraktu po odbiorze P1: brak kanonicznego id w SNAPSHOCIE indeksu
+    // nie jest już powodem do blokowania trasy, bo trasa i tak nie niesie tego
+    // id — niesie id indeksu, a rekord kanoniczny ustala `/templates/resolve`.
+    // Jeśli rekordu nie ma, serwer odpowie TEMPLATE_ORPHANED/NOT_INDEXED i widok
+    // pokaże uczciwy błąd (bez pickera i bez AI). Blokujemy nadal tylko wpis
+    // jawnie oznaczony jako osierocony (test niżej).
     expect(
       resolveTemplateUsePath({
         artifactIndexId: ARTIFACT_INDEX_ID,
@@ -220,7 +228,7 @@ describe('resolveTemplateUsePath', () => {
         canonicalTemplateId: null,
         originRuntime: 'document_template',
       })
-    ).toBeNull();
+    ).toBe(`/document-studio?entry=template&templateArtifactId=${ARTIFACT_INDEX_ID}`);
   });
 
   it('mapper + trasa razem: wiersz indeksu dokumentu ląduje w Mode 3', () => {
@@ -232,6 +240,7 @@ describe('resolveTemplateUsePath', () => {
       originRuntime: item!.originRuntime,
       orphaned: item!.orphaned,
     });
-    expect(path).toBe(`/document-studio?entry=template&templateId=${CANONICAL_ID}`);
+    expect(path).toBe(`/document-studio?entry=template&templateArtifactId=${ARTIFACT_INDEX_ID}`);
+    expect(path).not.toContain(CANONICAL_ID);
   });
 });
