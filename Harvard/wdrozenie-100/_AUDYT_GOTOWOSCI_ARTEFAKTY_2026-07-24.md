@@ -136,3 +136,125 @@ o migracji. Koszt zostawienia zerowy (jedno tanie sprawdzenie raz na proces, pot
 **11 przed, 11 po, zbiory identyczne**, skrypt bramki niezmieniony. To dług zastany na demo,
 nie coś, co ta promocja wnosi. Zatrzymanie cofnęłoby całą noc za błąd, którego demo już nie łapie.
 ★ **Do naprawy osobno** — bramka, która jest trwale czerwona, przestaje cokolwiek chronić.
+
+---
+
+## 8. WERYFIKACJA BRAMEK PO FAKCIE — FAŁSZYWA ZIELEŃ I REALNY PRZEBIEG (2026-07-24, druga sesja)
+
+**Na demo NIE poszła żadna regresja bramkowa.** Sprawdzone jawnie, plik po pliku, na
+liście 57 plików nocy (`git diff --name-only 9b143bc913..1666ad39cb`, w tym 23 pliki kodu
+wizualnego). Praca nocna nie WNOSI ani jednego nowego naruszenia crimson / tabeli /
+gęstości / kart N. Bramki, które są czerwone (`check-list-canon` = 8 plików), są czerwone
+długiem ZASTANYM sprzed nocy — identycznym na `9b143bc913`. Szczegóły i metoda niżej.
+
+### 8.1 Na czym polega fałszywa zieleń (DWA niezależne mechanizmy)
+
+**Mechanizm A — pusty payload na czystym drzewie (dotyczy `check-triada`, `check-gestosc`
+BLOK 2, `check-list-canon`).** W trybie skanowania dla plików ŚLEDZONYCH treść do sprawdzenia
+brana jest z `git diff` (dodane linie) albo z `git status` (nowy plik). Po commicie drzewo
+jest czyste → `git diff` pusty → `PAYLOAD` pusty → `[ -z "$PAYLOAD" ] && continue` pomija
+sprawdzenie. Bramka melduje sukces po sprawdzeniu ZERA treści. Dowód, dosłownie:
+
+```
+$ bash scripts/check-triada.sh          # bez argumentów, czyste drzewo
+✓ check-triada: brak nowych naruszeń crimson (sprawdzono plików: 0)
+$ bash scripts/check-gestosc.sh
+✓ check-gestosc: brak regresji mechanicznych (sprawdzono plików: 0)
+```
+
+Licznik „sprawdzono plików" w `check-triada` jest dodatkowo mylący: inkrementuje się PRZED
+sprawdzeniem payloadu, więc przy jawnej liście 23 plików pokazuje „sprawdzono plików: 23",
+a i tak sprawdził 0 treści (payload każdego pliku pusty). „23" to liczba plików wziętych pod
+uwagę, nie liczba plików z realnie sprawdzoną treścią.
+
+**Mechanizm B — bug BSD grep na macOS UNIEWAŻNIA `check-triada` całkowicie (nie tylko na
+czystym drzewie).** To jest gorsze niż samo pierwsze odkrycie. W `check-triada.sh` (linie
+146/148) payload dla pliku śledzonego liczy się tak:
+
+```
+git diff --cached -U0 -- "$f" | grep -E '^\+' | grep -v '^\+\+\+' | sed 's/^\+//'
+```
+
+Ostatni człon `grep -v '^\+\+\+'` jest w trybie BRE (bez `-E`). Systemowy `/usr/bin/grep` na
+tym macu (BSD grep) odrzuca `\+\+` jako **`grep: repetition-operator operand invalid`** (exit 2,
+zero wyjścia). Skutek: `PAYLOAD` wychodzi PUSTY **nawet gdy diff ma realne dodane linie** —
+człon czyszczący nagłówek `+++` wywala cały strumień. Zweryfikowane na realnym wejściu:
+
+```
+$ printf '+++ b/file\n+primary-100 crimson\n' | /usr/bin/grep -E '^\+' | /usr/bin/grep -v '^\+\+\+'
+grep: repetition-operator operand invalid           # exit 2, brak wyjścia → payload=''
+```
+
+Czyli **na tej maszynie `check-triada` w trybie skanowania nie jest w stanie wykryć ŻADNEGO
+crimson w pliku śledzonym**, niezależnie od stanu drzewa i niezależnie od tego, czy poda się
+jawną listę plików. Sam regex wykrywający (`VIOL_RE`) jest OK na BSD grep — psuje się
+wcześniejszy człon pipeline'u czyszczący diff. Hook pewnie działał historycznie na maszynie z
+GNU grepem (gdzie `\+` w BRE to rozszerzenie „jeden lub więcej"). Na Macu Piotra — martwy.
+Werdykt: **błąd grep unieważnia pomiar `check-triada` przez sam skrypt.** Dlatego crimson
+sprawdziłem osobno, replikując logikę bramki ręcznie (§8.3), nie ufając jej wyjściu.
+
+Bramki NIE dotknięte bugiem grep (czytają plik wprost, bez pipeline `\+\+`): `check-artefakt`
+(`count_violations` = `grep -nE` na całym pliku), `check-list-canon`, `check-gestosc` (awk),
+`check-sqlsql`, `check-ssot-paths`. Ich wyjście jest wiarygodne, o ile poda się realną treść.
+
+### 8.2 Jak uruchamiać bramki POPRAWNIE
+
+- **Nigdy na czystym drzewie bez argumentów** — to gwarantowana fałszywa zieleń dla
+  `check-triada`/`check-gestosc` (mechanizm A). Bramka jest sensowna tylko wtedy, gdy realnie
+  dostaje treść: przed commitem (staging niepusty) albo z jawną listą plików.
+- **Dla oceny PO fakcie** (praca już zacommitowana / na demo) diff-owe bramki NIE nadają się
+  „z pudełka": porównują drzewo robocze z HEAD, a nie z punktem sprzed pracy. Trzeba albo
+  odtworzyć treść w drzewie, albo — jak tutaj — puścić logikę detekcji bramki na
+  `git diff <przed>..<po>` / na blobach z commitu (`git show <sha>:<plik>`).
+- **`check-artefakt`** (ratchet po całym pliku) działa po fakcie poprawnie — ale porównuje z
+  baseline'em `scripts/check-artefakt.baseline.txt` (dziś 274), a nie ze stanem sprzed nocy.
+  Naruszenie DODANE nocą, ale wciąż poniżej zawyżonego baseline'u, przeszłoby. Dlatego stan
+  crimson w powłoce liczyłem osobno: `9b143bc913` vs `1666ad39cb` per plik (§8.3), nie ufając
+  samej ratchecie.
+- **Na macOS**: dopóki `grep -v '^\+\+\+'` w `check-triada` nie dostanie `-E` (albo nie zmieni
+  wzorca na `^[+][+][+]`), wyjście tej bramki jest bezwartościowe niezależnie od wywołania.
+
+### 8.3 Realny przebieg — metoda i wynik
+
+Metoda: dla każdej bramki puściłem JEJ logikę detekcji na jawnej treści nocy, nie na pustym
+drzewie. Crimson (`check-triada`, `check-artefakt` PART 1): regex bramki na dodanych liniach
+`git diff 9b143bc913..1666ad39cb` oraz per-plik na blobach obu commitów. Tabele
+(`check-list-canon`), gęstość (`check-gestosc`), karty N (`check-artefakt` PART 2), sql, ssot:
+skrypt z jawną listą plików nocy + porównanie `git show 9b143bc913:` vs `1666ad39cb:`.
+
+| Bramka | Naruszenia (stan demo) | Zastane | Regresje nocy |
+|---|---|---|---|
+| `check-triada` (crimson w dodanych liniach, 23 pliki) | 0 | — | **0** |
+| `check-artefakt` PART 1 (crimson w powłoce SPEC-A) | 0 nowych (7 ≤ baseline 274; pliki powłoki tknięte nocą: NModeCardState 1=1, reszta 0=0) | — | **0** |
+| `check-artefakt` PART 2 · R2 `createPortal` (7 kart N) | 0 | 0 | **0** |
+| `check-artefakt` PART 2 · R3 zarezerwowane id w lewej nawigacji | 0 blokujących (raw-grep 0–2/plik, ale wszystkie = prawy panel; identyczne baza vs demo) | wszystkie | **0** |
+| `check-artefakt` PART 2 · R1 solid CTA (OSTRZEŻENIE, z definicji nieblokujące) | 1 (TaskDetailView) | — | n/d (nie blokuje) |
+| `check-list-canon` (surowe tabele) | 8 plików | **8** | **0** |
+| `check-gestosc` BLOK 1/2/3 (blokujące) | 0 | 0 | **0** |
+| `check-gestosc` ostrzeżenia (toolbar >5) | 5 plików | pre-existing szum heurystyki | **0** |
+| `check-sqlsql` (migracja 931) | 0 | — | **0** |
+| `check-ssot-paths` (CLAUDE.md) | 0 (noc nie ruszała CLAUDE.md) | — | — |
+
+**Podział `check-list-canon` (jedyna czerwona bramka), 8 plików — wszystkie ZASTANE:**
+CompletenessAnalysis, FeasibilityAnalysis, LogicAnalysis, ResourcesAnalysis,
+InitiativeDocumentView (po 2 markery tabeli), InsightViewer (3), DecisionDetailView (23),
+TaskDetailView (8). Liczba markerów `<table>/<thead>/<tbody>/role=table` **identyczna na
+`9b143bc913` i `1666ad39cb`** dla każdego pliku; wszystkie istniały przed nocą; dodanych linii
+nocy z markerem tabeli = **0**. To ten sam dług, który §7 opisał jako „11 przed, 11 po" (8
+plików × podwójne trafienia = 11 linii komunikatu). Noc go nie wnosi ani nie powiększa.
+
+### 8.4 Wniosek
+
+Bramki nocą świeciły zielono, bo (A) biegły na czystym drzewie po zerowej treści, a dla crimson
+dodatkowo (B) `check-triada` jest na tym Macu trwale ślepy przez bug BSD grep. **Mimo to** — po
+uczciwym przeliczeniu logiki bramek na realnej treści nocy — praca nocna **nie wnosi żadnej
+regresji bramkowej**: crimson 0, tabele 0 nowych, gęstość 0, karty N 0 blokujących. Jedyna
+czerwień (`check-list-canon`, 8 plików) to dług sprzed nocy. Zieleń była fałszywa co do METODY,
+ale werdykt („noc nie psuje bramek") okazał się prawdziwy — potwierdzony pomiarem, nie zaufaniem
+do skryptu.
+
+Dwie rzeczy do naprawy osobno (decyzja właściciela), NIE w tym przebiegu:
+1. `check-triada.sh` — `grep -v '^\+\+\+'` → `grep -Ev '^\+\+\+'` (albo `'^[+][+][+]'`), inaczej
+   bramka crimson jest na macOS martwa. Klasa błędu bliźniacza do „fantomowej flagi".
+2. `check-list-canon` — trwale czerwony dług zastany (8 plików). Bramka stale czerwona nie
+   chroni już przed niczym.
