@@ -251,3 +251,10 @@ nawet po skasowaniu gałęzi:
   oznacza to lewy panel rosnący do ~2437px. Dotyczy WSZYSTKICH 6 kart (wspólny plik) — do naprawy
   osobno, niskie ryzyko (dodanie klas CSS), wysoki zwrot.
   Crimson=0, esbuild OK. Hub 17 commitów ponad demo.
+- **Etap 5, front Insight+Narzędzie** ✅ SCALONY. Insight: tryb analityczny wpięty TYLKO w Insight
+  (nie w `NModeCanvas` — świadomie, żeby nie dotknąć pozostałych 5 kart), 664→900px zależnie od
+  viewportu. `max-w-prose` na 6 kartach findings (Insight) + 27 blokach opisowych SWOT/framework
+  (Narzędzie) — czytelna długość linii. Reszta wymagań (Preview bez komunikatu, Menu2 geometria,
+  Comments/History z Etapu 4) potwierdzona jako już zgodna, nietknięta. Crimson=0, bramki zielone.
+  **ETAP 5 KOMPLETNY — wszystkie 3 fronty (Zadanie+Decyzja, Inicjatywa+Powiadomienie, Insight+Narzędzie)
+  scalone.** Hub 20 commitów ponad demo.
