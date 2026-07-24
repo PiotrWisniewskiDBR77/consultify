@@ -1867,7 +1867,7 @@
       },
       "toolbarExtra": {
         "ariaLabel": "Pasek narzędzi tablicy",
-        "title": "Tablica",
+        "title": "Whiteboard",
         "create": "Utwórz",
         "role": "Rola",
         "bgDots": "Kropki",
@@ -28134,7 +28134,17 @@
       "processHealth": "Zdrowie procesu",
       "mapInspector": "Inspektor mapy",
       "mapHealth": "Zdrowie mapy",
-      "convertSelectionCount": "Konwertuj zaznaczenie ({{value}})"
+      "convertSelectionCount": "Konwertuj zaznaczenie ({{value}})",
+      "overview": "Przegląd",
+      "properties": "Właściwości",
+      "relations": "Powiązania",
+      "comments": "Komentarze",
+      "history": "Historia",
+      "statistics": "Statystyki",
+      "statElements": "Elementy",
+      "statRelations": "Relacje",
+      "statRoots": "Gałęzie główne",
+      "statEvidence": "Dowody"
     },
     "contextPanel": {
       "contextStatistics": "Kontekst i statystyki",

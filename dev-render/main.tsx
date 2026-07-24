@@ -22,6 +22,9 @@ import { Toaster } from 'react-hot-toast';
 import PanelUwag from './PanelUwag';
 const MaterialyLauncherScreen = React.lazy(() => import('./screens/materialy-launcher'));
 
+// TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
+// `?slowLocale=<ms>`; no effect otherwise.
+import './slowLocaleFetch';
 // Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
 import i18n from '../src/i18n';
 import { useAppStore } from '../src/store/useAppStore';

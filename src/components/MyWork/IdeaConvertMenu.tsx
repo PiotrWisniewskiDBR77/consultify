@@ -5,9 +5,11 @@
  *
  * PRESENTATIONAL — it owns only its open/close state; conversion is the host's
  * real `handleConvert(target)` (the same mechanic the Convert panel uses). The
- * four surfaced targets are driven by the SSOT registry
- * (`ideaConvertTargets.ts`): Inicjatywa / Taski / Raport are `live`; Analiza is
- * `soon` → rendered DISABLED with an honest "wkrótce" hint (never hidden).
+ * surfaced targets are driven by the SSOT registry (`ideaConvertTargets.ts`):
+ * Inicjatywa / Taski / Raport are `live`. "Analiza" (`analysis`) was removed
+ * 2026-07-24 (Z3 audit) — it had no server convert handler, so the SSOT registry
+ * dropped it rather than keep a "soon" placeholder; `getConvertTargetMeta` now
+ * returns undefined for it and this menu silently skips rendering that row.
  *
  * CRIMSON-SAFE: the trigger is the sole primary CTA styled `bg-c-text
  * text-c-surface`; focus ring is `c-focus`; no crimson tokens.
@@ -18,13 +20,12 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { getConvertTargetMeta, type IdeaConvertTarget } from './ideaConvertTargets';
 
-/** Ordered targets surfaced in the quick dropdown (§Z7 anatomy). */
-const QUICK_CONVERT_TARGETS: IdeaConvertTarget[] = [
-  'initiative',
-  'task_set',
-  'report',
-  'analysis',
-];
+/**
+ * Ordered targets surfaced in the quick dropdown (§Z7 anatomy).
+ * `analysis` removed 2026-07-24 (Z3 audit) — no server handler, dropped from the
+ * SSOT registry entirely (see ideaConvertTargets.ts header note).
+ */
+const QUICK_CONVERT_TARGETS: IdeaConvertTarget[] = ['initiative', 'task_set', 'report'];
 
 export interface IdeaConvertMenuProps {
   onConvert: (target: IdeaConvertTarget) => void;
