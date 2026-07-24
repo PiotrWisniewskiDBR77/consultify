@@ -35,6 +35,7 @@ import type {
   MindMapInteractionMode,
 } from '../ideaSelectionTypes';
 import { getIdeaWorkspaceToolLabel, TOOL_CONFIG } from '../IdeaWorkspaceToolbar';
+import { isTableDataRailEnabled } from './ideaTableDataRailFlag';
 import {
   getMindmapConnectToolbarAction,
   getMindmapPointerToggleTooltip,
@@ -404,6 +405,15 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
 
   const contextSlots = CONTEXT_SLOTS[activeTool] || MM_CONTEXT_SLOTS;
 
+  // P2-5: Tabela dostaje DATA-rail. Standard rozdz. 06 §2 — rail Tabeli nie
+  // zawiera pojec plotna (tryb kursora) ani pozycji Menu 3 (Szablony/Import).
+  // Za flaga (OFF = dzisiejszy rail z wyszarzonymi slotami). Filtrujemy sloty
+  // gorne/dolne tylko dla Tabeli i tylko przy fladze ON.
+  const dataRail = activeTool === 'table' && isTableDataRailEnabled();
+  const SLOTY_SPOZA_DATA_RAILA = new Set(['pointer_toggle', 'templates', 'import']);
+  const filtrujDataRail = (slots: ToolSlot[]) =>
+    dataRail ? slots.filter((sl) => !SLOTY_SPOZA_DATA_RAILA.has(sl.id)) : slots;
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
@@ -654,7 +664,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
         </>
       )}
 
-      {SHARED_TOP.map(renderSlot)}
+      {filtrujDataRail(SHARED_TOP).map(renderSlot)}
 
       <div className="w-5 border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
 
@@ -662,7 +672,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
 
       <div className="w-5 border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
 
-      {SHARED_BOTTOM.map(renderSlot)}
+      {filtrujDataRail(SHARED_BOTTOM).map(renderSlot)}
 
       <div className="w-5 border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
 
