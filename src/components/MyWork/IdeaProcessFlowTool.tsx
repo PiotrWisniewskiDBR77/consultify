@@ -68,6 +68,12 @@ import { getCanvasBg } from './canvas/canvasBackground';
 import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 import { CanvasSnapGuides } from './canvas/CanvasSnapGuides';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import {
+  getIdeaCanvasCursorClass,
+  getIdeaCanvasCursorProps,
+  type IdeaCanvasCursorMode,
+  publishIdeaCanvasCursorMode,
+} from './canvas/ideaCanvasCursorMode';
 import { FOCUS_RING } from './canvas/motionTokens';
 import { useCanvasSnappingRef } from './canvas/useCanvasSnapping';
 import { formatIdeaMapSyncLabel, resolveIdeaMapHydration } from './canvas/useIdeaMapSync';
@@ -400,6 +406,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   // was written on save but never reflected actual UI state or restored).
   const [showGrid, setShowGrid] = useState(true);
   const [snapToGridEnabled, setSnapToGridEnabled] = useState(true);
+  /**
+   * Z1 (rozdz. 06 §3): tryb kursora płótna sterowany pstryczkiem lewego raila
+   * (`mm_select_mode` / `mm_pan_mode`). Do 2026-07-23 Przepływ w ogóle nie
+   * odczytywał trybu — pstryczek zmieniał wyłącznie własną etykietę na railu.
+   */
+  const [cursorMode, setCursorMode] = useState<IdeaCanvasCursorMode>('select');
   const [savedViewport, setSavedViewport] = useState<{ x: number; y: number; zoom: number } | null>(
     null
   );
@@ -2004,6 +2016,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       // P1-1: „Auto-układ" z Menu 3 → realny układ Przepływu (wcześniej Menu 3
       // wysyłało zdarzenie Mapy myśli, więc w Przepływie klik nie robił nic).
       autoLayout: handleAutoLayout,
+      // Z1: tryb kursora z lewego raila — realnie przestawia płótno (niżej,
+      // spread getIdeaCanvasCursorProps na <ReactFlow>).
+      setCursorMode: (mode) => setCursorMode(mode),
     },
     setters: {
       setFlowMode,
@@ -2011,6 +2026,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       setNodes,
     },
   });
+
+  // Z1: rozgłoszenie realnego trybu płótna do lewego raila (rail trzyma stan
+  // Mapy myśli i inaczej nie wie, czy Przepływ faktycznie go przyjął).
+  useEffect(() => {
+    if (!open) return;
+    publishIdeaCanvasCursorMode('process_flow', cursorMode);
+  }, [cursorMode, open]);
 
   // ── Accept ghost node → convert to real node ──────────────────────────
 
@@ -2933,6 +2955,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onNodeClick={() => setEdgeStylePopover(null)}
               onMoveStart={() => setEdgeStylePopover(null)}
               {...getIdeasToolInteractionProps('processflow', { locked, connectMode: !locked })}
+              // Z1 (rozdz. 06 §3): tryb kursora z lewego raila REALNIE
+              // przestawia płótno. `select` = zero nadpisań (zachowanie Z10),
+              // `pan` = rączka (nic nie da się ruszyć ani zaznaczyć). Spread
+              // MUSI być po getIdeasToolInteractionProps, żeby wygrał.
+              {...getIdeaCanvasCursorProps(cursorMode)}
               snapToGrid={snapToGridEnabled}
               snapGrid={[16, 16]}
               onInit={(instance: ReactFlowInstance) => {
@@ -2952,7 +2979,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 }
               }}
               fitView={!pendingViewportRef.current}
-              className={`bg-transparent ${isConnectingEdge ? 'pf-connecting' : ''}`}
+              className={`bg-transparent ${isConnectingEdge ? 'pf-connecting' : ''} ${getIdeaCanvasCursorClass(cursorMode)}`}
               defaultEdgeOptions={{ type: 'flowEdge', animated: false }}
             >
               {(() => {

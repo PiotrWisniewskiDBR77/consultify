@@ -40,6 +40,13 @@ export interface ProcessFlowQuickActionHandlers {
    * broadcast do kolaboracji); tu go tylko udostępniamy pod `pf_auto_layout`.
    */
   autoLayout?: () => void;
+  /**
+   * Z1 (rozdz. 06 §3): tryb kursora płótna z lewego raila. Rail wysyła
+   * `mm_select_mode` / `mm_pan_mode` (nazwy historyczne — obsługuje je też
+   * IdeaMapWorkspace, którego nie ruszamy). Do 2026-07-23 Przepływ ich NIE
+   * słuchał, więc pstryczek raila był czysto kosmetyczny.
+   */
+  setCursorMode?: (mode: 'select' | 'pan') => void;
 }
 
 export interface ProcessFlowQuickActionSetters {
@@ -147,6 +154,10 @@ export function useProcessFlowQuickActions(opts: UseProcessFlowQuickActionsOpts)
 
     // P1-1: „Auto-układ" (Menu 3) w reprezentacji Przepływ.
     if (action === 'pf_auto_layout') handlers.autoLayout?.();
+
+    // Z1 — tryb kursora z lewego raila (ten sam pstryczek co w Mapie myśli).
+    if (action === 'mm_select_mode') handlers.setCursorMode?.('select');
+    if (action === 'mm_pan_mode') handlers.setCursorMode?.('pan');
 
     if (action === 'pf_undo') handlers.undo();
     if (action === 'pf_redo') handlers.redo();

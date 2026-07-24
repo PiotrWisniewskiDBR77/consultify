@@ -28,6 +28,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import {
+  IDEA_CANVAS_CURSOR_MODE_EVENT,
+  type IdeaCanvasCursorMode,
+  type IdeaCanvasCursorModeDetail,
+} from '../canvas/ideaCanvasCursorMode';
 import { FOCUS_RING } from '../canvas/motionTokens';
 import type {
   CanvasToolType,
@@ -114,13 +119,16 @@ const SHARED_TOP: ToolSlot[] = [
     tkey: 'myWorkMindmap.toolbar.cursorMode',
     labelEn: 'Cursor mode',
     action: 'mm_toggle_pointer',
-    // Tryb kursora (SEL/PAN/LNK) jest stanem Mapy myśli — `mm_select_mode` /
-    // `mm_pan_mode` przestawiają `mindMapInteractionMode`, który czyta wyłącznie
-    // IdeaRecommendationMap. W pozostałych reprezentacjach pstryczek zmieniał
-    // tylko własną ikonę = kłamał o stanie płótna.
-    liveIn: ['mindmap'],
-    offReasonPl: 'tryb kursora (zaznacz / przesuń / połącz) jest stanem Mapy myśli',
-    offReasonEn: 'cursor mode (select / pan / connect) is a Mind Map state',
+    // Z1 (rozdz. 06 §3, 2026-07-23): tryb kursora działa REALNIE w trzech
+    // płótnach. Mapa myśli czyta `mindMapInteractionMode`; Tablica i Przepływ
+    // przyjmują `mm_select_mode` / `mm_pan_mode` we własnych hookach quick
+    // actions i tłumaczą je na propsy ReactFlow (canvas/ideaCanvasCursorMode.ts).
+    // Wcześniej slot był tu wyłączony, bo poza Mapą zmieniał tylko własną ikonę.
+    // Tabela zostaje wyłączona świadomie — rozdz. 06 §7 zakazuje pojęć
+    // canvasowych (rączka/pan) w siatce danych.
+    liveIn: ['mindmap', 'whiteboard', 'process_flow'],
+    offReasonPl: 'tryb kursora dotyczy płótna — Tabela to siatka danych, nie płótno',
+    offReasonEn: 'cursor mode belongs to a canvas — Table is a data grid, not a canvas',
   },
   // #6j: AI na samej górze raila, zaraz pod wskaźnikiem trybu chwytu —
   // najcenniejsza część raila, ma być widoczna od razu z góry.
@@ -371,6 +379,35 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const [openPopover, setOpenPopover] = useState<PopoverId>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * Z1 (rozdz. 06 §3): realny tryb płótna zgłaszany przez reprezentacje, które
+   * trzymają go u siebie (Tablica ma dodatkowo 'draw'). Rail dostaje
+   * `interactionMode` propsem z IdeaMapWorkspace — to stan Mapy myśli, więc bez
+   * tego nasłuchu pstryczek pokazywałby SEL, gdy Tablica jest w trybie
+   * rysowania. Pętla domknięta: rail wysyła akcję w dół, reprezentacja
+   * odsyła stan, który NAPRAWDĘ przyjęła.
+   */
+  const [canvasCursorModes, setCanvasCursorModes] = useState<
+    Partial<Record<CanvasToolType, IdeaCanvasCursorMode>>
+  >({});
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail as IdeaCanvasCursorModeDetail | undefined;
+      if (!detail?.tool || !detail?.mode) return;
+      setCanvasCursorModes((prev) =>
+        prev[detail.tool] === detail.mode ? prev : { ...prev, [detail.tool]: detail.mode }
+      );
+    };
+    window.addEventListener(IDEA_CANVAS_CURSOR_MODE_EVENT, handler);
+    return () => window.removeEventListener(IDEA_CANVAS_CURSOR_MODE_EVENT, handler);
+  }, []);
+
+  /** Tryb pokazywany na pstryczku: własny stan płótna tam, gdzie płótno go zgłasza. */
+  const effectiveMode: MindMapInteractionMode | 'draw' =
+    activeTool === 'whiteboard' || activeTool === 'process_flow'
+      ? (canvasCursorModes[activeTool] ?? 'select')
+      : interactionMode;
+
   // UI-L1: track the canvas container's box so the portaled rail floats INSIDE the
   // canvas — not on the app sidebar (x) and not over Menu 1 / Menu 3 (y).
   // Falls back to viewport centering when no ref is given (legacy chrome path).
@@ -449,12 +486,19 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const closePopover = useCallback(() => setOpenPopover(null), []);
 
   const handlePointerToggle = useCallback(() => {
-    const next = interactionMode === 'select' ? 'pan' : 'select';
+    // Z zaznaczania → przesuwanie; z KAŻDEGO innego trybu (przesuwanie,
+    // łączenie, rysowanie w Tablicy) → powrót do zaznaczania.
+    const next = effectiveMode === 'select' ? 'pan' : 'select';
     onAction(next === 'select' ? 'mm_select_mode' : 'mm_pan_mode');
     setOpenPopover(null);
-  }, [interactionMode, onAction]);
+  }, [effectiveMode, onAction]);
 
-  const pointerTooltip = getMindmapPointerToggleTooltip(interactionMode, isPl);
+  const pointerTooltip =
+    effectiveMode === 'draw'
+      ? isPl
+        ? 'Rysowanie — kliknij, aby wrócić do zaznaczania'
+        : 'Draw — click to return to select'
+      : getMindmapPointerToggleTooltip(effectiveMode, isPl);
 
   /**
    * P1-1: slot bez odbiornika w bieżącej reprezentacji. Zwraca powód (do
@@ -492,10 +536,12 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
       );
     }
     if (slot.id === 'pointer_toggle') {
-      const PointerIcon = interactionMode === 'pan' ? Hand : MousePointer2;
+      const PointerIcon =
+        effectiveMode === 'pan' ? Hand : effectiveMode === 'draw' ? Pen : MousePointer2;
       return (
         <div key={slot.id} className="relative">
           <button
+            data-testid={`canvas-left-toolbar-${slot.id}`}
             onClick={handlePointerToggle}
             title={pointerTooltip}
             aria-label={pointerTooltip}
@@ -505,11 +551,13 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           </button>
           <div className="absolute left-[calc(100%+6px)] top-1/2 -translate-y-1/2 pointer-events-none">
             <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text">
-              {interactionMode === 'pan'
+              {effectiveMode === 'pan'
                 ? 'PAN'
-                : interactionMode === 'connect'
-                  ? t('ideas.mindmap.lnk', 'LNK')
-                  : t('ideas.mindmap.sel', 'SEL')}
+                : effectiveMode === 'draw'
+                  ? t('ideas.mindmap.drw', 'DRW')
+                  : effectiveMode === 'connect'
+                    ? t('ideas.mindmap.lnk', 'LNK')
+                    : t('ideas.mindmap.sel', 'SEL')}
             </span>
           </div>
         </div>

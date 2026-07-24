@@ -33,6 +33,13 @@ export interface WhiteboardQuickActionHandlers {
   ungroupSelected: () => void;
   distributeNodes: (axis: 'horizontal' | 'vertical') => void;
   setMode?: (mode: 'board' | 'draw') => void;
+  /**
+   * Z1 (rozdz. 06 §3): tryb kursora płótna z lewego raila. Rail wysyła
+   * `mm_select_mode` / `mm_pan_mode` (nazwy historyczne — obsługuje je też
+   * IdeaMapWorkspace, którego nie ruszamy). Do 2026-07-23 Tablica ich NIE
+   * słuchała, więc pstryczek raila zmieniał tylko własną ikonę.
+   */
+  setCursorMode?: (mode: 'select' | 'pan') => void;
   cycleSessionRole?: () => void;
   toggleSessionTimer?: () => void;
   toggleSessionVoting?: () => void;
@@ -109,6 +116,10 @@ export function useWhiteboardQuickActions(opts: UseWhiteboardQuickActionsOpts): 
     if (action === 'wb_redo') handlers.redo?.();
     if (action === 'wb_mode_board') handlers.setMode?.('board');
     if (action === 'wb_mode_draw') handlers.setMode?.('draw');
+
+    // Z1 — tryb kursora z lewego raila (ten sam pstryczek co w Mapie myśli).
+    if (action === 'mm_select_mode') handlers.setCursorMode?.('select');
+    if (action === 'mm_pan_mode') handlers.setCursorMode?.('pan');
     if (action === 'wb_session_cycle_role') handlers.cycleSessionRole?.();
     if (action === 'wb_session_toggle_timer') handlers.toggleSessionTimer?.();
     if (action === 'wb_session_toggle_voting') handlers.toggleSessionVoting?.();
