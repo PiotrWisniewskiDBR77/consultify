@@ -273,6 +273,19 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     category: 'ui',
     allowLocalOverride: true,
   },
+  {
+    id: 'ideaSwitcherBottomRight',
+    name: 'Idea Workspace: przełącznik reprezentacji w prawym dolnym rogu (D2)',
+    description:
+      'docs/standards/idea-workspace/03_ARCHITEKTURA_EKRANU.md §7 (decyzja D2) — cztery ' +
+      'reprezentacje (Mapa/Tablica/Przepływ/Tabela) przełącza się w PRAWYM DOLNYM ROGU ' +
+      'płótna, obok zoom/dopasuj/minimapy. ON: przełącznik w rogu, zdjęty z lewego railа. ' +
+      'OFF (domyślnie): dzisiejszy przełącznik na górze lewego railа. Zmiana wizualna — ' +
+      'zostaje OFF do akceptu zrzutów przez Piotra (reguła #7).',
+    defaultValue: false,
+    category: 'ui',
+    allowLocalOverride: true,
+  },
 ];
 
 // ============================================
