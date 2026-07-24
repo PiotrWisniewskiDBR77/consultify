@@ -119,6 +119,7 @@ import { PoolNode } from './processflow/nodes/PoolNode';
 import { SubprocessNode } from './processflow/nodes/SubprocessNode';
 import {
   getCanvasContextActions,
+  getEdgeContextActions,
   getNodeContextActions,
   ProcessFlowContextMenu,
 } from './processflow/ProcessFlowContextMenu';
@@ -910,6 +911,31 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     [collab, locked, pushUndo]
   );
 
+  // P2-6 (menu krawedzi): odwroc kierunek = zamiana source<->target (i uchwytow).
+  // Realna operacja strukturalna, odrebna od arrowDirection (ktory tylko rysuje
+  // grot). Reszta danych krawedzi (etykieta/warunek/kolor/styl) bez zmian.
+  const handleEdgeReverse = useCallback(
+    (edgeId: string) => {
+      if (locked) return;
+      pushUndo();
+      setEdges((eds) =>
+        eds.map((e) => {
+          if (e.id !== edgeId) return e;
+          const nextEdge: Edge = {
+            ...e,
+            source: e.target,
+            target: e.source,
+            sourceHandle: e.targetHandle ?? null,
+            targetHandle: e.sourceHandle ?? null,
+          };
+          collab.broadcastEdgeUpdate(nextEdge);
+          return nextEdge;
+        })
+      );
+    },
+    [collab, locked, pushUndo]
+  );
+
   // ── F5a A1: waypoint editing ───────────────────────────────────────────
   // Waypoints live in edge.data.waypoints[] and persist through the existing
   // graph blob (edges in the payload) — no persistence-layer change (F4 stands).
@@ -1673,7 +1699,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     const idx = lanes.length;
     const newLane: Lane = {
       id: `lane-${Date.now()}`,
-      label: `Lane ${idx + 1}`,
+      label: t('myWorkIdeas.processFlowTool.laneDefaultName', 'Lane {{index}}', {
+        index: idx + 1,
+      }),
       color: LANE_COLORS[idx % LANE_COLORS.length],
     };
     setLanes((prev: Lane[]) => {
@@ -1681,7 +1709,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       collab.broadcastLanes(nextLanes); // F3: full Lane[] replacement
       return nextLanes;
     });
-  }, [collab, lanes.length, locked, pushUndo]);
+  }, [collab, lanes.length, locked, pushUndo, t]);
 
   const insertAutomationTrigger = useCallback(() => {
     if (locked) return;
@@ -2866,6 +2894,25 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 event.preventDefault();
                 setContextMenu({ x: event.clientX, y: event.clientY, nodeId: node.id });
               }}
+              // P2-6: prawy klik na krawedzi → menu krawedzi. Wczesniej
+              // `onEdgeContextMenu` nie bylo w ogole podpiete (prawy klik na
+              // krawedzi robil nic). Zaznaczamy klietkta krawedz (odznaczajac
+              // wezly i inne krawedzie), zeby akcje „Usuń"/„Wstaw węzeł" mogly
+              // dzialac przez istniejace deleteSelected()/insertBetween(), ktore
+              // operuja na zaznaczonej krawedzi — bez duplikowania ich logiki.
+              onEdgeContextMenu={(event: React.MouseEvent, edge: Edge) => {
+                event.preventDefault();
+                setEdgeStylePopover(null);
+                setNodes((prev) =>
+                  prev.some((n) => n.selected)
+                    ? prev.map((n) => (n.selected ? { ...n, selected: false } : n))
+                    : prev
+                );
+                setEdges((prev) =>
+                  prev.map((e) => ({ ...e, selected: e.id === edge.id }))
+                );
+                setContextMenu({ x: event.clientX, y: event.clientY, edgeId: edge.id });
+              }}
               onPaneContextMenu={(event: React.MouseEvent) => {
                 event.preventDefault();
                 setContextMenu({
@@ -3302,6 +3349,31 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   onConvertInitiative: onQuickAction
                     ? () => handleConvert('pf_convert_initiative')
                     : undefined,
+                })
+              : contextMenu.edgeId
+              ? getEdgeContextActions({
+                  edgeId: contextMenu.edgeId,
+                  isPl: !!isPl,
+                  locked,
+                  currentCondition: String(
+                    (edges as Edge[]).find((e) => e.id === contextMenu.edgeId)?.data
+                      ?.conditionType ?? ''
+                  ),
+                  // Etykieta + styl: otwiera ten sam EdgeStylePopover co lewy
+                  // klik (label/kolor/styl linii/strzalka) — jedno zrodlo prawdy.
+                  onEditProps: () =>
+                    setEdgeStylePopover({
+                      edgeId: contextMenu.edgeId!,
+                      x: contextMenu.x,
+                      y: contextMenu.y,
+                    }),
+                  // Krawedz jest zaznaczona (patrz onEdgeContextMenu), wiec
+                  // insertBetween/deleteSelected dzialaja na niej — bez duplikatu.
+                  onInsertNode: () => insertBetween(),
+                  onReverse: () => handleEdgeReverse(contextMenu.edgeId!),
+                  onSetCondition: (cond) =>
+                    handleEdgeConditionChange(contextMenu.edgeId!, cond),
+                  onDelete: () => deleteSelected(),
                 })
               : getCanvasContextActions({
                   isPl: !!isPl,

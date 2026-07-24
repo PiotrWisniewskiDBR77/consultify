@@ -26885,7 +26885,14 @@
       "ideaStartupTemplates": {
         "blankCanvas": "Pusty canvas",
         "startWithAi": "Zacznij z AI"
-      }
+      },
+      "copyValue": "Kopiuj wartość",
+      "paste": "Wklej",
+      "expandCell": "Rozwiń komórkę",
+      "clearCell": "Wyczyść komórkę",
+      "cellCleared": "Komórka wyczyszczona",
+      "copyFailed": "Nie udało się skopiować",
+      "pasteFailed": "Nie udało się odczytać schowka"
     },
     "mindmap": {
       "addNodeTab": "Dodaj węzeł (Tab)",
@@ -28475,7 +28482,12 @@
       "addAction": "Dodaj akcję",
       "addDecision": "Dodaj decyzję",
       "paste": "Wklej",
-      "copy": "Kopiuj"
+      "copy": "Kopiuj",
+      "edgeProps": "Etykieta i styl",
+      "edgeInsertNode": "Wstaw węzeł na połączeniu",
+      "edgeReverse": "Odwróć kierunek",
+      "edgeCondition": "Warunek",
+      "edgeDelete": "Usuń połączenie"
     },
     "laneSystem": {
       "expandLane": "Rozwiń tor",

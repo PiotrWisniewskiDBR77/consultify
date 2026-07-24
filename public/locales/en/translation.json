@@ -25825,7 +25825,14 @@
       "ideaStartupTemplates": {
         "blankCanvas": "Blank canvas",
         "startWithAi": "Start with AI"
-      }
+      },
+      "copyValue": "Copy value",
+      "paste": "Paste",
+      "expandCell": "Expand cell",
+      "clearCell": "Clear cell",
+      "cellCleared": "Cell cleared",
+      "copyFailed": "Copy failed",
+      "pasteFailed": "Could not read clipboard"
     },
     "mindmap": {
       "addNodeTab": "Add node (Tab)",
@@ -27411,7 +27418,12 @@
       "addAction": "Add action",
       "addDecision": "Add decision",
       "paste": "Paste",
-      "copy": "Copy"
+      "copy": "Copy",
+      "edgeProps": "Label & style",
+      "edgeInsertNode": "Insert node on connection",
+      "edgeReverse": "Reverse direction",
+      "edgeCondition": "Condition",
+      "edgeDelete": "Delete connection"
     },
     "laneSystem": {
       "expandLane": "Expand lane",
