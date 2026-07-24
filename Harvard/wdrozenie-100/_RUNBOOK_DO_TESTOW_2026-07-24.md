@@ -212,3 +212,12 @@ nawet po skasowaniu gałęzi:
   Dwa tryby centrum (dokument/analityczny) zadeklarowane jako tokeny, NIEUŻYTE — czekają na Etap 5.
 - **Do Etapu 5, nie blokuje Etapu 3**: Decyzja ma bespoke kanwę zamiast `NModeCanvas` (dwie kopie do
   utrzymania); Narzędzie 4/7 sekcji panelu; Insight „Akcje ukryte" komunikat do zdjęcia.
+- **Etap 3 (menu 1+2)** ✅ SCALONY, zweryfikowany. Struktura była już w większości zgodna z SSOT dzięki
+  wcześniejszym falom (kolejność Menu1, kebab, brak akcji workflow w Menu2 — wszystkie 6 kart PRAWDA).
+  Jedyny realny defekt: DWA różne fiolety AI w repo — `Menu2AIButton` używał surowej skali `violet-*`
+  (przemapowanej w tym repo na "HBS Purple" #57116A), token AI to `--c-ai` (#6d28d9/#a78bfa). Naprawione
+  w `Menu2AIButton` + martwym `FieldAIButton.tsx` (był `teal-*`) dla spójności. Crimson=0, bramki zielone.
+  Hub 8 commitów ponad demo.
+- **Do Etapu 4** (zgłoszone przez agenta Etapu 3): komunikat „Akcje są ukryte w trybie Podgląd" żyje
+  w `ArtifactRightPanel`, nie w Menu — to dokładnie zakazany wzorzec SSOT, widoczny na Insight+Inicjatywie
+  (i wg audytu Etapu 1 też Zadanie/Decyzja/Powiadomienie — 5/6 kart, jeden wzorzec pisany ręcznie).
