@@ -158,6 +158,17 @@ import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoDa
 // ARTIFACT_ANATOMY_STANDARD.md §18.1.
 const VF1_INSIGHT_SPECA = import.meta.env.VITE_VF1_INSIGHT_SPECA === 'true';
 
+/**
+ * Wspólny log „cichej" awarii danych wtórnych (aktywność, komentarze, sesje,
+ * streszczenia, packi, persystencja layoutu). ŚWIADOMIE tylko `console.warn` —
+ * te ścieżki mają fail-soft UI (pusta lista / null) i NIE mają krzyczeć do
+ * użytkownika. Cel: realna awaria backendu przestaje być niewidoczna dla
+ * developera (dotąd `catch {}` / `.catch(() => [])` połykały ją bez śladu).
+ */
+function warnInsightSilentFailure(context: string, err?: unknown): void {
+  console.warn(`[InsightViewer] ${context}`, err);
+}
+
 // MIGRACJA — kompozycja kart Insight przez WIĄŻĄCY kontrakt karty (D-8, KONTRAKT §9).
 // Default OFF (zero regresji na demo). Kolejność opt-in (wzór Initiative
 // `isInitiativeCardContractEnabled`): URL `?cardContract=1` → localStorage
@@ -1329,8 +1340,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       setNModeSectionOrder(sectionIds);
       try {
         localStorage.setItem(nModeOrderStorageKey, JSON.stringify(sectionIds));
-      } catch {
+      } catch (err) {
         // Ignore storage errors; drag-and-drop still works for this session.
+        warnInsightSilentFailure(`persisting section order (${nModeOrderStorageKey}) failed`, err);
       }
     },
     [nModeOrderStorageKey]
@@ -1374,8 +1386,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     (next: CardLayout) => {
       try {
         localStorage.setItem(cardLayoutStorageKey, JSON.stringify(next));
-      } catch {
+      } catch (err) {
         // Ignore storage errors; card management still works for this session.
+        warnInsightSilentFailure(`persisting card layout (${cardLayoutStorageKey}) failed`, err);
       }
     },
     [cardLayoutStorageKey]
@@ -1548,9 +1561,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     try {
       const findingsRes = await V8InterviewApi.listFindings(currentInsightId)
         .then((r) => r.findings)
-        .catch(() => []);
+        .catch((err) => {
+          warnInsightSilentFailure(`listFindings(${currentInsightId}) failed`, err);
+          return [];
+        });
       setFindings(Array.isArray(findingsRes) ? findingsRes : []);
-    } catch {
+    } catch (err) {
+      warnInsightSilentFailure(`loadPersistedFindings(${currentInsightId}) failed`, err);
       setFindings([]);
     }
   }, []);
@@ -1559,9 +1576,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     try {
       const analysisRes = await V8InterviewApi.getAnalysis(currentInsightId)
         .then((r) => r.analysis)
-        .catch(() => null);
+        .catch((err) => {
+          warnInsightSilentFailure(`getAnalysis(${currentInsightId}) failed`, err);
+          return null;
+        });
       setAnalysis(analysisRes || null);
-    } catch {
+    } catch (err) {
+      warnInsightSilentFailure(`loadInsightAnalysis(${currentInsightId}) failed`, err);
       setAnalysis(null);
     }
   }, []);
@@ -1570,9 +1591,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     try {
       const candidatesRes = await V8InterviewApi.listCandidates(currentInsightId)
         .then((r) => r.candidates)
-        .catch(() => []);
+        .catch((err) => {
+          warnInsightSilentFailure(`listCandidates(${currentInsightId}) failed`, err);
+          return [];
+        });
       setCandidates(Array.isArray(candidatesRes) ? candidatesRes : []);
-    } catch {
+    } catch (err) {
+      warnInsightSilentFailure(`loadCandidates(${currentInsightId}) failed`, err);
       setCandidates([]);
     }
   }, []);
@@ -1581,9 +1606,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     try {
       const sourcePackRes = await V8InterviewApi.getSourcePack(currentInsightId)
         .then((r) => r.sourcePack)
-        .catch(() => null);
+        .catch((err) => {
+          warnInsightSilentFailure(`getSourcePack(${currentInsightId}) failed`, err);
+          return null;
+        });
       setSourcePack(sourcePackRes || null);
-    } catch {
+    } catch (err) {
+      warnInsightSilentFailure(`loadSourcePack(${currentInsightId}) failed`, err);
       setSourcePack(null);
     }
   }, []);
@@ -1592,9 +1621,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     try {
       const reportPackRes = await V8InterviewApi.getInsightReportPack(currentInsightId)
         .then((r) => r.reportPack)
-        .catch(() => null);
+        .catch((err) => {
+          warnInsightSilentFailure(`getInsightReportPack(${currentInsightId}) failed`, err);
+          return null;
+        });
       setReportPack(reportPackRes || null);
-    } catch {
+    } catch (err) {
+      warnInsightSilentFailure(`loadReportPack(${currentInsightId}) failed`, err);
       setReportPack(null);
     }
   }, []);
@@ -1603,9 +1636,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     try {
       const readinessRes = await V8InterviewApi.getInsightReportReadiness(currentInsightId)
         .then((r) => r.readiness)
-        .catch(() => null);
+        .catch((err) => {
+          warnInsightSilentFailure(`getInsightReportReadiness(${currentInsightId}) failed`, err);
+          return null;
+        });
       setReportReadiness(readinessRes || null);
-    } catch {
+    } catch (err) {
+      warnInsightSilentFailure(`loadReportReadiness(${currentInsightId}) failed`, err);
       setReportReadiness(null);
     }
   }, []);
@@ -1859,7 +1896,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               data.sourceSessionIds.slice(0, 10).map((id: string) =>
                 V8InterviewApi.getSession(id)
                   .then((r) => r.session)
-                  .catch(() => Api.get(`/interview/sessions/${id}`).catch(() => null))
+                  .catch(() =>
+                    Api.get(`/interview/sessions/${id}`).catch((err) => {
+                      warnInsightSilentFailure(`getSession(${id}) failed (source session)`, err);
+                      return null;
+                    })
+                  )
               )
             );
             // Dedup po id — powiązania nie mogą renderować dwóch wpisów o tym
@@ -1877,7 +1919,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             const summaryEntries = await Promise.all(
               validSessions.map(async (session: SourceSession) => {
                 const summary = await V8InterviewApi.getSessionSummary(session.id).catch(() =>
-                  Api.get(`/interview/sessions/${session.id}/summary`).catch(() => null)
+                  Api.get(`/interview/sessions/${session.id}/summary`).catch((err) => {
+                    warnInsightSilentFailure(`getSessionSummary(${session.id}) failed`, err);
+                    return null;
+                  })
                 );
                 return [session.id, summary] as const;
               })
@@ -1899,8 +1944,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 {}
               )
             );
-          } catch {
-            // sessions are optional
+          } catch (err) {
+            // Sesje źródłowe są opcjonalne dla UI (fail-soft), ale awaria musi
+            // być widoczna w konsoli — inaczej pusty blok „Sesje" wygląda jak
+            // brak danych, a nie jak padnięty backend.
+            warnInsightSilentFailure(
+              `loading source sessions/summaries for insight ${insightId} failed`,
+              err
+            );
           }
         } else {
           setSourceSessions([]);
@@ -1910,10 +1961,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         const [activityRes, commentsRes] = await Promise.all([
           V8InterviewApi.getInsightActivity(insightId)
             .then((r) => r.activity)
-            .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])),
+            .catch(() =>
+              Api.get(`/interview/insights/${insightId}/activity`).catch((err) => {
+                warnInsightSilentFailure(`getInsightActivity(${insightId}) failed`, err);
+                return [];
+              })
+            ),
           V8InterviewApi.getInsightComments(insightId)
             .then((r) => r.comments)
-            .catch(() => Api.get(`/interview/insights/${insightId}/comments`).catch(() => [])),
+            .catch(() =>
+              Api.get(`/interview/insights/${insightId}/comments`).catch((err) => {
+                warnInsightSilentFailure(`getInsightComments(${insightId}) failed`, err);
+                return [];
+              })
+            ),
         ]);
         setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
         setNComments(Array.isArray(commentsRes) ? commentsRes : []);
@@ -2634,8 +2695,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             activeDocumentId: session.id || activeDocumentId,
           })
         );
-      } catch {
-        // ignore
+      } catch (err) {
+        // Fail-soft: nawigujemy i tak, ale brak zapisu = zakładka sesji się nie
+        // otworzy w hubie — to musi być widoczne w konsoli, nie połknięte.
+        warnInsightSilentFailure(
+          `handing off source session ${session.id} to Interview hub (sessionStorage) failed`,
+          err
+        );
       }
       navigate(ROUTES.INTERVIEW);
     },
@@ -2820,7 +2886,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       await V8InterviewApi.regenerateInsight(insight.id).catch(() =>
         Api.post(`/interview/insights/${insight.id}/regenerate`, {})
       );
-      toast.success(t('interview.insightViewer.regenerationStarted'));
       const data = await V8InterviewApi.getInsight(insightId)
         .then((r) => r.insight)
         .catch(() => Api.get(`/interview/insights/${insightId}`));
@@ -2830,10 +2895,22 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       await loadInsightAnalysis(insightId);
       const activityRes = await V8InterviewApi.getInsightActivity(insightId)
         .then((r) => r.activity)
-        .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
+        .catch(() =>
+          Api.get(`/interview/insights/${insightId}/activity`).catch((err) => {
+            warnInsightSilentFailure(
+              `getInsightActivity(${insightId}) after regenerate failed`,
+              err
+            );
+            return [];
+          })
+        );
       setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
+      // Sukces DOPIERO po udanym przeładowaniu — inaczej nieudany reload dawał
+      // użytkownikowi najpierw „rozpoczęto", a chwilę później „nie udało się".
+      toast.success(t('interview.insightViewer.regenerationStarted'));
       onRegenerate?.();
-    } catch {
+    } catch (err) {
+      warnInsightSilentFailure(`handleRegenerate(${insightId}) failed`, err);
       toast.error(t('interview.insightViewer.failedToRegenerate'));
     } finally {
       setIsRegenerating(false);
@@ -2856,8 +2933,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         );
         window.dispatchEvent(new CustomEvent('consultify:teresa-pending-prompt'));
       }
-    } catch {
-      // Non-critical
+    } catch (err) {
+      // Non-critical dla użytkownika, ale prompt Teresy się NIE zasieje —
+      // developer musi to zobaczyć zamiast zgadywać, czemu czat jest pusty.
+      warnInsightSilentFailure('seeding Teresa pending prompt (sessionStorage) failed', err);
     }
   }, []);
 
