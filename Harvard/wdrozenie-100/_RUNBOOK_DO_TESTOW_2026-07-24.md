@@ -95,3 +95,28 @@ punkt cofania, znane ograniczenia. Piotr klika, nie odkrywa zepsucia.
   ★ DŁUG: identyczna szerokość WSZYSTKICH 6 wymaga przepisania powłoki (dotknęłoby też
   InterviewWorkspace/ToolDocumentView) — zgłoszone, nie forsowane. Tryb C Inicjatywy
   (`InitiativeDocumentView:10666`) zachowuje stary padding — kanoniczny tryb N naprawiony.
+
+## FAZA F — PROMOCJA WYKONANA ✅
+demo = **`12826509a2`**, potwierdzone SAMODZIELNIE na `https://demo.consultify.ai/api/health`
+(gitSha zgodny, branch demo, database+redis connected, strona HTTP 200). Railway SUCCESS.
+Tag **`demo-do-testow-2026-07-24`** = stan do testów Piotra (świadomie NIE „safe" — akceptacji jeszcze nie ma).
+`demo-safe-2026-07-24` (`97f466bd98`) NIETKNIĘTY.
+★ Demo uciekło w trakcie promocji jeszcze raz (5. raz w dobie, +17 commitów IDEE) — scalone,
+render-verify 6 kart POWTÓRZONY (12/12 czysto), dopiero potem push.
+★ Migracje: BRAK w tej partii. Nic nie uruchamiano na żadnym hoście. PROD/centerbeam nietknięty.
+★ Incydent: `/private/tmp/promote-demo` należał do INNEJ sesji (niewypchnięte cherry-picki IDEE);
+`git worktree add` odmówił, ale `cd` przeszedł i pierwszy merge wylądował na cudzym WIP. Wykryte przy
+sprawdzaniu rodziców commita, cudzy worktree cofnięty do stanu zastanego, merge powtórzony w czystej
+ścieżce. **Do demo nie poszedł ani jeden cudzy commit.** LEKCJA: `worktree add` nie zabezpiecza, bo `cd` przechodzi.
+
+## FAZA G — SPRZĄTANIE GAŁĘZI ✅
+Wszystkie gałęzie doby (2026-07-23/24) sprawdzone `merge-base --is-ancestor` wobec demo.
+**Bezpieczne (osiągalne z demo): 37.** Wiszące poza demo: 8, z czego 1 pusta (`test/idee-preferred-tool`, 0 commitów).
+**7 pozostałych ZABEZPIECZONE tagami `zachowane/*-2026-07-24` i WYPCHNIĘTE na origin** — commity nie zginą
+nawet po skasowaniu gałęzi:
+`odbior/lokalny-2026-07-23` (73 commity IDEE — ★ NIEPOWIĄZANA historia, tylko cherry-pick, NIGDY merge),
+`materialy/r11-doc-slice` (12), `fix/atrapy-ai-fieldenhancer` (1), `fix/panel-akcji-kolor` (1),
+`fix/n-type-domkniecie-{inicjatywa-decyzja,zadanie-powiadomienie,insight-narzedzie}` (5+1+1).
+Świadomie NIE scalane: niezweryfikowane w tej sesji + jedna z niepowiązaną historią. „Nie utracić" > „scalić szybko".
+
+## FAZA H — GOTOWE DO TESTOWANIA ✅ (2026-07-24)
