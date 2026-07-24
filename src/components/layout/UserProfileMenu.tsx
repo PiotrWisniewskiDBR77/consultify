@@ -16,7 +16,8 @@ import {
   Sun,
   UserCircle,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -59,11 +60,65 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
   const [orgsLoading, setOrgsLoading] = useState(false);
   const [switchingOrgId, setSwitchingOrgId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  // ★ Naprawa 2026-07-24 (zgloszenie Piotra ze zrzutu: "menu wchodzi na
+  // panel"): dropdown byl zwyklym `position:absolute` potomkiem naglowka
+  // (bez `createPortal`), zagniezdzonym w `<div class="flex flex-col
+  // z-sticky shrink-0">` (MainLayout.tsx). Naglowek dostaje z:20 TYLKO przez
+  // regule CSS "z-index dziala na flex-item nawet bez position" — to
+  // realnie podnosi go NAD tresc kanwy (zweryfikowane empirycznie), ALE
+  // `z-overlay`(50) ustawiony NA SAMYM dropdownie i tak jest ZAGNIEZDZONY w
+  // tej lokalnej wartosci 20: cokolwiek w apce z prawdziwym z-index >= 20 na
+  // WLASNYM poziomie (np. `global-fab-rail` w MainLayout.tsx, `fixed
+  // z-dropdown`=40, ikony pomoc/feedback/dokument) i tak wygra, bo dropdown
+  // NIGDY realnie nie osiaga rangi 50 poza swoim lokalnym kontekstem.
+  //
+  // Wszystkie INNE dropdowny w tym repo (Select, MultiSelect, DatePicker,
+  // Menu3DropdownChip, TableSettingsPopover, RowActionsMenu) portalują sie
+  // do `document.body` wlasnie z tego powodu. Ten komponent teraz robi to
+  // samo — pozycja liczona z `getBoundingClientRect()` triggera, tak jak
+  // `Menu3DropdownChip.tsx` (align:'right').
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
-  // Close on click outside
+  const updatePosition = useCallback(() => {
+    const trigger = menuRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const panelWidth = panelRef.current?.offsetWidth ?? 288; // w-72
+    const panelHeight = panelRef.current?.offsetHeight ?? 400;
+    const GAP = 8;
+    const VIEWPORT_MARGIN = 8;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const flipUp = spaceBelow < panelHeight + GAP && rect.top > spaceBelow;
+    let left = rect.right - panelWidth;
+    left = Math.max(VIEWPORT_MARGIN, Math.min(left, window.innerWidth - panelWidth - VIEWPORT_MARGIN));
+    const top = flipUp
+      ? Math.max(VIEWPORT_MARGIN, rect.top - panelHeight - GAP)
+      : rect.bottom + GAP;
+    setPos({ top, left });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [isOpen, updatePosition]);
+
+  // Close on click outside — musi sprawdzac OBA fragmenty (trigger + panel
+  // portalowany do body), bo po portalu panel nie jest juz potomkiem DOM
+  // `menuRef` i naiwny `menuRef.contains(target)` zamykalby menu na kazdy
+  // klik WEWNATRZ niego (np. przelacznik jezyka).
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const insideTrigger = !!menuRef.current?.contains(target);
+      const insidePanel = !!panelRef.current?.contains(target);
+      if (!insideTrigger && !insidePanel) {
         setIsOpen(false);
         setShowOrgList(false);
       }
@@ -216,9 +271,15 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
         </div>
       </button>
 
-      {/* Profile Dropdown */}
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl z-overlay animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+      {/* Profile Dropdown — portaled to <body> (see naprawa note above) */}
+      {isOpen &&
+        createPortal(
+          <div
+            ref={panelRef}
+            role="menu"
+            style={{ top: pos.top, left: pos.left }}
+            className="fixed w-72 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl z-modal animate-in fade-in zoom-in-95 duration-100 overflow-hidden"
+          >
           {/* Header with User Info */}
           <div className="px-4 py-4 border-b border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5">
             <div className="flex items-center gap-3">
@@ -550,8 +611,9 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               {t('sidebar.logOut', 'Log Out')}
             </button>
           </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
