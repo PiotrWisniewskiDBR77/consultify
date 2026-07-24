@@ -19,6 +19,14 @@
  *     Wynik ląduje najpierw w PROPOZYCJI z akcjami Zastosuj / Odrzuć —
  *     dotąd `onApply` szło prosto w pole i jedynym ratunkiem było „Undo AI"
  *     schowane w menu (a po zamknięciu menu — nic).
+ *  3. ŻADNEJ ATRAPY AI (2026-07-24). Gdy `/ai/refine-text` nie odpowie, jedyną
+ *     dozwoloną reakcją jest UCZCIWY błąd: CO się nie udało + DLACZEGO (kod
+ *     backendu). Do 2026-07-24 stała tu funkcja `fallbackRefineText`, która
+ *     lokalnie ucinała zdanie użytkownika (`shorten`), doklejała „It is hereby
+ *     noted that…" (`formal`) albo stały akapit „Business rationale: …"
+ *     (`expand`) i podawała to jako PROPOZYCJĘ AI — nie do odróżnienia od
+ *     wyniku silnika. „AI niedostępne" to poprawny wynik; zmyślona treść
+ *     podpisana AI — nie jest. Pole użytkownika zostaje NIETKNIĘTE.
  *
  * @example
  * <AIFieldEnhancer
@@ -80,73 +88,6 @@ interface AIFieldEnhancerProps {
   outputFormat?: AIEnhancerOutputFormat;
 }
 
-// ── Fallback local refinement (when API unavailable) ─────────────────────────
-
-function fallbackRefineText(
-  input: string,
-  mode: AIEnhanceMode,
-  outputFormat: AIEnhancerOutputFormat
-): string {
-  if (outputFormat === 'list') {
-    const lines = String(input || '')
-      .split('\n')
-      .map((l) => l.trim())
-      .filter(Boolean);
-    if (lines.length === 0) return input;
-    const refined = lines.map((l) => fallbackRefineText(l, mode, 'short'));
-    return refined.join('\n');
-  }
-
-  const normalized = input
-    .replace(/\s+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-  if (!normalized) return input;
-
-  if (outputFormat === 'short') {
-    if (mode === 'shorten') {
-      return normalized.length > 90 ? `${normalized.slice(0, 87).trim()}...` : normalized;
-    }
-    if (mode === 'formal') {
-      return normalized.replace(/(^\w)/, (m) => m.toUpperCase());
-    }
-    // improve / expand (fallback): basic cleanup only
-    return normalized
-      .replace(/\s{2,}/g, ' ')
-      .replace(/\.\s*\./g, '.')
-      .replace(/(^\w)/, (m) => m.toUpperCase());
-  }
-
-  if (mode === 'shorten') {
-    const target = Math.max(120, Math.floor(normalized.length * 0.65));
-    const compact = normalized.slice(0, target).trim();
-    return compact.endsWith('.') || compact.endsWith('!') || compact.endsWith('?')
-      ? compact
-      : `${compact}...`;
-  }
-
-  if (mode === 'expand') {
-    const appendix =
-      '\n\nBusiness rationale: this item affects delivery timing, operational risk, and outcome quality. It is recommended to define an implementation owner and key control checkpoints.';
-    return `${normalized}${appendix}`;
-  }
-
-  if (mode === 'formal') {
-    return `It is hereby noted that ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
-  }
-
-  // improve — basic cleanup (real AI does the heavy lifting)
-  let improved = normalized
-    .replace(/\s{2,}/g, ' ')
-    .replace(/\.\s*\./g, '.')
-    .replace(/(^\w)/, (m) => m.toUpperCase());
-  // Ensure ends with period
-  if (improved && !/[.!?]$/.test(improved)) {
-    improved += '.';
-  }
-  return improved;
-}
-
 // ── Menu items configuration ─────────────────────────────────────────────────
 
 const MENU_ITEMS: { mode: AIEnhanceMode; labelKey: string }[] = [
@@ -200,6 +141,60 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [isOpen]);
 
+  /**
+   * Powód porażki AI wprost z kontraktu backendu (`/ai/refine-text`):
+   * bramka `ensureAiProviderAndAccess` zwraca NO_LLM_PROVIDER / ACCESS_BLOCKED /
+   * AI_BUDGET_EXHAUSTED, pusta odpowiedź modelu → 502 EMPTY_LLM_RESPONSE,
+   * awaria wywołania → LLM_CALL_FAILED. Kod ląduje w `err.data.code`
+   * (patrz `handleApiError` w `src/services/api.ts`).
+   */
+  const aiFailureReason = useCallback(
+    (err: unknown): string => {
+      const code = String(
+        (err as { data?: { code?: string } })?.data?.code || (err as { code?: string })?.code || ''
+      ).toUpperCase();
+      switch (code) {
+        case 'NO_LLM_PROVIDER':
+          return t('sharedComponents.aiFieldEnhancer.errNoProvider', 'no AI provider is configured');
+        case 'AI_BUDGET_EXHAUSTED':
+          return t('sharedComponents.aiFieldEnhancer.errBudget', 'the AI budget is exhausted');
+        case 'ACCESS_BLOCKED':
+          return t(
+            'sharedComponents.aiFieldEnhancer.errAccessBlocked',
+            'AI access is blocked for this workspace'
+          );
+        case 'EMPTY_LLM_RESPONSE':
+        case 'EMPTY_AI_RESPONSE':
+          return t('sharedComponents.aiFieldEnhancer.errEmpty', 'AI returned an empty response');
+        case 'LLM_CALL_FAILED':
+          return t('sharedComponents.aiFieldEnhancer.errCallFailed', 'the AI call failed');
+        default:
+          return (
+            String((err as Error)?.message || '').trim() ||
+            t('sharedComponents.aiFieldEnhancer.errUnavailable', 'AI is temporarily unavailable')
+          );
+      }
+    },
+    [t]
+  );
+
+  /**
+   * Jedyna dozwolona reakcja na brak odpowiedzi AI (reguła 3 w nagłówku):
+   * powiedz CO się nie udało i DLACZEGO. Żadna gałąź nie dopisuje treści.
+   */
+  const notifyAiFailure = useCallback(
+    (whatFailed: string, err: unknown) => {
+      console.error('[AIFieldEnhancer] AI request failed:', whatFailed, err);
+      toast.error(
+        t('sharedComponents.aiFieldEnhancer.aiFailedWithReason', '{{what}} — {{reason}}.', {
+          what: whatFailed,
+          reason: aiFailureReason(err),
+        })
+      );
+    },
+    [t, aiFailureReason]
+  );
+
   const handleGenerate = useCallback(async () => {
     setLoading(true);
     setIsOpen(false);
@@ -230,39 +225,39 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
         formatInstruction,
       ].join('\n');
 
-      let generatedText = '';
-      try {
-        const aiRes = await Api.post('/ai/refine-text', {
-          text: [
-            `[GENERATE FROM SCRATCH]`,
-            `Field: ${sectionLabel}`,
-            `Artifact: ${artifactContext.title || 'initiative'} (${artifactContext.type})`,
-            `Status: ${artifactContext.status || 'draft'}`,
-            `Priority: ${artifactContext.priority || 'medium'}`,
-          ].join('\n'),
-          mode: 'generate',
-          systemInstruction,
-          fieldLabel: sectionLabel,
-          artifactContext,
-          language: aiLanguage,
-        });
-        generatedText = String(aiRes?.text || '').trim();
-      } catch {
-        generatedText = '';
-      }
+      // Błąd wywołania NIE jest tu połykany — kod z backendu musi dojść do
+      // `notifyAiFailure`, inaczej użytkownik zobaczy „coś poszło nie tak"
+      // zamiast prawdziwego powodu.
+      const aiRes = await Api.post('/ai/refine-text', {
+        text: [
+          `[GENERATE FROM SCRATCH]`,
+          `Field: ${sectionLabel}`,
+          `Artifact: ${artifactContext.title || 'initiative'} (${artifactContext.type})`,
+          `Status: ${artifactContext.status || 'draft'}`,
+          `Priority: ${artifactContext.priority || 'medium'}`,
+        ].join('\n'),
+        mode: 'generate',
+        systemInstruction,
+        fieldLabel: sectionLabel,
+        artifactContext,
+        language: aiLanguage,
+      });
+      const generatedText = String(aiRes?.text || '').trim();
 
       if (!generatedText) {
-        throw new Error('Empty AI response');
+        const err = new Error('Empty AI response') as Error & { code?: string };
+        err.code = 'EMPTY_LLM_RESPONSE';
+        throw err;
       }
 
       // §4.5: propozycja, nie nadpisanie — pole zmieni się dopiero po „Zastosuj".
       setProposal(generatedText);
-    } catch {
-      toast.error(t('sharedComponents.aiFieldEnhancer.generateError'));
+    } catch (err) {
+      notifyAiFailure(t('sharedComponents.aiFieldEnhancer.generateError'), err);
     } finally {
       setLoading(false);
     }
-  }, [t, sectionLabel, artifactContext, outputFormat]);
+  }, [t, notifyAiFailure, sectionLabel, artifactContext, outputFormat]);
 
   const handleEnhance = useCallback(
     async (mode: AIEnhanceMode) => {
@@ -334,42 +329,33 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
           instructionByMode[mode] || '',
         ].join('\n');
 
-        let refinedText = '';
-        try {
-          const aiRes = await Api.post('/ai/refine-text', {
-            text: currentValue,
-            mode,
-            systemInstruction,
-            fieldLabel: sectionLabel,
-            artifactContext,
-            language: aiLanguage,
-          });
-          refinedText = String(aiRes?.text || '').trim();
-        } catch {
-          refinedText = '';
-        }
-
-        // Fallback only when API is truly unavailable
-        if (!refinedText) {
-          refinedText = fallbackRefineText(currentValue, mode, outputFormat);
-          // Tekst mówi „zaproponowano", nie „zastosowano" — od 2026-07-23 wynik
-          // trybu awaryjnego też czeka na akceptację, jak każda propozycja AI.
-          toast(t('sharedComponents.aiFieldEnhancer.fallbackProposed'), { icon: '⚠️' });
-        }
+        // Jak w `handleGenerate`: nie połykamy błędu, bo w nim jest powód.
+        const aiRes = await Api.post('/ai/refine-text', {
+          text: currentValue,
+          mode,
+          systemInstruction,
+          fieldLabel: sectionLabel,
+          artifactContext,
+          language: aiLanguage,
+        });
+        const refinedText = String(aiRes?.text || '').trim();
 
         if (!refinedText) {
-          throw new Error('Empty AI response');
+          const err = new Error('Empty AI response') as Error & { code?: string };
+          err.code = 'EMPTY_LLM_RESPONSE';
+          throw err;
         }
 
         // §4.5: propozycja, nie nadpisanie — pole zmieni się po „Zastosuj".
         setProposal(refinedText);
-      } catch {
-        toast.error(t('sharedComponents.aiFieldEnhancer.enhanceError'));
+      } catch (err) {
+        // Reguła 3: treść pola zostaje dokładnie taka, jaka była.
+        notifyAiFailure(t('sharedComponents.aiFieldEnhancer.enhanceError'), err);
       } finally {
         setLoading(false);
       }
     },
-    [currentValue, t, sectionLabel, artifactContext, handleGenerate, outputFormat]
+    [currentValue, t, notifyAiFailure, sectionLabel, artifactContext, handleGenerate, outputFormat]
   );
 
   /** Akceptacja propozycji — dopiero tu treść pola zostaje nadpisana. */
