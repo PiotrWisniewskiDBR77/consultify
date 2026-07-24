@@ -3,12 +3,15 @@ import {
   ArrowRight,
   CheckCircle2,
   FileText,
+  History,
   Lightbulb,
   Link2,
+  MessageSquare,
   Package,
   RefreshCw,
   ShieldCheck,
   SlidersHorizontal,
+  Sparkles,
   Target,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -558,7 +561,7 @@ export function KnownToolDetailView(props: {
             <h3 className="mt-2 text-sm font-semibold text-c-text">
               {item.title}
             </h3>
-            <div className="mt-3 space-y-2 text-xs leading-relaxed text-c-text-secondary">
+            <div className="mt-3 space-y-2 text-xs leading-relaxed max-w-prose text-c-text-secondary">
               <div>
                 <span className="font-semibold text-c-text">
                   {t('discoveryToolsMain.knownToolDetailView.context')}
@@ -610,7 +613,7 @@ export function KnownToolDetailView(props: {
           <div className="mt-3 text-lg font-semibold leading-tight text-c-text">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.goal.positioningHeadline')}
           </div>
-          <div className="mt-3 text-sm leading-relaxed text-c-text-secondary">
+          <div className="mt-3 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.goal.positioningBody')}
           </div>
         </div>
@@ -694,7 +697,7 @@ export function KnownToolDetailView(props: {
               { en: 'Recommended moves', pl: 'Rekomendowane ruchy' },
               { en: 'Outputs', pl: 'Rezultaty' },
             ])}
-            <div className="mt-3 text-sm leading-relaxed text-c-text-secondary">
+            <div className="mt-3 text-sm leading-relaxed max-w-prose text-c-text-secondary">
               {t('discoveryToolsMain.knownToolDetail.dynamicSwot.goal.dynamicBody')}
             </div>
           </div>
@@ -807,7 +810,7 @@ export function KnownToolDetailView(props: {
               {chip({ en: 'Process', pl: 'Proces' })}
             </span>
           </div>
-          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
+          <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.process.intro')}
           </div>
         </div>
@@ -846,7 +849,7 @@ export function KnownToolDetailView(props: {
               {chip({ en: 'Insight', pl: 'Wniosek' })}
             </span>
           </div>
-          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
+          <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.process.decisionSituationsIntro')}
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3">
@@ -892,7 +895,7 @@ export function KnownToolDetailView(props: {
               return (
                 <div key={item.label} className={`rounded-xl border ${a.border} ${a.bg} p-3`}>
                   <div className={`text-xs font-semibold ${a.title}`}>{item.label}</div>
-                  <div className="mt-1.5 text-[13px] leading-relaxed text-c-text-secondary">
+                  <div className="mt-1.5 text-[13px] leading-relaxed max-w-prose text-c-text-secondary">
                     {item.desc}
                   </div>
                 </div>
@@ -1001,7 +1004,7 @@ export function KnownToolDetailView(props: {
               {chip({ en: 'Output', pl: 'Rezultat' })}
             </span>
           </div>
-          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
+          <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.outcomes.intro')}
           </div>
         </div>
@@ -1029,7 +1032,7 @@ export function KnownToolDetailView(props: {
                     <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-secondary">
                       {t('discoveryToolsMain.knownToolDetailView.contains')}
                     </div>
-                    <div className="text-sm leading-relaxed text-c-text-secondary">
+                    <div className="text-sm leading-relaxed max-w-prose text-c-text-secondary">
                       {block.what}
                     </div>
                   </div>
@@ -1037,7 +1040,7 @@ export function KnownToolDetailView(props: {
                     <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-secondary">
                       {t('discoveryToolsMain.knownToolDetailView.whyItMatters')}
                     </div>
-                    <div className="text-sm leading-relaxed text-c-text-secondary">
+                    <div className="text-sm leading-relaxed max-w-prose text-c-text-secondary">
                       {block.why}
                     </div>
                   </div>
@@ -1045,7 +1048,7 @@ export function KnownToolDetailView(props: {
                     <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-secondary">
                       {t('discoveryToolsMain.knownToolDetailView.enablesNext')}
                     </div>
-                    <div className="text-sm leading-relaxed text-c-text">
+                    <div className="text-sm leading-relaxed max-w-prose text-c-text">
                       {block.next}
                     </div>
                   </div>
@@ -1064,7 +1067,7 @@ export function KnownToolDetailView(props: {
               {chip({ en: 'Quality', pl: 'Jakość' })}
             </span>
           </div>
-          <p className="mt-3 text-sm leading-relaxed text-c-text-secondary">
+          <p className="mt-3 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.outcomes.qualityBody')}
           </p>
         </div>
@@ -1077,7 +1080,7 @@ export function KnownToolDetailView(props: {
           <h2 className="text-lg font-semibold text-c-text">
             {t('discoveryToolsMain.knownToolDetailView.example')}
           </h2>
-          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
+          <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.example.intro')}
           </div>
         </div>
@@ -1184,7 +1187,7 @@ export function KnownToolDetailView(props: {
           <div className="mt-3 text-lg font-semibold leading-tight text-c-text">
             {t('discoveryToolsMain.knownToolDetail.marketForces.goal.positioningHeadline')}
           </div>
-          <div className="mt-3 text-sm leading-relaxed text-c-text-secondary">
+          <div className="mt-3 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.marketForces.goal.positioningBody')}
           </div>
         </div>
@@ -1226,7 +1229,7 @@ export function KnownToolDetailView(props: {
             { en: 'User approval', pl: 'Zatwierdzenie użytkownika' },
             { en: 'Initiatives', pl: 'Inicjatywy' },
           ])}
-          <div className="mt-3 text-sm leading-relaxed text-c-text-secondary">
+          <div className="mt-3 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.marketForces.goal.aiPhilosophyBody')}
           </div>
         </div>
@@ -1241,7 +1244,7 @@ export function KnownToolDetailView(props: {
           <h2 className="text-lg font-semibold text-c-text">
             {t('discoveryToolsMain.knownToolDetailView.workLogic')}
           </h2>
-          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
+          <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.marketForces.process.intro')}
           </div>
         </div>
@@ -1280,7 +1283,7 @@ export function KnownToolDetailView(props: {
           <h2 className="text-lg font-semibold text-c-text">
             {t('discoveryToolsMain.knownToolDetailView.whatTheSessionProduces')}
           </h2>
-          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
+          <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.marketForces.outcomes.intro')}
           </div>
         </div>
@@ -1297,7 +1300,7 @@ export function KnownToolDetailView(props: {
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700 dark:text-blue-300">
                 {title}
               </div>
-              <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
+              <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
                 {text}
               </div>
             </div>
@@ -1312,7 +1315,7 @@ export function KnownToolDetailView(props: {
           <h2 className="text-lg font-semibold text-c-text">
             {t('discoveryToolsMain.knownToolDetailView.example')}
           </h2>
-          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
+          <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.marketForces.example.intro')}
           </div>
         </div>
@@ -1342,7 +1345,7 @@ export function KnownToolDetailView(props: {
           <div className="mt-3 text-lg font-semibold leading-tight text-c-text">
             {t('discoveryToolsMain.knownToolDetail.growthPaths.goal.positioningHeadline')}
           </div>
-          <div className="mt-3 text-sm leading-relaxed text-c-text-secondary">
+          <div className="mt-3 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.growthPaths.goal.positioningBody')}
           </div>
         </div>
@@ -1402,7 +1405,7 @@ export function KnownToolDetailView(props: {
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-info">
                 {title}
               </div>
-              <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
+              <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
                 {text}
               </div>
             </div>
@@ -1417,7 +1420,7 @@ export function KnownToolDetailView(props: {
           <h2 className="text-lg font-semibold text-c-text">
             {t('discoveryToolsMain.knownToolDetailView.example')}
           </h2>
-          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
+          <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.growthPaths.example.intro')}
           </div>
         </div>
@@ -1444,7 +1447,7 @@ export function KnownToolDetailView(props: {
           <div className="text-[11px] uppercase tracking-[0.18em] text-c-text-muted">
             {t('discoveryToolsMain.knownToolDetailView.whyUseIt')}
           </div>
-          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
+          <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.portfolioPriority.goal.positioningBody')}
           </div>
         </div>
@@ -1480,7 +1483,7 @@ export function KnownToolDetailView(props: {
             className="rounded-2xl border border-c-border-subtle bg-c-surface p-5"
           >
             <div className="font-semibold text-c-text">{title}</div>
-            <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
+            <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
               {text}
             </div>
           </div>
@@ -1508,7 +1511,7 @@ export function KnownToolDetailView(props: {
 
     const portfolioExampleSection = (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5 text-sm leading-relaxed text-c-text-muted">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5 text-sm leading-relaxed max-w-prose text-c-text-muted">
           {t('discoveryToolsMain.knownToolDetail.portfolioPriority.example.intro')}
         </div>
         {caseGrid(
@@ -1534,7 +1537,7 @@ export function KnownToolDetailView(props: {
           <div className="text-[11px] uppercase tracking-[0.18em] text-c-text-muted">
             {t('discoveryToolsMain.knownToolDetailView.whyUseIt')}
           </div>
-          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
+          <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.riskUncertainty.goal.positioningBody')}
           </div>
         </div>
@@ -1567,7 +1570,7 @@ export function KnownToolDetailView(props: {
             className="rounded-2xl border border-c-border-subtle bg-c-surface p-5"
           >
             <div className="font-semibold text-c-text">{title}</div>
-            <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
+            <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
               {text}
             </div>
           </div>
@@ -1595,7 +1598,7 @@ export function KnownToolDetailView(props: {
 
     const riskExampleSection = (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5 text-sm leading-relaxed text-c-text-muted">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5 text-sm leading-relaxed max-w-prose text-c-text-muted">
           {t('discoveryToolsMain.knownToolDetail.riskUncertainty.example.intro')}
         </div>
         {caseGrid(
@@ -2128,6 +2131,28 @@ export function KnownToolDetailView(props: {
     const sessionItems = Array.isArray(sessionStats.items) ? sessionStats.items : [];
     return [
       {
+        // AKCJE (Etap 4 gridu n-Type, _GRID_STABILIZATION_COMMAND_2026-07-24.md
+        // §Prawy panel + rozstrzygnięcie CTO 2026-07-24): sekcja BYŁA
+        // nieobecna (fala 2, anty-duplikacja §2.6) — powód wciąż stoi, „Startuj
+        // sesję" i „How to" mają już swój dom w Menu 1 / Menu 2, więc panel
+        // nie ma żadnej NIEZDUBLOWANEJ akcji do pokazania. Rozstrzygnięcie:
+        // przewidywalność kanonu (sekcja obecna na WSZYSTKICH 6 kartach)
+        // wygrywa nad „lepiej brak niż pusty akordeon" — sekcja zostaje
+        // WIDOCZNA, ale ZWINIĘTA z licznikiem 0. Zero nowego backendu.
+        id: 'actions',
+        label: t('discoveryToolsMain.knownToolDetailView.panelActions', 'Actions'),
+        icon: Sparkles,
+        defaultOpen: false,
+        isEmpty: true,
+        badge: 0,
+        showZeroBadge: true,
+        emptyLabel: t(
+          'discoveryToolsMain.knownToolDetailView.panelActionsEmpty',
+          'This library entry has no actions of its own — start a session from the header.'
+        ),
+        children: null,
+      },
+      {
         id: 'properties',
         label: t('discoveryToolsMain.knownToolDetailView.panelProperties', 'Properties'),
         icon: SlidersHorizontal,
@@ -2305,6 +2330,44 @@ export function KnownToolDetailView(props: {
           </div>
         ),
       },
+      {
+        // KOMENTARZE (Etap 4 gridu n-Type — SSOT §Prawy panel: „nie usuwać
+        // losowo Comments i History z wybranych kart" + rozstrzygnięcie CTO
+        // 2026-07-24). Karta biblioteczna to katalog GLOBALNY, bez wpisu
+        // per-organizacja — nie ma tu do czego podpiąć wątku komentarzy bez
+        // wymyślenia nowej encji (ten sam powód co przy sesjach narzędzia,
+        // patrz komentarz `ToolController.ts` gdzie indziej w repo). Sekcja
+        // zostaje WIDOCZNA dla przewidywalności kanonu, ZWINIĘTA z licznikiem
+        // 0 — zero nowego backendu, zero kompozytora.
+        id: 'comments',
+        label: t('discoveryToolsMain.knownToolDetailView.panelComments', 'Comments'),
+        icon: MessageSquare,
+        defaultOpen: false,
+        isEmpty: true,
+        badge: 0,
+        showZeroBadge: true,
+        emptyLabel: t(
+          'discoveryToolsMain.knownToolDetailView.panelCommentsEmpty',
+          'Comments are not available for shared library entries.'
+        ),
+        children: null,
+      },
+      {
+        // HISTORIA — tak samo: katalog globalny, bez per-organizacja logu
+        // zmian tego wpisu. Widoczna, zwinięta, licznik 0.
+        id: 'history',
+        label: t('discoveryToolsMain.knownToolDetailView.panelHistory', 'History'),
+        icon: History,
+        defaultOpen: false,
+        isEmpty: true,
+        badge: 0,
+        showZeroBadge: true,
+        emptyLabel: t(
+          'discoveryToolsMain.knownToolDetailView.panelHistoryEmpty',
+          'No history for this library entry.'
+        ),
+        children: null,
+      },
     ];
   }, [
     properties,
@@ -2434,25 +2497,15 @@ export function KnownToolDetailView(props: {
       // do przelacznika trybu — dokladanie tam czegokolwiek innego zlamaloby
       // wspolny standard szesciu kart N).
       //
-      // ── ZGLOSZENIE (b): SZEROKOSC MENU 2 — NAPRAWA NALEZY DO POWLOKI ───────
-      // Zmierzone w runtime (viewport 1700, kolumna centrum 1308 px):
-      //   Menu 1 → x 78 · szer. 1152 · prawa 1230
-      //   Menu 2 → x 102 · szer. 1104 · prawa 1206   (24 px luzu z KAZDEJ strony)
-      // PRZYCZYNA jest w `NModeShell`, nie tutaj: Menu 1 siedzi w
-      // `px-6 > max-w-6xl mx-auto` (padding NA ZEWNATRZ limitu), a Menu 2 w
-      // `max-w-6xl mx-auto px-6` (padding WEWNATRZ limitu) — NModeShell.tsx:102
-      // vs :119. Gdy limit 6xl dziala, `px-6` zjada 48 px tylko Menu 2.
-      //
-      // PROBOWALEM zalatac to z tej strony (`className="-mx-6 w-auto"`) i
-      // ZMIERZYLEM, ze to POLOWICZNE: przy szerokim oknie owszem wyrownuje
-      // (1152/x=78, co do piksela jak Menu 1), ale przy oknie WEZSZYM niz limit
-      // 6xl (kolumna 888 px) Menu 1 i Menu 2 sa juz zgodne (oba x=24 szer.=840),
-      // a `-mx-6` wypycha wtedy Menu 2 na x=0 — czyli tworzy NOWA rozjezdzke
-      // i dokleja pasek do krawedzi. Nie da sie tego wyrazic samymi klasami z
-      // wnetrza komponentu, bo warunek zalezy od szerokosci DZIADKA.
-      // Poprawka to jedna linia w powloce (px-6 na zewnatrz limitu, jak w Menu 1),
-      // wspolna dla szesciu kart N — poza zakresem tej paczki. PATRZ RAPORT.
-      // Tam tez tlo paska (`bg-white/95` w NMODE_TOOLBAR_SHELL_CLASS).
+      // ── ZGLOSZENIE (b): SZEROKOSC MENU 2 — NAPRAWIONE W POWLOCE ───────────
+      // HISTORYCZNE: Menu 2 bywalo wezsze od Menu 1 o 2×24 px, bo w `NModeShell`
+      // padding `px-6` Menu 2 siedzial WEWNATRZ limitu `max-w-6xl` (a Menu 1
+      // mial go NA ZEWNATRZ). Naprawione 2026-07-24 po stronie powloki: wszystkie
+      // trzy segmenty (Menu 1 · Menu 2 · Sekcje) maja teraz `px-6` na zewnatrz
+      // limitu i wspolna os lewej krawedzi — patrz NModeShell.tsx (komentarz przy
+      // segmencie Menu 2). Ta karta nie musi juz nic kompensowac; probowany tu
+      // kiedys workaround `-mx-6 w-auto` zostal zdjety (tworzyl nowa rozjezdzke
+      // przy waskim oknie).
       //
       // ETAP 3: slot "Analizuj z AI" JEST juz wypelniony. Wczesniejsza uwaga
       // ("karta nie ma zadnej akcji AI") byla prawdziwa dla AI-ktore-PISZE.
