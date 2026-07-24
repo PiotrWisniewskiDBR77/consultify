@@ -264,3 +264,18 @@ nawet po skasowaniu gałęzi:
   Powiadomienie NIE mają grup w danych — świadomie BEZ zmiany (nie wymyślono sztucznego grupowania,
   to decyzja produktowa, nie techniczna). Inicjatywa: panel przestał rosnąć ze stroną do ~2437px,
   teraz przewija się niezależnie w ograniczonej wysokości. Crimson=0, bramki zielone. Hub 23 ponad demo.
+
+## ETAP 6 — QA WIZUALNE: WERDYKT „NIE GOTOWE" (2026-07-24)
+Sprawdzone 6 kart × 3 viewporty (1024/1280/1920) × Edit/Preview × light/dark — pierwszy raz testowana
+szerokość 1024px, nietestowana przez żaden wcześniejszy front. Znalezione DWIE realne regresje P0
+niezłapane wcześniej (fronty Etapu 5 testowały tylko 1280/1440):
+- **P0-1**: prawy panel CAŁKOWICIE ZNIKA na 1024px w Zadaniu/Decyzji/Inicjatywie (`hidden xl:block`
+  zamiast wzorca z Powiadomienia, który świadomie NIE ukrywa panelu). Utrata Akcji/Właściwości/
+  Komentarzy/Historii — funkcja, nie estetyka.
+- **P0-2**: centralna kolumna zamrożona ~592px w Decyzji/Inicjatywie/Powiadomieniu — nigdy nie
+  podłączono tokenu dokumentowego z Etapu 2 (Zadanie ma to już zrobione, wzorzec do skopiowania).
+- **P1**: Powiadomienie nie ma przycisku „Sekcje" w Menu2 (pusta lewa strona paska).
+20 kryteriów: 13 PRAWDA / 2 FAŁSZ (#1 wspólny grid, #7 Sekcje) / 3 częściowo lub niezweryfikowane
+(#15/16 interakcja resize, #18 tooltip) / 2 z zastrzeżeniem.
+★ Dobra wiadomość: obie naprawy P0 MAJĄ już gotowy wzorzec w kodzie (Notification dla P0-1, Task dla
+P0-2) — to kopiowanie sprawdzonego rozwiązania, nie nowy projekt. Fala naprawcza w toku.
