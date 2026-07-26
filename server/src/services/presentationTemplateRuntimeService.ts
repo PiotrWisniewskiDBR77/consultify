@@ -227,12 +227,18 @@ export function buildTemplateRuntimeFromRow(row: any | null): PresentationTempla
     enabled: item.enabled !== false,
     sourceRef: item.sourceRef,
     // FALA D (2026-07-26) — the Template Architect (presentationTemplateDraftService.ts)
-    // drafts per-slide `dataNeeded`/`suggestedVisual`/`contentHints` briefing fields, but
-    // this mapper used to hand-pick only 5 fields and silently drop them — the generator
-    // never saw them even though `applyTemplateRuntime`/`applyApprovedTemplateToOutline`
-    // downstream just spread the OutlineItem through unchanged. Restoring them here is
-    // what makes them reach `generateDeck`'s narrative loop (see
-    // `buildTemplateBriefingInstruction` in presentationGeneratorService.ts).
+    // drafts per-slide `dataNeeded`/`suggestedVisual` briefing fields, but this mapper
+    // used to hand-pick only 5 fields and silently drop them — the generator never saw
+    // them even though `applyTemplateRuntime`/`applyApprovedTemplateToOutline` downstream
+    // just spread the OutlineItem through unchanged. Restoring `dataNeeded` here is what
+    // makes it reach `generateDeck`'s narrative loop (see
+    // `buildTemplateBriefingInstruction` in presentationGeneratorService.ts). `suggestedVisual`
+    // is restored (no longer dropped) but deliberately NOT wired into `layoutHint` below —
+    // `layoutHint`/the recipe's `layoutFamily` is a closed vocabulary of known layout names
+    // (e.g. 'dashboard-kpi-strip', 'raid-table') that rendering switches on; `suggestedVisual`
+    // is a free-text LLM label (e.g. "RAG status table") that would silently override a real
+    // layout family with a string the renderer doesn't recognise. Left available on the
+    // OutlineItem for a dedicated layout-selection change to consume deliberately.
     dataNeeded: Array.isArray(item.dataNeeded)
       ? item.dataNeeded.filter((d: unknown): d is string => typeof d === 'string' && d.trim().length > 0)
       : Array.isArray(item.data_needed)
@@ -244,9 +250,6 @@ export function buildTemplateRuntimeFromRow(row: any | null): PresentationTempla
         : typeof item.suggested_visual === 'string' && item.suggested_visual.trim()
           ? item.suggested_visual.trim()
           : undefined,
-    contentHints: Array.isArray(item.contentHints)
-      ? item.contentHints.filter((h: unknown): h is string => typeof h === 'string' && h.trim().length > 0)
-      : undefined,
   }));
   const recipeJson = safeJsonParse<any>(row.template_recipe_json, null);
   const slideRecipes = outline.map((item) => {

@@ -197,14 +197,17 @@ export interface OutlineItem {
    * (presentationTemplateDraftService.ts `PresentationTemplateOutlineItem`).
    * `dataNeeded`/`suggestedVisual` used to be dropped by
    * `buildTemplateRuntimeFromRow` before reaching this type; now carried
-   * through end-to-end so `generateDeck` can fold them into the Narrative
-   * Engine directive (see `buildTemplateBriefingInstruction`). `keyMessage`
-   * above already served as the deterministic-template headline fallback —
-   * these two are additive, template-only, LLM-drafted hints, never facts.
+   * through end-to-end so `generateDeck` can fold `dataNeeded` into the
+   * Narrative Engine directive (see `buildTemplateBriefingInstruction`).
+   * `keyMessage` above already served as the deterministic-template headline
+   * fallback — these are additive, template-only, LLM-drafted hints, never
+   * facts. `suggestedVisual` is intentionally NOT wired into layout selection
+   * yet — see the comment on `buildTemplateRuntimeFromRow`'s outline mapping
+   * for why (it's free text, `layoutHint`/`layoutFamily` is a closed
+   * vocabulary consumed by rendering).
    */
   dataNeeded?: string[];
   suggestedVisual?: string;
-  contentHints?: string[];
 }
 
 /**
