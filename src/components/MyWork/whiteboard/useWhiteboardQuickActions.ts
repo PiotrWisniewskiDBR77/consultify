@@ -64,10 +64,21 @@ export interface UseWhiteboardQuickActionsOpts {
 export function useWhiteboardQuickActions(opts: UseWhiteboardQuickActionsOpts): void {
   const { open, handlers } = opts;
 
-  const quickActionRef = useRef<(action: string) => void>(() => {});
+  const quickActionRef = useRef<(action: string, detail?: Record<string, unknown>) => void>(
+    () => {}
+  );
 
-  quickActionRef.current = (action: string) => {
-    if (action === 'wb_add_sticky') handlers.addElement('sticky');
+  quickActionRef.current = (action: string, detail?: Record<string, unknown>) => {
+    // Krok B: `idea.element.add` przekazuje `ctx.params.label` jako
+    // `detail.label` — gdy podane, nowa karteczka dostaje od razu tę treść
+    // zamiast domyślnej pustej (addElement już przyjmuje `extraData.label`,
+    // patrz np. wb_add_area/wb_add_action niżej).
+    const addLabel =
+      typeof detail?.label === 'string' && (detail.label as string).trim()
+        ? (detail.label as string).trim()
+        : undefined;
+    if (action === 'wb_add_sticky')
+      handlers.addElement('sticky', addLabel ? { label: addLabel } : undefined);
     if (action === 'wb_add_text') handlers.addElement('text');
     if (action === 'wb_add_group') handlers.addElement('group');
     if (action === 'wb_add_shape_rectangle') handlers.addElement('shape_rectangle');
@@ -146,7 +157,7 @@ export function useWhiteboardQuickActions(opts: UseWhiteboardQuickActionsOpts): 
     if (!open) return;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      if (detail?.action) quickActionRef.current(detail.action);
+      if (detail?.action) quickActionRef.current(detail.action, detail);
     };
     window.addEventListener('idea-workspace-quick-action', handler);
     return () => window.removeEventListener('idea-workspace-quick-action', handler);

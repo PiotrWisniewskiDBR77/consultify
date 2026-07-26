@@ -336,6 +336,23 @@ export interface MessageRendererProps {
   onProposalExecute?: (proposalId: string, msg: ChatMessage) => void;
   onProposalInspect?: (proposalId: string, msg: ChatMessage) => void;
   proposalBusyById?: Record<string, { approve?: boolean; reject?: boolean; execute?: boolean }>;
+
+  // Krok A (domknięcie Teresy) — potwierdzenie akcji `confirmBeforeRun` z rejestru
+  // Idea Workspace (`src/actions/ideaActionRegistry.ts`). Analogiczne do
+  // `dtPendingConfirm` powyżej: `teresaPendingConfirm.messageId` wskazuje JEDNĄ
+  // wiadomość, która dziś pokazuje przyciski „Potwierdź"/„Anuluj" — po kliknięciu
+  // stan wraca do `null` i przyciski znikają (bez podwójnego wykonania).
+  teresaPendingConfirm?: {
+    messageId: string;
+    toolName: string;
+    args?: Record<string, unknown>;
+    ideaId: string;
+    tool: string;
+    language: 'pl' | 'en';
+  } | null;
+  teresaConfirmBusy?: boolean;
+  onTeresaConfirmProceed?: () => void;
+  onTeresaConfirmCancel?: () => void;
 }
 
 // ============================================================================
@@ -416,6 +433,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   onProposalExecute,
   onProposalInspect,
   proposalBusyById,
+  teresaPendingConfirm,
+  teresaConfirmBusy = false,
+  onTeresaConfirmProceed,
+  onTeresaConfirmCancel,
 }) => {
   const { t, i18n } = useTranslation();
   // Wave A7.4 — unlocks the `routingTrace` section of TrustPanel. Regular
@@ -443,6 +464,12 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const userVisibleContent =
     msg.role === 'ai' ? sanitizeUserVisibleAiText(msg.content || '') : msg.content || '';
   const isDeepThinkingConfirm = (msg as any).metadata?.deepThinking?.kind === 'confirm';
+  // Krok A — patrz `teresaPendingConfirm` w UnifiedChatPanel.tsx. Znacznik na
+  // wiadomości mówi "to JEST pytanie o potwierdzenie"; dopasowanie po
+  // `messageId` w stanie lokalnym mówi "i to pytanie NADAL czeka" (znika po
+  // kliknięciu, więc drugi render tej samej wiadomości już nie pokaże przycisków).
+  const isTeresaConfirm = (msg as any).metadata?.teresaConfirm === true;
+  const isTeresaConfirmPending = isTeresaConfirm && teresaPendingConfirm?.messageId === msg.id;
   const confirmPayload =
     isDeepThinkingConfirm && dtPendingConfirm?.messageId === msg.id
       ? dtPendingConfirm.confirm
@@ -548,7 +575,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           {/* AI Message Content */}
           {msg.role === 'ai' ? (
             <div
-              className={`${isDeepThinkingConfirm || (msg as any).metadata?.type === 'table_proposal' ? 'not-prose' : `prose ${isCompact ? 'prose-xs' : 'prose-sm'} dark:prose-invert`} max-w-none`}
+              className={`${isDeepThinkingConfirm || isTeresaConfirm || (msg as any).metadata?.type === 'table_proposal' ? 'not-prose' : `prose ${isCompact ? 'prose-xs' : 'prose-sm'} dark:prose-invert`} max-w-none`}
             >
               {/* Policy gateway (P34-B): refusal + uncertainty visibility */}
               {isPolicyRefusal && (
@@ -694,6 +721,40 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                       window.location.href = path;
                     }}
                   />
+                </div>
+              ) : isTeresaConfirm ? (
+                // Krok A — odmowa `confirmBeforeRun` z rejestru akcji (patrz
+                // `teresaPendingConfirm` w UnifiedChatPanel.tsx). Treść odmowy
+                // (PL, z rejestru) zostaje bez zmian; przyciski dochodzą tylko
+                // dopóki TA KONKRETNA wiadomość jest oczekującym potwierdzeniem.
+                <div className="not-prose space-y-2">
+                  <div className="whitespace-pre-wrap">{userVisibleContent}</div>
+                  {isTeresaConfirmPending && (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onTeresaConfirmProceed?.()}
+                        disabled={teresaConfirmBusy}
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-text hover:opacity-90 text-c-surface disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {teresaConfirmBusy
+                          ? teresaPendingConfirm?.language === 'pl'
+                            ? 'Wykonuję…'
+                            : 'Running…'
+                          : teresaPendingConfirm?.language === 'pl'
+                            ? 'Potwierdź'
+                            : 'Confirm'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onTeresaConfirmCancel?.()}
+                        disabled={teresaConfirmBusy}
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-surface border border-c-border text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {teresaPendingConfirm?.language === 'pl' ? 'Anuluj' : 'Cancel'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : isDeepThinkingConfirm ? (
                 <div className="space-y-3">

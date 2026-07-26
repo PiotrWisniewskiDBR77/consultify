@@ -30,15 +30,17 @@
  *   query_structured_data · create_task · update_task · create_decision
  *
  * ── BRAMKA AKCEPTU ───────────────────────────────────────────────────────────
- * `SIDE_EFFECT_TOOLS` (server/src/services/ai/sideEffectTools.ts) trzyma pięć
+ * `SIDE_EFFECT_TOOLS` (server/src/services/ai/sideEffectTools.ts) trzyma osiem
  * narzędzi, które backend SAM zatrzymuje na `awaiting_approval`:
  * create_initiative_draft, generate_report_section, schedule_meeting,
- * create_notebook_entry, query_structured_data. UWAGA — pisarze My Work
- * (`create_task`, `update_task`, `create_decision`) NIE są na tej liście, czyli
- * domyślnie wykonałyby się bez pytania. Dlatego klocki `kind: 'automat'`
- * (i `'brama-akceptu'`) wysyłają JAWNY override `requiresApproval: true`
+ * create_notebook_entry, query_structured_data, oraz (od 2026-07-26, decyzja
+ * właściciela — Harvey benchmark) pisarze My Work: `create_task`,
+ * `update_task`, `create_decision`. Klocki `kind: 'automat'` (i
+ * `'brama-akceptu'`) nadal wysyłają JAWNY override `requiresApproval: true`
  * (backend go przyjmuje — `PlanStepInputSchema` w agent-plan.routes.ts,
- * DOROBKA C 2026-07-23). Kierunek bezpieczny: pytamy częściej, nie rzadziej.
+ * DOROBKA C 2026-07-23) — teraz redundantny z domyślną bramką dla tych trzech,
+ * ale zostawiony: jawny override jest odporny na przyszłe zmiany w
+ * `SIDE_EFFECT_TOOLS` i nie ma kosztu. Kierunek bezpieczny: pytamy częściej, nie rzadziej.
  */
 
 /**

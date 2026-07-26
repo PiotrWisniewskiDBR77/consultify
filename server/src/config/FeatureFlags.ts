@@ -33,6 +33,15 @@ const FeatureFlagsSchema = z.object({
   ENABLE_DELIVERABLES_LIGHT: z.boolean().default(false),
   ENABLE_TERESA_RETRIEVAL: z.boolean().default(false),
   ENABLE_TERESA_MINDMAP: z.boolean().default(true),
+  // Krok C (rozdział flagi-długu): funkcja B (retrieval search_org_mindmaps)
+  // wydzielona z ENABLE_TERESA_MINDMAP na WŁASNĄ flagę. Default OFF. Realne
+  // gate'y czytają ten env per-call przez wspólny helper
+  // `isTeresaMindmapSearchEnabled()` (orgRetrievalShared.ts) — OR'owany z
+  // legacy ENABLE_TERESA_MINDMAP dla wstecznej kompatybilności (patrz
+  // komentarz przy ENABLE_TERESA_MINDMAP niżej). To pole w schemacie jest
+  // dokumentacyjne/SSOT; nie jest czytane z cache'owanego `featureFlags`
+  // singletonu przez te gate'y (ten sam wzorzec co ENABLE_TERESA_RETRIEVAL).
+  ENABLE_TERESA_MINDMAP_SEARCH: z.boolean().default(false),
   ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
   ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
   ENABLE_DECK_CONCLUSION_SLIDE: z.boolean().default(false),
@@ -144,12 +153,22 @@ export function loadFeatureFlags(): FeatureFlags {
     // collab-enable-flags): end-to-end since the seedGraph fix landed;
     // mirrors ENABLE_TERESA_CANVAS_TOOLS / ENABLE_TERESA_NOTE_CREATE. Set to
     // 'false' to omit 'mindmap' from the enum.
-    // NOTE: this same env var ALSO co-gates the separate, still opt-in
-    // `search_org_mindmaps` RETRIEVAL tool (persona.ts / orgRetrievalShared.ts
-    // / ai.routes.ts org-retrieval block) which stays default OFF — those
-    // call sites read process.env directly and are intentionally untouched
-    // here; that tool only activates when ENABLE_TERESA_RETRIEVAL is ALSO on.
+    // Krok C UPDATE (rozdział flagi-długu, 2026-07): the separate, still
+    // opt-in `search_org_mindmaps` RETRIEVAL tool (persona.ts /
+    // orgRetrievalShared.ts / ai.routes.ts / searchOrgMindmaps.ts) now has its
+    // OWN flag, ENABLE_TERESA_MINDMAP_SEARCH (default OFF, see above) — read
+    // through the shared `isTeresaMindmapSearchEnabled()` helper instead of
+    // this one. That helper ORs the new flag with THIS one for backward
+    // compat: any environment that relied on ENABLE_TERESA_MINDMAP=true as the
+    // sole switch for retrieval keeps working unchanged. This flag alone still
+    // governs Function A below (deliverable bridge) exactly as before.
     ENABLE_TERESA_MINDMAP: process.env.ENABLE_TERESA_MINDMAP !== 'false',
+
+    // Krok C: dedicated flag for the search_org_mindmaps RETRIEVAL tool —
+    // default OFF. Actual gates read `isTeresaMindmapSearchEnabled()`
+    // (orgRetrievalShared.ts), not this cached singleton, so env changes in
+    // tests apply without re-importing; this entry is the SSOT/documentation.
+    ENABLE_TERESA_MINDMAP_SEARCH: process.env.ENABLE_TERESA_MINDMAP_SEARCH === 'true',
 
     // Deliverables A3: per-section streaming for documents. Generates section
     // by section (each call sees prior sections for coherence) and writes the

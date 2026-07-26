@@ -981,6 +981,22 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   } | null>(null);
   const [dtConfirmBusy, setDtConfirmBusy] = useState(false);
 
+  // Krok A (domknięcie Teresy — potwierdzenie akcji `confirmBeforeRun` w czacie).
+  // Ten sam wzorzec co `dtPendingConfirm` powyżej: stan lokalny trzyma DOKŁADNIE
+  // jedno oczekujące potwierdzenie (message.id → parametry ponownego wywołania),
+  // a wiadomość w historii dostaje tylko znacznik `metadata.teresaConfirm` —
+  // gdy stan lokalny zniknie (po kliknięciu), przyciski znikają z tej wiadomości
+  // i nie da się wykonać akcji dwa razy.
+  const [teresaPendingConfirm, setTeresaPendingConfirm] = useState<{
+    messageId: string;
+    toolName: string;
+    args?: Record<string, unknown>;
+    ideaId: string;
+    tool: CanvasToolType;
+    language: 'pl' | 'en';
+  } | null>(null);
+  const [teresaConfirmBusy, setTeresaConfirmBusy] = useState(false);
+
   // Agent Audit Layer (registry + post-DT verdict)
   const [agentRegistryById, setAgentRegistryById] = useState<Record<string, any>>({});
   const [agentAuditBusy, setAgentAuditBusy] = useState(false);
@@ -1953,7 +1969,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         // Manifest był wysłany bez znanego kontekstu Idei — nie zgadujemy.
         return;
       }
-      const uiLang = (i18n.language || 'en').split('-')[0] === 'pl' ? 'pl' : 'en';
+      const uiLang: 'pl' | 'en' = (i18n.language || 'en').split('-')[0] === 'pl' ? 'pl' : 'en';
       try {
         const result = await executeTeresaTool(payload.toolName, {
           ideaId: ideaCtx.ideaId,
@@ -1965,18 +1981,84 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         // Rejestr sam mówi, czego NIE potrafi / że wymaga potwierdzenia — nie
         // udajemy sukcesu. Komunikat (PL) trafia do czatu tylko gdy jest treść.
         if (result?.message) {
+          // Krok A: `runIdeaAction` odmawia z `data.needsConfirmation` gdy akcja
+          // ma `teresa.confirmBeforeRun` — zamiast samego tekstu odmowy dajemy
+          // wiadomości znacznik, który MessageRenderer zamienia w przyciski
+          // „Potwierdź"/„Anuluj" (JEDNO oczekujące potwierdzenie na raz).
+          const needsConfirmation = Boolean((result.data as { needsConfirmation?: boolean } | undefined)?.needsConfirmation);
+          const messageId = `idea-action-${Date.now()}`;
           addChatMessage({
-            id: `idea-action-${Date.now()}`,
+            id: messageId,
             role: 'ai',
             content: result.message,
             timestamp: new Date(),
+            ...(needsConfirmation ? { metadata: { teresaConfirm: true } } : {}),
           });
+          if (needsConfirmation) {
+            setTeresaPendingConfirm({
+              messageId,
+              toolName: payload.toolName,
+              args: payload.args,
+              ideaId: ideaCtx.ideaId,
+              tool: ideaCtx.tool,
+              language: uiLang,
+            });
+          }
         }
       } catch (err) {
         console.warn('[UnifiedChatPanel] idea-action execute failed', err);
       }
     },
   });
+
+  // Krok A — klik „Potwierdź": ponowne `executeTeresaTool` z DOKŁADNIE tym samym
+  // toolName+ctx zapamiętanym w `teresaPendingConfirm`, ale `confirmed: true`.
+  // TA SAMA ścieżka co pierwsze wywołanie (executeTeresaTool → runIdeaAction →
+  // handler) — zero drugiego mechanizmu wykonania.
+  const handleTeresaConfirmProceed = useCallback(async () => {
+    const pending = teresaPendingConfirm;
+    if (!pending || teresaConfirmBusy) return;
+    setTeresaConfirmBusy(true);
+    try {
+      const result = await executeTeresaTool(pending.toolName, {
+        ideaId: pending.ideaId,
+        tool: pending.tool,
+        selection: EMPTY_SELECTION,
+        language: pending.language,
+        params: pending.args,
+        confirmed: true,
+      });
+      if (result?.message) {
+        addChatMessage({
+          id: `idea-action-confirm-${Date.now()}`,
+          role: 'ai',
+          content: result.message,
+          timestamp: new Date(),
+        });
+      }
+    } catch (err) {
+      console.warn('[UnifiedChatPanel] idea-action confirm execute failed', err);
+    } finally {
+      setTeresaConfirmBusy(false);
+      // Wyczyszczenie stanu USUWA przyciski z wiadomości źródłowej (dopasowanie
+      // po `messageId` w MessageRenderer przestaje trafiać) — klik drugi raz
+      // na tę samą wiadomość nic już nie robi.
+      setTeresaPendingConfirm(null);
+    }
+  }, [teresaPendingConfirm, teresaConfirmBusy, addChatMessage]);
+
+  // Krok A — klik „Anuluj": bez wywołania akcji, krótki komunikat, przyciski znikają.
+  const handleTeresaConfirmCancel = useCallback(() => {
+    if (!teresaPendingConfirm) return;
+    const lang = teresaPendingConfirm.language;
+    setTeresaPendingConfirm(null);
+    addChatMessage({
+      id: `idea-action-cancel-${Date.now()}`,
+      role: 'ai',
+      content: lang === 'pl' ? 'Anulowano.' : 'Cancelled.',
+      timestamp: new Date(),
+    });
+  }, [teresaPendingConfirm, addChatMessage]);
 
   // =========================================================================
   // Incremental TTS: speak sentence-by-sentence WHILE AI is streaming
@@ -5491,6 +5573,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       onProposalExecute={handleProposalExecute}
       onProposalInspect={handleProposalInspect}
       proposalBusyById={proposalBusyById}
+      teresaPendingConfirm={teresaPendingConfirm}
+      teresaConfirmBusy={teresaConfirmBusy}
+      onTeresaConfirmProceed={handleTeresaConfirmProceed}
+      onTeresaConfirmCancel={handleTeresaConfirmCancel}
     />
   );
 

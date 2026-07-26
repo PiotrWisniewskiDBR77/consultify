@@ -1,5 +1,7 @@
 /**
- * Tool: search_org_mindmaps (ff_teresaMindmap / ENABLE_TERESA_MINDMAP)
+ * Tool: search_org_mindmaps (ff_teresaMindmapSearch / ENABLE_TERESA_MINDMAP_SEARCH
+ * — Krok C split; OR'd with legacy ENABLE_TERESA_MINDMAP for backward compat,
+ * see orgRetrievalShared.ts `isTeresaMindmapSearchEnabled`)
  *
  * Lets Teresa locate an existing organization idea-map (mind map) the user
  * references by topic ("znajdź mapę myśli o transformacji Apator") and inject
@@ -15,7 +17,8 @@
  * `ideaMapToMarkdown` (duplicated server-side in ../mindmapSerialize.ts).
  *
  * READ-only. Returns the compact { results, truncated } envelope (~4KB cap).
- * Co-gated: BOTH ENABLE_TERESA_RETRIEVAL and ENABLE_TERESA_MINDMAP must be on.
+ * Co-gated: BOTH ENABLE_TERESA_RETRIEVAL and isTeresaMindmapSearchEnabled()
+ * (ENABLE_TERESA_MINDMAP_SEARCH, or legacy ENABLE_TERESA_MINDMAP) must be on.
  */
 
 import { all as dbAll } from '../../../utils/DbPromise.js';
@@ -25,7 +28,7 @@ import { ideaMapToMarkdown } from '../mindmapSerialize.js';
 import {
   capResultPayload,
   clampLimit,
-  isTeresaMindmapEnabled,
+  isTeresaMindmapSearchEnabled,
   isTeresaRetrievalEnabled,
   type OrgRetrievalEnvelope,
   toSnippet,
@@ -76,8 +79,10 @@ export async function searchOrgMindmaps(
   params: SearchOrgMindmapsParams,
   context: SearchOrgMindmapsContext = {}
 ): Promise<OrgRetrievalEnvelope<OrgMindmapHit>> {
-  // Co-gate: the mind-map retrieval path requires BOTH flags on.
-  if (!isTeresaRetrievalEnabled() || !isTeresaMindmapEnabled()) {
+  // Co-gate: the mind-map retrieval path requires BOTH flags on. Krok C:
+  // dedicated ENABLE_TERESA_MINDMAP_SEARCH (OR'd with the legacy
+  // ENABLE_TERESA_MINDMAP for backward compat) — see orgRetrievalShared.ts.
+  if (!isTeresaRetrievalEnabled() || !isTeresaMindmapSearchEnabled()) {
     return { results: [], truncated: false };
   }
 

@@ -12,7 +12,7 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 
-import { bucketIdeaStageForList, type IdeaStageListBucket } from './ideaEntryTypes';
+import { bucketIdeaStageForList, getIdeaStageBucketLabel } from './ideaEntryTypes';
 import { IDEA_TOOL_ICON } from './ideaCanvasMelsChips';
 import type { CanvasToolType } from './ideaSelectionTypes';
 
@@ -36,20 +36,15 @@ export const IdeaToolIcon: React.FC<{ tool: CanvasToolType; label: string }> = (
 };
 
 // ── Lifecycle stage chip ────────────────────────────────────────────────────
-const STAGE_BUCKET_LABEL: Record<IdeaStageListBucket, { en: string; pl: string }> = {
-  spark: { en: 'Spark', pl: 'Iskra' },
-  incubating: { en: 'Growing', pl: 'Rośnie' },
-  shaping: { en: 'Shaping', pl: 'Kształtuje' },
-  ready: { en: 'Ready', pl: 'Gotowy' },
-  promoted: { en: 'Promoted', pl: 'Promowany' },
-};
-
+// Labels come from the SSOT dictionary (ideaEntryTypes.ts `IDEA_STAGE_BUCKET_LABELS`)
+// — a local copy here had drifted on Polish diacritics ("Kształtuje" vs the
+// canonical "Kształtuje się"). Don't re-add a per-file copy.
 export const IdeaStageChip: React.FC<{ stage: string; isPolish: boolean }> = ({
   stage,
   isPolish,
 }) => {
   const bucket = bucketIdeaStageForList(stage);
-  const label = STAGE_BUCKET_LABEL[bucket][isPolish ? 'pl' : 'en'];
+  const label = getIdeaStageBucketLabel(bucket, isPolish);
   return (
     <span
       className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-full border border-c-border-subtle bg-c-surface-raised px-2 py-0.5 text-xs font-medium text-c-text-secondary"

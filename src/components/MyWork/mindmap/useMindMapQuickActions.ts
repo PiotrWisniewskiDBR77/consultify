@@ -90,7 +90,7 @@ const FRAMEWORK_TEMPLATE_MATCHERS: Array<{ pattern: RegExp; templateId: string; 
 ];
 
 export interface MindMapQuickActionHandlers {
-  addChildNode: (nodeId?: string) => void;
+  addChildNode: (nodeId?: string, label?: string) => void;
   addSiblingNode: (nodeId?: string) => void;
   addRootTopic: () => void;
   duplicateSelected: () => void;
@@ -202,7 +202,12 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     // Raw chat prompt text (N-13, UnifiedChatPanel) — only present for the
     // mindmapIntentDetector-sourced actions (mm_create/mm_expand_branch/mm_apply_framework).
     const promptText = typeof detail?.text === 'string' ? detail.text.trim() : '';
-    if (action === 'mm_add_child') handlers.addChildNode(targetNodeId);
+    // Krok B: `idea.element.add` (rejestr akcji) przekazuje `ctx.params.label`
+    // jako `detail.label` — gdy Teresa/formularz poda treść, nowy węzeł
+    // dostaje ją jako etykietę zamiast wchodzić w pusty tryb edycji.
+    const addLabel =
+      typeof detail?.label === 'string' && detail.label.trim() ? detail.label.trim() : undefined;
+    if (action === 'mm_add_child') handlers.addChildNode(targetNodeId, addLabel);
     if (action === 'mm_add_sibling') handlers.addSiblingNode(targetNodeId);
     if (action === 'mm_add_root') {
       handlers.addRootTopic();
