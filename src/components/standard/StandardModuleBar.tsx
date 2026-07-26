@@ -24,8 +24,14 @@ import { ChevronRight, type LucideIcon } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
-import { ModuleNavBar } from '../shared/ModuleHub/ModuleNavBar';
-import type { ModuleTab, OpenDocument, TabConfig, ViewMode } from '../shared/ModuleHub/types';
+import { ModuleNavBar, type StatusFilter } from '../shared/ModuleHub/ModuleNavBar';
+import type {
+  CategoryButton,
+  ModuleTab,
+  OpenDocument,
+  TabConfig,
+  ViewMode,
+} from '../shared/ModuleHub/types';
 import {
   MENU_1_BREADCRUMB_CURRENT,
   MENU_1_BREADCRUMB_LINK,
@@ -121,6 +127,29 @@ export interface StandardModuleBarProps {
   onViewModeChange?: (mode: ViewMode) => void;
   /** Ewentualne dodatkowe filtry — na lewo od przełącznika widoków. */
   filterControls?: React.ReactNode;
+  /** Alternatywa dla `primaryCta` — zgodność wywołań 1:1 z `ModuleHub` (Assessment-style). */
+  onNewItem?: () => void;
+  newItemLabel?: string;
+  newItemTestId?: string;
+  /** Discovery-Tools-style: 4 przyciski kategorii zamiast pigułek `tabs`. */
+  categoryButtons?: CategoryButton[];
+  /** Status po lewej (Initiatives/Execution/Audits) — przyciski albo dropdown. */
+  statusFilters?: StatusFilter[];
+  activeStatusFilter?: string | null;
+  onStatusFilterChange?: (status: string | null) => void;
+  statusDropdownContext?:
+    | 'initiatives'
+    | 'execution'
+    | 'benefits'
+    | 'assessment'
+    | 'assessment_list'
+    | 'assessment_reports'
+    | 'tools';
+  statusCounts?: Record<string, number>;
+  /** Domyślnie false (KANON v3: bez liczników na głównych pigułkach). */
+  showTabCounts?: boolean;
+  toolControl?: React.ReactNode;
+  aiControl?: React.ReactNode;
 
   // ── Menu 3 (trzy wymienne tryby) ─────────────────────────────────────────
   /** Tryb 1: ciche chipy filtrów z licznikami. */
@@ -142,6 +171,17 @@ export interface StandardModuleBarProps {
   onRemoveFilter?: (id: string) => void;
   onClearFilters?: () => void;
 
+  /**
+   * ★ Luk ucieczkowy dla hubów jeszcze nie wyrażonych przez `chips`/`bulk`
+   * (dziś większość — zob. audyt 2026-07-26). Gdy podane, ma pierwszeństwo
+   * nad `chips`/`bulk` i jest przekazywane 1:1 do `ModuleNavBar`, DOKŁADNIE
+   * jak dziś robi to `ModuleHub`. Docelowo do wygaszenia na rzecz `chips`/`bulk`
+   * hub po hubie — nie jest to trwały, sankcjonowany kanał.
+   */
+  commandRowContent?: React.ReactNode;
+  commandRowRightContent?: React.ReactNode;
+  forceCommandRow?: boolean;
+
   className?: string;
 }
 
@@ -159,6 +199,18 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
   viewMode = 'table',
   onViewModeChange,
   filterControls,
+  onNewItem,
+  newItemLabel,
+  newItemTestId,
+  categoryButtons,
+  statusFilters,
+  activeStatusFilter,
+  onStatusFilterChange,
+  statusDropdownContext,
+  statusCounts,
+  showTabCounts,
+  toolControl,
+  aiControl,
   chips,
   activeChip,
   onChipChange,
@@ -172,6 +224,9 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
   activeFilters,
   onRemoveFilter,
   onClearFilters,
+  commandRowContent: commandRowOverride,
+  commandRowRightContent: commandRowRightOverride,
+  forceCommandRow: forceCommandRowOverride,
   className,
 }) => {
   const navTabs = useMemo<TabConfig[]>(
@@ -250,6 +305,21 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
         })}
       </div>
     ) : null;
+
+  // Luk ucieczkowy: gdy hub podaje surowy `commandRowContent`, ma pierwszeństwo
+  // nad wyliczonym `chips`/`bulk` — 1:1 z dotychczasowym zachowaniem `ModuleHub`.
+  const hasOverride = commandRowOverride !== undefined;
+  const resolvedCommandRowContent = hasOverride
+    ? commandRowOverride
+    : bulkActive
+      ? bulkContent
+      : chipsContent;
+  const resolvedCommandRowRight = hasOverride
+    ? commandRowRightOverride
+    : bulkActive
+      ? undefined
+      : menu3Right;
+  const resolvedForceCommandRow = hasOverride ? !!forceCommandRowOverride : bulkActive;
 
   const primaryCtaNode = primaryCta ? (
     <button
@@ -332,9 +402,21 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
         activeFilters={activeFilters ?? []}
         onRemoveFilter={onRemoveFilter ?? noop}
         onClearFilters={onClearFilters ?? noop}
-        forceCommandRow={bulkActive}
-        commandRowContent={bulkActive ? bulkContent : chipsContent}
-        commandRowRightContent={bulkActive ? undefined : menu3Right}
+        forceCommandRow={resolvedForceCommandRow}
+        commandRowContent={resolvedCommandRowContent}
+        commandRowRightContent={resolvedCommandRowRight}
+        onNewItem={onNewItem}
+        newItemLabel={newItemLabel}
+        newItemTestId={newItemTestId}
+        categoryButtons={categoryButtons}
+        statusFilters={statusFilters}
+        activeStatusFilter={activeStatusFilter}
+        onStatusFilterChange={onStatusFilterChange}
+        statusDropdownContext={statusDropdownContext}
+        statusCounts={statusCounts}
+        showTabCounts={showTabCounts}
+        toolControl={toolControl}
+        aiControl={aiControl}
       />
     </div>
   );
