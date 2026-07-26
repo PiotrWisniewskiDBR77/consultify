@@ -157,6 +157,25 @@ export function StandardModuleBarChildrenScreen(): React.ReactElement {
           />
         </div>
       </div>
+
+      <div>
+        <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
+          F — categoryButtons passthrough (Benefits-style, dodane 2026-07-26)
+          — czysty przekaz do ModuleNavBar, pierwsze realne uzycie znalezione
+          przy migracji Fali 2
+        </p>
+        <div style={{ border: '1px dashed #888' }}>
+          <StandardModuleBar
+            tabs={[]}
+            activeTab=""
+            onTabChange={() => {}}
+            categoryButtons={[
+              { id: 'cost', label: 'Cost', icon: <CheckCircle2 size={14} />, count: 5, onClick: () => {} },
+              { id: 'time', label: 'Time', icon: <CheckCircle2 size={14} />, count: 2, onClick: () => {} },
+            ]}
+          />
+        </div>
+      </div>
     </div>
   );
 }
