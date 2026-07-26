@@ -1525,6 +1525,13 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                   setSnoozeOpen(false);
                   void handlePreviewSnooze(preset);
                 }}
+                onOpenLinkedDecision={(linkedId) => {
+                  onDecisionClick?.(
+                    linkedId,
+                    decisions.find((d) => d.id === linkedId)
+                  );
+                  setPreviewDecisionId(null);
+                }}
               />
             );
           }}

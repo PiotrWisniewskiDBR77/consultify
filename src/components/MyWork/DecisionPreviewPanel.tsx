@@ -356,6 +356,8 @@ export const DecisionPreviewFooter: React.FC<{
   onToggleSnooze: () => void;
   onCloseSnooze: () => void;
   onSnooze: (preset: DecisionSnoozePreset) => void;
+  /** Navigate to another decision referenced in `decision.linkedItems` (r.type === 'decision'). */
+  onOpenLinkedDecision?: (decisionId: string) => void;
 }> = ({
   decision,
   mode,
@@ -381,6 +383,7 @@ export const DecisionPreviewFooter: React.FC<{
   onToggleSnooze,
   onCloseSnooze,
   onSnooze,
+  onOpenLinkedDecision,
 }) => {
   const hintSummarize = i18n.t('myWork.decisionPreview.summarizeContext2', 'Summarize context');
   const hintPropose = i18n.t('myWork.decisionPreview.proposeOptions2', 'Propose options');
@@ -397,6 +400,14 @@ export const DecisionPreviewFooter: React.FC<{
   const relationItems: RelationItem[] = (decision?.linkedItems || []).slice(0, 6).map((r) => ({
     label: clampText(String(r.title || r.id), 42),
     tone: relationTone(r.type),
+    // Nawigacja dostępna dziś tylko dla linkowanych decyzji (onOpenLinkedDecision — te
+    // same handlery co przycisk "Open"/onMoreInfo). Task/Initiative nie mają w tym module
+    // gotowego adresu docelowego — bez onClick pigułka renderuje się jako <span> (bez
+    // cursor-pointer/hover), więc nie udaje klikalności, której nie ma.
+    onClick:
+      String(r.type || '').toLowerCase() === 'decision' && onOpenLinkedDecision
+        ? () => onOpenLinkedDecision(r.id)
+        : undefined,
   }));
 
   // Zgloszenie Piotra 2026-07-21: stopka Decision mial 7 widocznych przyciskow
@@ -874,6 +885,7 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
               setSnoozeOpen(false);
               void handleSnooze(preset);
             }}
+            onOpenLinkedDecision={(linkedId) => onOpenFullDetail(linkedId)}
           />
         }
       >
