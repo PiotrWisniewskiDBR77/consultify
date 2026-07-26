@@ -38,6 +38,12 @@
       "port": 3416
     },
     {
+      "name": "vault-sejf-wnetrze",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3415"],
+      "port": 3415
+    },
+    {
       "name": "grid-etap3-menu",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3207"],

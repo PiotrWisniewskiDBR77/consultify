@@ -41,6 +41,7 @@ const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canv
 const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
 const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
 const AgentWarsztatScreen = React.lazy(() => import('./screens/agent-warsztat'));
+const VaultSejfWnetrzeScreen = React.lazy(() => import('./screens/vault-sejf-wnetrze'));
 const AssessmentInitiativesPanelScreen = React.lazy(() => import('./screens/assessment-initiatives-panel'));
 const AssessmentInitiativesTableScreen = React.lazy(() => import('./screens/assessment-initiatives-table'));
 const AssessmentListScreen = React.lazy(() => import('./screens/assessment-list'));
@@ -294,6 +295,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'WARSZTAT AGENTA — 3 kolumny (sterowanie · schemat blokowy · paleta klocków); &case=planning|executing|approval',
     render: () => <AgentWarsztatScreen />,
+  },
+  'vault-sejf-wnetrze': {
+    label:
+      'VAULT — wnętrze sejfu po redesignie (Menu 1/2/3 + StandardTable + preview + panel „Dodaj dokument"). ?pusty=1 → stan pusty',
+    render: () => <VaultSejfWnetrzeScreen />,
   },
   'capability-gate-demo': {
     label: 'Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)',

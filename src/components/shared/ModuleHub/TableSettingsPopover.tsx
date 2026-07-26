@@ -59,11 +59,15 @@ export interface TableSettingsPopoverProps {
   align?: 'left' | 'right';
 }
 
+// TRIADA_KANON B.38 — stan aktywny UI musi być NEUTRALNY. `c-accent-soft` to
+// tint crimsona (`rgba(133,24,47,.08)`), więc otwarty pstryczek świecił różowo
+// w każdej tabeli aplikacji. Zamiana na neutralne wypełnienie 1:1 z aktywną
+// pigułką Menu 2 (`MENU_2_TAB_ACTIVE`). Fokus zostaje niebieski (`c-focus`).
 const TRIGGER_CLASS =
   'inline-flex h-8 w-8 items-center justify-center rounded-full text-c-text-muted ' +
-  'transition-colors hover:bg-c-accent-soft hover:text-c-text ' +
+  'transition-colors hover:bg-slate-900/[0.06] dark:hover:bg-white/10 hover:text-c-text ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ' +
-  'aria-expanded:bg-c-accent-soft aria-expanded:text-c-text';
+  'aria-expanded:bg-slate-900/[0.07] dark:aria-expanded:bg-white/10 aria-expanded:text-c-text';
 
 // Portaled to <body> with fixed positioning so it is NEVER clipped by an
 // ancestor's overflow (the table scroll container previously cut it off, #1).

@@ -86,9 +86,12 @@ export const ColumnResizer: React.FC<ColumnResizerProps> = ({
       <div
         className={[
           'absolute left-1/2 top-2 bottom-2 w-[2px] -translate-x-1/2 rounded-full transition-colors duration-150',
+          // TRIADA_KANON B.38 — uchwyt resize to STAN UI, nie semantyka krytyczna,
+          // więc nie może być crimsonem (`primary-*` = #85182F). Hover/drag na
+          // niebieskim `--c-focus-solid` (ten sam sygnał co fokus klawiaturowy).
           isDragging
-            ? 'bg-primary-500 dark:bg-primary-300'
-            : 'bg-slate-300/80 dark:bg-white/[0.10] group-hover/resizer:bg-primary-400/80 dark:group-hover/resizer:bg-primary-300/70',
+            ? 'bg-[color:var(--c-focus-solid)]'
+            : 'bg-slate-300/80 dark:bg-white/[0.10] group-hover/resizer:bg-[color:var(--c-focus-solid)] dark:group-hover/resizer:bg-[color:var(--c-focus-solid)]',
         ].join(' ')}
       />
     </div>

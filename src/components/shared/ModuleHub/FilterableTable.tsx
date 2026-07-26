@@ -216,7 +216,9 @@ const FilterDropdown: React.FC<{
                     type="checkbox"
                     checked={selected.includes(option.value)}
                     onChange={() => handleToggle(option.value)}
-                    className="rounded border-navy-600 bg-slate-200 dark:bg-navy-700 text-primary-500 focus:ring-primary-500"
+                    // TRIADA_KANON B.38/B.39 — jw.: lejek filtra kolumny miał
+                    // crimsonowy checkbox i crimsonowy ring fokusa.
+                    className="rounded border-navy-600 bg-slate-200 dark:bg-navy-700 text-c-info focus:ring-c-focus"
                   />
                   {option.color && <span className={`w-2 h-2 rounded-full ${option.color}`} />}
                   <span className="text-sm text-slate-700 dark:text-slate-200">{option.label}</span>
@@ -496,6 +498,12 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
       // Check each column's filters (OR within column, AND between columns)
       return Object.entries(filtersByColumn).every(([column, values]) => {
         const rowValue = row[column];
+        // Kolumny wielowartościowe (np. `tags: string[]`) — dopasowanie „którykolwiek
+        // z tagów wiersza jest wybrany". Bez tego lejek na takiej kolumnie zawsze
+        // zwracał 0 wierszy (`values.includes(tablica)` nigdy nie jest prawdą).
+        if (Array.isArray(rowValue)) {
+          return rowValue.some((entry) => values.includes(String(entry)));
+        }
         return values.includes(rowValue);
       });
     });
@@ -608,7 +616,11 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                               selection!.onToggleAll();
                             }}
                             aria-label={selection!.selectAllLabel ?? t('common.selectAll')}
-                            className="h-4 w-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500 cursor-pointer"
+                            // TRIADA_KANON B.38/B.39 — checkbox „zaznacz wszystko"
+                            // był jedynym crimsonowym (`primary-500`) w tabeli, z
+                            // crimsonowym ringiem fokusa. Wyrównane do checkboxa
+                            // wiersza (niżej): akcent `c-info`, fokus `c-focus`.
+                            className="h-4 w-4 rounded border-slate-300 dark:border-navy-600 text-c-info focus:ring-c-focus cursor-pointer"
                           />
                         </div>
                       ) : (
@@ -784,9 +796,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     }
                     className={[
                       'group cursor-pointer transition-colors',
-                      row.id === selectedRowId
-                        ? 'bg-state-selected'
-                        : 'hover:bg-state-hover',
+                      row.id === selectedRowId ? 'bg-state-selected' : 'hover:bg-state-hover',
                       typeof rowClassName === 'function' ? rowClassName(row) : rowClassName,
                     ]
                       .filter(Boolean)

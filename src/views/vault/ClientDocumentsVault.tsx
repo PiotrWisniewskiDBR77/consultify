@@ -13,42 +13,34 @@
  * ★ VLT-005 — warstwa tabeli sejfów PRZED narzędziem (cytat Piotra: „potrzebujemy
  * mieć poziom segregowania pomiędzy przyciskiem z menu głównego a samym
  * narzędziem"). Wejście w zakładkę pokazuje TABELĘ sejfów (`VaultSafesTable`,
- * kanon `StandardTable`) zamiast od razu uploadu.
+ * kanon `StandardTable`) zamiast od razu uploadu; klik w wiersz otwiera wnętrze
+ * sejfu, z breadcrumbem „Sejf klienta › [nazwa]" i powrotem do tabeli. Stan
+ * lokalny (nie przeżywa odświeżenia strony, tak jak reszta nawigacji My Work).
  *
- * ★ POPRAWKA ODBIORU TRIADY (2026-07-24, zrzuty demo Piotra: „cała ta tabela
- * jest super biedna [...] Nie ma struktury menu 1, 2, 3. [...] Po wejściu
- * powinna się otwierać karta w menu dynamicznym"):
- * - Menu 1: breadcrumb stały „Client Vault" (identyczny niezależnie od stanu —
- *   nawigacja wewnątrz zakładki teraz idzie przez Menu 3, nie przez podmianę
- *   breadcrumbu).
- * - Menu 2: lupa wpięta (`onSearch`/`searchValue`) — filtruje `VaultSafesTable`
- *   po nazwie sejfu (poprzednio samotna ikona bez działania).
- * - Menu 3: otwarcie sejfu (`onOpenSafe`) NIE podmienia całego widoku —
- *   dokłada KARTĘ do Menu 3 (`openItems`/`activeItemId`/`onSelectItem`/
- *   `onCloseItem`, ten sam mechanizm co w `AgentHubShell.tsx` — patrz tamten
- *   komentarz dla pełnego opisu `StandardModuleBar`→`ModuleNavBar`→
- *   `DynamicTabs`). Zamknięcie karty (×) wraca do tabeli sejfów.
- * - Treść otwartego sejfu (`DocumentsRAGTab`) owinięta w lekką kartę
- *   (bordered/rounded), żeby czytać się jako "to jest karta w hubie", nie
- *   "cały ekran się podmienił". To NIE jest pełna migracja `DocumentsRAGTab`
- *   do `StandardTable`/`StandardArtifactShell` (SPEC-A) — ten komponent ma
- *   własny, bespoke toolbar/listę sprzed kanonu (HP-22, poza zakresem tego
- *   zadania) — zgłoszone w raporcie jako osobny, większy temat.
- * - Kebab/preview/pstryczek samego sejfu → `VaultSafesTable.tsx`.
+ * ★ 2026-07-24 — wnętrze sejfu to `VaultDocumentsView` (triada: Menu 1/2/3 +
+ * StandardTable + StandardPreview + panel boczny dodawania), a NIE dawny
+ * `DocumentsRAGTab` w wariancie 'client'. Powód: ten drugi był ekranem
+ * administracyjnym wklejonym w kartę — wielki formularz uploadu zajmował pół
+ * widoku, lista była kafelkami. `DocumentsRAGTab` zostaje wyłącznie panelem
+ * superadmina (Knowledge → Documents/RAG), bez zmian.
  *
- * "No alerts"/samotna lupa bez paska (zgłoszenie Piotra, punkt 8): nie
- * znaleziono źródła "No alerts" w tej ścieżce (grep `src/` — jedyne
- * wystąpienie jest w `MyWorkHub.tsx`, niezwiązane z Vault); samotna lupa
- * była realnym defektem — naprawiona przez pełne Menu 2 wyżej.
+ * ★ SCALENIE 2026-07-26 (fix/triada-agent-sejfy + feat/sejf-redesign):
+ * - Z triady zachowana lupa Menu 2 (`onSearch`/`searchValue` → filtr
+ *   `VaultSafesTable` po nazwie sejfu; poprzednio samotna ikona bez działania).
+ * - Wnętrze sejfu = pełnoekranowy `VaultDocumentsView` (redesign wygrywa nad
+ *   kartą z owiniętym `DocumentsRAGTab` — tamto było przyznanym w komentarzu
+ *   półśrodkiem sprzed redesignu).
+ * - Mechanizm karty w Menu 3 (`openItems`, wzór `AgentHubShell.tsx`) dla
+ *   wnętrza sejfu — do dopięcia w `VaultDocumentsView` osobnym zadaniem
+ *   (obecnie nawigacja breadcrumbem: „Sejf klienta" klikalny → powrót).
  */
 
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { OpenDocument } from '../../components/shared/ModuleHub/types';
 import { StandardModuleBar } from '../../components/standard';
 import { isClientVaultEnabled } from '../../utils/clientVaultFlag';
-import { DocumentsRAGTab } from '../superadmin/AIPlatformModule/Knowledge/DocumentsRAGTab';
+import { VaultDocumentsView } from './VaultDocumentsView';
 import { type VaultSafe, VaultSafesTable } from './VaultSafesTable';
 
 export const ClientDocumentsVault: React.FC = () => {
@@ -62,17 +54,12 @@ export const ClientDocumentsVault: React.FC = () => {
 
   if (!isClientVaultEnabled()) return null;
 
-  const openItems: OpenDocument[] = openSafe
-    ? [
-        {
-          id: openSafe.id,
-          type: 'tool',
-          subType: 'vault-safe',
-          name: openSafe.name,
-          status: 'DONE',
-        },
-      ]
-    : [];
+  // Wnętrze sejfu ma WŁASNĄ pełną triadę (Menu 1 z breadcrumbem i kebabem karty
+  // + Menu 2 + Menu 3 + tabela + preview), więc renderuje się samodzielnie —
+  // wrapper nie dokłada drugiego paska (byłyby dwa Menu 1 nad sobą).
+  if (openSafe) {
+    return <VaultDocumentsView safe={openSafe} onBack={handleBackToSafes} />;
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -82,26 +69,9 @@ export const ClientDocumentsVault: React.FC = () => {
         ]}
         onSearch={setSearchQuery}
         searchValue={searchQuery}
-        openItems={openItems}
-        activeItemId={openSafe?.id ?? null}
-        onSelectItem={() => undefined}
-        onCloseItem={handleBackToSafes}
-        onShowList={handleBackToSafes}
       />
       <div className="flex-1 min-h-0 overflow-auto">
-        {openSafe ? (
-          <div className="h-full p-4">
-            <div className="h-full min-h-full overflow-auto rounded-xl border border-c-border-subtle bg-c-surface">
-              <DocumentsRAGTab
-                variant="client"
-                initialScope={openSafe.type}
-                initialProjectId={openSafe.projectId || undefined}
-              />
-            </div>
-          </div>
-        ) : (
-          <VaultSafesTable onOpenSafe={handleOpenSafe} searchQuery={searchQuery} />
-        )}
+        <VaultSafesTable onOpenSafe={handleOpenSafe} searchQuery={searchQuery} />
       </div>
     </div>
   );

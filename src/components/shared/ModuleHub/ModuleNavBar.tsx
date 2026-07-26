@@ -268,7 +268,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                 w-full pl-10 pr-10 py-2 rounded-lg
                 bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600
                 text-slate-900 dark:text-white placeholder-slate-500
-                focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus
+                focus:outline-none focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus
                 transition-all
               "
             />

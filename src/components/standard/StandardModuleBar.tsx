@@ -96,6 +96,14 @@ export interface StandardModuleBarProps {
   breadcrumbs?: StandardBreadcrumb[];
   /** Rendered on the right of the breadcrumb row (JEDEN primary CTA). */
   breadcrumbCta?: StandardPrimaryCta;
+  /**
+   * Slot NA SAMYM PRAWYM SKRAJU wiersza Menu 1 — przeznaczony na kebab karty
+   * (`RowActionsMenu`) hubów osadzonych, np. „Sejf klienta › [nazwa]".
+   * Addytywne: brak propa ⇒ wiersz renderuje się bajt w bajt jak dotąd.
+   * NIE służy do dokładania własnych przycisków akcji — te idą przez
+   * `breadcrumbCta` (Menu 1) albo `primaryCta` (Menu 2).
+   */
+  breadcrumbExtra?: React.ReactNode;
 
   // ── Menu 2 ────────────────────────────────────────────────────────────────
   /** Pigułki funkcjonalne modułu (h-9, ramka, active = neutral fill). */
@@ -140,6 +148,7 @@ export interface StandardModuleBarProps {
 export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
   breadcrumbs,
   breadcrumbCta,
+  breadcrumbExtra,
   tabs,
   activeTab,
   onTabChange,
@@ -284,16 +293,21 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
               );
             })}
           </nav>
-          {breadcrumbCta ? (
-            <button
-              type="button"
-              onClick={breadcrumbCta.onClick}
-              data-testid={breadcrumbCta.testId}
-              className={MENU_1_PRIMARY_CTA}
-            >
-              {breadcrumbCta.icon ? <breadcrumbCta.icon size={16} /> : null}
-              <span>{breadcrumbCta.label}</span>
-            </button>
+          {breadcrumbCta || breadcrumbExtra ? (
+            <div className="flex shrink-0 items-center gap-2">
+              {breadcrumbCta ? (
+                <button
+                  type="button"
+                  onClick={breadcrumbCta.onClick}
+                  data-testid={breadcrumbCta.testId}
+                  className={MENU_1_PRIMARY_CTA}
+                >
+                  {breadcrumbCta.icon ? <breadcrumbCta.icon size={16} /> : null}
+                  <span>{breadcrumbCta.label}</span>
+                </button>
+              ) : null}
+              {breadcrumbExtra}
+            </div>
           ) : null}
         </div>
       ) : null}
