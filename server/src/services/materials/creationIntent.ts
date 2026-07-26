@@ -36,6 +36,7 @@ import type {
 } from './templateContract.js';
 import {
   DOCUMENT_ORIGIN_RUNTIMES,
+  PRESENTATION_ORIGIN_RUNTIMES,
   deriveTemplateScope,
   isTemplateOriginRuntime,
   normalizeTemplateStatus,
@@ -53,6 +54,7 @@ export type {
 } from './templateContract.js';
 export {
   DOCUMENT_ORIGIN_RUNTIMES,
+  PRESENTATION_ORIGIN_RUNTIMES,
   TEMPLATE_ORIGIN_RUNTIMES,
   deriveTemplateScope,
   isTemplateOriginRuntime,
@@ -86,6 +88,26 @@ export interface ResolvedDocumentTemplate {
   legacy: boolean;
   /** Fresh from the canonical registry — NOT from the artifact index snapshot. */
   sectionBlueprint: unknown[];
+}
+
+/**
+ * R11 deck slice (2026-07-26) — presentation counterpart of
+ * `ResolvedDocumentTemplate`. `name` is carried (unlike the document shape)
+ * because the deck-from-template creation route needs a sensible default
+ * deck title without a separate intake step — it is display metadata, not
+ * part of the locked `TemplateOriginSummaryFields` contract.
+ */
+export interface ResolvedPresentationTemplate {
+  originRuntime: 'presentation_template';
+  canonicalTemplateId: string;
+  format: 'presentation';
+  name: string;
+  scope: TemplateScope;
+  status: TemplateStatus;
+  source: TemplateSource;
+  legacy: boolean;
+  /** Fresh from `presentation_templates.outline_json` — NOT from the index snapshot. */
+  outlineBlueprint: unknown[];
 }
 
 export type TemplateResolveErrorCode =
@@ -156,6 +178,17 @@ interface ReportTemplateProbeRow {
   sections_json: string | null;
 }
 
+interface PresentationTemplateProbeRow {
+  id: string;
+  organization_id: string | null;
+  name: string | null;
+  is_system: unknown;
+  is_active: unknown;
+  /** Migration 767 — CHECK (lifecycle_state IN ('draft','approved','deprecated')). */
+  lifecycle_state: string | null;
+  outline_json: string | null;
+}
+
 // =============================================================================
 // RESOLVER
 // =============================================================================
@@ -197,8 +230,11 @@ export async function resolveDocumentTemplateForCreation(
  * looked up in the artifact index; the `internal` shape is taken at face value
  * for the LOOKUP only — access is always re-validated downstream against the
  * canonical registry, never against the caller's claim.
+ *
+ * Exported (R11 deck slice) so `resolvePresentationTemplateForCreation` below
+ * reuses the same index lookup instead of a second copy of this query.
  */
-async function resolveReference(
+export async function resolveReference(
   ref: TemplateRef,
   organizationId: string
 ): Promise<{ originRuntime: TemplateOriginRuntime; canonicalTemplateId: string }> {
@@ -377,5 +413,101 @@ async function resolveLegacyReportTemplate(
     legacy: true,
     // Legacy registry stores its blueprint as the sections array; read fresh.
     sectionBlueprint: parseJsonArray(row.sections_json),
+  };
+}
+
+// =============================================================================
+// PRESENTATION (deck) RESOLVER — R11 deck slice (2026-07-26)
+// =============================================================================
+
+/**
+ * Resolve a client-supplied template reference into a server-validated
+ * presentation blueprint. Same contract shape and rejection discipline as
+ * `resolveDocumentTemplateForCreation` above — throws `TemplateResolveError`
+ * with a typed `code` on every rejection path, never returns a partially
+ * trusted result.
+ *
+ * `presentation_template` is the only origin runtime this resolves (deck has
+ * no legacy pre-canonical registry the way document/report do).
+ */
+export async function resolvePresentationTemplateForCreation(
+  ref: TemplateRef,
+  ctx: { organizationId: string }
+): Promise<ResolvedPresentationTemplate> {
+  const organizationId = (ctx?.organizationId ?? '').trim();
+  if (!organizationId) {
+    throw new TemplateResolveError(
+      'TEMPLATE_FORBIDDEN',
+      'Template resolution requires an organization context'
+    );
+  }
+
+  const { originRuntime, canonicalTemplateId } = await resolveReference(ref, organizationId);
+
+  if (!PRESENTATION_ORIGIN_RUNTIMES.includes(originRuntime)) {
+    throw new TemplateResolveError(
+      'TEMPLATE_FORMAT_UNSUPPORTED',
+      `Origin runtime ${originRuntime} does not produce a presentation`,
+      { originRuntime, canonicalTemplateId }
+    );
+  }
+
+  const row = await dbGet<PresentationTemplateProbeRow>(
+    `SELECT id, organization_id, name, is_system, is_active, lifecycle_state, outline_json
+       FROM presentation_templates
+      WHERE id = ?
+      LIMIT 1`,
+    [canonicalTemplateId],
+    { fallback: true }
+  );
+
+  if (!row) {
+    throw new TemplateResolveError(
+      'TEMPLATE_ORPHANED',
+      'Template link points at a presentation template that no longer exists',
+      { canonicalTemplateId, originRuntime: 'presentation_template' }
+    );
+  }
+
+  const isSystem = toBool(row.is_system) === true;
+  const orgId = (row.organization_id ?? '').trim();
+  // Mirrors the existing `GET /presentations/templates` visibility predicate
+  // (`organization_id IS NULL OR organization_id = ?`): a NULL org row is a
+  // system template regardless of the `is_system` flag's literal value.
+  const ownedByCaller = orgId !== '' && orgId === organizationId;
+  const systemVisible = isSystem || orgId === '';
+  if (!ownedByCaller && !systemVisible) {
+    throw new TemplateResolveError(
+      'TEMPLATE_FORBIDDEN',
+      'Template belongs to another organization',
+      { canonicalTemplateId, originRuntime: 'presentation_template' }
+    );
+  }
+
+  // `is_active = false` is the older kill-switch (still checked by the list
+  // route); `lifecycle_state` (migration 767) is the authoritative lifecycle
+  // column. An inactive row reads as deprecated regardless of lifecycle_state.
+  const isActive = toBool(row.is_active);
+  const lifecycleStatus = normalizeTemplateStatus(row.lifecycle_state);
+  const status: TemplateStatus = isActive === false ? 'deprecated' : lifecycleStatus;
+  if (status === 'deprecated') {
+    throw new TemplateResolveError('TEMPLATE_DEPRECATED', 'Template has been deprecated', {
+      canonicalTemplateId,
+      originRuntime: 'presentation_template',
+    });
+  }
+
+  return {
+    originRuntime: 'presentation_template',
+    canonicalTemplateId,
+    format: 'presentation',
+    name: (row.name ?? '').trim(),
+    scope: deriveTemplateScope(row),
+    status,
+    source: 'canonical',
+    legacy: false,
+    // Blueprint FRESH from the canonical registry — never from the artifact
+    // index snapshot, which can lag behind template edits.
+    outlineBlueprint: parseJsonArray(row.outline_json),
   };
 }
