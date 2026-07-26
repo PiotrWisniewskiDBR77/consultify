@@ -546,7 +546,7 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
                   transition-colors duration-150
                   ${
                     isSelected
-                      ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100'
+                      ? 'bg-slate-900/[0.07] dark:bg-white/10 text-slate-900 dark:text-slate-100'
                       : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
                   }
                 `}
@@ -556,7 +556,7 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
                 {count !== undefined && (
                   <span className="text-xs text-slate-500 dark:text-slate-400">{count}</span>
                 )}
-                {isSelected && <Check size={14} className="text-primary-400" />}
+                {isSelected && <Check size={14} className="text-slate-900 dark:text-slate-100" />}
               </button>
             );
           })}
