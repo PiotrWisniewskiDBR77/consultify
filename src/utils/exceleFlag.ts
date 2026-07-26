@@ -9,16 +9,16 @@
  * już wołany produkcyjnie z innego miejsca (`ArtifactActionPanel`). Audyt
  * `_AUDYT_DOKUMENTY_2026-07-22.md` — „najbardziej boli (Sheet)".
  *
- * Ta flaga (domyślnie ON od 2026-07-22 (akcept Piotra na zrzutach); kill-switch: ?ff_excele=0 lub env=false) pozwala odsłonić `ExceleView` pod `/excele` do
- * WIZUALNEGO AKCEPTU Piotra bez ruszania niczego na żywca: OFF → dokładnie
- * dzisiejsze zachowanie (redirect na Table Studio), zero regresji na `/tabele`.
- * Po akcepcie właściciela → domyślne ON (env) osobną decyzją.
+ * Ta flaga pozwala odsłonić `ExceleView` pod `/excele` (zamiast redirectu na
+ * Table Studio): OFF → dokładnie stare zachowanie (redirect na Table Studio),
+ * zero regresji na `/tabele`. Kill-switch: `?ff_excele=0` lub env=false.
  *
  * Kolejność (wygrywa najwyższe):
  *   1. URL query `?ff_excele=0|1` — bypass operatora / dev / dev-render.
  *   2. `localStorage["ff.excele"]` — override user / org.
  *   3. `import.meta.env.VITE_EXCELE_ENGINE_ENABLED` — build-time.
- *   4. Default: OFF (redirect jak dziś).
+ *   4. Default: ON (flip fb119cefe8, akcept Piotra 2026-07-22), env jawnie
+ *      nieustawione = ON.
  */
 
 const LS_KEY = 'ff.excele';

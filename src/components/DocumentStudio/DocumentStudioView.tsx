@@ -579,7 +579,16 @@ export const DocumentStudioView: React.FC = () => {
       {showDocumentShell ? null : (
         <TopBar
           moduleLabel={t('documentStudio.view.moduleLabel', 'Document Studio')}
-          title={t('documentStudio.view.title', 'Consultify Document Studio')}
+          // P1.3 (plan dokończenia Materiałów): tytuł dublował moduleLabel
+          // 1:1 ("Document Studio › Consultify Document Studio" — sama
+          // marka, zero informacji). Brak jeszcze realnego dokumentu na tej
+          // fazie (intake/plan szablonu), więc tytuł = aktualny tryb pracy
+          // (te same etykiety co w `tabChips` wyżej — bez nowego klucza i18n).
+          title={
+            activeTab === 'templates'
+              ? t('documentStudio.view.tabPlanTemplate', 'Plan template')
+              : t('documentStudio.view.tabGenerate', 'Generate')
+          }
           chips={tabChips}
           respectMelsOrder={false}
           presenceSlot={
