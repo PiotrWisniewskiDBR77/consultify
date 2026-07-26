@@ -9,14 +9,16 @@
  * `PresentationsHub` can be built and reviewed WITHOUT going live for every
  * user first (canon: "Piotr nigdy nie jest pierwszym testerem wizualnym").
  *
- * OFF (default) → `PresentationsHub` renders byte-identical to today (no
- * "Architekt szablonów" tab/button). ON → the tab appears.
+ * OFF → `PresentationsHub` renders byte-identical to pre-flag state (no
+ * "Architekt szablonów" tab/button). ON (default) → the tab appears.
  *
  * Kolejność (wygrywa najwyższe):
  *   1. URL query `?ff_deck_architect=0|1` — bypass operatora / dev / dev-render.
  *   2. `localStorage["ff.deckArchitect"]` — override user / org.
  *   3. `import.meta.env.VITE_DECK_ARCHITECT_ENABLED` — build-time.
- *   4. Default: OFF.
+ *   4. Default: ON (flip fb119cefe8, akcept Piotra 2026-07-22; UWAGA: decyzja
+ *      architekta D6 z 2026-07-24 postuluje OFF — konflikt do rozstrzygnięcia
+ *      przez Piotra, nie zmieniaj defaultu bez jego słowa).
  */
 
 const LS_KEY = 'ff.deckArchitect';
