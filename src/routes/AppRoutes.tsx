@@ -118,11 +118,6 @@ const ReportBuilderView = lazyWithRetry(() =>
 const ManagementReportsHub = lazyWithRetry(() =>
   import('@/components/Reports/Management/ReportsHub').then((m) => ({ default: m.ReportsHub }))
 );
-const AssessmentReportBuilderView = lazyWithRetry(() =>
-  import('@/views/AssessmentReportBuilderView').then((m) => ({
-    default: m.AssessmentReportBuilderView,
-  }))
-);
 const SharedPresentationView = lazyWithRetry(() =>
   import('@/components/Presentations/SharedPresentationView').then((m) => ({
     default: m.SharedPresentationView,
