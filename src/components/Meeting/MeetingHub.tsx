@@ -611,16 +611,9 @@ export const MeetingHub: React.FC = () => {
     () =>
       selectedMeeting
         ? {
-            informational: [
-              {
-                id: 'open',
-                variant: 'neutral',
-                label: t('common.open', 'Open'),
-                icon: ExternalLink,
-                shortcut: 'O',
-                onClick: () => openMeetingDocument(selectedMeeting),
-              },
-            ],
+            // canon §7.3 — "Open" usunięte z informational: dublowało onOpenFull
+            // przekazywane do StandardPreview w tym samym renderze (header ma już Open).
+            // Jedyna pozycja informational była duplikatem, więc tablica znika całkiem.
             resolutions: [
               {
                 id: 'toggle-status',
