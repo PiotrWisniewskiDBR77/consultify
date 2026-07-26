@@ -414,7 +414,8 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
    *
    * Sprawdzone przed decyzją: konwersja NIE jest bramkowana na `ready_to_convert`
    * (brak takiej bramki w `my-work.routes.ts` i w `IdeaConvertMenu`), a nudge na
-   * `exploring` siedzi w `IdeaPinnedCard`, który nie jest nigdzie używany.
+   * `exploring` siedzi w nudge-u karty, który nie jest nigdzie używany
+   * (dawny `IdeaPinnedCard.tsx` — usunięty jako martwy kod, higiena 2026-07-26).
    * KOSZT DO ŚWIADOMOŚCI: `IdeaFunnelAnalytics` (żywy, 6 odwołań) nie zobaczy już
    * `exploring`/`ready_to_convert` USTAWIONYCH TYM przyciskiem — inne ścieżki
    * (AI, akceptacja wyzwania) nadal je ustawiają.

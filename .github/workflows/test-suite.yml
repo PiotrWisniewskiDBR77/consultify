@@ -71,6 +71,15 @@ jobs:
       - name: a11y focus-visible gate (VF0-7, diff vs base)
         run: npm run check:a11y-focus -- --base "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || 'HEAD~1' }}"
 
+      - name: Triada full-repo ratchet gate (crimson primary-*, audyt strażników 2026-07-26)
+        run: npm run check:triada:all
+
+      - name: List-canon full-repo ratchet gate (StandardTable/StandardModuleBar, R1/R2/R2b)
+        run: npm run check:list-canon
+
+      - name: Artefakt shell ratchet gate (crimson w powłoce SPEC-A)
+        run: npm run check:artefakt
+
       - name: Job duration
         if: always()
         run: |

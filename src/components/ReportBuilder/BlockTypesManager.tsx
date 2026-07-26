@@ -414,15 +414,9 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
   // ── Preview actions (StandardPreview) ────────────────────────────────────
   const previewActions: StandardPreviewActions | undefined = previewBlock
     ? {
+        // canon §7.3 — "Edit" usunięte z resolutions: dublowało onOpenFull
+        // przekazywane do StandardPreview w tym samym renderze (header ma już Open).
         resolutions: [
-          {
-            id: 'edit',
-            variant: 'positive',
-            label: 'Edit',
-            icon: Edit3,
-            shortcut: 'E',
-            onClick: () => openEdit(previewBlock),
-          },
           ...(!previewBlock.isSystem
             ? [
                 {

@@ -279,15 +279,9 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
             onClick: () => setDeleteConfirmIds([previewAssessment.id]),
           },
         ],
+        // canon §7.3 — "Open in Map" usunięte: dublowało onOpenFull przekazywane
+        // do StandardPreview w tym samym renderze (header ma już Open).
         informational: [
-          {
-            id: 'open-map',
-            variant: 'neutral',
-            label: t('assessment.table.openInMap', 'Open in Map'),
-            icon: Map,
-            shortcut: 'O',
-            onClick: () => onOpenInMap(previewAssessment.id),
-          },
           {
             id: 'refresh',
             variant: 'neutral',

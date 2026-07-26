@@ -140,10 +140,13 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     [templates, selectedTemplateId]
   );
 
-  // C1 — manual structure editor (behind flag `?ff_tpl_editor=1`, default OFF).
-  // When OFF the section blueprint stays read-only and this whole surface is
-  // byte-identical to today. When ON, a DRAFT template's sections become
-  // editable (add / remove / move / rename) before approval.
+  // C1 — manual structure editor (behind flag `?ff_tpl_editor=1`, default ON
+  // since 79a75de14e, akcept Piotra 2026-07-22 po live-verify; UWAGA: decyzja
+  // architekta D6 z 2026-07-24 postuluje OFF — konflikt do rozstrzygnięcia
+  // przez Piotra, nie zmieniaj defaultu bez jego słowa). When OFF the section
+  // blueprint stays read-only and this whole surface is byte-identical to
+  // pre-flag state. When ON, a DRAFT template's sections become editable
+  // (add / remove / move / rename) before approval.
   const structureEditorEnabled = isTemplateStructureEditorEnabled();
   const isEditableDraft = structureEditorEnabled && selectedTemplate?.status === 'draft';
   const [editSections, setEditSections] = useState<TemplateSectionBlueprint[]>([]);

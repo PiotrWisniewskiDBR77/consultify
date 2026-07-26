@@ -10,6 +10,20 @@ import { ReportsAndPresentationsHub } from '../../../src/components/ReportsAndPr
 
 const navigateMock = vi.fn();
 let lastOnTabChange: ((tab: string) => void) | null = null;
+let lastTabs: Array<{ id: string; label: string }> | null = null;
+
+// Kanon 2026-07-26 (docs/product/MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md
+// §3): Menu 1 must stay at exactly 5 tabs REGARDLESS of these flags — the
+// architects moved from Menu 1 siblings to an embedded mode inside "Szablony".
+// Force both ON here to prove the tab list is flag-independent (see the test
+// below); this has no bearing on the other tests since the mocked ModuleHub
+// below ignores `primaryCta` (the only thing that reads these flags now).
+vi.mock('../../../src/utils/deckArchitectFlag', () => ({
+  isDeckArchitectEnabled: () => true,
+}));
+vi.mock('../../../src/utils/workbookTemplatesFlag', () => ({
+  isWorkbookTemplatesEnabled: () => true,
+}));
 
 vi.mock('react-i18next', async () => {
   const actual = await vi.importActual<typeof import('react-i18next')>('react-i18next');
@@ -25,6 +39,7 @@ vi.mock('react-i18next', async () => {
 vi.mock('../../../src/components/shared/ModuleHub', () => ({
   ModuleHub: ({ tabs, activeTab, title, commandRowContent, onTabChange, children }: any) => {
     lastOnTabChange = onTabChange;
+    lastTabs = tabs;
     return (
       <div>
         <h1>{title}</h1>
@@ -130,6 +145,17 @@ vi.mock('../../../src/components/ReportsAndPresentations/TemplatesTabContent', (
   ),
 }));
 
+// Embedded architect views (opened FROM the "Szablony" tab, kanon 2026-07-26)
+// — stubbed like the other tab-content components above; these are heavy
+// real screens with their own data fetching, out of scope for this shallow
+// Menu 1 / routing test.
+vi.mock('../../../src/components/Presentations/PresentationTemplateArchitectView', () => ({
+  PresentationTemplateArchitectView: () => <div data-testid="deck-architect-view">deck-architect</div>,
+}));
+vi.mock('../../../src/components/AIChat/KimiWorkspace/ExceleParametricTemplates', () => ({
+  ExceleParametricTemplates: () => <div data-testid="workbook-templates-view">workbook-templates</div>,
+}));
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
@@ -224,5 +250,76 @@ describe('ReportsAndPresentationsHub', () => {
     expect(navigateMock).toHaveBeenCalledWith('/presentations?tab=presentations&artifactId=deck-22', {
       replace: true,
     });
+  });
+
+  // Kanon 2026-07-26: Architekt szablonów (Deck) i Generator szablonów (Excel)
+  // przestały być zakładkami Menu 1 — otwierają się wewnątrz "Szablony".
+  // isDeckArchitectEnabled/isWorkbookTemplatesEnabled są mockowane na ON u
+  // góry pliku właśnie po to, by ten test udowodnił, że mimo obu flag ON
+  // Menu 1 MA dokładnie 5 pozycji i nie zawiera 'template_architect' /
+  // 'workbook_templates' jako osobnych id.
+  it('keeps Menu 1 at exactly 5 tabs with both architect flags ON, no template_architect/workbook_templates siblings', () => {
+    render(
+      <MemoryRouter initialEntries={['/presentations']}>
+        <ReportsAndPresentationsHub />
+      </MemoryRouter>
+    );
+
+    expect(lastTabs).toHaveLength(5);
+    const tabIds = (lastTabs || []).map((tab) => tab.id);
+    expect(tabIds).toEqual([
+      'outputs_all',
+      'outputs_documents',
+      'presentations',
+      'outputs_sheets',
+      'templates',
+    ]);
+    expect(tabIds).not.toContain('template_architect');
+    expect(tabIds).not.toContain('workbook_templates');
+  });
+
+  it('resolves the legacy ?tab=template_architect deep link into the templates tab (embedded architect view)', () => {
+    render(
+      <MemoryRouter initialEntries={['/presentations?tab=template_architect']}>
+        <ReportsAndPresentationsHub />
+      </MemoryRouter>
+    );
+
+    // Kanon: no more sibling tab id — the deep link now lands on 'templates',
+    // rendering the deck architect IN PLACE with a "← Szablony" back control.
+    expect(screen.getByTestId('active-tab')).toHaveTextContent('templates');
+    expect(screen.getByTestId('deck-architect-view')).toBeInTheDocument();
+    expect(screen.getByTestId('templates-architect-back')).toBeInTheDocument();
+  });
+
+  it('resolves the legacy ?tab=workbook_templates deep link into the templates tab (embedded architect view)', () => {
+    render(
+      <MemoryRouter initialEntries={['/presentations?tab=workbook_templates']}>
+        <ReportsAndPresentationsHub />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId('active-tab')).toHaveTextContent('templates');
+    expect(screen.getByTestId('workbook-templates-view')).toBeInTheDocument();
+    expect(screen.getByTestId('templates-workbook-back')).toBeInTheDocument();
+  });
+
+  it('"← Szablony" returns from the embedded deck architect view to the Template Library table', () => {
+    render(
+      <MemoryRouter initialEntries={['/presentations?tab=template_architect']}>
+        <ReportsAndPresentationsHub />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId('deck-architect-view')).toBeInTheDocument();
+    act(() => {
+      screen.getByTestId('templates-architect-back').click();
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith('/presentations?tab=templates', { replace: true });
+    // Local view-state flips immediately (independent of the mocked navigate
+    // actually changing history) — the library table reappears in place.
+    expect(screen.queryByTestId('deck-architect-view')).not.toBeInTheDocument();
+    expect(screen.getByTestId('templates-initial-artifact')).toBeInTheDocument();
   });
 });

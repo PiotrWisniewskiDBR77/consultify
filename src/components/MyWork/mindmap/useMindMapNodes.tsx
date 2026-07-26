@@ -242,7 +242,10 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
   );
 
   const addChildNode = useCallback(
-    (anchorNodeId?: string) => {
+    // Krok B: `label` opcjonalny — gdy podany (Teresa/formularz przez szynę
+    // `idea-workspace-quick-action`, pole `detail.label`), staje się od razu
+    // treścią węzła zamiast wejścia w pusty tryb edycji (patrz `initialLabel` niżej).
+    (anchorNodeId?: string, label?: string) => {
       if (locked) return;
       if (nodes.length >= MAX_MINDMAP_NODES) {
         toast.error(i18n.t('mindmap.nodes.mapLimitReached', { limit: MAX_MINDMAP_NODES }), {
@@ -265,7 +268,12 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       const branchKey = selected.data?.branchKey || 'uncategorized';
       const isFirstChildFromStarterBranch =
         selected.id.startsWith('branch-') && findChildrenIds(selected.id).length === 0;
-      const initialLabel = isFirstChildFromStarterBranch ? i18n.t('mindmap.nodes.newIdea') : '';
+      const providedLabel = typeof label === 'string' ? label.trim() : '';
+      const initialLabel = providedLabel
+        ? providedLabel
+        : isFirstChildFromStarterBranch
+          ? i18n.t('mindmap.nodes.newIdea')
+          : '';
       const newId = `node-${uid()}`;
       const newNode: Node = {
         id: newId,

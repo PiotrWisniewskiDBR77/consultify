@@ -6,7 +6,6 @@ import {
   Copy,
   ExternalLink,
   Loader2,
-  MessageSquare,
   Sparkles,
   TrendingUp,
   UserPlus,
@@ -349,13 +348,14 @@ export const DecisionPreviewFooter: React.FC<{
   onApprove: () => void;
   onReject: () => void;
   onDelegate: () => void;
-  onMoreInfo: () => void;
   onRemind: () => void;
   onEscalate: () => void;
   snoozeOpen: boolean;
   onToggleSnooze: () => void;
   onCloseSnooze: () => void;
   onSnooze: (preset: DecisionSnoozePreset) => void;
+  /** Navigate to another decision referenced in `decision.linkedItems` (r.type === 'decision'). */
+  onOpenLinkedDecision?: (decisionId: string) => void;
 }> = ({
   decision,
   mode,
@@ -374,13 +374,13 @@ export const DecisionPreviewFooter: React.FC<{
   onApprove,
   onReject,
   onDelegate,
-  onMoreInfo,
   onRemind,
   onEscalate,
   snoozeOpen,
   onToggleSnooze,
   onCloseSnooze,
   onSnooze,
+  onOpenLinkedDecision,
 }) => {
   const hintSummarize = i18n.t('myWork.decisionPreview.summarizeContext2', 'Summarize context');
   const hintPropose = i18n.t('myWork.decisionPreview.proposeOptions2', 'Propose options');
@@ -397,6 +397,14 @@ export const DecisionPreviewFooter: React.FC<{
   const relationItems: RelationItem[] = (decision?.linkedItems || []).slice(0, 6).map((r) => ({
     label: clampText(String(r.title || r.id), 42),
     tone: relationTone(r.type),
+    // Nawigacja dostępna dziś tylko dla linkowanych decyzji (onOpenLinkedDecision — te
+    // same handlery co przycisk "Open"). Task/Initiative nie mają w tym module
+    // gotowego adresu docelowego — bez onClick pigułka renderuje się jako <span> (bez
+    // cursor-pointer/hover), więc nie udaje klikalności, której nie ma.
+    onClick:
+      String(r.type || '').toLowerCase() === 'decision' && onOpenLinkedDecision
+        ? () => onOpenLinkedDecision(r.id)
+        : undefined,
   }));
 
   // Zgloszenie Piotra 2026-07-21: stopka Decision mial 7 widocznych przyciskow
@@ -494,12 +502,8 @@ export const DecisionPreviewFooter: React.FC<{
             rows={[]}
             overflowLabel={i18n.t('myWork.decisionPreview.moreActions', 'More actions')}
             overflowActions={[
-              {
-                label: i18n.t('myWork.decisionPreview.label8', 'More info'),
-                icon: MessageSquare,
-                onClick: onMoreInfo,
-                colorScheme: 'neutral',
-              },
+              // canon §7.3 — "More info" usunięte: wołało dokładnie ten sam handler
+              // co przycisk "Open" w headerze (onOpenFullDetail), czyli duplikat akcji.
               ...(canAct
                 ? [
                     {
@@ -864,7 +868,6 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
               await fetchUsers();
               setDelegationOpen(true);
             }}
-            onMoreInfo={() => onOpenFullDetail(decisionId, decision)}
             onRemind={handleRemind}
             onEscalate={handleEscalate}
             snoozeOpen={snoozeOpen}
@@ -874,6 +877,7 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
               setSnoozeOpen(false);
               void handleSnooze(preset);
             }}
+            onOpenLinkedDecision={(linkedId) => onOpenFullDetail(linkedId)}
           />
         }
       >

@@ -27,6 +27,16 @@ const MaterialyTemplateLibrarySliceScreen = React.lazy(
 const DocumentStudioTemplateResolveErrorScreen = React.lazy(
   () => import('./screens/document-studio-template-resolve-error')
 );
+const PrezentacjeTemplateStatesScreen = React.lazy(
+  () => import('./screens/prezentacje-template-states')
+);
+const ReportBuilderLibraryTemplateScreen = React.lazy(
+  () => import('./screens/report-builder-library-template')
+);
+const AudytyDrdReportScreen = React.lazy(() => import('./screens/audyty-drd-report'));
+const MenuCanonSidebarCheckScreen = React.lazy(
+  () => import('./screens/menu-canon-sidebar-check')
+);
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -112,6 +122,7 @@ const IdeaTableToolSortFilterScreen = React.lazy(() => import('./screens/idea-ta
 const IdeaTableToolGroupingScreen = React.lazy(() => import('./screens/idea-table-tool-grouping'));
 const IdeaTableScreen = React.lazy(() => import('./screens/idea-table'));
 const MindmapCanvasScreen = React.lazy(() => import('./screens/mindmap-canvas'));
+const TeresaConfirmChipScreen = React.lazy(() => import('./screens/teresa-confirm-chip'));
 const DeckArtifactScreen = React.lazy(() => import('./screens/deck-artifact'));
 const DocumentArtifactScreen = React.lazy(() => import('./screens/document-artifact'));
 const IdeasPreviewOverlayScreen = React.lazy(() => import('./screens/ideas-preview-overlay'));
@@ -152,6 +163,26 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DOCUMENT STUDIO — „Użyj wzorca" odrzucone serwerowo: stan blokujący (bez pickera, bez AI). ?case=orphaned|forbidden|deprecated|not_indexed|resolving',
     render: () => <DocumentStudioTemplateResolveErrorScreen />,
+  },
+  'prezentacje-template-states': {
+    label:
+      'PREZENTACJE — „Użyj wzorca" z Biblioteki (R11 deck slice): loading + 2 stany blokujące. ?variant=loading|orphaned|forbidden',
+    render: () => <PrezentacjeTemplateStatesScreen />,
+  },
+  'report-builder-library-template': {
+    label:
+      'REPORT BUILDER — „Użyj wzorca" z Biblioteki (report_template, R1 2026-07-26): sukces (modal, pole zablokowane) + stany blokujące. ?variant=success|orphaned|deprecated|forbidden',
+    render: () => <ReportBuilderLibraryTemplateScreen />,
+  },
+  'audyty-drd-report': {
+    label:
+      'AUDYTY — zakładka „Raporty DRD" (ff_drd_report) + DRDAuditReportView. ?variant=list|report',
+    render: () => <AudytyDrdReportScreen />,
+  },
+  'menu-canon-sidebar-check': {
+    label:
+      'SIDEBAR — potwierdzenie braku osobnej pozycji "Excel" po feat/materials-menu-canon-5-tabs.',
+    render: () => <MenuCanonSidebarCheckScreen />,
   },
   'initiatives-portfolio-analysis': {
     label:
@@ -525,6 +556,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'mindmap-canvas': {
     label: 'IDEE — Idea jako mapa myśli (pełny obiekt, archetyp Canvas)',
     render: () => <MindmapCanvasScreen />,
+  },
+  'teresa-confirm-chip': {
+    label: 'IDEE — Teresa: kontrolka potwierdzenia akcji trwałych (F1-A)',
+    render: () => <TeresaConfirmChipScreen />,
   },
   'ideas-preview-overlay': {
     label: 'IDEE — Idea: podgląd nakładkowy nad listą',

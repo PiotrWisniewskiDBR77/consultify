@@ -26,13 +26,40 @@ export function NewAssessmentReportModal(props: {
   assessments: AssessmentOption[];
   onClose: () => void;
   onCreated: (reportId: string) => void;
+  /**
+   * R1 Library „Użyj wzorca" (2026-07-26): when the caller already resolved a
+   * canonical `report_builder_templates` record server-side (e.g. from the
+   * Template Library), it hands it in here pre-selected. Paired with
+   * `lockTemplate` so the field shows the resolved template but the "Choose"
+   * picker — which would let the user swap in an UNRESOLVED template id — is
+   * hidden.
+   */
+  initialTemplate?: ReportTemplate | null;
+  lockTemplate?: boolean;
+  titleOverride?: string;
+  subtitleOverride?: string;
 }) {
-  const { isOpen, assessments, onClose, onCreated } = props;
+  const {
+    isOpen,
+    assessments,
+    onClose,
+    onCreated,
+    initialTemplate = null,
+    lockTemplate = false,
+    titleOverride,
+    subtitleOverride,
+  } = props;
 
   const [assessmentId, setAssessmentId] = useState<string>('');
-  const [template, setTemplate] = useState<ReportTemplate | null>(null);
+  const [template, setTemplate] = useState<ReportTemplate | null>(initialTemplate);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // Keep in sync if the caller resolves/changes the preselected template after
+  // this component has already mounted (e.g. async resolve completing).
+  React.useEffect(() => {
+    if (initialTemplate) setTemplate(initialTemplate);
+  }, [initialTemplate]);
 
   const selectedAssessment = useMemo(
     () => assessments.find((a) => a.id === assessmentId) || null,
@@ -60,10 +87,10 @@ export function NewAssessmentReportModal(props: {
             </div>
             <div>
               <div className="text-base font-semibold text-navy-900 dark:text-white">
-                New assessment report
+                {titleOverride || 'New assessment report'}
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                Choose assessment + template. A draft will be generated.
+                {subtitleOverride || 'Choose assessment + template. A draft will be generated.'}
               </div>
             </div>
           </div>
@@ -122,14 +149,20 @@ export function NewAssessmentReportModal(props: {
                   </div>
                 ) : null}
               </div>
-              <button
-                type="button"
-                onClick={() => setTemplatePickerOpen(true)}
-                disabled={busy}
-                className="shrink-0 h-9 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
-              >
-                Choose
-              </button>
+              {lockTemplate ? (
+                <span className="shrink-0 h-9 px-3 inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-100 dark:bg-navy-800 text-xs font-medium text-slate-500 dark:text-slate-400">
+                  Z Biblioteki
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setTemplatePickerOpen(true)}
+                  disabled={busy}
+                  className="shrink-0 h-9 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
+                >
+                  Choose
+                </button>
+              )}
             </div>
           </div>
 

@@ -16,9 +16,10 @@ import {
 import { Send, User } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { InitiativeSuggestionBadge } from '@/components/Initiatives/InitiativeSuggestionBadge';
-import { Api, api } from '@/services/api';
+import { api } from '@/services/api';
 import {
   areaScoresFromAxisData,
   openDrdReportForPrint,
@@ -28,7 +29,6 @@ import {
 import { ReportBuilder } from '../components/Reports/ReportBuilder';
 import TeresaMark from '../components/shared/TeresaMark';
 import { useAppStore } from '../store/useAppStore';
-import { AppView } from '../types';
 // Types
 interface ReportSection {
   id: string;
@@ -257,8 +257,8 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
   reportId: propReportId,
 }) => {
   const { t, i18n } = useTranslation();
-  const { addChatMessage, setIsBotTyping, currentReportId, setCurrentView, setCurrentReport } =
-    useAppStore();
+  const navigate = useNavigate();
+  const { addChatMessage, setIsBotTyping, currentReportId, setCurrentReport } = useAppStore();
 
   // Use prop reportId first, then store reportId
   const reportId = propReportId || currentReportId;
@@ -446,12 +446,17 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
   };
 
   // Export to PDF
+  // Contract fix (2026-07-26): the endpoint (GET /assessment-reports/:id/export/pdf)
+  // streams the PDF bytes directly (`Content-Type: application/pdf`, `res.sendFile`)
+  // — it does NOT return `{ pdfUrl }`. `api.exportReportPDF` already reflects this
+  // (returns a `Blob`); the view previously destructured a non-existent `pdfUrl`
+  // field, which produced a silently broken download (`href="undefined"`).
   const handleExportPDF = async () => {
     if (!reportId) return;
 
     try {
-      const { pdfUrl } = (await api.exportReportPDF(reportId)) as any;
-      const url = pdfUrl;
+      const blob = await api.exportReportPDF(reportId);
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `${report?.name || 'report'}_DRD_Audit.pdf`;
@@ -591,7 +596,11 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
             <button
               onClick={() => {
                 setCurrentReport(null, 'view');
-                setCurrentView(AppView.FULL_STEP6_REPORTS);
+                // Contract fix (2026-07-26): this view no longer lives behind the
+                // legacy AppView.FULL_STEP6_REPORTS surface — it's mounted as a
+                // real route under Audits (/audit-programs/drd-report/:reportId).
+                // Back must return there, not to the unrelated Report Builder.
+                navigate('/audit-programs');
               }}
               className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
             >
@@ -652,7 +661,9 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
           <button
             onClick={() => {
               setCurrentReport(null, 'view');
-              setCurrentView(AppView.FULL_STEP6_REPORTS);
+              // See contract-fix note above (empty-report header) — back goes to
+              // the real host route, not the legacy AppView.
+              navigate('/audit-programs');
             }}
             className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
           >

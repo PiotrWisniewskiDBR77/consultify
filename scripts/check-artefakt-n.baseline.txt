@@ -1,0 +1,6 @@
+# check-artefakt-n.baseline.txt — regenerowany --update. Format: <liczba>\t<ścieżka>.
+# Liczy WYŁĄCZNIE reguły BLOKUJĄCE PART 2: R2 (createPortal, SPEC-N §2.4) + R3
+# (id zarezerwowane w lewej nawigacji, SPEC-N §2.1). R1 (solid CTA, ostrzeżenie,
+# §2.3) NIE wchodzi tu nigdy — pozostaje raportem zawsze (heurystyka niedokładna
+# z natury, patrz komentarz przy kn_solid_hits w check-artefakt.sh).
+# Regeneruj TYLKO po świadomym sprzątnięciu długu, nigdy żeby ukryć nową regresję.

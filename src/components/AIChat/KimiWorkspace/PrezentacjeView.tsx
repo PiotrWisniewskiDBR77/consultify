@@ -9,7 +9,7 @@
  */
 
 import { Loader2 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -193,28 +193,22 @@ export const PrezentacjeView: React.FC = () => {
     void startRef.current(templatePrompt);
   }, [templatePrompt, pipeline.currentRun, pipeline.isGenerating]);
 
-  // Auto-trigger from API template
+  // R11 deck slice (2026-07-26) — "Użyj wzorca" z Biblioteki dla PREZENTACJI.
+  // ★ Był tu najważniejszy bug funkcjonalny programu Materiały: ten efekt
+  // czytał `originSummary.template.description` (sam OPIS TEKSTOWY) i wołał
+  // `startGeneration(desc, templateArtifactId)` — struktura szablonu
+  // (`outline_json`) nigdy nie docierała do generacji, bo `templateArtifactId`
+  // ginął w `POST /api/artifact-runs/from-chat` (brak go w Zod-schemacie i w
+  // `createArtifactRunFromChat`). Naprawa PONIŻEJ (po deklaracji
+  // `openInDeckBuilder`) pomija pipeline AI dla tej ścieżki całkowicie —
+  // `POST /presentations/decks/from-template` kopiuje `outline_json` do kart
+  // deterministycznie, po stronie serwera, z serwerowo zwalidowanym
+  // `templateArtifactId` (patrz `resolvePresentationTemplateForCreation`).
   const templateTriggered = useRef(false);
-  useEffect(() => {
-    if (
-      !templateArtifactId ||
-      templateTriggered.current ||
-      pipeline.currentRun ||
-      pipeline.isGenerating
-    )
-      return;
-    templateTriggered.current = true;
-    autoTriggered.current = true;
-    Api.get(`/artifacts/${templateArtifactId}`)
-      .then((tmpl: any) => {
-        const desc =
-          tmpl?.originSummary?.template?.description || tmpl?.title || 'Presentation from template';
-        void startRef.current(desc, templateArtifactId);
-      })
-      .catch(() => {
-        void startRef.current('Create presentation from template', templateArtifactId);
-      });
-  }, [templateArtifactId, pipeline.currentRun, pipeline.isGenerating]);
+  const [templateCreateState, setTemplateCreateState] = useState<'idle' | 'loading' | 'error'>(
+    'idle'
+  );
+  const [templateCreateErrorCode, setTemplateCreateErrorCode] = useState<string | null>(null);
 
   useEffect(() => {
     if (!artifactId || reopenLoaded.current) return;
@@ -346,6 +340,78 @@ export const PrezentacjeView: React.FC = () => {
     },
     [navigate, t]
   );
+
+  // R11 deck slice — deterministyczne tworzenie decka z szablonu Biblioteki.
+  // `templateArtifactId` (id WIERSZA INDEKSU) jest jedynym wskaźnikiem, jaki
+  // klient wysyła — serwer sam rozwiązuje i rewaliduje kanoniczny rekord
+  // `presentation_templates` (org/scope/status/orphan) w
+  // `POST /presentations/decks/from-template`, świeżo, bez zaufania do
+  // czegokolwiek z URL-a. Brak AI: struktura szablonu jest już znana, więc
+  // (jak przy trybie „Czysto") nowy deck ląduje wprost w Deck Builderze.
+  useEffect(() => {
+    if (
+      !templateArtifactId ||
+      templateTriggered.current ||
+      pipeline.currentRun ||
+      pipeline.isGenerating
+    )
+      return;
+    templateTriggered.current = true;
+    autoTriggered.current = true;
+    setTemplateCreateState('loading');
+    setTemplateCreateErrorCode(null);
+    void (async () => {
+      try {
+        const res = await Api.post('/presentations/decks/from-template', { templateArtifactId });
+        const deckId = unwrapApiData<{ id?: string }>(res)?.id;
+        if (!deckId) throw new Error('missing deckId in from-template response');
+        setTemplateCreateState('idle');
+        openInDeckBuilder(deckId);
+      } catch (err: any) {
+        // ★ Żaden fallback do promptu AI ani do pickera — wzorzec, którego nie
+        // da się rozwiązać, musi zatrzymać przepływ z uczciwym komunikatem
+        // (wzorowane na DocumentStudioView.tsx templateResolveMessage).
+        const code =
+          typeof err?.data?.error === 'string' ? err.data.error : 'TEMPLATE_RESOLVE_FAILED';
+        setTemplateCreateErrorCode(code);
+        setTemplateCreateState('error');
+      }
+    })();
+  }, [templateArtifactId, pipeline.currentRun, pipeline.isGenerating, openInDeckBuilder]);
+
+  // Uczciwy komunikat po polsku per kod odrzucenia — patrz
+  // DocumentStudioView.tsx `templateResolveMessage` (ten sam wzorzec).
+  const templateCreateMessage = useMemo((): string | null => {
+    if (templateCreateState !== 'error') return null;
+    switch (templateCreateErrorCode) {
+      case 'TEMPLATE_ORPHANED':
+        return t('prezentacje.templateOrphaned', {
+          defaultValue:
+            'Ten wzorzec nie ma już kanonicznego rekordu — nie ma z czego generować. Wybierz inny wzorzec w Bibliotece.',
+        });
+      case 'TEMPLATE_NOT_INDEXED':
+        return t('prezentacje.templateNotIndexed', {
+          defaultValue: 'Tego wzorca nie ma w Twoim indeksie Biblioteki. Wybierz inny wzorzec.',
+        });
+      case 'TEMPLATE_FORBIDDEN':
+        return t('prezentacje.templateForbidden', {
+          defaultValue: 'Nie masz dostępu do tego wzorca.',
+        });
+      case 'TEMPLATE_DEPRECATED':
+        return t('prezentacje.templateDeprecated', {
+          defaultValue:
+            'Ten wzorzec został wycofany i nie może już sterować generacją. Wybierz aktualny wzorzec.',
+        });
+      case 'TEMPLATE_FORMAT_UNSUPPORTED':
+        return t('prezentacje.templateFormatUnsupported', {
+          defaultValue: 'Ten wzorzec nie tworzy prezentacji.',
+        });
+      default:
+        return t('prezentacje.templateResolveFailed', {
+          defaultValue: 'Nie udało się rozwiązać wzorca. Spróbuj ponownie.',
+        });
+    }
+  }, [templateCreateState, templateCreateErrorCode, t]);
 
   // D2 tryb ①CZYSTO — pusty deck (1 slajd tytułowy) utworzony BEZ pipeline'u AI
   // przez istniejący `POST /api/presentations/decks` (create-from-structured-JSON),
@@ -561,6 +627,40 @@ export const PrezentacjeView: React.FC = () => {
         <span className="text-sm">
           {t('prezentacje.blank.creating', 'Tworzenie pustej prezentacji…')}
         </span>
+      </div>
+    );
+  }
+
+  // R11 deck slice — "Użyj wzorca": stan ładowania podczas materializacji
+  // decka z szablonu (`POST /presentations/decks/from-template`). Sukces
+  // nawiguje od razu do Deck Buildera (patrz efekt wyżej) — ten branch nigdy
+  // nie zostaje wyrenderowany po sukcesie.
+  if (templateArtifactId && templateCreateState !== 'error') {
+    return (
+      <div className="flex h-full flex-1 items-center justify-center gap-2 text-c-text-secondary">
+        <Loader2 size={18} className="animate-spin" />
+        <span className="text-sm">
+          {t('prezentacje.template.creating', 'Tworzenie prezentacji z szablonu…')}
+        </span>
+      </div>
+    );
+  }
+
+  // R11 deck slice — stan BLOKUJĄCY dla wzorca, którego nie da się rozwiązać
+  // (orphaned/forbidden/deprecated/not_indexed/unsupported). ★ Zero cichego
+  // fallbacku do promptu AI ani do pickera — użytkownik musi wrócić do
+  // Biblioteki i wybrać inny wzorzec.
+  if (templateArtifactId && templateCreateState === 'error') {
+    return (
+      <div className="flex h-full flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+        <p className="max-w-md text-sm text-c-text-secondary">{templateCreateMessage}</p>
+        <button
+          type="button"
+          onClick={handleAllFiles}
+          className="rounded-md border border-c-border px-3 py-1.5 text-sm text-c-text-primary hover:bg-c-surface-hover"
+        >
+          {t('prezentacje.template.backToLibrary', 'Wróć do Biblioteki')}
+        </button>
       </div>
     );
   }

@@ -43,6 +43,15 @@ describe('Sidebar menuConfig (L2)', () => {
     expect(menu.some((item) => item.label === 'Wnioski')).toBe(false);
   });
 
+  // Kanon 2026-07-26 (docs/product/MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md
+  // §3): "Excel" was a duplicate of Materiały → Arkusze and must NOT appear as
+  // its own sidebar entry, regardless of isExceleEngineEnabled() — the engine
+  // itself stays fully reachable via Materials → Sheets and the /excele deep
+  // link (AppRoutes.tsx); only the standalone clickable menu item is removed.
+  it('never exposes Excel as its own sidebar module (duplicate of Materiały → Arkusze)', () => {
+    expect(getMenuStructure(t).some((i) => i.id === 'MODULE_EXCELE')).toBe(false);
+  });
+
   it('exposes AI OS manual-test entrypoints as an internal tools footer item', () => {
     const aiOs = getInternalToolsMenuItem(t);
 

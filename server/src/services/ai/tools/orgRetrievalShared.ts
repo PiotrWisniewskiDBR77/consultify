@@ -19,14 +19,31 @@ export function isTeresaRetrievalEnabled(): boolean {
 }
 
 /**
- * Feature flag ff_teresaMindmap (ENABLE_TERESA_MINDMAP). Gates the mind-map
- * retrieval tool (search_org_mindmaps). Read per-call so env changes in tests
- * apply without re-importing. Default off. The mind-map retrieval path is
- * co-gated with ENABLE_TERESA_RETRIEVAL (both must be on) since it plugs into
- * the same server-side org-retrieval block.
+ * Krok C (rozdział flagi-długu ENABLE_TERESA_MINDMAP — patrz
+ * `server/src/config/FeatureFlags.ts` komentarz przy tej fladze): jedna nazwa
+ * ENV historycznie gasiła DWIE niepowiązane funkcje —
+ *   Funkcja A (deliverable bridge): generate_deliverable(type:'mindmap') +
+ *     front (IdeaMapWorkspace/useOpenChatWithContext) — zostaje na
+ *     `ENABLE_TERESA_MINDMAP`, default ON, NIE dotyczy tego helpera.
+ *   Funkcja B (retrieval, TEN plik): tool `search_org_mindmaps` — dostaje
+ *     WŁASNĄ flagę `ENABLE_TERESA_MINDMAP_SEARCH`, default OFF.
+ *
+ * Kompatybilność wsteczna: każde środowisko, które dotąd włączało retrieval
+ * WYŁĄCZNIE starą flagą (`ENABLE_TERESA_MINDMAP=true`), ma działać tak samo —
+ * stąd OR obu flag, nie zamiana jednej na drugą. Jedyny sposób na wyłączenie
+ * retrievalu tam, gdzie stara flaga zostaje ON dla Funkcji A, to NOWA,
+ * niezależna kontrola (`ENABLE_TERESA_MINDMAP_SEARCH`), którą to zastępuje.
+ *
+ * Read per-call (nie przez cache'owany `featureFlags` singleton) so env
+ * changes in tests apply without re-importing. Co-gated z
+ * `isTeresaRetrievalEnabled()` (oba muszą być prawdziwe) — patrz
+ * `searchOrgMindmaps.ts`.
  */
-export function isTeresaMindmapEnabled(): boolean {
-  return process.env.ENABLE_TERESA_MINDMAP === 'true';
+export function isTeresaMindmapSearchEnabled(): boolean {
+  return (
+    process.env.ENABLE_TERESA_MINDMAP_SEARCH === 'true' ||
+    process.env.ENABLE_TERESA_MINDMAP === 'true'
+  );
 }
 
 /** Max serialized size (chars ≈ bytes for ASCII-heavy JSON) per tool result. */
@@ -86,7 +103,7 @@ export function capResultPayload<T>(
 
 export default {
   isTeresaRetrievalEnabled,
-  isTeresaMindmapEnabled,
+  isTeresaMindmapSearchEnabled,
   clampLimit,
   toSnippet,
   capResultPayload,

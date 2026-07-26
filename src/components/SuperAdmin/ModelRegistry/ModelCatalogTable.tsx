@@ -689,14 +689,9 @@ export const ModelCatalogTable: React.FC = () => {
   // ── Preview actions (StandardPreview) ────────────────────────────────────
   const previewActions: StandardPreviewActions | undefined = previewModel
     ? {
+        // canon §7.3 — "Edit" usunięte z resolutions: dublowało onOpenFull
+        // przekazywane do StandardPreview w tym samym renderze (header ma już Open/Edit).
         resolutions: [
-          {
-            id: 'edit',
-            variant: 'positive',
-            label: 'Edit',
-            icon: Edit,
-            onClick: () => handleEdit(previewModel),
-          },
           {
             id: 'toggle-active',
             variant: previewModel.isActive ? 'warning' : 'positive',

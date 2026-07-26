@@ -1946,14 +1946,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             : undefined,
           informational: [
             {
-              id: 'open',
-              variant: 'neutral',
-              label: t('common.open', 'Open'),
-              icon: ExternalLink,
-              shortcut: 'O',
-              onClick: () => handleOpenInitiativeDocument(selectedTableRow),
-            },
-            {
               id: 'copy-link',
               variant: 'neutral',
               label: t('initiatives.copyLinkAction', 'Copy link'),

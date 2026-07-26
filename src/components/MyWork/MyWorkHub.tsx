@@ -125,6 +125,7 @@ import type { HomeScreenAction } from './Home/homeV2Types';
 import {
   composeIdeaBodyFromSeedIntent,
   deriveIdeaTitleFromSeedIntent,
+  getIdeaStageBucketLabel,
   type IdeaWorkspaceSeedIntent,
   normalizePreferredSystem,
 } from './ideaEntryTypes';
@@ -3185,31 +3186,34 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         },
         {
           id: 'spark',
-          label: t('myWork.hub.label40', 'Spark'),
+          // SSOT 2026-07-24 (jak IdeasTableContent.tsx:~506): etykieta z
+          // getIdeaStageBucketLabel, nie z osobnego klucza t() — te dryfowały
+          // (PL "Kształtuje" bez "się" w translation.json vs SSOT poniżej).
+          label: getIdeaStageBucketLabel('spark', isPolish),
           icon: <Lightbulb size={14} className="text-amber-600 dark:text-amber-300" />,
           count: ideasStageCounts.spark,
         },
         {
           id: 'incubating',
-          label: t('myWork.hub.label41', 'Growing'),
+          label: getIdeaStageBucketLabel('incubating', isPolish),
           icon: <Sprout size={14} className="text-emerald-600 dark:text-emerald-300" />,
           count: ideasStageCounts.incubating,
         },
         {
           id: 'shaping',
-          label: t('myWork.hub.label42', 'Shaping'),
+          label: getIdeaStageBucketLabel('shaping', isPolish),
           icon: <TreePine size={14} className="text-blue-600 dark:text-blue-300" />,
           count: ideasStageCounts.shaping,
         },
         {
           id: 'ready',
-          label: t('myWork.hub.label43', 'Ready'),
+          label: getIdeaStageBucketLabel('ready', isPolish),
           icon: <CheckCircle2 size={14} className="text-blue-600 dark:text-blue-300" />,
           count: ideasStageCounts.ready,
         },
         {
           id: 'promoted',
-          label: t('myWork.hub.label44', 'Promoted'),
+          label: getIdeaStageBucketLabel('promoted', isPolish),
           icon: <Rocket size={14} className="text-primary-600 dark:text-primary-300" />,
           count: ideasStageCounts.promoted,
         },

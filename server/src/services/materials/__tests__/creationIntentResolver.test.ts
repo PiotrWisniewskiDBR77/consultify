@@ -30,6 +30,7 @@ import {
   TemplateResolveError,
   isTemplateResolveError,
   resolveDocumentTemplateForCreation,
+  resolvePresentationTemplateForCreation,
   type TemplateRef,
 } from '../creationIntent.js';
 
@@ -84,10 +85,32 @@ function registeredDocTemplate(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/**
+ * `presentation_templates` (migration 568 base + 767 `lifecycle_state`). PK is
+ * `id`; system templates seeded with `organization_id IS NULL`.
+ */
+function presentationTemplateRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'pt-steering',
+    organization_id: null,
+    name: 'Steering Committee Update',
+    is_system: true,
+    is_active: true,
+    lifecycle_state: 'approved',
+    outline_json: JSON.stringify([
+      { intent: 'cover', title: 'Steering Committee Update' },
+      { intent: 'executive_summary', title: 'Executive Summary', keyMessage: 'Q3 on track' },
+      { intent: 'next_steps', title: 'Next Steps & Decisions' },
+    ]),
+    ...overrides,
+  };
+}
+
 interface DbRoute {
   originLink?: unknown;
   docStudio?: unknown;
   reportTemplate?: unknown;
+  presentationTemplate?: unknown;
 }
 
 /** Route `dbGet` by the table named in the SQL. Absent route → row not found. */
@@ -96,6 +119,7 @@ function routeDb(routes: DbRoute) {
     if (sql.includes('v8_artifact_origin_links')) return routes.originLink ?? null;
     if (sql.includes('document_studio_templates')) return routes.docStudio ?? null;
     if (sql.includes('report_builder_templates')) return routes.reportTemplate ?? null;
+    if (sql.includes('presentation_templates')) return routes.presentationTemplate ?? null;
     return null;
   });
 }
@@ -107,6 +131,21 @@ async function expectResolveError(
 ): Promise<TemplateResolveError> {
   try {
     await resolveDocumentTemplateForCreation(ref, { organizationId });
+  } catch (err) {
+    expect(isTemplateResolveError(err)).toBe(true);
+    expect((err as TemplateResolveError).code).toBe(code);
+    return err as TemplateResolveError;
+  }
+  throw new Error(`Expected ${code} but the resolver returned successfully`);
+}
+
+async function expectPresentationResolveError(
+  ref: TemplateRef,
+  code: string,
+  organizationId: string = ORG
+): Promise<TemplateResolveError> {
+  try {
+    await resolvePresentationTemplateForCreation(ref, { organizationId });
   } catch (err) {
     expect(isTemplateResolveError(err)).toBe(true);
     expect((err as TemplateResolveError).code).toBe(code);
@@ -377,6 +416,159 @@ describe('resolveDocumentTemplateForCreation — rejection paths', () => {
         canonicalTemplateId: 'dst-exec-memo-001',
         originRuntime: 'document_template',
       },
+      'TEMPLATE_FORBIDDEN',
+      ''
+    );
+  });
+});
+
+// =============================================================================
+// R11 DECK SLICE (2026-07-26) — resolvePresentationTemplateForCreation
+// =============================================================================
+
+describe('resolvePresentationTemplateForCreation — canonical presentation template', () => {
+  it('returns the outline_json blueprint fresh from the registry, matching the fixture row', async () => {
+    routeDb({
+      originLink: { origin_runtime: 'presentation_template', origin_record_id: 'pt-steering' },
+      presentationTemplate: presentationTemplateRow(),
+    });
+
+    const resolved = await resolvePresentationTemplateForCreation(
+      { kind: 'library', templateArtifactId: 'art-deck-library-card' },
+      { organizationId: ORG }
+    );
+
+    expect(resolved.originRuntime).toBe('presentation_template');
+    expect(resolved.format).toBe('presentation');
+    expect(resolved.source).toBe('canonical');
+    expect(resolved.legacy).toBe(false);
+    expect(resolved.status).toBe('approved');
+    expect(resolved.scope).toBe('system');
+    expect(resolved.name).toBe('Steering Committee Update');
+
+    // The library card id and the canonical registry id are DIFFERENT things.
+    expect(resolved.canonicalTemplateId).toBe('pt-steering');
+    expect(resolved.canonicalTemplateId).not.toBe('art-deck-library-card');
+
+    // Blueprint IS the fixture row's outline_json, parsed — not derived from
+    // anything else (e.g. not a text description, not AI output).
+    expect(resolved.outlineBlueprint).toEqual(
+      JSON.parse(presentationTemplateRow().outline_json as string)
+    );
+    expect(resolved.outlineBlueprint).toHaveLength(3);
+  });
+
+  it('resolves an organization-scoped template for its own org and reports scope "organization"', async () => {
+    routeDb({
+      presentationTemplate: presentationTemplateRow({
+        id: 'pt-custom-1',
+        organization_id: ORG,
+        is_system: false,
+      }),
+    });
+
+    const resolved = await resolvePresentationTemplateForCreation(
+      { kind: 'internal', canonicalTemplateId: 'pt-custom-1', originRuntime: 'presentation_template' },
+      { organizationId: ORG }
+    );
+
+    expect(resolved.scope).toBe('organization');
+    expect(resolved.canonicalTemplateId).toBe('pt-custom-1');
+  });
+
+  it('never writes to the database', async () => {
+    routeDb({ presentationTemplate: presentationTemplateRow() });
+
+    await resolvePresentationTemplateForCreation(
+      { kind: 'internal', canonicalTemplateId: 'pt-steering', originRuntime: 'presentation_template' },
+      { organizationId: ORG }
+    );
+
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+});
+
+describe('resolvePresentationTemplateForCreation — rejection paths', () => {
+  it('TEMPLATE_NOT_INDEXED when the artifact has no origin link', async () => {
+    routeDb({});
+    await expectPresentationResolveError(
+      { kind: 'library', templateArtifactId: 'art-missing' },
+      'TEMPLATE_NOT_INDEXED'
+    );
+  });
+
+  it('TEMPLATE_ORPHANED when the link survives but the canonical record is gone', async () => {
+    routeDb({
+      originLink: { origin_runtime: 'presentation_template', origin_record_id: 'pt-deleted' },
+      // presentation_templates has no such row any more.
+    });
+
+    const err = await expectPresentationResolveError(
+      { kind: 'library', templateArtifactId: 'art-orphan-deck-card' },
+      'TEMPLATE_ORPHANED'
+    );
+    expect(err.details.canonicalTemplateId).toBe('pt-deleted');
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
+  it('TEMPLATE_FORBIDDEN when the template belongs to another organization', async () => {
+    routeDb({
+      presentationTemplate: presentationTemplateRow({
+        id: 'pt-foreign',
+        organization_id: OTHER_ORG,
+        is_system: false,
+      }),
+    });
+
+    await expectPresentationResolveError(
+      { kind: 'internal', canonicalTemplateId: 'pt-foreign', originRuntime: 'presentation_template' },
+      'TEMPLATE_FORBIDDEN'
+    );
+  });
+
+  it('TEMPLATE_DEPRECATED when lifecycle_state is deprecated', async () => {
+    routeDb({
+      presentationTemplate: presentationTemplateRow({ lifecycle_state: 'deprecated' }),
+    });
+
+    await expectPresentationResolveError(
+      { kind: 'internal', canonicalTemplateId: 'pt-steering', originRuntime: 'presentation_template' },
+      'TEMPLATE_DEPRECATED'
+    );
+  });
+
+  it('TEMPLATE_DEPRECATED when is_active is false even if lifecycle_state says approved', async () => {
+    routeDb({
+      presentationTemplate: presentationTemplateRow({ is_active: false, lifecycle_state: 'approved' }),
+    });
+
+    await expectPresentationResolveError(
+      { kind: 'internal', canonicalTemplateId: 'pt-steering', originRuntime: 'presentation_template' },
+      'TEMPLATE_DEPRECATED'
+    );
+  });
+
+  it('TEMPLATE_FORMAT_UNSUPPORTED for document and report runtimes (out of this slice)', async () => {
+    routeDb({
+      originLink: { origin_runtime: 'document_template', origin_record_id: 'dst-exec-memo-001' },
+    });
+    await expectPresentationResolveError(
+      { kind: 'library', templateArtifactId: 'art-doc-card' },
+      'TEMPLATE_FORMAT_UNSUPPORTED'
+    );
+
+    routeDb({
+      originLink: { origin_runtime: 'report_template', origin_record_id: 'rbt-assessment-drd' },
+    });
+    await expectPresentationResolveError(
+      { kind: 'library', templateArtifactId: 'art-report-card' },
+      'TEMPLATE_FORMAT_UNSUPPORTED'
+    );
+  });
+
+  it('TEMPLATE_FORBIDDEN when no organization context is supplied', async () => {
+    await expectPresentationResolveError(
+      { kind: 'internal', canonicalTemplateId: 'pt-steering', originRuntime: 'presentation_template' },
       'TEMPLATE_FORBIDDEN',
       ''
     );

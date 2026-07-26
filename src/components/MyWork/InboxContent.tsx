@@ -1169,7 +1169,20 @@ const PreviewPane: React.FC<{
   onSnooze: (preset: SnoozePreset) => void;
   onSaveAsNote?: (item: InboxItem) => void;
   onUndoLastAI?: () => void;
-}> = ({ item, isPolish, onClose, onOpen, onTriage, onSnooze, onSaveAsNote, onUndoLastAI }) => {
+  onOpenTask?: (taskId: string) => void;
+  onOpenDecision?: (decisionId: string) => void;
+}> = ({
+  item,
+  isPolish,
+  onClose,
+  onOpen,
+  onTriage,
+  onSnooze,
+  onSaveAsNote,
+  onUndoLastAI,
+  onOpenTask,
+  onOpenDecision,
+}) => {
   const u = urgencyConfig[item.urgency] || urgencyConfig.normal;
   const UIcon = u.icon;
   const sla = slaPill(item.sla);
@@ -1376,6 +1389,7 @@ const PreviewPane: React.FC<{
             label: `Task ${item.linkedTaskId.slice(0, 8)}…`,
             icon: CheckSquare,
             tone: 'text-emerald-600 dark:text-emerald-400',
+            onClick: onOpenTask ? () => onOpenTask(item.linkedTaskId!) : undefined,
           } as RelationItem,
         ]
       : []),
@@ -1385,6 +1399,7 @@ const PreviewPane: React.FC<{
             label: `${i18n.t('myWork.inboxContent.decision', 'Decision')} ${item.linkedDecisionId.slice(0, 8)}…`,
             icon: Scale,
             tone: 'text-amber-600 dark:text-amber-400',
+            onClick: onOpenDecision ? () => onOpenDecision(item.linkedDecisionId!) : undefined,
           } as RelationItem,
         ]
       : []),
@@ -3953,6 +3968,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               }}
               onSaveAsNote={handleSaveAsNote}
               onUndoLastAI={handleUndoLastAI}
+              onOpenTask={onOpenTask}
+              onOpenDecision={onOpenDecision}
             />
           </div>
         )}

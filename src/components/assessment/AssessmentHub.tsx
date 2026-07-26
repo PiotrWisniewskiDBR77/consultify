@@ -1552,15 +1552,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                 onClick: () => void handleRowAction('delete', selectedListRow),
               },
             ],
+            // canon §7.3 — "Open" usunięte z informational: dublowało onOpenFull
+            // przekazywane do StandardPreview w tym samym renderze (header ma już Open).
             informational: [
-              {
-                id: 'open',
-                variant: 'neutral',
-                label: t('common.open', 'Open'),
-                icon: ExternalLink,
-                shortcut: 'O',
-                onClick: () => handleOpenDocument(selectedListRow),
-              },
               {
                 id: 'duplicate',
                 variant: 'neutral',
@@ -1599,15 +1593,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                     onClick: () => void handleRowAction('delete', selectedReportRow),
                   },
                 ],
+            // canon §7.3 — "Open" usunięte z informational: dublowało onOpenFull
+            // przekazywane do StandardPreview w tym samym renderze (header ma już Open).
             informational: [
-              {
-                id: 'open',
-                variant: 'neutral',
-                label: t('common.open', 'Open'),
-                icon: ExternalLink,
-                shortcut: 'O',
-                onClick: () => handleOpenDocument(selectedReportRow),
-              },
               ...(selectedReportRow._isImported
                 ? []
                 : [
@@ -1642,15 +1630,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                 onClick: () => void handleRowAction('delete', selectedInitiativeRow),
               },
             ],
+            // canon §7.3 — "Open" usunięte z informational: dublowało onOpenFull
+            // przekazywane do StandardPreview w tym samym renderze (header ma już Open).
             informational: [
-              {
-                id: 'open',
-                variant: 'neutral',
-                label: t('common.open', 'Open'),
-                icon: ExternalLink,
-                shortcut: 'O',
-                onClick: () => handleOpenDocument(selectedInitiativeRow),
-              },
               {
                 id: 'duplicate',
                 variant: 'neutral',

@@ -208,8 +208,10 @@ export const PresentationsHub: React.FC = () => {
 
   // Tabs config
   // "Architekt szablonów" is gated behind `isDeckArchitectEnabled()` (default
-  // OFF) — CLAUDE.md pkt 7: no visual surface goes in front of Piotr before
-  // it's reviewed on a clean screenshot. OFF → hub is byte-identical to today.
+  // ON since fb119cefe8, akcept Piotra 2026-07-22; UWAGA: decyzja architekta
+  // D6 z 2026-07-24 postuluje OFF — konflikt do rozstrzygnięcia przez Piotra,
+  // nie zmieniaj defaultu bez jego słowa). OFF → hub is byte-identical to
+  // pre-flag state.
   const deckArchitectEnabled = isDeckArchitectEnabled();
   const tabs = useMemo(
     () => [
