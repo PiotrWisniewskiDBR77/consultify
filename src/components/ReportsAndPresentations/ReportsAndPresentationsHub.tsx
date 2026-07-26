@@ -39,9 +39,10 @@ import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 
-import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
+import { type FilterChip, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -1326,8 +1327,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
   return (
     <div className="h-full" data-testid="reports-presentations-hub">
-      <ModuleHub
-        persistViewModeKey="reports_presentations"
+      <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab as ModuleTab}
         onTabChange={(tab) => {
@@ -1368,7 +1368,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         commandRowContent={commandRowContent}
       >
         <div className="h-full min-h-0 overflow-hidden">{renderTabContent()}</div>
-      </ModuleHub>
+      </StandardModuleBar>
       {/* Materiały — wspólne „Dodaj" (Documents/Presentations/Sheets/All), item 1-3
           briefu Materiały-entry 2026-07-24. Zastępuje martwy OutputsLauncherModal
           (nadal istnieje w repo, `./OutputsLauncherModal.tsx`, nieużywany z tego
