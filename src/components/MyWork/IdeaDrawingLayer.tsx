@@ -218,6 +218,12 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
         onPointerDown={startDrawing}
         onPointerMove={continueDrawing}
         onPointerUp={endDrawing}
+        // Naprawa 2026-07-26 (Zadanie C — prawy klik w trybie Rysuj pokazywał
+        // natywne menu przeglądarki): ta warstwa SVG leży NA WIERZCHU płótna
+        // (z-[70]) tylko w trybie draw i przechwytuje wszystkie zdarzenia
+        // wskaźnika — w tym prawy klik — zanim dotrą do `onPaneContextMenu`
+        // React Flow niżej. Brakowało tu analogicznego `preventDefault()`.
+        onContextMenu={(e) => e.preventDefault()}
         style={{ touchAction: 'none' }}
       >
         <g transform={vpTransformStr}>
