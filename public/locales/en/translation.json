@@ -24719,6 +24719,13 @@
     "detailError": {
       "title": "Could not load this conclusion",
       "description": "Something went wrong loading the readout. Try again."
+    },
+    "confidenceShort": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "insufficient": "Insufficient",
+      "contradicted": "Contradicted"
     }
   },
   "superAdmin": {

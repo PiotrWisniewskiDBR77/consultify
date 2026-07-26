@@ -25775,6 +25775,13 @@
     "detailError": {
       "title": "Nie udało się wczytać tego wniosku",
       "description": "Coś poszło nie tak podczas wczytywania readoutu. Spróbuj ponownie."
+    },
+    "confidenceShort": {
+      "high": "Wysoka",
+      "medium": "Średnia",
+      "low": "Niska",
+      "insufficient": "Niewystarczające",
+      "contradicted": "Podważony"
     }
   },
   "superAdmin": {
