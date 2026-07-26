@@ -4,7 +4,6 @@ import {
   BellOff,
   Copy,
   DollarSign,
-  ExternalLink,
   FileText,
   Inbox,
   Layers,
@@ -1541,14 +1540,6 @@ export const ResultsHub: React.FC = () => {
       selectedCatalogKpi
         ? {
             informational: [
-              {
-                id: 'open',
-                variant: 'neutral',
-                label: t('common.open', 'Open'),
-                icon: ExternalLink,
-                shortcut: 'O',
-                onClick: () => openKpiDrawer(selectedCatalogKpi.id, 'summary'),
-              },
               {
                 id: 'record',
                 variant: 'neutral',
