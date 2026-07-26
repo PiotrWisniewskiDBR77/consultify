@@ -90,6 +90,7 @@ import {
 import { buildParityReportForDeck } from '../services/presentationExportParityService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
+import { mapOutlineBlueprintToDeckSlides } from '../services/presentationTemplateRuntimeService.js';
 import {
   type AlertSeverity,
   dispatchAlertsForTransition,
@@ -1798,17 +1799,10 @@ router.post(
     }
 
     const title = requestedTitle || resolved.name || 'Presentation from template';
-    const outlineItems = resolved.outlineBlueprint as Array<Record<string, unknown>>;
-    const slides = outlineItems.map((item, index) => {
-      const intent = String(item?.intent || 'content');
-      const slideTitle = String(item?.title || item?.workingTitle || `Slide ${index + 1}`);
-      const keyMessage = item?.keyMessage ?? item?.key_message ?? null;
-      const blocks: Array<Record<string, unknown>> = [{ type: 'heading', content: slideTitle }];
-      if (typeof keyMessage === 'string' && keyMessage.trim()) {
-        blocks.push({ type: 'text', content: keyMessage.trim() });
-      }
-      return { type: intent, content: { title: slideTitle, intent, blocks } };
-    });
+    // Deterministic outline→slide copy (no AI) — see mapOutlineBlueprintToDeckSlides
+    // doc comment for why this is a named, independently-tested export rather
+    // than inline mapping.
+    const slides = mapOutlineBlueprintToDeckSlides(resolved.outlineBlueprint);
     const slideCount = slides.length;
 
     const deckId = uuidv4().replace(/-/g, '');

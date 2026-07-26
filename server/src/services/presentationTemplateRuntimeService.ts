@@ -409,3 +409,44 @@ export function buildSystemTemplateRuntime(family: TemplateFamily): Presentation
     },
   };
 }
+
+/** One slide as `POST /presentations/decks` (structured-JSON deck creation) expects it. */
+export interface DeckSlideFromOutline {
+  type: string;
+  content: {
+    title: string;
+    intent: string;
+    blocks: Array<{ type: 'heading' | 'text'; content: string }>;
+  };
+}
+
+/**
+ * R11 deck slice (2026-07-26) — deterministic outline→slide mapping for
+ * `POST /presentations/decks/from-template`.
+ *
+ * This is the fix for the R0 audit finding "`from_template` NIE kopiuje
+ * `outline_json` do kart — tylko seeduje AI promptem": given a template's
+ * `outline_json` (read fresh from `presentation_templates` by
+ * `resolvePresentationTemplateForCreation`), produce one slide per outline
+ * item with NO AI involved — pure, deterministic, and therefore unit-testable
+ * against a fixture without a live database.
+ *
+ * Exported so the route (production caller) and the test can both use the
+ * same function — the route must never re-derive this mapping inline.
+ */
+export function mapOutlineBlueprintToDeckSlides(outlineBlueprint: unknown[]): DeckSlideFromOutline[] {
+  const items = Array.isArray(outlineBlueprint) ? outlineBlueprint : [];
+  return items.map((raw, index) => {
+    const item = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+    const intent = String(item.intent || 'content');
+    const title = String(item.title || item.workingTitle || `Slide ${index + 1}`);
+    const keyMessageRaw = item.keyMessage ?? item.key_message ?? null;
+    const blocks: Array<{ type: 'heading' | 'text'; content: string }> = [
+      { type: 'heading', content: title },
+    ];
+    if (typeof keyMessageRaw === 'string' && keyMessageRaw.trim()) {
+      blocks.push({ type: 'text', content: keyMessageRaw.trim() });
+    }
+    return { type: intent, content: { title, intent, blocks } };
+  });
+}
