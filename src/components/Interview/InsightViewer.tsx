@@ -113,6 +113,7 @@ import {
 } from '@/components/standard/ArtifactRightPanel';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
+import { confidenceShortLabel } from '@/components/Conclusions/conclusionMeta';
 import { Button, LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -8906,7 +8907,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             {
               id: 'confidence',
               label: t('interview.insightViewer.confidence'),
-              value: panelConfidence || panelDash,
+              value: panelConfidence ? confidenceShortLabel(t, panelConfidence) : panelDash,
             },
             {
               id: 'findings',
@@ -9520,7 +9521,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       {t('interview.insightViewer.confidenceLevelLabel', 'Confidence level')}
                     </label>
                     <div className="mt-1 px-3 py-2 rounded-lg bg-c-surface-raised text-sm text-c-text-secondary border border-c-border-subtle">
-                      {handoffFinding.confidence || 'medium'}
+                      {confidenceShortLabel(t, handoffFinding.confidence)}
                     </div>
                   </div>
                   <div>

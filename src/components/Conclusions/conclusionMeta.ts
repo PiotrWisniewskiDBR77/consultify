@@ -54,6 +54,24 @@ export function confidenceLabel(t: TFunction, raw: string | null | undefined): s
   return t(`conclusions.confidence.${key}`, fallback[key]);
 }
 
+/**
+ * Goły przymiotnik (bez słowa „confidence"/„pewność") — do wierszy
+ * label:wartość, gdzie etykieta ("Pewność"/"Confidence") już stoi obok
+ * (np. InsightViewer property strip). `confidenceLabel` powyżej dublowałby
+ * słowo w takim layoucie ("Pewność: Średnia pewność").
+ */
+export function confidenceShortLabel(t: TFunction, raw: string | null | undefined): string {
+  const key = normalizeConfidence(raw);
+  const fallback: Record<ConfidenceKey, string> = {
+    high: 'High',
+    medium: 'Medium',
+    low: 'Low',
+    insufficient: 'Insufficient',
+    contradicted: 'Contradicted',
+  };
+  return t(`conclusions.confidenceShort.${key}`, fallback[key]);
+}
+
 /** Confidence chip tone — success/accent/warning/danger via tokens, no crimson. */
 export function confidenceTone(raw: string | null | undefined): string {
   const key = normalizeConfidence(raw);
