@@ -5000,14 +5000,15 @@ Return ONLY the final comment text.`;
         // dublujemy — patrz canCompleteFromPanel.
         label: t('myWork.taskDetail.label8', 'Actions'),
         icon: Save,
-        defaultOpen: true,
         // Pusto TYLKO w trybie Podgląd („do pokazania klientowi") — w trybie
-        // Edycja zawsze zostaje co najmniej „Przydziel".
+        // Edycja zawsze zostaje co najmniej „Przydziel". Etap 4 gridu n-Type
+        // (_GRID_STABILIZATION_COMMAND_2026-07-24.md): w Podglądzie sekcja jest
+        // ZWINIĘTA z licznikiem 0, bez komunikatu opisowego (był tu tekst
+        // „Actions are hidden in preview mode" — SSOT go zakazuje wprost).
+        defaultOpen: !readMode,
         isEmpty: readMode,
-        emptyLabel: t(
-          'myWork.taskDetail.actionsHiddenInReadMode',
-          'Actions are hidden in preview mode'
-        ),
+        badge: readMode ? 0 : undefined,
+        showZeroBadge: true,
         children: readMode ? null : (
           <div className="flex flex-col gap-2">
             {canCompleteFromPanel && (
@@ -5294,7 +5295,21 @@ Return ONLY the final comment text.`;
             Zadaniu / Powiadomieniu i na 16 px w pozostałych trzech kartach.
             Boki (`px-6`) i dół (`pb-6`) bez zmian. */}
         <div className="px-6 pt-4 pb-6">
-          <div className="max-w-6xl mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
+          {/* GRID ETAP 5 (2026-07-24) — Zadanie: SSOT §Wymagania/Zadanie wymaga
+              poszerzyć centralną kolumnę o ok. 80-120 px i podłączyć do niej
+              istniejący token dokumentowy `--ntype-content-document-width`
+              (Etap 2, do teraz nieużywany). `max-w-6xl` (1152px stałe) dawał
+              centrum ~598px na 1440 — za wąsko dla opisu+checklisty. Nowa
+              szerokość powłoki = suma stałych kolumn (lewy panel sekcji +
+              prawy panel + 2×odstęp) + token dokumentowy, więc centrum
+              wyrówna się do 720-760px zamiast rosnąć bez ograniczenia. */}
+          <div
+            className="mx-auto xl:flex xl:gap-6 xl:items-start space-y-0"
+            style={{
+              maxWidth:
+                'calc(var(--ntype-left-panel-width) + var(--ntype-column-gap) + var(--ntype-content-document-max-width) + var(--ntype-column-gap) + var(--ntype-right-panel-width))',
+            }}
+          >
             {/* ── Lewa kolumna: header + treść (dokowany panel po prawej) ── */}
             <div className="xl:flex-1 xl:min-w-0 space-y-0">
               {/* ── Header ──────────────────────────────────────── */}
@@ -5534,19 +5549,36 @@ Return ONLY the final comment text.`;
                        Wzór: Decyzja/Inicjatywa (fala 2). */
                     readMode={readMode}
                   />
-                  <NModeCanvas
-                    sections={visibleTaskNModeSections}
-                    activeSection={activeNSection}
-                    reducedMotion={reducedMotion}
-                    motionDuration={motionDuration}
-                  />
+                  {/* Kolumna dokumentowa (SSOT §Centralna kolumna treści / §Zadanie):
+                      strop tokenem `--ntype-content-document-max-width` (760px) —
+                      Zadanie to opis+checklist, nie tabela analityczna, więc NIE
+                      dostaje trybu analitycznego (800-900px). Bez wrappera
+                      `NModeCanvas` (nie ruszany — poza zakresem tego etapu) rósłby
+                      bez ograniczenia jako `flex-1` w poszerzonej powłoce. */}
+                  <div
+                    className="flex-1 min-w-0"
+                    style={{ maxWidth: 'var(--ntype-content-document-max-width)' }}
+                  >
+                    <NModeCanvas
+                      sections={visibleTaskNModeSections}
+                      activeSection={activeNSection}
+                      reducedMotion={reducedMotion}
+                      motionDuration={motionDuration}
+                    />
+                  </div>
                 </div>
               </div>
               {/* ── /Lewa kolumna ── */}
             </div>
 
-            {/* ── Dokowany prawy panel artefaktu (lg+; ukryty na <lg) ── */}
-            <div className="hidden xl:block shrink-0 sticky top-4 self-start">
+            {/* ── Dokowany prawy panel artefaktu ──────────────────────────
+                GRID ETAP 6 (2026-07-24, naprawa P0-1): BEZ `hidden xl:block`
+                (wzorzec z Powiadomienia, NotificationDetailView.tsx:4196) —
+                ta karta pokazywała panel tylko od 1280px, ukrywając na
+                1024px (minimalny wspierany desktop) całe Akcje/Właściwości/
+                Komentarze/Historię. Regresja funkcji pod pretekstem
+                geometrii, nie estetyka. */}
+            <div className="shrink-0 sticky top-4 self-start">
               <ArtifactRightPanel
                 sections={rightPanelSections}
                 className={ARTIFACT_PANEL_CARD_CLASS_STICKY}

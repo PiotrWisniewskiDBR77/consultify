@@ -1032,6 +1032,13 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
   const [showDelegationModal, setShowDelegationModal] = useState(false);
 
+  // GRID ETAP 5 (2026-07-24) — SSOT §Wymagania/Decyzja: „ograniczyć liczbę
+  // widocznych akcji w prawym panelu" + „jedna główna akcja, reszta w More".
+  // Sekcja Akcje potrafi wystawić naraz do 6 przycisków (Zatwierdź decyzję +
+  // 2 przejścia workflow + Odrzuć + Więcej info + Deleguj + Udostępnij) —
+  // zwinięte domyślnie za tym przełącznikiem, poza primary/destructive.
+  const [showMoreDecisionActions, setShowMoreDecisionActions] = useState(false);
+
   // ── Presentation Mode (N = Notion / C = ClickUp) ──────────────────────────
   const { mode: presentationMode, setMode: setPresentationMode } = usePresentationMode({
     entityType: 'decision',
@@ -4610,19 +4617,22 @@ Use userId only from this list:
       // te same handlery renderowały się w 2-3 miejscach naraz.
       label: t('myWork.decisionDetail.label', 'Actions'),
       icon: Save,
-      defaultOpen: true,
       // Pusto TYLKO w trybie Podgląd („do pokazania klientowi") — w Edycji
-      // zawsze zostaje co najmniej „Deleguj".
+      // zawsze zostaje co najmniej „Deleguj". Etap 4 gridu n-Type
+      // (_GRID_STABILIZATION_COMMAND_2026-07-24.md): w Podglądzie sekcja jest
+      // ZWINIĘTA z licznikiem 0, bez komunikatu opisowego (był tu tekst
+      // „Actions are hidden in preview mode" — SSOT go zakazuje wprost).
+      defaultOpen: !readMode,
       isEmpty: readMode,
-      emptyLabel: t(
-        'myWork.decisionDetail.actionsHiddenInReadMode',
-        'Actions are hidden in preview mode'
-      ),
+      badge: readMode ? 0 : undefined,
+      showZeroBadge: true,
       children: readMode ? null : (
         <div className="flex flex-col gap-2">
-          {/* 1) Zatwierdzenie decyzji — akcja, po której karta zmienia status.
-                 Zeszła TU z nagłówka (§2.2: decyzja ma zbyt złożony zestaw
-                 przejść, by wskazywać jedno w powłoce). */}
+          {/* 1) DOKŁADNIE JEDNA akcja primary (SSOT §Hierarchia akcji): zatwierdzenie
+                 decyzji ma pierwszeństwo; gdy karta nie czeka na werdykt, wyróżnione
+                 jest jedyne przejście workflow „do przodu" (highlightedWorkflowActionId,
+                 liczone wyżej). Zeszła TU z nagłówka (§2.2: decyzja ma zbyt złożony
+                 zestaw przejść, by wskazywać jedno w powłoce). */}
           {canApproveDecision && (
             <CapabilityGate capability="decision.approve" gateMode="disable">
               <button type="button" onClick={handleApprove} className={rpActionPrimary}>
@@ -4631,63 +4641,117 @@ Use userId only from this list:
               </button>
             </CapabilityGate>
           )}
-
-          {/* 2) Przejścia etapu workflow — pełny zestaw zależny od stanu
-                 (`workflowActions`). Do 2026-07-23 stały w pasku karty. */}
-          {panelWorkflowActions.map((action) => (
-            <button
-              key={action.id}
-              type="button"
-              onClick={action.onClick}
-              disabled={workflowActionLoading}
-              className={
-                action.id === highlightedWorkflowActionId ? rpActionPrimary : rpActionNeutral
-              }
-            >
-              {workflowActionLoading ? <Loader2 size={13} className="animate-spin" /> : null}
-              {action.label}
-            </button>
-          ))}
-
-          {/* 3) Werdykt negatywny + prośba o uzupełnienie — były w overflow „…"
-                 paska karty. Odrzucenie = jedyna akcja destrukcyjna (danger). */}
-          {canApproveDecision && (
-            <>
-              <CapabilityGate capability="decision.approve" gateMode="disable">
-                <button type="button" onClick={handleReject} className={rpActionDestructive}>
-                  <X size={14} />
-                  {t('decisions.detail.actions.reject', 'Reject')}
+          {!canApproveDecision &&
+            panelWorkflowActions
+              .filter((action) => action.id === highlightedWorkflowActionId)
+              .map((action) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  onClick={action.onClick}
+                  disabled={workflowActionLoading}
+                  className={rpActionPrimary}
+                >
+                  {workflowActionLoading ? <Loader2 size={13} className="animate-spin" /> : null}
+                  {action.label}
                 </button>
-              </CapabilityGate>
-              <button type="button" onClick={handleRequestMoreInfo} className={rpActionNeutral}>
-                <HelpCircle size={14} className="text-c-text-muted" />
-                {t('decisions.detail.actions.requestInfo', 'Request info')}
+              ))}
+
+          {/* 2) Werdykt negatywny — jedyna akcja destrukcyjna (danger), zawsze
+                 widoczna jako czerwony outline (SSOT: destrukcyjne NIE chowamy
+                 w More, dostają odrębny, rozpoznawalny styl). */}
+          {canApproveDecision && (
+            <CapabilityGate capability="decision.approve" gateMode="disable">
+              <button type="button" onClick={handleReject} className={rpActionDestructive}>
+                <X size={14} />
+                {t('decisions.detail.actions.reject', 'Reject')}
               </button>
-            </>
+            </CapabilityGate>
           )}
 
-          {/* 4) Delegowanie — działanie na decyzji, nie na jej treści. */}
-          <button
-            type="button"
-            onClick={() => setShowDelegationModal(true)}
-            className={rpActionNeutral}
-          >
-            <Share2 size={14} className="text-c-text-muted" />
-            {t('myWork.decisionDetail.delegate', 'Delegate')}
-          </button>
+          {/* 3) GRID ETAP 5 (2026-07-24) — SSOT §Wymagania/Decyzja: „ograniczyć
+                 liczbę widocznych akcji" + „jedna główna akcja, reszta w More".
+                 Przejścia workflow spoza primary, „Więcej info", „Deleguj" i
+                 „Udostępnij" zwinięte za jednym przełącznikiem zamiast stać
+                 osobno — panel bez tego pokazywał do 6 przycisków naraz. */}
+          {(() => {
+            const secondaryWorkflowActions = panelWorkflowActions.filter(
+              (action) => canApproveDecision || action.id !== highlightedWorkflowActionId
+            );
+            const moreCount =
+              secondaryWorkflowActions.length +
+              (canApproveDecision ? 1 : 0) + // Więcej info
+              1 + // Deleguj
+              (decisionId ? 1 : 0); // Udostępnij
 
-          {decisionId && (
-            <div className="flex items-center justify-between h-8 px-3 rounded-lg border border-c-border-subtle bg-c-surface-raised">
-              <span className="text-xs text-c-text-muted">
-                {t('myWork.decisionDetail.share', 'Share')}
-              </span>
-              <ArtifactPermalinkButton
-                artifactType="decision"
-                artifactId={decisionId}
-                isPolish={isPolish}
-              />
-            </div>
-          )}
+            if (!showMoreDecisionActions) {
+              if (moreCount === 0) return null;
+              return (
+                <button
+                  type="button"
+                  onClick={() => setShowMoreDecisionActions(true)}
+                  className={`${rpActionNeutral} justify-between`}
+                >
+                  <span>{t('myWork.decisionDetail.moreActions', 'More')}</span>
+                  <span className="inline-flex items-center gap-1 text-c-text-muted">
+                    {moreCount}
+                    <ChevronDown size={14} />
+                  </span>
+                </button>
+              );
+            }
+
+            return (
+              <>
+                {secondaryWorkflowActions.map((action) => (
+                  <button
+                    key={action.id}
+                    type="button"
+                    onClick={action.onClick}
+                    disabled={workflowActionLoading}
+                    className={rpActionNeutral}
+                  >
+                    {workflowActionLoading ? <Loader2 size={13} className="animate-spin" /> : null}
+                    {action.label}
+                  </button>
+                ))}
+                {canApproveDecision && (
+                  <button type="button" onClick={handleRequestMoreInfo} className={rpActionNeutral}>
+                    <HelpCircle size={14} className="text-c-text-muted" />
+                    {t('decisions.detail.actions.requestInfo', 'Request info')}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowDelegationModal(true)}
+                  className={rpActionNeutral}
+                >
+                  <Share2 size={14} className="text-c-text-muted" />
+                  {t('myWork.decisionDetail.delegate', 'Delegate')}
+                </button>
+                {decisionId && (
+                  <div className="flex items-center justify-between h-8 px-3 rounded-lg border border-c-border-subtle bg-c-surface-raised">
+                    <span className="text-xs text-c-text-muted">
+                      {t('myWork.decisionDetail.share', 'Share')}
+                    </span>
+                    <ArtifactPermalinkButton
+                      artifactType="decision"
+                      artifactId={decisionId}
+                      isPolish={isPolish}
+                    />
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowMoreDecisionActions(false)}
+                  className="inline-flex items-center justify-center gap-1 h-7 text-[11px] text-c-text-muted hover:text-c-text transition-colors"
+                >
+                  {t('myWork.decisionDetail.showLess', 'Show less')}
+                  <ChevronDown size={12} className="rotate-180" />
+                </button>
+              </>
+            );
+          })()}
         </div>
       ),
     },
@@ -5468,7 +5532,17 @@ Use userId only from this list:
           Zadaniu / Powiadomieniu i na 16 px w pozostałych trzech kartach.
           Boki (`px-6`) i dół (`pb-6`) bez zmian. */}
       <div className="px-6 pt-4 pb-6">
-        <div className="max-w-6xl mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
+        {/* GRID ETAP 6 (2026-07-24, naprawa P0-2): `max-w-6xl` (1152px stałe)
+            zamrażał centrum na ~592px i zostawiał martwe marginesy na 1920px.
+            Wzorzec z Zadania (TaskDetailView.tsx:5306-5311) — token
+            `--ntype-content-document-max-width` zamiast stałej. */}
+        <div
+          className="mx-auto xl:flex xl:gap-6 xl:items-start space-y-0"
+          style={{
+            maxWidth:
+              'calc(var(--ntype-left-panel-width) + var(--ntype-column-gap) + var(--ntype-content-document-max-width) + var(--ntype-column-gap) + var(--ntype-right-panel-width))',
+          }}
+        >
           <div className="xl:flex-1 xl:min-w-0 space-y-0">
             {/* Main */}
             {/* Title Header — uses shared NModeHeader component */}
@@ -5630,8 +5704,16 @@ Use userId only from this list:
                     readMode={readMode}
                   />
 
-                  {/* Canvas (shows selected section only) */}
-                  <div className="flex-1 pl-6 pt-1 min-w-0">
+                  {/* Canvas (shows selected section only). Bez pl-* — odstęp
+                      lewy panel ↔ centrum (24px) niesie wyłącznie NModeLeftNav
+                      przez token --ntype-column-gap. Ta karta ma własną kopię
+                      kanwy (nie NModeCanvas), więc duplikat pl-6 trzeba było zdjąć
+                      tu osobno, inaczej odstęp podwajał się do 48px (SSOT:
+                      _GRID_STABILIZATION_COMMAND_2026-07-24). */}
+                  <div
+                    className="flex-1 pt-1 min-w-0"
+                    style={{ maxWidth: 'var(--ntype-content-document-max-width)' }}
+                  >
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={activeNotionSection}
@@ -9004,8 +9086,14 @@ Use userId only from this list:
               </div>
             )}
           </div>
-          {/* ── Dokowany prawy panel artefaktu (xl+; ukryty na <xl) ── */}
-          <div className="hidden xl:block shrink-0 sticky top-4 self-start">
+          {/* ── Dokowany prawy panel artefaktu ──────────────────────────
+              GRID ETAP 6 (2026-07-24, naprawa P0-1): BEZ `hidden xl:block`
+              (wzorzec z Powiadomienia, NotificationDetailView.tsx:4196) —
+              ta karta pokazywała panel tylko od 1280px, ukrywając na
+              1024px (minimalny wspierany desktop) całe Akcje/Właściwości/
+              Komentarze/Historię. Regresja funkcji pod pretekstem
+              geometrii, nie estetyka. */}
+          <div className="shrink-0 sticky top-4 self-start">
             <ArtifactRightPanel
               sections={rightPanelSections}
               className={ARTIFACT_PANEL_CARD_CLASS_STICKY}

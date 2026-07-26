@@ -82,11 +82,22 @@ export interface ArtifactRightPanelSection {
   collapsible?: boolean;
   /** Stan początkowy (default true = otwarta). */
   defaultOpen?: boolean;
-  /** Licznik przy nagłówku (np. liczba komentarzy). 0/undefined = brak. */
+  /** Licznik przy nagłówku (np. liczba komentarzy). 0/undefined = brak (chyba że `showZeroBadge`). */
   badge?: number;
+  /**
+   * Gdy true, `badge: 0` RENDERUJE się jako widoczny licznik „0" zamiast
+   * chować się (domyślne zachowanie: 0 = brak licznika). Etap 4 gridu
+   * n-Type (_GRID_STABILIZATION_COMMAND_2026-07-24.md §Prawy panel): „puste
+   * sekcje mogą być widoczne jako zwinięte z licznikiem 0" — ale WYŁĄCZNIE
+   * tam, gdzie wołający świadomie to zadeklaruje (np. sekcja Akcje w
+   * Podglądzie, nowo dodane puste Comments/History). Domyślnie `false`, więc
+   * WSZYSTKIE istniejące sekcje (Komentarze/Historia/Powiązania na 6 kartach)
+   * zachowują dotychczasowe zachowanie 1:1 — licznik 0 nadal chowany.
+   */
+  showZeroBadge?: boolean;
   /** Gdy true — sekcja pokazuje stan pusty zamiast treści. */
   isEmpty?: boolean;
-  /** Tekst stanu pustego (gdy isEmpty). */
+  /** Tekst stanu pustego (gdy isEmpty). Bez tekstu → neutralny placeholder '—'. */
   emptyLabel?: string;
 }
 
@@ -97,8 +108,13 @@ export interface ArtifactRightPanelProps {
    * Źródła i założenia · Rezultaty (warunkowo) · Komentarze · Historia.
    */
   sections: ArtifactRightPanelSection[];
-  /** Szerokość panelu w px (default 360; kanon §11.2 zakres 320–420). */
-  width?: number;
+  /**
+   * Szerokość panelu. Domyślnie token gridu n-Type
+   * (`--ntype-right-panel-width: 320px`) — stała szerokość wspólna dla sześciu
+   * kart (SSOT: _GRID_STABILIZATION_COMMAND_2026-07-24). Można nadpisać liczbą
+   * (px) tam, gdzie powłoka steruje szerokością własnym stanem.
+   */
+  width?: number | string;
   /** Dodatkowa klasa kontenera. */
   className?: string;
   /** Aria-label kontenera (a11y). */
@@ -121,8 +137,17 @@ const SectionRow: React.FC<{
   open: boolean;
   onToggle: () => void;
 }> = ({ section, open, onToggle }) => {
-  const { label, icon: Icon, children, collapsible = true, badge, isEmpty, emptyLabel } = section;
-  const showBadge = typeof badge === 'number' && badge > 0;
+  const {
+    label,
+    icon: Icon,
+    children,
+    collapsible = true,
+    badge,
+    showZeroBadge,
+    isEmpty,
+    emptyLabel,
+  } = section;
+  const showBadge = typeof badge === 'number' && (badge > 0 || (badge === 0 && showZeroBadge));
 
   const header = (
     <div className="flex items-center gap-2 min-w-0">
@@ -178,7 +203,7 @@ const SectionRow: React.FC<{
 
 export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
   sections,
-  width = 360,
+  width = 'var(--ntype-right-panel-width)',
   className,
   ariaLabel,
   statusBar,
@@ -199,29 +224,78 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
   // zbiór id nigdy się nie zmienia między renderami, więc efekt nic nie robi.
   const sectionIdSetRef = useRef<Set<string>>(new Set(sections.map((s) => s.id)));
 
+  // Fix (Etap 4 gridu n-Type, weryfikacja renderu 2026-07-24): sekcje typu
+  // Akcje liczą `defaultOpen` z `readMode` (zwinięta w Podglądzie). Ale
+  // `readMode` na kartach n-Type (Task/Decision/Notification/Initiative)
+  // startuje z OPTYMISTYCZNYM zgadywaniem (np. `Boolean(taskId)`) i dopiero
+  // po async `load*()` dostaje prawdziwą wartość — czyli `defaultOpen` tej
+  // SAMEJ sekcji potrafi przeskoczyć false→true (albo odwrotnie) PO
+  // pierwszym renderze, zanim user cokolwiek kliknął. Bez tego efektu sekcja
+  // zostawała zamrożona w stanie z pierwszego (błędnego) odgadnięcia —
+  // zmierzone na żywym renderze karty Zadania: „Akcje" ze świeżymi
+  // przyciskami stały ZWINIĘTE, bo pierwszy render zgadł Podgląd.
+  // Śledzimy `defaultOpen` per id i, gdy się zmienia, DOGANIAMY openIds —
+  // ale TYLKO dla id, których user jeszcze ręcznie nie tknął (`toggle`).
+  // Ręczna decyzja usera zawsze wygrywa z odgadywaniem sterowanym z zewnątrz.
+  const manuallyToggledRef = useRef<Set<string>>(new Set());
+  const defaultOpenByIdRef = useRef<Map<string, boolean>>(
+    new Map(sections.map((s) => [s.id, s.defaultOpen ?? true]))
+  );
+
   useEffect(() => {
     const prevIds = sectionIdSetRef.current;
+    const prevDefaultOpen = defaultOpenByIdRef.current;
     const newlyAppeared = sections.filter((s) => !prevIds.has(s.id));
-    if (newlyAppeared.length > 0) {
-      const toOpen = newlyAppeared.filter((s) => s.defaultOpen ?? true);
-      if (toOpen.length > 0) {
-        setOpenIds((prev) => {
-          const next = new Set(prev);
-          let changed = false;
-          toOpen.forEach((s) => {
-            if (!next.has(s.id)) {
-              next.add(s.id);
-              changed = true;
-            }
-          });
-          return changed ? next : prev;
+    const toOpen = newlyAppeared.filter((s) => s.defaultOpen ?? true);
+    const toClose = newlyAppeared.filter((s) => !(s.defaultOpen ?? true));
+
+    const flipped = sections.filter((s) => {
+      if (!prevIds.has(s.id)) return false; // obsłużone jako newlyAppeared
+      if (manuallyToggledRef.current.has(s.id)) return false; // user decyduje
+      const prevWantOpen = prevDefaultOpen.get(s.id) ?? true;
+      const wantOpen = s.defaultOpen ?? true;
+      return prevWantOpen !== wantOpen;
+    });
+
+    if (toOpen.length > 0 || toClose.length > 0 || flipped.length > 0) {
+      setOpenIds((prev) => {
+        const next = new Set(prev);
+        let changed = false;
+        toOpen.forEach((s) => {
+          if (!next.has(s.id)) {
+            next.add(s.id);
+            changed = true;
+          }
         });
-      }
+        // Nowo pojawione id z `defaultOpen: false` NIE wymagają zapisu (Set
+        // domyślnie ich nie zawiera), ale pętla zostaje dla czytelności /
+        // symetrii z `flipped` niżej.
+        toClose.forEach((s) => {
+          if (next.has(s.id)) {
+            next.delete(s.id);
+            changed = true;
+          }
+        });
+        flipped.forEach((s) => {
+          const wantOpen = s.defaultOpen ?? true;
+          if (wantOpen && !next.has(s.id)) {
+            next.add(s.id);
+            changed = true;
+          } else if (!wantOpen && next.has(s.id)) {
+            next.delete(s.id);
+            changed = true;
+          }
+        });
+        return changed ? next : prev;
+      });
     }
+
     sectionIdSetRef.current = new Set(sections.map((s) => s.id));
+    defaultOpenByIdRef.current = new Map(sections.map((s) => [s.id, s.defaultOpen ?? true]));
   }, [sections]);
 
   const toggle = useCallback((id: string) => {
+    manuallyToggledRef.current.add(id);
     setOpenIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
