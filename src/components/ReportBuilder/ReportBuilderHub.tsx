@@ -34,12 +34,12 @@ import { Api } from '../../services/api';
 import {
   FilterableTable,
   type FilterChip,
-  ModuleHub,
   type ModuleTab,
   type TableColumn,
   type ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { type RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { ScheduleReportModal } from './ScheduleReportModal';
@@ -889,8 +889,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
   return (
     <>
       <div className="h-full" data-testid="report-builder-hub">
-        <ModuleHub
-          persistViewModeKey="report_builder_hub"
+        <StandardModuleBar
           tabs={tabs}
           activeTab={activeTab as ModuleTab}
           onTabChange={(tab) => {
@@ -913,7 +912,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
           availableViewModes={['table']}
         >
           <div className="h-full min-h-0 overflow-hidden">{renderTabContent()}</div>
-        </ModuleHub>
+        </StandardModuleBar>
       </div>
 
       <ScheduleReportModal
