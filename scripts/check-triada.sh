@@ -66,6 +66,126 @@ is_allowlisted() {
   return 1
 }
 
+# ===================== TRYB --all / --update (ratchet pełnego repo) =========
+# VF4 (2026-07-26, audyt strażników): do tej pory check-triada.sh widział
+# WYŁĄCZNIE diff (nowo dodane linie) — na czystym drzewie nie sprawdza
+# NICZEGO, więc dług zastany (primary-* wpisany przed hookiem) nigdy nie był
+# policzony ani widoczny. Dodano tryb pełnego skanu repo z ratchetem,
+# wzorowany 1:1 na mechanizmie scripts/check-list-canon.sh (i
+# scripts/check-artefakt.sh): baseline PER PLIK w
+# scripts/check-triada.baseline.txt (`<liczba>\t<ścieżka>`), bramka FAILuje
+# TYLKO gdy liczba naruszeń w pliku ROŚNIE (albo nowy plik ma >0 przy
+# baseline 0). Dług zastany przechodzi, każda NOWA regresja blokuje.
+# Liczenie w tym trybie NIE używa find_violations() (ta obcina wynik do 6 —
+# słusznie dla czytelnego promptu hooka, błędnie dla ratchetu: zaniżyłoby
+# liczbę w mocno naruszonych plikach i psuło porównanie z baseline).
+BASELINE="$SCRIPT_DIR/check-triada.baseline.txt"
+
+list_scope_files_all() {
+  # Ten sam zakres co is_scope_file(): src/components/**/*.{ts,tsx} i
+  # src/views/**/*.{ts,tsx} — pełna lista z indeksu git (śledzone pliki).
+  git ls-files 'src/components/*.ts' 'src/components/*.tsx' \
+               'src/views/*.ts' 'src/views/*.tsx' 2>/dev/null | sort -u
+}
+
+count_violations_full() {
+  # Dokładna (nieobcięta) liczba naruszeń w CAŁEJ treści pliku — dla ratchetu.
+  local f="$1" viol_lines accent_tokens accent_exact
+  viol_lines=$(grep -cE "$VIOL_RE" "$f" 2>/dev/null || true)
+  accent_tokens=$(grep -oE '(--)?c-accent(-[a-zA-Z0-9]+)?' "$f" 2>/dev/null || true)
+  accent_exact=0
+  if [ -n "$accent_tokens" ]; then
+    accent_exact=$(printf '%s\n' "$accent_tokens" | grep -xE '(--)?c-accent' | sort -u | grep -c . || true)
+  fi
+  echo $((viol_lines + accent_exact))
+}
+
+baseline_for_triada() {
+  local rel="$1"
+  [ -f "$BASELINE" ] || { echo 0; return; }
+  awk -F'\t' -v p="$rel" '$2==p{print $1; found=1} END{if(!found) print 0}' "$BASELINE"
+}
+
+if [ "${1:-}" = "--all" ] || [ "${1:-}" = "--update" ]; then
+  ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+  cd "$ROOT" || exit 1
+  ALL_MODE="$1"
+  VERBOSE=0
+  [ "${2:-}" = "--report" ] && VERBOSE=1
+
+  if [ "$ALL_MODE" = "--update" ]; then
+    tmp=$(mktemp); body=$(mktemp); total=0; nfiles=0
+    while IFS= read -r f; do
+      [ -n "$f" ] || continue
+      [ -f "$f" ] || continue
+      is_allowlisted "$f" && continue
+      n=$(count_violations_full "$f")
+      if [ "$n" -gt 0 ]; then
+        printf '%s\t%s\n' "$n" "$f" >> "$body"
+        total=$((total + n)); nfiles=$((nfiles + 1))
+      fi
+    done < <(list_scope_files_all)
+    {
+      echo "# check-triada.sh — BASELINE długu zastanego (ratchet pełnego repo). Format: <liczba>\\t<ścieżka>."
+      echo "# Liczba = ile linii w CAŁYM pliku łamie VIOL_RE (primary-*, KAŻDY odcień 50-900,"
+      echo "# focus:ring/border-primary, bg-crimson-N) albo używa bare c-accent/--c-accent."
+      echo "#"
+      echo "# Bramka (--all) przepuszcza plik dopóki liczba NIE ROŚNIE. Nowe naruszenie (nowy"
+      echo "# plik albo wzrost w istniejącym) = FAIL. Regeneruj (--update) TYLKO gdy dług"
+      echo "# ŚWIADOMIE SPADŁ — nigdy żeby uciszyć nową regresję."
+      echo "#"
+      echo "# WYGENEROWANO: $(date +%Y-%m-%d) (scripts/check-triada.sh --update)"
+      echo "# RAZEM: $total naruszeń w $nfiles plikach"
+      echo "#"
+      echo "# Posortowane po ścieżce (stabilny diff). Dług maleje = wiersze znikają / liczby spadają."
+      sort -k2,2 "$body" 2>/dev/null || true
+    } > "$tmp"
+    mv "$tmp" "$BASELINE"
+    rm -f "$body"
+    echo "✓ check-triada --update: baseline zaktualizowany → $BASELINE ($total naruszeń w $nfiles plikach)"
+    exit 0
+  fi
+
+  # ALL_MODE = --all: sprawdzanie względem baseline.
+  fail=0; checked=0; total_current=0; total_baseline=0; new_files=0; grown_files=0
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    [ -f "$f" ] || continue
+    is_allowlisted "$f" && continue
+    checked=$((checked + 1))
+    cur=$(count_violations_full "$f")
+    base=$(baseline_for_triada "$f")
+    total_current=$((total_current + cur))
+    total_baseline=$((total_baseline + base))
+    if [ "$cur" -gt "$base" ]; then
+      if [ "$base" -eq 0 ]; then
+        new_files=$((new_files + 1))
+        echo "✗ check-triada --all: $f — NOWE naruszenie crimson ($cur, baseline 0)." >&2
+      else
+        grown_files=$((grown_files + 1))
+        echo "✗ check-triada --all: $f — dług URÓSŁ: $cur naruszeń, baseline $base (+$((cur - base)))." >&2
+      fi
+      grep -nE "$VIOL_RE" "$f" 2>/dev/null | head -6 | sed 's/^/      /' >&2
+      fail=1
+    elif [ "$VERBOSE" = "1" ] && [ "$cur" -gt 0 ]; then
+      echo "  • $f — $cur (baseline $base)"
+    fi
+  done < <(list_scope_files_all)
+
+  if [ "$fail" -eq 0 ]; then
+    echo "✓ check-triada --all: brak NOWYCH naruszeń crimson (sprawdzono plików: $checked; naruszeń $total_current, baseline $total_baseline — dług nie rośnie)"
+    if [ "$total_current" -lt "$total_baseline" ]; then
+      echo "  ↓ Dług SPADŁ o $((total_baseline - total_current)). Zatwierdź spadek: scripts/check-triada.sh --update"
+    fi
+  else
+    echo "" >&2
+    echo "  KANON TRIADY: primary-* (KAŻDY numer) i c-accent/var(--c-accent) = crimson #85182F." >&2
+    echo "  Nowych plików z naruszeniem: $new_files · plików z urosłym długiem: $grown_files." >&2
+    echo "  SSOT: docs/ui-standards/TRIADA_KANON.md (część C)." >&2
+  fi
+  exit $fail
+fi
+
 find_violations() {
   # $1 = payload (treść do sprawdzenia)
   local payload="$1" viol accent_tokens accent_viol all
