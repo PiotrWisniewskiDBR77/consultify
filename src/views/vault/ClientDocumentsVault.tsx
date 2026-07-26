@@ -30,9 +30,16 @@
  * - Wnętrze sejfu = pełnoekranowy `VaultDocumentsView` (redesign wygrywa nad
  *   kartą z owiniętym `DocumentsRAGTab` — tamto było przyznanym w komentarzu
  *   półśrodkiem sprzed redesignu).
- * - Mechanizm karty w Menu 3 (`openItems`, wzór `AgentHubShell.tsx`) dla
- *   wnętrza sejfu — do dopięcia w `VaultDocumentsView` osobnym zadaniem
- *   (obecnie nawigacja breadcrumbem: „Sejf klienta" klikalny → powrót).
+ * - Mechanizm karty w Menu 3 (`openItems`/`activeItemId`/`onSelectItem`/
+ *   `onCloseItem`, wzór 1:1 `AgentHubShell.tsx`) DOPIĘTY na własnym
+ *   `StandardModuleBar` `VaultDocumentsView` (patrz komentarz „KARTA W MENU 3"
+ *   tamże): otwarty sejf = jedna zawsze-aktywna karta (`type:'tool',
+ *   subType:'vault-safe'`); × karty i „Lista" oba wołają `onBack` — dokładnie
+ *   ten sam `handleBackToSafes` co breadcrumb „Sejf klienta" niżej. Efekt
+ *   uboczny (opisany tamże): dopóki karta jest widoczna, chipy statusu
+ *   indeksowania w Menu 3 są wizualnie zastąpione tabem (tryby wyłączne we
+ *   wspólnym `ModuleNavBar`) — zgłoszone jako wątpliwość do decyzji, nie
+ *   naprawiane tutaj (wymagałoby zmiany pliku wspólnego, poza mandatem).
  */
 
 import React, { useCallback, useState } from 'react';
