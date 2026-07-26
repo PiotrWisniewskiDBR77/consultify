@@ -6,6 +6,7 @@
  */
 
 import {
+  ArrowLeft,
   BookTemplate,
   ChevronDown,
   ChevronUp,
@@ -23,7 +24,7 @@ import {
   Table2,
   Wand2,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -76,6 +77,121 @@ import {
   useTemplates,
 } from './useRapData';
 
+/**
+ * "Nowy szablon" CTA for the Template Library tab, extended (2026-07-26,
+ * kanon MATERIALS_TARGET_STATE §3) with a secondary menu that opens the two
+ * template ARCHITECTS in place, inside the same "Szablony" tab — they are
+ * NOT siblings of Menu 1 anymore. Reuses the exact CTA button classes from
+ * ModuleNavBar's default `onNewItem` button and the dropdown-panel styling
+ * from `StatusDropdown` (neutral tokens only — zero new colors/menus).
+ */
+interface TemplatesNewSplitButtonProps {
+  label: string;
+  onNewTemplate: () => void;
+  onOpenDeckArchitect?: () => void;
+  onOpenWorkbookTemplates?: () => void;
+}
+
+const TemplatesNewSplitButton: React.FC<TemplatesNewSplitButtonProps> = ({
+  label,
+  onNewTemplate,
+  onOpenDeckArchitect,
+  onOpenWorkbookTemplates,
+}) => {
+  const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [isOpen]);
+
+  const ctaBase =
+    'inline-flex h-9 items-center gap-2 px-4 text-sm font-medium text-white transition-colors duration-150 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]';
+
+  if (!onOpenDeckArchitect && !onOpenWorkbookTemplates) {
+    return (
+      <button
+        type="button"
+        onClick={onNewTemplate}
+        data-testid="outputs-new-btn"
+        className={`${ctaBase} rounded-lg`}
+      >
+        <span>{label}</span>
+      </button>
+    );
+  }
+
+  return (
+    <div ref={ref} className="relative flex items-center">
+      <button type="button" onClick={onNewTemplate} data-testid="outputs-new-btn" className={`${ctaBase} rounded-l-lg`}>
+        <span>{label}</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => setIsOpen((v) => !v)}
+        aria-label={t('rap.templatesLauncher.moreOptions', 'Więcej opcji tworzenia szablonów')}
+        aria-expanded={isOpen}
+        data-testid="templates-new-split-toggle"
+        className={`${ctaBase} rounded-r-lg border-l border-white/20 px-2 dark:border-navy-950/10`}
+      >
+        <ChevronDown
+          size={16}
+          className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {isOpen && (
+        <div
+          className="absolute right-0 top-full z-overlay mt-1 min-w-[280px] rounded-xl border border-c-border-subtle bg-white py-1 shadow-hig-xl dark:bg-navy-800 dark:shadow-hig-dark-xl"
+          data-testid="templates-new-split-menu"
+        >
+          {onOpenDeckArchitect && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                onOpenDeckArchitect();
+              }}
+              data-testid="templates-open-deck-architect"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-c-text transition-colors duration-150 hover:bg-c-surface-raised"
+            >
+              <Wand2 size={14} className="shrink-0 text-c-text-muted" />
+              <span>
+                {t(
+                  'rap.templatesLauncher.openDeckArchitect',
+                  'Architekt szablonów (Prezentacja)'
+                )}
+              </span>
+            </button>
+          )}
+          {onOpenWorkbookTemplates && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                onOpenWorkbookTemplates();
+              }}
+              data-testid="templates-open-workbook-templates"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-c-text transition-colors duration-150 hover:bg-c-surface-raised"
+            >
+              <FileSpreadsheet size={14} className="shrink-0 text-c-text-muted" />
+              <span>
+                {t('rap.templatesLauncher.openWorkbookTemplates', 'Generator szablonów (Arkusz)')}
+              </span>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const ReportsAndPresentationsHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -83,22 +199,46 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const openChatWithContext = useOpenChatWithContext();
   const isPolish = i18n.language?.startsWith('pl');
 
-  const { initialTab, initialArtifactId } = useMemo(() => {
+  // Kanon 2026-07-26 (docs/product/MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md
+  // §3): Menu 1 ma DOKŁADNIE 5 pozycji (All/Documents/Presentations/Sheets/
+  // Templates) — Architekt szablonów (Deck) i Generator szablonów (Excel) NIE
+  // są siostrzanymi zakładkami. Otwierają się WEWNĄTRZ zakładki "Szablony" jako
+  // tryb widoku (`templatesView`). Stare deep linki (`?tab=template_architect`,
+  // `?tab=workbook_templates`) nadal działają — lądują na 'templates' z
+  // odpowiednim `templatesView` zamiast na osobnej zakładce.
+  type TemplatesLibraryView = 'library' | 'deckArchitect' | 'workbookTemplates';
+
+  const { initialTab, initialArtifactId, initialTemplatesView } = useMemo(() => {
     const params = new URLSearchParams(location.search || '');
     const fromQuery = parseRapTabFromQuery(params.get('tab'));
     let tab: RapTab;
-    if (fromQuery) tab = fromQuery;
-    else if (location.pathname.startsWith('/reports')) tab = 'outputs_documents';
-    else if (location.pathname.startsWith('/presentations')) tab = 'presentations';
-    else tab = 'outputs_all';
+    let templatesView: TemplatesLibraryView = 'library';
+    if (fromQuery === 'template_architect') {
+      tab = 'templates';
+      templatesView = 'deckArchitect';
+    } else if (fromQuery === 'workbook_templates') {
+      tab = 'templates';
+      templatesView = 'workbookTemplates';
+    } else if (fromQuery) {
+      tab = fromQuery;
+    } else if (location.pathname.startsWith('/reports')) {
+      tab = 'outputs_documents';
+    } else if (location.pathname.startsWith('/presentations')) {
+      tab = 'presentations';
+    } else {
+      tab = 'outputs_all';
+    }
     return {
       initialTab: tab,
       // Keep backward compatibility with older deep links using ?deck=<id>.
       initialArtifactId: params.get('artifactId') || params.get('deck') || null,
+      initialTemplatesView: templatesView,
     };
   }, [location.pathname, location.search]);
 
   const [activeTab, setActiveTab] = useState<RapTab>(initialTab);
+  // Internal sub-view of the 'templates' tab — see kanon note above initialTab.
+  const [templatesView, setTemplatesView] = useState<TemplatesLibraryView>(initialTemplatesView);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
@@ -204,32 +344,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         label: t('rap.tabs.templates', 'Template Library'),
         icon: <BookTemplate size={16} />,
       },
-      // C2 (2026-07-22): Architekt szablonów Deck — TYLKO przy fladze ON
-      // (ff_deck_architect, default ON since fb119cefe8, akcept Piotra
-      // 2026-07-22; UWAGA: decyzja architekta D6 z 2026-07-24 postuluje OFF —
-      // konflikt do rozstrzygnięcia przez Piotra, nie zmieniaj defaultu bez
-      // jego słowa). Przy OFF lista zakładek bajt-identyczna z pre-flag.
-      ...(isDeckArchitectEnabled()
-        ? [
-            {
-              id: 'template_architect' as ModuleTab,
-              label: t('presentations.tabs.templateArchitect', 'Architekt szablonów'),
-              icon: <Wand2 size={16} />,
-            },
-          ]
-        : []),
-      // Gen. Excel nav (2026-07-22): rejestr parametrycznych szablonów Excela —
-      // zakładka TYLKO przy fladze (ff_workbook_templates, default OFF). Przy
-      // OFF lista zakładek bajt-identyczna.
-      ...(isWorkbookTemplatesEnabled()
-        ? [
-            {
-              id: 'workbook_templates' as ModuleTab,
-              label: t('rap.tabs.workbookTemplates', 'Generator szablonów Excel'),
-              icon: <FileSpreadsheet size={16} />,
-            },
-          ]
-        : []),
+      // Kanon 2026-07-26: Architekt szablonów (Deck) i Generator szablonów
+      // (Excel) NIE są zakładkami Menu 1 — niezależnie od stanu
+      // isDeckArchitectEnabled()/isWorkbookTemplatesEnabled(). Otwierają się
+      // wewnątrz zakładki "Szablony" (patrz `templatesView` + TemplatesNewSplitButton
+      // poniżej), zgodnie z docs/product/MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md §3.
     ],
     [t]
   );
@@ -381,6 +500,16 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     [navigate, location.pathname, location.search]
   );
 
+  // "← Szablony" — returns from an embedded architect view to the Template
+  // Library table, inside the SAME tab (no Menu 1 tab change). Also normalizes
+  // the URL back to `?tab=templates` so a refresh doesn't re-open the architect.
+  const handleBackToTemplatesLibrary = useCallback(() => {
+    setTemplatesView('library');
+    const params = new URLSearchParams(location.search || '');
+    params.set('tab', RAP_TAB_TO_QUERY.templates);
+    navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+  }, [navigate, location.pathname, location.search]);
+
   const templateFormatTiles = useMemo(
     () => [
       { id: 'document' as TemplateFormat, icon: FileText, title: t('rap.templatesLauncher.document', 'Word') },
@@ -463,7 +592,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   React.useEffect(() => {
     setActiveTab(initialTab);
     setActiveFilters([]);
-  }, [initialTab]);
+    setTemplatesView(initialTemplatesView);
+  }, [initialTab, initialTemplatesView]);
 
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   React.useEffect(() => {
@@ -510,6 +640,10 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   );
 
   const rightControls = useMemo(() => {
+    // Embedded architect views own their own chrome — the Template Library's
+    // drafts-toggle/status-filter controls don't apply to them.
+    if (activeTab === 'templates' && templatesView !== 'library') return null;
+
     const chipBase =
       'h-9 inline-flex items-center gap-2 rounded-full px-3 text-sm font-medium border transition-colors';
 
@@ -942,9 +1076,22 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         )}
       </div>
     );
-  }, [activeFilters, activeTab, filtersOpen, setSinglePreset, showDrafts, t, toggleFilter]);
+  }, [
+    activeFilters,
+    activeTab,
+    filtersOpen,
+    setSinglePreset,
+    showDrafts,
+    t,
+    templatesView,
+    toggleFilter,
+  ]);
 
   const commandRowLeftSlot = useMemo(() => {
+    // Same rationale as rightControls above — embedded architect views have
+    // no filterable list, so Menu 3 status chips would apply to nothing.
+    if (activeTab === 'templates' && templatesView !== 'library') return null;
+
     const chipBase = '';
     const chipActive = MENU_3_CHIP_ACTIVE;
     const chipInactive = MENU_3_CHIP_INACTIVE;
@@ -1147,6 +1294,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     setSinglePreset,
     t,
     templates,
+    templatesView,
   ]);
 
   // Document Studio is a Wave-2 format-lane. On public production where non-core
@@ -1227,23 +1375,24 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     [activeDocumentId, setActiveDocumentId, setOpenDocuments]
   );
 
+  // Shared "← Szablony" header bar for the two embedded architect sub-views —
+  // one visual pattern, reused for both (kanon: no bespoke per-screen chrome).
+  const renderTemplatesArchitectBackBar = (testId: string) => (
+    <div className="shrink-0 border-b border-c-border-subtle px-4 py-2">
+      <button
+        type="button"
+        onClick={handleBackToTemplatesLibrary}
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-c-text-secondary transition-colors hover:text-c-text"
+        data-testid={testId}
+      >
+        <ArrowLeft size={14} />
+        {t('rap.templates.backToLibrary', 'Szablony')}
+      </button>
+    </div>
+  );
+
   const renderTabContent = () => {
     switch (activeTab) {
-      // C2: Architekt szablonów Deck (za flagą — zakładka nieosiągalna przy OFF).
-      case 'template_architect':
-        return (
-          <div className="h-full min-h-0 overflow-y-auto">
-            <PresentationTemplateArchitectView />
-          </div>
-        );
-      // Gen. Excel nav: rejestr parametrycznych szablonów Excela (za flagą —
-      // zakładka nieosiągalna przy OFF).
-      case 'workbook_templates':
-        return (
-          <div className="h-full min-h-0 overflow-y-auto">
-            <ExceleParametricTemplates isPolish={isPolish} />
-          </div>
-        );
       case 'outputs_all':
       case 'outputs_mine':
       case 'outputs_review':
@@ -1263,6 +1412,30 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           />
         );
       case 'templates':
+        // Kanon 2026-07-26: architekci szablonów otwierają się WEWNĄTRZ tej
+        // zakładki jako tryb widoku, nie jako osobne Menu 1 zakładki (usunięte
+        // powyżej z `tabs`). Deep linki `?tab=template_architect` /
+        // `?tab=workbook_templates` nadal działają — patrz initialTemplatesView.
+        if (templatesView === 'deckArchitect') {
+          return (
+            <div className="flex h-full min-h-0 flex-col overflow-hidden">
+              {renderTemplatesArchitectBackBar('templates-architect-back')}
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <PresentationTemplateArchitectView />
+              </div>
+            </div>
+          );
+        }
+        if (templatesView === 'workbookTemplates') {
+          return (
+            <div className="flex h-full min-h-0 flex-col overflow-hidden">
+              {renderTemplatesArchitectBackBar('templates-workbook-back')}
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <ExceleParametricTemplates isPolish={isPolish} />
+              </div>
+            </div>
+          );
+        }
         return (
           <TemplatesTabContent
             viewMode={viewMode}
@@ -1328,6 +1501,38 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     }
   };
 
+  // "New template" CTA gains a secondary menu (Architekt szablonów / Generator
+  // szablonów) whenever at least one of the two architect flags is ON — the
+  // ONLY way to reach either architect now (kanon: no Menu 1 siblings). Reuses
+  // `handleTemplateLauncherSelect`'s existing navigation (sets `?tab=...`,
+  // which `initialTemplatesView` resolves into the embedded view) instead of
+  // duplicating navigation logic. `undefined` outside the Templates library
+  // view — ModuleHub then falls back to its plain `onNewItem` button.
+  const templatesLibraryCta =
+    activeTab === 'templates' && templatesView === 'library'
+      ? (() => {
+          const showDeckArchitect = isDeckArchitectEnabled();
+          const showWorkbookTemplates = isWorkbookTemplatesEnabled();
+          if (!showDeckArchitect && !showWorkbookTemplates) return undefined;
+          return (
+            <TemplatesNewSplitButton
+              label={ctaLabels.templates}
+              onNewTemplate={handleNewItem}
+              onOpenDeckArchitect={
+                showDeckArchitect
+                  ? () => handleTemplateLauncherSelect('presentation', 'blank')
+                  : undefined
+              }
+              onOpenWorkbookTemplates={
+                showWorkbookTemplates
+                  ? () => handleTemplateLauncherSelect('spreadsheet', 'blank')
+                  : undefined
+              }
+            />
+          );
+        })()
+      : undefined;
+
   return (
     <div className="h-full" data-testid="reports-presentations-hub">
       <ModuleHub
@@ -1358,15 +1563,14 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         onClearFilters={handleClearFilters}
         onNewItem={
           // Sheets odblokowane 2026-07-24 (item 3) — dostaje tablicę jak
-          // Documents/Presentations/All. template_architect/workbook_templates
-          // to zakładki-NARZĘDZIA (Menu 2 sprzątanie = poza zakresem entry-only),
-          // bez semantyki „nowy" — CTA zostaje ukryte jak dziś.
-          activeTab === 'template_architect' || activeTab === 'workbook_templates'
-            ? undefined
-            : handleNewItem
+          // Documents/Presentations/All. Embedded architect views (templatesView
+          // !== 'library') to NARZĘDZIA bez semantyki „nowy" — CTA ukryte, tak
+          // jak wcześniej dla osobnych zakładek template_architect/workbook_templates.
+          activeTab === 'templates' && templatesView !== 'library' ? undefined : handleNewItem
         }
         newItemLabel={ctaLabels[activeTab]}
         newItemTestId="outputs-new-btn"
+        primaryCta={templatesLibraryCta}
         availableViewModes={['table', 'grid']}
         rightControls={rightControls}
         commandRowContent={commandRowContent}
