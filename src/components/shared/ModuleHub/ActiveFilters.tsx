@@ -57,7 +57,7 @@ export const ActiveFilters: React.FC<ActiveFiltersProps> = ({
 
       <button
         onClick={onClearAll}
-        className="text-[11px] text-slate-500 hover:text-primary-400 transition-colors ml-auto"
+        className="text-[11px] text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors ml-auto"
       >
         Clear all
       </button>

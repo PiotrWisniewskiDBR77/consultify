@@ -1676,7 +1676,7 @@ const AIHintStrip: React.FC<{
           {result ? (
             <button
               onClick={() => onApplyAction(result.recommendedAction)}
-              className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[11px] font-medium border border-primary-400/30 dark:border-primary-500/20 bg-transparent text-primary-600 dark:text-primary-300 hover:bg-primary-50/50 dark:hover:bg-primary-500/10 transition-colors"
+              className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[11px] font-medium border border-green-300/40 dark:border-green-500/30 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-200 hover:bg-green-100/70 dark:hover:bg-green-500/15 transition-colors"
             >
               <Check size={11} />
               {actionLabel(result.recommendedAction)}
@@ -1733,7 +1733,7 @@ const AIHintStrip: React.FC<{
       <div className="flex flex-wrap gap-1.5">
         {hints.map((hint, idx) => (
           <button key={idx} onClick={onRun} disabled={loading} className={AI_HINT_CHIPCLASS}>
-            <Sparkles size={10} className="text-primary-400/80 dark:text-primary-400/80" />
+            <Sparkles size={10} className="text-c-ai/80" />
             {hint}
           </button>
         ))}
@@ -2458,7 +2458,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               color: 'text-c-text-muted',
               label: t('myWork.inboxContent.label16', 'System'),
             },
-            ai: { icon: Star, color: 'text-primary-500', label: 'AI' },
+            ai: { icon: Star, color: 'text-c-ai', label: 'AI' },
             user: {
               icon: MessageSquare,
               color: 'text-c-info',
@@ -3116,7 +3116,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   color: 'text-c-text-muted',
                   label: t('myWork.inboxContent.label16', 'System'),
                 },
-                ai: { icon: Star, color: 'text-primary-500', label: 'AI' },
+                ai: { icon: Star, color: 'text-c-ai', label: 'AI' },
                 user: {
                   icon: MessageSquare,
                   color: 'text-blue-500',

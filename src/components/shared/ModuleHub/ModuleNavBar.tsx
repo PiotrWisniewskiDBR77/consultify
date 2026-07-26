@@ -373,7 +373,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             }}
             className={`h-9 w-9 inline-flex items-center justify-center rounded-full transition-colors duration-150 border ${
               showSearch
-                ? 'bg-white/70 dark:bg-white/[0.06] text-slate-900 dark:text-slate-100 border-primary-500/40'
+                ? 'bg-white/70 dark:bg-white/[0.06] text-slate-900 dark:text-slate-100 border-slate-300 dark:border-white/25'
                 : 'text-slate-500 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
             }`}
             title={forceCommandRow ? 'Bulk mode active' : 'Search'}

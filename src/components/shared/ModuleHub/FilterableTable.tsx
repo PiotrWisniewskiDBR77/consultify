@@ -196,7 +196,7 @@ const FilterDropdown: React.FC<{
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`p-1 rounded-md hover:bg-state-hover transition-colors ${
-          activeValues.length > 0 ? 'text-primary-400' : 'text-slate-500'
+          activeValues.length > 0 ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500'
         }`}
       >
         <ChevronDown size={14} />

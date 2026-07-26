@@ -35,7 +35,9 @@ interface DynamicTabsProps {
 // Max visible tabs before overflow
 const MAX_VISIBLE_TABS = 6;
 
-// Status dot colors - uses canonical 11-status initiative lifecycle
+// Status dot colors - uses canonical 11-status initiative lifecycle.
+// SCHEDULED = blue (info, jak PROMOTED/EXECUTING/TRACKING) - było crimson
+// (primary-400), naruszenie C1 statusChipTone SSOT (TRIADA_KANON.md).
 const STATUS_COLORS: Record<ItemStatus, string> = {
   DRAFT: 'bg-slate-400',
   PENDING_REVIEW: 'bg-amber-400',
@@ -43,7 +45,7 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
   PROMOTED: 'bg-blue-400',
   PLANNING: 'bg-indigo-400',
   APPROVED: 'bg-emerald-400',
-  SCHEDULED: 'bg-primary-400',
+  SCHEDULED: 'bg-blue-400',
   EXECUTING: 'bg-blue-400',
   BLOCKED: 'bg-danger-400',
   DONE: 'bg-green-400',
@@ -52,10 +54,16 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
   ARCHIVED: 'bg-slate-500',
 };
 
-// Type colors for left border accent
+// Type colors for left border accent.
+// DRD + Discovery Tools „Digital" + assessment (poniżej) = indigo - było
+// crimson (border-l-primary-500), naruszenie TRIADA_KANON.md część C1
+// (primary = crimson, nielegalny nawet jako akcent kategorii). Indigo
+// wybrany bo żadna sąsiednia grupa go nie zajmuje (Strategic=emerald,
+// Operational=blue, Automation=amber, LEAN=green, upload=slate) -
+// zachowuje wizualne rozróżnienie grup, tylko bez marki w chrome.
 const TYPE_BORDER_COLORS: Record<string, string> = {
   // Assessment frameworks
-  DRD: 'border-l-primary-500',
+  DRD: 'border-l-indigo-500',
   SIRI: 'border-l-blue-500',
   ADMA: 'border-l-blue-500',
   CMMI: 'border-l-amber-500',
@@ -83,21 +91,21 @@ const TYPE_BORDER_COLORS: Record<string, string> = {
   CTW: 'border-l-blue-500',
   INV: 'border-l-blue-500',
   // Discovery Tools - Digital
-  ROB: 'border-l-primary-500',
-  LOG: 'border-l-primary-500',
-  RPA: 'border-l-primary-500',
-  AID: 'border-l-primary-500',
-  INT: 'border-l-primary-500',
-  DVP: 'border-l-primary-500',
-  LEG: 'border-l-primary-500',
-  DAT: 'border-l-primary-500',
-  P2S: 'border-l-primary-500',
-  SPE: 'border-l-primary-500',
+  ROB: 'border-l-indigo-500',
+  LOG: 'border-l-indigo-500',
+  RPA: 'border-l-indigo-500',
+  AID: 'border-l-indigo-500',
+  INT: 'border-l-indigo-500',
+  DVP: 'border-l-indigo-500',
+  LEG: 'border-l-indigo-500',
+  DAT: 'border-l-indigo-500',
+  P2S: 'border-l-indigo-500',
+  SPE: 'border-l-indigo-500',
   // Discovery Tools - Automation
   PAI: 'border-l-amber-500',
   // V3-J02 — Presentations Hub (source types)
   tool: 'border-l-emerald-500',
-  assessment: 'border-l-primary-500',
+  assessment: 'border-l-indigo-500',
   finance: 'border-l-blue-500',
   upload: 'border-l-slate-500',
 };
