@@ -139,6 +139,15 @@ export interface StandardModuleBarProps {
   searchValue?: string;
   /** JEDEN primary CTA (ciemny wypełniony) — prawy skraj Menu 2. */
   primaryCta?: StandardPrimaryCta;
+  /**
+   * Luk ucieczkowy: gdy hub ma WIĘCEJ niż jeden element w slocie CTA (np.
+   * Interview — CTA per-zakładka + flag-gated „+ Nowy" launcher, oba naraz,
+   * komentarz w kodzie: „additive next to the existing per-tab CTA"), ma
+   * pierwszeństwo nad `primaryCta`. Świadome odstępstwo od „primaryCta =
+   * JEDEN" — cel: 1:1 zgodność z dotychczasowym `ModuleHub` przy migracji,
+   * nie nowy, sankcjonowany wzorzec do kopiowania gdzie indziej.
+   */
+  primaryCtaContent?: React.ReactNode;
   /** Segment przełącznika widoków (ikony); pojedynczy tryb ukrywa segment. */
   viewModes?: ViewMode[];
   viewMode?: ViewMode;
@@ -222,6 +231,7 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
   onSearch,
   searchValue,
   primaryCta,
+  primaryCtaContent,
   viewModes,
   viewMode = 'table',
   onViewModeChange,
@@ -422,7 +432,7 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
         onSearch={onSearch ?? noop}
         searchValue={searchValue}
         rightControls={filterControls}
-        primaryCta={primaryCtaNode}
+        primaryCta={primaryCtaContent !== undefined ? primaryCtaContent : primaryCtaNode}
         openDocuments={openItems ?? []}
         activeDocumentId={activeItemId ?? null}
         onSelectDocument={onSelectItem ?? noop}

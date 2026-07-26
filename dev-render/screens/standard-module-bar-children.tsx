@@ -126,6 +126,37 @@ export function StandardModuleBarChildrenScreen(): React.ReactElement {
           />
         </div>
       </div>
+
+      <div>
+        <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
+          E — primaryCtaContent (Interview-style, dodane 2026-07-26) — DWA
+          przyciski naraz w slocie CTA (per-tab CTA + flag-gated „+ Nowy"),
+          luk ucieczkowy bo StandardPrimaryCta obsługuje tylko jeden
+        </p>
+        <div style={{ border: '1px dashed #888' }}>
+          <StandardModuleBar
+            tabs={[{ id: 'only', label: 'Jedyna zakładka' }]}
+            activeTab="only"
+            onTabChange={() => {}}
+            primaryCtaContent={
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium border border-c-border bg-c-surface text-c-text"
+                >
+                  Per-tab CTA
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white dark:bg-slate-50 dark:text-navy-950"
+                >
+                  + Nowy (unified launcher)
+                </button>
+              </div>
+            }
+          />
+        </div>
+      </div>
     </div>
   );
 }
