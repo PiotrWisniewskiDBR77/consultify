@@ -113,12 +113,29 @@ violations_for() {
   fi
 
   # 2) *LightShell / *Hub renderujący listę (grid+kolumny) BEZ importu ze standard/
+  #
+  # R2b (2026-07-26, audyt strażników): dla *Hub.tsx samo R2 ("jakikolwiek
+  # import ze standard/") jest za słabe — StandardTable SAM wystarcza, żeby
+  # przejść, mimo że Menu 1 huba wciąż renderuje się legacy komponentem
+  # (shared/ModuleHub zamiast StandardModuleBar). Reguła #1 CLAUDE.md wymaga
+  # WSZYSTKICH trzech (StandardModuleBar · StandardTable · StandardPreview).
+  # R2b sprawdza konkretnie import StandardModuleBar (nie "cokolwiek ze
+  # standard/") dla hubów, które już renderują listę (ten sam trigger co R2:
+  # .map + kolumny) — TYLKO *Hub.tsx, nie *LightShell.tsx (inny archetyp,
+  # nie zawsze ma własne Menu 1).
   case "$bn" in
     *LightShell.tsx|*Hub.tsx)
       if grep -Eq '\.map\(' "$f" && grep -Eq 'grid-template-columns|gridTemplateColumns|COLUMNS|columns=|columnDefs' "$f"; then
         if ! grep -Eq "from ['\"][^'\"]*standard['\"/]" "$f"; then
           echo "R2|-|renderuje listę kolumnową, ale NIE importuje StandardTable (regresja 2026-07-12)"
         fi
+        case "$bn" in
+          *Hub.tsx)
+            if ! grep -Eq 'StandardModuleBar' "$f"; then
+              echo "R2b|-|hub modułu listowego renderuje listę, ale NIE importuje StandardModuleBar — menu legacy (kanon triady reguła #1)"
+            fi
+            ;;
+        esac
       fi
       ;;
   esac
@@ -134,6 +151,28 @@ violations_for() {
 
 count_violations() {
   violations_for "$1" | grep -c . || true
+}
+
+# ── Widoczność długu R2b (2026-07-26) ────────────────────────────────────────
+# R2b jest ratchetowana jak reszta (dług zastany przechodzi, nowe blokuje) —
+# ale ratchet z definicji CHOWA istniejący dług w liczbach ("nie rośnie" ≠
+# "zero"). Ta funkcja liczy PRAWDZIWY stan menu w hubach list na CAŁYM zakresie
+# repo (niezależnie od tego, co akurat jest w $FILES do commitu), żeby dług
+# był widoczny w KAŻDYM uruchomieniu, nie tylko przy --report na trafionych
+# plikach. Zwraca "legacy total" (spacją).
+legacy_menu_hub_summary() {
+  local f bn legacy=0 total=0
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    [ -f "$f" ] || continue
+    bn=$(basename -- "$f")
+    case "$bn" in *Hub.tsx) : ;; *) continue ;; esac
+    grep -Eq '\.map\(' "$f" || continue
+    grep -Eq 'grid-template-columns|gridTemplateColumns|COLUMNS|columns=|columnDefs' "$f" || continue
+    total=$((total + 1))
+    grep -Eq 'StandardModuleBar' "$f" || legacy=$((legacy + 1))
+  done < <(list_scope_files)
+  echo "$legacy $total"
 }
 
 baseline_for() {
@@ -222,6 +261,8 @@ if [ "$MODE" = "update" ]; then
   mv "$tmp" "$BASELINE"
   rm -f "$body"
   echo "✓ check-list-canon: baseline zaktualizowany → $BASELINE ($total naruszeń w $nfiles plikach)"
+  read -r lm_legacy lm_total <<< "$(legacy_menu_hub_summary)"
+  echo "• Huby list z legacy menu (renderują listę, brak importu StandardModuleBar — R2b): $lm_legacy z $lm_total *Hub.tsx"
   exit 0
 fi
 
@@ -289,6 +330,12 @@ if [ "$checked" -eq 0 ]; then
   echo "  Podaj pliki jawnie albo uruchom pełny skan: scripts/check-list-canon.sh --all" >&2
   exit 0
 fi
+
+# ★ Dług R2b WIDOCZNY zawsze (nie tylko na --report) — ratchet chowa "dług nie
+# rośnie" za liczbami; ta linia mówi wprost ile hubów list ma dziś legacy menu
+# (shared/ModuleHub zamiast StandardModuleBar), niezależnie od wyniku bramki.
+read -r lm_legacy lm_total <<< "$(legacy_menu_hub_summary)"
+echo "• Huby list z legacy menu (renderują listę, brak importu StandardModuleBar — R2b): $lm_legacy z $lm_total *Hub.tsx"
 
 if [ "$fail" -eq 0 ]; then
   echo "✓ check-list-canon: brak NOWYCH naruszeń kanonu tabel (${SOURCE}: $checked plików; naruszeń $total_current, baseline $total_baseline — dług nie rośnie)"
