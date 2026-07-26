@@ -344,10 +344,24 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
     </div>
   ) : null;
 
+  // ★ ODSTĘP MENU 2 (2026-07-26, uwaga Piotra na żywym demo — Vault i Run
+  // agent, "analogiczne uwagi"): gdy `tabs` jest puste (DZIŚ zawsze — żaden
+  // z 17 konsumentów StandardModuleBar nie przekazuje realnych zakładek),
+  // `justify-between` rozciągał lupę i prawy klaster (filtry/CTA) na całą
+  // szerokość ekranu, zostawiając wielką martwą przestrzeń pośrodku. Gdy
+  // `tabs` jest puste, oba klastry idą razem do prawej krawędzi zamiast się
+  // rozjeżdżać — bezpieczne, bo dotyczy WSZYSTKICH ekranów jednakowo (nikt
+  // dziś nie polega na starym rozciągnięciu). Gdy ktoś w przyszłości doda
+  // realne zakładki, wraca poprzednie zachowanie (lupa+taby z lewej, reszta
+  // z prawej).
+  const hasTabs = tabs.length > 0;
+
   return (
     <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5">
       {/* Main Navigation Row */}
-      <div className="flex items-center justify-between px-4 py-3">
+      <div
+        className={`flex items-center px-4 py-3 gap-3 ${hasTabs ? 'justify-between' : 'justify-end'}`}
+      >
         {/* Left: Search + Tabs + Status Filters */}
         <div className="flex items-center gap-3">
           {/* Search Toggle */}
@@ -406,7 +420,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
         </div>
 
         {/* Right cluster (KANON v3, left→right): Filters → View → Tool → Add → Area */}
-        <div className="flex items-center gap-3 ml-auto justify-end">
+        <div className={`flex items-center gap-3 justify-end ${hasTabs ? 'ml-auto' : ''}`}>
           {/* Filters / compact controls (leftmost in the right cluster) */}
           {rightControls}
 
