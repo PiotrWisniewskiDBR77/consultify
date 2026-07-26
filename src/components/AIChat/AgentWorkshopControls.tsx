@@ -22,8 +22,8 @@
  * w `AgentPlanPanel.tsx`. Dzięki temu ten plik da się wyrenderować w harnessie
  * z samym obiektem planu.
  */
-import { CheckCircle2, OctagonX, Play, X } from 'lucide-react';
-import React from 'react';
+import { CalendarClock, CheckCircle2, OctagonX, Play, X } from 'lucide-react';
+import React, { useState } from 'react';
 
 import { PreviewActionButton } from '@/components/shared/PreviewPane';
 import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
@@ -49,6 +49,7 @@ export function stepDisplayName(step: AgentPlanStep): string {
 
 const PLAN_STATUS_LABEL: Record<AgentPlan['status'], string> = {
   planning: 'Schemat w edycji',
+  scheduled: 'Zaplanowany',
   awaiting_approval: 'Czeka na zgodę',
   executing: 'W trakcie wykonania',
   paused: 'Wstrzymany',
@@ -77,6 +78,8 @@ export interface AgentWorkshopControlsProps {
   canCancel: boolean;
   busy: boolean;
   onRun: () => void;
+  /** Harmonogram (Fala 1, 2026-07-26) — brak prop = przycisk "Zaplanuj" się nie pokazuje. */
+  onSchedule?: (scheduledAt: string) => void;
   onCancel: () => void;
   onApprove: (step: AgentPlanStep) => void;
   onClose?: () => void;
@@ -93,6 +96,7 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
   canCancel,
   busy,
   onRun,
+  onSchedule,
   onCancel,
   onApprove,
   onClose,
@@ -102,6 +106,8 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
   const awaitingSteps = plan.steps.filter((s) => s.status === 'awaiting_approval');
   const progressPct =
     plan.totalSteps > 0 ? Math.round((plan.completedSteps / plan.totalSteps) * 100) : 0;
+  const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+  const [scheduleValue, setScheduleValue] = useState('');
 
   return (
     <ArtifactRightPanel
@@ -130,6 +136,40 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
                   onClick={onRun}
                   disabled={busy || (draftBlockCount ?? 0) === 0}
                 />
+              ) : null}
+              {canRun && onSchedule ? (
+                <div className="space-y-1.5">
+                  <PreviewActionButton
+                    variant="neutral"
+                    icon={CalendarClock}
+                    label="Zaplanuj na termin"
+                    onClick={() => setShowSchedulePicker((v) => !v)}
+                    disabled={busy || (draftBlockCount ?? 0) === 0}
+                  />
+                  {showSchedulePicker ? (
+                    <div className="flex items-center gap-1.5 pl-1">
+                      <input
+                        type="datetime-local"
+                        value={scheduleValue}
+                        onChange={(e) => setScheduleValue(e.target.value)}
+                        aria-label="Data i godzina uruchomienia"
+                        className="h-8 flex-1 rounded-lg border border-c-border-subtle bg-c-surface px-2 text-[11px] text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!scheduleValue) return;
+                          onSchedule(new Date(scheduleValue).toISOString());
+                          setShowSchedulePicker(false);
+                        }}
+                        disabled={busy || !scheduleValue}
+                        className="h-8 shrink-0 rounded-lg bg-c-surface-raised px-2.5 text-[11px] font-medium text-c-text hover:bg-c-surface-raised/70 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      >
+                        Zapisz
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
               ) : null}
               {canCancel ? (
                 <PreviewActionButton

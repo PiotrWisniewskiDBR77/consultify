@@ -16,6 +16,9 @@ import { API_URL, getHeaders, handleResponse } from './baseClient';
 
 export type AgentPlanStatus =
   | 'planning'
+  // Harmonogram (Fala 1, 2026-07-26): plan gotowy w 'planning', czeka na
+  // scheduledAt zamiast na jawne "Uruchom" — patrz `scheduleAgentPlan` niżej.
+  | 'scheduled'
   | 'awaiting_approval'
   | 'executing'
   | 'paused'
@@ -167,6 +170,25 @@ export async function runAgentPlan(
     res,
     'Failed to run agent plan'
   );
+}
+
+/**
+ * Harmonogram (Fala 1, 2026-07-26): 'planning' -> 'scheduled' z konkretnym
+ * `scheduledAt` (ISO string, np. z `<input type="datetime-local">`). Dispatch
+ * robi cron (`server/src/jobs/agentPlanSchedulerJob.ts`, co 2 min), nie ten
+ * wywołanie — w przeciwieństwie do `runAgentPlan` to żądanie nigdy nie zwraca
+ * `dispatch`.
+ */
+export async function scheduleAgentPlan(
+  planId: string,
+  scheduledAt: string
+): Promise<{ plan: AgentPlan }> {
+  const res = await fetch(`${API_URL}/ai/agent-plan/${encodeURIComponent(planId)}/schedule`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ scheduledAt }),
+  });
+  return handleResponse<{ plan: AgentPlan }>(res, 'Failed to schedule agent plan');
 }
 
 export async function getAgentPlan(planId: string): Promise<{ plan: AgentPlan }> {

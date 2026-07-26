@@ -46,6 +46,8 @@ import {
   cancelAgentPlan,
   getAgentPlan,
   runAgentPlan,
+  scheduleAgentPlan,
+  updateAgentPlanSteps,
 } from '@/services/api/agentPlan.api';
 
 import {
@@ -347,6 +349,39 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
     }
   }, [planId, plan, canvasBlocks, onRunEditedSchema]);
 
+  /**
+   * Harmonogram (Fala 1, 2026-07-26): zapisuje przestawiony schemat (jak
+   * `handleRunSchema`), ale zamiast dispatchu od razu woła `/schedule` —
+   * dispatch robi cron, gdy `scheduledAt` minie.
+   */
+  const handleSchedule = useCallback(
+    async (scheduledAt: string) => {
+      const blocks = canvasBlocks ?? [];
+      saveStoredBlocks(planId, blocks);
+      const steps = blocksToSteps(blocks, plan?.steps ?? []);
+      if (steps.length === 0) {
+        setLoadError(
+          'Schemat nie ma ani jednego wykonywalnego kroku — sama notatka nie wystarczy.'
+        );
+        return;
+      }
+      setSchemaSubmitted(true);
+      setBusy('schedule');
+      try {
+        await updateAgentPlanSteps(planId, steps);
+        const { plan: updated } = await scheduleAgentPlan(planId, scheduledAt);
+        setPlan(updated);
+        setLoadError(null);
+      } catch (error) {
+        setSchemaSubmitted(false);
+        setLoadError(error instanceof Error ? error.message : 'Failed to schedule plan');
+      } finally {
+        setBusy(null);
+      }
+    },
+    [planId, plan, canvasBlocks]
+  );
+
   const handleApprove = useCallback(
     async (step: AgentPlanStep) => {
       setBusy(step.id);
@@ -386,7 +421,9 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
    * wskazany przez `currentStepIndex` planu (dopóki plan nie jest zakończony).
    */
   const execution: CanvasExecutionState | undefined = useMemo(() => {
-    if (!plan || plan.status === 'planning') return undefined;
+    // 'scheduled' (Fala 1, Harmonogram): nic jeszcze nie biegnie — nie
+    // podświetlaj kroku 1 jako "TERAZ" zanim cron realnie wystartuje plan.
+    if (!plan || plan.status === 'planning' || plan.status === 'scheduled') return undefined;
     const statusById: Record<string, CanvasExecutionState['statusById'][string]> = {};
     plan.steps.forEach((step) => {
       statusById[step.id] = step.status;
@@ -442,6 +479,7 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
         canCancel={!TERMINAL_STATUSES.has(plan.status) && plan.status !== 'planning'}
         busy={busy !== null}
         onRun={() => void handleRunSchema()}
+        onSchedule={(scheduledAt) => void handleSchedule(scheduledAt)}
         onCancel={() => void handleCancel()}
         onApprove={(step) => void handleApprove(step)}
         onClose={onClose}
