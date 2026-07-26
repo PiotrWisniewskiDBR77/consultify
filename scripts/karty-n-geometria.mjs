@@ -54,7 +54,11 @@ const KARTY = [
   ['Narzędzie', 'karta-tool'],
   ['Inicjatywa', 'karta-initiative'],
 ];
-const VIEWPORTY = [1280, 1440];
+// ★ 1024 dodane 2026-07-26: to szerokość, na której żył najgroźniejszy regres
+//   stabilizacji gridu (prawy panel znikał w 3/6 kart) — złapany wtedy WYŁĄCZNIE
+//   ręcznym QA, bo aparat mierzył tylko [1280,1440]. Bez tej kolumny narzędzie
+//   regresyjne było ślepe dokładnie tam, gdzie regresja faktycznie się zdarza.
+const VIEWPORTY = [1024, 1280, 1440];
 
 // ── Filtr szumu konsoli ──────────────────────────────────────────────────────
 // Świadomie WĄSKI: łapie tylko to, co w harnessie jest oczekiwane (brak backendu AI,
@@ -405,17 +409,28 @@ async function zmierzKarte(przegladarka, ekran, szerokosc, { wstrzyknij = false 
 // ═══ SELF-TEST ═══════════════════════════════════════════════════════════════
 async function selfTest() {
   console.log('KONTROLKI POZYTYWNE APARATU (--self-test)\n');
-  console.log(`Baza: ${BAZA} · karta wzorcowa: karta-decision @1440\n`);
+  console.log(`Baza: ${BAZA} · karta wzorcowa: karta-decision @1440 (geometria) + @1024 (detektory)\n`);
   const przegladarka = await chromium.launch();
 
   const czysty = await zmierzKarte(przegladarka, 'karta-decision', 1440);
   await czysty.ctx.close();
   const brudny = await zmierzKarte(przegladarka, 'karta-decision', 1440, { wstrzyknij: true });
   await brudny.ctx.close();
+  // ★ Drugi viewport (1024) — detektory konsoli/crimson/enum/error-boundary są
+  //   niezależne od szerokości i MUSZĄ łapać wstrzyknięte defekty także na wąskim
+  //   ekranie. Bez tego self-test walidował aparat tylko na jednej kombinacji
+  //   (decision@1440) — luka zgłoszona w handoffie 2026-07-24. Kontrolki GEOMETRII
+  //   zostają na 1440, bo na 1024 część pasów bywa świadomie ukryta (responsywność).
+  const czysty1024 = await zmierzKarte(przegladarka, 'karta-decision', 1024);
+  await czysty1024.ctx.close();
+  const brudny1024 = await zmierzKarte(przegladarka, 'karta-decision', 1024, { wstrzyknij: true });
+  await brudny1024.ctx.close();
   await przegladarka.close();
 
   const A = czysty.wynik;
   const B = brudny.wynik;
+  const A2 = czysty1024.wynik;
+  const B2 = brudny1024.wynik;
 
   const probki = [
     {
@@ -490,6 +505,44 @@ async function selfTest() {
       nazwa: 'Detektor tekstowy — łapie enum w treści pola formularza',
       ok: znajdzSuroweEnumy('NOT_STARTED').length === 1,
       szczegol: 'źródłem tekstu są też .value inputów, nie tylko innerText',
+    },
+  );
+
+  // ── Kontrolki detektorów na WĄSKIM viewportcie (1024) ───────────────────────
+  // Te same detektory, druga szerokość: dowód, że nie są po cichu zależne od
+  // viewportu. Tylko kontrolki niezależne od geometrii (konsola/crimson/enum/błąd).
+  probki.push(
+    {
+      nazwa: '@1024 Błąd konsoli — sztuczny błąd ZŁAPANY na wąskim ekranie',
+      ok: B2.bledyKonsoli.some((b) => /SELF-TEST: sztuczny blad/.test(b)),
+      szczegol: `przed: ${A2.bledyKonsoli.length}, po: ${B2.bledyKonsoli.length}`,
+    },
+    {
+      nazwa: '@1024 Filtr szumu — favicon 404 ODFILTROWANY na wąskim ekranie',
+      ok:
+        !B2.bledyKonsoli.some((b) => /favicon/i.test(b)) &&
+        B2.bledyKonsoliSurowo > A2.bledyKonsoliSurowo,
+      szczegol: `surowo ${A2.bledyKonsoliSurowo} → ${B2.bledyKonsoliSurowo}, po filtrze ${A2.bledyKonsoli.length} → ${B2.bledyKonsoli.length}`,
+    },
+    {
+      nazwa: '@1024 Crimson — wstrzyknięty rgb(133,24,47) podnosi licznik',
+      ok: B2.crimson > A2.crimson,
+      szczegol: `przed: ${A2.crimson}, po: ${B2.crimson}`,
+    },
+    {
+      nazwa: '@1024 Enum SCREAMING_SNAKE — „STATUS_W_TOKU" ZŁAPANY',
+      ok: B2.enumy.some((e) => e.wartosc === 'STATUS_W_TOKU'),
+      szczegol: `złapane: ${B2.enumy.map((e) => e.wartosc).join(', ') || '—'}`,
+    },
+    {
+      nazwa: '@1024 Enum slug — „priority-high" ZŁAPANY',
+      ok: B2.enumy.some((e) => e.wartosc === 'priority-high'),
+      szczegol: `slugów: ${B2.enumy.filter((e) => e.rodzaj === 'slug').length}`,
+    },
+    {
+      nazwa: '@1024 Error-boundary — „Coś poszło nie tak" ZŁAPANE',
+      ok: B2.bladNaEkranie === true && A2.bladNaEkranie === false,
+      szczegol: `przed: ${A2.bladNaEkranie}, po: ${B2.bladNaEkranie}`,
     },
   );
 
