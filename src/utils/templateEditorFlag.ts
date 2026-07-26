@@ -3,19 +3,21 @@
  *
  * Kreator AI-draft w Architekcie szablonów Word
  * (`DocumentStudioTemplateArchitectView`) generuje dziś szkic sekcji, ale
- * blueprint jest READ-ONLY — użytkownik (autor szablonu) nie może dodać,
- * usunąć, przenieść ani przemianować sekcji przed akceptem. Ta flaga
- * (domyślnie OFF) odsłania RĘCZNY EDYTOR STRUKTURY na szkicu do WIZUALNEGO
- * AKCEPTU Piotra bez ruszania niczego na żywca:
- *   OFF → widok bajt-identyczny z dzisiejszym (blueprint tylko do odczytu).
- *   ON  → dyskretne kontrolki edycji (dodaj/usuń/góra/dół/zmień nazwę).
- * Po akcepcie właściciela → domyślne ON (env) osobną decyzją (reguła #7).
+ * blueprint pierwotnie było READ-ONLY — użytkownik (autor szablonu) nie mógł
+ * dodać, usunąć, przenieść ani przemianować sekcji przed akceptem. Ta flaga
+ * odsłania RĘCZNY EDYTOR STRUKTURY na szkicu:
+ *   OFF → widok bajt-identyczny ze stanem sprzed flagi (blueprint tylko do
+ *         odczytu).
+ *   ON (default) → dyskretne kontrolki edycji (dodaj/usuń/góra/dół/zmień
+ *         nazwę).
  *
  * Kolejność (wygrywa najwyższe):
  *   1. URL query `?ff_tpl_editor=0|1` — bypass operatora / dev / dev-render.
  *   2. `localStorage["ff.tpl_editor"]` — override user / org.
  *   3. `import.meta.env.VITE_TPL_EDITOR_ENABLED` — build-time.
- *   4. Default: OFF (blueprint read-only jak dziś).
+ *   4. Default: ON (flip 79a75de14e, akcept Piotra 2026-07-22 po live-verify;
+ *      UWAGA: decyzja architekta D6 z 2026-07-24 postuluje OFF — konflikt do
+ *      rozstrzygnięcia przez Piotra, nie zmieniaj defaultu bez jego słowa).
  */
 
 const LS_KEY = 'ff.tpl_editor';
