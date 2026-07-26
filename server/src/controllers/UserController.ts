@@ -42,6 +42,9 @@ const PROFILE_USERS_COLUMNS: Array<{ name: string; sql: string }> = [
   { name: 'date_format', sql: 'ALTER TABLE users ADD COLUMN date_format TEXT' },
   { name: 'time_format', sql: 'ALTER TABLE users ADD COLUMN time_format TEXT' },
   { name: 'linkedin_id', sql: 'ALTER TABLE users ADD COLUMN linkedin_id TEXT' },
+  // P0.3 (2026-07-26): interface language preference — SSOT priority is
+  // account > localStorage > navigator. See src/services/languagePreference.ts.
+  { name: 'language', sql: 'ALTER TABLE users ADD COLUMN language TEXT' },
 ];
 
 const ensureUsersProfileColumns = async (): Promise<Set<string>> => {
@@ -230,6 +233,7 @@ export class UserController {
         profileSurveyCompletedAt,
         profileSurveyDismissedCount,
         profileSurveyLastDismissedAt,
+        language,
       } = req.body;
 
       if (firstName !== undefined && !String(firstName).trim()) {
@@ -415,6 +419,12 @@ export class UserController {
       if (timeFormat !== undefined && !userColumns.has('time_format')) {
         profilePreferenceFallback.timeFormat =
           timeFormat === null ? null : String(timeFormat || '').trim() || null;
+      }
+      // P0.3: interface language preference (account > localStorage > navigator).
+      addColumnUpdate('language', language);
+      if (language !== undefined && !userColumns.has('language')) {
+        profilePreferenceFallback.language =
+          language === null ? null : String(language || '').trim() || null;
       }
       addColumnUpdate('seniority_level', seniorityLevel);
       addColumnUpdate('site_location', siteLocation);
