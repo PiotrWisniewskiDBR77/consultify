@@ -183,6 +183,15 @@ export interface StandardModuleBarProps {
   forceCommandRow?: boolean;
 
   className?: string;
+  /**
+   * Gdy podane — fasada PRZEJMUJE TEŻ layout treści (flex-col h-full +
+   * scrollowalny content area), bajt w bajt jak dzisiejszy `ModuleHub`
+   * (`<ModuleHub>{children}</ModuleHub>` → `<StandardModuleBar>{children}</StandardModuleBar>`).
+   * Bez tego propa (obecni konsumenci peryferyjni: MyProjects, AssessmentTable,
+   * ReportBuilder, SuperAdmin, vault, AgentHubShell) fasada renderuje
+   * WYŁĄCZNIE pasek, zachowanie sprzed tej zmiany — zero różnicy.
+   */
+  children?: React.ReactNode;
 }
 
 export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
@@ -228,6 +237,7 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
   commandRowRightContent: commandRowRightOverride,
   forceCommandRow: forceCommandRowOverride,
   className,
+  children,
 }) => {
   const navTabs = useMemo<TabConfig[]>(
     () =>
@@ -333,8 +343,8 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
     </button>
   ) : undefined;
 
-  return (
-    <div className={className}>
+  const barContent = (
+    <>
       {/* Menu 1 (opcjonalny wiersz dla hubów osadzonych) */}
       {breadcrumbs && breadcrumbs.length > 0 ? (
         <div className={MENU_1_ROW_CLASS}>
@@ -418,6 +428,20 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
         toolControl={toolControl}
         aiControl={aiControl}
       />
+    </>
+  );
+
+  // Bez `children`: zachowanie sprzed tej zmiany — wyłącznie pasek (peryferyjni
+  // konsumenci: MyProjects, AssessmentTable, ReportBuilder, SuperAdmin, vault, AgentHubShell).
+  if (children === undefined) {
+    return <div className={className}>{barContent}</div>;
+  }
+
+  // Z `children`: pełny layout 1:1 z `ModuleHub` (flex-col h-full + scrollowalny content area).
+  return (
+    <div className={['flex flex-col h-full bg-c-bg text-c-text', className].filter(Boolean).join(' ')}>
+      {barContent}
+      <div className="flex-1 min-h-0 overflow-auto">{children}</div>
     </div>
   );
 };
