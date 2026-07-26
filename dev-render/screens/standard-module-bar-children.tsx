@@ -85,9 +85,9 @@ export function StandardModuleBarChildrenScreen(): React.ReactElement {
 
       <div>
         <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
-          C — primaryCta zablokowane (doktryna „uprawnienia bramkują akcje",
-          dodane 2026-07-26 dla Initiatives-style pilot lock) — wyszarzone,
-          nie znika, tooltip z wyjaśnieniem przy hover
+          C — primaryCta locked (pilot-lock, dodane 2026-07-26 dla Initiatives)
+          — wyszarzone, tooltip z wyjaśnieniem, ale NADAL KLIKALNE (onClick ma
+          dispatchować komunikat, nie ginie pod natywnym disabled)
         </p>
         <div style={{ border: '1px dashed #888' }}>
           <StandardModuleBar
@@ -97,9 +97,9 @@ export function StandardModuleBarChildrenScreen(): React.ReactElement {
             primaryCta={{
               label: 'Nowa inicjatywa',
               icon: Plus,
-              onClick: () => {},
-              disabled: true,
-              disabledReason: 'Dostępne w kolejnej fazie projektu',
+              onClick: () => console.log('PILOT_LOCK_CLICK_FIRED — onClick nie jest blokowany'),
+              locked: true,
+              lockedReason: 'Dostępne w kolejnej fazie projektu',
             }}
           />
         </div>

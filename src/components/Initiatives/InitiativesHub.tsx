@@ -97,8 +97,9 @@ import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 // Portfolio view components
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 // ModuleHub components
-import { FilterChip, ModuleHub, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
+import { FilterChip, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
   MENU_3_ACTION_DANGER,
   MENU_3_ACTION_NEUTRAL,
@@ -621,65 +622,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     ],
     [t]
   );
-
-  const PRIORITY_OPTIONS = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const;
-
-  const togglePriorityFilter = useCallback(
-    (priority: (typeof PRIORITY_OPTIONS)[number]) => {
-      setFilters((prev) => {
-        const current = prev.priority || [];
-        const next = current.includes(priority)
-          ? current.filter((p) => p !== priority)
-          : [...current, priority];
-        return { ...prev, priority: next.length ? next : undefined };
-      });
-      setActiveFilters((prev) => {
-        const withoutPriority = prev.filter((f) => !f.id.startsWith('priority:'));
-        const currentPriorities = filters.priority || [];
-        const next = currentPriorities.includes(priority)
-          ? currentPriorities.filter((p) => p !== priority)
-          : [...currentPriorities, priority];
-        const chips: FilterChip[] = next.map((p) => ({
-          id: `priority:${p}`,
-          label: t(`initiatives.priority.${p.toLowerCase()}`, p),
-          column: 'priority',
-          value: p,
-        }));
-        return [...withoutPriority, ...chips];
-      });
-    },
-    [filters.priority, t]
-  );
-
-  const filterActions = useMemo(() => {
-    const actions = PRIORITY_OPTIONS.map((p) => ({
-      id: `priority-${p}`,
-      label: t(`initiatives.priority.${p.toLowerCase()}`, p),
-      badge: filters.priority?.includes(p) ? 1 : 0,
-      onClick: () => togglePriorityFilter(p),
-    }));
-
-    if (isPilotParticipant) {
-      return actions;
-    }
-
-    return [
-      ...actions,
-      {
-        id: 'bulk-edit',
-        label: t('initiatives.bulkEdit.title'),
-        badge: selectedIds.size,
-        disabled: selectedIds.size === 0,
-        onClick: () => {
-          if (selectedIds.size === 0) {
-            toast.error(t('initiatives.bulkEdit.title'));
-            return;
-          }
-          setShowBulkModal(true);
-        },
-      },
-    ];
-  }, [isPilotParticipant, selectedIds.size, filters.priority, togglePriorityFilter, t]);
 
   // ============================================
   // HANDLERS
@@ -2562,8 +2504,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   return (
     <div className="h-full" data-testid="initiatives-hub">
-      <ModuleHub
-        persistViewModeKey="initiatives"
+      <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={handleMainTabChange}
@@ -2579,26 +2520,21 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         primaryCta={
-          isPilotParticipant ? (
-            <button
-              type="button"
-              onClick={() => dispatchPilotAccessBlocked({ href: '/initiatives' })}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-c-surface-raised text-c-text-muted cursor-not-allowed"
-              title={t('initiatives.pilot.createLocked', 'Available in the next project phase')}
-            >
-              <span>{t('initiatives.form.newInitiative')}</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowInitiativeWizard(true)}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-navy-700/20 bg-navy-900 text-white hover:bg-navy-800 dark:border-white/20 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150"
-            >
-              <span>{t('initiatives.form.newInitiative')}</span>
-            </button>
-          )
+          isPilotParticipant
+            ? {
+                label: t('initiatives.form.newInitiative'),
+                onClick: () => dispatchPilotAccessBlocked({ href: '/initiatives' }),
+                locked: true,
+                lockedReason: t(
+                  'initiatives.pilot.createLocked',
+                  'Available in the next project phase'
+                ),
+              }
+            : {
+                label: t('initiatives.form.newInitiative'),
+                onClick: () => setShowInitiativeWizard(true),
+              }
         }
-        filterActions={filterActions}
         rightControls={rightControls}
         commandRowContent={
           activeTab === 'analysis'
@@ -2612,7 +2548,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         <div className="flex h-full min-h-0 flex-col overflow-hidden">
           <div className="min-h-0 flex-1 overflow-hidden">{renderContent()}</div>
         </div>
-      </ModuleHub>
+      </StandardModuleBar>
 
       <InitiativeWizardModal
         isOpen={showInitiativeWizard}

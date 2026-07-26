@@ -48,10 +48,12 @@ import {
 
 const noop = () => undefined;
 
-// Wariant zablokowanego primaryCta (uprawnienia-bramkują-akcje) — ten sam
-// kształt (rounded-lg, h-9) co MENU_1_PRIMARY_CTA, powierzchnia wyciszona
-// zamiast wypełnienia granatem. 1:1 z dotychczasowym wyglądem w Initiatives.
-const MENU_1_PRIMARY_CTA_DISABLED =
+// Wariant zablokowanego (pilot-lock) primaryCta — ten sam kształt (rounded-lg,
+// h-9) co MENU_1_PRIMARY_CTA, powierzchnia wyciszona zamiast wypełnienia
+// granatem. Kursor `not-allowed` to sam WYGLĄD — przycisk NADAL jest klikalny
+// (patrz `locked` w StandardPrimaryCta). 1:1 z dotychczasowym wyglądem
+// w Initiatives.
+const MENU_1_PRIMARY_CTA_LOCKED =
   'inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium bg-c-surface-raised text-c-text-muted cursor-not-allowed';
 
 export interface StandardBreadcrumb {
@@ -99,13 +101,15 @@ export interface StandardPrimaryCta {
   onClick: () => void;
   testId?: string;
   /**
-   * Doktryna „uprawnienia bramkują akcje": CTA zablokowane (np. pilot bez
-   * dostępu) NIE znika — pokazuje się wyszarzone z wyjaśnieniem w tooltipie
-   * (`disabledReason`), zamiast po cichu ukrywać opcję (analogicznie do
-   * kebaba A6/blok4 — „niegotowe pokazujemy disabled z dopiskiem").
+   * Doktryna „uprawnienia bramkują akcje" (termin domenowy: pilot lock —
+   * `isPilotParticipant`/`PILOT_LOCKED`). CTA NIE znika i NIE jest natywnie
+   * `disabled` — `onClick` MUSI się odpalić (typowo `dispatchPilotAccessBlocked`,
+   * które pokazuje globalny komunikat + CTA „przejdź gdzie indziej"). Tylko
+   * wygląd zmienia się na wyciszony, z wyjaśnieniem w tooltipie (`lockedReason`).
+   * Zablokowanie natywnym `disabled` zjadałoby ten komunikat — nie robimy tego.
    */
-  disabled?: boolean;
-  disabledReason?: string;
+  locked?: boolean;
+  lockedReason?: string;
 }
 
 export interface StandardModuleBarProps {
@@ -348,11 +352,10 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
   const primaryCtaNode = primaryCta ? (
     <button
       type="button"
-      onClick={primaryCta.disabled ? undefined : primaryCta.onClick}
-      disabled={primaryCta.disabled}
-      title={primaryCta.disabled ? primaryCta.disabledReason : undefined}
+      onClick={primaryCta.onClick}
+      title={primaryCta.locked ? primaryCta.lockedReason : undefined}
       data-testid={primaryCta.testId}
-      className={primaryCta.disabled ? MENU_1_PRIMARY_CTA_DISABLED : MENU_1_PRIMARY_CTA}
+      className={primaryCta.locked ? MENU_1_PRIMARY_CTA_LOCKED : MENU_1_PRIMARY_CTA}
     >
       {primaryCta.icon ? <primaryCta.icon size={16} /> : null}
       <span>{primaryCta.label}</span>
