@@ -192,6 +192,19 @@ export interface OutlineItem {
   suggestedBlocks?: string[];
   notesPolicy?: 'none' | 'light' | 'standard' | 'speaker_heavy';
   warnings?: string[];
+  /**
+   * FALA D (2026-07-26) — per-slide briefing drafted by the Template Architect
+   * (presentationTemplateDraftService.ts `PresentationTemplateOutlineItem`).
+   * `dataNeeded`/`suggestedVisual` used to be dropped by
+   * `buildTemplateRuntimeFromRow` before reaching this type; now carried
+   * through end-to-end so `generateDeck` can fold them into the Narrative
+   * Engine directive (see `buildTemplateBriefingInstruction`). `keyMessage`
+   * above already served as the deterministic-template headline fallback —
+   * these two are additive, template-only, LLM-drafted hints, never facts.
+   */
+  dataNeeded?: string[];
+  suggestedVisual?: string;
+  contentHints?: string[];
 }
 
 /**
@@ -1541,12 +1554,14 @@ export async function generateDeck(
     // ------------------------------------------------------------
     // G4: Narrative Engine enrichment for text-heavy slides
     // ------------------------------------------------------------
-    const narrativeIntents: SlideIntent[] = [
-      'executive_summary',
-      'key_messages',
-      'next_steps',
-      'recommendation_portfolio',
-    ];
+    // FALA D (2026-07-26) — the intent gate for the source-driven (Kreator)
+    // default path now shares ONE list with the free-text-instruction path
+    // (`shouldRunNarrativeRewrite` / `getNarrativeRewriteIntents`, both
+    // exported below) instead of duplicating a 4-item literal here. See
+    // `NARRATIVE_REWRITE_INTENTS_EXTENDED` for which additional intents were
+    // added and why (root_cause/single_insight/performance_overview/roadmap/
+    // risk_management — the same arc `generateDefaultOutline` already treats
+    // as narrative-worthy for blank-brief decks).
     // Deck #2 (audyt 2026-07-22) — brief z czatu (setup.brief) grounduje TEMAT.
     // Dyskryminator w `resolveDeckNarrativeBrief` (eksportowany, testowalny):
     // aktywne TYLKO gdy jest brief i brak „rich" sourceArtifacts (ścieżka czatu);
@@ -1583,9 +1598,19 @@ export async function generateDeck(
         ? false
         : useBriefRewrite
           ? shouldRunNarrativeRewrite(slide.intent, briefText)
-          : narrativeIntents.includes(slide.intent);
+          : shouldRunNarrativeRewrite(slide.intent);
       if (!runNarrative) continue;
       try {
+        // FALA D (2026-07-26) — Template Architect per-slide briefing
+        // (keyMessage/dataNeeded, see `buildTemplateBriefingInstruction`).
+        // Only used on the Kreator path (`!useBriefRewrite`) so it never
+        // competes with the chat-brief instruction above — the two are
+        // mutually exclusive by construction (`resolveDeckNarrativeBrief`
+        // returns null whenever real sourceArtifacts are present, which is
+        // exactly when a template-driven outline exists).
+        const templateBriefing = useBriefRewrite
+          ? null
+          : buildTemplateBriefingInstruction(enabledSlides[i], setup.language);
         const engineInput: NarrativeEngineInput = {
           context_pack: contextPack,
           organizationId,
@@ -1606,7 +1631,11 @@ export async function generateDeck(
           section_title: slide.key_message || slide.intent,
           // Temat z czatu jako dyrektywa autora — Narrative Engine trzyma się
           // faktów (post_check odrzuca zmyślone liczby), ale pisze O TEMACIE.
-          ...(useBriefRewrite ? { user_instruction: briefInstruction } : {}),
+          ...(useBriefRewrite
+            ? { user_instruction: briefInstruction }
+            : templateBriefing
+              ? { user_instruction: templateBriefing }
+              : {}),
           aiPurpose:
             slide.intent === 'executive_summary' || slide.intent === 'key_messages'
               ? 'presentation_slide_copy'
@@ -2224,14 +2253,110 @@ export const NARRATIVE_REWRITE_INTENTS: SlideIntent[] = [
 ];
 
 /**
+ * FALA D (2026-07-26, "deck-narrative-depth") — additional slide intents whose
+ * L1 fact-extraction has real signal on the source-driven (Kreator) path. The
+ * `context_pack` consumed by `extractFacts` (narrativeEngine/factExtraction.ts)
+ * is DECK-WIDE, not per-slide — `generateDeck` builds it once from
+ * `setup.sourceArtifacts` and reuses it for every slide — so it already
+ * contains RAID risk items, KPI/benefit data, execution/initiative timelines
+ * and tool-session findings by the time any slide asks for a narrative. These
+ * 5 intents are exactly the source-driven mappings that populate that pool
+ * (`generateDefaultOutline`: raid → risk_management, kpi_roi →
+ * performance_overview, execution_status → roadmap, tool_session →
+ * single_insight) plus `root_cause`, the deterministic problem-framing arc
+ * slide — and are EXACTLY the "no-rich-source" narrative arc already unlocked
+ * for the chat/brief path by `shouldRunNarrativeRewrite`'s free-text branch.
+ * This only extends the SAME set to the Kreator default gate, where they
+ * previously fell back to the generic deterministic template even with real
+ * facts sitting in the pack.
+ *
+ * Deliberately NOT added: `cover`/`section_intro`/`appendix` (chrome slides,
+ * no facts to narrate); `comparison`/`assessment`/`initiative_portfolio`/
+ * `prioritization_matrix`/`recommendation_single` (table/matrix/scorecard
+ * layouts per `presentationTemplateRuntimeService.ts` `BASE_RECIPES` — the
+ * slide's value IS the table; a bolted-on narrative paragraph pads length
+ * without adding an argument, so it's excluded pending a dedicated look at
+ * whether THEIR deterministic content needs a different kind of depth fix).
+ */
+export const NARRATIVE_REWRITE_INTENTS_EXTENDED: SlideIntent[] = [
+  ...NARRATIVE_REWRITE_INTENTS,
+  'root_cause',
+  'single_insight',
+  'performance_overview',
+  'roadmap',
+  'risk_management',
+];
+
+/**
+ * FALA D — kill-switch: `ENABLE_DECK_NARRATIVE_EXTENDED`, read at CALL time
+ * (same pattern as `ENABLE_DECK_CONCLUSION_SLIDE` / `ENABLE_DECK_QUALITY_GATES`
+ * above) so an env change rolls back without a deploy. Default ON: set to the
+ * literal string `'false'` to fall back to the legacy 4-intent gate. Safe
+ * default-ON because this only widens WHICH slides may call the Narrative
+ * Engine — the L5 post-checks (no invented numbers, source-coverage floor)
+ * and the deck quality gates already police WHAT the engine is allowed to
+ * say, unchanged by this flag.
+ */
+export function getNarrativeRewriteIntents(): SlideIntent[] {
+  return process.env.ENABLE_DECK_NARRATIVE_EXTENDED !== 'false'
+    ? NARRATIVE_REWRITE_INTENTS_EXTENDED
+    : NARRATIVE_REWRITE_INTENTS;
+}
+
+/**
  * R4 — Pure decision: should the per-slide narrative rewrite run for this
  * intent? A free-text instruction unlocks every slide; absent an instruction
- * we keep the historical narrative-only gate. Exported for unit testing.
+ * we keep the (flag-gated) narrative-only gate. Exported for unit testing.
  */
 export function shouldRunNarrativeRewrite(intent: SlideIntent, instruction?: string): boolean {
   const hasInstruction = typeof instruction === 'string' && instruction.trim().length > 0;
   if (hasInstruction) return true;
-  return NARRATIVE_REWRITE_INTENTS.includes(intent);
+  return getNarrativeRewriteIntents().includes(intent);
+}
+
+/**
+ * FALA D (2026-07-26) — folds a template-drafted per-slide briefing
+ * (`OutlineItem.keyMessage` / `.dataNeeded`, drafted by
+ * `presentationTemplateDraftService.ts`'s Template Architect) into a Narrative
+ * Engine `user_instruction`. Mirrors the shape of the chat-brief instruction
+ * built in `generateDeck` (same field, same "highest priority" prompt slot in
+ * `linguisticRealization.ts` `buildSystemPrompt`), but the directive is
+ * STRUCTURAL, never a fact substitute: `keyMessage` tells L4 which thesis to
+ * open on and defend with the real facts already in the context pack;
+ * `dataNeeded` tells it which of those facts to prioritise. Neither field is
+ * itself a fact — L5 post-checks still reject any number the content can't
+ * trace back to `context_pack`. Returns `null` when there is nothing to say
+ * (most decks/slides have no template briefing) so callers can cleanly no-op.
+ * Pure — exported for unit testing.
+ */
+export function buildTemplateBriefingInstruction(
+  item: Pick<OutlineItem, 'keyMessage' | 'dataNeeded'> | undefined,
+  language: 'en' | 'pl'
+): string | null {
+  if (!item) return null;
+  const keyMessage = typeof item.keyMessage === 'string' ? item.keyMessage.trim() : '';
+  const dataNeeded = Array.isArray(item.dataNeeded)
+    ? item.dataNeeded.filter((d): d is string => typeof d === 'string' && d.trim().length > 0)
+    : [];
+  if (!keyMessage && dataNeeded.length === 0) return null;
+
+  const isPl = language === 'pl';
+  const lines: string[] = [];
+  if (keyMessage) {
+    lines.push(
+      isPl
+        ? `Teza tego slajdu zdefiniowana w szablonie: "${keyMessage}". Otwórz akapit tą tezą i rozwiń ją dostępnymi faktami — nie zastępuj jej inną tezą.`
+        : `This slide's thesis, as defined by the template: "${keyMessage}". Open on this thesis and support it with the available facts — do not substitute a different thesis.`
+    );
+  }
+  if (dataNeeded.length > 0) {
+    lines.push(
+      isPl
+        ? `Szablon wskazuje, że ten slajd powinien opierać się na: ${dataNeeded.join('; ')}. Jeśli te dane są obecne wśród podanych faktów, użyj ich w pierwszej kolejności; jeśli ich brakuje, NIE zmyślaj ich — pomiń lub oznacz jako założenie.`
+        : `The template indicates this slide should draw on: ${dataNeeded.join('; ')}. If these are present among the provided facts, prioritise them; if they are missing, do NOT invent them — omit or mark as an assumption.`
+    );
+  }
+  return lines.join('\n');
 }
 
 /** Rich-source typy — obecność któregokolwiek = deck sterowany danymi (Kreator). */
