@@ -6,7 +6,6 @@ import {
   Copy,
   ExternalLink,
   Loader2,
-  MessageSquare,
   Sparkles,
   TrendingUp,
   UserPlus,
@@ -349,7 +348,6 @@ export const DecisionPreviewFooter: React.FC<{
   onApprove: () => void;
   onReject: () => void;
   onDelegate: () => void;
-  onMoreInfo: () => void;
   onRemind: () => void;
   onEscalate: () => void;
   snoozeOpen: boolean;
@@ -376,7 +374,6 @@ export const DecisionPreviewFooter: React.FC<{
   onApprove,
   onReject,
   onDelegate,
-  onMoreInfo,
   onRemind,
   onEscalate,
   snoozeOpen,
@@ -401,7 +398,7 @@ export const DecisionPreviewFooter: React.FC<{
     label: clampText(String(r.title || r.id), 42),
     tone: relationTone(r.type),
     // Nawigacja dostępna dziś tylko dla linkowanych decyzji (onOpenLinkedDecision — te
-    // same handlery co przycisk "Open"/onMoreInfo). Task/Initiative nie mają w tym module
+    // same handlery co przycisk "Open"). Task/Initiative nie mają w tym module
     // gotowego adresu docelowego — bez onClick pigułka renderuje się jako <span> (bez
     // cursor-pointer/hover), więc nie udaje klikalności, której nie ma.
     onClick:
@@ -505,12 +502,8 @@ export const DecisionPreviewFooter: React.FC<{
             rows={[]}
             overflowLabel={i18n.t('myWork.decisionPreview.moreActions', 'More actions')}
             overflowActions={[
-              {
-                label: i18n.t('myWork.decisionPreview.label8', 'More info'),
-                icon: MessageSquare,
-                onClick: onMoreInfo,
-                colorScheme: 'neutral',
-              },
+              // canon §7.3 — "More info" usunięte: wołało dokładnie ten sam handler
+              // co przycisk "Open" w headerze (onOpenFullDetail), czyli duplikat akcji.
               ...(canAct
                 ? [
                     {
@@ -875,7 +868,6 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
               await fetchUsers();
               setDelegationOpen(true);
             }}
-            onMoreInfo={() => onOpenFullDetail(decisionId, decision)}
             onRemind={handleRemind}
             onEscalate={handleEscalate}
             snoozeOpen={snoozeOpen}
