@@ -17,7 +17,7 @@
  *   1. URL query `?ff_scimGroupSync=0|1` — operator bypass (staging / screenshot).
  *   2. `localStorage["ff.scim_group_sync"]` — user/org override.
  *   3. `import.meta.env.VITE_SCIM_GROUP_SYNC` — build-time override.
- *   4. Default: OFF.
+ *   4. Default: ON (flip 2026-07-16, akcept Piotra).
  *
  * Pattern: src/utils/ssoSelfServiceFlag.ts (HP-24), src/utils/clientVaultFlag.ts (HP-22).
  */

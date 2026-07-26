@@ -14,7 +14,8 @@
  *   1. URL query `?ff_client_reader=0|1` — bypass operatora / dev.
  *   2. `localStorage["ff.client_reader"]` — override user / org.
  *   3. `import.meta.env.VITE_CLIENT_READER_ENABLED` — build-time.
- *   4. Default: OFF (trasa niedostępna).
+ *   4. Default: ON (flip bez SHA, akcept Piotra; F1/F3 zweryfikowany w
+ *      dev-render, trasa live).
  */
 
 const LS_KEY = 'ff.client_reader';
