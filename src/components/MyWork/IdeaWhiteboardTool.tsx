@@ -253,7 +253,16 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   }, [locked, onNodeStyleChange, nodes, rfTransform]);
 
   React.useEffect(() => {
-    const rfEl = containerRef.current?.closest('.react-flow');
+    // Naprawa 2026-07-26 (Zadanie B — Scenes nie przełącza widoku): `.react-flow`
+    // to DZIECKO tego kontenera (`<div ref={containerRef}><ReactFlow/></div>`,
+    // patrz JSX niżej), nie jego PRZODEK. `Element.closest()` przeszukuje
+    // WYŁĄCZNIE element i jego przodków, więc zawsze zwracał `null` tutaj —
+    // efekt bailował na `if (!rfEl) return`, a nasłuch na
+    // `idea-whiteboard-set-viewport` NIGDY się nie rejestrował. Scena wciąż
+    // poprawnie dispatchowała zdarzenie (`idea-whiteboard-navigate` w innym
+    // efekcie niżej), ale nic go tu nie odbierało — kliknięcie sceny wyglądało
+    // jak martwe, mimo że cały łańcuch zdarzeń działał aż do tego miejsca.
+    const rfEl = containerRef.current?.querySelector('.react-flow');
     if (!rfEl) return;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
