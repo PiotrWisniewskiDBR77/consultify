@@ -40,6 +40,14 @@ interface ReportsTabContentProps {
   onRefresh: () => void;
   actions: ReturnType<typeof useRapActions>;
   initialArtifactId?: string | null;
+  /**
+   * Same handler as the tab's topbar "Nowy raport" (Hub's `handleNewItem` for
+   * `outputs_documents`). Without this, the empty-state button rendered by
+   * GridView/StandardTable when a search/filter clears the list has a label
+   * but no `onNewItem`/`onAction` — StandardTable/GridView don't render a
+   * button at all without one, so it silently disappeared.
+   */
+  onNewItem?: () => void;
 }
 
 export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
@@ -53,6 +61,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
   onRefresh,
   actions,
   initialArtifactId,
+  onNewItem,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -454,6 +463,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         onItemClick={(item) => setSelectedId(item.id)}
         emptyMessage={t('rap.empty.reports', 'Brak raportów')}
         newItemLabel={t('rap.actions.newReport', 'Nowy raport')}
+        onNewItem={onNewItem}
       />
     );
   }
@@ -482,6 +492,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
             title: t('rap.empty.reportsTitle', 'Canonical management reports'),
             description: t('rap.empty.reports', 'Brak raportów'),
             actionLabel: t('rap.actions.newReport', 'Nowy raport'),
+            onAction: onNewItem,
           }}
           rowMenu={(row) => buildRowMenu(row as unknown as ReportItem)}
         />
