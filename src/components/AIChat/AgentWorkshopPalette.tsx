@@ -26,6 +26,7 @@
 import {
   Bot,
   Boxes,
+  Clock,
   Database,
   GitBranch,
   Lock,
@@ -65,6 +66,7 @@ const KIND_ICON: Record<PlanBlockKind, LucideIcon> = {
   'brama-akceptu': ShieldCheck,
   automat: Wand2,
   informacja: GitBranch,
+  pauza: Clock,
 };
 
 export interface AgentWorkshopPaletteProps {
