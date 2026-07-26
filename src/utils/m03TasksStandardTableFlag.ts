@@ -16,7 +16,7 @@
  *   1. URL query `?ff_m03TasksStandardTable=0|1` — bypass operatora (staging / zrzut).
  *   2. `localStorage["ff.m03_tasks_standard_table"]` — override user/org.
  *   3. `import.meta.env.VITE_M03_TASKS_STANDARD_TABLE` — override build-time.
- *   4. Default: OFF.
+ *   4. Default: ON (flip 2026-07-15, akcept Piotra).
  */
 
 const LS_KEY = 'ff.m03_tasks_standard_table';

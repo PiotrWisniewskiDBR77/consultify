@@ -19,8 +19,8 @@
  * Resolution order (highest wins):
  *   1. URL query `?ff_evidencePanel=0|1` — operator bypass.
  *   2. `localStorage["ff.evidencePanel"]` — user/org override.
- *   3. Default: OFF (nothing renders differently until a Vegas pass flips it
- *      after owner acceptance on screenshots).
+ *   3. Default: ON (flip 2026-07-16, akcept Piotra; galeria czysta, Vegas
+ *      dopracuje wygląd).
  */
 
 const LS_KEY = 'ff.evidencePanel';

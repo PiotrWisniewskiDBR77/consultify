@@ -14,7 +14,7 @@
  *   1. URL query `?ff_commandCenter=0|1` — bypass operatora (staging / zrzut).
  *   2. `localStorage["ff.command_center"]` — override user/org.
  *   3. `import.meta.env.VITE_COMMAND_CENTER` — override build-time.
- *   4. Default: OFF.
+ *   4. Default: ON (flip 2026-07-15, akcept Piotra; galeria fala7).
  *
  * Wzorzec: src/utils/clientVaultFlag.ts (HP-22, Blok F).
  */

@@ -8,8 +8,7 @@
  *   1. URL query `?ff_tabeleAiEditor=0|1`
  *   2. `localStorage["ff.tabele_ai_editor"]`
  *   3. `import.meta.env.VITE_TABELE_AI_EDITOR`
- *   4. Default: OFF until the backend feature flag
- *      `ENABLE_TABLE_AI_EDITOR` is enabled in the target environment.
+ *   4. Default: ON (flip bez SHA, akcept Piotra; server flag defaults ON).
  */
 
 const LS_KEY = 'ff.tabele_ai_editor';
