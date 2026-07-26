@@ -9,6 +9,7 @@ import 'reactflow/dist/style.css';
 import './whiteboard/whiteboard-canvas.css';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import ReactFlow, {
@@ -127,6 +128,11 @@ import { WhiteboardSelectionBar } from './whiteboard/WhiteboardSelectionBar';
 import { WhiteboardStyleBar } from './whiteboard/WhiteboardStyleBar';
 import { WhiteboardSessionPanel } from './whiteboard/WhiteboardSessionPanel';
 import { WhiteboardToolbar } from './whiteboard/WhiteboardToolbar';
+import { usePortalSlot } from './whiteboard/usePortalSlot';
+import {
+  isWhiteboardSessionInPanelEnabled,
+  WHITEBOARD_SESSION_PANEL_SLOT_ID,
+} from '@/utils/whiteboardSessionInPanelFlag';
 
 // ── Node/edge types (extracted to whiteboard/nodes/) ─────────────────────────
 const nodeTypes = whiteboardNodeTypes;
@@ -735,6 +741,15 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   const [drawingPaths, setDrawingPaths] = useState<DrawingPath[]>([]);
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [sessionState, setSessionState] = useState<WhiteboardSessionState>(DEFAULT_SESSION_STATE);
+  // Naprawa 2026-07-26 (Zadanie A, `ff_whiteboardSessionInPanel`, default OFF):
+  // gdy flaga ON, `WhiteboardSessionPanel` nie renderuje się jako floating
+  // overlay nad płótnem — zamiast tego portaluje się do slotu wystawionego
+  // przez prawy panel „Właściwości" (sekcja „Inspektor tablicy" w
+  // IdeaWorkspaceTools.tsx). `sessionPanelSlot` jest `null` dopóki ten slot
+  // nie pojawi się w DOM (panel zamknięty / inna zakładka) — wtedy portal po
+  // prostu nic nie renderuje, zamiast rzucać błąd.
+  const whiteboardSessionInPanelEnabled = isWhiteboardSessionInPanelEnabled();
+  const sessionPanelSlot = usePortalSlot(WHITEBOARD_SESSION_PANEL_SLOT_ID);
   // B1 (M09): an 'observer' in an active facilitation session is view-only. This folds into
   // the existing `locked` mechanism already threaded through every mutation site below, so
   // node creation / drag / resize / edit / draw are all disabled without touching each call
@@ -3537,18 +3552,38 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         )
       ) : (
         <div className="flex-1 relative">
-          <WhiteboardSessionPanel
-            isPl={isPl}
-            locked={locked}
-            sessionState={sessionState}
-            whiteboardModeCopy={whiteboardModeCopy}
-            activityLog={activityLog}
-            historyLog={historyLog}
-            libraryItems={libraryItems}
-            onCycleGovernance={cycleGovernance}
-            onRestoreLatestHistory={restoreLatestHistory}
-            onPhaseChange={handlePhaseChange}
-          />
+          {whiteboardSessionInPanelEnabled
+            ? sessionPanelSlot &&
+              createPortal(
+                <WhiteboardSessionPanel
+                  isPl={isPl}
+                  locked={locked}
+                  sessionState={sessionState}
+                  whiteboardModeCopy={whiteboardModeCopy}
+                  activityLog={activityLog}
+                  historyLog={historyLog}
+                  libraryItems={libraryItems}
+                  onCycleGovernance={cycleGovernance}
+                  onRestoreLatestHistory={restoreLatestHistory}
+                  onPhaseChange={handlePhaseChange}
+                  embedded
+                />,
+                sessionPanelSlot
+              )
+            : (
+                <WhiteboardSessionPanel
+                  isPl={isPl}
+                  locked={locked}
+                  sessionState={sessionState}
+                  whiteboardModeCopy={whiteboardModeCopy}
+                  activityLog={activityLog}
+                  historyLog={historyLog}
+                  libraryItems={libraryItems}
+                  onCycleGovernance={cycleGovernance}
+                  onRestoreLatestHistory={restoreLatestHistory}
+                  onPhaseChange={handlePhaseChange}
+                />
+              )}
 
           {/* Idea lifecycle stage badge */}
           {ideaStage && (

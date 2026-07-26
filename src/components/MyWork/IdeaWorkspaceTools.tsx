@@ -59,6 +59,10 @@ import React, { useCallback, useContext, useMemo, useRef, useState } from 'react
 import { useTranslation } from 'react-i18next';
 
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
+import {
+  isWhiteboardSessionInPanelEnabled,
+  WHITEBOARD_SESSION_PANEL_SLOT_ID,
+} from '@/utils/whiteboardSessionInPanelFlag';
 
 import { IdeaContextPanel } from './IdeaContextPanel';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
@@ -995,6 +999,17 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           defaultOpen
         >
           <div className="space-y-3 text-[11px]">
+            {/* Naprawa 2026-07-26 (Zadanie A, `ff_whiteboardSessionInPanel`,
+                default OFF): mount point dla `WhiteboardSessionPanel`
+                (Facilitator/Board mode/Voting/Follow-me/WORKSHOP PHASE/
+                Ops+Governance), portalowanego tu z `IdeaWhiteboardTool` gdy
+                flaga ON — patrz `usePortalSlot` + `whiteboardSessionInPanelFlag.ts`.
+                Renderowany tylko gdy flaga włączona, żeby przy OFF (dziś)
+                nie zostawiać pustego diva w drzewie. */}
+            {isWhiteboardSessionInPanelEnabled() && (
+              <div id={WHITEBOARD_SESSION_PANEL_SLOT_ID} />
+            )}
+
             {/* Selected node info */}
             {selection.type === 'node' &&
               selection.primaryId &&

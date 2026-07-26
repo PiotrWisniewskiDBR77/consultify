@@ -91,6 +91,7 @@ const WhiteboardCanvasScreen = React.lazy(() => import('./screens/whiteboard-can
 const IdeaTableTimelineStuckScreen = React.lazy(
   () => import('./screens/idea-table-timeline-stuck')
 );
+const WhiteboardWorkshopScreen = React.lazy(() => import('./screens/whiteboard-workshop'));
 const MindmapI18nSmokeScreen = React.lazy(() => import('./screens/mindmap-i18n-smoke'));
 const ModelCatalogTableScreen = React.lazy(() => import('./screens/model-catalog-table'));
 const NavDeclutterSidebarScreen = React.lazy(() => import('./screens/navdeclutter-sidebar'));
@@ -524,6 +525,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'fix/table-timeline-stuck — REALNY <IdeaMapWorkspace initialTool="table"> — zakładka Timeline blokuje typ widoku na Gantt',
     render: () => <IdeaTableTimelineStuckScreen />,
+  },
+  'whiteboard-workshop': {
+    label:
+      'Naprawa 2026-07-26 — Whiteboard Session Layer/Scenes/prawy klik (mock stanowy); &ff_whiteboardSessionInPanel=1 dla ON',
+    render: () => <WhiteboardWorkshopScreen />,
   },
   'i18n-fala1-smoke': {
     label:

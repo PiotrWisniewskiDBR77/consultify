@@ -21,6 +21,11 @@ export interface WhiteboardSessionPanelProps {
   onCycleGovernance: () => void;
   onRestoreLatestHistory: () => void;
   onPhaseChange: (phase: FacilitationPhase) => void;
+  /** Naprawa 2026-07-26 (Zadanie A, `ff_whiteboardSessionInPanel`): gdy `true`,
+   * renderuje się jako zwykły blok wypełniający kontener rodzica (prawy
+   * panel „Właściwości") zamiast pływającego overlaya `absolute` nad
+   * płótnem. Zero zmian w treści/handlerach — tylko klasy wrappera. */
+  embedded?: boolean;
 }
 
 export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
@@ -34,6 +39,7 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
   onCycleGovernance,
   onRestoreLatestHistory,
   onPhaseChange,
+  embedded,
 }) => {
   const { t } = useTranslation();
 
@@ -53,7 +59,13 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
     // visually ate the left edge of every line here (every string in this file
     // rendered with its first few characters occluded). Cleared past the
     // rail's pill width instead of matching its anchor.
-    <div className="absolute top-3 left-20 z-20 flex flex-col gap-2 max-w-[280px]">
+    <div
+      className={
+        embedded
+          ? 'flex flex-col gap-2 w-full'
+          : 'absolute top-3 left-20 z-20 flex flex-col gap-2 max-w-[280px]'
+      }
+    >
       <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:backdrop-blur-xl backdrop-blur-sm shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-3 py-2.5">
         <div className="flex items-center justify-between gap-3">
           <div>
