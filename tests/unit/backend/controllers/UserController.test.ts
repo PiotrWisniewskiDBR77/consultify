@@ -331,5 +331,78 @@ describe('UserController', () => {
         'organization_id = ?'
       );
     });
+
+    // P0.3 (2026-07-26): account-level UI language preference — konto >
+    // localStorage > navigator. See src/services/languagePreference.ts.
+    it('persists language preference directly to users.language', async () => {
+      mockReq.params.id = 'user-1';
+      mockReq.body = { language: 'pl' };
+      vi.mocked(getTableColumns).mockImplementation(async (table: string) => {
+        if (table === 'users') {
+          return new Set([
+            'id',
+            'organization_id',
+            'updated_at',
+            'display_name',
+            'pronouns',
+            'status_message',
+            'out_of_office',
+            'vacation_end',
+            'out_of_office_message',
+            'company_name',
+            'timezone',
+            'date_format',
+            'time_format',
+            'linkedin_id',
+            'language',
+          ]);
+        }
+        return new Set();
+      });
+      (queryHelpers.queryRun as any).mockResolvedValue({ changes: 1 });
+
+      await UserController.updateUser(mockReq, mockRes, vi.fn());
+
+      expect(queryHelpers.queryRun).toHaveBeenCalledWith(
+        expect.stringContaining('language = ?'),
+        expect.arrayContaining(['pl'])
+      );
+      expect(jsonFn).toHaveBeenCalledWith({ id: 'user-1', message: 'User updated successfully' });
+    });
+
+    it('clears the language preference when explicitly set to null', async () => {
+      mockReq.params.id = 'user-1';
+      mockReq.body = { language: null };
+      vi.mocked(getTableColumns).mockImplementation(async (table: string) => {
+        if (table === 'users') {
+          return new Set([
+            'id',
+            'organization_id',
+            'updated_at',
+            'display_name',
+            'pronouns',
+            'status_message',
+            'out_of_office',
+            'vacation_end',
+            'out_of_office_message',
+            'company_name',
+            'timezone',
+            'date_format',
+            'time_format',
+            'linkedin_id',
+            'language',
+          ]);
+        }
+        return new Set();
+      });
+      (queryHelpers.queryRun as any).mockResolvedValue({ changes: 1 });
+
+      await UserController.updateUser(mockReq, mockRes, vi.fn());
+
+      expect(queryHelpers.queryRun).toHaveBeenCalledWith(
+        expect.stringContaining('language = ?'),
+        expect.arrayContaining([null])
+      );
+    });
   });
 });
