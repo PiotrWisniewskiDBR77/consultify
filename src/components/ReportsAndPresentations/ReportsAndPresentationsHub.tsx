@@ -66,7 +66,12 @@ import type {
   ReportStatus,
   TemplateStatus,
 } from './types';
-import { PRESENTATION_STATUS_META, REPORT_STATUS_META, SOURCE_TYPE_META } from './types';
+import {
+  PRESENTATION_STATUS_META,
+  REPORT_STATUS_META,
+  SOURCE_TYPE_META,
+  TEMPLATE_STATUS_META,
+} from './types';
 import {
   useArtifactOutputsList,
   usePresentations,
@@ -1060,26 +1065,19 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       {} as Record<string, number>
     );
 
+    // ★ Chipy dla 'templates' MUSZĄ pokrywać wszystkie statusy realnie zapisywane
+    // przez `mapTemplateStatus` (useRapData.ts): approved/published/draft/deprecated/unknown.
+    // Zahardkodowana lista active/draft/deprecated/archived była ślepa na
+    // published/approved — większość szablonów typu Report (report_builder_templates)
+    // ma status 'published', więc chipy pokazywały 0/0/0/0 mimo realnej zawartości.
+    // Wzorzec identyczny jak outputs_documents/outputs_presentations poniżej.
     const statusChips =
       activeTab === 'templates'
-        ? ([
-            {
-              value: 'active',
-              label: t('rap.filters.status.active', 'Active'),
-              dot: 'bg-emerald-400',
-            },
-            { value: 'draft', label: t('rap.filters.status.draft', 'Draft'), dot: 'bg-slate-400' },
-            {
-              value: 'deprecated',
-              label: t('rap.filters.status.deprecated', 'Deprecated'),
-              dot: 'bg-amber-500',
-            },
-            {
-              value: 'archived',
-              label: t('rap.filters.status.archived', 'Archived'),
-              dot: 'bg-slate-500',
-            },
-          ] as Array<{ value: string; label: string; dot: string }>)
+        ? (Object.entries(TEMPLATE_STATUS_META).map(([value, meta]) => ({
+            value,
+            label: isPolish ? meta.labelPl || meta.label : meta.label,
+            dot: meta.dotColor,
+          })) as Array<{ value: string; label: string; dot: string }>)
         : activeTab === 'outputs_documents'
           ? (Object.entries(REPORT_STATUS_META).map(([value, meta]) => ({
               value,
