@@ -37,12 +37,12 @@ import {
   GridItem,
   GridView,
   ItemStatus,
-  ModuleHub,
   ModuleTab,
   OpenDocument,
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { BudgetWorkspace } from './BudgetWorkspace';
 import { FinancialAnalysisWorkspace } from './FinancialAnalysisWorkspace';
@@ -820,7 +820,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
 
   return (
     <>
-      <ModuleHub
+      <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={(tab) => {
@@ -841,7 +841,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
         categoryButtons={categoryButtons.length > 0 ? categoryButtons : undefined}
       >
         {renderContent()}
-      </ModuleHub>
+      </StandardModuleBar>
 
       {/* Add KPI Modal */}
       {showKpiModal && (

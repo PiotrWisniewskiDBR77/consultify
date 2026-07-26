@@ -42,13 +42,13 @@ import {
 import {
   FilterableTable,
   FilterChip,
-  ModuleHub,
   ModuleTab,
   OpenDocument,
   TableColumn,
   ViewMode,
 } from '../../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../../shared/ModuleHub/useModuleOpenDocuments';
+import { StandardModuleBar } from '../../standard/StandardModuleBar';
 import { type RowAction } from '../../shared/RowActionsMenu';
 import { EmptyState, LoadingState } from '../../shared/states';
 import { TableWithPreviewLayout } from '../../shared/TableWithPreviewLayout';
@@ -988,7 +988,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
 
   return (
     <>
-      <ModuleHub
+      <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -1014,7 +1014,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         availableViewModes={['table']}
       >
         {renderContent()}
-      </ModuleHub>
+      </StandardModuleBar>
 
       {/* Report Generator Drawer */}
       {showGeneratorDrawer && (

@@ -103,12 +103,12 @@ import {
   FilterChip,
   HubWorkAreaLoadError,
   HubWorkAreaLoading,
-  ModuleHub,
   ModuleTab,
   OpenDocument,
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -5813,7 +5813,7 @@ Please return:
 
   return (
     <>
-      <ModuleHub
+      <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={handleMainTabChange}
@@ -5854,7 +5854,7 @@ Please return:
         }
       >
         {renderContent()}
-      </ModuleHub>
+      </StandardModuleBar>
       <InitiativeCompactPanel
         initiative={sidePanelInitiative}
         isOpen={isSidePanelOpen}

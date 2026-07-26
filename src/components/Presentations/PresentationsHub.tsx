@@ -40,13 +40,13 @@ import {
   FilterChip,
   GridItem,
   GridView,
-  ModuleHub,
   OpenDocument,
   TableColumn,
   useTableSelection,
   ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { type RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { AssigneeCell } from '../ui/primitives/cells/AssigneeCell';
@@ -754,7 +754,7 @@ export const PresentationsHub: React.FC = () => {
 
   return (
     <>
-      <ModuleHub
+      <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab as PresentationTab)}
@@ -838,7 +838,7 @@ export const PresentationsHub: React.FC = () => {
         ) : (
           renderContent()
         )}
-      </ModuleHub>
+      </StandardModuleBar>
 
       {/* Rename modal */}
       {renameModalDeck && (

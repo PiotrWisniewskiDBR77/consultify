@@ -67,7 +67,6 @@ import {
   GridItem,
   GridView,
   ModuleContext,
-  ModuleHub,
   ModuleTab,
   OpenDocument,
   REPORT_STATUSES,
@@ -75,6 +74,7 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
   MENU_3_ACTION_DANGER,
   MENU_3_INNER_CLASS,
@@ -2339,7 +2339,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
   return (
     <>
-      <ModuleHub
+      <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -2389,7 +2389,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             renderContent()
           )}
         </div>
-      </ModuleHub>
+      </StandardModuleBar>
 
       <InitiativesGenerationWizardModal
         isOpen={showInitiativesWizard}

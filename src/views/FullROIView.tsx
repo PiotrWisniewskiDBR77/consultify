@@ -20,8 +20,8 @@ import { Button } from '@/components/ui/primitives/Button';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, shouldAllowDemoData } from '@/services/api';
 
-import { ModuleHub } from '../components/shared/ModuleHub';
 import type { ModuleTab, ViewMode } from '../components/shared/ModuleHub/types';
+import { StandardModuleBar } from '../components/standard/StandardModuleBar';
 import { useAppStore } from '../store/useAppStore';
 
 /** Normalised analysis row used by the dashboard. */
@@ -456,8 +456,7 @@ export const FullROIView: React.FC = () => {
 
   return (
     <div className="h-full" data-testid="full-roi-view">
-      <ModuleHub
-        persistViewModeKey="roi"
+      <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab as RoiTab)}
@@ -473,7 +472,7 @@ export const FullROIView: React.FC = () => {
         onRemoveFilter={() => {}}
         onClearFilters={() => {}}
         availableViewModes={['table']}
-        primaryCta={
+        primaryCtaContent={
           <Button
             variant="brand"
             size="sm"
@@ -485,7 +484,7 @@ export const FullROIView: React.FC = () => {
         }
       >
         <div className="h-full min-h-0 overflow-auto">{renderBody()}</div>
-      </ModuleHub>
+      </StandardModuleBar>
     </div>
   );
 };

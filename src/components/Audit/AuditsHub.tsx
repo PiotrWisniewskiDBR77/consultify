@@ -43,8 +43,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { type FilterChip, ModuleHub } from '@/components/shared/ModuleHub';
+import { type FilterChip } from '@/components/shared/ModuleHub';
 import type { ModuleTab, ViewMode } from '@/components/shared/ModuleHub/types';
+import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import {
   MENU_3_ACTION_DANGER,
   MENU_3_LEFT_CLASS,
@@ -761,8 +762,7 @@ export const AuditsHub: React.FC = () => {
 
   return (
     <div className="h-full" data-testid="audits-hub">
-      <ModuleHub
-        persistViewModeKey="audits_hub"
+      <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -1022,7 +1022,7 @@ export const AuditsHub: React.FC = () => {
             </>
           )}
         </div>
-      </ModuleHub>
+      </StandardModuleBar>
 
       <AuditOrchestratorWizard
         open={wizardOpen}

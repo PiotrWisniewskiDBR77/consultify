@@ -72,13 +72,13 @@ import {
   FilterChip,
   type GridItem,
   GridView,
-  ModuleHub,
   ModuleTab,
   OpenDocument,
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
 import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
   MENU_3_ACTION_DANGER,
@@ -3434,7 +3434,7 @@ export const FinanceHub: React.FC = () => {
 
   return (
     <>
-      <ModuleHub
+      <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -3466,7 +3466,7 @@ export const FinanceHub: React.FC = () => {
           />
         )}
         {content}
-      </ModuleHub>
+      </StandardModuleBar>
 
       {isFinanceRuntimeV8 && (
         <FinanceLanePanel

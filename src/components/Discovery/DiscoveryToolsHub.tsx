@@ -110,13 +110,13 @@ import {
   GridItem,
   GridView,
   ItemStatus,
-  ModuleHub,
   ModuleTab,
   OpenDocument,
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -5059,7 +5059,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
   return (
     <>
-      <ModuleHub
+      <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -5076,12 +5076,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         commandRowContent={CommandRowContent}
-        primaryCta={PrimaryCta}
+        primaryCtaContent={PrimaryCta}
         availableViewModes={activeViewModes}
         rightControls={activeTab === 'library' ? null : StatusFilterDropdown}
       >
         {renderContent()}
-      </ModuleHub>
+      </StandardModuleBar>
 
       {generateInitiativesForId ? (
         <GenerateInitiativesModal

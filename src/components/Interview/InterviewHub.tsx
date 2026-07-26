@@ -119,12 +119,12 @@ import { isUnifiedCreateLauncherEnabled } from '@/utils/unifiedCreateLauncherFla
 
 import {
   type FilterChip,
-  ModuleHub,
   type ModuleTab,
   type OpenDocument as SharedOpenDocument,
   type ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { AssignInterviewModal } from './AssignInterviewModal';
@@ -9337,8 +9337,7 @@ Return ONLY the answer text (no markdown fences).`;
 
   return (
     <div className="h-full" data-testid="interview-hub">
-      <ModuleHub
-        persistViewModeKey="interview"
+      <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab as ModuleTab}
         onTabChange={handleMainTabChange}
@@ -9354,7 +9353,7 @@ Return ONLY the answer text (no markdown fences).`;
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         rightControls={rightControls}
-        primaryCta={primaryCta}
+        primaryCtaContent={primaryCta}
         commandRowContent={commandRowContent}
         forceCommandRow={hasBulkSelection}
         availableViewModes={['table']}
@@ -9371,7 +9370,7 @@ Return ONLY the answer text (no markdown fences).`;
           />
         ) : null}
         <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
-      </ModuleHub>
+      </StandardModuleBar>
 
       <InitiativeWizardModal
         isOpen={showInitiativeWizard}
