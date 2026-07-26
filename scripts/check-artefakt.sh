@@ -28,20 +28,39 @@
 # (SPEC-N §2.3, §2.4, §2.1). Zakres: WYŁĄCZNIE 7 plików pełnych kart
 # (lista w karty_n_files) — nie panele boczne list, nie Tool Document.
 #
-# UWAGA — te 7 plików ŁAMIE dziś te reguły (nie są jeszcze zmigrowane, migracje
-# to fale A/B/C). Dlatego reguły kart N działają domyślnie w TRYBIE RAPORTU:
-# wypisują naruszenia i NIE zmieniają kodu wyjścia. Blokują dopiero z `--strict`
-# albo `KARTY_N_STRICT=1` — falę Z włączy strict na stałe (plan §4 pkt 1).
+# ── RATCHET PART 2 (2026-07-26) ───────────────────────────────────────────────
+# Do 2026-07-26 R2/R3 (reguły BLOKUJĄCE: createPortal / id zarezerwowane w lewej
+# nawigacji) były TYLKO raportem — kod wyjścia zmieniał wyłącznie `--strict` /
+# `KARTY_N_STRICT=1`, których nikt nie ustawia w CI/pre-commit ⇒ bezpiecznik
+# był realnie martwy (audyt gotowości 2026-07-24). Naprawa: RATCHET identyczny
+# jak PART 1 (crimson) i check-list-canon.sh — baseline PER PLIK w
+# scripts/check-artefakt-n.baseline.txt (format `<liczba>\t<ścieżka>`, liczy
+# WYŁĄCZNIE R2+R3, nigdy R1 — patrz niżej). Bramka FAILuje DOMYŚLNIE (bez
+# żadnej flagi) gdy suma R2+R3 w danym pliku ROŚNIE ponad baseline, albo plik
+# spoza baseline (baseline = 0) ma >0 naruszeń. Dług zastany (dziś: 0 wszędzie)
+# przechodzi z ostrzeżeniem, suma długu jest zawsze wypisana.
+#
+# R1 (solid/filled CTA — OSTRZEŻENIE) NIE wchodzi do baseline/ratchetu: to
+# heurystyka niedokładna z natury (patrz uzasadnienie przy kn_solid_hits),
+# świadomie ma zostać oceną okiem, nie bramką — pozostaje raportem zawsze.
+#
+# `--strict`/`KARTY_N_STRICT=1` NIE zmienia się: dodatkowo, ponad ratchet,
+# blokuje na CAŁYM istniejącym R2+R3 (zero-tolerance), niezależnie od baseline —
+# przygotowanie pod falę Z, która wyłączy strict na stałe (plan §4 pkt 1).
+#
+# Regeneracja baseline po świadomym sprzątnięciu długu: --update
+# (regeneruj TYLKO gdy liczba SPADŁA — nigdy żeby ukryć nową regresję).
 #
 # Wyjątek per linia: komentarz `karty-n-ok` (analogicznie do `crimson-ok`).
 #
-# Użycie: check-artefakt.sh [--update] [--strict]
+# Użycie: check-artefakt.sh [--update] [--strict] [--report]
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT" || exit 1
 
 BASELINE="scripts/check-artefakt.baseline.txt"
+BASELINE_KN="scripts/check-artefakt-n.baseline.txt"
 MODE=""
 STRICT="${KARTY_N_STRICT:-0}"
 VERBOSE=0
@@ -101,6 +120,15 @@ baseline_for() {
   awk -F'\t' -v p="$rel" '$2==p{print $1; found=1} END{if(!found) print 0}' "$BASELINE"
 }
 
+# Baseline PART 2 (karty N, R2+R3 blokujące — NIE R1). Format identyczny jak
+# powyżej: <liczba>\t<ścieżka>, jeden plik osobny baseline (zakres inny niż
+# PART 1: 7 kart N, nie powłoka wspólna).
+baseline_for_kn() {
+  local rel="$1"
+  [ -f "$BASELINE_KN" ] || { echo 0; return; }
+  awk -F'\t' -v p="$rel" '$2==p{print $1; found=1} END{if(!found) print 0}' "$BASELINE_KN"
+}
+
 if [ "$MODE" = "--update" ]; then
   tmp=$(mktemp)
   echo "# check-artefakt.sh baseline — regenerowany --update. Format: <liczba>\\t<ścieżka>." > "$tmp"
@@ -111,31 +139,38 @@ if [ "$MODE" = "--update" ]; then
     [ "$n" -gt 0 ] && printf '%s\t%s\n' "$n" "$f" >> "$tmp"
   done < <(list_scope_files)
   mv "$tmp" "$BASELINE"
-  echo "✓ check-artefakt: baseline zaktualizowany → $BASELINE"
-  exit 0
+  echo "✓ check-artefakt: baseline (PART 1, crimson) zaktualizowany → $BASELINE"
+  # Nie exit tutaj — --update musi też zregenerować baseline PART 2 (karty N),
+  # ale jego funkcje detekcji (kn_portal_hits/kn_reserved_hits) są zdefiniowane
+  # niżej w pliku. Blok --update dla PART 2 (z właściwym exit 0) jest zaraz po
+  # nich. Normalna pętla-detekcji PART 1 poniżej jest więc pomijana w --update
+  # (bo baseline właśnie stał się aktualnym stanem — sprawdzanie byłoby pustym
+  # potwierdzeniem samego siebie).
 fi
 
 fail=0
 total_current=0
 total_baseline=0
-while IFS= read -r f; do
-  [ -f "$f" ] || continue
-  cur=$(count_violations "$f")
-  base=$(baseline_for "$f")
-  total_current=$((total_current + cur))
-  total_baseline=$((total_baseline + base))
-  if [ "$cur" -gt "$base" ]; then
-    echo "✗ check-artefakt: $f — $cur naruszeń crimson w powłoce (baseline $base). Nowa regresja primary-*/c-accent w SPEC-A powłoce (CLAUDE.md UI pkt 6)." >&2
-    fail=1
-  fi
-done < <(list_scope_files)
+if [ "$MODE" != "--update" ]; then
+  while IFS= read -r f; do
+    [ -f "$f" ] || continue
+    cur=$(count_violations "$f")
+    base=$(baseline_for "$f")
+    total_current=$((total_current + cur))
+    total_baseline=$((total_baseline + base))
+    if [ "$cur" -gt "$base" ]; then
+      echo "✗ check-artefakt: $f — $cur naruszeń crimson w powłoce (baseline $base). Nowa regresja primary-*/c-accent w SPEC-A powłoce (CLAUDE.md UI pkt 6)." >&2
+      fail=1
+    fi
+  done < <(list_scope_files)
 
-if [ $fail -eq 0 ]; then
-  echo "✓ check-artefakt: brak nowych naruszeń crimson w powłoce artefaktów (aktualnie $total_current, baseline $total_baseline — dług nie rośnie)"
-else
-  echo "" >&2
-  echo "  Napraw: zamień primary-*/c-accent na tokeny neutralne (c-focus dla fokusu, c-* semantyczne)." >&2
-  echo "  Jeśli to świadome sprzątnięcie długu (liczba SPADŁA), zaktualizuj baseline: scripts/check-artefakt.sh --update" >&2
+  if [ $fail -eq 0 ]; then
+    echo "✓ check-artefakt: brak nowych naruszeń crimson w powłoce artefaktów (aktualnie $total_current, baseline $total_baseline — dług nie rośnie)"
+  else
+    echo "" >&2
+    echo "  Napraw: zamień primary-*/c-accent na tokeny neutralne (c-focus dla fokusu, c-* semantyczne)." >&2
+    echo "  Jeśli to świadome sprzątnięcie długu (liczba SPADŁA), zaktualizuj baseline: scripts/check-artefakt.sh --update" >&2
+  fi
 fi
 
 # =====================================================================
@@ -160,8 +195,10 @@ EOF
 # `primary-*` celowo POMINIĘTE — łapie je już bezpiecznik crimson wyżej.
 SOLID_BG='bg-(teal|blue|indigo|emerald|green|purple|violet|amber|orange|cyan|sky|rose|navy)-(500|600|700|900)'
 
-kn_report=0   # liczba naruszeń reguł BLOKUJĄCYCH (2 i 3)
-kn_warn=0     # liczba naruszeń reguły OSTRZEGAWCZEJ (1)
+kn_report=0        # liczba naruszeń reguł BLOKUJĄCYCH (2 i 3), suma AKTUALNA
+kn_warn=0          # liczba naruszeń reguły OSTRZEGAWCZEJ (1) — nigdy w baseline
+kn_fail=0          # 1 = ratchet PART 2 wykrył wzrost R2+R3 w którymś pliku
+kn_total_baseline=0  # suma baseline R2+R3 (do komunikatu "dług nie rośnie")
 
 # --- Reguła 1 (OSTRZEŻENIE) — drugi solid/filled CTA poza slotem primary. ---
 # SPEC-N §2.3: „Poza tym jednym slotem żaden element nie może być stylowany jako
@@ -229,6 +266,27 @@ kn_reserved_hits() {
              | grep -v 'karty-n-ok')
 }
 
+# --update PART 2 (karty N): regeneruje scripts/check-artefakt-n.baseline.txt
+# z sumy R2 (createPortal) + R3 (id zarezerwowane) per plik. R1 (solid CTA,
+# ostrzeżenie) celowo NIE wchodzi do baseline — patrz nagłówek pliku.
+if [ "$MODE" = "--update" ]; then
+  tmp_kn=$(mktemp)
+  echo "# check-artefakt-n.baseline.txt — regenerowany --update. Format: <liczba>\\t<ścieżka>." > "$tmp_kn"
+  echo "# Liczy WYŁĄCZNIE reguły BLOKUJĄCE PART 2: R2 (createPortal, SPEC-N §2.4) + R3" >> "$tmp_kn"
+  echo "# (id zarezerwowane w lewej nawigacji, SPEC-N §2.1). R1 (solid CTA, ostrzeżenie," >> "$tmp_kn"
+  echo "# §2.3) NIE wchodzi tu nigdy — pozostaje raportem zawsze (heurystyka niedokładna" >> "$tmp_kn"
+  echo "# z natury, patrz komentarz przy kn_solid_hits w check-artefakt.sh)." >> "$tmp_kn"
+  echo "# Regeneruj TYLKO po świadomym sprzątnięciu długu, nigdy żeby ukryć nową regresję." >> "$tmp_kn"
+  while IFS= read -r f; do
+    [ -f "$f" ] || continue
+    n=$(( $(kn_portal_hits "$f" | grep -c . || true) + $(kn_reserved_hits "$f" | grep -c . || true) ))
+    [ "$n" -gt 0 ] && printf '%s\t%s\n' "$n" "$f" >> "$tmp_kn"
+  done < <(karty_n_files)
+  mv "$tmp_kn" "$BASELINE_KN"
+  echo "✓ check-artefakt: baseline (PART 2, karty N) zaktualizowany → $BASELINE_KN"
+  exit 0
+fi
+
 if [ "$VERBOSE" = "1" ]; then
   echo ""
   if [ "$STRICT" = "1" ]; then
@@ -246,6 +304,17 @@ while IFS= read -r f; do
   n_reserved=$(kn_reserved_hits "$f" | grep -c . || true)
   kn_warn=$((kn_warn + n_solid))
   kn_report=$((kn_report + n_portal + n_reserved))
+
+  # Ratchet PART 2 (domyślny, bez --strict): FAIL gdy R2+R3 w TYM pliku rośnie
+  # ponad baseline. Drukuje się zawsze (niezależnie od --report), bo to jest
+  # sygnał blokujący, nie tylko informacyjny — analogicznie do PART 1 wyżej.
+  cur_kn=$((n_portal + n_reserved))
+  base_kn=$(baseline_for_kn "$f")
+  kn_total_baseline=$((kn_total_baseline + base_kn))
+  if [ "$cur_kn" -gt "$base_kn" ]; then
+    echo "✗ check-artefakt (karty N): $f — $cur_kn naruszeń R2+R3 (baseline $base_kn). Nowa regresja createPortal (§2.4) / id zarezerwowane w lewej nawigacji (§2.1)." >&2
+    kn_fail=1
+  fi
 
   [ "$VERBOSE" = "1" ] || continue
   [ "$n_solid" -eq 0 ] && [ "$n_portal" -eq 0 ] && [ "$n_reserved" -eq 0 ] && continue
@@ -265,17 +334,26 @@ while IFS= read -r f; do
   fi
 done < <(karty_n_files)
 
-if [ "$kn_report" -eq 0 ] && [ "$kn_warn" -eq 0 ]; then
+if [ "$kn_fail" -eq 1 ]; then
+  echo "" >&2
+  echo "  ✗ check-artefakt (karty N, ratchet PART 2): R2+R3 rośnie w co najmniej jednym pliku — patrz ✗ wyżej." >&2
+  echo "  Napraw: createPortal → sloty NModeShell (§2.4); comments/history/activity-log → prawy panel (§2.1)." >&2
+  echo "  Jeśli to świadome sprzątnięcie długu W INNYM pliku (suma spadła), zaktualizuj: scripts/check-artefakt.sh --update" >&2
+elif [ "$kn_report" -eq 0 ] && [ "$kn_warn" -eq 0 ]; then
   echo "✓ karty N (SPEC-N §5B): brak naruszeń reguł R1-R3"
 elif [ "$VERBOSE" = "1" ]; then
-  echo "  Razem: R1 (ostrzeżenia) $kn_warn · R2+R3 (blokujące w strict) $kn_report"
+  echo "  Razem: R1 (ostrzeżeń) $kn_warn · R2+R3 aktualnie $kn_report / baseline $kn_total_baseline (blokujące, ratchet — dług nie rośnie)"
 else
-  echo "• karty N (SPEC-N §5B): R1 ostrzeżeń $kn_warn · R2+R3 $kn_report (dług przedmigracyjny, nie blokuje; szczegóły: --report)"
+  echo "• karty N (SPEC-N §5B): R1 ostrzeżeń $kn_warn · R2+R3 aktualnie $kn_report / baseline $kn_total_baseline (dług istniejący, ratchet nie rośnie — nie blokuje; szczegóły: --report)"
+fi
+
+if [ "$kn_fail" -eq 1 ]; then
+  fail=1
 fi
 
 if [ "$STRICT" = "1" ] && [ "$kn_report" -gt 0 ]; then
   echo "" >&2
-  echo "  ✗ check-artefakt --strict: $kn_report naruszeń reguł blokujących kart N." >&2
+  echo "  ✗ check-artefakt --strict: $kn_report naruszeń reguł blokujących kart N (zero-tolerance, niezależnie od baseline)." >&2
   echo "  Napraw: createPortal → sloty NModeShell (§2.4); comments/history/activity-log → prawy panel (§2.1)." >&2
   fail=1
 fi
