@@ -712,17 +712,21 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
 
   const previewActions: StandardPreviewActions | undefined = useMemo(() => {
     if (!previewItem) return undefined;
-    const informational: NonNullable<StandardPreviewActions['informational']> = [
-      {
-        id: 'open',
-        variant: 'neutral',
-        label: t('rap.actions.open', 'Otwórz'),
-        icon: ExternalLink,
-        shortcut: 'O',
-        onClick: () => openRow(previewItem),
-      },
-    ];
+    // TYPE 11 fix (2026-07-26): this used to also carry an informational[0]
+    // "Otwórz" entry calling openRow(previewItem) — a literal duplicate of the
+    // header onOpenFull (below, same handler). Removed; header stays the
+    // single "open" action for this panel.
+    const informational: NonNullable<StandardPreviewActions['informational']> = [];
     if (previewItem.kind === 'sheet') {
+      // N1 fix (2026-07-26): this used to call openRow(previewItem) too, which
+      // for kind==='sheet' always resolves a truthy path via
+      // resolveArtifactOpenPath() and navigates away — it never downloaded
+      // anything, so "Download XLSX" silently opened the row instead (rejestr
+      // N1: "Download XLSX nic nie pobiera"). openGovernedSheetRow is the real
+      // handler already used elsewhere in this file for sheet rows (see the
+      // lineage "Download" button below, ~L1048): it navigates to the
+      // workspace when tablePlatformMetadataFirst is on, otherwise calls
+      // downloadSheetArtifactXlsx() to actually fetch+download the .xlsx blob.
       informational.push({
         id: 'open_sheet',
         variant: 'neutral',
@@ -731,7 +735,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           : t('rap.actions.exportXlsx', 'Download XLSX'),
         icon: Download,
         shortcut: 'D',
-        onClick: () => openRow(previewItem),
+        onClick: () => void openGovernedSheetRow(previewItem.originRecordId),
       });
     }
     if (previewItem.artifactId) {
@@ -756,7 +760,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       });
     }
     return { informational };
-  }, [previewItem, t, isEnabled, actions, onRefresh]);
+  }, [previewItem, t, isEnabled, actions, onRefresh, openGovernedSheetRow]);
 
   // Esc closes preview; single-key shortcuts (O/D/R) active while preview
   // open (kanon B.24/B.31 — wzór 1:1 z Assessment/Results adopterami).
