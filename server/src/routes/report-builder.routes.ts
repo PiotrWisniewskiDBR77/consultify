@@ -62,6 +62,11 @@ import {
   getAgentMessages,
   processAgentMessage,
 } from '../services/reportAgentService.js';
+import {
+  isTemplateResolveError,
+  resolveDocumentTemplateForCreation,
+  type TemplateResolveErrorCode,
+} from '../services/materials/creationIntent.js';
 import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import {
@@ -1167,6 +1172,88 @@ router.post('/templates', async (req: Request, res: Response, next: NextFunction
   } catch (err) {
     logger.error('[ReportBuilder] Error creating template:', err);
     next(err);
+  }
+});
+
+/**
+ * R1 „Użyj wzorca" (raport) — SERVER-SIDE template resolution, 2026-07-26.
+ *
+ * Mirrors `POST /document-studio/templates/resolve`: the Template Library is
+ * an INDEX (`v8_artifact_origin_links`), keyed by `templateArtifactId` (the
+ * artifact-index row). The report-builder generator needs the CANONICAL
+ * `report_builder_templates.id`. The client must never bridge that gap
+ * itself — a canonical id arriving as a URL param would be an unvalidated
+ * pointer straight into generation. This route performs the trusted
+ * translation via `resolveDocumentTemplateForCreation` (same resolver
+ * Document Studio uses — org access, scope, status and orphan checks, no
+ * duplicated logic), then rejects anything that isn't a `report_template`:
+ * a `document_template` hitting this route belongs to Document Studio, not
+ * the legacy report-builder generator.
+ *
+ * Body: { templateArtifactId: string }
+ * Returns 200: { template: { canonicalTemplateId, originRuntime, format,
+ *                            scope, status, source, legacy, sectionCount } }
+ * Errors: 400 templateArtifactId_required · 401 Unauthorized
+ *         404 TEMPLATE_NOT_INDEXED | TEMPLATE_ORPHANED
+ *         403 TEMPLATE_FORBIDDEN · 409 TEMPLATE_DEPRECATED
+ *         422 TEMPLATE_FORMAT_UNSUPPORTED
+ */
+const REPORT_TEMPLATE_RESOLVE_STATUS: Record<TemplateResolveErrorCode, number> = {
+  TEMPLATE_NOT_INDEXED: 404,
+  TEMPLATE_ORPHANED: 404,
+  TEMPLATE_FORBIDDEN: 403,
+  TEMPLATE_DEPRECATED: 409,
+  TEMPLATE_FORMAT_UNSUPPORTED: 422,
+};
+
+router.post('/templates/resolve', async (req: Request, res: Response) => {
+  const { userId, organizationId } = getAuthContext(req);
+  if (!userId || !organizationId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+  const templateArtifactId = String(req.body?.templateArtifactId || '').trim();
+  if (!templateArtifactId) {
+    res.status(400).json({ error: 'templateArtifactId_required' });
+    return;
+  }
+
+  try {
+    const resolved = await resolveDocumentTemplateForCreation(
+      { kind: 'library', templateArtifactId },
+      { organizationId }
+    );
+
+    // Same index can carry a document_template — that belongs to Document
+    // Studio's own resolve route, not here. Reject rather than silently
+    // handing report-builder a blueprint it didn't ask for.
+    if (resolved.originRuntime !== 'report_template') {
+      res.status(422).json({ error: 'TEMPLATE_FORMAT_UNSUPPORTED' });
+      return;
+    }
+
+    res.json({
+      template: {
+        canonicalTemplateId: resolved.canonicalTemplateId,
+        originRuntime: resolved.originRuntime,
+        format: resolved.format,
+        scope: resolved.scope,
+        status: resolved.status,
+        source: resolved.source,
+        legacy: resolved.legacy,
+        sectionCount: resolved.sectionBlueprint.length,
+      },
+    });
+  } catch (err) {
+    if (isTemplateResolveError(err)) {
+      logger.info(
+        `[ReportBuilder] template resolve rejected: ${err.code} (artifact ${templateArtifactId})`
+      );
+      res.status(REPORT_TEMPLATE_RESOLVE_STATUS[err.code]).json({ error: err.code });
+      return;
+    }
+    logger.error('[ReportBuilder] template resolve failed', err);
+    res.status(500).json({ error: 'TEMPLATE_RESOLVE_FAILED' });
   }
 });
 
