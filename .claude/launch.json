@@ -54,6 +54,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3208"],
       "port": 3208
+    },
+    {
+      "name": "fixw-timeline-stuck",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3231", "--strictPort"],
+      "port": 3231
     }
   ]
 }

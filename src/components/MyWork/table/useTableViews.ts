@@ -84,7 +84,12 @@ export function useTableViews(opts: UseTableViewsOpts): UseTableViewsReturn {
       setSort(view.sort?.[0] ?? null);
       setFilters(view.filters ?? { logic: 'and', rules: [] });
       setGroupBy(view.groupBy ?? null);
-      if (view.layout) setViewLayout(view.layout);
+      // Always resolve viewLayout — never leave the PREVIOUS view's layout
+      // (e.g. 'timeline') dangling when the newly-selected view doesn't
+      // specify its own. viewLayout is one global piece of state shared by
+      // every saved-view tab, so switching tabs must always land somewhere
+      // deterministic: the view's own layout, or 'table' as the sane default.
+      setViewLayout(view.layout ?? 'table');
       if (view.columns && onApplyColumns) {
         onApplyColumns(view.columns);
       }

@@ -88,6 +88,9 @@ const IdeasTeresaPanelScreen = React.lazy(() => import('./screens/ideas-teresa-p
 const MelsCanvasWorkspaceScreen = React.lazy(() => import('./screens/melscanvas-workspace'));
 const ProcessFlowCanvasScreen = React.lazy(() => import('./screens/processflow-canvas'));
 const WhiteboardCanvasScreen = React.lazy(() => import('./screens/whiteboard-canvas'));
+const IdeaTableTimelineStuckScreen = React.lazy(
+  () => import('./screens/idea-table-timeline-stuck')
+);
 const MindmapI18nSmokeScreen = React.lazy(() => import('./screens/mindmap-i18n-smoke'));
 const ModelCatalogTableScreen = React.lazy(() => import('./screens/model-catalog-table'));
 const NavDeclutterSidebarScreen = React.lazy(() => import('./screens/navdeclutter-sidebar'));
@@ -516,6 +519,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'whiteboard-canvas': {
     label: 'Fala 8 — Whiteboard: łączniki (4-str uchwyty magnetyczne)',
     render: () => <WhiteboardCanvasScreen />,
+  },
+  'idea-table-timeline-stuck': {
+    label:
+      'fix/table-timeline-stuck — REALNY <IdeaMapWorkspace initialTool="table"> — zakładka Timeline blokuje typ widoku na Gantt',
+    render: () => <IdeaTableTimelineStuckScreen />,
   },
   'i18n-fala1-smoke': {
     label:

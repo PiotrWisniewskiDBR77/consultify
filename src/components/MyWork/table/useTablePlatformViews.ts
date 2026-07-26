@@ -92,7 +92,10 @@ export function useTablePlatformViews(
     setSort(view.sort?.[0] ?? null);
     setFilters(view.filters ?? { logic: 'and', rules: [] });
     setGroupBy(view.groupBy ?? null);
-    if (view.layout) setViewLayout(view.layout);
+    // Same fix as the legacy useTableViews.applyView: always resolve
+    // viewLayout so switching to a view without its own layout doesn't leave
+    // the previous view's layout (e.g. 'timeline') stuck.
+    setViewLayout(view.layout ?? 'table');
   }, []);
 
   const saveCurrentView = useCallback(
