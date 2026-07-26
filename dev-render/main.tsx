@@ -45,6 +45,7 @@ const VaultSejfWnetrzeScreen = React.lazy(() => import('./screens/vault-sejf-wne
 const AssessmentInitiativesPanelScreen = React.lazy(() => import('./screens/assessment-initiatives-panel'));
 const AssessmentInitiativesTableScreen = React.lazy(() => import('./screens/assessment-initiatives-table'));
 const AssessmentListScreen = React.lazy(() => import('./screens/assessment-list'));
+const StandardModuleBarChildrenScreen = React.lazy(() => import('./screens/standard-module-bar-children'));
 const AssessmentMenu3StatusChipsScreen = React.lazy(() => import('./screens/assessment-menu3-status-chips'));
 const AssessmentReportsPanelScreen = React.lazy(() => import('./screens/assessment-reports-panel'));
 const AssessmentReportsTableScreen = React.lazy(() => import('./screens/assessment-reports-table'));
@@ -374,6 +375,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'assessment-list': {
     label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
     render: () => <AssessmentListScreen />,
+  },
+  'standard-module-bar-children': {
+    label: 'StandardModuleBar + children (rozszerzenie 2026-07-26, program ujednolicenia Menu 9 hubów)',
+    render: () => <StandardModuleBarChildrenScreen />,
   },
   'assessment-menu3-status-chips': {
     label:
