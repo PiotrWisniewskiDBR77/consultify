@@ -27,7 +27,22 @@ ALLOWLIST="$SCRIPT_DIR/triada-allowlist.txt"
 
 # Zakazane wzorce kanonu (primary = crimson #85182F) — IDENTYCZNE jak w
 # oryginalnym hooku, patrz komentarz historyczny wyżej.
-VIOL_RE='bg-primary-[4567]00|focus:(ring|border)-primary|bg-crimson-[0-9]|primary-(100|200|300)([^0-9]|$)'
+# VF3 (2026-07-26, audyt strażników): regex nadal przepuszczał primary-50/800/900
+# i KAŻDY numer primary-* poza prefiksem bg- (np. text-primary-700,
+# dark:border-primary-800) — realny przypadek: NotificationSettings.tsx:239
+# 'bg-primary-50 dark:bg-primary-900/20 ... border-primary-200 dark:border-primary-800/30'
+# — tylko border-primary-200 był łapany (via 100/200/300), reszta przechodziła.
+# Kanon TRIADA_KANON.md czesc C: primary = crimson #85182F, KAZDY numer w
+# KAZDYM kontekscie (bg-/text-/border-/ring-/from-/to-/via-/divide-/outline-),
+# nie tylko bg-[4567]00. Rozszerzono na pelna enumeracje odcieni 50-900,
+# niezaleznie od prefiksu klasy (grep dopasowuje substring, wiec prefiks nie
+# musi byc w regexie - "primary-500" lapie i "bg-primary-500" i
+# "dark:text-primary-500" i "hover:border-primary-500"). Legalny wyjatek
+# pozostaje WYLACZNIE sciezkowy (scripts/triada-allowlist.txt, brand/logo) -
+# skrypt nie przewiduje wyjatku regexowego dla semantyki danger/critical
+# (canon: primary nigdy nie jest legalny nawet dla stanow krytycznych - do
+# tego sluza tokeny c-danger/c-critical, patrz TRIADA_KANON.md czesc C).
+VIOL_RE='primary-(50|100|200|300|400|500|600|700|800|900)([^0-9]|$)|focus:(ring|border)-primary([^0-9]|$)|bg-crimson-[0-9]'
 
 is_scope_file() {
   # Tylko frontend TS/TSX w src/components lub src/views (jak oryginał).
