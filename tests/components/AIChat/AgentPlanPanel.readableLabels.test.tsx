@@ -1,25 +1,24 @@
 /**
  * @vitest-environment jsdom
  *
- * AgentPlanPanel — NAPRAWA CZYTELNOŚCI poza `stepsToBlocks` (2026-07-24).
+ * AgentPlanPanel — WARSZTAT AGENTA: czytelne nazwy + wskazanie „gdzie agent jest".
  *
- * Kontekst: `stepsToBlocks`/`blocksToSteps` (AgentPlanPanel.tsx) mają już
- * pokrycie w tests/unit/AIChat/agentPlanPanel.blocksToSteps.test.ts — ten test
- * pokrywa DWA MIEJSCA, które ten plik NIE dotyka: sekcję „Plan" (read-only
- * lista kroków, ~L425-443) i sekcję „Aprobaty" (~L493-508). Obie renderowały
- * WPROST `step.toolName` (np. `get_assessment_data`) zamiast czytelnej nazwy
- * fazy z generatora (`step.toolInput.phase`, patrz `processLibraryService.
- * buildExecutableSteps` — wstrzykuje `phase`/`module`/`deliverable` do
- * `toolInput`). Naprawa: obie sekcje wołają ten sam helper `readablePhaseName`
- * co `stepsToBlocks`, nie duplikują logiki priorytetu.
+ * Historia: pierwotnie (2026-07-24) ten test pilnował, żeby sekcje „Plan"
+ * i „Aprobaty" pokazywały czytelną nazwę fazy (`toolInput.phase` z
+ * `processLibraryService.buildExecutableSteps`) zamiast surowego `toolName`.
+ * Po przebudowie panelu na trzykolumnowy warsztat te dwie sekcje zmieniły
+ * miejsce (schemat = `AgentPlanCanvas` w środku, zgody i log = lewa kolumna
+ * `AgentWorkshopControls`), więc test pilnuje TEGO SAMEGO KONTRAKTU w nowych
+ * miejscach — plus dwie rzeczy, które dopiero teraz istnieją:
+ *   (a) nazwa techniczna narzędzia nigdzie nie świeci jako snake_case
+ *       (idzie przez `toolLabel` z agentWorkshopCatalog.ts),
+ *   (b) krok wykonywany TERAZ jest wskazany zarówno w schemacie, jak i
+ *       w kolumnie sterowania.
  *
- * Metoda: renderujemy PRAWDZIWY `AgentPlanPanel` (prawdziwy `ArtifactRightPanel`
- * — accordion prosty, sekcje domyślnie otwarte — i prawdziwy
- * `PreviewActionButton`), mockując WYŁĄCZNIE `@/services/api/agentPlan.api`
- * (żeby nie robić realnego fetch) i ciężki `AgentPlanCanvas` (nieużywany w
- * tych dwóch scenariuszach — canvas edytowalny renderuje się TYLKO w statusie
- * `planning`, tu testujemy `executing`/`awaiting_approval`, czyli read-only
- * ścieżkę).
+ * Metoda: renderujemy PRAWDZIWY `AgentPlanPanel` z prawdziwą powłoką
+ * (`ArtifactRightPanel`, `PreviewActionButton`, `AgentPlanCanvas`), mockując
+ * WYŁĄCZNIE warstwę sieci (`@/services/api/agentPlan.api` i `@/services/api`,
+ * żeby nie ciągnąć klienta HTTP).
  */
 import { render, screen } from '@testing-library/react';
 import React from 'react';
@@ -39,12 +38,10 @@ vi.mock('@/services/api/agentPlan.api', () => ({
   runAgentPlan: (...a: unknown[]) => runAgentPlan(...a),
 }));
 
-// AgentPlanCanvas nie montuje się w statusie inny-niż-'planning' (por.
-// AgentPlanPanel.tsx `isEditableSchema`), więc atrapa tu jest wyłącznie
-// zabezpieczeniem przed zaciągnięciem ciężkiego drzewa, gdyby ktoś kiedyś
-// zmienił warunek.
-vi.mock('@/components/AIChat/AgentPlanCanvas', () => ({
-  AgentPlanCanvas: () => <div data-testid="agent-plan-canvas-stub" />,
+// AgentPlanCanvas woła Api.getVaultSafes() tylko w trybie edytowalnym; tutaj
+// testujemy stany read-only, ale mock zdejmuje z testu cały klient HTTP.
+vi.mock('@/services/api', () => ({
+  Api: { getVaultSafes: () => Promise.resolve([]) },
 }));
 
 import { AgentPlanPanel } from '@/components/AIChat/AgentPlanPanel';
@@ -78,8 +75,8 @@ function makePlan(overrides: Partial<AgentPlan> = {}): AgentPlan {
   };
 }
 
-describe('AgentPlanPanel — czytelna nazwa fazy w sekcjach Plan/Aprobaty', () => {
-  it('sekcja "Plan" (read-only, status executing) pokazuje toolInput.phase, nie surowy toolName', async () => {
+describe('AgentPlanPanel (warsztat) — czytelne nazwy etapów', () => {
+  it('schemat pokazuje toolInput.phase, a nazwa techniczna nie świeci jako snake_case', async () => {
     getAgentPlan.mockResolvedValue({
       plan: makePlan({
         status: 'executing',
@@ -96,15 +93,15 @@ describe('AgentPlanPanel — czytelna nazwa fazy w sekcjach Plan/Aprobaty', () =
 
     render(<AgentPlanPanel planId="plan-1" />);
 
-    // Etykieta czytelna widoczna
-    expect(await screen.findByText('Diagnoza')).toBeInTheDocument();
-    // Nazwa techniczna NIE jest tytułem klocka — nie może wystąpić jako
-    // jedyny/dominujący tekst; dopuszczamy ją jako drugorzędny podpis, więc
-    // sprawdzamy, że nie zastąpiła etykiety głównej (Diagnoza jest obecne).
-    expect(screen.queryByText('get_assessment_data')).not.toBeNull(); // dozwolone jako info drugorzędne
+    // Czytelna nazwa fazy widoczna (schemat + log w kolumnie sterowania).
+    expect((await screen.findAllByText('Diagnoza')).length).toBeGreaterThanOrEqual(1);
+    // Surowy identyfikator rejestru nie pojawia się nigdzie w UI.
+    expect(screen.queryByText('get_assessment_data')).toBeNull();
+    // Zamiast niego — czytelna etykieta narzędzia z katalogu warsztatu.
+    expect(screen.getAllByText(/Dane oceny/).length).toBeGreaterThanOrEqual(1);
   });
 
-  it('sekcja "Plan" fallback: krok bez toolInput.phase nadal pokazuje toolName (brak regresji)', async () => {
+  it('krok bez toolInput.phase dostaje czytelną etykietę narzędzia zamiast snake_case', async () => {
     getAgentPlan.mockResolvedValue({
       plan: makePlan({
         status: 'executing',
@@ -121,10 +118,11 @@ describe('AgentPlanPanel — czytelna nazwa fazy w sekcjach Plan/Aprobaty', () =
 
     render(<AgentPlanPanel planId="plan-1" />);
 
-    expect(await screen.findByText('search_knowledge_base')).toBeInTheDocument();
+    expect((await screen.findAllByText('Szukaj w wiedzy')).length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText('search_knowledge_base')).toBeNull();
   });
 
-  it('sekcja "Aprobaty" pokazuje toolInput.phase dla kroku awaiting_approval, nie surowy toolName', async () => {
+  it('sekcja "Zgody" pokazuje czytelną nazwę fazy i przycisk zatwierdzenia', async () => {
     getAgentPlan.mockResolvedValue({
       plan: makePlan({
         status: 'awaiting_approval',
@@ -142,16 +140,46 @@ describe('AgentPlanPanel — czytelna nazwa fazy w sekcjach Plan/Aprobaty', () =
 
     render(<AgentPlanPanel planId="plan-1" />);
 
-    // Krok w statusie awaiting_approval renderuje się i w sekcji "Plan"
-    // (read-only lista wszystkich kroków), i w sekcji "Aprobaty" (tylko
-    // oczekujące) — obie muszą pokazywać czytelną nazwę fazy, stąd
-    // getAllByText zamiast getByText (dopuszczamy 2 dopasowania).
+    // Krok pojawia się w schemacie, w logu przebiegu i w sekcji Zgody.
     const matches = await screen.findAllByText('Wdrożenie');
     expect(matches.length).toBeGreaterThanOrEqual(2);
-    // Nazwa techniczna nie może w ogóle zastąpić etykiety głównej w żadnej
-    // z sekcji — nie może wystąpić więcej razy niż czytelna nazwa fazy.
-    expect(screen.getAllByText('calculate_financial').length).toBeLessThanOrEqual(matches.length);
-    // Przycisk zatwierdzenia nadal obecny w sekcji Aprobaty.
-    expect(screen.getByRole('button', { name: /approve step/i })).toBeInTheDocument();
+    expect(screen.queryByText('calculate_financial')).toBeNull();
+    expect(screen.getByRole('button', { name: /zatwierdź krok/i })).toBeInTheDocument();
+  });
+
+  it('krok w toku jest wskazany JEDNOCZEŚNIE w schemacie i w kolumnie sterowania', async () => {
+    getAgentPlan.mockResolvedValue({
+      plan: makePlan({
+        status: 'executing',
+        totalSteps: 2,
+        completedSteps: 1,
+        currentStepIndex: 1,
+        steps: [
+          makeStep({
+            id: 's1',
+            stepIndex: 0,
+            toolName: 'search_knowledge_base',
+            toolInput: { phase: 'Wejście' },
+            status: 'completed',
+          }),
+          makeStep({
+            id: 's2',
+            stepIndex: 1,
+            toolName: 'get_assessment_data',
+            toolInput: { phase: 'Diagnoza' },
+            status: 'running',
+          }),
+        ],
+      }),
+    });
+
+    render(<AgentPlanPanel planId="plan-1" />);
+
+    // Wskazanie w kolumnie sterowania („Teraz — krok 2 z 2").
+    const current = await screen.findByTestId('agent-controls-current');
+    expect(current).toHaveTextContent('Diagnoza');
+    // Wskazanie w schemacie — obwódka + plakietka na TEJ SAMEJ karcie.
+    expect(screen.getByTestId('canvas-current-badge')).toBeInTheDocument();
+    expect(screen.getByTestId('canvas-block-1')).toHaveAttribute('data-current', 'true');
   });
 });

@@ -1,66 +1,82 @@
 /**
- * AgentPlanCanvas — przestawialny schemat klocków planu agenta (AGT-007).
+ * AgentPlanCanvas — ŚRODKOWA kolumna warsztatu agenta: schemat blokowy procesu.
  *
  * SSOT koncepcyjne: Harvard/wdrozenie-100/_SPEC_AGENT_VAULT_2026-07-22.md
- * §4 PARTIA 2 (generator procesu) + rejestr/1-OTWARTE/AGT-007. Doktryna
- * DEC-002: **v1 liniowy** — jeden ciąg klocków, bez rozgałęzień (DAG
- * `toolChainExecutor.ts` zostaje w rezerwie na później).
+ * §4 PARTIA 2 (generator procesu). Doktryna DEC-002: **v1 liniowy** — jeden
+ * ciąg klocków, bez rozgałęzień (DAG `toolChainExecutor.ts` w rezerwie; w
+ * palecie „Warunek"/„Pętla" są dlatego oznaczone „Wkrótce", nie ukryte).
  *
- * Renderuje listę klocków (`PlanSchemaBlock`) jako edytowalny schemat:
- *  - **dodaj** klocek (przycisk na dole),
- *  - **usuń** klocek (X na wierszu),
- *  - **przestaw** klocek (strzałki góra/dół — wybrane zamiast drag&drop:
- *    prostsze, bez biblioteki DnD, w pełni klawiaturo-dostępne, brak
- *    ryzyka złego drop-state na urządzeniach dotykowych).
- *  - **nazwa + moduł/typ** widoczne na klocku (inline-edytowalna nazwa,
- *    typ przez natywny `<select>`).
+ * ★ WARSZTAT (2026-07-24) — poprzednia wersja rysowała klocki jako wąską listę
+ * `<ol>` wciśniętą w prawy panel; reszta ekranu po otwarciu procesu była pusta.
+ * Teraz to jest CENTRUM warsztatu i wygląda jak schemat: karty klocków w
+ * pionowym przepływie, WIDOCZNE połączenia między krokami (linia + strzałka),
+ * znaczniki START/KONIEC, oraz stan wykonania na każdej karcie.
  *
- * Ten komponent NIE zna się na wykonaniu planu — to czysta powierzchnia
- * edycji schematu (etap "user przestawia" z konceptu, PRZED odpaleniem).
- * Zapis do backendu: patrz komentarz w `AgentPlanPanel.tsx` przy miejscu
- * użycia — na dziś endpoint edycji kroków NIE istnieje (AGT-006 dokłada
- * generator, nie edycję po fakcie), więc wołający odpowiada za persystencję
- * (prop `onChange` + `onRunSchema`).
+ * Co dokładnie doszło:
+ *  - **drag&drop z palety** — strefy zrzutu MIĘDZY klockami (i na końcach)
+ *    przyjmują pozycję palety (`PALETTE_DND_MIME`) i wstawiają klocek DOKŁADNIE
+ *    w to miejsce (`onInsertEntry`). Bez biblioteki DnD — natywne HTML5 DnD.
+ *  - **przeciąganie istniejącego klocka** (`BLOCK_DND_MIME`) = zmiana kolejności.
+ *    Strzałki ▲▼ ZOSTAJĄ: natywne DnD nie ma obsługi klawiatury, więc byłyby
+ *    jedyną drogą dla klawiatury — nie usuwamy dostępnej ścieżki.
+ *  - **stan wykonania** (`execution`) — każda karta dostaje status kroku, a
+ *    krok aktualnie wykonywany jest wyróżniony obwódką `c-info` + plakietką
+ *    „TERAZ". To jest sedno warsztatu: jednym rzutem oka widać, gdzie agent stoi.
+ *  - **czytelne nazwy** — na karcie nigdy nie świeci snake_case rejestru;
+ *    nazwa narzędzia idzie przez `toolLabel()` z `agentWorkshopCatalog.ts`.
  *
- * Tokeny wyłącznie `c-*` (c-text/-muted, c-surface-raised, c-border-subtle,
- * c-danger), fokus `c-focus`, zero crimson w tym pliku — patrz
- * consultify-artefakty §Twarde zakazy.
+ * Model klocka (`PlanSchemaBlock`) niesie `toolName`/`toolInput` od AGT-008 —
+ * dla większości `kind` user wybiera narzędzie z `TOOL_CATALOG` (kurowane
+ * odbicie `AI_TOOLS` z server/src/services/ai/toolDefinitions.ts), a dla
+ * `kind === 'vault-kontekst'` zamiast tego POZIOM sejfu Vault
+ * (`GET /api/knowledge/vault-safes`, VLT-001..005) — wybór ląduje w
+ * `toolInput.vault_scope`/`vault_project_id` i jest egzekwowany server-side w
+ * `executeKBSearch`. Klocki sprzed AGT-008 (bez tych pól) nadal działają —
+ * `blocksToSteps` ma bezpieczny fallback.
  *
- * ★ AGT-008 (2026-07-24) — bogatszy model klocka + klocek "Vault-kontekst".
- * PROBLEM zastany: `PlanSchemaBlock` niósł tylko `id/kind/name/moduleType` —
- * nowo dodany klocek nie miał jak przenieść WYBRANEGO narzędzia, więc
- * `AgentPlanPanel.blocksToSteps` dawała mu sztywny, niewidoczny dla usera
- * fallback `search_knowledge_base` (patrz komentarz tamże). Naprawa: blok
- * dostaje opcjonalne `toolName`/`toolInput` — dla większości `kind` user
- * wybiera KONKRETNE narzędzie z `TOOL_CATALOG` (kurowane odbicie
- * `server/src/services/ai/toolDefinitions.ts` — ten sam rejestr, którego
- * używa czat Teresy i executor planu); dla `kind === 'vault-kontekst'`
- * wybiera zamiast tego POZIOM sejfu Vault (Mój sejf / Projekt / Organizacja,
- * z `GET /api/knowledge/vault-safes`, VLT-001..005) — toolName jest wtedy
- * zawsze `search_knowledge_base`, a wybrany poziom trafia do
- * `toolInput.vault_scope`/`vault_project_id` (egzekwowane server-side w
- * `executeKBSearch`, izolacja per sejf). Stare klocki bez tych pól nadal
- * działają — `blocksToSteps` ma bezpieczny fallback.
+ * Tokeny wyłącznie `c-*`, fokus `c-focus`, czerwień tylko dla akcji
+ * destrukcyjnej (usuń) i statusu błędu — patrz consultify-artefakty §Twarde zakazy.
  */
 import type { LucideIcon } from 'lucide-react';
 import {
+  Boxes,
   ChevronDown,
   ChevronUp,
-  Layers,
+  CircleDot,
+  Flag,
+  GitBranch,
+  GripVertical,
   Lock,
   Plus,
   ShieldCheck,
   Sparkles,
   Trash2,
+  Wand2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { PreviewActionButton } from '@/components/shared/PreviewPane';
+import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '@/services/api';
 
-/** Typy klocków v1 zatwierdzone w SPEC §4 Partia 2. */
-export type PlanBlockKind = 'etap-modul' | 'ai-teresa' | 'vault-kontekst' | 'brama-akceptu';
+import {
+  ALL_BLOCK_KINDS,
+  BLOCK_KIND_FALLBACK_LABEL,
+  BLOCK_KIND_LABEL_KEY,
+  DEFAULT_TOOL_NAME,
+  isAnnotationKind,
+  type PlanBlockKind,
+  TOOL_CATALOG,
+  type ToolCatalogEntry,
+  toolLabel,
+} from './agentWorkshopCatalog';
+import { PALETTE_DND_MIME } from './AgentWorkshopPalette';
+
+export type { PlanBlockKind, ToolCatalogEntry };
+export { DEFAULT_TOOL_NAME, TOOL_CATALOG };
+
+/** Typ MIME przeciąganego KLOCKA schematu (zmiana kolejności wewnątrz canvasu). */
+export const BLOCK_DND_MIME = 'application/x-consultify-agent-block-move';
 
 export interface PlanSchemaBlock {
   /** Stabilny lokalny id (nie myl z `AgentPlanStep.id` — to jest przed utworzeniem planu). */
@@ -68,64 +84,23 @@ export interface PlanSchemaBlock {
   kind: PlanBlockKind;
   /** Nazwa klocka, edytowalna (np. "Diagnoza"). */
   name: string;
-  /** Moduł/typ pokazywany pod nazwą (np. "Interview · Assessment"). Opcjonalny dla ai-teresa/brama. */
+  /** Moduł/typ pokazywany pod nazwą (np. "Interview · Assessment"). */
   moduleType?: string;
   /**
-   * AGT-008 — konkretne narzędzie z rejestru `toolDefinitions.ts` niesione
-   * przez ten klocek (np. `'search_knowledge_base'`, `'calculate_financial'`).
+   * Narzędzie z rejestru `toolDefinitions.ts` niesione przez ten klocek.
    * Dla `kind === 'vault-kontekst'` zawsze `'search_knowledge_base'` — dobór
-   * idzie przez poziom sejfu w `toolInput`, nie przez to pole. Opcjonalne:
-   * klocki sprzed AGT-008 (bez tego pola) zachowują się jak dotąd — patrz
-   * fallback w `AgentPlanPanel.blocksToSteps`.
+   * idzie przez poziom sejfu w `toolInput`. Dla `kind === 'informacja'` puste
+   * (notatka nie jest krokiem wykonania).
    */
   toolName?: string;
   /**
    * Argumenty narzędzia niesione przez klocek. Dla `vault-kontekst`:
-   * `vault_scope` ('user'|'organization'|'project'), opcjonalnie
-   * `vault_project_id` + `vault_safe_id`/`vault_safe_name` (do odtworzenia
-   * wyboru w `<select>` po przeładowaniu — patrz `stepsToBlocks`). Dla
-   * pozostałych `kind` zwykle puste — realny `toolInput` istniejącego kroku
-   * jest i tak odzyskiwany po `id` w `blocksToSteps`.
+   * `vault_scope`/`vault_project_id`/`vault_safe_id`/`vault_safe_name`.
    */
   toolInput?: Record<string, unknown>;
 }
 
-/** Jedna pozycja katalogu narzędzi do wyboru na klocku (kind !== 'vault-kontekst'). */
-export interface ToolCatalogEntry {
-  /** MUSI być identyczne z `toolName` w `server/src/services/ai/toolDefinitions.ts` (AI_TOOLS) — trafia 1:1 do `executeToolCall`. */
-  name: string;
-  label: string;
-}
-
-/**
- * AGT-008 — katalog narzędzi do wyboru na klocku. Kurowane odbicie
- * `AI_TOOLS` z `server/src/services/ai/toolDefinitions.ts` (ten sam rejestr,
- * którego używa czat Teresy i executor planu — frontend go nie importuje
- * bezpośrednio, inny target bundlowania/node-only importy). „(akcept)"
- * oznacza narzędzia z `SIDE_EFFECT_TOOLS`
- * (server/src/services/ai/sideEffectTools.ts) — plan zatrzyma się na
- * bramce, zanim je wykona.
- */
-export const TOOL_CATALOG: ToolCatalogEntry[] = [
-  { name: 'search_knowledge_base', label: 'Szukaj w wiedzy (Vault)' },
-  { name: 'get_assessment_data', label: 'Dane oceny (Assessment)' },
-  { name: 'calculate_financial', label: 'Kalkulacja finansowa (ROI/NPV)' },
-  { name: 'run_monte_carlo', label: 'Symulacja Monte Carlo' },
-  { name: 'get_initiative_status', label: 'Status inicjatyw' },
-  { name: 'compare_benchmarks', label: 'Porównanie z benchmarkami' },
-  { name: 'find_similar_decisions', label: 'Podobne decyzje' },
-  { name: 'get_stakeholder_analysis', label: 'Analiza interesariuszy' },
-  { name: 'generate_report_section', label: 'Sekcja raportu' },
-  { name: 'create_initiative_draft', label: 'Szkic inicjatywy (akcept)' },
-  { name: 'schedule_meeting', label: 'Propozycja spotkania (akcept)' },
-  { name: 'create_notebook_entry', label: 'Wpis w Notatniku (akcept)' },
-  { name: 'query_structured_data', label: 'Zapytanie do danych (akcept)' },
-];
-
-/** Bezpieczny, read-only domyślny wybór dla nowego klocka i dla `vault-kontekst`. */
-export const DEFAULT_TOOL_NAME = 'search_knowledge_base';
-
-/** Jeden sejf Vault (odbicie `VaultSafe` z `src/views/vault/VaultSafesTable.tsx`) do wyboru poziomu w klocku "Vault-kontekst". */
+/** Jeden sejf Vault (odbicie `VaultSafe` z widoku Vault) do wyboru poziomu w klocku "Vault-kontekst". */
 export interface VaultSafeOption {
   id: string;
   type: 'user' | 'organization' | 'project';
@@ -133,28 +108,44 @@ export interface VaultSafeOption {
   name: string;
 }
 
+/** Status kroku planu — kształt 1:1 z `AgentPlanStep['status']` (agentPlan.api.ts). */
+export type CanvasStepStatus =
+  | 'pending'
+  | 'awaiting_approval'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'skipped';
+
+export interface CanvasExecutionState {
+  /** Status per id klocka (= id kroku planu, gdy klocek pochodzi z backendu). */
+  statusById: Record<string, CanvasStepStatus>;
+  /** Klocek aktualnie wykonywany — dostaje obwódkę i plakietkę „TERAZ". */
+  currentBlockId?: string;
+}
+
 const BLOCK_ICON: Record<PlanBlockKind, LucideIcon> = {
-  'etap-modul': Layers,
+  'etap-modul': Boxes,
   'ai-teresa': Sparkles,
   'vault-kontekst': Lock,
   'brama-akceptu': ShieldCheck,
+  automat: Wand2,
+  informacja: GitBranch,
 };
 
-const BLOCK_KIND_LABEL_KEY: Record<PlanBlockKind, string> = {
-  'etap-modul': 'agentPlan.canvas.kind.etapModul',
-  'ai-teresa': 'agentPlan.canvas.kind.aiTeresa',
-  'vault-kontekst': 'agentPlan.canvas.kind.vaultKontekst',
-  'brama-akceptu': 'agentPlan.canvas.kind.bramaAkceptu',
+/**
+ * Status kroku → (raw status dla `EntityStatusChip`, etykieta PL). Mapowanie na
+ * statusy, które kanoniczna tabela tonów w EntityStatusChip już zna — nie
+ * dokładamy własnych kolorów, korzystamy z istniejących tonów.
+ */
+const STATUS_CHIP: Record<CanvasStepStatus, { raw: string; label: string }> = {
+  pending: { raw: 'not_started', label: 'Oczekuje' },
+  awaiting_approval: { raw: 'awaiting_approval', label: 'Czeka na zgodę' },
+  running: { raw: 'executing', label: 'W toku' },
+  completed: { raw: 'completed', label: 'Gotowe' },
+  failed: { raw: 'failed', label: 'Błąd' },
+  skipped: { raw: 'archived', label: 'Pominięty' },
 };
-
-const BLOCK_KIND_FALLBACK: Record<PlanBlockKind, string> = {
-  'etap-modul': 'Etap-moduł',
-  'ai-teresa': 'AI / Teresa',
-  'vault-kontekst': 'Vault-kontekst',
-  'brama-akceptu': 'Bramka akceptu',
-};
-
-const ALL_KINDS: PlanBlockKind[] = ['etap-modul', 'ai-teresa', 'vault-kontekst', 'brama-akceptu'];
 
 let localIdCounter = 0;
 /** Generator id lokalnych klocków — brak zależności od backendu (jeszcze nie istnieją jako kroki). */
@@ -166,19 +157,86 @@ export function makeBlockId(): string {
 export interface AgentPlanCanvasProps {
   blocks: PlanSchemaBlock[];
   onChange: (blocks: PlanSchemaBlock[]) => void;
-  /** Wywołane po kliknięciu "Uruchom" — wołający odpowiada za wysyłkę do backendu. */
-  onRunSchema?: (blocks: PlanSchemaBlock[]) => void;
-  /** Blokuje edycję (np. plan już wystartował) — canvas renderuje się wtedy tylko-do-odczytu. */
+  /** Blokuje edycję (plan wystartował) — canvas renderuje się tylko-do-odczytu. */
   readOnly?: boolean;
+  /** Zrzut pozycji palety na strefę między klockami: (id pozycji, indeks docelowy). */
+  onInsertEntry?: (paletteEntryId: string, index: number) => void;
+  /** Stan wykonania planu — statusy kroków + wskazanie aktualnego. */
+  execution?: CanvasExecutionState;
 }
+
+/**
+ * Strefa zrzutu między klockami. Pełni dwie role naraz: przyjmuje pozycję z
+ * palety (wstaw nowy klocek) ORAZ przeciągany klocek schematu (przestaw).
+ * Widoczna dopiero w trakcie przeciągania — poza tym jest cienką przerwą, żeby
+ * schemat nie zamienił się w drabinę przycisków (doktryna gęstości).
+ */
+const DropZone: React.FC<{
+  index: number;
+  active: boolean;
+  onDropPalette: (entryId: string, index: number) => void;
+  onDropBlock: (blockId: string, index: number) => void;
+}> = ({ index, active, onDropPalette, onDropBlock }) => {
+  const [over, setOver] = useState(false);
+
+  if (!active) return <div className="h-1" aria-hidden="true" />;
+
+  return (
+    <div
+      data-testid={`canvas-dropzone-${index}`}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (!over) setOver(true);
+      }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setOver(false);
+        const entryId = e.dataTransfer.getData(PALETTE_DND_MIME);
+        if (entryId) {
+          onDropPalette(entryId, index);
+          return;
+        }
+        const blockId = e.dataTransfer.getData(BLOCK_DND_MIME);
+        if (blockId) onDropBlock(blockId, index);
+      }}
+      className={`my-1 flex h-7 items-center justify-center rounded-lg border-2 border-dashed text-[10px] transition-colors ${
+        over
+          ? 'border-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] text-c-info'
+          : 'border-c-border-subtle text-c-text-muted'
+      }`}
+    >
+      {over ? 'Upuść tutaj' : '—'}
+    </div>
+  );
+};
+
+/** Pionowe połączenie między kartami: linia + strzałka. To jest „krawędź" schematu. */
+const Connector: React.FC = () => (
+  <div className="flex flex-col items-center" aria-hidden="true">
+    <span className="h-3 w-px bg-c-border-subtle" />
+    <ChevronDown size={12} className="-my-0.5 text-c-border-subtle" />
+    <span className="h-3 w-px bg-c-border-subtle" />
+  </div>
+);
+
+const EndCap: React.FC<{ label: string; icon: LucideIcon }> = ({ label, icon: Icon }) => (
+  <div className="flex items-center gap-1.5 rounded-full border border-c-border-subtle bg-c-surface-raised/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+    <Icon size={11} />
+    {label}
+  </div>
+);
 
 export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
   blocks,
   onChange,
-  onRunSchema,
   readOnly = false,
+  onInsertEntry,
+  execution,
 }) => {
   const { t } = useTranslation();
+  const [dragging, setDragging] = useState(false);
 
   const moveBlock = useCallback(
     (index: number, direction: -1 | 1) => {
@@ -187,6 +245,22 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
       const next = blocks.slice();
       const [moved] = next.splice(index, 1);
       next.splice(target, 0, moved);
+      onChange(next);
+    },
+    [blocks, onChange]
+  );
+
+  /** Przeniesienie klocka na pozycję strefy zrzutu (indeks LICZONY PRZED wyjęciem). */
+  const moveBlockTo = useCallback(
+    (blockId: string, targetIndex: number) => {
+      const from = blocks.findIndex((b) => b.id === blockId);
+      if (from < 0) return;
+      const next = blocks.slice();
+      const [moved] = next.splice(from, 1);
+      // Po wyjęciu elementu indeksy za nim przesuwają się o 1 — korygujemy,
+      // inaczej „przeciągnij o jedno w dół" nie robiłoby nic.
+      const insertAt = targetIndex > from ? targetIndex - 1 : targetIndex;
+      next.splice(insertAt, 0, moved);
       onChange(next);
     },
     [blocks, onChange]
@@ -212,19 +286,17 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
     (index: number, kind: PlanBlockKind) => {
       const next = blocks.slice();
       const patched: PlanSchemaBlock = { ...next[index], kind };
-      // Wchodząc w 'vault-kontekst' narzędzie jest zawsze search_knowledge_base
-      // (dobór idzie przez poziom sejfu, nie przez katalog narzędzi) —
-      // patrz nagłówek pliku i setBlockVaultSafe niżej.
-      if (kind === 'vault-kontekst' && !patched.toolName) {
-        patched.toolName = DEFAULT_TOOL_NAME;
-      }
+      // 'vault-kontekst' → narzędzie zawsze search_knowledge_base (dobór idzie
+      // przez poziom sejfu). 'informacja' → notatka, więc żadnego narzędzia.
+      if (kind === 'vault-kontekst' && !patched.toolName) patched.toolName = DEFAULT_TOOL_NAME;
+      if (isAnnotationKind(kind)) patched.toolName = undefined;
+      else if (!patched.toolName) patched.toolName = DEFAULT_TOOL_NAME;
       next[index] = patched;
       onChange(next);
     },
     [blocks, onChange]
   );
 
-  /** AGT-008 — wybór KONKRETNEGO narzędzia dla klocka (kind !== 'vault-kontekst'). */
   const setBlockTool = useCallback(
     (index: number, toolName: string) => {
       const next = blocks.slice();
@@ -235,7 +307,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
   );
 
   /**
-   * AGT-008 — wybór POZIOMU sejfu Vault dla klocka 'vault-kontekst'. Zapisuje
+   * Wybór POZIOMU sejfu Vault dla klocka 'vault-kontekst'. Zapisuje
    * `vault_safe_id`/`vault_scope`/`vault_project_id`/`vault_safe_name` w
    * `toolInput` (czytane server-side w `executeKBSearch` do ograniczenia
    * retrievalu do TEGO JEDNEGO sejfu — izolacja per poziom, VLT-001..005).
@@ -268,25 +340,8 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
     [blocks, onChange]
   );
 
-  const addBlock = useCallback(() => {
-    onChange([
-      ...blocks,
-      {
-        id: makeBlockId(),
-        kind: 'etap-modul',
-        name: t('agentPlan.canvas.newBlockName', 'Nowy etap'),
-        // AGT-008: domyślny (bezpieczny, read-only) wybór — WIDOCZNY i
-        // ZMIENIALNY w select "Narzędzie" niżej, nie ukryty fallback jak
-        // dotąd (patrz nagłówek pliku i AgentPlanPanel.blocksToSteps).
-        toolName: DEFAULT_TOOL_NAME,
-      },
-    ]);
-  }, [blocks, onChange, t]);
-
-  // AGT-008 — lista sejfów Vault (Mój/Organizacja/po jednym na projekt) do
-  // wyboru poziomu na klocku 'vault-kontekst'. Ładowana raz, best-effort —
-  // brak listy nie blokuje edycji reszty canvasu (np. offline dev-render bez
-  // mocka tego endpointu), pokazuje się wtedy tylko pusty select + błąd.
+  // Lista sejfów Vault do wyboru poziomu na klocku 'vault-kontekst'. Ładowana
+  // raz, best-effort — brak listy nie blokuje edycji reszty canvasu.
   const [vaultSafes, setVaultSafes] = useState<VaultSafeOption[] | null>(null);
   const [vaultSafesError, setVaultSafesError] = useState<string | null>(null);
 
@@ -307,168 +362,314 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
     };
   }, [readOnly]);
 
+  const handleDropPalette = useCallback(
+    (entryId: string, index: number) => {
+      setDragging(false);
+      onInsertEntry?.(entryId, index);
+    },
+    [onInsertEntry]
+  );
+
+  const handleDropBlock = useCallback(
+    (blockId: string, index: number) => {
+      setDragging(false);
+      moveBlockTo(blockId, index);
+    },
+    [moveBlockTo]
+  );
+
+  const editable = !readOnly;
+  const dropActive = editable && dragging;
+
   return (
-    <div className="space-y-2" data-testid="agent-plan-canvas">
-      {blocks.length === 0 ? (
-        <p className="text-xs text-c-text-muted py-1.5">
-          {t('agentPlan.canvas.empty', 'Pusty schemat — dodaj pierwszy klocek.')}
-        </p>
-      ) : (
-        <ol className="space-y-1.5">
-          {blocks.map((block, index) => {
-            const Icon = BLOCK_ICON[block.kind];
-            return (
-              <li
-                key={block.id}
-                className="flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 p-2"
-              >
-                {!readOnly ? (
-                  <div className="flex flex-col gap-0.5 pt-0.5 shrink-0">
-                    <button
-                      type="button"
-                      aria-label={t('agentPlan.canvas.moveUp', 'Przesuń w górę')}
-                      onClick={() => moveBlock(index, -1)}
-                      disabled={index === 0}
-                      className="rounded p-0.5 text-c-text-muted hover:text-c-text hover:bg-c-surface-raised disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    >
-                      <ChevronUp size={12} />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={t('agentPlan.canvas.moveDown', 'Przesuń w dół')}
-                      onClick={() => moveBlock(index, 1)}
-                      disabled={index === blocks.length - 1}
-                      className="rounded p-0.5 text-c-text-muted hover:text-c-text hover:bg-c-surface-raised disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    >
-                      <ChevronDown size={12} />
-                    </button>
-                  </div>
-                ) : (
-                  <span className="mt-0.5 shrink-0 text-[10px] tabular-nums text-c-text-muted w-4 text-center">
-                    {index + 1}
-                  </span>
-                )}
-
-                <Icon size={14} className="shrink-0 mt-1 text-c-text-muted" />
-
-                <div className="min-w-0 flex-1">
-                  {readOnly ? (
-                    <div className="text-xs font-medium text-c-text truncate">{block.name}</div>
-                  ) : (
-                    <input
-                      value={block.name}
-                      onChange={(e) => renameBlock(index, e.target.value)}
-                      aria-label={t('agentPlan.canvas.blockName', 'Nazwa klocka')}
-                      className="w-full bg-transparent text-xs font-medium text-c-text rounded px-1 -mx-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    />
-                  )}
-                  {readOnly ? (
-                    <div className="text-[10px] text-c-text-muted">
-                      {t(BLOCK_KIND_LABEL_KEY[block.kind], BLOCK_KIND_FALLBACK[block.kind])}
-                      {block.moduleType ? ` · ${block.moduleType}` : ''}
-                      {block.kind === 'vault-kontekst'
-                        ? ` · ${
-                            typeof block.toolInput?.vault_safe_name === 'string'
-                              ? block.toolInput.vault_safe_name
-                              : t('agentPlan.canvas.vaultLevelUnset', '— poziom nie wybrany —')
-                          }`
-                        : block.toolName
-                          ? ` · ${TOOL_CATALOG.find((tc) => tc.name === block.toolName)?.label ?? block.toolName}`
-                          : ''}
-                    </div>
-                  ) : (
-                    <>
-                      <select
-                        value={block.kind}
-                        onChange={(e) => setBlockKind(index, e.target.value as PlanBlockKind)}
-                        aria-label={t('agentPlan.canvas.blockKind', 'Typ klocka')}
-                        className="mt-0.5 bg-transparent text-[10px] text-c-text-muted rounded px-1 -mx-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                      >
-                        {ALL_KINDS.map((kind) => (
-                          <option key={kind} value={kind}>
-                            {t(BLOCK_KIND_LABEL_KEY[kind], BLOCK_KIND_FALLBACK[kind])}
-                          </option>
-                        ))}
-                      </select>
-
-                      {block.kind === 'vault-kontekst' ? (
-                        <select
-                          value={
-                            typeof block.toolInput?.vault_safe_id === 'string'
-                              ? block.toolInput.vault_safe_id
-                              : ''
-                          }
-                          onChange={(e) => {
-                            const safe = (vaultSafes ?? []).find((s) => s.id === e.target.value);
-                            setBlockVaultSafe(index, safe);
-                          }}
-                          aria-label={t('agentPlan.canvas.vaultLevel', 'Poziom Vault')}
-                          className="mt-0.5 bg-transparent text-[10px] text-c-text-muted rounded px-1 -mx-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                        >
-                          <option value="">
-                            {t('agentPlan.canvas.vaultLevelPlaceholder', '— wybierz sejf —')}
-                          </option>
-                          {(vaultSafes ?? []).map((safe) => (
-                            <option key={safe.id} value={safe.id}>
-                              {safe.name}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <select
-                          value={block.toolName ?? DEFAULT_TOOL_NAME}
-                          onChange={(e) => setBlockTool(index, e.target.value)}
-                          aria-label={t('agentPlan.canvas.blockTool', 'Narzędzie')}
-                          className="mt-0.5 bg-transparent text-[10px] text-c-text-muted rounded px-1 -mx-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                        >
-                          {TOOL_CATALOG.map((tool) => (
-                            <option key={tool.name} value={tool.name}>
-                              {tool.label}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                      {block.kind === 'vault-kontekst' && vaultSafesError ? (
-                        <p className="text-[10px] text-c-danger mt-0.5">{vaultSafesError}</p>
-                      ) : null}
-                    </>
-                  )}
-                </div>
-
-                {!readOnly ? (
-                  <button
-                    type="button"
-                    aria-label={t('agentPlan.canvas.removeBlock', 'Usuń klocek')}
-                    onClick={() => removeBlock(index)}
-                    className="shrink-0 rounded p-1 text-c-text-muted hover:text-c-danger hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                ) : null}
-              </li>
-            );
-          })}
-        </ol>
-      )}
-
-      {!readOnly ? (
-        <div className="space-y-1.5 pt-1">
-          <PreviewActionButton
-            variant="neutral"
-            icon={Plus}
-            label={t('agentPlan.canvas.addBlock', 'Dodaj klocek')}
-            onClick={addBlock}
-          />
-          {onRunSchema ? (
-            <PreviewActionButton
-              variant="positive"
-              label={t('agentPlan.canvas.run', 'Uruchom')}
-              onClick={() => onRunSchema(blocks)}
-              disabled={blocks.length === 0}
-            />
-          ) : null}
+    <div
+      className="flex h-full w-full flex-col items-center overflow-y-auto px-6 py-6"
+      data-testid="agent-plan-canvas"
+      onDragOver={(e) => {
+        // Bez tego strefy zrzutu pojawiłyby się dopiero po wejściu kursora
+        // dokładnie na 7-pikselową przerwę — czyli praktycznie nigdy.
+        if (!editable) return;
+        if (
+          e.dataTransfer.types.includes(PALETTE_DND_MIME) ||
+          e.dataTransfer.types.includes(BLOCK_DND_MIME)
+        ) {
+          e.preventDefault();
+          if (!dragging) setDragging(true);
+        }
+      }}
+      onDragLeave={(e) => {
+        if (e.currentTarget === e.target) setDragging(false);
+      }}
+      onDrop={() => setDragging(false)}
+    >
+      <div className="w-full max-w-[560px]">
+        <div className="flex justify-center">
+          <EndCap label={t('agentPlan.canvas.start', 'Start')} icon={CircleDot} />
         </div>
-      ) : null}
+
+        {blocks.length === 0 ? (
+          <>
+            <div className="flex justify-center">
+              <Connector />
+            </div>
+            <div
+              data-testid="canvas-empty"
+              onDragOver={(e) => {
+                if (!editable) return;
+                e.preventDefault();
+              }}
+              onDrop={(e) => {
+                if (!editable) return;
+                e.preventDefault();
+                const entryId = e.dataTransfer.getData(PALETTE_DND_MIME);
+                if (entryId) handleDropPalette(entryId, 0);
+              }}
+              className="rounded-xl border-2 border-dashed border-c-border-subtle px-6 py-8 text-center"
+            >
+              <Plus size={18} className="mx-auto mb-2 text-c-text-muted" />
+              <p className="text-xs font-medium text-c-text">
+                {t('agentPlan.canvas.empty', 'Pusty schemat')}
+              </p>
+              <p className="mt-1 text-[11px] text-c-text-muted">
+                {t(
+                  'agentPlan.canvas.emptyHint',
+                  'Przeciągnij klocek z palety po prawej albo kliknij go, żeby dodać pierwszy krok.'
+                )}
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex justify-center">
+              <Connector />
+            </div>
+            <DropZone
+              index={0}
+              active={dropActive}
+              onDropPalette={handleDropPalette}
+              onDropBlock={handleDropBlock}
+            />
+            {blocks.map((block, index) => {
+              const Icon = BLOCK_ICON[block.kind] ?? Boxes;
+              const status = execution?.statusById[block.id];
+              const isCurrent = execution?.currentBlockId === block.id;
+              const annotation = isAnnotationKind(block.kind);
+              const chip = status ? STATUS_CHIP[status] : undefined;
+
+              return (
+                <React.Fragment key={block.id}>
+                  {index > 0 ? (
+                    <>
+                      <div className="flex justify-center">
+                        <Connector />
+                      </div>
+                      <DropZone
+                        index={index}
+                        active={dropActive}
+                        onDropPalette={handleDropPalette}
+                        onDropBlock={handleDropBlock}
+                      />
+                    </>
+                  ) : null}
+
+                  <article
+                    data-testid={`canvas-block-${index}`}
+                    data-current={isCurrent ? 'true' : undefined}
+                    draggable={editable}
+                    onDragStart={(e) => {
+                      if (!editable) return;
+                      e.dataTransfer.setData(BLOCK_DND_MIME, block.id);
+                      e.dataTransfer.effectAllowed = 'move';
+                      setDragging(true);
+                    }}
+                    onDragEnd={() => setDragging(false)}
+                    className={`rounded-xl border bg-c-surface px-3 py-2.5 transition-shadow ${
+                      isCurrent
+                        ? 'border-c-info ring-2 ring-c-info/40 shadow-sm'
+                        : 'border-c-border-subtle'
+                    } ${annotation ? 'border-dashed bg-c-surface-raised/30' : ''}`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-c-border-subtle text-[10px] font-semibold tabular-nums text-c-text-muted">
+                        {index + 1}
+                      </span>
+                      <Icon size={15} className="mt-0.5 shrink-0 text-c-text-muted" />
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          {editable ? (
+                            <input
+                              value={block.name}
+                              onChange={(e) => renameBlock(index, e.target.value)}
+                              aria-label={t('agentPlan.canvas.blockName', 'Nazwa klocka')}
+                              className="-mx-1 min-w-0 flex-1 rounded bg-transparent px-1 text-sm font-semibold text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                            />
+                          ) : (
+                            <span className="min-w-0 flex-1 truncate text-sm font-semibold text-c-text">
+                              {block.name}
+                            </span>
+                          )}
+                          {isCurrent ? (
+                            <span
+                              data-testid="canvas-current-badge"
+                              className="shrink-0 rounded-full border border-c-info px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-c-info"
+                            >
+                              {t('agentPlan.canvas.now', 'Teraz')}
+                            </span>
+                          ) : null}
+                          {chip ? (
+                            <EntityStatusChip
+                              status={chip.raw}
+                              label={chip.label}
+                              size="sm"
+                              className="shrink-0"
+                            />
+                          ) : null}
+                        </div>
+
+                        <p className="mt-0.5 text-[11px] text-c-text-muted">
+                          {t(
+                            BLOCK_KIND_LABEL_KEY[block.kind],
+                            BLOCK_KIND_FALLBACK_LABEL[block.kind]
+                          )}
+                          {block.moduleType ? ` · ${block.moduleType}` : ''}
+                          {block.kind === 'vault-kontekst'
+                            ? ` · ${
+                                typeof block.toolInput?.vault_safe_name === 'string'
+                                  ? block.toolInput.vault_safe_name
+                                  : t('agentPlan.canvas.vaultLevelUnset', '— poziom nie wybrany —')
+                              }`
+                            : !annotation && block.toolName
+                              ? ` · ${toolLabel(block.toolName)}`
+                              : ''}
+                        </p>
+
+                        {annotation ? (
+                          <p className="mt-1 text-[10px] italic text-c-text-muted">
+                            {t(
+                              'agentPlan.canvas.noteHint',
+                              'Notatka na schemacie — agent jej nie wykonuje.'
+                            )}
+                          </p>
+                        ) : null}
+
+                        {editable ? (
+                          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                            <select
+                              value={block.kind}
+                              onChange={(e) => setBlockKind(index, e.target.value as PlanBlockKind)}
+                              aria-label={t('agentPlan.canvas.blockKind', 'Typ klocka')}
+                              className="h-7 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-1.5 text-[11px] text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                            >
+                              {ALL_BLOCK_KINDS.map((kind) => (
+                                <option key={kind} value={kind}>
+                                  {t(BLOCK_KIND_LABEL_KEY[kind], BLOCK_KIND_FALLBACK_LABEL[kind])}
+                                </option>
+                              ))}
+                            </select>
+
+                            {block.kind === 'vault-kontekst' ? (
+                              <select
+                                value={
+                                  typeof block.toolInput?.vault_safe_id === 'string'
+                                    ? block.toolInput.vault_safe_id
+                                    : ''
+                                }
+                                onChange={(e) => {
+                                  const safe = (vaultSafes ?? []).find(
+                                    (s) => s.id === e.target.value
+                                  );
+                                  setBlockVaultSafe(index, safe);
+                                }}
+                                aria-label={t('agentPlan.canvas.vaultLevel', 'Poziom Vault')}
+                                className="h-7 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-1.5 text-[11px] text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                              >
+                                <option value="">
+                                  {t('agentPlan.canvas.vaultLevelPlaceholder', '— wybierz sejf —')}
+                                </option>
+                                {(vaultSafes ?? []).map((safe) => (
+                                  <option key={safe.id} value={safe.id}>
+                                    {safe.name}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : annotation ? null : (
+                              <select
+                                value={block.toolName ?? DEFAULT_TOOL_NAME}
+                                onChange={(e) => setBlockTool(index, e.target.value)}
+                                aria-label={t('agentPlan.canvas.blockTool', 'Narzędzie')}
+                                className="h-7 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-1.5 text-[11px] text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                              >
+                                {TOOL_CATALOG.map((tool) => (
+                                  <option key={tool.name} value={tool.name}>
+                                    {tool.label}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                            {block.kind === 'vault-kontekst' && vaultSafesError ? (
+                              <span className="text-[10px] text-c-danger">{vaultSafesError}</span>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      {editable ? (
+                        <div className="flex shrink-0 items-center gap-0.5">
+                          <GripVertical
+                            size={13}
+                            className="cursor-grab text-c-text-muted"
+                            aria-hidden="true"
+                          />
+                          <button
+                            type="button"
+                            aria-label={t('agentPlan.canvas.moveUp', 'Przesuń w górę')}
+                            onClick={() => moveBlock(index, -1)}
+                            disabled={index === 0}
+                            className="rounded p-0.5 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          >
+                            <ChevronUp size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={t('agentPlan.canvas.moveDown', 'Przesuń w dół')}
+                            onClick={() => moveBlock(index, 1)}
+                            disabled={index === blocks.length - 1}
+                            className="rounded p-0.5 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          >
+                            <ChevronDown size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={t('agentPlan.canvas.removeBlock', 'Usuń klocek')}
+                            onClick={() => removeBlock(index)}
+                            className="rounded p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  </article>
+                </React.Fragment>
+              );
+            })}
+            <DropZone
+              index={blocks.length}
+              active={dropActive}
+              onDropPalette={handleDropPalette}
+              onDropBlock={handleDropBlock}
+            />
+          </>
+        )}
+
+        <div className="flex justify-center">
+          <Connector />
+        </div>
+        <div className="flex justify-center">
+          <EndCap label={t('agentPlan.canvas.end', 'Koniec')} icon={Flag} />
+        </div>
+      </div>
     </div>
   );
 };

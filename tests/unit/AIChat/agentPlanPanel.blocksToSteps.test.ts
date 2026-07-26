@@ -191,7 +191,11 @@ describe('AgentPlanPanel.blocksToSteps (AGT-008 — klocek niesie wybrane narzę
     expect(block.toolName).toBe('get_assessment_data');
   });
 
-  it('FALLBACK: krok bez toolInput.phase (np. sprzed generatora faz) nadal pokazuje toolName jako nazwę', () => {
+  it('FALLBACK: krok bez toolInput.phase dostaje CZYTELNĄ etykietę narzędzia, nie snake_case', () => {
+    // ★ WARSZTAT 2026-07-24: nazwa wyprowadzana z narzędzia idzie teraz przez
+    // katalog warsztatu (`toolLabel`), żeby na karcie schematu nigdy nie świecił
+    // techniczny identyfikator rejestru. Sam `toolName` NIE ginie — jest niesiony
+    // osobno na bloku i pokazywany w podtytule karty.
     const step = makeStep({
       id: 'step-legacy',
       toolName: 'search_knowledge_base',
@@ -200,6 +204,88 @@ describe('AgentPlanPanel.blocksToSteps (AGT-008 — klocek niesie wybrane narzę
 
     const [block] = stepsToBlocks([step]);
 
-    expect(block.name).toBe('search_knowledge_base');
+    expect(block.name).toBe('Szukaj w wiedzy');
+    expect(block.toolName).toBe('search_knowledge_base');
+  });
+
+  it('narzędzie SPOZA katalogu warsztatu spada na surowy toolName (bez wywalania się)', () => {
+    const [block] = stepsToBlocks([makeStep({ id: 's-x', toolName: 'some_future_tool' })]);
+    expect(block.name).toBe('some_future_tool');
+  });
+});
+
+describe('AgentPlanPanel — klocek "informacja" (notatka) i bramka akceptu (warsztat 2026-07-24)', () => {
+  it('notatka NIE staje się krokiem — jedzie w notesBefore następnego kroku', () => {
+    const steps = blocksToSteps(
+      [
+        { id: 'n1', kind: 'informacja', name: 'Uzgodnić zakres z klientem' },
+        { id: 'b1', kind: 'etap-modul', name: 'Diagnoza', toolName: 'get_assessment_data' },
+      ],
+      []
+    );
+
+    expect(steps).toHaveLength(1);
+    expect(steps[0].toolName).toBe('get_assessment_data');
+    expect(steps[0].toolInput.notesBefore).toEqual(['Uzgodnić zakres z klientem']);
+  });
+
+  it('notatka na KOŃCU schematu ląduje w notesAfter ostatniego kroku', () => {
+    const steps = blocksToSteps(
+      [
+        { id: 'b1', kind: 'etap-modul', name: 'Diagnoza', toolName: 'get_assessment_data' },
+        { id: 'n1', kind: 'informacja', name: 'Wysłać podsumowanie' },
+      ],
+      []
+    );
+
+    expect(steps).toHaveLength(1);
+    expect(steps[0].toolInput.notesAfter).toEqual(['Wysłać podsumowanie']);
+  });
+
+  it('round-trip: stepsToBlocks odtwarza notatki jako osobne klocki', () => {
+    const blocks = stepsToBlocks([
+      makeStep({
+        id: 's1',
+        toolName: 'get_assessment_data',
+        toolInput: { phase: 'Diagnoza', notesBefore: ['Zebrać dane'], notesAfter: ['Zamknąć etap'] },
+      }),
+    ]);
+
+    expect(blocks.map((b) => b.kind)).toEqual(['informacja', 'etap-modul', 'informacja']);
+    expect(blocks[0].name).toBe('Zebrać dane');
+    expect(blocks[2].name).toBe('Zamknąć etap');
+    // Notatki nie zostają zdublowane w toolInput klocka wykonawczego.
+    expect(blocks[1].toolInput?.notesBefore).toBeUndefined();
+  });
+
+  it('SKASOWANA notatka nie wraca z toolInput istniejącego kroku przy kolejnym zapisie', () => {
+    const existing = makeStep({
+      id: 's1',
+      toolName: 'get_assessment_data',
+      toolInput: { phase: 'Diagnoza', notesBefore: ['stara notatka'] },
+    });
+
+    const [step] = blocksToSteps(
+      [{ id: 's1', kind: 'etap-modul', name: 'Diagnoza', toolName: 'get_assessment_data' }],
+      [existing]
+    );
+
+    expect(step.toolInput.notesBefore).toBeUndefined();
+  });
+
+  it('klocki "automat" i "brama-akceptu" wysyłają jawny requiresApproval:true', () => {
+    const steps = blocksToSteps(
+      [
+        { id: 'a1', kind: 'automat', name: 'Utwórz zadanie', toolName: 'create_task' },
+        { id: 'g1', kind: 'brama-akceptu', name: 'Zgoda', toolName: 'search_knowledge_base' },
+        { id: 'e1', kind: 'etap-modul', name: 'Diagnoza', toolName: 'get_assessment_data' },
+      ],
+      []
+    );
+
+    expect(steps[0].requiresApproval).toBe(true);
+    expect(steps[1].requiresApproval).toBe(true);
+    // Zwykły etap NIE dostaje override'u — backend liczy go z SIDE_EFFECT_TOOLS.
+    expect(steps[2].requiresApproval).toBeUndefined();
   });
 });
