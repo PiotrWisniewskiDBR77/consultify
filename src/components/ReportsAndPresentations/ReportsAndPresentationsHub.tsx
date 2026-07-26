@@ -1290,6 +1290,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             onRefresh={fetchReports}
             actions={actions}
             initialArtifactId={initialArtifactId}
+            onNewItem={handleNewItem}
           />
         );
       case 'presentations':
