@@ -45,7 +45,7 @@ import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailur
 import { Banner } from '../shared/Banner';
 import { HubWorkAreaLoadError } from '../shared/ModuleHub';
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
-import { ModuleHub } from '../shared/ModuleHub/ModuleHub';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { ModuleTab, type OpenDocument, TabConfig, ViewMode } from '../shared/ModuleHub/types';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
@@ -2039,8 +2039,7 @@ export const ResultsHub: React.FC = () => {
 
   return (
     <>
-      <ModuleHub
-        persistViewModeKey="results"
+      <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={(tab) => {
@@ -2358,7 +2357,7 @@ export const ResultsHub: React.FC = () => {
             onNewItem={() => setShowCreateModal(true)}
           />
         ) : null}
-      </ModuleHub>
+      </StandardModuleBar>
 
       {showCreateModal && (
         <KPICreateModal onClose={() => setShowCreateModal(false)} onSuccess={handleCreateSuccess} />
