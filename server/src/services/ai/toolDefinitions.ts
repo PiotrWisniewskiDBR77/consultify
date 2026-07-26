@@ -677,6 +677,14 @@ export async function executeToolCall(
           return JSON.stringify({ error: `Text-to-SQL query failed: ${err?.message}` });
         }
       }
+      case 'wait_until':
+        // Odczekaj (pauza, Fala 1 2026-07-26) — no-op. Rzeczywiste czekanie już
+        // się odbyło jako czas między pauzą kroku (`awaiting_approval`,
+        // agentPlannerService.executePlan) a auto-zdjęciem bramki przez cron
+        // (`resumeWaitStep`, gdy `toolInput.resumeAt` minie). Ten case istnieje
+        // WYŁĄCZNIE po to, żeby krok miał wynik zamiast trafić w `default`
+        // ("Unknown tool") po wznowieniu.
+        return JSON.stringify({ type: 'info', action: 'wait_until', message: 'Pauza zakończona.' });
       case 'create_task':
         return await executeCreateTask(args, context);
       case 'update_task':

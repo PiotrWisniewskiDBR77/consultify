@@ -20,14 +20,15 @@
  *      na backend `toolName`, którego `executeToolCall` nie zna (default →
  *      `{error: "Unknown tool"}` → krok padłby jako `failed`).
  *
- * Stan rejestru na 2026-07-24 (`git show origin/demo:server/src/services/ai/
- * toolDefinitions.ts`) — 19 narzędzi, wszystkie z case'em w dispatcherze:
+ * Stan rejestru na 2026-07-26 (`git show origin/demo:server/src/services/ai/
+ * toolDefinitions.ts`) — 20 narzędzi, wszystkie z case'em w dispatcherze:
  *   search_web · search_knowledge_base · list_enterprise_connectors ·
  *   search_enterprise_connector · get_assessment_data · calculate_financial ·
  *   run_monte_carlo · get_initiative_status · compare_benchmarks ·
  *   find_similar_decisions · get_stakeholder_analysis · create_initiative_draft ·
  *   generate_report_section · schedule_meeting · create_notebook_entry ·
- *   query_structured_data · create_task · update_task · create_decision
+ *   query_structured_data · create_task · update_task · create_decision ·
+ *   wait_until (Fala 1 flow, 2026-07-26 — patrz klocek 'pauza' niżej)
  *
  * ── BRAMKA AKCEPTU ───────────────────────────────────────────────────────────
  * `SIDE_EFFECT_TOOLS` (server/src/services/ai/sideEffectTools.ts) trzyma osiem
@@ -59,7 +60,8 @@ export type PlanBlockKind =
   | 'vault-kontekst'
   | 'brama-akceptu'
   | 'automat'
-  | 'informacja';
+  | 'informacja'
+  | 'pauza';
 
 export const ALL_BLOCK_KINDS: PlanBlockKind[] = [
   'etap-modul',
@@ -68,6 +70,7 @@ export const ALL_BLOCK_KINDS: PlanBlockKind[] = [
   'brama-akceptu',
   'automat',
   'informacja',
+  'pauza',
 ];
 
 export const BLOCK_KIND_FALLBACK_LABEL: Record<PlanBlockKind, string> = {
@@ -77,6 +80,7 @@ export const BLOCK_KIND_FALLBACK_LABEL: Record<PlanBlockKind, string> = {
   'brama-akceptu': 'Zgoda (bramka)',
   automat: 'Automat',
   informacja: 'Informacja',
+  pauza: 'Odczekaj (pauza)',
 };
 
 export const BLOCK_KIND_LABEL_KEY: Record<PlanBlockKind, string> = {
@@ -86,6 +90,7 @@ export const BLOCK_KIND_LABEL_KEY: Record<PlanBlockKind, string> = {
   'brama-akceptu': 'agentPlan.canvas.kind.bramaAkceptu',
   automat: 'agentPlan.canvas.kind.automat',
   informacja: 'agentPlan.canvas.kind.informacja',
+  pauza: 'agentPlan.canvas.kind.pauza',
 };
 
 export function isPlanBlockKind(value: unknown): value is PlanBlockKind {
@@ -102,7 +107,7 @@ export function isAnnotationKind(kind: PlanBlockKind): boolean {
  * (override `requiresApproval: true` w kroku) — patrz nagłówek pliku.
  */
 export function forcesApproval(kind: PlanBlockKind): boolean {
-  return kind === 'brama-akceptu' || kind === 'automat';
+  return kind === 'brama-akceptu' || kind === 'automat' || kind === 'pauza';
 }
 
 /** Jedna pozycja palety = jeden klocek do wstawienia w schemat. */
@@ -393,6 +398,16 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
         hint: 'Plan zatrzymuje się i czeka na Twoje zatwierdzenie.',
         kind: 'brama-akceptu',
         toolName: 'search_knowledge_base',
+        module: 'Kontrola',
+        status: 'active',
+        approval: true,
+      },
+      {
+        id: 'ctrl-wait',
+        label: 'Odczekaj (pauza)',
+        hint: 'Proces czeka określony czas, zanim przejdzie dalej.',
+        kind: 'pauza',
+        toolName: 'wait_until',
         module: 'Kontrola',
         status: 'active',
         approval: true,

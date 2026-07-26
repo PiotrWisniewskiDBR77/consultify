@@ -43,6 +43,7 @@ import {
   ChevronDown,
   ChevronUp,
   CircleDot,
+  Clock,
   Flag,
   GitBranch,
   GripVertical,
@@ -131,7 +132,11 @@ const BLOCK_ICON: Record<PlanBlockKind, LucideIcon> = {
   'brama-akceptu': ShieldCheck,
   automat: Wand2,
   informacja: GitBranch,
+  pauza: Clock,
 };
+
+/** Domyślna pauza dla nowo wstawionego klocka 'pauza', zanim user ją zmieni. */
+const DEFAULT_WAIT_HOURS = 24;
 
 /**
  * Status kroku → (raw status dla `EntityStatusChip`, etykieta PL). Mapowanie na
@@ -287,8 +292,15 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
       const next = blocks.slice();
       const patched: PlanSchemaBlock = { ...next[index], kind };
       // 'vault-kontekst' → narzędzie zawsze search_knowledge_base (dobór idzie
-      // przez poziom sejfu). 'informacja' → notatka, więc żadnego narzędzia.
+      // przez poziom sejfu). 'pauza' → zawsze wait_until (dobór idzie przez
+      // liczbę godzin). 'informacja' → notatka, więc żadnego narzędzia.
       if (kind === 'vault-kontekst' && !patched.toolName) patched.toolName = DEFAULT_TOOL_NAME;
+      if (kind === 'pauza') {
+        patched.toolName = 'wait_until';
+        if (typeof patched.toolInput?.waitHours !== 'number') {
+          patched.toolInput = { ...patched.toolInput, waitHours: DEFAULT_WAIT_HOURS };
+        }
+      }
       if (isAnnotationKind(kind)) patched.toolName = undefined;
       else if (!patched.toolName) patched.toolName = DEFAULT_TOOL_NAME;
       next[index] = patched;
@@ -334,6 +346,26 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
               vault_project_id: undefined,
               vault_safe_name: undefined,
             },
+      };
+      onChange(next);
+    },
+    [blocks, onChange]
+  );
+
+  /**
+   * Liczba godzin pauzy dla klocka 'pauza'. Zapisana w `toolInput.waitHours`
+   * (szablon — moment rzeczywistego wznowienia, `resumeAt`, backend liczy
+   * DOPIERO gdy proces realnie dotrze do tego kroku, nie teraz przy edycji
+   * schematu — patrz `agentPlannerService.executePlan`).
+   */
+  const setBlockWaitHours = useCallback(
+    (index: number, hours: number) => {
+      const next = blocks.slice();
+      const clamped = Number.isFinite(hours) && hours > 0 ? hours : DEFAULT_WAIT_HOURS;
+      next[index] = {
+        ...next[index],
+        toolName: 'wait_until',
+        toolInput: { ...next[index].toolInput, waitHours: clamped },
       };
       onChange(next);
     },
@@ -539,9 +571,16 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                                   ? block.toolInput.vault_safe_name
                                   : t('agentPlan.canvas.vaultLevelUnset', '— poziom nie wybrany —')
                               }`
-                            : !annotation && block.toolName
-                              ? ` · ${toolLabel(block.toolName)}`
-                              : ''}
+                            : block.kind === 'pauza'
+                              ? ` · ${t('agentPlan.canvas.waitHours', '{{h}} godz.', {
+                                  h:
+                                    typeof block.toolInput?.waitHours === 'number'
+                                      ? block.toolInput.waitHours
+                                      : DEFAULT_WAIT_HOURS,
+                                })}`
+                              : !annotation && block.toolName
+                                ? ` · ${toolLabel(block.toolName)}`
+                                : ''}
                         </p>
 
                         {annotation ? (
@@ -593,6 +632,26 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                                   </option>
                                 ))}
                               </select>
+                            ) : block.kind === 'pauza' ? (
+                              <label className="flex items-center gap-1 text-[11px] text-c-text-muted">
+                                <input
+                                  type="number"
+                                  min={1}
+                                  step={1}
+                                  value={
+                                    typeof block.toolInput?.waitHours === 'number'
+                                      ? block.toolInput.waitHours
+                                      : DEFAULT_WAIT_HOURS
+                                  }
+                                  onChange={(e) => setBlockWaitHours(index, Number(e.target.value))}
+                                  aria-label={t(
+                                    'agentPlan.canvas.waitHoursInput',
+                                    'Liczba godzin pauzy'
+                                  )}
+                                  className="h-7 w-16 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-1.5 text-[11px] text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                                />
+                                {t('agentPlan.canvas.waitHoursSuffix', 'godz.')}
+                              </label>
                             ) : annotation ? null : (
                               <select
                                 value={block.toolName ?? DEFAULT_TOOL_NAME}

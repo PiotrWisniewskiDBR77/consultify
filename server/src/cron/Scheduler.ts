@@ -725,8 +725,22 @@ export const Scheduler = {
     });
     this.jobs.push(job37);
 
+    // 38. Agent Plan Scheduler (Fala 1 flow, 2026-07-26) — every 2 min:
+    // dispatches 'scheduled' plans whose scheduled_at has passed (Harmonogram)
+    // and auto-resumes 'wait_until' pause steps whose resumeAt has passed
+    // (Odczekaj). See server/src/jobs/agentPlanSchedulerJob.ts header.
+    const job38 = cron.schedule('*/2 * * * *', async () => {
+      try {
+        const { runAgentPlanScheduler } = await import('../jobs/agentPlanSchedulerJob.js');
+        await runAgentPlanScheduler();
+      } catch (err: any) {
+        logger.error('[Scheduler] Agent plan scheduler job failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job38);
+
     logger.info(
-      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default)'
+      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default), Agent Plan Scheduler (Every 2min)'
     );
   },
   stop(): void {

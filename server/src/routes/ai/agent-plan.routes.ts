@@ -23,6 +23,10 @@
  * - PATCH  /api/ai/agent-plan/:id/steps           -> AGT-009: zapis przestawionego schematu (tylko 'planning')
  * - POST   /api/ai/agent-plan/:id/run             -> AGT-009: jawne "Uruchom" (opc. zapis steps + dispatch)
  * - POST   /api/ai/agent-plan/:id/approve-step    -> zatwierdzenie kroku awaiting_approval
+ * - POST   /api/ai/agent-plan/:id/schedule        -> Harmonogram (Fala 1, 2026-07-26):
+ *                                                   plan 'planning' -> 'scheduled'; dispatch robi
+ *                                                   cron (server/src/jobs/agentPlanSchedulerJob.ts)
+ *                                                   gdy `scheduled_at` minie, nie ten handler.
  * - POST   /api/ai/agent-plan/:id/cancel          -> przerwanie planu
  *
  * Linia montażu (integrator, NIE ten plik): dopisać w
@@ -364,6 +368,45 @@ router.post(
     const plan = (await agentPlannerService.getPlan(planId)) ?? existingPlan;
 
     return res.json({ success: true, plan, dispatch });
+  })
+);
+
+/**
+ * POST /api/ai/agent-plan/:id/schedule
+ * Harmonogram (Fala 1, 2026-07-26): plan gotowy w 'planning' -> 'scheduled'
+ * z konkretnym `scheduledAt` (ISO). NIE dispatchuje — cron
+ * (`server/src/jobs/agentPlanSchedulerJob.ts`, co 2 min) odbiera go, gdy czas
+ * minie. `scheduledAt` w przeszłości jest dozwolone celowo — cron i tak
+ * odbierze go przy najbliższym ticku (prostsze niż walidacja "musi być w
+ * przyszłości", a UI (date-time input) i tak nie pozwala wybrać przeszłości).
+ */
+router.post(
+  '/:id/schedule',
+  validateBody(z.object({ scheduledAt: z.string().trim().min(1) })),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const organizationId = req.user?.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const planId = String(req.params.id || '');
+    const existingPlan = await agentPlannerService.getPlan(planId);
+    if (!assertPlanInOrg(existingPlan, organizationId)) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
+    }
+
+    const { scheduledAt } = req.body as { scheduledAt: string };
+
+    try {
+      const plan = await agentPlannerService.schedulePlan(planId, scheduledAt);
+      return res.json({ success: true, plan });
+    } catch (error: unknown) {
+      logger.warn('[agent-plan] schedulePlan rejected', { err: error, planId });
+      return res.status(409).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Plan not schedulable',
+      });
+    }
   })
 );
 

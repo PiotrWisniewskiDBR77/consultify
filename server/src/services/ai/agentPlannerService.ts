@@ -18,6 +18,7 @@ export { SIDE_EFFECT_TOOLS };
 
 export type PlanStatus =
   | 'planning'
+  | 'scheduled'
   | 'awaiting_approval'
   | 'executing'
   | 'paused'
@@ -200,6 +201,21 @@ class AgentPlannerService {
       // step back to 'pending' + stamps approved_at, so WITHOUT the !approvedAt
       // guard the gate re-fired forever and the plan never reached 'completed'.
       if (step.requiresApproval && !step.approvedAt && step.status !== 'awaiting_approval') {
+        // Odczekaj (pauza, Fala 1 2026-07-26): reużywa TĘ SAMĄ bramkę co ludzka
+        // zgoda — jedyna różnica to KTO ją zdejmie (cron `resumeWaitStep`
+        // zamiast człowieka klikającego "Zatwierdź"). `resumeAt` liczony jest
+        // TERAZ, przy pierwszym dotarciu do kroku (nie przy autorstwie
+        // schematu — wtedy nie wiadomo kiedy proces tu dotrze).
+        if (step.toolName === 'wait_until' && !step.toolInput?.resumeAt) {
+          const hours =
+            typeof step.toolInput?.waitHours === 'number' ? step.toolInput.waitHours : 24;
+          const resumeAt = new Date(Date.now() + hours * 3_600_000).toISOString();
+          step.toolInput = { ...step.toolInput, resumeAt };
+          await dbRun(`UPDATE ai_agent_plan_steps SET tool_input_json = ? WHERE id = ?`, [
+            JSON.stringify(step.toolInput),
+            step.id,
+          ]);
+        }
         await this.updateStepStatus(step.id, 'awaiting_approval');
         await this.updatePlanStatus(planId, 'awaiting_approval', i);
         emitter?.emit('agent_checkpoint', {
@@ -335,6 +351,104 @@ class AgentPlannerService {
        SET status = 'pending', approved_by = ?, approved_at = datetime('now')
        WHERE id = ?`,
       [userId, step.id]
+    );
+  }
+
+  /**
+   * Harmonogram (Fala 1, 2026-07-26): plan gotowy w `planning` (schemat
+   * ułożony, jeszcze nie uruchomiony) przechodzi w `scheduled` z konkretnym
+   * `scheduled_at` zamiast dispatchu od razu. `runAgentPlanScheduler`
+   * (`server/src/jobs/agentPlanSchedulerJob.ts`, cron co 2 min) odbiera go,
+   * gdy czas nadejdzie. Kolumna `scheduled_at` istniała w schemacie od dawna
+   * (`ai_agent_plans`), ale nic jej dotąd nie czytało — to pierwszy konsument.
+   */
+  async schedulePlan(planId: string, scheduledAt: string): Promise<AgentPlan> {
+    const plan = await this.getPlan(planId);
+    if (!plan) throw new Error('Plan not found');
+    if (plan.status !== 'planning') {
+      throw new Error(`Plan not schedulable in status '${plan.status}' (only 'planning')`);
+    }
+    await dbRun(
+      `UPDATE ai_agent_plans SET status = 'scheduled', scheduled_at = ?, updated_at = datetime('now')
+       WHERE id = ?`,
+      [scheduledAt, planId]
+    );
+    const updated = await this.getPlan(planId);
+    if (!updated) throw new Error('Plan disappeared after schedule');
+    return updated;
+  }
+
+  /** Plany `scheduled`, których `scheduled_at` już minął — do dispatchu przez cron. */
+  async listScheduledPlansDue(): Promise<
+    Array<{ id: string; organizationId: string; userId: string }>
+  > {
+    const rows = (await dbAll(
+      `SELECT id, organization_id, user_id FROM ai_agent_plans
+       WHERE status = 'scheduled' AND scheduled_at IS NOT NULL AND scheduled_at <= datetime('now')`
+    )) as any[];
+    return (rows || []).map((r) => ({
+      id: r.id,
+      organizationId: r.organization_id,
+      userId: r.user_id,
+    }));
+  }
+
+  /**
+   * Kroki 'pauza' (`toolName='wait_until'`) czekające na zdjęcie bramki —
+   * filtr po `toolInput.resumeAt` robiony w JS (nie SQL — `resumeAt` jest
+   * zagnieżdżone w `tool_input_json`, a silnik działa nad sqlite i Postgres
+   * jednym zapytaniem przez `DbPromise`, więc string-matching na JSON w SQL
+   * byłby kruchy). Zbiór jest z definicji mały (aktywne pauzy, nie cała
+   * historia), więc pełny skan `awaiting_approval` + filtr w pamięci jest tani.
+   */
+  async listWaitStepsDue(): Promise<
+    Array<{ planId: string; stepIndex: number; organizationId: string; userId: string }>
+  > {
+    const rows = (await dbAll(
+      `SELECT s.plan_id, s.step_index, s.tool_input_json, p.organization_id, p.user_id
+       FROM ai_agent_plan_steps s
+       JOIN ai_agent_plans p ON p.id = s.plan_id
+       WHERE s.status = 'awaiting_approval' AND s.tool_name = 'wait_until'`
+    )) as any[];
+    const now = Date.now();
+    const due: Array<{
+      planId: string;
+      stepIndex: number;
+      organizationId: string;
+      userId: string;
+    }> = [];
+    for (const r of rows || []) {
+      let resumeAt: string | undefined;
+      try {
+        resumeAt = JSON.parse(r.tool_input_json || '{}')?.resumeAt;
+      } catch {
+        continue;
+      }
+      if (resumeAt && new Date(resumeAt).getTime() <= now) {
+        due.push({
+          planId: r.plan_id,
+          stepIndex: r.step_index,
+          organizationId: r.organization_id,
+          userId: r.user_id,
+        });
+      }
+    }
+    return due;
+  }
+
+  /** Zdejmuje bramkę pauzy AUTOMATYCZNIE (cron) — ten sam zapis co ludzkie `approveStep`, inny `approved_by`. */
+  async resumeWaitStep(planId: string, stepIndex: number): Promise<void> {
+    const step = (await dbGet(
+      `SELECT id FROM ai_agent_plan_steps
+       WHERE plan_id = ? AND step_index = ? AND status = 'awaiting_approval'`,
+      [planId, stepIndex]
+    )) as any;
+    if (!step) return; // już wznowiony przez inny tick crona / anulowany — cicho pomijamy
+    await dbRun(
+      `UPDATE ai_agent_plan_steps
+       SET status = 'pending', approved_by = ?, approved_at = datetime('now')
+       WHERE id = ?`,
+      ['system:scheduler', step.id]
     );
   }
 
