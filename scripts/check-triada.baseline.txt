@@ -7,7 +7,7 @@
 # ŚWIADOMIE SPADŁ — nigdy żeby uciszyć nową regresję.
 #
 # WYGENEROWANO: 2026-07-26 (scripts/check-triada.sh --update)
-# RAZEM: 3375 naruszeń w 924 plikach
+# RAZEM: 3357 naruszeń w 915 plikach
 #
 # Posortowane po ścieżce (stabilny diff). Dług maleje = wiersze znikają / liczby spadają.
 3	src/components/AIAnalyticsDashboard.tsx
@@ -368,9 +368,7 @@
 1	src/components/ReportBuilder/QualityGatesPanel.tsx
 1	src/components/ReportBuilder/ReportAgentChat.tsx
 1	src/components/ReportBuilder/ReportBuilderCommentPanel.tsx
-1	src/components/ReportBuilder/ReportBuilderHub.tsx
 1	src/components/ReportBuilder/ReportBuilderWizard.tsx
-1	src/components/ReportBuilder/ReportContainer.tsx
 1	src/components/ReportBuilder/ReportEditor/BlockAIActions.tsx
 1	src/components/ReportBuilder/ReportEditor/BlockCard.tsx
 1	src/components/ReportBuilder/ReportEditor/BrandVoicePanel.tsx
@@ -419,7 +417,6 @@
 2	src/components/Reports/Premium/Editor/Toolbar/AIAssistantPanel.tsx
 1	src/components/Reports/Premium/Editor/Toolbar/BlockInsertMenu.tsx
 1	src/components/Reports/Premium/Editor/Toolbar/EditorToolbar.tsx
-2	src/components/Reports/Premium/PremiumReportWorkspace.tsx
 11	src/components/Reports/ReportCommentPanel.tsx
 2	src/components/Reports/ReportHeader.tsx
 3	src/components/Reports/ReportSection.tsx
@@ -515,7 +512,6 @@
 2	src/components/assessment/AssessmentFrameworkPreviewV3.tsx
 1	src/components/assessment/AssessmentItemPreview.tsx
 6	src/components/assessment/AssessmentMatrixCard.tsx
-3	src/components/assessment/AssessmentModuleHub.tsx
 2	src/components/assessment/AssessmentModuleLayout.tsx
 7	src/components/assessment/AssessmentReportsWorkspace.tsx
 1	src/components/assessment/AssessmentSessionPreviewV3.tsx
@@ -540,7 +536,6 @@
 7	src/components/assessment/NewAssessmentModal.tsx
 4	src/components/assessment/RapidLeanResultsCard.tsx
 2	src/components/assessment/RapidLeanWorkspace.tsx
-3	src/components/assessment/ReportBuilderWorkspace.tsx
 5	src/components/assessment/ReportEditor.tsx
 3	src/components/assessment/ReportEditorModal.tsx
 5	src/components/assessment/WorkflowStatusBar.tsx
@@ -612,7 +607,6 @@
 1	src/components/layout/HelpPanel.tsx
 1	src/components/layout/NotificationDropdown.tsx
 7	src/components/layout/SettingsSidebar.tsx
-1	src/components/layout/Sidebar.tsx
 2	src/components/layout/SplitLayout.tsx
 1	src/components/layout/TrialBanner.tsx
 10	src/components/layout/UserProfileMenu.tsx
@@ -726,7 +720,7 @@
 2	src/components/shared/MobileV8ScopePanel.tsx
 1	src/components/shared/ModuleHub/ActiveFilters.tsx
 13	src/components/shared/ModuleHub/DynamicTabs.tsx
-3	src/components/shared/ModuleHub/FilterableTable.tsx
+2	src/components/shared/ModuleHub/FilterableTable.tsx
 2	src/components/shared/ModuleHub/GridView.tsx
 1	src/components/shared/ModuleHub/HubWorkAreaLoading.tsx
 1	src/components/shared/ModuleHub/ModuleNavBar.tsx
@@ -755,7 +749,6 @@
 1	src/components/shared/forms/PriorityPicker.tsx
 1	src/components/shared/forms/Select.tsx
 1	src/components/ui/HelpButton.tsx
-2	src/components/ui/ResizableTable/ColumnResizer.tsx
 1	src/components/ui/ResizableTable/TableHeader.tsx
 2	src/components/ui/composed/DataTable.tsx
 1	src/components/ui/composed/MetricCard.tsx
@@ -784,7 +777,6 @@
 1	src/views/AcceptInvitationView.tsx
 5	src/views/AppIntroView.tsx
 26	src/views/AppPricingView.tsx
-3	src/views/AssessmentView.tsx
 10	src/views/AuditsShowcasePage.tsx
 1	src/views/AuthView.tsx
 1	src/views/BecomePartnerView.tsx
@@ -803,7 +795,6 @@
 7	src/views/ContextBuilder/shared/ContextDocUploader.tsx
 8	src/views/ContextBuilder/shared/DynamicList.tsx
 4	src/views/ExecutiveView.tsx
-1	src/views/FullAssessmentView.tsx
 3	src/views/FullROIView.tsx
 5	src/views/HowItWorksPage.tsx
 4	src/views/InitiativeManagementView.tsx

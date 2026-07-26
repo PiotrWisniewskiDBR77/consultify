@@ -7,7 +7,7 @@
 # ŚWIADOMIE SPADŁ — nigdy żeby uciszyć nową regresję.
 #
 # WYGENEROWANO: 2026-07-26 (scripts/check-list-canon.sh --update)
-# RAZEM: 427 naruszeń w 146 plikach
+# RAZEM: 423 naruszeń w 145 plikach
 #
 # Posortowane po ścieżce (stabilny diff). Dług maleje = wiersze znikają / liczby spadają.
 2	src/components/AIAnalyticsDashboard.tsx
@@ -91,7 +91,6 @@
 2	src/components/PresentationStudio/PresentationStudioLayoutCapacityAdminPanel.tsx
 3	src/components/Presentations/DeckBuilder/blocks/TableBlock.tsx
 2	src/components/Presentations/PresentationsHub.tsx
-4	src/components/ReportBuilder/ReportBuilderHub.tsx
 2	src/components/ReportBuilder/ReportEditor/ReportEditor.tsx
 5	src/components/ReportBuilder/blocks/TableBlock.tsx
 2	src/components/ReportBuilder/visuals/AssessmentMatrix.tsx
