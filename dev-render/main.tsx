@@ -61,6 +61,7 @@ const CanvasToolbarMdHistoryScreen = React.lazy(() => import('./screens/canvas-t
 const CapabilityGateDemoScreen = React.lazy(() => import('./screens/capability-gate-demo'));
 const ChatSplitTeresaRightScreen = React.lazy(() => import('./screens/chat-split-teresa-right'));
 const CrimsonMyWorkWave2Screen = React.lazy(() => import('./screens/crimson-mywork-wave2'));
+const CrimsonWaveChromeScreen = React.lazy(() => import('./screens/crimson-wave-chrome-2026-07-26'));
 const DecisionRecordScreen = React.lazy(() => import('./screens/decision-record'));
 const DocumentStudioBlocksI18nScreen = React.lazy(() => import('./screens/document-studio-blocks-i18n'));
 const ExceleEngineRevealScreen = React.lazy(() => import('./screens/excele-engine-reveal'));
@@ -459,6 +460,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'crimson-mywork-wave2': {
     label: 'Crimson Wave #2 (MyWork) — CTA/aktywne bg-c-accent → neutralne (PRZED/PO)',
     render: () => <CrimsonMyWorkWave2Screen />,
+  },
+  'crimson-wave-chrome-2026-07-26': {
+    label: 'Crimson purge 2026-07-26 (audyt TRIADA) — 6 plików shared/ModuleHub + MyWorkHub + InboxContent (PRZED/PO)',
+    render: () => <CrimsonWaveChromeScreen />,
   },
   'decision-record': {
     label:

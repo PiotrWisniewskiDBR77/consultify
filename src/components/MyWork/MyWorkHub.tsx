@@ -2574,7 +2574,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                         : t('myWork.hub.searchInbox', 'Search inbox...')
               }
               autoFocus
-              className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:text-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+              className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:text-slate-400 dark:placeholder-slate-500 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition-all"
             />
             {searchQuery && (
               <button
@@ -3214,7 +3214,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         {
           id: 'promoted',
           label: getIdeaStageBucketLabel('promoted', isPolish),
-          icon: <Rocket size={14} className="text-primary-600 dark:text-primary-300" />,
+          icon: <Rocket size={14} className="text-blue-600 dark:text-blue-300" />,
           count: ideasStageCounts.promoted,
         },
       ];
@@ -3782,7 +3782,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               onClick={() => setShowSearch(!showSearch)}
               className={`h-9 w-9 inline-flex items-center justify-center rounded-full border transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                 showSearch
-                  ? 'bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500/30 text-primary-700 dark:text-primary-200'
+                  ? 'bg-slate-900/[0.07] dark:bg-white/10 border-slate-300 dark:border-white/25 text-slate-900 dark:text-slate-100'
                   : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
               }`}
               title={t('myWork.hub.title3', 'Search')}
@@ -3850,7 +3850,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     border border-slate-200/70 dark:border-white/[0.06]
                     text-slate-700 dark:text-slate-200
                     hover:bg-slate-100/70 dark:hover:bg-white/[0.06]
-                    focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+                    focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus
                     transition-colors duration-150
                     cursor-pointer min-w-[140px]
                   "
@@ -3909,7 +3909,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                         onClick={() => setTasksViewMode(id)}
                         className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                           isActive
-                            ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                            ? 'bg-white/80 dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
                             : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
                         }`}
                         title={isPolish ? titlePl : titleEn}
@@ -4000,7 +4000,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                         onClick={() => setDecisionsViewMode(id)}
                         className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                           isActive
-                            ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                            ? 'bg-white/80 dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
                             : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
                         }`}
                         title={isPolish ? titlePl : titleEn}
@@ -4026,7 +4026,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     onClick={() => setInboxViewMode('flat')}
                     className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                       inboxViewMode === 'flat'
-                        ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                        ? 'bg-white/80 dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
                         : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
                     }`}
                     title={t('myWork.hub.title4', 'List')}
@@ -4039,7 +4039,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     onClick={() => setInboxViewMode('sections')}
                     className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                       inboxViewMode === 'sections'
-                        ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                        ? 'bg-white/80 dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
                         : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
                     }`}
                     title={t('myWork.hub.title5', 'Cards')}
@@ -4089,7 +4089,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                       onClick={() => setIdeasViewMode(id)}
                       className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                         ideasViewMode === id
-                          ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                          ? 'bg-white/80 dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
                           : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
                       }`}
                       title={isPolish ? labelPl : label}
