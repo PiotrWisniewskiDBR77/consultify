@@ -179,7 +179,6 @@ import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
 import { upsertFinancialBlock } from './financialNarrativeBlocks';
 import { GateOverrideModal } from './gate-ai';
 import { normalizeGateReadinessPayload } from './gateReadinessPayload';
-import { draftJourneyDismissKey, InitiativeDraftJourney } from './InitiativeDraftJourney';
 import {
   extractInitiativeKpiRows,
   type InitiativeKpiEditorRow,
@@ -791,22 +790,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // Toggled by the solid-teal toolbar button; replaces the old one-shot generate.
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
-  // M13 flow redesign — DRAFT journey strip ("co dalej") dismissal, per initiative.
-  const [draftJourneyDismissed, setDraftJourneyDismissed] = useState<boolean>(() => {
-    try {
-      return window.localStorage.getItem(draftJourneyDismissKey(initiativeId)) === '1';
-    } catch {
-      return false;
-    }
-  });
-  const dismissDraftJourney = useCallback(() => {
-    setDraftJourneyDismissed(true);
-    try {
-      window.localStorage.setItem(draftJourneyDismissKey(initiativeId), '1');
-    } catch {
-      /* storage unavailable — session-only dismissal */
-    }
-  }, [initiativeId]);
+  // Etap 5 gridu n-Type (_GRID_STABILIZATION_COMMAND_2026-07-24.md, sekcja
+  // „Inicjatywa"): banner "co dalej" (InitiativeDraftJourney — „To jest
+  // dokument roboczy inicjatywy — trzy kroki do startu") USUNIĘTY. SSOT
+  // zakazuje instrukcyjnych pasków dublujących informacje ze statusu/
+  // Properties/Actions — a etap/status i najbliższa akcja (brama) już żyją
+  // w `nModePropertyFields` (pola „Status" i „Następna brama") oraz w
+  // primary CTA Menu 1 (`primaryLifecycleAction`), więc banner był czystą
+  // duplikacją. Stan dismissal + komponent usunięte razem z rendererem
+  // niżej (był jedynym callerem InitiativeDraftJourney w repo).
 
   // SPEC-N §2.7 — TRYB POKAZU (fullscreen card-walk), pojęcie ROZŁĄCZNE
   // z `densityMode` ('n'|'c'). Typ jawny 'off'|'fullscreen' zamiast boolean
@@ -9920,22 +9912,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         id: 'actions',
         label: t('initiatives.panel.actions', 'Actions'),
         icon: Sparkles,
-        defaultOpen: true,
         // §6.4: sekcja „Akcje" niesie działania NA REKORDZIE. „Utwórz wariant"
         // (odnoga biznesowa — tworzy nową inicjatywę-wariant) zostaje tu.
         // „Tryb pokazu" NIE jest działaniem na rekordzie, tylko sposobem
         // PREZENTACJI wyniku → przeniesiony do sekcji „Rezultaty" (§6.4/§6.5).
         //
         // ── PODGLĄD = TYLKO CZYTANIE (decyzja właściciela 2026-07-24) ──
-        // Sekcja jest PUSTA w Podglądzie — dokładnie jak w Zadaniu i Decyzji
-        // (wzorzec: `isEmpty: readMode` + `actionsHiddenInReadMode`). Wcześniej
-        // stał tu aktywny „Utwórz wariant", czyli akcja TWORZĄCA nowy obiekt
-        // w trybie, który ma nic nie zmieniać. Chcesz wariant → przełącz na Edycję.
+        // Sekcja jest PUSTA w Podglądzie — dokładnie jak w Zadaniu i Decyzji.
+        // Wcześniej stał tu aktywny „Utwórz wariant", czyli akcja TWORZĄCA
+        // nowy obiekt w trybie, który ma nic nie zmieniać. Chcesz wariant →
+        // przełącz na Edycję. Etap 4 gridu n-Type
+        // (_GRID_STABILIZATION_COMMAND_2026-07-24.md): w Podglądzie sekcja jest
+        // ZWINIĘTA z licznikiem 0, bez komunikatu opisowego (był tu tekst
+        // „Actions are hidden in preview mode" — SSOT go zakazuje wprost).
+        defaultOpen: !readMode,
         isEmpty: readMode,
-        emptyLabel: t(
-          'initiatives.panel.actionsHiddenInReadMode',
-          'Actions are hidden in preview mode'
-        ),
+        badge: readMode ? 0 : undefined,
+        showZeroBadge: true,
         children: readMode ? null : (
           <div className="flex flex-col gap-2">
             <button type="button" onClick={() => void handleFork()} className={panelBtn}>
@@ -10700,12 +10693,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               {/* SPEC-N §2.2 — panel jest częścią POWŁOKI, więc obowiązuje
                   w OBU gęstościach (N i C), nie tylko w N. Pozioma siatka
                   właściwości zniknęła też tutaj — pola żyją w sekcji
-                  „Właściwości" panelu. */}
+                  „Właściwości" panelu.
+                  GRID ETAP 6 (2026-07-24, naprawa P0-1): BEZ `hidden xl:block`
+                  (wzorzec z Powiadomienia, NotificationDetailView.tsx:4196) —
+                  ukrywanie panelu <1280 zabierało Akcje/Właściwości/
+                  Komentarze/Historię na 1024px. */}
               <div className="col-span-full mt-4 flex gap-4 items-start">
                 <div className="flex-1 min-w-0 space-y-0">
                   <NModeCBoard sections={orderedNModeSectionsWithContent} />
                 </div>
-                <div className="hidden xl:block shrink-0 sticky top-6 self-start">
+                <div className="shrink-0 sticky top-6 self-start">
                   <ArtifactRightPanel
                     sections={initiativeRightPanelSections}
                     className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
@@ -11182,8 +11179,20 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 JEST: padding NA ZEWNĄTRZ limitu (`px-6 pt-4 pb-6`, jak
                 `NModeShell` :153) i wiersz flex obejmujący RÓWNIEŻ Menu 1 —
                 identycznie jak w Decyzji/Zadaniu. Dzięki temu oba menu mają tę
-                samą szerokość, a panel startuje na górnej krawędzi Menu 1. */}
-            <div className="max-w-6xl mx-auto xl:flex xl:gap-6 xl:items-start">
+                samą szerokość, a panel startuje na górnej krawędzi Menu 1.
+                GRID ETAP 6 (2026-07-24, naprawa P0-2): `max-w-6xl` (1152px
+                stałe) zamrażał centrum na ~592px, martwe marginesy na
+                1920px. Wzorzec z Zadania (TaskDetailView.tsx:5306-5311) —
+                token `--ntype-content-document-max-width` zamiast stałej.
+                TYLKO ta ścieżka N-mode (densityMode === 'n', :11167) — C-mode
+                (legacy, :10659) poza zakresem tego etapu. */}
+            <div
+              className="mx-auto xl:flex xl:gap-6 xl:items-start"
+              style={{
+                maxWidth:
+                  'calc(var(--ntype-left-panel-width) + var(--ntype-column-gap) + var(--ntype-content-document-max-width) + var(--ntype-column-gap) + var(--ntype-right-panel-width))',
+              }}
+            >
               <div className="xl:flex-1 xl:min-w-0">
                 <NModeHeader
                   title={titleDraft || initiative?.name || ''}
@@ -11260,37 +11269,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     </Callout>
                   ) : null}
 
-                  {/* M13 flow redesign — DRAFT "co dalej" journey strip. */}
-                  {status === InitiativeStatus.DRAFT && !draftJourneyDismissed && (
-                    <InitiativeDraftJourney
-                      hasContent={!!(summary?.trim() || description?.trim() || symptomDraft?.trim())}
-                      taskCount={tasks.length}
-                      onFillWithAi={() => setAiPanelOpen(true)}
-                      onPlanTasks={() => {
-                        setHiddenSectionIds((prev) => {
-                          if (!prev.has('tasks')) return prev;
-                          const next = new Set(prev);
-                          next.delete('tasks');
-                          return next;
-                        });
-                        setActiveNSection('tasks');
-                      }}
-                      /* SPEC-N §2.6 (anty-duplikacja) — `onAdvance` USUNIĘTE.
-                         Był to DOKŁADNIE ten sam handler co primary w Menu 1
-                         (handleStatusAction(stripStatusActions[0]) ≡
-                         handleStatusAction(primaryLifecycleAction)), renderowany
-                         drugi raz w pasku journey. Reguła: akcja zostaje tam,
-                         gdzie jest widoczna ZAWSZE — a pasek journey pokazuje się
-                         tylko w statusie DRAFT i tylko póki user go nie zamknie.
-                         Primary w nagłówku jest bezwarunkowy, więc to on zostaje.
-                         `advanceActionLabel` też zdjęte: bez `onAdvance` krok i tak
-                         nie miał akcji, a etykieta obiecywała przycisk (patrz
-                         InitiativeDraftJourney.tsx — `cta` bez handlera).
-                         Kroki „Uzupełnij AI" i „Zaplanuj zadania" zostają: one NIE
-                         mają odpowiednika w nagłówku. */
-                      onDismiss={dismissDraftJourney}
-                    />
-                  )}
+                  {/* Etap 5 gridu n-Type: banner „co dalej" (InitiativeDraftJourney)
+                      USUNIĘTY stąd — patrz uzasadnienie przy stanie
+                      `draftJourneyDismissed` (teraz nieistniejącym), ok. linii 793.
+                      Status/faza/następna brama żyją w „Właściwościach"
+                      (nModePropertyFields), primary CTA w Menu 1. */}
 
                   {/* Action Bar — grouped: primary | context-create | secondary + danger | AI right-aligned.
                       Container matches the shared NModeShell action-bar standard (slate, borderless)
@@ -11575,7 +11558,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                (GripVertical) są ukryte. */
                             readMode={readMode}
                           />
-                          <div className="flex-1 min-w-0 flex flex-col">
+                          <div
+                            className="flex-1 min-w-0 flex flex-col"
+                            style={{ maxWidth: 'var(--ntype-content-document-max-width)' }}
+                          >
                             <NModeCanvas
                               sections={orderedNModeSectionsWithContent}
                               activeSection={activeNSection}
@@ -11587,12 +11573,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   </div>
                 </div>
               </div>
-              {/* Dokowany prawy panel (SPEC-A §11.2). Ukryty <xl, żeby nie
-                  ściskać centrum na wąskich ekranach — ten sam próg co
-                  w TaskDetailView. SIOSTRA kolumny roboczej (a nie element
-                  wiersza pod Menu 1), więc panel biegnie od górnej krawędzi
-                  Menu 1, a oba menu kończą się przed nim — jak w Decyzji. */}
-              <div className="hidden xl:block shrink-0 sticky top-4 self-start">
+              {/* Dokowany prawy panel (SPEC-A §11.2). SIOSTRA kolumny
+                  roboczej (a nie element wiersza pod Menu 1), więc panel
+                  biegnie od górnej krawędzi Menu 1, a oba menu kończą się
+                  przed nim — jak w Decyzji.
+                  GRID ETAP 6 (2026-07-24, naprawa P0-1): BEZ `hidden
+                  xl:block` (wzorzec z Powiadomienia,
+                  NotificationDetailView.tsx:4196) — próg 1280px, „ten sam
+                  co w TaskDetailView", ukrywał panel na 1024px i zabierał
+                  Akcje/Właściwości/Komentarze/Historię. Task miał TĘ SAMĄ
+                  wadę i dostał tę samą naprawę w tym etapie. */}
+              <div className="shrink-0 sticky top-4 self-start">
                 <ArtifactRightPanel
                   sections={initiativeRightPanelSections}
                   className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
