@@ -48,6 +48,12 @@ import {
 
 const noop = () => undefined;
 
+// Wariant zablokowanego primaryCta (uprawnienia-bramkują-akcje) — ten sam
+// kształt (rounded-lg, h-9) co MENU_1_PRIMARY_CTA, powierzchnia wyciszona
+// zamiast wypełnienia granatem. 1:1 z dotychczasowym wyglądem w Initiatives.
+const MENU_1_PRIMARY_CTA_DISABLED =
+  'inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium bg-c-surface-raised text-c-text-muted cursor-not-allowed';
+
 export interface StandardBreadcrumb {
   label: string;
   onClick?: () => void;
@@ -92,6 +98,14 @@ export interface StandardPrimaryCta {
   icon?: LucideIcon;
   onClick: () => void;
   testId?: string;
+  /**
+   * Doktryna „uprawnienia bramkują akcje": CTA zablokowane (np. pilot bez
+   * dostępu) NIE znika — pokazuje się wyszarzone z wyjaśnieniem w tooltipie
+   * (`disabledReason`), zamiast po cichu ukrywać opcję (analogicznie do
+   * kebaba A6/blok4 — „niegotowe pokazujemy disabled z dopiskiem").
+   */
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
 export interface StandardModuleBarProps {
@@ -334,9 +348,11 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
   const primaryCtaNode = primaryCta ? (
     <button
       type="button"
-      onClick={primaryCta.onClick}
+      onClick={primaryCta.disabled ? undefined : primaryCta.onClick}
+      disabled={primaryCta.disabled}
+      title={primaryCta.disabled ? primaryCta.disabledReason : undefined}
       data-testid={primaryCta.testId}
-      className={MENU_1_PRIMARY_CTA}
+      className={primaryCta.disabled ? MENU_1_PRIMARY_CTA_DISABLED : MENU_1_PRIMARY_CTA}
     >
       {primaryCta.icon ? <primaryCta.icon size={16} /> : null}
       <span>{primaryCta.label}</span>

@@ -82,6 +82,28 @@ export function StandardModuleBarChildrenScreen(): React.ReactElement {
           />
         </div>
       </div>
+
+      <div>
+        <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
+          C — primaryCta zablokowane (doktryna „uprawnienia bramkują akcje",
+          dodane 2026-07-26 dla Initiatives-style pilot lock) — wyszarzone,
+          nie znika, tooltip z wyjaśnieniem przy hover
+        </p>
+        <div style={{ border: '1px dashed #888' }}>
+          <StandardModuleBar
+            tabs={[{ id: 'only', label: 'Jedyna zakładka' }]}
+            activeTab="only"
+            onTabChange={() => {}}
+            primaryCta={{
+              label: 'Nowa inicjatywa',
+              icon: Plus,
+              onClick: () => {},
+              disabled: true,
+              disabledReason: 'Dostępne w kolejnej fazie projektu',
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
