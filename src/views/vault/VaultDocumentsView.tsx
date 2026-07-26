@@ -10,7 +10,10 @@
  * Ekran jest teraz zwykłym ekranem LISTOWYM aplikacji, czyli triadą:
  *   Menu 1  — breadcrumb „Sejf klienta › [nazwa sejfu]" + kebab karty
  *   Menu 2  — lupa · filtr Kategoria · CTA „Dodaj dokument"
- *   Menu 3  — chipy licznikowe statusu indeksowania / pasek bulk przy zaznaczeniu
+ *   Menu 3  — karta otwartego sejfu (dynamiczny tab, patrz niżej) / pasek bulk
+ *             przy zaznaczeniu — chipy licznikowe statusu indeksowania mieszkają
+ *             TERAZ w tej samej strefie i są nieaktywne, dopóki karta jest widoczna
+ *             (patrz „KARTA W MENU 3" niżej — świadomy kompromis, nie usterka).
  *   Tabela  — <StandardTable> (pstryczek kolumn, sort, kebab wiersza, checkboxy)
  *   Preview — <StandardPreview> po kliknięciu wiersza
  * Formularz dodawania przeniesiony do panelu bocznego (`VaultDocumentPanel`).
@@ -22,6 +25,22 @@
  * (GET leci z `?scope=`), więc filtr byłby martwą kontrolką — zostaje jako
  * KOLUMNA KONTEKSTU, tak jak prosi projekt.
  *
+ * ★ KARTA W MENU 3 (2026-07-26, wzór 1:1 `AgentHubShell.tsx` §"Karta w Menu 3"):
+ * ten ekran istnieje WYŁĄCZNIE w stanie "sejf otwarty" (rodzic
+ * `ClientDocumentsVault.tsx` renderuje go zamiast tabeli sejfów, early return),
+ * więc karta Menu 3 jest zawsze dokładnie jedna, zawsze aktywna: `openItems`
+ * niesie jeden wpis `{id: safe.id, type:'tool', subType:'vault-safe',
+ * name: safe.name, status:'DONE'}`. Zamknięcie (×) i „Lista" (`onShowList`)
+ * oba wołają `onBack` (powrót do tabeli sejfów) — jedyne dostępne wyjście z
+ * tego ekranu. UWAGA/KOMPROMIS: `ModuleNavBar` (wspólny, nie ruszany) traktuje
+ * chipy statusu i dynamiczne taby jako tryby WYŁĄCZNE — gdy `openItems` nie
+ * jest puste, DynamicTabs ZASTĘPUJE chipy `all/indexed/processing/failed`
+ * (nie chowa się obok). Efekt: dopóki `chips`+`openItems` idą razem (jak tu),
+ * filtr statusu jest wizualnie martwy — zgłoszone w raporcie zadania jako
+ * wątpliwość do decyzji (opcje: zaakceptować, przenieść status do Menu 2 obok
+ * Kategorii, albo rozszerzyć `ModuleNavBar` o tryb łączony — to ostatnie
+ * wymaga zmiany pliku wspólnego, poza mandatem tego zadania).
+ *
  * Kanon: `docs/ui-standards/TRIADA_KANON.md` (część B = lista odbioru).
  * Zero własnych tabel/menu/preview — wyłącznie `src/components/standard/`.
  */
@@ -32,6 +51,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import type { FilterChip } from '@/components/shared/ModuleHub/ActiveFilters';
+import type { OpenDocument } from '@/components/shared/ModuleHub/types';
 import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import {
   StandardModuleBar,
@@ -476,6 +496,19 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
 
   const safeContextLabel = scopeLabel(safe.type, isPolish);
 
+  // ── Karta w Menu 3 (wzór AgentHubShell.tsx §"Karta w Menu 3") ────────────
+  // Ten ekran istnieje TYLKO gdy sejf jest otwarty (nie ma tu stanu
+  // "lista + karty" w jednym komponencie jak w AgentHubShell) — więc karta
+  // jest zawsze dokładnie jedna i zawsze aktywna. `onSelectItem` nie ma
+  // drugiego stanu do przełączenia (jedyna karta = już aktywna), więc jest
+  // no-opem; `onCloseItem` (×) i `onShowList` ("Lista") oba wracają do
+  // tabeli sejfów — jedyne dostępne "zamknięcie" tego ekranu.
+  const openItems: OpenDocument[] = useMemo(
+    () => [{ id: safe.id, type: 'tool', subType: 'vault-safe', name: safe.name, status: 'DONE' }],
+    [safe.id, safe.name]
+  );
+  const handleSelectItem = useCallback(() => undefined, []);
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-c-bg">
       <StandardModuleBar
@@ -570,6 +603,11 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
         ]}
         activeChip={statusChip}
         onChipChange={(id) => setStatusChip(id as StatusChipId)}
+        openItems={openItems}
+        activeItemId={safe.id}
+        onSelectItem={handleSelectItem}
+        onCloseItem={onBack}
+        onShowList={onBack}
         activeFilters={tagFilters}
         onRemoveFilter={(id) => setTagFilters((prev) => prev.filter((f) => f.id !== id))}
         onClearFilters={() => setTagFilters([])}
