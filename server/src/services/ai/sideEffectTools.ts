@@ -20,4 +20,12 @@ export const SIDE_EFFECT_TOOLS = new Set([
   'schedule_meeting',
   'create_notebook_entry',
   'query_structured_data',
+  // My Work writers (2026-07-26, decyzja właściciela — Harvey benchmark: agent
+  // proponuje, człowiek zatwierdza). Do tej daty te trzy pisały do bazy od razu
+  // — jedyne trzy z `AI_TOOLS`/`executeToolCall` bez bramki, mimo że wprost
+  // mutują `tasks`/`decisions`. Zob. toolDefinitions.ts nagłówek "Teresa
+  // last-mile" — opisy narzędzi tam zaktualizowane w tym samym commicie.
+  'create_task',
+  'update_task',
+  'create_decision',
 ]);

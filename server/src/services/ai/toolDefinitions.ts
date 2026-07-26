@@ -455,15 +455,21 @@ export const AI_TOOLS: ToolDefinition[] = [
   },
   // -------------------------------------------------------------------------
   // Teresa last-mile (backlog #6): direct My Work writes (Tasks / Decisions).
-  // These persist immediately (no proposal envelope) — same low-risk personal
-  // entities the hard-coded /task and /decision slash commands already create.
+  // 2026-07-26 (decyzja właściciela, Harvey benchmark — agent proponuje,
+  // człowiek zatwierdza): all three are now in `SIDE_EFFECT_TOOLS`
+  // (sideEffectTools.ts), so when called through a plan
+  // (agentPlannerService.createPlan/executePlan) they PAUSE at
+  // `awaiting_approval` instead of writing immediately — same gate as
+  // create_initiative_draft/schedule_meeting/create_notebook_entry. The
+  // hard-coded /task and /decision slash commands are a SEPARATE path and are
+  // unaffected (still instant — no model call involved).
   // -------------------------------------------------------------------------
   {
     type: 'function',
     function: {
       name: 'create_task',
       description:
-        "Create a real task in the user's My Work. Use when the user asks you to add/create a task, action item, or to-do. Persists immediately.",
+        "Propose a real task in the user's My Work. Use when the user asks you to add/create a task, action item, or to-do. Requires the user's approval before it is created.",
       parameters: {
         type: 'object',
         properties: {
@@ -495,7 +501,7 @@ export const AI_TOOLS: ToolDefinition[] = [
     function: {
       name: 'update_task',
       description:
-        'Update an existing task (status, title, priority, or due date). Use when the user asks to change/complete/reprioritize a task.',
+        "Propose an update to an existing task (status, title, priority, or due date). Use when the user asks to change/complete/reprioritize a task. Requires the user's approval before the change is applied.",
       parameters: {
         type: 'object',
         properties: {
@@ -522,7 +528,7 @@ export const AI_TOOLS: ToolDefinition[] = [
     function: {
       name: 'create_decision',
       description:
-        "Create a real decision record in the user's My Work. Use when the user asks to log/track a decision to be made. Persists immediately.",
+        "Propose a real decision record in the user's My Work. Use when the user asks to log/track a decision to be made. Requires the user's approval before it is created.",
       parameters: {
         type: 'object',
         properties: {
