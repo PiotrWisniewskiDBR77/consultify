@@ -22,7 +22,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useDemo } from '../../hooks/useDemo';
-import { changeLanguage, normalizeLanguageCode, SUPPORTED_LANGUAGES } from '../../i18n';
+import { normalizeLanguageCode, SUPPORTED_LANGUAGES } from '../../i18n';
+import { changeLanguageAndPersist } from '../../services/languagePreference';
 import { tokenService } from '../../services/tokenService';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, SessionMode } from '../../types';
@@ -194,7 +195,8 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
   const handleLanguageChange = async (lang: string, event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    await changeLanguage(lang);
+    // P0.3: write-through to the account (konto > localStorage > navigator).
+    await changeLanguageAndPersist(currentUser?.id, lang);
   };
 
   const handleLogout = () => {

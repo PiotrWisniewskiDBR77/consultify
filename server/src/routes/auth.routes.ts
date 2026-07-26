@@ -341,6 +341,7 @@ router.get(
         date_format: string | null;
         time_format: string | null;
         out_of_office_message: string | null;
+        language: string | null;
         // VTS metrics
         seniority_level: string | null;
         site_location: string | null;
@@ -407,6 +408,7 @@ router.get(
         ucol('date_format', 'NULL'),
         ucol('time_format', 'NULL'),
         ucol('out_of_office_message', 'NULL'),
+        ucol('language', 'NULL'),
         ucol('seniority_level', 'NULL'),
         ucol('site_location', 'NULL'),
         ucol('tenure_years', 'NULL'),
@@ -660,6 +662,11 @@ router.get(
             user.time_format ||
             (profileFallbackPreferences.timeFormat as string | undefined) ||
             null,
+          // P0.3 (2026-07-26): interface language preference — SSOT priority
+          // is account > localStorage > navigator. See
+          // src/services/languagePreference.ts (syncLanguageFromAccount).
+          language:
+            user.language || (profileFallbackPreferences.language as string | undefined) || null,
           location: user.location || null,
           companyName:
             user.company_name ||

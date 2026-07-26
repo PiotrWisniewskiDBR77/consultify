@@ -7,6 +7,7 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 // RouterSyncProvider removed - RouterSync is now single source of truth
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
+import { syncLanguageFromAccount } from '@/services/languagePreference';
 import { initializeTokenServiceOnce, tokenService } from '@/services/tokenService';
 import { bootstrapAccessibilityPreferences } from '@/utils/accessibilityRuntime';
 import { seedReviewModeFlags } from '@/utils/reviewModeSeed';
@@ -302,6 +303,9 @@ function AppContent() {
           const userData = JSON.parse(storedUser);
           restoredUser = { ...userData, isAuthenticated: true };
           if (isMounted) setCurrentUser(restoredUser);
+          // P0.3: apply account language (if any) before the network round-trip
+          // completes, so a Polish account never flashes English on first paint.
+          void syncLanguageFromAccount(restoredUser?.language);
         } catch {
           console.warn('[Auth] Stale user data');
         }
@@ -335,6 +339,11 @@ function AppContent() {
 
         if (user) {
           const authenticatedUser: User = { ...user, isAuthenticated: true };
+
+          // P0.3: konto > localStorage > navigator — re-sync on every fresh
+          // profile fetch, not only when id/email/avatar/role changed (the
+          // account's language may have changed from another device/tab).
+          void syncLanguageFromAccount(user.language);
 
           // Only update if user data actually changed to prevent unnecessary re-renders
           if (
