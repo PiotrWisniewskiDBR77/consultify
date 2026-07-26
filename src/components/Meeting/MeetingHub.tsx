@@ -18,13 +18,13 @@ import { useNavigate } from 'react-router-dom';
 
 import {
   type FilterChip,
-  ModuleHub,
   type ModuleTab,
   type ViewMode,
 } from '@/components/shared/ModuleHub';
 import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
 import { Menu3Row } from '@/components/shared/ModuleHub/Menu3Row';
 import { useModuleOpenDocuments } from '@/components/shared/ModuleHub/useModuleOpenDocuments';
+import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import {
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -662,7 +662,7 @@ export const MeetingHub: React.FC = () => {
 
   return (
     <>
-      <ModuleHub
+      <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -680,15 +680,10 @@ export const MeetingHub: React.FC = () => {
         activeFilters={activeFilters}
         onRemoveFilter={(id) => setActiveFilters((prev) => prev.filter((item) => item.id !== id))}
         onClearFilters={() => setActiveFilters([])}
-        primaryCta={
-          <button
-            type="button"
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-c-text text-c-surface hover:opacity-90 transition-colors"
-          >
-            <span>{t('meeting.actions.new', 'New meeting')}</span>
-          </button>
-        }
+        primaryCta={{
+          label: t('meeting.actions.new', 'New meeting'),
+          onClick: openCreateModal,
+        }}
         rightControls={
           <div className="inline-flex items-center rounded-full border border-c-border-subtle px-3 h-9 text-xs text-c-text-muted">
             {loading ? (
@@ -901,7 +896,7 @@ export const MeetingHub: React.FC = () => {
             ) : null}
           </div>
         )}
-      </ModuleHub>
+      </StandardModuleBar>
 
       {showCreateModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
