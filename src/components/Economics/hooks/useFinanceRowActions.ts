@@ -6,7 +6,6 @@ import {
   Download,
   Eye,
   MessageCircle,
-  Pencil,
   RefreshCw,
   Trash2,
   TrendingUp,
@@ -297,8 +296,11 @@ export function useFinanceRowActions({
           : []),
       ];
 
-      // Fixed Bottom Manifest (canon §9.2): Otwórz podgląd → Edytuj → Archiwizuj.
+      // Fixed Bottom Manifest (canon §9.2): Otwórz podgląd → Archiwizuj.
       // Finance rows have no due_date, so the Delay slot is correctly omitted.
+      // 'edit' was removed from this manifest 2026-07-26 (TYPE 11 fix): it called
+      // the exact same handler as onOpenFull/header "Otwórz" — a literal duplicate,
+      // not a distinct "enter edit mode" action. See useFinanceRowActions ^ handleOpenFull.
       const manifest: RowAction[] = [
         {
           id: 'preview',
@@ -306,12 +308,6 @@ export function useFinanceRowActions({
           icon: ChevronRight,
           divider: true,
           onClick: () => (handleOpenPreview ?? handleOpenFull)(row),
-        },
-        {
-          id: 'edit',
-          label: t('common.edit', 'Edytuj'),
-          icon: Pencil,
-          onClick: () => handleOpenFull(row),
         },
         {
           id: 'archive',

@@ -151,7 +151,6 @@ interface FinancePreviewPanelProps {
   valuationPreviewResults: PreviewDataState['valuationPreviewResults'];
   valuationPreviewDetail: PreviewDataState['valuationPreviewDetail'];
   handleOpenFull: (row: FinanceRow) => void;
-  handleExport: (row: FinanceRow) => void;
   handleCreateModelFromStatement: (row: FinanceStatementRow) => void;
   handleCreateAnalysisFromStatements: (row: FinanceStatementRow) => void;
   loadStatements: () => Promise<void>;
@@ -177,7 +176,6 @@ export function useFinancePreview({
   valuationPreviewResults,
   valuationPreviewDetail,
   handleOpenFull,
-  handleExport,
   handleCreateModelFromStatement,
   handleCreateAnalysisFromStatements,
   loadStatements,
@@ -1212,23 +1210,14 @@ export function useFinancePreview({
         });
       }
 
-      if (
-        row.kind !== 'statements' &&
-        (row.kind !== 'prediction' || (row as FinanceModelRow).predictionType === 'model')
-      ) {
-        actionButtons.push({
-          label: t('finance.actions.export', 'Eksportuj'),
-          onClick: () => handleExport(row),
-          colorScheme: 'neutral',
-        });
-      }
-
-      actionButtons.push({
-        label: t('common.open', 'Otwórz'),
-        onClick: () => handleOpenFull(row),
-        colorScheme: 'primary',
-        shortcut: 'O',
-      });
+      // NOTE (TYPE 11 fix, 2026-07-26): this footer used to push its own bespoke
+      // "Eksportuj" and "Otwórz" buttons here — both were duplicates of actions
+      // already surfaced canonically via getRowActions()/financePreviewActions
+      // (FinanceHub.tsx): "Otwórz" duplicated the header onOpenFull (and even
+      // collided with it on the "O" keyboard shortcut), and "Eksportuj" called the
+      // exact same handleExport as the canonical export action. Both bespoke
+      // buttons were removed; the header "Otwórz" and the canonical Export action
+      // in the action bar (from getRowActions) remain as the single source of each.
 
       return (
         <div className="space-y-0">
@@ -1261,7 +1250,6 @@ export function useFinancePreview({
       i18n,
       statementPreviewDetail,
       handleOpenFull,
-      handleExport,
       handleCreateModelFromStatement,
       handleCreateAnalysisFromStatements,
       loadStatements,

@@ -1132,7 +1132,6 @@ export const FinanceHub: React.FC = () => {
     valuationPreviewResults,
     valuationPreviewDetail,
     handleOpenFull,
-    handleExport,
     handleCreateModelFromStatement,
     handleCreateAnalysisFromStatements,
     loadStatements,
