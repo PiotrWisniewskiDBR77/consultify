@@ -16,7 +16,8 @@
  *   1. URL query `?ff_ideasPreviewOverlay=0|1` — operator bypass (for dev-render/demo).
  *   2. `localStorage["ff.ideas_preview_overlay"]` — user override.
  *   3. `import.meta.env.VITE_IDEAS_PREVIEW_OVERLAY` — build-time default.
- *   4. Default: OFF.
+ *   4. Default: ON (flip 2026-07-13, akcept Piotra; #4b zaakceptowany na
+ *      zrzutach light+dark).
  */
 
 const LS_KEY = 'ff.ideas_preview_overlay';

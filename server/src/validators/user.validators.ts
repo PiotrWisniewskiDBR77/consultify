@@ -58,6 +58,9 @@ export const UpdateUserSchema = z.object({
   profileSurveyCompletedAt: z.string().max(100).nullable().optional(),
   profileSurveyDismissedCount: z.number().int().min(0).optional(),
   profileSurveyLastDismissedAt: z.string().max(100).nullable().optional(),
+  // P0.3 (2026-07-26): interface language preference. Must stay in sync with
+  // SUPPORTED_LANGUAGES in src/i18n.ts.
+  language: z.enum(['en', 'pl', 'de', 'ar', 'jp', 'es']).nullable().optional(),
 });
 
 export const UpdateUserRoleSchema = z.object({

@@ -16,7 +16,8 @@
  * Resolution order (highest wins), same shape as `artifactApprovalUiFlag.ts`:
  *   1. URL query `?ff_businessCaseAdvisory=0|1` — operator bypass.
  *   2. `localStorage["ff.businessCaseAdvisory"]` — user/org override.
- *   3. Default: OFF.
+ *   3. Default: ON (flip 2026-07-16, akcept Piotra; galeria czysta, Vegas
+ *      dopracuje wygląd).
  */
 
 const LS_KEY = 'ff.businessCaseAdvisory';

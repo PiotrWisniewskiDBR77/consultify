@@ -173,6 +173,28 @@ function buildActionTargetPayload(artifact: {
     };
   }
 
+  // P0.2 fix (2026-07-26): documents created directly in Document Studio
+  // register as originRuntime='native_artifact' (server/src/routes/document-
+  // studio.routes.ts registerGeneratedDocumentOrigin) — a DIFFERENT runtime
+  // from 'report' (report_builder). Before this case existed they fell to the
+  // generic branch below (openPath: null), which made the client's fallback
+  // path (getArtifactPath('report', id) -> /wordy?artifactId=...) the only
+  // option — the WRONG engine for these documents. Route explicitly to the
+  // Document Studio resume URL, which this same runtime's GET
+  // /api/document-studio/:artifactId actually resolves.
+  if (originRuntime === 'native_artifact') {
+    return {
+      artifactId: artifact.artifactId,
+      originRuntime,
+      originRecordId,
+      openPath: `/document-studio/${originRecordId}`,
+      exportPath: `/api/document-studio/${originRecordId}/export/pdf`,
+      deletePath: null,
+      reviewPath,
+      authority: 'document_studio',
+    };
+  }
+
   if (originRuntime === 'report_template') {
     return {
       artifactId: artifact.artifactId,

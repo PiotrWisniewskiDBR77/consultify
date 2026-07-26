@@ -122,6 +122,17 @@ export const DocumentStudioView: React.FC = () => {
   const [generating, setGenerating] = useState(false);
   const [loadingArtifact, setLoadingArtifact] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // P0.1 fix (2026-07-26): resuming a document that no longer resolves (404 —
+  // e.g. a report_builder/native-artifact id routed here by a stale link, or a
+  // genuinely deleted document) used to fall straight into the empty Mode-1
+  // intake form with `error` shown as a soft banner — indistinguishable from
+  // "start a new document". That is silent data-loss-looking behavior. This is
+  // a BLOCKING state instead (same pattern as `templateResolveState==='error'`
+  // below): no picker, no generation, just the failure + a way back.
+  const [artifactLoadFailed, setArtifactLoadFailed] = useState(false);
+  const [artifactLoadErrorCode, setArtifactLoadErrorCode] = useState<'not_found' | 'other' | null>(
+    null
+  );
   // C1 — progressive-generation streaming state. `streamOutline` is the outline
   // the server resolved (painted immediately from the `plan` event); it can
   // differ from the previewed Mode-1 outline (e.g. Mode 3 template outline).
@@ -225,11 +236,31 @@ export const DocumentStudioView: React.FC = () => {
     }
   }, [templateResolveState, templateResolveErrorCode, t]);
 
+  // Uczciwy komunikat, gdy wznowienie dokumentu (?artifactId=/:artifactId) się
+  // nie powiodło — najczęściej link z listy wskazujący na rekord z INNEGO
+  // silnika (np. report_builder) albo dokument, który zniknął. ŻADEN z tych
+  // stanów nie prowadzi do pustego intake — patrz `artifactLoadFailed` niżej.
+  const artifactLoadMessage = useMemo((): string | null => {
+    if (!artifactLoadFailed) return null;
+    if (artifactLoadErrorCode === 'not_found') {
+      return t(
+        'documentStudio.view.artifactNotFound',
+        'Nie znaleziono tego dokumentu. Mógł zostać usunięty albo link prowadzi do innego typu dokumentu.'
+      );
+    }
+    return t(
+      'documentStudio.view.artifactLoadFailedGeneric',
+      'Nie udało się załadować dokumentu. Spróbuj ponownie za chwilę.'
+    );
+  }, [artifactLoadFailed, artifactLoadErrorCode, t]);
+
   useEffect(() => {
     if (!artifactIdFromUrl || artifactIdFromUrl === artifactId) return;
     let cancelled = false;
     setLoadingArtifact(true);
     setError(null);
+    setArtifactLoadFailed(false);
+    setArtifactLoadErrorCode(null);
     void (async () => {
       try {
         const result = await getDocumentStudioArtifact(artifactIdFromUrl);
@@ -245,11 +276,18 @@ export const DocumentStudioView: React.FC = () => {
         }
       } catch (err) {
         if (cancelled) return;
+        // P0.1 fix: a failed resume (404 = no such document, or any other
+        // load error) must NOT fall through to the Mode-1 intake form — that
+        // reads as "start fresh", hiding the fact that the document the user
+        // clicked couldn't be opened. Surface a blocking error instead.
         setError(
           err instanceof Error
             ? err.message
             : t('documentStudio.view.loadFailed', 'Failed to load document')
         );
+        const status = (err as { status?: number } | null)?.status;
+        setArtifactLoadErrorCode(status === 404 ? 'not_found' : 'other');
+        setArtifactLoadFailed(true);
       } finally {
         if (!cancelled) setLoadingArtifact(false);
       }
@@ -541,7 +579,16 @@ export const DocumentStudioView: React.FC = () => {
       {showDocumentShell ? null : (
         <TopBar
           moduleLabel={t('documentStudio.view.moduleLabel', 'Document Studio')}
-          title={t('documentStudio.view.title', 'Consultify Document Studio')}
+          // P1.3 (plan dokończenia Materiałów): tytuł dublował moduleLabel
+          // 1:1 ("Document Studio › Consultify Document Studio" — sama
+          // marka, zero informacji). Brak jeszcze realnego dokumentu na tej
+          // fazie (intake/plan szablonu), więc tytuł = aktualny tryb pracy
+          // (te same etykiety co w `tabChips` wyżej — bez nowego klucza i18n).
+          title={
+            activeTab === 'templates'
+              ? t('documentStudio.view.tabPlanTemplate', 'Plan template')
+              : t('documentStudio.view.tabGenerate', 'Generate')
+          }
           chips={tabChips}
           respectMelsOrder={false}
           presenceSlot={
@@ -565,6 +612,23 @@ export const DocumentStudioView: React.FC = () => {
             label={t('documentStudio.view.loadingDocument', 'Loading document…')}
             className="flex-1"
           />
+        ) : artifactLoadFailed ? (
+          // P0.1 fix (2026-07-26): blocking state, same pattern as
+          // `template-resolve-error` above — a document that failed to load
+          // must never silently present as "start a new document".
+          <div
+            data-testid="document-load-error"
+            className="mx-auto max-w-xl rounded-xl border border-c-border bg-c-surface p-6 text-center"
+          >
+            <p className="text-sm text-c-text">{artifactLoadMessage}</p>
+            <button
+              type="button"
+              onClick={() => navigate('/presentations?tab=documents')}
+              className="mt-4 rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            >
+              {t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
+            </button>
+          </div>
         ) : phase === 'intake' ? (
           docEntryMode === 'blank' ? (
             <LoadingState

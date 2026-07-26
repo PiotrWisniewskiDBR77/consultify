@@ -231,6 +231,51 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
     expect(doc?.governance?.exportPath).toBe('/api/report-builder/reg-r1/export/pdf');
   });
 
+  // P0.2 (2026-07-26): a Document Studio document (originRuntime=native_artifact)
+  // used to map to `null` in mapRegistryItemToUnified and vanish from the
+  // Documents/All list even though the server indexed it correctly. This pins
+  // that it now surfaces as a 'document' row and opens via the Document Studio
+  // resume path the server assigns it (never /wordy).
+  it('useArtifactOutputsList(all) includes Document Studio documents (originRuntime=native_artifact)', async () => {
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String(input);
+      if (url.includes('/api/artifacts?') && !url.includes('view=') && !url.includes('outputType=')) {
+        return jsonResponse({
+          data: [
+            {
+              originRuntime: 'native_artifact',
+              originRecordId: 'doc-studio-42',
+              artifactId: 'art-doc-1',
+              resolvedTitle: 'Notatka z warsztatu',
+              originStatus: 'ready',
+              ownerUserId: 'user-a',
+              lastTransitionAt: '2026-07-24T10:00:00Z',
+              openPath: '/document-studio/doc-studio-42',
+              exportPath: '/api/document-studio/doc-studio-42/export/pdf',
+              authority: 'document_studio',
+            },
+          ],
+        });
+      }
+      return jsonResponse({ data: [] });
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useArtifactOutputsList('all'));
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.error).toBeNull();
+    expect(result.current.rows).toHaveLength(1);
+    expect(result.current.rows[0]).toEqual(
+      expect.objectContaining({
+        kind: 'document',
+        originRecordId: 'doc-studio-42',
+        artifactId: 'art-doc-1',
+        title: 'Notatka z warsztatu',
+      }),
+    );
+    expect(result.current.rows[0]?.governance?.openPath).toBe('/document-studio/doc-studio-42');
+  });
+
   it('useArtifactOutputsList(mine) appends view=mine', async () => {
     const calls: string[] = [];
     globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
@@ -293,6 +338,52 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
     expect(result.current.reports[0]?.artifactId).toBe('art-rb');
     expect(result.current.reports[0]?.governance?.openPath).toBe('/reports/builder/rb-99');
     expect(result.current.error).toBeNull();
+  });
+
+  // P0.2 (2026-07-26): the Documents tab (useReports) previously filtered
+  // strictly to originRuntime==='report', excluding every document created
+  // directly in Document Studio (originRuntime='native_artifact') even though
+  // both share outputType='report'/artifactFamily='document'.
+  it('useReports includes Document Studio documents (originRuntime=native_artifact) alongside report_builder rows', async () => {
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String(input);
+      if (url.includes('outputType=report')) {
+        return jsonResponse({
+          data: [
+            {
+              originRuntime: 'report',
+              originRecordId: 'rb-1',
+              artifactId: 'art-rb-1',
+              resolvedTitle: 'Report Builder doc',
+              originStatus: 'ready',
+              ownerUserId: 'owner-1',
+              lastTransitionAt: '2026-07-24T08:00:00Z',
+              openPath: '/reports/builder/rb-1',
+            },
+            {
+              originRuntime: 'native_artifact',
+              originRecordId: 'doc-studio-42',
+              artifactId: 'art-doc-1',
+              resolvedTitle: 'Document Studio doc',
+              originStatus: 'ready',
+              ownerUserId: 'owner-1',
+              lastTransitionAt: '2026-07-24T09:00:00Z',
+              openPath: '/document-studio/doc-studio-42',
+            },
+          ],
+        });
+      }
+      return jsonResponse({ data: [] });
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useReports());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.reports).toHaveLength(2);
+    const ids = result.current.reports.map((r) => r.id).sort();
+    expect(ids).toEqual(['doc-studio-42', 'rb-1']);
+    const docStudioRow = result.current.reports.find((r) => r.id === 'doc-studio-42');
+    expect(docStudioRow?.governance?.openPath).toBe('/document-studio/doc-studio-42');
   });
 
   it('usePresentations prefers GET /api/artifacts?outputType=presentation&limit=200', async () => {

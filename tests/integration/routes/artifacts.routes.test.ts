@@ -294,6 +294,71 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
     );
   });
 
+  // P0.2 (2026-07-26): Document Studio documents register with
+  // originRuntime='native_artifact' — a DIFFERENT runtime from 'report'
+  // (report_builder). Before buildActionTargetPayload had a case for it,
+  // native_artifact fell to the generic branch (openPath: null), which meant
+  // the client fell back to /wordy?artifactId=... — the wrong engine. This
+  // pins the server contract both endpoints (action-target and the canonical
+  // list) rely on.
+  it('returns canonical action-target metadata for native_artifact (Document Studio) documents', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };
+    });
+    getArtifactForUserMock.mockResolvedValue({
+      artifactId: 'art-doc-1',
+      originRuntime: 'native_artifact',
+      originRecordId: 'doc-studio-42',
+      ownerUserId: 'owner-1',
+    });
+
+    const res = await request(app).get('/api/artifacts/art-doc-1/action-target');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      data: {
+        artifactId: 'art-doc-1',
+        originRuntime: 'native_artifact',
+        originRecordId: 'doc-studio-42',
+        openPath: '/document-studio/doc-studio-42',
+        exportPath: '/api/document-studio/doc-studio-42/export/pdf',
+        deletePath: null,
+        reviewPath: '/api/artifacts/art-doc-1/start-review',
+        authority: 'document_studio',
+      },
+    });
+  });
+
+  it('includes native_artifact (Document Studio) documents in the canonical list with a document-studio openPath', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };
+    });
+    listArtifactsForUserMock.mockResolvedValue([
+      {
+        artifactId: 'art-doc-1',
+        originRuntime: 'native_artifact',
+        originRecordId: 'doc-studio-42',
+        outputType: 'report',
+        artifactFamily: 'document',
+        canonicalHome: 'outputs_library',
+        resolvedTitle: 'Notatka z warsztatu',
+      },
+    ]);
+
+    const res = await request(app).get('/api/artifacts?limit=25');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([
+      expect.objectContaining({
+        artifactId: 'art-doc-1',
+        originRuntime: 'native_artifact',
+        originRecordId: 'doc-studio-42',
+        openPath: '/document-studio/doc-studio-42',
+        authority: 'document_studio',
+      }),
+    ]);
+  });
+
   it('returns canonical action-target metadata for presentation artifacts', async () => {
     verifyTokenMock.mockImplementation((req: any) => {
       req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };

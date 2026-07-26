@@ -69,6 +69,34 @@ describe('resolveArtifactOpenPath', () => {
     expect(path).not.toContain('/reports/builder');
   });
 
+  // P0.1/P0.2 (2026-07-26) — real user-path regression coverage: the resolver
+  // is the SINGLE point every open action (row dblclick, kebab "Otwórz",
+  // preview "Open") funnels through (ReportsTabContent.openReport,
+  // OutputsAggregateTabContent.openRow). These pin the exact server-shaped
+  // governance payload for both document engines so any future change to the
+  // fallback branch can't silently regress a real click.
+  it('routes a report_builder document (originRuntime=report) to /reports/builder/:id via the server-provided openPath', () => {
+    // Shape matches buildActionTargetPayload() in artifacts.routes.ts for
+    // originRuntime === 'report', as it appears on a canonical list row.
+    const path = resolveArtifactOpenPath({
+      kind: 'document',
+      originRecordId: 'report-77',
+      governance: { openPath: '/reports/builder/report-77', authority: 'report_builder' },
+    });
+    expect(path).toBe('/reports/builder/report-77');
+  });
+
+  it('routes a Document Studio document (originRuntime=native_artifact) to /document-studio/:id via the server-provided openPath', () => {
+    // Shape matches buildActionTargetPayload() for originRuntime === 'native_artifact'.
+    const path = resolveArtifactOpenPath({
+      kind: 'document',
+      originRecordId: 'doc-studio-42',
+      governance: { openPath: '/document-studio/doc-studio-42', authority: 'document_studio' },
+    });
+    expect(path).toBe('/document-studio/doc-studio-42');
+    expect(path).not.toContain('/wordy');
+  });
+
   it('still honors an explicit backend openPath for assessment-origin artifacts', () => {
     expect(
       resolveArtifactOpenPath({

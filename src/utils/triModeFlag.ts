@@ -13,14 +13,15 @@
  *   - `DocumentStudioView` (faza intake, /document-studio),
  *   - `PrezentacjeView` (wejście `?view=new`, /prezentacje),
  *   - `ExceleView` (wejście `?view=new`, /excele).
- * OFF (domyślnie) → każdy z trzech widoków renderuje się BAJT-IDENTYCZNIE jak
- * dziś (żadnego chooserа, zero regresji). ON → chooser jako brama wejścia.
+ * OFF → każdy z trzech widoków renderuje się BAJT-IDENTYCZNIE jak przed flagą
+ * (żadnego choosera, zero regresji). ON (domyślnie) → chooser jako brama wejścia.
  *
  * Kolejność (wygrywa najwyższe):
  *   1. URL query `?ff_tri_tryby=0|1` — bypass operatora / dev / dev-render.
  *   2. `localStorage["ff.tri_tryby"]` — override user / org.
  *   3. `import.meta.env.VITE_TRI_TRYBY` — build-time.
- *   4. Default: OFF.
+ *   4. Default: ON (flip fb119cefe8, akcept Piotra 2026-07-22), env jawnie
+ *      nieustawione = ON.
  */
 
 const LS_KEY = 'ff.tri_tryby';
