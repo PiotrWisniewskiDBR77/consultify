@@ -23,6 +23,8 @@ interface Nudge {
   action: 'expand' | 'connect' | 'fill' | 'convert' | 'custom';
   priority: number;
   customPrompt?: string;
+  /** For `connect` nudges: ids of the currently-unconnected nodes (so "Go" can select them). */
+  nodeIds?: string[];
 }
 
 export interface IdeaAINudgeStripProps {
@@ -36,6 +38,8 @@ export interface IdeaAINudgeStripProps {
   onActionExpand: () => void;
   onActionConvert: () => void;
   onSendToChat?: (prompt: string) => void;
+  /** For `connect` nudges: select the unconnected nodes and fit the view to them. */
+  onActionConnect?: (nodeIds: string[]) => void;
 }
 
 export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
@@ -49,6 +53,7 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
   onActionExpand,
   onActionConvert,
   onSendToChat,
+  onActionConnect,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -89,15 +94,16 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
       connectedIds.add(e.source);
       connectedIds.add(e.target);
     }
-    const isolatedCount = graphNodes.filter((n) => !connectedIds.has(n.id)).length;
-    if (isolatedCount > 1 && nodeCount > 3) {
+    const isolatedIds = graphNodes.filter((n) => !connectedIds.has(n.id)).map((n) => n.id);
+    if (isolatedIds.length > 1 && nodeCount > 3) {
       nudges.push({
         id: 'isolated_nodes',
         icon: Link2,
-        textPl: `${isolatedCount} niepowiązanych elementów — AI może zasugerować połączenia`,
-        textEn: `${isolatedCount} unconnected elements — AI can suggest connections`,
+        textPl: `${isolatedIds.length} niepowiązanych elementów — kliknij, by je zaznaczyć na płótnie`,
+        textEn: `${isolatedIds.length} unconnected elements — click to select them on the canvas`,
         action: 'connect',
         priority: 70,
+        nodeIds: isolatedIds,
       });
     }
 
@@ -174,6 +180,10 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
           onActionConvert();
           break;
         case 'connect':
+          if (onActionConnect && nudge.nodeIds?.length) onActionConnect(nudge.nodeIds);
+          else if (onSendToChat && nudge.customPrompt) onSendToChat(nudge.customPrompt);
+          else onActionExpand();
+          break;
         case 'fill':
         case 'custom':
           if (onSendToChat && nudge.customPrompt) onSendToChat(nudge.customPrompt);
@@ -182,7 +192,7 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
       }
       setDismissed((prev) => new Set(prev).add(nudge.id));
     },
-    [onActionConvert, onActionExpand, onSendToChat]
+    [onActionConnect, onActionConvert, onActionExpand, onSendToChat]
   );
 
   if (!isAccepted || allNudges.length === 0) return null;

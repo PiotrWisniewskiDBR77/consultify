@@ -268,7 +268,16 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
       const detail = (e as CustomEvent).detail;
       // If fit flag is set, use fitView instead of setViewport
       if (detail?.fit) {
-        fitView({ padding: detail.padding || 0.2, duration: detail.duration || 300 });
+        const fitOpts: Record<string, unknown> = {
+          padding: detail.padding || 0.2,
+          duration: detail.duration || 300,
+        };
+        // Optional: fit to a specific subset of nodes (e.g. unconnected nodes
+        // highlighted from the AI nudge strip) instead of the whole canvas.
+        if (Array.isArray(detail.nodeIds) && detail.nodeIds.length > 0) {
+          fitOpts.nodes = detail.nodeIds.map((id: string) => ({ id }));
+        }
+        fitView(fitOpts);
       } else if (
         detail &&
         typeof detail.x === 'number' &&
@@ -3885,6 +3894,24 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                   })
                 )
               }
+              // AGT/whiteboard fix: "N unconnected elements" pill's "Go" button had no
+              // handler of its own — it silently fell through to onActionExpand
+              // (wb_ai_find_themes), an unrelated AI action. There is no existing
+              // "suggest connections" engine in whiteboard/ to call instead, so the
+              // minimal real fix is: select the unconnected nodes on the canvas and
+              // fit the view to them, so the user can see and connect them by hand.
+              onActionConnect={(nodeIds) => {
+                const idSet = new Set(nodeIds);
+                setNodes((nds) => nds.map((n) => ({ ...n, selected: idSet.has(n.id) })));
+                const rfContainer = document.querySelector('.react-flow');
+                if (rfContainer) {
+                  rfContainer.dispatchEvent(
+                    new CustomEvent('idea-whiteboard-set-viewport', {
+                      detail: { fit: true, padding: 0.3, duration: 400, nodeIds },
+                    })
+                  );
+                }
+              }}
             />
           )}
 
