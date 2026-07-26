@@ -68,6 +68,16 @@ export interface StandardBulkAction {
   icon?: LucideIcon;
   onClick: () => void;
   variant?: 'neutral' | 'danger';
+  /**
+   * Disabled state for the SUBSET of selected rows this action can't apply to
+   * (e.g. bulk-cancel when every selected row is already finished). The bulk
+   * bar itself only renders when count > 0 — this covers the narrower case
+   * where a selection exists but none of it is eligible. Pair with `title`
+   * for the tooltip explaining why.
+   */
+  disabled?: boolean;
+  /** Tooltip shown on hover — required reading when `disabled` is true. */
+  title?: string;
 }
 
 export interface StandardBulkState {
@@ -211,9 +221,12 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
                 key={action.id}
                 type="button"
                 onClick={action.onClick}
-                className={
+                disabled={action.disabled}
+                title={action.title}
+                aria-disabled={action.disabled}
+                className={`${
                   action.variant === 'danger' ? MENU_3_ACTION_DANGER : MENU_3_ACTION_NEUTRAL
-                }
+                } disabled:cursor-not-allowed disabled:opacity-40`}
               >
                 {Icon ? <Icon size={12} /> : null}
                 {action.label}

@@ -29,6 +29,26 @@
  * (`manifestId`) zostaje wstecznie zgodna z katalogiem sprzed AGT-010 —
  * dispatch od razu (canvas otwiera się na już wystartowanym planie).
  *
+ * ★ SELECTION/BULK (2026-07-26, audyt kanonu triady — MUST #7/#13):
+ * "Moje procesy" dostała `selection` (checkbox po lewej) + pasek bulk
+ * (`StandardModuleBar.bulk`) z JEDNĄ akcją zbiorczą — "Anuluj zaznaczone".
+ * Backend (`agentPlan.api.ts`) ma WYŁĄCZNIE `cancelAgentPlan(planId)`
+ * (POST /:id/cancel, pojedynczo) — brak endpointu zbiorczego i brak
+ * jakiegokolwiek DELETE dla planów, więc: (a) "Anuluj zaznaczone" woła
+ * `cancelAgentPlan` sekwencyjnie per zaznaczony wiersz (`handleBulkCancelPlans`
+ * niżej), (b) "Usuń zaznaczone" NIE istnieje — nie ma czego wołać, dopisywać
+ * przycisku bez handlera byłoby fasadą. Przycisk disabled+tooltip, gdy w
+ * zaznaczeniu zero anulowalnych planów (`CANCELLABLE_STATUSES`) — potwierdzenie
+ * `window.confirm` przed wysłaniem (wzór `AssessmentHub.handleBulkDeleteList`).
+ * "Szablony" NIE dostała selection — ŚWIADOMIE: wiersze to statyczna
+ * biblioteka do przeglądania (procesy + gotowe analizy), jedyna akcja to
+ * "Użyj szablonu" — z NATURY per-wiersz (tworzy jeden nowy plan z jednego
+ * szablonu; "użyj 5 szablonów naraz" nie ma sensu domenowego), i nie ma
+ * żadnej akcji destrukcyjnej/grupowej nad samą biblioteką (nie edytujemy ani
+ * nie kasujemy szablonów z tego ekranu). Checkbox bez żadnej realnej akcji
+ * pod nim byłby pustym elementem UI — pominięty do czasu, aż pojawi się
+ * realna akcja zbiorcza (np. "Ukryj z listy"/"Oznacz jako ulubione").
+ *
  * ★ POPRAWKA ODBIORU TRIADY (2026-07-24, zrzuty demo Piotra):
  * 1. Pigułki "Moje procesy"/"Szablony" przeniesione z lewej strony Menu 2
  *    (`tabs`) na PRAWĄ, obok CTA (`filterControls` + `Segmented` — jedyny
@@ -262,6 +282,11 @@ export const AgentHubShell: React.FC = () => {
   const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
 
+  // Triada MUST #7 — checkbox selection "Moje procesy" (patrz nagłówek pliku
+  // ★ SELECTION/BULK). Wyczyszczane przy zmianie zakładki i po odświeżeniu listy.
+  const [selectedPlanIds, setSelectedPlanIds] = useState<Set<string>>(new Set());
+  const [bulkCancelling, setBulkCancelling] = useState(false);
+
   // Menu 3 — karty otwarte (punkt 9: "Otwórz" dokłada tab, nie podmienia ekranu).
   const [openItems, setOpenItems] = useState<OpenDocument[]>([]);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
@@ -282,6 +307,12 @@ export const AgentHubShell: React.FC = () => {
       fetchPlans();
     }
   }, [tab, activeItemId, fetchPlans]);
+
+  // Triada MUST #7 — zaznaczenie należy do zakładki/widoku; wyjście z listy
+  // (zmiana taba, otwarcie karty planu) czyści je, żeby bulk bar nie "wisiał".
+  useEffect(() => {
+    setSelectedPlanIds(new Set());
+  }, [tab, activeItemId]);
 
   const fetchTemplates = useCallback(() => {
     setTemplatesError(null);
@@ -462,6 +493,54 @@ export const AgentHubShell: React.FC = () => {
     },
     [fetchPlans]
   );
+
+  // Ile z zaznaczonych wierszy jest w statusie, który da się anulować — steruje
+  // disabled+tooltip przycisku "Anuluj zaznaczone" (patrz nagłówek pliku).
+  const cancellableSelectedCount = useMemo(() => {
+    if (selectedPlanIds.size === 0 || !plans) return 0;
+    let count = 0;
+    for (const plan of plans) {
+      if (selectedPlanIds.has(plan.id) && CANCELLABLE_STATUSES.includes(plan.status)) count += 1;
+    }
+    return count;
+  }, [selectedPlanIds, plans]);
+
+  /**
+   * Bulk "Anuluj zaznaczone" — brak endpointu zbiorczego w `agentPlan.api.ts`
+   * (tylko `cancelAgentPlan(planId)` pojedynczo), więc wywołujemy sekwencyjnie
+   * per anulowalny zaznaczony plan i odświeżamy listę raz na końcu. Ten sam
+   * wzór potwierdzenia co `AssessmentHub.handleBulkDeleteList`.
+   */
+  const handleBulkCancelPlans = useCallback(async () => {
+    if (!plans || cancellableSelectedCount === 0 || bulkCancelling) return;
+    const ids = plans
+      .filter((p) => selectedPlanIds.has(p.id) && CANCELLABLE_STATUSES.includes(p.status))
+      .map((p) => p.id);
+    if (ids.length === 0) return;
+    const confirmed = window.confirm(
+      isPolish
+        ? `Anulować ${ids.length} zaznaczony(ch) proces(ów)? Tej operacji nie można cofnąć.`
+        : `Cancel ${ids.length} selected process(es)? This cannot be undone.`
+    );
+    if (!confirmed) return;
+    setBulkCancelling(true);
+    try {
+      for (const id of ids) {
+        // Sekwencyjnie i best-effort — jeden nieudany cancel nie blokuje reszty
+        // (spójne z `handleCancelPlan` pojedynczym, który też połyka błąd).
+        try {
+          await cancelAgentPlan(id);
+        } catch {
+          /* best-effort — kontynuuj z resztą zaznaczenia */
+        }
+      }
+    } finally {
+      setBulkCancelling(false);
+      setSelectedPlanIds(new Set());
+      setPreviewPlanId(null);
+      fetchPlans();
+    }
+  }, [plans, cancellableSelectedCount, selectedPlanIds, bulkCancelling, isPolish, fetchPlans]);
 
   const columns: TableColumn[] = [
     {
@@ -653,6 +732,7 @@ export const AgentHubShell: React.FC = () => {
                 };
               }}
               persistKey="agent.myprocesses.list"
+              selection={{ selectedIds: selectedPlanIds, onChange: setSelectedPlanIds }}
             />
           </div>
         </TableWithPreviewLayout>
@@ -899,6 +979,50 @@ export const AgentHubShell: React.FC = () => {
                 onClick: () => void handleNewProcess(),
               }
             : undefined
+        }
+        bulk={
+          tab === 'processes' && !activeItemId && selectedPlanIds.size > 0
+            ? {
+                count: selectedPlanIds.size,
+                selectedLabel: t('agentPlan.hub.bulk.selected', {
+                  defaultValue: isPolish ? 'Zaznaczono: {{count}}' : '{{count}} selected',
+                  count: selectedPlanIds.size,
+                }),
+                onSelectAll: () => setSelectedPlanIds(new Set(tableRows.map((r) => String(r.id)))),
+                selectAllLabel: t(
+                  'agentPlan.hub.bulk.selectAll',
+                  isPolish ? 'Zaznacz wszystkie' : 'Select all'
+                ),
+                onClear: () => setSelectedPlanIds(new Set()),
+                clearLabel: t('agentPlan.hub.bulk.clear', isPolish ? 'Wyczyść' : 'Clear'),
+                actions: [
+                  {
+                    id: 'bulk-cancel',
+                    label: bulkCancelling
+                      ? t('agentPlan.hub.bulk.cancelling', isPolish ? 'Anulowanie…' : 'Cancelling…')
+                      : t('agentPlan.hub.bulk.cancel', {
+                          defaultValue: isPolish
+                            ? 'Anuluj zaznaczone ({{count}})'
+                            : 'Cancel selected ({{count}})',
+                          count: cancellableSelectedCount,
+                        }),
+                    icon: XCircle,
+                    variant: 'danger',
+                    onClick: () => void handleBulkCancelPlans(),
+                    disabled: cancellableSelectedCount === 0 || bulkCancelling,
+                    title:
+                      cancellableSelectedCount === 0
+                        ? t(
+                            'agentPlan.hub.bulk.cancelNote',
+                            isPolish
+                              ? 'W zaznaczeniu brak procesów, które da się anulować'
+                              : 'None of the selected processes can be cancelled'
+                          )
+                        : undefined,
+                  },
+                ],
+              }
+            : null
         }
         openItems={openItems}
         activeItemId={activeItemId}
