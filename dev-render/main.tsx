@@ -112,6 +112,7 @@ const IdeaTableToolSortFilterScreen = React.lazy(() => import('./screens/idea-ta
 const IdeaTableToolGroupingScreen = React.lazy(() => import('./screens/idea-table-tool-grouping'));
 const IdeaTableScreen = React.lazy(() => import('./screens/idea-table'));
 const MindmapCanvasScreen = React.lazy(() => import('./screens/mindmap-canvas'));
+const TeresaConfirmChipScreen = React.lazy(() => import('./screens/teresa-confirm-chip'));
 const DeckArtifactScreen = React.lazy(() => import('./screens/deck-artifact'));
 const DocumentArtifactScreen = React.lazy(() => import('./screens/document-artifact'));
 const IdeasPreviewOverlayScreen = React.lazy(() => import('./screens/ideas-preview-overlay'));
@@ -525,6 +526,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'mindmap-canvas': {
     label: 'IDEE — Idea jako mapa myśli (pełny obiekt, archetyp Canvas)',
     render: () => <MindmapCanvasScreen />,
+  },
+  'teresa-confirm-chip': {
+    label: 'IDEE — Teresa: kontrolka potwierdzenia akcji trwałych (F1-A)',
+    render: () => <TeresaConfirmChipScreen />,
   },
   'ideas-preview-overlay': {
     label: 'IDEE — Idea: podgląd nakładkowy nad listą',
