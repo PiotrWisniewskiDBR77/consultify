@@ -4328,7 +4328,10 @@ Return ONLY the final comment text.`;
     showCreateDecision,
     showDecisionSearch,
     blockedReason,
-    readMode,, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
+    readMode,
+    /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */
+    t,
+  ]);
 
   // ── Card-management primitive (#52, wzorzec N §3.5) ───────────────────────
   // Same "nakładka" wiring as InsightViewer.tsx: `useCardLayout` (TASK_SPEC)
