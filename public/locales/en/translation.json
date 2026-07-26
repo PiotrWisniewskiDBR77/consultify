@@ -3316,6 +3316,8 @@
       "panelRelations": "Relations",
       "panelSources": "Sources & assumptions",
       "panelResults": "Results",
+      "panelComments": "Comments",
+      "commentsNotApplicable": "System notifications do not carry a comment thread.",
       "noSources": "No source information",
       "noStepsYet": "No steps yet",
       "actionsHiddenInReadMode": "Actions are hidden in preview mode"
@@ -29514,6 +29516,10 @@
         "initiative": {
           "label": "Create initiative",
           "description": "Move the insight into initiative intake."
+        },
+        "decision": {
+          "label": "Start decision",
+          "description": "Capture a decision to make in My Work."
         }
       },
       "titlePrefix": {
@@ -29522,8 +29528,11 @@
         "table": "Table",
         "idea": "Idea",
         "note": "Note",
-        "initiative": "Initiative"
+        "initiative": "Initiative",
+        "decision": "Decision"
       },
+      "openDecision": "Open decision",
+      "decisionNeedsProject": "Pick a project first — a decision must be anchored in a project.",
       "readBackText": "I confirm creating \"{{targetLabel}}\" from insight \"{{title}}\". I reviewed the limits, evidence count ({{evidenceCount}}), and confidence ({{confidence}}).",
       "confidenceNone": "none",
       "targetColumnLabel": "Target"
@@ -32576,6 +32585,11 @@
       "panelActionStartSession": "Start session",
       "panelActionStarting": "Starting…",
       "panelActionKnowledge": "How to / Knowledge base",
+      "panelActionsEmpty": "This library entry has no actions of its own — start a session from the header.",
+      "panelComments": "Comments",
+      "panelCommentsEmpty": "Comments are not available for shared library entries.",
+      "panelHistory": "History",
+      "panelHistoryEmpty": "No history for this library entry.",
       "panelEvidence": "Sources & assumptions",
       "panelEvidenceEmpty": "The library entry declares no required inputs or limitations for this method yet.",
       "panelEvidenceInputs": "Evidence the method consumes",

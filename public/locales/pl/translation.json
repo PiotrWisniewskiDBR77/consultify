@@ -2462,6 +2462,8 @@
       "panelRelations": "Powiązania",
       "panelSources": "Źródła i założenia",
       "panelResults": "Rezultaty",
+      "panelComments": "Komentarze",
+      "commentsNotApplicable": "Powiadomienia systemowe nie mają wątku komentarzy.",
       "noSources": "Brak informacji o źródle",
       "noStepsYet": "Brak kroków",
       "actionsHiddenInReadMode": "Akcje są ukryte w trybie Podgląd"
@@ -30578,6 +30580,10 @@
         "initiative": {
           "label": "Utwórz inicjatywę",
           "description": "Przenieś insight do intake inicjatyw."
+        },
+        "decision": {
+          "label": "Rozpocznij decyzję",
+          "description": "Zapisz decyzję do podjęcia w My Work."
         }
       },
       "titlePrefix": {
@@ -30586,8 +30592,11 @@
         "table": "Tabela",
         "idea": "Idea",
         "note": "Notatka",
-        "initiative": "Inicjatywa"
+        "initiative": "Inicjatywa",
+        "decision": "Decyzja"
       },
+      "openDecision": "Otwórz decyzję",
+      "decisionNeedsProject": "Najpierw wybierz projekt — decyzja musi być zakotwiczona w projekcie.",
       "readBackText": "Potwierdzam utworzenie artefaktu \"{{targetLabel}}\" z insightu \"{{title}}\". Widziałem/am ograniczenia, liczbę dowodów ({{evidenceCount}}) oraz poziom pewności ({{confidence}}).",
       "confidenceNone": "brak",
       "targetColumnLabel": "Cel"
@@ -33640,6 +33649,11 @@
       "panelActionStartSession": "Startuj sesję",
       "panelActionStarting": "Uruchamiam…",
       "panelActionKnowledge": "How to / Baza wiedzy",
+      "panelActionsEmpty": "Ten wpis biblioteczny nie ma własnych akcji — startuj sesję przyciskiem w nagłówku.",
+      "panelComments": "Komentarze",
+      "panelCommentsEmpty": "Komentarze nie są dostępne dla wspólnych wpisów bibliotecznych.",
+      "panelHistory": "Historia",
+      "panelHistoryEmpty": "Brak historii dla tego wpisu bibliotecznego.",
       "panelEvidence": "Źródła i założenia",
       "panelEvidenceEmpty": "Wpis biblioteczny nie deklaruje jeszcze wejść ani ograniczeń tej metody.",
       "panelEvidenceInputs": "Materiał, który metoda zużywa",

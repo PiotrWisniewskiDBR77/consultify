@@ -193,3 +193,102 @@ nawet po skasowaniu gałęzi:
 8. **Sprawdź hipotezę próbą, zanim ją ogłosisz.** 324 „błędy" okazały się jednym.
 9. **Nie „poprawiaj przy okazji" sekcji panelu ani etykiet** — DoD karze ubytek, a niezamierzone
    przetasowanie kolejności trudno potem odróżnić od zamierzonego.
+
+## STABILIZACJA GRIDU n-Type (SSOT: `_GRID_STABILIZATION_COMMAND_2026-07-24.md`)
+- **Etap 1 (audyt)** ✅ — nazwy z dokumentu (`NType*`) nie istnieją w kodzie, realna rodzina to `NMode*`,
+  zmapowane 1:1. 2/6 kart (Insight, Narzędzie) idą przez `NModeShell`, 4/6 hand-rollują ten sam layout
+  ręcznie (duplikacja, nie bug). Wiele z SSOT już naprawione wcześniejszymi falami (baner Zadania,
+  duplikat CTA Decyzji, baner Inicjatywy). 20 kryteriów: 10 PRAWDA / 2 FAŁSZ / 3 CZĘŚCIOWO / 5 nie zbadane
+  (treść, nie struktura — Etap 5). Otwarte systemowo: „Akcje ukryte w Podglądzie" w 5/6 kart (jeden
+  wzorzec, nie lokalna wada); Comments/History brakujące w Narzędziu i Powiadomieniu (udokumentowane
+  wcześniejsze decyzje kolidujące z SSOT — CTO decyzja: sekcje zostają WIDOCZNE, puste, zamiast budować
+  nowy backend poza zakresem).
+- **Etap 2 (tokeny + szerokości paneli)** ✅ SCALONY, zweryfikowany podwójnie (agent + ja osobno).
+  7 tokenów `--ntype-*` w `src/index.css`. Lewy panel 242→**216px**, prawy panel 360→**320px**
+  (jedna zmiana defaultu naprawiła 6/6 kart — żadna nie nadpisywała). ★ Znaleziony i zdjęty DRUGI
+  podwojony margines (Decyzja ma bespoke kanwę zamiast `NModeCanvas`, też miała `pl-6`) — nie było
+  w zleceniu, agent znalazł sam przez aparat pomiarowy. Zweryfikowane: 6 kart × 2 viewporty × 2 motywy,
+  zero regresji, crimson=0 na CAŁYM diffie, `check-list-canon` zielona (414=414). Hub 4 commity ponad demo.
+  Dwa tryby centrum (dokument/analityczny) zadeklarowane jako tokeny, NIEUŻYTE — czekają na Etap 5.
+- **Do Etapu 5, nie blokuje Etapu 3**: Decyzja ma bespoke kanwę zamiast `NModeCanvas` (dwie kopie do
+  utrzymania); Narzędzie 4/7 sekcji panelu; Insight „Akcje ukryte" komunikat do zdjęcia.
+- **Etap 3 (menu 1+2)** ✅ SCALONY, zweryfikowany. Struktura była już w większości zgodna z SSOT dzięki
+  wcześniejszym falom (kolejność Menu1, kebab, brak akcji workflow w Menu2 — wszystkie 6 kart PRAWDA).
+  Jedyny realny defekt: DWA różne fiolety AI w repo — `Menu2AIButton` używał surowej skali `violet-*`
+  (przemapowanej w tym repo na "HBS Purple" #57116A), token AI to `--c-ai` (#6d28d9/#a78bfa). Naprawione
+  w `Menu2AIButton` + martwym `FieldAIButton.tsx` (był `teal-*`) dla spójności. Crimson=0, bramki zielone.
+  Hub 8 commitów ponad demo.
+- **Do Etapu 4** (zgłoszone przez agenta Etapu 3): komunikat „Akcje są ukryte w trybie Podgląd" żyje
+  w `ArtifactRightPanel`, nie w Menu — to dokładnie zakazany wzorzec SSOT, widoczny na Insight+Inicjatywie
+  (i wg audytu Etapu 1 też Zadanie/Decyzja/Powiadomienie — 5/6 kart, jeden wzorzec pisany ręcznie).
+- **Etap 4 (prawy panel)** ✅ SCALONY, zweryfikowany. Komunikat „Akcje są ukryte w trybie Podgląd"
+  usunięty w JEDNYM miejscu (`ArtifactRightPanel.tsx`, nowy prop `showZeroBadge`) zamiast łatania
+  6 kart osobno. Narzędzie dostało Akcje/Komentarze/Historię (widoczne, puste, 0 — bez nowego backendu),
+  Powiadomienie dostało Komentarze (widoczne, puste, 0) — rozwiązuje obie kolizje decyzji z Etapu 1
+  jednym mechanizmem, zgodnym z SSOT „puste sekcje = zwinięte z licznikiem 0".
+  ★ **ZNALEZIONY I NAPRAWIONY ŻYWY BŁĄD** (nie w zleceniu): akordeon prawego panelu ustalał stan
+  otwarty/zamknięty raz przy montażu i nigdy się nie synchronizował, gdy `readMode` zmieniał się
+  asynchronicznie po załadowaniu (Zadanie/Decyzja/Powiadomienie/Inicjatywa startują z optymistycznym
+  zgadywaniem trybu). Skutek: sekcja Akcje mogła utknąć zwinięta z ukrytymi żywymi przyciskami, albo
+  otwarta pokazując nieaktualną treść. Złapane na żywym renderze PRZED wysłaniem, nie w code review.
+  Crimson=0, bramki zielone, JSON pl/en poprawny. Hub 11 commitów ponad demo.
+- **Etap 5 (karta po karcie), front Zadanie+Decyzja** ✅ SCALONY. Zadanie: centrum poszerzone
+  598→760px (1440) / 678px (1280) — pierwszy realny użytkownik tokenu `--ntype-content-document-*`
+  z Etapu 2. Decyzja: hierarchia akcji naprawiona — było do 6 przycisków naraz w panelu, teraz
+  1 primary + destructive (czerwony outline) + „More N" zwinięte. Duplikat Submit/Send-to-review i
+  szerokość Decyzji potwierdzone jako już zgodne (nietknięte). ★ Agent znalazł „pustą listę kontrolną",
+  zbadał, ustalił że to fałszywy alarm (klatka animacji) i WYCOFAŁ zgłoszenie — nie trafiło do kolejki.
+  Crimson=0, esbuild OK. Hub 14 commitów ponad demo.
+- **Etap 5, front Inicjatywa+Powiadomienie** ✅ SCALONY. ★★ AUDYT ETAPU 1 SIĘ MYLIŁ: banner
+  „initiative working document" ISTNIAŁ (`InitiativeDraftJourney`, widoczny tylko przy status DRAFT) —
+  audyt grepował angielski string, realny tekst był po polsku. Złapane na ŻYWYM RENDERZE (wymuszono
+  status DRAFT w mocku, zaobserwowano przed/po), nie grepem. Usunięty, informacje o etapie już
+  zdublowane w Properties (Status/Faza/Następna brama). Powiadomienie: potwierdzone w pełni zgodne
+  (7 sekcji panelu, centrum 592px identyczne z Inicjatywą, hierarchia akcji poprawna) — nic nie ruszone.
+  ★★ ZNALEZIONY DŁUG WSPÓLNY (zgłoszony, nie naprawiony — plik poza zakresem tego frontu):
+  `NModeLeftNav.tsx` NIE MA własnego przewijania ani zwijania grup — audyt Etapu 1 twierdził że ma
+  (PRAWDA), realnie tylko `sticky`, żadnego `overflow-y-auto`/zwijania. Dla Inicjatywy (26 sekcji)
+  oznacza to lewy panel rosnący do ~2437px. Dotyczy WSZYSTKICH 6 kart (wspólny plik) — do naprawy
+  osobno, niskie ryzyko (dodanie klas CSS), wysoki zwrot.
+  Crimson=0, esbuild OK. Hub 17 commitów ponad demo.
+- **Etap 5, front Insight+Narzędzie** ✅ SCALONY. Insight: tryb analityczny wpięty TYLKO w Insight
+  (nie w `NModeCanvas` — świadomie, żeby nie dotknąć pozostałych 5 kart), 664→900px zależnie od
+  viewportu. `max-w-prose` na 6 kartach findings (Insight) + 27 blokach opisowych SWOT/framework
+  (Narzędzie) — czytelna długość linii. Reszta wymagań (Preview bez komunikatu, Menu2 geometria,
+  Comments/History z Etapu 4) potwierdzona jako już zgodna, nietknięta. Crimson=0, bramki zielone.
+  **ETAP 5 KOMPLETNY — wszystkie 3 fronty (Zadanie+Decyzja, Inicjatywa+Powiadomienie, Insight+Narzędzie)
+  scalone.** Hub 20 commitów ponad demo.
+- **Naprawa dodatkowa (zgłoszona przez Etap 5)**: lewy panel dostał własny scroll (`max-h`+
+  `overflow-y-auto`) i zwijanie grup (chevron + sticky nagłówek + localStorage). ★ Odkrycie: grupowanie
+  sekcji JUŻ ISTNIAŁO w danych dla Inicjatywy/Insight/Narzędzia — dodano tylko UI. Zadanie/Decyzja/
+  Powiadomienie NIE mają grup w danych — świadomie BEZ zmiany (nie wymyślono sztucznego grupowania,
+  to decyzja produktowa, nie techniczna). Inicjatywa: panel przestał rosnąć ze stroną do ~2437px,
+  teraz przewija się niezależnie w ograniczonej wysokości. Crimson=0, bramki zielone. Hub 23 ponad demo.
+
+## ETAP 6 — QA WIZUALNE: WERDYKT „NIE GOTOWE" (2026-07-24)
+Sprawdzone 6 kart × 3 viewporty (1024/1280/1920) × Edit/Preview × light/dark — pierwszy raz testowana
+szerokość 1024px, nietestowana przez żaden wcześniejszy front. Znalezione DWIE realne regresje P0
+niezłapane wcześniej (fronty Etapu 5 testowały tylko 1280/1440):
+- **P0-1**: prawy panel CAŁKOWICIE ZNIKA na 1024px w Zadaniu/Decyzji/Inicjatywie (`hidden xl:block`
+  zamiast wzorca z Powiadomienia, który świadomie NIE ukrywa panelu). Utrata Akcji/Właściwości/
+  Komentarzy/Historii — funkcja, nie estetyka.
+- **P0-2**: centralna kolumna zamrożona ~592px w Decyzji/Inicjatywie/Powiadomieniu — nigdy nie
+  podłączono tokenu dokumentowego z Etapu 2 (Zadanie ma to już zrobione, wzorzec do skopiowania).
+- **P1**: Powiadomienie nie ma przycisku „Sekcje" w Menu2 (pusta lewa strona paska).
+20 kryteriów: 13 PRAWDA / 2 FAŁSZ (#1 wspólny grid, #7 Sekcje) / 3 częściowo lub niezweryfikowane
+(#15/16 interakcja resize, #18 tooltip) / 2 z zastrzeżeniem.
+★ Dobra wiadomość: obie naprawy P0 MAJĄ już gotowy wzorzec w kodzie (Notification dla P0-1, Task dla
+P0-2) — to kopiowanie sprawdzonego rozwiązania, nie nowy projekt. Fala naprawcza w toku.
+
+## NAPRAWA P0-1/P0-2 (po Etapie 6 QA) ✅ SCALONA I ZWERYFIKOWANA
+Panel widoczny na 1024px w 4 kartach (Zadanie/Decyzja/Inicjatywa×2 ścieżki) — wzorzec skopiowany
+1:1 z Powiadomienia, który miał to naprawione od dawna. Kolumna dokumentowa skaluje się 592→760px
+w 3 kartach (Decyzja/Inicjatywa/Powiadomienie) — token z Etapu 2 wreszcie podłączony wszędzie,
+wzorzec skopiowany z Zadania. Zmierzone dokładnie: przy 1920px suma = 216+24+760+24+320=1344px.
+**P1 (przycisk Sekcje w Powiadomieniu) ŚWIADOMIE NIE RUSZONY** — CTO decyzja: to nie błąd gridu,
+tylko wyłączona flaga stopniowego wdrożenia osobnej migracji (D-8, kontrolowana z innej sesji).
+Agent słusznie nie włączył jej sam — reguła #7/#9: żadna funkcja wizualna bez akceptu na czystym
+zrzucie. Zostaje poza zakresem tego programu.
+Crimson=0 na całym diffie, esbuild 4/4 OK, bramki zielone. Hub 27 commitów ponad demo.
+→ Następny krok: powtórzyć Etap 6 QA na tych 4 kartach × 3 viewporty, potwierdzić zero regresji
+na 1280/1440 (gdzie wcześniej było OK), dopiero potem Etap 7 (zamknięcie).

@@ -3072,16 +3072,17 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       id: 'actions',
       label: t('myWork.notificationDetail.panelActions', 'Actions'),
       icon: Zap,
-      defaultOpen: true,
       // ── PODGLĄD = TYLKO CZYTANIE (decyzja właściciela 2026-07-24) ──
       // „Oznacz przeczytane" zapisuje `isRead`, „Odłóż" zapisuje `snoozedUntil`
       // — obie zmieniają stan rekordu. Sekcja pustoszeje dokładnie tak jak
-      // w Zadaniu i Decyzji (`isEmpty: readMode` + ten sam komunikat).
+      // w Zadaniu i Decyzji. Etap 4 gridu n-Type
+      // (_GRID_STABILIZATION_COMMAND_2026-07-24.md): w Podglądzie sekcja jest
+      // ZWINIĘTA z licznikiem 0, bez komunikatu opisowego (był tu tekst
+      // „Actions are hidden in preview mode" — SSOT go zakazuje wprost).
+      defaultOpen: !readMode,
       isEmpty: readMode,
-      emptyLabel: t(
-        'myWork.notificationDetail.actionsHiddenInReadMode',
-        'Actions are hidden in preview mode'
-      ),
+      badge: readMode ? 0 : undefined,
+      showZeroBadge: true,
       children: readMode ? null : (
         // stopPropagation: globalny `click` na window zamyka rozwiniete presety
         // odlozenia (patrz `handleClickOutside`). Bez tego kliknięcie „Odloz"
@@ -3241,12 +3242,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       // PODGLĄD = TYLKO CZYTANIE (2026-07-24): „Zapisz jako notatkę" TWORZY
       // nowy artefakt — to nie jest wyjątek od reguły tylko dlatego, że siedzi
       // w „Rezultatach" zamiast w „Akcjach". Ta sama bramka co przy kafelkach
-      // tworzenia w Insighcie.
+      // tworzenia w Insighcie. Etap 4 gridu n-Type: licznik 0 zamiast
+      // komunikatu opisowego (był tu ten sam zakazany tekst co w „Akcjach").
       isEmpty: readMode,
-      emptyLabel: t(
-        'myWork.notificationDetail.actionsHiddenInReadMode',
-        'Actions are hidden in preview mode'
-      ),
+      badge: readMode ? 0 : undefined,
+      showZeroBadge: true,
       children: (
         <PreviewActionBar
           rows={[
@@ -3264,6 +3264,29 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           ]}
         />
       ),
+    },
+    {
+      // KOMENTARZE (Etap 4 gridu n-Type, _GRID_STABILIZATION_COMMAND_2026-07-24.md
+      // §Prawy panel: „nie usuwać losowo Comments i History z wybranych kart").
+      // Sekcja BYŁA usunięta wcześniejszą decyzją K2 („wiadomość systemowa nie
+      // jest artefaktem współpracy") — realny powód wciąż stoi: powiadomienie
+      // nie ma wątku komentarzy w bazie (`notification_comments` nie istnieje),
+      // więc kompozytor komentarzy byłby atrapą bez zapisu. Rozstrzygnięcie CTO
+      // 2026-07-24: sekcja zostaje WIDOCZNA (przewidywalność kanonu wygrywa),
+      // ale ZWINIĘTA z licznikiem 0 — zero nowego wywołania backendu, zero
+      // nowej trasy API, zero kompozytora.
+      id: 'comments',
+      label: t('myWork.notificationDetail.panelComments', 'Comments'),
+      icon: MessageSquare,
+      defaultOpen: false,
+      isEmpty: true,
+      badge: 0,
+      showZeroBadge: true,
+      emptyLabel: t(
+        'myWork.notificationDetail.commentsNotApplicable',
+        'System notifications do not carry a comment thread.'
+      ),
+      children: null,
     },
     {
       id: 'history',
@@ -3324,9 +3347,21 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           Wiersz flex z prawym panelem obejmuje RÓWNIEŻ Menu 1 i Menu 2
           (było: panel siedział w wierszu 3-pane POD menu, więc oba menu biegły
           na całe 1152 px NAD panelem, a panel startował 148 px od góry).
-          Teraz karta ma tę samą geometrię co Decyzja/Zadanie/Inicjatywa. */}
+          Teraz karta ma tę samą geometrię co Decyzja/Zadanie/Inicjatywa.
+          GRID ETAP 6 (2026-07-24, naprawa P0-2): `max-w-6xl` (1152px stałe)
+          zamrażał centrum na ~592px, martwe marginesy na 1920px. Wzorzec
+          z Zadania (TaskDetailView.tsx:5306-5311) — token
+          `--ntype-content-document-max-width` zamiast stałej. Ta karta nie
+          gatuje wiersza za `xl:` (panel zawsze widoczny, patrz komentarz
+          niżej przy prawym panelu) — `flex` zostaje bez prefiksu. */}
       <div className="px-6 pt-4 pb-6">
-        <div className="max-w-6xl mx-auto flex gap-6 items-start space-y-0">
+        <div
+          className="mx-auto flex gap-6 items-start space-y-0"
+          style={{
+            maxWidth:
+              'calc(var(--ntype-left-panel-width) + var(--ntype-column-gap) + var(--ntype-content-document-max-width) + var(--ntype-column-gap) + var(--ntype-right-panel-width))',
+          }}
+        >
           <div className="flex-1 min-w-0 space-y-0">
             {/* ── Header — shared NModeHeader ───────────────────────────────
                  SPEC-N §2.3/§2.7 — USUNIETO prop `draftSavedLabel`. Jego typ mowi
@@ -3481,12 +3516,17 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     activeSection={activeNSection}
                     onSectionChange={setActiveNSection}
                   />
-                  <NModeCanvas
-                    sections={orderedNModeSections}
-                    activeSection={activeNSection}
-                    reducedMotion={reducedMotion}
-                    motionDuration={motionDuration}
-                  />
+                  <div
+                    className="flex-1 min-w-0"
+                    style={{ maxWidth: 'var(--ntype-content-document-max-width)' }}
+                  >
+                    <NModeCanvas
+                      sections={orderedNModeSections}
+                      activeSection={activeNSection}
+                      reducedMotion={reducedMotion}
+                      motionDuration={motionDuration}
+                    />
+                  </div>
                 </div>
 
                 {/* ── ETAP 3: panel wyników „Analizuj z AI" ──────────────────

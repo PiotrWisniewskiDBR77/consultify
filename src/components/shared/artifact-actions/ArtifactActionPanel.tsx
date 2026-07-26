@@ -16,7 +16,19 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
-import { TEXT_L1 } from '@/styles/typography';
+
+/**
+ * Kicker (skala typograficzna L1) dla NARZUCONYCH-CIEMNYCH modali tego panelu.
+ *
+ * Dlaczego nie `TEXT_L1` z `@/styles/typography`: oba modale (generator dokumentu
+ * i potwierdzenie działania) mają na sztywno ciemną powłokę (`bg-navy-900`), więc
+ * nie przełączają się z motywem — a `TEXT_L1` kończy się na `dark:text-slate-500`,
+ * które przy jasnym motywie aplikacji w ogóle nie wchodzi i zostaje `text-slate-600`
+ * na granatowym tle. Zmierzone w runtime: 3,40:1 (poniżej AA 4,5). Ta stała powtarza
+ * skalę L1 co do wartości, zmienia WYŁĄCZNIE kolor na jasny — bo tło jest ciemne
+ * niezależnie od motywu. SSOT typografii zostaje nietknięte.
+ */
+const MODAL_KICKER = 'text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300';
 
 export type ArtifactActionTarget =
   | 'report'
@@ -70,42 +82,51 @@ interface ArtifactActionPanelProps {
   projectId?: string | null;
 }
 
+/**
+ * Cel akcji niesie WYŁĄCZNIE ikonę — kolor NIE jest już nośnikiem typu.
+ *
+ * Dlaczego (2026-07-23, naprawa wskazana przez dwóch sędziów): wcześniej każdy
+ * z siedmiu celów miał własny pastelowy `tone` (slate/fuchsia/emerald/amber/
+ * sky/indigo/teal). W jednym widoku dawało to siedem różnych barw tła, czyli
+ * kolor jako DEKORACJĘ, a nie sygnał. Najgorszy przypadek: „Utwórz prezentację"
+ * miała `fuchsia` — zmierzone w runtime `rgba(201, 0, 107, 0.1)` (dark) i
+ * `rgb(252, 238, 244)` / obwódka `rgb(241, 166, 197)` (light), czyli róż z
+ * rodziny czerwieni. Kanon (CLAUDE.md, pułapka nr 1): czerwień/róż = WYŁĄCZNIE
+ * semantyka krytyczna (błąd, usunięcie, blokada). „Utwórz prezentację" nią nie
+ * jest — to zwykła akcja tworzenia, jedna z siedmiu równorzędnych.
+ *
+ * Rozróżnienie typu robi teraz KSZTAŁT ikony (FileText · Presentation · Table ·
+ * Lightbulb · StickyNote · Rocket · Gavel), a powierzchnia jest jedna, neutralna,
+ * zbudowana z tokenów `c-*` (działa w light i dark bez klas `dark:`).
+ *
+ * Gdyby kiedyś wróciło kodowanie typu kolorem, kanonicznym narzędziem są
+ * `c-tag-1..12` (paleta KATEGORII), nie surowe palety Tailwinda — z zastrzeżeniem
+ * reguły §15.1 (≤5 widocznych serii), której siedem celów i tak nie spełnia.
+ */
 const TARGET_META: Record<
   ArtifactActionTarget,
-  {
-    icon: React.ComponentType<{ size?: number; className?: string }>;
-    tone: string;
-  }
+  { icon: React.ComponentType<{ size?: number; className?: string }> }
 > = {
-  report: {
-    icon: FileText,
-    tone: 'text-slate-700 bg-slate-100 border-slate-200 dark:text-slate-200 dark:bg-white/[0.05] dark:border-white/[0.08]',
-  },
-  presentation: {
-    icon: Presentation,
-    tone: 'text-fuchsia-700 bg-fuchsia-50 border-fuchsia-200 dark:text-fuchsia-200 dark:bg-fuchsia-500/10 dark:border-fuchsia-500/20',
-  },
-  table: {
-    icon: Table,
-    tone: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20',
-  },
-  idea: {
-    icon: Lightbulb,
-    tone: 'text-amber-800 bg-amber-100 border-amber-300 dark:text-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20',
-  },
-  note: {
-    icon: StickyNote,
-    tone: 'text-sky-700 bg-sky-50 border-sky-200 dark:text-sky-200 dark:bg-sky-500/10 dark:border-sky-500/20',
-  },
-  initiative: {
-    icon: Rocket,
-    tone: 'text-indigo-700 bg-indigo-50 border-indigo-200 dark:text-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/20',
-  },
-  decision: {
-    icon: Gavel,
-    tone: 'text-teal-700 bg-teal-50 border-teal-200 dark:text-teal-200 dark:bg-teal-500/10 dark:border-teal-500/20',
-  },
+  report: { icon: FileText },
+  presentation: { icon: Presentation },
+  table: { icon: Table },
+  idea: { icon: Lightbulb },
+  note: { icon: StickyNote },
+  initiative: { icon: Rocket },
+  decision: { icon: Gavel },
 };
+
+/**
+ * Jedna neutralna powierzchnia dla WSZYSTKICH kafli/chipów akcji.
+ * Drabina głębi: panel = `c-surface`, kafel = `c-surface-raised`,
+ * przycisk w kaflu = `c-surface` + `c-border` (żeby odczytał się z powrotem).
+ * Tokeny `c-*` przełączają się same z motywem — zero klas `dark:`.
+ */
+const TILE_SURFACE = 'border-c-border-subtle bg-c-surface-raised text-c-text';
+const TILE_BUTTON_SURFACE =
+  'border border-c-border bg-c-surface text-c-text hover:border-c-border-strong hover:bg-c-surface-raised';
+const CHIP_SURFACE =
+  'border-c-border bg-c-surface text-c-text hover:border-c-border-strong hover:bg-c-surface-raised';
 
 const DOC_TARGETS: ArtifactActionTarget[] = ['report', 'presentation', 'table'];
 const APP_TARGETS: ArtifactActionTarget[] = ['idea', 'note', 'initiative', 'decision'];
@@ -615,17 +636,17 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
     const blocked = blockedReason(target);
 
     return (
-      <div key={target} className={`rounded-2xl border p-3 ${meta.tone}`}>
+      <div key={target} className={`min-w-0 rounded-2xl border p-3 ${TILE_SURFACE}`}>
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 rounded-xl bg-white/70 p-2 dark:bg-white/[0.06]">
+          <div className="mt-0.5 shrink-0 rounded-xl border border-c-border-subtle bg-c-surface p-2">
             <Icon size={18} />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold">
+            <div className="text-sm font-semibold text-c-text">
               {t(`sharedComponents.artifactActionPanel.targetMeta.${target}.label`)}
             </div>
             {!isCompact && (
-              <div className="mt-1 text-xs opacity-80">
+              <div className="mt-1 text-xs text-c-text-secondary">
                 {t(`sharedComponents.artifactActionPanel.targetMeta.${target}.description`)}
               </div>
             )}
@@ -643,20 +664,22 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             }
             disabled={loading || isActionDisabled || !!blocked}
             title={blocked || undefined}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-white/80 px-3 py-2 text-xs font-semibold shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/[0.08] dark:hover:bg-white/[0.12]"
+            className={`inline-flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${TILE_BUTTON_SURFACE}`}
           >
             {loading ? (
-              <Loader2 size={14} className="animate-spin" />
+              <Loader2 size={14} className="shrink-0 animate-spin" />
             ) : created ? (
-              <ExternalLink size={14} />
+              <ExternalLink size={14} className="shrink-0" />
             ) : (
-              <Icon size={14} />
+              <Icon size={14} className="shrink-0" />
             )}
-            {created
-              ? created.label
-              : isDocumentTarget
-                ? t('sharedComponents.artifactActionPanel.openGenerator')
-                : t('sharedComponents.artifactActionPanel.create')}
+            <span className="truncate">
+              {created
+                ? created.label
+                : isDocumentTarget
+                  ? t('sharedComponents.artifactActionPanel.openGenerator')
+                  : t('sharedComponents.artifactActionPanel.create')}
+            </span>
           </button>
         </div>
       </div>
@@ -680,6 +703,14 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
       .replace(/^Start\s+/i, '');
     const label = stripped.charAt(0).toUpperCase() + stripped.slice(1);
     return (
+      // ROZPYCHANIE W POZIOMIE (naprawa u ŹRÓDŁA, 2026-07-23): chip nie mógł się
+      // skurczyć — brak `min-w-0`/`max-w-full` i nieskracalny tekst sprawiały, że
+      // długa etykieta (`created.label`, np. „Otwórz w Wywiad > Inicjatywy", albo
+      // goły klucz i18n przy braku tłumaczenia) rozpychała pasek na 393 px wewnątrz
+      // panelu preview o świetle 356 px → 47 px przepełnienia (przy panelu 300 px:
+      // 131 px). Konsumenci łatali to u siebie; przyczyna siedziała TUTAJ.
+      // `max-w-full min-w-0` + `truncate` na etykiecie + `shrink-0` na ikonie
+      // zamykają to w komponencie współdzielonym, więc żaden adopter nie musi.
       <button
         key={target}
         type="button"
@@ -692,11 +723,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         }
         disabled={loading || isActionDisabled || !!blocked}
         title={blocked || t(`sharedComponents.artifactActionPanel.targetMeta.${target}.description`)}
-        // `max-w-full min-w-0` + truncate: od 2026-07-23 wariant compact żyje w
-        // prawym panelu artefaktu (stała, wąska szerokość). Bez tego długa
-        // etykieta („Rozpocznij decyzję") rozpychała pigułkę POZA panel i robiła
-        // poziomy scroll — a panel ma być przewidywalny, nie rozjeżdżalny.
-        className={`inline-flex h-8 max-w-full min-w-0 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:brightness-110 ${meta.tone}`}
+        className={`inline-flex h-8 min-w-0 max-w-full items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${CHIP_SURFACE}`}
       >
         {loading ? (
           <Loader2 size={13} className="shrink-0 animate-spin" />
@@ -713,22 +740,27 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
   return (
     <>
       {isCompact ? (
-        // `min-w-0` na kontenerze i wierszach — bez tego flexbox nie pozwala
-        // pigułkom się skurczyć i cały blok rozpycha wąski prawy panel.
-        <div className="min-w-0 rounded-2xl border border-slate-200/70 bg-white/70 p-2.5 dark:border-white/[0.08] dark:bg-white/[0.03]">
-          <div className="mb-2 inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-            <BookOpen size={11} />
+        <div className="min-w-0 rounded-2xl border border-c-border-subtle bg-c-surface-raised p-2.5">
+          <div className="mb-2 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary">
+            <BookOpen size={11} className="shrink-0" />
             {t('sharedComponents.artifactActionPanel.whatNextWithThisInsight')}
           </div>
           <div className="min-w-0 space-y-1.5">
+            {/*
+              ETYKIETY GRUP — były `text-slate-400 dark:text-slate-500` / 10 px:
+              zmierzone 2,56:1 (light) i 3,49:1 (dark), czyli poniżej progu AA 4,5.
+              Token `c-text-secondary` (#475569 light / #b8c4d6 dark) trzyma próg w
+              OBU motywach bez klas `dark:`. Kolumna poszerzona z 68 → 84 px, bo przy
+              11 px „W APLIKACJI" łamało się na dwie linie.
+            */}
             <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-              <span className="mr-0.5 w-[68px] shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+              <span className="mr-0.5 w-[84px] shrink-0 text-[11px] font-semibold uppercase tracking-[0.12em] text-c-text-secondary">
                 {t('sharedComponents.artifactActionPanel.documents')}
               </span>
               {DOC_TARGETS.map(renderCompactButton)}
             </div>
             <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-              <span className="mr-0.5 w-[68px] shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+              <span className="mr-0.5 w-[84px] shrink-0 text-[11px] font-semibold uppercase tracking-[0.12em] text-c-text-secondary">
                 {t('sharedComponents.artifactActionPanel.inApp')}
               </span>
               {APP_TARGETS.map(renderCompactButton)}
@@ -737,7 +769,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         </div>
       ) : (
         <div
-          className={`rounded-3xl border border-slate-200/70 bg-white/80 shadow-sm dark:border-white/[0.08] dark:bg-navy-900/70 ${isCompact ? 'p-3' : 'p-5'}`}
+          className={`rounded-3xl border border-c-border-subtle bg-c-surface shadow-sm ${isCompact ? 'p-3' : 'p-5'}`}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -746,7 +778,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 {t('sharedComponents.artifactActionPanel.whatNextWithThisInsightQuestion')}
               </div>
               {!isCompact && (
-                <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
+                <p className="mt-2 max-w-3xl text-sm text-c-text-secondary">
                   {t('sharedComponents.artifactActionPanel.insightSourceHint')}
                 </p>
               )}
@@ -765,29 +797,23 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             </div>
             {!isCompact && (
               <div className="grid shrink-0 grid-cols-3 gap-2 text-center text-xs">
-                <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
-                  <div className="text-slate-500 dark:text-slate-400">
+                <div className="rounded-2xl border border-c-border-subtle bg-c-surface-raised px-3 py-2">
+                  <div className="text-c-text-secondary">
                     {t('sharedComponents.artifactActionPanel.confidence')}
                   </div>
-                  <div className="font-semibold text-slate-900 dark:text-slate-100">
-                    {source.confidence || '-'}
-                  </div>
+                  <div className="font-semibold text-c-text">{source.confidence || '-'}</div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
-                  <div className="text-slate-500 dark:text-slate-400">
+                <div className="rounded-2xl border border-c-border-subtle bg-c-surface-raised px-3 py-2">
+                  <div className="text-c-text-secondary">
                     {t('sharedComponents.artifactActionPanel.evidence')}
                   </div>
-                  <div className="font-semibold text-slate-900 dark:text-slate-100">
-                    {source.evidenceCount ?? 0}
-                  </div>
+                  <div className="font-semibold text-c-text">{source.evidenceCount ?? 0}</div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
-                  <div className="text-slate-500 dark:text-slate-400">
+                <div className="rounded-2xl border border-c-border-subtle bg-c-surface-raised px-3 py-2">
+                  <div className="text-c-text-secondary">
                     {t('sharedComponents.artifactActionPanel.sessions')}
                   </div>
-                  <div className="font-semibold text-slate-900 dark:text-slate-100">
-                    {source.sourceSessionCount ?? 0}
-                  </div>
+                  <div className="font-semibold text-c-text">{source.sourceSessionCount ?? 0}</div>
                 </div>
               </div>
             )}
@@ -796,7 +822,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
           <div className={`mt-4 grid gap-3 ${isCompact ? 'grid-cols-1' : 'lg:grid-cols-2'}`}>
             <div className="space-y-2">
               {!isCompact && (
-                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-secondary">
                   {t('sharedComponents.artifactActionPanel.documents')}
                 </div>
               )}
@@ -808,7 +834,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             </div>
             <div className="space-y-2">
               {!isCompact && (
-                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-secondary">
                   {t('sharedComponents.artifactActionPanel.appActions')}
                 </div>
               )}
@@ -829,7 +855,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 <div className="text-sm font-semibold text-white">
                   {t('sharedComponents.artifactActionPanel.documentGenerator')}
                 </div>
-                <p className="mt-1 text-xs text-slate-600">
+                <p className="mt-1 text-xs text-slate-300">
                   {t('sharedComponents.artifactActionPanel.composerHint')}
                 </p>
               </div>
@@ -839,16 +865,16 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   setComposerTarget(null);
                   setComposerConfirmed(false);
                 }}
-                className="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-white/[0.08]"
+                className="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/[0.08]"
               >
                 {t('sharedComponents.artifactActionPanel.close')}
               </button>
             </div>
 
             <div className="mt-4 rounded-2xl bg-white/[0.04] p-4">
-              <div className={TEXT_L1}>{t('sharedComponents.artifactActionPanel.context')}</div>
+              <div className={MODAL_KICKER}>{t('sharedComponents.artifactActionPanel.context')}</div>
               <div className="mt-2 text-sm font-medium text-white">{source.title}</div>
-              <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-slate-600">
+              <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-slate-300">
                 <div>
                   {t('sharedComponents.artifactActionPanel.evidence')}: {source.evidenceCount ?? 0}
                 </div>
@@ -875,7 +901,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             </div>
 
             <div className="mt-4">
-              <label className="block text-xs font-semibold text-slate-600">
+              <label className="block text-xs font-semibold text-slate-300">
                 {t('sharedComponents.artifactActionPanel.template')}
               </label>
               <select
@@ -898,7 +924,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
               </select>
             </div>
 
-            <label className="mt-4 flex items-start gap-2 text-xs text-slate-600">
+            <label className="mt-4 flex items-start gap-2 text-xs text-slate-300">
               <input
                 type="checkbox"
                 checked={composerConfirmed}
@@ -915,7 +941,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   setComposerTarget(null);
                   setComposerConfirmed(false);
                 }}
-                className="rounded-xl border border-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-white/[0.06]"
+                className="rounded-xl border border-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/[0.06]"
               >
                 {t('sharedComponents.artifactActionPanel.cancel')}
               </button>
@@ -948,7 +974,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 <div className="text-sm font-semibold text-white">
                   {t('sharedComponents.artifactActionPanel.actionConfirmation')}
                 </div>
-                <p className="mt-1 text-xs text-slate-600">
+                <p className="mt-1 text-xs text-slate-300">
                   {t('sharedComponents.artifactActionPanel.proposalHint')}
                 </p>
               </div>
@@ -958,7 +984,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   setProposalTarget(null);
                   setProposalConfirmed(false);
                 }}
-                className="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-white/[0.08]"
+                className="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/[0.08]"
               >
                 {t('sharedComponents.artifactActionPanel.close')}
               </button>
@@ -966,10 +992,10 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
 
             <div className="mt-4 space-y-3 rounded-2xl bg-white/[0.04] p-4 text-sm text-slate-200">
               <div>
-                <div className={TEXT_L1}>{t('sharedComponents.artifactActionPanel.source')}</div>
+                <div className={MODAL_KICKER}>{t('sharedComponents.artifactActionPanel.source')}</div>
                 <div className="mt-1 font-medium text-white">{source.title}</div>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-xs text-slate-600">
+              <div className="grid grid-cols-3 gap-2 text-xs text-slate-300">
                 <div>
                   {t('sharedComponents.artifactActionPanel.targetColumnLabel')}:{' '}
                   {t(`sharedComponents.artifactActionPanel.targetMeta.${proposalTarget}.label`)}
@@ -1001,10 +1027,10 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   </ul>
                 </div>
               )}
-              <div className="rounded-xl border border-white/[0.08] bg-black/20 p-3 text-xs text-slate-600">
+              <div className="rounded-xl border border-white/[0.08] bg-black/20 p-3 text-xs text-slate-300">
                 {buildGovernanceProposal(source, proposalTarget, t).readBackText as string}
               </div>
-              <label className="flex items-start gap-2 text-xs text-slate-600">
+              <label className="flex items-start gap-2 text-xs text-slate-300">
                 <input
                   type="checkbox"
                   checked={proposalConfirmed}
@@ -1022,7 +1048,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   setProposalTarget(null);
                   setProposalConfirmed(false);
                 }}
-                className="rounded-xl border border-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-white/[0.06]"
+                className="rounded-xl border border-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/[0.06]"
               >
                 {t('sharedComponents.artifactActionPanel.cancel')}
               </button>
