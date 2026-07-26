@@ -5226,15 +5226,9 @@ Please return:
     () =>
       selectedSummaryInitiative
         ? {
+            // canon §7.3 — "Open" usunięte z informational: dublowało onOpenFull
+            // przekazywane do StandardPreview w tym samym renderze (header ma już Open).
             informational: [
-              {
-                id: 'open',
-                variant: 'neutral',
-                label: t('common.open', 'Open'),
-                icon: ExternalLink,
-                shortcut: 'O',
-                onClick: () => handleOpenDocument(selectedSummaryInitiative),
-              },
               {
                 id: 'copy-link',
                 variant: 'neutral',
