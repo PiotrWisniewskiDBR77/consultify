@@ -51,7 +51,7 @@ function buildFieldFillProposal(
 }
 
 export interface QuickActionHandlers {
-  handleAddRow: () => void;
+  handleAddRow: (label?: string) => void;
   setShowRowTemplatePicker: (v: boolean) => void;
   setAddRowBtnRect: (v: DOMRect | null) => void;
   setShowAddColumn: (v: boolean) => void;
@@ -109,9 +109,21 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
         return;
       }
 
+      // Krok B: `idea.element.add` przekazuje `ctx.params.label` jako
+      // `detail.label` — wyjęte z toggleMap (poniżej), bo tamta mapa woła
+      // funkcje bez argumentów. Gdy label podany, nowy wiersz dostaje go od
+      // razu jako `label` zamiast pustej wartości domyślnej.
+      if (action === 'tbl_add_row') {
+        const label =
+          typeof detail?.label === 'string' && detail.label.trim()
+            ? detail.label.trim()
+            : undefined;
+        handlers.handleAddRow(label);
+        return;
+      }
+
       // Simple toggle actions
       const toggleMap: Record<string, () => void> = {
-        tbl_add_row: handlers.handleAddRow,
         tbl_add_row_template: () => {
           handlers.setAddRowBtnRect(null);
           handlers.setShowRowTemplatePicker(true);

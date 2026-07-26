@@ -178,7 +178,7 @@ export interface TableDataContextValue {
   setSelectedRowIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   toggleRowSelection: (id: string) => void;
   handleFieldChange: (nodeId: string, field: string, value: unknown) => void;
-  handleAddRow: () => void;
+  handleAddRow: (label?: string) => void;
   handleBulkDelete: () => void;
   /** K1/Airtable parity — row kebab: duplicate a single row. */
   handleDuplicateRow: (id: string) => void;

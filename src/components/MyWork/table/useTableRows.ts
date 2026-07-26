@@ -37,7 +37,7 @@ export interface UseTableRowsReturn {
   setSelectedRowIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   toggleRowSelection: (id: string) => void;
   handleFieldChange: (id: string, field: string, value: any) => void;
-  handleAddRow: () => void;
+  handleAddRow: (label?: string) => void;
   handleAddRowWithTemplate: (e?: React.MouseEvent) => void;
   handleTemplateSelect: (template: RowTemplate) => void;
   handleBulkDelete: () => void;
@@ -174,27 +174,33 @@ export function useTableRows(opts: UseTableRowsOpts): UseTableRowsReturn {
   );
 
   // ── Add row (auto-stamps created_time/by) ──
-  const handleAddRow = useCallback(() => {
-    if (locked) return;
-    const id = `node-${Date.now()}`;
-    const now = new Date().toISOString();
-    const newNode: TableNode = {
-      id,
-      type: 'idea',
-      data: {
-        label: '',
-        status: 'todo',
-        priority: 'Medium',
-        created_time: now,
-        created_by: currentUserName,
-        last_edited_time: now,
-        last_edited_by: currentUserName,
-      },
-      position: { x: 0, y: 0 },
-    };
-    nodesUndo.push([...nodes, newNode]);
-    trackFunnelEvent('ideas_table_row_added', { ideaId });
-  }, [ideaId, locked, nodes, nodesUndo]);
+  // Krok B: `label` opcjonalny — gdy podany (Teresa/formularz przez szynę
+  // `idea-workspace-quick-action`, `detail.label`), trafia od razu do komórki
+  // `label` zamiast pustej wartości domyślnej.
+  const handleAddRow = useCallback(
+    (label?: string) => {
+      if (locked) return;
+      const id = `node-${Date.now()}`;
+      const now = new Date().toISOString();
+      const newNode: TableNode = {
+        id,
+        type: 'idea',
+        data: {
+          label: typeof label === 'string' ? label.trim() : '',
+          status: 'todo',
+          priority: 'Medium',
+          created_time: now,
+          created_by: currentUserName,
+          last_edited_time: now,
+          last_edited_by: currentUserName,
+        },
+        position: { x: 0, y: 0 },
+      };
+      nodesUndo.push([...nodes, newNode]);
+      trackFunnelEvent('ideas_table_row_added', { ideaId });
+    },
+    [ideaId, locked, nodes, nodesUndo]
+  );
 
   const handleAddRowWithTemplate = useCallback(
     (e?: React.MouseEvent) => {

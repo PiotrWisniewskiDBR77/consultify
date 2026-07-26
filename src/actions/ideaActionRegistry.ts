@@ -292,7 +292,12 @@ const IDEA_ACTIONS: ActionDef[] = [
     tools: 'all',
     surfaces: ['menu3', 'context'],
     shortcut: 'Tab',
-    handler: (ctx) => runByTool('idea.element.add', RUNTIME_ADD_ELEMENT, ctx),
+    // Krok B: `ctx.params` (dziś: `label` od Teresy/formularza) idzie na szynę
+    // jako `extra` w CustomEvent.detail — cztery odbiorniki (`mm_add_child`
+    // itd.) czytają `detail.label` i używają jej jako treści nowego elementu
+    // zamiast pustej edycji (patrz use*QuickActions.ts, każdy z komentarzem
+    // „Krok B").
+    handler: (ctx) => runByTool('idea.element.add', RUNTIME_ADD_ELEMENT, ctx, ctx.params),
     mutates: true,
     requiresPreview: false,
     undo: {
@@ -382,7 +387,16 @@ const IDEA_ACTIONS: ActionDef[] = [
     scope: 'workspace',
     tools: ['mindmap'],
     surfaces: ['menu3', 'rail', 'panel'],
-    handler: (ctx) => runByTool('idea.ai.expand_map', RUNTIME_AI_EXPAND, ctx),
+    // Krok B: `ctx.params.nodeId` idzie na szynę jako `extra`, zgodnie z
+    // deklaracją `teresa.parameters` niżej. ŚWIADOME OGRANICZENIE: runtime
+    // string tej akcji to `mm_ai_expand` (patrz RUNTIME_AI_EXPAND), a
+    // useMindMapQuickActions.ts obsługuje `mm_ai_expand` wołaniem
+    // `handlers.handleAIExpand()` BEZ argumentu — `detail.nodeId` dociera na
+    // szynę, ale nie ma dziś odbiornika dla TEGO runtime stringa (istnieje
+    // osobny `mm_ai_expand_node`, który go czyta, ale rejestr go nie używa).
+    // Zmiana routingu między `mm_ai_expand`/`mm_ai_expand_node` wykracza poza
+    // zakres Kroku B — zostawiono jako znany dług, nie naprawiane tutaj.
+    handler: (ctx) => runByTool('idea.ai.expand_map', RUNTIME_AI_EXPAND, ctx, ctx.params),
     mutates: true,
     requiresPreview: true,
     undo: {

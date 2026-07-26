@@ -7,7 +7,7 @@ import { useEffect, useRef } from 'react';
 import type { Node } from 'reactflow';
 
 export interface ProcessFlowQuickActionHandlers {
-  addNode: (shape: any) => void;
+  addNode: (shape: any, overrides?: { label?: string }) => void;
   insertAutomationTrigger: () => void;
   addLane: () => void;
   insertBetween: () => void;
@@ -75,7 +75,14 @@ export function useProcessFlowQuickActions(opts: UseProcessFlowQuickActionsOpts)
     if (action === 'pf_add_action') handlers.addNode('action');
     // pf_add_step: chat-detector alias for "add a step" — same shape as
     // pf_add_action (an actionable process step). See processFlowIntentDetector.ts.
-    if (action === 'pf_add_step') handlers.addNode('action');
+    // Krok B: `idea.element.add` przekazuje `ctx.params.label` jako
+    // `detail.label` — `addNode` już przyjmuje `overrides.label` (patrz
+    // IdeaProcessFlowTool.addNode), więc tu tylko przekazujemy dalej.
+    if (action === 'pf_add_step') {
+      const label =
+        typeof detail?.label === 'string' && detail.label.trim() ? detail.label.trim() : undefined;
+      handlers.addNode('action', label ? { label } : undefined);
+    }
     if (action === 'pf_add_decision') handlers.addNode('decision');
     if (action === 'pf_add_start') handlers.addNode('start');
     if (action === 'pf_add_end') handlers.addNode('end');
