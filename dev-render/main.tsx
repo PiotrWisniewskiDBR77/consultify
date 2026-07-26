@@ -34,6 +34,9 @@ const ReportBuilderLibraryTemplateScreen = React.lazy(
   () => import('./screens/report-builder-library-template')
 );
 const AudytyDrdReportScreen = React.lazy(() => import('./screens/audyty-drd-report'));
+const DocumentStudioResumeErrorScreen = React.lazy(
+  () => import('./screens/document-studio-resume-error')
+);
 const MenuCanonSidebarCheckScreen = React.lazy(
   () => import('./screens/menu-canon-sidebar-check')
 );
@@ -175,6 +178,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'REPORT BUILDER — „Użyj wzorca" z Biblioteki (report_template, R1 2026-07-26): sukces (modal, pole zablokowane) + stany blokujące. ?variant=success|orphaned|deprecated|forbidden',
     render: () => <ReportBuilderLibraryTemplateScreen />,
+  },
+  'document-studio-resume-error': {
+    label:
+      'DOCUMENT STUDIO — nieudane wznowienie (P0.2): blokujący błąd PL zamiast intake. ?case=notfound|server',
+    render: () => <DocumentStudioResumeErrorScreen />,
   },
   'audyty-drd-report': {
     label:
