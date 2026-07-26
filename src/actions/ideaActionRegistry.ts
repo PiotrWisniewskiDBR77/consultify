@@ -810,6 +810,11 @@ export async function runIdeaAction(id: string, ctx: ActionContext): Promise<Act
       ok: false,
       actionId: id,
       message: `„${def.label.pl}" zmienia dane na trwałe — potwierdź, zanim to zrobię.`,
+      // Addytywne (Krok A): powierzchnia czatu używa tego pola, żeby zamiast
+      // samego tekstu odmowy wyrenderować przyciski „Potwierdź"/„Anuluj" —
+      // ponowne wywołanie z `confirmed: true` idzie TĄ SAMĄ ścieżką
+      // (executeTeresaTool → runIdeaAction), więc nie ma drugiego mechanizmu.
+      data: { needsConfirmation: true, actionId: id },
     };
   }
   return def.handler(ctx);
