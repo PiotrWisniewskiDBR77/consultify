@@ -29,7 +29,6 @@ import {
   Presentation,
   Rocket,
   Settings,
-  Sheet,
   Shield,
   Table,
   TrendingUp,
@@ -40,7 +39,6 @@ import {
 import React from 'react';
 
 import { AppView, UserRole } from '../../../types';
-import { isExceleEngineEnabled } from '../../../utils/exceleFlag';
 import { MenuItem } from './types';
 
 type TranslationFn = (key: string, options?: any) => any;
@@ -147,23 +145,13 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       viewId: AppView.PRESENTATIONS,
       badge: 'beta',
     },
-    // 9.1 Excel — dedykowane narzędzie OBLICZENIOWE (silnik 5-fazowy, żywe
-    // formuły), odrębne od Tabel (prosta prezentacja) i modułu Finance (decyzja
-    // Piotra 2026-07-22). Wizualnie nowa powierzchnia → gated OFF domyślnie
-    // (exceleFlag, reguła #7). Wpis nav jest POMIJANY, gdy flaga OFF, więc
-    // sidebar jest byte-for-byte niezmieniony dla wszystkich do akceptu Piotra
-    // na zrzucie. Przy OFF /excele i tak redirectuje na /tabele (AppRoutes).
-    ...(isExceleEngineEnabled()
-      ? [
-          {
-            id: 'MODULE_EXCELE',
-            label: t('sidebar.excele', 'Excel'),
-            icon: React.createElement(Sheet, { size: 20 }),
-            viewId: AppView.EXCELE,
-            badge: 'beta' as const,
-          },
-        ]
-      : []),
+    // 9.1 Excel — kanon 2026-07-26 (docs/product/MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md
+    // §3): osobna pozycja "Excel" w sidebarze była DUPLIKATEM Materiały→Arkusze
+    // i znika z głównej nawigacji NIEZALEŻNIE od stanu isExceleEngineEnabled()
+    // (funkcja pozostaje w pełni dostępna: Materiały → zakładka "Arkusze").
+    // Trasa /excele (AppView.EXCELE) zostaje w routingu (AppRoutes.tsx) dla
+    // zgodności wstecznej z deep linkami — usunięty jest TYLKO klikalny wpis
+    // menu, nie sama trasa/funkcja.
     // 9.5 Audyty - Audit Orchestrator hub (DRD/SIRI/ADMA/Lean program runner).
     // The functional hub lives at /audit-programs (AppRoutes), reached via the
     // canonical audits AppView so it inherits the authenticated app shell.

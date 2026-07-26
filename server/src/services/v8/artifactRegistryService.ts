@@ -1143,6 +1143,24 @@ async function updateArtifactMetadata(
   );
 }
 
+/**
+ * Fetch (and metadata-refresh) the artifact already registered for an origin
+ * link. Shared by the fast-path (link found before we ever write) and the
+ * race-recovery path in `registerArtifactOrigin` (link found AFTER we lost a
+ * concurrent insert race — see the big comment below).
+ */
+async function adoptExistingArtifactForLink(
+  link: ArtifactOriginLink,
+  validated: RegisterArtifactOriginParams
+): Promise<ArtifactRecord> {
+  await updateArtifactMetadata(link.artifactId, validated.organizationId, validated);
+  const row = await getArtifactRow(link.artifactId, validated.organizationId);
+  if (!row) {
+    throw new Error(`Artifact ${link.artifactId} disappeared during origin registration`);
+  }
+  return mapArtifactRow(row);
+}
+
 export async function registerArtifactOrigin(
   params: RegisterArtifactOriginParams
 ): Promise<ArtifactRecord | null> {
@@ -1155,12 +1173,7 @@ export async function registerArtifactOrigin(
   );
 
   if (existingLink) {
-    await updateArtifactMetadata(existingLink.artifactId, validated.organizationId, validated);
-    const row = await getArtifactRow(existingLink.artifactId, validated.organizationId);
-    if (!row) {
-      throw new Error(`Artifact ${existingLink.artifactId} disappeared during origin registration`);
-    }
-    return mapArtifactRow(row);
+    return adoptExistingArtifactForLink(existingLink, validated);
   }
 
   const artifactId = uuidv4();
@@ -1197,7 +1210,7 @@ export async function registerArtifactOrigin(
     ]
   );
 
-  await dbRun(
+  const linkInsertResult = await dbRun(
     `INSERT INTO v8_artifact_origin_links (
       link_id, artifact_id, organization_id, origin_runtime, origin_record_id, is_primary_origin, created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -1211,6 +1224,57 @@ export async function registerArtifactOrigin(
       now,
     ]
   );
+
+  // ── Race-recovery (root-cause fix, 2026-07-26) ──────────────────────────
+  // The two inserts above are NOT transactional, and the existence check at
+  // the top of this function is a classic TOCTOU: under concurrent calls for
+  // the SAME origin key (e.g. two overlapping `backfill*ForOrg` passes, or
+  // two horizontally-scaled server replicas handling the same org's Library
+  // load at once), several callers can all see "no existing link" before any
+  // of them commits, and each proceeds to insert its OWN `v8_output_artifacts`
+  // row — which always succeeds, since nothing ties it to the origin key.
+  // Only the origin-link insert is protected, by the real DB's
+  // `idx_v81_origin_unique (organization_id, origin_runtime, origin_record_id)`
+  // constraint — but `DbPromise.run()` defaults to `fallback: true`, which
+  // SILENTLY swallows a constraint-violation error (`{success:false}`,
+  // no throw, no log) instead of surfacing it. The result, confirmed live on
+  // the demo DB (trolley): 180 orphaned `artifact_family='template'` rows
+  // (52% of all template artifacts) sharing a title with a correctly-linked
+  // sibling but carrying `origin_runtime = NULL` — exactly the duplicate rows
+  // in the Template Library described in
+  // docs/product/MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md §7.
+  //
+  // Fix: after attempting our own insert, re-read whichever origin link is
+  // now canonical for this key. If it isn't ours, we lost the race — delete
+  // our own now-orphaned rows (safe: this artifact was never returned to any
+  // caller) and adopt the winner instead of returning a phantom duplicate.
+  const canonicalLink = await getOriginLinkByOrigin(
+    validated.organizationId,
+    validated.originRuntime,
+    validated.originRecordId
+  );
+
+  if (canonicalLink && canonicalLink.artifactId !== artifactId) {
+    logger.warn(
+      `${LOG_PREFIX} Lost registration race for ${validated.originRuntime}:${validated.originRecordId} ` +
+        `(ours=${artifactId}, winner=${canonicalLink.artifactId}) — cleaning up our orphan and adopting the winner`
+    );
+    // Best-effort cleanup of our own losing rows. Never touches the winner's data.
+    await dbRun(`DELETE FROM v8_artifact_origin_links WHERE artifact_id = ?`, [artifactId]);
+    await dbRun(
+      `DELETE FROM v8_output_artifacts WHERE artifact_id = ? AND organization_id = ?`,
+      [artifactId, validated.organizationId]
+    );
+    return adoptExistingArtifactForLink(canonicalLink, validated);
+  }
+
+  if (!canonicalLink) {
+    logger.warn(
+      `${LOG_PREFIX} Origin link for ${validated.originRuntime}:${validated.originRecordId} ` +
+        `missing after insert (result=${JSON.stringify(linkInsertResult)}) — artifact ${artifactId} ` +
+        `may be orphaned; leaving in place for the next reconciliation pass rather than guessing`
+    );
+  }
 
   logger.info(
     `${LOG_PREFIX} Registered ${validated.originRuntime}:${validated.originRecordId} as artifact ${artifactId}`
@@ -2403,6 +2467,19 @@ export function matchesViewFilters(
   filters: ArtifactListFilters,
   currentUserId: string
 ): boolean {
+  // Template Library duplicate fix (2026-07-26, canon §7): a `template`-family
+  // artifact with NO origin link is structural index corruption, not a real
+  // template — every legitimate template row is created by `registerArtifactOrigin`
+  // together with a matching `v8_artifact_origin_links` row (report_template /
+  // presentation_template / document_template / sheet_template). Rows with
+  // `originRuntime` missing are orphans left behind by a since-fixed race
+  // condition in `registerArtifactOrigin` (confirmed: 180 such rows on the demo
+  // DB, each a phantom duplicate of a correctly-linked sibling — e.g. two
+  // "KPI Review Report" cards, only one of which can ever open). They can never
+  // resolve to a real template, so they must never surface as Library cards.
+  // Doctrine: don't delete the data, just stop indexing/showing the duplicate.
+  if (item.artifactFamily === 'template' && !item.originRuntime) return false;
+
   // Templates are included when explicitly requested via artifactFamily filter,
   // in review lanes, or in recent/mixed lanes via includeTemplates flag.
   if (

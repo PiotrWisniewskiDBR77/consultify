@@ -34,6 +34,9 @@ const ReportBuilderLibraryTemplateScreen = React.lazy(
   () => import('./screens/report-builder-library-template')
 );
 const AudytyDrdReportScreen = React.lazy(() => import('./screens/audyty-drd-report'));
+const MenuCanonSidebarCheckScreen = React.lazy(
+  () => import('./screens/menu-canon-sidebar-check')
+);
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -175,6 +178,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'AUDYTY — zakładka „Raporty DRD" (ff_drd_report) + DRDAuditReportView. ?variant=list|report',
     render: () => <AudytyDrdReportScreen />,
+  },
+  'menu-canon-sidebar-check': {
+    label:
+      'SIDEBAR — potwierdzenie braku osobnej pozycji "Excel" po feat/materials-menu-canon-5-tabs.',
+    render: () => <MenuCanonSidebarCheckScreen />,
   },
   'initiatives-portfolio-analysis': {
     label:
