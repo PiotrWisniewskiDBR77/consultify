@@ -290,16 +290,19 @@ describe('agentPlannerService.executePlan — continue-on-error (HP-4, Piotr dec
       ],
     });
 
-    const executor = vi
-      .fn()
-      .mockResolvedValueOnce('ok-1')
-      .mockRejectedValueOnce(new Error('tool exploded'))
-      .mockResolvedValueOnce('ok-3');
+    // Keyed by toolName (not call order) so this stays correct regardless of
+    // how many times a failing step gets retried (Fala 1, 2026-07-26).
+    const executor = vi.fn(async (toolName: string) => {
+      if (toolName === 'get_initiative_status') throw new Error('tool exploded');
+      return toolName === 'search_web' ? 'ok' : 'ok-3';
+    });
 
     const result = await agentPlannerService.executePlan(plan.id, executor);
 
     // The key regression guard: the 3rd (independent) step still ran.
-    expect(executor).toHaveBeenCalledTimes(3);
+    // 2 successful steps (1 call each) + the failing middle step retried to
+    // exhaustion (3 attempts, Fala 1) = 5.
+    expect(executor).toHaveBeenCalledTimes(5);
     expect(result.status).toBe('completed_with_errors');
     expect(result.steps[0].status).toBe('completed');
     expect(result.steps[1].status).toBe('failed');
@@ -325,7 +328,8 @@ describe('agentPlannerService.executePlan — continue-on-error (HP-4, Piotr dec
     const executor = vi.fn().mockRejectedValue(new Error('down'));
     const result = await agentPlannerService.executePlan(plan.id, executor);
 
-    expect(executor).toHaveBeenCalledTimes(2);
+    // 2 steps × 3 attempts each (Fala 1 retry-before-failed, 2026-07-26).
+    expect(executor).toHaveBeenCalledTimes(6);
     expect(result.status).toBe('completed_with_errors');
     expect(result.status).not.toBe('failed');
     expect(result.steps.every((s) => s.status === 'failed')).toBe(true);
@@ -351,5 +355,115 @@ describe('agentPlannerService.executePlan — continue-on-error (HP-4, Piotr dec
     expect(result.status).toBe('awaiting_approval');
     expect(result.steps[1].status).toBe('awaiting_approval');
     expect(result.steps[2].status).toBe('pending');
+  });
+});
+
+describe('agentPlannerService.executePlan — retry przed failed (Fala 1, 2026-07-26)', () => {
+  beforeEach(() => {
+    db.plans.clear();
+    db.steps.clear();
+  });
+
+  it('recovers a step that fails once then succeeds — never marked failed', async () => {
+    const plan = await agentPlannerService.createPlan({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      title: 'Transient failure',
+      steps: [{ toolName: 'search_web', toolInput: { q: 'a' } }],
+    });
+
+    const executor = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('transient'))
+      .mockResolvedValueOnce('recovered');
+
+    const result = await agentPlannerService.executePlan(plan.id, executor);
+
+    expect(executor).toHaveBeenCalledTimes(2);
+    expect(result.status).toBe('completed');
+    expect(result.steps[0].status).toBe('completed');
+    expect(result.steps[0].result).toBe('recovered');
+  });
+
+  it('gives up after 3 attempts and marks the step failed (plan still completes, 07-16 behaviour)', async () => {
+    const plan = await agentPlannerService.createPlan({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      title: 'Persistent failure',
+      steps: [{ toolName: 'search_web', toolInput: {} }],
+    });
+
+    const executor = vi.fn().mockRejectedValue(new Error('down for good'));
+    const result = await agentPlannerService.executePlan(plan.id, executor);
+
+    expect(executor).toHaveBeenCalledTimes(3);
+    expect(result.steps[0].status).toBe('failed');
+    expect(result.steps[0].errorMessage).toBe('down for good');
+    expect(result.status).toBe('completed_with_errors');
+  });
+});
+
+describe('agentPlannerService.executePlan — zmienne między krokami (Fala 1, 2026-07-26)', () => {
+  beforeEach(() => {
+    db.plans.clear();
+    db.steps.clear();
+  });
+
+  it('resolves $step.N.pole to the completed result of step N (1-based)', async () => {
+    const plan = await agentPlannerService.createPlan({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      title: 'Uses prior step result',
+      steps: [
+        { toolName: 'get_assessment_data', toolInput: {} },
+        { toolName: 'calculate_financial', toolInput: { score: '$step.1.score', label: 'fixed' } },
+      ],
+    });
+
+    const executor = vi.fn(async (toolName: string) => {
+      if (toolName === 'get_assessment_data') return { score: 87 };
+      return 'ok';
+    });
+
+    await agentPlannerService.executePlan(plan.id, executor);
+
+    expect(executor).toHaveBeenNthCalledWith(2, 'calculate_financial', {
+      score: 87,
+      label: 'fixed',
+    });
+  });
+
+  it('leaves the reference untouched when the referenced step has no result yet (bad index)', async () => {
+    const plan = await agentPlannerService.createPlan({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      title: 'Bad reference',
+      steps: [{ toolName: 'search_web', toolInput: { q: '$step.9.missing' } }],
+    });
+
+    const executor = vi.fn().mockResolvedValue('ok');
+    await agentPlannerService.executePlan(plan.id, executor);
+
+    expect(executor).toHaveBeenNthCalledWith(1, 'search_web', { q: '$step.9.missing' });
+  });
+
+  it('does not mutate the stored tool_input_json — DB keeps the template, not the resolved value', async () => {
+    const plan = await agentPlannerService.createPlan({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      title: 'Template survives execution',
+      steps: [
+        { toolName: 'get_assessment_data', toolInput: {} },
+        { toolName: 'calculate_financial', toolInput: { score: '$step.1.score' } },
+      ],
+    });
+
+    const executor = vi.fn(async (toolName: string) =>
+      toolName === 'get_assessment_data' ? { score: 42 } : 'ok'
+    );
+    await agentPlannerService.executePlan(plan.id, executor);
+
+    const reloaded = await agentPlannerService.getPlan(plan.id);
+    expect(reloaded?.steps[1].toolInput).toEqual({ score: '$step.1.score' });
   });
 });

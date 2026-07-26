@@ -224,8 +224,20 @@ class AgentPlannerService {
       const startMs = Date.now();
       await this.updateStepStatus(step.id, 'running');
 
+      // Zmienne między krokami (Fala 1, 2026-07-26): `$step.N.pole` w
+      // toolInput odnosi się do WYNIKU kroku o numerze N (1-based, ten sam
+      // numer co w canvasie). Rozwiązywane dopiero TERAZ, tuż przed
+      // wykonaniem — zapisany w bazie `tool_input_json` zostaje szablonem
+      // (nie nadpisujemy go rozwiązaną wartością), żeby podgląd/edycja
+      // schematu nadal pokazywały odniesienie, nie zamrożoną wartość z
+      // pierwszego uruchomienia. Wzorzec składni ($step.X.pole) przeniesiony
+      // z `toolChainExecutor.ts` (silnik DAG, dziś nieużywany) — tam
+      // referencja szła po ID kroku z grafu; tu po numerze porządkowym, bo to
+      // jedyny identyfikator, jaki user widzi na liniowym schemacie.
+      const resolvedInput = this.resolveStepInputVariables(step.toolInput, plan.steps.slice(0, i));
+
       try {
-        const result = await toolExecutor(step.toolName, step.toolInput);
+        const result = await this.runToolWithRetry(toolExecutor, step.toolName, resolvedInput);
         const durationMs = Date.now() - startMs;
 
         step.result = result;
@@ -557,6 +569,83 @@ class AgentPlannerService {
        WHERE id = ?`,
       [completedSteps, completedSteps, planId]
     );
+  }
+
+  /**
+   * Podmienia `$step.N.pole` (N = numer kroku 1-based, jak w canvasie) na
+   * wynik tego kroku — TYLKO gdy krok N już się wykonał (`precedingSteps`
+   * to zawsze prefiks planu przed bieżącym indeksem, więc "przyszły" krok
+   * nigdy nie jest referencyjnie dostępny — brak cyklu z definicji kolejności
+   * wykonania). Brak dopasowania (zły numer, krok bez wyniku, krok o innym
+   * statusie niż 'completed') zostawia string bez zmian, żeby literówka w
+   * schemacie nie wysadziła wywołania narzędzia — trafi jako dosłowny tekst,
+   * widoczny w wyniku/błędzie kroku.
+   */
+  private resolveStepInputVariables(
+    input: Record<string, unknown>,
+    precedingSteps: PlanStep[]
+  ): Record<string, unknown> {
+    const resolved: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(input)) {
+      if (typeof value === 'string' && value.startsWith('$step.')) {
+        const match = value.match(/^\$step\.(\d+)(?:\.(.+))?$/);
+        const refIndex = match ? Number(match[1]) - 1 : -1;
+        const source = refIndex >= 0 ? precedingSteps[refIndex] : undefined;
+        if (match && source?.status === 'completed' && source.result !== undefined) {
+          resolved[key] = match[2] ? this.getNestedValue(source.result, match[2]) : source.result;
+        } else {
+          resolved[key] = value;
+        }
+      } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+        resolved[key] = this.resolveStepInputVariables(
+          value as Record<string, unknown>,
+          precedingSteps
+        );
+      } else {
+        resolved[key] = value;
+      }
+    }
+    return resolved;
+  }
+
+  private getNestedValue(obj: unknown, path: string): unknown {
+    let current: unknown = obj;
+    for (const part of path.split('.')) {
+      if (current == null) return undefined;
+      current = (current as Record<string, unknown>)[part];
+    }
+    return current;
+  }
+
+  /**
+   * Ponów przy błędzie (Fala 1, 2026-07-26): do 2 dodatkowych prób (3 łącznie)
+   * z krótkim odstępem, zanim krok trafi do istniejącej ścieżki "failed, ale
+   * plan jedzie dalej" (decyzja Piotra 07-16 — patrz komentarz `executePlan`).
+   * To NIE ratuje planu przed porażką — plan i tak nigdy nie padał od jednego
+   * błędu kroku. Ratuje POJEDYNCZY krok przed przejściową usterką (chwilowy
+   * błąd sieci/API), która bez tego liczyłaby się jako trwała porażka mimo że
+   * druga próba by przeszła.
+   */
+  private async runToolWithRetry(
+    toolExecutor: (toolName: string, input: Record<string, unknown>) => Promise<unknown>,
+    toolName: string,
+    input: Record<string, unknown>,
+    maxAttempts = 3,
+    delayMs = 400
+  ): Promise<unknown> {
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await toolExecutor(toolName, input);
+      } catch (err) {
+        lastError = err;
+        if (attempt < maxAttempts) {
+          logger.warn('[AgentPlanner] step failed, retrying', { toolName, attempt, maxAttempts });
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+      }
+    }
+    throw lastError;
   }
 }
 
