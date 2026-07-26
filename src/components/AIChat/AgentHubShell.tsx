@@ -558,7 +558,13 @@ export const AgentHubShell: React.FC = () => {
       width: '160px',
       render: (row: TableRow) => {
         const plan = row as unknown as AgentPlan;
-        return <EntityStatusChip status={plan.status} />;
+        // ★ Znalezisko odbioru Mastera (2026-07-26): EntityStatusChip bez `label`
+        // humanizuje SUROWY status po angielsku ("Planning") nawet w polskim UI.
+        // `planStatusLabel` (słownik PL/EN, już użyty w preview linia ~671) daje
+        // poprawną etykietę w obu językach.
+        return (
+          <EntityStatusChip status={plan.status} label={planStatusLabel(plan.status, isPolish)} />
+        );
       },
     },
     {
