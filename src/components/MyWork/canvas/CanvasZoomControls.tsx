@@ -31,21 +31,26 @@ interface CanvasZoomControlsProps {
 const ZOOM_DURATION = 220;
 const FIT_PADDING = 0.3;
 
+// Unified with the tool-switcher pill next door (IdeaViewSwitcher): same
+// 32px square, same corner radius and same `c-*` tokens, so the two clusters
+// read as one connected set instead of two mismatched groups glued together
+// (Piotr 2026-07-26: "zrob to na jednej wysokosci i tej samej wielkosci").
 const ZoomBtn: React.FC<{
   onClick: () => void;
   title: string;
   children: React.ReactNode;
 }> = ({ onClick, title, children }) => (
   <button
+    type="button"
     onClick={onClick}
-    className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-white/[0.06] active:scale-95 transition-all duration-150"
+    className="flex h-8 w-8 items-center justify-center rounded-hig-xl text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface dark:hover:bg-c-surface-raised active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
     title={title}
   >
     {children}
   </button>
 );
 
-const Divider = () => <div className="w-px h-5 bg-slate-200/60 dark:bg-white/[0.06] mx-0.5" />;
+const Divider = () => <div className="w-px h-5 bg-c-border-subtle dark:bg-c-border-subtle mx-0.5" />;
 
 export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
   isPolish,
@@ -92,12 +97,12 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
   return (
     <div className="absolute bottom-3 right-3 z-dropdown pointer-events-auto">
       <div
-        className={`flex items-center gap-0.5 px-1.5 py-1 bg-white/90 dark:bg-navy-950/90 backdrop-blur-md dark:backdrop-blur-xl rounded-2xl border border-slate-200/40 dark:border-white/[0.06] shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.35)] ${className}`}
+        className={`flex items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl px-1 py-1 ${className}`}
       >
         <ZoomBtn onClick={handleZoomOut} title={isPolish ? 'Oddal' : 'Zoom out'}>
           <Minus size={15} />
         </ZoomBtn>
-        <div className="min-w-[48px] px-1 text-center text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+        <div className="min-w-[42px] px-1 text-center text-[11px] font-semibold text-c-text dark:text-c-text">
           {zoomPercent}
         </div>
         <ZoomBtn onClick={handleZoomIn} title={isPolish ? 'Przybliż' : 'Zoom in'}>
@@ -147,10 +152,10 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
               type="button"
               onClick={onToggleSnap}
               aria-pressed={snapEnabled}
-              className={`p-1.5 rounded-lg transition-all duration-150 active:scale-95 ${
+              className={`flex h-8 w-8 items-center justify-center rounded-hig-xl transition-all duration-150 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                 snapEnabled
-                  ? 'bg-c-surface-raised text-c-focus dark:bg-c-surface'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-white/[0.06]'
+                  ? 'bg-c-surface dark:bg-c-surface-raised text-c-focus'
+                  : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface dark:hover:bg-c-surface-raised'
               }`}
               title={
                 snapEnabled
@@ -176,10 +181,10 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
               type="button"
               onClick={onToggleMiniMap}
               aria-pressed={showMiniMap}
-              className={`p-1.5 rounded transition-colors ${
+              className={`flex h-8 w-8 items-center justify-center rounded-hig-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                 showMiniMap
-                  ? 'text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-white/[0.08]'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
+                  ? 'bg-c-surface dark:bg-c-surface-raised text-c-text dark:text-c-text'
+                  : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface dark:hover:bg-c-surface-raised'
               }`}
               title={
                 showMiniMap
