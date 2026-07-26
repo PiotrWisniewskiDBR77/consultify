@@ -14,9 +14,8 @@
  *   1. URL query `?ff_evBasket=0|1` — operator bypass for staging / visual review.
  *   2. `localStorage["ff.finance_ev_basket"]` — user / org override.
  *   3. `import.meta.env.VITE_FINANCE_EV_BASKET` — build-time override.
- *   4. Default: OFF. Ships behind an OFF flag so the proven valuation results
- *      surface stays the default until Piotr signs off on demo. Set any override
- *      to `1` to preview.
+ *   4. Default: ON (flip 2026-07-16, akcept Piotra; EV Basket football-field
+ *      zweryfikowany dev-render light+dark).
  */
 
 const LS_KEY = 'ff.finance_ev_basket';

@@ -12,7 +12,7 @@
  *   1. URL query `?ff_clientVault=0|1` — bypass operatora (staging / zrzut).
  *   2. `localStorage["ff.client_vault"]` — override user/org.
  *   3. `import.meta.env.VITE_CLIENT_VAULT` — override build-time.
- *   4. Default: OFF.
+ *   4. Default: ON (flip 2026-07-15, akcept Piotra; styl legacy do Vegas).
  */
 
 const LS_KEY = 'ff.client_vault';

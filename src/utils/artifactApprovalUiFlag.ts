@@ -21,8 +21,8 @@
  * `templateLifecycleFlag.ts`:
  *   1. URL query `?ff_artifactApprovalUi=0|1` — operator bypass.
  *   2. `localStorage["ff.artifactApprovalUi"]` — user/org override.
- *   3. Default: OFF (nothing renders differently until Vegas flips it after
- *      owner acceptance on screenshots).
+ *   3. Default: ON (flip 2026-07-16, akcept Piotra; galeria czysta, Vegas
+ *      dopracuje wygląd).
  */
 
 const LS_KEY = 'ff.artifactApprovalUi';

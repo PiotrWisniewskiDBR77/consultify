@@ -8,6 +8,7 @@ import { changeLanguage } from '@/i18n';
 vi.mock('@/services/api', () => ({
   Api: {
     get: vi.fn(),
+    put: vi.fn(),
   },
 }));
 
@@ -67,6 +68,24 @@ describe('LanguageSettings honest UI', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Failed to change language')).toBeInTheDocument();
+    });
+  });
+
+  // P0.3 (2026-07-26): manual language switch must write through to the
+  // account (konto > localStorage > navigator), not just localStorage —
+  // otherwise the account never gets a language and the bug this fixes
+  // (fresh browser + PL account = English UI) keeps recurring on new devices.
+  it('persists the chosen language to the account on manual switch', async () => {
+    vi.mocked(Api.get).mockResolvedValue({ profile: { defaultLanguage: null } });
+    vi.mocked(changeLanguage).mockResolvedValue(true);
+    vi.mocked(Api.put).mockResolvedValue({});
+
+    render(<LanguageSettings />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Polski/i }));
+
+    await waitFor(() => {
+      expect(Api.put).toHaveBeenCalledWith('/users/user-1', { language: 'pl' });
     });
   });
 });

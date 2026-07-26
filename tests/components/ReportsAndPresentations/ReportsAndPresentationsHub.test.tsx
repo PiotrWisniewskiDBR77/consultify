@@ -304,6 +304,26 @@ describe('ReportsAndPresentationsHub', () => {
     expect(screen.getByTestId('templates-workbook-back')).toBeInTheDocument();
   });
 
+  // P1.2 (plan dokończenia Materiałów): każde wejście twórcze idzie przez
+  // JAWNY wybór trybu — przycisk nazywa się "New AI document", więc entry=ai
+  // jest jedynym słusznym trybem (wcześniej brak ?entry= zostawiał zachowanie
+  // zależne od stanu triModeFlag, co mogło pokazać TriModeChooser zamiast
+  // wejść wprost do AI).
+  it('navigates to Document Studio with entry=ai from the "New AI document" command-row button', () => {
+    render(
+      <MemoryRouter initialEntries={['/presentations']}>
+        <ReportsAndPresentationsHub />
+      </MemoryRouter>
+    );
+
+    const button = screen.getByTitle('New AI document (Document Studio)');
+    act(() => {
+      button.click();
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith('/document-studio?entry=ai');
+  });
+
   it('"← Szablony" returns from the embedded deck architect view to the Template Library table', () => {
     render(
       <MemoryRouter initialEntries={['/presentations?tab=template_architect']}>

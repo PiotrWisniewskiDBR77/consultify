@@ -19,7 +19,8 @@
  *   1. URL query `?ff_canvasNewDocOptions=0|1`
  *   2. `localStorage["ff.canvas_new_doc_options"]`
  *   3. `import.meta.env.VITE_CANVAS_NEW_DOC_OPTIONS`
- *   4. Default: OFF.
+ *   4. Default: ON (flip 2026-07-13, akcept Piotra; #87a zaakceptowany na
+ *      zrzutach light+dark).
  */
 
 const LS_KEY = 'ff.canvas_new_doc_options';

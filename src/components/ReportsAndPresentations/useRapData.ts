@@ -288,8 +288,16 @@ export function useReports() {
       if (artifactRes.ok) {
         const artifactData = await artifactRes.json();
         const list = artifactData.data || [];
+        // P0.2 fix (2026-07-26): documents created in Document Studio register
+        // with originRuntime='native_artifact' (a DIFFERENT engine from the
+        // report_builder-backed 'report' runtime), but both are outputType
+        // 'report' / artifactFamily 'document'. Excluding 'native_artifact'
+        // here made every Document-Studio document invisible in the
+        // Documents tab even though the registry indexed it correctly.
+        const isDocumentRuntime = (runtime: unknown) =>
+          runtime === 'report' || runtime === 'native_artifact';
         const mapped = list
-          .filter((item: any) => item.originRuntime === 'report' && item.originRecordId)
+          .filter((item: any) => isDocumentRuntime(item.originRuntime) && item.originRecordId)
           .map(mapArtifactReport);
         setReports(mapped);
         setError(null);
@@ -448,7 +456,17 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
 
   const baseGov = mapArtifactGovernance(raw);
 
-  if (runtime === 'report') {
+  // P0.2 fix (2026-07-26): 'report' (report_builder) and 'native_artifact'
+  // (Document Studio) are two DIFFERENT runtimes for the same document
+  // family — see the ZAKAZ naiwnej unifikacji note above `mapRegistryItemToUnified`.
+  // They share this branch only because `mapArtifactReport` is runtime-agnostic
+  // (it reads generic registry fields, not runtime-specific ones) and because
+  // opening/exporting is already delegated correctly per-row via
+  // `governance.openPath`, which the server sets per-runtime
+  // (buildActionTargetPayload in artifacts.routes.ts). Before this fix,
+  // 'native_artifact' had no case here at all, so every Document-Studio-made
+  // document silently vanished from Documents/All (mapped to `null` → filtered).
+  if (runtime === 'report' || runtime === 'native_artifact') {
     const r = mapArtifactReport(raw);
     return {
       kind: 'document',

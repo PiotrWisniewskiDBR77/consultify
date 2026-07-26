@@ -9,13 +9,13 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
-  changeLanguage,
   LANGUAGE_NAMES,
   normalizeLanguageCode,
   SUPPORTED_LANGUAGES,
   type SupportedLanguage,
 } from '../../i18n';
 import { Api } from '../../services/api';
+import { changeLanguageAndPersist } from '../../services/languagePreference';
 import { useAppStore } from '../../store/useAppStore';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 
@@ -84,7 +84,10 @@ export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = 
 
   const handleLanguageChange = async (langCode: string) => {
     setActionError(null);
-    const changed = await changeLanguage(langCode);
+    // P0.3: write-through to the account so this survives across devices —
+    // the first manual switch is what seeds users.language for accounts
+    // that never had a preference before.
+    const changed = await changeLanguageAndPersist(currentUser?.id, langCode);
     if (!changed) {
       setActionError(t('settings.appearance.languageChangeError', 'Failed to change language'));
     }

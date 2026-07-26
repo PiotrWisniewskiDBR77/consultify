@@ -19,8 +19,8 @@
  *   1. URL query `?ff_agentPlan=0|1` — operator bypass.
  *   2. `localStorage["ff.agent_plan"]` — user / org override.
  *   3. `import.meta.env.VITE_AGENT_PLAN` — build-time default.
- *   4. Default: OFF. Nie ma jeszcze akceptu Piotra na zrzutach (reguła #7) —
- *      ekran renderuje się dopiero po flip po akceptacji.
+ *   4. Default: ON (flip bez SHA, akcept Piotra; HP-4 domknięty i zweryfikowany
+ *      wizualnie w dev-render).
  */
 
 const LS_KEY = 'ff.agent_plan';

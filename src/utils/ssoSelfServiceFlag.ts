@@ -14,7 +14,7 @@
  *   1. URL query `?ff_ssoSelfService=0|1` — bypass operatora (staging / zrzut).
  *   2. `localStorage["ff.sso_self_service"]` — override user/org.
  *   3. `import.meta.env.VITE_SSO_SELF_SERVICE` — override build-time.
- *   4. Default: OFF.
+ *   4. Default: ON (flip 2026-07-15, akcept Piotra; galeria fala7).
  *
  * Wzorzec: src/utils/commandCenterFlag.ts (HP-10…13), src/utils/clientVaultFlag.ts (HP-22).
  */
