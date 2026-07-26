@@ -14,6 +14,9 @@
  */
 
 import { buildProductModuleCatalog } from '../services/ai/productModuleCatalog.js';
+// Krok C: wspólny helper Funkcji B (retrieval search_org_mindmaps) — koniec z
+// lokalną kopią `isTeresaMindmapEnabled()` czytającą surowy process.env.
+import { isTeresaMindmapSearchEnabled } from '../services/ai/tools/orgRetrievalShared.js';
 
 // ---------------------------------------------------------------------------
 // Supported languages with cultural intelligence
@@ -362,12 +365,8 @@ function isTeresaRetrievalEnabled(): boolean {
   return process.env.ENABLE_TERESA_RETRIEVAL === 'true';
 }
 
-function isTeresaMindmapEnabled(): boolean {
-  return process.env.ENABLE_TERESA_MINDMAP === 'true';
-}
-
 function buildOrgRetrievalGuidance(lang: PersonaLanguage): string {
-  const mindmap = isTeresaMindmapEnabled();
+  const mindmap = isTeresaMindmapSearchEnabled();
   if (lang === 'pl') {
     const toolsList = mindmap
       ? 'search_org_notes, search_insights, get_initiative, search_org_mindmaps'

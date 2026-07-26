@@ -25,6 +25,9 @@ import {
 } from '../services/ai/chatStabilizationPolicy.js';
 import type { VerificationReport } from '../services/ai/citationVerifier.js';
 import { buildHelpDocsContext, isProductOrHowToQuery } from '../services/ai/helpDocsContext.js';
+// Krok C: wspólny helper Funkcji B (retrieval search_org_mindmaps) — koniec z
+// surowym `process.env.ENABLE_TERESA_MINDMAP` w tym pliku.
+import { isTeresaMindmapSearchEnabled } from '../services/ai/tools/orgRetrievalShared.js';
 import {
   numericConfidenceFromVerification,
   verifyRuntimeCitations,
@@ -3342,11 +3345,13 @@ router.post(
           const initiativeIdMatch = wantsInitiative
             ? msg.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)
             : null;
-          // Teresa mind-map retrieval (ff_teresaMindmap) — co-gated on its own flag.
+          // Teresa mind-map retrieval (ff_teresaMindmapSearch) — co-gated on its
+          // own flag (Krok C: ENABLE_TERESA_MINDMAP_SEARCH, OR'd with legacy
+          // ENABLE_TERESA_MINDMAP for backward compat — see orgRetrievalShared.ts).
           // PL stems: mapa/mapę/mapie myśli, "mind map/mindmap". Also match bare
           // "mapa myśli" phrasing and English "mind map".
           const wantsMindmap =
-            process.env.ENABLE_TERESA_MINDMAP === 'true' &&
+            isTeresaMindmapSearchEnabled() &&
             /map[aeęy]\s*myśl\w*|mapa\s+myśli|mind[\s-]?map\w*|mapę?\s+myśli/i.test(msg);
 
           if (wantsNotes || wantsInsights || initiativeIdMatch || wantsMindmap) {
