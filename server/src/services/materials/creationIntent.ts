@@ -231,10 +231,11 @@ export async function resolveDocumentTemplateForCreation(
  * for the LOOKUP only — access is always re-validated downstream against the
  * canonical registry, never against the caller's claim.
  *
- * Exported (R11 deck slice) so `resolvePresentationTemplateForCreation` below
- * reuses the same index lookup instead of a second copy of this query.
+ * Module-private: both `resolveDocumentTemplateForCreation` and
+ * `resolvePresentationTemplateForCreation` (R11 deck slice) live in this same
+ * file and share this one lookup — no need to export it.
  */
-export async function resolveReference(
+async function resolveReference(
   ref: TemplateRef,
   organizationId: string
 ): Promise<{ originRuntime: TemplateOriginRuntime; canonicalTemplateId: string }> {
