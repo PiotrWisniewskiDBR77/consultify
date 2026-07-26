@@ -104,6 +104,28 @@ export function StandardModuleBarChildrenScreen(): React.ReactElement {
           />
         </div>
       </div>
+
+      <div>
+        <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
+          D — statusFilters passthrough (Execution/Audits-style, dodane
+          2026-07-26) — czysty przekaz propsów do ModuleNavBar, zero nowej
+          logiki w fasadzie
+        </p>
+        <div style={{ border: '1px dashed #888' }}>
+          <StandardModuleBar
+            tabs={[{ id: 'only', label: 'Jedyna zakładka' }]}
+            activeTab="only"
+            onTabChange={() => {}}
+            statusFilters={[
+              { id: 'all', label: 'Wszystkie', color: 'slate' },
+              { id: 'on_track', label: 'On track', color: 'green', count: 12 },
+              { id: 'at_risk', label: 'At risk', color: 'amber', count: 3 },
+            ]}
+            activeStatusFilter="on_track"
+            onStatusFilterChange={() => {}}
+          />
+        </div>
+      </div>
     </div>
   );
 }
