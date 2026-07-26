@@ -24,7 +24,6 @@ import {
 import { type WorkbookSchema, WorkbookSchemaValidator } from './WorkbookSchema.js';
 import { critiqueWorkbook, type WorkbookQualityReport } from './workbookQualityGate.js';
 import {
-  buildFromTemplate,
   buildFromTemplateFlat,
   listWorkbookTemplates,
   type WorkbookTemplateId,
@@ -183,24 +182,30 @@ Return ONLY the JSON. No markdown, no explanation.`;
 
 // ---------------------------------------------------------------------------
 // FALA B: model-template registry match — decides whether a registered,
-// hand-verified parametric template (e.g. threeScenarioPnL) fits the request
-// BETTER than designing a model from scratch, and if so extracts its params.
+// hand-verified parametric template (threeScenarioPnL, operatingBudget,
+// dcfValuation, breakEven, cashflow12m, unitEconomics, loanAmortization) fits
+// the request BETTER than designing a model from scratch, and if so extracts
+// its params. Domain-agnostic across the whole registry: the catalog (with
+// each template's self-describing param list) is injected per-call by
+// `matchWorkbookTemplate`, so this prompt never hardcodes a template id.
 // ---------------------------------------------------------------------------
 
-const TEMPLATE_MATCH_SYSTEM_PROMPT = `You are a template-matching assistant for a spreadsheet generator. You receive a user's request plus a list of registered, pre-built parametric model templates. Decide whether one of them fits the request, and if so extract its parameters.
+const TEMPLATE_MATCH_SYSTEM_PROMPT = `You are a template-matching assistant for a spreadsheet generator. You receive a user's request plus a catalog of registered, pre-built parametric model templates — each with its own self-describing parameter list. Decide whether one of them fits the request, and if so extract its parameters.
 
 Rules:
 1. Only match a template when the request is CLEARLY asking for that exact kind of model. When unsure, do NOT match — return templateId: null. A generic or unrelated request must never be forced into a template.
 2. If no template fits, return {"templateId": null, "confidence": 0, "params": {}}.
-3. If a template fits, extract every parameter you can ground in the request or the attached research context. Omit any field you are not confident about — the template applies sane, labeled defaults for anything omitted.
-4. NEVER invent a specific numeric driver (growth rate, margin, revenue, etc.) that has no basis in the request or research context just to fill a field. Leaving it out (so the template default applies) is always safer than fabricating a number.
-5. For template "threeScenarioPnL" the params are: companyName (string), currencyCode ("PLN"|"EUR"|"USD"), startYear (number), baseRevenue (number), and base/bull/bear (each optional, all FRACTIONS e.g. 0.08 = 8%): revenueGrowthPct, cogsPct, opexPct, daPct, interestPct, taxRatePct.
+3. "templateId" MUST be exactly one of the "id" values listed in the catalog, or null. Never invent an id that is not in the catalog.
+4. Each catalog entry lists its parameters as 'name (type, default=X[, options=A/B/C])'. Use the parameter's exact 'name' string as the JSON key in "params" — INCLUDING any dot in the name (e.g. "base.cogsPct" is one flat key; do NOT turn it into a nested object like {"base": {"cogsPct": ...}}).
+5. Extract every parameter you can ground in the request or the attached research context. Omit any field you are not confident about — the template applies sane, labeled defaults for anything omitted.
+6. NEVER invent a specific numeric driver (growth rate, margin, revenue, interest rate, churn, price, cost, etc.) that has no basis in the request or research context just to fill a field. Leaving it out (so the template default applies) is always safer than fabricating a number.
+7. Type conventions for the extracted values: "percent" fields are FRACTIONS (0.08 = 8%, never 8 or "8%"). "currency"/"number"/"integer" fields are plain numbers, no currency symbols or thousand separators. "enum" fields must be exactly one of that field's listed options.
 
 Return ONLY this JSON, no markdown, no explanation:
 {
-  "templateId": "threeScenarioPnL" | null,
+  "templateId": "<one of the catalog ids>" | null,
   "confidence": 0.0-1.0,
-  "params": { ...extracted fields only... }
+  "params": { ...extracted fields only, flat keys as described in rule 4... }
 }`;
 
 const GENERATION_SYSTEM_PROMPT = `You are an expert spreadsheet architect. You receive a PLAN and must produce the final WorkbookSchema JSON.
@@ -498,14 +503,32 @@ class WorkbookGeneratorService {
     researchContext: string | undefined,
     llmParams: { userId: string; organizationId: string; projectId?: string }
   ): Promise<{ id: WorkbookTemplateId; schema: WorkbookSchema } | null> {
-    // Keyword gate: PL + EN hints for a 3-scenario / Base-Bull-Bear P&L model.
+    // Keyword gate: cheap PL + EN hints for ANY of the 7 registered templates.
+    // Purpose is ONLY "is it worth asking the LLM at all" — the LLM (with the
+    // full catalog + rule 1 "only match when CLEARLY asking for that exact
+    // model") makes the real accept/reject + template-choice decision. A
+    // false positive here just costs one small wasted LLM call; a false
+    // negative here means the template path never gets a chance, so this
+    // stays deliberately generous with \S* suffixes (Polish inflection —
+    // diacritics like ł/ą/ę/ó/ś/ż are NOT part of \w in JS regexes).
     const TEMPLATE_HINT_RE =
-      /(3\s*scenariusz|scenariusz(e|y)?|scenarios?|base[\s/-]*bull[\s/-]*bear|rachunek\s*wynik|rzis|p\s*&\s*l\b|p&l\b|profit\s*(and|&)\s*loss|model\s*finansow|financial\s*model)/i;
+      /(3\s*scenariusz|scenariusz\S*|scenarios?|base[\s/-]*bull[\s/-]*bear|rachunek\s*wynik\S*|rzis|p\s*&\s*l\b|p&l\b|profit\s*(and|&)\s*loss|model\s*finansow\S*|financial\s*model|bud[żz]et\S*\s*operacyjn\S*|operating\s*budget|\bdcf\b|wycen\S*\s*dcf|discounted\s*cash\s*flow|zdyskontowan\S*\s*przep\S*|pr[oó]g\s*rentown\S*|break[\s-]*even|\bbep\b|cash[\s-]*flow|przep\S*\s*pieni\S*|przep\S*\s*12|unit\s*economics|ekonomi\S*\s*jednostkow\S*|\bltv\b|\bcac\b|amortyzacj\S*\s*kredyt\S*|harmonogram\s*(sp\S*at|kredyt\S*)|loan\s*amortization|rata\s*kredyt\S*)/i;
     if (!TEMPLATE_HINT_RE.test(userPrompt)) return null;
 
     try {
       const catalog = listWorkbookTemplates()
-        .map((t) => `- id: "${t.id}" — ${t.title}: ${t.description}`)
+        .map((t) => {
+          const paramList = t.params
+            .map((p) => {
+              const opts =
+                p.type === 'enum' && p.options && p.options.length
+                  ? `, options=${p.options.join('/')}`
+                  : '';
+              return `${p.name} (${p.type}, default=${p.default}${opts})`;
+            })
+            .join('; ');
+          return `- id: "${t.id}" — ${t.title}: ${t.description}\n  params: ${paramList}`;
+        })
         .join('\n');
       const userMessage = [
         `Available templates:\n${catalog}`,
@@ -528,7 +551,11 @@ class WorkbookGeneratorService {
       const templateId = verdict.templateId as WorkbookTemplateId;
       const params = verdict.params && typeof verdict.params === 'object' ? verdict.params : {};
 
-      const schema = buildFromTemplate(templateId, params);
+      // Flat build: matches the flat-dotted-key contract taught in rule 4 above
+      // and in each template's self-describing `params[].name` (dots only for
+      // threeScenarioPnL's per-scenario drivers, e.g. "base.cogsPct" — the other
+      // six templates are already flat, so this is a no-op for them).
+      const schema = buildFromTemplateFlat(templateId, params as Record<string, unknown>);
       if (!schema) return null; // unknown id (e.g. LLM hallucinated one) — fall back
 
       return { id: templateId, schema };

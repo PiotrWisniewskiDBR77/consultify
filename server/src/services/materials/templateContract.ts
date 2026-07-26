@@ -63,6 +63,16 @@ export const DOCUMENT_ORIGIN_RUNTIMES: readonly TemplateOriginRuntime[] = [
   'report_template',
 ];
 
+/**
+ * Runtimes that can be resolved into a PRESENTATION (deck) blueprint (R11 deck
+ * slice, 2026-07-26). Mirrors `DOCUMENT_ORIGIN_RUNTIMES` above — kept as its
+ * own list rather than folded in so a runtime can only ever resolve into the
+ * one format its registry actually produces.
+ */
+export const PRESENTATION_ORIGIN_RUNTIMES: readonly TemplateOriginRuntime[] = [
+  'presentation_template',
+];
+
 export function isTemplateOriginRuntime(value: unknown): value is TemplateOriginRuntime {
   return TEMPLATE_ORIGIN_RUNTIMES.includes(value as TemplateOriginRuntime);
 }

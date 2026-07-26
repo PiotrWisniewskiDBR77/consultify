@@ -66,8 +66,16 @@ export interface TemplateUseTarget {
  * → `resolveDocumentTemplateForCreation`), który sprawdza dostęp organizacji,
  * scope, status i istnienie rekordu źródłowego.
  *
- * Legacy `report_template` (report_builder_templates) zachowuje dotychczasową
- * trasę generacji bez zmian.
+ * ★ Legacy `report_template` (report_builder_templates) — NAPRAWA 2026-07-26:
+ * dotychczasowa trasa `/wordy?templateArtifactId=...` gubiła wzorzec po cichu
+ * (WordyView bierze tylko title/description; POST /artifact-runs/from-chat nie
+ * zna templateArtifactId — sections_json szablonu nigdy nie było użyte).
+ * Kieruje teraz do Report Buildera z tym samym schematem co Document Studio:
+ * indeks id w URL, serwer (`POST /report-builder/templates/resolve` →
+ * ten sam `resolveDocumentTemplateForCreation`) tłumaczy na kanoniczny
+ * `report_builder_templates.id` i otwiera kreator z zablokowanym polem
+ * szablonu. Wszystko, czego indeks jeszcze nie oznaczył originRuntime —
+ * dotychczasowa trasa per-typ, bez zmiany generacji.
  */
 export function resolveTemplateUsePath(target: TemplateUseTarget): string | null {
   const artifactIndexId = String(target.artifactIndexId || '').trim();
@@ -78,8 +86,12 @@ export function resolveTemplateUsePath(target: TemplateUseTarget): string | null
     return `/document-studio?entry=template&templateArtifactId=${encodeURIComponent(artifactIndexId)}`;
   }
 
-  // Legacy report_template + wszystko, czego indeks jeszcze nie oznaczył:
-  // dotychczasowa trasa, bez zmiany generacji.
+  if (target.originRuntime === 'report_template') {
+    return `/reports/builder?new=true&templateArtifactId=${encodeURIComponent(artifactIndexId)}`;
+  }
+
+  // Wszystko, czego indeks jeszcze nie oznaczył originRuntime: dotychczasowa
+  // trasa per-typ, bez zmiany generacji.
   const routeMap: Record<TemplateType, string> = {
     report: '/wordy',
     sheet: '/tabele',

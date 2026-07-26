@@ -32,6 +32,7 @@ import { canUseInternalTools } from '@/utils/internalToolsAccess';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 import { isSuperAdminRole } from '@/utils/roleGuards';
+import { isDrdReportEnabled } from '@/utils/drdReportFlag';
 import { isExceleEngineEnabled } from '@/utils/exceleFlag';
 import { isStudioEnabled } from '@/utils/studioFlag';
 import { AuthView } from '@/views/AuthView';
@@ -117,11 +118,6 @@ const ReportBuilderView = lazyWithRetry(() =>
 );
 const ManagementReportsHub = lazyWithRetry(() =>
   import('@/components/Reports/Management/ReportsHub').then((m) => ({ default: m.ReportsHub }))
-);
-const AssessmentReportBuilderView = lazyWithRetry(() =>
-  import('@/views/AssessmentReportBuilderView').then((m) => ({
-    default: m.AssessmentReportBuilderView,
-  }))
 );
 const SharedPresentationView = lazyWithRetry(() =>
   import('@/components/Presentations/SharedPresentationView').then((m) => ({
@@ -436,6 +432,13 @@ const PublicBookingView = lazyWithRetry(() =>
 );
 // Audit Orchestrator hub (audit #19 family) — authenticated module route.
 const AuditProgramsHub = lazyWithRetry(() => import('@/components/Audit/AuditsHub'));
+// DRD Audit Report engine — full editor (AI chat, per-section AI actions, PDF
+// export, publishing-grade "Raport DRD" client report) wired to a live backend
+// but previously reachable by ZERO routes (audyt 2026-07-26). Flag-gated entry
+// under the Audits module — see src/utils/drdReportFlag.ts (default OFF).
+const DRDAuditReportView = lazyWithRetry(() =>
+  import('@/views/DRDAuditReportView').then((m) => ({ default: m.DRDAuditReportView }))
+);
 
 // Public Mini Assessment (T015)
 const PublicMiniAssessmentView = lazyWithRetry(() =>
@@ -543,6 +546,24 @@ const MyWorkSheetsDeepLinkRedirect: React.FC = () => {
       <Loader2 className="w-6 h-6 animate-spin text-sky-500" />
     </div>
   );
+};
+
+/**
+ * Audits module entry for the DRD audit report engine (audyt 2026-07-26).
+ * Reads `:reportId` from the URL and mounts `DRDAuditReportView`, which
+ * fetches the report itself via `GET /assessment-reports/:reportId/full`
+ * (contract: src/views/DRDAuditReportView.tsx — `api.getFullReport`).
+ * Flag-gated (`isDrdReportEnabled`, default OFF): OFF → redirects to
+ * /audit-programs so the route is a no-op for every user until Piotr
+ * accepts the visual on a dev-render screenshot (canon: "Piotr nigdy nie
+ * jest pierwszym testerem wizualnym").
+ */
+const DRDAuditReportRoute: React.FC = () => {
+  const params = useParams<{ reportId: string }>();
+  if (!isDrdReportEnabled()) {
+    return <Navigate to="/audit-programs" replace />;
+  }
+  return <DRDAuditReportView reportId={params.reportId} />;
 };
 
 /** Redirects /auth?action=trial to /trial/start */
@@ -1307,6 +1328,28 @@ export const AppRoutes: React.FC = () => {
                   <AnimationWrapper variant="slideUp">
                     <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
                       <AuditProgramsHub />
+                    </Suspense>
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+
+        {/* DRD Audit Report engine (audyt 2026-07-26) — reconnects the
+            previously orphaned DRDAuditReportView (zero importers, live
+            backend) onto the Audits module. Flag-gated (isDrdReportEnabled,
+            default OFF, ?ff_drd_report=1 to preview) — see
+            DRDAuditReportRoute above for the OFF→redirect behavior. */}
+        <Route
+          path="/audit-programs/drd-report/:reportId"
+          element={
+            <BetaGate moduleId="MODULE_AUDITS">
+              <MainLayout breadcrumbs={breadcrumbs || ['Audits', 'Raport DRD']}>
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <Suspense fallback={<LoadingScreen message="Loading DRD report..." />}>
+                      <DRDAuditReportRoute />
                     </Suspense>
                   </AnimationWrapper>
                 </RouteErrorBoundary>

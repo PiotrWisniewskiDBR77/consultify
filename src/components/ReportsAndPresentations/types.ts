@@ -19,7 +19,10 @@ export type RapTab =
   | 'outputs_sheets'
   | 'templates'
   // C2 (2026-07-22): Architekt szablonów Prezentacji — zakładka widoczna TYLKO
-  // przy fladze isDeckArchitectEnabled() (default OFF); przy OFF hub bez zmian.
+  // przy fladze isDeckArchitectEnabled() (default ON since fb119cefe8, akcept
+  // Piotra 2026-07-22; UWAGA: decyzja architekta D6 z 2026-07-24 postuluje OFF
+  // — konflikt do rozstrzygnięcia przez Piotra, nie zmieniaj defaultu bez
+  // jego słowa); przy OFF hub bez zmian względem pre-flag.
   | 'template_architect'
   // Gen. Excel nav (2026-07-22): rejestr parametrycznych szablonów Excela —
   // zakładka widoczna TYLKO przy fladze isWorkbookTemplatesEnabled() (default

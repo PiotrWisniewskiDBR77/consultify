@@ -27,6 +27,13 @@ const MaterialyTemplateLibrarySliceScreen = React.lazy(
 const DocumentStudioTemplateResolveErrorScreen = React.lazy(
   () => import('./screens/document-studio-template-resolve-error')
 );
+const PrezentacjeTemplateStatesScreen = React.lazy(
+  () => import('./screens/prezentacje-template-states')
+);
+const ReportBuilderLibraryTemplateScreen = React.lazy(
+  () => import('./screens/report-builder-library-template')
+);
+const AudytyDrdReportScreen = React.lazy(() => import('./screens/audyty-drd-report'));
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -153,6 +160,21 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DOCUMENT STUDIO — „Użyj wzorca" odrzucone serwerowo: stan blokujący (bez pickera, bez AI). ?case=orphaned|forbidden|deprecated|not_indexed|resolving',
     render: () => <DocumentStudioTemplateResolveErrorScreen />,
+  },
+  'prezentacje-template-states': {
+    label:
+      'PREZENTACJE — „Użyj wzorca" z Biblioteki (R11 deck slice): loading + 2 stany blokujące. ?variant=loading|orphaned|forbidden',
+    render: () => <PrezentacjeTemplateStatesScreen />,
+  },
+  'report-builder-library-template': {
+    label:
+      'REPORT BUILDER — „Użyj wzorca" z Biblioteki (report_template, R1 2026-07-26): sukces (modal, pole zablokowane) + stany blokujące. ?variant=success|orphaned|deprecated|forbidden',
+    render: () => <ReportBuilderLibraryTemplateScreen />,
+  },
+  'audyty-drd-report': {
+    label:
+      'AUDYTY — zakładka „Raporty DRD" (ff_drd_report) + DRDAuditReportView. ?variant=list|report',
+    render: () => <AudytyDrdReportScreen />,
   },
   'initiatives-portfolio-analysis': {
     label:

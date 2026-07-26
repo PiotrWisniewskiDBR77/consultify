@@ -31,6 +31,7 @@ import {
   AlertTriangle,
   ClipboardList,
   ExternalLink,
+  FileText,
   Loader2,
   RefreshCw,
   Send,
@@ -40,6 +41,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { type FilterChip, ModuleHub } from '@/components/shared/ModuleHub';
 import type { ModuleTab, ViewMode } from '@/components/shared/ModuleHub/types';
@@ -58,7 +60,9 @@ import {
   type TableColumn as StandardTableColumn,
 } from '@/components/standard';
 import { EntityStatusChip, MetaChip, statusChipTone } from '@/components/ui/primitives/chips';
+import { Api } from '@/services/api';
 import { isAuditProgramEditEnabled } from '@/utils/auditProgramEditStubFlag';
+import { isDrdReportEnabled } from '@/utils/drdReportFlag';
 
 import {
   type AuditProgram,
@@ -95,6 +99,7 @@ const STATUS_PILL_ALIAS: Record<AuditProgramStatus, string> = {
 export const AuditsHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const navigate = useNavigate();
 
   const [programs, setPrograms] = useState<AuditProgram[]>([]);
   const [total, setTotal] = useState(0);
@@ -118,6 +123,52 @@ export const AuditsHub: React.FC = () => {
   // Triada standard (canon A3/A6): checkbox selection on the program list
   // switches Menu 3 into bulk mode (1:1 markup with Assessment/Results catalog).
   const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set());
+
+  // Which module tab is active. Audit Orchestrator "programs" (this hub's core
+  // domain, /api/audit/programs) carry NO relation to assessment_reports rows
+  // — they're separate backends (interview-based audit programs vs. DRD
+  // maturity assessment reports). So the DRD report engine can't be a
+  // per-program-row action; it's its own tab listing the org's assessment
+  // reports directly. Flag-gated (audyt 2026-07-26, isDrdReportEnabled,
+  // default OFF): the tab itself doesn't exist in `tabs` below when off, so
+  // this state is inert and the hub renders byte-identical to before.
+  const [activeTab, setActiveTab] = useState<ModuleTab>('list' as ModuleTab);
+  const drdReportFlagOn = isDrdReportEnabled();
+
+  interface DrdReportRow {
+    id: string;
+    name: string;
+    assessmentName?: string;
+    status: string;
+    updatedAt: string;
+  }
+  const [drdReports, setDrdReports] = useState<DrdReportRow[]>([]);
+  const [drdLoading, setDrdLoading] = useState(false);
+  const [drdError, setDrdError] = useState<string | null>(null);
+  const [selectedDrdReportId, setSelectedDrdReportId] = useState<string | null>(null);
+
+  // Lazy-load the DRD report list only once the tab is actually opened.
+  useEffect(() => {
+    if (!drdReportFlagOn || activeTab !== 'drd-reports') return;
+    let cancelled = false;
+    setDrdLoading(true);
+    setDrdError(null);
+    Api.getAssessmentReports(undefined)
+      .then((reports: DrdReportRow[]) => {
+        if (!cancelled) setDrdReports(Array.isArray(reports) ? reports : []);
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) {
+          setDrdError(e instanceof Error ? e.message : t('audit.failedToLoadPrograms'));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setDrdLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [drdReportFlagOn, activeTab, t]);
 
   // Load the first page (resets the list). Used on mount, after mutations, and
   // whenever the server-side search/status filter changes.
@@ -573,9 +624,126 @@ export const AuditsHub: React.FC = () => {
         label: t('audit.auditPrograms'),
         icon: <ShieldCheck className="h-4 w-4" />,
       },
+      // DRD Audit Report engine entry (audyt 2026-07-26, flag-gated, default
+      // OFF): this tab doesn't exist in the array at all when the flag is
+      // off, so the hub is byte-identical to before for every user until
+      // Piotr accepts the visual.
+      ...(drdReportFlagOn
+        ? [
+            {
+              id: 'drd-reports' as ModuleTab,
+              label: t('audit.drdReports', 'Raporty DRD'),
+              icon: <FileText className="h-4 w-4" />,
+            },
+          ]
+        : []),
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isPolish, drdReportFlagOn]
+  );
+
+  // DRD Reports tab (flag-gated, see drdReportFlagOn above): thin StandardTable
+  // over the org's assessment reports (GET /api/assessment-reports, already
+  // consumed elsewhere by AssessmentHub via Api.getAssessmentReports). "Open"
+  // navigates to the flag-gated DRDAuditReportView route.
+  const drdColumns = useMemo<StandardTableColumn[]>(
+    () => [
+      {
+        id: 'name',
+        label: t('audit.program'),
+        width: '260px',
+        render: (row: DrdReportRow) => (
+          <span className="truncate text-sm font-semibold text-c-text block">{row.name}</span>
+        ),
+      },
+      {
+        id: 'assessmentName',
+        label: t('audit.drdSourceAssessment', 'Assessment'),
+        width: '220px',
+        render: (row: DrdReportRow) => (
+          <span className="line-clamp-1 text-sm text-c-text-muted">
+            {row.assessmentName || '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        label: t('common.status', 'Status'),
+        width: '140px',
+        render: (row: DrdReportRow) => <EntityStatusChip status={row.status} />,
+      },
+      {
+        id: 'updatedAt',
+        label: t('common.updated', 'Updated'),
+        width: '130px',
+        sortable: true,
+        sortAccessor: (row: Record<string, unknown>) => {
+          const r = row as unknown as DrdReportRow;
+          return r.updatedAt ? new Date(r.updatedAt).getTime() : 0;
+        },
+        render: (row: Record<string, unknown>) => {
+          const r = row as unknown as DrdReportRow;
+          return r.updatedAt ? (
+            <span className="text-[11px] text-c-text-muted">
+              {new Date(r.updatedAt).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </span>
+          ) : (
+            <span className="text-c-text-muted">—</span>
+          );
+        },
+      },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [isPolish]
+  );
+
+  const openDrdReport = useCallback(
+    (id: string) => navigate(`/audit-programs/drd-report/${encodeURIComponent(id)}`),
+    [navigate]
+  );
+
+  const buildDrdRowMenu = useCallback(
+    (row: DrdReportRow): StandardRowMenu => ({
+      primary: [
+        {
+          id: 'open',
+          label: t('common.open', 'Open'),
+          icon: ExternalLink,
+          onClick: () => openDrdReport(row.id),
+        },
+      ],
+      universalHandlers: {
+        preview: () => setSelectedDrdReportId(row.id),
+      },
+    }),
+    [t, openDrdReport]
+  );
+
+  const selectedDrdReport: DrdReportRow | null = selectedDrdReportId
+    ? (drdReports.find((r) => r.id === selectedDrdReportId) ?? null)
+    : null;
+
+  const drdPreviewActions: StandardPreviewActions | undefined = useMemo(
+    () =>
+      selectedDrdReport
+        ? {
+            informational: [
+              {
+                id: 'open',
+                variant: 'neutral',
+                label: t('common.open', 'Open'),
+                icon: ExternalLink,
+                shortcut: 'O',
+                onClick: () => openDrdReport(selectedDrdReport.id),
+              },
+            ],
+          }
+        : undefined,
+    [selectedDrdReport, t, openDrdReport]
   );
 
   // Status filters drive the SERVER-SIDE status param (L-02): ModuleNavBar renders
@@ -596,8 +764,8 @@ export const AuditsHub: React.FC = () => {
       <ModuleHub
         persistViewModeKey="audits_hub"
         tabs={tabs}
-        activeTab={'list' as ModuleTab}
-        onTabChange={() => {}}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setQuery}
@@ -629,29 +797,97 @@ export const AuditsHub: React.FC = () => {
         }
       >
         <div className="mx-auto max-w-6xl px-6 py-6">
-          {error && (
-            <div className="mb-4 flex items-start gap-3 rounded-xl border border-danger-200 bg-danger-50 p-4 dark:border-danger-500/20 dark:bg-danger-500/10">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-danger-600 dark:text-danger-400" />
-              <div className="flex-1">
-                <p className="text-sm text-danger-800 dark:text-danger-300">{error}</p>
-              </div>
-              <button
-                onClick={load}
-                className="flex items-center gap-1.5 rounded-lg border border-danger-200 bg-c-surface px-3 py-1.5 text-xs font-medium text-danger-700 transition-colors hover:bg-danger-50 dark:border-danger-500/30 dark:bg-transparent dark:text-danger-300 dark:hover:bg-danger-500/10"
-              >
-                <RefreshCw className="h-3 w-3" />
-                {t('common.retry', 'Retry')}
-              </button>
-            </div>
-          )}
-
-          {loading ? (
-            <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface py-12 text-sm text-c-text-muted">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {t('audit.loading')}
-            </div>
+          {activeTab === 'drd-reports' ? (
+            <>
+              {drdError && (
+                <div className="mb-4 flex items-start gap-3 rounded-xl border border-danger-200 bg-danger-50 p-4 dark:border-danger-500/20 dark:bg-danger-500/10">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-danger-600 dark:text-danger-400" />
+                  <div className="flex-1">
+                    <p className="text-sm text-danger-800 dark:text-danger-300">{drdError}</p>
+                  </div>
+                </div>
+              )}
+              {drdLoading ? (
+                <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface py-12 text-sm text-c-text-muted">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t('audit.loading')}
+                </div>
+              ) : (
+                <div className="h-[calc(100vh-260px)] min-h-[420px] flex overflow-hidden rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
+                  <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+                    <StandardTable
+                      columns={drdColumns}
+                      data={drdReports as unknown as Array<Record<string, unknown> & { id: string }>}
+                      selectedRowId={selectedDrdReportId}
+                      onRowClick={(row) =>
+                        setSelectedDrdReportId(String((row as unknown as DrdReportRow).id))
+                      }
+                      rowDescription={() => null}
+                      defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+                      persistKey="audits.drdReports.list"
+                      empty={{
+                        icon: FileText,
+                        title: t('audit.noDrdReportsYet', 'No DRD reports yet'),
+                      }}
+                      rowMenu={(row) => buildDrdRowMenu(row as unknown as DrdReportRow)}
+                    />
+                  </div>
+                  {selectedDrdReport ? (
+                    <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+                      <StandardPreview
+                        title={selectedDrdReport.name || t('audit.drdReports', 'Raporty DRD')}
+                        onClose={() => setSelectedDrdReportId(null)}
+                        onOpenFull={() => openDrdReport(selectedDrdReport.id)}
+                        meta={{
+                          pills: [
+                            {
+                              label: selectedDrdReport.status,
+                              tone: statusChipTone(selectedDrdReport.status),
+                            },
+                          ],
+                        }}
+                        details={{
+                          text: [
+                            `${t('audit.drdSourceAssessment', 'Assessment')}: ${selectedDrdReport.assessmentName || '—'}`,
+                          ].join('\n'),
+                        }}
+                        ai={{
+                          hints: [t('audit.aiHintSummarize'), t('audit.aiHintNextSteps')],
+                          disabled: true,
+                          disabledTooltip: t('common.comingSoon', 'Coming soon'),
+                        }}
+                        actions={drdPreviewActions}
+                      />
+                    </aside>
+                  ) : null}
+                </div>
+              )}
+            </>
           ) : (
             <>
+              {error && (
+                <div className="mb-4 flex items-start gap-3 rounded-xl border border-danger-200 bg-danger-50 p-4 dark:border-danger-500/20 dark:bg-danger-500/10">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-danger-600 dark:text-danger-400" />
+                  <div className="flex-1">
+                    <p className="text-sm text-danger-800 dark:text-danger-300">{error}</p>
+                  </div>
+                  <button
+                    onClick={load}
+                    className="flex items-center gap-1.5 rounded-lg border border-danger-200 bg-c-surface px-3 py-1.5 text-xs font-medium text-danger-700 transition-colors hover:bg-danger-50 dark:border-danger-500/30 dark:bg-transparent dark:text-danger-300 dark:hover:bg-danger-500/10"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    {t('common.retry', 'Retry')}
+                  </button>
+                </div>
+              )}
+
+              {loading ? (
+                <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface py-12 text-sm text-c-text-muted">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t('audit.loading')}
+                </div>
+              ) : (
+                <>
               {/* Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7):
                   StandardTable + StandardPreview, 1:1 with the Assessment
                   'list' / Results KPI catalog adopters. Single click selects a
@@ -781,6 +1017,8 @@ export const AuditsHub: React.FC = () => {
                   </span>
                 </div>
               )}
+            </>
+          )}
             </>
           )}
         </div>

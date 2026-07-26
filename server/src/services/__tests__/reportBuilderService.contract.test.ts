@@ -98,6 +98,93 @@ describe('reportBuilderService — contract tests', () => {
       expect(result).toHaveProperty('sections');
       expect(result.report.title).toBe('Test Report');
     });
+
+    // R1 Library „Użyj wzorca" (raport, 2026-07-26) — PRODUCTION entry point
+    // proof: `POST /report-builder` (the route both `NewAssessmentReportModal`
+    // and the new Library create flow call) with a `templateId` that came from
+    // `POST /report-builder/templates/resolve` (canonical id, NOT the
+    // Library's index id) must produce a report whose sections come FROM the
+    // template's `sections_json` — not an empty/no-template draft. This is the
+    // exact bug the audit found downstream of `/wordy`: a template silently
+    // never being applied. Asserting only "has a sections array" (as the test
+    // above does) would pass even if sections were empty; this test pins the
+    // actual content.
+    it('creates report sections FAITHFULLY from the resolved template sections_json (R1 Library "Użyj wzorca")', async () => {
+      const templateRow = {
+        id: 'rbt-canonical-42',
+        name: 'DRD Assessment Report',
+        source_type: 'ASSESSMENT',
+        report_type: 'ASSESSMENT_DRD',
+        sections_json: JSON.stringify([
+          {
+            key: 'exec_summary',
+            type: 'narrative',
+            title: 'Podsumowanie zarządcze',
+            required: true,
+            order: 0,
+          },
+          { key: 'findings', type: 'narrative', title: 'Ustalenia', required: true, order: 1 },
+        ]),
+        is_active: 1,
+      };
+
+      const approvedAssessmentRow = {
+        id: 'assessment-1',
+        name: 'DRD Assessment — Acme Corp',
+        assessment_type: 'DRD',
+        status: 'APPROVED',
+        organization_id: 'org-1',
+        answers_json: '{}',
+        score_summary: '{}',
+        context_snapshot: '{}',
+        approved_at: '2026-07-20T00:00:00.000Z',
+        created_by: 'user-1',
+      };
+
+      mockDb.get.mockImplementation((_sql: string, _params: unknown[], cb: DbCallback<unknown>) => {
+        if (String(_sql).includes('report_builder_templates')) {
+          cb(null, templateRow);
+        } else if (String(_sql).includes('FROM assessments')) {
+          cb(null, approvedAssessmentRow);
+        } else {
+          cb(null, null);
+        }
+      });
+      mockDb.all.mockImplementation(
+        (_sql: string, _params: unknown[], cb: DbCallback<unknown[]>) => {
+          cb(null, []);
+        }
+      );
+      mockDb.run.mockImplementation(function (
+        this: any,
+        _sql: string,
+        _params: unknown[],
+        cb: any
+      ) {
+        if (typeof cb === 'function') cb.call({ lastID: 1, changes: 1 }, null);
+      });
+
+      const result = await createReport({
+        organizationId: 'org-1',
+        createdBy: 'user-1',
+        sourceType: 'ASSESSMENT',
+        sourceId: 'assessment-1',
+        title: 'Report from Library template',
+        // A canonical id, as returned by `resolveDocumentTemplateForCreation`
+        // via `POST /report-builder/templates/resolve` — never the Library's
+        // artifact-index id.
+        templateId: 'rbt-canonical-42',
+      });
+
+      expect(result.report.templateId).toBe('rbt-canonical-42');
+      expect(result.sections).toHaveLength(2);
+      expect(result.sections.map((s) => s.sectionKey)).toEqual(['exec_summary', 'findings']);
+      expect(result.sections.map((s) => s.title)).toEqual([
+        'Podsumowanie zarządcze',
+        'Ustalenia',
+      ]);
+      expect(result.sections.every((s) => s.required === true)).toBe(true);
+    });
   });
 
   describe('listBlockTypes', () => {
