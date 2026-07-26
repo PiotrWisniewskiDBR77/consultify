@@ -1306,7 +1306,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         {documentStudioAvailable ? (
           <button
             type="button"
-            onClick={() => navigate('/document-studio')}
+            onClick={() => navigate('/document-studio?entry=ai')}
             className={`${getMenu3AiButtonClass(false)} !border-sky-300/60 !bg-sky-500/10 !text-sky-800 dark:!border-sky-400/30 dark:!bg-sky-500/20 dark:!text-sky-200`}
             title={t('rap.actions.newDocumentStudio', 'New AI document (Document Studio)')}
           >
