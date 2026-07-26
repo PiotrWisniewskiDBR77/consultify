@@ -28,6 +28,11 @@ import {
   replyToDeckComment,
   setDeckCommentResolved,
 } from '../services/deckCommentsService.js';
+import {
+  isTemplateResolveError,
+  resolvePresentationTemplateForCreation,
+  type TemplateResolveErrorCode,
+} from '../services/materials/creationIntent.js';
 import { send as sendNotification } from '../services/notificationService.js';
 import { uploadMedia as uploadOrganizationMedia } from '../services/organizationMediaService.js';
 import { OrgPoliciesError, requireNoLegalHold } from '../services/OrgPoliciesService.js';
@@ -219,6 +224,17 @@ function getOrgId(req: any): string {
 function getUserId(req: any): string {
   return req.user?.id || req.userId || 'system';
 }
+
+// R11 deck slice (2026-07-26) — same code→HTTP mapping as
+// document-studio.routes.ts's TEMPLATE_RESOLVE_STATUS (kept as its own const
+// here since the two routers don't share a common base module).
+const TEMPLATE_RESOLVE_STATUS: Record<TemplateResolveErrorCode, number> = {
+  TEMPLATE_NOT_INDEXED: 404,
+  TEMPLATE_ORPHANED: 404,
+  TEMPLATE_FORBIDDEN: 403,
+  TEMPLATE_DEPRECATED: 409,
+  TEMPLATE_FORMAT_UNSUPPORTED: 422,
+};
 
 function ensurePresentationCapability(
   req: any,
@@ -946,6 +962,72 @@ router.get(
   })
 );
 
+/**
+ * R11 deck slice (2026-07-26) — SERVER-SIDE template resolution for
+ * "Użyj wzorca" on a PRESENTATION. Mirrors
+ * `POST /document-studio/templates/resolve` 1:1 (see that route's doc
+ * comment for the full rationale): the Template Library index only ever
+ * hands the client an `artifactIndexId`; the canonical
+ * `presentation_templates.id` + a fresh read of `outline_json` are resolved
+ * HERE, never trusted from the client.
+ *
+ * The resolved `outlineBlueprint` is deliberately NOT returned — the client
+ * has no use for it, and `POST /presentations/decks/from-template` (below)
+ * re-resolves fresh at creation time instead of trusting this snapshot.
+ *
+ * Body: { templateArtifactId: string }
+ * Returns 200: { template: { canonicalTemplateId, originRuntime, format,
+ *                            name, scope, status, source, legacy, slideCount } }
+ * Errors: 400 templateArtifactId_required · 401 Unauthorized
+ *         404 TEMPLATE_NOT_INDEXED | TEMPLATE_ORPHANED
+ *         403 TEMPLATE_FORBIDDEN · 409 TEMPLATE_DEPRECATED
+ *         422 TEMPLATE_FORMAT_UNSUPPORTED
+ */
+router.post(
+  '/templates/resolve',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const templateArtifactId = String(req.body?.templateArtifactId || '').trim();
+    if (!templateArtifactId) {
+      res.status(400).json({ error: 'templateArtifactId_required' });
+      return;
+    }
+
+    try {
+      const resolved = await resolvePresentationTemplateForCreation(
+        { kind: 'library', templateArtifactId },
+        { organizationId: orgId }
+      );
+      res.json({
+        template: {
+          canonicalTemplateId: resolved.canonicalTemplateId,
+          originRuntime: resolved.originRuntime,
+          format: resolved.format,
+          name: resolved.name,
+          scope: resolved.scope,
+          status: resolved.status,
+          source: resolved.source,
+          legacy: resolved.legacy,
+          slideCount: resolved.outlineBlueprint.length,
+        },
+      });
+    } catch (err) {
+      if (isTemplateResolveError(err)) {
+        logger.info(
+          `[Presentations] template resolve rejected: ${err.code} (artifact ${templateArtifactId})`
+        );
+        res.status(TEMPLATE_RESOLVE_STATUS[err.code]).json({ error: err.code });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
 // ------------------------------------------------------------------
 // FALA B (2026-07-22): AI Template Architect for decks — mirrors the
 // Document Studio pattern (`POST /api/document-studio/templates/plan` ->
@@ -1649,6 +1731,152 @@ router.post(
       res
         .status(500)
         .json({ success: false, error: 'Failed to create deck', code: 'DECK_CREATE_FAILED' });
+    }
+  })
+);
+
+/**
+ * POST /api/presentations/decks/from-template
+ *
+ * R11 deck slice (2026-07-26) — the deck counterpart of the "Use template"
+ * fix already shipped for documents. Fixes the bug the R0 audit flagged as
+ * the most important functional gap for Materiały: "Użyj wzorca" for a
+ * PRESENTATION used to throw away the template's structure and hand only a
+ * text description to the AI chat pipeline as a prompt
+ * (`PrezentacjeView.tsx` read `originSummary.template.description` and
+ * called `startGeneration(desc, templateArtifactId)` — the outline never
+ * reached generation).
+ *
+ * This route skips the AI pipeline entirely for the template case (same
+ * shape of decision as the existing `POST /decks` "blank deck" route above —
+ * no AI needed when the structure is already fully known) and DETERMINISTICALLY
+ * copies `presentation_templates.outline_json` into `presentation_cards`,
+ * one card per outline item. `templateArtifactId` is the ONLY template
+ * pointer accepted from the client (Template Library index id); the
+ * canonical `presentation_templates` record is re-resolved and re-validated
+ * HERE via `resolvePresentationTemplateForCreation` — never trusted from a
+ * prior `/templates/resolve` response.
+ *
+ * Body: { templateArtifactId: string, title?: string }
+ * Returns 201: { success: true, data: { id, title, slideCount } } — same
+ * shape as `POST /decks` so the client can reuse its existing deck-created
+ * handling.
+ * Errors: 400 templateArtifactId_required
+ *         404 TEMPLATE_NOT_INDEXED | TEMPLATE_ORPHANED
+ *         403 TEMPLATE_FORBIDDEN · 409 TEMPLATE_DEPRECATED
+ *         422 TEMPLATE_FORMAT_UNSUPPORTED
+ */
+router.post(
+  '/decks/from-template',
+  requireAudit,
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const templateArtifactId = String(req.body?.templateArtifactId || '').trim();
+    if (!templateArtifactId) {
+      res.status(400).json({ success: false, error: 'templateArtifactId_required' });
+      return;
+    }
+    const requestedTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
+
+    let resolved;
+    try {
+      resolved = await resolvePresentationTemplateForCreation(
+        { kind: 'library', templateArtifactId },
+        { organizationId: orgId }
+      );
+    } catch (err) {
+      if (isTemplateResolveError(err)) {
+        logger.info(
+          `[Presentations] deck-from-template resolve rejected: ${err.code} (artifact ${templateArtifactId})`
+        );
+        res.status(TEMPLATE_RESOLVE_STATUS[err.code]).json({ error: err.code });
+        return;
+      }
+      throw err;
+    }
+
+    const title = requestedTitle || resolved.name || 'Presentation from template';
+    const outlineItems = resolved.outlineBlueprint as Array<Record<string, unknown>>;
+    const slides = outlineItems.map((item, index) => {
+      const intent = String(item?.intent || 'content');
+      const slideTitle = String(item?.title || item?.workingTitle || `Slide ${index + 1}`);
+      const keyMessage = item?.keyMessage ?? item?.key_message ?? null;
+      const blocks: Array<Record<string, unknown>> = [{ type: 'heading', content: slideTitle }];
+      if (typeof keyMessage === 'string' && keyMessage.trim()) {
+        blocks.push({ type: 'text', content: keyMessage.trim() });
+      }
+      return { type: intent, content: { title: slideTitle, intent, blocks } };
+    });
+    const slideCount = slides.length;
+
+    const deckId = uuidv4().replace(/-/g, '');
+    try {
+      await ensureDeckLineageSchema();
+      await dbRun(
+        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, created_at, updated_at)
+         VALUES (?, ?, ?, 'custom', 'modern', ?, 'draft', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [
+          deckId,
+          orgId,
+          title,
+          slideCount,
+          JSON.stringify({
+            source: 'template_library',
+            templateArtifactId,
+            canonicalTemplateId: resolved.canonicalTemplateId,
+          }),
+        ]
+      );
+
+      for (let i = 0; i < slides.length; i++) {
+        const slide = slides[i];
+        const cardId = uuidv4().replace(/-/g, '');
+        await dbRun(
+          `INSERT INTO presentation_cards (id, deck_id, card_index, intent, blocks_json, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          [cardId, deckId, i, slide.type, JSON.stringify(slide.content)]
+        );
+      }
+
+      await (req as any).emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'create',
+        resourceType: 'presentation_deck',
+        resourceId: deckId,
+        after: { title, slideCount, source: 'template_library', templateArtifactId },
+        metadata: { organizationId: orgId },
+      });
+
+      try {
+        await syncArtifactRegistryForDeck({
+          deckId,
+          organizationId: orgId,
+          userId,
+          title: String(title),
+          slideCount,
+          presentationMode: 'briefing',
+          status: 'draft',
+          source: 'template_library',
+        });
+      } catch (artifactErr: any) {
+        await dbRun(`DELETE FROM presentation_cards WHERE deck_id = ?`, [deckId]);
+        await dbRun(`DELETE FROM presentation_decks WHERE id = ? AND organization_id = ?`, [
+          deckId,
+          orgId,
+        ]);
+        throw artifactErr;
+      }
+
+      res.status(201).json({ success: true, data: { id: deckId, title, slideCount } });
+    } catch (error: any) {
+      logger.error('[presentations] Failed to create deck from template:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to create deck from template',
+        code: 'DECK_FROM_TEMPLATE_FAILED',
+      });
     }
   })
 );
