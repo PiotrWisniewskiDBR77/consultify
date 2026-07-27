@@ -18,14 +18,18 @@ const WB_INTENT_PATTERNS: Array<{ pattern: RegExp; action: string }> = [
   { pattern: /\b(identify|extract)\s+(themes?|outcomes?|decisions?)\b/i, action: 'wb_add_theme' },
   // PL patterns
   {
-    pattern: /\b(stwórz|utwórz|zacznij|otwórz)\s+(burz[eę]|tablicę|warsztat|board)\b/i,
+    pattern:
+      /\b(stwórz|utwórz|zacznij|otwórz)\s+(burz[eę]|tablicę|warsztat|board)(?![a-ząćęłńóśźż0-9_])/i,
     action: 'wb_add_sticky',
   },
   {
     pattern: /\b(organizuj|grupuj|klasteryzuj)\s+(notatki|pomysły|board)\b/i,
     action: 'wb_add_cluster',
   },
-  { pattern: /\bdodaj\s+(notatk[ięa]|karteczk[ięa])\b/i, action: 'wb_add_sticky' },
+  {
+    pattern: /\bdodaj\s+(notatk[ięa]|karteczk[ięa])(?![a-ząćęłńóśźż0-9_])/i,
+    action: 'wb_add_sticky',
+  },
   { pattern: /\b(wyodrębnij|zidentyfikuj)\s+(temat|wynik|decyzj)\b/i, action: 'wb_add_theme' },
 ];
 

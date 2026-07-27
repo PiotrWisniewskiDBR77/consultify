@@ -37,15 +37,15 @@ const PF_INTENT_PATTERNS: Array<{ pattern: RegExp; action: string }> = [
     action: 'pf_create',
   },
   {
-    pattern: /\bdodaj\s+(krok|akcj[ęa]|zadanie|czynność|etap)\b/i,
+    pattern: /\bdodaj\s+(krok|akcj[ęa]|zadanie|czynność|etap)(?![a-ząćęłńóśźż0-9_])/i,
     action: 'pf_add_step',
   },
   {
-    pattern: /\bdodaj\s+(decyzj[ęa]|bramk[ęa]|warunek|rozgałęzienie)\b/i,
+    pattern: /\bdodaj\s+(decyzj[ęa]|bramk[ęa]|warunek|rozgałęzienie)(?![a-ząćęłńóśźż0-9_])/i,
     action: 'pf_add_decision',
   },
   {
-    pattern: /\bdodaj\s+(tor|ścieżk[ęa]|dział)\b/i,
+    pattern: /\bdodaj\s+(tor|ścieżk[ęa]|dział)(?![a-ząćęłńóśźż0-9_])/i,
     action: 'pf_add_lane',
   },
   {
