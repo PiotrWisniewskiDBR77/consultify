@@ -29069,7 +29069,7 @@
       },
       "pf": {
         "startEnd": "Start/End",
-        "task": "Task",
+        "task": "Action (process step)",
         "decision": "Decision",
         "lane": "Lane (adds a new responsibility lane)"
       },

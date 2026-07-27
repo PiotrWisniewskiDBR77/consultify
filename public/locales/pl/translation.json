@@ -30133,7 +30133,7 @@
       },
       "pf": {
         "startEnd": "Start/Koniec",
-        "task": "Zadanie",
+        "task": "Akcja (krok procesu)",
         "decision": "Decyzja",
         "lane": "Tor (nowy tor odpowiedzialności)"
       },
