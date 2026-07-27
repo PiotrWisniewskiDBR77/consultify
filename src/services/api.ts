@@ -4972,6 +4972,18 @@ export const Api = {
   },
 
   // --- Node Comments ---
+  /**
+   * Komplet komentarzy Idei (wątek całej Idei + wszystkie węzły) jednym
+   * zapytaniem — zasila zakres „Cała Idea" w prawym panelu (IdeaPanelComments).
+   */
+  getIdeaComments: async (ideaId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/comments`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to fetch idea comments');
+  },
+
   getNodeComments: async (ideaId: string, nodeId: string): Promise<any> => {
     const res = await fetch(
       `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/nodes/${encodeURIComponent(nodeId)}/comments`,
