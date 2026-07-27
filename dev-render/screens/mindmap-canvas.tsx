@@ -263,9 +263,29 @@ const MOCK_MAP = {
 zamontujMockKomentarzy('dev-render:mindmap-canvas:comments');
 
 Api.getMyIdea = (async () => MOCK_IDEA) as typeof Api.getMyIdea;
-Api.getMyIdeaMap = (async () => MOCK_MAP) as typeof Api.getMyIdeaMap;
-Api.syncMyIdeaMap = (async () => MOCK_MAP.map) as typeof Api.syncMyIdeaMap;
-Api.saveMyIdeaMap = (async () => MOCK_MAP.map) as typeof Api.saveMyIdeaMap;
+// ★ AUDYT RAILA (2026-07-27): mock MUSI byc STANOWY. Zamrozony
+// (`syncMyIdeaMap = async () => MOCK_MAP.map`) cofal kazdy dodany wezel przy
+// pierwszym sync, wiec kliknieta ikona raila wygladala na martwa mimo dzialania.
+// Wzorzec 1:1 z `whiteboard-workshop.tsx`.
+let currentMap: any = structuredClone(MOCK_MAP.map);
+function mergeMapPayload(payload: any) {
+  currentMap = {
+    ...currentMap,
+    nodes: Array.isArray(payload?.nodes) ? payload.nodes : currentMap.nodes,
+    edges: Array.isArray(payload?.edges) ? payload.edges : currentMap.edges,
+    extensions:
+      payload?.extensions && typeof payload.extensions === 'object'
+        ? { ...currentMap.extensions, ...payload.extensions }
+        : currentMap.extensions,
+  };
+  return currentMap;
+}
+(window as any).__RAIL_DEBUG_MAP__ = () => currentMap;
+Api.getMyIdeaMap = (async () => ({ map: currentMap })) as typeof Api.getMyIdeaMap;
+Api.syncMyIdeaMap = (async (_ideaId: string, payload: any) =>
+  mergeMapPayload(payload)) as typeof Api.syncMyIdeaMap;
+Api.saveMyIdeaMap = (async (_ideaId: string, payload: any) =>
+  mergeMapPayload(payload)) as typeof Api.saveMyIdeaMap;
 Api.updateMyIdea = (async () => MOCK_IDEA) as typeof Api.updateMyIdea;
 Api.getMyIdeaEdges = (async () => []) as typeof Api.getMyIdeaEdges;
 

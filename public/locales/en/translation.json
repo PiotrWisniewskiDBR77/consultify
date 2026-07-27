@@ -29105,14 +29105,14 @@
       },
       "pf": {
         "startEnd": "Start/End",
-        "task": "Task",
+        "task": "Action (process step)",
         "decision": "Decision",
-        "lane": "Lane"
+        "lane": "Lane (adds a new responsibility lane)"
       },
       "tbl": {
         "addRow": "Add row",
         "columns": "Columns",
-        "view": "View",
+        "view": "Gallery view — switches the table to cards",
         "filter": "Filter",
         "dashboard": "Dashboard"
       },

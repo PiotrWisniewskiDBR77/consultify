@@ -170,6 +170,8 @@ Api.getMyIdea = (async () => MOCK_IDEA) as typeof Api.getMyIdea;
 Api.getMyIdeaMap = (async () => ({ map: mapState })) as typeof Api.getMyIdeaMap;
 Api.syncMyIdeaMap = (async (_ideaId: string, payload: any) => persist(payload || {})) as typeof Api.syncMyIdeaMap;
 Api.saveMyIdeaMap = (async (_ideaId: string, payload: any) => persist(payload || {})) as typeof Api.saveMyIdeaMap;
+// Alias zgodnosci dla audytu raila — ten sam stan, druga nazwa.
+(window as unknown as { __RAIL_DEBUG_MAP__?: () => unknown }).__RAIL_DEBUG_MAP__ = () => mapState;
 Api.updateMyIdea = (async () => MOCK_IDEA) as typeof Api.updateMyIdea;
 Api.getMyIdeaEdges = (async () => []) as typeof Api.getMyIdeaEdges;
 
