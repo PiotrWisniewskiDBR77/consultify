@@ -743,6 +743,73 @@ export function reviseTemplateStructure(
   return next;
 }
 
+export interface UpdateTemplateContentParams {
+  templateId: string;
+  organizationId: string;
+  userId: string;
+  name?: string;
+  notes?: string;
+  sections?: TemplateSectionBlueprint[];
+}
+
+/**
+ * Direct author-owned content edit (fala sprzątania 1b, 2026-07-27) — the
+ * Template Library "Biblioteka" CRUD path
+ * (`server/src/services/deliverableTemplateService.ts` PUT
+ * `/api/deliverables/templates/:id`), NOT the AI Template Architect
+ * governance flow. `reviseTemplateStructure` above is deliberately
+ * draft-only — it protects the drafted-then-human-reviewed Architect
+ * lifecycle. This path is for templates a user authored directly
+ * end-to-end via the shared Template Library form and owns outright, where
+ * there is no separate "draft vs. approved" review step to protect —
+ * mirrors the always-editable behaviour the legacy `report_builder_templates`
+ * rows had (no approval concept at all). Allowed on `draft` OR `approved`
+ * templates; `deprecated` templates stay immutable (create a new draft
+ * instead, same rule as `reviseTemplateStructure`).
+ */
+export function updateTemplateContent(params: UpdateTemplateContentParams): DocumentTemplate {
+  if (!params.organizationId) throw new Error('organizationId is required');
+  if (!params.userId) throw new Error('userId is required');
+  const template = getTemplate(params.templateId, params.organizationId);
+  if (!template) throw new Error('template_not_found');
+  const ownedByTenant = registryStore.has(templateKey(params.organizationId, params.templateId));
+  if (!ownedByTenant) throw new Error('template_not_found');
+  if (template.status === 'deprecated') throw new Error('template_deprecated');
+
+  let sectionBlueprint = template.sectionBlueprint;
+  if (params.sections !== undefined) {
+    if (!Array.isArray(params.sections) || params.sections.length === 0) {
+      throw new Error('template_sections_required');
+    }
+    if (params.sections.length > MAX_TEMPLATE_SECTIONS) {
+      throw new Error('template_sections_too_many');
+    }
+    sectionBlueprint = params.sections.map(sanitizeAuthoredSection);
+  }
+
+  const now = nowIso();
+  const trimmedName = params.name?.trim();
+  const next: DocumentTemplate = {
+    ...template,
+    name: trimmedName || template.name,
+    notes: params.notes !== undefined ? params.notes.trim() || undefined : template.notes,
+    sectionBlueprint,
+    updatedAt: now,
+  };
+  registryStore.set(templateKey(params.organizationId, template.templateId), next);
+  void persistTemplate(next).catch(() => undefined);
+  pushAudit({
+    auditId: makeId('doc-template-audit'),
+    templateId: template.templateId,
+    organizationId: params.organizationId,
+    action: 'template_updated',
+    actorId: params.userId,
+    occurredAt: now,
+    details: { source: 'template_library_content_edit' },
+  });
+  return next;
+}
+
 export function listTemplateAuditEntries(
   templateId: string,
   organizationId: string
