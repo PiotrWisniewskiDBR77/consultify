@@ -1181,10 +1181,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           const updated = next.map((n: Node) => {
             const posChange = posChanges.find((c: NodeChange) => (c as any).id === n.id);
             if (!posChange) return n;
-            const laneIdx = Math.max(
-              0,
-              Math.min(lanes.length - 1, Math.floor(n.position.y / LANE_HEIGHT))
-            );
+            // B2 2026-07-27: `Math.floor(y / LANE_HEIGHT)` assumed every band is
+            // exactly LANE_HEIGHT tall, so a collapsed (28px) or resized lane
+            // made the drop land in a different lane than the one the user aimed
+            // at. Now that the bands are painted where they really are, that
+            // divergence would be plainly visible — use the same band walk the
+            // painting uses (identical result for default-height lanes).
+            const laneIdx = laneIndexAtY(lanes, n.position.y, LANE_HEIGHT);
             const targetLane = lanes[laneIdx];
             if (targetLane && n.data?.laneId !== targetLane.id) {
               return {
@@ -1212,10 +1215,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         if (dragging.length > 0) {
           const dragNode = next.find((n: Node) => n.id === (dragging[0] as any).id);
           if (dragNode) {
-            const laneIdx = Math.max(
-              0,
-              Math.min(lanes.length - 1, Math.floor(dragNode.position.y / LANE_HEIGHT))
-            );
+            // B2 2026-07-27: same band walk as the drop above — the live
+            // highlight must point at the band the drop will actually pick.
+            const laneIdx = laneIndexAtY(lanes, dragNode.position.y, LANE_HEIGHT);
             const targetLane = lanes[laneIdx];
             setDragOverLaneId(targetLane?.id || null);
           }
