@@ -894,7 +894,9 @@ export const DocumentStudioView: React.FC = () => {
             // pokazujemy pickera, żeby użytkownik nie zaczął wybierać ręcznie
             // wzorca, który za chwilę i tak zostanie ustawiony.
             <LoadingState
-              message={t('documentStudio.view.templateResolving', 'Sprawdzam wybrany wzorzec…')}
+              variant="spinner"
+              label={t('documentStudio.view.templateResolving', 'Sprawdzam wybrany wzorzec…')}
+              className="flex-1"
             />
           ) : templateResolveState === 'error' ? (
             // ★ Stan blokujący: wzorzec nie do rozwiązania (osierocony, brak

@@ -406,7 +406,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                 ? t('rap.outputs.kind.document', 'Document')
                 : row.kind === 'presentation'
                   ? t('rap.outputs.kind.presentation', 'Presentation')
-                  : sheetKindLabel(row.sheetOrigin, t, isPolish)}
+                  : sheetKindLabel(row.sheetOrigin, translate, isPolish)}
             </span>
           );
         },

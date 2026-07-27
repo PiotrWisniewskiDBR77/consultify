@@ -11,7 +11,6 @@
 import {
   Clock,
   FileSpreadsheet,
-  FileText,
   FolderOpen,
   Loader2,
   Plus,
@@ -60,12 +59,6 @@ const LANE_META: Record<
     accentText: string;
   }
 > = {
-  wordy: {
-    icon: FileText,
-    route: '/wordy',
-    accentBg: 'bg-c-accent-soft0',
-    accentText: 'text-c-accent',
-  },
   excele: {
     icon: FileSpreadsheet,
     // /excele (nie /tabele) — inaczej „Zacznij nowy"/szablon w odsłoniętym Excelu
@@ -126,11 +119,6 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
   const useTabeleLifecycleGrid = lane === 'tabele' && isTemplateLifecycleEnabled();
 
   const heroText = useMemo(() => {
-    if (lane === 'wordy')
-      return t(
-        'kimi.artifactHome.hero.wordy',
-        'Reports, briefs, analyses, articles and business documents'
-      );
     if (lane === 'excele')
       return t(
         'kimi.artifactHome.hero.excele',
@@ -148,7 +136,6 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
   }, [lane, t]);
 
   const laneLabel = useMemo(() => {
-    if (lane === 'wordy') return t('kimi.artifactHome.laneLabel.wordy', 'Documents');
     if (lane === 'excele') return t('kimi.artifactHome.laneLabel.excele', 'Excel');
     if (lane === 'tabele') return t('kimi.artifactHome.laneLabel.tabele', 'Table Studio');
     return t('kimi.artifactHome.laneLabel.deck', 'Presentations');
@@ -281,64 +268,6 @@ const BUILTIN_TEMPLATES: Record<
   KimiLane,
   Array<{ id: string; title: string; titlePl: string; desc: string; descPl: string }>
 > = {
-  wordy: [
-    {
-      id: 'bt-doc-weekly',
-      title: 'Weekly Execution Report',
-      titlePl: 'Tygodniowy raport wykonania',
-      desc: 'Sprint progress, KPIs, blockers',
-      descPl: 'Postęp sprintu, KPI, blokery',
-    },
-    {
-      id: 'bt-doc-steering',
-      title: 'Steering Committee Brief',
-      titlePl: 'Brief dla Komitetu Sterującego',
-      desc: 'Executive summary for decision-makers',
-      descPl: 'Podsumowanie dla decydentów',
-    },
-    {
-      id: 'bt-doc-benefits',
-      title: 'Benefits Tracking Report',
-      titlePl: 'Raport śledzenia korzyści',
-      desc: 'KPI realization and ROI tracking',
-      descPl: 'Realizacja KPI i śledzenie ROI',
-    },
-    {
-      id: 'bt-doc-portfolio',
-      title: 'Portfolio Overview',
-      titlePl: 'Przegląd portfela',
-      desc: 'Cross-initiative health dashboard',
-      descPl: 'Dashboard zdrowia inicjatyw',
-    },
-    {
-      id: 'bt-doc-kickoff',
-      title: 'Project Kickoff Document',
-      titlePl: 'Dokument startu projektu',
-      desc: 'Goals, scope, team, timeline',
-      descPl: 'Cele, zakres, zespół, harmonogram',
-    },
-    {
-      id: 'bt-doc-risk',
-      title: 'Risk Assessment Report',
-      titlePl: 'Raport oceny ryzyk',
-      desc: 'Risk identification and mitigation',
-      descPl: 'Identyfikacja i mitygacja ryzyk',
-    },
-    {
-      id: 'bt-doc-dd',
-      title: 'Due Diligence Report',
-      titlePl: 'Raport due diligence',
-      desc: 'Investment analysis and findings',
-      descPl: 'Analiza inwestycyjna i wnioski',
-    },
-    {
-      id: 'bt-doc-market',
-      title: 'Market Analysis Report',
-      titlePl: 'Raport analizy rynku',
-      desc: 'Market sizing, competitors, trends',
-      descPl: 'Wielkość rynku, konkurencja, trendy',
-    },
-  ],
   excele: [
     {
       id: 'bt-sheet-finmodel',
