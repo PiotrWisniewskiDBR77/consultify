@@ -96,10 +96,17 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         onClose();
       }
     };
-    window.addEventListener('mousedown', handler);
+    // CAPTURE PHASE IS LOAD-BEARING — nie zmieniaj na zwykły listener.
+    // d3-zoom (pod ReactFlow) w swoim `mousedowned` woła `nopropagation(event)`
+    // = `event.stopImmediatePropagation()` (d3-zoom/src/zoom.js:280) na
+    // `.react-flow__pane`. Każdy `mousedown` na pustym płótnie ginie więc, zanim
+    // dojdzie do `window` w fazie bąbelkowania — menu kontekstowe zostawało
+    // otwarte na zawsze (Piotr 07-27: „nie mogę go zamknąć"). Faza przechwytywania
+    // na `window` odpala się PRZED handlerem d3, więc jest nie do zatrzymania.
+    window.addEventListener('mousedown', handler, true);
     window.addEventListener('keydown', keyHandler);
     return () => {
-      window.removeEventListener('mousedown', handler);
+      window.removeEventListener('mousedown', handler, true);
       window.removeEventListener('keydown', keyHandler);
       if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
     };
