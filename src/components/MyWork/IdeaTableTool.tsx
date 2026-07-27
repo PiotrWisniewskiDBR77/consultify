@@ -165,6 +165,7 @@ import type {
 import { computeAggregation } from './table/tableTypes';
 import { TemplateGallery } from './table/TemplateGallery';
 import { TimelineView } from './table/TimelineView';
+import { buildDateColumnSeedPlan } from './table/ViewSetupEmptyState';
 // Domain hooks extracted from this file (Stage 1 refactor)
 import { useRollupComputation } from './table/useRollupComputation';
 import { useTableKeyboard } from './table/useTableKeyboard';
@@ -1247,6 +1248,67 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     },
     [columns, ideaId, locked, nodes, nodesUndo]
   );
+
+  // ── Puste stany widoków Timeline/Kalendarz: realne wyjścia ────────────────
+  // Bez tych trzech callbacków zakładka „Timeline" jest ślepą uliczką — umie
+  // tylko opisać, czego brakuje (incydent właściciela 2026-07-27: dodał
+  // kolumnę, nic się nie zmieniło, bo nie była typu „data").
+  const handleAddDateColumnForView = useCallback(() => {
+    if (locked) return;
+    const plan = buildDateColumnSeedPlan({
+      existingKeys: _cols.map((c) => c.key),
+      rowIds: nodes.map((n) => n.id),
+      t,
+    });
+
+    if (usePlatform) {
+      // Platform path: handleFieldChange uses setLocalNodes(curr => …), so a
+      // sequence of per-field calls composes correctly.
+      for (const col of plan.columns) {
+        platformIntegration.handleAddColumn(col as unknown as ColumnDef);
+      }
+      for (const v of plan.values) _fieldChange(v.rowId, v.key, v.value);
+    } else {
+      for (const col of plan.columns) handleAddColumn(col as unknown as ColumnDef);
+      // Legacy path: handleFieldChange closes over a STALE `nodes` snapshot, so
+      // a loop of calls would keep only the LAST write and the timeline would
+      // stay empty right after the user clicked the fix. One bulk push instead.
+      nodesUndo.push(
+        nodes.map((n) => {
+          const patch = plan.patchByRow[n.id];
+          return patch ? { ...n, data: { ...(n.data || {}), ...patch } } : n;
+        })
+      );
+    }
+
+    trackFunnelEvent('ideas_table_column_added', {
+      key: plan.columns[0]?.key,
+      type: 'date',
+      ideaId,
+    });
+  }, [
+    _cols,
+    _fieldChange,
+    handleAddColumn,
+    ideaId,
+    locked,
+    nodes,
+    nodesUndo,
+    platformIntegration,
+    t,
+    usePlatform,
+  ]);
+
+  const handleShowDateColumnForView = useCallback(
+    (columnKey: string) => {
+      (usePlatform ? platformIntegration.toggleColumn : toggleColumn)(columnKey);
+    },
+    [platformIntegration, toggleColumn, usePlatform]
+  );
+
+  const handleBackToTableView = useCallback(() => {
+    (usePlatform ? effectiveSetViewLayout : setViewLayout)('table');
+  }, [effectiveSetViewLayout, setViewLayout, usePlatform]);
 
   // ── "/" key for AI assistant ─────────────────────────────────────────────
   useEffect(() => {
@@ -2863,6 +2925,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   locked={locked}
                   onFieldChange={_fieldChange}
                   onNodeClick={(id) => setDetailNodeId(id)}
+                  onAddDateColumn={handleAddDateColumnForView}
+                  onShowDateColumn={handleShowDateColumnForView}
+                  onBackToTable={handleBackToTableView}
+                  onAddRow={_addRow}
                 />
               ) : _vl === 'sticky' ? (
                 <StickyNoteView
@@ -2899,6 +2965,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   onNodeClick={(id) => setDetailNodeId(id)}
                   onFieldChange={_fieldChange}
                   onAddEventAtDate={handleAddEventAtDate}
+                  onAddDateColumn={handleAddDateColumnForView}
+                  onBackToTable={handleBackToTableView}
                 />
               ) : _vl === 'grid' ? (
                 <GridView

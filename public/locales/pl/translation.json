@@ -27098,7 +27098,43 @@
       "clearCell": "Wyczyść komórkę",
       "cellCleared": "Komórka wyczyszczona",
       "copyFailed": "Nie udało się skopiować",
-      "pasteFailed": "Nie udało się odczytać schowka"
+      "pasteFailed": "Nie udało się odczytać schowka",
+      "viewSetup": {
+        "timeline": {
+          "noDateColumn": {
+            "headline": "Oś czasu potrzebuje kolumny z datą",
+            "description": "Ta tabela nie ma żadnej kolumny typu „data”, więc nie ma czego umieścić na osi czasu. Dodaj kolumnę — rozplanujemy istniejące wiersze od dziś, a paski przesuniesz później."
+          }
+        },
+        "calendar": {
+          "noDateColumn": {
+            "headline": "Kalendarz potrzebuje kolumny z datą",
+            "description": "Ta tabela nie ma żadnej kolumny typu „data”, więc żaden wiersz nie trafi na konkretny dzień. Dodaj kolumnę — rozplanujemy istniejące wiersze od dziś."
+          }
+        },
+        "hiddenDateColumn": {
+          "headline": "Kolumna z datą „{{column}}” jest ukryta",
+          "description": "Ten widok ją ukrywa, więc nie ma czego umieścić na osi. Pokaż kolumnę, aby wiersze wróciły."
+        },
+        "noDateValues": {
+          "headline": "Kolumna „{{column}}” nie ma wypełnionych dat",
+          "description": "Kolumna z datą istnieje, ale żaden wiersz nie ma w niej wartości — dlatego ten widok jest pusty. Wróć do tabeli i uzupełnij daty."
+        },
+        "noRows": {
+          "headline": "Ta tabela nie ma jeszcze wierszy",
+          "description": "Dodaj pierwszy wiersz w widoku Tabela i wróć tutaj."
+        },
+        "action": {
+          "addDateColumn": "Dodaj kolumnę daty",
+          "showColumn": "Pokaż kolumnę „{{column}}”",
+          "addRow": "Dodaj wiersz",
+          "backToTable": "Wróć do widoku Tabela"
+        },
+        "columnHeader": {
+          "start": "Data startu",
+          "end": "Data końca"
+        }
+      }
     },
     "mindmap": {
       "addNodeTab": "Dodaj węzeł (Tab)",
