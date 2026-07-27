@@ -115,6 +115,20 @@ export function branchColor(key: string, colorOverride?: string) {
   return { ...base, bg: `${colorOverride}20`, edge: colorOverride, glow: `${colorOverride}40` };
 }
 
+// ── Kadrowanie po dodaniu/usunięciu węzła ────────────────────────────────────
+// Dopełnienie wokół kadrowanej grupy (rodzic + rodzeństwo + nowy węzeł).
+const REVEAL_PADDING = 0.3;
+// Gdy nie znamy bieżącego zoomu (brak `getViewport`), 1.0 = 100% jest twardym
+// sufitem — nigdy 200% domyślnego `maxZoom` ReactFlow.
+const REVEAL_FALLBACK_MAX_ZOOM = 1;
+// ReactFlow zwraca `false` z `fitView`, dopóki KAŻDY kadrowany węzeł nie ma
+// zmierzonych wymiarów. Świeżo wstawiony węzeł bywa niezmierzony jeszcze
+// kilkaset ms — bez ponowień kadrowanie po cichu nie robiło NIC i nowy węzeł
+// potrafił powstać poza ekranem.
+const REVEAL_RETRIES = 6;
+const REVEAL_RETRY_MS = 120;
+const REVEAL_FIRST_TRY_MS = 150;
+
 export interface UseMindMapNodesOpts {
   nodes: Node[];
   edges: Edge[];
@@ -123,7 +137,13 @@ export interface UseMindMapNodesOpts {
   locked: boolean;
   isPolish: boolean;
   pushUndo: () => void;
-  fitView: (opts?: any) => void;
+  fitView: (opts?: any) => boolean | void;
+  /**
+   * Bieżący viewport. Używany WYŁĄCZNIE po to, żeby kadrowanie po dodaniu
+   * węzła nigdy nie PRZYBLIŻAŁO (sufit `maxZoom` = aktualny zoom). Opcjonalne —
+   * bez niego sufitem jest {@link REVEAL_FALLBACK_MAX_ZOOM}.
+   */
+  getViewport?: () => { x: number; y: number; zoom: number };
   remoteLockedNodeIds: Set<string>;
   autoLayout?: (nodes: Node[], edges: Edge[]) => Node[];
   partialLayoutSubtree?: (nodes: Node[], edges: Edge[], subtreeRootId: string) => Node[];
@@ -147,6 +167,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     isPolish,
     pushUndo,
     fitView,
+    getViewport,
     remoteLockedNodeIds,
     autoLayout,
     partialLayoutSubtree,
@@ -216,6 +237,63 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     [edges]
   );
 
+  /**
+   * Sufit zoomu dla kadrowania: NIGDY nie przybliżamy ponad to, co użytkownik
+   * już widzi. Bez tego ReactFlow dociąga zoom do `maxZoom` instancji
+   * (domyślnie 2.0), bo dopasowuje kadr do bardzo małego prostokąta.
+   */
+  const revealMaxZoom = useCallback((): number => {
+    try {
+      const zoom = getViewport?.().zoom;
+      if (typeof zoom === 'number' && Number.isFinite(zoom) && zoom > 0) return zoom;
+    } catch {
+      /* viewport niedostępny w trakcie demontażu płótna */
+    }
+    return REVEAL_FALLBACK_MAX_ZOOM;
+  }, [getViewport]);
+
+  /**
+   * Pokaż węzeł `nodeId` W KONTEKŚCIE — razem z rodzicem i całym rodzeństwem,
+   * bez przybliżania.
+   *
+   * PRZED: `fitView({ nodes: [{ id: newId }], padding: 0.5 })` kadrował na
+   * POJEDYNCZYM, świeżo utworzonym (pustym, małym) węźle. ReactFlow liczy zoom
+   * jako „zmieść ten prostokąt w oknie" i obcina go dopiero o `maxZoom`
+   * instancji — a mapa nie ustawia `maxZoom`, więc obowiązywało domyślne 2.0.
+   * Płótno skakało z ~45% na 200%: gigantyczny tekst, nachodzące węzły,
+   * zero kontekstu. Właściciel zgłosił to dwa razy („magiczne przybliżenia").
+   *
+   * Do tego kadrowanie i tak było zawodne: `fitView` zwraca `false`, dopóki
+   * ReactFlow nie zmierzy węzła — świeżo dodany bywa niezmierzony przez
+   * kilkaset ms, więc pojedyncza próba po 150 ms po cichu nie robiła NIC.
+   */
+  const revealNodeInContext = useCallback(
+    (nodeId: string, parentId?: string | null) => {
+      const ids = new Set<string>([nodeId]);
+      if (parentId) {
+        ids.add(parentId);
+        for (const siblingId of findChildrenIds(parentId)) ids.add(siblingId);
+      }
+      const fitNodes = Array.from(ids).map((id) => ({ id }) as any);
+      const maxZoom = revealMaxZoom();
+
+      const attempt = (retriesLeft: number) => {
+        let done = false;
+        try {
+          done = fitView({ nodes: fitNodes, padding: REVEAL_PADDING, duration: 300, maxZoom }) === true;
+        } catch {
+          // Płótno w trakcie demontażu — nie ponawiaj.
+          done = true;
+        }
+        if (!done && retriesLeft > 0) {
+          window.setTimeout(() => attempt(retriesLeft - 1), REVEAL_RETRY_MS);
+        }
+      };
+      window.setTimeout(() => attempt(REVEAL_RETRIES), REVEAL_FIRST_TRY_MS);
+    },
+    [findChildrenIds, fitView, revealMaxZoom]
+  );
+
   const getSubtreeNodeIds = useCallback(
     (nodeId: string): string[] => {
       const result: string[] = [nodeId];
@@ -245,7 +323,11 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     // Krok B: `label` opcjonalny — gdy podany (Teresa/formularz przez szynę
     // `idea-workspace-quick-action`, pole `detail.label`), staje się od razu
     // treścią węzła zamiast wejścia w pusty tryb edycji (patrz `initialLabel` niżej).
-    (anchorNodeId?: string, label?: string) => {
+    //
+    // `notice` podmienia domyślny komunikat „Dodano gałąź" — używa go awaryjna
+    // ścieżka `addSiblingNode` (węzeł bez rodzica), żeby użytkownik dostał
+    // JEDEN komunikat wyjaśniający, a nie generyczny obok wyjaśnienia.
+    (anchorNodeId?: string, label?: string, notice?: { key: string; duration?: number }) => {
       if (locked) return;
       if (nodes.length >= MAX_MINDMAP_NODES) {
         toast.error(i18n.t('mindmap.nodes.mapLimitReached', { limit: MAX_MINDMAP_NODES }), {
@@ -260,7 +342,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         nodes.find((node) => node.id === 'branch-options') ||
         nodes.find((node) => node.id.startsWith('branch-'));
       if (!selected) {
-        toast(i18n.t('mindmap.nodes.selectNode'));
+        toast(i18n.t('mindmap.nodes.selectNode'), { id: 'mm-op-cue' });
         return;
       }
       pushUndo();
@@ -344,21 +426,18 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         { op: 'add_edge', data: newEdge },
       ]);
 
-      toast.success(i18n.t('mindmap.nodes.childAdded'), { id: 'mm-op-cue', duration: 1500 });
+      toast.success(i18n.t(notice?.key ?? 'mindmap.nodes.childAdded'), {
+        id: 'mm-op-cue',
+        duration: notice?.duration ?? 1500,
+      });
 
-      setTimeout(() => {
-        try {
-          fitView({ nodes: [{ id: newId } as any], padding: 0.5, duration: 300 });
-        } catch {
-          /* */
-        }
-      }, 150);
+      revealNodeInContext(newId, selected.id);
     },
     [
       broadcast,
       edges,
       ensureCreatedNodePersists,
-      fitView,
+      revealNodeInContext,
       getNodeById,
       getSelectedNode,
       findChildrenIds,
@@ -383,12 +462,25 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       const selected =
         getNodeById(anchorNodeId) || getSelectedNode() || getNodeById(lastActiveNodeIdRef.current);
       if (!selected) {
-        toast(i18n.t('mindmap.nodes.selectNode'));
+        toast(i18n.t('mindmap.nodes.selectNode'), { id: 'mm-op-cue' });
         return;
       }
       const parentId = findParentId(selected.id);
       if (!parentId) {
-        toast(i18n.t('mindmap.nodes.cannotAddSiblingToRoot'));
+        // PRZED: enigmatyczne „Nie można dodać rodzeństwa do korzenia" i koniec —
+        // operacja po prostu nie działała. Trafia tu KAŻDY węzeł bez krawędzi
+        // strukturalnej do rodzica: węzeł centralny, ale też karta/notatka
+        // rzucona luzem na płótno (u właściciela: „Frame"), gdzie słowo
+        // „korzeń" nic nie znaczy.
+        //
+        // Rodzeństwo bez rodzica nie istnieje, więc robimy rzecz sensowną i
+        // oczywistą: dokładamy węzeł PODRZĘDNY do zaznaczonego, a wyjaśnienie
+        // wchodzi ZAMIAST generycznego „Dodano gałąź" (ten sam kanał
+        // `mm-op-cue`) — jeden komunikat, który mówi co się stało.
+        addChildNode(selected.id, undefined, {
+          key: 'mindmap.nodes.siblingFallbackToChild',
+          duration: 3500,
+        });
         return;
       }
       pushUndo();
@@ -463,21 +555,16 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         duration: 1500,
       });
 
-      setTimeout(() => {
-        try {
-          fitView({ nodes: [{ id: newId } as any], padding: 0.5, duration: 300 });
-        } catch {
-          /* */
-        }
-      }, 150);
+      revealNodeInContext(newId, parentId);
     },
     [
+      addChildNode,
       broadcast,
       edges,
       ensureCreatedNodePersists,
       findChildrenIds,
       findParentId,
-      fitView,
+      revealNodeInContext,
       getNodeById,
       getSelectedNode,
       isPolish,
@@ -601,9 +688,17 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       );
 
       if (anchor) {
+        // Ta sama pułapka co przy dodawaniu: kadr na POJEDYNCZYM węźle-kotwicy
+        // dociągał zoom do domyślnego `maxZoom` ReactFlow (2.0 = 200%). Po
+        // skasowaniu węzła płótno skakało w zbliżenie. Sufit = bieżący zoom.
         setTimeout(() => {
           try {
-            fitView({ nodes: [{ id: anchor } as any], padding: 0.5, duration: 300 });
+            fitView({
+              nodes: [{ id: anchor } as any],
+              padding: 0.5,
+              duration: 300,
+              maxZoom: revealMaxZoom(),
+            });
           } catch {
             /* */
           }
@@ -614,6 +709,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       broadcast,
       edges,
       fitView,
+      revealMaxZoom,
       getSubtreeNodeIds,
       isPolish,
       locked,

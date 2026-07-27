@@ -24898,6 +24898,7 @@
       "newIdea": "New idea",
       "childAdded": "Child added",
       "cannotAddSiblingToRoot": "Cannot add sibling to root",
+      "siblingFallbackToChild": "This node has no parent, so there is nothing to add a sibling to — added a child instead.",
       "siblingAdded": "Sibling added",
       "subtreeDeleteConfirm_one": "This will also delete {{count}} child node. Continue?",
       "subtreeDeleteConfirm_other": "This will also delete {{count}} child nodes. Continue?",
