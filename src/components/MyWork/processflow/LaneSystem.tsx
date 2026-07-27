@@ -1,6 +1,7 @@
 import { ArrowDownUp, ChevronDown, ChevronRight, Palette, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useViewport } from 'reactflow';
 
 import { LANE_HEIGHT } from './FlowNodeComponent';
 import { laneBandLayout } from './laneState';
@@ -46,10 +47,17 @@ export const DEFAULT_LANES: Lane[] = [
 interface LaneBackgroundProps {
   lane: Lane;
   idx: number;
-  /** Absolute band top (px), honouring collapse/resize of lanes above. */
+  /**
+   * Band top in CONTAINER px — already projected through the ReactFlow
+   * viewport (`flowTop * zoom + viewport.y`), so the band tracks the nodes.
+   */
   top: number;
-  /** Rendered band height (px). */
+  /** Rendered band height in CONTAINER px (`flowHeight * zoom`). */
   height: number;
+  /** Band height in FLOW px (pre-zoom) — the unit `onResize` persists. */
+  flowHeight: number;
+  /** Current canvas zoom, so pointer deltas convert back to flow px. */
+  zoom: number;
   locked: boolean;
   onRename: (id: string, next: string) => void;
   onDelete?: (id: string) => void;
@@ -70,6 +78,8 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
   lane,
   top,
   height,
+  flowHeight,
+  zoom,
   locked,
   onRename,
   onDelete,
@@ -101,14 +111,18 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
 
   // F5a A3: resize the band by dragging the bottom edge. Pointer maths only —
   // the committed height persists via onResize → lanes[].height.
+  // B2 2026-07-27: the pointer delta is SCREEN px, the persisted height is FLOW
+  // px — divide by zoom, otherwise resizing at 50%/150% zoom moves the edge at
+  // the wrong speed (and desyncs the band from the nodes it contains).
   const startResize = (ev: React.PointerEvent) => {
     if (locked || collapsed || !onResize) return;
     ev.preventDefault();
     ev.stopPropagation();
     const startY = ev.clientY;
-    const startH = height;
+    const startH = flowHeight;
+    const safeZoom = zoom > 0 ? zoom : 1;
     const onMove = (moveEv: PointerEvent) => {
-      const nextH = startH + (moveEv.clientY - startY);
+      const nextH = startH + (moveEv.clientY - startY) / safeZoom;
       onResize(lane.id, nextH);
     };
     const onUp = () => {
@@ -119,11 +133,18 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
     window.addEventListener('pointerup', onUp);
   };
 
+  // B2 2026-07-27: the header keeps a CONSTANT screen size (it lives outside the
+  // scaled band content) so lane names stay readable when the user zooms out —
+  // but a band thinner than the header row would just render a smear of
+  // overlapping labels, so below that we show the colour strip only.
+  const showHeader = height >= 14;
+
   return (
     <div
       className="absolute left-0 right-0 border-b border-c-border-subtle"
       style={{ top, height, background: `${lane.color}15` }}
     >
+      {showHeader && (
       <div className="absolute left-2 top-1 z-10 flex items-center gap-1">
         {onToggleCollapse && (
           <button
@@ -221,6 +242,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
           </div>
         )}
       </div>
+      )}
 
       {showColorPicker && !locked && (
         <div className="absolute left-2 top-5 z-20 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg p-1.5 shadow-lg flex flex-wrap gap-1 w-[120px]">
@@ -242,7 +264,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
       )}
 
       {/* F5a A3: bottom-edge resize handle (hidden when locked/collapsed). */}
-      {!locked && !collapsed && onResize && (
+      {!locked && !collapsed && onResize && showHeader && (
         <div
           onPointerDown={startResize}
           className="absolute left-0 right-0 bottom-0 h-1.5 cursor-ns-resize opacity-0 hover:opacity-100 transition-opacity bg-[var(--c-info)]/40"
@@ -269,6 +291,15 @@ export interface LaneSystemProps {
   /** F5a A3: commit a resized lane height (px). */
   onResize?: (laneId: string, height: number) => void;
   dragOverLaneId: string | null;
+  /**
+   * B2 2026-07-27: current ReactFlow viewport. Lane bands are laid out in FLOW
+   * coordinates (same space as `node.position.y`, see `laneBandLayout` /
+   * `laneIndexAtY`) but painted in a plain container that sits OUTSIDE the
+   * ReactFlow transform — so they must be projected by hand. Defaults to the
+   * identity viewport, which reproduces the pre-fix geometry (used by unit
+   * tests that render LaneSystem without a ReactFlowProvider).
+   */
+  viewport?: { x: number; y: number; zoom: number };
 }
 
 export const LaneSystem: React.FC<LaneSystemProps> = ({
@@ -283,19 +314,30 @@ export const LaneSystem: React.FC<LaneSystemProps> = ({
   onToggleCollapse,
   onResize,
   dragOverLaneId,
+  viewport,
 }) => {
   const layout = laneBandLayout(lanes, LANE_HEIGHT);
+  const zoom = viewport && viewport.zoom > 0 ? viewport.zoom : 1;
+  const offsetY = viewport ? viewport.y : 0;
+  /** Flow-space band → container-space band (vertical only: bands are strips). */
+  const project = (band: { top: number; height: number }) => ({
+    top: band.top * zoom + offsetY,
+    height: band.height * zoom,
+  });
   return (
     <>
       {lanes.map((lane, idx) => {
         const band = layout[lane.id] ?? { top: idx * LANE_HEIGHT, height: LANE_HEIGHT };
+        const screen = project(band);
         return (
           <LaneBackground
             key={lane.id}
             lane={lane}
             idx={idx}
-            top={band.top}
-            height={band.height}
+            top={screen.top}
+            height={screen.height}
+            flowHeight={band.height}
+            zoom={zoom}
             locked={locked}
             isPl={isPl}
             onRename={onRename}
@@ -315,15 +357,26 @@ export const LaneSystem: React.FC<LaneSystemProps> = ({
         (() => {
           const band = layout[dragOverLaneId];
           if (!band) return null;
+          const screen = project(band);
           return (
             <div
               className="absolute left-0 right-0 pointer-events-none border-2 border-c-focus rounded-lg"
-              style={{ top: band.top, height: band.height }}
+              style={{ top: screen.top, height: screen.height }}
             />
           );
         })()}
     </>
   );
+};
+
+/**
+ * B2 2026-07-27: viewport-aware wrapper. MUST be rendered inside
+ * `<ReactFlowProvider>`; it re-renders on pan/zoom and hands the live viewport
+ * to the (context-free, unit-testable) `LaneSystem`.
+ */
+export const LaneSystemViewportLayer: React.FC<LaneSystemProps> = (props) => {
+  const viewport = useViewport();
+  return <LaneSystem {...props} viewport={viewport} />;
 };
 
 export default LaneSystem;
