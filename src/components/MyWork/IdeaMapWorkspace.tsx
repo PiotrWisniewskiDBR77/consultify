@@ -1183,6 +1183,35 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     [isPolish, realId]
   );
 
+  /**
+   * B2 (2026-07-27) — JEDYNA poprawna reakcja na „szablon zastosowany".
+   *
+   * Bug: „Użyj szablonu"/„AI wypełni" zapisywały szablon na serwerze, ale
+   * kanwa zostawała stara — z perspektywy użytkownika „nic się nie dzieje".
+   * Przyczyna: samo `setMapRefreshToken` NIE wystarcza dla narzędzi pracujących
+   * w trybie `externalRuntime` (Mind Map, Process Flow). Ich `hydrate()` czyta
+   * NIE z API, tylko z współdzielonego `graphRuntime` („the parent's refresh()
+   * primes it" — IdeaProcessFlowTool.hydrate). Bez `refresh()` runtime nadal
+   * trzyma graf sprzed szablonu, więc:
+   *   • Process Flow re-hydratował się do STAREJ zawartości, a jego autosave
+   *     zapisywał ją z powrotem NA szablon (obserwowane: mapa wracała do
+   *     3 węzłów przy `templateGovernance.templateId` już ustawionym),
+   *   • Mind Map w ogóle nie dostawał `refreshToken`.
+   * Whiteboard/Tabela działały, bo idą legacy-ścieżką per-tool `getMyIdeaMap`.
+   *
+   * Kolejność jest istotna: NAJPIERW `refresh()` (runtime dostaje kanoniczny
+   * graf), DOPIERO POTEM bump tokenu (narzędzia re-hydratują się z już
+   * świeżego runtime).
+   */
+  const handleTemplateApplied = useCallback(async () => {
+    try {
+      await refreshRuntimeGraph();
+    } catch {
+      // best-effort — bump tokenu i tak wymusi ponowną hydratację narzędzia
+    }
+    setMapRefreshToken((v) => v + 1);
+  }, [refreshRuntimeGraph]);
+
   const handleApplyTemplate = useCallback(
     async (templateId: string) => {
       if (!realId) return;
@@ -1201,18 +1230,26 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           ideaTitle: title,
           seedText: seedText,
         });
-        setMapRefreshToken((v) => v + 1);
+        await handleTemplateApplied();
         toast.success(t('mindmap.templateApplied'), { duration: 1200 });
       } catch (error: any) {
         if (error?.status === 409) {
           toast(t('mindmap.changeConflictDetectedRefreshingMapFrom'), { icon: '⚠️' });
-          setMapRefreshToken((v) => v + 1);
+          void handleTemplateApplied();
         } else {
           toast.error(error?.message || t('mindmap.failedToApplyTemplate'));
         }
       }
     },
-    [activeTool, graphRuntime.graph.version, isPolish, realId, seedText, title]
+    [
+      activeTool,
+      graphRuntime.graph.version,
+      handleTemplateApplied,
+      isPolish,
+      realId,
+      seedText,
+      title,
+    ]
   );
 
   const orgContextRef = useRef<string | null>(null);
@@ -3671,6 +3708,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             <IdeaRecommendationMap
               ideaId={realId}
               ideaTitle={title || safeTitleFromSeed(seedText, isPolish)}
+              // B2: parytet z Tabelą/Process Flow/Whiteboard — bez tego Mind Map
+              // był JEDYNYM narzędziem bez sygnału „graf podmieniony z zewnątrz"
+              // (szablon, retry po błędzie), więc kanwa zostawała stara.
+              refreshToken={mapRefreshToken}
               onClose={() => setMapOpen(false)}
               onCenterEdit={() => handlePanelChange('tools')}
               preferredTool={activeTool}
@@ -3985,7 +4026,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           onClose={() => setTemplateGalleryOpen(false)}
           ideaId={realId}
           activeTool={activeTool}
-          onApplied={() => setMapRefreshToken((v) => v + 1)}
+          onApplied={handleTemplateApplied}
           baseVersion={graphRuntime.graph.version}
           existingNodeCount={graphNodes.length}
         />

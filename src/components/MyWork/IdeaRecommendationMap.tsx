@@ -1626,6 +1626,14 @@ type IdeaRecommendationMapProps = {
   onOpenChat?: (prompt?: string) => void;
   interactionMode?: MindMapInteractionMode;
   onInteractionModeChange?: (mode: MindMapInteractionMode) => void;
+  /**
+   * B2 (2026-07-27): bump = „graf zostal podmieniony z ZEWNATRZ" (szablon z
+   * galerii, retry po bledzie narzedzia). Parytet z IdeaTableTool /
+   * IdeaProcessFlowTool / IdeaWhiteboardTool, ktore ten prop mialy od dawna —
+   * Mind Map byl jedynym narzedziem bez tego sygnalu, wiec po zastosowaniu
+   * szablonu kanwa zostawala stara.
+   */
+  refreshToken?: number;
   externalRuntime?: {
     version: number;
     loading: boolean;
@@ -1679,6 +1687,7 @@ function MindMapInner({
   onOpenChat,
   interactionMode: externalInteractionMode = 'select',
   onInteractionModeChange,
+  refreshToken,
   externalRuntime,
 }: IdeaRecommendationMapProps) {
   const { t, i18n } = useTranslation();
@@ -2648,6 +2657,7 @@ function MindMapInner({
     onPreferredToolLoaded,
     onViewportReport,
     clearUndoHistory,
+    refreshToken,
     externalRuntime,
   });
 

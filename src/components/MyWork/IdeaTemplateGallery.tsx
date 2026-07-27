@@ -1907,7 +1907,7 @@ export async function applyIdeaTemplate(params: {
   seedText?: string;
 }): Promise<any> {
   const { ideaId, template, activeTool = template.tool, isPl, baseVersion } = params;
-  const result = await Api.syncMyIdeaMap(ideaId, {
+  const buildPayload = (version?: number) => ({
     nodes: template.nodes,
     edges: template.edges,
     preferredTool: template.tool,
@@ -1926,9 +1926,31 @@ export async function applyIdeaTemplate(params: {
         }),
       },
     },
-    ...(baseVersion != null ? { baseVersion } : {}),
-    reason: 'manual',
+    ...(version != null ? { baseVersion: version } : {}),
+    reason: 'manual' as const,
   });
+
+  // B2 (2026-07-27): SAMO-LECZENIE 409.
+  // `baseVersion` przychodzi z `graphRuntime.graph.version`, a ta wartość jest
+  // aktualizowana WYŁĄCZNIE w refresh()/flushGraph() — zwykły autosave (queueSync)
+  // podnosi wersję NA SERWERZE, ale nie w tym stanie. Więc po każdym autozapisie
+  // galeria wysyłała przeterminowaną wersję, a serwer odrzucał zapis 409
+  // (my-work.routes.ts: `baseVersion !== currentVersion` → 409). Dla użytkownika:
+  // „klikam Użyj szablonu i nic się nie dzieje" (mignięcie ostrzeżenia).
+  // Szablon świadomie NADPISUJE całą kanwę (użytkownik potwierdził w oknie
+  // „Zastąpić istniejące elementy?"), więc kolizja wersji nie jest tu sporem
+  // o cudzą treść — dociągamy aktualną wersję i ponawiamy DOKŁADNIE raz.
+  let result: any;
+  try {
+    result = await Api.syncMyIdeaMap(ideaId, buildPayload(baseVersion ?? undefined));
+  } catch (err: any) {
+    if (err?.status !== 409) throw err;
+    const serverVersion =
+      Number(err?.data?.currentVersion || err?.currentVersion || 0) ||
+      Number((await Api.getMyIdeaMap(ideaId).catch(() => null))?.map?.version || 0);
+    if (!serverVersion) throw err;
+    result = await Api.syncMyIdeaMap(ideaId, buildPayload(serverVersion));
+  }
 
   if (params.ideaTitle && template.nodes.some((n) => n.type === 'branch')) {
     try {
