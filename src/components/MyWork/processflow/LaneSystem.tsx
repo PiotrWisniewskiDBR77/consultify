@@ -1,7 +1,10 @@
 import { ArrowDownUp, ChevronDown, ChevronRight, Palette, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useViewport } from 'reactflow';
+// `useViewport` jest eksportowany jako default z podmodułu; barrel `reactflow`
+// nie przenosi tego do typów (TS2614). Repo ma już tę konwencję —
+// patrz `mindmap/LabeledEdge.tsx`, `processflow/FlowEdgeComponent.tsx`.
+import { useViewport } from '@reactflow/core';
 
 import { LANE_HEIGHT } from './FlowNodeComponent';
 import { laneBandLayout } from './laneState';

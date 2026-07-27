@@ -1229,7 +1229,10 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
     const plan = buildDateColumnSeedPlan({
       existingKeys: columns.map((c) => c.key),
       rowIds: processedRows.map((r) => r.id),
-      t,
+      // Adapter: `TFunction` i18nexta ma przeciążenia, których nie da się
+      // przypisać wprost do wąskiego `(key, fallback?) => string`.
+      // `IdeaTableTool` ma własny `t` o tym kształcie i dlatego nie wymaga adaptera.
+      t: (key: string, fallback?: string) => (fallback === undefined ? t(key) : t(key, fallback)),
     });
     for (const col of plan.columns) handleAddColumn(col as unknown as ColumnDef);
     for (const v of plan.values) handleFieldChange(v.rowId, v.key, v.value);
