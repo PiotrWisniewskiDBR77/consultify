@@ -24377,7 +24377,10 @@
     "generating": {
       "title": "Generating your document…",
       "planning": "Planning the outline…",
-      "progress": "Writing sections… {{done}} of {{total}} ready"
+      "progress": "Writing sections… {{done}} of {{total}} ready",
+      "stop": "Stop",
+      "streamFallbackNotice": "Live connection dropped — finishing in the background…",
+      "basedOn": "Based on:"
     },
     "blocks": {
       "noTableData": "No table data available",
