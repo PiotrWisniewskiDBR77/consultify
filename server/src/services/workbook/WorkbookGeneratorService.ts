@@ -456,6 +456,16 @@ export interface WorkbookGenerationParams {
   projectId?: string;
   researchContext?: string;
   language?: string;
+  /**
+   * N2 (2026-07-27/28, noc): resolved organization display name (from
+   * `documentOrgContextSourcePack.buildOrgContextSourcePack`, called by the
+   * route BEFORE this params object is built). Purely for the Info sheet
+   * (A0 layer, `addInfoSheet` in WorkbookBuilder.ts) — the actual facts
+   * (active projects/initiatives) travel via `researchContext`, this only
+   * makes the org visible on the workbook itself instead of a bare UUID.
+   * Optional — omitted/undefined is byte-identical to today's behaviour.
+   */
+  organizationName?: string;
 }
 
 class WorkbookGeneratorService {
@@ -570,7 +580,8 @@ class WorkbookGeneratorService {
   // =========================================================================
 
   async generate(params: WorkbookGenerationParams): Promise<WorkbookGenerationResult> {
-    const { prompt, userId, organizationId, projectId, researchContext, language } = params;
+    const { prompt, userId, organizationId, projectId, researchContext, language, organizationName } =
+      params;
     const id = uuidv4();
     const llmParams = { userId, organizationId, projectId };
     const pipelineLog: PipelinePhaseLog[] = [];
@@ -1092,9 +1103,12 @@ class WorkbookGeneratorService {
     try {
       buffer = await buildWorkbookBuffer(schema!, {
         // Consultant styling layer runs by default; surface provenance on the
-        // Info sheet (org name resolution is intentionally deferred — the UUID
-        // is not user-facing).
+        // Info sheet. N2 (2026-07-27/28): `organizationName` is now resolved by
+        // the route (documentOrgContextSourcePack reuse) BEFORE calling
+        // `generate` — no longer deferred, so the Info sheet shows the real
+        // organization instead of a bare UUID whenever it is available.
         meta: {
+          organizationName,
           source: 'Consultify — Intelligent Workbook Generator',
           generatedAt: new Date().toISOString().slice(0, 10),
         },
@@ -1158,6 +1172,8 @@ class WorkbookGeneratorService {
   async generateFromTemplate(input: {
     templateId: string;
     flatParams: Record<string, unknown>;
+    /** N2 — same Info-sheet-only purpose as `WorkbookGenerationParams.organizationName`. */
+    organizationName?: string;
   }): Promise<WorkbookGenerationResult> {
     const id = uuidv4();
     const pipelineLog: PipelinePhaseLog[] = [];
@@ -1202,6 +1218,7 @@ class WorkbookGeneratorService {
     try {
       buffer = await buildWorkbookBuffer(schema, {
         meta: {
+          organizationName: input.organizationName,
           source: 'Consultify — Intelligent Workbook Generator (template)',
           generatedAt: new Date().toISOString().slice(0, 10),
         },
