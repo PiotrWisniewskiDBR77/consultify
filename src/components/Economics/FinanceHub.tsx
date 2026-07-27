@@ -3441,20 +3441,20 @@ export const FinanceHub: React.FC = () => {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
-        openDocuments={openDocuments}
-        activeDocumentId={activeDocumentId}
-        onSelectDocument={(id) => {
+        openItems={openDocuments}
+        activeItemId={activeDocumentId}
+        onSelectItem={(id) => {
           setActiveDocumentId(id);
           const row = rowsForActiveTab.find((r) => r.id === id) || null;
           setActiveDocument(row);
         }}
-        onCloseDocument={handleCloseDocument}
+        onCloseItem={handleCloseDocument}
         onShowList={handleShowList}
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        availableViewModes={['table', 'grid']}
-        primaryCta={primaryCta}
+        viewModes={['table', 'grid']}
+        primaryCtaContent={primaryCta}
         commandRowContent={
           statementsBulkCommandRowContent ?? financeBulkCommandRowContent ?? commandRowContent
         }

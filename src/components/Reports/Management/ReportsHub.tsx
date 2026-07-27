@@ -995,23 +995,23 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
-        openDocuments={openDocuments}
-        activeDocumentId={activeDocumentId}
-        onSelectDocument={(id) => {
+        openItems={openDocuments}
+        activeItemId={activeDocumentId}
+        onSelectItem={(id) => {
           setActiveDocumentId(id);
           const report = reports.find((r) => r.id === id);
           if (report) {
             handleViewReport(report.id);
           }
         }}
-        onCloseDocument={handleCloseDocument}
+        onCloseItem={handleCloseDocument}
         onShowList={handleShowList}
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         onNewItem={handleNewReport}
         newItemLabel="New Report"
-        availableViewModes={['table']}
+        viewModes={['table']}
       >
         {renderContent()}
       </StandardModuleBar>

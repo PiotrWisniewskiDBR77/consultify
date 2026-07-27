@@ -830,10 +830,10 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
-        openDocuments={openDocuments}
-        activeDocumentId={activeDocumentId}
-        onSelectDocument={setActiveDocumentId}
-        onCloseDocument={handleCloseDocument}
+        openItems={openDocuments}
+        activeItemId={activeDocumentId}
+        onSelectItem={setActiveDocumentId}
+        onCloseItem={handleCloseDocument}
         onShowList={handleShowList}
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}

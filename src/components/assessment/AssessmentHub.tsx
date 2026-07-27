@@ -2346,17 +2346,17 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
-        openDocuments={openDocuments}
-        activeDocumentId={activeDocumentId}
-        onSelectDocument={setActiveDocumentId}
-        onCloseDocument={handleCloseDocument}
+        openItems={openDocuments}
+        activeItemId={activeDocumentId}
+        onSelectItem={setActiveDocumentId}
+        onCloseItem={handleCloseDocument}
         onShowList={handleShowList}
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         onNewItem={handleNewItem}
         newItemLabel={getNewItemLabel()}
-        rightControls={statusDropdownControl}
+        filterControls={statusDropdownControl}
         commandRowContent={hubCommandRowContent}
       >
         {/* min-h-0 flex-1 overflow-hidden: without this the 'list' tab's

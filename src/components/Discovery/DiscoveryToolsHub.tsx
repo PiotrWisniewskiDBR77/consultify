@@ -5067,18 +5067,18 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
         searchValue={searchQuery}
-        openDocuments={openDocuments}
-        activeDocumentId={activeDocumentId}
-        onSelectDocument={setActiveDocumentId}
-        onCloseDocument={handleCloseDocument}
+        openItems={openDocuments}
+        activeItemId={activeDocumentId}
+        onSelectItem={setActiveDocumentId}
+        onCloseItem={handleCloseDocument}
         onShowList={handleShowList}
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         commandRowContent={CommandRowContent}
         primaryCtaContent={PrimaryCta}
-        availableViewModes={activeViewModes}
-        rightControls={activeTab === 'library' ? null : StatusFilterDropdown}
+        viewModes={activeViewModes}
+        filterControls={activeTab === 'library' ? null : StatusFilterDropdown}
       >
         {renderContent()}
       </StandardModuleBar>

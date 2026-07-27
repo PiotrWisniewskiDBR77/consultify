@@ -463,15 +463,15 @@ export const FullROIView: React.FC = () => {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={() => {}}
-        openDocuments={[]}
-        activeDocumentId={null}
-        onSelectDocument={() => {}}
-        onCloseDocument={() => {}}
+        openItems={[]}
+        activeItemId={null}
+        onSelectItem={() => {}}
+        onCloseItem={() => {}}
         onShowList={() => setActiveTab('roi')}
         activeFilters={[]}
         onRemoveFilter={() => {}}
         onClearFilters={() => {}}
-        availableViewModes={['table']}
+        viewModes={['table']}
         primaryCtaContent={
           <Button
             variant="brand"

@@ -2049,10 +2049,10 @@ export const ResultsHub: React.FC = () => {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
-        openDocuments={openDocuments}
-        activeDocumentId={activeDocumentId}
-        onSelectDocument={setActiveDocumentId}
-        onCloseDocument={(id) => {
+        openItems={openDocuments}
+        activeItemId={activeDocumentId}
+        onSelectItem={setActiveDocumentId}
+        onCloseItem={(id) => {
           setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
           if (activeDocumentId === id) setActiveDocumentId(null);
         }}
@@ -2098,12 +2098,12 @@ export const ResultsHub: React.FC = () => {
                 ? t('results.roi.add', 'Record ROI')
                 : undefined
         }
-        availableViewModes={
+        viewModes={
           activeTab === 'results_kpi' && kpiWorkspaceMode === 'catalog'
             ? ['table', 'grid']
             : ['table']
         }
-        rightControls={rightControls}
+        filterControls={rightControls}
         commandRowContent={effectiveCommandRowContent}
       >
         {resultsSource === 'legacy' && (

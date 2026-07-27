@@ -5820,10 +5820,10 @@ Please return:
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
         onSearch={setSearchQuery}
-        openDocuments={isChromelessTab ? [] : openDocuments}
-        activeDocumentId={isChromelessTab ? null : activeDocumentId}
-        onSelectDocument={setActiveDocumentId}
-        onCloseDocument={handleCloseDocument}
+        openItems={isChromelessTab ? [] : openDocuments}
+        activeItemId={isChromelessTab ? null : activeDocumentId}
+        onSelectItem={setActiveDocumentId}
+        onCloseItem={handleCloseDocument}
         onShowList={handleShowList}
         activeFilters={
           isChromelessTab
@@ -5840,8 +5840,8 @@ Please return:
         newItemLabel={menuCta.newItemLabel}
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={setActiveStatusFilter}
-        rightControls={rightControls}
-        availableViewModes={availableViewModes}
+        filterControls={rightControls}
+        viewModes={availableViewModes}
         commandRowContent={
           activeTab === ('people_change' as ModuleTab)
             ? managerCommandRowContent

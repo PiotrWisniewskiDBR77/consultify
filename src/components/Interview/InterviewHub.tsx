@@ -9344,19 +9344,19 @@ Return ONLY the answer text (no markdown fences).`;
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
-        openDocuments={openDocuments}
-        activeDocumentId={activeDocumentId}
-        onSelectDocument={setActiveDocumentId}
-        onCloseDocument={handleCloseDocument}
+        openItems={openDocuments}
+        activeItemId={activeDocumentId}
+        onSelectItem={setActiveDocumentId}
+        onCloseItem={handleCloseDocument}
         onShowList={handleShowList}
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        rightControls={rightControls}
+        filterControls={rightControls}
         primaryCtaContent={primaryCta}
         commandRowContent={commandRowContent}
         forceCommandRow={hasBulkSelection}
-        availableViewModes={['table']}
+        viewModes={['table']}
         showTabCounts={false}
       >
         {/* D-03 — top-level numbered pipeline stepper (flag-gated, default OFF).

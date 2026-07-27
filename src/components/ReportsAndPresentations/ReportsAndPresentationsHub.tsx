@@ -1551,10 +1551,10 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
-        openDocuments={openDocuments}
-        activeDocumentId={activeDocumentId}
-        onSelectDocument={setActiveDocumentId}
-        onCloseDocument={handleCloseDocument}
+        openItems={openDocuments}
+        activeItemId={activeDocumentId}
+        onSelectItem={setActiveDocumentId}
+        onCloseItem={handleCloseDocument}
         onShowList={handleShowList}
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
@@ -1569,8 +1569,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         newItemLabel={ctaLabels[activeTab]}
         newItemTestId="outputs-new-btn"
         primaryCtaContent={templatesLibraryCta}
-        availableViewModes={['table', 'grid']}
-        rightControls={rightControls}
+        viewModes={['table', 'grid']}
+        filterControls={rightControls}
         commandRowContent={commandRowContent}
       >
         <div className="h-full min-h-0 overflow-hidden">{renderTabContent()}</div>

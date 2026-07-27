@@ -2503,10 +2503,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
-        openDocuments={openDocuments}
-        activeDocumentId={activeDocumentId}
-        onSelectDocument={setActiveDocumentId}
-        onCloseDocument={handleCloseDocument}
+        openItems={openDocuments}
+        activeItemId={activeDocumentId}
+        onSelectItem={setActiveDocumentId}
+        onCloseItem={handleCloseDocument}
         onShowList={handleShowList}
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
@@ -2527,7 +2527,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 onClick: () => setShowInitiativeWizard(true),
               }
         }
-        rightControls={rightControls}
+        filterControls={rightControls}
         commandRowContent={
           activeTab === 'analysis'
             ? analysisCommandRow
@@ -2535,7 +2535,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               ? bulkBarContent
               : commandRowContent
         }
-        availableViewModes={availableViewModes}
+        viewModes={availableViewModes}
       >
         <div className="flex h-full min-h-0 flex-col overflow-hidden">
           <div className="min-h-0 flex-1 overflow-hidden">{renderContent()}</div>
