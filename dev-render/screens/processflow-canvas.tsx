@@ -139,10 +139,37 @@ const MOCK_MAP = {
   },
 };
 
+// ── STANOWY mock (B0 2026-07-27) ────────────────────────────────────────────
+// Zamrozony mock (get zwracal wciaz ten sam MOCK_MAP, a sync/save go ignorowaly)
+// daje FALSZYWE bugi w kazdym scenariuszu z refetchem po mutacji: dodany wezel
+// „znika" po zapisie, bo serwer-atrapa oddaje stara wersje. Tutaj jedna
+// mutowalna zmienna modulu jest zrodlem prawdy: sync/save ja NADPISUJA
+// (podbijajac version), a get czyta ja SWIEZO przy kazdym wywolaniu.
+let mapState: { version: number; nodes: any[]; edges: any[]; extensions: any; preferredTool: string } =
+  JSON.parse(JSON.stringify(MOCK_MAP.map));
+
+function persist(payload: { nodes?: any[]; edges?: any[]; extensions?: any; preferredTool?: any }) {
+  mapState = {
+    ...mapState,
+    version: (mapState.version || 0) + 1,
+    nodes: Array.isArray(payload?.nodes) ? payload.nodes : mapState.nodes,
+    edges: Array.isArray(payload?.edges) ? payload.edges : mapState.edges,
+    extensions: payload?.extensions ?? mapState.extensions,
+    preferredTool: payload?.preferredTool ?? mapState.preferredTool,
+  };
+  return mapState;
+}
+
+// Okno diagnostyczne: `window.__PF_MOCK_MAP__()` zwraca to, co „serwer" ma
+// zapisane — pozwala odroznic „wezel nie powstal" od „wezel powstal, ale nie
+// dojechal do zapisu" bez zgadywania. Reload strony resetuje mapState (modul
+// wykonuje sie od nowa) — to celowe, harness ma startowac z czystej sceny.
+(window as unknown as { __PF_MOCK_MAP__?: () => unknown }).__PF_MOCK_MAP__ = () => mapState;
+
 Api.getMyIdea = (async () => MOCK_IDEA) as typeof Api.getMyIdea;
-Api.getMyIdeaMap = (async () => MOCK_MAP) as typeof Api.getMyIdeaMap;
-Api.syncMyIdeaMap = (async () => MOCK_MAP.map) as typeof Api.syncMyIdeaMap;
-Api.saveMyIdeaMap = (async () => MOCK_MAP.map) as typeof Api.saveMyIdeaMap;
+Api.getMyIdeaMap = (async () => ({ map: mapState })) as typeof Api.getMyIdeaMap;
+Api.syncMyIdeaMap = (async (_ideaId: string, payload: any) => persist(payload || {})) as typeof Api.syncMyIdeaMap;
+Api.saveMyIdeaMap = (async (_ideaId: string, payload: any) => persist(payload || {})) as typeof Api.saveMyIdeaMap;
 Api.updateMyIdea = (async () => MOCK_IDEA) as typeof Api.updateMyIdea;
 Api.getMyIdeaEdges = (async () => []) as typeof Api.getMyIdeaEdges;
 
