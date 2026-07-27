@@ -34,6 +34,9 @@ const ReportBuilderLibraryTemplateScreen = React.lazy(
   () => import('./screens/report-builder-library-template')
 );
 const AudytyDrdReportScreen = React.lazy(() => import('./screens/audyty-drd-report'));
+const DocumentStudioContextChipScreen = React.lazy(
+  () => import('./screens/document-studio-context-chip')
+);
 const DocumentStudioResumeErrorScreen = React.lazy(
   () => import('./screens/document-studio-resume-error')
 );
@@ -187,6 +190,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DOCUMENT STUDIO — nieudane wznowienie (P0.2): blokujący błąd PL zamiast intake. ?case=notfound|server',
     render: () => <DocumentStudioResumeErrorScreen />,
+  },
+  'document-studio-context-chip': {
+    label:
+      'DOCUMENT STUDIO — chip kontekstu organizacji (P0 2026-07-27): co zostanie automatycznie dołączone.',
+    render: () => <DocumentStudioContextChipScreen />,
   },
   'audyty-drd-report': {
     label:

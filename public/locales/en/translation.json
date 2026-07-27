@@ -23964,7 +23964,8 @@
       "generating": "Generating…",
       "planning": "Planning…",
       "submitTemplate": "Generate from template",
-      "submitPlan": "Plan document"
+      "submitPlan": "Plan document",
+      "contextChip": "Context: {{organizationName}}"
     },
     "outline": {
       "type": "Type",

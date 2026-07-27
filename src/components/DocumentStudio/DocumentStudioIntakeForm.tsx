@@ -7,11 +7,12 @@
  *   template; outline + formatting are hydrated server-side.
  */
 
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Button from '@/components/ui/primitives/Button';
+import { useAppStore } from '@/store/useAppStore';
 
 import type {
   DocumentDensity,
@@ -147,6 +148,12 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
   onBackToModes,
 }) => {
   const { t } = useTranslation();
+  // P0 URODZINOWE (2026-07-27) — pokazuje, jaki kontekst organizacji zostanie
+  // automatycznie dołączony do generacji (server/src/services/documentStudio/
+  // documentOrgContextSourcePack.ts). Czysto informacyjne — kontekst jest
+  // budowany i wstrzykiwany PO STRONIE SERWERA na podstawie zalogowanej
+  // organizacji; formularz nic tu nie wysyła, tylko informuje.
+  const currentOrganization = useAppStore((s) => s.currentOrganization);
   const templatePickerRef = useRef<HTMLSelectElement | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -334,6 +341,21 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
               </li>
             ))}
           </ul>
+        </div>
+      ) : null}
+
+      {currentOrganization?.name ? (
+        <div
+          data-testid="docstudio-intake-context-chip"
+          className="flex items-center gap-1.5 self-start rounded-full border border-slate-200/60 bg-c-surface-raised px-3 py-1 text-xs text-c-text-secondary dark:border-white/[0.06]"
+        >
+          <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span>
+            {t('documentStudio.intake.contextChip', {
+              defaultValue: 'Context: {{organizationName}}',
+              organizationName: currentOrganization.name,
+            })}
+          </span>
         </div>
       ) : null}
 
