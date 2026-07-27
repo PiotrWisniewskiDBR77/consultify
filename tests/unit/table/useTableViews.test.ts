@@ -43,6 +43,16 @@ describe('useTableViews', () => {
     expect(result.current.viewLayout).toBe('timeline');
   });
 
+  it('resets viewLayout to table when applying a view without its own layout', () => {
+    const { result } = renderViews();
+    const timelineView = result.current.savedViews.find((v) => v.id === 'timeline_view');
+    act(() => result.current.applyView(timelineView!));
+    expect(result.current.viewLayout).toBe('timeline');
+    const defaultView = result.current.savedViews.find((v) => v.id === 'default');
+    act(() => result.current.applyView(defaultView!));
+    expect(result.current.viewLayout).toBe('table');
+  });
+
   it('resets sort when applying a view without sort', () => {
     const { result } = renderViews();
     act(() => result.current.setSort({ key: 'label', direction: 'asc' }));
