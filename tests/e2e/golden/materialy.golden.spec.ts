@@ -33,7 +33,12 @@ import { dismissOverlayIfPresent, suppressOnboarding } from '../smoke/work-canva
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 const SHOTS_DIR = path.resolve(process.cwd(), 'e2e-zrzuty');
 
-test.describe.configure({ mode: 'serial' });
+// NOTE: intentionally NOT `mode: 'serial'` — a serial group aborts every
+// remaining test after the first failure, and the whole point of this suite
+// is an honest PASS/FAIL/DEGRADED verdict for EACH of G1-G8, not "we stopped
+// looking after G2 broke". Cross-test isolation is instead guaranteed by
+// running with `--workers=1` (strictly sequential, one test at a time, same
+// shared org) — see the run command in the final report.
 
 /** Hub root testid — StandardModuleBar-based Materiały. */
 const HUB_TESTID = 'reports-presentations-hub';
