@@ -258,6 +258,67 @@ const MOCK_MAP = {
   },
 };
 
+/**
+ * KOMENTARZE — mock STANOWY (nie zamrożony).
+ *
+ * Zamrożony mock (`async () => []`) dawałby fałszywy obraz: przycisk „Dodaj
+ * komentarz" wyglądałby na działający, a lista nigdy by się nie zmieniła —
+ * i nie dałoby się odróżnić naprawy od dalszej awarii. Ten magazyn żyje w
+ * `sessionStorage`, więc komentarz PRZEŻYWA przeładowanie strony (F5) — to
+ * jedyny sposób, żeby w harnessie bez backendu sprawdzić trwałość zapisu.
+ *
+ * Kształt odpowiedzi 1:1 z serwerem (`my-work.routes.ts`):
+ *   GET  …/map/comments                    → { comments: [{id,nodeId,author,text,createdAt}] }
+ *   GET  …/map/nodes/:nodeId/comments      → j.w., przefiltrowane po nodeId
+ *   POST …/map/nodes/:nodeId/comments      → dopisuje
+ *   DELETE …/comments/:commentId           → usuwa
+ */
+const KLUCZ_KOMENTARZY = 'dev-render:mindmap-canvas:comments';
+
+type MockComment = { id: string; nodeId: string; author: string; text: string; createdAt: string };
+
+const wczytajKomentarze = (): MockComment[] => {
+  try {
+    const raw = sessionStorage.getItem(KLUCZ_KOMENTARZY);
+    return raw ? (JSON.parse(raw) as MockComment[]) : [];
+  } catch {
+    return [];
+  }
+};
+const zapiszKomentarze = (lista: MockComment[]): void => {
+  try {
+    sessionStorage.setItem(KLUCZ_KOMENTARZY, JSON.stringify(lista));
+  } catch {
+    /* prywatny tryb przeglądarki — trudno, zostaje pamięć procesu */
+  }
+};
+
+Api.getIdeaComments = (async () => ({
+  comments: wczytajKomentarze(),
+})) as typeof Api.getIdeaComments;
+
+Api.getNodeComments = (async (_ideaId: string, nodeId: string) => ({
+  comments: wczytajKomentarze().filter((c) => c.nodeId === nodeId),
+})) as typeof Api.getNodeComments;
+
+Api.addNodeComment = (async (_ideaId: string, nodeId: string, text: string) => {
+  const lista = wczytajKomentarze();
+  const nowy: MockComment = {
+    id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    nodeId,
+    author: 'Piotr Wiśniewski',
+    text,
+    createdAt: new Date().toISOString(),
+  };
+  zapiszKomentarze([...lista, nowy]);
+  return { comment: nowy };
+}) as typeof Api.addNodeComment;
+
+Api.deleteNodeComment = (async (_ideaId: string, _nodeId: string, commentId: string) => {
+  zapiszKomentarze(wczytajKomentarze().filter((c) => c.id !== commentId));
+  return { ok: true };
+}) as typeof Api.deleteNodeComment;
+
 Api.getMyIdea = (async () => MOCK_IDEA) as typeof Api.getMyIdea;
 Api.getMyIdeaMap = (async () => MOCK_MAP) as typeof Api.getMyIdeaMap;
 Api.syncMyIdeaMap = (async () => MOCK_MAP.map) as typeof Api.syncMyIdeaMap;
