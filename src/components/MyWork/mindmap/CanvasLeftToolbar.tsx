@@ -416,6 +416,17 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   } | null>(null);
 
   /**
+   * B3: druga ofiara tego samego przycinania — wskaźnik trybu (SEL/PAN/DRW/LNK)
+   * przy pstryczku. Wisiał `absolute left-[calc(100%+6px)]`, czyli zaczynał się
+   * 3px ZA widoczną treścią paska, więc był niewidoczny w 100% (zmierzone:
+   * start x=47, koniec treści kolumny x=44). Wędruje do tej samej warstwy obok
+   * kolumny. W odróżnieniu od panelu jest widoczny CIĄGLE, więc jego pozycję
+   * odświeżamy także przy przewijaniu samego paska.
+   */
+  const pointerButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [modeBadgePos, setModeBadgePos] = useState<{ left: number; top: number } | null>(null);
+
+  /**
    * Z1 (rozdz. 06 §3): realny tryb płótna zgłaszany przez reprezentacje, które
    * trzymają go u siebie (Tablica ma dodatkowo 'draw'). Rail dostaje
    * `interactionMode` propsem z IdeaMapWorkspace — to stan Mapy myśli, więc bez
@@ -576,6 +587,45 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     // przeskakuje — panel musi pójść za nim.
   }, [openPopover, railBox]);
 
+  /**
+   * B3: pozycja wskaźnika trybu. Chowamy go, gdy pstryczek wyjedzie poza
+   * widoczne pasmo paska (pasek scrolluje się pionowo) — inaczej etykieta
+   * wisiałaby samotnie nad Menu 1.
+   */
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined') return;
+    const place = () => {
+      const btn = pointerButtonRef.current;
+      const rail = toolbarRef.current;
+      if (!btn || !rail || !btn.isConnected) {
+        setModeBadgePos(null);
+        return;
+      }
+      const b = btn.getBoundingClientRect();
+      const r = rail.getBoundingClientRect();
+      if (b.bottom <= r.top || b.top >= r.bottom) {
+        setModeBadgePos(null);
+        return;
+      }
+      const next = { left: Math.round(b.right + 6), top: Math.round(b.top + b.height / 2) };
+      setModeBadgePos((prev) =>
+        prev && prev.left === next.left && prev.top === next.top ? prev : next
+      );
+    };
+    place();
+    const raf = requestAnimationFrame(place);
+    const railEl = toolbarRef.current;
+    railEl?.addEventListener('animationend', place);
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      cancelAnimationFrame(raf);
+      railEl?.removeEventListener('animationend', place);
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+  }, [railBox, activeTool, dataRail, effectiveMode, onToolChange]);
+
   const handleSlotClick = useCallback(
     (slot: ToolSlot, anchor?: HTMLButtonElement | null) => {
       if (slot.popover) {
@@ -661,6 +711,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
       return (
         <div key={slot.id} className="relative">
           <button
+            ref={pointerButtonRef}
             data-testid={`canvas-left-toolbar-${slot.id}`}
             onClick={handlePointerToggle}
             title={pointerTooltip}
@@ -669,17 +720,10 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           >
             <PointerIcon size={15} />
           </button>
-          <div className="absolute left-[calc(100%+6px)] top-1/2 -translate-y-1/2 pointer-events-none">
-            <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text">
-              {effectiveMode === 'pan'
-                ? 'PAN'
-                : effectiveMode === 'draw'
-                  ? t('ideas.mindmap.drw', 'DRW')
-                  : effectiveMode === 'connect'
-                    ? t('ideas.mindmap.lnk', 'LNK')
-                    : t('ideas.mindmap.sel', 'SEL')}
-            </span>
-          </div>
+          {/* B3: sam wskaźnik trybu (SEL/PAN/DRW/LNK) renderuje się w warstwie
+              obok kolumny — patrz `modeBadgeNode`. Tutaj zostaje sam przycisk,
+              bo etykieta wystawała 3px poza widoczną treść paska i była ścinana
+              w całości (mierzone: start x=47, koniec treści x=44 → 0% widoczna). */}
         </div>
       );
     }
@@ -901,9 +945,29 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
       </div>
     ) : null;
 
+  // B3: wskaźnik trybu w tej samej warstwie co panel — poza kolumną przycinającą.
+  const modeBadgeNode = modeBadgePos ? (
+    <div
+      data-testid="canvas-left-toolbar-mode-badge"
+      className="fixed z-context-menu -translate-y-1/2 pointer-events-none"
+      style={{ left: `${modeBadgePos.left}px`, top: `${modeBadgePos.top}px` }}
+    >
+      <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text">
+        {effectiveMode === 'pan'
+          ? 'PAN'
+          : effectiveMode === 'draw'
+            ? t('ideas.mindmap.drw', 'DRW')
+            : effectiveMode === 'connect'
+              ? t('ideas.mindmap.lnk', 'LNK')
+              : t('ideas.mindmap.sel', 'SEL')}
+      </span>
+    </div>
+  ) : null;
+
   const railWithPopover = (
     <>
       {toolbarNode}
+      {modeBadgeNode}
       {popoverNode}
     </>
   );
