@@ -28,6 +28,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
+import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
+import { AppProviders } from '../../src/providers/AppProviders';
+import { seedRealisticSession } from '../mocks/seedStore';
+
 import { DocumentStudioView } from '@/components/DocumentStudio/DocumentStudioView';
 import { useAppStore } from '@/store/useAppStore';
 import { ZAI_TERESA_FLAG_KEYS } from '@/utils/zaiTeresaFlag';
@@ -124,6 +128,11 @@ window.fetch = (async (input: any, init?: any) => {
   return realFetch(input, init);
 }) as typeof window.fetch;
 
+seedRealisticSession();
+if (!window.location.pathname.startsWith('/document-studio')) {
+  window.history.replaceState({}, '', '/document-studio?entry=ai');
+}
+
 export default function DocumentStudioAiTeresaScreen(): React.ReactElement {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
@@ -131,7 +140,8 @@ export default function DocumentStudioAiTeresaScreen(): React.ReactElement {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/document-studio?entry=ai']}>
+      <AppProviders>
+      <FeatureFlagsProvider showDevTools={false}>
         <div className="min-h-screen w-full bg-c-bg">
           <div className="border-b border-c-border px-6 py-3">
             <div className="text-sm font-semibold text-c-text">
@@ -147,7 +157,8 @@ export default function DocumentStudioAiTeresaScreen(): React.ReactElement {
             <DocumentStudioView />
           </div>
         </div>
-      </MemoryRouter>
+      </FeatureFlagsProvider>
+      </AppProviders>
     </QueryClientProvider>
   );
 }

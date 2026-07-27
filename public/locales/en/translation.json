@@ -15262,7 +15262,8 @@
       "urlIngestFailed": "Couldn't process the link.",
       "urlReady": "Link processed."
     },
-    "stopTTS": "Stop reading"
+    "stopTTS": "Stop reading",
+    "sidebarEmptyHint": "Ask Teresa from this side panel when you need quick context or next-step help."
   },
   "agentAudit": {
     "title": "Agent Audit Layer",
@@ -29608,8 +29609,8 @@
       },
       "targetMeta": {
         "decision": {
-          "label": "Start a decision",
-          "description": "Turn this insight into a decision to be made — with context and evidence."
+          "label": "Start decision",
+          "description": "Capture a decision to make in My Work."
         },
         "report": {
           "label": "Create report",
@@ -29634,10 +29635,6 @@
         "initiative": {
           "label": "Create initiative",
           "description": "Move the insight into initiative intake."
-        },
-        "decision": {
-          "label": "Start decision",
-          "description": "Capture a decision to make in My Work."
         }
       },
       "titlePrefix": {
