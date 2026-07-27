@@ -2576,7 +2576,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               {!locked && (
                 <div className="flex items-center rounded-lg border border-c-border-subtle overflow-hidden">
                   <button
-                    onClick={_addRow}
+                    onClick={() => _addRow()}
                     className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-c-text-muted hover:bg-c-surface-raised transition-colors"
                     title={t('ideas.table.addBlankRow', 'Add blank row')}
                   >
@@ -3096,7 +3096,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                               {!locked && (
                                 <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                                   <button
-                                    onClick={_addRow}
+                                    onClick={() => _addRow()}
                                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface transition-colors"
                                   >
                                     <Plus size={14} />

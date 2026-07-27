@@ -1321,7 +1321,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       {!locked && (
         <div className="flex items-center rounded-lg border border-c-border-subtle overflow-hidden">
           <button
-            onClick={handleAddRow}
+            onClick={() => handleAddRow()}
             data-testid="table-add-row"
             className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
             title={t('ideas.table.addBlankRow', 'Add blank row')}
