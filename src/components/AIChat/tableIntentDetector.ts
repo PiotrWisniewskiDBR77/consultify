@@ -31,6 +31,22 @@ const EXCELE_INTENT_PATTERNS = [
   /\b(stwórz|utwórz|zbuduj|zrób|przygotuj|wygeneruj)\s+(mi\s+)?(skoroszyt|plik\s*excel|arkusz\s*excel)\b/i,
   /\bmodel\s+(finansowy|budżetowy)\b/i,
   /\b(budżet|prognoza|rachunek\s*zysków)\b/i,
+
+  // P0 urodzinowe (2026-07-27, live incydent): BARE excel-file nouns —
+  // "zrób mi excela", "make an excel", "potrzebuję arkusza kalkulacyjnego",
+  // "wygeneruj xlsx", "otwórz Excele". Wcześniej detekcja wymagała CAŁEJ frazy
+  // czasownik+"arkusz excel"/"plik excel"/"skoroszyt" — najbardziej naturalny
+  // sposób poproszenia o Excela (samo słowo "excel"/"xlsx"/"spreadsheet"/
+  // "workbook") NIE trafiał w żaden wzorzec (ani tu, ani w TABLE_INTENT_
+  // PATTERNS) i spadał do ogólnej klasyfikacji czatu → płaska tabela w Tabele
+  // Studio zamiast realnego silnika arkuszy. \b po "excel" nie łapie
+  // "excellent" (brak granicy słowa między dwoma znakami-literami).
+  /\bexcel(a|u|em|owi|e)?\b/i,
+  /\bxlsx\b/i,
+  /\bspreadsheet\b/i,
+  /\bworkbook\b/i,
+  /\bskoroszyt\w*\b/i,
+  /\barkusz[a-ząćęłńóśźż]*\s+kalkulacyjn\w*\b/i,
 ];
 
 export function detectTableIntent(message: string): boolean {
