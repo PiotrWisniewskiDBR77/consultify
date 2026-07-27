@@ -1568,7 +1568,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         }
         newItemLabel={ctaLabels[activeTab]}
         newItemTestId="outputs-new-btn"
-        primaryCta={templatesLibraryCta}
+        primaryCtaContent={templatesLibraryCta}
         availableViewModes={['table', 'grid']}
         rightControls={rightControls}
         commandRowContent={commandRowContent}
