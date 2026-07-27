@@ -5848,6 +5848,58 @@ router.delete(
   })
 );
 
+/**
+ * GET /api/my-work/my-ideas/:id/map/comments
+ *
+ * WSZYSTKIE komentarze Idei jednym zapytaniem — wątek całej Idei (node_id
+ * `__idea__`, sentinel z panelu „Komentarze") ORAZ wątki wszystkich węzłów.
+ *
+ * PO CO: prawy panel w zakresie „Cała Idea" musi pokazać komplet. Bez tego
+ * komentarz dopisany do węzła znikał po przełączeniu na „Całą Ideę" (wyglądał
+ * na zgubiony), a licznik przy zakładce kłamał. Wariant „N zapytań, po jednym
+ * na węzeł" odpada — mapy mają po kilkadziesiąt węzłów.
+ *
+ * Dopisywanie/usuwanie zostaje na trasach per-node (`…/nodes/:nodeId/comments`)
+ * — ta trasa jest wyłącznie do odczytu zbiorczego.
+ */
+router.get(
+  '/my-ideas/:id/map/comments',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+
+    const hasTables = await requireTables(res, ['idea_node_comments']);
+    if (!hasTables) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Missing ideaId' });
+
+    const rows = await queryHelpers.query<any>(
+      `SELECT id, node_id, user_id, user_name, text, mentions, created_at
+       FROM idea_node_comments
+       WHERE idea_id = ? AND organization_id = ?
+       ORDER BY created_at ASC`,
+      [ideaId, orgId]
+    );
+
+    res.json({
+      comments: rows.map((c: any) => ({
+        id: c.id,
+        nodeId: c.node_id,
+        author: c.user_name || c.user_id,
+        text: c.text,
+        mentions: c.mentions
+          ? typeof c.mentions === 'string'
+            ? JSON.parse(c.mentions)
+            : c.mentions
+          : [],
+        createdAt: c.created_at,
+      })),
+    });
+  })
+);
+
 // ============================================================================
 // Activity Feed — server-persisted map activity log
 // ============================================================================

@@ -14,9 +14,23 @@
  *      kanał, którego używa `NodeCommentThread` (Mapa myśli). Dopisanie idzie
  *      przez `Api.addNodeComment`, usunięcie przez `Api.deleteNodeComment`.
  *
+ *   3. `GET /my-work/my-ideas/:id/map/comments` (`Api.getIdeaComments`) —
+ *      odczyt ZBIORCZY: wątek całej Idei + wątki wszystkich węzłów jednym
+ *      zapytaniem. Zasila zakres „Cała Idea".
+ *
+ * KOMENTARZ DO CAŁEJ IDEI (naprawa 2026-07-27 — „nie da się dodać komentarza"):
+ *   Wcześniej pole tekstowe renderowało się WYŁĄCZNIE przy zaznaczonym węźle,
+ *   a domyślnym widokiem jest „Cała Idea" (nic nie zaznaczone) — właściciel
+ *   otwierał zakładkę i nie miał czym pisać, bez wyjaśnienia dlaczego. Teraz
+ *   komentarz do całej Idei jest PEŁNOPRAWNY: leci tą samą trasą per-node, ale
+ *   pod ustalonym identyfikatorem `IDEA_SCOPE_NODE_ID`, który nigdy nie należy
+ *   do żadnego węzła grafu. Dzięki temu:
+ *     • zero zmian w schemacie (ta sama tabela `idea_node_comments`),
+ *     • wątek całej Idei nie zanieczyszcza wątków węzłów (GET filtruje po
+ *       `node_id`, więc `NodeCommentThread`/`CommentPinBadge` go nie widzą),
+ *     • usuwanie działa tą samą trasą co dla węzłów.
+ *
  * CZEGO TU NIE MA (świadomie, żeby nie zmyślać):
- *   • Nie ma endpointu „komentarze całej Idei" — zakres „Cała Idea" składamy z
- *     blobu (punkt 1). Zakres „Zaznaczenie" dokłada wątek serwerowy (punkt 2).
  *   • Nie ma pola „rozwiązany/nierozwiązany" ani wątków odpowiedzi w schemacie,
  *     więc NIE rysujemy filtrów ani przycisków, które nie miałyby na czym
  *     działać (standard §7 wymienia je jako docelowe — patrz raport).
@@ -24,7 +38,7 @@
  * Wygląd: wyłącznie tokeny `c-*` (light+dark), czerwień tylko dla akcji
  * niszczącej (usuń). Zero crimson (`primary-*`).
  */
-import { Loader2, MessageSquare, Send, Sparkles, Trash2 } from 'lucide-react';
+import { Loader2, MessageSquare, MousePointerClick, Send, Sparkles, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Api } from '@/services/api';
@@ -50,6 +64,14 @@ interface PanelComment {
   /** `server` = tabela idea_node_comments (można usunąć), `blob` = graf. */
   source: 'server' | 'blob';
 }
+
+/**
+ * Adresat komentarza „do całej Idei". Celowo w formie, która nie może się
+ * zderzyć z realnym identyfikatorem węzła (te są uuid-ami albo `center-1` /
+ * `branch-*`). Serwer traktuje `node_id` jak zwykły łańcuch — nie ma klucza
+ * obcego do węzłów — więc wątek Idei to po prostu wątek pod tym adresem.
+ */
+export const IDEA_SCOPE_NODE_ID = '__idea__';
 
 /** Autor-maszyna: Teresa/AI oznaczamy plakietką (standard §7). */
 function czyAI(author: string): boolean {
@@ -141,22 +163,48 @@ export const IdeaPanelComments: React.FC<IdeaPanelCommentsProps> = ({
   const [tresc, setTresc] = useState('');
   const [wysylka, setWysylka] = useState(false);
 
+  /**
+   * Adresat zapisu: w „Zaznaczeniu" to węzeł, w „Całej Idei" — wątek Idei.
+   * Zawsze istnieje (dla zapisanej Idei), więc pole tekstowe ma gdzie pisać.
+   */
+  const celId = zakres === 'selection' && wybranyId ? wybranyId : IDEA_SCOPE_NODE_ID;
+
+  const etykietaDlaId = useCallback(
+    (nodeId: string): string => {
+      if (nodeId === IDEA_SCOPE_NODE_ID) return t('Cała Idea', 'Whole idea');
+      const node = (graphNodes ?? []).find((n: any) => String(n?.id) === nodeId);
+      if (!node) return t('(usunięty element)', '(deleted element)');
+      return etykietaWezla(node, isPl);
+    },
+    [graphNodes, isPl]
+  );
+
+  const celEtykieta = etykietaDlaId(celId);
+
   const pobierz = useCallback(async () => {
-    if (!wybranyId || !ideaId || isDraft) {
+    if (!ideaId || isDraft) {
       setSerwerowe([]);
       return;
     }
     setLadowanie(true);
     setBlad(null);
     try {
-      const res = await Api.getNodeComments(ideaId, wybranyId);
+      // „Cała Idea" → jedno zapytanie zbiorcze (wątek Idei + wszystkie węzły).
+      // „Zaznaczenie" → wąski wątek jednego węzła.
+      const res =
+        zakres === 'selection' && wybranyId
+          ? await Api.getNodeComments(ideaId, wybranyId)
+          : await Api.getIdeaComments(ideaId);
       const lista = Array.isArray(res?.comments) ? res.comments : [];
-      const node = (graphNodes ?? []).find((n: any) => n?.id === wybranyId);
+      // Etykiety NIE są rozwiązywane tutaj — `graphNodes` bywa nową tablicą przy
+      // każdym renderze rodzica, więc trzymanie ich w zależnościach `pobierz`
+      // zapętliłoby efekt (fetch → setState → nowy `pobierz` → fetch…).
+      // Nazwę węzła doklejamy dopiero przy składaniu listy (`pozycje`).
       setSerwerowe(
         lista.map((c: any) => ({
           id: String(c.id),
-          nodeId: wybranyId,
-          nodeLabel: etykietaWezla(node, isPl),
+          nodeId: String(c.nodeId ?? wybranyId ?? IDEA_SCOPE_NODE_ID),
+          nodeLabel: '',
           author: String(c.author ?? ''),
           text: String(c.text ?? ''),
           createdAt: c.createdAt,
@@ -170,11 +218,11 @@ export const IdeaPanelComments: React.FC<IdeaPanelCommentsProps> = ({
     } finally {
       setLadowanie(false);
     }
-  }, [ideaId, isDraft, wybranyId, graphNodes, isPl]);
+  }, [ideaId, isDraft, zakres, wybranyId, isPl]);
 
   useEffect(() => {
-    if (zakres === 'selection') void pobierz();
-  }, [zakres, pobierz]);
+    void pobierz();
+  }, [pobierz]);
 
   const zBlobuIdea = useMemo(() => zblobu(graphNodes, isPl), [graphNodes, isPl]);
   const zBlobuWezel = useMemo(
@@ -183,20 +231,26 @@ export const IdeaPanelComments: React.FC<IdeaPanelCommentsProps> = ({
   );
 
   const pozycje = useMemo(() => {
-    const src = zakres === 'selection' ? [...serwerowe, ...zBlobuWezel] : zBlobuIdea;
+    // W OBU zakresach dokładamy wątek serwerowy. Wcześniej „Cała Idea" składała
+    // się wyłącznie z blobu, więc komentarz zapisany na serwerze był niewidoczny
+    // w domyślnym widoku — wyglądał na zgubiony.
+    const src = (
+      zakres === 'selection' ? [...serwerowe, ...zBlobuWezel] : [...serwerowe, ...zBlobuIdea]
+    ).map((c) => (c.nodeLabel ? c : { ...c, nodeLabel: etykietaDlaId(c.nodeId) }));
     return [...src].sort((a, b) => {
       const ta = typeof a.createdAt === 'number' ? a.createdAt : Date.parse(String(a.createdAt));
       const tb = typeof b.createdAt === 'number' ? b.createdAt : Date.parse(String(b.createdAt));
       return (Number.isNaN(tb) ? 0 : tb) - (Number.isNaN(ta) ? 0 : ta);
     });
-  }, [zakres, serwerowe, zBlobuWezel, zBlobuIdea]);
+  }, [zakres, serwerowe, zBlobuWezel, zBlobuIdea, etykietaDlaId]);
 
   const dodaj = useCallback(async () => {
     const txt = tresc.trim();
-    if (!txt || !wybranyId || isDraft) return;
+    if (!txt || isDraft) return;
     setWysylka(true);
+    setBlad(null);
     try {
-      await Api.addNodeComment(ideaId, wybranyId, txt);
+      await Api.addNodeComment(ideaId, celId, txt);
       setTresc('');
       await pobierz();
     } catch {
@@ -204,7 +258,7 @@ export const IdeaPanelComments: React.FC<IdeaPanelCommentsProps> = ({
     } finally {
       setWysylka(false);
     }
-  }, [tresc, wybranyId, isDraft, ideaId, pobierz, isPl]);
+  }, [tresc, celId, isDraft, ideaId, pobierz, isPl]);
 
   const usun = useCallback(
     async (c: PanelComment) => {
@@ -281,11 +335,45 @@ export const IdeaPanelComments: React.FC<IdeaPanelCommentsProps> = ({
               ? t('Brak komentarzy na tym elemencie.', 'No comments on this element.')
               : t('Brak komentarzy w tej Idei.', 'No comments in this idea yet.')}
           </div>
-          {zakres === 'idea' && !wybranyId && (
+          {!isDraft && (
             <div className="mt-1 text-[10px] text-c-text-muted">
-              {t(
-                'Komentarz prowadzimy na elemencie — zaznacz węzeł lub wiersz.',
-                'Comments live on elements — select a node or a row.'
+              {zakres === 'selection'
+                ? t('Napisz pierwszy — poniżej.', 'Write the first one — below.')
+                : t(
+                    'Napisz poniżej — komentarz trafi do całej Idei.',
+                    'Write below — the comment goes to the whole idea.'
+                  )}
+            </div>
+          )}
+          {/*
+            Wyjście z pustego stanu. Gdy element JEST zaznaczony, jedna akcja
+            przypina wątek do niego. Gdy nie ma zaznaczenia — mówimy wprost, co
+            zrobić na płótnie, ale użytkownik NIE jest zablokowany: pole niżej
+            i tak przyjmie komentarz do całej Idei.
+          */}
+          {zakres === 'idea' && !isDraft && (
+            <div className="mt-2">
+              {wybranyId ? (
+                <button
+                  type="button"
+                  onClick={() => setZakres('selection')}
+                  className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1 text-[10px] font-semibold text-c-text-secondary transition-colors hover:border-c-focus hover:text-c-text"
+                  data-testid="idea-panel-comments-pin-to-selection"
+                >
+                  <MousePointerClick size={10} className="shrink-0" />
+                  <span className="truncate">
+                    {t('Przypnij do: ', 'Pin to: ')}
+                    {etykietaDlaId(wybranyId)}
+                  </span>
+                </button>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 text-[10px] text-c-text-muted">
+                  <MousePointerClick size={10} className="shrink-0" />
+                  {t(
+                    'Chcesz przypiąć do elementu? Zaznacz węzeł na płótnie.',
+                    'Want it pinned to an element? Select a node on the canvas.'
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -338,27 +426,45 @@ export const IdeaPanelComments: React.FC<IdeaPanelCommentsProps> = ({
         </div>
       )}
 
-      {/* Dodawanie — tylko gdy jest realny adresat (element) i zapisana Idea. */}
-      {wybranyId && !isDraft && (
+      {/*
+        Dodawanie — dla KAŻDEJ zapisanej Idei, nie tylko przy zaznaczeniu.
+        Adresat (`celId`) zawsze istnieje: element w „Zaznaczeniu", wątek Idei
+        w „Całej Idei". Etykieta pod przyciskiem mówi wprost, gdzie komentarz
+        wyląduje — żeby nikt nie zgadywał (to była pierwotna skarga).
+      */}
+      {!isDraft && (
         <div className="space-y-1.5">
           <textarea
             value={tresc}
             onChange={(e) => setTresc(e.target.value)}
             rows={2}
-            placeholder={t('Dodaj komentarz…', 'Add a comment…')}
+            placeholder={
+              zakres === 'selection'
+                ? t('Dodaj komentarz do elementu…', 'Add a comment on the element…')
+                : t('Dodaj komentarz do całej Idei…', 'Add a comment on the whole idea…')
+            }
             className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-2 text-[11px] text-c-text placeholder:text-c-text-muted resize-none focus:outline-none focus:border-c-focus"
             data-testid="idea-panel-comments-input"
           />
-          <button
-            type="button"
-            onClick={() => void dodaj()}
-            disabled={!tresc.trim() || wysylka}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-2.5 py-1.5 text-[10px] font-semibold text-c-surface transition-opacity hover:opacity-90 disabled:opacity-40"
-            data-testid="idea-panel-comments-submit"
-          >
-            {wysylka ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
-            {t('Dodaj komentarz', 'Add comment')}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void dodaj()}
+              disabled={!tresc.trim() || wysylka}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-c-text px-2.5 py-1.5 text-[10px] font-semibold text-c-surface transition-opacity hover:opacity-90 disabled:opacity-40"
+              data-testid="idea-panel-comments-submit"
+            >
+              {wysylka ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+              {t('Dodaj komentarz', 'Add comment')}
+            </button>
+            <span
+              className="min-w-0 truncate text-[10px] text-c-text-muted"
+              title={celEtykieta}
+              data-testid="idea-panel-comments-target"
+            >
+              ↳ {celEtykieta}
+            </span>
+          </div>
         </div>
       )}
     </div>
