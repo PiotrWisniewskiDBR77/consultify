@@ -35,7 +35,25 @@
  *                                                    komórce). Deterministyczne, konserwatywne — patrz granica
  *                                                    heurystyki niżej.
  *
+ * ── BRAMKI DOKTRYNALNE (DX) — `_DOKTRYNA_TRESCI_EXCEL_2026-07-27.md` §5.2 ────────────────────
+ *
+ *   DX-01  Assumptions-layer-missing → validation_failed — model BEZ warstwy Założeń (A1).
+ *                                                    Luka L4 doktryny: WQ-03 milczy, gdy arkusza Założeń
+ *                                                    NIE MA (`checkAssumptionsSeparation` → early return),
+ *                                                    więc arkusz, którego nie da się zasymulować, dostawał
+ *                                                    100/100. Decyzja CTO D4/D-6: CRITICAL (blokujący) —
+ *                                                    „model bez Założeń to nie jest model" (doktryna §2 R-A1,
+ *                                                    §9 AW-2). Granica — patrz `checkAssumptionsLayer`.
+ *   DX-02  Formula-cycle → formula_cycle_detected     — odwołanie cykliczne w grafie formuł.
+ *                                                    Luka L3 doktryny: klasa `formula_cycle_detected`
+ *                                                    istnieje w taksonomii P23 (`exceleCanon.ts`), ale
+ *                                                    ŻADNA reguła jej nie emitowała — zakaz B10
+ *                                                    (`BUSINESS_PLAN_GENERATOR_SPEC`) był niepilnowany.
+ *                                                    Decyzja CTO D4/D-6: CRITICAL (blokujący) — doktryna
+ *                                                    §3.5, §9 AW-5.
+ *
  * Deterministyczny i fail-open, jak deckDesignCritic. Werdykt „passed" = brak CRITICAL.
+ * Każde znalezisko CRITICAL niesie `blocking: true` (nie przepuszczamy takiego arkusza dalej).
  */
 
 import { createP23Error, type P23ErrorCode } from '../v8/exceleCanon.js';
@@ -56,7 +74,9 @@ export type WorkbookRuleCode =
   | 'WQ-06-BROKEN-FORMULA-REF'
   | 'WQ-07-BAD-FORMULA-SYNTAX'
   | 'WQ-08-CROSS-SHEET-OOB'
-  | 'WQ-09-INCONSISTENT-CALC-COL';
+  | 'WQ-09-INCONSISTENT-CALC-COL'
+  | 'DX-01-NO-ASSUMPTIONS-LAYER'
+  | 'DX-02-FORMULA-CYCLE';
 
 export interface WorkbookIssue {
   /** Stabilny kod reguły krytyka. */
@@ -64,6 +84,12 @@ export interface WorkbookIssue {
   /** Kod z kanonu P23 (spójna klasyfikacja z resztą silnika). */
   canonCode: P23ErrorCode;
   severity: WorkbookIssueSeverity;
+  /**
+   * Czy znalezisko BLOKUJE arkusz (nie wolno go oddać klientowi w tym stanie).
+   * Wprost równoważne `severity === 'CRITICAL'` — pole jest jawne, żeby konsument
+   * (pętla naprawcza, route, odbiór) nie musiał znać mapowania severity→werdykt.
+   */
+  blocking: boolean;
   /** Nazwa arkusza, którego dotyczy znalezisko. */
   sheet: string;
   /** Adres komórki (A1) gdy znane; w przeciwnym razie null. */
@@ -190,6 +216,7 @@ function issue(
     code,
     canonCode,
     severity,
+    blocking: severity === 'CRITICAL',
     sheet,
     cell: extra?.cell ?? null,
     col: extra?.col ?? null,
@@ -357,9 +384,19 @@ function checkSumCoverage(sheet: Sheet): WorkbookIssue[] {
 
 // ── Reguła 3: separacja Assumptions ──────────────────────────────────────────
 
+/**
+ * Czy arkusz jest warstwą ZAŁOŻEŃ (A1 doktryny)? Dwa równoprawne sygnały:
+ *   • jawna flaga schematu `isAssumptions` (kontrakt `WorkbookSchema`, używany przez
+ *     wszystkie 7 szablonów i przez builder do named-ranges),
+ *   • nazwa arkusza (Assumptions / Założenia / Inputs / Parametry).
+ */
+function isAssumptionsSheet(sheet: Sheet): boolean {
+  return sheet.isAssumptions === true || matchesAny(sheet.name, ASSUMPTIONS_SHEET_HINTS);
+}
+
 function checkAssumptionsSeparation(workbook: WorkbookSchema): WorkbookIssue[] {
   const out: WorkbookIssue[] = [];
-  const assumptionsSheet = workbook.sheets.find((s) => matchesAny(s.name, ASSUMPTIONS_SHEET_HINTS));
+  const assumptionsSheet = workbook.sheets.find(isAssumptionsSheet);
   if (!assumptionsSheet) return out;
 
   // Zbierz stałe numeryczne inputy z arkusza Assumptions (wartość → etykieta).
@@ -769,10 +806,257 @@ function checkInconsistentCalcColumns(sheet: Sheet): WorkbookIssue[] {
   return out;
 }
 
+// ── DX-01: warstwa ZAŁOŻEŃ (A1) istnieje i jest jedyna ───────────────────────
+//
+// Doktryna treści Excela §2 (anatomia warstw) + §5.2 DX-01 + §9 AW-2.
+// Luka L4: `checkAssumptionsSeparation` (WQ-03) robi early-return, gdy arkusza
+// Założeń NIE MA — więc model, w którym drivery są rozsiane po arkuszach i
+// którego NIE DA SIĘ zasymulować, przechodził na 100/100. Decyzja CTO D4/D-6:
+// CRITICAL blokujący, bo „model bez Założeń to nie jest model".
+//
+// GRANICA (świadomie wąska — Prawda > szeroka reguła; doktryna §2 „minimum żywotne"):
+//   • ≥2 arkusze. Arkusz z JEDNĄ zakładką to z definicji doktryny nie model, tylko
+//     TABELA — podlega `DOKTRYNA_TABELA_NIE_EXCEL.md`, nie tej doktrynie (§2, koniec).
+//     Eksport tabeli/listy do .xlsx nie może być karany za brak Założeń.
+//   • ≥1 formuła w całym skoroszycie. Zero formuł = zrzut danych, nie model —
+//     nie ma czego symulować, więc nie ma czego zakładać (§1, test symulacji).
+//   Dopiero skoroszyt, który JEST modelem (wiele warstw + policzone wyniki), a
+//   nie ma warstwy wejść, jest defektem doktrynalnym.
+function checkAssumptionsLayer(workbook: WorkbookSchema): WorkbookIssue[] {
+  const sheets = workbook.sheets;
+  if (sheets.length < 2) return []; // jedna zakładka = tabela, nie model
+
+  const hasFormula = sheets.some((s) =>
+    s.rows.some((r) =>
+      Object.values(r.cells).some((c) => typeof c?.formula === 'string' && c.formula.trim() !== ''),
+    ),
+  );
+  if (!hasFormula) return []; // zrzut danych, nie model
+
+  const assumptionSheets = sheets.filter(isAssumptionsSheet);
+
+  if (assumptionSheets.length === 0) {
+    return [
+      issue(
+        'DX-01-NO-ASSUMPTIONS-LAYER',
+        'validation_failed',
+        'CRITICAL',
+        sheets[0].name,
+        `Model (${sheets.length} arkuszy, formuły obecne) NIE MA warstwy Założeń — brak arkusza wejść ` +
+          `(„Założenia"/„Assumptions"/„Inputs" albo isAssumptions: true). Bez wyodrębnionych wejść nie da się ` +
+          `nic zasymulować ani zaudytować (doktryna treści Excela §2 A1, AW-2).`,
+        {
+          fix:
+            'Dodaj arkusz „Założenia" (isAssumptions: true) ze WSZYSTKIMI surowymi wejściami ' +
+            '(driver · wartość · jednostka · źródło · zakres) i podmień stałe w pozostałych arkuszach ' +
+            "na referencje typu 'Założenia'!$B$3.",
+        },
+      ),
+    ];
+  }
+
+  if (assumptionSheets.length > 1) {
+    // R-A1: jeden model = jedno źródło wejść (FAST: single source of truth).
+    // MAJOR, nie CRITICAL: model jest symulowalny, ale ma dwa źródła prawdy.
+    return [
+      issue(
+        'DX-01-NO-ASSUMPTIONS-LAYER',
+        'validation_failed',
+        'MAJOR',
+        assumptionSheets[1].name,
+        `Skoroszyt ma ${assumptionSheets.length} arkusze Założeń (${assumptionSheets
+          .map((s) => `„${s.name}"`)
+          .join(', ')}) — jeden model = JEDNO źródło wejść (doktryna §2 R-A1).`,
+        {
+          fix: 'Scal wejścia do jednego arkusza Założeń; pozostałe arkusze mają referować do niego.',
+        },
+      ),
+    ];
+  }
+
+  return [];
+}
+
+// ── DX-02: odwołania cykliczne w grafie formuł ───────────────────────────────
+//
+// Doktryna §3.5 („Zero odwołań cyklicznych", zakaz B10 `BUSINESS_PLAN_GENERATOR_SPEC`)
+// + §5.2 DX-02 + §9 AW-5. Luka L3: klasa `formula_cycle_detected` istniała w
+// taksonomii P23, ale żadna reguła jej nie emitowała.
+//
+// Pracujemy na `WorkbookSchema` (PRZED buildem), nie na wygenerowanym pliku:
+// budujemy graf zależności komórka→komórka z formuł i szukamy cyklu (DFS z
+// kolorowaniem). Krawędzie prowadzą WYŁĄCZNIE do komórek, które same są formułami
+// — stała jest liściem i nie może domknąć cyklu.
+//
+// GRANICA (brak false-positive):
+//   • Ref rozpoznajemy tylko wtedy, gdy rozwiązuje się do ISTNIEJĄCEJ komórki
+//     w schemacie (arkusz + kolumna + wiersz w granicach). Nazwane zakresy,
+//     funkcje i literały nie tworzą krawędzi.
+//   • Token, po którym stoi „(", to NAZWA FUNKCJI (np. LOG10(...)), nie adres.
+//   • Token poprzedzony literą/cyfrą/podkreśleniem to fragment identyfikatora
+//     (np. named range „Scen1_B2"), nie adres.
+//   • Zakresy (B2:B10) rozwijamy do komórek — `SUM(B2:B5)` w komórce B5 to
+//     realny cykl w Excelu, nie artefakt heurystyki.
+//   • Twardy limit węzłów (perf) — powyżej progu reguła milczy zamiast zgadywać.
+
+/** Limit węzłów-formuł, powyżej którego rezygnujemy z analizy grafu (perf, fail-open). */
+const CYCLE_MAX_FORMULA_NODES = 20000;
+/** Limit komórek rozwijanych z jednego zakresu (perf). */
+const CYCLE_MAX_RANGE_CELLS = 5000;
+
+/** Wyciąga adresy komórek/zakresów z formuły. Zwraca surowe trójki (arkusz|null, kol, wiersz). */
+function extractCellRefs(
+  formula: string,
+): Array<{ sheet: string | null; c1: number; r1: number; c2: number; r2: number }> {
+  const out: Array<{ sheet: string | null; c1: number; r1: number; c2: number; r2: number }> = [];
+  const re =
+    /(?:'([^']+)'!|([A-Za-z][A-Za-z0-9_ ]*)!)?\$?([A-Z]{1,3})\$?(\d{1,7})(?::\$?([A-Z]{1,3})\$?(\d{1,7}))?/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(formula)) !== null) {
+    const after = formula[re.lastIndex];
+    if (after === '(') continue; // nazwa funkcji (LOG10(…)), nie adres
+    const before = m.index > 0 ? formula[m.index - 1] : '';
+    // Fragment identyfikatora (named range) — nie adres. Znak „!" jest częścią dopasowania,
+    // więc poprzednik litera/cyfra/_ oznacza sklejkę typu „Scen1_B2".
+    if (before && /[A-Za-z0-9_]/.test(before) && !m[1] && !m[2]) continue;
+    const sheet = m[1] ?? m[2] ?? null;
+    const c1 = colLetterToIndex(m[3]);
+    const r1 = parseInt(m[4], 10);
+    const c2 = m[5] ? colLetterToIndex(m[5]) : c1;
+    const r2 = m[6] ? parseInt(m[6], 10) : r1;
+    out.push({
+      sheet: sheet ? sheet.trim() : null,
+      c1: Math.min(c1, c2),
+      r1: Math.min(r1, r2),
+      c2: Math.max(c1, c2),
+      r2: Math.max(r1, r2),
+    });
+  }
+  return out;
+}
+
+function checkFormulaCycles(workbook: WorkbookSchema): WorkbookIssue[] {
+  const out: WorkbookIssue[] = [];
+
+  // 1. Indeks węzłów: tylko komórki Z FORMUŁĄ (stała = liść, nie domknie cyklu).
+  //    id = "<norm(sheet)>!<col1based>:<excelRow>"
+  const nodeId = (sheetKey: string, col: number, row: number) => `${sheetKey}!${col}:${row}`;
+  const formulaOf = new Map<string, string>();
+  const labelOf = new Map<string, string>();
+  const sheetByKey = new Map<string, Sheet>();
+
+  for (const sheet of workbook.sheets) {
+    const key = norm(sheet.name);
+    sheetByKey.set(key, sheet);
+    sheet.rows.forEach((row, rowIdx) => {
+      sheet.columns.forEach((col, colIdx) => {
+        const c = row.cells[col.key];
+        if (typeof c?.formula !== 'string' || c.formula.trim() === '') return;
+        const id = nodeId(key, colIdx + 1, dataRowNumber(rowIdx));
+        formulaOf.set(id, c.formula);
+        labelOf.set(id, `${sheet.name}!${cellAddress(colIdx, rowIdx)}`);
+      });
+    });
+  }
+  if (formulaOf.size === 0 || formulaOf.size > CYCLE_MAX_FORMULA_NODES) return out;
+
+  // 2. Krawędzie: formuła → referowane komórki, które SAME są formułami.
+  const edges = new Map<string, string[]>();
+  for (const [id, formula] of formulaOf) {
+    const ownerSheetKey = id.slice(0, id.lastIndexOf('!'));
+    const targets = new Set<string>();
+    for (const ref of extractCellRefs(formula)) {
+      const targetKey = ref.sheet ? norm(ref.sheet) : ownerSheetKey;
+      const target = sheetByKey.get(targetKey);
+      if (!target) continue; // nieistniejący arkusz → domena WQ-06
+      const { maxCol, maxRow } = sheetBounds(target);
+      if ((ref.c2 - ref.c1 + 1) * (ref.r2 - ref.r1 + 1) > CYCLE_MAX_RANGE_CELLS) continue;
+      for (let c = ref.c1; c <= Math.min(ref.c2, maxCol); c++) {
+        for (let r = Math.max(ref.r1, 2); r <= Math.min(ref.r2, maxRow); r++) {
+          const tid = nodeId(targetKey, c, r);
+          if (formulaOf.has(tid)) targets.add(tid);
+        }
+      }
+    }
+    edges.set(id, [...targets]);
+  }
+
+  // 3. DFS z kolorowaniem (0=biały, 1=szary/na stosie, 2=czarny) — pierwszy powrót
+  //    do węzła szarego domyka cykl. Deduplikacja po zbiorze węzłów cyklu.
+  const color = new Map<string, 0 | 1 | 2>();
+  const seenCycles = new Set<string>();
+
+  const reportCycle = (path: string[]) => {
+    const fingerprint = [...path].sort().join('|');
+    if (seenCycles.has(fingerprint)) return;
+    seenCycles.add(fingerprint);
+    const head = path[0];
+    const [sheetKey] = head.split('!');
+    const sheetName = sheetByKey.get(sheetKey)?.name ?? sheetKey;
+    const chain = [...path, path[0]].map((n) => labelOf.get(n) ?? n).join(' → ');
+    const headLabel = labelOf.get(head) ?? head;
+    out.push(
+      issue(
+        'DX-02-FORMULA-CYCLE',
+        'formula_cycle_detected',
+        'CRITICAL',
+        sheetName,
+        `Odwołanie cykliczne w formułach: ${chain}. Excel pokaże 0 albo ostrzeżenie — model traci ` +
+          `wiarygodność (doktryna treści Excela §3.5, AW-5).`,
+        {
+          cell: headLabel.includes('!') ? headLabel.split('!')[1] : null,
+          fix:
+            'Przeprojektuj łańcuch obliczeń tak, by graf był ACYKLICZNY (doktryna §4 E3) — ' +
+            'np. licz odsetki od salda OTWARCIA okresu, nie od salda średniego; total nie może sumować sam siebie.',
+        },
+      ),
+    );
+  };
+
+  const visit = (start: string) => {
+    // Iteracyjny DFS (bez rekurencji — arkusze bywają duże).
+    const stack: Array<{ id: string; iter: number }> = [{ id: start, iter: 0 }];
+    const path: string[] = [];
+    const onPath = new Set<string>();
+    color.set(start, 1);
+    path.push(start);
+    onPath.add(start);
+
+    while (stack.length > 0) {
+      const frame = stack[stack.length - 1];
+      const next = (edges.get(frame.id) ?? [])[frame.iter++];
+      if (next === undefined) {
+        color.set(frame.id, 2);
+        stack.pop();
+        onPath.delete(path.pop() as string);
+        continue;
+      }
+      if (onPath.has(next)) {
+        // Cykl: wytnij fragment ścieżki od `next` do końca.
+        const from = path.indexOf(next);
+        reportCycle(path.slice(from));
+        continue;
+      }
+      if ((color.get(next) ?? 0) === 2) continue;
+      color.set(next, 1);
+      path.push(next);
+      onPath.add(next);
+      stack.push({ id: next, iter: 0 });
+    }
+  };
+
+  for (const id of formulaOf.keys()) {
+    if ((color.get(id) ?? 0) === 0) visit(id);
+  }
+
+  return out;
+}
+
 // ── Główna funkcja ───────────────────────────────────────────────────────────
 
 /**
- * Ocenia CAŁY workbook (schema przed buildem) wg 6 deterministycznych reguł.
+ * Ocenia CAŁY workbook (schema przed buildem) wg 11 deterministycznych reguł:
+ * 9 mechanicznych (WQ-01…WQ-09) + 2 doktrynalne (DX-01 warstwa Założeń, DX-02 cykle).
  * Zwraca `{ score, issues, passed }`. Fail-open: nigdy nie rzuca.
  */
 export function critiqueWorkbook(workbook: WorkbookSchema): WorkbookQualityReport {
@@ -792,6 +1076,9 @@ export function critiqueWorkbook(workbook: WorkbookSchema): WorkbookQualityRepor
     issues.push(...checkAssumptionsSeparation(workbook));
     issues.push(...checkBrokenFormulaRefs(workbook));
     issues.push(...checkCrossSheetOutOfBounds(workbook));
+    // Bramki doktrynalne (blokujące wg decyzji CTO D4): warstwa Założeń + brak cykli.
+    issues.push(...checkAssumptionsLayer(workbook));
+    issues.push(...checkFormulaCycles(workbook));
   } catch (err) {
     // Fail-open jak deckDesignCritic — krytyk NIGDY nie wywala generacji.
     logger.warn('[workbookQualityGate] critic threw, returning partial report', err);
