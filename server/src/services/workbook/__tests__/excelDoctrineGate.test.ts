@@ -446,8 +446,13 @@ describe('doktryna treści Excela — (c) DX-02 odwołania cykliczne', () => {
 describe('doktryna treści Excela — (d) 7 zarejestrowanych szablonów przechodzi bramkę', () => {
   const templates = listWorkbookTemplates();
 
-  it('rejestr ma 7 szablonów', () => {
-    expect(templates).toHaveLength(7);
+  // Liczba szablonów rośnie wraz z uzupełnianiem typologii doktryny (§8) — asercja
+  // pilnuje MINIMUM i unikalności id, a nie sztywnej liczby, żeby dołożenie kolejnego
+  // archetypu (np. projectViability, 2026-07-28) nie wywracało bramki doktryny.
+  it('rejestr ma komplet szablonów, każdy z unikalnym id', () => {
+    expect(templates.length).toBeGreaterThanOrEqual(7);
+    const ids = templates.map((t) => t.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   it.each(templates.map((t) => t.id))(
