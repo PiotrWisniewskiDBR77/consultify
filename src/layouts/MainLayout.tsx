@@ -206,10 +206,23 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       }}
     >
       <div className="flex h-screen w-full bg-c-bg text-c-text font-sans overflow-hidden">
-        {/* Global Floating Action Buttons - Order: Help, Feedback, Docs */}
+        {/* Global Floating Action Buttons - Order: Help, Feedback, Docs
+         *
+         * PILNE-9 (2026-07-27, zgłaszane 3x): rail wisiał na `right-4` NAD treścią,
+         * na wysokości 70% ekranu — czyli dokładnie nad ostatnimi wierszami tabeli.
+         * Przy zamkniętym podglądzie tabela sięga prawej krawędzi i kebab ostatniego
+         * wiersza był fizycznie nieklikalny (dotyczyło KAŻDEGO ekranu z tabelą).
+         *
+         * Rozwiązanie systemowe, w jednym miejscu: rail przestaje pływać NAD treścią
+         * i dostaje własny pas przy krawędzi okna — dosunięty do `right-0` (przyciski
+         * są zresztą tak zaprojektowane: `rounded-l-md rounded-r-none`, czyli zakładka
+         * przy krawędzi), a `<main>` rezerwuje na ten pas `md:pr-8` (32px = szerokość
+         * przycisku). Dzięki temu żadna treść nigdy nie trafia pod rail — niezależnie
+         * od ekranu, hovera, dotyku czy nawigacji klawiaturą.
+         */}
         <div
           data-testid="global-fab-rail"
-          className={`fixed z-dropdown flex flex-col gap-1 items-end pointer-events-none ${isMobile ? 'right-3' : 'right-4 top-[70%]'}`}
+          className={`fixed z-dropdown flex flex-col gap-1 items-end pointer-events-none ${isMobile ? 'right-3' : 'right-0 top-[70%]'}`}
           style={
             mobileGlobalRailBottomOffset
               ? { bottom: `${mobileGlobalRailBottomOffset}px` }
@@ -269,6 +282,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     ${isSidebarCollapsed ? 'md:ltr:pl-16 md:rtl:pr-16' : 'md:ltr:pl-64 md:rtl:pr-64'}
                     ${currentUser?.isDemo ? 'mt-10' : ''}
                     pb-16 md:pb-0
+                    md:pr-8
                 `}
         >
           <a

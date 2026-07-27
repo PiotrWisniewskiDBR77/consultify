@@ -165,7 +165,13 @@ const InitiativesPortfolioAnalysisScreen = React.lazy(
   () => import('./screens/initiatives-portfolio-analysis')
 );
 // ── Screen registry (extensible) ──────────────────────────────────────────
+const FabRailKebabScreen = React.lazy(() => import('./screens/fab-rail-kebab'));
+
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'fab-rail-kebab': {
+    label: 'PILNE-9 — pływające przyciski vs kebab ostatniego wiersza (&fix=off = stan przed)',
+    render: () => <FabRailKebabScreen />,
+  },
   'materialy-launcher': {
     label: 'MATERIAŁY — tablica Dodaj (format×tryb) &variant=materials|templates',
     render: () => <MaterialyLauncherScreen />,

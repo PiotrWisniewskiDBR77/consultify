@@ -1382,6 +1382,14 @@
     }
   },
   "myWork": {
+    "kanban": {
+      "statusMoved": "Przeniesiono do „{{column}}\"",
+      "statusFailedNotFound": "Nie zapisano: zadanie „{{title}}\" już nie istnieje (mogło zostać usunięte lub przypisane komuś innemu). Odśwież tablicę.",
+      "statusFailedForbidden": "Nie zapisano: brak uprawnień do zmiany statusu zadania „{{title}}\". Poproś właściciela zadania o zmianę.",
+      "statusFailedServer": "Nie zapisano „{{title}}\" → {{column}}: błąd serwera ({{code}}). Karta wróciła na miejsce — spróbuj ponownie za chwilę.",
+      "statusFailedOffline": "Nie zapisano „{{title}}\" → {{column}}: brak połączenia z serwerem. Karta wróciła na miejsce — sprawdź internet i spróbuj ponownie.",
+      "statusFailedGeneric": "Nie zapisano „{{title}}\" → {{column}} ({{code}}). Karta wróciła na miejsce — spróbuj ponownie."
+    },
     "title": "Moja Praca",
     "home": "Home",
     "manager": "Manager",
