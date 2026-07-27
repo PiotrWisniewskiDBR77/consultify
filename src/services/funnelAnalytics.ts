@@ -84,6 +84,11 @@ export type FunnelEventName =
   | 'idea_converted_task_set'
   | 'idea_converted_decision'
   | 'idea_converted_team_chat'
+  // Z3 audit (2026-07-24): 'target' union in MyIdeasListContent.handleConvert
+  // was widened to also accept 'report'/'presentation' — these two event
+  // names complete the matching FunnelEventName set (see that file's comment).
+  | 'idea_converted_report'
+  | 'idea_converted_presentation'
   | 'idea_edge_created'
   | 'idea_edge_deleted'
   | 'notebook_page_saved'
