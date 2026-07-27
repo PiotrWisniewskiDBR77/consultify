@@ -113,7 +113,17 @@ export interface DateColumnSeedPlan {
   }[];
   /** Pre-filled schedule so the view actually SHOWS something after the fix. */
   values: { rowId: string; key: string; value: string }[];
+  /**
+   * The same schedule keyed by row — for callers whose `handleFieldChange`
+   * closes over a STALE `nodes` array (the legacy IdeaTableTool one does), so
+   * a loop of per-field calls would keep only the last write. Those callers
+   * must apply this patch map in a single state update.
+   */
+  patchByRow: Record<string, Record<string, string>>;
 }
+
+/** Guard: the platform path writes one request per seeded field. */
+const MAX_SEEDED_ROWS = 100;
 
 function uniqueKey(base: string, taken: Set<string>): string {
   if (!taken.has(base)) return base;
@@ -150,16 +160,19 @@ export function buildDateColumnSeedPlan(opts: {
 
   const base = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const values: DateColumnSeedPlan['values'] = [];
-  rowIds.forEach((rowId, idx) => {
+  const patchByRow: DateColumnSeedPlan['patchByRow'] = {};
+  rowIds.slice(0, MAX_SEEDED_ROWS).forEach((rowId, idx) => {
     const start = new Date(base);
     start.setDate(start.getDate() + idx * 7);
     const end = new Date(start);
     end.setDate(end.getDate() + 5);
     values.push({ rowId, key: startKey, value: isoDay(start) });
     values.push({ rowId, key: endKey, value: isoDay(end) });
+    patchByRow[rowId] = { [startKey]: isoDay(start), [endKey]: isoDay(end) };
   });
 
   return {
+    patchByRow,
     columns: [
       {
         key: startKey,

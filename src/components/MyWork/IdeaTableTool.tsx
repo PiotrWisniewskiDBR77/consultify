@@ -1255,14 +1255,32 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   // kolumnę, nic się nie zmieniło, bo nie była typu „data").
   const handleAddDateColumnForView = useCallback(() => {
     if (locked) return;
-    const addCol = usePlatform ? platformIntegration.handleAddColumn : handleAddColumn;
     const plan = buildDateColumnSeedPlan({
       existingKeys: _cols.map((c) => c.key),
-      rowIds: processedRowsWithRollups.map((n) => n.id),
+      rowIds: nodes.map((n) => n.id),
       t,
     });
-    for (const col of plan.columns) addCol(col as unknown as ColumnDef);
-    for (const v of plan.values) _fieldChange(v.rowId, v.key, v.value);
+
+    if (usePlatform) {
+      // Platform path: handleFieldChange uses setLocalNodes(curr => …), so a
+      // sequence of per-field calls composes correctly.
+      for (const col of plan.columns) {
+        platformIntegration.handleAddColumn(col as unknown as ColumnDef);
+      }
+      for (const v of plan.values) _fieldChange(v.rowId, v.key, v.value);
+    } else {
+      for (const col of plan.columns) handleAddColumn(col as unknown as ColumnDef);
+      // Legacy path: handleFieldChange closes over a STALE `nodes` snapshot, so
+      // a loop of calls would keep only the LAST write and the timeline would
+      // stay empty right after the user clicked the fix. One bulk push instead.
+      nodesUndo.push(
+        nodes.map((n) => {
+          const patch = plan.patchByRow[n.id];
+          return patch ? { ...n, data: { ...(n.data || {}), ...patch } } : n;
+        })
+      );
+    }
+
     trackFunnelEvent('ideas_table_column_added', {
       key: plan.columns[0]?.key,
       type: 'date',
@@ -1274,8 +1292,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     handleAddColumn,
     ideaId,
     locked,
+    nodes,
+    nodesUndo,
     platformIntegration,
-    processedRowsWithRollups,
     t,
     usePlatform,
   ]);
