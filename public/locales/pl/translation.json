@@ -30133,14 +30133,14 @@
       },
       "pf": {
         "startEnd": "Start/Koniec",
-        "task": "Task",
+        "task": "Zadanie",
         "decision": "Decyzja",
-        "lane": "Lane"
+        "lane": "Tor (nowy tor odpowiedzialności)"
       },
       "tbl": {
         "addRow": "Nowy wiersz",
         "columns": "Kolumny",
-        "view": "Widok",
+        "view": "Widok galerii — przełącza tabelę na kafelki",
         "filter": "Filtruj",
         "dashboard": "Dashboard"
       },
