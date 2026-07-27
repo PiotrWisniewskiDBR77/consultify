@@ -20679,7 +20679,15 @@
         "trustBoundary": "Trust boundary",
         "executionAuthority": "Execution",
         "reviewAuthority": "Review",
-        "validationChecks": "Validation checks"
+        "validationChecks": "Validation checks",
+        "originsCount_one": "{{count}} origin",
+        "originsCount_other": "{{count}} origins",
+        "sourcesCount_one": "{{count}} source",
+        "sourcesCount_other": "{{count}} sources",
+        "checkFailed": "not passed",
+        "checkPending": "awaiting check",
+        "checkSkipped": "skipped",
+        "copyId": "Copy ID"
       },
       "tabs": {
         "all": "All",
@@ -20769,6 +20777,10 @@
     },
     "templateBuilder": {
       "saved": "Template saved"
+    },
+    "templates": {
+      "legacySourceLine": "Older template registry — works unchanged",
+      "legacyHint": "Template from the older registry — generation works unchanged."
     }
   },
   "rbHub": {
