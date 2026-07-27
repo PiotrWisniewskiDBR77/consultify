@@ -30453,7 +30453,9 @@
       "edit": "Edycja"
     },
     "whatIf": {
-      "scenariosFor": "Scenariusze dla: \"{{label}}\""
+      "scenariosFor": "Scenariusze dla: \"{{label}}\"",
+      "intro": "AI proponuje hipotetyczne scenariusze dla zaznaczonego węzła — szanse, ryzyka i ścieżki alternatywne — na podstawie treści całej mapy.",
+      "legend": "Znacznik HIGH / MEDIUM / LOW to pewność AI co do scenariusza, a nie ocena Twojego pomysłu. „Dodaj do mapy\" wstawia scenariusz jako nowy węzeł na mapie."
     },
     "heatmap": {
       "mon": "Pn",

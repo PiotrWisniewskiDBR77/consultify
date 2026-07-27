@@ -93,22 +93,27 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
   if (!open) return null;
 
   const typeConfig = {
+    // W3: `bg` bylo pelnym, nasyconym wypelnieniem (`bg-c-danger` itd.) — karta
+    // stawala sie jednolitym czerwonym/zielonym prostokatem, na ktorym opis i
+    // przycisk „Dodaj do mapy" byly praktycznie nieczytelne (i wygladalo to jak
+    // alarm, nie jak propozycja). Zostaje ten sam sygnal semantyczny, ale jako
+    // delikatny tint + obramowanie — zgodnie ze wzorcem uzywanym w reszcie appki.
     opportunity: {
       icon: Sparkles,
       color: 'text-c-success',
-      bg: 'bg-c-success',
+      bg: 'bg-c-success/10 border-c-success/25',
       label: t('ideas.mindmap.opportunity', 'Opportunity'),
     },
     risk: {
       icon: AlertTriangle,
       color: 'text-c-danger',
-      bg: 'bg-c-danger',
+      bg: 'bg-c-danger/10 border-c-danger/25',
       label: t('ideas.mindmap.risk', 'Risk'),
     },
     alternative: {
       icon: Route,
       color: 'text-c-info',
-      bg: 'bg-c-info',
+      bg: 'bg-c-info/10 border-c-info/25',
       label: t('ideas.mindmap.alternative', 'Alternative'),
     },
   };
@@ -143,6 +148,28 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
           >
             <X size={16} />
           </button>
+        </div>
+
+        {/*
+          W3: bez tego bloku ekran pokazywal same karty z tagami HIGH/MEDIUM i
+          przyciskiem „Dodaj do mapy", bez slowa o tym CO to jest i SKAD sie
+          wzielo („boze nie wiem co to jest tutaj"). Dwa zdania: czym sa
+          scenariusze + co naprawde znaczy znacznik (to PEWNOSC modelu, liczona
+          z `s.confidence` powyzej — nie ocena wplywu ani jakosci pomyslu).
+        */}
+        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle bg-c-surface dark:bg-c-surface-raised">
+          <p className="text-[11px] leading-relaxed text-c-text-secondary dark:text-c-text-muted">
+            {t(
+              'myWorkMindmap.whatIf.intro',
+              'AI proposes hypothetical scenarios for the selected node — opportunities, risks and alternative paths — based on the content of the whole map.'
+            )}
+          </p>
+          <p className="text-[10px] leading-relaxed text-c-text-secondary dark:text-c-text-muted mt-1.5">
+            {t(
+              'myWorkMindmap.whatIf.legend',
+              'HIGH / MEDIUM / LOW is the AI\'s confidence in a scenario, not a rating of your idea. "Add to map" inserts the scenario as a new node on the map.'
+            )}
+          </p>
         </div>
 
         {/* Content */}
@@ -187,7 +214,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
                 return (
                   <div
                     key={scenario.id}
-                    className={`p-3 rounded-xl border border-c-border-subtle dark:border-c-border-subtle ${cfg.bg}`}
+                    className={`p-3 rounded-xl border ${cfg.bg}`}
                   >
                     <div className="flex items-start gap-2">
                       <Icon size={14} className={`mt-0.5 shrink-0 ${cfg.color}`} />

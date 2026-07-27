@@ -29389,7 +29389,9 @@
       "edit": "Edit"
     },
     "whatIf": {
-      "scenariosFor": "Scenarios for: \"{{label}}\""
+      "scenariosFor": "Scenarios for: \"{{label}}\"",
+      "intro": "AI proposes hypothetical scenarios for the selected node — opportunities, risks and alternative paths — based on the content of the whole map.",
+      "legend": "HIGH / MEDIUM / LOW is the AI’s confidence in a scenario, not a rating of your idea. \"Add to map\" inserts the scenario as a new node on the map."
     },
     "heatmap": {
       "mon": "Mo",
