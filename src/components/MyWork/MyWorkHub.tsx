@@ -84,7 +84,6 @@ import {
   MENU_3_ROW_CLASS,
 } from '@/components/shared/ModuleMenu3';
 import { LoadingState } from '@/components/shared/states';
-import { UnifiedCreateLauncher } from '@/components/shared/UnifiedCreateLauncher';
 import {
   type WorkspacePanelKey,
   WorkspacePanelStrip,
@@ -116,7 +115,6 @@ import {
   downloadSheetArtifactXlsx,
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
-import { isUnifiedCreateLauncherEnabled } from '@/utils/unifiedCreateLauncherFlag';
 
 import { CalendarView } from './Calendar/CalendarView';
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
@@ -726,10 +724,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     Record<string, IdeaWorkspaceHubState>
   >({});
   const [showStartupTemplates, setShowStartupTemplates] = useState(false);
-  // I1-I3 Faza 0 — unified "+ Nowy" launcher (Insight/Initiative/Decision).
-  // Gated by isUnifiedCreateLauncherEnabled() (default OFF) — see
-  // Harvard/wdrozenie-100/_PLAN_I1-I3_UNIFIKACJA_KREATOROW.md §6 Faza 0.
-  const [showUnifiedLauncher, setShowUnifiedLauncher] = useState(false);
   const [ideaStageFilter, setIdeaStageFilter] = useState<IdeaStage | 'all'>('all');
   const [ideasStageCounts, setIdeasStageCounts] = useState<{
     total: number;
@@ -4133,18 +4127,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </button>
             )}
 
-            {/* I1-I3 Faza 0 — unified "+ Nowy" launcher (Insight/Initiative/
-                Decision), additive next to the existing per-tab CTA above.
-                Flag OFF by default — see unifiedCreateLauncherFlag.ts. */}
-            {!activeDocumentId && isUnifiedCreateLauncherEnabled() && (
-              <button
-                onClick={() => setShowUnifiedLauncher(true)}
-                className={`${CTA_BASE} ${CTA_TONE.neutral}`}
-                data-testid="mywork-unified-create-launcher-trigger"
-              >
-                <span>{t('myWork.hub.unifiedCreateNew')}</span>
-              </button>
-            )}
+            {/* D-01 (Piotr, OBR-28 2026-07-27): uniwersalny „+ New" USUNIĘTY —
+                CTA jest kontekstowe per zakładka (`actionButton` wyżej).
+                Zakładki bez własnego tworzenia (Inbox, Client Vault, Home,
+                Manager) świadomie nie mają CTA. Launcher 3-w-1 był jedynym
+                żywym callerem `NewDecisionModal` — decyzje tworzy się dziś
+                przez „New Decision" (DecisionDetailView). */}
 
             {/* Ideas detail AI action lives in Menu 3 right slot. */}
           </div>
@@ -4171,16 +4159,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         onSelect={handleStartupTemplateSelect}
       />
 
-      {/* I1-I3 Faza 0 — unified "+ Nowy" launcher (flag OFF by default). */}
-      {isUnifiedCreateLauncherEnabled() && (
-        <UnifiedCreateLauncher
-          isOpen={showUnifiedLauncher}
-          onClose={() => setShowUnifiedLauncher(false)}
-          projectId={currentProjectId || undefined}
-          isPolish={isPolish}
-          onCreated={() => setShowUnifiedLauncher(false)}
-        />
-      )}
     </div>
   );
 };
