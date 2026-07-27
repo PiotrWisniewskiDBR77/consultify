@@ -36,9 +36,24 @@ import { useConversationStore } from '../store/useConversationStore';
 import { AppView } from '../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../types/workspace';
 
+/**
+ * A breadcrumb segment. A plain string preserves the historical behaviour
+ * (non-clickable, hover style only). An object segment with `to` renders as
+ * a real navigable control — used by screens that need >2 levels (e.g. the
+ * three Materiały studios: `Materiały › Dokumenty|Prezentacje|Arkusze ›
+ * [nazwa]`, FAZA B3 2026-07-27).
+ */
+export type BreadcrumbSegment = string | { label: string; to?: string };
+
 export interface MainLayoutProps {
   children: React.ReactNode;
-  breadcrumbs?: string[];
+  /**
+   * Ordered from outermost to innermost (current) segment. Any number of
+   * segments is supported — the last one always renders as the current,
+   * non-clickable page marker (`aria-current="page"`); every earlier segment
+   * with a `to` navigates there on click.
+   */
+  breadcrumbs?: BreadcrumbSegment[];
   noPadding?: boolean;
 }
 
@@ -288,20 +303,47 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                   // slate-400 podnosi do ~7:1 bez zmiany hierarchii (nadal drugorzedny).
                   className="flex items-center text-sm font-medium text-slate-600 dark:text-slate-400"
                 >
-                  <span
-                    className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors"
-                    aria-current={!breadcrumbs?.[1] && breadcrumbs?.[0] ? 'page' : undefined}
-                  >
-                    {breadcrumbs?.[0] || ''}
-                  </span>
-                  {breadcrumbs?.[1] ? (
-                    <>
-                      <ChevronRight size={14} className="mx-2 rtl:rotate-180" aria-hidden="true" />
-                      <span className="text-navy-900 dark:text-white" aria-current="page">
-                        {breadcrumbs[1]}
-                      </span>
-                    </>
-                  ) : null}
+                  {breadcrumbs && breadcrumbs.length > 0 ? (
+                    breadcrumbs.map((segment, index) => {
+                      const isLast = index === breadcrumbs.length - 1;
+                      const label = typeof segment === 'string' ? segment : segment.label;
+                      const to = typeof segment === 'string' ? undefined : segment.to;
+                      return (
+                        // eslint-disable-next-line react/no-array-index-key -- segments are a static, ordered path; label alone isn't unique enough (e.g. two "Documents" levels).
+                        <React.Fragment key={`${index}-${label}`}>
+                          {index > 0 ? (
+                            <ChevronRight
+                              size={14}
+                              className="mx-2 rtl:rotate-180 flex-shrink-0"
+                              aria-hidden="true"
+                            />
+                          ) : null}
+                          {isLast ? (
+                            <span
+                              className="text-navy-900 dark:text-white truncate"
+                              aria-current="page"
+                            >
+                              {label}
+                            </span>
+                          ) : to ? (
+                            <button
+                              type="button"
+                              onClick={() => navigate(to)}
+                              className="hover:text-navy-900 dark:hover:text-white hover:underline cursor-pointer transition-colors truncate"
+                            >
+                              {label}
+                            </button>
+                          ) : (
+                            <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors truncate">
+                              {label}
+                            </span>
+                          )}
+                        </React.Fragment>
+                      );
+                    })
+                  ) : (
+                    <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors" />
+                  )}
                 </nav>
               </div>
 
