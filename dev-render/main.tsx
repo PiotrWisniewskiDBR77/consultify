@@ -95,6 +95,7 @@ const IdeaTableTimelineStuckScreen = React.lazy(
   () => import('./screens/idea-table-timeline-stuck')
 );
 const WhiteboardWorkshopScreen = React.lazy(() => import('./screens/whiteboard-workshop'));
+const B2TemplateGalleryScreen = React.lazy(() => import('./screens/b2-template-gallery'));
 const MindmapI18nSmokeScreen = React.lazy(() => import('./screens/mindmap-i18n-smoke'));
 const ModelCatalogTableScreen = React.lazy(() => import('./screens/model-catalog-table'));
 const NavDeclutterSidebarScreen = React.lazy(() => import('./screens/navdeclutter-sidebar'));
@@ -538,6 +539,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Naprawa 2026-07-26 — Whiteboard Session Layer/Scenes/prawy klik (mock stanowy); &ff_whiteboardSessionInPanel=1 dla ON',
     render: () => <WhiteboardWorkshopScreen />,
+  },
+  'b2-template-gallery': {
+    label:
+      'B2 — galeria szablonów Idei (mock STANOWY) dla 4 narzędzi; &tool=mindmap|whiteboard|process_flow|table, &empty=1 dla pustej kanwy',
+    render: () => <B2TemplateGalleryScreen />,
   },
   'i18n-fala1-smoke': {
     label:
