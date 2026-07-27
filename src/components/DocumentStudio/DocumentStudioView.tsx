@@ -19,6 +19,7 @@ import { TopBar, type TopBarChipDescriptor } from '@/components/shared/Executive
 import { TriModeChooser } from '@/components/shared/TriModeChooser';
 import { LoadingState } from '@/components/ui/primitives';
 import { isTriModeEnabled } from '@/utils/triModeFlag';
+import { isZaiTeresaEnabled } from '@/utils/zaiTeresaFlag';
 
 import {
   type DocumentStreamDoneEvent,
@@ -32,6 +33,7 @@ import {
   resolveDocumentStudioTemplate,
   TemplateResolveClientError,
 } from './api';
+import { DocumentStudioAiEntryPanel } from './DocumentStudioAiEntryPanel';
 import { DocumentStudioDocumentPanel } from './DocumentStudioDocumentPanel';
 import {
   DocumentStudioGeneratingPanel,
@@ -52,7 +54,7 @@ type Phase = 'intake' | 'outline' | 'generating' | 'document';
 type Tab = 'generate' | 'templates';
 
 export const DocumentStudioView: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { artifactId: artifactIdFromPath } = useParams<{ artifactId?: string }>();
   // #84b fix: getArtifactPath('report', id) / legacy /wordy deep-links resolve to
@@ -93,6 +95,11 @@ export const DocumentStudioView: React.FC = () => {
   // `ff_tri_tryby`. OFF → `triMode` false → gałąź intake renderuje wyłącznie
   // dotychczasowy `DocumentStudioIntakeForm` (bajt-identycznie).
   const triMode = isTriModeEnabled();
+  // FAZA B1 (2026-07-27) — `docEntryMode === 'ai'` renderuje
+  // `DocumentStudioAiEntryPanel` (dokument + Teresa z boku) zamiast
+  // `DocumentStudioIntakeForm`, kiedy ON. Default OFF — patrz
+  // `src/utils/zaiTeresaFlag.ts` (czeka na akcept właściciela na zrzucie).
+  const zaiTeresaEnabled = isZaiTeresaEnabled();
   // 'choose' = ekran wyboru (Czysto/Z AI/Z szablonu); 'ai'/'template' = intake;
   // 'blank' = auto-tworzenie pustego dokumentu (wejście z Materiałów, patrz efekt niżej).
   const [docEntryMode, setDocEntryMode] = useState<'choose' | 'ai' | 'template' | 'blank'>(
@@ -442,6 +449,52 @@ export const DocumentStudioView: React.FC = () => {
     }
   };
 
+  // FAZA B1 (2026-07-27) — buduje DocumentIntake z pojedynczej wiadomości
+  // czatu zamiast 6 pól formularza. Parametry, które znikają z EKRANU
+  // (Type/Density/Goal/Audience — N12), NIE znikają z SYSTEMU: dostają te
+  // same domyślne co dawny `DocumentStudioIntakeForm.tsx` —
+  //   documentType: undefined (= "Auto-detect from description", tak jak
+  //                 domyślna opcja starego <select>),
+  //   density:      'standard' (dawny `useState<DocumentDensity>('standard')`),
+  //   goal:         'inform' (dawny `useState<DocumentGoal>('inform')`),
+  //   audience:     undefined (dawne puste pole tekstowe).
+  // Jedyna ŚWIADOMA zmiana względem formularza: `language` czyta konto
+  // (i18n.language, zsynchronizowane z `users.language` na starcie sesji —
+  // `src/services/languagePreference.ts`) zamiast sztywnego 'pl', którego
+  // formularz nigdy nie odczytywał z konta mimo dostępnego pola.
+  const buildAiChatIntake = useCallback(
+    (description: string): DocumentIntake => ({
+      description,
+      documentType: undefined,
+      language: (i18n.language || '').toLowerCase().startsWith('en') ? 'en' : 'pl',
+      density: 'standard',
+      goal: 'inform',
+    }),
+    [i18n.language]
+  );
+
+  // FAZA B1 — pierwsza wiadomość w `DocumentStudioAiEntryPanel` uruchamia
+  // generację BEZPOŚREDNIO (BANG, N11/N12): bez ekranu podglądu outline'u,
+  // dokładnie tak jak Mode 3 (template) już robi — serwer planuje outline
+  // wewnętrznie i emituje go zdarzeniem `plan` (`runStreamingGeneration`
+  // sieje `knownOutline=null`, `DocumentStudioGeneratingPanel` wypełnia się
+  // na żywo dopiero po tym zdarzeniu). Auto-grounding (org + projekty +
+  // inicjatywy) dzieje się PO STRONIE SERWERA identycznie jak dla każdego
+  // innego wywołania `/generate/stream` — patrz
+  // `server/src/services/documentStudio/documentOrgContextSourcePack.ts`
+  // i `autoGroundGenerateRequest` w `document-studio.routes.ts`.
+  const handleAiChatFirstMessage = useCallback(
+    async (description: string): Promise<void> => {
+      setError(null);
+      const nextIntake = buildAiChatIntake(description);
+      setIntake(nextIntake);
+      setActiveTemplateId(null);
+      setUseLlm(true);
+      await runStreamingGeneration({ intake: nextIntake, useLlm: true }, null);
+    },
+    [buildAiChatIntake, runStreamingGeneration]
+  );
+
   const handleGenerate = async (): Promise<void> => {
     if (!intake || !outline) return;
     await runStreamingGeneration(
@@ -694,6 +747,16 @@ export const DocumentStudioView: React.FC = () => {
                 {t('documentStudio.view.backToLibrary', 'Wróć do Biblioteki wzorców')}
               </button>
             </div>
+          ) : zaiTeresaEnabled && docEntryMode === 'ai' ? (
+            // FAZA B1 (2026-07-27, flaga `ff_zai_teresa`, default OFF) — N11:
+            // „Z AI → otwiera się dokument, a Z BOKU okno AI (czat)." Zero pól
+            // formularza; pierwsza wiadomość w czacie uruchamia generację.
+            <DocumentStudioAiEntryPanel
+              onFirstMessage={handleAiChatFirstMessage}
+              busy={planning || generating}
+              error={phase === 'intake' ? error : null}
+              onBackToModes={triMode ? handleBackToModes : undefined}
+            />
           ) : (
             <DocumentStudioIntakeForm
               onSubmit={handleIntakeSubmit}
