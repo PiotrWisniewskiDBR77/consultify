@@ -27182,7 +27182,8 @@
           "showColumn": "Pokaż kolumnę „{{column}}”",
           "runScoringModel": "Uruchom Model scoringowy",
           "addRow": "Dodaj wiersz",
-          "backToTable": "Wróć do widoku Tabela"
+          "backToTable": "Wróć do widoku Tabela",
+          "backToDefaultView": "Wróć do zakładki Domyślny"
         },
         "columnHeader": {
           "start": "Data startu",

@@ -165,7 +165,17 @@ import type {
 import { computeAggregation } from './table/tableTypes';
 import { TemplateGallery } from './table/TemplateGallery';
 import { TimelineView } from './table/TimelineView';
-import { buildDateColumnSeedPlan } from './table/ViewSetupEmptyState';
+import {
+  buildDateColumnSeedPlan,
+  buildDecisionColumnSeedPlan,
+  buildScoreColumnSeedPlan,
+  DECISION_COLUMN_KEY,
+  resolveDecisionViewSetup,
+  resolveScoringViewSetup,
+  SCORE_COLUMN_KEY,
+  type SetupDrivenView,
+  ViewSetupEmptyState,
+} from './table/ViewSetupEmptyState';
 // Domain hooks extracted from this file (Stage 1 refactor)
 import { useRollupComputation } from './table/useRollupComputation';
 import { useTableKeyboard } from './table/useTableKeyboard';
@@ -1309,6 +1319,91 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const handleBackToTableView = useCallback(() => {
     (usePlatform ? effectiveSetViewLayout : setViewLayout)('table');
   }, [effectiveSetViewLayout, setViewLayout, usePlatform]);
+
+  // ── Puste stany zakładek Scoring / Log decyzji ────────────────────────────
+  // Te dwie zakładki były CICHYMI atrapami: preset „scoring" sortuje po
+  // kolumnie `score`, preset „decision_log" grupuje po kolumnie `decision`, a
+  // ŻADNEJ z nich nie ma w DEFAULT_COLUMNS. Efekt: Scoring przestawiał wiersze
+  // porównując undefined z undefined (wygląda na pracę, nie znaczy nic), a Log
+  // decyzji robił jedną bezsensowną grupę „IDEA (5)". Zero sygnału dla
+  // użytkownika — gorzej niż błąd. Teraz obie idą przez ten sam mechanizm co
+  // Timeline: nazwij brakujący warunek i podaj działające wyjście.
+  const viewSetupBlocker = useMemo(() => {
+    if (_vl !== 'table') return null; // inne układy mają własne puste stany
+    if (_activeViewId === 'scoring') {
+      return resolveScoringViewSetup({ columns: _cols, rows: effectiveNodes });
+    }
+    if (_activeViewId === 'decision_log') {
+      return resolveDecisionViewSetup({ columns: _cols, rows: effectiveNodes });
+    }
+    return null;
+  }, [_activeViewId, _cols, _vl, effectiveNodes]);
+
+  /** Który widok pyta — steruje ikoną i tekstami pustego stanu. */
+  const viewSetupView: SetupDrivenView = _activeViewId === 'scoring' ? 'scoring' : 'decisionLog';
+
+  const handleAddViewSetupColumn = useCallback(() => {
+    if (locked) return;
+    const addColumn = usePlatform ? platformIntegration.handleAddColumn : handleAddColumn;
+
+    if (_activeViewId === 'scoring') {
+      // Bez zasianych wartości: wymyślona „ocena" to kłamstwo o osądzie,
+      // którego nikt nie wydał. Wiersze ocenione wcześniej przez „Model
+      // scoringowy" (pisze do data.score — dotąd w niewidzialną kolumnę)
+      // zapalają się od razu, reszta ląduje na stanie „kolumna jest, pusta",
+      // który ma własne wyjście → Model scoringowy.
+      const plan = buildScoreColumnSeedPlan({ t });
+      for (const col of plan.columns) addColumn(col as unknown as ColumnDef);
+      trackFunnelEvent('ideas_table_column_added', {
+        key: SCORE_COLUMN_KEY,
+        type: 'number',
+        ideaId,
+      });
+      return;
+    }
+
+    const plan = buildDecisionColumnSeedPlan({ rowIds: effectiveNodes.map((n) => n.id), t });
+    for (const col of plan.columns) addColumn(col as unknown as ColumnDef);
+    if (usePlatform) {
+      // Ścieżka platformy: handleFieldChange używa setLocalNodes(curr => …),
+      // więc seria wywołań składa się poprawnie.
+      for (const v of plan.values) _fieldChange(v.rowId, v.key, v.value);
+    } else {
+      // Ścieżka legacy: handleFieldChange domyka STARY snapshot `nodes`, więc
+      // pętla wywołań zostawiłaby tylko ostatni zapis (ta sama pułapka co przy
+      // naprawie Timeline). Jeden zbiorczy push zamiast pętli.
+      nodesUndo.push(
+        nodes.map((n) => {
+          const patch = plan.patchByRow[n.id];
+          return patch ? { ...n, data: { ...(n.data || {}), ...patch } } : n;
+        })
+      );
+    }
+    trackFunnelEvent('ideas_table_column_added', {
+      key: DECISION_COLUMN_KEY,
+      type: 'select',
+      ideaId,
+    });
+  }, [
+    _activeViewId,
+    _fieldChange,
+    effectiveNodes,
+    handleAddColumn,
+    ideaId,
+    locked,
+    nodes,
+    nodesUndo,
+    platformIntegration,
+    t,
+    usePlatform,
+  ]);
+
+  /** „Wróć" dla Scoringu/Logu decyzji = zakładka Domyślny (układ już jest 'table'). */
+  const handleBackToDefaultView = useCallback(() => {
+    const def = savedViews.find((v) => v.id === 'default');
+    if (def) applyView(def);
+    else setActiveViewId('default');
+  }, [applyView, savedViews, setActiveViewId]);
 
   // ── "/" key for AI assistant ─────────────────────────────────────────────
   useEffect(() => {
@@ -3004,6 +3099,19 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     if (axis === 'x') setMatrixAxisXKey(col.key);
                     else setMatrixAxisYKey(col.key);
                   }}
+                />
+              ) : viewSetupBlocker ? (
+                <ViewSetupEmptyState
+                  view={viewSetupView}
+                  state={viewSetupBlocker}
+                  locked={locked}
+                  onAddColumn={handleAddViewSetupColumn}
+                  onShowColumn={handleShowDateColumnForView}
+                  onBackToTable={handleBackToDefaultView}
+                  onAddRow={_addRow}
+                  onFillValues={
+                    viewSetupView === 'scoring' ? () => setShowScoringModel(true) : undefined
+                  }
                 />
               ) : (
                 <div

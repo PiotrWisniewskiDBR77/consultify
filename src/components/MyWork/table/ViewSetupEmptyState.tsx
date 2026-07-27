@@ -588,7 +588,13 @@ export const ViewSetupEmptyState: React.FC<ViewSetupEmptyStateProps> = ({
             className={reason === 'no-values' && !onFillValues ? primaryClass : secondaryClass}
           >
             <Table2 className="h-3.5 w-3.5 shrink-0" />
-            {t('ideas.table.viewSetup.action.backToTable', 'Back to Table view')}
+            {/* Timeline/Kalendarz wracają do UKŁADU „Tabela"; Scoring i Log
+                decyzji już są w układzie tabeli — ich wyjściem jest ZAKŁADKA
+                „Domyślny". Jeden przycisk, dwa różne cele, więc i dwie różne
+                etykiety: napis musi mówić, gdzie klik naprawdę zaprowadzi. */}
+            {view === 'scoring' || view === 'decisionLog'
+              ? t('ideas.table.viewSetup.action.backToDefaultView', 'Back to the Default view')
+              : t('ideas.table.viewSetup.action.backToTable', 'Back to Table view')}
           </button>
         )}
       </div>

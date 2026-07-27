@@ -26122,7 +26122,8 @@
           "showColumn": "Show column “{{column}}”",
           "runScoringModel": "Run the scoring model",
           "addRow": "Add row",
-          "backToTable": "Back to Table view"
+          "backToTable": "Back to Table view",
+          "backToDefaultView": "Back to the Default view"
         },
         "columnHeader": {
           "start": "Start date",
