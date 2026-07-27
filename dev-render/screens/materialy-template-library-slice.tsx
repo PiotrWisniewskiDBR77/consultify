@@ -14,14 +14,26 @@
  *  3. wiersz OSIEROCONY — wyszarzony tytuł + odznaka „Brak źródła”, akcja
  *     „Użyj wzorca" wyłączona z powodem (kebab wiersza / preview),
  *  4. wiersz bez statusu/zakresu/daty — „Nieznany" i „—" zamiast udawanego stanu.
+ *  5. wiersz ARKUSZ (sheet) — TemplateItem nie niesie żadnego pola struktury
+ *     dla arkuszy, więc miniatura w Galerii ma być zawsze ta sama neutralna
+ *     sylwetka `SheetSilhouette`/`NEUTRAL_SHEET_SILHOUETTE`, NIGDY zmyślona liczba.
  *
- * URL: ?screen=materialy-template-library-slice[&lang=pl|en][&theme=light|dark]
+ * N4 (noc 2026-07-27/28) — Galeria za `ff_galeria_szablonow` (default OFF):
+ * dopisz `&ff_galeria_szablonow=1` do URL, żeby zamiast dzisiejszej tabeli
+ * zobaczyć przełącznik Galeria ↔ Tabela + kafle z miniaturami niosącymi
+ * strukturę wzorca (port 1:1 zaakceptowanego prototypu
+ * `proto/galeria-szablonow`). Bez tego parametru (albo z `=0`) ekran
+ * renderuje się BYTE-IDENTYCZNIE jak przed N4 — to jest dowód dla
+ * odbioru „flaga OFF = bez zmian".
+ *
+ * URL: ?screen=materialy-template-library-slice[&lang=pl|en][&theme=light|dark][&ff_galeria_szablonow=0|1]
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
 import { TemplatesTabContent } from '../../src/components/ReportsAndPresentations/TemplatesTabContent';
 import type { TemplateItem } from '../../src/components/ReportsAndPresentations/types';
+import type { FilterChip } from '../../src/components/shared/ModuleHub';
 import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
 
 const TEMPLATES: TemplateItem[] = [
@@ -100,9 +112,34 @@ const TEMPLATES: TemplateItem[] = [
     createdBy: 'System',
     slideCount: 12,
   },
+  {
+    id: 'idx-5555-5555-5555-555555555555',
+    artifactIndexId: 'idx-5555-5555-5555-555555555555',
+    canonicalTemplateId: 'wb-tpl-3333-4444-5555-666666666666',
+    originRuntime: null,
+    source: 'canonical',
+    legacy: false,
+    orphaned: false,
+    title: 'Model budżetu operacyjnego (arkusz)',
+    description:
+      'TemplateItem nie niesie żadnego pola struktury dla arkuszy (mapCanonicalTemplateArtifact ' +
+      'nigdy nie ustawia licznika dla type=sheet) — miniatura Galerii ma być zawsze ta sama ' +
+      'neutralna sylwetka, nie zmyślona liczba kolumn/wierszy/zakładek.',
+    type: 'sheet',
+    category: 'custom',
+    scope: 'organization',
+    status: 'published',
+    updatedAt: '2026-07-20T07:55:00.000Z',
+    createdBy: 'Zespół DRD',
+  },
 ];
 
 export default function MaterialyTemplateLibrarySliceScreen(): React.ReactElement {
+  // Stan aktywnych filtrów żyje TU (jak w prawdziwym ReportsAndPresentationsHub,
+  // które trzyma `activeFilters` przez useState) — bez tego chipy Galerii
+  // (N4) klikałyby się, ale nic by się nie zawężało w tym harnessie.
+  const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
+
   return (
     <MemoryRouter initialEntries={['/materialy?tab=templates']}>
       <FeatureFlagsProvider showDevTools={false}>
@@ -113,15 +150,17 @@ export default function MaterialyTemplateLibrarySliceScreen(): React.ReactElemen
             </div>
             <div className="mt-0.5 text-xs text-c-text-muted">
               1) kanoniczny dokument · 2) LEGACY (report_builder_templates) · 3) OSIEROCONY (bez
-              źródła, „Użyj wzorca" wyłączone) · 4) bez statusu/zakresu/daty
+              źródła, „Użyj wzorca" wyłączone) · 4) bez statusu/zakresu/daty · 5) ARKUSZ (bez
+              danych struktury → sylwetka neutralna). Dopisz{' '}
+              <code>&amp;ff_galeria_szablonow=1</code> do URL, żeby zobaczyć Galerię (N4).
             </div>
           </div>
           <div className="h-[calc(100%-64px)]">
             <TemplatesTabContent
               viewMode="table"
               searchQuery=""
-              activeFilters={[]}
-              onFilterChange={() => {}}
+              activeFilters={activeFilters}
+              onFilterChange={setActiveFilters}
               templates={TEMPLATES}
               loading={false}
               error={null}
