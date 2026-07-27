@@ -1413,12 +1413,20 @@ router.put(
     });
 
     const id = String(req.params.id || '').trim();
+    // PILNE-3 (2026-07-27): ten UPDATE miał twardy filtr `task_type='personal'`,
+    // podczas gdy LISTA (GET /personal-tasks) zwraca KAŻDE zadanie właściciela w
+    // organizacji, niezależnie od task_type (na demo 60 ze 151 zadań Piotra to
+    // 'execution'/'interview'/'research'/…). Efekt: kanban My Work → Tasks
+    // pokazywał kartę, drag działał, a PUT zwracał 404 → toast „Failed to update
+    // status". To NIE był problem uprawnień. Zakres zawężają org + owner-scope,
+    // dokładnie tak jak w GET /personal-tasks/:id, gdzie ten sam filtr zdjęto
+    // wcześniej (patrz komentarz przy 404 w detalu).
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, status FROM tasks t WHERE id = ? AND organization_id = ? AND ${ownerScope.whereSql} AND lower(coalesce(task_type,''))='personal' LIMIT 1`,
+      `SELECT id, status FROM tasks t WHERE id = ? AND organization_id = ? AND ${ownerScope.whereSql} LIMIT 1`,
       [id, orgId, ...ownerScope.params]
     );
     if (!existing) {
-      res.status(404).json({ error: 'Not found' });
+      res.status(404).json({ error: 'Not found', code: 'TASK_NOT_FOUND' });
       return;
     }
 
@@ -1486,7 +1494,6 @@ router.put(
           t.completed_at as "completedAt"
         FROM tasks t
       WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
-          AND lower(coalesce(t.task_type,'')) = 'personal'
         LIMIT 1
       `,
         [id, orgId, ...ownerScope.params]
@@ -1497,7 +1504,7 @@ router.put(
 
     params.push(id, orgId, ...ownerScopeNoAlias.params);
     await queryHelpers.queryRun(
-      `UPDATE tasks SET ${setParts.join(', ')} WHERE id = ? AND organization_id = ? AND ${ownerScopeNoAlias.whereSql} AND lower(coalesce(task_type,''))='personal'`,
+      `UPDATE tasks SET ${setParts.join(', ')} WHERE id = ? AND organization_id = ? AND ${ownerScopeNoAlias.whereSql}`,
       params
     );
 
@@ -1517,7 +1524,6 @@ router.put(
         t.completed_at as "completedAt"
       FROM tasks t
       WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
-        AND lower(coalesce(t.task_type,'')) = 'personal'
       LIMIT 1
     `,
       [id, orgId, ...ownerScope.params]
