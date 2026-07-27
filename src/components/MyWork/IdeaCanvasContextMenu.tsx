@@ -316,10 +316,16 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
     const keyHandler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
-    document.addEventListener('mousedown', handler);
+    // CAPTURE PHASE IS LOAD-BEARING — nie zmieniaj na zwykły listener.
+    // d3-zoom (pod ReactFlow) w swoim `mousedowned` woła `nopropagation(event)`
+    // = `event.stopImmediatePropagation()` (d3-zoom/src/zoom.js:280) na
+    // `.react-flow__pane`. Każdy `mousedown` na pustym płótnie Whiteboardu ginie
+    // więc, zanim dojdzie do `document` w fazie bąbelkowania — menu zostawało
+    // otwarte na zawsze (Piotr 07-27: „nie mogę go zamknąć").
+    window.addEventListener('mousedown', handler, true);
     document.addEventListener('keydown', keyHandler);
     return () => {
-      document.removeEventListener('mousedown', handler);
+      window.removeEventListener('mousedown', handler, true);
       document.removeEventListener('keydown', keyHandler);
     };
   }, [onClose, position]);

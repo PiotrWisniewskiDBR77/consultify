@@ -57,10 +57,13 @@ export const WhiteboardEdgeContextMenu: React.FC<WhiteboardEdgeContextMenuProps>
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
-    document.addEventListener('mousedown', handleMouseDown);
+    // Faza przechwytywania — obowiązkowa: d3-zoom pod ReactFlow woła
+    // `stopImmediatePropagation()` na `mousedown` w `.react-flow__pane`, więc
+    // zwykły listener nigdy się nie odpali (patrz NodeContextMenu).
+    window.addEventListener('mousedown', handleMouseDown, true);
     document.addEventListener('keydown', handleKey);
     return () => {
-      document.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mousedown', handleMouseDown, true);
       document.removeEventListener('keydown', handleKey);
     };
   }, [onClose]);
