@@ -155,7 +155,10 @@ export const ArtifactApprovalStatusBar: React.FC<ArtifactApprovalStatusBarProps>
             type="button"
             className={buttonClass}
             disabled={actionPending}
-            onClick={() => void submitForReview(currentUserId)}
+            // canSubmit (l.122) already requires Boolean(currentUserId) to be
+            // true before this button renders — the assertion reflects that
+            // runtime guarantee without changing behaviour.
+            onClick={() => void submitForReview(currentUserId!)}
           >
             <Send size={12} />
             {t('sharedComponents.artifactApprovalStatusBar.submitForReview')}

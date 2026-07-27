@@ -11,7 +11,6 @@ import { useArtifactOutputsList } from '@/components/ReportsAndPresentations/use
 import type { KimiLane } from './KimiWorkspaceShell';
 
 const LANE_TO_KIND: Record<KimiLane, UnifiedOutputRow['kind']> = {
-  wordy: 'document',
   excele: 'sheet',
   prezentacje: 'presentation',
   // Tabele uses the existing 'sheet' artifact kind. Sprint 5 may introduce

@@ -1555,14 +1555,6 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                   await fetchUsers();
                   setDelegationOpen(true);
                 }}
-                onMoreInfo={() => {
-                  if (!previewDecisionId) return;
-                  onDecisionClick?.(
-                    previewDecisionId,
-                    decisions.find((d) => d.id === previewDecisionId)
-                  );
-                  setPreviewDecisionId(null);
-                }}
                 onRemind={async () => {
                   if (!previewDecisionId) return;
                   await handleRemind(previewDecisionId);

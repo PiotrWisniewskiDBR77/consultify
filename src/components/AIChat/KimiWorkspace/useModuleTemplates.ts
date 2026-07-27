@@ -11,7 +11,6 @@ import { useTemplates } from '@/components/ReportsAndPresentations/useRapData';
 import type { KimiLane } from './KimiWorkspaceShell';
 
 const LANE_TO_TEMPLATE_TYPE: Record<KimiLane, TemplateType> = {
-  wordy: 'report',
   excele: 'sheet',
   prezentacje: 'presentation',
   // Tabele uses the existing 'sheet' template family. Sprint 5 may introduce
