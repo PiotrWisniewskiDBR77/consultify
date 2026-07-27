@@ -14,6 +14,7 @@ Konsolidacja 4 pozycji sidebara (Dokumenty/Prezentacje/Raporty/Tabele) → **jed
 
 ## 2. Trzy wejścia (ładowarki kontekstu → jeden silnik generacji)
 1. **Czysty input (Gamma-style):** jedno zdanie → retrieval z org (projekty/inicjatywy/artefakty) → cedzi → układa w wybrany format.
+   > ⚠️ 27.07: „czysty input" = TERESA, nie osobny byt/silnik. Nie budować drugiego pola tworzenia.
 2. **Upload pliku:** zewnętrzny .docx/.pptx/.pdf → parsuje na części → buduje.
 3. **In-place „Przygotuj narzędzie":** z dowolnego modułu (inicjatywa/idea/raport fin.) → przeskok do Materiałów z **zaznaczonym kontekstem** → wybór formatu/wielkości/zawartości. *(To most „moduły↔materiały".)*
 
