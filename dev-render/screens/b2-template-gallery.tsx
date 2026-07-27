@@ -139,10 +139,24 @@ function mergeMapPayload(payload: any) {
   return currentMap;
 }
 
+// `&strict409=1` → mock zachowuje się jak PRODUKCYJNY serwer: odrzuca zapis
+// z nieaktualnym `baseVersion` błędem 409 (my-work.routes.ts §POST /map/sync).
+// Bez tego harness NIE widzi drugiej, ukrytej przyczyny B2 (przeterminowana
+// wersja z `graphRuntime.graph.version` po każdym autozapisie).
+const STRICT_409 = params.get('strict409') === '1';
+
 Api.getMyIdea = (async () => MOCK_IDEA) as typeof Api.getMyIdea;
 Api.getMyIdeaMap = (async () => ({ map: currentMap })) as typeof Api.getMyIdeaMap;
-Api.syncMyIdeaMap = (async (_ideaId: string, payload: any) =>
-  mergeMapPayload(payload)) as typeof Api.syncMyIdeaMap;
+Api.syncMyIdeaMap = (async (_ideaId: string, payload: any) => {
+  if (STRICT_409 && payload?.baseVersion != null && payload.baseVersion !== currentMap.version) {
+    const err: any = new Error('Idea map conflict');
+    err.status = 409;
+    err.data = { code: 'IDEA_MAP_CONFLICT', currentVersion: currentMap.version };
+    syncLog.push({ at: new Date().toISOString().slice(11, 23), n: -409, base: payload.baseVersion });
+    throw err;
+  }
+  return mergeMapPayload(payload);
+}) as typeof Api.syncMyIdeaMap;
 Api.saveMyIdeaMap = (async (_ideaId: string, payload: any) =>
   mergeMapPayload(payload)) as typeof Api.saveMyIdeaMap;
 Api.updateMyIdea = (async () => MOCK_IDEA) as typeof Api.updateMyIdea;
