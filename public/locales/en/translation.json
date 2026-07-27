@@ -26038,7 +26038,43 @@
       "clearCell": "Clear cell",
       "cellCleared": "Cell cleared",
       "copyFailed": "Copy failed",
-      "pasteFailed": "Could not read clipboard"
+      "pasteFailed": "Could not read clipboard",
+      "viewSetup": {
+        "timeline": {
+          "noDateColumn": {
+            "headline": "Timeline needs a date column",
+            "description": "This table has no column of type “date”, so there is nothing to put on the time axis. Add one — we will schedule the existing rows starting today, and you can drag the bars afterwards."
+          }
+        },
+        "calendar": {
+          "noDateColumn": {
+            "headline": "Calendar needs a date column",
+            "description": "This table has no column of type “date”, so no record can land on a day. Add one — we will schedule the existing rows starting today."
+          }
+        },
+        "hiddenDateColumn": {
+          "headline": "Date column “{{column}}” is hidden",
+          "description": "This view hides it, so there is nothing left to place on the axis. Show the column to bring the records back."
+        },
+        "noDateValues": {
+          "headline": "Column “{{column}}” has no dates filled in",
+          "description": "The date column exists, but no row has a value in it — that is why this view is empty. Go back to the table and fill in the dates."
+        },
+        "noRows": {
+          "headline": "This table has no rows yet",
+          "description": "Add the first row in the Table view and come back here."
+        },
+        "action": {
+          "addDateColumn": "Add date column",
+          "showColumn": "Show column “{{column}}”",
+          "addRow": "Add row",
+          "backToTable": "Back to Table view"
+        },
+        "columnHeader": {
+          "start": "Start date",
+          "end": "End date"
+        }
+      }
     },
     "mindmap": {
       "addNodeTab": "Add node (Tab)",
