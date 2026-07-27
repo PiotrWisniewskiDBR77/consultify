@@ -24,7 +24,7 @@ import {
   Upload,
   Workflow,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -389,6 +389,33 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const toolbarRef = useRef<HTMLDivElement>(null);
 
   /**
+   * B3 (2026-07-27) — popover NIE MOŻE być dzieckiem kolumny raila.
+   *
+   * Kolumna ma `overflow-y-auto` (rail bywa wyższy niż pasmo płótna, patrz
+   * `railBox` niżej), a CSS nie pozwala mieć `overflow-y: auto` razem z
+   * `overflow-x: visible` — druga oś ZAWSZE degraduje się do przycinania.
+   * Skutkiem popover wysuwany `absolute left-[calc(100%+8px)]` był ścinany do
+   * ~44px szerokości kolumny: właściciel widział „Rozbi…/Znajd…/Porów…"
+   * ściśnięte w pasku zamiast panelu obok. Gorzej — autofokus pola szukania w
+   * popoverze przewijał kolumnę POZIOMO (`scrollLeft` 64px), więc ikony raila
+   * znikały z widoku.
+   *
+   * Dlatego popover renderujemy jako RODZEŃSTWO kolumny, w tym samym portalu
+   * (patrz koniec pliku), pozycjonowany `fixed` z prostokąta ikony-kotwicy.
+   * Świadomie NIE robimy osobnego `createPortal(…, document.body)`: rail już
+   * dziś portaluje się do body i przez to znika w fullscreenie (dług A8) —
+   * osobny portal pogłębiłby ten problem o kolejny węzeł. Wspólny portal
+   * znaczy: popover żyje i umiera dokładnie tam, gdzie rail.
+   */
+  const popoverAnchorRef = useRef<HTMLButtonElement | null>(null);
+  const popoverLayerRef = useRef<HTMLDivElement | null>(null);
+  const [popoverPos, setPopoverPos] = useState<{
+    left: number;
+    top: number | null;
+    bottom: number | null;
+  } | null>(null);
+
+  /**
    * Z1 (rozdz. 06 §3): realny tryb płótna zgłaszany przez reprezentacje, które
    * trzymają go u siebie (Tablica ma dodatkowo 'draw'). Rail dostaje
    * `interactionMode` propsem z IdeaMapWorkspace — to stan Mapy myśli, więc bez
@@ -474,7 +501,13 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      // B3: popover mieszka POZA kolumną raila (rodzeństwo w tym samym portalu),
+      // więc sam `toolbarRef.contains` zamykałby go przy każdym kliknięciu w jego
+      // własne wnętrze. Warstwa popovera liczy się jako „wewnątrz".
+      const inToolbar = toolbarRef.current?.contains(target);
+      const inPopover = popoverLayerRef.current?.contains(target);
+      if (!inToolbar && !inPopover) {
         setOpenPopover(null);
       }
     };
@@ -482,10 +515,73 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  /**
+   * B3: popover nie jest już dzieckiem ikony, więc gdy zmiana reprezentacji
+   * usunie slot-kotwicę, panel zostałby wiszący nad pustym miejscem. Zamykamy.
+   */
+  useEffect(() => {
+    setOpenPopover(null);
+    popoverAnchorRef.current = null;
+  }, [activeTool]);
+
+  /**
+   * B3: pozycja panelu liczona z prostokąta ikony (rail jest `fixed`, więc
+   * współrzędne viewportu zgadzają się 1:1). Przy ikonach w dolnej połowie
+   * ekranu kotwiczymy DOŁEM, żeby wysoki panel (Szablony/Więcej mają ~440px)
+   * nie zjeżdżał pod krawędź okna.
+   */
+  useLayoutEffect(() => {
+    if (!openPopover || typeof window === 'undefined') {
+      setPopoverPos(null);
+      return;
+    }
+    const place = () => {
+      const anchor = popoverAnchorRef.current;
+      if (!anchor || !anchor.isConnected) {
+        setOpenPopover(null);
+        return;
+      }
+      const rect = anchor.getBoundingClientRect();
+      const viewportH = window.innerHeight;
+      const flipUp = rect.top > viewportH / 2;
+      const next = {
+        left: Math.round(rect.right + 8),
+        top: flipUp ? null : Math.round(Math.max(8, rect.top)),
+        bottom: flipUp ? Math.round(Math.max(8, viewportH - rect.bottom)) : null,
+      };
+      setPopoverPos((prev) =>
+        prev && prev.left === next.left && prev.top === next.top && prev.bottom === next.bottom
+          ? prev
+          : next
+      );
+    };
+    place();
+    // Rail wjeżdża animacją `leftToolbarSlideIn` (transform). Pomiar zrobiony w
+    // jej trakcie dawałby panel przesunięty o kilkanaście px — dlatego mierzymy
+    // ponownie w następnej klatce i po zakończeniu animacji.
+    const raf = requestAnimationFrame(place);
+    const railEl = toolbarRef.current;
+    railEl?.addEventListener('animationend', place);
+    window.addEventListener('resize', place);
+    // `true` = faza przechwytywania: rail przewija się w środku płótna, a nie na
+    // window, więc bez capture nie dostalibyśmy tego zdarzenia.
+    window.addEventListener('scroll', place, true);
+    return () => {
+      cancelAnimationFrame(raf);
+      railEl?.removeEventListener('animationend', place);
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+    // `railBox` w zależnościach: gdy powłoka przeliczy pasmo płótna, rail
+    // przeskakuje — panel musi pójść za nim.
+  }, [openPopover, railBox]);
+
   const handleSlotClick = useCallback(
-    (slot: ToolSlot) => {
+    (slot: ToolSlot, anchor?: HTMLButtonElement | null) => {
       if (slot.popover) {
-        setOpenPopover((cur) => (cur === slot.popover ? null : (slot.popover as PopoverId)));
+        const willOpen = openPopover !== slot.popover;
+        popoverAnchorRef.current = willOpen ? (anchor ?? null) : null;
+        setOpenPopover(willOpen ? (slot.popover as PopoverId) : null);
       } else if (activeTool === 'mindmap' && slot.id === 'connect') {
         onAction(getMindmapConnectToolbarAction(interactionMode));
         setOpenPopover(null);
@@ -494,7 +590,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
         setOpenPopover(null);
       }
     },
-    [activeTool, interactionMode, onAction]
+    [activeTool, interactionMode, onAction, openPopover]
   );
 
   const handlePopoverAction = useCallback(
@@ -504,7 +600,10 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     [onAction]
   );
 
-  const closePopover = useCallback(() => setOpenPopover(null), []);
+  const closePopover = useCallback(() => {
+    popoverAnchorRef.current = null;
+    setOpenPopover(null);
+  }, []);
 
   const handlePointerToggle = useCallback(() => {
     // Z zaznaczania → przesuwanie; z KAŻDEGO innego trybu (przesuwanie,
@@ -600,7 +699,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            handleSlotClick(slot);
+            handleSlotClick(slot, event.currentTarget);
           }}
           title={slotTitle}
           aria-label={slotTitle}
@@ -612,61 +711,65 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
         >
           <Icon size={15} />
         </button>
-
-        {isActive && slot.popover && (
-          <div className="absolute left-[calc(100%+8px)] top-0 z-dropdown">
-            {slot.popover === 'templates' && (
-              <TemplatesPopover
-                isPl={!!isPl}
-                activeTool={activeTool}
-                onApplyTemplate={onApplyTemplate}
-                onOpenGallery={onOpenTemplateGallery}
-                onClose={closePopover}
-              />
-            )}
-            {slot.popover === 'addNode' && (
-              <AddNodePopover
-                isPl={!!isPl}
-                hasSelection={selection.type === 'node' && selection.count > 0}
-                onAction={handlePopoverAction}
-                onClose={closePopover}
-              />
-            )}
-            {slot.popover === 'knowledge' && (
-              <KnowledgePopover
-                isPl={!!isPl}
-                onAction={handlePopoverAction}
-                onClose={closePopover}
-              />
-            )}
-            {slot.popover === 'importExport' && (
-              <ImportExportPopover
-                isPl={!!isPl}
-                onAction={handlePopoverAction}
-                onClose={closePopover}
-              />
-            )}
-            {slot.popover === 'ai' && (
-              <AIActionsPopover
-                isPl={!!isPl}
-                // P1-1: popover AI musi znać reprezentację — inaczej wystawia
-                // generatory mm_* także w Whiteboardzie/Przepływie/Tabeli,
-                // gdzie nie mają odbiornika.
-                activeTool={activeTool}
-                selection={selection}
-                heuristicAiEnabled={heuristicAiEnabled}
-                onAction={handlePopoverAction}
-                onOpenChat={onOpenChat}
-                onClose={closePopover}
-              />
-            )}
-            {slot.popover === 'more' && (
-              <MoreToolsPanel isPl={!!isPl} onAction={handlePopoverAction} onClose={closePopover} />
-            )}
-          </div>
-        )}
       </div>
     );
+  };
+
+  /**
+   * B3: treść panelu. Renderowana w warstwie-rodzeństwie kolumny raila (niżej),
+   * NIE wewnątrz slotu — kolumna przycina wszystko, co z niej wystaje.
+   */
+  const renderPopoverContent = (popover: Exclude<PopoverId, null>) => {
+    switch (popover) {
+      case 'templates':
+        return (
+          <TemplatesPopover
+            isPl={!!isPl}
+            activeTool={activeTool}
+            onApplyTemplate={onApplyTemplate}
+            onOpenGallery={onOpenTemplateGallery}
+            onClose={closePopover}
+          />
+        );
+      case 'addNode':
+        return (
+          <AddNodePopover
+            isPl={!!isPl}
+            hasSelection={selection.type === 'node' && selection.count > 0}
+            onAction={handlePopoverAction}
+            onClose={closePopover}
+          />
+        );
+      case 'knowledge':
+        return (
+          <KnowledgePopover isPl={!!isPl} onAction={handlePopoverAction} onClose={closePopover} />
+        );
+      case 'importExport':
+        return (
+          <ImportExportPopover isPl={!!isPl} onAction={handlePopoverAction} onClose={closePopover} />
+        );
+      case 'ai':
+        return (
+          <AIActionsPopover
+            isPl={!!isPl}
+            // P1-1: popover AI musi znać reprezentację — inaczej wystawia
+            // generatory mm_* także w Whiteboardzie/Przepływie/Tabeli,
+            // gdzie nie mają odbiornika.
+            activeTool={activeTool}
+            selection={selection}
+            heuristicAiEnabled={heuristicAiEnabled}
+            onAction={handlePopoverAction}
+            onOpenChat={onOpenChat}
+            onClose={closePopover}
+          />
+        );
+      case 'more':
+        return (
+          <MoreToolsPanel isPl={!!isPl} onAction={handlePopoverAction} onClose={closePopover} />
+        );
+      default:
+        return null;
+    }
   };
 
   // Sloty dolne po odfiltrowaniu — poza Mapą myśli dziś puste (import/more nie
@@ -777,11 +880,39 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     </div>
   );
 
+  // B3: warstwa panelu — RODZEŃSTWO kolumny raila, nie jej dziecko. Dzięki temu
+  // `overflow-y-auto` kolumny (a więc i wymuszone przez CSS przycinanie w poziomie)
+  // jej nie dotyczy. `fixed` bo rail też jest `fixed` — ta sama przestrzeń
+  // współrzędnych. Kolejność w portalu: panel PO railu, więc maluje się na wierzchu
+  // przy równym `z-context-menu`.
+  const popoverNode =
+    openPopover && popoverPos ? (
+      <div
+        ref={popoverLayerRef}
+        data-testid={`canvas-left-toolbar-popover-${openPopover}`}
+        className="fixed z-context-menu pointer-events-auto"
+        style={{
+          left: `${popoverPos.left}px`,
+          ...(popoverPos.top != null ? { top: `${popoverPos.top}px` } : null),
+          ...(popoverPos.bottom != null ? { bottom: `${popoverPos.bottom}px` } : null),
+        }}
+      >
+        {renderPopoverContent(openPopover)}
+      </div>
+    ) : null;
+
+  const railWithPopover = (
+    <>
+      {toolbarNode}
+      {popoverNode}
+    </>
+  );
+
   if (typeof window === 'undefined' || typeof document === 'undefined') {
-    return toolbarNode;
+    return railWithPopover;
   }
 
-  return createPortal(toolbarNode, document.body);
+  return createPortal(railWithPopover, document.body);
 };
 
 export default CanvasLeftToolbar;
