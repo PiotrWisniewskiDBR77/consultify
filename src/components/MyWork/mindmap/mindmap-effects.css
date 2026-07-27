@@ -290,3 +290,28 @@
     filter: none;
   }
 }
+
+/* ── Ramka Mapy Myśli (typ `group`) ─────────────────────────────────────────
+   Reactflow trzyma dla typu `group` własny zestaw domyślnych stylów
+   (`padding:10px; color:#222; text-align:center; background:white`) pomyślany
+   pod wbudowany, bezstanowy węzeł. Mapa Myśli rysuje ramkę własnym
+   komponentem `MindMapFrameNode`, więc te domyślne wtrącenia trzeba zdjąć —
+   inaczej etykieta ramki jest wcięta o 10px, wyśrodkowana i CZARNA również w
+   trybie ciemnym. Obwódka/tło ramki przychodzą z `node.style` (inline), więc
+   ich tu NIE ruszamy. Zakres celowo zawężony do `.mm-canvas`, żeby nie tknąć
+   Tablicy ani Przepływu. */
+.mm-canvas .react-flow__node-group {
+  padding: 0;
+  color: inherit;
+  text-align: left;
+  font-size: inherit;
+}
+
+/* ── Uchwyty zmiany rozmiaru ────────────────────────────────────────────────
+   Domyślny `#3367d9` reactflow to kolor spoza palety. Linia obrysu w kolorze
+   fokusu (`--c-focus-solid`, niebieski), uchwyty stylowane inline w
+   `MindMapNodeResizer`. Uchwyty istnieją w DOM tylko przy zaznaczeniu
+   (`isVisible`), więc nie zaśmiecają płótna. */
+.mm-canvas .react-flow__resize-control.line {
+  border-color: var(--c-focus-solid);
+}

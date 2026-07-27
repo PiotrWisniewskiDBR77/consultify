@@ -12,9 +12,24 @@ import { BookOpen, ExternalLink, FileText, Lightbulb, StickyNote } from 'lucide-
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Handle, type NodeProps, Position } from 'reactflow';
 
+import {
+  MM_MIN_NODE_HEIGHT,
+  MM_MIN_NODE_WIDTH,
+  MindMapNodeResizer,
+  useNodeHasExplicitSize,
+} from '../mindmap/MindMapNodeResizer';
+
+/**
+ * Ręczna zmiana rozmiaru (2026-07-27): karty wiedzy są węzłami Mapy Myśli,
+ * więc obowiązuje je ta sama umowa co węzły `idea`/`branch`/ramki — uchwyty
+ * przy zaznaczeniu, rozmiar w `node.style` (przeżywa zapis i przeładowanie),
+ * a `min-w`/`max-w` znika dopiero, gdy użytkownik SAM nadał rozmiar.
+ */
+
 // ── Knowledge Card ──────────────────────────────────────────────────────────
 
 const KnowledgeCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
+  const hasExplicitSize = useNodeHasExplicitSize(id);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(data?.label || ''));
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -30,13 +45,21 @@ const KnowledgeCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
 
   return (
     <div
-      className={`relative min-w-[160px] max-w-[240px] rounded-xl border bg-[color-mix(in_srgb,var(--c-tag-2)_12%,transparent)] border-c-tag-2 shadow-sm px-3 py-2 ${
+      className={`relative ${
+        hasExplicitSize ? 'w-full h-full overflow-auto' : 'min-w-[160px] max-w-[240px]'
+      } rounded-xl border bg-[color-mix(in_srgb,var(--c-tag-2)_12%,transparent)] border-c-tag-2 shadow-sm px-3 py-2 ${
         selected ? 'ring-2 ring-c-tag-2' : ''
       }`}
       onDoubleClick={() => {
         if (!data?.locked) setEditing(true);
       }}
     >
+      <MindMapNodeResizer
+        selected={selected}
+        locked={Boolean(data?.locked)}
+        minWidth={MM_MIN_NODE_WIDTH}
+        minHeight={MM_MIN_NODE_HEIGHT}
+      />
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-c-tag-2" />
 
       <div className="flex items-center gap-1.5 mb-1">
@@ -80,6 +103,7 @@ const KnowledgeCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
 // ── Note Card ───────────────────────────────────────────────────────────────
 
 const NoteCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
+  const hasExplicitSize = useNodeHasExplicitSize(id);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(data?.label || ''));
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -95,13 +119,21 @@ const NoteCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
 
   return (
     <div
-      className={`relative min-w-[140px] max-w-[220px] rounded-xl border bg-[color-mix(in_srgb,var(--c-tag-9)_12%,transparent)] border-c-tag-9 shadow-sm px-3 py-2 ${
+      className={`relative ${
+        hasExplicitSize ? 'w-full h-full overflow-auto' : 'min-w-[140px] max-w-[220px]'
+      } rounded-xl border bg-[color-mix(in_srgb,var(--c-tag-9)_12%,transparent)] border-c-tag-9 shadow-sm px-3 py-2 ${
         selected ? 'ring-2 ring-c-tag-9' : ''
       }`}
       onDoubleClick={() => {
         if (!data?.locked) setEditing(true);
       }}
     >
+      <MindMapNodeResizer
+        selected={selected}
+        locked={Boolean(data?.locked)}
+        minWidth={MM_MIN_NODE_WIDTH}
+        minHeight={MM_MIN_NODE_HEIGHT}
+      />
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-c-tag-9" />
 
       <div className="flex items-center gap-1.5 mb-1">
@@ -142,6 +174,7 @@ const NoteCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
 // ── Evidence Card ───────────────────────────────────────────────────────────
 
 const EvidenceCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
+  const hasExplicitSize = useNodeHasExplicitSize(id);
   const evidenceType: 'url' | 'artifact' | 'note' | 'document' = data?.evidenceType || 'note';
 
   const typeConfig = {
@@ -156,7 +189,9 @@ const EvidenceCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
 
   return (
     <div
-      className={`relative min-w-[140px] max-w-[200px] rounded-xl border bg-${cfg.color}-50 dark:bg-${cfg.color}-900/20 border-${cfg.color}-300 dark:border-${cfg.color}-600 shadow-sm px-3 py-2 ${
+      className={`relative ${
+        hasExplicitSize ? 'w-full h-full overflow-auto' : 'min-w-[140px] max-w-[200px]'
+      } rounded-xl border bg-${cfg.color}-50 dark:bg-${cfg.color}-900/20 border-${cfg.color}-300 dark:border-${cfg.color}-600 shadow-sm px-3 py-2 ${
         selected ? `ring-2 ring-${cfg.color}-500/60` : ''
       }`}
       onDoubleClick={() => {
@@ -164,6 +199,12 @@ const EvidenceCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
         else if (data?.onNodeDetail) data.onNodeDetail(id, data);
       }}
     >
+      <MindMapNodeResizer
+        selected={selected}
+        locked={Boolean(data?.locked)}
+        minWidth={MM_MIN_NODE_WIDTH}
+        minHeight={MM_MIN_NODE_HEIGHT}
+      />
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-c-tag-8" />
 
       <div className="flex items-center gap-1.5 mb-1">

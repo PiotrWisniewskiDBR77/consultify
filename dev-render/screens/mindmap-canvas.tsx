@@ -340,6 +340,17 @@ Api.syncMyIdeaMap = (async (_ideaId: string, payload: any) =>
   mergeMapPayload(payload)) as typeof Api.syncMyIdeaMap;
 Api.saveMyIdeaMap = (async (_ideaId: string, payload: any) =>
   mergeMapPayload(payload)) as typeof Api.saveMyIdeaMap;
+// Aliasy zgodnosci — rozne fale nazwaly te same sondy inaczej.
+(window as unknown as { __MM_MOCK_MAP__?: () => unknown }).__MM_MOCK_MAP__ = () => currentMap;
+(window as unknown as { __MM_MOCK_RESET__?: () => void }).__MM_MOCK_RESET__ = () => {
+  try {
+    window.sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* brak sessionStorage — nic do sprzatania */
+  }
+  window.location.reload();
+};
+
 Api.updateMyIdea = (async () => MOCK_IDEA) as typeof Api.updateMyIdea;
 Api.getMyIdeaEdges = (async () => []) as typeof Api.getMyIdeaEdges;
 

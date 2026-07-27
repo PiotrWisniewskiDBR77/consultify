@@ -25114,7 +25114,10 @@
     "imageAdded": "Image added",
     "acceptedProposalsCount": "Accepted {{count}} proposals",
     "linkSuggestionsFoundCount": "Found {{count}} link suggestions",
-    "deleteSubtreeWarning": "This will also delete {{count}} child nodes. This cannot be undone after sync."
+    "deleteSubtreeWarning": "This will also delete {{count}} child nodes. This cannot be undone after sync.",
+    "frameNode": {
+      "defaultLabel": "Frame"
+    }
   },
   "ideas": {
     "table": {
