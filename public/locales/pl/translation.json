@@ -27146,38 +27146,95 @@
       "pasteFailed": "Nie udało się odczytać schowka",
       "viewSetup": {
         "timeline": {
-          "noDateColumn": {
+          "noColumn": {
             "headline": "Oś czasu potrzebuje kolumny z datą",
             "description": "Ta tabela nie ma żadnej kolumny typu „data”, więc nie ma czego umieścić na osi czasu. Dodaj kolumnę — rozplanujemy istniejące wiersze od dziś, a paski przesuniesz później."
+          },
+          "hiddenColumn": {
+            "headline": "Kolumna z datą „{{column}}” jest ukryta",
+            "description": "Ten widok ją ukrywa, więc nie ma czego umieścić na osi. Pokaż kolumnę, aby wiersze wróciły."
+          },
+          "noValues": {
+            "headline": "Kolumna „{{column}}” nie ma wypełnionych dat",
+            "description": "Kolumna z datą istnieje, ale żaden wiersz nie ma w niej wartości — dlatego ten widok jest pusty. Wróć do tabeli i uzupełnij daty."
+          },
+          "noRows": {
+            "headline": "Ta tabela nie ma jeszcze wierszy",
+            "description": "Dodaj pierwszy wiersz w widoku Tabela i wróć tutaj."
           }
         },
         "calendar": {
-          "noDateColumn": {
+          "noColumn": {
             "headline": "Kalendarz potrzebuje kolumny z datą",
             "description": "Ta tabela nie ma żadnej kolumny typu „data”, więc żaden wiersz nie trafi na konkretny dzień. Dodaj kolumnę — rozplanujemy istniejące wiersze od dziś."
+          },
+          "hiddenColumn": {
+            "headline": "Kolumna z datą „{{column}}” jest ukryta",
+            "description": "Ten widok ją ukrywa, więc żaden wiersz nie trafi na konkretny dzień. Pokaż kolumnę, aby wiersze wróciły."
+          },
+          "noValues": {
+            "headline": "Kolumna „{{column}}” nie ma wypełnionych dat",
+            "description": "Kolumna z datą istnieje, ale żaden wiersz nie ma w niej wartości — dlatego ten widok jest pusty. Wróć do tabeli i uzupełnij daty."
+          },
+          "noRows": {
+            "headline": "Ta tabela nie ma jeszcze wierszy",
+            "description": "Dodaj pierwszy wiersz w widoku Tabela i wróć tutaj."
           }
         },
-        "hiddenDateColumn": {
-          "headline": "Kolumna z datą „{{column}}” jest ukryta",
-          "description": "Ten widok ją ukrywa, więc nie ma czego umieścić na osi. Pokaż kolumnę, aby wiersze wróciły."
+        "scoring": {
+          "noColumn": {
+            "headline": "Scoring potrzebuje kolumny z oceną",
+            "description": "Ten widok układa wiersze według kolumny „Ocena” — a ta tabela jej nie ma, więc przełączenie na niego nic nie zmieniło. Dodaj kolumnę, a ranking zacznie działać; „Model scoringowy” zapisuje wyniki do tej samej kolumny."
+          },
+          "hiddenColumn": {
+            "headline": "Kolumna z oceną „{{column}}” jest ukryta",
+            "description": "Ten widok ją ukrywa, więc ranking nie ma czego pokazać. Pokaż kolumnę, aby zobaczyć oceny."
+          },
+          "noValues": {
+            "headline": "Kolumna „{{column}}” nie ma jeszcze ocen",
+            "description": "Kolumna istnieje, ale żaden wiersz nie został oceniony — nie ma czego układać w ranking. Uruchom „Model scoringowy” albo wpisz oceny w widoku Tabela."
+          },
+          "noRows": {
+            "headline": "Ta tabela nie ma jeszcze wierszy",
+            "description": "Dodaj pierwszy wiersz w widoku Tabela i wróć tutaj."
+          }
         },
-        "noDateValues": {
-          "headline": "Kolumna „{{column}}” nie ma wypełnionych dat",
-          "description": "Kolumna z datą istnieje, ale żaden wiersz nie ma w niej wartości — dlatego ten widok jest pusty. Wróć do tabeli i uzupełnij daty."
-        },
-        "noRows": {
-          "headline": "Ta tabela nie ma jeszcze wierszy",
-          "description": "Dodaj pierwszy wiersz w widoku Tabela i wróć tutaj."
+        "decisionLog": {
+          "noColumn": {
+            "headline": "Log decyzji potrzebuje kolumny z decyzją",
+            "description": "Ten widok grupuje wiersze według kolumny „Decyzja” — a ta tabela jej nie ma, więc wrzucił wszystko do jednej bezsensownej grupy. Dodaj kolumnę: każdy wiersz startuje jako „open”, a po rozstrzygnięciu trafia do własnej grupy."
+          },
+          "hiddenColumn": {
+            "headline": "Kolumna z decyzją „{{column}}” jest ukryta",
+            "description": "Ten widok ją ukrywa, więc nie ma według czego grupować. Pokaż kolumnę, aby odzyskać log."
+          },
+          "noValues": {
+            "headline": "Kolumna „{{column}}” nie ma wypełnionych decyzji",
+            "description": "Kolumna istnieje, ale żaden wiersz nie ma zapisanej decyzji — log nie ma czego grupować. Wróć do tabeli i ustaw decyzje."
+          },
+          "noRows": {
+            "headline": "Ta tabela nie ma jeszcze wierszy",
+            "description": "Dodaj pierwszy wiersz w widoku Tabela i wróć tutaj."
+          }
         },
         "action": {
-          "addDateColumn": "Dodaj kolumnę daty",
+          "addColumn": {
+            "timeline": "Dodaj kolumnę daty",
+            "calendar": "Dodaj kolumnę daty",
+            "scoring": "Dodaj kolumnę oceny",
+            "decisionLog": "Dodaj kolumnę decyzji"
+          },
           "showColumn": "Pokaż kolumnę „{{column}}”",
+          "runScoringModel": "Uruchom Model scoringowy",
           "addRow": "Dodaj wiersz",
-          "backToTable": "Wróć do widoku Tabela"
+          "backToTable": "Wróć do widoku Tabela",
+          "backToDefaultView": "Wróć do zakładki Domyślny"
         },
         "columnHeader": {
           "start": "Data startu",
-          "end": "Data końca"
+          "end": "Data końca",
+          "score": "Ocena",
+          "decision": "Decyzja"
         }
       }
     },

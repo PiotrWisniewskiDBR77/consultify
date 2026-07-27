@@ -26082,38 +26082,95 @@
       "pasteFailed": "Could not read clipboard",
       "viewSetup": {
         "timeline": {
-          "noDateColumn": {
+          "noColumn": {
             "headline": "Timeline needs a date column",
             "description": "This table has no column of type “date”, so there is nothing to put on the time axis. Add one — we will schedule the existing rows starting today, and you can drag the bars afterwards."
+          },
+          "hiddenColumn": {
+            "headline": "Date column “{{column}}” is hidden",
+            "description": "This view hides it, so there is nothing left to place on the axis. Show the column to bring the records back."
+          },
+          "noValues": {
+            "headline": "Column “{{column}}” has no dates filled in",
+            "description": "The date column exists, but no row has a value in it — that is why this view is empty. Go back to the table and fill in the dates."
+          },
+          "noRows": {
+            "headline": "This table has no rows yet",
+            "description": "Add the first row in the Table view and come back here."
           }
         },
         "calendar": {
-          "noDateColumn": {
+          "noColumn": {
             "headline": "Calendar needs a date column",
             "description": "This table has no column of type “date”, so no record can land on a day. Add one — we will schedule the existing rows starting today."
+          },
+          "hiddenColumn": {
+            "headline": "Date column “{{column}}” is hidden",
+            "description": "This view hides it, so no record can land on a day. Show the column to bring the records back."
+          },
+          "noValues": {
+            "headline": "Column “{{column}}” has no dates filled in",
+            "description": "The date column exists, but no row has a value in it — that is why this view is empty. Go back to the table and fill in the dates."
+          },
+          "noRows": {
+            "headline": "This table has no rows yet",
+            "description": "Add the first row in the Table view and come back here."
           }
         },
-        "hiddenDateColumn": {
-          "headline": "Date column “{{column}}” is hidden",
-          "description": "This view hides it, so there is nothing left to place on the axis. Show the column to bring the records back."
+        "scoring": {
+          "noColumn": {
+            "headline": "Scoring needs a score column",
+            "description": "This view ranks rows by the “Score” column — and this table does not have one, so switching to it changed nothing. Add the column and the ranking starts working; the scoring model writes into the same column."
+          },
+          "hiddenColumn": {
+            "headline": "Score column “{{column}}” is hidden",
+            "description": "This view hides it, so the ranking has nothing to show. Show the column to see the scores."
+          },
+          "noValues": {
+            "headline": "Column “{{column}}” has no scores yet",
+            "description": "The column exists, but no row has been scored — so there is nothing to rank. Run the scoring model, or type the scores in the Table view."
+          },
+          "noRows": {
+            "headline": "This table has no rows yet",
+            "description": "Add the first row in the Table view and come back here."
+          }
         },
-        "noDateValues": {
-          "headline": "Column “{{column}}” has no dates filled in",
-          "description": "The date column exists, but no row has a value in it — that is why this view is empty. Go back to the table and fill in the dates."
-        },
-        "noRows": {
-          "headline": "This table has no rows yet",
-          "description": "Add the first row in the Table view and come back here."
+        "decisionLog": {
+          "noColumn": {
+            "headline": "The decision log needs a decision column",
+            "description": "This view groups rows by the “Decision” column — and this table does not have one, so it lumped everything into one meaningless group. Add the column: every row starts as “open” and moves to its own group as you rule on it."
+          },
+          "hiddenColumn": {
+            "headline": "Decision column “{{column}}” is hidden",
+            "description": "This view hides it, so there is nothing to group by. Show the column to get the log back."
+          },
+          "noValues": {
+            "headline": "Column “{{column}}” has no decisions filled in",
+            "description": "The column exists, but no row has a decision recorded — so the log has nothing to group. Go back to the table and set the decisions."
+          },
+          "noRows": {
+            "headline": "This table has no rows yet",
+            "description": "Add the first row in the Table view and come back here."
+          }
         },
         "action": {
-          "addDateColumn": "Add date column",
+          "addColumn": {
+            "timeline": "Add date column",
+            "calendar": "Add date column",
+            "scoring": "Add score column",
+            "decisionLog": "Add decision column"
+          },
           "showColumn": "Show column “{{column}}”",
+          "runScoringModel": "Run the scoring model",
           "addRow": "Add row",
-          "backToTable": "Back to Table view"
+          "backToTable": "Back to Table view",
+          "backToDefaultView": "Back to the Default view"
         },
         "columnHeader": {
           "start": "Start date",
-          "end": "End date"
+          "end": "End date",
+          "score": "Score",
+          "decision": "Decision"
         }
       }
     },

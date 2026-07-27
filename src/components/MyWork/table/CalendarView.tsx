@@ -245,13 +245,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       columns,
       rows,
       allowHiddenColumns: true,
-    }) ?? { reason: 'no-date-column' as const };
+    }) ?? { reason: 'no-column' as const };
     return (
       <ViewSetupEmptyState
         view="calendar"
         state={setupState}
         locked={locked}
-        onAddDateColumn={onAddDateColumn}
+        onAddColumn={onAddDateColumn}
         onBackToTable={onBackToTable}
       />
     );

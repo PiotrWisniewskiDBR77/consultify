@@ -213,7 +213,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
     // column this view does not read as the START column; the "column has no
     // dates" copy is the closest honest message for that case too.
     const setupState = resolveDateViewSetup({ columns, rows: nodes }) ?? {
-      reason: 'no-date-values' as const,
+      reason: 'no-values' as const,
       columnName: dateCols[0]?.header || startCol,
       columnKey: dateCols[0]?.key || startCol,
     };
@@ -223,8 +223,8 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
           view="timeline"
           state={setupState}
           locked={locked}
-          onAddDateColumn={onAddDateColumn}
-          onShowDateColumn={onShowDateColumn}
+          onAddColumn={onAddDateColumn}
+          onShowColumn={onShowDateColumn}
           onBackToTable={onBackToTable}
           onAddRow={onAddRow}
         />
