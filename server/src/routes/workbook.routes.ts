@@ -22,6 +22,7 @@ import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { retryWithBackoff } from '../utils/retryWithBackoff.js';
 
 const router = Router();
 
@@ -313,22 +314,43 @@ async function finalizeGeneratedWorkbook(params: {
     }
 
     // Fallback: standalone workbook (no run) OR the run had no adoptable artifact.
+    // Fala sprzątania 1b (2026-07-27) — this used to be a single unretried
+    // attempt logged at `warn` with no workbook/artifact id in the
+    // structured fields (rejestr: "dokument może powstać i nigdy nie
+    // pojawić się w bibliotece", same defect class as the Document Studio
+    // path in document-studio.routes.ts). `registerArtifactOrigin` is
+    // idempotent (checks the existing origin link before inserting), so
+    // retrying after a transient failure is always safe.
     if (!artifactId) {
-      const registered = await registerArtifactOrigin({
-        organizationId: user.organizationId,
-        outputType: 'sheet',
-        artifactFamily: 'sheet',
-        originRuntime: 'sheet',
-        originRecordId: result.id,
-        titleSnapshot: result.schema.title || 'Untitled workbook',
-        ownerUserId: user.id,
-        createdBy: user.id,
-        deliveryState: 'ready',
-        visibilityScope: 'organization',
-        projectId: params.projectId || null,
-        sourceInitiativeId: params.sourceInitiativeId || null,
-        originSummary,
-      });
+      const registered = await retryWithBackoff(
+        () =>
+          registerArtifactOrigin({
+            organizationId: user.organizationId,
+            outputType: 'sheet',
+            artifactFamily: 'sheet',
+            originRuntime: 'sheet',
+            originRecordId: result.id,
+            titleSnapshot: result.schema.title || 'Untitled workbook',
+            ownerUserId: user.id,
+            createdBy: user.id,
+            deliveryState: 'ready',
+            visibilityScope: 'organization',
+            projectId: params.projectId || null,
+            sourceInitiativeId: params.sourceInitiativeId || null,
+            originSummary,
+          }),
+        {
+          onAttemptFailed: (attempt, attempts, attemptErr) => {
+            logger.warn('[WorkbookRoutes] Register artifact attempt failed (will retry)', {
+              workbookId: result.id,
+              organizationId: user.organizationId,
+              attempt,
+              attempts,
+              message: attemptErr instanceof Error ? attemptErr.message : String(attemptErr),
+            });
+          },
+        }
+      );
       artifactId = registered?.artifactId ?? null;
       if (artifactId) {
         logger.info(
@@ -337,7 +359,12 @@ async function finalizeGeneratedWorkbook(params: {
       }
     }
   } catch (err) {
-    logger.warn('[WorkbookRoutes] Failed to register workbook in artifact registry:', err);
+    logger.error('[WorkbookRoutes] Failed to register workbook in artifact registry after retries', {
+      workbookId: result.id,
+      organizationId: user.organizationId,
+      artifactId,
+      message: err instanceof Error ? err.message : String(err),
+    });
   }
 
   return {

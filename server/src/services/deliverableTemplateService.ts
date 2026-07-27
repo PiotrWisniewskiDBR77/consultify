@@ -10,6 +10,17 @@
 
 import logger from '../utils/Logger.js';
 import { queryAll, queryOne, queryRun } from '../utils/queryHelpers.js';
+import type { DocumentTemplate, TemplateSectionBlueprint } from './documentStudio/documentStudioTypes.js';
+import { persistTemplate as persistDocStudioTemplate } from './documentStudio/documentTemplateRegistryDao.js';
+import {
+  approveTemplate as approveDocStudioTemplate,
+  deprecateTemplate as deprecateDocStudioTemplate,
+  draftTemplate as draftDocStudioTemplate,
+  ensureTemplateRegistryHydrated,
+  getTemplate as getDocStudioTemplate,
+  reviseTemplateStructure as reviseDocStudioTemplateStructure,
+  updateTemplateContent as updateDocStudioTemplateContent,
+} from './documentStudio/documentTemplateService.js';
 import { registerArtifactOrigin } from './v8/artifactRegistryService.js';
 
 const LOG_PREFIX = '[deliverableTemplateService]';
@@ -341,6 +352,129 @@ async function listDocTemplates(orgId: string, userId?: string): Promise<Deliver
   return sortDocLikeTemplates([...legacyRows, ...docStudioRows]);
 }
 
+// ------------------------------------------------------------------
+// document_studio_templates WRITE adapter (fala sprzątania 1b, 2026-07-27)
+//
+// Kanon (docs/product/MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md
+// §7): document_studio_templates = kanon dla szablonów 'doc',
+// report_builder_templates = legacy. Do tej pory createDeliverableTemplate /
+// updateDeliverableTemplate / deleteDeliverableTemplate dla type==='doc'
+// pisały WYŁĄCZNIE do report_builder_templates (patrz INSERT/UPDATE/DELETE
+// poniżej, teraz gałąź legacy-only). Ten blok przestawia zapis NOWYCH i
+// EDYTOWANYCH szablonów 'doc' na document_studio_templates, reużywając
+// istniejącego pipeline'u draft→revise→approve z documentTemplateService.ts
+// (`./documentStudio/documentTemplateService.ts`) zamiast pisać nowe SQL
+// INSERT/UPDATE przeciwko tej tabeli — jedyny "nowy" zapis to
+// `updateTemplateContent` w tamtym pliku, który sam reużywa registryStore +
+// persistTemplate (ten sam mechanizm co draftTemplate/approveTemplate).
+//
+// Istniejące rekordy legacy NIE są migrowane (osobna decyzja) — zmienia się
+// tylko cel zapisu dla NOWYCH operacji. Odczyt/federacja (listDocTemplates
+// powyżej) zostaje bez zmian — czyta oba źródła, jak dotychczas.
+//
+// Widoczność w Bibliotece (artifact_family='template' tab, `GET
+// /api/artifacts?artifactFamily=template`): NIE rejestrujemy tu ręcznie do
+// v8_output_artifacts (odwrotnie niż registerBuilderTemplateArtifactBestEffort
+// poniżej, który celuje w report_template/presentation_template/
+// sheet_template) — document_studio_templates ma już własny, istniejący
+// backfill (`backfillDocStudioTemplatesForOrg` → origin_runtime =
+// 'document_template', wired w `ensureBackfilledOutputsForOrg`,
+// server/src/services/v8/artifactRegistryService.ts), który indeksuje każdy
+// `status = 'approved'` wiersz automatycznie przy najbliższym odczycie —
+// to jest już właściwa siatka bezpieczeństwa dla tej tabeli. Wołanie
+// registerBuilderTemplateArtifactBestEffort dla 'doc' byłoby dziś wręcz
+// BŁĘDNE (jego gałąź 'doc' na sztywno zakłada sourceTable:
+// 'report_builder_templates').
+// ------------------------------------------------------------------
+
+/**
+ * `meta.sections_json` z formularza Biblioteki ma kształt `DocSection`
+ * (src/components/TemplateBuilder/templateBuilderModel.ts):
+ * `{ title, block, depth, hint, ai_filled }`. `TemplateSectionBlueprint`
+ * (document_studio_templates) nie ma odpowiednika dla `block`
+ * (heading/paragraph/bullets/table/kpi/chart) ani `ai_filled` — świadomie
+ * pomijane tutaj (udokumentowana luka pól, nie cichy błąd mapowania).
+ * `depth` mapuje się 1:1 na `expectedLengthHint` (identyczny enum
+ * short/medium/long), `hint` na `purpose`.
+ */
+function docSectionsJsonToBlueprint(raw: unknown): TemplateSectionBlueprint[] {
+  const arr = typeof raw === 'string' ? safeParseArray(raw) : Array.isArray(raw) ? raw : [];
+  const mapped: TemplateSectionBlueprint[] = [];
+  for (const entry of arr as any[]) {
+    const title = typeof entry?.title === 'string' ? entry.title.trim() : '';
+    if (!title) continue;
+    const depth = entry?.depth === 'short' || entry?.depth === 'long' ? entry.depth : 'medium';
+    mapped.push({
+      title,
+      level: 1,
+      purpose: typeof entry?.hint === 'string' ? entry.hint.trim() : '',
+      required: false,
+      expectedLengthHint: depth,
+    });
+  }
+  return mapped;
+}
+
+/** `DocumentTemplate` (documentTemplateService in-memory shape) → `DeliverableTemplate`
+ *  (this file's shared API shape). Mirrors `mapDocStudioRow` above, which does
+ *  the same conversion starting from a raw SQL row instead of the service object. */
+function mapDocStudioTemplateToDeliverable(t: DocumentTemplate): DeliverableTemplate {
+  const meta: Record<string, unknown> = {
+    report_type: t.documentType,
+    sections_json: JSON.stringify(t.sectionBlueprint ?? []),
+    source: 'document_studio_templates',
+  };
+  const isSystem = t.organizationId === DOC_STUDIO_SYSTEM_ORG_ID;
+  return {
+    id: t.templateId,
+    type: 'doc',
+    name: t.name,
+    description: (t.notes && t.notes.trim()) || t.purpose || null,
+    isSystem,
+    isBlank: detectIsBlank(t.name, meta),
+    organizationId: isSystem ? null : t.organizationId,
+    meta,
+  };
+}
+
+/**
+ * Explicit, awaited durable write to `document_studio_templates` — on top of
+ * documentTemplateService's own fire-and-forget persistence (every mutator
+ * there does `void persistTemplate(...).catch(() => undefined)`). Needed
+ * here because `listDocStudioDocTemplates` (this file) reads Postgres
+ * directly rather than the in-process registry: an un-awaited write could
+ * lose the create→list race for a caller that lists immediately after
+ * creating (exactly the T1 route test this fala's task requires).
+ * `persistTemplate` is an upsert (`ON CONFLICT ... DO UPDATE`), so calling
+ * it again here after the fire-and-forget call is always safe/idempotent.
+ */
+async function persistDocStudioTemplateDurable(template: DocumentTemplate): Promise<void> {
+  const result = await persistDocStudioTemplate(template);
+  if (!result.ok) {
+    logger.warn(
+      `${LOG_PREFIX} durable persist to document_studio_templates failed for ${template.templateId} — in-process registry has the row, but the DB write did not land this attempt`
+    );
+  }
+}
+
+/** Fetch a 'doc' template that lives in document_studio_templates (not the
+ *  legacy report_builder_templates table) for this org, or `null`. Hydrates
+ *  the in-process registry first — `getDeliverableTemplate` may be the FIRST
+ *  read this process does for `orgId` (e.g. a different request/worker
+ *  created the template), so without hydration a cold registryStore would
+ *  incorrectly report "not found" for a template that exists in Postgres.
+ *  Deprecated templates are treated as not-found (soft-delete semantics,
+ *  matching `deleteDeliverableTemplate`'s use of `deprecateTemplate` below). */
+async function getDocStudioDocTemplateForDeliverable(
+  id: string,
+  orgId: string
+): Promise<DeliverableTemplate | null> {
+  await ensureTemplateRegistryHydrated(orgId);
+  const template = getDocStudioTemplate(id, orgId);
+  if (!template || template.status === 'deprecated') return null;
+  return mapDocStudioTemplateToDeliverable(template);
+}
+
 type TableRow = {
   id: string;
   name: string;
@@ -513,6 +647,12 @@ export async function getDeliverableTemplate(
     };
   }
 
+  // doc — document_studio_templates (canon; legacy report_builder_templates
+  // row above takes precedence on id collision, which in practice never
+  // happens: the two id schemes are disjoint — uuid vs. `doc-template-*`).
+  const docStudio = await getDocStudioDocTemplateForDeliverable(id, orgId);
+  if (docStudio) return docStudio;
+
   // table
   const tbl = await queryOne<{
     id: string;
@@ -664,6 +804,12 @@ async function registerBuilderTemplateArtifactBestEffort(params: {
     }
 
     if (type === 'doc') {
+      // Dead from `createDeliverableTemplate` since the fala sprzątania 1b
+      // canon rewrite (2026-07-27) — 'doc' now writes to
+      // document_studio_templates and never calls this function (see the
+      // "document_studio_templates WRITE adapter" comment block above
+      // `docSectionsJsonToBlueprint`). Left in place (not deleted) only in
+      // case another caller ever passes type:'doc' here directly.
       const sections = safeParseArray(params.sectionsJson ?? '[]');
       await registerArtifactOrigin({
         organizationId,
@@ -751,30 +897,45 @@ export async function createDeliverableTemplate(
   const metaObj = meta ?? {};
 
   if (type === 'doc') {
-    const sectionsJson =
-      typeof metaObj.sections_json === 'string'
-        ? metaObj.sections_json
-        : JSON.stringify(metaObj.sections_json ?? []);
-    const row = await queryOne<{ id: string }>(
-      `INSERT INTO report_builder_templates
-         (id, name, description, source_type, report_type, sections_json,
-          is_system, is_default, is_public, organization_id, created_by, created_at, updated_at)
-       VALUES (gen_random_uuid()::text, $1, $2, 'DELIVERABLE', 'custom', $3,
-               false, false, false, $4, $5, NOW(), NOW())
-       RETURNING id`,
-      [name, desc, sectionsJson, orgId, userId]
-    );
-    if (!row) throw new Error('Insert doc template returned no row');
-    await registerBuilderTemplateArtifactBestEffort({
-      type,
-      templateId: row.id,
-      name,
-      description: desc,
-      sectionsJson,
+    // Canon rewrite (fala sprzątania 1b, 2026-07-27): write to
+    // document_studio_templates instead of legacy report_builder_templates —
+    // see the "document_studio_templates WRITE adapter" block above for the
+    // full rationale. Reuses documentTemplateService's draft→revise→approve
+    // pipeline rather than a raw INSERT.
+    const purpose = (desc && desc.trim()) || `Szablon: ${name}`;
+    const { template: drafted } = draftDocStudioTemplate({
+      organizationId: orgId,
+      userId,
+      input: { name, purpose, notes: desc?.trim() || undefined },
+    });
+
+    const sectionBlueprint = docSectionsJsonToBlueprint(metaObj.sections_json);
+    const withSections =
+      sectionBlueprint.length > 0
+        ? reviseDocStudioTemplateStructure({
+            templateId: drafted.templateId,
+            organizationId: orgId,
+            userId,
+            sections: sectionBlueprint,
+          })
+        : drafted;
+
+    // Auto-approve: unlike the AI Template Architect flow (draft → human
+    // review → approve), a Template Library template is authored directly,
+    // end-to-end, by the same user in one step — there is no separate
+    // review step to gate on. Approval is required for the template to be
+    // visible via listDocStudioDocTemplates (`status = 'approved'`) and
+    // usable in Mode 3 (`isTemplateUsableForGeneration`), matching the
+    // legacy report_builder_templates behaviour of "visible/usable
+    // immediately after creation".
+    const approved = approveDocStudioTemplate({
+      templateId: withSections.templateId,
       organizationId: orgId,
       userId,
     });
-    return (await getDeliverableTemplate(row.id, orgId))!;
+
+    await persistDocStudioTemplateDurable(approved);
+    return mapDocStudioTemplateToDeliverable(approved);
   }
 
   if (type === 'deck') {
@@ -835,7 +996,8 @@ export async function createDeliverableTemplate(
 export async function updateDeliverableTemplate(
   id: string,
   updates: { name?: string; description?: string; meta?: Record<string, unknown> },
-  orgId: string
+  orgId: string,
+  userId?: string
 ): Promise<DeliverableTemplate> {
   // Sprawdź we wszystkich 3 tabelach
   const existing = await getDeliverableTemplate(id, orgId);
@@ -848,7 +1010,33 @@ export async function updateDeliverableTemplate(
   const newDesc = updates.description !== undefined ? updates.description : existing.description;
   const metaObj = updates.meta ?? {};
 
-  if (existing.type === 'doc') {
+  if (existing.type === 'doc' && existing.meta.source === 'document_studio_templates') {
+    // Canon rewrite (fala sprzątania 1b): edits to a document_studio_templates-
+    // backed 'doc' template go through updateTemplateContent (reuses
+    // registryStore + persistTemplate, the same plumbing draftTemplate /
+    // approveTemplate use) — NOT a new SQL UPDATE against that table.
+    await ensureTemplateRegistryHydrated(orgId);
+    const sections =
+      metaObj.sections_json !== undefined ? docSectionsJsonToBlueprint(metaObj.sections_json) : undefined;
+    let updatedTemplate: DocumentTemplate;
+    try {
+      updatedTemplate = updateDocStudioTemplateContent({
+        templateId: id,
+        organizationId: orgId,
+        userId: userId ?? '',
+        name: updates.name,
+        notes: newDesc ?? undefined,
+        sections: sections && sections.length > 0 ? sections : undefined,
+      });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'template_not_found') {
+        throw new TemplateNotFoundError(id);
+      }
+      throw err;
+    }
+    await persistDocStudioTemplateDurable(updatedTemplate);
+    return mapDocStudioTemplateToDeliverable(updatedTemplate);
+  } else if (existing.type === 'doc') {
     const sectionsJson =
       metaObj.sections_json !== undefined
         ? typeof metaObj.sections_json === 'string'
@@ -890,13 +1078,39 @@ export async function updateDeliverableTemplate(
 }
 
 /** Usuń template — tylko org-owned, nie-system. */
-export async function deleteDeliverableTemplate(id: string, orgId: string): Promise<boolean> {
+export async function deleteDeliverableTemplate(
+  id: string,
+  orgId: string,
+  userId?: string
+): Promise<boolean> {
   const existing = await getDeliverableTemplate(id, orgId);
   if (!existing) return false;
   if (existing.isSystem) throw new TemplateForbiddenError();
   if (existing.organizationId !== orgId)
     throw new TemplateForbiddenError('Cross-org delete not allowed');
 
+  if (existing.type === 'doc' && existing.meta.source === 'document_studio_templates') {
+    // Canon rewrite (fala sprzątania 1b): "delete" for a document_studio_templates
+    // row = deprecateTemplate (existing state transition — soft-delete, no row
+    // is ever hard-deleted from that table anywhere in the codebase; matches
+    // `listDocStudioDocTemplates`'s `status = 'approved'` filter, so a
+    // deprecated row disappears from every read path exactly like a deletion
+    // would). NOT a new DELETE statement against document_studio_templates.
+    await ensureTemplateRegistryHydrated(orgId);
+    try {
+      const deprecated = deprecateDocStudioTemplate({
+        templateId: id,
+        organizationId: orgId,
+        userId: userId ?? '',
+        reason: 'template_library_delete',
+      });
+      await persistDocStudioTemplateDurable(deprecated);
+      return true;
+    } catch (err) {
+      if (err instanceof Error && err.message === 'template_not_found') return false;
+      throw err;
+    }
+  }
   if (existing.type === 'doc') {
     const r = await queryRun(
       `DELETE FROM report_builder_templates WHERE id = $1 AND organization_id = $2 AND is_system = false`,

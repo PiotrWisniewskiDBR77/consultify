@@ -101,16 +101,30 @@ export function resolveTemplateUsePath(target: TemplateUseTarget): string | null
   return `${base}?templateArtifactId=${encodeURIComponent(artifactIndexId)}`;
 }
 
+/**
+ * Edycja/klon szablonu PREZENTACJI — scalenie wejść 2026-07-27
+ * (Harvard/wdrozenie-100/_INWENTARZ_GENERATORY_3_FORMATY_2026-07-27.md, sekcja
+ * "DO SCALENIA" #1). `PresentationWizard` (`/presentations/wizard`) był
+ * osierocony z nawigacji i miał kliencki resolver templateArtifactId→canoniczne
+ * id BEZ walidacji serwera (luka z 26.07). Kanoniczne wejście do
+ * edycji/klonowania szablonu decka to Architekt szablonów
+ * (`PresentationTemplateArchitectView`, montowany pod `/presentations` z
+ * `templatesView==='deckArchitect'` — deep-link `?tab=template_architect`,
+ * patrz ReportsAndPresentationsHub.tsx). Architekt dziś NIE przyjmuje
+ * deep-linka do KONKRETNEGO szablonu (brak propsa/parametru selekcji) — user
+ * ląduje na liście architekta i sam wybiera wiersz; to jest świadomy,
+ * tymczasowy kompromis (sprzątanie wejść, nie budowa nowej funkcji).
+ */
 export function resolveTemplateEditPath(templateId: string, templateType: TemplateType): string {
   if (templateType === 'presentation') {
-    return `/presentations/wizard?templateArtifactId=${encodeURIComponent(templateId)}&edit=true`;
+    return '/presentations?tab=template_architect';
   }
   return `/reports/builder?tab=templates&templateArtifactId=${encodeURIComponent(templateId)}&edit=true`;
 }
 
 export function resolveTemplateClonePath(templateId: string, templateType: TemplateType): string {
   if (templateType === 'presentation') {
-    return `/presentations/wizard?cloneTemplateArtifactId=${encodeURIComponent(templateId)}`;
+    return '/presentations?tab=template_architect';
   }
   return `/reports/builder?new=true&templateArtifactId=${encodeURIComponent(templateId)}`;
 }

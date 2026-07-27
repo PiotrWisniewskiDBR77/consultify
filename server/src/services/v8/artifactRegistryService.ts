@@ -327,6 +327,17 @@ interface PresentationBackfillRow {
   source_refs_json: string | null;
 }
 
+interface NativeArtifactBackfillRow {
+  artifact_id: string;
+  title: string | null;
+  status: string | null;
+  project_id: string | null;
+  created_by: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  provenance_json: string | null;
+}
+
 interface ReportTemplateBackfillRow {
   id: string;
   organization_id: string | null;
@@ -1727,6 +1738,100 @@ async function backfillPresentationsForOrg(organizationId: string): Promise<numb
   return inserted;
 }
 
+/**
+ * Index Document Studio native artifacts — actual generated DOCUMENTS
+ * (`wave5_artifacts`, `materializeDocumentArtifact` /
+ * `documentStudioService.ts`), as opposed to `backfillDocStudioTemplatesForOrg`
+ * above which indexes the reusable TEMPLATES.
+ *
+ * Gap closed (rejestr, fala sprzątania 1b, 2026-07-27): unlike
+ * `report_builder_reports` (backfillReportsForOrg) and `presentation_decks`
+ * (backfillPresentationsForOrg), documents materialized via Document Studio
+ * had NO reconciliation safety net — `registerGeneratedDocumentOrigin`
+ * (server/src/routes/document-studio.routes.ts) registers them at creation
+ * time, but that registration is fire-and-forget/best-effort (now retried,
+ * see `retryWithBackoff` there); if it still failed after retries, the
+ * document existed durably in `wave5_artifacts` but had no way to ever
+ * surface in the Outputs Library. This closes that gap the same way the
+ * report/presentation/template backfills already do.
+ *
+ * `wave5_artifacts` is a SHARED table (also used by `researchSessionService.ts`
+ * and the generic `POST /api/artifacts/wave5` route with an
+ * arbitrary/client-supplied `artifact_type`), so this can't just filter on
+ * `artifact_type = 'report'` — that value is not unique to Document Studio.
+ * Document Studio stamps every artifact's `provenance_json.metadata` with a
+ * `documentStudioSchema` key (`SCHEMA_METADATA_KEY` in
+ * `documentStudio/documentStudioService.ts`) that no other wave5 producer
+ * sets; the substring match below is the same distinguishing signal, kept
+ * portable (the column is plain TEXT, not jsonb) rather than a JSON operator.
+ *
+ * Idempotent: the LEFT JOIN + `l.link_id IS NULL` guard means an already
+ * indexed artifact is skipped, so repeated runs insert nothing. Never deletes.
+ */
+async function backfillNativeArtifactsForOrg(organizationId: string): Promise<number> {
+  const rows = await dbAll<NativeArtifactBackfillRow>(
+    `SELECT a.artifact_id, a.title, a.status, a.project_id, a.created_by, a.created_at, a.updated_at,
+            a.provenance_json
+     FROM wave5_artifacts a
+     LEFT JOIN v8_artifact_origin_links l
+       ON l.organization_id = a.organization_id
+      AND l.origin_runtime = 'native_artifact'
+      AND l.origin_record_id = a.artifact_id
+     WHERE a.organization_id = ?
+       AND a.artifact_type = 'report'
+       AND a.provenance_json LIKE '%"documentStudioSchema"%'
+       AND l.link_id IS NULL`,
+    [organizationId],
+    { fallback: true }
+  );
+
+  let inserted = 0;
+  for (const row of rows || []) {
+    try {
+      let templateId: string | null = null;
+      try {
+        const provenance = row.provenance_json ? JSON.parse(row.provenance_json) : null;
+        const meta = provenance && typeof provenance === 'object' ? provenance.metadata : null;
+        const rawTemplateId = meta && typeof meta === 'object' ? meta.documentStudioTemplateId : null;
+        templateId = typeof rawTemplateId === 'string' && rawTemplateId ? rawTemplateId : null;
+      } catch {
+        templateId = null;
+      }
+
+      const result = await registerArtifactOrigin({
+        organizationId,
+        outputType: 'report',
+        artifactFamily: 'document',
+        originRuntime: 'native_artifact',
+        originRecordId: row.artifact_id,
+        titleSnapshot: row.title || 'Untitled document',
+        ownerUserId: row.created_by || null,
+        createdBy: row.created_by || FALLBACK_ACTOR,
+        deliveryState: mapReportStatusToDeliveryState(row.status),
+        visibilityScope: deriveArtifactVisibilityScope({
+          outputType: 'report',
+          projectId: row.project_id,
+          ownerUserId: row.created_by || null,
+          isBackfill: true,
+        }),
+        projectId: row.project_id || null,
+        originSummary: {
+          sourceType: 'document_studio',
+          templateId,
+          sourceTable: 'wave5_artifacts',
+          nativeStatus: row.status,
+        },
+      });
+      if (result) inserted++;
+    } catch (err: any) {
+      logger.warn(
+        `${LOG_PREFIX} Failed to backfill native document artifact ${row.artifact_id}: ${err?.message}`
+      );
+    }
+  }
+  return inserted;
+}
+
 async function backfillReportTemplatesForOrg(organizationId: string): Promise<number> {
   const rows = await dbAll<ReportTemplateBackfillRow>(
     `SELECT t.id, t.organization_id, t.name, t.description, t.report_type, t.sections_json,
@@ -2291,12 +2396,14 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
   const [
     reportsInserted,
     presentationsInserted,
+    nativeArtifactsInserted,
     reportTemplatesInserted,
     presentationTemplatesInserted,
     docStudioTemplatesInserted,
   ] = await Promise.all([
     backfillReportsForOrg(organizationId),
     backfillPresentationsForOrg(organizationId),
+    backfillNativeArtifactsForOrg(organizationId),
     backfillReportTemplatesForOrg(organizationId),
     backfillPresentationTemplatesForOrg(organizationId),
     backfillDocStudioTemplatesForOrg(organizationId),
@@ -2306,14 +2413,16 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
   if (
     reportsInserted ||
     presentationsInserted ||
+    nativeArtifactsInserted ||
     reportTemplatesInserted ||
     presentationTemplatesInserted ||
     docStudioTemplatesInserted
   ) {
     logger.info(
       `${LOG_PREFIX} Backfilled ${reportsInserted} reports, ${presentationsInserted} presentations, ` +
-        `${reportTemplatesInserted} report templates, ${presentationTemplatesInserted} presentation templates, ` +
-        `and ${docStudioTemplatesInserted} document templates for org ${organizationId}`
+        `${nativeArtifactsInserted} native documents, ${reportTemplatesInserted} report templates, ` +
+        `${presentationTemplatesInserted} presentation templates, and ${docStudioTemplatesInserted} document templates ` +
+        `for org ${organizationId}`
     );
   }
 

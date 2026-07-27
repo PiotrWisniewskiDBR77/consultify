@@ -295,8 +295,14 @@ export async function handleChatAction(
         }
         const outputType = String(params.outputType || '').toLowerCase();
         if (outputType === 'presentation') {
+          // Scalenie wejść prezentacji 2026-07-27: generacja z szablonu idzie
+          // teraz przez kanoniczne wejście Teresy (/prezentacje), tak samo jak
+          // "Użyj wzorca" w bibliotece (artifactNavigation.ts
+          // resolveTemplateUsePath) — PrezentacjeView czyta templateArtifactId
+          // i woła POST /presentations/decks/from-template (R1.1, 26.07).
+          // `/presentations/wizard` jest teraz redirect-only.
           deps.navigate(
-            `/presentations/wizard?templateArtifactId=${encodeURIComponent(templateArtifactId)}`
+            `/prezentacje?templateArtifactId=${encodeURIComponent(templateArtifactId)}`
           );
         } else {
           deps.navigate(
