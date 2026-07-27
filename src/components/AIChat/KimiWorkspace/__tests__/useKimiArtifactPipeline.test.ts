@@ -1,8 +1,8 @@
 /**
- * useKimiArtifactPipeline — 4-lane regression test.
+ * useKimiArtifactPipeline — 3-lane regression test.
  *
  * Validation matrix row L2.4 (Sprint 2 / Table Studio Foundation block).
- * Asserts the hook accepts all four KIMI lanes — `wordy`, `excele`,
+ * Asserts the hook accepts all three KIMI lanes — `excele`,
  * `prezentacje`, `tabele` — and returns a stable `KimiPipelineState`
  * shape for each lane on initial render. Catches regressions in:
  * - the `KimiLane` union exhaustiveness inside the hook,
@@ -117,9 +117,9 @@ import {
   useKimiArtifactPipeline,
 } from '../useKimiArtifactPipeline';
 
-const LANES: KimiLane[] = ['wordy', 'excele', 'prezentacje', 'tabele'];
+const LANES: KimiLane[] = ['excele', 'prezentacje', 'tabele'];
 
-describe('useKimiArtifactPipeline — 4-lane regression (L2.4)', () => {
+describe('useKimiArtifactPipeline — 3-lane regression (L2.4)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockExecutionData.current = null;
