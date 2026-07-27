@@ -2311,6 +2311,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
 
+  /** Domyslny ksztalt „nowego kroku" dla biezacego trybu przeplywu. */
+  const addDefaultStep = useCallback(() => {
+    const shape: FlowShape =
+      flowMode === 'automation' ? 'auto_trigger' : flowMode === 'vsm' ? 'vsm_process' : 'action';
+    addNode(shape);
+  }, [addNode, flowMode]);
+
   // P3: shared grammar (Tab/Enter/F2/Delete/Escape/Ctrl+Z/S/D/L/0)
   useCanvasKeyboard({
     toolType: 'processflow',
@@ -2330,15 +2337,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
         onSelectionChange?.(EMPTY_SELECTION);
       },
-      onAddSibling: () => {
-        const shape: FlowShape =
-          flowMode === 'automation'
-            ? 'auto_trigger'
-            : flowMode === 'vsm'
-              ? 'vsm_process'
-              : 'action';
-        addNode(shape);
-      },
+      // Tab i Enter robia w Przeplywie to samo — nowy krok. Kontrakt skrotow
+      // (useIdeasToolKeyboard) mapuje Tab na `onAddChild`, ktorego Przeplyw
+      // NIGDY nie podawal, wiec Tab byl tu martwym klawiszem (w odroznieniu od
+      // mapy mysli proces nie ma hierarchii rodzic-dziecko — jest nastepny krok).
+      onAddChild: () => addDefaultStep(),
+      onAddSibling: () => addDefaultStep(),
     },
   });
 
