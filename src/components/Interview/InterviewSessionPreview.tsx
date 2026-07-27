@@ -30,6 +30,13 @@ export interface InterviewSessionPreviewBodyProps {
     lastActivityAt?: string;
     ownerId?: string;
   };
+  /**
+   * FALA 1 / „surowe identyfikatory w UI" (2026-07-27): w DETAILS wisiało
+   * `Owner: d2b6a316-08c5-47cf-9bf7-4ba50311d5a2`. Linia właściciela pojawia
+   * się teraz WYŁĄCZNIE gdy znamy czytelną nazwę; sam `ownerId` nigdy nie
+   * trafia do treści (jest do wzięcia pod akcją „Kopiuj ID").
+   */
+  ownerName?: string;
   isPolish: boolean;
   // canon §4.1: tone/colour come from EntityStatusChip(statusChipTone) — NOT
   // hardcoded bg/text/dot colours. We only need the bilingual label here.
@@ -45,6 +52,7 @@ export interface InterviewSessionPreviewBodyProps {
 
 export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyProps> = ({
   session,
+  ownerName,
   isPolish,
   statusConfig,
   progress,
@@ -77,7 +85,9 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
     `${t('interview.sessionPreview.answers')}: ${session.answeredQuestions}/${session.totalQuestions}`,
     `${t('interview.sessionPreview.started')}: ${started}`,
     `${t('interview.sessionPreview.lastActivity')}: ${last}`,
-    session.ownerId ? `${t('interview.sessionPreview.owner')}: ${session.ownerId}` : null,
+    ownerName?.trim()
+      ? `${t('interview.sessionPreview.owner', 'Owner')}: ${ownerName.trim()}`
+      : null,
   ]
     .filter(Boolean)
     .join('\n');
@@ -142,7 +152,8 @@ export interface InterviewSessionPreviewFooterProps {
   canRunAi: boolean;
   aiHints: string[];
   onRunAiHint: (hint: string) => void;
-  relations: Array<{ label: string; tone?: string }>;
+  /** `title` = tooltip (miejsce na identyfikator techniczny, nigdy w `label`). */
+  relations: Array<{ label: string; tone?: string; title?: string }>;
   onOpenFull: () => void;
   onGenerateInsight?: (type: string) => void;
   onCopyId: () => void;
@@ -162,6 +173,7 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
   const { t } = useTranslation();
   const relationItems: RelationItem[] = relations.map((r) => ({
     label: r.label,
+    title: r.title,
     tone: r.tone ?? 'text-[var(--c-text-secondary)]',
   }));
 

@@ -12,6 +12,7 @@
  * semantic color dots and standardized sizing.
  */
 
+import { Copy } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -73,7 +74,17 @@ function dotColor(state: string | null | undefined): string {
   return DOT_COLORS[key] || DOT_COLORS.default;
 }
 
-function displayLabel(value: string | null | undefined): string {
+/**
+ * Zamienia surowy enum backendu (`attention_required`, `source_grounded`) na
+ * czytelną etykietę („Attention Required", „Source Grounded").
+ *
+ * FALA 1 / „surowe identyfikatory w UI" (2026-07-27): wyeksportowane, bo
+ * zakładka Presentations renderowała TEN SAM stan drugą drogą — jako pigułkę
+ * z gołą wartością `previewItem.governance.validationState` — i przez to
+ * pokazywała `attention_required` tam, gdzie All/Documents/Sheets pokazywały
+ * „Attention Required". Jedno źródło etykiety = jeden wygląd.
+ */
+export function displayLabel(value: string | null | undefined): string {
   const normalized = String(value || '').trim();
   if (!normalized) return '—';
   return normalized
@@ -123,10 +134,25 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
 
   const originCount = governance.originLinks?.length ?? 0;
   const sourceCount = governance.sourceRefs?.length ?? 0;
+  // FALA 1 (2026-07-27): było `1 origins` — liczba sklejana z zawsze mnogim
+  // rzeczownikiem. Teraz forma zależy od liczby (i18next `_one/_few/_many`,
+  // polski ma trzy formy).
   const lineageSummary =
     [
-      originCount > 0 ? `${originCount} ${t('rap.outputs.preview.originsShort', 'origins')}` : null,
-      sourceCount > 0 ? `${sourceCount} ${t('rap.outputs.preview.sourcesShort', 'sources')}` : null,
+      originCount > 0
+        ? t('rap.outputs.preview.originsCount', {
+            count: originCount,
+            defaultValue_one: '{{count}} origin',
+            defaultValue: '{{count}} origins',
+          })
+        : null,
+      sourceCount > 0
+        ? t('rap.outputs.preview.sourcesCount', {
+            count: sourceCount,
+            defaultValue_one: '{{count}} source',
+            defaultValue: '{{count}} sources',
+          })
+        : null,
     ]
       .filter(Boolean)
       .join(' · ') || '—';
@@ -135,11 +161,23 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
     ? `${governance.exportHistory.length} · ${displayLabel(governance.exportHistory[0]?.status)}`
     : '—';
 
+  // FALA 1 (2026-07-27): było `source_grounded:failed` — surowy kod kontroli
+  // i surowy status sklejone dwukropkiem. Teraz zdanie po ludzku:
+  // „Source Grounded — nie przeszło".
+  const checkStatusLabel = (status: string | null | undefined): string => {
+    const key = String(status || '')
+      .toLowerCase()
+      .trim();
+    if (key === 'failed') return t('rap.outputs.preview.checkFailed', 'not passed');
+    if (key === 'pending') return t('rap.outputs.preview.checkPending', 'awaiting check');
+    if (key === 'skipped') return t('rap.outputs.preview.checkSkipped', 'skipped');
+    return displayLabel(status);
+  };
   const validationChecksText =
     Array.isArray(governance.validationChecks) && governance.validationChecks.length > 0
       ? governance.validationChecks
           .filter((check) => check.status !== 'passed')
-          .map((check) => `${check.id}:${check.status}`)
+          .map((check) => `${displayLabel(check.id)} — ${checkStatusLabel(check.status)}`)
           .join(' · ') || t('rap.outputs.preview.validationChecksAllGood', 'all passed')
       : '—';
 
@@ -181,14 +219,19 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
           <span className="text-[10px] font-medium text-c-text-secondary">{lineageSummary}</span>
         </Row>
 
+        {/* FALA 1 / „surowe identyfikatory w UI" (2026-07-27): oba wiersze
+            wypisywały goły UUID (`Artifact ID: c6c12106-…`). Użytkownik
+            biznesowy nie ma z niego nic — identyfikator zostaje dostępny, ale
+            pod przyciskiem „Kopiuj ID" (pełna wartość w tooltipie). */}
         <Row label={t('rap.outputs.preview.artifactId', 'Artifact ID')}>
-          <span className="text-[10px] font-mono text-c-text-secondary">{artifactId || '—'}</span>
+          <CopyIdButton id={artifactId} label={t('rap.outputs.preview.copyId', 'Copy ID')} />
         </Row>
 
         <Row label={t('rap.outputs.preview.executionRunId', 'Execution run')}>
-          <span className="text-[10px] font-mono text-c-text-secondary">
-            {governance.executionRunId || '—'}
-          </span>
+          <CopyIdButton
+            id={governance.executionRunId}
+            label={t('rap.outputs.preview.copyId', 'Copy ID')}
+          />
           {governance.executionRunId && onTrace ? (
             <button
               type="button"
@@ -244,6 +287,27 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
         </Row>
       </div>
     </div>
+  );
+};
+
+/**
+ * Identyfikator techniczny NIGDY nie jest treścią — jest akcją.
+ * Brak identyfikatora → zwykły myślnik (bez martwego przycisku).
+ */
+const CopyIdButton: React.FC<{ id?: string | null; label: string }> = ({ id, label }) => {
+  if (!id) return <span className="text-[10px] text-c-text-muted">—</span>;
+  return (
+    <button
+      type="button"
+      title={id}
+      onClick={() => {
+        void navigator.clipboard?.writeText(id);
+      }}
+      className="inline-flex items-center gap-1 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 py-0.5 text-[9px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+    >
+      <Copy size={9} />
+      {label}
+    </button>
   );
 };
 

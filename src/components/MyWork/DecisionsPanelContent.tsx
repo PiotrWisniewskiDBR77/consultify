@@ -162,6 +162,56 @@ const priorityLabel = (priority: string | undefined, isPolish: boolean): string 
   }
 };
 
+/**
+ * FALA 1 / „surowe identyfikatory w UI" (2026-07-27): kolumna TYPE pokazywała
+ * gołe enumy bazy — `APPROVAL` (wielkie) obok `general` (małe) w tej samej
+ * kolumnie. Enum to nie etykieta. Słownik odwzorowuje ten z
+ * `Initiatives/sections/DecisionsSection.tsx`, a typ spoza słownika jest
+ * humanizowany (`SCOPE_CHANGE` → „Scope change"), nie wypisywany surowo.
+ */
+const DECISION_TYPE_LABELS: Record<string, { en: string; pl: string }> = {
+  APPROVAL: { en: 'Approval', pl: 'Zatwierdzenie' },
+  INITIATIVE_APPROVAL: { en: 'Initiative approval', pl: 'Zatwierdzenie inicjatywy' },
+  BUDGET_APPROVAL: { en: 'Budget approval', pl: 'Zatwierdzenie budżetu' },
+  GO_NO_GO: { en: 'Go/No-Go', pl: 'Go/No-Go' },
+  GOVERNANCE_DECISION_MAKING: { en: 'Go/No-Go', pl: 'Go/No-Go' },
+  RESOURCE_ALLOCATION: { en: 'Resource allocation', pl: 'Alokacja zasobów' },
+  RESOURCE_RESPONSIBILITY: { en: 'Resources commit', pl: 'Zobowiązanie zasobów' },
+  SCHEDULE_MILESTONES: { en: 'Schedule lock', pl: 'Blokada harmonogramu' },
+  SCOPE_CHANGE: { en: 'Scope change', pl: 'Zmiana zakresu' },
+  SCOPE: { en: 'Scope', pl: 'Zakres' },
+  RISK_ACCEPTANCE: { en: 'Risk acceptance', pl: 'Akceptacja ryzyka' },
+  RISK: { en: 'Risk', pl: 'Ryzyko' },
+  TECH: { en: 'Technical', pl: 'Techniczna' },
+  TECHNICAL: { en: 'Technical', pl: 'Techniczna' },
+  GOVERNANCE: { en: 'Governance', pl: 'Nadzór' },
+  BUDGET: { en: 'Budget', pl: 'Budżet' },
+  PHASE_TRANSITION: { en: 'Phase transition', pl: 'Przejście fazy' },
+  TASK_UNBLOCK: { en: 'Unblock task', pl: 'Odblokowanie zadania' },
+  UNBLOCK: { en: 'Unblock', pl: 'Odblokowanie' },
+  EXCEPTION: { en: 'Exception', pl: 'Odstępstwo' },
+  STRATEGIC: { en: 'Strategic', pl: 'Strategiczna' },
+  EXECUTION: { en: 'Execution', pl: 'Wykonawcza' },
+  GENERAL: { en: 'General', pl: 'Ogólna' },
+  OTHER: { en: 'Other', pl: 'Inna' },
+};
+
+/** Czytelna nazwa typu decyzji — nigdy surowy enum. */
+const decisionTypeLabel = (
+  raw: string | undefined | null,
+  isPolish: boolean,
+  fallback: string
+): string => {
+  const key = String(raw || '')
+    .trim()
+    .toUpperCase();
+  if (!key) return fallback;
+  const known = DECISION_TYPE_LABELS[key];
+  if (known) return isPolish ? known.pl : known.en;
+  const words = key.replace(/_/g, ' ').toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
+
 // Distinct icon per decision type (dot/icon carries the type signal).
 const getDecisionTypeIcon = (type?: string): LucideIcon => {
   switch (type?.toUpperCase()) {
@@ -273,11 +323,16 @@ const buildDecisionColumns = (
     width: '130px',
     render: (row: TableRow) => {
       const d = row as unknown as Decision;
+      const typeText = decisionTypeLabel(
+        d.decisionType || d.type,
+        isPolish,
+        t('myWork.decisionsPanel.general', 'General')
+      );
       return (
         <MetaChip
           icon={getDecisionTypeIcon(d.decisionType || d.type)}
-          label={d.decisionType || d.type || t('myWork.decisionsPanel.general', 'General')}
-          title={d.decisionType || d.type || t('myWork.decisionsPanel.general2', 'General')}
+          label={typeText}
+          title={typeText}
         />
       );
     },
