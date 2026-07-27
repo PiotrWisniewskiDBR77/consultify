@@ -119,6 +119,13 @@ import { LabeledEdge } from './mindmap/LabeledEdge';
 import { LargeMapOptimizer } from './mindmap/LargeMapOptimizer';
 import { BranchHealthDot, computeBranchHealth, MapHealthScore } from './mindmap/MapHealthScore';
 import { MindMap3DView } from './mindmap/MindMap3DView';
+import { MindMapFrameNode } from './mindmap/MindMapFrameNode';
+import {
+  MM_MIN_NODE_HEIGHT,
+  MM_MIN_NODE_WIDTH,
+  MindMapNodeResizer,
+  useNodeHasExplicitSize,
+} from './mindmap/MindMapNodeResizer';
 import { MindmapCommandPalette } from './mindmap/MindmapCommandPalette';
 import { normalizeMindmapNodeQuickAction } from './mindmap/mindmapInteractionGrammar';
 import {
@@ -791,42 +798,77 @@ function inferNodeAccentColor(data: Record<string, any> | undefined): string | u
 
 // ─────── Node Types ───────
 
-const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => (
+/**
+ * Blokada całego płótna (tryb read-only / obserwator). Węzły muszą ją znać,
+ * żeby NIE pokazywać uchwytów zmiany rozmiaru — `nodesDraggable={false}`
+ * blokuje tylko przeciąganie, `NodeResizer` żyje własnym życiem.
+ */
+const MindMapLockedContext = React.createContext<boolean>(false);
+
+const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => {
+  const mapLocked = useContext(MindMapLockedContext);
+  const hasExplicitSize = useNodeHasExplicitSize(id);
   // Clean, consulting-grade root node (Whimsical-style): solid neutral surface on
   // c-* tokens, no glowing gradient orb / pulsing glow / rotating conic border
   // (those read as a toy, not a work tool). Emphasis via a slightly stronger ring
   // + shadow, not animation.
-  <div
-    className={`relative flex items-center justify-center w-32 h-32 rounded-full bg-c-surface-raised border-2 shadow-lg transition-transform duration-200 hover:scale-105 ${
-      selected ? 'border-c-focus' : 'border-c-border'
-    }`}
-  >
-    <Handle type="source" position={Position.Top} id="top" className="!opacity-0 !w-1 !h-1" />
-    <Handle type="source" position={Position.Right} id="right" className="!opacity-0 !w-1 !h-1" />
-    <Handle type="source" position={Position.Bottom} id="bottom" className="!opacity-0 !w-1 !h-1" />
-    <Handle type="source" position={Position.Left} id="left" className="!opacity-0 !w-1 !h-1" />
-    <div className="text-center px-3">
-      <Flower2 size={30} className="text-c-text-secondary mx-auto" />
-      <div className="text-[11px] font-semibold text-c-text mt-1.5 line-clamp-2">{data.label}</div>
-    </div>
-    {selected && (
-      <button
-        type="button"
-        className="nodrag absolute left-full top-1/2 z-20 ml-3 -translate-y-1/2 h-10 w-10 rounded-full bg-c-surface-raised text-c-text border-2 border-c-border shadow-lg hover:bg-c-surface active:scale-[0.98] transition-all flex items-center justify-center"
-        onClick={(e) => {
-          e.stopPropagation();
-          window.dispatchEvent(
-            new CustomEvent('idea-mindmap-node-quick-action', {
-              detail: { action: 'add_child', nodeId: id },
-            })
-          );
-        }}
+  return (
+    <>
+      {/* Ręczna zmiana rozmiaru — korzeń jest KOŁEM, więc trzymamy proporcję. */}
+      <MindMapNodeResizer
+        selected={selected}
+        locked={mapLocked || Boolean(data?.locked)}
+        minWidth={96}
+        minHeight={96}
+        keepAspectRatio
+      />
+      <div
+        className={`relative flex items-center justify-center ${
+          hasExplicitSize ? 'w-full h-full' : 'w-32 h-32'
+        } rounded-full bg-c-surface-raised border-2 shadow-lg transition-transform duration-200 hover:scale-105 ${
+          selected ? 'border-c-focus' : 'border-c-border'
+        }`}
       >
-        <Plus size={20} strokeWidth={2.5} />
-      </button>
-    )}
-  </div>
-));
+        <Handle type="source" position={Position.Top} id="top" className="!opacity-0 !w-1 !h-1" />
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="right"
+          className="!opacity-0 !w-1 !h-1"
+        />
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="bottom"
+          className="!opacity-0 !w-1 !h-1"
+        />
+        <Handle type="source" position={Position.Left} id="left" className="!opacity-0 !w-1 !h-1" />
+        <div className="text-center px-3">
+          <Flower2 size={30} className="text-c-text-secondary mx-auto" />
+          <div className="text-[11px] font-semibold text-c-text mt-1.5 line-clamp-2">
+            {data.label}
+          </div>
+        </div>
+        {selected && (
+          <button
+            type="button"
+            className="nodrag absolute left-full top-1/2 z-20 ml-3 -translate-y-1/2 h-10 w-10 rounded-full bg-c-surface-raised text-c-text border-2 border-c-border shadow-lg hover:bg-c-surface active:scale-[0.98] transition-all flex items-center justify-center"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.dispatchEvent(
+                new CustomEvent('idea-mindmap-node-quick-action', {
+                  detail: { action: 'add_child', nodeId: id },
+                })
+              );
+            }}
+          >
+            <Plus size={20} strokeWidth={2.5} />
+          </button>
+        )}
+      </div>
+    </>
+  );
+});
 CenterNodeComponent.displayName = 'RecommendationCenterNode';
 
 const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => {
@@ -846,6 +888,8 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
     () => computeBranchHealth(id, rfNodes, rfEdges),
     [id, nodeCount, edgeCount]
   );
+  const mapLocked = useContext(MindMapLockedContext);
+  const hasExplicitSize = useNodeHasExplicitSize(id);
 
   if (data._simplified) {
     return (
@@ -869,8 +913,21 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
     <div
       className={`relative px-4 py-2.5 rounded-2xl border-2 ${colors.border} ${colors.bg} ${
         selected ? `ring-2 ${colors.ring}` : ''
-      } shadow-md min-w-[120px] text-center`}
+      } shadow-md text-center ${
+        // Ręcznie ustawiony rozmiar jest TWARDY — pudełko przestaje się
+        // dopasowywać do treści i wypełnia węzeł.
+        hasExplicitSize ? 'w-full h-full flex flex-col justify-center' : 'min-w-[120px]'
+      }`}
     >
+      {/* Ręczna zmiana rozmiaru gałęzi (uchwyty tylko przy zaznaczeniu).
+          Wewnątrz pudełka, bo to ono jest pudełkiem węzła (`relative`) —
+          uchwyty siadają dokładnie na jego krawędziach. */}
+      <MindMapNodeResizer
+        selected={selected}
+        locked={mapLocked || Boolean(data?.locked)}
+        minWidth={MM_MIN_NODE_WIDTH}
+        minHeight={MM_MIN_NODE_HEIGHT}
+      />
       <Handle type="target" position={Position.Left} className="!opacity-0 !w-1 !h-1" />
       <Handle type="source" position={Position.Right} id="right" className="!opacity-0 !w-1 !h-1" />
       <Handle type="source" position={Position.Top} id="top" className="!opacity-0 !w-1 !h-1" />
@@ -965,6 +1022,8 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
   const isPolish = i18n.language?.startsWith('pl');
   const interactionMode = useContext(MindMapInteractionModeContext);
   const ideaId = useContext(MindMapIdeaIdContext);
+  const mapLocked = useContext(MindMapLockedContext);
+  const hasExplicitSize = useNodeHasExplicitSize(id);
   const { getNodes, getEdges } = useReactFlow();
   const colors = useMemo(
     () => branchColor(data.branchKey, data._depth),
@@ -1262,8 +1321,21 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 : selected
                   ? `ring-2 ${colors.ring}`
                   : ''
-        } ${isRemoteLocked ? 'opacity-50 grayscale cursor-not-allowed' : 'cursor-pointer'} min-w-[120px] max-w-[210px] relative transition-colors duration-150`}
+        } ${isRemoteLocked ? 'opacity-50 grayscale cursor-not-allowed' : 'cursor-pointer'} ${
+          // Ręcznie ustawiony rozmiar jest TWARDY: pudełko wypełnia węzeł i
+          // przestaje się dopasowywać do treści (min-w/max-w by je ścisnęły).
+          hasExplicitSize ? 'w-full h-full flex flex-col' : 'min-w-[120px] max-w-[210px]'
+        } relative transition-colors duration-150`}
       >
+        {/* Ręczna zmiana rozmiaru węzła (uchwyty tylko przy zaznaczeniu).
+            Wewnątrz pudełka węzła, bo to ono jest `relative` — uchwyty siadają
+            dokładnie na jego krawędziach, niezależnie od GlowWrappera. */}
+        <MindMapNodeResizer
+          selected={selected}
+          locked={mapLocked || isRemoteLocked || Boolean(data?.locked)}
+          minWidth={MM_MIN_NODE_WIDTH}
+          minHeight={MM_MIN_NODE_HEIGHT}
+        />
         <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
         <Handle type="target" position={Position.Top} id="target-top" className={handleTarget} />
         <Handle
@@ -1388,7 +1460,10 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           </div>
         )}
 
-        <div className={innerRotate}>
+        {/* Po ręcznym powiększeniu treść ma WYPEŁNIĆ pudełko (flex-1 + własny
+            scroll), a nie zostać przyklejona do górnej krawędzi z pustką pod
+            spodem. Bez jawnego rozmiaru — zero zmian względem stanu sprzed. */}
+        <div className={`${innerRotate} ${hasExplicitSize ? 'flex-1 min-h-0 overflow-auto' : ''}`}>
           {/* Image thumbnail (R3.5) */}
           {data.imageUrl && !editing && (
             <div className="mb-1.5 -mx-1 -mt-1 rounded-lg overflow-hidden">
@@ -1459,7 +1534,14 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 </div>
                 <div className="min-w-0 flex-1">
                   <div
-                    className={`text-[11px] font-semibold ${data.label ? colors.text : 'text-slate-600 dark:text-slate-500 italic'} line-clamp-2 leading-tight`}
+                    className={`text-[11px] font-semibold ${data.label ? colors.text : 'text-slate-600 dark:text-slate-500 italic'} ${
+                      // Przy domyślnym (dopasowanym do treści) pudełku etykieta
+                      // musi się urwać po 2 wierszach, bo inaczej węzeł rósłby
+                      // w nieskończoność. Gdy użytkownik SAM nadał rozmiar,
+                      // urywanie jest wbrew jego decyzji — tekst ma się zawinąć
+                      // i wykorzystać miejsce, które właśnie zrobił.
+                      hasExplicitSize ? 'whitespace-pre-wrap break-words' : 'line-clamp-2'
+                    } leading-tight`}
                   >
                     {data.label || t('mindmap.clickToType')}
                   </div>
@@ -1587,6 +1669,9 @@ const nodeTypes = {
   center: CenterNodeComponent,
   branch: BranchNodeComponent,
   idea: EditableIdeaNodeComponent,
+  // Ramka (`mm_add_frame`, Ctrl+G). Wcześniej BRAK wpisu → reactflow rysował
+  // wbudowany węzeł `group`: goły prostokąt bez etykiety i bez uchwytów.
+  group: MindMapFrameNode,
   ...knowledgeNodeTypes,
 };
 
@@ -5415,6 +5500,7 @@ function MindMapInner({
         </div>
       ) : (
         <MindMapIdeaIdContext.Provider value={ideaId}>
+          <MindMapLockedContext.Provider value={Boolean(locked)}>
           <MindMapInteractionModeContext.Provider value={interactionMode}>
             <ReactFlow
               nodes={enrichedNodes}
@@ -5464,7 +5550,7 @@ function MindMapInner({
               // rusza ani nie zaznacza). Spread MUSI być po
               // getIdeasToolInteractionProps, żeby wygrał z domyślnymi.
               {...getIdeaCanvasCursorProps(interactionMode === 'pan' ? 'pan' : 'select')}
-              className={`bg-c-bg ${
+              className={`mm-canvas bg-c-bg ${
                 interactionMode === 'connect'
                   ? 'cursor-crosshair'
                   : getIdeaCanvasCursorClass(interactionMode === 'pan' ? 'pan' : 'select') ||
@@ -5663,6 +5749,7 @@ function MindMapInner({
               <MapHealthScore nodes={nodes} edges={edges} visible={showHealthScore} />
             )}
           </MindMapInteractionModeContext.Provider>
+          </MindMapLockedContext.Provider>
         </MindMapIdeaIdContext.Provider>
       )}
 

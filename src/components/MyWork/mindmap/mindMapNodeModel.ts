@@ -54,6 +54,11 @@ const VALID_NODE_TYPES = [
   'knowledgeCard',
   'noteCard',
   'evidenceCard',
+  // Ramka (`mm_add_frame` / Ctrl+G w useMindMapQuickActions). BRAK tego wpisu
+  // powodował, że po przeładowaniu mapy hydratacja przemieniała każdą ramkę w
+  // zwykły węzeł `idea` (fallback dla nieznanego typu) — ramka nie przeżywała
+  // zapisu ani jako typ, ani jako rozmiar.
+  'group',
 ] as const;
 
 function getNodeDepth(nodeId: string, edges: Array<{ source: string; target: string }>): number {

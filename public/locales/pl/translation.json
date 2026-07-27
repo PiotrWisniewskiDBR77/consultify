@@ -26133,7 +26133,10 @@
     "imageAdded": "Obraz dodany",
     "acceptedProposalsCount": "Zaakceptowano {{count}} propozycji",
     "linkSuggestionsFoundCount": "Znaleziono {{count}} propozycji powiązań",
-    "deleteSubtreeWarning": "Usunięcie obejmie {{count}} podwęzłów. Tej operacji nie można cofnąć po synchronizacji."
+    "deleteSubtreeWarning": "Usunięcie obejmie {{count}} podwęzłów. Tej operacji nie można cofnąć po synchronizacji.",
+    "frameNode": {
+      "defaultLabel": "Ramka"
+    }
   },
   "ideas": {
     "table": {
