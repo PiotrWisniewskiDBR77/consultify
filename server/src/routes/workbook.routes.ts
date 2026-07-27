@@ -793,45 +793,6 @@ router.get(
 );
 
 /**
- * POST /api/workbook/generate-and-download
- * One-shot: generate + immediate download
- */
-router.post(
-  '/generate-and-download',
-  asyncHandler(async (req: AuthenticatedRequest, res) => {
-    const user = req.user;
-    if (!user) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-
-    const { prompt, researchContext, language } = req.body;
-    if (!prompt || typeof prompt !== 'string' || prompt.trim().length < 5) {
-      res.status(400).json({ error: 'prompt is required (min 5 chars)' });
-      return;
-    }
-
-    const { default: WorkbookGeneratorService } =
-      await import('../services/workbook/WorkbookGeneratorService.js');
-
-    const result = await WorkbookGeneratorService.generate({
-      prompt: prompt.trim(),
-      userId: user.id,
-      organizationId: user.organizationId,
-      researchContext,
-      language: language || req.headers['accept-language']?.split(',')[0],
-    });
-
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    );
-    res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
-    res.send(result.buffer);
-  })
-);
-
-/**
  * GET /api/workbook/list
  * List recent workbooks for the organization
  */
