@@ -2174,9 +2174,14 @@ function MindMapInner({
     });
   }, [collapsedNodeIds, drillFocusId, edges, nodes]);
 
+  // Ostatni węzeł, dla którego pokazaliśmy dymek „zaznaczenie przeniesione".
+  const selectionMovedNoticeRef = useRef<string | null>(null);
   useEffect(() => {
     const hiddenSelected = visibleNodes.filter((n) => n.hidden && n.selected);
-    if (hiddenSelected.length === 0) return;
+    if (hiddenSelected.length === 0) {
+      selectionMovedNoticeRef.current = null;
+      return;
+    }
 
     const targetId = hiddenSelected[0].id;
     let ancestorId: string | null = null;
@@ -2204,6 +2209,17 @@ function MindMapInner({
       }))
     );
 
+    // Komunikat TYLKO wtedy, gdy zaznaczenie faktycznie DOKĄDŚ powędrowało.
+    // Bez `ancestorId` nic się nie „przeniosło" — zaznaczenie zostało po prostu
+    // zdjęte (węzeł ukryty przez tryb skupienia/drążenia, nie przez zwinięcie
+    // gałęzi), a dymek kłamał i wyskakiwał obok komunikatu operacji, którą
+    // użytkownik właśnie wykonał (zgłoszenie: „drugi, niepowiązany komunikat"
+    // przy próbie dodania węzła).
+    if (!ancestorId) return;
+    // Efekt przelicza się przy KAŻDEJ zmianie `nodes`, więc bez tego strażnika
+    // ta sama sytuacja potrafiła odpalić dymek wielokrotnie pod rząd.
+    if (selectionMovedNoticeRef.current === targetId) return;
+    selectionMovedNoticeRef.current = targetId;
     toast(t('mindmap.selectionMovedBranchCollapsed'), { id: 'mm-op-cue', duration: 2000 });
   }, [edges, isPolish, setNodes, visibleNodes]);
 
@@ -2707,6 +2723,9 @@ function MindMapInner({
     isPolish,
     pushUndo,
     fitView,
+    // Sufit zoomu przy kadrowaniu nowego/kotwiczonego węzła — patrz
+    // `revealNodeInContext` w useMindMapNodes (nigdy nie przybliżaj).
+    getViewport,
     remoteLockedNodeIds,
     autoLayout,
     partialLayoutSubtree,
