@@ -25004,7 +25004,8 @@
       "generating": "Generowanie…",
       "planning": "Planowanie…",
       "submitTemplate": "Generuj z szablonu",
-      "submitPlan": "Zaplanuj dokument"
+      "submitPlan": "Zaplanuj dokument",
+      "contextChip": "Kontekst: {{organizationName}}"
     },
     "outline": {
       "type": "Typ",

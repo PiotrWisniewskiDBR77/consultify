@@ -322,6 +322,10 @@ import {
   transitionDocumentStatus,
   updateDocumentManualContent,
 } from '../services/documentStudio/documentStudioService.js';
+import {
+  applyOrgContextGrounding,
+  buildOrgContextSourcePack,
+} from '../services/documentStudio/documentOrgContextSourcePack.js';
 import type {
   AudienceProfileAppendixPolicy,
   AudienceProfileExecutiveSummaryPolicy,
@@ -519,6 +523,51 @@ function parseGenerateRequest(body: unknown): ParsedGenerateRequest | null {
 }
 
 /**
+ * P0 URODZINOWE (2026-07-27) — auto-ground a generate request in the calling
+ * organization's context when the caller (frontend) supplied NO sourceRefs
+ * at all. Today `DocumentStudioIntakeForm.tsx` never sends any, so every
+ * document was generated with zero organizational grounding — tripping the
+ * Sources QA gate (`documentQaService.runSourceQa`) and shipping generic
+ * content with no facts about the org.
+ *
+ * Deliberately minimal (see `documentOrgContextSourcePack.ts` for full
+ * rationale + explicitly deferred scope): builds one synthetic source ref
+ * (org name + active projects/initiatives) and prepends a short PL summary
+ * to `intake.description` so both the deterministic and premium/LLM content
+ * paths actually see the facts (not just a metadata pointer nothing reads —
+ * see the module doc for why `sourcePackId` alone does not achieve this).
+ *
+ * Fail-open: any lookup failure or empty-org result returns the request
+ * UNCHANGED — brand-new organizations with no data yet see zero regression.
+ * An explicit, curator-picked `sourceRefs` from the caller always wins and
+ * is never silently mixed with the auto-built one.
+ */
+async function autoGroundGenerateRequest(
+  organizationId: string,
+  intake: DocumentIntake,
+  sourceRefs: DocumentSourceRef[]
+): Promise<{ intake: DocumentIntake; sourceRefs: DocumentSourceRef[] }> {
+  if (sourceRefs.length > 0) return { intake, sourceRefs };
+  try {
+    const pack = await buildOrgContextSourcePack(organizationId);
+    const grounded = applyOrgContextGrounding(intake, sourceRefs, pack);
+    if (grounded.autoGrounded) {
+      logger.debug('[DocumentStudio] auto-grounded generate request from org context', {
+        organizationId,
+        sourceRef: grounded.sourceRefs[0]?.sourceId,
+      });
+    }
+    return { intake: grounded.intake, sourceRefs: grounded.sourceRefs };
+  } catch (err) {
+    logger.warn('[DocumentStudio] auto-grounding failed (fail-open, no regression)', {
+      organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return { intake, sourceRefs };
+  }
+}
+
+/**
  * G5 + X6 — register a freshly materialized document in the Outputs registry.
  * Shared by the sync `/generate` and streaming `/generate/stream` routes so
  * both surface the document in the Outputs Library identically. Best-effort:
@@ -651,7 +700,12 @@ router.post(
       res.status(400).json({ error: 'intake is required' });
       return;
     }
-    const { intake, outline, sourceRefs, projectId, useLlm, templateId } = parsed;
+    const { outline, projectId, useLlm, templateId } = parsed;
+    const { intake, sourceRefs } = await autoGroundGenerateRequest(
+      organizationId,
+      parsed.intake,
+      parsed.sourceRefs
+    );
 
     try {
       const result = await materializeDocumentArtifact({
@@ -741,7 +795,12 @@ router.post(
       res.status(400).json({ error: 'intake is required' });
       return;
     }
-    const { intake, outline, sourceRefs, projectId, useLlm, templateId } = parsed;
+    const { outline, projectId, useLlm, templateId } = parsed;
+    const { intake, sourceRefs } = await autoGroundGenerateRequest(
+      organizationId,
+      parsed.intake,
+      parsed.sourceRefs
+    );
 
     // Long-running SSE: raise socket timeout + disable Nagle so events flush
     // in real time (mirrors ai.routes streaming setup).
