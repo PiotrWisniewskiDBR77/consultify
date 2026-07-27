@@ -1,3 +1,7 @@
+> ⚠️ **DOKUMENT UNIEWAŻNIONY 2026-07-27** — powód: porzucony draft z TRZECIĄ, sprzeczną definicją
+> „Menu 1/2/3"; nigdy nie zaakceptowany · zastąpiony przez: `docs/ui-standards/TRIADA_KANON.md`
+> (listy) + `Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md` (artefakty).
+
 # Skonsolidowany standard: Menu 1/2/3 · Tabele · Preview
 **Data:** 2026-06-19 · **Status:** DRAFT do akceptacji Piotra · **Cel:** JEDEN punkt odniesienia do przejścia ekran-po-ekranie.
 

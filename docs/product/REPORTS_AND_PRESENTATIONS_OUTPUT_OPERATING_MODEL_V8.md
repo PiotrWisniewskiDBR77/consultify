@@ -1,3 +1,7 @@
+> ⚠️ **DOKUMENT UNIEWAŻNIONY 2026-07-27** — powód: model „Raporty i Prezentacje = dwa osobne
+> produkty" jest sprzeczny z jednym modułem Materiały i decyzją Piotra 27.07 „raport = dokument
+> Word" · zastąpiony przez: `docs/product/MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md`.
+
 # Reports And Presentations Output Operating Model v8
 
 > Status: Draft v8

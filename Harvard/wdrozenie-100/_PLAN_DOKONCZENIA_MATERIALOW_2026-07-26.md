@@ -43,7 +43,7 @@ Reguła #7 w pełni.
 
 | # | Robota | Benchmark | Rozmiar |
 |---|---|---|---|
-| P2.1 | Ekran startu „Z AI": jedno duże pole „Co przygotować?" + kontekst podpięty + „Więcej opcji" zwinięte (dziś: formularz Description/Density/Goal/Audience — jedyny twardo NIESPEŁNIONY punkt DoD §8). TriModeChooser już istnieje — rozbudowa, nie greenfield. Wspólny wzorzec dla 3 formatów. | Gamma | L |
+| P2.1 | Ekran startu „Z AI": jedno duże pole „Co przygotować?" + kontekst podpięty + „Więcej opcji" zwinięte (dziś: formularz Description/Density/Goal/Audience — jedyny twardo NIESPEŁNIONY punkt DoD §8). TriModeChooser już istnieje — rozbudowa, nie greenfield. Wspólny wzorzec dla 3 formatów.<br>⚠️ UNIEWAŻNIONE 27.07 — Piotr: wejście „Z AI" to TERESA, nie nowy ekran. Patrz `_NAGRANIE_PIOTRA_WIZJA_MATERIALY_2026-07-27.md` N10. | Gamma | L |
 | P2.2 | Biblioteka: tagi semantyczne zamiast tęczy (SOURCE_TYPE_META + 3 sąsiednie flyouty: surowe emerald/blue/amber → tokeny), fix z-index dropdown (z-50 vs z-50 topbara — potwierdzić zrzutem w dark), hover-akcje na wierszach, przełącznik widoku tabela/galeria kart. | Airtable | M/L |
 | P2.3 | Szablony jako GALERIA MINIATUR (dziś tabela nazw) — widzisz jak szablon wygląda przed użyciem. Wymaga generowania miniatur blueprintów (sylwetki już istnieją: SlideSilhouette/DocumentStructurePreview — reuse). | Gamma | M |
 | P2.4 | Crimson w żywych CTA: kreator prezentacji (`wizard/*Step.tsx` — gradient primary→blue na „Generate"/„Continue"). OutputsLauncherModal też ma crimson, ale wg wcześniejszych audytów jest ODPIĘTY (sprzeczność między audytami — zweryfikować grep-em callera zanim ktokolwiek go rusza; jeśli martwy → deprecate zamiast malować). | triada | S |
