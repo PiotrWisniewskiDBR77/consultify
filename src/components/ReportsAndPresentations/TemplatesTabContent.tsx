@@ -157,7 +157,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                 data-testid="template-legacy-badge"
                 title={t(
                   'rap.templates.legacyHint',
-                  'Wzorzec ze starego rejestru (report_builder_templates) — generacja bez zmian.'
+                  'Wzorzec ze starszego rejestru wzorców — generacja działa bez zmian.'
                 )}
                 className="shrink-0 rounded border border-c-border px-1.5 py-px text-[10px] font-medium uppercase tracking-wide text-c-text-muted"
               >
@@ -700,11 +700,15 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             details={{
               text: [
                 `${t('rap.preview.scope', 'Zakres')}: ${scopeLabel(selectedItem.scope)}`,
+                // FALA 1 / „surowe identyfikatory w UI" (2026-07-27): tu wisiała
+                // NAZWA TABELI BAZY DANYCH („Legacy (report_builder_templates)").
+                // Użytkownik ma wiedzieć, co to dla niego znaczy — nie gdzie
+                // rekord leży w bazie.
                 ...(selectedItem.source === 'legacy' || selectedItem.legacy
                   ? [
                       `${t('rap.preview.source', 'Źródło')}: ${t(
                         'rap.templates.legacySourceLine',
-                        'Legacy (report_builder_templates)'
+                        'Starszy rejestr wzorców — działa bez zmian'
                       )}`,
                     ]
                   : []),

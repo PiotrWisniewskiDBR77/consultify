@@ -47,33 +47,60 @@ export interface ConvertToOutputMenuProps {
   additionalSources?: MyWorkDerivedSource[];
 }
 
+// FALA 1 / „surowe identyfikatory w UI" (2026-07-27): `financialModel` NIE
+// istniał w słownikach (`public/locales/*/translation.json` ma
+// `traceability.convertTo.financial_model`), a `t(labelKey)` było wołane BEZ
+// wartości domyślnej — i18next zwracał wtedy sam klucz, który w wąskim pasku
+// „Co dalej" ucinał się do „traceability.convertT". Klucz poprawiony, a każdy
+// element ma teraz twardy `fallback` — brak tłumaczenia nigdy nie wypuści
+// surowego klucza do UI.
 const TARGET_ITEMS: {
   type: ConversionTargetType;
   icon: React.ElementType;
   labelKey: string;
+  fallback: string;
 }[] = [
-  { type: 'initiative', icon: Target, labelKey: 'traceability.convertTo.initiative' },
-  { type: 'report', icon: FileText, labelKey: 'traceability.convertTo.report' },
-  { type: 'presentation', icon: Presentation, labelKey: 'traceability.convertTo.presentation' },
+  {
+    type: 'initiative',
+    icon: Target,
+    labelKey: 'traceability.convertTo.initiative',
+    fallback: 'Initiative',
+  },
+  {
+    type: 'report',
+    icon: FileText,
+    labelKey: 'traceability.convertTo.report',
+    fallback: 'Report',
+  },
+  {
+    type: 'presentation',
+    icon: Presentation,
+    labelKey: 'traceability.convertTo.presentation',
+    fallback: 'Presentation',
+  },
   {
     type: 'financial_model',
     icon: Calculator,
-    labelKey: 'traceability.convertTo.financialModel',
+    labelKey: 'traceability.convertTo.financial_model',
+    fallback: 'Financial model',
   },
   {
     type: 'budget',
     icon: Wallet,
     labelKey: 'traceability.convertTo.budget',
+    fallback: 'Budget',
   },
   {
     type: 'valuation',
     icon: TrendingUp,
     labelKey: 'traceability.convertTo.valuation',
+    fallback: 'Valuation',
   },
   {
     type: 'analysis',
     icon: BarChart3,
     labelKey: 'traceability.convertTo.analysis',
+    fallback: 'Analysis',
   },
 ];
 
@@ -248,7 +275,7 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
                     role="menu"
                   >
                     {createsSessionNote}
-                    {TARGET_ITEMS.map(({ type, icon: Icon, labelKey }) => (
+                    {TARGET_ITEMS.map(({ type, icon: Icon, labelKey, fallback }) => (
                       <button
                         key={type}
                         role="menuitem"
@@ -256,7 +283,7 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
                         className="w-full flex items-center gap-2 h-9 px-3 hover:bg-slate-100/60 dark:hover:bg-white/5 text-left text-sm text-slate-800 dark:text-slate-200 transition-colors"
                       >
                         <Icon size={14} className="text-slate-600 dark:text-slate-400 shrink-0" />
-                        <span className="flex-1 min-w-0 truncate">{t(labelKey)}</span>
+                        <span className="flex-1 min-w-0 truncate">{t(labelKey, fallback)}</span>
                       </button>
                     ))}
                   </div>
@@ -268,15 +295,15 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
           <div className="flex flex-col gap-1 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-white/10 p-1">
             {createsSessionNote}
             <div className="flex items-center gap-1">
-              {TARGET_ITEMS.map(({ type, icon: Icon, labelKey }) => (
+              {TARGET_ITEMS.map(({ type, icon: Icon, labelKey, fallback }) => (
                 <button
                   key={type}
                   onClick={() => handleItemClick(type)}
-                  title={t(labelKey)}
+                  title={t(labelKey, fallback)}
                   className="flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-slate-100/60 dark:hover:bg-white/5 text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   <Icon size={12} />
-                  {t(labelKey)}
+                  {t(labelKey, fallback)}
                 </button>
               ))}
             </div>

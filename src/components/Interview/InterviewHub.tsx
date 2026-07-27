@@ -6966,6 +6966,19 @@ Return ONLY the answer text (no markdown fences).`;
               return (
                 <InterviewSessionPreviewBody
                   session={s}
+                  // FALA 1 (2026-07-27): DETAILS pokazywało `Owner: <UUID>`.
+                  // Podajemy czytelną nazwę tylko gdy naprawdę ją znamy —
+                  // dziś potrafimy rozpoznać właściciela = zalogowany
+                  // użytkownik; w innym wypadku linia znika, a identyfikator
+                  // zostaje pod akcją „Kopiuj ID".
+                  ownerName={
+                    s.ownerId && currentUser?.id && s.ownerId === currentUser.id
+                      ? currentUser.displayName ||
+                        (currentUser as { name?: string }).name ||
+                        currentUser.email ||
+                        undefined
+                      : undefined
+                  }
                   isPolish={isPolish}
                   statusConfig={statusCfg}
                   progress={progress}
@@ -7000,6 +7013,17 @@ Return ONLY the answer text (no markdown fences).`;
                 'Następne kroki': 'recommendations',
                 'Next steps': 'recommendations',
               };
+              // FALA 1 / „surowe identyfikatory w UI" (2026-07-27): chipy
+              // „Project"/„Org" wypisywały gołe UUID
+              // (`Org: a3e05d4a-5397-419d-b486-8e44366c0063`). Pokazujemy
+              // nazwę organizacji, gdy sesja należy do bieżącej organizacji;
+              // identyfikator zostaje najwyżej w tooltipie. Chip projektu bez
+              // czytelnej nazwy w ogóle się nie pojawia — pusty chip jest
+              // lepszy niż mylący.
+              const orgName =
+                currentOrganization?.id && s.organizationId === currentOrganization.id
+                  ? currentOrganization.name
+                  : null;
               const relations = [
                 {
                   label: `${t('interview.hub.assignee3')}: ${s.assigneeName || s.respondentName || '—'}`,
@@ -7009,14 +7033,15 @@ Return ONLY the answer text (no markdown fences).`;
                   label: `${t('interview.hub.template')}: ${s.templateName || s.templateCategory || '—'}`,
                   tone: 'text-slate-600 dark:text-slate-300',
                 },
-                {
-                  label: `${t('interview.hub.project')}: ${s.projectId || '—'}`,
-                  tone: 'text-slate-600 dark:text-slate-300',
-                },
-                {
-                  label: `${t('interview.hub.org')}: ${s.organizationId || '—'}`,
-                  tone: 'text-slate-600 dark:text-slate-300',
-                },
+                ...(orgName
+                  ? [
+                      {
+                        label: `${t('interview.hub.org')}: ${orgName}`,
+                        title: s.organizationId,
+                        tone: 'text-slate-600 dark:text-slate-300',
+                      },
+                    ]
+                  : []),
               ];
 
               return (
@@ -7142,7 +7167,9 @@ Return ONLY the answer text (no markdown fences).`;
             const sourceLabel = item.sourceSessionCount
               ? `${item.sourceSessionCount} ${t('interview.hub.sessions2')}`
               : item.sessionId
-                ? `${t('interview.hub.session2')} ${item.sessionId.slice(0, 8)}…`
+                ? // FALA 1 (2026-07-27): było `Sesja f7847468…` — obcięty UUID
+                  // nic nie mówi; źródłem jest po prostu jedna sesja wywiadu.
+                  t('interview.hub.linkedSession', 'Linked session')
                 : '—';
             const dateStr = item.createdAt
               ? new Date(item.createdAt).toLocaleDateString(undefined, {
@@ -8440,7 +8467,10 @@ Return ONLY the answer text (no markdown fences).`;
                     selectedRow.sessionId || selectedRow.session?.id
                       ? [
                           {
-                            label: `${t('interview.hub.session2')}: ${(selectedRow.sessionId || selectedRow.session?.id || '').slice(0, 8)}…`,
+                            // FALA 1 (2026-07-27): było `Session: f7847468…`
+                            // — obcięty UUID. Czytelna etykieta, ID w tooltipie.
+                            label: t('interview.hub.linkedSession', 'Linked session'),
+                            title: selectedRow.sessionId || selectedRow.session?.id || undefined,
                             onClick: () => void openInterviewAssignmentFull(selectedRow, false),
                           },
                         ]
@@ -8526,15 +8556,18 @@ Return ONLY the answer text (no markdown fences).`;
               renderPreviewFooter={(item) => {
                 const a = item as InterviewAssignment;
 
-                const relations: Array<{ label: string; tone: string }> = [];
+                const relations: Array<{ label: string; tone: string; title?: string }> = [];
                 if (a.template?.category)
                   relations.push({
                     label: `${t('interview.hub.category')}: ${a.template.category}`,
                     tone: 'text-c-text-secondary',
                   });
+                // FALA 1 (2026-07-27): było `Session: 409683b2…` — obcięty
+                // UUID. Czytelna etykieta, identyfikator tylko w tooltipie.
                 if (a.sessionId || a.session?.id)
                   relations.push({
-                    label: `${t('interview.hub.session2')}: ${(a.sessionId || a.session?.id || '').slice(0, 8)}…`,
+                    label: t('interview.hub.linkedSession', 'Linked session'),
+                    title: a.sessionId || a.session?.id,
                     tone: 'text-blue-600 dark:text-blue-300',
                   });
 
@@ -8697,15 +8730,18 @@ Return ONLY the answer text (no markdown fences).`;
               renderPreviewFooter={(item) => {
                 const a = item as InterviewAssignment;
 
-                const relations: Array<{ label: string; tone: string }> = [];
+                const relations: Array<{ label: string; tone: string; title?: string }> = [];
                 if (a.template?.category)
                   relations.push({
                     label: `${t('interview.hub.category')}: ${a.template.category}`,
                     tone: 'text-c-text-secondary',
                   });
+                // FALA 1 (2026-07-27): było `Session: 409683b2…` — obcięty
+                // UUID. Czytelna etykieta, identyfikator tylko w tooltipie.
                 if (a.sessionId || a.session?.id)
                   relations.push({
-                    label: `${t('interview.hub.session2')}: ${(a.sessionId || a.session?.id || '').slice(0, 8)}…`,
+                    label: t('interview.hub.linkedSession', 'Linked session'),
+                    title: a.sessionId || a.session?.id,
                     tone: 'text-blue-600 dark:text-blue-300',
                   });
 

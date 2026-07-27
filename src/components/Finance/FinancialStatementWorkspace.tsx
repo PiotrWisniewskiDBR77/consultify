@@ -27,6 +27,7 @@ import {
   type FinancialStatementMappedValue,
   FinancialStatementMappingEditor,
 } from './FinancialStatementMappingEditor';
+import { statementReasonSentences } from './statementReadinessCopy';
 
 interface StatementDetail {
   id: string;
@@ -822,17 +823,21 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                   'Only fully mapped and correctly validated financial data is handled in Statements. This import must be corrected before it becomes a working statement.'
                 )}
             </div>
+            {/* FALA 1 / „surowe identyfikatory w UI" (2026-07-27): tu leciała
+                naga lista kodów backendu (`MISSING_PL`, `HAS_PENDING_STATEMENT`).
+                Kod błędu nie jest komunikatem — mówimy, czego brakuje. */}
             {!!detail.readinessReasonCodes?.length && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {detail.readinessReasonCodes.map((code) => (
-                  <span
-                    key={code}
-                    className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:bg-navy-800 dark:text-slate-300"
+              <ul className="mt-3 space-y-1">
+                {statementReasonSentences(detail.readinessReasonCodes, t).map((sentence) => (
+                  <li
+                    key={sentence}
+                    className="flex items-start gap-1.5 text-[12px] text-slate-600 dark:text-slate-300"
                   >
-                    {code}
-                  </span>
+                    <span aria-hidden="true">•</span>
+                    <span>{sentence}</span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </div>
 
@@ -1080,10 +1085,21 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                 {t('finance.statements.validationMessages', 'Validation messages')}
               </h4>
               <div className="mt-4 space-y-3">
+                {/* FALA 1 (2026-07-27): było `… • MISSING_PL, MISSING_CF,
+                    HAS_PENDING_STATEMENT` — surowe kody jako komunikat. */}
                 {!!detail.readinessReasonCodes?.length && (
                   <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-navy-800/70 dark:text-slate-300">
-                    {t('finance.statements.recoveryQueueLabel', 'Recovery queue')} •{' '}
-                    {detail.readinessReasonCodes.join(', ')}
+                    <div className="font-medium">
+                      {t('finance.statements.recoveryQueueLabel', 'Recovery queue')}
+                    </div>
+                    <ul className="mt-1 space-y-0.5">
+                      {statementReasonSentences(detail.readinessReasonCodes, t).map((sentence) => (
+                        <li key={sentence} className="flex items-start gap-1.5">
+                          <span aria-hidden="true">•</span>
+                          <span>{sentence}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
                 {(detail.validationMessages || []).length === 0 && (

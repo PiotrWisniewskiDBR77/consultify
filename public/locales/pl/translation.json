@@ -2397,7 +2397,9 @@
         "source": "Źródło",
         "received": "Otrzymano",
         "sla": "SLA"
-      }
+      },
+      "linkedTask": "Powiązane zadanie",
+      "linkedDecision": "Powiązana decyzja"
     },
     "notificationDetail": {
       "toastError": "Nie znaleziono powiadomienia",
@@ -4880,7 +4882,8 @@
       "aiQualityScoreTitle": "Ocena jakości AI wg rubryki (konkretność/dowody/głębia/mierzalność/spójność): {{score}}/5",
       "createdRelative": "Utworzono {{relative}}",
       "confirmSendReminderTo": "Czy na pewno chcesz wysłać przypomnienie do {{name}}?",
-      "theUserFallback": "użytkownika"
+      "theUserFallback": "użytkownika",
+      "linkedSession": "Powiązana sesja"
     },
     "insightViewer": {
       "panelResults": "Rezultaty",
@@ -18701,7 +18704,20 @@
       "previewTitle": "Stan pakietu",
       "ratios": "Sprawozdania",
       "validation": "Status pakietu",
-      "computeRatios": "Przelicz ratios"
+      "computeRatios": "Przelicz ratios",
+      "reason": {
+        "missingPl": "Brakuje rachunku zysków i strat",
+        "missingBs": "Brakuje bilansu",
+        "missingCf": "Brakuje rachunku przepływów pieniężnych",
+        "duplicateType": "Ten sam rodzaj sprawozdania wgrano więcej niż raz",
+        "inconsistentCurrency": "Sprawozdania są w różnych walutach",
+        "inconsistentScaling": "Sprawozdania mają różną skalę wartości (np. jednostki i tysiące)",
+        "inconsistentPeriod": "Sprawozdania obejmują różne okresy",
+        "hasRejected": "Co najmniej jedno sprawozdanie zostało odrzucone przy weryfikacji",
+        "hasPending": "Co najmniej jedno sprawozdanie czeka na weryfikację",
+        "hasRecoverable": "Co najmniej jedno sprawozdanie wymaga poprawek, zanim będzie użyteczne",
+        "unknown": "To sprawozdanie wymaga sprawdzenia, zanim będzie można go użyć"
+      }
     },
     "counters": {
       "all": "Wszystkie",
@@ -21250,7 +21266,19 @@
         "trustBoundary": "Granica zaufania",
         "executionAuthority": "Wykonanie",
         "reviewAuthority": "Przegląd",
-        "validationChecks": "Kontrole walidacji"
+        "validationChecks": "Kontrole walidacji",
+        "originsCount_one": "{{count}} źródło pochodzenia",
+        "originsCount_few": "{{count}} źródła pochodzenia",
+        "originsCount_many": "{{count}} źródeł pochodzenia",
+        "originsCount_other": "{{count}} źródeł pochodzenia",
+        "sourcesCount_one": "{{count}} materiał źródłowy",
+        "sourcesCount_few": "{{count}} materiały źródłowe",
+        "sourcesCount_many": "{{count}} materiałów źródłowych",
+        "sourcesCount_other": "{{count}} materiałów źródłowych",
+        "checkFailed": "nie przeszło",
+        "checkPending": "czeka na sprawdzenie",
+        "checkSkipped": "pominięto",
+        "copyId": "Kopiuj ID"
       },
       "tabs": {
         "all": "Wszystkie",
@@ -21340,6 +21368,10 @@
     },
     "templateBuilder": {
       "saved": "Szablon zapisany"
+    },
+    "templates": {
+      "legacySourceLine": "Starszy rejestr wzorców — działa bez zmian",
+      "legacyHint": "Wzorzec ze starszego rejestru wzorców — generacja działa bez zmian."
     }
   },
   "rbHub": {

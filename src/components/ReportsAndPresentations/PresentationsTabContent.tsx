@@ -26,6 +26,7 @@ import {
   type TableColumn as StandardTableColumn,
 } from '../standard';
 import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNavigation';
+import { displayLabel } from './TrustStatePreviewSection';
 import { PRESENTATION_STATUS_META, type PresentationItem, SOURCE_TYPE_META } from './types';
 import type { useRapActions } from './useRapData';
 import { useTrustState } from './useTrustState';
@@ -399,10 +400,16 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
             : SOURCE_TYPE_META[previewItem.sourceType]?.label || previewItem.sourceType,
           tone: 'neutral',
         },
+        // FALA 1 / „surowe identyfikatory w UI" (2026-07-27): ta pigułka
+        // wypisywała goły enum `attention_required`, podczas gdy zakładki
+        // All/Documents/Sheets renderują ten sam stan przez
+        // TrustStatePreviewSection → „Attention Required". Powód rozjazdu:
+        // dwie niezależne drogi renderowania tej samej wartości. Teraz obie
+        // korzystają z `displayLabel` z TrustStatePreviewSection.
         ...(previewItem.governance?.validationState
           ? [
               {
-                label: previewItem.governance.validationState,
+                label: displayLabel(previewItem.governance.validationState),
                 tone:
                   previewItem.governance.validationState === 'validated'
                     ? ('success' as const)

@@ -666,16 +666,31 @@ const typeIcon: Record<InboxItemType, React.ElementType> = {
   project_update: Inbox,
 };
 
-const typeLabel: Record<InboxItemType, string> = {
-  new_assignment: 'assignment',
-  mention: 'mention',
-  escalation: 'escalation',
-  review_request: 'review',
-  decision_request: 'decision',
-  ai_suggestion: 'ai insight',
-  system_alert: 'system',
-  billing_alert: 'billing',
-  project_update: 'project',
+// FALA 1 / „surowe identyfikatory w UI" (2026-07-27): kolumna TYPE pokazywała
+// surowe, nietłumaczone enumy z małej litery (`assignment`, `review`,
+// `system`). Etykiety są teraz tłumaczone i pisane jak nazwy — 1:1 z opcjami
+// filtra (`INBOX_TYPE_FILTER_OPTIONS`), żeby filtr i komórka mówiły to samo.
+// Klucze i18n czytane leniwie (funkcja), bo `i18n.t` na poziomie modułu
+// zamraża język na moment importu.
+const INBOX_TYPE_LABEL_KEYS: Record<InboxItemType, { key: string; fallback: string }> = {
+  new_assignment: { key: 'myWork.inboxContent.typeFilter.assignment', fallback: 'Assignment' },
+  mention: { key: 'myWork.inboxContent.typeFilter.mention', fallback: 'Mention' },
+  escalation: { key: 'myWork.inboxContent.typeFilter.escalation', fallback: 'Escalation' },
+  review_request: { key: 'myWork.inboxContent.typeFilter.review', fallback: 'Review' },
+  decision_request: { key: 'myWork.inboxContent.typeFilter.decision', fallback: 'Decision' },
+  ai_suggestion: { key: 'myWork.inboxContent.typeFilter.aiInsight', fallback: 'AI Insight' },
+  system_alert: { key: 'myWork.inboxContent.typeFilter.system', fallback: 'System' },
+  billing_alert: { key: 'myWork.inboxContent.typeFilter.billing', fallback: 'Billing' },
+  project_update: { key: 'myWork.inboxContent.typeFilter.project', fallback: 'Project' },
+};
+
+/** Czytelna etykieta typu pozycji Inboxa — nigdy surowy enum. */
+const inboxTypeLabel = (type: InboxItemType | string): string => {
+  const entry = INBOX_TYPE_LABEL_KEYS[type as InboxItemType];
+  if (entry) return i18n.t(entry.key, entry.fallback);
+  // Nieznany typ z backendu: zamiast `some_new_kind` pokaż „Some new kind".
+  const words = String(type || '').replace(/_/g, ' ');
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : '—';
 };
 
 // S1-U3b: cards view — max cards visible per section before "show more (N)".
@@ -1382,11 +1397,16 @@ const PreviewPane: React.FC<{
     </div>
   );
 
+  // FALA 1 / „surowe identyfikatory w UI" (2026-07-27): chipy pokazywały
+  // `Task 8ef8640d…` / `Decision 4b23ab49…` — obcięty UUID nic użytkownikowi
+  // nie mówi. Teraz czytelna etykieta, a pełny identyfikator wyłącznie
+  // w tooltipie (`RelationItem.title`).
   const relationItems: RelationItem[] = [
     ...(item.linkedTaskId
       ? [
           {
-            label: `Task ${item.linkedTaskId.slice(0, 8)}…`,
+            label: i18n.t('myWork.inboxContent.linkedTask', 'Linked task'),
+            title: item.linkedTaskId,
             icon: CheckSquare,
             tone: 'text-emerald-600 dark:text-emerald-400',
             onClick: onOpenTask ? () => onOpenTask(item.linkedTaskId!) : undefined,
@@ -1396,7 +1416,8 @@ const PreviewPane: React.FC<{
     ...(item.linkedDecisionId
       ? [
           {
-            label: `${i18n.t('myWork.inboxContent.decision', 'Decision')} ${item.linkedDecisionId.slice(0, 8)}…`,
+            label: i18n.t('myWork.inboxContent.linkedDecision', 'Linked decision'),
+            title: item.linkedDecisionId,
             icon: Scale,
             tone: 'text-amber-600 dark:text-amber-400',
             onClick: onOpenDecision ? () => onOpenDecision(item.linkedDecisionId!) : undefined,
@@ -2418,7 +2439,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           return (
             <span className="inline-flex items-center gap-1.5 text-xs text-c-text-secondary">
               <span className="truncate">
-                {typeLabel[item.type] || item.type.replace(/_/g, ' ')}
+                {inboxTypeLabel(item.type)}
               </span>
             </span>
           );
@@ -3088,7 +3109,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           <td className="px-3 py-2 text-left" style={{ width: columnWidths.type }}>
             <span className="inline-flex items-center gap-1.5 text-xs text-c-text-secondary">
               <span className="truncate">
-                {typeLabel[item.type] || item.type.replace(/_/g, ' ')}
+                {inboxTypeLabel(item.type)}
               </span>
             </span>
           </td>
