@@ -40,6 +40,9 @@ const DocumentStudioContextChipScreen = React.lazy(
 const DocumentStudioResumeErrorScreen = React.lazy(
   () => import('./screens/document-studio-resume-error')
 );
+const DocumentStudioAiTeresaScreen = React.lazy(
+  () => import('./screens/document-studio-ai-teresa')
+);
 const MenuCanonSidebarCheckScreen = React.lazy(
   () => import('./screens/menu-canon-sidebar-check')
 );
@@ -195,6 +198,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DOCUMENT STUDIO — chip kontekstu organizacji (P0 2026-07-27): co zostanie automatycznie dołączone.',
     render: () => <DocumentStudioContextChipScreen />,
+  },
+  'document-studio-ai-teresa': {
+    label:
+      'DOCUMENT STUDIO — FAZA B1 (2026-07-27): "Z AI" bez formularza, Teresa z boku (ff_zai_teresa).',
+    render: () => <DocumentStudioAiTeresaScreen />,
   },
   'audyty-drd-report': {
     label:

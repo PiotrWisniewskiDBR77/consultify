@@ -16037,7 +16037,8 @@
       "urlIngestFailed": "Nie udało się przetworzyć linku.",
       "urlReady": "Link przetworzony."
     },
-    "stopTTS": "Zatrzymaj czytanie"
+    "stopTTS": "Zatrzymaj czytanie",
+    "sidebarEmptyHint": "Opisz tutaj, jaki materiał potrzebujesz — Teresa zaplanuje strukturę i napisze pierwszą wersję na Twoich oczach."
   },
   "agentAudit": {
     "title": "Warstwa audytu agentów",
@@ -30673,7 +30674,7 @@
       "targetMeta": {
         "decision": {
           "label": "Rozpocznij decyzję",
-          "description": "Zamień wniosek w decyzję do podjęcia — z kontekstem i dowodami."
+          "description": "Zapisz decyzję do podjęcia w My Work."
         },
         "report": {
           "label": "Utwórz raport",
@@ -30698,10 +30699,6 @@
         "initiative": {
           "label": "Utwórz inicjatywę",
           "description": "Przenieś insight do intake inicjatyw."
-        },
-        "decision": {
-          "label": "Rozpocznij decyzję",
-          "description": "Zapisz decyzję do podjęcia w My Work."
         }
       },
       "titlePrefix": {
