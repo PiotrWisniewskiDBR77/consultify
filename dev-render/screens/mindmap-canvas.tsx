@@ -15,7 +15,13 @@
  * patch na singletonie + fetch safety-net dla /api/ i /my-work/.
  * IdeaMapWorkspace jest REALNYM komponentem produkcyjnym — brak re-implementacji.
  *
- * URL: ?screen=mindmap-canvas [&theme=light|dark] [&ff_melsCanvas=1 wymuszone
+ * ★ Mock Api jest STANOWY (`currentMap` + sessionStorage), a nie zamrożony —
+ * patrz sekcja „Mock STANOWY" niżej. Zamrożony mock sprawiał, że każda zmiana
+ * grafu „znikała" po rundzie sync i dawał fałszywe alarmy przy testowaniu
+ * dodawania węzłów.
+ *
+ * URL: ?screen=mindmap-canvas [&theme=light|dark] [&resetMap=1 → czyści
+ * zapisany stan i wraca do fixture] [&ff_melsCanvas=1 wymuszone
  * zawsze ON przez ten screen, param ignorowany świadomie — patrz FORCE_ON niżej]
  */
 import React from 'react';
@@ -62,7 +68,7 @@ const MOCK_IDEA = {
 // Layout: centrum + 6 gałęzi rozłożonych promieniście (zegar 12/2/4/6/8/10),
 // każda z 1-2 pod-węzłami typu `idea`. Tytuły = realne tematy doradcze
 // (nie placeholdery „Branch 1" / „Idea A").
-const MOCK_MAP = {
+const INITIAL_MAP = {
   map: {
     version: 3,
     preferredTool: 'mindmap',
@@ -215,6 +221,17 @@ const MOCK_MAP = {
           parentId: 'branch-governance',
         },
       },
+      // Węzeł BEZ krawędzi strukturalnej do rodzica (notatka/karta rzucona na
+      // płótno). Odtwarza zgłoszenie A6: „+Rodzeństwo" na takim węźle trafiało
+      // w gałąź `findParentId() === undefined` → enigmatyczne „Nie można dodać
+      // rodzeństwa do korzenia". Fixture musi go mieć, inaczej scenariusz 4
+      // jest nietestowalny.
+      {
+        id: 'note-parking',
+        type: 'noteCard',
+        position: { x: 620, y: 1020 },
+        data: { label: 'Parking lot — wrócić po warsztacie z zarządem' },
+      },
     ],
     edges: [
       { id: 'e-c-scope', source: 'center-1', target: 'branch-scope', type: 'gradient' },
@@ -258,12 +275,71 @@ const MOCK_MAP = {
   },
 };
 
+// ── Mock STANOWY (nie zamrożony) ────────────────────────────────────────────
+// PRZED: `syncMyIdeaMap`/`saveMyIdeaMap` zwracały zamrożone `MOCK_MAP.map`, a
+// `getMyIdeaMap` ten sam zamrożony zrzut — więc KAŻDY dodany/przesunięty węzeł
+// „znikał" po rundzie sync niezależnie od kodu (fałszywy alarm: „dodawanie nie
+// działa"). Teraz `currentMap` jest jedynym źródłem prawdy: sync/save
+// nadpisują je i podbijają `version`, `get` czyta świeży stan.
+// Wzorzec 1:1 z `whiteboard-workshop.tsx`.
+// Trwałość między przeładowaniami strony: bez niej `let` na poziomie modułu
+// resetuje się przy każdym F5 i nie da się sprawdzić scenariusza „węzeł
+// przeżywa przeładowanie". `?resetMap=1` czyści zapis (świeży fixture).
+const STORAGE_KEY = 'mm-canvas-mock-map';
+
+function loadPersistedMap(): any {
+  try {
+    if (new URLSearchParams(window.location.search).get('resetMap') === '1') {
+      window.sessionStorage.removeItem(STORAGE_KEY);
+      return structuredClone(INITIAL_MAP.map);
+    }
+    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed?.nodes)) return parsed;
+    }
+  } catch {
+    /* sessionStorage może być zablokowany — fallback na fixture */
+  }
+  return structuredClone(INITIAL_MAP.map);
+}
+
+let currentMap: any = loadPersistedMap();
+
+function persistMap() {
+  try {
+    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(currentMap));
+  } catch {
+    /* quota / prywatny tryb — stan pozostaje tylko w pamięci */
+  }
+}
+
+function mergeMapPayload(payload: any) {
+  currentMap = {
+    ...currentMap,
+    version: (currentMap.version ?? 0) + 1,
+    nodes: Array.isArray(payload?.nodes) ? payload.nodes : currentMap.nodes,
+    edges: Array.isArray(payload?.edges) ? payload.edges : currentMap.edges,
+    extensions:
+      payload?.extensions && typeof payload.extensions === 'object'
+        ? { ...currentMap.extensions, ...payload.extensions }
+        : currentMap.extensions,
+  };
+  persistMap();
+  return currentMap;
+}
+
 Api.getMyIdea = (async () => MOCK_IDEA) as typeof Api.getMyIdea;
-Api.getMyIdeaMap = (async () => MOCK_MAP) as typeof Api.getMyIdeaMap;
-Api.syncMyIdeaMap = (async () => MOCK_MAP.map) as typeof Api.syncMyIdeaMap;
-Api.saveMyIdeaMap = (async () => MOCK_MAP.map) as typeof Api.saveMyIdeaMap;
+Api.getMyIdeaMap = (async () => ({ map: currentMap })) as typeof Api.getMyIdeaMap;
+Api.syncMyIdeaMap = (async (_ideaId: string, payload: any) =>
+  mergeMapPayload(payload)) as typeof Api.syncMyIdeaMap;
+Api.saveMyIdeaMap = (async (_ideaId: string, payload: any) =>
+  mergeMapPayload(payload)) as typeof Api.saveMyIdeaMap;
 Api.updateMyIdea = (async () => MOCK_IDEA) as typeof Api.updateMyIdea;
 Api.getMyIdeaEdges = (async () => []) as typeof Api.getMyIdeaEdges;
+
+// Debug hook — weryfikacja w konsoli: `__MM_DEBUG_MAP__().nodes.length`.
+(window as any).__MM_DEBUG_MAP__ = () => currentMap;
 
 // Safety net (identyczny wzorzec co melscanvas-workspace.tsx): wszystko inne
 // co ten ciężki komponent odpala przy mount (presence, notifications,
