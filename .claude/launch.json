@@ -60,6 +60,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3231", "--strictPort"],
       "port": 3231
+    },
+    {
+      "name": "execution-export-prezentacja",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3421", "--strictPort"],
+      "port": 3421
     }
   ]
 }
