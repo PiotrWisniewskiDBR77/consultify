@@ -16,6 +16,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { TriModeChooser } from '@/components/shared/TriModeChooser';
 import { Api } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { buildArtifactCode, buildArtifactPermalink, buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
 import {
@@ -56,6 +57,9 @@ export const ExceleView: React.FC = () => {
   const pipeline = useKimiArtifactPipeline('excele');
   const navigate = useNavigate();
   const activeMessages = useConversationStore((s) => s.activeMessages);
+  // Kickoff fix (fala 1c, 2026-07-27) — see the kickoff effect below.
+  const chatKickoffMessage = useAppStore((s) => s.chatKickoffMessage);
+  const clearChatKickoffMessage = useAppStore((s) => s.clearChatKickoffMessage);
   const [searchParams] = useSearchParams();
   const artifactId = searchParams.get('artifactId');
   const templateArtifactId = searchParams.get('templateArtifactId');
@@ -65,11 +69,15 @@ export const ExceleView: React.FC = () => {
   // tryb wybrany w KROK 2 tablicy Materiałów, żeby wejście z Materiałów lądowało
   // od razu w tym trybie zamiast ponownie pytać o wybór na tym ekranie.
   const entryParam = searchParams.get('entry');
+  // Kickoff fix: a pending cross-module message must not flash the "home"
+  // gate before the effect below has a chance to start the pipeline.
+  const hasPendingKickoff = Boolean(chatKickoffMessage && chatKickoffMessage.trim());
 
   const showHome =
     !artifactId &&
     !templateArtifactId &&
     !templatePrompt &&
+    !hasPendingKickoff &&
     viewParam !== 'new' &&
     !pipeline.currentRun &&
     !pipeline.isGenerating;
@@ -111,6 +119,40 @@ export const ExceleView: React.FC = () => {
     autoTriggered.current = true;
     void startRef.current(templatePrompt);
   }, [templatePrompt, pipeline.currentRun, pipeline.isGenerating]);
+
+  // Kickoff fix (fala 1c, 2026-07-27): cross-module "ask Teresa about X" flows
+  // call `setChatKickoffMessage` + navigate expecting the ONE Teresa panel to
+  // open with a seeded first message. `hasEmbeddedModuleChat` (MainLayout)
+  // turns the global panel off on `/excele`, and this Studio has no embedded
+  // chat of its own — the message was silently dropped. Consume it the same
+  // way as `templatePrompt` above (pipeline.startGeneration IS the "send
+  // first message" channel here), then clear the store so it can't re-fire.
+  const kickoffTriggered = useRef(false);
+  useEffect(() => {
+    const message = (chatKickoffMessage || '').trim();
+    if (
+      !message ||
+      kickoffTriggered.current ||
+      artifactId ||
+      templateArtifactId ||
+      templatePrompt ||
+      pipeline.currentRun ||
+      pipeline.isGenerating
+    )
+      return;
+    kickoffTriggered.current = true;
+    autoTriggered.current = true;
+    void startRef.current(message);
+    clearChatKickoffMessage();
+  }, [
+    chatKickoffMessage,
+    artifactId,
+    templateArtifactId,
+    templatePrompt,
+    pipeline.currentRun,
+    pipeline.isGenerating,
+    clearChatKickoffMessage,
+  ]);
 
   // Auto-trigger from API template
   const templateTriggered = useRef(false);
