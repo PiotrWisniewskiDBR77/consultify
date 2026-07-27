@@ -32,6 +32,21 @@ export type RapTab =
 // moved to a sub-tab inside Sheets (SheetsTabContent). Legacy `?tab=data` deep
 // links now resolve to 'outputs_sheets' via outputsLibraryTabQuery.ts.
 
+/**
+ * Sheet origin (inwentarz Excel 27.07): `kind === 'sheet'` rows come from two
+ * DIFFERENT registry writers that both use `originRuntime: 'sheet'`, so the
+ * registry alone can't tell them apart — the row previously showed a bare
+ * "Sheet" label for both, making a Table Studio export look identical to a
+ * real workbook ("tabele o niczym" — Piotr's audyt).
+ *   - 'table_export' — flat XLSX/CSV export of a `tp_tables` row, registered
+ *     by `registerGovernedTableSheetArtifact` (originSummary.sourceTable ===
+ *     'tp_tables', governanceMode: 'governed'). 61/75 sheet artifacts on demo.
+ *   - 'workbook' — a real generator-built workbook in `generated_workbooks`,
+ *     registered by the `/api/workbook` routes (no `sourceTable` marker).
+ * See `resolveSheetOrigin` in useRapData.ts for the derivation.
+ */
+export type SheetOrigin = 'table_export' | 'workbook';
+
 /** Canonical registry row flattened for All / Mine / Needs review tabs */
 export interface UnifiedOutputRow {
   kind: 'document' | 'presentation' | 'sheet';
@@ -48,6 +63,8 @@ export interface UnifiedOutputRow {
   slideCount?: number;
   exportFormats: string[];
   governance?: ArtifactGovernanceSummary;
+  /** Only set when `kind === 'sheet'` — see `SheetOrigin` above. */
+  sheetOrigin?: SheetOrigin;
 }
 
 export type TemplateType = 'report' | 'presentation' | 'sheet';
@@ -350,6 +367,17 @@ export const SOURCE_TYPE_META: Record<
   assessment: { label: 'Assessment', labelPl: 'Ocena', color: 'text-blue-400' },
   finance: { label: 'Finance', labelPl: 'Finanse', color: 'text-blue-400' },
   upload: { label: 'Upload', labelPl: 'Przesłane', color: 'text-amber-400' },
+};
+
+/**
+ * Labels for the `sheet` row's TYPE column, distinguishing a flat Table
+ * Studio export from a real generated workbook — see `SheetOrigin` above.
+ * Text-only differentiation, no new colors (TRIADA §primary=crimson pułapka):
+ * both share the same neutral `text-c-text-secondary` class in the column.
+ */
+export const SHEET_ORIGIN_META: Record<SheetOrigin, { label: string; labelPl: string }> = {
+  workbook: { label: 'Sheet (model)', labelPl: 'Arkusz (model)' },
+  table_export: { label: 'Sheet (table export)', labelPl: 'Arkusz (eksport tabeli)' },
 };
 
 export const TEMPLATE_TYPE_META: Record<

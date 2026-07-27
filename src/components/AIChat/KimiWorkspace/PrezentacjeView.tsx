@@ -16,6 +16,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { TriModeChooser } from '@/components/shared/TriModeChooser';
 import { Api } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { deriveDeckLifecycleBadge } from '@/utils/deckLifecycleBadge';
 import { isMelsPrezentacjeEnabled } from '@/utils/melsPrezentacjeFlag';
@@ -143,6 +144,9 @@ export const PrezentacjeView: React.FC = () => {
   const navigate = useNavigate();
   const pipeline = useKimiArtifactPipeline('prezentacje');
   const activeMessages = useConversationStore((s) => s.activeMessages);
+  // AGT/kickoff fix (fala 1c, 2026-07-27) — see the kickoff effect below.
+  const chatKickoffMessage = useAppStore((s) => s.chatKickoffMessage);
+  const clearChatKickoffMessage = useAppStore((s) => s.clearChatKickoffMessage);
   const [searchParams] = useSearchParams();
   const artifactId = searchParams.get('artifactId');
   const templateArtifactId = searchParams.get('templateArtifactId');
@@ -152,11 +156,16 @@ export const PrezentacjeView: React.FC = () => {
   // tryb wybrany w KROK 2 tablicy Materiałów, żeby wejście z Materiałów lądowało
   // od razu w tym trybie zamiast ponownie pytać o wybór na tym ekranie.
   const entryParam = searchParams.get('entry');
+  // Kickoff fix: a pending cross-module message must not flash the "home"
+  // gate before the effect below has a chance to start the pipeline — same
+  // reasoning as `!templatePrompt` right below.
+  const hasPendingKickoff = Boolean(chatKickoffMessage && chatKickoffMessage.trim());
 
   const showHome =
     !artifactId &&
     !templateArtifactId &&
     !templatePrompt &&
+    !hasPendingKickoff &&
     viewParam !== 'new' &&
     !pipeline.currentRun &&
     !pipeline.isGenerating;
@@ -192,6 +201,45 @@ export const PrezentacjeView: React.FC = () => {
     autoTriggered.current = true;
     void startRef.current(templatePrompt);
   }, [templatePrompt, pipeline.currentRun, pipeline.isGenerating]);
+
+  // Kickoff fix (fala 1c, 2026-07-27): cross-module flows (Notebook/Task/
+  // Decision/Help "ask Teresa about X") call `setChatKickoffMessage` + navigate
+  // expecting the ONE Teresa panel to open with a seeded first message. That
+  // works on ordinary views (MainLayout wires `kickoffMessage` into the split
+  // `UnifiedChatPanel`), but on `/prezentacje` `hasEmbeddedModuleChat` turns
+  // the global panel off entirely, and this Studio has no embedded chat of its
+  // own ("Teresa is the single chat surface" — KimiWorkspaceShell) — the
+  // message was silently dropped, the pipeline never started. Consume it the
+  // same way as `templatePrompt` above (the pipeline's `startGeneration` IS
+  // the "send first message" channel for this lane — there is no separate
+  // chat-input component to seed), then clear the store so it can't re-fire on
+  // a later visit or leak into another module.
+  const kickoffTriggered = useRef(false);
+  useEffect(() => {
+    const message = (chatKickoffMessage || '').trim();
+    if (
+      !message ||
+      kickoffTriggered.current ||
+      artifactId ||
+      templateArtifactId ||
+      templatePrompt ||
+      pipeline.currentRun ||
+      pipeline.isGenerating
+    )
+      return;
+    kickoffTriggered.current = true;
+    autoTriggered.current = true;
+    void startRef.current(message);
+    clearChatKickoffMessage();
+  }, [
+    chatKickoffMessage,
+    artifactId,
+    templateArtifactId,
+    templatePrompt,
+    pipeline.currentRun,
+    pipeline.isGenerating,
+    clearChatKickoffMessage,
+  ]);
 
   // R11 deck slice (2026-07-26) — "Użyj wzorca" z Biblioteki dla PREZENTACJI.
   // ★ Był tu najważniejszy bug funkcjonalny programu Materiały: ten efekt
