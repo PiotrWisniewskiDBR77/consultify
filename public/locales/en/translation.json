@@ -2146,6 +2146,14 @@
     }
   },
   "myWork": {
+    "kanban": {
+      "statusMoved": "Moved to \"{{column}}\"",
+      "statusFailedNotFound": "Not saved: task \"{{title}}\" no longer exists (it may have been deleted or reassigned). Refresh the board.",
+      "statusFailedForbidden": "Not saved: you do not have permission to change the status of \"{{title}}\". Ask the task owner to change it.",
+      "statusFailedServer": "Not saved \"{{title}}\" → {{column}}: server error ({{code}}). The card was moved back — please try again shortly.",
+      "statusFailedOffline": "Not saved \"{{title}}\" → {{column}}: no connection to the server. The card was moved back — check your internet and try again.",
+      "statusFailedGeneric": "Not saved \"{{title}}\" → {{column}} ({{code}}). The card was moved back — please try again."
+    },
     "title": "My Work",
     "home": "Home",
     "manager": "Manager",
@@ -3161,7 +3169,9 @@
         "source": "Source",
         "received": "Received",
         "sla": "SLA"
-      }
+      },
+      "linkedTask": "Linked task",
+      "linkedDecision": "Linked decision"
     },
     "notificationDetail": {
       "toastError": "Notification not found",
@@ -5628,7 +5638,8 @@
       "aiQualityScoreTitle": "AI quality score per rubric (concreteness/evidence/depth/measurability/coherence): {{score}}/5",
       "createdRelative": "Created {{relative}}",
       "confirmSendReminderTo": "Are you sure you want to send a reminder to {{name}}?",
-      "theUserFallback": "the user"
+      "theUserFallback": "the user",
+      "linkedSession": "Linked session"
     },
     "insightViewer": {
       "panelResults": "Results",
@@ -18233,7 +18244,20 @@
       "previewTitle": "Pack health",
       "ratios": "Statements",
       "validation": "Pack status",
-      "computeRatios": "Compute ratios"
+      "computeRatios": "Compute ratios",
+      "reason": {
+        "missingPl": "Missing profit and loss statement",
+        "missingBs": "Missing balance sheet",
+        "missingCf": "Missing cash flow statement",
+        "duplicateType": "The same statement type was imported more than once",
+        "inconsistentCurrency": "Statements use different currencies",
+        "inconsistentScaling": "Statements use different value scales (e.g. units vs thousands)",
+        "inconsistentPeriod": "Statements cover different reporting periods",
+        "hasRejected": "At least one statement was rejected during validation",
+        "hasPending": "At least one statement is still awaiting validation",
+        "hasRecoverable": "At least one statement needs corrections before it can be used",
+        "unknown": "This statement needs review before it can be used"
+      }
     },
     "counters": {
       "all": "All",
@@ -20676,7 +20700,15 @@
         "trustBoundary": "Trust boundary",
         "executionAuthority": "Execution",
         "reviewAuthority": "Review",
-        "validationChecks": "Validation checks"
+        "validationChecks": "Validation checks",
+        "originsCount_one": "{{count}} origin",
+        "originsCount_other": "{{count}} origins",
+        "sourcesCount_one": "{{count}} source",
+        "sourcesCount_other": "{{count}} sources",
+        "checkFailed": "not passed",
+        "checkPending": "awaiting check",
+        "checkSkipped": "skipped",
+        "copyId": "Copy ID"
       },
       "tabs": {
         "all": "All",
@@ -20766,6 +20798,10 @@
     },
     "templateBuilder": {
       "saved": "Template saved"
+    },
+    "templates": {
+      "legacySourceLine": "Older template registry — works unchanged",
+      "legacyHint": "Template from the older registry — generation works unchanged."
     }
   },
   "rbHub": {
@@ -24047,7 +24083,8 @@
       "suggestedEvidencePlaceholder": "The category of proof that should back this section (a source type, not a specific fabricated citation).",
       "addSection": "Add section",
       "blankTitleHint": "Every section needs a title before you can save.",
-      "structurePreviewHeading": "Structure preview"
+      "structurePreviewHeading": "Structure preview",
+      "structurePreviewEmpty": "No sections yet."
     },
     "view": {
       "templatesLoadFailedWithReason": "Approved templates could not be loaded ({{reason}}). You can still generate without a template.",
@@ -24341,7 +24378,10 @@
     "generating": {
       "title": "Generating your document…",
       "planning": "Planning the outline…",
-      "progress": "Writing sections… {{done}} of {{total}} ready"
+      "progress": "Writing sections… {{done}} of {{total}} ready",
+      "stop": "Stop",
+      "streamFallbackNotice": "Live connection dropped — finishing in the background…",
+      "basedOn": "Based on:"
     },
     "blocks": {
       "noTableData": "No table data available",

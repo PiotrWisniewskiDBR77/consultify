@@ -47,6 +47,20 @@ const EXCELE_INTENT_PATTERNS = [
   /\bworkbook\b/i,
   /\bskoroszyt\w*\b/i,
   /\barkusz[a-ząćęłńóśźż]*\s+kalkulacyjn\w*\b/i,
+
+  // N5 (2026-07-27, noc): ocena opłacalności projektu (NPV/IRR) — nowy model
+  // `projectViability`. Bez tych fraz "policz NPV dla tego projektu" nie ma
+  // ani "excel"/"model finansowy", ani czasownika+"tabelę" (TABLE_INTENT_
+  // PATTERNS), więc nie trafiał w ŻADEN wzorzec i nie routował do silnika
+  // arkuszy w ogóle — ten sam problem, który P0 urodzinowe naprawiło dla
+  // bare "excel"/"xlsx" powyżej.
+  /\bopłacaln(ość|y|a|ych|ego)\s*(projektu|inwestycji)?\b/i,
+  /\bczy\s+(to\s+|ten\s+projekt\s+|ta\s+inwestycja\s+)?się\s+opłaca\b/i,
+  /\b(npv|irr)\b/i,
+  /\bokres\s+zwrotu\b/i,
+  /\brachunek\s+zwrotu\b/i,
+  /\bpayback(\s*period)?\b/i,
+  /\bproject\s+(viability|profitability)\b/i,
 ];
 
 export function detectTableIntent(message: string): boolean {

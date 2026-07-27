@@ -43,6 +43,9 @@ const DocumentStudioResumeErrorScreen = React.lazy(
 const DocumentStudioAiTeresaScreen = React.lazy(
   () => import('./screens/document-studio-ai-teresa')
 );
+const DocumentStudioStreamingHonestyN3Screen = React.lazy(
+  () => import('./screens/document-studio-streaming-honesty-n3')
+);
 const MenuCanonSidebarCheckScreen = React.lazy(
   () => import('./screens/menu-canon-sidebar-check')
 );
@@ -165,7 +168,13 @@ const InitiativesPortfolioAnalysisScreen = React.lazy(
   () => import('./screens/initiatives-portfolio-analysis')
 );
 // ── Screen registry (extensible) ──────────────────────────────────────────
+const FabRailKebabScreen = React.lazy(() => import('./screens/fab-rail-kebab'));
+
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'fab-rail-kebab': {
+    label: 'PILNE-9 — pływające przyciski vs kebab ostatniego wiersza (&fix=off = stan przed)',
+    render: () => <FabRailKebabScreen />,
+  },
   'materialy-launcher': {
     label: 'MATERIAŁY — tablica Dodaj (format×tryb) &variant=materials|templates',
     render: () => <MaterialyLauncherScreen />,
@@ -204,6 +213,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DOCUMENT STUDIO — FAZA B1 (2026-07-27): "Z AI" bez formularza, Teresa z boku (ff_zai_teresa).',
     render: () => <DocumentStudioAiTeresaScreen />,
+  },
+  'document-studio-streaming-honesty-n3': {
+    label:
+      'DOCUMENT STUDIO — N3 (2026-07-28): doktryna streaming — notyfikacja fallback, Stop, chipy źródeł, plan w Mode 3. ?simFail=1 dla naprawy #1.',
+    render: () => <DocumentStudioStreamingHonestyN3Screen />,
   },
   'audyty-drd-report': {
     label:

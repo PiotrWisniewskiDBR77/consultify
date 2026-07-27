@@ -44,6 +44,35 @@ import {
 const HEADER_RULE_ARGB = 'FF1D9E75';
 
 // ---------------------------------------------------------------------------
+// D3 — financial-model font-color convention (market standard, doctrine §10 L5).
+//
+// Before this: the generator PROMPT talked about "blue-input / black-formula"
+// but the builder only ever painted a background fill on input cells — the
+// FONT color (the part that actually signals "you may type here" vs. "do not
+// touch, this is calculated") was never set, and cross-sheet references had
+// no visual signal at all. This block closes that gap for every model,
+// existing and new:
+//   • blue  → a raw input/assumption (a literal value living on an
+//             `isAssumptions` sheet)
+//   • black → a formula computed from cells on the SAME sheet
+//   • green → a formula that reaches into ANOTHER sheet (cross-sheet ref)
+// Applied automatically, but an explicit `style.fontColor` on the cell or
+// column always wins — this never overrides deliberate schema intent.
+// ---------------------------------------------------------------------------
+
+const FONT_COLOR_INPUT_HEX = '0000FF'; // blue — editable assumption
+const FONT_COLOR_FORMULA_HEX = '000000'; // black — local formula
+const FONT_COLOR_CROSS_SHEET_HEX = '008000'; // green — formula referencing another sheet
+
+/** A formula references another sheet iff it contains an Excel sheet-qualifier
+ *  `!`. Every cross-sheet reference emitted by this codebase quotes the sheet
+ *  name (`'Sheet Name'!B2`) and Excel formulas never use `!` for anything
+ *  else, so a plain substring check is exact here (see templates/*.ts). */
+function formulaReferencesOtherSheet(formula: string): boolean {
+  return formula.includes('!');
+}
+
+// ---------------------------------------------------------------------------
 // Style mapping
 // ---------------------------------------------------------------------------
 
@@ -802,11 +831,13 @@ function emitSensitivityTable(
   corner.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2F7' } };
 
   // Column-input headers across the top (row r0, cols c0+1 ..).
+  // D3 — these headers are the table's editable input variants, so they get
+  // the blue "input" font color, same convention as the Assumptions sheet.
   cols.forEach((cv, j) => {
     const cell = ws.getCell(a1(c0 + 1 + j, r0));
     cell.value = cv;
     if (headerFmt) cell.numFmt = headerFmt;
-    cell.font = { ...(cell.font ?? {}), bold: true };
+    cell.font = { ...(cell.font ?? {}), bold: true, color: { argb: hexToArgb(FONT_COLOR_INPUT_HEX) } };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2F7' } };
     cell.alignment = { horizontal: 'center' };
   });
@@ -819,7 +850,7 @@ function emitSensitivityTable(
       const rc = ws.getCell(a1(c0, rowNum));
       rc.value = rv as number;
       if (headerFmt) rc.numFmt = headerFmt;
-      rc.font = { ...(rc.font ?? {}), bold: true };
+      rc.font = { ...(rc.font ?? {}), bold: true, color: { argb: hexToArgb(FONT_COLOR_INPUT_HEX) } };
       rc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2F7' } };
       rc.alignment = { horizontal: 'center' };
     }
@@ -833,6 +864,16 @@ function emitSensitivityTable(
       const cell = ws.getCell(a1(colNum, rowNum));
       cell.value = { formula } as ExcelJS.CellFormulaValue;
       if (st.numberFormat) cell.numFmt = st.numberFormat;
+      // D3 — interior cells are formulas: green when they reach into another
+      // sheet (the usual case — they recompute from Assumptions), else black.
+      cell.font = {
+        ...(cell.font ?? {}),
+        color: {
+          argb: hexToArgb(
+            formulaReferencesOtherSheet(formula) ? FONT_COLOR_CROSS_SHEET_HEX : FONT_COLOR_FORMULA_HEX
+          ),
+        },
+      };
       cell.alignment = { horizontal: 'right' };
     });
   });
@@ -1084,6 +1125,24 @@ export async function buildWorkbookBuffer(
         // Column-level style (if no cell style)
         if (!cellDef.style && col.style) {
           applyStyle(cell, col.style);
+        }
+
+        // D3 — financial-model font-color convention: blue = input, black =
+        // local formula, green = cross-sheet formula. Only fills the gap when
+        // neither the cell nor the column already asked for an explicit
+        // fontColor (deliberate schema intent always wins).
+        if (applyStyling && !cellDef.style?.fontColor && !col.style?.fontColor) {
+          let conventionHex: string | undefined;
+          if (cellDef.formula) {
+            conventionHex = formulaReferencesOtherSheet(cellDef.formula)
+              ? FONT_COLOR_CROSS_SHEET_HEX
+              : FONT_COLOR_FORMULA_HEX;
+          } else if (typeof cellDef.value === 'number' && sheetDef.isAssumptions) {
+            conventionHex = FONT_COLOR_INPUT_HEX;
+          }
+          if (conventionHex) {
+            cell.font = { ...(cell.font ?? {}), color: { argb: hexToArgb(conventionHex) } };
+          }
         }
 
         // Per-type alignment (numbers/dates right, text left) — only fills the

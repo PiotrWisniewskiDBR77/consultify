@@ -81,3 +81,32 @@ describe('ambiguous financial-table phrasing keeps prior (table) behavior', () =
     expect(detectExceleIntent(text)).toBe(false);
   });
 });
+
+describe('detectExceleIntent — projectViability phrases (N5, 2026-07-27 night)', () => {
+  // Bare "policz NPV..." has neither an "excel"/"model finansowy" keyword nor
+  // a table-creation verb+noun (TABLE_INTENT_PATTERNS), so before this it hit
+  // NEITHER gate at UnifiedChatPanel's routing check and never reached the
+  // workbook engine at all — the same class of gap the P0 fix above closed
+  // for bare "excel"/"xlsx".
+  const projectViabilityUnambiguous = [
+    'policz NPV dla tego projektu',
+    'jakie jest IRR tej inwestycji',
+    'oceń opłacalność projektu',
+    'czy ten projekt się opłaca',
+    'czy się opłaca ta inwestycja',
+    'jaki jest okres zwrotu z inwestycji',
+    'zrób mi rachunek zwrotu',
+    'what is the payback period for this project',
+    'assess the project viability',
+  ];
+
+  it.each(projectViabilityUnambiguous)('classifies %j as EXCELE', (text) => {
+    expect(detectExceleIntent(text)).toBe(true);
+  });
+
+  it('routes all of them to the workbook lane (not gfm)', () => {
+    for (const text of projectViabilityUnambiguous) {
+      expect(resolveSheetLane(text)).toBe('workbook');
+    }
+  });
+});

@@ -21,6 +21,12 @@ export interface RelationItem {
   preview?: RelationPreview;
   /** Type category for smart grouping (e.g. "task", "decision", "kpi") */
   type?: string;
+  /**
+   * Tooltip nadpisujący `label` w atrybucie `title`. FALA 1 (2026-07-27) —
+   * miejsce na identyfikator techniczny (UUID), którego użytkownik NIE ma
+   * widzieć w treści chipa; etykieta zostaje czytelna, ID żyje w tooltipie.
+   */
+  title?: string;
 }
 
 export interface PreviewRelationsProps {
@@ -66,7 +72,7 @@ const RelationChip: React.FC<{ item: RelationItem; idx: number }> = ({ item, idx
         key={`${item.label}-${idx}`}
         className={`${PREVIEW_RELATION_CHIP} ${tone}${item.onClick ? ' cursor-pointer hover:bg-slate-100/50 dark:hover:bg-white/[0.04]' : ''}`}
         onClick={item.onClick}
-        title={item.label}
+        title={item.title ?? item.label}
       >
         {Icon ? <Icon size={13} /> : (item.icon as React.ReactNode)}
         {item.value !== undefined ? (

@@ -6,6 +6,16 @@
  * same as ResultsHub, which keeps its own grid branch alongside the triada
  * table branch.
  * Canonical source: /api/artifacts?artifactFamily=template (P24 Outputs artifacts)
+ *
+ * Galeria (N4, noc 2026-07-27/28): behind `ff_galeria_szablonow` (default
+ * OFF, `src/utils/templatesGalleryFlag.ts`), the TABLE branch (not the
+ * separate `viewMode === 'grid'` branch above, which stays untouched) grows
+ * a Galeria ↔ Tabela toggle. OFF → byte-identical to before this change:
+ * same JSX tree, `StandardTable` only, no toggle, no chip toolbar. ON →
+ * the toggle appears and "Galeria" renders `TemplatesGalleryView` (kafle z
+ * miniaturami niosącymi strukturę wzorca, port 1:1 z zaakceptowanego
+ * prototypu `proto/galeria-szablonow`); "Tabela" stays the exact same
+ * `StandardTable`+`StandardPreview` pair used today.
  */
 
 import {
@@ -14,9 +24,11 @@ import {
   Copy,
   FileSpreadsheet,
   FileText,
+  LayoutGrid,
   MessageSquare,
   Play,
   Presentation,
+  Table2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +44,7 @@ import {
   type TableColumn as StandardTableColumn,
 } from '@/components/standard';
 import { LoadingState, StatusChip } from '@/components/ui/primitives';
+import { isTemplatesGalleryEnabled } from '@/utils/templatesGalleryFlag';
 
 import { useOpenChatWithContext } from '../../hooks/useOpenChatWithContext';
 import { type FilterChip, type GridItem, GridView, type ViewMode } from '../shared/ModuleHub';
@@ -40,6 +53,7 @@ import {
   resolveTemplateEditPath,
   resolveTemplateUsePath,
 } from './artifactNavigation';
+import { TemplatesGalleryView } from './TemplatesGalleryView';
 import { TEMPLATE_STATUS_META, TEMPLATE_TYPE_META, type TemplateItem } from './types';
 
 interface TemplatesTabContentProps {
@@ -83,15 +97,28 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const deepLinkConsumed = useRef(false);
 
+  // N4 (2026-07-27/28): reveal flag for the Galeria ↔ Tabela toggle. Read
+  // once per render (flag readers are cheap sync checks over
+  // query/localStorage/env — see templatesGalleryFlag.ts); OFF is the
+  // untouched path below.
+  const galleryEnabled = isTemplatesGalleryEnabled();
+  const [innerView, setInnerView] = useState<'gallery' | 'table'>('gallery');
+
+  // Search-only filtered set — powers the gallery's faceted filter-chip
+  // counters (how many templates WOULD match each format/scope), kept
+  // independent from `activeFilters` so a chip's own count isn't distorted
+  // by the very filter it represents.
+  const searchFilteredTemplates = useMemo(() => {
+    if (!searchQuery) return templates;
+    const q = searchQuery.toLowerCase();
+    return templates.filter(
+      (item) =>
+        item.title.toLowerCase().includes(q) || (item.description || '').toLowerCase().includes(q)
+    );
+  }, [templates, searchQuery]);
+
   const filteredData = useMemo(() => {
-    let data = templates;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      data = data.filter(
-        (item) =>
-          item.title.toLowerCase().includes(q) || (item.description || '').toLowerCase().includes(q)
-      );
-    }
+    let data = searchFilteredTemplates;
     for (const f of activeFilters) {
       if (f.column === 'type') data = data.filter((item) => item.type === f.value);
       if (f.column === 'category') data = data.filter((item) => item.category === f.value);
@@ -99,7 +126,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       if (f.column === 'status') data = data.filter((item) => item.status === f.value);
     }
     return data;
-  }, [templates, searchQuery, activeFilters]);
+  }, [searchFilteredTemplates, activeFilters]);
 
   // Etykieta zakresu wg kanonu materials.ts (system|organization|personal|unknown).
   // Legacy 'application' zostaje obsłużone dla wpisów sprzed migracji.
@@ -157,7 +184,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                 data-testid="template-legacy-badge"
                 title={t(
                   'rap.templates.legacyHint',
-                  'Wzorzec ze starego rejestru (report_builder_templates) — generacja bez zmian.'
+                  'Wzorzec ze starszego rejestru wzorców — generacja działa bez zmian.'
                 )}
                 className="shrink-0 rounded border border-c-border px-1.5 py-px text-[10px] font-medium uppercase tracking-wide text-c-text-muted"
               >
@@ -623,37 +650,54 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     ? TEMPLATE_STATUS_META[selectedItem.status] || TEMPLATE_STATUS_META.unknown
     : null;
 
-  return (
-    <div className="h-full flex overflow-hidden">
-      <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
-        <StandardTable
-          columns={columns}
-          data={filteredData as unknown as Array<Record<string, unknown> & { id: string }>}
-          selectedRowId={selectedId}
-          onRowClick={(row) => setSelectedId(String((row as unknown as TemplateItem).id))}
-          onRowDoubleClick={(row) => {
-            const item = row as unknown as TemplateItem;
-            const usePath = usePathFor(item);
-            if (usePath) navigate(usePath);
-          }}
-          rowDescription={(row) => (row as unknown as TemplateItem).description ?? null}
-          defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
-          persistKey="rap.templates.list"
-          selection={{ selectedIds, onChange: setSelectedIds }}
-          empty={{
-            icon: BookTemplate,
-            title: t('rap.empty.templates', 'Brak wzorców'),
-            description: t(
-              'rap.empty.templatesOnboardingDesc',
-              'Wzorce (templates) definiują strukturę i standard raportów oraz prezentacji. Zacznij od jednej z kanonicznych rodzin lub utwórz własny wzorzec.'
-            ),
-          }}
-          rowMenu={(row) => buildRowMenu(row as unknown as TemplateItem)}
-        />
-      </div>
+  // ★ N4: factored so the flag-OFF path below stays a byte-identical
+  // `<StandardTable>` — the only thing an ON flag does is choose between
+  // this same element and the gallery inside an extra toggle wrapper.
+  const tableView = (
+    <StandardTable
+      columns={columns}
+      data={filteredData as unknown as Array<Record<string, unknown> & { id: string }>}
+      selectedRowId={selectedId}
+      onRowClick={(row) => setSelectedId(String((row as unknown as TemplateItem).id))}
+      onRowDoubleClick={(row) => {
+        const item = row as unknown as TemplateItem;
+        const usePath = usePathFor(item);
+        if (usePath) navigate(usePath);
+      }}
+      rowDescription={(row) => (row as unknown as TemplateItem).description ?? null}
+      defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+      persistKey="rap.templates.list"
+      selection={{ selectedIds, onChange: setSelectedIds }}
+      empty={{
+        icon: BookTemplate,
+        title: t('rap.empty.templates', 'Brak wzorców'),
+        description: t(
+          'rap.empty.templatesOnboardingDesc',
+          'Wzorce (templates) definiują strukturę i standard raportów oraz prezentacji. Zacznij od jednej z kanonicznych rodzin lub utwórz własny wzorzec.'
+        ),
+      }}
+      rowMenu={(row) => buildRowMenu(row as unknown as TemplateItem)}
+    />
+  );
 
-      {selectedItem ? (
-        <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+  const galleryView = (
+    <TemplatesGalleryView
+      templates={filteredData}
+      searchFilteredTemplates={searchFilteredTemplates}
+      activeFilters={activeFilters}
+      onFilterChange={onFilterChange}
+      scopeLabel={scopeLabel}
+      usePathFor={usePathFor}
+      onUse={(item) => {
+        const usePath = usePathFor(item);
+        if (usePath) navigate(usePath);
+      }}
+      onPreview={(item) => setSelectedId(item.id)}
+    />
+  );
+
+  const previewAside = selectedItem ? (
+    <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
           <StandardPreview
             title={selectedItem.title}
             onClose={() => setSelectedId(null)}
@@ -700,11 +744,15 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             details={{
               text: [
                 `${t('rap.preview.scope', 'Zakres')}: ${scopeLabel(selectedItem.scope)}`,
+                // FALA 1 / „surowe identyfikatory w UI" (2026-07-27): tu wisiała
+                // NAZWA TABELI BAZY DANYCH („Legacy (report_builder_templates)").
+                // Użytkownik ma wiedzieć, co to dla niego znaczy — nie gdzie
+                // rekord leży w bazie.
                 ...(selectedItem.source === 'legacy' || selectedItem.legacy
                   ? [
                       `${t('rap.preview.source', 'Źródło')}: ${t(
                         'rap.templates.legacySourceLine',
-                        'Legacy (report_builder_templates)'
+                        'Starszy rejestr wzorców — działa bez zmian'
                       )}`,
                     ]
                   : []),
@@ -751,8 +799,59 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             }
             actions={previewActions}
           />
-        </aside>
-      ) : null}
+    </aside>
+  ) : null;
+
+  // ── Galeria ↔ Tabela (flag ON only) ──────────────────────────────────
+  if (galleryEnabled) {
+    return (
+      <div className="h-full flex flex-col overflow-hidden">
+        <div
+          data-testid="templates-gallery-toolbar"
+          className="shrink-0 flex flex-wrap items-center justify-end gap-2 border-b border-c-border-subtle bg-c-surface px-4 py-2"
+        >
+          <div
+            data-testid="templates-gallery-view-toggle"
+            className="flex shrink-0 items-center gap-1 rounded-token-sm border border-c-border bg-c-surface p-0.5"
+          >
+            {(
+              [
+                ['gallery', LayoutGrid, t('rap.templates.viewGallery', 'Galeria')],
+                ['table', Table2, t('rap.templates.viewTable', 'Tabela')],
+              ] as const
+            ).map(([id, Icon, label]) => (
+              <button
+                key={id}
+                type="button"
+                data-testid={`templates-gallery-view-toggle-${id}`}
+                onClick={() => setInnerView(id)}
+                aria-pressed={innerView === id}
+                className={`inline-flex h-7 items-center gap-1.5 rounded-token-xs px-2.5 text-[11px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                  innerView === id
+                    ? 'bg-c-surface-raised text-c-text shadow-token-card'
+                    : 'text-c-text-muted hover:text-c-text'
+                }`}
+              >
+                <Icon size={13} />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 min-w-0 flex overflow-hidden">
+          <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+            {innerView === 'gallery' ? galleryView : tableView}
+          </div>
+          {previewAside}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex overflow-hidden">
+      <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">{tableView}</div>
+      {previewAside}
     </div>
   );
 };
