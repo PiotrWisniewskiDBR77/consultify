@@ -3161,7 +3161,9 @@
         "source": "Source",
         "received": "Received",
         "sla": "SLA"
-      }
+      },
+      "linkedTask": "Linked task",
+      "linkedDecision": "Linked decision"
     },
     "notificationDetail": {
       "toastError": "Notification not found",

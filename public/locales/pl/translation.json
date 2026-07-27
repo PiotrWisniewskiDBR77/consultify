@@ -2397,7 +2397,9 @@
         "source": "Źródło",
         "received": "Otrzymano",
         "sla": "SLA"
-      }
+      },
+      "linkedTask": "Powiązane zadanie",
+      "linkedDecision": "Powiązana decyzja"
     },
     "notificationDetail": {
       "toastError": "Nie znaleziono powiadomienia",
