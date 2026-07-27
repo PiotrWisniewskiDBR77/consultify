@@ -11,4 +11,3 @@ export { PrezentacjeView } from './PrezentacjeView';
 export { TabeleView } from './TabeleView';
 export type { KimiPipelineState } from './useKimiArtifactPipeline';
 export { useKimiArtifactPipeline } from './useKimiArtifactPipeline';
-export { WordyView } from './WordyView';
