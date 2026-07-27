@@ -262,10 +262,98 @@ const MOCK_MAP = {
 // Komentarze: mock STANOWY (przeżywa F5) — patrz dev-render/mocks/komentarze.ts
 zamontujMockKomentarzy('dev-render:mindmap-canvas:comments');
 
+// ── STANOWY mock mapy (2026-07-27) ──────────────────────────────────────────
+// PRZED: `getMyIdeaMap` zwracał wciąż ten sam zamrożony `MOCK_MAP`, a
+// `syncMyIdeaMap`/`saveMyIdeaMap` IGNOROWAŁY payload. Każdy scenariusz
+// „zmień coś → przeładuj → sprawdź czy przetrwało" dawał FAŁSZYWY wynik:
+// zmiana znikała nie dlatego, że kod jej nie zapisał, tylko dlatego, że
+// atrapa serwera oddawała starą wersję.
+//
+// PO: jedno źródło prawdy `mapState`, trzymane dodatkowo w `localStorage`,
+// więc stan przeżywa TWARDE przeładowanie strony (F5) — inaczej moduł
+// wykonałby się od nowa i zresetował mapę, co dla testu „rozmiar przeżywa
+// przeładowanie" jest nie do odróżnienia od bugu. `version` rośnie przy
+// każdym zapisie (workspaceGraphRuntime porównuje wersje).
+//
+// Konsola:
+//   window.__MM_MOCK_MAP__()   → co „serwer" ma zapisane (np. node.style)
+//   window.__MM_MOCK_RESET__() → czysta scena startowa + reload
+const MOCK_STORAGE_KEY = `dev-render:mindmap-canvas:map:${IDEA_ID}`;
+
+type MockMapState = {
+  version: number;
+  preferredTool: string;
+  nodes: any[];
+  edges: any[];
+  extensions: Record<string, unknown>;
+};
+
+function readPersistedMap(): MockMapState {
+  try {
+    const raw = window.localStorage.getItem(MOCK_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.nodes) && parsed.nodes.length > 0) {
+        return parsed as MockMapState;
+      }
+    }
+  } catch {
+    /* uszkodzony/zablokowany storage — startujemy ze sceny bazowej */
+  }
+  return JSON.parse(JSON.stringify(MOCK_MAP.map)) as MockMapState;
+}
+
+let mapState: MockMapState = readPersistedMap();
+
+function writePersistedMap() {
+  try {
+    window.localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(mapState));
+  } catch {
+    /* brak storage — mock nadal działa w obrębie jednej sesji strony */
+  }
+}
+
+function persistMap(payload: {
+  nodes?: any[];
+  edges?: any[];
+  extensions?: Record<string, unknown>;
+  preferredTool?: string;
+}): MockMapState {
+  mapState = {
+    ...mapState,
+    version: (mapState.version || 0) + 1,
+    nodes: Array.isArray(payload?.nodes) ? payload.nodes : mapState.nodes,
+    edges: Array.isArray(payload?.edges) ? payload.edges : mapState.edges,
+    extensions:
+      payload?.extensions && typeof payload.extensions === 'object'
+        ? { ...(mapState.extensions || {}), ...payload.extensions }
+        : mapState.extensions,
+    preferredTool: payload?.preferredTool || mapState.preferredTool,
+  };
+  writePersistedMap();
+  return mapState;
+}
+
+(
+  window as unknown as { __MM_MOCK_MAP__?: () => unknown; __MM_MOCK_RESET__?: () => void }
+).__MM_MOCK_MAP__ = () => mapState;
+(
+  window as unknown as { __MM_MOCK_MAP__?: () => unknown; __MM_MOCK_RESET__?: () => void }
+).__MM_MOCK_RESET__ = () => {
+  try {
+    window.localStorage.removeItem(MOCK_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+  window.location.reload();
+};
+
 Api.getMyIdea = (async () => MOCK_IDEA) as typeof Api.getMyIdea;
-Api.getMyIdeaMap = (async () => MOCK_MAP) as typeof Api.getMyIdeaMap;
-Api.syncMyIdeaMap = (async () => MOCK_MAP.map) as typeof Api.syncMyIdeaMap;
-Api.saveMyIdeaMap = (async () => MOCK_MAP.map) as typeof Api.saveMyIdeaMap;
+Api.getMyIdeaMap = (async () => ({ map: mapState })) as typeof Api.getMyIdeaMap;
+Api.syncMyIdeaMap = (async (_ideaId: string, payload: any) =>
+  persistMap(payload || {})) as typeof Api.syncMyIdeaMap;
+Api.saveMyIdeaMap = (async (_ideaId: string, payload: any) =>
+  persistMap(payload || {})) as typeof Api.saveMyIdeaMap;
 Api.updateMyIdea = (async () => MOCK_IDEA) as typeof Api.updateMyIdea;
 Api.getMyIdeaEdges = (async () => []) as typeof Api.getMyIdeaEdges;
 
