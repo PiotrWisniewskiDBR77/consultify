@@ -52,7 +52,7 @@ import { isFormulaDisplayValue } from '@/utils/workbookGridPreview';
 
 import TabelePreviewLayout from './tabelePreview/TabelePreviewLayout';
 
-export type KimiLane = 'wordy' | 'excele' | 'prezentacje' | 'tabele';
+export type KimiLane = 'excele' | 'prezentacje' | 'tabele';
 
 // B3 fix (2026-07-22, workstream Excel): render only the first N rows of a big
 // sheet by default — the "Show all" toggle un-caps the current sheet, the
