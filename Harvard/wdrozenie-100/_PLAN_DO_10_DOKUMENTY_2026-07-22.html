@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan dojścia do 10 — 6 narzędzi DOKUMENTY</title>
+<style>
+  :root {
+    --bg: #f5f7f9; --surface: #ffffff; --surface-2: #eceff3;
+    --ink: #14202b; --ink-soft: #4c5a68; --ink-faint: #7c8895;
+    --line: #dce2e9; --line-strong: #c4ccd6;
+    --accent: #1f4e79; --accent-2: #2f6aa5; --accent-soft: #e5edf5;
+    --b1: #b23a2e; --b1-bg: #f6e3e0; --b2: #b9791a; --b2-bg: #f7ecd8;
+    --b3: #2c7d59; --b3-bg: #dff0e7; --b4: #1c6b45; --b4-bg: #d3ead9;
+    --opus: #6b3fa0; --opus-bg: #ece4f5;
+    --shadow: 0 1px 2px rgba(20,32,43,.06), 0 6px 20px rgba(20,32,43,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1319; --surface: #141d26; --surface-2: #1b2731;
+      --ink: #e9eef3; --ink-soft: #a6b4c2; --ink-faint: #6f8090;
+      --line: #253340; --line-strong: #33475a;
+      --accent: #74acdf; --accent-2: #8fbde8; --accent-soft: #172532;
+      --b1: #e07d6d; --b1-bg: #2c1a18; --b2: #dcab55; --b2-bg: #2b2416;
+      --b3: #57bd8e; --b3-bg: #16271f; --b4: #4fb87e; --b4-bg: #14241b;
+      --opus: #b491dd; --opus-bg: #201830;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 26px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg:#f5f7f9;--surface:#fff;--surface-2:#eceff3;--ink:#14202b;--ink-soft:#4c5a68;--ink-faint:#7c8895;
+    --line:#dce2e9;--line-strong:#c4ccd6;--accent:#1f4e79;--accent-2:#2f6aa5;--accent-soft:#e5edf5;
+    --b1:#b23a2e;--b1-bg:#f6e3e0;--b2:#b9791a;--b2-bg:#f7ecd8;--b3:#2c7d59;--b3-bg:#dff0e7;--b4:#1c6b45;--b4-bg:#d3ead9;
+    --opus:#6b3fa0;--opus-bg:#ece4f5;--shadow:0 1px 2px rgba(20,32,43,.06),0 6px 20px rgba(20,32,43,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg:#0d1319;--surface:#141d26;--surface-2:#1b2731;--ink:#e9eef3;--ink-soft:#a6b4c2;--ink-faint:#6f8090;
+    --line:#253340;--line-strong:#33475a;--accent:#74acdf;--accent-2:#8fbde8;--accent-soft:#172532;
+    --b1:#e07d6d;--b1-bg:#2c1a18;--b2:#dcab55;--b2-bg:#2b2416;--b3:#57bd8e;--b3-bg:#16271f;--b4:#4fb87e;--b4-bg:#14241b;
+    --opus:#b491dd;--opus-bg:#201830;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 26px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); line-height:1.5; -webkit-font-smoothing:antialiased;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; }
+  .wrap { max-width:1180px; margin:0 auto; padding:clamp(20px,4vw,52px) clamp(16px,4vw,40px) 72px; }
+  .serif { font-family:Georgia,"Times New Roman",serif; }
+  .eyebrow { font-size:12px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); }
+  h1 { font-size:clamp(26px,4.4vw,40px); line-height:1.1; margin:10px 0 0; font-weight:800; letter-spacing:-.02em; text-wrap:balance; max-width:22ch; }
+  .lede { font-size:17px; color:var(--ink-soft); margin:14px 0 0; max-width:70ch; }
+  .lede .serif { font-style:italic; color:var(--ink); }
+  .rule { height:1px; background:var(--line); border:0; margin:30px 0; }
+  h2 { font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); margin:0 0 16px; }
+  section { margin-top:46px; }
+
+  .chip { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; line-height:1.4; white-space:nowrap; }
+  .c-size { border:1px solid var(--line-strong); color:var(--ink-soft); background:var(--surface); }
+  .c-opus { background:var(--opus-bg); color:var(--opus); }
+  .c-sonnet { background:var(--accent-soft); color:var(--accent); }
+  .c-phase { background:var(--accent-soft); color:var(--accent); font-variant-numeric:tabular-nums; }
+  .c-dec { background:var(--b2-bg); color:var(--b2); }
+  .c-done { background:var(--b4-bg); color:var(--b4); }
+  .c-nice { border:1px dashed var(--line-strong); color:var(--ink-faint); background:transparent; }
+  .score { display:inline-flex; align-items:baseline; gap:2px; font-weight:800; font-variant-numeric:tabular-nums; font-size:13px; padding:2px 7px; border-radius:6px; }
+  .s-b1{color:var(--b1);background:var(--b1-bg)} .s-b2{color:var(--b2);background:var(--b2-bg)}
+  .s-b3{color:var(--b3);background:var(--b3-bg)} .s-b4{color:var(--b4);background:var(--b4-bg)}
+
+  .lever { display:grid; grid-template-columns:34px 1fr; gap:14px; padding:16px; background:var(--surface); border:1px solid var(--line); border-radius:12px; margin-top:12px; box-shadow:var(--shadow); }
+  .lever .n { font-size:22px; font-weight:800; color:var(--accent); font-variant-numeric:tabular-nums; line-height:1; }
+  .lever .t { font-size:13.5px; color:var(--ink-soft); line-height:1.5; }
+  .lever .t b { color:var(--ink); font-weight:700; }
+  .lever .t .covers { display:block; margin-top:6px; font-size:12px; color:var(--ink-faint); }
+
+  .scrollx { overflow-x:auto; border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); }
+  table { border-collapse:collapse; width:100%; min-width:920px; background:var(--surface); }
+  thead th { text-align:left; font-size:13px; font-weight:700; color:var(--ink); padding:13px 12px; border-bottom:1px solid var(--line-strong); background:var(--surface); vertical-align:bottom; }
+  thead th .lead { display:block; font-size:11px; font-weight:500; color:var(--ink-faint); margin-top:2px; }
+  thead th.crit-h { color:var(--ink-faint); font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
+  tbody td { padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tbody tr:last-child td { border-bottom:0; }
+  .crit .k { font-weight:700; font-size:13px; } .crit { min-width:110px; }
+  .cvcell { min-width:132px; }
+  .cvcell .row1 { display:flex; align-items:center; gap:6px; }
+  .cvcell .arrow { color:var(--ink-faint); font-weight:700; }
+  .cvcell .items { margin-top:5px; display:flex; flex-wrap:wrap; gap:4px; }
+  .id { display:inline-block; font-size:11px; font-weight:800; font-variant-numeric:tabular-nums; padding:1px 6px; border-radius:5px; background:var(--surface-2); color:var(--ink-soft); border:1px solid var(--line); }
+  .id.done { background:var(--b4-bg); color:var(--b4); border-color:var(--b4-bg); }
+
+  .ws { margin-top:22px; border:1px solid var(--line); border-radius:14px; background:var(--surface); box-shadow:var(--shadow); overflow:hidden; }
+  .ws > .wh { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; padding:15px 18px; border-bottom:1px solid var(--line); background:var(--surface-2); }
+  .ws > .wh .wsid { font-size:15px; font-weight:800; color:var(--accent); }
+  .ws > .wh .wnm { font-size:16px; font-weight:800; letter-spacing:-.01em; }
+  .ws > .wh .wcov { margin-left:auto; font-size:12px; color:var(--ink-faint); }
+  .ws > .wh .wcov b { color:var(--ink-soft); }
+  .item { display:grid; grid-template-columns:52px 1fr auto; gap:12px; padding:13px 18px; border-bottom:1px solid var(--line); align-items:start; }
+  .item:last-child { border-bottom:0; }
+  .item.isdone { background:linear-gradient(0deg, var(--b4-bg), transparent 60%); }
+  .item .iid { font-size:12.5px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums; padding-top:2px; }
+  .item .idesc .t { font-size:13.5px; font-weight:600; color:var(--ink); }
+  .item .idesc .d { font-size:12.5px; color:var(--ink-soft); margin-top:3px; line-height:1.45; }
+  .item .meta { display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
+  @media (max-width:640px){ .item{ grid-template-columns:44px 1fr; } .item .meta{ grid-column:2; flex-direction:row; flex-wrap:wrap; align-items:center; } }
+
+  .phase { border-left:2px solid var(--line-strong); padding:2px 0 2px 20px; margin-left:8px; position:relative; }
+  .phase + .phase { margin-top:6px; }
+  .phase::before { content:""; position:absolute; left:-7px; top:6px; width:12px; height:12px; border-radius:50%; background:var(--accent); border:2px solid var(--bg); }
+  .phase .ph-h { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .phase .ph-h .pn { font-size:15px; font-weight:800; }
+  .phase .ph-h .pg { font-size:12px; color:var(--ink-faint); }
+  .phase .ph-b { font-size:13px; color:var(--ink-soft); margin:5px 0 16px; line-height:1.5; }
+  .phase .ph-b .ids { display:inline-flex; flex-wrap:wrap; gap:4px; vertical-align:middle; }
+  .gate { display:inline-block; font-size:11px; font-weight:700; color:var(--b3); background:var(--b3-bg); padding:1px 7px; border-radius:5px; }
+
+  .note { font-size:12.5px; color:var(--ink-faint); margin-top:10px; line-height:1.55; }
+  .note b { color:var(--ink-soft); }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.92em; background:var(--surface-2); padding:1px 5px; border-radius:4px; }
+  .legendbar { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Consultify · DOKUMENTY · 2026-07-22</div>
+    <h1>Plan dojścia do 10 — wszystkie osie, wszystkie 6 narzędzi</h1>
+    <p class="lede">Cel: <b>każda z 30 komórek siatki na 10</b> (parytet lidera — Gamma / dokument klasy partnerskiej / analityk PE). Zasada planu: <span class="serif">nie narzędzie-po-narzędziu, tylko workstreamami</span> — bo <b>3 wspólne dźwignie</b> domykają najwięcej komórek naraz. 6 narzędzi = 3 narzędzia-dokumenty (Deck · Word · Excel) + 3 generatory template'ów. Każda robota ma rozmiar, model, fazę i bramkę odbioru (reguła #7).</p>
+    <div class="legendbar">
+      <span class="chip c-phase">P0–P5 faza</span>
+      <span class="chip c-size">S / M / L rozmiar</span>
+      <span class="chip c-opus">Opus (trudny kod)</span>
+      <span class="chip c-sonnet">Sonnet (robotnik)</span>
+      <span class="chip c-dec">decyzja Piotra</span>
+      <span class="chip c-done">zrobione (live-verify)</span>
+    </div>
+  </header>
+
+  <hr class="rule" />
+
+  <section style="margin-top:0">
+    <h2>Logika planu — 3 dźwignie robią większość roboty</h2>
+    <div class="lever"><div class="n">1</div><div class="t"><b>Odblokować gotowy silnik Excel</b> (workstream B). Silnik 5-fazowy + grounding + dobór szablonu JUŻ DZIAŁAJĄ — ale odcięte flagą <code>/excele</code> OFF i split-brainem (czat robi płaską tabelę Markdown zamiast modelu z formułami).<span class="covers">Domyka <b>Excel: Nawigacja, Funkcja, Menu, Grafika</b> (5 komórek). Jeden przełącznik + reroute czatu, nie budowa od zera.</span></div></div>
+    <div class="lever"><div class="n">2</div><div class="t"><b>Jeden wzorzec generatora template'ów → klon ×3</b> (workstream C). Backend WSZYSTKICH 3 generatorów istnieje (Word AI-draft, Deck <code>/templates/plan</code> parytet, Excel <code>WORKBOOK_TEMPLATES</code>) — brakuje frontendu architekta.<span class="covers">Domyka <b>3 najsłabsze narzędzia</b> (generatory #1/#2/#3 — dziś śr. 2,4 / 5,2 / 3,4) — ~15 komórek. Zbudować wzorzec (Word edytor struktury) → klonować.</span></div></div>
+    <div class="lever"><div class="n">3</div><div class="t"><b>Merytoryka — wspólny wzorzec §0.3</b> (workstream A). Grounding + jawne założenia „(założenie)" zamiast „brak danych".<span class="covers">Deck JUŻ ZROBIONY (<span class="id done">A1</span>, live-verify PASS) — zostaje Excel grounding z dedykowanej ścieżki + Word QA twardy + Deck bramki jakości. Domyka <b>Merytoryka ×3</b>.</span></div></div>
+    <p class="note">Reszta (D 3 tryby wejścia · E wykończenie merytoryki · F kolaboracja/odbiór klienta · G powłoka SPEC-A + storage) to domknięcia per narzędzie. Razem <b>7 workstreamów, 23 roboty</b> pokrywające 30 komórek. 1 już zrobiona i zweryfikowana live. Ok. 7 wymaga Opusa (trudny kod silnika/edytora), reszta Sonnet.</p>
+  </section>
+
+  <section>
+    <h2>Macierz pokrycia — dla każdej komórki: co ją zawozi do 10</h2>
+    <div class="scrollx">
+      <table>
+        <thead>
+          <tr>
+            <th class="crit-h">Oś</th>
+            <th>Deck<span class="lead">dziś 7,3</span></th>
+            <th>Word<span class="lead">dziś 7,2</span></th>
+            <th>Excel<span class="lead">dziś 4,2</span></th>
+            <th>Gen. Deck<span class="lead">dziś 2,4</span></th>
+            <th>Gen. Word<span class="lead">dziś 5,2</span></th>
+            <th>Gen. Excel<span class="lead">dziś 3,4</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="crit"><div class="k">Menu</div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">8</span><span class="arrow">→10</span></div><div class="items"><span class="id">D2</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">7</span><span class="arrow">→10</span></div><div class="items"><span class="id">D1</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b1">3</span><span class="arrow">→10</span></div><div class="items"><span class="id">B1</span><span class="id">G1</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b1">1</span><span class="arrow">→10</span></div><div class="items"><span class="id">C2</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">C1</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b1">3</span><span class="arrow">→10</span></div><div class="items"><span class="id">C3</span></div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">Nawigacja</div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">8</span><span class="arrow">→10</span></div><div class="items"><span class="id">D2</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">7</span><span class="arrow">→10</span></div><div class="items"><span class="id">F1</span><span class="id">F3</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b1">2</span><span class="arrow">→10</span></div><div class="items"><span class="id">B0</span><span class="id">B1</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b1">2</span><span class="arrow">→10</span></div><div class="items"><span class="id">C2</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">C1</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b1">2</span><span class="arrow">→10</span></div><div class="items"><span class="id">B1</span><span class="id">C3</span></div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">Funkcja</div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">8</span><span class="arrow">→10</span></div><div class="items"><span class="id">E2</span><span class="id">G2</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">8</span><span class="arrow">→10</span></div><div class="items"><span class="id">E1</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">6</span><span class="arrow">→10</span></div><div class="items"><span class="id">B2</span><span class="id">B3</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b1">3</span><span class="arrow">→10</span></div><div class="items"><span class="id">C2</span><span class="id">C4</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">6</span><span class="arrow">→10</span></div><div class="items"><span class="id">C1</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">4</span><span class="arrow">→10</span></div><div class="items"><span class="id">C3</span></div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">Merytoryka</div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">7</span><span class="arrow">→10</span></div><div class="items"><span class="id done">A1</span><span class="id">A4</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">7</span><span class="arrow">→10</span></div><div class="items"><span class="id">A3</span><span class="id">E3</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">6</span><span class="arrow">→10</span></div><div class="items"><span class="id">A2</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b1">2</span><span class="arrow">→10</span></div><div class="items"><span class="id">C2</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">C1</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">4</span><span class="arrow">→10</span></div><div class="items"><span class="id">C3</span><span class="id">A2</span></div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">Grafika</div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">7</span><span class="arrow">→10</span></div><div class="items"><span class="id">G3</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">7</span><span class="arrow">→10</span></div><div class="items"><span class="id">G3</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">4</span><span class="arrow">→10</span></div><div class="items"><span class="id">B3</span><span class="id">G1</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">4</span><span class="arrow">→10</span></div><div class="items"><span class="id done">G3</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">C1</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">4</span><span class="arrow">→10</span></div><div class="items"><span class="id">G3</span></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Każda komórka ma co najmniej jedną robotę. Jedna robota często zawozi kilka komórek (np. <span class="id">C1</span> edytor struktury Word → cały generator #2 na 5 osiach; <span class="id">B1</span> odblokowanie <code>/excele</code> → Excel Menu+Nawig). <span class="id done">A1</span> (Deck brief→treść) jest już ZROBIONA i zweryfikowana live (brak-danych 6→0, „(założenie)" 0→13, audience→executive).</p>
+  </section>
+
+  <section>
+    <h2>Workstreamy i roboty (23)</h2>
+
+    <div class="ws">
+      <div class="wh"><span class="wsid">A</span><span class="wnm">Merytoryka / grounding (§0.3 wspólny wzorzec)</span><span class="wcov">domyka <b>Merytoryka ×3</b></span></div>
+      <div class="item isdone"><div class="iid">A1</div><div class="idesc"><div class="t">Deck z czatu — temat do generatora, koniec „brak danych" ✓</div><div class="d">ZROBIONE i zweryfikowane live (a5b17b3f). Root-cause był upstream: chat-deck gubił <code>brief</code>/odbiorcę u źródła (<code>buildDeckSetup</code> + <code>DeckSetupSchema</code>). Fix niesie temat + derywuje audience → odpala gotowy content-pack.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-done">zrobione</span></div></div>
+      <div class="item"><div class="iid">A2</div><div class="idesc"><div class="t">Excel — grounding z dedykowanej ścieżki do promptu</div><div class="d"><code>ExceleView</code> dziś nie wysyła <code>sourcePack</code>/<code>evidenceRefs</code> (grounding działa tylko z insight→tabela). Dosłać kontekst i rozszerzyć typ <code>Api.generateWorkbook</code>.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P1</span></div></div>
+      <div class="item"><div class="iid">A3</div><div class="idesc"><div class="t">Word — grounding twardszy (QA jako bramka, nie soft-override)</div><div class="d">Dziś QA-gate jest przełamywalny; grounding zależny od source-packów. Utwardzić: niepoparte wartości muszą mieć „(założenie)", QA blokuje partnerski odbiór przy fabrykacji.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-opus">Opus</span><span class="chip c-phase">P3</span></div></div>
+      <div class="item"><div class="iid">A4</div><div class="idesc"><div class="t">Deck — podłączyć bramki jakości na realnej ścieżce</div><div class="d">4 z 5 bramek (Styler/Critic/AudienceVariants/QA) mają ZERO wywołań na realnej ścieżce decka — żyją w osobnym bundlu. Wpiąć w <code>generateDeck</code>.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-opus">Opus</span><span class="chip c-phase">P3</span></div></div>
+    </div>
+
+    <div class="ws">
+      <div class="wh"><span class="wsid">B</span><span class="wnm">Odblokowanie silnika Excel (routing / split-brain)</span><span class="wcov">domyka <b>Excel Nawig, Funkcja, Menu, Grafika</b></span></div>
+      <div style="padding:11px 18px 0;font-size:12px;color:var(--ink-faint);line-height:1.5">Tożsamość (Piotr 2026-07-22): <b>Excel = narzędzie OBLICZENIOWE</b> (formuły/przeliczenia, modele, scenariusze) — tabela tylko prezentuje wynik. Odrębne od <b>Tabel</b> (prosta prezentacja operacyjna, bez formuł) i od <b>dedykowanego modułu Finance</b> (osobny byt, też z tabelami obliczeniowymi). Trzy obszary dziś ROZDZIELNE — zbiegną się później. Silnik <code>WorkbookGeneratorService</code> (żywe formuły) prowadzimy z dala i od GFM, i od Finance.</div>
+      <div class="item isdone"><div class="iid">B0</div><div class="idesc"><div class="t">Decyzja: Excel = OSOBNE narzędzie, <code>/excele</code> własne wejście ✓</div><div class="d">ZDECYDOWANE (Piotr, 2026-07-22): Excel (modele finansowe, żywe formuły) i Tabele (tabele operacyjne) to DWA osobne narzędzia. Silnik 5-fazowy = domyślna ścieżka Excela. Flagę włączam po render→akcept (reguła #7).</div></div><div class="meta"><span class="chip c-done">zdecydowane</span></div></div>
+      <div class="item"><div class="iid">B1</div><div class="idesc"><div class="t"><code>/excele</code> → sidebar + własny route (nie redirect na <code>/tabele</code>)</div><div class="d">Wpiąć wejście w sidebar, poprawić <code>routeConfig</code> (~:770), zdjąć redirect za flagą. Dziś jedyne wejście = ręczny URL <code>?ff_excele=1</code>.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P2</span></div></div>
+      <div class="item"><div class="iid">B2</div><div class="idesc"><div class="t">Czat „stwórz arkusz" — reroute GFM → <code>WorkbookGeneratorService</code></div><div class="d">Dziś czat idzie do <code>docGenerationRuntime</code> (markdown 10×15, zero formuł). Przekierować na silnik 5-fazowy z żywymi formułami. Koniec split-brainu.</div></div><div class="meta"><span class="chip c-size">L</span><span class="chip c-opus">Opus</span><span class="chip c-phase">P2</span></div></div>
+      <div class="item"><div class="iid">B3</div><div class="idesc"><div class="t">Podgląd arkusza z cell-data + formułami</div><div class="d">Dziś podgląd pokazuje tylko metadane (nazwa/kolumny/wiersze) — trzeba pobrać plik, żeby cokolwiek zobaczyć. Renderować komórki + formuły inline.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P4</span></div></div>
+    </div>
+
+    <div class="ws">
+      <div class="wh"><span class="wsid">C</span><span class="wnm">Generatory template'ów — FE architekt (jeden wzorzec ×3)</span><span class="wcov">domyka <b>generatory #1/#2/#3 ×5 osi</b></span></div>
+      <div class="item"><div class="iid">C1</div><div class="idesc"><div class="t">Gen. Word — edytor struktury (WZORZEC)</div><div class="d">Backend AI-draft (<code>/templates/plan</code>) + governance już REAL; brakuje ręcznego edytora: dodaj/usuń/przenieś/przemianuj sekcję (dziś read-only) + rozluźnić refiner, by akceptował zmiany strukturalne. To wzorzec dla Deck/Excel.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-opus">Opus</span><span class="chip c-phase">P2</span></div></div>
+      <div class="item"><div class="iid">C2</div><div class="idesc"><div class="t">Gen. Deck — FE architekt (klon wzorca)</div><div class="d">Klon <code>DocumentStudioTemplateArchitectView</code> → <code>PresentationTemplateArchitectView</code>, wpięty w Hub. Backend <code>/templates/plan</code> + governance + clone już REAL (parytet z Word) — brakuje TYLKO warstwy React.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P3</span></div></div>
+      <div class="item"><div class="iid">C3</div><div class="idesc"><div class="t">Gen. Excel — FE szablonów parametrycznych (formułowych)</div><div class="d">Dziś user tworzy z FE tylko płaską listę kolumn; parametryczny model z formułami (<code>WORKBOOK_TEMPLATES</code>) jest kodowy, nieedytowalny. Zbudować autorstwo parametryczne z FE; odblokować build-from-template (zależy od B1).</div></div><div class="meta"><span class="chip c-size">L</span><span class="chip c-opus">Opus</span><span class="chip c-phase">P3</span></div></div>
+      <div class="item"><div class="iid">C4</div><div class="idesc"><div class="t">Gen. Deck — ręczny edytor struktury (odczarować fantom)</div><div class="d"><code>PUT /templates/:id</code> (outlineJson) istnieje na backendzie, ZERO callera FE. Wpiąć w architekt z C2 — odczarowuje fantom.</div></div><div class="meta"><span class="chip c-size">S</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P3</span></div></div>
+    </div>
+
+    <div class="ws">
+      <div class="wh"><span class="wsid">D</span><span class="wnm">3 tryby wejścia jawne (czysto / AI / template)</span><span class="wcov">domyka <b>Menu + Nawigacja</b></span></div>
+      <div class="item"><div class="iid">D1</div><div class="idesc"><div class="t">Word — 3 tryby jako równorzędny wybór na wejściu</div><div class="d">Dziś zakładka + toggle <code>useLlm</code> + picker (nierówna hierarchia). Ujednolicić w jawny wybór ①czysto ②AI ③template.</div></div><div class="meta"><span class="chip c-size">S</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P4</span></div></div>
+      <div class="item"><div class="iid">D2</div><div class="idesc"><div class="t">Deck — dodać tryb „czysto" (ręcznie)</div><div class="d">Dziś „start new"/„szablon" i tak przechodzą przez pipeline AI — brak realnego trybu ręcznego. Dodać ścieżkę czystą + jawny wybór 3 trybów.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P4</span></div></div>
+      <div class="item"><div class="iid">D3</div><div class="idesc"><div class="t">Excel — dodać tryb „czysto" (ręcznie)</div><div class="d">Dziś tylko Start-new-AI + szablony-prompty. Dodać pustą siatkę do pracy ręcznej + jawny wybór 3 trybów.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P4</span></div></div>
+    </div>
+
+    <div class="ws">
+      <div class="wh"><span class="wsid">E</span><span class="wnm">Wykończenie merytoryki per narzędzie</span><span class="wcov">domyka <b>Funkcja + Merytoryka</b></span></div>
+      <div class="item"><div class="iid">E1</div><div class="idesc"><div class="t">Word — historia wersji automatyczna (nie tylko on-demand)</div><div class="d">Snapshoty + diff istnieją, ale capture ręczny. Dodać auto-wersjonowanie per istotny zapis, żeby „śledzenie zmian" było partnerskie.</div></div><div class="meta"><span class="chip c-size">S</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P4</span></div></div>
+      <div class="item"><div class="iid">E2</div><div class="idesc"><div class="t">Deck — slajd „Wnioski" (conclusion layer) domyślnie ON</div><div class="d">Flaga <code>ENABLE_DECK_CONCLUSION_SLIDE</code> — deck zarządu ma kończyć na „co robić najpierw" + „czego oczekiwać", nie kolażu sekcji. Włączyć po weryfikacji.</div></div><div class="meta"><span class="chip c-size">S</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P4</span></div></div>
+      <div class="item"><div class="iid">E3</div><div class="idesc"><div class="t">Word — polish formatu założeń</div><div class="d">„(założenie)" działa; dopilnować, by nie było over-repeat na kolejnych zdaniach (brzmi mechanicznie). Drobna korekta promptu.</div></div><div class="meta"><span class="chip c-size">S</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P4</span></div></div>
+    </div>
+
+    <div class="ws">
+      <div class="wh"><span class="wsid">F</span><span class="wnm">Kolaboracja / odbiór klienta</span><span class="wcov">domyka <b>Nawigacja (odbiór) + Funkcja</b></span></div>
+      <div class="item"><div class="iid">F1</div><div class="idesc"><div class="t">Word — czytnik klienta (FE do share-link)</div><div class="d">Backend share-linków (scope read/comment + publiczny resolve) REAL, brak widoku-czytnika w apce. Zbudować read-only viewer dla klienta.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P5</span></div></div>
+      <div class="item"><div class="iid">F2</div><div class="idesc"><div class="t">Deck — presence / współpraca (za flagą)</div><div class="d">Presence to dziś statyczna etykieta; realtime za <code>VITE_ENABLE_DECK_COLLABORATE</code>. Domknąć jak w narzędziach IDEE (jeden gateway collab).</div></div><div class="meta"><span class="chip c-size">S</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P5</span></div></div>
+      <div class="item"><div class="iid">F3</div><div class="idesc"><div class="t">Word — tryb czytania / komentowania klienta</div><div class="d">Widok „klient" (bez chrome edytora) + wątki komentarzy (cykl create/resolve/reopen już REAL) wystawione klientowi przez share-link.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P5</span></div></div>
+    </div>
+
+    <div class="ws">
+      <div class="wh"><span class="wsid">G</span><span class="wnm">Powłoka SPEC-A + storage P0</span><span class="wcov">domyka <b>Grafika + Menu + niezawodność</b></span></div>
+      <div class="item"><div class="iid">G1</div><div class="idesc"><div class="t">Excel — powłoka SPEC-A (ArtifactRightPanel / kebab)</div><div class="d"><code>KimiWorkspaceShell</code> nie ma SPEC-A. Wpiąć wspólną powłokę artefaktu (prawy panel accordion + kebab + stany) — parytet z resztą artefaktów.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P4</span></div></div>
+      <div class="item"><div class="iid">G2</div><div class="idesc"><div class="t">Storage nietrwały — P0 systemowy → wolumen Railway</div><div class="d">ZDECYDOWANE (Piotr, 2026-07-22): <b>wolumen Railway</b> (nie R2 na teraz — bez sekretu, najszybciej). Deck PPTX (<code>/app/server/exports/…</code>) + załączniki dziś GINĄ przy redeployu. Wpiąć kod do ścieżki wolumenu + dodać wolumen w Railway (akcja infra Piotra / relink CLI).</div></div><div class="meta"><span class="chip c-size">L</span><span class="chip c-opus">Opus</span><span class="chip c-phase">P0</span></div></div>
+      <div class="item"><div class="iid">G3</div><div class="idesc"><div class="t">Galerie / grafika generatorów — tokeny c-*</div><div class="d">Deck galeria ZROBIONA (Fala C). Sprawdzić i wyrównać Word/Excel galerie + podglądy szablonów do tokenów c-* (zero surowego slate/navy).</div></div><div class="meta"><span class="chip c-size">S</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P4</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Kolejność — 6 faz z bramkami odbioru</h2>
+    <div style="margin-top:6px">
+      <div class="phase">
+        <div class="ph-h"><span class="pn">P0 · Fundament</span><span class="pg">decyzje + niezawodność, odblokowuje resztę</span></div>
+        <div class="ph-b"><span class="ids"><span class="id">B0</span><span class="id">G2</span></span> — decyzja o fladze <code>/excele</code> + storage nietrwały (żeby to, co robimy, nie ginęło przy redeployu). <span class="gate">bramka: decyzja Piotra + trwały storage</span></div>
+      </div>
+      <div class="phase">
+        <div class="ph-h"><span class="pn">P1 · Merytoryka — odblokowanie</span><span class="pg">Deck już done, dosłać Excel</span></div>
+        <div class="ph-b"><span class="id done">A1</span> zrobione (Deck brief→treść). <span class="ids"><span class="id">A2</span></span> Excel grounding z dedykowanej ścieżki. <span class="gate">bramka: grounding widoczny live w treści</span></div>
+      </div>
+      <div class="phase">
+        <div class="ph-h"><span class="pn">P2 · Silnik Excel + wzorzec generatora</span><span class="pg">dwie dźwignie startują</span></div>
+        <div class="ph-b"><span class="ids"><span class="id">B1</span><span class="id">B2</span></span> Excel routing/reroute (silnik 5-faz jako domyślna ścieżka) + <span class="ids"><span class="id">C1</span></span> Word edytor struktury (WZORZEC generatora). <span class="gate">bramka: arkusz z formułami z czatu + wzorzec generatora render→akcept</span></div>
+      </div>
+      <div class="phase">
+        <div class="ph-h"><span class="pn">P3 · Generatory ×3 + merytoryka twarda</span><span class="pg">klon wzorca (zależy od C1)</span></div>
+        <div class="ph-b"><span class="ids"><span class="id">C2</span><span class="id">C4</span></span> Deck architekt · <span class="ids"><span class="id">C3</span></span> Excel parametryczny · <span class="ids"><span class="id">A3</span><span class="id">A4</span></span> Word QA twardy + Deck bramki. <span class="gate">bramka: 3 generatory FE render→akcept</span></div>
+      </div>
+      <div class="phase">
+        <div class="ph-h"><span class="pn">P4 · 3 tryby + wykończenie + SPEC-A</span><span class="pg">domyka Menu/Nawig/Grafika</span></div>
+        <div class="ph-b"><span class="ids"><span class="id">D1</span><span class="id">D2</span><span class="id">D3</span><span class="id">E1</span><span class="id">E2</span><span class="id">E3</span><span class="id">B3</span><span class="id">G1</span><span class="id">G3</span></span> — 3 tryby jawne, historia wersji, conclusion slide, podgląd formuł, powłoka SPEC-A Excel, tokeny galerii. <span class="gate">bramka: odbiór wizualny oczami Piotra</span></div>
+      </div>
+      <div class="phase">
+        <div class="ph-h"><span class="pn">P5 · Kolaboracja + odbiór klienta</span><span class="pg">domyka odbiór + gate board-ready</span></div>
+        <div class="ph-b"><span class="ids"><span class="id">F1</span><span class="id">F2</span><span class="id">F3</span></span> — czytnik klienta Word, presence Deck, tryb komentowania. <span class="gate">bramka: 10 na wszystkich osiach potwierdzone w 2 przebiegach</span></div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule" />
+  <section style="margin-top:20px">
+    <h2>Zasady wykonania (nienaruszalne)</h2>
+    <p class="note"><b>Reguła #7 przy KAŻDEJ robocie UI:</b> prototyp/render przeze mnie → zrzut → wstępny akcept Piotra → dopiero deploy. Piotr nigdy nie jest pierwszym testerem wizualnym. <b>Nic na demo bez akceptu na zrzucie</b>, jedna partia po drugiej (nie hurtem). Po każdej akcept-partii re-tag <code>demo-safe-&lt;data&gt;</code>. Baza gałęzi = <code>origin/demo</code> (żywe pod wieloma sesjami — zawsze fetch + pre-flight). Zero crimson w nowym kodzie. Weryfikacja realnego runtime, nie flag (ta grupa złapała już 3 „fantomy": naprawy z zielonymi testami, których realna ścieżka nie dotykała).</p>
+    <p class="note"><b>Świadomie NIE podaję estymat w dniach.</b> Dzień z sufitu byłby zmyśleniem (złota reguła: nie zawyżać). Rozmiar S/M/L + model + faza + zależności dają kształt i kolejność. Gdy ustalimy tempo na 1–2 pierwszych robotach, przeliczę realny kalendarz.</p>
+    <p class="note"><b>Treść vs wizual:</b> zmiany promptów/silników są GLOBALNE i ich efekt widać dopiero na żywym LLM — akcept treści zawsze na żywym demo (offline = kod/esbuild/test; live = treść/wizual). <b>Źródła:</b> karta ocen 5 osi (<code>_PLAN_6_NARZEDZI_AKTUALIZACJA_2026-07-22.md</code>) + framework (<code>_FRAMEWORK_6_NARZEDZI_DOKUMENTY_2026-07-22.md</code>) + audyt (<code>_AUDYT_DOKUMENTY_2026-07-22.md</code>). Ten dokument = wykonawcze rozbicie na 23 roboty z pełnym pokryciem 30 komórek.</p>
+  </section>
+
+</div>
+</body>
+</html>

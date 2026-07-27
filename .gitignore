@@ -16,6 +16,8 @@ dist-ssr
 __tmp_ai_agent__
 .tmp/
 .codex-worktrees/
+.worktrees/
+scratchpad/
 .tmp/
 
 # Editor directories and files
