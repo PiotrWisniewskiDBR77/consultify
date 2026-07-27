@@ -58,6 +58,27 @@ export function laneBandLayout(
 }
 
 /**
+ * Index of the lane whose RENDERED band contains `y` (flow coordinates).
+ *
+ * B1 2026-07-27: node placement used to assume every band is exactly
+ * `LANE_HEIGHT` tall (`Math.floor(y / LANE_HEIGHT)`), which stops matching what
+ * the user sees the moment a lane is collapsed (28px) or resized. This walks
+ * the real band layout instead, so "which lane did I click / drop into" and
+ * "where does the lane start" agree. Clamped to a valid index; identical to the
+ * old formula when every lane has the default height.
+ */
+export function laneIndexAtY(lanes: Lane[], y: number, defaultHeight: number): number {
+  if (lanes.length === 0) return 0;
+  let top = 0;
+  for (let i = 0; i < lanes.length; i += 1) {
+    const height = laneBandHeight(lanes[i], defaultHeight);
+    if (y < top + height) return i;
+    top += height;
+  }
+  return lanes.length - 1;
+}
+
+/**
  * Whether a node belongs to a currently-collapsed lane (so it should be hidden
  * from the canvas). Nodes with no laneId are always visible.
  */
