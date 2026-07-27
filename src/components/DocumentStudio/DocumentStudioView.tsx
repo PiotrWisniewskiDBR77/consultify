@@ -11,7 +11,7 @@
  */
 
 import { Layers, Sparkles } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
@@ -47,11 +47,31 @@ import type {
   DocumentIntake,
   DocumentOutline,
   DocumentSchema,
+  DocumentSourceRef,
   DocumentTemplate,
 } from './types';
 
 type Phase = 'intake' | 'outline' | 'generating' | 'document';
 type Tab = 'generate' | 'templates';
+
+/**
+ * N3 (doktryna streaming §5/§7.2) — collapse a streamed section's blocks down
+ * to the distinct sources it is grounded on, so
+ * `DocumentStudioGeneratingPanel` can render "Based on: X, Y" chips while the
+ * section is being written. The data already flows through the `section` SSE
+ * event (`document-studio.routes.ts:866-876`, `blocks[].sourceRef`) — this was
+ * previously discarded on the client.
+ */
+function dedupeSourceRefs(blocks: { sourceRef?: DocumentSourceRef }[]): DocumentSourceRef[] {
+  const seen = new Map<string, DocumentSourceRef>();
+  for (const block of blocks) {
+    const ref = block.sourceRef;
+    if (!ref) continue;
+    const key = `${ref.sourceType}:${ref.sourceId}`;
+    if (!seen.has(key)) seen.set(key, ref);
+  }
+  return Array.from(seen.values());
+}
 
 export const DocumentStudioView: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -147,6 +167,28 @@ export const DocumentStudioView: React.FC = () => {
   // fill sections as they arrive.
   const [streamOutline, setStreamOutline] = useState<DocumentOutline | null>(null);
   const [streamSections, setStreamSections] = useState<GeneratingSectionState[]>([]);
+  // N3 (doktryna streaming §4/§7.1) — non-blocking, honest notice shown while
+  // the live SSE connection has dropped and generation continues via the
+  // synchronous fallback. Replaces the previous cichy fallback (nothing shown
+  // to the user while `/generate/stream` silently gave way to `/generate`).
+  const [streamFallbackNotice, setStreamFallbackNotice] = useState<string | null>(null);
+  // N3 (§2/§7.3) — Stop button parity with Canvas (`useCanvasAIStream.ts`).
+  // `streamAbortControllerRef` holds the in-flight stream's controller so the
+  // generating panel can abort it; `canStopStream` is false once the run has
+  // fallen back to the non-abortable synchronous `/generate` call, so the Stop
+  // button is hidden instead of becoming a dead control.
+  const streamAbortControllerRef = useRef<AbortController | null>(null);
+  const [canStopStream, setCanStopStream] = useState(false);
+
+  // Aborts the in-flight stream fetch on unmount (mirrors
+  // `useCanvasAIStream.ts:136-141` — closing mid-stream must not leak a fetch
+  // into an unmounted view).
+  useEffect(() => {
+    return () => {
+      streamAbortControllerRef.current?.abort();
+      streamAbortControllerRef.current = null;
+    };
+  }, []);
 
   const refreshApprovedTemplates = useCallback(async (): Promise<void> => {
     try {
@@ -324,6 +366,7 @@ export const DocumentStudioView: React.FC = () => {
     ): Promise<DocumentStreamDoneEvent | null> => {
       setGenerating(true);
       setError(null);
+      setStreamFallbackNotice(null);
       // Seed the progressive panel: known outline (Mode 1) or empty (Mode 3).
       setStreamOutline(knownOutline);
       setStreamSections(
@@ -331,7 +374,16 @@ export const DocumentStudioView: React.FC = () => {
       );
       setPhase('generating');
 
+      // N3 (§2/§7.3) — a fresh AbortController per run, mirroring
+      // `useCanvasAIStream.ts:162-163`. Stoppable only while the SSE stream
+      // itself is in flight; see the `canStopStream` toggles below.
+      const abortController = new AbortController();
+      streamAbortControllerRef.current = abortController;
+      setCanStopStream(true);
+
       const commitDone = (result: DocumentStreamDoneEvent): DocumentStreamDoneEvent => {
+        streamAbortControllerRef.current = null;
+        setCanStopStream(false);
         setArtifactId(result.artifactId);
         setSchema(result.schema);
         setGenerationWarnings(result.generationWarnings ?? []);
@@ -341,31 +393,51 @@ export const DocumentStudioView: React.FC = () => {
       };
 
       try {
-        const result = await generateDocumentStudioArtifactStream(params, {
-          onPlan: (resolvedOutline) => {
-            setStreamOutline(resolvedOutline);
-            setStreamSections(
-              resolvedOutline.sections.map((s) => ({ title: s.title, ready: false }))
-            );
+        const result = await generateDocumentStudioArtifactStream(
+          params,
+          {
+            onPlan: (resolvedOutline) => {
+              setStreamOutline(resolvedOutline);
+              setStreamSections(
+                resolvedOutline.sections.map((s) => ({ title: s.title, ready: false }))
+              );
+            },
+            onSection: (event) => {
+              setStreamSections((prev) => {
+                const next =
+                  prev.length >= event.total
+                    ? [...prev]
+                    : new Array(event.total)
+                        .fill(null)
+                        .map((_, i) => prev[i] ?? { title: '', ready: false });
+                next[event.index] = {
+                  title: event.title,
+                  ready: true,
+                  sourceRefs: dedupeSourceRefs(event.blocks),
+                };
+                return next;
+              });
+            },
+            onWarning: (warning) => {
+              setGenerationWarnings((prev) => [...prev, warning]);
+            },
           },
-          onSection: (event) => {
-            setStreamSections((prev) => {
-              const next =
-                prev.length >= event.total
-                  ? [...prev]
-                  : new Array(event.total)
-                      .fill(null)
-                      .map((_, i) => prev[i] ?? { title: '', ready: false });
-              next[event.index] = { title: event.title, ready: true };
-              return next;
-            });
-          },
-          onWarning: (warning) => {
-            setGenerationWarnings((prev) => [...prev, warning]);
-          },
-        });
+          abortController.signal
+        );
         return commitDone(result);
       } catch (streamErr) {
+        streamAbortControllerRef.current = null;
+        setCanStopStream(false);
+        // User-initiated Stop (§2/§7.3): honor it as a clean cancel, not a
+        // transport failure — no fallback, no error banner. Consistent state
+        // = back to the phase the user was in before generation started
+        // (same pattern as Canvas's `stopStream`, which never surfaces an
+        // error either).
+        if (abortController.signal.aborted) {
+          setGenerating(false);
+          setPhase(knownOutline ? 'outline' : 'intake');
+          return null;
+        }
         // Structured Mode-3 preflight failure is terminal — surface, don't retry.
         if (streamErr instanceof MissingRequiredSourceError) {
           setPhase('intake');
@@ -380,7 +452,17 @@ export const DocumentStudioView: React.FC = () => {
           return null;
         }
         // Transport / fatal stream failure → fall back to the synchronous path
-        // so the user still gets their document.
+        // so the user still gets their document (§4: NIE przerywaj generacji —
+        // chodzi o widoczność, nie o blokadę). Unlike the silent version this
+        // replaced, the user now sees an explicit, calm notice before the
+        // fallback kicks in — the żelazna zasada "zero cichych fallbacków"
+        // applies here just as much as to any other retry-without-telling.
+        setStreamFallbackNotice(
+          t(
+            'documentStudio.generating.streamFallbackNotice',
+            'Połączenie na żywo zerwane — dokańczam w tle…'
+          )
+        );
         try {
           const sync = await generateDocumentStudioArtifact(params);
           return commitDone({
@@ -409,10 +491,20 @@ export const DocumentStudioView: React.FC = () => {
         }
       } finally {
         setGenerating(false);
+        setCanStopStream(false);
       }
     },
     [navigate, t]
   );
+
+  // N3 (§2/§7.3) — user-initiated Stop, wired to `DocumentStudioGeneratingPanel`.
+  // Aborts the in-flight SSE fetch; `runStreamingGeneration`'s catch block
+  // detects `abortController.signal.aborted` and returns to a consistent
+  // phase without falling back or surfacing an error (same contract as
+  // Canvas's `stopStream`).
+  const handleStopGeneration = useCallback((): void => {
+    streamAbortControllerRef.current?.abort();
+  }, []);
 
   const handleIntakeSubmit = async (
     nextIntake: DocumentIntake,
@@ -794,6 +886,9 @@ export const DocumentStudioView: React.FC = () => {
             outline={streamOutline}
             sections={streamSections}
             error={phase === 'generating' ? error : null}
+            notice={streamFallbackNotice}
+            onStop={handleStopGeneration}
+            canStop={canStopStream}
           />
         ) : phase === 'document' && schema && artifactId ? (
           <DocumentStudioDocumentPanel

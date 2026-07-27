@@ -25403,7 +25403,10 @@
     "generating": {
       "title": "Generuję Twój dokument…",
       "planning": "Planuję strukturę…",
-      "progress": "Piszę sekcje… gotowe {{done}} z {{total}}"
+      "progress": "Piszę sekcje… gotowe {{done}} z {{total}}",
+      "stop": "Zatrzymaj",
+      "streamFallbackNotice": "Połączenie na żywo zerwane — dokańczam w tle…",
+      "basedOn": "Na czym opieram:"
     },
     "blocks": {
       "noTableData": "Brak danych tabeli",
