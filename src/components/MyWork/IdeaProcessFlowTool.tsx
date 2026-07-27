@@ -116,7 +116,7 @@ import {
   type Lane,
   LANE_COLORS,
 } from './processflow/LaneSystem';
-import { LaneSystem } from './processflow/LaneSystem';
+import { LaneSystemViewportLayer } from './processflow/LaneSystem';
 import {
   appendComment,
   type ProcessFlowNodeComment,
@@ -2936,8 +2936,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         )
       ) : (
         <div ref={flowContainerRef} className="flex-1 relative">
-          <div className="absolute inset-0">
-            <LaneSystem
+          {/* B2 2026-07-27: the provider now opens BEFORE the lane layer (DOM
+              order and paint order are unchanged — ReactFlowProvider renders no
+              element) so the swimlane bands can read the live viewport and
+              travel with the nodes when the canvas is panned/zoomed. Before
+              this, bands were positioned in raw container px and drifted off
+              their nodes on the very first pan. `overflow-hidden` keeps a band
+              that scrolls out of the canvas from painting over the toolbar. */}
+          <ReactFlowProvider>
+          <div className="absolute inset-0 overflow-hidden">
+            <LaneSystemViewportLayer
               lanes={lanes}
               isPl={!!isPl}
               locked={locked}
@@ -3016,7 +3024,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             </div>
           )}
 
-          <ReactFlowProvider>
             <EdgeRehydrateFix
               nodeIdsKey={nodes.map((n) => n.id).join(',')}
               nodeIds={nodes.map((n) => n.id)}
