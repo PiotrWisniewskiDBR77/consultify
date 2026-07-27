@@ -31,7 +31,7 @@ import {
   UserPlus,
   Workflow,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { usePointFixedMenuPosition } from '@/hooks/useFixedMenuPosition';
@@ -81,25 +81,79 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   const { t } = useTranslation();
   const { ref, style: posStyle } = usePointFixedMenuPosition(x, y, true);
   const [submenu, setSubmenu] = useState<string | null>(null);
+  /**
+   * „Przypięte" podmenu = otwarte KLIKNIĘCIEM (albo klawiaturą), więc zjechanie
+   * myszą go NIE zamyka. Najechanie zostaje skrótem: otwiera nieprzypięte
+   * podmenu, które chowa się po 200 ms od zjechania.
+   */
+  const [pinned, setPinned] = useState(false);
+  const pinnedRef = useRef(false);
+  pinnedRef.current = pinned;
   const submenuTimerRef = useRef<number | null>(null);
+  const submenuPanelRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const headerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  /**
+   * Pozycja panelu podmenu liczona względem nagłówka kategorii.
+   *
+   * Podmenu MUSI być portalowane do <body>: kontener menu ma `overflow-y: auto`
+   * (żeby długie menu się przewijało), a wtedy CSS wylicza `overflow-x: auto` —
+   * dziecko na `left: 100%` było PRZYCINANE i niewidoczne (`elementFromPoint` w
+   * miejscu panelu zwracał `react-flow__pane`). Dlatego nawet najechanie myszą
+   * nie pokazywało nic — kategorie wyglądały na całkiem martwe.
+   */
+  const [submenuPos, setSubmenuPos] = useState<{ left: number; top: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!submenu) {
+      setSubmenuPos(null);
+      return;
+    }
+    const header = headerRefs.current[submenu];
+    const panel = submenuPanelRefs.current[submenu];
+    if (!header) return;
+    const MARGIN = 8;
+    const hr = header.getBoundingClientRect();
+    const pw = panel?.offsetWidth || 210;
+    const ph = panel?.offsetHeight || 300;
+    let left = hr.right + 4;
+    if (left + pw > window.innerWidth - MARGIN) left = Math.max(MARGIN, hr.left - pw - 4);
+    let top = hr.top;
+    if (top + ph > window.innerHeight - MARGIN)
+      top = Math.max(MARGIN, window.innerHeight - MARGIN - ph);
+    setSubmenuPos({ left, top });
+  }, [submenu]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as HTMLElement)) onClose();
+      const target = e.target as HTMLElement;
+      // Panel podmenu żyje w portalu (poza `ref`), więc klik w jego pozycję
+      // musi być jawnie uznany za „wewnątrz menu" — inaczej menu zamknęłoby się
+      // na `mousedown`, zanim `click` zdążyłby odpalić akcję.
+      const insideSubmenu = submenu ? !!submenuPanelRefs.current[submenu]?.contains(target) : false;
+      if (ref.current && !ref.current.contains(target) && !insideSubmenu) onClose();
     };
     const keyHandler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (submenu) {
+          headerRefs.current[submenu]?.focus();
           setSubmenu(null);
+          setPinned(false);
           return;
         }
         onClose();
       }
     };
-    window.addEventListener('mousedown', handler);
+    // CAPTURE PHASE IS LOAD-BEARING — nie zmieniaj na zwykły listener.
+    // d3-zoom (pod ReactFlow) w swoim `mousedowned` woła `nopropagation(event)`
+    // = `event.stopImmediatePropagation()` (d3-zoom/src/zoom.js:280) na
+    // `.react-flow__pane`. Każdy `mousedown` na pustym płótnie ginie więc, zanim
+    // dojdzie do `window` w fazie bąbelkowania — menu kontekstowe zostawało
+    // otwarte na zawsze (Piotr 07-27: „nie mogę go zamknąć"). Faza przechwytywania
+    // na `window` odpala się PRZED handlerem d3, więc jest nie do zatrzymania.
+    window.addEventListener('mousedown', handler, true);
     window.addEventListener('keydown', keyHandler);
     return () => {
-      window.removeEventListener('mousedown', handler);
+      window.removeEventListener('mousedown', handler, true);
       window.removeEventListener('keydown', keyHandler);
       if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
     };
@@ -458,7 +512,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         type="button"
         disabled={disabled}
         onClick={() => handleClick(item.id)}
-        className={`w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium transition-colors rounded-md ${menuItemClass({ ...item, disabled })}`}
+        className={`w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${menuItemClass({ ...item, disabled })}`}
       >
         <Icon
           size={13}
@@ -530,44 +584,138 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
           </React.Fragment>
         ))}
 
-        {subGroups.map((group) => (
-          <div
-            key={group.titleEn}
-            className="relative"
-            onMouseEnter={() => {
-              if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
-              setSubmenu(group.titleEn);
-            }}
-            onMouseLeave={() => {
-              submenuTimerRef.current = window.setTimeout(() => setSubmenu(null), 200);
-            }}
-          >
-            <button
-              type="button"
-              className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-md"
+        {subGroups.map((group) => {
+          const key = group.titleEn;
+          const open = submenu === key;
+          const panelId = `ctx-submenu-${key.replace(/[^a-zA-Z0-9]+/g, '-')}`;
+          return (
+            <div
+              key={key}
+              className="relative"
+              onMouseEnter={() => {
+                // Najechanie = SKRÓT (otwiera nieprzypięte podmenu). Przejście
+                // myszą na inną kategorię odpina poprzednią.
+                if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
+                setSubmenu(key);
+                setPinned(false);
+              }}
+              onMouseLeave={() => {
+                // Podmenu otwarte klikiem/klawiaturą zostaje — zjechanie myszą go
+                // nie zamyka (to był ból: kategoria „nie działa" pod kliknięciem).
+                if (pinnedRef.current) return;
+                submenuTimerRef.current = window.setTimeout(() => {
+                  if (!pinnedRef.current) setSubmenu(null);
+                }, 200);
+              }}
             >
-              <span className="flex-1">{t(group.titleKey, group.titleEn)}</span>
-              <ChevronRight size={11} className="text-c-text-secondary" />
-            </button>
-
-            {submenu === group.titleEn && (
-              <div
-                className="absolute left-full top-0 ml-1 min-w-[200px] max-h-[70vh] overflow-y-auto py-1.5 px-1 rounded-xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-2xl animate-in fade-in slide-in-from-left-1 duration-100"
-                onMouseEnter={() => {
+              <button
+                ref={(el) => {
+                  headerRefs.current[key] = el;
+                }}
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={open}
+                aria-controls={open ? panelId : undefined}
+                // Nagłówek kategorii reaguje NA KLIKNIĘCIE (wcześniej był to
+                // <button> bez onClick — klik dosłownie nic nie robił, stąd
+                // „tutaj nic nie działa z tych 4 przycisków").
+                onClick={() => {
                   if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
+                  if (open && pinned) {
+                    setSubmenu(null);
+                    setPinned(false);
+                    return;
+                  }
+                  setSubmenu(key);
+                  setPinned(true);
                 }}
-                onMouseLeave={() => {
-                  submenuTimerRef.current = window.setTimeout(() => setSubmenu(null), 200);
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') {
+                    // preventDefault na Enter/Space blokuje syntetyczny klik
+                    // przycisku, więc podmenu nie przełącza się dwa razy.
+                    e.preventDefault();
+                    if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
+                    if (open && pinned && e.key !== 'ArrowRight') {
+                      setSubmenu(null);
+                      setPinned(false);
+                      return;
+                    }
+                    setSubmenu(key);
+                    setPinned(true);
+                    window.setTimeout(() => {
+                      submenuPanelRefs.current[key]
+                        ?.querySelector<HTMLButtonElement>('button:not([disabled])')
+                        ?.focus();
+                    }, 0);
+                  }
                 }}
+                className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded-md"
               >
-                <div className="px-3 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
-                  {t(group.titleKey, group.titleEn)}
-                </div>
-                {group.items.map(renderItem)}
-              </div>
-            )}
-          </div>
-        ))}
+                <span className="flex-1">{t(group.titleKey, group.titleEn)}</span>
+                <ChevronRight
+                  size={11}
+                  className={`text-c-text-secondary transition-transform ${open ? 'rotate-90' : ''}`}
+                />
+              </button>
+
+              {open && (
+                <ContextMenuPortal>
+                  <div
+                    id={panelId}
+                    ref={(el) => {
+                      submenuPanelRefs.current[key] = el;
+                    }}
+                    style={{
+                      position: 'fixed',
+                      left: submenuPos ? submenuPos.left : -9999,
+                      top: submenuPos ? submenuPos.top : -9999,
+                    }}
+                    className="z-[101] min-w-[200px] max-h-[70vh] overflow-y-auto py-1.5 px-1 rounded-xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-2xl animate-in fade-in slide-in-from-left-1 duration-100"
+                    onMouseEnter={() => {
+                      // Most myszy nagłówek → zawartość: kasujemy timer, więc
+                      // podmenu nie znika w trakcie przejazdu.
+                      if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
+                    }}
+                    onMouseLeave={() => {
+                      if (pinnedRef.current) return;
+                      submenuTimerRef.current = window.setTimeout(() => {
+                        if (!pinnedRef.current) setSubmenu(null);
+                      }, 200);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        setSubmenu(null);
+                        setPinned(false);
+                        headerRefs.current[key]?.focus();
+                        return;
+                      }
+                      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+                      e.preventDefault();
+                      const focusables = Array.from(
+                        e.currentTarget.querySelectorAll<HTMLButtonElement>(
+                          'button:not([disabled])'
+                        )
+                      );
+                      if (focusables.length === 0) return;
+                      const idx = focusables.indexOf(document.activeElement as HTMLButtonElement);
+                      const next =
+                        e.key === 'ArrowDown'
+                          ? focusables[(idx + 1 + focusables.length) % focusables.length]
+                          : focusables[(idx - 1 + focusables.length) % focusables.length];
+                      next?.focus();
+                    }}
+                  >
+                    <div className="px-3 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
+                      {t(group.titleKey, group.titleEn)}
+                    </div>
+                    {group.items.map(renderItem)}
+                  </div>
+                </ContextMenuPortal>
+              )}
+            </div>
+          );
+        })}
 
         <div className="my-1.5 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />
         {deleteGroup.items.map(renderItem)}

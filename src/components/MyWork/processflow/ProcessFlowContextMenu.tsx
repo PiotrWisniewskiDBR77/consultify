@@ -59,8 +59,11 @@ export const ProcessFlowContextMenu: React.FC<ProcessFlowContextMenuProps> = ({
         onClose();
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    // Faza przechwytywania — obowiązkowa: d3-zoom pod ReactFlow woła
+    // `stopImmediatePropagation()` na `mousedown` w `.react-flow__pane`, więc
+    // zwykły listener nigdy się nie odpali (patrz NodeContextMenu).
+    window.addEventListener('mousedown', handler, true);
+    return () => window.removeEventListener('mousedown', handler, true);
   }, [onClose]);
 
   useEffect(() => {
