@@ -25127,7 +25127,8 @@
       "suggestedEvidencePlaceholder": "Rodzaj dowodu, który powinien wspierać tę sekcję (typ źródła, nie konkretny zmyślony cytat).",
       "addSection": "Dodaj sekcję",
       "blankTitleHint": "Każda sekcja wymaga tytułu, zanim będzie można zapisać.",
-      "structurePreviewHeading": "Podgląd struktury"
+      "structurePreviewHeading": "Podgląd struktury",
+      "structurePreviewEmpty": "Brak sekcji do pokazania."
     },
     "view": {
       "templatesLoadFailedWithReason": "Nie udało się wczytać zatwierdzonych szablonów ({{reason}}). Nadal możesz generować bez szablonu.",

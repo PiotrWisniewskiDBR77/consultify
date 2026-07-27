@@ -24083,7 +24083,8 @@
       "suggestedEvidencePlaceholder": "The category of proof that should back this section (a source type, not a specific fabricated citation).",
       "addSection": "Add section",
       "blankTitleHint": "Every section needs a title before you can save.",
-      "structurePreviewHeading": "Structure preview"
+      "structurePreviewHeading": "Structure preview",
+      "structurePreviewEmpty": "No sections yet."
     },
     "view": {
       "templatesLoadFailedWithReason": "Approved templates could not be loaded ({{reason}}). You can still generate without a template.",
