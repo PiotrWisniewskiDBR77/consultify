@@ -18704,7 +18704,20 @@
       "previewTitle": "Stan pakietu",
       "ratios": "Sprawozdania",
       "validation": "Status pakietu",
-      "computeRatios": "Przelicz ratios"
+      "computeRatios": "Przelicz ratios",
+      "reason": {
+        "missingPl": "Brakuje rachunku zysków i strat",
+        "missingBs": "Brakuje bilansu",
+        "missingCf": "Brakuje rachunku przepływów pieniężnych",
+        "duplicateType": "Ten sam rodzaj sprawozdania wgrano więcej niż raz",
+        "inconsistentCurrency": "Sprawozdania są w różnych walutach",
+        "inconsistentScaling": "Sprawozdania mają różną skalę wartości (np. jednostki i tysiące)",
+        "inconsistentPeriod": "Sprawozdania obejmują różne okresy",
+        "hasRejected": "Co najmniej jedno sprawozdanie zostało odrzucone przy weryfikacji",
+        "hasPending": "Co najmniej jedno sprawozdanie czeka na weryfikację",
+        "hasRecoverable": "Co najmniej jedno sprawozdanie wymaga poprawek, zanim będzie użyteczne",
+        "unknown": "To sprawozdanie wymaga sprawdzenia, zanim będzie można go użyć"
+      }
     },
     "counters": {
       "all": "Wszystkie",

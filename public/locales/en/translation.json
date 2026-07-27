@@ -18236,7 +18236,20 @@
       "previewTitle": "Pack health",
       "ratios": "Statements",
       "validation": "Pack status",
-      "computeRatios": "Compute ratios"
+      "computeRatios": "Compute ratios",
+      "reason": {
+        "missingPl": "Missing profit and loss statement",
+        "missingBs": "Missing balance sheet",
+        "missingCf": "Missing cash flow statement",
+        "duplicateType": "The same statement type was imported more than once",
+        "inconsistentCurrency": "Statements use different currencies",
+        "inconsistentScaling": "Statements use different value scales (e.g. units vs thousands)",
+        "inconsistentPeriod": "Statements cover different reporting periods",
+        "hasRejected": "At least one statement was rejected during validation",
+        "hasPending": "At least one statement is still awaiting validation",
+        "hasRecoverable": "At least one statement needs corrections before it can be used",
+        "unknown": "This statement needs review before it can be used"
+      }
     },
     "counters": {
       "all": "All",

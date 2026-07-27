@@ -31,6 +31,7 @@ import {
   type FinancialStatementMappedValue,
   FinancialStatementMappingEditor,
 } from './FinancialStatementMappingEditor';
+import { statementReasonSentences } from './statementReadinessCopy';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1251,17 +1252,20 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                 </div>
               )}
 
+              {/* FALA 1 (2026-07-27): chipy z surowymi kodami backendu
+                  (`MISSING_PL`) → zdania mówiące, czego brakuje. */}
               {!!readiness?.reasonCodes?.length && (
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {readiness.reasonCodes.map((code) => (
-                    <span
-                      key={code}
-                      className="rounded-md bg-white/70 px-2 py-1 text-[10px] font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-300"
+                <ul className="mt-4 space-y-1">
+                  {statementReasonSentences(readiness.reasonCodes, t).map((sentence) => (
+                    <li
+                      key={sentence}
+                      className="flex items-start gap-1.5 text-[11px] text-slate-600 dark:text-slate-300"
                     >
-                      {code}
-                    </span>
+                      <span aria-hidden="true">•</span>
+                      <span>{sentence}</span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               )}
             </div>
           </div>
