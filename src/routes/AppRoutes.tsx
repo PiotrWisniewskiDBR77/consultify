@@ -41,6 +41,7 @@ import { StudioUnavailableView } from '@/views/StudioUnavailableView';
 
 import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
 import { LicensedToolsRedirect } from './LicensedToolsRedirect';
+import { buildMaterialsStudioBreadcrumb } from './materialsStudioBreadcrumb';
 import { resolvePresentationWizardRedirectTarget } from './presentationWizardRedirect';
 import { ROUTES } from './routeConfig';
 import { WorkCanvasRedirect } from './WorkCanvasRedirect';
@@ -710,6 +711,14 @@ export const AppRoutes: React.FC = () => {
   } = useAppStore();
 
   const breadcrumbs = useBreadcrumbs();
+
+  // FAZA B3 (2026-07-27): the 3 Materiały studios (Document Studio,
+  // Prezentacje, Excel) resume an existing material via `?artifactId=`
+  // (or, for Document Studio, `/document-studio/:artifactId`). Used to pick
+  // a "resumed" vs "new" label for the studio breadcrumb's last segment —
+  // we don't have the real material title here without reaching into each
+  // studio's own load state (out of scope for this pass, see report).
+  const materialsArtifactIdParam = new URLSearchParams(location.search).get('artifactId');
 
   const isSuperAdmin = isSuperAdminRole(currentUser?.role);
   const hideNonCoreModulesOnPublicProduction = React.useMemo(
@@ -1542,7 +1551,19 @@ export const AppRoutes: React.FC = () => {
           element={
             isExceleEngineEnabled() ? (
               <ProtectedRoute requireAuth={true}>
-                <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.excele', 'Excel')]}>
+                <MainLayout
+                  breadcrumbs={
+                    breadcrumbs ||
+                    buildMaterialsStudioBreadcrumb(
+                      t('sidebar.materialy', 'Materials'),
+                      t('rap.tabs.sheets', 'Sheets'),
+                      'sheets',
+                      materialsArtifactIdParam
+                        ? t('excele.breadcrumb.open', 'Sheet')
+                        : t('excele.breadcrumb.new', 'New sheet')
+                    )
+                  }
+                >
                   <RouteErrorBoundary>
                     <ExceleView />
                   </RouteErrorBoundary>
@@ -1570,7 +1591,17 @@ export const AppRoutes: React.FC = () => {
             <ProtectedRoute requireAuth={true}>
               <BetaGate moduleId="MODULE_PREZENTACJE_GEN">
                 <MainLayout
-                  breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]}
+                  breadcrumbs={
+                    breadcrumbs ||
+                    buildMaterialsStudioBreadcrumb(
+                      t('sidebar.materialy', 'Materials'),
+                      t('rap.tabs.presentations', 'Presentations'),
+                      'presentations',
+                      materialsArtifactIdParam
+                        ? t('prezentacje.breadcrumb.open', 'Presentation')
+                        : t('prezentacje.breadcrumb.new', 'New presentation')
+                    )
+                  }
                 >
                   <RouteErrorBoundary>
                     <PrezentacjeView />
@@ -2285,10 +2316,15 @@ export const AppRoutes: React.FC = () => {
               <BetaGate moduleId="MODULE_DOCUMENT_STUDIO">
                 <MainLayout
                   breadcrumbs={
-                    breadcrumbs || [
-                      t('sidebar.documentStudio', 'Documents'),
-                      t('documentStudio.breadcrumb', 'Document Studio'),
-                    ]
+                    breadcrumbs ||
+                    buildMaterialsStudioBreadcrumb(
+                      t('sidebar.materialy', 'Materials'),
+                      t('rap.tabs.documents', 'Documents'),
+                      'documents',
+                      materialsArtifactIdParam
+                        ? t('documentStudio.breadcrumb.open', 'Document')
+                        : t('documentStudio.breadcrumb.new', 'New document')
+                    )
                   }
                   noPadding
                 >
@@ -2307,10 +2343,13 @@ export const AppRoutes: React.FC = () => {
               <BetaGate moduleId="MODULE_DOCUMENT_STUDIO">
                 <MainLayout
                   breadcrumbs={
-                    breadcrumbs || [
-                      t('sidebar.documentStudio', 'Documents'),
-                      t('documentStudio.breadcrumb', 'Document Studio'),
-                    ]
+                    breadcrumbs ||
+                    buildMaterialsStudioBreadcrumb(
+                      t('sidebar.materialy', 'Materials'),
+                      t('rap.tabs.documents', 'Documents'),
+                      'documents',
+                      t('documentStudio.breadcrumb.open', 'Document')
+                    )
                   }
                   noPadding
                 >
