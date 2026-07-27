@@ -87,7 +87,9 @@ export function useTableViews(
       setSort(view.sort?.[0] ?? null);
       setFilters(view.filters ?? { logic: 'and', rules: [] });
       setGroupBy(view.groupBy ?? null);
-      if (view.layout) setViewLayout(view.layout);
+      // Zawsze ustaw layout — inaczej poprzedni widok (np. 'timeline') zostaje
+      // "wiszący" na widoku bez własnego layoutu, bo viewLayout jest współdzielony.
+      setViewLayout(view.layout ?? 'table');
       if (view.columns && onApplyColumns) {
         onApplyColumns(view.columns);
       }
