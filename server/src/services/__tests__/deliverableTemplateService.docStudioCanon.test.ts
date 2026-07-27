@@ -59,8 +59,9 @@ const {
   updateDeliverableTemplate,
   deleteDeliverableTemplate,
   getDeliverableTemplate,
+  listDeliverableTemplates,
 } = await import('../deliverableTemplateService.js');
-const { __resetTemplateRegistryForTests } = await import(
+const { __resetTemplateRegistryForTests, getTemplate, isTemplateUsableForGeneration } = await import(
   '../documentStudio/documentTemplateService.js'
 );
 
@@ -165,5 +166,54 @@ describe('createDeliverableTemplate("doc") — canon rewrite to document_studio_
 
     const afterDelete = await getDeliverableTemplate(created.id, ORG_ID);
     expect(afterDelete).toBeNull();
+  });
+
+  it('route flow: create → list → resolve (Biblioteka + Mode 3), per T1 acceptance', async () => {
+    const created = await createDeliverableTemplate(
+      'doc',
+      'Szablon widoczny w Bibliotece',
+      'Opis',
+      { sections_json: [{ title: 'Sekcja', block: 'paragraph', depth: 'medium', hint: '', ai_filled: false }] },
+      ORG_ID,
+      USER_ID
+    );
+
+    // LIST — GET /api/deliverables/templates?type=doc federates legacy
+    // report_builder_templates (SQL, empty here) with document_studio_templates
+    // (SQL, routed below to reflect what the durable persistTemplate call
+    // above just wrote — proves the SQL-mapping side of the read path,
+    // `mapDocStudioRow`, independently of the in-memory registry already
+    // covered by the GET-by-id test above).
+    queryAllMock.mockImplementation(async (sql: string) => {
+      const s = String(sql);
+      if (s.includes('FROM document_studio_templates')) {
+        return [
+          {
+            template_id: created.id,
+            name: created.name,
+            purpose: 'Opis',
+            notes: null,
+            is_system: false,
+            organization_id: ORG_ID,
+            section_blueprint: created.meta.sections_json,
+            document_type: 'generic_document',
+          },
+        ];
+      }
+      return []; // legacy report_builder_templates: nothing here
+    });
+
+    const listed = await listDeliverableTemplates('doc', ORG_ID, USER_ID);
+    const match = listed.find((t) => t.id === created.id);
+    expect(match).toBeDefined();
+    expect(match?.name).toBe(created.name);
+    expect(match?.meta.source).toBe('document_studio_templates');
+
+    // RESOLVE — the Mode 3 entry point (documentStudioService.materializeDocumentArtifact)
+    // resolves templates via documentTemplateService.getTemplate +
+    // isTemplateUsableForGeneration; both must accept what the Library just created.
+    const resolved = getTemplate(created.id, ORG_ID);
+    expect(resolved).not.toBeNull();
+    expect(isTemplateUsableForGeneration(resolved, ORG_ID)).toBe(true);
   });
 });
