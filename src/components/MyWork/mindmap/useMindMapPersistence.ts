@@ -157,6 +157,14 @@ export interface UseMindMapPersistenceOpts {
   onPreferredToolLoaded?: (tool: CanvasToolType | null) => void;
   onViewportReport?: (viewport: { x: number; y: number; zoom: number }) => void;
   clearUndoHistory: () => void;
+  /**
+   * B2 (2026-07-27): bump = „graf podmieniony z ZEWNATRZ" (szablon z galerii).
+   * Konieczny, bo efekt „skok wersji" nizej z zalozenia IGNORUJE bump o +1
+   * (zeby wlasny autosave nie resetowal viewportu) — a zastosowanie szablonu
+   * podnosi wersje serwera dokladnie o +1, wiec bylo nieodrozanialne od
+   * wlasnego zapisu i kanwa nigdy sie nie przeladowywala.
+   */
+  refreshToken?: number;
   externalRuntime?: {
     version: number;
     loading: boolean;
@@ -201,6 +209,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     onPreferredToolLoaded,
     onViewportReport,
     clearUndoHistory,
+    refreshToken,
     externalRuntime,
   } = opts;
 
@@ -601,6 +610,28 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     hydrate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runtimeVersion]);
+
+  // B2 (2026-07-27): WYMUSZONA re-hydratacja na zewnetrzna podmiane grafu
+  // (szablon z galerii). Efekt „skok wersji" powyzej swiadomie przepuszcza
+  // bump o +1 — a szablon podnosi wersje dokladnie o +1, wiec bez tego efektu
+  // kanwa Mind Map zostawala stara mimo poprawnego zapisu na serwerze
+  // (objaw uzytkownika: „klikam Uzyj szablonu i nic sie nie dzieje").
+  // Pierwsza wartosc tokenu jest POMIJANA (to montaz, nie podmiana).
+  const lastRefreshTokenRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (refreshToken === undefined) return;
+    if (lastRefreshTokenRef.current === null) {
+      lastRefreshTokenRef.current = refreshToken;
+      return;
+    }
+    if (lastRefreshTokenRef.current === refreshToken) return;
+    lastRefreshTokenRef.current = refreshToken;
+    // Runtime zostal juz odswiezony przez rodzica (handleTemplateApplied),
+    // wiec zdejmujemy blokade efektu wersji i czytamy graf od nowa.
+    lastHydratedRuntimeVersionRef.current = runtimeVersion;
+    hydrate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshToken]);
 
   // DP-3 (T6): `graph_version` = the WS gateway persisted a live graph_patch
   // we have ALREADY applied to the canvas (the patch relay precedes the
