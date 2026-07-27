@@ -5630,7 +5630,8 @@
       "aiQualityScoreTitle": "AI quality score per rubric (concreteness/evidence/depth/measurability/coherence): {{score}}/5",
       "createdRelative": "Created {{relative}}",
       "confirmSendReminderTo": "Are you sure you want to send a reminder to {{name}}?",
-      "theUserFallback": "the user"
+      "theUserFallback": "the user",
+      "linkedSession": "Linked session"
     },
     "insightViewer": {
       "panelResults": "Results",

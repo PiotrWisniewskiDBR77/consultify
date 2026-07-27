@@ -4882,7 +4882,8 @@
       "aiQualityScoreTitle": "Ocena jakości AI wg rubryki (konkretność/dowody/głębia/mierzalność/spójność): {{score}}/5",
       "createdRelative": "Utworzono {{relative}}",
       "confirmSendReminderTo": "Czy na pewno chcesz wysłać przypomnienie do {{name}}?",
-      "theUserFallback": "użytkownika"
+      "theUserFallback": "użytkownika",
+      "linkedSession": "Powiązana sesja"
     },
     "insightViewer": {
       "panelResults": "Rezultaty",

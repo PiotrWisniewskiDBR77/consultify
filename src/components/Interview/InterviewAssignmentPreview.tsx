@@ -94,7 +94,8 @@ export interface InterviewAssignmentPreviewFooterProps {
   onRegenerateAi?: () => void;
   onCopyAi?: () => void;
   onClearAi?: () => void;
-  relations: Array<{ label: string; tone: string }>;
+  /** `title` = tooltip (miejsce na identyfikator techniczny, nigdy w `label`). */
+  relations: Array<{ label: string; tone: string; title?: string }>;
   onStartAssignment?: () => void;
   onContinueAssignment?: () => void;
   onFixAssignment?: () => void;
@@ -121,6 +122,7 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
   const { t } = useTranslation();
   const relationItems: RelationItem[] = relations.map((r) => ({
     label: r.label,
+    title: r.title,
     tone: r.tone,
   }));
 
