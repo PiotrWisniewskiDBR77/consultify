@@ -3,7 +3,9 @@
  *
  * Tabs:
  *   - Generate: Mode 1 (intake -> outline -> document) and Mode 3 (intake +
- *     approved template -> document, no outline preview).
+ *     approved template -> outline preview, seeded client-side from the
+ *     template's sectionBlueprint -> document). Both modes show the plan
+ *     before writing starts — see N3, `_DOKTRYNA_STREAMING_2026-07-27.md` §7.4.
  *   - Plan template: Mode 2 — Document Template Architect.
  *
  * Routed at /document-studio (and /document-studio/:artifactId for resume).
@@ -71,6 +73,35 @@ function dedupeSourceRefs(blocks: { sourceRef?: DocumentSourceRef }[]): Document
     if (!seen.has(key)) seen.set(key, ref);
   }
   return Array.from(seen.values());
+}
+
+/**
+ * N3 (doktryna streaming §2/§7.4) — Mode 3 preview outline, built client-side
+ * from the already-loaded approved template so the plan screen can render
+ * instantly with no extra round-trip ("tani do zrobienia" per doctrine). Mirrors
+ * `outlineFromTemplate` server-side (`documentStudioService.ts:514-528`) field
+ * for field; the server remains the source of truth for the outline actually
+ * used to generate (see `handleGenerate` below — `outline` is NOT sent over
+ * the wire for template mode, only used to seed this preview + panel skeleton).
+ */
+function buildTemplateOutlinePreview(
+  template: DocumentTemplate,
+  intake: DocumentIntake
+): DocumentOutline {
+  return {
+    documentType: template.documentType,
+    title:
+      intake.title?.trim() || `${template.documentType.replace(/_/g, ' ')}: ${template.name}`,
+    sections: template.sectionBlueprint.map((blueprint) => ({
+      title: blueprint.title,
+      level: blueprint.level,
+      purpose: blueprint.purpose,
+      expectedLengthHint: blueprint.expectedLengthHint,
+    })),
+    recommendedDensity: template.density,
+    recommendedRegister: template.communicationRegister,
+    recommendedLanguageStyle: template.languageStyle,
+  };
 }
 
 export const DocumentStudioView: React.FC = () => {
@@ -512,11 +543,30 @@ export const DocumentStudioView: React.FC = () => {
   ): Promise<void> => {
     setError(null);
 
-    // Mode 3: skip outline preview and generate directly (streamed).
+    // N3 (doktryna streaming §2/§7.4) — Mode 3: preview the template's
+    // structure as a plan BEFORE generating, same as Mode 1. Previously this
+    // skipped straight to `generating`, which was the one inconsistency the
+    // doctrine calls out ("plan zawsze widoczny" must not have exceptions).
+    // Reuses `DocumentStudioOutlinePanel` as-is, seeded client-side from the
+    // already-loaded template's `sectionBlueprint` — zero extra round-trip.
+    // Deliberately NOT an editable plan here (that's the more expensive,
+    // later-phase item per doctrine §7); a single "Generate document" click
+    // confirms it, same gesture speed as before, so the N11/N12 "BANG" feel
+    // is preserved while still showing the structure first.
     if (options.templateId) {
       setIntake(nextIntake);
       setActiveTemplateId(options.templateId);
       setUseLlm(false);
+      const template = approvedTemplates.find((tpl) => tpl.templateId === options.templateId);
+      if (template) {
+        setOutline(buildTemplateOutlinePreview(template, nextIntake));
+        setPhase('outline');
+        return;
+      }
+      // Defensive fallback: the form resolved a templateId that isn't in the
+      // currently loaded list (stale cache / race with `refreshApprovedTemplates`).
+      // Don't block the user behind a plan screen we have no data to render —
+      // generate directly, same as the pre-N3 behavior.
       await runStreamingGeneration({ intake: nextIntake, templateId: options.templateId }, null);
       return;
     }
@@ -566,15 +616,21 @@ export const DocumentStudioView: React.FC = () => {
   );
 
   // FAZA B1 — pierwsza wiadomość w `DocumentStudioAiEntryPanel` uruchamia
-  // generację BEZPOŚREDNIO (BANG, N11/N12): bez ekranu podglądu outline'u,
-  // dokładnie tak jak Mode 3 (template) już robi — serwer planuje outline
-  // wewnętrznie i emituje go zdarzeniem `plan` (`runStreamingGeneration`
-  // sieje `knownOutline=null`, `DocumentStudioGeneratingPanel` wypełnia się
-  // na żywo dopiero po tym zdarzeniu). Auto-grounding (org + projekty +
-  // inicjatywy) dzieje się PO STRONIE SERWERA identycznie jak dla każdego
-  // innego wywołania `/generate/stream` — patrz
+  // generację BEZPOŚREDNIO (BANG, N11/N12): bez ekranu podglądu outline'u —
+  // serwer planuje outline wewnętrznie i emituje go zdarzeniem `plan`
+  // (`runStreamingGeneration` sieje `knownOutline=null`,
+  // `DocumentStudioGeneratingPanel` wypełnia się na żywo dopiero po tym
+  // zdarzeniu). Auto-grounding (org + projekty + inicjatywy) dzieje się PO
+  // STRONIE SERWERA identycznie jak dla każdego innego wywołania
+  // `/generate/stream` — patrz
   // `server/src/services/documentStudio/documentOrgContextSourcePack.ts`
   // i `autoGroundGenerateRequest` w `document-studio.routes.ts`.
+  // ★ N3 (2026-07-28, doktryna streaming §7.4): Mode 3 (z szablonu) dostał
+  // ekran planu, żeby domknąć niespójność "plan czasem pomijany". Ta ścieżka
+  // (`entry=ai`, flaga `ff_zai_teresa`, domyślnie OFF) świadomie NIE dostała
+  // tej samej zmiany — poza zakresem tego zadania (dotyczy tylko trybu
+  // szablonu) i poza zakresem dozwolonych dotknięć `entry=ai` w tej sesji.
+  // Do rozważenia osobno, jeśli/gdy `ff_zai_teresa` wejdzie do akceptu.
   const handleAiChatFirstMessage = useCallback(
     async (description: string): Promise<void> => {
       setError(null);
@@ -592,7 +648,17 @@ export const DocumentStudioView: React.FC = () => {
     await runStreamingGeneration(
       {
         intake,
-        outline,
+        // Mode 1: `outline` came from `/plan` (possibly LLM-refined) and MUST
+        // be sent to the server as-is. Mode 3 (template, `activeTemplateId`
+        // set): `outline` here is the client-side preview
+        // (`buildTemplateOutlinePreview`) shown on the plan screen above —
+        // intentionally NOT sent over the wire, so the server stays the one
+        // source of truth for the template's canonical outline
+        // (`outlineFromTemplate` in `documentStudioService.ts`), exactly like
+        // before N3 added the preview screen. `knownOutline` (2nd arg) still
+        // gets the preview either way, so the generating panel's section
+        // skeleton is seeded instantly instead of waiting for the `plan` event.
+        outline: activeTemplateId ? undefined : outline,
         useLlm,
         templateId: activeTemplateId ?? undefined,
       },
