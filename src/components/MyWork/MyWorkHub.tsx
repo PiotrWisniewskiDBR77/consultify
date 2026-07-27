@@ -65,6 +65,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { presentationsTabQueryForHomeBridge } from '@/components/ReportsAndPresentations/outputsLibraryTabQuery';
+import { HubBarSlotsProvider, useHubBar } from '@/components/shared/HubBarSlots';
 import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import {
   MENU_2_TAB_ACTIVE,
@@ -639,7 +640,19 @@ interface MyWorkHubProps {
   onNavigate?: (view: string) => void;
 }
 
-export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
+/**
+ * ★ JEDEN PASEK NA EKRAN (2026-07-27, zgłoszenie właściciela na żywym demo).
+ *
+ * Hub jest właścicielem Menu 2 i Menu 3 — ekrany-dzieci (Run agent, Client
+ * Vault) NIE rysują własnych pasków, tylko DEKLARUJĄ, co ma się w tym jednym
+ * pasku pojawić (`useHubBarSlot`, src/components/shared/HubBarSlots.tsx).
+ * Przedtem nad obszarem roboczym stały cztery rzędy chrome, z czego dwa były
+ * duplikatem — cytat: „za dużo miejsca ucieka".
+ *
+ * Rozdział na `MyWorkHub` (provider) i `MyWorkHubInner` (treść) jest konieczny,
+ * bo kontekstu nie da się czytać w tym samym komponencie, który go zakłada.
+ */
+const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const openChatWithContext = useOpenChatWithContext();
@@ -4184,5 +4197,17 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     </div>
   );
 };
+
+/**
+ * Publiczny MyWorkHub = provider slotów paska + treść huba.
+ * Ekrany-dzieci (AgentHubShell, ClientDocumentsVault) deklarują swoje elementy
+ * paska przez `useHubBarSlot`; `MyWorkHubInner` czyta je przez `useHubBar`
+ * i wplata w SWOJE Menu 2/3 — zamiast pozwalać dziecku rysować drugi pasek.
+ */
+export const MyWorkHub: React.FC<MyWorkHubProps> = (props) => (
+  <HubBarSlotsProvider>
+    <MyWorkHubInner {...props} />
+  </HubBarSlotsProvider>
+);
 
 export default MyWorkHub;
