@@ -342,4 +342,67 @@ describe('ReportsAndPresentationsHub', () => {
     expect(screen.queryByTestId('deck-architect-view')).not.toBeInTheDocument();
     expect(screen.getByTestId('templates-initial-artifact')).toBeInTheDocument();
   });
+
+  // Regresja G5 (przechwycona przez suitę E2E, NIE przez jednostkowe testy
+  // powyżej — dlatego przeszła na demo): Hub przekazywał `TemplatesNewSplitButton`
+  // (ReactNode) przez prop `primaryCta` StandardModuleBar, który oczekuje configu
+  // {label,icon,onClick} — button.icon/label/onClick były `undefined`, więc
+  // przycisk renderował się jako PUSTA, NIEKLIKALNA biała pigułka. Naprawa:
+  // ten sam ReactNode idzie przez `primaryCtaContent` (dedykowany slot).
+  // Te testy renderują PRAWDZIWY StandardModuleBar (nieomockowany w tym pliku
+  // — mock '.../ModuleHub' powyżej jest martwy, Hub od dawna renderuje
+  // StandardModuleBar bezpośrednio), więc łapią realne przekazanie propa.
+  describe('"New template" split button (deck-architect flag ON)', () => {
+    it('renders with visible, non-empty label text (regression: was an empty white pill)', () => {
+      render(
+        <MemoryRouter initialEntries={['/presentations?tab=templates']}>
+          <ReportsAndPresentationsHub />
+        </MemoryRouter>
+      );
+
+      const button = screen.getByTestId('outputs-new-btn');
+      expect(button).toBeInTheDocument();
+      expect(button.textContent?.trim()).toBe('New template');
+    });
+
+    it('clicking the main part triggers the default "New template" action (opens the format/mode launcher)', () => {
+      render(
+        <MemoryRouter initialEntries={['/presentations?tab=templates']}>
+          <ReportsAndPresentationsHub />
+        </MemoryRouter>
+      );
+
+      expect(screen.queryByTestId('template-library-create-launcher')).not.toBeInTheDocument();
+
+      act(() => {
+        screen.getByTestId('outputs-new-btn').click();
+      });
+
+      expect(screen.getByTestId('template-library-create-launcher')).toBeInTheDocument();
+    });
+
+    it('clicking the split arrow reveals "Architekt szablonów", and selecting it navigates into the embedded deck-architect mode', () => {
+      render(
+        <MemoryRouter initialEntries={['/presentations?tab=templates']}>
+          <ReportsAndPresentationsHub />
+        </MemoryRouter>
+      );
+
+      expect(screen.queryByTestId('templates-open-deck-architect')).not.toBeInTheDocument();
+
+      act(() => {
+        screen.getByTestId('templates-new-split-toggle').click();
+      });
+
+      const architectOption = screen.getByTestId('templates-open-deck-architect');
+      expect(architectOption).toBeInTheDocument();
+      expect(architectOption.textContent).toContain('Architekt szablonów');
+
+      act(() => {
+        architectOption.click();
+      });
+
+      expect(navigateMock).toHaveBeenCalledWith('/presentations?tab=template_architect');
+    });
+  });
 });
