@@ -23696,6 +23696,16 @@
     "qualityGateBlockedDetailed": "Bramka jakości zablokowana — wymagany przegląd przed eksportem",
     "leftRail": {
       "openBuilder": "Otwórz w Builderze"
+    },
+    "breadcrumb": {
+      "new": "Nowa prezentacja",
+      "open": "Prezentacja"
+    }
+  },
+  "excele": {
+    "breadcrumb": {
+      "new": "Nowy arkusz",
+      "open": "Arkusz"
     }
   },
   "aiActions": {
@@ -25095,7 +25105,12 @@
       "title": "Consultify Document Studio",
       "presenceNote": "Tryby 1, 2, 3 · Środowisko artefaktów Word/PDF",
       "loadingDocument": "Ładowanie dokumentu…",
-      "noDocument": "Brak wczytanego dokumentu."
+      "noDocument": "Brak wczytanego dokumentu.",
+      "backToMaterials": "Wróć do Materiałów"
+    },
+    "breadcrumb": {
+      "new": "Nowy dokument",
+      "open": "Dokument"
     },
     "qa": {
       "title": "Kontrola jakości — marka + język",

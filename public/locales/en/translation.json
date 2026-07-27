@@ -22662,6 +22662,16 @@
     "qualityGateBlockedDetailed": "Quality gate blocked — review required before export",
     "leftRail": {
       "openBuilder": "Open in Builder"
+    },
+    "breadcrumb": {
+      "new": "New presentation",
+      "open": "Presentation"
+    }
+  },
+  "excele": {
+    "breadcrumb": {
+      "new": "New sheet",
+      "open": "Sheet"
     }
   },
   "aiActions": {
@@ -24055,7 +24065,12 @@
       "title": "Consultify Document Studio",
       "presenceNote": "Modes 1, 2, 3 · Word/PDF artifact runtime",
       "loadingDocument": "Loading document…",
-      "noDocument": "No document loaded."
+      "noDocument": "No document loaded.",
+      "backToMaterials": "Back to Materials"
+    },
+    "breadcrumb": {
+      "new": "New document",
+      "open": "Document"
     },
     "qa": {
       "title": "Quality QA — Brand + Language",

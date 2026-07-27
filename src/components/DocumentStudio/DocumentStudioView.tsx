@@ -644,6 +644,14 @@ export const DocumentStudioView: React.FC = () => {
           }
           chips={tabChips}
           respectMelsOrder={false}
+          // FAZA B3 (2026-07-27): wejście w Document Studio wyrzucało z
+          // powłoki Materiałów — brak drogi powrotnej poza przeglądarkowym
+          // "Wstecz". MainLayout breadcrumb dostał klikalny pierwszy segment
+          // "Materiały" równolegle; ten przycisk jest drugą, redundantną ale
+          // tanią afordancją bezpośrednio w studiu (ten sam cel co istniejący
+          // "Wróć do Materiałów" w stanie błędu ładowania, patrz niżej).
+          onBack={() => navigate('/presentations?tab=documents')}
+          backLabel={t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
           presenceSlot={
             <span className="hidden text-[11px] text-c-text-muted lg:inline">
               {t('documentStudio.view.presenceNote', 'Modes 1, 2, 3 · Word/PDF artifact runtime')}
