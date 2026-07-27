@@ -474,6 +474,14 @@ function getDocumentTab(type: OpenDocument['type']): ModuleTab {
   }
 }
 
+// ★ LEAK Menu 3 (zgłoszenie właściciela, żywe demo 2026-07-26): dynamiczne
+// karty `openDocuments` (task/idea/decision/notification/initiative) mają
+// sens WYŁĄCZNIE na zakładkach, które je realnie otwierają — patrz
+// `getDocumentTab` wyżej. Przedtem `renderCommandRow` pokazywał je na KAŻDEJ
+// zakładce (w tym 'agent'/'vault'), więc np. karta „Proces ofertowania"
+// (otwarta wcześniej na Ideas) wisiała nad Run agent, gdzie nie ma sensu.
+const OPEN_DOCUMENT_TABS: ModuleTab[] = ['tasks', 'ideas', 'decisions', 'inbox'];
+
 function getInitialMyWorkTab(
   searchParams: URLSearchParams,
   _canViewManager: boolean,
@@ -636,6 +644,46 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
   unread: 'bg-amber-400',
 };
 
+// ★ HubBarSlots (2026-07-27) — karty dokładane do Menu 3 z ekranu-dziecka
+// (np. Run agent) używają `OpenDocument`/`ItemStatus` z
+// `shared/ModuleHub/types` (kanoniczny 13-status lifecycle), INNY zbiór niż
+// lokalny `ItemStatus` powyżej (10 wartości specyficznych dla MyWork). Stąd
+// osobna, mała mapa tylko dla tych kart — paleta zgodna z
+// `shared/ModuleHub/DynamicTabs.tsx` STATUS_COLORS (SSOT koloru kropki).
+const HUB_SLOT_STATUS_DOT: Record<string, string> = {
+  DRAFT: 'bg-slate-400',
+  PENDING_REVIEW: 'bg-amber-400',
+  REVIEW: 'bg-amber-400',
+  PROMOTED: 'bg-blue-400',
+  PLANNING: 'bg-indigo-400',
+  APPROVED: 'bg-emerald-400',
+  SCHEDULED: 'bg-blue-400',
+  EXECUTING: 'bg-blue-400',
+  BLOCKED: 'bg-danger-400',
+  DONE: 'bg-green-400',
+  TRACKING: 'bg-blue-400',
+  CANCELLED: 'bg-gray-400',
+  ARCHIVED: 'bg-slate-500',
+};
+
+// Ikona per `doc.type` dla kart ze slotu dziecka — te same typy co
+// `shared/ModuleHub/types.ts` OpenDocument['type'].
+const HUB_SLOT_TYPE_ICON: Record<string, React.ComponentType<{ size?: number }>> = {
+  tool: Bot,
+  task: CheckSquare,
+  idea: Lightbulb,
+  decision: Scale,
+  notification: Bell,
+  initiative: Rocket,
+  report: FileText,
+  assessment: FileText,
+  presentation: FileText,
+  conclusion: FileText,
+  interview_session: FileText,
+  interview_insight: FileText,
+  interview_template: FileText,
+};
+
 interface MyWorkHubProps {
   onNavigate?: (view: string) => void;
 }
@@ -655,6 +703,9 @@ interface MyWorkHubProps {
 const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  // ★ JEDEN PASEK NA EKRAN — co ekran-dziecko (Run agent, Client Vault)
+  // zadeklarował przez `useHubBarSlot`. Poza providerem: zawsze `{}` (no-op).
+  const hubBarSlot = useHubBar();
   const openChatWithContext = useOpenChatWithContext();
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   const location = useLocation();
@@ -2469,11 +2520,24 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     [activeTab]
   );
 
-  // Render Dynamic Tabs
+  // Render Dynamic Tabs — hub's own openDocuments (gated to the tabs that
+  // actually open them, OPEN_DOCUMENT_TABS) PLUS cards DOKLEJONE from a
+  // child screen's HubBarSlots registration (`hubBarSlot.openItems`, e.g.
+  // Run agent's open processes). Both live in the SAME row/List button —
+  // in practice they never populate on the same tab at once (a child clears
+  // its slot on unmount), but rendering them side by side is the general,
+  // correct form and matches what the owner asked for: ONE Menu 3.
   const renderDynamicTabs = () => {
-    if (openDocuments.length === 0) return null;
+    const hubDocs = OPEN_DOCUMENT_TABS.includes(activeTab) ? openDocuments : [];
+    const childItems = hubBarSlot.openItems ?? [];
+    if (hubDocs.length === 0 && childItems.length === 0) return null;
 
-    const isListActive = activeDocumentId === null;
+    const childActiveId = hubBarSlot.activeItemId ?? null;
+    const isListActive = activeDocumentId === null && childActiveId === null;
+    const handleListClick = () => {
+      handleShowList();
+      hubBarSlot.onShowList?.();
+    };
 
     return (
       <div className={MENU_3_ROW_CLASS}>
@@ -2481,7 +2545,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           <div className={`${MENU_3_LEFT_CLASS} overflow-x-auto whitespace-nowrap no-scrollbar`}>
             {/* List button */}
             <button
-              onClick={handleShowList}
+              onClick={handleListClick}
               className={
                 isListActive
                   ? TAB_ACTIVE.replace('border-l-2', '')
@@ -2496,8 +2560,8 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {/* Separator */}
             <div className="w-px h-6 bg-slate-200/70 dark:bg-white/[0.06] shrink-0" />
 
-            {/* Document Tabs */}
-            {openDocuments.map((doc) => {
+            {/* Document Tabs (hub's own — tasks/ideas/decisions/inbox) */}
+            {hubDocs.map((doc) => {
               const isActive = doc.id === activeDocumentId;
               const leftBorderColor = TYPE_COLORS[doc.type];
               const statusColor = STATUS_COLORS[doc.status] || 'bg-slate-400';
@@ -2530,6 +2594,39 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     }}
                     // Sam „X" nie mowi czytnikowi ekranu NIC, a takich przyciskow
                     // jest tyle, ile otwartych kart — nazwa musi wskazywac ktora.
+                    title={t('myWork.closeOpenDocument', { nazwa: doc.name })}
+                    aria-label={t('myWork.closeOpenDocument', { nazwa: doc.name })}
+                    className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
+                  >
+                    <X size={14} aria-hidden="true" />
+                  </button>
+                </div>
+              );
+            })}
+
+            {/* Child cards DOKLEJONE z HubBarSlots (np. Run agent — otwarte
+                procesy). Te same klasy TAB_ACTIVE/TAB_INACTIVE co karty huba
+                wyżej — jedna wizualna rodzina, tylko inne źródło danych. */}
+            {childItems.map((doc) => {
+              const isActive = doc.id === childActiveId;
+              const Icon = HUB_SLOT_TYPE_ICON[doc.type] || Bot;
+              const statusColor = HUB_SLOT_STATUS_DOT[doc.status] || 'bg-slate-400';
+
+              return (
+                <div
+                  key={doc.id}
+                  className={`group shrink-0 ${isActive ? TAB_ACTIVE : TAB_INACTIVE} border-l-2 border-l-indigo-500`}
+                  onClick={() => hubBarSlot.onSelectItem?.(doc.id)}
+                >
+                  <Icon size={14} />
+                  <span className="max-w-[150px] truncate">{doc.name}</span>
+                  <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      hubBarSlot.onCloseItem?.(doc.id);
+                    }}
                     title={t('myWork.closeOpenDocument', { nazwa: doc.name })}
                     aria-label={t('myWork.closeOpenDocument', { nazwa: doc.name })}
                     className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
@@ -2602,8 +2699,12 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       );
     }
 
-    // 2) Dynamic tabs row (when documents open)
-    if (!hasBulkMode && openDocuments.length > 0) {
+    // 2) Dynamic tabs row (when documents open — hub's own, gated to the
+    // tabs that open them — OR a child screen declared cards via HubBarSlots,
+    // e.g. Run agent's open processes on the 'agent' tab).
+    const hasHubDocsToShow = openDocuments.length > 0 && OPEN_DOCUMENT_TABS.includes(activeTab);
+    const hasChildItems = (hubBarSlot.openItems?.length ?? 0) > 0;
+    if (!hasBulkMode && (hasHubDocsToShow || hasChildItems)) {
       return renderDynamicTabs();
     }
 
@@ -3850,6 +3951,13 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
             {/* Scrollable controls (keep primary action always visible) */}
             <div className="flex items-center gap-3 min-w-0 overflow-x-auto whitespace-nowrap">
+              {/* HubBarSlots — filtr zadeklarowany przez ekran-dziecko (np.
+                  Run agent "Moje procesy | Szablony"). Kontrakt:
+                  filterControls → lewa część prawego klastra (patrz
+                  HubBarSlots.tsx). Dziecko samo decyduje KIEDY go rejestruje
+                  (np. tylko na liście, nie w otwartym procesie). */}
+              {hubBarSlot.filterControls}
+
               {/* Filters (furthest left in right cluster) */}
               {/* Context-sensitive Filter Dropdown (only show when viewing list) */}
               {currentFilters.length > 0 && (
@@ -4135,15 +4243,30 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 )}
             </div>
 
-            {/* Primary Action Button (New Task/Decision/Notification) */}
-            {actionButton && (
+            {/* Primary Action Button (New Task/Decision/Notification) —
+                HubBarSlots: gdy ekran-dziecko (np. Run agent "Nowy agent")
+                zadeklarował `primaryCta`, WYGRYWA nad hub-owym per-tab
+                `actionButton` (kontrakt HubBarSlots.tsx — jeden CTA na
+                ekran, kontekstowy dla tego, co user właśnie widzi). */}
+            {hubBarSlot.primaryCta ? (
               <button
-                onClick={actionButton.onClick}
-                className={`${CTA_BASE} ${CTA_TONE[actionButton.tone]}`}
-                data-testid="mywork-action-button"
+                onClick={hubBarSlot.primaryCta.onClick}
+                disabled={hubBarSlot.primaryCta.disabled}
+                className={`${CTA_BASE} ${CTA_TONE.violet} disabled:opacity-60 disabled:cursor-not-allowed`}
+                data-testid={hubBarSlot.primaryCta.testId || 'mywork-action-button'}
               >
-                <span>{actionButton.label}</span>
+                <span>{hubBarSlot.primaryCta.label}</span>
               </button>
+            ) : (
+              actionButton && (
+                <button
+                  onClick={actionButton.onClick}
+                  className={`${CTA_BASE} ${CTA_TONE[actionButton.tone]}`}
+                  data-testid="mywork-action-button"
+                >
+                  <span>{actionButton.label}</span>
+                </button>
+              )
             )}
 
             {/* I1-I3 Faza 0 — unified "+ Nowy" launcher (Insight/Initiative/
