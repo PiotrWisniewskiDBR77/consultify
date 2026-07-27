@@ -33,6 +33,7 @@ import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { Api } from '../../src/services/api';
 import { useAppStore } from '../../src/store/useAppStore';
+import { zamontujMockKomentarzy } from '../mocks/komentarze';
 import { seedRealisticSession } from '../mocks/seedStore';
 
 seedRealisticSession();
@@ -113,6 +114,9 @@ const MOCK_MAP = {
     extensions: {},
   },
 };
+
+// Komentarze: mock STANOWY (przeżywa F5) — patrz dev-render/mocks/komentarze.ts
+zamontujMockKomentarzy('dev-render:whiteboard-canvas:comments');
 
 Api.getMyIdea = (async () => MOCK_IDEA) as typeof Api.getMyIdea;
 Api.getMyIdeaMap = (async () => MOCK_MAP) as typeof Api.getMyIdeaMap;
