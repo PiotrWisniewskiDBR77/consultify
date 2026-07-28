@@ -54,7 +54,7 @@ import {
   Trash2,
   Wand2,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
@@ -96,7 +96,10 @@ export interface PlanSchemaBlock {
   toolName?: string;
   /**
    * Argumenty narzędzia niesione przez klocek. Dla `vault-kontekst`:
-   * `vault_scope`/`vault_project_id`/`vault_safe_id`/`vault_safe_name`.
+   * `vault_scope`/`vault_project_id`/`vault_safe_id`/`vault_safe_name` (poziom
+   * sejfu) + opcjonalnie `vault_folder_id`/`vault_folder_name` (★ VLT-FOLDERS —
+   * DRUGI select, folder WEWNĄTRZ tego sejfu; egzekwowane server-side
+   * autorytatywnie z rekordu folderu, patrz `executeKBSearch`).
    */
   toolInput?: Record<string, unknown>;
 }
@@ -106,6 +109,16 @@ export interface VaultSafeOption {
   id: string;
   type: 'user' | 'organization' | 'project';
   projectId: string | null;
+  name: string;
+}
+
+/**
+ * ★ VLT-FOLDERS — jeden folder WEWNĄTRZ wybranego sejfu, do DRUGIEGO selecta
+ * klocka "Vault-kontekst" (`Api.getVaultFolders`, ta sama widoczność co
+ * `server/src/services/KnowledgeService.ts` `getFolders`).
+ */
+export interface VaultFolderOption {
+  id: string;
   name: string;
 }
 
@@ -338,6 +351,10 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
               vault_scope: safe.type,
               vault_project_id: safe.projectId,
               vault_safe_name: safe.name,
+              // ★ VLT-FOLDERS — zmiana sejfu unieważnia poprzedni wybór folderu
+              // (folder żył WEWNĄTRZ poprzedniego sejfu, może nie istnieć w nowym).
+              vault_folder_id: undefined,
+              vault_folder_name: undefined,
             }
           : {
               ...prevInput,
@@ -345,7 +362,33 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
               vault_scope: undefined,
               vault_project_id: undefined,
               vault_safe_name: undefined,
+              vault_folder_id: undefined,
+              vault_folder_name: undefined,
             },
+      };
+      onChange(next);
+    },
+    [blocks, onChange]
+  );
+
+  /**
+   * ★ VLT-FOLDERS — DRUGI select klocka 'vault-kontekst': folder WEWNĄTRZ już
+   * wybranego sejfu. Zapisuje `vault_folder_id`/`vault_folder_name` w
+   * `toolInput` — server-side (`executeKBSearch`) wyprowadza poziom/projekt
+   * AUTORYTATYWNIE z samego folderu (nie ufa temu polu do rozszerzenia
+   * dostępu), więc to tylko wygoda UI + etykieta na karcie.
+   */
+  const setBlockVaultFolder = useCallback(
+    (index: number, folder: VaultFolderOption | undefined) => {
+      const next = blocks.slice();
+      const prevInput = next[index].toolInput ?? {};
+      next[index] = {
+        ...next[index],
+        toolInput: {
+          ...prevInput,
+          vault_folder_id: folder?.id,
+          vault_folder_name: folder?.name,
+        },
       };
       onChange(next);
     },
@@ -393,6 +436,59 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
       cancelled = true;
     };
   }, [readOnly]);
+
+  // ★ VLT-FOLDERS — foldery WEWNĄTRZ każdego sejfu, do DRUGIEGO selecta klocka
+  // 'vault-kontekst'. Wiele bloków mogą wskazywać różne sejfy naraz, więc to
+  // cache per "scope:projectId" (klucz sejfu), doładowywany EFEKTEM za każdym
+  // razem, gdy zbiór faktycznie wybranych sejfów się zmienia (nie ładujemy
+  // wszystkich sejfów z góry — tylko te, które jakiś blok już ma ustawione).
+  const safeCacheKey = useCallback(
+    (scope: string, projectId: string | null | undefined) => `${scope}:${projectId || ''}`,
+    []
+  );
+
+  const neededSafeKeys = useMemo(() => {
+    const keys = new Map<
+      string,
+      { scope: 'user' | 'organization' | 'project'; projectId: string | null }
+    >();
+    for (const block of blocks) {
+      if (block.kind !== 'vault-kontekst') continue;
+      const scope = block.toolInput?.vault_scope;
+      if (scope !== 'user' && scope !== 'organization' && scope !== 'project') continue;
+      const projectId =
+        typeof block.toolInput?.vault_project_id === 'string'
+          ? block.toolInput.vault_project_id
+          : null;
+      keys.set(safeCacheKey(scope, projectId), { scope, projectId });
+    }
+    return keys;
+  }, [blocks, safeCacheKey]);
+
+  const [vaultFoldersBySafe, setVaultFoldersBySafe] = useState<
+    Record<string, VaultFolderOption[] | 'loading' | 'error'>
+  >({});
+
+  useEffect(() => {
+    if (readOnly) return;
+    for (const [key, { scope, projectId }] of neededSafeKeys) {
+      if (vaultFoldersBySafe[key] !== undefined) continue;
+      setVaultFoldersBySafe((prev) =>
+        prev[key] !== undefined ? prev : { ...prev, [key]: 'loading' }
+      );
+      Api.getVaultFolders({ scope, projectId: projectId || undefined })
+        .then((list) => {
+          setVaultFoldersBySafe((cur) => ({
+            ...cur,
+            [key]: list.map((f) => ({ id: f.id, name: f.name })),
+          }));
+        })
+        .catch(() => {
+          setVaultFoldersBySafe((cur) => ({ ...cur, [key]: 'error' }));
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [neededSafeKeys, readOnly]);
 
   const handleDropPalette = useCallback(
     (entryId: string, index: number) => {
@@ -570,6 +666,10 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                                 typeof block.toolInput?.vault_safe_name === 'string'
                                   ? block.toolInput.vault_safe_name
                                   : t('agentPlan.canvas.vaultLevelUnset', '— poziom nie wybrany —')
+                              }${
+                                typeof block.toolInput?.vault_folder_name === 'string'
+                                  ? ` / ${block.toolInput.vault_folder_name}`
+                                  : ''
                               }`
                             : block.kind === 'pauza'
                               ? ` · ${t('agentPlan.canvas.waitHours', '{{h}} godz.', {
@@ -632,7 +732,63 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                                   </option>
                                 ))}
                               </select>
-                            ) : block.kind === 'pauza' ? (
+                            ) : null}
+
+                            {/* ★ VLT-FOLDERS — DRUGI select: folder WEWNĄTRZ już wybranego sejfu.
+                                Widoczny dopiero, gdy blok ma sejf ustawiony — folder bez sejfu
+                                nie ma sensu (nie wiadomo, w KTÓRYM sejfie szukać). */}
+                            {block.kind === 'vault-kontekst' &&
+                            (block.toolInput?.vault_scope === 'user' ||
+                              block.toolInput?.vault_scope === 'organization' ||
+                              block.toolInput?.vault_scope === 'project')
+                              ? (() => {
+                                  const scope = block.toolInput.vault_scope as
+                                    | 'user'
+                                    | 'organization'
+                                    | 'project';
+                                  const projectId =
+                                    typeof block.toolInput?.vault_project_id === 'string'
+                                      ? block.toolInput.vault_project_id
+                                      : null;
+                                  const key = safeCacheKey(scope, projectId);
+                                  const entry = vaultFoldersBySafe[key];
+                                  const folderOptions = Array.isArray(entry) ? entry : [];
+                                  return (
+                                    <select
+                                      value={
+                                        typeof block.toolInput?.vault_folder_id === 'string'
+                                          ? block.toolInput.vault_folder_id
+                                          : ''
+                                      }
+                                      onChange={(e) => {
+                                        const folder = folderOptions.find(
+                                          (f) => f.id === e.target.value
+                                        );
+                                        setBlockVaultFolder(index, folder);
+                                      }}
+                                      disabled={entry === 'loading'}
+                                      aria-label={t('agentPlan.canvas.vaultFolder', 'Folder Vault')}
+                                      className="h-7 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-1.5 text-[11px] text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
+                                    >
+                                      <option value="">
+                                        {t(
+                                          'agentPlan.canvas.vaultFolderPlaceholder',
+                                          entry === 'loading'
+                                            ? '— ładowanie folderów —'
+                                            : '— cały sejf (bez folderu) —'
+                                        )}
+                                      </option>
+                                      {folderOptions.map((folder) => (
+                                        <option key={folder.id} value={folder.id}>
+                                          {folder.name}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  );
+                                })()
+                              : null}
+
+                            {block.kind === 'pauza' ? (
                               <label className="flex items-center gap-1 text-[11px] text-c-text-muted">
                                 <input
                                   type="number"
@@ -652,7 +808,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                                 />
                                 {t('agentPlan.canvas.waitHoursSuffix', 'godz.')}
                               </label>
-                            ) : annotation ? null : (
+                            ) : annotation || block.kind === 'vault-kontekst' ? null : (
                               <select
                                 value={block.toolName ?? DEFAULT_TOOL_NAME}
                                 onChange={(e) => setBlockTool(index, e.target.value)}
