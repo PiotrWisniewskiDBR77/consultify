@@ -177,6 +177,7 @@ const IdeaTableToolSortFilterScreen = React.lazy(
 const IdeaTableToolGroupingScreen = React.lazy(() => import('./screens/idea-table-tool-grouping'));
 const IdeaTableScreen = React.lazy(() => import('./screens/idea-table'));
 const MindmapCanvasScreen = React.lazy(() => import('./screens/mindmap-canvas'));
+const MyWorkIdeaTopBarScreen = React.lazy(() => import('./screens/mywork-idea-topbar'));
 const TeresaConfirmChipScreen = React.lazy(() => import('./screens/teresa-confirm-chip'));
 const DeckArtifactScreen = React.lazy(() => import('./screens/deck-artifact'));
 const DocumentArtifactScreen = React.lazy(() => import('./screens/document-artifact'));
@@ -667,6 +668,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'mindmap-canvas': {
     label: 'IDEE — Idea jako mapa myśli (pełny obiekt, archetyp Canvas)',
     render: () => <MindmapCanvasScreen />,
+  },
+  'mywork-idea-topbar': {
+    label:
+      'IDEE — CAŁA góra: rząd pilli MyWorkHub + Menu 1 + Menu 3 (flaga ff_ideaTopBarOneLine=1 → jedna linia)',
+    render: () => <MyWorkIdeaTopBarScreen />,
   },
   'teresa-confirm-chip': {
     label: 'IDEE — Teresa: kontrolka potwierdzenia akcji trwałych (F1-A)',
