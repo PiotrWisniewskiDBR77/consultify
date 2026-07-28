@@ -3953,7 +3953,13 @@ router.put(
       res.status(400).json({ error: 'artifactId is required' });
       return;
     }
-    const body = (req.body ?? {}) as { sections?: unknown; expectedVersion?: unknown };
+    const body = (req.body ?? {}) as {
+      sections?: unknown;
+      expectedVersion?: unknown;
+      // P-10 (2026-07-28): optional title rename riding along the same
+      // durable content save — see `updateDocumentManualContent` doc-comment.
+      title?: unknown;
+    };
     if (!Array.isArray(body.sections)) {
       res.status(400).json({ error: 'sections_required', code: 'DOC_CONTENT_SECTIONS_REQUIRED' });
       return;
@@ -3964,6 +3970,10 @@ router.put(
         .json({ error: 'expectedVersion_required', code: 'DOC_CONTENT_EXPECTED_VERSION_REQUIRED' });
       return;
     }
+    if (body.title !== undefined && typeof body.title !== 'string') {
+      res.status(400).json({ error: 'title_must_be_string', code: 'DOC_CONTENT_TITLE_INVALID' });
+      return;
+    }
     try {
       const result = await updateDocumentManualContent({
         artifactId,
@@ -3971,6 +3981,7 @@ router.put(
         userId,
         sections: body.sections as DocumentSchema['sections'],
         expectedVersion: body.expectedVersion,
+        title: typeof body.title === 'string' ? body.title : undefined,
       });
       res.json({ schema: result.schema });
     } catch (err) {
