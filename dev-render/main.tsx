@@ -205,6 +205,7 @@ const InitiativesPortfolioAnalysisScreen = React.lazy(
 );
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const FabRailKebabScreen = React.lazy(() => import('./screens/fab-rail-kebab'));
+const PrawyPanelSzynaIkonScreen = React.lazy(() => import('./screens/prawy-panel-szyna-ikon'));
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'fab-rail-kebab': {
@@ -581,6 +582,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'navdeclutter-sidebar': {
     label: 'ODB O5 — REALNY <Sidebar> (navDeclutterFlag, default OFF); &ff_navDeclutter=1 dla ON',
     render: () => <NavDeclutterSidebarScreen />,
+  },
+  'prawy-panel-szyna-ikon': {
+    label:
+      'P-01 (28.07) — Deck Builder prawy panel: REALNY <RightRail> zepsuty vs mock propozycji (szyna ikon zawsze widoczna)',
+    render: () => <PrawyPanelSzynaIkonScreen />,
   },
   'melscanvas-workspace': {
     label:
