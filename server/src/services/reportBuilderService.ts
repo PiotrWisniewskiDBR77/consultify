@@ -1045,6 +1045,7 @@ export async function createReport(params: CreateReportParams): Promise<{
     createdAt: now,
     updatedAt: now,
     version: 1,
+    sourceRefs: resolvedSourceRefs.length > 0 ? resolvedSourceRefs : undefined,
   };
 
   return { report, sections };
@@ -1152,6 +1153,15 @@ export async function getReport(
       version: row.version,
       archivedAt: row.archived_at || undefined,
       archivedBy: row.archived_by || undefined,
+      // OGNIWO 8 (dopełnienie, 2026-07-28): `createReport` zapisuje `source_refs_json`
+      // od commitu 2947865eeb, ale `getReport()` nigdy nie odczytywał go z powrotem
+      // do `ReportRecord.sourceRefs` — więc `reportGenerationService.ts:952` zawsze
+      // widział `report.sourceRefs` jako `undefined` i `buildContextPack` się nie
+      // wywoływał mimo poprawnego zapisu w bazie. Zapis bez odczytu = ten sam efekt
+      // co brak zapisu.
+      sourceRefs: row.source_refs_json
+        ? (parseMaybeJson(row.source_refs_json, []) as SourceRef[])
+        : undefined,
     },
     sections: sections.map((s) => ({
       id: s.id,
@@ -1187,6 +1197,12 @@ export async function getReport(
       chapterTitle: (s as any).chapter_title || undefined,
       isRefreshable: Boolean((s as any).is_refreshable),
       lastDataTimestamp: (s as any).last_data_timestamp || undefined,
+      // Sekcje dziś nie zapisują własnego source_refs_json (tylko raport-poziom
+      // to robi, patrz `createReport`), ale odczyt trzyma się tego samego wzorca
+      // co `report-builder.routes.ts:3168`, żeby nie powielić luki zapis≠odczyt.
+      sourceRefs: (s as any).source_refs_json
+        ? (parseMaybeJson((s as any).source_refs_json, []) as SourceRef[])
+        : undefined,
     })),
   };
 }

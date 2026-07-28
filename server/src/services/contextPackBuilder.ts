@@ -270,11 +270,24 @@ async function extractInitiativeData(
   ref: SourceRef,
   orgId: string
 ): Promise<void> {
+  // Schema-drift fix (2026-07-28, part of OGNIWO 8): the previous query selected
+  // `owner`, `started_at`, `target_date` — none of which exist on `initiatives`
+  // (real columns: owner_business_id/owner_execution_id, start_date/
+  // planned_start_date, planned_end_date/forecast_end_date/end_date). On Postgres
+  // this threw "column does not exist", was swallowed by the caller's per-source
+  // try/catch, and silently produced ZERO data_points — the exact "cichy fallback"
+  // this program forbids. Join to `users` for a readable owner name and coalesce
+  // the due-date candidates instead of a column that never existed.
   const initiatives = await dbAll(
-    `SELECT id, name AS title, description, status, priority, owner, started_at, target_date,
-            COALESCE(progress, 0) AS progress
-     FROM initiatives WHERE organization_id = ? AND (id = ? OR ? IS NULL)
-     ORDER BY priority DESC LIMIT 20`,
+    `SELECT i.id, i.name AS title, i.description, i.status, i.priority,
+            (u.first_name || ' ' || u.last_name) AS owner,
+            i.start_date,
+            COALESCE(i.planned_end_date::text, i.forecast_end_date, i.end_date::text) AS target_date,
+            COALESCE(i.progress, 0) AS progress
+     FROM initiatives i
+     LEFT JOIN users u ON u.id = i.owner_business_id
+     WHERE i.organization_id = ? AND (i.id = ? OR ? IS NULL)
+     ORDER BY i.priority DESC LIMIT 20`,
     [orgId, ref.artifact_id || null, ref.artifact_id || null]
   );
 
