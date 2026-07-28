@@ -96,10 +96,10 @@
  *     1:1 to samo, co szło wcześniej do `StandardModuleBar` (karty otwartych
  *     procesów), teraz lądują w Menu 3 huba.
  * WYJĄTEK: `bulk` (pasek zaznaczenia "Moje procesy") NIE ma odpowiednika w
- * `HubBarSlotValue` (kontrakt slotu tego nie przewiduje — rozbudowa o niego
- * to osobne zadanie) — zostaje renderowany LOKALNIE nad tabelą
- * (`renderBulkBar`, ten sam wygląd co dawny `StandardModuleBar.bulk`, tylko
- * inny, mniejszy pasek zamiast pełnego Menu 2/3).
+ * `HubBarSlotValue` — zostaje renderowany LOKALNIE nad tabelą (`renderBulkBar`,
+ * ten sam wygląd co dawny `StandardModuleBar.bulk`, tylko inny, mniejszy pasek
+ * zamiast pełnego Menu 2/3). ŚWIADOMA DECYZJA, ponownie oceniona i potwierdzona
+ * AGT-015 §6 D3 (2026-07-28) — uzasadnienie przy `renderBulkBar` niżej.
  */
 import {
   FileStack,
@@ -896,10 +896,23 @@ export const AgentHubShell: React.FC = () => {
    * HubBarSlots). `StandardModuleBar.bulk` renderował ten pasek jako Menu 3
    * WEWNĄTRZ własnego `ModuleNavBar` — teraz, gdy hub (MyWorkHub) rysuje
    * JEDYNE Menu 2/3, nie ma gdzie go doczepić bez rozbudowy kontraktu
-   * `HubBarSlotValue` o osobny `bulk` slot (poza zakresem tego zadania —
-   * zgłoszone w raporcie). Zamiast fasady dublujemy TYLKO wygląd (te same
-   * klasy `MENU_3_*`/`Menu3Chip` co `StandardModuleBar.bulkContent`) i
-   * renderujemy go bezpośrednio nad tabelą.
+   * `HubBarSlotValue` o osobny `bulk` slot. Zamiast fasady dublujemy TYLKO
+   * wygląd (te same klasy `MENU_3_*`/`Menu3Chip` co
+   * `StandardModuleBar.bulkContent`) i renderujemy go bezpośrednio nad
+   * tabelą.
+   *
+   * ★ AGT-015 §6 D3 (2026-07-28, ponowna ocena — ŚWIADOMA DECYZJA, nie
+   * przeoczenie): sprawdzone, czy warto wciągnąć ten pasek do
+   * `HubBarSlotValue`. NIE — z trzech powodów: (1) pasek pojawia się TYLKO
+   * warunkowo (selectedPlanIds.size > 0) i wyłącznie dla jednej tabeli
+   * ("Moje procesy"), więc byłby jedynym opcjonalnym/warunkowym polem w
+   * kontrakcie slotu, dziś w całości bezwarunkowym; (2) slot renderuje się w
+   * Menu 2/3 huba, NAD `renderDynamicTabs()`/kartami otwartych obiektów —
+   * odrywałby pasek bulk wizualnie od tabeli, do której się odnosi (dziś
+   * siedzi BEZPOŚREDNIO nad `TableWithPreviewLayout`, linia niżej —
+   * `renderBulkBar()` tuż przed nią); (3) jedyny inny caller `HubBarSlots`
+   * (`VaultDocumentsView`) nie ma bulk bara wcale — rozbudowa kontraktu pod
+   * JEDNEGO konsumenta to spekulacyjna generalizacja. Zostaje lokalnie.
    */
   const renderBulkBar = () => {
     if (tab !== 'processes' || activeItemId || selectedPlanIds.size === 0) return null;
@@ -991,7 +1004,11 @@ export const AgentHubShell: React.FC = () => {
               : 'Start the classic consulting process or pick a ready-made agent from Templates.'
           )}
           primaryAction={{
-            label: t('agentPlan.hub.newProcess', isPolish ? 'Nowy proces' : 'New process'),
+            // AGT-015 §6 D2 (Piotr: nazwa CTA = „Nowy agent"/"New agent"): ten
+            // ekran wołał osobny klucz `newProcess` ("Nowy proces") — rozjazd
+            // z CTA Menu 2 (`primaryCtaValue` wyżej), które już miało
+            // `newAgent`. Ujednolicone na WSPÓLNY klucz.
+            label: t('agentPlan.hub.newAgent', isPolish ? 'Nowy agent' : 'New agent'),
             onClick: () => void handleNewProcess(),
           }}
           className="h-full"
@@ -1470,11 +1487,18 @@ export const AgentHubShell: React.FC = () => {
   const primaryCtaValue = useMemo(() => {
     if (tab !== 'processes' || activeItemId) return null;
     return {
-      // Piotr: zmiana nazwy z „Nowy proces" na „Nowy agent" (nowy klucz
-      // i18n — `newProcess` zostaje tylko w empty-state CTA poniżej).
+      // Piotr: zmiana nazwy z „Nowy proces" na „Nowy agent" — TERAZ jedyny
+      // klucz w tym pliku (AGT-015 §6 D2: empty-state poniżej ujednolicony
+      // na ten sam klucz, `newProcess` usunięty).
       label: creating
         ? t('agentPlan.hub.newProcessLoading', isPolish ? 'Tworzenie…' : 'Creating…')
         : t('agentPlan.hub.newAgent', isPolish ? 'Nowy agent' : 'New agent'),
+      // AGT-015 §6 D1: ikona CTA — przywrócona z przedmigracyjnej wersji tego
+      // ekranu (`StandardModuleBar.primaryCta.icon = PlayCircle`, patrz
+      // commit 401ea601c1^), zgubiona gdy ekran przeszedł na `HubBarSlots`
+      // (kontrakt slotu wtedy nie niósł ikony — teraz niesie, patrz
+      // `HubBarSlots.tsx`).
+      icon: PlayCircle,
       onClick: () => void handleNewProcess(),
       disabled: creating,
       testId: 'agent-hub-new-agent',

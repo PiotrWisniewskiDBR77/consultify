@@ -599,8 +599,10 @@ const TOPBAR_PILL_BASE =
 const TOPBAR_PILL_INACTIVE = `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
 
 // Canon §15.2/§19.1: kontrolki Menu 2 = h-9 rounded-full (jeden family z pillami topbara).
+// `gap-2` — odstęp ikona/etykieta gdy CTA ma ikonę (AGT-015 §6 D1); nieszkodliwe
+// dla CTA bez ikony (pojedyncze dziecko flexa, gap się nie liczy).
 const CTA_BASE =
-  'inline-flex items-center justify-center h-9 rounded-full border px-4 text-sm font-semibold transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+  'inline-flex items-center justify-center gap-2 h-9 rounded-full border px-4 text-sm font-semibold transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 const CTA_TONE: Record<'violet' | 'emerald' | 'amber' | 'indigo' | 'neutral', string> = {
   neutral:
     'border-navy-700/20 bg-navy-900 text-white hover:bg-navy-800 active:bg-navy-950 dark:border-white/20 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]',
@@ -4287,7 +4289,10 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 HubBarSlots: gdy ekran-dziecko (np. Run agent "Nowy agent")
                 zadeklarował `primaryCta`, WYGRYWA nad hub-owym per-tab
                 `actionButton` (kontrakt HubBarSlots.tsx — jeden CTA na
-                ekran, kontekstowy dla tego, co user właśnie widzi). */}
+                ekran, kontekstowy dla tego, co user właśnie widzi). Ikona
+                (AGT-015 §6 D1) — te same klasy/rozmiar co `StandardModuleBar`
+                `primaryCta.icon` (`size={16}`, patrz `StandardModuleBar.tsx`
+                ok. linii 383): opcjonalna, dziecko może jej nie podać. */}
             {hubBarSlot.primaryCta ? (
               <button
                 onClick={hubBarSlot.primaryCta.onClick}
@@ -4295,6 +4300,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 className={`${CTA_BASE} ${CTA_TONE.violet} disabled:opacity-60 disabled:cursor-not-allowed`}
                 data-testid={hubBarSlot.primaryCta.testId || 'mywork-action-button'}
               >
+                {hubBarSlot.primaryCta.icon ? <hubBarSlot.primaryCta.icon size={16} /> : null}
                 <span>{hubBarSlot.primaryCta.label}</span>
               </button>
             ) : (
