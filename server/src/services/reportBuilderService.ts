@@ -263,6 +263,83 @@ export function setDependencies(newDeps: { db?: IDatabase } = {}): void {
   if (newDeps.db) db = newDeps.db;
 }
 
+/**
+ * Referencja do artefaktu w kontrakcie `contextPackBuilder.SourceRef`.
+ * ⚠ NIE mylić z `source_refs_json` prezentacji — tam ta sama nazwa kolumny trzyma
+ * metadane pochodzenia (`{source:'blank_manual'}`), a nie tablicę referencji.
+ */
+type ReportSourceRef = { artifact_id: string; artifact_type: string; artifact_name: string };
+
+/**
+ * OGNIWO 8 (tor MVP, 2026-07-28) — most między raportem a danymi systemu.
+ *
+ * PRZYCZYNA: `source_refs_json` w module raportów był czytany w 13 miejscach i
+ * zapisywany w ZERO. Skutek łańcuchowy w `reportGenerationService.ts:974`:
+ * pusta lista źródeł → contextPack zawsze „lightweight" → raport bez ani jednej
+ * liczby z systemu → konsultant przepisywał dane ręcznie.
+ *
+ * MODEL (wytyczna Piotra 2026-07-28): assessment, wywiad i narzędzie to trzy
+ * PRZYCZYNKI do budowy inicjatyw. Dlatego wartość raportu z assessmentu leży nie
+ * w samym assessmencie, lecz w inicjatywach, które z niego wyrosły — i to je
+ * podajemy do ContextPacka. To także wyjaśnia, dlaczego `buildContextPack` nie ma
+ * typu „assessment": nie jest mu potrzebny.
+ *
+ * FAIL-SOFT: każdy błąd → pusta lista. Most nigdy nie może zablokować powstania
+ * raportu; brak referencji oznacza tylko powrót do dotychczasowego zachowania.
+ */
+async function resolveReportSourceRefs(
+  sourceType: string,
+  sourceId: string | null | undefined,
+  organizationId: string
+): Promise<ReportSourceRef[]> {
+  const refs: ReportSourceRef[] = [];
+  const st = String(sourceType || '').toUpperCase();
+  const sid = sourceId ? String(sourceId) : '';
+  if (!sid || !organizationId) return refs;
+
+  // Sam obiekt źródłowy — TYLKO gdy ContextPack zna ten typ (patrz
+  // `contextPackBuilder.ts:221-260`). Dla ASSESSMENT/WORK_CANVAS nie zna, więc
+  // nie dokładamy referencji, której builder i tak by nie obsłużył.
+  if (st === 'TOOL') {
+    refs.push({ artifact_id: sid, artifact_type: 'tool_session', artifact_name: 'Tool session' });
+  }
+
+  // Inicjatywy zrodzone z tego przyczynku. `source_type` inicjatywy używa innego
+  // słownika niż `source_type` raportu (assessment/tool/interview_insight vs
+  // ASSESSMENT/TOOL/INTERVIEW) — stąd jawne mapowanie zamiast porównania wprost.
+  const initiativeSourceType =
+    st === 'ASSESSMENT' ? 'assessment' : st === 'TOOL' ? 'tool' : st === 'INTERVIEW' ? 'interview_insight' : null;
+
+  try {
+    const rows = await queryAll<{ id: string; title: string }>(
+      `SELECT id, title FROM initiatives
+        WHERE organization_id = ?
+          AND (
+            source_assessment_id = ?
+            OR source_report_id = ?
+            OR (source_id = ? AND lower(coalesce(source_type, '')) = ?)
+          )
+        LIMIT 50`,
+      [organizationId, sid, sid, sid, initiativeSourceType || ' ']
+    );
+    for (const r of rows) {
+      if (!r?.id) continue;
+      refs.push({
+        artifact_id: String(r.id),
+        artifact_type: 'initiative',
+        artifact_name: String(r.title || 'Initiative'),
+      });
+    }
+  } catch (err) {
+    logger.warn('[ReportBuilder] resolveReportSourceRefs: initiatives lookup failed', {
+      error: err,
+      sourceType: st,
+    });
+  }
+
+  return refs;
+}
+
 function queryAll<T>(sql: string, params: unknown[] = []): Promise<T[]> {
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err: Error | null, rows: T[]) => {
@@ -730,6 +807,18 @@ export async function createReport(params: CreateReportParams): Promise<{
   const reportType = derivedReportType;
   const now = new Date().toISOString();
 
+  // OGNIWO 8 (tor MVP): referencje do artefaktów, z których raport ma czerpać
+  // liczby. Bez tego zapisu `reportGenerationService` zawsze schodzi na pusty
+  // contextPack — patrz komentarz przy `resolveReportSourceRefs`.
+  const resolvedSourceRefs = await resolveReportSourceRefs(sourceType, sourceId, organizationId);
+  if (resolvedSourceRefs.length === 0) {
+    logger.info('[ReportBuilder] Brak referencji zrodlowych dla raportu', {
+      reportId,
+      sourceType,
+      hint: 'contextPack bedzie lightweight — raport bez danych z systemu',
+    });
+  }
+
   // Create report (with V3 fields when provided)
   await queryRun(
     `
@@ -737,8 +826,9 @@ export async function createReport(params: CreateReportParams): Promise<{
       id, organization_id, project_id, source_type, source_id, source_name, source_framework,
       title, description, report_type, template_id, config_json, company_context_json, status,
       created_by, created_at, updated_at, version,
-      report_type_v3, goal_v3, communication_register, density, period_from, period_to, confidentiality
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIGURING', ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?)
+      report_type_v3, goal_v3, communication_register, density, period_from, period_to, confidentiality,
+      source_refs_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIGURING', ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?)
   `,
     [
       reportId,
@@ -764,6 +854,7 @@ export async function createReport(params: CreateReportParams): Promise<{
       params.periodFrom || null,
       params.periodTo || null,
       params.confidentiality || null,
+      resolvedSourceRefs.length > 0 ? JSON.stringify(resolvedSourceRefs) : null,
     ]
   );
 
