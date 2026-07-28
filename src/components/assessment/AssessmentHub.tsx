@@ -1477,6 +1477,51 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     ? (currentData.find((r: any) => r.id === selectedAssessmentId) ?? null)
     : null;
 
+  /**
+   * Blok „Co dalej" dla otwartej OCENY (kanon, blok opcjonalny StandardPreview).
+   *
+   * Dwie rzeczy spotykają się tutaj:
+   *   1. Przegląd 128 zrzutów: podgląd oceny miał WYŁĄCZNIE `Delete` i
+   *      `Duplicate` — „brak jakiejkolwiek akcji pozytywnej, można tylko usunąć
+   *      albo zduplikować". Ekran nie mówił, co z tą oceną zrobić dalej.
+   *   2. P-20: `Generate Report` i `Initiative Pack` wyleciały z Menu 3, bo tam
+   *      dublowały CTA „New Report"/„New Initiative" i łamały kanon A3.
+   *
+   * W Menu 3 były duplikatem, bo dotyczyły CAŁEJ listy. Tutaj dotyczą JEDNEJ,
+   * wybranej oceny — i dopiero w tym miejscu niosą informację: „z tej oceny
+   * możesz zrobić raport albo pakiet inicjatyw". To dokładnie przepływ, na
+   * którym stoi moduł Tools.
+   *
+   * `whatsNext` w `StandardPreview` istniał od dawna, ale miał ZERO
+   * konsumentów — kanon obiecywał blok, którego nie było na żadnym ekranie.
+   */
+  const listPreviewWhatsNext = useMemo(
+    () =>
+      selectedListRow
+        ? {
+            items: [
+              {
+                id: 'to-report',
+                label: t('assessment.whatsNext.report', 'Report'),
+                icon: FileText,
+                onClick: () => setShowNewReportModal(true),
+              },
+              {
+                id: 'to-initiatives',
+                label: t('assessment.whatsNext.initiatives', 'Initiative pack'),
+                icon: Lightbulb,
+                onClick: () => setShowInitiativesWizard(true),
+              },
+            ],
+            note: t(
+              'assessment.whatsNext.note',
+              'Uses this assessment as the source.'
+            ),
+          }
+        : undefined,
+    [selectedListRow, t]
+  );
+
   const listPreviewActions: StandardPreviewActions | undefined = useMemo(
     () =>
       selectedListRow
@@ -1899,6 +1944,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                 }}
                 relations={[]}
                 actions={previewActions}
+                whatsNext={activeTab === 'list' ? listPreviewWhatsNext : undefined}
               />
             </aside>
           ) : null}
