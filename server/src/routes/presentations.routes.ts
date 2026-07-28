@@ -1251,9 +1251,33 @@ router.put(
       }
     }
 
-    const { name, description, audience, goal, theme, outlineJson, maxSlides } = req.body;
+    const { name, description, audience, goal, theme, outlineJson, maxSlides, colorTemplateId } =
+      req.body;
+
+    // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). Reuses the existing,
+    // previously-unused `layout_policy_json` free-form column (no new
+    // migration) instead of a new column — see
+    // `presentationTemplateCompatibilityService.ts` for the read side.
+    // `colorTemplateId === undefined` means "field not sent, leave
+    // untouched"; `null` or `''` means "explicitly cleared".
+    let layoutPolicyJson: string | null = null;
+    if (colorTemplateId !== undefined) {
+      let currentLayoutPolicy: Record<string, unknown> = {};
+      if (existing?.layout_policy_json) {
+        try {
+          currentLayoutPolicy = JSON.parse(existing.layout_policy_json) || {};
+        } catch {
+          currentLayoutPolicy = {};
+        }
+      }
+      layoutPolicyJson = JSON.stringify({
+        ...currentLayoutPolicy,
+        colorTemplateId: colorTemplateId || null,
+      });
+    }
+
     await dbRun(
-      `UPDATE presentation_templates SET name = COALESCE(?, name), description = COALESCE(?, description), audience = COALESCE(?, audience), goal = COALESCE(?, goal), theme = COALESCE(?, theme), outline_json = COALESCE(?, outline_json), max_slides = COALESCE(?, max_slides), updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND is_system = FALSE`,
+      `UPDATE presentation_templates SET name = COALESCE(?, name), description = COALESCE(?, description), audience = COALESCE(?, audience), goal = COALESCE(?, goal), theme = COALESCE(?, theme), outline_json = COALESCE(?, outline_json), max_slides = COALESCE(?, max_slides), layout_policy_json = COALESCE(?, layout_policy_json), updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND is_system = FALSE`,
       [
         name,
         description,
@@ -1262,6 +1286,7 @@ router.put(
         theme,
         outlineJson ? JSON.stringify(outlineJson) : null,
         maxSlides,
+        layoutPolicyJson,
         req.params.id,
         orgId,
       ]

@@ -1247,6 +1247,14 @@ router.patch(
       res.status(400).json({ error: 'sections array is required' });
       return;
     }
+    // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). Optional; omitted body
+    // field leaves the saved color pattern untouched.
+    const colorTemplateId =
+      'colorTemplateId' in (req.body ?? {})
+        ? typeof req.body.colorTemplateId === 'string'
+          ? req.body.colorTemplateId
+          : null
+        : undefined;
     await ensureTemplateRegistryHydrated(organizationId);
     try {
       const template = reviseTemplateStructure({
@@ -1254,6 +1262,7 @@ router.patch(
         organizationId,
         userId,
         sections,
+        colorTemplateId,
       });
       res.json({ template });
     } catch (err) {

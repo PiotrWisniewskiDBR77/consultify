@@ -31,6 +31,8 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/shared/ModuleHub';
+import { ColorPatternPicker } from '@/components/shared/colorPatterns/ColorPatternPicker';
+import { useBrandKitColors } from '@/components/shared/colorPatterns/useBrandKitColors';
 import Button from '@/components/ui/primitives/Button';
 import {
   clonePresentationTemplate,
@@ -169,6 +171,13 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
   const [editTheme, setEditTheme] = useState('corporate');
   const [editOutline, setEditOutline] = useState<PresentationTemplateOutlineItem[]>([]);
   const [addIntent, setAddIntent] = useState<string>(PRESENTATION_SLIDE_INTENTS[0]);
+  // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31), the same gallery the
+  // Wizard's `SetupStep` already uses, now savable ON the template itself
+  // (`layout_policy_json.colorTemplateId`) instead of only chosen at
+  // generation time. Independent of the outline — a template can carry
+  // colors, structure, or both (see `ColorPatternPicker`).
+  const [editColorTemplateId, setEditColorTemplateId] = useState('');
+  const brandKitColors = useBrandKitColors();
 
   const selectedTemplate = useMemo(
     () => templates.find((tpl) => tpl.id === selectedTemplateId) ?? null,
@@ -186,6 +195,7 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
     setEditGoal(selectedTemplate.goal || '');
     setEditTheme(selectedTemplate.theme || 'corporate');
     setEditOutline(selectedTemplate.outline_json ? [...selectedTemplate.outline_json] : []);
+    setEditColorTemplateId(selectedTemplate.color_template_id || '');
   }, [selectedTemplate]);
 
   const tableColumns = useMemo<TableColumn[]>(
@@ -379,6 +389,10 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
         goal: editGoal.trim() || undefined,
         theme: editTheme.trim() || undefined,
         outlineJson: editOutline,
+        // '' means "no color pattern chosen" — send null so the server can
+        // tell "leave unchanged" (undefined, never sent) apart from
+        // "explicitly cleared" (null) once a value existed.
+        colorTemplateId: editColorTemplateId || null,
       });
       const fresh = await getPresentationTemplate(selectedTemplate.id);
       setTemplates((prev) => prev.map((tpl) => (tpl.id === fresh.id ? fresh : tpl)));
@@ -788,6 +802,25 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
                   ))}
                 </select>
               </label>
+              <div className="col-span-1 sm:col-span-2">
+                <span className="font-medium text-c-text text-xs">
+                  {t('presentations.templateArchitect.colorPatternLabel', 'Wzorzec kolorów')}
+                </span>
+                <p className="mb-2 text-[11px] text-c-text-secondary">
+                  {t(
+                    'presentations.templateArchitect.colorPatternHint',
+                    'Niezależny od treści — możesz zapisać sam kolor, samą strukturę, albo oba naraz.'
+                  )}
+                </p>
+                <div className={!isEditable ? 'pointer-events-none opacity-60' : undefined}>
+                  <ColorPatternPicker
+                    value={editColorTemplateId}
+                    onChange={setEditColorTemplateId}
+                    brandKitColors={brandKitColors}
+                    hideLabel
+                  />
+                </div>
+              </div>
               <label className="col-span-1 flex flex-col gap-1 text-xs sm:col-span-2">
                 <span className="font-medium text-c-text">
                   {t('presentations.templateArchitect.descriptionLabel', 'Description')}

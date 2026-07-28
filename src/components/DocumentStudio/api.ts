@@ -845,14 +845,22 @@ export async function deprecateDocumentStudioTemplate(
  */
 export async function reviseDocumentStudioTemplateStructure(
   templateId: string,
-  sections: TemplateSectionBlueprint[]
+  sections: TemplateSectionBlueprint[],
+  /**
+   * Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). `undefined` (default) —
+   * omit the field, leave the saved color pattern untouched. `null`/`''` —
+   * explicitly clear it. A `CURATED_COLOR_SETS[].id`/`'brand_kit'` — set it.
+   */
+  colorTemplateId?: string | null
 ): Promise<DocumentTemplate> {
+  const body: Record<string, unknown> = { sections };
+  if (colorTemplateId !== undefined) body.colorTemplateId = colorTemplateId;
   const res = await fetchWithRetry(
     `${BASE}/templates/${encodeURIComponent(templateId)}/structure`,
     {
       method: 'PATCH',
       headers: getHeaders(),
-      body: JSON.stringify({ sections }),
+      body: JSON.stringify(body),
     }
   );
   const json = await handleResponse<{ template: DocumentTemplate }>(

@@ -604,6 +604,14 @@ export interface ReviseTemplateStructureParams {
    * titles, at least one section, a sane cap).
    */
   sections: TemplateSectionBlueprint[];
+  /**
+   * Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). `undefined` = field not
+   * sent, leave `formattingSchema.colorTemplateId` untouched. `null` or
+   * `''` = explicitly cleared. Saved alongside structure edits because both
+   * are draft-only author actions on the same screen (the Template
+   * Architect's outline editor) — see `DocumentStudioTemplateArchitectView.tsx`.
+   */
+  colorTemplateId?: string | null;
 }
 
 const MAX_TEMPLATE_SECTIONS = 60;
@@ -720,9 +728,16 @@ export function reviseTemplateStructure(
 
   const sectionBlueprint = params.sections.map(sanitizeAuthoredSection);
   const now = nowIso();
+  // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). `undefined` leaves the
+  // existing formattingSchema untouched; `null`/`''` clears the pattern.
+  const formattingSchema =
+    params.colorTemplateId !== undefined
+      ? { ...template.formattingSchema, colorTemplateId: params.colorTemplateId || null }
+      : template.formattingSchema;
   const next: DocumentTemplate = {
     ...template,
     sectionBlueprint,
+    formattingSchema,
     updatedAt: now,
   };
   registryStore.set(templateKey(params.organizationId, template.templateId), next);
@@ -738,6 +753,7 @@ export function reviseTemplateStructure(
       source: 'author_manual_structure_edit',
       sectionCount: sectionBlueprint.length,
       previousSectionCount: template.sectionBlueprint.length,
+      colorTemplateChanged: params.colorTemplateId !== undefined,
     },
   });
   return next;

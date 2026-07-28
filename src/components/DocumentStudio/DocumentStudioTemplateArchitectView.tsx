@@ -29,6 +29,8 @@ import {
   type TableRow,
 } from '@/components/shared/ModuleHub';
 import { type RowAction } from '@/components/shared/RowActionsMenu';
+import { ColorPatternPicker } from '@/components/shared/colorPatterns/ColorPatternPicker';
+import { useBrandKitColors } from '@/components/shared/colorPatterns/useBrandKitColors';
 import Button from '@/components/ui/primitives/Button';
 import { isTemplateStructureEditorEnabled } from '@/utils/templateEditorFlag';
 
@@ -151,6 +153,14 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   const isEditableDraft = structureEditorEnabled && selectedTemplate?.status === 'draft';
   const [editSections, setEditSections] = useState<TemplateSectionBlueprint[]>([]);
   const [savingStructure, setSavingStructure] = useState(false);
+  // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31): the same gallery the
+  // Deck Template Architect now offers (`PresentationTemplateArchitectView`),
+  // wired to Word templates for the first time. Independent of section
+  // structure — saved together only because both are draft-only author
+  // edits on this one screen; a template can carry colors, structure, or
+  // both (see `ColorPatternPicker`).
+  const [editColorTemplateId, setEditColorTemplateId] = useState('');
+  const brandKitColors = useBrandKitColors();
 
   // Reset the working copy whenever the selected draft (or its saved revision)
   // changes. Keyed on templateId + updatedAt so a successful save re-syncs.
@@ -158,12 +168,20 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     setEditSections(
       selectedTemplate ? selectedTemplate.sectionBlueprint.map((s) => ({ ...s })) : []
     );
+    setEditColorTemplateId(selectedTemplate?.formattingSchema?.colorTemplateId ?? '');
   }, [selectedTemplate?.templateId, selectedTemplate?.updatedAt]);
 
   const structureDirty = useMemo(() => {
     if (!selectedTemplate) return false;
     return JSON.stringify(editSections) !== JSON.stringify(selectedTemplate.sectionBlueprint);
   }, [editSections, selectedTemplate]);
+
+  const colorPatternDirty = useMemo(() => {
+    if (!selectedTemplate) return false;
+    return editColorTemplateId !== (selectedTemplate.formattingSchema?.colorTemplateId ?? '');
+  }, [editColorTemplateId, selectedTemplate]);
+
+  const hasUnsavedChanges = structureDirty || colorPatternDirty;
 
   const hasBlankSectionTitle = useMemo(
     () => editSections.some((s) => s.title.trim().length === 0),
@@ -233,7 +251,11 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     setError(null);
     try {
       const normalized = editSections.map((s) => ({ ...s, title: s.title.trim() }));
-      await reviseDocumentStudioTemplateStructure(selectedTemplate.templateId, normalized);
+      await reviseDocumentStudioTemplateStructure(
+        selectedTemplate.templateId,
+        normalized,
+        colorPatternDirty ? editColorTemplateId || null : undefined
+      );
       await refresh();
     } catch (err) {
       setError(
@@ -629,14 +651,15 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                     {t('documentStudio.templateArchitect.sectionBlueprint', 'Section blueprint')} —{' '}
                     {selectedTemplate.name}
                   </div>
-                  {structureDirty ? (
+                  {hasUnsavedChanges ? (
                     <div className="flex items-center gap-2">
                       <Button
                         type="button"
                         variant="ghost"
-                        onClick={() =>
-                          setEditSections(selectedTemplate.sectionBlueprint.map((s) => ({ ...s })))
-                        }
+                        onClick={() => {
+                          setEditSections(selectedTemplate.sectionBlueprint.map((s) => ({ ...s })));
+                          setEditColorTemplateId(selectedTemplate.formattingSchema?.colorTemplateId ?? '');
+                        }}
                         disabled={savingStructure}
                       >
                         {t('documentStudio.templateArchitect.resetStructure', 'Reset')}
@@ -655,6 +678,23 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                       </Button>
                     </div>
                   ) : null}
+                </div>
+                <div className="mt-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                    {t('documentStudio.templateArchitect.colorPatternLabel', 'Wzorzec kolorów')}
+                  </span>
+                  <p className="mb-2 text-[11px] text-c-text-secondary">
+                    {t(
+                      'documentStudio.templateArchitect.colorPatternHint',
+                      'Niezależny od struktury sekcji — możesz zapisać sam kolor, samą strukturę, albo oba naraz.'
+                    )}
+                  </p>
+                  <ColorPatternPicker
+                    value={editColorTemplateId}
+                    onChange={setEditColorTemplateId}
+                    brandKitColors={brandKitColors}
+                    hideLabel
+                  />
                 </div>
                 <ol className="mt-2 space-y-1">
                   {editSections.map((section, idx) => (
