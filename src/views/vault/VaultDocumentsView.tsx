@@ -64,12 +64,24 @@
  * + `useHubBarSlot` zamiast własnego paska.
  */
 
-import { Download, FileText, Info, Pencil, RefreshCw, Search, Trash2 } from 'lucide-react';
+import {
+  Download,
+  FileText,
+  Folder,
+  FolderPlus,
+  Info,
+  Layers,
+  Pencil,
+  RefreshCw,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useHubBarSlot } from '@/components/shared/HubBarSlots';
+import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import type { FilterChip } from '@/components/shared/ModuleHub/ActiveFilters';
 import type { OpenDocument } from '@/components/shared/ModuleHub/types';
 import {
@@ -189,6 +201,110 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
       .catch(() => setProjects([]));
   }, []);
 
+  // ── Foldery WEWNĄTRZ tego sejfu (★ VLT-FOLDERS) ─────────────────────────
+  // Wzór 1:1 `MyIdeasListContent.tsx` §"Load folders": endpoint może jeszcze
+  // nie mieć migracji na danej bazie — `foldersAvailable` chroni UI, nic się
+  // nie psuje wcześniej (fail-soft, tak jak `my_idea_folders`).
+  const [folders, setFolders] = useState<Array<{ id: string; name: string }>>([]);
+  const [foldersAvailable, setFoldersAvailable] = useState(false);
+  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+
+  const loadFolders = useCallback(async () => {
+    try {
+      const list = await Api.getVaultFolders({
+        scope: safe.type,
+        projectId: safe.type === 'project' ? safe.projectId : undefined,
+      });
+      setFolders(list.map((f) => ({ id: f.id, name: f.name })));
+      setFoldersAvailable(true);
+    } catch {
+      setFoldersAvailable(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [safe.type, safe.projectId]);
+
+  useEffect(() => {
+    setActiveFolderId(null);
+    void loadFolders();
+  }, [loadFolders]);
+
+  const handleCreateFolder = useCallback(async () => {
+    const name = window
+      .prompt(t('vault.docs.folderPrompt', isPolish ? 'Nazwa folderu' : 'Folder name'))
+      ?.trim();
+    if (!name) return;
+    try {
+      const created = await Api.createVaultFolder({
+        name,
+        scope: safe.type,
+        projectId: safe.type === 'project' ? safe.projectId : undefined,
+      });
+      setFolders((prev) => [...prev, { id: created.id, name: created.name }]);
+      setFoldersAvailable(true);
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t(
+              'vault.docs.folderCreateFailed',
+              isPolish ? 'Nie udało się utworzyć folderu' : 'Failed to create folder'
+            )
+      );
+    }
+  }, [safe.type, safe.projectId, t, isPolish]);
+
+  const handleDeleteFolder = useCallback(
+    async (folderId: string) => {
+      try {
+        await Api.deleteVaultFolder(folderId);
+        setFolders((prev) => prev.filter((f) => f.id !== folderId));
+        if (activeFolderId === folderId) setActiveFolderId(null);
+        await load(); // dokumenty z tego folderu wracają jako "bez folderu"
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : t(
+                'vault.docs.folderDeleteFailed',
+                isPolish ? 'Nie udało się usunąć folderu' : 'Failed to delete folder'
+              )
+        );
+      }
+    },
+    [activeFolderId, load, t, isPolish]
+  );
+
+  const handleMoveToFolder = useCallback(
+    async (doc: VaultDocument, folderId: string | null) => {
+      setDocuments((prev) =>
+        prev.map((d) => (d.id === doc.id ? { ...d, folder_id: folderId } : d))
+      );
+      try {
+        await Api.updateKnowledgeDocument(doc.id, { folderId });
+        toast.success(t('vault.docs.folderMoved', isPolish ? 'Przeniesiono' : 'Moved'), {
+          duration: 800,
+        });
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : t(
+                'vault.docs.folderMoveFailed',
+                isPolish ? 'Nie udało się przenieść dokumentu' : 'Failed to move document'
+              )
+        );
+        await load();
+      }
+    },
+    [load, t, isPolish]
+  );
+
+  const folderNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    folders.forEach((f) => map.set(f.id, f.name));
+    return map;
+  }, [folders]);
+
   // ── Filtrowanie ──────────────────────────────────────────────────────────
   const tagOptions = useMemo(() => {
     const all = new Set<string>();
@@ -207,9 +323,10 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
         !q ||
         doc.filename.toLowerCase().includes(q) ||
         doc.tags.some((tag) => tag.toLowerCase().includes(q));
-      return matchesCategory && matchesTags && matchesSearch;
+      const matchesFolder = !activeFolderId || doc.folder_id === activeFolderId;
+      return matchesCategory && matchesTags && matchesSearch && matchesFolder;
     });
-  }, [documents, search, categoryFilter, tagFilters]);
+  }, [documents, search, categoryFilter, tagFilters, activeFolderId]);
 
   const statusCounts = useMemo(() => {
     const counts = { all: searched.length, indexed: 0, processing: 0, failed: 0 };
@@ -285,6 +402,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
       t('vault.docs.colName', isPolish ? 'Nazwa' : 'Name'),
       t('vault.docs.colCategory', isPolish ? 'Kategoria' : 'Category'),
       t('vault.docs.colTags', isPolish ? 'Tagi' : 'Tags'),
+      t('vault.docs.colFolder', isPolish ? 'Folder' : 'Folder'),
       t('vault.docs.colLevel', isPolish ? 'Poziom' : 'Level'),
       t('vault.docs.colSize', isPolish ? 'Rozmiar' : 'Size'),
       t('vault.docs.colAdded', isPolish ? 'Dodano' : 'Added'),
@@ -296,6 +414,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
         doc.filename,
         doc.category || '',
         doc.tags.join(' | '),
+        (doc.folder_id && folderNameById.get(doc.folder_id)) || '',
         scopeLabel(doc.scope, isPolish),
         formatBytes(doc.file_size_bytes),
         formatDate(doc.created_at, isPolish),
@@ -313,7 +432,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
     link.download = `${safe.name.replace(/[^\p{L}\p{N}-]+/gu, '-')}-dokumenty.csv`;
     link.click();
     URL.revokeObjectURL(url);
-  }, [rows, safe.name, t, isPolish]);
+  }, [rows, safe.name, t, isPolish, folderNameById]);
 
   // ── Kolumny tabeli ───────────────────────────────────────────────────────
   const columns: TableColumn[] = useMemo(
@@ -343,6 +462,29 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
           ) : (
             <span className="text-sm text-c-text-muted">—</span>
           ),
+      },
+      // ★ VLT-FOLDERS — kolumna KONTEKSTU (jak "Poziom"/"W wiedzy AI"): pokazuje
+      // W KTÓRYM folderze tego sejfu żyje dokument. Bez lejka — filtr folderu
+      // mieszka w pasku nad tabelą (dropdown "Folder"), nie tu (kanon gęstości
+      // §"jedna akcja = jeden dom" — patrz `filterBarNode`).
+      {
+        id: 'folder',
+        label: t('vault.docs.colFolder', isPolish ? 'Folder' : 'Folder'),
+        width: '150px',
+        sortable: true,
+        sortAccessor: (row: TableRow) =>
+          (row.folder_id && folderNameById.get(row.folder_id as string)) || '',
+        render: (row: TableRow) => {
+          const name = row.folder_id ? folderNameById.get(row.folder_id as string) : null;
+          return name ? (
+            <span className="inline-flex min-w-0 items-center gap-1.5 text-sm text-c-text-secondary">
+              <Folder size={13} className="shrink-0 text-c-text-muted" />
+              <span className="truncate">{name}</span>
+            </span>
+          ) : (
+            <span className="text-sm text-c-text-muted">—</span>
+          );
+        },
       },
       {
         id: 'tags',
@@ -451,12 +593,45 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
         ),
       },
     ],
-    [t, isPolish, tagOptions]
+    [t, isPolish, tagOptions, folderNameById]
   );
 
   // ── Kebab wiersza (kontrakt 5 bloków; bloki 4/5 dokłada StandardTable) ───
   const buildRowMenu = useCallback(
     (doc: VaultDocument): StandardRowMenu => ({
+      primary: [
+        {
+          id: 'move-folder',
+          label: t('vault.docs.moveToFolder', isPolish ? 'Przenieś do folderu' : 'Move to folder'),
+          icon: Folder,
+          disabled: folders.length === 0,
+          note:
+            folders.length === 0
+              ? t(
+                  'vault.docs.moveToFolderNote',
+                  isPolish
+                    ? 'Brak folderów — utwórz jeden w pasku filtrów'
+                    : 'No folders yet — create one in the filter bar'
+                )
+              : undefined,
+          submenu: [
+            {
+              id: 'folder-none',
+              label: t('vault.docs.noFolder', isPolish ? 'Bez folderu' : 'No folder'),
+              icon: Layers,
+              disabled: !doc.folder_id,
+              onClick: () => void handleMoveToFolder(doc, null),
+            },
+            ...folders.map((f) => ({
+              id: `folder-${f.id}`,
+              label: f.name,
+              icon: Folder,
+              disabled: doc.folder_id === f.id,
+              onClick: () => void handleMoveToFolder(doc, f.id),
+            })),
+          ],
+        },
+      ],
       universalHandlers: {
         preview: () => setSelectedId(doc.id),
         edit: () => openEdit(doc),
@@ -473,7 +648,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
         onClick: () => void deleteDocuments([doc.id]),
       },
     }),
-    [openEdit, deleteDocuments, t, isPolish]
+    [openEdit, deleteDocuments, handleMoveToFolder, folders, t, isPolish]
   );
 
   // ── Preview (6 bloków fasady) ────────────────────────────────────────────
@@ -653,6 +828,60 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
             </option>
           ))}
         </select>
+        {foldersAvailable ? (
+          <Menu3DropdownChip
+            data-testid="vault-docs-folder-chip"
+            icon={<Folder size={14} className="text-c-text-muted" />}
+            label={
+              activeFolderId
+                ? folderNameById.get(activeFolderId) || t('vault.docs.folder', 'Folder')
+                : t('vault.docs.folder', 'Folder')
+            }
+            active={Boolean(activeFolderId)}
+            ariaLabel={t('vault.docs.folder', 'Folder')}
+            items={[
+              {
+                id: 'all',
+                label: t(
+                  'vault.docs.allFolders',
+                  isPolish ? 'Wszystkie dokumenty' : 'All documents'
+                ),
+                icon: <Layers size={14} />,
+                active: !activeFolderId,
+                onSelect: () => setActiveFolderId(null),
+              },
+              ...folders.map((f) => ({
+                id: f.id,
+                label: f.name,
+                icon: <Folder size={14} />,
+                active: activeFolderId === f.id,
+                trailing: activeFolderId === f.id ? '✓' : undefined,
+                onSelect: () => setActiveFolderId(f.id),
+              })),
+              {
+                id: 'new-folder',
+                label: t('vault.docs.newFolder', isPolish ? 'Nowy folder…' : 'New folder…'),
+                icon: <FolderPlus size={14} />,
+                dividerBefore: true,
+                onSelect: () => void handleCreateFolder(),
+              },
+              ...(activeFolderId
+                ? [
+                    {
+                      id: 'delete-folder',
+                      label: t(
+                        'vault.docs.deleteFolder',
+                        isPolish ? 'Usuń ten folder' : 'Delete this folder'
+                      ),
+                      icon: <Trash2 size={14} />,
+                      danger: true,
+                      onSelect: () => void handleDeleteFolder(activeFolderId),
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        ) : null}
         <div className="flex items-center gap-1">
           {statusChipDefs.map(({ id, label, dot }) => (
             <Menu3Chip key={id} active={statusChip === id} onClick={() => setStatusChip(id)}>
@@ -703,6 +932,12 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
       exportCsv,
       t,
       isPolish,
+      foldersAvailable,
+      folders,
+      activeFolderId,
+      folderNameById,
+      handleCreateFolder,
+      handleDeleteFolder,
     ]
   );
 
