@@ -360,10 +360,20 @@ export const TopBar: React.FC<TopBarProps> = ({
             data-testid="mels-topbar-title-input"
           />
         ) : (
+          // 2026-07-28 (U5, odbiór "menu pliku") — this button used to have no
+          // explicit width share: as the ONLY sibling here without
+          // `flex-shrink-0`, it should have absorbed all of the row's
+          // remaining space, but the observed result ("Audyt p…" with a
+          // visibly empty bar at 1280px) means it wasn't reliably getting it.
+          // `flex-1 min-w-0` makes it claim the row's leftover width
+          // explicitly instead of relying on default flex-item sizing, so it
+          // only truncates when space is truly short. Native `title` restores
+          // the full string on hover (was missing entirely before).
           <button
             type="button"
             onClick={() => onTitleChange && setEditing(true)}
-            className={`text-slate-900 dark:text-white font-medium truncate ${
+            title={title}
+            className={`min-w-0 flex-1 truncate text-left text-slate-900 dark:text-white font-medium ${
               onTitleChange ? 'hover:text-c-focus-solid' : ''
             }`}
             data-testid="mels-topbar-title"
