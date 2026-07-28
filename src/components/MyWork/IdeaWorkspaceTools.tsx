@@ -1176,7 +1176,16 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           <Section title={t('myWorkIdeas.workspaceTools.mapHealth')} icon={<Activity size={13} />}>
             <MapHealthScore
               nodes={graphNodes.map((n: any) => ({ id: n.id, data: n.data, type: n.type }))}
-              edges={graphEdges.map((e: any) => ({ source: e.source, target: e.target }))}
+              // `type`/`data` są tu POTRZEBNE: widget rozróżnia krawędzie
+              // strukturalne od relacji użytkownika (edgeRole/`labeled`), a
+              // wcześniejsze okrojenie do {source,target} kasowało ten sygnał.
+              edges={graphEdges.map((e: any) => ({
+                id: e.id,
+                source: e.source,
+                target: e.target,
+                type: e.type,
+                data: e.data,
+              }))}
               visible
             />
           </Section>

@@ -3208,6 +3208,30 @@ function MindMapInner({
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail || {};
       if (detail.ideaId && detail.ideaId !== ideaId) return;
+
+      // Wariant ZBIOROWY (`nodeIds`) — dodany dla widgetu „Zdrowie mapy":
+      // klik w konkretny brak („5 węzłów bez etykiety") ma pokazać WSZYSTKIE
+      // winne węzły, nie jeden. Zaznacza je na płótnie i kadruje do nich —
+      // ten sam ruch, co pigułka „N niepowiązanych elementów" w Whiteboard.
+      const nodeIds = Array.isArray(detail.nodeIds)
+        ? detail.nodeIds.map((id: unknown) => String(id || '').trim()).filter(Boolean)
+        : [];
+      if (nodeIds.length > 0) {
+        const idSet = new Set<string>(nodeIds);
+        setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: idSet.has(n.id) })));
+        setSearchHitNodeId(nodeIds[0]);
+        try {
+          fitView({
+            nodes: nodeIds.map((id: string) => ({ id }) as any),
+            padding: 0.4,
+            duration: 400,
+          });
+        } catch {
+          /* fitView throws if the canvas is mid-teardown — safe to ignore */
+        }
+        return;
+      }
+
       const nodeId = String(detail.nodeId || '').trim();
       if (!nodeId) return;
       setSearchHitNodeId(nodeId);
@@ -3219,7 +3243,7 @@ function MindMapInner({
     };
     window.addEventListener('idea-workspace-highlight-node', handler);
     return () => window.removeEventListener('idea-workspace-highlight-node', handler);
-  }, [fitView, ideaId]);
+  }, [fitView, ideaId, setNodes]);
 
   // Clear the pulse after a short delay so it doesn't linger once the user
   // moves on (matches the _justMoved ring's transient nature elsewhere).

@@ -29322,15 +29322,26 @@
       "ctx_ai_rewrite_node": "AI: Rewrite this node"
     },
     "health": {
-      "balance": "Balance",
-      "depth": "Depth",
-      "coverage": "Coverage",
-      "maturity": "Maturity",
-      "connectivity": "Connectivity",
-      "avgDepth": "Avg depth: {{value}}",
-      "coverageBranches": "{{covered}}/{{total}} branches",
-      "matureCount": "{{mature}}/{{total}} mature",
-      "crossBranch": "{{count}} cross-branch"
+      "gapsCount_one": "{{count}} gap to fill",
+      "gapsCount_other": "{{count}} gaps to fill",
+      "noGaps": "No obvious gaps on this map",
+      "noGapsHint": "Every node has a label and a link, every branch has depth and evidence.",
+      "showOnMap": "Show on map",
+      "gapNoLabel_one": "{{count}} node without a label",
+      "gapNoLabel_other": "{{count}} nodes without a label",
+      "gapNoLabelHint": "An empty node carries no content",
+      "gapIsolated_one": "{{count}} element linked to nothing",
+      "gapIsolated_other": "{{count}} elements linked to nothing",
+      "gapIsolatedHint": "Not attached to any branch of the map",
+      "gapEmptyBranch_one": "{{count}} branch with no ideas",
+      "gapEmptyBranch_other": "{{count}} branches with no ideas",
+      "gapEmptyBranchHint": "The branch has no node underneath it",
+      "gapShallowBranch_one": "{{count}} branch with no depth",
+      "gapShallowBranch_other": "{{count}} branches with no depth",
+      "gapShallowBranchHint": "One level only — ideas are not broken down",
+      "gapNoEvidence_one": "{{count}} branch without evidence",
+      "gapNoEvidence_other": "{{count}} branches without evidence",
+      "gapNoEvidenceHint": "No node in the branch has evidence attached"
     },
     "inspector": {
       "tab": {
