@@ -57,7 +57,104 @@ deep-linki/menu po adopcji StandardModuleBar. To pierwsza robota poranka (Sonnet
 3. **3 decyzje** (nie blokują startu, ale odblokowują P3): raport=typ dokumentu? ·
    /presentation-studio żywe? · stary Report Builder UI deprecate? 5 min.
 
-### DZIEŃ 1 (27.07) — po akceptach
+### ✅ NOC 27/28.07 — 6 robotników, demo `01a12a26f8` + `33260bf7db` (odbiór: rejestr MAT-NOC)
+- **N1 (Opus)** doktryna treści Excela wdrożona: prompt PRZESTAŁ kazać zmyślać („use realistic
+  numbers" → reguła 3 źródeł), sekwencja E1→E5 w planowaniu, bramki **DX-01 (brak Założeń)**
+  i **DX-02 (cykle)** jako blokujące. 7/7 szablonów przechodzi. 30 nowych testów.
+- **N2** Excel zna organizację: `buildOrgContextSourcePack` reużyty co do bajtu z dokumentów,
+  nazwa firmy na zakładce Info, kontekst zasila ZAŁOŻENIA (nie wyniki). Fail-open dla pustej org.
+- **N3** uczciwy streaming: koniec cichego fallbacku (widoczny komunikat), przycisk Stop, chipy
+  źródeł per sekcja, plan pokazywany także w trybie szablonu (wcześniej pomijany).
+- **N4** galeria szablonów w PRODUKCJI za flagą `ff_galeria_szablonow` (default OFF) —
+  gotowa do flipa po akcepcie Piotra. `SheetSilhouette` wylądował w `src/components/Sheets/`.
+- **N5** nowy model **projectViability (NPV/IRR)** — 8. archetyp, żywe formuły, tabela wrażliwości,
+  frazy intencji PL/EN; kolory czcionki modelu finansowego (niebieski/czarny/zielony) dla WSZYSTKICH
+  modeli. Sanity: NPV ≈ +239 tys., IRR ≈ 17-20% dla domyślnych.
+- **N6** czystość typów: **27 → 0** błędów, w tym MOJA regresja z porannej kasacji (`wordy`),
+  plus 3 starsze usterki (m.in. komunikat, który nigdy się nie pokazywał).
+- Integracja: kolizja N1×N5 (sztywne „7 szablonów" vs dodany ósmy) złapana i rozwiązana asercją
+  odporną. 251 testów zielonych, strażniki czyste.
+- ★★ LEKCJA NOCY: `tsc` porównuj do **ŚWIEŻEGO** baseline — demo rusza się pod nami. Jeden „nowy"
+  błąd typu okazał się cudzy (równoległa sesja), co ustaliłem dopiero mierząc czysty tip ponownie.
+- ⚠️ LUKA: interaktywne stany streamingu niezweryfikowane wzrokiem (harness nie przechodził dalej
+  pod automatem) — pokryte 11 testami DOM, ale bez mojego oka.
+
+### ✅ FAZA A (kanon na papierze) — WYKONANA (27.07 ~19:00, demo `3a19e43faf`)
+A1 `_KANON_MENU_3_NARZEDZIA` (22 punkty zweryfikowane w kodzie; ★odkrycie: Excel ma DWA ekrany
+o różnej jakości — generacja ma poprawny prawy panel, otwarty arkusz dzieli komponent z Idea Table
+bez tożsamości) · A2 `_BENCHMARK_UKLAD_DOKUMENTY` (34 prymitywy vs Gamma/Notion/Airtable; TOP 3
+rekomendacje to „komponent istnieje, tylko nie podłączony") · A3 `_DOKTRYNA_TRESCI_EXCEL`
+(sekwencja E1→E5, anatomia 7 warstw; ★prompt planowania DOSŁOWNIE każe LLM zmyślać liczby;
+arkusz bez założeń dostaje 100/100 od bramki; Excel odcięty od księgi faktów) ·
+A4 `_DOKTRYNA_STREAMING` (★audyt o „cichym no-op" był PRZEDAWNIONY — streaming dokumentu działa;
+Deck i Excel nie mają postępu treści, tylko 8 generycznych etapów co 3s) · A5 czystka 4 dokumentów.
+
+### ✅ FAZA B (przepływ) — WYKONANA (27.07 22:05, demo `97f4470845`, tag
+### `demo-safe-2026-07-27-faza-b`; odbiór: rejestr MAT-FAZA-B)
+- **B1** przepływ „Z AI" bez formularza: dokument + Teresa z boku, za flagą `ff_zai_teresa`
+  (DEFAULT OFF do akceptu Piotra). ★Robotnik ODRZUCIŁ wzorzec Excela (legacy silnik Kimi) na rzecz
+  lepszego streamingu, który Document Studio już ma + `UnifiedChatPanel` z Decka — dobra decyzja
+  inżynierska, zero kopiowania regresji.
+- **B2** kickoff Teresy — zrobiony wcześniej (fala 1 sprzątania, 3 lane'y).
+- **B3** breadcrumb N-poziomowy + rama modułu w 3 studiach; przy okazji naprawiony ekran
+  Megatrendy, który po cichu gubił trzeci poziom.
+- **B4** PROTOTYP galerii szablonów — gałąź `proto/galeria-szablonow`, NIE na demo, zrzuty
+  light+dark pokazane Piotrowi. Czeka na akcept + 1 decyzja (wyciszenie sylwetki dokumentu).
+- ★ Render-verify nadzorcy złapał: harness bez pełnego drzewa kontekstów + angielskie zdanie
+  w panelu Teresy (naprawione przed pokazaniem Piotrowi).
+
+### ✅ FALA 2 URODZINOWA — WYKONANA (27.07 17:30, demo `9f720dca92`, tag
+### `demo-safe-2026-07-27-fala2-urodzinowa`; odbiór: rejestr MAT-FALA2)
+Trzy bugi z ŻYWYCH testów Piotra: (1) samo słowo „excel" w czacie nie trafiało w żaden wzorzec
+intencji → pusta tabela zamiast skoroszytu; (2) Document Studio generował BEZ kontekstu organizacji
+→ 0 źródeł → własna bramka QA blokowała eksport (dowód naprawy: Sources 0→100, nazwy realnie
+w treści); (3) ★ G5 — „New template" pusty i nieklikalny = JEDYNE wejście do Architekta szablonów
+było martwe (MOJA regresja z 26.07).
+**★ Powstała suita golden E2E** (`tests/e2e/golden/materialy.golden.spec.ts`, 8 ścieżek headless) —
+od teraz stała bramka. **Baseline: 6 PASS / 2 FAIL / 1 DEGRADED, werdykt 5/10.** G5 naprawiony tą
+falą; G2 (dokument nie na liście) wymaga potwierdzenia na REALNEJ bazie — atrapa DB w środowisku
+testowym może nie odwzorowywać rejestracji artefaktów, więc NIE nazywam tego bugiem produktowym.
+★ LEKCJA: suita złapała regresję, której nie złapały testy jednostkowe ani mój render-verify —
+bo testowałem komponent, nie ścieżkę użytkownika.
+
+### ✅ KASACJA MARTWYCH — WYKONANA (27.07 6:15, demo `4e52afe592`, tag
+### `demo-safe-2026-07-27-kasacja`): −4651 LOC, 8 pozycji wg spisu z dowodami per commit
+### (Haiku). Worktree armii scalonych fal posprzątane; `army-proto-gamma` zostaje (prototyp
+### nie scalony — do decyzji Piotra co z wzorcami do Teresy).
+
+### ✅ FALA 1 SPRZĄTANIA — WYKONANA (27.07 6:00, demo `33662cace7`, tag
+### `demo-safe-2026-07-27-fala1-sprzatanie`, odbiór: rejestr MAT-FALA1)
+Wizard+Studio odcięte redirectami · szablony doc→rejestr kanoniczny · retry+backfill
+native_artifact (dokumenty DS miały ZERO siatki — realna dziura zamknięta) · arkusze
+rozróżnione (model vs eksport tabeli) · kickoff Teresy naprawiony (3 lane'y; Wordy=osobne
+zadanie, inna architektura). Spis martwych gotowy: `_SPIS_MARTWYCH_DO_KASACJI_2026-07-27.md`
+(8×KASUJ z dowodami, 1×ZOSTAW — żywy przez główny czat). 35/35 testów, strażnicy zieloni.
+Luka jawna: etykiety arkuszy nieobejrzane na żywych danych (ściana logowania) — Piotr rzuca
+okiem przy klik-teście.
+
+### ★ REWIZJA REUSE-FIRST (27.07 ~5:40, po inwentaryzacji 3 formatów — SSOT:
+### `_INWENTARZ_GENERATORY_3_FORMATY_2026-07-27.md`; UNIEWAŻNIA sprzeczne pozycje niżej)
+Dyrektywy Piotra z poranka: raport=dokument Word (3 formaty, 3 generatory) · Teresa=pole
+tworzenia z AI (prototyp Gamma-start ODRZUCONY jako osobny ekran — wzorce mogą zasilić przepływ
+Teresy) · najpierw inwentarz, zero dublowania · estetyka „lekkie AI-app, nie tabele z lat 90".
+Inwentarz potwierdził: WSZYSTKIE silniki istnieją i są dojrzałe. Tydzień = SPRZĄTANIE+POLER,
+nie budowa. Zmiany względem pierwotnych dni 1-3:
+- SKREŚLONE: P2.1 rollout ekranu startu Gamma (zastąpione: przepływ Teresy jako jedyne wejście
+  Z AI; ewentualne wzbogacenie czatu chipami kontekstu = osobny prototyp, po decyzji).
+- DZIEŃ 1 dodatkowo [Sonnet]: scalenie PresentationWizard → tryb „Z szablonu" w /prezentacje;
+  czystka martwych (PresentationsHub stary, DeckTemplateGallery, WordyView+lane, ReportBuilderWizard,
+  ReportBuilderCommentPanel, DocumentStudioEditorPanel, generate-and-download — po gotowym spisie
+  z dowodami → wykonawczo Haiku); dokończenie migracji zapisu szablonów na document_studio_templates.
+- DZIEŃ 1-2 [Sonnet]: retry rejestracji artefaktu w bibliotece (fail-soft→rekoncyliacja);
+  badge „model finansowy vs eksport tabeli" w Sheets (61/75!); fix kickoff→/prezentacje.
+- DZIEŃ 2 [Opus prototypy]: redesign DataSources (koniec JSON-textarea) + formularz parametrów
+  Excela (progresywne ujawnianie) — za akceptami wieczornymi.
+- P3.3 doprecyzowane: unifikacja = WCHŁONIĘCIE zdolności Report Buildera (RAG, typy sekcji,
+  bloki analityczne, PPTX-eksport) do Document Studio; RB UI wygaszany PO migracji. Koncept
+  [Fable, dzień 2] · implementacja po urodzinach. Decyzja kierunkowa zgodna z „raport=Word".
+- Presentation Studio: front wygaszamy (porzucony sprint z maja), backend zostaje.
+
+### DZIEŃ 1 (27.07) — po akceptach (pozycje sprzeczne z rewizją wyżej = nieaktualne)
 | Zadanie | Model | Rozmiar |
 |---|---|---|
 | P1.1 breadcrumb N-poziomowy + rama „Materiały › …" + „← Materiały" w 3 studiach | Sonnet | M |
