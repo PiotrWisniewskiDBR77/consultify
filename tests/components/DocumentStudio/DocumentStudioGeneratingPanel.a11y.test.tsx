@@ -11,10 +11,18 @@
  *   - decorative icons (spinner/check) are `aria-hidden`;
  *   - the error line uses `role="alert"` so failures are announced;
  *   - skeleton placeholder rows (no outline yet) render without crashing.
+ *
+ * N3 (2026-07-28, doktryna streaming) additions:
+ *   - the stream-fallback `notice` uses `role="status"` (distinct from
+ *     `role="alert"` — it is an honest heads-up, not a failure);
+ *   - the Stop button only renders when `onStop` is provided AND `canStop`
+ *     is true, and calls `onStop` on click;
+ *   - `sourceRefs` on a ready section render as deduped chips, absent on a
+ *     pending section.
  */
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { DocumentStudioGeneratingPanel } from '../../../src/components/DocumentStudio/DocumentStudioGeneratingPanel';
 import type { DocumentOutline } from '../../../src/components/DocumentStudio/types';
@@ -100,5 +108,68 @@ describe('DocumentStudioGeneratingPanel (D3 a11y smoke)', () => {
     );
     const alert = screen.getByRole('alert');
     expect(alert).toHaveTextContent(/streaming failed/i);
+  });
+
+  // N3 (doktryna streaming §4/§7.1) — the silent-fallback fix: a dropped SSE
+  // connection now surfaces a calm, non-blocking `notice` (status, not
+  // alert — this is expected/handled, unlike `error`).
+  it('announces the stream-fallback notice via role="status", distinct from role="alert"', () => {
+    render(
+      <DocumentStudioGeneratingPanel
+        outline={null}
+        sections={[]}
+        notice="Połączenie na żywo zerwane — dokańczam w tle…"
+      />
+    );
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent(/Połączenie na żywo zerwane/i);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  // N3 (§2/§7.3) — Stop button parity with Canvas. Hidden entirely when
+  // `canStop` is false (e.g. once a run has fallen back to the non-abortable
+  // synchronous path) so it is never a dead control.
+  it('shows a Stop button only when onStop is provided and canStop is true, and fires it on click', () => {
+    const onStop = vi.fn();
+    const { rerender } = render(
+      <DocumentStudioGeneratingPanel outline={OUTLINE} sections={[]} onStop={onStop} canStop />
+    );
+    fireEvent.click(screen.getByTestId('document-studio-stop-generation'));
+    expect(onStop).toHaveBeenCalledOnce();
+
+    rerender(
+      <DocumentStudioGeneratingPanel
+        outline={OUTLINE}
+        sections={[]}
+        onStop={onStop}
+        canStop={false}
+      />
+    );
+    expect(screen.queryByTestId('document-studio-stop-generation')).not.toBeInTheDocument();
+  });
+
+  // N3 (§5/§7.2) — sourceRef chips ("Based on: X, Y") render under a ready
+  // section and are absent while the section is still pending.
+  it('renders deduped sourceRef chips under a ready section, and none for a pending one', () => {
+    render(
+      <DocumentStudioGeneratingPanel
+        outline={OUTLINE}
+        sections={[
+          {
+            title: 'Executive summary',
+            ready: true,
+            sourceRefs: [
+              { sourceType: 'interview', sourceId: 'int-4', sourceTitle: 'Wywiad #4' },
+              { sourceType: 'insight', sourceId: 'ins-12', sourceTitle: 'Insight #12' },
+            ],
+          },
+          { title: 'Market analysis', ready: false },
+        ]}
+      />
+    );
+    const sourcesRow = screen.getByTestId('generating-section-0-sources');
+    expect(sourcesRow).toHaveTextContent('Wywiad #4');
+    expect(sourcesRow).toHaveTextContent('Insight #12');
+    expect(screen.queryByTestId('generating-section-1-sources')).not.toBeInTheDocument();
   });
 });

@@ -3081,7 +3081,7 @@ Consider priority {{priority}}, due date {{dueDate}} and status {{status}}.`,
         roleName: 'Reminder Rules Advisor',
       });
       const next = (Array.isArray(parsed?.reminders) ? parsed.reminders : [])
-        .map((r: any, idx: number) => ({
+        .map((r: any, idx: number): ReminderRuleWithDelivery => ({
           id: `ai-rem-${Date.now()}-${idx}`,
           type: r?.type === 'after_due' ? 'after_due' : 'before_due',
           days: Math.max(0, Number(r?.days ?? 0)),

@@ -52,7 +52,7 @@ import { isFormulaDisplayValue } from '@/utils/workbookGridPreview';
 
 import TabelePreviewLayout from './tabelePreview/TabelePreviewLayout';
 
-export type KimiLane = 'wordy' | 'excele' | 'prezentacje' | 'tabele';
+export type KimiLane = 'excele' | 'prezentacje' | 'tabele';
 
 // B3 fix (2026-07-22, workstream Excel): render only the first N rows of a big
 // sheet by default — the "Show all" toggle un-caps the current sheet, the
@@ -470,13 +470,11 @@ function ArtifactPreviewPane({
               {t('kimi.generating', 'Generating...')}
             </p>
             <p className="text-xs text-c-text-secondary mt-1">
-              {lane === 'wordy'
-                ? t('kimi.generatingDoc', 'Building your document')
-                : lane === 'excele'
-                  ? t('kimi.generatingSheet', 'Building your spreadsheet')
-                  : lane === 'tabele'
-                    ? t('kimi.generatingTabele', 'Building your operational table')
-                    : t('kimi.generatingDeck', 'Building your presentation')}
+              {lane === 'excele'
+                ? t('kimi.generatingSheet', 'Building your spreadsheet')
+                : lane === 'tabele'
+                  ? t('kimi.generatingTabele', 'Building your operational table')
+                  : t('kimi.generatingDeck', 'Building your presentation')}
             </p>
           </div>
         </div>
@@ -526,13 +524,11 @@ function ArtifactPreviewPane({
           </div>
           <div>
             <p className="text-sm font-medium text-c-text">
-              {lane === 'wordy'
-                ? t('kimi.emptyWordy', 'Your document will appear here')
-                : lane === 'excele'
-                  ? t('kimi.emptyExcele', 'Your spreadsheet will appear here')
-                  : lane === 'tabele'
-                    ? t('kimi.emptyTabele', 'Your operational table will appear here')
-                    : t('kimi.emptyDeck', 'Your presentation will appear here')}
+              {lane === 'excele'
+                ? t('kimi.emptyExcele', 'Your spreadsheet will appear here')
+                : lane === 'tabele'
+                  ? t('kimi.emptyTabele', 'Your operational table will appear here')
+                  : t('kimi.emptyDeck', 'Your presentation will appear here')}
             </p>
             <p className="text-xs text-c-text-secondary mt-1">
               {usesChatOnlyStart
@@ -562,13 +558,11 @@ function ArtifactPreviewPane({
                 ) : (
                   <Sparkles size={16} />
                 )}
-                {lane === 'wordy'
-                  ? t('kimi.generateDoc', 'Generate Document')
-                  : lane === 'excele'
-                    ? t('kimi.generateSheet', 'Generate Spreadsheet')
-                    : lane === 'tabele'
-                      ? t('kimi.generateTable', 'Generate Table')
-                      : t('kimi.generateDeck', 'Generate Presentation')}
+                {lane === 'excele'
+                  ? t('kimi.generateSheet', 'Generate Spreadsheet')
+                  : lane === 'tabele'
+                    ? t('kimi.generateTable', 'Generate Table')
+                    : t('kimi.generateDeck', 'Generate Presentation')}
               </button>
             </div>
           )}
@@ -931,13 +925,11 @@ function ArtifactPreviewPane({
               <Eye size={16} />
               <span>
                 {preview.fileName ||
-                  (lane === 'wordy'
-                    ? 'document.pdf'
-                    : lane === 'excele'
-                      ? 'spreadsheet.xlsx'
-                      : lane === 'tabele'
-                        ? 'table.csv'
-                        : 'presentation.pptx')}
+                  (lane === 'excele'
+                    ? 'spreadsheet.xlsx'
+                    : lane === 'tabele'
+                      ? 'table.csv'
+                      : 'presentation.pptx')}
               </span>
               <span className="text-xs text-c-text-secondary">
                 {t('kimi.previewFile', 'Preview File')}
@@ -990,7 +982,6 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
 
   const workspaceContext = useMemo(() => {
     const laneViewMap: Record<KimiLane, AppView> = {
-      wordy: AppView.WORDY,
       excele: AppView.EXCELE,
       prezentacje: AppView.PREZENTACJE_GEN,
       tabele: AppView.TABELE,

@@ -5,8 +5,7 @@
 // Main Editor (Gamma-style)
 export { ReportEditor } from './ReportEditor';
 
-// Legacy Wizard (kept for compatibility)
-export { ReportBuilderWizard } from './ReportBuilderWizard';
+// Legacy Wizard (removed 2026-07-27 — never imported)
 export { useReportBuilder } from './useReportBuilder';
 
 // Steps (legacy)
@@ -17,9 +16,6 @@ export { SourceSelectStep } from './steps/SourceSelectStep';
 
 // Composer
 export { ReportsComposer } from './ReportsComposer';
-
-// Comment Panel
-export { ReportBuilderCommentPanel } from './ReportBuilderCommentPanel';
 
 // Types
 export type {

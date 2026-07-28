@@ -2,11 +2,12 @@
  * CalendarView — Monthly/weekly/daily calendar showing rows on their date.
  * Supports month/week/day modes, navigation, click-to-detail, drag-to-reschedule, add event on slot click.
  */
-import { Calendar, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { ColumnDef, TableNode } from './tableTypes';
+import { resolveDateViewSetup, ViewSetupEmptyState } from './ViewSetupEmptyState';
 
 type CalendarMode = 'month' | 'week' | 'day';
 
@@ -17,6 +18,13 @@ interface CalendarViewProps {
   onNodeClick?: (nodeId: string) => void;
   onFieldChange?: (nodeId: string, field: string, value: any) => void;
   onAddEventAtDate?: (dateStr: string) => void;
+  /**
+   * Empty-state escape hatches — same reason as TimelineView: a view that
+   * needs a `date` column must be able to CREATE one and to hand the user
+   * back to the Table view, not just describe what is missing.
+   */
+  onAddDateColumn?: () => void;
+  onBackToTable?: () => void;
 }
 
 const WEEKDAYS_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -76,6 +84,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onNodeClick,
   onFieldChange,
   onAddEventAtDate,
+  onAddDateColumn,
+  onBackToTable,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -228,14 +238,22 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   );
 
   if (!dateCol) {
+    // `dateCol` already falls back to a HIDDEN date column, so reaching this
+    // branch means the table truly has none — allowHiddenColumns keeps
+    // resolveDateViewSetup from reporting the (here impossible) hidden case.
+    const setupState = resolveDateViewSetup({
+      columns,
+      rows,
+      allowHiddenColumns: true,
+    }) ?? { reason: 'no-column' as const };
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-c-text-muted gap-2 p-8">
-        <Calendar size={32} />
-        <span className="text-sm font-medium">{t('myWorkTable.calendarView.calendarView')}</span>
-        <span className="text-xs text-c-text-muted">
-          {t('myWorkTable.calendarView.addADateColumnTo')}
-        </span>
-      </div>
+      <ViewSetupEmptyState
+        view="calendar"
+        state={setupState}
+        locked={locked}
+        onAddColumn={onAddDateColumn}
+        onBackToTable={onBackToTable}
+      />
     );
   }
 

@@ -35,6 +35,10 @@ import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
+import {
+  IDEA_TOP_BAR_SLOT_ID,
+  isIdeaTopBarOneLineEnabled,
+} from '@/utils/ideaTopBarOneLineFlag';
 import { isMelsCanvasEnabled } from '@/utils/melsCanvasFlag';
 import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
@@ -81,6 +85,7 @@ import {
 import { IdeaExportMenu } from './IdeaExportMenu';
 import { IdeaGhostCards } from './IdeaGhostCards';
 import { ideaMapToMarkdown } from './ideaMapToMarkdown';
+import { subscribeIdeaUndoState } from './ideaUndoStateBus';
 import { type ExtendedNodeData, IdeaNodeDetailDrawer } from './IdeaNodeDetailDrawer';
 import { IdeaProcessFlowTool } from './IdeaProcessFlowTool';
 import { IdeaProposalReview } from './IdeaProposalReview';
@@ -111,6 +116,8 @@ import {
 import { AIGovernanceBadge, AIGovernancePanel } from './mindmap/AIGovernancePanel';
 import { CanvasLeftToolbar } from './mindmap/CanvasLeftToolbar';
 import { IdeaViewSwitcher } from './mindmap/IdeaViewSwitcher';
+import { buildIdeaPanel6RailTools } from './panel/ideaPanel6Sections';
+import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
 import { stabilizeMindmapInteractionMode } from './mindmap/mindmapInteractionGrammar';
 import { SnapshotHistory } from './mindmap/SnapshotHistory';
 import { type UnifiedNodeData, UnifiedNodeDetailDrawer } from './mindmap/UnifiedNodeDetailDrawer';
@@ -368,23 +375,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const graphEdgesRef = useRef<any[]>([]);
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
-  const [mmCanUndo, setMmCanUndo] = useState(false);
-  const [mmCanRedo, setMmCanRedo] = useState(false);
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const { canUndo, canRedo } = (e as CustomEvent).detail || {};
-      setMmCanUndo(Boolean(canUndo));
-      setMmCanRedo(Boolean(canRedo));
-    };
-    window.addEventListener('mm-undo-state', handler);
-    // Table tool reports its own undo/redo availability on a dedicated channel.
-    window.addEventListener('tbl-undo-state', handler);
-    return () => {
-      window.removeEventListener('mm-undo-state', handler);
-      window.removeEventListener('tbl-undo-state', handler);
-    };
-  }, []);
+  // Stan Cofnij/Ponów lewego paska — JEDEN kanał dla wszystkich 4 narzędzi
+  // (`ideaUndoStateBus`). Wcześniej workspace słuchał tylko Mapy i Tabeli, więc
+  // na Tablicy i Przepływie przyciski były trwale wygaszone.
+  const [railCanUndo, setRailCanUndo] = useState(false);
+  const [railCanRedo, setRailCanRedo] = useState(false);
   // discoveryPanel removed — replaced by CanvasLeftToolbar
   const [whiteboardFacilitation, setWhiteboardFacilitation] = useState<{
     timerEndsAt?: number | null;
@@ -532,6 +527,20 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         new CustomEvent('idea-workspace-active-tool', { detail: { tool: null } })
       );
     };
+  }, [activeTool]);
+
+  // Cofnij/Ponów lewego paska: jeden autobus (`idea-undo-state` + most dla starych
+  // kanałów Mapy/Tabeli). Przyjmujemy TYLKO stan aktywnego narzędzia, a przy
+  // przełączeniu narzędzia gasimy przyciski do czasu, aż nowe narzędzie nada swój
+  // stan — inaczej pasek pokazywałby cudzy, nieaktualny stos.
+  useEffect(() => {
+    setRailCanUndo(false);
+    setRailCanRedo(false);
+    return subscribeIdeaUndoState((state) => {
+      if (state.tool !== activeTool) return;
+      setRailCanUndo(state.canUndo);
+      setRailCanRedo(state.canRedo);
+    });
   }, [activeTool]);
 
   // ── Selection contract ──────────────────────────────────────────────────────
@@ -1183,6 +1192,35 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     [isPolish, realId]
   );
 
+  /**
+   * B2 (2026-07-27) — JEDYNA poprawna reakcja na „szablon zastosowany".
+   *
+   * Bug: „Użyj szablonu"/„AI wypełni" zapisywały szablon na serwerze, ale
+   * kanwa zostawała stara — z perspektywy użytkownika „nic się nie dzieje".
+   * Przyczyna: samo `setMapRefreshToken` NIE wystarcza dla narzędzi pracujących
+   * w trybie `externalRuntime` (Mind Map, Process Flow). Ich `hydrate()` czyta
+   * NIE z API, tylko z współdzielonego `graphRuntime` („the parent's refresh()
+   * primes it" — IdeaProcessFlowTool.hydrate). Bez `refresh()` runtime nadal
+   * trzyma graf sprzed szablonu, więc:
+   *   • Process Flow re-hydratował się do STAREJ zawartości, a jego autosave
+   *     zapisywał ją z powrotem NA szablon (obserwowane: mapa wracała do
+   *     3 węzłów przy `templateGovernance.templateId` już ustawionym),
+   *   • Mind Map w ogóle nie dostawał `refreshToken`.
+   * Whiteboard/Tabela działały, bo idą legacy-ścieżką per-tool `getMyIdeaMap`.
+   *
+   * Kolejność jest istotna: NAJPIERW `refresh()` (runtime dostaje kanoniczny
+   * graf), DOPIERO POTEM bump tokenu (narzędzia re-hydratują się z już
+   * świeżego runtime).
+   */
+  const handleTemplateApplied = useCallback(async () => {
+    try {
+      await refreshRuntimeGraph();
+    } catch {
+      // best-effort — bump tokenu i tak wymusi ponowną hydratację narzędzia
+    }
+    setMapRefreshToken((v) => v + 1);
+  }, [refreshRuntimeGraph]);
+
   const handleApplyTemplate = useCallback(
     async (templateId: string) => {
       if (!realId) return;
@@ -1201,18 +1239,26 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           ideaTitle: title,
           seedText: seedText,
         });
-        setMapRefreshToken((v) => v + 1);
+        await handleTemplateApplied();
         toast.success(t('mindmap.templateApplied'), { duration: 1200 });
       } catch (error: any) {
         if (error?.status === 409) {
           toast(t('mindmap.changeConflictDetectedRefreshingMapFrom'), { icon: '⚠️' });
-          setMapRefreshToken((v) => v + 1);
+          void handleTemplateApplied();
         } else {
           toast.error(error?.message || t('mindmap.failedToApplyTemplate'));
         }
       }
     },
-    [activeTool, graphRuntime.graph.version, isPolish, realId, seedText, title]
+    [
+      activeTool,
+      graphRuntime.graph.version,
+      handleTemplateApplied,
+      isPolish,
+      realId,
+      seedText,
+      title,
+    ]
   );
 
   const orgContextRef = useRef<string | null>(null);
@@ -2924,6 +2970,21 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // handlers/hooks — TDZ-safe). Flag OFF → nothing below is consumed and the
   // legacy render is byte-for-byte unchanged.
   const melsCanvasEnabled = isMelsCanvasEnabled();
+  // ── Górny pasek w JEDNEJ LINII (flaga, domyślnie OFF) ───────────────────
+  // ON: Menu 3 (Dodaj · Auto-układ · AI rozwiń · Szablony · Eksport) znika w
+  // całości — te same wejścia są w lewym pasku narzędzi (CanvasLeftToolbar),
+  // a „Eksport" ma już pozycję w kebabie Menu 1 (ten sam `setExportMenuOpen`).
+  // Klaster poleceń Menu 1 przenosi się portalem do rzędu pilli MyWorkHub.
+  const ideaTopBarOneLine = isIdeaTopBarOneLineEnabled();
+  /**
+   * Prawy panel w układzie SZEŚCIU sekcji zależnych od przedmiotu
+   * (`ff_ideaPanel6Sections`, default OFF — patrz
+   * `panel/ideaPanel6SectionsFlag.ts`). Steruje trzema rzeczami naraz, bo to
+   * jeden układ: (1) pasek ikon = 6 pozycji z własnego buildera, (2) panel
+   * dostaje id sekcji wprost jako `onlySection`, (3) pasek ikon przestaje się
+   * zwijać do 16-pikselowego słupka. Flaga OFF → wszystkie trzy jak dziś.
+   */
+  const panel6Enabled = isIdeaPanel6SectionsEnabled();
   // VF1 SPEC-A canvas states (loading/error) — default OFF, gated per rule #7.
   const vf1CanvasSpecAEnabled = isVf1CanvasSpecAEnabled();
   // Z-menu1-delete: "Usuń" kebab entry — wires the same `Api.deleteMyIdea`
@@ -3075,6 +3136,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // reprezentacja, dopisz ją tutaj — inaczej wróci martwy klik.
   const melsCanvasRightRailTools = useMemo(() => {
     if (!melsCanvasEnabled) return [];
+    // Układ SZEŚCIU sekcji (flaga `ff_ideaPanel6Sections`, default OFF) ma
+    // własny, niezależny budowniczy paska — patrz `panel/ideaPanel6Sections.ts`.
+    // Przy fladze OFF nie zmienia się nic: leci stary builder pięciu ikon.
+    if (panel6Enabled) return buildIdeaPanel6RailTools({ isPolish: Boolean(isPolish) });
     const inspektorJest =
       activeTool === 'mindmap' || activeTool === 'whiteboard' || activeTool === 'process_flow';
     const kondycjaJest = activeTool === 'mindmap' || activeTool === 'process_flow';
@@ -3100,7 +3165,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           : 'computed for Mind Map and Process Flow',
       },
     });
-  }, [melsCanvasEnabled, isPolish, activeTool]);
+  }, [melsCanvasEnabled, panel6Enabled, isPolish, activeTool]);
 
   // ── Shared IdeaWorkspaceTools props (single source) ─────────────────────
   // The workspace inspector (5 sections: Problem · Status · Inspector · Convert
@@ -3160,6 +3225,24 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       onAISummarize:
         activeTool === 'mindmap' ? () => handleQuickAction('mm_ai_summarize') : undefined,
       onAIExpand: activeTool === 'mindmap' ? () => handleQuickAction('mm_ai_expand') : undefined,
+      /**
+       * Sekcja „AI" w kontekście ELEMENTU (układ 6 sekcji). Ta sama trasa,
+       * którą wysyła pigułka AI pod zaznaczonym węzłem mapy
+       * (`IdeaRecommendationMap` → `idea-mindmap-node-quick-action`), obsługiwana
+       * przez `useMindMapQuickActions`. Ten hook jest zamontowany WYŁĄCZNIE w
+       * Mapie myśli, więc poza nią nie podajemy handlera — panel narysuje
+       * uczciwy pusty stan zamiast czterech martwych przycisków (Z3).
+       */
+      onAINodeAction:
+        activeTool === 'mindmap'
+          ? (action: string, nodeId: string) => {
+              window.dispatchEvent(
+                new CustomEvent('idea-mindmap-node-quick-action', {
+                  detail: { action, nodeId },
+                })
+              );
+            }
+          : undefined,
       onLayoutChange: (mode: string) => {
         window.dispatchEvent(
           new CustomEvent('idea-mindmap-node-quick-action', {
@@ -3368,9 +3451,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // below when the flag is ON (no dupes).
   const renderMelsCanvasRightRailPanel = useCallback(
     (activeToolId: string | null): React.ReactNode => {
-      const section = IDEA_PANEL_SECTIONS.includes(activeToolId as IdeaPanelSection)
-        ? (activeToolId as IdeaPanelSection)
-        : 'problem';
+      // Układ 6 sekcji: id z paska idzie WPROST (panel sam je normalizuje przez
+      // `normalizujDoSzesciu`). Bez tego nowe id `ai`/`activity`/`tool` wpadałyby
+      // w fallback `problem` i trzy ikony pokazywałyby Przegląd.
+      const section = panel6Enabled
+        ? ((activeToolId ?? 'overview') as IdeaPanelSection)
+        : IDEA_PANEL_SECTIONS.includes(activeToolId as IdeaPanelSection)
+          ? (activeToolId as IdeaPanelSection)
+          : 'problem';
       return (
         <IdeaWorkspaceTools
           {...ideaWorkspaceToolsSharedProps}
@@ -3381,7 +3469,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         />
       );
     },
-    [ideaWorkspaceToolsSharedProps, handlePanelChange]
+    [ideaWorkspaceToolsSharedProps, handlePanelChange, panel6Enabled]
   );
 
   if (loading) {
@@ -3448,14 +3536,19 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               />
             }
             secondBar={
-              <IdeaCanvasSecondBar
-                left={melsMenu3Actions.left}
-                right={melsMenu3Actions.right}
-                ariaLabel={t('mindmap.ideaCanvasAndMapTools')}
-              />
+              ideaTopBarOneLine ? undefined : (
+                <IdeaCanvasSecondBar
+                  left={melsMenu3Actions.left}
+                  right={melsMenu3Actions.right}
+                  ariaLabel={t('mindmap.ideaCanvasAndMapTools')}
+                />
+              )
             }
+            mergeTopBarSlotId={ideaTopBarOneLine ? IDEA_TOP_BAR_SLOT_ID : undefined}
             rightRailTools={melsCanvasRightRailTools}
             renderRightRailPanel={renderMelsCanvasRightRailPanel}
+            // Układ 6 sekcji: pasek ikon zawsze widoczny (decyzja właściciela).
+            rightRailCollapsible={!panel6Enabled}
             canvas={
               <>
                 {canvasToolsNode}
@@ -3671,6 +3764,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             <IdeaRecommendationMap
               ideaId={realId}
               ideaTitle={title || safeTitleFromSeed(seedText, isPolish)}
+              // B2: parytet z Tabelą/Process Flow/Whiteboard — bez tego Mind Map
+              // był JEDYNYM narzędziem bez sygnału „graf podmieniony z zewnątrz"
+              // (szablon, retry po błędzie), więc kanwa zostawała stara.
+              refreshToken={mapRefreshToken}
               onClose={() => setMapOpen(false)}
               onCenterEdit={() => handlePanelChange('tools')}
               preferredTool={activeTool}
@@ -3870,8 +3967,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         isAccepted={isAccepted}
         ideaId={realId}
         canvasContainerRef={canvasContainerRef}
-        canUndo={mmCanUndo}
-        canRedo={mmCanRedo}
+        canUndo={railCanUndo}
+        canRedo={railCanRedo}
         heuristicAiEnabled={heuristicAiOverlaysEnabled}
         onAction={(action) => handleQuickAction(action)}
         onOpenChat={() => {
@@ -3985,7 +4082,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           onClose={() => setTemplateGalleryOpen(false)}
           ideaId={realId}
           activeTool={activeTool}
-          onApplied={() => setMapRefreshToken((v) => v + 1)}
+          onApplied={handleTemplateApplied}
           baseVersion={graphRuntime.graph.version}
           existingNodeCount={graphNodes.length}
         />

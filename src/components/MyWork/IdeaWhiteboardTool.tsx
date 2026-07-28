@@ -33,6 +33,10 @@ import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 import { SkeletonState } from '@/components/shared/states';
+import {
+  IDEA_BOTTOM_BAR_MINIMAP_LIFT,
+  isIdeaBottomBarUnifiedEnabled,
+} from '@/utils/ideaBottomBarUnifiedFlag';
 import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
 import { getCanvasBg } from './canvas/canvasBackground';
@@ -74,6 +78,11 @@ import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout
 import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
+import {
+  type EdgeArrowDirection,
+  nextArrowDirection,
+  resolveArrowDirection,
+} from './canvas/edgeArrowMarkers';
 import { WhiteboardEdgeContextMenu } from './whiteboard/WhiteboardEdgeContextMenu';
 import { whiteboardEdgeTypes, whiteboardNodeTypes } from './whiteboard/nodes/nodeTypes';
 import {
@@ -129,6 +138,7 @@ import { WhiteboardStyleBar } from './whiteboard/WhiteboardStyleBar';
 import { WhiteboardSessionPanel } from './whiteboard/WhiteboardSessionPanel';
 import { WhiteboardToolbar } from './whiteboard/WhiteboardToolbar';
 import { usePortalSlot } from './whiteboard/usePortalSlot';
+import { emitIdeaUndoState } from './ideaUndoStateBus';
 import {
   isWhiteboardSessionInPanelEnabled,
   WHITEBOARD_SESSION_PANEL_SLOT_ID,
@@ -575,6 +585,17 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
             }}
             maskColor={isDarkCanvas ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.08)'}
             className="!bg-c-surface !border-c-border-subtle !rounded-xl"
+            /**
+             * Wymaganie #6 dolnego paska: minimapa nie może wjeżdżać POD pasek
+             * (pasek `z-dropdown`, minimapa domyślnie `z-index:5`). Mapa myśli
+             * ma to uniesienie od dawna na sztywno; tutaj wchodzi razem z flagą
+             * `ideaBottomBarUnified`, bo to zmiana wizualna (OFF = jak dziś).
+             */
+            style={
+              isIdeaBottomBarUnifiedEnabled()
+                ? { marginBottom: IDEA_BOTTOM_BAR_MINIMAP_LIFT, zIndex: 10 }
+                : undefined
+            }
           />
         )}
         <CanvasZoomControls
@@ -928,6 +949,17 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   const lastSnapshotRef = useRef<WhiteboardCanvasSnapshot | null>(null);
   const undoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
   const redoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
+
+  // Nadaj stan Cofnij/Ponów na wspólny autobus — bez tego przyciski w lewym
+  // pasku są trwale wygaszone (stosy żyją w refach, więc nie ma przerysowania,
+  // z którego pasek mógłby to wyczytać sam).
+  const emitUndoState = useCallback(() => {
+    emitIdeaUndoState(
+      'whiteboard',
+      undoStackRef.current.length > 0,
+      redoStackRef.current.length > 0
+    );
+  }, []);
   const toolSessionId = useMemo(() => `whiteboard:${ideaId}`, [ideaId]);
   const appendActivity = useCallback(
     (entry: WhiteboardActivityEntry) => {
@@ -940,7 +972,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     undoStackRef.current = [...undoStackRef.current.slice(-24), snapshot];
     redoStackRef.current = [];
     lastSnapshotRef.current = snapshot;
-  }, [drawingPaths, edges, nodes, scenes]);
+    emitUndoState();
+  }, [drawingPaths, edges, emitUndoState, nodes, scenes]);
 
   const restoreSnapshot = useCallback(
     (snapshot: WhiteboardCanvasSnapshot) => {
@@ -961,10 +994,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     undoStackRef.current = undoStackRef.current.slice(0, -1);
     redoStackRef.current = [current, ...redoStackRef.current.slice(0, 24)];
     restoreSnapshot(previous);
+    emitUndoState();
     appendActivity(
       createWhiteboardActivityEntry('history', t('myWork.whiteboard.activity.undo'), currentUserId)
     );
-  }, [appendActivity, currentUserId, drawingPaths, edges, isPl, nodes, restoreSnapshot, scenes]);
+  }, [appendActivity, currentUserId, drawingPaths, edges, emitUndoState, isPl, nodes, restoreSnapshot, scenes]);
 
   const redoWhiteboard = useCallback(() => {
     const next = redoStackRef.current[0];
@@ -973,10 +1007,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     redoStackRef.current = redoStackRef.current.slice(1);
     undoStackRef.current = [...undoStackRef.current.slice(-24), current];
     restoreSnapshot(next);
+    emitUndoState();
     appendActivity(
       createWhiteboardActivityEntry('history', t('myWork.whiteboard.activity.redo'), currentUserId)
     );
-  }, [appendActivity, currentUserId, drawingPaths, edges, isPl, nodes, restoreSnapshot, scenes]);
+  }, [appendActivity, currentUserId, drawingPaths, edges, emitUndoState, isPl, nodes, restoreSnapshot, scenes]);
   const handleSelectionUpdate = useCallback(
     (nds: Node[]) => {
       const selected = nds.filter((n: Node) => n.selected);
@@ -3037,6 +3072,33 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
   }, [collab, edgeContextMenu, pushUndoSnapshot, setEdges]);
 
+  // edge.set_arrow — strzałka kierunku przepływu (2026-07-28, zgłoszenie
+  // właściciela). Cykl none → end → both → start na `data.arrowDirection`,
+  // czyli DOKŁADNIE tym polu, którego używa Przepływ procesu i Mapa myśli
+  // (SSOT geometrii: `canvas/edgeArrowMarkers.tsx`). Ta sama ścieżka zapisu co
+  // `handleEdgeCycleStyle` → undo + collab + autosave bez nowej mechaniki.
+  const handleEdgeCycleArrow = useCallback(() => {
+    if (!edgeContextMenu) return;
+    pushUndoSnapshot();
+    let updated: Edge | undefined;
+    let applied: EdgeArrowDirection = 'none';
+    setEdges((prev) =>
+      prev.map((ed) => {
+        if (ed.id !== edgeContextMenu.edgeId) return ed;
+        applied = nextArrowDirection(resolveArrowDirection(ed.data?.arrowDirection, 'none'));
+        updated = { ...ed, data: { ...(ed.data || {}), arrowDirection: applied } };
+        return updated;
+      })
+    );
+    if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
+    toast.success(
+      t(`mindmap.edgeArrow.${applied}`, {
+        defaultValue: applied === 'none' ? 'Arrow: none' : `Arrow: ${applied}`,
+      }),
+      { duration: 900 }
+    );
+  }, [collab, edgeContextMenu, pushUndoSnapshot, setEdges, t]);
+
   // edge.reverse — zamiana source/target (i uchwytów), kierunek strzałki podąża.
   const handleEdgeReverse = useCallback(() => {
     if (!edgeContextMenu) return;
@@ -3680,6 +3742,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               onClose={() => setEdgeContextMenu(null)}
               onEditLabel={handleEdgeEditLabel}
               onCycleStyle={handleEdgeCycleStyle}
+              onCycleArrow={handleEdgeCycleArrow}
               onReverse={handleEdgeReverse}
               onDelete={handleEdgeDelete}
             />

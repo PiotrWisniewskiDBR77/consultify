@@ -139,7 +139,8 @@ router.put('/templates/:id', async (req, res) => {
     const template = await updateDeliverableTemplate(
       req.params.id,
       { name: name?.trim(), description, meta },
-      getOrgId(req)
+      getOrgId(req),
+      getUserId(req)
     );
     res.json({ template });
   } catch (err) {
@@ -199,7 +200,7 @@ router.post('/templates/suggest', async (req, res) => {
 // ── DELETE ──────────────────────────────────────────────────
 router.delete('/templates/:id', async (req, res) => {
   try {
-    const deleted = await deleteDeliverableTemplate(req.params.id, getOrgId(req));
+    const deleted = await deleteDeliverableTemplate(req.params.id, getOrgId(req), getUserId(req));
     if (!deleted) {
       res.status(404).json({ error: 'Template not found' });
       return;

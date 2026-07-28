@@ -8,6 +8,12 @@
       "port": 3400
     },
     {
+      "name": "n4-galeria-szablonow",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3421"],
+      "port": 3421
+    },
+    {
       "name": "atrapy-inicjatywa-analysis",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3150"],
@@ -60,6 +66,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3231", "--strictPort"],
       "port": 3231
+    },
+    {
+      "name": "execution-export-prezentacja",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3421", "--strictPort"],
+      "port": 3421
     }
   ]
 }

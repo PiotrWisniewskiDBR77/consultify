@@ -29,6 +29,7 @@ import type {
   ArtifactGovernanceSummary,
   PresentationItem,
   ReportItem,
+  SheetOrigin,
   TemplateItem,
   UnifiedOutputRow,
 } from './types';
@@ -449,7 +450,33 @@ function mapArtifactPresentation(raw: any): PresentationItem {
   };
 }
 
-function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
+/**
+ * Distinguish a governed Table Studio export from a real generated workbook
+ * for `kind === 'sheet'` rows (inwentarz Excel 27.07: 61/75 sheet artifacts on
+ * demo are flat exports, 6 are real workbooks — the list showed both as a
+ * bare "Sheet", making the export lane look like empty/pointless tables).
+ *
+ * Both writers register with `originRuntime: 'sheet'` (registry can't tell
+ * them apart on runtime alone — see `server/src/services/v8/artifactRegistryService.ts`):
+ *   - `registerGovernedTableSheetArtifact` (table-platform.routes.ts ~2243/2350,
+ *     called from the `excele` materialization lane ~L3924) always stamps
+ *     `originSummary: { sourceTable: 'tp_tables', exportFormat: 'xlsx',
+ *     governanceMode: 'governed' }`.
+ *   - the `/api/workbook` routes (workbook.routes.ts ~L284/~L663) register (or
+ *     adopt) with an `originSummary` that carries `sheetCount`/`source` but
+ *     never `sourceTable` — those are real `generated_workbooks` rows.
+ *
+ * `sourceTable === 'tp_tables'` is therefore the reliable discriminator.
+ * Defaults to 'workbook' (the richer, real-artifact interpretation) when the
+ * marker is absent, matching current writer behavior above.
+ */
+export function resolveSheetOrigin(raw: any): SheetOrigin {
+  const originSummary = raw?.originSummary;
+  const sourceTable = originSummary && typeof originSummary === 'object' ? originSummary.sourceTable : undefined;
+  return sourceTable === 'tp_tables' ? 'table_export' : 'workbook';
+}
+
+export function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
   const runtime = raw?.originRuntime || raw?.origin_runtime;
   const originId = raw?.originRecordId || raw?.origin_record_id;
   if (!runtime || !originId) return null;
@@ -558,6 +585,7 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       sourceInitiativeId: raw.sourceInitiativeId || raw.source_initiative_id || undefined,
       exportFormats: raw.exportFormat ? [raw.exportFormat] : [],
       governance: baseGov,
+      sheetOrigin: resolveSheetOrigin(raw),
     };
   }
 

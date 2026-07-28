@@ -1,22 +1,40 @@
 /**
- * MapHealthScore — Floating widget showing map health metrics:
- * balance, depth, coverage, maturity, and overall score.
+ * MapHealthScore — widget „Zdrowie mapy".
+ *
+ * PRZED (do 2026-07-28): jedna liczba `overallScore` = średnia z pięciu
+ * pod-wskaźników (Balance/Depth/Coverage/Maturity/Connectivity), z których
+ * każdy miał wagi wzięte z sufitu (`childScore*0.3 + notesScore*0.2 + …`,
+ * `connectivityScore = min(100, crossBranchEdges * 20)`). Właściciel: „nie mam
+ * pojęcia jak to działa" — procent nie mówił CO zrobić.
+ *
+ * PO: żadnego procentu. Lista KONKRETNYCH, policzalnych braków — każdy z
+ * prawdziwą liczbą policzoną z grafu i z przejściem na płótno (zaznacza i
+ * kadruje winne węzły). Gdy braków nie ma — komunikat wprost, nie pusta lista.
+ *
+ * Mechanizm przejścia = ten sam, który już działa w produkcie: zdarzenie
+ * `idea-workspace-highlight-node` (obsługiwane w IdeaRecommendationMap), tu
+ * rozszerzone o `nodeIds` dla zbioru węzłów — 1:1 z pigułką „N niepowiązanych
+ * elementów" w Whiteboard (`onActionConnect`: select + fitView na podzbiorze).
  */
-import { Activity, ChevronDown, ChevronUp, Heart, TrendingUp } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface MapHealthScoreProps {
   nodes: Array<{ id: string; data: any; type?: string }>;
-  edges: Array<{ source: string; target: string }>;
+  edges: Array<{ id?: string; source: string; target: string; type?: string; data?: any }>;
   visible?: boolean;
+  /** Przejście do problemu. Bez niego komponent użyje zdarzenia globalnego. */
+  onFocusNodes?: (nodeIds: string[]) => void;
 }
 
-interface HealthMetric {
+/** Jeden konkretny, policzalny brak. `count` = liczba winnych obiektów. */
+interface MapGap {
   key: string;
-  labelEn: string;
-  score: number;
-  detail: string;
+  count: number;
+  nodeIds: string[];
+  label: string;
+  hint: string;
 }
 
 /* ── Per-branch health scoring ─────────────────────────────────────── */
@@ -107,197 +125,245 @@ export const BranchHealthDot: React.FC<{ score: number; size?: number }> = ({
   );
 };
 
-/* ── Global MapHealthScore widget ─────────────────────────────────── */
+/* ── Braki mapy — policzalne, nie punktowane ──────────────────────── */
 
-export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, visible = true }) => {
+type GapEdge = { source: string; target: string; type?: string; data?: any };
+type GapNode = { id: string; data: any; type?: string };
+
+/**
+ * Krawędź strukturalna (drzewo) vs relacja użytkownika.
+ * Kanon repo: `data.edgeRole === 'relation'` = relacja (useMindMapNodes.getEdgeRole).
+ * Dodatkowo `type === 'labeled'` — w mapie myśli WSZYSTKIE relacje rysuje
+ * `LabeledEdge`, a struktura `GradientEdge`; starsze zapisy grafu bywają bez
+ * `edgeRole`, więc sam typ krawędzi jest tu drugim, równie twardym sygnałem.
+ */
+function isStructuralGapEdge(e: GapEdge): boolean {
+  if (e?.data?.edgeRole === 'relation') return false;
+  if (e?.type === 'labeled') return false;
+  return true;
+}
+
+const isRootNode = (n: GapNode) => n.type === 'center' || n.id === 'root';
+const isBranchNode = (n: GapNode) => n.type === 'branch' || n.id.startsWith('branch-');
+/** Ramka (Ctrl+G) z założenia nie ma etykiety ani krawędzi — nie jest brakiem. */
+const isFrameNode = (n: GapNode) => n.type === 'group';
+const labelOf = (n: GapNode) => String(n.data?.label ?? '').trim();
+
+export interface MapGapsResult {
+  gaps: MapGap[];
+  /** Węzły brane pod uwagę (bez ramek). 0 = nie ma czego oceniać. */
+  assessedCount: number;
+}
+
+/**
+ * Liczy braki mapy. Każda pozycja = konkretny, sprawdzalny fakt o grafie
+ * („5 węzłów bez etykiety"), nigdy oszacowanie ani wynik ważenia.
+ */
+export function computeMapGaps(
+  nodes: GapNode[],
+  edges: GapEdge[],
+  labels: {
+    label: (key: string, count: number) => string;
+    hint: (key: string) => string;
+  }
+): MapGapsResult {
+  const assessable = nodes.filter((n) => !isFrameNode(n));
+  if (assessable.length === 0) return { gaps: [], assessedCount: 0 };
+
+  const branches = assessable.filter((n) => isBranchNode(n) && !isRootNode(n));
+
+  // dzieci strukturalne per węzeł (jedno przejście po krawędziach)
+  const childrenOf = new Map<string, string[]>();
+  const touched = new Set<string>();
+  for (const e of edges) {
+    touched.add(e.source);
+    touched.add(e.target);
+    if (!isStructuralGapEdge(e)) continue;
+    const list = childrenOf.get(e.source);
+    if (list) list.push(e.target);
+    else childrenOf.set(e.source, [e.target]);
+  }
+  const kids = (id: string) => childrenOf.get(id) ?? [];
+
+  const byId = new Map(assessable.map((n) => [n.id, n]));
+  const hasEvidence = (n?: GapNode) =>
+    Array.isArray(n?.data?.evidenceLinks) && n!.data.evidenceLinks.length > 0;
+
+  /** Wszyscy potomkowie po krawędziach strukturalnych (bez cykli). */
+  function descendants(rootId: string): string[] {
+    const out: string[] = [];
+    const seen = new Set<string>([rootId]);
+    const stack = [...kids(rootId)];
+    while (stack.length) {
+      const id = stack.pop() as string;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      out.push(id);
+      stack.push(...kids(id));
+    }
+    return out;
+  }
+
+  // 1. Węzły bez etykiety — pusty węzeł nie niesie żadnej treści.
+  const noLabel = assessable.filter((n) => !labelOf(n));
+
+  // 2. Elementy niepowiązane z niczym — nie występują w ŻADNEJ krawędzi.
+  //    (Korzeń pomijamy: na pustej mapie nie ma się z czym wiązać.)
+  const isolated = assessable.filter((n) => !isRootNode(n) && !touched.has(n.id));
+
+  // 3. Gałęzie bez ani jednego pomysłu.
+  const emptyBranches = branches.filter((b) => kids(b.id).length === 0);
+
+  // 4. Gałęzie bez rozwinięcia — mają pomysły, ale żaden nie ma poziomu niżej.
+  const shallowBranches = branches.filter((b) => {
+    const c = kids(b.id);
+    return c.length > 0 && c.every((cid) => kids(cid).length === 0);
+  });
+
+  // 5. Gałęzie bez dowodów — ani gałąź, ani żaden jej potomek nie ma
+  //    podpiętego `evidenceLinks`.
+  const noEvidenceBranches = branches.filter(
+    (b) => !hasEvidence(b) && !descendants(b.id).some((id) => hasEvidence(byId.get(id)))
+  );
+
+  const raw: Array<{ key: string; items: GapNode[] }> = [
+    { key: 'gapNoLabel', items: noLabel },
+    { key: 'gapIsolated', items: isolated },
+    { key: 'gapEmptyBranch', items: emptyBranches },
+    { key: 'gapShallowBranch', items: shallowBranches },
+    { key: 'gapNoEvidence', items: noEvidenceBranches },
+  ];
+
+  const gaps: MapGap[] = raw
+    .filter((g) => g.items.length > 0)
+    .map((g) => ({
+      key: g.key,
+      count: g.items.length,
+      nodeIds: g.items.map((n) => n.id),
+      label: labels.label(g.key, g.items.length),
+      hint: labels.hint(g.key),
+    }));
+
+  return { gaps, assessedCount: assessable.length };
+}
+
+/* ── Widget „Zdrowie mapy" ────────────────────────────────────────── */
+
+export const MapHealthScore: React.FC<MapHealthScoreProps> = ({
+  nodes,
+  edges,
+  visible = true,
+  onFocusNodes,
+}) => {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
-  const metrics = useMemo((): HealthMetric[] => {
-    const branchNodes = nodes.filter((n) => n.id.startsWith('branch-'));
-    const ideaNodes = nodes.filter((n) => n.id !== 'root' && !n.id.startsWith('branch-'));
-    const totalIdeas = ideaNodes.length;
+  const { gaps, assessedCount } = useMemo(
+    () =>
+      computeMapGaps(nodes, edges, {
+        label: (key, count) => t(`myWorkMindmap.health.${key}`, { count }),
+        hint: (key) => t(`myWorkMindmap.health.${key}Hint`),
+      }),
+    [nodes, edges, t]
+  );
 
-    if (totalIdeas === 0) return [];
-
-    // Balance: how evenly distributed are ideas across branches
-    const branchCounts = branchNodes.map((bn) => edges.filter((e) => e.source === bn.id).length);
-    const maxCount = Math.max(...branchCounts, 1);
-    const minCount = Math.min(...branchCounts);
-    const avgCount = branchCounts.reduce((s, c) => s + c, 0) / Math.max(branchCounts.length, 1);
-    const balanceScore =
-      branchCounts.length > 1
-        ? Math.max(0, 100 - Math.round(((maxCount - minCount) / Math.max(avgCount, 1)) * 30))
-        : 50;
-
-    // Depth: average depth of the tree
-    const depths: number[] = [];
-    function measureDepth(nodeId: string, depth: number) {
-      const children = edges.filter((e) => e.source === nodeId).map((e) => e.target);
-      if (children.length === 0) {
-        depths.push(depth);
+  /**
+   * Przejście do problemu. Preferuje callback powłoki; bez niego korzysta z
+   * istniejącego zdarzenia `idea-workspace-highlight-node` (rozszerzonego o
+   * `nodeIds`), żeby działać także z prawego panelu, gdzie propa nie ma.
+   * `nodeId` zostaje dla zgodności ze starym, jednowęzłowym odbiornikiem.
+   */
+  const focusNodes = useCallback(
+    (nodeIds: string[]) => {
+      if (!nodeIds.length) return;
+      if (onFocusNodes) {
+        onFocusNodes(nodeIds);
         return;
       }
-      for (const cid of children) measureDepth(cid, depth + 1);
-    }
-    for (const bn of branchNodes) measureDepth(bn.id, 1);
-    const avgDepth = depths.length > 0 ? depths.reduce((s, d) => s + d, 0) / depths.length : 0;
-    const depthScore = Math.min(100, Math.round(avgDepth * 33));
-
-    // Coverage: % of branches with at least 2 ideas
-    const coveredBranches = branchCounts.filter((c) => c >= 2).length;
-    const coverageScore = Math.round((coveredBranches / Math.max(branchNodes.length, 1)) * 100);
-
-    // Maturity: % of ideas beyond 'idea' status
-    const matureCount = ideaNodes.filter((n) => n.data?.status && n.data.status !== 'idea').length;
-    const maturityScore = Math.round((matureCount / Math.max(totalIdeas, 1)) * 100);
-
-    // Connectivity: cross-branch edges
-    const crossBranchEdges = edges.filter((e) => {
-      const src = nodes.find((n) => n.id === e.source);
-      const tgt = nodes.find((n) => n.id === e.target);
-      return (
-        src &&
-        tgt &&
-        src.data?.branchKey &&
-        tgt.data?.branchKey &&
-        src.data.branchKey !== tgt.data.branchKey
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-highlight-node', {
+          detail: { nodeIds, nodeId: nodeIds[0] },
+        })
       );
-    });
-    const connectivityScore = Math.min(100, crossBranchEdges.length * 20);
+    },
+    [onFocusNodes]
+  );
 
-    return [
-      {
-        key: 'balance',
-        labelEn: 'Balance',
-        score: balanceScore,
-        detail: t('ideas.mindmap.minMaxDetail', 'Min: {{min}}, Max: {{max}}', {
-          min: minCount,
-          max: maxCount,
-        }),
-      },
-      {
-        key: 'depth',
-        labelEn: 'Depth',
-        score: depthScore,
-        detail: t('myWorkMindmap.health.avgDepth', 'Avg depth: {{value}}', {
-          value: avgDepth.toFixed(1),
-        }),
-      },
-      {
-        key: 'coverage',
-        labelEn: 'Coverage',
-        score: coverageScore,
-        detail: t('myWorkMindmap.health.coverageBranches', '{{covered}}/{{total}} branches', {
-          covered: coveredBranches,
-          total: branchNodes.length,
-        }),
-      },
-      {
-        key: 'maturity',
-        labelEn: 'Maturity',
-        score: maturityScore,
-        detail: t('myWorkMindmap.health.matureCount', '{{mature}}/{{total}} mature', {
-          mature: matureCount,
-          total: totalIdeas,
-        }),
-      },
-      {
-        key: 'connectivity',
-        labelEn: 'Connectivity',
-        score: connectivityScore,
-        detail: t('myWorkMindmap.health.crossBranch', '{{count}} cross-branch', {
-          count: crossBranchEdges.length,
-        }),
-      },
-    ];
-  }, [edges, t, nodes]);
+  // Pusta mapa (albo same ramki) — nie ma czego oceniać, nie kłamiemy „bez braków".
+  if (!visible || assessedCount === 0) return null;
 
-  const overallScore = useMemo(() => {
-    if (metrics.length === 0) return 0;
-    return Math.round(metrics.reduce((s, m) => s + m.score, 0) / metrics.length);
-  }, [metrics]);
-
-  if (!visible || metrics.length === 0) return null;
-
-  const scoreColor =
-    overallScore >= 70 ? 'text-c-success' : overallScore >= 40 ? 'text-c-warning' : 'text-c-danger';
-  const ringColor =
-    overallScore >= 70
-      ? 'var(--c-success)'
-      : overallScore >= 40
-        ? 'var(--c-warning)'
-        : 'var(--c-danger)';
+  const hasGaps = gaps.length > 0;
 
   return (
     <div className="absolute top-14 right-3 z-dropdown">
-      <div className="rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-2xl overflow-hidden min-w-[180px]">
+      <div className="rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-2xl overflow-hidden min-w-[212px] max-w-[268px]">
         <button
+          type="button"
           onClick={() => setExpanded(!expanded)}
+          aria-expanded={expanded}
           className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
         >
-          {/* Mini ring */}
-          <svg width={28} height={28} className="transform -rotate-90 shrink-0">
-            <circle
-              cx={14}
-              cy={14}
-              r={11}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={3}
-              className="text-c-text dark:text-c-text-secondary"
-            />
-            <circle
-              cx={14}
-              cy={14}
-              r={11}
-              fill="none"
-              stroke={ringColor}
-              strokeWidth={3}
-              strokeDasharray={69.1}
-              strokeDashoffset={69.1 - (overallScore / 100) * 69.1}
-              strokeLinecap="round"
-              className="transition-all duration-700"
-            />
-          </svg>
+          <div
+            className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+              hasGaps ? 'bg-c-warning/15' : 'bg-c-success/15'
+            }`}
+          >
+            {hasGaps ? (
+              <AlertTriangle size={14} className="text-c-warning" />
+            ) : (
+              <CheckCircle2 size={14} className="text-c-success" />
+            )}
+          </div>
           <div className="flex-1 text-left">
             <div className="text-[10px] font-bold text-c-text-secondary dark:text-c-text-muted">
               {t('ideas.mindmap.mapHealth', 'Map Health')}
             </div>
-            <div className={`text-[13px] font-bold ${scoreColor}`}>{overallScore}%</div>
+            <div
+              className={`text-[12px] font-bold leading-tight ${
+                hasGaps ? 'text-c-warning' : 'text-c-success'
+              }`}
+            >
+              {hasGaps
+                ? t('myWorkMindmap.health.gapsCount', { count: gaps.length })
+                : t('myWorkMindmap.health.noGaps')}
+            </div>
           </div>
           {expanded ? (
-            <ChevronUp size={12} className="text-c-text-secondary" />
+            <ChevronUp size={12} className="text-c-text-secondary shrink-0" />
           ) : (
-            <ChevronDown size={12} className="text-c-text-secondary" />
+            <ChevronDown size={12} className="text-c-text-secondary shrink-0" />
           )}
         </button>
 
         {expanded && (
-          <div className="px-3 pb-3 space-y-2">
-            {metrics.map((m) => {
-              const color =
-                m.score >= 70 ? 'bg-c-success' : m.score >= 40 ? 'bg-c-warning' : 'bg-c-danger';
-              return (
-                <div key={m.key}>
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[9px] font-medium text-c-text-secondary dark:text-c-text-muted">
-                      {t(`myWorkMindmap.health.${m.key}`, m.labelEn)}
+          <div className="px-2 pb-2 space-y-0.5">
+            {hasGaps ? (
+              gaps.map((g) => (
+                <button
+                  key={g.key}
+                  type="button"
+                  onClick={() => focusNodes(g.nodeIds)}
+                  title={t('myWorkMindmap.health.showOnMap')}
+                  className="group w-full text-left rounded-lg px-2 py-1.5 hover:bg-c-warning/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus transition-colors"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-c-warning shrink-0" />
+                    <span className="flex-1 text-[10px] font-semibold text-c-text dark:text-c-text-secondary">
+                      {g.label}
                     </span>
-                    <span className="text-[9px] font-bold text-c-text-secondary dark:text-c-text-muted">
-                      {m.score}%
-                    </span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-c-surface-raised dark:bg-c-surface overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${color} transition-all duration-500`}
-                      style={{ width: `${m.score}%` }}
+                    <ChevronRight
+                      size={11}
+                      className="text-c-text-secondary opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                     />
                   </div>
-                  <div className="text-[8px] text-c-text-secondary mt-0.5">{m.detail}</div>
-                </div>
-              );
-            })}
+                  <div className="pl-3 text-[9px] text-c-text-secondary leading-snug">{g.hint}</div>
+                </button>
+              ))
+            ) : (
+              <div className="px-2 py-1.5 text-[9px] text-c-text-secondary leading-snug">
+                {t('myWorkMindmap.health.noGapsHint')}
+              </div>
+            )}
           </div>
         )}
       </div>

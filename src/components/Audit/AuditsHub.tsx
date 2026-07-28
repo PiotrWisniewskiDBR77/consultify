@@ -770,10 +770,10 @@ export const AuditsHub: React.FC = () => {
         onViewModeChange={setViewMode}
         onSearch={setQuery}
         searchValue={query}
-        openDocuments={[]}
-        activeDocumentId={null}
-        onSelectDocument={() => {}}
-        onCloseDocument={() => {}}
+        openItems={[]}
+        activeItemId={null}
+        onSelectItem={() => {}}
+        onCloseItem={() => {}}
         onShowList={() => setSelectedId(null)}
         activeFilters={[]}
         onRemoveFilter={() => {}}
@@ -783,9 +783,9 @@ export const AuditsHub: React.FC = () => {
         statusFilters={statusFilters}
         activeStatusFilter={statusFilter === 'all' ? null : statusFilter}
         onStatusFilterChange={(s) => setStatusFilter((s as AuditProgramStatus | null) ?? 'all')}
-        availableViewModes={['table']}
+        viewModes={['table']}
         commandRowContent={bulkCommandRowContent}
-        rightControls={
+        filterControls={
           <button
             type="button"
             onClick={() => openWizard('iso27001')}

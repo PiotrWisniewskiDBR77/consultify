@@ -31,6 +31,36 @@ const EXCELE_INTENT_PATTERNS = [
   /\b(stwórz|utwórz|zbuduj|zrób|przygotuj|wygeneruj)\s+(mi\s+)?(skoroszyt|plik\s*excel|arkusz\s*excel)\b/i,
   /\bmodel\s+(finansowy|budżetowy)\b/i,
   /\b(budżet|prognoza|rachunek\s*zysków)\b/i,
+
+  // P0 urodzinowe (2026-07-27, live incydent): BARE excel-file nouns —
+  // "zrób mi excela", "make an excel", "potrzebuję arkusza kalkulacyjnego",
+  // "wygeneruj xlsx", "otwórz Excele". Wcześniej detekcja wymagała CAŁEJ frazy
+  // czasownik+"arkusz excel"/"plik excel"/"skoroszyt" — najbardziej naturalny
+  // sposób poproszenia o Excela (samo słowo "excel"/"xlsx"/"spreadsheet"/
+  // "workbook") NIE trafiał w żaden wzorzec (ani tu, ani w TABLE_INTENT_
+  // PATTERNS) i spadał do ogólnej klasyfikacji czatu → płaska tabela w Tabele
+  // Studio zamiast realnego silnika arkuszy. \b po "excel" nie łapie
+  // "excellent" (brak granicy słowa między dwoma znakami-literami).
+  /\bexcel(a|u|em|owi|e)?\b/i,
+  /\bxlsx\b/i,
+  /\bspreadsheet\b/i,
+  /\bworkbook\b/i,
+  /\bskoroszyt\w*\b/i,
+  /\barkusz[a-ząćęłńóśźż]*\s+kalkulacyjn\w*\b/i,
+
+  // N5 (2026-07-27, noc): ocena opłacalności projektu (NPV/IRR) — nowy model
+  // `projectViability`. Bez tych fraz "policz NPV dla tego projektu" nie ma
+  // ani "excel"/"model finansowy", ani czasownika+"tabelę" (TABLE_INTENT_
+  // PATTERNS), więc nie trafiał w ŻADEN wzorzec i nie routował do silnika
+  // arkuszy w ogóle — ten sam problem, który P0 urodzinowe naprawiło dla
+  // bare "excel"/"xlsx" powyżej.
+  /\bopłacaln(ość|y|a|ych|ego)\s*(projektu|inwestycji)?\b/i,
+  /\bczy\s+(to\s+|ten\s+projekt\s+|ta\s+inwestycja\s+)?się\s+opłaca\b/i,
+  /\b(npv|irr)\b/i,
+  /\bokres\s+zwrotu\b/i,
+  /\brachunek\s+zwrotu\b/i,
+  /\bpayback(\s*period)?\b/i,
+  /\bproject\s+(viability|profitability)\b/i,
 ];
 
 export function detectTableIntent(message: string): boolean {

@@ -349,13 +349,9 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const currentUser = useAppStore((s) => s.currentUser);
 
   const outputType: ArtifactPlanOutputType =
-    lane === 'wordy' ? 'report' : lane === 'excele' || lane === 'tabele' ? 'sheet' : 'presentation';
+    lane === 'excele' || lane === 'tabele' ? 'sheet' : 'presentation';
   const artifactFamily: ArtifactFamily =
-    lane === 'wordy'
-      ? 'document'
-      : lane === 'excele' || lane === 'tabele'
-        ? 'sheet'
-        : 'presentation';
+    lane === 'excele' || lane === 'tabele' ? 'sheet' : 'presentation';
 
   const { data: snapshots } = useV8Snapshots(conversationId ? conversationId : undefined);
   const captureSnapshot = useV8CaptureSnapshot();
@@ -432,13 +428,11 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       const origin = currentRun.materializationOrigin;
       const title =
         currentRun.plan.titleHint ||
-        (lane === 'wordy'
-          ? 'Document'
-          : lane === 'excele'
-            ? 'Spreadsheet'
-            : lane === 'tabele'
-              ? 'Table'
-              : 'Presentation');
+        (lane === 'excele'
+          ? 'Spreadsheet'
+          : lane === 'tabele'
+            ? 'Table'
+            : 'Presentation');
 
       if (lane === 'prezentacje' && origin?.originRecordId) {
         const deckId = origin.originRecordId;
@@ -571,31 +565,6 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               kpiItems: [{ label: 'Status', value: 'Ready' }],
               deckId,
               deckSlides: [],
-            });
-            setContentGenerated(true);
-          });
-        return;
-      }
-
-      if (lane === 'wordy' && origin?.originRecordId) {
-        const reportId = origin.originRecordId;
-        Api.post(`/report-builder/${reportId}/generate`, { regenerateAll: false })
-          .then(() => {
-            const pdfUrl = `/api/report-builder/${reportId}/export/pdf`;
-            setPreview({
-              type: 'pdf',
-              title,
-              url: pdfUrl,
-              fileName: `${title.replace(/\s+/g, '_')}.pdf`,
-            });
-            setContentGenerated(true);
-          })
-          .catch(() => {
-            setPreview({
-              type: 'pdf',
-              title,
-              url: `/api/report-builder/${reportId}/export/pdf`,
-              fileName: `${title.replace(/\s+/g, '_')}.pdf`,
             });
             setContentGenerated(true);
           });
@@ -780,13 +749,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         return;
       }
 
-      if (lane === 'wordy') {
-        setPreview({
-          type: 'pdf',
-          title,
-          fileName: `${title.replace(/\s+/g, '_')}.pdf`,
-        });
-      } else if (lane === 'tabele') {
+      if (lane === 'tabele') {
         const message =
           'Table Studio materialization did not return a Table Platform tableId. Please retry generation.';
         setStartupError(message);
@@ -834,13 +797,11 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       if (!activeConvId) {
         try {
           const laneTitle =
-            lane === 'wordy'
-              ? 'Document'
-              : lane === 'excele'
-                ? 'Spreadsheet'
-                : lane === 'tabele'
-                  ? 'Table'
-                  : 'Presentation';
+            lane === 'excele'
+              ? 'Spreadsheet'
+              : lane === 'tabele'
+                ? 'Table'
+                : 'Presentation';
           await useConversationStore.getState().createConversation({
             title: `${laneTitle}: ${goal.slice(0, 60)}`,
           });
@@ -1165,12 +1126,6 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       return;
     }
 
-    if (lane === 'wordy' && currentRun.materializationOrigin?.originRecordId) {
-      const reportId = currentRun.materializationOrigin.originRecordId;
-      window.open(`/api/report-builder/${reportId}/export/docx`, '_blank');
-      return;
-    }
-
     if (lane === 'prezentacje' && currentRun.materializationOrigin?.originRecordId) {
       const deckId = currentRun.materializationOrigin.originRecordId;
       window.open(`/api/presentations/decks/${deckId}/download`, '_blank');
@@ -1194,13 +1149,11 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
 
     const origin = currentRun.materializationOrigin;
     const laneSegment =
-      lane === 'wordy'
-        ? 'wordy'
-        : lane === 'prezentacje'
-          ? 'prezentacje'
-          : lane === 'tabele'
-            ? 'tabele'
-            : 'excele';
+      lane === 'prezentacje'
+        ? 'prezentacje'
+        : lane === 'tabele'
+          ? 'tabele'
+          : 'excele';
     const artifactPath = origin?.originRecordId
       ? `/${laneSegment}?artifactId=${origin.originRecordId}`
       : null;

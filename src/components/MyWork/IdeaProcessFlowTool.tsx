@@ -24,10 +24,8 @@ import {
   AlertTriangle,
   CheckCircle,
   GitMerge,
-  Grid3x3,
   Lightbulb,
   Loader2,
-  Magnet,
   Plus,
   X,
 } from 'lucide-react';
@@ -60,6 +58,10 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
+import {
+  IDEA_BOTTOM_BAR_MINIMAP_LIFT,
+  isIdeaBottomBarUnifiedEnabled,
+} from '@/utils/ideaBottomBarUnifiedFlag';
 import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
@@ -75,6 +77,7 @@ import {
   publishIdeaCanvasCursorMode,
 } from './canvas/ideaCanvasCursorMode';
 import { FOCUS_RING } from './canvas/motionTokens';
+import { publishProcessFlowGridState } from './canvas/processFlowGridState';
 import { useCanvasSnappingRef } from './canvas/useCanvasSnapping';
 import { formatIdeaMapSyncLabel, resolveIdeaMapHydration } from './canvas/useIdeaMapSync';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
@@ -103,14 +106,20 @@ import {
   LANE_HEIGHT,
   SHAPE_CONFIG,
 } from './processflow/FlowNodeComponent';
-import { isNodeInCollapsedLane, setLaneHeight, toggleLaneCollapsed } from './processflow/laneState';
+import {
+  isNodeInCollapsedLane,
+  laneBandLayout,
+  laneIndexAtY,
+  setLaneHeight,
+  toggleLaneCollapsed,
+} from './processflow/laneState';
 import {
   DEFAULT_LANES,
   FLOW_THEME_PRESETS,
   type Lane,
   LANE_COLORS,
 } from './processflow/LaneSystem';
-import { LaneSystem } from './processflow/LaneSystem';
+import { LaneSystemViewportLayer } from './processflow/LaneSystem';
 import {
   appendComment,
   type ProcessFlowNodeComment,
@@ -151,6 +160,7 @@ import {
 } from './processflow/useProcessFlowPersistence';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
 import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
+import { emitIdeaUndoState } from './ideaUndoStateBus';
 import { useProcessFlowUndoRedo } from './processflow/useProcessFlowUndoRedo';
 import { useProcessFlowValidation } from './processflow/useProcessFlowValidation';
 import { validateFlowWarnings, type ValidationWarning } from './processflow/validateFlow';
@@ -271,6 +281,12 @@ const EdgeRehydrateFix: React.FC<{ nodeIdsKey: string; nodeIds: string[] }> = ({
 
 // LaneBackground replaced by LaneSystem import (./processflow/LaneSystem)
 // Undo/Redo replaced by useProcessFlowUndoRedo hook (./processflow/useProcessFlowUndoRedo)
+
+// Przyblizone gabaryty kafla kroku (te same, ktorych uzywa auto-uklad dagre
+// nizej). Sluza wylacznie do centrowania nowego wezla w kadrze i do prostego
+// omijania kolizji przy dodawaniu — nie sa zrodlem prawdy dla renderu.
+const NODE_BOX_W = 160;
+const NODE_BOX_H = 48;
 
 // ── Auto-layout with dagre ───────────────────────────────────────────────────
 
@@ -646,6 +662,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     setEdges,
     setLanes,
   });
+
+  // Nadaj stan Cofnij/Ponów na wspólny autobus — lewy pasek czyta stąd, więc bez
+  // tego jego przyciski były na Przepływie trwale wygaszone (mimo że sama akcja
+  // `pf_undo`/`pf_redo` działała).
+  useEffect(() => {
+    emitIdeaUndoState('process_flow', canUndo, canRedo);
+  }, [canUndo, canRedo]);
   const dragSnapshotTakenRef = useRef(false);
   // Latest state mirror — lets undo/redo (which setState async) read the just-
   // restored snapshot on the next tick to broadcast it as a graph_snapshot.
@@ -1169,10 +1192,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           const updated = next.map((n: Node) => {
             const posChange = posChanges.find((c: NodeChange) => (c as any).id === n.id);
             if (!posChange) return n;
-            const laneIdx = Math.max(
-              0,
-              Math.min(lanes.length - 1, Math.floor(n.position.y / LANE_HEIGHT))
-            );
+            // B2 2026-07-27: `Math.floor(y / LANE_HEIGHT)` assumed every band is
+            // exactly LANE_HEIGHT tall, so a collapsed (28px) or resized lane
+            // made the drop land in a different lane than the one the user aimed
+            // at. Now that the bands are painted where they really are, that
+            // divergence would be plainly visible — use the same band walk the
+            // painting uses (identical result for default-height lanes).
+            const laneIdx = laneIndexAtY(lanes, n.position.y, LANE_HEIGHT);
             const targetLane = lanes[laneIdx];
             if (targetLane && n.data?.laneId !== targetLane.id) {
               return {
@@ -1200,10 +1226,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         if (dragging.length > 0) {
           const dragNode = next.find((n: Node) => n.id === (dragging[0] as any).id);
           if (dragNode) {
-            const laneIdx = Math.max(
-              0,
-              Math.min(lanes.length - 1, Math.floor(dragNode.position.y / LANE_HEIGHT))
-            );
+            // B2 2026-07-27: same band walk as the drop above — the live
+            // highlight must point at the band the drop will actually pick.
+            const laneIdx = laneIndexAtY(lanes, dragNode.position.y, LANE_HEIGHT);
             const targetLane = lanes[laneIdx];
             setDragOverLaneId(targetLane?.id || null);
           }
@@ -1449,10 +1474,107 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     ) => {
       if (locked) return;
       pushUndo();
-      const lane = lanes[0] || DEFAULT_LANES[0];
+
+      // ── B1 (2026-07-27): „dodalem krok i nic sie nie stalo" ─────────────
+      // Do dzis kazdy nowy wezel ladowal SZTYWNO w lanes[0], na pozycji
+      // wyliczonej z liczby wezlow w tym torze — niezaleznie od zaznaczenia,
+      // fokusu i kadru. Trzy mechanizmy potrafily go zjesc: zwiniety tor
+      // (displayNodes odfiltrowuje — efekt TRWALY), przywrocony viewport
+      // (pozycja poza kadrem) i tryb skupienia. Licznik „Kroki" rosl, plotno
+      // stalo — stad zgloszenie „wszystkie przyciski martwe".
+      const baseLanes = lanes.length > 0 ? lanes : DEFAULT_LANES;
+      const laneById = (laneId: unknown) =>
+        typeof laneId === 'string' ? baseLanes.find((l) => l.id === laneId) : undefined;
+
+      const selectedNode = (nodes as Node[]).find((n) => n.selected);
+      const focusNode = focusObjectId
+        ? (nodes as Node[]).find((n) => n.id === focusObjectId)
+        : undefined;
+
+      // Gdy wolajacy zna miejsce (prawy klik, wstawka z czatu Teresy), tor
+      // czytamy z TEGO miejsca — inaczej wezel mial etykiete jednego toru,
+      // a lezal w pasie innego.
+      const explicitPosition = overrides?.position;
+      const laneFromPosition = explicitPosition
+        ? baseLanes[laneIndexAtY(baseLanes, explicitPosition.y, LANE_HEIGHT)]
+        : undefined;
+
+      const lane =
+        laneFromPosition ||
+        laneById(selectedNode?.data?.laneId) ||
+        laneById(focusNode?.data?.laneId) ||
+        baseLanes.find((l) => !l.collapsed) ||
+        baseLanes[0];
+
+      // Nigdy nie wkladamy do zwinietego toru — rozwijamy go. To ta sama
+      // migawka undo (pushUndo wyzej zrzuca rowniez `lanes`), wiec jeden
+      // Ctrl+Z cofa i wezel, i rozwiniecie.
+      const lanesAfter = lane.collapsed ? toggleLaneCollapsed(baseLanes, lane.id, false) : baseLanes;
+      if (lane.collapsed) {
+        setLanes(lanesAfter);
+        collab.broadcastLanes?.(lanesAfter);
+      }
+
+      const bands = laneBandLayout(lanesAfter, LANE_HEIGHT);
+      const band = bands[lane.id] ?? {
+        top: Math.max(0, lanesAfter.indexOf(lane)) * LANE_HEIGHT,
+        height: LANE_HEIGHT,
+      };
+      const laneY = band.top + Math.max(8, Math.round((band.height - NODE_BOX_H) / 2));
+
+      // Srodek biezacego kadru zamiast wzoru „100 + N*200" — wezel ma sie
+      // pojawic tam, GDZIE UZYTKOWNIK PATRZY.
+      const rect = flowContainerRef.current?.getBoundingClientRect();
+      let xBase: number;
+      if (rect && rect.width > 0 && rect.height > 0) {
+        const center = screenToFlow(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        xBase = Math.round(center.x - NODE_BOX_W / 2);
+      } else {
+        xBase = 100 + nodes.filter((n: Node) => n.data?.laneId === lane.id).length * 200;
+      }
+      const yBase = laneY;
+
+      // Omijanie kolizji: szukamy wolnego miejsca w pasie toru, przesuwajac sie
+      // co 40px NAPRZEMIENNIE w prawo i w lewo od srodka kadru. Samo „w prawo"
+      // nie wystarcza — gesty rzad krokow (a taki jest typowy proces) wypychal
+      // nowy wezel poza limit i konczyl sie nachodzeniem na istniejacy kafel.
+      // Prog to pelna szerokosc kafla + luka: kafle rysuja sie szersze niz
+      // NODE_BOX_W (etykieta rozciaga), wiec „srodki dalej niz polowa" bylo za malo.
+      if (!explicitPosition) {
+        const clearX = NODE_BOX_W + 20;
+        const occupied = (x: number) =>
+          (nodes as Node[]).some(
+            (n) =>
+              Math.abs((n.position?.x ?? 0) - x) < clearX &&
+              Math.abs((n.position?.y ?? 0) - yBase) < NODE_BOX_H
+          );
+        if (occupied(xBase)) {
+          const origin = xBase;
+          for (let step = 1; step <= 20; step += 1) {
+            const right = origin + step * 40;
+            if (!occupied(right)) {
+              xBase = right;
+              break;
+            }
+            const left = origin - step * 40;
+            if (!occupied(left)) {
+              xBase = left;
+              break;
+            }
+            if (step === 20) xBase = right;
+          }
+        }
+      }
+
+      const position = explicitPosition
+        ? // Tor byl zwiniety → pas wlasnie urosl, wiec Y trzeba wciagnac do
+          // nowego pasa; inaczej pozycje wolajacego zostawiamy nietkniete.
+          lane.collapsed
+          ? { x: explicitPosition.x, y: laneY }
+          : explicitPosition
+        : { x: xBase, y: yBase };
+
       const id = `pf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      const yBase = 60 + lanes.indexOf(lane) * LANE_HEIGHT;
-      const xBase = 100 + nodes.filter((n: Node) => n.data?.laneId === lane.id).length * 200;
 
       // V5-IDEA-23: Use rich VSM node type when in VSM mode
       const isVsmShape = shape.startsWith('vsm_');
@@ -1461,7 +1583,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       const newNode: Node = {
         id,
         type: resolvedType,
-        position: overrides?.position || { x: xBase, y: yBase },
+        position,
+        // Nowy krok od razu zaznaczony: podswietlenie + plywajacy pasek i panel
+        // wlasciwosci celuja we wlasciwy wezel bez dodatkowego klikniecia.
+        selected: true,
         data: {
           label:
             overrides?.label || (isPl ? SHAPE_CONFIG[shape].labelPl : SHAPE_CONFIG[shape].label),
@@ -1479,8 +1604,45 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           ...(overrides?.data || {}),
         },
       };
-      setNodes((prev: Node[]) => [...prev, newNode]);
+      setNodes((prev: Node[]) => {
+        const next = [
+          ...prev.map((n: Node) => (n.selected ? { ...n, selected: false } : n)),
+          newNode,
+        ];
+        // setNodes z zaznaczeniem nie przechodzi przez onNodesChange, wiec
+        // pasek/panel trzeba powiadomic recznie — inaczej celowalyby w stary wybor.
+        handleSelectionUpdate(next);
+        return next;
+      });
       collab.broadcastNodeAdd(newNode); // F3: realtime add
+
+      // Kadr: viewport jest PERSYSTOWANY (extensions.processFlow.viewState), wiec
+      // bezwarunkowe centrowanie skasowaloby zapisany widok uzytkownika.
+      // Przesuwamy sie tylko wtedy, gdy nowy wezel wypadlby poza kadr — a to
+      // realnie zdarza sie po przywroceniu zapisanego viewportu.
+      if (rect && rect.width > 0 && rect.height > 0) {
+        const topLeft = screenToFlow(rect.left, rect.top);
+        const bottomRight = screenToFlow(rect.right, rect.bottom);
+        const cx = position.x + NODE_BOX_W / 2;
+        const cy = position.y + NODE_BOX_H / 2;
+        const margin = 24;
+        const outside =
+          cx < topLeft.x + margin ||
+          cx > bottomRight.x - margin ||
+          cy < topLeft.y + margin ||
+          cy > bottomRight.y - margin;
+        if (outside) {
+          const zoom = reactFlowInstanceRef.current?.getViewport?.()?.zoom ?? 1;
+          reactFlowInstanceRef.current?.setCenter?.(cx, cy, { zoom, duration: 300 });
+        }
+      }
+
+      toast.success(
+        isPl
+          ? `Dodano krok: ${String(newNode.data?.label ?? '')}`.trim()
+          : `Step added: ${String(newNode.data?.label ?? '')}`.trim(),
+        { duration: 2000 }
+      );
 
       // Ghost nodes: AI suggests next steps
       if (!locked && shape !== 'end') {
@@ -1507,7 +1669,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               const ghosts: Node[] = steps.slice(0, 3).map((s: any, i: number) => ({
                 id: `ghost-${Date.now()}-${i}`,
                 type: 'flowNode',
-                position: { x: xBase + 200 + i * 180, y: yBase },
+                position: { x: position.x + 200 + i * 180, y: position.y },
                 data: {
                   label: s.label || `Step ${i + 1}`,
                   shape: s.data?.shape || 'action',
@@ -1529,6 +1691,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     [
       collab,
       edges,
+      flowMode,
+      focusObjectId,
+      handleSelectionUpdate,
       i18n.language,
       ideaId,
       isPl,
@@ -1537,7 +1702,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       nodes,
       onNodeDetail,
       pushUndo,
+      screenToFlow,
       semanticKit,
+      setLanes,
       setNodes,
     ]
   );
@@ -2019,6 +2186,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       // Z1: tryb kursora z lewego raila — realnie przestawia płótno (niżej,
       // spread getIdeaCanvasCursorProps na <ReactFlow>).
       setCursorMode: (mode) => setCursorMode(mode),
+      // D2 2026-07-28: siatka i przyciąganie — te same dwie funkcje co przed
+      // przeprowadzką, tylko wołane teraz z lewego raila zamiast z nakładki
+      // zasłaniającej pstryczek toru.
+      toggleGrid: () => setShowGrid((prev) => !prev),
+      toggleSnap: () => setSnapToGridEnabled((prev) => !prev),
     },
     setters: {
       setFlowMode,
@@ -2033,6 +2205,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     if (!open) return;
     publishIdeaCanvasCursorMode('process_flow', cursorMode);
   }, [cursorMode, open]);
+
+  // D2 2026-07-28: to samo dla siatki/przyciągania — rail rysuje stan włączenia
+  // obu pstryczków, a stan mieszka tutaj (i wraca z hydracji, bug L-04).
+  useEffect(() => {
+    if (!open) return;
+    publishProcessFlowGridState({ showGrid, snap: snapToGridEnabled });
+  }, [open, showGrid, snapToGridEnabled]);
 
   // ── Accept ghost node → convert to real node ──────────────────────────
 
@@ -2157,6 +2336,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
 
+  /** Domyslny ksztalt „nowego kroku" dla biezacego trybu przeplywu. */
+  const addDefaultStep = useCallback(() => {
+    const shape: FlowShape =
+      flowMode === 'automation' ? 'auto_trigger' : flowMode === 'vsm' ? 'vsm_process' : 'action';
+    addNode(shape);
+  }, [addNode, flowMode]);
+
   // P3: shared grammar (Tab/Enter/F2/Delete/Escape/Ctrl+Z/S/D/L/0)
   useCanvasKeyboard({
     toolType: 'processflow',
@@ -2176,15 +2362,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
         onSelectionChange?.(EMPTY_SELECTION);
       },
-      onAddSibling: () => {
-        const shape: FlowShape =
-          flowMode === 'automation'
-            ? 'auto_trigger'
-            : flowMode === 'vsm'
-              ? 'vsm_process'
-              : 'action';
-        addNode(shape);
-      },
+      // Tab i Enter robia w Przeplywie to samo — nowy krok. Kontrakt skrotow
+      // (useIdeasToolKeyboard) mapuje Tab na `onAddChild`, ktorego Przeplyw
+      // NIGDY nie podawal, wiec Tab byl tu martwym klawiszem (w odroznieniu od
+      // mapy mysli proces nie ma hierarchii rodzic-dziecko — jest nastepny krok).
+      onAddChild: () => addDefaultStep(),
+      onAddSibling: () => addDefaultStep(),
     },
   });
 
@@ -2778,8 +2961,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         )
       ) : (
         <div ref={flowContainerRef} className="flex-1 relative">
-          <div className="absolute inset-0">
-            <LaneSystem
+          {/* B2 2026-07-27: the provider now opens BEFORE the lane layer (DOM
+              order and paint order are unchanged — ReactFlowProvider renders no
+              element) so the swimlane bands can read the live viewport and
+              travel with the nodes when the canvas is panned/zoomed. Before
+              this, bands were positioned in raw container px and drifted off
+              their nodes on the very first pan. `overflow-hidden` keeps a band
+              that scrolls out of the canvas from painting over the toolbar. */}
+          <ReactFlowProvider>
+          <div className="absolute inset-0 overflow-hidden">
+            <LaneSystemViewportLayer
               lanes={lanes}
               isPl={!!isPl}
               locked={locked}
@@ -2794,40 +2985,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             />
           </div>
 
-          {/* M07 F5b B1: grid/snap toggle — real, user-controllable, and now
-              round-trips through hydration (bug L-04). Solid c-* tokens only
-              (no /alpha suffix — those don't emit rules for hex-valued c-*
-              tokens, see finding_c_token_alpha_colormix). */}
-          <div className="absolute top-2 left-2 z-20 flex items-center gap-0.5 rounded-xl border border-c-border dark:border-white/[0.03] bg-c-surface shadow-sm px-1 py-0.5">
-            <button
-              type="button"
-              onClick={() => setShowGrid((prev) => !prev)}
-              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                showGrid
-                  ? 'text-c-info bg-c-surface-raised'
-                  : 'text-c-text-muted hover:bg-c-surface-raised'
-              }`}
-              title={t('myWorkIdeas.processFlowTool.toggleGrid')}
-              aria-label={t('myWorkIdeas.processFlowTool.toggleGrid')}
-              aria-pressed={showGrid}
-            >
-              <Grid3x3 size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setSnapToGridEnabled((prev) => !prev)}
-              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                snapToGridEnabled
-                  ? 'text-c-info bg-c-surface-raised'
-                  : 'text-c-text-muted hover:bg-c-surface-raised'
-              }`}
-              title={t('myWorkIdeas.processFlowTool.snapGrid')}
-              aria-label={t('myWorkIdeas.processFlowTool.snapGrid')}
-              aria-pressed={snapToGridEnabled}
-            >
-              <Magnet size={14} />
-            </button>
-          </div>
+          {/* D2 2026-07-28: pstryczki siatki i przyciągania NIE wiszą już jako
+              bezpodpisowa nakładka `absolute top-2 left-2` nad płótnem. Powód
+              podwójny: (a) właściciel nie wiedział, co robią („nie wiem co to są
+              te dwa przyciski w ogóle"), (b) zasłaniały pstryczek zwijania
+              PIERWSZEGO toru — zmierzone `elementFromPoint`: 58/225 punktów
+              pstryczka klikalnych, w jego środku wypadała nakładka. Funkcja
+              została, przeniosła się do wspólnego lewego raila
+              (`CanvasLeftToolbar`, sloty `grid`/`snap` z `liveIn:
+              ['process_flow']`), a stan jedzie w górę przez
+              `publishProcessFlowGridState`. Tu zostaje sam stan i płótno. */}
 
           {/* V51-28: Empty state overlay */}
           {filteredNodes.length === 0 && filteredGhostNodes.length === 0 && (
@@ -2858,7 +3025,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             </div>
           )}
 
-          <ReactFlowProvider>
             <EdgeRehydrateFix
               nodeIdsKey={nodes.map((n) => n.id).join(',')}
               nodeIds={nodes.map((n) => n.id)}
@@ -3003,6 +3169,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   zoomable
                   pannable
                   className="!bg-c-surface !border-slate-200/60 dark:!border-navy-700/60"
+                  /**
+                   * Wymaganie #6 dolnego paska: minimapa nie może wjeżdżać POD
+                   * pasek (pasek `z-dropdown`, minimapa domyślnie `z-index:5`).
+                   * Za flagą `ideaBottomBarUnified` — OFF zostawia dzisiejszy stan.
+                   */
+                  style={
+                    isIdeaBottomBarUnifiedEnabled()
+                      ? { marginBottom: IDEA_BOTTOM_BAR_MINIMAP_LIFT, zIndex: 10 }
+                      : undefined
+                  }
                 />
               )}
               <CanvasZoomControls
@@ -3405,7 +3581,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               : getCanvasContextActions({
                   isPl: !!isPl,
                   locked,
-                  onAddNode: (shape) => addNode(shape as FlowShape),
+                  // B1: menu kontekstowe zna dokladne miejsce prawego klika —
+                  // do dzis je gubilo i wezel ladowal gdzie indziej.
+                  onAddNode: (shape) =>
+                    addNode(shape as FlowShape, {
+                      position: screenToFlow(contextMenu.x, contextMenu.y),
+                    }),
                   // P1-4: „Wklej" bylo podpiete pod duplicateSelected(), wiec
                   // duplikowalo zaznaczenie zamiast wkleic schowek — a w menu TLA
                   // zaznaczenia zwykle nie ma, wiec byl to martwy klik. Teraz

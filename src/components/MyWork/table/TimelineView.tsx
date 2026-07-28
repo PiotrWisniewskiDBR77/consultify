@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { ColumnDef, TableEdge, TableNode } from './tableTypes';
 import { ROW_ACCENT_COLORS } from './tableTypes';
+import { resolveDateViewSetup, ViewSetupEmptyState } from './ViewSetupEmptyState';
 
 type ZoomLevel = 'day' | 'week' | 'month';
 
@@ -24,6 +25,14 @@ interface TimelineViewProps {
   locked?: boolean;
   onFieldChange?: (nodeId: string, field: string, value: any) => void;
   onNodeClick?: (nodeId: string) => void;
+  /**
+   * Empty-state escape hatches. Without them the Timeline tab is a dead end:
+   * it can only describe what is missing, never fix it (incydent 2026-07-27).
+   */
+  onAddDateColumn?: () => void;
+  onShowDateColumn?: (columnKey: string) => void;
+  onBackToTable?: () => void;
+  onAddRow?: () => void;
 }
 
 const DAY_MS = 86400000;
@@ -66,6 +75,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   locked = false,
   onFieldChange,
   onNodeClick,
+  onAddDateColumn,
+  onShowDateColumn,
+  onBackToTable,
+  onAddRow,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -194,19 +207,27 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   const LABEL_WIDTH = 180;
 
   if (timelineData.length === 0) {
+    // Never a bare "no dates to display" any more — name the exact blocker and
+    // hand over the action that clears it. `resolveDateViewSetup` returning
+    // null while the timeline is still empty means the values sit in a date
+    // column this view does not read as the START column; the "column has no
+    // dates" copy is the closest honest message for that case too.
+    const setupState = resolveDateViewSetup({ columns, rows: nodes }) ?? {
+      reason: 'no-values' as const,
+      columnName: dateCols[0]?.header || startCol,
+      columnKey: dateCols[0]?.key || startCol,
+    };
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-sm text-c-text-secondary mb-1">
-            {t('ideas.table.timelineView.noDatesToDisplay', 'No dates to display')}
-          </p>
-          <p className="text-[10px] text-c-text-muted">
-            {t(
-              'ideas.table.timelineView.addDateColumns',
-              'Add "date" type columns to see the timeline'
-            )}
-          </p>
-        </div>
+        <ViewSetupEmptyState
+          view="timeline"
+          state={setupState}
+          locked={locked}
+          onAddColumn={onAddDateColumn}
+          onShowColumn={onShowDateColumn}
+          onBackToTable={onBackToTable}
+          onAddRow={onAddRow}
+        />
       </div>
     );
   }

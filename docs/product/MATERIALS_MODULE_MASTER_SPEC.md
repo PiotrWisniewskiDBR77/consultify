@@ -1,5 +1,7 @@
 # Moduł „Materiały" — master spec (mapa do kodowania) · 2026-06-24
 
+> **Aktualizacja kanoniczna (2026-07-24):** decyzje o nawigacji, trzech trybach tworzenia, roli Excela i wspolnej bibliotece szablonow sa zebrane w [MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md](MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md). Ten dokument pozostaje szczegolowa specyfikacja modulu, ale nie nadpisuje nowszego kanonu.
+
 > Konsolidacja rozmowy projektowej Piotr×CTO. Cel: **najlepszy konsultant na świecie** — każdy projekt w końcu trzeba pokazać światu; to moment, gdy konsultant składa wiedzę w Excel / PPT / raport. Moduły zbierają dane → ten moduł dzieli się wynikami. Musi: (1) współpracować z resztą systemu, (2) prezentować najlepsze dane najlepszym przekazem, (3) być piękny. Status: **spec do uzgodnienia przed kodowaniem.** Bazuje na: [`DELIVERABLE_STANDARDS_AND_TOOLING`](../qa/deliverables/DELIVERABLE_STANDARDS_AND_TOOLING.md) · [`DELIVERABLE_FORMATTING_SPEC`](DELIVERABLE_FORMATTING_SPEC.md) · [`BUSINESS_PLAN_GENERATOR_SPEC`](BUSINESS_PLAN_GENERATOR_SPEC.md).
 
 ## 0. Fundament — Artefakt (źródło prawdy)
@@ -12,6 +14,7 @@ Konsolidacja 4 pozycji sidebara (Dokumenty/Prezentacje/Raporty/Tabele) → **jed
 
 ## 2. Trzy wejścia (ładowarki kontekstu → jeden silnik generacji)
 1. **Czysty input (Gamma-style):** jedno zdanie → retrieval z org (projekty/inicjatywy/artefakty) → cedzi → układa w wybrany format.
+   > ⚠️ 27.07: „czysty input" = TERESA, nie osobny byt/silnik. Nie budować drugiego pola tworzenia.
 2. **Upload pliku:** zewnętrzny .docx/.pptx/.pdf → parsuje na części → buduje.
 3. **In-place „Przygotuj narzędzie":** z dowolnego modułu (inicjatywa/idea/raport fin.) → przeskok do Materiałów z **zaznaczonym kontekstem** → wybór formatu/wielkości/zawartości. *(To most „moduły↔materiały".)*
 

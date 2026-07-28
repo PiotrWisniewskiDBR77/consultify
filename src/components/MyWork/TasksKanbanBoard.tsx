@@ -90,8 +90,15 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
   {
     id: 'todo',
     label: 'To Do',
-    statuses: ['todo', 'pending', 'new'],
-    apiStatus: 'TODO',
+    // PILNE-3 (2026-07-27): listy statusów pokrywały tylko część wartości, jakie
+    // realnie siedzą w `tasks.status` (unia TaskStatus zna też backlog/review/
+    // on_hold/cancelled, a baza demo ma m.in. 'archived'). Karta o statusie spoza
+    // list wypadała ze WSZYSTKICH kolumn → suma kolumn < licznik „All".
+    statuses: ['todo', 'pending', 'new', 'backlog', 'open', 'not_started'],
+    // PILNE-3: baza trzyma statusy MAŁYMI literami (demo: 100% wierszy `tasks`).
+    // Kanban zapisywał 'TODO'/'IN_PROGRESS' — serwer pisze wartość dosłownie, więc
+    // każdy drag zaśmiecał dane drugim wariantem tego samego statusu.
+    apiStatus: 'todo',
     icon: <Circle size={14} />,
     headerColor: 'text-c-text-muted',
     dotColor: 'bg-c-border-strong',
@@ -100,8 +107,8 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
   {
     id: 'in_progress',
     label: 'In Progress',
-    statuses: ['in_progress', 'in progress'],
-    apiStatus: 'IN_PROGRESS',
+    statuses: ['in_progress', 'in progress', 'active', 'review', 'in_review'],
+    apiStatus: 'in_progress',
     icon: <Clock size={14} />,
     headerColor: 'text-blue-400',
     dotColor: 'bg-blue-500',
@@ -110,8 +117,8 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
   {
     id: 'blocked',
     label: 'Blocked',
-    statuses: ['blocked'],
-    apiStatus: 'BLOCKED',
+    statuses: ['blocked', 'on_hold', 'on hold', 'waiting'],
+    apiStatus: 'blocked',
     icon: <AlertCircle size={14} />,
     headerColor: 'text-danger-400',
     dotColor: 'bg-danger-500',
@@ -121,7 +128,7 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
     id: 'done',
     label: 'Done',
     statuses: ['done', 'completed', 'validated'],
-    apiStatus: 'DONE',
+    apiStatus: 'done',
     icon: <CheckCircle2 size={14} />,
     headerColor: 'text-emerald-400',
     dotColor: 'bg-emerald-500',
@@ -480,8 +487,12 @@ const buildContainerItems = (taskList: Task[]): ContainerItems => {
 
   const items: ContainerItems = {};
   for (const col of KANBAN_COLUMNS) {
+    // PILNE-3: przydział przez `getColumnForStatus` (ten sam mechanizm co reszta
+    // komponentu) zamiast surowego `col.statuses.includes(...)` — dzięki temu
+    // status nieznany trafia do fallbackowej kolumny „To Do" zamiast zniknąć
+    // z tablicy. Suma kolumn == liczba zadań ZAWSZE.
     const colTasks = taskList
-      .filter((t) => col.statuses.includes(t.status?.toLowerCase() || 'todo'))
+      .filter((t) => getColumnForStatus(t.status) === col.id)
       .sort((a, b) => {
         const ap = priorityOrder[a.priority?.toLowerCase() || 'medium'] ?? 2;
         const bp = priorityOrder[b.priority?.toLowerCase() || 'medium'] ?? 2;
@@ -778,14 +789,58 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
         // Persist via API
         try {
           await Api.updatePersonalTask(activeId, { status: newStatus });
-          toast.success(`Moved to ${targetColDef.label}`, { duration: 2000, icon: '✓' });
+          toast.success(
+            t('myWork.kanban.statusMoved', 'Przeniesiono do „{{column}}"', {
+              column: targetColDef.label,
+            }),
+            { duration: 2000, icon: '✓' }
+          );
         } catch (error) {
           console.error('Failed to update task status:', error);
           // Revert
           setTasks((prev) =>
             prev.map((t) => (t.id === activeId ? { ...t, status: previousStatus } : t))
           );
-          toast.error(t('myWork.kanban.statusFailed', 'Failed to update status'));
+          // PILNE-3: „Failed to update status" nic nie mówiło — ani co się stało,
+          // ani co zrobić. Komunikat rozróżnia teraz realne przypadki i zawsze
+          // podaje tytuł zadania + kolumnę docelową + krok naprawczy.
+          const httpStatus = Number((error as { status?: number } | undefined)?.status) || 0;
+          const shortTitle =
+            (task.title || '').length > 40 ? `${(task.title || '').slice(0, 40)}…` : task.title || '';
+          const ctx = { title: shortTitle, column: targetColDef.label };
+          let message: string;
+          if (httpStatus === 404) {
+            message = t(
+              'myWork.kanban.statusFailedNotFound',
+              'Nie zapisano: zadanie „{{title}}" już nie istnieje (mogło zostać usunięte lub przypisane komuś innemu). Odśwież tablicę.',
+              ctx
+            );
+          } else if (httpStatus === 401 || httpStatus === 403) {
+            message = t(
+              'myWork.kanban.statusFailedForbidden',
+              'Nie zapisano: brak uprawnień do zmiany statusu zadania „{{title}}". Poproś właściciela zadania o zmianę.',
+              ctx
+            );
+          } else if (httpStatus >= 500) {
+            message = t(
+              'myWork.kanban.statusFailedServer',
+              'Nie zapisano „{{title}}" → {{column}}: błąd serwera ({{code}}). Karta wróciła na miejsce — spróbuj ponownie za chwilę.',
+              { ...ctx, code: httpStatus }
+            );
+          } else if (!httpStatus) {
+            message = t(
+              'myWork.kanban.statusFailedOffline',
+              'Nie zapisano „{{title}}" → {{column}}: brak połączenia z serwerem. Karta wróciła na miejsce — sprawdź internet i spróbuj ponownie.',
+              ctx
+            );
+          } else {
+            message = t(
+              'myWork.kanban.statusFailedGeneric',
+              'Nie zapisano „{{title}}" → {{column}} ({{code}}). Karta wróciła na miejsce — spróbuj ponownie.',
+              { ...ctx, code: httpStatus }
+            );
+          }
+          toast.error(message, { duration: 6000 });
         }
       }
     },

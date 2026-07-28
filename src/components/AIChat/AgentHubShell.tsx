@@ -171,6 +171,7 @@ const PLAN_STATUS_TONE: Record<
   'info' | 'warning' | 'success' | 'danger' | 'neutral'
 > = {
   planning: 'info',
+  scheduled: 'info',
   awaiting_approval: 'warning',
   executing: 'info',
   paused: 'warning',
@@ -185,6 +186,7 @@ const PLAN_STATUS_TONE: Record<
 // nie krytyczne semantycznie (patrz DynamicTabs.tsx `STATUS_COLORS`).
 const PLAN_STATUS_TO_ITEM_STATUS: Record<AgentPlanStatus, OpenDocument['status']> = {
   planning: 'PLANNING',
+  scheduled: 'SCHEDULED',
   awaiting_approval: 'PENDING_REVIEW',
   executing: 'EXECUTING',
   paused: 'BLOCKED',
@@ -204,6 +206,7 @@ const CANCELLABLE_STATUSES: AgentPlanStatus[] = [
 function planStatusLabel(status: AgentPlanStatus, isPolish: boolean): string {
   const pl: Record<AgentPlanStatus, string> = {
     planning: 'Planowanie',
+    scheduled: 'Zaplanowany',
     awaiting_approval: 'Czeka na akceptację',
     executing: 'W toku',
     paused: 'Wstrzymany',
@@ -214,6 +217,7 @@ function planStatusLabel(status: AgentPlanStatus, isPolish: boolean): string {
   };
   const en: Record<AgentPlanStatus, string> = {
     planning: 'Planning',
+    scheduled: 'Scheduled',
     awaiting_approval: 'Awaiting approval',
     executing: 'Executing',
     paused: 'Paused',

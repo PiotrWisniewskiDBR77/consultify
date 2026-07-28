@@ -1382,6 +1382,14 @@
     }
   },
   "myWork": {
+    "kanban": {
+      "statusMoved": "Przeniesiono do „{{column}}\"",
+      "statusFailedNotFound": "Nie zapisano: zadanie „{{title}}\" już nie istnieje (mogło zostać usunięte lub przypisane komuś innemu). Odśwież tablicę.",
+      "statusFailedForbidden": "Nie zapisano: brak uprawnień do zmiany statusu zadania „{{title}}\". Poproś właściciela zadania o zmianę.",
+      "statusFailedServer": "Nie zapisano „{{title}}\" → {{column}}: błąd serwera ({{code}}). Karta wróciła na miejsce — spróbuj ponownie za chwilę.",
+      "statusFailedOffline": "Nie zapisano „{{title}}\" → {{column}}: brak połączenia z serwerem. Karta wróciła na miejsce — sprawdź internet i spróbuj ponownie.",
+      "statusFailedGeneric": "Nie zapisano „{{title}}\" → {{column}} ({{code}}). Karta wróciła na miejsce — spróbuj ponownie."
+    },
     "title": "Moja Praca",
     "home": "Home",
     "manager": "Manager",
@@ -2397,7 +2405,9 @@
         "source": "Źródło",
         "received": "Otrzymano",
         "sla": "SLA"
-      }
+      },
+      "linkedTask": "Powiązane zadanie",
+      "linkedDecision": "Powiązana decyzja"
     },
     "notificationDetail": {
       "toastError": "Nie znaleziono powiadomienia",
@@ -4880,7 +4890,8 @@
       "aiQualityScoreTitle": "Ocena jakości AI wg rubryki (konkretność/dowody/głębia/mierzalność/spójność): {{score}}/5",
       "createdRelative": "Utworzono {{relative}}",
       "confirmSendReminderTo": "Czy na pewno chcesz wysłać przypomnienie do {{name}}?",
-      "theUserFallback": "użytkownika"
+      "theUserFallback": "użytkownika",
+      "linkedSession": "Powiązana sesja"
     },
     "insightViewer": {
       "panelResults": "Rezultaty",
@@ -15287,9 +15298,7 @@
       "submitReviewPrompt": "Prześlij ten insight do recenzji",
       "exportInsight": "Eksportuj insight do inicjatywy",
       "exportInsightPrompt": "Eksportuj ten insight do inicjatywy",
-      "viewEvidence": "Zobacz mapę dowodów",
-      "openOutputs": "Otwórz Bibliotekę Outputs",
-      "reviewPending": "Przejrzyj oczekujące artefakty"
+      "viewEvidence": "Zobacz mapę dowodów"
     },
     "feedback": {
       "missingInfoPlaceholder": "Opisz czego brakowało w odpowiedzi..."
@@ -16037,7 +16046,8 @@
       "urlIngestFailed": "Nie udało się przetworzyć linku.",
       "urlReady": "Link przetworzony."
     },
-    "stopTTS": "Zatrzymaj czytanie"
+    "stopTTS": "Zatrzymaj czytanie",
+    "sidebarEmptyHint": "Opisz tutaj, jaki materiał potrzebujesz — Teresa zaplanuje strukturę i napisze pierwszą wersję na Twoich oczach."
   },
   "agentAudit": {
     "title": "Warstwa audytu agentów",
@@ -18700,7 +18710,20 @@
       "previewTitle": "Stan pakietu",
       "ratios": "Sprawozdania",
       "validation": "Status pakietu",
-      "computeRatios": "Przelicz ratios"
+      "computeRatios": "Przelicz ratios",
+      "reason": {
+        "missingPl": "Brakuje rachunku zysków i strat",
+        "missingBs": "Brakuje bilansu",
+        "missingCf": "Brakuje rachunku przepływów pieniężnych",
+        "duplicateType": "Ten sam rodzaj sprawozdania wgrano więcej niż raz",
+        "inconsistentCurrency": "Sprawozdania są w różnych walutach",
+        "inconsistentScaling": "Sprawozdania mają różną skalę wartości (np. jednostki i tysiące)",
+        "inconsistentPeriod": "Sprawozdania obejmują różne okresy",
+        "hasRejected": "Co najmniej jedno sprawozdanie zostało odrzucone przy weryfikacji",
+        "hasPending": "Co najmniej jedno sprawozdanie czeka na weryfikację",
+        "hasRecoverable": "Co najmniej jedno sprawozdanie wymaga poprawek, zanim będzie użyteczne",
+        "unknown": "To sprawozdanie wymaga sprawdzenia, zanim będzie można go użyć"
+      }
     },
     "counters": {
       "all": "Wszystkie",
@@ -21249,7 +21272,19 @@
         "trustBoundary": "Granica zaufania",
         "executionAuthority": "Wykonanie",
         "reviewAuthority": "Przegląd",
-        "validationChecks": "Kontrole walidacji"
+        "validationChecks": "Kontrole walidacji",
+        "originsCount_one": "{{count}} źródło pochodzenia",
+        "originsCount_few": "{{count}} źródła pochodzenia",
+        "originsCount_many": "{{count}} źródeł pochodzenia",
+        "originsCount_other": "{{count}} źródeł pochodzenia",
+        "sourcesCount_one": "{{count}} materiał źródłowy",
+        "sourcesCount_few": "{{count}} materiały źródłowe",
+        "sourcesCount_many": "{{count}} materiałów źródłowych",
+        "sourcesCount_other": "{{count}} materiałów źródłowych",
+        "checkFailed": "nie przeszło",
+        "checkPending": "czeka na sprawdzenie",
+        "checkSkipped": "pominięto",
+        "copyId": "Kopiuj ID"
       },
       "tabs": {
         "all": "Wszystkie",
@@ -21339,6 +21374,10 @@
     },
     "templateBuilder": {
       "saved": "Szablon zapisany"
+    },
+    "templates": {
+      "legacySourceLine": "Starszy rejestr wzorców — działa bez zmian",
+      "legacyHint": "Wzorzec ze starszego rejestru wzorców — generacja działa bez zmian."
     }
   },
   "rbHub": {
@@ -23695,6 +23734,16 @@
     "qualityGateBlockedDetailed": "Bramka jakości zablokowana — wymagany przegląd przed eksportem",
     "leftRail": {
       "openBuilder": "Otwórz w Builderze"
+    },
+    "breadcrumb": {
+      "new": "Nowa prezentacja",
+      "open": "Prezentacja"
+    }
+  },
+  "excele": {
+    "breadcrumb": {
+      "new": "Nowy arkusz",
+      "open": "Arkusz"
     }
   },
   "aiActions": {
@@ -25004,7 +25053,8 @@
       "generating": "Generowanie…",
       "planning": "Planowanie…",
       "submitTemplate": "Generuj z szablonu",
-      "submitPlan": "Zaplanuj dokument"
+      "submitPlan": "Zaplanuj dokument",
+      "contextChip": "Kontekst: {{organizationName}}"
     },
     "outline": {
       "type": "Typ",
@@ -25075,7 +25125,8 @@
       "suggestedEvidencePlaceholder": "Rodzaj dowodu, który powinien wspierać tę sekcję (typ źródła, nie konkretny zmyślony cytat).",
       "addSection": "Dodaj sekcję",
       "blankTitleHint": "Każda sekcja wymaga tytułu, zanim będzie można zapisać.",
-      "structurePreviewHeading": "Podgląd struktury"
+      "structurePreviewHeading": "Podgląd struktury",
+      "structurePreviewEmpty": "Brak sekcji do pokazania."
     },
     "view": {
       "templatesLoadFailedWithReason": "Nie udało się wczytać zatwierdzonych szablonów ({{reason}}). Nadal możesz generować bez szablonu.",
@@ -25093,7 +25144,12 @@
       "title": "Consultify Document Studio",
       "presenceNote": "Tryby 1, 2, 3 · Środowisko artefaktów Word/PDF",
       "loadingDocument": "Ładowanie dokumentu…",
-      "noDocument": "Brak wczytanego dokumentu."
+      "noDocument": "Brak wczytanego dokumentu.",
+      "backToMaterials": "Wróć do Materiałów"
+    },
+    "breadcrumb": {
+      "new": "Nowy dokument",
+      "open": "Dokument"
     },
     "qa": {
       "title": "Kontrola jakości — marka + język",
@@ -25386,7 +25442,10 @@
     "generating": {
       "title": "Generuję Twój dokument…",
       "planning": "Planuję strukturę…",
-      "progress": "Piszę sekcje… gotowe {{done}} z {{total}}"
+      "progress": "Piszę sekcje… gotowe {{done}} z {{total}}",
+      "stop": "Zatrzymaj",
+      "streamFallbackNotice": "Połączenie na żywo zerwane — dokańczam w tle…",
+      "basedOn": "Na czym opieram:"
     },
     "blocks": {
       "noTableData": "Brak danych tabeli",
@@ -25941,6 +26000,7 @@
       "newIdea": "Nowy pomysł",
       "childAdded": "Dodano gałąź",
       "cannotAddSiblingToRoot": "Nie można dodać rodzeństwa do korzenia",
+      "siblingFallbackToChild": "Ten węzeł nie ma węzła nadrzędnego, więc nie ma do czego dodać sąsiada — dodano węzeł podrzędny.",
       "siblingAdded": "Dodano sąsiada",
       "subtreeDeleteConfirm_one": "Usunięcie obejmie {{count}} podwęzeł. Kontynuować?",
       "subtreeDeleteConfirm_other": "Usunięcie obejmie {{count}} podwęzłów. Kontynuować?",
@@ -26116,7 +26176,17 @@
     "imageAdded": "Obraz dodany",
     "acceptedProposalsCount": "Zaakceptowano {{count}} propozycji",
     "linkSuggestionsFoundCount": "Znaleziono {{count}} propozycji powiązań",
-    "deleteSubtreeWarning": "Usunięcie obejmie {{count}} podwęzłów. Tej operacji nie można cofnąć po synchronizacji."
+    "deleteSubtreeWarning": "Usunięcie obejmie {{count}} podwęzłów. Tej operacji nie można cofnąć po synchronizacji.",
+    "frameNode": {
+      "defaultLabel": "Ramka"
+    },
+    "edgeArrow": {
+      "none": "Strzałka: brak",
+      "end": "Strzałka: na końcu",
+      "start": "Strzałka: na początku",
+      "both": "Strzałka: na obu końcach",
+      "noEdges": "Ta gałąź nie ma połączeń"
+    }
   },
   "ideas": {
     "table": {
@@ -27081,7 +27151,100 @@
       "clearCell": "Wyczyść komórkę",
       "cellCleared": "Komórka wyczyszczona",
       "copyFailed": "Nie udało się skopiować",
-      "pasteFailed": "Nie udało się odczytać schowka"
+      "pasteFailed": "Nie udało się odczytać schowka",
+      "viewSetup": {
+        "timeline": {
+          "noColumn": {
+            "headline": "Oś czasu potrzebuje kolumny z datą",
+            "description": "Ta tabela nie ma żadnej kolumny typu „data”, więc nie ma czego umieścić na osi czasu. Dodaj kolumnę — rozplanujemy istniejące wiersze od dziś, a paski przesuniesz później."
+          },
+          "hiddenColumn": {
+            "headline": "Kolumna z datą „{{column}}” jest ukryta",
+            "description": "Ten widok ją ukrywa, więc nie ma czego umieścić na osi. Pokaż kolumnę, aby wiersze wróciły."
+          },
+          "noValues": {
+            "headline": "Kolumna „{{column}}” nie ma wypełnionych dat",
+            "description": "Kolumna z datą istnieje, ale żaden wiersz nie ma w niej wartości — dlatego ten widok jest pusty. Wróć do tabeli i uzupełnij daty."
+          },
+          "noRows": {
+            "headline": "Ta tabela nie ma jeszcze wierszy",
+            "description": "Dodaj pierwszy wiersz w widoku Tabela i wróć tutaj."
+          }
+        },
+        "calendar": {
+          "noColumn": {
+            "headline": "Kalendarz potrzebuje kolumny z datą",
+            "description": "Ta tabela nie ma żadnej kolumny typu „data”, więc żaden wiersz nie trafi na konkretny dzień. Dodaj kolumnę — rozplanujemy istniejące wiersze od dziś."
+          },
+          "hiddenColumn": {
+            "headline": "Kolumna z datą „{{column}}” jest ukryta",
+            "description": "Ten widok ją ukrywa, więc żaden wiersz nie trafi na konkretny dzień. Pokaż kolumnę, aby wiersze wróciły."
+          },
+          "noValues": {
+            "headline": "Kolumna „{{column}}” nie ma wypełnionych dat",
+            "description": "Kolumna z datą istnieje, ale żaden wiersz nie ma w niej wartości — dlatego ten widok jest pusty. Wróć do tabeli i uzupełnij daty."
+          },
+          "noRows": {
+            "headline": "Ta tabela nie ma jeszcze wierszy",
+            "description": "Dodaj pierwszy wiersz w widoku Tabela i wróć tutaj."
+          }
+        },
+        "scoring": {
+          "noColumn": {
+            "headline": "Scoring potrzebuje kolumny z oceną",
+            "description": "Ten widok układa wiersze według kolumny „Ocena” — a ta tabela jej nie ma, więc przełączenie na niego nic nie zmieniło. Dodaj kolumnę, a ranking zacznie działać; „Model scoringowy” zapisuje wyniki do tej samej kolumny."
+          },
+          "hiddenColumn": {
+            "headline": "Kolumna z oceną „{{column}}” jest ukryta",
+            "description": "Ten widok ją ukrywa, więc ranking nie ma czego pokazać. Pokaż kolumnę, aby zobaczyć oceny."
+          },
+          "noValues": {
+            "headline": "Kolumna „{{column}}” nie ma jeszcze ocen",
+            "description": "Kolumna istnieje, ale żaden wiersz nie został oceniony — nie ma czego układać w ranking. Uruchom „Model scoringowy” albo wpisz oceny w widoku Tabela."
+          },
+          "noRows": {
+            "headline": "Ta tabela nie ma jeszcze wierszy",
+            "description": "Dodaj pierwszy wiersz w widoku Tabela i wróć tutaj."
+          }
+        },
+        "decisionLog": {
+          "noColumn": {
+            "headline": "Log decyzji potrzebuje kolumny z decyzją",
+            "description": "Ten widok grupuje wiersze według kolumny „Decyzja” — a ta tabela jej nie ma, więc wrzucił wszystko do jednej bezsensownej grupy. Dodaj kolumnę: każdy wiersz startuje jako „open”, a po rozstrzygnięciu trafia do własnej grupy."
+          },
+          "hiddenColumn": {
+            "headline": "Kolumna z decyzją „{{column}}” jest ukryta",
+            "description": "Ten widok ją ukrywa, więc nie ma według czego grupować. Pokaż kolumnę, aby odzyskać log."
+          },
+          "noValues": {
+            "headline": "Kolumna „{{column}}” nie ma wypełnionych decyzji",
+            "description": "Kolumna istnieje, ale żaden wiersz nie ma zapisanej decyzji — log nie ma czego grupować. Wróć do tabeli i ustaw decyzje."
+          },
+          "noRows": {
+            "headline": "Ta tabela nie ma jeszcze wierszy",
+            "description": "Dodaj pierwszy wiersz w widoku Tabela i wróć tutaj."
+          }
+        },
+        "action": {
+          "addColumn": {
+            "timeline": "Dodaj kolumnę daty",
+            "calendar": "Dodaj kolumnę daty",
+            "scoring": "Dodaj kolumnę oceny",
+            "decisionLog": "Dodaj kolumnę decyzji"
+          },
+          "showColumn": "Pokaż kolumnę „{{column}}”",
+          "runScoringModel": "Uruchom Model scoringowy",
+          "addRow": "Dodaj wiersz",
+          "backToTable": "Wróć do widoku Tabela",
+          "backToDefaultView": "Wróć do zakładki Domyślny"
+        },
+        "columnHeader": {
+          "start": "Data startu",
+          "end": "Data końca",
+          "score": "Ocena",
+          "decision": "Decyzja"
+        }
+      }
     },
     "mindmap": {
       "addNodeTab": "Dodaj węzeł (Tab)",
@@ -27475,7 +27638,11 @@
       "whyThisImportant": "Dlaczego to ważne?",
       "willBeRemoved": "Zostanie usunięty",
       "writeCommentMention": "Napisz komentarz... (@wzmianka)",
-      "nSelected": "{{count}} zaznaczonych"
+      "nSelected": "{{count}} zaznaczonych",
+      "summaryUnavailable": "Nie udało się przygotować podsumowania tej gałęzi. Spróbuj ponownie.",
+      "branchHasNoChildren": "Ten węzeł nie ma podgałęzi — nie ma czego podsumować.",
+      "tryAgain": "Spróbuj ponownie",
+      "arrowDirectionBranch": "Strzałki w gałęzi"
     }
   },
   "notebook": {
@@ -28456,7 +28623,14 @@
       "edgeCount_one": "{{count}} połączenie",
       "edgeCount_few": "{{count}} połączenia",
       "edgeCount_many": "{{count}} połączeń",
-      "edgeCount_other": "{{count}} połączenia"
+      "edgeCount_other": "{{count}} połączenia",
+      "exportFailedTitle": "Nie udało się wyeksportować: {{format}}",
+      "exportFailedToast": "Eksport „{{format}}\" nie powiódł się — plik nie został pobrany.",
+      "exportFailedCanvasNotFound": "Nie znaleziono płótna mapy. Otwórz mapę na pełnym ekranie i spróbuj ponownie.",
+      "exportFailedEmptyMap": "Mapa nie ma widocznych elementów do wyeksportowania.",
+      "exportFailedRender": "Renderowanie obrazu mapy nie powiodło się. Szczegóły: {{reason}}",
+      "exportFallbackJson": "Pobierz zamiast tego dane mapy (JSON)",
+      "exportFailedDismiss": "Zamknij"
     },
     "slashCommandMenu": {
       "typeCommand": "Wpisz polecenie…",
@@ -30116,21 +30290,25 @@
       },
       "pf": {
         "startEnd": "Start/Koniec",
-        "task": "Task",
+        "task": "Akcja (krok procesu)",
         "decision": "Decyzja",
-        "lane": "Lane"
+        "lane": "Tor (nowy tor odpowiedzialności)",
+        "grid": "Siatka (pokaż kratkę pomocniczą na płótnie)",
+        "snap": "Przyciąganie (równaj przesuwane kroki do siatki)"
       },
       "tbl": {
         "addRow": "Nowy wiersz",
         "columns": "Kolumny",
-        "view": "Widok",
+        "view": "Widok galerii — przełącza tabelę na kafelki",
         "filter": "Filtruj",
         "dashboard": "Dashboard"
       },
       "importExport": "Import / Eksport",
       "moreTools": "Więcej narzędzi",
       "undo": "Cofnij",
-      "redo": "Ponów"
+      "redo": "Ponów",
+      "toggleOn": "włączone",
+      "toggleOff": "wyłączone"
     },
     "documentToMap": {
       "addedIdeas": "Dodano {{count}} pomysłów z dokumentu",
@@ -30214,15 +30392,32 @@
       "ctx_ai_rewrite_node": "AI: Przeredaguj węzeł"
     },
     "health": {
-      "balance": "Balans",
-      "depth": "Głębokość",
-      "coverage": "Pokrycie",
-      "maturity": "Dojrzałość",
-      "connectivity": "Połączenia",
-      "avgDepth": "Śr. głębokość: {{value}}",
-      "coverageBranches": "{{covered}}/{{total}} gałęzi",
-      "matureCount": "{{mature}}/{{total}} dojrzałych",
-      "crossBranch": "{{count}} cross-branch"
+      "gapsCount_one": "{{count}} brak do uzupełnienia",
+      "gapsCount_few": "{{count}} braki do uzupełnienia",
+      "gapsCount_many": "{{count}} braków do uzupełnienia",
+      "noGaps": "Mapa nie ma oczywistych braków",
+      "noGapsHint": "Każdy węzeł ma etykietę i powiązanie, każda gałąź ma rozwinięcie i dowód.",
+      "showOnMap": "Pokaż na mapie",
+      "gapNoLabel_one": "{{count}} węzeł bez etykiety",
+      "gapNoLabel_few": "{{count}} węzły bez etykiety",
+      "gapNoLabel_many": "{{count}} węzłów bez etykiety",
+      "gapNoLabelHint": "Pusty węzeł nie niesie żadnej treści",
+      "gapIsolated_one": "{{count}} element niepowiązany z niczym",
+      "gapIsolated_few": "{{count}} elementy niepowiązane z niczym",
+      "gapIsolated_many": "{{count}} elementów niepowiązanych z niczym",
+      "gapIsolatedHint": "Nie wpina się w żadną gałąź mapy",
+      "gapEmptyBranch_one": "{{count}} gałąź bez pomysłów",
+      "gapEmptyBranch_few": "{{count}} gałęzie bez pomysłów",
+      "gapEmptyBranch_many": "{{count}} gałęzi bez pomysłów",
+      "gapEmptyBranchHint": "Gałąź nie ma ani jednego węzła pod sobą",
+      "gapShallowBranch_one": "{{count}} gałąź bez rozwinięcia",
+      "gapShallowBranch_few": "{{count}} gałęzie bez rozwinięcia",
+      "gapShallowBranch_many": "{{count}} gałęzi bez rozwinięcia",
+      "gapShallowBranchHint": "Tylko jeden poziom — pomysły bez uszczegółowienia",
+      "gapNoEvidence_one": "{{count}} gałąź bez dowodów",
+      "gapNoEvidence_few": "{{count}} gałęzie bez dowodów",
+      "gapNoEvidence_many": "{{count}} gałęzi bez dowodów",
+      "gapNoEvidenceHint": "Żaden węzeł gałęzi nie ma podpiętego dowodu"
     },
     "inspector": {
       "tab": {
@@ -30258,7 +30453,8 @@
       "edge_reverse": "Odwróć kierunek",
       "edge_change_style": "Zmień styl linii",
       "edge_edit_relation": "Edytuj relację",
-      "edge_delete": "Usuń połączenie"
+      "edge_delete": "Usuń połączenie",
+      "edge_arrow_direction": "Kierunek strzałki"
     },
     "paneMenu": {
       "pane_add_node": "Dodaj temat (do korzenia)",
@@ -30399,7 +30595,9 @@
       "edit": "Edycja"
     },
     "whatIf": {
-      "scenariosFor": "Scenariusze dla: \"{{label}}\""
+      "scenariosFor": "Scenariusze dla: \"{{label}}\"",
+      "intro": "AI proponuje hipotetyczne scenariusze dla zaznaczonego węzła — szanse, ryzyka i ścieżki alternatywne — na podstawie treści całej mapy.",
+      "legend": "Znacznik HIGH / MEDIUM / LOW to pewność AI co do scenariusza, a nie ocena Twojego pomysłu. „Dodaj do mapy\" wstawia scenariusz jako nowy węzeł na mapie."
     },
     "heatmap": {
       "mon": "Pn",
@@ -30431,6 +30629,12 @@
       "1": "Nadaj tytuł wyzwaniu",
       "2": "Opisz problem lub pomysł",
       "3": "Kliknij „Akceptuj\" w panelu Tools"
+    },
+    "arrowDirection": {
+      "none": "Brak",
+      "end": "Na końcu",
+      "start": "Na początku",
+      "both": "Na obu końcach"
     }
   },
   "roadmap": {
@@ -30672,7 +30876,7 @@
       "targetMeta": {
         "decision": {
           "label": "Rozpocznij decyzję",
-          "description": "Zamień wniosek w decyzję do podjęcia — z kontekstem i dowodami."
+          "description": "Zapisz decyzję do podjęcia w My Work."
         },
         "report": {
           "label": "Utwórz raport",
@@ -30697,10 +30901,6 @@
         "initiative": {
           "label": "Utwórz inicjatywę",
           "description": "Przenieś insight do intake inicjatyw."
-        },
-        "decision": {
-          "label": "Rozpocznij decyzję",
-          "description": "Zapisz decyzję do podjęcia w My Work."
         }
       },
       "titlePrefix": {

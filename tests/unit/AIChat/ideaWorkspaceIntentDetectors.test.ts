@@ -26,17 +26,14 @@ describe('detectMindmapIntent', () => {
     expect(detectMindmapIntent('run a SWOT')).toBe('mm_apply_framework');
   });
 
-  it('detects Polish create/expand intents', () => {
+  it('detects Polish create/expand intents, including nouns ending in a diacritic', () => {
     expect(detectMindmapIntent('stwórz mapę myśli o strategii')).toBe('mm_create');
-    // Note: "rozwiń pomysł" / "dodaj gałąź" — i.e. target nouns ending in a
-    // Polish diacritic (ł/ń/ę/ą/ź/ż) right before the pattern's trailing \b —
-    // never match: JS regex \w is ASCII-only, so \b can't find a boundary
-    // after those characters. Pre-existing gap in mindmapIntentDetector.ts,
-    // out of scope here (Z20 is about the interceptor's context-gate, not the
-    // detector regexes) — flagged separately. Using diacritic-free target
-    // nouns below exercises the same branches without tripping it.
     expect(detectMindmapIntent('rozwiń temat dalej')).toBe('mm_expand_branch');
+    expect(detectMindmapIntent('rozwiń pomysł dalej')).toBe('mm_expand_branch');
     expect(detectMindmapIntent('dodaj dziecko')).toBe('mm_add_child');
+    expect(detectMindmapIntent('dodaj gałąź do tego węzła')).toBe('mm_add_child');
+    // Must not match on a longer word that merely starts with the same noun.
+    expect(detectMindmapIntent('rozwiń pomysłowy plan')).toBeNull();
   });
 
   it('returns null for unrelated chat', () => {
@@ -54,9 +51,11 @@ describe('detectProcessFlowIntent', () => {
     expect(detectProcessFlowIntent('optimize the process')).toBe('pf_analyze');
   });
 
-  it('detects Polish process/workflow intents', () => {
+  it('detects Polish process/workflow intents, including nouns ending in a diacritic', () => {
     expect(detectProcessFlowIntent('stwórz proces dla onboardingu')).toBe('pf_create');
     expect(detectProcessFlowIntent('dodaj krok zatwierdzenia')).toBe('pf_add_step');
+    expect(detectProcessFlowIntent('dodaj decyzję warunkową')).toBe('pf_add_decision');
+    expect(detectProcessFlowIntent('dodaj dział finansowy')).toBe('pf_add_lane');
   });
 
   it('returns null for unrelated chat', () => {
@@ -76,12 +75,13 @@ describe('detectWhiteboardIntent', () => {
     expect(detectWhiteboardIntent('identify themes from the workshop')).toBe('wb_add_theme');
   });
 
-  it('detects Polish whiteboard/brainstorm intents', () => {
-    // See the mindmap Polish test above re: diacritic-ending target nouns
-    // ("tablicę", "notatkę") never matching their pattern's trailing \b —
-    // same pre-existing gap, avoided here with diacritic-free phrasing.
+  it('detects Polish whiteboard/brainstorm intents, including nouns ending in a diacritic', () => {
     expect(detectWhiteboardIntent('stwórz warsztat na burzę mózgów')).toBe('wb_add_sticky');
+    expect(detectWhiteboardIntent('stwórz tablicę na pomysły')).toBe('wb_add_sticky');
     expect(detectWhiteboardIntent('dodaj notatki z sesji')).toBe('wb_add_sticky');
+    expect(detectWhiteboardIntent('dodaj notatkę')).toBe('wb_add_sticky');
+    // Must not match on a longer word that merely starts with the same noun.
+    expect(detectWhiteboardIntent('dodaj notatkowanie do procesu')).toBeNull();
   });
 
   it('returns null for unrelated chat', () => {

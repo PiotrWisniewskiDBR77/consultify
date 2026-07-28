@@ -16,6 +16,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { TriModeChooser } from '@/components/shared/TriModeChooser';
 import { Api } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { deriveDeckLifecycleBadge } from '@/utils/deckLifecycleBadge';
 import { isMelsPrezentacjeEnabled } from '@/utils/melsPrezentacjeFlag';
@@ -143,6 +144,9 @@ export const PrezentacjeView: React.FC = () => {
   const navigate = useNavigate();
   const pipeline = useKimiArtifactPipeline('prezentacje');
   const activeMessages = useConversationStore((s) => s.activeMessages);
+  // AGT/kickoff fix (fala 1c, 2026-07-27) — see the kickoff effect below.
+  const chatKickoffMessage = useAppStore((s) => s.chatKickoffMessage);
+  const clearChatKickoffMessage = useAppStore((s) => s.clearChatKickoffMessage);
   const [searchParams] = useSearchParams();
   const artifactId = searchParams.get('artifactId');
   const templateArtifactId = searchParams.get('templateArtifactId');
@@ -152,11 +156,41 @@ export const PrezentacjeView: React.FC = () => {
   // tryb wybrany w KROK 2 tablicy Materiałów, żeby wejście z Materiałów lądowało
   // od razu w tym trybie zamiast ponownie pytać o wybór na tym ekranie.
   const entryParam = searchParams.get('entry');
+  // Kickoff fix: a pending cross-module message must not flash the "home"
+  // gate before the effect below has a chance to start the pipeline — same
+  // reasoning as `!templatePrompt` right below.
+  const hasPendingKickoff = Boolean(chatKickoffMessage && chatKickoffMessage.trim());
+
+
+  // Eksport raportu Execution → prezentacja (2026-07-27): „Export as presentation"
+  // (ReportCompactPanel.tsx / ReportDocumentView.tsx) nawiguje tu z
+  // `?sourceType=execution_report&sourceName=…&content=…` (markdown raportu).
+  // Te parametry nie były dotąd nigdzie czytane — ekran otwierał goły hub,
+  // a treść raportu ginęła. Konsumpcja = ścieżka „Z AI" z prefil-em treści
+  // (ten sam mechanizm co `templatePrompt` niżej).
+  const sourceTypeParam = searchParams.get('sourceType');
+  const sourceNameParam = searchParams.get('sourceName');
+  const sourceContentParam = searchParams.get('content');
+
+  const sourcePrompt = useMemo((): string | null => {
+    if (sourceTypeParam !== 'execution_report' || !sourceContentParam?.trim()) return null;
+    const title = sourceNameParam?.trim();
+    return [
+      'Create a slide deck presentation from the following execution report.',
+      ...(title ? [`Report title: ${title}`] : []),
+      'Map the report sections to slides, preserve key metrics and RAG statuses, and write the slides in the same language as the report content.',
+      '',
+      '--- REPORT CONTENT (markdown) ---',
+      sourceContentParam.trim(),
+    ].join('\n');
+  }, [sourceTypeParam, sourceNameParam, sourceContentParam]);
 
   const showHome =
     !artifactId &&
     !templateArtifactId &&
     !templatePrompt &&
+    !hasPendingKickoff &&
+    !sourcePrompt &&
     viewParam !== 'new' &&
     !pipeline.currentRun &&
     !pipeline.isGenerating;
@@ -192,6 +226,64 @@ export const PrezentacjeView: React.FC = () => {
     autoTriggered.current = true;
     void startRef.current(templatePrompt);
   }, [templatePrompt, pipeline.currentRun, pipeline.isGenerating]);
+
+  // Kickoff fix (fala 1c, 2026-07-27): cross-module flows (Notebook/Task/
+  // Decision/Help "ask Teresa about X") call `setChatKickoffMessage` + navigate
+  // expecting the ONE Teresa panel to open with a seeded first message. That
+  // works on ordinary views (MainLayout wires `kickoffMessage` into the split
+  // `UnifiedChatPanel`), but on `/prezentacje` `hasEmbeddedModuleChat` turns
+  // the global panel off entirely, and this Studio has no embedded chat of its
+  // own ("Teresa is the single chat surface" — KimiWorkspaceShell) — the
+  // message was silently dropped, the pipeline never started. Consume it the
+  // same way as `templatePrompt` above (the pipeline's `startGeneration` IS
+  // the "send first message" channel for this lane — there is no separate
+  // chat-input component to seed), then clear the store so it can't re-fire on
+  // a later visit or leak into another module.
+  const kickoffTriggered = useRef(false);
+  useEffect(() => {
+    const message = (chatKickoffMessage || '').trim();
+    if (
+      !message ||
+      kickoffTriggered.current ||
+      artifactId ||
+      templateArtifactId ||
+      templatePrompt ||
+      // Scalenie 2026-07-28 (tor MVP): eksport raportu Execution ma własny
+      // auto-start niżej. Bez tego wykluczenia oba efekty mogłyby wystartować
+      // pipeline w tym samym renderze (`isGenerating` ustawia się dopiero
+      // asynchronicznie) — ta sama logika, dla której wykluczony jest
+      // `templatePrompt`.
+      sourcePrompt ||
+      pipeline.currentRun ||
+      pipeline.isGenerating
+    )
+      return;
+    kickoffTriggered.current = true;
+    autoTriggered.current = true;
+    void startRef.current(message);
+    clearChatKickoffMessage();
+  }, [
+    chatKickoffMessage,
+    artifactId,
+    templateArtifactId,
+    templatePrompt,
+    sourcePrompt,
+    pipeline.currentRun,
+    pipeline.isGenerating,
+    clearChatKickoffMessage,
+  ]);
+
+
+  // Auto-trigger z eksportu raportu Execution (`?sourceType=execution_report`).
+  // Ref guard: fire-once, jak `promptTriggered` wyżej.
+  const sourceTriggered = useRef(false);
+  useEffect(() => {
+    if (!sourcePrompt || sourceTriggered.current || pipeline.currentRun || pipeline.isGenerating)
+      return;
+    sourceTriggered.current = true;
+    autoTriggered.current = true;
+    void startRef.current(sourcePrompt);
+  }, [sourcePrompt, pipeline.currentRun, pipeline.isGenerating]);
 
   // R11 deck slice (2026-07-26) — "Użyj wzorca" z Biblioteki dla PREZENTACJI.
   // ★ Był tu najważniejszy bug funkcjonalny programu Materiały: ten efekt
@@ -280,6 +372,7 @@ export const PrezentacjeView: React.FC = () => {
     if (
       autoTriggered.current ||
       templatePrompt ||
+      sourcePrompt ||
       templateArtifactId ||
       artifactId ||
       viewParam === 'new' ||
@@ -302,6 +395,7 @@ export const PrezentacjeView: React.FC = () => {
     artifactId,
     templateArtifactId,
     templatePrompt,
+    sourcePrompt,
     viewParam,
     pipeline.currentRun,
     pipeline.isGenerating,
@@ -674,6 +768,7 @@ export const PrezentacjeView: React.FC = () => {
     !artifactId &&
     !templateArtifactId &&
     !templatePrompt &&
+    !sourcePrompt &&
     !pipeline.currentRun &&
     !pipeline.isGenerating &&
     !reopenPreview;

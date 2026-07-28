@@ -2146,6 +2146,14 @@
     }
   },
   "myWork": {
+    "kanban": {
+      "statusMoved": "Moved to \"{{column}}\"",
+      "statusFailedNotFound": "Not saved: task \"{{title}}\" no longer exists (it may have been deleted or reassigned). Refresh the board.",
+      "statusFailedForbidden": "Not saved: you do not have permission to change the status of \"{{title}}\". Ask the task owner to change it.",
+      "statusFailedServer": "Not saved \"{{title}}\" → {{column}}: server error ({{code}}). The card was moved back — please try again shortly.",
+      "statusFailedOffline": "Not saved \"{{title}}\" → {{column}}: no connection to the server. The card was moved back — check your internet and try again.",
+      "statusFailedGeneric": "Not saved \"{{title}}\" → {{column}} ({{code}}). The card was moved back — please try again."
+    },
     "title": "My Work",
     "home": "Home",
     "manager": "Manager",
@@ -3161,7 +3169,9 @@
         "source": "Source",
         "received": "Received",
         "sla": "SLA"
-      }
+      },
+      "linkedTask": "Linked task",
+      "linkedDecision": "Linked decision"
     },
     "notificationDetail": {
       "toastError": "Notification not found",
@@ -5628,7 +5638,8 @@
       "aiQualityScoreTitle": "AI quality score per rubric (concreteness/evidence/depth/measurability/coherence): {{score}}/5",
       "createdRelative": "Created {{relative}}",
       "confirmSendReminderTo": "Are you sure you want to send a reminder to {{name}}?",
-      "theUserFallback": "the user"
+      "theUserFallback": "the user",
+      "linkedSession": "Linked session"
     },
     "insightViewer": {
       "panelResults": "Results",
@@ -14512,9 +14523,7 @@
       "submitReviewPrompt": "Submit this insight for review",
       "exportInsight": "Export insight to initiative",
       "exportInsightPrompt": "Export this insight to an initiative",
-      "viewEvidence": "View evidence map",
-      "openOutputs": "Open Outputs Library",
-      "reviewPending": "Review pending artifacts"
+      "viewEvidence": "View evidence map"
     },
     "feedback": {
       "missingInfoPlaceholder": "Describe what was missing from the answer..."
@@ -15262,7 +15271,8 @@
       "urlIngestFailed": "Couldn't process the link.",
       "urlReady": "Link processed."
     },
-    "stopTTS": "Stop reading"
+    "stopTTS": "Stop reading",
+    "sidebarEmptyHint": "Ask Teresa from this side panel when you need quick context or next-step help."
   },
   "agentAudit": {
     "title": "Agent Audit Layer",
@@ -18232,7 +18242,20 @@
       "previewTitle": "Pack health",
       "ratios": "Statements",
       "validation": "Pack status",
-      "computeRatios": "Compute ratios"
+      "computeRatios": "Compute ratios",
+      "reason": {
+        "missingPl": "Missing profit and loss statement",
+        "missingBs": "Missing balance sheet",
+        "missingCf": "Missing cash flow statement",
+        "duplicateType": "The same statement type was imported more than once",
+        "inconsistentCurrency": "Statements use different currencies",
+        "inconsistentScaling": "Statements use different value scales (e.g. units vs thousands)",
+        "inconsistentPeriod": "Statements cover different reporting periods",
+        "hasRejected": "At least one statement was rejected during validation",
+        "hasPending": "At least one statement is still awaiting validation",
+        "hasRecoverable": "At least one statement needs corrections before it can be used",
+        "unknown": "This statement needs review before it can be used"
+      }
     },
     "counters": {
       "all": "All",
@@ -20675,7 +20698,15 @@
         "trustBoundary": "Trust boundary",
         "executionAuthority": "Execution",
         "reviewAuthority": "Review",
-        "validationChecks": "Validation checks"
+        "validationChecks": "Validation checks",
+        "originsCount_one": "{{count}} origin",
+        "originsCount_other": "{{count}} origins",
+        "sourcesCount_one": "{{count}} source",
+        "sourcesCount_other": "{{count}} sources",
+        "checkFailed": "not passed",
+        "checkPending": "awaiting check",
+        "checkSkipped": "skipped",
+        "copyId": "Copy ID"
       },
       "tabs": {
         "all": "All",
@@ -20765,6 +20796,10 @@
     },
     "templateBuilder": {
       "saved": "Template saved"
+    },
+    "templates": {
+      "legacySourceLine": "Older template registry — works unchanged",
+      "legacyHint": "Template from the older registry — generation works unchanged."
     }
   },
   "rbHub": {
@@ -22661,6 +22696,16 @@
     "qualityGateBlockedDetailed": "Quality gate blocked — review required before export",
     "leftRail": {
       "openBuilder": "Open in Builder"
+    },
+    "breadcrumb": {
+      "new": "New presentation",
+      "open": "Presentation"
+    }
+  },
+  "excele": {
+    "breadcrumb": {
+      "new": "New sheet",
+      "open": "Sheet"
     }
   },
   "aiActions": {
@@ -23964,7 +24009,8 @@
       "generating": "Generating…",
       "planning": "Planning…",
       "submitTemplate": "Generate from template",
-      "submitPlan": "Plan document"
+      "submitPlan": "Plan document",
+      "contextChip": "Context: {{organizationName}}"
     },
     "outline": {
       "type": "Type",
@@ -24035,7 +24081,8 @@
       "suggestedEvidencePlaceholder": "The category of proof that should back this section (a source type, not a specific fabricated citation).",
       "addSection": "Add section",
       "blankTitleHint": "Every section needs a title before you can save.",
-      "structurePreviewHeading": "Structure preview"
+      "structurePreviewHeading": "Structure preview",
+      "structurePreviewEmpty": "No sections yet."
     },
     "view": {
       "templatesLoadFailedWithReason": "Approved templates could not be loaded ({{reason}}). You can still generate without a template.",
@@ -24053,7 +24100,12 @@
       "title": "Consultify Document Studio",
       "presenceNote": "Modes 1, 2, 3 · Word/PDF artifact runtime",
       "loadingDocument": "Loading document…",
-      "noDocument": "No document loaded."
+      "noDocument": "No document loaded.",
+      "backToMaterials": "Back to Materials"
+    },
+    "breadcrumb": {
+      "new": "New document",
+      "open": "Document"
     },
     "qa": {
       "title": "Quality QA — Brand + Language",
@@ -24324,7 +24376,10 @@
     "generating": {
       "title": "Generating your document…",
       "planning": "Planning the outline…",
-      "progress": "Writing sections… {{done}} of {{total}} ready"
+      "progress": "Writing sections… {{done}} of {{total}} ready",
+      "stop": "Stop",
+      "streamFallbackNotice": "Live connection dropped — finishing in the background…",
+      "basedOn": "Based on:"
     },
     "blocks": {
       "noTableData": "No table data available",
@@ -24881,6 +24936,7 @@
       "newIdea": "New idea",
       "childAdded": "Child added",
       "cannotAddSiblingToRoot": "Cannot add sibling to root",
+      "siblingFallbackToChild": "This node has no parent, so there is nothing to add a sibling to — added a child instead.",
       "siblingAdded": "Sibling added",
       "subtreeDeleteConfirm_one": "This will also delete {{count}} child node. Continue?",
       "subtreeDeleteConfirm_other": "This will also delete {{count}} child nodes. Continue?",
@@ -25056,7 +25112,17 @@
     "imageAdded": "Image added",
     "acceptedProposalsCount": "Accepted {{count}} proposals",
     "linkSuggestionsFoundCount": "Found {{count}} link suggestions",
-    "deleteSubtreeWarning": "This will also delete {{count}} child nodes. This cannot be undone after sync."
+    "deleteSubtreeWarning": "This will also delete {{count}} child nodes. This cannot be undone after sync.",
+    "frameNode": {
+      "defaultLabel": "Frame"
+    },
+    "edgeArrow": {
+      "none": "Arrow: none",
+      "end": "Arrow: at the end",
+      "start": "Arrow: at the start",
+      "both": "Arrow: both ends",
+      "noEdges": "This branch has no connections"
+    }
   },
   "ideas": {
     "table": {
@@ -26021,7 +26087,100 @@
       "clearCell": "Clear cell",
       "cellCleared": "Cell cleared",
       "copyFailed": "Copy failed",
-      "pasteFailed": "Could not read clipboard"
+      "pasteFailed": "Could not read clipboard",
+      "viewSetup": {
+        "timeline": {
+          "noColumn": {
+            "headline": "Timeline needs a date column",
+            "description": "This table has no column of type “date”, so there is nothing to put on the time axis. Add one — we will schedule the existing rows starting today, and you can drag the bars afterwards."
+          },
+          "hiddenColumn": {
+            "headline": "Date column “{{column}}” is hidden",
+            "description": "This view hides it, so there is nothing left to place on the axis. Show the column to bring the records back."
+          },
+          "noValues": {
+            "headline": "Column “{{column}}” has no dates filled in",
+            "description": "The date column exists, but no row has a value in it — that is why this view is empty. Go back to the table and fill in the dates."
+          },
+          "noRows": {
+            "headline": "This table has no rows yet",
+            "description": "Add the first row in the Table view and come back here."
+          }
+        },
+        "calendar": {
+          "noColumn": {
+            "headline": "Calendar needs a date column",
+            "description": "This table has no column of type “date”, so no record can land on a day. Add one — we will schedule the existing rows starting today."
+          },
+          "hiddenColumn": {
+            "headline": "Date column “{{column}}” is hidden",
+            "description": "This view hides it, so no record can land on a day. Show the column to bring the records back."
+          },
+          "noValues": {
+            "headline": "Column “{{column}}” has no dates filled in",
+            "description": "The date column exists, but no row has a value in it — that is why this view is empty. Go back to the table and fill in the dates."
+          },
+          "noRows": {
+            "headline": "This table has no rows yet",
+            "description": "Add the first row in the Table view and come back here."
+          }
+        },
+        "scoring": {
+          "noColumn": {
+            "headline": "Scoring needs a score column",
+            "description": "This view ranks rows by the “Score” column — and this table does not have one, so switching to it changed nothing. Add the column and the ranking starts working; the scoring model writes into the same column."
+          },
+          "hiddenColumn": {
+            "headline": "Score column “{{column}}” is hidden",
+            "description": "This view hides it, so the ranking has nothing to show. Show the column to see the scores."
+          },
+          "noValues": {
+            "headline": "Column “{{column}}” has no scores yet",
+            "description": "The column exists, but no row has been scored — so there is nothing to rank. Run the scoring model, or type the scores in the Table view."
+          },
+          "noRows": {
+            "headline": "This table has no rows yet",
+            "description": "Add the first row in the Table view and come back here."
+          }
+        },
+        "decisionLog": {
+          "noColumn": {
+            "headline": "The decision log needs a decision column",
+            "description": "This view groups rows by the “Decision” column — and this table does not have one, so it lumped everything into one meaningless group. Add the column: every row starts as “open” and moves to its own group as you rule on it."
+          },
+          "hiddenColumn": {
+            "headline": "Decision column “{{column}}” is hidden",
+            "description": "This view hides it, so there is nothing to group by. Show the column to get the log back."
+          },
+          "noValues": {
+            "headline": "Column “{{column}}” has no decisions filled in",
+            "description": "The column exists, but no row has a decision recorded — so the log has nothing to group. Go back to the table and set the decisions."
+          },
+          "noRows": {
+            "headline": "This table has no rows yet",
+            "description": "Add the first row in the Table view and come back here."
+          }
+        },
+        "action": {
+          "addColumn": {
+            "timeline": "Add date column",
+            "calendar": "Add date column",
+            "scoring": "Add score column",
+            "decisionLog": "Add decision column"
+          },
+          "showColumn": "Show column “{{column}}”",
+          "runScoringModel": "Run the scoring model",
+          "addRow": "Add row",
+          "backToTable": "Back to Table view",
+          "backToDefaultView": "Back to the Default view"
+        },
+        "columnHeader": {
+          "start": "Start date",
+          "end": "End date",
+          "score": "Score",
+          "decision": "Decision"
+        }
+      }
     },
     "mindmap": {
       "addNodeTab": "Add node (Tab)",
@@ -26415,7 +26574,11 @@
       "whyThisImportant": "Why is this important?",
       "willBeRemoved": "Will be removed",
       "writeCommentMention": "Write a comment... (@mention)",
-      "nSelected": "{{count}} selected"
+      "nSelected": "{{count}} selected",
+      "summaryUnavailable": "Could not prepare a summary for this branch. Please try again.",
+      "branchHasNoChildren": "This node has no sub-nodes, so there is no branch to summarize.",
+      "tryAgain": "Try again",
+      "arrowDirectionBranch": "Arrows in branch"
     }
   },
   "notebook": {
@@ -27392,7 +27555,14 @@
       "nodeCount_one": "{{count}} node",
       "nodeCount_other": "{{count}} nodes",
       "edgeCount_one": "{{count}} connection",
-      "edgeCount_other": "{{count}} connections"
+      "edgeCount_other": "{{count}} connections",
+      "exportFailedTitle": "Export failed: {{format}}",
+      "exportFailedToast": "“{{format}}” export failed — no file was downloaded.",
+      "exportFailedCanvasNotFound": "The map canvas was not found. Open the map full screen and try again.",
+      "exportFailedEmptyMap": "The map has no visible elements to export.",
+      "exportFailedRender": "Rendering the map image failed. Details: {{reason}}",
+      "exportFallbackJson": "Download raw map data (JSON) instead",
+      "exportFailedDismiss": "Dismiss"
     },
     "slashCommandMenu": {
       "typeCommand": "Type a command…",
@@ -29052,21 +29222,25 @@
       },
       "pf": {
         "startEnd": "Start/End",
-        "task": "Task",
+        "task": "Action (process step)",
         "decision": "Decision",
-        "lane": "Lane"
+        "lane": "Lane (adds a new responsibility lane)",
+        "grid": "Grid (show the helper grid on the canvas)",
+        "snap": "Snap (align dragged steps to the grid)"
       },
       "tbl": {
         "addRow": "Add row",
         "columns": "Columns",
-        "view": "View",
+        "view": "Gallery view — switches the table to cards",
         "filter": "Filter",
         "dashboard": "Dashboard"
       },
       "importExport": "Import / Export",
       "moreTools": "More tools",
       "undo": "Undo",
-      "redo": "Redo"
+      "redo": "Redo",
+      "toggleOn": "on",
+      "toggleOff": "off"
     },
     "documentToMap": {
       "addedIdeas": "Added {{count}} ideas from document",
@@ -29150,15 +29324,26 @@
       "ctx_ai_rewrite_node": "AI: Rewrite this node"
     },
     "health": {
-      "balance": "Balance",
-      "depth": "Depth",
-      "coverage": "Coverage",
-      "maturity": "Maturity",
-      "connectivity": "Connectivity",
-      "avgDepth": "Avg depth: {{value}}",
-      "coverageBranches": "{{covered}}/{{total}} branches",
-      "matureCount": "{{mature}}/{{total}} mature",
-      "crossBranch": "{{count}} cross-branch"
+      "gapsCount_one": "{{count}} gap to fill",
+      "gapsCount_other": "{{count}} gaps to fill",
+      "noGaps": "No obvious gaps on this map",
+      "noGapsHint": "Every node has a label and a link, every branch has depth and evidence.",
+      "showOnMap": "Show on map",
+      "gapNoLabel_one": "{{count}} node without a label",
+      "gapNoLabel_other": "{{count}} nodes without a label",
+      "gapNoLabelHint": "An empty node carries no content",
+      "gapIsolated_one": "{{count}} element linked to nothing",
+      "gapIsolated_other": "{{count}} elements linked to nothing",
+      "gapIsolatedHint": "Not attached to any branch of the map",
+      "gapEmptyBranch_one": "{{count}} branch with no ideas",
+      "gapEmptyBranch_other": "{{count}} branches with no ideas",
+      "gapEmptyBranchHint": "The branch has no node underneath it",
+      "gapShallowBranch_one": "{{count}} branch with no depth",
+      "gapShallowBranch_other": "{{count}} branches with no depth",
+      "gapShallowBranchHint": "One level only — ideas are not broken down",
+      "gapNoEvidence_one": "{{count}} branch without evidence",
+      "gapNoEvidence_other": "{{count}} branches without evidence",
+      "gapNoEvidenceHint": "No node in the branch has evidence attached"
     },
     "inspector": {
       "tab": {
@@ -29194,7 +29379,8 @@
       "edge_reverse": "Reverse direction",
       "edge_change_style": "Change line style",
       "edge_edit_relation": "Edit relation",
-      "edge_delete": "Delete connection"
+      "edge_delete": "Delete connection",
+      "edge_arrow_direction": "Arrow direction"
     },
     "paneMenu": {
       "pane_add_node": "Add topic (to root)",
@@ -29335,7 +29521,9 @@
       "edit": "Edit"
     },
     "whatIf": {
-      "scenariosFor": "Scenarios for: \"{{label}}\""
+      "scenariosFor": "Scenarios for: \"{{label}}\"",
+      "intro": "AI proposes hypothetical scenarios for the selected node — opportunities, risks and alternative paths — based on the content of the whole map.",
+      "legend": "HIGH / MEDIUM / LOW is the AI’s confidence in a scenario, not a rating of your idea. \"Add to map\" inserts the scenario as a new node on the map."
     },
     "heatmap": {
       "mon": "Mo",
@@ -29367,6 +29555,12 @@
       "1": "Name your challenge",
       "2": "Describe the problem or idea",
       "3": "Click \"Accept\" in the Tools panel"
+    },
+    "arrowDirection": {
+      "none": "None",
+      "end": "End",
+      "start": "Start",
+      "both": "Both ends"
     }
   },
   "roadmap": {
@@ -29607,8 +29801,8 @@
       },
       "targetMeta": {
         "decision": {
-          "label": "Start a decision",
-          "description": "Turn this insight into a decision to be made — with context and evidence."
+          "label": "Start decision",
+          "description": "Capture a decision to make in My Work."
         },
         "report": {
           "label": "Create report",
@@ -29633,10 +29827,6 @@
         "initiative": {
           "label": "Create initiative",
           "description": "Move the insight into initiative intake."
-        },
-        "decision": {
-          "label": "Start decision",
-          "description": "Capture a decision to make in My Work."
         }
       },
       "titlePrefix": {

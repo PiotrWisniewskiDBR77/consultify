@@ -15,6 +15,7 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
+import { buildOrgContextSourcePack } from '../services/documentStudio/documentOrgContextSourcePack.js';
 import { createP23Error } from '../services/v8/exceleCanon.js';
 import type { WorkbookQualityReport } from '../services/workbook/workbookQualityGate.js';
 import type { WorkbookSchema } from '../services/workbook/WorkbookSchema.js';
@@ -22,6 +23,7 @@ import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { retryWithBackoff } from '../utils/retryWithBackoff.js';
 
 const router = Router();
 
@@ -89,6 +91,57 @@ function buildWorkbookGrounding(input: {
 
   const text = parts.join('\n\n').trim();
   return text ? text.slice(0, 6000) : undefined;
+}
+
+/**
+ * N2 (noc 2026-07-27/28) — Excel org-context grounding.
+ *
+ * PROBLEM (verified): `grep -r "factBook|spine|financialEngine" server/src/services/workbook/`
+ * = 0 hits. The Excel generator is completely cut off from the organization's
+ * context and fact book — the same project described in a deck/report and in a
+ * workbook can show contradictory numbers (`_DOKTRYNA_TRESCI_EXCEL_2026-07-27.md`
+ * §7/§10 L8, CTO decision D-5: "tak"). This closes the FIRST layer of that gap —
+ * org identity + active projects/initiatives as ASSUMPTIONS-layer (A1) grounding,
+ * not fabricated results. Full fact-book/spine wiring (§7 doctrine, producer side)
+ * is explicitly OUT of scope here — deferred to a dedicated fala.
+ *
+ * REUSES `documentOrgContextSourcePack.buildOrgContextSourcePack` byte-for-byte —
+ * the exact same function Document Studio's P0 URODZINOWE fix uses (org name/
+ * industry via `AIContextBuilder._buildOrganizationContext` + active projects/
+ * initiatives SQL). No second builder was written; the function is already fully
+ * generic (takes only `organizationId`, returns plain data — no document-specific
+ * shape leaks except the `sourceRef` field, which this caller simply ignores).
+ *
+ * DIFFERENCE vs Document Studio's `applyOrgContextGrounding`: there, auto-
+ * grounding is SKIPPED whenever the caller supplied any `sourceRefs`, because an
+ * explicit, curator-picked source pack must never be silently mixed with the
+ * auto-built one (it drives a Sources QA gate). Workbook generation has no
+ * equivalent curation/QA concept for `researchContext`/`sourcePack`/`evidenceRefs`
+ * — those carry TOPIC-specific facts for the numbers, while org identity (who the
+ * model is for, what else the org has live) is orthogonal. So here the org-context
+ * summary is MERGED ONTO (prepended to) whatever grounding already exists, instead
+ * of being skipped when other grounding is present.
+ *
+ * Fail-open: returns `null` on any lookup failure or empty/brand-new organization
+ * — generation proceeds exactly as before, zero regression.
+ */
+async function buildWorkbookOrgContext(
+  organizationId: string
+): Promise<{ summaryPl: string; organizationName?: string } | null> {
+  try {
+    const pack = await buildOrgContextSourcePack(organizationId);
+    if (!pack) return null;
+    return {
+      summaryPl: pack.contextSummaryPl,
+      organizationName: pack.organizationName || undefined,
+    };
+  } catch (err) {
+    logger.warn('[WorkbookRoutes] org-context grounding failed (fail-open, no regression)', {
+      organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
 }
 
 /**
@@ -313,22 +366,43 @@ async function finalizeGeneratedWorkbook(params: {
     }
 
     // Fallback: standalone workbook (no run) OR the run had no adoptable artifact.
+    // Fala sprzątania 1b (2026-07-27) — this used to be a single unretried
+    // attempt logged at `warn` with no workbook/artifact id in the
+    // structured fields (rejestr: "dokument może powstać i nigdy nie
+    // pojawić się w bibliotece", same defect class as the Document Studio
+    // path in document-studio.routes.ts). `registerArtifactOrigin` is
+    // idempotent (checks the existing origin link before inserting), so
+    // retrying after a transient failure is always safe.
     if (!artifactId) {
-      const registered = await registerArtifactOrigin({
-        organizationId: user.organizationId,
-        outputType: 'sheet',
-        artifactFamily: 'sheet',
-        originRuntime: 'sheet',
-        originRecordId: result.id,
-        titleSnapshot: result.schema.title || 'Untitled workbook',
-        ownerUserId: user.id,
-        createdBy: user.id,
-        deliveryState: 'ready',
-        visibilityScope: 'organization',
-        projectId: params.projectId || null,
-        sourceInitiativeId: params.sourceInitiativeId || null,
-        originSummary,
-      });
+      const registered = await retryWithBackoff(
+        () =>
+          registerArtifactOrigin({
+            organizationId: user.organizationId,
+            outputType: 'sheet',
+            artifactFamily: 'sheet',
+            originRuntime: 'sheet',
+            originRecordId: result.id,
+            titleSnapshot: result.schema.title || 'Untitled workbook',
+            ownerUserId: user.id,
+            createdBy: user.id,
+            deliveryState: 'ready',
+            visibilityScope: 'organization',
+            projectId: params.projectId || null,
+            sourceInitiativeId: params.sourceInitiativeId || null,
+            originSummary,
+          }),
+        {
+          onAttemptFailed: (attempt, attempts, attemptErr) => {
+            logger.warn('[WorkbookRoutes] Register artifact attempt failed (will retry)', {
+              workbookId: result.id,
+              organizationId: user.organizationId,
+              attempt,
+              attempts,
+              message: attemptErr instanceof Error ? attemptErr.message : String(attemptErr),
+            });
+          },
+        }
+      );
       artifactId = registered?.artifactId ?? null;
       if (artifactId) {
         logger.info(
@@ -337,7 +411,12 @@ async function finalizeGeneratedWorkbook(params: {
       }
     }
   } catch (err) {
-    logger.warn('[WorkbookRoutes] Failed to register workbook in artifact registry:', err);
+    logger.error('[WorkbookRoutes] Failed to register workbook in artifact registry after retries', {
+      workbookId: result.id,
+      organizationId: user.organizationId,
+      artifactId,
+      message: err instanceof Error ? err.message : String(err),
+    });
   }
 
   return {
@@ -422,12 +501,29 @@ router.post(
       }
     }
 
+    // N2 (noc 2026-07-27/28) — org-context grounding (see buildWorkbookOrgContext
+    // above): always attempted, merged onto (never replacing) whatever grounding
+    // was already assembled above. Fail-open — a `null` pack (empty/new org, or a
+    // lookup failure) leaves `groundingText`/`organizationName` untouched, so a
+    // brand-new organization sees byte-identical behaviour to before this change.
+    const orgContext = await buildWorkbookOrgContext(user.organizationId);
+    if (orgContext) {
+      groundingText = groundingText
+        ? `${orgContext.summaryPl}\n\n${groundingText}`
+        : orgContext.summaryPl;
+      logger.debug('[WorkbookRoutes] auto-grounded workbook generation from org context', {
+        organizationId: user.organizationId,
+        organizationName: orgContext.organizationName,
+      });
+    }
+
     const result = await WorkbookGeneratorService.generate({
       prompt: prompt.trim(),
       userId: user.id,
       organizationId: user.organizationId,
       projectId: projectId || null,
       researchContext: groundingText,
+      organizationName: orgContext?.organizationName,
       language: language || req.headers['accept-language']?.split(',')[0],
     });
 
@@ -533,11 +629,18 @@ router.post(
     const { default: WorkbookGeneratorService } =
       await import('../services/workbook/WorkbookGeneratorService.js');
 
+    // N2 — no LLM prompt on the template path (deterministic build), so there is
+    // no `researchContext` to enrich; still resolve the org name so the Info
+    // sheet shows it (see buildWorkbookOrgContext above). Fail-open: null → the
+    // template build proceeds exactly as before.
+    const orgContextForTemplate = await buildWorkbookOrgContext(user.organizationId);
+
     let result;
     try {
       result = await WorkbookGeneratorService.generateFromTemplate({
         templateId: id,
         flatParams: parsed.data as Record<string, unknown>,
+        organizationName: orgContextForTemplate?.organizationName,
       });
     } catch (err) {
       logger.error('[WorkbookRoutes] Template build failed:', err);
@@ -762,45 +865,6 @@ router.get(
       `attachment; filename="${row.file_name || 'workbook.xlsx'}"`
     );
     res.send(buffer);
-  })
-);
-
-/**
- * POST /api/workbook/generate-and-download
- * One-shot: generate + immediate download
- */
-router.post(
-  '/generate-and-download',
-  asyncHandler(async (req: AuthenticatedRequest, res) => {
-    const user = req.user;
-    if (!user) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-
-    const { prompt, researchContext, language } = req.body;
-    if (!prompt || typeof prompt !== 'string' || prompt.trim().length < 5) {
-      res.status(400).json({ error: 'prompt is required (min 5 chars)' });
-      return;
-    }
-
-    const { default: WorkbookGeneratorService } =
-      await import('../services/workbook/WorkbookGeneratorService.js');
-
-    const result = await WorkbookGeneratorService.generate({
-      prompt: prompt.trim(),
-      userId: user.id,
-      organizationId: user.organizationId,
-      researchContext,
-      language: language || req.headers['accept-language']?.split(',')[0],
-    });
-
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    );
-    res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
-    res.send(result.buffer);
   })
 );
 

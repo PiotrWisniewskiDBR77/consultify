@@ -41,6 +41,8 @@ import { StudioUnavailableView } from '@/views/StudioUnavailableView';
 
 import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
 import { LicensedToolsRedirect } from './LicensedToolsRedirect';
+import { buildMaterialsStudioBreadcrumb } from './materialsStudioBreadcrumb';
+import { resolvePresentationWizardRedirectTarget } from './presentationWizardRedirect';
 import { ROUTES } from './routeConfig';
 import { WorkCanvasRedirect } from './WorkCanvasRedirect';
 
@@ -130,12 +132,10 @@ const ReportsAndPresentationsHub = lazyWithRetry(() =>
   }))
 );
 // Consultify Presentation Studio (Module Delivery Contract S5) — read-only
-// surface that consumes the four /api/presentation-studio/*/preview endpoints.
-const PresentationStudioPage = lazyWithRetry(() =>
-  import('@/components/PresentationStudio/PresentationStudioPage').then((m) => ({
-    default: m.PresentationStudioPage,
-  }))
-);
+// surface that consumed the four /api/presentation-studio/*/preview endpoints.
+// Route retired 2026-07-27 (front wygaszony, zero linków w UI — patrz
+// PresentationStudioRedirect powyżej); komponent NIE skasowany, więc lazy
+// import zostaje niepotrzebny tu — patrz `_SPIS_MARTWYCH_DO_KASACJI_2026-07-27.md`.
 // Consultify Document Studio (MVP-1, Mode 1) — productized Document runtime
 // above the V8.1 substrate.
 // See docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md.
@@ -149,11 +149,9 @@ const DeckBuilder = lazyWithRetry(() =>
     default: m.DeckBuilder,
   }))
 );
-const PresentationWizard = lazyWithRetry(() =>
-  import('@/components/Presentations/PresentationWizard').then((m) => ({
-    default: m.PresentationWizard,
-  }))
-);
+// PresentationWizard lazy import retired 2026-07-27 — `/presentations/wizard`
+// is now redirect-only (PresentationWizardRedirect above); component kept
+// under src/components/Presentations/PresentationWizard.tsx, unimported here.
 const MeetingHub = lazyWithRetry(() =>
   import('@/components/Meeting/MeetingHub').then((m) => ({ default: m.MeetingHub }))
 );
@@ -549,6 +547,57 @@ const MyWorkSheetsDeepLinkRedirect: React.FC = () => {
 };
 
 /**
+ * `/presentations/wizard` — scalenie wejść prezentacji 2026-07-27
+ * (Harvard/wdrozenie-100/_INWENTARZ_GENERATORY_3_FORMATY_2026-07-27.md,
+ * "DO SCALENIA" #1). `PresentationWizard` był osierocony z nawigacji (zero
+ * linków w UI) i żył tylko z deep-linków tworzonych przez
+ * artifactNavigation.ts / chatActionHandler.ts / useActionHandler.ts /
+ * server `artifacts.routes.ts` (openPath dla `presentation_template`) — te
+ * cztery miejsca zostały przepięte na kanoniczne cele (Teresa /prezentacje
+ * dla generacji, Architekt szablonów dla edycji/klonu). Ta trasa zostaje
+ * jako redirect na wypadek starych zakładek/bookmarków, zamiast usuwać ją
+ * całkiem — patrz reguła "przycisk cofania" (CLAUDE.md #8). Rozgałęzienie
+ * celu wg query — patrz `resolvePresentationWizardRedirectTarget`
+ * (wyodrębnione do osobnego pliku, żeby dało się to przetestować bez
+ * montowania całego drzewa routera).
+ */
+const PresentationWizardRedirect: React.FC = () => {
+  const location = useLocation();
+  const { target, reason } = resolvePresentationWizardRedirectTarget(location.search);
+
+  React.useEffect(() => {
+    trackFunnelEvent('route_redirected', { from: '/presentations/wizard', to: target, reason });
+  }, [target, reason]);
+
+  return <Navigate to={target} replace />;
+};
+
+/**
+ * `/presentation-studio` — porzucony sprint z maja (preview+approval nakładka
+ * na ten sam silnik `presentationGeneratorService`), zero linków w UI
+ * (potwierdzone grep 2026-07-27: brak w sidebarze/nawigacji). Wygaszenie
+ * frontu wg inwentarza "DO WYGASZENIA" — backend (`presentationStudio.routes.ts`
+ * + serwisy) zostaje jako fundament pod przyszły "approval gate", komponenty
+ * `src/components/PresentationStudio/*` też NIE są kasowane w tym kroku.
+ */
+const PresentationStudioRedirect: React.FC = () => {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search || '');
+  params.set('tab', 'presentations');
+  const target = `/presentations?${params.toString()}`;
+
+  React.useEffect(() => {
+    trackFunnelEvent('route_redirected', {
+      from: ROUTES.PRESENTATION_STUDIO,
+      to: target,
+      reason: 'presentation_studio_retired',
+    });
+  }, [target]);
+
+  return <Navigate to={target} replace />;
+};
+
+/**
  * Audits module entry for the DRD audit report engine (audyt 2026-07-26).
  * Reads `:reportId` from the URL and mounts `DRDAuditReportView`, which
  * fetches the report itself via `GET /assessment-reports/:reportId/full`
@@ -662,6 +711,14 @@ export const AppRoutes: React.FC = () => {
   } = useAppStore();
 
   const breadcrumbs = useBreadcrumbs();
+
+  // FAZA B3 (2026-07-27): the 3 Materiały studios (Document Studio,
+  // Prezentacje, Excel) resume an existing material via `?artifactId=`
+  // (or, for Document Studio, `/document-studio/:artifactId`). Used to pick
+  // a "resumed" vs "new" label for the studio breadcrumb's last segment —
+  // we don't have the real material title here without reaching into each
+  // studio's own load state (out of scope for this pass, see report).
+  const materialsArtifactIdParam = new URLSearchParams(location.search).get('artifactId');
 
   const isSuperAdmin = isSuperAdminRole(currentUser?.role);
   const hideNonCoreModulesOnPublicProduction = React.useMemo(
@@ -1494,7 +1551,19 @@ export const AppRoutes: React.FC = () => {
           element={
             isExceleEngineEnabled() ? (
               <ProtectedRoute requireAuth={true}>
-                <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.excele', 'Excel')]}>
+                <MainLayout
+                  breadcrumbs={
+                    breadcrumbs ||
+                    buildMaterialsStudioBreadcrumb(
+                      t('sidebar.materialy', 'Materials'),
+                      t('rap.tabs.sheets', 'Sheets'),
+                      'sheets',
+                      materialsArtifactIdParam
+                        ? t('excele.breadcrumb.open', 'Sheet')
+                        : t('excele.breadcrumb.new', 'New sheet')
+                    )
+                  }
+                >
                   <RouteErrorBoundary>
                     <ExceleView />
                   </RouteErrorBoundary>
@@ -1522,7 +1591,17 @@ export const AppRoutes: React.FC = () => {
             <ProtectedRoute requireAuth={true}>
               <BetaGate moduleId="MODULE_PREZENTACJE_GEN">
                 <MainLayout
-                  breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]}
+                  breadcrumbs={
+                    breadcrumbs ||
+                    buildMaterialsStudioBreadcrumb(
+                      t('sidebar.materialy', 'Materials'),
+                      t('rap.tabs.presentations', 'Presentations'),
+                      'presentations',
+                      materialsArtifactIdParam
+                        ? t('prezentacje.breadcrumb.open', 'Presentation')
+                        : t('prezentacje.breadcrumb.new', 'New presentation')
+                    )
+                  }
                 >
                   <RouteErrorBoundary>
                     <PrezentacjeView />
@@ -2179,21 +2258,7 @@ export const AppRoutes: React.FC = () => {
             </BetaGate>
           }
         />
-        <Route
-          path={ROUTES.PRESENTATION_STUDIO}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Presentation Studio']} noPadding>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Presentation Studio"
-              >
-                <RouteErrorBoundary>
-                  <PresentationStudioPage />
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
-          }
-        />
+        <Route path={ROUTES.PRESENTATION_STUDIO} element={<PresentationStudioRedirect />} />
         <Route
           path={ROUTES.MEETING}
           element={
@@ -2211,32 +2276,7 @@ export const AppRoutes: React.FC = () => {
             </BetaGate>
           }
         />
-        <Route
-          path="/presentations/wizard"
-          element={
-            <BetaGate moduleId="MODULE_PRESENTATIONS">
-              <MainLayout
-                breadcrumbs={
-                  breadcrumbs || [
-                    t('sidebar.outputsLibrary', 'Outputs'),
-                    t('rap.breadcrumb.presentationWizard', 'Presentation Wizard'),
-                  ]
-                }
-              >
-                <ProductionModuleGate
-                  enabled={!hideNonCoreModulesOnPublicProduction}
-                  moduleName="Outputs"
-                >
-                  <RouteErrorBoundary>
-                    <AnimationWrapper variant="slideUp">
-                      <PresentationWizard />
-                    </AnimationWrapper>
-                  </RouteErrorBoundary>
-                </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
-          }
-        />
+        <Route path="/presentations/wizard" element={<PresentationWizardRedirect />} />
         <Route
           path="/presentations/builder/:deckId"
           element={
@@ -2276,10 +2316,15 @@ export const AppRoutes: React.FC = () => {
               <BetaGate moduleId="MODULE_DOCUMENT_STUDIO">
                 <MainLayout
                   breadcrumbs={
-                    breadcrumbs || [
-                      t('sidebar.documentStudio', 'Documents'),
-                      t('documentStudio.breadcrumb', 'Document Studio'),
-                    ]
+                    breadcrumbs ||
+                    buildMaterialsStudioBreadcrumb(
+                      t('sidebar.materialy', 'Materials'),
+                      t('rap.tabs.documents', 'Documents'),
+                      'documents',
+                      materialsArtifactIdParam
+                        ? t('documentStudio.breadcrumb.open', 'Document')
+                        : t('documentStudio.breadcrumb.new', 'New document')
+                    )
                   }
                   noPadding
                 >
@@ -2298,10 +2343,13 @@ export const AppRoutes: React.FC = () => {
               <BetaGate moduleId="MODULE_DOCUMENT_STUDIO">
                 <MainLayout
                   breadcrumbs={
-                    breadcrumbs || [
-                      t('sidebar.documentStudio', 'Documents'),
-                      t('documentStudio.breadcrumb', 'Document Studio'),
-                    ]
+                    breadcrumbs ||
+                    buildMaterialsStudioBreadcrumb(
+                      t('sidebar.materialy', 'Materials'),
+                      t('rap.tabs.documents', 'Documents'),
+                      'documents',
+                      t('documentStudio.breadcrumb.open', 'Document')
+                    )
                   }
                   noPadding
                 >

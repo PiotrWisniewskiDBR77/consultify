@@ -36,9 +36,24 @@ import { useConversationStore } from '../store/useConversationStore';
 import { AppView } from '../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../types/workspace';
 
+/**
+ * A breadcrumb segment. A plain string preserves the historical behaviour
+ * (non-clickable, hover style only). An object segment with `to` renders as
+ * a real navigable control — used by screens that need >2 levels (e.g. the
+ * three Materiały studios: `Materiały › Dokumenty|Prezentacje|Arkusze ›
+ * [nazwa]`, FAZA B3 2026-07-27).
+ */
+export type BreadcrumbSegment = string | { label: string; to?: string };
+
 export interface MainLayoutProps {
   children: React.ReactNode;
-  breadcrumbs?: string[];
+  /**
+   * Ordered from outermost to innermost (current) segment. Any number of
+   * segments is supported — the last one always renders as the current,
+   * non-clickable page marker (`aria-current="page"`); every earlier segment
+   * with a `to` navigates there on click.
+   */
+  breadcrumbs?: BreadcrumbSegment[];
   noPadding?: boolean;
 }
 
@@ -191,10 +206,23 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       }}
     >
       <div className="flex h-screen w-full bg-c-bg text-c-text font-sans overflow-hidden">
-        {/* Global Floating Action Buttons - Order: Help, Feedback, Docs */}
+        {/* Global Floating Action Buttons - Order: Help, Feedback, Docs
+         *
+         * PILNE-9 (2026-07-27, zgłaszane 3x): rail wisiał na `right-4` NAD treścią,
+         * na wysokości 70% ekranu — czyli dokładnie nad ostatnimi wierszami tabeli.
+         * Przy zamkniętym podglądzie tabela sięga prawej krawędzi i kebab ostatniego
+         * wiersza był fizycznie nieklikalny (dotyczyło KAŻDEGO ekranu z tabelą).
+         *
+         * Rozwiązanie systemowe, w jednym miejscu: rail przestaje pływać NAD treścią
+         * i dostaje własny pas przy krawędzi okna — dosunięty do `right-0` (przyciski
+         * są zresztą tak zaprojektowane: `rounded-l-md rounded-r-none`, czyli zakładka
+         * przy krawędzi), a `<main>` rezerwuje na ten pas `md:pr-8` (32px = szerokość
+         * przycisku). Dzięki temu żadna treść nigdy nie trafia pod rail — niezależnie
+         * od ekranu, hovera, dotyku czy nawigacji klawiaturą.
+         */}
         <div
           data-testid="global-fab-rail"
-          className={`fixed z-dropdown flex flex-col gap-1 items-end pointer-events-none ${isMobile ? 'right-3' : 'right-4 top-[70%]'}`}
+          className={`fixed z-dropdown flex flex-col gap-1 items-end pointer-events-none ${isMobile ? 'right-3' : 'right-0 top-[70%]'}`}
           style={
             mobileGlobalRailBottomOffset
               ? { bottom: `${mobileGlobalRailBottomOffset}px` }
@@ -254,6 +282,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     ${isSidebarCollapsed ? 'md:ltr:pl-16 md:rtl:pr-16' : 'md:ltr:pl-64 md:rtl:pr-64'}
                     ${currentUser?.isDemo ? 'mt-10' : ''}
                     pb-16 md:pb-0
+                    md:pr-8
                 `}
         >
           <a
@@ -288,20 +317,47 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                   // slate-400 podnosi do ~7:1 bez zmiany hierarchii (nadal drugorzedny).
                   className="flex items-center text-sm font-medium text-slate-600 dark:text-slate-400"
                 >
-                  <span
-                    className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors"
-                    aria-current={!breadcrumbs?.[1] && breadcrumbs?.[0] ? 'page' : undefined}
-                  >
-                    {breadcrumbs?.[0] || ''}
-                  </span>
-                  {breadcrumbs?.[1] ? (
-                    <>
-                      <ChevronRight size={14} className="mx-2 rtl:rotate-180" aria-hidden="true" />
-                      <span className="text-navy-900 dark:text-white" aria-current="page">
-                        {breadcrumbs[1]}
-                      </span>
-                    </>
-                  ) : null}
+                  {breadcrumbs && breadcrumbs.length > 0 ? (
+                    breadcrumbs.map((segment, index) => {
+                      const isLast = index === breadcrumbs.length - 1;
+                      const label = typeof segment === 'string' ? segment : segment.label;
+                      const to = typeof segment === 'string' ? undefined : segment.to;
+                      return (
+                        // eslint-disable-next-line react/no-array-index-key -- segments are a static, ordered path; label alone isn't unique enough (e.g. two "Documents" levels).
+                        <React.Fragment key={`${index}-${label}`}>
+                          {index > 0 ? (
+                            <ChevronRight
+                              size={14}
+                              className="mx-2 rtl:rotate-180 flex-shrink-0"
+                              aria-hidden="true"
+                            />
+                          ) : null}
+                          {isLast ? (
+                            <span
+                              className="text-navy-900 dark:text-white truncate"
+                              aria-current="page"
+                            >
+                              {label}
+                            </span>
+                          ) : to ? (
+                            <button
+                              type="button"
+                              onClick={() => navigate(to)}
+                              className="hover:text-navy-900 dark:hover:text-white hover:underline cursor-pointer transition-colors truncate"
+                            >
+                              {label}
+                            </button>
+                          ) : (
+                            <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors truncate">
+                              {label}
+                            </span>
+                          )}
+                        </React.Fragment>
+                      );
+                    })
+                  ) : (
+                    <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors" />
+                  )}
                 </nav>
               </div>
 

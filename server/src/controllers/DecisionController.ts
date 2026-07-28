@@ -547,20 +547,33 @@ export class DecisionController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { projectId } = req.query;
 
+      // BEZPIECZEŃSTWO (tor MVP, 2026-07-28): wszystkie trzy zapytania niżej filtrowały
+      // WYŁĄCZNIE po statusie (i opcjonalnie po projekcie), bez `organization_id` — czyli
+      // wąskie gardła jednej firmy mogły pokazać decyzje, właścicieli i adresy e-mail
+      // INNEJ firmy. Audyt z 27.07 wskazywał jedno zapytanie; realnie dziurawe były trzy
+      // (aging, blocking, ownerOverload). Bez organizacji nie zwracamy niczego —
+      // pusty wynik jest bezpieczny, cudze dane nie są.
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.json({ aging: [], blocking: [], ownerOverload: [] });
+        return;
+      }
+
       // Aging decisions
       const agingSql = `
-            SELECT d.*, 
+            SELECT d.*,
                 CAST(julianday('now') - julianday(d.created_at) AS INTEGER) as days_waiting,
                 u.first_name || ' ' || u.last_name as owner_name
             FROM decisions d
             LEFT JOIN users u ON d.decision_maker_id = u.id
-            WHERE d.status IN ('pending', 'escalated')
+            WHERE d.organization_id = ?
+            AND d.status IN ('pending', 'escalated')
             ${projectId ? 'AND d.project_id = ?' : ''}
             AND julianday('now') - julianday(d.created_at) > 5
             ORDER BY days_waiting DESC
             LIMIT 20
         `;
-      const agingParams = projectId ? [projectId] : [];
+      const agingParams = projectId ? [orgId, projectId] : [orgId];
 
       const aging = await DbPromise.all(agingSql, agingParams);
 
@@ -572,14 +585,15 @@ export class DecisionController {
             FROM decisions d
             LEFT JOIN users u ON d.decision_maker_id = u.id
             LEFT JOIN decision_impacts di ON d.id = di.decision_id AND di.is_blocker = TRUE
-            WHERE d.status IN ('pending', 'escalated')
+            WHERE d.organization_id = ?
+            AND d.status IN ('pending', 'escalated')
             ${projectId ? 'AND d.project_id = ?' : ''}
             GROUP BY d.id
             HAVING blocked_count > 0
             ORDER BY blocked_count DESC
             LIMIT 20
         `;
-      const blockingParams = projectId ? [projectId] : [];
+      const blockingParams = projectId ? [orgId, projectId] : [orgId];
 
       const blocking = await DbPromise.all(blockingSql, blockingParams);
 
@@ -591,14 +605,15 @@ export class DecisionController {
                COUNT(*) as pending_count
         FROM decisions d
         LEFT JOIN users u ON d.decision_maker_id = u.id
-        WHERE d.status IN ('pending', 'escalated')
+        WHERE d.organization_id = ?
+        AND d.status IN ('pending', 'escalated')
         ${projectId ? 'AND d.project_id = ?' : ''}
         GROUP BY d.decision_maker_id
         HAVING pending_count >= 5
         ORDER BY pending_count DESC
         LIMIT 10
       `;
-      const overloadParams = projectId ? [projectId] : [];
+      const overloadParams = projectId ? [orgId, projectId] : [orgId];
       const ownerOverload = await DbPromise.all(overloadSql, overloadParams);
 
       res.json({

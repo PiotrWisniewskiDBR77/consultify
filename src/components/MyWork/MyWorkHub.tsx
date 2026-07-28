@@ -85,7 +85,6 @@ import {
   MENU_3_ROW_CLASS,
 } from '@/components/shared/ModuleMenu3';
 import { LoadingState } from '@/components/shared/states';
-import { UnifiedCreateLauncher } from '@/components/shared/UnifiedCreateLauncher';
 import {
   type WorkspacePanelKey,
   WorkspacePanelStrip,
@@ -106,6 +105,7 @@ import {
   isBetaSubareaClosed,
 } from '@/utils/betaAccess';
 import { isClientVaultEnabled } from '@/utils/clientVaultFlag';
+import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTopBarOneLineFlag';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import {
   dispatchPilotAccessBlocked,
@@ -117,7 +117,6 @@ import {
   downloadSheetArtifactXlsx,
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
-import { isUnifiedCreateLauncherEnabled } from '@/utils/unifiedCreateLauncherFlag';
 
 import { CalendarView } from './Calendar/CalendarView';
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
@@ -706,6 +705,10 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // ★ JEDEN PASEK NA EKRAN — co ekran-dziecko (Run agent, Client Vault)
   // zadeklarował przez `useHubBarSlot`. Poza providerem: zawsze `{}` (no-op).
   const hubBarSlot = useHubBar();
+  // Górny pasek Idei w jednej linii (flaga, domyślnie OFF) — steruje TYLKO
+  // slotem portalu w rzędzie pilli + kurczliwością tego rzędu. Reszta huba
+  // przy OFF jest bajt-w-bajt jak dziś.
+  const ideaTopBarOneLine = isIdeaTopBarOneLineEnabled();
   const openChatWithContext = useOpenChatWithContext();
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   const location = useLocation();
@@ -790,10 +793,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     Record<string, IdeaWorkspaceHubState>
   >({});
   const [showStartupTemplates, setShowStartupTemplates] = useState(false);
-  // I1-I3 Faza 0 — unified "+ Nowy" launcher (Insight/Initiative/Decision).
-  // Gated by isUnifiedCreateLauncherEnabled() (default OFF) — see
-  // Harvard/wdrozenie-100/_PLAN_I1-I3_UNIFIKACJA_KREATOROW.md §6 Faza 0.
-  const [showUnifiedLauncher, setShowUnifiedLauncher] = useState(false);
   const [ideaStageFilter, setIdeaStageFilter] = useState<IdeaStage | 'all'>('all');
   const [ideasStageCounts, setIdeasStageCounts] = useState<{
     total: number;
@@ -1743,6 +1742,11 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     [activeDocumentId]
   );
 
+  // Powrót do listy Idei z rzędu pilli — chip „Lista". Przy scalonym górnym
+  // pasku (flaga `ff_ideaTopBarOneLine`) to JEDYNE wejście „w górę" w tym
+  // rzędzie (strzałka wstecz powłoki znika razem z breadcrumbem), więc musi
+  // działać dla każdego typu dokumentu. Działa: zeruje aktywny dokument, a hub
+  // wraca do listy aktywnej zakładki (dla Idei — listy Idei).
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
   }, []);
@@ -2541,8 +2545,28 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
     return (
       <div className={MENU_3_ROW_CLASS}>
-        <div className={MENU_3_INNER_CLASS}>
-          <div className={`${MENU_3_LEFT_CLASS} overflow-x-auto whitespace-nowrap no-scrollbar`}>
+        <div
+          className={
+            // ⚠ ZNALEZIONE WZROKIEM (nie z testów): `MENU_3_INNER_CLASS` ma
+            // `overflow-x-auto`, a `overflow-x: auto` wymusza `overflow-y: auto`
+            // — czyli rząd PRZYCINA wszystko, co z niego wystaje w dół. Przy
+            // scalonym pasku mieszka tu kebab `⋯`, więc jego rozwijane menu
+            // było niewidoczne (klik działał, menu nie było widać). Przy fladze
+            // ON zdejmujemy przewijanie z rzędu — przewija się KLASTER PILLI
+            // (własne `overflow-x-auto` niżej), więc nic nie ucieka poza ekran.
+            ideaTopBarOneLine
+              ? 'flex min-h-8 items-center justify-between gap-3 whitespace-nowrap'
+              : MENU_3_INNER_CLASS
+          }
+        >
+          <div
+            className={`${MENU_3_LEFT_CLASS} overflow-x-auto whitespace-nowrap no-scrollbar ${
+              // Jedna linia: pille muszą KURCZYĆ SIĘ i przewijać we własnym
+              // kontenerze, żeby klaster poleceń po prawej nigdy nie uciekł
+              // poza ekran ani nie nachodził na karty (wąskie okno).
+              ideaTopBarOneLine ? 'min-w-0 flex-1' : ''
+            }`}
+          >
             {/* List button */}
             <button
               onClick={handleListClick}
@@ -2644,6 +2668,22 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
            * exposes "Omów z Teresą / Discuss with Teresa" (IdeaWorkspaceToolbar).
            * One AI entry per shell; no double doors.
            */}
+
+          {/*
+           * SCALENIE GÓRNEGO PASKA IDEI W JEDNĄ LINIĘ (flaga
+           * `ff_ideaTopBarOneLine`, domyślnie OFF). Ten pusty węzeł jest CELEM
+           * portalu dla klastra poleceń Menu 1 powłoki Idei (Etap · Zapisano ·
+           * Teresa · ⋯ · Konwertuj) — patrz `TopBar.mergeSlotId`. Renderujemy
+           * go WYŁĄCZNIE przy fladze ON: przy OFF węzła nie ma, więc powłoka
+           * sama zostaje przy starym, dwurzędowym układzie.
+           */}
+          {ideaTopBarOneLine ? (
+            <div
+              id={IDEA_TOP_BAR_SLOT_ID}
+              className="flex shrink-0 items-center gap-1.5 pl-2"
+              data-testid="idea-top-bar-one-line-slot"
+            />
+          ) : null}
         </div>
       </div>
     );
@@ -4269,18 +4309,12 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               )
             )}
 
-            {/* I1-I3 Faza 0 — unified "+ Nowy" launcher (Insight/Initiative/
-                Decision), additive next to the existing per-tab CTA above.
-                Flag OFF by default — see unifiedCreateLauncherFlag.ts. */}
-            {!activeDocumentId && isUnifiedCreateLauncherEnabled() && (
-              <button
-                onClick={() => setShowUnifiedLauncher(true)}
-                className={`${CTA_BASE} ${CTA_TONE.neutral}`}
-                data-testid="mywork-unified-create-launcher-trigger"
-              >
-                <span>{t('myWork.hub.unifiedCreateNew')}</span>
-              </button>
-            )}
+            {/* D-01 (Piotr, OBR-28 2026-07-27): uniwersalny „+ New" USUNIĘTY —
+                CTA jest kontekstowe per zakładka (`actionButton` wyżej).
+                Zakładki bez własnego tworzenia (Inbox, Client Vault, Home,
+                Manager) świadomie nie mają CTA. Launcher 3-w-1 był jedynym
+                żywym callerem `NewDecisionModal` — decyzje tworzy się dziś
+                przez „New Decision" (DecisionDetailView). */}
 
             {/* Ideas detail AI action lives in Menu 3 right slot. */}
           </div>
@@ -4306,17 +4340,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         onClose={() => setShowStartupTemplates(false)}
         onSelect={handleStartupTemplateSelect}
       />
-
-      {/* I1-I3 Faza 0 — unified "+ Nowy" launcher (flag OFF by default). */}
-      {isUnifiedCreateLauncherEnabled() && (
-        <UnifiedCreateLauncher
-          isOpen={showUnifiedLauncher}
-          onClose={() => setShowUnifiedLauncher(false)}
-          projectId={currentProjectId || undefined}
-          isPolish={isPolish}
-          onCreated={() => setShowUnifiedLauncher(false)}
-        />
-      )}
     </div>
   );
 };

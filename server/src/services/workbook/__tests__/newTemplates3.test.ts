@@ -323,7 +323,8 @@ describe('registry — unitEconomics + loanAmortization are registered', () => {
     expect(ids).toContain('dcfValuation');
     expect(ids).toContain('breakEven');
     expect(ids).toContain('cashflow12m');
-    expect(ids).toHaveLength(7);
+    expect(ids).toContain('projectViability');
+    expect(ids).toHaveLength(8);
   });
 
   it('WORKBOOK_TEMPLATES exposes both entries with id/build wired correctly', () => {

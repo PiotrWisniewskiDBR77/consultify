@@ -209,11 +209,17 @@ function buildActionTargetPayload(artifact: {
   }
 
   if (originRuntime === 'presentation_template') {
+    // Scalenie wejść prezentacji 2026-07-27: `/presentations/wizard` jest
+    // teraz redirect-only (AppRoutes.tsx); kanoniczne wejście do edycji
+    // szablonu decka to Architekt szablonów pod `/presentations?tab=
+    // template_architect` (deep-link istniejący od 26.07 —
+    // ReportsAndPresentationsHub.tsx czyta ?tab=template_architect i
+    // ustawia templatesView='deckArchitect').
     return {
       artifactId: artifact.artifactId,
       originRuntime,
       originRecordId,
-      openPath: `/presentations/wizard?templateArtifactId=${artifact.artifactId}`,
+      openPath: '/presentations?tab=template_architect',
       exportPath: null,
       deletePath: null,
       reviewPath,

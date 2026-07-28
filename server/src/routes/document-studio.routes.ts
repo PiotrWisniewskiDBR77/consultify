@@ -322,6 +322,10 @@ import {
   transitionDocumentStatus,
   updateDocumentManualContent,
 } from '../services/documentStudio/documentStudioService.js';
+import {
+  applyOrgContextGrounding,
+  buildOrgContextSourcePack,
+} from '../services/documentStudio/documentOrgContextSourcePack.js';
 import type {
   AudienceProfileAppendixPolicy,
   AudienceProfileExecutiveSummaryPolicy,
@@ -377,6 +381,7 @@ import * as artifactRegistryService from '../services/v8/artifactRegistryService
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+import { retryWithBackoff } from '../utils/retryWithBackoff.js';
 
 const router = Router();
 
@@ -518,11 +523,73 @@ function parseGenerateRequest(body: unknown): ParsedGenerateRequest | null {
 }
 
 /**
+ * P0 URODZINOWE (2026-07-27) — auto-ground a generate request in the calling
+ * organization's context when the caller (frontend) supplied NO sourceRefs
+ * at all. Today `DocumentStudioIntakeForm.tsx` never sends any, so every
+ * document was generated with zero organizational grounding — tripping the
+ * Sources QA gate (`documentQaService.runSourceQa`) and shipping generic
+ * content with no facts about the org.
+ *
+ * Deliberately minimal (see `documentOrgContextSourcePack.ts` for full
+ * rationale + explicitly deferred scope): builds one synthetic source ref
+ * (org name + active projects/initiatives) and prepends a short PL summary
+ * to `intake.description` so both the deterministic and premium/LLM content
+ * paths actually see the facts (not just a metadata pointer nothing reads —
+ * see the module doc for why `sourcePackId` alone does not achieve this).
+ *
+ * Fail-open: any lookup failure or empty-org result returns the request
+ * UNCHANGED — brand-new organizations with no data yet see zero regression.
+ * An explicit, curator-picked `sourceRefs` from the caller always wins and
+ * is never silently mixed with the auto-built one.
+ */
+async function autoGroundGenerateRequest(
+  organizationId: string,
+  intake: DocumentIntake,
+  sourceRefs: DocumentSourceRef[]
+): Promise<{ intake: DocumentIntake; sourceRefs: DocumentSourceRef[] }> {
+  if (sourceRefs.length > 0) return { intake, sourceRefs };
+  try {
+    const pack = await buildOrgContextSourcePack(organizationId);
+    const grounded = applyOrgContextGrounding(intake, sourceRefs, pack);
+    if (grounded.autoGrounded) {
+      logger.debug('[DocumentStudio] auto-grounded generate request from org context', {
+        organizationId,
+        sourceRef: grounded.sourceRefs[0]?.sourceId,
+      });
+    }
+    return { intake: grounded.intake, sourceRefs: grounded.sourceRefs };
+  } catch (err) {
+    logger.warn('[DocumentStudio] auto-grounding failed (fail-open, no regression)', {
+      organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return { intake, sourceRefs };
+  }
+}
+
+/**
  * G5 + X6 — register a freshly materialized document in the Outputs registry.
  * Shared by the sync `/generate` and streaming `/generate/stream` routes so
  * both surface the document in the Outputs Library identically. Best-effort:
- * every registration hiccup is swallowed (fail-open) so generation is never
- * affected by a registry failure.
+ * a registration failure never fails generation (the document itself is
+ * already durably saved by the time this runs) — but see the fala
+ * sprzątania 1b hardening below, which used to be a single unretried
+ * attempt logged at `warn` with no `artifactId` in the structured fields,
+ * i.e. a document could materialize and never appear in the Outputs Library
+ * with no findable trace (rejestr: "dokument może powstać i nigdy nie
+ * pojawić się w bibliotece").
+ *
+ * Hardening (2026-07-27):
+ *   (a) each registration call gets 3 in-process attempts with linear
+ *       backoff (`retryWithBackoff`) — both calls are idempotent
+ *       (`registerArtifactOrigin` / `registerOutputArtifactTransactional`
+ *       look up the existing origin link before inserting), so retrying is
+ *       always safe;
+ *   (b) if all attempts are exhausted, log at `error` (not `warn`) WITH
+ *       `artifactId` so the failure is actually findable/alertable;
+ *   (c) `backfillNativeArtifactsForOrg` (artifactRegistryService.ts) is the
+ *       lazy reconciliation safety net for whatever still slips through —
+ *       retry only shrinks the failure window, it doesn't replace the net.
  */
 function registerGeneratedDocumentOrigin(args: {
   organizationId: string;
@@ -534,34 +601,9 @@ function registerGeneratedDocumentOrigin(args: {
 }): void {
   const { organizationId, userId, artifactId, title, projectId, templateId } = args;
   // G5 — canonical origin registration (Outputs Library).
-  void artifactRegistryService
-    .registerArtifactOrigin({
-      organizationId,
-      outputType: 'report',
-      artifactFamily: 'document',
-      originRuntime: 'native_artifact',
-      originRecordId: artifactId,
-      titleSnapshot: title,
-      ownerUserId: userId,
-      createdBy: userId,
-      visibilityScope: undefined,
-      projectId,
-      originSummary: {
-        sourceType: 'document_studio',
-        templateId: templateId ? String(templateId) : null,
-        sourceTable: 'document_studio_artifacts',
-      },
-    })
-    .catch((regErr: unknown) => {
-      logger.warn('[DocumentStudio] Outputs registration failed (document still saved)', {
-        message: regErr instanceof Error ? regErr.message : String(regErr),
-      });
-    });
-
-  // X6 — W5 Transactional Outputs Registry (v8_output_artifacts + origin links).
-  import('../services/v8/outputsTransactionalRegistry.js')
-    .then(({ registerOutputArtifactTransactional }) =>
-      registerOutputArtifactTransactional({
+  void retryWithBackoff(
+    () =>
+      artifactRegistryService.registerArtifactOrigin({
         organizationId,
         outputType: 'report',
         artifactFamily: 'document',
@@ -570,20 +612,79 @@ function registerGeneratedDocumentOrigin(args: {
         titleSnapshot: title,
         ownerUserId: userId,
         createdBy: userId,
+        visibilityScope: undefined,
         projectId,
         originSummary: {
           sourceType: 'document_studio',
           templateId: templateId ? String(templateId) : null,
           sourceTable: 'document_studio_artifacts',
         },
-      })
-    )
-    .catch((x6Err: unknown) => {
-      logger.warn('[DocumentStudio] X6 transactional registration failed (non-blocking)', {
+      }),
+    {
+      onAttemptFailed: (attempt, attempts, err) => {
+        logger.warn('[DocumentStudio] Outputs registration attempt failed (will retry)', {
+          artifactId,
+          organizationId,
+          attempt,
+          attempts,
+          message: err instanceof Error ? err.message : String(err),
+        });
+      },
+    }
+  ).catch((regErr: unknown) => {
+    logger.error(
+      '[DocumentStudio] Outputs registration permanently failed after retries — document saved but not indexed in Outputs Library until the next reconciliation pass',
+      {
         artifactId,
+        organizationId,
+        message: regErr instanceof Error ? regErr.message : String(regErr),
+      }
+    );
+  });
+
+  // X6 — W5 Transactional Outputs Registry (v8_output_artifacts + origin links).
+  void retryWithBackoff(
+    () =>
+      import('../services/v8/outputsTransactionalRegistry.js').then(
+        ({ registerOutputArtifactTransactional }) =>
+          registerOutputArtifactTransactional({
+            organizationId,
+            outputType: 'report',
+            artifactFamily: 'document',
+            originRuntime: 'native_artifact',
+            originRecordId: artifactId,
+            titleSnapshot: title,
+            ownerUserId: userId,
+            createdBy: userId,
+            projectId,
+            originSummary: {
+              sourceType: 'document_studio',
+              templateId: templateId ? String(templateId) : null,
+              sourceTable: 'document_studio_artifacts',
+            },
+          })
+      ),
+    {
+      onAttemptFailed: (attempt, attempts, err) => {
+        logger.warn('[DocumentStudio] X6 transactional registration attempt failed (will retry)', {
+          artifactId,
+          organizationId,
+          attempt,
+          attempts,
+          message: err instanceof Error ? err.message : String(err),
+        });
+      },
+    }
+  ).catch((x6Err: unknown) => {
+    logger.error(
+      '[DocumentStudio] X6 transactional registration permanently failed after retries (non-blocking)',
+      {
+        artifactId,
+        organizationId,
         message: x6Err instanceof Error ? x6Err.message : String(x6Err),
-      });
-    });
+      }
+    );
+  });
 }
 
 router.post(
@@ -599,7 +700,12 @@ router.post(
       res.status(400).json({ error: 'intake is required' });
       return;
     }
-    const { intake, outline, sourceRefs, projectId, useLlm, templateId } = parsed;
+    const { outline, projectId, useLlm, templateId } = parsed;
+    const { intake, sourceRefs } = await autoGroundGenerateRequest(
+      organizationId,
+      parsed.intake,
+      parsed.sourceRefs
+    );
 
     try {
       const result = await materializeDocumentArtifact({
@@ -689,7 +795,12 @@ router.post(
       res.status(400).json({ error: 'intake is required' });
       return;
     }
-    const { intake, outline, sourceRefs, projectId, useLlm, templateId } = parsed;
+    const { outline, projectId, useLlm, templateId } = parsed;
+    const { intake, sourceRefs } = await autoGroundGenerateRequest(
+      organizationId,
+      parsed.intake,
+      parsed.sourceRefs
+    );
 
     // Long-running SSE: raise socket timeout + disable Nagle so events flush
     // in real time (mirrors ai.routes streaming setup).

@@ -151,14 +151,21 @@ const buildNavigateRoute = (payload: NavigateContract): string | null => {
   }
 
   if (moduleKey === 'presentations' || moduleKey === 'presentation') {
-    const templateId = normalizeValue(payload.templateId) || params.templateId || '';
+    // Scalenie wejść prezentacji 2026-07-27: `/presentations/wizard` jest
+    // teraz redirect-only. "Nowa/z szablonu" prezentacja idzie przez
+    // kanoniczne wejście Teresy (/prezentacje), z tym samym parametrem
+    // (`templateArtifactId`), jakiego oczekuje PrezentacjeView + POST
+    // /presentations/decks/from-template (R1.1, 26.07). Ten hook nie ma dziś
+    // żadnego wywołującego w src/ (grep potwierdzony 2026-07-27) — poprawka
+    // na przyszłość, bez zmiany zachowania w praktyce.
+    const templateArtifactId = normalizeValue(payload.templateId) || params.templateId || '';
     const wantsWizard =
       surface === 'wizard' || surface === 'new' || surface === 'create' || params.new === '1';
 
     if (wantsWizard) {
       const wizardParams: Record<string, string> = {};
-      if (templateId) wizardParams.templateId = templateId;
-      return withQuery('/presentations/wizard', wizardParams);
+      if (templateArtifactId) wizardParams.templateArtifactId = templateArtifactId;
+      return withQuery('/prezentacje', wizardParams);
     }
 
     if (entityId) {

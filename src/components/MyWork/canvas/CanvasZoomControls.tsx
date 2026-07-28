@@ -7,7 +7,14 @@
  */
 import { Focus, Grid3x3, Map, Maximize2, Minimize2, Minus, Plus, RotateCcw } from 'lucide-react';
 import React, { useCallback } from 'react';
-import { useReactFlow } from 'reactflow';
+// ★ Zawsze z barrela 'reactflow' — import z '@reactflow/core' podpina DRUGĄ
+//   instancję magazynu i płótno przestaje startować.
+import { useReactFlow, useStore } from 'reactflow';
+
+import {
+  IDEA_BOTTOM_BAR_SWITCHER_SLOT_ID,
+  isIdeaBottomBarUnifiedEnabled,
+} from '../../../utils/ideaBottomBarUnifiedFlag';
 
 interface CanvasZoomControlsProps {
   isPolish?: boolean;
@@ -64,7 +71,23 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
   snapEnabled = false,
   onToggleSnap,
 }) => {
-  const { zoomIn, zoomOut, fitView, setViewport, getZoom } = useReactFlow();
+  const { zoomIn, zoomOut, fitView, setViewport } = useReactFlow();
+  /**
+   * ★ Defekt zgłoszony przez Piotra (2026-07-28): „procent nie aktualizuje się
+   * przy zoomie kółkiem — pokazywał 100% przy realnym 57%".
+   *
+   * Przyczyna: poprzednia wersja czytała `getZoom()` PODCZAS renderu. To zwykły
+   * odczyt imperatywny — nic go nie subskrybuje, więc pigułka pokazywała skalę
+   * z chwili OSTATNIEGO renderu wymuszonego z zewnątrz (zmiana zaznaczenia,
+   * przeciągnięcie węzła…), a nie skalę bieżącą. Zmierzone na żywo przed
+   * naprawą: Mapa myśli po `fitView` miała realnie 53%, a pasek 100%.
+   *
+   * `useStore` subskrybuje transform płótna, więc procent idzie za KAŻDĄ zmianą
+   * skali — kółkiem, gestem, +/−, fitView. Naprawa jest POZA flagą układu:
+   * to skłamana liczba, nie zmiana wyglądu.
+   */
+  const zoomLevel = useStore((s) => s.transform[2]);
+  const bottomBarUnified = isIdeaBottomBarUnifiedEnabled();
 
   const handleZoomIn = useCallback(() => {
     zoomIn({ duration: ZOOM_DURATION });
@@ -92,13 +115,24 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
     setViewport(savedViewport, { duration: ZOOM_DURATION + 80 });
   }, [savedViewport, setViewport]);
 
-  const zoomPercent = `${Math.round(getZoom() * 100)}%`;
+  const zoomPercent = `${Math.round((zoomLevel || 1) * 100)}%`;
 
   return (
     <div className="absolute bottom-3 right-3 z-dropdown pointer-events-auto">
       <div
         className={`flex items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl px-1 py-1 ${className}`}
       >
+        {/* Gniazdo przełącznika czterech reprezentacji (flaga `ideaBottomBarUnified`).
+            Puste, dopóki `IdeaViewSwitcher` się do niego nie sportaluje; własny
+            separator dokłada sam przełącznik, więc pusty węzeł nie zostawia
+            sierocej kreski. OFF => gniazda nie ma i układ jest dzisiejszy. */}
+        {bottomBarUnified && (
+          <div
+            id={IDEA_BOTTOM_BAR_SWITCHER_SLOT_ID}
+            data-testid={IDEA_BOTTOM_BAR_SWITCHER_SLOT_ID}
+            className="flex items-center gap-0.5 empty:hidden"
+          />
+        )}
         <ZoomBtn onClick={handleZoomOut} title={isPolish ? 'Oddal' : 'Zoom out'}>
           <Minus size={15} />
         </ZoomBtn>

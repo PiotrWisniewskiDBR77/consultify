@@ -1,4 +1,4 @@
-import { Clipboard, FileText, Loader2, X } from 'lucide-react';
+import { Clipboard, FileText, Info, Loader2, RefreshCw, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +41,25 @@ function collectDescendants(rootId: string, nodes: Node[], edges: Edge[]): Node[
   visited.delete(rootId);
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
   return [...visited].map((id) => nodeMap.get(id)).filter(Boolean) as Node[];
+}
+
+/**
+ * Pull human-readable prose out of whatever the AI endpoint returned.
+ *
+ * The old code ended its chain with `JSON.stringify(res)`, so a response that
+ * carried no prose (the suggestions endpoint happily answers `{"data":[],"items":[]}`)
+ * was rendered verbatim under the "PODSUMOWANIE" heading. Returning `null` instead
+ * lets the caller show a sentence a human can act on.
+ */
+function extractSummaryText(res: unknown): string | null {
+  if (typeof res === 'string') return res.trim() || null;
+  if (!res || typeof res !== 'object') return null;
+  const bag = res as Record<string, unknown>;
+  for (const key of ['summary', 'text', 'narrative', 'content', 'message', 'answer', 'result']) {
+    const value = bag[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return null;
 }
 
 function parseSummary(raw: string): BranchSummary {
@@ -106,15 +125,29 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
   const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Non-error explanation (e.g. a leaf node) — informational, not a red box. */
+  const [notice, setNotice] = useState<string | null>(null);
   const [summary, setSummary] = useState<BranchSummary | null>(null);
 
   const fetchSummary = useCallback(async () => {
     if (!branchNodeId) return;
     setLoading(true);
     setError(null);
+    setNotice(null);
     setSummary(null);
     try {
       const descendants = collectDescendants(branchNodeId, nodes, edges);
+      // A leaf has nothing below it — asking the model to summarise an empty
+      // branch burns a call and returns noise. Say so instead.
+      if (descendants.length === 0) {
+        setNotice(
+          t(
+            'ideas.mindmap.branchHasNoChildren',
+            'This node has no sub-nodes, so there is no branch to summarize.'
+          )
+        );
+        return; // `finally` clears the loading flag
+      }
       const labels = descendants.map((n) => n.data?.label).filter(Boolean);
       const prompt = t(
         'myWorkMindmap.branchSummary.prompt',
@@ -127,10 +160,18 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
         activeTool: 'mindmap',
         language: i18n.language || 'en',
       });
-      const raw =
-        typeof res === 'string'
-          ? res
-          : res?.summary || res?.text || res?.narrative || JSON.stringify(res);
+      const raw = extractSummaryText(res);
+      if (!raw) {
+        // Never dump the raw object on the user — that is how `{"data":[],"items":[]}`
+        // ended up under the "PODSUMOWANIE" heading.
+        setError(
+          t(
+            'ideas.mindmap.summaryUnavailable',
+            'Could not prepare a summary for this branch. Please try again.'
+          )
+        );
+        return;
+      }
       setSummary(parseSummary(raw));
     } catch (err: any) {
       setError(err?.message || t('ideas.mindmap.failedFetchSummary', 'Failed to fetch summary'));
@@ -197,9 +238,23 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
               </span>
             </div>
           )}
-          {error && (
-            <div className="rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-danger dark:border-c-danger p-3 text-xs text-c-danger dark:text-c-danger">
-              {error}
+          {error && !loading && (
+            <div className="rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-danger dark:border-c-danger p-3 text-xs text-c-danger dark:text-c-danger space-y-2">
+              <p>{error}</p>
+              <button
+                type="button"
+                onClick={fetchSummary}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised transition-colors"
+              >
+                <RefreshCw size={12} />
+                {t('ideas.mindmap.tryAgain', 'Try again')}
+              </button>
+            </div>
+          )}
+          {notice && !loading && (
+            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary dark:text-c-text-muted flex items-start gap-2">
+              <Info size={14} className="mt-px shrink-0 text-c-text-muted" />
+              <span>{notice}</span>
             </div>
           )}
           {summary && !loading && (

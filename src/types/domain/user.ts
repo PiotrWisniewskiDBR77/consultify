@@ -62,6 +62,15 @@ export interface User {
   timezone?: string;
   mfaEnabled?: boolean;
   preferredLanguage?: string;
+  /**
+   * P0.3 (2026-07-26): account-level UI interface language (en/pl/de/ar/jp/es
+   * from src/i18n.ts SUPPORTED_LANGUAGES). Distinct from `preferredLanguage`
+   * (AI content-generation language). SSOT priority for a logged-in session
+   * is account (`language`) > localStorage > navigator — see
+   * src/services/languagePreference.ts. Mirrors the same field on the
+   * (separately-defined) `User` in `types/core.ts`.
+   */
+  language?: string;
   socialLinks?: any;
   jobTitle?: string;
   skills?: string[];

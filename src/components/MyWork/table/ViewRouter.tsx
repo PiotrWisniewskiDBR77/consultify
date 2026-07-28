@@ -54,6 +54,7 @@ import { useTableData } from './TableDataProvider';
 import { tpViewToLegacy } from './tablePlatformMappers';
 import type { ColumnDef, FilterGroup, SortConfig, TableEdge, TableNode } from './tableTypes';
 import { TimelineView } from './TimelineView';
+import { buildDateColumnSeedPlan } from './ViewSetupEmptyState';
 import type { ViewLayout } from './useTableViews';
 import ViewErrorBoundary from './ViewErrorBoundary';
 import { ViewSwitcher } from './ViewSwitcher';
@@ -1172,6 +1173,8 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
     visibleColumns,
     handleFieldChange,
     handleAddRow,
+    handleAddColumn,
+    toggleColumn,
     handleDuplicateRow,
     handleDeleteRow,
     handleInsertRow,
@@ -1217,6 +1220,30 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
       window.history.replaceState({}, '', url.toString());
     } catch {}
   }, [activeViewId]);
+
+  // ── Puste stany widoków zależnych od dat: realne wyjścia ─────────────────
+  // Timeline/Kalendarz bez kolumny typu `date` potrafiły tylko opisać brak.
+  // Te trzy callbacki zamieniają opis w akcję (incydent właściciela 07-27).
+  const handleAddDateColumnForView = useCallback(() => {
+    if (locked) return;
+    const plan = buildDateColumnSeedPlan({
+      existingKeys: columns.map((c) => c.key),
+      rowIds: processedRows.map((r) => r.id),
+      // Adapter: `TFunction` i18nexta ma przeciążenia, których nie da się
+      // przypisać wprost do wąskiego `(key, fallback?) => string`.
+      // `IdeaTableTool` ma własny `t` o tym kształcie i dlatego nie wymaga adaptera.
+      t: (key: string, fallback?: string) => (fallback === undefined ? t(key) : t(key, fallback)),
+    });
+    for (const col of plan.columns) handleAddColumn(col as unknown as ColumnDef);
+    for (const v of plan.values) handleFieldChange(v.rowId, v.key, v.value);
+  }, [columns, handleAddColumn, handleFieldChange, locked, processedRows, t]);
+
+  const handleShowDateColumnForView = useCallback(
+    (columnKey: string) => toggleColumn(columnKey),
+    [toggleColumn]
+  );
+
+  const handleBackToTableView = useCallback(() => setViewLayout('table'), [setViewLayout]);
 
   const handleRemoveMissingField = useCallback(
     async (fieldId: string) => {
@@ -1368,6 +1395,8 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
             onAddEventAtDate={() => {
               if (!locked) handleAddRow();
             }}
+            onAddDateColumn={handleAddDateColumnForView}
+            onBackToTable={handleBackToTableView}
           />
         );
       case 'timeline':
@@ -1379,6 +1408,10 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
             locked={locked}
             onFieldChange={handleFieldChange}
             onNodeClick={(id) => uiDispatch({ type: 'SET_DETAIL_RECORD', id })}
+            onAddDateColumn={handleAddDateColumnForView}
+            onShowDateColumn={handleShowDateColumnForView}
+            onBackToTable={handleBackToTableView}
+            onAddRow={handleAddRow}
           />
         );
       case 'matrix':
@@ -1430,6 +1463,9 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
     mxX,
     mxY,
     onMatrixAxisChange,
+    handleAddDateColumnForView,
+    handleShowDateColumnForView,
+    handleBackToTableView,
     t,
   ]);
 

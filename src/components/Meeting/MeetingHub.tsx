@@ -662,10 +662,10 @@ export const MeetingHub: React.FC = () => {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
-        openDocuments={openDocuments}
-        activeDocumentId={activeDocumentId}
-        onSelectDocument={setActiveDocumentId}
-        onCloseDocument={(id) => {
+        openItems={openDocuments}
+        activeItemId={activeDocumentId}
+        onSelectItem={setActiveDocumentId}
+        onCloseItem={(id) => {
           setOpenDocuments((prev) => prev.filter((doc) => doc.id !== id));
           if (activeDocumentId === id) setActiveDocumentId(null);
         }}
@@ -677,7 +677,7 @@ export const MeetingHub: React.FC = () => {
           label: t('meeting.actions.new', 'New meeting'),
           onClick: openCreateModal,
         }}
-        rightControls={
+        filterControls={
           <div className="inline-flex items-center rounded-full border border-c-border-subtle px-3 h-9 text-xs text-c-text-muted">
             {loading ? (
               <>
@@ -690,7 +690,7 @@ export const MeetingHub: React.FC = () => {
           </div>
         }
         commandRowContent={commandRowContent}
-        availableViewModes={['table', 'calendar']}
+        viewModes={['table', 'calendar']}
       >
         {loading ? (
           <LoadingState variant="spinner" className="h-full" />

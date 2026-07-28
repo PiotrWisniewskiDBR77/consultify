@@ -2285,32 +2285,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
     // Removed always-on "Open Tools hub" / "View Results" nav chips (declutter —
     // those destinations live in the sidebar). Suggestions now show only when
-    // contextually relevant (initiative/insight/artifact).
-
-    const lastContent = String(
-      (displayMessages[displayMessages.length - 1] as any)?.content || ''
-    ).toLowerCase();
-    const artifactMentioned =
-      workspaceContext?.type === 'report' ||
-      workspaceContext?.type === 'presentation' ||
-      /\b(report|presentation|artifact|output|deck|sheet|template)\b/.test(lastContent);
-
-    if (artifactMentioned) {
-      items.push(
-        {
-          id: 'open-outputs',
-          label: t('chat.suggestions.openOutputs', 'Open Outputs Library'),
-          type: 'outputs' as any,
-          action: { type: 'NAVIGATE', targetModule: 'presentations' },
-        },
-        {
-          id: 'review-pending',
-          label: t('chat.suggestions.reviewPending', 'Review pending artifacts'),
-          type: 'outputs' as any,
-          action: { type: 'NAVIGATE', targetModule: 'presentations', params: { tab: 'review' } },
-        }
-      );
-    }
+    // contextually relevant (initiative/insight).
+    //
+    // 2026-07-28 (D4) — the artifact family ("Open Outputs Library" /
+    // "Review pending artifacts") was removed on the owner's explicit,
+    // app-wide decision: those two chips fired on any mention of
+    // report/presentation/deck/sheet/template and cluttered the space right
+    // under the composer without adding anything the sidebar doesn't already
+    // give. Do NOT reintroduce them here — the whole `artifactMentioned`
+    // heuristic went with them.
 
     return items;
   }, [displayMessages.length, isStreaming, workspaceContext, t]);

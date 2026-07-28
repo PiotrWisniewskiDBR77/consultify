@@ -87,7 +87,6 @@ import {
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { TeresaMark } from '@/components/shared/TeresaMark';
-import { UnifiedCreateLauncher } from '@/components/shared/UnifiedCreateLauncher';
 import {
   StandardPreview,
   type StandardPreviewActions,
@@ -115,7 +114,6 @@ import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
 import { isInterviewPendingReviewTabEnabled } from '@/utils/interviewPendingReviewTabFlag';
 import { isInterviewPipelineStepperEnabled } from '@/utils/interviewPipelineStepperFlag';
-import { isUnifiedCreateLauncherEnabled } from '@/utils/unifiedCreateLauncherFlag';
 
 import {
   type FilterChip,
@@ -726,11 +724,6 @@ export const InterviewHub: React.FC = () => {
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [showSendBackModal, setShowSendBackModal] = useState(false);
   const [showInsightModal, setShowInsightModal] = useState(false);
-  // I1-I3 Faza 1 — unified "+ Nowy" launcher (Insight/Initiative/Decision),
-  // additive next to the existing per-tab CTA. Gated by
-  // isUnifiedCreateLauncherEnabled() — see
-  // Harvard/wdrozenie-100/_PLAN_I1-I3_UNIFIKACJA_KREATOROW.md §6 Faza 0/1.
-  const [showUnifiedLauncher, setShowUnifiedLauncher] = useState(false);
   // #11b — Manager approve flow with AI snapshot panel.
   const [showApproveModal, setShowApproveModal] = useState(false);
   // #7b — Manager "Change due date" inline modal.
@@ -6966,6 +6959,19 @@ Return ONLY the answer text (no markdown fences).`;
               return (
                 <InterviewSessionPreviewBody
                   session={s}
+                  // FALA 1 (2026-07-27): DETAILS pokazywało `Owner: <UUID>`.
+                  // Podajemy czytelną nazwę tylko gdy naprawdę ją znamy —
+                  // dziś potrafimy rozpoznać właściciela = zalogowany
+                  // użytkownik; w innym wypadku linia znika, a identyfikator
+                  // zostaje pod akcją „Kopiuj ID".
+                  ownerName={
+                    s.ownerId && currentUser?.id && s.ownerId === currentUser.id
+                      ? currentUser.displayName ||
+                        (currentUser as { name?: string }).name ||
+                        currentUser.email ||
+                        undefined
+                      : undefined
+                  }
                   isPolish={isPolish}
                   statusConfig={statusCfg}
                   progress={progress}
@@ -7000,6 +7006,17 @@ Return ONLY the answer text (no markdown fences).`;
                 'Następne kroki': 'recommendations',
                 'Next steps': 'recommendations',
               };
+              // FALA 1 / „surowe identyfikatory w UI" (2026-07-27): chipy
+              // „Project"/„Org" wypisywały gołe UUID
+              // (`Org: a3e05d4a-5397-419d-b486-8e44366c0063`). Pokazujemy
+              // nazwę organizacji, gdy sesja należy do bieżącej organizacji;
+              // identyfikator zostaje najwyżej w tooltipie. Chip projektu bez
+              // czytelnej nazwy w ogóle się nie pojawia — pusty chip jest
+              // lepszy niż mylący.
+              const orgName =
+                currentOrganization?.id && s.organizationId === currentOrganization.id
+                  ? currentOrganization.name
+                  : null;
               const relations = [
                 {
                   label: `${t('interview.hub.assignee3')}: ${s.assigneeName || s.respondentName || '—'}`,
@@ -7009,14 +7026,15 @@ Return ONLY the answer text (no markdown fences).`;
                   label: `${t('interview.hub.template')}: ${s.templateName || s.templateCategory || '—'}`,
                   tone: 'text-slate-600 dark:text-slate-300',
                 },
-                {
-                  label: `${t('interview.hub.project')}: ${s.projectId || '—'}`,
-                  tone: 'text-slate-600 dark:text-slate-300',
-                },
-                {
-                  label: `${t('interview.hub.org')}: ${s.organizationId || '—'}`,
-                  tone: 'text-slate-600 dark:text-slate-300',
-                },
+                ...(orgName
+                  ? [
+                      {
+                        label: `${t('interview.hub.org')}: ${orgName}`,
+                        title: s.organizationId,
+                        tone: 'text-slate-600 dark:text-slate-300',
+                      },
+                    ]
+                  : []),
               ];
 
               return (
@@ -7142,7 +7160,9 @@ Return ONLY the answer text (no markdown fences).`;
             const sourceLabel = item.sourceSessionCount
               ? `${item.sourceSessionCount} ${t('interview.hub.sessions2')}`
               : item.sessionId
-                ? `${t('interview.hub.session2')} ${item.sessionId.slice(0, 8)}…`
+                ? // FALA 1 (2026-07-27): było `Sesja f7847468…` — obcięty UUID
+                  // nic nie mówi; źródłem jest po prostu jedna sesja wywiadu.
+                  t('interview.hub.linkedSession', 'Linked session')
                 : '—';
             const dateStr = item.createdAt
               ? new Date(item.createdAt).toLocaleDateString(undefined, {
@@ -8440,7 +8460,10 @@ Return ONLY the answer text (no markdown fences).`;
                     selectedRow.sessionId || selectedRow.session?.id
                       ? [
                           {
-                            label: `${t('interview.hub.session2')}: ${(selectedRow.sessionId || selectedRow.session?.id || '').slice(0, 8)}…`,
+                            // FALA 1 (2026-07-27): było `Session: f7847468…`
+                            // — obcięty UUID. Czytelna etykieta, ID w tooltipie.
+                            label: t('interview.hub.linkedSession', 'Linked session'),
+                            title: selectedRow.sessionId || selectedRow.session?.id || undefined,
                             onClick: () => void openInterviewAssignmentFull(selectedRow, false),
                           },
                         ]
@@ -8526,15 +8549,18 @@ Return ONLY the answer text (no markdown fences).`;
               renderPreviewFooter={(item) => {
                 const a = item as InterviewAssignment;
 
-                const relations: Array<{ label: string; tone: string }> = [];
+                const relations: Array<{ label: string; tone: string; title?: string }> = [];
                 if (a.template?.category)
                   relations.push({
                     label: `${t('interview.hub.category')}: ${a.template.category}`,
                     tone: 'text-c-text-secondary',
                   });
+                // FALA 1 (2026-07-27): było `Session: 409683b2…` — obcięty
+                // UUID. Czytelna etykieta, identyfikator tylko w tooltipie.
                 if (a.sessionId || a.session?.id)
                   relations.push({
-                    label: `${t('interview.hub.session2')}: ${(a.sessionId || a.session?.id || '').slice(0, 8)}…`,
+                    label: t('interview.hub.linkedSession', 'Linked session'),
+                    title: a.sessionId || a.session?.id,
                     tone: 'text-blue-600 dark:text-blue-300',
                   });
 
@@ -8697,15 +8723,18 @@ Return ONLY the answer text (no markdown fences).`;
               renderPreviewFooter={(item) => {
                 const a = item as InterviewAssignment;
 
-                const relations: Array<{ label: string; tone: string }> = [];
+                const relations: Array<{ label: string; tone: string; title?: string }> = [];
                 if (a.template?.category)
                   relations.push({
                     label: `${t('interview.hub.category')}: ${a.template.category}`,
                     tone: 'text-c-text-secondary',
                   });
+                // FALA 1 (2026-07-27): było `Session: 409683b2…` — obcięty
+                // UUID. Czytelna etykieta, identyfikator tylko w tooltipie.
                 if (a.sessionId || a.session?.id)
                   relations.push({
-                    label: `${t('interview.hub.session2')}: ${(a.sessionId || a.session?.id || '').slice(0, 8)}…`,
+                    label: t('interview.hub.linkedSession', 'Linked session'),
+                    title: a.sessionId || a.session?.id,
                     tone: 'text-blue-600 dark:text-blue-300',
                   });
 
@@ -9289,29 +9318,13 @@ Return ONLY the answer text (no markdown fences).`;
     handleNewTemplate,
   ]);
 
-  // I1-I3 Faza 1 — unified "+ Nowy" launcher trigger, additive next to the
-  // existing per-tab CTA (tabPrimaryCta above). Read directly (not memoized)
-  // so a runtime flag flip (URL/localStorage override) is picked up on the
-  // next render, matching the MyWorkHub Faza 0 pattern.
-  const unifiedLauncherTrigger =
-    !activeDocumentId && isUnifiedCreateLauncherEnabled() ? (
-      <button
-        type="button"
-        onClick={() => setShowUnifiedLauncher(true)}
-        data-testid="interview-unified-create-launcher-trigger"
-        className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-      >
-        <span>{t('interview.hub.unifiedCreateLauncherLabel')}</span>
-      </button>
-    ) : null;
-
-  const primaryCta =
-    tabPrimaryCta || unifiedLauncherTrigger ? (
-      <div className="flex items-center gap-2">
-        {tabPrimaryCta}
-        {unifiedLauncherTrigger}
-      </div>
-    ) : null;
+  // D-01 (Piotr, OBR-28 2026-07-27): uniwersalny „+ Nowy" launcher USUNIĘTY —
+  // w Menu 2 zostaje WYŁĄCZNIE kontekstowe CTA zakładki (`tabPrimaryCta`):
+  // Assign (Inbox/Assigned) · New session · New template · New insight ·
+  // Add initiatives. Kanon: maks. JEDEN primary CTA, kontekstowy.
+  const primaryCta = tabPrimaryCta ? (
+    <div className="flex items-center gap-2">{tabPrimaryCta}</div>
+  ) : null;
 
   // Command row content (from renderCommandRow, minus search/dynamic tabs which ModuleHub handles)
   const commandRowContent = useMemo(() => {
@@ -9344,19 +9357,19 @@ Return ONLY the answer text (no markdown fences).`;
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
-        openDocuments={openDocuments}
-        activeDocumentId={activeDocumentId}
-        onSelectDocument={setActiveDocumentId}
-        onCloseDocument={handleCloseDocument}
+        openItems={openDocuments}
+        activeItemId={activeDocumentId}
+        onSelectItem={setActiveDocumentId}
+        onCloseItem={handleCloseDocument}
         onShowList={handleShowList}
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        rightControls={rightControls}
+        filterControls={rightControls}
         primaryCtaContent={primaryCta}
         commandRowContent={commandRowContent}
         forceCommandRow={hasBulkSelection}
-        availableViewModes={['table']}
+        viewModes={['table']}
         showTabCounts={false}
       >
         {/* D-03 — top-level numbered pipeline stepper (flag-gated, default OFF).
@@ -9976,29 +9989,6 @@ Return ONLY the answer text (no markdown fences).`;
         }}
       />
 
-      {/* I1-I3 Faza 1 — unified "+ Nowy" launcher (Insight/Initiative charter/
-          Decision). No defaultType here — Interview mixes Insight generation
-          (this hub) and Initiative (portfolio wizard above, out of scope per
-          ADR 68b), so the full Krok 0 chooser stays. */}
-      {isUnifiedCreateLauncherEnabled() && (
-        <UnifiedCreateLauncher
-          isOpen={showUnifiedLauncher}
-          onClose={() => setShowUnifiedLauncher(false)}
-          projectId={currentProjectId || undefined}
-          isPolish={isPolish}
-          onCreated={async (type) => {
-            setShowUnifiedLauncher(false);
-            if (type === 'insight') {
-              const insightsRes = await V8InterviewApi.listInsights()
-                .then((r) => r.insights)
-                .catch(() => Api.get('/interview/insights').catch(() => []));
-              setInsights(Array.isArray(insightsRes) ? insightsRes : []);
-            } else if (type === 'initiative') {
-              void loadInterviewInitiatives();
-            }
-          }}
-        />
-      )}
     </div>
   );
 };

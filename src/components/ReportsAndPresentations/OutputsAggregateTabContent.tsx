@@ -54,7 +54,8 @@ import { resolveArtifactOpenPath } from './artifactNavigation';
 import { duplicateArtifactToCanvasDraft } from './duplicateArtifactToDraft';
 import { SaveAsTemplateModal, type SaveAsTemplateSource } from './SaveAsTemplateModal';
 import { TrustStatePreviewSection } from './TrustStatePreviewSection';
-import type { ArtifactGovernanceSummary, UnifiedOutputRow } from './types';
+import { SHEET_ORIGIN_META } from './types';
+import type { ArtifactGovernanceSummary, SheetOrigin, UnifiedOutputRow } from './types';
 import type { useRapActions } from './useRapData';
 import { useTrustState } from './useTrustState';
 
@@ -70,6 +71,25 @@ function formatLabel(value: string | null | undefined): string {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
+}
+
+/**
+ * TYP column label for `kind === 'sheet'` rows (inwentarz Excel 27.07): a flat
+ * Table Studio export ("tabela o niczym" bez treści) and a real generated
+ * workbook both used to render as a bare "Sheet", making 61/75 export rows
+ * indistinguishable from the 6 real workbooks. Text-only differentiation —
+ * same neutral class as the other kinds, no new colors. See `SheetOrigin` /
+ * `resolveSheetOrigin` (useRapData.ts) for how the origin is derived.
+ */
+function sheetKindLabel(
+  sheetOrigin: SheetOrigin | undefined,
+  t: (key: string, fallback?: string) => string,
+  isPolish: boolean
+): string {
+  const meta = SHEET_ORIGIN_META[sheetOrigin || 'workbook'];
+  const key =
+    sheetOrigin === 'table_export' ? 'rap.outputs.kind.sheetExport' : 'rap.outputs.kind.sheetModel';
+  return t(key, isPolish ? meta.labelPl : meta.label);
 }
 
 function formatSourceSummary(
@@ -386,7 +406,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                 ? t('rap.outputs.kind.document', 'Document')
                 : row.kind === 'presentation'
                   ? t('rap.outputs.kind.presentation', 'Presentation')
-                  : t('rap.outputs.kind.sheet', 'Sheet')}
+                  : sheetKindLabel(row.sheetOrigin, translate, isPolish)}
             </span>
           );
         },

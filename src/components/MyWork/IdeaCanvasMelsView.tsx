@@ -56,12 +56,24 @@ export interface IdeaCanvasMelsViewProps {
   primaryActionSlot?: React.ReactNode;
   /** Menu 3 (second bar) — per-tool view actions, ready-made node from host. */
   secondBar?: React.ReactNode;
+  /**
+   * Scalenie Menu 1 w rząd pilli hosta (jedna linia) — DOM id slotu. Podawane
+   * przez `IdeaMapWorkspace` tylko przy fladze `ff_ideaTopBarOneLine`; gdy
+   * slotu nie ma w DOM, powłoka renderuje pasek po staremu.
+   */
+  mergeTopBarSlotId?: string;
 
   /** Right-rail inspector tabs + active id + selection + panel renderer. */
   rightRailTools: RightRailToolDescriptor[];
   activeRightToolId?: string | null;
   onSelectRightTool?: (id: string | null) => void;
   renderRightRailPanel?: (activeToolId: string | null) => React.ReactNode;
+  /**
+   * Czy pasek ikon prawego panelu wolno schować do 16-pikselowego słupka.
+   * Domyślnie TAK (dzisiejsze zachowanie). Idea w układzie 6 sekcji podaje
+   * `false` — decyzja właściciela: pasek ikon ma być zawsze widoczny.
+   */
+  rightRailCollapsible?: boolean;
 
   /** Core canvas-mode slots. */
   canvas: React.ReactNode;
@@ -105,10 +117,12 @@ export const IdeaCanvasMelsView: React.FC<IdeaCanvasMelsViewProps> = ({
   titleTrailingSlot,
   primaryActionSlot,
   secondBar,
+  mergeTopBarSlotId,
   rightRailTools,
   activeRightToolId,
   onSelectRightTool,
   renderRightRailPanel,
+  rightRailCollapsible = true,
   canvas,
   floatingLeftRail,
   canvasOverlaySlot,
@@ -145,6 +159,7 @@ export const IdeaCanvasMelsView: React.FC<IdeaCanvasMelsViewProps> = ({
       topBarTitleIconSlot={titleIconSlot}
       topBarTitleTrailingSlot={titleTrailingSlot}
       topBarPrimaryActionSlot={primaryActionSlot}
+      topBarMergeSlotId={mergeTopBarSlotId}
       secondBar={secondBar}
       centerMode="canvas"
       canvas={canvas}
@@ -156,6 +171,7 @@ export const IdeaCanvasMelsView: React.FC<IdeaCanvasMelsViewProps> = ({
       leftRailContent={<></>}
       rightRailTools={rightRailTools}
       renderRightRailPanel={rightPanelRenderer}
+      rightRailCollapsible={rightRailCollapsible}
       onRunPrimary={onRunPrimary}
       onToggleAgent={onToggleAgent}
       onOpenCommandPalette={onOpenCommandPalette}

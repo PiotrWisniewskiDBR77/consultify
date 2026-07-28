@@ -887,6 +887,29 @@ const GridViewStandalone: React.FC<
 export const GridView: React.FC<GridViewProps> = (props) => {
   const { t } = useTranslation();
   const ctx = useContext(TableDataContext);
+  /**
+   * Explicit `rows`/`columns` WIN over the provider.
+   *
+   * Bug (widok "Galeria" pusty przy pełnej tabeli): `IdeaTableTool` renders
+   * `<GridView rows={processedRowsWithRollups} columns={_cols} />` from *inside*
+   * its own `<TableDataProvider>`. In legacy (non-platform) mode that provider
+   * carries nothing — measured live: `processedRows: 0, visibleColumns: 0` — but
+   * the context-first check below hijacked the render into `GridViewConnected`
+   * and threw the passed rows away, so a table with rows showed "Brak elementów".
+   * The platform path (`table/ViewRouter` → `<GridView />`, no props) still gets
+   * the connected variant.
+   */
+  if (props.rows && props.columns) {
+    return (
+      <GridViewStandalone
+        rows={props.rows}
+        columns={props.columns}
+        onNodeClick={props.onNodeClick}
+        onFieldChange={props.onFieldChange}
+        locked={props.locked}
+      />
+    );
+  }
   if (ctx) {
     return <GridViewConnected />;
   }

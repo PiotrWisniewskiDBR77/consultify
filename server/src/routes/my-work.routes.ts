@@ -1413,12 +1413,20 @@ router.put(
     });
 
     const id = String(req.params.id || '').trim();
+    // PILNE-3 (2026-07-27): ten UPDATE miał twardy filtr `task_type='personal'`,
+    // podczas gdy LISTA (GET /personal-tasks) zwraca KAŻDE zadanie właściciela w
+    // organizacji, niezależnie od task_type (na demo 60 ze 151 zadań Piotra to
+    // 'execution'/'interview'/'research'/…). Efekt: kanban My Work → Tasks
+    // pokazywał kartę, drag działał, a PUT zwracał 404 → toast „Failed to update
+    // status". To NIE był problem uprawnień. Zakres zawężają org + owner-scope,
+    // dokładnie tak jak w GET /personal-tasks/:id, gdzie ten sam filtr zdjęto
+    // wcześniej (patrz komentarz przy 404 w detalu).
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, status FROM tasks t WHERE id = ? AND organization_id = ? AND ${ownerScope.whereSql} AND lower(coalesce(task_type,''))='personal' LIMIT 1`,
+      `SELECT id, status FROM tasks t WHERE id = ? AND organization_id = ? AND ${ownerScope.whereSql} LIMIT 1`,
       [id, orgId, ...ownerScope.params]
     );
     if (!existing) {
-      res.status(404).json({ error: 'Not found' });
+      res.status(404).json({ error: 'Not found', code: 'TASK_NOT_FOUND' });
       return;
     }
 
@@ -1447,6 +1455,27 @@ router.put(
       setIf('due_date', d);
     }
     if (req.body?.tags !== undefined) setIf('tags', JSON.stringify(parseTagsArray(req.body.tags)));
+
+    // P8 (tor MVP, 2026-07-28): TaskDetailView pokazywał „Task updated" także dla
+    // checklisty i przypisania osoby, ale ten handler czytał z body tylko 7 pól —
+    // te trzy nie miały jak dojść do bazy. Kolumny w schemacie ISTNIEJĄ
+    // (`checklist`, `assignee_id`, `owner_id`; w demo 369/417 zadań ma przypisanie),
+    // więc brakowało wyłącznie odczytu żądania. `setIf` pomija kolumnę nieobecną
+    // w schemacie, więc zmiana jest addytywna.
+    // ⚠ Naprawa ma DWIE warstwy — front (`TaskDetailView.tsx:1091` `personalPayload`)
+    // też pomijał te pola. Sama zmiana serwera nic nie da.
+    if (req.body?.checklist !== undefined) {
+      const raw = req.body.checklist;
+      setIf('checklist', raw === null ? null : typeof raw === 'string' ? raw : JSON.stringify(raw));
+    }
+    if (req.body?.assigneeId !== undefined) {
+      const a = req.body.assigneeId ? String(req.body.assigneeId).trim() : null;
+      setIf('assignee_id', a);
+    }
+    if (req.body?.ownerId !== undefined) {
+      const o = req.body.ownerId ? String(req.body.ownerId).trim() : null;
+      setIf('owner_id', o);
+    }
 
     let nextStatus: string | null = null;
     if (typeof req.body?.status === 'string') {
@@ -1486,7 +1515,6 @@ router.put(
           t.completed_at as "completedAt"
         FROM tasks t
       WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
-          AND lower(coalesce(t.task_type,'')) = 'personal'
         LIMIT 1
       `,
         [id, orgId, ...ownerScope.params]
@@ -1497,7 +1525,7 @@ router.put(
 
     params.push(id, orgId, ...ownerScopeNoAlias.params);
     await queryHelpers.queryRun(
-      `UPDATE tasks SET ${setParts.join(', ')} WHERE id = ? AND organization_id = ? AND ${ownerScopeNoAlias.whereSql} AND lower(coalesce(task_type,''))='personal'`,
+      `UPDATE tasks SET ${setParts.join(', ')} WHERE id = ? AND organization_id = ? AND ${ownerScopeNoAlias.whereSql}`,
       params
     );
 
@@ -1517,7 +1545,6 @@ router.put(
         t.completed_at as "completedAt"
       FROM tasks t
       WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
-        AND lower(coalesce(t.task_type,'')) = 'personal'
       LIMIT 1
     `,
       [id, orgId, ...ownerScope.params]
@@ -5845,6 +5872,58 @@ router.delete(
     });
 
     res.json({ ok: true });
+  })
+);
+
+/**
+ * GET /api/my-work/my-ideas/:id/map/comments
+ *
+ * WSZYSTKIE komentarze Idei jednym zapytaniem — wątek całej Idei (node_id
+ * `__idea__`, sentinel z panelu „Komentarze") ORAZ wątki wszystkich węzłów.
+ *
+ * PO CO: prawy panel w zakresie „Cała Idea" musi pokazać komplet. Bez tego
+ * komentarz dopisany do węzła znikał po przełączeniu na „Całą Ideę" (wyglądał
+ * na zgubiony), a licznik przy zakładce kłamał. Wariant „N zapytań, po jednym
+ * na węzeł" odpada — mapy mają po kilkadziesiąt węzłów.
+ *
+ * Dopisywanie/usuwanie zostaje na trasach per-node (`…/nodes/:nodeId/comments`)
+ * — ta trasa jest wyłącznie do odczytu zbiorczego.
+ */
+router.get(
+  '/my-ideas/:id/map/comments',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+
+    const hasTables = await requireTables(res, ['idea_node_comments']);
+    if (!hasTables) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Missing ideaId' });
+
+    const rows = await queryHelpers.query<any>(
+      `SELECT id, node_id, user_id, user_name, text, mentions, created_at
+       FROM idea_node_comments
+       WHERE idea_id = ? AND organization_id = ?
+       ORDER BY created_at ASC`,
+      [ideaId, orgId]
+    );
+
+    res.json({
+      comments: rows.map((c: any) => ({
+        id: c.id,
+        nodeId: c.node_id,
+        author: c.user_name || c.user_id,
+        text: c.text,
+        mentions: c.mentions
+          ? typeof c.mentions === 'string'
+            ? JSON.parse(c.mentions)
+            : c.mentions
+          : [],
+        createdAt: c.created_at,
+      })),
+    });
   })
 );
 

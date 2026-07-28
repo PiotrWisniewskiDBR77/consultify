@@ -119,6 +119,13 @@ import { LabeledEdge } from './mindmap/LabeledEdge';
 import { LargeMapOptimizer } from './mindmap/LargeMapOptimizer';
 import { BranchHealthDot, computeBranchHealth, MapHealthScore } from './mindmap/MapHealthScore';
 import { MindMap3DView } from './mindmap/MindMap3DView';
+import { MindMapFrameNode } from './mindmap/MindMapFrameNode';
+import {
+  MM_MIN_NODE_HEIGHT,
+  MM_MIN_NODE_WIDTH,
+  MindMapNodeResizer,
+  useNodeHasExplicitSize,
+} from './mindmap/MindMapNodeResizer';
 import { MindmapCommandPalette } from './mindmap/MindmapCommandPalette';
 import { normalizeMindmapNodeQuickAction } from './mindmap/mindmapInteractionGrammar';
 import {
@@ -716,15 +723,31 @@ function getNodeDepth(data: IdeaNodeData) {
   return data._depth ?? 0;
 }
 
-/** #6n: per-type minimap fill so the overview actually reflects map structure (not blank grey dots). */
+/**
+ * Minimap fill — MUST mirror the key the canvas paints a node with, otherwise the
+ * thumbnail is a field of identical grey dots that says nothing about the map.
+ *
+ * Canvas order (see `EditableIdeaNodeComponent`): explicit `data.color` / semantic
+ * accent (`inferNodeAccentColor`) → first tag (`resolveTagColor`) → branch palette
+ * modulated by depth (`branchColor`). Real maps have most nodes on
+ * `branchKey: 'uncategorized'`, so keying only on `branchKey` (the old behaviour)
+ * collapsed ~95% of the map to one slate tone.
+ */
 function miniMapNodeColor(node: Node): string {
   const data = (node.data || {}) as Record<string, any>;
+  if (node.type === 'center') return 'var(--c-warning)';
+
+  // Same precedence as the rendered node: explicit/semantic accent wins.
+  const accent = inferNodeAccentColor(data);
+  if (accent) return accent;
+
+  const tag = resolveTagColor(Array.isArray(data.tags) ? data.tags : []);
+  if (tag) return tag.color;
+
   switch (node.type) {
-    case 'center':
-      return 'var(--c-warning)';
     case 'branch':
     case 'idea':
-      return branchColor(data.branchKey, 0).edge;
+      return branchColor(data.branchKey, data._depth).edge;
     case 'knowledgeCard':
       return 'var(--c-tag-2)';
     case 'noteCard':
@@ -791,42 +814,77 @@ function inferNodeAccentColor(data: Record<string, any> | undefined): string | u
 
 // ─────── Node Types ───────
 
-const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => (
+/**
+ * Blokada całego płótna (tryb read-only / obserwator). Węzły muszą ją znać,
+ * żeby NIE pokazywać uchwytów zmiany rozmiaru — `nodesDraggable={false}`
+ * blokuje tylko przeciąganie, `NodeResizer` żyje własnym życiem.
+ */
+const MindMapLockedContext = React.createContext<boolean>(false);
+
+const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => {
+  const mapLocked = useContext(MindMapLockedContext);
+  const hasExplicitSize = useNodeHasExplicitSize(id);
   // Clean, consulting-grade root node (Whimsical-style): solid neutral surface on
   // c-* tokens, no glowing gradient orb / pulsing glow / rotating conic border
   // (those read as a toy, not a work tool). Emphasis via a slightly stronger ring
   // + shadow, not animation.
-  <div
-    className={`relative flex items-center justify-center w-32 h-32 rounded-full bg-c-surface-raised border-2 shadow-lg transition-transform duration-200 hover:scale-105 ${
-      selected ? 'border-c-focus' : 'border-c-border'
-    }`}
-  >
-    <Handle type="source" position={Position.Top} id="top" className="!opacity-0 !w-1 !h-1" />
-    <Handle type="source" position={Position.Right} id="right" className="!opacity-0 !w-1 !h-1" />
-    <Handle type="source" position={Position.Bottom} id="bottom" className="!opacity-0 !w-1 !h-1" />
-    <Handle type="source" position={Position.Left} id="left" className="!opacity-0 !w-1 !h-1" />
-    <div className="text-center px-3">
-      <Flower2 size={30} className="text-c-text-secondary mx-auto" />
-      <div className="text-[11px] font-semibold text-c-text mt-1.5 line-clamp-2">{data.label}</div>
-    </div>
-    {selected && (
-      <button
-        type="button"
-        className="nodrag absolute left-full top-1/2 z-20 ml-3 -translate-y-1/2 h-10 w-10 rounded-full bg-c-surface-raised text-c-text border-2 border-c-border shadow-lg hover:bg-c-surface active:scale-[0.98] transition-all flex items-center justify-center"
-        onClick={(e) => {
-          e.stopPropagation();
-          window.dispatchEvent(
-            new CustomEvent('idea-mindmap-node-quick-action', {
-              detail: { action: 'add_child', nodeId: id },
-            })
-          );
-        }}
+  return (
+    <>
+      {/* Ręczna zmiana rozmiaru — korzeń jest KOŁEM, więc trzymamy proporcję. */}
+      <MindMapNodeResizer
+        selected={selected}
+        locked={mapLocked || Boolean(data?.locked)}
+        minWidth={96}
+        minHeight={96}
+        keepAspectRatio
+      />
+      <div
+        className={`relative flex items-center justify-center ${
+          hasExplicitSize ? 'w-full h-full' : 'w-32 h-32'
+        } rounded-full bg-c-surface-raised border-2 shadow-lg transition-transform duration-200 hover:scale-105 ${
+          selected ? 'border-c-focus' : 'border-c-border'
+        }`}
       >
-        <Plus size={20} strokeWidth={2.5} />
-      </button>
-    )}
-  </div>
-));
+        <Handle type="source" position={Position.Top} id="top" className="!opacity-0 !w-1 !h-1" />
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="right"
+          className="!opacity-0 !w-1 !h-1"
+        />
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="bottom"
+          className="!opacity-0 !w-1 !h-1"
+        />
+        <Handle type="source" position={Position.Left} id="left" className="!opacity-0 !w-1 !h-1" />
+        <div className="text-center px-3">
+          <Flower2 size={30} className="text-c-text-secondary mx-auto" />
+          <div className="text-[11px] font-semibold text-c-text mt-1.5 line-clamp-2">
+            {data.label}
+          </div>
+        </div>
+        {selected && (
+          <button
+            type="button"
+            className="nodrag absolute left-full top-1/2 z-20 ml-3 -translate-y-1/2 h-10 w-10 rounded-full bg-c-surface-raised text-c-text border-2 border-c-border shadow-lg hover:bg-c-surface active:scale-[0.98] transition-all flex items-center justify-center"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.dispatchEvent(
+                new CustomEvent('idea-mindmap-node-quick-action', {
+                  detail: { action: 'add_child', nodeId: id },
+                })
+              );
+            }}
+          >
+            <Plus size={20} strokeWidth={2.5} />
+          </button>
+        )}
+      </div>
+    </>
+  );
+});
 CenterNodeComponent.displayName = 'RecommendationCenterNode';
 
 const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => {
@@ -846,6 +904,8 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
     () => computeBranchHealth(id, rfNodes, rfEdges),
     [id, nodeCount, edgeCount]
   );
+  const mapLocked = useContext(MindMapLockedContext);
+  const hasExplicitSize = useNodeHasExplicitSize(id);
 
   if (data._simplified) {
     return (
@@ -869,8 +929,21 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
     <div
       className={`relative px-4 py-2.5 rounded-2xl border-2 ${colors.border} ${colors.bg} ${
         selected ? `ring-2 ${colors.ring}` : ''
-      } shadow-md min-w-[120px] text-center`}
+      } shadow-md text-center ${
+        // Ręcznie ustawiony rozmiar jest TWARDY — pudełko przestaje się
+        // dopasowywać do treści i wypełnia węzeł.
+        hasExplicitSize ? 'w-full h-full flex flex-col justify-center' : 'min-w-[120px]'
+      }`}
     >
+      {/* Ręczna zmiana rozmiaru gałęzi (uchwyty tylko przy zaznaczeniu).
+          Wewnątrz pudełka, bo to ono jest pudełkiem węzła (`relative`) —
+          uchwyty siadają dokładnie na jego krawędziach. */}
+      <MindMapNodeResizer
+        selected={selected}
+        locked={mapLocked || Boolean(data?.locked)}
+        minWidth={MM_MIN_NODE_WIDTH}
+        minHeight={MM_MIN_NODE_HEIGHT}
+      />
       <Handle type="target" position={Position.Left} className="!opacity-0 !w-1 !h-1" />
       <Handle type="source" position={Position.Right} id="right" className="!opacity-0 !w-1 !h-1" />
       <Handle type="source" position={Position.Top} id="top" className="!opacity-0 !w-1 !h-1" />
@@ -965,6 +1038,8 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
   const isPolish = i18n.language?.startsWith('pl');
   const interactionMode = useContext(MindMapInteractionModeContext);
   const ideaId = useContext(MindMapIdeaIdContext);
+  const mapLocked = useContext(MindMapLockedContext);
+  const hasExplicitSize = useNodeHasExplicitSize(id);
   const { getNodes, getEdges } = useReactFlow();
   const colors = useMemo(
     () => branchColor(data.branchKey, data._depth),
@@ -1262,8 +1337,21 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 : selected
                   ? `ring-2 ${colors.ring}`
                   : ''
-        } ${isRemoteLocked ? 'opacity-50 grayscale cursor-not-allowed' : 'cursor-pointer'} min-w-[120px] max-w-[210px] relative transition-colors duration-150`}
+        } ${isRemoteLocked ? 'opacity-50 grayscale cursor-not-allowed' : 'cursor-pointer'} ${
+          // Ręcznie ustawiony rozmiar jest TWARDY: pudełko wypełnia węzeł i
+          // przestaje się dopasowywać do treści (min-w/max-w by je ścisnęły).
+          hasExplicitSize ? 'w-full h-full flex flex-col' : 'min-w-[120px] max-w-[210px]'
+        } relative transition-colors duration-150`}
       >
+        {/* Ręczna zmiana rozmiaru węzła (uchwyty tylko przy zaznaczeniu).
+            Wewnątrz pudełka węzła, bo to ono jest `relative` — uchwyty siadają
+            dokładnie na jego krawędziach, niezależnie od GlowWrappera. */}
+        <MindMapNodeResizer
+          selected={selected}
+          locked={mapLocked || isRemoteLocked || Boolean(data?.locked)}
+          minWidth={MM_MIN_NODE_WIDTH}
+          minHeight={MM_MIN_NODE_HEIGHT}
+        />
         <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
         <Handle type="target" position={Position.Top} id="target-top" className={handleTarget} />
         <Handle
@@ -1388,7 +1476,10 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           </div>
         )}
 
-        <div className={innerRotate}>
+        {/* Po ręcznym powiększeniu treść ma WYPEŁNIĆ pudełko (flex-1 + własny
+            scroll), a nie zostać przyklejona do górnej krawędzi z pustką pod
+            spodem. Bez jawnego rozmiaru — zero zmian względem stanu sprzed. */}
+        <div className={`${innerRotate} ${hasExplicitSize ? 'flex-1 min-h-0 overflow-auto' : ''}`}>
           {/* Image thumbnail (R3.5) */}
           {data.imageUrl && !editing && (
             <div className="mb-1.5 -mx-1 -mt-1 rounded-lg overflow-hidden">
@@ -1459,7 +1550,14 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 </div>
                 <div className="min-w-0 flex-1">
                   <div
-                    className={`text-[11px] font-semibold ${data.label ? colors.text : 'text-slate-600 dark:text-slate-500 italic'} line-clamp-2 leading-tight`}
+                    className={`text-[11px] font-semibold ${data.label ? colors.text : 'text-slate-600 dark:text-slate-500 italic'} ${
+                      // Przy domyślnym (dopasowanym do treści) pudełku etykieta
+                      // musi się urwać po 2 wierszach, bo inaczej węzeł rósłby
+                      // w nieskończoność. Gdy użytkownik SAM nadał rozmiar,
+                      // urywanie jest wbrew jego decyzji — tekst ma się zawinąć
+                      // i wykorzystać miejsce, które właśnie zrobił.
+                      hasExplicitSize ? 'whitespace-pre-wrap break-words' : 'line-clamp-2'
+                    } leading-tight`}
                   >
                     {data.label || t('mindmap.clickToType')}
                   </div>
@@ -1587,6 +1685,9 @@ const nodeTypes = {
   center: CenterNodeComponent,
   branch: BranchNodeComponent,
   idea: EditableIdeaNodeComponent,
+  // Ramka (`mm_add_frame`, Ctrl+G). Wcześniej BRAK wpisu → reactflow rysował
+  // wbudowany węzeł `group`: goły prostokąt bez etykiety i bez uchwytów.
+  group: MindMapFrameNode,
   ...knowledgeNodeTypes,
 };
 
@@ -1626,6 +1727,14 @@ type IdeaRecommendationMapProps = {
   onOpenChat?: (prompt?: string) => void;
   interactionMode?: MindMapInteractionMode;
   onInteractionModeChange?: (mode: MindMapInteractionMode) => void;
+  /**
+   * B2 (2026-07-27): bump = „graf zostal podmieniony z ZEWNATRZ" (szablon z
+   * galerii, retry po bledzie narzedzia). Parytet z IdeaTableTool /
+   * IdeaProcessFlowTool / IdeaWhiteboardTool, ktore ten prop mialy od dawna —
+   * Mind Map byl jedynym narzedziem bez tego sygnalu, wiec po zastosowaniu
+   * szablonu kanwa zostawala stara.
+   */
+  refreshToken?: number;
   externalRuntime?: {
     version: number;
     loading: boolean;
@@ -1679,6 +1788,7 @@ function MindMapInner({
   onOpenChat,
   interactionMode: externalInteractionMode = 'select',
   onInteractionModeChange,
+  refreshToken,
   externalRuntime,
 }: IdeaRecommendationMapProps) {
   const { t, i18n } = useTranslation();
@@ -2174,9 +2284,14 @@ function MindMapInner({
     });
   }, [collapsedNodeIds, drillFocusId, edges, nodes]);
 
+  // Ostatni węzeł, dla którego pokazaliśmy dymek „zaznaczenie przeniesione".
+  const selectionMovedNoticeRef = useRef<string | null>(null);
   useEffect(() => {
     const hiddenSelected = visibleNodes.filter((n) => n.hidden && n.selected);
-    if (hiddenSelected.length === 0) return;
+    if (hiddenSelected.length === 0) {
+      selectionMovedNoticeRef.current = null;
+      return;
+    }
 
     const targetId = hiddenSelected[0].id;
     let ancestorId: string | null = null;
@@ -2204,6 +2319,17 @@ function MindMapInner({
       }))
     );
 
+    // Komunikat TYLKO wtedy, gdy zaznaczenie faktycznie DOKĄDŚ powędrowało.
+    // Bez `ancestorId` nic się nie „przeniosło" — zaznaczenie zostało po prostu
+    // zdjęte (węzeł ukryty przez tryb skupienia/drążenia, nie przez zwinięcie
+    // gałęzi), a dymek kłamał i wyskakiwał obok komunikatu operacji, którą
+    // użytkownik właśnie wykonał (zgłoszenie: „drugi, niepowiązany komunikat"
+    // przy próbie dodania węzła).
+    if (!ancestorId) return;
+    // Efekt przelicza się przy KAŻDEJ zmianie `nodes`, więc bez tego strażnika
+    // ta sama sytuacja potrafiła odpalić dymek wielokrotnie pod rząd.
+    if (selectionMovedNoticeRef.current === targetId) return;
+    selectionMovedNoticeRef.current = targetId;
     toast(t('mindmap.selectionMovedBranchCollapsed'), { id: 'mm-op-cue', duration: 2000 });
   }, [edges, isPolish, setNodes, visibleNodes]);
 
@@ -2648,6 +2774,7 @@ function MindMapInner({
     onPreferredToolLoaded,
     onViewportReport,
     clearUndoHistory,
+    refreshToken,
     externalRuntime,
   });
 
@@ -2707,6 +2834,9 @@ function MindMapInner({
     isPolish,
     pushUndo,
     fitView,
+    // Sufit zoomu przy kadrowaniu nowego/kotwiczonego węzła — patrz
+    // `revealNodeInContext` w useMindMapNodes (nigdy nie przybliżaj).
+    getViewport,
     remoteLockedNodeIds,
     autoLayout,
     partialLayoutSubtree,
@@ -3078,6 +3208,30 @@ function MindMapInner({
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail || {};
       if (detail.ideaId && detail.ideaId !== ideaId) return;
+
+      // Wariant ZBIOROWY (`nodeIds`) — dodany dla widgetu „Zdrowie mapy":
+      // klik w konkretny brak („5 węzłów bez etykiety") ma pokazać WSZYSTKIE
+      // winne węzły, nie jeden. Zaznacza je na płótnie i kadruje do nich —
+      // ten sam ruch, co pigułka „N niepowiązanych elementów" w Whiteboard.
+      const nodeIds = Array.isArray(detail.nodeIds)
+        ? detail.nodeIds.map((id: unknown) => String(id || '').trim()).filter(Boolean)
+        : [];
+      if (nodeIds.length > 0) {
+        const idSet = new Set<string>(nodeIds);
+        setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: idSet.has(n.id) })));
+        setSearchHitNodeId(nodeIds[0]);
+        try {
+          fitView({
+            nodes: nodeIds.map((id: string) => ({ id }) as any),
+            padding: 0.4,
+            duration: 400,
+          });
+        } catch {
+          /* fitView throws if the canvas is mid-teardown — safe to ignore */
+        }
+        return;
+      }
+
       const nodeId = String(detail.nodeId || '').trim();
       if (!nodeId) return;
       setSearchHitNodeId(nodeId);
@@ -3089,7 +3243,7 @@ function MindMapInner({
     };
     window.addEventListener('idea-workspace-highlight-node', handler);
     return () => window.removeEventListener('idea-workspace-highlight-node', handler);
-  }, [fitView, ideaId]);
+  }, [fitView, ideaId, setNodes]);
 
   // Clear the pulse after a short delay so it doesn't linger once the user
   // moves on (matches the _justMoved ring's transient nature elsewhere).
@@ -5405,6 +5559,7 @@ function MindMapInner({
         </div>
       ) : (
         <MindMapIdeaIdContext.Provider value={ideaId}>
+          <MindMapLockedContext.Provider value={Boolean(locked)}>
           <MindMapInteractionModeContext.Provider value={interactionMode}>
             <ReactFlow
               nodes={enrichedNodes}
@@ -5454,7 +5609,7 @@ function MindMapInner({
               // rusza ani nie zaznacza). Spread MUSI być po
               // getIdeasToolInteractionProps, żeby wygrał z domyślnymi.
               {...getIdeaCanvasCursorProps(interactionMode === 'pan' ? 'pan' : 'select')}
-              className={`bg-c-bg ${
+              className={`mm-canvas bg-c-bg ${
                 interactionMode === 'connect'
                   ? 'cursor-crosshair'
                   : getIdeaCanvasCursorClass(interactionMode === 'pan' ? 'pan' : 'select') ||
@@ -5568,14 +5723,35 @@ function MindMapInner({
               {showMiniMap && (
                 <MiniMap
                   nodeColor={miniMapNodeColor}
-                  nodeStrokeColor="var(--c-border-strong)"
-                  nodeStrokeWidth={3}
+                  // Stroke = fill: a fixed grey 3px outline swallowed the node colour
+                  // at this scale and made every node read as the same dot.
+                  nodeStrokeColor={miniMapNodeColor}
+                  nodeStrokeWidth={1}
                   nodeBorderRadius={6}
-                  maskColor="color-mix(in srgb, var(--c-bg) 70%, transparent)"
-                  style={{ width: 180, height: 130 }}
+                  /**
+                   * The mask paints everything OUTSIDE the current viewport, so it has to
+                   * CONTRAST with the minimap background. `var(--c-bg)` is the page
+                   * background itself → effectively zero contrast in light mode, i.e.
+                   * "where am I" was invisible. Semi-transparent slate reads in both themes.
+                   */
+                  maskColor={isDarkMindmap ? 'rgba(2, 6, 23, 0.55)' : 'rgba(15, 23, 42, 0.28)'}
+                  /**
+                   * `marginBottom` lifts the minimap clear of `CanvasZoomControls`
+                   * (bottom-3, ~42px tall, z-dropdown) — it used to slide underneath.
+                   */
+                  style={{
+                    width: 180,
+                    height: 130,
+                    marginBottom: 62,
+                    zIndex: 10,
+                    // Inline, not a class: React Flow's own stylesheet hard-codes a
+                    // white `.react-flow__minimap` background and loads after Tailwind,
+                    // so a `bg-*` utility loses and dark mode stays a white slab.
+                    backgroundColor: 'var(--c-surface)',
+                  }}
                   zoomable
                   pannable
-                  className="rounded-xl border border-slate-200/40 dark:border-navy-700/40"
+                  className="rounded-xl border border-c-border shadow-lg"
                 />
               )}
 
@@ -5653,6 +5829,7 @@ function MindMapInner({
               <MapHealthScore nodes={nodes} edges={edges} visible={showHealthScore} />
             )}
           </MindMapInteractionModeContext.Provider>
+          </MindMapLockedContext.Provider>
         </MindMapIdeaIdContext.Provider>
       )}
 

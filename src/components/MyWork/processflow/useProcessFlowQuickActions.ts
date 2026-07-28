@@ -47,6 +47,16 @@ export interface ProcessFlowQuickActionHandlers {
    * słuchał, więc pstryczek raila był czysto kosmetyczny.
    */
   setCursorMode?: (mode: 'select' | 'pan') => void;
+  /**
+   * D2 (2026-07-28): pokazywanie kratki na płótnie. Do tej pory sterowała tym
+   * bezpodpisowa nakładka `absolute top-2 left-2` nad płótnem — właściciel nie
+   * wiedział, co ta ikona robi, a przy okazji zasłaniała pstryczek zwijania
+   * pierwszego toru (58/225 punktów klikalnych). Funkcja przeniesiona do
+   * wspólnego lewego raila, tu jest jej jedyne wejście.
+   */
+  toggleGrid?: () => void;
+  /** D2: przyciąganie kroków do siatki (ReactFlow `snapToGrid`), jak wyżej. */
+  toggleSnap?: () => void;
 }
 
 export interface ProcessFlowQuickActionSetters {
@@ -165,6 +175,10 @@ export function useProcessFlowQuickActions(opts: UseProcessFlowQuickActionsOpts)
     // Z1 — tryb kursora z lewego raila (ten sam pstryczek co w Mapie myśli).
     if (action === 'mm_select_mode') handlers.setCursorMode?.('select');
     if (action === 'mm_pan_mode') handlers.setCursorMode?.('pan');
+
+    // D2 — siatka i przyciąganie z lewego raila (dawna nakładka nad płótnem).
+    if (action === 'pf_toggle_grid') handlers.toggleGrid?.();
+    if (action === 'pf_toggle_snap') handlers.toggleSnap?.();
 
     if (action === 'pf_undo') handlers.undo();
     if (action === 'pf_redo') handlers.redo();

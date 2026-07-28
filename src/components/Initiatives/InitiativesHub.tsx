@@ -40,7 +40,6 @@ import {
   EmptyState as SharedEmptyState,
   LoadingState as SharedLoadingState,
 } from '@/components/shared/states';
-import { UnifiedCreateLauncher } from '@/components/shared/UnifiedCreateLauncher';
 import {
   StandardPreview,
   type StandardPreviewActions,
@@ -83,7 +82,6 @@ import {
 } from '@/utils/initiativeHelpers';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
-import { isUnifiedCreateLauncherEnabled } from '@/utils/unifiedCreateLauncherFlag';
 
 import { usePortfolioStore } from '../../store/portfolioSlice';
 import { useAppStore } from '../../store/useAppStore';
@@ -274,11 +272,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [showNewModal, setShowNewModal] = useState(false);
   const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
   const [showCharter, setShowCharter] = useState(false);
-  // I1-I3 Faza 1 — unified "+ Nowy" launcher, additive next to Menu 3's
-  // "Charter" action. defaultType='initiative' skips Krok 0 (module context is
-  // already known) — see
-  // Harvard/wdrozenie-100/_PLAN_I1-I3_UNIFIKACJA_KREATOROW.md §6 Faza 0/1.
-  const [showUnifiedLauncher, setShowUnifiedLauncher] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [users, setUsers] = useState<any[]>([]);
@@ -2475,21 +2468,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           <Sparkles className="h-3.5 w-3.5" />
           {t('initiatives.charter.short', 'Charter')}
         </button>
-        {/* I1-I3 Faza 1 — unified "+ Nowy" launcher, additive next to Charter.
-            defaultType='initiative' — module context already known, Krok 0
-            chooser is skipped (still reachable: the Charter button above opens
-            the same generator directly, unchanged). */}
-        {isUnifiedCreateLauncherEnabled() && (
-          <button
-            type="button"
-            onClick={() => setShowUnifiedLauncher(true)}
-            data-testid="initiatives-unified-create-launcher-trigger"
-            className={MENU_3_ACTION_NEUTRAL}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            {t('initiatives.newButton', 'New')}
-          </button>
-        )}
+        {/* D-01 (Piotr, OBR-28 2026-07-27): „+ New" z Menu 3 USUNIĘTY —
+            dublował Menu 2 („New initiative") oraz sąsiedni „Charter", który
+            otwiera DOKŁADNIE ten sam generator (InitiativeCharterWizard),
+            więc nic nie zostało odcięte. */}
       </div>
     </div>
   );
@@ -2503,10 +2485,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
-        openDocuments={openDocuments}
-        activeDocumentId={activeDocumentId}
-        onSelectDocument={setActiveDocumentId}
-        onCloseDocument={handleCloseDocument}
+        openItems={openDocuments}
+        activeItemId={activeDocumentId}
+        onSelectItem={setActiveDocumentId}
+        onCloseItem={handleCloseDocument}
         onShowList={handleShowList}
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
@@ -2527,7 +2509,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 onClick: () => setShowInitiativeWizard(true),
               }
         }
-        rightControls={rightControls}
+        filterControls={rightControls}
         commandRowContent={
           activeTab === 'analysis'
             ? analysisCommandRow
@@ -2535,7 +2517,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               ? bulkBarContent
               : commandRowContent
         }
-        availableViewModes={availableViewModes}
+        viewModes={availableViewModes}
       >
         <div className="flex h-full min-h-0 flex-col overflow-hidden">
           <div className="min-h-0 flex-1 overflow-hidden">{renderContent()}</div>
@@ -2587,23 +2569,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           void fetchData(true);
         }}
       />
-
-      {/* I1-I3 Faza 1 — unified "+ Nowy" launcher (Menu 3, next to Charter).
-          defaultType='initiative' skips Krok 0 since the module context is
-          already known; the full 3-way chooser stays reachable via the
-          button itself if Piotr later wants it default-less here too. */}
-      {isUnifiedCreateLauncherEnabled() && (
-        <UnifiedCreateLauncher
-          isOpen={showUnifiedLauncher}
-          onClose={() => setShowUnifiedLauncher(false)}
-          projectId={currentProjectId || undefined}
-          defaultType="initiative"
-          onCreated={() => {
-            setShowUnifiedLauncher(false);
-            void fetchData(true);
-          }}
-        />
-      )}
 
       {/* New Initiative Modal — D1.1: includes type/level selector */}
       {showNewModal && (

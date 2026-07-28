@@ -15,7 +15,11 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { resolveTemplateUsePath } from '../artifactNavigation';
+import {
+  resolveTemplateClonePath,
+  resolveTemplateEditPath,
+  resolveTemplateUsePath,
+} from '../artifactNavigation';
 import { mapCanonicalTemplateArtifact, mapTemplateScope, mapTemplateStatus } from '../useRapData';
 
 const ARTIFACT_INDEX_ID = 'aaaaaaaa-1111-4444-8888-aaaaaaaaaaaa';
@@ -242,5 +246,28 @@ describe('resolveTemplateUsePath', () => {
     });
     expect(path).toBe(`/document-studio?entry=template&templateArtifactId=${ARTIFACT_INDEX_ID}`);
     expect(path).not.toContain(CANONICAL_ID);
+  });
+});
+
+describe('resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejść prezentacji 2026-07-27', () => {
+  it('szablon PREZENTACJI (edit) → Architekt szablonów, NIE /presentations/wizard', () => {
+    const path = resolveTemplateEditPath(ARTIFACT_INDEX_ID, 'presentation');
+    expect(path).toBe('/presentations?tab=template_architect');
+    expect(path).not.toContain('/presentations/wizard');
+  });
+
+  it('szablon PREZENTACJI (clone) → Architekt szablonów, NIE /presentations/wizard', () => {
+    const path = resolveTemplateClonePath(ARTIFACT_INDEX_ID, 'presentation');
+    expect(path).toBe('/presentations?tab=template_architect');
+    expect(path).not.toContain('/presentations/wizard');
+  });
+
+  it('szablon RAPORTU (edit/clone) bez zmian — trasa Report Buildera', () => {
+    expect(resolveTemplateEditPath(ARTIFACT_INDEX_ID, 'report')).toBe(
+      `/reports/builder?tab=templates&templateArtifactId=${ARTIFACT_INDEX_ID}&edit=true`
+    );
+    expect(resolveTemplateClonePath(ARTIFACT_INDEX_ID, 'report')).toBe(
+      `/reports/builder?new=true&templateArtifactId=${ARTIFACT_INDEX_ID}`
+    );
   });
 });

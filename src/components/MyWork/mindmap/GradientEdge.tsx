@@ -7,6 +7,12 @@ import { getBezierPath } from '@reactflow/core';
 import React from 'react';
 import { type EdgeProps } from 'reactflow';
 
+import {
+  EdgeArrowMarkers,
+  arrowMarkerAttrs,
+  resolveArrowDirection,
+} from '../canvas/edgeArrowMarkers';
+
 // Branch edge colors = DATA (categorical). Mapped onto the canonical identity
 // palette (--c-tag-1..12) + status tokens so edges stay on-brand and theme-aware.
 // CSS-var strings resolve in SVG stroke / gradient stop-color attributes.
@@ -46,6 +52,11 @@ export const GradientEdge: React.FC<EdgeProps> = ({
   const targetBranch = data?.targetBranch || data?.branchKey || '';
   const sourceColor = getColor(sourceBranch);
   const targetColor = getColor(targetBranch);
+  // Strzałka kierunku przepływu (wspólny model z Przepływem procesu — patrz
+  // canvas/edgeArrowMarkers.tsx). Domyślnie 'none': mapa myśli to hierarchia,
+  // strzałki są świadomym wyborem użytkownika, nie stanem startowym.
+  const arrowDirection = resolveArrowDirection(data?.arrowDirection, 'none');
+  const arrowAttrs = arrowMarkerAttrs(id, arrowDirection);
   const isAnimated = data?.animated !== false;
   const showParticles = data?.showParticles;
 
@@ -82,6 +93,17 @@ export const GradientEdge: React.FC<EdgeProps> = ({
           </feMerge>
         </filter>
       </defs>
+
+      {/* Groty kierunku — osobne `<defs>`, bo kolor grotu bierze literalny
+          token gałęzi (gradient `url(#…)` nie jest dozwolony jako `fill`
+          markera i dawałby czarny trójkąt). Koniec = kolor celu, początek =
+          kolor źródła, więc grot zawsze zgadza się z barwą swojego końca. */}
+      <EdgeArrowMarkers
+        edgeId={id}
+        direction={arrowDirection}
+        color={targetColor}
+        colorStart={sourceColor}
+      />
 
       {/* Invisible wide hit area for hover + right-click */}
       <path
@@ -137,7 +159,8 @@ export const GradientEdge: React.FC<EdgeProps> = ({
         strokeWidth={activeWidth}
         strokeOpacity={activeOpacity}
         strokeLinecap="round"
-        markerEnd={markerEnd}
+        markerStart={arrowAttrs.markerStart}
+        markerEnd={arrowAttrs.markerEnd ?? markerEnd}
         className="transition-all duration-200 group-hover/edge:[stroke-width:var(--hover-w)]"
         style={{ '--hover-w': `${activeWidth + 1}px` } as React.CSSProperties}
       />

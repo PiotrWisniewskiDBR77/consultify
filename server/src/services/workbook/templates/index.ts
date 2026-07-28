@@ -25,13 +25,15 @@
  *      (if the builder takes a nested shape) a `coerceParams` un-flattener.
  *   3. Add a focused read-back + math-verification test under `__tests__/`.
  *
- * Seven templates are registered today: `threeScenarioPnL` (flagship 3-scenario
+ * Eight templates are registered today: `threeScenarioPnL` (flagship 3-scenario
  * P&L), `operatingBudget` (12-month operating budget), `dcfValuation`
  * (Discounted Cash Flow valuation), `breakEven` (break-even / BEP analysis),
  * `cashflow12m` (12-month cash-flow forecast), `unitEconomics` (SaaS unit
- * economics: LTV/CAC/payback/NRR + 12m churn-decay projection), and
- * `loanAmortization` (loan amortization schedule, annuity payment). The map
- * is the extension point.
+ * economics: LTV/CAC/payback/NRR + 12m churn-decay projection),
+ * `loanAmortization` (loan amortization schedule, annuity payment), and
+ * `projectViability` (project profitability assessment: NPV/IRR/payback/PI —
+ * answers "does this PROJECT pay off", as opposed to `dcfValuation` which
+ * values a whole COMPANY). The map is the extension point.
  */
 
 import { z } from 'zod';
@@ -81,6 +83,12 @@ import {
   LOAN_AMORTIZATION_DRIVER_DEFAULTS,
   type LoanAmortizationParams,
 } from './loanAmortization.js';
+import {
+  buildProjectViabilitySchema,
+  PROJECT_VIABILITY_GENERAL_DEFAULTS,
+  PROJECT_VIABILITY_DRIVER_DEFAULTS,
+  type ProjectViabilityParams,
+} from './projectViability.js';
 import type { WorkbookSchema } from '../WorkbookSchema.js';
 
 /** Stable identifiers for registered model templates. */
@@ -91,7 +99,8 @@ export type WorkbookTemplateId =
   | 'breakEven'
   | 'cashflow12m'
   | 'unitEconomics'
-  | 'loanAmortization';
+  | 'loanAmortization'
+  | 'projectViability';
 
 /** A FE-renderable, zod-validatable parameter type. */
 export type WorkbookTemplateParamType =
@@ -704,6 +713,105 @@ function buildLoanAmortizationParams(): WorkbookTemplateParam[] {
 }
 
 // ---------------------------------------------------------------------------
+// projectViability — parameter descriptors
+// ---------------------------------------------------------------------------
+
+function buildProjectViabilityParams(): WorkbookTemplateParam[] {
+  return [
+    {
+      name: 'projectName',
+      label: 'Nazwa projektu',
+      type: 'text',
+      default: PROJECT_VIABILITY_GENERAL_DEFAULTS.projectName,
+      group: 'Ogólne',
+    },
+    {
+      name: 'currencyCode',
+      label: 'Waluta',
+      type: 'enum',
+      options: ['PLN', 'EUR', 'USD'],
+      default: PROJECT_VIABILITY_GENERAL_DEFAULTS.currencyCode,
+      group: 'Ogólne',
+    },
+    {
+      name: 'startYear',
+      label: 'Pierwszy rok eksploatacji (rok 1)',
+      type: 'integer',
+      default: new Date().getFullYear() + 1,
+      min: 2000,
+      max: 2100,
+      step: 1,
+      group: 'Ogólne',
+    },
+    {
+      name: 'investment',
+      label: 'Nakład początkowy (inwestycja)',
+      type: 'currency',
+      default: PROJECT_VIABILITY_GENERAL_DEFAULTS.investment,
+      min: 0.01,
+      step: 1000,
+      group: 'Inwestycja',
+    },
+    {
+      name: 'baseCashFlow',
+      label: 'Przepływ operacyjny brutto — rok 1',
+      type: 'currency',
+      default: PROJECT_VIABILITY_DRIVER_DEFAULTS.baseCashFlow,
+      step: 1000,
+      group: 'Przepływy',
+    },
+    {
+      name: 'cashFlowGrowthPct',
+      label: 'Wzrost przepływów % rocznie',
+      type: 'percent',
+      default: PROJECT_VIABILITY_DRIVER_DEFAULTS.cashFlowGrowthPct,
+      min: -1,
+      max: 2,
+      step: 0.005,
+      group: 'Przepływy',
+    },
+    {
+      name: 'horizonYears',
+      label: 'Horyzont projektu (lata)',
+      type: 'integer',
+      default: PROJECT_VIABILITY_DRIVER_DEFAULTS.horizonYears,
+      min: 3,
+      max: 15,
+      step: 1,
+      group: 'Przepływy',
+    },
+    {
+      name: 'discountRatePct',
+      label: 'Stopa dyskontowa (wymagana stopa zwrotu)',
+      type: 'percent',
+      default: PROJECT_VIABILITY_DRIVER_DEFAULTS.discountRatePct,
+      min: 0.001,
+      max: 1,
+      step: 0.005,
+      group: 'Dyskontowanie',
+    },
+    {
+      name: 'residualValue',
+      label: 'Wartość rezydualna (koniec horyzontu)',
+      type: 'currency',
+      default: PROJECT_VIABILITY_DRIVER_DEFAULTS.residualValue,
+      step: 1000,
+      group: 'Dyskontowanie',
+    },
+    {
+      name: 'taxRatePct',
+      label: 'Stopa podatkowa (od przepływu operacyjnego)',
+      type: 'percent',
+      default: PROJECT_VIABILITY_DRIVER_DEFAULTS.taxRatePct,
+      min: 0,
+      max: 1,
+      step: 0.005,
+      group: 'Dyskontowanie',
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -716,6 +824,7 @@ export const WORKBOOK_TEMPLATES: {
   cashflow12m: WorkbookTemplateEntry<Cashflow12mParams>;
   unitEconomics: WorkbookTemplateEntry<UnitEconomicsParams>;
   loanAmortization: WorkbookTemplateEntry<LoanAmortizationParams>;
+  projectViability: WorkbookTemplateEntry<ProjectViabilityParams>;
 } = {
   threeScenarioPnL: {
     id: 'threeScenarioPnL',
@@ -781,6 +890,18 @@ export const WORKBOOK_TEMPLATES: {
       'każda pozycja jako formuła, wejścia na arkuszu Założenia, arkusz Harmonogram.',
     params: buildLoanAmortizationParams(),
     build: buildLoanAmortizationSchema,
+  },
+  projectViability: {
+    id: 'projectViability',
+    title: 'Ocena opłacalności projektu (NPV/IRR)',
+    description:
+      'Parametryczna ocena opłacalności projektu: projekcja przepływów pieniężnych netto (rok 0 = ' +
+      'inwestycja, lata 1..N = eksploatacja z podatkiem i wartością rezydualną)→NPV→IRR→wskaźnik ' +
+      'rentowności (PI)→okres zwrotu prosty i zdyskontowany, plus siatka wrażliwości NPV na stopę ' +
+      'dyskontową i poziom przepływów, każda pozycja jako formuła, wejścia na arkuszu Założenia, ' +
+      'arkusze Przepływy, Wyniki i Wrażliwość.',
+    params: buildProjectViabilityParams(),
+    build: buildProjectViabilitySchema,
   },
 };
 
@@ -901,6 +1022,7 @@ export {
   buildCashflow12mSchema,
   buildUnitEconomicsSchema,
   buildLoanAmortizationSchema,
+  buildProjectViabilitySchema,
 };
 export type {
   ThreeScenarioPnLParams,
@@ -910,4 +1032,5 @@ export type {
   Cashflow12mParams,
   UnitEconomicsParams,
   LoanAmortizationParams,
+  ProjectViabilityParams,
 };

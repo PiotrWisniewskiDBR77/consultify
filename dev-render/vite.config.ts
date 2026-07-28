@@ -233,6 +233,41 @@ export default defineConfig({
       'react/jsx-runtime': path.resolve(repoRoot, 'node_modules/react/jsx-runtime.js'),
       'react/jsx-dev-runtime': path.resolve(repoRoot, 'node_modules/react/jsx-dev-runtime.js'),
     },
+    // ★ 2026-07-28: bez tego KAŻDY ekran z płótnem (mapa myśli, tablica,
+    // przepływ) wywalał się na „[React Flow]: Seems like you have not used
+    // zustand provider as an ancestor" (error#001). Kod płócien importuje i z
+    // `reactflow`, i wprost z `@reactflow/core`; przy symlinkowanym
+    // `node_modules` (worktree) vite prebundlował te dwa wejścia osobno →
+    // DWIE kopie store'a zustand → provider z jednej kopii, `useStore` z
+    // drugiej. `dedupe` + jawne `optimizeDeps.include` sprowadzają je do
+    // jednej instancji. Objaw wyglądał jak zepsuty ekran, przyczyna była
+    // wyłącznie w rozwiązywaniu zależności harnessu.
+    dedupe: [
+      'react',
+      'react-dom',
+      'zustand',
+      'reactflow',
+      '@reactflow/core',
+      '@reactflow/background',
+      '@reactflow/controls',
+      '@reactflow/minimap',
+      '@reactflow/node-resizer',
+      '@reactflow/node-toolbar',
+    ],
+  },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'zustand',
+      'reactflow',
+      '@reactflow/core',
+      '@reactflow/background',
+      '@reactflow/controls',
+      '@reactflow/minimap',
+      '@reactflow/node-resizer',
+      '@reactflow/node-toolbar',
+    ],
   },
   server: {
     port: 3020,

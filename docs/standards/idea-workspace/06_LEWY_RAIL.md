@@ -83,6 +83,8 @@ Te trzy reprezentacje mają płótno i dzielą **jeden szkielet czterowarstwowy*
 | środek | `Square` | Aktywność | `single_item`/`workspace` | dodaje węzeł typu `action` | `pf_add_action` — **działa** | tak |
 | środek | `Diamond` | Decyzja | `workspace` | dodaje węzeł typu `decision` | `pf_add_decision` — **działa** | tak |
 | środek | `Plus` | Tor | `workspace` | dodaje nowy tor (lane) | `pf_add_lane` — **działa, ale etykieta nieprzetłumaczona** („Lane N" zamiast „Tor N") — naprawić tłumaczenie | tak |
+| dół | `Grid3x3` | Siatka (pokaż kratkę pomocniczą na płótnie) | `current_view` | rysuje/chowa kratkę pod procesem | `pf_toggle_grid` — **działa** (2026-07-28: przeniesione z bezpodpisowej nakładki `absolute top-2 left-2` nad płótnem, która zasłaniała pstryczek zwijania pierwszego toru — zmierzone 58/225 punktów pstryczka klikalnych); stan włączenia wraca do raila zdarzeniem `process-flow-grid-state` | — |
+| dół | `Magnet` | Przyciąganie (równaj przesuwane kroki do siatki) | `current_view` | `snapToGrid` płótna, siatka 16 px | `pf_toggle_snap` — **działa**, jak wyżej | — |
 | niżej | `MessageSquare` | Komentarze | `single_item` | komentarz do zaznaczonego kroku | **dziś: brak na railu** — dodać | n/d |
 | niżej | `Paperclip` | Załącznik | `single_item` | dołącza plik do kroku | **dziś: brak na railu** — dodać | tak |
 | niżej | `Sparkles` | AI dla zaznaczenia | `single_item` | AI na zaznaczonym kroku | **dziś: martwe w popoverze wspólnym** — realne AI Process Flow (AI Coach, Propozycja AI) dziś dostępne tylko z natywnego „Więcej akcji" paska, nie z raila — docelowo: zmapować na tę ikonę | zależnie od akcji |

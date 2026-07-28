@@ -51,6 +51,13 @@ export interface ExecutiveModuleShellProps {
   topBarTitleTrailingSlot?: React.ReactNode;
   topBarPrimaryActionSlot?: React.ReactNode;
   /**
+   * Opcjonalne SCALENIE górnego paska w jedną linię — DOM id węzła, do którego
+   * `TopBar` ma przenieść portalem swój klaster poleceń zamiast renderować
+   * własny rząd (patrz `TopBar.mergeSlotId`). ADDITIVE: pomiń dla domyślnego
+   * układu; gdy węzła nie ma w DOM, pasek renderuje się bez zmian.
+   */
+  topBarMergeSlotId?: string;
+  /**
    * Optional second command bar (Menu 3) rendered as a full-width row directly
    * BELOW the top bar. ADDITIVE — omit to keep the single-row top bar. The node
    * brings its own border/height/background.
@@ -76,6 +83,12 @@ export interface ExecutiveModuleShellProps {
    */
   activeRightRailToolId?: string | null;
   onActiveRightRailToolChange?: (toolId: string | null) => void;
+  /**
+   * Czy prawy pasek ikon wolno schować do 16-pikselowego słupka (domyślnie
+   * TAK = dzisiejsze zachowanie wszystkich modułów). `false` → pasek ikon jest
+   * ZAWSZE widoczny. ADDITIVE — pomijające go powłoki nie zmieniają się.
+   */
+  rightRailCollapsible?: boolean;
 
   /** Center canvas. */
   canvas: React.ReactNode;
@@ -153,6 +166,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   topBarTitleIconSlot,
   topBarTitleTrailingSlot,
   topBarPrimaryActionSlot,
+  topBarMergeSlotId,
   secondBar,
   leftRailTitle,
   leftRailToolsSlot,
@@ -162,6 +176,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   renderRightRailPanel,
   activeRightRailToolId,
   onActiveRightRailToolChange,
+  rightRailCollapsible = true,
   canvas,
   centerMode = 'chrome',
   floatingLeftRail,
@@ -293,6 +308,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
         titleIconSlot={topBarTitleIconSlot}
         titleTrailingSlot={topBarTitleTrailingSlot}
         primaryActionSlot={topBarPrimaryActionSlot}
+        mergeSlotId={topBarMergeSlotId}
       />
 
       {secondBar}
@@ -378,6 +394,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
           collapsed={rail.rightCollapsed}
           onToggleCollapse={rail.toggleRight}
           onResize={rail.setRightWidth}
+          collapsible={rightRailCollapsible}
         />
 
         {aiEntrySlot ? (

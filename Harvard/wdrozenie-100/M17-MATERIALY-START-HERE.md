@@ -6,7 +6,10 @@
 Budujemy **„plan domknięcia systemu dokumentacji Consultify"** — czyli program **„Materiały" (M17)**: scalenie 4 osobnych modułów (Outputs/Documents/Presentations/Tables = M17–M20) w **JEDEN moduł „Materiały"** = biblioteka utworzonych materiałów + przycisk „Nowy" → tworzenie deck/raport/tabela z briefu, zasilane **artefaktami** (insighty/inicjatywy/decyzje/KPI/notatki). Cel: jakość i **piękno** klasy najlepszego konsultanta świata — bo *to, jak prezentujemy wyniki, decyduje, czy klienci płacą faktury.* To kluczowy obszar konsorcjum AI.
 
 ## 2. Dokumenty (KOLEJNOŚĆ CZYTANIA — to jest „plan i raport", o który pytasz)
-1. **`Harvard/wdrozenie-100/M17-MATERIALY-HANDOFF.md`** ← MASTER, czytaj NAJPIERW (pełny kontekst + plan F0–F14 + analiza układu Gamma-killer + spec piękna + jak wznowić).
+0. **`docs/product/MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md`** ← obowiązujący kanon decyzji dla Materialow i szablonow.
+0a. **`docs/product/MATERIALS_RESUSCITATION_PROGRAM_2026-07-24.md`** ← kolejnosc wykonania, bramki i Definition of Done dla programu scalania.
+0b. **`docs/product/MATERIALS_R0_ARCHITECT_DECISIONS_2026-07-24.md`** ← rozstrzygniecia po audycie R0 i skorygowany zakres R1.
+1. **`Harvard/wdrozenie-100/M17-MATERIALY-HANDOFF.md`** ← historyczny master: pelny kontekst, plan i material odbiorowy.
 2. **`Harvard/wdrozenie-100/M17-MATERIALY-PLAN.md`** — fazy → taski → tabele (DoD/epiki/testy/UI).
 3. **`Harvard/wdrozenie-100/M17-MATERIALY-STAN-PRACY-ODBIORY.md`** — DASHBOARD tracking (43 taski × 8 bramek, ⬜🟡✅). **Tu odhaczasz postęp.**
 4. `docs/product/DOCUMENTATION_SYSTEM_COMPLETION_PLAN.md` — wcześniejszy plan domknięcia (fazy F0-F5, kontekst luk).
