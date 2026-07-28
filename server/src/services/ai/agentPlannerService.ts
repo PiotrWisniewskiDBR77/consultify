@@ -65,6 +65,19 @@ export interface AgentPlan {
   errorMessage?: string;
   isBackground: boolean;
   createdAt: string;
+  /**
+   * Kolumny huba (2026-07-28, „odpowiednie kolumny" — zgłoszenie właściciela):
+   * kolumny istniały w schemacie od Harmonogramu/silnika (`scheduled_at`,
+   * `started_at`/`completed_at` na PLANIE — NIE mylić z per-krokowym
+   * `duration_ms` na `ai_agent_plan_steps`, patrz `updateStepStatus`), ale
+   * nigdy nie były zwracane przez `getPlan`/`listPlans` — front nie miał z
+   * czego zbudować „Ostatnie uruchomienie"/„Zaplanowany na"/„Czas wykonania".
+   */
+  scheduledAt?: string;
+  startedAt?: string;
+  completedAt?: string;
+  /** AGT-FOLDERS (2026-07-28): folder ("Moje procesy"), nullable = bez folderu. */
+  folderId?: string | null;
 }
 
 export interface SSEEmitter {
@@ -575,6 +588,10 @@ class AgentPlannerService {
       errorMessage: row.error_message || undefined,
       isBackground: Boolean(row.is_background),
       createdAt: row.created_at,
+      scheduledAt: row.scheduled_at || undefined,
+      startedAt: row.started_at || undefined,
+      completedAt: row.completed_at || undefined,
+      folderId: row.folder_id || null,
     };
   }
 
@@ -604,7 +621,32 @@ class AgentPlannerService {
       errorMessage: row.error_message || undefined,
       isBackground: Boolean(row.is_background),
       createdAt: row.created_at,
+      scheduledAt: row.scheduled_at || undefined,
+      startedAt: row.started_at || undefined,
+      completedAt: row.completed_at || undefined,
+      folderId: row.folder_id || null,
     }));
+  }
+
+  /**
+   * AGT-FOLDERS (2026-07-28): przenosi plan do folderu (albo odpina —
+   * `folderId: null`). Org-scoped guard tu (nie w routes) — spójne z resztą
+   * usługi (`schedulePlan`/`cancelPlan` też nie sprawdzają org tutaj, robi to
+   * router przez `assertPlanInOrg` PRZED wywołaniem; ale ten update sam w
+   * sobie musi mieć `organization_id` w WHERE, żeby nie dało się przenieść
+   * planu cudzej organizacji nawet przy błędzie w routerze — defense in depth).
+   */
+  async setFolder(
+    planId: string,
+    organizationId: string,
+    folderId: string | null
+  ): Promise<{ updated: boolean }> {
+    const result = await dbRun(
+      `UPDATE ai_agent_plans SET folder_id = ?, updated_at = datetime('now')
+       WHERE id = ? AND organization_id = ?`,
+      [folderId, planId, organizationId]
+    );
+    return { updated: Boolean((result as { changes?: number })?.changes) };
   }
 
   async executeBackgroundPlan(payload: {

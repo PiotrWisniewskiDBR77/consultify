@@ -72,6 +72,7 @@ import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
+import { type AgentFolderScope, agentFolderService } from '../../services/ai/agentFolderService.js';
 import { buildPlanFromManifest } from '../../services/ai/agentPlan/planBuilderService.js';
 import {
   buildStepsFromProcess,
@@ -79,12 +80,37 @@ import {
 } from '../../services/ai/agentPlan/processLibraryService.js';
 import { agentPlannerService } from '../../services/ai/agentPlannerService.js';
 import { getDiscoveryAgentManifest } from '../../services/ai/agentRuntime/discoveryAgentManifestCatalog.js';
+import contextDocumentService from '../../services/organizationContext/ContextDocumentService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
 
 router.use(verifyToken);
+
+const AGENT_FOLDER_SCOPES: AgentFolderScope[] = ['user', 'project', 'organization'];
+
+const parseAgentFolderScope = (value: unknown): AgentFolderScope | null => {
+  const s = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return (AGENT_FOLDER_SCOPES as string[]).includes(s) ? (s as AgentFolderScope) : null;
+};
+
+/**
+ * Projekty, w których dany user jest członkiem — do domyślnego widoku
+ * folderów agenta i filtra scope=project. Kopia `getMemberProjectIds`
+ * (knowledge.routes.ts) — ta sama zapytanie, inny plik routera (żaden z tych
+ * routerów nie eksportuje pomocników drugiemu, wzór powtórzony jak w reszcie
+ * repo — patrz np. `parseVaultScope` vs ten `parseAgentFolderScope`).
+ */
+async function getMemberProjectIds(userId: string): Promise<string[]> {
+  if (!userId) return [];
+  const rows = await DbPromise.all<{ project_id: string }>(
+    `SELECT project_id FROM project_members WHERE user_id = ?`,
+    [userId]
+  );
+  return (rows || []).map((r) => String(r.project_id)).filter(Boolean);
+}
 
 const MAX_STEPS_PER_PLAN = 12; // koncept sekcja 1 "Limity (twarde)" — F6 doda timeout/budżet realny
 
@@ -446,6 +472,207 @@ router.get(
   asyncHandler(async (_req: AuthRequest, res) => {
     const processes = listProcesses();
     return res.json({ success: true, total: processes.length, processes });
+  })
+);
+
+/**
+ * AGT-FOLDERS (2026-07-28) — foldery dla "Moje procesy" (patrz
+ * `agentFolderService.ts`, WZÓR 1:1 `knowledge.routes.ts` "/vault-folders").
+ * Zarejestrowane PRZED `GET /:id` z tego samego powodu co `/processes`
+ * powyżej (Express dopasowałby literal 'folders' jako `:id`).
+ *
+ * GET    /folders?scope=&project_id=  — lista folderów widocznych dla usera
+ * POST   /folders                     — nowy folder (scope wymagany)
+ * PUT    /folders/:folderId           — rename/opis/kolor — TYLKO twórca
+ * DELETE /folders/:folderId           — usuń — TYLKO twórca; plany zostają, odpięte
+ */
+router.get(
+  '/folders',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const requestedScope = parseAgentFolderScope(req.query.scope);
+    const requestedProjectId =
+      typeof req.query.project_id === 'string' && req.query.project_id.trim()
+        ? req.query.project_id.trim()
+        : null;
+
+    if (requestedScope === 'project' && requestedProjectId && userId) {
+      const canAccess = await contextDocumentService.canAccessProject({
+        organizationId: orgId,
+        userId,
+        projectId: requestedProjectId,
+        userRole: req.user?.role || 'USER',
+      });
+      if (!canAccess)
+        return res.status(403).json({ success: false, error: 'Brak dostępu do projektu' });
+    }
+
+    try {
+      const memberProjectIds = userId ? await getMemberProjectIds(userId) : [];
+      const folders = await agentFolderService.getFolders(orgId, userId, {
+        scope: requestedScope,
+        projectId: requestedProjectId,
+        memberProjectIds,
+      });
+      return res.json({
+        success: true,
+        folders: folders.map((f) => ({
+          id: f.id,
+          name: f.name,
+          description: f.description ?? null,
+          color: f.color ?? null,
+          scope: f.scope,
+          projectId: f.project_id ?? null,
+          ownerId: f.owner_id,
+          parentFolderId: f.parent_folder_id ?? null,
+          createdAt: f.created_at,
+          updatedAt: f.updated_at,
+        })),
+      });
+    } catch (err: unknown) {
+      logger.error('[AgentPlanRoutes] Get folders failed', { err });
+      return res.status(500).json({ success: false, error: 'Nie udało się pobrać folderów' });
+    }
+  })
+);
+
+router.post(
+  '/folders',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const name = String(req.body?.name || '').trim();
+    if (!name) return res.status(400).json({ success: false, error: 'name is required' });
+
+    const scope = parseAgentFolderScope(req.body?.scope);
+    if (!scope) {
+      return res
+        .status(400)
+        .json({ success: false, error: 'scope is required (user|project|organization)' });
+    }
+
+    const rawProjectId =
+      typeof req.body?.projectId === 'string' && req.body.projectId.trim()
+        ? req.body.projectId.trim()
+        : null;
+
+    if (scope === 'project') {
+      if (!rawProjectId) {
+        return res
+          .status(400)
+          .json({ success: false, error: 'projectId wymagany dla scope=project' });
+      }
+      const canAccess = await contextDocumentService.canAccessProject({
+        organizationId: orgId,
+        userId,
+        projectId: rawProjectId,
+        userRole: req.user?.role || 'USER',
+      });
+      if (!canAccess)
+        return res.status(403).json({ success: false, error: 'Brak dostępu do projektu' });
+    }
+
+    try {
+      const created = await agentFolderService.createFolder(orgId, userId, {
+        name,
+        description: typeof req.body?.description === 'string' ? req.body.description : null,
+        color: req.body?.color ? String(req.body.color) : null,
+        parentFolderId: req.body?.parentFolderId ? String(req.body.parentFolderId) : null,
+        scope,
+        projectId: scope === 'project' ? rawProjectId : null,
+      });
+      return res.status(201).json({
+        success: true,
+        id: created.id,
+        name: created.name,
+        description: created.description,
+        color: created.color,
+        scope: created.scope,
+        projectId: created.project_id,
+        ownerId: created.owner_id,
+        parentFolderId: created.parent_folder_id,
+        createdAt: created.created_at,
+        updatedAt: created.updated_at,
+      });
+    } catch (err: unknown) {
+      logger.error('[AgentPlanRoutes] Create folder failed', { err });
+      return res.status(500).json({ success: false, error: 'Nie udało się utworzyć folderu' });
+    }
+  })
+);
+
+router.put(
+  '/folders/:folderId',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const { folderId } = req.params;
+    const { name, description, color, parentFolderId } = req.body || {};
+    try {
+      const result = await agentFolderService.updateFolder(orgId, userId, folderId, {
+        name: typeof name === 'string' ? name : undefined,
+        description: description !== undefined ? description : undefined,
+        color: color !== undefined ? color : undefined,
+        parentFolderId: parentFolderId !== undefined ? parentFolderId : undefined,
+      });
+      return res.json({ success: true, ...result });
+    } catch (err: unknown) {
+      logger.error('[AgentPlanRoutes] Update folder failed', { err });
+      return res.status(500).json({ success: false, error: 'Nie udało się zaktualizować folderu' });
+    }
+  })
+);
+
+router.delete(
+  '/folders/:folderId',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const { folderId } = req.params;
+    try {
+      const result = await agentFolderService.deleteFolder(orgId, userId, folderId);
+      return res.json({ success: true, ...result });
+    } catch (err: unknown) {
+      logger.error('[AgentPlanRoutes] Delete folder failed', { err });
+      return res.status(500).json({ success: false, error: 'Nie udało się usunąć folderu' });
+    }
+  })
+);
+
+/**
+ * PATCH /api/ai/agent-plan/:id/folder
+ * AGT-FOLDERS: przenosi plan do folderu (kebab "Przenieś do folderu",
+ * wzór `PUT /documents/:id` scope-move w Vault). `folderId: null` odpina.
+ */
+router.patch(
+  '/:id/folder',
+  validateBody(z.object({ folderId: z.string().trim().min(1).nullable() })),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const organizationId = req.user?.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const planId = String(req.params.id || '');
+    const existingPlan = await agentPlannerService.getPlan(planId);
+    if (!assertPlanInOrg(existingPlan, organizationId)) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
+    }
+
+    const { folderId } = req.body as { folderId: string | null };
+    await agentPlannerService.setFolder(planId, organizationId, folderId);
+    const plan = (await agentPlannerService.getPlan(planId)) ?? existingPlan;
+
+    return res.json({ success: true, plan });
   })
 );
 
