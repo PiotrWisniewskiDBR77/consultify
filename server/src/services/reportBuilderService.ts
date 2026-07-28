@@ -337,6 +337,42 @@ async function resolveReportSourceRefs(
     });
   }
 
+  // WYWIAD — przeskok przez insighty (2026-07-28, po zmianie zakresu MVP na ścieżkę
+  // wywiadu). Zapytanie powyżej dla `INTERVIEW` nie trafi NIGDY: raport z wywiadu
+  // wskazuje **sesję**, a inicjatywa wskazuje **insight**. Łańcuch jest dwuczłonowy:
+  //   raport.source_id = sesja → interview_insights.session_id → initiatives.source_id
+  // Samych insightów nie dokładamy — `buildContextPack` nie zna takiego typu; wartość
+  // wywiadu materializuje się w inicjatywach (ta sama zasada co przy assessmencie).
+  // Pomijamy zarchiwizowane insighty: 27.07 zarchiwizowano 14 z 15 jako śmieci testowe,
+  // a mimo to miały pod sobą inicjatywy — raport nie może się karmić śmieciami.
+  if (st === 'INTERVIEW') {
+    try {
+      const viaInsights = await queryAll<{ id: string; title: string }>(
+        `SELECT i.id, i.title
+           FROM initiatives i
+           JOIN interview_insights ii ON i.source_id = ii.id
+          WHERE i.organization_id = ?
+            AND ii.session_id = ?
+            AND ii.archived_at IS NULL
+          LIMIT 50`,
+        [organizationId, sid]
+      );
+      const juzMamy = new Set(refs.map((r) => r.artifact_id));
+      for (const r of viaInsights) {
+        if (!r?.id || juzMamy.has(String(r.id))) continue;
+        refs.push({
+          artifact_id: String(r.id),
+          artifact_type: 'initiative',
+          artifact_name: String(r.title || 'Initiative'),
+        });
+      }
+    } catch (err) {
+      logger.warn('[ReportBuilder] resolveReportSourceRefs: interview insight hop failed', {
+        error: err,
+      });
+    }
+  }
+
   return refs;
 }
 
