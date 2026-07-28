@@ -33,6 +33,10 @@ import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 import { SkeletonState } from '@/components/shared/states';
+import {
+  IDEA_BOTTOM_BAR_MINIMAP_LIFT,
+  isIdeaBottomBarUnifiedEnabled,
+} from '@/utils/ideaBottomBarUnifiedFlag';
 import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
 import { getCanvasBg } from './canvas/canvasBackground';
@@ -581,6 +585,17 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
             }}
             maskColor={isDarkCanvas ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.08)'}
             className="!bg-c-surface !border-c-border-subtle !rounded-xl"
+            /**
+             * Wymaganie #6 dolnego paska: minimapa nie może wjeżdżać POD pasek
+             * (pasek `z-dropdown`, minimapa domyślnie `z-index:5`). Mapa myśli
+             * ma to uniesienie od dawna na sztywno; tutaj wchodzi razem z flagą
+             * `ideaBottomBarUnified`, bo to zmiana wizualna (OFF = jak dziś).
+             */
+            style={
+              isIdeaBottomBarUnifiedEnabled()
+                ? { marginBottom: IDEA_BOTTOM_BAR_MINIMAP_LIFT, zIndex: 10 }
+                : undefined
+            }
           />
         )}
         <CanvasZoomControls

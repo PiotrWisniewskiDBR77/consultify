@@ -60,6 +60,10 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
+import {
+  IDEA_BOTTOM_BAR_MINIMAP_LIFT,
+  isIdeaBottomBarUnifiedEnabled,
+} from '@/utils/ideaBottomBarUnifiedFlag';
 import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
@@ -3178,6 +3182,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   zoomable
                   pannable
                   className="!bg-c-surface !border-slate-200/60 dark:!border-navy-700/60"
+                  /**
+                   * Wymaganie #6 dolnego paska: minimapa nie może wjeżdżać POD
+                   * pasek (pasek `z-dropdown`, minimapa domyślnie `z-index:5`).
+                   * Za flagą `ideaBottomBarUnified` — OFF zostawia dzisiejszy stan.
+                   */
+                  style={
+                    isIdeaBottomBarUnifiedEnabled()
+                      ? { marginBottom: IDEA_BOTTOM_BAR_MINIMAP_LIFT, zIndex: 10 }
+                      : undefined
+                  }
                 />
               )}
               <CanvasZoomControls
