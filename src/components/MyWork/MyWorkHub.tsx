@@ -2471,7 +2471,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
     return (
       <div className={MENU_3_ROW_CLASS}>
-        <div className={MENU_3_INNER_CLASS}>
+        <div
+          className={
+            // ⚠ ZNALEZIONE WZROKIEM (nie z testów): `MENU_3_INNER_CLASS` ma
+            // `overflow-x-auto`, a `overflow-x: auto` wymusza `overflow-y: auto`
+            // — czyli rząd PRZYCINA wszystko, co z niego wystaje w dół. Przy
+            // scalonym pasku mieszka tu kebab `⋯`, więc jego rozwijane menu
+            // było niewidoczne (klik działał, menu nie było widać). Przy fladze
+            // ON zdejmujemy przewijanie z rzędu — przewija się KLASTER PILLI
+            // (własne `overflow-x-auto` niżej), więc nic nie ucieka poza ekran.
+            ideaTopBarOneLine
+              ? 'flex min-h-8 items-center justify-between gap-3 whitespace-nowrap'
+              : MENU_3_INNER_CLASS
+          }
+        >
           <div
             className={`${MENU_3_LEFT_CLASS} overflow-x-auto whitespace-nowrap no-scrollbar ${
               // Jedna linia: pille muszą KURCZYĆ SIĘ i przewijać we własnym
