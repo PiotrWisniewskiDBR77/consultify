@@ -352,8 +352,18 @@ function respond(body: unknown, status = 200): Response {
   });
 }
 
-/** Installs the fetch mock. Call once at screen mount, before first render. */
-export function installAgentHubFetchMock(): void {
+/**
+ * Installs the fetch mock. Call once at screen mount, before first render.
+ *
+ * `emptyPlans` (AGT-015 §6 D2 render-verify, 2026-07-28): start with ZERO
+ * plans so `?screen=agent-hub` can show the empty-state CTA ("Nowy agent")
+ * instead of the 6-row seed table — the empty-state and the Menu 2 CTA are
+ * two DIFFERENT code paths (`agentPlan.hub.newAgent` used to diverge from
+ * `agentPlan.hub.newProcess` in the empty-state only), so seeing the table
+ * alone never proves the empty-state text.
+ */
+export function installAgentHubFetchMock(options?: { emptyPlans?: boolean }): void {
+  if (options?.emptyPlans) plans = [];
   const originalFetch = window.fetch.bind(window);
 
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {

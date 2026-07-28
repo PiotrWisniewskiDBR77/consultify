@@ -72,6 +72,7 @@ const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canv
 const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
 const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
 const TabeleFala2PrzedPoScreen = React.lazy(() => import('./screens/tabele-fala2-przed-po'));
+const MenuDlugiDomkniecieScreen = React.lazy(() => import('./screens/menu-dlugi-domkniecie'));
 const AgentWarsztatScreen = React.lazy(() => import('./screens/agent-warsztat'));
 const VaultSejfWnetrzeScreen = React.lazy(() => import('./screens/vault-sejf-wnetrze'));
 const VaultFolderBlockProofScreen = React.lazy(() => import('./screens/vault-folder-block-proof'));
@@ -433,6 +434,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'FALA TABEL 2026-07-28 — PRZED/PO: priorytet kropka+tekst (N-24/N-29), Delete na końcu stopki podglądu (PILNE-10), kontrola regresji Approve/Reject',
     render: () => <TabeleFala2PrzedPoScreen />,
+  },
+  'menu-dlugi-domkniecie': {
+    label:
+      'AGT-015 §6 D1-D4 — ikona CTA/„Nowy agent"/FolderCreateDialog, montowane z REALNYM HubBarSlotsProvider (agent-hub bez providera nie pokazuje Menu 2). &empty=1 → agent-hub empty-state',
+    render: () => <MenuDlugiDomkniecieScreen />,
   },
   'agent-warsztat': {
     label:

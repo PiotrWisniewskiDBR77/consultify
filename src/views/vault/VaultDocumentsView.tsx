@@ -36,8 +36,9 @@
  *     dawniej `breadcrumbExtra` Menu 1) + chipy statusu indeksowania (dawniej
  *     `chips`/`activeChip`/`onChipChange` Menu 3 tego komponentu) — WSZYSTKO
  *     RAZEM w jednym rzędzie Menu 2 huba.
- *   - `primaryCta` — „Dodaj dokument" (bez ikony — kontrakt `HubBarPrimaryCta`
- *     nie niesie ikony, hub renderuje sam tekst, tak jak w Run agent).
+ *   - `primaryCta` — „Dodaj dokument" (bez ikony — ten ekran świadomie jej nie
+ *     podaje; kontrakt `HubBarPrimaryCta` NIESIE opcjonalną `icon` od AGT-015
+ *     §6 D1, patrz `HubBarSlots.tsx` i `AgentHubShell.tsx` „Nowy agent").
  *   - `openItems`/`activeItemId`/`onSelectItem`/`onCloseItem`/`onShowList` —
  *     1:1 to samo, co szło wcześniej do `StandardModuleBar` (karta otwartego
  *     sejfu), teraz ląduje w Menu 3 huba.
@@ -80,6 +81,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { FolderCreateDialog } from '@/components/shared/FolderCreateDialog';
 import { useHubBarSlot } from '@/components/shared/HubBarSlots';
 import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import type { FilterChip } from '@/components/shared/ModuleHub/ActiveFilters';
@@ -211,6 +213,12 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
   const [folders, setFolders] = useState<Array<{ id: string; name: string }>>([]);
   const [foldersAvailable, setFoldersAvailable] = useState(false);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+  // AGT-015 §6 D4 — dialog tworzenia folderu (zastępuje window.prompt), wzór
+  // 1:1 `AgentHubShell.tsx`. Poziom TU jest NARZUCONY przez sejf (`safe.type`
+  // /`safe.projectId`) — dialog dostaje `fixedScope`, pyta TYLKO o nazwę.
+  const [folderDialogOpen, setFolderDialogOpen] = useState(false);
+  const [folderDialogBusy, setFolderDialogBusy] = useState(false);
+  const [folderDialogError, setFolderDialogError] = useState<string | null>(null);
 
   const loadFolders = useCallback(async () => {
     try {
@@ -231,30 +239,42 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
     void loadFolders();
   }, [loadFolders]);
 
-  const handleCreateFolder = useCallback(async () => {
-    const name = window
-      .prompt(t('vault.docs.folderPrompt', isPolish ? 'Nazwa folderu' : 'Folder name'))
-      ?.trim();
-    if (!name) return;
-    try {
-      const created = await Api.createVaultFolder({
-        name,
-        scope: safe.type,
-        projectId: safe.type === 'project' ? safe.projectId : undefined,
-      });
-      setFolders((prev) => [...prev, { id: created.id, name: created.name }]);
-      setFoldersAvailable(true);
-    } catch (err: unknown) {
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : t(
-              'vault.docs.folderCreateFailed',
-              isPolish ? 'Nie udało się utworzyć folderu' : 'Failed to create folder'
-            )
-      );
-    }
-  }, [safe.type, safe.projectId, t, isPolish]);
+  // AGT-015 §6 D4 (odbiór, 2026-07-28): `window.prompt` zastąpiony wspólnym
+  // `FolderCreateDialog` (dzieli komponent z `AgentHubShell.handleCreateFolder`).
+  // API backendu (`Api.createVaultFolder`) NIEZMIENIONE.
+  const handleCreateFolder = useCallback(() => {
+    setFolderDialogError(null);
+    setFolderDialogOpen(true);
+  }, []);
+
+  const handleFolderDialogSubmit = useCallback(
+    async (input: { name: string }) => {
+      setFolderDialogBusy(true);
+      setFolderDialogError(null);
+      try {
+        const created = await Api.createVaultFolder({
+          name: input.name,
+          scope: safe.type,
+          projectId: safe.type === 'project' ? safe.projectId : undefined,
+        });
+        setFolders((prev) => [...prev, { id: created.id, name: created.name }]);
+        setFoldersAvailable(true);
+        setFolderDialogOpen(false);
+      } catch (err: unknown) {
+        setFolderDialogError(
+          err instanceof Error
+            ? err.message
+            : t(
+                'vault.docs.folderCreateFailed',
+                isPolish ? 'Nie udało się utworzyć folderu' : 'Failed to create folder'
+              )
+        );
+      } finally {
+        setFolderDialogBusy(false);
+      }
+    },
+    [safe.type, safe.projectId, t, isPolish]
+  );
 
   const handleDeleteFolder = useCallback(
     async (folderId: string) => {
@@ -1137,6 +1157,24 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
           setEditedDocument(null);
         }}
         onSaved={() => void load()}
+      />
+
+      {/* AGT-015 §6 D4 — dialog "Nowy folder" (zastępuje window.prompt). Poziom
+          narzucony przez sejf, w którym stoimy — `fixedScope`, brak wyboru
+          projektu (ten sejf już jest w konkretnym projekcie/na konkretnym
+          poziomie). */}
+      <FolderCreateDialog
+        open={folderDialogOpen}
+        onClose={() => {
+          if (folderDialogBusy) return;
+          setFolderDialogOpen(false);
+        }}
+        onSubmit={handleFolderDialogSubmit}
+        fixedScope={safe.type}
+        fixedScopeContextLabel={safe.name}
+        busy={folderDialogBusy}
+        errorMessage={folderDialogError}
+        title={t('vault.docs.newFolder', isPolish ? 'Nowy folder…' : 'New folder…')}
       />
     </div>
   );

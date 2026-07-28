@@ -36,6 +36,7 @@
  * (dziecko renderuje się normalnie, tylko jego sloty nikną). Dzięki temu
  * migracja idzie ekran po ekranie, bez „wielkiego przełączenia".
  */
+import type { LucideIcon } from 'lucide-react';
 import React, {
   createContext,
   type ReactNode,
@@ -48,9 +49,16 @@ import React, {
 
 import type { OpenDocument } from './ModuleHub/types';
 
-/** CTA dodawania — jeden na ekran, kontekstowy dla widocznej treści. */
+/**
+ * CTA dodawania — jeden na ekran, kontekstowy dla widocznej treści.
+ * `icon` opcjonalna — 1:1 kontrakt `StandardPrimaryCta` (`StandardModuleBar.tsx`),
+ * renderowana przez huba TYMI SAMYMI klasami/rozmiarem (`size={16}`) co CTA
+ * natywne huba (AGT-015 §6 D1: dziecko deklarujące primaryCta bez ikony
+ * dostawało uboższy przycisk niż per-tab CTA huba).
+ */
 export interface HubBarPrimaryCta {
   label: string;
+  icon?: LucideIcon;
   onClick: () => void;
   /** Blokada w trakcie operacji (np. „Tworzenie…"). */
   disabled?: boolean;

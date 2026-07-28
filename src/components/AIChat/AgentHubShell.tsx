@@ -96,10 +96,10 @@
  *     1:1 to samo, co szło wcześniej do `StandardModuleBar` (karty otwartych
  *     procesów), teraz lądują w Menu 3 huba.
  * WYJĄTEK: `bulk` (pasek zaznaczenia "Moje procesy") NIE ma odpowiednika w
- * `HubBarSlotValue` (kontrakt slotu tego nie przewiduje — rozbudowa o niego
- * to osobne zadanie) — zostaje renderowany LOKALNIE nad tabelą
- * (`renderBulkBar`, ten sam wygląd co dawny `StandardModuleBar.bulk`, tylko
- * inny, mniejszy pasek zamiast pełnego Menu 2/3).
+ * `HubBarSlotValue` — zostaje renderowany LOKALNIE nad tabelą (`renderBulkBar`,
+ * ten sam wygląd co dawny `StandardModuleBar.bulk`, tylko inny, mniejszy pasek
+ * zamiast pełnego Menu 2/3). ŚWIADOMA DECYZJA, ponownie oceniona i potwierdzona
+ * AGT-015 §6 D3 (2026-07-28) — uzasadnienie przy `renderBulkBar` niżej.
  */
 import {
   FileStack,
@@ -115,6 +115,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { FolderCreateDialog } from '@/components/shared/FolderCreateDialog';
 import { useHubBarSlot } from '@/components/shared/HubBarSlots';
 import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import type { OpenDocument } from '@/components/shared/ModuleHub/types';
@@ -388,6 +389,10 @@ export const AgentHubShell: React.FC = () => {
   const [projectMemberships, setProjectMemberships] = useState<Array<{ id: string; name: string }>>(
     []
   );
+  // AGT-015 §6 D4 — dialog tworzenia folderu (zastępuje sekwencję window.prompt).
+  const [folderDialogOpen, setFolderDialogOpen] = useState(false);
+  const [folderDialogBusy, setFolderDialogBusy] = useState(false);
+  const [folderDialogError, setFolderDialogError] = useState<string | null>(null);
 
   useEffect(() => {
     Api.getMyProjectMemberships()
@@ -429,61 +434,51 @@ export const AgentHubShell: React.FC = () => {
   /**
    * Nowy folder — poziom wybierany PRZY TWORZENIU (dziedziczy go na stałe,
    * jak Vault). W przeciwieństwie do Vault (poziom narzucony przez sejf, w
-   * którym stoisz) Run agent jest JEDNĄ płaską listą, więc pytamy wprost —
-   * lekki wzorzec `window.prompt` (spójny z resztą ekranu — rename/usuń
-   * folderu w Vault też idą przez prompt/confirm, nie modal).
+   * którym stoisz) Run agent jest JEDNĄ płaską listą, więc pytamy wprost.
+   *
+   * AGT-015 §6 D4 (odbiór, 2026-07-28): sekwencja `window.prompt` → poziom
+   * cyfrą 1/2/3 → wybór projektu NUMEREM z listy zastąpiona wspólnym
+   * `FolderCreateDialog` (`src/components/shared/FolderCreateDialog.tsx`,
+   * dzieli komponent z `VaultDocumentsView.handleCreateFolder`). API
+   * backendu (`createAgentFolder({ name, scope, projectId })`) NIEZMIENIONE.
    */
-  const handleCreateFolder = useCallback(async () => {
-    const name = window
-      .prompt(t('agentPlan.hub.folders.namePrompt', isPolish ? 'Nazwa folderu' : 'Folder name'))
-      ?.trim();
-    if (!name) return;
+  const handleCreateFolder = useCallback(() => {
+    setFolderDialogError(null);
+    setFolderDialogOpen(true);
+  }, []);
 
-    const levelPrompt = isPolish
-      ? 'Poziom folderu:\n1 = Prywatny (tylko ja)\n2 = Projektowy (zespół projektu)\n3 = Organizacyjny (cała firma)'
-      : 'Folder level:\n1 = Private (me only)\n2 = Project (project team)\n3 = Organization (whole company)';
-    const levelRaw = window.prompt(levelPrompt, '1')?.trim();
-    const level = levelRaw === '2' ? 'project' : levelRaw === '3' ? 'organization' : 'user';
-
-    let projectId: string | undefined;
-    if (level === 'project') {
-      if (projectMemberships.length === 0) {
-        window.alert(
-          isPolish
-            ? 'Nie należysz do żadnego projektu — folder projektowy nie jest możliwy.'
-            : 'You are not a member of any project — a project folder is not possible.'
+  const handleFolderDialogSubmit = useCallback(
+    async (input: {
+      name: string;
+      scope: 'user' | 'project' | 'organization';
+      projectId?: string;
+    }) => {
+      setFolderDialogBusy(true);
+      setFolderDialogError(null);
+      try {
+        const created = await createAgentFolder({
+          name: input.name,
+          scope: input.scope,
+          projectId: input.projectId,
+        });
+        setFolders((prev) => [...prev, created]);
+        setFoldersAvailable(true);
+        setFolderDialogOpen(false);
+      } catch (error) {
+        setFolderDialogError(
+          error instanceof Error
+            ? error.message
+            : t(
+                'agentPlan.hub.folders.createFailed',
+                isPolish ? 'Nie udało się utworzyć folderu' : 'Failed to create folder'
+              )
         );
-        return;
+      } finally {
+        setFolderDialogBusy(false);
       }
-      if (projectMemberships.length === 1) {
-        projectId = projectMemberships[0].id;
-      } else {
-        const list = projectMemberships.map((p, i) => `${i + 1}. ${p.name}`).join('\n');
-        const choice = window.prompt(
-          (isPolish ? 'Wybierz projekt (numer):\n' : 'Choose a project (number):\n') + list,
-          '1'
-        );
-        const idx = Number(choice) - 1;
-        projectId = projectMemberships[idx]?.id;
-        if (!projectId) return;
-      }
-    }
-
-    try {
-      const created = await createAgentFolder({ name, scope: level, projectId });
-      setFolders((prev) => [...prev, created]);
-      setFoldersAvailable(true);
-    } catch (error) {
-      window.alert(
-        error instanceof Error
-          ? error.message
-          : t(
-              'agentPlan.hub.folders.createFailed',
-              isPolish ? 'Nie udało się utworzyć folderu' : 'Failed to create folder'
-            )
-      );
-    }
-  }, [t, isPolish, projectMemberships]);
+    },
+    [t, isPolish]
+  );
 
   const handleDeleteFolder = useCallback(
     async (folderId: string) => {
@@ -896,10 +891,23 @@ export const AgentHubShell: React.FC = () => {
    * HubBarSlots). `StandardModuleBar.bulk` renderował ten pasek jako Menu 3
    * WEWNĄTRZ własnego `ModuleNavBar` — teraz, gdy hub (MyWorkHub) rysuje
    * JEDYNE Menu 2/3, nie ma gdzie go doczepić bez rozbudowy kontraktu
-   * `HubBarSlotValue` o osobny `bulk` slot (poza zakresem tego zadania —
-   * zgłoszone w raporcie). Zamiast fasady dublujemy TYLKO wygląd (te same
-   * klasy `MENU_3_*`/`Menu3Chip` co `StandardModuleBar.bulkContent`) i
-   * renderujemy go bezpośrednio nad tabelą.
+   * `HubBarSlotValue` o osobny `bulk` slot. Zamiast fasady dublujemy TYLKO
+   * wygląd (te same klasy `MENU_3_*`/`Menu3Chip` co
+   * `StandardModuleBar.bulkContent`) i renderujemy go bezpośrednio nad
+   * tabelą.
+   *
+   * ★ AGT-015 §6 D3 (2026-07-28, ponowna ocena — ŚWIADOMA DECYZJA, nie
+   * przeoczenie): sprawdzone, czy warto wciągnąć ten pasek do
+   * `HubBarSlotValue`. NIE — z trzech powodów: (1) pasek pojawia się TYLKO
+   * warunkowo (selectedPlanIds.size > 0) i wyłącznie dla jednej tabeli
+   * ("Moje procesy"), więc byłby jedynym opcjonalnym/warunkowym polem w
+   * kontrakcie slotu, dziś w całości bezwarunkowym; (2) slot renderuje się w
+   * Menu 2/3 huba, NAD `renderDynamicTabs()`/kartami otwartych obiektów —
+   * odrywałby pasek bulk wizualnie od tabeli, do której się odnosi (dziś
+   * siedzi BEZPOŚREDNIO nad `TableWithPreviewLayout`, linia niżej —
+   * `renderBulkBar()` tuż przed nią); (3) jedyny inny caller `HubBarSlots`
+   * (`VaultDocumentsView`) nie ma bulk bara wcale — rozbudowa kontraktu pod
+   * JEDNEGO konsumenta to spekulacyjna generalizacja. Zostaje lokalnie.
    */
   const renderBulkBar = () => {
     if (tab !== 'processes' || activeItemId || selectedPlanIds.size === 0) return null;
@@ -991,7 +999,11 @@ export const AgentHubShell: React.FC = () => {
               : 'Start the classic consulting process or pick a ready-made agent from Templates.'
           )}
           primaryAction={{
-            label: t('agentPlan.hub.newProcess', isPolish ? 'Nowy proces' : 'New process'),
+            // AGT-015 §6 D2 (Piotr: nazwa CTA = „Nowy agent"/"New agent"): ten
+            // ekran wołał osobny klucz `newProcess` ("Nowy proces") — rozjazd
+            // z CTA Menu 2 (`primaryCtaValue` wyżej), które już miało
+            // `newAgent`. Ujednolicone na WSPÓLNY klucz.
+            label: t('agentPlan.hub.newAgent', isPolish ? 'Nowy agent' : 'New agent'),
             onClick: () => void handleNewProcess(),
           }}
           className="h-full"
@@ -1470,11 +1482,18 @@ export const AgentHubShell: React.FC = () => {
   const primaryCtaValue = useMemo(() => {
     if (tab !== 'processes' || activeItemId) return null;
     return {
-      // Piotr: zmiana nazwy z „Nowy proces" na „Nowy agent" (nowy klucz
-      // i18n — `newProcess` zostaje tylko w empty-state CTA poniżej).
+      // Piotr: zmiana nazwy z „Nowy proces" na „Nowy agent" — TERAZ jedyny
+      // klucz w tym pliku (AGT-015 §6 D2: empty-state poniżej ujednolicony
+      // na ten sam klucz, `newProcess` usunięty).
       label: creating
         ? t('agentPlan.hub.newProcessLoading', isPolish ? 'Tworzenie…' : 'Creating…')
         : t('agentPlan.hub.newAgent', isPolish ? 'Nowy agent' : 'New agent'),
+      // AGT-015 §6 D1: ikona CTA — przywrócona z przedmigracyjnej wersji tego
+      // ekranu (`StandardModuleBar.primaryCta.icon = PlayCircle`, patrz
+      // commit 401ea601c1^), zgubiona gdy ekran przeszedł na `HubBarSlots`
+      // (kontrakt slotu wtedy nie niósł ikony — teraz niesie, patrz
+      // `HubBarSlots.tsx`).
+      icon: PlayCircle,
       onClick: () => void handleNewProcess(),
       disabled: creating,
       testId: 'agent-hub-new-agent',
@@ -1517,6 +1536,20 @@ export const AgentHubShell: React.FC = () => {
           renderTemplates()
         )}
       </div>
+
+      {/* AGT-015 §6 D4 — dialog "Nowy folder" (zastępuje window.prompt). */}
+      <FolderCreateDialog
+        open={folderDialogOpen}
+        onClose={() => {
+          if (folderDialogBusy) return;
+          setFolderDialogOpen(false);
+        }}
+        onSubmit={handleFolderDialogSubmit}
+        projects={projectMemberships}
+        busy={folderDialogBusy}
+        errorMessage={folderDialogError}
+        title={t('agentPlan.hub.folders.newFolder', isPolish ? 'Nowy folder…' : 'New folder…')}
+      />
     </div>
   );
 };
