@@ -24,7 +24,19 @@
  *   3. Brak daty to `—` (kanon C7), nie pusta komórka i nie `Invalid Date`.
  */
 
-import i18n from '@/i18n';
+/**
+ * Świadomie `i18next`, a NIE `@/i18n`.
+ *
+ * `@/i18n` to moduł INICJALIZUJĄCY: ciągnie `initReactI18next`, detektor języka
+ * i backend HTTP. Import stąd wciągał to wszystko do każdego komponentu, który
+ * formatuje datę — i wywalił cztery zestawy testów, które mockują
+ * `react-i18next` bez eksportu `initReactI18next` (m.in.
+ * `MyIdeasListContent.folders`, `apiGateway.stubRoutes.*`).
+ *
+ * `i18next` to sama instancja: `language` czyta się z niej tak samo, a nic się
+ * przy okazji nie inicjalizuje.
+ */
+import i18n from 'i18next';
 
 export const PUSTA_DATA = '—';
 

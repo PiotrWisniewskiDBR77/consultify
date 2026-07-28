@@ -83,13 +83,27 @@ Sedno było głębsze niż filtr: blok uniwersalny miał regułę „ZAWSZE obec
 disabled z notą" — i **to ona produkowała atrapy**, na które narzekałeś. Filtrowanie leczyło
 objaw. Naprawione u źródła: pozycja bez handlera i bez powodu w ogóle nie powstaje.
 
-**Stan suity — pomiar, nie deklaracja:**
-| | czerwone | zielone | pliki |
-|---|---|---|---|
-| `origin/demo` | 180 | 15547 | 75 |
-| ta gałąź | 179 | 15575 | 74 |
+**Stan suity — pomiar tym samym poleceniem po obu stronach** (`vitest run tests/unit/ tests/components/`):
 
-Dług jest **zastany**, a fala go netto zmniejsza.
+| | czerwone | zielone | pliki testowe |
+|---|---|---|---|
+| `origin/demo` | 434 | 17 821 | 2050 |
+| ta gałąź | **434** | **17 845** | 2056 |
+
+**Zero regresji** — liczba czerwonych identyczna. Fala dokłada **+24 zielone testy**
+w 6 nowych plikach-strażnikach. Dług 434 czerwonych jest w całości zastany.
+
+★ POPRAWKA MOJEGO WCZEŚNIEJSZEGO RAPORTU: napisałem najpierw „fala netto zmniejsza dług",
+opierając się na pomiarze samego `tests/unit/` (179 vs 180). Pełny zakres pokazał najpierw
+**+5 czerwonych plików** — czyli regresję, nie poprawę. Wniosek z wycinka o całości był błędny.
+Przyczyna regresji: `listDateFormat` importował `@/i18n`, moduł INICJALIZUJĄCY (ciągnie
+`initReactI18next`, detektor języka, backend HTTP), więc każdy komponent formatujący datę
+wciągał to za sobą i wywalał zestawy mockujące `react-i18next` bez tego eksportu
+(`MyIdeasListContent.folders`, 4× `apiGateway.stubRoutes`, `EarningsSection`).
+Naprawa: import `i18next` zamiast `@/i18n` — ta sama instancja, ten sam `language`,
+zero inicjalizacji przy okazji.
+
+
 
 ---
 
