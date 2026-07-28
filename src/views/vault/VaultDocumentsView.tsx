@@ -139,8 +139,11 @@ const STATUS_GROUP = (status: string): Exclude<StatusChipId, 'all'> => {
   return 'processing';
 };
 
+// Kształt 1:1 z pigułkami filtrów obok (Folder / Wszystkie / Zindeksowane…) —
+// uwaga Piotra 2026-07-28: w jednym rzędzie filtrów wszystkie kontrolki mają
+// mieć ten sam kształt, inaczej rząd wygląda na sklejony z dwóch systemów.
 const SELECT_CLASS =
-  'h-9 rounded-lg border border-c-border bg-c-surface px-3 text-sm text-c-text transition-colors ' +
+  'h-9 rounded-full border border-c-border bg-c-surface px-3.5 text-sm text-c-text transition-colors ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
 
 export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, onBack }) => {
@@ -809,7 +812,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
               isPolish ? 'Szukaj dokumentu…' : 'Search documents…'
             )}
             aria-label={t('vault.docs.colName', isPolish ? 'Nazwa' : 'Name')}
-            className="h-9 w-44 rounded-lg border border-c-border bg-c-surface pl-8 pr-3 text-sm text-c-text placeholder:text-c-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            className="h-9 w-44 rounded-full border border-c-border bg-c-surface pl-8 pr-3.5 text-sm text-c-text placeholder:text-c-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           />
         </div>
         <select
