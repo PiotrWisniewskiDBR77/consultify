@@ -238,6 +238,10 @@ import {
   updateDocumentContentBlock,
 } from '../services/documentStudio/documentContentBlockService.js';
 import {
+  applyOrgContextGrounding,
+  buildOrgContextSourcePack,
+} from '../services/documentStudio/documentOrgContextSourcePack.js';
+import {
   computeDocumentSchemaDiff,
   summarizeDocumentSchemaDiff,
 } from '../services/documentStudio/documentSchemaDiffService.js';
@@ -322,10 +326,6 @@ import {
   transitionDocumentStatus,
   updateDocumentManualContent,
 } from '../services/documentStudio/documentStudioService.js';
-import {
-  applyOrgContextGrounding,
-  buildOrgContextSourcePack,
-} from '../services/documentStudio/documentOrgContextSourcePack.js';
 import type {
   AudienceProfileAppendixPolicy,
   AudienceProfileExecutiveSummaryPolicy,
@@ -1105,6 +1105,21 @@ router.post(
     }
     const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
     const notes = typeof req.body?.notes === 'string' ? req.body.notes.trim() : undefined;
+    // Fala 2 (2026-07-28) — answers to the 3-5 clarifying questions the
+    // "Zrób z tego wzorzec" modal asks (see `CreateTemplateFromArtifactModal`
+    // client-side, and `CreateTemplateFromArtifactParams` doc comments for
+    // why each one can't be deduced mechanically).
+    const optionalSectionIds = Array.isArray(req.body?.optionalSectionIds)
+      ? req.body.optionalSectionIds.filter((id: unknown) => typeof id === 'string')
+      : undefined;
+    const dataRefreshHints = Array.isArray(req.body?.dataRefreshHints)
+      ? req.body.dataRefreshHints.filter((s: unknown) => typeof s === 'string')
+      : undefined;
+    const carryColorPattern = req.body?.carryColorPattern === false ? false : true;
+    const sensitiveContentNotes =
+      typeof req.body?.sensitiveContentNotes === 'string'
+        ? req.body.sensitiveContentNotes.trim()
+        : undefined;
 
     await ensureTemplateRegistryHydrated(organizationId);
     try {
@@ -1114,6 +1129,10 @@ router.post(
         schema,
         name: name || undefined,
         notes,
+        optionalSectionIds,
+        dataRefreshHints,
+        carryColorPattern,
+        sensitiveContentNotes,
       });
       res.status(201).json({ template: result.template });
     } catch (err) {
@@ -1275,11 +1294,7 @@ router.patch(
         });
       }
       const status =
-        message === 'template_not_found'
-          ? 404
-          : message === 'template_not_draft'
-            ? 409
-            : 400;
+        message === 'template_not_found' ? 404 : message === 'template_not_draft' ? 409 : 400;
       res.status(status).json({ error: message });
     }
   })

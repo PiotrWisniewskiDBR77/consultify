@@ -23965,7 +23965,33 @@
       "saveStatusSaved": "Saved automatically",
       "saveStatusConflict": "Save conflict — latest version was reloaded",
       "saveStatusError": "Save failed — try again",
-      "saveStatusDisabled": "No document to save yet"
+      "saveStatusDisabled": "No document to save yet",
+      "saveAsTemplate": "Save as template"
+    },
+    "createFromArtifact": {
+      "title": "Save as template",
+      "subtitle": "The structure is extracted automatically. What's left is only what can't be deduced from the document.",
+      "close": "Close",
+      "untitled": "Untitled document",
+      "nameLabel": "Template name",
+      "sectionsQuestion": "Does every section always appear in future documents?",
+      "sectionsHint": "Uncheck sections that only showed up in this document — the rest will be marked as required.",
+      "required": "always",
+      "optional": "sometimes",
+      "optionalHint": "(optional)",
+      "dataRefreshQuestion": "Which data should refresh every time (instead of staying as fixed text)?",
+      "dataRefreshPlaceholder": "One item per line, e.g. quarterly revenue, risk list",
+      "colorQuestion": "This document's colors",
+      "colorTogether": "Save together with the content (this template always looks the same)",
+      "colorSeparate": "Save separately — I'll pick colors each time I use it",
+      "colorSeparateHint": "This template will save with no colors — you can pick one now to reuse elsewhere, or do it later in the Template Architect.",
+      "sensitiveQuestion": "Is anything in this document specific only to this client that should be removed before others reuse it?",
+      "sensitivePlaceholder": "E.g. a client name in section X, a specific number in paragraph Y",
+      "cancel": "Cancel",
+      "submit": "Create template",
+      "submitBusy": "Creating…",
+      "success": "Template draft created: {{name}}",
+      "error": "Could not create the template"
     },
     "intakeForm": {
       "audiencePlaceholder": "e.g., CEO, CFO, Transformation Officer"

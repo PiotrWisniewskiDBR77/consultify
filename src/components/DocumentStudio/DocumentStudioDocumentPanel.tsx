@@ -75,6 +75,7 @@ import {
   requestDocumentStudioApproval,
   saveDocumentStudioManualContent,
 } from './api';
+import { CreateTemplateFromArtifactModal } from './CreateTemplateFromArtifactModal';
 import { DocumentCommentsPanel } from './DocumentCommentsPanel';
 import { DocumentExportSuccessNote } from './DocumentExportSuccessNote';
 import { DocumentSchemaDiffView } from './DocumentSchemaDiffView';
@@ -1715,6 +1716,9 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   // already uses elsewhere — see `handleSaveAs` below.
   const [savingAs, setSavingAs] = useState(false);
   const [saveAsError, setSaveAsError] = useState<string | null>(null);
+  // Fala 2 (2026-07-28) — "Zrób z tego wzorzec". See `DocumentStudioFileMenu`
+  // `onSaveAsTemplate` and `CreateTemplateFromArtifactModal`.
+  const [showSaveAsTemplateModal, setShowSaveAsTemplateModal] = useState(false);
   const [exporting, setExporting] = useState<'markdown' | 'docx' | 'pdf' | null>(null);
   const [exportNote, setExportNote] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -2533,6 +2537,24 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
 
   const canvas = (
     <div className="flex min-h-full flex-col">
+      {showSaveAsTemplateModal ? (
+        <CreateTemplateFromArtifactModal
+          artifactId={artifactId}
+          documentTitle={schema.title}
+          sections={schema.sections}
+          onClose={() => setShowSaveAsTemplateModal(false)}
+          onCreated={(template) => {
+            setShowSaveAsTemplateModal(false);
+            toast.success(
+              t(
+                'documentStudio.createFromArtifact.success',
+                'Utworzono szkic wzorca: {{name}}',
+                { name: template.name }
+              )
+            );
+          }}
+        />
+      ) : null}
       {generationWarnings.length > 0 && (
         <div className="px-6 pt-4">
           <DocumentGenerationWarningsChip warnings={generationWarnings} />
@@ -2828,6 +2850,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           saveStatus={autosaveStatus}
           onSaveAs={() => void handleSaveAs()}
           saveAsBusy={savingAs}
+          onSaveAsTemplate={() => setShowSaveAsTemplateModal(true)}
         />
       }
       topBarChips={topBarChips}

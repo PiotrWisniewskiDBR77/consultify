@@ -33,9 +33,11 @@ export function useBrandKitColors(): BrandKitColors | null {
     (async () => {
       try {
         const res = await Api.get('/presentations/brand-kit');
-        const kit = unwrap<{ primary_color?: string; secondary_color?: string; accent_color?: string } | null>(
-          res
-        );
+        const kit = unwrap<{
+          primary_color?: string;
+          secondary_color?: string;
+          accent_color?: string;
+        } | null>(res);
         if (cancelled || !kit || !kit.primary_color) return;
         setColors({
           primary: `#${kit.primary_color || '003A70'}`,

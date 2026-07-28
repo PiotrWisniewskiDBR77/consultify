@@ -4,5 +4,5 @@
  * just this Wizard. Re-exported here (same name, same props) so
  * `SetupStep.tsx` keeps working unchanged.
  */
-export { ColorPatternPicker as ColorSetGallery } from '@/components/shared/colorPatterns/ColorPatternPicker';
 export type { ColorPatternPickerProps as ColorSetGalleryProps } from '@/components/shared/colorPatterns/ColorPatternPicker';
+export { ColorPatternPicker as ColorSetGallery } from '@/components/shared/colorPatterns/ColorPatternPicker';

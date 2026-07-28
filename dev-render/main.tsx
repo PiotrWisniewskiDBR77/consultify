@@ -49,9 +49,10 @@ const DocumentStudioStreamingHonestyN3Screen = React.lazy(
 const DocumentStudioMenuPlikuScreen = React.lazy(
   () => import('./screens/document-studio-menu-pliku')
 );
-const MenuCanonSidebarCheckScreen = React.lazy(
-  () => import('./screens/menu-canon-sidebar-check')
+const DocumentStudioSaveAsTemplateScreen = React.lazy(
+  () => import('./screens/document-studio-save-as-template')
 );
+const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-canon-sidebar-check'));
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -271,6 +272,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DOCUMENT STUDIO — N19/N20 (2026-07-28): menu „Plik" (Nowy·Otwórz·Zapisz·Zapisz jako) + afordancje wyjścia (Start over / breadcrumb).',
     render: () => <DocumentStudioMenuPlikuScreen />,
+  },
+  'document-studio-save-as-template': {
+    label:
+      'DOCUMENT STUDIO — FALA 2 (2026-07-28): „Zrób z tego wzorzec" — Plik→Zrób z tego wzorzec→3-5 pytań doprecyzowujących→createTemplateFromArtifact.',
+    render: () => <DocumentStudioSaveAsTemplateScreen />,
   },
   'audyty-drd-report': {
     label:

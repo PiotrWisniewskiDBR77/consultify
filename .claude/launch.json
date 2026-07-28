@@ -84,6 +84,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3077", "--strictPort"],
       "port": 3077
+    },
+    {
+      "name": "fix-wzorce-kolory-ekstrakcja",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3082", "--strictPort"],
+      "port": 3082
     }
   ]
 }

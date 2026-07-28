@@ -328,7 +328,9 @@ export function draftTemplate(params: DraftTemplateParams): DraftTemplateResult 
 }
 
 /** Coarse block-count → length-hint heuristic for cloned sections (no word-count pass). */
-function lengthHintFromBlockCount(blockCount: number): TemplateSectionBlueprint['expectedLengthHint'] {
+function lengthHintFromBlockCount(
+  blockCount: number
+): TemplateSectionBlueprint['expectedLengthHint'] {
   if (blockCount <= 2) return 'short';
   if (blockCount <= 5) return 'medium';
   return 'long';
@@ -342,6 +344,46 @@ export interface CreateTemplateFromArtifactParams {
   /** Optional template name override; defaults to `${schema.title} (Copy)`. */
   name?: string;
   notes?: string;
+  /**
+   * Fala 2 (2026-07-28) — "Zrób z tego wzorzec" clarifying question #1
+   * ("Czy każda sekcja ma zawsze występować, czy niektóre są opcjonalne?").
+   * `sectionId`s the author marked as NOT always present. Everything the
+   * mechanical extraction CAN deduce (titles, order, level, length) stays
+   * automatic — this is the one thing it cannot: whether a section is a
+   * fixed fixture of the template or only showed up in this one instance.
+   * Unset/absent sectionIds default to `required: true` (unchanged from the
+   * pre-Fala-2 behaviour).
+   */
+  optionalSectionIds?: string[];
+  /**
+   * Clarifying question #2 ("Które dane mają się za każdym razem
+   * odświeżać?"). Free text, one item per line from the modal — appended to
+   * `notes` verbatim (never fabricated into fake per-section `dataNeeded`,
+   * which the mechanical extraction has no evidence for).
+   */
+  dataRefreshHints?: string[];
+  /**
+   * Clarifying question #3 ("Kolory razem z treścią, czy osobno?"). `true`
+   * (default) keeps `schema.formattingSchema` as-is, including any
+   * `colorTemplateId` the source document carried. `false` strips
+   * `colorTemplateId` so the new template has NO saved color pattern — the
+   * consultant then picks one explicitly per generation, or sets one later
+   * in the Template Architect (Fala 1's `ColorPatternPicker`). This is the
+   * literal N31 "można je nakładać, ale niekoniecznie" choice, applied at
+   * extraction time instead of only at generation time.
+   */
+  carryColorPattern?: boolean;
+  /**
+   * Clarifying question #4 ("Czy coś jest specyficzne tylko dla tego
+   * klienta i trzeba to usunąć?"). The mechanical extraction only copies
+   * section TITLES/purposes, never body content — so there is no
+   * automatic redaction to perform. This free text is instead surfaced
+   * prominently in `notes` (prefixed) so a human reviews it before
+   * approving the draft (templates are draft-until-approved regardless —
+   * this makes the review target obvious rather than silently trusting the
+   * extraction).
+   */
+  sensitiveContentNotes?: string;
 }
 
 /**
@@ -374,6 +416,13 @@ export function createTemplateFromArtifact(
   const category = categoryForDocumentType(documentType);
   const density: DocumentDensity = schema.density ?? 'standard';
 
+  // Fala 2 — question #1: everything else about the blueprint (titles,
+  // order, level, expectedLengthHint) is deduced mechanically; `required`
+  // is the one field a human must decide (default true, matching the
+  // pre-Fala-2 behaviour when no answer is given).
+  const optionalSectionIds = new Set(
+    Array.isArray(params.optionalSectionIds) ? params.optionalSectionIds : []
+  );
   const sourceSections = Array.isArray(schema.sections) ? schema.sections : [];
   const clonedBlueprint: TemplateSectionBlueprint[] = sourceSections
     .slice()
@@ -382,13 +431,44 @@ export function createTemplateFromArtifact(
       title: section.title,
       level: section.level,
       purpose: section.purpose?.trim() || section.title,
-      required: true,
+      required: !optionalSectionIds.has(section.sectionId),
       expectedLengthHint: lengthHintFromBlockCount(
         Array.isArray(section.blocks) ? section.blocks.length : 0
       ),
     }));
   const blueprint =
-    clonedBlueprint.length > 0 ? clonedBlueprint : deriveBlueprintFromDocumentType(documentType, density);
+    clonedBlueprint.length > 0
+      ? clonedBlueprint
+      : deriveBlueprintFromDocumentType(documentType, density);
+
+  // Fala 2 — question #3: "razem" (default) keeps formattingSchema as-is
+  // (including any colorTemplateId); "osobno" strips the pattern so the new
+  // template has none saved (see `CreateTemplateFromArtifactParams` doc).
+  const sourceFormattingSchema = schema.formattingSchema ?? {
+    ...DEFAULT_CONSULTING_FORMATTING_SCHEMA,
+  };
+  const formattingSchema =
+    params.carryColorPattern === false
+      ? { ...sourceFormattingSchema, colorTemplateId: undefined }
+      : sourceFormattingSchema;
+
+  // Fala 2 — questions #2/#4: no automatic per-section splitting or
+  // redaction is attempted (no evidence to base it on) — both are
+  // surfaced verbatim in `notes` so a human sees them before approving.
+  const noteParts: string[] = [];
+  if (params.notes?.trim()) noteParts.push(params.notes.trim());
+  else noteParts.push(`Cloned from artifact ${schema.artifactId || schema.documentId}`);
+  const dataRefreshHints = (params.dataRefreshHints || [])
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  if (dataRefreshHints.length > 0) {
+    noteParts.push(`Dane do odświeżania za każdym razem: ${dataRefreshHints.join('; ')}`);
+  }
+  if (params.sensitiveContentNotes?.trim()) {
+    noteParts.push(
+      `⚠ Do przejrzenia przed użyciem (treść specyficzna dla klienta): ${params.sensitiveContentNotes.trim()}`
+    );
+  }
 
   const now = nowIso();
   const template: DocumentTemplate = {
@@ -406,14 +486,14 @@ export function createTemplateFromArtifact(
     confidentiality: schema.confidentiality ?? defaultConfidentialityFor(category),
     requiredInputs: [],
     sectionBlueprint: blueprint,
-    formattingSchema: schema.formattingSchema ?? { ...DEFAULT_CONSULTING_FORMATTING_SCHEMA },
+    formattingSchema,
     exportRules: defaultExportRules(category),
     status: 'draft',
     version: '0.1',
     createdBy: params.userId,
     createdAt: now,
     updatedAt: now,
-    notes: params.notes?.trim() || `Cloned from artifact ${schema.artifactId || schema.documentId}`,
+    notes: noteParts.join(' | '),
   };
 
   registryStore.set(templateKey(params.organizationId, template.templateId), template);
@@ -425,7 +505,15 @@ export function createTemplateFromArtifact(
     action: 'template_drafted',
     actorId: params.userId,
     occurredAt: now,
-    details: { documentType, category, clonedFromArtifactId: schema.artifactId || null },
+    details: {
+      documentType,
+      category,
+      clonedFromArtifactId: schema.artifactId || null,
+      optionalSectionCount: optionalSectionIds.size,
+      carryColorPattern: params.carryColorPattern !== false,
+      hasDataRefreshHints: dataRefreshHints.length > 0,
+      hasSensitiveContentNotes: Boolean(params.sensitiveContentNotes?.trim()),
+    },
   });
   return { template };
 }
@@ -688,11 +776,10 @@ function sanitizeAuthoredSection(raw: unknown): TemplateSectionBlueprint {
         .slice(0, MAX_DATA_NEEDED_ITEMS)
     : [];
   if (dataNeeded.length > 0) section.dataNeeded = dataNeeded;
-  if (
-    typeof input.suggestedEvidence === 'string' &&
-    input.suggestedEvidence.trim().length > 0
-  ) {
-    section.suggestedEvidence = input.suggestedEvidence.trim().slice(0, MAX_SUGGESTED_EVIDENCE_CHARS);
+  if (typeof input.suggestedEvidence === 'string' && input.suggestedEvidence.trim().length > 0) {
+    section.suggestedEvidence = input.suggestedEvidence
+      .trim()
+      .slice(0, MAX_SUGGESTED_EVIDENCE_CHARS);
   }
   return section;
 }
@@ -705,18 +792,14 @@ function sanitizeAuthoredSection(raw: unknown): TemplateSectionBlueprint {
  * kept: draft-only (approved / deprecated templates are immutable), at least
  * one section, no blank titles, a sane upper bound.
  */
-export function reviseTemplateStructure(
-  params: ReviseTemplateStructureParams
-): DocumentTemplate {
+export function reviseTemplateStructure(params: ReviseTemplateStructureParams): DocumentTemplate {
   if (!params.organizationId) throw new Error('organizationId is required');
   if (!params.userId) throw new Error('userId is required');
   const template = getTemplate(params.templateId, params.organizationId);
   if (!template) throw new Error('template_not_found');
   // Only a draft that this tenant owns is editable. Never mutate the shared
   // system catalogue or an already-governed (approved/deprecated) record.
-  const ownedByTenant = registryStore.has(
-    templateKey(params.organizationId, params.templateId)
-  );
+  const ownedByTenant = registryStore.has(templateKey(params.organizationId, params.templateId));
   if (!ownedByTenant) throw new Error('template_not_found');
   if (template.status !== 'draft') throw new Error('template_not_draft');
   if (!Array.isArray(params.sections) || params.sections.length === 0) {

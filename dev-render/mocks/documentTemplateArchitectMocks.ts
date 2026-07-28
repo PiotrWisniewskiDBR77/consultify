@@ -59,7 +59,10 @@ const DRAFT_TEMPLATE = {
     section(
       'Streszczenie zarządcze',
       'Zwięzłe podsumowanie statusu i kluczowej decyzji.',
-      ['Zacznij od jednego zdania o ogólnym statusie programu', 'Wyróżnij decyzję wymaganą od komitetu'],
+      [
+        'Zacznij od jednego zdania o ogólnym statusie programu',
+        'Wyróżnij decyzję wymaganą od komitetu',
+      ],
       {
         level: 1,
         required: true,
@@ -79,18 +82,16 @@ const DRAFT_TEMPLATE = {
       ],
       { level: 1, required: true, expectedLengthHint: 'medium' }
     ),
-    section(
-      'Postęp wg obszarów',
-      'Skrócony status per obszar/strumień prac.',
-      undefined,
-      { level: 2, required: true, expectedLengthHint: 'short' }
-    ),
-    section(
-      'Ryzyka i problemy',
-      'Kluczowe ryzyka wymagające uwagi.',
-      undefined,
-      { level: 1, required: false, expectedLengthHint: 'medium' }
-    ),
+    section('Postęp wg obszarów', 'Skrócony status per obszar/strumień prac.', undefined, {
+      level: 2,
+      required: true,
+      expectedLengthHint: 'short',
+    }),
+    section('Ryzyka i problemy', 'Kluczowe ryzyka wymagające uwagi.', undefined, {
+      level: 1,
+      required: false,
+      expectedLengthHint: 'medium',
+    }),
     section(
       'Szczegóły ryzyka wysokiego priorytetu',
       'Rozwinięcie pojedynczego ryzyka, jeśli dotyczy.',
@@ -105,6 +106,10 @@ const DRAFT_TEMPLATE = {
     ),
   ],
   exportRules: { docx: true, pdf: true, markdown: true, approvalRequiredForExport: false },
+  // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31): Word never had a color
+  // pattern concept before; this seeds one so the picker's "selected" state
+  // is visible on load, not just after a click.
+  formattingSchema: { colorTemplateId: 'ocean' },
   status: 'draft',
   version: '0.1.0',
   createdBy: 'dev',
@@ -133,9 +138,18 @@ export function installDocumentTemplateArchitectFetchMock(): () => void {
       if (url.includes('/structure') && method !== 'GET') {
         const body = init?.body ? JSON.parse(String(init.body)) : {};
         const sections = body.sections || body.sectionBlueprint || DRAFT_TEMPLATE.sectionBlueprint;
+        // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31).
         templates = templates.map((t) =>
           t.templateId === DRAFT_TEMPLATE.templateId
-            ? { ...t, sectionBlueprint: sections, updatedAt: '2026-07-23T00:05:00.000Z' }
+            ? {
+                ...t,
+                sectionBlueprint: sections,
+                formattingSchema:
+                  'colorTemplateId' in body
+                    ? { ...t.formattingSchema, colorTemplateId: body.colorTemplateId ?? null }
+                    : t.formattingSchema,
+                updatedAt: '2026-07-23T00:05:00.000Z',
+              }
             : t
         );
         return json({ template: templates[0] });

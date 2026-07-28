@@ -25009,7 +25009,33 @@
       "saveStatusSaved": "Zapisano automatycznie",
       "saveStatusConflict": "Konflikt zapisu — pobrano najnowszą wersję",
       "saveStatusError": "Błąd zapisu — spróbuj ponownie",
-      "saveStatusDisabled": "Brak dokumentu do zapisania"
+      "saveStatusDisabled": "Brak dokumentu do zapisania",
+      "saveAsTemplate": "Zrób z tego wzorzec"
+    },
+    "createFromArtifact": {
+      "title": "Zrób z tego wzorzec",
+      "subtitle": "Strukturę wyciągamy automatycznie. Zostały tylko rzeczy, których nie da się wydedukować z dokumentu.",
+      "close": "Zamknij",
+      "untitled": "Dokument bez tytułu",
+      "nameLabel": "Nazwa wzorca",
+      "sectionsQuestion": "Czy każda sekcja ma zawsze występować w kolejnych dokumentach?",
+      "sectionsHint": "Odznacz sekcje, które pojawiły się tylko w tym dokumencie — reszta zostanie oznaczona jako obowiązkowa.",
+      "required": "zawsze",
+      "optional": "czasami",
+      "optionalHint": "(opcjonalnie)",
+      "dataRefreshQuestion": "Które dane mają się za każdym razem odświeżać (nie zostać jako stały tekst)?",
+      "dataRefreshPlaceholder": "Jedna pozycja na linię, np. przychód kwartalny, lista ryzyk",
+      "colorQuestion": "Kolory tego dokumentu",
+      "colorTogether": "Zapisz razem z treścią (ten wzorzec zawsze wygląda tak samo)",
+      "colorSeparate": "Zapisz osobno — kolory wybieram przy każdym użyciu",
+      "colorSeparateHint": "Ten wzorzec zapisze się bez kolorów — możesz od razu wybrać jeden do wykorzystania gdzie indziej, albo zrobić to później w Architekcie szablonów.",
+      "sensitiveQuestion": "Czy coś w tym dokumencie jest specyficzne tylko dla tego klienta i trzeba to usunąć przed użyciem przez innych?",
+      "sensitivePlaceholder": "Np. nazwa klienta w sekcji X, konkretna liczba w akapicie Y",
+      "cancel": "Anuluj",
+      "submit": "Utwórz wzorzec",
+      "submitBusy": "Tworzę…",
+      "success": "Utworzono szkic wzorca: {{name}}",
+      "error": "Nie udało się utworzyć wzorca"
     },
     "intakeForm": {
       "audiencePlaceholder": "np. CEO, CFO, Dyrektor ds. Transformacji"

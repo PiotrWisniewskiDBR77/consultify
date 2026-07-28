@@ -723,6 +723,46 @@ export async function planDocumentStudioTemplate(
   return { template: json.template, llmRefined: Boolean(json.llmRefined) };
 }
 
+/**
+ * Fala 2 (2026-07-28) — "Zrób z tego wzorzec" (ożywienie fantomu).
+ * `createTemplateFromArtifact` was complete server-side
+ * (`POST /templates/from-artifact/:artifactId`) since it shipped, but no
+ * client code called it — see
+ * `Harvard/wdrozenie-100/_SPEC_GENERATOR_TEMPLATOW_2026-07-28.md` Część 3.1.
+ * This is that missing caller, used by `CreateTemplateFromArtifactModal`.
+ */
+export interface CreateTemplateFromArtifactAnswers {
+  name?: string;
+  notes?: string;
+  /** sectionIds the author marked as NOT always present (question #1). */
+  optionalSectionIds?: string[];
+  /** One free-text item per line (question #2). */
+  dataRefreshHints?: string[];
+  /** `false` = save colors as a separate, reusable pattern (question #3). Default `true`. */
+  carryColorPattern?: boolean;
+  /** Free text — client-specific content to review before others reuse this (question #4). */
+  sensitiveContentNotes?: string;
+}
+
+export async function createDocumentStudioTemplateFromArtifact(
+  artifactId: string,
+  answers: CreateTemplateFromArtifactAnswers = {}
+): Promise<DocumentTemplate> {
+  const res = await fetchWithRetry(
+    `${BASE}/templates/from-artifact/${encodeURIComponent(artifactId)}`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(answers),
+    }
+  );
+  const json = await handleResponse<{ template: DocumentTemplate }>(
+    res,
+    'DocumentStudio create template from artifact'
+  );
+  return json.template;
+}
+
 export async function getDocumentStudioTemplate(templateId: string): Promise<DocumentTemplate> {
   const res = await fetchWithRetry(`${BASE}/templates/${encodeURIComponent(templateId)}`, {
     method: 'GET',

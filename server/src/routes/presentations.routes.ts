@@ -90,7 +90,6 @@ import {
 import { buildParityReportForDeck } from '../services/presentationExportParityService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
-import { mapOutlineBlueprintToDeckSlides } from '../services/presentationTemplateRuntimeService.js';
 import {
   type AlertSeverity,
   dispatchAlertsForTransition,
@@ -157,6 +156,7 @@ import {
   recordGovernanceEvent,
   type TemplateLifecycleState,
 } from '../services/presentationTemplateGovernanceService.js';
+import { mapOutlineBlueprintToDeckSlides } from '../services/presentationTemplateRuntimeService.js';
 import {
   comparePresetsByName,
   normalizePresetFilters,
@@ -1120,7 +1120,10 @@ router.post(
         actorId: userId,
         actorRole: (req as any).user?.role || null,
         reason: llmRefined ? 'Drafted by AI Template Architect' : 'Drafted (deterministic outline)',
-        metadata: { source: llmRefined ? 'ai_template_architect' : 'deterministic', purpose: input.purpose },
+        metadata: {
+          source: llmRefined ? 'ai_template_architect' : 'deterministic',
+          purpose: input.purpose,
+        },
       });
     } catch (governanceError) {
       logger.warn(

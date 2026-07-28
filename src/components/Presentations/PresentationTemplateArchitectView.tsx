@@ -25,14 +25,15 @@ import { ArrowDown, ArrowUp, Copy, Loader2, Plus, ShieldAlert, Trash2 } from 'lu
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { SlideSilhouette } from '@/components/Presentations/SlideSilhouette';
+import { ColorPatternPicker } from '@/components/shared/colorPatterns/ColorPatternPicker';
+import { useBrandKitColors } from '@/components/shared/colorPatterns/useBrandKitColors';
 import {
   FilterableTable,
   type FilterChip,
   type TableColumn,
   type TableRow,
 } from '@/components/shared/ModuleHub';
-import { ColorPatternPicker } from '@/components/shared/colorPatterns/ColorPatternPicker';
-import { useBrandKitColors } from '@/components/shared/colorPatterns/useBrandKitColors';
 import Button from '@/components/ui/primitives/Button';
 import {
   clonePresentationTemplate,
@@ -47,7 +48,6 @@ import {
   type PresentationTemplateOutlineItem,
   updatePresentationTemplate,
 } from '@/services/presentationTemplateArchitect';
-import { SlideSilhouette } from '@/components/Presentations/SlideSilhouette';
 
 const DECK_TYPE_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
   {
@@ -78,10 +78,22 @@ const DECK_TYPE_OPTIONS: { value: string; labelKey: string; fallback: string }[]
 ];
 
 const AUDIENCE_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
-  { value: 'executive', labelKey: 'presentations.templates.audience.executive', fallback: 'Executive' },
+  {
+    value: 'executive',
+    labelKey: 'presentations.templates.audience.executive',
+    fallback: 'Executive',
+  },
   { value: 'sponsor', labelKey: 'presentations.templates.audience.sponsor', fallback: 'Sponsor' },
-  { value: 'investor', labelKey: 'presentations.templates.audience.investor', fallback: 'Investor / VC' },
-  { value: 'internal', labelKey: 'presentations.templates.audience.internal', fallback: 'Internal Team' },
+  {
+    value: 'investor',
+    labelKey: 'presentations.templates.audience.investor',
+    fallback: 'Investor / VC',
+  },
+  {
+    value: 'internal',
+    labelKey: 'presentations.templates.audience.internal',
+    fallback: 'Internal Team',
+  },
 ];
 
 const GOAL_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
@@ -136,9 +148,9 @@ export interface PresentationTemplateArchitectViewProps {
   onTemplateSaved?: (template: PresentationTemplate) => void;
 }
 
-export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArchitectViewProps> = ({
-  onTemplateSaved,
-}) => {
+export const PresentationTemplateArchitectView: React.FC<
+  PresentationTemplateArchitectViewProps
+> = ({ onTemplateSaved }) => {
   const { t } = useTranslation();
   const intentLabel = useIntentLabel(t);
 
@@ -576,8 +588,12 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
               onChange={(e) => setLanguage(e.target.value as 'pl' | 'en')}
               className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             >
-              <option value="pl">{t('presentations.templateArchitect.langPolish', 'Polish')}</option>
-              <option value="en">{t('presentations.templateArchitect.langEnglish', 'English')}</option>
+              <option value="pl">
+                {t('presentations.templateArchitect.langPolish', 'Polish')}
+              </option>
+              <option value="en">
+                {t('presentations.templateArchitect.langEnglish', 'English')}
+              </option>
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -629,7 +645,11 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
                     )
                   : null}
             </div>
-            <Button type="submit" variant="primary" disabled={drafting || purpose.trim().length < 8}>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={drafting || purpose.trim().length < 8}
+            >
               {drafting ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />{' '}
@@ -661,7 +681,12 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
           <h3 className="text-sm font-semibold text-c-text">
             {t('presentations.templateArchitect.registryHeading', 'Template registry')}
           </h3>
-          <Button type="button" variant="secondary" onClick={() => void refresh()} disabled={loadingList}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => void refresh()}
+            disabled={loadingList}
+          >
             {loadingList
               ? t('presentations.templateArchitect.refreshing', 'Refreshing…')
               : t('presentations.templateArchitect.refresh', 'Refresh')}
@@ -705,7 +730,10 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
                       ) : (
                         <Trash2 className="h-3.5 w-3.5" />
                       )}
-                      {t('presentations.templateArchitect.deprecateTemplate', 'Withdraw / delete draft')}
+                      {t(
+                        'presentations.templateArchitect.deprecateTemplate',
+                        'Withdraw / delete draft'
+                      )}
                     </span>
                   </Button>
                 ) : (
@@ -880,7 +908,8 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
 
             <div className="mt-4">
               <div className="text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
-                {t('presentations.templateArchitect.slidesHeading', 'Slides')} ({editOutline.length})
+                {t('presentations.templateArchitect.slidesHeading', 'Slides')} ({editOutline.length}
+                )
               </div>
               <ol className="mt-2 space-y-2">
                 {editOutline.map((slide, idx) => (
@@ -935,7 +964,10 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
                               type="button"
                               onClick={() => handleOutlineRemove(idx)}
                               disabled={!isEditable}
-                              title={t('presentations.templateArchitect.removeSlide', 'Remove slide')}
+                              title={t(
+                                'presentations.templateArchitect.removeSlide',
+                                'Remove slide'
+                              )}
                               className="rounded p-1 text-danger-600 hover:bg-danger-500/10 disabled:opacity-30 dark:text-danger-400"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -977,7 +1009,10 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
                             </label>
                             <label className="block">
                               <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
-                                {t('presentations.templateArchitect.dataNeeded', 'Dane do zebrania')}
+                                {t(
+                                  'presentations.templateArchitect.dataNeeded',
+                                  'Dane do zebrania'
+                                )}
                               </span>
                               <textarea
                                 value={(slide.dataNeeded ?? []).join('\n')}
@@ -1011,7 +1046,9 @@ export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArc
                               />
                             </label>
                           </div>
-                        ) : slide.keyMessage || slide.dataNeeded?.length || slide.suggestedVisual ? (
+                        ) : slide.keyMessage ||
+                          slide.dataNeeded?.length ||
+                          slide.suggestedVisual ? (
                           <div className="mt-1.5 space-y-1 pl-7">
                             {slide.keyMessage ? (
                               <div>
