@@ -10,14 +10,22 @@
  * i zapis komórki na serwer (`PATCH /api/workbook/:id/cell`).
  *
  * Wzorowana 1:1 na `src/utils/exceleFlag.ts` (ta sama kolejność źródeł, ta sama
- * semantyka kill-switcha) — zgodnie z regułą projektu #7: „nic wizualnego nie
- * wchodzi domyślnie bez akceptu Piotra na czystym zrzucie".
+ * semantyka kill-switcha).
+ *
+ * ZMIANA DOMYŚLNEJ (2026-07-28, zlecenie Piotra — "jeden Excel na każdej
+ * ścieżce, bez flag w adresie"): oba widoki arkusza (parametric-templates i
+ * KimiWorkspaceShell reopen) zostały zweryfikowane wzrokiem na produkcji —
+ * edycja działa, przeliczanie formuł działa, zapis działa. Odstępstwo od
+ * reguły #7 ("nic domyślnie bez akceptu") jest ŚWIADOME i zlecone wprost:
+ * właściciel przestaje musieć sklejać `?ff_excele_edit=1` ręcznie. Kill-switch
+ * `?ff_excele_edit=0` / `localStorage["ff.excele.edit"]=false` działa dalej
+ * bez zmian.
  *
  * Kolejność (wygrywa najwyższe):
  *   1. URL query `?ff_excele_edit=0|1` — bypass operatora / dev / dev-render.
  *   2. `localStorage["ff.excele.edit"]` — override user / org.
  *   3. `import.meta.env.VITE_EXCELE_EDIT_ENABLED` — build-time.
- *   4. Default: OFF (jeszcze niezaakceptowane wizualnie).
+ *   4. Default: ON (2026-07-28) — env jawnie nieustawione = ON.
  */
 
 const LS_KEY = 'ff.excele.edit';
@@ -36,9 +44,10 @@ function readEnvFlag(): boolean {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    return parsed === null ? false : parsed;
+    // Default ON (2026-07-28) — env jawnie nieustawione = ON, patrz nagłówek pliku.
+    return parsed === null ? true : parsed;
   } catch {
-    return false;
+    return true;
   }
 }
 

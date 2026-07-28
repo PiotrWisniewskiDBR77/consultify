@@ -25,13 +25,17 @@
  * `KimiWorkspaceShell` (pipeline 8 kroków, Powtórz/Remix, pasek plików na
  * dole) NIE jest ruszany — zmienia się WYŁĄCZNIE zawartość `rightPanel`.
  *
+ * ZMIANA DOMYŚLNEJ (2026-07-28, zlecenie Piotra — "jeden Excel na każdej
+ * ścieżce, bez flag w adresie"): szyna ikon zweryfikowana wzrokiem na
+ * produkcji obok arkusza ze ścieżki B (edytowalnej). Odstępstwo od reguły #7
+ * jest ŚWIADOME i zlecone wprost. Kill-switch `?ff_excele_right_rail=0` /
+ * `localStorage["ff.excele.right_rail"]=false` działa dalej bez zmian.
+ *
  * Kolejność (wygrywa najwyższe):
  *   1. URL query `?ff_excele_right_rail=0|1` — bypass operatora / dev / dev-render.
  *   2. `localStorage["ff.excele.right_rail"]` — override user / org.
  *   3. `import.meta.env.VITE_EXCELE_RIGHT_RAIL_ENABLED` — build-time.
- *   4. Default: OFF — jeszcze niezaakceptowane wizualnie przez Piotra
- *      (reguła projektu #7: żaden re-skin nie wchodzi domyślnie bez akceptu
- *      na czystym zrzucie z harnessu).
+ *   4. Default: ON (2026-07-28) — env jawnie nieustawione = ON.
  */
 
 const LS_KEY = 'ff.excele.right_rail';
@@ -50,11 +54,11 @@ function readEnvFlag(): boolean {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    // Default OFF — re-skin nigdy nie jest domyślnie ON bez akceptu Piotra
-    // na czystym zrzucie (reguła #7/#9 CLAUDE.md).
-    return parsed === null ? false : parsed;
+    // Default ON (2026-07-28) — patrz nagłówek pliku (zlecenie Piotra, akcept
+    // na żywej weryfikacji, odstępstwo świadome od reguły #7/#9).
+    return parsed === null ? true : parsed;
   } catch {
-    return false;
+    return true;
   }
 }
 
