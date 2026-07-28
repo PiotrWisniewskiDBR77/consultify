@@ -68,6 +68,61 @@ describe('presentationAgentEditService', () => {
     expect(result.appliedActions.some((a) => a.toLowerCase().includes('brand'))).toBe(true);
   });
 
+  it('skips locked cards on a global edit and reports them by 1-based slide number', () => {
+    const deck = {
+      deck_id: 'deck-locked-1',
+      title: 'Deck',
+      cards: [
+        {
+          card_id: 'c1',
+          intent: 'key_messages',
+          title: 'Unlocked slide',
+          is_locked: false,
+          blocks: [{ content: { text: 'A very long paragraph that should get trimmed down.' } }],
+        },
+        {
+          card_id: 'c2',
+          intent: 'key_messages',
+          title: 'Locked slide',
+          is_locked: true,
+          blocks: [{ content: { text: 'A manually protected paragraph that must survive.' } }],
+        },
+      ],
+    };
+    const prompt = 'Make this concise';
+    const plan = parsePresentationEditIntent(prompt);
+    const result = applyPresentationEditPlan({ deck, prompt, isPolish: false, plan });
+
+    expect(result.skippedLockedSlides).toEqual([2]);
+    expect(result.deck.cards[0].blocks[0].content.text.length).toBeLessThanOrEqual(180);
+    expect(result.deck.cards[1].blocks[0].content.text).toBe(
+      'A manually protected paragraph that must survive.'
+    );
+  });
+
+  it('does NOT skip a locked card when the prompt explicitly names its slide number', () => {
+    const deck = {
+      deck_id: 'deck-locked-2',
+      title: 'Deck',
+      cards: [
+        { card_id: 'c1', intent: 'key_messages', title: 'A', is_locked: false, blocks: [] },
+        {
+          card_id: 'c2',
+          intent: 'key_messages',
+          title: 'B',
+          is_locked: true,
+          blocks: [{ content: { text: 'Long enough text that concise mode would slice down.' } }],
+        },
+      ],
+    };
+    const prompt = 'Skróć slajd 2';
+    const plan = parsePresentationEditIntent(prompt);
+    expect(plan.scope).toBe('slide');
+    const result = applyPresentationEditPlan({ deck, prompt, isPolish: true, plan });
+
+    expect(result.skippedLockedSlides).toEqual([]);
+  });
+
   it('applies KS compliance ensuring required intents', () => {
     const deck = {
       deck_id: 'deck-ks-1',
