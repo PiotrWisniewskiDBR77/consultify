@@ -90,7 +90,18 @@ interface RowActionsMenuProps {
  *     `Safes are automatic — cannot be deleted`) → ZOSTAJE wyłączone z powodem,
  *     bo uczy użytkownika reguły produktu zamiast go oszukiwać.
  */
-const ATRAPA_WZORZEC = /coming soon|wkrótce|wkrotce/i;
+/**
+ * Uwaga na `\b…\b` i samotne „soon".
+ *
+ * Pierwsza wersja (2026-07-28 rano) szukała wyłącznie `coming soon` / `wkrótce`.
+ * Przegląd 74 zrzutów pokazał, że kebab Idei nadal ma pozycję **`Table  soon`** —
+ * bo etykieta jest podana jako `rightLabel: 'soon'` (samo słowo, bez „coming").
+ * To ta sama atrapa, tylko krócej podpisana, więc wzorzec musi łapać oba zapisy.
+ *
+ * `\b` po obu stronach chroni przed trafieniem w wyrazy zawierające te litery
+ * (np. „Soonergy" jako nazwa własna) — dopasowanie tylko na całe słowo.
+ */
+const ATRAPA_WZORZEC = /\b(coming\s+soon|soon|wkrótce|wkrotce)\b/i;
 
 export function czyAtrapa(action: Pick<RowAction, 'disabled' | 'description' | 'rightLabel'>) {
   if (!action.disabled) return false;

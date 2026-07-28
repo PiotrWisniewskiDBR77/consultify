@@ -117,6 +117,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { isM03InboxStandardTableEnabled } from '@/utils/m03InboxStandardTableFlag';
+import { formatListDate } from '@/utils/listDateFormat';
 
 export type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
 export type InboxItemType =
@@ -793,10 +794,9 @@ const formatRelativeTime = (
   else if (diffHours < 24) text = isPolish ? `${diffHours} godz. temu` : `${diffHours}h ago`;
   else if (diffDays < 7) text = isPolish ? `${diffDays} d temu` : `${diffDays}d ago`;
   else
-    text = d.toLocaleDateString(i18n.t('myWork.inboxContent.dToLocaleDateString', 'en-US'), {
-      month: 'short',
-      day: 'numeric',
-    });
+    // G1-1 (przeglad 2, 2026-07-28): kolumna RECEIVED pokazywala „Apr 20" —
+    // angielski skrot mimo polskiego UI. Wspolny formatter daje DD/MM/YYYY.
+    text = formatListDate(d);
 
   let agingLevel: 'fresh' | 'warm' | 'hot' | 'critical';
   if (diffHours < 4) agingLevel = 'fresh';

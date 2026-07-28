@@ -848,7 +848,7 @@ export const FinanceHub: React.FC = () => {
                 : 'DRAFT',
           statementType: 'PACK',
           statementPackId: String(statement.id),
-          entityName: String(statement.entity_name || ''),
+          entityName: sanitizeStatementTitle(statement.entity_name),
           // Ten sam powod co przy `periodLabel` — oba trafiaja do kolumny
           // PERIOD jako zapasowy zapis `start → koniec`.
           periodStart: sanitizeStatementTitle(statement.period_start),
@@ -3082,10 +3082,10 @@ export const FinanceHub: React.FC = () => {
                   : 'DRAFT',
             statementType: 'PACK',
             statementPackId: String(pack.id),
-            entityName: String(pack.entity_name || ''),
-            periodStart: String(pack.period_start || ''),
-            periodEnd: String(pack.period_end || ''),
-            periodLabel: String(pack.period_label || ''),
+            entityName: sanitizeStatementTitle(pack.entity_name),
+            periodStart: sanitizeStatementTitle(pack.period_start),
+            periodEnd: sanitizeStatementTitle(pack.period_end),
+            periodLabel: sanitizeStatementTitle(pack.period_label),
             currency: String(pack.currency || 'PLN'),
             scaling: String(pack.scaling || 'units'),
             sourceFileName: '',

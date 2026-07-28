@@ -22,6 +22,21 @@ describe('czyAtrapa — rozróżnienie „nie ma" od „nie wolno"', () => {
     expect(czyAtrapa({ disabled: true, description: 'Wkrótce (backend)' })).toBe(true);
   });
 
+  it('łapie też SAMO „soon" w rightLabel — ten zapis mi umknął', () => {
+    /**
+     * Przegląd 74 zrzutów (2026-07-28): kebab Idei nadal pokazywał `Table  soon`,
+     * bo etykieta idzie jako `rightLabel: 'soon'` — samo słowo, bez „coming".
+     * Pierwsza wersja wzorca tego nie łapała.
+     */
+    expect(czyAtrapa({ disabled: true, rightLabel: 'soon' })).toBe(true);
+    expect(czyAtrapa({ disabled: true, rightLabel: 'wkrótce' })).toBe(true);
+  });
+
+  it('nie łapie słów, które tylko zawierają te litery', () => {
+    // `\b` chroni przed trafieniem w nazwy wlasne.
+    expect(czyAtrapa({ disabled: true, description: 'Soonergy integration' })).toBe(false);
+  });
+
   it('NIE uznaje za atrapę blokady z powodem merytorycznym', () => {
     // Te trzy komunikaty przeglad wskazal jako WZORCOWE — ucza reguly produktu.
     expect(czyAtrapa({ disabled: true, description: 'AI-generated — read-only' })).toBe(false);

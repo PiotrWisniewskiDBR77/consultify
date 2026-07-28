@@ -3,7 +3,9 @@ import {
   Archive,
   Bot,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
+  Copy,
   Edit2,
   ExternalLink,
   FileText,
@@ -539,6 +541,9 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
     );
   };
 
+  /* P-4: rozwijanie treści w bloku DETAILS (akcja kebaba ⋮). */
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
+
   const renderPreview = (idea: MyIdea) => {
     const resolvedStage = (idea.stage || 'spark') as IdeaStage;
     const stageMeta = getStageMeta(idea.stage);
@@ -595,7 +600,48 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
           ) : null}
         </PreviewMetaCard>
 
-        <PreviewDetailsSection text={detailsText} label={isPolish ? 'Szczegóły' : 'Details'}>
+        {/**
+         * P-4 (Piotr, OBR-07): „Nie ma tutaj tych kebabów/hamburgerów nad
+         * treścią, żeby uzupełniać czy tam przerabiać. Nie jest to dobre okno."
+         *
+         * Blok dostawał sam `text`, bez ani jednej akcji — a kebab ⋮ renderuje
+         * się dopiero, gdy jakaś jest (`hasMenu` w `PreviewDetailsSection`).
+         *
+         * Naprawiałem to raz, 2026-07-28 rano, ale w `MyIdeasListContent` —
+         * czyli w widoku KART. Tabelę i jej podgląd renderuje TEN plik, więc
+         * na ekranie nic się nie zmieniło. Stąd druga podejście, tym razem
+         * w komponencie, który Piotr faktycznie ogląda.
+         */}
+        <PreviewDetailsSection
+          text={detailsText}
+          label={isPolish ? 'Szczegóły' : 'Details'}
+          expanded={detailsExpanded}
+          onToggleExpanded={() => setDetailsExpanded((v) => !v)}
+          customActions={[
+            {
+              id: 'toggle',
+              label: detailsExpanded
+                ? isPolish
+                  ? 'Zwiń'
+                  : 'Collapse'
+                : isPolish
+                  ? 'Rozwiń'
+                  : 'Expand',
+              icon: ChevronDown,
+              onClick: () => setDetailsExpanded((v) => !v),
+            },
+            {
+              id: 'copy',
+              label: isPolish ? 'Kopiuj treść' : 'Copy content',
+              icon: Copy,
+              onClick: () => {
+                void navigator.clipboard?.writeText(
+                  [idea.title, idea.body].filter(Boolean).join('\n\n')
+                );
+              },
+            },
+          ]}
+        >
           {contextParts.length > 0 ? (
             <div className="mt-3 pt-3 border-t border-c-border-subtle">
               <div className="text-[11px] font-semibold text-c-text-muted uppercase tracking-wider mb-2">
@@ -620,13 +666,18 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
       ? ['Dlaczego pilne?', 'Plan działania', 'Kto może pomóc?']
       : ['Why urgent?', 'Action plan', 'Who can help?'];
 
+    /**
+     * PILNE-2 (przegląd 128 zrzutów, potwierdzone ponownie 2026-07-28):
+     * `Source: manual` renderowało się DWA RAZY — raz w bloku `CONTEXT`
+     * (`contextParts` w `renderPreview` wyżej), raz tutaj jako „relacja"
+     * nad `WHAT'S NEXT`. Ta sama informacja, dwa miejsca, kilkanaście pikseli
+     * od siebie.
+     *
+     * Zostaje wersja z `CONTEXT`, bo tam stoi razem z resztą metadanych mapy
+     * (Elementy / Nodes / Połączenia). Źródło NIE jest relacją do innej encji —
+     * blok relacji ma pokazywać powiązane obiekty, a nie skąd wpis pochodzi.
+     */
     const relationItems: RelationItem[] = [];
-    if (idea.sourceType) {
-      relationItems.push({
-        label: `${isPolish ? 'Źródło' : 'Source'}: ${idea.sourceType}`,
-        tone: 'text-c-text-secondary',
-      });
-    }
 
     // canon §7.3b — tylko dozwolone colorScheme; create-targety idą do „Co dalej" (§7.3a),
     // Usuń żyje w kebabie wiersza (strefa danger) — NIE duplikujemy go tu (§7.3 pkt 4).

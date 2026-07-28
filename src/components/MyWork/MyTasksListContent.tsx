@@ -89,6 +89,7 @@ import { Task } from '@/types';
 import { getArtifactPath } from '@/utils/artifactLinks';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { isM03TasksStandardTableEnabled } from '@/utils/m03TasksStandardTableFlag';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { BulkDatePicker, BulkPriorityPicker } from './shared/BulkEditPopovers';
@@ -287,7 +288,9 @@ const formatDueDate = (dueDate?: string | Date): string => {
 
   if (dateOnly.getTime() === today.getTime()) return 'Today';
   if (dateOnly.getTime() === tomorrow.getTime()) return 'Tomorrow';
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  // G1-1: fallback pokazywal „Feb 9" — angielski skrot. „Dzis"/„Jutro" wyzej
+  // zostaja, bo niosa wiecej niz data; reszta idzie wspolnym formatem.
+  return formatListDate(date);
 };
 
 const isOverdue = (dueDate?: string | Date, status?: string): boolean => {

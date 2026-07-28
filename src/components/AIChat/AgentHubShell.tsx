@@ -143,6 +143,7 @@ import { Segmented } from '@/components/TemplateBuilder/templateBuilderFields';
 import { EntityStatusChip, MetaChip, StatusChip } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 import { listAgentManifests } from '@/services/api/agentManifests.api';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 import {
   type AgentFolder,
   type AgentPlan,
@@ -177,11 +178,8 @@ interface TemplateRow {
 const formatPlanDate = (iso: string, isPolish: boolean): string => {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  // G1-1: kolumna DATE pokazywala „Jul 24, 2026".
+  return formatListDate(date);
 };
 
 /**
@@ -193,12 +191,8 @@ const formatPlanDateTime = (iso: string | undefined, isPolish: boolean): string 
   if (!iso) return '—';
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  // G1-1: harmonogram — data + godzina, wspolnym formatem.
+  return formatListDateTime(date);
 };
 
 /**
