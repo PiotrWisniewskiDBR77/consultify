@@ -30292,7 +30292,9 @@
         "startEnd": "Start/Koniec",
         "task": "Akcja (krok procesu)",
         "decision": "Decyzja",
-        "lane": "Tor (nowy tor odpowiedzialności)"
+        "lane": "Tor (nowy tor odpowiedzialności)",
+        "grid": "Siatka (pokaż kratkę pomocniczą na płótnie)",
+        "snap": "Przyciąganie (równaj przesuwane kroki do siatki)"
       },
       "tbl": {
         "addRow": "Nowy wiersz",
@@ -30304,7 +30306,9 @@
       "importExport": "Import / Eksport",
       "moreTools": "Więcej narzędzi",
       "undo": "Cofnij",
-      "redo": "Ponów"
+      "redo": "Ponów",
+      "toggleOn": "włączone",
+      "toggleOff": "wyłączone"
     },
     "documentToMap": {
       "addedIdeas": "Dodano {{count}} pomysłów z dokumentu",

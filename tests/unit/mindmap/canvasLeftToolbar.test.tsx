@@ -1,7 +1,7 @@
 /**
  * Tests for CanvasLeftToolbar: correct slots per activeTool, event dispatch.
  */
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -116,5 +116,53 @@ describe('CanvasLeftToolbar', () => {
     render(<CanvasLeftToolbar {...baseProps} onToolChange={onToolChange} />);
     fireEvent.click(screen.getByTestId('canvas-left-toolbar-switch-process_flow'));
     expect(onToolChange).toHaveBeenCalledWith('process_flow');
+  });
+
+  /**
+   * D2 (2026-07-28): siatka i przyciąganie przeniesione z bezpodpisowej nakładki
+   * nad płótnem Przepływu (zasłaniała pstryczek zwijania pierwszego toru) do
+   * tego raila. Strażnik pilnuje dwóch rzeczy naraz: że sloty w ogóle istnieją
+   * w Przepływie i że NIE wyciekają do pozostałych trzech reprezentacji, gdzie
+   * `pf_toggle_*` nie ma odbiornika (mechanizm `liveIn`).
+   */
+  it('Przepływ ma na railu pstryczki siatki i przyciągania', () => {
+    const onAction = vi.fn();
+    render(<CanvasLeftToolbar {...baseProps} activeTool="process_flow" onAction={onAction} />);
+    fireEvent.click(screen.getByTestId('canvas-left-toolbar-pf_grid'));
+    expect(onAction).toHaveBeenCalledWith('pf_toggle_grid');
+    fireEvent.click(screen.getByTestId('canvas-left-toolbar-pf_snap'));
+    expect(onAction).toHaveBeenCalledWith('pf_toggle_snap');
+  });
+
+  it.each(['mindmap', 'whiteboard', 'table'] as const)(
+    'siatka i przyciąganie nie pojawiają się w reprezentacji %s',
+    (tool) => {
+      render(<CanvasLeftToolbar {...baseProps} activeTool={tool} />);
+      expect(screen.queryByTestId('canvas-left-toolbar-pf_grid')).toBeNull();
+      expect(screen.queryByTestId('canvas-left-toolbar-pf_snap')).toBeNull();
+    }
+  );
+
+  it('pstryczek siatki pokazuje stan włączenia (aria-pressed)', () => {
+    render(<CanvasLeftToolbar {...baseProps} activeTool="process_flow" />);
+    // Domyślnie oba włączone (tak startuje IdeaProcessFlowTool)…
+    expect(screen.getByTestId('canvas-left-toolbar-pf_grid')).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    // …a stan przychodzi z płótna zdarzeniem, nie z klikania w rail.
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent('process-flow-grid-state', { detail: { showGrid: false, snap: true } })
+      );
+    });
+    expect(screen.getByTestId('canvas-left-toolbar-pf_grid')).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    );
+    expect(screen.getByTestId('canvas-left-toolbar-pf_snap')).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
   });
 });

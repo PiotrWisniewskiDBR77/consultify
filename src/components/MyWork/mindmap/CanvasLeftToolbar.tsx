@@ -5,10 +5,12 @@ import {
   Filter,
   Frame,
   GitBranch,
+  Grid3x3,
   Hand,
   LayoutGrid,
   LayoutTemplate,
   Link2,
+  Magnet,
   MessageSquare,
   MoreHorizontal,
   MousePointer2,
@@ -34,6 +36,10 @@ import {
   type IdeaCanvasCursorModeDetail,
 } from '../canvas/ideaCanvasCursorMode';
 import { FOCUS_RING } from '../canvas/motionTokens';
+import {
+  PROCESS_FLOW_GRID_STATE_EVENT,
+  type ProcessFlowGridStateDetail,
+} from '../canvas/processFlowGridState';
 import type {
   CanvasToolType,
   IdeaWorkspaceSelection,
@@ -116,6 +122,12 @@ interface ToolSlot {
   /** Powód wyłączenia (PL/EN) — tylko dla slotów z prawdziwą informacją dziedzinową. */
   offReasonPl?: string;
   offReasonEn?: string;
+  /**
+   * D2 (2026-07-28): slot jest PSTRYCZKIEM (wł./wył.), nie jednorazową akcją —
+   * rail musi pokazać, czy funkcja jest włączona, inaczej ikona jest ślepa.
+   * Stan przychodzi z reprezentacji zdarzeniem (patrz `canvas/processFlowGridState`).
+   */
+  toggle?: 'grid' | 'snap';
 }
 
 const SHARED_TOP: ToolSlot[] = [
@@ -338,6 +350,40 @@ const SHARED_BOTTOM: ToolSlot[] = [
     // `import` powyżej — ten slot znika (nie wyszarza się) poza Mapą myśli.
     liveIn: ['mindmap'],
   },
+  /**
+   * D2 (2026-07-28) — siatka i przyciąganie Przepływu. Wcześniej wisiały jako
+   * bezpodpisowa nakładka `absolute top-2 left-2` NAD płótnem Przepływu:
+   * właściciel nie wiedział, co robią, a nakładka zasłaniała pstryczek zwijania
+   * pierwszego toru (zmierzone `elementFromPoint`: 58/225 punktów pstryczka
+   * klikalnych). Decyzja właściciela: funkcja zostaje, miejsce się zmienia.
+   *
+   * Siedzą w SEKCJI DOLNEJ raila, bo to ustawienia WIDOKU płótna, nie
+   * elementy procesu (te są w `PF_CONTEXT_SLOTS`). `liveIn: ['process_flow']`
+   * plus `usunNieobslugiwaneSloty` (patrz `dolneSloty`) sprawia, że w Mapie
+   * myśli, na Tablicy i w Tabeli te sloty po prostu nie istnieją — żadna z tych
+   * reprezentacji nie ma odbiornika na `pf_toggle_*`, więc wyszarzenie byłoby
+   * atrapą (standard rozdz. 06 §2, decyzja Z3).
+   */
+  {
+    // `pf_` w id, bo Tabela ma własny slot `grid` (widok siatki) — testid
+    // `canvas-left-toolbar-grid` byłby wtedy dwuznaczny.
+    id: 'pf_grid',
+    icon: Grid3x3,
+    tkey: 'myWorkMindmap.toolbar.pf.grid',
+    labelEn: 'Grid (show the helper grid on the canvas)',
+    action: 'pf_toggle_grid',
+    liveIn: ['process_flow'],
+    toggle: 'grid',
+  },
+  {
+    id: 'pf_snap',
+    icon: Magnet,
+    tkey: 'myWorkMindmap.toolbar.pf.snap',
+    labelEn: 'Snap (align dragged steps to the grid)',
+    action: 'pf_toggle_snap',
+    liveIn: ['process_flow'],
+    toggle: 'snap',
+  },
 ];
 
 const UNDO_REDO_PREFIX: Record<CanvasToolType, string> = {
@@ -449,6 +495,33 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     return () => window.removeEventListener(IDEA_CANVAS_CURSOR_MODE_EVENT, handler);
   }, []);
 
+  /**
+   * D2 (2026-07-28): stan siatki/przyciągania Przepływu. Ta sama pętla co przy
+   * trybie kursora — rail wysyła `pf_toggle_*` w dół, Przepływ odsyła stan, jaki
+   * NAPRAWDĘ przyjął, a rail rysuje nim wygląd „włączone". Bez tego pstryczek
+   * byłby ślepy: użytkownik nie widziałby, czy siatka jest włączona.
+   * Wartości początkowe = domyślne Przepływu (`showGrid`/`snapToGridEnabled`
+   * startują jako `true` w IdeaProcessFlowTool), a pierwsze zdarzenie po
+   * zamontowaniu płótna i tak je potwierdza lub koryguje po hydracji.
+   */
+  const [gridState, setGridState] = useState<ProcessFlowGridStateDetail>({
+    showGrid: true,
+    snap: true,
+  });
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail as ProcessFlowGridStateDetail | undefined;
+      if (!detail || typeof detail.showGrid !== 'boolean' || typeof detail.snap !== 'boolean') {
+        return;
+      }
+      setGridState((prev) =>
+        prev.showGrid === detail.showGrid && prev.snap === detail.snap ? prev : { ...detail }
+      );
+    };
+    window.addEventListener(PROCESS_FLOW_GRID_STATE_EVENT, handler);
+    return () => window.removeEventListener(PROCESS_FLOW_GRID_STATE_EVENT, handler);
+  }, []);
+
   /** Tryb pokazywany na pstryczku: własny stan płótna tam, gdzie płótno go zgłasza. */
   const effectiveMode: MindMapInteractionMode | 'draw' =
     activeTool === 'whiteboard' || activeTool === 'process_flow'
@@ -509,6 +582,10 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
    */
   const usunNieobslugiwaneSloty = (slots: ToolSlot[]) =>
     slots.filter((sl) => !sl.liveIn || sl.liveIn.includes(activeTool));
+  // D2 (2026-07-28): filtr biegnie też po slotach kontekstowych. Dziś żaden z
+  // nich nie ma `liveIn` (każda reprezentacja dostaje własną listę), więc to
+  // zmiana zerowa — ale bez niej `liveIn` w sekcji kontekstowej byłoby cichą
+  // atrapą, gdyby ktoś je tam kiedyś dopisał.
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -731,11 +808,24 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     const Icon = slot.icon;
     const isModeSlot =
       activeTool === 'mindmap' && slot.id === 'connect' && interactionMode === 'connect';
+    // D2: pstryczek pokazuje stan włączenia (siatka/przyciąganie Przepływu).
+    const toggleOn =
+      slot.toggle == null
+        ? null
+        : slot.toggle === 'grid'
+          ? gridState.showGrid
+          : gridState.snap;
+    const baseTitle = t(slot.tkey, slot.labelEn);
     const slotTitle =
       activeTool === 'mindmap' && slot.id === 'connect' && interactionMode === 'connect'
         ? t('ideas.mindmap.finishConnectingReturnSelect', 'Finish connecting and return to select')
-        : t(slot.tkey, slot.labelEn);
-    const isActive = isModeSlot || (openPopover === slot.popover && slot.popover != null);
+        : toggleOn == null
+          ? baseTitle
+          : // Sam stan „wciśnięty" widać dopiero po najechaniu na sąsiada — w
+            // podpowiedzi mówimy go wprost, żeby nie trzeba było zgadywać.
+            `${baseTitle} — ${toggleOn ? t('myWorkMindmap.toolbar.toggleOn', 'on') : t('myWorkMindmap.toolbar.toggleOff', 'off')}`;
+    const isActive =
+      isModeSlot || (openPopover === slot.popover && slot.popover != null) || toggleOn === true;
     return (
       <div key={slot.id} className="relative">
         <button
@@ -747,6 +837,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           }}
           title={slotTitle}
           aria-label={slotTitle}
+          {...(toggleOn == null ? null : { 'aria-pressed': toggleOn })}
           className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${FOCUS_RING} ${
             isActive
               ? 'bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text'
@@ -889,7 +980,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
 
       <div className="w-5 border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
 
-      {contextSlots.map(renderSlot)}
+      {usunNieobslugiwaneSloty(contextSlots).map(renderSlot)}
 
       {dolneSloty.length > 0 && (
         <>

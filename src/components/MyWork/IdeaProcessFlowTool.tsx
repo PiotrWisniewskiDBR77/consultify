@@ -24,10 +24,8 @@ import {
   AlertTriangle,
   CheckCircle,
   GitMerge,
-  Grid3x3,
   Lightbulb,
   Loader2,
-  Magnet,
   Plus,
   X,
 } from 'lucide-react';
@@ -75,6 +73,7 @@ import {
   publishIdeaCanvasCursorMode,
 } from './canvas/ideaCanvasCursorMode';
 import { FOCUS_RING } from './canvas/motionTokens';
+import { publishProcessFlowGridState } from './canvas/processFlowGridState';
 import { useCanvasSnappingRef } from './canvas/useCanvasSnapping';
 import { formatIdeaMapSyncLabel, resolveIdeaMapHydration } from './canvas/useIdeaMapSync';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
@@ -2183,6 +2182,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       // Z1: tryb kursora z lewego raila — realnie przestawia płótno (niżej,
       // spread getIdeaCanvasCursorProps na <ReactFlow>).
       setCursorMode: (mode) => setCursorMode(mode),
+      // D2 2026-07-28: siatka i przyciąganie — te same dwie funkcje co przed
+      // przeprowadzką, tylko wołane teraz z lewego raila zamiast z nakładki
+      // zasłaniającej pstryczek toru.
+      toggleGrid: () => setShowGrid((prev) => !prev),
+      toggleSnap: () => setSnapToGridEnabled((prev) => !prev),
     },
     setters: {
       setFlowMode,
@@ -2197,6 +2201,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     if (!open) return;
     publishIdeaCanvasCursorMode('process_flow', cursorMode);
   }, [cursorMode, open]);
+
+  // D2 2026-07-28: to samo dla siatki/przyciągania — rail rysuje stan włączenia
+  // obu pstryczków, a stan mieszka tutaj (i wraca z hydracji, bug L-04).
+  useEffect(() => {
+    if (!open) return;
+    publishProcessFlowGridState({ showGrid, snap: snapToGridEnabled });
+  }, [open, showGrid, snapToGridEnabled]);
 
   // ── Accept ghost node → convert to real node ──────────────────────────
 
@@ -2970,40 +2981,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             />
           </div>
 
-          {/* M07 F5b B1: grid/snap toggle — real, user-controllable, and now
-              round-trips through hydration (bug L-04). Solid c-* tokens only
-              (no /alpha suffix — those don't emit rules for hex-valued c-*
-              tokens, see finding_c_token_alpha_colormix). */}
-          <div className="absolute top-2 left-2 z-20 flex items-center gap-0.5 rounded-xl border border-c-border dark:border-white/[0.03] bg-c-surface shadow-sm px-1 py-0.5">
-            <button
-              type="button"
-              onClick={() => setShowGrid((prev) => !prev)}
-              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                showGrid
-                  ? 'text-c-info bg-c-surface-raised'
-                  : 'text-c-text-muted hover:bg-c-surface-raised'
-              }`}
-              title={t('myWorkIdeas.processFlowTool.toggleGrid')}
-              aria-label={t('myWorkIdeas.processFlowTool.toggleGrid')}
-              aria-pressed={showGrid}
-            >
-              <Grid3x3 size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setSnapToGridEnabled((prev) => !prev)}
-              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                snapToGridEnabled
-                  ? 'text-c-info bg-c-surface-raised'
-                  : 'text-c-text-muted hover:bg-c-surface-raised'
-              }`}
-              title={t('myWorkIdeas.processFlowTool.snapGrid')}
-              aria-label={t('myWorkIdeas.processFlowTool.snapGrid')}
-              aria-pressed={snapToGridEnabled}
-            >
-              <Magnet size={14} />
-            </button>
-          </div>
+          {/* D2 2026-07-28: pstryczki siatki i przyciągania NIE wiszą już jako
+              bezpodpisowa nakładka `absolute top-2 left-2` nad płótnem. Powód
+              podwójny: (a) właściciel nie wiedział, co robią („nie wiem co to są
+              te dwa przyciski w ogóle"), (b) zasłaniały pstryczek zwijania
+              PIERWSZEGO toru — zmierzone `elementFromPoint`: 58/225 punktów
+              pstryczka klikalnych, w jego środku wypadała nakładka. Funkcja
+              została, przeniosła się do wspólnego lewego raila
+              (`CanvasLeftToolbar`, sloty `grid`/`snap` z `liveIn:
+              ['process_flow']`), a stan jedzie w górę przez
+              `publishProcessFlowGridState`. Tu zostaje sam stan i płótno. */}
 
           {/* V51-28: Empty state overlay */}
           {filteredNodes.length === 0 && filteredGhostNodes.length === 0 && (
