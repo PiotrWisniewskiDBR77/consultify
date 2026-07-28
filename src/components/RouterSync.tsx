@@ -214,12 +214,23 @@ export const RouterSync: React.FC = () => {
     // ---------------------------
     // If user is authenticated, keep them out of auth pages
     if ((path === '/login' || path === '/register' || path === '/auth') && isAuthenticated) {
-      console.log(
-        '[RouterSync] Authenticated on auth route, redirecting to',
-        defaultAuthenticatedRoute
-      );
+      // 2026-07-28 fix: a deep link to a protected route (e.g. `/excele` with
+      // `?artifactId=...&ff_excele_edit=1`) bounces here via the "not
+      // authenticated" branch below, which stashes the ORIGINAL path+query in
+      // `?redirect=`. Without this, every such link landed the user on
+      // `defaultAuthenticatedRoute` after login, silently dropping the
+      // artifactId and any `ff_*` flags — the exact class of bug called out
+      // in `_RUNBOOK_COFANIA.md` (RedirectPreservingQuery exists, but this
+      // call site pre-dates it and had no query-preserving equivalent).
+      // Only accept a same-origin, relative `redirect` (must start with a
+      // single `/`, never `//`) to avoid an open-redirect via this param.
+      const rawRedirect = new URLSearchParams(location.search).get('redirect');
+      const isSafeRelativeRedirect =
+        !!rawRedirect && rawRedirect.startsWith('/') && !rawRedirect.startsWith('//');
+      const target = isSafeRelativeRedirect ? rawRedirect : defaultAuthenticatedRoute;
+      console.log('[RouterSync] Authenticated on auth route, redirecting to', target);
       isNavigatingRef.current = true;
-      navigate(defaultAuthenticatedRoute, { replace: true });
+      navigate(target, { replace: true });
       setTimeout(() => {
         isNavigatingRef.current = false;
       }, 50);
@@ -263,9 +274,16 @@ export const RouterSync: React.FC = () => {
       path.startsWith('/mcp/');
 
     if (isProtected && !isAuthenticated) {
-      console.log('[RouterSync] Not authenticated, redirecting to /login');
+      // 2026-07-28 fix: preserve the attempted path+query (e.g. a workbook
+      // deep link's `artifactId` + `ff_excele_edit`/`ff_excele_right_rail`)
+      // across the forced login round-trip. See the matching `?redirect=`
+      // consumer above (auth-route branch). Bounded to this app's own
+      // relative URLs only (no external redirect target is ever accepted).
+      const attemptedTarget = `${path}${location.search}`;
+      const loginTarget = `/login?redirect=${encodeURIComponent(attemptedTarget)}`;
+      console.log('[RouterSync] Not authenticated, redirecting to', loginTarget);
       isNavigatingRef.current = true;
-      navigate('/login', { replace: true });
+      navigate(loginTarget, { replace: true });
       setTimeout(() => {
         isNavigatingRef.current = false;
       }, 50);
