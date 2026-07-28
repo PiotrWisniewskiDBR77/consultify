@@ -55,7 +55,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext } from '@/types/workspace';
-import { formatListDate } from '@/utils/listDateFormat';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { DecisionDetailView } from '../MyWork/DecisionDetailView';
@@ -1856,25 +1856,33 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   ],
                   trailing: (
                     <span className="text-[11px] font-semibold text-c-text-secondary">
-                      {selectedRow.updatedAt
-                        ? new Date(selectedRow.updatedAt).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : '—'}
+                      {/* N-94: podglad pokazywal „30 Apr 2026", a tabela obok
+                          „30/04/2026" — ta sama data, dwa zapisy, jeden ekran. */}
+                      {formatListDate(selectedRow.updatedAt)}
                     </span>
                   ),
                 }}
                 details={{
-                  text: [
-                    `${t('assessment.table.type', 'Type')}: ${
+                  // N-52 / przeglad 128 zrzutow: to sa WLASCIWOSCI, nie tresc —
+                  // szly dotad jako sklejony akapit w bloku na proze.
+                  propertyLabel: isPolish ? 'Wlasciwosc' : 'Property',
+                  valueLabel: isPolish ? 'Wartosc' : 'Value',
+                  properties: [
+                    {
+                      id: 'type',
+                      label: t('assessment.table.type', 'Type'),
+                      value:
                       FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
                       selectedRow.framework ||
-                      '—'
-                    }`,
-                    `${t('assessment.table.progress', 'Progress')}: ${selectedRow.progress ?? 0}%`,
-                  ].join('\n\n'),
+                      '—',
+                    },
+                    {
+                      id: 'progress',
+                      label: t('assessment.table.progress', 'Progress'),
+                      value: `${selectedRow.progress ?? 0}%`,
+                      mono: true,
+                    },
+                  ],
                   onCopy: () => {
                     void navigator.clipboard?.writeText(
                       `${selectedRow.name} — ${selectedRow.status} (${selectedRow.progress ?? 0}%)`
@@ -1984,32 +1992,41 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   ],
                   trailing: (
                     <span className="text-[11px] font-semibold text-c-text-secondary">
-                      {selectedRow.updatedAt
-                        ? new Date(selectedRow.updatedAt).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : '—'}
+                      {/* N-94: podglad pokazywal „30 Apr 2026", a tabela obok
+                          „30/04/2026" — ta sama data, dwa zapisy, jeden ekran. */}
+                      {formatListDate(selectedRow.updatedAt)}
                     </span>
                   ),
                 }}
                 details={{
-                  text: [
-                    `${t('assessment.table.type', 'Type')}: ${
+                  // N-52 / przeglad 128 zrzutow: to sa WLASCIWOSCI, nie tresc —
+                  // szly dotad jako sklejony akapit w bloku na proze.
+                  propertyLabel: isPolish ? 'Wlasciwosc' : 'Property',
+                  valueLabel: isPolish ? 'Wartosc' : 'Value',
+                  properties: [
+                    {
+                      id: 'type',
+                      label: t('assessment.table.type', 'Type'),
+                      value:
                       FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
                       selectedRow.framework ||
-                      '—'
-                    }`,
-                    selectedRow.assessmentName
-                      ? `${t('assessment.reports.source', 'Source assessment')}: ${selectedRow.assessmentName}`
-                      : null,
-                    `${t('assessment.hub.table.author', 'Author')}: ${
-                      getAuthorLabel(selectedRow.createdBy) || '—'
-                    }`,
-                  ]
-                    .filter(Boolean)
-                    .join('\n\n'),
+                      '—',
+                    },
+                    ...(selectedRow.assessmentName
+                      ? [
+                          {
+                            id: 'source',
+                            label: t('assessment.reports.source', 'Source assessment'),
+                            value: selectedRow.assessmentName,
+                          },
+                        ]
+                      : []),
+                    {
+                      id: 'author',
+                      label: t('assessment.hub.table.author', 'Author'),
+                      value: getAuthorLabel(selectedRow.createdBy) || '—',
+                    },
+                  ],
                   onCopy: () => {
                     void navigator.clipboard?.writeText(
                       `${selectedRow.name} — ${selectedRow.status}`
@@ -2108,32 +2125,41 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   ],
                   trailing: (
                     <span className="text-[11px] font-semibold text-c-text-secondary">
-                      {selectedRow.updatedAt
-                        ? new Date(selectedRow.updatedAt).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : '—'}
+                      {/* N-94: podglad pokazywal „30 Apr 2026", a tabela obok
+                          „30/04/2026" — ta sama data, dwa zapisy, jeden ekran. */}
+                      {formatListDate(selectedRow.updatedAt)}
                     </span>
                   ),
                 }}
                 details={{
-                  text: [
-                    `${t('assessment.table.type', 'Type')}: ${
+                  // N-52 / przeglad 128 zrzutow: to sa WLASCIWOSCI, nie tresc —
+                  // szly dotad jako sklejony akapit w bloku na proze.
+                  propertyLabel: isPolish ? 'Wlasciwosc' : 'Property',
+                  valueLabel: isPolish ? 'Wartosc' : 'Value',
+                  properties: [
+                    {
+                      id: 'type',
+                      label: t('assessment.table.type', 'Type'),
+                      value:
                       FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
                       selectedRow.framework ||
-                      '—'
-                    }`,
-                    selectedRow.sourceReport
-                      ? `${t('assessment.initiatives.sourceReport', 'Source report')}: ${selectedRow.sourceReport}`
-                      : null,
-                    `${t('assessment.hub.table.author', 'Author')}: ${
-                      getAuthorLabel(selectedRow.createdBy) || '—'
-                    }`,
-                  ]
-                    .filter(Boolean)
-                    .join('\n\n'),
+                      '—',
+                    },
+                    ...(selectedRow.sourceReport
+                      ? [
+                          {
+                            id: 'source-report',
+                            label: t('assessment.initiatives.sourceReport', 'Source report'),
+                            value: selectedRow.sourceReport,
+                          },
+                        ]
+                      : []),
+                    {
+                      id: 'author',
+                      label: t('assessment.hub.table.author', 'Author'),
+                      value: getAuthorLabel(selectedRow.createdBy) || '—',
+                    },
+                  ],
                   onCopy: () => {
                     void navigator.clipboard?.writeText(
                       `${selectedRow.name} — ${selectedRow.status}`
@@ -2685,15 +2711,9 @@ const ReportSlideOverContent: React.FC<{
                       {cfg.label}
                     </div>
                     <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                      {exportDate
-                        ? new Date(exportDate).toLocaleDateString('pl-PL', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })
-                        : '—'}
+                      {/* `pl-PL` na sztywno dawalo polski zapis takze angielskiemu
+                          kontu — wspolny formatter idzie za jezykiem konta. */}
+                      {formatListDateTime(exportDate)}
                       {exp.fileSize ? ` · ${(exp.fileSize / 1024).toFixed(0)} KB` : ''}
                     </div>
                   </div>
