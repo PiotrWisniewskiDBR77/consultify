@@ -81,6 +81,7 @@ import {
 import { IdeaExportMenu } from './IdeaExportMenu';
 import { IdeaGhostCards } from './IdeaGhostCards';
 import { ideaMapToMarkdown } from './ideaMapToMarkdown';
+import { subscribeIdeaUndoState } from './ideaUndoStateBus';
 import { type ExtendedNodeData, IdeaNodeDetailDrawer } from './IdeaNodeDetailDrawer';
 import { IdeaProcessFlowTool } from './IdeaProcessFlowTool';
 import { IdeaProposalReview } from './IdeaProposalReview';
@@ -368,23 +369,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const graphEdgesRef = useRef<any[]>([]);
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
-  const [mmCanUndo, setMmCanUndo] = useState(false);
-  const [mmCanRedo, setMmCanRedo] = useState(false);
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const { canUndo, canRedo } = (e as CustomEvent).detail || {};
-      setMmCanUndo(Boolean(canUndo));
-      setMmCanRedo(Boolean(canRedo));
-    };
-    window.addEventListener('mm-undo-state', handler);
-    // Table tool reports its own undo/redo availability on a dedicated channel.
-    window.addEventListener('tbl-undo-state', handler);
-    return () => {
-      window.removeEventListener('mm-undo-state', handler);
-      window.removeEventListener('tbl-undo-state', handler);
-    };
-  }, []);
+  // Stan Cofnij/Ponów lewego paska — JEDEN kanał dla wszystkich 4 narzędzi
+  // (`ideaUndoStateBus`). Wcześniej workspace słuchał tylko Mapy i Tabeli, więc
+  // na Tablicy i Przepływie przyciski były trwale wygaszone.
+  const [railCanUndo, setRailCanUndo] = useState(false);
+  const [railCanRedo, setRailCanRedo] = useState(false);
   // discoveryPanel removed — replaced by CanvasLeftToolbar
   const [whiteboardFacilitation, setWhiteboardFacilitation] = useState<{
     timerEndsAt?: number | null;
@@ -532,6 +521,20 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         new CustomEvent('idea-workspace-active-tool', { detail: { tool: null } })
       );
     };
+  }, [activeTool]);
+
+  // Cofnij/Ponów lewego paska: jeden autobus (`idea-undo-state` + most dla starych
+  // kanałów Mapy/Tabeli). Przyjmujemy TYLKO stan aktywnego narzędzia, a przy
+  // przełączeniu narzędzia gasimy przyciski do czasu, aż nowe narzędzie nada swój
+  // stan — inaczej pasek pokazywałby cudzy, nieaktualny stos.
+  useEffect(() => {
+    setRailCanUndo(false);
+    setRailCanRedo(false);
+    return subscribeIdeaUndoState((state) => {
+      if (state.tool !== activeTool) return;
+      setRailCanUndo(state.canUndo);
+      setRailCanRedo(state.canRedo);
+    });
   }, [activeTool]);
 
   // ── Selection contract ──────────────────────────────────────────────────────
@@ -3911,8 +3914,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         isAccepted={isAccepted}
         ideaId={realId}
         canvasContainerRef={canvasContainerRef}
-        canUndo={mmCanUndo}
-        canRedo={mmCanRedo}
+        canUndo={railCanUndo}
+        canRedo={railCanRedo}
         heuristicAiEnabled={heuristicAiOverlaysEnabled}
         onAction={(action) => handleQuickAction(action)}
         onOpenChat={() => {

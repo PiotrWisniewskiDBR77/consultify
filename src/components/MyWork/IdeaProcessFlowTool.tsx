@@ -157,6 +157,7 @@ import {
 } from './processflow/useProcessFlowPersistence';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
 import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
+import { emitIdeaUndoState } from './ideaUndoStateBus';
 import { useProcessFlowUndoRedo } from './processflow/useProcessFlowUndoRedo';
 import { useProcessFlowValidation } from './processflow/useProcessFlowValidation';
 import { validateFlowWarnings, type ValidationWarning } from './processflow/validateFlow';
@@ -658,6 +659,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     setEdges,
     setLanes,
   });
+
+  // Nadaj stan Cofnij/Ponów na wspólny autobus — lewy pasek czyta stąd, więc bez
+  // tego jego przyciski były na Przepływie trwale wygaszone (mimo że sama akcja
+  // `pf_undo`/`pf_redo` działała).
+  useEffect(() => {
+    emitIdeaUndoState('process_flow', canUndo, canRedo);
+  }, [canUndo, canRedo]);
   const dragSnapshotTakenRef = useRef(false);
   // Latest state mirror — lets undo/redo (which setState async) read the just-
   // restored snapshot on the next tick to broadcast it as a graph_snapshot.
