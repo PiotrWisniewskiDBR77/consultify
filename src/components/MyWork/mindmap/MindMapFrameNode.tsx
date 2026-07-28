@@ -16,11 +16,22 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { NodeProps } from 'reactflow';
 
+import {
+  canvasObjectTextStyle,
+  readCanvasObjectStyle,
+} from '../canvas/canvasObjectStyle';
+
 import { MM_MIN_FRAME_HEIGHT, MM_MIN_FRAME_WIDTH, MindMapNodeResizer } from './MindMapNodeResizer';
 
 export const MindMapFrameNode: React.FC<NodeProps> = React.memo(({ data, selected }) => {
   const { t } = useTranslation();
   const label = String(data?.label || t('mindmap.frameNode.defaultLabel', 'Ramka'));
+  // PUŁAPKA (opisana w audycie): pudełko ramki rysuje `node.style` na wrapperze
+  // reactflow, a NIE `node.data` — dlatego tło i ramkę wybrane w pasku
+  // przepisuje handler zapisu (`applyFrameStyleToNode` w IdeaRecommendationMap)
+  // prosto na `node.style`. Tu zostaje tylko typografia etykiety, która żyje
+  // wewnątrz komponentu i z `node.style` by nie dojechała.
+  const frameText = canvasObjectTextStyle(readCanvasObjectStyle(data));
 
   return (
     <>
@@ -35,7 +46,10 @@ export const MindMapFrameNode: React.FC<NodeProps> = React.memo(({ data, selecte
           selected ? 'ring-2 ring-c-focus-solid' : ''
         }`}
       >
-        <div className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-c-text-secondary truncate max-w-full">
+        <div
+          style={frameText}
+          className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-c-text-secondary truncate max-w-full"
+        >
           {label}
         </div>
       </div>

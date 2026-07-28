@@ -13,7 +13,12 @@
  * CRIMSON-SAFE: neutral ghost tokens + `c-focus` focus ring; no crimson.
  */
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+
+import {
+  CANVAS_OBJECT_EDIT_BAR_SLOT_ID,
+  isCanvasObjectEditBarEnabled,
+} from '@/utils/canvasObjectEditBarFlag';
 
 import type { IdeaMenu3Action } from './ideaCanvasMelsChips';
 
@@ -35,6 +40,31 @@ const Btn: React.FC<{ action: IdeaMenu3Action }> = ({ action }) => {
   );
 };
 
+/**
+ * Czy slot paska edycji ma treść (czyli narzędzie coś do niego wportalowało).
+ * `MutationObserver` na SAMYM slocie — reaguje na montaż/odmontowanie paska
+ * przez `createPortal`, którego React nie zgłasza rodzicowi w żaden inny sposób.
+ */
+function useSlotHasContent(ref: React.RefObject<HTMLElement>, enabled: boolean): boolean {
+  const [hasContent, setHasContent] = useState(false);
+
+  useEffect(() => {
+    if (!enabled) {
+      setHasContent(false);
+      return;
+    }
+    const el = ref.current;
+    if (!el || typeof MutationObserver === 'undefined') return;
+    const check = () => setHasContent(el.childElementCount > 0);
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(el, { childList: true });
+    return () => observer.disconnect();
+  }, [ref, enabled]);
+
+  return hasContent;
+}
+
 export interface IdeaCanvasSecondBarProps {
   left: IdeaMenu3Action[];
   right: IdeaMenu3Action[];
@@ -46,18 +76,40 @@ export const IdeaCanvasSecondBar: React.FC<IdeaCanvasSecondBarProps> = ({
   right,
   ariaLabel = 'Idea view actions',
 }) => {
-  if (left.length === 0 && right.length === 0) return null;
+  // PASEK EDYCJI OBIEKTU (ff_canvasObjectEditBar): ta listwa jest miejscem, w
+  // które wskazał właściciel — „tam gdzie jest AddNode, Auto Layout, AI Expand,
+  // Templates — dokładnie tutaj na środku tego menu". Przy zaznaczeniu obiektu
+  // narzędzie portaluje `<ObjectEditBar>` do slotu poniżej, a listwa CHOWA
+  // własne klastry: pasek edycji PODMIENIA zawartość linii, nie dokłada rzędu.
+  const editBarEnabled = isCanvasObjectEditBarEnabled();
+  const slotRef = useRef<HTMLDivElement>(null);
+  const editing = useSlotHasContent(slotRef, editBarEnabled);
+
+  // Przy fladze ON listwa musi istnieć nawet z pustymi klastrami — inaczej nie
+  // byłoby slotu, do którego narzędzie miałoby wportalować pasek.
+  if (left.length === 0 && right.length === 0 && !editBarEnabled) return null;
+
   return (
     <div
       className="flex items-center gap-1 border-b border-c-border-subtle bg-c-surface px-4 h-11 flex-shrink-0"
       role="toolbar"
       aria-label={ariaLabel}
       data-testid="idea-canvas-second-bar"
+      data-edit-bar-active={editing ? 'true' : undefined}
     >
-      {left.map((action) => (
-        <Btn key={action.id} action={action} />
-      ))}
-      {right.length > 0 ? (
+      {!editing &&
+        left.map((action) => <Btn key={action.id} action={action} />)}
+
+      {editBarEnabled ? (
+        <div
+          id={CANVAS_OBJECT_EDIT_BAR_SLOT_ID}
+          ref={slotRef}
+          className={editing ? 'flex min-w-0 flex-1 items-center' : 'contents'}
+          data-testid="canvas-object-edit-bar-slot"
+        />
+      ) : null}
+
+      {!editing && right.length > 0 ? (
         <div className="ml-auto flex items-center gap-1">
           {right.map((action) => (
             <Btn key={action.id} action={action} />
