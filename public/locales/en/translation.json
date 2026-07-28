@@ -17727,7 +17727,20 @@
       "moveToTop": "To top",
       "moveToBottom": "To bottom",
       "moveToPosition": "To position…",
-      "moveToPositionPrompt": "Move to position (1-{{count}})"
+      "moveToPositionPrompt": "Move to position (1-{{count}})",
+      "block": {
+        "drag": "Drag to reorder",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "refresh": "Refresh from source",
+        "replaceImage": "Replace image",
+        "duplicate": "Duplicate block",
+        "delete": "Delete block",
+        "startTyping": "Start typing..."
+      },
+      "lockSlideAction": "Lock slide",
+      "unlockSlideAction": "Unlock slide",
+      "unlockSlide": "Manually edited — protected from AI rewrite. Click to unlock."
     },
     "governance": {
       "loading": "Loading…",
@@ -17927,7 +17940,8 @@
         "next_steps": "Next steps",
         "appendix": "Appendix"
       }
-    }
+    },
+    "deckDiffSkippedLocked": "· skipped {{count}} locked slide(s): {{numbers}}"
   },
   "finance": {
     "export": {

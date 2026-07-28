@@ -2,7 +2,7 @@ import { Plus, RefreshCw, Sparkles } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { DeckCard } from '../wizard/types';
+import type { CardBlock, DeckCard } from '../wizard/types';
 import { CardRenderer } from './CardRenderer';
 
 interface CardCanvasProps {
@@ -21,6 +21,13 @@ interface CardCanvasProps {
   speakerNotes?: string;
   showNotes: boolean;
   animationsEnabled?: boolean;
+  /** Fala 1 (manual mode) — selected block (id only; unique across the deck). */
+  selectedBlockId?: string | null;
+  onBlockUpdate?: (cardId: string, blockId: string, updates: Partial<CardBlock>) => void;
+  onBlockDelete?: (cardId: string, blockId: string) => void;
+  onBlockDuplicate?: (cardId: string, blockId: string) => void;
+  onBlockMove?: (cardId: string, blockId: string, direction: 'up' | 'down') => void;
+  onBlockRefresh?: (cardId: string, blockId: string) => void;
 }
 
 export const CardCanvas: React.FC<CardCanvasProps> = ({
@@ -34,6 +41,12 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
   speakerNotes,
   showNotes,
   animationsEnabled = true,
+  selectedBlockId = null,
+  onBlockUpdate,
+  onBlockDelete,
+  onBlockDuplicate,
+  onBlockMove,
+  onBlockRefresh,
 }) => {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -102,6 +115,13 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                 isActive={index === activeCardIndex}
                 onBlockClick={(blockId) => onBlockClick?.(card.card_id, blockId)}
                 animationsEnabled={animationsEnabled}
+                editable
+                selectedBlockId={selectedBlockId}
+                onBlockUpdate={(blockId, updates) => onBlockUpdate?.(card.card_id, blockId, updates)}
+                onBlockDelete={(blockId) => onBlockDelete?.(card.card_id, blockId)}
+                onBlockDuplicate={(blockId) => onBlockDuplicate?.(card.card_id, blockId)}
+                onBlockMove={(blockId, direction) => onBlockMove?.(card.card_id, blockId, direction)}
+                onBlockRefresh={(blockId) => onBlockRefresh?.(card.card_id, blockId)}
               />
               {onRewriteCard && (
                 <>

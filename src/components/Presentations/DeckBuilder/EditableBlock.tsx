@@ -3,8 +3,9 @@
  * Uses TipTap for rich-text inline editing on text-based blocks.
  */
 
-import { Copy, GripVertical, Image, RefreshCw, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Copy, GripVertical, Image, RefreshCw, Trash2 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { CardBlock } from '../wizard/types';
 import { TipTapEditor } from './TipTapEditor';
@@ -17,6 +18,11 @@ interface EditableBlockProps {
   onDelete: () => void;
   onDuplicate: () => void;
   onRefresh?: () => void;
+  /** Fala 1 — przenieś blok w obrębie tego samego regionu (patrz `blockOps.ts`). */
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
   children: React.ReactNode;
 }
 
@@ -30,8 +36,13 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
   onDelete,
   onDuplicate,
   onRefresh,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp = false,
+  canMoveDown = false,
   children,
 }) => {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const isTextBlock = TEXT_BLOCK_TYPES.includes(block.type);
 
@@ -95,9 +106,38 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
     >
       {isSelected && (
         <div className="absolute -top-8 left-0 flex items-center gap-1 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-lg px-1 py-0.5 z-20">
-          <button className="p-1 text-c-text-secondary cursor-grab hover:text-c-text-secondary">
+          <button
+            className="p-1 text-c-text-secondary cursor-grab hover:text-c-text-secondary"
+            title={t('presentations.builder.block.drag', 'Drag to reorder')}
+          >
             <GripVertical size={12} />
           </button>
+          {(onMoveUp || onMoveDown) && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMoveUp?.();
+                }}
+                disabled={!canMoveUp}
+                className="p-1 text-c-text-secondary hover:text-c-text-secondary disabled:opacity-30 disabled:cursor-not-allowed"
+                title={t('presentations.builder.block.moveUp', 'Move up')}
+              >
+                <ChevronUp size={12} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMoveDown?.();
+                }}
+                disabled={!canMoveDown}
+                className="p-1 text-c-text-secondary hover:text-c-text-secondary disabled:opacity-30 disabled:cursor-not-allowed"
+                title={t('presentations.builder.block.moveDown', 'Move down')}
+              >
+                <ChevronDown size={12} />
+              </button>
+            </>
+          )}
           {block.is_refreshable && (
             <button
               onClick={(e) => {
@@ -105,7 +145,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
                 onRefresh?.();
               }}
               className="p-1 text-blue-400 hover:text-blue-600"
-              title="Refresh from source"
+              title={t('presentations.builder.block.refresh', 'Refresh from source')}
             >
               <RefreshCw size={12} />
             </button>
@@ -113,7 +153,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
           {block.type === 'image' && (
             <button
               className="p-1 text-c-text-secondary hover:text-c-text-secondary"
-              title="Replace image"
+              title={t('presentations.builder.block.replaceImage', 'Replace image')}
             >
               <Image size={12} />
             </button>
@@ -124,7 +164,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
               onDuplicate();
             }}
             className="p-1 text-c-text-secondary hover:text-c-text-secondary"
-            title="Duplicate"
+            title={t('presentations.builder.block.duplicate', 'Duplicate block')}
           >
             <Copy size={12} />
           </button>
@@ -134,7 +174,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
               onDelete();
             }}
             className="p-1 text-danger-400 hover:text-danger-600"
-            title="Delete"
+            title={t('presentations.builder.block.delete', 'Delete block')}
           >
             <Trash2 size={12} />
           </button>
@@ -150,7 +190,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
             isHeading={block.type === 'heading'}
             headingLevel={(block.content.level as 1 | 2 | 3 | 4) || 2}
             className={block.type === 'heading' ? 'text-2xl font-bold' : 'text-sm'}
-            placeholder="Start typing..."
+            placeholder={t('presentations.builder.block.startTyping', 'Start typing...')}
           />
         </div>
       ) : (

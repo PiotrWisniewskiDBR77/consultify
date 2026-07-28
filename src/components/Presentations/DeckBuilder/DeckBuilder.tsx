@@ -41,6 +41,7 @@ import { isMelsDeckBuilderEnabled } from '@/utils/melsDeckBuilderFlag';
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
 import { AgentActivityPanel } from './AgentActivityPanel';
 import { BlockToolbar } from './BlockToolbar';
+import { deleteBlockFromList, duplicateBlockInList, moveBlockInList } from './blockOps';
 import { CardCanvas } from './CardCanvas';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
 import { ConflictBanner } from './ConflictBanner';
@@ -438,13 +439,109 @@ export const DeckBuilder: React.FC = () => {
       cardsAdded?: number;
       cardsRemoved?: number;
       changedCards?: number;
+      // ★ Fala 2 (SPEC §3.3.4) — 1-based slide numbers skipped because they
+      // are locked (`is_locked`) and not explicitly named in the prompt.
+      skippedLockedSlides?: number[];
     };
   } | null>(null);
 
   const { versions, hasUnsavedChanges, lastSavedAt, restoreVersion, saveManualCheckpoint } =
     useVersionHistory(deck, deckId);
 
-  const { isCardOutdated, refreshCard, refreshAllCards } = useDataRefresh(deck, updateCard);
+  const { isCardOutdated, refreshCard, refreshAllCards, refreshBlock } = useDataRefresh(
+    deck,
+    updateCard
+  );
+
+  // Fala 1 (manual mode) — selected block for the floating toolbar / inline
+  // TipTap edit (EditableBlock). Block ids are unique across the whole deck
+  // (`block-<card_id>-<n>` or `block-<timestamp>-<rand>`), so a single id is
+  // enough to identify the selection deck-wide.
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+
+  const handleSelectCard = useCallback(
+    (index: number) => {
+      setActiveCardIndex(index);
+      setSelectedBlockId(null);
+    },
+    [setActiveCardIndex]
+  );
+
+  const handleSelectBlock = useCallback(
+    (cardId: string, blockId: string) => {
+      setSelectedBlockId(blockId);
+      const idx = deck?.cards.findIndex((c) => c.card_id === cardId) ?? -1;
+      if (idx >= 0 && idx !== activeCardIndex) setActiveCardIndex(idx);
+    },
+    [deck, activeCardIndex, setActiveCardIndex]
+  );
+
+  // ★ Fala 2 (SPEC §3.3.1) — każda ręczna zmiana bloku ustawia `is_locked`
+  // razem ze zmianą treści, w JEDNYM wywołaniu `updateCard` (jeden krok undo),
+  // żeby karta była chroniona przed globalnym „przebuduj przez Teresę"
+  // automatycznie, bez dodatkowego kliku użytkownika.
+  const applyBlockChange = useCallback(
+    (cardId: string, mutate: (blocks: CardBlock[]) => CardBlock[]) => {
+      const card = deck?.cards.find((c) => c.card_id === cardId);
+      if (!card) return;
+      const nextBlocks = mutate(card.blocks);
+      updateCard(cardId, { blocks: nextBlocks, is_locked: true });
+    },
+    [deck, updateCard]
+  );
+
+  const handleBlockUpdate = useCallback(
+    (cardId: string, blockId: string, updates: Partial<CardBlock>) => {
+      applyBlockChange(cardId, (blocks) =>
+        blocks.map((b) => (b.block_id === blockId ? { ...b, ...updates } : b))
+      );
+    },
+    [applyBlockChange]
+  );
+
+  const handleBlockDelete = useCallback(
+    (cardId: string, blockId: string) => {
+      applyBlockChange(cardId, (blocks) => deleteBlockFromList(blocks, blockId));
+      setSelectedBlockId((current) => (current === blockId ? null : current));
+    },
+    [applyBlockChange]
+  );
+
+  const handleBlockDuplicate = useCallback(
+    (cardId: string, blockId: string) => {
+      applyBlockChange(cardId, (blocks) => duplicateBlockInList(blocks, blockId));
+    },
+    [applyBlockChange]
+  );
+
+  const handleBlockMove = useCallback(
+    (cardId: string, blockId: string, direction: 'up' | 'down') => {
+      applyBlockChange(cardId, (blocks) => moveBlockInList(blocks, blockId, direction));
+    },
+    [applyBlockChange]
+  );
+
+  const handleBlockRefresh = useCallback(
+    (cardId: string, blockId: string) => {
+      // Odświeżenie ciągnie świeże dane ze źródła — to NIE jest ręczna
+      // nadpisanie treści (w odróżnieniu od edit/delete/duplicate/move), więc
+      // — inaczej niż `applyBlockChange` — nie ustawia `is_locked`.
+      void refreshBlock(cardId, blockId);
+    },
+    [refreshBlock]
+  );
+
+  // ★ Fala 2 (SPEC §3.3.2) — widoczna, ODWRACALNA kłódka: użytkownik może
+  // świadomie odblokować kartę ("mimo wszystko przebuduj to") albo zablokować
+  // ją ręcznie z wyprzedzeniem, bez czekania na pierwszą ręczną zmianę.
+  const handleToggleCardLock = useCallback(
+    (cardId: string) => {
+      const card = deck?.cards.find((c) => c.card_id === cardId);
+      if (!card) return;
+      updateCard(cardId, { is_locked: !card.is_locked });
+    },
+    [deck, updateCard]
+  );
 
   const [brandKit, setBrandKit] = useState<BrandKit | null>(null);
   useEffect(() => {
@@ -1031,7 +1128,16 @@ export const DeckBuilder: React.FC = () => {
         if (rebuilt && typeof rebuilt === 'object') {
           // Preserve the stable client card_id; merge server-rebuilt content.
           const { card_id: _ignored, ...rest } = rebuilt as Record<string, unknown>;
-          updateCard(card.card_id, rest as Partial<typeof card>);
+          // ★ Fala 2 (SPEC §3.3.1) — a TARGETED local instruction ("Przerób ten
+          // slajd…") is "lokalne AI" tknięcie tej karty: lock it so a later
+          // global Teresa rebuild does not silently overwrite this deliberate
+          // choice. A blank "Regenerate" (no instruction) is a generic re-roll,
+          // not a considered edit worth protecting — it does NOT lock.
+          const shouldLock = Boolean(instruction && instruction.trim().length > 0);
+          updateCard(card.card_id, {
+            ...(rest as Partial<typeof card>),
+            ...(shouldLock ? { is_locked: true } : {}),
+          });
         } else {
           // Fallback: server returned no card (AI off / no context pack) —
           // reload deck so the persisted state is reflected.
@@ -1083,6 +1189,12 @@ export const DeckBuilder: React.FC = () => {
       ) {
         return;
       }
+      // Fala 1 (manual mode) — Escape deselects the active block first (most
+      // local interaction), before falling through to modals/back-navigation.
+      if (selectedBlockId) {
+        setSelectedBlockId(null);
+        return;
+      }
       if (presentMode !== 'off' || commandPaletteOpen || governanceModalOpen || auditLogOpen) {
         return;
       }
@@ -1130,6 +1242,7 @@ export const DeckBuilder: React.FC = () => {
     shareModalOpen,
     mediaLibraryOpen,
     teresaOpen,
+    selectedBlockId,
     handleBackToPresentations,
   ]);
 
@@ -1325,12 +1438,13 @@ export const DeckBuilder: React.FC = () => {
               cards={deck.cards}
               activeIndex={activeCardIndex}
               colorSetId={deck.color_set_id}
-              onSelect={setActiveCardIndex}
+              onSelect={handleSelectCard}
               onReorder={reorderCards}
               onDuplicate={duplicateCard}
               onDelete={deleteCard}
               onAddCard={handleAddBlankCard}
               isCardOutdated={isCardOutdated}
+              onToggleLock={handleToggleCardLock}
             />
           }
           canvas={
@@ -1338,13 +1452,19 @@ export const DeckBuilder: React.FC = () => {
               cards={deck.cards}
               activeCardIndex={activeCardIndex}
               colorSetId={deck.color_set_id}
-              onSelectCard={setActiveCardIndex}
-              onBlockClick={() => {}}
+              onSelectCard={handleSelectCard}
+              onBlockClick={handleSelectBlock}
               onAddCard={handleAddBlankCard}
               onRewriteCard={handleRewriteCard}
               speakerNotes={activeCard?.speaker_notes}
               showNotes={showNotes}
               animationsEnabled={animationsEnabled}
+              selectedBlockId={selectedBlockId}
+              onBlockUpdate={handleBlockUpdate}
+              onBlockDelete={handleBlockDelete}
+              onBlockDuplicate={handleBlockDuplicate}
+              onBlockMove={handleBlockMove}
+              onBlockRefresh={handleBlockRefresh}
             />
           }
           aiEntrySlot={
@@ -1368,6 +1488,32 @@ export const DeckBuilder: React.FC = () => {
               <div className="flex items-center gap-3 border-b border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-4 py-2.5">
                 <span className="text-sm font-medium text-amber-800 dark:text-amber-200 flex-1">
                   {pendingAgentEdit.reply}
+                  {pendingAgentEdit.actions.length > 0 && (
+                    <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
+                      ({pendingAgentEdit.actions.join(', ')})
+                    </span>
+                  )}
+                  {pendingAgentEdit.diff && (
+                    <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
+                      {t('presentations.deckDiff', {
+                        added: pendingAgentEdit.diff.cardsAdded || 0,
+                        removed: pendingAgentEdit.diff.cardsRemoved || 0,
+                        changed: pendingAgentEdit.diff.changedCards || 0,
+                      })}
+                    </span>
+                  )}
+                  {/* ★ Fala 2 (SPEC §3.3.4) — pominięte slajdy WYMIENIONE po
+                      numerze, nie tylko zliczone, żeby użytkownik wiedział
+                      DOKŁADNIE które ręczne poprawki przetrwały. */}
+                  {pendingAgentEdit.diff?.skippedLockedSlides &&
+                    pendingAgentEdit.diff.skippedLockedSlides.length > 0 && (
+                      <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
+                        {t('presentations.deckDiffSkippedLocked', {
+                          count: pendingAgentEdit.diff.skippedLockedSlides.length,
+                          numbers: pendingAgentEdit.diff.skippedLockedSlides.join(', '),
+                        })}
+                      </span>
+                    )}
                 </span>
                 <button
                   type="button"
@@ -1628,6 +1774,15 @@ export const DeckBuilder: React.FC = () => {
                   })}
                 </span>
               )}
+              {pendingAgentEdit.diff?.skippedLockedSlides &&
+                pendingAgentEdit.diff.skippedLockedSlides.length > 0 && (
+                  <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
+                    {t('presentations.deckDiffSkippedLocked', {
+                      count: pendingAgentEdit.diff.skippedLockedSlides.length,
+                      numbers: pendingAgentEdit.diff.skippedLockedSlides.join(', '),
+                    })}
+                  </span>
+                )}
             </span>
             <button
               type="button"
@@ -1668,12 +1823,13 @@ export const DeckBuilder: React.FC = () => {
             cards={deck.cards}
             activeIndex={activeCardIndex}
             colorSetId={deck.color_set_id}
-            onSelect={setActiveCardIndex}
+            onSelect={handleSelectCard}
             onReorder={reorderCards}
             onDuplicate={duplicateCard}
             onDelete={deleteCard}
             onAddCard={handleAddBlankCard}
             isCardOutdated={isCardOutdated}
+            onToggleLock={handleToggleCardLock}
           />
 
           {/* Center: Card Canvas */}
@@ -1681,13 +1837,19 @@ export const DeckBuilder: React.FC = () => {
             cards={deck.cards}
             activeCardIndex={activeCardIndex}
             colorSetId={deck.color_set_id}
-            onSelectCard={setActiveCardIndex}
-            onBlockClick={() => {}}
+            onSelectCard={handleSelectCard}
+            onBlockClick={handleSelectBlock}
             onAddCard={handleAddBlankCard}
             onRewriteCard={handleRewriteCard}
             speakerNotes={activeCard?.speaker_notes}
             showNotes={showNotes}
             animationsEnabled={animationsEnabled}
+            selectedBlockId={selectedBlockId}
+            onBlockUpdate={handleBlockUpdate}
+            onBlockDelete={handleBlockDelete}
+            onBlockDuplicate={handleBlockDuplicate}
+            onBlockMove={handleBlockMove}
+            onBlockRefresh={handleBlockRefresh}
           />
 
           {/* Right: Block Toolbar */}
