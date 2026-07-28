@@ -14523,9 +14523,7 @@
       "submitReviewPrompt": "Submit this insight for review",
       "exportInsight": "Export insight to initiative",
       "exportInsightPrompt": "Export this insight to an initiative",
-      "viewEvidence": "View evidence map",
-      "openOutputs": "Open Outputs Library",
-      "reviewPending": "Review pending artifacts"
+      "viewEvidence": "View evidence map"
     },
     "feedback": {
       "missingInfoPlaceholder": "Describe what was missing from the answer..."

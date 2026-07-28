@@ -1,11 +1,18 @@
 /**
  * ChatSmartSuggestions (V3-B01)
  * Component shown below the chat input that suggests next actions based on conversation context.
- * DBR77: pill (rounded-full) chips, text-xs, bg-primary-500/10.
+ * DBR77: pill (rounded-full) chips, text-xs, neutral c-* palette.
  * Max 3 suggestions, disappear after 1 is clicked.
+ *
+ * Palette (2026-07-28, D4): these chips used to carry the tailwind brand ramp,
+ * which in this project resolves to crimson #85182F on EVERY step — a colour
+ * reserved for critical semantics. A next-step suggestion is not critical, so
+ * the chip now uses the same neutral c-* tokens as the sibling `contextActions`
+ * pills in the composer (`UnifiedChatPanel`). Keep it neutral; focus ring stays
+ * blue (c-focus). SSOT: docs/ui-standards/TRIADA_KANON.md, part C.
  */
 
-import { ChevronRight, FileOutput, Lightbulb, Target, Wrench } from 'lucide-react';
+import { ChevronRight, Lightbulb, Target, Wrench } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -33,7 +40,8 @@ export interface ChatSuggestion {
     | 'initiative'
     | 'tool'
     | 'results'
-    | 'outputs'
+    // NOTE: the 'outputs' family was dropped with the artifact chips (D4,
+    // 2026-07-28) — nothing produces it any more.
     | 'generic'
     // Chat V8 — interview/insight smart-suggestion family.
     | 'interview';
@@ -43,7 +51,6 @@ const SUGGESTION_ICONS: Record<string, React.ElementType> = {
   initiative: Target,
   tool: Wrench,
   results: Target,
-  outputs: FileOutput,
   generic: Lightbulb,
 };
 
@@ -103,7 +110,7 @@ export const ChatSmartSuggestions: React.FC<ChatSmartSuggestionsProps> = ({
             type="button"
             onClick={() => handleClick(suggestion)}
             disabled={isLoading}
-            className="inline-flex h-7 items-center gap-1.5 rounded-full bg-primary-500/10 px-3 text-xs font-medium text-primary-700 dark:text-primary-300 hover:bg-primary-500/20 dark:hover:bg-primary-500/20 transition-colors disabled:opacity-60"
+            className="inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border-strong bg-c-surface-raised px-3 text-xs font-medium text-c-text-secondary hover:bg-c-surface hover:text-c-text transition-colors disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
           >
             <Icon size={12} className="shrink-0" />
             <span className="truncate max-w-[140px]">{suggestion.label}</span>
