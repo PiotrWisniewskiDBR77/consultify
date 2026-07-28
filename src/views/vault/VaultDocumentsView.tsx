@@ -567,14 +567,26 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
     [t, isPolish]
   );
 
-  // ── filterControls (Menu 2 huba) ─────────────────────────────────────────
-  // Lupa dokumentów w sejfie + select Kategorii + kebab (dawniej Menu 1
-  // breadcrumbExtra) + chipy statusu indeksowania (dawniej `chips` Menu 3 tego
-  // komponentu — VLT-007, patrz nagłówek pliku „★ ZYSK UBOCZNY"), wszystko w
-  // JEDNYM rzędzie Menu 2 huba zamiast trzech osobnych wierszy.
-  const filterControlsNode = useMemo(
+  // ── Pasek filtrów DOKUMENTÓW — renderowany LOKALNIE nad tabelą ───────────
+  //
+  // ★ KOREKTA WŁAŚCICIELA (2026-07-27, po pierwszym wdrożeniu): pierwotnie te
+  // kontrolki szły do `filterControls` slotu huba (Menu 2). Piotr odrzucił to
+  // na żywym demo: „to, co się pojawiło w menu drugim po prawej stronie, nie
+  // jest w ogóle tu potrzebne […] jak się otworzy karta, to tego po prostu nie
+  // widać, bo nie widzimy teraz przecież konkretnej listy".
+  //
+  // ZASADA (do stosowania w całej aplikacji): pasek huba to NAWIGACJA —
+  // co jest otwarte i czym się przełączam. Filtry listy należą do TREŚCI, więc
+  // gdy lista jest zawartością OTWARTEJ KARTY (jak dokumenty wewnątrz sejfu),
+  // jej filtry siedzą w obszarze roboczym nad tą listą, a nie w pasku
+  // gospodarza. Do slotu huba idą tylko: karta obiektu (Menu 3) i CTA.
+  //
+  // Zawartość bez zmian względem poprzedniej wersji: lupa + Kategoria + chipy
+  // statusu indeksowania (VLT-007 — nadal widoczne, bo nie konkurują już z
+  // kartą o ten sam rząd) + kebab (Odśwież / Eksportuj CSV).
+  const filterBarNode = useMemo(
     () => (
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 pb-2">
         <div className="relative">
           <Search
             size={14}
@@ -674,8 +686,10 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
     [t, isPolish]
   );
 
+  // Do paska huba idzie WYŁĄCZNIE nawigacja (karta otwartego sejfu w Menu 3)
+  // i jeden CTA. Filtry dokumentów — patrz `filterBarNode` wyżej — zostają
+  // w obszarze roboczym, bo dotyczą treści karty, nie huba.
   useHubBarSlot({
-    filterControls: filterControlsNode,
     primaryCta: primaryCtaValue,
     openItems,
     activeItemId: safe.id,
@@ -724,6 +738,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
     <div className="flex h-full min-h-0 flex-col bg-c-bg">
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="min-w-0 flex-1 overflow-auto pb-4 pl-4 pr-1.5 pt-3">
+          {filterBarNode}
           {renderBulkBar()}
           <StandardTable
             columns={columns}
