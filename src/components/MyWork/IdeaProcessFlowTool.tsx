@@ -23,10 +23,19 @@ import * as dagre from 'dagre';
 import {
   AlertTriangle,
   CheckCircle,
+  Copy,
+  Edit3,
   GitMerge,
   Lightbulb,
   Loader2,
+  MessageCircle,
+  Minus,
+  MoreHorizontal,
+  MoveRight,
+  Palette,
   Plus,
+  Repeat,
+  Trash2,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -57,6 +66,7 @@ import {
 } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
+import { isCanvasObjectEditBarEnabled } from '@/utils/canvasObjectEditBarFlag';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import {
   IDEA_BOTTOM_BAR_MINIMAP_LIFT,
@@ -138,6 +148,18 @@ import {
   getNodeContextActions,
   ProcessFlowContextMenu,
 } from './processflow/ProcessFlowContextMenu';
+import { readCanvasObjectStyle } from './canvas/canvasObjectStyle';
+import { ObjectEditBar } from './canvas/ObjectEditBar';
+import {
+  ArrowDirectionPopover,
+  ColorPalettePopover,
+  MenuListPopover,
+} from './canvas/ObjectEditBarPopovers';
+import {
+  buildStyleGroups,
+  ObjectEditBarDock,
+  useObjectEditBarSlot,
+} from './canvas/objectEditBarDock';
 import { ProcessFlowFloatingToolbar } from './processflow/ProcessFlowFloatingToolbar';
 import { ProcessFlowNodeCommentThread } from './processflow/ProcessFlowNodeCommentThread';
 import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesPanel';
@@ -860,6 +882,44 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       }
     },
     [onSelectionChange]
+  );
+
+  // ── PASEK EDYCJI OBIEKTU (ff_canvasObjectEditBar) ──────────────────────
+  // Zgłoszenie właściciela: „Wybór obiektu powinien uruchamiać pasek kontekstowy
+  // z narzędziami do jego edycji, który z kolei powinien uruchamiać się w górnym
+  // menu. Jak w innych narzędziach. Teraz nie mogę zmienić czcionek, kolorów
+  // typu, koloru tła, kształtów obiektów, wielkości obiektów. Strzałek pomiędzy
+  // obiektami. kierunku przepływu."
+  //
+  // UWAGA: w Procesie to NIE jest przeniesienie istniejących zdolności, tylko
+  // ich BUDOWA — `ProcessFlowFloatingToolbar` nie miał ANI JEDNEJ kontrolki
+  // stylu (tylko rename/duplicate/insert/links/comments/chat/delete), a
+  // `FlowNodeComponent` w ogóle nie czytał kolorów z `node.data` (wygląd brał
+  // wyłącznie z kształtu i toru). Krawędzie to jedyna część, która już istniała
+  // (`EdgeStylePopover` po kliknięciu w krawędź) — tę pasek tylko WYSTAWIA.
+  const handleFlowNodeStyleChange = useCallback(
+    (patch: Record<string, unknown>) => {
+      if (locked) return;
+      const targetIds = (nodes as Node[]).filter((n) => n.selected).map((n) => n.id);
+      if (targetIds.length === 0) return;
+      pushUndo();
+      setNodes((nds: Node[]) =>
+        nds.map((n) => {
+          if (!targetIds.includes(n.id)) return n;
+          const nextData: Record<string, unknown> = { ...n.data };
+          for (const [k, v] of Object.entries(patch)) {
+            // `null` z palety = „skasuj mój wybór" i wróć do domyślnej barwy
+            // kształtu/toru — kasujemy klucz zamiast zapisywać null.
+            if (v === null) delete nextData[k];
+            else nextData[k] = v;
+          }
+          const nextNode = { ...n, data: nextData };
+          collab.broadcastNodeUpdate(nextNode);
+          return nextNode;
+        })
+      );
+    },
+    [collab, locked, nodes, pushUndo, setNodes]
   );
 
   // ── Edge label/condition change handlers ───────────────────────────────
@@ -2582,6 +2642,177 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     return () => window.removeEventListener(IDEA_WORKSPACE_THEME_EVENT, handler);
   }, [ideaId, locked, open, pushUndo]);
 
+  // ── Model paska edycji obiektu ────────────────────────────────────────────
+  const pfEditBarSlot = useObjectEditBarSlot();
+  const pfEditBarTarget = selectedNode ? 'node' : selectedEdge ? 'edge' : null;
+  const pfEditBarDocked =
+    isCanvasObjectEditBarEnabled() && !!pfEditBarSlot && !!pfEditBarTarget && !locked;
+
+  const pfEditBarModel = useMemo(() => {
+    if (!pfEditBarDocked) return null;
+
+    // ── KRAWĘDŹ: kolor linii · styl · strzałki · kierunek przepływu ──────────
+    if (pfEditBarTarget === 'edge' && selectedEdge) {
+      const edgeId = selectedEdge.id;
+      const edgeData = (selectedEdge.data || {}) as Record<string, any>;
+      return {
+        title: t('canvasEditBar.titleEdge', 'Połączenie'),
+        groups: [
+          {
+            id: 'edge-look',
+            controls: [
+              {
+                kind: 'popover' as const,
+                id: 'line-color',
+                icon: Palette,
+                label: t('canvasEditBar.lineColor', 'Kolor linii'),
+                swatch: (edgeData.edgeColor as string) ?? null,
+                render: (close: () => void) => (
+                  <ColorPalettePopover
+                    title={t('canvasEditBar.lineColor', 'Kolor linii')}
+                    resetLabel={t('canvasEditBar.resetDefault', 'Domyślny')}
+                    value={edgeData.edgeColor}
+                    onPick={(c) => handleEdgeColorChange(edgeId, c)}
+                    close={close}
+                  />
+                ),
+              },
+              {
+                kind: 'popover' as const,
+                id: 'line-style',
+                icon: Minus,
+                label: t('canvasEditBar.lineStyle', 'Styl linii'),
+                render: (close: () => void) => (
+                  <MenuListPopover
+                    title={t('canvasEditBar.lineStyle', 'Styl linii')}
+                    close={close}
+                    items={[
+                      {
+                        id: 'solid',
+                        label: t('canvasEditBar.lineSolid', 'Ciągła'),
+                        icon: Minus,
+                        onClick: () => handleEdgeStyleOverrideChange(edgeId, 'solid'),
+                      },
+                      {
+                        id: 'dashed',
+                        label: t('canvasEditBar.lineDashed', 'Kreskowana'),
+                        icon: MoreHorizontal,
+                        onClick: () => handleEdgeStyleOverrideChange(edgeId, 'dashed'),
+                      },
+                    ]}
+                  />
+                ),
+              },
+            ],
+          },
+          {
+            id: 'edge-flow',
+            controls: [
+              {
+                kind: 'popover' as const,
+                id: 'arrows',
+                icon: MoveRight,
+                label: t('canvasEditBar.arrowTitle', 'Strzałki i kierunek'),
+                align: 'center' as const,
+                render: (close: () => void) => (
+                  <ArrowDirectionPopover
+                    value={edgeData.arrowDirection}
+                    onPick={(direction) => handleEdgeArrowChange(edgeId, direction)}
+                    close={close}
+                  />
+                ),
+              },
+              {
+                kind: 'button' as const,
+                id: 'reverse',
+                icon: Repeat,
+                // Odwrócenie kierunku PRZEPŁYWU (zamiana źródła i celu) — to co
+                // innego niż sam grot strzałki wyżej, dlatego osobny przycisk.
+                label: t('canvasEditBar.reverseFlow', 'Odwróć kierunek przepływu'),
+                onClick: () => handleEdgeReverse(edgeId),
+              },
+            ],
+          },
+        ],
+      };
+    }
+
+    // ── WĘZEŁ: typografia · tło · ramka · kształt · akcje ────────────────────
+    if (!selectedNode) return null;
+    const nodeData = (selectedNode.data || {}) as Record<string, any>;
+    const styleGroups = buildStyleGroups({
+      style: readCanvasObjectStyle(nodeData),
+      onPatch: handleFlowNodeStyleChange,
+      t,
+      disabled: locked,
+      show: { shape: true },
+    });
+
+    return {
+      title: t('canvasEditBar.titleNode', 'Węzeł'),
+      groups: [
+        ...styleGroups,
+        {
+          id: 'pf-actions',
+          controls: [
+            {
+              kind: 'button' as const,
+              id: 'rename',
+              icon: Edit3,
+              label: t('processFlow.floatingToolbar.rename', 'Rename'),
+              onClick: () => setShowPropertiesPanel(true),
+            },
+            {
+              kind: 'button' as const,
+              id: 'duplicate',
+              icon: Copy,
+              label: t('processFlow.floatingToolbar.duplicate', 'Duplicate'),
+              onClick: duplicateSelected,
+            },
+            {
+              kind: 'button' as const,
+              id: 'insert-between',
+              icon: GitMerge,
+              label: t('processFlow.floatingToolbar.insertBetween', 'Insert between'),
+              onClick: insertBetween,
+            },
+            {
+              kind: 'button' as const,
+              id: 'comments',
+              icon: MessageCircle,
+              label: t('processFlow.floatingToolbar.comments', 'Comments'),
+              badge: Array.isArray(nodeData.comments) ? nodeData.comments.length : 0,
+              onClick: () => setCommentsPanelNodeId(selectedNode.id),
+            },
+            {
+              kind: 'button' as const,
+              id: 'delete',
+              icon: Trash2,
+              label: t('processFlow.floatingToolbar.delete', 'Delete'),
+              tone: 'danger' as const,
+              onClick: deleteSelected,
+            },
+          ],
+        },
+      ],
+    };
+  }, [
+    pfEditBarDocked,
+    pfEditBarTarget,
+    selectedEdge,
+    selectedNode,
+    locked,
+    t,
+    handleEdgeColorChange,
+    handleEdgeStyleOverrideChange,
+    handleEdgeArrowChange,
+    handleEdgeReverse,
+    handleFlowNodeStyleChange,
+    duplicateSelected,
+    insertBetween,
+    deleteSelected,
+  ]);
+
   if (!open) return null;
 
   return (
@@ -3225,7 +3456,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             }
           />
 
-          {selectedNode && !locked && (
+          {/* Pasek edycji zadokowany w listwie Menu 3. Gdy jest — pływający
+              pasek Procesu się nie renderuje; gdy slotu brak, wraca pływający. */}
+          {pfEditBarDocked && pfEditBarModel ? (
+            <ObjectEditBarDock slot={pfEditBarSlot}>
+              <ObjectEditBar model={pfEditBarModel} />
+            </ObjectEditBarDock>
+          ) : null}
+
+          {selectedNode && !locked && !pfEditBarDocked && (
             <ProcessFlowFloatingToolbar
               nodeId={selectedNode.id}
               nodeData={selectedNode.data}

@@ -19,6 +19,8 @@ import {
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isCanvasUndoInRailOnlyEnabled } from '@/utils/canvasUndoInRailOnlyFlag';
+
 import TeresaMark from '../../shared/TeresaMark';
 import { type ProcessFlowSemanticKit } from '../canvas/canvasOsContract';
 import { FOCUS_RING } from '../canvas/motionTokens';
@@ -224,6 +226,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   hideSaveIndicator = false,
 }) => {
   const { t } = useTranslation();
+  /** C: Cofnij/Ponów tylko w lewym pasku (flaga, domyślnie OFF). */
+  const undoRedoInRailOnly = isCanvasUndoInRailOnlyEnabled();
   const [overflowOpen, setOverflowOpen] = useState(false);
   const overflowRef = useRef<HTMLDivElement>(null);
 
@@ -384,27 +388,38 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
 
           <div className="ml-auto" />
 
-          {/* Undo / redo (always visible) */}
-          <button
-            type="button"
-            onClick={undo}
-            disabled={!canUndo || locked}
-            className={`inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface transition-colors disabled:opacity-30 ${FOCUS_RING}`}
-            title={t('processFlow.toolbar.undoTitle', 'Undo (Ctrl+Z)')}
-            aria-label={t('processFlow.toolbar.undo', 'Undo')}
-          >
-            <Undo2 size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={redo}
-            disabled={!canRedo || locked}
-            className={`inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface transition-colors disabled:opacity-30 ${FOCUS_RING}`}
-            title={t('processFlow.toolbar.redoTitle', 'Redo (Ctrl+Shift+Z)')}
-            aria-label={t('processFlow.toolbar.redo', 'Redo')}
-          >
-            <Redo2 size={14} />
-          </button>
+          {/*
+           * Sprzątanie C (2026-07-28, flaga `ff_canvasUndoInRailOnly`, OFF):
+           * Przepływ miał DWA komplety Cofnij/Ponów na jednym ekranie — ten i
+           * lewy pasek. Właściciel o parze z paska poziomego: „to nie jest
+           * potrzebne bo mamy to samo w panelu lewym". Traktujemy identycznie
+           * jak Tablicę. Funkcja zostaje: lewy pasek (`pf_undo`/`pf_redo`),
+           * Ctrl/Cmd+Z i Ctrl/Cmd+Shift+Z, sekcja „Historia" prawego panelu.
+           */}
+          {!undoRedoInRailOnly && (
+            <>
+              <button
+                type="button"
+                onClick={undo}
+                disabled={!canUndo || locked}
+                className={`inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface transition-colors disabled:opacity-30 ${FOCUS_RING}`}
+                title={t('processFlow.toolbar.undoTitle', 'Undo (Ctrl+Z)')}
+                aria-label={t('processFlow.toolbar.undo', 'Undo')}
+              >
+                <Undo2 size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={redo}
+                disabled={!canRedo || locked}
+                className={`inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface transition-colors disabled:opacity-30 ${FOCUS_RING}`}
+                title={t('processFlow.toolbar.redoTitle', 'Redo (Ctrl+Shift+Z)')}
+                aria-label={t('processFlow.toolbar.redo', 'Redo')}
+              >
+                <Redo2 size={14} />
+              </button>
+            </>
+          )}
 
           {/* Z9: gdy Menu 1 (mels canvas shell) niesie własny wskaźnik zapisu
               (IdeaSaveIndicator), toolbar chowa WŁASNY przycisk Zapisz (wraz z

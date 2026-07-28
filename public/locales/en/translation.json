@@ -26197,6 +26197,36 @@
           "score": "Score",
           "decision": "Decision"
         }
+      },
+      "start": {
+        "headline": "This table is still empty",
+        "description": "Pick one of three ways in — each one creates columns and rows straight away, no form to fill in.",
+        "lockedDescription": "The table has no rows yet and this view is read-only — nothing can be built here.",
+        "importCsv": "I already have the data in a file — import CSV",
+        "blankFailed": "Could not create the rows",
+        "template": {
+          "title": "From a template",
+          "description": "A ready consulting frame — SWOT, risk register, action plan. Adds the columns and sample rows you then replace with your own.",
+          "action": "Pick a template"
+        },
+        "ai": {
+          "title": "With AI",
+          "description": "Say in one sentence what you want to track. AI proposes the columns and first rows — you approve or adjust.",
+          "action": "Describe the table"
+        },
+        "blank": {
+          "title": "Blank with suggested columns",
+          "description": "Name, Status, Priority, Owner and three empty rows. The table appears immediately — you add the rest.",
+          "action": "Start blank"
+        }
+      },
+      "overflow": {
+        "sectionData": "Data",
+        "sectionAi": "AI",
+        "sectionView": "View",
+        "sectionMore": "More",
+        "sectionPlatform": "Platform",
+        "title": "More tools"
       }
     },
     "mindmap": {
@@ -26442,6 +26472,8 @@
       "noAppliedAiChangesYet": "No applied AI changes yet",
       "noArtifactsLinkedThisNodeYet": "No artifacts linked to this node yet.",
       "noBlindSpotsFound": "No blind spots found",
+      "blindSpotsIdleHint": "Run the check to find areas the map is missing.",
+      "blindSpotsUnavailable": "Add a few more elements to the map — there is nothing to analyse yet.",
       "noChangesProposed": "No changes proposed.",
       "noCommentsYetWriteFirstOne": "No comments yet. Write the first one!",
       "noCompanyDataConnectionsFound": "No company data connections found",
@@ -34169,5 +34201,45 @@
     "realtimeReconnecting": "Realtime reconnecting",
     "realtimeDegraded": "Realtime degraded",
     "recoveryInProgress": "Recovery in progress"
+  },
+  "canvasEditBar": {
+    "titleNode": "Node",
+    "titleEdge": "Connection",
+    "fontFamily": "Font",
+    "fontSize": "Size",
+    "bold": "Bold",
+    "underline": "Underline",
+    "textColor": "Text color",
+    "bgColor": "Background color",
+    "borderColor": "Border color",
+    "lineColor": "Line color",
+    "lineStyle": "Line style",
+    "lineSolid": "Solid",
+    "lineDashed": "Dashed",
+    "resetDefault": "Default",
+    "resetBg": "No custom background",
+    "resetBorder": "No custom border",
+    "shapeTitle": "Object shape",
+    "arrowTitle": "Arrows and direction",
+    "reverseFlow": "Reverse flow direction",
+    "font": {
+      "sans": "Sans-serif",
+      "serif": "Serif",
+      "mono": "Monospace"
+    },
+    "shape": {
+      "rounded": "Rounded",
+      "rect": "Rectangle",
+      "pill": "Pill",
+      "circle": "Circle",
+      "diamond": "Diamond",
+      "hexagon": "Hexagon"
+    },
+    "arrow": {
+      "none": "No arrow",
+      "end": "Forward",
+      "start": "Backward",
+      "both": "Both ways"
+    }
   }
 }

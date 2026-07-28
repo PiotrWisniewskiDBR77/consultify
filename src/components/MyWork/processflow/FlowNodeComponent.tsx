@@ -21,6 +21,13 @@ import React from 'react';
 import type { NodeProps } from 'reactflow';
 import { Handle, Position } from 'reactflow';
 
+import {
+  canvasObjectSurfaceStyle,
+  canvasObjectTextStyle,
+  canvasShapeClasses,
+  readCanvasObjectStyle,
+} from '../canvas/canvasObjectStyle';
+
 export type FlowShape =
   | 'start'
   | 'end'
@@ -49,6 +56,9 @@ export type FlowShape =
   | 'vsm_fifo';
 
 export const LANE_HEIGHT = 140;
+
+/** Kształty z palety wspólnej paska edycji — patrz `canvas/canvasObjectStyle`. */
+const CANVAS_SHAPE_KEYS = new Set(['rounded', 'rect', 'pill', 'circle', 'diamond', 'hexagon']);
 
 // Default lane tint when a node has no assigned lane color.
 // Resolved value of the `slate-200` design token (a structural neutral — NOT
@@ -203,14 +213,32 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
   };
   const shapeToken = SHAPE_TOKENS[shape];
 
-  const innerRotate =
-    shape === 'decision' || shape === 'auto_condition' || shape === 'bpmn_gateway'
+  // ── PASEK EDYCJI OBIEKTU (ff_canvasObjectEditBar) ────────────────────────
+  // NOWA ZDOLNOŚĆ, nie przeniesienie: do tej pory wygląd węzła Procesu brał się
+  // WYŁĄCZNIE z `shape` i koloru toru — `node.data` nie niosło ani tła, ani
+  // ramki, ani typografii, więc właściciel „nie mógł zmienić czcionek, kolorów
+  // typu, koloru tła, kształtów obiektów".
+  const objectStyle = readCanvasObjectStyle(data);
+  const objectSurface = canvasObjectSurfaceStyle(objectStyle, { bgOpacityPct: 16 });
+  const objectText = canvasObjectTextStyle(objectStyle);
+  // Kształt z palety (`rounded/rect/pill/circle/diamond/hexagon`) ma
+  // pierwszeństwo nad kształtem WYNIKAJĄCYM Z TYPU kroku (action/decision/BPMN),
+  // ale tylko wtedy, gdy właściciel jawnie go wybrał — inaczej diagram BPMN
+  // straciłby swoją semantykę kształtów.
+  const overrideShape = objectStyle.shape && CANVAS_SHAPE_KEYS.has(objectStyle.shape);
+  const overrideShapeClasses = overrideShape ? canvasShapeClasses(objectStyle.shape) : null;
+
+  const innerRotate = overrideShapeClasses
+    ? overrideShapeClasses.inner
+    : shape === 'decision' || shape === 'auto_condition' || shape === 'bpmn_gateway'
       ? '-rotate-45'
       : '';
 
   return (
     <div
-      className={`group relative flex flex-col items-center justify-center min-w-[80px] min-h-[48px] px-3 py-2 shadow-sm transition-shadow ${shapeStyles[shape]} ${selected ? 'ring-2 ring-c-border-strong' : ''}`}
+      className={`group relative flex flex-col items-center justify-center min-w-[80px] min-h-[48px] px-3 py-2 shadow-sm transition-shadow ${
+        overrideShapeClasses ? `border-2 ${overrideShapeClasses.box}` : shapeStyles[shape]
+      } ${selected ? 'ring-2 ring-c-border-strong' : ''}`}
       style={{
         borderLeftColor: laneColor,
         borderLeftWidth: shape === 'action' ? 4 : undefined,
@@ -221,6 +249,8 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
               ? `color-mix(in srgb, var(${shapeToken}) 12%, transparent)`
               : undefined,
         borderColor: shapeToken ? `var(${shapeToken})` : undefined,
+        // Wybór właściciela na końcu — bije kolor toru i token kształtu.
+        ...(objectSurface || {}),
       }}
       onDoubleClick={() => {
         if (isGhost) return;
@@ -299,10 +329,14 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
             if (e.key === 'Enter') commitEdit();
             if (e.key === 'Escape') setEditing(false);
           }}
+          style={objectText}
           className={`bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-border-strong w-full ${innerRotate}`}
         />
       ) : (
-        <div className={`text-xs font-medium text-c-text text-center ${innerRotate}`}>
+        <div
+          style={objectText}
+          className={`text-xs font-medium text-c-text text-center ${innerRotate}`}
+        >
           {data?.label || shape}
         </div>
       )}
