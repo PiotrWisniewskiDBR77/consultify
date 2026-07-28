@@ -195,7 +195,7 @@ const getPriorityCardStyle = (priority?: string) => {
       return {
         border: 'border-l-4 border-l-danger-500',
         bg: 'bg-danger-500/5 dark:bg-danger-500/10',
-        badge: 'bg-danger-500/15 text-danger-400 border border-danger-500/20',
+        badge: 'text-danger-700 dark:text-danger-300',
         label: 'Critical',
         dot: 'bg-danger-500',
         icon: Zap,
@@ -204,7 +204,7 @@ const getPriorityCardStyle = (priority?: string) => {
       return {
         border: 'border-l-4 border-l-amber-500',
         bg: 'bg-amber-500/5 dark:bg-amber-500/10',
-        badge: 'bg-amber-500/15 text-amber-400 border border-amber-500/20',
+        badge: 'text-c-text-secondary',
         label: 'High',
         dot: 'bg-amber-500',
         icon: Flag,
@@ -213,7 +213,7 @@ const getPriorityCardStyle = (priority?: string) => {
       return {
         border: 'border-l-4 border-l-amber-500',
         bg: 'bg-amber-500/5 dark:bg-amber-500/10',
-        badge: 'bg-amber-500/15 text-amber-400 border border-amber-500/20',
+        badge: 'text-c-text-secondary',
         label: 'Medium',
         dot: 'bg-amber-500',
         icon: Flag,
@@ -222,7 +222,7 @@ const getPriorityCardStyle = (priority?: string) => {
       return {
         border: 'border-l-4 border-l-slate-400',
         bg: 'bg-slate-500/5 dark:bg-slate-500/10',
-        badge: 'bg-slate-500/15 text-slate-500 dark:text-slate-400 border border-slate-500/20',
+        badge: 'text-c-text-muted',
         label: 'Low',
         dot: 'bg-slate-400',
         icon: Flag,
@@ -231,7 +231,7 @@ const getPriorityCardStyle = (priority?: string) => {
       return {
         border: 'border-l-4 border-l-slate-300',
         bg: 'bg-slate-500/5 dark:bg-slate-500/10',
-        badge: 'bg-slate-500/15 text-slate-500 dark:text-slate-400 border border-slate-500/20',
+        badge: 'text-c-text-muted',
         label: 'Normal',
         dot: 'bg-slate-400',
         icon: Flag,
@@ -330,7 +330,7 @@ const KanbanCardContent: React.FC<{
 
       <div className="flex items-center gap-1.5 mb-2 flex-wrap pl-5">
         <span
-          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${priorityStyle.badge}`}
+          className={`inline-flex items-center gap-1 text-[10px] font-medium ${priorityStyle.badge}`}
         >
           <PriorityIcon size={10} />
           {priorityStyle.label}
