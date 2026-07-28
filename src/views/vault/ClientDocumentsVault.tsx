@@ -25,27 +25,43 @@
  * superadmina (Knowledge → Documents/RAG), bez zmian.
  *
  * ★ SCALENIE 2026-07-26 (fix/triada-agent-sejfy + feat/sejf-redesign):
- * - Z triady zachowana lupa Menu 2 (`onSearch`/`searchValue` → filtr
- *   `VaultSafesTable` po nazwie sejfu; poprzednio samotna ikona bez działania).
  * - Wnętrze sejfu = pełnoekranowy `VaultDocumentsView` (redesign wygrywa nad
  *   kartą z owiniętym `DocumentsRAGTab` — tamto było przyznanym w komentarzu
  *   półśrodkiem sprzed redesignu).
  * - Mechanizm karty w Menu 3 (`openItems`/`activeItemId`/`onSelectItem`/
- *   `onCloseItem`, wzór 1:1 `AgentHubShell.tsx`) DOPIĘTY na własnym
- *   `StandardModuleBar` `VaultDocumentsView` (patrz komentarz „KARTA W MENU 3"
- *   tamże): otwarty sejf = jedna zawsze-aktywna karta (`type:'tool',
- *   subType:'vault-safe'`); × karty i „Lista" oba wołają `onBack` — dokładnie
- *   ten sam `handleBackToSafes` co breadcrumb „Sejf klienta" niżej. Efekt
- *   uboczny (opisany tamże): dopóki karta jest widoczna, chipy statusu
- *   indeksowania w Menu 3 są wizualnie zastąpione tabem (tryby wyłączne we
- *   wspólnym `ModuleNavBar`) — zgłoszone jako wątpliwość do decyzji, nie
- *   naprawiane tutaj (wymagałoby zmiany pliku wspólnego, poza mandatem).
+ *   `onCloseItem`, wzór 1:1 `AgentHubShell.tsx`) — patrz `VaultDocumentsView`.
+ *
+ * ★ HUBBARSLOTS (2026-07-28, sprzątanie chrome — to samo zgłoszenie
+ * właściciela co Run agent: „posprzątać w Client Vault tak samo"; audyt: do
+ * 320px/6 rzędów chrome nad obszarem roboczym, najgorzej w całej aplikacji).
+ * Ten ekran PRZESTAŁ rysować własny `StandardModuleBar` — hub (`MyWorkHub`)
+ * ma teraz JEDYNE Menu 2/3, a lista sejfów tylko DEKLARUJE swój `filterControls`
+ * przez `useHubBarSlot` (patrz `src/components/shared/HubBarSlots.tsx`):
+ * - Lupa: kontrakt `HubBarSlotValue` NIE ma osobnego pola na wyszukiwanie
+ *   (tylko `filterControls`/`primaryCta`/`openItems`), więc pole trafia do
+ *   `filterControls` jako zwykły input (filtrowanie po nazwie sejfu — bez
+ *   zmian funkcjonalnych, tylko inne miejsce w drzewie).
+ * - `primaryCta` „Nowy sejf" POMINIĘTY ŚWIADOMIE: sejfy powstają automatycznie
+ *   (mój/organizacji/po jednym na projekt, patrz `VaultSafesTable.tsx`), nie
+ *   ma endpointu tworzenia — przycisk bez handlera byłby fasadą.
+ * ★ PUŁAPKA WSPÓŁDZIELONEGO SLOTU: ta lista i `VaultDocumentsView` (wnętrze
+ * sejfu) to DWA NIEZALEŻNE komponenty, oba wołają `useHubBarSlot` (inaczej niż
+ * `AgentHubShell`, gdzie jeden komponent warunkuje zawartość slotu wewnątrz
+ * siebie) — `register()` w `HubBarSlotsContext` NADPISUJE cały slot („ostatni
+ * zapis wygrywa"). Otwarcie sejfu samo się domyka poprawnie (efekt tej listy
+ * ma STABILNĄ referencję `filterControlsNode`, więc nie odpala się ponownie w
+ * tym samym committcie co montowanie `VaultDocumentsView` — brak wyścigu).
+ * Zamknięcie WYMAGA jawnego wymuszenia: `handleBackToSafes` inkrementuje
+ * `resyncTick` (dep. `filterControlsNode`), żeby efekt tej listy odpalił się
+ * PO odmontowaniu `VaultDocumentsView` (które czyści slot) i przywrócił pole
+ * szukania — bez tego zostawałoby puste do najbliższej niepowiązanej zmiany.
  */
 
-import React, { useCallback, useState } from 'react';
+import { Search } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { StandardModuleBar } from '../../components/standard';
+import { useHubBarSlot } from '../../components/shared/HubBarSlots';
 import { isClientVaultEnabled } from '../../utils/clientVaultFlag';
 import { VaultDocumentsView } from './VaultDocumentsView';
 import { type VaultSafe, VaultSafesTable } from './VaultSafesTable';
@@ -55,28 +71,53 @@ export const ClientDocumentsVault: React.FC = () => {
   const isPolish = !!i18n.language?.startsWith('pl');
   const [openSafe, setOpenSafe] = useState<VaultSafe | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  // Patrz „★ PUŁAPKA WSPÓŁDZIELONEGO SLOTU" w nagłówku pliku.
+  const [resyncTick, setResyncTick] = useState(0);
 
   const handleOpenSafe = useCallback((safe: VaultSafe) => setOpenSafe(safe), []);
-  const handleBackToSafes = useCallback(() => setOpenSafe(null), []);
+  const handleBackToSafes = useCallback(() => {
+    setOpenSafe(null);
+    setResyncTick((v) => v + 1);
+  }, []);
+
+  const filterControlsNode = useMemo(
+    () => (
+      <div className="relative">
+        <Search
+          size={14}
+          className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-muted"
+        />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t(
+            'vault.safes.searchPlaceholder',
+            isPolish ? 'Szukaj sejfu…' : 'Search safes…'
+          )}
+          aria-label={t('vault.breadcrumb.root', isPolish ? 'Sejf klienta' : 'Client Vault')}
+          className="h-9 w-48 rounded-lg border border-c-border bg-c-surface pl-8 pr-3 text-sm text-c-text placeholder:text-c-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+        />
+      </div>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [searchQuery, t, isPolish, resyncTick]
+  );
+
+  useHubBarSlot({ filterControls: filterControlsNode });
 
   if (!isClientVaultEnabled()) return null;
 
-  // Wnętrze sejfu ma WŁASNĄ pełną triadę (Menu 1 z breadcrumbem i kebabem karty
-  // + Menu 2 + Menu 3 + tabela + preview), więc renderuje się samodzielnie —
-  // wrapper nie dokłada drugiego paska (byłyby dwa Menu 1 nad sobą).
+  // Wnętrze sejfu rejestruje WŁASNY slot (patrz `VaultDocumentsView`), więc
+  // renderuje się samodzielnie — ta lista tylko przestaje pokazywać swoją
+  // tabelę (jej `filterControls` zostaje nadpisany przez wnętrze, dopóki jest
+  // zamontowane).
   if (openSafe) {
     return <VaultDocumentsView safe={openSafe} onBack={handleBackToSafes} />;
   }
 
   return (
     <div className="h-full flex flex-col">
-      <StandardModuleBar
-        breadcrumbs={[
-          { label: t('vault.breadcrumb.root', isPolish ? 'Sejf klienta' : 'Client Vault') },
-        ]}
-        onSearch={setSearchQuery}
-        searchValue={searchQuery}
-      />
       <div className="flex-1 min-h-0 overflow-auto">
         <VaultSafesTable onOpenSafe={handleOpenSafe} searchQuery={searchQuery} />
       </div>

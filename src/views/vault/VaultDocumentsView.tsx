@@ -7,54 +7,81 @@
  * zajmujący pół widoku, a dopiero pod spodem kafelki „INDEXED DOCUMENTS".
  * Ocena właściciela 2026-07-24: „nadzwyczajnie tandetnie brzydkie".
  *
- * Ekran jest teraz zwykłym ekranem LISTOWYM aplikacji, czyli triadą:
- *   Menu 1  — breadcrumb „Sejf klienta › [nazwa sejfu]" + kebab karty
- *   Menu 2  — lupa · filtr Kategoria · CTA „Dodaj dokument"
- *   Menu 3  — karta otwartego sejfu (dynamiczny tab, patrz niżej) / pasek bulk
- *             przy zaznaczeniu — chipy licznikowe statusu indeksowania mieszkają
- *             TERAZ w tej samej strefie i są nieaktywne, dopóki karta jest widoczna
- *             (patrz „KARTA W MENU 3" niżej — świadomy kompromis, nie usterka).
+ * Ekran jest teraz zwykłym ekranem LISTOWYM aplikacji, osadzonym w JEDYNYM
+ * pasku huba (`MyWorkHub`) przez `HubBarSlots` (2026-07-28, ★ HUBBARSLOTS
+ * niżej) — Menu 1 (breadcrumb) NIE jest tu już renderowane (hub ma własny
+ * breadcrumb globalny; powrót do listy sejfów zapewnia × karty w Menu 3 huba
+ * / `onShowList`):
+ *   Menu 2 (huba) — filtr Kategoria + kebab (Odśwież/Eksportuj CSV) + chipy
+ *             statusu indeksowania (`filterControls`) · CTA „Dodaj dokument"
+ *             (`primaryCta`).
+ *   Menu 3 (huba) — karta otwartego sejfu doklejona do kart huba (`openItems`).
  *   Tabela  — <StandardTable> (pstryczek kolumn, sort, kebab wiersza, checkboxy)
  *   Preview — <StandardPreview> po kliknięciu wiersza
  * Formularz dodawania przeniesiony do panelu bocznego (`VaultDocumentPanel`).
  *
  * ROZDZIAŁ FILTRÓW (doktryna gęstości §1 „jedna akcja = jeden dom"): Kategoria
- * mieszka w Menu 2, status indeksowania w chipach Menu 3 — dlatego kolumny
- * Kategoria/Status NIE mają lejków (byłby ten sam filtr w dwóch miejscach).
- * Poziom nie ma filtra w ogóle: wewnątrz jednego sejfu jest z definicji stały
- * (GET leci z `?scope=`), więc filtr byłby martwą kontrolką — zostaje jako
- * KOLUMNA KONTEKSTU, tak jak prosi projekt.
+ * i status indeksowania mieszkają RAZEM w `filterControls` (patrz niżej), więc
+ * kolumny Kategoria/Status NIE mają lejków (byłby ten sam filtr w dwóch
+ * miejscach). Poziom nie ma filtra w ogóle: wewnątrz jednego sejfu jest z
+ * definicji stały (GET leci z `?scope=`), więc filtr byłby martwą kontrolką —
+ * zostaje jako KOLUMNA KONTEKSTU, tak jak prosi projekt.
  *
- * ★ KARTA W MENU 3 (2026-07-26, wzór 1:1 `AgentHubShell.tsx` §"Karta w Menu 3"):
- * ten ekran istnieje WYŁĄCZNIE w stanie "sejf otwarty" (rodzic
- * `ClientDocumentsVault.tsx` renderuje go zamiast tabeli sejfów, early return),
- * więc karta Menu 3 jest zawsze dokładnie jedna, zawsze aktywna: `openItems`
- * niesie jeden wpis `{id: safe.id, type:'tool', subType:'vault-safe',
- * name: safe.name, status:'DONE'}`. Zamknięcie (×) i „Lista" (`onShowList`)
- * oba wołają `onBack` (powrót do tabeli sejfów) — jedyne dostępne wyjście z
- * tego ekranu. UWAGA/KOMPROMIS: `ModuleNavBar` (wspólny, nie ruszany) traktuje
- * chipy statusu i dynamiczne taby jako tryby WYŁĄCZNE — gdy `openItems` nie
- * jest puste, DynamicTabs ZASTĘPUJE chipy `all/indexed/processing/failed`
- * (nie chowa się obok). Efekt: dopóki `chips`+`openItems` idą razem (jak tu),
- * filtr statusu jest wizualnie martwy — zgłoszone w raporcie zadania jako
- * wątpliwość do decyzji (opcje: zaakceptować, przenieść status do Menu 2 obok
- * Kategorii, albo rozszerzyć `ModuleNavBar` o tryb łączony — to ostatnie
- * wymaga zmiany pliku wspólnego, poza mandatem tego zadania).
+ * ★ HUBBARSLOTS (2026-07-28, sprzątanie chrome — audyt: sejf miał do 320px
+ * (6 rzędów) nad obszarem roboczym, najgorzej w całej aplikacji; wzór 1:1
+ * `AgentHubShell.tsx` + `src/components/shared/HubBarSlots.tsx`). Ten ekran
+ * PRZESTAŁ rysować własny `StandardModuleBar` — hub (`MyWorkHub`, przez
+ * `ClientDocumentsVault.tsx`) ma teraz JEDYNE Menu 2/3 na ekranie:
+ *   - `filterControls` — select Kategorii + kebab (Odśwież/Eksportuj CSV,
+ *     dawniej `breadcrumbExtra` Menu 1) + chipy statusu indeksowania (dawniej
+ *     `chips`/`activeChip`/`onChipChange` Menu 3 tego komponentu) — WSZYSTKO
+ *     RAZEM w jednym rzędzie Menu 2 huba.
+ *   - `primaryCta` — „Dodaj dokument" (bez ikony — kontrakt `HubBarPrimaryCta`
+ *     nie niesie ikony, hub renderuje sam tekst, tak jak w Run agent).
+ *   - `openItems`/`activeItemId`/`onSelectItem`/`onCloseItem`/`onShowList` —
+ *     1:1 to samo, co szło wcześniej do `StandardModuleBar` (karta otwartego
+ *     sejfu), teraz ląduje w Menu 3 huba.
+ * ★ ZYSK UBOCZNY (VLT-007, naprawiony TU): stary kompromis „chipy statusu są
+ * niewidoczne, dopóki karta jest w Menu 3" (bo `ModuleNavBar.commandRow` traktuje
+ * `chips`+`openItems` jako tryby WYŁĄCZNE, patrz `ModuleNavBar.tsx` ok. linii 289)
+ * PRZESTAJE dotyczyć tego ekranu — chipy status TERAZ mieszkają w `filterControls`
+ * (Menu 2 huba), fizycznie w INNYM rzędzie niż `openItems` (Menu 3 huba prowadzony
+ * przez `DynamicTabs`), więc oba są widoczne jednocześnie. Renderowane własnym
+ * `Menu3Chip`/`Menu3Badge` (prymitywy z `ModuleMenu3`, nie przez prop `chips`
+ * `StandardModuleBar`, bo `filterControls` przyjmuje `ReactNode`, nie kontrakt
+ * chipów). Zweryfikowane w raporcie zadania (dev-render, jasny/ciemny motyw).
+ *
+ * ★ PUŁAPKA WSPÓŁDZIELONEGO SLOTU (dwa niezależne komponenty, `ClientDocumentsVault`
+ * jako lista I `VaultDocumentsView` jako wnętrze, oba wołają `useHubBarSlot` —
+ * inaczej niż `AgentHubShell`, gdzie jest to JEDEN komponent z warunkiem
+ * wewnątrz): `register()` NADPISUJE cały slot („ostatni zapis wygrywa"), więc
+ * `ClientDocumentsVault.handleBackToSafes` musi WYMUSIĆ ponowną rejestrację
+ * listy PO zamknięciu tego ekranu (`resyncTick`, patrz komentarz tam) — bez
+ * tego pole szukania sejfów zostawałoby puste po powrocie z sejfu.
  *
  * Kanon: `docs/ui-standards/TRIADA_KANON.md` (część B = lista odbioru).
- * Zero własnych tabel/menu/preview — wyłącznie `src/components/standard/`.
+ * Zero własnych tabel/menu/preview — wyłącznie `src/components/standard/`
+ * + `useHubBarSlot` zamiast własnego paska.
  */
 
-import { Download, FileText, Info, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { Download, FileText, Info, Pencil, RefreshCw, Search, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useHubBarSlot } from '@/components/shared/HubBarSlots';
 import type { FilterChip } from '@/components/shared/ModuleHub/ActiveFilters';
 import type { OpenDocument } from '@/components/shared/ModuleHub/types';
+import {
+  MENU_3_ACTION_DANGER,
+  MENU_3_INNER_CLASS,
+  MENU_3_LEFT_CLASS,
+  MENU_3_RIGHT_CLASS,
+  Menu3Badge,
+  Menu3Chip,
+} from '@/components/shared/ModuleMenu3';
 import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import {
-  StandardModuleBar,
   StandardPreview,
   type StandardPreviewActions,
   standardPreviewShortcuts,
@@ -65,6 +92,7 @@ import {
 } from '@/components/standard';
 import { MetaChip, StatusChip } from '@/components/ui/primitives';
 import { useAppStore } from '@/store/useAppStore';
+import { cn } from '@/utils/cn';
 
 import { Api } from '../../services/api';
 import { VaultDocumentPanel } from './VaultDocumentPanel';
@@ -509,134 +537,194 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
   );
   const handleSelectItem = useCallback(() => undefined, []);
 
+  // Etykiety chipów statusu — memoizowane osobno (zależą tylko od t/isPolish),
+  // żeby `filterControlsNode` niżej nie tracił referencji przy każdej zmianie
+  // statusCounts (patrz pułapka `useHubBarSlot`: stabilne referencje albo pętla
+  // render→register→render, komentarz w `HubBarSlots.tsx`).
+  const statusChipDefs: Array<{ id: StatusChipId; label: string; dot?: string }> = useMemo(
+    () => [
+      {
+        id: 'all' as StatusChipId,
+        label: t('vault.docs.chipAll', isPolish ? 'Wszystkie' : 'All'),
+        dot: undefined,
+      },
+      {
+        id: 'indexed' as StatusChipId,
+        label: t('vault.docs.chipIndexed', isPolish ? 'Zindeksowane' : 'Indexed'),
+        dot: 'bg-emerald-400',
+      },
+      {
+        id: 'processing' as StatusChipId,
+        label: t('vault.docs.chipProcessing', isPolish ? 'W trakcie' : 'Processing'),
+        dot: 'bg-amber-400',
+      },
+      {
+        id: 'failed' as StatusChipId,
+        label: t('vault.docs.chipFailed', isPolish ? 'Błąd' : 'Failed'),
+        dot: 'bg-red-400',
+      },
+    ],
+    [t, isPolish]
+  );
+
+  // ── filterControls (Menu 2 huba) ─────────────────────────────────────────
+  // Lupa dokumentów w sejfie + select Kategorii + kebab (dawniej Menu 1
+  // breadcrumbExtra) + chipy statusu indeksowania (dawniej `chips` Menu 3 tego
+  // komponentu — VLT-007, patrz nagłówek pliku „★ ZYSK UBOCZNY"), wszystko w
+  // JEDNYM rzędzie Menu 2 huba zamiast trzech osobnych wierszy.
+  const filterControlsNode = useMemo(
+    () => (
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative">
+          <Search
+            size={14}
+            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-muted"
+          />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t(
+              'vault.docs.searchPlaceholder',
+              isPolish ? 'Szukaj dokumentu…' : 'Search documents…'
+            )}
+            aria-label={t('vault.docs.colName', isPolish ? 'Nazwa' : 'Name')}
+            className="h-9 w-44 rounded-lg border border-c-border bg-c-surface pl-8 pr-3 text-sm text-c-text placeholder:text-c-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          />
+        </div>
+        <select
+          data-testid="vault-docs-category-filter"
+          aria-label={t('vault.docs.colCategory', isPolish ? 'Kategoria' : 'Category')}
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className={SELECT_CLASS}
+        >
+          <option value="">
+            {t('vault.docs.allCategories', isPolish ? 'Wszystkie kategorie' : 'All categories')}
+          </option>
+          {DOCUMENT_CATEGORIES.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+        <div className="flex items-center gap-1">
+          {statusChipDefs.map(({ id, label, dot }) => (
+            <Menu3Chip key={id} active={statusChip === id} onClick={() => setStatusChip(id)}>
+              {dot ? <span className={cn('h-1.5 w-1.5 rounded-full', dot)} /> : null}
+              {label}
+              <Menu3Badge count={statusCounts[id]} active={statusChip === id} />
+            </Menu3Chip>
+          ))}
+        </div>
+        <RowActionsMenu
+          size="sm"
+          sections={[
+            {
+              id: 'safe',
+              kind: 'context',
+              actions: [
+                {
+                  id: 'refresh',
+                  label: t('common.refresh', isPolish ? 'Odśwież' : 'Refresh'),
+                  icon: RefreshCw,
+                  onClick: () => void load(),
+                },
+                {
+                  id: 'export-csv',
+                  label: t(
+                    'vault.docs.exportCsv',
+                    isPolish ? 'Eksportuj listę (CSV)' : 'Export list (CSV)'
+                  ),
+                  icon: Download,
+                  onClick: exportCsv,
+                  disabled: rows.length === 0,
+                },
+              ],
+            },
+          ]}
+        />
+      </div>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      search,
+      categoryFilter,
+      statusChip,
+      statusCounts,
+      statusChipDefs,
+      rows.length,
+      load,
+      exportCsv,
+      t,
+      isPolish,
+    ]
+  );
+
+  const primaryCtaValue = useMemo(
+    () => ({
+      label: t('vault.docs.add', isPolish ? 'Dodaj dokument' : 'Add document'),
+      onClick: () => {
+        setEditedDocument(null);
+        setPanelMode('add');
+      },
+      testId: 'vault-docs-add',
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, isPolish]
+  );
+
+  useHubBarSlot({
+    filterControls: filterControlsNode,
+    primaryCta: primaryCtaValue,
+    openItems,
+    activeItemId: safe.id,
+    onSelectItem: handleSelectItem,
+    onCloseItem: onBack,
+    onShowList: onBack,
+  });
+
+  // Pasek zaznaczenia — RENDEROWANY LOKALNIE nad tabelą (wzór 1:1
+  // `AgentHubShell.tsx` §"Pasek zaznaczenia"): `HubBarSlotValue` nie ma slotu
+  // na `bulk` (poza mandatem tego zadania — zgłoszone w raporcie), więc
+  // dublujemy TYLKO wygląd dawnego `StandardModuleBar.bulk` (te same klasy
+  // `MENU_3_*`/`Menu3Chip`) bezpośrednio nad tabelą.
+  const renderBulkBar = () => {
+    if (selectedRowIds.size === 0) return null;
+    return (
+      <div className="pb-2">
+        <div className={MENU_3_INNER_CLASS}>
+          <div className={MENU_3_LEFT_CLASS}>
+            <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
+              {t('vault.docs.selected', {
+                defaultValue: isPolish ? 'Zaznaczono: {{count}}' : '{{count}} selected',
+                count: selectedRowIds.size,
+              })}
+            </span>
+            <Menu3Chip onClick={() => setSelectedRowIds(new Set())}>
+              {t('common.clear', isPolish ? 'Wyczyść' : 'Clear')}
+            </Menu3Chip>
+          </div>
+          <div className={MENU_3_RIGHT_CLASS}>
+            <button
+              type="button"
+              onClick={() => void deleteDocuments(Array.from(selectedRowIds))}
+              className={MENU_3_ACTION_DANGER}
+            >
+              <Trash2 size={12} />
+              {t('common.delete', isPolish ? 'Usuń' : 'Delete')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-c-bg">
-      <StandardModuleBar
-        breadcrumbs={[
-          {
-            label: t('vault.breadcrumb.root', isPolish ? 'Sejf klienta' : 'Client Vault'),
-            onClick: onBack,
-          },
-          { label: safe.name },
-        ]}
-        breadcrumbExtra={
-          <RowActionsMenu
-            sections={[
-              {
-                id: 'safe',
-                kind: 'context',
-                actions: [
-                  {
-                    id: 'refresh',
-                    label: t('common.refresh', isPolish ? 'Odśwież' : 'Refresh'),
-                    icon: RefreshCw,
-                    onClick: () => void load(),
-                  },
-                  {
-                    id: 'export-csv',
-                    label: t(
-                      'vault.docs.exportCsv',
-                      isPolish ? 'Eksportuj listę (CSV)' : 'Export list (CSV)'
-                    ),
-                    icon: Download,
-                    onClick: exportCsv,
-                    disabled: rows.length === 0,
-                  },
-                ],
-              },
-            ]}
-          />
-        }
-        onSearch={setSearch}
-        searchValue={search}
-        filterControls={
-          <select
-            data-testid="vault-docs-category-filter"
-            aria-label={t('vault.docs.colCategory', isPolish ? 'Kategoria' : 'Category')}
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className={SELECT_CLASS}
-          >
-            <option value="">
-              {t('vault.docs.allCategories', isPolish ? 'Wszystkie kategorie' : 'All categories')}
-            </option>
-            {DOCUMENT_CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        }
-        primaryCta={{
-          label: t('vault.docs.add', isPolish ? 'Dodaj dokument' : 'Add document'),
-          icon: Plus,
-          onClick: () => {
-            setEditedDocument(null);
-            setPanelMode('add');
-          },
-          testId: 'vault-docs-add',
-        }}
-        chips={[
-          {
-            id: 'all',
-            label: t('vault.docs.chipAll', isPolish ? 'Wszystkie' : 'All'),
-            count: statusCounts.all,
-          },
-          {
-            id: 'indexed',
-            label: t('vault.docs.chipIndexed', isPolish ? 'Zindeksowane' : 'Indexed'),
-            count: statusCounts.indexed,
-            dot: 'bg-emerald-400',
-          },
-          {
-            id: 'processing',
-            label: t('vault.docs.chipProcessing', isPolish ? 'W trakcie' : 'Processing'),
-            count: statusCounts.processing,
-            dot: 'bg-amber-400',
-          },
-          {
-            id: 'failed',
-            label: t('vault.docs.chipFailed', isPolish ? 'Błąd' : 'Failed'),
-            count: statusCounts.failed,
-            dot: 'bg-red-400',
-          },
-        ]}
-        activeChip={statusChip}
-        onChipChange={(id) => setStatusChip(id as StatusChipId)}
-        openItems={openItems}
-        activeItemId={safe.id}
-        onSelectItem={handleSelectItem}
-        onCloseItem={onBack}
-        onShowList={onBack}
-        activeFilters={tagFilters}
-        onRemoveFilter={(id) => setTagFilters((prev) => prev.filter((f) => f.id !== id))}
-        onClearFilters={() => setTagFilters([])}
-        bulk={
-          selectedRowIds.size > 0
-            ? {
-                count: selectedRowIds.size,
-                selectedLabel: t('vault.docs.selected', {
-                  defaultValue: isPolish ? 'Zaznaczono: {{count}}' : '{{count}} selected',
-                  count: selectedRowIds.size,
-                }),
-                onClear: () => setSelectedRowIds(new Set()),
-                clearLabel: t('common.clear', isPolish ? 'Wyczyść' : 'Clear'),
-                actions: [
-                  {
-                    id: 'bulk-delete',
-                    label: t('common.delete', isPolish ? 'Usuń' : 'Delete'),
-                    icon: Trash2,
-                    variant: 'danger',
-                    onClick: () => void deleteDocuments(Array.from(selectedRowIds)),
-                  },
-                ],
-              }
-            : null
-        }
-      />
-
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="min-w-0 flex-1 overflow-auto pb-4 pl-4 pr-1.5 pt-3">
+          {renderBulkBar()}
           <StandardTable
             columns={columns}
             data={rows as unknown as TableRow[]}
