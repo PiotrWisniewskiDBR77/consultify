@@ -29226,7 +29226,9 @@
         "startEnd": "Start/End",
         "task": "Action (process step)",
         "decision": "Decision",
-        "lane": "Lane (adds a new responsibility lane)"
+        "lane": "Lane (adds a new responsibility lane)",
+        "grid": "Grid (show the helper grid on the canvas)",
+        "snap": "Snap (align dragged steps to the grid)"
       },
       "tbl": {
         "addRow": "Add row",
@@ -29238,7 +29240,9 @@
       "importExport": "Import / Export",
       "moreTools": "More tools",
       "undo": "Undo",
-      "redo": "Redo"
+      "redo": "Redo",
+      "toggleOn": "on",
+      "toggleOff": "off"
     },
     "documentToMap": {
       "addedIdeas": "Added {{count}} ideas from document",
