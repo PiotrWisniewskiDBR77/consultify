@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import ReactFlow, {
@@ -44,6 +45,7 @@ import ReactFlow, {
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
+import { usePortalSlot } from '@/hooks/usePortalSlot';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import {
@@ -168,6 +170,8 @@ import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
 import { shouldVirtualize } from './mindmap/virtualization';
 import { VoiceToNode } from './mindmap/VoiceToNode';
+import { IDEA_PANEL_AI_SLOT_ID } from './panel/ideaPanel6Sections';
+import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 type IdeaNodeData = NodeDetailData & {
@@ -4123,6 +4127,25 @@ function MindMapInner({
 
   // ── R5: Analytics ─────────────────────────────────────────────────────
   const [showHealthScore, setShowHealthScore] = useState(true);
+
+  /**
+   * PANELE INFORMACYJNE DO PRAWEGO PANELU (2026-07-28, `ff_ideaPanel6Sections`).
+   *
+   * Zasada zaakceptowana przez właściciela: żaden panel INFORMACYJNY nie pływa
+   * nad płótnem — mieszka w prawym panelu i daje się schować. (Sterowanie —
+   * dolny pasek i mini-mapa — zostaje nad płótnem świadomie.)
+   *
+   * Mapa myśli wnosi do sekcji „AI" dwa panele:
+   *   • Zdrowie mapy — rysuje je już `IdeaWorkspaceTools` (sekcja AI), więc tu
+   *     tylko GASIMY overlay, żeby nie było dwóch kopii.
+   *   • AI Blind Spots — mieszka w TYM komponencie (trzyma stan detekcji i
+   *     handler „Dodaj"), więc portalujemy go do `IDEA_PANEL_AI_SLOT_ID`.
+   *     Portal, a nie przeniesienie kodu: te same propsy, ten sam stan, zero
+   *     prop-drillingu przez IdeaMapWorkspace — wzorzec 1:1 z panelem sesji
+   *     Whiteboard (`WHITEBOARD_SESSION_PANEL_SLOT_ID`, 07-26).
+   */
+  const paneleWPrawymPanelu = isIdeaPanel6SectionsEnabled();
+  const aiPanelSlot = usePortalSlot(paneleWPrawymPanelu ? IDEA_PANEL_AI_SLOT_ID : null);
   const [showFunnelAnalytics, setShowFunnelAnalytics] = useState(false);
 
   // ── R4: Export & Embed ──────────────────────────────────────────────
@@ -5825,7 +5848,10 @@ function MindMapInner({
 
               {/* Active branch info removed — redundant with visual branch nodes on canvas */}
             </ReactFlow>
-            {showHealthScore && (
+            {/* Overlay „Zdrowie mapy" — TYLKO przy fladze OFF. Przy ON tę samą
+                treść rysuje sekcja „AI" prawego panelu (IdeaWorkspaceTools),
+                więc overlay zniknąłby jako duplikat, a nie jako utrata funkcji. */}
+            {showHealthScore && !paneleWPrawymPanelu && (
               <MapHealthScore nodes={nodes} edges={edges} visible={showHealthScore} />
             )}
           </MindMapInteractionModeContext.Provider>
@@ -5894,28 +5920,42 @@ function MindMapInner({
           );
         })()}
 
-      {/* AI Blind Spots Detector */}
-      {enrichedNodes.length > 0 ? (
-        <AIBlindSpotsDetector
-          ideaId={ideaId}
-          ideaTitle={ideaTitle}
-          nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
-          edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
-          persistence={persistence}
-          locked={locked}
-          onAddBlindSpot={(spot) => {
-            pushUndo();
-            window.dispatchEvent(
-              new CustomEvent('idea-workspace-insert', {
-                detail: {
-                  items: [{ text: spot.area, type: 'topics' }],
-                  ideaId,
-                },
-              })
+      {/* AI Blind Spots Detector — jeden byt, dwa adresy: overlay (flaga OFF)
+          albo karta w sekcji „AI" prawego panelu (flaga ON, przez portal).
+          Propsy IDENTYCZNE w obu gałęziach — funkcje („Dodaj", „Odrzuć",
+          „Sprawdź ponownie") nie mogą zależeć od miejsca renderu. */}
+      {enrichedNodes.length > 0
+        ? (() => {
+            const detektor = (
+              <AIBlindSpotsDetector
+                ideaId={ideaId}
+                ideaTitle={ideaTitle}
+                nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+                edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
+                persistence={persistence}
+                locked={locked}
+                onAddBlindSpot={(spot) => {
+                  pushUndo();
+                  window.dispatchEvent(
+                    new CustomEvent('idea-workspace-insert', {
+                      detail: {
+                        items: [{ text: spot.area, type: 'topics' }],
+                        ideaId,
+                      },
+                    })
+                  );
+                }}
+                embedded={paneleWPrawymPanelu}
+              />
             );
-          }}
-        />
-      ) : null}
+            if (!paneleWPrawymPanelu) return detektor;
+            // Slot istnieje tylko, gdy prawy panel stoi na sekcji „AI" (poziom
+            // Idei). Bez slotu nie renderujemy nic — detekcja rusza przy
+            // pierwszym otwarciu sekcji. To świadome: panel informacyjny liczy
+            // się wtedy, gdy użytkownik na niego patrzy, a nie w tle bez celu.
+            return aiPanelSlot ? createPortal(detektor, aiPanelSlot) : null;
+          })()
+        : null}
 
       {/* Batch Convert Modal */}
       {showBatchConvert ? (

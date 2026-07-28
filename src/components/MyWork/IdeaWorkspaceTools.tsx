@@ -671,7 +671,17 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
    * przenosi się do „Narzędzia" — to opis NARZĘDZIA, nie zaznaczonego elementu.
    * Jeden byt, dwa miejsca renderu — bez kopiowania JSX.
    */
-  const slotSesjiTablicy = isWhiteboardSessionInPanelEnabled() ? (
+  /**
+   * Panel sesji ląduje w prawym panelu przy DWÓCH niezależnych flagach:
+   *   • `ff_whiteboardSessionInPanel` — starsza, punktowa (07-26, sekcja
+   *     „Właściwości"); nigdy nie została domyślnie włączona.
+   *   • `ff_ideaPanel6Sections` — układ sześciu sekcji (07-28); tam panel sesji
+   *     jest częścią sekcji „Narzędzie" razem ze Scenami.
+   * Jedna flaga wystarczy — inaczej ON na samych sześciu sekcjach zostawiałby
+   * Warstwę sesji pływającą nad płótnem wbrew zgłoszeniu właściciela.
+   */
+  const sesjaTablicyWPanelu = isWhiteboardSessionInPanelEnabled() || szesc;
+  const slotSesjiTablicy = sesjaTablicyWPanelu ? (
     /* Naprawa 2026-07-26 (Zadanie A, `ff_whiteboardSessionInPanel`, default OFF):
        mount point dla `WhiteboardSessionPanel` (Facilitator/Board mode/Voting/
        Follow-me/WORKSHOP PHASE/Ops+Governance), portalowanego tu z
@@ -1387,6 +1397,11 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                 data: e.data,
               }))}
               visible
+              // Układ 6 sekcji: karta wypełnia sekcję „AI". Bez tego widget
+              // niósłby swoje `absolute top-14 right-3` także w panelu (to
+              // właśnie było „Map Health wpada mi w okno"). Przy fladze OFF
+              // zostaje dzisiejsze zachowanie 1:1.
+              embedded={szesc}
             />
           </Section>
           )}

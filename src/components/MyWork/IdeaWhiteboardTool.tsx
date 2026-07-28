@@ -139,6 +139,8 @@ import { WhiteboardSessionPanel } from './whiteboard/WhiteboardSessionPanel';
 import { WhiteboardToolbar } from './whiteboard/WhiteboardToolbar';
 import { usePortalSlot } from './whiteboard/usePortalSlot';
 import { emitIdeaUndoState } from './ideaUndoStateBus';
+import { IDEA_PANEL_TOOL_SLOT_ID } from './panel/ideaPanel6Sections';
+import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
 import {
   isWhiteboardSessionInPanelEnabled,
   WHITEBOARD_SESSION_PANEL_SLOT_ID,
@@ -787,8 +789,17 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   // IdeaWorkspaceTools.tsx). `sessionPanelSlot` jest `null` dopóki ten slot
   // nie pojawi się w DOM (panel zamknięty / inna zakładka) — wtedy portal po
   // prostu nic nie renderuje, zamiast rzucać błąd.
-  const whiteboardSessionInPanelEnabled = isWhiteboardSessionInPanelEnabled();
+  //
+  // 2026-07-28 (`ff_ideaPanel6Sections`): układ sześciu sekcji przenosi WSZYSTKIE
+  // panele informacyjne z płótna do prawego panelu — Warstwa sesji i Sceny lądują
+  // w sekcji „Narzędzie". Warstwa sesji była już w połowie przeniesiona (własna
+  // flaga z 07-26, nigdy nie włączona), więc nie budujemy jej od nowa: wystarczy,
+  // że DOWOLNA z dwóch flag włącza tryb panelowy. Sceny dostają analogiczny
+  // portal do `IDEA_PANEL_TOOL_SLOT_ID`.
+  const panele6Enabled = isIdeaPanel6SectionsEnabled();
+  const whiteboardSessionInPanelEnabled = isWhiteboardSessionInPanelEnabled() || panele6Enabled;
   const sessionPanelSlot = usePortalSlot(WHITEBOARD_SESSION_PANEL_SLOT_ID);
+  const toolPanelSlot = usePortalSlot(IDEA_PANEL_TOOL_SLOT_ID);
   // B1 (M09): an 'observer' in an active facilitation session is view-only. This folds into
   // the existing `locked` mechanism already threaded through every mutation site below, so
   // node creation / drag / resize / edit / draw are all disabled without touching each call
@@ -3894,17 +3905,27 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             viewportTransform={viewportTransform}
           />
 
-          {/* Scenes manager */}
-          <IdeaScenesManager
-            scenes={scenes}
-            onScenesChange={setScenes}
-            currentViewport={viewportTransform}
-            onNavigateToScene={(viewport) => {
-              window.dispatchEvent(
-                new CustomEvent('idea-whiteboard-navigate', { detail: { viewport, ideaId } })
-              );
-            }}
-          />
+          {/* Sceny — jeden byt, dwa adresy: overlay nad płótnem (flaga OFF)
+              albo karta w sekcji „Narzędzie" prawego panelu (flaga ON, portal).
+              Propsy identyczne, więc dodawanie/przełączanie/kolejność/nazwa/
+              usuwanie i tryb prezentacji działają tak samo w obu miejscach. */}
+          {(() => {
+            const sceny = (
+              <IdeaScenesManager
+                scenes={scenes}
+                onScenesChange={setScenes}
+                currentViewport={viewportTransform}
+                onNavigateToScene={(viewport) => {
+                  window.dispatchEvent(
+                    new CustomEvent('idea-whiteboard-navigate', { detail: { viewport, ideaId } })
+                  );
+                }}
+                embedded={panele6Enabled}
+              />
+            );
+            if (!panele6Enabled) return sceny;
+            return toolPanelSlot ? createPortal(sceny, toolPanelSlot) : null;
+          })()}
 
           <CollaborationOverlay
             ideaId={ideaId}
