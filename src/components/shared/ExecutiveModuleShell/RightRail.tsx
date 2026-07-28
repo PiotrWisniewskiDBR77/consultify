@@ -20,6 +20,11 @@
  *     Deck Builder, Document Studio, Tabele/Excel and all four Ideas
  *     canvases, so this fix applies everywhere at once — see call sites
  *     listed in git history / session report for P-01.
+ *   * `collapsible` (added by the panel-6-sekcji Idea work, merged on top
+ *     of P-01 2026-07-28): controls ONLY whether the collapse toggle
+ *     button is rendered / whether `collapsed` can hide the side PANEL.
+ *     It must NEVER reintroduce the 16 px icon-less sliver P-01 removed —
+ *     the icon strip stays unconditional regardless of `collapsible`.
  */
 
 import type { LucideIcon } from 'lucide-react';
@@ -66,6 +71,18 @@ interface RightRailProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
   collapseLabel?: string;
+  /**
+   * Czy pasek ikon wolno schować do 16-pikselowego słupka. Domyślnie TAK
+   * (dzisiejsze zachowanie każdego modułu — Wordy / Tabele / Prezentacje /
+   * Document Studio / Deck Builder).
+   *
+   * `false` = pasek ikon jest ZAWSZE widoczny: znika chevron zwijania, a stan
+   * `collapsed` przestaje mieć skutek. Decyzja właściciela dla Idei (2026-07-28):
+   * „nie ma sensu zwijać bardziej — niech ciągle będzie i przyzwyczaja, że tu są
+   * ikony". Podawane wyłącznie przez powłokę Idei za flagą `ff_ideaPanel6Sections`,
+   * więc pozostałe moduły zachowują się bez zmian.
+   */
+  collapsible?: boolean;
   /**
    * Optional resize handler. When supplied AND the panel is open, a
    * drag handle is rendered on the panel's left edge. Caller forwards
@@ -139,14 +156,24 @@ export const RightRail: React.FC<RightRailProps> = ({
   onToggleCollapse,
   collapseLabel,
   onResize,
+  collapsible = true,
   testId,
 }) => {
   const activeTool = activeToolId ? (tools.find((t) => t.id === activeToolId) ?? null) : null;
-  const showPanel = !collapsed && Boolean(activeTool) && Boolean(panelContent);
+  // Gdy zwijanie jest wyłączone, zapamiętany stan `collapsed` (localStorage
+  // `useRailState`) nie może schować paska — inaczej użytkownik, który kiedyś
+  // go zwinął, dostałby pusty słupek bez przycisku rozwijania.
+  const zwiniety = collapsible && collapsed;
+  const showPanel = !zwiniety && Boolean(activeTool) && Boolean(panelContent);
   // `aria-expanded` opisuje PRZYCISK sterujacy, nie region — na <aside> (rola
   // complementary) jest niedozwolone i axe raportuje to jako critical.
   const panelDomId = 'mels-right-rail-panel';
 
+  // P-01 (2026-07-28): NIGDY nie renderujemy 16px słupka bez ikon — to był
+  // pierwotny bug (użytkownik nie mógł złapać przycisku rozwijania). Pasek
+  // ikon 56px jest bezwarunkowy dla WSZYSTKICH modułów; `collapsible`/`zwiniety`
+  // (patrz niżej) sterują wyłącznie widocznością przycisku zwijania i panelu
+  // bocznego, nigdy całego paska ikon.
   const containerWidth = ICON_STRIP_WIDTH + (showPanel ? panelWidth : 0);
 
   // P-01 (2026-07-28): the icon strip is UNCONDITIONAL — `collapsed` only
@@ -181,18 +208,20 @@ export const RightRail: React.FC<RightRailProps> = ({
         style={{ width: ICON_STRIP_WIDTH }}
         data-testid="mels-right-rail-strip"
       >
-        <button
-          type="button"
-          onClick={onToggleCollapse}
-          className="p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 mb-1"
-          title={collapsed ? (collapseLabel ?? 'Expand right rail') : (collapseLabel ?? 'Collapse right rail')}
-          aria-label={collapsed ? (collapseLabel ?? 'Expand right rail') : (collapseLabel ?? 'Collapse right rail')}
-          aria-expanded={!collapsed}
-          aria-controls={showPanel ? panelDomId : undefined}
-          data-testid="mels-right-rail-toggle"
-        >
-          {collapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-        </button>
+        {collapsible ? (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            className="p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 mb-1"
+            title={collapsed ? (collapseLabel ?? 'Expand right rail') : (collapseLabel ?? 'Collapse right rail')}
+            aria-label={collapsed ? (collapseLabel ?? 'Expand right rail') : (collapseLabel ?? 'Collapse right rail')}
+            aria-expanded={!collapsed}
+            aria-controls={showPanel ? panelDomId : undefined}
+            data-testid="mels-right-rail-toggle"
+          >
+            {collapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+          </button>
+        ) : null}
         {tools.map((tool) => (
           <ToolIcon
             key={tool.id}
