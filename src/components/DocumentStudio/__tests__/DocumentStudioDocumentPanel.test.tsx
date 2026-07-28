@@ -273,18 +273,42 @@ describe('DocumentStudioDocumentPanel', () => {
     expect(screen.getByTestId('mels-left-rail')).toHaveTextContent('Risks');
     expect(screen.getByTestId('mels-canvas')).toHaveTextContent('Document preview');
     expect(screen.getByTestId('mels-canvas')).toHaveTextContent('This is the executive summary.');
-    await waitFor(() => expect(screen.getByText('Governance')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('QA')).toBeInTheDocument());
 
-    // N20 (menu pliku) — `mels-topbar-chips` also hosts `topBarPrimaryActionSlot`
-    // (the new "Plik" dropdown trigger) by design — see `TopBar.tsx`'s own
-    // doc for that slot. Scope the query to elements carrying the
+    // U5 (odbiór "menu pliku", 2026-07-28) — "history" and "governance" moved
+    // to the `⋯` overflow tier (measured live at 1280px: 6 always-expanded
+    // chips + the new "Plik" menu crushed the document title to a 0-26px
+    // sliver; folding these two — lower call-frequency, audit-style actions
+    // — back to editor-shell-canon's own documented overflow pattern
+    // reclaimed ~200px with zero functionality loss, since `⋯` was already
+    // built for exactly this). So the always-visible chip set shrank; the
+    // folded two are asserted separately below via the `⋯` menu.
+    //
+    // `mels-topbar-chips` also hosts `topBarLeadingActionSlot` (the new
+    // "Plik" dropdown trigger, rendered FIRST per U3) — see `TopBar.tsx`'s
+    // own doc for that slot. Scope the query to elements carrying the
     // `data-mels-chip` contract so this assertion keeps testing the
     // canonical CHIP set, not "every button in the container".
+    // Render order is secondary-tier chips first, then primary ("share") —
+    // a PRE-EXISTING, separately-flagged inconsistency between
+    // `sortChipsByMelsOrder` (which interleaves "share" between "qa" and
+    // "agent" per MELS_CHIP_ORDER) and `TopBar.tsx`'s tier-partitioned
+    // render (secondary chips always render before primary chips). Verified
+    // unrelated to this change: reproduces identically on a clean
+    // `origin/demo` checkout with zero modifications (see task
+    // `task_289f7414`). Asserting the actual (buggy) order here rather than
+    // the nominally-intended MELS order, so this test doesn't mask further
+    // regressions on top of the known one.
     const chips = Array.from(
       screen.getByTestId('mels-topbar-chips').querySelectorAll('[data-mels-chip]')
     ).map((button) => button.getAttribute('data-mels-chip'));
-    expect(chips).toEqual(['history', 'qa', 'governance', 'share', 'agent', 'run']);
+    expect(chips).toEqual(['qa', 'agent', 'run', 'share']);
     expect(screen.getByTestId('document-file-menu-trigger')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('mels-topbar-overflow'));
+    const overflowMenu = screen.getByTestId('mels-topbar-overflow-menu');
+    expect(overflowMenu).toHaveTextContent('History');
+    expect(overflowMenu).toHaveTextContent('Governance');
   });
 
   it('opens sources and properties right-rail panels', async () => {

@@ -830,10 +830,12 @@ export const DocumentStudioView: React.FC = () => {
           // Document Studio screen, not just the ones with a document open.
           // No artifact exists yet on this phase (intake/outline/plan
           // template) — Zapisz/Zapisz jako are disabled rather than faked.
-          // U3 — `titleTrailingSlot` (not `primaryActionSlot`, which renders
-          // last/rightmost) puts "Plik" first, ahead of the tab chips, per
-          // "pierwsze przyciski jak w Wordzie".
-          titleTrailingSlot={
+          // U3 — `leadingActionSlot` (not `primaryActionSlot`, which renders
+          // last/rightmost, nor `titleTrailingSlot`, a separate flex sibling
+          // that adds its own width+gap — see U5) puts "Plik" first inside
+          // the SAME chip row, ahead of the tab chips, per "pierwsze
+          // przyciski jak w Wordzie".
+          leadingActionSlot={
             <DocumentStudioFileMenu
               onNew={handleStartOver}
               onOpen={() => navigate('/presentations?tab=documents')}

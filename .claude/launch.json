@@ -66,6 +66,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3231", "--strictPort"],
       "port": 3231
+    },
+    {
+      "name": "document-studio-menu-pliku",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3077", "--strictPort"],
+      "port": 3077
     }
   ]
 }

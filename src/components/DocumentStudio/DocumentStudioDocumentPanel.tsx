@@ -2011,9 +2011,22 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   const topBarChips = useMemo<TopBarChipDescriptor[]>(
     () => [
       {
+        // U5 (odbiór "menu pliku", 2026-07-28) — moved to `overflow`.
+        // Measured live at 1280px: 6 always-expanded chips + the new "Plik"
+        // menu consumed 751px of the top bar, crushing the document title
+        // to a 0-26px sliver regardless of the title button's own flex
+        // sizing (which was independently broken AND fixed — see the title
+        // button's `flex-1 min-w-0` below). "History" is an audit/inspection
+        // action (lower call frequency than QA status or the AI editor),
+        // and the `⋯` overflow menu this component already builds
+        // (editor-shell-canon's own documented purpose for exactly this
+        // "no flat row of equal-weight buttons" situation, `TopBar.tsx`
+        // header doc) is the reversible, zero-functionality-loss way to
+        // reclaim ~200px so the title gets a legible share of the bar.
         id: 'history',
         label: t('documentStudio.panel.chipHistory', 'History'),
         icon: History,
+        group: 'overflow',
         tooltip: t(
           'documentStudio.panel.chipHistoryTooltip',
           'Open the unified activity feed from the right rail.'
@@ -2029,11 +2042,15 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         tooltip: t('documentStudio.panel.chipQaTooltip', 'Open the QA panel from the right rail.'),
       },
       {
+        // U5 — moved to `overflow`, same rationale as "history" above.
+        // Kept its `dotTone` (still surfaces the "override allowed" signal
+        // via the overflow menu item's dot even when folded).
         id: 'governance',
         label: policy?.canOverrideQa
           ? t('documentStudio.panel.chipOverrideAllowed', 'Override allowed')
           : t('documentStudio.panel.chipGovernance', 'Governance'),
         icon: FileWarning,
+        group: 'overflow',
         dotTone: policy?.canOverrideQa ? 'warning' : 'neutral',
         tooltip: t(
           'documentStudio.panel.chipGovernanceTooltip',
@@ -2592,11 +2609,13 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       backLabel={t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
       // U3 — "Plik" is the FIRST action in the row (Word convention: File is
       // always leftmost), ahead of Historia/QA/Nadzór and ahead of the
-      // highlighted "Udostępnij" primary chip. `titleTrailingSlot` renders
-      // immediately before the chip cluster (`topBarChips`/`primaryActionSlot`
-      // territory), so this — not `topBarPrimaryActionSlot` (which renders
-      // LAST, after Udostępnij) — is the slot that achieves that order.
-      topBarTitleTrailingSlot={
+      // highlighted "Udostępnij" primary chip. `topBarLeadingActionSlot`
+      // renders inside the SAME chip cluster as `topBarChips`, first — unlike
+      // `topBarTitleTrailingSlot` (a separate flex sibling that made U5's
+      // title-truncation worse by adding its own width+gap on top of an
+      // already chip-heavy 1280px bar) or `topBarPrimaryActionSlot` (renders
+      // LAST, after Udostępnij).
+      topBarLeadingActionSlot={
         <DocumentStudioFileMenu
           onNew={onStartOver}
           onOpen={handleFileOpen}

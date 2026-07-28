@@ -46,10 +46,15 @@ export interface ExecutiveModuleShellProps {
    *   - `topBarTitleIconSlot`     → between breadcrumb chevron and title.
    *   - `topBarTitleTrailingSlot` → right after the title (stage chip / save).
    *   - `topBarPrimaryActionSlot` → prominent action in the right cluster.
+   *   - `topBarLeadingActionSlot` → FIRST inside the chip cluster, ahead of
+   *     every chip (e.g. a "Plik ▾" File menu — Word convention: File is
+   *     leftmost). Shares the chip row's width budget rather than adding a
+   *     separate flex item (see `TopBar.tsx`'s own doc for why that matters).
    */
   topBarTitleIconSlot?: React.ReactNode;
   topBarTitleTrailingSlot?: React.ReactNode;
   topBarPrimaryActionSlot?: React.ReactNode;
+  topBarLeadingActionSlot?: React.ReactNode;
   /**
    * Optional second command bar (Menu 3) rendered as a full-width row directly
    * BELOW the top bar. ADDITIVE — omit to keep the single-row top bar. The node
@@ -153,6 +158,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   topBarTitleIconSlot,
   topBarTitleTrailingSlot,
   topBarPrimaryActionSlot,
+  topBarLeadingActionSlot,
   secondBar,
   leftRailTitle,
   leftRailToolsSlot,
@@ -293,6 +299,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
         titleIconSlot={topBarTitleIconSlot}
         titleTrailingSlot={topBarTitleTrailingSlot}
         primaryActionSlot={topBarPrimaryActionSlot}
+        leadingActionSlot={topBarLeadingActionSlot}
       />
 
       {secondBar}

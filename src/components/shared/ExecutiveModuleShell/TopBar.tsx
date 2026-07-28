@@ -54,6 +54,18 @@ interface TopBarProps {
    * express). ADDITIVE — omit for the default row.
    */
   primaryActionSlot?: React.ReactNode;
+  /**
+   * 2026-07-28 (U3, odbiór "menu pliku") — rendered FIRST inside the chip
+   * cluster, ahead of every chip (including the highlighted `kind:'primary'`
+   * one) — e.g. a "Plik ▾" dropdown that must be leftmost, Word-convention
+   * style. Deliberately lives INSIDE the same flex row as the chips (not a
+   * separate `titleTrailingSlot` sibling) so it shares that row's existing
+   * width budget instead of adding a whole extra flex item + gap on top of
+   * an already chip-heavy bar — see U5 in the same odbiór (title truncation
+   * got WORSE when this used to live in a separate sibling slot). ADDITIVE
+   * — omit for the default row.
+   */
+  leadingActionSlot?: React.ReactNode;
   /** Right-cluster slot (presence indicators / version / status dot). */
   presenceSlot?: React.ReactNode;
   /** Optional className for the outer row. */
@@ -284,6 +296,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   titleIconSlot,
   titleTrailingSlot,
   primaryActionSlot,
+  leadingActionSlot,
   presenceSlot,
   className,
   testId,
@@ -394,6 +407,17 @@ export const TopBar: React.FC<TopBarProps> = ({
       ) : null}
 
       <div className="flex items-center gap-1 flex-shrink-0" data-testid="mels-topbar-chips">
+        {leadingActionSlot ? (
+          <>
+            {leadingActionSlot}
+            {secondaryChips.length > 0 ||
+            overflowChips.length > 0 ||
+            primaryChips.length > 0 ||
+            primaryActionSlot ? (
+              <span aria-hidden="true" className="mx-1 h-5 w-px bg-slate-200 dark:bg-navy-700" />
+            ) : null}
+          </>
+        ) : null}
         {secondaryChips.map((chip) => (
           <Chip key={chip.id} descriptor={chip} />
         ))}
