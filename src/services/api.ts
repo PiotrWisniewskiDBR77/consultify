@@ -7034,6 +7034,34 @@ export const Api = {
     return handleResponse(res, 'Failed to load workbook schema');
   },
 
+  // "Najmniejszy arkusz, który jest naprawdę arkuszem" (2026-07-28): persists
+  // ONE cell edit made in `EditableSpreadsheetGrid` (behind `ff_excele_edit`,
+  // src/utils/exceleEditFlag.ts) so it survives a page refresh. See
+  // `PATCH /api/workbook/:id/cell` in server/src/routes/workbook.routes.ts.
+  updateWorkbookCell: async (
+    workbookId: string,
+    payload: {
+      sheetIndex: number;
+      rowIndex: number;
+      columnKey: string;
+      value?: string | number | boolean | null;
+      formula?: string;
+    }
+  ): Promise<{
+    ok: boolean;
+    sheetIndex: number;
+    rowIndex: number;
+    columnKey: string;
+    cell: { value?: string | number | boolean | null; formula?: string };
+  }> => {
+    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/cell`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to save cell edit');
+  },
+
   // --- ASSESSMENT WORKFLOW ---
   createAssessmentSession: async (payload: {
     assessmentType: 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';

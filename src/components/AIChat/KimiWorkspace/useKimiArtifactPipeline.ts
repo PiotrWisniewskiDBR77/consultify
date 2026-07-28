@@ -636,9 +636,15 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               Api.getWorkbookSchema(wbResult.id)
                 .then((schemaResult) => {
                   const perSheetData = buildWorkbookGridSheets(schemaResult?.sheets);
+                  // "Najmniejszy arkusz" (2026-07-28, za ff_excele_edit): RAW
+                  // sheets dla EditableSpreadsheetGrid — patrz komentarz przy
+                  // rawSheets w KimiWorkspaceShell.tsx (ArtifactPreview).
+                  const rawSheets = (
+                    Array.isArray(schemaResult?.sheets) ? schemaResult.sheets : []
+                  ) as ArtifactPreview['rawSheets'];
                   setPreview((prev) =>
                     prev && prev.type === 'xlsx' && prev.workbookId === wbResult.id
-                      ? { ...prev, perSheetData, gridLoading: false, gridError: null }
+                      ? { ...prev, perSheetData, rawSheets, gridLoading: false, gridError: null }
                       : prev
                   );
                 })

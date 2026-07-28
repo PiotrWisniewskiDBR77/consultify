@@ -1103,6 +1103,176 @@ router.post(
 );
 
 /**
+ * PATCH /api/workbook/:id/cell
+ *
+ * "Najmniejszy arkusz, który jest naprawdę arkuszem" (2026-07-28) — trwałość
+ * dla `EditableSpreadsheetGrid` (src/components/AIChat/KimiWorkspace). Zanim
+ * ten endpoint powstał, `PATCH`/`PUT` NIE ISTNIAŁ dla `generated_workbooks` —
+ * grep potwierdza, że jedyne mutacje to `/generate`, `/blank`,
+ * `/templates/:id/build`, `/:id/clone` (zawsze NOWY wiersz); żadna trasa nie
+ * aktualizowała istniejący `schema_json`. Bez tego edycja komórki w
+ * przeglądarce nie przeżywa odświeżenia strony — a to jest CAŁY sens zadania.
+ *
+ * Caller produkcyjny: `EditableSpreadsheetGrid.tsx` → `Api.updateWorkbookCell`
+ * (src/services/api.ts) — wołany po każdym zatwierdzeniu edycji komórki
+ * (Enter/Tab/blur), za flagą `ff_excele_edit` (domyślnie OFF, patrz
+ * src/utils/exceleEditFlag.ts).
+ *
+ * Body: { sheetIndex: number, rowIndex: number, columnKey: string,
+ *         value?: string|number|boolean|null, formula?: string }
+ * — `formula` wygrywa nad `value` gdy oba obecne (formuła zapisywana BEZ
+ * wiodącego "=", zgodnie z konwencją całego schematu — patrz
+ * WorkbookBuilder.ts "Formulas are emitted WITHOUT a leading '='"). Podanie
+ * ani `value` ani `formula` czyści komórkę (usuwa jej zawartość, zachowuje
+ * styl/walidację jeśli były).
+ *
+ * Org-scoped (jak każda inna trasa tego routera). Invaliduje `workbookCache`
+ * dla tego id, żeby `GET /:id/download` odbudował plik ZE ŚWIEŻEGO
+ * `schema_json` zamiast serwować stary bufor (patrz istniejący fallback
+ * "Try to regenerate from stored schema" w `GET /:id/download` poniżej —
+ * reużyty, nie duplikowany).
+ */
+router.patch(
+  '/:id/cell',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { id } = req.params;
+    const { sheetIndex, rowIndex, columnKey, value, formula } = req.body || {};
+
+    if (typeof sheetIndex !== 'number' || !Number.isInteger(sheetIndex) || sheetIndex < 0) {
+      res.status(400).json({
+        error: 'sheetIndex must be a non-negative integer',
+        classified: createP23Error('validation_failed', 'Invalid sheetIndex'),
+      });
+      return;
+    }
+    if (typeof rowIndex !== 'number' || !Number.isInteger(rowIndex) || rowIndex < 0) {
+      res.status(400).json({
+        error: 'rowIndex must be a non-negative integer',
+        classified: createP23Error('validation_failed', 'Invalid rowIndex'),
+      });
+      return;
+    }
+    if (typeof columnKey !== 'string' || !columnKey.trim()) {
+      res.status(400).json({
+        error: 'columnKey must be a non-empty string',
+        classified: createP23Error('validation_failed', 'Invalid columnKey'),
+      });
+      return;
+    }
+    if (formula !== undefined && typeof formula !== 'string') {
+      res.status(400).json({
+        error: 'formula must be a string when present',
+        classified: createP23Error('validation_failed', 'Invalid formula'),
+      });
+      return;
+    }
+    if (
+      value !== undefined &&
+      value !== null &&
+      !['string', 'number', 'boolean'].includes(typeof value)
+    ) {
+      res.status(400).json({
+        error: 'value must be string, number, boolean or null',
+        classified: createP23Error('validation_failed', 'Invalid value'),
+      });
+      return;
+    }
+
+    await ensureWorkbookSchema();
+
+    const row = await queryHelpers.queryOne<{ schema_json: string | null }>(
+      `SELECT schema_json FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+
+    if (!row?.schema_json) {
+      res.status(404).json({
+        error: 'Workbook not found or expired',
+        classified: createP23Error('access_denied', `Workbook ${id} not found for this organization`),
+      });
+      return;
+    }
+
+    let schema: WorkbookSchema;
+    try {
+      schema = JSON.parse(row.schema_json);
+    } catch (err) {
+      logger.error(`[WorkbookRoutes] Stored schema for ${id} is not valid JSON:`, err);
+      res.status(500).json({ error: 'Stored workbook schema is corrupted' });
+      return;
+    }
+
+    const sheet = schema?.sheets?.[sheetIndex];
+    if (!sheet || !Array.isArray(sheet.rows) || !Array.isArray(sheet.columns)) {
+      res.status(400).json({
+        error: `Unknown sheetIndex ${sheetIndex}`,
+        classified: createP23Error('validation_failed', 'sheetIndex out of range'),
+      });
+      return;
+    }
+    if (rowIndex >= sheet.rows.length) {
+      res.status(400).json({
+        error: `Unknown rowIndex ${rowIndex} for sheet "${sheet.name}"`,
+        classified: createP23Error('validation_failed', 'rowIndex out of range'),
+      });
+      return;
+    }
+    if (!sheet.columns.some((c) => c.key === columnKey)) {
+      res.status(400).json({
+        error: `Unknown columnKey "${columnKey}" for sheet "${sheet.name}"`,
+        classified: createP23Error('validation_failed', 'columnKey not found'),
+      });
+      return;
+    }
+
+    const targetRow = sheet.rows[rowIndex];
+    if (!targetRow.cells) targetRow.cells = {};
+    const oldCell = targetRow.cells[columnKey] ?? {};
+
+    // Formuła wygrywa nad wartością; brak obu = wyczyszczenie komórki. Styl/
+    // komentarz/walidacja z istniejącej komórki są zachowane (edycja treści
+    // nie ma prawa zjeść formatowania ani reguł walidacji wejścia).
+    const trimmedFormula = typeof formula === 'string' ? formula.trim().replace(/^=+/, '') : '';
+    const nextCell: Record<string, unknown> = {
+      style: oldCell.style,
+      comment: oldCell.comment,
+      validation: oldCell.validation,
+    };
+    if (trimmedFormula) {
+      nextCell.formula = trimmedFormula;
+    } else if (value !== undefined) {
+      nextCell.value = value;
+    }
+    // Undefined fields are dropped by JSON.stringify — no explicit delete needed.
+    targetRow.cells[columnKey] = nextCell as (typeof sheet.rows)[number]['cells'][string];
+
+    await queryHelpers.queryRun(
+      `UPDATE generated_workbooks SET schema_json = ? WHERE id = ? AND organization_id = ?`,
+      [JSON.stringify(schema), id, user.organizationId]
+    );
+
+    // Invaliduje bufor .xlsx w pamięci — następny GET /:id/download odbuduje
+    // plik ZE ŚWIEŻEGO schema_json (istniejąca ścieżka "Try to regenerate from
+    // stored schema" poniżej), zamiast serwować stary, przed-edycją bufor.
+    workbookCache.delete(id);
+
+    res.json({
+      ok: true,
+      sheetIndex,
+      rowIndex,
+      columnKey,
+      cell: targetRow.cells[columnKey],
+    });
+  })
+);
+
+/**
  * GET /api/workbook/:id
  * Returns workbook metadata (for reopen/preview without downloading binary).
  * Must be registered after all specific GET paths (/list, /:id/download,

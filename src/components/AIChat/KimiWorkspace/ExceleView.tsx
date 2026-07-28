@@ -208,6 +208,11 @@ export const ExceleView: React.FC = () => {
           // returns the full schema_json (cells + formulas) — no separate
           // fetch needed here, just map it into the grid shape the shell renders.
           perSheetData: buildWorkbookGridSheets(sheets),
+          // "Najmniejszy arkusz" (2026-07-28, za ff_excele_edit): RAW sheets
+          // (column keys + odrębne value/formula) dla EditableSpreadsheetGrid —
+          // perSheetData wyżej spłaszcza formułę do napisu i gubi klucz kolumny,
+          // którego potrzebuje PATCH przy edycji.
+          rawSheets: sheets,
           workbookId: artifactId,
           downloadUrl: `/api/workbook/${artifactId}/download`,
         });

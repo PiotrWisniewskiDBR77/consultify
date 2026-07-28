@@ -48,8 +48,10 @@ import type {
 } from '@/types/tabeleArtifact';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
 import { deriveDeckBadgeFromNativeStatus } from '@/utils/deckLifecycleBadge';
+import { isExceleEditEnabled } from '@/utils/exceleEditFlag';
 import { isFormulaDisplayValue } from '@/utils/workbookGridPreview';
 
+import { EditableSpreadsheetGrid } from './EditableSpreadsheetGrid';
 import TabelePreviewLayout from './tabelePreview/TabelePreviewLayout';
 
 export type KimiLane = 'excele' | 'prezentacje' | 'tabele';
@@ -87,6 +89,14 @@ export interface ArtifactPreview {
     columns: string[];
     rows: Array<Record<string, unknown>>;
   }>;
+  // "Najmniejszy arkusz, który jest naprawdę arkuszem" (2026-07-28): the RAW
+  // WorkbookSchema sheets (columns[].key preserved, cells carry {value|formula}
+  // separately — unlike `perSheetData` above, which collapses a formula cell
+  // into a display string and loses the column key needed to address a PATCH).
+  // Only `EditableSpreadsheetGrid` (behind `ff_excele_edit`) reads this; the
+  // read-only table below keeps using `perSheetData` unchanged when the flag
+  // is off or this is absent — zero regression.
+  rawSheets?: import('@/utils/workbookFormulaEngine').FormulaSheet[];
   deckId?: string;
   deckStatus?: 'draft' | 'reviewed' | 'exported' | string;
   deckSlides?: Array<{
@@ -649,7 +659,16 @@ function ArtifactPreviewPane({
                 ))}
               </div>
             )}
-            {preview.gridLoading ? (
+            {isExceleEditEnabled() && preview.workbookId && preview.rawSheets && preview.rawSheets.length > 0 ? (
+              // "Najmniejszy arkusz, który jest naprawdę arkuszem" (2026-07-28,
+              // za flagą ff_excele_edit, domyślnie OFF) — klik→edycja→przeliczenie
+              // formuł zależnych→zapis, patrz EditableSpreadsheetGrid.tsx.
+              <EditableSpreadsheetGrid
+                workbookId={preview.workbookId}
+                sheets={preview.rawSheets}
+                activeSheetIndex={activeSheet}
+              />
+            ) : preview.gridLoading ? (
               <div className="bg-c-surface rounded-hig-md border border-c-border-subtle overflow-hidden">
                 <div className="p-8 text-center text-c-text-secondary">
                   <Loader2 size={32} className="mx-auto mb-3 animate-spin" />
