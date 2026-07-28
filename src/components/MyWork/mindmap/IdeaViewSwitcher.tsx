@@ -11,11 +11,22 @@
  * pasma płótna (`[data-testid="mels-canvas"]`, z fallbackiem na kontener) —
  * tym samym wzorcem pomiaru co rail, żeby nie wchodzić na paski powłoki ani na
  * własny pasek reprezentacji.
+ *
+ * ★ 2026-07-28, flaga `ideaBottomBarUnified` (domyślnie OFF): heurystyczny
+ * pomiar ma gałąź „usiądź PIĘTRO NAD klastrem", gdy w rzędzie brakuje miejsca —
+ * i to ona dawała Piotrowi „dwa klastry jeden nad drugim". Przy fladze ON nic
+ * nie mierzymy: przełącznik portaluje się do gniazda WEWNĄTRZ pigułki zoomu
+ * (`IDEA_BOTTOM_BAR_SWITCHER_SLOT_ID`), więc jeden rząd jest gwarantowany
+ * układem, a nie szczęściem pomiaru. OFF = dzisiejsza ścieżka co do piksela.
  */
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import {
+  IDEA_BOTTOM_BAR_SWITCHER_SLOT_ID,
+  isIdeaBottomBarUnifiedEnabled,
+} from '../../../utils/ideaBottomBarUnifiedFlag';
 import { getIdeaWorkspaceToolLabel, TOOL_CONFIG } from '../IdeaWorkspaceToolbar';
 import type { CanvasToolType } from '../ideaSelectionTypes';
 
@@ -38,8 +49,48 @@ export function IdeaViewSwitcher({
 }: IdeaViewSwitcherProps) {
   const anchorRef = useRef<HTMLDivElement | null>(null);
   const [box, setBox] = useState<{ right: number; bottom: number } | null>(null);
+  const zjednoczonyPasek = isIdeaBottomBarUnifiedEnabled();
+  /**
+   * Tabela nie ma płótna React Flow, więc nie ma `CanvasZoomControls`, a co za
+   * tym idzie — gniazda. Nie zgadujemy tego z DOM (to by dało migotanie albo,
+   * jak w pierwszym podejściu, ZNIKNIĘCIE przełącznika w Tabeli): jedziemy z
+   * `activeTool`, który jest deterministyczny. Tabela zostaje na dzisiejszej
+   * ścieżce — własna pigułka w rogu. To NAZWANY wyjątek, nie przeoczenie.
+   */
+  const bezPlotna = activeTool === 'table';
+  const doGniazda = zjednoczonyPasek && !bezPlotna;
+  // Gniazdo w pigułce zoomu. Montuje się razem z `CanvasZoomControls`, czyli
+  // PÓŹNIEJ niż my i na nowo przy każdej zmianie narzędzia — stąd krótkie
+  // dopytywanie, a nie jednorazowe `getElementById` na starcie.
+  const [gniazdo, setGniazdo] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
+    if (!doGniazda) {
+      setGniazdo(null);
+      return;
+    }
+    let tiki = 0;
+    const szukaj = () => {
+      const el = document.getElementById(IDEA_BOTTOM_BAR_SWITCHER_SLOT_ID);
+      setGniazdo((poprzednie) => (poprzednie === el ? poprzednie : el));
+    };
+    szukaj();
+    const raf = requestAnimationFrame(szukaj);
+    // Kontrolki rogu montują się później niż my (płótno ładuje graf) — stąd
+    // krótkie dopytywanie; pętla wygasa po ~6 s, żeby nie tykać w nieskończoność.
+    const interwal = window.setInterval(() => {
+      szukaj();
+      if (++tiki > 20) window.clearInterval(interwal);
+    }, 300);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearInterval(interwal);
+    };
+  }, [doGniazda, activeTool]);
+
+  useEffect(() => {
+    // Wchodzimy do gniazda => zero pomiaru; pozycję narzuca pigułka zoomu.
+    if (doGniazda) return;
     const measure = () => {
       const canvas = document.querySelector('[data-testid="mels-canvas"]');
       if (!canvas) {
@@ -145,17 +196,10 @@ export function IdeaViewSwitcher({
       cancelAnimationFrame(raf);
       timery.forEach(clearTimeout);
     };
-  }, [rightInset]);
+  }, [rightInset, doGniazda]);
 
-  if (!box) return null;
-
-  const node = (
-    <div
-      ref={anchorRef}
-      className="fixed z-dropdown pointer-events-auto flex items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl px-1 py-1"
-      style={{ right: box.right, bottom: box.bottom }}
-      data-testid="idea-view-switcher"
-    >
+  const przyciski = (
+    <>
       {TOOL_CONFIG.map((tool) => {
         const Icon = tool.icon;
         const isActive = activeTool === tool.id;
@@ -184,6 +228,38 @@ export function IdeaViewSwitcher({
           </div>
         );
       })}
+    </>
+  );
+
+  // ── Flaga ON: jeden rząd — wchodzimy DO pigułki zoomu ────────────────────
+  if (doGniazda) {
+    if (!gniazdo) return null;
+    return createPortal(
+      <div
+        ref={anchorRef}
+        data-testid="idea-view-switcher"
+        className="flex items-center gap-0.5"
+      >
+        {przyciski}
+        {/* Separator po naszej stronie, nie po stronie gniazda — puste gniazdo
+            nie zostawia wtedy sierocej kreski przy samym „−". */}
+        <div className="w-px h-5 bg-c-border-subtle dark:bg-c-border-subtle mx-0.5" />
+      </div>,
+      gniazdo
+    );
+  }
+
+  // ── Flaga OFF: dzisiejsza ścieżka (własna pigułka, pomiar heurystyczny) ──
+  if (!box) return null;
+
+  const node = (
+    <div
+      ref={anchorRef}
+      className="fixed z-dropdown pointer-events-auto flex items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl px-1 py-1"
+      style={{ right: box.right, bottom: box.bottom }}
+      data-testid="idea-view-switcher"
+    >
+      {przyciski}
     </div>
   );
 
