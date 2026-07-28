@@ -201,6 +201,9 @@ const DocumentArtifactScreen = React.lazy(() => import('./screens/document-artif
 const IdeasPreviewOverlayScreen = React.lazy(() => import('./screens/ideas-preview-overlay'));
 const SheetArtifactScreen = React.lazy(() => import('./screens/sheet-artifact'));
 const ExceleEdytowalnaSiatkaScreen = React.lazy(() => import('./screens/excele-edytowalna-siatka'));
+const ExcelePrawyPanelStandardScreen = React.lazy(
+  () => import('./screens/excele-prawy-panel-standard')
+);
 const NTypeAnalizujAiScreen = React.lazy(() => import('./screens/ntype-analizuj-ai'));
 // Ekrany ładujemy LENIWIE (React.lazy) — i to jest wymóg poprawności, nie optymalizacja.
 // Każdy screen instaluje swój stub `window.fetch` jako efekt uboczny importu. Przy
@@ -765,6 +768,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DOKUMENTY — Excel EDYTOWALNY (NPV/IRR, za ff_excele_edit — klik→edycja→przeliczenie→zapis)',
     render: () => <ExceleEdytowalnaSiatkaScreen />,
+  },
+  'excele-prawy-panel-standard': {
+    label:
+      'DOKUMENTY — Excel PRAWY PANEL = szyna ikon jak Word (NPV/IRR, za ff_excele_right_rail)',
+    render: () => <ExcelePrawyPanelStandardScreen />,
   },
 };
 
