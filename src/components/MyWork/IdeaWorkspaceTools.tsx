@@ -1256,7 +1256,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
        * Dlatego blok renderuje się we „Właściwościach" tylko przy zaznaczeniu,
        * a części sesyjne mają własny warunek niżej.
        */}
-      {activeTool === 'whiteboard' && pokaz('properties') && (!szesc || maZaznaczenie) && (
+      {activeTool === 'whiteboard' && pokaz('properties') && (!szesc || Boolean(wybranyWezel)) && (
         <Section
           title={t('myWorkIdeas.workspaceTools.whiteboardInspector')}
           icon={<Activity size={12} />}
@@ -1479,8 +1479,47 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         </Section>
       )}
 
-      {/* ── AI · poziom Idei ── */}
-      {szesc && sekcja6 === 'ai' && !maZaznaczenie && (
+      {/*
+       * ── Właściwości z zaznaczeniem, ale bez inspektora reprezentacji ──
+       * Tabela nie ma inspektora w panelu (pola wiersza edytuje się w siatce),
+       * a na Tablicy inspektor opisuje wyłącznie WĘZEŁ — przy zaznaczonym
+       * połączeniu nie miałby czego pokazać. Bez tego bloku sekcja renderowała
+       * pustą kartę z samym nagłówkiem. Docelowo mieszka tu przeskalowany panel
+       * szczegółów wiersza (osobne zlecenie).
+       */}
+      {szesc &&
+        sekcja6 === 'properties' &&
+        maZaznaczenie &&
+        (activeTool === 'table' || (activeTool === 'whiteboard' && !wybranyWezel)) && (
+          <Section
+            title={etykieta6.properties}
+            icon={<SlidersHorizontal size={12} />}
+            defaultOpen
+          >
+            {pustaSekcja(
+              activeTool === 'table'
+                ? pl6(
+                    'Pola tego wiersza edytujesz w tabeli.',
+                    'This row’s fields are edited in the table.'
+                  )
+                : pl6(
+                    'To połączenie nie ma własnych pól.',
+                    'This connection has no fields of its own.'
+                  ),
+              pl6('Tożsamość elementu widzisz w „Przeglądzie".', 'Its identity is under “Overview”.')
+            )}
+          </Section>
+        )}
+
+      {/* ── AI · poziom Idei ──
+          Karta rysuje się TYLKO gdy ma co pokazać. Dla Mapy myśli i Przepływu
+          treścią sekcji jest kondycja (wyżej, `pokaz('overview','ai')`), więc
+          bez akcji AI nie dokładamy pustej karty pod spodem. */}
+      {szesc &&
+        sekcja6 === 'ai' &&
+        !maZaznaczenie &&
+        (Boolean(onAISummarize || onAIExpand) ||
+          (activeTool !== 'mindmap' && activeTool !== 'process_flow')) && (
         <Section title={etykieta6.ai} icon={<Sparkles size={12} />} defaultOpen>
           <div className="space-y-2" data-testid="idea-panel6-ai-idea">
             {onAISummarize || onAIExpand ? (
@@ -1517,12 +1556,14 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                 pl6('Rozmowę z Teresą otwierasz z Menu 1.', 'Open the chat with Teresa from Menu 1.')
               )
             )}
-            {/* Hak pod przeniesienie pływających paneli AI (Blind Spots, Map
-                Health) — osobne zlecenie. Pusty węzeł nic nie rysuje. */}
-            <div id={IDEA_PANEL_AI_SLOT_ID} />
           </div>
         </Section>
       )}
+
+      {/* Hak pod przeniesienie pływających paneli AI (Blind Spots, Map Health)
+          — osobne zlecenie. Poza kartą, żeby istniał także wtedy, gdy karta AI
+          się nie renderuje. Pusty węzeł nic nie rysuje. */}
+      {szesc && sekcja6 === 'ai' && !maZaznaczenie && <div id={IDEA_PANEL_AI_SLOT_ID} />}
 
       {/* ── AI · poziom elementu ── */}
       {szesc && sekcja6 === 'ai' && maZaznaczenie && (
