@@ -26569,7 +26569,10 @@
       "whyThisImportant": "Why is this important?",
       "willBeRemoved": "Will be removed",
       "writeCommentMention": "Write a comment... (@mention)",
-      "nSelected": "{{count}} selected"
+      "nSelected": "{{count}} selected",
+      "summaryUnavailable": "Could not prepare a summary for this branch. Please try again.",
+      "branchHasNoChildren": "This node has no sub-nodes, so there is no branch to summarize.",
+      "tryAgain": "Try again"
     }
   },
   "notebook": {
