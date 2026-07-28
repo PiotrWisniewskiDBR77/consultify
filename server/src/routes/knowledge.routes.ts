@@ -915,14 +915,23 @@ router.get(
     try {
       const memberProjectIds = await getMemberProjectIds(userId);
 
+      // ★ Kolumny „Rozmiar" / „W wiedzy AI" / „Błędy indeksowania" (research Harvey
+      // Vault + kanon nazw z tabeli dokumentów, patrz VaultDocumentsView.tsx
+      // `colChunks`/`colSize`) — policzone TYM SAMYM zapytaniem GROUP BY, zero N+1.
       const grouped = await DbPromise.all<{
         scope: string | null;
         project_id: string | null;
         owner_id: string | null;
         cnt: number;
         last_modified: string | null;
+        size_bytes: number | null;
+        indexed_cnt: number;
+        error_cnt: number;
       }>(
-        `SELECT scope, project_id, owner_id, COUNT(*) as cnt, MAX(updated_at) as last_modified
+        `SELECT scope, project_id, owner_id, COUNT(*) as cnt, MAX(updated_at) as last_modified,
+                SUM(COALESCE(file_size_bytes, 0)) as size_bytes,
+                SUM(CASE WHEN chunk_count > 0 THEN 1 ELSE 0 END) as indexed_cnt,
+                SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as error_cnt
          FROM knowledge_docs
          WHERE (organization_id = ? OR organization_id IS NULL) AND deleted_at IS NULL
          GROUP BY scope, project_id, owner_id`,
@@ -941,30 +950,57 @@ router.get(
       // właścicielem jest wołający (nie inni userzy organizacji).
       let myCount = 0;
       let myLast: string | null = null;
+      let mySize = 0;
+      let myIndexed = 0;
+      let myErrors = 0;
       // [Sejf organizacji] — scope='organization' (albo NULL, patrz KnowledgeService.getDocuments).
       let orgCount = 0;
       let orgLast: string | null = null;
+      let orgSize = 0;
+      let orgIndexed = 0;
+      let orgErrors = 0;
       // Sejfy per projekt — scope='project', policzone tylko dla projektów,
       // w których wołający jest członkiem (memberProjectIds).
-      const projectCounts = new Map<string, { cnt: number; last: string | null }>();
+      const projectCounts = new Map<
+        string,
+        { cnt: number; last: string | null; size: number; indexed: number; errors: number }
+      >();
 
       for (const row of rows) {
         const cnt = Number(row.cnt) || 0;
+        const size = Number(row.size_bytes) || 0;
+        const indexed = Number(row.indexed_cnt) || 0;
+        const errors = Number(row.error_cnt) || 0;
         if (row.scope === 'user') {
           if (String(row.owner_id || '') === String(userId)) {
             myCount += cnt;
             myLast = mergeLatest(myLast, row.last_modified);
+            mySize += size;
+            myIndexed += indexed;
+            myErrors += errors;
           }
         } else if (row.scope === 'organization' || !row.scope) {
           orgCount += cnt;
           orgLast = mergeLatest(orgLast, row.last_modified);
+          orgSize += size;
+          orgIndexed += indexed;
+          orgErrors += errors;
         } else if (row.scope === 'project' && row.project_id) {
           const pid = String(row.project_id);
           if (memberProjectIds.includes(pid)) {
-            const prev = projectCounts.get(pid) || { cnt: 0, last: null };
+            const prev = projectCounts.get(pid) || {
+              cnt: 0,
+              last: null,
+              size: 0,
+              indexed: 0,
+              errors: 0,
+            };
             projectCounts.set(pid, {
               cnt: prev.cnt + cnt,
               last: mergeLatest(prev.last, row.last_modified),
+              size: prev.size + size,
+              indexed: prev.indexed + indexed,
+              errors: prev.errors + errors,
             });
           }
         }
@@ -989,6 +1025,9 @@ router.get(
           name: 'Mój sejf',
           documentCount: myCount,
           lastModified: myLast,
+          sizeBytes: mySize,
+          indexedCount: myIndexed,
+          errorCount: myErrors,
         },
         {
           id: 'organization',
@@ -997,9 +1036,18 @@ router.get(
           name: 'Sejf organizacji',
           documentCount: orgCount,
           lastModified: orgLast,
+          sizeBytes: orgSize,
+          indexedCount: orgIndexed,
+          errorCount: orgErrors,
         },
         ...memberProjectIds.map((pid) => {
-          const counted = projectCounts.get(pid) || { cnt: 0, last: null };
+          const counted = projectCounts.get(pid) || {
+            cnt: 0,
+            last: null,
+            size: 0,
+            indexed: 0,
+            errors: 0,
+          };
           return {
             id: `project:${pid}`,
             type: 'project' as const,
@@ -1007,6 +1055,9 @@ router.get(
             name: projectNames.get(pid) || 'Untitled project',
             documentCount: counted.cnt,
             lastModified: counted.last,
+            sizeBytes: counted.size,
+            indexedCount: counted.indexed,
+            errorCount: counted.errors,
           };
         }),
       ];
