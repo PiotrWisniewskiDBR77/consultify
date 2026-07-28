@@ -104,6 +104,7 @@ import {
   indexStatusTone,
   normalizeVaultDocuments,
   normalizeVaultProjects,
+  ownerLabel,
   scopeLabel,
   scopeMeta,
   type VaultDocument,
@@ -188,6 +189,19 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
       .then((data) => setProjects(normalizeVaultProjects(data)))
       .catch(() => setProjects([]));
   }, []);
+
+  // Mapa project_id → nazwa projektu dla kolumny "Projekt" (VLT — rozbudowa
+  // tabeli 2026-07-28). Droga (a) z zadania: front i tak zna nazwy — z listy
+  // "moich projektów" (`Api.getMyProjectMemberships`, ładowana już wyżej dla
+  // panelu dodawania) + nazwa AKTUALNIE otwartego sejfu (`safe.name`/`safe.projectId`,
+  // zawsze poprawna, nawet gdyby dokument należał do projektu spoza listy
+  // członkostw wołającego). Zero nowego zapytania, zero JOIN-a w backendzie.
+  const projectNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    projects.forEach((p) => map.set(p.id, p.name));
+    if (safe.projectId) map.set(safe.projectId, safe.name);
+    return map;
+  }, [projects, safe.projectId, safe.name]);
 
   // ── Filtrowanie ──────────────────────────────────────────────────────────
   const tagOptions = useMemo(() => {
@@ -380,6 +394,27 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
           );
         },
       },
+      // ★ Kolumna kontekstu (VLT — rozbudowa tabeli 2026-07-28, zgłoszenie
+      // Piotra „rozbuduj kolumnę, tak żebyśmy mieli specyficzne informacje
+      // odnośnie danych, które tu są ładowane"). Źródło: `knowledge_docs.project_id`,
+      // nazwa dociągnięta po stronie frontu — patrz `projectNameById` wyżej.
+      {
+        id: 'project_id',
+        label: t('vault.docs.colProject', isPolish ? 'Projekt' : 'Project'),
+        width: '150px',
+        sortable: true,
+        sortAccessor: (row: TableRow) => projectNameById.get(String(row.project_id || '')) || '',
+        render: (row: TableRow) => {
+          const pid = row.project_id ? String(row.project_id) : '';
+          if (!pid) return <span className="text-sm text-c-text-muted">—</span>;
+          const name = projectNameById.get(pid);
+          return (
+            <span className="truncate text-sm text-c-text-secondary" title={name || pid}>
+              {name || pid}
+            </span>
+          );
+        },
+      },
       {
         id: 'file_size_bytes',
         label: t('vault.docs.colSize', isPolish ? 'Rozmiar' : 'Size'),
@@ -393,6 +428,30 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
           </span>
         ),
       },
+      // ★ Kolumna kontekstu — gotowość RAG (chunk_count już wraca z API, zero
+      // kosztu backendu). 0 = dokument NIE wszedł do wiedzy mimo statusu
+      // "Zindeksowany" wyżej (widoczny sygnał, tonowany, bez czerwieni-stanu).
+      {
+        id: 'chunk_count',
+        label: t('vault.docs.colChunks', isPolish ? 'Fragmenty' : 'Chunks'),
+        width: '100px',
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: TableRow) => Number(row.chunk_count) || 0,
+        render: (row: TableRow) => {
+          const count = Number(row.chunk_count) || 0;
+          return (
+            <span
+              className={cn(
+                'text-sm tabular-nums',
+                count === 0 ? 'text-c-text-muted' : 'text-c-text-secondary'
+              )}
+            >
+              {count}
+            </span>
+          );
+        },
+      },
       {
         id: 'created_at',
         label: t('vault.docs.colAdded', isPolish ? 'Dodano' : 'Added'),
@@ -402,6 +461,20 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
         render: (row: TableRow) => (
           <span className="text-sm text-c-text-muted">
             {formatDate(row.created_at as string, isPolish)}
+          </span>
+        ),
+      },
+      // ★ Kolumna kontekstu — kto wgrał (owner_id). Backend zwraca surowe UUID
+      // bez JOIN-a; front nie ma gotowego store'u z nazwami userów organizacji
+      // dostępnego z tego ekranu → fallback "Ja" dla własnych, skrócony
+      // identyfikator dla cudzych (ograniczenie opisane w raporcie zadania).
+      {
+        id: 'owner_id',
+        label: t('vault.docs.colOwner', isPolish ? 'Dodane przez' : 'Added by'),
+        width: '140px',
+        render: (row: TableRow) => (
+          <span className="text-sm text-c-text-secondary">
+            {ownerLabel(row.owner_id as string | null, currentUserId, isPolish)}
           </span>
         ),
       },
@@ -418,7 +491,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
         ),
       },
     ],
-    [t, isPolish, tagOptions]
+    [t, isPolish, tagOptions, projectNameById, currentUserId]
   );
 
   // ── Kebab wiersza (kontrakt 5 bloków; bloki 4/5 dokłada StandardTable) ───
