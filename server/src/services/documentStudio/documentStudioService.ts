@@ -2406,6 +2406,15 @@ export interface UpdateDocumentManualContentParams {
   sections: DocumentSchema['sections'];
   /** The `updatedAt` the client last read — optimistic-lock guard. */
   expectedVersion: string;
+  /**
+   * P-10 (2026-07-28) — optional title rename, reusing this same durable
+   * overlay write instead of a brand-new endpoint. The TopBar title editor
+   * (`ExecutiveModuleShell`'s `onTitleChange`) sends the current sections
+   * unchanged alongside the new title so this stays a single write, not a
+   * separate title-only code path that could race the content autosave.
+   * Omitted/blank → title is left untouched.
+   */
+  title?: string;
 }
 
 export interface UpdateDocumentManualContentResult {
@@ -2433,6 +2442,10 @@ export async function updateDocumentManualContent(
 
   const nextSchema = cloneSchema(current);
   nextSchema.sections = params.sections;
+  const trimmedTitle = typeof params.title === 'string' ? params.title.trim() : '';
+  if (trimmedTitle) {
+    nextSchema.title = trimmedTitle;
+  }
   nextSchema.updatedAt = nowIso();
 
   persistSchemaOverlayWriteThrough(params.artifactId, params.organizationId, nextSchema);
@@ -2447,6 +2460,7 @@ export async function updateDocumentManualContent(
     details: {
       sectionCount: nextSchema.sections.length,
       blockCount: nextSchema.sections.reduce((sum, s) => sum + s.blocks.length, 0),
+      ...(trimmedTitle && trimmedTitle !== current.title ? { titleRenamedTo: trimmedTitle } : {}),
     },
   });
 
