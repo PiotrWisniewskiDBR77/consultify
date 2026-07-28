@@ -3,6 +3,7 @@ import {
   Bot,
   CheckCircle2,
   ChevronDown,
+  Copy,
   ChevronLeft,
   ChevronRight,
   Edit2,
@@ -371,6 +372,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [tagModalOpen, setTagModalOpen] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  /* P-4: rozwijanie treści w bloku DETAILS — akcja kebaba ⋮ podglądu. */
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [sortField, setSortField] = useState<SortField>(persistedTableView.sortField);
   const [sortDir, setSortDir] = useState<SortDir>(persistedTableView.sortDir);
@@ -1177,9 +1180,46 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             </div>
           ) : null}
         </PreviewMetaCard>
+        {/**
+         * P-4 (Piotr, OBR-07, 2026-07-27): „Nie ma tutaj tych kebabów/hamburgerów
+         * nad treścią, żeby uzupełniać czy tam przerabiać. Nie jest to dobre okno."
+         *
+         * Blok DETAILS dostawał sam `text`, bez ani jednej akcji — a kebab ⋮
+         * renderuje się dopiero, gdy jakaś jest (`hasMenu` w
+         * `PreviewDetailsSection`). Stąd Ideas był jedynym podglądem bez niego:
+         * Inbox, Tasks i Decisions swoje akcje podawały.
+         */}
         <PreviewDetailsSection
           text={idea.body || ''}
           label={t('myWork.ideasList.label', 'Details')}
+          expanded={detailsExpanded}
+          onToggleExpanded={() => setDetailsExpanded((v) => !v)}
+          customActions={[
+            {
+              id: 'toggle',
+              label: detailsExpanded
+                ? t('myWork.ideasList.collapse', isPolish ? 'Zwiń' : 'Collapse')
+                : t('myWork.ideasList.expand', isPolish ? 'Rozwiń' : 'Expand'),
+              icon: ChevronDown,
+              onClick: () => setDetailsExpanded((v) => !v),
+            },
+            {
+              id: 'edit',
+              label: t('myWork.ideasList.editIdea', isPolish ? 'Edytuj' : 'Edit'),
+              icon: Edit2,
+              onClick: () => openIdea(idea.id, idea),
+            },
+            {
+              id: 'copy',
+              label: t('myWork.ideasList.copyContent', isPolish ? 'Kopiuj treść' : 'Copy content'),
+              icon: Copy,
+              onClick: () => {
+                void navigator.clipboard?.writeText(
+                  [idea.title, idea.body].filter(Boolean).join('\n\n')
+                );
+              },
+            },
+          ]}
         />
       </div>
     );
