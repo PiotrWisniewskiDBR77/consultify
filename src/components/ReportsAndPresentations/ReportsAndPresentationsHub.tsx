@@ -54,7 +54,7 @@ import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
 import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import { PresentationsTabContent } from './PresentationsTabContent';
 import { ReportsTabContent } from './ReportsTabContent';
-import { SheetsTabContent } from './SheetsTabContent';
+import { type SheetsSubView, SheetsTabContent } from './SheetsTabContent';
 import { TemplatesTabContent } from './TemplatesTabContent';
 import type {
   PresentationSourceType,
@@ -245,6 +245,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   // M17 junk filter (S6.3): OFF by default so the hub shows only real/final
   // outputs (server excludes drafts + dedupes). Toggle surfaces the "Robocze" set.
   const [showDrafts, setShowDrafts] = useState(false);
+  /* D-06: wybor zbioru danych zakladki Sheets — podniesiony z wlasnego paska
+     SheetsTabContent do Menu 2 (patrz `rightControls`). */
+  const [sheetsSubView, setSheetsSubView] = useState<SheetsSubView>('list');
 
   useEffect(() => {
     const params = new URLSearchParams(location.search || '');
@@ -666,7 +669,49 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     );
 
     if (activeTab === 'outputs_sheets') {
-      return <div className="relative flex items-center gap-2">{draftsToggle}</div>;
+      /**
+       * D-06 (Piotr, P-28, 2026-07-27): „Mamy przycisk Sheets albo Data sources.
+       * Wrzuciłbym wybór — czy oglądamy arkusze, czy źródła danych — do drugiego
+       * menu po prawej stronie. Dzięki temu podniesiemy całą tabelę."
+       *
+       * Przełącznik stał wcześniej we WŁASNYM pasku wewnątrz `SheetsTabContent`,
+       * czyli jako czwarta warstwa nagłówkowa (Menu 1 + Menu 2 + Menu 3 + on).
+       * Kanon zna wyłącznie Menu 1/2/3, a wybór zbioru danych to filtr — więc
+       * jego miejsce jest tutaj, obok pozostałych kontrolek Menu 2.
+       */
+      const zakresy: Array<{ id: SheetsSubView; label: string }> = [
+        { id: 'list', label: t('rap.outputs.tabs.sheets', 'Sheets') },
+        { id: 'data', label: t('rap.sheets.subtabs.data', 'Data sources') },
+      ];
+      return (
+        <div className="relative flex items-center gap-2">
+          <div
+            role="tablist"
+            aria-label={t('rap.sheets.subtabs.label', 'Sheets sections')}
+            data-testid="rap-sheets-subtabs"
+            className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle p-1"
+          >
+            {zakresy.map((z) => (
+              <button
+                key={z.id}
+                type="button"
+                role="tab"
+                aria-selected={sheetsSubView === z.id}
+                onClick={() => setSheetsSubView(z.id)}
+                data-testid={`rap-sheets-subtab-${z.id}`}
+                className={`h-7 rounded-full px-3 text-xs font-medium transition-colors ${
+                  sheetsSubView === z.id
+                    ? 'bg-c-accent-soft text-c-text'
+                    : 'text-c-text-secondary hover:bg-c-surface-raised'
+                }`}
+              >
+                {z.label}
+              </button>
+            ))}
+          </div>
+          {draftsToggle}
+        </div>
+      );
     }
 
     const isAggregateTab =
@@ -1081,6 +1126,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     activeTab,
     filtersOpen,
     setSinglePreset,
+    sheetsSubView,
     showDrafts,
     t,
     templatesView,
@@ -1438,6 +1484,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       case 'outputs_sheets':
         return (
           <SheetsTabContent
+            subView={sheetsSubView}
             viewMode={viewMode}
             searchQuery={searchQuery}
             activeFilters={activeFilters}
