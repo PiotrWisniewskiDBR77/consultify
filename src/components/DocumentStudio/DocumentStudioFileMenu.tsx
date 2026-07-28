@@ -144,7 +144,13 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
         <div
           role="menu"
           aria-label={t('documentStudio.fileMenu.trigger', 'Plik')}
-          className="absolute left-0 top-full z-dropdown mt-1 min-w-[240px] rounded-token-md border border-c-border-subtle bg-c-surface p-1 shadow-lg"
+          // U4 (odbiór "menu pliku") — was `left-0`, which overflowed past the
+          // right edge of the viewport at 1280px when the trigger sits near
+          // the right side of the bar (now more likely per U3's reordering).
+          // `right-0` mirrors the existing `⋯` OverflowMenu in `TopBar.tsx`,
+          // which already solves this exact viewport-collision problem the
+          // same way. Verified at 1280px and 1024px.
+          className="absolute right-0 top-full z-dropdown mt-1 min-w-[260px] max-w-[calc(100vw-2rem)] rounded-token-md border border-c-border-subtle bg-c-surface p-1 shadow-lg"
           data-testid="document-file-menu"
         >
           <button
