@@ -20494,7 +20494,7 @@
       "source": "Source",
       "slides": "Slides",
       "reportType": "Type",
-      "mode": "Tryb",
+      "mode": "Mode",
       "quality": "Quality"
     },
     "filters": {
@@ -20658,7 +20658,7 @@
         "source": "source",
         "visibility": "Visibility",
         "review": "Review",
-        "kind": "Typ",
+        "kind": "Type",
         "exports": "Exports"
       },
       "preview": {
