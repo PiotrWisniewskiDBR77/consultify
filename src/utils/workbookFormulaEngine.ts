@@ -308,7 +308,7 @@ class Parser {
   private advance(): Token {
     return this.tokens[this.pos++] ?? { t: 'eof' };
   }
-  private isOp(tok: Token, v: string): boolean {
+  private isOp(tok: Token, v: string): tok is Extract<Token, { t: 'op' }> {
     return tok.t === 'op' && tok.v === v;
   }
 
