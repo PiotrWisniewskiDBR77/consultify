@@ -123,10 +123,45 @@ Api.getMyIdea = (async () => MOCK_IDEA) as typeof Api.getMyIdea;
 // (`syncMyIdeaMap = async () => MOCK_MAP.map`) cofal kazdy dodany wezel przy
 // pierwszym sync, wiec kliknieta ikona raila wygladala na martwa mimo dzialania.
 // Wzorzec 1:1 z `whiteboard-workshop.tsx`.
-let currentMap: any = structuredClone(MOCK_MAP.map);
+// ★ 2026-07-28: dołożona TRWAŁOŚĆ między przeładowaniami (sessionStorage),
+// wzorzec 1:1 z `mindmap-canvas.tsx`. Bez niej `let` na poziomie modułu
+// resetował się przy każdym F5 i scenariusza „ustawienie krawędzi przeżywa
+// przeładowanie" (strzałka kierunku, styl linii, etykieta) NIE dało się
+// sprawdzić — mock wyglądał na stanowy, a gubił stan na odświeżeniu.
+// `?resetMap=1` czyści zapis i wraca do fixture.
+const STORAGE_KEY = 'wb-canvas-mock-map';
+
+function loadPersistedMap(): any {
+  try {
+    if (new URLSearchParams(window.location.search).get('resetMap') === '1') {
+      window.sessionStorage.removeItem(STORAGE_KEY);
+      return structuredClone(MOCK_MAP.map);
+    }
+    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed?.nodes)) return parsed;
+    }
+  } catch {
+    /* sessionStorage może być zablokowany — fallback na fixture */
+  }
+  return structuredClone(MOCK_MAP.map);
+}
+
+let currentMap: any = loadPersistedMap();
+
+function persistMap() {
+  try {
+    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(currentMap));
+  } catch {
+    /* quota / tryb prywatny — stan zostaje tylko w pamięci */
+  }
+}
+
 function mergeMapPayload(payload: any) {
   currentMap = {
     ...currentMap,
+    version: (currentMap.version ?? 0) + 1,
     nodes: Array.isArray(payload?.nodes) ? payload.nodes : currentMap.nodes,
     edges: Array.isArray(payload?.edges) ? payload.edges : currentMap.edges,
     extensions:
@@ -134,9 +169,12 @@ function mergeMapPayload(payload: any) {
         ? { ...currentMap.extensions, ...payload.extensions }
         : currentMap.extensions,
   };
+  persistMap();
   return currentMap;
 }
 (window as any).__RAIL_DEBUG_MAP__ = () => currentMap;
+// Sonda zgodna z mindmap-canvas — weryfikacja stanu krawędzi w konsoli.
+(window as any).__WB_DEBUG_MAP__ = () => currentMap;
 Api.getMyIdeaMap = (async () => ({ map: currentMap })) as typeof Api.getMyIdeaMap;
 Api.syncMyIdeaMap = (async (_ideaId: string, payload: any) =>
   mergeMapPayload(payload)) as typeof Api.syncMyIdeaMap;
