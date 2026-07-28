@@ -38,7 +38,13 @@ export const BETA_ADMINS_EXEMPT = true;
 export const BETA_MENU_STATUS: Record<string, BetaStatus> = {
   MODULE_BENEFITS: 'open', // Results (M15 — GA per D-A)
   MODULE_CONCLUSIONS: 'closed', // HIDDEN 2026-07-04 (owner decision — added without consent); nav entry removed in menuConfig too
-  MODULE_ECONOMICS: 'open', // Finance (M16 — GA per D-A)
+  // Finance — ZAMKNIĘTE przed klientami (decyzja Piotra, MVP 2026-07-28):
+  // „MVP finansów nie ładowałbym, to jest ogromny projekt… zostawiłbym w wersji
+  // beta i klientom bym tego później nie pokazywał, zakluczyłbym to. Nie jesteśmy
+  // w stanie do poniedziałku rozwinąć tego modułu."
+  // Moduł zostaje dostępny dla administratorów (BETA_ADMINS_EXEMPT), więc dalej
+  // nad nim pracujemy — znika tylko z zasięgu klienta.
+  MODULE_ECONOMICS: 'closed', // Finance (M16 — poza MVP, patrz _MVP_PRZEGLAD_MENU_2026-07-28.md)
   MODULE_AUDITS: 'open', // FLIP — akcept Piotra 07-16 (816 linii + backend, demo-ready)
   MODULE_PRESENTATIONS: 'open', // Documents (Outputs library)
   MODULE_DOCUMENT_STUDIO: 'open', // Document Studio
