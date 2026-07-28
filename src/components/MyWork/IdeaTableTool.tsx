@@ -2657,7 +2657,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   </button>
                 )}
 
-                {/* Framework generator */}
+                  </>
+                )}
+
+                {/* Framework generator — ZOSTAJE w pasku także przy fladze ON:
+                    to jedna z trzech dróg zbudowania tabeli (obok AI i szablonu),
+                    czyli dokładnie ta funkcja, której właściciel szukał („nie wiem
+                    jak zbudować tabelę"). Chowanie jej pod kebab byłoby cofnięciem
+                    naprawy A. */}
                 {!locked && (
                   <button
                     onClick={() => setShowFrameworkGen(true)}
@@ -2672,6 +2679,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 )}
 
                 {/* Conditional formatting */}
+                {!guidedBar && (
                 <button
                   onClick={() => setShowConditionalFmt(true)}
                   className={`p-1.5 rounded-lg transition-colors ${formatRules.length > 0 ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
@@ -2679,7 +2687,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 >
                   <Paintbrush size={12} />
                 </button>
-                  </>
                 )}
 
                 {/* Color palette — panel zostaje zamontowany zawsze (kebab go otwiera) */}
@@ -3240,11 +3247,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               {guidedBar && menu1ToolSlot ? (
                 createPortal(
                   <>
-                    {_saveLabel ? (
-                      <span className="text-xs text-c-text-muted" data-testid="idea-table-save-label">
-                        {_saveLabel}
-                      </span>
-                    ) : null}
                     <button
                       type="button"
                       onClick={_save}
