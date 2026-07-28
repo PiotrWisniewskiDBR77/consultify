@@ -178,6 +178,7 @@ const IdeaTableToolGroupingScreen = React.lazy(() => import('./screens/idea-tabl
 const IdeaTableScreen = React.lazy(() => import('./screens/idea-table'));
 const MindmapCanvasScreen = React.lazy(() => import('./screens/mindmap-canvas'));
 const TeresaConfirmChipScreen = React.lazy(() => import('./screens/teresa-confirm-chip'));
+const TeresaChipySugestiiScreen = React.lazy(() => import('./screens/teresa-chipy-sugestii'));
 const DeckArtifactScreen = React.lazy(() => import('./screens/deck-artifact'));
 const DocumentArtifactScreen = React.lazy(() => import('./screens/document-artifact'));
 const IdeasPreviewOverlayScreen = React.lazy(() => import('./screens/ideas-preview-overlay'));
@@ -671,6 +672,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'teresa-confirm-chip': {
     label: 'IDEE — Teresa: kontrolka potwierdzenia akcji trwałych (F1-A)',
     render: () => <TeresaConfirmChipScreen />,
+  },
+  'teresa-chipy-sugestii': {
+    label: 'TERESA — chipy sugestii pod oknem rozmowy (kontekst raportu vs insightu)',
+    render: () => <TeresaChipySugestiiScreen />,
   },
   'ideas-preview-overlay': {
     label: 'IDEE — Idea: podgląd nakładkowy nad listą',
