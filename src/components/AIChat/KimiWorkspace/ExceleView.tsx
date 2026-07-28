@@ -8,12 +8,13 @@
  * SSOT: FINAL_IMPLEMENTATION_PLAN_23_EXCELE_2026-03-29.md
  */
 
-import { Copy, Link2, Loader2 } from 'lucide-react';
+import { Copy, Link2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { BlankCreationState } from '@/components/shared/BlankCreationState';
 import { TriModeChooser } from '@/components/shared/TriModeChooser';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -109,6 +110,12 @@ export const ExceleView: React.FC = () => {
     entryParam === 'ai' ? 'ai' : entryParam === 'blank' ? 'blank' : 'choose'
   );
   const [creatingBlank, setCreatingBlank] = useState(false);
+  // 2026-07-28 fix (żywy odbiór — "Tworzenie pustego arkusza…" wisi bez
+  // wyjścia): `entryMode` never left 'blank' on its own — the render gate
+  // below used to key ONLY on `entryMode === 'blank'`, with no escape hatch on
+  // failure. `blankCreateFailed` gives that failure a permanent, actionable
+  // state instead of a toast that disappears while the spinner stays forever.
+  const [blankCreateFailed, setBlankCreateFailed] = useState(false);
 
   // Auto-trigger from builtin template prompt
   const promptTriggered = useRef(false);
@@ -358,6 +365,7 @@ export const ExceleView: React.FC = () => {
   const handleCreateEmptyGrid = useCallback(async (): Promise<void> => {
     if (creatingBlank) return;
     setCreatingBlank(true);
+    setBlankCreateFailed(false);
     try {
       const res = await Api.post('/workbook/blank', { title: 'Pusty arkusz' });
       const payload = (res as { data?: { id?: string } } | null)?.data;
@@ -366,9 +374,16 @@ export const ExceleView: React.FC = () => {
         navigate(`/excele?artifactId=${encodeURIComponent(workbookId)}`);
       } else {
         toast.error('Nie udało się utworzyć pustego arkusza.');
+        setBlankCreateFailed(true);
       }
     } catch {
+      // `Api.post` already carries a hard 20s transport timeout
+      // (`src/services/api.ts` `fetchWithRetry` — "Request timed out"), so
+      // this catch fires deterministically rather than hanging forever. The
+      // bug was downstream: nothing here used to give the failure a
+      // permanent, visible state — see `blankCreateFailed` above.
       toast.error('Nie udało się utworzyć pustego arkusza.');
+      setBlankCreateFailed(true);
     } finally {
       setCreatingBlank(false);
     }
@@ -391,12 +406,28 @@ export const ExceleView: React.FC = () => {
   // Materiały wspólny launcher — `?entry=blank`: pokaż lekki loading zamiast
   // brama-wyboru/czatu, dopóki handleCreateEmptyGrid (efekt wyżej) nie
   // przełączy nawigacji do realnego arkusza (`?artifactId=...`).
-  if (entryMode === 'blank') {
+  //
+  // 2026-07-28 fix: `navigate('/excele?artifactId=…')` on success stays on
+  // THIS route (no remount — `<ExceleView />` has no `key` in AppRoutes.tsx),
+  // so `entryMode` never left 'blank' on its own. Gating on `!artifactId` too
+  // means the moment the URL carries the real id, this branch steps aside and
+  // the reopen logic below (already running via its own effect) can render —
+  // previously it kept winning forever, hiding a workbook that had already
+  // been created and loaded in the background. `blankCreateFailed` covers the
+  // other half: a failed POST used to leave only a toast (gone in seconds)
+  // with the spinner stuck here permanently — see `handleCreateEmptyGrid`.
+  if (entryMode === 'blank' && !artifactId) {
     return (
-      <div className="flex h-full flex-1 items-center justify-center gap-2 text-c-text-secondary">
-        <Loader2 size={18} className="animate-spin" />
-        <span className="text-sm">Tworzenie pustego arkusza…</span>
-      </div>
+      <BlankCreationState
+        status={blankCreateFailed ? 'failed' : 'creating'}
+        creatingLabel="Tworzenie pustego arkusza…"
+        failedMessage="Nie udało się utworzyć pustego arkusza. Spróbuj ponownie albo wróć do Materiałów."
+        onRetry={() => void handleCreateEmptyGrid()}
+        retryLabel="Spróbuj ponownie"
+        onBack={() => navigate('/presentations?tab=sheets')}
+        backLabel="Wróć do Materiałów"
+        testId="excele-blank"
+      />
     );
   }
 

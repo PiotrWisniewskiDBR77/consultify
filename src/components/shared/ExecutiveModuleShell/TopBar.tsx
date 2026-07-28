@@ -57,6 +57,18 @@ interface TopBarProps {
    * express). ADDITIVE — omit for the default row.
    */
   primaryActionSlot?: React.ReactNode;
+  /**
+   * 2026-07-28 (U3, odbiór "menu pliku") — rendered FIRST inside the chip
+   * cluster, ahead of every chip (including the highlighted `kind:'primary'`
+   * one) — e.g. a "Plik ▾" dropdown that must be leftmost, Word-convention
+   * style. Deliberately lives INSIDE the same flex row as the chips (not a
+   * separate `titleTrailingSlot` sibling) so it shares that row's existing
+   * width budget instead of adding a whole extra flex item + gap on top of
+   * an already chip-heavy bar — see U5 in the same odbiór (title truncation
+   * got WORSE when this used to live in a separate sibling slot). ADDITIVE
+   * — omit for the default row.
+   */
+  leadingActionSlot?: React.ReactNode;
   /** Right-cluster slot (presence indicators / version / status dot). */
   presenceSlot?: React.ReactNode;
   /** Optional className for the outer row. */
@@ -301,6 +313,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   titleIconSlot,
   titleTrailingSlot,
   primaryActionSlot,
+  leadingActionSlot,
   presenceSlot,
   className,
   testId,
@@ -382,12 +395,19 @@ export const TopBar: React.FC<TopBarProps> = ({
         <button
           type="button"
           onClick={onBack}
-          className="flex-shrink-0 p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+          // 2026-07-28 (odbiór "menu pliku", N19): the back control used to be
+          // icon-only — its meaning only surfaced on hover (`title`), which is
+          // exactly why owners couldn't find "simple navigation" out of a
+          // screen. A visible text label next to the arrow (same
+          // `hidden md:inline` pattern the chip strip already uses) makes the
+          // control's actual behaviour legible at a glance instead of a guess.
+          className="flex-shrink-0 flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
           title={backLabel ?? 'Back'}
           aria-label={backLabel ?? 'Back'}
           data-testid="mels-topbar-back"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={18} className="flex-shrink-0" aria-hidden="true" />
+          {backLabel ? <span className="hidden md:inline whitespace-nowrap">{backLabel}</span> : null}
         </button>
       ) : null}
 
@@ -412,10 +432,20 @@ export const TopBar: React.FC<TopBarProps> = ({
             data-testid="mels-topbar-title-input"
           />
         ) : (
+          // 2026-07-28 (U5, odbiór "menu pliku") — this button used to have no
+          // explicit width share: as the ONLY sibling here without
+          // `flex-shrink-0`, it should have absorbed all of the row's
+          // remaining space, but the observed result ("Audyt p…" with a
+          // visibly empty bar at 1280px) means it wasn't reliably getting it.
+          // `flex-1 min-w-0` makes it claim the row's leftover width
+          // explicitly instead of relying on default flex-item sizing, so it
+          // only truncates when space is truly short. Native `title` restores
+          // the full string on hover (was missing entirely before).
           <button
             type="button"
             onClick={() => onTitleChange && setEditing(true)}
-            className={`text-slate-900 dark:text-white font-medium truncate ${
+            title={title}
+            className={`min-w-0 flex-1 truncate text-left text-slate-900 dark:text-white font-medium ${
               onTitleChange ? 'hover:text-c-focus-solid' : ''
             }`}
             data-testid="mels-topbar-title"
@@ -436,6 +466,17 @@ export const TopBar: React.FC<TopBarProps> = ({
       ) : null}
 
       <div className="flex items-center gap-1 flex-shrink-0" data-testid="mels-topbar-chips">
+        {leadingActionSlot ? (
+          <>
+            {leadingActionSlot}
+            {secondaryChips.length > 0 ||
+            overflowChips.length > 0 ||
+            primaryChips.length > 0 ||
+            primaryActionSlot ? (
+              <span aria-hidden="true" className="mx-1 h-5 w-px bg-slate-200 dark:bg-navy-700" />
+            ) : null}
+          </>
+        ) : null}
         {secondaryChips.map((chip) => (
           <Chip key={chip.id} descriptor={chip} />
         ))}

@@ -46,10 +46,15 @@ export interface ExecutiveModuleShellProps {
    *   - `topBarTitleIconSlot`     → between breadcrumb chevron and title.
    *   - `topBarTitleTrailingSlot` → right after the title (stage chip / save).
    *   - `topBarPrimaryActionSlot` → prominent action in the right cluster.
+   *   - `topBarLeadingActionSlot` → FIRST inside the chip cluster, ahead of
+   *     every chip (e.g. a "Plik ▾" File menu — Word convention: File is
+   *     leftmost). Shares the chip row's width budget rather than adding a
+   *     separate flex item (see `TopBar.tsx`'s own doc for why that matters).
    */
   topBarTitleIconSlot?: React.ReactNode;
   topBarTitleTrailingSlot?: React.ReactNode;
   topBarPrimaryActionSlot?: React.ReactNode;
+  topBarLeadingActionSlot?: React.ReactNode;
   /**
    * Opcjonalne SCALENIE górnego paska w jedną linię — DOM id węzła, do którego
    * `TopBar` ma przenieść portalem swój klaster poleceń zamiast renderować
@@ -167,6 +172,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   topBarTitleTrailingSlot,
   topBarPrimaryActionSlot,
   topBarMergeSlotId,
+  topBarLeadingActionSlot,
   secondBar,
   leftRailTitle,
   leftRailToolsSlot,
@@ -309,6 +315,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
         titleTrailingSlot={topBarTitleTrailingSlot}
         primaryActionSlot={topBarPrimaryActionSlot}
         mergeSlotId={topBarMergeSlotId}
+        leadingActionSlot={topBarLeadingActionSlot}
       />
 
       {secondBar}

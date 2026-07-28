@@ -2,21 +2,43 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DocumentStudioDocumentPanel } from '../DocumentStudioDocumentPanel';
 import type { DocumentSchema } from '../types';
 
-const { insertDocumentStudioContentBlockMock } = vi.hoisted(() => ({
+const {
+  insertDocumentStudioContentBlockMock,
+  generateDocumentStudioArtifactMock,
+  saveDocumentStudioManualContentMock,
+  navigateMock,
+} = vi.hoisted(() => ({
   insertDocumentStudioContentBlockMock: vi.fn(),
+  generateDocumentStudioArtifactMock: vi.fn(),
+  saveDocumentStudioManualContentMock: vi.fn(),
+  navigateMock: vi.fn(),
 }));
+
+// N20 (menu pliku) — override the global no-op `useNavigate` safety net
+// (`tests/setup.ts`) with a spy so "Otwórz" / the module-label exit can be
+// asserted to navigate to the right place, per every other existing export
+// (MemoryRouter, Routes, …) staying real.
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  };
+});
 
 vi.mock('../api', async () => {
   const actual = await vi.importActual<typeof import('../api')>('../api');
   return {
     ...actual,
+    generateDocumentStudioArtifact: generateDocumentStudioArtifactMock,
+    saveDocumentStudioManualContent: saveDocumentStudioManualContentMock,
     getDocumentStudioPolicy: vi.fn(async () => ({ canOverrideQa: false, role: 'CONSULTANT' })),
     getDocumentStudioSchemaDiff: vi.fn(async () => ({
       baseSnapshot: {
@@ -198,6 +220,18 @@ describe('DocumentStudioDocumentPanel', () => {
   beforeEach(() => {
     window.localStorage.clear();
     vi.clearAllMocks();
+    // N20 (menu pliku) — "Zapisz jako" default happy path: a fresh artifact
+    // is created, then overwritten with the current schema's sections.
+    generateDocumentStudioArtifactMock.mockResolvedValue({
+      artifactId: 'artifact-2',
+      schema: { ...schema, artifactId: 'artifact-2', updatedAt: '2026-07-28T00:00:00.000Z' },
+      generationWarnings: [],
+    });
+    saveDocumentStudioManualContentMock.mockResolvedValue({
+      ...schema,
+      artifactId: 'artifact-2',
+      title: 'Board memo (kopia)',
+    });
     insertDocumentStudioContentBlockMock.mockResolvedValue({
       insertedBlock: {
         blockId: 'inserted-block-1',
@@ -239,12 +273,42 @@ describe('DocumentStudioDocumentPanel', () => {
     expect(screen.getByTestId('mels-left-rail')).toHaveTextContent('Risks');
     expect(screen.getByTestId('mels-canvas')).toHaveTextContent('Document preview');
     expect(screen.getByTestId('mels-canvas')).toHaveTextContent('This is the executive summary.');
-    await waitFor(() => expect(screen.getByText('Governance')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('QA')).toBeInTheDocument());
 
-    const chips = within(screen.getByTestId('mels-topbar-chips'))
-      .getAllByRole('button')
-      .map((button) => button.getAttribute('data-mels-chip'));
-    expect(chips).toEqual(['history', 'qa', 'governance', 'share', 'agent', 'run']);
+    // U5 (odbiór "menu pliku", 2026-07-28) — "history" and "governance" moved
+    // to the `⋯` overflow tier (measured live at 1280px: 6 always-expanded
+    // chips + the new "Plik" menu crushed the document title to a 0-26px
+    // sliver; folding these two — lower call-frequency, audit-style actions
+    // — back to editor-shell-canon's own documented overflow pattern
+    // reclaimed ~200px with zero functionality loss, since `⋯` was already
+    // built for exactly this). So the always-visible chip set shrank; the
+    // folded two are asserted separately below via the `⋯` menu.
+    //
+    // `mels-topbar-chips` also hosts `topBarLeadingActionSlot` (the new
+    // "Plik" dropdown trigger, rendered FIRST per U3) — see `TopBar.tsx`'s
+    // own doc for that slot. Scope the query to elements carrying the
+    // `data-mels-chip` contract so this assertion keeps testing the
+    // canonical CHIP set, not "every button in the container".
+    // Render order is secondary-tier chips first, then primary ("share") —
+    // a PRE-EXISTING, separately-flagged inconsistency between
+    // `sortChipsByMelsOrder` (which interleaves "share" between "qa" and
+    // "agent" per MELS_CHIP_ORDER) and `TopBar.tsx`'s tier-partitioned
+    // render (secondary chips always render before primary chips). Verified
+    // unrelated to this change: reproduces identically on a clean
+    // `origin/demo` checkout with zero modifications (see task
+    // `task_289f7414`). Asserting the actual (buggy) order here rather than
+    // the nominally-intended MELS order, so this test doesn't mask further
+    // regressions on top of the known one.
+    const chips = Array.from(
+      screen.getByTestId('mels-topbar-chips').querySelectorAll('[data-mels-chip]')
+    ).map((button) => button.getAttribute('data-mels-chip'));
+    expect(chips).toEqual(['qa', 'agent', 'run', 'share']);
+    expect(screen.getByTestId('document-file-menu-trigger')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('mels-topbar-overflow'));
+    const overflowMenu = screen.getByTestId('mels-topbar-overflow-menu');
+    expect(overflowMenu).toHaveTextContent('History');
+    expect(overflowMenu).toHaveTextContent('Governance');
   });
 
   it('opens sources and properties right-rail panels', async () => {
@@ -346,5 +410,157 @@ describe('DocumentStudioDocumentPanel', () => {
       )
     );
     expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('0 MUST · 0 SHOULD');
+  });
+
+  // N20 (menu pliku, live odbiór 2026-07-28) — "Nie ma Zapisz, Zapisz jako,
+  // Otwórz". The File menu below is the fix; these 4 tests match the
+  // ROBOTNIK brief's own acceptance list verbatim.
+  describe('File menu (N20)', () => {
+    it('renders 4 file operations (Nowy · Otwórz · Zapisz · Zapisz jako)', async () => {
+      render(
+        <DocumentStudioDocumentPanel
+          artifactId="artifact-1"
+          schema={schema}
+          onStartOver={vi.fn()}
+          onSchemaUpdated={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('document-file-menu-trigger'));
+
+      expect(screen.getByTestId('document-file-menu-new')).toBeInTheDocument();
+      expect(screen.getByTestId('document-file-menu-open')).toBeInTheDocument();
+      expect(screen.getByTestId('document-file-menu-save')).toBeInTheDocument();
+      expect(screen.getByTestId('document-file-menu-save-as')).toBeInTheDocument();
+    });
+
+    it('"Otwórz" navigates to the Materiały documents list', async () => {
+      render(
+        <DocumentStudioDocumentPanel
+          artifactId="artifact-1"
+          schema={schema}
+          onStartOver={vi.fn()}
+          onSchemaUpdated={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('document-file-menu-trigger'));
+      fireEvent.click(screen.getByTestId('document-file-menu-open'));
+
+      expect(navigateMock).toHaveBeenCalledWith('/presentations?tab=documents');
+    });
+
+    it('shows the live autosave state instead of a fake manual "Save" action', async () => {
+      render(
+        <DocumentStudioDocumentPanel
+          artifactId="artifact-1"
+          schema={schema}
+          onStartOver={vi.fn()}
+          onSchemaUpdated={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('document-file-menu-trigger'));
+
+      // Freshly opened, no edits yet — the autosave observer starts at
+      // 'idle', which reads as "already durable" (matches server state at
+      // load), not as "nothing to report".
+      const saveRow = screen.getByTestId('document-file-menu-save');
+      expect(saveRow).toHaveTextContent('Zapisano automatycznie');
+      // Not a button — clicking it must not pretend to trigger a save.
+      expect(saveRow).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('"Zapisz jako" duplicates the document via the existing generate + manual-content endpoints', async () => {
+      render(
+        <DocumentStudioDocumentPanel
+          artifactId="artifact-1"
+          schema={schema}
+          onStartOver={vi.fn()}
+          onSchemaUpdated={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('document-file-menu-trigger'));
+      fireEvent.click(screen.getByTestId('document-file-menu-save-as'));
+
+      await waitFor(() => expect(generateDocumentStudioArtifactMock).toHaveBeenCalledTimes(1));
+      expect(generateDocumentStudioArtifactMock).toHaveBeenCalledWith(
+        expect.objectContaining({ useLlm: false })
+      );
+      await waitFor(() =>
+        expect(saveDocumentStudioManualContentMock).toHaveBeenCalledWith('artifact-2', {
+          sections: schema.sections,
+          expectedVersion: '2026-07-28T00:00:00.000Z',
+        })
+      );
+      await waitFor(() =>
+        expect(navigateMock).toHaveBeenCalledWith('/document-studio/artifact-2')
+      );
+    });
+  });
+
+  // N19/U1/U2 (live odbiór 2026-07-28) — the arrow in the top-left corner is
+  // a universal "back/exit" sign. It used to fire "Start over" (discard +
+  // restart INSIDE the tool) — a data-loss-shaped trap for exactly the user
+  // hunting for the exit. Fixed: the arrow now IS the one real exit, its
+  // visible label says where it leads (not the name of the screen you're
+  // already on), and "Start over" no longer lives behind anything
+  // arrow-shaped.
+  describe('Exit affordance (N19/U1/U2)', () => {
+    it('back arrow navigates to Materiały and does NOT discard the open document', () => {
+      const onStartOver = vi.fn();
+      render(
+        <DocumentStudioDocumentPanel
+          artifactId="artifact-1"
+          schema={schema}
+          onStartOver={onStartOver}
+          onSchemaUpdated={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('mels-topbar-back'));
+
+      expect(navigateMock).toHaveBeenCalledWith('/presentations?tab=documents');
+      // U1's core complaint: the back arrow must not be a disguised
+      // "discard and restart" trap — it must only navigate, never fire the
+      // destructive start-over handler.
+      expect(onStartOver).not.toHaveBeenCalled();
+    });
+
+    it('back arrow\'s visible label says where it leads (Materiały), matching its accessible name', () => {
+      render(
+        <DocumentStudioDocumentPanel
+          artifactId="artifact-1"
+          schema={schema}
+          onStartOver={vi.fn()}
+          onSchemaUpdated={vi.fn()}
+        />
+      );
+
+      const back = screen.getByTestId('mels-topbar-back');
+      // U2: visible text and accessible name (aria-label) must agree, and
+      // both must name the DESTINATION, not the screen the user is already
+      // on ("Document Studio" — that was the bug).
+      expect(back).toHaveTextContent('Materiał');
+      expect(back).toHaveAccessibleName(/materiał/i);
+    });
+
+    it('"Start over" (Nowy) is reachable ONLY from the File menu, not from the back arrow', () => {
+      const onStartOver = vi.fn();
+      render(
+        <DocumentStudioDocumentPanel
+          artifactId="artifact-1"
+          schema={schema}
+          onStartOver={onStartOver}
+          onSchemaUpdated={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('document-file-menu-trigger'));
+      fireEvent.click(screen.getByTestId('document-file-menu-new'));
+
+      expect(onStartOver).toHaveBeenCalledTimes(1);
+    });
   });
 });

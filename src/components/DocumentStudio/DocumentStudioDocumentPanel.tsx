@@ -29,6 +29,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import {
   ExecutiveModuleShell,
@@ -52,6 +53,7 @@ import {
   cancelDocumentStudioApproval,
   createDocumentStudioShareLink,
   exportDocumentStudioArtifact,
+  generateDocumentStudioArtifact,
   getDocumentStudioAccessHistory,
   getDocumentStudioCommentCounts,
   getDocumentStudioPolicy,
@@ -68,12 +70,14 @@ import {
   QaOverrideUnauthorizedError,
   recordDocumentStudioApprovalDecision,
   requestDocumentStudioApproval,
+  saveDocumentStudioManualContent,
 } from './api';
 import { DocumentCommentsPanel } from './DocumentCommentsPanel';
 import { DocumentExportSuccessNote } from './DocumentExportSuccessNote';
 import { DocumentSchemaDiffView } from './DocumentSchemaDiffView';
+import { DocumentStudioFileMenu } from './DocumentStudioFileMenu';
 import { DocumentStudioQaPanel } from './DocumentStudioQaPanel';
-import { DocumentTipTapEditor } from './editor';
+import { type DocumentAutosaveStatus, DocumentTipTapEditor } from './editor';
 import type {
   DocumentAccessHistoryEntry,
   DocumentApprovalDecisionKind,
@@ -83,6 +87,7 @@ import type {
   DocumentCommentSectionCounts,
   DocumentContentBlockTemplate,
   DocumentGenerationWarning,
+  DocumentOutline,
   DocumentQaReport,
   DocumentSchema,
   DocumentSchemaDiffResponse,
@@ -1639,6 +1644,18 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   onSchemaUpdated,
 }) => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  // N20 (menu pliku) — live autosave status observed from the TipTap editor's
+  // debounced `PUT /:artifactId/content` (see `DocumentTipTapEditor.tsx`
+  // `persistManualEdit`). This was already computed and thrown away before —
+  // the "Zapisz" row in `DocumentStudioFileMenu` surfaces it honestly instead
+  // of pretending a manual save button exists.
+  const [autosaveStatus, setAutosaveStatus] = useState<DocumentAutosaveStatus>('idle');
+  // N20 — "Zapisz jako": no document-duplication endpoint exists (only
+  // template cloning does), so this composes two endpoints the panel
+  // already uses elsewhere — see `handleSaveAs` below.
+  const [savingAs, setSavingAs] = useState(false);
+  const [saveAsError, setSaveAsError] = useState<string | null>(null);
   const [exporting, setExporting] = useState<'markdown' | 'docx' | 'pdf' | null>(null);
   const [exportNote, setExportNote] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -1882,12 +1899,134 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     setActiveRailToolId('more');
   }, []);
 
+  // N20 (menu pliku) — "Otwórz": cheapest correct answer per the ticket's own
+  // framing is the Materiały documents list — the same target the existing
+  // "Wróć do Materiałów" control (`DocumentStudioView` TopBar, intake phase)
+  // already navigates to. A bespoke "recent files" picker would duplicate
+  // that list for no material benefit.
+  const handleFileOpen = useCallback((): void => {
+    navigate('/presentations?tab=documents');
+  }, [navigate]);
+
+  // N20 — "Zapisz jako": Document Studio has no artifact-duplication
+  // endpoint (checked: `grep duplicate` only turns up template cloning,
+  // `POST /document-studio/templates/:id/clone`, and the deprecated
+  // report-builder module's own `/duplicate`). Composed minimally from two
+  // endpoints this panel already calls elsewhere instead of a new engine:
+  //   1) `generateDocumentStudioArtifact` (useLlm:false, single placeholder
+  //      section) — the same deterministic creation path
+  //      `DocumentStudioView.handleCreateEmptyDoc` uses for "Czysto" — to
+  //      get a fresh artifactId + intake metadata cloned from the current
+  //      schema.
+  //   2) `saveDocumentStudioManualContent` — the exact PUT the editor's own
+  //      autosave uses — to overwrite the placeholder section with the
+  //      CURRENT schema's real sections, so the duplicate is byte-for-byte
+  //      the document as last saved (not a re-generation from titles).
+  // No naming dialog: names the copy "<title> (kopia)"/"(copy)", same
+  // zero-extra-click cost as Word's default "Copy of …".
+  const handleSaveAs = useCallback(async (): Promise<void> => {
+    setSavingAs(true);
+    setSaveAsError(null);
+    try {
+      const copyTitle = `${schema.title} ${t('documentStudio.fileMenu.saveAsCopySuffix', '(kopia)')}`;
+      const placeholderOutline: DocumentOutline = {
+        documentType: schema.documentType,
+        title: copyTitle,
+        sections: [
+          {
+            title: schema.sections[0]?.title ?? copyTitle,
+            level: 1,
+            purpose: '',
+            expectedLengthHint: 'short',
+          },
+        ],
+        recommendedDensity: schema.density,
+        recommendedRegister: schema.communicationRegister,
+        recommendedLanguageStyle: schema.languageStyle,
+      };
+      const created = await generateDocumentStudioArtifact({
+        intake: {
+          title: copyTitle,
+          description: copyTitle,
+          documentType: schema.documentType,
+          language: schema.language,
+          audience: schema.audience,
+          goal: schema.goal,
+          communicationRegister: schema.communicationRegister,
+          density: schema.density,
+          languageStyle: schema.languageStyle,
+          confidentiality: schema.confidentiality,
+        },
+        outline: placeholderOutline,
+        useLlm: false,
+      });
+      if (!created.schema.updatedAt) {
+        // Defensive: mirrors the same guard `persistManualEdit` uses when a
+        // schema predates the optimistic-lock field — should not happen for
+        // a freshly created artifact, but skipping beats a lock-free
+        // overwrite. The new (empty-content) artifact still exists and is
+        // reachable from "Otwórz", so nothing is lost — just not cloned.
+        throw new Error(
+          t(
+            'documentStudio.fileMenu.saveAsFailed',
+            'Nie udało się zduplikować dokumentu'
+          )
+        );
+      }
+      const saved = await saveDocumentStudioManualContent(created.artifactId, {
+        sections: schema.sections,
+        expectedVersion: created.schema.updatedAt,
+      });
+      toast.success(
+        t('documentStudio.fileMenu.saveAsSuccess', 'Zduplikowano dokument: {{title}}', {
+          title: saved.title,
+        })
+      );
+      navigate(`/document-studio/${encodeURIComponent(created.artifactId)}`);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.fileMenu.saveAsFailed', 'Nie udało się zduplikować dokumentu');
+      setSaveAsError(message);
+      toast.error(message);
+    } finally {
+      setSavingAs(false);
+    }
+  }, [
+    navigate,
+    schema.audience,
+    schema.communicationRegister,
+    schema.confidentiality,
+    schema.density,
+    schema.documentType,
+    schema.goal,
+    schema.language,
+    schema.languageStyle,
+    schema.sections,
+    schema.title,
+    t,
+  ]);
+
   const topBarChips = useMemo<TopBarChipDescriptor[]>(
     () => [
       {
+        // U5 (odbiór "menu pliku", 2026-07-28) — moved to `overflow`.
+        // Measured live at 1280px: 6 always-expanded chips + the new "Plik"
+        // menu consumed 751px of the top bar, crushing the document title
+        // to a 0-26px sliver regardless of the title button's own flex
+        // sizing (which was independently broken AND fixed — see the title
+        // button's `flex-1 min-w-0` below). "History" is an audit/inspection
+        // action (lower call frequency than QA status or the AI editor),
+        // and the `⋯` overflow menu this component already builds
+        // (editor-shell-canon's own documented purpose for exactly this
+        // "no flat row of equal-weight buttons" situation, `TopBar.tsx`
+        // header doc) is the reversible, zero-functionality-loss way to
+        // reclaim ~200px so the title gets a legible share of the bar.
         id: 'history',
         label: t('documentStudio.panel.chipHistory', 'History'),
         icon: History,
+        group: 'overflow',
         tooltip: t(
           'documentStudio.panel.chipHistoryTooltip',
           'Open the unified activity feed from the right rail.'
@@ -1903,11 +2042,15 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         tooltip: t('documentStudio.panel.chipQaTooltip', 'Open the QA panel from the right rail.'),
       },
       {
+        // U5 — moved to `overflow`, same rationale as "history" above.
+        // Kept its `dotTone` (still surfaces the "override allowed" signal
+        // via the overflow menu item's dot even when folded).
         id: 'governance',
         label: policy?.canOverrideQa
           ? t('documentStudio.panel.chipOverrideAllowed', 'Override allowed')
           : t('documentStudio.panel.chipGovernance', 'Governance'),
         icon: FileWarning,
+        group: 'overflow',
         dotTone: policy?.canOverrideQa ? 'warning' : 'neutral',
         tooltip: t(
           'documentStudio.panel.chipGovernanceTooltip',
@@ -2207,6 +2350,16 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           <DocumentGenerationWarningsChip warnings={generationWarnings} />
         </div>
       )}
+      {saveAsError ? (
+        <div className="px-6 pt-4">
+          <div
+            role="alert"
+            className="rounded-md border border-danger-500/30 bg-danger-500/10 px-3 py-2 text-xs text-danger-700 dark:text-danger-400"
+          >
+            {saveAsError}
+          </div>
+        </div>
+      ) : null}
       {(exportSuccess || exportWarnings.length > 0 || exportNote || exportError || qaBlock) && (
         <div className="space-y-3 px-6 pt-4">
           {exportSuccess ? (
@@ -2432,6 +2585,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           onSchemaUpdated={onSchemaUpdated}
           editable
           artifactId={artifactId}
+          onAutosaveStatusChange={setAutosaveStatus}
         />
       </div>
     </div>
@@ -2442,8 +2596,34 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       moduleKey="document-studio"
       moduleLabel={t('documentStudio.view.moduleLabel', 'Document Studio')}
       title={schema.title}
-      onBack={onStartOver}
-      backLabel={t('documentStudio.panel.startOver', 'Start over')}
+      // U1/U2 (odbiór "menu pliku", 2026-07-28) — the arrow in the top-left
+      // corner is a universal "back/exit" sign. It used to fire "Start over"
+      // (discard + restart INSIDE the tool) — a data-loss-shaped trap for
+      // exactly the user who's hunting for the exit (N19). The arrow now IS
+      // the one real exit to Materiały; "Start over" moved to the File menu's
+      // "Nowy" (with a confirm, since it's destructive-looking — see
+      // `handleStartOver` in `DocumentStudioView.tsx`) so there is exactly
+      // ONE thing in this corner that looks like "back", and it behaves like
+      // "back".
+      onBack={() => navigate('/presentations?tab=documents')}
+      backLabel={t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
+      // U3 — "Plik" is the FIRST action in the row (Word convention: File is
+      // always leftmost), ahead of Historia/QA/Nadzór and ahead of the
+      // highlighted "Udostępnij" primary chip. `topBarLeadingActionSlot`
+      // renders inside the SAME chip cluster as `topBarChips`, first — unlike
+      // `topBarTitleTrailingSlot` (a separate flex sibling that made U5's
+      // title-truncation worse by adding its own width+gap on top of an
+      // already chip-heavy 1280px bar) or `topBarPrimaryActionSlot` (renders
+      // LAST, after Udostępnij).
+      topBarLeadingActionSlot={
+        <DocumentStudioFileMenu
+          onNew={onStartOver}
+          onOpen={handleFileOpen}
+          saveStatus={autosaveStatus}
+          onSaveAs={() => void handleSaveAs()}
+          saveAsBusy={savingAs}
+        />
+      }
       topBarChips={topBarChips}
       presenceSlot={
         <div className="text-right text-[11px] text-c-text-secondary">

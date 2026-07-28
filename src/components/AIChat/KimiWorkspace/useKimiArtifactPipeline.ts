@@ -572,8 +572,23 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       }
 
       if (lane === 'excele') {
-        // P23-ext: Try intelligent workbook generation first, fallback to table export
-        const generateWorkbook = async () => {
+        // P23-ext: real Excel engine call.
+        //
+        // N3 fix (naprawa 2026-07-28, "Excel od tygodni nie działa"): this used
+        // to swallow ANY engine failure into a bare `console.warn` + `return
+        // false`, then silently show the OLD operational table (governed
+        // table/CSV) relabeled as `type: 'xlsx'` with a "Spreadsheet … rows,
+        // columns" summary — the user saw what looked like a successful export
+        // with no hint that the real .xlsx engine never ran. Root cause of the
+        // engine call itself failing (WorkbookGeneratorService.callLLM
+        // discarding AIPipeline error info, and the workbook phases having no
+        // dedicated model-routing purpose) is fixed server-side; this is the
+        // "never lie about it" half — any remaining failure (budget, auth,
+        // provider outage, genuinely bad model output) now surfaces as an
+        // honest Polish error + retry instead of a disguised CSV.
+        const generateWorkbook = async (): Promise<
+          { ok: true } | { ok: false; reason: string }
+        > => {
           try {
             const wbResult = await Api.generateWorkbook({
               prompt: lastGoal || title,
@@ -640,51 +655,32 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
                   );
                 });
 
-              return true;
+              return { ok: true };
             }
+            // Engine responded 2xx but with no usable workbook id — treat as a
+            // failure with an honest reason rather than falling through silently.
+            return { ok: false, reason: 'Silnik nie zwrócił poprawnego skoroszytu.' };
           } catch (err) {
-            console.warn('[KIMI] Workbook generation failed, falling back to table export:', err);
+            const reason =
+              err instanceof Error && err.message ? err.message : 'nieznany błąd silnika';
+            console.warn('[KIMI] Workbook generation failed:', err);
+            return { ok: false, reason };
           }
-          return false;
         };
 
-        const workbookGenerated = await generateWorkbook();
+        const workbookResult = await generateWorkbook();
 
-        if (!workbookGenerated && origin?.originRecordId) {
-          const tableId = origin.originRecordId;
-          fetchSheetPreviewData(tableId)
-            .then((data) => {
-              setPreview({
-                type: 'xlsx',
-                title,
-                fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
-                summary: `Spreadsheet "${title}" — ${data.kpiItems.find((k) => k.label === 'Rows')?.value || '0'} rows, ${data.kpiItems.find((k) => k.label === 'Columns')?.value || '0'} columns.`,
-                kpiItems: data.kpiItems,
-                sheetNames: data.sheetNames,
-                tableData: { columns: data.columns, rows: data.rows },
-              });
-              setContentGenerated(true);
-            })
-            .catch(() => {
-              setPreview({
-                type: 'xlsx',
-                title,
-                fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
-                summary: `Spreadsheet "${title}" generated.`,
-                kpiItems: [],
-                sheetNames: ['Sheet1'],
-              });
-              setContentGenerated(true);
-            });
-        } else if (!workbookGenerated) {
-          setPreview({
-            type: 'xlsx',
-            title,
-            fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
-            summary: `Spreadsheet "${title}" generated.`,
-            kpiItems: [],
-            sheetNames: ['Sheet1'],
-          });
+        if (!workbookResult.ok) {
+          // N3 fix (naprawa 2026-07-28): NIGDY cichego fallbacku. Poprzednio ta
+          // gałąź po cichu ładowała starą tabelę operacyjną (governed table/CSV)
+          // i etykietowała ją `type: 'xlsx'` / "Spreadsheet … rows, columns" —
+          // użytkownik widział pozorny sukces bez śladu, że prawdziwy silnik
+          // Excela nie zadziałał. Zamiast tego: jawny polski komunikat z
+          // powodem + istniejący, gotowy ekran błędu (ArtifactPreviewPane w
+          // KimiWorkspaceShell.tsx renderuje go z `isFailed`/`failureReason`,
+          // z przyciskiem "Spróbuj ponownie" spiętym z `handleReplay`).
+          setStartupError(`Nie udało się wygenerować arkusza: ${workbookResult.reason}`);
+          setPreview(null);
           setContentGenerated(true);
         }
         return;
