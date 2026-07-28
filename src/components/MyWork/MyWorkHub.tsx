@@ -3295,6 +3295,24 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       );
     }
 
+    /**
+     * PILNE-6 (przegląd 128 zrzutów, 2026-07-27; uwaga Piotra P-17 o Sejfie:
+     * „Ta tabela jest w ogóle wbrew jakimkolwiek standardom"):
+     *
+     * Poniższy pasek to fallback „alerty z innych zakładek" (Overdue / Urgent /
+     * Decisions (pending) / Inbox). Dla zakładek `vault` i `agent` — które mają
+     * WŁASNE tabele, ale nie mają jeszcze własnych filtrów — oznaczało to, że
+     * na ekranie dokumentów klienta stały liczniki zaległych ZADAŃ i oczekujących
+     * DECYZJI. Oba ekrany pokazywały co do sztuki te same cztery chipy, bo brały
+     * je z tego samego miejsca; użytkownik dostawał filtry, które nie filtrują
+     * niczego, co widzi pod spodem.
+     *
+     * Menu 3 należy do tabeli, nad którą stoi. Skoro te dwie jeszcze nie mają
+     * czym go wypełnić, pasek się nie renderuje — to zdejmuje przy okazji jedną
+     * z czterech warstw nagłówkowych, na które Piotr zwrócił uwagę (P-17/P-18).
+     */
+    if (activeTab === 'vault' || activeTab === 'agent') return null;
+
     // Default cross-tab alerts (tasks/decisions/inbox)
     const chips: Array<{ key: string; label: string; count: number; onClick: () => void }> = [
       {
@@ -3678,7 +3696,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         // out when the flag is off, this is a second, defensive gate.
         return (
           <React.Suspense fallback={lazyFallback}>
-            <ClientDocumentsVault />
+            {/* P-17: Sejf nie ma już własnego paska ani własnej lupy — fraza
+                idzie z Menu 2 tego huba, żeby na ekranie było JEDNO pole
+                wyszukiwania zamiast dwóch. */}
+            <ClientDocumentsVault searchQuery={searchQuery} />
           </React.Suspense>
         );
       case 'agent':

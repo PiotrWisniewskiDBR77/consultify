@@ -43,18 +43,23 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
-import { StandardModuleBar } from '../../components/standard';
 import { isClientVaultEnabled } from '../../utils/clientVaultFlag';
 import { VaultDocumentsView } from './VaultDocumentsView';
 import { type VaultSafe, VaultSafesTable } from './VaultSafesTable';
 
-export const ClientDocumentsVault: React.FC = () => {
-  const { t, i18n } = useTranslation();
-  const isPolish = !!i18n.language?.startsWith('pl');
+export interface ClientDocumentsVaultProps {
+  /**
+   * Fraza z lupy Menu 2 hosta (My Work). Sejf nie ma własnej wyszukiwarki —
+   * patrz komentarz P-17 niżej.
+   */
+  searchQuery?: string;
+}
+
+export const ClientDocumentsVault: React.FC<ClientDocumentsVaultProps> = ({
+  searchQuery = '',
+}) => {
   const [openSafe, setOpenSafe] = useState<VaultSafe | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const handleOpenSafe = useCallback((safe: VaultSafe) => setOpenSafe(safe), []);
   const handleBackToSafes = useCallback(() => setOpenSafe(null), []);
@@ -68,15 +73,21 @@ export const ClientDocumentsVault: React.FC = () => {
     return <VaultDocumentsView safe={openSafe} onBack={handleBackToSafes} />;
   }
 
+  /**
+   * P-17 (Piotr, OBR-40…43, 2026-07-27): „Zwróć uwagę na menu drugie, trzecie,
+   * idą robione jakieś dziwne czwarte. Trzeba wdrożyć wszystkie narzędzia
+   * i standardy."
+   *
+   * Lista sejfów jest ZAKŁADKĄ My Work, a ta ma już komplet: Menu 1
+   * (breadcrumb „My Work › Sejf klienta"), Menu 2 (pigułki modułu + lupa)
+   * i Menu 3. Ten komponent dokładał do tego WŁASNY `StandardModuleBar` —
+   * czyli czwartą warstwę nagłówkową z drugim breadcrumbem „Client Vault"
+   * i DRUGĄ wyszukiwarką na tym samym ekranie (kanon zna wyłącznie Menu 1/2/3).
+   * Pasek zniknął; fraza przychodzi teraz z lupy Menu 2 hosta przez `searchQuery`,
+   * więc jedno pole filtruje to, co widać.
+   */
   return (
     <div className="h-full flex flex-col">
-      <StandardModuleBar
-        breadcrumbs={[
-          { label: t('vault.breadcrumb.root', isPolish ? 'Sejf klienta' : 'Client Vault') },
-        ]}
-        onSearch={setSearchQuery}
-        searchValue={searchQuery}
-      />
       <div className="flex-1 min-h-0 overflow-auto">
         <VaultSafesTable onOpenSafe={handleOpenSafe} searchQuery={searchQuery} />
       </div>
