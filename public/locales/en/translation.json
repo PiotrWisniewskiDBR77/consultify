@@ -27557,7 +27557,14 @@
       "nodeCount_one": "{{count}} node",
       "nodeCount_other": "{{count}} nodes",
       "edgeCount_one": "{{count}} connection",
-      "edgeCount_other": "{{count}} connections"
+      "edgeCount_other": "{{count}} connections",
+      "exportFailedTitle": "Export failed: {{format}}",
+      "exportFailedToast": "“{{format}}” export failed — no file was downloaded.",
+      "exportFailedCanvasNotFound": "The map canvas was not found. Open the map full screen and try again.",
+      "exportFailedEmptyMap": "The map has no visible elements to export.",
+      "exportFailedRender": "Rendering the map image failed. Details: {{reason}}",
+      "exportFallbackJson": "Download raw map data (JSON) instead",
+      "exportFailedDismiss": "Dismiss"
     },
     "slashCommandMenu": {
       "typeCommand": "Type a command…",
