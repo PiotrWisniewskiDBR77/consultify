@@ -24,11 +24,13 @@ import {
   downloadSheetArtifactXlsx,
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
+import { isExceleRightRailEnabled } from '@/utils/exceleRightRailFlag';
 import { isTriModeEnabled } from '@/utils/triModeFlag';
 import { buildWorkbookGridSheets } from '@/utils/workbookGridPreview';
 
 import { ArtifactModuleHome } from './ArtifactModuleHome';
 import { ExceleRightPanel } from './ExceleRightPanel';
+import { ExceleRightRail } from './ExceleRightRail';
 import type { ArtifactPreview } from './KimiWorkspaceShell';
 import { KimiWorkspaceShell, type KimiHeaderKebabItem } from './KimiWorkspaceShell';
 import { useKimiArtifactPipeline } from './useKimiArtifactPipeline';
@@ -495,17 +497,34 @@ export const ExceleView: React.FC = () => {
       chatSystemPrompt={EXCELE_SYSTEM_PROMPT}
       kebabItems={kebabItems}
       rightPanel={
-        <ExceleRightPanel
-          preview={effectivePreview}
-          workbookId={effectiveWorkbookId}
-          taskSteps={pipeline.taskSteps}
-          isGenerating={pipeline.isGenerating}
-          isFailed={pipeline.isFailed}
-          failureReason={pipeline.failureReason}
-          onDownload={pipeline.handleDownload}
-          onPreviewFile={handlePreviewFile}
-          onAllFiles={handleAllFiles}
-        />
+        // Zgłoszenie Piotra 2026-07-28 ("ma wyglądać jak Word") — za flagą
+        // `ff_excele_right_rail` (domyślnie OFF, src/utils/exceleRightRailFlag.ts)
+        // prawy panel to szyna ikon (ta sama co Word/Deck), nie accordion.
+        isExceleRightRailEnabled() ? (
+          <ExceleRightRail
+            preview={effectivePreview}
+            workbookId={effectiveWorkbookId}
+            taskSteps={pipeline.taskSteps}
+            isGenerating={pipeline.isGenerating}
+            isFailed={pipeline.isFailed}
+            failureReason={pipeline.failureReason}
+            onDownload={pipeline.handleDownload}
+            onPreviewFile={handlePreviewFile}
+            onAllFiles={handleAllFiles}
+          />
+        ) : (
+          <ExceleRightPanel
+            preview={effectivePreview}
+            workbookId={effectiveWorkbookId}
+            taskSteps={pipeline.taskSteps}
+            isGenerating={pipeline.isGenerating}
+            isFailed={pipeline.isFailed}
+            failureReason={pipeline.failureReason}
+            onDownload={pipeline.handleDownload}
+            onPreviewFile={handlePreviewFile}
+            onAllFiles={handleAllFiles}
+          />
+        )
       }
     />
   );
