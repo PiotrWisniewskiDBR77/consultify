@@ -1,10 +1,14 @@
 import { ArrowDownUp, ChevronDown, ChevronRight, Palette, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-// `useViewport` jest eksportowany jako default z podmodułu; barrel `reactflow`
-// nie przenosi tego do typów (TS2614). Repo ma już tę konwencję —
-// patrz `mindmap/LabeledEdge.tsx`, `processflow/FlowEdgeComponent.tsx`.
-import { useViewport } from '@reactflow/core';
+// ★ NIE importuj `useViewport` z '@reactflow/core' — to ODDZIELNA instancja
+// magazynu zustand niż ta, którą tworzy `<ReactFlowProvider>` z barrela
+// 'reactflow'. Efekt: „Seems like you have not used zustand provider as an
+// ancestor" i całe Process Flow nie startuje. (Regresja 2026-07-28, złapana
+// wzrokiem; barrel nie przenosi `useViewport` do typów, stąd pokusa.)
+// `useStore` z 'reactflow' jest typowany poprawnie i czyta TĘ SAMĄ instancję —
+// tak robi już `canvas/CanvasSnapGuides.tsx` i `mindmap/SmartGuidesOverlay.tsx`.
+import { useStore } from 'reactflow';
 
 import { LANE_HEIGHT } from './FlowNodeComponent';
 import { laneBandLayout } from './laneState';
@@ -378,7 +382,13 @@ export const LaneSystem: React.FC<LaneSystemProps> = ({
  * to the (context-free, unit-testable) `LaneSystem`.
  */
 export const LaneSystemViewportLayer: React.FC<LaneSystemProps> = (props) => {
-  const viewport = useViewport();
+  // `transform` to [x, y, zoom] — to samo źródło co `useViewport`, ale czytane
+  // przez `useStore` z barrela, czyli z właściwej instancji magazynu.
+  const transform = useStore((s) => s.transform);
+  const viewport = React.useMemo(
+    () => ({ x: transform[0], y: transform[1], zoom: transform[2] }),
+    [transform]
+  );
   return <LaneSystem {...props} viewport={viewport} />;
 };
 
