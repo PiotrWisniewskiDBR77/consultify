@@ -714,7 +714,28 @@ export const DocumentStudioView: React.FC = () => {
     void handleCreateEmptyDoc();
   }, [docEntryMode, handleCreateEmptyDoc]);
 
+  // U1 (odbiór "menu pliku", 2026-07-28) — this is now reachable from more
+  // than one place (File menu "Nowy" in both phases, the canvas's own
+  // "Start over" button) and moved OUT of the top-left arrow slot precisely
+  // because it looks like simple navigation but actually discards the
+  // in-progress view. Guard it once, here, for every caller: skip the
+  // confirm when there is nothing to lose (already on a blank intake), so
+  // it doesn't become annoying friction on the one screen where it's a
+  // true no-op. The document itself is NOT deleted (autosaved server-side,
+  // reachable again via File → Otwórz) — the confirm copy says exactly
+  // that instead of implying data loss that doesn't actually happen.
   const handleStartOver = (): void => {
+    if (
+      phase !== 'intake' &&
+      !window.confirm(
+        t(
+          'documentStudio.view.startOverConfirm',
+          'Zamknąć ten dokument i zacząć nowy? Bieżący dokument jest zapisany — możesz do niego wrócić przez „Otwórz” w menu Plik.'
+        )
+      )
+    ) {
+      return;
+    }
     setPhase('intake');
     setDocEntryMode('choose');
     setIntake(null);
@@ -809,7 +830,10 @@ export const DocumentStudioView: React.FC = () => {
           // Document Studio screen, not just the ones with a document open.
           // No artifact exists yet on this phase (intake/outline/plan
           // template) — Zapisz/Zapisz jako are disabled rather than faked.
-          primaryActionSlot={
+          // U3 — `titleTrailingSlot` (not `primaryActionSlot`, which renders
+          // last/rightmost) puts "Plik" first, ahead of the tab chips, per
+          // "pierwsze przyciski jak w Wordzie".
+          titleTrailingSlot={
             <DocumentStudioFileMenu
               onNew={handleStartOver}
               onOpen={() => navigate('/presentations?tab=documents')}

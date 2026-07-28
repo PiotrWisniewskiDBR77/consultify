@@ -38,14 +38,6 @@ export interface ExecutiveModuleShellProps {
   onTitleChange?: (next: string) => void;
   onBack?: () => void;
   backLabel?: string;
-  /**
-   * 2026-07-28 (odbiór "menu pliku") — makes `moduleLabel` a real exit
-   * control. See `TopBar.tsx`'s `onModuleLabelClick` doc for why this is
-   * separate from `onBack` (which some shells bind to an in-tool action,
-   * not to leaving the module).
-   */
-  topBarOnModuleLabelClick?: () => void;
-  topBarModuleLabelClickTitle?: string;
   topBarChips: TopBarChipDescriptor[];
   presenceSlot?: React.ReactNode;
   /**
@@ -156,8 +148,6 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   onTitleChange,
   onBack,
   backLabel,
-  topBarOnModuleLabelClick,
-  topBarModuleLabelClickTitle,
   topBarChips,
   presenceSlot,
   topBarTitleIconSlot,
@@ -298,8 +288,6 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
         onTitleChange={onTitleChange}
         onBack={onBack}
         backLabel={backLabel}
-        onModuleLabelClick={topBarOnModuleLabelClick}
-        moduleLabelClickTitle={topBarModuleLabelClickTitle}
         chips={topBarChips}
         presenceSlot={presenceSlot}
         titleIconSlot={topBarTitleIconSlot}

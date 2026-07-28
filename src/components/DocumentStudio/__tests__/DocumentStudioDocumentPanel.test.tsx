@@ -476,40 +476,67 @@ describe('DocumentStudioDocumentPanel', () => {
     });
   });
 
-  // N19 (live odbiór 2026-07-28) — the document phase's own back arrow is
-  // bound to "Start over" (discard + restart INSIDE the tool), not to
-  // leaving Document Studio; the ONE real exit is the moduleLabel
-  // breadcrumb segment. Both must be visibly labelled, not icon-only.
-  describe('Exit affordance (N19)', () => {
-    it('back arrow shows a visible "Start over" label, not just an icon', () => {
+  // N19/U1/U2 (live odbiór 2026-07-28) — the arrow in the top-left corner is
+  // a universal "back/exit" sign. It used to fire "Start over" (discard +
+  // restart INSIDE the tool) — a data-loss-shaped trap for exactly the user
+  // hunting for the exit. Fixed: the arrow now IS the one real exit, its
+  // visible label says where it leads (not the name of the screen you're
+  // already on), and "Start over" no longer lives behind anything
+  // arrow-shaped.
+  describe('Exit affordance (N19/U1/U2)', () => {
+    it('back arrow navigates to Materiały and does NOT discard the open document', () => {
+      const onStartOver = vi.fn();
       render(
         <DocumentStudioDocumentPanel
           artifactId="artifact-1"
           schema={schema}
-          onStartOver={vi.fn()}
+          onStartOver={onStartOver}
           onSchemaUpdated={vi.fn()}
         />
       );
 
-      expect(screen.getByTestId('mels-topbar-back')).toHaveTextContent('Start over');
-    });
-
-    it('module-label breadcrumb has a visible label and navigates to Materiały', () => {
-      render(
-        <DocumentStudioDocumentPanel
-          artifactId="artifact-1"
-          schema={schema}
-          onStartOver={vi.fn()}
-          onSchemaUpdated={vi.fn()}
-        />
-      );
-
-      const exit = screen.getByTestId('mels-topbar-module-label-link');
-      expect(exit).toHaveTextContent('Document Studio');
-
-      fireEvent.click(exit);
+      fireEvent.click(screen.getByTestId('mels-topbar-back'));
 
       expect(navigateMock).toHaveBeenCalledWith('/presentations?tab=documents');
+      // U1's core complaint: the back arrow must not be a disguised
+      // "discard and restart" trap — it must only navigate, never fire the
+      // destructive start-over handler.
+      expect(onStartOver).not.toHaveBeenCalled();
+    });
+
+    it('back arrow\'s visible label says where it leads (Materiały), matching its accessible name', () => {
+      render(
+        <DocumentStudioDocumentPanel
+          artifactId="artifact-1"
+          schema={schema}
+          onStartOver={vi.fn()}
+          onSchemaUpdated={vi.fn()}
+        />
+      );
+
+      const back = screen.getByTestId('mels-topbar-back');
+      // U2: visible text and accessible name (aria-label) must agree, and
+      // both must name the DESTINATION, not the screen the user is already
+      // on ("Document Studio" — that was the bug).
+      expect(back).toHaveTextContent('Materiał');
+      expect(back).toHaveAccessibleName(/materiał/i);
+    });
+
+    it('"Start over" (Nowy) is reachable ONLY from the File menu, not from the back arrow', () => {
+      const onStartOver = vi.fn();
+      render(
+        <DocumentStudioDocumentPanel
+          artifactId="artifact-1"
+          schema={schema}
+          onStartOver={onStartOver}
+          onSchemaUpdated={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('document-file-menu-trigger'));
+      fireEvent.click(screen.getByTestId('document-file-menu-new'));
+
+      expect(onStartOver).toHaveBeenCalledTimes(1);
     });
   });
 });

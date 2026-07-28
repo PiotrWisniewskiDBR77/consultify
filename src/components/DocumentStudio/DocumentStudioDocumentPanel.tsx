@@ -2579,18 +2579,24 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       moduleKey="document-studio"
       moduleLabel={t('documentStudio.view.moduleLabel', 'Document Studio')}
       title={schema.title}
-      onBack={onStartOver}
-      backLabel={t('documentStudio.panel.startOver', 'Start over')}
-      // N19 (live odbiór, wyjście z dokumentu) — `onBack`/`backLabel` above are
-      // "Start over" (discard + restart INSIDE Document Studio), not an exit.
-      // Once a document is open this shell had NO way back to Materiały at
-      // all in its own chrome (only the barely-visible global header
-      // breadcrumb) — this is the ONE additional, clearly distinct exit
-      // (breadcrumb text, not a second arrow button) rather than a
-      // competing third control.
-      topBarOnModuleLabelClick={() => navigate('/presentations?tab=documents')}
-      topBarModuleLabelClickTitle={t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
-      topBarPrimaryActionSlot={
+      // U1/U2 (odbiór "menu pliku", 2026-07-28) — the arrow in the top-left
+      // corner is a universal "back/exit" sign. It used to fire "Start over"
+      // (discard + restart INSIDE the tool) — a data-loss-shaped trap for
+      // exactly the user who's hunting for the exit (N19). The arrow now IS
+      // the one real exit to Materiały; "Start over" moved to the File menu's
+      // "Nowy" (with a confirm, since it's destructive-looking — see
+      // `handleStartOver` in `DocumentStudioView.tsx`) so there is exactly
+      // ONE thing in this corner that looks like "back", and it behaves like
+      // "back".
+      onBack={() => navigate('/presentations?tab=documents')}
+      backLabel={t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
+      // U3 — "Plik" is the FIRST action in the row (Word convention: File is
+      // always leftmost), ahead of Historia/QA/Nadzór and ahead of the
+      // highlighted "Udostępnij" primary chip. `titleTrailingSlot` renders
+      // immediately before the chip cluster (`topBarChips`/`primaryActionSlot`
+      // territory), so this — not `topBarPrimaryActionSlot` (which renders
+      // LAST, after Udostępnij) — is the slot that achieves that order.
+      topBarTitleTrailingSlot={
         <DocumentStudioFileMenu
           onNew={onStartOver}
           onOpen={handleFileOpen}

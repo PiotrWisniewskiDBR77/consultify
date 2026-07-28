@@ -24119,7 +24119,8 @@
       "presenceNote": "Modes 1, 2, 3 · Word/PDF artifact runtime",
       "loadingDocument": "Loading document…",
       "noDocument": "No document loaded.",
-      "backToMaterials": "Back to Materials"
+      "backToMaterials": "Back to Materials",
+      "startOverConfirm": "Close this document and start a new one? The current document is saved — you can get back to it via \"Open\" in the File menu."
     },
     "breadcrumb": {
       "new": "New document",

@@ -25163,7 +25163,8 @@
       "presenceNote": "Tryby 1, 2, 3 · Środowisko artefaktów Word/PDF",
       "loadingDocument": "Ładowanie dokumentu…",
       "noDocument": "Brak wczytanego dokumentu.",
-      "backToMaterials": "Wróć do Materiałów"
+      "backToMaterials": "Wróć do Materiałów",
+      "startOverConfirm": "Zamknąć ten dokument i zacząć nowy? Bieżący dokument jest zapisany — możesz do niego wrócić przez „Otwórz” w menu Plik."
     },
     "breadcrumb": {
       "new": "Nowy dokument",
