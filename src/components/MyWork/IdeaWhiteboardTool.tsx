@@ -129,6 +129,7 @@ import { WhiteboardStyleBar } from './whiteboard/WhiteboardStyleBar';
 import { WhiteboardSessionPanel } from './whiteboard/WhiteboardSessionPanel';
 import { WhiteboardToolbar } from './whiteboard/WhiteboardToolbar';
 import { usePortalSlot } from './whiteboard/usePortalSlot';
+import { emitIdeaUndoState } from './ideaUndoStateBus';
 import {
   isWhiteboardSessionInPanelEnabled,
   WHITEBOARD_SESSION_PANEL_SLOT_ID,
@@ -928,6 +929,17 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   const lastSnapshotRef = useRef<WhiteboardCanvasSnapshot | null>(null);
   const undoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
   const redoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
+
+  // Nadaj stan Cofnij/Ponów na wspólny autobus — bez tego przyciski w lewym
+  // pasku są trwale wygaszone (stosy żyją w refach, więc nie ma przerysowania,
+  // z którego pasek mógłby to wyczytać sam).
+  const emitUndoState = useCallback(() => {
+    emitIdeaUndoState(
+      'whiteboard',
+      undoStackRef.current.length > 0,
+      redoStackRef.current.length > 0
+    );
+  }, []);
   const toolSessionId = useMemo(() => `whiteboard:${ideaId}`, [ideaId]);
   const appendActivity = useCallback(
     (entry: WhiteboardActivityEntry) => {
@@ -940,7 +952,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     undoStackRef.current = [...undoStackRef.current.slice(-24), snapshot];
     redoStackRef.current = [];
     lastSnapshotRef.current = snapshot;
-  }, [drawingPaths, edges, nodes, scenes]);
+    emitUndoState();
+  }, [drawingPaths, edges, emitUndoState, nodes, scenes]);
 
   const restoreSnapshot = useCallback(
     (snapshot: WhiteboardCanvasSnapshot) => {
@@ -961,10 +974,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     undoStackRef.current = undoStackRef.current.slice(0, -1);
     redoStackRef.current = [current, ...redoStackRef.current.slice(0, 24)];
     restoreSnapshot(previous);
+    emitUndoState();
     appendActivity(
       createWhiteboardActivityEntry('history', t('myWork.whiteboard.activity.undo'), currentUserId)
     );
-  }, [appendActivity, currentUserId, drawingPaths, edges, isPl, nodes, restoreSnapshot, scenes]);
+  }, [appendActivity, currentUserId, drawingPaths, edges, emitUndoState, isPl, nodes, restoreSnapshot, scenes]);
 
   const redoWhiteboard = useCallback(() => {
     const next = redoStackRef.current[0];
@@ -973,10 +987,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     redoStackRef.current = redoStackRef.current.slice(1);
     undoStackRef.current = [...undoStackRef.current.slice(-24), current];
     restoreSnapshot(next);
+    emitUndoState();
     appendActivity(
       createWhiteboardActivityEntry('history', t('myWork.whiteboard.activity.redo'), currentUserId)
     );
-  }, [appendActivity, currentUserId, drawingPaths, edges, isPl, nodes, restoreSnapshot, scenes]);
+  }, [appendActivity, currentUserId, drawingPaths, edges, emitUndoState, isPl, nodes, restoreSnapshot, scenes]);
   const handleSelectionUpdate = useCallback(
     (nds: Node[]) => {
       const selected = nds.filter((n: Node) => n.selected);
