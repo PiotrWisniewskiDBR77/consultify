@@ -116,6 +116,8 @@ import {
 import { AIGovernanceBadge, AIGovernancePanel } from './mindmap/AIGovernancePanel';
 import { CanvasLeftToolbar } from './mindmap/CanvasLeftToolbar';
 import { IdeaViewSwitcher } from './mindmap/IdeaViewSwitcher';
+import { isIdeaDetailsInPanelEnabled } from '@/utils/ideaDetailsInPanelFlag';
+
 import { buildIdeaPanel6RailTools } from './panel/ideaPanel6Sections';
 import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
 import { stabilizeMindmapInteractionMode } from './mindmap/mindmapInteractionGrammar';
@@ -2985,6 +2987,26 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
    * zwijać do 16-pikselowego słupka. Flaga OFF → wszystkie trzy jak dziś.
    */
   const panel6Enabled = isIdeaPanel6SectionsEnabled();
+
+  /**
+   * IDE-025 — prawy pasek powłoki w TRYBIE STEROWANYM.
+   *
+   * Po co: gdy właściciel otwiera szczegóły elementu (dwuklik / „Właściwości"
+   * z menu), treść ma wjechać do sekcji „Właściwości" prawego panelu. Bez
+   * sterowania panel zostawał na sekcji, którą użytkownik oglądał wcześniej,
+   * slot się nie renderował i drawer spadał do starej NAKŁADKI — czyli do
+   * dokładnie tego „wielkiego okna", które likwidujemy.
+   *
+   * `null` = zwinięty panel (kontrakt powłoki), więc stan startowy zachowuje
+   * dotychczasowe zachowanie: nic nie otwiera się samo.
+   */
+  const detaleWPanelu = isIdeaDetailsInPanelEnabled();
+  const [sekcjaPrawegoPaska, setSekcjaPrawegoPaska] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!detaleWPanelu || !panel6Enabled) return;
+    if (nodeDetailOpen) setSekcjaPrawegoPaska('properties');
+  }, [detaleWPanelu, panel6Enabled, nodeDetailOpen]);
   // VF1 SPEC-A canvas states (loading/error) — default OFF, gated per rule #7.
   const vf1CanvasSpecAEnabled = isVf1CanvasSpecAEnabled();
   // Z-menu1-delete: "Usuń" kebab entry — wires the same `Api.deleteMyIdea`
@@ -3546,6 +3568,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             }
             mergeTopBarSlotId={ideaTopBarOneLine ? IDEA_TOP_BAR_SLOT_ID : undefined}
             rightRailTools={melsCanvasRightRailTools}
+            // Sterujemy sekcją TYLKO gdy IDE-025 jest włączone — inaczej
+            // `undefined` zostawia powłokę w jej dotychczasowym trybie
+            // niesterowanym (zero zmiany zachowania przy fladze OFF).
+            activeRightRailToolId={
+              detaleWPanelu && panel6Enabled ? sekcjaPrawegoPaska : undefined
+            }
+            onActiveRightRailToolChange={setSekcjaPrawegoPaska}
             renderRightRailPanel={renderMelsCanvasRightRailPanel}
             // Układ 6 sekcji: pasek ikon zawsze widoczny (decyzja właściciela).
             rightRailCollapsible={!panel6Enabled}

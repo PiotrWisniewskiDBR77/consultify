@@ -59,7 +59,7 @@ import {
   Sparkles,
   Star,
 } from 'lucide-react';
-import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
@@ -81,6 +81,11 @@ import {
   IDEA_PANEL_TOOL_SLOT_ID,
   normalizujDoSzesciu,
 } from './panel/ideaPanel6Sections';
+import {
+  IDEA_ELEMENT_DETAILS_SLOT_ID,
+  isIdeaDetailsInPanelEnabled,
+} from '@/utils/ideaDetailsInPanelFlag';
+
 import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
 import { isIdeaPanelVisualEnabled } from './panel/ideaPanelVisualFlag';
 import {
@@ -633,6 +638,30 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
     return (graphEdges ?? []).find((e: any) => String(e?.id) === String(selection.primaryId)) ?? null;
   }, [selection, graphEdges]);
   const maZaznaczenie = Boolean(wybranyWezel || wybranaKrawedz);
+  /** IDE-025: szczegóły elementu mieszkają w panelu, nie w osobnym oknie. */
+  const detaleWPanelu = isIdeaDetailsInPanelEnabled();
+  /**
+   * Czy drawer FAKTYCZNIE wportalował się do slotu. Nie wystarczy sama flaga:
+   * użytkownik może mieć element tylko ZAZNACZONY (bez otwartych szczegółów) —
+   * wtedy slot jest pusty i karta inspektora zostaje jedyną treścią sekcji.
+   * Gasimy dubel dopiero, gdy szczegóły realnie są. `MutationObserver`, bo
+   * `createPortal` nie zgłasza montażu rodzicowi w żaden inny sposób.
+   */
+  const [slotMaTresc, setSlotMaTresc] = useState(false);
+  useEffect(() => {
+    if (!detaleWPanelu || typeof MutationObserver === 'undefined') {
+      setSlotMaTresc(false);
+      return;
+    }
+    const sprawdz = () => {
+      const el = document.getElementById(IDEA_ELEMENT_DETAILS_SLOT_ID);
+      setSlotMaTresc(Boolean(el && el.childElementCount > 0));
+    };
+    sprawdz();
+    const obs = new MutationObserver(sprawdz);
+    obs.observe(document.body, { childList: true, subtree: true });
+    return () => obs.disconnect();
+  }, [detaleWPanelu]);
   const etykieta6 = isPl ? IDEA_PANEL_6_LABELS_PL : IDEA_PANEL_6_LABELS_EN;
   const pl6 = (pl: string, en: string) => (isPl ? pl : en);
 
@@ -1266,7 +1295,13 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
        * Dlatego blok renderuje się we „Właściwościach" tylko przy zaznaczeniu,
        * a części sesyjne mają własny warunek niżej.
        */}
-      {activeTool === 'whiteboard' && pokaz('properties') && (!szesc || Boolean(wybranyWezel)) && (
+      {/* IDE-025: w układzie 6 sekcji z ZADOKOWANYMI szczegółami ta karta nie ma
+          już czym się wypełnić (części sesyjne mieszkają w „Narzędziu", a blok
+          nazwy zgasł jako dubel) — więc nie rysujemy pustego nagłówka. */}
+      {activeTool === 'whiteboard' &&
+        pokaz('properties') &&
+        (!szesc || Boolean(wybranyWezel)) &&
+        !(szesc && slotMaTresc) && (
         <Section
           title={t('myWorkIdeas.workspaceTools.whiteboardInspector')}
           icon={<Activity size={12} />}
@@ -1276,8 +1311,12 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
             {/* W układzie 6 sekcji panel sesji mieszka w „Narzędziu" (niżej). */}
             {!szesc && slotSesjiTablicy}
 
-            {/* Selected node info */}
-            {selection.type === 'node' &&
+            {/* Selected node info — IDE-025: gaśnie, gdy szczegóły elementu są
+                już zadokowane niżej w tej samej sekcji. Bez tego nazwa
+                zaznaczonego elementu powtarzała się TRZY razy pod rząd
+                (nagłówek „ZAZNACZONY ELEMENT" + ta karta + tytuł drawera). */}
+            {!slotMaTresc &&
+              selection.type === 'node' &&
               selection.primaryId &&
               (() => {
                 const node = (graphNodes ?? []).find((n: any) => n.id === selection.primaryId);
@@ -1354,6 +1393,16 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         >
           <ProcessFlowHealthScore nodes={graphNodes ?? []} edges={graphEdges ?? []} isPl={isPl} />
         </Section>
+      )}
+
+      {/* ── IDE-025: SLOT szczegółów elementu ──
+          Cel portalu dla `UnifiedNodeDetailDrawer` (wielkie okno, które
+          właściciel kazał przenieść do panelu). Stoi PRZED inspektorem stylu,
+          bo najpierw czytasz CZYM jest element, a dopiero potem go stylujesz.
+          Drawer sam sprawdza obecność slotu — przy jego braku wraca do
+          dotychczasowej nakładki, więc treść nigdy nie znika. */}
+      {szesc && sekcja6 === 'properties' && maZaznaczenie && detaleWPanelu && (
+        <div id={IDEA_ELEMENT_DETAILS_SLOT_ID} data-testid="idea-element-details-slot" />
       )}
 
       {activeTool === 'mindmap' && (

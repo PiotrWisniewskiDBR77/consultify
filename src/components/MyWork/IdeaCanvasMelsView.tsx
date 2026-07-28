@@ -74,6 +74,15 @@ export interface IdeaCanvasMelsViewProps {
    * `false` — decyzja właściciela: pasek ikon ma być zawsze widoczny.
    */
   rightRailCollapsible?: boolean;
+  /**
+   * IDE-025: przelotka do TRYBU STEROWANEGO prawego paska powłoki.
+   * Gospodarz musi móc otworzyć sekcję „Właściwości" programowo — inaczej
+   * dwuklik w element nie ma gdzie pokazać szczegółów i drawer spada do
+   * nakładki (czyli dokładnie do problemu, który likwidujemy). Powłoka ma
+   * ten tryb od dawna, po prostu nie był tu przepuszczony.
+   */
+  activeRightRailToolId?: string | null;
+  onActiveRightRailToolChange?: (next: string | null) => void;
 
   /** Core canvas-mode slots. */
   canvas: React.ReactNode;
@@ -123,6 +132,8 @@ export const IdeaCanvasMelsView: React.FC<IdeaCanvasMelsViewProps> = ({
   onSelectRightTool,
   renderRightRailPanel,
   rightRailCollapsible = true,
+  activeRightRailToolId,
+  onActiveRightRailToolChange,
   canvas,
   floatingLeftRail,
   canvasOverlaySlot,
@@ -172,6 +183,8 @@ export const IdeaCanvasMelsView: React.FC<IdeaCanvasMelsViewProps> = ({
       rightRailTools={rightRailTools}
       renderRightRailPanel={rightPanelRenderer}
       rightRailCollapsible={rightRailCollapsible}
+      activeRightRailToolId={activeRightRailToolId}
+      onActiveRightRailToolChange={onActiveRightRailToolChange}
       onRunPrimary={onRunPrimary}
       onToggleAgent={onToggleAgent}
       onOpenCommandPalette={onOpenCommandPalette}

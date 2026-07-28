@@ -50,6 +50,12 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+
+import {
+  IDEA_ELEMENT_DETAILS_SLOT_ID,
+  isIdeaDetailsInPanelEnabled,
+} from '@/utils/ideaDetailsInPanelFlag';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -317,6 +323,32 @@ function simpleMarkdown(text: string): string {
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
+
+
+/**
+ * IDE-025 — reaktywne wyszukiwanie slotu „Właściwości" w prawym panelu.
+ * Wzorzec 1:1 z `useObjectEditBarSlot`: `MutationObserver` na `document.body`,
+ * bo slot pojawia się i znika razem z przełączaniem sekcji panelu, a React nie
+ * zgłasza tego w żaden inny sposób komponentowi spoza tego poddrzewa.
+ */
+function useSlotSzczegolow(aktywne: boolean): HTMLElement | null {
+  const [node, setNode] = React.useState<HTMLElement | null>(null);
+  React.useEffect(() => {
+    if (!aktywne || typeof document === 'undefined' || typeof MutationObserver === 'undefined') {
+      setNode(null);
+      return;
+    }
+    const check = () => {
+      const found = document.getElementById(IDEA_ELEMENT_DETAILS_SLOT_ID);
+      setNode((prev) => (prev === found ? prev : found));
+    };
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [aktywne]);
+  return node;
+}
 
 export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = ({
   variant,
@@ -808,6 +840,13 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
       .map((n) => ({ id: n!.id, label: n!.data?.label || n!.id }));
   }, [allNodes, isIdea, nodeData?.linkedNodes]);
 
+  // IDE-025: czy szczegóły mają zamieszkać w prawym panelu zamiast w nakładce.
+  // Hook MUSI stać przed warunkowym `return null` poniżej — inaczej łamiemy
+  // reguły hooków (liczba wywołań zmienia się między renderami).
+  const detaleWPanelu = isIdeaDetailsInPanelEnabled();
+  const slotPanelu = useSlotSzczegolow(detaleWPanelu && open && Boolean(nodeData));
+  const zadokowany = detaleWPanelu && Boolean(slotPanelu);
+
   if (!open || !nodeData) return null;
 
   const isProtected = nodeData.nodeId === 'root' || nodeData.nodeId.startsWith('branch-');
@@ -817,9 +856,17 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
     nodeData.sourceType === 'ai_suggestion';
   const priority = nodeData.priority ?? 50;
 
-  return (
+  const tresc = (
     <div
-      className="fixed top-0 right-0 bottom-0 z-modal w-[420px] max-w-[90vw] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border-subtle shadow-2xl flex flex-col overflow-hidden"
+      className={
+        zadokowany
+          ? // W panelu: karta o szerokości sekcji, bez cienia i bez pełnej
+            // wysokości ekranu — przewijaniem rządzi panel, nie drawer.
+            'w-full rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface flex flex-col overflow-hidden'
+          : // Zapas: dotychczasowa nakładka (brak slotu = powłoka wyłączona).
+            'fixed top-0 right-0 bottom-0 z-modal w-[420px] max-w-[90vw] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border-subtle shadow-2xl flex flex-col overflow-hidden'
+      }
+      data-zadokowany={zadokowany ? '1' : '0'}
       data-testid="unified-node-detail-drawer"
       data-variant={variant}
     >
@@ -2047,6 +2094,11 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
       />
     </div>
   );
+
+  // IDE-025: ta sama treść, inne miejsce. Gdy slot panelu istnieje — portalujemy
+  // tam; gdy go nie ma — zostaje dotychczasowa nakładka, więc treść nigdy nie
+  // znika przez brak celu portalu.
+  return zadokowany && slotPanelu ? createPortal(tresc, slotPanelu) : tresc;
 };
 
 // ── Depth field (mindmap collapse-when-empty style) ─────────────────────────────
