@@ -3,16 +3,23 @@
  * `ExecutiveModuleShell` (MELS § 2 Zone D · EPIC-T16 D1).
  *
  * The right rail is a 56 px icon strip; clicking an icon expands a
- * side-panel that shares the rail's coordinate space. Only ONE panel
- * is visible at a time (mutually exclusive with the icon strip — the
- * panel replaces it but keeps the dismiss chevron).
+ * side-panel that shares the rail's coordinate space. Only the PANEL
+ * collapses — the icon strip never does.
  *
  * Constraints (MELS § 2.D):
  *   * Right rail is the ONLY place for module tool buttons.
  *   * AI buttons that would otherwise live in Menu 3 land here too
  *     (the rule's intent — no AI buttons floating in canvas — is
  *     preserved; see `.cursor/rules/ai-actions-menu3.mdc`).
- *   * Collapsible to a 0 px sliver via the chevron at the top.
+ *   * `collapsed` closes the open PANEL only — the 56 px icon strip
+ *     (tools + the expand/collapse handle) always stays in the DOM and
+ *     stays clickable. Before P-01 (2026-07-28, zgłoszenie Piotra),
+ *     `collapsed` rendered a 16 px sliver with no tool icons — the user
+ *     could not find a click target to re-open the panel ("nie jestem w
+ *     stanie złapać tego przycisku"). The same shared component backs
+ *     Deck Builder, Document Studio, Tabele/Excel and all four Ideas
+ *     canvases, so this fix applies everywhere at once — see call sites
+ *     listed in git history / session report for P-01.
  */
 
 import type { LucideIcon } from 'lucide-react';
@@ -51,7 +58,11 @@ interface RightRailProps {
   panelContent?: React.ReactNode;
   /** Width of the open panel in px (clamped by `useRailState`). */
   panelWidth: number;
-  /** Whether the rail is fully collapsed (0 px sliver). */
+  /**
+   * Whether the side PANEL is collapsed/closed. The 56 px icon strip
+   * (tools + expand/collapse handle) is always rendered regardless of
+   * this flag — see file header note (P-01, 2026-07-28).
+   */
   collapsed: boolean;
   onToggleCollapse: () => void;
   collapseLabel?: string;
@@ -136,37 +147,19 @@ export const RightRail: React.FC<RightRailProps> = ({
   // complementary) jest niedozwolone i axe raportuje to jako critical.
   const panelDomId = 'mels-right-rail-panel';
 
-  if (collapsed) {
-    return (
-      <aside
-        className="flex-shrink-0 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex flex-col items-center py-2 transition-[width] duration-150"
-        style={{ width: 16 }}
-        data-testid={testId ?? 'mels-right-rail'}
-        data-collapsed="true"
-      >
-        <button
-          type="button"
-          onClick={onToggleCollapse}
-          className="p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
-          title={collapseLabel ?? 'Expand right rail'}
-          aria-label={collapseLabel ?? 'Expand right rail'}
-          aria-expanded={false}
-          data-testid="mels-right-rail-toggle"
-        >
-          <ChevronLeft size={14} />
-        </button>
-      </aside>
-    );
-  }
-
   const containerWidth = ICON_STRIP_WIDTH + (showPanel ? panelWidth : 0);
 
+  // P-01 (2026-07-28): the icon strip is UNCONDITIONAL — `collapsed` only
+  // decides whether the side panel is shown next to it. Clicking a tool
+  // icon while collapsed both selects the tool AND re-opens the panel
+  // (one gesture — the user should never have to hunt for a second,
+  // separate handle to "expand" before the tool becomes clickable).
   return (
     <aside
       className="flex-shrink-0 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex h-full transition-[width] duration-150"
       style={{ width: containerWidth }}
       data-testid={testId ?? 'mels-right-rail'}
-      data-collapsed="false"
+      data-collapsed={collapsed ? 'true' : 'false'}
     >
       {showPanel ? (
         <div
@@ -192,20 +185,24 @@ export const RightRail: React.FC<RightRailProps> = ({
           type="button"
           onClick={onToggleCollapse}
           className="p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 mb-1"
-          title={collapseLabel ?? 'Collapse right rail'}
-          aria-label={collapseLabel ?? 'Collapse right rail'}
-          aria-expanded
+          title={collapsed ? (collapseLabel ?? 'Expand right rail') : (collapseLabel ?? 'Collapse right rail')}
+          aria-label={collapsed ? (collapseLabel ?? 'Expand right rail') : (collapseLabel ?? 'Collapse right rail')}
+          aria-expanded={!collapsed}
           aria-controls={showPanel ? panelDomId : undefined}
           data-testid="mels-right-rail-toggle"
         >
-          <ChevronRight size={14} />
+          {collapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
         </button>
         {tools.map((tool) => (
           <ToolIcon
             key={tool.id}
             tool={tool}
-            active={tool.id === activeToolId}
-            onClick={() => onSelectTool(tool.id === activeToolId ? null : tool.id)}
+            active={!collapsed && tool.id === activeToolId}
+            onClick={() => {
+              const opening = collapsed || tool.id !== activeToolId;
+              onSelectTool(opening ? tool.id : null);
+              if (opening && collapsed) onToggleCollapse();
+            }}
           />
         ))}
       </div>

@@ -44,6 +44,14 @@ check_block2_orphan_component() {
     */src/components/*|src/components/*) : ;;
     *) return 0 ;;
   esac
+  # Testy (__tests__/*.test.tsx, *.spec.tsx) NIE są komponentami UI — są
+  # punktem wejścia dla test runnera, nie mają i nie mogą mieć "importera"
+  # w src/. Bez tego wyjątku KAŻDY nowy plik testowy w src/components/**
+  # fałszywie łapał się jako "sierota" (§3 dotyczy orphan UI components,
+  # nie pokrycia testami — P-01, 2026-07-28).
+  case "$file" in
+    */__tests__/*|*.test.ts|*.test.tsx|*.spec.ts|*.spec.tsx) return 0 ;;
+  esac
   status=$(cd "$project_dir" 2>/dev/null && git status --porcelain -- "$file" 2>/dev/null | head -1)
   case "$status" in
     "??"*|"A "*|"AM"*) : ;;
