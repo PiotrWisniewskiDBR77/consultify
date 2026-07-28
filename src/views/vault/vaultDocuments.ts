@@ -105,27 +105,6 @@ export const formatBytes = (bytes: number | null | undefined): string => {
   return `${out >= 10 || idx === 0 ? Math.round(out) : out.toFixed(1)} ${units[idx]}`;
 };
 
-/**
- * Etykieta "Dodane przez" (kolumna kontekstu, VLT — rozbudowa tabeli 2026-07-28).
- * `knowledge_docs.owner_id` to surowe UUID — backend NIE dołącza nazwy (SELECT *
- * bez JOIN-a, patrz `getDocuments` w `KnowledgeService.ts`), a we froncie nie ma
- * gotowego store'u/hooka z listą userów organizacji dostępnego z poziomu Client
- * Vault (jest `Api.getOrganizationMembers`, ale to osobne zapytanie + wymaga
- * weryfikacji uprawnień dla zwykłego usera — poza zakresem tej zmiany, patrz
- * raport). Fallback: własne dokumenty → "Ja"/"Me"; cudze → skrócony identyfikator
- * (czytelny odnośnik, nie prawdziwe imię i nazwisko — ograniczenie świadome).
- */
-export const ownerLabel = (
-  ownerId: string | null | undefined,
-  currentUserId: string | null | undefined,
-  isPolish: boolean
-): string => {
-  if (!ownerId) return '—';
-  if (currentUserId && ownerId === currentUserId) return isPolish ? 'Ja' : 'Me';
-  const short = ownerId.replace(/-/g, '').slice(0, 6).toUpperCase();
-  return isPolish ? `Użytkownik #${short}` : `User #${short}`;
-};
-
 export const formatDate = (value: string | null | undefined, isPolish: boolean): string => {
   if (!value) return '—';
   const d = new Date(value);
