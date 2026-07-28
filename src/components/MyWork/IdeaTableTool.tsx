@@ -56,17 +56,24 @@ import {
   Undo2,
   Upload,
   Webhook,
+  Workflow,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { usePortalSlot } from '@/hooks/usePortalSlot';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
 import { Api } from '@/services/api';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
+import {
+  IDEA_MENU1_TOOL_SLOT_ID,
+  isIdeaTableGuidedBarEnabled,
+} from '@/utils/ideaTableGuidedBarFlag';
 
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import {
@@ -150,6 +157,10 @@ import { SharingManager } from './table/sharing/SharingManager';
 import { StatusBar } from './table/StatusBar';
 import { StickyNoteView } from './table/StickyNoteView';
 import { SyncManager } from './table/sync/SyncManager';
+import {
+  TableBarOverflowMenu,
+  type TableBarOverflowSection,
+} from './table/TableBarOverflowMenu';
 // P15 Table Platform – extracted components
 import { TableDataProvider } from './table/TableDataProvider';
 import { TableTabStrip } from './table/TableTabStrip';
@@ -163,6 +174,7 @@ import type {
   TableNode,
 } from './table/tableTypes';
 import { computeAggregation } from './table/tableTypes';
+import { TableStartEmptyState } from './table/TableStartEmptyState';
 import { TemplateGallery } from './table/TemplateGallery';
 import { TimelineView } from './table/TimelineView';
 import {
@@ -227,6 +239,10 @@ interface IdeaTableToolProps {
 }
 
 // DEFAULT_COLUMNS now lives in useTableSchema.ts
+
+/** Ile pustych wierszy zakłada ścieżka startu „Pusta z sugerowanymi kolumnami".
+ *  Jeden nie wygląda jak tabela, dziesięć to śmieci do sprzątania. */
+const STARTER_ROW_COUNT = 3;
 
 export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   open,
@@ -646,6 +662,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const _saving = usePlatform ? effectiveSaving : saving;
   const _saveLabel = usePlatform ? effectiveSaveStatusLabel : saveStatusLabel;
   const _save = usePlatform ? effectiveHandleSave : handleSave;
+
+  // ── Prowadzenie + rozładowanie paska (flaga, domyślnie OFF) ────────────────
+  // Czytamy RAZ na montaż: flaga rozstrzyga układ, a nie stan runtime — zmiana
+  // w trakcie sesji (localStorage) i tak wymaga przeładowania, żeby wszystkie
+  // powierzchnie (pasek, pusty stan, slot Menu 1) były spójne.
+  const guidedBar = useMemo(() => isIdeaTableGuidedBarEnabled(), []);
+  /** Cel portalu „Zapisz" w Menu 1 (obok Teresy). `null` → zostajemy w pasku. */
+  const menu1ToolSlot = usePortalSlot(guidedBar ? IDEA_MENU1_TOOL_SLOT_ID : null);
 
   // ── UI overlay state ────────────────────────────────────────────────────────
   const [showColumnConfig, setShowColumnConfig] = useState(false);
@@ -1342,6 +1366,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   /** Który widok pyta — steruje ikoną i tekstami pustego stanu. */
   const viewSetupView: SetupDrivenView = _activeViewId === 'scoring' ? 'scoring' : 'decisionLog';
 
+  /**
+   * Czy pokazać pusty stan „od czego zacząć" (flaga `ff_ideaTableGuidedBar`).
+   * Warunek jest o TABELI, nie o widoku: zero wierszy = nie ma czego filtrować,
+   * więc nie ma ryzyka pomylenia tego z „filtr wyciął wszystko"
+   * (`EmptyFilterStateView` — tamten stan ma `nodes.length > 0`). Nie
+   * pokazujemy w trakcie ładowania ani po błędzie wczytania: „pusto" i „nie
+   * udało się wczytać" to dwie różne prawdy, a druga ma już swój komunikat.
+   */
+  const showStartEmptyState =
+    guidedBar && !_loading && !effectiveLoadError && effectiveNodes.length === 0;
+
   const handleAddViewSetupColumn = useCallback(() => {
     if (locked) return;
     const addColumn = usePlatform ? platformIntegration.handleAddColumn : handleAddColumn;
@@ -1395,6 +1430,113 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     nodesUndo,
     platformIntegration,
     t,
+    usePlatform,
+  ]);
+
+  // ── Ścieżka startu 3: „Pusta z sugerowanymi kolumnami" ────────────────────
+  // Zgłoszenie właściciela: „dodałem kolumnę cos ale nie wiem jak mam sprawić
+  // aby ta tabela powstała". Ta droga ma zrobić DOKŁADNIE to: po jednym
+  // kliknięciu na ekranie stoi tabela z wierszami, nie sam nagłówek.
+  //
+  //   • odsłania komplet kolumn startowych (Nazwa · Status · Priorytet ·
+  //     Właściciel) — `owner` jest w DEFAULT_COLUMNS ukryty, więc „sugerowane"
+  //     znaczy tu naprawdę: pokaż to, co i tak masz,
+  //   • dokłada 3 PUSTE wiersze — puste, bo wymyślone treści byłyby kłamstwem o
+  //     pracy, której nikt nie wykonał (ta sama zasada co przy kolumnie
+  //     „Score" w ViewSetupEmptyState); trzy, bo jeden wiersz nie wygląda jak
+  //     tabela, a dziesięć to śmieci do sprzątania.
+  //
+  // PUŁAPKA (ta sama co przy Timeline/Logu decyzji): legacy `handleAddRow`
+  // domyka STARY snapshot `nodes`, więc trzy wywołania pod rząd zostawiłyby
+  // JEDEN wiersz (a `node-${Date.now()}` w tym samym milisekundzie dałby jeszcze
+  // kolizję id). Stąd jeden zbiorczy `nodesUndo.push`, a na platformie pętla
+  // `createRecord` + `refresh`.
+  const handleStartBlankTable = useCallback(() => {
+    if (locked) return;
+    const addColumn = usePlatform ? platformIntegration.handleAddColumn : handleAddColumn;
+    const toggle = usePlatform ? platformIntegration.toggleColumn : toggleColumn;
+
+    const starters: ColumnDef[] = [
+      { key: 'label', header: t('ideas.table.column.label', 'Label'), type: 'text', visible: true, width: 240 },
+      {
+        key: 'status',
+        header: t('ideas.table.column.status', 'Status'),
+        type: 'status',
+        visible: true,
+        width: 130,
+        options: ['todo', 'in_progress', 'done', 'blocked'],
+        optionColors: {
+          todo: '#e0e7ff',
+          in_progress: '#fef3c7',
+          done: '#d1fae5',
+          blocked: '#fee2e2',
+        },
+      },
+      {
+        key: 'priority',
+        header: t('ideas.table.column.priority', 'Priority'),
+        type: 'select',
+        visible: true,
+        width: 110,
+        options: ['Low', 'Medium', 'High', 'Critical'],
+        optionColors: { Low: '#d1fae5', Medium: '#fef3c7', High: '#fce7f3', Critical: '#fee2e2' },
+      },
+      { key: 'owner', header: t('ideas.table.column.owner', 'Owner'), type: 'person', visible: true, width: 140 },
+    ] as ColumnDef[];
+
+    for (const starter of starters) {
+      const existing = _cols.find((c) => c.key === starter.key);
+      if (!existing) addColumn(starter);
+      else if (existing.visible === false) toggle(starter.key);
+    }
+
+    if (usePlatform) {
+      const tid = platformTableId ?? null;
+      if (tid) {
+        void (async () => {
+          try {
+            for (let i = 0; i < STARTER_ROW_COUNT; i += 1) {
+              await TablePlatformApi.createRecord(tid, { label: '', status: 'todo' });
+            }
+            await effectiveRefresh();
+          } catch {
+            toast.error(t('ideas.table.start.blankFailed', 'Nie udało się założyć wierszy'));
+          }
+        })();
+      }
+    } else {
+      const now = new Date().toISOString();
+      const base = Date.now();
+      const fresh: TableNode[] = Array.from({ length: STARTER_ROW_COUNT }, (_, i) => ({
+        id: `node-${base + i}`,
+        type: 'idea',
+        data: {
+          label: '',
+          status: 'todo',
+          priority: 'Medium',
+          created_time: now,
+          created_by: currentUserName,
+          last_edited_time: now,
+          last_edited_by: currentUserName,
+        },
+        position: { x: 0, y: 0 },
+      })) as TableNode[];
+      nodesUndo.push([...nodes, ...fresh]);
+    }
+    trackFunnelEvent('ideas_table_row_added', { ideaId, source: 'start_blank' });
+  }, [
+    _cols,
+    currentUserName,
+    effectiveRefresh,
+    handleAddColumn,
+    ideaId,
+    locked,
+    nodes,
+    nodesUndo,
+    platformIntegration,
+    platformTableId,
+    t,
+    toggleColumn,
     usePlatform,
   ]);
 
@@ -1638,6 +1780,305 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       </tr>
     );
   };
+
+  /**
+   * ZAWARTOŚĆ KEBABA „⋯" (flaga ff_ideaTableGuidedBar).
+   *
+   * KONTRAKT: każda pozycja, która zniknęła z rzędu paska, MUSI tu być — właściciel
+   * napisał wprost „funkcje są super", więc to przegrupowanie, nie okrojenie.
+   * Sekcje zamiast płaskiej listy 25 pozycji (doktryna gęstości: kebab też ma mieć
+   * porządek, inaczej ściana elementów staje pionowo).
+   *
+   * W pasku ZOSTAJE to, czym się pracuje nad tabelą: zakładki widoków, filtr,
+   * grupowanie, przełącznik układów, AI · AI Fill · Framework (trzy drogi
+   * budowania), kolumny, cofnij/ponów, „+ Wiersz" oraz sam kebab.
+   */
+  const guidedBarOverflowSections: TableBarOverflowSection[] = useMemo(
+    () => [
+      {
+        id: 'data',
+        heading: t('ideas.table.overflow.sectionData', 'Dane'),
+        items: [
+          {
+            id: 'import-data',
+            label: t('ideas.table.importData', 'Import data'),
+            icon: Network,
+            onClick: () => setShowConnectorWizard(true),
+            show: !locked,
+            testId: 'idea-table-overflow-import-data',
+          },
+          {
+            id: 'connectors',
+            label: t('ideas.table.connectors', 'Connectors'),
+            icon: Layers,
+            onClick: () => setShowConnectorList((v) => !v),
+            show: connectors.connectors.length > 0,
+          },
+          {
+            id: 'webhooks',
+            label: t('ideas.table.webhookRelaysZapierMake', 'Webhook Relays (Zapier/Make)'),
+            icon: Webhook,
+            onClick: () => setShowWebhookRelays(true),
+            show: usePlatform,
+          },
+          {
+            id: 'import-csv',
+            label: t('ideas.table.importCsv', 'Import CSV'),
+            icon: Upload,
+            onClick: () => csvInputRef.current?.click(),
+            show: !locked,
+            testId: 'idea-table-overflow-import-csv',
+          },
+          {
+            id: 'export-csv',
+            label: t('ideas.table.exportCsv', 'Export CSV'),
+            icon: Download,
+            onClick: () => {
+              const csv = exportToCSV(_cols, effectiveNodes);
+              downloadCSV(csv, `idea-${ideaId}.csv`);
+            },
+            testId: 'idea-table-overflow-export-csv',
+          },
+          {
+            id: 'copy',
+            label: t('ideas.table.copyToClipboard', 'Copy to clipboard'),
+            icon: ClipboardCopy,
+            onClick: () => {
+              copyTableToClipboard(_cols, effectiveNodes);
+              toast.success(t('ideas.table.copied', 'Copied'));
+            },
+          },
+        ],
+      },
+      {
+        id: 'ai',
+        heading: t('ideas.table.overflow.sectionAi', 'AI'),
+        items: [
+          {
+            id: 'ai-categorize',
+            label: t('ideas.table.aiCategorize', 'AI Categorize'),
+            icon: Layers,
+            onClick: () => setShowAICategorize(true),
+            show: !locked,
+          },
+          {
+            id: 'scoring-model',
+            label: t('ideas.table.scoringModel', 'Scoring Model'),
+            icon: Trophy,
+            onClick: () => setShowScoringModel(true),
+          },
+          {
+            id: 'copilot',
+            label: t('ideas.table.aiCopilot.label', 'AI Copilot'),
+            icon: Brain,
+            onClick: () => setShowCopilot(true),
+          },
+          {
+            id: 'voice-image',
+            label: t('ideas.table.voiceImage', 'Voice / Image'),
+            icon: Mic,
+            onClick: () => setShowVoiceInput(true),
+          },
+        ],
+      },
+      {
+        id: 'view',
+        heading: t('ideas.table.overflow.sectionView', 'Widok'),
+        items: [
+          {
+            id: 'heatmap',
+            label: t('ideas.table.heatmap', 'Heatmap'),
+            icon: Flame,
+            onClick: () => setShowHeatmap((p) => !p),
+            active: heatmapColumns.size > 0,
+          },
+          {
+            id: 'conditional-formatting',
+            label: t('ideas.table.conditionalFormatting', 'Conditional Formatting'),
+            icon: Paintbrush,
+            onClick: () => setShowConditionalFmt(true),
+            active: formatRules.length > 0,
+          },
+          {
+            id: 'color-palette',
+            label: t('ideas.table.colorPalette', 'Color Palette'),
+            icon: Palette,
+            onClick: () => setShowColorPalette(true),
+          },
+        ],
+      },
+      {
+        id: 'more',
+        heading: t('ideas.table.overflow.sectionMore', 'Więcej'),
+        items: [
+          {
+            id: 'export-presentation',
+            label: t('ideas.table.exportToPresentation', 'Export to Presentation'),
+            icon: Presentation,
+            onClick: () => setShowExportPresentation(true),
+          },
+          {
+            id: 'pipeline',
+            label: t('ideas.table.ideaPipeline', 'Idea Pipeline'),
+            icon: Rocket,
+            onClick: () => setShowPipeline(true),
+          },
+          {
+            id: 'cross-relations',
+            label: t('ideas.table.crossTableRelations', 'Cross-table Relations'),
+            icon: Network,
+            onClick: () => setShowCrossRelations(true),
+          },
+          {
+            id: 'templates',
+            label: t('ideas.table.templates', 'Templates'),
+            icon: LayoutTemplate,
+            onClick: () => setShowTemplateGallery(true),
+            show: !locked,
+          },
+          {
+            id: 'distribute',
+            label: t('ideas.table.distribute', 'Distribute'),
+            icon: Send,
+            onClick: () => setShowDistributionBuilder(true),
+            show: !locked,
+          },
+          {
+            id: 'history',
+            label: t('ideas.table.history', 'History'),
+            icon: History,
+            onClick: () => setShowAuditTrail((p) => !p),
+            active: showAuditTrail,
+          },
+          {
+            id: 'activity',
+            label: t('ideas.table.activity', 'Activity'),
+            icon: Activity,
+            onClick: () => setShowActivityFeed((p) => !p),
+            active: showActivityFeed,
+          },
+          {
+            id: 'shortcuts',
+            label: t('ideas.table.keyboardShortcuts', 'Keyboard shortcuts (?)'),
+            icon: Keyboard,
+            onClick: () => setShowKeyboardShortcuts(true),
+          },
+        ],
+      },
+      {
+        // Sekcja nieosiągalna w tej gałęzi (renderuje się tylko przy usePlatform,
+        // a wtedy działa pasek P15) — trzymana dla dosłownej zasady „zero utraty
+        // funkcji": każdy przycisk, który ukryliśmy wyżej, ma tu swój odpowiednik.
+        id: 'platform',
+        heading: t('ideas.table.overflow.sectionPlatform', 'Platforma'),
+        items: [
+          {
+            id: 'platform-tab-data',
+            label: t('ideas.table.data', 'Data'),
+            icon: Table2,
+            onClick: () => setPlatformTab('data'),
+            active: platformTab === 'data',
+            show: usePlatform,
+          },
+          {
+            id: 'platform-tab-forms',
+            label: t('ideas.table.forms', 'Forms'),
+            icon: FileText,
+            onClick: () => setPlatformTab('forms'),
+            active: platformTab === 'forms',
+            show: usePlatform,
+          },
+          {
+            id: 'platform-tab-interfaces',
+            label: t('ideas.table.interfaces', 'Interfaces'),
+            icon: Layout,
+            onClick: () => setPlatformTab('interfaces'),
+            active: platformTab === 'interfaces',
+            show: usePlatform,
+          },
+          {
+            id: 'platform-tab-models',
+            label: t('ideas.table.models', 'Models'),
+            icon: Grid3X3,
+            onClick: () => setPlatformTab('models'),
+            active: platformTab === 'models',
+            show: usePlatform,
+          },
+          {
+            id: 'platform-tab-workflow',
+            label: t('ideas.table.workflow', 'Workflow'),
+            icon: Workflow,
+            onClick: () => setPlatformTab('workflow'),
+            active: platformTab === 'workflow',
+            show: usePlatform,
+          },
+          {
+            id: 'interface-designer',
+            label: t('ideas.table.interfaceDesigner.label', 'Interface Designer'),
+            icon: Layout,
+            onClick: () => setShowInterfaceDesigner(true),
+            show: usePlatform,
+          },
+          {
+            id: 'form-builder',
+            label: t('ideas.table.formBuilder.label', 'Form Builder'),
+            icon: FileText,
+            onClick: () => setShowFormBuilder(true),
+            show: usePlatform && !locked,
+          },
+          {
+            id: 'automations',
+            label: t('ideas.table.automations', 'Automations'),
+            icon: Rocket,
+            onClick: () => setShowAutomationsManager(true),
+            show: usePlatform,
+          },
+          {
+            id: 'data-sync',
+            label: t('ideas.table.dataSync', 'Data Sync'),
+            icon: Link2,
+            onClick: () => setShowSyncManager(true),
+            show: usePlatform,
+          },
+          {
+            id: 'sharing',
+            label: t('ideas.table.sharingPermissions', 'Sharing & Permissions'),
+            icon: Network,
+            onClick: () => setShowSharingManager(true),
+            show: usePlatform,
+          },
+          {
+            id: 'distribution-manager',
+            label: t('ideas.table.distribution', 'Distribution'),
+            icon: Send,
+            onClick: () => setShowDistributionManager(true),
+            show: usePlatform,
+          },
+          {
+            id: 'consultify-link',
+            label: t('ideas.table.consultifyLink', 'Consultify Link'),
+            icon: Layers,
+            onClick: () => setShowConsultifyLink(true),
+            show: usePlatform,
+          },
+        ],
+      },
+    ],
+    [
+      _cols,
+      connectors.connectors.length,
+      effectiveNodes,
+      formatRules.length,
+      heatmapColumns.size,
+      ideaId,
+      locked,
+      platformTab,
+      showActivityFeed,
+      showAuditTrail,
+      t,
+      usePlatform,
+    ]
+  );
 
   return (
     <div
@@ -2065,8 +2506,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 />
               )}
 
-              {/* Secondary actions — hidden on mobile, shown in overflow menu */}
+              {/* Secondary actions — hidden on mobile, shown in overflow menu.
+                  ROZŁADOWANIE PASKA (flaga ff_ideaTableGuidedBar): przy fladze ON
+                  same PRZYCISKI-wyzwalacze znikają z rzędu i wracają jako pozycje
+                  kebaba „⋯" niżej — ale komponenty PANELI (HeatmapControls,
+                  ColorPalette) muszą zostać zamontowane, inaczej pozycja z kebaba
+                  otwierałaby nicość. Ten sam zabieg co w pasku platformowym
+                  (`TableToolbar.tsx`: „panels stay wired; triggers moved to
+                  overflow"). Przy fladze OFF blok renderuje się 1:1 jak dziś. */}
               <div className="hidden md:contents">
+                {!guidedBar && (
+                  <>
                 {/* AI Categorize */}
                 {!locked && (
                   <button
@@ -2131,9 +2581,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 >
                   <Network size={12} />
                 </button>
+                  </>
+                )}
 
-                {/* Heatmap */}
+                {/* Heatmap — panel zostaje zamontowany zawsze (kebab go otwiera) */}
                 <div className="relative">
+                  {!guidedBar && (
                   <button
                     onClick={() => setShowHeatmap(!showHeatmap)}
                     className={`p-1.5 rounded-lg transition-colors ${heatmapColumns.size > 0 ? 'text-c-warning bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)]' : 'text-c-text-muted hover:text-c-text-secondary'}`}
@@ -2141,6 +2594,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   >
                     <Flame size={12} />
                   </button>
+                  )}
                   <HeatmapControls
                     open={showHeatmap}
                     onClose={() => setShowHeatmap(false)}
@@ -2152,6 +2606,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   />
                 </div>
 
+                {!guidedBar && (
+                  <>
                 {/* History / Audit */}
                 <button
                   onClick={() => setShowAuditTrail((p) => !p)}
@@ -2201,7 +2657,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   </button>
                 )}
 
-                {/* Framework generator */}
+                  </>
+                )}
+
+                {/* Framework generator — ZOSTAJE w pasku także przy fladze ON:
+                    to jedna z trzech dróg zbudowania tabeli (obok AI i szablonu),
+                    czyli dokładnie ta funkcja, której właściciel szukał („nie wiem
+                    jak zbudować tabelę"). Chowanie jej pod kebab byłoby cofnięciem
+                    naprawy A. */}
                 {!locked && (
                   <button
                     onClick={() => setShowFrameworkGen(true)}
@@ -2216,6 +2679,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 )}
 
                 {/* Conditional formatting */}
+                {!guidedBar && (
                 <button
                   onClick={() => setShowConditionalFmt(true)}
                   className={`p-1.5 rounded-lg transition-colors ${formatRules.length > 0 ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
@@ -2223,9 +2687,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 >
                   <Paintbrush size={12} />
                 </button>
+                )}
 
-                {/* Color palette */}
+                {/* Color palette — panel zostaje zamontowany zawsze (kebab go otwiera) */}
                 <div className="relative">
+                  {!guidedBar && (
                   <button
                     onClick={() => setShowColorPalette(!showColorPalette)}
                     className={`p-1.5 rounded-lg transition-colors ${showColorPalette ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
@@ -2233,6 +2699,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   >
                     <Palette size={12} />
                   </button>
+                  )}
                   <ColorPalette
                     open={showColorPalette}
                     onClose={() => setShowColorPalette(false)}
@@ -2245,8 +2712,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   />
                 </div>
 
-                {/* Platform tab switcher: Data / Forms / Interfaces */}
-                {usePlatform && (
+                {/* Platform tab switcher — martwy w tej gałęzi (renderuje się tylko przy
+                    usePlatform, a wtedy działa pasek P15); przy fladze ON i tak
+                    ma swoje odpowiedniki w kebabie. */}
+                {!guidedBar && usePlatform && (
                   <div className="flex items-center rounded-lg bg-c-surface-raised p-0.5">
                     <button
                       onClick={() => setPlatformTab('data')}
@@ -2302,7 +2771,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 )}
 
                 {/* Interface Designer (direct open) */}
-                {usePlatform && (
+                {!guidedBar && usePlatform && (
                   <button
                     onClick={() => setShowInterfaceDesigner(true)}
                     className={`p-1.5 rounded-lg transition-colors ${showInterfaceDesigner ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
@@ -2313,7 +2782,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 )}
 
                 {/* Form Builder (direct open) */}
-                {usePlatform && !locked && (
+                {!guidedBar && usePlatform && !locked && (
                   <button
                     onClick={() => setShowFormBuilder(true)}
                     className="p-1.5 rounded-lg transition-colors text-c-text-muted hover:text-c-text-secondary"
@@ -2324,7 +2793,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 )}
 
                 {/* Tools dropdown — quick access to platform features */}
-                {usePlatform && (
+                {!guidedBar && usePlatform && (
                   <div className="relative">
                     <button
                       onClick={() => setShowToolsMenu((p) => !p)}
@@ -2543,9 +3012,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 )}
               </MobileToolbarMenu>
 
-              {/* CSV import/export + Connectors */}
+              {/* CSV import/export + Connectors — przy fladze ON cała szóstka
+                  (Import danych · Konektory · Webhooki · Importuj CSV · Eksportuj
+                  CSV · Kopiuj) przenosi się do kebaba, sekcja „Dane" (wprost ze
+                  zgłoszenia: „trochę do trzykropka czyli import eksport"). UKRYTY
+                  <input type="file"> ZOSTAJE zamontowany — to on realizuje wczytanie
+                  CSV zarówno z kebaba, jak i z pustego stanu startu. */}
               <div className="flex items-center gap-0.5">
-                {!locked && (
+                {!guidedBar && !locked && (
                   <button
                     onClick={() => setShowConnectorWizard(true)}
                     className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-text-secondary bg-c-surface-raised hover:bg-c-surface-raised transition-colors"
@@ -2555,7 +3029,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     {t('ideas.table.import', 'Import')}
                   </button>
                 )}
-                {connectors.connectors.length > 0 && (
+                {!guidedBar && connectors.connectors.length > 0 && (
                   <button
                     onClick={() => setShowConnectorList((v) => !v)}
                     className="relative p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
@@ -2570,7 +3044,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     )}
                   </button>
                 )}
-                {usePlatform && (
+                {!guidedBar && usePlatform && (
                   <button
                     onClick={() => setShowWebhookRelays(true)}
                     className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text transition-colors"
@@ -2586,7 +3060,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   className="hidden"
                   onChange={handleCSVImport}
                 />
-                {!locked && (
+                {!guidedBar && !locked && (
                   <button
                     onClick={() => csvInputRef.current?.click()}
                     className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
@@ -2595,6 +3069,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     <Upload size={12} />
                   </button>
                 )}
+                {!guidedBar && (
+                  <>
                 <button
                   onClick={() => {
                     const csv = exportToCSV(_cols, effectiveNodes);
@@ -2615,7 +3091,18 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 >
                   <ClipboardCopy size={12} />
                 </button>
+                  </>
+                )}
               </div>
+
+              {/* Kebab „⋯" — jedyne miejsce, gdzie wszystko, co zniknęło z rzędu,
+                  jest osiągalne. Renderuje się TYLKO przy fladze ON. */}
+              {guidedBar && (
+                <TableBarOverflowMenu
+                  title={t('ideas.table.overflow.title', 'Więcej narzędzi')}
+                  sections={guidedBarOverflowSections}
+                />
+              )}
 
               {/* Column config */}
               <div className="relative">
@@ -2750,20 +3237,53 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 </div>
               )}
 
-              <span className="text-[11px] text-c-text-muted">{_saveLabel}</span>
-              <button
-                type="button"
-                onClick={_save}
-                disabled={_saving || _loading || locked}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  _saving || _loading || locked
-                    ? 'bg-c-surface-raised text-c-text-muted'
-                    : 'bg-c-text text-c-surface hover:brightness-95'
-                }`}
-              >
-                {_saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                {_saving ? t('ideas.table.saving', 'Saving…') : t('ideas.table.save', 'Save')}
-              </button>
+              {/* ZAPIS — „może save koło teresa" (zgłoszenie 2026-07-28).
+                  Flaga ON + slot Menu 1 obecny → etykieta i przycisk lecą PORTALEM
+                  do rzędu poleceń powłoki, tuż przed chip „Teresa"; w Menu 1
+                  przycisk jest chipem-duchem (jak Teresa), bo solidna pigułka obok
+                  „Konwertuj" dałaby dwa CTA równej wagi. Brak slotu (Idea poza
+                  powłoką MELS / stary harness) → zostaje w pasku 1:1 jak dziś,
+                  więc zapis nigdy nie znika przez brak celu portalu. */}
+              {guidedBar && menu1ToolSlot ? (
+                createPortal(
+                  <>
+                    <button
+                      type="button"
+                      onClick={_save}
+                      disabled={_saving || _loading || locked}
+                      data-testid="idea-table-save-in-menu1"
+                      title={t('ideas.table.save', 'Save')}
+                      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                    >
+                      {_saving ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Save size={14} />
+                      )}
+                      {_saving ? t('ideas.table.saving', 'Saving…') : t('ideas.table.save', 'Save')}
+                    </button>
+                  </>,
+                  menu1ToolSlot
+                )
+              ) : (
+                <>
+                  <span className="text-[11px] text-c-text-muted">{_saveLabel}</span>
+                  <button
+                    type="button"
+                    onClick={_save}
+                    disabled={_saving || _loading || locked}
+                    data-testid="idea-table-save-in-bar"
+                    className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      _saving || _loading || locked
+                        ? 'bg-c-surface-raised text-c-text-muted'
+                        : 'bg-c-text text-c-surface hover:brightness-95'
+                    }`}
+                  >
+                    {_saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                    {_saving ? t('ideas.table.saving', 'Saving…') : t('ideas.table.save', 'Save')}
+                  </button>
+                </>
+              )}
             </div>
           )}
 
@@ -3112,6 +3632,18 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   onFillValues={
                     viewSetupView === 'scoring' ? () => setShowScoringModel(true) : undefined
                   }
+                />
+              ) : showStartEmptyState ? (
+                /* Pusta tabela → TRZY ścieżki startu (flaga ff_ideaTableGuidedBar).
+                   Stoi PO `viewSetupBlocker`, bo „ten widok potrzebuje kolumny"
+                   jest konkretniejszą diagnozą niż „tabela jest pusta" — gdyby
+                   szło odwrotnie, Scoring/Log decyzji straciłyby swoje wyjścia. */
+                <TableStartEmptyState
+                  locked={locked}
+                  onStartFromTemplate={() => setShowFrameworkGen(true)}
+                  onStartWithAI={() => setShowAIAssistant(true)}
+                  onStartBlank={handleStartBlankTable}
+                  onImportCSV={locked ? undefined : () => csvInputRef.current?.click()}
                 />
               ) : (
                 <div

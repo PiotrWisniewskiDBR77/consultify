@@ -393,6 +393,39 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
           </span>
         ),
       },
+      // ★ Kolumna kontekstu — gotowość RAG (chunk_count już wraca z API, zero
+      // kosztu backendu). Odpowiada na pytanie biznesowe „czy AI faktycznie
+      // z tego korzysta", nie tylko techniczne "ile fragmentów": 0 przy
+      // statusie „Zindeksowany" = dokument NIE wszedł do wiedzy mimo statusu
+      // (sygnał widoczny jako „—" + tooltip, bez czerwieni-stanu). Decyzja CTO
+      // 2026-07-28 (przycięcie z 3 do 1 nowej kolumny): jedyna z trzech, która
+      // niesie realną informację — „Projekt"/„Dodane przez" usunięte (patrz
+      // historia gita), bo w tym widoku były stałe/nieczytelne (surowe ID).
+      {
+        id: 'chunk_count',
+        label: t('vault.docs.colChunks', isPolish ? 'W wiedzy AI' : 'In AI knowledge'),
+        width: '110px',
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: TableRow) => Number(row.chunk_count) || 0,
+        render: (row: TableRow) => {
+          const count = Number(row.chunk_count) || 0;
+          if (count === 0) {
+            return (
+              <span
+                className="text-sm tabular-nums text-c-text-muted"
+                title={t(
+                  'vault.docs.chunksZeroTooltip',
+                  isPolish ? 'Dokument nie wszedł jeszcze do wiedzy AI' : 'Not in AI knowledge yet'
+                )}
+              >
+                —
+              </span>
+            );
+          }
+          return <span className="text-sm tabular-nums text-c-text-secondary">{count}</span>;
+        },
+      },
       {
         id: 'created_at',
         label: t('vault.docs.colAdded', isPolish ? 'Dodano' : 'Added'),

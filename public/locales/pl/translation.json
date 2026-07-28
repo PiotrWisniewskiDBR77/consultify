@@ -27275,6 +27275,36 @@
           "score": "Ocena",
           "decision": "Decyzja"
         }
+      },
+      "start": {
+        "headline": "Ta tabela jest jeszcze pusta",
+        "description": "Wybierz jedną z trzech dróg — każda zakłada kolumny i wiersze od razu, bez wypełniania formularza.",
+        "lockedDescription": "Tabela nie ma jeszcze wierszy, a widok jest tylko do odczytu — nic tu nie zbudujesz.",
+        "importCsv": "Mam już dane w pliku — wczytaj CSV",
+        "blankFailed": "Nie udało się założyć wierszy",
+        "template": {
+          "title": "Z szablonu",
+          "description": "Gotowa rama konsultingowa — SWOT, rejestr ryzyk, plan działań. Wstawia kolumny i przykładowe wiersze, które podmieniasz na swoje.",
+          "action": "Wybierz szablon"
+        },
+        "ai": {
+          "title": "Z AI",
+          "description": "Napisz jednym zdaniem, co chcesz śledzić. AI zaproponuje kolumny i pierwsze wiersze — zatwierdzasz albo poprawiasz.",
+          "action": "Opisz tabelę"
+        },
+        "blank": {
+          "title": "Pusta z sugerowanymi kolumnami",
+          "description": "Nazwa, Status, Priorytet, Właściciel i trzy puste wiersze. Tabela powstaje od razu — resztę dokładasz sam.",
+          "action": "Zacznij pustą"
+        }
+      },
+      "overflow": {
+        "sectionData": "Dane",
+        "sectionAi": "AI",
+        "sectionView": "Widok",
+        "sectionMore": "Więcej",
+        "sectionPlatform": "Platforma",
+        "title": "Więcej narzędzi"
       }
     },
     "mindmap": {
@@ -27520,6 +27550,8 @@
       "noAppliedAiChangesYet": "Brak zastosowanych zmian AI",
       "noArtifactsLinkedThisNodeYet": "Brak podłączonych artefaktów do tego węzła.",
       "noBlindSpotsFound": "Nie znaleziono luk w mapie",
+      "blindSpotsIdleHint": "Uruchom sprawdzenie, żeby znaleźć obszary, których mapie brakuje.",
+      "blindSpotsUnavailable": "Dodaj jeszcze kilka elementów mapy — nie ma jeszcze czego analizować.",
       "noChangesProposed": "Brak proponowanych zmian.",
       "noCommentsYetWriteFirstOne": "Brak komentarzy. Napisz pierwszy!",
       "noCompanyDataConnectionsFound": "Brak powiązań z danymi firmy",
@@ -35257,5 +35289,45 @@
     "realtimeReconnecting": "Ponowne łączenie w czasie rzeczywistym",
     "realtimeDegraded": "Praca w czasie rzeczywistym osłabiona",
     "recoveryInProgress": "Trwa przywracanie połączenia"
+  },
+  "canvasEditBar": {
+    "titleNode": "Węzeł",
+    "titleEdge": "Połączenie",
+    "fontFamily": "Czcionka",
+    "fontSize": "Wielkość",
+    "bold": "Pogrubienie",
+    "underline": "Podkreślenie",
+    "textColor": "Kolor tekstu",
+    "bgColor": "Kolor tła",
+    "borderColor": "Kolor ramki",
+    "lineColor": "Kolor linii",
+    "lineStyle": "Styl linii",
+    "lineSolid": "Ciągła",
+    "lineDashed": "Kreskowana",
+    "resetDefault": "Domyślny",
+    "resetBg": "Bez własnego tła",
+    "resetBorder": "Bez własnej ramki",
+    "shapeTitle": "Kształt obiektu",
+    "arrowTitle": "Strzałki i kierunek",
+    "reverseFlow": "Odwróć kierunek przepływu",
+    "font": {
+      "sans": "Bezszeryfowa",
+      "serif": "Szeryfowa",
+      "mono": "Maszynowa"
+    },
+    "shape": {
+      "rounded": "Zaokrąglony",
+      "rect": "Prostokąt",
+      "pill": "Pigułka",
+      "circle": "Koło",
+      "diamond": "Romb",
+      "hexagon": "Sześciokąt"
+    },
+    "arrow": {
+      "none": "Bez strzałki",
+      "end": "W przód",
+      "start": "W tył",
+      "both": "Obustronna"
+    }
   }
 }

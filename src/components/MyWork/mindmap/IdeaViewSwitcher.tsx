@@ -23,6 +23,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useFullscreenPortalTarget } from '@/hooks/useFullscreenPortalTarget';
+
 import {
   IDEA_BOTTOM_BAR_SWITCHER_SLOT_ID,
   isIdeaBottomBarUnifiedEnabled,
@@ -49,6 +51,8 @@ export function IdeaViewSwitcher({
 }: IdeaViewSwitcherProps) {
   const anchorRef = useRef<HTMLDivElement | null>(null);
   const [box, setBox] = useState<{ right: number; bottom: number } | null>(null);
+  /** Cel portalu ścieżki OFF: `body` normalnie, element pełnoekranowy w F11. */
+  const portalTarget = useFullscreenPortalTarget();
   const zjednoczonyPasek = isIdeaBottomBarUnifiedEnabled();
   /**
    * Tabela nie ma płótna React Flow, więc nie ma `CanvasZoomControls`, a co za
@@ -263,5 +267,9 @@ export function IdeaViewSwitcher({
     </div>
   );
 
-  return createPortal(node, document.body);
+  // 2026-07-28: `body` poza pełnym ekranem, element pełnoekranowy w pełnym
+  // ekranie — inaczej przełącznik znikał razem z lewym paskiem (to samo
+  // pochodzenie błędu: portal do rodzeństwa elementu pełnoekranowego).
+  if (!portalTarget) return null;
+  return createPortal(node, portalTarget);
 }

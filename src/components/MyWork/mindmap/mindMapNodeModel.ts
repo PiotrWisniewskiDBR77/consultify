@@ -31,6 +31,18 @@ export interface MindMapNodeStyle {
   locked?: boolean;
   branchTheme?: string;
   autoLayout?: boolean;
+  // ── Pasek edycji obiektu (ff_canvasObjectEditBar) ──────────────────────────
+  // Kontrakt wspólny z Tablicą i Procesem (`canvas/canvasObjectStyle.ts`).
+  // TŁO i RAMKA są OSOBNYMI polami — stare `color` zostaje akcentem
+  // semantycznym i nie da się nim już sterować obiema rzeczami naraz.
+  fontFamily?: string;
+  textColor?: string;
+  underline?: boolean;
+  bgColor?: string;
+  borderColor?: string;
+  /** Zapis Tablicy — trzymany, żeby zaznaczenie wielokrotne nie gubiło pola. */
+  fontWeight?: string;
+  textDecoration?: string;
 }
 
 export interface MindMapNodeSemanticFields {
@@ -196,6 +208,13 @@ export function copyNodeStyle(node: Node | null | undefined): MindMapNodeStyle {
     locked: typeof d?.locked === 'boolean' ? d.locked : undefined,
     branchTheme: typeof d?.branchTheme === 'string' ? d.branchTheme : undefined,
     autoLayout: typeof d?.autoLayout === 'boolean' ? d.autoLayout : undefined,
+    fontFamily: typeof d?.fontFamily === 'string' ? d.fontFamily : undefined,
+    textColor: typeof d?.textColor === 'string' ? d.textColor : undefined,
+    underline: typeof d?.underline === 'boolean' ? d.underline : undefined,
+    bgColor: typeof d?.bgColor === 'string' ? d.bgColor : undefined,
+    borderColor: typeof d?.borderColor === 'string' ? d.borderColor : undefined,
+    fontWeight: typeof d?.fontWeight === 'string' ? d.fontWeight : undefined,
+    textDecoration: typeof d?.textDecoration === 'string' ? d.textDecoration : undefined,
   };
 }
 
@@ -213,6 +232,15 @@ export function applyNodeStyle(node: Node, style: MindMapNodeStyle): Node {
   if (typeof style.locked === 'boolean') patch.locked = style.locked;
   if (style.branchTheme) patch.branchTheme = style.branchTheme;
   if (typeof style.autoLayout === 'boolean') patch.autoLayout = style.autoLayout;
+  // Pola paska edycji obiektu. `!== undefined` (nie truthy!), bo `null` z palety
+  // znaczy „skasuj kolor" i musi dolecieć do węzła; truthy-check by je zjadł.
+  if (style.fontFamily !== undefined) patch.fontFamily = style.fontFamily;
+  if (style.textColor !== undefined) patch.textColor = style.textColor;
+  if (typeof style.underline === 'boolean') patch.underline = style.underline;
+  if (style.bgColor !== undefined) patch.bgColor = style.bgColor;
+  if (style.borderColor !== undefined) patch.borderColor = style.borderColor;
+  if (style.fontWeight !== undefined) patch.fontWeight = style.fontWeight;
+  if (style.textDecoration !== undefined) patch.textDecoration = style.textDecoration;
   return { ...node, data: { ...node.data, ...patch } };
 }
 

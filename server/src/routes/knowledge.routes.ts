@@ -789,7 +789,7 @@ router.post(
       }
 
       // Process & Index (Async)
-      const chunkCount = await KnowledgeService.processDocument(docId, text);
+      const chunkCount = await KnowledgeService.processDocument(docId, text, orgId);
 
       // Record storage usage (Organization Level)
       if (recordStorageAfterUpload) {

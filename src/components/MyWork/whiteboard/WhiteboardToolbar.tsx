@@ -29,6 +29,8 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import { isCanvasUndoInRailOnlyEnabled } from '@/utils/canvasUndoInRailOnlyFlag';
+
 import type { CanvasBgPattern } from '../ideaSelectionTypes';
 import { STICKY_COLORS } from './nodes/whiteboardNodeHelpers';
 import type { WhiteboardSessionState, WhiteboardSharePolicy } from './whiteboardContracts';
@@ -208,6 +210,8 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
   hideSaveIndicator = false,
 }) => {
   const { t } = useTranslation();
+  /** C: Cofnij/Ponów tylko w lewym pasku (flaga, domyślnie OFF). */
+  const undoRedoInRailOnly = isCanvasUndoInRailOnlyEnabled();
 
   return (
     <div
@@ -300,24 +304,37 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
         />
       )}
 
-      <div className="w-px h-5 bg-c-surface-raised mx-0.5 shrink-0" />
+      {/*
+       * Sprzątanie C (2026-07-28, flaga `ff_canvasUndoInRailOnly`, domyślnie OFF):
+       * właściciel — „to nie jest potrzebne bo mamy to samo w panelu lewym".
+       * ON = para znika RAZEM ze swoimi dzielnikami (inaczej zostałaby podwójna
+       * kreska). Funkcja zostaje w lewym pasku (`wb_undo`/`wb_redo`), pod
+       * Ctrl/Cmd+Z / Ctrl/Cmd+Shift+Z i w sekcji „Historia" prawego panelu.
+       */}
+      {undoRedoInRailOnly ? (
+        <div className="w-px h-5 bg-c-surface-raised mx-0.5 shrink-0" />
+      ) : (
+        <>
+          <div className="w-px h-5 bg-c-surface-raised mx-0.5 shrink-0" />
 
-      <ToolbarBtn
-        icon={Undo2}
-        label={t('myWork.whiteboard.toolbar.undo')}
-        onClick={onUndo}
-        disabled={!canUndo || locked}
-        ariaLabel={t('myWork.whiteboard.toolbar.undo')}
-      />
-      <ToolbarBtn
-        icon={Redo2}
-        label={t('myWork.whiteboard.toolbar.redo')}
-        onClick={onRedo}
-        disabled={!canRedo || locked}
-        ariaLabel={t('myWork.whiteboard.toolbar.redo')}
-      />
+          <ToolbarBtn
+            icon={Undo2}
+            label={t('myWork.whiteboard.toolbar.undo')}
+            onClick={onUndo}
+            disabled={!canUndo || locked}
+            ariaLabel={t('myWork.whiteboard.toolbar.undo')}
+          />
+          <ToolbarBtn
+            icon={Redo2}
+            label={t('myWork.whiteboard.toolbar.redo')}
+            onClick={onRedo}
+            disabled={!canRedo || locked}
+            ariaLabel={t('myWork.whiteboard.toolbar.redo')}
+          />
 
-      <div className="w-px h-5 bg-c-surface-raised mx-0.5 shrink-0" />
+          <div className="w-px h-5 bg-c-surface-raised mx-0.5 shrink-0" />
+        </>
+      )}
 
       {/*
        * Editor Shell Canon §2 GÓRNA — secondary tools (session/collab, export,

@@ -26,6 +26,13 @@ interface MapHealthScoreProps {
   visible?: boolean;
   /** Przejście do problemu. Bez niego komponent użyje zdarzenia globalnego. */
   onFocusNodes?: (nodeIds: string[]) => void;
+  /**
+   * `true` = karta wewnątrz prawego panelu (sekcja „AI"), bez `absolute`/`z-*`
+   * i bez stałej szerokości. Zgłoszenie właściciela 2026-07-28: „ten Map Health
+   * wpada mi w okno i nie mogę go przesunąć — przerzuciłbym to do panelu
+   * prawego". Flaga `ff_ideaPanel6Sections`; przy OFF zostaje overlay.
+   */
+  embedded?: boolean;
 }
 
 /** Jeden konkretny, policzalny brak. `count` = liczba winnych obiektów. */
@@ -254,9 +261,12 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({
   edges,
   visible = true,
   onFocusNodes,
+  embedded,
 }) => {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(false);
+  // W panelu karta startuje ROZWINIĘTA (lista braków to główna treść sekcji AI);
+  // jako overlay nad płótnem — zwinięta, żeby nie zasłaniać mapy (jak dziś).
+  const [expanded, setExpanded] = useState(Boolean(embedded));
 
   const { gaps, assessedCount } = useMemo(
     () =>
@@ -295,8 +305,17 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({
   const hasGaps = gaps.length > 0;
 
   return (
-    <div className="absolute top-14 right-3 z-dropdown">
-      <div className="rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-2xl overflow-hidden min-w-[212px] max-w-[268px]">
+    <div
+      className={embedded ? 'w-full' : 'absolute top-14 right-3 z-dropdown'}
+      data-testid="map-health-score"
+    >
+      <div
+        className={
+          embedded
+            ? 'w-full rounded-[11px] bg-c-surface-raised border border-c-border-subtle overflow-hidden'
+            : 'rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-2xl overflow-hidden min-w-[212px] max-w-[268px]'
+        }
+      >
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}

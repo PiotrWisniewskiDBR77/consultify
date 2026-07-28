@@ -1,4 +1,5 @@
-import React from 'react';
+import { ChevronDown, ChevronUp, Layers } from 'lucide-react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type {
@@ -24,7 +25,11 @@ export interface WhiteboardSessionPanelProps {
   /** Naprawa 2026-07-26 (Zadanie A, `ff_whiteboardSessionInPanel`): gdy `true`,
    * renderuje się jako zwykły blok wypełniający kontener rodzica (prawy
    * panel „Właściwości") zamiast pływającego overlaya `absolute` nad
-   * płótnem. Zero zmian w treści/handlerach — tylko klasy wrappera. */
+   * płótnem. Zero zmian w treści/handlerach — tylko klasy wrappera.
+   *
+   * 2026-07-28 (`ff_ideaPanel6Sections`): ten sam tryb obsługuje sekcję
+   * „Narzędzie" układu sześciu sekcji, a panel dostaje własny, ZWIJALNY
+   * nagłówek — właściciel: „to musi mieć możliwość chowania z ekranu". */
   embedded?: boolean;
 }
 
@@ -42,6 +47,13 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
   embedded,
 }) => {
   const { t } = useTranslation();
+  /** Zwijanie — tylko w wersji panelowej (overlay nad płótnem bez zmian). */
+  const [rozwiniete, setRozwiniete] = useState(true);
+  const tresc = !embedded || rozwiniete;
+  /** W panelu karty są płaskie (panel ma już własną ramkę i cień). */
+  const kartaCls = embedded
+    ? 'rounded-[11px] border border-c-border-subtle bg-c-surface-raised'
+    : 'rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:backdrop-blur-xl backdrop-blur-sm shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)]';
 
   const roleLabel =
     sessionState.role === 'facilitator'
@@ -65,16 +77,43 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
           ? 'flex flex-col gap-2 w-full'
           : 'absolute top-3 left-20 z-20 flex flex-col gap-2 max-w-[280px]'
       }
+      data-testid="whiteboard-session-panel"
     >
-      <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:backdrop-blur-xl backdrop-blur-sm shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-3 py-2.5">
+      {embedded && (
+        <button
+          type="button"
+          onClick={() => setRozwiniete((v) => !v)}
+          aria-expanded={rozwiniete}
+          className="w-full flex items-center gap-2 rounded-[11px] border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-left transition-colors hover:border-c-focus"
+          data-testid="whiteboard-session-panel-toggle"
+        >
+          <Layers size={12} className="shrink-0 text-c-text-muted" />
+          <span className="flex-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-c-text-muted">
+            {t('myWork.whiteboard.sessionPanel.layer')}
+          </span>
+          <span className="text-[10px] font-semibold text-c-text-secondary">{roleLabel}</span>
+          {rozwiniete ? (
+            <ChevronUp size={12} className="shrink-0 text-c-text-muted" />
+          ) : (
+            <ChevronDown size={12} className="shrink-0 text-c-text-muted" />
+          )}
+        </button>
+      )}
+
+      {tresc && (
+      <div className={`${kartaCls} px-3 py-2.5`}>
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-c-text-muted">
-              {t('myWork.whiteboard.sessionPanel.layer')}
+          {/* Nazwa panelu + rola: w wersji panelowej niesie je zwijalny nagłówek
+              wyżej, więc tutaj byłby dubel (Doktryna Gęstości). */}
+          {!embedded && (
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-c-text-muted">
+                {t('myWork.whiteboard.sessionPanel.layer')}
+              </div>
+              <div className="text-[11px] font-semibold text-c-text">{roleLabel}</div>
             </div>
-            <div className="text-[11px] font-semibold text-c-text">{roleLabel}</div>
-          </div>
-          <div className="text-right">
+          )}
+          <div className={embedded ? 'text-left' : 'text-right'}>
             <div className="text-[10px] font-semibold text-c-text-secondary">
               {whiteboardModeCopy.modeLabel}
             </div>
@@ -111,15 +150,18 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
             currentPhase={sessionState.facilitationPhase}
             locked={locked}
             onPhaseChange={onPhaseChange}
+            wrap={embedded}
           />
         </div>
         <div className="mt-2 text-[10px] leading-4 text-c-text-muted">
           {whiteboardModeCopy.helper}
         </div>
       </div>
+      )}
 
-      {(activityLog.length > 0 || libraryItems.length > 0 || historyLog.length > 0) && (
-        <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:backdrop-blur-xl backdrop-blur-sm shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-3 py-2.5 space-y-2">
+      {tresc &&
+        (activityLog.length > 0 || libraryItems.length > 0 || historyLog.length > 0) && (
+        <div className={`${kartaCls} px-3 py-2.5 space-y-2`}>
           <div className="flex items-center justify-between gap-3">
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-c-text-muted">
               {t('myWork.whiteboard.sessionPanel.opsGovernance')}

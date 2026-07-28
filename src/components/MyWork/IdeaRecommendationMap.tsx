@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
+  Edit3,
   ExternalLink,
   FileText,
   Flower2,
@@ -12,14 +13,19 @@ import {
   Lightbulb,
   Link2,
   Loader2,
+  Lock,
+  MoreVertical,
+  MoveRight,
   Paperclip,
   Pencil,
   Plus,
   Sparkles,
   StickyNote,
+  Unlock,
   X,
 } from 'lucide-react';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import ReactFlow, {
@@ -44,6 +50,7 @@ import ReactFlow, {
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
+import { usePortalSlot } from '@/hooks/usePortalSlot';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import {
@@ -54,8 +61,29 @@ import {
   getArtifactPath,
 } from '@/utils/artifactLinks';
 
+import {
+  CANVAS_OBJECT_EDIT_BAR_SLOT_ID,
+  isCanvasObjectEditBarEnabled,
+} from '@/utils/canvasObjectEditBarFlag';
+
 import TeresaMark from '../shared/TeresaMark';
 import { getCanvasBg } from './canvas/canvasBackground';
+import {
+  canvasObjectSurfaceStyle,
+  canvasObjectTextStyle,
+  canvasShapeClasses,
+  readCanvasObjectStyle,
+} from './canvas/canvasObjectStyle';
+import { ObjectEditBar, type ObjectEditBarGroup } from './canvas/ObjectEditBar';
+import {
+  ArrowDirectionPopover,
+  type CanvasArrowDirection,
+} from './canvas/ObjectEditBarPopovers';
+import {
+  buildStyleGroups,
+  ObjectEditBarDock,
+  useObjectEditBarSlot,
+} from './canvas/objectEditBarDock';
 import { CanvasSnapGuides } from './canvas/CanvasSnapGuides';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import {
@@ -168,6 +196,8 @@ import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
 import { shouldVirtualize } from './mindmap/virtualization';
 import { VoiceToNode } from './mindmap/VoiceToNode';
+import { IDEA_PANEL_AI_SLOT_ID } from './panel/ideaPanel6Sections';
+import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 type IdeaNodeData = NodeDetailData & {
@@ -812,6 +842,35 @@ function inferNodeAccentColor(data: Record<string, any> | undefined): string | u
   return undefined;
 }
 
+/**
+ * PUŁAPKA nr 1 z audytu paska edycji, rozwiązana tutaj.
+ *
+ * Ramka na mapie (`type: 'group'`) NIE rysuje swojego pudełka w komponencie —
+ * kreskowaną obwódkę, tło i promień nakłada reactflow z `node.style` na wrapper
+ * węzła. Patch wysłany na `node.data` (czyli tam, gdzie pisze pasek dla
+ * wszystkich pozostałych typów) do niej po prostu NIE dolatuje i użytkownik
+ * widzi „kliknąłem kolor, nic się nie stało".
+ *
+ * Ta funkcja przepisuje kolor tła i kolor ramki z patcha `data` na `node.style`
+ * WYŁĄCZNIE dla węzłów typu `group`; dla reszty zwraca węzeł bez zmian
+ * (referencyjnie ten sam obiekt, więc React nie przerysowuje niczego zbędnie).
+ * `null` z palety = „skasuj mój wybór" i przywraca wartość domyślną.
+ */
+function applyFrameStyleToNode(node: Node, patch: Record<string, any>): Node {
+  if (node.type !== 'group') return node;
+  if (patch.bgColor === undefined && patch.borderColor === undefined) return node;
+  const style: Record<string, any> = { ...(node.style || {}) };
+  if (patch.bgColor !== undefined) {
+    style.backgroundColor = patch.bgColor
+      ? `color-mix(in srgb, ${patch.bgColor} 14%, transparent)`
+      : undefined;
+  }
+  if (patch.borderColor !== undefined) {
+    style.borderColor = patch.borderColor || undefined;
+  }
+  return { ...node, style };
+}
+
 // ─────── Node Types ───────
 
 /**
@@ -828,6 +887,11 @@ const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
   // c-* tokens, no glowing gradient orb / pulsing glow / rotating conic border
   // (those read as a toy, not a work tool). Emphasis via a slightly stronger ring
   // + shadow, not animation.
+  // Pasek edycji obiektu: korzeń też musi słuchać tła/ramki/typografii —
+  // inaczej „zmieniam kolor, nic się nie dzieje" dla najważniejszego węzła mapy.
+  const rootStyle = readCanvasObjectStyle(data);
+  const rootSurface = canvasObjectSurfaceStyle(rootStyle, { bgOpacityPct: 22 });
+  const rootText = canvasObjectTextStyle(rootStyle);
   return (
     <>
       {/* Ręczna zmiana rozmiaru — korzeń jest KOŁEM, więc trzymamy proporcję. */}
@@ -839,6 +903,7 @@ const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         keepAspectRatio
       />
       <div
+        style={rootSurface}
         className={`relative flex items-center justify-center ${
           hasExplicitSize ? 'w-full h-full' : 'w-32 h-32'
         } rounded-full bg-c-surface-raised border-2 shadow-lg transition-transform duration-200 hover:scale-105 ${
@@ -861,7 +926,10 @@ const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         <Handle type="source" position={Position.Left} id="left" className="!opacity-0 !w-1 !h-1" />
         <div className="text-center px-3">
           <Flower2 size={30} className="text-c-text-secondary mx-auto" />
-          <div className="text-[11px] font-semibold text-c-text mt-1.5 line-clamp-2">
+          <div
+            style={rootText}
+            className="text-[11px] font-semibold text-c-text mt-1.5 line-clamp-2"
+          >
             {data.label}
           </div>
         </div>
@@ -906,6 +974,10 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
   );
   const mapLocked = useContext(MindMapLockedContext);
   const hasExplicitSize = useNodeHasExplicitSize(id);
+  // Pasek edycji obiektu — gałąź czyta ten sam kontrakt co węzeł-idea.
+  const branchStyle = readCanvasObjectStyle(data);
+  const branchSurface = canvasObjectSurfaceStyle(branchStyle, { bgOpacityPct: 20 });
+  const branchText = canvasObjectTextStyle(branchStyle);
 
   if (data._simplified) {
     return (
@@ -927,6 +999,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
 
   return (
     <div
+      style={branchSurface}
       className={`relative px-4 py-2.5 rounded-2xl border-2 ${colors.border} ${colors.bg} ${
         selected ? `ring-2 ${colors.ring}` : ''
       } shadow-md text-center ${
@@ -974,6 +1047,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         </button>
       )}
       <div
+        style={branchText}
         className={`text-xs font-semibold ${colors.text} flex items-center gap-1 justify-center`}
       >
         {collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
@@ -1261,8 +1335,15 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
       ? '!opacity-100 !bg-amber-300 dark:!bg-amber-600 !border-amber-500 hover:!bg-amber-400 hover:!scale-150'
       : '!opacity-0 !pointer-events-none'
   }`;
-  const shapeClass =
-    shape === 'circle'
+  // Kształty: przy fladze paska edycji korzystamy ze WSPÓLNEJ mapy kształtów
+  // (`canvasShapeClasses`) — ta sama paleta co w Tablicy i Procesie, z dwoma
+  // kształtami więcej (prostokąt, pigułka), których stary cykl `ctx_change_shape`
+  // w ogóle nie znał. Przy fladze OFF — dokładnie stare zachowanie.
+  const canvasShape = canvasShapeClasses(shape);
+  const useCanvasShape = isCanvasObjectEditBarEnabled();
+  const shapeClass = useCanvasShape
+    ? canvasShape.box
+    : shape === 'circle'
       ? 'rounded-full aspect-square flex items-center justify-center'
       : shape === 'diamond'
         ? 'rotate-45'
@@ -1270,7 +1351,19 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           ? '[clip-path:polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]'
           : 'rounded-xl';
 
-  const innerRotate = shape === 'diamond' ? '-rotate-45' : '';
+  const innerRotate = useCanvasShape
+    ? canvasShape.inner
+    : shape === 'diamond'
+      ? '-rotate-45'
+      : '';
+
+  // PASEK EDYCJI OBIEKTU — tu renderer CZYTA to, co pasek zapisuje. Krytyczne:
+  // `bgColor` i `borderColor` są ODDZIELNE (stare `data.color` sterowało obiema
+  // rzeczami naraz), a `fontSize`/`bold` były do tej pory MARTWE — etykieta
+  // miała na sztywno `text-[11px] font-semibold` i nikt ich nie czytał.
+  const objectStyle = readCanvasObjectStyle(data);
+  const objectSurface = canvasObjectSurfaceStyle(objectStyle, { bgOpacityPct: 20 });
+  const objectText = canvasObjectTextStyle(objectStyle);
 
   if (data._simplified) {
     return (
@@ -1306,7 +1399,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
       }
     : undefined;
   const nodeSurfaceStyle =
-    depthScale < 1 || accentColor
+    depthScale < 1 || accentColor || objectSurface
       ? {
           ...(depthScale < 1 ? { transform: `scale(${depthScale})` } : {}),
           ...(accentColor
@@ -1318,6 +1411,10 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   : `0 10px 24px -18px ${withAlpha(accentColor, '99')}`,
               }
             : {}),
+          // NA KOŃCU — jawny wybór właściciela w pasku bije akcent semantyczny
+          // wyliczony z tagów. `backgroundImage: 'none'` z `objectSurface`
+          // kasuje gradient akcentu, żeby wybrane tło było naprawdę widoczne.
+          ...(objectSurface || {}),
         }
       : undefined;
 
@@ -1550,6 +1647,11 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 </div>
                 <div className="min-w-0 flex-1">
                   <div
+                    // `objectText` (czcionka / wielkość / kolor / grubość /
+                    // podkreślenie) MUSI iść inline: klasy `text-[11px]
+                    // font-semibold` niżej są statyczne, więc bez tego pola
+                    // paska pozostałyby martwe — dokładnie tak było do dziś.
+                    style={objectText}
                     className={`text-[11px] font-semibold ${data.label ? colors.text : 'text-slate-600 dark:text-slate-500 italic'} ${
                       // Przy domyślnym (dopasowanym do treści) pudełku etykieta
                       // musi się urwać po 2 wierszach, bo inaczej węzeł rósłby
@@ -4123,6 +4225,25 @@ function MindMapInner({
 
   // ── R5: Analytics ─────────────────────────────────────────────────────
   const [showHealthScore, setShowHealthScore] = useState(true);
+
+  /**
+   * PANELE INFORMACYJNE DO PRAWEGO PANELU (2026-07-28, `ff_ideaPanel6Sections`).
+   *
+   * Zasada zaakceptowana przez właściciela: żaden panel INFORMACYJNY nie pływa
+   * nad płótnem — mieszka w prawym panelu i daje się schować. (Sterowanie —
+   * dolny pasek i mini-mapa — zostaje nad płótnem świadomie.)
+   *
+   * Mapa myśli wnosi do sekcji „AI" dwa panele:
+   *   • Zdrowie mapy — rysuje je już `IdeaWorkspaceTools` (sekcja AI), więc tu
+   *     tylko GASIMY overlay, żeby nie było dwóch kopii.
+   *   • AI Blind Spots — mieszka w TYM komponencie (trzyma stan detekcji i
+   *     handler „Dodaj"), więc portalujemy go do `IDEA_PANEL_AI_SLOT_ID`.
+   *     Portal, a nie przeniesienie kodu: te same propsy, ten sam stan, zero
+   *     prop-drillingu przez IdeaMapWorkspace — wzorzec 1:1 z panelem sesji
+   *     Whiteboard (`WHITEBOARD_SESSION_PANEL_SLOT_ID`, 07-26).
+   */
+  const paneleWPrawymPanelu = isIdeaPanel6SectionsEnabled();
+  const aiPanelSlot = usePortalSlot(paneleWPrawymPanelu ? IDEA_PANEL_AI_SLOT_ID : null);
   const [showFunnelAnalytics, setShowFunnelAnalytics] = useState(false);
 
   // ── R4: Export & Embed ──────────────────────────────────────────────
@@ -5248,16 +5369,169 @@ function MindMapInner({
       if (!floatingToolbarInfo) return;
       if (floatingToolbarInfo.mode === 'multi' && floatingToolbarInfo.nodeIds.length > 1) {
         const targetIds = floatingToolbarInfo.nodeIds;
-        setNodes((prev: Node[]) => applyStyleToNodes(prev, targetIds, patch));
+        setNodes((prev: Node[]) =>
+          applyStyleToNodes(prev, targetIds, patch).map((n) =>
+            targetIds.includes(n.id) ? applyFrameStyleToNode(n, patch) : n
+          )
+        );
         for (const nodeId of targetIds) {
           broadcastNodeUpdate({ id: nodeId, data: patch } as any);
         }
         return;
       }
       updateNodeDataById(floatingToolbarInfo.nodeId, (data: any) => ({ ...data, ...patch }));
+      // PUŁAPKA nr 1 z audytu: ramka (`type: 'group'`) rysuje pudełko z
+      // `node.style`, nie z `node.data` — sam patch na `data` do niej NIE
+      // dolatuje i kolor „nie działa". Osobne przejście po `node.style`.
+      if (patch.bgColor !== undefined || patch.borderColor !== undefined) {
+        const targetId = floatingToolbarInfo.nodeId;
+        setNodes((prev: Node[]) =>
+          prev.map((n) => (n.id === targetId ? applyFrameStyleToNode(n, patch) : n))
+        );
+      }
     },
     [debugLog, floatingToolbarInfo, updateNodeDataById, setNodes, broadcastNodeUpdate]
   );
+
+  // ── PASEK EDYCJI OBIEKTU (ff_canvasObjectEditBar) ──────────────────────────
+  // Zaznaczenie → pasek dokuje się w listwie Menu 3 („tam gdzie jest AddNode,
+  // Auto Layout, AI Expand, Templates"). Bez slotu (flaga OFF albo Menu 3
+  // schowane przez ff_ideaTopBarOneLine) zostaje stary pasek pływający.
+  const editBarSlot = useObjectEditBarSlot();
+  const editBarDocked = isCanvasObjectEditBarEnabled() && !!editBarSlot && !!floatingToolbarInfo;
+
+  const editBarModel = useMemo(() => {
+    if (!editBarDocked || !floatingToolbarInfo) return null;
+    const info = floatingToolbarInfo;
+    const nodeData = (info.node.data || {}) as Record<string, any>;
+    const isMulti = info.mode === 'multi';
+    const isProtected = info.nodeId === 'root' || info.nodeId.startsWith('branch-');
+    const style = readCanvasObjectStyle(nodeData);
+    const nodeDisabled = locked || !!nodeData.locked;
+
+    const growth: ObjectEditBarGroup = { id: 'growth', controls: [] };
+    if (!isMulti) {
+      growth.controls.push({
+        kind: 'button',
+        id: 'add-child',
+        icon: Plus,
+        label: t('ideas.mindmap.addChildTab', 'Add child (Tab)'),
+        disabled: nodeDisabled,
+        onClick: () => addChildNode(info.nodeId),
+      });
+      if (!isProtected) {
+        growth.controls.push({
+          kind: 'button',
+          id: 'add-sibling',
+          icon: GitBranch,
+          label: t('ideas.mindmap.addSiblingShiftEnter', 'Add sibling (Shift+Enter)'),
+          disabled: nodeDisabled,
+          onClick: () => addSiblingNode(info.nodeId),
+        });
+      }
+      growth.controls.push({
+        kind: 'button',
+        id: 'rename',
+        icon: Edit3,
+        label: t('ideas.mindmap.renameF2', 'Rename (F2)'),
+        disabled: nodeDisabled || isProtected,
+        // `_startEditing` to ten sam sygnał, którym menu kontekstowe wchodzi w
+        // edycję etykiety (czyta go `EditableIdeaNodeComponent`) — bez
+        // dublowania logiki zmiany nazwy.
+        onClick: () =>
+          updateNodeDataById(info.nodeId, (d: any) => ({ ...d, _startEditing: Date.now() })),
+      });
+    }
+
+    const styleGroups = buildStyleGroups({
+      style,
+      onPatch: handleFloatingToolbarUpdate,
+      t,
+      disabled: nodeDisabled,
+      show: { shape: true },
+    });
+
+    // Strzałki / kierunek przepływu — funkcja JUŻ ISTNIEJE (`mm_edge_arrow`,
+    // gałąź feat/strzalki-kierunku): hurtowo na całą gałąź, dotąd schowana w
+    // rozwijce stylu linii. Pasek tylko ją WYSTAWIA, nie robi drugi raz.
+    const structure: ObjectEditBarGroup = {
+      id: 'structure',
+      controls: [
+        {
+          kind: 'popover',
+          id: 'arrows',
+          icon: MoveRight,
+          label: t('canvasEditBar.arrowTitle', 'Strzałki i kierunek'),
+          disabled: nodeDisabled,
+          align: 'center',
+          render: (close) => (
+            <ArrowDirectionPopover
+              value={nodeData.arrowDirection as CanvasArrowDirection | undefined}
+              onPick={(direction) => {
+                window.dispatchEvent(
+                  new CustomEvent('idea-workspace-quick-action', {
+                    detail: { action: 'mm_edge_arrow', nodeId: info.nodeId, direction },
+                  })
+                );
+              }}
+              close={close}
+            />
+          ),
+        },
+        {
+          kind: 'button',
+          id: 'lock',
+          icon: nodeData.locked ? Lock : Unlock,
+          label: nodeData.locked
+            ? t('ideas.mindmap.unlock', 'Unlock')
+            : t('ideas.mindmap.lock', 'Lock'),
+          active: !!nodeData.locked,
+          onClick: () => handleFloatingToolbarUpdate({ locked: !nodeData.locked }),
+        },
+      ],
+    };
+
+    // „Więcej" otwiera pełne menu kontekstowe węzła — dzięki temu ŻADNA akcja
+    // starego paska pływającego nie staje się nieosiągalna po zadokowaniu.
+    if (!isMulti) {
+      structure.controls.push({
+        kind: 'button',
+        id: 'more',
+        icon: MoreVertical,
+        label: t('ideas.mindmap.moreOptions', 'More options'),
+        onClick: () => {
+          const el =
+            typeof document === 'undefined'
+              ? null
+              : document.querySelector('[data-testid="object-edit-bar-more"]');
+          const rect = el?.getBoundingClientRect();
+          setContextMenu({
+            nodeId: info.nodeId,
+            nodeType: info.node.type || 'idea',
+            x: rect ? rect.left : 240,
+            y: rect ? rect.bottom + 4 : 120,
+          });
+        },
+      });
+    }
+
+    return {
+      title: isMulti
+        ? t('ideas.mindmap.nSelected', '{{count}} selected', { count: info.nodeIds.length }).trim()
+        : t('canvasEditBar.titleNode', 'Węzeł'),
+      groups: [growth, ...styleGroups, structure],
+    };
+  }, [
+    editBarDocked,
+    floatingToolbarInfo,
+    locked,
+    t,
+    addChildNode,
+    addSiblingNode,
+    updateNodeDataById,
+    handleFloatingToolbarUpdate,
+    setContextMenu,
+  ]);
 
   // M06 Fala 3.1: apply an align/distribute op to the current multi-selection.
   // Pure geometry (computeAlignDistribute) → position patches; positions are
@@ -5307,8 +5581,17 @@ function MindMapInner({
 
   return (
     <div ref={containerRef} className={containerClassName} tabIndex={-1} data-mm-surface="mindmap">
+      {/* PASEK EDYCJI OBIEKTU zadokowany w listwie Menu 3 (ff_canvasObjectEditBar).
+          Renderuje się TYLKO gdy slot faktycznie istnieje — inaczej niżej
+          zostaje stary pasek pływający, więc kontrolki nigdy nie znikają. */}
+      {editBarDocked && editBarModel ? (
+        <ObjectEditBarDock slot={editBarSlot}>
+          <ObjectEditBar model={editBarModel} />
+        </ObjectEditBarDock>
+      ) : null}
+
       {/* Floating node toolbar */}
-      {floatingToolbarInfo && (
+      {floatingToolbarInfo && !editBarDocked && (
         <FloatingNodeToolbar
           nodeId={floatingToolbarInfo.nodeId}
           nodeData={floatingToolbarInfo.node.data}
@@ -5825,7 +6108,10 @@ function MindMapInner({
 
               {/* Active branch info removed — redundant with visual branch nodes on canvas */}
             </ReactFlow>
-            {showHealthScore && (
+            {/* Overlay „Zdrowie mapy" — TYLKO przy fladze OFF. Przy ON tę samą
+                treść rysuje sekcja „AI" prawego panelu (IdeaWorkspaceTools),
+                więc overlay zniknąłby jako duplikat, a nie jako utrata funkcji. */}
+            {showHealthScore && !paneleWPrawymPanelu && (
               <MapHealthScore nodes={nodes} edges={edges} visible={showHealthScore} />
             )}
           </MindMapInteractionModeContext.Provider>
@@ -5894,28 +6180,42 @@ function MindMapInner({
           );
         })()}
 
-      {/* AI Blind Spots Detector */}
-      {enrichedNodes.length > 0 ? (
-        <AIBlindSpotsDetector
-          ideaId={ideaId}
-          ideaTitle={ideaTitle}
-          nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
-          edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
-          persistence={persistence}
-          locked={locked}
-          onAddBlindSpot={(spot) => {
-            pushUndo();
-            window.dispatchEvent(
-              new CustomEvent('idea-workspace-insert', {
-                detail: {
-                  items: [{ text: spot.area, type: 'topics' }],
-                  ideaId,
-                },
-              })
+      {/* AI Blind Spots Detector — jeden byt, dwa adresy: overlay (flaga OFF)
+          albo karta w sekcji „AI" prawego panelu (flaga ON, przez portal).
+          Propsy IDENTYCZNE w obu gałęziach — funkcje („Dodaj", „Odrzuć",
+          „Sprawdź ponownie") nie mogą zależeć od miejsca renderu. */}
+      {enrichedNodes.length > 0
+        ? (() => {
+            const detektor = (
+              <AIBlindSpotsDetector
+                ideaId={ideaId}
+                ideaTitle={ideaTitle}
+                nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+                edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
+                persistence={persistence}
+                locked={locked}
+                onAddBlindSpot={(spot) => {
+                  pushUndo();
+                  window.dispatchEvent(
+                    new CustomEvent('idea-workspace-insert', {
+                      detail: {
+                        items: [{ text: spot.area, type: 'topics' }],
+                        ideaId,
+                      },
+                    })
+                  );
+                }}
+                embedded={paneleWPrawymPanelu}
+              />
             );
-          }}
-        />
-      ) : null}
+            if (!paneleWPrawymPanelu) return detektor;
+            // Slot istnieje tylko, gdy prawy panel stoi na sekcji „AI" (poziom
+            // Idei). Bez slotu nie renderujemy nic — detekcja rusza przy
+            // pierwszym otwarciu sekcji. To świadome: panel informacyjny liczy
+            // się wtedy, gdy użytkownik na niego patrzy, a nie w tle bez celu.
+            return aiPanelSlot ? createPortal(detektor, aiPanelSlot) : null;
+          })()
+        : null}
 
       {/* Batch Convert Modal */}
       {showBatchConvert ? (
