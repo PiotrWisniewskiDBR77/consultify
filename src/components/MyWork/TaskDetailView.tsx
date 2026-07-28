@@ -1098,6 +1098,15 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         priority,
         dueDate: dueDate || null,
         tags,
+        // P8 (tor MVP, 2026-07-28): te trzy pola były przygotowane w `payload`
+        // powyżej, ale NIE trafiały do żądania — a toast „Task updated" leciał
+        // bezwarunkowo. Użytkownik odhaczał checklistę, przypisywał osobę, widział
+        // potwierdzenie i tracił zmiany po odświeżeniu. Najgorszy rodzaj błędu:
+        // system twierdzi, że zapisał.
+        // Druga warstwa naprawy jest w `my-work.routes.ts` (PUT czytał tylko 7 pól).
+        checklist,
+        assigneeId: assigneeId || null,
+        ownerId: ownerId || null,
       };
 
       // Always persist a local draft before attempting network save (offline safety net)
