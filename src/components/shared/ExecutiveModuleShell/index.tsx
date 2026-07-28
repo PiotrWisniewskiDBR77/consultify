@@ -76,6 +76,12 @@ export interface ExecutiveModuleShellProps {
    */
   activeRightRailToolId?: string | null;
   onActiveRightRailToolChange?: (toolId: string | null) => void;
+  /**
+   * Czy prawy pasek ikon wolno schować do 16-pikselowego słupka (domyślnie
+   * TAK = dzisiejsze zachowanie wszystkich modułów). `false` → pasek ikon jest
+   * ZAWSZE widoczny. ADDITIVE — pomijające go powłoki nie zmieniają się.
+   */
+  rightRailCollapsible?: boolean;
 
   /** Center canvas. */
   canvas: React.ReactNode;
@@ -162,6 +168,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   renderRightRailPanel,
   activeRightRailToolId,
   onActiveRightRailToolChange,
+  rightRailCollapsible = true,
   canvas,
   centerMode = 'chrome',
   floatingLeftRail,
@@ -378,6 +385,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
           collapsed={rail.rightCollapsed}
           onToggleCollapse={rail.toggleRight}
           onResize={rail.setRightWidth}
+          collapsible={rightRailCollapsible}
         />
 
         {aiEntrySlot ? (

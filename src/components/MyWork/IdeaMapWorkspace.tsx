@@ -112,6 +112,8 @@ import {
 import { AIGovernanceBadge, AIGovernancePanel } from './mindmap/AIGovernancePanel';
 import { CanvasLeftToolbar } from './mindmap/CanvasLeftToolbar';
 import { IdeaViewSwitcher } from './mindmap/IdeaViewSwitcher';
+import { buildIdeaPanel6RailTools } from './panel/ideaPanel6Sections';
+import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
 import { stabilizeMindmapInteractionMode } from './mindmap/mindmapInteractionGrammar';
 import { SnapshotHistory } from './mindmap/SnapshotHistory';
 import { type UnifiedNodeData, UnifiedNodeDetailDrawer } from './mindmap/UnifiedNodeDetailDrawer';
@@ -2964,6 +2966,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // handlers/hooks — TDZ-safe). Flag OFF → nothing below is consumed and the
   // legacy render is byte-for-byte unchanged.
   const melsCanvasEnabled = isMelsCanvasEnabled();
+  /**
+   * Prawy panel w układzie SZEŚCIU sekcji zależnych od przedmiotu
+   * (`ff_ideaPanel6Sections`, default OFF — patrz
+   * `panel/ideaPanel6SectionsFlag.ts`). Steruje trzema rzeczami naraz, bo to
+   * jeden układ: (1) pasek ikon = 6 pozycji z własnego buildera, (2) panel
+   * dostaje id sekcji wprost jako `onlySection`, (3) pasek ikon przestaje się
+   * zwijać do 16-pikselowego słupka. Flaga OFF → wszystkie trzy jak dziś.
+   */
+  const panel6Enabled = isIdeaPanel6SectionsEnabled();
   // VF1 SPEC-A canvas states (loading/error) — default OFF, gated per rule #7.
   const vf1CanvasSpecAEnabled = isVf1CanvasSpecAEnabled();
   // Z-menu1-delete: "Usuń" kebab entry — wires the same `Api.deleteMyIdea`
@@ -3115,6 +3126,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // reprezentacja, dopisz ją tutaj — inaczej wróci martwy klik.
   const melsCanvasRightRailTools = useMemo(() => {
     if (!melsCanvasEnabled) return [];
+    // Układ SZEŚCIU sekcji (flaga `ff_ideaPanel6Sections`, default OFF) ma
+    // własny, niezależny budowniczy paska — patrz `panel/ideaPanel6Sections.ts`.
+    // Przy fladze OFF nie zmienia się nic: leci stary builder pięciu ikon.
+    if (panel6Enabled) return buildIdeaPanel6RailTools({ isPolish: Boolean(isPolish) });
     const inspektorJest =
       activeTool === 'mindmap' || activeTool === 'whiteboard' || activeTool === 'process_flow';
     const kondycjaJest = activeTool === 'mindmap' || activeTool === 'process_flow';
@@ -3140,7 +3155,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           : 'computed for Mind Map and Process Flow',
       },
     });
-  }, [melsCanvasEnabled, isPolish, activeTool]);
+  }, [melsCanvasEnabled, panel6Enabled, isPolish, activeTool]);
 
   // ── Shared IdeaWorkspaceTools props (single source) ─────────────────────
   // The workspace inspector (5 sections: Problem · Status · Inspector · Convert
@@ -3200,6 +3215,24 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       onAISummarize:
         activeTool === 'mindmap' ? () => handleQuickAction('mm_ai_summarize') : undefined,
       onAIExpand: activeTool === 'mindmap' ? () => handleQuickAction('mm_ai_expand') : undefined,
+      /**
+       * Sekcja „AI" w kontekście ELEMENTU (układ 6 sekcji). Ta sama trasa,
+       * którą wysyła pigułka AI pod zaznaczonym węzłem mapy
+       * (`IdeaRecommendationMap` → `idea-mindmap-node-quick-action`), obsługiwana
+       * przez `useMindMapQuickActions`. Ten hook jest zamontowany WYŁĄCZNIE w
+       * Mapie myśli, więc poza nią nie podajemy handlera — panel narysuje
+       * uczciwy pusty stan zamiast czterech martwych przycisków (Z3).
+       */
+      onAINodeAction:
+        activeTool === 'mindmap'
+          ? (action: string, nodeId: string) => {
+              window.dispatchEvent(
+                new CustomEvent('idea-mindmap-node-quick-action', {
+                  detail: { action, nodeId },
+                })
+              );
+            }
+          : undefined,
       onLayoutChange: (mode: string) => {
         window.dispatchEvent(
           new CustomEvent('idea-mindmap-node-quick-action', {
@@ -3408,9 +3441,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // below when the flag is ON (no dupes).
   const renderMelsCanvasRightRailPanel = useCallback(
     (activeToolId: string | null): React.ReactNode => {
-      const section = IDEA_PANEL_SECTIONS.includes(activeToolId as IdeaPanelSection)
-        ? (activeToolId as IdeaPanelSection)
-        : 'problem';
+      // Układ 6 sekcji: id z paska idzie WPROST (panel sam je normalizuje przez
+      // `normalizujDoSzesciu`). Bez tego nowe id `ai`/`activity`/`tool` wpadałyby
+      // w fallback `problem` i trzy ikony pokazywałyby Przegląd.
+      const section = panel6Enabled
+        ? ((activeToolId ?? 'overview') as IdeaPanelSection)
+        : IDEA_PANEL_SECTIONS.includes(activeToolId as IdeaPanelSection)
+          ? (activeToolId as IdeaPanelSection)
+          : 'problem';
       return (
         <IdeaWorkspaceTools
           {...ideaWorkspaceToolsSharedProps}
@@ -3421,7 +3459,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         />
       );
     },
-    [ideaWorkspaceToolsSharedProps, handlePanelChange]
+    [ideaWorkspaceToolsSharedProps, handlePanelChange, panel6Enabled]
   );
 
   if (loading) {
@@ -3496,6 +3534,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             }
             rightRailTools={melsCanvasRightRailTools}
             renderRightRailPanel={renderMelsCanvasRightRailPanel}
+            // Układ 6 sekcji: pasek ikon zawsze widoczny (decyzja właściciela).
+            rightRailCollapsible={!panel6Enabled}
             canvas={
               <>
                 {canvasToolsNode}

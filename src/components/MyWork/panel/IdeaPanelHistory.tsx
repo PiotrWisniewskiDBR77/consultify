@@ -93,14 +93,78 @@ function czytajLokalne<T>(key: string): T[] {
   }
 }
 
-const KIND_DOT: Record<IdeaHistoryKind, string> = {
+/**
+ * Odczyt osi czasu Idei — JEDNO źródło prawdy dla zakładki „Historia" (układ
+ * 5 zakładek, flaga OFF) i dla scalonej osi „Aktywność" (`IdeaPanelActivity`,
+ * układ 6 sekcji, flaga ON). Zwraca też `trybLokalny` — czy któreś ze źródeł
+ * poleciało z `localStorage` zamiast z serwera (uczciwa plakietka w UI).
+ */
+export async function pobierzHistorieIdei(
+  ideaId: string,
+  isPl: boolean
+): Promise<{ wpisy: IdeaHistoryEntry[]; trybLokalny: boolean }> {
+  const t = (pl: string, en: string) => (isPl ? pl : en);
+  let lokalny = false;
+
+  // 1. Strumień zdarzeń.
+  let zdarzenia: IdeaHistoryEntry[] = [];
+  const naZdarzenie = (e: any, zLokalnego: boolean): IdeaHistoryEntry => ({
+    id: `act-${e.id}`,
+    timestamp: zLokalnego
+      ? Number(e.timestamp) || Date.now()
+      : Number(e.timestamp) || Date.parse(String(e.createdAt)) || Date.now(),
+    kind: klasyfikuj(e.type, e.actor),
+    type: String(e.type || ''),
+    actor: String(e.actor || ''),
+    label: e.nodeLabel ? String(e.nodeLabel) : undefined,
+    detail: e.detail ? String(e.detail) : undefined,
+  });
+  try {
+    const res = await Api.getMyIdeaActivity(ideaId, { limit: 100 });
+    const lista = Array.isArray(res?.entries) ? res.entries : [];
+    zdarzenia = lista.map((e: any) => naZdarzenie(e, false));
+  } catch {
+    lokalny = true;
+    zdarzenia = czytajLokalne<any>(`${ACTIVITY_LS_PREFIX}${ideaId}`).map((e: any) =>
+      naZdarzenie(e, true)
+    );
+  }
+
+  // 2. Wersje (migawki) — ten sam magazyn co modal Historii wersji.
+  let wersje: IdeaHistoryEntry[] = [];
+  const naWpis = (s: any): IdeaHistoryEntry => ({
+    id: `snap-${s.id}`,
+    timestamp: Number(s.timestamp) || Date.now(),
+    kind: 'version',
+    type: 'snapshot',
+    actor: t('Wersja', 'Version'),
+    label: String(s.label || ''),
+    snapshot: { nodes: s.nodes || [], edges: s.edges || [], extensions: s.extensions },
+    nodeCount: Number(s.nodeCount) || (s.nodes?.length ?? 0),
+    edgeCount: Number(s.edgeCount) || (s.edges?.length ?? 0),
+  });
+  try {
+    const res = await Api.getMyIdeaMapSnapshots(ideaId);
+    wersje = (Array.isArray(res?.snapshots) ? res.snapshots : []).map(naWpis);
+  } catch {
+    lokalny = true;
+    wersje = czytajLokalne<any>(`${SNAPSHOT_LS_PREFIX}${ideaId}`).map(naWpis);
+  }
+
+  return {
+    wpisy: [...zdarzenia, ...wersje].sort((a, b) => b.timestamp - a.timestamp),
+    trybLokalny: lokalny,
+  };
+}
+
+export const KIND_DOT: Record<IdeaHistoryKind, string> = {
   people: 'bg-c-info',
   ai: 'bg-c-success',
   convert: 'bg-c-warning',
   version: 'bg-c-text-muted',
 };
 
-const KIND_ICON: Record<IdeaHistoryKind, React.ComponentType<any>> = {
+export const KIND_ICON: Record<IdeaHistoryKind, React.ComponentType<any>> = {
   people: User,
   ai: Bot,
   convert: GitBranch,
@@ -126,58 +190,9 @@ export const IdeaPanelHistory: React.FC<IdeaPanelHistoryProps> = ({
       return;
     }
     setLadowanie(true);
-    let lokalny = false;
-
-    // 1. Strumień zdarzeń.
-    let zdarzenia: IdeaHistoryEntry[] = [];
-    try {
-      const res = await Api.getMyIdeaActivity(ideaId, { limit: 100 });
-      const lista = Array.isArray(res?.entries) ? res.entries : [];
-      zdarzenia = lista.map((e: any) => ({
-        id: `act-${e.id}`,
-        timestamp: Number(e.timestamp) || Date.parse(String(e.createdAt)) || Date.now(),
-        kind: klasyfikuj(e.type, e.actor),
-        type: String(e.type || ''),
-        actor: String(e.actor || ''),
-        label: e.nodeLabel ? String(e.nodeLabel) : undefined,
-        detail: e.detail ? String(e.detail) : undefined,
-      }));
-    } catch {
-      lokalny = true;
-      zdarzenia = czytajLokalne<any>(`${ACTIVITY_LS_PREFIX}${ideaId}`).map((e: any) => ({
-        id: `act-${e.id}`,
-        timestamp: Number(e.timestamp) || Date.now(),
-        kind: klasyfikuj(e.type, e.actor),
-        type: String(e.type || ''),
-        actor: String(e.actor || ''),
-        label: e.nodeLabel ? String(e.nodeLabel) : undefined,
-        detail: e.detail ? String(e.detail) : undefined,
-      }));
-    }
-
-    // 2. Wersje (migawki) — ten sam magazyn co modal Historii wersji.
-    let wersje: IdeaHistoryEntry[] = [];
-    const naWpis = (s: any): IdeaHistoryEntry => ({
-      id: `snap-${s.id}`,
-      timestamp: Number(s.timestamp) || Date.now(),
-      kind: 'version',
-      type: 'snapshot',
-      actor: t('Wersja', 'Version'),
-      label: String(s.label || ''),
-      snapshot: { nodes: s.nodes || [], edges: s.edges || [], extensions: s.extensions },
-      nodeCount: Number(s.nodeCount) || (s.nodes?.length ?? 0),
-      edgeCount: Number(s.edgeCount) || (s.edges?.length ?? 0),
-    });
-    try {
-      const res = await Api.getMyIdeaMapSnapshots(ideaId);
-      wersje = (Array.isArray(res?.snapshots) ? res.snapshots : []).map(naWpis);
-    } catch {
-      lokalny = true;
-      wersje = czytajLokalne<any>(`${SNAPSHOT_LS_PREFIX}${ideaId}`).map(naWpis);
-    }
-
+    const { wpisy: pobrane, trybLokalny: lokalny } = await pobierzHistorieIdei(ideaId, isPl);
     setTrybLokalny(lokalny);
-    setWpisy([...zdarzenia, ...wersje].sort((a, b) => b.timestamp - a.timestamp));
+    setWpisy(pobrane);
     setLadowanie(false);
   }, [ideaId, isDraft, isPl]);
 

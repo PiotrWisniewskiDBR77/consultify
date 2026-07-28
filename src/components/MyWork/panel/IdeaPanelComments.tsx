@@ -54,7 +54,7 @@ export interface IdeaPanelCommentsProps {
   graphNodes: any[];
 }
 
-interface PanelComment {
+export interface PanelComment {
   id: string;
   nodeId: string;
   nodeLabel: string;
@@ -74,11 +74,11 @@ interface PanelComment {
 export const IDEA_SCOPE_NODE_ID = '__idea__';
 
 /** Autor-maszyna: Teresa/AI oznaczamy plakietką (standard §7). */
-function czyAI(author: string): boolean {
+export function czyAI(author: string): boolean {
   return /teresa|\bai\b|assistant|bot/i.test(author || '');
 }
 
-function czasWzgledny(value: string | number | undefined, pl: boolean): string {
+export function czasWzgledny(value: string | number | undefined, pl: boolean): string {
   if (value === undefined || value === null) return '';
   const ts = typeof value === 'number' ? value : Date.parse(String(value));
   if (Number.isNaN(ts)) return String(value);
@@ -91,7 +91,7 @@ function czasWzgledny(value: string | number | undefined, pl: boolean): string {
   return pl ? `${Math.floor(h / 24)} dn. temu` : `${Math.floor(h / 24)}d ago`;
 }
 
-function etykietaWezla(node: any, pl: boolean): string {
+export function etykietaWezla(node: any, pl: boolean): string {
   return (
     node?.data?.label ||
     node?.data?.title ||
@@ -101,7 +101,7 @@ function etykietaWezla(node: any, pl: boolean): string {
 }
 
 /** Komentarze zapisane w blobie grafu (Tablica / Przepływ). */
-function zblobu(graphNodes: any[], pl: boolean, tylkoNode?: string | null): PanelComment[] {
+export function zblobu(graphNodes: any[], pl: boolean, tylkoNode?: string | null): PanelComment[] {
   const out: PanelComment[] = [];
   for (const node of graphNodes ?? []) {
     if (tylkoNode && node?.id !== tylkoNode) continue;
@@ -121,6 +121,39 @@ function zblobu(graphNodes: any[], pl: boolean, tylkoNode?: string | null): Pane
     }
   }
   return out;
+}
+
+/**
+ * Odczyt wątku serwerowego — JEDNO źródło prawdy dla zakładki „Komentarze"
+ * (układ 5 zakładek, flaga OFF) i dla scalonej osi czasu „Aktywność"
+ * (`IdeaPanelActivity`, układ 6 sekcji, flaga ON). Bez tego eksportu powstałby
+ * drugi, rozjeżdżający się odczyt tych samych komentarzy.
+ *
+ * `nodeId === null` → wątek CAŁEJ Idei (zapytanie zbiorcze: wątek Idei +
+ * wszystkie węzły). `nodeId` podany → wąski wątek jednego elementu.
+ * Rzuca wyjątkiem gdy kanał serwerowy padnie — decyzję o fallbacku (blob)
+ * podejmuje wywołujący.
+ */
+export async function pobierzKomentarzeSerwerowe(
+  ideaId: string,
+  nodeId: string | null
+): Promise<PanelComment[]> {
+  const res = nodeId
+    ? await Api.getNodeComments(ideaId, nodeId)
+    : await Api.getIdeaComments(ideaId);
+  const lista = Array.isArray(res?.comments) ? res.comments : [];
+  // Etykiety NIE są rozwiązywane tutaj — `graphNodes` bywa nową tablicą przy
+  // każdym renderze rodzica, więc trzymanie ich w zależnościach efektu
+  // zapętliłoby fetch → setState → fetch. Nazwę doklejamy przy składaniu listy.
+  return lista.map((c: any) => ({
+    id: String(c.id),
+    nodeId: String(c.nodeId ?? nodeId ?? IDEA_SCOPE_NODE_ID),
+    nodeLabel: '',
+    author: String(c.author ?? ''),
+    text: String(c.text ?? ''),
+    createdAt: c.createdAt,
+    source: 'server' as const,
+  }));
 }
 
 const CARD =
@@ -190,26 +223,10 @@ export const IdeaPanelComments: React.FC<IdeaPanelCommentsProps> = ({
     setBlad(null);
     try {
       // „Cała Idea" → jedno zapytanie zbiorcze (wątek Idei + wszystkie węzły).
-      // „Zaznaczenie" → wąski wątek jednego węzła.
-      const res =
-        zakres === 'selection' && wybranyId
-          ? await Api.getNodeComments(ideaId, wybranyId)
-          : await Api.getIdeaComments(ideaId);
-      const lista = Array.isArray(res?.comments) ? res.comments : [];
-      // Etykiety NIE są rozwiązywane tutaj — `graphNodes` bywa nową tablicą przy
-      // każdym renderze rodzica, więc trzymanie ich w zależnościach `pobierz`
-      // zapętliłoby efekt (fetch → setState → nowy `pobierz` → fetch…).
-      // Nazwę węzła doklejamy dopiero przy składaniu listy (`pozycje`).
+      // „Zaznaczenie" → wąski wątek jednego węzła. Odczyt współdzielony z osią
+      // czasu „Aktywność" (`pobierzKomentarzeSerwerowe`).
       setSerwerowe(
-        lista.map((c: any) => ({
-          id: String(c.id),
-          nodeId: String(c.nodeId ?? wybranyId ?? IDEA_SCOPE_NODE_ID),
-          nodeLabel: '',
-          author: String(c.author ?? ''),
-          text: String(c.text ?? ''),
-          createdAt: c.createdAt,
-          source: 'server' as const,
-        }))
+        await pobierzKomentarzeSerwerowe(ideaId, zakres === 'selection' ? wybranyId : null)
       );
     } catch {
       // Kanał serwerowy niedostępny → zostają komentarze z blobu (bez atrapy).
