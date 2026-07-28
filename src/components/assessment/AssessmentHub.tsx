@@ -55,6 +55,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext } from '@/types/workspace';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { DecisionDetailView } from '../MyWork/DecisionDetailView';
@@ -2635,7 +2636,7 @@ const ReportSlideOverContent: React.FC<{
             <Calendar size={11} /> Created
           </span>
           <span className="text-xs text-slate-700 dark:text-slate-300">
-            {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : '—'}
+            {report.createdAt ? formatListDate(report.createdAt) : '—'}
           </span>
         </div>
         <div className="flex items-center justify-between px-3.5 py-2.5">
@@ -2643,7 +2644,7 @@ const ReportSlideOverContent: React.FC<{
             <Clock size={11} /> Last updated
           </span>
           <span className="text-xs text-slate-700 dark:text-slate-300">
-            {report.updatedAt ? new Date(report.updatedAt).toLocaleDateString() : '—'}
+            {report.updatedAt ? formatListDate(report.updatedAt) : '—'}
           </span>
         </div>
       </div>

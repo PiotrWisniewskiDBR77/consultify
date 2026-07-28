@@ -114,6 +114,7 @@ import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
 import { isInterviewPendingReviewTabEnabled } from '@/utils/interviewPendingReviewTabFlag';
 import { isInterviewPipelineStepperEnabled } from '@/utils/interviewPipelineStepperFlag';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import {
   type FilterChip,
@@ -1752,7 +1753,7 @@ export const InterviewHub: React.FC = () => {
           (s.name ?? '').toLowerCase().includes(query) ||
           (s.assigneeName ?? '').toLowerCase().includes(query) ||
           (s.templateName ?? '').toLowerCase().includes(query) ||
-          new Date(s.startedAt || 0).toLocaleDateString().includes(query)
+          formatListDate(s.startedAt || 0).includes(query)
       );
     }
 
@@ -2304,7 +2305,7 @@ export const InterviewHub: React.FC = () => {
       });
       const newSession = await Api.post('/interview/sessions', {
         projectId,
-        name: `Interview ${new Date().toLocaleDateString()}`,
+        name: `Interview ${formatListDate(new Date())}`,
       });
 
       setSessions((prev) => [newSession as InterviewSession, ...prev]);
@@ -4418,7 +4419,7 @@ export const InterviewHub: React.FC = () => {
           const resolved = isSubmitted || isApproved;
           const overdue = daysToDue != null && daysToDue < 0 && !resolved;
           const absDays = daysToDue != null ? Math.abs(daysToDue) : 0;
-          const dateLabel = new Date(row.dueAt).toLocaleDateString();
+          const dateLabel = formatListDate(row.dueAt);
           return (
             <DueChip
               label={
@@ -4445,7 +4446,7 @@ export const InterviewHub: React.FC = () => {
         render: (row: InterviewSession) =>
           row.submittedAt ? (
             <span className="text-xs text-c-text-secondary">
-              {new Date(row.submittedAt).toLocaleDateString()}
+              {formatListDate(row.submittedAt)}
             </span>
           ) : (
             <span className="text-xs text-c-text-muted">—</span>
@@ -4880,8 +4881,8 @@ export const InterviewHub: React.FC = () => {
               />
               <span className="text-xs text-slate-600 dark:text-slate-400">
                 {session.dueAt
-                  ? `${t('interview.hub.due2')} ${new Date(session.dueAt).toLocaleDateString()}`
-                  : new Date(session.startedAt).toLocaleDateString()}
+                  ? `${t('interview.hub.due2')} ${formatListDate(session.dueAt)}`
+                  : formatListDate(session.startedAt)}
               </span>
             </div>
 
@@ -5333,7 +5334,7 @@ export const InterviewHub: React.FC = () => {
         render: (row: (typeof rows)[number]) =>
           row.createdAt ? (
             <span className="text-xs text-c-text-muted">
-              {new Date(row.createdAt).toLocaleDateString()}
+              {formatListDate(row.createdAt)}
             </span>
           ) : (
             <span className="text-xs text-c-text-muted">—</span>
@@ -5499,7 +5500,7 @@ export const InterviewHub: React.FC = () => {
             }
             Api.post(`/interview/templates/${template.id}/use`, {
               projectId,
-              name: `${template.name} ${new Date().toLocaleDateString()}`,
+              name: `${template.name} ${formatListDate(new Date())}`,
             })
               .then((created) => {
                 const newSession = created as InterviewSession;
@@ -6297,7 +6298,7 @@ export const InterviewHub: React.FC = () => {
     ) => {
       try {
         const title = getAssignmentTitle(a);
-        const due = a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—';
+        const due = a.dueAt ? formatListDate(a.dueAt) : '—';
         const status = getAssignmentStatusLabel(a.status);
         const progress = a.session?.completenessPercent ?? 0;
         const assignee = a.assignee?.name || a.assignee?.email || '—';
@@ -6659,7 +6660,7 @@ Return ONLY the answer text (no markdown fences).`;
               label={dtd.label}
               risk={dtd.days < 0 ? 'overdue' : dtd.days <= 3 ? 'soon' : 'none'}
               showIcon
-              title={row.dueAt ? new Date(row.dueAt).toLocaleDateString() : undefined}
+              title={row.dueAt ? formatListDate(row.dueAt) : undefined}
             />
           );
         },
@@ -6679,7 +6680,7 @@ Return ONLY the answer text (no markdown fences).`;
                     title={new Date(row.submittedAt).toLocaleString()}
                   >
                     <Send size={11} className="text-c-text-muted" />
-                    {new Date(row.submittedAt).toLocaleDateString()}
+                    {formatListDate(row.submittedAt)}
                   </span>
                 ) : (
                   <span className="text-xs text-c-text-muted">—</span>
@@ -6864,7 +6865,7 @@ Return ONLY the answer text (no markdown fences).`;
                   risk={dtd.days < 0 ? 'overdue' : dtd.days <= 3 ? 'soon' : 'none'}
                   showIcon
                   title={
-                    assignment.dueAt ? new Date(assignment.dueAt).toLocaleDateString() : undefined
+                    assignment.dueAt ? formatListDate(assignment.dueAt) : undefined
                   }
                 />
               ) : (
@@ -9491,7 +9492,7 @@ Return ONLY the answer text (no markdown fences).`;
                 </div>
                 <div className="text-xs text-slate-500 mt-1">
                   {selectedAssignment.dueAt
-                    ? `${t('interview.hub.due3')} ${new Date(selectedAssignment.dueAt).toLocaleDateString()}`
+                    ? `${t('interview.hub.due3')} ${formatListDate(selectedAssignment.dueAt)}`
                     : t('interview.hub.noDueDate')}
                 </div>
               </div>

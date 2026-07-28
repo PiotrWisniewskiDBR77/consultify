@@ -58,6 +58,7 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { tokenService } from '@/services/tokenService';
 import { isIdeasPreviewOverlayEnabled } from '@/utils/ideasPreviewOverlayFlag';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import { useFavoriteIdeas } from './hooks/useFavoriteIdeas';
@@ -1159,9 +1160,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     const metaTrailing = (
       <span className="text-[11px] font-medium text-c-text-muted">
         {idea.updatedAt
-          ? new Date(idea.updatedAt).toLocaleDateString()
+          ? formatListDate(idea.updatedAt)
           : idea.createdAt
-            ? new Date(idea.createdAt).toLocaleDateString()
+            ? formatListDate(idea.createdAt)
             : '—'}
       </span>
     );
@@ -1883,9 +1884,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         </div>
                         <span className="shrink-0">
                           {idea.updatedAt
-                            ? new Date(idea.updatedAt).toLocaleDateString()
+                            ? formatListDate(idea.updatedAt)
                             : idea.createdAt
-                              ? new Date(idea.createdAt).toLocaleDateString()
+                              ? formatListDate(idea.createdAt)
                               : '—'}
                         </span>
                       </div>
@@ -2025,9 +2026,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                           </button>
                           <span className="text-[10px] text-c-text-muted whitespace-nowrap">
                             {idea.updatedAt
-                              ? new Date(idea.updatedAt).toLocaleDateString()
+                              ? formatListDate(idea.updatedAt)
                               : idea.createdAt
-                                ? new Date(idea.createdAt).toLocaleDateString()
+                                ? formatListDate(idea.createdAt)
                                 : ''}
                           </span>
                         </div>
