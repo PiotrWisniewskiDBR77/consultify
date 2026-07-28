@@ -51,6 +51,13 @@ export interface ExecutiveModuleShellProps {
   topBarTitleTrailingSlot?: React.ReactNode;
   topBarPrimaryActionSlot?: React.ReactNode;
   /**
+   * Opcjonalne SCALENIE górnego paska w jedną linię — DOM id węzła, do którego
+   * `TopBar` ma przenieść portalem swój klaster poleceń zamiast renderować
+   * własny rząd (patrz `TopBar.mergeSlotId`). ADDITIVE: pomiń dla domyślnego
+   * układu; gdy węzła nie ma w DOM, pasek renderuje się bez zmian.
+   */
+  topBarMergeSlotId?: string;
+  /**
    * Optional second command bar (Menu 3) rendered as a full-width row directly
    * BELOW the top bar. ADDITIVE — omit to keep the single-row top bar. The node
    * brings its own border/height/background.
@@ -153,6 +160,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   topBarTitleIconSlot,
   topBarTitleTrailingSlot,
   topBarPrimaryActionSlot,
+  topBarMergeSlotId,
   secondBar,
   leftRailTitle,
   leftRailToolsSlot,
@@ -293,6 +301,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
         titleIconSlot={topBarTitleIconSlot}
         titleTrailingSlot={topBarTitleTrailingSlot}
         primaryActionSlot={topBarPrimaryActionSlot}
+        mergeSlotId={topBarMergeSlotId}
       />
 
       {secondBar}

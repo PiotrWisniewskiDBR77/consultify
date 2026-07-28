@@ -104,6 +104,10 @@ import {
   isBetaSubareaClosed,
 } from '@/utils/betaAccess';
 import { isClientVaultEnabled } from '@/utils/clientVaultFlag';
+import {
+  IDEA_TOP_BAR_SLOT_ID,
+  isIdeaTopBarOneLineEnabled,
+} from '@/utils/ideaTopBarOneLineFlag';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import {
   dispatchPilotAccessBlocked,
@@ -640,6 +644,10 @@ interface MyWorkHubProps {
 export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  // Górny pasek Idei w jednej linii (flaga, domyślnie OFF) — steruje TYLKO
+  // slotem portalu w rzędzie pilli + kurczliwością tego rzędu. Reszta huba
+  // przy OFF jest bajt-w-bajt jak dziś.
+  const ideaTopBarOneLine = isIdeaTopBarOneLineEnabled();
   const openChatWithContext = useOpenChatWithContext();
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   const location = useLocation();
@@ -1673,6 +1681,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     [activeDocumentId]
   );
 
+  // Powrót do listy Idei z rzędu pilli — chip „Lista". Przy scalonym górnym
+  // pasku (flaga `ff_ideaTopBarOneLine`) to JEDYNE wejście „w górę" w tym
+  // rzędzie (strzałka wstecz powłoki znika razem z breadcrumbem), więc musi
+  // działać dla każdego typu dokumentu. Działa: zeruje aktywny dokument, a hub
+  // wraca do listy aktywnej zakładki (dla Idei — listy Idei).
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
   }, []);
@@ -2458,8 +2471,28 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
     return (
       <div className={MENU_3_ROW_CLASS}>
-        <div className={MENU_3_INNER_CLASS}>
-          <div className={`${MENU_3_LEFT_CLASS} overflow-x-auto whitespace-nowrap no-scrollbar`}>
+        <div
+          className={
+            // ⚠ ZNALEZIONE WZROKIEM (nie z testów): `MENU_3_INNER_CLASS` ma
+            // `overflow-x-auto`, a `overflow-x: auto` wymusza `overflow-y: auto`
+            // — czyli rząd PRZYCINA wszystko, co z niego wystaje w dół. Przy
+            // scalonym pasku mieszka tu kebab `⋯`, więc jego rozwijane menu
+            // było niewidoczne (klik działał, menu nie było widać). Przy fladze
+            // ON zdejmujemy przewijanie z rzędu — przewija się KLASTER PILLI
+            // (własne `overflow-x-auto` niżej), więc nic nie ucieka poza ekran.
+            ideaTopBarOneLine
+              ? 'flex min-h-8 items-center justify-between gap-3 whitespace-nowrap'
+              : MENU_3_INNER_CLASS
+          }
+        >
+          <div
+            className={`${MENU_3_LEFT_CLASS} overflow-x-auto whitespace-nowrap no-scrollbar ${
+              // Jedna linia: pille muszą KURCZYĆ SIĘ i przewijać we własnym
+              // kontenerze, żeby klaster poleceń po prawej nigdy nie uciekł
+              // poza ekran ani nie nachodził na karty (wąskie okno).
+              ideaTopBarOneLine ? 'min-w-0 flex-1' : ''
+            }`}
+          >
             {/* List button */}
             <button
               onClick={handleShowList}
@@ -2528,6 +2561,22 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
            * exposes "Omów z Teresą / Discuss with Teresa" (IdeaWorkspaceToolbar).
            * One AI entry per shell; no double doors.
            */}
+
+          {/*
+           * SCALENIE GÓRNEGO PASKA IDEI W JEDNĄ LINIĘ (flaga
+           * `ff_ideaTopBarOneLine`, domyślnie OFF). Ten pusty węzeł jest CELEM
+           * portalu dla klastra poleceń Menu 1 powłoki Idei (Etap · Zapisano ·
+           * Teresa · ⋯ · Konwertuj) — patrz `TopBar.mergeSlotId`. Renderujemy
+           * go WYŁĄCZNIE przy fladze ON: przy OFF węzła nie ma, więc powłoka
+           * sama zostaje przy starym, dwurzędowym układzie.
+           */}
+          {ideaTopBarOneLine ? (
+            <div
+              id={IDEA_TOP_BAR_SLOT_ID}
+              className="flex shrink-0 items-center gap-1.5 pl-2"
+              data-testid="idea-top-bar-one-line-slot"
+            />
+          ) : null}
         </div>
       </div>
     );

@@ -56,6 +56,12 @@ export interface IdeaCanvasMelsViewProps {
   primaryActionSlot?: React.ReactNode;
   /** Menu 3 (second bar) — per-tool view actions, ready-made node from host. */
   secondBar?: React.ReactNode;
+  /**
+   * Scalenie Menu 1 w rząd pilli hosta (jedna linia) — DOM id slotu. Podawane
+   * przez `IdeaMapWorkspace` tylko przy fladze `ff_ideaTopBarOneLine`; gdy
+   * slotu nie ma w DOM, powłoka renderuje pasek po staremu.
+   */
+  mergeTopBarSlotId?: string;
 
   /** Right-rail inspector tabs + active id + selection + panel renderer. */
   rightRailTools: RightRailToolDescriptor[];
@@ -105,6 +111,7 @@ export const IdeaCanvasMelsView: React.FC<IdeaCanvasMelsViewProps> = ({
   titleTrailingSlot,
   primaryActionSlot,
   secondBar,
+  mergeTopBarSlotId,
   rightRailTools,
   activeRightToolId,
   onSelectRightTool,
@@ -145,6 +152,7 @@ export const IdeaCanvasMelsView: React.FC<IdeaCanvasMelsViewProps> = ({
       topBarTitleIconSlot={titleIconSlot}
       topBarTitleTrailingSlot={titleTrailingSlot}
       topBarPrimaryActionSlot={primaryActionSlot}
+      topBarMergeSlotId={mergeTopBarSlotId}
       secondBar={secondBar}
       centerMode="canvas"
       canvas={canvas}

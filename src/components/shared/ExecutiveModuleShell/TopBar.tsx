@@ -20,6 +20,9 @@
 
 import { ArrowLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+
+import { usePortalSlot } from '@/hooks/usePortalSlot';
 
 import {
   resolveChipGroup,
@@ -60,6 +63,20 @@ interface TopBarProps {
   className?: string;
   /** Optional `data-testid` override for the row. */
   testId?: string;
+  /**
+   * SCALENIE W JEDNĄ LINIĘ (opcjonalne, ADDITIVE — pomiń dla domyślnego rzędu).
+   *
+   * Gdy podane `id` istnieje w DOM, TopBar NIE renderuje własnego rzędu: cały
+   * klaster poleceń (`titleTrailingSlot` · chipy · `⋯` · `primaryActionSlot` ·
+   * `presenceSlot`) idzie `createPortal`-em do tego węzła, a tożsamość
+   * (strzałka wstecz + breadcrumb + tytuł) znika — bo host, który wystawił
+   * slot, niesie ją już we własnym rzędzie (rząd pilli otwartych dokumentów).
+   *
+   * Gdy `id` nie jest podane ALBO węzła nie ma w DOM — render bez zmian
+   * (pełny rząd z tożsamością). To bezpiecznik: brak celu portalu nigdy nie
+   * może zabrać użytkownikowi nawigacji w górę.
+   */
+  mergeSlotId?: string;
 }
 
 const DOT_TONE_CLASS: Record<Exclude<TopBarChipDotTone, null>, string> = {
@@ -287,9 +304,11 @@ export const TopBar: React.FC<TopBarProps> = ({
   presenceSlot,
   className,
   testId,
+  mergeSlotId,
 }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(title);
+  const mergeSlotNode = usePortalSlot(mergeSlotId);
 
   React.useEffect(() => {
     setDraft(title);
@@ -308,6 +327,46 @@ export const TopBar: React.FC<TopBarProps> = ({
     setEditing(false);
     if (draft !== title) onTitleChange?.(draft);
   };
+
+  // ── Scalenie w jedną linię: klaster poleceń portalem do rzędu hosta ────────
+  // Kolejność 1:1 ze zgłoszeniem właściciela: Etap · Zapisano · Teresa · ⋯ ·
+  // Konwertuj. ZERO pionowego separatora i zero obwódki — właściciel wprost
+  // prosił o zdjęcie „zbędnej ramki po prawej stronie" wokół tej grupy.
+  if (mergeSlotId && mergeSlotNode) {
+    return createPortal(
+      <div
+        className="flex items-center gap-1.5 min-w-0"
+        data-testid="mels-topbar-merged"
+        role="toolbar"
+        aria-label={`${moduleLabel} top bar`}
+      >
+        {presenceSlot ? (
+          <div className="flex items-center gap-2 flex-shrink-0" data-testid="mels-topbar-presence">
+            {presenceSlot}
+          </div>
+        ) : null}
+        {titleTrailingSlot ? (
+          <div
+            className="flex items-center gap-2 flex-shrink-0"
+            data-testid="mels-topbar-title-trailing"
+          >
+            {titleTrailingSlot}
+          </div>
+        ) : null}
+        <div className="flex items-center gap-1 flex-shrink-0" data-testid="mels-topbar-chips">
+          {secondaryChips.map((chip) => (
+            <Chip key={chip.id} descriptor={chip} />
+          ))}
+          <OverflowMenu chips={overflowChips} />
+          {primaryChips.map((chip) => (
+            <Chip key={chip.id} descriptor={chip} />
+          ))}
+          {primaryActionSlot}
+        </div>
+      </div>,
+      mergeSlotNode
+    );
+  }
 
   return (
     <div

@@ -35,6 +35,10 @@ import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
+import {
+  IDEA_TOP_BAR_SLOT_ID,
+  isIdeaTopBarOneLineEnabled,
+} from '@/utils/ideaTopBarOneLineFlag';
 import { isMelsCanvasEnabled } from '@/utils/melsCanvasFlag';
 import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
@@ -2964,6 +2968,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // handlers/hooks — TDZ-safe). Flag OFF → nothing below is consumed and the
   // legacy render is byte-for-byte unchanged.
   const melsCanvasEnabled = isMelsCanvasEnabled();
+  // ── Górny pasek w JEDNEJ LINII (flaga, domyślnie OFF) ───────────────────
+  // ON: Menu 3 (Dodaj · Auto-układ · AI rozwiń · Szablony · Eksport) znika w
+  // całości — te same wejścia są w lewym pasku narzędzi (CanvasLeftToolbar),
+  // a „Eksport" ma już pozycję w kebabie Menu 1 (ten sam `setExportMenuOpen`).
+  // Klaster poleceń Menu 1 przenosi się portalem do rzędu pilli MyWorkHub.
+  const ideaTopBarOneLine = isIdeaTopBarOneLineEnabled();
   // VF1 SPEC-A canvas states (loading/error) — default OFF, gated per rule #7.
   const vf1CanvasSpecAEnabled = isVf1CanvasSpecAEnabled();
   // Z-menu1-delete: "Usuń" kebab entry — wires the same `Api.deleteMyIdea`
@@ -3488,12 +3498,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               />
             }
             secondBar={
-              <IdeaCanvasSecondBar
-                left={melsMenu3Actions.left}
-                right={melsMenu3Actions.right}
-                ariaLabel={t('mindmap.ideaCanvasAndMapTools')}
-              />
+              ideaTopBarOneLine ? undefined : (
+                <IdeaCanvasSecondBar
+                  left={melsMenu3Actions.left}
+                  right={melsMenu3Actions.right}
+                  ariaLabel={t('mindmap.ideaCanvasAndMapTools')}
+                />
+              )
             }
+            mergeTopBarSlotId={ideaTopBarOneLine ? IDEA_TOP_BAR_SLOT_ID : undefined}
             rightRailTools={melsCanvasRightRailTools}
             renderRightRailPanel={renderMelsCanvasRightRailPanel}
             canvas={
