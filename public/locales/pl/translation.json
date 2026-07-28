@@ -28614,7 +28614,14 @@
       "edgeCount_one": "{{count}} połączenie",
       "edgeCount_few": "{{count}} połączenia",
       "edgeCount_many": "{{count}} połączeń",
-      "edgeCount_other": "{{count}} połączenia"
+      "edgeCount_other": "{{count}} połączenia",
+      "exportFailedTitle": "Nie udało się wyeksportować: {{format}}",
+      "exportFailedToast": "Eksport „{{format}}\" nie powiódł się — plik nie został pobrany.",
+      "exportFailedCanvasNotFound": "Nie znaleziono płótna mapy. Otwórz mapę na pełnym ekranie i spróbuj ponownie.",
+      "exportFailedEmptyMap": "Mapa nie ma widocznych elementów do wyeksportowania.",
+      "exportFailedRender": "Renderowanie obrazu mapy nie powiodło się. Szczegóły: {{reason}}",
+      "exportFallbackJson": "Pobierz zamiast tego dane mapy (JSON)",
+      "exportFailedDismiss": "Zamknij"
     },
     "slashCommandMenu": {
       "typeCommand": "Wpisz polecenie…",

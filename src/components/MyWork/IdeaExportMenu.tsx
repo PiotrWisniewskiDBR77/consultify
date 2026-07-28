@@ -5,6 +5,7 @@
  * PDF generation via jsPDF is optional and loaded dynamically.
  */
 import {
+  AlertTriangle,
   Code2,
   Download,
   FileImage,
@@ -15,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
@@ -26,6 +28,14 @@ import {
   parseDiagramPackage,
   parseDrawIoXml,
 } from './canvas/diagramInterop';
+import {
+  buildVectorSvg,
+  captureMapRaster,
+  isDarkColor,
+  MapExportError,
+  renderTextStrip,
+  toRgbTriplet,
+} from './canvas/mapExportRender';
 import type { IdeaWorkspaceImportPayload } from './ideaSelectionTypes';
 
 /**
@@ -69,8 +79,12 @@ const FORMATS: ExportFormat[] = [
     icon: FileImage,
     labelPl: 'SVG (wektor)',
     labelEn: 'SVG (vector)',
-    descPl: 'Eksport jako grafika wektorowa',
-    descEn: 'Export as vector graphic',
+    // Nazwa „wektor" byla wczesniej NIEPRAWDZIWA: eksport produkowal jeden
+    // <foreignObject> z surowym XHTML (0 elementow <text>), ktorego edytory
+    // wektorowe nie renderuja. Od naprawy eksportu rysujemy realne prymitywy
+    // SVG, wiec opis moze to obiecywac wprost.
+    descPl: 'Krzywe i tekst do edycji — Illustrator, Inkscape, Figma',
+    descEn: 'Editable shapes and text — Illustrator, Inkscape, Figma',
     ext: 'svg',
   },
   {
@@ -179,6 +193,14 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
   const { isEnabled } = useFeatureFlagsContext();
   const importGuardRailEnabled = isEnabled('ideaImportGuardRail');
   const [exporting, setExporting] = useState<string | null>(null);
+  // Bez cichych podmian formatu (patrz `reportExportFailure`): nieudany eksport
+  // zostawia tu KONKRETNY powod, ktory widac w oknie, zamiast po cichu podac
+  // uzytkownikowi inny plik niz ten, ktory kliknal.
+  const [exportError, setExportError] = useState<{
+    formatId: string;
+    formatLabel: string;
+    reason: string;
+  } | null>(null);
   const [importFormat, setImportFormat] = useState<'drawio_xml' | 'bpmn_xml' | 'diagram_package'>(
     'drawio_xml'
   );
@@ -260,45 +282,108 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
     [downloadBlob]
   );
 
-  const safeFilename = title?.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50) || 'idea-map';
+  // Nazwa pliku zachowuje polskie znaki — poprzednia maska `[^a-zA-Z0-9_-]`
+  // robila z „Wejscie na rynek DACH" plik `Wej_cie_na_rynek_DACH`. Usuwamy
+  // tylko znaki wrogie systemom plikow.
+  const safeFilename =
+    (title || '')
+      .replace(/[\\/:*?"<>| -]/g, ' ')
+      .trim()
+      .replace(/\s+/g, '_')
+      .replace(/_{2,}/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 60) || 'idea-map';
+
+  const formatLabel = useCallback(
+    (formatId: string) => {
+      const format = FORMATS.find((entry) => entry.id === formatId);
+      if (!format) return formatId.toUpperCase();
+      return isPl ? format.labelPl : format.labelEn;
+    },
+    [isPl]
+  );
+
+  /**
+   * ZERO CICHYCH PODMIAN FORMATU.
+   *
+   * Wczesniej `exportPNG`/`exportSVG` mialy `catch { exportJSON(); }`, a
+   * `exportPDF` — `catch { exportPNG(); }`. Uzytkownik klikal „PDF", dostawal
+   * PNG (albo JSON) i nie mial ZADNEJ informacji, ze cos poszlo nie tak: brak
+   * komunikatu, brak logu, inny plik w Pobranych. To najgorszy z trzech
+   * defektow eksportu, bo niszczy zaufanie do calego okna.
+   *
+   * Teraz: mowimy CO sie stalo i CZEGO nie ma, a zapasowy JSON jest OFERTA
+   * (przycisk w oknie), nie decyzja podjeta za plecami uzytkownika.
+   */
+  const reportExportFailure = useCallback(
+    (formatId: string, error: unknown) => {
+      const code = error instanceof MapExportError ? error.code : 'render_failed';
+      const detail = (error as Error)?.message || '';
+      const reason =
+        code === 'canvas_not_found'
+          ? t('myWorkIdeas.exportMenu.exportFailedCanvasNotFound')
+          : code === 'empty_map'
+            ? t('myWorkIdeas.exportMenu.exportFailedEmptyMap')
+            : t('myWorkIdeas.exportMenu.exportFailedRender', { reason: detail });
+      setExportError({ formatId, formatLabel: formatLabel(formatId), reason });
+      toast.error(
+        t('myWorkIdeas.exportMenu.exportFailedToast', { format: formatLabel(formatId) }),
+        { id: 'idea-export-failed' }
+      );
+      // Diagnostyka dla wsparcia — bez tego nieudany eksport nie zostawial sladu.
+      console.error('[IdeaExportMenu] export failed', { formatId, code, error });
+    },
+    [formatLabel, t]
+  );
 
   const exportPNG = useCallback(async () => {
     setExporting('png');
+    setExportError(null);
     try {
-      const container = canvasContainerRef?.current?.querySelector('.react-flow') as HTMLElement;
-      if (!container) throw new Error('Canvas not found');
-      const { toPng } = await import('html-to-image');
-      const dataUrl = await toPng(container, {
-        backgroundColor: '#ffffff',
-        quality: 0.95,
-        pixelRatio: 2,
-      });
-      const res = await fetch(dataUrl);
+      const container = canvasContainerRef?.current;
+      if (!container) throw new MapExportError('canvas_not_found', 'canvasContainerRef is empty');
+      const capture = await captureMapRaster(container);
+      const res = await fetch(capture.dataUrl);
       const blob = await res.blob();
       downloadBlob(blob, `${safeFilename}.png`);
-    } catch {
-      // fallback: export as JSON
-      exportJSON();
+    } catch (error) {
+      reportExportFailure('png', error);
     } finally {
       setExporting(null);
     }
-  }, [canvasContainerRef, downloadBlob, safeFilename]);
+  }, [canvasContainerRef, downloadBlob, reportExportFailure, safeFilename]);
 
-  const exportSVG = useCallback(async () => {
+  const exportSVG = useCallback(() => {
     setExporting('svg');
+    setExportError(null);
     try {
-      const container = canvasContainerRef?.current?.querySelector('.react-flow') as HTMLElement;
-      if (!container) throw new Error('Canvas not found');
-      const { toSvg } = await import('html-to-image');
-      const dataUrl = await toSvg(container, { backgroundColor: '#ffffff' });
-      const svgContent = decodeURIComponent(dataUrl.split(',')[1] || '');
+      const container = canvasContainerRef?.current;
+      if (!container) throw new MapExportError('canvas_not_found', 'canvasContainerRef is empty');
+      // Etykiety bierzemy z danych grafu, nie z DOM — DOM ma je pocięte na
+      // wiersze i wymieszane z odznakami/licznikami.
+      const labelsById = new Map<string, string>(
+        graphNodes.map((node: any) => [String(node.id), String(node.data?.label ?? '')])
+      );
+      const svgContent = buildVectorSvg(container, {
+        labelsById,
+        title: title || 'Idea Map',
+        footer: `${exportFooter} • ${title || 'Map'} • ${new Date().toISOString().slice(0, 10)}`,
+      });
       downloadText(svgContent, `${safeFilename}.svg`, 'image/svg+xml');
-    } catch {
-      exportJSON();
+    } catch (error) {
+      reportExportFailure('svg', error);
     } finally {
       setExporting(null);
     }
-  }, [canvasContainerRef, downloadText, safeFilename]);
+  }, [
+    canvasContainerRef,
+    downloadText,
+    exportFooter,
+    graphNodes,
+    reportExportFailure,
+    safeFilename,
+    title,
+  ]);
 
   const exportMarkdown = useCallback(() => {
     setExporting('markdown');
@@ -348,23 +433,39 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
 
   const exportPDF = useCallback(async () => {
     setExporting('pdf');
+    setExportError(null);
     try {
-      const container = canvasContainerRef?.current?.querySelector('.react-flow') as HTMLElement;
-      if (!container) throw new Error('Canvas not found');
-      const { toPng } = await import('html-to-image');
+      const container = canvasContainerRef?.current;
+      if (!container) throw new MapExportError('canvas_not_found', 'canvasContainerRef is empty');
+      const capture = await captureMapRaster(container);
       const { jsPDF } = await import('jspdf');
-      const dataUrl = await toPng(container, {
-        backgroundColor: '#ffffff',
-        quality: 0.95,
-        pixelRatio: 2,
+
+      // Orientacja idzie za ksztaltem mapy — mapa pionowa na poziomej kartce
+      // marnowala ~40% strony (plik wlasciciela: obraz 331 pkt na stronie 595).
+      const landscape = capture.widthPx >= capture.heightPx;
+      const pdf = new jsPDF({
+        orientation: landscape ? 'landscape' : 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        // Bez kompresji raster szedl do pliku jako surowy DeviceRGB — PDF
+        // wlasciciela wazyl 15 MB przy jednej stronie.
+        compress: true,
       });
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
       const margin = 10;
+      const footerBand = 8;
       const maxW = pageW - 2 * margin;
-      const maxH = pageH - 2 * margin - 8;
-      const aspect = container.offsetHeight / container.offsetWidth;
+      const maxH = pageH - 2 * margin - footerBand;
+
+      // Tlo strony = tlo eksportu, zeby ciemny raster nie lezal na bialej
+      // kartce z bialymi pasami dookola.
+      const [bgR, bgG, bgB] = toRgbTriplet(capture.background);
+      pdf.setFillColor(bgR, bgG, bgB);
+      pdf.rect(0, 0, pageW, pageH, 'F');
+
+      // Dopasowanie do strony z zachowaniem proporcji + wysrodkowanie w obu osiach.
+      const aspect = capture.heightPx / capture.widthPx;
       let imgW = maxW;
       let imgH = imgW * aspect;
       if (imgH > maxH) {
@@ -372,21 +473,39 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
         imgW = imgH / aspect;
       }
       const x = margin + (maxW - imgW) / 2;
-      pdf.addImage(dataUrl, 'PNG', x, margin, imgW, imgH);
-      pdf.setFontSize(8);
-      pdf.setTextColor(128, 128, 128);
-      pdf.text(
+      const y = margin + (maxH - imgH) / 2;
+      pdf.addImage(capture.dataUrl, 'PNG', x, y, imgW, imgH, undefined, 'FAST');
+
+      // Stopka jako obraz — patrz `renderTextStrip`: standardowa Helvetica w PDF
+      // jest jednobajtowa (WinAnsi) i nie ma polskich diakrytykow, przez co
+      // „Wejscie" wychodzilo jako „Wej[cie".
+      const dark = isDarkColor(capture.background);
+      const strip = renderTextStrip(
         `Exported from ${exportFooter} • ${title || 'Map'} • ${new Date().toISOString().slice(0, 10)}`,
-        margin,
-        pageH - 5
+        {
+          color: dark ? '#94a3b8' : '#6b7280',
+          background: capture.background,
+          fontPx: 11,
+          scale: 4,
+        }
       );
+      if (strip) {
+        const ratio = strip.widthPx / strip.heightPx;
+        let stripH = 3.6;
+        let stripW = stripH * ratio;
+        if (stripW > maxW) {
+          stripW = maxW;
+          stripH = stripW / ratio;
+        }
+        pdf.addImage(strip.dataUrl, 'PNG', margin, pageH - margin / 2 - stripH, stripW, stripH);
+      }
       pdf.save(`${safeFilename}.pdf`);
-    } catch {
-      exportPNG();
+    } catch (error) {
+      reportExportFailure('pdf', error);
     } finally {
       setExporting(null);
     }
-  }, [canvasContainerRef, exportFooter, exportPNG, safeFilename, title]);
+  }, [canvasContainerRef, exportFooter, reportExportFailure, safeFilename, title]);
 
   const exportJSON = useCallback(() => {
     setExporting('json');
@@ -638,6 +757,7 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
   const handleExport = useCallback(
     (formatId: string) => {
       if (!canExportFormat(formatId)) return;
+      setExportError(null);
       recordExportRequest(formatId);
       switch (formatId) {
         case 'png':
@@ -889,6 +1009,50 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
             )}
           </div>
         </div>
+
+        {/*
+          Nieudany eksport MUSI byc widoczny. Wczesniej blad byl polykany i
+          uzytkownik dostawal po cichu inny format (PDF→PNG, PNG/SVG→JSON).
+          Tutaj mowimy czego NIE MA, dlaczego, a zapasowy JSON jest osobnym,
+          swiadomym kliknieciem.
+        */}
+        {exportError && (
+          <div className="mx-5 mb-1 rounded-xl border border-amber-300/70 bg-amber-50 px-4 py-3 dark:border-amber-500/40 dark:bg-amber-950/30">
+            <div className="flex items-start gap-2">
+              <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div className="flex-1">
+                <div className="text-[12px] font-bold text-amber-800 dark:text-amber-200">
+                  {t('myWorkIdeas.exportMenu.exportFailedTitle', {
+                    format: exportError.formatLabel,
+                  })}
+                </div>
+                <div className="mt-0.5 text-[10px] text-amber-700 dark:text-amber-300">
+                  {exportError.reason}
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExportError(null);
+                      exportJSON();
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300/70 px-2.5 py-1.5 text-[11px] font-semibold text-amber-800 hover:bg-amber-100 dark:border-amber-500/40 dark:text-amber-200 dark:hover:bg-amber-900/40"
+                  >
+                    <FileJson size={12} />
+                    {t('myWorkIdeas.exportMenu.exportFallbackJson')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExportError(null)}
+                    className="rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
+                  >
+                    {t('myWorkIdeas.exportMenu.exportFailedDismiss')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60">
           <div className="text-[10px] text-slate-600 dark:text-slate-500">
