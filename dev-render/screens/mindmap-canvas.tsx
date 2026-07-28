@@ -367,6 +367,34 @@ Api.saveMyIdeaMap = (async (_ideaId: string, payload: any) =>
 Api.updateMyIdea = (async () => MOCK_IDEA) as typeof Api.updateMyIdea;
 Api.getMyIdeaEdges = (async () => []) as typeof Api.getMyIdeaEdges;
 
+// Analiza luk (AI Blind Spots). Bez tego mocka safety-net niżej zwraca pusty
+// payload i panel pokazuje wyłącznie stan „brak luk" — nie da się sprawdzić
+// przycisków „Dodaj"/„Odrzuć". Kontrakt 1:1 z my-work.routes.ts
+// (/map/gap-analysis): { proposal: { add: { nodes, edges }, rationale } }.
+Api.getMyIdeaGapAnalysis = (async () => ({
+  proposal: {
+    rationale:
+      'Mapa mocno rozwija zakres i zespół, ale nie dotyka ryzyka gotówkowego ani mierników.',
+    add: {
+      nodes: [
+        {
+          id: 'gap-cash',
+          data: { label: 'Wpływ przekroczeń na przepływ gotówki', branchKey: 'options' },
+        },
+        {
+          id: 'gap-kpi',
+          data: { label: 'Mierniki marży na poziomie projektu', branchKey: 'options' },
+        },
+        {
+          id: 'gap-client',
+          data: { label: 'Segmentacja klientów wg rentowności', branchKey: 'options' },
+        },
+      ],
+      edges: [],
+    },
+  },
+})) as unknown as typeof Api.getMyIdeaGapAnalysis;
+
 // Debug hook — weryfikacja w konsoli: `__MM_DEBUG_MAP__().nodes.length`.
 (window as any).__MM_DEBUG_MAP__ = () => currentMap;
 

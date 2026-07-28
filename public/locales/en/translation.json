@@ -26472,6 +26472,8 @@
       "noAppliedAiChangesYet": "No applied AI changes yet",
       "noArtifactsLinkedThisNodeYet": "No artifacts linked to this node yet.",
       "noBlindSpotsFound": "No blind spots found",
+      "blindSpotsIdleHint": "Run the check to find areas the map is missing.",
+      "blindSpotsUnavailable": "Add a few more elements to the map — there is nothing to analyse yet.",
       "noChangesProposed": "No changes proposed.",
       "noCommentsYetWriteFirstOne": "No comments yet. Write the first one!",
       "noCompanyDataConnectionsFound": "No company data connections found",

@@ -27536,6 +27536,8 @@
       "noAppliedAiChangesYet": "Brak zastosowanych zmian AI",
       "noArtifactsLinkedThisNodeYet": "Brak podłączonych artefaktów do tego węzła.",
       "noBlindSpotsFound": "Nie znaleziono luk w mapie",
+      "blindSpotsIdleHint": "Uruchom sprawdzenie, żeby znaleźć obszary, których mapie brakuje.",
+      "blindSpotsUnavailable": "Dodaj jeszcze kilka elementów mapy — nie ma jeszcze czego analizować.",
       "noChangesProposed": "Brak proponowanych zmian.",
       "noCommentsYetWriteFirstOne": "Brak komentarzy. Napisz pierwszy!",
       "noCompanyDataConnectionsFound": "Brak powiązań z danymi firmy",

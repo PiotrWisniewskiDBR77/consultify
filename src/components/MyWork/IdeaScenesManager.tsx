@@ -1,8 +1,18 @@
 /**
- * IdeaScenesManager — Saved viewport scenes + Presentation mode.
+ * IdeaScenesManager — zapisane widoki (sceny) + tryb prezentacji.
  *
- * Inspired by Apple Freeform Scenes: save named viewports,
- * navigate between them, present as slides in fullscreen.
+ * DWA ADRESY (2026-07-28, flaga `ff_ideaPanel6Sections`):
+ *   • OFF — pływający panel `absolute top-2 right-4` nad płótnem (jak dziś).
+ *   • ON  — `embedded`: karta w sekcji „Narzędzie" prawego panelu, portalowana
+ *     tam z `IdeaWhiteboardTool` do `IDEA_PANEL_TOOL_SLOT_ID`.
+ * Zgłoszenie właściciela: „Ten system jest ekstra, tylko on też powinien być
+ * wywoływany z panelu prawego i możliwy do schowania tam. Teraz jest cały czas
+ * widoczny".
+ *
+ * Zero okrojenia funkcji: dodawanie, przełączanie (klik w scenę), zmiana
+ * kolejności, zmiana nazwy, usuwanie i tryb prezentacji (pełny ekran, strzałki,
+ * Esc) działają identycznie w obu adresach. Overlay prezentacji zostaje `fixed`
+ * — to tryb pełnoekranowy, nie panel informacyjny.
  */
 import {
   ArrowLeft,
@@ -33,6 +43,8 @@ export interface IdeaScenesManagerProps {
   onScenesChange: (scenes: Scene[]) => void;
   currentViewport: { x: number; y: number; zoom: number };
   onNavigateToScene: (viewport: { x: number; y: number; zoom: number }) => void;
+  /** `true` = karta w prawym panelu (sekcja „Narzędzie") zamiast overlaya. */
+  embedded?: boolean;
 }
 
 export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
@@ -40,6 +52,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
   onScenesChange,
   currentViewport,
   onNavigateToScene,
+  embedded,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -125,15 +138,28 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
     document.documentElement.requestFullscreen?.().catch(() => {});
   }, [onNavigateToScene, scenes]);
 
+  /** Opakowanie: overlay nad płótnem (OFF) albo karta w prawym panelu (ON). */
+  const wrapperCls = embedded ? 'w-full' : 'absolute top-2 right-4 z-[55] w-[220px]';
+  const cardCls = embedded
+    ? 'w-full rounded-[11px] border border-c-border-subtle bg-c-surface-raised overflow-hidden'
+    : 'bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg overflow-hidden';
+  /** W panelu lista chowa się pod nagłówkiem; overlay zachowuje się jak dziś. */
+  const listaWidoczna = embedded ? expanded : true;
+
   if (scenes.length === 0 && !expanded) {
     return (
-      <div className="absolute top-2 right-4 z-[55]">
+      <div className={embedded ? 'w-full' : 'absolute top-2 right-4 z-[55]'}>
         <button
           onClick={() => {
             setExpanded(true);
             handleAddScene();
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm rounded-xl border border-slate-200/60 dark:border-navy-700/60 shadow-sm text-[10px] font-semibold text-slate-600 dark:text-slate-400 hover:text-c-info transition-colors"
+          className={
+            embedded
+              ? 'w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-[11px] border border-c-border-subtle bg-c-surface-raised text-[11px] font-semibold text-c-text-secondary hover:border-c-focus hover:text-c-text transition-colors'
+              : 'flex items-center gap-1.5 px-3 py-1.5 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm rounded-xl border border-slate-200/60 dark:border-navy-700/60 shadow-sm text-[10px] font-semibold text-slate-600 dark:text-slate-400 hover:text-c-info transition-colors'
+          }
+          data-testid="idea-scenes-save-view"
         >
           <Bookmark size={12} />
           {t('myWorkIdeas.scenesManager.saveView')}
@@ -145,8 +171,8 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
   return (
     <>
       {/* Scenes panel */}
-      <div className="absolute top-2 right-4 z-[55] w-[220px]">
-        <div className="bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg overflow-hidden">
+      <div className={wrapperCls} data-testid="idea-scenes-manager">
+        <div className={cardCls}>
           <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200/40 dark:border-navy-700/40">
             <div className="flex items-center gap-1.5">
               <Bookmark size={12} className="text-c-info" />
@@ -173,17 +199,31 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
               >
                 <Plus size={12} />
               </button>
+              {/* Chowanie sekcji. W panelu = zwijanie listy pod nagłówkiem
+                  (właściciel: „musi być możliwość schowania"); nad płótnem =
+                  zamknięcie panelu, jak dziś. */}
               <button
-                onClick={() => setExpanded(false)}
+                onClick={() => setExpanded(embedded ? !expanded : false)}
+                aria-expanded={embedded ? expanded : undefined}
                 aria-label={t('myWorkIdeas.scenesManager.closeScenesPanel')}
                 title={t('myWorkIdeas.scenesManager.close')}
                 className="p-1 rounded-lg text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                data-testid="idea-scenes-toggle"
               >
-                <X size={12} />
+                {embedded ? (
+                  expanded ? (
+                    <ChevronUp size={12} />
+                  ) : (
+                    <ChevronDown size={12} />
+                  )
+                ) : (
+                  <X size={12} />
+                )}
               </button>
             </div>
           </div>
 
+          {listaWidoczna && (
           <div className="max-h-[200px] overflow-y-auto p-1 space-y-0.5">
             {scenes.map((scene, i) => (
               <div
@@ -260,6 +300,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
               </div>
             ))}
           </div>
+          )}
         </div>
       </div>
 

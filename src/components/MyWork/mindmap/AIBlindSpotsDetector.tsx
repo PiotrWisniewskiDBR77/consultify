@@ -1,6 +1,17 @@
 /**
- * AIBlindSpotsDetector — Floating notification panel that detects missing areas
- * in the mind map and suggests additions.
+ * AIBlindSpotsDetector — panel wykrywający braki w mapie myśli i proponujący
+ * uzupełnienia.
+ *
+ * DWA ADRESY (2026-07-28, flaga `ff_ideaPanel6Sections`):
+ *   • OFF — pływający overlay `absolute bottom-16 right-3` nad płótnem (jak dziś).
+ *   • ON  — `embedded`: zwykła karta w sekcji „AI" prawego panelu, portalowana
+ *     tam z `IdeaRecommendationMap` do `IDEA_PANEL_AI_SLOT_ID`.
+ * Zgłoszenie właściciela: „nie mogę go przesunąć (…) nie wiem czy nie warto
+ * byłoby to rzucić po prostu do prawego menu".
+ *
+ * Zero okrojenia funkcji: te same dane, te same handlery „Dodaj"/„Odrzuć",
+ * to samo „Sprawdź ponownie", to samo zwijanie nagłówkiem. `embedded` zmienia
+ * WYŁĄCZNIE klasy opakowania (brak `absolute`/`z-*`/stałej szerokości).
  */
 import {
   AlertTriangle,
@@ -34,6 +45,8 @@ interface AIBlindSpotsDetectorProps {
   persistence: string;
   locked: boolean;
   onAddBlindSpot: (spot: BlindSpot) => void;
+  /** `true` = karta w prawym panelu (sekcja „AI") zamiast overlaya nad płótnem. */
+  embedded?: boolean;
 }
 
 export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
@@ -44,6 +57,7 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
   persistence,
   locked,
   onAddBlindSpot,
+  embedded,
 }) => {
   const { t, i18n } = useTranslation();
 
@@ -157,11 +171,59 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
   // All suggestions handled (added/dismissed) by the user → nothing left to show.
   const allHandled = spots.length > 0 && visibleSpots.length === 0;
 
+  /** Opakowanie: overlay nad płótnem (OFF) albo karta w prawym panelu (ON). */
+  const wrapperCls = embedded
+    ? 'w-full'
+    : 'absolute bottom-16 right-3 z-dropdown w-[320px] max-w-[90vw]';
+
+  /** Czy „Sprawdź" ma wykonawcę. Bez tego nie rysujemy przycisku (Z3). */
+  const canDetect = persistence === 'online' && !locked && ideaNodeCount >= 3;
+
   if (visibleSpots.length === 0 && !loading) {
     // Honest empty state: a completed run found no gaps — say so once, no retry loop.
-    if (!checked || allHandled || emptyDismissed) return null;
+    if (!checked || allHandled || emptyDismissed) {
+      // W panelu (embedded) sekcja „AI" nie może być pustym miejscem — mówimy
+      // wprost, co jest grane, i dajemy uruchomienie analizy, gdy ma wykonawcę.
+      if (!embedded) return null;
+      return (
+        <div className={wrapperCls} data-testid="ai-blind-spots-embedded-idle">
+          <div className="rounded-[11px] border border-c-border-subtle bg-c-surface-raised px-3 py-2.5">
+            <div className="flex items-center gap-2">
+              <Eye size={13} className="text-c-warning shrink-0" />
+              <span className="text-[11px] font-bold text-c-text-secondary flex-1">
+                {t('ideas.mindmap.aiBlindSpots', 'AI Blind Spots')}
+              </span>
+            </div>
+            <div className="mt-1 text-[10px] leading-snug text-c-text-muted">
+              {allHandled || emptyDismissed
+                ? t('ideas.mindmap.noBlindSpotsFound', 'No blind spots found')
+                : canDetect
+                  ? t(
+                      'ideas.mindmap.blindSpotsIdleHint',
+                      'Run the check to find areas the map is missing.'
+                    )
+                  : t(
+                      'ideas.mindmap.blindSpotsUnavailable',
+                      'Add a few more elements to the map — there is nothing to analyse yet.'
+                    )}
+            </div>
+            {canDetect && (
+              <button
+                type="button"
+                onClick={detectBlindSpots}
+                disabled={loading}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1 text-[10px] font-semibold text-c-text-secondary transition-colors hover:border-c-focus hover:text-c-text disabled:opacity-40"
+              >
+                <RefreshCw size={10} className={loading ? 'animate-spin' : ''} />
+                {t('ideas.mindmap.reCheck', 'Re-check')}
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
     return (
-      <div className="absolute bottom-16 right-3 z-dropdown w-[320px] max-w-[90vw]">
+      <div className={wrapperCls}>
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-c-surface/90 backdrop-blur-xl border border-amber-400/30 dark:border-amber-500/20 shadow-2xl">
           <Eye size={14} className="text-amber-500 shrink-0" />
           <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 flex-1">
@@ -186,8 +248,14 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
   };
 
   return (
-    <div className="absolute bottom-16 right-3 z-dropdown w-[320px] max-w-[90vw]">
-      <div className="rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-warning dark:border-c-warning shadow-2xl overflow-hidden">
+    <div className={wrapperCls} data-testid="ai-blind-spots">
+      <div
+        className={
+          embedded
+            ? 'rounded-[11px] bg-c-surface-raised border border-c-warning overflow-hidden'
+            : 'rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-warning dark:border-c-warning shadow-2xl overflow-hidden'
+        }
+      >
         {/* Header */}
         <button
           onClick={() => setExpanded(!expanded)}
