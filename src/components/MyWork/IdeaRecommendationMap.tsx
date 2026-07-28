@@ -1899,8 +1899,51 @@ function MindMapInner({
   const isDarkMindmap = useIsDark();
   const { dialog: subtreeDeleteDialog, confirm: confirmSubtreeDelete } = useConfirmDialog();
   const debugEnabled = false;
-  const { fitView, getViewport, setViewport, getIntersectingNodes, screenToFlowPosition } =
-    useReactFlow();
+  const {
+    fitView: fitViewSurowy,
+    getViewport,
+    setViewport,
+    getIntersectingNodes,
+    screenToFlowPosition,
+  } = useReactFlow();
+
+  /**
+   * ★ IDE-026 — SUFIT PRZYBLIŻENIA (zgłoszenie właściciela, TRZECI raz:
+   * „wcisnąłem element i nagle mi się przybliżył. Wyłączmy przybliżenia
+   * automatyczne").
+   *
+   * W tym pliku i w `useMindMapNodes` jest DWADZIEŚCIA KILKA wywołań `fitView`
+   * (dodanie węzła, skasowanie, wklejenie, drill-down, nawigacja, okruszki…).
+   * Łatanie ich po jednym już raz zawiodło — przy kolejnej funkcji ktoś dopisze
+   * dwudzieste piąte bez sufitu. Dlatego sufit wisi w JEDNYM miejscu: na wejściu.
+   *
+   * ZASADA: kadrowanie automatyczne może ODDALIĆ (żeby coś zmieścić), ale NIGDY
+   * nie przybliża — sufit to bieżący zoom. Widok się przesuwa, skala stoi.
+   * Wyjątek: polecenia JAWNE użytkownika („Dopasuj widok", Auto-układ, pierwsze
+   * otwarcie) przekazują `jawne: true` i mają pełną swobodę.
+   *
+   * Bez sufitu ReactFlow liczy zoom jako „zmieść ten prostokąt w oknie" i obcina
+   * dopiero o własne `maxZoom` (2.0), więc kadr na jednym małym węźle skakał
+   * z ~45% na 200%.
+   */
+  const fitView = useCallback(
+    (opts?: Record<string, any>) => {
+      const { jawne, ...reszta } = opts || {};
+      if (jawne) return fitViewSurowy(reszta as any);
+      let sufit = 1;
+      try {
+        const z = getViewport?.()?.zoom;
+        if (Number.isFinite(z) && (z as number) > 0) sufit = z as number;
+      } catch {
+        /* płótno w trakcie demontażu — zostaw sufit 1 (nigdy nie przybliża) */
+      }
+      // Jeśli wołający sam podał maxZoom, bierzemy OSTROŻNIEJSZY z dwóch.
+      const podany = Number(reszta.maxZoom);
+      const maxZoom = Number.isFinite(podany) && podany > 0 ? Math.min(podany, sufit) : sufit;
+      return fitViewSurowy({ ...reszta, maxZoom } as any);
+    },
+    [fitViewSurowy, getViewport]
+  );
   // True once ReactFlow has measured every node — the only reliable signal that
   // fitView can compute real bounds (firing it earlier silently no-ops).
   const nodesInitialized = useNodesInitialized();
@@ -2256,7 +2299,7 @@ function MindMapInner({
       if (saved) {
         setViewport(saved, { duration: 0 });
       } else {
-        fitView({ padding: 0.3, duration: 0 });
+        fitView({ padding: 0.3, duration: 0, jawne: true });
       }
     } catch {
       /* fitView throws if the canvas is mid-teardown — safe to ignore */
@@ -2986,7 +3029,7 @@ function MindMapInner({
       if (action === 'open_properties' && detail.nodeId) setDrawerNodeId(detail.nodeId);
       if (action === 'pane_fit_view') {
         try {
-          fitView({ padding: 0.3, duration: 300 });
+          fitView({ padding: 0.3, duration: 300, jawne: true });
         } catch {
           /* */
         }
@@ -2996,7 +3039,7 @@ function MindMapInner({
         setNodes(laid);
         setTimeout(() => {
           try {
-            fitView({ padding: 0.3, duration: 300 });
+            fitView({ padding: 0.3, duration: 300, jawne: true });
           } catch {
             /* */
           }
@@ -5193,7 +5236,7 @@ function MindMapInner({
         setNodes(laid);
         setTimeout(() => {
           try {
-            fitView({ padding: 0.3, duration: 300 });
+            fitView({ padding: 0.3, duration: 300, jawne: true });
           } catch {
             /* */
           }
@@ -5202,7 +5245,7 @@ function MindMapInner({
 
       if (action === 'pane_fit_view') {
         try {
-          fitView({ padding: 0.3, duration: 300 });
+          fitView({ padding: 0.3, duration: 300, jawne: true });
         } catch {
           /* */
         }
