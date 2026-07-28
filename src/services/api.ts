@@ -7707,6 +7707,70 @@ export const Api = {
     return Array.isArray(data?.safes) ? data.safes : [];
   },
 
+  /**
+   * ★ VLT-FOLDERS — foldery WEWNĄTRZ jednego sejfu (dzielą temat, sejf zostaje
+   * granicą bezpieczeństwa). `scope`/`projectId` muszą odpowiadać otwartemu
+   * sejfowi (`VaultDocumentsView`) — folder poza nim po prostu nie istnieje
+   * w tym widoku.
+   */
+  getVaultFolders: async (filters: {
+    scope: 'user' | 'project' | 'organization';
+    projectId?: string | null;
+  }): Promise<
+    Array<{
+      id: string;
+      name: string;
+      description: string | null;
+      color: string | null;
+      scope: 'user' | 'project' | 'organization';
+      projectId: string | null;
+      ownerId: string;
+      parentFolderId: string | null;
+    }>
+  > => {
+    const params = new URLSearchParams({ scope: filters.scope });
+    if (filters.projectId) params.set('project_id', filters.projectId);
+    const res = await fetch(`${API_URL}/knowledge/vault-folders?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || 'Failed to fetch vault folders');
+    return Array.isArray(data) ? data : [];
+  },
+
+  createVaultFolder: async (payload: {
+    name: string;
+    description?: string;
+    color?: string;
+    parentFolderId?: string | null;
+    scope: 'user' | 'project' | 'organization';
+    projectId?: string | null;
+  }): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/knowledge/vault-folders`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create vault folder');
+  },
+
+  updateVaultFolder: async (folderId: string, updates: any): Promise<void> => {
+    const res = await fetchWithRetry(`${API_URL}/knowledge/vault-folders/${folderId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updates),
+    });
+    await handleResponse(res, 'Failed to update vault folder');
+  },
+
+  deleteVaultFolder: async (folderId: string): Promise<void> => {
+    const res = await fetchWithRetry(`${API_URL}/knowledge/vault-folders/${folderId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    await handleResponse(res, 'Failed to delete vault folder');
+  },
+
   getKnowledgeDocuments: async (filters?: {
     scope?: 'user' | 'project' | 'organization';
     projectId?: string;
