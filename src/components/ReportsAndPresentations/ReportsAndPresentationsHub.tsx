@@ -15,7 +15,6 @@ import {
   Filter,
   LayoutGrid,
   LayoutTemplate,
-  MessageSquare,
   Package2,
   PenLine,
   Presentation,
@@ -34,12 +33,10 @@ import { CreateFormatModeLauncher } from '@/components/shared/CreateFormatModeLa
 import { TemplateBuilderFlow } from '@/components/TemplateBuilder';
 import { isDeckArchitectEnabled } from '@/utils/deckArchitectFlag';
 import { isWorkbookTemplatesEnabled } from '@/utils/workbookTemplatesFlag';
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
 
 import { type FilterChip, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
-import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
@@ -57,7 +54,7 @@ import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
 import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import { PresentationsTabContent } from './PresentationsTabContent';
 import { ReportsTabContent } from './ReportsTabContent';
-import { SheetsTabContent } from './SheetsTabContent';
+import { type SheetsSubView, SheetsTabContent } from './SheetsTabContent';
 import { TemplatesTabContent } from './TemplatesTabContent';
 import type {
   PresentationSourceType,
@@ -200,7 +197,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const openChatWithContext = useOpenChatWithContext();
   const isPolish = i18n.language?.startsWith('pl');
 
   // Kanon 2026-07-26 (docs/product/MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md
@@ -249,6 +245,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   // M17 junk filter (S6.3): OFF by default so the hub shows only real/final
   // outputs (server excludes drafts + dedupes). Toggle surfaces the "Robocze" set.
   const [showDrafts, setShowDrafts] = useState(false);
+  /* D-06: wybor zbioru danych zakladki Sheets — podniesiony z wlasnego paska
+     SheetsTabContent do Menu 2 (patrz `rightControls`). */
+  const [sheetsSubView, setSheetsSubView] = useState<SheetsSubView>('list');
 
   useEffect(() => {
     const params = new URLSearchParams(location.search || '');
@@ -670,7 +669,49 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     );
 
     if (activeTab === 'outputs_sheets') {
-      return <div className="relative flex items-center gap-2">{draftsToggle}</div>;
+      /**
+       * D-06 (Piotr, P-28, 2026-07-27): „Mamy przycisk Sheets albo Data sources.
+       * Wrzuciłbym wybór — czy oglądamy arkusze, czy źródła danych — do drugiego
+       * menu po prawej stronie. Dzięki temu podniesiemy całą tabelę."
+       *
+       * Przełącznik stał wcześniej we WŁASNYM pasku wewnątrz `SheetsTabContent`,
+       * czyli jako czwarta warstwa nagłówkowa (Menu 1 + Menu 2 + Menu 3 + on).
+       * Kanon zna wyłącznie Menu 1/2/3, a wybór zbioru danych to filtr — więc
+       * jego miejsce jest tutaj, obok pozostałych kontrolek Menu 2.
+       */
+      const zakresy: Array<{ id: SheetsSubView; label: string }> = [
+        { id: 'list', label: t('rap.outputs.tabs.sheets', 'Sheets') },
+        { id: 'data', label: t('rap.sheets.subtabs.data', 'Data sources') },
+      ];
+      return (
+        <div className="relative flex items-center gap-2">
+          <div
+            role="tablist"
+            aria-label={t('rap.sheets.subtabs.label', 'Sheets sections')}
+            data-testid="rap-sheets-subtabs"
+            className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle p-1"
+          >
+            {zakresy.map((z) => (
+              <button
+                key={z.id}
+                type="button"
+                role="tab"
+                aria-selected={sheetsSubView === z.id}
+                onClick={() => setSheetsSubView(z.id)}
+                data-testid={`rap-sheets-subtab-${z.id}`}
+                className={`h-7 rounded-full px-3 text-xs font-medium transition-colors ${
+                  sheetsSubView === z.id
+                    ? 'bg-c-accent-soft text-c-text'
+                    : 'text-c-text-secondary hover:bg-c-surface-raised'
+                }`}
+              >
+                {z.label}
+              </button>
+            ))}
+          </div>
+          {draftsToggle}
+        </div>
+      );
     }
 
     const isAggregateTab =
@@ -1085,6 +1126,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     activeTab,
     filtersOpen,
     setSinglePreset,
+    sheetsSubView,
     showDrafts,
     t,
     templatesView,
@@ -1294,47 +1336,20 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     templatesView,
   ]);
 
-  const commandRowRightSlot = useMemo(
-    () => (
-      <>
-        {/* D-01 (Piotr, OBR-28 2026-07-27): „+ New AI document (Document
-            Studio)" USUNIĘTY z Menu 3 — dublował kontekstowe CTA Menu 2
-            („New output"/„New report"/„New presentation"/„New sheet"/
-            „New template"), które przez `handleMaterialsLauncherSelect`
-            prowadzi do TEJ SAMEJ ścieżki `/document-studio?entry=ai`.
-            Menu 3 zostaje slotem AI (Discuss). */}
-        <button
-          type="button"
-          onClick={() =>
-            openChatWithContext({
-              entityType: 'outputs_module',
-              entityId: activeTab,
-              entityName: t('rap.hub.entityName', 'Reports & Presentations'),
-              contextData: {
-                activeTab,
-                viewMode,
-                activeFiltersCount: activeFilters.length,
-                openDocumentsCount: openDocuments.length,
-              },
-            })
-          }
-          className={getMenu3AiButtonClass(false)}
-          title={t('rap.actions.discuss', 'Discuss')}
-        >
-          <MessageSquare size={12} />
-          <span>{t('rap.actions.discuss', 'Discuss')}</span>
-        </button>
-      </>
-    ),
-    [
-      activeFilters.length,
-      activeTab,
-      openChatWithContext,
-      openDocuments.length,
-      t,
-      viewMode,
-    ]
-  );
+  /**
+   * P-27 (Piotr, 2026-07-27): „w trzecim menu `New AI document` i `Discuss` —
+   * przecież mamy to w innym miejscu."
+   *
+   * Prawa strona Menu 3 jest PUSTA:
+   *   - „+ New AI document (Document Studio)" → usunięty 07-27 (D-01): dublował
+   *     kontekstowe CTA Menu 2, prowadzące do tej samej ścieżki
+   *     `/document-studio?entry=ai`.
+   *   - „Discuss" → usunięty tu (07-28): ta sama pozycja żyje w kebabie wiersza,
+   *     i to w wersji użyteczniejszej (czat o KONKRETNYM dokumencie zamiast
+   *     o całej zakładce).
+   * Pusta prawa strona jest zgodna z kanonem — tak wygląda cały moduł Interview.
+   */
+  const commandRowRightSlot = null;
 
   // Canonical Menu 3: one flex row (MENU_3_INNER_CLASS = flex items-center justify-between).
   // ModuleNavBar voids commandRowRightContent; merge both sides into commandRowContent.
@@ -1469,6 +1484,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       case 'outputs_sheets':
         return (
           <SheetsTabContent
+            subView={sheetsSubView}
             viewMode={viewMode}
             searchQuery={searchQuery}
             activeFilters={activeFilters}

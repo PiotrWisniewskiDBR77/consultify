@@ -58,14 +58,50 @@ describe('StandardTable', () => {
     render(<StandardTable columns={columns} data={data} rowMenu={rowMenu} />);
     fireEvent.click(screen.getAllByLabelText('Row actions')[0]);
     expect(screen.getByText('Open in Map')).toBeInTheDocument();
-    // Blok 4 — zawsze obecny
+    // Blok 4 — „Otwórz podgląd" zostaje zawsze: to nie funkcja do zbudowania,
+    // tylko wejście do encji.
     expect(screen.getByText('Open preview')).toBeInTheDocument();
     expect(screen.getByText('Edit')).toBeInTheDocument();
-    // Archive bez handlera = disabled z dopiskiem, NIE ukryty
-    const archive = screen.getByText('Archive').closest('button');
-    expect(archive).toBeDisabled();
+
+    /**
+     * ZMIANA REGUŁY (2026-07-28, P-17/P-18). Do tej pory test wymagał, żeby
+     * `Archive` BEZ handlera renderował się wyłączony, z dopiskiem „Coming soon
+     * (backend)" — i to właśnie ta reguła produkowała kebaby-atrapy, na które
+     * Piotr zwrócił uwagę dwa razy: Sejf miał 3 z 4 pozycji martwe, Run agent
+     * to samo. Wzorcem jest kebab Interview → Templates: 9 pozycji, ZERO
+     * wyłączonych.
+     *
+     * Teraz rozstrzyga POWÓD braku — sprawdzane niżej w tym samym teście.
+     */
+    expect(screen.queryByText('Archive')).toBeNull();
+
     // Blok 5 — Delete zawsze ostatni
     expect(screen.getByText('Delete')).toBeInTheDocument();
+  });
+
+  it('kebab: blokada z POWODEM produktu zostaje widoczna, „jeszcze tego nie ma" znika', () => {
+    render(
+      <StandardTable
+        columns={columns}
+        data={data}
+        rowMenu={(row) => {
+          const bazowe = rowMenu(row);
+          return {
+            ...bazowe,
+            universalHandlers: {
+              ...(bazowe.universalHandlers ?? {}),
+              // Regula produktu — uzytkownik ma sie dowiedziec, DLACZEGO nie wolno.
+              archiveNote: 'Finish or cancel it first',
+            },
+          };
+        }}
+      />
+    );
+    fireEvent.click(screen.getAllByLabelText('Row actions')[0]);
+
+    const archive = screen.getByText('Archive').closest('button');
+    expect(archive).toBeDisabled();
+    expect(screen.getByText(/Finish or cancel it first/)).toBeInTheDocument();
   });
 
   it('renders selection checkboxes when selection prop is provided', () => {

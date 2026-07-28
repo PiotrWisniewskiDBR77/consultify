@@ -851,7 +851,10 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     | 'critical'
     | 'action_required'
     | 'today'
-    | 'this_week';
+    | 'this_week'
+    /* P-10 (2026-07-28): „Done" zszedł z prawej strony Menu 3 na lewą, do
+       filtrów — patrz komentarz przy `presets` niżej. */
+    | 'done';
   const [inboxPreset, setInboxPreset] = useState<InboxPreset>('all');
   const [inboxCounts, setInboxCounts] = useState<InboxCounts | null>(null);
   const [inboxBulkUi, setInboxBulkUi] = useState<{
@@ -2151,30 +2154,14 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const applyInboxPreset = useCallback((next: InboxPreset) => {
     // Canon v3: "ALL" means no preset filters are active.
     setInboxPreset(next);
-    setInboxStatusTab(next === 'saved' ? 'saved' : 'open');
+    setInboxStatusTab(next === 'saved' ? 'saved' : next === 'done' ? 'done' : 'open');
     setInboxSection(next === 'today' ? 'today' : next === 'this_week' ? 'this_week' : 'all');
     setInboxActionRequiredOnly(next === 'action_required');
   }, []);
 
-  const handleInboxStatusTabSelect = useCallback(
-    (next: 'open' | 'done' | 'saved' | 'all') => {
-      setInboxStatusTab(next);
-      if (next === 'saved') {
-        setInboxPreset('saved');
-        setInboxSection('all');
-        setInboxActionRequiredOnly(false);
-        return;
-      }
-      if (inboxPreset === 'saved') {
-        setInboxPreset('all');
-      }
-      if (next === 'done' || next === 'all') {
-        setInboxSection('all');
-        setInboxActionRequiredOnly(false);
-      }
-    },
-    [inboxPreset]
-  );
+  /* P-10 (2026-07-28): `handleInboxStatusTabSelect` usunięty razem z segmentem
+     `Open | Done | Saved` z prawej strony Menu 3 — jego mapowanie
+     preset ↔ statusTab przejął w całości `applyInboxPreset` powyżej. */
 
   const openTabAiContext = useCallback(
     async (tab: 'inbox' | 'tasks' | 'decisions') => {
@@ -3076,6 +3063,18 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           label: t('myWork.hub.label35', 'This week'),
           count: c?.newThisWeek ?? 0,
         },
+        /**
+         * P-10 (Piotr, OBR-18/22, 2026-07-27): „Menu trzecie — straszny bałagan.
+         * Po prawej stronie te przyciski nie są potrzebne. Zostawiłbym tylko
+         * AI Triage, pozostałe są tak samo widoczne po lewej stronie."
+         *
+         * Segment `Open | Done | Saved`, który stał po PRAWEJ, był w dwóch
+         * trzecich dosłownym duplikatem lewej strony: `Open` pokazywał tę samą
+         * liczbę co `ALL` (oba = counts.open), a `Saved` istniał tu i tam.
+         * Jedyną wartością nie do odzyskania po lewej był `Done` — więc tu
+         * dołącza jako zwykły filtr, a prawa strona zostaje slotem AI (kanon A3).
+         */
+        { id: 'done', label: t('myWork.hub.label37', 'Done'), count: c?.counts.done ?? 0 },
       ];
 
       const menu3RowClass = MENU_3_ROW_CLASS;
@@ -3176,43 +3175,9 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 );
               })}
             </div>
+            {/* P-10: prawa strona Menu 3 = wyłącznie AI Triage (kanon A3).
+                Segment `Open | Done | Saved` zjechał do filtrów po lewej. */}
             <div className={MENU_3_RIGHT_CLASS}>
-              <div className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/80 p-1 dark:border-white/[0.08] dark:bg-navy-900/70">
-                {(
-                  [
-                    {
-                      id: 'open',
-                      label: t('myWork.hub.label36', 'Open'),
-                      count: c?.counts.open ?? 0,
-                    },
-                    {
-                      id: 'done',
-                      label: t('myWork.hub.label37', 'Done'),
-                      count: c?.counts.done ?? 0,
-                    },
-                    {
-                      id: 'saved',
-                      label: t('myWork.hub.label38', 'Saved'),
-                      count: c?.counts.saved ?? 0,
-                    },
-                  ] as const
-                ).map((statusChip) => {
-                  const isActive = inboxStatusTab === statusChip.id;
-                  return (
-                    <button
-                      key={statusChip.id}
-                      type="button"
-                      onClick={() => handleInboxStatusTabSelect(statusChip.id)}
-                      className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
-                    >
-                      <span>{statusChip.label}</span>
-                      <span className={`${badgeBase} ${isActive ? badgeActive : badgeInactive}`}>
-                        {statusChip.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
               <button
                 onClick={() => void openTabAiContext('inbox')}
                 className={MENU_3_ACTION_NEUTRAL}
@@ -3570,6 +3535,24 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         </div>
       );
     }
+
+    /**
+     * PILNE-6 (przegląd 128 zrzutów, 2026-07-27; uwaga Piotra P-17 o Sejfie:
+     * „Ta tabela jest w ogóle wbrew jakimkolwiek standardom"):
+     *
+     * Poniższy pasek to fallback „alerty z innych zakładek" (Overdue / Urgent /
+     * Decisions (pending) / Inbox). Dla zakładek `vault` i `agent` — które mają
+     * WŁASNE tabele, ale nie mają jeszcze własnych filtrów — oznaczało to, że
+     * na ekranie dokumentów klienta stały liczniki zaległych ZADAŃ i oczekujących
+     * DECYZJI. Oba ekrany pokazywały co do sztuki te same cztery chipy, bo brały
+     * je z tego samego miejsca; użytkownik dostawał filtry, które nie filtrują
+     * niczego, co widzi pod spodem.
+     *
+     * Menu 3 należy do tabeli, nad którą stoi. Skoro te dwie jeszcze nie mają
+     * czym go wypełnić, pasek się nie renderuje — to zdejmuje przy okazji jedną
+     * z czterech warstw nagłówkowych, na które Piotr zwrócił uwagę (P-17/P-18).
+     */
+    if (activeTab === 'vault' || activeTab === 'agent') return null;
 
     // Default cross-tab alerts (tasks/decisions/inbox)
     const chips: Array<{ key: string; label: string; count: number; onClick: () => void }> = [
@@ -3954,6 +3937,18 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         // out when the flag is off, this is a second, defensive gate.
         return (
           <React.Suspense fallback={lazyFallback}>
+            {/**
+             * P-17 (czwarta warstwa Sejfu) rozwiązany po stronie samego Sejfu,
+             * mechanizmem `useHubBarSlot` — zakładka wstrzykuje swoją lupę do
+             * paska TEGO huba, zamiast rysować własny.
+             *
+             * Scalenie 2026-07-28: ta sama uwaga była naprawiana równolegle w
+             * dwóch sesjach. Moja wersja przekazywała frazę propem
+             * `searchQuery`; wersja z demo jest pełniejsza (zachowuje
+             * wyszukiwanie zamiast je usuwać), więc to ona zostaje. Prop
+             * zniknął CELOWO — komponent go nie przyjmuje, a React ignoruje
+             * nieznane propy po cichu (regresja 07-26 kosztowała na tym dzień).
+             */}
             <ClientDocumentsVault />
           </React.Suspense>
         );
@@ -4190,6 +4185,8 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   return (
                     <Menu3DropdownChip
                       data-testid="mywork-decisions-priority-chip"
+                      // P-15: ten chip stoi w Menu 2, wiec ma miec h-9 jak sasiedzi.
+                      bar="menu2"
                       icon={<Flag size={14} className="text-c-text-muted" />}
                       label={
                         decisionsPriorityActive && activeDecisionsPriority

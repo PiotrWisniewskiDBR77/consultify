@@ -19,7 +19,11 @@ import {
   isAccessBlockedCode,
 } from '../utils/accessBlocked';
 import { normalizeApiErrorMessage } from '../utils/apiError';
-import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
+import {
+  decodeDisplayFields,
+  decodeHtmlEntities,
+  POLA_TEKSTOWE_INICJATYWY,
+} from '../utils/decodeHtmlEntities';
 import { OrganizationContextWorkerApi } from './api/organizationContextWorker.api';
 import { SettingsApi } from './api/settings.api';
 import { V8AssessmentApi } from './api/v8/assessment';
@@ -1190,6 +1194,17 @@ const normalizeIdeaDisplayFields = <T>(idea: T): T => {
   }
   return idea;
 };
+
+/**
+ * PILNE-12: ten sam sanitizer serwera, ktory kodowal tytuly idei, kodowal tez
+ * teksty inicjatyw — tylko idee mialy odkodowanie. W Portfolio wychodzilo
+ * `organization&#x27;s` i podwojnie zakodowane `Date &amp;amp; Participants`.
+ */
+const normalizeInitiativeDisplayFields = <T>(initiative: T): T =>
+  decodeDisplayFields(initiative, POLA_TEKSTOWE_INICJATYWY);
+
+const normalizeInitiativeList = (rows: unknown): any[] =>
+  Array.isArray(rows) ? rows.map((r) => normalizeInitiativeDisplayFields(r)) : [];
 
 const getCachedJson = async <T = any>(
   url: string,
@@ -6391,12 +6406,12 @@ export const Api = {
     let url = `${API_URL}/initiatives`;
     if (projectId) url += `?projectId=${encodeURIComponent(projectId)}`;
     const res = await fetchWithRetry(url, { headers: getHeaders() });
-    return handleResponse(res, 'Failed to fetch initiatives');
+    return normalizeInitiativeList(await handleResponse(res, 'Failed to fetch initiatives'));
   },
 
   getInitiativeById: async (id: string): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/initiatives/${id}`, { headers: getHeaders() });
-    return handleResponse(res, 'Failed to fetch initiative');
+    return normalizeInitiativeDisplayFields(await handleResponse(res, 'Failed to fetch initiative'));
   },
 
   createInitiative: async (initiative: any): Promise<any> => {
@@ -6474,7 +6489,7 @@ export const Api = {
     if (projectId) url += `?projectId=${projectId}`;
     const res = await fetchWithRetry(url, { headers: getHeaders() });
     const data = await handleResponse(res, 'Failed to fetch initiatives by status');
-    return data?.initiatives || data || [];
+    return normalizeInitiativeList(data?.initiatives || data || []);
   },
 
   /**

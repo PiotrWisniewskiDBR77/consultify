@@ -36,8 +36,22 @@ export const MENU_2_TAB_ACTIVE = cn(
   'dark:border-white/25 dark:text-slate-100'
 );
 
+/**
+ * P-6 (Piotr, OBR-09, 2026-07-27): „Zwróć uwagę na bardzo małą przerwę
+ * pomiędzy tabelą a menu trzecim. Wydaje mi się, że to jest wbrew standardowi."
+ *
+ * Sprawdzenie przyznało mu rację co do odczucia, ale nie co do diagnozy: kanon
+ * §C3 opisuje WYŁĄCZNIE wewnętrzny padding paska (`px-4 py-2`) i regułę
+ * wielokrotności 4px — odstępu MIĘDZY paskiem a nagłówkiem tabeli nie definiuje
+ * nigdzie. To była luka w kanonie, nie naruszenie. Odczucie ma źródło realne:
+ * dwie różne warstwy sterowania (filtry vs nagłówki kolumn) stykały się bez
+ * żadnego oddechu, więc czytały się jako jedno.
+ *
+ * Wartość: `mb-2` = 8px (wielokrotność 4px). Świadomie skromna — większa
+ * odsuwałaby filtry od tego, co filtrują.
+ */
 export const MENU_3_ROW_CLASS =
-  'px-4 py-2 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.05]';
+  'px-4 py-2 mb-2 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.05]';
 
 export const MENU_3_INNER_CLASS =
   'flex min-h-8 items-center justify-between gap-3 overflow-x-auto whitespace-nowrap no-scrollbar';

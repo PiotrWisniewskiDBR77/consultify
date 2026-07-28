@@ -66,6 +66,7 @@ import {
 } from '@/services/api/v8/finance';
 import { useAppStore } from '@/store/useAppStore';
 import { InitiativeStatus } from '@/types/core';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { Menu3DropdownChip } from '../shared/Menu3DropdownChip';
 import {
@@ -247,13 +248,10 @@ function sanitizeStatementTitle(raw?: string | null): string {
   const looksLikeDate = JS_DATE_TOSTRING_RE.test(value);
   if (looksLikeDate) {
     const parsed = new Date(value);
-    if (!Number.isNaN(parsed.getTime())) {
-      return parsed.toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
-    }
+    // `toLocaleDateString(undefined, …)` brało format z PRZEGLĄDARKI, nie
+    // z języka konta — ta sama data wychodziła inaczej niż w sąsiedniej
+    // kolumnie. Wspólny formatter (`utils/listDateFormat`) daje jeden zapis.
+    if (!Number.isNaN(parsed.getTime())) return formatListDate(parsed);
   }
   return value;
 }
@@ -851,9 +849,21 @@ export const FinanceHub: React.FC = () => {
           statementType: 'PACK',
           statementPackId: String(statement.id),
           entityName: String(statement.entity_name || ''),
-          periodStart: String(statement.period_start || ''),
-          periodEnd: String(statement.period_end || ''),
-          periodLabel: String(statement.period_label || ''),
+          // Ten sam powod co przy `periodLabel` — oba trafiaja do kolumny
+          // PERIOD jako zapasowy zapis `start → koniec`.
+          periodStart: sanitizeStatementTitle(statement.period_start),
+          periodEnd: sanitizeStatementTitle(statement.period_end),
+          /**
+           * P-24 (Piotr, Finance → Statements, 2026-07-27): „Zmień ten czas
+           * w period i już będzie dużo lepiej".
+           *
+           * `title` przechodził przez `sanitizeStatementTitle`, a `periodLabel`
+           * NIE — więc kolumna PERIOD dalej pokazywała surowe
+           * `Thu Dec 31 2026 00:00:00 GMT+0000 (Coordinated Universal Time)`.
+           * Ta sama wartość szła też do karty otwartego dokumentu w Menu 3
+           * i do tytułu podglądu.
+           */
+          periodLabel: sanitizeStatementTitle(statement.period_label),
           currency: String(statement.currency || 'PLN'),
           scaling: String(statement.scaling || 'units'),
           sourceFileName: childStatements
