@@ -4,7 +4,8 @@
  */
 
 import { ChevronDown, ChevronUp, Copy, GripVertical, Image, RefreshCw, Trash2 } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import type { CardBlock } from '../wizard/types';
@@ -26,6 +27,61 @@ interface EditableBlockProps {
   children: React.ReactNode;
 }
 
+/**
+ * U1 fix (2026-07-28, odbiór nadzorcy) — the toolbar used to be a plain
+ * `absolute -top-8` anchor. That silently assumed there is always ≥32px of
+ * clear space directly above the block, which is false right where it
+ * matters most: the FIRST block of a card only has the card's own padding
+ * above it (tight, no margin for error on a wrapped 2-line title), and
+ * flipping it to "always below" just moves the same problem onto the NEXT
+ * sibling block instead (verified live — both break with a fixed CSS
+ * anchor). The only anchor-free fix is what Notion/Figma actually do:
+ * MEASURE the block, MEASURE the available space, and render the toolbar in
+ * a portal at a `position: fixed` pixel coordinate that is guaranteed clear
+ * of the block's own box — flipping above/below based on real viewport
+ * room, not a guess baked into a class name.
+ */
+const TOOLBAR_HEIGHT_PX = 32; // approx rendered height incl. border; used for the flip decision only
+const TOOLBAR_GAP_PX = 6;
+const VIEWPORT_TOP_SAFE_PX = 8; // never place the toolbar's top edge above this
+
+function useFloatingToolbarPosition(
+  anchorRef: React.RefObject<HTMLElement | null>,
+  isSelected: boolean
+): { top: number; left: number } | null {
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!isSelected) {
+      setPos(null);
+      return;
+    }
+    const update = () => {
+      const el = anchorRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const spaceAbove = rect.top;
+      const fitsAbove = spaceAbove - TOOLBAR_HEIGHT_PX - TOOLBAR_GAP_PX >= VIEWPORT_TOP_SAFE_PX;
+      const top = fitsAbove
+        ? rect.top - TOOLBAR_GAP_PX - TOOLBAR_HEIGHT_PX
+        : rect.bottom + TOOLBAR_GAP_PX;
+      setPos({ top, left: rect.left });
+    };
+    update();
+    // `scroll` doesn't bubble, but capture-phase listeners on window still see
+    // it fire on any descendant scrollable ancestor (the CardCanvas list).
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('resize', update);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSelected, anchorRef]);
+
+  return pos;
+}
+
 const TEXT_BLOCK_TYPES = ['heading', 'paragraph', 'bullet_list', 'numbered_list'];
 
 export const EditableBlock: React.FC<EditableBlockProps> = ({
@@ -45,6 +101,8 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const isTextBlock = TEXT_BLOCK_TYPES.includes(block.type);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const toolbarPos = useFloatingToolbarPosition(wrapperRef, isSelected);
 
   const handleDoubleClick = useCallback(() => {
     if (isTextBlock) {
@@ -93,19 +151,13 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
     return '';
   };
 
-  return (
-    <div
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect();
-      }}
-      onDoubleClick={handleDoubleClick}
-      className={`relative group rounded-lg transition-all ${
-        isSelected ? 'ring-2 ring-c-focus bg-c-accent-soft0' : 'hover:ring-1 hover:ring-c-border'
-      }`}
-    >
-      {isSelected && (
-        <div className="absolute -top-8 left-0 flex items-center gap-1 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-lg px-1 py-0.5 z-20">
+  const toolbar =
+    isSelected && toolbarPos
+      ? createPortal(
+          <div
+            style={{ position: 'fixed', top: toolbarPos.top, left: toolbarPos.left, zIndex: 9999 }}
+            className="flex items-center gap-1 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-lg px-1 py-0.5"
+          >
           <button
             className="p-1 text-c-text-secondary cursor-grab hover:text-c-text-secondary"
             title={t('presentations.builder.block.drag', 'Drag to reorder')}
@@ -173,13 +225,34 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
               e.stopPropagation();
               onDelete();
             }}
+            // U2 (odbiór nadzorcy) — usuwanie jest akcją destrukcyjną, więc
+            // czerwień jest tu uprawniona (CLAUDE.md §UI.3), ale MUSI iść z
+            // tokenu semantyki krytycznej `danger-*` (skala oddzielna od
+            // `primary` = crimson), nie z `primary-*`. Ten sam token co
+            // istniejący przycisk usuwania w `SlideSorter.tsx`.
             className="p-1 text-danger-400 hover:text-danger-600"
             title={t('presentations.builder.block.delete', 'Delete block')}
           >
             <Trash2 size={12} />
           </button>
-        </div>
-      )}
+        </div>,
+        document.body
+      )
+      : null;
+
+  return (
+    <div
+      ref={wrapperRef}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect();
+      }}
+      onDoubleClick={handleDoubleClick}
+      className={`relative group rounded-lg transition-all ${
+        isSelected ? 'ring-2 ring-c-focus bg-c-accent-soft0' : 'hover:ring-1 hover:ring-c-border'
+      }`}
+    >
+      {toolbar}
 
       {isEditing && isTextBlock ? (
         <div className="p-1">
