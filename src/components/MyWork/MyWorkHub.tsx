@@ -2582,6 +2582,14 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     const visibleChildItems = editing
       ? childItems.filter((doc) => doc.id === childActiveId)
       : childItems;
+    // CIASNOTA PRZY WĄSKIM OKNIE — kolejność ustępowania jest ŚWIADOMA:
+    // najpierw ustępuje TOŻSAMOŚĆ (jest powtórzona w tytule karty i w prawym
+    // panelu), potem etykieta paska, a NIGDY same kontrolki edycji — właściciel
+    // prosił o nie o to, żeby były pod ręką, więc żadna nie ląduje w kebabie.
+    // Poniżej 1280 px sam TYTUŁ zwija się do zera (`max-w-0`), zostaje ikona +
+    // kropka statusu jako klikalny powrót do dokumentu. Zysk ~300 px dla
+    // kontrolek na oknie 900 px.
+    const docNameClass = editing ? 'max-w-0 xl:max-w-[150px] truncate' : 'max-w-[150px] truncate';
 
     return (
       <div className={MENU_3_ROW_CLASS}>
@@ -2652,7 +2660,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   {doc.type === 'initiative' && <Rocket size={14} />}
 
                   {/* Name (truncated) */}
-                  <span className="max-w-[150px] truncate">{doc.name}</span>
+                  <span className={docNameClass}>{doc.name}</span>
 
                   {/* Status Dot */}
                   <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
@@ -2691,7 +2699,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   onClick={() => hubBarSlot.onSelectItem?.(doc.id)}
                 >
                   <Icon size={14} />
-                  <span className="max-w-[150px] truncate">{doc.name}</span>
+                  <span className={docNameClass}>{doc.name}</span>
                   <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
                   <button
                     type="button"
