@@ -7,6 +7,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ReactDOM from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import { useFullscreenPortalTarget } from '@/hooks/useFullscreenPortalTarget';
+
 interface CommandItem {
   id: string;
   tkey: string;
@@ -296,6 +298,8 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
   const [selectedIdx, setSelectedIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  /** 2026-07-28: paleta musi być widoczna także w pełnym ekranie płótna. */
+  const portalTarget = useFullscreenPortalTarget();
 
   useEffect(() => {
     if (open) {
@@ -461,7 +465,8 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
     </>
   );
 
-  return ReactDOM.createPortal(content, document.body);
+  if (!portalTarget) return null;
+  return ReactDOM.createPortal(content, portalTarget);
 };
 
 export default MindmapCommandPalette;
