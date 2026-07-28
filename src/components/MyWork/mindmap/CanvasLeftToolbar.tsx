@@ -30,6 +30,8 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import { useFullscreenPortalTarget } from '@/hooks/useFullscreenPortalTarget';
+
 import {
   IDEA_CANVAS_CURSOR_MODE_EVENT,
   type IdeaCanvasCursorMode,
@@ -433,6 +435,8 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const isPl = i18n.language?.startsWith('pl');
   const [openPopover, setOpenPopover] = useState<PopoverId>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
+  /** Cel portalu: `body` normalnie, element pełnoekranowy w pełnym ekranie. */
+  const portalTarget = useFullscreenPortalTarget();
 
   /**
    * B3 (2026-07-27) — popover NIE MOŻE być dzieckiem kolumny raila.
@@ -1063,11 +1067,17 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     </>
   );
 
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
+  if (typeof window === 'undefined' || typeof document === 'undefined' || !portalTarget) {
     return railWithPopover;
   }
 
-  return createPortal(railWithPopover, document.body);
+  // 2026-07-28 (zgłoszenie „w pełnym ekranie nie ma menu lewego"): cel portalu
+  // to `document.body` POZA pełnym ekranem, a element pełnoekranowy W pełnym
+  // ekranie — inaczej pasek jest RODZEŃSTWEM elementu pełnoekranowego i
+  // przeglądarka go nie rysuje. Niezmiennik B3 zachowany: rail, wskaźnik trybu i
+  // popover idą JEDNYM `createPortal` w to samo miejsce (patrz komentarz przy
+  // `popoverAnchorRef`), więc żyją i umierają razem.
+  return createPortal(railWithPopover, portalTarget);
 };
 
 export default CanvasLeftToolbar;

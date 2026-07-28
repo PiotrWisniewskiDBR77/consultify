@@ -5,6 +5,7 @@ import { commentCountOf, CommentPinBadge } from './CommentPinBadge';
 import {
   resolveNodeAccentBg,
   resolveNodeFontStyle,
+  resolveNodeSurfaceOverride,
   STICKY_COLORS,
   STICKY_SIZES,
   useIsDark,
@@ -40,6 +41,7 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
   };
 
   const commentCount = commentCountOf(data);
+  const surfaceOverride = resolveNodeSurfaceOverride(data, 26);
   const priority = typeof data?.priority === 'number' ? data.priority : 0;
   const priorityBorder =
     priority >= 80
@@ -64,6 +66,9 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
           : {}),
         // Z15: explicit per-element accent wins over the random creation color.
         ...(accentBg || {}),
+        // Pasek edycji obiektu: TŁO i RAMKA osobno — bije wszystko powyżej,
+        // bo to jawny wybór właściciela, a nie kolor wylosowany przy tworzeniu.
+        ...(surfaceOverride || {}),
       }}
       onDoubleClick={() => {
         if (!data?.locked) {

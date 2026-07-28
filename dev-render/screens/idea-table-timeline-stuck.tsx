@@ -28,6 +28,7 @@
  * return the merged result.
  *
  *   ?screen=idea-table-timeline-stuck          → light
+ *   ?screen=idea-table-timeline-stuck&rows=0   → PUSTA tabela (pusty stan startu)
  *   ?screen=idea-table-timeline-stuck&theme=dark → dark
  *
  * Mock table: 5 idea rows, columns = Nazwa (text) + Status (select) +
@@ -112,7 +113,10 @@ const TABLE_NODES = [
 let currentMapState: Record<string, any> = {
   version: 4,
   preferredTool: 'table',
-  nodes: TABLE_NODES,
+  // `?rows=0` — wariant PUSTEJ tabeli, do odbioru pustego stanu „od czego zacząć"
+  // (`TableStartEmptyState`, flaga ff_ideaTableGuidedBar). Bez parametru harness
+  // zachowuje się 1:1 jak dotąd (5 wierszy, scenariusz Timeline-stuck).
+  nodes: new URLSearchParams(window.location.search).get('rows') === '0' ? [] : TABLE_NODES,
   edges: [],
   extensions: {
     table: {
@@ -125,6 +129,10 @@ let currentMapState: Record<string, any> = {
 };
 
 function mergeMapPatch(patch: Record<string, any>): Record<string, any> {
+  // Licznik zapisów — dowód dla odbioru, że przycisk „Zapisz" przeniesiony do
+  // Menu 1 wywołuje TEN SAM tor zapisu co przycisk w pasku (nie atrapę).
+  const w = window as unknown as { __saveCalls?: number };
+  w.__saveCalls = (w.__saveCalls ?? 0) + 1;
   currentMapState = {
     ...currentMapState,
     ...patch,
