@@ -27633,7 +27633,10 @@
       "whyThisImportant": "Dlaczego to ważne?",
       "willBeRemoved": "Zostanie usunięty",
       "writeCommentMention": "Napisz komentarz... (@wzmianka)",
-      "nSelected": "{{count}} zaznaczonych"
+      "nSelected": "{{count}} zaznaczonych",
+      "summaryUnavailable": "Nie udało się przygotować podsumowania tej gałęzi. Spróbuj ponownie.",
+      "branchHasNoChildren": "Ten węzeł nie ma podgałęzi — nie ma czego podsumować.",
+      "tryAgain": "Spróbuj ponownie"
     }
   },
   "notebook": {
