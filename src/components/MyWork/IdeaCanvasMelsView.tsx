@@ -68,6 +68,12 @@ export interface IdeaCanvasMelsViewProps {
   activeRightToolId?: string | null;
   onSelectRightTool?: (id: string | null) => void;
   renderRightRailPanel?: (activeToolId: string | null) => React.ReactNode;
+  /**
+   * Czy pasek ikon prawego panelu wolno schować do 16-pikselowego słupka.
+   * Domyślnie TAK (dzisiejsze zachowanie). Idea w układzie 6 sekcji podaje
+   * `false` — decyzja właściciela: pasek ikon ma być zawsze widoczny.
+   */
+  rightRailCollapsible?: boolean;
 
   /** Core canvas-mode slots. */
   canvas: React.ReactNode;
@@ -116,6 +122,7 @@ export const IdeaCanvasMelsView: React.FC<IdeaCanvasMelsViewProps> = ({
   activeRightToolId,
   onSelectRightTool,
   renderRightRailPanel,
+  rightRailCollapsible = true,
   canvas,
   floatingLeftRail,
   canvasOverlaySlot,
@@ -164,6 +171,7 @@ export const IdeaCanvasMelsView: React.FC<IdeaCanvasMelsViewProps> = ({
       leftRailContent={<></>}
       rightRailTools={rightRailTools}
       renderRightRailPanel={rightPanelRenderer}
+      rightRailCollapsible={rightRailCollapsible}
       onRunPrimary={onRunPrimary}
       onToggleAgent={onToggleAgent}
       onOpenCommandPalette={onOpenCommandPalette}
