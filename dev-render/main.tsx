@@ -46,6 +46,9 @@ const DocumentStudioAiTeresaScreen = React.lazy(
 const DocumentStudioStreamingHonestyN3Screen = React.lazy(
   () => import('./screens/document-studio-streaming-honesty-n3')
 );
+const DocumentStudioMenuPlikuScreen = React.lazy(
+  () => import('./screens/document-studio-menu-pliku')
+);
 const MenuCanonSidebarCheckScreen = React.lazy(
   () => import('./screens/menu-canon-sidebar-check')
 );
@@ -218,6 +221,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DOCUMENT STUDIO — N3 (2026-07-28): doktryna streaming — notyfikacja fallback, Stop, chipy źródeł, plan w Mode 3. ?simFail=1 dla naprawy #1.',
     render: () => <DocumentStudioStreamingHonestyN3Screen />,
+  },
+  'document-studio-menu-pliku': {
+    label:
+      'DOCUMENT STUDIO — N19/N20 (2026-07-28): menu „Plik" (Nowy·Otwórz·Zapisz·Zapisz jako) + afordancje wyjścia (Start over / breadcrumb).',
+    render: () => <DocumentStudioMenuPlikuScreen />,
   },
   'audyty-drd-report': {
     label:
