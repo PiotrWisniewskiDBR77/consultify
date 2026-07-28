@@ -6,6 +6,7 @@ import {
   darkenHex,
   hexToGlow,
   resolveNodeFontStyle,
+  resolveNodeSurfaceOverride,
   useIsDark,
   WB_HANDLE_CLASS,
 } from './whiteboardNodeHelpers';
@@ -17,6 +18,10 @@ export const ShapeNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) =
   // bgColor and is theme-aware via color-mix (no darkenHex needed).
   const accent = typeof data?.accentColor === 'string' ? data.accentColor : null;
   const fontStyle = resolveNodeFontStyle(data);
+  // Pasek edycji obiektu: TŁO i RAMKA osobno. Dotąd kształt miał JEDEN
+  // `accentColor` sterujący i wypełnieniem, i obwódką (`hexToGlow(lightBg)`),
+  // więc ramki w innym kolorze niż tło po prostu nie dało się zrobić.
+  const surfaceOverride = resolveNodeSurfaceOverride(data, 26);
   // Default shape fill = periwinkle identity token (theme-aware); a user-picked
   // data.bgColor is still a raw hex, darkened for dark mode via darkenHex.
   const lightBg = accent
@@ -43,6 +48,21 @@ export const ShapeNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) =
   const isDiamond = shape === 'diamond';
   const isCircle = shape === 'circle';
   const isHexagon = shape === 'hexagon';
+  // 'rect' (ostry prostokąt) i 'pill' (pigułka) dochodzą z WSPÓLNEJ palety
+  // kształtów (`CANVAS_SHAPES`) — ten sam zestaw co w Mapie i Procesie.
+  // Koło trzyma proporcję (`borderRadius: 50%`), pigułka NIE — to prostokąt o
+  // maksymalnie zaokrąglonych końcach, więc `9999px`, nie `50%`.
+  const cornerRadius = isCircle
+    ? '50%'
+    : shape === 'pill'
+      ? 9999
+      : shape === 'rect'
+        ? 0
+        : isDiamond
+          ? 8
+          : isHexagon
+            ? 0
+            : 12;
 
   return (
     <>
@@ -58,13 +78,15 @@ export const ShapeNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) =
           width: '100%',
           height: '100%',
           backgroundColor: isDark ? darkBg : lightBg,
-          borderRadius: isCircle ? '50%' : isDiamond ? 8 : isHexagon ? 0 : 12,
+          borderRadius: cornerRadius,
           transform: isDiamond ? 'rotate(45deg)' : undefined,
           border: isHexagon
             ? 'none'
             : isDark
               ? `2px solid ${hexToGlow(lightBg)}`
               : '2px solid rgba(255,255,255,0.4)',
+          ...(surfaceOverride || {}),
+          ...(surfaceOverride?.borderColor ? { borderStyle: 'solid', borderWidth: 2 } : {}),
           boxShadow: isHexagon
             ? undefined
             : isDark

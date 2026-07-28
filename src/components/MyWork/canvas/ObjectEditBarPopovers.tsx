@@ -200,6 +200,44 @@ export const ShapePalettePopover: React.FC<{
   );
 };
 
+// ───────────────────────────── LISTA POLECEŃ ────────────────────────────────
+
+/**
+ * Zwykła lista poleceń w popoverze — używana tam, gdzie stary pasek miał
+ * `ToolbarDropdown` (Wyrównaj / Rozłóż w Tablicy). Dzięki temu przy zamianie
+ * etykiet na ikony ANI JEDNA pozycja z tamtych rozwijek nie ginie.
+ */
+export const MenuListPopover: React.FC<{
+  title: string;
+  items: Array<{
+    id: string;
+    label: string;
+    icon?: React.ComponentType<{ size?: number }>;
+    onClick: () => void;
+    disabled?: boolean;
+  }>;
+  close: () => void;
+}> = ({ title, items, close }) => (
+  <div className={`${PANEL} w-[186px]`}>
+    <div className={CAPTION}>{title}</div>
+    {items.map((item) => (
+      <button
+        key={item.id}
+        type="button"
+        disabled={item.disabled}
+        onClick={() => {
+          item.onClick();
+          close();
+        }}
+        className={`${ROW_BTN} disabled:opacity-40 disabled:cursor-not-allowed`}
+      >
+        {item.icon ? <item.icon size={13} /> : null}
+        {item.label}
+      </button>
+    ))}
+  </div>
+);
+
 // ─────────────────────── STRZAŁKI / KIERUNEK PRZEPŁYWU ──────────────────────
 
 export type CanvasArrowDirection = 'none' | 'start' | 'end' | 'both';

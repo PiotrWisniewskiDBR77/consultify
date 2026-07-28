@@ -8,6 +8,24 @@
 import 'reactflow/dist/style.css';
 import './whiteboard/whiteboard-canvas.css';
 
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  ArrowDown,
+  ArrowLeftRight,
+  ArrowUp,
+  ArrowUpDown,
+  CheckSquare,
+  Copy,
+  ExternalLink,
+  Group,
+  Link2,
+  Lock,
+  Rocket,
+  Trash2,
+  Ungroup,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
@@ -32,6 +50,7 @@ import { Api } from '@/services/api';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
+import { isCanvasObjectEditBarEnabled } from '@/utils/canvasObjectEditBarFlag';
 import { SkeletonState } from '@/components/shared/states';
 import {
   IDEA_BOTTOM_BAR_MINIMAP_LIFT,
@@ -133,6 +152,14 @@ import {
   type WbNodeKind,
 } from './whiteboard/whiteboardProposalPatch';
 import { toggleReaction } from './whiteboard/whiteboardReactions';
+import { readCanvasObjectStyle } from './canvas/canvasObjectStyle';
+import { ObjectEditBar, type ObjectEditBarGroup } from './canvas/ObjectEditBar';
+import { MenuListPopover } from './canvas/ObjectEditBarPopovers';
+import {
+  buildStyleGroups,
+  ObjectEditBarDock,
+  useObjectEditBarSlot,
+} from './canvas/objectEditBarDock';
 import { WhiteboardSelectionBar } from './whiteboard/WhiteboardSelectionBar';
 import { WhiteboardStyleBar } from './whiteboard/WhiteboardStyleBar';
 import { WhiteboardSessionPanel } from './whiteboard/WhiteboardSessionPanel';
@@ -174,6 +201,13 @@ interface WhiteboardCanvasProps {
   onEdgeContextMenu?: (e: React.MouseEvent, edgeId: string) => void;
   // Z15: patch a single node's style (accent/fontSize/fontWeight) onto node.data.
   onNodeStyleChange?: (nodeId: string, patch: Record<string, unknown>) => void;
+  /**
+   * Gdy pasek edycji obiektu jest ZADOKOWANY w listwie Menu 3
+   * (ff_canvasObjectEditBar), pływający `WhiteboardStyleBar` niósłby DOKŁADNIE
+   * te same kontrolki dwa razy — doktryna gęstości §3 (zdublowana akcja).
+   * Wtedy chowamy pływający; przy fladze OFF nic się nie zmienia.
+   */
+  suppressFloatingStyleBar?: boolean;
 }
 
 // Z15: node types that expose the floating per-element style bar.
@@ -197,6 +231,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   onContextMenu: externalOnContextMenu,
   onEdgeContextMenu: externalOnEdgeContextMenu,
   onNodeStyleChange,
+  suppressFloatingStyleBar,
 }) => {
   const { screenToFlowPosition, setViewport, fitView } = useReactFlow();
   // Z15: subscribe to the live viewport transform so the floating style bar
@@ -248,7 +283,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   // selected. Anchor = top-center of the node, transformed into screen space via
   // the live viewport (mirrors the Mind Map FloatingNodeToolbar anchor math).
   const styleBarTarget = React.useMemo(() => {
-    if (locked || !onNodeStyleChange) return null;
+    if (locked || !onNodeStyleChange || suppressFloatingStyleBar) return null;
     const selected = nodes.filter((n) => n.selected);
     if (selected.length !== 1) return null;
     const node = selected[0];
@@ -260,7 +295,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
     const screenX = node.position.x * zoom + tx + (width * zoom) / 2;
     const screenY = node.position.y * zoom + ty;
     return { node, position: { x: screenX, y: screenY } };
-  }, [locked, onNodeStyleChange, nodes, rfTransform]);
+  }, [locked, onNodeStyleChange, suppressFloatingStyleBar, nodes, rfTransform]);
 
   React.useEffect(() => {
     // Naprawa 2026-07-26 (Zadanie B — Scenes nie przełącza widoku): `.react-flow`
@@ -3552,6 +3587,201 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     (node: Node) => node.type === 'frameNode' || node.type === 'groupNode'
   );
 
+  // ── PASEK EDYCJI OBIEKTU (ff_canvasObjectEditBar) ──────────────────────────
+  // Zgłoszenie właściciela: „zróbmy to tak jak w mapie myśli. menu kontekstowe,
+  // czyli ikony i to co będzie się otwierać na środku menu narzędzia. no brakuje
+  // nam czcionek (kolorów, wielkości, podkreśleń, bordów…)".
+  //
+  // WYMÓG TWARDY „nic nie znika": pasek zaznaczenia Tablicy niósł 11 funkcji
+  // (Attach · Linked · Promote decision · Promote action · Align · Distribute ·
+  // Group · Ungroup · Duplicate · Lock · Delete). WSZYSTKIE są niżej — etykiety
+  // zamieniono na ikony, rozwijki Align/Distribute na popovery z tą samą
+  // zawartością co do pozycji.
+  const editBarSlot = useObjectEditBarSlot();
+  const wbEditBarDocked = isCanvasObjectEditBarEnabled() && !!editBarSlot && selectedCount > 0;
+
+  // Zmiana stylu dla CAŁEGO zaznaczenia (stary `handleNodeStyleChange` umiał
+  // tylko jeden węzeł — pasek zaznaczenia bywa wielokrotny).
+  const handleSelectionStyleChange = useCallback(
+    (patch: Record<string, unknown>) => {
+      for (const id of selectedNodeIds) handleNodeStyleChange(id, patch);
+    },
+    [selectedNodeIds, handleNodeStyleChange]
+  );
+
+  const wbQuickAction = useCallback(
+    (action: string) => {
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-quick-action', {
+          detail: {
+            action,
+            ideaId,
+            ...(selectedNodeIds?.length ? { nodeIds: selectedNodeIds } : {}),
+          },
+        })
+      );
+    },
+    [ideaId, selectedNodeIds]
+  );
+
+  const wbEditBarModel = useMemo(() => {
+    if (!wbEditBarDocked) return null;
+    const primary = selectedNodes[0];
+    const style = readCanvasObjectStyle(primary?.data);
+    const styleGroups = buildStyleGroups({
+      style,
+      onPatch: handleSelectionStyleChange,
+      t,
+      disabled: locked,
+      show: { shape: true },
+    });
+
+    const arrange: ObjectEditBarGroup = {
+      id: 'arrange',
+      controls: [
+        {
+          kind: 'popover',
+          id: 'align',
+          icon: AlignCenter,
+          label: t('myWork.whiteboard.selectionBar.align'),
+          disabled: locked || selectedCount < 2,
+          align: 'center',
+          render: (close) => (
+            <MenuListPopover
+              title={t('myWork.whiteboard.selectionBar.align')}
+              close={close}
+              items={[
+                { id: 'left', label: t('myWork.whiteboard.selection.alignLeft'), icon: AlignLeft, onClick: () => alignNodes('left') },
+                { id: 'center', label: t('myWork.whiteboard.selection.alignCenter'), icon: AlignCenter, onClick: () => alignNodes('center') },
+                { id: 'right', label: t('myWork.whiteboard.selection.alignRight'), icon: AlignRight, onClick: () => alignNodes('right') },
+                { id: 'top', label: t('myWork.whiteboard.selection.alignTop'), icon: ArrowUp, onClick: () => alignNodes('top') },
+                { id: 'middle', label: t('myWork.whiteboard.selection.alignMiddle'), icon: AlignCenter, onClick: () => alignNodes('middle') },
+                { id: 'bottom', label: t('myWork.whiteboard.selection.alignBottom'), icon: ArrowDown, onClick: () => alignNodes('bottom') },
+              ]}
+            />
+          ),
+        },
+        {
+          kind: 'popover',
+          id: 'distribute',
+          icon: ArrowLeftRight,
+          label: t('myWork.whiteboard.selectionBar.distribute'),
+          disabled: locked || selectedCount < 3,
+          align: 'center',
+          render: (close) => (
+            <MenuListPopover
+              title={t('myWork.whiteboard.selectionBar.distribute')}
+              close={close}
+              items={[
+                { id: 'dist_h', label: t('myWork.whiteboard.selection.distributeH'), icon: ArrowLeftRight, onClick: () => distributeNodes('horizontal') },
+                { id: 'dist_v', label: t('myWork.whiteboard.selection.distributeV'), icon: ArrowUpDown, onClick: () => distributeNodes('vertical') },
+              ]}
+            />
+          ),
+        },
+        {
+          kind: 'button',
+          id: 'group',
+          icon: Group,
+          label: t('myWork.whiteboard.selection.group'),
+          disabled: locked || selectedCount < 2,
+          onClick: groupSelected,
+        },
+        {
+          kind: 'button',
+          id: 'ungroup',
+          icon: Ungroup,
+          label: t('myWork.whiteboard.selection.ungroup'),
+          disabled: locked || !hasSelectedFrame,
+          onClick: ungroupSelected,
+        },
+        {
+          kind: 'button',
+          id: 'duplicate',
+          icon: Copy,
+          label: t('myWork.whiteboard.selection.duplicate'),
+          disabled: locked,
+          onClick: duplicateSelected,
+        },
+        {
+          kind: 'button',
+          id: 'lock',
+          icon: Lock,
+          label: t('myWork.whiteboard.selection.lock'),
+          disabled: locked,
+          onClick: lockSelected,
+        },
+      ],
+    };
+
+    const links: ObjectEditBarGroup = {
+      id: 'links',
+      controls: [
+        {
+          kind: 'button',
+          id: 'attach',
+          icon: Link2,
+          label: t('myWork.whiteboard.selectionBar.attach'),
+          disabled: locked,
+          onClick: () => wbQuickAction('attach_artifact'),
+        },
+        {
+          kind: 'button',
+          id: 'linked',
+          icon: ExternalLink,
+          label: t('myWork.whiteboard.selectionBar.linked'),
+          onClick: () => wbQuickAction('open_linked_artifacts'),
+        },
+        {
+          kind: 'button',
+          id: 'promote-decision',
+          icon: Rocket,
+          label: t('myWork.whiteboard.selectionBar.convertDecision'),
+          disabled: locked,
+          onClick: () => wbQuickAction('wb_convert_decision'),
+        },
+        {
+          kind: 'button',
+          id: 'promote-action',
+          icon: CheckSquare,
+          label: t('myWork.whiteboard.selectionBar.convertAction'),
+          disabled: locked,
+          onClick: () => wbQuickAction('wb_convert_action'),
+        },
+        {
+          kind: 'button',
+          id: 'delete',
+          icon: Trash2,
+          label: t('myWork.whiteboard.selection.delete'),
+          disabled: locked,
+          tone: 'danger',
+          onClick: deleteSelected,
+        },
+      ],
+    };
+
+    return {
+      title: t('myWork.whiteboard.selection.elementsSelected', { count: selectedCount }),
+      groups: [...styleGroups, arrange, links],
+    };
+  }, [
+    wbEditBarDocked,
+    selectedNodes,
+    selectedCount,
+    hasSelectedFrame,
+    locked,
+    t,
+    handleSelectionStyleChange,
+    alignNodes,
+    distributeNodes,
+    groupSelected,
+    ungroupSelected,
+    duplicateSelected,
+    lockSelected,
+    deleteSelected,
+    wbQuickAction,
+  ]);
+
   if (!open) return null;
 
   return (
@@ -3695,6 +3925,16 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             </div>
           )}
 
+          {/* Pasek edycji zadokowany w listwie Menu 3. Gdy jest — pływający
+              pasek zaznaczenia się NIE renderuje (jedno miejsce prawdy);
+              gdy slotu brak (flaga OFF / brak Menu 3) — wraca pływający. */}
+          {wbEditBarDocked && wbEditBarModel ? (
+            <ObjectEditBarDock slot={editBarSlot}>
+              <ObjectEditBar model={wbEditBarModel} />
+            </ObjectEditBarDock>
+          ) : null}
+
+          {!wbEditBarDocked && (
           <WhiteboardSelectionBar
             isPl={isPl}
             locked={locked}
@@ -3710,6 +3950,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             onLockSelected={lockSelected}
             onDeleteSelected={deleteSelected}
           />
+          )}
 
           <ReactFlowProvider>
             <WhiteboardCanvas
@@ -3730,6 +3971,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               onContextMenu={handleCanvasContextMenu}
               onEdgeContextMenu={handleEdgeContextMenu}
               onNodeStyleChange={handleNodeStyleChange}
+              suppressFloatingStyleBar={wbEditBarDocked}
             />
           </ReactFlowProvider>
 
