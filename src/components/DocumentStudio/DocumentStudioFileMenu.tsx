@@ -36,7 +36,7 @@
  *                 (`saveDocumentStudioManualContent`). No new backend engine.
  */
 
-import { Check, ChevronDown, Copy, FilePlus, FolderOpen, Loader2, Save } from 'lucide-react';
+import { Check, ChevronDown, Copy, FilePlus, FolderOpen, Loader2, Save, Wand2 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -53,6 +53,13 @@ export interface DocumentStudioFileMenuProps {
   saveStatus: DocumentAutosaveStatus | undefined;
   onSaveAs?: () => void;
   saveAsBusy?: boolean;
+  /**
+   * Fala 2 (2026-07-28) — "Zrób z tego wzorzec" (ożywienie fantomu:
+   * `createTemplateFromArtifact` istniał server-side, zero przycisku w UI
+   * go wywoływało). `undefined` when there is no artifact yet — row hidden,
+   * same convention as `onSaveAs`.
+   */
+  onSaveAsTemplate?: () => void;
 }
 
 function useOutsideClose(open: boolean, onClose: () => void): React.RefObject<HTMLDivElement> {
@@ -81,6 +88,7 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
   saveStatus,
   onSaveAs,
   saveAsBusy = false,
+  onSaveAsTemplate,
 }) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -93,7 +101,9 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
       case 'saving':
         return {
           label: t('documentStudio.fileMenu.saveStatusSaving', 'Zapisywanie…'),
-          icon: <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-c-text-muted" aria-hidden />,
+          icon: (
+            <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-c-text-muted" aria-hidden />
+          ),
         };
       case 'conflict':
         return {
@@ -200,7 +210,10 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
             data-testid="document-file-menu-save-as"
           >
             {saveAsBusy ? (
-              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-c-text-muted" aria-hidden />
+              <Loader2
+                className="h-3.5 w-3.5 shrink-0 animate-spin text-c-text-muted"
+                aria-hidden
+              />
             ) : (
               <Copy className="h-3.5 w-3.5 shrink-0 text-c-text-muted" aria-hidden />
             )}
@@ -210,6 +223,23 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
                 : t('documentStudio.fileMenu.saveAs', 'Zapisz jako')}
             </span>
           </button>
+          {onSaveAsTemplate ? (
+            <>
+              <div className="my-1 border-t border-c-border-subtle" aria-hidden="true" />
+              <button
+                type="button"
+                role="menuitem"
+                onClick={closeAnd(onSaveAsTemplate)}
+                className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                data-testid="document-file-menu-save-as-template"
+              >
+                <Wand2 className="h-3.5 w-3.5 shrink-0 text-c-text-muted" aria-hidden />
+                <span className="flex-1 truncate">
+                  {t('documentStudio.fileMenu.saveAsTemplate', 'Zrób z tego wzorzec')}
+                </span>
+              </button>
+            </>
+          ) : null}
         </div>
       ) : null}
     </div>

@@ -5313,9 +5313,20 @@ function MindMapInner({
     [onNodeDrag, onSnapNodeDrag]
   );
 
+  // Slot doku paska edycji — czytany TU (a nie dopiero niżej), bo decyduje, czy
+  // pasek pływa, czy siedzi w listwie; od tego zależy warunek `contextMenu`.
+  const editBarSlot = useObjectEditBarSlot();
+  const editBarDockAvailable = isCanvasObjectEditBarEnabled() && !!editBarSlot;
+
   const floatingToolbarInfo = useMemo(() => {
     if (locked) return null;
-    if (contextMenu) return null;
+    // Pasek PŁYWAJĄCY chowa się przy menu kontekstowym, bo inaczej zasłaniałby
+    // je nad węzłem. Pasek ZADOKOWANY w górnej listwie nic nie zasłania, a
+    // znikanie go przy otwarciu jego WŁASNEGO kebaba wygląda na awarię: cała
+    // linia przeskakuje (tożsamość rozwija się z powrotem do pilli) w chwili,
+    // gdy użytkownik sięga po pozycję z menu. Warunek zostaje więc TYLKO dla
+    // wariantu pływającego — zachowanie przy fladze OFF bez zmian.
+    if (contextMenu && !editBarDockAvailable) return null;
     if (selectedNodeIds.length === 1) {
       const nodeId = selectedNodeIds[0];
       const node = (nodes as Node[]).find((n) => n.id === nodeId);
@@ -5361,7 +5372,15 @@ function MindMapInner({
       mode: 'multi' as const,
       nodeIds: selected.map((n) => n.id),
     };
-  }, [locked, selectedNodeIds, nodes, contextMenu, getViewport, multiToolbarEnabled]);
+  }, [
+    locked,
+    selectedNodeIds,
+    nodes,
+    contextMenu,
+    editBarDockAvailable,
+    getViewport,
+    multiToolbarEnabled,
+  ]);
 
   const handleFloatingToolbarUpdate = useCallback(
     (patch: Record<string, any>) => {
@@ -5397,8 +5416,8 @@ function MindMapInner({
   // Zaznaczenie → pasek dokuje się w listwie Menu 3 („tam gdzie jest AddNode,
   // Auto Layout, AI Expand, Templates"). Bez slotu (flaga OFF albo Menu 3
   // schowane przez ff_ideaTopBarOneLine) zostaje stary pasek pływający.
-  const editBarSlot = useObjectEditBarSlot();
-  const editBarDocked = isCanvasObjectEditBarEnabled() && !!editBarSlot && !!floatingToolbarInfo;
+  // `editBarSlot` / `editBarDockAvailable` — patrz wyżej (przy `floatingToolbarInfo`).
+  const editBarDocked = editBarDockAvailable && !!floatingToolbarInfo;
 
   const editBarModel = useMemo(() => {
     if (!editBarDocked || !floatingToolbarInfo) return null;

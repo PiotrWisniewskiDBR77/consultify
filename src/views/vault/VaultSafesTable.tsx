@@ -368,6 +368,9 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe, se
             />
             <PreviewDetailsSection
               label={isPolish ? 'Ostatnie dokumenty' : 'Recent documents'}
+              // PILNE-8: to jest LISTA PLIKÓW, nie proza — licznik słów
+              // pokazywał tu „~30 words" nad pięcioma nazwami dokumentów.
+              showWordCount={false}
               loading={recentDocsLoading}
               text={
                 recentDocs && recentDocs.length > 0

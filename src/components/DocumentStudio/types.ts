@@ -416,6 +416,16 @@ export interface TemplateExportRules {
 // "discover the right template" experience: usage-based sort, quality
 // score with sample-size disclosure, persona / region / brand chip
 // filters, and dependency-gated visibility.
+/**
+ * Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). Frontend mirror of the
+ * server `FormattingSchema` is intentionally partial: the client has never
+ * needed the rest of that type (fonts/heading styles are author-invisible
+ * defaults today), so we only mirror the one field this fala adds.
+ */
+export interface DocumentTemplateFormattingSchema {
+  colorTemplateId?: string | null;
+}
+
 export interface DocumentTemplate {
   templateId: string;
   organizationId: string;
@@ -431,6 +441,8 @@ export interface DocumentTemplate {
   confidentiality: DocumentConfidentiality;
   requiredInputs: string[];
   sectionBlueprint: TemplateSectionBlueprint[];
+  /** Fala 1 (2026-07-28) — optional; pre-Fala-1 templates omit it. */
+  formattingSchema?: DocumentTemplateFormattingSchema;
   exportRules: TemplateExportRules;
   status: TemplateStatus;
   version: string;

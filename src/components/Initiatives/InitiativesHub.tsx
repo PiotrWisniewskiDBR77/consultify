@@ -129,7 +129,6 @@ import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiati
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 import PortfolioHealthView from './PortfolioHealthView';
-import { InitiativeCharterWizard } from './Wizard/InitiativeCharterWizard';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
@@ -271,7 +270,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const v8SnapshotRequestRef = useRef(0);
   const [showNewModal, setShowNewModal] = useState(false);
   const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
-  const [showCharter, setShowCharter] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [users, setUsers] = useState<any[]>([]);
@@ -2451,28 +2449,18 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           );
         })}
       </div>
-      {/* Stable right group — Charter. Present at all times (not conditional),
-          separated from the status filters.
+      {/* P-22 (Piotr, OBR-102 2026-07-27): „Te dwa przyciski nie są potrzebne
+          na pewno" — prawa strona Menu 3 jest teraz PUSTA.
+          - „+ New"   → usunięty 07-27 (D-01: dublował CTA „New initiative")
+          - „Charter" → usunięty tu (2026-07-28): kanon TRIADA A3 dopuszcza po
+            prawej stronie Menu 3 WYŁĄCZNIE przyciski AI (wzorzec: `AI Priorities`
+            w Tasks), a Charter to akcja tworzenia. Funkcja NIE zniknęła —
+            `InitiativeCharterWizard` ma wejście w globalnym
+            `UnifiedCreateLauncher` (shared/UnifiedCreateLauncher.tsx) oraz
+            w `InitiativeGeneratorModal`.
           #75 — the "AI Initiative Wizard" entry that used to live here was
-          removed: it duplicated the same source-anchored insight-picker that
-          belongs to the SOURCE (Interview/Tools), while the hub already offers
-          the scratch-creation path via the "+ New Initiative" primaryCta
-          (which opens the same InitiativeWizardModal, unseeded). Wizard code
-          is unchanged — it is still invoked from the source surfaces. */}
-      <div className={MENU_3_RIGHT_CLASS}>
-        <button
-          type="button"
-          onClick={() => setShowCharter(true)}
-          className={MENU_3_ACTION_NEUTRAL}
-        >
-          <Sparkles className="h-3.5 w-3.5" />
-          {t('initiatives.charter.short', 'Charter')}
-        </button>
-        {/* D-01 (Piotr, OBR-28 2026-07-27): „+ New" z Menu 3 USUNIĘTY —
-            dublował Menu 2 („New initiative") oraz sąsiedni „Charter", który
-            otwiera DOKŁADNIE ten sam generator (InitiativeCharterWizard),
-            więc nic nie zostało odcięte. */}
-      </div>
+          removed earlier: it duplicated the source-anchored insight-picker that
+          belongs to the SOURCE (Interview/Tools). */}
     </div>
   );
 
@@ -2560,15 +2548,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         }}
       />
 
-      <InitiativeCharterWizard
-        isOpen={showCharter}
-        onClose={() => setShowCharter(false)}
-        projectId={currentProjectId || undefined}
-        onCreated={() => {
-          setShowCharter(false);
-          void fetchData(true);
-        }}
-      />
+      {/* P-22 (2026-07-28): `InitiativeCharterWizard` zdjęty razem z przyciskiem
+          „Charter" z Menu 3 — bez triggera modal był martwym drzewem. Wejście do
+          kreatora żyje w `UnifiedCreateLauncher` i `InitiativeGeneratorModal`. */}
 
       {/* New Initiative Modal — D1.1: includes type/level selector */}
       {showNewModal && (

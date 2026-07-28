@@ -177,6 +177,27 @@ Priorytet (cichy chip): Critical → kropka `bg-danger-500` + `text-danger-700 d
 ## C3. ODSTĘPY I SIATKA
 Wszystko w wielokrotnościach **4px**: 4·8·12·16·20·24·32·40·48. Padding wiersza tabeli: komórki `px-3 py-2.5` (tytuł `py-3`), checkbox `px-2 py-2.5`. Pasek Menu 3: `px-4 py-2`.
 
+**Odstęp Menu 3 → nagłówek tabeli: `mb-2` (8px).** _(uzupełnione 2026-07-28, uwaga P-6)_
+Kanon opisywał dotąd wyłącznie padding WEWNĄTRZ paska, więc pasek stykał się z nagłówkiem
+kolumn i obie warstwy sterowania — filtry oraz nazwy kolumn — czytały się jako jedna.
+Wartość jest świadomie skromna: większa odsuwałaby filtry od tego, co filtrują.
+Wymuszane w `MENU_3_ROW_CLASS` (`components/shared/ModuleMenu3.tsx`), nie per ekran.
+
+**Licznik słów w bloku DETAILS podglądu** opisuje PROZĘ („ile tu jest czytania").
+Gdy blok niesie listę plików albo tabelę właściwości — `showWordCount={false}`.
+_(Podgląd Sejfu pokazywał `~30 words` nad pięcioma nazwami dokumentów — PILNE-8.)_
+
+**Właściwości encji (klucz–wartość) nie idą do pola na prozę.** `StandardPreview.details`
+przyjmuje `properties: ArtifactPropertyRow[]` i renderuje je przez `ArtifactPropertiesTable`
+(SPEC-A §11.2). Sklejanie ich w akapit przez `join('\n\n')` dało w przeglądzie 128 zrzutów
+cztery podglądy będące zrzutem pól (Interview→Sessions, Tools×3) — N-52.
+
+**Menu wiersza (kebab) nie pokazuje ATRAP.** Pozycja wyłączona dlatego, że funkcji jeszcze
+nie zbudowano („Coming soon"/„Wkrótce"), jest ukrywana — filtruje ją `czyAtrapa`
+w `RowActionsMenu`. Pozycja wyłączona przez REGUŁĘ produktu zostaje widoczna z powodem
+(„AI-generated — read-only", „Archive first", „Safes are automatic — cannot be deleted"),
+bo uczy zasady zamiast obiecywać. Gdy po odsianiu nie zostaje nic — kebaba nie ma wcale.
+
 ## C4. MENU 2 — pigułka (`MENU_2_TAB_*`)
 `h-9` (36px) · `rounded-full` · `border` · `px-3` · `text-sm` · `font-medium` · `gap-2` · transition 150ms.
 - nieaktywna: `border-slate-200/70 bg-white/70 text-slate-700` (dark `border-white/[0.06] bg-white/[0.04] text-slate-300`)

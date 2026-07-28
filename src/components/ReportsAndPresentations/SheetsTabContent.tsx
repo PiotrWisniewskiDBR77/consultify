@@ -1,4 +1,4 @@
-import { Database, Table2 } from 'lucide-react';
+import { Table2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -19,19 +19,16 @@ interface SheetsTabContentProps {
   onRefresh: () => void;
   actions: ReturnType<typeof useRapActions>;
   initialArtifactId?: string | null;
+  /**
+   * D-06: wybór zbioru danych (arkusze vs źródła) należy do Menu 2 hosta.
+   * Gdy host go poda, ten komponent NIE rysuje własnego paska.
+   */
+  subView?: SheetsSubView;
 }
 
 // #83a: "Data" no longer a standalone Menu 2 tab — Piotr's call is that data
-// sources belong under Sheets. This local pill switch keeps both surfaces
-// (governed sheet artifacts + connector/form data sources) reachable without
-// losing any capability from the retired outputs_data tab.
-type SheetsSubView = 'list' | 'data';
-
-const SUB_TAB_BASE =
-  'h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-xs font-medium border transition-colors';
-const SUB_TAB_ACTIVE = 'bg-c-accent-soft text-c-text border-c-border';
-const SUB_TAB_INACTIVE =
-  'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised';
+// sources belong under Sheets.
+export type SheetsSubView = 'list' | 'data';
 
 export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
   viewMode,
@@ -44,47 +41,29 @@ export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
   onRefresh,
   actions,
   initialArtifactId,
+  subView: subViewProp,
 }) => {
+  /**
+   * D-06 (Piotr, P-28, 2026-07-27): „Mamy przycisk Sheets albo Data sources.
+   * Wrzuciłbym wybór — czy oglądamy arkusze, czy źródła danych — do drugiego
+   * menu po prawej stronie. Dzięki temu podniesiemy całą tabelę."
+   *
+   * Pasek pigułek, który tu stał, był CZWARTĄ warstwą nagłówkową (Menu 1 +
+   * Menu 2 + Menu 3 + on) i spychał tabelę o ~44px w dół. Przełącznik żyje
+   * teraz w `rightControls` hosta, czyli po prawej stronie Menu 2; ten
+   * komponent tylko czyta wybór.
+   *
+   * Fallback na stan lokalny zostaje dla wywołań bez hosta (harness dev-render,
+   * testy) — bez niego komponent nie dałby się zamontować samodzielnie.
+   */
   const { t } = useTranslation();
-  const [subView, setSubView] = useState<SheetsSubView>('list');
+  const [subViewLokalny] = useState<SheetsSubView>('list');
+  const subView = subViewProp ?? subViewLokalny;
   const hasRegistrySheets = rows.length > 0;
-
-  const subTabs = (
-    <div
-      className="flex items-center gap-2 px-4 pt-3 pb-1"
-      role="tablist"
-      aria-label={t('rap.sheets.subtabs.label', 'Sheets sections')}
-      data-testid="rap-sheets-subtabs"
-    >
-      <button
-        type="button"
-        role="tab"
-        aria-selected={subView === 'list'}
-        onClick={() => setSubView('list')}
-        data-testid="rap-sheets-subtab-list"
-        className={`${SUB_TAB_BASE} ${subView === 'list' ? SUB_TAB_ACTIVE : SUB_TAB_INACTIVE}`}
-      >
-        <Table2 size={13} />
-        <span>{t('rap.outputs.tabs.sheets', 'Sheets')}</span>
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={subView === 'data'}
-        onClick={() => setSubView('data')}
-        data-testid="rap-sheets-subtab-data"
-        className={`${SUB_TAB_BASE} ${subView === 'data' ? SUB_TAB_ACTIVE : SUB_TAB_INACTIVE}`}
-      >
-        <Database size={13} />
-        <span>{t('rap.sheets.subtabs.data', 'Data sources')}</span>
-      </button>
-    </div>
-  );
 
   if (subView === 'data') {
     return (
       <div className="h-full min-h-0 flex flex-col" data-testid="rap-sheets-tab">
-        {subTabs}
         <div className="flex-1 min-h-0">
           <DataSourcesTabContent />
         </div>
@@ -102,7 +81,6 @@ export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
   ) {
     return (
       <div className="h-full min-h-0 flex flex-col" data-testid="rap-sheets-tab">
-        {subTabs}
         <div className="flex-1 min-h-0">
           <OutputsAggregateTabContent
             viewMode={viewMode}
@@ -123,7 +101,6 @@ export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
 
   return (
     <div className="h-full min-h-0 flex flex-col" data-testid="rap-sheets-tab">
-      {subTabs}
       <div className="flex items-center justify-center flex-1 p-6">
         <div className="w-full max-w-2xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-8">
           <div className="flex items-start gap-4">

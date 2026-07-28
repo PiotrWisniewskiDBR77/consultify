@@ -49,6 +49,10 @@ const DocumentStudioStreamingHonestyN3Screen = React.lazy(
 const DocumentStudioMenuPlikuScreen = React.lazy(
   () => import('./screens/document-studio-menu-pliku')
 );
+const DocumentStudioSaveAsTemplateScreen = React.lazy(
+  () => import('./screens/document-studio-save-as-template')
+);
+const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-canon-sidebar-check'));
 const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-canon-sidebar-check'));
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
@@ -68,6 +72,7 @@ const AdminSsoSelfServiceCardScreen = React.lazy(
 const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canvas'));
 const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
 const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
+const TabeleFala2PrzedPoScreen = React.lazy(() => import('./screens/tabele-fala2-przed-po'));
 const MenuDlugiDomkniecieScreen = React.lazy(() => import('./screens/menu-dlugi-domkniecie'));
 const AgentWarsztatScreen = React.lazy(() => import('./screens/agent-warsztat'));
 const VaultSejfWnetrzeScreen = React.lazy(() => import('./screens/vault-sejf-wnetrze'));
@@ -272,6 +277,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'DOCUMENT STUDIO — N19/N20 (2026-07-28): menu „Plik" (Nowy·Otwórz·Zapisz·Zapisz jako) + afordancje wyjścia (Start over / breadcrumb).',
     render: () => <DocumentStudioMenuPlikuScreen />,
   },
+  'document-studio-save-as-template': {
+    label:
+      'DOCUMENT STUDIO — FALA 2 (2026-07-28): „Zrób z tego wzorzec" — Plik→Zrób z tego wzorzec→3-5 pytań doprecyzowujących→createTemplateFromArtifact.',
+    render: () => <DocumentStudioSaveAsTemplateScreen />,
+  },
   'audyty-drd-report': {
     label:
       'AUDYTY — zakładka „Raporty DRD" (ff_drd_report) + DRDAuditReportView. ?variant=list|report',
@@ -420,6 +430,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'AGT-010 — powłoka Run agent (Moje procesy | Szablony) PRZED AgentPlanWorkspace, tabela planning/executing/awaiting_approval/completed/failed',
     render: () => <AgentHubScreen />,
+  },
+  'tabele-fala2-przed-po': {
+    label:
+      'FALA TABEL 2026-07-28 — PRZED/PO: priorytet kropka+tekst (N-24/N-29), Delete na końcu stopki podglądu (PILNE-10), kontrola regresji Approve/Reject',
+    render: () => <TabeleFala2PrzedPoScreen />,
   },
   'menu-dlugi-domkniecie': {
     label:

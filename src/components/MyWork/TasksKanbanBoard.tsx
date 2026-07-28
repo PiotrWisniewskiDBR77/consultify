@@ -147,7 +147,17 @@ const getColumnForStatus = (status?: string): string => {
   return 'todo';
 };
 
-/* ─── Priority → card styles ─── */
+/* ─── Priority → card styles ───
+ *
+ * N-24 (przegląd 128 zrzutów, 2026-07-27): karta kanbana pokazywała priorytet
+ * jako pełną pigułkę `● CRITICAL` UPPERCASE z tłem i ramką — czyli TEN SAM
+ * moduł miał dwa różne standardy priorytetu: tabela Tasks robiła kropkę
+ * + tekst (kanon A4, ekran przyjęty przez Piotra), a kanban obok — dokładnie
+ * to, czego kanon A9 zabrania („pełne czerwone pigułki priorytetów").
+ * `badge` niesie teraz sam tonowany kolor tekstu, w skali wspólnej ze
+ * `standard/PriorityCell`. Pasek akcentu na lewej krawędzi karty (`border`)
+ * i delikatny tint tła (`bg`) ZOSTAJĄ — kanon A9 wprost ich wymaga.
+ */
 
 const getPriorityCardStyle = (priority?: string) => {
   switch (priority?.toLowerCase()) {
@@ -156,7 +166,7 @@ const getPriorityCardStyle = (priority?: string) => {
       return {
         border: 'border-l-4 border-l-danger-500',
         bg: 'bg-danger-500/5 dark:bg-danger-500/10',
-        badge: 'bg-danger-500/15 text-danger-400 border border-danger-500/20',
+        badge: 'text-danger-700 dark:text-danger-300',
         label: 'Critical',
         dot: 'bg-danger-500',
       };
@@ -164,7 +174,7 @@ const getPriorityCardStyle = (priority?: string) => {
       return {
         border: 'border-l-4 border-l-amber-500',
         bg: 'bg-amber-500/5 dark:bg-amber-500/10',
-        badge: 'bg-amber-500/15 text-amber-400 border border-amber-500/20',
+        badge: 'text-c-text-secondary',
         label: 'High',
         dot: 'bg-amber-500',
       };
@@ -172,7 +182,7 @@ const getPriorityCardStyle = (priority?: string) => {
       return {
         border: 'border-l-4 border-l-blue-500',
         bg: 'bg-blue-500/5 dark:bg-blue-500/10',
-        badge: 'bg-blue-500/15 text-blue-400 border border-blue-500/20',
+        badge: 'text-c-text-secondary',
         label: 'Medium',
         dot: 'bg-blue-500',
       };
@@ -180,7 +190,7 @@ const getPriorityCardStyle = (priority?: string) => {
       return {
         border: 'border-l-4 border-l-slate-400',
         bg: 'bg-slate-500/5 dark:bg-slate-500/10',
-        badge: 'bg-slate-500/15 text-slate-500 dark:text-slate-400 border border-slate-500/20',
+        badge: 'text-c-text-muted',
         label: 'Low',
         dot: 'bg-slate-400',
       };
@@ -188,7 +198,7 @@ const getPriorityCardStyle = (priority?: string) => {
       return {
         border: 'border-l-4 border-l-slate-300',
         bg: 'bg-slate-500/5 dark:bg-slate-500/10',
-        badge: 'bg-slate-500/15 text-slate-500 dark:text-slate-400 border border-slate-500/20',
+        badge: 'text-c-text-muted',
         label: 'Normal',
         dot: 'bg-slate-400',
       };
@@ -265,7 +275,7 @@ const KanbanCardContent: React.FC<{
 
       <div className="flex items-center gap-1.5 mb-3 flex-wrap pl-5">
         <span
-          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${priorityStyle.badge}`}
+          className={`inline-flex items-center gap-1 text-[10px] font-medium ${priorityStyle.badge}`}
         >
           <span className={`w-1.5 h-1.5 rounded-full ${priorityStyle.dot}`} />
           {priorityStyle.label}

@@ -3,6 +3,12 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
+  ArtifactPropertiesTable,
+  type ArtifactPropertyRow,
+} from '@/components/standard/ArtifactPropertiesTable';
+import { formatListDate } from '@/utils/listDateFormat';
+
+import {
   type ActionRow,
   type DetailsAction,
   type MetaPill,
@@ -62,8 +68,8 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
   onCopyId,
 }) => {
   const { t } = useTranslation();
-  const started = session.startedAt ? new Date(session.startedAt).toLocaleDateString() : '—';
-  const last = session.lastActivityAt ? new Date(session.lastActivityAt).toLocaleDateString() : '—';
+  const started = formatListDate(session.startedAt);
+  const last = formatListDate(session.lastActivityAt);
 
   const pills: MetaPill[] = [
     {
@@ -81,16 +87,45 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
     },
   ];
 
-  const detailsText = [
-    `${t('interview.sessionPreview.answers')}: ${session.answeredQuestions}/${session.totalQuestions}`,
-    `${t('interview.sessionPreview.started')}: ${started}`,
-    `${t('interview.sessionPreview.lastActivity')}: ${last}`,
-    ownerName?.trim()
-      ? `${t('interview.sessionPreview.owner', 'Owner')}: ${ownerName.trim()}`
-      : null,
-  ]
-    .filter(Boolean)
-    .join('\n');
+  /**
+   * Przegląd 128 zrzutów (N-52): blok DETAILS pokazywał tu ZRZUT PÓL sklejony
+   * w jeden akapit — „Answers: 0/6 Started: 30/04/2026 Last activity: …
+   * Owner: …" — z licznikiem „~9 words" nad nim. Kanon wymaga w tym bloku
+   * treści, a to nie jest treść, tylko WŁAŚCIWOŚCI.
+   *
+   * Idą więc tam, gdzie ich miejsce: w tabelę klucz–wartość. Przegląd wskazał
+   * ją jako wzorzec (Tools → Reports: „czytelniejsza niż chipy etykieta:wartość"),
+   * a `ArtifactPropertiesTable` jest jej kanoniczną postacią (SPEC-A §11.2).
+   */
+  const wlasciwosci: ArtifactPropertyRow[] = [
+    {
+      id: 'answers',
+      label: t('interview.sessionPreview.answers'),
+      value: `${session.answeredQuestions}/${session.totalQuestions}`,
+      mono: true,
+    },
+    {
+      id: 'started',
+      label: t('interview.sessionPreview.started'),
+      value: started,
+      mono: true,
+    },
+    {
+      id: 'last-activity',
+      label: t('interview.sessionPreview.lastActivity'),
+      value: last,
+      mono: true,
+    },
+    ...(ownerName?.trim()
+      ? [
+          {
+            id: 'owner',
+            label: t('interview.sessionPreview.owner', 'Owner'),
+            value: ownerName.trim(),
+          },
+        ]
+      : []),
+  ];
 
   const customActions: DetailsAction[] = [
     {
@@ -125,11 +160,19 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
       </div>
       <PreviewMetaCard pills={pills} />
       <PreviewDetailsSection
-        text={detailsText}
+        label={t('interview.sessionPreview.propertiesLabel', isPolish ? 'Przebieg' : 'Progress')}
         customActions={customActions}
         expanded={detailsExpanded}
         onToggleExpanded={onToggleDetailsExpanded}
-      />
+        // To tabela właściwości, nie proza — licznik słów nad nią nic nie znaczy.
+        showWordCount={false}
+      >
+        <ArtifactPropertiesTable
+          rows={wlasciwosci}
+          propertyLabel={isPolish ? 'Właściwość' : 'Property'}
+          valueLabel={isPolish ? 'Wartość' : 'Value'}
+        />
+      </PreviewDetailsSection>
     </div>
   );
 };
@@ -190,6 +233,21 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
           },
         ]
       : []),
+  ];
+
+  const actionRows: ActionRow[] = contextButtons.length > 0 ? [{ buttons: contextButtons }] : [];
+
+  /**
+   * N-51 (przegląd 128 zrzutów): „jedyna akcja w podglądzie sesji to skopiowanie
+   * identyfikatora — czynność deweloperska, nie biznesowa".
+   *
+   * `Copy ID` nie znika (bywa potrzebne przy zgłoszeniu błędu), ale przestaje
+   * zajmować miejsce akcji głównej. Ląduje pod „…", zgodnie z kanonem: w stopce
+   * stoją akcje, po które użytkownik tu przyszedł, reszta chowa się w overflow.
+   * Gdy sesja nie oferuje nic innego, stopka pokazuje sam trigger „…" zamiast
+   * udawać, że kopiowanie identyfikatora jest tym, co chciało się zrobić.
+   */
+  const overflowActions = [
     {
       label: t('interview.sessionPreview.copyId'),
       icon: Copy,
@@ -197,8 +255,6 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
       colorScheme: 'neutral' as const,
     },
   ];
-
-  const actionRows: ActionRow[] = contextButtons.length > 0 ? [{ buttons: contextButtons }] : [];
 
   return (
     // canon §7.3: space-y-2.5, NO border-t dividers between footer cards
@@ -214,7 +270,11 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
 
       <PreviewRelations items={relationItems} />
 
-      {actionRows.length > 0 && <PreviewActionBar rows={actionRows} />}
+      <PreviewActionBar
+        rows={actionRows}
+        overflowActions={overflowActions}
+        overflowLabel={isPolish ? 'Więcej akcji' : 'More actions'}
+      />
     </div>
   );
 };

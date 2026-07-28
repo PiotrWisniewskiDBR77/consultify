@@ -67,6 +67,36 @@ interface RowActionsMenuProps {
   onContextMenuClose?: () => void;
 }
 
+/**
+ * Czy pozycja menu to ATRAPA — akcja, która istnieje na ekranie, ale nic nie
+ * robi, bo jej po prostu nie zbudowano.
+ *
+ * Piotr, P-17 (Sejf) i P-18 (Run agent), 2026-07-27: „Ta tabela jest w ogóle
+ * wbrew jakimkolwiek standardom" — przy kebabie, w którym 3 z 4 pozycji były
+ * martwe. Przegląd 128 zrzutów naliczył takich menu pięć (Sejf 3/4, Run agent
+ * Szablony 3/4, Run agent Procesy 2/4, Documents→Sheets 3/7, Interview→
+ * Initiatives 3/6), a jako wzorzec wskazał kebab Interview→Templates: dziewięć
+ * pozycji, ZERO wyłączonych.
+ *
+ * Sprawdziłem, zanim to napisałem: „Coming soon (backend)" mówi prawdę —
+ * `my_ideas` i siostrzane tabele nie mają nawet kolumny na archiwizację, a
+ * `POST /archive` istnieje wyłącznie dla sesji wywiadu i report-buildera.
+ * Czyli to nie jest coś, co da się „włączyć" — to funkcja do zbudowania.
+ *
+ * Dlatego menu jej nie pokazuje. Rozróżnienie jest celowe i przebiega po
+ * TREŚCI komunikatu:
+ *   - „jeszcze tego nie ma" (Coming soon / Wkrótce)  → ATRAPA, znika z menu;
+ *   - „nie wolno, bo…" (`AI-generated — read-only`, `Archive first`,
+ *     `Safes are automatic — cannot be deleted`) → ZOSTAJE wyłączone z powodem,
+ *     bo uczy użytkownika reguły produktu zamiast go oszukiwać.
+ */
+const ATRAPA_WZORZEC = /coming soon|wkrótce|wkrotce/i;
+
+export function czyAtrapa(action: Pick<RowAction, 'disabled' | 'description' | 'rightLabel'>) {
+  if (!action.disabled) return false;
+  return ATRAPA_WZORZEC.test(`${action.description ?? ''} ${action.rightLabel ?? ''}`);
+}
+
 export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   actions = [],
   sections,
@@ -197,7 +227,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
       return sections
         .map((section) => ({
           ...section,
-          actions: section.actions.filter((action) => !action.hidden),
+          actions: section.actions.filter((action) => !action.hidden && !czyAtrapa(action)),
         }))
         .filter((section) => section.actions.length > 0);
     }

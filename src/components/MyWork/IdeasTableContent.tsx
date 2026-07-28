@@ -57,6 +57,7 @@ import type {
   TableFilters,
 } from '@/components/ui/ResizableTable';
 import { ColumnResizer, FilterDropdown } from '@/components/ui/ResizableTable';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import type { IdeaConvertTarget as SsotConvertTarget } from './ideaConvertTargets';
@@ -287,7 +288,7 @@ function getToolMeta(tool?: string | null) {
 function formatIdeaDate(idea: MyIdea) {
   const value = idea.updatedAt || idea.createdAt;
   if (!value) return '—';
-  return new Date(value).toLocaleDateString();
+  return formatListDate(value);
 }
 
 function SortIndicator({ active, direction }: { active: boolean; direction: SortDir }) {

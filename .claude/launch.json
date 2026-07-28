@@ -10,67 +10,134 @@
     {
       "name": "fala8-table-parity",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3400"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3400"
+      ],
       "port": 3400
     },
     {
       "name": "n4-galeria-szablonow",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3421"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3421"
+      ],
       "port": 3421
     },
     {
       "name": "atrapy-inicjatywa-analysis",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3150"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3150"
+      ],
       "port": 3150
     },
     {
       "name": "dev-render-vlt005",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3410"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3410"
+      ],
       "port": 3410
     },
     {
       "name": "agt-010-agent-hub",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3411"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3411"
+      ],
       "port": 3411
     },
     {
       "name": "agt-008-klocki",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3413"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3413"
+      ],
       "port": 3413
     },
     {
       "name": "agent-warsztat",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3416"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3416"
+      ],
       "port": 3416
     },
     {
       "name": "vault-sejf-wnetrze",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3415"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3415"
+      ],
       "port": 3415
     },
     {
       "name": "grid-etap3-menu",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3207"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3207"
+      ],
       "port": 3207
     },
     {
       "name": "grid-etap4-prawy-panel",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3208"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3208"
+      ],
       "port": 3208
     },
     {
       "name": "fixw-timeline-stuck",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3231", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3231",
+        "--strictPort"
+      ],
       "port": 3231
     },
     {
@@ -84,6 +151,18 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3077", "--strictPort"],
       "port": 3077
+    },
+    {
+      "name": "fix-wzorce-kolory-ekstrakcja",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3082", "--strictPort"],
+      "port": 3082
+    },
+    {
+      "name": "tabele-fala2",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3450", "--strictPort"],
+      "port": 3450
     }
   ]
 }
