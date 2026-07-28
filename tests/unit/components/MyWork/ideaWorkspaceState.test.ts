@@ -118,4 +118,59 @@ describe('idea deep-link tool routing (residual race)', () => {
     });
     expect(state.activeTool).toBe('table');
   });
+
+  // ── IDE-027: łańcuch, przez który wybór narzędzia ginął przy tworzeniu ──────
+  // Regresja wracała DWA RAZY, bo każda poprzednia naprawa dokładała kolejną
+  // siatkę bezpieczeństwa, a nie usuwała przyczyny. Te trzy testy pilnują
+  // KAŻDEGO ogniwa osobno — pojedynczy test na „końcowy efekt" znów by przegapił.
+  describe('IDE-027 — wybór narzędzia przeżywa utworzenie Idei na serwerze', () => {
+    const DOK_ROBOCZY = {
+      id: 'new-idea-1700000000000',
+      data: { isNew: true, initialTool: 'process_flow' as const },
+    };
+
+    it('OGNIWO 1: strażnik „bez zmian" NIE zakłada wpisu dla świeżej Idei', () => {
+      // To jest przyczyna, nie usterka: łatka z ekranu tworzenia jest co do joty
+      // równa stanowi domyślnemu, więc mapa stanów zostaje PUSTA.
+      const puste: Record<string, never> = {};
+      const po = patchIdeaWorkspaceState(puste, DOK_ROBOCZY, {
+        activeTool: 'process_flow',
+        activePanel: 'tools',
+        selection: EMPTY_SELECTION,
+        locked: true,
+      });
+      expect(po).toBe(puste);
+      expect(po['new-idea-1700000000000']).toBeUndefined();
+    });
+
+    it('OGNIWO 2: przeniesienie na prawdziwy identyfikator działa MIMO braku wpisu', () => {
+      const stanWyliczony = createDefaultIdeaWorkspaceState(DOK_ROBOCZY);
+      const po = moveIdeaWorkspaceState({}, DOK_ROBOCZY.id, 'idea-realne-99', stanWyliczony);
+      expect(po['idea-realne-99']?.activeTool).toBe('process_flow');
+      expect(po[DOK_ROBOCZY.id]).toBeUndefined();
+    });
+
+    it('OGNIWO 3: bez stanu awaryjnego wybór ginie — dowód, że argument jest konieczny', () => {
+      const po = moveIdeaWorkspaceState({}, DOK_ROBOCZY.id, 'idea-realne-99');
+      expect(po['idea-realne-99']).toBeUndefined();
+      // …a odtworzenie z dokumentu po nadpisaniu `data` rekordem z serwera
+      // (bez `initialTool`) daje Mapę myśli — dokładnie objaw zgłoszony przez
+      // właściciela: „wybrałem Proces, dostałem Mapę myśli".
+      const poNadpisaniu = createDefaultIdeaWorkspaceState({
+        id: 'idea-realne-99',
+        data: { isNew: false } as any,
+      });
+      expect(poNadpisaniu.activeTool).toBe('mindmap');
+    });
+
+    it('OGNIWO 4: scalenie danych dokumentu zachowuje initialTool po zapisie', () => {
+      // Odwzorowanie tego, co robi handleDocumentSaved po naprawie.
+      const rekordZSerwera = { id: 'idea-realne-99', title: 'Nowy pomysł', stage: 'seed' };
+      const dataPoScaleniu = { ...DOK_ROBOCZY.data, ...rekordZSerwera, isNew: false };
+      expect(
+        createDefaultIdeaWorkspaceState({ id: 'idea-realne-99', data: dataPoScaleniu as any })
+          .activeTool
+      ).toBe('process_flow');
+    });
+  });
 });

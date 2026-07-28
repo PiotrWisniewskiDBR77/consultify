@@ -58,13 +58,32 @@ export function patchIdeaWorkspaceState(
   };
 }
 
+/**
+ * Przenieś stan warsztatu z identyfikatora roboczego na prawdziwy (po zapisie
+ * Idei na serwerze).
+ *
+ * ★ `fallback` NIE JEST OZDOBNIKIEM — bez niego wybór narzędzia ginie (IDE-027).
+ * `patchIdeaWorkspaceState` ma strażnika „bez zmian", który NIE ZAKŁADA wpisu,
+ * gdy łatka jest równa stanowi domyślnemu. Dla świeżej Idei z wybranym Procesem
+ * łatka `{activeTool:'process_flow', activePanel:'tools', …}` jest co do joty
+ * równa domyślnemu stanowi wyliczonemu z `data.initialTool` — więc strażnik
+ * ją odrzuca i pod `new-idea-<ts>` NIE MA ŻADNEGO WPISU. Wtedy `current[fromId]`
+ * jest puste, przeniesienie było ciche, a po podmianie identyfikatora stan
+ * odtwarzał się z dokumentu, któremu `handleDocumentSaved` właśnie wyczyścił
+ * `data` rekordem z serwera (bez `initialTool`) → 'mindmap'.
+ *
+ * Dlatego przy braku wpisu przenosimy STAN WYLICZONY, a nie nic.
+ */
 export function moveIdeaWorkspaceState(
   current: Record<string, IdeaWorkspaceHubState>,
   fromId: string,
-  toId: string
+  toId: string,
+  fallback?: IdeaWorkspaceHubState | null
 ): Record<string, IdeaWorkspaceHubState> {
-  if (!current[fromId] || fromId === toId) return current;
-  const next = { ...current, [toId]: current[fromId] };
+  if (fromId === toId) return current;
+  const przenoszony = current[fromId] || fallback;
+  if (!przenoszony) return current;
+  const next = { ...current, [toId]: przenoszony };
   delete next[fromId];
   return next;
 }

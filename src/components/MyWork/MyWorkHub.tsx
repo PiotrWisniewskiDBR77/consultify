@@ -969,6 +969,14 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     keys: string[];
   } | null>(null);
 
+  // Lustro `openDocuments` do odczytu z uchwytów, które NIE MOGĄ mieć tej listy
+  // w zależnościach (IDE-027: `handleDocumentSaved` jest przekazywany w dół i
+  // przeliczanie go przy każdej zmianie listy dokumentów remontowałoby warsztat).
+  const openDocumentsRef = useRef<OpenDocument[]>(openDocuments);
+  useEffect(() => {
+    openDocumentsRef.current = openDocuments;
+  }, [openDocuments]);
+
   useEffect(() => {
     if (!isPilotParticipant) return;
     if (isPilotAllowedMyWorkTab(activeTab)) return;
@@ -1957,7 +1965,19 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           : null;
 
       if (nextId && nextId !== docId) {
-        setIdeaWorkspaceStateById((prev) => moveIdeaWorkspaceState(prev, docId, nextId));
+        // ★ IDE-027: stan warsztatu MUSI przeżyć podmianę identyfikatora, nawet
+        // jeśli nikt nie zmaterializował wpisu pod identyfikatorem roboczym
+        // (strażnik „bez zmian" w patchIdeaWorkspaceState go nie zakłada, gdy
+        // łatka równa się stanowi domyślnemu — czyli DOKŁADNIE przy świeżej
+        // Idei z wybranym narzędziem). Wyliczamy stan z dokumentu SPRZED
+        // nadpisania i podajemy jako awaryjny.
+        const dokumentPrzed = openDocumentsRef.current.find((d) => d.id === docId) || null;
+        const stanPrzed = dokumentPrzed
+          ? createDefaultIdeaWorkspaceState(dokumentPrzed as any)
+          : null;
+        setIdeaWorkspaceStateById((prev) =>
+          moveIdeaWorkspaceState(prev, docId, nextId, stanPrzed)
+        );
         setOpenDocuments((prev) => {
           const existing = prev.find((d) => d.id === docId);
           if (!existing) return prev;
@@ -1969,7 +1989,12 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               ...existing,
               id: nextId,
               name: updatedData.title || existing.name,
-              data: updatedData,
+              // ★ IDE-027: SCALAJ, nie nadpisuj. `updatedData` to rekord Idei
+              // z serwera — nie zna `initialTool` ani `seedIntent`. Podstawienie
+              // go w miejsce `data` kasowało wybór narzędzia użytkownika, przez
+              // co Idea otwierała się jako Mapa myśli niezależnie od wyboru.
+              // `isNew` gaśnie, bo Idea już istnieje na serwerze.
+              data: { ...(existing.data || {}), ...updatedData, isNew: false },
             },
           ];
         });
@@ -1978,7 +2003,13 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         setOpenDocuments((prev) =>
           prev.map((doc) =>
             doc.id === docId
-              ? { ...doc, name: updatedData.title || doc.name, data: updatedData }
+              ? {
+                  ...doc,
+                  name: updatedData.title || doc.name,
+                  // Ta sama zasada co wyżej — zapis nie może gubić kontekstu
+                  // utworzenia (narzędzie, seedIntent) trzymanego w `data`.
+                  data: { ...(doc.data || {}), ...updatedData },
+                }
               : doc
           )
         );
