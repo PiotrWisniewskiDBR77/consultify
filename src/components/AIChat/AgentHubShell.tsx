@@ -115,6 +115,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { FolderCreateDialog } from '@/components/shared/FolderCreateDialog';
 import { useHubBarSlot } from '@/components/shared/HubBarSlots';
 import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import type { OpenDocument } from '@/components/shared/ModuleHub/types';
@@ -388,6 +389,10 @@ export const AgentHubShell: React.FC = () => {
   const [projectMemberships, setProjectMemberships] = useState<Array<{ id: string; name: string }>>(
     []
   );
+  // AGT-015 §6 D4 — dialog tworzenia folderu (zastępuje sekwencję window.prompt).
+  const [folderDialogOpen, setFolderDialogOpen] = useState(false);
+  const [folderDialogBusy, setFolderDialogBusy] = useState(false);
+  const [folderDialogError, setFolderDialogError] = useState<string | null>(null);
 
   useEffect(() => {
     Api.getMyProjectMemberships()
@@ -429,61 +434,51 @@ export const AgentHubShell: React.FC = () => {
   /**
    * Nowy folder — poziom wybierany PRZY TWORZENIU (dziedziczy go na stałe,
    * jak Vault). W przeciwieństwie do Vault (poziom narzucony przez sejf, w
-   * którym stoisz) Run agent jest JEDNĄ płaską listą, więc pytamy wprost —
-   * lekki wzorzec `window.prompt` (spójny z resztą ekranu — rename/usuń
-   * folderu w Vault też idą przez prompt/confirm, nie modal).
+   * którym stoisz) Run agent jest JEDNĄ płaską listą, więc pytamy wprost.
+   *
+   * AGT-015 §6 D4 (odbiór, 2026-07-28): sekwencja `window.prompt` → poziom
+   * cyfrą 1/2/3 → wybór projektu NUMEREM z listy zastąpiona wspólnym
+   * `FolderCreateDialog` (`src/components/shared/FolderCreateDialog.tsx`,
+   * dzieli komponent z `VaultDocumentsView.handleCreateFolder`). API
+   * backendu (`createAgentFolder({ name, scope, projectId })`) NIEZMIENIONE.
    */
-  const handleCreateFolder = useCallback(async () => {
-    const name = window
-      .prompt(t('agentPlan.hub.folders.namePrompt', isPolish ? 'Nazwa folderu' : 'Folder name'))
-      ?.trim();
-    if (!name) return;
+  const handleCreateFolder = useCallback(() => {
+    setFolderDialogError(null);
+    setFolderDialogOpen(true);
+  }, []);
 
-    const levelPrompt = isPolish
-      ? 'Poziom folderu:\n1 = Prywatny (tylko ja)\n2 = Projektowy (zespół projektu)\n3 = Organizacyjny (cała firma)'
-      : 'Folder level:\n1 = Private (me only)\n2 = Project (project team)\n3 = Organization (whole company)';
-    const levelRaw = window.prompt(levelPrompt, '1')?.trim();
-    const level = levelRaw === '2' ? 'project' : levelRaw === '3' ? 'organization' : 'user';
-
-    let projectId: string | undefined;
-    if (level === 'project') {
-      if (projectMemberships.length === 0) {
-        window.alert(
-          isPolish
-            ? 'Nie należysz do żadnego projektu — folder projektowy nie jest możliwy.'
-            : 'You are not a member of any project — a project folder is not possible.'
+  const handleFolderDialogSubmit = useCallback(
+    async (input: {
+      name: string;
+      scope: 'user' | 'project' | 'organization';
+      projectId?: string;
+    }) => {
+      setFolderDialogBusy(true);
+      setFolderDialogError(null);
+      try {
+        const created = await createAgentFolder({
+          name: input.name,
+          scope: input.scope,
+          projectId: input.projectId,
+        });
+        setFolders((prev) => [...prev, created]);
+        setFoldersAvailable(true);
+        setFolderDialogOpen(false);
+      } catch (error) {
+        setFolderDialogError(
+          error instanceof Error
+            ? error.message
+            : t(
+                'agentPlan.hub.folders.createFailed',
+                isPolish ? 'Nie udało się utworzyć folderu' : 'Failed to create folder'
+              )
         );
-        return;
+      } finally {
+        setFolderDialogBusy(false);
       }
-      if (projectMemberships.length === 1) {
-        projectId = projectMemberships[0].id;
-      } else {
-        const list = projectMemberships.map((p, i) => `${i + 1}. ${p.name}`).join('\n');
-        const choice = window.prompt(
-          (isPolish ? 'Wybierz projekt (numer):\n' : 'Choose a project (number):\n') + list,
-          '1'
-        );
-        const idx = Number(choice) - 1;
-        projectId = projectMemberships[idx]?.id;
-        if (!projectId) return;
-      }
-    }
-
-    try {
-      const created = await createAgentFolder({ name, scope: level, projectId });
-      setFolders((prev) => [...prev, created]);
-      setFoldersAvailable(true);
-    } catch (error) {
-      window.alert(
-        error instanceof Error
-          ? error.message
-          : t(
-              'agentPlan.hub.folders.createFailed',
-              isPolish ? 'Nie udało się utworzyć folderu' : 'Failed to create folder'
-            )
-      );
-    }
-  }, [t, isPolish, projectMemberships]);
+    },
+    [t, isPolish]
+  );
 
   const handleDeleteFolder = useCallback(
     async (folderId: string) => {
@@ -1541,6 +1536,20 @@ export const AgentHubShell: React.FC = () => {
           renderTemplates()
         )}
       </div>
+
+      {/* AGT-015 §6 D4 — dialog "Nowy folder" (zastępuje window.prompt). */}
+      <FolderCreateDialog
+        open={folderDialogOpen}
+        onClose={() => {
+          if (folderDialogBusy) return;
+          setFolderDialogOpen(false);
+        }}
+        onSubmit={handleFolderDialogSubmit}
+        projects={projectMemberships}
+        busy={folderDialogBusy}
+        errorMessage={folderDialogError}
+        title={t('agentPlan.hub.folders.newFolder', isPolish ? 'Nowy folder…' : 'New folder…')}
+      />
     </div>
   );
 };
