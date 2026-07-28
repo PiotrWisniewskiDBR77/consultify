@@ -3206,6 +3206,11 @@ router.post(
     const diff = {
       ...buildDeckDiffSummary(deck, result.deck),
       editPlan: result.plan,
+      // ★ Fala 2 (SPEC §3.3.4) — 1-based slide numbers protected by a manual
+      // lock (`is_locked`) and skipped by this global/section edit. Surfaced
+      // to the client so the approval banner can name them, not just count
+      // `changedCards`.
+      skippedLockedSlides: result.skippedLockedSlides,
     };
     await saveAiOperation(
       {
@@ -5896,6 +5901,11 @@ router.get(
 
         const slides = Array.isArray(diffRaw.slides) ? diffRaw.slides : undefined;
         const editPlan = diffRaw.editPlan;
+        const skippedLockedSlides = Array.isArray(diffRaw.skippedLockedSlides)
+          ? diffRaw.skippedLockedSlides.filter(
+              (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n)
+            )
+          : [];
 
         const numericOrNull = (value: unknown): number | null =>
           typeof value === 'number' && Number.isFinite(value) ? value : null;
@@ -5922,6 +5932,7 @@ router.get(
             changedCards: numericOrZero(diffRaw.changedCards),
             slides,
             editPlan,
+            skippedLockedSlides,
           },
         };
       });

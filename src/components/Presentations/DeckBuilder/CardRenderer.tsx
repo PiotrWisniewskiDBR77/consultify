@@ -21,7 +21,9 @@ import { SmartDiagramBlock } from './blocks/SmartDiagramBlock';
 import { SmartLayoutBlock } from './blocks/SmartLayoutBlock';
 import { TableBlock } from './blocks/TableBlock';
 import { TimelineBlock } from './blocks/TimelineBlock';
+import { canMoveBlock } from './blockOps';
 import { sanitizeDeckBlock, sanitizeDeckDisplayText } from './deckTextSanitizer';
+import { EditableBlock } from './EditableBlock';
 import {
   assignBlocksToRegions,
   blockDensityFor,
@@ -44,6 +46,20 @@ interface CardRendererProps {
     artifact_type: string;
     artifact_name: string;
   }) => void;
+  /**
+   * Fala 1 (manual mode) — gdy TAK, bloki renderują się przez `EditableBlock`
+   * (zaznaczenie, inline-edycja TipTap, usuń/duplikuj/przenieś). Domyślnie
+   * WYŁĄCZONE, żeby miniaturki (`SlideSorter`), `PresentMode` i publiczne
+   * podglądy (`SharedPresentationView`, `CanvasPresentationView`) zostały
+   * bajt w bajt takie jak dziś — patrz SPEC §2.3.
+   */
+  editable?: boolean;
+  selectedBlockId?: string | null;
+  onBlockUpdate?: (blockId: string, updates: Partial<CardBlock>) => void;
+  onBlockDelete?: (blockId: string) => void;
+  onBlockDuplicate?: (blockId: string) => void;
+  onBlockMove?: (blockId: string, direction: 'up' | 'down') => void;
+  onBlockRefresh?: (blockId: string) => void;
 }
 
 const BLOCK_COMPONENTS: Record<
@@ -78,6 +94,13 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   recentLayoutIds = [],
   onBlockClick,
   onSourceClick,
+  editable = false,
+  selectedBlockId = null,
+  onBlockUpdate,
+  onBlockDelete,
+  onBlockDuplicate,
+  onBlockMove,
+  onBlockRefresh,
 }) => {
   const navigate = useNavigate();
   const deckTheme = CURATED_COLOR_SETS.find((c) => c.id === colorSetId) || CURATED_COLOR_SETS[1];
@@ -175,6 +198,50 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
       variant: card.composition?.layoutVariantId,
     });
     const block = sanitizeDeckBlock(rawBlock);
+    const blockBody = (
+      <>
+        <Component block={block} theme={theme} density={density} />
+        {block.source_ref && (
+          <BlockSourceBadge
+            sourceRef={block.source_ref}
+            isRefreshable={block.is_refreshable ?? false}
+          />
+        )}
+      </>
+    );
+
+    // Fala 1 (manual mode) — EditableBlock adds selection ring, floating
+    // toolbar (move/duplicate/delete/refresh) and inline TipTap text editing.
+    // Operations read/write ONLY `card.blocks` via the raw (unsanitized)
+    // block_id — the model stays a sequence of blocks (SPEC §2.1), never x/y.
+    if (editable) {
+      return (
+        <AnimatedBlock
+          key={block.block_id}
+          blockType={block.type}
+          index={blockIndex}
+          animationsEnabled={animationsEnabled}
+          blockStagger={card.animations.block_stagger}
+        >
+          <EditableBlock
+            block={block}
+            isSelected={selectedBlockId === block.block_id}
+            onSelect={() => onBlockClick?.(block.block_id)}
+            onUpdate={(updates) => onBlockUpdate?.(block.block_id, updates)}
+            onDelete={() => onBlockDelete?.(block.block_id)}
+            onDuplicate={() => onBlockDuplicate?.(block.block_id)}
+            onRefresh={block.is_refreshable ? () => onBlockRefresh?.(block.block_id) : undefined}
+            onMoveUp={() => onBlockMove?.(block.block_id, 'up')}
+            onMoveDown={() => onBlockMove?.(block.block_id, 'down')}
+            canMoveUp={canMoveBlock(card.blocks, block.block_id, 'up')}
+            canMoveDown={canMoveBlock(card.blocks, block.block_id, 'down')}
+          >
+            {blockBody}
+          </EditableBlock>
+        </AnimatedBlock>
+      );
+    }
+
     return (
       <AnimatedBlock
         key={block.block_id}
@@ -187,13 +254,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
           onClick={() => onBlockClick?.(block.block_id)}
           className="relative group cursor-pointer"
         >
-          <Component block={block} theme={theme} density={density} />
-          {block.source_ref && (
-            <BlockSourceBadge
-              sourceRef={block.source_ref}
-              isRefreshable={block.is_refreshable ?? false}
-            />
-          )}
+          {blockBody}
           <div className="absolute inset-0 rounded border-2 border-transparent group-hover:border-c-border-strong transition-colors pointer-events-none" />
         </div>
       </AnimatedBlock>

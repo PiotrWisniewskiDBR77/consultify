@@ -15,6 +15,13 @@ export interface PresentationEditResult {
   reply: string;
   appliedActions: string[];
   plan: PresentationEditPlan;
+  /**
+   * ★ Fala 2 (SPEC §3.3.3/§3.3.4) — 1-based slide numbers whose content was
+   * protected from this edit because `card.is_locked` is true and the slide
+   * was NOT explicitly named by number in the prompt. Empty when nothing was
+   * skipped (no locked cards in scope, or the prompt named them explicitly).
+   */
+  skippedLockedSlides: number[];
 }
 
 function extractTargetSlides(prompt: string): number[] {
@@ -320,6 +327,7 @@ export function applyPresentationEditPlan(params: {
         : `No changes: ${plan.noOpReason || 'unsupported intent.'}`,
       appliedActions: [],
       plan,
+      skippedLockedSlides: [],
     };
   }
 
@@ -329,6 +337,21 @@ export function applyPresentationEditPlan(params: {
   const cards = Array.isArray(deck?.cards) ? [...deck.cards] : [];
   const appliedActions: string[] = [];
   const nowIso = new Date().toISOString();
+
+  // ★ Fala 2 (SPEC §3.3.3) — protect manually-locked cards from THIS
+  // global/section-scoped edit, UNLESS the prompt explicitly names that slide
+  // by number (`plan.targetSlides`, 0-indexed — the existing
+  // `extractTargetSlides` mechanism already distinguishes "no number given"
+  // from "slide N named explicitly"). Only content-mutating loops below
+  // consult this; card insertion (summary/KS-template), whole-deck reorder,
+  // and deck-level branding are structural/deck-wide and are left untouched
+  // (locking protects a SLIDE's content, not its position in the deck).
+  const explicitTargets = new Set(plan.targetSlides);
+  const skippedIndices = new Set<number>();
+  const isProtected = (index: number): boolean => {
+    const card = cards[index];
+    return Boolean(card?.is_locked) && !explicitTargets.has(index);
+  };
 
   if (
     normalized.includes('summary') ||
@@ -382,7 +405,11 @@ export function applyPresentationEditPlan(params: {
     normalized.includes('skr') ||
     normalized.includes('zwi')
   ) {
-    for (const card of cards) {
+    cards.forEach((card: any, idx: number) => {
+      if (isProtected(idx)) {
+        skippedIndices.add(idx);
+        return;
+      }
       for (const block of card.blocks || []) {
         if (typeof block?.content?.text === 'string')
           block.content.text = block.content.text.slice(0, 180);
@@ -396,7 +423,7 @@ export function applyPresentationEditPlan(params: {
             );
         }
       }
-    }
+    });
     appliedActions.push(isPolish ? 'skrócono copy' : 'made copy concise');
   }
 
@@ -405,11 +432,15 @@ export function applyPresentationEditPlan(params: {
     normalized.includes('speaker') ||
     normalized.includes('notat')
   ) {
-    for (const card of cards) {
+    cards.forEach((card: any, idx: number) => {
+      if (isProtected(idx)) {
+        skippedIndices.add(idx);
+        return;
+      }
       const firstBlock = (card.blocks || []).find((block: any) => block?.content);
       const baseText = extractBlockText(firstBlock || {});
       card.speaker_notes = `${card.title || card.intent}: ${baseText || (isPolish ? 'omów kluczowy komunikat' : 'cover the key message')}`;
-    }
+    });
     deck.speaker_notes_generated = true;
     appliedActions.push(isPolish ? 'dodano speaker notes' : 'added speaker notes');
   }
@@ -419,12 +450,16 @@ export function applyPresentationEditPlan(params: {
     normalized.includes('refresh') ||
     normalized.includes('odświe')
   ) {
-    for (const card of cards) {
+    cards.forEach((card: any, idx: number) => {
+      if (isProtected(idx)) {
+        skippedIndices.add(idx);
+        return;
+      }
       for (const block of card.blocks || []) {
         if (block?.is_refreshable)
           block.content = { ...(block.content || {}), _agent_refreshed_at: nowIso };
       }
-    }
+    });
     appliedActions.push(isPolish ? 'odświeżono bloki danych' : 'refreshed data blocks');
   }
 
@@ -435,9 +470,14 @@ export function applyPresentationEditPlan(params: {
     normalized.includes('dark') ||
     normalized.includes('brand')
   ) {
-    for (const card of cards.slice(0, 3)) {
+    cards.forEach((card: any, idx: number) => {
+      if (idx >= 3) return;
+      if (isProtected(idx)) {
+        skippedIndices.add(idx);
+        return;
+      }
       card.background = { type: 'gradient', value: 'linear-gradient(135deg, #0B3D91, #1A8A8A)' };
-    }
+    });
     appliedActions.push(isPolish ? 'wzmocniono styl slajdów' : 'improved slide styling');
   }
 
@@ -589,10 +629,13 @@ export function applyPresentationEditPlan(params: {
   }
 
   const reindexedCards = cards.map((card: any, index: number) => ({ ...card, order_index: index }));
+  // 1-based, sorted, unique — matches what SlideSorter shows the user.
+  const skippedLockedSlides = [...skippedIndices].sort((a, b) => a - b).map((idx) => idx + 1);
   return {
     deck: { ...deck, cards: reindexedCards, updated_at: nowIso },
     reply: buildAgentReply(appliedActions, isPolish),
     appliedActions,
     plan,
+    skippedLockedSlides,
   };
 }
