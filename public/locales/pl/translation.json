@@ -15298,9 +15298,7 @@
       "submitReviewPrompt": "Prześlij ten insight do recenzji",
       "exportInsight": "Eksportuj insight do inicjatywy",
       "exportInsightPrompt": "Eksportuj ten insight do inicjatywy",
-      "viewEvidence": "Zobacz mapę dowodów",
-      "openOutputs": "Otwórz Bibliotekę Outputs",
-      "reviewPending": "Przejrzyj oczekujące artefakty"
+      "viewEvidence": "Zobacz mapę dowodów"
     },
     "feedback": {
       "missingInfoPlaceholder": "Opisz czego brakowało w odpowiedzi..."
