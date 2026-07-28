@@ -12,6 +12,35 @@ import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
+/**
+ * Realne liczniki stanów Skrzynki (MVP 2026-07-28).
+ *
+ * PRZEDTEM: `counts: { open: total, done: 0, saved: 0, dismissed: 0 }` — wpisane na
+ * sztywno. Skutek widoczny na ekranie: chip `ALL 497` i chip `Open 497` pokazywały
+ * TĘ SAMĄ liczbę (bo `open` był po prostu `total`), a `Saved` renderował się dwa
+ * razy i zawsze jako 0.
+ *
+ * Stany w bazie demo: `pending` (703), `triaged` (1), `resolved` (1).
+ * Mapowanie: otwarte = wszystko poza rozstrzygniętym/odrzuconym.
+ * `saved`/`dismissed` zostają 0 UCZCIWIE — w danych nie ma takiego stanu; lepiej
+ * pokazać prawdziwe zero niż zmyśloną liczbę.
+ */
+function liczStany(
+  wiersze: Array<{ stan: string; n: number }> | null | undefined,
+  total: number
+): { open: number; done: number; saved: number; dismissed: number } {
+  const wg = new Map<string, number>();
+  for (const w of wiersze || []) wg.set(String(w?.stan || ''), Number(w?.n) || 0);
+  const suma = (...klucze: string[]) => klucze.reduce((acc, k) => acc + (wg.get(k) || 0), 0);
+
+  const done = suma('resolved', 'done', 'completed');
+  const dismissed = suma('dismissed', 'rejected');
+  const saved = suma('saved', 'snoozed');
+  // Brak wierszy stanu (np. starsza baza) → nie zgadujemy, wracamy do `total`.
+  const open = wg.size === 0 ? total : Math.max(0, total - done - dismissed);
+  return { open, done, saved, dismissed };
+}
+
 class InboxEnterpriseService {
   // ── V4-INBX-06: Connectors + Routing ──
 
@@ -673,9 +702,15 @@ class InboxEnterpriseService {
     const countSql = `SELECT COUNT(*) as total FROM canonical_inbox_items WHERE ${conditions.join(' AND ')}`;
     const dataSql = `SELECT * FROM canonical_inbox_items WHERE ${conditions.join(' AND ')} ORDER BY ${sortCol} ${sortDir} LIMIT ${limit} OFFSET ${offset}`;
 
-    const [countResult, rawItems] = await Promise.all([
+    // MVP 2026-07-28: chip `ALL` pokazywał tę samą liczbę co `Open` (497=497), bo
+    // `counts` niżej były wpisane na sztywno (`open: total`). Liczymy realne stany
+    // tym samym warunkiem co `countSql` — inaczej chipy nie mogą się zsumować.
+    const statusSql = `SELECT lower(coalesce(status, '')) AS stan, COUNT(*) AS n FROM canonical_inbox_items WHERE ${conditions.join(' AND ')} GROUP BY 1`;
+
+    const [countResult, rawItems, statusRows] = await Promise.all([
       queryHelpers.queryFirst<{ total: number }>(countSql, params),
       queryHelpers.queryAll<any>(dataSql, params),
+      queryHelpers.queryAll<{ stan: string; n: number }>(statusSql, params),
     ]);
 
     const priorityToUrgency = (p: string | null): string => {
@@ -745,7 +780,7 @@ class InboxEnterpriseService {
         critical,
         newToday,
         actionRequired,
-        counts: { open: total, done: 0, saved: 0, dismissed: 0 },
+        counts: liczStany(statusRows, total),
       },
       items,
       total,
