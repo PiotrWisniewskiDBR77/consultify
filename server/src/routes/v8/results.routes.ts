@@ -295,6 +295,92 @@ function deriveKpiPeriodKey(
  * Composed KPI scorecard, active deviation count, ROI dashboard, reconciliation health,
  * and recent executive review pack rollups for the V8 org context.
  */
+/**
+ * KARTY KPI (D-04, MVP 2026-07-28) — warstwa, której brakowało.
+ *
+ * Uwaga Piotra: „organizacja ma wiele kart — ze względu na terminy, na różne działy;
+ * różne działy mają swoje karty w różnych okresach: za styczeń, za luty, za marzec.
+ * Potrzebna nam tabela, gdzie te karty wybieramy, i możliwość tworzenia kart."
+ *
+ * Dotąd Wyniki otwierały się od razu na PŁASKIEJ liście wszystkich 27 wskaźników —
+ * „jakby cała firma miała tylko jedną kartę". Ten endpoint dostarcza brakujący
+ * poziom: listę kart (dział × okres) z licznikami.
+ *
+ * Karta może zawierać ten sam wskaźnik co inna (np. marża jest i w karcie Finansów,
+ * i w karcie Zarządu) — stąd tabela łącząca `kpi_scorecard_items`, nie kolumna.
+ */
+router.get(
+  '/scorecards',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const rows = await dbAll<{
+      id: string;
+      name: string;
+      department: string | null;
+      period_label: string | null;
+      period_start: string | null;
+      period_end: string | null;
+      status: string | null;
+      kpi_count: number;
+      on_target_count: number;
+    }>(
+      `SELECT s.id, s.name, s.department, s.period_label, s.period_start, s.period_end, s.status,
+              COUNT(i.id) AS kpi_count,
+              COUNT(*) FILTER (WHERE COALESCE(k.is_on_target, 0) = 1) AS on_target_count
+         FROM kpi_scorecards s
+         LEFT JOIN kpi_scorecard_items i ON i.scorecard_id = s.id
+         LEFT JOIN initiative_kpis k ON k.id = i.kpi_id
+        WHERE s.organization_id = ?
+        GROUP BY s.id, s.name, s.department, s.period_label, s.period_start, s.period_end, s.status
+        ORDER BY s.department NULLS LAST, s.period_start DESC NULLS LAST`,
+      [organizationId],
+      { fallback: true }
+    );
+    return res.json({
+      scorecards: (rows || []).map((r) => ({
+        id: r.id,
+        name: r.name,
+        department: r.department,
+        periodLabel: r.period_label,
+        periodStart: r.period_start,
+        periodEnd: r.period_end,
+        status: r.status || 'active',
+        kpiCount: Number(r.kpi_count) || 0,
+        onTargetCount: Number(r.on_target_count) || 0,
+      })),
+      count: (rows || []).length,
+    });
+  })
+);
+
+/** Wskaźniki należące do jednej karty — wnętrze karty po kliknięciu w wiersz tabeli. */
+router.get(
+  '/scorecards/:scorecardId/kpis',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const scorecardId = String(req.params.scorecardId || '').trim();
+    const card = await dbGet<{ id: string; name: string }>(
+      `SELECT id, name FROM kpi_scorecards WHERE id = ? AND organization_id = ?`,
+      [scorecardId, organizationId],
+      { fallback: true }
+    );
+    if (!card?.id) {
+      return res.status(404).json({ error: 'Scorecard not found', code: 'SCORECARD_NOT_FOUND' });
+    }
+    const kpis = await dbAll(
+      `SELECT k.id, k.name, k.baseline_value, k.current_value, k.target_value, k.unit,
+              k.direction, k.progress_percentage, k.is_on_target, k.category, k.initiative_id
+         FROM kpi_scorecard_items i
+         JOIN initiative_kpis k ON k.id = i.kpi_id
+        WHERE i.scorecard_id = ? AND k.organization_id = ?
+        ORDER BY i.sort_order ASC, k.name ASC`,
+      [scorecardId, organizationId],
+      { fallback: true }
+    );
+    return res.json({ scorecard: card, kpis: kpis || [], count: (kpis || []).length });
+  })
+);
+
 router.get(
   '/dashboard',
   asyncHandler(async (req: AuthRequest, res: Response) => {
