@@ -33,6 +33,13 @@ export interface WhiteboardPhaseBarProps {
   currentPhase: FacilitationPhase;
   locked?: boolean;
   onPhaseChange: (phase: FacilitationPhase) => void;
+  /**
+   * `true` = pasek faz może zawinąć się do drugiego wiersza. Używane w wersji
+   * panelowej (`WhiteboardSessionPanel embedded`), gdzie kolumna jest węższa
+   * niż overlay nad płótnem i ostatnia faza („Przekazanie") wychodziła poza
+   * kartę. Domyślnie OFF — układ nad płótnem zostaje 1:1 jak dziś.
+   */
+  wrap?: boolean;
 }
 
 export const WhiteboardPhaseBar: React.FC<WhiteboardPhaseBarProps> = ({
@@ -40,6 +47,7 @@ export const WhiteboardPhaseBar: React.FC<WhiteboardPhaseBarProps> = ({
   currentPhase,
   locked,
   onPhaseChange,
+  wrap,
 }) => {
   const { t } = useTranslation();
   const currentIdx = FACILITATION_PHASES.indexOf(currentPhase);
@@ -51,7 +59,7 @@ export const WhiteboardPhaseBar: React.FC<WhiteboardPhaseBarProps> = ({
         {t('myWork.whiteboard.phaseBar.title')}
       </div>
       <div
-        className="flex items-center gap-0.5"
+        className={`flex items-center gap-0.5 ${wrap ? 'flex-wrap' : ''}`}
         role="tablist"
         aria-label={t('myWork.whiteboard.phaseBar.tabsAria')}
       >

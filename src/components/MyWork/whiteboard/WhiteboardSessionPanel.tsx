@@ -103,13 +103,17 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
       {tresc && (
       <div className={`${kartaCls} px-3 py-2.5`}>
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-c-text-muted">
-              {t('myWork.whiteboard.sessionPanel.layer')}
+          {/* Nazwa panelu + rola: w wersji panelowej niesie je zwijalny nagłówek
+              wyżej, więc tutaj byłby dubel (Doktryna Gęstości). */}
+          {!embedded && (
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-c-text-muted">
+                {t('myWork.whiteboard.sessionPanel.layer')}
+              </div>
+              <div className="text-[11px] font-semibold text-c-text">{roleLabel}</div>
             </div>
-            <div className="text-[11px] font-semibold text-c-text">{roleLabel}</div>
-          </div>
-          <div className="text-right">
+          )}
+          <div className={embedded ? 'text-left' : 'text-right'}>
             <div className="text-[10px] font-semibold text-c-text-secondary">
               {whiteboardModeCopy.modeLabel}
             </div>
@@ -146,6 +150,7 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
             currentPhase={sessionState.facilitationPhase}
             locked={locked}
             onPhaseChange={onPhaseChange}
+            wrap={embedded}
           />
         </div>
         <div className="mt-2 text-[10px] leading-4 text-c-text-muted">

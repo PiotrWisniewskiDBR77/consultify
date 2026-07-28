@@ -1342,8 +1342,12 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         </Section>
       )}
 
-      {/* Kondycja przepływu — w układzie 6 sekcji to treść AI, nie Przeglądu. */}
-      {activeTool === 'process_flow' && pokaz('overview', 'ai') && (!szesc || !maZaznaczenie) && (
+      {/* Kondycja przepływu — w układzie 6 sekcji to treść AI, nie Przeglądu.
+          Zostaje TAKŻE przy zaznaczeniu: kondycja opisuje CAŁY diagram, a
+          kliknięcie braku zaznacza winne kroki — gdyby karta wtedy znikała,
+          przejście do problemu działałoby raz i nie dałoby się kliknąć
+          kolejnego braku. */}
+      {activeTool === 'process_flow' && pokaz('overview', 'ai') && (
         <Section
           title={t('myWorkIdeas.workspaceTools.processHealth')}
           icon={<Activity size={13} />}
@@ -1381,8 +1385,11 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           </Section>
           )}
 
-          {/* ── 6. Map Health ── (6 sekcji: treść AI, nie Przeglądu) */}
-          {pokaz('overview', 'ai') && (!szesc || !maZaznaczenie) && (
+          {/* ── 6. Map Health ── (6 sekcji: treść AI, nie Przeglądu)
+              Zostaje TAKŻE przy zaznaczeniu — patrz komentarz przy kondycji
+              przepływu: klik w brak zaznacza węzły, więc znikająca lista
+              zabijałaby własną funkcję po pierwszym użyciu. */}
+          {pokaz('overview', 'ai') && (
           <Section title={t('myWorkIdeas.workspaceTools.mapHealth')} icon={<Activity size={13} />}>
             <MapHealthScore
               nodes={graphNodes.map((n: any) => ({ id: n.id, data: n.data, type: n.type }))}
@@ -1584,11 +1591,6 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         </Section>
       )}
 
-      {/* Hak pod przeniesienie pływających paneli AI (Blind Spots, Map Health)
-          — osobne zlecenie. Poza kartą, żeby istniał także wtedy, gdy karta AI
-          się nie renderuje. Pusty węzeł nic nie rysuje. */}
-      {szesc && sekcja6 === 'ai' && !maZaznaczenie && <div id={IDEA_PANEL_AI_SLOT_ID} />}
-
       {/* ── AI · poziom elementu ── */}
       {szesc && sekcja6 === 'ai' && maZaznaczenie && (
         <Section title={etykieta6.ai} icon={<Sparkles size={12} />} defaultOpen>
@@ -1632,6 +1634,15 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           )}
         </Section>
       )}
+
+      {/* Gniazdo pływających paneli AI Mapy myśli (AI Blind Spots — portalowany
+          tu z `IdeaRecommendationMap`). Poza kartą, żeby istniało także wtedy,
+          gdy karta AI się nie renderuje; pusty węzeł nic nie rysuje.
+          Renderowane NIEZALEŻNIE od zaznaczenia: Blind Spots mówią o całej
+          mapie, a przycisk „Dodaj" wstawia węzeł (czyli zmienia zaznaczenie) —
+          gniazdo znikające przy zaznaczeniu odmontowywałoby panel w środku
+          jego własnej akcji i kasowało listę propozycji. */}
+      {szesc && sekcja6 === 'ai' && <div id={IDEA_PANEL_AI_SLOT_ID} />}
 
       {/* ── Aktywność — Komentarze + Historia w JEDNEJ osi czasu ── */}
       {szesc && sekcja6 === 'activity' && (
