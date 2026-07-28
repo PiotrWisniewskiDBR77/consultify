@@ -2009,12 +2009,23 @@ export function buildTemplateOriginSummaryFields(params: {
 }
 
 /**
- * Index the approved Document Studio templates that are visible to `organizationId`.
+ * Index the Document Studio templates that are visible to `organizationId`.
  *
  * Visibility mirrors `documentTemplateRegistryDao.loadTemplatesForOrg`: the org's
- * own rows plus the system catalogue seeded under the `__system__` sentinel org
- * with `is_system = TRUE`. Only `status = 'approved'` rows are offered as
- * ready-to-use library cards.
+ * own rows (ANY lifecycle status) plus the system catalogue seeded under the
+ * `__system__` sentinel org with `is_system = TRUE`.
+ *
+ * ★ Fix 2026-07-28 (owner report: "New template" never surfaces what I already
+ * prepared): this query used to additionally require `t.status = 'approved'`,
+ * which does NOT mirror `loadTemplatesForOrg` (that DAO returns every status).
+ * Every freshly-drafted document template starts life as `draft` — excluding
+ * drafts here meant a user's own in-progress template NEVER appeared in the
+ * Materiały → Szablony library, and the row-level "Submit for review" action
+ * (which promotes draft → approved) only renders for rows already visible in
+ * that same list — a dead end with no UI path out. Presentation templates
+ * (`backfillPresentationTemplatesForOrg` above) never had this restriction —
+ * their drafts show up with a working "Submit for review" today. Dropping the
+ * status filter here makes Word/document templates behave the same way.
  *
  * Idempotent: the LEFT JOIN + `l.link_id IS NULL` guard means an already indexed
  * template is skipped, so repeated runs insert nothing. Never deletes.
@@ -2030,7 +2041,6 @@ async function backfillDocStudioTemplatesForOrg(organizationId: string): Promise
       AND l.origin_runtime = 'document_template'
       AND l.origin_record_id = t.template_id
      WHERE (t.organization_id = ? OR (t.organization_id = ? AND t.is_system = TRUE))
-       AND t.status = 'approved'
        AND l.link_id IS NULL`,
     [organizationId, organizationId, DOC_STUDIO_SYSTEM_ORG_ID],
     { fallback: true }
