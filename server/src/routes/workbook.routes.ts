@@ -517,15 +517,40 @@ router.post(
       });
     }
 
-    const result = await WorkbookGeneratorService.generate({
-      prompt: prompt.trim(),
-      userId: user.id,
-      organizationId: user.organizationId,
-      projectId: projectId || null,
-      researchContext: groundingText,
-      organizationName: orgContext?.organizationName,
-      language: language || req.headers['accept-language']?.split(',')[0],
-    });
+    // N3 fix (naprawa 2026-07-28, "Excel od tygodni nie działa"): this call was
+    // NOT wrapped in try/catch — unlike `/templates/:id/build` and `/:id/clone`
+    // below, which already classify thrown errors via createP23Error and
+    // respond directly. A thrown error here fell through to the generic
+    // Express error middleware, which in production replies with a bare
+    // "Something went very wrong!" (see server/src/utils/ErrorHandler.ts) —
+    // discarding the real reason (e.g. a bad model route, an exhausted AI
+    // budget, or a genuinely invalid LLM schema) before it ever reached the
+    // client. The excele lane's `Api.generateWorkbook` catch then had nothing
+    // useful to show and silently fell back to a relabeled CSV table. Mirror
+    // the same classify-and-respond pattern used by the sibling routes so the
+    // real detail survives all the way to the user-facing failure banner.
+    let result;
+    try {
+      result = await WorkbookGeneratorService.generate({
+        prompt: prompt.trim(),
+        userId: user.id,
+        organizationId: user.organizationId,
+        projectId: projectId || null,
+        researchContext: groundingText,
+        organizationName: orgContext?.organizationName,
+        language: language || req.headers['accept-language']?.split(',')[0],
+      });
+    } catch (err) {
+      logger.error('[WorkbookRoutes] Workbook generation failed:', err);
+      res.status(502).json({
+        error: 'Failed to generate workbook',
+        classified: createP23Error(
+          'export_failed',
+          err instanceof Error ? err.message : String(err)
+        ),
+      });
+      return;
+    }
 
     const payload = await finalizeGeneratedWorkbook({
       result,

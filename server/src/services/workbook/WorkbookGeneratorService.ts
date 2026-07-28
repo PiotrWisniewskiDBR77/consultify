@@ -542,15 +542,29 @@ class WorkbookGeneratorService {
 
   /**
    * Calls LLM with a dedicated system prompt, bypassing the chat persona.
+   *
+   * `purpose` (naprawa 2026-07-28, "Excel od tygodni nie działa"): every OTHER
+   * deliverable generator (Reports, Presentations) registers dedicated
+   * purposes in `aiTaskCatalog.ts` (`report_section_draft`,
+   * `presentation_deck_outline`, …) so the model router picks a tier/quality
+   * profile matched to the task. Workbook generation never did — it called
+   * `capability: 'chat'` with no purpose, so every phase (plan/confirm/
+   * generate/review/repair) fell through `inferChatTaskPurpose`'s generic
+   * text-length heuristic into `chat_simple`/`chat_complex` (BUDGET/STANDARD,
+   * qualityProfile speed/balanced) — tiers tuned for casual chat, not for
+   * producing a schema-valid, formula-correct, multi-sheet financial model.
+   * Callers now pass an explicit `workbook_*` purpose (see aiTaskCatalog.ts).
    */
   private async callLLM(
     systemPrompt: string,
     userPrompt: string,
     params: { userId: string; organizationId: string; projectId?: string },
-    maxTokens: number = 12000
+    maxTokens: number = 12000,
+    purpose?: string
   ): Promise<string> {
     const response = await this.aiPipeline.process({
       capability: 'chat',
+      purpose,
       prompt: userPrompt,
       userId: params.userId,
       organizationId: params.organizationId,
@@ -562,6 +576,27 @@ class WorkbookGeneratorService {
       },
       history: [],
     } as any);
+
+    // N3 (naprawa 2026-07-28): AIPipeline.process() NEVER throws on internal
+    // failure (auth/quota/budget/model-routing/provider errors) — it catches
+    // everything and returns `{ success: false, content: '', error }`. This
+    // method used to do `return response?.content || ''`, silently turning
+    // EVERY such failure into an empty string. Downstream that produced the
+    // generic, misleading "LLM did not return valid JSON after 3 attempts"
+    // (Phase 3) — hiding the real cause (e.g. "No routable model satisfies
+    // requirements for tier STANDARD") — which the excele lane's catch then
+    // turned into a silently-swapped CSV table mislabeled as a real .xlsx.
+    // Surface the real reason so it reaches the phase's own try/catch (already
+    // logged into `pipelineLog`) and, ultimately, the user-facing failure
+    // banner — instead of disappearing into an opaque empty string.
+    if (response && (response as any).success === false) {
+      const aiError = (response as any).error;
+      const message =
+        (aiError && typeof aiError === 'object' && typeof aiError.message === 'string'
+          ? aiError.message
+          : null) || 'AI request failed with no content';
+      throw new Error(message);
+    }
 
     return response?.content || '';
   }
@@ -620,7 +655,13 @@ class WorkbookGeneratorService {
         .filter(Boolean)
         .join('\n\n');
 
-      const response = await this.callLLM(TEMPLATE_MATCH_SYSTEM_PROMPT, userMessage, llmParams, 2000);
+      const response = await this.callLLM(
+        TEMPLATE_MATCH_SYSTEM_PROMPT,
+        userMessage,
+        llmParams,
+        2000,
+        'workbook_template_match'
+      );
       const parsed = extractJsonFromResponse(response);
       if (!parsed || typeof parsed !== 'object') return null;
 
@@ -734,7 +775,8 @@ class WorkbookGeneratorService {
         PLANNING_SYSTEM_PROMPT,
         `User request: ${userPrompt}\n\nAnalyze this request and produce a workbook plan as JSON.`,
         llmParams,
-        4000
+        4000,
+        'workbook_plan'
       );
       pipelineLog.push({
         phase: 'plan',
@@ -767,7 +809,8 @@ class WorkbookGeneratorService {
           CONFIRMATION_SYSTEM_PROMPT,
           `ORIGINAL USER REQUEST:\n${userPrompt}\n\nPLAN TO REVIEW:\n${plan}\n\nReview this plan and return your assessment as JSON.`,
           llmParams,
-          4000
+          4000,
+          'workbook_confirm'
         );
 
         const confirmResult = extractJsonFromResponse(confirmationResponse);
@@ -860,7 +903,8 @@ class WorkbookGeneratorService {
           GENERATION_SYSTEM_PROMPT,
           currentPrompt,
           llmParams,
-          16000
+          16000,
+          'workbook_generate'
         );
 
         const parsed = extractJsonFromResponse(content);
@@ -922,7 +966,8 @@ class WorkbookGeneratorService {
         REVIEW_SYSTEM_PROMPT,
         `ORIGINAL USER REQUEST:\n${userPrompt}\n\nGENERATED WORKBOOK SCHEMA:\n${schemaJson}\n\nReview this schema for quality. Return your assessment as JSON.`,
         llmParams,
-        6000
+        6000,
+        'workbook_review'
       );
 
       const reviewResult = extractJsonFromResponse(reviewResponse);
@@ -975,7 +1020,8 @@ class WorkbookGeneratorService {
               GENERATION_SYSTEM_PROMPT,
               `${generationPrompt}\n\nQUALITY REVIEW found these CRITICAL issues in your previous output:\n${issuesFeedback}\n\nFix ALL critical issues and return the corrected WorkbookSchema JSON. Return ONLY the JSON.`,
               llmParams,
-              16000
+              16000,
+              'workbook_generate'
             );
             const fixParsed = extractJsonFromResponse(fixContent);
             if (fixParsed) {
@@ -1084,6 +1130,7 @@ class WorkbookGeneratorService {
               `Return the corrected WorkbookSchema JSON. Return ONLY the JSON.`,
             llmParams,
             16000,
+            'workbook_repair'
           );
           const repairParsed = extractJsonFromResponse(repairContent);
           const repairValidated = repairParsed

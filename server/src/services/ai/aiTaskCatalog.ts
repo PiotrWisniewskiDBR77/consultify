@@ -488,6 +488,91 @@ const TASK_DEFINITIONS: AITaskDefinition[] = [
     costProfile: 'balanced',
     description: 'Optimizes business process flows.',
   },
+  // -------------------------------------------------------------------------
+  // Workbook / Excel generation (naprawa 2026-07-28, "Excel od tygodni nie
+  // działa"): WorkbookGeneratorService used to call `capability: 'chat'` with
+  // NO purpose at all, so every phase fell through `inferChatTaskPurpose`'s
+  // generic text-length heuristic into `chat_simple`/`chat_complex` — tiers
+  // tuned for casual conversation, not for producing a schema-valid, formula-
+  // correct, multi-sheet financial model. Report/Presentation generation both
+  // have dedicated purposes above (`report_section_draft`,
+  // `presentation_deck_outline`, …); Workbook never did. See
+  // WorkbookGeneratorService.callLLM for the call sites.
+  // -------------------------------------------------------------------------
+  {
+    purpose: 'workbook_template_match',
+    kind: 'TEXT_LLM',
+    defaultTier: 'BUDGET',
+    useCase: 'reports',
+    businessOwner: 'Materiały — Excel',
+    qualityProfile: 'speed',
+    maxLatencyMs: 8000,
+    costProfile: 'budget',
+    fallbackPurposes: ['chat_simple'],
+    description: 'Cheap gate: does the request match a registered parametric workbook template?',
+  },
+  {
+    purpose: 'workbook_plan',
+    kind: 'TEXT_LLM',
+    defaultTier: 'STANDARD',
+    useCase: 'reports',
+    businessOwner: 'Materiały — Excel',
+    qualityProfile: 'balanced',
+    maxLatencyMs: 18000,
+    costProfile: 'balanced',
+    fallbackPurposes: ['chat_complex'],
+    description: 'Decomposes a workbook request into a driver-tree model plan (E1-E5).',
+  },
+  {
+    purpose: 'workbook_confirm',
+    kind: 'TEXT_LLM',
+    defaultTier: 'STANDARD',
+    useCase: 'reports',
+    businessOwner: 'Materiały — Excel',
+    qualityProfile: 'precision',
+    maxLatencyMs: 12000,
+    costProfile: 'balanced',
+    fallbackPurposes: ['workbook_plan', 'chat_complex'],
+    description: 'Validates a workbook plan against the original user intent before generation.',
+  },
+  {
+    purpose: 'workbook_generate',
+    kind: 'TEXT_LLM',
+    defaultTier: 'PREMIUM',
+    useCase: 'reports',
+    businessOwner: 'Materiały — Excel',
+    qualityProfile: 'precision',
+    maxLatencyMs: 60000,
+    costProfile: 'premium',
+    fallbackPurposes: ['workbook_plan', 'chat_complex'],
+    description:
+      'Produces the full WorkbookSchema JSON — sheets, live cross-sheet formulas, assumptions layer. Long structured output; needs a precision-tier model, not a casual-chat one.',
+  },
+  {
+    purpose: 'workbook_review',
+    kind: 'TEXT_LLM',
+    defaultTier: 'STANDARD',
+    useCase: 'reports',
+    businessOwner: 'Materiały — Excel',
+    qualityProfile: 'precision',
+    maxLatencyMs: 20000,
+    costProfile: 'balanced',
+    fallbackPurposes: ['workbook_generate', 'chat_complex'],
+    description: 'Self-review pass over a generated WorkbookSchema before build.',
+  },
+  {
+    purpose: 'workbook_repair',
+    kind: 'TEXT_LLM',
+    defaultTier: 'PREMIUM',
+    useCase: 'reports',
+    businessOwner: 'Materiały — Excel',
+    qualityProfile: 'precision',
+    maxLatencyMs: 45000,
+    costProfile: 'premium',
+    fallbackPurposes: ['workbook_generate', 'chat_complex'],
+    description:
+      'Targeted repair pass fixing deterministic quality-gate defects (DX-01 assumptions layer, DX-02 formula cycles).',
+  },
 ];
 
 const PURPOSE_MAP = new Map<string, AITaskDefinition>();

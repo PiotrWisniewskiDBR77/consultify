@@ -572,8 +572,23 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       }
 
       if (lane === 'excele') {
-        // P23-ext: Try intelligent workbook generation first, fallback to table export
-        const generateWorkbook = async () => {
+        // P23-ext: real Excel engine call.
+        //
+        // N3 fix (naprawa 2026-07-28, "Excel od tygodni nie działa"): this used
+        // to swallow ANY engine failure into a bare `console.warn` + `return
+        // false`, then silently show the OLD operational table (governed
+        // table/CSV) relabeled as `type: 'xlsx'` with a "Spreadsheet … rows,
+        // columns" summary — the user saw what looked like a successful export
+        // with no hint that the real .xlsx engine never ran. Root cause of the
+        // engine call itself failing (WorkbookGeneratorService.callLLM
+        // discarding AIPipeline error info, and the workbook phases having no
+        // dedicated model-routing purpose) is fixed server-side; this is the
+        // "never lie about it" half — any remaining failure (budget, auth,
+        // provider outage, genuinely bad model output) now surfaces as an
+        // honest Polish error + retry instead of a disguised CSV.
+        const generateWorkbook = async (): Promise<
+          { ok: true } | { ok: false; reason: string }
+        > => {
           try {
             const wbResult = await Api.generateWorkbook({
               prompt: lastGoal || title,
