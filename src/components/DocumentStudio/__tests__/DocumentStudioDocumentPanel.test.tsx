@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -275,10 +275,16 @@ describe('DocumentStudioDocumentPanel', () => {
     expect(screen.getByTestId('mels-canvas')).toHaveTextContent('This is the executive summary.');
     await waitFor(() => expect(screen.getByText('Governance')).toBeInTheDocument());
 
-    const chips = within(screen.getByTestId('mels-topbar-chips'))
-      .getAllByRole('button')
-      .map((button) => button.getAttribute('data-mels-chip'));
+    // N20 (menu pliku) — `mels-topbar-chips` also hosts `topBarPrimaryActionSlot`
+    // (the new "Plik" dropdown trigger) by design — see `TopBar.tsx`'s own
+    // doc for that slot. Scope the query to elements carrying the
+    // `data-mels-chip` contract so this assertion keeps testing the
+    // canonical CHIP set, not "every button in the container".
+    const chips = Array.from(
+      screen.getByTestId('mels-topbar-chips').querySelectorAll('[data-mels-chip]')
+    ).map((button) => button.getAttribute('data-mels-chip'));
     expect(chips).toEqual(['history', 'qa', 'governance', 'share', 'agent', 'run']);
+    expect(screen.getByTestId('document-file-menu-trigger')).toBeInTheDocument();
   });
 
   it('opens sources and properties right-rail panels', async () => {
