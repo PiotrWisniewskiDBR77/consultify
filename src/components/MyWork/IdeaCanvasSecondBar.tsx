@@ -45,7 +45,10 @@ const Btn: React.FC<{ action: IdeaMenu3Action }> = ({ action }) => {
  * `MutationObserver` na SAMYM slocie — reaguje na montaż/odmontowanie paska
  * przez `createPortal`, którego React nie zgłasza rodzicowi w żaden inny sposób.
  */
-function useSlotHasContent(ref: React.RefObject<HTMLElement>, enabled: boolean): boolean {
+function useSlotHasContent(
+  ref: React.RefObject<HTMLElement | null>,
+  enabled: boolean
+): boolean {
   const [hasContent, setHasContent] = useState(false);
 
   useEffect(() => {

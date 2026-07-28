@@ -35226,5 +35226,45 @@
     "realtimeReconnecting": "Ponowne łączenie w czasie rzeczywistym",
     "realtimeDegraded": "Praca w czasie rzeczywistym osłabiona",
     "recoveryInProgress": "Trwa przywracanie połączenia"
+  },
+  "canvasEditBar": {
+    "titleNode": "Węzeł",
+    "titleEdge": "Połączenie",
+    "fontFamily": "Czcionka",
+    "fontSize": "Wielkość",
+    "bold": "Pogrubienie",
+    "underline": "Podkreślenie",
+    "textColor": "Kolor tekstu",
+    "bgColor": "Kolor tła",
+    "borderColor": "Kolor ramki",
+    "lineColor": "Kolor linii",
+    "lineStyle": "Styl linii",
+    "lineSolid": "Ciągła",
+    "lineDashed": "Kreskowana",
+    "resetDefault": "Domyślny",
+    "resetBg": "Bez własnego tła",
+    "resetBorder": "Bez własnej ramki",
+    "shapeTitle": "Kształt obiektu",
+    "arrowTitle": "Strzałki i kierunek",
+    "reverseFlow": "Odwróć kierunek przepływu",
+    "font": {
+      "sans": "Bezszeryfowa",
+      "serif": "Szeryfowa",
+      "mono": "Maszynowa"
+    },
+    "shape": {
+      "rounded": "Zaokrąglony",
+      "rect": "Prostokąt",
+      "pill": "Pigułka",
+      "circle": "Koło",
+      "diamond": "Romb",
+      "hexagon": "Sześciokąt"
+    },
+    "arrow": {
+      "none": "Bez strzałki",
+      "end": "W przód",
+      "start": "W tył",
+      "both": "Obustronna"
+    }
   }
 }
