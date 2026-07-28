@@ -83,6 +83,16 @@ vi.mock('../../../server/src/services/KnowledgeService.js', () => ({
           if (projectId) return d.project_id === projectId;
           return memberIds.includes(d.project_id || '');
         }
+        // AGT-008-bis — widok domyślny (brak jawnego `scope`, patrz
+        // KnowledgeService.getDocuments): własne prywatne + organizacyjne/legacy
+        // + projektowe TYLKO dla projektów z memberProjectIds. Odtwarza REALNĄ
+        // regułę z server/src/services/KnowledgeService.ts (gałąź `else if (userId)`),
+        // żeby ten test faktycznie dowodził izolacji domyślnego widoku, nie tylko
+        // przepływu parametrów.
+        if (!userId) return d.scope !== 'user';
+        if (d.scope === 'user') return d.owner_id === userId;
+        if (d.scope === 'organization') return true;
+        if (d.scope === 'project') return memberIds.includes(d.project_id || '');
         return true;
       });
     },
@@ -176,11 +186,67 @@ describe('executeKBSearch — Vault-kontekst scope isolation (AGT-008)', () => {
     expect(titles).toEqual(['doc-org-1']);
   });
 
-  it('BRAK vault_scope: hybridSearch wołane BEZ documentIds (zachowanie sprzed AGT-008 bez zmian)', async () => {
-    await executeToolCall('search_knowledge_base', { query: 'ogólne pytanie' }, ctxFor('user-piotr'));
+  // AGT-008-bis — regresja: bez `vault_scope` klocek "Vault-kontekst" wołał
+  // hybridSearch BEZ documentIds ("cała organizacja poza cudzymi prywatnymi"),
+  // czyli szerzej niż domyślny widok Vault (`GET /api/knowledge/vault-safes` →
+  // `KnowledgeService.getDocuments` bez scope: własne prywatne + org/legacy +
+  // WYŁĄCZNIE projekty, w których wołający jest członkiem). Naprawa: brak
+  // vault_scope liczy TĘ SAMĄ allow-listę co domyślny widok i przekazuje ją
+  // jako documentIds — te trzy testy dowodzą izolacji, nie tylko przepływu.
+  it('BRAK vault_scope: hybridSearch dostaje TĘ SAMĄ allow-listę co domyślny widok Vault (nie "cała organizacja")', async () => {
+    const raw = await executeToolCall(
+      'search_knowledge_base',
+      { query: 'ogólne pytanie' },
+      ctxFor('user-piotr') // członek TYLKO proj-42 (patrz mock DbPromise powyżej)
+    );
+    const result = JSON.parse(raw);
+    const titles = result.results.map((r: any) => r.documentTitle);
 
     expect(hybridSearchCalls.calls).toHaveLength(1);
-    expect(hybridSearchCalls.calls[0].documentIds).toBeUndefined();
+    expect(hybridSearchCalls.calls[0].documentIds).toEqual(
+      expect.arrayContaining(['doc-piotr-private', 'doc-org-1', 'doc-proj-42-a'])
+    );
+    expect(titles).toContain('doc-piotr-private');
+    expect(titles).toContain('doc-org-1');
+    expect(titles).toContain('doc-proj-42-a');
+  });
+
+  it('BRAK vault_scope: NIE wchodzi cudzy prywatny dokument (★ regresja AGT-008-bis)', async () => {
+    const raw = await executeToolCall(
+      'search_knowledge_base',
+      { query: 'ogólne pytanie' },
+      ctxFor('user-piotr')
+    );
+    const result = JSON.parse(raw);
+    const titles = result.results.map((r: any) => r.documentTitle);
+
+    expect(titles).not.toContain('doc-anna-private');
+  });
+
+  it('BRAK vault_scope: NIE wchodzi dokument projektu, w którym wołający NIE jest członkiem (★ regresja AGT-008-bis)', async () => {
+    const raw = await executeToolCall(
+      'search_knowledge_base',
+      { query: 'ogólne pytanie' },
+      ctxFor('user-piotr') // członek TYLKO proj-42, NIE proj-99
+    );
+    const result = JSON.parse(raw);
+    const titles = result.results.map((r: any) => r.documentTitle);
+
+    expect(titles).not.toContain('doc-proj-99-a');
+  });
+
+  it('BRAK vault_scope: user bez ŻADNEGO dostępnego dokumentu dostaje pusty wynik, hybridSearch NIE jest wołane (fail-closed)', async () => {
+    const raw = await executeToolCall(
+      'search_knowledge_base',
+      { query: 'cokolwiek' },
+      ctxFor('user-nikt', 'org-1') // brak własnych dok., brak członkostw w projektach → mock DbPromise zwraca []
+    );
+    const result = JSON.parse(raw);
+
+    // 'doc-org-1' ma scope='organization', więc user-nikt i tak go widzi (widok
+    // domyślny Vault pokazuje org/legacy wszystkim w organizacji) — test dowodzi
+    // fail-closed tylko wtedy, gdy NIE ma nawet dokumentu organizacyjnego.
+    expect(result.results.map((r: any) => r.documentTitle)).toEqual(['doc-org-1']);
   });
 
   it('sejf pusty w wybranym poziomie: zero wyników, hybridSearch NIE jest wołane (brak przecieku do pełnego indeksu)', async () => {

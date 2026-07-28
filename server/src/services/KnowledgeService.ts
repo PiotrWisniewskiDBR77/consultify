@@ -623,7 +623,17 @@ const KnowledgeService = {
     return docId;
   },
 
-  async processDocument(docId: string, text: string): Promise<number> {
+  // AGT-008-bis / VLT-003 — `organizationId` threaded through to
+  // `embeddingService.storeChunk` (persisted into ai_knowledge_embeddings.
+  // metadata.organization_id, see embeddingService.ts storeChunkPg comment) so
+  // Vault documents indexed here can no longer surface in another org's
+  // `search_knowledge_base` retrieval. Previously this call site never passed
+  // an organizationId at all — confirmed via `information_schema.columns` +
+  // live row inspection on demo (ai_knowledge_embeddings has no org column,
+  // and no `source_type='knowledge'` rows existed yet, so no leak had
+  // manifested from Vault uploads specifically — the confirmed leak was via
+  // IngestionPipeline.ingestText/interview answers, same underlying bug).
+  async processDocument(docId: string, text: string, organizationId?: string): Promise<number> {
     await ensureKnowledgeSchema();
     const chunks = chunkText(text, { chunkSize: 1000, overlap: 200 });
 
@@ -666,7 +676,14 @@ const KnowledgeService = {
       if (embedding && embedding.length > 0) {
         try {
           await embeddingService.storeChunk(
-            { content, chunkIndex: i, documentId: docId, metadata, sourceType: 'knowledge' },
+            {
+              content,
+              chunkIndex: i,
+              documentId: docId,
+              organizationId,
+              metadata,
+              sourceType: 'knowledge',
+            },
             embedding
           );
         } catch {

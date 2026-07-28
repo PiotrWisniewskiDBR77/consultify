@@ -929,21 +929,33 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
         ? (args.vault_scope as 'user' | 'organization' | 'project')
         : undefined;
 
+    // AGT-008-bis — bez `vault_scope` (klocek zostawiony na "wszystko"/domyślnie)
+    // `documentIds` zostawało `undefined`, co dla `ragService.hybridSearch`
+    // oznacza "cała organizacja" — `appendKnowledgeDocAccessFilter` wyklucza
+    // WYŁĄCZNIE dokumenty scope='user' w ogóle (żaden, nawet własne wołającego),
+    // ale NIE zawęża dokumentów scope='project' do projektów, w których
+    // wołający jest członkiem. To szerszy zakres niż domyślny widok Vault
+    // (`KnowledgeService.getDocuments` bez scope: własne prywatne + org/legacy +
+    // WYŁĄCZNIE projekty-gdzie-jest-członkiem). Naprawa: gdy brak vault_scope,
+    // policz TĘ SAMĄ allow-listę co domyślny widok Vault (memberProjectIds +
+    // getDocuments bez scope) i użyj jej jako `documentIds` — fail-closed: pusta
+    // lista → pusty wynik, tak jak w gałęzi z jawnym vault_scope poniżej.
+    const { default: KnowledgeService } = await import('../KnowledgeService.js');
+    let memberProjectIds: string[] = [];
+    const explicitProjectId =
+      typeof args.vault_project_id === 'string' && args.vault_project_id
+        ? args.vault_project_id
+        : null;
+    if ((vaultScope === 'project' && !explicitProjectId) || !vaultScope) {
+      const { all: dbAll } = await import('../../utils/DbPromise.js');
+      const rows = await dbAll<{ project_id: string }>(
+        `SELECT project_id FROM project_members WHERE user_id = ?`,
+        [ctx.userId]
+      );
+      memberProjectIds = (rows || []).map((r: any) => String(r.project_id)).filter(Boolean);
+    }
+
     if (vaultScope) {
-      const { default: KnowledgeService } = await import('../KnowledgeService.js');
-      let memberProjectIds: string[] = [];
-      const explicitProjectId =
-        typeof args.vault_project_id === 'string' && args.vault_project_id
-          ? args.vault_project_id
-          : null;
-      if (vaultScope === 'project' && !explicitProjectId) {
-        const { all: dbAll } = await import('../../utils/DbPromise.js');
-        const rows = await dbAll<{ project_id: string }>(
-          `SELECT project_id FROM project_members WHERE user_id = ?`,
-          [ctx.userId]
-        );
-        memberProjectIds = (rows || []).map((r: any) => String(r.project_id)).filter(Boolean);
-      }
       const scopedDocs = await KnowledgeService.getDocuments(
         ctx.organizationId,
         ctx.userId,
@@ -959,6 +971,23 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
           vaultScope,
           results: [],
           note: 'Brak dokumentów w wybranym sejfie Vault',
+        });
+      }
+    } else {
+      const defaultViewDocs = await KnowledgeService.getDocuments(
+        ctx.organizationId,
+        ctx.userId,
+        undefined,
+        { memberProjectIds }
+      );
+      documentIds = (defaultViewDocs || []).map((d: any) => String(d.id)).filter(Boolean);
+
+      if (documentIds.length === 0) {
+        return JSON.stringify({
+          source: 'knowledge_base',
+          query: args.query,
+          results: [],
+          note: 'Brak dokumentów w dostępnym zakresie Vault',
         });
       }
     }
