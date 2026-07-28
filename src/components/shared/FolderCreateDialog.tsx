@@ -139,18 +139,26 @@ export const FolderCreateDialog: React.FC<FolderCreateDialogProps> = ({
     [isPolish]
   );
 
+  // Wybór projektu jest wymagany TYLKO gdy user go realnie wybiera (poziom
+  // wybieralny, `!fixedScope`) — przy `fixedScope` nie ma pod niego UI (patrz
+  // gałąź `fixedScope ? … : …` niżej), projekt jest już ZDETERMINOWANY przez
+  // wołającego (np. `safe.projectId` w VaultDocumentsView), więc gate na
+  // `projectId` blokowałby submit NA ZAWSZE — bug złapany w render-verify
+  // (AGT-015 §6 D4, 2026-07-28): "Utwórz folder" zostawało wygaszone w
+  // wariancie Vault, bo `projectId` nigdy się nie ustawiał.
+  const needsProjectPick = !fixedScope && scope === 'project';
   const nameError = touched && !name.trim();
-  const projectRequiredError = touched && scope === 'project' && !projectId;
-  const canSubmit = !!name.trim() && (scope !== 'project' || !!projectId) && !busy;
+  const projectRequiredError = touched && needsProjectPick && !projectId;
+  const canSubmit = !!name.trim() && (!needsProjectPick || !!projectId) && !busy;
 
   const handleSubmit = () => {
     setTouched(true);
     if (!name.trim()) return;
-    if (scope === 'project' && !projectId) return;
+    if (needsProjectPick && !projectId) return;
     void onSubmit({
       name: name.trim(),
       scope,
-      projectId: scope === 'project' ? projectId : undefined,
+      projectId: needsProjectPick ? projectId : undefined,
     });
   };
 
