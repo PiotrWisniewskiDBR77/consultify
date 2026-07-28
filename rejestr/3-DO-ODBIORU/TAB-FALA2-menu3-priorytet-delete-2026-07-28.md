@@ -74,6 +74,25 @@ ale **nie treść wierszy**. Od tego są strażniki i harness.
 
 ---
 
+## FALA 3 — ciąg dalszy (23 commity łącznie)
+
+| # | Pozycja planu | Co zrobione / co się okazało |
+|---|---|---|
+| 17 | **Kebab: przejścia stanu (blok 2 kanonu A6)** | **Ideas** dostały zmianę etapu prosto z listy — 5 etapów w kolejności cyklu życia, bieżący wyłączony. Kebab miał ~20 pozycji i ani jednej zmieniającej Stage; przestawić go dało się tylko wchodząc w ideę. Backend przyjmował `stage` od dawna — luka była w UI |
+| 18 | **Blok „Co dalej"** | ★ `whatsNext` w `StandardPreview` miał **ZERO konsumentów** — kanon obiecywał blok, którego nie było nigdzie (jedyne wystąpienie, Insights, jest bespoke). Pierwszy konsument: podgląd oceny w Tools. Spina się z P-20: `Generate Report`/`Initiative Pack` w Menu 3 były duplikatem CTA, ale w podglądzie **jednej** oceny niosą sens — i naprawiają „brak akcji pozytywnej" (był tylko Delete + Duplicate) |
+| 19 | **N-81 — akcje techniczne w stopce** | `Copy ID` / `Copy link` zeszły pod „…" w Interview→Initiatives i Initiatives→Portfolio (Sessions naprawione wcześniej). Nie znikają — przestają zajmować miejsce akcji głównej |
+
+### Pozycje planu, które NIE są propagacją UI — wymagają decyzji
+
+| Pozycja | Co pokazało sprawdzenie |
+|---|---|
+| **D-02 — Folder w każdej liście** (decyzja P-7) | Mechanizm jest wyłącznie idei: tabela `my_idea_folders`, kolumna `my_ideas.folder_id`, endpointy `/my-idea-folders`. **Grep migracji: `folder_id` nie istnieje w ŻADNEJ innej tabeli encji.** Folder dla Zadań/Decyzji/Wywiadów = migracja + generyczne endpointy + dopiero UI. Blok wielkości Fali 4, wymaga zgody na migrację |
+| **Linia rekomendacji** (kanon A7.2) | W Decisions pochodzi z endpointu AI `/my-work/decisions/:id/brief`. Skopiowanie = endpoint per encja. Wariant deterministyczny (zdanie z terminu i priorytetu) to już **projektowanie**, a teza planu brzmi „nie projektujemy, propagujemy" — decyzja Piotra |
+| **Interview→Assigned „brak bloku 2"** | ★ KOREKTA PRZEGLĄDU: kebab **ma** przejścia (start/continue/fix dla wykonawcy; approve/sendback/reassign/remind/escalate dla oceniającego), tylko warunkowe wobec roli i statusu. Obserwacja była nietrafna |
+| **Interview→Templates przejścia stanu** | Statusy Draft/In review/Published filtrowane lokalnie; backend nie ma endpointu ich zmiany |
+
+---
+
 ## ★ MOJA REGRESJA W TEJ FALI — złapana i naprawiona
 
 Filtr atrap ukrył pozycje, które `StandardTable` **sam wcześniej dokładał** — test
