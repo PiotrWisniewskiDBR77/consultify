@@ -25117,6 +25117,13 @@
     "deleteSubtreeWarning": "This will also delete {{count}} child nodes. This cannot be undone after sync.",
     "frameNode": {
       "defaultLabel": "Frame"
+    },
+    "edgeArrow": {
+      "none": "Arrow: none",
+      "end": "Arrow: at the end",
+      "start": "Arrow: at the start",
+      "both": "Arrow: both ends",
+      "noEdges": "This branch has no connections"
     }
   },
   "ideas": {
@@ -26569,7 +26576,8 @@
       "whyThisImportant": "Why is this important?",
       "willBeRemoved": "Will be removed",
       "writeCommentMention": "Write a comment... (@mention)",
-      "nSelected": "{{count}} selected"
+      "nSelected": "{{count}} selected",
+      "arrowDirectionBranch": "Arrows in branch"
     }
   },
   "notebook": {
@@ -29348,7 +29356,8 @@
       "edge_reverse": "Reverse direction",
       "edge_change_style": "Change line style",
       "edge_edit_relation": "Edit relation",
-      "edge_delete": "Delete connection"
+      "edge_delete": "Delete connection",
+      "edge_arrow_direction": "Arrow direction"
     },
     "paneMenu": {
       "pane_add_node": "Add topic (to root)",
@@ -29523,6 +29532,12 @@
       "1": "Name your challenge",
       "2": "Describe the problem or idea",
       "3": "Click \"Accept\" in the Tools panel"
+    },
+    "arrowDirection": {
+      "none": "None",
+      "end": "End",
+      "start": "Start",
+      "both": "Both ends"
     }
   },
   "roadmap": {

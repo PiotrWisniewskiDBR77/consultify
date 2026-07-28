@@ -26181,6 +26181,13 @@
     "deleteSubtreeWarning": "Usunięcie obejmie {{count}} podwęzłów. Tej operacji nie można cofnąć po synchronizacji.",
     "frameNode": {
       "defaultLabel": "Ramka"
+    },
+    "edgeArrow": {
+      "none": "Strzałka: brak",
+      "end": "Strzałka: na końcu",
+      "start": "Strzałka: na początku",
+      "both": "Strzałka: na obu końcach",
+      "noEdges": "Ta gałąź nie ma połączeń"
     }
   },
   "ideas": {
@@ -27633,7 +27640,8 @@
       "whyThisImportant": "Dlaczego to ważne?",
       "willBeRemoved": "Zostanie usunięty",
       "writeCommentMention": "Napisz komentarz... (@wzmianka)",
-      "nSelected": "{{count}} zaznaczonych"
+      "nSelected": "{{count}} zaznaczonych",
+      "arrowDirectionBranch": "Strzałki w gałęzi"
     }
   },
   "notebook": {
@@ -30416,7 +30424,8 @@
       "edge_reverse": "Odwróć kierunek",
       "edge_change_style": "Zmień styl linii",
       "edge_edit_relation": "Edytuj relację",
-      "edge_delete": "Usuń połączenie"
+      "edge_delete": "Usuń połączenie",
+      "edge_arrow_direction": "Kierunek strzałki"
     },
     "paneMenu": {
       "pane_add_node": "Dodaj temat (do korzenia)",
@@ -30591,6 +30600,12 @@
       "1": "Nadaj tytuł wyzwaniu",
       "2": "Opisz problem lub pomysł",
       "3": "Kliknij „Akceptuj\" w panelu Tools"
+    },
+    "arrowDirection": {
+      "none": "Brak",
+      "end": "Na końcu",
+      "start": "Na początku",
+      "both": "Na obu końcach"
     }
   },
   "roadmap": {

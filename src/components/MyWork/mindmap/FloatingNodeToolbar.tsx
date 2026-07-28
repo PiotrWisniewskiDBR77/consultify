@@ -392,6 +392,17 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
                 isPl={!!isPl}
                 current={style.branchTheme}
                 onSelect={(theme) => onUpdate({ branchTheme: theme })}
+                onArrowSelect={(direction) => {
+                  // Hurtowo na całą gałąź. Obsługa (BFS w dół + zapis pola
+                  // `arrowDirection`) siedzi w `useMindMapQuickActions`, tam
+                  // gdzie reszta akcji `mm_*` — pasek nie zna grafu.
+                  window.dispatchEvent(
+                    new CustomEvent('idea-workspace-quick-action', {
+                      detail: { action: 'mm_edge_arrow', nodeId, direction },
+                    })
+                  );
+                  closeDD();
+                }}
                 onClose={closeDD}
               />
             </div>
