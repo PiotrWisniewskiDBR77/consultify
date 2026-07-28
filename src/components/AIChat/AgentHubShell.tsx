@@ -101,11 +101,22 @@
  * (`renderBulkBar`, ten sam wygląd co dawny `StandardModuleBar.bulk`, tylko
  * inny, mniejszy pasek zamiast pełnego Menu 2/3).
  */
-import { FileStack, ListChecks, PlayCircle, XCircle } from 'lucide-react';
+import {
+  FileStack,
+  Folder,
+  FolderPlus,
+  Layers,
+  ListChecks,
+  PlayCircle,
+  Timer,
+  Trash2,
+  XCircle,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useHubBarSlot } from '@/components/shared/HubBarSlots';
+import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import type { OpenDocument } from '@/components/shared/ModuleHub/types';
 import {
   MENU_3_ACTION_DANGER,
@@ -129,15 +140,21 @@ import {
 } from '@/components/standard/StandardTable';
 import { Segmented } from '@/components/TemplateBuilder/templateBuilderFields';
 import { EntityStatusChip, MetaChip, StatusChip } from '@/components/ui/primitives/chips';
+import { Api } from '@/services/api';
 import { listAgentManifests } from '@/services/api/agentManifests.api';
 import {
+  type AgentFolder,
   type AgentPlan,
   type AgentPlanStatus,
   cancelAgentPlan,
+  createAgentFolder,
   createAgentPlan,
+  deleteAgentFolder,
   getAgentPlan,
+  listAgentFolders,
   listAgentPlans,
   listAgentProcesses,
+  setAgentPlanFolder,
 } from '@/services/api/agentPlan.api';
 
 import { readablePhaseName } from './AgentPlanPanel';
@@ -164,6 +181,46 @@ const formatPlanDate = (iso: string, isPolish: boolean): string => {
     day: 'numeric',
     year: 'numeric',
   });
+};
+
+/**
+ * Kolumny „Zaplanowany na"/„Ostatnie uruchomienie" (2026-07-28): data+godzina,
+ * nie tylko dzień jak `formatPlanDate` — dla harmonogramu i startu minuty
+ * mają znaczenie (odróżnienie „za chwilę" od „za 8h" tego samego dnia).
+ */
+const formatPlanDateTime = (iso: string | undefined, isPolish: boolean): string => {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+/**
+ * „Czas wykonania" (2026-07-28): completedAt-startedAt gdy plan już skończony;
+ * gdy nadal `executing` — czas OD startu DO TERAZ (przybliżony, przelicza się
+ * przy każdym odświeżeniu listy, nie ma tu tickera co sekundę — wystarczające
+ * dla pytania „jak długo to już trwa", nie stoper).
+ */
+const formatDuration = (plan: Pick<AgentPlan, 'startedAt' | 'completedAt' | 'status'>): string => {
+  if (!plan.startedAt) return '—';
+  const start = new Date(plan.startedAt).getTime();
+  if (Number.isNaN(start)) return '—';
+  const endIso = plan.completedAt;
+  const end = endIso ? new Date(endIso).getTime() : plan.status === 'executing' ? Date.now() : NaN;
+  if (Number.isNaN(end) || end < start) return '—';
+  const ms = end - start;
+  const totalSeconds = Math.round(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
 };
 
 const PLAN_STATUS_TONE: Record<
@@ -321,6 +378,148 @@ export const AgentHubShell: React.FC = () => {
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const [activePlanDetail, setActivePlanDetail] = useState<AgentPlan | null>(null);
   const [activePlanError, setActivePlanError] = useState<string | null>(null);
+
+  // ── Foldery „Moje procesy" (AGT-FOLDERS, 2026-07-28) — wzór 1:1 Vault
+  // (VaultDocumentsView.tsx §"Foldery WEWNĄTRZ tego sejfu"). `foldersAvailable`
+  // chroni UI, gdyby migracja jeszcze nie doszła na danej bazie (fail-soft).
+  const [folders, setFolders] = useState<AgentFolder[]>([]);
+  const [foldersAvailable, setFoldersAvailable] = useState(false);
+  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+  const [projectMemberships, setProjectMemberships] = useState<Array<{ id: string; name: string }>>(
+    []
+  );
+
+  useEffect(() => {
+    Api.getMyProjectMemberships()
+      .then(setProjectMemberships)
+      .catch(() => setProjectMemberships([]));
+  }, []);
+
+  const loadFolders = useCallback(() => {
+    // Bez `scope` — widok domyślny agentFolderService.getFolders: mój
+    // prywatny + wszystkie organizacyjne + projektowe dla projektów, w
+    // których jestem członkiem (patrz komentarz w serwisie backendowym).
+    listAgentFolders({})
+      .then((list) => {
+        setFolders(list);
+        setFoldersAvailable(true);
+      })
+      .catch(() => setFoldersAvailable(false));
+  }, []);
+
+  useEffect(() => {
+    loadFolders();
+  }, [loadFolders]);
+
+  const folderNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    folders.forEach((f) => map.set(f.id, f.name));
+    return map;
+  }, [folders]);
+
+  const folderScopeLabel = useCallback(
+    (scope: AgentFolder['scope']): string => {
+      if (scope === 'user') return isPolish ? 'Prywatny' : 'Private';
+      if (scope === 'project') return isPolish ? 'Projekt' : 'Project';
+      return isPolish ? 'Organizacja' : 'Organization';
+    },
+    [isPolish]
+  );
+
+  /**
+   * Nowy folder — poziom wybierany PRZY TWORZENIU (dziedziczy go na stałe,
+   * jak Vault). W przeciwieństwie do Vault (poziom narzucony przez sejf, w
+   * którym stoisz) Run agent jest JEDNĄ płaską listą, więc pytamy wprost —
+   * lekki wzorzec `window.prompt` (spójny z resztą ekranu — rename/usuń
+   * folderu w Vault też idą przez prompt/confirm, nie modal).
+   */
+  const handleCreateFolder = useCallback(async () => {
+    const name = window
+      .prompt(t('agentPlan.hub.folders.namePrompt', isPolish ? 'Nazwa folderu' : 'Folder name'))
+      ?.trim();
+    if (!name) return;
+
+    const levelPrompt = isPolish
+      ? 'Poziom folderu:\n1 = Prywatny (tylko ja)\n2 = Projektowy (zespół projektu)\n3 = Organizacyjny (cała firma)'
+      : 'Folder level:\n1 = Private (me only)\n2 = Project (project team)\n3 = Organization (whole company)';
+    const levelRaw = window.prompt(levelPrompt, '1')?.trim();
+    const level = levelRaw === '2' ? 'project' : levelRaw === '3' ? 'organization' : 'user';
+
+    let projectId: string | undefined;
+    if (level === 'project') {
+      if (projectMemberships.length === 0) {
+        window.alert(
+          isPolish
+            ? 'Nie należysz do żadnego projektu — folder projektowy nie jest możliwy.'
+            : 'You are not a member of any project — a project folder is not possible.'
+        );
+        return;
+      }
+      if (projectMemberships.length === 1) {
+        projectId = projectMemberships[0].id;
+      } else {
+        const list = projectMemberships.map((p, i) => `${i + 1}. ${p.name}`).join('\n');
+        const choice = window.prompt(
+          (isPolish ? 'Wybierz projekt (numer):\n' : 'Choose a project (number):\n') + list,
+          '1'
+        );
+        const idx = Number(choice) - 1;
+        projectId = projectMemberships[idx]?.id;
+        if (!projectId) return;
+      }
+    }
+
+    try {
+      const created = await createAgentFolder({ name, scope: level, projectId });
+      setFolders((prev) => [...prev, created]);
+      setFoldersAvailable(true);
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : t(
+              'agentPlan.hub.folders.createFailed',
+              isPolish ? 'Nie udało się utworzyć folderu' : 'Failed to create folder'
+            )
+      );
+    }
+  }, [t, isPolish, projectMemberships]);
+
+  const handleDeleteFolder = useCallback(
+    async (folderId: string) => {
+      try {
+        await deleteAgentFolder(folderId);
+        setFolders((prev) => prev.filter((f) => f.id !== folderId));
+        if (activeFolderId === folderId) setActiveFolderId(null);
+      } catch (error) {
+        window.alert(
+          error instanceof Error
+            ? error.message
+            : t(
+                'agentPlan.hub.folders.deleteFailed',
+                isPolish ? 'Nie udało się usunąć folderu' : 'Failed to delete folder'
+              )
+        );
+      }
+    },
+    [activeFolderId, t, isPolish]
+  );
+
+  const handleMoveToFolder = useCallback(async (plan: AgentPlan, folderId: string | null) => {
+    setPlans((prev) =>
+      prev ? prev.map((p) => (p.id === plan.id ? { ...p, folderId } : p)) : prev
+    );
+    try {
+      await setAgentPlanFolder(plan.id, folderId);
+    } catch {
+      // best-effort UI optimism — re-fetch to reconcile on failure
+      setPlans((prev) =>
+        prev
+          ? prev.map((p) => (p.id === plan.id ? { ...p, folderId: plan.folderId ?? null } : p))
+          : prev
+      );
+    }
+  }, []);
 
   const fetchPlans = useCallback(() => {
     setLoadError(null);
@@ -575,7 +774,7 @@ export const AgentHubShell: React.FC = () => {
     {
       id: 'title',
       label: t('agentPlan.hub.columns.name', isPolish ? 'Nazwa' : 'Name'),
-      width: '360px',
+      width: '300px',
       render: (row: TableRow) => {
         const plan = row as unknown as AgentPlan;
         return <span className="text-sm font-semibold text-c-text">{plan.title}</span>;
@@ -584,7 +783,7 @@ export const AgentHubShell: React.FC = () => {
     {
       id: 'status',
       label: t('agentPlan.hub.columns.status', isPolish ? 'Status' : 'Status'),
-      width: '160px',
+      width: '150px',
       render: (row: TableRow) => {
         const plan = row as unknown as AgentPlan;
         // ★ Znalezisko odbioru Mastera (2026-07-26): EntityStatusChip bez `label`
@@ -599,7 +798,7 @@ export const AgentHubShell: React.FC = () => {
     {
       id: 'progress',
       label: t('agentPlan.hub.columns.progress', isPolish ? 'Postęp' : 'Progress'),
-      width: '140px',
+      width: '110px',
       render: (row: TableRow) => {
         const plan = row as unknown as AgentPlan;
         return (
@@ -615,9 +814,57 @@ export const AgentHubShell: React.FC = () => {
       },
     },
     {
+      // Piotr (zadanie 2026-07-28): „odpowiednie kolumny, żebyśmy zarządzali
+      // agentami" — Harmonogram (Fala 1, 2026-07-26) dodał `scheduled_at` do
+      // silnika, ale front nigdy go nie pokazywał. Odpowiada na „co jest
+      // zaplanowane i kiedy ruszy" bez otwierania każdego wiersza.
+      id: 'scheduledAt',
+      label: t('agentPlan.hub.columns.scheduled', isPolish ? 'Zaplanowany na' : 'Scheduled for'),
+      width: '130px',
+      render: (row: TableRow) => {
+        const plan = row as unknown as AgentPlan;
+        return (
+          <span className="text-xs text-c-text-secondary">
+            {formatPlanDateTime(plan.scheduledAt, isPolish)}
+          </span>
+        );
+      },
+    },
+    {
+      // Odróżnia "utworzony" (kolumna Data, poniżej) od "faktycznie ruszył" —
+      // plan w 'planning'/'scheduled' nie ma jeszcze `startedAt`.
+      id: 'startedAt',
+      label: t('agentPlan.hub.columns.lastRun', isPolish ? 'Ostatnie uruchomienie' : 'Last run'),
+      width: '140px',
+      render: (row: TableRow) => {
+        const plan = row as unknown as AgentPlan;
+        return (
+          <span className="text-xs text-c-text-secondary">
+            {formatPlanDateTime(plan.startedAt, isPolish)}
+          </span>
+        );
+      },
+    },
+    {
+      // "Ile to już trwa/trwało" — ważne dla procesów w tle (isBackground),
+      // gdzie user wraca po godzinach i chce wiedzieć czy 5 minut czy 5 godzin.
+      id: 'duration',
+      label: t('agentPlan.hub.columns.duration', isPolish ? 'Czas wykonania' : 'Duration'),
+      width: '110px',
+      render: (row: TableRow) => {
+        const plan = row as unknown as AgentPlan;
+        const value = formatDuration(plan);
+        return value === '—' ? (
+          <span className="text-xs text-c-text-muted">—</span>
+        ) : (
+          <MetaChip icon={Timer} label={value} />
+        );
+      },
+    },
+    {
       id: 'date',
       label: t('agentPlan.hub.columns.created', isPolish ? 'Data' : 'Date'),
-      width: '140px',
+      width: '110px',
       render: (row: TableRow) => {
         const plan = row as unknown as AgentPlan;
         return (
@@ -629,7 +876,16 @@ export const AgentHubShell: React.FC = () => {
     },
   ];
 
-  const tableRows = (plans ?? []) as unknown as TableRow[];
+  // Folder aktywny w filtrze (Menu 2 huba) — filtr KLIENCKI nad planami, które
+  // user i tak widzi z `listAgentPlans` (wzór 1:1 `VaultDocumentsView.tsx`
+  // `matchesFolder`). Bez folderu = wszystko (łącznie z planami bez `folderId`).
+  const visiblePlans = useMemo(() => {
+    if (!plans) return plans;
+    if (!activeFolderId) return plans;
+    return plans.filter((p) => p.folderId === activeFolderId);
+  }, [plans, activeFolderId]);
+
+  const tableRows = (visiblePlans ?? []) as unknown as TableRow[];
   const previewPlan = useMemo(
     () => plans?.find((p) => p.id === previewPlanId) ?? null,
     [plans, previewPlanId]
@@ -742,6 +998,25 @@ export const AgentHubShell: React.FC = () => {
         />
       );
     }
+    if (activeFolderId && tableRows.length === 0) {
+      return (
+        <EmptyState
+          icon={Folder}
+          title={t(
+            'agentPlan.hub.folders.emptyTitle',
+            isPolish ? 'Brak procesów w tym folderze' : 'No processes in this folder'
+          )}
+          primaryAction={{
+            label: t(
+              'agentPlan.hub.folders.clearFilter',
+              isPolish ? 'Pokaż wszystkie procesy' : 'Show all processes'
+            ),
+            onClick: () => setActiveFolderId(null),
+          }}
+          className="h-full"
+        />
+      );
+    }
     return (
       <div className="h-full min-h-0">
         {createError ? <p className="px-4 pt-3 text-xs text-c-danger">{createError}</p> : null}
@@ -814,6 +1089,48 @@ export const AgentHubShell: React.FC = () => {
                       id: 'open',
                       label: t('agentPlan.hub.rowOpen', isPolish ? 'Otwórz' : 'Open'),
                       onClick: () => handleOpenPlan(plan.id),
+                    },
+                    // AGT-FOLDERS (2026-07-28) — wzór 1:1 `VaultDocumentsView.tsx`
+                    // "move-folder": submenu z "Bez folderu" + każdy widoczny folder;
+                    // disabled+nota gdy user nie ma jeszcze żadnego folderu (nie ma
+                    // czego wybrać — spójne z `common.comingSoonBackend` wzorcem
+                    // "brak handlera = disabled z notą", tu brak DANYCH, nie backendu).
+                    {
+                      id: 'move-folder',
+                      label: t(
+                        'agentPlan.hub.rowMoveToFolder',
+                        isPolish ? 'Przenieś do folderu' : 'Move to folder'
+                      ),
+                      icon: Folder,
+                      disabled: !foldersAvailable || folders.length === 0,
+                      note:
+                        foldersAvailable && folders.length > 0
+                          ? undefined
+                          : t(
+                              'agentPlan.hub.folders.noneYetNote',
+                              isPolish
+                                ? 'Brak folderów — utwórz jeden w pasku filtrów'
+                                : 'No folders yet — create one in the filter bar'
+                            ),
+                      submenu: [
+                        {
+                          id: 'folder-none',
+                          label: t(
+                            'agentPlan.hub.folders.noFolder',
+                            isPolish ? 'Bez folderu' : 'No folder'
+                          ),
+                          icon: Layers,
+                          disabled: !plan.folderId,
+                          onClick: () => void handleMoveToFolder(plan, null),
+                        },
+                        ...folders.map((f) => ({
+                          id: `folder-${f.id}`,
+                          label: f.name,
+                          icon: Folder,
+                          disabled: plan.folderId === f.id,
+                          onClick: () => void handleMoveToFolder(plan, f.id),
+                        })),
+                      ],
                     },
                   ],
                   universalHandlers: {
@@ -1057,23 +1374,98 @@ export const AgentHubShell: React.FC = () => {
     // w agencie, to już nie ma po co go pokazywać" — ukryty przy otwartej karcie.
     if (activeItemId) return null;
     return (
-      <Segmented<AgentHubTab>
-        value={tab}
-        options={[
-          {
-            value: 'processes',
-            label: t('agentPlan.hub.tabs.processes', isPolish ? 'Moje procesy' : 'My processes'),
-          },
-          {
-            value: 'templates',
-            label: t('agentPlan.hub.tabs.templates', isPolish ? 'Szablony' : 'Templates'),
-          },
-        ]}
-        onChange={(id) => setTab(id)}
-        testId="agent-hub-mode-switch"
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        <Segmented<AgentHubTab>
+          value={tab}
+          options={[
+            {
+              value: 'processes',
+              label: t('agentPlan.hub.tabs.processes', isPolish ? 'Moje procesy' : 'My processes'),
+            },
+            {
+              value: 'templates',
+              label: t('agentPlan.hub.tabs.templates', isPolish ? 'Szablony' : 'Templates'),
+            },
+          ]}
+          onChange={(id) => setTab(id)}
+          testId="agent-hub-mode-switch"
+        />
+        {/* AGT-FOLDERS (2026-07-28) — filtr "Folder", TYLKO na "Moje procesy"
+            (foldery grupują PROCESY, nie bibliotekę statycznych szablonów).
+            Wzór 1:1 `VaultDocumentsView.tsx` chip "Folder". */}
+        {tab === 'processes' && foldersAvailable ? (
+          <Menu3DropdownChip
+            data-testid="agent-hub-folder-chip"
+            icon={<Folder size={14} className="text-c-text-muted" />}
+            label={
+              activeFolderId
+                ? (folderNameById.get(activeFolderId) ??
+                  t('agentPlan.hub.folders.chip', isPolish ? 'Folder' : 'Folder'))
+                : t('agentPlan.hub.folders.chip', isPolish ? 'Folder' : 'Folder')
+            }
+            active={Boolean(activeFolderId)}
+            ariaLabel={t('agentPlan.hub.folders.chip', isPolish ? 'Folder' : 'Folder')}
+            items={[
+              {
+                id: 'all',
+                label: t(
+                  'agentPlan.hub.folders.allProcesses',
+                  isPolish ? 'Wszystkie procesy' : 'All processes'
+                ),
+                icon: <Layers size={14} />,
+                active: !activeFolderId,
+                onSelect: () => setActiveFolderId(null),
+              },
+              ...folders.map((f) => ({
+                id: f.id,
+                label: f.name,
+                icon: <Folder size={14} />,
+                active: activeFolderId === f.id,
+                trailing: folderScopeLabel(f.scope),
+                onSelect: () => setActiveFolderId(f.id),
+              })),
+              {
+                id: 'new-folder',
+                label: t(
+                  'agentPlan.hub.folders.newFolder',
+                  isPolish ? 'Nowy folder…' : 'New folder…'
+                ),
+                icon: <FolderPlus size={14} />,
+                dividerBefore: true,
+                onSelect: () => void handleCreateFolder(),
+              },
+              ...(activeFolderId
+                ? [
+                    {
+                      id: 'delete-folder',
+                      label: t(
+                        'agentPlan.hub.folders.deleteFolder',
+                        isPolish ? 'Usuń ten folder' : 'Delete this folder'
+                      ),
+                      icon: <Trash2 size={14} />,
+                      danger: true,
+                      onSelect: () => void handleDeleteFolder(activeFolderId),
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        ) : null}
+      </div>
     );
-  }, [tab, activeItemId, isPolish]);
+  }, [
+    tab,
+    activeItemId,
+    isPolish,
+    t,
+    foldersAvailable,
+    folders,
+    activeFolderId,
+    folderNameById,
+    folderScopeLabel,
+    handleCreateFolder,
+    handleDeleteFolder,
+  ]);
 
   const primaryCtaValue = useMemo(() => {
     if (tab !== 'processes' || activeItemId) return null;

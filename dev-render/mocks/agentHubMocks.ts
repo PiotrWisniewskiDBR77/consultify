@@ -46,6 +46,24 @@ export interface MockAgentPlan {
   errorMessage?: string;
   isBackground: boolean;
   createdAt: string;
+  // AGT-FOLDERS + kolumny huba (2026-07-28) — patrz raport zadania.
+  scheduledAt?: string;
+  startedAt?: string;
+  completedAt?: string;
+  folderId?: string | null;
+}
+
+export interface MockAgentFolder {
+  id: string;
+  name: string;
+  description?: string | null;
+  color?: string | null;
+  scope: 'user' | 'project' | 'organization';
+  projectId?: string | null;
+  ownerId: string;
+  parentFolderId?: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const CLASSIC_5_PHASES = [
@@ -67,6 +85,25 @@ function makeClassicSteps(statusPattern: MockAgentPlanStep['status'][]): MockAge
   }));
 }
 
+let folders: MockAgentFolder[] = [
+  {
+    id: 'folder-mock-elkomtech',
+    name: 'Elkomtech',
+    scope: 'user',
+    ownerId: 'user-piotr-demo',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+  },
+  {
+    id: 'folder-mock-org',
+    name: 'Standardowe analizy',
+    scope: 'organization',
+    ownerId: 'user-inna-osoba-demo',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+  },
+];
+
 let plans: MockAgentPlan[] = [
   {
     id: 'plan-mock-planning',
@@ -80,6 +117,22 @@ let plans: MockAgentPlan[] = [
     currentStepIndex: 0,
     isBackground: true,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    folderId: 'folder-mock-elkomtech',
+  },
+  {
+    id: 'plan-mock-scheduled',
+    organizationId: 'org-dbr77-demo',
+    userId: 'user-piotr-demo',
+    title: 'Przegląd kwartalny — automatyczny',
+    status: 'scheduled',
+    steps: makeClassicSteps(['pending', 'pending', 'pending', 'pending', 'pending']),
+    totalSteps: 5,
+    completedSteps: 0,
+    currentStepIndex: 0,
+    isBackground: true,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    scheduledAt: new Date(Date.now() + 1000 * 60 * 60 * 18).toISOString(),
+    folderId: 'folder-mock-org',
   },
   {
     id: 'plan-mock-executing',
@@ -93,6 +146,7 @@ let plans: MockAgentPlan[] = [
     currentStepIndex: 1,
     isBackground: true,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    startedAt: new Date(Date.now() - 1000 * 60 * 42).toISOString(),
   },
   {
     id: 'plan-mock-awaiting',
@@ -106,6 +160,7 @@ let plans: MockAgentPlan[] = [
     currentStepIndex: 2,
     isBackground: true,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+    startedAt: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
   },
   {
     id: 'plan-mock-completed',
@@ -120,6 +175,9 @@ let plans: MockAgentPlan[] = [
     resultSummary: 'Proces zakończony pomyślnie (dev-render mock).',
     isBackground: true,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+    startedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5 + 1000 * 60 * 2).toISOString(),
+    completedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5 + 1000 * 60 * 37).toISOString(),
+    folderId: 'folder-mock-elkomtech',
   },
   {
     id: 'plan-mock-failed',
@@ -134,6 +192,8 @@ let plans: MockAgentPlan[] = [
     errorMessage: 'Tool timeout (dev-render mock).',
     isBackground: true,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
+    startedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7 + 1000 * 60).toISOString(),
+    completedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7 + 1000 * 60 * 9).toISOString(),
   },
 ];
 
@@ -305,6 +365,57 @@ export function installAgentHubFetchMock(): void {
     // (inaczej 'processes' zostałby wzięty za id planu -> 404).
     if (url.includes('/api/ai/agent-plan/processes') && method === 'GET') {
       return respond({ total: MOCK_PROCESSES.length, processes: MOCK_PROCESSES });
+    }
+
+    // AGT-FOLDERS (2026-07-28) — "Moje procesy" folder dropdown (Menu 2 huba,
+    // no-op w tym harnessie bo AgentHubShell montuje BEZ providera slotów —
+    // patrz raport zadania — ale kolejność musi być poprawna PRZED :id).
+    if (url.includes('/api/ai/agent-plan/folders') && method === 'GET') {
+      return respond({ folders });
+    }
+    if (url.includes('/api/ai/agent-plan/folders') && method === 'POST') {
+      const body = init?.body ? JSON.parse(String(init.body)) : {};
+      const folder: MockAgentFolder = {
+        id: `folder-mock-new-${folders.length + 1}`,
+        name: String(body.name || 'Folder'),
+        scope: body.scope || 'user',
+        projectId: body.projectId ?? null,
+        ownerId: 'user-piotr-demo',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      folders = [...folders, folder];
+      return respond(folder, 201);
+    }
+    const folderIdMatch = url.match(/\/api\/ai\/agent-plan\/folders\/([^/?]+)$/);
+    if (folderIdMatch && method === 'DELETE') {
+      folders = folders.filter((f) => f.id !== folderIdMatch[1]);
+      plans = plans.map((p) => (p.folderId === folderIdMatch[1] ? { ...p, folderId: null } : p));
+      return respond({ success: true, deleted: true });
+    }
+    if (folderIdMatch && method === 'PUT') {
+      const body = init?.body ? JSON.parse(String(init.body)) : {};
+      folders = folders.map((f) =>
+        f.id === folderIdMatch[1] ? { ...f, ...body, updatedAt: new Date().toISOString() } : f
+      );
+      return respond({ success: true, updated: true });
+    }
+
+    // PATCH /api/ai/agent-plan/:id/folder — kebab "Przenieś do folderu".
+    const moveFolderMatch = url.match(/\/api\/ai\/agent-plan\/([^/]+)\/folder$/);
+    if (moveFolderMatch && method === 'PATCH') {
+      const body = init?.body ? JSON.parse(String(init.body)) : {};
+      const plan = plans.find((p) => p.id === moveFolderMatch[1]);
+      if (!plan) return respond({ error: 'Plan not found' }, 404);
+      plan.folderId = body.folderId ?? null;
+      return respond({ plan });
+    }
+
+    // GET /api/projects/my-memberships — scope picker "Nowy folder…" (projekt).
+    if (url.includes('/api/projects/my-memberships') && method === 'GET') {
+      return respond({
+        memberships: [{ projectId: 'proj-mock-elkomtech', projectName: 'Elkomtech — wdrożenie' }],
+      });
     }
 
     // GET /api/ai/agent-manifests — AGT-011 "Szablony": katalog gotowych analiz.

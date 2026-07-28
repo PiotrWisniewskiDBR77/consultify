@@ -73,6 +73,7 @@ const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view')
 const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
 const AgentWarsztatScreen = React.lazy(() => import('./screens/agent-warsztat'));
 const VaultSejfWnetrzeScreen = React.lazy(() => import('./screens/vault-sejf-wnetrze'));
+const VaultFolderBlockProofScreen = React.lazy(() => import('./screens/vault-folder-block-proof'));
 const AssessmentInitiativesPanelScreen = React.lazy(
   () => import('./screens/assessment-initiatives-panel')
 );
@@ -436,6 +437,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'VAULT — wnętrze sejfu po redesignie (Menu 1/2/3 + StandardTable + preview + panel „Dodaj dokument"). ?pusty=1 → stan pusty',
     render: () => <VaultSejfWnetrzeScreen />,
+  },
+  'vault-folder-block-proof': {
+    label:
+      'VLT-FOLDERS — klocek "Vault-kontekst" (AgentPlanCanvas): select Poziom + DRUGI select Folder wewnątrz sejfu',
+    render: () => <VaultFolderBlockProofScreen />,
   },
   'capability-gate-demo': {
     label: 'Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)',

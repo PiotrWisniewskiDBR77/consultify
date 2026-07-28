@@ -105,6 +105,18 @@ const MOCK_VAULT_SAFES = [
   },
 ];
 
+// ★ VLT-FOLDERS — foldery WEWNĄTRZ "Mój sejf" i "Elkomtech" (project), żeby
+// DRUGI select klocka 'vault-kontekst' (AgentPlanCanvas.tsx) miał realne
+// opcje do pokazania zamiast pustego "— cały sejf (bez folderu) —".
+const MOCK_VAULT_FOLDERS: Record<string, Array<{ id: string; name: string }>> = {
+  'user:': [
+    { id: 'folder-inbox', name: 'Inbox' },
+    { id: 'folder-szkice', name: 'Szkice' },
+  ],
+  'organization:': [{ id: 'folder-polityki', name: 'Polityki' }],
+  'project:proj-elkomtech': [{ id: 'folder-diagnoza', name: 'Diagnoza AiR' }],
+};
+
 export function installAgentPlanCanvasFetchMock(): void {
   const originalFetch = window.fetch.bind(window);
 
@@ -117,6 +129,18 @@ export function installAgentPlanCanvasFetchMock(): void {
       (!init || !init.method || init.method === 'GET')
     ) {
       return respond({ safes: MOCK_VAULT_SAFES });
+    }
+
+    // ★ VLT-FOLDERS — DRUGI select: folder WEWNĄTRZ już wybranego sejfu.
+    if (
+      url.includes('/api/knowledge/vault-folders') &&
+      (!init || !init.method || init.method === 'GET')
+    ) {
+      const parsed = new URL(url, window.location.origin);
+      const scope = parsed.searchParams.get('scope') || '';
+      const projectId = parsed.searchParams.get('project_id') || '';
+      const key = scope === 'project' ? `project:${projectId}` : `${scope}:`;
+      return respond(MOCK_VAULT_FOLDERS[key] || []);
     }
 
     const getMatch = url.match(/\/api\/ai\/agent-plan\/([^/?]+)$/);

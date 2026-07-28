@@ -66,6 +66,12 @@ export interface AgentPlan {
   errorMessage?: string;
   isBackground: boolean;
   createdAt: string;
+  /** Kolumny huba (2026-07-28) — patrz `agentPlannerService.ts` AgentPlan dla pochodzenia. */
+  scheduledAt?: string;
+  startedAt?: string;
+  completedAt?: string;
+  /** AGT-FOLDERS (2026-07-28): folder w "Moje procesy", null/undefined = bez folderu. */
+  folderId?: string | null;
 }
 
 /**
@@ -252,4 +258,92 @@ export async function listAgentProcesses(): Promise<{
     res,
     'Failed to load process library'
   );
+}
+
+/**
+ * AGT-FOLDERS (2026-07-28): foldery dla "Moje procesy" — analogiczny system
+ * jak Vault (`getVaultFolders`/`createVaultFolder`/…, src/services/api.ts).
+ * 3 poziomy: 'user' (prywatny, tylko twórca), 'project' (zespół projektu),
+ * 'organization' (cała firma) — patrz `server/src/services/ai/agentFolderService.ts`.
+ */
+export type AgentFolderScope = 'user' | 'project' | 'organization';
+
+export interface AgentFolder {
+  id: string;
+  name: string;
+  description?: string | null;
+  color?: string | null;
+  scope: AgentFolderScope;
+  projectId?: string | null;
+  ownerId: string;
+  parentFolderId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** GET /api/ai/agent-plan/folders — bez `scope` = widok domyślny (mój + org + projekty, których jestem członkiem). */
+export async function listAgentFolders(
+  params: { scope?: AgentFolderScope; projectId?: string } = {}
+): Promise<AgentFolder[]> {
+  const query = new URLSearchParams();
+  if (params.scope) query.set('scope', params.scope);
+  if (params.projectId) query.set('project_id', params.projectId);
+  const qs = query.toString();
+  const res = await fetch(`${API_URL}/ai/agent-plan/folders${qs ? `?${qs}` : ''}`, {
+    headers: getHeaders(),
+  });
+  const data = await handleResponse<{ folders: AgentFolder[] }>(
+    res,
+    'Failed to load agent folders'
+  );
+  return data.folders;
+}
+
+export async function createAgentFolder(input: {
+  name: string;
+  scope: AgentFolderScope;
+  projectId?: string;
+  description?: string;
+  color?: string;
+  parentFolderId?: string;
+}): Promise<AgentFolder> {
+  const res = await fetch(`${API_URL}/ai/agent-plan/folders`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(input),
+  });
+  return handleResponse<AgentFolder>(res, 'Failed to create agent folder');
+}
+
+export async function updateAgentFolder(
+  folderId: string,
+  updates: { name?: string; description?: string | null; color?: string | null }
+): Promise<{ updated: boolean }> {
+  const res = await fetch(`${API_URL}/ai/agent-plan/folders/${encodeURIComponent(folderId)}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(updates),
+  });
+  return handleResponse<{ updated: boolean }>(res, 'Failed to update agent folder');
+}
+
+export async function deleteAgentFolder(folderId: string): Promise<{ deleted: boolean }> {
+  const res = await fetch(`${API_URL}/ai/agent-plan/folders/${encodeURIComponent(folderId)}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  return handleResponse<{ deleted: boolean }>(res, 'Failed to delete agent folder');
+}
+
+/** PATCH /api/ai/agent-plan/:id/folder — kebab "Przenieś do folderu"; `folderId: null` odpina. */
+export async function setAgentPlanFolder(
+  planId: string,
+  folderId: string | null
+): Promise<{ plan: AgentPlan }> {
+  const res = await fetch(`${API_URL}/ai/agent-plan/${encodeURIComponent(planId)}/folder`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify({ folderId }),
+  });
+  return handleResponse<{ plan: AgentPlan }>(res, 'Failed to move agent plan to folder');
 }
