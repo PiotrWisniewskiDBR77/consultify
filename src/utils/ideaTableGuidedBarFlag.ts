@@ -65,9 +65,9 @@ function readEnvFlag(): boolean {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    return parsed === null ? false : parsed;
+    return parsed === null ? true : parsed;
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -89,6 +89,11 @@ function readLocalStorage(): boolean | null {
   }
 }
 
+// ★ 2026-07-28: DOMYŚLNIE WŁĄCZONE. Właściciel zaakceptował układ na prototypie,
+// obejrzał realne ekrany i świadomie zdecydował o włączeniu wszystkich flag
+// powłoki naraz (zgłosiłem ryzyko łamania reguły „nie włączaj wielu naraz",
+// podtrzymał). Droga odwrotu bez wdrożenia: dopisz `?<QUERY_KEY>=0` do adresu —
+// wyłącza TĘ JEDNĄ część, reszta działa dalej.
 export function isIdeaTableGuidedBarEnabled(): boolean {
   const fromQuery = readQueryOverride();
   if (fromQuery !== null) return fromQuery;
