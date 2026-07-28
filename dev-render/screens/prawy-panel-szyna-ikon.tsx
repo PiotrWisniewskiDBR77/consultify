@@ -2,43 +2,36 @@
  * P-01 (28.07, zgłoszenie Piotra) — dev-render host dla prawego panelu
  * Deck Buildera (ExecutiveModuleShell → `RightRail`).
  *
- * ★ WAŻNE — ten harness NIE POKAZUJE poprawki wdrożonej w kodzie
- * produkcyjnym. Robotnik zbadał zgłoszenie i ustalił, że jedyne miejsce,
- * w którym da się faktycznie naprawić zachowanie „prawy panel znika do
- * 4-pikselowego paska", to:
+ * STATUS: NAPRAWIONE w kodzie produkcyjnym —
+ * `src/components/shared/ExecutiveModuleShell/RightRail.tsx` — patrz plik,
+ * gałąź `collapsed` (usunięty 16px pasek, 56px szyna ikon jest teraz
+ * BEZWARUNKOWA). Zakaz edycji `ExecutiveModuleShell/**` został zdjęty przez
+ * koordynatora sesji 28.07 (robotnik menu „Plik" oddał gałąź
+ * `feat/menu-pliku-dokumentu`, nie dotyka `RightRail.tsx` — brak konfliktu).
  *
- *     src/components/shared/ExecutiveModuleShell/RightRail.tsx (linie 139-160)
+ * Ten harness pokazuje PRZED/PO:
  *
- * — czyli PLIK JEST W GRANICACH ZAKAZU tego zgłoszenia („NIE DOTYKAJ
- * .../ExecutiveModuleShell/**" — równolegle trwa tam praca nad menu „Plik").
- * Zgodnie z instrukcją zgłoszenia („jeśli poprawka wymagałaby wejścia w te
- * pliki — ZATRZYMAJ SIĘ i napisz to w raporcie") ROBOTNIK NIE EDYTOWAŁ
- * ŻADNEGO pliku produkcyjnego. Ten harness pokazuje:
+ *   Lewa kolumna „PRZED (zamrożona kopia starego zachowania)" — lokalna
+ *     kopia DAWNEJ implementacji `RightRail` (ta sprzed naprawy — 16px
+ *     pasek z jedną strzałką, bez ikon narzędzi w stanie zwiniętym).
+ *     ŚWIADOMIE zamrożona (nie jest importem z src/, bo produkcyjny plik
+ *     już nie ma tego kodu) — istnieje WYŁĄCZNIE do porównania wizualnego
+ *     z tym, jak wyglądał błąd Piotra.
  *
- *   Lewa kolumna „DZIŚ (na żywo, zepsute)"  — REALNY import `<RightRail>`
- *     z src/components/shared/ExecutiveModuleShell/RightRail.tsx, z
- *     deskryptorami narzędzi 1:1 jak w Deck Builderze
- *     (`buildDeckBuilderRightRailTools`). Stanowe (useState) — przycisk
- *     „Zwiń / Rozwiń" faktycznie przełącza stan, więc widać żywy błąd:
- *     po zwinięciu zostaje 16px pasek z jedną strzałką, ikony znikają.
+ *   Prawa kolumna „PO (na żywo, REALNY <RightRail>)" — REALNY import
+ *     `<RightRail>` z src/components/shared/ExecutiveModuleShell/RightRail.tsx
+ *     (dokładnie ten sam plik, który renderuje dziś Deck Builder/Document
+ *     Studio/Tabele/Excel/4 canvasy Idei). Stanowe — przycisk „Zwiń"
+ *     faktycznie przełącza stan i pokazuje żywy, naprawiony wynik: po
+ *     zwinięciu 56px szyna ikon zostaje, klik ikony rozwija panel.
  *
- *   Prawa kolumna „PROPOZYCJA (mock, kod NIE wdrożony)" — lokalna kopia
- *     `RightRail` z jedną zmianą: gałąź `collapsed` renderuje TĘ SAMĄ
- *     56px szynę ikon zamiast 16px paska; kliknięcie ikony w stanie
- *     zwiniętym jednocześnie otwiera panel (uchwyt rozwijania „siedzi na
- *     szynie", nie jest osobnym cienkim paskiem). Też stanowe.
- *
- * Precedens (IDEE) — WAŻNA KOREKTA do zgłoszenia: „my o tym rozmawialiśmy
- * przy Ideach" NIE oznacza, że Idee mają OSOBNY, już-poprawny wzorzec do
- * skopiowania. `IdeaCanvasMelsView.tsx` (Mind Map/Process Flow/Whiteboard/
- * Idea Table) montuje DOKŁADNIE TEN SAM `<EditorShell>`/`<RightRail>` co
- * Deck Builder (`DeckBuilderMelsView.tsx`) i Document Studio
- * (`DocumentStudioDocumentPanel.tsx`, moduleKey="document-studio") —
- * jeden współdzielony komponent, jedna wspólna choroba, wszystkie 4
- * miejsca dotknięte identycznie. Rozmowa „przy Ideach" ustaliła WYMAGANIE
- * (ikony mają być zawsze widoczne), ale nigdy nie weszła do kodu
- * `RightRail.tsx` — więc nie ma z czego „ukraść" gotowej, innej
- * implementacji; trzeba naprawić WSPÓLNY plik raz.
+ * Precedens (IDEE) — korekta ustalona podczas diagnozy: „my o tym
+ * rozmawialiśmy przy Ideach" NIE oznaczało gotowego wzorca do skopiowania.
+ * `IdeaCanvasMelsView.tsx` (Mind Map/Process Flow/Whiteboard/Idea Table)
+ * montuje DOKŁADNIE TEN SAM `<EditorShell>`/`<RightRail>` co Deck Builder,
+ * Document Studio i Tabele/Excel — jeden współdzielony komponent, jedna
+ * wspólna choroba. Naprawa tego jednego pliku naprawia wszystkie te
+ * ekrany naraz (pełna lista plik:linia w raporcie sesji P-01).
  *
  *   ?screen=prawy-panel-szyna-ikon            → light
  *   ?screen=prawy-panel-szyna-ikon&theme=dark → dark
@@ -82,9 +75,10 @@ const DemoPanelContent: React.FC<{ toolId: string }> = ({ toolId }) => (
 );
 
 /* ------------------------------------------------------------------------ *
- * PROPOZYCJA — lokalna kopia RightRail z jedną zmianą w gałęzi `collapsed`.
- * NIE jest importem z src/ — to świadomie osobna kopia w harnessie, żeby
- * NIE dotykać pliku produkcyjnego objętego zakazem tego zgłoszenia.
+ * PRZED — ZAMROŻONA kopia implementacji `RightRail` SPRZED naprawy P-01.
+ * NIE jest importem z src/ (ten kod już tam nie istnieje po naprawie) —
+ * trzymana tu WYŁĄCZNIE do porównania wizualnego z tym, jak wyglądał błąd
+ * zgłoszony przez Piotra (16px pasek, brak ikon w stanie zwiniętym).
  * ------------------------------------------------------------------------ */
 const ICON_STRIP_WIDTH = 56;
 
@@ -95,7 +89,7 @@ const DOT_TONE_CLASS: Record<string, string> = {
   info: 'bg-sky-500',
 };
 
-const ProposedToolIcon: React.FC<{
+const LegacyToolIcon: React.FC<{
   tool: RightRailToolDescriptor;
   active: boolean;
   onClick: () => void;
@@ -115,7 +109,7 @@ const ProposedToolIcon: React.FC<{
       aria-label={label}
       aria-pressed={active}
       className={`${baseClasses} ${stateClasses} disabled:opacity-40 disabled:cursor-not-allowed`}
-      data-testid={`proposed-right-rail-tool-${id}`}
+      data-testid={`legacy-right-rail-tool-${id}`}
     >
       <Icon size={16} aria-hidden="true" />
       {dotTone ? (
@@ -136,7 +130,8 @@ const ProposedToolIcon: React.FC<{
   );
 };
 
-const ProposedRightRail: React.FC<{
+/** Zamrożona kopia RightRail SPRZED P-01 — gałąź `collapsed` = 16px pasek. */
+const LegacyBrokenRightRail: React.FC<{
   tools: RightRailToolDescriptor[];
   activeToolId: string | null;
   onSelectTool: (id: string | null) => void;
@@ -148,42 +143,28 @@ const ProposedRightRail: React.FC<{
   const activeTool = activeToolId ? (tools.find((t) => t.id === activeToolId) ?? null) : null;
   const showPanel = !collapsed && Boolean(activeTool) && Boolean(panelContent);
 
-  // JEDYNA ISTOTNA ZMIANA vs oryginał: gałąź `collapsed` renderuje TĘ SAMĄ
-  // 56px szynę ikon (nie 16px pasek). Uchwyt zwijania/rozwijania jest
-  // PIERWSZYM elementem szyny — zawsze w tym samym, wygodnym polu 40x40.
-  // Kliknięcie ikony narzędzia w stanie zwiniętym wybiera narzędzie I
-  // rozwija panel jednym gestem (bez potrzeby trafiania osobno w uchwyt).
-  const iconStrip = (
-    <div
-      className="flex flex-col items-center py-2 gap-1"
-      style={{ width: ICON_STRIP_WIDTH }}
-      data-testid="proposed-right-rail-strip"
-    >
-      <button
-        type="button"
-        onClick={onToggleCollapse}
-        className="p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 mb-1"
-        title={collapsed ? 'Rozwiń prawy panel' : 'Zwiń prawy panel'}
-        aria-label={collapsed ? 'Rozwiń prawy panel' : 'Zwiń prawy panel'}
-        aria-expanded={!collapsed}
-        data-testid="proposed-right-rail-toggle"
+  if (collapsed) {
+    return (
+      <aside
+        className="flex-shrink-0 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex flex-col items-center py-2 transition-[width] duration-150"
+        style={{ width: 16 }}
+        data-testid="legacy-right-rail"
+        data-collapsed="true"
       >
-        {collapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-      </button>
-      {tools.map((tool) => (
-        <ProposedToolIcon
-          key={tool.id}
-          tool={tool}
-          active={tool.id === activeToolId}
-          onClick={() => {
-            const nextId = tool.id === activeToolId && !collapsed ? null : tool.id;
-            onSelectTool(nextId);
-            if (collapsed && nextId) onToggleCollapse();
-          }}
-        />
-      ))}
-    </div>
-  );
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          className="p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
+          title="Rozwiń prawy panel"
+          aria-label="Rozwiń prawy panel"
+          aria-expanded={false}
+          data-testid="legacy-right-rail-toggle"
+        >
+          <ChevronLeft size={14} />
+        </button>
+      </aside>
+    );
+  }
 
   const containerWidth = ICON_STRIP_WIDTH + (showPanel ? panelWidth : 0);
 
@@ -191,19 +172,43 @@ const ProposedRightRail: React.FC<{
     <aside
       className="flex-shrink-0 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex h-full transition-[width] duration-150"
       style={{ width: containerWidth }}
-      data-testid="proposed-right-rail"
-      data-collapsed={collapsed ? 'true' : 'false'}
+      data-testid="legacy-right-rail"
+      data-collapsed="false"
     >
       {showPanel ? (
         <div
           className="relative border-r border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col"
           style={{ width: panelWidth }}
-          data-testid="proposed-right-rail-panel"
+          data-testid="legacy-right-rail-panel"
         >
           {panelContent}
         </div>
       ) : null}
-      {iconStrip}
+      <div
+        className="flex flex-col items-center py-2 gap-1"
+        style={{ width: ICON_STRIP_WIDTH }}
+        data-testid="legacy-right-rail-strip"
+      >
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          className="p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 mb-1"
+          title="Zwiń prawy panel"
+          aria-label="Zwiń prawy panel"
+          aria-expanded
+          data-testid="legacy-right-rail-toggle"
+        >
+          <ChevronRight size={14} />
+        </button>
+        {tools.map((tool) => (
+          <LegacyToolIcon
+            key={tool.id}
+            tool={tool}
+            active={tool.id === activeToolId}
+            onClick={() => onSelectTool(tool.id === activeToolId ? null : tool.id)}
+          />
+        ))}
+      </div>
     </aside>
   );
 };
@@ -227,86 +232,85 @@ const ColumnFrame: React.FC<{ title: string; note: string; children: React.React
 export function PrawyPanelSzynaIkonScreen(): React.ReactElement {
   const tools = buildDemoTools();
 
-  // Kolumna DZIŚ — realny <RightRail>, stanowe.
-  const [todayCollapsed, setTodayCollapsed] = useState(false);
-  const [todayActiveId, setTodayActiveId] = useState<string | null>('blocks');
+  // Kolumna PRZED — zamrożona kopia starego (zepsutego) zachowania, stanowe.
+  const [legacyCollapsed, setLegacyCollapsed] = useState(false);
+  const [legacyActiveId, setLegacyActiveId] = useState<string | null>('blocks');
 
-  // Kolumna PROPOZYCJA — mock <ProposedRightRail>, stanowe.
-  const [proposedCollapsed, setProposedCollapsed] = useState(false);
-  const [proposedActiveId, setProposedActiveId] = useState<string | null>('blocks');
+  // Kolumna PO — REALNY <RightRail> z src/ (naprawiony), stanowe.
+  const [fixedCollapsed, setFixedCollapsed] = useState(false);
+  const [fixedActiveId, setFixedActiveId] = useState<string | null>('blocks');
 
   return (
     <div className="h-screen w-screen flex flex-col bg-c-surface" data-testid="p01-harness-root">
       <div className="px-4 py-3 border-b border-c-border-subtle">
         <h1 className="text-base font-semibold text-c-text">
-          P-01 — Prawy panel Deck Builder: szyna ikon vs pasek 16px
+          P-01 — Prawy panel Deck Builder: NAPRAWIONE (szyna ikon vs stary pasek 16px)
         </h1>
         <p className="text-xs text-c-text-muted mt-1 max-w-3xl">
-          Lewa kolumna = REALNY komponent produkcyjny (
-          <code>src/components/shared/ExecutiveModuleShell/RightRail.tsx</code>), dziś zepsuty —
-          kliknij „Zwiń", żeby zobaczyć błąd Piotra (16px pasek, brak ikon). Prawa kolumna = mock
-          proponowanej naprawy (kod NIE wdrożony — plik jest poza granicami tego zgłoszenia,
-          równolegle trwa tam praca nad menu „Plik"). Kliknij „Zwiń" po prawej, żeby zobaczyć że
-          szyna 5(4) ikon zostaje zawsze widoczna.
+          Lewa kolumna = zamrożona kopia STAREGO zachowania (kod już nie istnieje w src/, trzymany
+          tu tylko do porównania — tak wyglądał błąd Piotra). Prawa kolumna = REALNY, na żywo
+          zaimportowany <code>src/components/shared/ExecutiveModuleShell/RightRail.tsx</code> —
+          dokładnie ten plik, który dziś renderuje Deck Builder/Document Studio/Tabele/Excel/Idee.
+          Kliknij „Zwiń" po obu stronach, żeby zobaczyć różnicę.
         </p>
       </div>
       <div className="flex-1 min-h-0 flex divide-x divide-c-border-subtle">
         <ColumnFrame
-          title="DZIŚ (na żywo, zepsute)"
-          note={`collapsed=${todayCollapsed ? 'true' : 'false'} — stan zapisywany jak dziś (localStorage mels.rail.*)`}
+          title="PRZED (zamrożona kopia starego zachowania)"
+          note={`collapsed=${legacyCollapsed ? 'true' : 'false'} — tak wyglądał błąd Piotra`}
         >
           <div className="flex-1 min-w-0 flex flex-col items-start justify-start p-4 gap-2">
             <button
               type="button"
-              onClick={() => setTodayCollapsed((v) => !v)}
+              onClick={() => setLegacyCollapsed((v) => !v)}
               className="px-3 py-1.5 rounded-md border border-c-border-subtle text-xs font-medium text-c-text bg-c-surface hover:bg-c-surface-raised"
-              data-testid="today-external-toggle"
+              data-testid="legacy-external-toggle"
             >
-              {todayCollapsed ? 'Rozwiń (spoza panelu)' : 'Zwiń (spoza panelu)'}
+              {legacyCollapsed ? 'Rozwiń (spoza panelu)' : 'Zwiń (spoza panelu)'}
             </button>
             <p className="text-[11px] text-c-text-muted">
-              (przycisk pomocniczy do testu — w produkcji jedyny sposób zwinięcia to strzałka na
-              samej szynie, ta sama, która potem znika)
+              (przycisk pomocniczy do testu — w starej wersji jedyny sposób zwinięcia to strzałka
+              na samej szynie, ta sama, która potem znikała)
             </p>
           </div>
-          <RightRail
+          <LegacyBrokenRightRail
             tools={tools}
-            activeToolId={todayActiveId}
-            onSelectTool={setTodayActiveId}
+            activeToolId={legacyActiveId}
+            onSelectTool={setLegacyActiveId}
             panelContent={
-              todayActiveId ? <DemoPanelContent toolId={todayActiveId} /> : undefined
+              legacyActiveId ? <DemoPanelContent toolId={legacyActiveId} /> : undefined
             }
             panelWidth={320}
-            collapsed={todayCollapsed}
-            onToggleCollapse={() => setTodayCollapsed((v) => !v)}
-            collapseLabel={todayCollapsed ? 'Rozwiń prawy panel' : 'Zwiń prawy panel'}
+            collapsed={legacyCollapsed}
+            onToggleCollapse={() => setLegacyCollapsed((v) => !v)}
           />
         </ColumnFrame>
 
         <ColumnFrame
-          title="PROPOZYCJA (mock, kod NIE wdrożony)"
-          note={`collapsed=${proposedCollapsed ? 'true' : 'false'} — szyna ikon ZAWSZE widoczna, uchwyt na szynie`}
+          title="PO (na żywo, REALNY <RightRail> naprawiony)"
+          note={`collapsed=${fixedCollapsed ? 'true' : 'false'} — szyna ikon ZAWSZE widoczna, uchwyt na szynie`}
         >
           <div className="flex-1 min-w-0 flex flex-col items-start justify-start p-4 gap-2">
             <button
               type="button"
-              onClick={() => setProposedCollapsed((v) => !v)}
+              onClick={() => setFixedCollapsed((v) => !v)}
               className="px-3 py-1.5 rounded-md border border-c-border-subtle text-xs font-medium text-c-text bg-c-surface hover:bg-c-surface-raised"
-              data-testid="proposed-external-toggle"
+              data-testid="fixed-external-toggle"
             >
-              {proposedCollapsed ? 'Rozwiń (spoza panelu)' : 'Zwiń (spoza panelu)'}
+              {fixedCollapsed ? 'Rozwiń (spoza panelu)' : 'Zwiń (spoza panelu)'}
             </button>
           </div>
-          <ProposedRightRail
+          <RightRail
             tools={tools}
-            activeToolId={proposedActiveId}
-            onSelectTool={setProposedActiveId}
+            activeToolId={fixedActiveId}
+            onSelectTool={setFixedActiveId}
             panelContent={
-              proposedActiveId ? <DemoPanelContent toolId={proposedActiveId} /> : undefined
+              fixedActiveId ? <DemoPanelContent toolId={fixedActiveId} /> : undefined
             }
             panelWidth={320}
-            collapsed={proposedCollapsed}
-            onToggleCollapse={() => setProposedCollapsed((v) => !v)}
+            collapsed={fixedCollapsed}
+            onToggleCollapse={() => setFixedCollapsed((v) => !v)}
+            collapseLabel={fixedCollapsed ? 'Rozwiń prawy panel' : 'Zwiń prawy panel'}
           />
         </ColumnFrame>
       </div>
