@@ -56,6 +56,18 @@ interface RightRailProps {
   onToggleCollapse: () => void;
   collapseLabel?: string;
   /**
+   * Czy pasek ikon wolno schować do 16-pikselowego słupka. Domyślnie TAK
+   * (dzisiejsze zachowanie każdego modułu — Wordy / Tabele / Prezentacje /
+   * Document Studio / Deck Builder).
+   *
+   * `false` = pasek ikon jest ZAWSZE widoczny: znika chevron zwijania, a stan
+   * `collapsed` przestaje mieć skutek. Decyzja właściciela dla Idei (2026-07-28):
+   * „nie ma sensu zwijać bardziej — niech ciągle będzie i przyzwyczaja, że tu są
+   * ikony". Podawane wyłącznie przez powłokę Idei za flagą `ff_ideaPanel6Sections`,
+   * więc pozostałe moduły zachowują się bez zmian.
+   */
+  collapsible?: boolean;
+  /**
    * Optional resize handler. When supplied AND the panel is open, a
    * drag handle is rendered on the panel's left edge. Caller forwards
    * the next width to `useRailState.setRightWidth` (clamping there).
@@ -128,15 +140,20 @@ export const RightRail: React.FC<RightRailProps> = ({
   onToggleCollapse,
   collapseLabel,
   onResize,
+  collapsible = true,
   testId,
 }) => {
   const activeTool = activeToolId ? (tools.find((t) => t.id === activeToolId) ?? null) : null;
-  const showPanel = !collapsed && Boolean(activeTool) && Boolean(panelContent);
+  // Gdy zwijanie jest wyłączone, zapamiętany stan `collapsed` (localStorage
+  // `useRailState`) nie może schować paska — inaczej użytkownik, który kiedyś
+  // go zwinął, dostałby pusty słupek bez przycisku rozwijania.
+  const zwiniety = collapsible && collapsed;
+  const showPanel = !zwiniety && Boolean(activeTool) && Boolean(panelContent);
   // `aria-expanded` opisuje PRZYCISK sterujacy, nie region — na <aside> (rola
   // complementary) jest niedozwolone i axe raportuje to jako critical.
   const panelDomId = 'mels-right-rail-panel';
 
-  if (collapsed) {
+  if (zwiniety) {
     return (
       <aside
         className="flex-shrink-0 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex flex-col items-center py-2 transition-[width] duration-150"
@@ -188,18 +205,20 @@ export const RightRail: React.FC<RightRailProps> = ({
         style={{ width: ICON_STRIP_WIDTH }}
         data-testid="mels-right-rail-strip"
       >
-        <button
-          type="button"
-          onClick={onToggleCollapse}
-          className="p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 mb-1"
-          title={collapseLabel ?? 'Collapse right rail'}
-          aria-label={collapseLabel ?? 'Collapse right rail'}
-          aria-expanded
-          aria-controls={showPanel ? panelDomId : undefined}
-          data-testid="mels-right-rail-toggle"
-        >
-          <ChevronRight size={14} />
-        </button>
+        {collapsible ? (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            className="p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 mb-1"
+            title={collapseLabel ?? 'Collapse right rail'}
+            aria-label={collapseLabel ?? 'Collapse right rail'}
+            aria-expanded
+            aria-controls={showPanel ? panelDomId : undefined}
+            data-testid="mels-right-rail-toggle"
+          >
+            <ChevronRight size={14} />
+          </button>
+        ) : null}
         {tools.map((tool) => (
           <ToolIcon
             key={tool.id}
