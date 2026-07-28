@@ -28,6 +28,15 @@ import { AppProviders } from '../../src/providers/AppProviders';
 
 const IDEA_ID = 'idea-dbr77-demo-mindmap-canvas';
 
+// `?tool=mindmap|whiteboard|process_flow|table` — górny pasek jest WSPÓLNY dla
+// czterech reprezentacji, więc odbiór wymaga sprawdzenia każdej z nich. Hub
+// czyta narzędzie startowe z `data.initialTool` otwartego dokumentu
+// (`createDefaultIdeaWorkspaceState`), więc podajemy je tam.
+const TOOL = (() => {
+  const raw = new URLSearchParams(window.location.search).get('tool') || 'mindmap';
+  return ['mindmap', 'whiteboard', 'process_flow', 'table'].includes(raw) ? raw : 'mindmap';
+})();
+
 // Rząd pilli huba odtwarza się z `sessionStorage` (`readStoredMyWorkDocuments`).
 // Zasiewamy DWIE otwarte idee — dokładnie jak na zrzucie właściciela („Proces
 // ofertowania" + aktywna) — żeby było widać kropki statusu i przewijanie kart.
@@ -47,6 +56,7 @@ try {
           type: 'idea',
           name: 'Podnieść marżę na projektach wdrożeniowych',
           status: 'in_progress',
+          data: { initialTool: TOOL },
         },
       ],
       activeDocumentId: IDEA_ID,
