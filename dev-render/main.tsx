@@ -49,9 +49,7 @@ const DocumentStudioStreamingHonestyN3Screen = React.lazy(
 const DocumentStudioMenuPlikuScreen = React.lazy(
   () => import('./screens/document-studio-menu-pliku')
 );
-const MenuCanonSidebarCheckScreen = React.lazy(
-  () => import('./screens/menu-canon-sidebar-check')
-);
+const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-canon-sidebar-check'));
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -70,6 +68,7 @@ const AdminSsoSelfServiceCardScreen = React.lazy(
 const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canvas'));
 const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
 const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
+const MenuDlugiDomkniecieScreen = React.lazy(() => import('./screens/menu-dlugi-domkniecie'));
 const AgentWarsztatScreen = React.lazy(() => import('./screens/agent-warsztat'));
 const VaultSejfWnetrzeScreen = React.lazy(() => import('./screens/vault-sejf-wnetrze'));
 const VaultFolderBlockProofScreen = React.lazy(() => import('./screens/vault-folder-block-proof'));
@@ -421,6 +420,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'AGT-010 — powłoka Run agent (Moje procesy | Szablony) PRZED AgentPlanWorkspace, tabela planning/executing/awaiting_approval/completed/failed',
     render: () => <AgentHubScreen />,
+  },
+  'menu-dlugi-domkniecie': {
+    label:
+      'AGT-015 §6 D1-D4 — ikona CTA/„Nowy agent"/FolderCreateDialog, montowane z REALNYM HubBarSlotsProvider (agent-hub bez providera nie pokazuje Menu 2). &empty=1 → agent-hub empty-state',
+    render: () => <MenuDlugiDomkniecieScreen />,
   },
   'agent-warsztat': {
     label:
