@@ -106,6 +106,9 @@ const WordIntakeUseLlmDefaultScreen = React.lazy(
 const DocumentStudioM1SharePrimaryScreen = React.lazy(
   () => import('./screens/document-studio-m1-share-primary')
 );
+const DocumentStudioNowyDokumentMartweprzyciskiScreen = React.lazy(
+  () => import('./screens/document-studio-nowy-dokument-martwe-przyciski')
+);
 const EvFootballFieldScreen = React.lazy(() => import('./screens/ev-football-field'));
 const ExecutionChangeSignalsScreen = React.lazy(() => import('./screens/execution-change-signals'));
 const ExecutionExportPrezentacjaScreen = React.lazy(
@@ -438,6 +441,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'document-studio-m1-share-primary': {
     label: 'M18 #2 — Document Studio M1: "Udostępnij" primary, Export DOCX obok (kanon Formuły)',
     render: () => <DocumentStudioM1SharePrimaryScreen />,
+  },
+  'document-studio-nowy-dokument-martwe-przyciski': {
+    label:
+      'P-10/P-11/P-12 (2026-07-28) — Nowy dokument: edycja tytułu, Cofnij/Ponów, przyciski paska',
+    render: () => <DocumentStudioNowyDokumentMartweprzyciskiScreen />,
   },
   'document-studio-blocks-i18n': {
     label: 'M18 #3 — Document Studio bloki: puste stany i18n (Table/Kpi/Chart)',
