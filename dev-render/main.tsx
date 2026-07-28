@@ -221,6 +221,13 @@ const VaultSafesTableScreen = React.lazy(() => import('./screens/vault-safes-tab
 // Uwaga historyczna VLT-003 („import musi byc ostatni, bo stuby sie nakladaja")
 // dotyczyla tamtego statycznego swiata i przy leniwym ladowaniu nie obowiazuje.
 const ExceleReopenVerifyScreen = React.lazy(() => import('./screens/excele-reopen-verify'));
+const ExceleJedenWidokRecentScreen = React.lazy(
+  () => import('./screens/excele-jeden-widok-recent')
+);
+const ExceleJedenWidokMaterialyScreen = React.lazy(
+  () => import('./screens/excele-jeden-widok-materialy')
+);
+const ExceleJedenWidokPustyScreen = React.lazy(() => import('./screens/excele-jeden-widok-pusty'));
 const OdbiorScreen = React.lazy(() => import('./screens/odbior'));
 const InitiativesPortfolioAnalysisScreen = React.lazy(
   () => import('./screens/initiatives-portfolio-analysis')
@@ -354,6 +361,21 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DOKUMENTY — Excel: naprawa "nie mam czego otworzyć" — reopen wiszącego artifactId → honest error zamiast pustego fake-podglądu (2026-07-23)',
     render: () => <ExceleReopenVerifyScreen />,
+  },
+  'excele-jeden-widok-recent': {
+    label:
+      'EXCELE — "jeden Excel" ścieżka 3: Recent/Saved tab → otwarcie → edytowalna siatka (2026-07-28)',
+    render: () => <ExceleJedenWidokRecentScreen />,
+  },
+  'excele-jeden-widok-materialy': {
+    label:
+      'EXCELE — "jeden Excel" ścieżka 4: Materiały → Arkusze → otwarcie z listy → edytowalna siatka, nie pobranie/Table Studio (2026-07-28)',
+    render: () => <ExceleJedenWidokMaterialyScreen />,
+  },
+  'excele-jeden-widok-pusty': {
+    label:
+      'EXCELE — "jeden Excel" ścieżka 2: Start new → Czysto → pusta ale edytowalna siatka (12x30), nie zastępczy obrazek (2026-07-28)',
+    render: () => <ExceleJedenWidokPustyScreen />,
   },
   // (deck-artifact / sheet-artifact są zarejestrowane niżej, w bloku DOKUMENTY
   // razem z document-artifact — scalenie fix/crimson-deck-sheet dołożyło tu ich
