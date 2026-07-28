@@ -3,7 +3,11 @@
  */
 
 export { getDocumentEditorExtensions } from './documentEditorExtensions';
-export { DocumentTipTapEditor, type DocumentTipTapEditorProps } from './DocumentTipTapEditor';
+export {
+  type DocumentAutosaveStatus,
+  DocumentTipTapEditor,
+  type DocumentTipTapEditorProps,
+} from './DocumentTipTapEditor';
 export {
   CHART_NODE_NAME,
   DOC_IMAGE_NODE_NAME,
