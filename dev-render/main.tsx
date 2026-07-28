@@ -53,38 +53,64 @@ const MenuCanonSidebarCheckScreen = React.lazy(
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
 import './slowLocaleFetch';
+
 // Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
 import i18n from '../src/i18n';
 import { useAppStore } from '../src/store/useAppStore';
 const AccentSoftTokenFixScreen = React.lazy(() => import('./screens/accent-soft-token-fix'));
-const AdminCommandCenterPanelScreen = React.lazy(() => import('./screens/admin-command-center-panel'));
-const AdminSsoSelfServiceCardScreen = React.lazy(() => import('./screens/admin-sso-self-service-card'));
+const AdminCommandCenterPanelScreen = React.lazy(
+  () => import('./screens/admin-command-center-panel')
+);
+const AdminSsoSelfServiceCardScreen = React.lazy(
+  () => import('./screens/admin-sso-self-service-card')
+);
 const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canvas'));
 const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
 const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
 const AgentWarsztatScreen = React.lazy(() => import('./screens/agent-warsztat'));
 const VaultSejfWnetrzeScreen = React.lazy(() => import('./screens/vault-sejf-wnetrze'));
-const AssessmentInitiativesPanelScreen = React.lazy(() => import('./screens/assessment-initiatives-panel'));
-const AssessmentInitiativesTableScreen = React.lazy(() => import('./screens/assessment-initiatives-table'));
+const AssessmentInitiativesPanelScreen = React.lazy(
+  () => import('./screens/assessment-initiatives-panel')
+);
+const AssessmentInitiativesTableScreen = React.lazy(
+  () => import('./screens/assessment-initiatives-table')
+);
 const AssessmentListScreen = React.lazy(() => import('./screens/assessment-list'));
-const StandardModuleBarChildrenScreen = React.lazy(() => import('./screens/standard-module-bar-children'));
-const AssessmentMenu3StatusChipsScreen = React.lazy(() => import('./screens/assessment-menu3-status-chips'));
+const StandardModuleBarChildrenScreen = React.lazy(
+  () => import('./screens/standard-module-bar-children')
+);
+const AssessmentMenu3StatusChipsScreen = React.lazy(
+  () => import('./screens/assessment-menu3-status-chips')
+);
 const AssessmentReportsPanelScreen = React.lazy(() => import('./screens/assessment-reports-panel'));
 const AssessmentReportsTableScreen = React.lazy(() => import('./screens/assessment-reports-table'));
 const CanvasKebabRestructureScreen = React.lazy(() => import('./screens/canvas-kebab-restructure'));
 const CanvasNewDocScreen = React.lazy(() => import('./screens/canvas-new-doc'));
-const CanvasToolbarMdHistoryScreen = React.lazy(() => import('./screens/canvas-toolbar-md-history'));
+const CanvasToolbarMdHistoryScreen = React.lazy(
+  () => import('./screens/canvas-toolbar-md-history')
+);
 const CapabilityGateDemoScreen = React.lazy(() => import('./screens/capability-gate-demo'));
 const ChatSplitTeresaRightScreen = React.lazy(() => import('./screens/chat-split-teresa-right'));
 const CrimsonMyWorkWave2Screen = React.lazy(() => import('./screens/crimson-mywork-wave2'));
-const CrimsonWaveChromeScreen = React.lazy(() => import('./screens/crimson-wave-chrome-2026-07-26'));
+const CrimsonWaveChromeScreen = React.lazy(
+  () => import('./screens/crimson-wave-chrome-2026-07-26')
+);
 const DecisionRecordScreen = React.lazy(() => import('./screens/decision-record'));
-const DocumentStudioBlocksI18nScreen = React.lazy(() => import('./screens/document-studio-blocks-i18n'));
+const DocumentStudioBlocksI18nScreen = React.lazy(
+  () => import('./screens/document-studio-blocks-i18n')
+);
 const ExceleEngineRevealScreen = React.lazy(() => import('./screens/excele-engine-reveal'));
-const WordIntakeUseLlmDefaultScreen = React.lazy(() => import('./screens/word-intake-uselm-default'));
-const DocumentStudioM1SharePrimaryScreen = React.lazy(() => import('./screens/document-studio-m1-share-primary'));
+const WordIntakeUseLlmDefaultScreen = React.lazy(
+  () => import('./screens/word-intake-uselm-default')
+);
+const DocumentStudioM1SharePrimaryScreen = React.lazy(
+  () => import('./screens/document-studio-m1-share-primary')
+);
 const EvFootballFieldScreen = React.lazy(() => import('./screens/ev-football-field'));
 const ExecutionChangeSignalsScreen = React.lazy(() => import('./screens/execution-change-signals'));
+const ExecutionExportPrezentacjaScreen = React.lazy(
+  () => import('./screens/execution-export-prezentacja')
+);
 const FinanceValuePanelsScreen = React.lazy(() => import('./screens/finance-value-panels'));
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
 const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
@@ -110,17 +136,23 @@ const NotatnikOsieroconeGrafScreen = React.lazy(() => import('./screens/notatnik
 const PartnerSettlementsViewScreen = React.lazy(() => import('./screens/partner-settlements-view'));
 const PromptRegistryTabScreen = React.lazy(() => import('./screens/prompt-registry-tab'));
 const PublicBookingWidgetScreen = React.lazy(() => import('./screens/public-booking-widget'));
-const ReportBuilderBlockTypesScreen = React.lazy(() => import('./screens/report-builder-block-types'));
+const ReportBuilderBlockTypesScreen = React.lazy(
+  () => import('./screens/report-builder-block-types')
+);
 const ReportBuilderTemplatesScreen = React.lazy(() => import('./screens/report-builder-templates'));
 const ResultsThreePairsScreen = React.lazy(() => import('./screens/results-three-pairs'));
 const RoseDangerTokenParityScreen = React.lazy(() => import('./screens/rose-danger-token-parity'));
-const SettingsCrimsonNeutralizedScreen = React.lazy(() => import('./screens/settings-crimson-neutralized'));
+const SettingsCrimsonNeutralizedScreen = React.lazy(
+  () => import('./screens/settings-crimson-neutralized')
+);
 const StandardKanbanCardScreen = React.lazy(() => import('./screens/standard-kanban-card'));
 const TemplateBuilderDeckScreen = React.lazy(() => import('./screens/template-builder-deck'));
 const TemplateBuilderDocScreen = React.lazy(() => import('./screens/template-builder-doc'));
 const TemplateBuilderTableScreen = React.lazy(() => import('./screens/template-builder-table'));
 const TemplateCreateWizardScreen = React.lazy(() => import('./screens/template-create-wizard'));
-const TemplateLibraryNewEntryScreen = React.lazy(() => import('./screens/template-library-new-entry'));
+const TemplateLibraryNewEntryScreen = React.lazy(
+  () => import('./screens/template-library-new-entry')
+);
 const UnifiedCreateLauncherScreen = React.lazy(() => import('./screens/unified-create-launcher'));
 const Wave3CreatorsCrimsonScreen = React.lazy(() => import('./screens/wave3-creators-crimson'));
 const Wave4ChoicesCrimsonScreen = React.lazy(() => import('./screens/wave4-choices-crimson'));
@@ -135,9 +167,13 @@ const KartaNotificationScreen = React.lazy(() => import('./screens/karta-notific
 const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
 const PreviewZakladkiScreen = React.lazy(() => import('./screens/preview-4-zakladki'));
 const IdeaTableToolKebabScreen = React.lazy(() => import('./screens/idea-table-tool-kebab'));
-const IdeaTableToolEmptyFilterScreen = React.lazy(() => import('./screens/idea-table-tool-empty-filter'));
+const IdeaTableToolEmptyFilterScreen = React.lazy(
+  () => import('./screens/idea-table-tool-empty-filter')
+);
 const IdeaTableToolPasteScreen = React.lazy(() => import('./screens/idea-table-tool-paste'));
-const IdeaTableToolSortFilterScreen = React.lazy(() => import('./screens/idea-table-tool-sortfilter'));
+const IdeaTableToolSortFilterScreen = React.lazy(
+  () => import('./screens/idea-table-tool-sortfilter')
+);
 const IdeaTableToolGroupingScreen = React.lazy(() => import('./screens/idea-table-tool-grouping'));
 const IdeaTableScreen = React.lazy(() => import('./screens/idea-table'));
 const MindmapCanvasScreen = React.lazy(() => import('./screens/mindmap-canvas'));
@@ -259,11 +295,13 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <GenWordContentHintsScreen />,
   },
   'deck-quality-badge': {
-    label: 'DOKUMENTY — Deck W4: badge jakości (critic/M19) na kroku wyniku kreatora (&clean=1 dla 0 uwag)',
+    label:
+      'DOKUMENTY — Deck W4: badge jakości (critic/M19) na kroku wyniku kreatora (&clean=1 dla 0 uwag)',
     render: () => <DeckQualityBadgeScreen />,
   },
   'word-quality-badge': {
-    label: 'DOKUMENTY — Word W4: badge fabrykacji w panelu QA Document Studio (&clean=1 dla zweryfikowane)',
+    label:
+      'DOKUMENTY — Word W4: badge fabrykacji w panelu QA Document Studio (&clean=1 dla zweryfikowane)',
     render: () => <WordQualityBadgeScreen />,
   },
   'word-intake-uselm-default': {
@@ -283,13 +321,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   // razem z document-artifact — scalenie fix/crimson-deck-sheet dołożyło tu ich
   // duplikat, zdjęty przy rozwiązywaniu konfliktu.)
   'idea-table-tool-kebab': {
-    label:
-      'IDEE Table — K1 kebab wiersza (PlatformGridView, prawy-klik) — audyt-idee 2026-07-22',
+    label: 'IDEE Table — K1 kebab wiersza (PlatformGridView, prawy-klik) — audyt-idee 2026-07-22',
     render: () => <IdeaTableToolKebabScreen />,
   },
   'idea-table-tool-paste': {
-    label:
-      'IDEE Table — Ctrl/Cmd+V wklejanie (PlatformGridView, Z16b domknięcie) — 2026-07-22',
+    label: 'IDEE Table — Ctrl/Cmd+V wklejanie (PlatformGridView, Z16b domknięcie) — 2026-07-22',
     render: () => <IdeaTableToolPasteScreen />,
   },
   'idea-table-tool-sortfilter': {
@@ -340,7 +376,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <PreviewZakladkiScreen />,
   },
   'accent-soft-token-fix': {
-    label: 'J23 — bg-c-accent-soft opacity bug fix (cTok): odznaka REKOMENDACJA tint vs pełny crimson',
+    label:
+      'J23 — bg-c-accent-soft opacity bug fix (cTok): odznaka REKOMENDACJA tint vs pełny crimson',
     render: () => <AccentSoftTokenFixScreen />,
   },
   'admin-command-center-panel': {
@@ -447,12 +484,18 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'M14-wire — ExecutionChangeSignalsPanel (capacity signals · ADKAR readiness · champions), flaga changeSignals default OFF',
     render: () => <ExecutionChangeSignalsScreen />,
   },
+  'execution-export-prezentacja': {
+    label:
+      'Naprawa 2026-07-27 — Execution „Export as presentation" → PrezentacjeView konsumuje sourceType/sourceName/content (2 fazy: klik → auto-start Z AI)',
+    render: () => <ExecutionExportPrezentacjaScreen />,
+  },
   'assessment-list': {
     label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
     render: () => <AssessmentListScreen />,
   },
   'standard-module-bar-children': {
-    label: 'StandardModuleBar + children (rozszerzenie 2026-07-26, program ujednolicenia Menu 9 hubów)',
+    label:
+      'StandardModuleBar + children (rozszerzenie 2026-07-26, program ujednolicenia Menu 9 hubów)',
     render: () => <StandardModuleBarChildrenScreen />,
   },
   'assessment-menu3-status-chips': {
@@ -518,7 +561,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <CrimsonMyWorkWave2Screen />,
   },
   'crimson-wave-chrome-2026-07-26': {
-    label: 'Crimson purge 2026-07-26 (audyt TRIADA) — 6 plików shared/ModuleHub + MyWorkHub + InboxContent (PRZED/PO)',
+    label:
+      'Crimson purge 2026-07-26 (audyt TRIADA) — 6 plików shared/ModuleHub + MyWorkHub + InboxContent (PRZED/PO)',
     render: () => <CrimsonWaveChromeScreen />,
   },
   'decision-record': {
@@ -535,8 +579,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <MindmapI18nSmokeScreen />,
   },
   'navdeclutter-sidebar': {
-    label:
-      'ODB O5 — REALNY <Sidebar> (navDeclutterFlag, default OFF); &ff_navDeclutter=1 dla ON',
+    label: 'ODB O5 — REALNY <Sidebar> (navDeclutterFlag, default OFF); &ff_navDeclutter=1 dla ON',
     render: () => <NavDeclutterSidebarScreen />,
   },
   'melscanvas-workspace': {
@@ -722,7 +765,9 @@ createRoot(mount).render(
   <React.StrictMode>
     <DebugBoundary>
       {/* Suspense: ekrany są leniwe, więc render czeka na pobranie modułu. */}
-      <React.Suspense fallback={<div style={{ padding: 24, color: '#64748b' }}>Ładowanie ekranu…</div>}>
+      <React.Suspense
+        fallback={<div style={{ padding: 24, color: '#64748b' }}>Ładowanie ekranu…</div>}
+      >
         {entry ? entry.render() : <Fallback />}
       </React.Suspense>
       {/* Panel uwag właściciela — obecny na KAŻDYM ekranie odbioru (zapis: /__uwagi). */}

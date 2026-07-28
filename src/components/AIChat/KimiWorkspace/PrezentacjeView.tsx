@@ -161,11 +161,36 @@ export const PrezentacjeView: React.FC = () => {
   // reasoning as `!templatePrompt` right below.
   const hasPendingKickoff = Boolean(chatKickoffMessage && chatKickoffMessage.trim());
 
+
+  // Eksport raportu Execution → prezentacja (2026-07-27): „Export as presentation"
+  // (ReportCompactPanel.tsx / ReportDocumentView.tsx) nawiguje tu z
+  // `?sourceType=execution_report&sourceName=…&content=…` (markdown raportu).
+  // Te parametry nie były dotąd nigdzie czytane — ekran otwierał goły hub,
+  // a treść raportu ginęła. Konsumpcja = ścieżka „Z AI" z prefil-em treści
+  // (ten sam mechanizm co `templatePrompt` niżej).
+  const sourceTypeParam = searchParams.get('sourceType');
+  const sourceNameParam = searchParams.get('sourceName');
+  const sourceContentParam = searchParams.get('content');
+
+  const sourcePrompt = useMemo((): string | null => {
+    if (sourceTypeParam !== 'execution_report' || !sourceContentParam?.trim()) return null;
+    const title = sourceNameParam?.trim();
+    return [
+      'Create a slide deck presentation from the following execution report.',
+      ...(title ? [`Report title: ${title}`] : []),
+      'Map the report sections to slides, preserve key metrics and RAG statuses, and write the slides in the same language as the report content.',
+      '',
+      '--- REPORT CONTENT (markdown) ---',
+      sourceContentParam.trim(),
+    ].join('\n');
+  }, [sourceTypeParam, sourceNameParam, sourceContentParam]);
+
   const showHome =
     !artifactId &&
     !templateArtifactId &&
     !templatePrompt &&
     !hasPendingKickoff &&
+    !sourcePrompt &&
     viewParam !== 'new' &&
     !pipeline.currentRun &&
     !pipeline.isGenerating;
@@ -223,6 +248,12 @@ export const PrezentacjeView: React.FC = () => {
       artifactId ||
       templateArtifactId ||
       templatePrompt ||
+      // Scalenie 2026-07-28 (tor MVP): eksport raportu Execution ma własny
+      // auto-start niżej. Bez tego wykluczenia oba efekty mogłyby wystartować
+      // pipeline w tym samym renderze (`isGenerating` ustawia się dopiero
+      // asynchronicznie) — ta sama logika, dla której wykluczony jest
+      // `templatePrompt`.
+      sourcePrompt ||
       pipeline.currentRun ||
       pipeline.isGenerating
     )
@@ -236,10 +267,23 @@ export const PrezentacjeView: React.FC = () => {
     artifactId,
     templateArtifactId,
     templatePrompt,
+    sourcePrompt,
     pipeline.currentRun,
     pipeline.isGenerating,
     clearChatKickoffMessage,
   ]);
+
+
+  // Auto-trigger z eksportu raportu Execution (`?sourceType=execution_report`).
+  // Ref guard: fire-once, jak `promptTriggered` wyżej.
+  const sourceTriggered = useRef(false);
+  useEffect(() => {
+    if (!sourcePrompt || sourceTriggered.current || pipeline.currentRun || pipeline.isGenerating)
+      return;
+    sourceTriggered.current = true;
+    autoTriggered.current = true;
+    void startRef.current(sourcePrompt);
+  }, [sourcePrompt, pipeline.currentRun, pipeline.isGenerating]);
 
   // R11 deck slice (2026-07-26) — "Użyj wzorca" z Biblioteki dla PREZENTACJI.
   // ★ Był tu najważniejszy bug funkcjonalny programu Materiały: ten efekt
@@ -328,6 +372,7 @@ export const PrezentacjeView: React.FC = () => {
     if (
       autoTriggered.current ||
       templatePrompt ||
+      sourcePrompt ||
       templateArtifactId ||
       artifactId ||
       viewParam === 'new' ||
@@ -350,6 +395,7 @@ export const PrezentacjeView: React.FC = () => {
     artifactId,
     templateArtifactId,
     templatePrompt,
+    sourcePrompt,
     viewParam,
     pipeline.currentRun,
     pipeline.isGenerating,
@@ -722,6 +768,7 @@ export const PrezentacjeView: React.FC = () => {
     !artifactId &&
     !templateArtifactId &&
     !templatePrompt &&
+    !sourcePrompt &&
     !pipeline.currentRun &&
     !pipeline.isGenerating &&
     !reopenPreview;
