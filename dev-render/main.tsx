@@ -49,9 +49,10 @@ const DocumentStudioStreamingHonestyN3Screen = React.lazy(
 const DocumentStudioMenuPlikuScreen = React.lazy(
   () => import('./screens/document-studio-menu-pliku')
 );
-const MenuCanonSidebarCheckScreen = React.lazy(
-  () => import('./screens/menu-canon-sidebar-check')
+const DocumentStudioSaveAsTemplateScreen = React.lazy(
+  () => import('./screens/document-studio-save-as-template')
 );
+const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-canon-sidebar-check'));
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -70,8 +71,10 @@ const AdminSsoSelfServiceCardScreen = React.lazy(
 const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canvas'));
 const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
 const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
+const TabeleFala2PrzedPoScreen = React.lazy(() => import('./screens/tabele-fala2-przed-po'));
 const AgentWarsztatScreen = React.lazy(() => import('./screens/agent-warsztat'));
 const VaultSejfWnetrzeScreen = React.lazy(() => import('./screens/vault-sejf-wnetrze'));
+const VaultFolderBlockProofScreen = React.lazy(() => import('./screens/vault-folder-block-proof'));
 const AssessmentInitiativesPanelScreen = React.lazy(
   () => import('./screens/assessment-initiatives-panel')
 );
@@ -272,6 +275,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'DOCUMENT STUDIO — N19/N20 (2026-07-28): menu „Plik" (Nowy·Otwórz·Zapisz·Zapisz jako) + afordancje wyjścia (Start over / breadcrumb).',
     render: () => <DocumentStudioMenuPlikuScreen />,
   },
+  'document-studio-save-as-template': {
+    label:
+      'DOCUMENT STUDIO — FALA 2 (2026-07-28): „Zrób z tego wzorzec" — Plik→Zrób z tego wzorzec→3-5 pytań doprecyzowujących→createTemplateFromArtifact.',
+    render: () => <DocumentStudioSaveAsTemplateScreen />,
+  },
   'audyty-drd-report': {
     label:
       'AUDYTY — zakładka „Raporty DRD" (ff_drd_report) + DRDAuditReportView. ?variant=list|report',
@@ -421,6 +429,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'AGT-010 — powłoka Run agent (Moje procesy | Szablony) PRZED AgentPlanWorkspace, tabela planning/executing/awaiting_approval/completed/failed',
     render: () => <AgentHubScreen />,
   },
+  'tabele-fala2-przed-po': {
+    label:
+      'FALA TABEL 2026-07-28 — PRZED/PO: priorytet kropka+tekst (N-24/N-29), Delete na końcu stopki podglądu (PILNE-10), kontrola regresji Approve/Reject',
+    render: () => <TabeleFala2PrzedPoScreen />,
+  },
   'agent-warsztat': {
     label:
       'WARSZTAT AGENTA — 3 kolumny (sterowanie · schemat blokowy · paleta klocków); &case=planning|executing|approval',
@@ -430,6 +443,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'VAULT — wnętrze sejfu po redesignie (Menu 1/2/3 + StandardTable + preview + panel „Dodaj dokument"). ?pusty=1 → stan pusty',
     render: () => <VaultSejfWnetrzeScreen />,
+  },
+  'vault-folder-block-proof': {
+    label:
+      'VLT-FOLDERS — klocek "Vault-kontekst" (AgentPlanCanvas): select Poziom + DRUGI select Folder wewnątrz sejfu',
+    render: () => <VaultFolderBlockProofScreen />,
   },
   'capability-gate-demo': {
     label: 'Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)',

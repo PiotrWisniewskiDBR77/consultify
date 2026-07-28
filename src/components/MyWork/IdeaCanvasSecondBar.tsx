@@ -13,13 +13,14 @@
  * CRIMSON-SAFE: neutral ghost tokens + `c-focus` focus ring; no crimson.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef } from 'react';
 
 import {
   CANVAS_OBJECT_EDIT_BAR_SLOT_ID,
   isCanvasObjectEditBarEnabled,
 } from '@/utils/canvasObjectEditBarFlag';
 
+import { useObjectEditBarSlotHasContent } from './canvas/objectEditBarDock';
 import type { IdeaMenu3Action } from './ideaCanvasMelsChips';
 
 const Btn: React.FC<{ action: IdeaMenu3Action }> = ({ action }) => {
@@ -40,34 +41,6 @@ const Btn: React.FC<{ action: IdeaMenu3Action }> = ({ action }) => {
   );
 };
 
-/**
- * Czy slot paska edycji ma treść (czyli narzędzie coś do niego wportalowało).
- * `MutationObserver` na SAMYM slocie — reaguje na montaż/odmontowanie paska
- * przez `createPortal`, którego React nie zgłasza rodzicowi w żaden inny sposób.
- */
-function useSlotHasContent(
-  ref: React.RefObject<HTMLElement | null>,
-  enabled: boolean
-): boolean {
-  const [hasContent, setHasContent] = useState(false);
-
-  useEffect(() => {
-    if (!enabled) {
-      setHasContent(false);
-      return;
-    }
-    const el = ref.current;
-    if (!el || typeof MutationObserver === 'undefined') return;
-    const check = () => setHasContent(el.childElementCount > 0);
-    check();
-    const observer = new MutationObserver(check);
-    observer.observe(el, { childList: true });
-    return () => observer.disconnect();
-  }, [ref, enabled]);
-
-  return hasContent;
-}
-
 export interface IdeaCanvasSecondBarProps {
   left: IdeaMenu3Action[];
   right: IdeaMenu3Action[];
@@ -86,7 +59,7 @@ export const IdeaCanvasSecondBar: React.FC<IdeaCanvasSecondBarProps> = ({
   // własne klastry: pasek edycji PODMIENIA zawartość linii, nie dokłada rzędu.
   const editBarEnabled = isCanvasObjectEditBarEnabled();
   const slotRef = useRef<HTMLDivElement>(null);
-  const editing = useSlotHasContent(slotRef, editBarEnabled);
+  const editing = useObjectEditBarSlotHasContent(slotRef, editBarEnabled);
 
   // Przy fladze ON listwa musi istnieć nawet z pustymi klastrami — inaczej nie
   // byłoby slotu, do którego narzędzie miałoby wportalować pasek.

@@ -222,37 +222,61 @@ export const StandardTable: React.FC<StandardTableProps> = ({
       if (menu.timeActions?.length) {
         sections.push({ id: 'time', kind: 'manage', actions: menu.timeActions.map(toRowAction) });
       }
-      // Blok 4 — ZAWSZE obecny; brak handlera = disabled z notą, nigdy ukryty.
+      /**
+       * Blok 4 — uniwersalny (Otwórz podgląd · Edytuj · Archiwizuj).
+       *
+       * Do 2026-07-28 blok był „ZAWSZE obecny; brak handlera = disabled z notą,
+       * nigdy ukryty" i to właśnie ta reguła produkowała kebaby-atrapy, na które
+       * Piotr zwrócił uwagę dwa razy — P-17 (Sejf: 3 z 4 pozycji martwe) i P-18
+       * (Run agent: to samo). Moduł, który nie ma czym obsłużyć archiwizacji,
+       * dostawał ją wyrenderowaną z dopiskiem „Coming soon (backend)".
+       *
+       * Teraz rozstrzyga POWÓD braku:
+       *   - moduł podał własną notę (`archiveNote`: „Archive first",
+       *     „AI-generated — read-only") → pozycja ZOSTAJE, wyłączona z powodem.
+       *     To reguła produktu i warto ją pokazać;
+       *   - brak handlera i brak noty → funkcji po prostu nie ma, więc menu
+       *     jej nie obiecuje. Pozycja się nie renderuje.
+       *
+       * `Otwórz podgląd` jest wyjątkiem: to nie jest funkcja do zbudowania,
+       * tylko sposób otwarcia wiersza — zostaje nawet bez handlera, żeby kebab
+       * nigdy nie stracił wejścia do encji.
+       */
       const u = menu.universalHandlers ?? {};
+      const universalne: StandardRowMenuAction[] = [
+        {
+          id: 'open-preview',
+          label: t('common.openPreview', isPolish ? 'Otwórz podgląd' : 'Open preview'),
+          icon: Eye,
+          onClick: u.preview ?? NOOP,
+          disabled: !u.preview,
+          note: u.preview ? undefined : (u.previewNote ?? comingSoon),
+        },
+      ];
+      if (u.edit || u.editNote) {
+        universalne.push({
+          id: 'edit',
+          label: t('common.edit', isPolish ? 'Edytuj' : 'Edit'),
+          icon: Pencil,
+          onClick: u.edit ?? NOOP,
+          disabled: !u.edit,
+          note: u.edit ? undefined : u.editNote,
+        });
+      }
+      if (u.archive || u.archiveNote) {
+        universalne.push({
+          id: 'archive',
+          label: t('common.archive', isPolish ? 'Archiwizuj' : 'Archive'),
+          icon: Archive,
+          onClick: u.archive ?? NOOP,
+          disabled: !u.archive,
+          note: u.archive ? undefined : u.archiveNote,
+        });
+      }
       sections.push({
         id: 'universal',
         kind: 'context',
-        actions: [
-          {
-            id: 'open-preview',
-            label: t('common.openPreview', isPolish ? 'Otwórz podgląd' : 'Open preview'),
-            icon: Eye,
-            onClick: u.preview ?? NOOP,
-            disabled: !u.preview,
-            description: u.preview ? undefined : (u.previewNote ?? comingSoon),
-          },
-          {
-            id: 'edit',
-            label: t('common.edit', isPolish ? 'Edytuj' : 'Edit'),
-            icon: Pencil,
-            onClick: u.edit ?? NOOP,
-            disabled: !u.edit,
-            description: u.edit ? undefined : (u.editNote ?? comingSoon),
-          },
-          {
-            id: 'archive',
-            label: t('common.archive', isPolish ? 'Archiwizuj' : 'Archive'),
-            icon: Archive,
-            onClick: u.archive ?? NOOP,
-            disabled: !u.archive,
-            description: u.archive ? undefined : (u.archiveNote ?? comingSoon),
-          },
-        ],
+        actions: universalne.map(toRowAction),
       });
       // Blok CONVERT TO — opcjonalny (ANEKS #3a), MIĘDZY universal i danger.
       // Brak deklaracji ⇒ push pominięty, sekcja nie istnieje (addytywne).

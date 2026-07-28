@@ -369,6 +369,16 @@ export interface FormattingSchema {
     includeStatus?: boolean;
     includeConfidentiality?: boolean;
   };
+  /**
+   * Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). Mirrors the Deck
+   * Template Architect's `presentation_templates.layout_policy_json
+   * .colorTemplateId`: a `CURATED_COLOR_SETS[].id` or `'brand_kit'`, or
+   * `undefined`/`null` when this Word template has no saved color pattern
+   * (Document Studio had no color-pattern concept at all before this —
+   * only `fonts`/heading styles above). Independent of `sectionBlueprint`
+   * — a template can carry colors, structure, or both.
+   */
+  colorTemplateId?: string | null;
 }
 
 /**

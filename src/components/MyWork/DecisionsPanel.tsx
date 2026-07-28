@@ -48,6 +48,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
+import { PriorityCell } from '@/components/standard/PriorityCell';
 import type { GenericListItem, ListColumn, ListSection } from '@/components/shared/ViewLayouts';
 import { ClickUpListView, NotionListView } from '@/components/shared/ViewLayouts';
 import { LoadingState } from '@/components/ui/primitives';
@@ -533,51 +534,25 @@ const DelegateModal: React.FC<{
 /**
  * Priority Badge Component
  */
+/**
+ * N-29 (przegląd 128 zrzutów, 2026-07-27): kolumna PRIORITY pokazywała
+ * wypełnione pigułki — `CRITICAL` był BIAŁYM tekstem na pełnym czerwonym tle
+ * z `animate-pulse`, `MEDIUM` amber na amber. Kanon A4 wymaga kropki
+ * + tonowanego tekstu; tak robi tabela Tasks, jedyny ekran, o którym Piotr
+ * powiedział „na moje ok". Wspólny `PriorityCell` niesie teraz tę samą skalę.
+ */
 const PriorityBadge: React.FC<{ priority?: string }> = ({ priority }) => {
   const { t } = useTranslation();
 
-  const config = {
-    CRITICAL: {
-      bg: 'bg-danger-500',
-      text: 'text-white',
-      icon: Zap,
-      label: t('priority.critical', 'Critical'),
-      animate: true,
-    },
-    HIGH: {
-      bg: 'bg-amber-500',
-      text: 'text-white',
-      icon: Flag,
-      label: t('priority.high', 'High'),
-      animate: false,
-    },
-    MEDIUM: {
-      bg: 'bg-amber-100 dark:bg-amber-900/30',
-      text: 'text-amber-700 dark:text-amber-300',
-      icon: Flag,
-      label: t('priority.medium', 'Medium'),
-      animate: false,
-    },
-    LOW: {
-      bg: 'bg-slate-100 dark:bg-slate-800',
-      text: 'text-slate-500 dark:text-slate-400',
-      icon: Flag,
-      label: t('priority.low', 'Low'),
-      animate: false,
-    },
+  const labels: Record<string, string> = {
+    CRITICAL: t('priority.critical', 'Critical'),
+    HIGH: t('priority.high', 'High'),
+    MEDIUM: t('priority.medium', 'Medium'),
+    LOW: t('priority.low', 'Low'),
   };
+  const key = String(priority ?? 'MEDIUM').toUpperCase();
 
-  const cfg = config[priority as keyof typeof config] || config.MEDIUM;
-  const Icon = cfg.icon;
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${cfg.bg} ${cfg.text} ${cfg.animate ? 'animate-pulse' : ''}`}
-    >
-      <Icon size={10} />
-      {cfg.label}
-    </span>
-  );
+  return <PriorityCell value={key} label={labels[key] ?? labels.MEDIUM} />;
 };
 
 /**

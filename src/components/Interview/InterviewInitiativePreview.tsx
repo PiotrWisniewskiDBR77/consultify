@@ -97,6 +97,21 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
           },
         ]
       : []),
+  ];
+
+  const actionRows: ActionRow[] = contextButtons.length > 0 ? [{ buttons: contextButtons }] : [];
+
+  /**
+   * N-81 (przegląd 128 zrzutów): `Copy ID` stało w stopce OBOK akcji
+   * biznesowych — „akcja deweloperska obok biznesowych", ten sam błąd co
+   * w Interview → Sessions, gdzie było w dodatku JEDYNĄ akcją.
+   *
+   * Nie znika (bywa potrzebne przy zgłaszaniu błędu), ale przestaje zajmować
+   * miejsce obok „Wyślij do przeglądu" i „Otwórz dokument inicjatywy". Ląduje
+   * pod „…", zgodnie z kanonem gęstości: w stopce stoi to, po co użytkownik
+   * tu przyszedł.
+   */
+  const overflowActions = [
     {
       label: t('interview.initiativePreview.copyId'),
       icon: Copy,
@@ -104,8 +119,6 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
       colorScheme: 'neutral' as const,
     },
   ];
-
-  const actionRows: ActionRow[] = contextButtons.length > 0 ? [{ buttons: contextButtons }] : [];
 
   return (
     // canon §7.3: space-y-2.5, NO border-t dividers between footer cards
@@ -125,7 +138,7 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
 
       <PreviewRelations items={relationItems} />
 
-      {actionRows.length > 0 && <PreviewActionBar rows={actionRows} />}
+      <PreviewActionBar rows={actionRows} overflowActions={overflowActions} />
     </div>
   );
 };

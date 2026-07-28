@@ -111,6 +111,15 @@ export interface PresentationTemplate {
   recommended_visuals: string[];
   max_slides: number;
   min_slides: number;
+  /**
+   * Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). A `CURATED_COLOR_SETS[].id`
+   * or `'brand_kit'`, or `null` when this template has no saved color
+   * pattern (generation then falls back to whatever the caller picks at
+   * generation time, same as today). Stored server-side inside
+   * `layout_policy_json.colorTemplateId` — `theme` stays the shallow
+   * corporate/minimal/modern enum it always was.
+   */
+  color_template_id?: string | null;
   is_system: boolean;
   is_active?: boolean;
   cloned_from: string | null;
@@ -155,6 +164,8 @@ export interface UpdatePresentationTemplateInput {
   theme?: string;
   outlineJson?: PresentationTemplateOutlineItem[];
   maxSlides?: number;
+  /** Fala 1 (2026-07-28) — see `PresentationTemplate.color_template_id`. `null` clears it. */
+  colorTemplateId?: string | null;
 }
 
 // ---------------------------------------------------------------------------

@@ -168,10 +168,42 @@ async function ensureKnowledgeSchema(): Promise<void> {
     const knowledgeDocsScopeColumns = [
       `ALTER TABLE knowledge_docs ADD COLUMN owner_id TEXT`,
       `ALTER TABLE knowledge_docs ADD COLUMN scope TEXT`,
+      // ★ VLT-FOLDERS: folder wewnątrz sejfu — patrz `vault_folders` niżej. Ta sama
+      // reguła jak owner_id/scope powyżej: runtime ALTER (idempotentny przez
+      // fallback:true) niesie kolumnę NIEZALEŻNIE od kolejności/obecności migracji
+      // pliku (`server/migrations/20260728_vault_folders.sql`) — oba są bezpieczne
+      // razem, bo CREATE/ALTER ... IF NOT EXISTS jest z definicji idempotentny.
+      `ALTER TABLE knowledge_docs ADD COLUMN folder_id TEXT`,
     ];
     for (const statement of knowledgeDocsScopeColumns) {
       await DbPromise.run(statement, [], { fallback: true } as any);
     }
+
+    // ★ VLT-FOLDERS — folder wewnątrz sejfu Vault. Dziedziczy poziom po
+    // scope/project_id DOKŁADNIE jak knowledge_docs (decyzja właściciela:
+    // "folder DZIEDZICZY poziom po sejfie, w którym powstał" — zero nowego pola
+    // "poziom folderu", widoczność = ta sama reguła co dokumenty, patrz
+    // `getFolders` niżej). Brak twardego FK do knowledge_docs.folder_id — runner
+    // migracji wykonuje cały plik jednym strzałem; integralność w API
+    // (usunięcie folderu odpina jego dokumenty, patrz `deleteFolder`), tak samo
+    // jak `my_idea_folders` (server/migrations/20260602_..._folders_...sql).
+    await DbPromise.run(
+      `CREATE TABLE IF NOT EXISTS vault_folders (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        scope TEXT NOT NULL,
+        project_id TEXT,
+        owner_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        color TEXT,
+        parent_folder_id TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`,
+      [],
+      { fallback: true } as any
+    );
 
     // knowledge_chunks (local chunks store)
     await DbPromise.run(
@@ -720,6 +752,15 @@ const KnowledgeService = {
       scope?: VaultDocumentScope | null;
       projectId?: string | null;
       memberProjectIds?: string[];
+      /**
+       * ★ VLT-FOLDERS — dodatkowe zawężenie DO JEDNEGO FOLDERU wewnątrz sejfu
+       * wybranego przez `scope`/`projectId` powyżej. Nigdy nie zastępuje reguły
+       * poziomu — jest zawsze DODATKOWYM `AND folder_id = ?` na już policzonym
+       * dostępie (jeśli caller nie ma dostępu do poziomu, folder tego nie
+       * naprawia). Egzekwowane w `executeKBSearch` (AGT-008-folder) tą samą
+       * regułą co karta „Folder" w `VaultDocumentsView.tsx`.
+       */
+      folderId?: string | null;
     }
   ): Promise<any[]> {
     await ensureKnowledgeSchema();
@@ -766,6 +807,11 @@ const KnowledgeService = {
       // Brak userId (np. aiContextBuilder — wywołanie wewnętrzne bez kontekstu usera):
       // pokaż wszystko OPRÓCZ prywatnych dokumentów (nie ujawniaj cudzych 'user'-scope).
       where.push(`(scope != 'user' OR scope IS NULL)`);
+    }
+
+    if (access?.folderId) {
+      where.push(`folder_id = ?`);
+      params.push(access.folderId);
     }
 
     const rows = await DbPromise.all<DocumentRow>(
@@ -817,7 +863,7 @@ const KnowledgeService = {
   async updateDocumentMetadata(
     orgId: string,
     docId: string,
-    updates: { category?: string | null; tags?: string[] | null }
+    updates: { category?: string | null; tags?: string[] | null; folderId?: string | null }
   ): Promise<{ updated: boolean }> {
     await ensureKnowledgeSchema();
     const sets: string[] = [];
@@ -830,6 +876,14 @@ const KnowledgeService = {
     if (updates.tags !== undefined) {
       sets.push('tags = ?');
       params.push(JSON.stringify(updates.tags ?? []));
+    }
+    // ★ VLT-FOLDERS — przypisanie/odpięcie dokumentu do folderu wewnątrz TEGO
+    // SAMEGO sejfu (walidacja "folder należy do tego samego poziomu/właściciela
+    // co dokument" żyje w `knowledge.routes.ts` PUT /documents/:id, PRZED tym
+    // wywołaniem — patrz komentarz tam). `null` = odepnij (bez folderu).
+    if (updates.folderId !== undefined) {
+      sets.push('folder_id = ?');
+      params.push(updates.folderId ?? null);
     }
     if (!sets.length) return { updated: false };
 
@@ -912,6 +966,200 @@ const KnowledgeService = {
       newScope,
       becameOrgVisibleCount,
     };
+  },
+
+  // -------------------------
+  // Vault folders (★ VLT-FOLDERS — folder wewnątrz sejfu)
+  // -------------------------
+  // Decyzja właściciela: folder NIE ma własnego pola "poziom" — dziedziczy
+  // scope/project_id po sejfie, w którym powstał. Widoczność MUSI więc być
+  // TĄ SAMĄ regułą co `getDocuments` powyżej (kopia kształtu WHERE — na razie
+  // nie wydzielone do wspólnej funkcji, żeby nie ryzykować regresji w
+  // `getDocuments`, który ma własny test kontraktu w toolDefinitions).
+
+  /**
+   * Lista folderów widocznych dla `userId` W JEDNYM, wskazanym poziomie sejfu
+   * (`access.scope` — w odróżnieniu od `getDocuments`, folder zawsze żyje w
+   * DOKŁADNIE jednym sejfie, więc tu `scope` jest w praktyce zawsze podane;
+   * gałąź "widok domyślny" zostaje dla symetrii z `getDocuments` i do
+   * wewnętrznych sprawdzeń widoczności, patrz `executeKBSearch`).
+   */
+  async getFolders(
+    orgId: string,
+    userId?: string,
+    access?: {
+      scope?: VaultDocumentScope | null;
+      projectId?: string | null;
+      memberProjectIds?: string[];
+    }
+  ): Promise<any[]> {
+    await ensureKnowledgeSchema();
+    const where: string[] = [`organization_id = ?`];
+    const params: unknown[] = [orgId];
+
+    const requestedScope = access?.scope || null;
+    const projectId = access?.projectId || null;
+    const memberIds = (access?.memberProjectIds || []).filter(Boolean);
+
+    if (requestedScope === 'user') {
+      where.push(`scope = 'user'`);
+      where.push(`owner_id = ?`);
+      params.push(userId || null);
+    } else if (requestedScope === 'project') {
+      where.push(`scope = 'project'`);
+      if (projectId) {
+        where.push(`project_id = ?`);
+        params.push(projectId);
+      } else if (memberIds.length > 0) {
+        where.push(`project_id IN (${memberIds.map(() => '?').join(',')})`);
+        params.push(...memberIds);
+      } else {
+        where.push(`1 = 0`);
+      }
+    } else if (requestedScope === 'organization') {
+      where.push(`scope = 'organization'`);
+    } else if (userId) {
+      const projectClause =
+        memberIds.length > 0
+          ? `(scope = 'project' AND project_id IN (${memberIds.map(() => '?').join(',')}))`
+          : `1 = 0`;
+      where.push(
+        `((scope = 'user' AND owner_id = ?) OR scope = 'organization' OR ${projectClause})`
+      );
+      params.push(userId);
+      if (memberIds.length > 0) params.push(...memberIds);
+    } else {
+      where.push(`scope != 'user'`);
+    }
+
+    const rows = await DbPromise.all<any>(
+      `SELECT * FROM vault_folders WHERE ${where.join(' AND ')} ORDER BY lower(name) ASC LIMIT 500`,
+      params,
+      { fallback: true } as any
+    );
+    return rows || [];
+  },
+
+  /** Single-folder lookup (org-scoped only — caller checks visibility, patrz `getFolders`/`executeKBSearch`). */
+  async getFolderById(orgId: string, folderId: string): Promise<any | null> {
+    await ensureKnowledgeSchema();
+    const row = await DbPromise.get<any>(
+      `SELECT * FROM vault_folders WHERE id = ? AND organization_id = ?`,
+      [folderId, orgId],
+      { fallback: true } as any
+    );
+    return row || null;
+  },
+
+  async createFolder(
+    orgId: string,
+    ownerId: string,
+    input: {
+      name: string;
+      description?: string | null;
+      color?: string | null;
+      parentFolderId?: string | null;
+      scope: VaultDocumentScope;
+      projectId?: string | null;
+    }
+  ): Promise<any> {
+    await ensureKnowledgeSchema();
+    const id = randomUUID();
+    const scope = input.scope;
+    const projectId = scope === 'project' ? input.projectId || null : null;
+    await DbPromise.run(
+      `INSERT INTO vault_folders
+         (id, organization_id, scope, project_id, owner_id, name, description, color, parent_folder_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        orgId,
+        scope,
+        projectId,
+        ownerId,
+        String(input.name || '').trim(),
+        input.description ?? null,
+        input.color ?? null,
+        input.parentFolderId ?? null,
+      ],
+      { fallback: true } as any
+    );
+    return {
+      id,
+      organizationId: orgId,
+      scope,
+      projectId,
+      ownerId,
+      name: String(input.name || '').trim(),
+      description: input.description ?? null,
+      color: input.color ?? null,
+      parentFolderId: input.parentFolderId ?? null,
+    };
+  },
+
+  /** Rename/re-describe — TYLKO twórca folderu (patrz DZIENNIK VLT-FOLDERS: udostępnianie
+   * ⇒ widoczność, edycja/usunięcie ⇒ nadal wyłącznie właściciel, jak w `my_idea_folders`). */
+  async updateFolder(
+    orgId: string,
+    ownerId: string,
+    folderId: string,
+    updates: {
+      name?: string;
+      description?: string | null;
+      color?: string | null;
+      parentFolderId?: string | null;
+    }
+  ): Promise<{ updated: boolean }> {
+    await ensureKnowledgeSchema();
+    const sets: string[] = [];
+    const params: unknown[] = [];
+    if (typeof updates.name === 'string' && updates.name.trim()) {
+      sets.push('name = ?');
+      params.push(updates.name.trim());
+    }
+    if (updates.description !== undefined) {
+      sets.push('description = ?');
+      params.push(updates.description ?? null);
+    }
+    if (updates.color !== undefined) {
+      sets.push('color = ?');
+      params.push(updates.color ?? null);
+    }
+    if (updates.parentFolderId !== undefined) {
+      sets.push('parent_folder_id = ?');
+      params.push(updates.parentFolderId ?? null);
+    }
+    if (!sets.length) return { updated: false };
+    sets.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(folderId, orgId, ownerId);
+    const result = await DbPromise.run(
+      `UPDATE vault_folders SET ${sets.join(', ')}
+       WHERE id = ? AND organization_id = ? AND owner_id = ?`,
+      params,
+      { fallback: true } as any
+    );
+    return { updated: Boolean((result as any)?.changes) };
+  },
+
+  /** Usuwa folder (TYLKO twórca) — odpina jego dokumenty (folder_id = NULL), nie usuwa ich. */
+  async deleteFolder(
+    orgId: string,
+    ownerId: string,
+    folderId: string
+  ): Promise<{ deleted: boolean }> {
+    await ensureKnowledgeSchema();
+    await DbPromise.run(
+      `UPDATE knowledge_docs SET folder_id = NULL, updated_at = CURRENT_TIMESTAMP
+       WHERE folder_id = ? AND (organization_id = ? OR organization_id IS NULL)`,
+      [folderId, orgId],
+      { fallback: true } as any
+    );
+    const result = await DbPromise.run(
+      `DELETE FROM vault_folders WHERE id = ? AND organization_id = ? AND owner_id = ?`,
+      [folderId, orgId, ownerId],
+      { fallback: true } as any
+    );
+    return { deleted: Boolean((result as any)?.changes) };
   },
 };
 

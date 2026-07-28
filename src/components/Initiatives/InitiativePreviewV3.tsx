@@ -607,7 +607,22 @@ export const InitiativePreviewV3Footer: React.FC<{
             },
           ]
         : []),
-      ...(onCopyLink
+    ];
+    return [{ buttons }];
+  }, [chatPrompt, extraActionsSlot, isPolish, onOpenChat, onOpenFull, onOpenInModule]);
+
+  /**
+   * N-81 (przegląd 128 zrzutów): `Copy link` stało w stopce obok akcji
+   * biznesowych — a przy okazji obok `Delete`. Przegląd zebrał trzy takie
+   * przypadki (Interview → Sessions, Interview → Initiatives, tu) i nazwał je
+   * „akcją techniczną w stopce".
+   *
+   * Nie znika — bywa potrzebne, gdy trzeba komuś podesłać odnośnik. Przenosi
+   * się pod „…", żeby stopka niosła to, po co użytkownik tu przyszedł.
+   */
+  const overflowActions = useMemo(
+    () =>
+      onCopyLink
         ? [
             {
               label: t('initiatives.initiativePreviewV3.copyLink'),
@@ -616,10 +631,9 @@ export const InitiativePreviewV3Footer: React.FC<{
               colorScheme: 'neutral' as const,
             },
           ]
-        : []),
-    ];
-    return [{ buttons }];
-  }, [chatPrompt, extraActionsSlot, isPolish, onCopyLink, onOpenChat, onOpenFull, onOpenInModule]);
+        : [],
+    [onCopyLink, t]
+  );
 
   return (
     <div className="space-y-0">
@@ -638,7 +652,11 @@ export const InitiativePreviewV3Footer: React.FC<{
 
       <div className="border-t border-c-border-subtle my-3" />
 
-      {extraActionsSlot ? extraActionsSlot : <PreviewActionBar rows={actionRows} />}
+      {extraActionsSlot ? (
+        extraActionsSlot
+      ) : (
+        <PreviewActionBar rows={actionRows} overflowActions={overflowActions} />
+      )}
       {extraActionsAfterSlot ? extraActionsAfterSlot : null}
     </div>
   );

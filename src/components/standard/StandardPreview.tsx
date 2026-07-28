@@ -41,6 +41,7 @@ import {
   SKELETON_LINE_4,
 } from '../shared/PreviewPane';
 import { PreviewPaneShell } from '../ui/ResizableTable/PreviewPaneShell';
+import { ArtifactPropertiesTable, type ArtifactPropertyRow } from './ArtifactPropertiesTable';
 
 export type { MetaPill, RelationItem } from '../shared/PreviewPane';
 
@@ -97,6 +98,26 @@ export interface StandardPreviewDetails {
   text?: string;
   loading?: boolean;
   label?: string;
+  /**
+   * WŁAŚCIWOŚCI encji (klucz–wartość) — zamiast sklejania ich w akapit `text`.
+   *
+   * Przegląd 128 zrzutów naliczył CZTERY podglądy, w których blok treści był
+   * zrzutem pól: Interview → Sessions („Answers: 0/6 Started: … Owner: …"),
+   * Tools → Assessment („Type: … Progress: 0%"), Tools → Reports, Tools →
+   * Initiatives („Type: … Author: —"). Wszystkie robiły to samo obejście —
+   * wkładały właściwości w pole na prozę, bo nie miały gdzie indziej.
+   *
+   * Renderowane przez `ArtifactPropertiesTable` (SPEC-A §11.2), czyli ten sam
+   * komponent, który przegląd wskazał jako wzorzec w Tools → Reports
+   * („czytelniejsza niż chipy etykieta:wartość"). Licznik słów przy tym
+   * wariancie znika sam — nad tabelą nic by nie znaczył.
+   *
+   * `text` i `properties` można podać razem: najpierw opis, pod nim tabela.
+   */
+  properties?: ArtifactPropertyRow[];
+  /** Nagłówki kolumn tabeli właściwości (przetłumaczone). */
+  propertyLabel?: string;
+  valueLabel?: string;
   /** ⋮ Copy — zawsze pierwszy w kebabie Details. */
   onCopy?: () => void;
   /** ⋮ Export (np. do formatu udostępnienia). */
@@ -162,6 +183,53 @@ export function standardPreviewShortcuts(
     }
   }
   return map;
+}
+
+/**
+ * Kanon A6/A8: akcja DESTRUKCYJNA stoi ZAWSZE NA KOŃCU stopki podglądu,
+ * po akcjach zwykłych — nigdy jako pierwszy przycisk, na który pada wzrok.
+ *
+ * PILNE-10 / N-83 (przegląd 128 zrzutów, 2026-07-27): reguła była łamana na
+ * PIĘCIU ekranach naraz — Tools→Assessment, Tools→Reports, Tools→Initiatives,
+ * Initiatives→Portfolio — i za każdym razem z tego samego powodu: ekran wkładał
+ * `Delete` do rzędu `resolutions` (bo to formalnie „rozstrzygnięcie"), a
+ * `Duplicate` do `informational`. Rzędy renderują się w kolejności
+ * resolutions → informational → time, więc jedyna nieodwracalna akcja lądowała
+ * NAD wszystkimi pozostałymi. Kebab tego samego wiersza robił to poprawnie —
+ * jeden ekran, dwie sprzeczne reguły.
+ *
+ * Dlatego kolejność jest wymuszana TUTAJ, a nie poprawiana per ekran: żaden
+ * nowy ekran nie ma jak jej złamać, choćby podał akcje w dowolnym porządku.
+ *
+ * Reguła:
+ *   1. akcje `destructive` są wyjmowane ze wszystkich rzędów,
+ *   2. rzędy zachowują swoją kolejność i zawartość,
+ *   3. destrukcyjne wracają na KONIEC ostatniego niepustego rzędu
+ *      (albo tworzą własny rząd, gdy nic innego nie zostało).
+ *
+ * Przypadek Approve/Reject (Decisions) przechodzi bez zmiany: `Reject` jest
+ * destrukcyjny i już stoi na końcu swojego rzędu.
+ */
+export function orderPreviewActionRows(
+  actions?: StandardPreviewActions
+): StandardPreviewAction[][] {
+  const zrzedy = [actions?.resolutions, actions?.informational, actions?.time].map(
+    (row) => row ?? []
+  );
+
+  const destrukcyjne = zrzedy.flat().filter((a) => a.variant === 'destructive');
+  if (destrukcyjne.length === 0) {
+    return zrzedy.filter((row) => row.length > 0);
+  }
+
+  const bezDestrukcyjnych = zrzedy
+    .map((row) => row.filter((a) => a.variant !== 'destructive'))
+    .filter((row) => row.length > 0);
+
+  if (bezDestrukcyjnych.length === 0) return [destrukcyjne];
+
+  const ostatni = bezDestrukcyjnych.length - 1;
+  return bezDestrukcyjnych.map((row, i) => (i === ostatni ? [...row, ...destrukcyjne] : row));
 }
 
 const ActionGridRow: React.FC<{ actions: StandardPreviewAction[] }> = ({ actions }) => (
@@ -238,9 +306,7 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
       ]
     : undefined;
 
-  const actionRows = [actions?.resolutions, actions?.informational, actions?.time].filter(
-    (row): row is StandardPreviewAction[] => !!row && row.length > 0
-  );
+  const actionRows = orderPreviewActionRows(actions);
 
   const footer =
     ai || relations || actionRows.length > 0 || whatsNext ? (
@@ -367,7 +433,19 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
               loading={details.loading}
               label={details.label}
               customActions={detailsActions?.length ? detailsActions : undefined}
-            />
+              // Licznik słów opisuje prozę. Gdy blok niesie WYŁĄCZNIE tabelę
+              // właściwości, liczyłby słowa etykiet — dokładnie ten bezsens, co
+              // „~30 words" nad listą plików w Sejfie (PILNE-8).
+              showWordCount={!(details.properties?.length && !details.text)}
+            >
+              {details.properties?.length ? (
+                <ArtifactPropertiesTable
+                  rows={details.properties}
+                  propertyLabel={details.propertyLabel ?? 'Property'}
+                  valueLabel={details.valueLabel ?? 'Value'}
+                />
+              ) : null}
+            </PreviewDetailsSection>
           ) : null}
 
           {children}

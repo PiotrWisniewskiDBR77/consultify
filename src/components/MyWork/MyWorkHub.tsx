@@ -104,6 +104,10 @@ import {
   isBetaLockedForRole,
   isBetaSubareaClosed,
 } from '@/utils/betaAccess';
+import {
+  CANVAS_OBJECT_EDIT_BAR_SLOT_ID,
+  isCanvasObjectEditBarEnabled,
+} from '@/utils/canvasObjectEditBarFlag';
 import { isClientVaultEnabled } from '@/utils/clientVaultFlag';
 import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTopBarOneLineFlag';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
@@ -119,6 +123,7 @@ import {
 } from '@/utils/sheetArtifactOpen';
 
 import { CalendarView } from './Calendar/CalendarView';
+import { useObjectEditBarSlotHasContent } from './canvas/objectEditBarDock';
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
 import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
 import type { HomeScreenAction } from './Home/homeV2Types';
@@ -709,6 +714,27 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // slotem portalu w rzędzie pilli + kurczliwością tego rzędu. Reszta huba
   // przy OFF jest bajt-w-bajt jak dziś.
   const ideaTopBarOneLine = isIdeaTopBarOneLineEnabled();
+  /**
+   * ★ DOK PASKA EDYCJI W SCALONEJ LINII (naprawa konfliktu dwóch flag).
+   *
+   * `ff_canvasObjectEditBar` dokuje pasek edycji obiektu w listwie Menu 3
+   * (`IdeaCanvasSecondBar`). `ff_ideaTopBarOneLine` KASUJE Menu 3 w całości —
+   * więc obie ON = brak celu portalu = pasek wracał do pływania nad
+   * zaznaczeniem (potwierdzone zrzutem, nie testem). Skoro obie flagi mają być
+   * stanem domyślnym, ta linia MUSI umieć dokować pasek.
+   *
+   * Rozwiązanie: rząd pilli wystawia DRUGIEGO gospodarza tego samego slotu
+   * (`CANVAS_OBJECT_EDIT_BAR_SLOT_ID`) — ten sam identyfikator DOM, więc
+   * `useObjectEditBarSlot()` w Mapie/Tablicy/Procesie działa BEZ ZMIAN i bez
+   * prop-drillingu. Kolizji id nie ma: gospodarze wykluczają się wzajemnie
+   * (Menu 3 istnieje tylko przy `ideaTopBarOneLine === false`).
+   */
+  const ideaEditBarDockEnabled = ideaTopBarOneLine && isCanvasObjectEditBarEnabled();
+  const ideaEditBarSlotRef = useRef<HTMLDivElement>(null);
+  const ideaEditBarActive = useObjectEditBarSlotHasContent(
+    ideaEditBarSlotRef,
+    ideaEditBarDockEnabled
+  );
   const openChatWithContext = useOpenChatWithContext();
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   const location = useLocation();
@@ -825,7 +851,10 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     | 'critical'
     | 'action_required'
     | 'today'
-    | 'this_week';
+    | 'this_week'
+    /* P-10 (2026-07-28): „Done" zszedł z prawej strony Menu 3 na lewą, do
+       filtrów — patrz komentarz przy `presets` niżej. */
+    | 'done';
   const [inboxPreset, setInboxPreset] = useState<InboxPreset>('all');
   const [inboxCounts, setInboxCounts] = useState<InboxCounts | null>(null);
   const [inboxBulkUi, setInboxBulkUi] = useState<{
@@ -2125,30 +2154,14 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const applyInboxPreset = useCallback((next: InboxPreset) => {
     // Canon v3: "ALL" means no preset filters are active.
     setInboxPreset(next);
-    setInboxStatusTab(next === 'saved' ? 'saved' : 'open');
+    setInboxStatusTab(next === 'saved' ? 'saved' : next === 'done' ? 'done' : 'open');
     setInboxSection(next === 'today' ? 'today' : next === 'this_week' ? 'this_week' : 'all');
     setInboxActionRequiredOnly(next === 'action_required');
   }, []);
 
-  const handleInboxStatusTabSelect = useCallback(
-    (next: 'open' | 'done' | 'saved' | 'all') => {
-      setInboxStatusTab(next);
-      if (next === 'saved') {
-        setInboxPreset('saved');
-        setInboxSection('all');
-        setInboxActionRequiredOnly(false);
-        return;
-      }
-      if (inboxPreset === 'saved') {
-        setInboxPreset('all');
-      }
-      if (next === 'done' || next === 'all') {
-        setInboxSection('all');
-        setInboxActionRequiredOnly(false);
-      }
-    },
-    [inboxPreset]
-  );
+  /* P-10 (2026-07-28): `handleInboxStatusTabSelect` usunięty razem z segmentem
+     `Open | Done | Saved` z prawej strony Menu 3 — jego mapowanie
+     preset ↔ statusTab przejął w całości `applyInboxPreset` powyżej. */
 
   const openTabAiContext = useCallback(
     async (tab: 'inbox' | 'tasks' | 'decisions') => {
@@ -2543,6 +2556,28 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       hubBarSlot.onShowList?.();
     };
 
+    // ★ TRYB EDYCJI OBIEKTU w scalonej linii. Zaznaczenie na płótnie →
+    // narzędzie portaluje pasek edycji do slotu na środku belki. Belka jest
+    // ciasna (tożsamość + ~9 grup kontrolek + 5-elementowy klaster poleceń),
+    // więc lewa strona KURCZY SIĘ do samego tytułu: znikają „Lista",
+    // separator i pille nieaktywnych dokumentów. Odznaczenie = powrót.
+    // Dokładnie to, o co prosił właściciel: „na środku tej belki".
+    const editing = ideaEditBarActive;
+    const visibleHubDocs = editing
+      ? hubDocs.filter((doc) => doc.id === activeDocumentId)
+      : hubDocs;
+    const visibleChildItems = editing
+      ? childItems.filter((doc) => doc.id === childActiveId)
+      : childItems;
+    // CIASNOTA PRZY WĄSKIM OKNIE — kolejność ustępowania jest ŚWIADOMA:
+    // najpierw ustępuje TOŻSAMOŚĆ (jest powtórzona w tytule karty i w prawym
+    // panelu), potem etykieta paska, a NIGDY same kontrolki edycji — właściciel
+    // prosił o nie o to, żeby były pod ręką, więc żadna nie ląduje w kebabie.
+    // Poniżej 1280 px sam TYTUŁ zwija się do zera (`max-w-0`), zostaje ikona +
+    // kropka statusu jako klikalny powrót do dokumentu. Zysk ~300 px dla
+    // kontrolek na oknie 900 px.
+    const docNameClass = editing ? 'max-w-0 xl:max-w-[150px] truncate' : 'max-w-[150px] truncate';
+
     return (
       <div className={MENU_3_ROW_CLASS}>
         <div
@@ -2564,28 +2599,36 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               // Jedna linia: pille muszą KURCZYĆ SIĘ i przewijać we własnym
               // kontenerze, żeby klaster poleceń po prawej nigdy nie uciekł
               // poza ekran ani nie nachodził na karty (wąskie okno).
-              ideaTopBarOneLine ? 'min-w-0 flex-1' : ''
+              // W trybie edycji lewa strona przestaje być „elastyczna": oddaje
+              // resztę linii paskowi edycji i sama zwęża się do tytułu.
+              ideaTopBarOneLine ? (editing ? 'min-w-0 flex-none max-w-[38%]' : 'min-w-0 flex-1') : ''
             }`}
+            data-testid={ideaTopBarOneLine ? 'idea-one-line-identity' : undefined}
+            data-editing={editing ? 'true' : undefined}
           >
-            {/* List button */}
-            <button
-              onClick={handleListClick}
-              className={
-                isListActive
-                  ? TAB_ACTIVE.replace('border-l-2', '')
-                  : TAB_INACTIVE.replace('border-l-2', '')
-              }
-              style={{ flexShrink: 0 }}
-            >
-              <List size={14} />
-              <span>{t('myWork.hub.list', 'List')}</span>
-            </button>
+            {/* List button — w trybie edycji ustępuje miejsca kontrolkom. */}
+            {editing ? null : (
+              <>
+                <button
+                  onClick={handleListClick}
+                  className={
+                    isListActive
+                      ? TAB_ACTIVE.replace('border-l-2', '')
+                      : TAB_INACTIVE.replace('border-l-2', '')
+                  }
+                  style={{ flexShrink: 0 }}
+                >
+                  <List size={14} />
+                  <span>{t('myWork.hub.list', 'List')}</span>
+                </button>
 
-            {/* Separator */}
-            <div className="w-px h-6 bg-slate-200/70 dark:bg-white/[0.06] shrink-0" />
+                {/* Separator */}
+                <div className="w-px h-6 bg-slate-200/70 dark:bg-white/[0.06] shrink-0" />
+              </>
+            )}
 
             {/* Document Tabs (hub's own — tasks/ideas/decisions/inbox) */}
-            {hubDocs.map((doc) => {
+            {visibleHubDocs.map((doc) => {
               const isActive = doc.id === activeDocumentId;
               const leftBorderColor = TYPE_COLORS[doc.type];
               const statusColor = STATUS_COLORS[doc.status] || 'bg-slate-400';
@@ -2604,7 +2647,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   {doc.type === 'initiative' && <Rocket size={14} />}
 
                   {/* Name (truncated) */}
-                  <span className="max-w-[150px] truncate">{doc.name}</span>
+                  <span className={docNameClass}>{doc.name}</span>
 
                   {/* Status Dot */}
                   <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
@@ -2631,7 +2674,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {/* Child cards DOKLEJONE z HubBarSlots (np. Run agent — otwarte
                 procesy). Te same klasy TAB_ACTIVE/TAB_INACTIVE co karty huba
                 wyżej — jedna wizualna rodzina, tylko inne źródło danych. */}
-            {childItems.map((doc) => {
+            {visibleChildItems.map((doc) => {
               const isActive = doc.id === childActiveId;
               const Icon = HUB_SLOT_TYPE_ICON[doc.type] || Bot;
               const statusColor = HUB_SLOT_STATUS_DOT[doc.status] || 'bg-slate-400';
@@ -2643,7 +2686,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   onClick={() => hubBarSlot.onSelectItem?.(doc.id)}
                 >
                   <Icon size={14} />
-                  <span className="max-w-[150px] truncate">{doc.name}</span>
+                  <span className={docNameClass}>{doc.name}</span>
                   <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
                   <button
                     type="button"
@@ -2677,6 +2720,31 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
            * go WYŁĄCZNIE przy fladze ON: przy OFF węzła nie ma, więc powłoka
            * sama zostaje przy starym, dwurzędowym układzie.
            */}
+          {/*
+           * ★ PASEK EDYCJI OBIEKTU — DRUGIE GNIAZDO tej samej belki
+           * (`ff_ideaTopBarOneLine` + `ff_canvasObjectEditBar`). Menu 3, gdzie
+           * pasek dokował się dotąd, przy jednej linii nie istnieje; bez tego
+           * węzła narzędzia wracały do PŁYWAJĄCEGO paska nad zaznaczeniem
+           * (zobaczone na zrzucie). Ten sam `id` co gniazdo w Menu 3 — obaj
+           * gospodarze wykluczają się wzajemnie, więc `getElementById` w
+           * `useObjectEditBarSlot()` zawsze trafia w ten, który akurat żyje.
+           *
+           * `contents` gdy pusty: nie tworzy pudełka, nie łapie `gap` rodzica,
+           * więc belka bez zaznaczenia wygląda BAJT W BAJT jak przed zmianą.
+           * `min-w-0` + `flex-1` gdy pełny: kontrolki dostają środek linii i
+           * przewijają się WEWNĄTRZ siebie (`ObjectEditBar` ma własny
+           * `overflow-x-auto`) — klaster poleceń po prawej nigdy nie ucieka
+           * poza ekran, nawet przy 900 px.
+           */}
+          {ideaEditBarDockEnabled ? (
+            <div
+              id={CANVAS_OBJECT_EDIT_BAR_SLOT_ID}
+              ref={ideaEditBarSlotRef}
+              className={editing ? 'flex min-w-0 flex-1 items-center px-1' : 'contents'}
+              data-testid="canvas-object-edit-bar-slot"
+            />
+          ) : null}
+
           {ideaTopBarOneLine ? (
             <div
               id={IDEA_TOP_BAR_SLOT_ID}
@@ -2995,6 +3063,18 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           label: t('myWork.hub.label35', 'This week'),
           count: c?.newThisWeek ?? 0,
         },
+        /**
+         * P-10 (Piotr, OBR-18/22, 2026-07-27): „Menu trzecie — straszny bałagan.
+         * Po prawej stronie te przyciski nie są potrzebne. Zostawiłbym tylko
+         * AI Triage, pozostałe są tak samo widoczne po lewej stronie."
+         *
+         * Segment `Open | Done | Saved`, który stał po PRAWEJ, był w dwóch
+         * trzecich dosłownym duplikatem lewej strony: `Open` pokazywał tę samą
+         * liczbę co `ALL` (oba = counts.open), a `Saved` istniał tu i tam.
+         * Jedyną wartością nie do odzyskania po lewej był `Done` — więc tu
+         * dołącza jako zwykły filtr, a prawa strona zostaje slotem AI (kanon A3).
+         */
+        { id: 'done', label: t('myWork.hub.label37', 'Done'), count: c?.counts.done ?? 0 },
       ];
 
       const menu3RowClass = MENU_3_ROW_CLASS;
@@ -3095,43 +3175,9 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 );
               })}
             </div>
+            {/* P-10: prawa strona Menu 3 = wyłącznie AI Triage (kanon A3).
+                Segment `Open | Done | Saved` zjechał do filtrów po lewej. */}
             <div className={MENU_3_RIGHT_CLASS}>
-              <div className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/80 p-1 dark:border-white/[0.08] dark:bg-navy-900/70">
-                {(
-                  [
-                    {
-                      id: 'open',
-                      label: t('myWork.hub.label36', 'Open'),
-                      count: c?.counts.open ?? 0,
-                    },
-                    {
-                      id: 'done',
-                      label: t('myWork.hub.label37', 'Done'),
-                      count: c?.counts.done ?? 0,
-                    },
-                    {
-                      id: 'saved',
-                      label: t('myWork.hub.label38', 'Saved'),
-                      count: c?.counts.saved ?? 0,
-                    },
-                  ] as const
-                ).map((statusChip) => {
-                  const isActive = inboxStatusTab === statusChip.id;
-                  return (
-                    <button
-                      key={statusChip.id}
-                      type="button"
-                      onClick={() => handleInboxStatusTabSelect(statusChip.id)}
-                      className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
-                    >
-                      <span>{statusChip.label}</span>
-                      <span className={`${badgeBase} ${isActive ? badgeActive : badgeInactive}`}>
-                        {statusChip.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
               <button
                 onClick={() => void openTabAiContext('inbox')}
                 className={MENU_3_ACTION_NEUTRAL}
@@ -3489,6 +3535,24 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         </div>
       );
     }
+
+    /**
+     * PILNE-6 (przegląd 128 zrzutów, 2026-07-27; uwaga Piotra P-17 o Sejfie:
+     * „Ta tabela jest w ogóle wbrew jakimkolwiek standardom"):
+     *
+     * Poniższy pasek to fallback „alerty z innych zakładek" (Overdue / Urgent /
+     * Decisions (pending) / Inbox). Dla zakładek `vault` i `agent` — które mają
+     * WŁASNE tabele, ale nie mają jeszcze własnych filtrów — oznaczało to, że
+     * na ekranie dokumentów klienta stały liczniki zaległych ZADAŃ i oczekujących
+     * DECYZJI. Oba ekrany pokazywały co do sztuki te same cztery chipy, bo brały
+     * je z tego samego miejsca; użytkownik dostawał filtry, które nie filtrują
+     * niczego, co widzi pod spodem.
+     *
+     * Menu 3 należy do tabeli, nad którą stoi. Skoro te dwie jeszcze nie mają
+     * czym go wypełnić, pasek się nie renderuje — to zdejmuje przy okazji jedną
+     * z czterech warstw nagłówkowych, na które Piotr zwrócił uwagę (P-17/P-18).
+     */
+    if (activeTab === 'vault' || activeTab === 'agent') return null;
 
     // Default cross-tab alerts (tasks/decisions/inbox)
     const chips: Array<{ key: string; label: string; count: number; onClick: () => void }> = [
@@ -3873,6 +3937,18 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         // out when the flag is off, this is a second, defensive gate.
         return (
           <React.Suspense fallback={lazyFallback}>
+            {/**
+             * P-17 (czwarta warstwa Sejfu) rozwiązany po stronie samego Sejfu,
+             * mechanizmem `useHubBarSlot` — zakładka wstrzykuje swoją lupę do
+             * paska TEGO huba, zamiast rysować własny.
+             *
+             * Scalenie 2026-07-28: ta sama uwaga była naprawiana równolegle w
+             * dwóch sesjach. Moja wersja przekazywała frazę propem
+             * `searchQuery`; wersja z demo jest pełniejsza (zachowuje
+             * wyszukiwanie zamiast je usuwać), więc to ona zostaje. Prop
+             * zniknął CELOWO — komponent go nie przyjmuje, a React ignoruje
+             * nieznane propy po cichu (regresja 07-26 kosztowała na tym dzień).
+             */}
             <ClientDocumentsVault />
           </React.Suspense>
         );
@@ -4109,6 +4185,8 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   return (
                     <Menu3DropdownChip
                       data-testid="mywork-decisions-priority-chip"
+                      // P-15: ten chip stoi w Menu 2, wiec ma miec h-9 jak sasiedzi.
+                      bar="menu2"
                       icon={<Flag size={14} className="text-c-text-muted" />}
                       label={
                         decisionsPriorityActive && activeDecisionsPriority

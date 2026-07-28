@@ -57,6 +57,15 @@ export interface PreviewDetailsSectionProps {
   label?: string;
   /** Compact mode: smaller font (text-xs instead of text-sm) for space-constrained previews */
   compact?: boolean;
+  /**
+   * Licznik słów ma sens dla PROZY — mówi „ile tu jest czytania". Przy treści,
+   * która prozą nie jest, kłamie: podgląd Sejfu klienta pokazywał `~30 words`
+   * nad LISTĄ PLIKÓW (przegląd 128 zrzutów, PILNE-8), gdzie liczba słów nie
+   * znaczy nic — plików było pięć.
+   *
+   * Domyślnie `true`, żeby nie ruszać ekranów z prawdziwym opisem.
+   */
+  showWordCount?: boolean;
   /** Optional structured content rendered below the text block */
   children?: React.ReactNode;
 }
@@ -75,6 +84,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
   onToggleExpanded,
   label,
   compact,
+  showWordCount = true,
   children,
 }) => {
   const { t } = useTranslation();
@@ -136,7 +146,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {wordCount > 0 ? (
+          {showWordCount && wordCount > 0 ? (
             <span
               className="text-[10px] text-slate-400 dark:text-slate-500"
               aria-label={`${wordCount} ${t('sharedComponents.previewDetailsSection.words')}`}

@@ -21,7 +21,6 @@ import {
   Layers,
   Lightbulb,
   Loader2,
-  MessageSquare,
   Monitor,
   Presentation,
   Trash2,
@@ -56,6 +55,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext } from '@/types/workspace';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { DecisionDetailView } from '../MyWork/DecisionDetailView';
@@ -1230,14 +1230,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const isHubChatActive =
     Boolean(hubChatId) && activeConversationId === hubChatId && !isChatCollapsed;
 
-  const openInterpretationDraft = useCallback(() => {
-    const targetAssessment = assessments[0];
-    if (!targetAssessment?.id) return;
-    navigate(
-      `/assessment/${String(targetAssessment.type || 'drd').toLowerCase()}/${targetAssessment.id}`
-    );
-  }, [assessments, navigate]);
-
   // #70: shared "open/focus the hub chat" plumbing, extracted so AI Triage can
   // reuse it and additionally post a framing message (see handleOpenHubTriage
   // below) instead of being a byte-for-byte duplicate of Chat's onClick.
@@ -1286,14 +1278,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     tabs,
     toggleChatCollapse,
   ]);
-
-  const handleOpenHubChat = useCallback(async () => {
-    try {
-      await ensureHubChatOpen();
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to open AI chat');
-    }
-  }, [ensureHubChatOpen]);
 
   // #70: "AI Triage" used to be a byte-for-byte duplicate of "Chat" (same
   // onClick, same active state) — a pill that promised AI prioritization but
@@ -1393,64 +1377,28 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
   const hubMenu3Chips = menu3StatusChipsEnabled ? statusFilterChips : hubMenu3InfoChips;
 
-  const thirdHubAction = useMemo(() => {
-    if (activeTab === 'reports') {
-      return {
-        id: 'report',
-        label: 'Generate Report',
-        icon: FileText,
-        onClick: () => setShowNewReportModal(true),
-        active: false,
-        disabled: assessments.length === 0,
-        title: t(
-          'assessment.hub.generateReportTooltip',
-          'Generate a new report from a completed assessment.'
-        ),
-      };
-    }
-
-    if (activeTab === 'initiatives') {
-      return {
-        id: 'initiative',
-        label: 'Initiative Pack',
-        icon: Lightbulb,
-        onClick: () => setShowInitiativesWizard(true),
-        active: false,
-        disabled: assessments.length === 0,
-        title: t(
-          'assessment.hub.initiativePackTooltip',
-          'Generate an AI initiative pack from the assessment findings.'
-        ),
-      };
-    }
-
-    // #70: was "Interpretation Draft" — jargon that didn't say what clicking it
-    // does. It jumps straight into the editor of the most recently updated
-    // assessment (assessments[0], server-sorted by updated_at DESC), resuming
-    // the last-visited axis/area/level for DRD. Renamed to say that plainly.
-    return {
-      id: 'interpretation',
-      label: t('assessment.hub.resumeLatestLabel', 'Resume latest assessment'),
-      icon: Lightbulb,
-      onClick: openInterpretationDraft,
-      active: false,
-      disabled: assessments.length === 0,
-      title: t(
-        'assessment.hub.resumeLatestTooltip',
-        'Opens the editor for your most recently updated assessment, back where you left off.'
-      ),
-    };
-  }, [activeTab, assessments.length, openInterpretationDraft, t]);
-
+  /**
+   * P-20 (Piotr, OBR-84…86, 2026-07-27): „Nie wiem, po co powstały te trzy
+   * dodatkowe przyciski. Są zupełnie zbędne tutaj w menu trzecim."
+   *
+   * Kanon TRIADA A3: po PRAWEJ stronie Menu 3 stoją WYŁĄCZNIE przyciski AI
+   * (dosłowny przykład z kanonu: `AI Priorities` w Tasks). Z trójki, która
+   * tu stała, legalny był tylko `AI Triage`:
+   *   - `Generate Report`  → wołał `setShowNewReportModal(true)`, czyli DOKŁADNIE
+   *     to samo co CTA `New Report` z Menu 2 (patrz handler primaryCta niżej) → D-01
+   *   - `Initiative Pack`  → to samo wobec CTA `New Initiative` → D-01
+   *   - `Chat`             → funkcja, nie akcja AI kontekstowa; ten sam czat
+   *     otwiera `AI Triage`, tylko z gotowym promptem
+   *   - `Resume latest assessment` → skrót do najnowszego rekordu, który i tak
+   *     stoi pierwszy w tabeli (sort po updated_at DESC)
+   */
   const hubMenu3Actions = useMemo(
     () => [
       {
         // #70: label kept ("AI Triage" is the example the owner asked for), but
         // the click now does something Chat doesn't: opens the hub chat AND
         // posts a framing prompt asking the AI to prioritize the current tab's
-        // list (see handleOpenHubTriage). Previously this button called the
-        // exact same handler as "Chat" next to it — same onClick, same active
-        // state — so it carried zero information beyond a duplicate label.
+        // list (see handleOpenHubTriage).
         id: 'triage',
         label: 'AI Triage',
         icon: Layers,
@@ -1462,18 +1410,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           'Opens AI chat with a ready-made prompt: what in this list needs attention first.'
         ),
       },
-      {
-        id: 'chat',
-        label: 'Chat',
-        icon: MessageSquare,
-        onClick: () => void handleOpenHubChat(),
-        active: isHubChatActive,
-        disabled: isLoading,
-        title: t('assessment.hub.chatTooltip', 'Opens a blank AI chat for this hub.'),
-      },
-      thirdHubAction,
     ],
-    [handleOpenHubChat, handleOpenHubTriage, isHubChatActive, isLoading, t, thirdHubAction]
+    [handleOpenHubTriage, isHubChatActive, isLoading, t]
   );
 
   // Triada standard (canon A3/A6): checkbox selection on the 'list' tab
@@ -1538,6 +1476,51 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const selectedListRow: any = selectedAssessmentId
     ? (currentData.find((r: any) => r.id === selectedAssessmentId) ?? null)
     : null;
+
+  /**
+   * Blok „Co dalej" dla otwartej OCENY (kanon, blok opcjonalny StandardPreview).
+   *
+   * Dwie rzeczy spotykają się tutaj:
+   *   1. Przegląd 128 zrzutów: podgląd oceny miał WYŁĄCZNIE `Delete` i
+   *      `Duplicate` — „brak jakiejkolwiek akcji pozytywnej, można tylko usunąć
+   *      albo zduplikować". Ekran nie mówił, co z tą oceną zrobić dalej.
+   *   2. P-20: `Generate Report` i `Initiative Pack` wyleciały z Menu 3, bo tam
+   *      dublowały CTA „New Report"/„New Initiative" i łamały kanon A3.
+   *
+   * W Menu 3 były duplikatem, bo dotyczyły CAŁEJ listy. Tutaj dotyczą JEDNEJ,
+   * wybranej oceny — i dopiero w tym miejscu niosą informację: „z tej oceny
+   * możesz zrobić raport albo pakiet inicjatyw". To dokładnie przepływ, na
+   * którym stoi moduł Tools.
+   *
+   * `whatsNext` w `StandardPreview` istniał od dawna, ale miał ZERO
+   * konsumentów — kanon obiecywał blok, którego nie było na żadnym ekranie.
+   */
+  const listPreviewWhatsNext = useMemo(
+    () =>
+      selectedListRow
+        ? {
+            items: [
+              {
+                id: 'to-report',
+                label: t('assessment.whatsNext.report', 'Report'),
+                icon: FileText,
+                onClick: () => setShowNewReportModal(true),
+              },
+              {
+                id: 'to-initiatives',
+                label: t('assessment.whatsNext.initiatives', 'Initiative pack'),
+                icon: Lightbulb,
+                onClick: () => setShowInitiativesWizard(true),
+              },
+            ],
+            note: t(
+              'assessment.whatsNext.note',
+              'Uses this assessment as the source.'
+            ),
+          }
+        : undefined,
+    [selectedListRow, t]
+  );
 
   const listPreviewActions: StandardPreviewActions | undefined = useMemo(
     () =>
@@ -1918,25 +1901,33 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   ],
                   trailing: (
                     <span className="text-[11px] font-semibold text-c-text-secondary">
-                      {selectedRow.updatedAt
-                        ? new Date(selectedRow.updatedAt).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : '—'}
+                      {/* N-94: podglad pokazywal „30 Apr 2026", a tabela obok
+                          „30/04/2026" — ta sama data, dwa zapisy, jeden ekran. */}
+                      {formatListDate(selectedRow.updatedAt)}
                     </span>
                   ),
                 }}
                 details={{
-                  text: [
-                    `${t('assessment.table.type', 'Type')}: ${
+                  // N-52 / przeglad 128 zrzutow: to sa WLASCIWOSCI, nie tresc —
+                  // szly dotad jako sklejony akapit w bloku na proze.
+                  propertyLabel: isPolish ? 'Wlasciwosc' : 'Property',
+                  valueLabel: isPolish ? 'Wartosc' : 'Value',
+                  properties: [
+                    {
+                      id: 'type',
+                      label: t('assessment.table.type', 'Type'),
+                      value:
                       FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
                       selectedRow.framework ||
-                      '—'
-                    }`,
-                    `${t('assessment.table.progress', 'Progress')}: ${selectedRow.progress ?? 0}%`,
-                  ].join('\n\n'),
+                      '—',
+                    },
+                    {
+                      id: 'progress',
+                      label: t('assessment.table.progress', 'Progress'),
+                      value: `${selectedRow.progress ?? 0}%`,
+                      mono: true,
+                    },
+                  ],
                   onCopy: () => {
                     void navigator.clipboard?.writeText(
                       `${selectedRow.name} — ${selectedRow.status} (${selectedRow.progress ?? 0}%)`
@@ -1953,6 +1944,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                 }}
                 relations={[]}
                 actions={previewActions}
+                whatsNext={activeTab === 'list' ? listPreviewWhatsNext : undefined}
               />
             </aside>
           ) : null}
@@ -2046,32 +2038,41 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   ],
                   trailing: (
                     <span className="text-[11px] font-semibold text-c-text-secondary">
-                      {selectedRow.updatedAt
-                        ? new Date(selectedRow.updatedAt).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : '—'}
+                      {/* N-94: podglad pokazywal „30 Apr 2026", a tabela obok
+                          „30/04/2026" — ta sama data, dwa zapisy, jeden ekran. */}
+                      {formatListDate(selectedRow.updatedAt)}
                     </span>
                   ),
                 }}
                 details={{
-                  text: [
-                    `${t('assessment.table.type', 'Type')}: ${
+                  // N-52 / przeglad 128 zrzutow: to sa WLASCIWOSCI, nie tresc —
+                  // szly dotad jako sklejony akapit w bloku na proze.
+                  propertyLabel: isPolish ? 'Wlasciwosc' : 'Property',
+                  valueLabel: isPolish ? 'Wartosc' : 'Value',
+                  properties: [
+                    {
+                      id: 'type',
+                      label: t('assessment.table.type', 'Type'),
+                      value:
                       FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
                       selectedRow.framework ||
-                      '—'
-                    }`,
-                    selectedRow.assessmentName
-                      ? `${t('assessment.reports.source', 'Source assessment')}: ${selectedRow.assessmentName}`
-                      : null,
-                    `${t('assessment.hub.table.author', 'Author')}: ${
-                      getAuthorLabel(selectedRow.createdBy) || '—'
-                    }`,
-                  ]
-                    .filter(Boolean)
-                    .join('\n\n'),
+                      '—',
+                    },
+                    ...(selectedRow.assessmentName
+                      ? [
+                          {
+                            id: 'source',
+                            label: t('assessment.reports.source', 'Source assessment'),
+                            value: selectedRow.assessmentName,
+                          },
+                        ]
+                      : []),
+                    {
+                      id: 'author',
+                      label: t('assessment.hub.table.author', 'Author'),
+                      value: getAuthorLabel(selectedRow.createdBy) || '—',
+                    },
+                  ],
                   onCopy: () => {
                     void navigator.clipboard?.writeText(
                       `${selectedRow.name} — ${selectedRow.status}`
@@ -2170,32 +2171,41 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   ],
                   trailing: (
                     <span className="text-[11px] font-semibold text-c-text-secondary">
-                      {selectedRow.updatedAt
-                        ? new Date(selectedRow.updatedAt).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : '—'}
+                      {/* N-94: podglad pokazywal „30 Apr 2026", a tabela obok
+                          „30/04/2026" — ta sama data, dwa zapisy, jeden ekran. */}
+                      {formatListDate(selectedRow.updatedAt)}
                     </span>
                   ),
                 }}
                 details={{
-                  text: [
-                    `${t('assessment.table.type', 'Type')}: ${
+                  // N-52 / przeglad 128 zrzutow: to sa WLASCIWOSCI, nie tresc —
+                  // szly dotad jako sklejony akapit w bloku na proze.
+                  propertyLabel: isPolish ? 'Wlasciwosc' : 'Property',
+                  valueLabel: isPolish ? 'Wartosc' : 'Value',
+                  properties: [
+                    {
+                      id: 'type',
+                      label: t('assessment.table.type', 'Type'),
+                      value:
                       FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
                       selectedRow.framework ||
-                      '—'
-                    }`,
-                    selectedRow.sourceReport
-                      ? `${t('assessment.initiatives.sourceReport', 'Source report')}: ${selectedRow.sourceReport}`
-                      : null,
-                    `${t('assessment.hub.table.author', 'Author')}: ${
-                      getAuthorLabel(selectedRow.createdBy) || '—'
-                    }`,
-                  ]
-                    .filter(Boolean)
-                    .join('\n\n'),
+                      '—',
+                    },
+                    ...(selectedRow.sourceReport
+                      ? [
+                          {
+                            id: 'source-report',
+                            label: t('assessment.initiatives.sourceReport', 'Source report'),
+                            value: selectedRow.sourceReport,
+                          },
+                        ]
+                      : []),
+                    {
+                      id: 'author',
+                      label: t('assessment.hub.table.author', 'Author'),
+                      value: getAuthorLabel(selectedRow.createdBy) || '—',
+                    },
+                  ],
                   onCopy: () => {
                     void navigator.clipboard?.writeText(
                       `${selectedRow.name} — ${selectedRow.status}`
@@ -2698,7 +2708,7 @@ const ReportSlideOverContent: React.FC<{
             <Calendar size={11} /> Created
           </span>
           <span className="text-xs text-slate-700 dark:text-slate-300">
-            {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : '—'}
+            {report.createdAt ? formatListDate(report.createdAt) : '—'}
           </span>
         </div>
         <div className="flex items-center justify-between px-3.5 py-2.5">
@@ -2706,7 +2716,7 @@ const ReportSlideOverContent: React.FC<{
             <Clock size={11} /> Last updated
           </span>
           <span className="text-xs text-slate-700 dark:text-slate-300">
-            {report.updatedAt ? new Date(report.updatedAt).toLocaleDateString() : '—'}
+            {report.updatedAt ? formatListDate(report.updatedAt) : '—'}
           </span>
         </div>
       </div>
@@ -2747,15 +2757,9 @@ const ReportSlideOverContent: React.FC<{
                       {cfg.label}
                     </div>
                     <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                      {exportDate
-                        ? new Date(exportDate).toLocaleDateString('pl-PL', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })
-                        : '—'}
+                      {/* `pl-PL` na sztywno dawalo polski zapis takze angielskiemu
+                          kontu — wspolny formatter idzie za jezykiem konta. */}
+                      {formatListDateTime(exportDate)}
                       {exp.fileSize ? ` · ${(exp.fileSize / 1024).toFixed(0)} KB` : ''}
                     </div>
                   </div>

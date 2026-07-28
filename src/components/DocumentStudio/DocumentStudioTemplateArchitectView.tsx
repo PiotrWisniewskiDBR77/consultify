@@ -22,6 +22,8 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ColorPatternPicker } from '@/components/shared/colorPatterns/ColorPatternPicker';
+import { useBrandKitColors } from '@/components/shared/colorPatterns/useBrandKitColors';
 import {
   FilterableTable,
   type FilterChip,
@@ -151,6 +153,14 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   const isEditableDraft = structureEditorEnabled && selectedTemplate?.status === 'draft';
   const [editSections, setEditSections] = useState<TemplateSectionBlueprint[]>([]);
   const [savingStructure, setSavingStructure] = useState(false);
+  // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31): the same gallery the
+  // Deck Template Architect now offers (`PresentationTemplateArchitectView`),
+  // wired to Word templates for the first time. Independent of section
+  // structure — saved together only because both are draft-only author
+  // edits on this one screen; a template can carry colors, structure, or
+  // both (see `ColorPatternPicker`).
+  const [editColorTemplateId, setEditColorTemplateId] = useState('');
+  const brandKitColors = useBrandKitColors();
 
   // Reset the working copy whenever the selected draft (or its saved revision)
   // changes. Keyed on templateId + updatedAt so a successful save re-syncs.
@@ -158,12 +168,20 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     setEditSections(
       selectedTemplate ? selectedTemplate.sectionBlueprint.map((s) => ({ ...s })) : []
     );
+    setEditColorTemplateId(selectedTemplate?.formattingSchema?.colorTemplateId ?? '');
   }, [selectedTemplate?.templateId, selectedTemplate?.updatedAt]);
 
   const structureDirty = useMemo(() => {
     if (!selectedTemplate) return false;
     return JSON.stringify(editSections) !== JSON.stringify(selectedTemplate.sectionBlueprint);
   }, [editSections, selectedTemplate]);
+
+  const colorPatternDirty = useMemo(() => {
+    if (!selectedTemplate) return false;
+    return editColorTemplateId !== (selectedTemplate.formattingSchema?.colorTemplateId ?? '');
+  }, [editColorTemplateId, selectedTemplate]);
+
+  const hasUnsavedChanges = structureDirty || colorPatternDirty;
 
   const hasBlankSectionTitle = useMemo(
     () => editSections.some((s) => s.title.trim().length === 0),
@@ -233,7 +251,11 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     setError(null);
     try {
       const normalized = editSections.map((s) => ({ ...s, title: s.title.trim() }));
-      await reviseDocumentStudioTemplateStructure(selectedTemplate.templateId, normalized);
+      await reviseDocumentStudioTemplateStructure(
+        selectedTemplate.templateId,
+        normalized,
+        colorPatternDirty ? editColorTemplateId || null : undefined
+      );
       await refresh();
     } catch (err) {
       setError(
@@ -621,273 +643,305 @@ export const DocumentStudioTemplateArchitectView: React.FC<
 
         {selectedTemplate ? (
           <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start">
-          <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
-            {isEditableDraft ? (
-              <>
-                <div className="flex items-center justify-between gap-3">
+            <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
+              {isEditableDraft ? (
+                <>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="font-semibold text-c-text">
+                      {t('documentStudio.templateArchitect.sectionBlueprint', 'Section blueprint')}{' '}
+                      — {selectedTemplate.name}
+                    </div>
+                    {hasUnsavedChanges ? (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditSections(
+                              selectedTemplate.sectionBlueprint.map((s) => ({ ...s }))
+                            );
+                            setEditColorTemplateId(
+                              selectedTemplate.formattingSchema?.colorTemplateId ?? ''
+                            );
+                          }}
+                          disabled={savingStructure}
+                        >
+                          {t('documentStudio.templateArchitect.resetStructure', 'Reset')}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => void handleSaveStructure()}
+                          disabled={
+                            savingStructure || hasBlankSectionTitle || editSections.length === 0
+                          }
+                        >
+                          {savingStructure
+                            ? t('documentStudio.templateArchitect.savingStructure', 'Saving…')
+                            : t('documentStudio.templateArchitect.saveStructure', 'Save structure')}
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="mt-3">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                      {t('documentStudio.templateArchitect.colorPatternLabel', 'Wzorzec kolorów')}
+                    </span>
+                    <p className="mb-2 text-[11px] text-c-text-secondary">
+                      {t(
+                        'documentStudio.templateArchitect.colorPatternHint',
+                        'Niezależny od struktury sekcji — możesz zapisać sam kolor, samą strukturę, albo oba naraz.'
+                      )}
+                    </p>
+                    <ColorPatternPicker
+                      value={editColorTemplateId}
+                      onChange={setEditColorTemplateId}
+                      brandKitColors={brandKitColors}
+                      hideLabel
+                    />
+                  </div>
+                  <ol className="mt-2 space-y-1">
+                    {editSections.map((section, idx) => (
+                      <li
+                        key={`${selectedTemplate.templateId}-edit-section-${idx}`}
+                        className="group flex flex-col gap-1 rounded-md px-1.5 py-1 hover:bg-c-surface focus-within:bg-c-surface"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 shrink-0 text-right text-xs tabular-nums text-c-text-secondary">
+                            {idx + 1}.
+                          </span>
+                          <input
+                            type="text"
+                            value={section.title}
+                            onChange={(e) => renameEditSection(idx, e.target.value)}
+                            aria-label={t(
+                              'documentStudio.templateArchitect.sectionTitleLabel',
+                              'Section title'
+                            )}
+                            placeholder={t(
+                              'documentStudio.templateArchitect.sectionTitlePlaceholder',
+                              'Section title'
+                            )}
+                            className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-c-text hover:border-c-border-subtle focus:border-c-focus-solid focus:bg-c-surface focus:outline-none focus:ring-2 focus:ring-c-focus"
+                          />
+                          <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditSections((prev) => reorderSection(prev, idx, 'up'))
+                              }
+                              disabled={idx === 0}
+                              aria-label={t(
+                                'documentStudio.templateArchitect.moveSectionUp',
+                                'Move section up'
+                              )}
+                              className="rounded p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus disabled:cursor-not-allowed disabled:opacity-30"
+                            >
+                              <ChevronUp className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditSections((prev) => reorderSection(prev, idx, 'down'))
+                              }
+                              disabled={idx === editSections.length - 1}
+                              aria-label={t(
+                                'documentStudio.templateArchitect.moveSectionDown',
+                                'Move section down'
+                              )}
+                              className="rounded p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus disabled:cursor-not-allowed disabled:opacity-30"
+                            >
+                              <ChevronDown className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditSections((prev) => removeSection(prev, idx))}
+                              aria-label={t(
+                                'documentStudio.templateArchitect.removeSection',
+                                'Remove section'
+                              )}
+                              className="rounded p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="pl-7">
+                          <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                            {t('documentStudio.templateArchitect.contentHints', 'Content guidance')}
+                          </span>
+                          <textarea
+                            value={(section.contentHints ?? []).join('\n')}
+                            onChange={(e) => handleEditSectionHintsChange(idx, e.target.value)}
+                            rows={Math.max(2, (section.contentHints ?? []).length)}
+                            placeholder={t(
+                              'documentStudio.templateArchitect.contentHintsPlaceholder',
+                              'One guidance phrase per line — what this section should cover (no invented facts). Use "Refine with AI" on a new draft to auto-suggest.'
+                            )}
+                            className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                          />
+                        </div>
+                        <div className="pl-7">
+                          <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                            {t('documentStudio.templateArchitect.keyMessage', 'Key message')}
+                          </span>
+                          <input
+                            type="text"
+                            value={section.keyMessage ?? ''}
+                            onChange={(e) => handleEditSectionKeyMessageChange(idx, e.target.value)}
+                            aria-label={t(
+                              'documentStudio.templateArchitect.keyMessage',
+                              'Key message'
+                            )}
+                            placeholder={t(
+                              'documentStudio.templateArchitect.keyMessagePlaceholder',
+                              'The one-sentence thesis this section should argue (no invented conclusions).'
+                            )}
+                            className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                          />
+                        </div>
+                        <div className="pl-7">
+                          <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                            {t('documentStudio.templateArchitect.dataNeeded', 'Data needed')}
+                          </span>
+                          <textarea
+                            value={(section.dataNeeded ?? []).join('\n')}
+                            onChange={(e) => handleEditSectionDataNeededChange(idx, e.target.value)}
+                            rows={Math.max(2, (section.dataNeeded ?? []).length)}
+                            aria-label={t(
+                              'documentStudio.templateArchitect.dataNeeded',
+                              'Data needed'
+                            )}
+                            placeholder={t(
+                              'documentStudio.templateArchitect.dataNeededPlaceholder',
+                              'One data/input label per line — what to collect before writing this section (no invented values).'
+                            )}
+                            className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                          />
+                        </div>
+                        <div className="pl-7">
+                          <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                            {t(
+                              'documentStudio.templateArchitect.suggestedEvidence',
+                              'Suggested evidence'
+                            )}
+                          </span>
+                          <input
+                            type="text"
+                            value={section.suggestedEvidence ?? ''}
+                            onChange={(e) => handleEditSectionEvidenceChange(idx, e.target.value)}
+                            aria-label={t(
+                              'documentStudio.templateArchitect.suggestedEvidence',
+                              'Suggested evidence'
+                            )}
+                            placeholder={t(
+                              'documentStudio.templateArchitect.suggestedEvidencePlaceholder',
+                              'The category of proof that should back this section (a source type, not a specific fabricated citation).'
+                            )}
+                            className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+                          />
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEditSections((prev) => insertSection(prev, undefined, makeBlankSection()))
+                    }
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    {t('documentStudio.templateArchitect.addSection', 'Add section')}
+                  </button>
+                  {hasBlankSectionTitle ? (
+                    <p className="mt-1 text-xs text-c-text-secondary">
+                      {t(
+                        'documentStudio.templateArchitect.blankTitleHint',
+                        'Every section needs a title before you can save.'
+                      )}
+                    </p>
+                  ) : null}
+                </>
+              ) : (
+                <>
                   <div className="font-semibold text-c-text">
                     {t('documentStudio.templateArchitect.sectionBlueprint', 'Section blueprint')} —{' '}
                     {selectedTemplate.name}
                   </div>
-                  {structureDirty ? (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() =>
-                          setEditSections(selectedTemplate.sectionBlueprint.map((s) => ({ ...s })))
-                        }
-                        disabled={savingStructure}
-                      >
-                        {t('documentStudio.templateArchitect.resetStructure', 'Reset')}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => void handleSaveStructure()}
-                        disabled={
-                          savingStructure || hasBlankSectionTitle || editSections.length === 0
-                        }
-                      >
-                        {savingStructure
-                          ? t('documentStudio.templateArchitect.savingStructure', 'Saving…')
-                          : t('documentStudio.templateArchitect.saveStructure', 'Save structure')}
-                      </Button>
-                    </div>
-                  ) : null}
-                </div>
-                <ol className="mt-2 space-y-1">
-                  {editSections.map((section, idx) => (
-                    <li
-                      key={`${selectedTemplate.templateId}-edit-section-${idx}`}
-                      className="group flex flex-col gap-1 rounded-md px-1.5 py-1 hover:bg-c-surface focus-within:bg-c-surface"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 shrink-0 text-right text-xs tabular-nums text-c-text-secondary">
-                          {idx + 1}.
-                        </span>
-                        <input
-                          type="text"
-                          value={section.title}
-                          onChange={(e) => renameEditSection(idx, e.target.value)}
-                          aria-label={t(
-                            'documentStudio.templateArchitect.sectionTitleLabel',
-                            'Section title'
-                          )}
-                          placeholder={t(
-                            'documentStudio.templateArchitect.sectionTitlePlaceholder',
-                            'Section title'
-                          )}
-                          className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-c-text hover:border-c-border-subtle focus:border-c-focus-solid focus:bg-c-surface focus:outline-none focus:ring-2 focus:ring-c-focus"
-                        />
-                        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setEditSections((prev) => reorderSection(prev, idx, 'up'))
-                            }
-                            disabled={idx === 0}
-                            aria-label={t(
-                              'documentStudio.templateArchitect.moveSectionUp',
-                              'Move section up'
-                            )}
-                            className="rounded p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus disabled:cursor-not-allowed disabled:opacity-30"
-                          >
-                            <ChevronUp className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setEditSections((prev) => reorderSection(prev, idx, 'down'))
-                            }
-                            disabled={idx === editSections.length - 1}
-                            aria-label={t(
-                              'documentStudio.templateArchitect.moveSectionDown',
-                              'Move section down'
-                            )}
-                            className="rounded p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus disabled:cursor-not-allowed disabled:opacity-30"
-                          >
-                            <ChevronDown className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditSections((prev) => removeSection(prev, idx))}
-                            aria-label={t(
-                              'documentStudio.templateArchitect.removeSection',
-                              'Remove section'
-                            )}
-                            className="rounded p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="pl-7">
-                        <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
-                          {t('documentStudio.templateArchitect.contentHints', 'Content guidance')}
-                        </span>
-                        <textarea
-                          value={(section.contentHints ?? []).join('\n')}
-                          onChange={(e) => handleEditSectionHintsChange(idx, e.target.value)}
-                          rows={Math.max(2, (section.contentHints ?? []).length)}
-                          placeholder={t(
-                            'documentStudio.templateArchitect.contentHintsPlaceholder',
-                            'One guidance phrase per line — what this section should cover (no invented facts). Use "Refine with AI" on a new draft to auto-suggest.'
-                          )}
-                          className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
-                        />
-                      </div>
-                      <div className="pl-7">
-                        <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
-                          {t('documentStudio.templateArchitect.keyMessage', 'Key message')}
-                        </span>
-                        <input
-                          type="text"
-                          value={section.keyMessage ?? ''}
-                          onChange={(e) => handleEditSectionKeyMessageChange(idx, e.target.value)}
-                          aria-label={t(
-                            'documentStudio.templateArchitect.keyMessage',
-                            'Key message'
-                          )}
-                          placeholder={t(
-                            'documentStudio.templateArchitect.keyMessagePlaceholder',
-                            'The one-sentence thesis this section should argue (no invented conclusions).'
-                          )}
-                          className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
-                        />
-                      </div>
-                      <div className="pl-7">
-                        <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
-                          {t('documentStudio.templateArchitect.dataNeeded', 'Data needed')}
-                        </span>
-                        <textarea
-                          value={(section.dataNeeded ?? []).join('\n')}
-                          onChange={(e) => handleEditSectionDataNeededChange(idx, e.target.value)}
-                          rows={Math.max(2, (section.dataNeeded ?? []).length)}
-                          aria-label={t(
-                            'documentStudio.templateArchitect.dataNeeded',
-                            'Data needed'
-                          )}
-                          placeholder={t(
-                            'documentStudio.templateArchitect.dataNeededPlaceholder',
-                            'One data/input label per line — what to collect before writing this section (no invented values).'
-                          )}
-                          className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
-                        />
-                      </div>
-                      <div className="pl-7">
-                        <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
-                          {t('documentStudio.templateArchitect.suggestedEvidence', 'Suggested evidence')}
-                        </span>
-                        <input
-                          type="text"
-                          value={section.suggestedEvidence ?? ''}
-                          onChange={(e) => handleEditSectionEvidenceChange(idx, e.target.value)}
-                          aria-label={t(
-                            'documentStudio.templateArchitect.suggestedEvidence',
-                            'Suggested evidence'
-                          )}
-                          placeholder={t(
-                            'documentStudio.templateArchitect.suggestedEvidencePlaceholder',
-                            'The category of proof that should back this section (a source type, not a specific fabricated citation).'
-                          )}
-                          className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
-                        />
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setEditSections((prev) => insertSection(prev, undefined, makeBlankSection()))
-                  }
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  {t('documentStudio.templateArchitect.addSection', 'Add section')}
-                </button>
-                {hasBlankSectionTitle ? (
-                  <p className="mt-1 text-xs text-c-text-secondary">
-                    {t(
-                      'documentStudio.templateArchitect.blankTitleHint',
-                      'Every section needs a title before you can save.'
-                    )}
-                  </p>
-                ) : null}
-              </>
-            ) : (
-              <>
-                <div className="font-semibold text-c-text">
-                  {t('documentStudio.templateArchitect.sectionBlueprint', 'Section blueprint')} —{' '}
-                  {selectedTemplate.name}
-                </div>
-                <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-c-text">
-                  {selectedTemplate.sectionBlueprint.map((section, idx) => (
-                    <li key={`${selectedTemplate.templateId}-section-${idx}`}>
-                      <span className="font-medium">{section.title}</span>
-                      {section.purpose ? (
-                        <span className="text-xs text-c-text-secondary"> — {section.purpose}</span>
-                      ) : null}
-                      {section.contentHints && section.contentHints.length > 0 ? (
-                        <div className="mt-1 flex flex-wrap gap-1.5">
-                          {section.contentHints.map((hint, hintIdx) => (
-                            <span
-                              key={`${selectedTemplate.templateId}-section-${idx}-hint-${hintIdx}`}
-                              className="rounded-full border border-c-border-subtle bg-c-surface px-2.5 py-0.5 text-[11px] text-c-text-secondary"
-                            >
-                              {hint}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
-                      {section.keyMessage ? (
-                        <div className="mt-1 text-[11px] text-c-text-secondary">
-                          <span className="font-medium uppercase tracking-wide text-c-text-muted">
-                            {t('documentStudio.templateArchitect.keyMessage', 'Key message')}:
-                          </span>{' '}
-                          <span className="italic">{section.keyMessage}</span>
-                        </div>
-                      ) : null}
-                      {section.dataNeeded && section.dataNeeded.length > 0 ? (
-                        <div className="mt-1 text-[11px] text-c-text-secondary">
-                          <span className="font-medium uppercase tracking-wide text-c-text-muted">
-                            {t('documentStudio.templateArchitect.dataNeeded', 'Data needed')}:
-                          </span>{' '}
-                          <div className="mt-0.5 flex flex-wrap gap-1.5">
-                            {section.dataNeeded.map((item, itemIdx) => (
+                  <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-c-text">
+                    {selectedTemplate.sectionBlueprint.map((section, idx) => (
+                      <li key={`${selectedTemplate.templateId}-section-${idx}`}>
+                        <span className="font-medium">{section.title}</span>
+                        {section.purpose ? (
+                          <span className="text-xs text-c-text-secondary">
+                            {' '}
+                            — {section.purpose}
+                          </span>
+                        ) : null}
+                        {section.contentHints && section.contentHints.length > 0 ? (
+                          <div className="mt-1 flex flex-wrap gap-1.5">
+                            {section.contentHints.map((hint, hintIdx) => (
                               <span
-                                key={`${selectedTemplate.templateId}-section-${idx}-data-${itemIdx}`}
+                                key={`${selectedTemplate.templateId}-section-${idx}-hint-${hintIdx}`}
                                 className="rounded-full border border-c-border-subtle bg-c-surface px-2.5 py-0.5 text-[11px] text-c-text-secondary"
                               >
-                                {item}
+                                {hint}
                               </span>
                             ))}
                           </div>
-                        </div>
-                      ) : null}
-                      {section.suggestedEvidence ? (
-                        <div className="mt-1 text-[11px] text-c-text-secondary">
-                          <span className="font-medium uppercase tracking-wide text-c-text-muted">
-                            {t('documentStudio.templateArchitect.suggestedEvidence', 'Suggested evidence')}:
-                          </span>{' '}
-                          {section.suggestedEvidence}
-                        </div>
-                      ) : null}
-                    </li>
-                  ))}
-                </ol>
-              </>
-            )}
-          </div>
-          <div className="lg:sticky lg:top-0">
-            <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-              {t('documentStudio.templateArchitect.structurePreviewHeading', 'Structure preview')}
+                        ) : null}
+                        {section.keyMessage ? (
+                          <div className="mt-1 text-[11px] text-c-text-secondary">
+                            <span className="font-medium uppercase tracking-wide text-c-text-muted">
+                              {t('documentStudio.templateArchitect.keyMessage', 'Key message')}:
+                            </span>{' '}
+                            <span className="italic">{section.keyMessage}</span>
+                          </div>
+                        ) : null}
+                        {section.dataNeeded && section.dataNeeded.length > 0 ? (
+                          <div className="mt-1 text-[11px] text-c-text-secondary">
+                            <span className="font-medium uppercase tracking-wide text-c-text-muted">
+                              {t('documentStudio.templateArchitect.dataNeeded', 'Data needed')}:
+                            </span>{' '}
+                            <div className="mt-0.5 flex flex-wrap gap-1.5">
+                              {section.dataNeeded.map((item, itemIdx) => (
+                                <span
+                                  key={`${selectedTemplate.templateId}-section-${idx}-data-${itemIdx}`}
+                                  className="rounded-full border border-c-border-subtle bg-c-surface px-2.5 py-0.5 text-[11px] text-c-text-secondary"
+                                >
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                        {section.suggestedEvidence ? (
+                          <div className="mt-1 text-[11px] text-c-text-secondary">
+                            <span className="font-medium uppercase tracking-wide text-c-text-muted">
+                              {t(
+                                'documentStudio.templateArchitect.suggestedEvidence',
+                                'Suggested evidence'
+                              )}
+                              :
+                            </span>{' '}
+                            {section.suggestedEvidence}
+                          </div>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              )}
             </div>
-            <DocumentStructurePreview
-              sections={isEditableDraft ? editSections : selectedTemplate.sectionBlueprint}
-            />
-          </div>
+            <div className="lg:sticky lg:top-0">
+              <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                {t('documentStudio.templateArchitect.structurePreviewHeading', 'Structure preview')}
+              </div>
+              <DocumentStructurePreview
+                sections={isEditableDraft ? editSections : selectedTemplate.sectionBlueprint}
+              />
+            </div>
           </div>
         ) : null}
       </section>

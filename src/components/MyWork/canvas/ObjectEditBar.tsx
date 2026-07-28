@@ -200,7 +200,14 @@ export const ObjectEditBar: React.FC<{ model: ObjectEditBarModel }> = ({ model }
       aria-label={model.title}
       data-testid="object-edit-bar"
     >
-      <span className="flex-shrink-0 px-1 text-[10px] font-bold uppercase tracking-[0.12em] text-c-text-muted whitespace-nowrap">
+      {/*
+       * Etykieta zaznaczenia („WĘZEŁ" / „3 obiekty") kosztuje ~75 px w linii,
+       * która przy 900 px walczy o każdy piksel z kontrolkami. Poniżej 1024 px
+       * ustępuje: co jest zaznaczone, widać na płótnie (ramka zaznaczenia) i w
+       * prawym panelu — a kontrolek nie da się odgadnąć. `aria-label` toolbara
+       * niesie tę samą treść, więc czytnik ekranu nic nie traci.
+       */}
+      <span className="hidden flex-shrink-0 px-1 text-[10px] font-bold uppercase tracking-[0.12em] text-c-text-muted whitespace-nowrap lg:inline">
         {model.title}
       </span>
       <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">

@@ -622,32 +622,41 @@ export const flattenInboxDisplayGroups = (
   return rows;
 };
 
-// ── Urgency config ──
+/**
+ * ── Urgency config ──
+ *
+ * N-10 (przegląd 128 zrzutów, 2026-07-27): `Critical` renderował się jako
+ * WYPEŁNIONA czerwona pigułka z ramką — kanon A4 zabrania („kropka + tonowany
+ * TEKST, nie pigułka"), a tabela Tasks w tym samym module robiła to poprawnie.
+ * `pill` niesie teraz kropkę + tonowany tekst, w skali wspólnej z
+ * `standard/PriorityCell` (ta sama semantyka: kolor tylko na kropce).
+ * Ikona zostaje — dokłada rozróżnienie niezależne od koloru (dostępność).
+ */
 const urgencyConfig: Record<
   InboxUrgency,
   { icon: LucideIcon; pill: string; label: string; heatColor: string }
 > = {
   critical: {
     icon: AlertTriangle,
-    pill: 'border border-danger-200 bg-danger-100 text-danger-800 [&>svg]:text-danger-700 dark:bg-danger-500/15 dark:text-danger-300 dark:border-transparent dark:[&>svg]:text-danger-300',
+    pill: 'text-danger-700 dark:text-danger-300 [&>svg]:text-danger-500',
     label: i18n.t('myWork.inboxContent.urgency.critical', 'Critical'),
     heatColor: 'border-l-danger-500',
   },
   high: {
     icon: AlertCircle,
-    pill: 'border border-amber-200 bg-amber-100 text-amber-800 [&>svg]:text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent dark:[&>svg]:text-amber-300',
+    pill: 'text-c-text-secondary [&>svg]:text-amber-500',
     label: i18n.t('myWork.inboxContent.urgency.high', 'High'),
     heatColor: 'border-l-amber-500',
   },
   normal: {
     icon: Clock,
-    pill: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary [&>svg]:text-c-text-muted dark:border-transparent',
+    pill: 'text-c-text-muted [&>svg]:text-slate-400',
     label: i18n.t('myWork.inboxContent.urgency.normal', 'Normal'),
     heatColor: 'border-l-c-border',
   },
   low: {
     icon: Calendar,
-    pill: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary [&>svg]:text-c-text-muted dark:border-transparent',
+    pill: 'text-c-text-muted [&>svg]:text-slate-400',
     label: i18n.t('myWork.inboxContent.urgency.low', 'Low'),
     heatColor: 'border-l-c-border-subtle',
   },
@@ -2419,7 +2428,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           const UIcon = u.icon;
           return (
             <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${u.pill}`}
+              className={`inline-flex items-center gap-1.5 text-[11px] font-medium whitespace-nowrap ${u.pill}`}
             >
               <UIcon size={11} />
               {u.label}
@@ -3096,7 +3105,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         {!hiddenSet.has('urgency') && (
           <td className="px-3 py-2 text-left" style={{ width: columnWidths.urgency }}>
             <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${u.pill}`}
+              className={`inline-flex items-center gap-1.5 text-[11px] font-medium whitespace-nowrap ${u.pill}`}
             >
               <UIcon size={11} />
               {u.label}
@@ -3632,7 +3641,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 {isPolish ? kindCfg.labelPl : kindCfg.labelEn}
               </span>
               <span
-                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${u.pill}`}
+                className={`inline-flex items-center gap-1 text-[10px] font-medium whitespace-nowrap ${u.pill}`}
               >
                 <UIcon size={10} />
                 {u.label}

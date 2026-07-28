@@ -3,6 +3,7 @@ import {
   Bot,
   CheckCircle2,
   ChevronDown,
+  Copy,
   ChevronLeft,
   ChevronRight,
   Edit2,
@@ -58,6 +59,7 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { tokenService } from '@/services/tokenService';
 import { isIdeasPreviewOverlayEnabled } from '@/utils/ideasPreviewOverlayFlag';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import { useFavoriteIdeas } from './hooks/useFavoriteIdeas';
@@ -344,6 +346,25 @@ function loadIdeasTableViewState(): {
   }
 }
 
+/**
+ * Etapy idei w kolejności cyklu życia — SSOT dla bloku 2 kebaba.
+ *
+ * Wartości 1:1 z `IdeaStage` (`myIdeasTypes.ts`) i z tym, co przyjmuje
+ * `PUT /my-work/my-idea/:id`. Ikony dobrane tak, żeby czytały się jako
+ * postęp: iskra → kiełek → kształtowanie → gotowe → wypromowane.
+ */
+const ETAPY_IDEI: Array<{
+  id: IdeaStage;
+  icon: React.ElementType;
+  label: (pl: boolean) => string;
+}> = [
+  { id: 'spark', icon: Sparkles, label: (pl) => (pl ? 'Iskra' : 'Spark') },
+  { id: 'incubating', icon: Sprout, label: (pl) => (pl ? 'Inkubacja' : 'Incubating') },
+  { id: 'shaping', icon: PenTool, label: (pl) => (pl ? 'Kształtowanie' : 'Shaping') },
+  { id: 'ready', icon: CheckCircle2, label: (pl) => (pl ? 'Gotowa' : 'Ready') },
+  { id: 'promoted', icon: Rocket, label: (pl) => (pl ? 'Wypromowana' : 'Promoted') },
+];
+
 export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   viewMode = 'table',
   searchQuery,
@@ -370,6 +391,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [tagModalOpen, setTagModalOpen] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  /* P-4: rozwijanie treści w bloku DETAILS — akcja kebaba ⋮ podglądu. */
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [sortField, setSortField] = useState<SortField>(persistedTableView.sortField);
   const [sortDir, setSortDir] = useState<SortDir>(persistedTableView.sortDir);
@@ -480,6 +503,32 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       cancelled = true;
     };
   }, [refreshTrigger]);
+
+  /**
+   * Zmiana etapu idei prosto z listy — blok 2 kebaba (kanon A6).
+   *
+   * Ten sam wzorzec optymistyczny co `handleMoveToFolder` obok: najpierw
+   * lokalnie (żeby chip w wierszu odpowiedział od razu), potem zapis, a przy
+   * błędzie cofnięcie przez `fetchIdeas()`.
+   */
+  const handleZmienEtap = useCallback(
+    async (idea: MyIdea, stage: IdeaStage) => {
+      if ((idea.stage || 'spark') === stage) return;
+      setIdeas((prev) => prev.map((i) => (i.id === idea.id ? ({ ...i, stage } as MyIdea) : i)));
+      try {
+        await Api.updateMyIdea(idea.id, { stage });
+        toast.success(t('myWork.ideasList.stageChanged', isPolish ? 'Etap zmieniony' : 'Stage updated'), {
+          duration: 800,
+        });
+      } catch {
+        toast.error(
+          t('myWork.ideasList.stageChangeFailed', isPolish ? 'Nie udało się zmienić etapu' : 'Failed to update stage')
+        );
+        fetchIdeas();
+      }
+    },
+    [isPolish, fetchIdeas, t]
+  );
 
   const handleMoveToFolder = useCallback(
     async (idea: MyIdea, folderId: string | null) => {
@@ -1159,9 +1208,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     const metaTrailing = (
       <span className="text-[11px] font-medium text-c-text-muted">
         {idea.updatedAt
-          ? new Date(idea.updatedAt).toLocaleDateString()
+          ? formatListDate(idea.updatedAt)
           : idea.createdAt
-            ? new Date(idea.createdAt).toLocaleDateString()
+            ? formatListDate(idea.createdAt)
             : '—'}
       </span>
     );
@@ -1176,9 +1225,46 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             </div>
           ) : null}
         </PreviewMetaCard>
+        {/**
+         * P-4 (Piotr, OBR-07, 2026-07-27): „Nie ma tutaj tych kebabów/hamburgerów
+         * nad treścią, żeby uzupełniać czy tam przerabiać. Nie jest to dobre okno."
+         *
+         * Blok DETAILS dostawał sam `text`, bez ani jednej akcji — a kebab ⋮
+         * renderuje się dopiero, gdy jakaś jest (`hasMenu` w
+         * `PreviewDetailsSection`). Stąd Ideas był jedynym podglądem bez niego:
+         * Inbox, Tasks i Decisions swoje akcje podawały.
+         */}
         <PreviewDetailsSection
           text={idea.body || ''}
           label={t('myWork.ideasList.label', 'Details')}
+          expanded={detailsExpanded}
+          onToggleExpanded={() => setDetailsExpanded((v) => !v)}
+          customActions={[
+            {
+              id: 'toggle',
+              label: detailsExpanded
+                ? t('myWork.ideasList.collapse', isPolish ? 'Zwiń' : 'Collapse')
+                : t('myWork.ideasList.expand', isPolish ? 'Rozwiń' : 'Expand'),
+              icon: ChevronDown,
+              onClick: () => setDetailsExpanded((v) => !v),
+            },
+            {
+              id: 'edit',
+              label: t('myWork.ideasList.editIdea', isPolish ? 'Edytuj' : 'Edit'),
+              icon: Edit2,
+              onClick: () => openIdea(idea.id, idea),
+            },
+            {
+              id: 'copy',
+              label: t('myWork.ideasList.copyContent', isPolish ? 'Kopiuj treść' : 'Copy content'),
+              icon: Copy,
+              onClick: () => {
+                void navigator.clipboard?.writeText(
+                  [idea.title, idea.body].filter(Boolean).join('\n\n')
+                );
+              },
+            },
+          ]}
         />
       </div>
     );
@@ -1264,6 +1350,31 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           onClick: () => openIdeaInProcessFlow(idea),
         },
       ],
+    },
+    /**
+     * Blok 2 kanonu A6 — PRZEJŚCIA STANU.
+     *
+     * Przegląd 128 zrzutów: kebab Ideas miał ~20 pozycji i ani jednej, która
+     * zmienia Stage — „brak bloku 2, nie da się zmienić Stage" (OBR-03).
+     * Etap widniał w kolumnie i w chipie podglądu, ale przestawić go dało się
+     * wyłącznie wchodząc w ideę. Tasks robi to poprawnie od dawna
+     * (To do / In progress / Blocked), Inbox też (Focus →), Decisions też
+     * (Approve / Reject) — Ideas było jedynym wyjątkiem.
+     *
+     * Zapis działa: `PUT /my-work/my-ideas/:id` przyjmuje `stage`
+     * (`my-work.routes.ts`), więc to była luka W UI, nie w backendzie.
+     * Bieżący etap jest wyłączony — klikanie go byłoby zapisem bez zmiany.
+     */
+    {
+      id: 'stage',
+      kind: 'manage',
+      actions: ETAPY_IDEI.map((etap) => ({
+        id: `stage_${etap.id}`,
+        label: etap.label(isPolish),
+        icon: etap.icon,
+        disabled: (idea.stage || 'spark') === etap.id,
+        onClick: () => void handleZmienEtap(idea, etap.id),
+      })),
     },
     {
       id: 'ai',
@@ -1883,9 +1994,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         </div>
                         <span className="shrink-0">
                           {idea.updatedAt
-                            ? new Date(idea.updatedAt).toLocaleDateString()
+                            ? formatListDate(idea.updatedAt)
                             : idea.createdAt
-                              ? new Date(idea.createdAt).toLocaleDateString()
+                              ? formatListDate(idea.createdAt)
                               : '—'}
                         </span>
                       </div>
@@ -2025,9 +2136,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                           </button>
                           <span className="text-[10px] text-c-text-muted whitespace-nowrap">
                             {idea.updatedAt
-                              ? new Date(idea.updatedAt).toLocaleDateString()
+                              ? formatListDate(idea.updatedAt)
                               : idea.createdAt
-                                ? new Date(idea.createdAt).toLocaleDateString()
+                                ? formatListDate(idea.createdAt)
                                 : ''}
                           </span>
                         </div>

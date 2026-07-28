@@ -48,7 +48,9 @@ import {
   type TableColumn,
   type TableRow,
 } from '../../components/standard';
+import { StatusChip } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
+import { formatBytes } from './vaultDocuments';
 
 export interface VaultSafe {
   id: string;
@@ -57,6 +59,13 @@ export interface VaultSafe {
   name: string;
   documentCount: number;
   lastModified: string | null;
+  /** Suma `file_size_bytes` dokumentów sejfu — „ile tu materiału" (research Harvey Vault). */
+  sizeBytes: number;
+  /** Ile dokumentów ma `chunk_count > 0` — gotowość do pracy z AI, ta sama etykieta
+   *  co kolumna „W wiedzy AI" w tabeli dokumentów wewnątrz sejfu (VaultDocumentsView). */
+  indexedCount: number;
+  /** Ile dokumentów ma `status = 'error'` — sygnał „coś się nie zaindeksowało". */
+  errorCount: number;
 }
 
 export interface VaultSafesTableProps {
@@ -196,13 +205,82 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe, se
     {
       id: 'documentCount',
       label: t('vault.safes.documents', isPolish ? 'Dokumenty' : 'Documents'),
-      width: '140px',
+      width: '120px',
       align: 'right',
       sortable: true,
       sortAccessor: (row: TableRow) => Number(row.documentCount) || 0,
       render: (row: TableRow) => (
-        <span className="text-sm text-c-text-secondary">{Number(row.documentCount) || 0}</span>
+        <span className="text-sm tabular-nums text-c-text-secondary">
+          {Number(row.documentCount) || 0}
+        </span>
       ),
+    },
+    {
+      id: 'sizeBytes',
+      // ★ Research Harvey (developers.harvey.ai/guides/vault): lista projektów
+      // Vault pokazuje `files_count` na poziomie repozytorium, ale nie sam rozmiar —
+      // dodajemy go, bo „ile dokumentów" nie mówi „ile materiału" (pytanie
+      // konsultanta: czy jest tu w ogóle coś do pracy, czy to 2 skany czy 200 stron).
+      label: t('vault.safes.size', isPolish ? 'Rozmiar' : 'Size'),
+      width: '100px',
+      align: 'right',
+      sortable: true,
+      sortAccessor: (row: TableRow) => Number(row.sizeBytes) || 0,
+      render: (row: TableRow) => (
+        <span className="text-sm tabular-nums text-c-text-secondary">
+          {formatBytes(Number(row.sizeBytes) || 0)}
+        </span>
+      ),
+    },
+    {
+      id: 'indexedCount',
+      // ★ Ta sama etykieta co „W wiedzy AI" w tabeli dokumentów wewnątrz sejfu
+      // (VaultDocumentsView.tsx colChunks) — odpowiada na pytanie „czy ten
+      // sejf jest w ogóle gotowy do pracy z AI", nie tylko „ile plików wgrano".
+      label: t('vault.safes.inAiKnowledge', isPolish ? 'W wiedzy AI' : 'In AI knowledge'),
+      width: '120px',
+      align: 'right',
+      sortable: true,
+      sortAccessor: (row: TableRow) => Number(row.indexedCount) || 0,
+      render: (row: TableRow) => {
+        const indexed = Number(row.indexedCount) || 0;
+        const total = Number(row.documentCount) || 0;
+        if (total === 0) {
+          return <span className="text-sm tabular-nums text-c-text-muted">—</span>;
+        }
+        return (
+          <span className="text-sm tabular-nums text-c-text-secondary">
+            {indexed}/{total}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'errorCount',
+      // ★ Sygnał „coś się nie zaindeksowało" — chip TYLKO gdy > 0 (danger — jedyny
+      // dopuszczalny czerwony stan, kanon §3: crimson wyłącznie semantyka krytyczna).
+      // Pusty sejf lub sejf bez błędów nie dostaje ozdoby, żeby nie zaszumiać wiersza.
+      label: t('vault.safes.indexingErrors', isPolish ? 'Błędy indeksowania' : 'Indexing errors'),
+      width: '130px',
+      sortable: true,
+      sortAccessor: (row: TableRow) => Number(row.errorCount) || 0,
+      render: (row: TableRow) => {
+        const errors = Number(row.errorCount) || 0;
+        if (errors === 0) {
+          return <span className="text-sm text-c-text-muted">—</span>;
+        }
+        return (
+          <StatusChip
+            label={String(
+              t('vault.safes.indexingErrorsCount', {
+                defaultValue: isPolish ? '{{count}} błąd(y)' : '{{count}} error(s)',
+                count: errors,
+              })
+            )}
+            tone="danger"
+          />
+        );
+      },
     },
     {
       id: 'lastModified',
@@ -272,10 +350,27 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe, se
                   label: t('vault.safes.documents', isPolish ? 'Dokumenty' : 'Documents'),
                   value: previewSafe.documentCount,
                 },
+                {
+                  label: t('vault.safes.size', isPolish ? 'Rozmiar' : 'Size'),
+                  value: formatBytes(previewSafe.sizeBytes),
+                },
+                {
+                  label: t(
+                    'vault.safes.inAiKnowledge',
+                    isPolish ? 'W wiedzy AI' : 'In AI knowledge'
+                  ),
+                  value:
+                    previewSafe.documentCount > 0
+                      ? `${previewSafe.indexedCount}/${previewSafe.documentCount}`
+                      : '—',
+                },
               ]}
             />
             <PreviewDetailsSection
               label={isPolish ? 'Ostatnie dokumenty' : 'Recent documents'}
+              // PILNE-8: to jest LISTA PLIKÓW, nie proza — licznik słów
+              // pokazywał tu „~30 words" nad pięcioma nazwami dokumentów.
+              showWordCount={false}
               loading={recentDocsLoading}
               text={
                 recentDocs && recentDocs.length > 0

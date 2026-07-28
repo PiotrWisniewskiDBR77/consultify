@@ -915,14 +915,23 @@ router.get(
     try {
       const memberProjectIds = await getMemberProjectIds(userId);
 
+      // ★ Kolumny „Rozmiar" / „W wiedzy AI" / „Błędy indeksowania" (research Harvey
+      // Vault + kanon nazw z tabeli dokumentów, patrz VaultDocumentsView.tsx
+      // `colChunks`/`colSize`) — policzone TYM SAMYM zapytaniem GROUP BY, zero N+1.
       const grouped = await DbPromise.all<{
         scope: string | null;
         project_id: string | null;
         owner_id: string | null;
         cnt: number;
         last_modified: string | null;
+        size_bytes: number | null;
+        indexed_cnt: number;
+        error_cnt: number;
       }>(
-        `SELECT scope, project_id, owner_id, COUNT(*) as cnt, MAX(updated_at) as last_modified
+        `SELECT scope, project_id, owner_id, COUNT(*) as cnt, MAX(updated_at) as last_modified,
+                SUM(COALESCE(file_size_bytes, 0)) as size_bytes,
+                SUM(CASE WHEN chunk_count > 0 THEN 1 ELSE 0 END) as indexed_cnt,
+                SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as error_cnt
          FROM knowledge_docs
          WHERE (organization_id = ? OR organization_id IS NULL) AND deleted_at IS NULL
          GROUP BY scope, project_id, owner_id`,
@@ -941,30 +950,57 @@ router.get(
       // właścicielem jest wołający (nie inni userzy organizacji).
       let myCount = 0;
       let myLast: string | null = null;
+      let mySize = 0;
+      let myIndexed = 0;
+      let myErrors = 0;
       // [Sejf organizacji] — scope='organization' (albo NULL, patrz KnowledgeService.getDocuments).
       let orgCount = 0;
       let orgLast: string | null = null;
+      let orgSize = 0;
+      let orgIndexed = 0;
+      let orgErrors = 0;
       // Sejfy per projekt — scope='project', policzone tylko dla projektów,
       // w których wołający jest członkiem (memberProjectIds).
-      const projectCounts = new Map<string, { cnt: number; last: string | null }>();
+      const projectCounts = new Map<
+        string,
+        { cnt: number; last: string | null; size: number; indexed: number; errors: number }
+      >();
 
       for (const row of rows) {
         const cnt = Number(row.cnt) || 0;
+        const size = Number(row.size_bytes) || 0;
+        const indexed = Number(row.indexed_cnt) || 0;
+        const errors = Number(row.error_cnt) || 0;
         if (row.scope === 'user') {
           if (String(row.owner_id || '') === String(userId)) {
             myCount += cnt;
             myLast = mergeLatest(myLast, row.last_modified);
+            mySize += size;
+            myIndexed += indexed;
+            myErrors += errors;
           }
         } else if (row.scope === 'organization' || !row.scope) {
           orgCount += cnt;
           orgLast = mergeLatest(orgLast, row.last_modified);
+          orgSize += size;
+          orgIndexed += indexed;
+          orgErrors += errors;
         } else if (row.scope === 'project' && row.project_id) {
           const pid = String(row.project_id);
           if (memberProjectIds.includes(pid)) {
-            const prev = projectCounts.get(pid) || { cnt: 0, last: null };
+            const prev = projectCounts.get(pid) || {
+              cnt: 0,
+              last: null,
+              size: 0,
+              indexed: 0,
+              errors: 0,
+            };
             projectCounts.set(pid, {
               cnt: prev.cnt + cnt,
               last: mergeLatest(prev.last, row.last_modified),
+              size: prev.size + size,
+              indexed: prev.indexed + indexed,
+              errors: prev.errors + errors,
             });
           }
         }
@@ -989,6 +1025,9 @@ router.get(
           name: 'Mój sejf',
           documentCount: myCount,
           lastModified: myLast,
+          sizeBytes: mySize,
+          indexedCount: myIndexed,
+          errorCount: myErrors,
         },
         {
           id: 'organization',
@@ -997,9 +1036,18 @@ router.get(
           name: 'Sejf organizacji',
           documentCount: orgCount,
           lastModified: orgLast,
+          sizeBytes: orgSize,
+          indexedCount: orgIndexed,
+          errorCount: orgErrors,
         },
         ...memberProjectIds.map((pid) => {
-          const counted = projectCounts.get(pid) || { cnt: 0, last: null };
+          const counted = projectCounts.get(pid) || {
+            cnt: 0,
+            last: null,
+            size: 0,
+            indexed: 0,
+            errors: 0,
+          };
           return {
             id: `project:${pid}`,
             type: 'project' as const,
@@ -1007,6 +1055,9 @@ router.get(
             name: projectNames.get(pid) || 'Untitled project',
             documentCount: counted.cnt,
             lastModified: counted.last,
+            sizeBytes: counted.size,
+            indexedCount: counted.indexed,
+            errorCount: counted.errors,
           };
         }),
       ];
@@ -1020,6 +1071,195 @@ router.get(
       return res
         .status(500)
         .json({ error: 'Nie udało się pobrać listy sejfów', code: 'KNOWLEDGE_VAULT_SAFES_FAILED' });
+    }
+  })
+);
+
+/**
+ * ★ VLT-FOLDERS — foldery WEWNĄTRZ sejfu Vault (dzielą temat, nie granicę
+ * bezpieczeństwa — sejf/scope zostaje jedyną granicą dostępu, decyzja
+ * właściciela). Folder NIE niesie własnego pola poziomu: `scope`/`project_id`
+ * są nadawane RAZ przy tworzeniu (dziedziczą po sejfie, w którym folder
+ * powstał) i widoczność liczy DOKŁADNIE ta sama reguła co dla dokumentów
+ * (`KnowledgeService.getDocuments`/`getFolders`, ta sama gałąź WHERE).
+ *
+ * GET    /vault-folders?scope=&project_id=  — lista folderów w JEDNYM sejfie
+ * POST   /vault-folders                     — nowy folder (scope/projectId wymagane)
+ * PUT    /vault-folders/:id                 — rename/opis/kolor — TYLKO twórca
+ * DELETE /vault-folders/:id                 — usuń — TYLKO twórca; dokumenty zostają, odpięte
+ */
+router.get(
+  '/vault-folders',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.getFolders) return notConfigured(res);
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const requestedScope = parseVaultScope(req.query.scope);
+    const requestedProjectId =
+      typeof req.query.project_id === 'string' && req.query.project_id.trim()
+        ? req.query.project_id.trim()
+        : null;
+
+    if (requestedScope === 'project' && requestedProjectId && userId) {
+      const canAccess = await contextDocumentService.canAccessProject({
+        organizationId: orgId,
+        userId,
+        projectId: requestedProjectId,
+        userRole: req.user?.role || 'USER',
+      });
+      if (!canAccess) return res.status(403).json({ error: 'Brak dostępu do projektu' });
+    }
+
+    try {
+      const memberProjectIds = userId ? await getMemberProjectIds(userId) : [];
+      const folders = await KnowledgeService.getFolders(orgId, userId, {
+        scope: requestedScope,
+        projectId: requestedProjectId,
+        memberProjectIds,
+      });
+      return res.json(
+        folders.map((f: any) => ({
+          id: f.id,
+          name: f.name,
+          description: f.description ?? null,
+          color: f.color ?? null,
+          scope: f.scope,
+          projectId: f.project_id ?? null,
+          ownerId: f.owner_id,
+          parentFolderId: f.parent_folder_id ?? null,
+          createdAt: f.created_at,
+          updatedAt: f.updated_at,
+        }))
+      );
+    } catch (err: any) {
+      logger.error('[Knowledge] Get vault folders failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się pobrać folderów', code: 'KNOWLEDGE_VAULT_FOLDERS_FAILED' });
+    }
+  })
+);
+
+router.post(
+  '/vault-folders',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.createFolder) return notConfigured(res);
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const name = String(req.body?.name || '').trim();
+    if (!name) return res.status(400).json({ error: 'name is required' });
+
+    const scope = parseVaultScope(req.body?.scope);
+    if (!scope) {
+      return res.status(400).json({ error: 'scope is required (user|project|organization)' });
+    }
+
+    const rawProjectId =
+      typeof req.body?.projectId === 'string' && req.body.projectId.trim()
+        ? req.body.projectId.trim()
+        : typeof req.body?.project_id === 'string' && req.body.project_id.trim()
+          ? req.body.project_id.trim()
+          : null;
+
+    if (scope === 'project') {
+      if (!rawProjectId) {
+        return res.status(400).json({ error: 'projectId wymagany dla scope=project' });
+      }
+      const canAccess = await contextDocumentService.canAccessProject({
+        organizationId: orgId,
+        userId,
+        projectId: rawProjectId,
+        userRole: req.user?.role || 'USER',
+      });
+      if (!canAccess) return res.status(403).json({ error: 'Brak dostępu do projektu' });
+    }
+
+    try {
+      const created = await KnowledgeService.createFolder(orgId, userId, {
+        name,
+        description: typeof req.body?.description === 'string' ? req.body.description : null,
+        color: req.body?.color ? String(req.body.color) : null,
+        parentFolderId: req.body?.parentFolderId ? String(req.body.parentFolderId) : null,
+        scope,
+        projectId: scope === 'project' ? rawProjectId : null,
+      });
+      return res.status(201).json(created);
+    } catch (err: any) {
+      logger.error('[Knowledge] Create vault folder failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się utworzyć folderu',
+        code: 'KNOWLEDGE_VAULT_FOLDER_CREATE_FAILED',
+      });
+    }
+  })
+);
+
+router.put(
+  '/vault-folders/:folderId',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.updateFolder) return notConfigured(res);
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { folderId } = req.params;
+    const { name, description, color, parentFolderId } = req.body || {};
+    try {
+      const result = await KnowledgeService.updateFolder(orgId, userId, folderId, {
+        name: typeof name === 'string' ? name : undefined,
+        description: description !== undefined ? description : undefined,
+        color: color !== undefined ? color : undefined,
+        parentFolderId: parentFolderId !== undefined ? parentFolderId : undefined,
+      });
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[Knowledge] Update vault folder failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się zaktualizować folderu',
+        code: 'KNOWLEDGE_VAULT_FOLDER_UPDATE_FAILED',
+      });
+    }
+  })
+);
+
+router.delete(
+  '/vault-folders/:folderId',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.deleteFolder) return notConfigured(res);
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { folderId } = req.params;
+    try {
+      const result = await KnowledgeService.deleteFolder(orgId, userId, folderId);
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[Knowledge] Delete vault folder failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się usunąć folderu',
+        code: 'KNOWLEDGE_VAULT_FOLDER_DELETE_FAILED',
+      });
     }
   })
 );
@@ -1063,7 +1303,7 @@ router.put(
       return res.status(403).json({ error: 'Super admin access required' });
     }
 
-    const { category, tags } = req.body || {};
+    const { category, tags, folderId } = req.body || {};
 
     if (category !== undefined && category !== null && typeof category !== 'string') {
       return res.status(400).json({ error: 'Invalid category' });
@@ -1071,10 +1311,45 @@ router.put(
     if (tags !== undefined && tags !== null && !Array.isArray(tags)) {
       return res.status(400).json({ error: 'Invalid tags' });
     }
+    if (folderId !== undefined && folderId !== null && typeof folderId !== 'string') {
+      return res.status(400).json({ error: 'Invalid folderId' });
+    }
 
+    // ★ VLT-FOLDERS — przypisanie do folderu (kebab wiersza „Przenieś do
+    // folderu", VaultDocumentsView.tsx). Folder MUSI żyć w TYM SAMYM sejfie co
+    // dokument (poziom + — dla project — projekt) — inaczej to byłaby furtka do
+    // sklejenia dokumentu z folderem z innego, niewidocznego dla właściciela
+    // dokumentu poziomu. `null`/`''` = odepnij (bez folderu).
+    let resolvedFolderId: string | null | undefined;
+    if (folderId !== undefined) {
+      if (!folderId) {
+        resolvedFolderId = null;
+      } else if (KnowledgeService?.getFolderById) {
+        const folder = await KnowledgeService.getFolderById(orgId, String(folderId));
+        if (!folder) return res.status(400).json({ error: 'Folder not found' });
+        const docScope = doc.scope || 'organization';
+        if (folder.scope !== docScope) {
+          return res.status(400).json({ error: 'Folder należy do innego poziomu sejfu' });
+        }
+        if (
+          docScope === 'project' &&
+          String(folder.project_id || '') !== String(doc.project_id || '')
+        ) {
+          return res.status(400).json({ error: 'Folder należy do innego projektu' });
+        }
+        resolvedFolderId = String(folderId);
+      }
+    }
+
+    // ★ NAPRAWA PRZY OKAZJI: poprzednia wersja zawsze wysyłała `category ?? null`
+    // / `Array.isArray(tags) ? tags : null` do `updateDocumentMetadata` — więc
+    // KAŻDE PUT (np. samo `{ folderId }` z kebaba) zerowało category/tags, bo
+    // `updates.category !== undefined` było zawsze prawdą. Teraz pola idą
+    // WYŁĄCZNIE gdy faktycznie były w body (spójnie z kontraktem `updateDocumentMetadata`).
     const result = await KnowledgeService.updateDocumentMetadata(orgId, id, {
-      category: category ?? null,
-      tags: Array.isArray(tags) ? tags : null,
+      ...(category !== undefined ? { category: category ?? null } : {}),
+      ...(tags !== undefined ? { tags: Array.isArray(tags) ? tags : null } : {}),
+      ...(resolvedFolderId !== undefined ? { folderId: resolvedFolderId } : {}),
     });
 
     return res.json({ success: true, ...result });
