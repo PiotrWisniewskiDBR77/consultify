@@ -12,7 +12,7 @@
  * NIE wspiera "Wstaw węzeł na połączeniu" (brak logiki rozcięcia krawędzi), więc
  * ta pozycja świadomie NIE występuje — zamiast atrapy.
  */
-import { ArrowLeftRight, Paintbrush, Trash2, Type } from 'lucide-react';
+import { ArrowLeftRight, ArrowRight, Paintbrush, Trash2, Type } from 'lucide-react';
 import React, { useCallback, useEffect, useRef } from 'react';
 
 interface WhiteboardEdgeContextMenuProps {
@@ -23,6 +23,12 @@ interface WhiteboardEdgeContextMenuProps {
   onClose: () => void;
   onEditLabel: () => void;
   onCycleStyle: () => void;
+  /**
+   * Strzałka kierunku przepływu (2026-07-28) — cykl none → end → both → start
+   * na TEJ krawędzi, dokładnie jak `onCycleStyle` obok. Wspólne pole
+   * `edge.data.arrowDirection` z Mapą myśli i Przepływem procesu.
+   */
+  onCycleArrow: () => void;
   onReverse: () => void;
   onDelete: () => void;
 }
@@ -45,6 +51,7 @@ export const WhiteboardEdgeContextMenu: React.FC<WhiteboardEdgeContextMenuProps>
   onClose,
   onEditLabel,
   onCycleStyle,
+  onCycleArrow,
   onReverse,
   onDelete,
 }) => {
@@ -90,6 +97,13 @@ export const WhiteboardEdgeContextMenu: React.FC<WhiteboardEdgeContextMenuProps>
       labelPl: 'Odwróć kierunek',
       labelEn: 'Reverse direction',
       run: onReverse,
+    },
+    {
+      id: 'edge_arrow_direction',
+      icon: ArrowRight,
+      labelPl: 'Kierunek strzałki',
+      labelEn: 'Arrow direction',
+      run: onCycleArrow,
     },
     {
       id: 'edge_change_style',

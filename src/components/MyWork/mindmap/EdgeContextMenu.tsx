@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Edit3, Paintbrush, Plus, Trash2, Type } from 'lucide-react';
+import { ArrowLeftRight, ArrowRight, Edit3, Paintbrush, Plus, Trash2, Type } from 'lucide-react';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -16,9 +16,19 @@ export interface EdgeContextMenuProps {
   onAction: (action: string) => void;
 }
 
+// Strzałka kierunku (2026-07-28). Pozycja NIE idzie przez `onAction` tylko
+// dyspozycją `idea-workspace-quick-action` → `mm_edge_arrow`, bo logika cyklu
+// (none → end → both → start) potrzebuje dostępu do samej krawędzi; obsługuje
+// ją `mindmap/useMindMapQuickActions.ts`, tak jak resztę akcji `mm_*`.
+// Wzorzec cyklu 1:1 z sąsiednim „Zmień styl linii" (jeden klik = następny stan,
+// bieżący stan raportuje toast) — świadomie NIE dokładamy tu nowego typu
+// kontrolki, żeby menu krawędzi zostało jednorodną listą pozycji.
+const EDGE_ARROW_ACTION = 'edge_arrow_direction';
+
 export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
   x,
   y,
+  edgeId,
   isPl: _isPl,
   isLocked,
   isUserCreated,
@@ -48,10 +58,19 @@ export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
 
   const handleClick = useCallback(
     (action: string) => {
+      if (action === EDGE_ARROW_ACTION) {
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-quick-action', {
+            detail: { action: 'mm_edge_arrow', edgeId },
+          })
+        );
+        onClose();
+        return;
+      }
       onAction(action);
       onClose();
     },
-    [onAction, onClose]
+    [edgeId, onAction, onClose]
   );
 
   const items: MenuItemBase[] = [
@@ -71,6 +90,12 @@ export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
       id: 'edge_reverse',
       labelEn: 'Reverse direction',
       icon: ArrowLeftRight,
+      disabled: isLocked,
+    },
+    {
+      id: EDGE_ARROW_ACTION,
+      labelEn: 'Arrow direction',
+      icon: ArrowRight,
       disabled: isLocked,
     },
     {

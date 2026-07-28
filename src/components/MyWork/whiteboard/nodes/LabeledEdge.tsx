@@ -3,6 +3,12 @@ import { getBezierPath } from '@reactflow/core';
 import React from 'react';
 import { type EdgeProps } from 'reactflow';
 
+import {
+  EdgeArrowMarkers,
+  arrowMarkerAttrs,
+  resolveArrowDirection,
+} from '../../canvas/edgeArrowMarkers';
+
 export const LabeledEdge: React.FC<EdgeProps> = ({
   id,
   sourceX,
@@ -42,9 +48,20 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
   const edgeColor = data?.color || (selected ? 'var(--c-tag-2)' : 'var(--c-border-strong)');
   const edgeColorEnd = data?.colorEnd || (selected ? 'var(--c-tag-2)' : 'var(--c-border)');
   const gradientId = `edge-gradient-${id}`;
+  // Strzałka kierunku — wspólny model (canvas/edgeArrowMarkers.tsx). Grot na
+  // końcu bierze kolor końca gradientu, na początku — kolor początku, więc
+  // przy `both` każda strzałka zgadza się z barwą swojego końca linii.
+  const arrowDirection = resolveArrowDirection(data?.arrowDirection, 'none');
+  const arrowAttrs = arrowMarkerAttrs(id, arrowDirection);
 
   return (
     <>
+      <EdgeArrowMarkers
+        edgeId={id}
+        direction={arrowDirection}
+        color={edgeColorEnd}
+        colorStart={edgeColor}
+      />
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor={edgeColor} />
@@ -78,7 +95,8 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
                 ? '6 3 2 3'
                 : undefined
         }
-        markerEnd={markerEnd}
+        markerStart={arrowAttrs.markerStart}
+        markerEnd={arrowAttrs.markerEnd ?? markerEnd}
         style={style}
       />
       <circle r={selected ? 3 : 2} fill={edgeColor} opacity={0.7}>

@@ -3,6 +3,12 @@ import { EdgeLabelRenderer, getSmoothStepPath } from '@reactflow/core';
 import React, { useCallback, useState } from 'react';
 import { type EdgeProps } from 'reactflow';
 
+import {
+  EdgeArrowMarkers,
+  arrowMarkerAttrs,
+  resolveArrowDirection,
+} from '../canvas/edgeArrowMarkers';
+
 export const LabeledEdge: React.FC<EdgeProps> = ({
   id,
   sourceX,
@@ -73,9 +79,14 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
         .trim() || rawStroke
     : rawStroke;
   const strokeWidth = selected ? 3 : (style?.strokeWidth as number) || 2;
+  // Strzałka kierunku — wspólny model (canvas/edgeArrowMarkers.tsx). Kolor
+  // grotu = już rozwiązany `strokeColor` (literał), nie gradient krawędzi.
+  const arrowDirection = resolveArrowDirection(data?.arrowDirection, 'none');
+  const arrowAttrs = arrowMarkerAttrs(id, arrowDirection);
 
   return (
     <>
+      <EdgeArrowMarkers edgeId={id} direction={arrowDirection} color={strokeColor} />
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor={strokeColor} stopOpacity={0.3} />
@@ -134,7 +145,8 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
                 ? '6 3 2 3'
                 : undefined
         }
-        markerEnd={markerEnd}
+        markerStart={arrowAttrs.markerStart}
+        markerEnd={arrowAttrs.markerEnd ?? markerEnd}
       />
 
       {/* Animated flowing dot */}

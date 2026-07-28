@@ -12,6 +12,11 @@ import type { Edge, Node } from 'reactflow';
 import i18n from '@/i18n';
 import { Api } from '@/services/api';
 
+import {
+  type EdgeArrowDirection,
+  nextArrowDirection,
+  resolveArrowDirection,
+} from '../canvas/edgeArrowMarkers';
 import type { MapStructureType, MindMapInteractionMode } from '../ideaSelectionTypes';
 import { findIdeaTemplate } from '../IdeaTemplateGallery';
 import { applyForceLayout } from './ForceDirectedLayout';
@@ -177,6 +182,14 @@ export interface UseMindMapQuickActionsOpts {
   handlers: MindMapQuickActionHandlers;
   setters: MindMapQuickActionSetters;
 }
+
+/** Awaryjne etykiety toastu strzałki, gdy brak tłumaczenia (i18n = SSOT). */
+const ARROW_TOAST_FALLBACK: Record<EdgeArrowDirection, string> = {
+  none: 'Arrow: none',
+  end: 'Arrow: at the end',
+  start: 'Arrow: at the start',
+  both: 'Arrow: both ends',
+};
 
 export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
   const {
@@ -1232,6 +1245,72 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         });
     }
     if (action === 'mm_branch_analysis') setters.setShowBranchComparison(true);
+
+    // ── Strzałka kierunku przepływu na krawędzi (2026-07-28) ────────────────
+    // Zgłoszenie właściciela: „strzałki by się przydały i one mogłyby pokazywać
+    // kierunek przepływu linii". Model = `edge.data.arrowDirection`, dokładnie
+    // ten sam, którego od #6p używa Przepływ procesu (patrz
+    // `canvas/edgeArrowMarkers.tsx`) — nie wprowadzamy drugiej konwencji.
+    //
+    // Dwa wejścia, JEDNO pole (nie ma ustawienia globalnego mapy, którego nie
+    // dałoby się nadpisać per linia):
+    //  • `detail.edgeId`  — prawy klik na połączeniu → cykl na tej krawędzi
+    //    (none → end → both → start), stan raportuje toast, jak przy „Zmień
+    //    styl linii".
+    //  • `detail.nodeId` + `detail.direction` — hurtowe ustawienie z menu
+    //    „Styl linii" w pasku węzła: WSZYSTKIE połączenia wychodzące z gałęzi
+    //    (rekurencyjnie w dół), bo tam właściciel szukał tej opcji.
+    if (action === 'mm_edge_arrow') {
+      if (locked) return;
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      const nodeId = typeof detail?.nodeId === 'string' ? detail.nodeId : undefined;
+      const explicit = resolveArrowDirection(detail?.direction, 'none');
+
+      // Zbiór krawędzi do zmiany: pojedyncza albo całe poddrzewo gałęzi.
+      let targetIds: Set<string>;
+      if (edgeId) {
+        targetIds = new Set([edgeId]);
+      } else if (nodeId) {
+        const subtree = new Set<string>([nodeId]);
+        // BFS w dół po krawędziach — gałąź = węzeł + wszystko, co z niego wisi.
+        let grew = true;
+        while (grew) {
+          grew = false;
+          for (const e of edges) {
+            if (subtree.has(e.source) && !subtree.has(e.target)) {
+              subtree.add(e.target);
+              grew = true;
+            }
+          }
+        }
+        targetIds = new Set(edges.filter((e) => subtree.has(e.source)).map((e) => e.id));
+      } else {
+        return;
+      }
+      if (targetIds.size === 0) {
+        toast(i18n.t('mindmap.edgeArrow.noEdges', 'No connections in this branch'), {
+          icon: '⚠️',
+        });
+        return;
+      }
+
+      let applied: EdgeArrowDirection = explicit;
+      setters.setEdges((prev) =>
+        prev.map((e) => {
+          if (!targetIds.has(e.id)) return e;
+          const current = resolveArrowDirection(e.data?.arrowDirection, 'none');
+          const next = edgeId ? nextArrowDirection(current) : explicit;
+          applied = next;
+          return { ...e, data: { ...(e.data || {}), arrowDirection: next } };
+        })
+      );
+      toast.success(
+        i18n.t(`mindmap.edgeArrow.${applied}`, {
+          defaultValue: ARROW_TOAST_FALLBACK[applied],
+        }),
+        { duration: 900 }
+      );
+    }
   };
 
   useEffect(() => {

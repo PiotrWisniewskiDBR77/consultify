@@ -271,6 +271,19 @@ const INITIAL_MAP = {
         target: 'idea-governance-2',
         type: 'gradient',
       },
+      // Krawędź `labeled` (relacja użytkownika, nie struktura drzewa) —
+      // mapa myśli rejestruje DWA typy krawędzi (`gradient` + `labeled`,
+      // patrz `edgeTypes` w IdeaRecommendationMap) i rysują je dwa różne
+      // komponenty o różnej geometrii ścieżki (Bézier vs smoothstep).
+      // Bez tej jednej krawędzi w fixture połowa ścieżek renderowania
+      // krawędzi była nietestowalna w harnessie (m.in. strzałki kierunku).
+      {
+        id: 'e-rel-scope-quality',
+        source: 'idea-scope-1',
+        target: 'idea-quality-1',
+        type: 'labeled',
+        data: { label: 'wymusza', relation: 'depends_on', userCreated: true },
+      },
     ],
     extensions: {},
   },

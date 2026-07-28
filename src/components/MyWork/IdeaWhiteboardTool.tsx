@@ -74,6 +74,11 @@ import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout
 import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
+import {
+  type EdgeArrowDirection,
+  nextArrowDirection,
+  resolveArrowDirection,
+} from './canvas/edgeArrowMarkers';
 import { WhiteboardEdgeContextMenu } from './whiteboard/WhiteboardEdgeContextMenu';
 import { whiteboardEdgeTypes, whiteboardNodeTypes } from './whiteboard/nodes/nodeTypes';
 import {
@@ -3052,6 +3057,33 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
   }, [collab, edgeContextMenu, pushUndoSnapshot, setEdges]);
 
+  // edge.set_arrow — strzałka kierunku przepływu (2026-07-28, zgłoszenie
+  // właściciela). Cykl none → end → both → start na `data.arrowDirection`,
+  // czyli DOKŁADNIE tym polu, którego używa Przepływ procesu i Mapa myśli
+  // (SSOT geometrii: `canvas/edgeArrowMarkers.tsx`). Ta sama ścieżka zapisu co
+  // `handleEdgeCycleStyle` → undo + collab + autosave bez nowej mechaniki.
+  const handleEdgeCycleArrow = useCallback(() => {
+    if (!edgeContextMenu) return;
+    pushUndoSnapshot();
+    let updated: Edge | undefined;
+    let applied: EdgeArrowDirection = 'none';
+    setEdges((prev) =>
+      prev.map((ed) => {
+        if (ed.id !== edgeContextMenu.edgeId) return ed;
+        applied = nextArrowDirection(resolveArrowDirection(ed.data?.arrowDirection, 'none'));
+        updated = { ...ed, data: { ...(ed.data || {}), arrowDirection: applied } };
+        return updated;
+      })
+    );
+    if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
+    toast.success(
+      t(`mindmap.edgeArrow.${applied}`, {
+        defaultValue: applied === 'none' ? 'Arrow: none' : `Arrow: ${applied}`,
+      }),
+      { duration: 900 }
+    );
+  }, [collab, edgeContextMenu, pushUndoSnapshot, setEdges, t]);
+
   // edge.reverse — zamiana source/target (i uchwytów), kierunek strzałki podąża.
   const handleEdgeReverse = useCallback(() => {
     if (!edgeContextMenu) return;
@@ -3695,6 +3727,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               onClose={() => setEdgeContextMenu(null)}
               onEditLabel={handleEdgeEditLabel}
               onCycleStyle={handleEdgeCycleStyle}
+              onCycleArrow={handleEdgeCycleArrow}
               onReverse={handleEdgeReverse}
               onDelete={handleEdgeDelete}
             />
