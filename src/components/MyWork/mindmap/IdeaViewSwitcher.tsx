@@ -50,13 +50,22 @@ export function IdeaViewSwitcher({
   const anchorRef = useRef<HTMLDivElement | null>(null);
   const [box, setBox] = useState<{ right: number; bottom: number } | null>(null);
   const zjednoczonyPasek = isIdeaBottomBarUnifiedEnabled();
+  /**
+   * Tabela nie ma płótna React Flow, więc nie ma `CanvasZoomControls`, a co za
+   * tym idzie — gniazda. Nie zgadujemy tego z DOM (to by dało migotanie albo,
+   * jak w pierwszym podejściu, ZNIKNIĘCIE przełącznika w Tabeli): jedziemy z
+   * `activeTool`, który jest deterministyczny. Tabela zostaje na dzisiejszej
+   * ścieżce — własna pigułka w rogu. To NAZWANY wyjątek, nie przeoczenie.
+   */
+  const bezPlotna = activeTool === 'table';
+  const doGniazda = zjednoczonyPasek && !bezPlotna;
   // Gniazdo w pigułce zoomu. Montuje się razem z `CanvasZoomControls`, czyli
   // PÓŹNIEJ niż my i na nowo przy każdej zmianie narzędzia — stąd krótkie
   // dopytywanie, a nie jednorazowe `getElementById` na starcie.
   const [gniazdo, setGniazdo] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (!zjednoczonyPasek) {
+    if (!doGniazda) {
       setGniazdo(null);
       return;
     }
@@ -67,8 +76,8 @@ export function IdeaViewSwitcher({
     };
     szukaj();
     const raf = requestAnimationFrame(szukaj);
-    // Tabela nie ma płótna React Flow, więc gniazda nigdy nie będzie — pętla
-    // sama wygasa po ~6 s i przełącznik zostaje na dzisiejszej ścieżce.
+    // Kontrolki rogu montują się później niż my (płótno ładuje graf) — stąd
+    // krótkie dopytywanie; pętla wygasa po ~6 s, żeby nie tykać w nieskończoność.
     const interwal = window.setInterval(() => {
       szukaj();
       if (++tiki > 20) window.clearInterval(interwal);
@@ -77,11 +86,11 @@ export function IdeaViewSwitcher({
       cancelAnimationFrame(raf);
       window.clearInterval(interwal);
     };
-  }, [zjednoczonyPasek, activeTool]);
+  }, [doGniazda, activeTool]);
 
   useEffect(() => {
-    // Flaga ON => zero pomiaru; pozycję narzuca pigułka, do której wchodzimy.
-    if (zjednoczonyPasek) return;
+    // Wchodzimy do gniazda => zero pomiaru; pozycję narzuca pigułka zoomu.
+    if (doGniazda) return;
     const measure = () => {
       const canvas = document.querySelector('[data-testid="mels-canvas"]');
       if (!canvas) {
@@ -187,7 +196,7 @@ export function IdeaViewSwitcher({
       cancelAnimationFrame(raf);
       timery.forEach(clearTimeout);
     };
-  }, [rightInset, zjednoczonyPasek]);
+  }, [rightInset, doGniazda]);
 
   const przyciski = (
     <>
@@ -223,7 +232,7 @@ export function IdeaViewSwitcher({
   );
 
   // ── Flaga ON: jeden rząd — wchodzimy DO pigułki zoomu ────────────────────
-  if (zjednoczonyPasek) {
+  if (doGniazda) {
     if (!gniazdo) return null;
     return createPortal(
       <div
