@@ -3928,6 +3928,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   return (
                     <Menu3DropdownChip
                       data-testid="mywork-decisions-priority-chip"
+                      // P-15: ten chip stoi w Menu 2, wiec ma miec h-9 jak sasiedzi.
+                      bar="menu2"
                       icon={<Flag size={14} className="text-c-text-muted" />}
                       label={
                         decisionsPriorityActive && activeDecisionsPriority

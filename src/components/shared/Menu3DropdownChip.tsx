@@ -54,6 +54,23 @@ export interface Menu3DropdownItem {
 }
 
 export interface Menu3DropdownChipProps {
+  /**
+   * Pasek, w którym chip stoi — decyduje o WYSOKOŚCI.
+   *
+   * P-15 (Piotr, OBR-39, 2026-07-27): „Przycisk `Priority` nie jest wielkości
+   * pozostałych przycisków w tym menu. Generalnie one wszystkie powinny być tej
+   * samej wielkości."
+   *
+   * Przyczyna: filtr `Priority` w Menu 2 (Decisions) używał TEGO komponentu,
+   * a on jest chipem Menu 3 — czyli `h-7` (28px). Sąsiedzi w Menu 2 mają
+   * kanoniczne `h-9` (36px, §C4), więc jeden element odstawał o 8px.
+   * Ten sam gatunek pomyłki, co czwarte warstwy nagłówkowe: element z jednej
+   * warstwy postawiony w drugiej.
+   *
+   * `'menu3'` (domyślnie) = `h-7`, bez zmian dla dotychczasowych wywołań.
+   * `'menu2'` = `h-9`, do użycia w pasku Menu 2.
+   */
+  bar?: 'menu2' | 'menu3';
   /** Chip icon (16px lucide). */
   icon?: React.ReactNode;
   /** Chip label. */
@@ -72,6 +89,7 @@ export interface Menu3DropdownChipProps {
 }
 
 export const Menu3DropdownChip: React.FC<Menu3DropdownChipProps> = ({
+  bar = 'menu3',
   icon,
   label,
   badgeCount,
@@ -149,7 +167,13 @@ export const Menu3DropdownChip: React.FC<Menu3DropdownChipProps> = ({
         aria-label={ariaLabel || label}
         data-testid={testId}
         onClick={() => setOpen((prev) => !prev)}
-        className={cn(active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE, className)}
+        className={cn(
+          active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE,
+          // §C4: kontrolki Menu 2 maja h-9. Chip Menu 3 ma h-7 — nadpisujemy
+          // wysokosc i typografie, gdy ten sam komponent stoi w Menu 2 (P-15).
+          bar === 'menu2' ? 'h-9 text-sm' : '',
+          className
+        )}
       >
         {icon}
         <span className="max-w-[140px] truncate">{label}</span>
