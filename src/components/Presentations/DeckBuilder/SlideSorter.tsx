@@ -4,11 +4,13 @@ import {
   GripVertical,
   LayoutGrid,
   List,
+  Lock,
   MoreVertical,
   Move,
   Plus,
   RefreshCw,
   Trash2,
+  Unlock,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +28,12 @@ interface SlideSorterProps {
   onDelete: (index: number) => void;
   onAddCard: () => void;
   isCardOutdated?: (cardId: string) => boolean;
+  /**
+   * Fala 2 (SPEC §3.3.2) — widoczna, odwracalna kłódka. Karta tknięta ręcznie
+   * (Tryb 1 / lokalne AI) dostaje ją automatycznie; klik świadomie
+   * odblokowuje/blokuje kartę bez czekania na ręczną zmianę.
+   */
+  onToggleLock?: (cardId: string) => void;
 }
 
 export const SlideSorter: React.FC<SlideSorterProps> = ({
@@ -38,6 +46,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
   onDelete,
   onAddCard,
   isCardOutdated,
+  onToggleLock,
 }) => {
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
@@ -138,6 +147,27 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                     </div>
                   )}
 
+                  {/* ★ Fala 2 — widoczna, odwracalna kłódka (SPEC §3.3.2). Karta
+                      tknięta ręcznie (Tryb 1 / lokalne AI) dostaje `is_locked`
+                      automatycznie; klik świadomie odblokowuje. Zawsze
+                      widoczna gdy zablokowana (nie tylko na hover), bo to jest
+                      informacja o STANIE ochrony, nie akcja kontekstowa. */}
+                  {card.is_locked && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleLock?.(card.card_id);
+                      }}
+                      title={t(
+                        'presentations.builder.unlockSlide',
+                        'Manually edited — protected from AI rewrite. Click to unlock.'
+                      )}
+                      className="absolute bottom-1 right-1 flex items-center gap-0.5 p-0.5 rounded bg-black/40 text-c-text hover:bg-black/60"
+                    >
+                      <Lock size={9} />
+                    </button>
+                  )}
+
                   {/* Context menu trigger */}
                   <button
                     onClick={(e) => {
@@ -164,6 +194,21 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                     className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${INTENT_COLORS[card.intent] || 'bg-c-text-muted'}`}
                   />
                   <span className="text-c-text truncate flex-1">{card.title}</span>
+                  {card.is_locked && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleLock?.(card.card_id);
+                      }}
+                      title={t(
+                        'presentations.builder.unlockSlide',
+                        'Manually edited — protected from AI rewrite. Click to unlock.'
+                      )}
+                      className="text-c-text-secondary hover:text-c-text flex-shrink-0"
+                    >
+                      <Lock size={10} />
+                    </button>
+                  )}
                   {outdated && <RefreshCw size={10} className="text-amber-500 flex-shrink-0" />}
                   <button
                     onClick={(e) => {
@@ -191,6 +236,27 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                   >
                     <Copy size={12} /> {t('presentations.builder.duplicate')}
                   </button>
+
+                  {onToggleLock && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleLock(card.card_id);
+                        closeContextMenu();
+                      }}
+                      className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-c-surface-raised text-c-text"
+                    >
+                      {card.is_locked ? (
+                        <>
+                          <Unlock size={12} /> {t('presentations.builder.unlockSlideAction', 'Unlock slide')}
+                        </>
+                      ) : (
+                        <>
+                          <Lock size={12} /> {t('presentations.builder.lockSlideAction', 'Lock slide')}
+                        </>
+                      )}
+                    </button>
+                  )}
 
                   {/* Move ▸ submenu (na górę / na dół / na pozycję) */}
                   <div

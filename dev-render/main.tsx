@@ -24,6 +24,9 @@ const MaterialyLauncherScreen = React.lazy(() => import('./screens/materialy-lau
 const MaterialyTemplateLibrarySliceScreen = React.lazy(
   () => import('./screens/materialy-template-library-slice')
 );
+const MaterialyDraftTemplateVisibilityFixScreen = React.lazy(
+  () => import('./screens/materialy-draft-template-visibledraft-fix')
+);
 const DocumentStudioTemplateResolveErrorScreen = React.lazy(
   () => import('./screens/document-studio-template-resolve-error')
 );
@@ -236,6 +239,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'MATERIAŁY — Biblioteka wzorców, slice „szablon dokumentu": Legacy · osierocony (bez użycia) · brak metadanych',
     render: () => <MaterialyTemplateLibrarySliceScreen />,
+  },
+  'materialy-draft-template-visibledraft-fix': {
+    label:
+      'MATERIAŁY — naprawa 2026-07-28: draft szablonu dokumentu teraz widoczny w Bibliotece (owner: "New template" nie pokazywał mojej pracy)',
+    render: () => <MaterialyDraftTemplateVisibilityFixScreen />,
   },
   'document-studio-template-resolve-error': {
     label:
