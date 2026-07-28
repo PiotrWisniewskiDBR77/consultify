@@ -21,7 +21,6 @@ import {
   Layers,
   Lightbulb,
   Loader2,
-  MessageSquare,
   Monitor,
   Presentation,
   Trash2,
@@ -1230,14 +1229,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const isHubChatActive =
     Boolean(hubChatId) && activeConversationId === hubChatId && !isChatCollapsed;
 
-  const openInterpretationDraft = useCallback(() => {
-    const targetAssessment = assessments[0];
-    if (!targetAssessment?.id) return;
-    navigate(
-      `/assessment/${String(targetAssessment.type || 'drd').toLowerCase()}/${targetAssessment.id}`
-    );
-  }, [assessments, navigate]);
-
   // #70: shared "open/focus the hub chat" plumbing, extracted so AI Triage can
   // reuse it and additionally post a framing message (see handleOpenHubTriage
   // below) instead of being a byte-for-byte duplicate of Chat's onClick.
@@ -1286,14 +1277,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     tabs,
     toggleChatCollapse,
   ]);
-
-  const handleOpenHubChat = useCallback(async () => {
-    try {
-      await ensureHubChatOpen();
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to open AI chat');
-    }
-  }, [ensureHubChatOpen]);
 
   // #70: "AI Triage" used to be a byte-for-byte duplicate of "Chat" (same
   // onClick, same active state) — a pill that promised AI prioritization but
@@ -1393,64 +1376,28 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
   const hubMenu3Chips = menu3StatusChipsEnabled ? statusFilterChips : hubMenu3InfoChips;
 
-  const thirdHubAction = useMemo(() => {
-    if (activeTab === 'reports') {
-      return {
-        id: 'report',
-        label: 'Generate Report',
-        icon: FileText,
-        onClick: () => setShowNewReportModal(true),
-        active: false,
-        disabled: assessments.length === 0,
-        title: t(
-          'assessment.hub.generateReportTooltip',
-          'Generate a new report from a completed assessment.'
-        ),
-      };
-    }
-
-    if (activeTab === 'initiatives') {
-      return {
-        id: 'initiative',
-        label: 'Initiative Pack',
-        icon: Lightbulb,
-        onClick: () => setShowInitiativesWizard(true),
-        active: false,
-        disabled: assessments.length === 0,
-        title: t(
-          'assessment.hub.initiativePackTooltip',
-          'Generate an AI initiative pack from the assessment findings.'
-        ),
-      };
-    }
-
-    // #70: was "Interpretation Draft" — jargon that didn't say what clicking it
-    // does. It jumps straight into the editor of the most recently updated
-    // assessment (assessments[0], server-sorted by updated_at DESC), resuming
-    // the last-visited axis/area/level for DRD. Renamed to say that plainly.
-    return {
-      id: 'interpretation',
-      label: t('assessment.hub.resumeLatestLabel', 'Resume latest assessment'),
-      icon: Lightbulb,
-      onClick: openInterpretationDraft,
-      active: false,
-      disabled: assessments.length === 0,
-      title: t(
-        'assessment.hub.resumeLatestTooltip',
-        'Opens the editor for your most recently updated assessment, back where you left off.'
-      ),
-    };
-  }, [activeTab, assessments.length, openInterpretationDraft, t]);
-
+  /**
+   * P-20 (Piotr, OBR-84…86, 2026-07-27): „Nie wiem, po co powstały te trzy
+   * dodatkowe przyciski. Są zupełnie zbędne tutaj w menu trzecim."
+   *
+   * Kanon TRIADA A3: po PRAWEJ stronie Menu 3 stoją WYŁĄCZNIE przyciski AI
+   * (dosłowny przykład z kanonu: `AI Priorities` w Tasks). Z trójki, która
+   * tu stała, legalny był tylko `AI Triage`:
+   *   - `Generate Report`  → wołał `setShowNewReportModal(true)`, czyli DOKŁADNIE
+   *     to samo co CTA `New Report` z Menu 2 (patrz handler primaryCta niżej) → D-01
+   *   - `Initiative Pack`  → to samo wobec CTA `New Initiative` → D-01
+   *   - `Chat`             → funkcja, nie akcja AI kontekstowa; ten sam czat
+   *     otwiera `AI Triage`, tylko z gotowym promptem
+   *   - `Resume latest assessment` → skrót do najnowszego rekordu, który i tak
+   *     stoi pierwszy w tabeli (sort po updated_at DESC)
+   */
   const hubMenu3Actions = useMemo(
     () => [
       {
         // #70: label kept ("AI Triage" is the example the owner asked for), but
         // the click now does something Chat doesn't: opens the hub chat AND
         // posts a framing prompt asking the AI to prioritize the current tab's
-        // list (see handleOpenHubTriage). Previously this button called the
-        // exact same handler as "Chat" next to it — same onClick, same active
-        // state — so it carried zero information beyond a duplicate label.
+        // list (see handleOpenHubTriage).
         id: 'triage',
         label: 'AI Triage',
         icon: Layers,
@@ -1462,18 +1409,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           'Opens AI chat with a ready-made prompt: what in this list needs attention first.'
         ),
       },
-      {
-        id: 'chat',
-        label: 'Chat',
-        icon: MessageSquare,
-        onClick: () => void handleOpenHubChat(),
-        active: isHubChatActive,
-        disabled: isLoading,
-        title: t('assessment.hub.chatTooltip', 'Opens a blank AI chat for this hub.'),
-      },
-      thirdHubAction,
     ],
-    [handleOpenHubChat, handleOpenHubTriage, isHubChatActive, isLoading, t, thirdHubAction]
+    [handleOpenHubTriage, isHubChatActive, isLoading, t]
   );
 
   // Triada standard (canon A3/A6): checkbox selection on the 'list' tab

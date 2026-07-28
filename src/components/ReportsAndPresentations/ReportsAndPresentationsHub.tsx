@@ -15,7 +15,6 @@ import {
   Filter,
   LayoutGrid,
   LayoutTemplate,
-  MessageSquare,
   Package2,
   PenLine,
   Presentation,
@@ -34,12 +33,10 @@ import { CreateFormatModeLauncher } from '@/components/shared/CreateFormatModeLa
 import { TemplateBuilderFlow } from '@/components/TemplateBuilder';
 import { isDeckArchitectEnabled } from '@/utils/deckArchitectFlag';
 import { isWorkbookTemplatesEnabled } from '@/utils/workbookTemplatesFlag';
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
 
 import { type FilterChip, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
-import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
@@ -200,7 +197,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const openChatWithContext = useOpenChatWithContext();
   const isPolish = i18n.language?.startsWith('pl');
 
   // Kanon 2026-07-26 (docs/product/MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md
@@ -1294,47 +1290,20 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     templatesView,
   ]);
 
-  const commandRowRightSlot = useMemo(
-    () => (
-      <>
-        {/* D-01 (Piotr, OBR-28 2026-07-27): „+ New AI document (Document
-            Studio)" USUNIĘTY z Menu 3 — dublował kontekstowe CTA Menu 2
-            („New output"/„New report"/„New presentation"/„New sheet"/
-            „New template"), które przez `handleMaterialsLauncherSelect`
-            prowadzi do TEJ SAMEJ ścieżki `/document-studio?entry=ai`.
-            Menu 3 zostaje slotem AI (Discuss). */}
-        <button
-          type="button"
-          onClick={() =>
-            openChatWithContext({
-              entityType: 'outputs_module',
-              entityId: activeTab,
-              entityName: t('rap.hub.entityName', 'Reports & Presentations'),
-              contextData: {
-                activeTab,
-                viewMode,
-                activeFiltersCount: activeFilters.length,
-                openDocumentsCount: openDocuments.length,
-              },
-            })
-          }
-          className={getMenu3AiButtonClass(false)}
-          title={t('rap.actions.discuss', 'Discuss')}
-        >
-          <MessageSquare size={12} />
-          <span>{t('rap.actions.discuss', 'Discuss')}</span>
-        </button>
-      </>
-    ),
-    [
-      activeFilters.length,
-      activeTab,
-      openChatWithContext,
-      openDocuments.length,
-      t,
-      viewMode,
-    ]
-  );
+  /**
+   * P-27 (Piotr, 2026-07-27): „w trzecim menu `New AI document` i `Discuss` —
+   * przecież mamy to w innym miejscu."
+   *
+   * Prawa strona Menu 3 jest PUSTA:
+   *   - „+ New AI document (Document Studio)" → usunięty 07-27 (D-01): dublował
+   *     kontekstowe CTA Menu 2, prowadzące do tej samej ścieżki
+   *     `/document-studio?entry=ai`.
+   *   - „Discuss" → usunięty tu (07-28): ta sama pozycja żyje w kebabie wiersza,
+   *     i to w wersji użyteczniejszej (czat o KONKRETNYM dokumencie zamiast
+   *     o całej zakładce).
+   * Pusta prawa strona jest zgodna z kanonem — tak wygląda cały moduł Interview.
+   */
+  const commandRowRightSlot = null;
 
   // Canonical Menu 3: one flex row (MENU_3_INNER_CLASS = flex items-center justify-between).
   // ModuleNavBar voids commandRowRightContent; merge both sides into commandRowContent.

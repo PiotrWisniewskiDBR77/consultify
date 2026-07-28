@@ -756,7 +756,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     | 'critical'
     | 'action_required'
     | 'today'
-    | 'this_week';
+    | 'this_week'
+    /* P-10 (2026-07-28): „Done" zszedł z prawej strony Menu 3 na lewą, do
+       filtrów — patrz komentarz przy `presets` niżej. */
+    | 'done';
   const [inboxPreset, setInboxPreset] = useState<InboxPreset>('all');
   const [inboxCounts, setInboxCounts] = useState<InboxCounts | null>(null);
   const [inboxBulkUi, setInboxBulkUi] = useState<{
@@ -2051,30 +2054,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const applyInboxPreset = useCallback((next: InboxPreset) => {
     // Canon v3: "ALL" means no preset filters are active.
     setInboxPreset(next);
-    setInboxStatusTab(next === 'saved' ? 'saved' : 'open');
+    setInboxStatusTab(next === 'saved' ? 'saved' : next === 'done' ? 'done' : 'open');
     setInboxSection(next === 'today' ? 'today' : next === 'this_week' ? 'this_week' : 'all');
     setInboxActionRequiredOnly(next === 'action_required');
   }, []);
 
-  const handleInboxStatusTabSelect = useCallback(
-    (next: 'open' | 'done' | 'saved' | 'all') => {
-      setInboxStatusTab(next);
-      if (next === 'saved') {
-        setInboxPreset('saved');
-        setInboxSection('all');
-        setInboxActionRequiredOnly(false);
-        return;
-      }
-      if (inboxPreset === 'saved') {
-        setInboxPreset('all');
-      }
-      if (next === 'done' || next === 'all') {
-        setInboxSection('all');
-        setInboxActionRequiredOnly(false);
-      }
-    },
-    [inboxPreset]
-  );
+  /* P-10 (2026-07-28): `handleInboxStatusTabSelect` usunięty razem z segmentem
+     `Open | Done | Saved` z prawej strony Menu 3 — jego mapowanie
+     preset ↔ statusTab przejął w całości `applyInboxPreset` powyżej. */
 
   const openTabAiContext = useCallback(
     async (tab: 'inbox' | 'tasks' | 'decisions') => {
@@ -2835,6 +2822,18 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           label: t('myWork.hub.label35', 'This week'),
           count: c?.newThisWeek ?? 0,
         },
+        /**
+         * P-10 (Piotr, OBR-18/22, 2026-07-27): „Menu trzecie — straszny bałagan.
+         * Po prawej stronie te przyciski nie są potrzebne. Zostawiłbym tylko
+         * AI Triage, pozostałe są tak samo widoczne po lewej stronie."
+         *
+         * Segment `Open | Done | Saved`, który stał po PRAWEJ, był w dwóch
+         * trzecich dosłownym duplikatem lewej strony: `Open` pokazywał tę samą
+         * liczbę co `ALL` (oba = counts.open), a `Saved` istniał tu i tam.
+         * Jedyną wartością nie do odzyskania po lewej był `Done` — więc tu
+         * dołącza jako zwykły filtr, a prawa strona zostaje slotem AI (kanon A3).
+         */
+        { id: 'done', label: t('myWork.hub.label37', 'Done'), count: c?.counts.done ?? 0 },
       ];
 
       const menu3RowClass = MENU_3_ROW_CLASS;
@@ -2935,43 +2934,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 );
               })}
             </div>
+            {/* P-10: prawa strona Menu 3 = wyłącznie AI Triage (kanon A3).
+                Segment `Open | Done | Saved` zjechał do filtrów po lewej. */}
             <div className={MENU_3_RIGHT_CLASS}>
-              <div className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/80 p-1 dark:border-white/[0.08] dark:bg-navy-900/70">
-                {(
-                  [
-                    {
-                      id: 'open',
-                      label: t('myWork.hub.label36', 'Open'),
-                      count: c?.counts.open ?? 0,
-                    },
-                    {
-                      id: 'done',
-                      label: t('myWork.hub.label37', 'Done'),
-                      count: c?.counts.done ?? 0,
-                    },
-                    {
-                      id: 'saved',
-                      label: t('myWork.hub.label38', 'Saved'),
-                      count: c?.counts.saved ?? 0,
-                    },
-                  ] as const
-                ).map((statusChip) => {
-                  const isActive = inboxStatusTab === statusChip.id;
-                  return (
-                    <button
-                      key={statusChip.id}
-                      type="button"
-                      onClick={() => handleInboxStatusTabSelect(statusChip.id)}
-                      className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
-                    >
-                      <span>{statusChip.label}</span>
-                      <span className={`${badgeBase} ${isActive ? badgeActive : badgeInactive}`}>
-                        {statusChip.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
               <button
                 onClick={() => void openTabAiContext('inbox')}
                 className={MENU_3_ACTION_NEUTRAL}
