@@ -7699,6 +7699,9 @@ export const Api = {
       name: string;
       documentCount: number;
       lastModified: string | null;
+      sizeBytes: number;
+      indexedCount: number;
+      errorCount: number;
     }>
   > => {
     const res = await fetch(`${API_URL}/knowledge/vault-safes`, { headers: getHeaders() });
