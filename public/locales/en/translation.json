@@ -34169,5 +34169,45 @@
     "realtimeReconnecting": "Realtime reconnecting",
     "realtimeDegraded": "Realtime degraded",
     "recoveryInProgress": "Recovery in progress"
+  },
+  "canvasEditBar": {
+    "titleNode": "Node",
+    "titleEdge": "Connection",
+    "fontFamily": "Font",
+    "fontSize": "Size",
+    "bold": "Bold",
+    "underline": "Underline",
+    "textColor": "Text color",
+    "bgColor": "Background color",
+    "borderColor": "Border color",
+    "lineColor": "Line color",
+    "lineStyle": "Line style",
+    "lineSolid": "Solid",
+    "lineDashed": "Dashed",
+    "resetDefault": "Default",
+    "resetBg": "No custom background",
+    "resetBorder": "No custom border",
+    "shapeTitle": "Object shape",
+    "arrowTitle": "Arrows and direction",
+    "reverseFlow": "Reverse flow direction",
+    "font": {
+      "sans": "Sans-serif",
+      "serif": "Serif",
+      "mono": "Monospace"
+    },
+    "shape": {
+      "rounded": "Rounded",
+      "rect": "Rectangle",
+      "pill": "Pill",
+      "circle": "Circle",
+      "diamond": "Diamond",
+      "hexagon": "Hexagon"
+    },
+    "arrow": {
+      "none": "No arrow",
+      "end": "Forward",
+      "start": "Backward",
+      "both": "Both ways"
+    }
   }
 }

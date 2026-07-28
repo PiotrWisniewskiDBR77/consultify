@@ -3,6 +3,12 @@
  */
 import React from 'react';
 
+import {
+  canvasObjectSurfaceStyle,
+  canvasObjectTextStyle,
+  readCanvasObjectStyle,
+} from '../../canvas/canvasObjectStyle';
+
 // rose-exempt: sticky-note brand palette swatch (one of yellow/pink/primary/amber/blue/rose);
 // these are deliberate decorative note colors, not danger semantics — keep raw palette.
 export const STICKY_COLORS = [
@@ -121,7 +127,29 @@ export const resolveNodeFontStyle = (data: unknown): React.CSSProperties => {
   }
   if (d.fontWeight === 'bold' || d.bold === true) style.fontWeight = 700;
   else if (d.fontWeight === 'normal') style.fontWeight = 500;
-  return style;
+  // PASEK EDYCJI OBIEKTU (ff_canvasObjectEditBar): rodzina pisma, kolor tekstu i
+  // podkreślenie. Dokładane TU, a nie w każdym węźle z osobna, bo `resolveNodeFontStyle`
+  // jest już jedynym czytnikiem typografii Tablicy (sticky/text/shape/link) —
+  // dopisanie tego gdzie indziej rozjechałoby narzędzie na cztery ścieżki.
+  const extra = canvasObjectTextStyle(readCanvasObjectStyle(d));
+  return extra ? { ...style, ...extra } : style;
+};
+
+/**
+ * TŁO i RAMKA OSOBNO dla węzła Tablicy (zgłoszenie właściciela: „…oraz tła i
+ * ramki"). Zwraca `null`, gdy właściciel nic nie wybrał — wtedy węzeł zostaje
+ * przy swojej palecie karteczek / akcencie `accentColor` z Z15.
+ */
+export const resolveNodeSurfaceOverride = (
+  data: unknown,
+  bgOpacityPct = 24
+): { backgroundColor?: string; borderColor?: string } | null => {
+  const surface = canvasObjectSurfaceStyle(readCanvasObjectStyle(data), { bgOpacityPct });
+  if (!surface) return null;
+  return {
+    ...(surface.backgroundColor ? { backgroundColor: String(surface.backgroundColor) } : {}),
+    ...(surface.borderColor ? { borderColor: String(surface.borderColor) } : {}),
+  };
 };
 
 // Fala 8: magnetic 4-side connector handles — Miro/FigJam parity, same visual
