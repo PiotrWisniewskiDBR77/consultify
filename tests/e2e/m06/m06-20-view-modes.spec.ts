@@ -147,10 +147,10 @@ test.describe('M06 §20 — Tryby widoku', () => {
   test('20.5 Health Score (MapHealthScore)', async ({ page }) => {
     await freshMap(page, '20.5');
     await withChild(page);
-    // MapHealthScore is a default-ON floating widget (IdeaRecommendationMap.tsx:5408-5410,
-    // showHealthScore initial state = true). It renders "Map Health"/"Zdrowie mapy" + an
-    // NN% overall score once the map has >=1 node (MapHealthScore.tsx:222 returns null only
-    // when metrics empty; withChild() guarantees a node). No button to click.
+    // MapHealthScore is a default-ON floating widget (showHealthScore initial state = true).
+    // Od 2026-07-28 NIE pokazuje procentu: nagłówek "Map Health"/"Zdrowie mapy" + albo
+    // liczba konkretnych braków ("N braków do uzupełnienia"), albo komunikat, że braków
+    // nie ma. Widget znika tylko dla pustej mapy — withChild() gwarantuje węzeł.
     await page.waitForTimeout(600);
     await shot(page, '20.5-health-score-open');
     const healthLabel = page.getByText(/Map Health|Zdrowie mapy/i).first();
@@ -163,8 +163,13 @@ test.describe('M06 §20 — Tryby widoku', () => {
       return;
     }
     await expect(healthLabel, '§20.5: Map Health widget visible by default').toBeVisible();
-    // Widget shows an overall percentage score (MapHealthScore.tsx:267).
-    const score = page.getByText(/\d{1,3}%/).first();
-    expect(await score.isVisible().catch(() => false), 'Health widget shows a % score').toBe(true);
+    // Widget mówi KONKRETNIE: albo ile braków, albo że ich nie ma. Żadnego procentu.
+    const verdict = page
+      .getByText(/brak(i|ów)? do uzupełnienia|gaps? to fill|nie ma oczywistych braków|No obvious gaps/i)
+      .first();
+    expect(
+      await verdict.isVisible().catch(() => false),
+      'Health widget names concrete gaps (or states there are none) instead of a % score'
+    ).toBe(true);
   });
 });
