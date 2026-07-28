@@ -8629,6 +8629,15 @@ Return ONLY the answer text (no markdown fences).`;
                         ? () => void openInterviewAssignmentFull(a, false)
                         : undefined
                     }
+                    onApproveAssignment={
+                      a.status === 'submitted' ? () => void handleApproveAssignment(a) : undefined
+                    }
+                    onSendBackAssignment={
+                      // Modal, nie strzał na ślepo: odesłanie do poprawy wymaga
+                      // POWODU (`handleSendBack` przekazuje go do API), inaczej
+                      // wykonawca dostaje zwrot bez informacji, co poprawić.
+                      a.status === 'submitted' ? () => handleOpenSendBackModal(a) : undefined
+                    }
                     onOpenFull={() => void openInterviewAssignmentFull(a, false)}
                   />
                 );
