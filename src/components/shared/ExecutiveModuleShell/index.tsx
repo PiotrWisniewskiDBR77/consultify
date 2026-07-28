@@ -46,10 +46,15 @@ export interface ExecutiveModuleShellProps {
    *   - `topBarTitleIconSlot`     → between breadcrumb chevron and title.
    *   - `topBarTitleTrailingSlot` → right after the title (stage chip / save).
    *   - `topBarPrimaryActionSlot` → prominent action in the right cluster.
+   *   - `topBarLeadingActionSlot` → FIRST inside the chip cluster, ahead of
+   *     every chip (e.g. a "Plik ▾" File menu — Word convention: File is
+   *     leftmost). Shares the chip row's width budget rather than adding a
+   *     separate flex item (see `TopBar.tsx`'s own doc for why that matters).
    */
   topBarTitleIconSlot?: React.ReactNode;
   topBarTitleTrailingSlot?: React.ReactNode;
   topBarPrimaryActionSlot?: React.ReactNode;
+  topBarLeadingActionSlot?: React.ReactNode;
   /**
    * Opcjonalne SCALENIE górnego paska w jedną linię — DOM id węzła, do którego
    * `TopBar` ma przenieść portalem swój klaster poleceń zamiast renderować
@@ -83,6 +88,12 @@ export interface ExecutiveModuleShellProps {
    */
   activeRightRailToolId?: string | null;
   onActiveRightRailToolChange?: (toolId: string | null) => void;
+  /**
+   * Czy prawy pasek ikon wolno schować do 16-pikselowego słupka (domyślnie
+   * TAK = dzisiejsze zachowanie wszystkich modułów). `false` → pasek ikon jest
+   * ZAWSZE widoczny. ADDITIVE — pomijające go powłoki nie zmieniają się.
+   */
+  rightRailCollapsible?: boolean;
 
   /** Center canvas. */
   canvas: React.ReactNode;
@@ -161,6 +172,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   topBarTitleTrailingSlot,
   topBarPrimaryActionSlot,
   topBarMergeSlotId,
+  topBarLeadingActionSlot,
   secondBar,
   leftRailTitle,
   leftRailToolsSlot,
@@ -170,6 +182,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   renderRightRailPanel,
   activeRightRailToolId,
   onActiveRightRailToolChange,
+  rightRailCollapsible = true,
   canvas,
   centerMode = 'chrome',
   floatingLeftRail,
@@ -302,6 +315,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
         titleTrailingSlot={topBarTitleTrailingSlot}
         primaryActionSlot={topBarPrimaryActionSlot}
         mergeSlotId={topBarMergeSlotId}
+        leadingActionSlot={topBarLeadingActionSlot}
       />
 
       {secondBar}
@@ -387,6 +401,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
           collapsed={rail.rightCollapsed}
           onToggleCollapse={rail.toggleRight}
           onResize={rail.setRightWidth}
+          collapsible={rightRailCollapsible}
         />
 
         {aiEntrySlot ? (

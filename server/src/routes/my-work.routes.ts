@@ -1456,6 +1456,27 @@ router.put(
     }
     if (req.body?.tags !== undefined) setIf('tags', JSON.stringify(parseTagsArray(req.body.tags)));
 
+    // P8 (tor MVP, 2026-07-28): TaskDetailView pokazywał „Task updated" także dla
+    // checklisty i przypisania osoby, ale ten handler czytał z body tylko 7 pól —
+    // te trzy nie miały jak dojść do bazy. Kolumny w schemacie ISTNIEJĄ
+    // (`checklist`, `assignee_id`, `owner_id`; w demo 369/417 zadań ma przypisanie),
+    // więc brakowało wyłącznie odczytu żądania. `setIf` pomija kolumnę nieobecną
+    // w schemacie, więc zmiana jest addytywna.
+    // ⚠ Naprawa ma DWIE warstwy — front (`TaskDetailView.tsx:1091` `personalPayload`)
+    // też pomijał te pola. Sama zmiana serwera nic nie da.
+    if (req.body?.checklist !== undefined) {
+      const raw = req.body.checklist;
+      setIf('checklist', raw === null ? null : typeof raw === 'string' ? raw : JSON.stringify(raw));
+    }
+    if (req.body?.assigneeId !== undefined) {
+      const a = req.body.assigneeId ? String(req.body.assigneeId).trim() : null;
+      setIf('assignee_id', a);
+    }
+    if (req.body?.ownerId !== undefined) {
+      const o = req.body.ownerId ? String(req.body.ownerId).trim() : null;
+      setIf('owner_id', o);
+    }
+
     let nextStatus: string | null = null;
     if (typeof req.body?.status === 'string') {
       nextStatus = String(req.body.status).trim();

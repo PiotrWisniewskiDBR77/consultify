@@ -42,16 +42,20 @@ import {
   Clock,
   FileText,
   GitBranch,
+  Layers,
+  LayoutDashboard,
   Lightbulb,
   Link2,
   ListChecks,
   MessageSquare,
   MessageSquarePlus,
+  MousePointerClick,
   Pencil,
   Presentation,
   Rocket,
   Save,
   Shield,
+  SlidersHorizontal,
   Sparkles,
   Star,
 } from 'lucide-react';
@@ -66,8 +70,18 @@ import {
 
 import { IdeaContextPanel } from './IdeaContextPanel';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
+import { IdeaPanelActivity } from './panel/IdeaPanelActivity';
 import { IdeaPanelComments } from './panel/IdeaPanelComments';
 import { IdeaPanelHistory } from './panel/IdeaPanelHistory';
+import {
+  type IdeaPanel6SectionId,
+  IDEA_PANEL_6_LABELS_EN,
+  IDEA_PANEL_6_LABELS_PL,
+  IDEA_PANEL_AI_SLOT_ID,
+  IDEA_PANEL_TOOL_SLOT_ID,
+  normalizujDoSzesciu,
+} from './panel/ideaPanel6Sections';
+import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
 import { isIdeaPanelVisualEnabled } from './panel/ideaPanelVisualFlag';
 import {
   IDEA_CONVERT_GROUP_LABELS,
@@ -261,6 +275,15 @@ interface IdeaWorkspaceToolsProps {
   ) => void;
   /** Zakładka Powiązania (§6) — wstawienie pozycji kontekstu na płótno. */
   onInsertContextToCanvas?: (item: { text: string; type: string; detail?: string }) => void;
+  /**
+   * Układ SZEŚCIU sekcji (flaga `ff_ideaPanel6Sections`), sekcja „AI" w
+   * kontekście ELEMENTU: akcje AI wykonywane NA zaznaczonym węźle
+   * (`mm_ai_expand_node`, `mm_ai_deepen`, `mm_ai_what_if`, `mm_ai_suggest_links`).
+   * Host podaje handler TYLKO tam, gdzie te akcje mają wykonawcę
+   * (`useMindMapQuickActions` = Mapa myśli) — brak handlera = brak przycisków,
+   * nigdy martwy klik (Z3).
+   */
+  onAINodeAction?: (action: string, nodeId: string) => void;
   /** Rozszerzenia grafu (`graphRuntime.graph.extensions`) dla panelu kontekstu. */
   mapExtensions?: Record<string, any>;
 }
@@ -391,6 +414,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   whiteboardOutcomes,
   onRestoreSnapshot,
   onInsertContextToCanvas,
+  onAINodeAction,
   mapExtensions,
 }) => {
   const { t, i18n } = useTranslation();
@@ -572,8 +596,57 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   const wZakladce = (id: IdeaPanelTab) => zakladka === id;
   /** Czy renderować blok w trybie legacy (szuflada = wszystkie stare sekcje). */
   const wLegacy = !trybZakladek;
-  /** Blok wspólny: legacy pokazuje go zawsze, tryb zakładek — w swojej zakładce. */
-  const pokaz = (id: IdeaPanelTab) => wLegacy || wZakladce(id);
+
+  /*
+   * ── UKŁAD SZEŚCIU SEKCJI (flaga `ff_ideaPanel6Sections`, default OFF) ──
+   *
+   * Przegląd · Właściwości · Powiązania · AI · Aktywność · Narzędzie
+   *
+   * Panel mówi zawsze o jednej z DWÓCH rzeczy: o CAŁEJ IDEI albo o ZAZNACZONYM
+   * ELEMENCIE. Sekcje zostają te same, zmienia się treść.
+   *
+   * Nie budujemy drugiego drzewa renderu — te same bloki co dziś dostają drugi
+   * adres. `sek(pięć, sześć)` mówi: „w układzie 5 zakładek ten blok należy do
+   * zakładki `pięć`, w układzie 6 sekcji — do sekcji `sześć`". Dzięki temu przy
+   * fladze OFF nie zmienia się ANI JEDEN warunek (`szesc === false` → ta sama
+   * gałąź `wZakladce` co dotąd).
+   */
+  const szesc = isIdeaPanel6SectionsEnabled() && trybZakladek;
+  const sekcja6: IdeaPanel6SectionId | null = szesc ? normalizujDoSzesciu(onlySection) : null;
+  const sek = (a: IdeaPanelTab, b: IdeaPanel6SectionId) =>
+    szesc ? sekcja6 === b : wZakladce(a);
+  /** Blok wspólny: legacy pokazuje go zawsze, tryb zakładek — w swojej sekcji. */
+  const pokaz = (id: IdeaPanelTab, id6: IdeaPanel6SectionId = id as IdeaPanel6SectionId) =>
+    wLegacy || sek(id, id6);
+
+  // Przedmiot panelu. Zaznaczenie liczy się TYLKO gdy element realnie istnieje
+  // w grafie — cztery reprezentacje dzielą jeden graf, a „duch" po usuniętym
+  // węźle pokazywałby panel o czymś, czego nie ma.
+  const wybranyWezel = useMemo(() => {
+    if (selection?.type !== 'node' && selection?.type !== 'row') return null;
+    const id = selection?.primaryId ? String(selection.primaryId) : null;
+    if (!id) return null;
+    return (graphNodes ?? []).find((n: any) => String(n?.id) === id) ?? null;
+  }, [selection, graphNodes]);
+  const wybranaKrawedz = useMemo(() => {
+    if (selection?.type !== 'edge' || !selection?.primaryId) return null;
+    return (graphEdges ?? []).find((e: any) => String(e?.id) === String(selection.primaryId)) ?? null;
+  }, [selection, graphEdges]);
+  const maZaznaczenie = Boolean(wybranyWezel || wybranaKrawedz);
+  const etykieta6 = isPl ? IDEA_PANEL_6_LABELS_PL : IDEA_PANEL_6_LABELS_EN;
+  const pl6 = (pl: string, en: string) => (isPl ? pl : en);
+
+  /** Uczciwy pusty stan sekcji — mówi CZEGO brakuje i CO zrobić. */
+  const pustaSekcja = (tekst: string, podpowiedz?: string) => (
+    <div
+      className="rounded-[11px] border border-c-border-subtle bg-c-surface-raised px-3 py-4 text-center"
+      data-testid="idea-panel6-empty"
+    >
+      <MousePointerClick size={16} className="mx-auto mb-1.5 text-c-text-muted" />
+      <div className="text-[11px] text-c-text-secondary">{tekst}</div>
+      {podpowiedz && <div className="mt-1 text-[10px] text-c-text-muted">{podpowiedz}</div>}
+    </div>
+  );
 
   // Statystyki Przeglądu (§4 pkt 3) — liczone z żywego grafu, który panel i tak
   // dostaje. Bez zaokrągleń i bez „liczb-atrap": gdy grafu nie ma, karta się
@@ -591,6 +664,89 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
     };
   }, [graphNodes, graphEdges, evidenceCount]);
 
+  /**
+   * Blok SESJI TABLICY (mount panelu sesji + rola/faza/uczestnicy + rejestr
+   * wyników). Wyciągnięty ze środka „Inspektora tablicy", bo w układzie 6 sekcji
+   * ma DWA adresy: przy fladze OFF zostaje tam, gdzie był (Właściwości), przy ON
+   * przenosi się do „Narzędzia" — to opis NARZĘDZIA, nie zaznaczonego elementu.
+   * Jeden byt, dwa miejsca renderu — bez kopiowania JSX.
+   */
+  const slotSesjiTablicy = isWhiteboardSessionInPanelEnabled() ? (
+    /* Naprawa 2026-07-26 (Zadanie A, `ff_whiteboardSessionInPanel`, default OFF):
+       mount point dla `WhiteboardSessionPanel` (Facilitator/Board mode/Voting/
+       Follow-me/WORKSHOP PHASE/Ops+Governance), portalowanego tu z
+       `IdeaWhiteboardTool` gdy flaga ON — patrz `usePortalSlot` +
+       `whiteboardSessionInPanelFlag.ts`. Renderowany tylko gdy flaga włączona,
+       żeby przy OFF (dziś) nie zostawiać pustego diva w drzewie. */
+    <div id={WHITEBOARD_SESSION_PANEL_SLOT_ID} />
+  ) : null;
+
+  const blokSesjiTablicy = (
+    <>
+      {whiteboardSession && (
+        <div className="rounded-lg bg-slate-50 dark:bg-navy-800/60 p-2.5 space-y-1.5">
+          <div className="font-semibold text-slate-700 dark:text-slate-200">
+            {t('myWorkIdeas.workspaceTools.session')}
+          </div>
+          {whiteboardSession.role && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-500 dark:text-slate-400">
+                {t('myWorkIdeas.workspaceTools.role')}
+              </span>
+              <span className="font-medium text-slate-700 dark:text-slate-200 capitalize">
+                {whiteboardSession.role}
+              </span>
+            </div>
+          )}
+          {whiteboardSession.phase && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-500 dark:text-slate-400">
+                {t('myWorkIdeas.workspaceTools.phase')}
+              </span>
+              <span className="font-medium text-slate-700 dark:text-slate-200 capitalize">
+                {whiteboardSession.phase}
+              </span>
+            </div>
+          )}
+          {(whiteboardSession.participantCount ?? 0) > 0 && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-500 dark:text-slate-400">
+                {t('myWorkIdeas.workspaceTools.participants')}
+              </span>
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {whiteboardSession.participantCount}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {whiteboardOutcomes && whiteboardOutcomes.length > 0 && (
+        <div className="rounded-lg bg-slate-50 dark:bg-navy-800/60 p-2.5 space-y-1.5">
+          <div className="font-semibold text-slate-700 dark:text-slate-200">
+            {t('myWorkIdeas.workspaceTools.outcomes')} ({whiteboardOutcomes.length})
+          </div>
+          <div className="space-y-1 max-h-32 overflow-auto">
+            {whiteboardOutcomes.slice(0, 8).map((o, i) => (
+              <div key={i} className="flex items-center gap-1.5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                <span className="text-[9px] font-bold uppercase text-slate-600 w-14 shrink-0">
+                  {o.type}
+                </span>
+                <span className="text-slate-600 dark:text-slate-300 truncate">{o.label}</span>
+              </div>
+            ))}
+            {whiteboardOutcomes.length > 8 && (
+              <div className="text-[9px] text-slate-600">
+                +{whiteboardOutcomes.length - 8} {t('myWorkIdeas.workspaceTools.more')}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+
   if (!embedded && !open) return null;
 
   return (
@@ -606,15 +762,54 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       onClose={onClose}
     >
       <TrybZakladki.Provider value={!!onlySection}>
-      <PanelVisual.Provider value={visualV2}>
+      <PanelVisual.Provider value={visualV2 || szesc}>
       {/*
        * P2-4 (Z2): OFF → `contents` (kontener znika z layoutu, struktura 1:1 z dziś).
        * ON → kontener z paddingiem + odstępem 12 px między kartami; `[&>*]:shrink-0`
        * gwarantuje, że karty NIE kurczą się przy przewijaniu (07_PRAWY_PANEL.md §3).
+       * Układ 6 sekcji zawsze używa wersji kartowej — inaczej sekcje zlewałyby się
+       * w jedną kolumnę bez oddechu.
        */}
-      <div className={visualV2 ? 'flex flex-col gap-3 p-3.5 [&>*]:shrink-0' : 'contents'}>
+      <div className={visualV2 || szesc ? 'flex flex-col gap-3 p-3.5 [&>*]:shrink-0' : 'contents'}>
+
+      {/*
+       * ── NAGŁÓWEK PRZEDMIOTU (układ 6 sekcji) ──
+       * Jedno zdanie, które za każdym razem odpowiada na pytanie „o czym teraz
+       * jest ten panel". Bez niego przełączanie treści przy zaznaczeniu wygląda
+       * jak zniknięcie zawartości.
+       */}
+      {szesc && (
+        <div
+          className="flex items-center gap-2 rounded-[11px] border border-c-border-subtle bg-c-surface-raised px-3 py-2"
+          data-testid="idea-panel6-subject"
+          data-subject={maZaznaczenie ? 'element' : 'idea'}
+        >
+          <span className="text-c-text-muted shrink-0">
+            {maZaznaczenie ? <MousePointerClick size={12} /> : <Lightbulb size={12} />}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-c-text-muted">
+              {maZaznaczenie
+                ? pl6('Zaznaczony element', 'Selected element')
+                : pl6('Cała Idea', 'Whole idea')}
+            </div>
+            <div className="truncate text-[11px] font-semibold text-c-text">
+              {maZaznaczenie
+                ? wybranyWezel?.data?.label ||
+                  wybranaKrawedz?.data?.label ||
+                  wybranaKrawedz?.label ||
+                  pl6('(bez etykiety)', '(no label)')
+                : title || t('myWorkIdeas.workspaceTools.untitled')}
+            </div>
+          </div>
+          <span className="shrink-0 rounded-md bg-c-surface px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-c-text-muted">
+            {etykieta6[sekcja6 ?? 'overview']}
+          </span>
+        </div>
+      )}
+
       {/* ── 1. Problem ── */}
-      {pokaz('overview') && (
+      {pokaz('overview') && (!szesc || !maZaznaczenie) && (
       <Section
         title={t('myWorkIdeas.workspaceTools.problem')}
         icon={<Pencil size={12} />}
@@ -669,7 +864,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       )}
 
       {/* ── 2. Status ── */}
-      {pokaz('overview') && (
+      {pokaz('overview') && (!szesc || !maZaznaczenie) && (
       <Section
         title={t('myWorkIdeas.workspaceTools.status')}
         icon={<CheckCircle2 size={12} />}
@@ -888,7 +1083,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
        * Siatka 2×2 liczona z żywego grafu. Tylko w trybie zakładek — w szufladzie
        * legacy zachowujemy dzisiejszy układ 1:1 (zero zmian wizualnych bez akceptu).
        */}
-      {wZakladce('overview') && statystyki.elementy > 0 && (
+      {sek('overview', 'overview') && (!szesc || !maZaznaczenie) && statystyki.elementy > 0 && (
         <Section
           title={t('myWorkIdeas.workspaceTools.statistics')}
           icon={<BarChart3 size={12} />}
@@ -912,6 +1107,68 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               </div>
             ))}
           </div>
+        </Section>
+      )}
+
+      {/*
+       * ── Przegląd · TOŻSAMOŚĆ ELEMENTU (układ 6 sekcji, kontekst elementu) ──
+       * Odpowiednik „Problemu + Statusu" na poziomie Idei: kim jest ten element.
+       * Czytamy WYŁĄCZNIE to, co element realnie niesie (`data` węzła + meta
+       * zaznaczenia) — pola bez wartości się nie renderują, zamiast pokazywać
+       * puste etykiety. Edycja pól mieszka we „Właściwościach", nie tutaj.
+       */}
+      {szesc && sekcja6 === 'overview' && maZaznaczenie && (
+        <Section
+          title={pl6('Tożsamość', 'Identity')}
+          icon={<LayoutDashboard size={12} />}
+          defaultOpen
+        >
+          {(() => {
+            const d = (wybranyWezel?.data ?? {}) as Record<string, any>;
+            const m = (selection?.meta ?? {}) as Record<string, any>;
+            const wiersze: Array<{ k: string; v: string }> = [];
+            const dodaj = (k: string, v: unknown) => {
+              const s = v === null || v === undefined ? '' : String(v).trim();
+              if (s) wiersze.push({ k, v: s });
+            };
+            dodaj(
+              pl6('Typ', 'Type'),
+              d.semanticType || m.semanticType || wybranyWezel?.type || m.nodeType ||
+                (wybranaKrawedz ? pl6('połączenie', 'connection') : '')
+            );
+            dodaj(pl6('Nazwa', 'Name'), d.label || m.label || wybranaKrawedz?.data?.label);
+            dodaj(pl6('Status', 'Status'), d.status || m.status);
+            dodaj(pl6('Priorytet', 'Priority'), d.priority ?? m.priority);
+            dodaj(pl6('Właściciel', 'Owner'), d.owner || d.assignee || m.owner);
+            return (
+              <div className="space-y-1.5" data-testid="idea-panel6-identity">
+                {wiersze.length === 0
+                  ? pustaSekcja(
+                      pl6(
+                        'Ten element nie ma jeszcze żadnych opisanych pól.',
+                        'This element has no described fields yet.'
+                      ),
+                      pl6('Uzupełnij je we „Właściwościach".', 'Fill them in under “Properties”.')
+                    )
+                  : wiersze.map(({ k, v }) => (
+                      <div key={k} className="flex items-start gap-2 text-[11px]">
+                        <span className="w-20 shrink-0 text-c-text-muted">{k}</span>
+                        <span className="min-w-0 flex-1 break-words font-medium text-c-text">
+                          {v}
+                        </span>
+                      </div>
+                    ))}
+                {selection && selection.count > 1 && (
+                  <div className="pt-1 text-[10px] text-c-text-muted">
+                    {pl6(
+                      `Zaznaczono ${selection.count} elementów — panel opisuje pierwszy.`,
+                      `${selection.count} elements selected — the panel describes the first one.`
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </Section>
       )}
 
@@ -992,23 +1249,22 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       </Section>
       )}
 
-      {activeTool === 'whiteboard' && pokaz('properties') && (
+      {/*
+       * Inspektor tablicy. W układzie 6 sekcji rozpada się na dwa adresy:
+       *   • zaznaczony element → „Właściwości" (karta elementu),
+       *   • sesja / wyniki warsztatu → „Narzędzie" (opisują NARZĘDZIE, nie element).
+       * Dlatego blok renderuje się we „Właściwościach" tylko przy zaznaczeniu,
+       * a części sesyjne mają własny warunek niżej.
+       */}
+      {activeTool === 'whiteboard' && pokaz('properties') && (!szesc || Boolean(wybranyWezel)) && (
         <Section
           title={t('myWorkIdeas.workspaceTools.whiteboardInspector')}
           icon={<Activity size={12} />}
           defaultOpen
         >
           <div className="space-y-3 text-[11px]">
-            {/* Naprawa 2026-07-26 (Zadanie A, `ff_whiteboardSessionInPanel`,
-                default OFF): mount point dla `WhiteboardSessionPanel`
-                (Facilitator/Board mode/Voting/Follow-me/WORKSHOP PHASE/
-                Ops+Governance), portalowanego tu z `IdeaWhiteboardTool` gdy
-                flaga ON — patrz `usePortalSlot` + `whiteboardSessionInPanelFlag.ts`.
-                Renderowany tylko gdy flaga włączona, żeby przy OFF (dziś)
-                nie zostawiać pustego diva w drzewie. */}
-            {isWhiteboardSessionInPanelEnabled() && (
-              <div id={WHITEBOARD_SESSION_PANEL_SLOT_ID} />
-            )}
+            {/* W układzie 6 sekcji panel sesji mieszka w „Narzędziu" (niżej). */}
+            {!szesc && slotSesjiTablicy}
 
             {/* Selected node info */}
             {selection.type === 'node' &&
@@ -1038,74 +1294,14 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                 );
               })()}
 
-            {/* Session info */}
-            {whiteboardSession && (
-              <div className="rounded-lg bg-slate-50 dark:bg-navy-800/60 p-2.5 space-y-1.5">
-                <div className="font-semibold text-slate-700 dark:text-slate-200">
-                  {t('myWorkIdeas.workspaceTools.session')}
-                </div>
-                {whiteboardSession.role && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-slate-500 dark:text-slate-400">
-                      {t('myWorkIdeas.workspaceTools.role')}
-                    </span>
-                    <span className="font-medium text-slate-700 dark:text-slate-200 capitalize">
-                      {whiteboardSession.role}
-                    </span>
-                  </div>
-                )}
-                {whiteboardSession.phase && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-slate-500 dark:text-slate-400">
-                      {t('myWorkIdeas.workspaceTools.phase')}
-                    </span>
-                    <span className="font-medium text-slate-700 dark:text-slate-200 capitalize">
-                      {whiteboardSession.phase}
-                    </span>
-                  </div>
-                )}
-                {(whiteboardSession.participantCount ?? 0) > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-slate-500 dark:text-slate-400">
-                      {t('myWorkIdeas.workspaceTools.participants')}
-                    </span>
-                    <span className="font-medium text-slate-700 dark:text-slate-200">
-                      {whiteboardSession.participantCount}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Outcome registry summary */}
-            {whiteboardOutcomes && whiteboardOutcomes.length > 0 && (
-              <div className="rounded-lg bg-slate-50 dark:bg-navy-800/60 p-2.5 space-y-1.5">
-                <div className="font-semibold text-slate-700 dark:text-slate-200">
-                  {t('myWorkIdeas.workspaceTools.outcomes')} ({whiteboardOutcomes.length})
-                </div>
-                <div className="space-y-1 max-h-32 overflow-auto">
-                  {whiteboardOutcomes.slice(0, 8).map((o, i) => (
-                    <div key={i} className="flex items-center gap-1.5">
-                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                      <span className="text-[9px] font-bold uppercase text-slate-600 w-14 shrink-0">
-                        {o.type}
-                      </span>
-                      <span className="text-slate-600 dark:text-slate-300 truncate">{o.label}</span>
-                    </div>
-                  ))}
-                  {whiteboardOutcomes.length > 8 && (
-                    <div className="text-[9px] text-slate-600">
-                      +{whiteboardOutcomes.length - 8} {t('myWorkIdeas.workspaceTools.more')}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* Sesja + rejestr wyników: przy fladze 6 sekcji przenoszą się
+                do „Narzędzia" (ten sam blok, inny adres). */}
+            {!szesc && blokSesjiTablicy}
           </div>
         </Section>
       )}
 
-      {activeTool === 'process_flow' && pokaz('properties') && (
+      {activeTool === 'process_flow' && pokaz('properties') && (!szesc || maZaznaczenie) && (
         <Section
           title={t('myWorkIdeas.workspaceTools.processInspector')}
           icon={<Activity size={12} />}
@@ -1136,7 +1332,8 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         </Section>
       )}
 
-      {activeTool === 'process_flow' && pokaz('overview') && (
+      {/* Kondycja przepływu — w układzie 6 sekcji to treść AI, nie Przeglądu. */}
+      {activeTool === 'process_flow' && pokaz('overview', 'ai') && (!szesc || !maZaznaczenie) && (
         <Section
           title={t('myWorkIdeas.workspaceTools.processHealth')}
           icon={<Activity size={13} />}
@@ -1147,8 +1344,11 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
 
       {activeTool === 'mindmap' && (
         <>
-          {/* ── 5. Mindmap Inspector (Style / Layout / Theme) ── */}
-          {pokaz('properties') && (
+          {/* ── 5. Mindmap Inspector (Style / Layout / Theme) ──
+              W układzie 6 sekcji: z zaznaczeniem = „Właściwości" (styl węzła);
+              bez zaznaczenia ustawienia reprezentacji przenoszą się do
+              „Narzędzia" (osobny blok niżej) — tam opisują NARZĘDZIE, nie element. */}
+          {pokaz('properties') && (!szesc || maZaznaczenie) && (
           <Section
             title={t('myWorkIdeas.workspaceTools.mapInspector')}
             icon={<Sparkles size={12} />}
@@ -1171,8 +1371,8 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           </Section>
           )}
 
-          {/* ── 6. Map Health ── */}
-          {pokaz('overview') && (
+          {/* ── 6. Map Health ── (6 sekcji: treść AI, nie Przeglądu) */}
+          {pokaz('overview', 'ai') && (!szesc || !maZaznaczenie) && (
           <Section title={t('myWorkIdeas.workspaceTools.mapHealth')} icon={<Activity size={13} />}>
             <MapHealthScore
               nodes={graphNodes.map((n: any) => ({ id: n.id, data: n.data, type: n.type }))}
@@ -1202,7 +1402,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
        * Dlatego renderujemy go WYŁĄCZNIE w trybie zakładek — w szufladzie legacy
        * ta treść już jest piętro wyżej i powstałby dubel.
        */}
-      {wZakladce('relations') && (
+      {sek('relations', 'relations') && (
         <Section
           title={t('myWorkIdeas.workspaceTools.relations')}
           icon={<Link2 size={12} />}
@@ -1229,8 +1429,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         </Section>
       )}
 
-      {/* ── Komentarze (§7) — first-class, nie szczegół elementu. ── */}
-      {wZakladce('comments') && (
+      {/* ── Komentarze (§7) — first-class, nie szczegół elementu.
+             W układzie 6 sekcji scalone z Historią w „Aktywność" (niżej). ── */}
+      {!szesc && wZakladce('comments') && (
         <Section
           title={t('myWorkIdeas.workspaceTools.comments')}
           icon={<MessageSquare size={12} />}
@@ -1246,8 +1447,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         </Section>
       )}
 
-      {/* ── Historia (§8) — zdarzenia + wersje, AI = typ zdarzenia. ── */}
-      {wZakladce('history') && (
+      {/* ── Historia (§8) — zdarzenia + wersje, AI = typ zdarzenia.
+             W układzie 6 sekcji scalona z Komentarzami w „Aktywność" (niżej). ── */}
+      {!szesc && wZakladce('history') && (
         <Section
           title={t('myWorkIdeas.workspaceTools.history')}
           icon={<Clock size={12} />}
@@ -1259,6 +1461,218 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
             isPl={!!isPl}
             onRestoreSnapshot={onRestoreSnapshot}
           />
+        </Section>
+      )}
+
+      {/*
+       * ═══ SEKCJE WŁASNE UKŁADU SZEŚCIU (flaga ON) ═══
+       * Renderują się WYŁĄCZNIE przy `szesc` — przy fladze OFF nie istnieją
+       * w drzewie, więc stary układ jest nietknięty.
+       */}
+
+      {/* ── Właściwości bez zaznaczenia: uczciwy pusty stan ──
+          Panel szczegółów wiersza Tabeli wprowadzi się tu osobnym zleceniem. */}
+      {szesc && sekcja6 === 'properties' && !maZaznaczenie && (
+        <Section
+          title={etykieta6.properties}
+          icon={<SlidersHorizontal size={12} />}
+          defaultOpen
+        >
+          {pustaSekcja(
+            pl6('Zaznacz element, żeby zobaczyć jego pola.', 'Select an element to see its fields.'),
+            pl6(
+              'Ustawienia samej reprezentacji (styl, układ, motyw) są w sekcji „Narzędzie".',
+              'Representation settings (style, layout, theme) live under “Tool”.'
+            )
+          )}
+        </Section>
+      )}
+
+      {/*
+       * ── Właściwości z zaznaczeniem, ale bez inspektora reprezentacji ──
+       * Tabela nie ma inspektora w panelu (pola wiersza edytuje się w siatce),
+       * a na Tablicy inspektor opisuje wyłącznie WĘZEŁ — przy zaznaczonym
+       * połączeniu nie miałby czego pokazać. Bez tego bloku sekcja renderowała
+       * pustą kartę z samym nagłówkiem. Docelowo mieszka tu przeskalowany panel
+       * szczegółów wiersza (osobne zlecenie).
+       */}
+      {szesc &&
+        sekcja6 === 'properties' &&
+        maZaznaczenie &&
+        (activeTool === 'table' || (activeTool === 'whiteboard' && !wybranyWezel)) && (
+          <Section
+            title={etykieta6.properties}
+            icon={<SlidersHorizontal size={12} />}
+            defaultOpen
+          >
+            {pustaSekcja(
+              activeTool === 'table'
+                ? pl6(
+                    'Pola tego wiersza edytujesz w tabeli.',
+                    'This row’s fields are edited in the table.'
+                  )
+                : pl6(
+                    'To połączenie nie ma własnych pól.',
+                    'This connection has no fields of its own.'
+                  ),
+              pl6('Tożsamość elementu widzisz w „Przeglądzie".', 'Its identity is under “Overview”.')
+            )}
+          </Section>
+        )}
+
+      {/* ── AI · poziom Idei ──
+          Karta rysuje się TYLKO gdy ma co pokazać. Dla Mapy myśli i Przepływu
+          treścią sekcji jest kondycja (wyżej, `pokaz('overview','ai')`), więc
+          bez akcji AI nie dokładamy pustej karty pod spodem. */}
+      {szesc &&
+        sekcja6 === 'ai' &&
+        !maZaznaczenie &&
+        (Boolean(onAISummarize || onAIExpand) ||
+          (activeTool !== 'mindmap' && activeTool !== 'process_flow')) && (
+        <Section title={etykieta6.ai} icon={<Sparkles size={12} />} defaultOpen>
+          <div className="space-y-2" data-testid="idea-panel6-ai-idea">
+            {onAISummarize || onAIExpand ? (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {onAISummarize && (
+                  <button
+                    onClick={onAISummarize}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-c-info hover:bg-c-info/5 transition-colors"
+                  >
+                    <Sparkles size={10} />
+                    {t('myWorkIdeas.workspaceTools.aiSummarize')}
+                  </button>
+                )}
+                {onAIExpand && (
+                  <button
+                    onClick={onAIExpand}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-c-info/10 text-c-info hover:bg-c-info/15 transition-colors"
+                  >
+                    <Sparkles size={10} />
+                    {t('myWorkIdeas.workspaceTools.aiExpand')}
+                  </button>
+                )}
+              </div>
+            ) : (
+              // Zero martwych przycisków (Z3): akcje AI mają wykonawcę wyłącznie
+              // tam, gdzie host go podłączył. Bez handlera mówimy to wprost.
+              activeTool !== 'mindmap' &&
+              activeTool !== 'process_flow' &&
+              pustaSekcja(
+                pl6(
+                  'To narzędzie nie ma jeszcze własnych podpowiedzi AI.',
+                  'This tool has no AI suggestions of its own yet.'
+                ),
+                pl6('Rozmowę z Teresą otwierasz z Menu 1.', 'Open the chat with Teresa from Menu 1.')
+              )
+            )}
+          </div>
+        </Section>
+      )}
+
+      {/* Hak pod przeniesienie pływających paneli AI (Blind Spots, Map Health)
+          — osobne zlecenie. Poza kartą, żeby istniał także wtedy, gdy karta AI
+          się nie renderuje. Pusty węzeł nic nie rysuje. */}
+      {szesc && sekcja6 === 'ai' && !maZaznaczenie && <div id={IDEA_PANEL_AI_SLOT_ID} />}
+
+      {/* ── AI · poziom elementu ── */}
+      {szesc && sekcja6 === 'ai' && maZaznaczenie && (
+        <Section title={etykieta6.ai} icon={<Sparkles size={12} />} defaultOpen>
+          {onAINodeAction && wybranyWezel ? (
+            <div className="grid grid-cols-1 gap-1.5" data-testid="idea-panel6-ai-element">
+              {[
+                {
+                  akcja: 'mm_ai_expand_node',
+                  label: pl6('Rozbuduj temat', 'Expand this topic'),
+                },
+                { akcja: 'mm_ai_what_if', label: pl6('Kwestionuj', 'Challenge it') },
+                { akcja: 'mm_ai_deepen', label: pl6('Pogłęb', 'Go deeper') },
+                {
+                  akcja: 'mm_ai_suggest_links',
+                  label: pl6('Sugeruj połączenia', 'Suggest connections'),
+                },
+              ].map(({ akcja, label }) => (
+                <button
+                  key={akcja}
+                  type="button"
+                  onClick={() => onAINodeAction(akcja, String(wybranyWezel.id))}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] font-semibold text-c-text-secondary transition-colors hover:border-c-focus hover:text-c-text"
+                  data-testid={`idea-panel6-ai-${akcja}`}
+                >
+                  <Sparkles size={11} className="shrink-0 text-c-info" />
+                  {label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            pustaSekcja(
+              pl6(
+                'Akcje AI na elemencie działają na razie w Mapie myśli.',
+                'Element-level AI actions currently work in the Mind Map.'
+              ),
+              pl6(
+                'W pozostałych narzędziach użyj rozmowy z Teresą.',
+                'In the other tools, use the chat with Teresa.'
+              )
+            )
+          )}
+        </Section>
+      )}
+
+      {/* ── Aktywność — Komentarze + Historia w JEDNEJ osi czasu ── */}
+      {szesc && sekcja6 === 'activity' && (
+        <Section title={etykieta6.activity} icon={<Clock size={12} />} defaultOpen>
+          <IdeaPanelActivity
+            ideaId={ideaId}
+            isDraft={isDraft}
+            isPl={!!isPl}
+            selection={selection}
+            graphNodes={graphNodes ?? []}
+            onRestoreSnapshot={onRestoreSnapshot}
+          />
+        </Section>
+      )}
+
+      {/* ── Narzędzie — opisuje NARZĘDZIE, nie element (stąd brak wariantu
+             „element" w tabeli układu). ── */}
+      {szesc && sekcja6 === 'tool' && (
+        <Section title={etykieta6.tool} icon={<Layers size={12} />} defaultOpen>
+          <div className="space-y-3 text-[11px]" data-testid="idea-panel6-tool">
+            {activeTool === 'mindmap' && (
+              // Ustawienia REPREZENTACJI (struktura / układ / motyw). Bez
+              // `selectedNodeId` — styl pojedynczego węzła należy do Właściwości.
+              <MindmapInspector
+                currentStructure="mindmap"
+                currentLayoutMode="tree"
+                onUpdateNode={(nodeId, patch) => onStyleChange?.({ nodeId, ...patch })}
+                onSetStructure={(s) => onLayoutChange?.(`structure_${s}`)}
+                onSetLayoutMode={(m) => onLayoutChange?.(m)}
+                onApplyTheme={(th) => onThemeChange?.(th)}
+              />
+            )}
+
+            {activeTool === 'whiteboard' && (
+              <>
+                {slotSesjiTablicy}
+                {blokSesjiTablicy}
+              </>
+            )}
+
+            {/* Hak pod przeniesienie Scen i Warstwy sesji z płótna — osobne
+                zlecenie. Pusty węzeł nic nie rysuje. */}
+            <div id={IDEA_PANEL_TOOL_SLOT_ID} />
+
+            {(activeTool === 'process_flow' || activeTool === 'table') &&
+              pustaSekcja(
+                pl6(
+                  'To narzędzie nie ma jeszcze własnych ustawień w panelu.',
+                  'This tool has no panel-level settings yet.'
+                ),
+                pl6(
+                  'Układ i widok zmieniasz paskiem nad płótnem.',
+                  'Layout and view are changed from the bar above the canvas.'
+                )
+              )}
+          </div>
         </Section>
       )}
       </div>

@@ -31,7 +31,8 @@
  *
  * ★ SELECTION/BULK (2026-07-26, audyt kanonu triady — MUST #7/#13):
  * "Moje procesy" dostała `selection` (checkbox po lewej) + pasek bulk
- * (`StandardModuleBar.bulk`) z JEDNĄ akcją zbiorczą — "Anuluj zaznaczone".
+ * (renderowany lokalnie, `renderBulkBar` niżej — patrz ★ HubBarSlots poniżej)
+ * z JEDNĄ akcją zbiorczą — "Anuluj zaznaczone".
  * Backend (`agentPlan.api.ts`) ma WYŁĄCZNIE `cancelAgentPlan(planId)`
  * (POST /:id/cancel, pojedynczo) — brak endpointu zbiorczego i brak
  * jakiegokolwiek DELETE dla planów, więc: (a) "Anuluj zaznaczone" woła
@@ -64,9 +65,9 @@
  *    (AgentPlan nie niesie processId/manifestId źródłowego, `runAgentPlan`
  *    działa tylko na planie w statusie 'planning') — zgłoszone w raporcie.
  * 4. "Otwórz" (preview/kebab) NIE podmienia całego ekranu — dokłada kartę do
- *    Menu 3 (`openItems`/`activeItemId`/`onSelectItem`/`onCloseItem`,
- *    mechanizm już wpięty w `StandardModuleBar`→`ModuleNavBar`→`DynamicTabs`,
- *    dotąd nieużywany przez żaden hub — pierwszy realny konsument).
+ *    Menu 3 (`openItems`/`activeItemId`/`onSelectItem`/`onCloseItem`, teraz
+ *    zadeklarowane przez `useHubBarSlot` — patrz ★ HubBarSlots poniżej —
+ *    a nie renderowane tu bezpośrednio przez `StandardModuleBar`).
  *    Treść karty: `AgentPlanWorkspace` (ArtifactRightPanel — z NATURY wąski
  *    prawy dok, doktryna "panel-Teresy-zawsze-po-prawej") dostaje TOWARZYSZA
  *    z lewej — `PlanSummaryCard` (też reużywana w preview) — bo bez niego
@@ -76,18 +77,43 @@
  *    stałych kluczach, czyli osobnego, większego zadania; zgłoszone w raporcie
  *    z oszacowaniem zamiast robić połowicznie.
  *
- * Kanon: consultify-triada (StandardModuleBar Menu2/3 + StandardTable +
- * StandardPreview — zero własnej tabeli/menu/preview) + consultify-gestosc
- * (hub 2 zakładki ≤ 6; "Nowy proces" ma jeden dom — Menu2 primary CTA; NIE ma
- * globalnego "+ New" w topbarze aplikacji — sprawdzone w `MainLayout.tsx`,
- * każdy hub ma WŁASNY primaryCta w Menu2, identycznie jak AssessmentHub/
- * DiscoveryToolsHub — więc "Nowy proces" zostaje, nie jest duplikatem).
+ * Kanon: consultify-triada (StandardTable + StandardPreview — zero własnej
+ * tabeli/preview) + consultify-gestosc (hub 2 zakładki ≤ 6; "Nowy agent" ma
+ * jeden dom — Menu2 primary CTA).
+ *
+ * ★ HubBarSlots (2026-07-27, zgłoszenie właściciela na żywym demo — nad
+ * obszarem roboczym w "My Work → Run agent" piętrzyły się 4 rzędy chrome,
+ * dwa duplikat huba, cytat: „za dużo miejsca ucieka"). Ta powłoka PRZESTAŁA
+ * rysować własny `StandardModuleBar` — hub (`MyWorkHub`) ma teraz JEDYNE
+ * Menu 2/3 na ekranie, a ta powłoka tylko DEKLARUJE swoje elementy przez
+ * `useHubBarSlot` (patrz `src/components/shared/HubBarSlots.tsx`):
+ *   - `filterControls` — Segmented "Moje procesy | Szablony", TYLKO gdy
+ *     `!activeItemId` (Piotr: na poziomie listy owszem, w otwartym agencie
+ *     już nie ma po co go pokazywać);
+ *   - `primaryCta` — "Nowy agent"/"New agent" (Piotr wprost zmienił nazwę z
+ *     "Nowy proces"), TYLKO gdy `tab === 'processes' && !activeItemId`;
+ *   - `openItems`/`activeItemId`/`onSelectItem`/`onCloseItem`/`onShowList` —
+ *     1:1 to samo, co szło wcześniej do `StandardModuleBar` (karty otwartych
+ *     procesów), teraz lądują w Menu 3 huba.
+ * WYJĄTEK: `bulk` (pasek zaznaczenia "Moje procesy") NIE ma odpowiednika w
+ * `HubBarSlotValue` (kontrakt slotu tego nie przewiduje — rozbudowa o niego
+ * to osobne zadanie) — zostaje renderowany LOKALNIE nad tabelą
+ * (`renderBulkBar`, ten sam wygląd co dawny `StandardModuleBar.bulk`, tylko
+ * inny, mniejszy pasek zamiast pełnego Menu 2/3).
  */
 import { FileStack, ListChecks, PlayCircle, XCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useHubBarSlot } from '@/components/shared/HubBarSlots';
 import type { OpenDocument } from '@/components/shared/ModuleHub/types';
+import {
+  MENU_3_ACTION_DANGER,
+  MENU_3_INNER_CLASS,
+  MENU_3_LEFT_CLASS,
+  MENU_3_RIGHT_CLASS,
+  Menu3Chip,
+} from '@/components/shared/ModuleMenu3';
 import {
   PreviewActionButton,
   PreviewDetailsSection,
@@ -95,7 +121,6 @@ import {
 } from '@/components/shared/PreviewPane';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
-import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import {
   type StandardRowMenu,
   StandardTable,
@@ -610,6 +635,71 @@ export const AgentHubShell: React.FC = () => {
     [plans, previewPlanId]
   );
 
+  /**
+   * Pasek zaznaczenia "Moje procesy" — RENDEROWANY LOKALNIE (nie przez
+   * HubBarSlots). `StandardModuleBar.bulk` renderował ten pasek jako Menu 3
+   * WEWNĄTRZ własnego `ModuleNavBar` — teraz, gdy hub (MyWorkHub) rysuje
+   * JEDYNE Menu 2/3, nie ma gdzie go doczepić bez rozbudowy kontraktu
+   * `HubBarSlotValue` o osobny `bulk` slot (poza zakresem tego zadania —
+   * zgłoszone w raporcie). Zamiast fasady dublujemy TYLKO wygląd (te same
+   * klasy `MENU_3_*`/`Menu3Chip` co `StandardModuleBar.bulkContent`) i
+   * renderujemy go bezpośrednio nad tabelą.
+   */
+  const renderBulkBar = () => {
+    if (tab !== 'processes' || activeItemId || selectedPlanIds.size === 0) return null;
+    return (
+      <div className="px-4 pt-3">
+        <div className={MENU_3_INNER_CLASS}>
+          <div className={MENU_3_LEFT_CLASS}>
+            <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
+              {t('agentPlan.hub.bulk.selected', {
+                defaultValue: isPolish ? 'Zaznaczono: {{count}}' : '{{count}} selected',
+                count: selectedPlanIds.size,
+              })}
+            </span>
+            <Menu3Chip
+              onClick={() => setSelectedPlanIds(new Set(tableRows.map((r) => String(r.id))))}
+            >
+              {t('agentPlan.hub.bulk.selectAll', isPolish ? 'Zaznacz wszystkie' : 'Select all')}
+            </Menu3Chip>
+            <Menu3Chip onClick={() => setSelectedPlanIds(new Set())}>
+              {t('agentPlan.hub.bulk.clear', isPolish ? 'Wyczyść' : 'Clear')}
+            </Menu3Chip>
+          </div>
+          <div className={MENU_3_RIGHT_CLASS}>
+            <button
+              type="button"
+              onClick={() => void handleBulkCancelPlans()}
+              disabled={cancellableSelectedCount === 0 || bulkCancelling}
+              aria-disabled={cancellableSelectedCount === 0 || bulkCancelling}
+              title={
+                cancellableSelectedCount === 0
+                  ? t(
+                      'agentPlan.hub.bulk.cancelNote',
+                      isPolish
+                        ? 'W zaznaczeniu brak procesów, które da się anulować'
+                        : 'None of the selected processes can be cancelled'
+                    )
+                  : undefined
+              }
+              className={`${MENU_3_ACTION_DANGER} disabled:cursor-not-allowed disabled:opacity-40`}
+            >
+              <XCircle size={12} />
+              {bulkCancelling
+                ? t('agentPlan.hub.bulk.cancelling', isPolish ? 'Anulowanie…' : 'Cancelling…')
+                : t('agentPlan.hub.bulk.cancel', {
+                    defaultValue: isPolish
+                      ? 'Anuluj zaznaczone ({{count}})'
+                      : 'Cancel selected ({{count}})',
+                    count: cancellableSelectedCount,
+                  })}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderProcesses = () => {
     if (loadError) {
       return (
@@ -655,6 +745,7 @@ export const AgentHubShell: React.FC = () => {
     return (
       <div className="h-full min-h-0">
         {createError ? <p className="px-4 pt-3 text-xs text-c-danger">{createError}</p> : null}
+        {renderBulkBar()}
         <TableWithPreviewLayout<{ id: string; title: string }>
           selectedId={previewPlanId}
           selectedItem={previewPlan ? { id: previewPlan.id, title: previewPlan.title } : null}
@@ -956,90 +1047,60 @@ export const AgentHubShell: React.FC = () => {
     );
   };
 
+  // ★ HubBarSlots (2026-07-27, zgłoszenie właściciela — 4 rzędy chrome nad
+  // Run agent). Ta powłoka NIE rysuje już własnego `StandardModuleBar`; hub
+  // (MyWorkHub) ma JEDYNE Menu 2/3 na ekranie i czyta to, co deklarujemy tu
+  // (patrz HubBarSlots.tsx). Wyjątek: `bulk` — patrz `renderBulkBar` wyżej,
+  // kontrakt slotu nie ma (jeszcze) pola na pasek zaznaczenia.
+  const filterControlsNode = useMemo(() => {
+    // Piotr: „My processes/Templates mają sens na poziomie listy; jak jestem
+    // w agencie, to już nie ma po co go pokazywać" — ukryty przy otwartej karcie.
+    if (activeItemId) return null;
+    return (
+      <Segmented<AgentHubTab>
+        value={tab}
+        options={[
+          {
+            value: 'processes',
+            label: t('agentPlan.hub.tabs.processes', isPolish ? 'Moje procesy' : 'My processes'),
+          },
+          {
+            value: 'templates',
+            label: t('agentPlan.hub.tabs.templates', isPolish ? 'Szablony' : 'Templates'),
+          },
+        ]}
+        onChange={(id) => setTab(id)}
+        testId="agent-hub-mode-switch"
+      />
+    );
+  }, [tab, activeItemId, isPolish]);
+
+  const primaryCtaValue = useMemo(() => {
+    if (tab !== 'processes' || activeItemId) return null;
+    return {
+      // Piotr: zmiana nazwy z „Nowy proces" na „Nowy agent" (nowy klucz
+      // i18n — `newProcess` zostaje tylko w empty-state CTA poniżej).
+      label: creating
+        ? t('agentPlan.hub.newProcessLoading', isPolish ? 'Tworzenie…' : 'Creating…')
+        : t('agentPlan.hub.newAgent', isPolish ? 'Nowy agent' : 'New agent'),
+      onClick: () => void handleNewProcess(),
+      disabled: creating,
+      testId: 'agent-hub-new-agent',
+    };
+  }, [tab, activeItemId, creating, isPolish, handleNewProcess]);
+
+  useHubBarSlot({
+    filterControls: filterControlsNode,
+    primaryCta: primaryCtaValue,
+    openItems,
+    activeItemId,
+    onSelectItem: handleSelectItem,
+    onCloseItem: handleCloseItem,
+    onShowList: handleShowList,
+  });
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
-      <StandardModuleBar
-        filterControls={
-          <Segmented<AgentHubTab>
-            value={tab}
-            options={[
-              {
-                value: 'processes',
-                label: t(
-                  'agentPlan.hub.tabs.processes',
-                  isPolish ? 'Moje procesy' : 'My processes'
-                ),
-              },
-              {
-                value: 'templates',
-                label: t('agentPlan.hub.tabs.templates', isPolish ? 'Szablony' : 'Templates'),
-              },
-            ]}
-            onChange={(id) => setTab(id)}
-            testId="agent-hub-mode-switch"
-          />
-        }
-        primaryCta={
-          tab === 'processes'
-            ? {
-                label: creating
-                  ? t('agentPlan.hub.newProcessLoading', isPolish ? 'Tworzenie…' : 'Creating…')
-                  : t('agentPlan.hub.newProcess', isPolish ? 'Nowy proces' : 'New process'),
-                icon: PlayCircle,
-                onClick: () => void handleNewProcess(),
-              }
-            : undefined
-        }
-        bulk={
-          tab === 'processes' && !activeItemId && selectedPlanIds.size > 0
-            ? {
-                count: selectedPlanIds.size,
-                selectedLabel: t('agentPlan.hub.bulk.selected', {
-                  defaultValue: isPolish ? 'Zaznaczono: {{count}}' : '{{count}} selected',
-                  count: selectedPlanIds.size,
-                }),
-                onSelectAll: () => setSelectedPlanIds(new Set(tableRows.map((r) => String(r.id)))),
-                selectAllLabel: t(
-                  'agentPlan.hub.bulk.selectAll',
-                  isPolish ? 'Zaznacz wszystkie' : 'Select all'
-                ),
-                onClear: () => setSelectedPlanIds(new Set()),
-                clearLabel: t('agentPlan.hub.bulk.clear', isPolish ? 'Wyczyść' : 'Clear'),
-                actions: [
-                  {
-                    id: 'bulk-cancel',
-                    label: bulkCancelling
-                      ? t('agentPlan.hub.bulk.cancelling', isPolish ? 'Anulowanie…' : 'Cancelling…')
-                      : t('agentPlan.hub.bulk.cancel', {
-                          defaultValue: isPolish
-                            ? 'Anuluj zaznaczone ({{count}})'
-                            : 'Cancel selected ({{count}})',
-                          count: cancellableSelectedCount,
-                        }),
-                    icon: XCircle,
-                    variant: 'danger',
-                    onClick: () => void handleBulkCancelPlans(),
-                    disabled: cancellableSelectedCount === 0 || bulkCancelling,
-                    title:
-                      cancellableSelectedCount === 0
-                        ? t(
-                            'agentPlan.hub.bulk.cancelNote',
-                            isPolish
-                              ? 'W zaznaczeniu brak procesów, które da się anulować'
-                              : 'None of the selected processes can be cancelled'
-                          )
-                        : undefined,
-                  },
-                ],
-              }
-            : null
-        }
-        openItems={openItems}
-        activeItemId={activeItemId}
-        onSelectItem={handleSelectItem}
-        onCloseItem={handleCloseItem}
-        onShowList={handleShowList}
-      />
       <div className="flex-1 min-h-0 overflow-y-auto">
         {activeItemId ? (
           <div className="flex h-full min-h-0 overflow-hidden">
