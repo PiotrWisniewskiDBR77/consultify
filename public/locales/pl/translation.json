@@ -27244,6 +27244,36 @@
           "score": "Ocena",
           "decision": "Decyzja"
         }
+      },
+      "start": {
+        "headline": "Ta tabela jest jeszcze pusta",
+        "description": "Wybierz jedną z trzech dróg — każda zakłada kolumny i wiersze od razu, bez wypełniania formularza.",
+        "lockedDescription": "Tabela nie ma jeszcze wierszy, a widok jest tylko do odczytu — nic tu nie zbudujesz.",
+        "importCsv": "Mam już dane w pliku — wczytaj CSV",
+        "blankFailed": "Nie udało się założyć wierszy",
+        "template": {
+          "title": "Z szablonu",
+          "description": "Gotowa rama konsultingowa — SWOT, rejestr ryzyk, plan działań. Wstawia kolumny i przykładowe wiersze, które podmieniasz na swoje.",
+          "action": "Wybierz szablon"
+        },
+        "ai": {
+          "title": "Z AI",
+          "description": "Napisz jednym zdaniem, co chcesz śledzić. AI zaproponuje kolumny i pierwsze wiersze — zatwierdzasz albo poprawiasz.",
+          "action": "Opisz tabelę"
+        },
+        "blank": {
+          "title": "Pusta z sugerowanymi kolumnami",
+          "description": "Nazwa, Status, Priorytet, Właściciel i trzy puste wiersze. Tabela powstaje od razu — resztę dokładasz sam.",
+          "action": "Zacznij pustą"
+        }
+      },
+      "overflow": {
+        "sectionData": "Dane",
+        "sectionAi": "AI",
+        "sectionView": "Widok",
+        "sectionMore": "Więcej",
+        "sectionPlatform": "Platforma",
+        "title": "Więcej narzędzi"
       }
     },
     "mindmap": {

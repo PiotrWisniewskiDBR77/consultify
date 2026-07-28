@@ -23,6 +23,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { usePortalSlot } from '@/hooks/usePortalSlot';
+import { IDEA_MENU1_TOOL_SLOT_ID } from '@/utils/ideaTableGuidedBarFlag';
 
 import {
   resolveChipGroup,
@@ -290,6 +291,19 @@ const OverflowMenu: React.FC<{ chips: TopBarChipDescriptor[] }> = ({ chips }) =>
   );
 };
 
+/**
+ * Slot narzędzia w rzędzie poleceń — miejsce TUŻ PRZED chipami drugorzędnymi
+ * (czyli przed „Teresą"), do którego aktywne narzędzie może zaportalować JEDNĄ
+ * własną akcję. Powstał na zgłoszenie właściciela „może save koło teresa"
+ * (Tabela Idei, 2026-07-28) i jest celowo pusty oraz `display: contents`:
+ * bez dzieci nie tworzy pudełka, więc nie łapie `gap` rodzica i NIE zmienia
+ * wyglądu Menu 1 w żadnym module. Portaluje do niego tylko narzędzie z włączoną
+ * flagą `ff_ideaTableGuidedBar` — przy fladze OFF slot zostaje pusty.
+ */
+const ToolActionSlot: React.FC = () => (
+  <div id={IDEA_MENU1_TOOL_SLOT_ID} data-testid={IDEA_MENU1_TOOL_SLOT_ID} style={{ display: 'contents' }} />
+);
+
 export const TopBar: React.FC<TopBarProps> = ({
   moduleLabel,
   title,
@@ -354,6 +368,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           </div>
         ) : null}
         <div className="flex items-center gap-1 flex-shrink-0" data-testid="mels-topbar-chips">
+          <ToolActionSlot />
           {secondaryChips.map((chip) => (
             <Chip key={chip.id} descriptor={chip} />
           ))}
@@ -436,6 +451,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       ) : null}
 
       <div className="flex items-center gap-1 flex-shrink-0" data-testid="mels-topbar-chips">
+        <ToolActionSlot />
         {secondaryChips.map((chip) => (
           <Chip key={chip.id} descriptor={chip} />
         ))}
