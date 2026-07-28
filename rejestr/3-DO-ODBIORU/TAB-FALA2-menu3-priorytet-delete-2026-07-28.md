@@ -26,6 +26,24 @@
   (sprawdzane `--listFiles`, żeby nie powtórzyć pomyłki z 07-27, gdy wysypany tsc udawał czysty
   wynik). Bramka zarobiła na siebie: złapała usunięte `t` w `SheetsTabContent`, którego esbuild
   nie widzi.
+### Przejście Playwrightem (`tests/e2e/smoke/tabele-fala-odbior.spec.ts`, 6/6)
+
+Sprawdza konkretne naprawy, nie „czy się wyrenderowało". **Dwie pułapki po drodze — obie
+dawały fałszywą zieleń:**
+
+1. Skopiowałem zamykanie okna powitalnego ze starego testu — szuka „Skip tour", a produkt
+   ma **„Skip for now"**. Modal nie znikał, asercje czytały jego treść zamiast tabeli.
+   **Sześć testów świeciło na zielono nad zasłoniętym ekranem.** Wyłapane oglądaniem zrzutów,
+   nie wynikiem testu.
+2. Stałe czekanie przepuszczało pomiar na spinnerze — 17 znaków tekstu udawało załadowany ekran.
+
+Naprawione: onboarding wyłączany u źródła (localStorage), twarda asercja na brak modala,
+`expect.poll` na realną treść.
+
+**OGRANICZENIE:** tryb testowy nie niesie danych → tabele puste. Przejście potwierdza
+**strukturę** (na zrzutach widać P-10 i P-20: po prawej Menu 3 stoi sam `AI Triage`),
+ale **nie treść wierszy**. Od tego są strażniki i harness.
+
 - 5 nowych plików-strażników, **26/26 zielone**: `standardPreviewActionOrder` (6),
   `priorityCellCanon` (5), `naglowkiKolumnJezyk` (5), `listDateFormat` (6),
   `sheetsSubviewWarstwa` (4)
@@ -38,6 +56,40 @@
 2. `My Work → Inbox` — Menu 3 ma po prawej sam `AI Triage`, a `Done` zszedł na lewo jako filtr
 3. `My Work → Sejf klienta` — jedna wyszukiwarka zamiast dwóch, bez chipów z cudzych modułów
 4. `Tools → Assessment/Reports/Initiatives` — Menu 3 bez trzech nadmiarowych przycisków
+
+---
+
+## FALA 3 i 5 — dokończenie (18 commitów łącznie)
+
+| # | Uwaga | Co się okazało po sprawdzeniu |
+|---|---|---|
+| 9 | **P-17 / P-18** — kebaby-atrapy | Sprawdziłem bazę, zanim naprawiłem: `my_ideas` i siostrzane tabele **nie mają nawet kolumny** na archiwizację, a `POST /archive` istnieje wyłącznie dla sesji wywiadu i report-buildera. „Coming soon (backend)" mówiło prawdę — to funkcja do zbudowania, nie do włączenia. Menu przestaje ją obiecywać: **39 pozycji w 20 plikach**. Blokady z POWODEM produktu zostają |
+| 10 | **Interview → Assigned bez stopki** | Stopka **istniała**. Renderowała przyciski wyłącznie dla `assigned`/`in_progress`/`sent_back`; rekord na zrzucie miał `approved`, więc lista wychodziła pusta i znikał cały blok. `submitted` → para Zatwierdź/Odeślij (wzorzec Decisions), `approved` → baner stanu (wzorzec Interview→Initiatives) |
+| 11 | **N-52** — treść preview = zrzut pól | Cztery podglądy robiły to samo obejście: właściwości nie miały gdzie mieszkać, więc szły w pole na prozę. `StandardPreview.details` dostał kontrakt `properties` → `ArtifactPropertiesTable` |
+| 12 | **P-24** — „zmień ten czas w period" | `title` przechodził przez sanitizer, `periodLabel` **nie** — stąd surowy `Thu Dec 31 2026 00:00:00 GMT+0000`. Jeden brakujący przebieg psuł trzy miejsca (kolumna, karta Menu 3, tytuł podglądu) |
+| 13 | **PILNE-12** — encje HTML | Dekoder istniał od dawna (radzi sobie z podwójnym kodowaniem), ale podpięty **tylko do idei**. Inicjatywy szły obok, choć wpadają w ten sam sanitizer |
+| 14 | **P-4** — brak kebaba w Details Ideas | Blok dostawał sam `text`, bez ani jednej akcji — a kebab renderuje się dopiero, gdy jakaś jest. Ideas był jedynym podglądem bez niego |
+| 15 | **P-6** — odstęp Menu 3 ↔ tabela | Racja co do odczucia, nie co do diagnozy: kanon opisywał tylko padding WEWNĄTRZ paska, odstępu pod nim **nie definiował nigdzie**. To była luka. `mb-2` |
+| 16 | **P-15** — `Priority` innej wysokości | Ten sam gatunek co czwarte warstwy: filtr w **Menu 2** używał `Menu3DropdownChip`, komponentu **Menu 3** (`h-7` zamiast `h-9`) |
+
+---
+
+## ★ MOJA REGRESJA W TEJ FALI — złapana i naprawiona
+
+Filtr atrap ukrył pozycje, które `StandardTable` **sam wcześniej dokładał** — test
+`kebab contract` to wyłapał (zielony na `origin/demo`, czerwony u mnie).
+
+Sedno było głębsze niż filtr: blok uniwersalny miał regułę „ZAWSZE obecny; brak handlera =
+disabled z notą" — i **to ona produkowała atrapy**, na które narzekałeś. Filtrowanie leczyło
+objaw. Naprawione u źródła: pozycja bez handlera i bez powodu w ogóle nie powstaje.
+
+**Stan suity — pomiar, nie deklaracja:**
+| | czerwone | zielone | pliki |
+|---|---|---|---|
+| `origin/demo` | 180 | 15547 | 75 |
+| ta gałąź | 179 | 15575 | 74 |
+
+Dług jest **zastany**, a fala go netto zmniejsza.
 
 ---
 
