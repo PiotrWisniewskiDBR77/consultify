@@ -37,6 +37,7 @@ import {
 } from './api';
 import { DocumentStudioAiEntryPanel } from './DocumentStudioAiEntryPanel';
 import { DocumentStudioDocumentPanel } from './DocumentStudioDocumentPanel';
+import { DocumentStudioFileMenu } from './DocumentStudioFileMenu';
 import {
   DocumentStudioGeneratingPanel,
   type GeneratingSectionState,
@@ -802,6 +803,19 @@ export const DocumentStudioView: React.FC = () => {
           }
           chips={tabChips}
           respectMelsOrder={false}
+          // N20 (menu pliku) — same "Plik" dropdown as the document phase
+          // (`DocumentStudioDocumentPanel`), so the operation set (Nowy ·
+          // Otwórz · Zapisz · Zapisz jako) is consistent across EVERY
+          // Document Studio screen, not just the ones with a document open.
+          // No artifact exists yet on this phase (intake/outline/plan
+          // template) — Zapisz/Zapisz jako are disabled rather than faked.
+          primaryActionSlot={
+            <DocumentStudioFileMenu
+              onNew={handleStartOver}
+              onOpen={() => navigate('/presentations?tab=documents')}
+              saveStatus={undefined}
+            />
+          }
           // FAZA B3 (2026-07-27): wejście w Document Studio wyrzucało z
           // powłoki Materiałów — brak drogi powrotnej poza przeglądarkowym
           // "Wstecz". MainLayout breadcrumb dostał klikalny pierwszy segment

@@ -9,14 +9,36 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DocumentStudioDocumentPanel } from '../DocumentStudioDocumentPanel';
 import type { DocumentSchema } from '../types';
 
-const { insertDocumentStudioContentBlockMock } = vi.hoisted(() => ({
+const {
+  insertDocumentStudioContentBlockMock,
+  generateDocumentStudioArtifactMock,
+  saveDocumentStudioManualContentMock,
+  navigateMock,
+} = vi.hoisted(() => ({
   insertDocumentStudioContentBlockMock: vi.fn(),
+  generateDocumentStudioArtifactMock: vi.fn(),
+  saveDocumentStudioManualContentMock: vi.fn(),
+  navigateMock: vi.fn(),
 }));
+
+// N20 (menu pliku) — override the global no-op `useNavigate` safety net
+// (`tests/setup.ts`) with a spy so "Otwórz" / the module-label exit can be
+// asserted to navigate to the right place, per every other existing export
+// (MemoryRouter, Routes, …) staying real.
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  };
+});
 
 vi.mock('../api', async () => {
   const actual = await vi.importActual<typeof import('../api')>('../api');
   return {
     ...actual,
+    generateDocumentStudioArtifact: generateDocumentStudioArtifactMock,
+    saveDocumentStudioManualContent: saveDocumentStudioManualContentMock,
     getDocumentStudioPolicy: vi.fn(async () => ({ canOverrideQa: false, role: 'CONSULTANT' })),
     getDocumentStudioSchemaDiff: vi.fn(async () => ({
       baseSnapshot: {
@@ -198,6 +220,18 @@ describe('DocumentStudioDocumentPanel', () => {
   beforeEach(() => {
     window.localStorage.clear();
     vi.clearAllMocks();
+    // N20 (menu pliku) — "Zapisz jako" default happy path: a fresh artifact
+    // is created, then overwritten with the current schema's sections.
+    generateDocumentStudioArtifactMock.mockResolvedValue({
+      artifactId: 'artifact-2',
+      schema: { ...schema, artifactId: 'artifact-2', updatedAt: '2026-07-28T00:00:00.000Z' },
+      generationWarnings: [],
+    });
+    saveDocumentStudioManualContentMock.mockResolvedValue({
+      ...schema,
+      artifactId: 'artifact-2',
+      title: 'Board memo (kopia)',
+    });
     insertDocumentStudioContentBlockMock.mockResolvedValue({
       insertedBlock: {
         blockId: 'inserted-block-1',
@@ -346,5 +380,130 @@ describe('DocumentStudioDocumentPanel', () => {
       )
     );
     expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('0 MUST · 0 SHOULD');
+  });
+
+  // N20 (menu pliku, live odbiór 2026-07-28) — "Nie ma Zapisz, Zapisz jako,
+  // Otwórz". The File menu below is the fix; these 4 tests match the
+  // ROBOTNIK brief's own acceptance list verbatim.
+  describe('File menu (N20)', () => {
+    it('renders 4 file operations (Nowy · Otwórz · Zapisz · Zapisz jako)', async () => {
+      render(
+        <DocumentStudioDocumentPanel
+          artifactId="artifact-1"
+          schema={schema}
+          onStartOver={vi.fn()}
+          onSchemaUpdated={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('document-file-menu-trigger'));
+
+      expect(screen.getByTestId('document-file-menu-new')).toBeInTheDocument();
+      expect(screen.getByTestId('document-file-menu-open')).toBeInTheDocument();
+      expect(screen.getByTestId('document-file-menu-save')).toBeInTheDocument();
+      expect(screen.getByTestId('document-file-menu-save-as')).toBeInTheDocument();
+    });
+
+    it('"Otwórz" navigates to the Materiały documents list', async () => {
+      render(
+        <DocumentStudioDocumentPanel
+          artifactId="artifact-1"
+          schema={schema}
+          onStartOver={vi.fn()}
+          onSchemaUpdated={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('document-file-menu-trigger'));
+      fireEvent.click(screen.getByTestId('document-file-menu-open'));
+
+      expect(navigateMock).toHaveBeenCalledWith('/presentations?tab=documents');
+    });
+
+    it('shows the live autosave state instead of a fake manual "Save" action', async () => {
+      render(
+        <DocumentStudioDocumentPanel
+          artifactId="artifact-1"
+          schema={schema}
+          onStartOver={vi.fn()}
+          onSchemaUpdated={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('document-file-menu-trigger'));
+
+      // Freshly opened, no edits yet — the autosave observer starts at
+      // 'idle', which reads as "already durable" (matches server state at
+      // load), not as "nothing to report".
+      const saveRow = screen.getByTestId('document-file-menu-save');
+      expect(saveRow).toHaveTextContent('Zapisano automatycznie');
+      // Not a button — clicking it must not pretend to trigger a save.
+      expect(saveRow).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('"Zapisz jako" duplicates the document via the existing generate + manual-content endpoints', async () => {
+      render(
+        <DocumentStudioDocumentPanel
+          artifactId="artifact-1"
+          schema={schema}
+          onStartOver={vi.fn()}
+          onSchemaUpdated={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('document-file-menu-trigger'));
+      fireEvent.click(screen.getByTestId('document-file-menu-save-as'));
+
+      await waitFor(() => expect(generateDocumentStudioArtifactMock).toHaveBeenCalledTimes(1));
+      expect(generateDocumentStudioArtifactMock).toHaveBeenCalledWith(
+        expect.objectContaining({ useLlm: false })
+      );
+      await waitFor(() =>
+        expect(saveDocumentStudioManualContentMock).toHaveBeenCalledWith('artifact-2', {
+          sections: schema.sections,
+          expectedVersion: '2026-07-28T00:00:00.000Z',
+        })
+      );
+      await waitFor(() =>
+        expect(navigateMock).toHaveBeenCalledWith('/document-studio/artifact-2')
+      );
+    });
+  });
+
+  // N19 (live odbiór 2026-07-28) — the document phase's own back arrow is
+  // bound to "Start over" (discard + restart INSIDE the tool), not to
+  // leaving Document Studio; the ONE real exit is the moduleLabel
+  // breadcrumb segment. Both must be visibly labelled, not icon-only.
+  describe('Exit affordance (N19)', () => {
+    it('back arrow shows a visible "Start over" label, not just an icon', () => {
+      render(
+        <DocumentStudioDocumentPanel
+          artifactId="artifact-1"
+          schema={schema}
+          onStartOver={vi.fn()}
+          onSchemaUpdated={vi.fn()}
+        />
+      );
+
+      expect(screen.getByTestId('mels-topbar-back')).toHaveTextContent('Start over');
+    });
+
+    it('module-label breadcrumb has a visible label and navigates to Materiały', () => {
+      render(
+        <DocumentStudioDocumentPanel
+          artifactId="artifact-1"
+          schema={schema}
+          onStartOver={vi.fn()}
+          onSchemaUpdated={vi.fn()}
+        />
+      );
+
+      const exit = screen.getByTestId('mels-topbar-module-label-link');
+      expect(exit).toHaveTextContent('Document Studio');
+
+      fireEvent.click(exit);
+
+      expect(navigateMock).toHaveBeenCalledWith('/presentations?tab=documents');
+    });
   });
 });

@@ -23951,6 +23951,22 @@
       "reviewerCommentPlaceholder": "Optional reviewer comment",
       "outlineAria": "Document outline"
     },
+    "fileMenu": {
+      "trigger": "File",
+      "new": "New",
+      "open": "Open",
+      "save": "Save",
+      "saveAs": "Save as",
+      "saveAsBusy": "Duplicating…",
+      "saveAsCopySuffix": "(copy)",
+      "saveAsSuccess": "Document duplicated: {{title}}",
+      "saveAsFailed": "Could not duplicate the document",
+      "saveStatusSaving": "Saving…",
+      "saveStatusSaved": "Saved automatically",
+      "saveStatusConflict": "Save conflict — latest version was reloaded",
+      "saveStatusError": "Save failed — try again",
+      "saveStatusDisabled": "No document to save yet"
+    },
     "intakeForm": {
       "audiencePlaceholder": "e.g., CEO, CFO, Transformation Officer"
     },

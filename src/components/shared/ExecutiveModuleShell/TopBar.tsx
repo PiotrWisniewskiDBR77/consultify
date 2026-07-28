@@ -34,6 +34,18 @@ interface TopBarProps {
   onTitleChange?: (next: string) => void;
   onBack?: () => void;
   backLabel?: string;
+  /**
+   * 2026-07-28 (odbiór "menu pliku"): when supplied, the leading
+   * `moduleLabel` breadcrumb segment becomes a real exit control
+   * (e.g. "Document Studio" → Materiały). ADDITIVE — omit to keep the
+   * segment as plain text (today's behaviour for every existing
+   * adopter). This is the ONE obvious exit for shells whose `onBack`
+   * is already claimed by an in-tool action (e.g. Document Studio's
+   * document phase uses `onBack`/`backLabel` for "Start over", not
+   * for leaving the module) — see N19 (`_NAGRANIE_PIOTRA_WIZJA_MATERIALY_2026-07-27.md`).
+   */
+  onModuleLabelClick?: () => void;
+  moduleLabelClickTitle?: string;
   chips: TopBarChipDescriptor[];
   /** When true, the shell will sort chips by canonical MELS order. */
   respectMelsOrder?: boolean;
@@ -279,6 +291,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   onTitleChange,
   onBack,
   backLabel,
+  onModuleLabelClick,
+  moduleLabelClickTitle,
   chips,
   respectMelsOrder = true,
   titleIconSlot,
@@ -323,17 +337,36 @@ export const TopBar: React.FC<TopBarProps> = ({
         <button
           type="button"
           onClick={onBack}
-          className="flex-shrink-0 p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+          // 2026-07-28 (odbiór "menu pliku", N19): the back control used to be
+          // icon-only — its meaning only surfaced on hover (`title`), which is
+          // exactly why owners couldn't find "simple navigation" out of a
+          // screen. A visible text label next to the arrow (same
+          // `hidden md:inline` pattern the chip strip already uses) makes the
+          // control's actual behaviour legible at a glance instead of a guess.
+          className="flex-shrink-0 flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
           title={backLabel ?? 'Back'}
           aria-label={backLabel ?? 'Back'}
           data-testid="mels-topbar-back"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={18} className="flex-shrink-0" aria-hidden="true" />
+          {backLabel ? <span className="hidden md:inline whitespace-nowrap">{backLabel}</span> : null}
         </button>
       ) : null}
 
       <div className="flex items-center gap-1.5 text-sm min-w-0 flex-1 text-slate-500 dark:text-slate-400">
-        <span className="flex-shrink-0 truncate">{moduleLabel}</span>
+        {onModuleLabelClick ? (
+          <button
+            type="button"
+            onClick={onModuleLabelClick}
+            className="flex-shrink-0 truncate rounded px-1 -mx-1 text-slate-600 dark:text-slate-300 underline decoration-slate-300 dark:decoration-slate-600 underline-offset-2 hover:text-c-focus-solid hover:decoration-c-focus-solid focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus transition-colors"
+            title={moduleLabelClickTitle ?? moduleLabel}
+            data-testid="mels-topbar-module-label-link"
+          >
+            {moduleLabel}
+          </button>
+        ) : (
+          <span className="flex-shrink-0 truncate">{moduleLabel}</span>
+        )}
         <ChevronRight size={14} className="flex-shrink-0" aria-hidden="true" />
         {titleIconSlot}
         {editing && onTitleChange ? (

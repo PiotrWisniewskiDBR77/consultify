@@ -24995,6 +24995,22 @@
       "reviewerCommentPlaceholder": "Opcjonalny komentarz recenzenta",
       "outlineAria": "Konspekt dokumentu"
     },
+    "fileMenu": {
+      "trigger": "Plik",
+      "new": "Nowy",
+      "open": "Otwórz",
+      "save": "Zapisz",
+      "saveAs": "Zapisz jako",
+      "saveAsBusy": "Duplikuję…",
+      "saveAsCopySuffix": "(kopia)",
+      "saveAsSuccess": "Zduplikowano dokument: {{title}}",
+      "saveAsFailed": "Nie udało się zduplikować dokumentu",
+      "saveStatusSaving": "Zapisywanie…",
+      "saveStatusSaved": "Zapisano automatycznie",
+      "saveStatusConflict": "Konflikt zapisu — pobrano najnowszą wersję",
+      "saveStatusError": "Błąd zapisu — spróbuj ponownie",
+      "saveStatusDisabled": "Brak dokumentu do zapisania"
+    },
     "intakeForm": {
       "audiencePlaceholder": "np. CEO, CFO, Dyrektor ds. Transformacji"
     },
