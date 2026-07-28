@@ -31,6 +31,7 @@ const DOCS = [
     scope: 'project',
     project_id: 'proj-1',
     owner_id: 'user-1',
+    folder_id: 'folder-1',
   },
   {
     id: 'doc-2',
@@ -44,6 +45,7 @@ const DOCS = [
     scope: 'project',
     project_id: 'proj-1',
     owner_id: 'user-1',
+    folder_id: 'folder-1',
   },
   {
     id: 'doc-3',
@@ -70,6 +72,7 @@ const DOCS = [
     scope: 'project',
     project_id: 'proj-1',
     owner_id: 'user-3',
+    folder_id: 'folder-2',
   },
   {
     id: 'doc-5',
@@ -101,18 +104,48 @@ const DOCS = [
 
 type ApiShape = Record<string, unknown>;
 
+// ★ VLT-FOLDERS — mock STANOWY (nie zamrożony — lekcja z pamięci sesji: mock
+// zamrożony = fałszywe bugi w render-verify). Nowy folder/przeniesienie
+// dokumentu faktycznie zmienia to, co harness pokazuje na kolejnym renderze.
+const FOLDERS = [
+  { id: 'folder-1', name: 'Zarząd' },
+  { id: 'folder-2', name: 'Zgodność' },
+];
+
 const installMocks = (empty: boolean) => {
   const api = Api as unknown as ApiShape;
-  api.getKnowledgeDocuments = async () => (empty ? [] : DOCS);
+  const docs = empty ? [] : DOCS.map((d) => ({ ...d }));
+  api.getKnowledgeDocuments = async () => docs;
   api.getMyProjectMemberships = async () => [
     { id: 'proj-1', name: 'Transformacja DBR77' },
     { id: 'proj-2', name: 'Program energetyczny' },
   ];
   api.uploadKnowledgeDocument = async () => ({ document: { id: 'doc-new' }, chunkCount: 12 });
-  api.updateKnowledgeDocument = async () => ({ success: true });
+  api.updateKnowledgeDocument = async (id: string, data: Record<string, unknown>) => {
+    const doc = docs.find((d) => d.id === id) as Record<string, unknown> | undefined;
+    if (doc && 'folderId' in data) doc.folder_id = data.folderId;
+    return { success: true };
+  };
   api.deleteKnowledgeDocument = async () => ({ success: true });
   api.getKnowledgeDocumentScopeImpact = async () => ({ becameOrgVisibleCount: 1 });
   api.updateKnowledgeDocumentScope = async () => ({ success: true });
+
+  api.getVaultFolders = async () => FOLDERS.map((f) => ({ ...f }));
+  api.createVaultFolder = async (payload: { name: string }) => {
+    const created = { id: `folder-${FOLDERS.length + 1}`, name: payload.name };
+    FOLDERS.push(created);
+    return created;
+  };
+  api.updateVaultFolder = async () => undefined;
+  api.deleteVaultFolder = async (folderId: string) => {
+    const idx = FOLDERS.findIndex((f) => f.id === folderId);
+    if (idx >= 0) FOLDERS.splice(idx, 1);
+    docs.forEach((d) => {
+      if ((d as Record<string, unknown>).folder_id === folderId) {
+        (d as Record<string, unknown>).folder_id = null;
+      }
+    });
+  };
 };
 
 // Mocki instalujemy na poziomie MODUŁU — zanim komponent zdąży odpalić efekt.
