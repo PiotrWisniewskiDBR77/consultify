@@ -346,6 +346,25 @@ function loadIdeasTableViewState(): {
   }
 }
 
+/**
+ * Etapy idei w kolejności cyklu życia — SSOT dla bloku 2 kebaba.
+ *
+ * Wartości 1:1 z `IdeaStage` (`myIdeasTypes.ts`) i z tym, co przyjmuje
+ * `PUT /my-work/my-idea/:id`. Ikony dobrane tak, żeby czytały się jako
+ * postęp: iskra → kiełek → kształtowanie → gotowe → wypromowane.
+ */
+const ETAPY_IDEI: Array<{
+  id: IdeaStage;
+  icon: React.ElementType;
+  label: (pl: boolean) => string;
+}> = [
+  { id: 'spark', icon: Sparkles, label: (pl) => (pl ? 'Iskra' : 'Spark') },
+  { id: 'incubating', icon: Sprout, label: (pl) => (pl ? 'Inkubacja' : 'Incubating') },
+  { id: 'shaping', icon: PenTool, label: (pl) => (pl ? 'Kształtowanie' : 'Shaping') },
+  { id: 'ready', icon: CheckCircle2, label: (pl) => (pl ? 'Gotowa' : 'Ready') },
+  { id: 'promoted', icon: Rocket, label: (pl) => (pl ? 'Wypromowana' : 'Promoted') },
+];
+
 export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   viewMode = 'table',
   searchQuery,
@@ -484,6 +503,32 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       cancelled = true;
     };
   }, [refreshTrigger]);
+
+  /**
+   * Zmiana etapu idei prosto z listy — blok 2 kebaba (kanon A6).
+   *
+   * Ten sam wzorzec optymistyczny co `handleMoveToFolder` obok: najpierw
+   * lokalnie (żeby chip w wierszu odpowiedział od razu), potem zapis, a przy
+   * błędzie cofnięcie przez `fetchIdeas()`.
+   */
+  const handleZmienEtap = useCallback(
+    async (idea: MyIdea, stage: IdeaStage) => {
+      if ((idea.stage || 'spark') === stage) return;
+      setIdeas((prev) => prev.map((i) => (i.id === idea.id ? ({ ...i, stage } as MyIdea) : i)));
+      try {
+        await Api.updateMyIdea(idea.id, { stage });
+        toast.success(t('myWork.ideasList.stageChanged', isPolish ? 'Etap zmieniony' : 'Stage updated'), {
+          duration: 800,
+        });
+      } catch {
+        toast.error(
+          t('myWork.ideasList.stageChangeFailed', isPolish ? 'Nie udało się zmienić etapu' : 'Failed to update stage')
+        );
+        fetchIdeas();
+      }
+    },
+    [isPolish, fetchIdeas, t]
+  );
 
   const handleMoveToFolder = useCallback(
     async (idea: MyIdea, folderId: string | null) => {
@@ -1305,6 +1350,31 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           onClick: () => openIdeaInProcessFlow(idea),
         },
       ],
+    },
+    /**
+     * Blok 2 kanonu A6 — PRZEJŚCIA STANU.
+     *
+     * Przegląd 128 zrzutów: kebab Ideas miał ~20 pozycji i ani jednej, która
+     * zmienia Stage — „brak bloku 2, nie da się zmienić Stage" (OBR-03).
+     * Etap widniał w kolumnie i w chipie podglądu, ale przestawić go dało się
+     * wyłącznie wchodząc w ideę. Tasks robi to poprawnie od dawna
+     * (To do / In progress / Blocked), Inbox też (Focus →), Decisions też
+     * (Approve / Reject) — Ideas było jedynym wyjątkiem.
+     *
+     * Zapis działa: `PUT /my-work/my-ideas/:id` przyjmuje `stage`
+     * (`my-work.routes.ts`), więc to była luka W UI, nie w backendzie.
+     * Bieżący etap jest wyłączony — klikanie go byłoby zapisem bez zmiany.
+     */
+    {
+      id: 'stage',
+      kind: 'manage',
+      actions: ETAPY_IDEI.map((etap) => ({
+        id: `stage_${etap.id}`,
+        label: etap.label(isPolish),
+        icon: etap.icon,
+        disabled: (idea.stage || 'spark') === etap.id,
+        onClick: () => void handleZmienEtap(idea, etap.id),
+      })),
     },
     {
       id: 'ai',
