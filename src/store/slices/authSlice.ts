@@ -1,5 +1,6 @@
 import { StateCreator } from 'zustand';
 
+import { clearOrganizationDefaultLanguageCache } from '../../services/languagePreference';
 import { AppView, AuthStep, SessionMode, User } from '../../types';
 import type { AppState } from '../useAppStore';
 
@@ -73,6 +74,9 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
     } catch {
       // ignore
     }
+    // 2026-07-28 (język konta fix): don't let a shared browser tab carry the
+    // previous account's organization-language guess into the next login.
+    clearOrganizationDefaultLanguageCache();
 
     // Call API logout (fire and forget)
     if (token) {

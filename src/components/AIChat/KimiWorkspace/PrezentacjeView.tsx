@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { BlankCreationState } from '@/components/shared/BlankCreationState';
 import { TriModeChooser } from '@/components/shared/TriModeChooser';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -216,6 +217,13 @@ export const PrezentacjeView: React.FC = () => {
     entryParam === 'ai' ? 'ai' : entryParam === 'blank' ? 'blank' : 'choose'
   );
   const [creatingBlank, setCreatingBlank] = useState(false);
+  // 2026-07-28 fix (żywy odbiór — identyczna klasa błędu jak w ExceleView):
+  // failure in `handleCreateEmptyDeck` used to fire only a toast (gone in a
+  // few seconds) with `entryMode` stuck at 'blank' forever — no permanent
+  // affordance to retry or leave. Success is fine here (`openInDeckBuilder`
+  // navigates to a DIFFERENT route, `/presentations/builder/:id`, which
+  // unmounts this view), but failure needed the same fix as Excele.
+  const [blankCreateFailed, setBlankCreateFailed] = useState(false);
 
   // Auto-trigger from builtin template prompt
   const promptTriggered = useRef(false);
@@ -513,6 +521,7 @@ export const PrezentacjeView: React.FC = () => {
   const handleCreateEmptyDeck = useCallback(async (): Promise<void> => {
     if (creatingBlank) return;
     setCreatingBlank(true);
+    setBlankCreateFailed(false);
     try {
       const title = t('prezentacje.blank.title', 'Nowa prezentacja');
       const res = await Api.post('/presentations/decks', {
@@ -535,9 +544,15 @@ export const PrezentacjeView: React.FC = () => {
         openInDeckBuilder(deckId);
       } else {
         toast.error(t('prezentacje.blankFailed', 'Nie udało się utworzyć pustej prezentacji.'));
+        setBlankCreateFailed(true);
       }
     } catch {
+      // `Api.post` already carries a hard 20s transport timeout (see
+      // ExceleView's equivalent comment) — this catch is deterministic, not a
+      // hang. The bug was that nothing downstream gave the failure a
+      // permanent, visible state; see `blankCreateFailed` above.
       toast.error(t('prezentacje.blankFailed', 'Nie udało się utworzyć pustej prezentacji.'));
+      setBlankCreateFailed(true);
     } finally {
       setCreatingBlank(false);
     }
@@ -714,14 +729,27 @@ export const PrezentacjeView: React.FC = () => {
   // Materiały wspólny launcher — `?entry=blank`: pokaż lekki loading zamiast
   // brama-wyboru/czatu, dopóki handleCreateEmptyDeck (efekt wyżej) nie
   // przełączy nawigacji do Deck Buildera z realną, pustą prezentacją.
+  //
+  // 2026-07-28 fix: on success `openInDeckBuilder` navigates to a DIFFERENT
+  // route (unmounts this view), so `entryMode` staying 'blank' never bit
+  // there — but on FAILURE it used to leave only a toast (gone in seconds)
+  // with this spinner stuck here forever. `blankCreateFailed` gives that
+  // failure a permanent, actionable state instead.
   if (entryMode === 'blank') {
     return (
-      <div className="flex h-full flex-1 items-center justify-center gap-2 text-c-text-secondary">
-        <Loader2 size={18} className="animate-spin" />
-        <span className="text-sm">
-          {t('prezentacje.blank.creating', 'Tworzenie pustej prezentacji…')}
-        </span>
-      </div>
+      <BlankCreationState
+        status={blankCreateFailed ? 'failed' : 'creating'}
+        creatingLabel={t('prezentacje.blank.creating', 'Tworzenie pustej prezentacji…')}
+        failedMessage={t(
+          'prezentacje.blankFailedPermanent',
+          'Nie udało się utworzyć pustej prezentacji. Spróbuj ponownie albo wróć do Materiałów.'
+        )}
+        onRetry={() => void handleCreateEmptyDeck()}
+        retryLabel={t('prezentacje.blank.retry', 'Spróbuj ponownie')}
+        onBack={() => navigate('/presentations?tab=presentations')}
+        backLabel={t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
+        testId="prezentacje-blank"
+      />
     );
   }
 
