@@ -43,6 +43,8 @@ interface MockTemplate {
   is_active: boolean;
   cloned_from: string | null;
   lifecycle_state: 'draft' | 'approved' | 'deprecated';
+  // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31).
+  color_template_id?: string | null;
 }
 
 const DRAFT_WITH_HINTS: MockTemplate = {
@@ -90,6 +92,7 @@ const DRAFT_WITH_HINTS: MockTemplate = {
   is_active: true,
   cloned_from: null,
   lifecycle_state: 'draft',
+  color_template_id: 'harvard',
 };
 
 const APPROVED_LOCKED: MockTemplate = {
@@ -114,6 +117,7 @@ const APPROVED_LOCKED: MockTemplate = {
   is_active: true,
   cloned_from: null,
   lifecycle_state: 'approved',
+  color_template_id: null,
 };
 
 let templates: MockTemplate[] = [DRAFT_WITH_HINTS, APPROVED_LOCKED];
@@ -138,6 +142,16 @@ export function installPresentationTemplateArchitectApiMock(): () => void {
   const realPut = Api.put;
 
   Api.get = (async (url: string) => {
+    // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31): the shared
+    // `ColorPatternPicker`'s `useBrandKitColors` hook fetches this so the
+    // "Brand Kit" tile renders in the gallery alongside CURATED_COLOR_SETS.
+    if (url.includes('/presentations/brand-kit')) {
+      return envelope({
+        primary_color: 'A51C30',
+        secondary_color: '3B2883',
+        accent_color: '6578B4',
+      });
+    }
     if (url.includes('/presentations/templates/') && !url.includes('/clone')) {
       const id = url.split('/presentations/templates/')[1].split('?')[0];
       const found = templates.find((t) => t.id === id);
@@ -227,6 +241,11 @@ export function installPresentationTemplateArchitectApiMock(): () => void {
               theme: (body.theme as string) ?? t.theme,
               outline_json: (body.outlineJson as MockOutlineItem[]) ?? t.outline_json,
               max_slides: (body.maxSlides as number) ?? t.max_slides,
+              // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31).
+              color_template_id:
+                'colorTemplateId' in body
+                  ? ((body.colorTemplateId as string | null) ?? null)
+                  : t.color_template_id,
             }
           : t
       );

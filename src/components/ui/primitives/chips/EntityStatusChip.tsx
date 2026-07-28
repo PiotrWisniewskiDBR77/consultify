@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { type ChipSize } from './chipBase';
 import { StatusChip, type StatusTone } from './StatusChip';
@@ -102,6 +103,15 @@ function humanize(status: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
+/**
+ * i18n key prefix for translated status labels (TAB-003).
+ * A dedicated `statusChip.*` namespace (not the pre-existing `status.*` used
+ * by InitiativeDetailModal, which holds gendered Polish forms agreeing with
+ * "Inicjatywa" — reusing it here would risk grammatically wrong labels once
+ * shared across other entity types). See public/locales/{en,pl}/translation.json.
+ */
+const STATUS_I18N_PREFIX = 'statusChip';
+
 export interface EntityStatusChipProps {
   /** Raw status string (any casing/spacing); mapped to a semantic tone. */
   status: string | null | undefined;
@@ -126,15 +136,25 @@ export const EntityStatusChip: React.FC<EntityStatusChipProps> = ({
   hideDot = false,
   className,
   title,
-}) => (
-  <StatusChip
-    tone={statusChipTone(status)}
-    label={label ?? humanize(status ?? '')}
-    size={size}
-    hideDot={hideDot}
-    className={className}
-    title={title}
-  />
-);
+}) => {
+  const { t } = useTranslation();
+  const normalized = status ? normalize(status) : '';
+  // Translated label when a dictionary entry exists for this normalized
+  // status; falls back to the mechanical humanization (never a raw i18n
+  // key) so unrecognized/new statuses still render something readable.
+  const i18nKey = `${STATUS_I18N_PREFIX}.${normalized}`;
+  const translated = normalized ? t(i18nKey, { defaultValue: '' }) : '';
+  const resolvedLabel = label ?? (translated || humanize(status ?? ''));
+  return (
+    <StatusChip
+      tone={statusChipTone(status)}
+      label={resolvedLabel}
+      size={size}
+      hideDot={hideDot}
+      className={className}
+      title={title}
+    />
+  );
+};
 
 export default EntityStatusChip;
