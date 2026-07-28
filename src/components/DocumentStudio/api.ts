@@ -362,7 +362,15 @@ export class DocumentManualSaveConflictError extends Error {
  */
 export async function saveDocumentStudioManualContent(
   artifactId: string,
-  payload: { sections: DocumentSchema['sections']; expectedVersion: string }
+  payload: {
+    sections: DocumentSchema['sections'];
+    expectedVersion: string;
+    /**
+     * P-10 (2026-07-28) — optional title rename, riding the same durable
+     * save the content autosave already uses instead of a new endpoint.
+     */
+    title?: string;
+  }
 ): Promise<DocumentSchema> {
   const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/content`, {
     method: 'PUT',

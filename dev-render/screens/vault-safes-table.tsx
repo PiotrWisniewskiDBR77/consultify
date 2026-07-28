@@ -54,6 +54,7 @@ let docs = [
     created_at: daysAgo(2),
     updated_at: daysAgo(2),
     chunk_count: 4,
+    file_size_bytes: 84_000,
     scope: 'user',
     project_id: null,
     owner_id: ME,
@@ -63,10 +64,11 @@ let docs = [
     filename: 'Prywatny brief — nie do udostępnienia.pdf',
     category: 'Other',
     tags: [],
-    status: 'indexed',
+    status: 'indexing',
     created_at: daysAgo(9),
     updated_at: daysAgo(9),
-    chunk_count: 6,
+    chunk_count: 0,
+    file_size_bytes: 512_000,
     scope: 'user',
     project_id: null,
     owner_id: ME,
@@ -80,6 +82,7 @@ let docs = [
     created_at: daysAgo(30),
     updated_at: daysAgo(30),
     chunk_count: 11,
+    file_size_bytes: 1_240_000,
     scope: 'organization',
     project_id: null,
     owner_id: OTHER,
@@ -93,6 +96,7 @@ let docs = [
     created_at: daysAgo(4),
     updated_at: daysAgo(1),
     chunk_count: 22,
+    file_size_bytes: 3_400_000,
     scope: 'project',
     project_id: 'proj-1',
     owner_id: OTHER,
@@ -106,6 +110,7 @@ let docs = [
     created_at: daysAgo(20),
     updated_at: daysAgo(20),
     chunk_count: 9,
+    file_size_bytes: 960_000,
     scope: 'project',
     project_id: 'proj-1',
     owner_id: ME,
@@ -115,10 +120,13 @@ let docs = [
     filename: 'DBR77 — Kontrakt.pdf',
     category: 'Other',
     tags: [],
-    status: 'indexed',
+    // ★ Celowo status='error' — jedyny dokument w mocku ćwiczący kolumnę
+    // „Błędy indeksowania" (chip danger, kanon §3 crimson=semantyka krytyczna).
+    status: 'error',
     created_at: daysAgo(45),
     updated_at: daysAgo(45),
-    chunk_count: 3,
+    chunk_count: 0,
+    file_size_bytes: 210_000,
     scope: 'project',
     project_id: 'proj-1',
     owner_id: OTHER,
@@ -133,11 +141,15 @@ function jsonResponse(body: unknown): Response {
   });
 }
 
-/** Mirrors the GROUP BY aggregation in knowledge.routes.ts `/vault-safes`. */
+/** Mirrors the GROUP BY aggregation in knowledge.routes.ts `/vault-safes`,
+ *  teraz też z sizeBytes/indexedCount/errorCount (3 nowe kolumny). */
+const sumBytes = (list: typeof docs) => list.reduce((sum, d) => sum + (d.file_size_bytes || 0), 0);
+const countIndexed = (list: typeof docs) => list.filter((d) => (d.chunk_count || 0) > 0).length;
+const countErrors = (list: typeof docs) => list.filter((d) => d.status === 'error').length;
+
 function buildSafes() {
-  const myCount = docs.filter((d) => d.scope === 'user' && d.owner_id === ME).length;
-  const myLast = docs
-    .filter((d) => d.scope === 'user' && d.owner_id === ME)
+  const myDocs = docs.filter((d) => d.scope === 'user' && d.owner_id === ME);
+  const myLast = myDocs
     .map((d) => d.updated_at)
     .sort()
     .at(-1);
@@ -154,8 +166,11 @@ function buildSafes() {
         type: 'user',
         projectId: null,
         name: 'Mój sejf',
-        documentCount: myCount,
+        documentCount: myDocs.length,
         lastModified: myLast || null,
+        sizeBytes: sumBytes(myDocs),
+        indexedCount: countIndexed(myDocs),
+        errorCount: countErrors(myDocs),
       },
       {
         id: 'organization',
@@ -164,6 +179,9 @@ function buildSafes() {
         name: 'Sejf organizacji',
         documentCount: orgDocs.length,
         lastModified: orgLast || null,
+        sizeBytes: sumBytes(orgDocs),
+        indexedCount: countIndexed(orgDocs),
+        errorCount: countErrors(orgDocs),
       },
       ...MEMBERSHIPS.map((m) => {
         const projDocs = docs.filter((d) => d.scope === 'project' && d.project_id === m.projectId);
@@ -178,6 +196,9 @@ function buildSafes() {
           name: m.projectName,
           documentCount: projDocs.length,
           lastModified: last || null,
+          sizeBytes: sumBytes(projDocs),
+          indexedCount: countIndexed(projDocs),
+          errorCount: countErrors(projDocs),
         };
       }),
     ],

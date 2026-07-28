@@ -31,6 +31,8 @@ export interface VaultDocument {
   scope: VaultScope;
   project_id: string | null;
   owner_id: string | null;
+  /** ★ VLT-FOLDERS — folder wewnątrz TEGO sejfu; `null` = bez folderu. */
+  folder_id: string | null;
 }
 
 export interface VaultProject {
@@ -209,6 +211,8 @@ export const normalizeVaultDocuments = (value: unknown): VaultDocument[] => {
             : asText(doc.project_id, ''),
         owner_id:
           doc.owner_id === null || doc.owner_id === undefined ? null : asText(doc.owner_id, ''),
+        folder_id:
+          doc.folder_id === null || doc.folder_id === undefined ? null : asText(doc.folder_id, ''),
       };
     })
     .filter((doc) => doc.id);

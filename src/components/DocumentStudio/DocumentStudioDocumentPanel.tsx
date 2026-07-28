@@ -6,6 +6,7 @@
  * Properties, QA, and AI Editor.
  */
 
+import type { Editor } from '@tiptap/react';
 import type { TFunction } from 'i18next';
 import {
   AlertTriangle,
@@ -52,9 +53,11 @@ import {
 import {
   cancelDocumentStudioApproval,
   createDocumentStudioShareLink,
+  DocumentManualSaveConflictError,
   exportDocumentStudioArtifact,
   generateDocumentStudioArtifact,
   getDocumentStudioAccessHistory,
+  getDocumentStudioArtifact,
   getDocumentStudioCommentCounts,
   getDocumentStudioPolicy,
   getDocumentStudioSchemaDiff,
@@ -77,6 +80,7 @@ import { DocumentExportSuccessNote } from './DocumentExportSuccessNote';
 import { DocumentSchemaDiffView } from './DocumentSchemaDiffView';
 import { DocumentStudioFileMenu } from './DocumentStudioFileMenu';
 import { DocumentStudioQaPanel } from './DocumentStudioQaPanel';
+import { DocumentUndoRedoControls } from './DocumentUndoRedoControls';
 import { type DocumentAutosaveStatus, DocumentTipTapEditor } from './editor';
 import type {
   DocumentAccessHistoryEntry,
@@ -1132,6 +1136,61 @@ function ManifestGatePanel(): React.ReactElement {
   );
 }
 
+/**
+ * P-12 (2026-07-28) — the "Governance" top-bar chip had no `onClick` at all
+ * (dead button, verified live: `ExecutiveModuleShell`'s `TopBar.tsx` Chip
+ * renders `onClick={disabled ? undefined : onClick}` — an undefined
+ * descriptor `onClick` means the click literally does nothing). Its
+ * tooltip promised "export governance policy for this user" — content that
+ * was ALREADY fetched (`policy` state below) but never shown anywhere.
+ * This panel is that missing surface; the chip now opens it via `more`.
+ */
+function GovernancePanel({ policy }: { policy: DocumentStudioPolicy | null }): React.ReactElement {
+  const { t } = useTranslation();
+  return (
+    <div className="flex h-full flex-col overflow-y-auto p-4">
+      <div className="mb-3">
+        <h3 className="text-sm font-semibold text-c-text">
+          {t('documentStudio.panel.toolGovernance', 'Governance')}
+        </h3>
+        <p className="text-xs text-c-text-secondary">
+          {t(
+            'documentStudio.panel.governanceSubtitle',
+            'Export governance policy for this user.'
+          )}
+        </p>
+      </div>
+      <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs">
+        <div className="mb-2">
+          <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-secondary">
+            {t('documentStudio.panel.governanceRoleLabel', 'Your role')}
+          </span>
+          <div className="mt-0.5 font-medium text-c-text">
+            {policy?.role ?? t('documentStudio.panel.governanceRoleUnknown', 'unknown')}
+          </div>
+        </div>
+        <div
+          className={`rounded-md px-2 py-1.5 text-xs ${
+            policy?.canOverrideQa
+              ? 'bg-warning-500/10 text-warning-700 dark:text-amber-300'
+              : 'bg-c-surface-raised text-c-text-secondary'
+          }`}
+        >
+          {policy?.canOverrideQa
+            ? t(
+                'documentStudio.panel.governanceOverrideAllowed',
+                'You can override a blocking QA gate at export (audited).'
+              )
+            : t(
+                'documentStudio.panel.governanceOverrideNotAllowed',
+                'You cannot override the QA export gate. Requires an admin or manager role.'
+              )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElement {
   const { t } = useTranslation();
   const [approvals, setApprovals] = useState<DocumentApprovalRequest[]>([]);
@@ -1671,6 +1730,10 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   } | null>(null);
   /** Cached policy snapshot; controls whether the override button is rendered. */
   const [policy, setPolicy] = useState<DocumentStudioPolicy | null>(null);
+  // P-11 (2026-07-28) — live TipTap instance, handed up by
+  // `DocumentTipTapEditor`'s `onEditorInstance`. Drives the standalone
+  // `DocumentUndoRedoControls` below the "Document preview" action row.
+  const [tiptapEditor, setTiptapEditor] = useState<Editor | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -1703,6 +1766,77 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         return sourceType.includes('table') || sourceType.includes('sheet');
       }) ?? null,
     [schema.sourceRefs]
+  );
+
+  // P-10 (2026-07-28, live walkthrough finding) — "nawet nie mogę zmienić
+  // tytułu tego dokumentu". Root cause: `ExecutiveModuleShell`'s `TopBar`
+  // ALREADY has a full click-to-edit title affordance (`TopBar.tsx`:
+  // `onClick={() => onTitleChange && setEditing(true)}`,
+  // `disabled={!onTitleChange}`) — but this panel never passed
+  // `onTitleChange` down, so the button was permanently disabled. This
+  // handler is the missing wire, not a new UI. It reuses the SAME durable
+  // save path as the editor's own manual-content autosave
+  // (`saveDocumentStudioManualContent` → `PUT /:artifactId/content`,
+  // extended to optionally carry `title` — see `documentStudioService.ts`
+  // `updateDocumentManualContent`) instead of standing up a separate
+  // title-only endpoint.
+  const handleTitleChange = useCallback(
+    async (nextTitle: string): Promise<void> => {
+      const trimmed = nextTitle.trim();
+      if (!trimmed) {
+        toast.error(
+          t('documentStudio.panel.titleSaveEmpty', 'Tytuł nie może być pusty.')
+        );
+        return;
+      }
+      if (trimmed === schema.title) return;
+      if (!schema.updatedAt) {
+        // Pre-dates the optimistic-lock field (legacy artifact) — same
+        // guard `persistManualEdit` uses; skip rather than risk a
+        // lock-free overwrite.
+        toast.error(
+          t(
+            'documentStudio.panel.titleSaveFailed',
+            'Nie udało się zapisać tytułu. Spróbuj ponownie.'
+          )
+        );
+        return;
+      }
+      try {
+        const saved = await saveDocumentStudioManualContent(artifactId, {
+          sections: schema.sections,
+          expectedVersion: schema.updatedAt,
+          title: trimmed,
+        });
+        onSchemaUpdated(saved);
+        toast.success(t('documentStudio.panel.titleSaved', 'Tytuł zapisany'));
+      } catch (err) {
+        if (err instanceof DocumentManualSaveConflictError) {
+          // Same reconciliation as the editor's autosave conflict path:
+          // never force-push the local title over a newer server state —
+          // refetch and let the user retry against the fresh schema.
+          try {
+            const fresh = await getDocumentStudioArtifact(artifactId);
+            onSchemaUpdated(fresh.schema);
+          } catch {
+            /* best-effort refetch; user can still manually reload */
+          }
+          toast.error(
+            t(
+              'documentStudio.panel.titleSaveConflict',
+              'Dokument zmienił się w międzyczasie — spróbuj ponownie.'
+            )
+          );
+          return;
+        }
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : t('documentStudio.panel.titleSaveFailed', 'Nie udało się zapisać tytułu. Spróbuj ponownie.')
+        );
+      }
+    },
+    [artifactId, onSchemaUpdated, schema.sections, schema.title, schema.updatedAt, t]
   );
 
   const triggerTextDownload = (filename: string, content: string, mime: string): void => {
@@ -1899,6 +2033,36 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     setActiveRailToolId('more');
   }, []);
 
+  // P-12 (2026-07-28, live walkthrough finding) — "Historia", "QA",
+  // "Nadzór"/"Pominięcie dozwolone" and "Edytor AI" were all rendered by
+  // `TopBar.tsx`'s `Chip` with `onClick: undefined` (verified by reading
+  // `Chip`: `onClick={disabled ? undefined : onClick}` — an undefined
+  // descriptor `onClick` means the click does nothing at all, no error, no
+  // console warning). Confirmed independently by a same-day commit on
+  // `feat/menu-pliku-dokumentu` (`7eefe1d3d0`) whose message states
+  // outright: "chipy nie miały już wcześniej żadnego onClick" — that branch
+  // only moved the dead chips into the `⋯` overflow, it did not wire them.
+  // These four handlers are the actual fix: each opens the right-rail tool
+  // the chip's own tooltip already promised. STILL VALID after the
+  // `feat/menu-pliku-dokumentu` merge below: that branch moved "history"/
+  // "governance" INTO the `⋯` overflow (`group: 'overflow'`) but an
+  // overflow chip is still a `Chip` — it still needs a real `onClick` to do
+  // anything when picked from the menu; these handlers are unchanged.
+  const handleOpenHistory = useCallback(() => {
+    setOverflowSelection('activity');
+    setActiveRailToolId('more');
+  }, []);
+  const handleOpenQa = useCallback(() => {
+    setActiveRailToolId('qa');
+  }, []);
+  const handleOpenGovernance = useCallback(() => {
+    setOverflowSelection('governance');
+    setActiveRailToolId('more');
+  }, []);
+  const handleOpenAgent = useCallback(() => {
+    setActiveRailToolId('teresa');
+  }, []);
+
   // N20 (menu pliku) — "Otwórz": cheapest correct answer per the ticket's own
   // framing is the Materiały documents list — the same target the existing
   // "Wróć do Materiałów" control (`DocumentStudioView` TopBar, intake phase)
@@ -2026,6 +2190,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         id: 'history',
         label: t('documentStudio.panel.chipHistory', 'History'),
         icon: History,
+        onClick: handleOpenHistory,
         group: 'overflow',
         tooltip: t(
           'documentStudio.panel.chipHistoryTooltip',
@@ -2039,6 +2204,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           : t('documentStudio.panel.chipQa', 'QA'),
         icon: ShieldCheck,
         dotTone: qaBlock ? 'danger' : 'success',
+        onClick: handleOpenQa,
         tooltip: t('documentStudio.panel.chipQaTooltip', 'Open the QA panel from the right rail.'),
       },
       {
@@ -2052,6 +2218,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         icon: FileWarning,
         group: 'overflow',
         dotTone: policy?.canOverrideQa ? 'warning' : 'neutral',
+        onClick: handleOpenGovernance,
         tooltip: t(
           'documentStudio.panel.chipGovernanceTooltip',
           'Export governance policy for this user.'
@@ -2075,6 +2242,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         id: 'agent',
         label: t('documentStudio.panel.chipAiEditor', 'AI Editor'),
         icon: Bot,
+        onClick: handleOpenAgent,
         tooltip: t('documentStudio.panel.chipAiEditorTooltip', 'Open Teresa from the right rail.'),
       },
       {
@@ -2087,7 +2255,18 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         onClick: () => void handleExport('docx'),
       },
     ],
-    [exporting, handleExport, handleOpenShare, policy?.canOverrideQa, qaBlock, t]
+    [
+      exporting,
+      handleExport,
+      handleOpenAgent,
+      handleOpenGovernance,
+      handleOpenHistory,
+      handleOpenQa,
+      handleOpenShare,
+      policy?.canOverrideQa,
+      qaBlock,
+      t,
+    ]
   );
 
   // Right-rail tool inventory (13 total). Kanon powłoki: ≤5 "primary"
@@ -2165,6 +2344,13 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         id: 'manifest',
         label: t('documentStudio.panel.toolManifest', 'Manifest gate'),
         icon: ShieldCheck,
+      },
+      {
+        // P-12 (2026-07-28) — real destination for the top-bar "Governance"
+        // chip (see `GovernancePanel` above + `handleOpenGovernance` below).
+        id: 'governance',
+        label: t('documentStudio.panel.toolGovernance', 'Governance'),
+        icon: FileWarning,
       },
       {
         id: 'library',
@@ -2259,6 +2445,8 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       content = <ApprovalsPanel artifactId={artifactId} />;
     } else if (overflowToolId === 'manifest') {
       content = <ManifestGatePanel />;
+    } else if (overflowToolId === 'governance') {
+      content = <GovernancePanel policy={policy} />;
     } else if (overflowToolId === 'evidence') {
       // HP-17: renderowane tylko gdy wpis istnieje w overflowRightRailTools,
       // co dzieje się wyłącznie za flagą ff_evidencePanel (patrz wyżej).
@@ -2512,6 +2700,18 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {/*
+              P-11 (2026-07-28) — "muszę zrobić możliwości edycji, możliwości
+              cofnięć. Nie mogę tutaj cofnąć zmiany." The TipTap engine
+              already tracks history (StarterKit's `undoRedo` option
+              defaults to on — see `documentEditorExtensions.ts`) and
+              Ctrl/Cmd+Z already works; this was the missing UI entry
+              point. Standalone component (`DocumentUndoRedoControls`) so
+              it is a one-line move once the owner's redesigned right panel
+              lands — see its own doc-comment.
+            */}
+            <DocumentUndoRedoControls editor={tiptapEditor} />
+            <span aria-hidden="true" className="mx-0.5 h-5 w-px bg-slate-200 dark:bg-navy-700" />
             <Button
               type="button"
               variant="outline"
@@ -2585,6 +2785,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           onSchemaUpdated={onSchemaUpdated}
           editable
           artifactId={artifactId}
+          onEditorInstance={setTiptapEditor}
           onAutosaveStatusChange={setAutosaveStatus}
         />
       </div>
@@ -2596,6 +2797,11 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       moduleKey="document-studio"
       moduleLabel={t('documentStudio.view.moduleLabel', 'Document Studio')}
       title={schema.title}
+      // P-10 (2026-07-28) — TopBar's click-to-edit title affordance already
+      // existed (`onClick={() => onTitleChange && setEditing(true)}`,
+      // `disabled={!onTitleChange}` in `TopBar.tsx`) but this panel never
+      // passed the prop, so the title button was permanently disabled.
+      onTitleChange={handleTitleChange}
       // U1/U2 (odbiór "menu pliku", 2026-07-28) — the arrow in the top-left
       // corner is a universal "back/exit" sign. It used to fire "Start over"
       // (discard + restart INSIDE the tool) — a data-loss-shaped trap for

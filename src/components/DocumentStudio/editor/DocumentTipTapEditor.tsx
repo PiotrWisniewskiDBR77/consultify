@@ -28,6 +28,7 @@
  * approve-flow's own writes.
  */
 
+import type { Editor } from '@tiptap/react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
@@ -56,6 +57,15 @@ export interface DocumentTipTapEditorProps {
   artifactId?: string;
   /** Optional autosave status observer (idle/saving/saved/conflict/error) for UI feedback. */
   onAutosaveStatusChange?: (status: DocumentAutosaveStatus) => void;
+  /**
+   * P-11 (2026-07-28) — hands the live TipTap `Editor` instance up to the
+   * caller so a small, standalone Undo/Redo control (`DocumentUndoRedoControls`)
+   * can drive `editor.commands.undo()/redo()` without this component owning
+   * any toolbar UI itself. Fires on every editor (re)creation, including
+   * `null` on unmount/remount — mirrors the `onAutosaveStatusChange` pattern.
+   * ADDITIVE: omit to keep this editor's behaviour byte-identical.
+   */
+  onEditorInstance?: (editor: Editor | null) => void;
 }
 
 export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
@@ -66,6 +76,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
   className,
   artifactId,
   onAutosaveStatusChange,
+  onEditorInstance,
 }) => {
   const extensions = useMemo(() => getDocumentEditorExtensions(placeholder), [placeholder]);
 
@@ -191,6 +202,18 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
   useEffect(() => {
     if (editor) editor.setEditable(editable);
   }, [editable, editor]);
+
+  // P-11 — hand the live instance to the caller (Undo/Redo controls). Fires
+  // on every (re)creation, including `null` on unmount, so a caller that
+  // stores it in state never holds a stale/destroyed editor reference.
+  const onEditorInstanceRef = useRef(onEditorInstance);
+  onEditorInstanceRef.current = onEditorInstance;
+  useEffect(() => {
+    onEditorInstanceRef.current?.(editor ?? null);
+    return () => {
+      onEditorInstanceRef.current?.(null);
+    };
+  }, [editor]);
 
   // External schema replacement (e.g. an applied AI proposal from the right
   // rail) → push the new doc into the LIVE editor without re-mounting and

@@ -84,6 +84,18 @@ export const AI_TOOLS: ToolDefinition[] = [
             description:
               'Project id for vault_scope="project". When omitted, falls back to the projects the caller is a member of.',
           },
+          // ★ VLT-FOLDERS — drugi, opcjonalny select klocka "Vault-kontekst":
+          // folder WEWNĄTRZ wybranego sejfu. Gdy podane, `executeKBSearch`
+          // wyprowadza poziom/projekt AUTORYTATYWNIE z rekordu folderu (nie z
+          // `vault_scope`/`vault_project_id` powyżej — te są tylko podpowiedzią
+          // UI), więc niespójny/spreparowany `vault_scope` nie rozszerza
+          // dostępu. Fail-closed: folder niewidoczny dla wołającego lub
+          // nieistniejący → pusty wynik, tak jak pusty sejf.
+          vault_folder_id: {
+            type: 'string',
+            description:
+              'Optional Vault folder id (agent-plan "Vault-kontekst" block, second selector). Narrows retrieval to documents filed in this ONE folder inside the selected safe. The folder\'s own level/project — not the vault_scope/vault_project_id above — determines which safe is queried.',
+          },
         },
         required: ['query'],
       },
@@ -929,26 +941,81 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
         ? (args.vault_scope as 'user' | 'organization' | 'project')
         : undefined;
 
-    if (vaultScope) {
-      const { default: KnowledgeService } = await import('../KnowledgeService.js');
-      let memberProjectIds: string[] = [];
-      const explicitProjectId =
-        typeof args.vault_project_id === 'string' && args.vault_project_id
-          ? args.vault_project_id
-          : null;
-      if (vaultScope === 'project' && !explicitProjectId) {
-        const { all: dbAll } = await import('../../utils/DbPromise.js');
-        const rows = await dbAll<{ project_id: string }>(
-          `SELECT project_id FROM project_members WHERE user_id = ?`,
-          [ctx.userId]
-        );
-        memberProjectIds = (rows || []).map((r: any) => String(r.project_id)).filter(Boolean);
+    // AGT-008-bis — bez `vault_scope` (klocek zostawiony na "wszystko"/domyślnie)
+    // `documentIds` zostawało `undefined`, co dla `ragService.hybridSearch`
+    // oznacza "cała organizacja" — `appendKnowledgeDocAccessFilter` wyklucza
+    // WYŁĄCZNIE dokumenty scope='user' w ogóle (żaden, nawet własne wołającego),
+    // ale NIE zawęża dokumentów scope='project' do projektów, w których
+    // wołający jest członkiem. To szerszy zakres niż domyślny widok Vault
+    // (`KnowledgeService.getDocuments` bez scope: własne prywatne + org/legacy +
+    // WYŁĄCZNIE projekty-gdzie-jest-członkiem). Naprawa: gdy brak vault_scope,
+    // policz TĘ SAMĄ allow-listę co domyślny widok Vault (memberProjectIds +
+    // getDocuments bez scope) i użyj jej jako `documentIds` — fail-closed: pusta
+    // lista → pusty wynik, tak jak w gałęzi z jawnym vault_scope poniżej.
+    const { default: KnowledgeService } = await import('../KnowledgeService.js');
+    let memberProjectIds: string[] = [];
+    const explicitProjectId =
+      typeof args.vault_project_id === 'string' && args.vault_project_id
+        ? args.vault_project_id
+        : null;
+    const requestedFolderId =
+      typeof args.vault_folder_id === 'string' && args.vault_folder_id.trim()
+        ? args.vault_folder_id.trim()
+        : undefined;
+    if ((vaultScope === 'project' && !explicitProjectId) || !vaultScope || requestedFolderId) {
+      const { all: dbAll } = await import('../../utils/DbPromise.js');
+      const rows = await dbAll<{ project_id: string }>(
+        `SELECT project_id FROM project_members WHERE user_id = ?`,
+        [ctx.userId]
+      );
+      memberProjectIds = (rows || []).map((r: any) => String(r.project_id)).filter(Boolean);
+    }
+
+    // ★ VLT-FOLDERS — drugi select klocka "Vault-kontekst" (folder WEWNĄTRZ
+    // sejfu). Poziom/projekt idą AUTORYTATYWNIE z rekordu folderu — nie z
+    // `vault_scope`/`vault_project_id` powyżej (te są tylko podpowiedzią UI;
+    // niespójny/spreparowany `vault_scope` nie może rozszerzyć dostępu ponad to,
+    // co pozwala sam folder). Widoczność folderu = TA SAMA reguła co dokumenty:
+    // scope='user' wymaga owner_id === wołający, scope='project' wymaga
+    // członkostwa, scope='organization' zawsze widoczny. Fail-closed: folder
+    // nieistniejący / niewidoczny → pusty wynik, hybridSearch NIE jest wołane
+    // (żaden przeciek do pełnego indeksu sejfu).
+    let folderId: string | undefined;
+    let folderName: string | undefined;
+    let effectiveVaultScope = vaultScope;
+    let effectiveProjectId = explicitProjectId;
+    if (requestedFolderId) {
+      const folder = KnowledgeService.getFolderById
+        ? await KnowledgeService.getFolderById(ctx.organizationId, requestedFolderId)
+        : null;
+      const folderVisible =
+        !!folder &&
+        (folder.scope === 'organization' ||
+          (folder.scope === 'user' && String(folder.owner_id || '') === String(ctx.userId || '')) ||
+          (folder.scope === 'project' &&
+            !!folder.project_id &&
+            memberProjectIds.includes(String(folder.project_id))));
+
+      if (!folderVisible) {
+        return JSON.stringify({
+          source: 'knowledge_base',
+          query: args.query,
+          results: [],
+          note: 'Folder Vault nie istnieje lub jest niewidoczny',
+        });
       }
+      folderId = folder.id;
+      folderName = folder.name;
+      effectiveVaultScope = folder.scope;
+      effectiveProjectId = folder.scope === 'project' ? folder.project_id || null : null;
+    }
+
+    if (effectiveVaultScope) {
       const scopedDocs = await KnowledgeService.getDocuments(
         ctx.organizationId,
         ctx.userId,
         undefined,
-        { scope: vaultScope, projectId: explicitProjectId, memberProjectIds }
+        { scope: effectiveVaultScope, projectId: effectiveProjectId, memberProjectIds, folderId }
       );
       documentIds = (scopedDocs || []).map((d: any) => String(d.id)).filter(Boolean);
 
@@ -956,9 +1023,29 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
         return JSON.stringify({
           source: 'knowledge_base',
           query: args.query,
-          vaultScope,
+          vaultScope: effectiveVaultScope,
+          ...(folderName ? { vaultFolder: folderName } : {}),
           results: [],
-          note: 'Brak dokumentów w wybranym sejfie Vault',
+          note: folderId
+            ? 'Brak dokumentów w wybranym folderze Vault'
+            : 'Brak dokumentów w wybranym sejfie Vault',
+        });
+      }
+    } else {
+      const defaultViewDocs = await KnowledgeService.getDocuments(
+        ctx.organizationId,
+        ctx.userId,
+        undefined,
+        { memberProjectIds }
+      );
+      documentIds = (defaultViewDocs || []).map((d: any) => String(d.id)).filter(Boolean);
+
+      if (documentIds.length === 0) {
+        return JSON.stringify({
+          source: 'knowledge_base',
+          query: args.query,
+          results: [],
+          note: 'Brak dokumentów w dostępnym zakresie Vault',
         });
       }
     }
@@ -971,7 +1058,8 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
     return JSON.stringify({
       source: 'knowledge_base',
       query: args.query,
-      ...(vaultScope ? { vaultScope } : {}),
+      ...(effectiveVaultScope ? { vaultScope: effectiveVaultScope } : {}),
+      ...(folderName ? { vaultFolder: folderName } : {}),
       results: (results || []).slice(0, 5).map((r: any) => ({
         content: r.content?.slice(0, 500),
         documentTitle: r.metadata?.documentTitle || r.documentId,
