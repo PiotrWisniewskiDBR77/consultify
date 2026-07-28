@@ -21762,6 +21762,14 @@
     "generateTable": "Generuj tabelę",
     "docReady": "Dokument gotowy — użyj Podglądu pliku lub Pobierz",
     "showingRows": "Pokazywanie 25 z {{total}} wierszy",
+    "excele": {
+      "reopenNotFound": "Nie znaleziono treści tego arkusza — dane źródłowe zostały usunięte lub wygasły.",
+      "reopenNotFoundToast": "Nie udało się otworzyć arkusza — treść nie została znaleziona.",
+      "formulaBarEmpty": "Zaznacz komórkę, aby zobaczyć jej treść",
+      "saving": "Zapisywanie…",
+      "saved": "Zapisano",
+      "saveFailed": "Błąd zapisu"
+    },
     "xlsxPreview": "Podgląd arkusza",
     "deckPreview": "Podgląd prezentacji",
     "openInBuilder": "Otwórz w kreatorze",

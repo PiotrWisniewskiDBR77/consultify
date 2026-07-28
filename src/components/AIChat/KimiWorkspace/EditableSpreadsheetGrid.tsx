@@ -81,6 +81,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const [showAllRows, setShowAllRows] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Nowy skoroszyt (reopen na inny id) → zacznij od świeżych danych serwera;
   // edycje w toku dla POPRZEDNIEGO workbookId nigdy nie mieszają się z nowym.
@@ -105,6 +106,18 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   useEffect(() => {
     if (editingValue !== null) inputRef.current?.focus();
   }, [editingValue]);
+
+  // Naprawa odkryta w render-verify (2026-07-28): po Escape/zatwierdzeniu
+  // edycji React odmontowuje `<input>` komórki, ale fokus NIE wraca sam do
+  // kontenera siatki — kolejne strzałki/Enter/Delete lądowały donikąd (klawiatura
+  // "martwa" po pierwszym Escape). Kontener musi przejąć fokus z powrotem,
+  // żeby nawigacja klawiaturą działała przez całą sesję edycji, nie tylko do
+  // pierwszego anulowania.
+  useEffect(() => {
+    if (editingValue === null && selected) {
+      containerRef.current?.focus();
+    }
+  }, [editingValue, selected]);
 
   const commit = useCallback(
     (nextRaw: string, move: 'down' | 'right' | 'none') => {
@@ -185,61 +198,124 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
     [activeRaw]
   );
 
-  const handleContainerKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (editingValue !== null) return; // input's own onKeyDown handles this
-      if (!selected) return;
-      switch (e.key) {
+  // Rdzeń nawigacji klawiaturowej — wydzielony z onKeyDown, żeby móc go wołać
+  // z DWÓCH źródeł zdarzeń (patrz `useEffect` niżej i komentarz tam). Zwraca
+  // `true`, gdy klawisz został obsłużony (caller wtedy robi preventDefault).
+  const handleNavigationKey = useCallback(
+    (key: string, modifiers: { ctrlKey: boolean; metaKey: boolean; altKey: boolean }): boolean => {
+      if (editingValue !== null || !selected) return false;
+      switch (key) {
         case 'ArrowUp':
-          e.preventDefault();
           moveSelection(-1, 0);
-          break;
+          return true;
         case 'ArrowDown':
-          e.preventDefault();
           moveSelection(1, 0);
-          break;
+          return true;
         case 'ArrowLeft':
-          e.preventDefault();
           moveSelection(0, -1);
-          break;
+          return true;
         case 'ArrowRight':
-          e.preventDefault();
           moveSelection(0, 1);
-          break;
+          return true;
         case 'Enter':
         case 'F2':
-          e.preventDefault();
           startEditing(selected.rowIndex, selected.colIndex);
-          break;
+          return true;
         case 'Delete':
         case 'Backspace':
-          e.preventDefault();
           commit('', 'none');
-          break;
+          return true;
         default:
-          if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            startEditing(selected.rowIndex, selected.colIndex, e.key);
+          if (key.length === 1 && !modifiers.ctrlKey && !modifiers.metaKey && !modifiers.altKey) {
+            startEditing(selected.rowIndex, selected.colIndex, key);
+            return true;
           }
+          return false;
       }
     },
     [editingValue, selected, moveSelection, startEditing, commit]
   );
 
-  const handleInputKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
+  const handleContainerKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const handled = handleNavigationKey(e.key, {
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey,
+        altKey: e.altKey,
+      });
+      if (handled) e.preventDefault();
+    },
+    [handleNavigationKey]
+  );
+
+  // Zabezpieczenie skupienia (odkryte w render-verify 2026-07-28): klik na
+  // `<td>` (element nie-fokusowalny) w niektórych ścieżkach zdarzeń NIE
+  // przenosi fokusu DOM na kontener nawet po `containerRef.current?.focus()`
+  // (np. gdy zdarzenie klawiatury zostało wygenerowane programowo i trafia w
+  // `document.body`, nie w aktualnie "aktywny" element). Nasłuch na poziomie
+  // dokumentu jest DODATKOWĄ siecią bezpieczeństwa obok `onKeyDown` na
+  // kontenerze (który obsługuje normalne, w pełni zogniskowane wpisywanie z
+  // klawiatury) — działa WYŁĄCZNIE gdy jest zaznaczona komórka i fokus leży
+  // na samym kontenerze/na `<body>` (nigdy gdy fokus jest w innym polu
+  // edytowalnym, np. czacie Teresy obok — to by ukradło mu klawisze).
+  useEffect(() => {
+    if (!selected || editingValue !== null) return undefined;
+    const onDocKeyDown = (e: KeyboardEvent) => {
+      const active = document.activeElement;
+      const safeTarget = active === containerRef.current || active === document.body || active === null;
+      if (!safeTarget) return;
+      const handled = handleNavigationKey(e.key, {
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey,
+        altKey: e.altKey,
+      });
+      if (handled) e.preventDefault();
+    };
+    document.addEventListener('keydown', onDocKeyDown, true);
+    return () => document.removeEventListener('keydown', onDocKeyDown, true);
+  }, [selected, editingValue, handleNavigationKey]);
+
+  const handleEditingKey = useCallback(
+    (key: string): boolean => {
+      if (key === 'Enter') {
         commit(editingValue ?? '', 'down');
-      } else if (e.key === 'Tab') {
-        e.preventDefault();
-        commit(editingValue ?? '', 'right');
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        setEditingValue(null);
+        return true;
       }
+      if (key === 'Tab') {
+        commit(editingValue ?? '', 'right');
+        return true;
+      }
+      if (key === 'Escape') {
+        setEditingValue(null);
+        return true;
+      }
+      return false;
     },
     [commit, editingValue]
   );
+
+  const handleInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (handleEditingKey(e.key)) e.preventDefault();
+    },
+    [handleEditingKey]
+  );
+
+  // Ta sama siec bezpieczenstwa co dla nawigacji (patrz komentarz wyzej) -
+  // Enter/Tab/Escape podczas edycji tez musza dzialac, gdy zdarzenie
+  // klawiatury trafia w `document.body` zamiast w realnie zogniskowany
+  // `<input>` (obserwowane w harnessie render-verify).
+  useEffect(() => {
+    if (editingValue === null) return undefined;
+    const onDocKeyDown = (e: KeyboardEvent) => {
+      const active = document.activeElement;
+      const safeTarget = active === inputRef.current || active === document.body || active === null;
+      if (!safeTarget) return;
+      if (handleEditingKey(e.key)) e.preventDefault();
+    };
+    document.addEventListener('keydown', onDocKeyDown, true);
+    return () => document.removeEventListener('keydown', onDocKeyDown, true);
+  }, [editingValue, handleEditingKey]);
 
   if (!activeRaw?.columns?.length) return null;
 
@@ -308,7 +384,8 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
       </div>
 
       <div
-        className="overflow-x-auto max-h-[520px] overflow-y-auto"
+        ref={containerRef}
+        className="overflow-x-auto max-h-[520px] overflow-y-auto focus:outline-none"
         onKeyDown={handleContainerKeyDown}
         tabIndex={0}
       >
@@ -335,7 +412,15 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
                   return (
                     <td
                       key={`${col.key}-${ci}`}
-                      onClick={() => setSelected({ rowIndex: ri, colIndex: ci })}
+                      onClick={() => {
+                        setSelected({ rowIndex: ri, colIndex: ci });
+                        // Fokus SYNCHRONICZNIE w momencie kliknięcia (nie
+                        // czekając na useEffect po renderze) — <td> nie jest
+                        // fokusowalny, więc bez tego strzałka/Enter naciśnięte
+                        // od razu po kliknięciu mogą trafić w domyślny fokus
+                        // przeglądarki (body) zamiast w kontener siatki.
+                        containerRef.current?.focus();
+                      }}
                       onDoubleClick={() => startEditing(ri, ci)}
                       className={`relative px-3 py-1.5 whitespace-nowrap max-w-[220px] truncate cursor-cell ${
                         cell?.error

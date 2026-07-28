@@ -21144,6 +21144,14 @@
     "generateTable": "Generate Table",
     "docReady": "Document ready — use Preview File or Download",
     "showingRows": "Showing 25 of {{total}} rows",
+    "excele": {
+      "reopenNotFound": "This spreadsheet's content could not be found — the source data was deleted or has expired.",
+      "reopenNotFoundToast": "Could not open the spreadsheet — content was not found.",
+      "formulaBarEmpty": "Select a cell to see its content",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "saveFailed": "Save failed"
+    },
     "xlsxPreview": "Spreadsheet preview",
     "deckPreview": "Presentation preview",
     "openInBuilder": "Open in Builder",
