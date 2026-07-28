@@ -31,6 +31,40 @@ import {
   ShapePalettePopover,
 } from './ObjectEditBarPopovers';
 
+/**
+ * Czy slot paska edycji MA treść (czyli narzędzie coś do niego wportalowało).
+ * `MutationObserver` na SAMYM slocie — montaż/odmontowanie przez `createPortal`
+ * nie jest zgłaszane rodzicowi przez Reacta w żaden inny sposób.
+ *
+ * Dwóch gospodarzy slotu potrzebuje tej samej odpowiedzi, więc mieszka tu, a
+ * nie w jednym z nich:
+ *   • `IdeaCanvasSecondBar` (Menu 3) — chowa własne klastry na czas edycji,
+ *   • `MyWorkHub` (scalona jedna linia, `ff_ideaTopBarOneLine`) — kurczy rząd
+ *     pilli do samego tytułu, żeby zrobić miejsce na środku belki.
+ */
+export function useObjectEditBarSlotHasContent(
+  ref: React.RefObject<HTMLElement | null>,
+  enabled: boolean
+): boolean {
+  const [hasContent, setHasContent] = useState(false);
+
+  useEffect(() => {
+    if (!enabled) {
+      setHasContent(false);
+      return;
+    }
+    const el = ref.current;
+    if (!el || typeof MutationObserver === 'undefined') return;
+    const check = () => setHasContent(el.childElementCount > 0);
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(el, { childList: true });
+    return () => observer.disconnect();
+  }, [ref, enabled]);
+
+  return hasContent;
+}
+
 /** Reaktywne wyszukiwanie slotu paska edycji w DOM. */
 export function useObjectEditBarSlot(): HTMLElement | null {
   const [node, setNode] = useState<HTMLElement | null>(() =>

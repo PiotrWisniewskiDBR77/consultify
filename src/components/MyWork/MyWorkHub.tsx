@@ -104,6 +104,10 @@ import {
   isBetaLockedForRole,
   isBetaSubareaClosed,
 } from '@/utils/betaAccess';
+import {
+  CANVAS_OBJECT_EDIT_BAR_SLOT_ID,
+  isCanvasObjectEditBarEnabled,
+} from '@/utils/canvasObjectEditBarFlag';
 import { isClientVaultEnabled } from '@/utils/clientVaultFlag';
 import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTopBarOneLineFlag';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
@@ -119,6 +123,7 @@ import {
 } from '@/utils/sheetArtifactOpen';
 
 import { CalendarView } from './Calendar/CalendarView';
+import { useObjectEditBarSlotHasContent } from './canvas/objectEditBarDock';
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
 import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
 import type { HomeScreenAction } from './Home/homeV2Types';
@@ -709,6 +714,27 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // slotem portalu w rzędzie pilli + kurczliwością tego rzędu. Reszta huba
   // przy OFF jest bajt-w-bajt jak dziś.
   const ideaTopBarOneLine = isIdeaTopBarOneLineEnabled();
+  /**
+   * ★ DOK PASKA EDYCJI W SCALONEJ LINII (naprawa konfliktu dwóch flag).
+   *
+   * `ff_canvasObjectEditBar` dokuje pasek edycji obiektu w listwie Menu 3
+   * (`IdeaCanvasSecondBar`). `ff_ideaTopBarOneLine` KASUJE Menu 3 w całości —
+   * więc obie ON = brak celu portalu = pasek wracał do pływania nad
+   * zaznaczeniem (potwierdzone zrzutem, nie testem). Skoro obie flagi mają być
+   * stanem domyślnym, ta linia MUSI umieć dokować pasek.
+   *
+   * Rozwiązanie: rząd pilli wystawia DRUGIEGO gospodarza tego samego slotu
+   * (`CANVAS_OBJECT_EDIT_BAR_SLOT_ID`) — ten sam identyfikator DOM, więc
+   * `useObjectEditBarSlot()` w Mapie/Tablicy/Procesie działa BEZ ZMIAN i bez
+   * prop-drillingu. Kolizji id nie ma: gospodarze wykluczają się wzajemnie
+   * (Menu 3 istnieje tylko przy `ideaTopBarOneLine === false`).
+   */
+  const ideaEditBarDockEnabled = ideaTopBarOneLine && isCanvasObjectEditBarEnabled();
+  const ideaEditBarSlotRef = useRef<HTMLDivElement>(null);
+  const ideaEditBarActive = useObjectEditBarSlotHasContent(
+    ideaEditBarSlotRef,
+    ideaEditBarDockEnabled
+  );
   const openChatWithContext = useOpenChatWithContext();
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   const location = useLocation();
@@ -2543,6 +2569,28 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       hubBarSlot.onShowList?.();
     };
 
+    // ★ TRYB EDYCJI OBIEKTU w scalonej linii. Zaznaczenie na płótnie →
+    // narzędzie portaluje pasek edycji do slotu na środku belki. Belka jest
+    // ciasna (tożsamość + ~9 grup kontrolek + 5-elementowy klaster poleceń),
+    // więc lewa strona KURCZY SIĘ do samego tytułu: znikają „Lista",
+    // separator i pille nieaktywnych dokumentów. Odznaczenie = powrót.
+    // Dokładnie to, o co prosił właściciel: „na środku tej belki".
+    const editing = ideaEditBarActive;
+    const visibleHubDocs = editing
+      ? hubDocs.filter((doc) => doc.id === activeDocumentId)
+      : hubDocs;
+    const visibleChildItems = editing
+      ? childItems.filter((doc) => doc.id === childActiveId)
+      : childItems;
+    // CIASNOTA PRZY WĄSKIM OKNIE — kolejność ustępowania jest ŚWIADOMA:
+    // najpierw ustępuje TOŻSAMOŚĆ (jest powtórzona w tytule karty i w prawym
+    // panelu), potem etykieta paska, a NIGDY same kontrolki edycji — właściciel
+    // prosił o nie o to, żeby były pod ręką, więc żadna nie ląduje w kebabie.
+    // Poniżej 1280 px sam TYTUŁ zwija się do zera (`max-w-0`), zostaje ikona +
+    // kropka statusu jako klikalny powrót do dokumentu. Zysk ~300 px dla
+    // kontrolek na oknie 900 px.
+    const docNameClass = editing ? 'max-w-0 xl:max-w-[150px] truncate' : 'max-w-[150px] truncate';
+
     return (
       <div className={MENU_3_ROW_CLASS}>
         <div
@@ -2564,28 +2612,36 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               // Jedna linia: pille muszą KURCZYĆ SIĘ i przewijać we własnym
               // kontenerze, żeby klaster poleceń po prawej nigdy nie uciekł
               // poza ekran ani nie nachodził na karty (wąskie okno).
-              ideaTopBarOneLine ? 'min-w-0 flex-1' : ''
+              // W trybie edycji lewa strona przestaje być „elastyczna": oddaje
+              // resztę linii paskowi edycji i sama zwęża się do tytułu.
+              ideaTopBarOneLine ? (editing ? 'min-w-0 flex-none max-w-[38%]' : 'min-w-0 flex-1') : ''
             }`}
+            data-testid={ideaTopBarOneLine ? 'idea-one-line-identity' : undefined}
+            data-editing={editing ? 'true' : undefined}
           >
-            {/* List button */}
-            <button
-              onClick={handleListClick}
-              className={
-                isListActive
-                  ? TAB_ACTIVE.replace('border-l-2', '')
-                  : TAB_INACTIVE.replace('border-l-2', '')
-              }
-              style={{ flexShrink: 0 }}
-            >
-              <List size={14} />
-              <span>{t('myWork.hub.list', 'List')}</span>
-            </button>
+            {/* List button — w trybie edycji ustępuje miejsca kontrolkom. */}
+            {editing ? null : (
+              <>
+                <button
+                  onClick={handleListClick}
+                  className={
+                    isListActive
+                      ? TAB_ACTIVE.replace('border-l-2', '')
+                      : TAB_INACTIVE.replace('border-l-2', '')
+                  }
+                  style={{ flexShrink: 0 }}
+                >
+                  <List size={14} />
+                  <span>{t('myWork.hub.list', 'List')}</span>
+                </button>
 
-            {/* Separator */}
-            <div className="w-px h-6 bg-slate-200/70 dark:bg-white/[0.06] shrink-0" />
+                {/* Separator */}
+                <div className="w-px h-6 bg-slate-200/70 dark:bg-white/[0.06] shrink-0" />
+              </>
+            )}
 
             {/* Document Tabs (hub's own — tasks/ideas/decisions/inbox) */}
-            {hubDocs.map((doc) => {
+            {visibleHubDocs.map((doc) => {
               const isActive = doc.id === activeDocumentId;
               const leftBorderColor = TYPE_COLORS[doc.type];
               const statusColor = STATUS_COLORS[doc.status] || 'bg-slate-400';
@@ -2604,7 +2660,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   {doc.type === 'initiative' && <Rocket size={14} />}
 
                   {/* Name (truncated) */}
-                  <span className="max-w-[150px] truncate">{doc.name}</span>
+                  <span className={docNameClass}>{doc.name}</span>
 
                   {/* Status Dot */}
                   <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
@@ -2631,7 +2687,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {/* Child cards DOKLEJONE z HubBarSlots (np. Run agent — otwarte
                 procesy). Te same klasy TAB_ACTIVE/TAB_INACTIVE co karty huba
                 wyżej — jedna wizualna rodzina, tylko inne źródło danych. */}
-            {childItems.map((doc) => {
+            {visibleChildItems.map((doc) => {
               const isActive = doc.id === childActiveId;
               const Icon = HUB_SLOT_TYPE_ICON[doc.type] || Bot;
               const statusColor = HUB_SLOT_STATUS_DOT[doc.status] || 'bg-slate-400';
@@ -2643,7 +2699,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   onClick={() => hubBarSlot.onSelectItem?.(doc.id)}
                 >
                   <Icon size={14} />
-                  <span className="max-w-[150px] truncate">{doc.name}</span>
+                  <span className={docNameClass}>{doc.name}</span>
                   <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
                   <button
                     type="button"
@@ -2677,6 +2733,31 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
            * go WYŁĄCZNIE przy fladze ON: przy OFF węzła nie ma, więc powłoka
            * sama zostaje przy starym, dwurzędowym układzie.
            */}
+          {/*
+           * ★ PASEK EDYCJI OBIEKTU — DRUGIE GNIAZDO tej samej belki
+           * (`ff_ideaTopBarOneLine` + `ff_canvasObjectEditBar`). Menu 3, gdzie
+           * pasek dokował się dotąd, przy jednej linii nie istnieje; bez tego
+           * węzła narzędzia wracały do PŁYWAJĄCEGO paska nad zaznaczeniem
+           * (zobaczone na zrzucie). Ten sam `id` co gniazdo w Menu 3 — obaj
+           * gospodarze wykluczają się wzajemnie, więc `getElementById` w
+           * `useObjectEditBarSlot()` zawsze trafia w ten, który akurat żyje.
+           *
+           * `contents` gdy pusty: nie tworzy pudełka, nie łapie `gap` rodzica,
+           * więc belka bez zaznaczenia wygląda BAJT W BAJT jak przed zmianą.
+           * `min-w-0` + `flex-1` gdy pełny: kontrolki dostają środek linii i
+           * przewijają się WEWNĄTRZ siebie (`ObjectEditBar` ma własny
+           * `overflow-x-auto`) — klaster poleceń po prawej nigdy nie ucieka
+           * poza ekran, nawet przy 900 px.
+           */}
+          {ideaEditBarDockEnabled ? (
+            <div
+              id={CANVAS_OBJECT_EDIT_BAR_SLOT_ID}
+              ref={ideaEditBarSlotRef}
+              className={editing ? 'flex min-w-0 flex-1 items-center px-1' : 'contents'}
+              data-testid="canvas-object-edit-bar-slot"
+            />
+          ) : null}
+
           {ideaTopBarOneLine ? (
             <div
               id={IDEA_TOP_BAR_SLOT_ID}
