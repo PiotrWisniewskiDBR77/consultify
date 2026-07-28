@@ -3023,6 +3023,22 @@ export function deriveArtifactTitle(goalRaw: string, fallback: string): string {
     /^(tabela|raport|prezentacja|deck|report|table|presentation|dokument|document)\s*[:\-–—]\s*/i,
     ''
   );
+  // Naprawa 2026-07-28 ("tytułem dokumentu jest surowy prompt użytkownika"):
+  // a schema-spec prompt like "Rejestr 8 inicjatyw transformacji AI: nazwa,
+  // właściciel, priorytet (select), status (select)…" has no period and no
+  // "dodaj/add" trigger word, so the two rules below never fired — the "first
+  // clause" WAS the whole prompt, just cut off mid-field-list at 70 chars.
+  // When there's a short lead-in before a colon and what follows it reads
+  // like an enumerated field list (has a comma), the lead-in IS the name of
+  // the thing — use only that, not the field list.
+  const colonIdx = t.indexOf(':');
+  if (colonIdx > 0 && colonIdx <= 60) {
+    const head = t.slice(0, colonIdx).trim();
+    const tail = t.slice(colonIdx + 1);
+    if (head && /,/.test(tail)) {
+      t = head;
+    }
+  }
   // strip trailing instruction phrases ("…, dodaj przykładowe dane", "…include sample data")
   t = t.replace(
     /[,;]?\s*(dodaj|add|uwzgl[ęe]dnij|include|wygeneruj|generate|przygotuj|prepare|zbuduj|build)\b.*$/i,
