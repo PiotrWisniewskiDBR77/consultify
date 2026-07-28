@@ -537,6 +537,22 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   );
 
   const openRow = (row: UnifiedOutputRow) => {
+    // Naprawa 2026-07-28 ("jeden Excel na każdej ścieżce", path #4): dla
+    // kind==='sheet' `resolveArtifactOpenPath` ZAWSZE zwraca prawdę — serwer
+    // nigdy nie ustawia `governance.openPath` dla runtime 'sheet' (patrz
+    // brak gałęzi 'sheet' w buildActionTargetPayload, server/src/routes/artifacts.routes.ts),
+    // więc spadało to zawsze na statyczne `getArtifactPath('sheet', id)` =
+    // `/tabele?artifactId=` — nawet dla PRAWDZIWYCH skoroszytów Excela z
+    // `generated_workbooks`, które tam nie istnieją (Table Studio pokazywał
+    // "Nie udało się załadować podglądu tabeli"). `openGovernedSheetRow`
+    // (używana już przez pigułkę "Otwórz w przestrzeni roboczej"/"Pobierz
+    // XLSX" niżej) robi to poprawnie i ASYNCHRONICZNIE: najpierw sprawdza,
+    // czy to realna tabela platformowa (→ My Work), inaczej otwiera ten sam,
+    // jednolity widok arkusza (`/excele?artifactId=`) co reszta modułu.
+    if (row.kind === 'sheet') {
+      void openGovernedSheetRow(row.originRecordId);
+      return;
+    }
     const openPath = resolveArtifactOpenPath({
       kind: row.kind,
       originRecordId: row.originRecordId,
@@ -544,9 +560,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
     });
     if (openPath) {
       navigate(openPath);
-      return;
     }
-    if (row.kind === 'sheet') void openGovernedSheetRow(row.originRecordId);
   };
 
   // Triada standard (TRIADA_KANON.md A6 / ANEKS #4): moduł deklaruje TYLKO
