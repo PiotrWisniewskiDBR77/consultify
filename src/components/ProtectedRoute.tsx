@@ -63,7 +63,22 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Check authentication
   if (requireAuth && !currentUser?.isAuthenticated) {
     // Redirect to canonical login route and preserve attempted location.
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // 2026-07-28 fix: `state.from` was set here but never read by anything
+    // after login (grepped the whole app — zero consumers), so a deep link's
+    // query (e.g. `/excele?artifactId=...&ff_excele_edit=1`) was silently
+    // dropped whenever THIS guard (rather than RouterSync's own check) won
+    // the race to redirect. Use the same `?redirect=` convention RouterSync
+    // writes/reads so either guard produces a login link that returns the
+    // user to where they meant to go. `state.from` is kept for compatibility
+    // in case something starts reading it later.
+    const attemptedTarget = `${location.pathname}${location.search}`;
+    return (
+      <Navigate
+        to={`/login?redirect=${encodeURIComponent(attemptedTarget)}`}
+        state={{ from: location }}
+        replace
+      />
+    );
   }
 
   // Security P0 (audit ADM-RAW-P0-001): SUPERADMIN must NOT silently inherit

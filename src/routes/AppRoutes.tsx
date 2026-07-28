@@ -1150,7 +1150,21 @@ export const AppRoutes: React.FC = () => {
           path="/login"
           element={
             !isAuthInitializing && currentUser?.isAuthenticated ? (
-              <Navigate to={ROUTES.AI_CHAT} replace />
+              // 2026-07-28 fix: a deep link bounced here via RouterSync/
+              // ProtectedRoute (both now write `?redirect=<original path+query>`,
+              // e.g. an Excel workbook link's `artifactId` + `ff_excele_edit`)
+              // must land back on that original destination, not unconditionally
+              // on AI_CHAT — this ternary used to win that race and drop it.
+              // Same same-origin-relative guard as the two producers.
+              <Navigate
+                to={(() => {
+                  const raw = new URLSearchParams(location.search).get('redirect');
+                  return raw && raw.startsWith('/') && !raw.startsWith('//')
+                    ? raw
+                    : ROUTES.AI_CHAT;
+                })()}
+                replace
+              />
             ) : (
               <AuthLayout>
                 <AuthView
