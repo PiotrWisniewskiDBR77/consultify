@@ -723,15 +723,31 @@ function getNodeDepth(data: IdeaNodeData) {
   return data._depth ?? 0;
 }
 
-/** #6n: per-type minimap fill so the overview actually reflects map structure (not blank grey dots). */
+/**
+ * Minimap fill — MUST mirror the key the canvas paints a node with, otherwise the
+ * thumbnail is a field of identical grey dots that says nothing about the map.
+ *
+ * Canvas order (see `EditableIdeaNodeComponent`): explicit `data.color` / semantic
+ * accent (`inferNodeAccentColor`) → first tag (`resolveTagColor`) → branch palette
+ * modulated by depth (`branchColor`). Real maps have most nodes on
+ * `branchKey: 'uncategorized'`, so keying only on `branchKey` (the old behaviour)
+ * collapsed ~95% of the map to one slate tone.
+ */
 function miniMapNodeColor(node: Node): string {
   const data = (node.data || {}) as Record<string, any>;
+  if (node.type === 'center') return 'var(--c-warning)';
+
+  // Same precedence as the rendered node: explicit/semantic accent wins.
+  const accent = inferNodeAccentColor(data);
+  if (accent) return accent;
+
+  const tag = resolveTagColor(Array.isArray(data.tags) ? data.tags : []);
+  if (tag) return tag.color;
+
   switch (node.type) {
-    case 'center':
-      return 'var(--c-warning)';
     case 'branch':
     case 'idea':
-      return branchColor(data.branchKey, 0).edge;
+      return branchColor(data.branchKey, data._depth).edge;
     case 'knowledgeCard':
       return 'var(--c-tag-2)';
     case 'noteCard':
@@ -5683,14 +5699,35 @@ function MindMapInner({
               {showMiniMap && (
                 <MiniMap
                   nodeColor={miniMapNodeColor}
-                  nodeStrokeColor="var(--c-border-strong)"
-                  nodeStrokeWidth={3}
+                  // Stroke = fill: a fixed grey 3px outline swallowed the node colour
+                  // at this scale and made every node read as the same dot.
+                  nodeStrokeColor={miniMapNodeColor}
+                  nodeStrokeWidth={1}
                   nodeBorderRadius={6}
-                  maskColor="color-mix(in srgb, var(--c-bg) 70%, transparent)"
-                  style={{ width: 180, height: 130 }}
+                  /**
+                   * The mask paints everything OUTSIDE the current viewport, so it has to
+                   * CONTRAST with the minimap background. `var(--c-bg)` is the page
+                   * background itself → effectively zero contrast in light mode, i.e.
+                   * "where am I" was invisible. Semi-transparent slate reads in both themes.
+                   */
+                  maskColor={isDarkMindmap ? 'rgba(2, 6, 23, 0.55)' : 'rgba(15, 23, 42, 0.28)'}
+                  /**
+                   * `marginBottom` lifts the minimap clear of `CanvasZoomControls`
+                   * (bottom-3, ~42px tall, z-dropdown) — it used to slide underneath.
+                   */
+                  style={{
+                    width: 180,
+                    height: 130,
+                    marginBottom: 62,
+                    zIndex: 10,
+                    // Inline, not a class: React Flow's own stylesheet hard-codes a
+                    // white `.react-flow__minimap` background and loads after Tailwind,
+                    // so a `bg-*` utility loses and dark mode stays a white slab.
+                    backgroundColor: 'var(--c-surface)',
+                  }}
                   zoomable
                   pannable
-                  className="rounded-xl border border-slate-200/40 dark:border-navy-700/40"
+                  className="rounded-xl border border-c-border shadow-lg"
                 />
               )}
 
