@@ -714,12 +714,36 @@ router.post(
     const rawTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
     const title = rawTitle || 'Pusty arkusz';
 
-    // Minimalna, poprawna WorkbookSchema: jeden arkusz, zero kolumn/wierszy →
-    // ExcelJS materializuje czystą, pustą siatkę. To jest kształt, którego sam
-    // WorkbookGeneratorService używa jako fallbacku (Sheet1, columns:[], rows:[]).
+    // Naprawa 2026-07-28 ("jeden Excel na każdej ścieżce"): 0 kolumn/0 wierszy
+    // dawało JSON-poprawną, ale bezużyteczną WorkbookSchema — EditableSpreadsheetGrid
+    // (src/components/AIChat/KimiWorkspace/EditableSpreadsheetGrid.tsx) renderuje
+    // `null` gdy `columns.length === 0` (nie ma czego kliknąć), a stary
+    // tylko-do-odczytu fallback w KimiWorkspaceShell pokazywał zastępczy obrazek
+    // "Spreadsheet preview" zamiast siatki. Prawdziwa pusta siatka = stały
+    // szkielet kolumn/wierszy z PUSTYMI komórkami (cells: {}), żeby dwuklik w
+    // dowolną komórkę od razu otwierał edycję — dokładnie jak w Excelu/Sheets
+    // po "New spreadsheet".
+    const BLANK_GRID_COLUMNS = 12; // A..L
+    const BLANK_GRID_ROWS = 30;
+    const colLetter = (index: number): string => {
+      let n = index + 1;
+      let out = '';
+      while (n > 0) {
+        const rem = (n - 1) % 26;
+        out = String.fromCharCode(65 + rem) + out;
+        n = Math.floor((n - 1) / 26);
+      }
+      return out;
+    };
+    const blankColumns = Array.from({ length: BLANK_GRID_COLUMNS }, (_, i) => ({
+      key: colLetter(i),
+      header: colLetter(i),
+    }));
+    const blankRows = Array.from({ length: BLANK_GRID_ROWS }, () => ({ cells: {} }));
+
     const schema: WorkbookSchema = {
       title,
-      sheets: [{ name: 'Arkusz1', columns: [], rows: [] }],
+      sheets: [{ name: 'Arkusz1', columns: blankColumns, rows: blankRows }],
     };
 
     const { buildWorkbookBuffer } = await import('../services/workbook/WorkbookBuilder.js');

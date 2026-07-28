@@ -213,6 +213,18 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           navigate(buildMyWorkSheetTableOpenPath(ws, tableId));
           return;
         }
+        // Naprawa 2026-07-28 ("jeden Excel na każdej ścieżce", path #4 —
+        // Materiały → Arkusze → otwarcie z listy): brak mapowania na tabelę
+        // platformową zwykle znaczy, że to PRAWDZIWY skoroszyt Excela
+        // (generated_workbooks, nie tp_tables — patrz komentarz w
+        // ExceleView.tsx). Klik "Otwórz" po cichu ŚCIĄGAŁ plik zamiast
+        // otworzyć edytowalną siatkę — teraz otwiera ten sam, jednolity
+        // widok arkusza co reszta modułu (`ExceleView`'s reopen: GET
+        // /workbook/:id → EditableSpreadsheetGrid), które samo ma dalszy,
+        // jawny fallback (Table Studio / "nie znaleziono") gdy naprawdę nic
+        // się nie rozwiąże.
+        navigate(`/excele?artifactId=${encodeURIComponent(tableId)}`);
+        return;
       }
       const ok = await downloadSheetArtifactXlsx(tableId);
       if (ok) {

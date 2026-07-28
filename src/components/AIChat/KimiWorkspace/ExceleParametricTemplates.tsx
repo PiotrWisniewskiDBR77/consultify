@@ -50,6 +50,23 @@
  * headers become the labels underneath) and renders nothing when no row
  * qualifies (all-formula/text sheets stay exactly as before). FE-only, reuses
  * the already-fetched `gridSheets` state — no extra request, no new flag.
+ *
+ * Edytowalna siatka (2026-07-28, "jeden Excel na każdej ścieżce"): przed tą
+ * zmianą ten ekran ("Ścieżka A" — /excele → szablon → "Build workbook") i
+ * `KimiWorkspaceShell`'s reopen ("Ścieżka B" — `?artifactId=`) renderowały
+ * DWA różne widoki tego samego skoroszytu: tu zawsze tylko-do-odczytu
+ * `<table>` (dwuklik nic nie robił), tam za `ff_excele_edit` prawdziwy
+ * `EditableSpreadsheetGrid`. Zamiast przekierowywać po zbudowaniu (co
+ * zgubiłoby "Zbuduj ponownie"/"Zapisz zestaw parametrów"/odznakę jakości —
+ * wszystkie żyją TYLKO na tym ekranie, w stanie `result`/`presets`), grid
+ * został OSADZONY tutaj: ten sam `Api.getWorkbookSchema(built.id)`, którego
+ * już wołaliśmy dla `gridSheets` (kształt do wykresu/tabeli read-only), daje
+ * też SUROWE arkusze (`schema.sheets`) — dokładnie ten kształt, którego
+ * `EditableSpreadsheetGrid` oczekuje jako `sheets` (identyczny z `rawSheets`
+ * w `ExceleView.tsx`'s reopen). Za `ff_excele_edit` (domyślnie ON od
+ * 2026-07-28) renderuje się grid; przy kill-switchu `?ff_excele_edit=0`
+ * albo braku kolumn w arkuszu (np. przyszły pusty szablon) zostaje stary,
+ * tylko-do-odczytu render — zero regresji.
  */
 
 import {
@@ -70,15 +87,18 @@ import toast from 'react-hot-toast';
 
 import { API_URL } from '@/services/api';
 import { Api } from '@/services/api';
+import { isExceleEditEnabled } from '@/utils/exceleEditFlag';
 import {
   deleteTemplatePreset,
   readTemplatePresets,
   saveTemplatePreset,
   type ExceleTemplatePreset,
 } from '@/utils/exceleTemplatePresets';
+import type { FormulaSheet } from '@/utils/workbookFormulaEngine';
 import { buildWorkbookGridSheets, isFormulaDisplayValue } from '@/utils/workbookGridPreview';
 import type { WorkbookGridSheet } from '@/utils/workbookGridPreview';
 
+import { EditableSpreadsheetGrid } from './EditableSpreadsheetGrid';
 import { findBarChartSeries, MiniBarChart } from './MiniBarChart';
 
 type ParamType = 'text' | 'integer' | 'number' | 'percent' | 'currency' | 'enum';
@@ -194,6 +214,10 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
   const [gridError, setGridError] = useState<string | null>(null);
   const [activeSheet, setActiveSheet] = useState(0);
   const [showAllRows, setShowAllRows] = useState(false);
+  // Edytowalna siatka (2026-07-28): SUROWE arkusze z tego samego
+  // getWorkbookSchema wołania co gridSheets wyżej — kształt zgodny z
+  // `EditableSpreadsheetGrid`'s `sheets` prop (patrz nagłówek pliku).
+  const [rawSheets, setRawSheets] = useState<FormulaSheet[] | null>(null);
 
   // Quality badge (2026-07-23): deterministic critic already computed server-side
   // for every template build — expandable list of issues, collapsed by default.
@@ -240,6 +264,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
     setValues(initial);
     setResult(null);
     setGridSheets(null);
+    setRawSheets(null);
     setGridError(null);
     setGridLoading(false);
     setShowQualityIssues(false);
@@ -381,6 +406,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
       // the B3 KimiWorkspaceShell xlsx preview: GET /api/workbook/:id/schema).
       if (built.id) {
         setGridSheets(null);
+        setRawSheets(null);
         setGridError(null);
         setActiveSheet(0);
         setShowAllRows(false);
@@ -388,6 +414,9 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
         Api.getWorkbookSchema(built.id)
           .then((schema) => {
             setGridSheets(buildWorkbookGridSheets(schema?.sheets));
+            // Edytowalna siatka (2026-07-28): te same surowe arkusze co
+            // `rawSheets` w ExceleView.tsx's reopen — patrz nagłówek pliku.
+            setRawSheets((schema?.sheets ?? null) as FormulaSheet[] | null);
           })
           .catch((err) => {
             console.warn('[ExceleParametricTemplates] Failed to load workbook grid schema:', err);
@@ -472,6 +501,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                 onClick={() => {
                   setResult(null);
                   setGridSheets(null);
+                  setRawSheets(null);
                   setGridError(null);
                   setGridLoading(false);
                   setShowQualityIssues(false);
@@ -590,6 +620,29 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                     </div>
                   )}
                   {(() => {
+                    // Edytowalna siatka (2026-07-28): za ff_excele_edit (domyślnie
+                    // ON) i tylko gdy mamy surowe arkusze z realnymi kolumnami —
+                    // patrz nagłówek pliku. Kill-switch/brak kolumn → stary,
+                    // tylko-do-odczytu render niżej, zero regresji.
+                    const activeRaw = rawSheets?.[activeSheet] ?? rawSheets?.[0] ?? null;
+                    const canEdit =
+                      isExceleEditEnabled() &&
+                      !!result?.id &&
+                      !!rawSheets &&
+                      rawSheets.length > 0 &&
+                      (activeRaw?.columns?.length ?? 0) > 0;
+                    if (canEdit) {
+                      return (
+                        <div className="[&>div]:rounded-none [&>div]:border-0 [&>div]:border-t [&>div]:border-c-border-subtle">
+                          <EditableSpreadsheetGrid
+                            workbookId={result!.id}
+                            sheets={rawSheets as FormulaSheet[]}
+                            activeSheetIndex={activeSheet}
+                          />
+                        </div>
+                      );
+                    }
+
                     const sheetData = gridSheets[activeSheet] || gridSheets[0];
                     if (!sheetData || sheetData.columns.length === 0) return null;
                     const visibleRows = showAllRows
@@ -598,7 +651,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                     return (
                       <>
                         <div className="overflow-x-auto max-h-[360px] overflow-y-auto">
-                          <table className="w-full text-xs">
+                          <table className="w-full text-xs" /* §27-exempt: podgląd arkusza Excel (kill-switch/brak kolumn fallback), nie lista rekordów — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md */>
                             <thead className="sticky top-0 z-10">
                               <tr className="bg-c-surface-raised">
                                 {sheetData.columns.map((col, ci) => (
