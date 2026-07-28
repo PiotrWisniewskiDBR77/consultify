@@ -12,6 +12,7 @@
 import { Copy, Flag, Trash2, Zap } from 'lucide-react';
 import React from 'react';
 
+import { ArtifactPropertiesTable } from '../../src/components/standard/ArtifactPropertiesTable';
 import { PriorityCell } from '../../src/components/standard/PriorityCell';
 import { StandardPreview } from '../../src/components/standard/StandardPreview';
 import { PriorityChip } from '../../src/components/ui/primitives/chips/PriorityChip';
@@ -235,6 +236,87 @@ export default function TabeleFala2PrzedPo() {
             }}
           />
         </div>
+      </Sekcja>
+      <Sekcja
+        tytul="4 · Kebab wiersza bez atrap (P-17 / P-18)"
+        opis={'Po lewej kebab Sejfu tak, jak wyglądał: trzy z czterech pozycji martwe, każda z bezużytecznym „Coming soon (backend)”. Po prawej ten sam kebab dziś — „jeszcze tego nie ma” znika, a blokada z POWODEM zostaje, bo uczy reguły produktu.'}
+      >
+        <Para
+          przed={
+            <div className="w-64 rounded-xl border border-c-border-subtle bg-c-surface-raised py-1 text-xs">
+              <div className="px-3 py-1.5 text-c-text">Open preview</div>
+              <div className="px-3 py-1.5 text-c-text-muted opacity-50">
+                Edit <span className="text-[10px]">— Coming soon (backend)</span>
+              </div>
+              <div className="px-3 py-1.5 text-c-text-muted opacity-50">
+                Archive <span className="text-[10px]">— Coming soon (backend)</span>
+              </div>
+              <div className="px-3 py-1.5 text-c-text-muted opacity-50">
+                Delete <span className="text-[10px]">— Safes are automatic</span>
+              </div>
+            </div>
+          }
+          po={
+            <div className="w-64 rounded-xl border border-c-border-subtle bg-c-surface-raised py-1 text-xs">
+              <div className="px-3 py-1.5 text-c-text">Open preview</div>
+              <div className="px-3 py-1.5 text-c-text-muted opacity-50">
+                Delete{' '}
+                <span className="text-[10px]">— Safes are automatic — cannot be deleted</span>
+              </div>
+            </div>
+          }
+        />
+      </Sekcja>
+
+      <Sekcja
+        tytul="5 · Właściwości w tabeli klucz–wartość, nie w akapicie (N-52)"
+        opis="Cztery podglądy wkładały właściwości encji w pole na prozę, sklejone przez join i z licznikiem słów nad nimi. Po prawej ten sam zestaw danych przez ArtifactPropertiesTable — komponent, który przegląd wskazał jako wzorzec w Tools → Reports."
+      >
+        <Para
+          przed={
+            <div className="rounded-xl border border-c-border-subtle p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+                  Details
+                </span>
+                <span className="text-[10px] text-c-text-muted">~9 words</span>
+              </div>
+              <p className="whitespace-pre-line text-sm leading-relaxed text-c-text">
+                {'Answers: 0/6\n\nStarted: 30/04/2026\n\nLast activity: 30/04/2026'}
+              </p>
+            </div>
+          }
+          po={
+            <div className="rounded-xl border border-c-border-subtle p-3">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+                Przebieg
+              </div>
+              <ArtifactPropertiesTable
+                propertyLabel="Właściwość"
+                valueLabel="Wartość"
+                rows={[
+                  { id: 'a', label: 'Odpowiedzi', value: '0/6', mono: true },
+                  { id: 'b', label: 'Rozpoczęto', value: '30/04/2026', mono: true },
+                  { id: 'c', label: 'Ostatnia aktywność', value: '30/04/2026', mono: true },
+                ]}
+              />
+            </div>
+          }
+        />
+      </Sekcja>
+
+      <Sekcja
+        tytul="6 · Stan końcowy mówi, że jest końcowy (Interview → Assigned)"
+        opis="Podgląd zatwierdzonego przydziału był po prostu urwany — stopka znikała, bo przyciski renderowały się tylko dla trzech statusów roboczych. Pustka nie do odróżnienia od brakującej funkcji. Baner to wzorzec z Interview → Initiatives."
+      >
+        <Para
+          przed={<div className="p-6 text-center text-xs text-c-text-muted">(nic — koniec panelu)</div>}
+          po={
+            <div className="rounded-token-md border-l-2 border-emerald-400/70 bg-emerald-50/60 px-3 py-2 text-xs text-emerald-800 dark:bg-emerald-500/[0.08] dark:text-emerald-200">
+              Zatwierdzone — przydział jest zamknięty i nie wymaga już działania.
+            </div>
+          }
+        />
       </Sekcja>
     </div>
   );
