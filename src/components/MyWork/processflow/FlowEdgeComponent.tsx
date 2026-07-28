@@ -3,6 +3,11 @@ import { getSmoothStepPath } from '@reactflow/core';
 import React from 'react';
 import { EdgeProps } from 'reactflow';
 
+import {
+  EdgeArrowMarkers,
+  arrowMarkerAttrs,
+  resolveArrowDirection,
+} from '../canvas/edgeArrowMarkers';
 import { pointsToPath, routeOrthogonal, type RoutePoint } from './edgeRouting';
 
 export const CONDITION_TYPES = ['', 'yes', 'no', 'default', 'exception'] as const;
@@ -120,13 +125,14 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
   // the user explicitly picks "None" in the popover (data.arrowDirection ===
   // 'none' is then persisted and respected) — unset/legacy edges (no field at
   // all) pick up the new default automatically.
-  const arrowDirection =
-    (data?.arrowDirection as 'none' | 'start' | 'end' | 'both' | undefined) ?? 'end';
-  const showEndArrow = arrowDirection === 'end' || arrowDirection === 'both';
-  const showStartArrow = arrowDirection === 'start' || arrowDirection === 'both';
+  // 2026-07-28: geometria grotów przeniesiona do WSPÓLNEGO `canvas/edgeArrowMarkers`
+  // (ten sam grot rysuje teraz Mapa myśli i Tablica). Domyślne 'end' zostaje —
+  // to nadal diagram procesu. Przy okazji naprawiony grot startowy: miał
+  // JEDNOCZEŚNIE odwróconą ścieżkę i `orient="auto-start-reverse"`, co znosiło
+  // się nawzajem — przy 'both' obie strzałki pokazywały w tę samą stronę.
+  const arrowDirection = resolveArrowDirection(data?.arrowDirection, 'end');
   const markerColor = edgeStroke || EDGE_NEUTRAL_STROKE;
-  const markerEndId = `pf-arrow-end-${id}`;
-  const markerStartId = `pf-arrow-start-${id}`;
+  const arrowAttrs = arrowMarkerAttrs(id, arrowDirection);
 
   const handleAddWaypoint = (e: React.MouseEvent) => {
     // F5a A1: double-click on the edge inserts a waypoint at the pointer.
@@ -141,39 +147,8 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
   return (
     <g className="group/flowedge">
       <style>{`@keyframes flowEdgeDash { to { stroke-dashoffset: -12; } }`}</style>
-      {/* #6p: arrowhead markers, sized in user-space so they stay a fixed
-          ~7px regardless of stroke width. One pair per edge (unique ids) so
-          concurrent edges don't fight over marker definitions. */}
-      {(showEndArrow || showStartArrow) && (
-        <defs>
-          {showEndArrow && (
-            <marker
-              id={markerEndId}
-              markerWidth={8}
-              markerHeight={8}
-              refX={7}
-              refY={4}
-              orient="auto"
-              markerUnits="userSpaceOnUse"
-            >
-              <path d="M0,0 L8,4 L0,8 Z" fill={markerColor} />
-            </marker>
-          )}
-          {showStartArrow && (
-            <marker
-              id={markerStartId}
-              markerWidth={8}
-              markerHeight={8}
-              refX={1}
-              refY={4}
-              orient="auto-start-reverse"
-              markerUnits="userSpaceOnUse"
-            >
-              <path d="M8,0 L0,4 L8,8 Z" fill={markerColor} />
-            </marker>
-          )}
-        </defs>
-      )}
+      {/* Groty kierunku — wspólny komponent dla wszystkich trzech płócien. */}
+      <EdgeArrowMarkers edgeId={id} direction={arrowDirection} color={markerColor} />
       {/* Invisible wide hit area — also the double-click target for waypoints */}
       <path
         d={edgePath}
@@ -199,8 +174,8 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
         id={id}
         className="react-flow__edge-path transition-all duration-200"
         d={edgePath}
-        markerEnd={showEndArrow ? `url(#${markerEndId})` : undefined}
-        markerStart={showStartArrow ? `url(#${markerStartId})` : undefined}
+        markerEnd={arrowAttrs.markerEnd}
+        markerStart={arrowAttrs.markerStart}
         style={{
           ...style,
           stroke: edgeStroke,
