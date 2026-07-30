@@ -163,6 +163,19 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3450", "--strictPort"],
       "port": 3450
+    },
+    {
+      "name": "tools-sesja-wyjscie",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3260",
+        "--strictPort"
+      ],
+      "port": 3260
     }
   ]
 }

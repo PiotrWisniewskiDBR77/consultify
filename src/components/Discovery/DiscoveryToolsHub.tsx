@@ -2269,6 +2269,24 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     setInitiativeTasks([]);
   }, []);
 
+  /**
+   * Menu 2 MUSI wyprowadzać z otwartej karty (zgłoszenie Piotra 2026-07-27:
+   * „wystartowałem sesję i nie mam jak z niej wyjść").
+   *
+   * `renderContent()` sprawdza `activeDocumentId` PRZED `activeTab`, więc samo
+   * `setActiveTab` przy otwartej sesji nic nie robiło — pigułki Menu 2 były
+   * martwe, a jedynym wyjściem została bezetykietowa strzałka w nagłówku
+   * artefaktu. Przełączenie zakładki = intencja „chcę stąd wyjść", więc
+   * zamykamy kartę (zostaje w `openDocuments`, wraca jednym kliknięciem chipu).
+   */
+  const handleTabChange = useCallback(
+    (tab: string) => {
+      setActiveTab(tab as ModuleTab);
+      handleShowList();
+    },
+    [handleShowList]
+  );
+
   useEffect(() => {
     if (!hydrated) return;
     const docId = String(searchParams.get('docId') || '').trim();
@@ -5062,12 +5080,17 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
         searchValue={searchQuery}
-        openItems={openDocuments}
+        /* Wiersz kart otwartych (Menu 3, tryb 3) TYLKO gdy karta jest naprawdę
+         * otwarta. `ModuleNavBar` przełącza Menu 3 w tryb kart, gdy lista nie
+         * jest pusta — a `openDocuments` żyje w sessionStorage, więc karmienie
+         * go bezwarunkowo zabierałoby chipy kategorii (All/Strategy/…) z
+         * Biblioteki na długo po zamknięciu sesji. Na liście = jak dotąd. */
+        openItems={activeDocumentId ? openDocuments : []}
         activeItemId={activeDocumentId}
         onSelectItem={setActiveDocumentId}
         onCloseItem={handleCloseDocument}
