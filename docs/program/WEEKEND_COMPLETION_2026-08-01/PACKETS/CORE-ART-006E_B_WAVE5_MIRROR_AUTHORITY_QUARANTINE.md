@@ -1,7 +1,7 @@
 ---
 doc_id: CORE-ART-006E-B
 truth_type: operations
-status: READY
+status: ACCEPTED
 owner: codex
 product_owner: piotr
 priority: P0
@@ -36,3 +36,15 @@ origin runtime; placeholder nigdy nie jest content authority.
 ## Recovery
 
 Rollback przywraca stary mirror writer, nie usuwa ani nie przepisuje historycznych rekordów.
+
+## Odbiór 2026-08-01
+
+Decyzja: **GO**.
+
+- Wave5 runtime + quarantine + origin adapters: `26/26 PASS`;
+- frontend typecheck: PASS;
+- `git diff --check`: PASS.
+
+Nowe mirrory są linkami z projekcją `missing`. Historyczna treść placeholdera pozostaje
+w bazie, ale jest wykrywana i omijana. Native Wave5 niebędący mirrorem zachowuje własne
+content authority.

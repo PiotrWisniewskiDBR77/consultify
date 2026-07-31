@@ -9,6 +9,7 @@ import { AppError } from '../../utils/ErrorHandler.js';
 import { presentationArtifactContentAdapter } from './presentationArtifactContentAdapter.js';
 import { reportArtifactContentAdapter } from './reportArtifactContentAdapter.js';
 import { sheetArtifactContentAdapter } from './sheetArtifactContentAdapter.js';
+import { wave5ArtifactContentAdapter } from './wave5ArtifactContentAdapter.js';
 
 export const ARTIFACT_CONTENT_ERROR_CODES = {
   ARTIFACT_NOT_FOUND: 'ARTIFACT_CONTENT_ARTIFACT_NOT_FOUND',
@@ -46,6 +47,7 @@ const adapters = new Map<string, ArtifactContentAdapter>();
 adapters.set('report', reportArtifactContentAdapter);
 adapters.set('presentation', presentationArtifactContentAdapter);
 adapters.set('sheet', sheetArtifactContentAdapter);
+adapters.set('native_artifact', wave5ArtifactContentAdapter);
 
 export function registerArtifactContentAdapter(
   originRuntime: string,
