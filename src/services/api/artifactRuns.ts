@@ -1,7 +1,20 @@
 import { fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 
 export type ArtifactPlanOutputType = 'report' | 'presentation' | 'sheet';
-export type ArtifactFamily = 'document' | 'presentation' | 'sheet';
+export const ArtifactFamilyValues = ['document', 'presentation', 'sheet', 'template'] as const;
+export type ArtifactFamily = (typeof ArtifactFamilyValues)[number];
+export const ArtifactOriginRuntimeValues = [
+  'report',
+  'presentation',
+  'sheet',
+  'native_artifact',
+  'report_template',
+  'presentation_template',
+  'sheet_template',
+  'document_template',
+  'work_canvas',
+] as const;
+export type ArtifactOriginRuntime = (typeof ArtifactOriginRuntimeValues)[number];
 export type ArtifactVisibilityScope =
   | 'private'
   | 'project'
@@ -44,6 +57,51 @@ export interface ArtifactRunFailurePackage {
   cleanupNotes?: string | null;
 }
 
+export interface ArtifactRunOperationContract {
+  contractId: string;
+  version: 'v1';
+  kind: 'teresa_handoff' | 'governed_execution' | 'artifact_runtime' | 'tool_invocation';
+  stage:
+    | 'draft'
+    | 'proposal_ready'
+    | 'pending_review'
+    | 'approved'
+    | 'executing'
+    | 'completed'
+    | 'rejected'
+    | 'failed';
+  links: {
+    organizationId: string;
+    userId: string | null;
+    conversationId: string | null;
+    sessionId: string | null;
+    contextSnapshotId: string | null;
+    executionRunId: string | null;
+    teresaProposalId: string | null;
+    governedProposalId: string | null;
+    chatProposalId: string | null;
+    artifactRunId: string | null;
+    artifactId: string | null;
+    toolInvocationId: string | null;
+    targetModule: string | null;
+    targetRef: {
+      artifactId: string;
+      artifactType: string;
+      artifactModule: string;
+      relationship: 'target' | 'source' | 'reference';
+    } | null;
+  };
+  preview: {
+    title: string;
+    summary: string;
+    intent: string;
+    previewLines: string[];
+    riskLabel: string | null;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ArtifactRunPlan {
   artifactFamily: ArtifactFamily;
   outputType: ArtifactPlanOutputType;
@@ -70,19 +128,14 @@ export interface ArtifactRunRecord {
   preflight: ArtifactRunPreflight | null;
   failurePackage: ArtifactRunFailurePackage | null;
   materializationOrigin: {
-    originRuntime:
-      | 'report'
-      | 'presentation'
-      | 'sheet'
-      | 'native_artifact'
-      | 'report_template'
-      | 'presentation_template';
+    originRuntime: ArtifactOriginRuntime;
     originRecordId: string;
   } | null;
   startedAt: string;
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  operationContract?: ArtifactRunOperationContract;
 }
 
 export interface ArtifactRunPlanningEnvelope {

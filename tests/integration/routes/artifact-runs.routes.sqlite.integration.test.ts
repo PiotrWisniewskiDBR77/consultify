@@ -5,6 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import {
   applyArtifactSubstrateDdl,
   clearArtifactSubstrateTables,
+  seedGovernedTable,
 } from '../helpers/artifactSubstrateSqliteContext.js';
 
 const sqliteCtx = vi.hoisted(() => {
@@ -119,11 +120,13 @@ vi.mock('../../../server/src/middleware/v8FeatureGate.middleware.js', () => ({
 
 import artifactRunsRouter from '../../../server/src/routes/artifact-runs.routes.js';
 import * as reportBuilderService from '../../../server/src/services/reportBuilderService.js';
+import { errorHandlerMiddleware } from '../../../server/src/utils/ErrorHandler.js';
 
 describe('artifact-runs routes (sqlite-backed integration)', () => {
   const app = express();
   app.use(express.json());
   app.use('/api/artifact-runs', artifactRunsRouter);
+  app.use(errorHandlerMiddleware);
 
   beforeAll(async () => {
     await applyArtifactSubstrateDdl(sqliteCtx.db);
@@ -155,10 +158,8 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
       }),
   );
 
-  it('persists a run through POST -> GET -> accept-plan -> materialize -> retry', async () => {
-    spineMocks.initiateHandoff
-      .mockResolvedValueOnce({ executionRunId: 'exec-run-1' })
-      .mockResolvedValueOnce({ executionRunId: 'exec-run-2' });
+  it('persists a run through POST -> GET -> accept-plan -> materialize and rejects retry of completed', async () => {
+    spineMocks.initiateHandoff.mockResolvedValueOnce({ executionRunId: 'exec-run-1' });
     spineMocks.createProposal.mockResolvedValue({ proposalId: 'proposal-abc' });
 
     await new Promise<void>((resolve, reject) => {
@@ -238,23 +239,57 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
     expect(materializeRes.body.data.artifactId).toBeTruthy();
 
     const retryRes = await request(app).post(`/api/artifact-runs/${runId}/retry`).send({});
+    expect(retryRes.status).toBe(409);
+    expect(retryRes.body.error).toEqual(
+      expect.objectContaining({
+        code: 'ARTIFACT_RUN_RETRY_NOT_ALLOWED',
+        runId,
+        runStatus: 'completed',
+      }),
+    );
+
+    const historyRes = await request(app).get(`/api/artifact-runs/${runId}/history`);
+    expect(historyRes.status).toBe(200);
+    expect(historyRes.body.data.map((item: any) => item.runId)).toEqual([runId]);
+  });
+
+  it.each(['failed', 'cancelled'])('creates one retry child for persisted %s', async (status) => {
+    spineMocks.initiateHandoff
+      .mockResolvedValueOnce({ executionRunId: `exec-parent-${status}` })
+      .mockResolvedValueOnce({ executionRunId: `exec-child-${status}` });
+
+    const createRes = await request(app).post('/api/artifact-runs/from-chat').send({
+      conversationId: `conv-${status}`,
+      contextSnapshotId: `snap-${status}`,
+      goal: `Retry ${status} report`,
+      requestedArtifactFamily: 'document',
+      requestedOutputType: 'report',
+    });
+    expect(createRes.status).toBe(201);
+    const runId = String(createRes.body.data.run.runId);
+
+    await new Promise<void>((resolve, reject) => {
+      sqliteCtx.db.run(
+        `UPDATE v8_artifact_runs SET run_status = ?, updated_at = ?
+         WHERE run_id = ? AND organization_id = ?`,
+        [status, new Date().toISOString(), runId, 'org-a'],
+        (err) => (err ? reject(err) : resolve()),
+      );
+    });
+
+    const retryRes = await request(app).post(`/api/artifact-runs/${runId}/retry`).send({});
     expect(retryRes.status).toBe(201);
     expect(retryRes.body.data).toEqual(
       expect.objectContaining({
         retryOfRunId: runId,
         runStatus: 'planned',
-        executionRunId: 'exec-run-2',
+        executionRunId: `exec-child-${status}`,
       }),
     );
 
-    spineMocks.getRun.mockImplementation(async (executionRunId: string) =>
-      executionRunId === 'exec-run-1'
-        ? { state: 'approved_for_apply' }
-        : { state: 'planning' }
-    );
-    const historyRes = await request(app).get(`/api/artifact-runs/${retryRes.body.data.runId}/history`);
-    expect(historyRes.status).toBe(200);
-    expect(historyRes.body.data.map((item: any) => item.runId)).toEqual([runId, retryRes.body.data.runId]);
+    const parentRes = await request(app).get(`/api/artifact-runs/${runId}`);
+    expect(parentRes.status).toBe(200);
+    expect(parentRes.body.data.runStatus).toBe(status);
   });
 
   it('materializes a presentation run through the governed artifact-run route', async () => {
@@ -304,6 +339,11 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
   it('materializes a sheet run through the governed artifact-run route when a governed table target is provided', async () => {
     spineMocks.initiateHandoff.mockResolvedValueOnce({ executionRunId: 'exec-run-sheet-1' });
     spineMocks.createProposal.mockResolvedValue({ proposalId: 'proposal-sheet-1' });
+    await seedGovernedTable(sqliteCtx.db, {
+      tableId: 'tbl-governed-1',
+      organizationId: 'org-a',
+      tableName: 'Governed matrix',
+    });
 
     const createRes = await request(app).post('/api/artifact-runs/from-chat').send({
       conversationId: 'conv-sheet-1',

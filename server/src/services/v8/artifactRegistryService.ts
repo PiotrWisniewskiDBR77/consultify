@@ -64,6 +64,37 @@ import * as publishReviewService from './publishReviewService.js';
 const LOG_PREFIX = '[V8:ArtifactRegistry]';
 const FALLBACK_ACTOR = 'system';
 const BACKFILL_TTL_MS = 30_000;
+const ARTIFACT_RUN_RETRY_NOT_ALLOWED = 'ARTIFACT_RUN_RETRY_NOT_ALLOWED';
+const RETRYABLE_ARTIFACT_RUN_STATUSES = new Set<ArtifactRunStatus>([
+  'failed',
+  'rejected',
+  'cancelled',
+]);
+
+// Retry does not have a database uniqueness constraint yet. Serialize attempts in this
+// process and re-read lineage inside the critical section so concurrent requests are
+// idempotent without changing the schema.
+const artifactRunRetryLocks = new Map<string, Promise<void>>();
+
+async function withArtifactRunRetryLock<T>(key: string, work: () => Promise<T>): Promise<T> {
+  const previous = artifactRunRetryLocks.get(key) ?? Promise.resolve();
+  let release!: () => void;
+  const current = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const tail = previous.then(() => current);
+  artifactRunRetryLocks.set(key, tail);
+
+  await previous;
+  try {
+    return await work();
+  } finally {
+    release();
+    if (artifactRunRetryLocks.get(key) === tail) {
+      artifactRunRetryLocks.delete(key);
+    }
+  }
+}
 
 type StarterTableField = {
   name: string;
@@ -3500,10 +3531,11 @@ export async function listArtifactRunHistory(params: {
   return Promise.all(ordered.map((row) => mapArtifactRunRowWithEffectiveStatus(row)));
 }
 
-function computeArtifactRunPreflight(params: {
+export async function computeArtifactRunPreflight(params: {
   run: ArtifactRunRecord;
   executionRunExists: boolean;
-}): ArtifactRunPreflight {
+  materializationParams?: MaterializeArtifactRunParams;
+}): Promise<ArtifactRunPreflight> {
   const now = new Date().toISOString();
   const checks: ArtifactRunPreflight['checks'] = [];
 
@@ -3528,11 +3560,36 @@ function computeArtifactRunPreflight(params: {
   });
 
   if (params.run.plan.outputType === 'sheet') {
+    const tableId =
+      typeof params.materializationParams?.config?.tableId === 'string'
+        ? params.materializationParams.config.tableId.trim()
+        : '';
+    const table = tableId
+      ? await dbGet<{ table_id: string; field_count: number }>(
+          `SELECT t.id AS table_id, COUNT(f.id) AS field_count
+             FROM tp_tables t
+             JOIN tp_bases b ON b.id = t.base_id
+             LEFT JOIN tp_fields f ON f.table_id = t.id
+            WHERE t.id = ? AND b.organization_id = ?
+            GROUP BY t.id
+            LIMIT 1`,
+          [tableId, params.run.organizationId],
+          { fallback: true }
+        )
+      : null;
+    const targetPassed = Boolean(table?.table_id && Number(table.field_count || 0) >= 2);
     checks.push({
       id: 'materialization_target',
-      status: 'pending',
-      message:
-        'Sheet materialization requires a governed table target (tableId) at materialize time',
+      status: params.materializationParams ? (targetPassed ? 'passed' : 'failed') : 'pending',
+      message: !params.materializationParams
+        ? 'Sheet materialization requires a governed table target (tableId) at materialize time'
+        : !tableId
+          ? 'Sheet materialization requires config.tableId'
+          : !table?.table_id
+            ? 'Sheet materialization target was not found in the current organization'
+            : Number(table.field_count || 0) < 2
+              ? 'Sheet materialization target has no usable schema'
+              : 'Sheet materialization target is governed by the current organization',
     });
   } else if (params.run.plan.outputType === 'report') {
     const hasGroundedSource = Boolean(params.run.contextSnapshotId);
@@ -3563,6 +3620,39 @@ function computeArtifactRunPreflight(params: {
   return { state, computedAt: now, checks };
 }
 
+async function persistArtifactRunPreflight(params: {
+  runId: string;
+  organizationId: string;
+  actorUserId: string;
+  preflight: ArtifactRunPreflight;
+}): Promise<void> {
+  await dbRun(
+    `UPDATE v8_artifact_runs
+     SET preflight_state = ?,
+         preflight_json = ?,
+         updated_at = ?
+     WHERE run_id = ? AND organization_id = ?`,
+    [
+      params.preflight.state,
+      JSON.stringify(params.preflight),
+      new Date().toISOString(),
+      params.runId,
+      params.organizationId,
+    ]
+  );
+
+  await emitRunAudit({
+    runId: params.runId,
+    organizationId: params.organizationId,
+    action: 'preflight',
+    actorUserId: params.actorUserId,
+    detail: {
+      preflightState: params.preflight.state,
+      checksCount: params.preflight.checks.length,
+    },
+  });
+}
+
 export async function preflightArtifactRun(params: {
   runId: string;
   organizationId: string;
@@ -3575,27 +3665,15 @@ export async function preflightArtifactRun(params: {
 
   const mapped = mapArtifactRunRow(row);
   const spineRun = await executionSpineService.getRun(mapped.executionRunId, mapped.organizationId);
-  const preflight = computeArtifactRunPreflight({
+  const preflight = await computeArtifactRunPreflight({
     run: mapped,
     executionRunExists: Boolean(spineRun && typeof (spineRun as any).state === 'string'),
   });
-
-  const now = new Date().toISOString();
-  await dbRun(
-    `UPDATE v8_artifact_runs
-     SET preflight_state = ?,
-         preflight_json = ?,
-         updated_at = ?
-     WHERE run_id = ? AND organization_id = ?`,
-    [preflight.state, JSON.stringify(preflight), now, params.runId, params.organizationId]
-  );
-
-  await emitRunAudit({
+  await persistArtifactRunPreflight({
     runId: params.runId,
     organizationId: params.organizationId,
-    action: 'preflight',
     actorUserId: params.actorUserId,
-    detail: { preflightState: preflight.state, checksCount: preflight.checks.length },
+    preflight,
   });
 
   const updated = await getArtifactRun(params.runId, params.organizationId);
@@ -3608,10 +3686,11 @@ export async function acceptArtifactRunPlan(params: {
   organizationId: string;
   actorUserId: string;
 }): Promise<ArtifactRunRecord> {
-  const current = await getArtifactRun(params.runId, params.organizationId);
-  if (!current) {
+  const currentRow = await getArtifactRunRow(params.runId, params.organizationId);
+  if (!currentRow) {
     throw new Error(`ArtifactRun ${params.runId} not found`);
   }
+  const current = mapArtifactRunRow(currentRow);
   if (current.runStatus !== 'planned' && current.runStatus !== 'retry_requested') {
     return current;
   }
@@ -3714,62 +3793,97 @@ export async function retryArtifactRun(params: {
   if (!current) {
     throw new Error(`ArtifactRun ${params.runId} not found`);
   }
-
-  if (current.runStatus === 'failed' && current.materializationOrigin) {
-    await cleanupGhostOutputsByOrigin({
-      organizationId: params.organizationId,
-      originRuntime: current.materializationOrigin.originRuntime,
-      originRecordId: current.materializationOrigin.originRecordId,
-    }).catch((error) => {
-      logger.warn(`${LOG_PREFIX} Ghost artifact cleanup failed during retry`, {
-        runId: params.runId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    });
+  if (!RETRYABLE_ARTIFACT_RUN_STATUSES.has(current.runStatus)) {
+    throw new AppError(
+      `ArtifactRun ${params.runId} cannot be retried from status ${current.runStatus}`,
+      409,
+      ARTIFACT_RUN_RETRY_NOT_ALLOWED,
+      { runId: params.runId, runStatus: current.runStatus }
+    );
   }
 
-  await dbRun(
-    `UPDATE v8_artifact_runs
-     SET run_status = ?, updated_at = ?
-     WHERE run_id = ? AND organization_id = ?`,
-    ['retry_requested', new Date().toISOString(), params.runId, params.organizationId]
-  );
+  const lockKey = `${params.organizationId}:${params.runId}`;
+  return withArtifactRunRetryLock(lockKey, async () => {
+    const lockedCurrentRow = await getArtifactRunRow(params.runId, params.organizationId);
+    if (!lockedCurrentRow) {
+      throw new Error(`ArtifactRun ${params.runId} not found`);
+    }
+    const lockedCurrent = mapArtifactRunRow(lockedCurrentRow);
+    if (!RETRYABLE_ARTIFACT_RUN_STATUSES.has(lockedCurrent.runStatus)) {
+      throw new AppError(
+        `ArtifactRun ${params.runId} cannot be retried from status ${lockedCurrent.runStatus}`,
+        409,
+        ARTIFACT_RUN_RETRY_NOT_ALLOWED,
+        { runId: params.runId, runStatus: lockedCurrent.runStatus }
+      );
+    }
 
-  const handoff = await chatExecutionService.initiateHandoff({
-    conversationId: current.sourceContextId || current.runId,
-    contextSnapshotId: current.contextSnapshotId,
-    organizationId: params.organizationId,
-    userId: params.actorUserId,
-    goal: current.plan.titleHint,
-  });
+    const existingChildren = await getArtifactRunChildRows(params.runId, params.organizationId);
+    if (existingChildren.length > 0) {
+      const existingChild = mapArtifactRunRow(existingChildren[0]);
+      await emitRunAudit({
+        runId: params.runId,
+        organizationId: params.organizationId,
+        action: 'retry_requested',
+        actorUserId: params.actorUserId,
+        fromStatus: lockedCurrent.runStatus,
+        toStatus: lockedCurrent.runStatus,
+        detail: { childRunId: existingChild.runId, reusedExistingChild: true },
+      });
+      return existingChild;
+    }
 
-  await executionSpineService.transitionRunState(
-    handoff.executionRunId,
-    params.organizationId,
-    'planning',
-    params.actorUserId,
-    'ArtifactRun retry requested'
-  );
+    if (lockedCurrent.runStatus === 'failed' && lockedCurrent.materializationOrigin) {
+      await cleanupGhostOutputsByOrigin({
+        organizationId: params.organizationId,
+        originRuntime: lockedCurrent.materializationOrigin.originRuntime,
+        originRecordId: lockedCurrent.materializationOrigin.originRecordId,
+      }).catch((error) => {
+        logger.warn(`${LOG_PREFIX} Ghost artifact cleanup failed during retry`, {
+          runId: params.runId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
+    }
 
-  await emitRunAudit({
-    runId: params.runId,
-    organizationId: params.organizationId,
-    action: 'retry_requested',
-    actorUserId: params.actorUserId,
-    fromStatus: current.runStatus,
-    toStatus: 'retry_requested',
-    detail: { newExecutionRunId: handoff.executionRunId },
-  });
+    const handoff = await chatExecutionService.initiateHandoff({
+      conversationId: lockedCurrent.sourceContextId || lockedCurrent.runId,
+      contextSnapshotId: lockedCurrent.contextSnapshotId,
+      organizationId: params.organizationId,
+      userId: params.actorUserId,
+      goal: lockedCurrent.plan.titleHint,
+    });
 
-  return createArtifactRunRecord({
-    organizationId: params.organizationId,
-    executionRunId: handoff.executionRunId,
-    contextSnapshotId: current.contextSnapshotId,
-    requestedByUserId: params.actorUserId,
-    plan: current.plan,
-    retryOfRunId: current.runId,
-    sourceContextType: current.sourceContextType,
-    sourceContextId: current.sourceContextId,
+    await executionSpineService.transitionRunState(
+      handoff.executionRunId,
+      params.organizationId,
+      'planning',
+      params.actorUserId,
+      'ArtifactRun retry requested'
+    );
+
+    const child = await createArtifactRunRecord({
+      organizationId: params.organizationId,
+      executionRunId: handoff.executionRunId,
+      contextSnapshotId: lockedCurrent.contextSnapshotId,
+      requestedByUserId: params.actorUserId,
+      plan: lockedCurrent.plan,
+      retryOfRunId: lockedCurrent.runId,
+      sourceContextType: lockedCurrent.sourceContextType,
+      sourceContextId: lockedCurrent.sourceContextId,
+    });
+
+    await emitRunAudit({
+      runId: params.runId,
+      organizationId: params.organizationId,
+      action: 'retry_requested',
+      actorUserId: params.actorUserId,
+      fromStatus: lockedCurrent.runStatus,
+      toStatus: lockedCurrent.runStatus,
+      detail: { childRunId: child.runId, newExecutionRunId: handoff.executionRunId },
+    });
+
+    return child;
   });
 }
 
@@ -3812,6 +3926,27 @@ export async function materializeArtifactRun(
     if (!spineRun) {
       throw new Error(
         `Execution run ${current.executionRunId} not found for ArtifactRun ${validated.runId}`
+      );
+    }
+
+    const preflight = await computeArtifactRunPreflight({
+      run: current,
+      executionRunExists: true,
+      materializationParams: validated,
+    });
+    await persistArtifactRunPreflight({
+      runId: validated.runId,
+      organizationId: validated.organizationId,
+      actorUserId: validated.actorUserId,
+      preflight,
+    });
+    if (preflight.state !== 'passed') {
+      const unmetChecks = preflight.checks.filter((check) => check.status !== 'passed');
+      throw new AppError(
+        `ArtifactRun ${validated.runId} preflight blocked materialization`,
+        409,
+        'ARTIFACT_RUN_PREFLIGHT_BLOCKED',
+        { runId: validated.runId, preflightState: preflight.state, unmetChecks }
       );
     }
 
@@ -3950,107 +4085,10 @@ export async function materializeArtifactRun(
         resolvedArtifactId = link?.artifactId || null;
       }
     } else {
-      let tableId =
+      const tableId =
         typeof validated.config?.tableId === 'string' ? validated.config.tableId.trim() : '';
       const tableName =
         typeof validated.config?.tableName === 'string' ? validated.config.tableName.trim() : '';
-      const workspaceId =
-        typeof validated.config?.workspaceId === 'string' && validated.config.workspaceId.trim()
-          ? validated.config.workspaceId.trim()
-          : '';
-      const workspaceTarget = workspaceId || validated.organizationId;
-
-      // Hardening (P1): never trust incoming tableId blindly.
-      // If the provided table is missing or belongs to another organization,
-      // fall back to deterministic auto-create flow below.
-      if (tableId) {
-        const existingTable = await dbGet<{ table_id: string }>(
-          `SELECT t.id AS table_id
-             FROM tp_tables t
-             JOIN tp_bases b ON b.id = t.base_id
-            WHERE t.id = ? AND b.organization_id = ?
-            LIMIT 1`,
-          [tableId, validated.organizationId],
-          { fallback: true }
-        );
-        if (!existingTable?.table_id) {
-          logger.warn(
-            `${LOG_PREFIX} Ignoring invalid sheet tableId from materialize config; auto-create fallback will run`,
-            {
-              runId: validated.runId,
-              organizationId: validated.organizationId,
-              providedTableId: tableId,
-            }
-          );
-          tableId = '';
-        }
-      }
-
-      // Auto-create table when Excele pipeline doesn't provide one
-      if (!tableId) {
-        try {
-          const metadataService = (await import('../tablePlatform/MetadataService.js')).default;
-
-          // Find or create a base for this org/workspace sheet artifacts.
-          let baseId: string | null = null;
-          const workspaceScopedBase = await dbGet<{ id: string }>(
-            `SELECT id
-               FROM tp_bases
-              WHERE organization_id = ? AND workspace_id = ?
-              ORDER BY created_at DESC
-              LIMIT 1`,
-            [validated.organizationId, workspaceTarget],
-            { fallback: true }
-          );
-          if (workspaceScopedBase?.id) {
-            baseId = workspaceScopedBase.id;
-          } else {
-            const newBase = await metadataService.createBase(
-              workspaceTarget,
-              validated.organizationId,
-              'Excele Workspace',
-              validated.actorUserId
-            );
-            baseId = (newBase as any)?.id;
-          }
-
-          if (baseId) {
-            const newTable = await metadataService.createTable(
-              baseId,
-              tableName || validated.title || current.plan.titleHint || 'Generated Sheet',
-              `Auto-created by Table Studio pipeline for artifact run ${validated.runId}`,
-              validated.actorUserId
-            );
-            tableId = (newTable as any)?.id || '';
-          }
-        } catch (tableCreateErr) {
-          logger.warn(
-            '[ArtifactRegistry] Auto-create table failed, falling back to error:',
-            tableCreateErr
-          );
-        }
-
-        if (!tableId) {
-          throw new Error(
-            `ArtifactRun ${validated.runId} requires config.tableId for sheet materialization (auto-create also failed)`
-          );
-        }
-      }
-
-      const tableSeed = buildStarterTableSeed({
-        goal:
-          typeof validated.config?.goal === 'string'
-            ? validated.config.goal
-            : current.plan.titleHint,
-        title: tableName || validated.title || current.plan.titleHint,
-        explicitColumns: validated.config?.columns,
-        explicitRows: validated.config?.rows,
-      });
-      await ensureStarterTableData({
-        tableId,
-        seed: tableSeed,
-        actorUserId: validated.actorUserId,
-      });
       await assertMaterializedTableReady({
         tableId,
         organizationId: validated.organizationId,
@@ -4149,6 +4187,9 @@ export async function materializeArtifactRun(
     }
     return completed;
   } catch (error) {
+    const operationalError = error instanceof AppError ? error : null;
+    const failureStage: ArtifactRunFailurePackage['stage'] =
+      operationalError?.code === 'ARTIFACT_RUN_PREFLIGHT_BLOCKED' ? 'preflight' : 'materialize';
     const failureReason =
       error instanceof Error ? error.message : 'ArtifactRun materialization failed';
     const now = new Date().toISOString();
@@ -4171,7 +4212,7 @@ export async function materializeArtifactRun(
     }
 
     const failurePackage: ArtifactRunFailurePackage = {
-      stage: 'materialize',
+      stage: failureStage,
       message: failureReason,
       occurredAt: now,
       ghostArtifactsCleanedUp,
@@ -4224,18 +4265,19 @@ export async function materializeArtifactRun(
       actorUserId: validated.actorUserId,
       fromStatus: current.runStatus,
       toStatus: 'failed',
-      detail: { failureReason, stage: 'materialize', ghostArtifactsCleanedUp },
+      detail: { failureReason, stage: failureStage, ghostArtifactsCleanedUp },
     });
 
     // Surface a controlled operational error to the API layer so the UI
     // gets a meaningful materialization message instead of a generic 500.
-    throw new AppError(failureReason, 409, 'ARTIFACT_MATERIALIZE_FAILED', {
+    throw new AppError(failureReason, operationalError?.statusCode || 409, operationalError?.code || 'ARTIFACT_MATERIALIZE_FAILED', {
       runId: validated.runId,
       outputType: current.plan.outputType,
       executionRunId: current.executionRunId,
-      stage: 'materialize',
+      stage: failureStage,
       ghostArtifactsCleanedUp,
       cleanupNotes,
+      ...(operationalError?.details || {}),
     });
   }
 }

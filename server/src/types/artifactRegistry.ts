@@ -301,6 +301,7 @@ export const ArtifactRecordSchema = z.object({
   sourceInitiativeId: z.string().nullable(),
   aiGovernancePresetRef: z.string().nullable(),
   originSummary: z.record(z.string(), z.unknown()).nullable(),
+  isDraft: z.boolean().optional().default(false),
   createdBy: z.string().min(1),
   createdAt: z.string().min(1),
   lastTransitionAt: z.string().min(1),

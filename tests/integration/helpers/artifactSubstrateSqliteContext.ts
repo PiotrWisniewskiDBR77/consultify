@@ -18,6 +18,29 @@ export async function applyArtifactSubstrateDdl(db: sqlite3.Database): Promise<v
       user_id TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS tp_bases (
+      id TEXT PRIMARY KEY,
+      workspace_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS tp_tables (
+      id TEXT PRIMARY KEY,
+      base_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS tp_fields (
+      id TEXT PRIMARY KEY,
+      table_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      field_type TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS report_builder_reports (
       id TEXT PRIMARY KEY,
       organization_id TEXT NOT NULL,
@@ -248,4 +271,36 @@ export async function clearArtifactSubstrateTables(db: sqlite3.Database): Promis
   await run('DELETE FROM report_builder_reports');
   await run('DELETE FROM project_members');
   await run('DELETE FROM projects');
+  await run('DELETE FROM tp_fields');
+  await run('DELETE FROM tp_tables');
+  await run('DELETE FROM tp_bases');
+}
+
+export async function seedGovernedTable(
+  db: sqlite3.Database,
+  params: { tableId: string; organizationId: string; workspaceId?: string; tableName?: string },
+): Promise<void> {
+  const run = promisify(db.run.bind(db));
+  const baseId = `base-${params.tableId}`;
+  await run(
+    `INSERT INTO tp_bases (id, workspace_id, organization_id, name) VALUES (?, ?, ?, ?)`,
+    [baseId, params.workspaceId || params.organizationId, params.organizationId, 'Governed base'],
+  );
+  await run(`INSERT INTO tp_tables (id, base_id, name) VALUES (?, ?, ?)`, [
+    params.tableId,
+    baseId,
+    params.tableName || 'Governed table',
+  ]);
+  await run(`INSERT INTO tp_fields (id, table_id, name, field_type) VALUES (?, ?, ?, ?)`, [
+    `field-name-${params.tableId}`,
+    params.tableId,
+    'Name',
+    'singleLineText',
+  ]);
+  await run(`INSERT INTO tp_fields (id, table_id, name, field_type) VALUES (?, ?, ?, ?)`, [
+    `field-status-${params.tableId}`,
+    params.tableId,
+    'Status',
+    'singleSelect',
+  ]);
 }
