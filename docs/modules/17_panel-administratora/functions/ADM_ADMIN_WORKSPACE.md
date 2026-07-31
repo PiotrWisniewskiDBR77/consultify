@@ -7,10 +7,19 @@ status: active
 owner: user
 owner_business: user
 owner_tech: user
-last_updated: 2026-05-11
+last_updated: 2026-07-31
 ---
 
 # Function Contract — Admin Workspace
+
+> Rozwinięty, aktualny kontrakt funkcjonalny i remanent znajdują się w pakiecie weekendowym:
+> - `docs/program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/ADMIN_PANEL_COMPLETE_PRODUCT_CONTRACT.md`
+> - `docs/program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/ADMIN_PANEL_ROLES_TEAMS_PROJECTS_AND_WORKFLOWS.md`
+> - `docs/program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/ADMIN_PANEL_AI_TERESA_CONNECTIONS_AND_POLICY_ENGINE.md`
+> - `docs/program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/ADMIN_PANEL_SECURITY_DATA_BILLING_AUDIT_AND_SUPERADMIN_BOUNDARY.md`
+> - `docs/program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/ADMIN_PANEL_MARKET_BENCHMARK_AS_IS_GAPS_AND_GOLDEN_FLOWS.md`
+>
+> W razie konfliktu te dokumenty są źródłem prawdy dla TO-BE i odbioru, a zamontowany runtime jest źródłem prawdy dla AS-IS.
 
 ## 1. Function Identity
 - Function ID: `ADM_ADMIN_WORKSPACE`

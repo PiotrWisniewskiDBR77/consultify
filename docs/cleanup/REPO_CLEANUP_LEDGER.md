@@ -57,6 +57,26 @@ These areas were intentionally not moved or deleted:
 - local benchmark corpora under `Softs/` (now in .gitignore + .railwayignore + .dockerignore)
 - noisy sample and knowledge duplicates under `data/` that need provenance review
 
+## Third-Pass Information Architecture (2026-07-30)
+
+| Obszar | Działanie | Wynik |
+| --- | --- | --- |
+| `docs/ssot/` | zbudowano kompletny punkt wejścia: produkt, repo, architektura, dane/security/ops, jakość i kompletność | completed |
+| menu funkcjonalne | zarejestrowano kontrakty dla 16/16 pozycji | completed |
+| `docs/README.md`, root `README.md` | usunięto bezwarunkowe deklaracje gotowości i metryk bez świeżego dowodu | completed |
+| kontrola SSOT | rozszerzono o wymagany komplet plików | completed |
+| lokalne sekrety | sprawdzono tracking nazw `.env`, credentials i secrets | brak śledzonych lokalnych env/credentials |
+| `out/`, `tmp/`, `uploads/` | wykryto historycznie śledzone artefakty | deferred; wymaga osobnej migracji Git |
+| root reports | trzy unikalne raporty przeniesiono do `docs/testing/reports/`; generator audytu zaktualizowano | completed |
+| `knowledge/` | duży korpus źródeł, w tym pliki binarne | deferred; wymaga provenance/licensing review |
+
+### Safety decision
+
+W trzecim przebiegu nie wykonywano masowych przenosin ani usuwania plików
+śledzonych. Repo zawiera roczną historię i artefakty, których unikalności nie
+można bezpiecznie rozstrzygnąć po nazwie. Następna redukcja rozmiaru powinna
+mieć osobny backup, manifest hashy, owner decision i plan odtworzenia.
+
 ## Decision Notes
 
 - `docs/` remains the canonical home for tracked long-term documentation.

@@ -12,6 +12,8 @@ last_updated: 2026-05-10
 
 # Function Contract — Tasks / Zadania
 
+> Kompletny kontrakt implementacyjny: [`TASKS_COMPLETE_PRODUCT_CONTRACT.md`](../../../program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/TASKS_COMPLETE_PRODUCT_CONTRACT.md). Wspólny system z Decisions: [`MY_WORK_TASKS_AND_DECISIONS_OPERATING_SYSTEM.md`](../../../program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/MY_WORK_TASKS_AND_DECISIONS_OPERATING_SYSTEM.md).
+
 ## 1. Function Identity
 
 - Function ID: `MW_TASKS`

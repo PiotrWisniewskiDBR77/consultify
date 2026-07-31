@@ -3,7 +3,7 @@
 > ⚠️ **AUTORYTET PRZENIESIONY → [CANON.md](CANON.md)** (od 2026-06-14, v3.0).
 > Ten plik pozostaje jako **pomocniczy indeks nawigacyjny**. Jedynym dokumentem, który *ogłasza* standard i rozstrzyga konflikty, jest `CANON.md` (§2 Hierarchia prawdy).
 
-> **Indeks wytycznych UI/UX i specyfikacji komponentów.**  
+> **Indeks wytycznych UI/UX i specyfikacji komponentów.**
 > **Data konsolidacji:** 2026-05-01 (v2.1 — "DBR77 Tech Sexy 2027" Edition)
 >
 > **v2.1 Changelog:** Golden Standard jako najwyższy SSOT, DBR77 Tech Sexy 2027, Menu 2/3 bez improwizacji, segmented view controls, primary CTA bez plusa, AI actions po prawej stronie Menu 3.
@@ -67,6 +67,9 @@ docs/ui-standards/
 | **Artifact shell future**            | [artifact-shell-future-standard.md](01-shell-layout/artifact-shell-future-standard.md)                                       | Future/next-iteration shell N/C; pomocniczy względem Golden Standard i artifact-shell                                                        |
 | **Współdzielone sekcje**             | [02-components/shared-sections.md](02-components/shared-sections.md)                                         | CommentsCanvas, ActivityLog, Risk, Governance                                                                                                |
 | **Building blocks**                  | [02-components/building-blocks.md](02-components/building-blocks.md)                                         | Callout, ToggleBlock, EmptyState, Checklist, InlineTable, EmbeddedView                                                                       |
+| **Component registry**               | [02-components/COMPONENT_CATALOG_AND_OWNERSHIP_REGISTRY.md](02-components/COMPONENT_CATALOG_AND_OWNERSHIP_REGISTRY.md) | Rejestr rodzin komponentów, odpowiedzialności, implementacji i statusów konsolidacji                                                         |
+| **Component documentation card**     | [02-components/COMPONENT_DOCUMENTATION_CARD_STANDARD.md](02-components/COMPONENT_DOCUMENTATION_CARD_STANDARD.md) | Obowiązkowy standard kompletnego opisu pojedynczej rodziny komponentów                                                                       |
+| **Component UI/UX audit**            | [02-components/COMPONENT_UI_UX_AUDIT_AND_ACCEPTANCE_MATRIX.md](02-components/COMPONENT_UI_UX_AUDIT_AND_ACCEPTANCE_MATRIX.md) | Macierz kontroli, bramki GO/FIX/NO-GO i kolejność audytu                                                                                      |
 | **AI suggestions modal**             | [02-components/ai-suggestions-modal.md](02-components/ai-suggestions-modal.md)                               | Standard modala do przeglądu i zastosowania sugestii AI                                                                                      |
 | **Help + Intro**                     | [02-components/help-intro-standard.md](02-components/help-intro-standard.md)                                 | Delikatny standard intro, contextual help i wejść do AI                                                                                      |
 | **Help Panel + Intro Spec**          | [02-components/help-sidepanel-intro-spec.md](02-components/help-sidepanel-intro-spec.md)                     | Spec ekranów, sekcji, stanów i zachowań dla helpa i intro                                                                                    |

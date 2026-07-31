@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 1,
+  "entrypoint": "docs/SOURCE_OF_TRUTH.md",
+  "updated": "2026-07-30",
+  "truthTypes": [
+    "runtime-current",
+    "product-target",
+    "ui-standard",
+    "data-contract",
+    "operations",
+    "security-compliance",
+    "strategy",
+    "delivery-status",
+    "evidence-history"
+  ],
+  "statuses": [
+    "canonical",
+    "supporting",
+    "working",
+    "evidence",
+    "historical",
+    "superseded",
+    "disputed"
+  ],
+  "authorities": [
+    {
+      "id": "ssot-index",
+      "truthType": "product-target",
+      "status": "canonical",
+      "path": "docs/ssot/README.md",
+      "scope": "Kompletny punkt wejścia do wiedzy o aplikacji"
+    },
+    {
+      "id": "application-profile",
+      "truthType": "product-target",
+      "status": "canonical",
+      "path": "docs/ssot/APPLICATION.md",
+      "scope": "Karta aplikacji, użytkownicy, menu, model działania i stan produktu"
+    },
+    {
+      "id": "repository-structure",
+      "truthType": "runtime-current",
+      "status": "canonical",
+      "path": "docs/ssot/REPOSITORY_STRUCTURE.md",
+      "scope": "Przeznaczenie katalogów repozytorium i zasady umieszczania nowych artefaktów"
+    },
+    {
+      "id": "technical-truth-map",
+      "truthType": "runtime-current",
+      "status": "canonical",
+      "path": "docs/ssot/TECHNICAL_ARCHITECTURE.md",
+      "scope": "Stabilne punkty wykonawcze architektury frontendu, backendu, danych, AI i integracji"
+    },
+    {
+      "id": "data-security-operations-map",
+      "truthType": "operations",
+      "status": "canonical",
+      "path": "docs/ssot/DATA_SECURITY_OPERATIONS.md",
+      "scope": "Nadrzędna mapa danych, tenancy, bezpieczeństwa, środowisk, backupu i retencji"
+    },
+    {
+      "id": "quality-delivery-map",
+      "truthType": "delivery-status",
+      "status": "canonical",
+      "path": "docs/ssot/QUALITY_AND_DELIVERY.md",
+      "scope": "Poziomy dowodu, bramki jakości, evidence i release"
+    },
+    {
+      "id": "documentation-completeness",
+      "truthType": "delivery-status",
+      "status": "canonical",
+      "path": "docs/ssot/COMPLETENESS_MATRIX.md",
+      "scope": "Macierz kompletności całej wiedzy i lista brakujących źródeł wykonawczych"
+    },
+    {
+      "id": "weekend-completion-control-center",
+      "truthType": "delivery-status",
+      "status": "canonical",
+      "path": "docs/program/WEEKEND_COMPLETION_2026-08-01/README.md",
+      "scope": "Aktywny proces odbioru i dokończenia aplikacji 1–2 sierpnia 2026"
+    },
+    {
+      "id": "product-registry",
+      "truthType": "product-target",
+      "status": "canonical",
+      "path": "docs/product/DOCUMENTATION_REGISTRY.md",
+      "scope": "Nadrzędny rejestr zachowania produktu i pakietów produktowych"
+    },
+    {
+      "id": "program-index",
+      "truthType": "product-target",
+      "status": "canonical",
+      "path": "docs/program/README.md",
+      "scope": "Punkt wejścia do dokumentacji całego programu Consultinity"
+    },
+    {
+      "id": "program-operating-model",
+      "truthType": "product-target",
+      "status": "canonical",
+      "path": "docs/program/OPERATING_MODEL.md",
+      "scope": "Model operacyjny 16 pozycji menu i własność obiektów"
+    },
+    {
+      "id": "module-catalog",
+      "truthType": "product-target",
+      "status": "canonical",
+      "path": "docs/modules/README.md",
+      "scope": "Katalog kontraktów modułów w kolejności aplikacji"
+    },
+    {
+      "id": "complete-documentation-standard",
+      "truthType": "product-target",
+      "status": "canonical",
+      "path": "docs/ssot/COMPLETE_DOCUMENTATION_STANDARD.md",
+      "scope": "Struktura, szablon i bramka kompletności dokumentacji programu"
+    },
+    {
+      "id": "ui-standards",
+      "truthType": "ui-standard",
+      "status": "canonical",
+      "path": "docs/ui-standards/README.md",
+      "scope": "Indeks standardów UI/UX"
+    },
+    {
+      "id": "ui-list-canon",
+      "truthType": "ui-standard",
+      "status": "canonical",
+      "path": "docs/ui-standards/TRIADA_KANON.md",
+      "scope": "Ekrany listowe, menu, tabela i preview"
+    },
+    {
+      "id": "architecture-map",
+      "truthType": "runtime-current",
+      "status": "supporting",
+      "path": "docs/architecture/ARCHITECTURE_MAP.md",
+      "scope": "Nawigacyjna mapa architektury; stan potwierdza kod"
+    },
+    {
+      "id": "database-index",
+      "truthType": "data-contract",
+      "status": "canonical",
+      "path": "docs/database/README.md",
+      "scope": "Punkt wejścia do dokumentacji danych i bazy"
+    },
+    {
+      "id": "operations-model",
+      "truthType": "operations",
+      "status": "canonical",
+      "path": "docs/operations/STAGING_PRODUCTION_OPERATING_MODEL.md",
+      "scope": "Model środowisk, gałęzi i promocji"
+    },
+    {
+      "id": "security-compliance",
+      "truthType": "security-compliance",
+      "status": "canonical",
+      "path": "docs/security-compliance/COMPLIANCE_MATRIX.md",
+      "scope": "Punkt wejścia do statusu zgodności"
+    },
+    {
+      "id": "strategy-index",
+      "truthType": "strategy",
+      "status": "canonical",
+      "path": "docs/strategy/README.md",
+      "scope": "Kanoniczny indeks strategii"
+    },
+    {
+      "id": "plans-index",
+      "truthType": "evidence-history",
+      "status": "supporting",
+      "path": "docs/plans/README.md",
+      "scope": "Plany robocze i historyczne; nie są automatycznie prawem produktu"
+    },
+    {
+      "id": "cleanup-governance",
+      "truthType": "operations",
+      "status": "canonical",
+      "path": "docs/cleanup/README.md",
+      "scope": "Klasyfikacja i higiena drzew dokumentacyjnych"
+    },
+    {
+      "id": "harvard-program",
+      "truthType": "delivery-status",
+      "status": "supporting",
+      "path": "Harvard/wdrozenie-100/README.md",
+      "scope": "Program Harvard/Vegas/Oxford i jego dokumenty robocze"
+    },
+    {
+      "id": "historical-implementations",
+      "truthType": "evidence-history",
+      "status": "historical",
+      "path": "wdrozenia/README.md",
+      "scope": "Historyczny zapis wdrożeń"
+    }
+  ],
+  "functionalMenu": {
+    "index": "docs/FUNCTIONAL_DOCUMENTATION.md",
+    "runtimeSources": [
+      "src/components/navigation/Sidebar/menuConfig.ts",
+      "src/components/navigation/Sidebar/SidebarFooter.tsx"
+    ],
+    "items": [
+      {"id":"chat","order":1,"label":"Chat","runtimeId":"AI_CHAT","status":"active","sources":["docs/modules/01_czat/09_AS_IS.md","docs/modules/01_czat/10_TO_BE.md","docs/modules/01_czat/11_GAPS_AND_ROADMAP.md","docs/modules/01_czat/12_TESTS_AND_EVIDENCE.md"]},
+      {"id":"my-work","order":2,"label":"My Work","runtimeId":"MY_WORK","status":"active","sources":["docs/modules/02_moja-praca/CURRENT_CONTRACT.md"]},
+      {"id":"interview","order":3,"label":"Interview","runtimeId":"INTERVIEW","status":"active","sources":["docs/modules/03_wywiad/CURRENT_CONTRACT.md"]},
+      {"id":"tools","order":4,"label":"Tools","runtimeId":"TOOLS","status":"active","sources":["docs/modules/04_narzedzia/CURRENT_CONTRACT.md"]},
+      {"id":"assessment","order":5,"label":"Assessment","runtimeId":"TOOLS_ASSESSMENT","status":"active","documentationStatus":"working-contract","sources":["docs/functional/05_assessment/README.md","docs/product/ASSESSMENT_CONCEPT_V4_2026-06-28.md","docs/product/ASSESSMENT_WORKBENCH_STANDARD_V3.md"]},
+      {"id":"initiatives","order":6,"label":"Initiatives","runtimeId":"MODULE_INITIATIVES","status":"active","sources":["docs/modules/05_inicjatywy/CURRENT_CONTRACT.md"]},
+      {"id":"execution","order":7,"label":"Execution","runtimeId":"MODULE_EXECUTION","status":"active","sources":["docs/modules/06_realizacja/CURRENT_CONTRACT.md"]},
+      {"id":"results","order":8,"label":"Results","runtimeId":"MODULE_BENEFITS","status":"beta","sources":["docs/modules/07_rezultaty/CURRENT_CONTRACT.md"]},
+      {"id":"finance","order":9,"label":"Finance","runtimeId":"MODULE_ECONOMICS","status":"beta","sources":["docs/modules/08_finanse/CURRENT_CONTRACT.md"]},
+      {"id":"materials","order":10,"label":"Materials","runtimeId":"MODULE_PRESENTATIONS","status":"beta","documentationStatus":"working-contract","sources":["docs/functional/10_materials/README.md","docs/product/MATERIALS_MODULE_MASTER_SPEC.md","docs/modules/09_outputs/SSOT.md","docs/modules/10_dokumenty/SSOT.md","docs/modules/11_tabele/SSOT.md","docs/modules/12_prezentacje/SSOT.md"]},
+      {"id":"audits","order":11,"label":"Audits","runtimeId":"MODULE_AUDITS","status":"beta","documentationStatus":"working-contract","sources":["docs/functional/11_audits/README.md","Harvard/modules/M12-audyty/KARTA_AUDYTU.md"]},
+      {"id":"meeting","order":12,"label":"Meeting","runtimeId":"MODULE_MEETING","status":"soon","sources":["docs/modules/13_meeting/CURRENT_CONTRACT.md"]},
+      {"id":"organization","order":13,"label":"Organization","runtimeId":"ORGANIZATION","status":"access-controlled","sources":["docs/modules/16_organizacja/CURRENT_CONTRACT.md"]},
+      {"id":"admin","order":14,"label":"Admin Panel","runtimeId":"ADMIN","status":"access-controlled","sources":["docs/modules/17_panel-administratora/CURRENT_CONTRACT.md"]},
+      {"id":"settings","order":15,"label":"Settings","runtimeId":"SETTINGS","status":"active","sources":["docs/modules/18_ustawienia/CURRENT_CONTRACT.md"]},
+      {"id":"partner-portal","order":16,"label":"Partner Portal","runtimeId":"PARTNER_PORTAL","status":"access-controlled","sources":["docs/modules/19_portal-partnerski/CURRENT_CONTRACT.md"]}
+    ]
+  },
+  "nestedSubsystems": [
+    {"id":"outputs","parent":"materials","path":"docs/modules/09_outputs/SSOT.md"},
+    {"id":"documents","parent":"materials","path":"docs/modules/10_dokumenty/SSOT.md"},
+    {"id":"tables","parent":"materials","path":"docs/modules/11_tabele/SSOT.md"},
+    {"id":"presentations","parent":"materials","path":"docs/modules/12_prezentacje/SSOT.md"},
+    {"id":"mcp-iris","parent":"technical-history","path":"docs/modules/14_mcp-iris/SSOT.md"},
+    {"id":"mcp-marketplace","parent":"technical-history","path":"docs/modules/15_mcp-marketplace/SSOT.md"}
+  ]
+}

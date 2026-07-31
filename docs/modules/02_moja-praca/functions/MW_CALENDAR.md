@@ -12,6 +12,9 @@ last_updated: 2026-05-10
 
 # Function Contract — Calendar / Kalendarz
 
+> Szczegółowy aktualny kontrakt produktu, synchronizacji, UX i MVP znajduje się w
+> `docs/program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/MY_WORK_CALENDAR_REVIEW.md`.
+
 ## 1. Function Identity
 
 - Function ID: `MW_CALENDAR`

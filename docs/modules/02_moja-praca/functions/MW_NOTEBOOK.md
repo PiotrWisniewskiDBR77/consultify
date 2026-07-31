@@ -1,7 +1,7 @@
 ---
 module_id: MODULE_MY_WORK
 function_id: MW_NOTEBOOK
-function_name: Folder / Notatki
+function_name: Notes / Notatki
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
@@ -10,20 +10,20 @@ owner_tech: user
 last_updated: 2026-05-10
 ---
 
-# Function Contract — Folder / Notatki
+# Function Contract — Notes / Notatki
 
 ## 1. Function Identity
 
 - Function ID: `MW_NOTEBOOK`
 - Module: `02_moja-praca`
-- UI labels/aliases: `Notatki`, `Folder`, `Notebook` (legacy alias)
+- UI labels/aliases: `Notatki` / `Notes`; hierarchy: `Notatnik` -> `Strona` -> `Bloki`; `Folder` is a deprecated legacy alias.
 - Route/AppView scope: `AppView.MY_WORK`, `"/my-work/notebook"`
 - Feature state: `real`
 - Scope anchor posture: `MW_NOTEBOOK` is a function in My Work, never a standalone module.
 
 ## 2. User Job and Business Outcome
 
-- User job: open `Notatki`, manage folder list, then work inside a selected folder that contains many note cards.
+- User job: open `Notatki`, manage the notebook library, then capture, develop, verify and hand off knowledge from pages inside a selected notebook.
 - Business outcome: preserve operational thinking without losing provenance, and convert only approved notes into actionable handoff.
 - Non-goals:
   - Notebook is not canonical owner of initiatives/tasks/execution objects.

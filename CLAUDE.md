@@ -3,6 +3,15 @@
 Consultify to AI-native system realizacji doradztwa (nie generyczny SaaS-dashboard).
 Właściciel: Piotr (product/strategy, nie-koder, komunikacja PO POLSKU, krótko, obrazkami).
 
+## ŹRÓDŁA PRAWDY — PUNKT WEJŚCIA
+Przed pracą wymaganiową lub implementacją zacznij od `docs/SOURCE_OF_TRUTH.md`.
+Mapa rozdziela prawdę runtime, produkt docelowy, UI, dane, operacje, strategię,
+status realizacji i historię. Sam napis `FINAL`, `MASTER`, `KANON` lub `SSOT`
+w nazwie starszego pliku nie daje mu pierwszeństwa.
+Dokumentację funkcjonalną buduj w kolejności menu z
+`docs/FUNCTIONAL_DOCUMENTATION.md`; podsystem techniczny nie staje się przez
+to osobnym modułem głównego menu.
+
 ## UI — PRAWO NADRZĘDNE
 1. **Standard jest KODEM, nie opisem**: ekrany listowe budujemy WYŁĄCZNIE komponentami
    `src/components/standard/` (StandardModuleBar · StandardTable · StandardPreview).

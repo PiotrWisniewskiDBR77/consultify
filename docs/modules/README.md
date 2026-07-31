@@ -1,6 +1,14 @@
 # Modules (catalog) — start here
 
-Cel tego katalogu: trzymać **jeden, spójny punkt odniesienia** dla wszystkich modułów (dla ludzi i agentów), w kolejności jak w sidebarze aplikacji.
+> Nadrzędna mapa rodzajów prawdy: `docs/SOURCE_OF_TRUTH.md`. Funkcjonalna
+> kolejność aplikacji: `docs/FUNCTIONAL_DOCUMENTATION.md`. Ten katalog
+> przechowuje kontrakty, również zagnieżdżonych podsystemów, ale nie definiuje
+> samodzielnie głównego menu.
+
+Cel tego katalogu: trzymać **jeden, spójny punkt odniesienia** dla modułów i
+podsystemów (dla ludzi i agentów). Numeracja historyczna tego katalogu nie jest
+już interpretowana jako kolejność sidebara; obowiązującą kolejność 1–16
+definiuje `docs/FUNCTIONAL_DOCUMENTATION.md`.
 
 Ten katalog jest **kuratorską nakładką** na istniejące SSOT w `DRD/consultify/docs/` (np. routing w `docs/modules/`). Nie przenosimy teraz istniejących dokumentów — zamiast tego linkujemy do nich z poziomu folderu danego modułu.
 
@@ -21,34 +29,26 @@ Ten katalog jest **kuratorską nakładką** na istniejące SSOT w `DRD/consultif
 
 ### Która warstwa jest kanoniczna?
 
-- **Jedynym kanonicznym źródłem prawdy o zachowaniu modułu jest warstwa kontraktowa** (`00-07`).
-- Pliki nawigacyjne są indeksami i nie powinny duplikować treści kontraktu (tylko streszczenie + linki).
+- Kanonicznym punktem wejścia jest kontrakt wskazany w
+  `docs/FUNCTIONAL_DOCUMENTATION.md`.
+- Pliki `00-07` pozostają szczegółową warstwą wspierającą, dopóki nie zostaną
+  uzgodnione z bieżącym kontraktem pozycji menu.
+- Pliki nawigacyjne są indeksami i nie powinny konkurować z bieżącym
+  kontraktem.
 
-## Lista modułów (sidebar order)
+## Bieżąca struktura menu
 
-> Uwaga: **`Tabele Studio` jest obecnie duplikatem** `Tabele` w nawigacji — w katalogu modułów **pomijamy** `Tabele Studio` i traktujemy to jako ten sam moduł.
->
-> `Wyloguj się` nie jest modułem (akcja systemowa) — nie tworzymy dla niego folderu.
+Aktualna lista 16 pozycji oraz ich kanoniczne punkty wejścia znajduje się w
+`docs/FUNCTIONAL_DOCUMENTATION.md`. Historyczna numeracja 19 katalogów nie jest
+już interpretowana jako kolejność sidebara.
 
-1. `01_czat` — Czat
-2. `02_moja-praca` — Moja Praca
-3. `03_wywiad` — Wywiad
-4. `04_narzedzia` — Narzędzia
-5. `05_inicjatywy` — Inicjatywy
-6. `06_realizacja` — Realizacja
-7. `07_rezultaty` — Rezultaty
-8. `08_finanse` — Finanse
-9. `09_outputs` — Outputs
-10. `10_dokumenty` — Dokumenty (wkrótce)
-11. `11_tabele` — Tabele (wkrótce)
-12. `12_prezentacje` — Prezentacje (wkrótce)
-13. `13_meeting` — Meeting (wkrótce)
-14. `14_mcp-iris` — MCP IRIS (wkrótce)
-15. `15_mcp-marketplace` — MCP Marketplace (wkrótce)
-16. `16_organizacja` — Organizacja
-17. `17_panel-administratora` — Panel Administratora
-18. `18_ustawienia` — Ustawienia
-19. `19_portal-partnerski` — Portal Partnerski
+- `01_czat`–`08_finanse`, `13_meeting`, `16_organizacja`–`19_portal-partnerski`
+  zawierają kontrakty pozycji menu;
+- `09_outputs`, `10_dokumenty`, `11_tabele`, `12_prezentacje` są podsystemami
+  pozycji `Materials`;
+- `14_mcp-iris` i `15_mcp-marketplace` są dokumentacją techniczną/historyczną,
+  a nie pozycjami menu;
+- Assessment i Audits mają kontrakty konsolidujące w `docs/functional/`.
 
 ## SSOT (global) dla modułów
 

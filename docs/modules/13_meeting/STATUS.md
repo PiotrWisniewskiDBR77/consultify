@@ -1,19 +1,21 @@
 ---
 module_id: MODULE_MEETING
 doc_kind: STATUS
-version: 1.0
+version: 1.1
 owner: user
 status: canonical
-last_updated: 2026-05-09
+last_updated: 2026-07-30
 ---
 
 # Status — Meeting
 
 ## Shipping Status (As-Is)
 
-- Runtime class: `soon + code_gap`
-- Launch path is wired in sidebar + route config, then rendered through `AppRoutes`.
-- Current ownership decision: As-Is route and menu are active; current runtime is placeholder.
+- Runtime class: `real + partial + badge_mismatch`
+- `/meeting` mounts `MeetingHub`; Gateway mounts `/api/meeting` behind `betaGate`.
+- The sidebar still presents the module as `soon`, which is no longer an
+  accurate description of code availability.
+- Runtime requires business acceptance and full handoff/consent verification.
 
 ## Current Risks
 
