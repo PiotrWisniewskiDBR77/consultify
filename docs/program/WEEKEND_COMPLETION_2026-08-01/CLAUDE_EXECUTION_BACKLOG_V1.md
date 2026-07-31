@@ -54,7 +54,7 @@ Jedna paczka ma jednego ownera zapisu, ograniczony zestaw plików, jeden weryfik
 | `INI-001` | jeden status model i Initiative List | filters are projections of one registry |
 | `INI-002` | candidate dedupe/merge/completeness | duplicate fixtures and merge lineage |
 | `INI-003` | roles, team and simple approval profile | positive/negative capability matrix |
-| `EXE-001` | jeden canonical Execution entry/List | route and UI Gate 0 |
+| `EXE-001` | jeden canonical Execution entry/List | **ACCEPTED**: `/execution` owner + preserved aliases + internal handoffs |
 | `EXE-002` | management spine plan/task/risk/change | update + audit + read-back |
 | `FLOW-001` | Initiative → Execution → KPI → Finance actual | full identifier lineage and reopen |
 

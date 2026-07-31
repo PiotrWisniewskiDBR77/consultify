@@ -182,7 +182,7 @@ describe('Critical Navigation Paths', () => {
       name: 'Assessment',
     },
     { view: AppView.PORTFOLIO_ROADMAP, expectedRoute: '/portfolio', name: 'Portfolio/Initiatives' },
-    { view: AppView.IMPLEMENTATION, expectedRoute: '/implementation', name: 'Implementation' },
+    { view: AppView.IMPLEMENTATION, expectedRoute: '/execution', name: 'Execution' },
     { view: AppView.BENEFITS_REALIZATION, expectedRoute: '/results', name: 'Results' },
     { view: AppView.SETTINGS_PROFILE_MODULE, expectedRoute: '/settings/profile', name: 'Settings' },
     { view: AppView.ECONOMICS, expectedRoute: '/finance', name: 'Finance' },

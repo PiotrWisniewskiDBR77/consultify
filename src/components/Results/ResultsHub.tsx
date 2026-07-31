@@ -883,7 +883,7 @@ export const ResultsHub: React.FC = () => {
     query.set('mode', 'doc');
     query.set('tab', 'list');
     query.set('view', 'table');
-    navigate(`${ROUTES.IMPLEMENTATION}?${query.toString()}`);
+    navigate(`${ROUTES.EXECUTION}?${query.toString()}`);
   }, [navigate, scopedInitiativeId]);
 
   const openInitiativeDocument = useCallback(

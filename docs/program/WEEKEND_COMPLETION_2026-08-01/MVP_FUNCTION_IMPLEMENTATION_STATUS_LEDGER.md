@@ -35,10 +35,10 @@ last_reviewed: 2026-07-31
 | OKR definition quality gate | `BRAK gate/CZĘŚCIOWA CRUD` | Objective/KR CRUD działa; brak enforcement owner/source/cadence/baseline/target i mierzalności | `RES-002` |
 | threshold → Deviation → Recovery | `CZĘŚCIOWA+` | threshold→Deviation Case→notification→RCA/actions/resolve działa; Recovery owner object, Task handoff i clock escalation brak lub niepodłączone | `RES-003` |
 | KPI visibility/roll-up | `CZĘŚCIOWA/BRAK visibility` | org scope działa; brak polityki visibility, a roll-up istnieje w dwóch modelach scorecardów | `RES-004` |
-| Execution List | `CZĘŚCIOWA` | kilka shelli i widoków, brak wyboru jednego kanonu | `EXE-001` |
-| plan/tasks/milestones/roles | `CZĘŚCIOWA` | funkcje istnieją w wielu komponentach | `EXE-002` |
-| risks/issues/change/decisions | `CZĘŚCIOWA` | lokalne moduły bez jednego management spine | `EXE-003` |
-| closure → Results/Finance | `CZĘŚCIOWA/BRAK E2E` | execution spine istnieje, pełny round-trip nieudowodniony | `FLOW-001` |
+| Execution List | `CZĘŚCIOWA+` | `EXE-001`: `/execution` jedyny owner, legacy aliases redirect-only; Hub domyślnie otwiera realną List/table aktywnych inicjatyw | `EXE-002` |
+| plan/tasks/milestones/roles/resources | `CZĘŚCIOWA+` | realne CRUD/RACI/budget/capacity istnieją, ale są rozproszone i nie mają jednego plan→task→role→actual read-back | `EXE-002` |
+| risks/issues/change/decisions | `CZĘŚCIOWA` | realne RAID/mitigation/decisions/rollout changes istnieją w kilku modelach bez jednego management spine | `EXE-003` |
+| closure → Results/Finance | `CZĘŚCIOWA/BRAK E2E` | DONE uruchamia idempotentny, ale fire-and-forget Results handoff; brak transakcyjnego receipt i closure→Results→Finance actual round-trip | `FLOW-001` |
 | Initiative List all statuses | `CZĘŚCIOWA` | Hub istnieje, statusy/źródła wymagają kanonizacji | `INI-001` |
 | Candidates dedupe/merge/AI | `CZĘŚCIOWA` | fragmenty analiz i generatorów istnieją | `INI-002` |
 | Portfolio/resources vs Roadmap/time | `CZĘŚCIOWA` | osobne widoki/analizy, wspólny read model nieudowodniony | `INI-003` |

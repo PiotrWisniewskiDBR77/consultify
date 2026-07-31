@@ -102,7 +102,7 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       id: 'MODULE_EXECUTION',
       label: t('sidebar.execution', 'Execution'),
       icon: React.createElement(Rocket, { size: 20 }),
-      viewId: AppView.IMPLEMENTATION,
+      viewId: AppView.FULL_STEP5_EXECUTION,
     },
     // 7. Resultaty - śledzenie efektów (KPI/ROI) zrealizowanych inicjatyw
     {

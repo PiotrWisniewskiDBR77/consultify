@@ -47,6 +47,7 @@ last_reviewed: 2026-07-31
 | `WK-D-035` | Artifact authority | `CORE-ART-001..007` jest przyjętym fundamentem: jeden registry/envelope, kanoniczne typy, wersjonowany content read-back, source lineage, ETag i fail-closed review quorum; Canvas zapisuje kanonicznie, a Wave5 mirrors są tylko linkami pochodzenia | Codex | 2026-07-31 | zastępuje wcześniejszy Canvas NO_GO dotyczący braku materialization read-back; pełny Chat→Canvas golden flow nadal wymaga odbioru domenowego |
 | `WK-D-036` | Finance route authority | `/finance` jest jedyną trasą montującą moduł; `/economics` pozostaje wyłącznie kompatybilnym redirectem zachowującym query/hash, a stare nazwy API/ID są długiem migracyjnym | Codex | 2026-07-31 | `FIN-001` ACCEPTED; usuwa dwóch właścicieli URL bez migracji danych/API |
 | `WK-D-037` | Results route authority | `/results` jest jedyną trasą montującą moduł; `/benefits` i `/kpi-okr` są kompatybilnymi redirectami zachowującymi query/hash; `MODULE_BENEFITS` i stare nazwy API/DB pozostają na czas migracji | Codex | 2026-07-31 | `RES-001A` ACCEPTED; migracja scorecard store pozostaje osobną częścią `RES-001B` |
+| `WK-D-038` | Execution route authority | `/execution` jest jedyną trasą montującą ExecutionHub; `/implementation` i `/rollout` są kompatybilnymi redirectami z zachowaniem stanu URL | Codex | 2026-07-31 | `EXE-001` ACCEPTED; FullExecutionView nie uczestniczy już w runtime |
 
 ## Otwarte decyzje
 

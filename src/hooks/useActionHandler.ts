@@ -33,7 +33,7 @@ const VIEW_ROUTE_MAP: Record<string, string> = {
   interview: '/interview',
   discovery: '/interview',
   'discovery-tools': '/discovery-tools',
-  implementation: '/implementation',
+  implementation: '/execution',
   roi: '/roi',
   economics: '/finance',
   'kpi-okr': '/results',

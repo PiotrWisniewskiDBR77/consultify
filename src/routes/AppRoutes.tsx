@@ -41,7 +41,7 @@ import { StudioUnavailableView } from '@/views/StudioUnavailableView';
 
 import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
 import { LicensedToolsRedirect } from './LicensedToolsRedirect';
-import { buildCanonicalRedirectTarget } from './canonicalRedirect';
+import { buildCanonicalRedirectTarget, buildCanonicalTabRedirectTarget } from './canonicalRedirect';
 import { buildMaterialsStudioBreadcrumb } from './materialsStudioBreadcrumb';
 import { resolvePresentationWizardRedirectTarget } from './presentationWizardRedirect';
 import { ROUTES } from './routeConfig';
@@ -112,9 +112,6 @@ const FullROIView = lazyWithRetry(() =>
 );
 const EconomicsView = lazyWithRetry(() =>
   import('@/views/EconomicsView').then((m) => ({ default: m.EconomicsView }))
-);
-const FullExecutionView = lazyWithRetry(() =>
-  import('@/views/FullExecutionView').then((m) => ({ default: m.FullExecutionView }))
 );
 const ReportBuilderView = lazyWithRetry(() =>
   import('@/views/ReportBuilderView').then((m) => ({ default: m.ReportBuilderView }))
@@ -500,6 +497,20 @@ const RedirectPreservingQuery: React.FC<{ from: string; to: string; reason: stri
 }) => {
   const location = useLocation();
   const target = buildCanonicalRedirectTarget(to, location);
+  React.useEffect(() => {
+    trackFunnelEvent('route_redirected', { from, to: target, reason });
+  }, [from, target, reason]);
+  return <Navigate to={target} replace />;
+};
+
+const RedirectToCanonicalTab: React.FC<{
+  from: string;
+  to: string;
+  tab: string;
+  reason: string;
+}> = ({ from, to, tab, reason }) => {
+  const location = useLocation();
+  const target = buildCanonicalTabRedirectTarget(to, location, tab);
   React.useEffect(() => {
     trackFunnelEvent('route_redirected', { from, to: target, reason });
   }, [from, target, reason]);
@@ -2100,13 +2111,13 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['Execution']}>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Implementation"
+                moduleName="Execution"
               >
                 <RouteErrorBoundary>
                   <AnimationWrapper variant="slideUp">
                     <V8UnavailableBanner moduleName="Execution">
                       <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                        <FullExecutionView />
+                        <ExecutionHub />
                       </Suspense>
                     </V8UnavailableBanner>
                   </AnimationWrapper>
@@ -2118,22 +2129,11 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.IMPLEMENTATION}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Implementation']}>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Implementation"
-              >
-                <RouteErrorBoundary>
-                  <AnimationWrapper variant="slideUp">
-                    <V8UnavailableBanner moduleName="Implementation">
-                      <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                        <ExecutionHub />
-                      </Suspense>
-                    </V8UnavailableBanner>
-                  </AnimationWrapper>
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+            <RedirectPreservingQuery
+              from={ROUTES.IMPLEMENTATION}
+              to={ROUTES.EXECUTION}
+              reason="execution_canonical_route"
+            />
           }
         />
         {/* Rollout consolidated into ExecutionHub as a tab (Module 06 Realizacja).
@@ -2141,9 +2141,10 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.ROLLOUT}
           element={
-            <RedirectWithTracking
+            <RedirectToCanonicalTab
               from={ROUTES.ROLLOUT}
-              to={`${ROUTES.EXECUTION}?tab=rollout`}
+              to={ROUTES.EXECUTION}
+              tab="rollout"
               reason="rollout_consolidated_into_execution_hub"
             />
           }

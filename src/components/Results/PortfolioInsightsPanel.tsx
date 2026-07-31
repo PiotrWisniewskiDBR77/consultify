@@ -263,7 +263,7 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
               </span>
             )}
             <a
-              href="/implementation"
+              href="/execution"
               className="ml-auto flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 hover:underline shrink-0"
               title={t('results.portfolio.goToM14', 'Go to M14 Implementation')}
             >

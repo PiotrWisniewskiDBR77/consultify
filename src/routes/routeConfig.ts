@@ -355,8 +355,8 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.FULL_STEP4_ROI]: ROUTES.ROI,
   [AppView.ECONOMICS]: ROUTES.FINANCE,
   [AppView.FULL_STEP5_EXECUTION]: ROUTES.EXECUTION,
-  [AppView.IMPLEMENTATION]: ROUTES.IMPLEMENTATION,
-  [AppView.FULL_PILOT_EXECUTION]: ROUTES.IMPLEMENTATION,
+  [AppView.IMPLEMENTATION]: ROUTES.EXECUTION,
+  [AppView.FULL_PILOT_EXECUTION]: ROUTES.EXECUTION,
   [AppView.FULL_ROLLOUT]: ROUTES.ROLLOUT,
   [AppView.FULL_STEP6_REPORTS]: ROUTES.REPORTS.BUILDER,
   [AppView.REPORTS_ENTRY]: ROUTES.REPORTS.ROOT,
@@ -698,7 +698,7 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.ONBOARDING)) return AppView.ONBOARDING_WIZARD;
   if (normalized.startsWith(ROUTES.ONBOARDING_ADMIN)) return AppView.ONBOARDING_WIZARD;
   if (normalized.startsWith(ROUTES.ONBOARDING_SEED_BASE)) return AppView.ONBOARDING_WIZARD;
-  if (normalized.startsWith(ROUTES.IMPLEMENTATION)) return AppView.IMPLEMENTATION;
+  if (normalized.startsWith(ROUTES.IMPLEMENTATION)) return AppView.FULL_STEP5_EXECUTION;
   if (normalized.startsWith(ROUTES.EXECUTION)) return AppView.FULL_STEP5_EXECUTION;
   if (normalized.startsWith(ROUTES.ROLLOUT)) return AppView.FULL_ROLLOUT;
   if (

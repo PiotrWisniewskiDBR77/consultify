@@ -89,7 +89,7 @@ odtwarzalne procesy.
 
 | Kolejność | Pakiet | Rezultat |
 | ---: | --- | --- |
-| 1 | `EXE-001` | wybór między FullExecutionView i ExecutionHub |
+| 1 | `EXE-001` | **ACCEPTED** — `/execution` owner; legacy aliases redirect-only |
 | 2 | `EXE-002` | jeden lifecycle plan/task/risk/change |
 | 3 | `INI-001` | jeden initiative write-truth i router order |
 | 4 | `INI-002` | candidate → approve → portfolio |
