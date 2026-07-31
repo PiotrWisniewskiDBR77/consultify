@@ -158,6 +158,44 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
       }),
   );
 
+  it.each([
+    ['document', 'sheet'],
+    ['presentation', 'report'],
+  ])('rejects contradictory explicit pair %s/%s before creating a run', async (artifactFamily, outputType) => {
+    const response = await request(app).post('/api/artifact-runs/from-chat').send({
+      conversationId: 'conv-invalid-pair',
+      contextSnapshotId: 'snap-invalid-pair',
+      goal: 'Create output',
+      requestedArtifactFamily: artifactFamily,
+      requestedOutputType: outputType,
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toEqual(
+      expect.objectContaining({
+        code: 'ARTIFACT_TYPE_MAPPING_INVALID',
+        artifactFamily,
+        outputType,
+      }),
+    );
+    expect(spineMocks.initiateHandoff).not.toHaveBeenCalled();
+  });
+
+  it('requires explicit output type for template runs without guessing from goal text', async () => {
+    const response = await request(app).post('/api/artifact-runs/from-chat').send({
+      conversationId: 'conv-template',
+      contextSnapshotId: 'snap-template',
+      goal: 'Create a presentation template',
+      requestedArtifactFamily: 'template',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toEqual(
+      expect.objectContaining({ code: 'ARTIFACT_TYPE_MAPPING_INVALID' }),
+    );
+    expect(spineMocks.initiateHandoff).not.toHaveBeenCalled();
+  });
+
   it('persists a run through POST -> GET -> accept-plan -> materialize and rejects retry of completed', async () => {
     spineMocks.initiateHandoff.mockResolvedValueOnce({ executionRunId: 'exec-run-1' });
     spineMocks.createProposal.mockResolvedValue({ proposalId: 'proposal-abc' });

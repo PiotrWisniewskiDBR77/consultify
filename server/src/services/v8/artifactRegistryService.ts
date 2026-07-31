@@ -52,6 +52,7 @@ import {
   mirrorLegacyArtifactIntoWave5,
 } from '../wave5ArtifactRuntimeService.js';
 import * as chatExecutionService from './chatExecutionService.js';
+import { mapCanonicalArtifactType, mapExplicitArtifactRunType } from './artifactTypeMapper.js';
 import * as contextSnapshotService from './contextSnapshotService.js';
 import * as executionSpineService from './executionSpineService.js';
 import { isV8Enabled } from './featureFlagService.js';
@@ -1555,9 +1556,15 @@ export async function startArtifactReview(params: {
     params.organizationId
   );
   if (!record) {
+    const typeMapping = mapCanonicalArtifactType({
+      artifactFamily:
+        artifact.artifact_family ||
+        (artifact.output_type === 'report' ? 'document' : artifact.output_type),
+      outputType: artifact.output_type,
+    });
     record = await publishReviewService.createPublishRecord({
       artifactId: params.artifactId,
-      artifactType: artifact.output_type,
+      artifactType: typeMapping.publishArtifactType,
       organizationId: params.organizationId,
       publishedBy: params.actorUserId,
       reviewers: params.reviewers || [],
@@ -3098,55 +3105,59 @@ function inferArtifactPlan(
   request: ArtifactPlanningRequest
 ): ArtifactPlanningResult['artifactPlan'] {
   const goal = request.goal.toLowerCase();
-  const explicitFamily = request.requestedArtifactFamily;
+  const explicit = mapExplicitArtifactRunType({
+    artifactFamily: request.requestedArtifactFamily,
+    outputType: request.requestedOutputType,
+  });
 
-  if (
-    explicitFamily === 'template' ||
-    goal.includes('template') ||
-    goal.includes('wzorzec') ||
-    goal.includes('szablon')
-  ) {
-    const isPresentation =
-      goal.includes('deck') || goal.includes('presentation') || goal.includes('prezentacj');
+  if (explicit) {
     return {
-      artifactFamily: 'template',
-      outputType: isPresentation ? 'presentation' : 'report',
-      titleHint: 'Template-based output',
+      artifactFamily: explicit.artifactFamily,
+      outputType: explicit.outputType,
+      titleHint: deriveArtifactTitle(request.goal, 'Output draft'),
       governancePath: 'execution_spine',
-      visibilityScope: 'organization',
-      templateHint: true,
-    } as any;
+      visibilityScope:
+        explicit.artifactFamily === 'presentation'
+          ? 'private'
+          : explicit.artifactFamily === 'document'
+            ? 'private'
+            : 'organization',
+    };
   }
 
   if (
-    explicitFamily === 'sheet' ||
-    request.requestedOutputType === 'sheet' ||
     goal.includes('sheet') ||
     goal.includes('spreadsheet') ||
     goal.includes('excel')
   ) {
+    const inferred = mapCanonicalArtifactType({ artifactFamily: 'sheet', outputType: 'sheet' });
     return {
-      artifactFamily: 'sheet',
-      outputType: 'sheet',
+      artifactFamily: inferred.artifactFamily,
+      outputType: inferred.outputType,
       titleHint: deriveArtifactTitle(request.goal, 'Tabela operacyjna'),
       governancePath: 'execution_spine',
       visibilityScope: 'organization',
     };
   }
 
-  if (explicitFamily === 'presentation' || goal.includes('deck') || goal.includes('presentation')) {
-    return {
+  if (goal.includes('deck') || goal.includes('presentation')) {
+    const inferred = mapCanonicalArtifactType({
       artifactFamily: 'presentation',
       outputType: 'presentation',
+    });
+    return {
+      artifactFamily: inferred.artifactFamily,
+      outputType: inferred.outputType,
       titleHint: deriveArtifactTitle(request.goal, 'Prezentacja'),
       governancePath: 'execution_spine',
       visibilityScope: 'private',
     };
   }
 
+  const inferred = mapCanonicalArtifactType({ artifactFamily: 'document', outputType: 'report' });
   return {
-    artifactFamily: explicitFamily || 'document',
-    outputType: request.requestedOutputType || 'report',
+    artifactFamily: inferred.artifactFamily,
+    outputType: inferred.outputType,
     titleHint: deriveArtifactTitle(
       request.goal,
       goal.includes('brief') ? 'Working brief' : 'Raport'
