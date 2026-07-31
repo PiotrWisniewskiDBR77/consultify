@@ -24,7 +24,7 @@ last_reviewed: 2026-07-31
 | --- | --- | --- | --- |
 | Materials Library | `CZĘŚCIOWA+` | live registry bez produkcyjnych mocków; documents/decks realne, Sheets bez archive/share, ownership gate nadal rozdzielony | `MAT-001` |
 | Document create/edit/save/reopen/export | `CZĘŚCIOWA+` | autosave z 409, reopen i DOCX/PDF/MD działają; list→share handoff domknięty w `MAT-002`; brak UI snapshot/rollback i pełnego lifecycle E2E | `MAT-005` |
-| Workbook/Excel | `CZĘŚCIOWA` | create/cell-edit/reopen/XLSX działa; brak wersji, concurrency i pełnego real-DB round-trip; dwa runtime'y | `MAT-003A..D` |
+| Workbook/Excel | `CZĘŚCIOWA+` | `MAT-003A` udowadnia real-route SQLite create→cell/formula edit→reopen→XLSX read-back; brak wersji, concurrency, operacji strukturalnych i browser E2E; dwa runtime'y | `MAT-003B..D` |
 | Deck/Presentation | `CZĘŚCIOWA+` | create/edit/CAS-save/reopen/export/share działają; restore bez CAS i brak pełnego golden E2E | `MAT-006` |
 | artifact share/download | `CZĘŚCIOWA+` | Document list handoff działa; Document i Deck mają realne share API, Sheets brak; zamrożony export receipt do domknięcia | `MAT-005..007` |
 | Finance Hub | `CZĘŚCIOWA` | `/finance` i `/economics` równolegle | `FIN-001` |
