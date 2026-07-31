@@ -13,7 +13,7 @@ last_reviewed: 2026-07-31
 | `WK-D-001` | struktura dokumentacji | menu 16 pozycji jest szkieletem funkcjonalnym | Piotr | 2026-07-29 | obowiązuje |
 | `WK-D-002` | role wykonawcze | Codex zarządza procesem, Claude implementuje, Piotr odbiera produkt | Piotr | 2026-07-30 | obowiązuje |
 | `WK-D-003` | historia repo | brak masowego kasowania bez backupu i manifestu | Piotr/Codex | 2026-07-30 | obowiązuje |
-| `WK-D-004` | Canvas | pozostaje NO_GO do pełnego E2E i read-back | Codex | 2026-07-29 | blokuje deklarację gotowości Chat |
+| `WK-D-004` | Canvas — historyczna bramka | NO_GO obowiązywało do pełnego materialization read-back | Codex | 2026-07-29 | **SUPERSEDED przez `WK-D-035`**; domenowy Chat→Canvas E2E nadal pozostaje do odbioru |
 | `WK-D-005` | model zespołu | Codex zarządza wyspecjalizowanymi agentami Claude i jest jedynym integratorem | Piotr | 2026-07-30 | obowiązuje |
 | `WK-D-006` | strategia wykonania | najpierw scalamy istniejące fragmenty w pionowe flow, dopiero potem budujemy nowe | Piotr/Codex | 2026-07-30 | obowiązuje |
 | `WK-D-007` | cel odbioru | stabilny staging z pełnymi golden flows; bez presji deployu produkcyjnego | Piotr | 2026-07-30 | obowiązuje |
@@ -44,15 +44,15 @@ last_reviewed: 2026-07-31
 | `WK-D-032` | Teresa — Initiatives i Execution | AI w Initiatives i Execution tworzy jeden ciągły system: ocenia sens i wykonalność Initiative, przygotowuje decyzję i AI Handoff Snapshot, a następnie w Execution prognozuje, proponuje interwencje i sprawdza ich skuteczność na wspólnym AI Management Case | Piotr | 2026-07-31 | obowiązuje; nie budować dwóch niezależnych copilotów ani zaczynać Execution od pustego kontekstu |
 | `WK-D-033` | UI/UX Gate 0 | ujednolicenie UI odbywa się w ramach każdego golden flow, bez osobnego big-bang refaktoru; każda paczka wskazuje component ID, nie tworzy lokalnego forka, nie zwiększa baseline i przechodzi visual/behavioral DoD | Piotr/Codex | 2026-07-31 | obowiązuje we wszystkich siedmiu etapach; Results, Materials i Tools mają pierwszy priorytet migracji |
 | `WK-D-034` | Zbiorcze decyzje produktowe | zatwierdzone rekomendacje `A1–A24` i defaulty `D1–D20` z `MASTER_PRODUCT_DECISIONS_FOR_APPROVAL.md`; zakres odłożony nie blokuje MVP, a Excel/Calendar/Deck/Canvas Host wymagają wskazanych POC | Piotr | 2026-07-31 | zamyka etap 1 programu; sprzeczne pytania są rozstrzygnięte przez ten pakiet |
+| `WK-D-035` | Artifact authority | `CORE-ART-001..007` jest przyjętym fundamentem: jeden registry/envelope, kanoniczne typy, wersjonowany content read-back, source lineage, ETag i fail-closed review quorum; Canvas zapisuje kanonicznie, a Wave5 mirrors są tylko linkami pochodzenia | Codex | 2026-07-31 | zastępuje wcześniejszy Canvas NO_GO dotyczący braku materialization read-back; pełny Chat→Canvas golden flow nadal wymaga odbioru domenowego |
+| `WK-D-036` | Finance route authority | `/finance` jest jedyną trasą montującą moduł; `/economics` pozostaje wyłącznie kompatybilnym redirectem zachowującym query/hash, a stare nazwy API/ID są długiem migracyjnym | Codex | 2026-07-31 | `FIN-001` ACCEPTED; usuwa dwóch właścicieli URL bez migracji danych/API |
 
 ## Otwarte decyzje
 
-| ID | Pytanie | Potrzebne przed |
-| --- | --- | --- |
-| `WK-OD-001` | jaki wspólny model artefaktu i trybów przyjmujemy dla elastycznego Canvas? | `WK-P0-005` |
-| `WK-OD-002` | jaki dokładny zakres SWOT uznajemy za pierwszy kompletny flow? | `TLS-001` |
-| `WK-OD-003` | jaka jest kolejność odbioru formatów Materials przy obowiązkowym zakresie all? | `MAT-001` |
-| `WK-OD-004` | jak Codex technicznie przydziela i odbiera pracę agentów Claude? | uruchomienie zespołu |
+Brak nierozstrzygniętych pytań produktowych blokujących rozpoczęte paczki. Dawne
+`WK-OD-001..004` zamknęły odpowiednio decyzje `A2/A22`, `A17`, `A6` oraz zatwierdzony
+model operacyjny zespołu. Nowe pytanie trafia tutaj tylko wtedy, gdy istniejący pakiet
+`A1..A24`, `D1..D20` lub rejestr `WK-D-*` rzeczywiście go nie rozstrzyga.
 
 Nowa decyzja musi opisywać alternatywy, powód, skutek i dokumenty zmienione
 przez decyzję.
