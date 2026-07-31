@@ -449,8 +449,15 @@ export const DeckBuilder: React.FC = () => {
   const syncDeckServerVersion = useCallback((version: number) => {
     serverVersionRef.current = version;
   }, []);
-  const { versions, hasUnsavedChanges, lastSavedAt, restoreVersion, saveManualCheckpoint } =
-    useVersionHistory(deck, deckId, getExpectedDeckVersion, syncDeckServerVersion);
+  const {
+    versions,
+    historyStatus,
+    refreshVersions,
+    hasUnsavedChanges,
+    lastSavedAt,
+    restoreVersion,
+    saveManualCheckpoint,
+  } = useVersionHistory(deck, deckId, getExpectedDeckVersion, syncDeckServerVersion);
 
   const { isCardOutdated, refreshCard, refreshAllCards, refreshBlock } = useDataRefresh(
     deck,
@@ -1593,6 +1600,8 @@ export const DeckBuilder: React.FC = () => {
                 isOpen={versionHistoryOpen}
                 onClose={() => setVersionHistoryOpen(false)}
                 versions={versions}
+                historyStatus={historyStatus}
+                onRetryHistory={refreshVersions}
                 onRestore={handleRestoreVersion}
                 onSaveCheckpoint={saveManualCheckpoint}
                 hasUnsavedChanges={hasUnsavedChanges}
@@ -1879,6 +1888,8 @@ export const DeckBuilder: React.FC = () => {
             isOpen={versionHistoryOpen}
             onClose={() => setVersionHistoryOpen(false)}
             versions={versions}
+            historyStatus={historyStatus}
+            onRetryHistory={refreshVersions}
             onRestore={handleRestoreVersion}
             onSaveCheckpoint={saveManualCheckpoint}
             hasUnsavedChanges={hasUnsavedChanges}

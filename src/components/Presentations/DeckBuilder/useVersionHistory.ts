@@ -36,6 +36,7 @@ export interface VersionSnapshot {
 
 interface VersionHistoryState {
   versions: VersionSnapshot[];
+  historyStatus: 'loading' | 'available' | 'unavailable';
   isSaving: boolean;
   lastSavedAt: number | null;
   hasUnsavedChanges: boolean;
@@ -96,8 +97,10 @@ export function useVersionHistory(
   getExpectedVersion?: () => number | null,
   onServerVersion?: (version: number) => void
 ) {
+  const resolvedDeckId = deckId ?? deck?.deck_id ?? null;
   const [state, setState] = useState<VersionHistoryState>({
     versions: [],
+    historyStatus: resolvedDeckId ? 'loading' : 'available',
     isSaving: false,
     lastSavedAt: null,
     hasUnsavedChanges: false,
@@ -106,7 +109,6 @@ export function useVersionHistory(
   const lastSavedDeckRef = useRef<string>('');
   const autoSaveTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const snapshotTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
-  const resolvedDeckId = deckId ?? deck?.deck_id ?? null;
 
   /** Merge persisted server snapshots into the timeline, de-duped by id. */
   const mergeServerVersions = useCallback((rows: ServerVersionRow[]) => {
@@ -133,20 +135,25 @@ export function useVersionHistory(
 
   const fetchServerVersions = useCallback(async () => {
     if (!resolvedDeckId) return;
+    setState((prev) => ({ ...prev, historyStatus: 'loading' }));
     try {
       const res = await fetch(`/api/presentations/decks/${resolvedDeckId}/versions`, {
         method: 'GET',
         headers: authHeaders(),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setState((prev) => ({ ...prev, historyStatus: 'unavailable' }));
+        return;
+      }
       const body = (await res.json().catch(() => null)) as
         | { data?: ServerVersionRow[] }
         | ServerVersionRow[]
         | null;
       const rows = Array.isArray(body) ? body : Array.isArray(body?.data) ? body.data : [];
       mergeServerVersions(rows);
+      setState((prev) => ({ ...prev, historyStatus: 'available' }));
     } catch {
-      /* non-blocking: fall back to in-session timeline only */
+      setState((prev) => ({ ...prev, historyStatus: 'unavailable' }));
     }
   }, [resolvedDeckId, mergeServerVersions]);
 

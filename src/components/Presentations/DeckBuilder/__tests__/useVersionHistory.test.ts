@@ -86,6 +86,16 @@ describe('useVersionHistory — server persistence', () => {
     expect(result.current.versions.every((v) => v.persisted)).toBe(true);
     // Newest version first.
     expect(result.current.versions[0].id).toBe('ver-2');
+    expect(result.current.historyStatus).toBe('available');
+  });
+
+  it('reports history unavailable instead of presenting a failed request as an empty history', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ success: false }, false, 503));
+    const deck = makeDeck();
+    const { result } = renderHook(() => useVersionHistory(deck, DECK_ID, () => 1));
+
+    await waitFor(() => expect(result.current.historyStatus).toBe('unavailable'));
+    expect(result.current.versions).toEqual([]);
   });
 
   it('restores a persisted snapshot via the server and returns the restored deck', async () => {

@@ -13,6 +13,8 @@ interface VersionHistoryPanelProps {
   isOpen: boolean;
   onClose: () => void;
   versions: VersionSnapshot[];
+  historyStatus?: 'loading' | 'available' | 'unavailable';
+  onRetryHistory?: () => void;
   onRestore: (versionId: string) => void;
   onSaveCheckpoint: (label: string) => void;
   hasUnsavedChanges: boolean;
@@ -23,6 +25,8 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
   isOpen,
   onClose,
   versions,
+  historyStatus = 'available',
+  onRetryHistory,
   onRestore,
   onSaveCheckpoint,
   hasUnsavedChanges,
@@ -108,7 +112,32 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
 
       {/* Version list */}
       <div className="flex-1 overflow-y-auto">
-        {versions.length === 0 ? (
+        {historyStatus === 'loading' ? (
+          <div role="status" className="px-4 py-5 text-xs text-c-text-secondary">
+            {t('presentations.builder.versionHistory.loading', 'Loading version history…')}
+          </div>
+        ) : historyStatus === 'unavailable' ? (
+          <div role="status" className="px-4 py-5 text-xs text-c-text-secondary">
+            <p className="font-medium text-c-text">
+              {t('presentations.builder.versionHistory.unavailable', 'Version history unavailable')}
+            </p>
+            <p className="mt-1">
+              {t(
+                'presentations.builder.versionHistory.unavailableHint',
+                'Your deck is still available. Retry to load its saved versions.'
+              )}
+            </p>
+            {onRetryHistory && (
+              <button
+                type="button"
+                onClick={onRetryHistory}
+                className="mt-3 rounded-lg border border-c-border-subtle px-2.5 py-1.5 font-medium text-c-text hover:bg-c-surface-raised"
+              >
+                {t('presentations.builder.versionHistory.retry', 'Retry')}
+              </button>
+            )}
+          </div>
+        ) : versions.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-c-text-secondary text-xs">
             <Clock size={16} className="mb-2 opacity-40" />
             <p>No versions yet</p>
