@@ -1,3 +1,5 @@
+import type { CanonicalFormat, MarkdownProjectionStatus } from './artifactContent';
+
 export type CanvasMode = 'rich' | 'document' | 'md';
 
 export type CanvasStarterId =
@@ -14,9 +16,9 @@ export type CanvasSaveState = 'unsaved' | 'saving' | 'saved' | 'failed';
 
 export type CanvasLifecycleState = 'draft' | 'in_review' | 'approved';
 
-export type CanvasProjectionStatus = 'synced' | 'stale' | 'failed' | 'missing';
+export type CanvasProjectionStatus = MarkdownProjectionStatus;
 
-export type CanvasCanonicalFormat = 'markdown' | 'json';
+export type CanvasCanonicalFormat = CanonicalFormat;
 
 export type CanvasArtifactBlockKind =
   | 'table'

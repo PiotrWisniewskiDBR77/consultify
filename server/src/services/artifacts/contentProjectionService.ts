@@ -1,5 +1,11 @@
-export type CanonicalFormat = 'markdown' | 'json';
-export type MarkdownProjectionStatus = 'synced' | 'stale' | 'failed' | 'missing';
+import {
+  normalizeArtifactContentEnvelope,
+  type ArtifactCanonicalFormat as CanonicalFormat,
+  type ArtifactContentEnvelopeV1 as ArtifactContentEnvelope,
+  type ArtifactProjectionStatus as MarkdownProjectionStatus,
+} from '../../types/artifactContent.js';
+
+export type { ArtifactContentEnvelope, CanonicalFormat, MarkdownProjectionStatus };
 export type CanvasArtifactBlockKind =
   | 'table'
   | 'chart'
@@ -29,18 +35,6 @@ export interface CanvasArtifactBlock {
   markdownProjection: string;
   markdownProjectionStatus: MarkdownProjectionStatus;
   projectionError?: string | null;
-}
-
-export interface ArtifactContentEnvelope {
-  canonicalFormat: CanonicalFormat;
-  artifactType: string;
-  contentMd: string;
-  contentJson?: unknown;
-  blocks?: CanvasArtifactBlock[];
-  contentSchemaVersion?: string;
-  markdownProjectionStatus: MarkdownProjectionStatus;
-  markdownProjectedAt?: string;
-  projectionError?: string;
 }
 
 export interface ProjectionResult {
@@ -544,7 +538,7 @@ export function createArtifactContentEnvelope(params: {
       params.artifactType,
       params.contentMd || params.contentJson
     );
-    return {
+    return normalizeArtifactContentEnvelope({
       canonicalFormat: 'json',
       artifactType: params.artifactType,
       contentJson: params.contentJson,
@@ -557,11 +551,11 @@ export function createArtifactContentEnvelope(params: {
         projection.error ||
         blocks.find((block) => block.markdownProjectionStatus === 'failed')?.projectionError ||
         undefined,
-    };
+    });
   }
 
   const markdownStatus: MarkdownProjectionStatus = params.contentMd?.trim() ? 'synced' : 'missing';
-  return {
+  return normalizeArtifactContentEnvelope({
     canonicalFormat: 'markdown',
     artifactType: params.artifactType,
     contentMd: params.contentMd || '',
@@ -569,5 +563,5 @@ export function createArtifactContentEnvelope(params: {
     contentSchemaVersion: params.contentSchemaVersion,
     markdownProjectionStatus: combineProjectionStatus(markdownStatus, blocks),
     markdownProjectedAt: new Date().toISOString(),
-  };
+  });
 }
