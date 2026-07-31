@@ -1,5 +1,33 @@
 import { v8Get, v8Patch, v8Post } from './client';
 
+export interface V8ExecutionManagementSectionProvenance {
+  source: string;
+  state: 'available' | 'degraded';
+  reason?: string;
+}
+
+export interface V8ExecutionManagementSnapshot {
+  contractVersion: 'execution_management_snapshot_v1';
+  asOf: string;
+  initiative: {
+    id: string;
+    projectId: string | null;
+    name: string;
+    status: string;
+    ownerId: string | null;
+    ownerName: string | null;
+    plannedStartDate: string | null;
+    plannedEndDate: string | null;
+    actualStartDate: string | null;
+    actualEndDate: string | null;
+  };
+  milestones: Array<Record<string, unknown>>;
+  tasks: Array<Record<string, unknown>>;
+  decisions: Array<Record<string, unknown>>;
+  provenance: Record<string, V8ExecutionManagementSectionProvenance>;
+  degradedSections: string[];
+}
+
 export const shouldFallbackToLegacyExecutionControl = (error: any) => {
   const status = Number(error?.status);
   return [400, 404, 405, 501].includes(status);
@@ -308,6 +336,11 @@ export interface V8LaneAnalysisResponse {
 }
 
 export const V8ExecutionControlApi = {
+  getManagementSnapshot: (initiativeId: string, projectId?: string) =>
+    v8Get<V8ExecutionManagementSnapshot>(
+      `/execution/management/initiatives/${encodeURIComponent(initiativeId)}`,
+      projectId ? { projectId } : undefined
+    ),
   getRiskSignals: (projectId?: string) =>
     v8Get<{ signals: V8ExecutionRiskSignal[]; count: number }>(
       '/execution-control/risk-signals',

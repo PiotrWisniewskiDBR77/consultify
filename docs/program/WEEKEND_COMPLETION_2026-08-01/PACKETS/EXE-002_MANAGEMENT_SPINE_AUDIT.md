@@ -1,7 +1,7 @@
 ---
 doc_id: EXE-002
 truth_type: verified-as-is
-status: READY_FOR_TASK_BREAKDOWN
+status: ACCEPTED_BACKEND_A1
 owner: codex
 product_owner: piotr
 priority: P0
@@ -10,6 +10,16 @@ last_reviewed: 2026-08-01
 ---
 
 # EXE-002 — audyt management spine Execution
+
+## Odbiór backend A1 — 2026-08-01
+
+Przyjęto addytywny, read-only kontrakt
+`execution_management_snapshot_v1`: kanoniczna inicjatywa, milestones, linked tasks i
+wyłącznie linked decisions z org/project scope, provenance oraz rozróżnieniem pustej
+sekcji od sekcji niedostępnej. Nie utworzono nowego store ani migracji.
+
+UI consumption oraz `task mutation → snapshot read-back` pozostają osobną paczką
+`EXE-002A2`; cały management spine nadal ma werdykt `FIX`.
 
 ## Decyzja audytowa
 

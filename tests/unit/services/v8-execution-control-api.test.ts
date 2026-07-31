@@ -18,6 +18,15 @@ describe('V8ExecutionControlApi', () => {
     vi.clearAllMocks();
   });
 
+  it('requests the additive management snapshot with optional project scope', async () => {
+    await V8ExecutionControlApi.getManagementSnapshot('initiative/1', 'project-1');
+
+    expect(v8Get).toHaveBeenCalledWith(
+      '/execution/management/initiatives/initiative%2F1',
+      { projectId: 'project-1' }
+    );
+  });
+
   it('requests risk signals from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({ signals: [], count: 0 });
 

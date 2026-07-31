@@ -6,6 +6,7 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import * as artifactRegistryService from '../../services/v8/artifactRegistryService.js';
 import * as executionSpineService from '../../services/v8/executionSpineService.js';
+import { getExecutionManagementSnapshot } from '../../services/v8/executionManagementSnapshotService.js';
 import * as toolGovernanceService from '../../services/v8/toolGovernanceService.js';
 import {
   type ProposalStatus,
@@ -17,6 +18,27 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { get as dbGet } from '../../utils/DbPromise.js';
 
 const router = Router();
+
+router.get(
+  '/management/initiatives/:initiativeId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const initiativeId = String(req.params.initiativeId || '').trim();
+    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId.trim() : undefined;
+    const snapshot = await getExecutionManagementSnapshot(
+      organizationId,
+      initiativeId,
+      projectId || undefined
+    );
+    if (!snapshot) {
+      return res.status(404).json({
+        error: 'Initiative not found',
+        code: 'EXECUTION_MANAGEMENT_INITIATIVE_NOT_FOUND',
+      });
+    }
+    return res.json({ data: snapshot });
+  })
+);
 
 const RESOLVABLE_PROPOSAL_STATUSES: readonly ProposalStatus[] = [
   'approved',
