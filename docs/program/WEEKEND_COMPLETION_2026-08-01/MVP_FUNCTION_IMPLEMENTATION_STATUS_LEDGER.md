@@ -22,11 +22,11 @@ last_reviewed: 2026-07-31
 
 | Moduł / funkcja | Status | Dowód / problem | Następna bramka |
 | --- | --- | --- | --- |
-| Materials Library | `CZĘŚCIOWA` | różne registries/studia; brak jednego envelope w UI | `MAT-001` |
-| Document create/edit/save/export | `CZĘŚCIOWA` | rozbudowany Document Studio, potrzebny pełny reopen/version/share E2E | `MAT-002` |
-| Workbook/Excel | `CZĘŚCIOWA` | table platform i import istnieją; brak zatwierdzonego Excel-class stack i pełnego fidelity | `MAT-003` |
-| Deck/Presentation | `CZĘŚCIOWA` | builder/runtime istnieje; brak jakości Gamma+ i jednego lifecycle | `MAT-004` |
-| artifact share/download | `CZĘŚCIOWA` | rozproszone handlery; jeden receipt/read-back nieudowodniony | `MAT-005` |
+| Materials Library | `CZĘŚCIOWA+` | live registry bez produkcyjnych mocków; documents/decks realne, Sheets bez archive/share, ownership gate nadal rozdzielony | `MAT-001` |
+| Document create/edit/save/reopen/export | `CZĘŚCIOWA+` | autosave z 409, reopen i DOCX/PDF/MD działają; list→share handoff domknięty w `MAT-002`; brak UI snapshot/rollback i pełnego lifecycle E2E | `MAT-005` |
+| Workbook/Excel | `CZĘŚCIOWA` | create/cell-edit/reopen/XLSX działa; brak wersji, concurrency i pełnego real-DB round-trip; dwa runtime'y | `MAT-003A..D` |
+| Deck/Presentation | `CZĘŚCIOWA+` | create/edit/CAS-save/reopen/export/share działają; restore bez CAS i brak pełnego golden E2E | `MAT-006` |
+| artifact share/download | `CZĘŚCIOWA+` | Document list handoff działa; Document i Deck mają realne share API, Sheets brak; zamrożony export receipt do domknięcia | `MAT-005..007` |
 | Finance Hub | `CZĘŚCIOWA` | `/finance` i `/economics` równolegle | `FIN-001` |
 | Investment Case calculations | `CZĘŚCIOWA` | liczne workspaces/ROI; ownership i baseline/actual thread niezamknięte | `FIN-002` |
 | statement import/mapping | `CZĘŚCIOWA` | realne routes i UI, potrzebny reprezentatywny E2E | `FIN-003` |

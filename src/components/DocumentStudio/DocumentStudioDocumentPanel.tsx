@@ -108,6 +108,8 @@ import type {
 interface DocumentStudioDocumentPanelProps {
   artifactId: string;
   schema: DocumentSchema;
+  /** Opens a governed right-rail tool after a deep-link handoff from Materials. */
+  initialOverflowToolId?: 'share';
   /**
    * A4 — generation-time warnings recorded when the pipeline degraded via
    * a silent fallback (LLM prose failure, chart rasterization fallback,
@@ -1699,6 +1701,7 @@ function TeresaDrawerPanel({
 export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelProps> = ({
   artifactId,
   schema,
+  initialOverflowToolId,
   generationWarnings = [],
   onStartOver,
   onSchemaUpdated,
@@ -2025,13 +2028,17 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   // across `more` re-opens (last pick shown again) rather than reaching into
   // shell internals to auto-reset it. The explicit "back to menu" affordance
   // (`renderOverflowToolPanel`) always lets the user return to the full list.
-  const [overflowSelection, setOverflowSelection] = useState<string | null>(null);
+  const [overflowSelection, setOverflowSelection] = useState<string | null>(
+    initialOverflowToolId ?? null
+  );
 
   // M1 primary action (kanon ARTIFACT_ANATOMY_STANDARD §Archetyp B: "Udostępnij"
   // jest primary w M1). The chip lives in the top bar while ShareLinksPanel is a
   // rail tool folded behind `more`; controlled rail state lets the chip jump
   // straight to it instead of leaving the user to hunt through the overflow menu.
-  const [activeRailToolId, setActiveRailToolId] = useState<string | null>(null);
+  const [activeRailToolId, setActiveRailToolId] = useState<string | null>(
+    initialOverflowToolId ? 'more' : null
+  );
   const handleOpenShare = useCallback(() => {
     setOverflowSelection('share');
     setActiveRailToolId('more');

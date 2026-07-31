@@ -25,11 +25,13 @@ Jedna paczka ma jednego ownera zapisu, ograniczony zestaw plików, jeden weryfik
 
 | Packet | Cel | Non-regression | Test |
 | --- | --- | --- | --- |
-| `MAT-001` | kanoniczny Materials Library read model | nie usuwać istniejących studiów | list/create/open real artifact |
-| `MAT-002` | Document save/reopen/version/export | istniejący Document Studio | fixture document E2E |
-| `MAT-003` | Excel stack POC i ADR | nie wymieniać silnika przed decyzją | formula/import/export fidelity matrix |
-| `MAT-004` | Workbook golden flow po ADR | Finance/table platform | edit/save/reopen/xlsx |
-| `MAT-005` | Deck quality POC i lifecycle | report/presentation exports | representative deck + visual QA |
+| `MAT-001` | jeden owner/gate Materials i kompletne akcje Library | nie usuwać legacy deep links | list/create/open/archive/share real artifact |
+| `MAT-002` | Document Library → real share panel | istniejący Document Studio | **ACCEPTED**: one-shot handoff + canonical URL |
+| `MAT-003A..D` | Workbook round-trip, safe save, minimal edit i versions | nie wymieniać silnika przed ADR | blank→edit→reopen→XLSX read-back + restore |
+| `MAT-004A..C` | generatory templates i fidelity matrix | osiem istniejących modeli | template→edit→reopen→export + OOXML corpus |
+| `MAT-005` | domknięcie Document lifecycle | autosave/export/share | snapshot→rollback→PDF→share E2E |
+| `MAT-006` | Presentation lifecycle hardening | generator i eksporty | CAS restore + pełny deck E2E |
+| `MAT-007` | immutable PDF export receipt | Document/Deck source authority | historyczny PDF związany z source revision/hash |
 
 ## Fala 2 — Finance i Results
 

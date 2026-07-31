@@ -29,7 +29,7 @@ Statusy końcowe alternatywne: `BLOCKED`, `DEFERRED`, `REJECTED`.
 | `WK-P0-008` | Tools — pełny lifecycle SWOT | CONCEPT | E2E SWOT |
 | `WK-P0-009` | Assessment — scoring/raport/handoff | DISCOVERY | E2E jednego frameworka |
 | `WK-P0-010` | Initiative → Execution → Results | DISCOVERY | jeden spójny golden flow |
-| `WK-P0-011` | Materials all — zapis, wznowienie, szablony i eksport | CONCEPT | macierz DOCX/XLSX/PPTX/PDF |
+| `WK-P0-011` | Materials all — zapis, wznowienie, szablony i eksport | IN_IMPLEMENTATION | live library i artifact read-back przyjęte; pozostają workbook versions/concurrency, Sheets actions i lifecycle E2E |
 | `WK-P0-012` | Admin/Settings — guardy i krytyczne mutacje | DISCOVERY | RBAC + audit |
 | `WK-P0-013` | migracje, backup i próbny restore | DISCOVERY | odtwarzalny raport |
 | `WK-P0-014` | globalny smoke i decyzja release | BLOCKED | wszystkie wymagane P0 rozstrzygnięte |

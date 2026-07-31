@@ -336,6 +336,23 @@ describe('DocumentStudioDocumentPanel', () => {
     expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('client-1');
   });
 
+  it('opens the real share-link panel when Materials hands off a share action', async () => {
+    render(
+      <DocumentStudioDocumentPanel
+        artifactId="artifact-1"
+        schema={schema}
+        initialOverflowToolId="share"
+        onStartOver={vi.fn()}
+        onSchemaUpdated={vi.fn()}
+      />
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('Share links')
+    );
+    expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('Create link');
+  });
+
   it('inserts reusable content blocks through the durable schema mutation', async () => {
     const onSchemaUpdated = vi.fn();
     render(
