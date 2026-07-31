@@ -129,6 +129,20 @@ describe('F07 — Output publish → recall', () => {
     expect(inReview.currentState).toBe('in_review');
 
     // Step 4: Submit review gate
+    mockDbGet.mockResolvedValueOnce({
+      record_id: publishRecord.recordId,
+      artifact_id: artifact.artifactId,
+      artifact_type: 'report',
+      organization_id: ORG_ID,
+      current_state: 'in_review',
+      published_by: USER_ID,
+      published_at: null,
+      reviewers: JSON.stringify([REVIEWER_ID]),
+      approved_by: null,
+      approved_at: null,
+      created_at: publishRecord.createdAt,
+      updated_at: inReview.updatedAt,
+    });
     const reviewGate = await submitReviewGate({
       artifactId: artifact.artifactId,
       organizationId: ORG_ID,
@@ -141,6 +155,18 @@ describe('F07 — Output publish → recall', () => {
     expect(reviewGate.gateId).toBeDefined();
     expect(reviewGate.artifactId).toBe(artifact.artifactId);
     expect(reviewGate.result).toBe('approved');
+    mockDbAll.mockResolvedValueOnce([
+      {
+        gate_id: reviewGate.gateId,
+        artifact_id: artifact.artifactId,
+        organization_id: ORG_ID,
+        review_type: reviewGate.reviewType,
+        reviewer_id: REVIEWER_ID,
+        result: 'approved',
+        comments: reviewGate.comments,
+        created_at: reviewGate.createdAt,
+      },
+    ]);
 
     // Step 5: Transition to approved
     mockDbGet.mockResolvedValueOnce({
@@ -233,6 +259,20 @@ describe('F07 — Output publish → recall', () => {
     expect(publishRecord.currentState).toBe('private_draft');
 
     // Review gate output → coordinated publish input (same artifactId)
+    mockDbGet.mockResolvedValueOnce({
+      record_id: publishRecord.recordId,
+      artifact_id: artifact.artifactId,
+      artifact_type: 'presentation',
+      organization_id: ORG_ID,
+      current_state: 'private_draft',
+      published_by: USER_ID,
+      published_at: null,
+      reviewers: JSON.stringify([REVIEWER_ID]),
+      approved_by: null,
+      approved_at: null,
+      created_at: publishRecord.createdAt,
+      updated_at: publishRecord.updatedAt,
+    });
     const gate = await submitReviewGate({
       artifactId: artifact.artifactId,
       organizationId: ORG_ID,
