@@ -51,22 +51,35 @@ Wyjście: cztery golden flows i usunięta nieuczciwość statusów.
 
 ## Fala 2 — Materials, Finance, Results/KPI
 
+### Stan wykonania 2026-07-31
+
+Fundament `CORE-ART-001..007` jest **ACCEPTED**: jeden registry/envelope, kanoniczne typy,
+materialization preflight, content read-back z ETag, adaptery report/presentation/sheet,
+kanoniczny Canvas, kwarantanna Wave5 mirrors oraz fail-closed quorum publikacji.
+
+Przyjęte paczki domenowe: `MAT-002`, `MAT-003A`, `MAT-005A`, `FIN-001`.
+Fala pozostaje w realizacji; status ten nie jest równoznaczny z odbiorem całego Materials
+lub Finance.
+
 | Kolejność | Pakiet | Rezultat | Stan wejścia |
 | ---: | --- | --- | --- |
-| 1 | `MAT-001` | jeden model artifact/version/approval/source | product decision |
-| 2 | `MAT-002` | hub bez produkcyjnej zależności od mock data | implement |
-| 3 | `MAT-003` | Excel/Table: edycja, zapis, reopen i eksport | integrate |
-| 4 | `MAT-004` | generatory i lifecycle szablonów Excel | concept + integrate |
-| 5 | `MAT-005` | Document save/reopen/version/export | integrate |
-| 6 | `MAT-006` | Presentation save/reopen/version/export | integrate |
-| 7 | `MAT-007` | PDF i wspólna jakość eksportów | integrate |
-| 8 | `MAT-008` | wspólna biblioteka, archive/delete/share | integrate |
-| 9 | `FIN-001` | kanon Finance API i modelu danych | discovery/decision |
-| 10 | `FIN-002` | statement import/map/validation | integrate |
-| 11 | `FIN-003` | model/scenario/version/result | integrate |
-| 12 | `RES-001` | Results vs Benefits ownership i kanon API | discovery/decision |
-| 13 | `RES-002` | KPI lifecycle z measurement i deviation | integrate |
-| 14 | `RES-003` | Initiative ↔ Finance ↔ KPI golden thread | integrate |
+| 1 | `CORE-ART-001..007` | jeden model artifact/version/content/review/source | **ACCEPTED** |
+| 2 | `MAT-001` | jeden owner/gate Materials i kompletne akcje Library | implement |
+| 3 | `MAT-002` | Document Library → real share panel | **ACCEPTED** |
+| 4 | `MAT-003A` | Workbook real-route round-trip i XLSX read-back | **ACCEPTED** |
+| 5 | `MAT-003B..D` | concurrency, minimal edit i workbook versions | integrate |
+| 6 | `MAT-004A..C` | generatory, lifecycle templates i fidelity matrix | concept + integrate |
+| 7 | `MAT-005A` | Document checkpoint/restore/read-back | **ACCEPTED** |
+| 8 | `MAT-005B` | pełny Document lifecycle E2E i share management | integrate |
+| 9 | `MAT-006` | Presentation restore hardening i lifecycle E2E | integrate |
+| 10 | `MAT-007` | immutable PDF export receipt i wspólna jakość | integrate |
+| 11 | `FIN-001` | `/finance` owner, `/economics` redirect-only | **ACCEPTED** |
+| 12 | `FIN-002` | trwały Investment Case: ROI/scenario/baseline/actual | concept + integrate |
+| 13 | `FIN-003` | statement import/map/validation | integrate |
+| 14 | `FIN-004` | Finance → kanoniczny Candidate Pack | integrate |
+| 15 | `RES-001` | Results vs Benefits ownership i kanon API | discovery/decision |
+| 16 | `RES-002` | KPI lifecycle z measurement i deviation | integrate |
+| 17 | `RES-003` | Initiative ↔ Finance ↔ KPI golden thread | integrate |
 
 Wyjście: trzy główne moduły przestają być kolekcją ekranów i realizują
 odtwarzalne procesy.
