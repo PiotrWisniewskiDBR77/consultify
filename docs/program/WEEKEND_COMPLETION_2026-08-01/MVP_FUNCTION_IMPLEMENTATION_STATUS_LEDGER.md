@@ -27,10 +27,10 @@ last_reviewed: 2026-07-31
 | Workbook/Excel | `CZĘŚCIOWA+` | `MAT-003A` udowadnia real-route SQLite create→cell/formula edit→reopen→XLSX read-back; brak wersji, concurrency, operacji strukturalnych i browser E2E; dwa runtime'y | `MAT-003B..D` |
 | Deck/Presentation | `CZĘŚCIOWA+` | create/edit/CAS-save/reopen/export/share działają; restore bez CAS i brak pełnego golden E2E | `MAT-006` |
 | artifact share/download | `CZĘŚCIOWA+` | Document list handoff działa; Document i Deck mają realne share API, Sheets brak; zamrożony export receipt do domknięcia | `MAT-005..007` |
-| Finance Hub | `CZĘŚCIOWA` | `/finance` i `/economics` równolegle | `FIN-001` |
-| Investment Case calculations | `CZĘŚCIOWA` | liczne workspaces/ROI; ownership i baseline/actual thread niezamknięte | `FIN-002` |
-| statement import/mapping | `CZĘŚCIOWA` | realne routes i UI, potrzebny reprezentatywny E2E | `FIN-003` |
-| Initiative Candidate Pack from Finance | `CZĘŚCIOWA` | kilka historycznych ścieżek tworzenia inicjatyw | `FIN-004` |
+| Finance Hub | `CZĘŚCIOWA+` | `FIN-001`: `/finance` jest jedynym ownerem UI, `/economics` zachowuje query/hash i przekierowuje; V8/legacy data fallback pozostaje | `FIN-002` |
+| Investment Case calculations | `CZĘŚCIOWA/BRAK lifecycle` | realne NPV/IRR/payback, ale lokalny kalkulator bez ROI, save/version/reopen/scenario/baseline/actual | `FIN-002` |
+| statement import/mapping | `CZĘŚCIOWA+` | realne upload/detect/extract/map/correct/confirm; dwa kontrakty, brak reprezentatywnego XLSX/CSV E2E i CSV w pickerze | `FIN-003` |
+| Initiative Candidate Pack from Finance | `BRAK targetu` | historyczny flow tworzy Initiative bezpośrednio i ma atrapę receipt; brak Candidate Pack, dedupe i pełnego lineage | `FIN-004` |
 | Results Hub / KPI table | `CZĘŚCIOWA` | route nadal Benefits, lokalne KPI tables | `RES-001` |
 | OKR definition quality gate | `CZĘŚCIOWA` | komponenty/metody istnieją fragmentarycznie | `RES-002` |
 | threshold → Deviation → Recovery | `CZĘŚCIOWA/BRAK E2E` | elementy alertów i corrective actions rozproszone | `RES-003` |

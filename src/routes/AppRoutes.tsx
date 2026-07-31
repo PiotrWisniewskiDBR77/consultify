@@ -41,6 +41,7 @@ import { StudioUnavailableView } from '@/views/StudioUnavailableView';
 
 import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
 import { LicensedToolsRedirect } from './LicensedToolsRedirect';
+import { buildCanonicalRedirectTarget } from './canonicalRedirect';
 import { buildMaterialsStudioBreadcrumb } from './materialsStudioBreadcrumb';
 import { resolvePresentationWizardRedirectTarget } from './presentationWizardRedirect';
 import { ROUTES } from './routeConfig';
@@ -498,7 +499,7 @@ const RedirectPreservingQuery: React.FC<{ from: string; to: string; reason: stri
   reason,
 }) => {
   const location = useLocation();
-  const target = `${to}${location.search || ''}`;
+  const target = buildCanonicalRedirectTarget(to, location);
   React.useEffect(() => {
     trackFunnelEvent('route_redirected', { from, to: target, reason });
   }, [from, target, reason]);
@@ -1159,9 +1160,7 @@ export const AppRoutes: React.FC = () => {
               <Navigate
                 to={(() => {
                   const raw = new URLSearchParams(location.search).get('redirect');
-                  return raw && raw.startsWith('/') && !raw.startsWith('//')
-                    ? raw
-                    : ROUTES.AI_CHAT;
+                  return raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : ROUTES.AI_CHAT;
                 })()}
                 replace
               />
@@ -2020,18 +2019,11 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.ECONOMICS}
           element={
-            <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || ['Finance']} noPadding>
-                <ProductionModuleGate
-                  enabled={!hideNonCoreModulesOnPublicProduction}
-                  moduleName="Finance"
-                >
-                  <RouteErrorBoundary>
-                    <EconomicsView />
-                  </RouteErrorBoundary>
-                </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
+            <RedirectPreservingQuery
+              from={ROUTES.ECONOMICS}
+              to={ROUTES.FINANCE}
+              reason="finance_canonical_route"
+            />
           }
         />
         <Route

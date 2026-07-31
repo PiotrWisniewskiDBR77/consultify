@@ -38,10 +38,10 @@ Jedna paczka ma jednego ownera zapisu, ograniczony zestaw plików, jeden weryfik
 
 | Packet | Cel | Test |
 | --- | --- | --- |
-| `FIN-001` | `/finance` kanoniczne, `/economics` kompatybilne | route/deep-link/browser refresh |
-| `FIN-002` | Investment Case versioned baseline | NPV/IRR/ROI/payback fixture + reopen |
-| `FIN-003` | statement import/map/validate | representative XLSX/CSV fixture |
-| `FIN-004` | Finance → Candidate Pack | numerical anchors + lineage read-back |
+| `FIN-001` | `/finance` kanoniczne, `/economics` redirect-only | **ACCEPTED**: query/hash preservation + route identity |
+| `FIN-002` | trwały Investment Case: ROI, scenario, versioned baseline/actual | NPV/IRR/ROI/payback fixture + save/reopen |
+| `FIN-003` | statement import/map/validate | representative XLSX/CSV fixture + canonical read-back |
+| `FIN-004` | Finance → Candidate Pack przez jeden write path | numerical anchors + pełny lineage read-back, bez direct Initiative |
 | `RES-001` | Results owner i Benefits redirects | one table/many scorecards, no duplicate store |
 | `RES-002` | KPI/OKR definition gate | good/bad metric fixtures |
 | `RES-003` | threshold → Deviation/Recovery/escalation | clock-controlled workflow E2E |
