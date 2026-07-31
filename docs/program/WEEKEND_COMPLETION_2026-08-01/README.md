@@ -218,6 +218,12 @@ zakończone na podstawie samej deklaracji implementatora.
     — pierwsza uruchomiona paczka Fali 0: read-only audyt wspólnego Artifact envelope i lifecycle.
 90. [`PACKETS/CORE-ART-002_CONTRACT_PARITY.md`](PACKETS/CORE-ART-002_CONTRACT_PARITY.md)
     — pierwsza mała naprawa: parity DTO/enums klient–serwer oraz kompatybilne `isDraft` schema.
+91. [`MORNING_MVP_ACCEPTANCE_HANDOFF_2026-08-01.md`](MORNING_MVP_ACCEPTANCE_HANDOFF_2026-08-01.md)
+    — aktualny stan przyjętych paczek, jawne blokady, recovery i kolejność porannego odbioru.
+92. [`PACKETS/EXE-002_MANAGEMENT_SPINE_AUDIT.md`](PACKETS/EXE-002_MANAGEMENT_SPINE_AUDIT.md)
+    — audyt rozproszonych pionów Execution i minimalny kontrakt wspólnego management snapshotu.
+93. [`PACKETS/INI-001_INITIATIVES_MVP_AUDIT.md`](PACKETS/INI-001_INITIATIVES_MVP_AUDIT.md)
+    — remanent Initiatives od Candidate przez approval i Roadmap do same-ID handoffu Execution.
 91. [`PACKETS/CORE-ART-003A_RETRY_GUARD_AND_PARENT_IMMUTABILITY.md`](PACKETS/CORE-ART-003A_RETRY_GUARD_AND_PARENT_IMMUTABILITY.md)
     — bezpieczna macierz retry, niemutowalny rodzic, lineage i idempotency/concurrency gate.
     — remanent profilu, zdegradowane endpointy, konsolidacja danych i testy.

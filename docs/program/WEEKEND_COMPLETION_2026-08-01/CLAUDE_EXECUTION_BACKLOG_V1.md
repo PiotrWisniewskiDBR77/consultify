@@ -32,7 +32,7 @@ Jedna paczka ma jednego ownera zapisu, ograniczony zestaw plików, jeden weryfik
 | `MAT-005A` | Document checkpoint i restore | autosave/editor sync | **ACCEPTED**: capture→confirm→rollback→canonical read-back |
 | `MAT-005B` | domknięcie Document lifecycle | autosave/export/share/version | pełny create→edit→reopen→restore→PDF→share E2E + revoke/rotate |
 | `MAT-006A` | Presentation restore z CAS | generator/autosave | **ACCEPTED**: expectedVersion + 409 + canonical read-back |
-| `MAT-006B` | Presentation lifecycle E2E i history unavailable | generator i eksporty | wizard→edit→reopen→restore→PPTX/PDF→share/revoke |
+| `MAT-006B` | Presentation lifecycle E2E i history unavailable | generator i eksporty | **ACCEPTED_CONTRACT_SLICE**: jawny history unavailable + mapa/testy składowe; pełny staging wizard→edit→reopen→restore→PPTX/PDF→share/revoke nadal wymagany |
 | `MAT-007` | immutable PDF export receipt | Document/Deck source authority | historyczny PDF związany z source revision/hash |
 
 ## Fala 2 — Finance i Results
@@ -52,9 +52,12 @@ Jedna paczka ma jednego ownera zapisu, ograniczony zestaw plików, jeden weryfik
 
 | Packet | Cel | Test |
 | --- | --- | --- |
-| `INI-001` | jeden status model i Initiative List | filters are projections of one registry |
-| `INI-002` | candidate dedupe/merge/completeness | duplicate fixtures and merge lineage |
-| `INI-003` | roles, team and simple approval profile | positive/negative capability matrix |
+| `INI-001` | `/initiatives` owner, default List/table i lifecycle projection | alias query/hash + Active/All same-ID + audit/reopen |
+| `INI-002` | candidate dedupe/merge/completeness i recovery | duplicate fixtures, merge lineage, idempotent repeat accept |
+| `INI-003` | project scope, roles, team i simple approval profile | positive/negative capability matrix + reopen |
+| `INI-004` | wspólny Portfolio/resources/Roadmap/time/capacity read model | update → List/Analysis/Timeline read-back + baseline |
+| `INI-005` | Decision/go-no-go → handoff Execution | negative role + decision audit + same-ID EXECUTING reopen |
+| `INI-006` | deterministyczne dynamic cards | registry composition, no duplicates, persisted reopen |
 | `EXE-001` | jeden canonical Execution entry/List | **ACCEPTED**: `/execution` owner + preserved aliases + internal handoffs |
 | `EXE-002` | management spine plan/task/risk/change | update + audit + read-back |
 | `FLOW-001` | Initiative → Execution → KPI → Finance actual | full identifier lineage and reopen |

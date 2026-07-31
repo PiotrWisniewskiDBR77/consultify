@@ -25,7 +25,7 @@ last_reviewed: 2026-07-31
 | Materials Library | `CZĘŚCIOWA+` | live registry bez produkcyjnych mocków; documents/decks realne, Sheets bez archive/share, ownership gate nadal rozdzielony | `MAT-001` |
 | Document create/edit/save/reopen/version/export | `CZĘŚCIOWA+` | autosave z 409, reopen, checkpoint/restore (`MAT-005A`) i DOCX/PDF/MD działają; list→share handoff domknięty w `MAT-002`; brak pełnego lifecycle E2E i revoke/rotate UI | `MAT-005B` |
 | Workbook/Excel | `CZĘŚCIOWA+` | `MAT-003A` udowadnia real-route SQLite create→cell/formula edit→reopen→XLSX read-back; brak wersji, concurrency, operacji strukturalnych i browser E2E; dwa runtime'y | `MAT-003B..D` |
-| Deck/Presentation | `CZĘŚCIOWA+` | create/edit/CAS-save/reopen/export/share oraz CAS restore z canonical read-back (`MAT-006A`) działają; historia nadal fail-soft i brak pełnego golden E2E | `MAT-006B` |
+| Deck/Presentation | `CZĘŚCIOWA+` | `MAT-006B`: zinwentaryzowany pełny lifecycle, składowe kontrakty są pokryte, CAS restore/read-back działa, a awaria historii ma jawny `unavailable`; brak jednego staging E2E z otwarciem PPTX/PDF | staging acceptance z packetu `MAT-006B` |
 | artifact share/download | `CZĘŚCIOWA+` | Document list handoff działa; Document i Deck mają realne share API, Sheets brak; zamrożony export receipt do domknięcia | `MAT-005..007` |
 | Finance Hub | `CZĘŚCIOWA+` | `FIN-001`: `/finance` jest jedynym ownerem UI, `/economics` zachowuje query/hash i przekierowuje; V8/legacy data fallback pozostaje | `FIN-002` |
 | Investment Case calculations | `CZĘŚCIOWA/BRAK lifecycle` | realne NPV/IRR/payback, ale lokalny kalkulator bez ROI, save/version/reopen/scenario/baseline/actual | `FIN-002` |
@@ -39,11 +39,12 @@ last_reviewed: 2026-07-31
 | plan/tasks/milestones/roles/resources | `CZĘŚCIOWA+` | realne CRUD/RACI/budget/capacity istnieją, ale są rozproszone i nie mają jednego plan→task→role→actual read-back | `EXE-002` |
 | risks/issues/change/decisions | `CZĘŚCIOWA` | realne RAID/mitigation/decisions/rollout changes istnieją w kilku modelach bez jednego management spine | `EXE-003` |
 | closure → Results/Finance | `CZĘŚCIOWA/BRAK E2E` | DONE uruchamia idempotentny, ale fire-and-forget Results handoff; brak transakcyjnego receipt i closure→Results→Finance actual round-trip | `FLOW-001` |
-| Initiative List all statuses | `CZĘŚCIOWA` | Hub istnieje, statusy/źródła wymagają kanonizacji | `INI-001` |
-| Candidates dedupe/merge/AI | `CZĘŚCIOWA` | fragmenty analiz i generatorów istnieją | `INI-002` |
-| Portfolio/resources vs Roadmap/time | `CZĘŚCIOWA` | osobne widoki/analizy, wspólny read model nieudowodniony | `INI-003` |
-| Decisions/go-no-go | `CZĘŚCIOWA` | approval fragments istnieją, role/default workflow niepełne | `INI-004` |
-| Initiative cards dynamic selection | `CZĘŚCIOWA` | katalog i N-mode registry istnieją, pełna kompozycja AI nieudowodniona | `INI-005` |
+| Initiative List all statuses | `CZĘŚCIOWA+` | `/initiatives` owner i realny Hub; `/portfolio` nadal drugim mountem, default Kanban zamiast List/table, V8/legacy continuity nie jest jednym dowiedzionym rejestrem | `INI-001` |
+| Candidates dedupe/merge/AI | `CZĘŚCIOWA+` | osobna zakładka, realne scan/accept/dismiss i canonical DRAFT; dedupe advisory/fail-open, brak jawnego merge UX i recovery dla accepted bez initiativeId | `INI-002` |
+| Roles/projects/approval profile | `CZĘŚCIOWA+` | project scope, owner/sponsor/RACI i effective gate roles działają; brak jednej capability matrix i jawnego cross-project scope | `INI-003` |
+| Portfolio/resources vs Roadmap/time/capacity | `CZĘŚCIOWA` | realne Analysis/Timeline/resources/dependencies, ale kilka read modeli i brak update→read-back→reopen między surfaces | `INI-004` |
+| Decisions/go-no-go + handoff Execution | `CZĘŚCIOWA/BRAK E2E` | gate/role/decision enforcement działa; brak jednego GO/NO-GO audit flow i same-ID SCHEDULED→EXECUTING reopen; konkurencyjny start-execution path | `INI-005` |
+| Initiative cards dynamic selection | `CZĘŚCIOWA` | katalog i N-mode registry istnieją, deterministyczna kompozycja AI i persisted reopen nieudowodnione | `INI-006` |
 | Assessment Library/Processes/Outputs/Reports/Initiatives | `CZĘŚCIOWA` | Hub i tabele obecne; różne generacje edytorów | `ASM-001` |
 | DRD guided session + matrix round-trip | `CZĘŚCIOWA` | najbogatszy stary edytor, potrzebny scalenie i E2E | `ASM-002` |
 | evidence/scoring/quality review | `CZĘŚCIOWA` | kontrakty i endpointy istnieją; enforcement do dowodu | `ASM-003` |

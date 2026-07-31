@@ -4,7 +4,7 @@ truth_type: delivery-status
 status: canonical
 owner: codex
 business-owner: piotr
-last_reviewed: 2026-07-31
+last_reviewed: 2026-08-01
 ---
 
 # Master plan wykonawczy — bottom-up
@@ -72,7 +72,7 @@ lub Finance.
 | 7 | `MAT-005A` | Document checkpoint/restore/read-back | **ACCEPTED** |
 | 8 | `MAT-005B` | pełny Document lifecycle E2E i share management | integrate |
 | 9 | `MAT-006A` | Presentation restore z CAS i canonical read-back | **ACCEPTED** |
-| 10 | `MAT-006B` | Presentation lifecycle E2E i history unavailable | integrate |
+| 10 | `MAT-006B` | **ACCEPTED_CONTRACT_SLICE** — history unavailable i kontrakty składowe; pełny staging E2E pozostaje bramką | staging acceptance |
 | 11 | `MAT-007` | immutable PDF export receipt i wspólna jakość | integrate |
 | 12 | `FIN-001` | `/finance` owner, `/economics` redirect-only | **ACCEPTED** |
 | 13 | `FIN-002` | trwały Investment Case: ROI/scenario/baseline/actual | concept + integrate |
@@ -92,9 +92,13 @@ odtwarzalne procesy.
 | ---: | --- | --- |
 | 1 | `EXE-001` | **ACCEPTED** — `/execution` owner; legacy aliases redirect-only |
 | 2 | `EXE-002` | jeden lifecycle plan/task/risk/change |
-| 3 | `INI-001` | jeden initiative write-truth i router order |
-| 4 | `INI-002` | candidate → approve → portfolio |
-| 5 | `FLOW-001` | initiative → execution → results E2E |
+| 3 | `INI-001` | `/initiatives` owner, default List/table, lifecycle i write-path audit |
+| 4 | `INI-002` | candidate → dedupe/merge → DRAFT z recovery i lineage |
+| 5 | `INI-003` | project scope, role resolution i prosty approval profile |
+| 6 | `INI-004` | wspólny Portfolio/resources/Roadmap/time/capacity read model |
+| 7 | `INI-005` | Decision GO/NO-GO → same-ID handoff do Execution |
+| 8 | `INI-006` | deterministyczne dynamic cards z persisted reopen |
+| 9 | `FLOW-001` | initiative → execution → results E2E |
 
 ## Fala 4 — Assessment, Tools, Interview
 
