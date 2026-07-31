@@ -90,7 +90,12 @@ function parseRestoredDeck(deckJsonRaw: unknown, deckId: string): Deck | null {
   return { ...(candidate as unknown as Deck), deck_id: deckId };
 }
 
-export function useVersionHistory(deck: Deck | null, deckId?: string | null) {
+export function useVersionHistory(
+  deck: Deck | null,
+  deckId?: string | null,
+  getExpectedVersion?: () => number | null,
+  onServerVersion?: (version: number) => void
+) {
   const [state, setState] = useState<VersionHistoryState>({
     versions: [],
     isSaving: false,
@@ -257,12 +262,19 @@ export function useVersionHistory(deck: Deck | null, deckId?: string | null) {
       try {
         const restoreRes = await fetch(
           `/api/presentations/decks/${resolvedDeckId}/versions/${versionId}/restore`,
-          { method: 'POST', headers: authHeaders() }
+          {
+            method: 'POST',
+            headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              expectedVersion: getExpectedVersion?.() ?? serverVersionRef.current,
+            }),
+          }
         );
         if (!restoreRes.ok) return null;
         const restoreBody = (await restoreRes.json().catch(() => ({}))) as { version?: number };
         if (restoreBody?.version) {
           serverVersionRef.current = restoreBody.version;
+          onServerVersion?.(restoreBody.version);
         }
 
         const deckRes = await fetch(`/api/presentations/decks/${resolvedDeckId}`, {
@@ -286,7 +298,7 @@ export function useVersionHistory(deck: Deck | null, deckId?: string | null) {
         return null;
       }
     },
-    [state.versions, resolvedDeckId, fetchServerVersions]
+    [state.versions, resolvedDeckId, fetchServerVersions, getExpectedVersion, onServerVersion]
   );
 
   const saveManualCheckpoint = useCallback(

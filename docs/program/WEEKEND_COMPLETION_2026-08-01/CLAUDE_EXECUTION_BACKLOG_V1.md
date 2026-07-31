@@ -31,7 +31,8 @@ Jedna paczka ma jednego ownera zapisu, ograniczony zestaw plików, jeden weryfik
 | `MAT-004A..C` | generatory templates i fidelity matrix | osiem istniejących modeli | template→edit→reopen→export + OOXML corpus |
 | `MAT-005A` | Document checkpoint i restore | autosave/editor sync | **ACCEPTED**: capture→confirm→rollback→canonical read-back |
 | `MAT-005B` | domknięcie Document lifecycle | autosave/export/share/version | pełny create→edit→reopen→restore→PDF→share E2E + revoke/rotate |
-| `MAT-006` | Presentation lifecycle hardening | generator i eksporty | CAS restore + pełny deck E2E |
+| `MAT-006A` | Presentation restore z CAS | generator/autosave | **ACCEPTED**: expectedVersion + 409 + canonical read-back |
+| `MAT-006B` | Presentation lifecycle E2E i history unavailable | generator i eksporty | wizard→edit→reopen→restore→PPTX/PDF→share/revoke |
 | `MAT-007` | immutable PDF export receipt | Document/Deck source authority | historyczny PDF związany z source revision/hash |
 
 ## Fala 2 — Finance i Results

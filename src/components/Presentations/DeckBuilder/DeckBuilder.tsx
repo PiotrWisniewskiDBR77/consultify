@@ -445,8 +445,12 @@ export const DeckBuilder: React.FC = () => {
     };
   } | null>(null);
 
+  const getExpectedDeckVersion = useCallback(() => serverVersionRef.current, []);
+  const syncDeckServerVersion = useCallback((version: number) => {
+    serverVersionRef.current = version;
+  }, []);
   const { versions, hasUnsavedChanges, lastSavedAt, restoreVersion, saveManualCheckpoint } =
-    useVersionHistory(deck, deckId);
+    useVersionHistory(deck, deckId, getExpectedDeckVersion, syncDeckServerVersion);
 
   const { isCardOutdated, refreshCard, refreshAllCards, refreshBlock } = useDataRefresh(
     deck,

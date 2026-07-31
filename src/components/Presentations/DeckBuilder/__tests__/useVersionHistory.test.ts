@@ -71,7 +71,7 @@ describe('useVersionHistory — server persistence', () => {
     fetchMock.mockResolvedValue(jsonResponse({ success: true, data: SERVER_VERSIONS }));
 
     const deck = makeDeck();
-    const { result } = renderHook(() => useVersionHistory(deck, DECK_ID));
+    const { result } = renderHook(() => useVersionHistory(deck, DECK_ID, () => 2));
 
     await waitFor(() => {
       expect(result.current.versions.length).toBe(2);
@@ -110,7 +110,8 @@ describe('useVersionHistory — server persistence', () => {
     });
 
     const deck = makeDeck();
-    const { result } = renderHook(() => useVersionHistory(deck, DECK_ID));
+    const onServerVersion = vi.fn();
+    const { result } = renderHook(() => useVersionHistory(deck, DECK_ID, () => 2, onServerVersion));
     await waitFor(() => expect(result.current.versions.length).toBe(2));
 
     let restored: Deck | null = null;
@@ -121,11 +122,38 @@ describe('useVersionHistory — server persistence', () => {
     expect(restored).not.toBeNull();
     expect((restored as unknown as Deck).title).toBe('Restored Deck');
     expect((restored as unknown as Deck).deck_id).toBe(DECK_ID);
+    expect(onServerVersion).toHaveBeenCalledWith(3);
 
     // Server restore endpoint was hit, then the canonical deck re-fetched.
     expect(fetchMock).toHaveBeenCalledWith(
       `/api/presentations/decks/${DECK_ID}/versions/ver-1/restore`,
-      expect.objectContaining({ method: 'POST' })
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ expectedVersion: 2 }) })
+    );
+  });
+
+  it('does not read back or apply a restore rejected with a version conflict', async () => {
+    fetchMock.mockImplementation((url: string, opts?: RequestInit) => {
+      if (url.endsWith('/versions') && (!opts || opts.method === 'GET')) {
+        return Promise.resolve(jsonResponse({ success: true, data: SERVER_VERSIONS }));
+      }
+      if (url.endsWith('/versions/ver-1/restore')) {
+        return Promise.resolve(
+          jsonResponse({ code: 'VERSION_CONFLICT', serverVersion: 3, clientVersion: 2 }, false, 409)
+        );
+      }
+      return Promise.resolve(jsonResponse({}, false, 404));
+    });
+    const deck = makeDeck();
+    const { result } = renderHook(() => useVersionHistory(deck, DECK_ID, () => 2));
+    await waitFor(() => expect(result.current.versions.length).toBe(2));
+    let restored: Deck | null = makeDeck();
+    await act(async () => {
+      restored = await result.current.restoreVersion('ver-1');
+    });
+    expect(restored).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      `/api/presentations/decks/${DECK_ID}`,
+      expect.anything()
     );
   });
 

@@ -71,16 +71,17 @@ lub Finance.
 | 6 | `MAT-004A..C` | generatory, lifecycle templates i fidelity matrix | concept + integrate |
 | 7 | `MAT-005A` | Document checkpoint/restore/read-back | **ACCEPTED** |
 | 8 | `MAT-005B` | pełny Document lifecycle E2E i share management | integrate |
-| 9 | `MAT-006` | Presentation restore hardening i lifecycle E2E | integrate |
-| 10 | `MAT-007` | immutable PDF export receipt i wspólna jakość | integrate |
-| 11 | `FIN-001` | `/finance` owner, `/economics` redirect-only | **ACCEPTED** |
-| 12 | `FIN-002` | trwały Investment Case: ROI/scenario/baseline/actual | concept + integrate |
-| 13 | `FIN-003` | statement import/map/validation | integrate |
-| 14 | `FIN-004` | Finance → kanoniczny Candidate Pack | integrate |
-| 15 | `RES-001A` | `/results` owner, `/benefits` i `/kpi-okr` redirect-only | **ACCEPTED** |
-| 16 | `RES-001B` | jeden owner store scorecardów KPI | integrate |
-| 17 | `RES-002` | KPI lifecycle z measurement i deviation | integrate |
-| 18 | `RES-003` | Initiative ↔ Finance ↔ KPI golden thread | integrate |
+| 9 | `MAT-006A` | Presentation restore z CAS i canonical read-back | **ACCEPTED** |
+| 10 | `MAT-006B` | Presentation lifecycle E2E i history unavailable | integrate |
+| 11 | `MAT-007` | immutable PDF export receipt i wspólna jakość | integrate |
+| 12 | `FIN-001` | `/finance` owner, `/economics` redirect-only | **ACCEPTED** |
+| 13 | `FIN-002` | trwały Investment Case: ROI/scenario/baseline/actual | concept + integrate |
+| 14 | `FIN-003` | statement import/map/validation | integrate |
+| 15 | `FIN-004` | Finance → kanoniczny Candidate Pack | integrate |
+| 16 | `RES-001A` | `/results` owner, `/benefits` i `/kpi-okr` redirect-only | **ACCEPTED** |
+| 17 | `RES-001B` | jeden owner store scorecardów KPI | integrate |
+| 18 | `RES-002` | KPI lifecycle z measurement i deviation | integrate |
+| 19 | `RES-003` | Initiative ↔ Finance ↔ KPI golden thread | integrate |
 
 Wyjście: trzy główne moduły przestają być kolekcją ekranów i realizują
 odtwarzalne procesy.

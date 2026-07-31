@@ -7135,6 +7135,23 @@ router.post(
       [deckId, orgId]
     )) as any;
     if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
+    const expectedVersion = Number(req.body?.expectedVersion);
+    if (!Number.isInteger(expectedVersion) || expectedVersion < 1) {
+      return res.status(400).json({
+        success: false,
+        error: 'expectedVersion is required',
+        code: 'EXPECTED_VERSION_REQUIRED',
+      });
+    }
+    if (expectedVersion !== Number(deck.version || 1)) {
+      return res.status(409).json({
+        success: false,
+        error: 'Version conflict: deck was modified before restore.',
+        code: 'VERSION_CONFLICT',
+        serverVersion: Number(deck.version || 1),
+        clientVersion: expectedVersion,
+      });
+    }
 
     let versionRow: any;
     try {
@@ -7149,6 +7166,25 @@ router.post(
 
     const newVersion = (deck.version || 1) + 1;
 
+    const restored = await dbRun(
+      `UPDATE presentation_decks SET deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND organization_id = ? AND version = ?`,
+      [versionRow.deck_json_snapshot, newVersion, deckId, orgId, expectedVersion]
+    );
+    if ((restored?.changes ?? 0) === 0) {
+      const latest = (await dbGet(
+        'SELECT version FROM presentation_decks WHERE id = ? AND organization_id = ?',
+        [deckId, orgId]
+      )) as any;
+      return res.status(409).json({
+        success: false,
+        error: 'Version conflict: deck changed during restore.',
+        code: 'VERSION_CONFLICT',
+        serverVersion: Number(latest?.version || deck.version || 1),
+        clientVersion: expectedVersion,
+      });
+    }
+
     if (deck.deck_json) {
       try {
         await dbRun(
@@ -7160,11 +7196,6 @@ router.post(
         /* non-blocking */
       }
     }
-
-    await dbRun(
-      `UPDATE presentation_decks SET deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-      [versionRow.deck_json_snapshot, newVersion, deckId, orgId]
-    );
 
     res.json({ success: true, version: newVersion, restoredFromVersion: versionRow.version });
   })
