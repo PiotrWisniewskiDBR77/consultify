@@ -51,13 +51,15 @@ Wyjście: cztery golden flows i usunięta nieuczciwość statusów.
 
 ## Fala 2 — Materials, Finance, Results/KPI
 
-### Stan wykonania 2026-07-31
+### Stan wykonania 2026-08-01
 
 Fundament `CORE-ART-001..007` jest **ACCEPTED**: jeden registry/envelope, kanoniczne typy,
 materialization preflight, content read-back z ETag, adaptery report/presentation/sheet,
 kanoniczny Canvas, kwarantanna Wave5 mirrors oraz fail-closed quorum publikacji.
 
-Przyjęte paczki domenowe: `MAT-002`, `MAT-003A`, `MAT-005A`, `FIN-001`.
+Przyjęte paczki domenowe: `MAT-002`, `MAT-003A`, `MAT-005A`, `MAT-006A`,
+`MAT-006B` jako contract slice, `FIN-001`, `RES-001A`, `EXE-001`, route slice
+`INI-001` oraz backend A1 `EXE-002`.
 Fala pozostaje w realizacji; status ten nie jest równoznaczny z odbiorem całego Materials
 lub Finance.
 

@@ -3,7 +3,7 @@ doc_id: mvp-function-implementation-status-ledger
 truth_type: verified-as-is
 status: working-canonical
 owner: codex
-last_reviewed: 2026-07-31
+last_reviewed: 2026-08-01
 ---
 
 # Remanent funkcji względem kodu
@@ -61,7 +61,7 @@ last_reviewed: 2026-07-31
 | Notes/Ideas/Vault/Run Agent/Manager | `CZĘŚCIOWA` | bogate, nierówno dojrzałe runtime; szczegółowe audyty istnieją | `MW-003..007` |
 | Chat history/composer/tools | `CZĘŚCIOWA+` | rozbudowany runtime, kilka regresji i duplikatów | `CHAT-001` |
 | Teresa action registry/approval | `CZĘŚCIOWA` | manifest, registry i handler istnieją; lokalne ścieżki pozostają | `CHAT-002` |
-| Chat → Canvas → owner object | `CZĘŚCIOWA/NO-GO` | Canvas bez kompletnego materialization read-back | `CHAT-003` |
+| Chat → Canvas → owner object | `CZĘŚCIOWA` | kanoniczny Canvas persistence i Artifact content read-back są przyjęte w `CORE-ART-006E/F`; nadal brak domenowego E2E Chat→Canvas→zatwierdzenie→Material/Note/Initiative/Table | `CHAT-003` |
 
 ## Zasada pogłębiania
 

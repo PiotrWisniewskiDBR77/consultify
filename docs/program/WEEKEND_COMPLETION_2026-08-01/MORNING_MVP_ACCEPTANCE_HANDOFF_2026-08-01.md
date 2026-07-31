@@ -1,7 +1,7 @@
 ---
 doc_id: morning-mvp-acceptance-handoff-2026-08-01
 truth_type: delivery-status
-status: working-canonical
+status: canonical
 owner: codex
 product_owner: piotr
 last_reviewed: 2026-08-01
