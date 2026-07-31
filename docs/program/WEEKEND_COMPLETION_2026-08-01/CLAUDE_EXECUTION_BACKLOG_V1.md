@@ -29,7 +29,8 @@ Jedna paczka ma jednego ownera zapisu, ograniczony zestaw plików, jeden weryfik
 | `MAT-002` | Document Library → real share panel | istniejący Document Studio | **ACCEPTED**: one-shot handoff + canonical URL |
 | `MAT-003A..D` | Workbook round-trip, safe save, minimal edit i versions | nie wymieniać silnika przed ADR | blank→edit→reopen→XLSX read-back + restore |
 | `MAT-004A..C` | generatory templates i fidelity matrix | osiem istniejących modeli | template→edit→reopen→export + OOXML corpus |
-| `MAT-005` | domknięcie Document lifecycle | autosave/export/share | snapshot→rollback→PDF→share E2E |
+| `MAT-005A` | Document checkpoint i restore | autosave/editor sync | **ACCEPTED**: capture→confirm→rollback→canonical read-back |
+| `MAT-005B` | domknięcie Document lifecycle | autosave/export/share/version | pełny create→edit→reopen→restore→PDF→share E2E + revoke/rotate |
 | `MAT-006` | Presentation lifecycle hardening | generator i eksporty | CAS restore + pełny deck E2E |
 | `MAT-007` | immutable PDF export receipt | Document/Deck source authority | historyczny PDF związany z source revision/hash |
 

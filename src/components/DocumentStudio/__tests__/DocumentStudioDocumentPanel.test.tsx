@@ -6,18 +6,24 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DocumentStudioDocumentPanel } from '../DocumentStudioDocumentPanel';
+import { DocumentStudioDocumentPanel, SchemaDiffPanel } from '../DocumentStudioDocumentPanel';
 import type { DocumentSchema } from '../types';
 
 const {
   insertDocumentStudioContentBlockMock,
   generateDocumentStudioArtifactMock,
   saveDocumentStudioManualContentMock,
+  createDocumentStudioSnapshotMock,
+  rollbackDocumentStudioSnapshotMock,
+  getDocumentStudioArtifactMock,
   navigateMock,
 } = vi.hoisted(() => ({
   insertDocumentStudioContentBlockMock: vi.fn(),
   generateDocumentStudioArtifactMock: vi.fn(),
   saveDocumentStudioManualContentMock: vi.fn(),
+  createDocumentStudioSnapshotMock: vi.fn(),
+  rollbackDocumentStudioSnapshotMock: vi.fn(),
+  getDocumentStudioArtifactMock: vi.fn(),
   navigateMock: vi.fn(),
 }));
 
@@ -39,6 +45,18 @@ vi.mock('../api', async () => {
     ...actual,
     generateDocumentStudioArtifact: generateDocumentStudioArtifactMock,
     saveDocumentStudioManualContent: saveDocumentStudioManualContentMock,
+    createDocumentStudioSnapshot: createDocumentStudioSnapshotMock,
+    rollbackDocumentStudioSnapshot: rollbackDocumentStudioSnapshotMock,
+    getDocumentStudioArtifact: getDocumentStudioArtifactMock,
+    listDocumentStudioSnapshots: vi.fn(async () => [
+      {
+        versionId: 'snapshot-1',
+        versionNumber: 1,
+        capturedAt: '2026-05-09T00:00:00.000Z',
+        origin: 'manual',
+        label: 'Baseline',
+      },
+    ]),
     getDocumentStudioPolicy: vi.fn(async () => ({ canOverrideQa: false, role: 'CONSULTANT' })),
     getDocumentStudioSchemaDiff: vi.fn(async () => ({
       baseSnapshot: {
@@ -256,6 +274,18 @@ describe('DocumentStudioDocumentPanel', () => {
         ],
       },
     });
+    createDocumentStudioSnapshotMock.mockResolvedValue({
+      versionId: 'snapshot-2',
+      versionNumber: 2,
+      capturedAt: '2026-05-09T01:00:00.000Z',
+      origin: 'manual',
+      label: 'Manual checkpoint',
+    });
+    rollbackDocumentStudioSnapshotMock.mockResolvedValue(undefined);
+    getDocumentStudioArtifactMock.mockResolvedValue({
+      schema: { ...schema, title: 'Restored title' },
+      generationWarnings: [],
+    });
   });
 
   it('renders the document in the shared MELS shell with outline and canonical chips', async () => {
@@ -409,6 +439,38 @@ describe('DocumentStudioDocumentPanel', () => {
     expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('Reusable intro text.');
   });
 
+  it('captures and restores a snapshot, then publishes the canonical read-back', async () => {
+    const onSchemaUpdated = vi.fn();
+    render(<SchemaDiffPanel artifactId="artifact-1" onSchemaUpdated={onSchemaUpdated} />);
+    await waitFor(() =>
+      expect(screen.getByTestId('document-snapshot-capture')).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByTestId('document-snapshot-capture'));
+    await waitFor(() =>
+      expect(createDocumentStudioSnapshotMock).toHaveBeenCalledWith(
+        'artifact-1',
+        expect.objectContaining({ reason: 'document_studio_ui_capture' })
+      )
+    );
+
+    const select = screen.getByTestId('schema-diff-baseline-select');
+    fireEvent.change(select, { target: { value: 'snapshot-1' } });
+    fireEvent.click(screen.getByTestId('document-snapshot-restore'));
+    expect(screen.getByTestId('document-snapshot-restore')).toHaveTextContent('Confirm restore');
+    fireEvent.click(screen.getByTestId('document-snapshot-restore'));
+    await waitFor(() =>
+      expect(rollbackDocumentStudioSnapshotMock).toHaveBeenCalledWith(
+        'artifact-1',
+        'snapshot-1',
+        expect.objectContaining({ reason: 'document_studio_ui_restore' })
+      )
+    );
+    expect(getDocumentStudioArtifactMock).toHaveBeenCalledWith('artifact-1');
+    expect(onSchemaUpdated).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Restored title' })
+    );
+  });
+
   it('opens the DOC_BUILDER_MANIFEST validation gate', async () => {
     render(
       <DocumentStudioDocumentPanel
@@ -511,9 +573,7 @@ describe('DocumentStudioDocumentPanel', () => {
           expectedVersion: '2026-07-28T00:00:00.000Z',
         })
       );
-      await waitFor(() =>
-        expect(navigateMock).toHaveBeenCalledWith('/document-studio/artifact-2')
-      );
+      await waitFor(() => expect(navigateMock).toHaveBeenCalledWith('/document-studio/artifact-2'));
     });
   });
 
@@ -545,7 +605,7 @@ describe('DocumentStudioDocumentPanel', () => {
       expect(onStartOver).not.toHaveBeenCalled();
     });
 
-    it('back arrow\'s visible label says where it leads (Materiały), matching its accessible name', () => {
+    it("back arrow's visible label says where it leads (Materiały), matching its accessible name", () => {
       render(
         <DocumentStudioDocumentPanel
           artifactId="artifact-1"

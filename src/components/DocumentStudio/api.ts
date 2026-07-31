@@ -1153,6 +1153,34 @@ export async function listDocumentStudioSnapshots(
   return json.snapshots;
 }
 
+export async function createDocumentStudioSnapshot(
+  artifactId: string,
+  payload: { label?: string; reason?: string } = {}
+): Promise<DocumentVersionSnapshotSummary> {
+  const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/snapshots`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  const json = await handleResponse<{ snapshot: DocumentVersionSnapshotSummary }>(
+    res,
+    'DocumentStudio create snapshot'
+  );
+  return json.snapshot;
+}
+
+export async function rollbackDocumentStudioSnapshot(
+  artifactId: string,
+  versionId: string,
+  payload: { reason?: string } = {}
+): Promise<void> {
+  const res = await fetchWithRetry(
+    `${BASE}/${encodeURIComponent(artifactId)}/snapshots/${encodeURIComponent(versionId)}/rollback`,
+    { method: 'POST', headers: getHeaders(), body: JSON.stringify(payload) }
+  );
+  await handleResponse<unknown>(res, 'DocumentStudio rollback snapshot');
+}
+
 export async function getDocumentStudioSchemaDiff(
   artifactId: string,
   versionId?: string
