@@ -21,6 +21,7 @@ równoważne URL-e, mimo zatwierdzonej nazwy produktu Finance i kanonicznego map
 
 - `/finance` pozostaje jedyną trasą montującą Finance Hub;
 - `/economics` jest kompatybilnym redirect-only aliasem;
+- wewnętrzny AI action handler kieruje aliasy `economics` i `finance` bezpośrednio do `/finance`;
 - query i hash są zachowane, więc zakładki oraz deep-link state nie giną;
 - redirect emituje istniejącą telemetrię `route_redirected`;
 - backendowe nazwy `/api/economics`, identyfikator uprawnienia `MODULE_ECONOMICS`

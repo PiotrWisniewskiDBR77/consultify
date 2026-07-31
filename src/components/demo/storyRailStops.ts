@@ -55,7 +55,7 @@ export const STORY_RAIL_STOPS: StoryRailStop[] = [
   },
   {
     id: 'results',
-    route: '/benefits',
+    route: '/results',
     title: 'Results & Value',
     blurb: '€1.4M banked — 194% of target, reconciled to a confirmed P&L.',
   },

@@ -72,7 +72,7 @@ const MODULE_ROUTES: Record<TargetModule, { list: string; detail?: (id: string) 
     detail: (id) => `/tabele?artifactId=${encodeURIComponent(id)}`,
   },
   results: {
-    list: '/benefits',
+    list: '/results',
   },
   assessment: {
     list: '/assessment',

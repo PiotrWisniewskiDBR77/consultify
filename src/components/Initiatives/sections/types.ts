@@ -663,7 +663,7 @@ export const MODULE_CONFIG = {
     textColor: 'text-amber-600 dark:text-amber-400',
     bgLight: 'bg-amber-500/10',
     icon: 'TrendingUp',
-    route: '/benefits',
+    route: '/results',
     description: 'Value tracking phase',
     descriptionPl: 'Faza śledzenia wartości',
   },
