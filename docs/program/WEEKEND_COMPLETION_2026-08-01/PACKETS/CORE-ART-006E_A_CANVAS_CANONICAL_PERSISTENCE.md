@@ -1,7 +1,7 @@
 ---
 doc_id: CORE-ART-006E-A
 truth_type: operations
-status: READY
+status: ACCEPTED
 owner: codex
 product_owner: piotr
 priority: P0
@@ -37,3 +37,15 @@ Route i service zwracają identyczny kanon. Restore jawnie inferuje format stars
 ## Recovery
 
 Wspólny helper jest addytywny; rollback przywraca stare mappery bez zmiany istniejących danych.
+
+## Odbiór 2026-07-31
+
+Decyzja: **GO**.
+
+- canonical transition/restore matrix: `6/6 PASS`;
+- route smoke: `3/3 PASS`;
+- pełny frontend typecheck: PASS;
+- `git diff --check`: PASS.
+
+Review wykrył i naprawił dwie regresje przed GO: pusty Markdown nie może być `synced`,
+a `toDraft` nie może nadpisywać obliczonego statusu starym polem z rekordu.

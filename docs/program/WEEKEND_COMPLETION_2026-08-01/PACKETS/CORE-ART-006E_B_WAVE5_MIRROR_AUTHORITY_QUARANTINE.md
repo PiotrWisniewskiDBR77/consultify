@@ -1,7 +1,7 @@
 ---
 doc_id: CORE-ART-006E-B
 truth_type: operations
-status: BLOCKED_BY_CORE_ART_006E_A
+status: READY
 owner: codex
 product_owner: piotr
 priority: P0

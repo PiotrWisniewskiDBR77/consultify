@@ -24,6 +24,11 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js'
 import { getTableColumns } from '../utils/dbSchema.js';
 import { decodeHtmlEntities, deepDecodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
+import {
+  buildCanvasCanonicalWrite,
+  inferCanvasVersionFormat,
+  resolveCanvasCanonicalEnvelope,
+} from '../services/artifacts/canvasCanonicalPersistence.js';
 
 const router = Router();
 
@@ -644,22 +649,9 @@ function workflowOutputType(template: WorkflowTemplate): OutputType {
 }
 
 function toDraft(row: DraftRow): WorkCanvasDraft {
-  const legacyContent = parseJson(row.content_json, '');
-  const contentJson = parseJson(row.content_json_native, undefined);
   const blocks = normalizeCanvasArtifactBlocks(parseJson(row.blocks_json, []));
-  const contentEnvelope = createArtifactContentEnvelope({
-    artifactType: row.kind,
-    canonicalFormat: row.canonical_format || undefined,
-    contentMd: (() => {
-      const raw = row.content_md || (typeof legacyContent === 'string' ? legacyContent : '');
-      return raw && raw.startsWith('"') ? JSON.parse(raw) : raw;
-    })(),
-    contentJson: contentJson ?? (row.canonical_format === 'json' ? legacyContent : undefined),
-    blocks,
-    contentSchemaVersion: row.content_schema_version || undefined,
-  });
-  const projectionStatus =
-    row.markdown_projection_status || contentEnvelope.markdownProjectionStatus;
+  const contentEnvelope = resolveCanvasCanonicalEnvelope(row);
+  const projectionStatus = contentEnvelope.markdownProjectionStatus;
   return {
     id: row.id,
     organizationId: row.organization_id,
@@ -667,21 +659,18 @@ function toDraft(row: DraftRow): WorkCanvasDraft {
     conversationId: row.conversation_id,
     kind: row.kind,
     title: row.title,
-    content: parseJson(row.content_json, ''),
-    contentEnvelope: {
-      ...contentEnvelope,
-      markdownProjectionStatus: projectionStatus,
-      markdownProjectedAt: row.markdown_projected_at || contentEnvelope.markdownProjectedAt,
-      projectionError: row.projection_error || contentEnvelope.projectionError,
-    },
+    content: contentEnvelope.canonicalFormat === 'json'
+      ? contentEnvelope.contentJson
+      : contentEnvelope.contentMd,
+    contentEnvelope,
     canonicalFormat: contentEnvelope.canonicalFormat,
     contentMd: contentEnvelope.contentMd,
     contentJson: contentEnvelope.contentJson,
-    blocks: contentEnvelope.blocks || blocks,
-    contentSchemaVersion: row.content_schema_version,
+    blocks: normalizeCanvasArtifactBlocks(contentEnvelope.blocks || blocks),
+    contentSchemaVersion: contentEnvelope.contentSchemaVersion,
     markdownProjectionStatus: projectionStatus,
-    markdownProjectedAt: row.markdown_projected_at || contentEnvelope.markdownProjectedAt || null,
-    projectionError: row.projection_error || contentEnvelope.projectionError || null,
+    markdownProjectedAt: contentEnvelope.markdownProjectedAt || null,
+    projectionError: contentEnvelope.projectionError || null,
     sources: parseJson(row.sources_json, []) as unknown[],
     provenance: parseJson(row.provenance_json, {}) as Record<string, unknown>,
     projectId: row.project_id,
@@ -2499,7 +2488,7 @@ async function createOutputResource(
     canonicalFormat: envelopeForOutput.canonicalFormat,
     contentMd: envelopeForOutput.contentMd,
     contentJson: envelopeForOutput.contentJson,
-    blocks: envelopeForOutput.blocks || [],
+    blocks: normalizeCanvasArtifactBlocks(envelopeForOutput.blocks || []),
     contentSchemaVersion: envelopeForOutput.contentSchemaVersion || null,
     markdownProjectionStatus: envelopeForOutput.markdownProjectionStatus,
     markdownProjectedAt: envelopeForOutput.markdownProjectedAt || null,
@@ -2784,7 +2773,7 @@ router.post('/drafts', async (req: AuthRequest, res) => {
   draft.canonicalFormat = draft.contentEnvelope.canonicalFormat;
   draft.contentMd = draft.contentEnvelope.contentMd;
   draft.contentJson = draft.contentEnvelope.contentJson;
-  draft.blocks = draft.contentEnvelope.blocks || [];
+  draft.blocks = normalizeCanvasArtifactBlocks(draft.contentEnvelope.blocks || []);
   draft.markdownProjectionStatus = draft.contentEnvelope.markdownProjectionStatus;
   draft.markdownProjectedAt = draft.contentEnvelope.markdownProjectedAt || null;
   draft.projectionError = draft.contentEnvelope.projectionError || null;
@@ -3465,20 +3454,31 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
     createdBy: draft.createdBy,
     updatedAt: new Date().toISOString(),
   };
-  updated.contentEnvelope = createArtifactContentEnvelope({
-    artifactType: normalizedKind,
-    canonicalFormat: updated.canonicalFormat,
-    contentMd:
-      updated.contentMd ??
-      (typeof updated.content === 'string' ? updated.content : updated.contentMd),
-    contentJson: updated.contentJson,
-    blocks: updated.blocks,
-    contentSchemaVersion: updated.contentSchemaVersion || undefined,
-  });
+  const canonicalWrite = buildCanvasCanonicalWrite(
+    {
+      kind: draft.kind, canonical_format: draft.canonicalFormat,
+      content_json: JSON.stringify(draft.content), content_md: draft.contentMd,
+      content_json_native: draft.contentJson === undefined ? null : JSON.stringify(draft.contentJson),
+      blocks_json: draft.blocks.length ? JSON.stringify(draft.blocks) : null,
+      content_schema_version: draft.contentSchemaVersion,
+      markdown_projection_status: draft.markdownProjectionStatus,
+      markdown_projected_at: draft.markdownProjectedAt, projection_error: draft.projectionError,
+    },
+    {
+      canonicalFormat: updated.canonicalFormat,
+      ...(payload.content !== undefined ? { content: payload.content } : {}),
+      ...(payload.contentMd !== undefined ? { contentMd: String(payload.contentMd) } : {}),
+      ...(payload.contentJson !== undefined ? { contentJson: payload.contentJson } : {}),
+      ...(Array.isArray(payload.blocks) ? { blocks: updated.blocks } : {}),
+      contentSchemaVersion: updated.contentSchemaVersion,
+    },
+  );
+  updated.contentEnvelope = canonicalWrite.envelope;
   updated.canonicalFormat = updated.contentEnvelope.canonicalFormat;
   updated.contentMd = updated.contentEnvelope.contentMd;
   updated.contentJson = updated.contentEnvelope.contentJson;
-  updated.blocks = updated.contentEnvelope.blocks || [];
+  updated.content = updated.canonicalFormat === 'json' ? updated.contentJson : updated.contentMd;
+  updated.blocks = normalizeCanvasArtifactBlocks(updated.contentEnvelope.blocks || []);
   updated.contentSchemaVersion = updated.contentEnvelope.contentSchemaVersion || null;
   updated.markdownProjectionStatus = updated.contentEnvelope.markdownProjectionStatus;
   updated.markdownProjectedAt = updated.contentEnvelope.markdownProjectedAt || null;
@@ -3496,7 +3496,7 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
       updated.conversationId,
       updated.kind,
       updated.title,
-      JSON.stringify(updated.content),
+      canonicalWrite.content_json,
       JSON.stringify(updated.sources),
       JSON.stringify(updated.provenance),
       updated.projectId,
@@ -3510,14 +3510,14 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
       updated.dirtyState,
       updated.visibility,
       updated.auditStatus,
-      updated.canonicalFormat,
-      updated.contentMd,
-      updated.contentJson === undefined ? null : JSON.stringify(updated.contentJson),
-      updated.blocks.length > 0 ? JSON.stringify(updated.blocks) : null,
-      updated.contentSchemaVersion,
-      updated.markdownProjectionStatus,
-      updated.markdownProjectedAt,
-      updated.projectionError,
+      canonicalWrite.canonical_format,
+      canonicalWrite.content_md,
+      canonicalWrite.content_json_native,
+      canonicalWrite.blocks_json,
+      canonicalWrite.content_schema_version,
+      canonicalWrite.markdown_projection_status,
+      canonicalWrite.markdown_projected_at,
+      canonicalWrite.projection_error,
       updated.updatedAt,
       updated.id,
       updated.organizationId,
@@ -3870,7 +3870,7 @@ router.post('/drafts/:draftId/operations', async (req: AuthRequest, res) => {
       canonicalFormat: updatedEnvelope.canonicalFormat,
       contentMd: updatedEnvelope.contentMd,
       contentJson: updatedEnvelope.contentJson,
-      blocks: updatedEnvelope.blocks || [],
+      blocks: normalizeCanvasArtifactBlocks(updatedEnvelope.blocks || []),
       contentSchemaVersion: updatedEnvelope.contentSchemaVersion || null,
       markdownProjectionStatus: updatedEnvelope.markdownProjectionStatus,
       markdownProjectedAt: updatedEnvelope.markdownProjectedAt || null,
@@ -3943,21 +3943,30 @@ router.post('/drafts/:draftId/versions/:versionId/restore', async (req: AuthRequ
   const version = toVersion(versionRow);
   await createVersionSnapshot(draft, 'restore_version', `Restored version ${version.id}`, userId);
   const now = new Date().toISOString();
-  const restoredEnvelope = createArtifactContentEnvelope({
-    artifactType: draft.kind,
-    canonicalFormat: draft.canonicalFormat,
-    contentMd: version.contentMd,
-    contentJson: version.contentJson,
-    blocks: version.blocks,
-  });
+  const restoredFormat = inferCanvasVersionFormat(versionRow);
+  const restoredWrite = buildCanvasCanonicalWrite(
+    {
+      kind: draft.kind, canonical_format: draft.canonicalFormat,
+      content_json: JSON.stringify(draft.content), content_md: draft.contentMd,
+      content_json_native: draft.contentJson === undefined ? null : JSON.stringify(draft.contentJson),
+      blocks_json: draft.blocks.length ? JSON.stringify(draft.blocks) : null,
+      content_schema_version: draft.contentSchemaVersion,
+      markdown_projection_status: draft.markdownProjectionStatus,
+      markdown_projected_at: draft.markdownProjectedAt, projection_error: draft.projectionError,
+    },
+    restoredFormat === 'json'
+      ? { canonicalFormat: 'json', contentJson: version.contentJson, contentMd: version.contentMd, blocks: version.blocks, contentSchemaVersion: 'legacy/v0' }
+      : { canonicalFormat: 'markdown', contentMd: version.contentMd, blocks: version.blocks, contentSchemaVersion: 'legacy/v0' },
+  );
+  const restoredEnvelope = restoredWrite.envelope;
   const restored: WorkCanvasDraft = {
     ...draft,
-    content: version.contentMd,
+    content: restoredEnvelope.canonicalFormat === 'json' ? restoredEnvelope.contentJson : restoredEnvelope.contentMd,
     contentEnvelope: restoredEnvelope,
     canonicalFormat: restoredEnvelope.canonicalFormat,
     contentMd: restoredEnvelope.contentMd,
     contentJson: restoredEnvelope.contentJson,
-    blocks: restoredEnvelope.blocks || [],
+    blocks: normalizeCanvasArtifactBlocks(restoredEnvelope.blocks || []),
     markdownProjectionStatus: restoredEnvelope.markdownProjectionStatus,
     markdownProjectedAt: restoredEnvelope.markdownProjectedAt || null,
     projectionError: restoredEnvelope.projectionError || null,
@@ -3967,19 +3976,20 @@ router.post('/drafts/:draftId/versions/:versionId/restore', async (req: AuthRequ
   };
   await dbRun(
     `UPDATE work_canvas_drafts
-     SET content_json = ?, canonical_format = ?, content_md = ?, content_json_native = ?, blocks_json = ?,
+     SET content_json = ?, canonical_format = ?, content_md = ?, content_json_native = ?, blocks_json = ?, content_schema_version = ?,
          markdown_projection_status = ?, markdown_projected_at = ?, projection_error = ?,
          save_state = ?, dirty_state = ?, updated_at = ?
      WHERE id = ? AND organization_id = ?`,
     [
-      JSON.stringify(restored.content),
-      restored.canonicalFormat,
-      restored.contentMd,
-      restored.contentJson === undefined ? null : JSON.stringify(restored.contentJson),
-      restored.blocks.length > 0 ? JSON.stringify(restored.blocks) : null,
-      restored.markdownProjectionStatus,
-      restored.markdownProjectedAt,
-      restored.projectionError,
+      restoredWrite.content_json,
+      restoredWrite.canonical_format,
+      restoredWrite.content_md,
+      restoredWrite.content_json_native,
+      restoredWrite.blocks_json,
+      restoredWrite.content_schema_version,
+      restoredWrite.markdown_projection_status,
+      restoredWrite.markdown_projected_at,
+      restoredWrite.projection_error,
       restored.saveState,
       restored.dirtyState,
       restored.updatedAt,
@@ -3988,7 +3998,13 @@ router.post('/drafts/:draftId/versions/:versionId/restore', async (req: AuthRequ
     ],
     { fallback: false }
   );
-  return res.json(envelope({ draft: restored, restoredVersion: version }));
+  const readBackRow = await dbGet<DraftRow>(
+    `SELECT * FROM work_canvas_drafts WHERE id = ? AND organization_id = ?`,
+    [restored.id, restored.organizationId],
+    { fallback: false },
+  );
+  if (!readBackRow) return res.status(500).json({ error: 'Canvas restore read-back failed' });
+  return res.json(envelope({ draft: toDraft(readBackRow), restoredVersion: version }));
 });
 
 router.post('/drafts/:draftId/share', async (req: AuthRequest, res) => {
