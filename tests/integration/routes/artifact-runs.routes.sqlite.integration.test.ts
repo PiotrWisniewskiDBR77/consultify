@@ -119,6 +119,7 @@ vi.mock('../../../server/src/middleware/v8FeatureGate.middleware.js', () => ({
 }));
 
 import artifactRunsRouter from '../../../server/src/routes/artifact-runs.routes.js';
+import artifactsRouter from '../../../server/src/routes/artifacts.routes.js';
 import * as reportBuilderService from '../../../server/src/services/reportBuilderService.js';
 import { errorHandlerMiddleware } from '../../../server/src/utils/ErrorHandler.js';
 
@@ -126,7 +127,73 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
   const app = express();
   app.use(express.json());
   app.use('/api/artifact-runs', artifactRunsRouter);
+  app.use('/api/artifacts', artifactsRouter);
   app.use(errorHandlerMiddleware);
+
+  const sqliteRun = (sql: string, params: unknown[] = []) =>
+    new Promise<void>((resolve, reject) => {
+      sqliteCtx.db.run(sql, params, (err) => (err ? reject(err) : resolve()));
+    });
+
+  const sqliteGet = <T,>(sql: string, params: unknown[] = []) =>
+    new Promise<T | null>((resolve, reject) => {
+      sqliteCtx.db.get(sql, params, (err, row) =>
+        err ? reject(err) : resolve((row || null) as T | null),
+      );
+    });
+
+  async function getPrimaryOrigin(artifactId: string) {
+    const origin = await sqliteGet<{ origin_runtime: string; origin_record_id: string }>(
+      `SELECT origin_runtime, origin_record_id FROM v8_artifact_origin_links
+       WHERE artifact_id = ? AND organization_id = ? AND is_primary_origin = 1`,
+      [artifactId, 'org-a'],
+    );
+    expect(origin).toBeTruthy();
+    return origin!;
+  }
+
+  async function expectStableContentReadBack(
+    artifactId: string,
+    origin: { origin_runtime: string; origin_record_id: string },
+  ) {
+    const first = await request(app).get(`/api/artifacts/${artifactId}/content`);
+    expect(first.status, JSON.stringify(first.body)).toBe(200);
+    expect(first.headers['cache-control']).toBe('private, must-revalidate');
+    expect(first.headers.etag).toMatch(/^"[a-f0-9]{64}"$/);
+    expect(first.body.data).toEqual(
+      expect.objectContaining({
+        artifactId,
+        origin: {
+          originRuntime: origin.origin_runtime,
+          originRecordId: origin.origin_record_id,
+        },
+        contentHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        envelope: expect.objectContaining({
+          envelopeVersion: 'artifact-content/v1',
+          canonicalFormat: 'json',
+          provenance: expect.objectContaining({
+            originRuntime: origin.origin_runtime,
+            originRecordId: origin.origin_record_id,
+          }),
+        }),
+      }),
+    );
+    expect(JSON.stringify(first.body.data.envelope)).not.toContain(
+      'mirrored into Wave 5 runtime',
+    );
+
+    const second = await request(app).get(`/api/artifacts/${artifactId}/content`);
+    expect(second.status).toBe(200);
+    expect(second.headers.etag).toBe(first.headers.etag);
+    expect(second.body.data.contentHash).toBe(first.body.data.contentHash);
+
+    const notModified = await request(app)
+      .get(`/api/artifacts/${artifactId}/content`)
+      .set('If-None-Match', first.headers.etag);
+    expect(notModified.status).toBe(304);
+    expect(notModified.text).toBe('');
+    return first;
+  }
 
   beforeAll(async () => {
     await applyArtifactSubstrateDdl(sqliteCtx.db);
@@ -290,6 +357,55 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
     );
     expect(materializeRes.body.data.artifactId).toBeTruthy();
 
+    const reportArtifactId = String(materializeRes.body.data.artifactId);
+    const reportOrigin = await getPrimaryOrigin(reportArtifactId);
+    expect(reportOrigin.origin_runtime).toBe('report');
+    expect(materializeRes.body.data.materializationOrigin).toEqual({
+      originRuntime: 'report',
+      originRecordId: reportOrigin.origin_record_id,
+    });
+    await sqliteRun(
+      `UPDATE report_builder_sections
+       SET generated_content = ?, edited_content = NULL, content_format = 'markdown', updated_at = ?
+       WHERE report_id = ?`,
+      ['Initial governed report content', '2026-08-01T08:00:00.000Z', reportOrigin.origin_record_id],
+    );
+    await sqliteRun('UPDATE report_builder_reports SET updated_at = ? WHERE id = ?', [
+      '2026-08-01T08:00:00.000Z',
+      reportOrigin.origin_record_id,
+    ]);
+    const initialReportContent = await expectStableContentReadBack(reportArtifactId, reportOrigin);
+    expect(initialReportContent.body.data.envelope).toEqual(expect.objectContaining({
+      canonicalKind: 'document',
+      contentSchemaVersion: 'report-builder/v1',
+      contentMd: expect.stringContaining('Initial governed report content'),
+    }));
+    expect(initialReportContent.body.data.originRevision).toBeTruthy();
+
+    await sqliteRun(
+      `UPDATE report_builder_sections SET edited_content = ?, updated_at = ? WHERE report_id = ?`,
+      ['Edited governed report content', '2026-08-01T09:00:00.000Z', reportOrigin.origin_record_id],
+    );
+    await sqliteRun('UPDATE report_builder_reports SET updated_at = ? WHERE id = ?', [
+      '2026-08-01T09:00:00.000Z',
+      reportOrigin.origin_record_id,
+    ]);
+    const changedReportContent = await request(app)
+      .get(`/api/artifacts/${reportArtifactId}/content`)
+      .set('If-None-Match', initialReportContent.headers.etag);
+    expect(changedReportContent.status).toBe(200);
+    expect(changedReportContent.headers.etag).not.toBe(initialReportContent.headers.etag);
+    expect(changedReportContent.body.data.contentHash).not.toBe(
+      initialReportContent.body.data.contentHash,
+    );
+    expect(changedReportContent.body.data.originRevision).not.toBe(
+      initialReportContent.body.data.originRevision,
+    );
+    expect(changedReportContent.body.data.envelope.contentMd).toContain(
+      'Edited governed report content',
+    );
+    expect(changedReportContent.body.data.envelope.contentJson.sections[0].source).toBe('edited');
+
     const retryRes = await request(app).post(`/api/artifact-runs/${runId}/retry`).send({});
     expect(retryRes.status).toBe(409);
     expect(retryRes.body.error).toEqual(
@@ -386,6 +502,58 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
       }),
     );
     expect(materializeRes.body.data.artifactId).toBeTruthy();
+
+    const presentationArtifactId = String(materializeRes.body.data.artifactId);
+    const presentationOrigin = await getPrimaryOrigin(presentationArtifactId);
+    expect(presentationOrigin.origin_runtime).toBe('presentation');
+    expect(materializeRes.body.data.materializationOrigin).toEqual({
+      originRuntime: 'presentation',
+      originRecordId: presentationOrigin.origin_record_id,
+    });
+    const initialDeck = {
+      title: 'Board presentation',
+      slides: [{ title: 'Initial decision', bullets: ['Approve initial plan'] }],
+    };
+    await sqliteRun(
+      `UPDATE presentation_decks
+       SET content_json_native = ?, deck_json = ?, version = 1, updated_at = ? WHERE id = ?`,
+      [JSON.stringify(initialDeck), JSON.stringify({ title: 'Stale deck' }), '2026-08-01T10:00:00.000Z', presentationOrigin.origin_record_id],
+    );
+    const initialPresentationContent = await expectStableContentReadBack(
+      presentationArtifactId,
+      presentationOrigin,
+    );
+    expect(initialPresentationContent.body.data.envelope).toEqual(expect.objectContaining({
+      canonicalKind: 'presentation',
+      contentSchemaVersion: 'presentation-deck/v1',
+      contentJson: initialDeck,
+      contentMd: expect.stringContaining('Initial decision'),
+    }));
+    expect(initialPresentationContent.body.data.originRevision).toBeTruthy();
+
+    const changedDeck = {
+      title: 'Board presentation',
+      slides: [{ title: 'Updated decision', bullets: ['Approve revised plan'] }],
+    };
+    await sqliteRun(
+      `UPDATE presentation_decks
+       SET content_json_native = ?, version = 2, updated_at = ? WHERE id = ?`,
+      [JSON.stringify(changedDeck), '2026-08-01T11:00:00.000Z', presentationOrigin.origin_record_id],
+    );
+    const changedPresentationContent = await request(app)
+      .get(`/api/artifacts/${presentationArtifactId}/content`)
+      .set('If-None-Match', initialPresentationContent.headers.etag);
+    expect(changedPresentationContent.status).toBe(200);
+    expect(changedPresentationContent.headers.etag).not.toBe(
+      initialPresentationContent.headers.etag,
+    );
+    expect(changedPresentationContent.body.data.contentHash).not.toBe(
+      initialPresentationContent.body.data.contentHash,
+    );
+    expect(changedPresentationContent.body.data.originRevision).not.toBe(
+      initialPresentationContent.body.data.originRevision,
+    );
+    expect(changedPresentationContent.body.data.envelope.contentMd).toContain('Updated decision');
   });
 
   it('materializes a sheet run through the governed artifact-run route when a governed table target is provided', async () => {
@@ -429,5 +597,58 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
       }),
     );
     expect(materializeRes.body.data.artifactId).toBeTruthy();
+
+    const sheetArtifactId = String(materializeRes.body.data.artifactId);
+    const sheetOrigin = await getPrimaryOrigin(sheetArtifactId);
+    expect(sheetOrigin.origin_runtime).toBe('sheet');
+    expect(materializeRes.body.data.materializationOrigin).toEqual({
+      originRuntime: 'sheet',
+      originRecordId: sheetOrigin.origin_record_id,
+    });
+    await sqliteRun(
+      `INSERT INTO tp_views
+       (id, table_id, name, view_type, visible_field_ids, config, is_default, ordinal, created_at, updated_at)
+       VALUES (?, ?, ?, 'grid', ?, '{}', 1, 0, ?, ?)`,
+      ['view-governed-1', sheetOrigin.origin_record_id, 'Default view', JSON.stringify([
+        'field-name-tbl-governed-1',
+        'field-status-tbl-governed-1',
+      ]), '2026-08-01T12:00:00.000Z', '2026-08-01T12:00:00.000Z'],
+    );
+    await sqliteRun(
+      `INSERT INTO tp_records (id, table_id, data, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)`,
+      [
+        'record-governed-1', sheetOrigin.origin_record_id,
+        JSON.stringify({ 'field-name-tbl-governed-1': 'Alpha', 'field-status-tbl-governed-1': 'Open' }),
+        '2026-08-01T12:00:00.000Z', '2026-08-01T12:00:00.000Z',
+        'record-governed-2', sheetOrigin.origin_record_id,
+        JSON.stringify({ 'field-name-tbl-governed-1': 'Beta', 'field-status-tbl-governed-1': 'Closed' }),
+        '2026-08-01T12:01:00.000Z', '2026-08-01T12:01:00.000Z',
+      ],
+    );
+    const initialSheetContent = await expectStableContentReadBack(sheetArtifactId, sheetOrigin);
+    expect(initialSheetContent.body.data.originRevision).toBeNull();
+    expect(initialSheetContent.body.data.envelope).toEqual(expect.objectContaining({
+      canonicalKind: 'sheet',
+      contentSchemaVersion: 'table-platform/sheet-snapshot-v1',
+      contentMd: expect.stringContaining('Alpha'),
+    }));
+    expect(initialSheetContent.body.data.envelope.contentJson.records).toHaveLength(2);
+
+    await sqliteRun('UPDATE tp_records SET data = ?, updated_at = ? WHERE id = ?', [
+      JSON.stringify({ 'field-name-tbl-governed-1': 'Alpha revised', 'field-status-tbl-governed-1': 'Open' }),
+      '2026-08-01T13:00:00.000Z',
+      'record-governed-1',
+    ]);
+    const changedSheetContent = await request(app)
+      .get(`/api/artifacts/${sheetArtifactId}/content`)
+      .set('If-None-Match', initialSheetContent.headers.etag);
+    expect(changedSheetContent.status).toBe(200);
+    expect(changedSheetContent.headers.etag).not.toBe(initialSheetContent.headers.etag);
+    expect(changedSheetContent.body.data.contentHash).not.toBe(
+      initialSheetContent.body.data.contentHash,
+    );
+    expect(changedSheetContent.body.data.originRevision).toBeNull();
+    expect(changedSheetContent.body.data.envelope.contentMd).toContain('Alpha revised');
   });
 });

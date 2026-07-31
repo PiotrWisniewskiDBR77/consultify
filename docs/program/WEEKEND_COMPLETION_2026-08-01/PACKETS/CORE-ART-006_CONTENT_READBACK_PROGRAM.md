@@ -1,7 +1,7 @@
 ---
 doc_id: CORE-ART-006
 truth_type: operations
-status: IN_PROGRESS
+status: ACCEPTED
 owner: codex
 product_owner: piotr
 priority: P0
@@ -32,3 +32,9 @@ wersjonowany envelope.
 - JSON-native content nie może mieć statusu `synced` bez dowodu rewizji/hash;
 - preview skrócony nie może być przedstawiany jako pełny eksport;
 - tenant scope i stabilny hash/ETag na każdej ścieżce odczytu.
+
+## Odbiór programu 2026-08-01
+
+Decyzja: **GO**. Paczki `006A–006F` zaakceptowane. Registry pozostaje katalogiem,
+origin runtime źródłem prawdy, a report/presentation/sheet/Canvas/Wave5 mają jawny
+kontrakt content i sprawdzony read-back.

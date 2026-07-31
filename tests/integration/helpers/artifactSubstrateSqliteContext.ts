@@ -23,6 +23,7 @@ export async function applyArtifactSubstrateDdl(db: sqlite3.Database): Promise<v
       workspace_id TEXT NOT NULL,
       organization_id TEXT NOT NULL,
       name TEXT NOT NULL,
+      schema_version INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -30,6 +31,7 @@ export async function applyArtifactSubstrateDdl(db: sqlite3.Database): Promise<v
       id TEXT PRIMARY KEY,
       base_id TEXT NOT NULL,
       name TEXT NOT NULL,
+      description TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -38,7 +40,34 @@ export async function applyArtifactSubstrateDdl(db: sqlite3.Database): Promise<v
       table_id TEXT NOT NULL,
       name TEXT NOT NULL,
       field_type TEXT NOT NULL,
+      options TEXT NOT NULL DEFAULT '{}',
+      is_computed INTEGER NOT NULL DEFAULT 0,
+      field_order INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS tp_views (
+      id TEXT PRIMARY KEY,
+      table_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      view_type TEXT NOT NULL DEFAULT 'grid',
+      visible_field_ids TEXT NOT NULL DEFAULT '[]',
+      config TEXT NOT NULL DEFAULT '{}',
+      is_default INTEGER NOT NULL DEFAULT 0,
+      ordinal INTEGER,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS tp_records (
+      id TEXT PRIMARY KEY,
+      table_id TEXT NOT NULL,
+      data TEXT NOT NULL DEFAULT '{}',
+      confidence_score REAL,
+      validation_status TEXT NOT NULL DEFAULT 'unverified',
+      created_by TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS report_builder_reports (
@@ -82,6 +111,8 @@ export async function applyArtifactSubstrateDdl(db: sqlite3.Database): Promise<v
       length TEXT,
       language TEXT,
       content_format TEXT,
+      generated_content TEXT,
+      edited_content TEXT,
       custom_prompt TEXT,
       block_type_id TEXT,
       block_config_json TEXT,
@@ -126,6 +157,9 @@ export async function applyArtifactSubstrateDdl(db: sqlite3.Database): Promise<v
       brand_kit_id TEXT,
       source_artifacts TEXT,
       outline_json TEXT,
+      deck_json TEXT,
+      content_json_native TEXT,
+      version INTEGER NOT NULL DEFAULT 1,
       generated_by TEXT,
       source_type TEXT,
       presentation_mode TEXT,
@@ -271,6 +305,8 @@ export async function clearArtifactSubstrateTables(db: sqlite3.Database): Promis
   await run('DELETE FROM report_builder_reports');
   await run('DELETE FROM project_members');
   await run('DELETE FROM projects');
+  await run('DELETE FROM tp_records');
+  await run('DELETE FROM tp_views');
   await run('DELETE FROM tp_fields');
   await run('DELETE FROM tp_tables');
   await run('DELETE FROM tp_bases');
@@ -278,14 +314,16 @@ export async function clearArtifactSubstrateTables(db: sqlite3.Database): Promis
 
 export async function seedGovernedTable(
   db: sqlite3.Database,
-  params: { tableId: string; organizationId: string; workspaceId?: string; tableName?: string },
+  params: { tableId: string; organizationId: string; workspaceId?: string; tableName?: string }
 ): Promise<void> {
   const run = promisify(db.run.bind(db));
   const baseId = `base-${params.tableId}`;
-  await run(
-    `INSERT INTO tp_bases (id, workspace_id, organization_id, name) VALUES (?, ?, ?, ?)`,
-    [baseId, params.workspaceId || params.organizationId, params.organizationId, 'Governed base'],
-  );
+  await run(`INSERT INTO tp_bases (id, workspace_id, organization_id, name) VALUES (?, ?, ?, ?)`, [
+    baseId,
+    params.workspaceId || params.organizationId,
+    params.organizationId,
+    'Governed base',
+  ]);
   await run(`INSERT INTO tp_tables (id, base_id, name) VALUES (?, ?, ?)`, [
     params.tableId,
     baseId,
