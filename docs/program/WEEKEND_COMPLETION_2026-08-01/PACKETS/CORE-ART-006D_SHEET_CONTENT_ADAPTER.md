@@ -1,7 +1,7 @@
 ---
 doc_id: CORE-ART-006D
 truth_type: operations
-status: READY
+status: ACCEPTED
 owner: codex
 product_owner: piotr
 priority: P0
@@ -50,3 +50,16 @@ słabą/snapshotową semantykę i nie przedstawiać pageHash jako dataset revisi
 ## Recovery
 
 Usunięcie rejestracji adaptera przywraca fail-closed unsupported runtime bez zmiany danych.
+
+## Odbiór 2026-07-31
+
+Decyzja: **GO**.
+
+- adapter sheet matrix: `12/12 PASS`;
+- cały content resolver i runtime regression: `27/27 PASS`;
+- materialize regression: `10/10 PASS`;
+- łącznie niezależnie: `37/37 PASS`;
+- `git diff --check`: PASS.
+
+Paged read-back ma jawnie `revision.strength = weak`, `datasetRevision = null` oraz
+`originRevision = null`. Page hash nie jest przedstawiany jako rewizja całego arkusza.

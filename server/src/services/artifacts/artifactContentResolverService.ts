@@ -8,6 +8,7 @@ import { get as dbGet } from '../../utils/DbPromise.js';
 import { AppError } from '../../utils/ErrorHandler.js';
 import { presentationArtifactContentAdapter } from './presentationArtifactContentAdapter.js';
 import { reportArtifactContentAdapter } from './reportArtifactContentAdapter.js';
+import { sheetArtifactContentAdapter } from './sheetArtifactContentAdapter.js';
 
 export const ARTIFACT_CONTENT_ERROR_CODES = {
   ARTIFACT_NOT_FOUND: 'ARTIFACT_CONTENT_ARTIFACT_NOT_FOUND',
@@ -44,6 +45,7 @@ export interface ResolvedArtifactContent {
 const adapters = new Map<string, ArtifactContentAdapter>();
 adapters.set('report', reportArtifactContentAdapter);
 adapters.set('presentation', presentationArtifactContentAdapter);
+adapters.set('sheet', sheetArtifactContentAdapter);
 
 export function registerArtifactContentAdapter(
   originRuntime: string,
