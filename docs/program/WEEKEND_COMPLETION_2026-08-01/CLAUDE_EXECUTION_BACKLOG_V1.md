@@ -52,7 +52,7 @@ Jedna paczka ma jednego ownera zapisu, ograniczony zestaw plików, jeden weryfik
 
 | Packet | Cel | Test |
 | --- | --- | --- |
-| `INI-001` | `/initiatives` owner, default List/table i lifecycle projection | alias query/hash + Active/All same-ID + audit/reopen |
+| `INI-001` | `/initiatives` owner, default List/table i lifecycle projection | **ACCEPTED_ROUTE_SLICE**: owner/alias query+hash/default table; status parity i write-path audit pozostają |
 | `INI-002` | candidate dedupe/merge/completeness i recovery | duplicate fixtures, merge lineage, idempotent repeat accept |
 | `INI-003` | project scope, roles, team i simple approval profile | positive/negative capability matrix + reopen |
 | `INI-004` | wspólny Portfolio/resources/Roadmap/time/capacity read model | update → List/Analysis/Timeline read-back + baseline |

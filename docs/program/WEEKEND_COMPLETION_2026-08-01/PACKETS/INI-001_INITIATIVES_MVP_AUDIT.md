@@ -1,7 +1,7 @@
 ---
 doc_id: INI-001-initiatives-mvp-audit
 truth_type: audit
-status: READY
+status: ACCEPTED_ROUTE_SLICE
 owner: codex
 product_owner: piotr
 priority: P0
@@ -10,6 +10,17 @@ last_reviewed: 2026-08-01
 ---
 
 # INI-001 — audyt Initiatives MVP
+
+## Odbiór route/default-view slice 2026-08-01
+
+- `/initiatives` jest jedynym mountem `InitiativesHub`;
+- `/portfolio` i `/roadmap` są redirect-only i zachowują query/hash;
+- wewnętrzne handoffy emitują `/initiatives`;
+- domyślny surface to `list` w widoku `table`, przy zachowaniu Kanban jako opcji;
+- nie zmieniono danych, statusów ani Candidate lifecycle.
+
+Pozostałe elementy większego INI-001 — status parity i delegowanie konkurencyjnego
+`start-execution` — pozostają otwarte.
 
 ## Werdykt
 

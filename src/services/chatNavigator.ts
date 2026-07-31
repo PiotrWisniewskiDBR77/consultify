@@ -54,7 +54,7 @@ const MODULE_ROUTES: Record<TargetModule, { list: string; detail?: (id: string) 
     detail: (id) => `/discovery-tools?docId=${encodeURIComponent(id)}`,
   },
   initiatives: {
-    list: '/portfolio',
+    list: '/initiatives',
     detail: (id) => `/initiatives?open=${encodeURIComponent(id)}&mode=doc`,
   },
   reports: {

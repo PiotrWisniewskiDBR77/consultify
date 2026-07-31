@@ -103,10 +103,8 @@ const ConclusionsHub = lazyWithRetry(() =>
 const FullInitiativesView = lazyWithRetry(() =>
   import('@/views/FullInitiativesView').then((m) => ({ default: m.FullInitiativesView }))
 );
-// FullRoadmapView (deprecated, @ts-nocheck) is intentionally NOT imported here:
-// /roadmap now redirects to /portfolio (see route below). The file is kept for
-// Wave-2 cleanup only.
-const PortfolioView = lazyWithRetry(() => import('@/views/PortfolioView'));
+// FullRoadmapView and PortfolioView are retained as legacy source files only.
+// Their historical routes redirect to the single InitiativesHub owner below.
 const FullROIView = lazyWithRetry(() =>
   import('@/views/FullROIView').then((m) => ({ default: m.FullROIView }))
 );
@@ -1990,24 +1988,27 @@ export const AppRoutes: React.FC = () => {
           }
         />
         {/*
-          Module 05: /roadmap is retired. The deprecated @ts-nocheck FullRoadmapView
-          is no longer reachable; the Portfolio hub's Timeline tab covers the roadmap
-          use case. Redirect to /portfolio so old links/bookmarks land safely.
+          Module 05: /roadmap and /portfolio are legacy aliases. Preserve route
+          state while sending bookmarks to the single /initiatives owner.
         */}
-        <Route path={ROUTES.ROADMAP} element={<Navigate to={ROUTES.PORTFOLIO} replace />} />
+        <Route
+          path={ROUTES.ROADMAP}
+          element={
+            <RedirectPreservingQuery
+              from={ROUTES.ROADMAP}
+              to={ROUTES.INITIATIVES}
+              reason="initiatives_canonical_route"
+            />
+          }
+        />
         <Route
           path={ROUTES.PORTFOLIO}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Initiatives']} noPadding>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Initiatives"
-              >
-                <RouteErrorBoundary>
-                  <PortfolioView />
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+            <RedirectPreservingQuery
+              from={ROUTES.PORTFOLIO}
+              to={ROUTES.INITIATIVES}
+              reason="initiatives_canonical_route"
+            />
           }
         />
         <Route

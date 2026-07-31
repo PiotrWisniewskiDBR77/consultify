@@ -348,10 +348,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.FULL_STEP1_CYBERSECURITY]: ROUTES.ASSESSMENT.DRD,
   [AppView.FULL_STEP1_AI]: ROUTES.ASSESSMENT.DRD,
   [AppView.FULL_STEP2_INITIATIVES]: ROUTES.INITIATIVES,
-  // Module 05: /roadmap is retired — the Portfolio Timeline tab covers the
-  // roadmap use case. Map legacy navigate() calls to the Portfolio hub so they
-  // land safely instead of on the deprecated @ts-nocheck FullRoadmapView.
-  [AppView.FULL_STEP3_ROADMAP]: ROUTES.PORTFOLIO,
+  [AppView.FULL_STEP3_ROADMAP]: ROUTES.INITIATIVES,
   [AppView.FULL_STEP4_ROI]: ROUTES.ROI,
   [AppView.ECONOMICS]: ROUTES.FINANCE,
   [AppView.FULL_STEP5_EXECUTION]: ROUTES.EXECUTION,
@@ -374,8 +371,8 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.PREZENTACJE_GEN]: ROUTES.PREZENTACJE_GEN,
   [AppView.TABELE]: ROUTES.TABELE,
   [AppView.KPI_OKR_DASHBOARD]: ROUTES.RESULTS,
-  [AppView.PORTFOLIO_ROADMAP]: ROUTES.PORTFOLIO,
-  [AppView.INITIATIVE_MANAGEMENT]: ROUTES.PORTFOLIO,
+  [AppView.PORTFOLIO_ROADMAP]: ROUTES.INITIATIVES,
+  [AppView.INITIATIVE_MANAGEMENT]: ROUTES.INITIATIVES,
   [AppView.BENEFITS_REALIZATION]: ROUTES.RESULTS,
   [AppView.CONCLUSIONS]: ROUTES.CONCLUSIONS,
   [AppView.MCP_IRIS_COMING_SOON]: ROUTES.MCP_IRIS,
@@ -671,6 +668,9 @@ export function getAppViewFromPath(path: string): AppView | null {
   // the reverse mapping explicitly to the sidebar/owner view instead of
   // depending on object insertion order between duplicate route values.
   if (normalized === ROUTES.RESULTS) return AppView.BENEFITS_REALIZATION;
+  // Initiatives has several historical AppView ids pointing at the same owner.
+  // Keep URL sync on the sidebar/owner identity instead of object insertion order.
+  if (normalized === ROUTES.INITIATIVES) return AppView.FULL_STEP2_INITIATIVES;
 
   const exact = getAppViewFromRoute(normalized);
   if (exact) return exact;

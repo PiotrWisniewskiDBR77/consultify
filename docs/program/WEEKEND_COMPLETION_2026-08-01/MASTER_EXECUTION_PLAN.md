@@ -92,7 +92,7 @@ odtwarzalne procesy.
 | ---: | --- | --- |
 | 1 | `EXE-001` | **ACCEPTED** — `/execution` owner; legacy aliases redirect-only |
 | 2 | `EXE-002` | jeden lifecycle plan/task/risk/change |
-| 3 | `INI-001` | `/initiatives` owner, default List/table, lifecycle i write-path audit |
+| 3 | `INI-001` | **ACCEPTED_ROUTE_SLICE** — `/initiatives` owner, alias redirects i default List/table; lifecycle/write-path audit pozostaje |
 | 4 | `INI-002` | candidate → dedupe/merge → DRAFT z recovery i lineage |
 | 5 | `INI-003` | project scope, role resolution i prosty approval profile |
 | 6 | `INI-004` | wspólny Portfolio/resources/Roadmap/time/capacity read model |

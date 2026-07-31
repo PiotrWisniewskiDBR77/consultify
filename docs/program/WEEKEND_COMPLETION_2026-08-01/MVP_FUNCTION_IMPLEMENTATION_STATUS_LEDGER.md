@@ -39,7 +39,7 @@ last_reviewed: 2026-07-31
 | plan/tasks/milestones/roles/resources | `CZĘŚCIOWA+` | realne CRUD/RACI/budget/capacity istnieją, ale są rozproszone i nie mają jednego plan→task→role→actual read-back | `EXE-002` |
 | risks/issues/change/decisions | `CZĘŚCIOWA` | realne RAID/mitigation/decisions/rollout changes istnieją w kilku modelach bez jednego management spine | `EXE-003` |
 | closure → Results/Finance | `CZĘŚCIOWA/BRAK E2E` | DONE uruchamia idempotentny, ale fire-and-forget Results handoff; brak transakcyjnego receipt i closure→Results→Finance actual round-trip | `FLOW-001` |
-| Initiative List all statuses | `CZĘŚCIOWA+` | `/initiatives` owner i realny Hub; `/portfolio` nadal drugim mountem, default Kanban zamiast List/table, V8/legacy continuity nie jest jednym dowiedzionym rejestrem | `INI-001` |
+| Initiative List all statuses | `CZĘŚCIOWA+` | `INI-001` route slice: `/initiatives` jest jedynym mountem, legacy aliasy zachowują query/hash, default to List/table; V8/legacy continuity, status parity i write-path audit pozostają | dalszy `INI-001` |
 | Candidates dedupe/merge/AI | `CZĘŚCIOWA+` | osobna zakładka, realne scan/accept/dismiss i canonical DRAFT; dedupe advisory/fail-open, brak jawnego merge UX i recovery dla accepted bez initiativeId | `INI-002` |
 | Roles/projects/approval profile | `CZĘŚCIOWA+` | project scope, owner/sponsor/RACI i effective gate roles działają; brak jednej capability matrix i jawnego cross-project scope | `INI-003` |
 | Portfolio/resources vs Roadmap/time/capacity | `CZĘŚCIOWA` | realne Analysis/Timeline/resources/dependencies, ale kilka read modeli i brak update→read-back→reopen między surfaces | `INI-004` |
