@@ -27,6 +27,8 @@ to pionowe golden flows na lokalnej bazie testowej i stagingu, wykonywane zgodni
 | Finance | `/finance` jest jedynym ownerem UI, `/economics` redirect-only | `FIN-001` |
 | Results | `/results` jest jedynym ownerem UI, aliasy są redirect-only | `RES-001A` |
 | Execution | `/execution` jest jedynym ownerem UI, aliasy i handoffy zachowują stan | `EXE-001` |
+| Initiatives | `/initiatives` jest jedynym mountem, aliasy zachowują stan, domyślny widok to List/table | `INI-001 route slice` |
+| Execution snapshot | read-only initiative/milestone/task/decision snapshot z tenant scope i provenance | `EXE-002A1` |
 
 Pełny wykaz commitów i zmienionych kontraktów znajduje się w historii gałęzi;
 status funkcji jest utrzymywany w
@@ -46,6 +48,8 @@ status funkcji jest utrzymywany w
    odebrany jako jeden flow.
 5. Assessment, Tools, Interview, My Work i Chat pozostają w ledgerze jako częściowe;
    obecność ekranów i endpointów nie jest dowodem golden flow.
+6. Assessment ma rozpoznany kanon pięciu powierzchni, lecz Library nie jest jeszcze
+   domyślnym wejściem, a DRD Form→save→reopen→Matrix wymaga realizacji `ASM-001A`.
 
 ## Pierwsza kolejka odbioru
 

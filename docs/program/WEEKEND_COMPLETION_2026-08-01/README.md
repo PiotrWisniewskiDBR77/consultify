@@ -224,6 +224,8 @@ zakończone na podstawie samej deklaracji implementatora.
     — audyt rozproszonych pionów Execution i minimalny kontrakt wspólnego management snapshotu.
 93. [`PACKETS/INI-001_INITIATIVES_MVP_AUDIT.md`](PACKETS/INI-001_INITIATIVES_MVP_AUDIT.md)
     — remanent Initiatives od Candidate przez approval i Roadmap do same-ID handoffu Execution.
+94. [`PACKETS/ASM-001_ASSESSMENT_MVP_AUDIT.md`](PACKETS/ASM-001_ASSESSMENT_MVP_AUDIT.md)
+    — audyt pięciu powierzchni Assessment oraz minimalny DRD Form–Matrix round-trip.
 91. [`PACKETS/CORE-ART-003A_RETRY_GUARD_AND_PARENT_IMMUTABILITY.md`](PACKETS/CORE-ART-003A_RETRY_GUARD_AND_PARENT_IMMUTABILITY.md)
     — bezpieczna macierz retry, niemutowalny rodzic, lineage i idempotency/concurrency gate.
     — remanent profilu, zdegradowane endpointy, konsolidacja danych i testy.
