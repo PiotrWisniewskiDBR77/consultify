@@ -533,6 +533,8 @@ function mapArtifactRunRow(row: ArtifactRunRow): ArtifactRunRecord {
     sourceContextId: row.source_context_id,
     requestedByUserId: row.requested_by_user_id,
     plan: parsedPlan,
+    persistedRunStatus: row.run_status,
+    effectiveRunStatus: row.run_status,
     runStatus: row.run_status,
     proposalId: row.proposal_id,
     retryOfRunId: row.retry_of_run_id,
@@ -1117,11 +1119,12 @@ async function mapArtifactRunRowWithEffectiveStatus(
   const mapped = mapArtifactRunRow(row);
   const spineRun = await executionSpineService.getRun(mapped.executionRunId, mapped.organizationId);
   const effectiveStatus = deriveArtifactRunStatusFromExecutionState({
-    persistedStatus: mapped.runStatus,
+    persistedStatus: mapped.persistedRunStatus,
     executionState: spineRun?.state,
   });
   return {
     ...mapped,
+    effectiveRunStatus: effectiveStatus,
     runStatus: effectiveStatus,
     operationContract: mapped.operationContract
       ? updateOperationContractLinks(
@@ -3691,7 +3694,10 @@ export async function acceptArtifactRunPlan(params: {
     throw new Error(`ArtifactRun ${params.runId} not found`);
   }
   const current = mapArtifactRunRow(currentRow);
-  if (current.runStatus !== 'planned' && current.runStatus !== 'retry_requested') {
+  if (
+    current.persistedRunStatus !== 'planned' &&
+    current.persistedRunStatus !== 'retry_requested'
+  ) {
     return current;
   }
 
@@ -3774,7 +3780,7 @@ export async function acceptArtifactRunPlan(params: {
     organizationId: params.organizationId,
     action: 'plan_accepted',
     actorUserId: params.actorUserId,
-    fromStatus: current.runStatus,
+    fromStatus: current.persistedRunStatus,
     toStatus: 'proposal_created',
     detail: { proposalId: proposal.proposalId },
   });
@@ -3789,16 +3795,17 @@ export async function retryArtifactRun(params: {
   organizationId: string;
   actorUserId: string;
 }): Promise<ArtifactRunRecord> {
-  const current = await getArtifactRun(params.runId, params.organizationId);
-  if (!current) {
+  const currentRow = await getArtifactRunRow(params.runId, params.organizationId);
+  if (!currentRow) {
     throw new Error(`ArtifactRun ${params.runId} not found`);
   }
-  if (!RETRYABLE_ARTIFACT_RUN_STATUSES.has(current.runStatus)) {
+  const current = mapArtifactRunRow(currentRow);
+  if (!RETRYABLE_ARTIFACT_RUN_STATUSES.has(current.persistedRunStatus)) {
     throw new AppError(
-      `ArtifactRun ${params.runId} cannot be retried from status ${current.runStatus}`,
+      `ArtifactRun ${params.runId} cannot be retried from status ${current.persistedRunStatus}`,
       409,
       ARTIFACT_RUN_RETRY_NOT_ALLOWED,
-      { runId: params.runId, runStatus: current.runStatus }
+      { runId: params.runId, runStatus: current.persistedRunStatus }
     );
   }
 
@@ -3809,12 +3816,12 @@ export async function retryArtifactRun(params: {
       throw new Error(`ArtifactRun ${params.runId} not found`);
     }
     const lockedCurrent = mapArtifactRunRow(lockedCurrentRow);
-    if (!RETRYABLE_ARTIFACT_RUN_STATUSES.has(lockedCurrent.runStatus)) {
+    if (!RETRYABLE_ARTIFACT_RUN_STATUSES.has(lockedCurrent.persistedRunStatus)) {
       throw new AppError(
-        `ArtifactRun ${params.runId} cannot be retried from status ${lockedCurrent.runStatus}`,
+        `ArtifactRun ${params.runId} cannot be retried from status ${lockedCurrent.persistedRunStatus}`,
         409,
         ARTIFACT_RUN_RETRY_NOT_ALLOWED,
-        { runId: params.runId, runStatus: lockedCurrent.runStatus }
+        { runId: params.runId, runStatus: lockedCurrent.persistedRunStatus }
       );
     }
 
@@ -3826,14 +3833,17 @@ export async function retryArtifactRun(params: {
         organizationId: params.organizationId,
         action: 'retry_requested',
         actorUserId: params.actorUserId,
-        fromStatus: lockedCurrent.runStatus,
-        toStatus: lockedCurrent.runStatus,
+        fromStatus: lockedCurrent.persistedRunStatus,
+        toStatus: lockedCurrent.persistedRunStatus,
         detail: { childRunId: existingChild.runId, reusedExistingChild: true },
       });
       return existingChild;
     }
 
-    if (lockedCurrent.runStatus === 'failed' && lockedCurrent.materializationOrigin) {
+    if (
+      lockedCurrent.persistedRunStatus === 'failed' &&
+      lockedCurrent.materializationOrigin
+    ) {
       await cleanupGhostOutputsByOrigin({
         organizationId: params.organizationId,
         originRuntime: lockedCurrent.materializationOrigin.originRuntime,
@@ -3878,8 +3888,8 @@ export async function retryArtifactRun(params: {
       organizationId: params.organizationId,
       action: 'retry_requested',
       actorUserId: params.actorUserId,
-      fromStatus: lockedCurrent.runStatus,
-      toStatus: lockedCurrent.runStatus,
+      fromStatus: lockedCurrent.persistedRunStatus,
+      toStatus: lockedCurrent.persistedRunStatus,
       detail: { childRunId: child.runId, newExecutionRunId: handoff.executionRunId },
     });
 
@@ -3891,10 +3901,11 @@ export async function materializeArtifactRun(
   params: MaterializeArtifactRunParams
 ): Promise<ArtifactRunRecord> {
   const validated = MaterializeArtifactRunParamsSchema.parse(params);
-  const current = await getArtifactRun(validated.runId, validated.organizationId);
-  if (!current) {
+  const currentRow = await getArtifactRunRow(validated.runId, validated.organizationId);
+  if (!currentRow) {
     throw new Error(`ArtifactRun ${validated.runId} not found`);
   }
+  const current = mapArtifactRunRow(currentRow);
   let materializationOrigin: { originRuntime: string; originRecordId: string } | null = null;
   if (
     current.plan.outputType !== 'report' &&
@@ -3906,12 +3917,12 @@ export async function materializeArtifactRun(
     );
   }
   if (
-    current.runStatus === 'planned' ||
-    current.runStatus === 'retry_requested' ||
-    current.runStatus === 'rejected' ||
-    current.runStatus === 'failed' ||
-    current.runStatus === 'completed' ||
-    current.runStatus === 'cancelled'
+    current.persistedRunStatus === 'planned' ||
+    current.persistedRunStatus === 'retry_requested' ||
+    current.persistedRunStatus === 'rejected' ||
+    current.persistedRunStatus === 'failed' ||
+    current.persistedRunStatus === 'completed' ||
+    current.persistedRunStatus === 'cancelled'
   ) {
     throw new Error(
       `ArtifactRun ${validated.runId} must have an accepted lifecycle before materialization`
@@ -4152,7 +4163,7 @@ export async function materializeArtifactRun(
       organizationId: validated.organizationId,
       action: 'materialized',
       actorUserId: validated.actorUserId,
-      fromStatus: current.runStatus,
+      fromStatus: current.persistedRunStatus,
       toStatus: 'completed',
       detail: {
         artifactId: resolvedArtifactId,
@@ -4263,7 +4274,7 @@ export async function materializeArtifactRun(
       organizationId: validated.organizationId,
       action: 'failed',
       actorUserId: validated.actorUserId,
-      fromStatus: current.runStatus,
+      fromStatus: current.persistedRunStatus,
       toStatus: 'failed',
       detail: { failureReason, stage: failureStage, ghostArtifactsCleanedUp },
     });

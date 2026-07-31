@@ -131,6 +131,8 @@ describe('artifactRegistryService.retryArtifactRun', () => {
 
     expect(child.retryOfRunId).toBe(parent.run_id);
     expect(child.runStatus).toBe('planned');
+    expect(child.persistedRunStatus).toBe('planned');
+    expect(child.effectiveRunStatus).toBe('planned');
     expect(mocks.rows.get('org-a:parent').run_status).toBe(status);
     const audit = mocks.audits.at(-1)!;
     expect(audit[4]).toBe(status);

@@ -216,7 +216,19 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
       expect.objectContaining({
         runId,
         runStatus: 'proposal_created',
+        persistedRunStatus: 'proposal_created',
+        effectiveRunStatus: 'proposal_created',
         proposalId: 'proposal-abc',
+      }),
+    );
+    spineMocks.getRun.mockResolvedValue({ state: 'applying' });
+    const divergentStatusRes = await request(app).get(`/api/artifact-runs/${runId}`);
+    expect(divergentStatusRes.status).toBe(200);
+    expect(divergentStatusRes.body.data).toEqual(
+      expect.objectContaining({
+        persistedRunStatus: 'proposal_created',
+        effectiveRunStatus: 'applying',
+        runStatus: 'applying',
       }),
     );
     spineMocks.getRun.mockResolvedValue({ state: 'approved_for_apply' });
@@ -234,6 +246,8 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
       expect.objectContaining({
         runId,
         runStatus: 'completed',
+        persistedRunStatus: 'completed',
+        effectiveRunStatus: 'completed',
       }),
     );
     expect(materializeRes.body.data.artifactId).toBeTruthy();

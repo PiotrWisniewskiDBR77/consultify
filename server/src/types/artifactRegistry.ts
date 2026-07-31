@@ -254,6 +254,9 @@ export interface ArtifactRunRecord {
   sourceContextId: string | null;
   requestedByUserId: string;
   plan: ArtifactPlanningResult['artifactPlan'];
+  persistedRunStatus: ArtifactRunStatus;
+  effectiveRunStatus: ArtifactRunStatus;
+  /** Backward-compatible alias of effectiveRunStatus. */
   runStatus: ArtifactRunStatus;
   proposalId: string | null;
   retryOfRunId: string | null;

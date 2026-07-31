@@ -121,6 +121,9 @@ export interface ArtifactRunRecord {
   sourceContextId: string | null;
   requestedByUserId: string;
   plan: ArtifactRunPlan;
+  persistedRunStatus: ArtifactRunStatus;
+  effectiveRunStatus: ArtifactRunStatus;
+  /** Backward-compatible alias of effectiveRunStatus. */
   runStatus: ArtifactRunStatus;
   proposalId: string | null;
   retryOfRunId: string | null;
@@ -165,6 +168,26 @@ export interface MaterializeArtifactRunParams {
 
 const ARTIFACT_RUNS_BASE = '/api/artifact-runs';
 
+/**
+ * Compatibility-only normalization for payloads produced before explicit status fields.
+ * The client never derives lifecycle state from Execution Spine; backend values are canonical.
+ */
+export function normalizeArtifactRunStatusFields(
+  payload: ArtifactRunRecord | (Omit<ArtifactRunRecord, 'persistedRunStatus' | 'effectiveRunStatus'> & {
+    persistedRunStatus?: ArtifactRunStatus;
+    effectiveRunStatus?: ArtifactRunStatus;
+  })
+): ArtifactRunRecord {
+  const effectiveRunStatus = payload.effectiveRunStatus ?? payload.runStatus;
+  const persistedRunStatus = payload.persistedRunStatus ?? payload.runStatus;
+  return {
+    ...payload,
+    persistedRunStatus,
+    effectiveRunStatus,
+    runStatus: effectiveRunStatus,
+  } as ArtifactRunRecord;
+}
+
 export const ArtifactRunsApi = {
   createFromChat: async (
     params: CreateArtifactRunFromChatParams
@@ -180,7 +203,10 @@ export const ArtifactRunsApi = {
       res,
       'Failed to create artifact run from chat'
     );
-    return json.data;
+    return {
+      ...json.data,
+      run: normalizeArtifactRunStatusFields(json.data.run),
+    };
   },
 
   getRun: async (runId: string): Promise<ArtifactRunRecord> => {
@@ -192,7 +218,7 @@ export const ArtifactRunsApi = {
       res,
       'Failed to fetch artifact run'
     );
-    return json.data;
+    return normalizeArtifactRunStatusFields(json.data);
   },
 
   getHistory: async (runId: string): Promise<ArtifactRunRecord[]> => {
@@ -204,7 +230,7 @@ export const ArtifactRunsApi = {
       res,
       'Failed to fetch artifact run history'
     );
-    return json.data;
+    return json.data.map(normalizeArtifactRunStatusFields);
   },
 
   acceptPlan: async (runId: string): Promise<ArtifactRunRecord> => {
@@ -220,7 +246,7 @@ export const ArtifactRunsApi = {
       res,
       'Failed to accept artifact run plan'
     );
-    return json.data;
+    return normalizeArtifactRunStatusFields(json.data);
   },
 
   materialize: async (
@@ -241,7 +267,7 @@ export const ArtifactRunsApi = {
       res,
       'Failed to materialize artifact run'
     );
-    return json.data;
+    return normalizeArtifactRunStatusFields(json.data);
   },
 
   retry: async (runId: string): Promise<ArtifactRunRecord> => {
@@ -254,7 +280,7 @@ export const ArtifactRunsApi = {
       res,
       'Failed to retry artifact run'
     );
-    return json.data;
+    return normalizeArtifactRunStatusFields(json.data);
   },
 
   preflight: async (runId: string): Promise<ArtifactRunRecord> => {
@@ -272,6 +298,6 @@ export const ArtifactRunsApi = {
       res,
       'Failed to preflight artifact run'
     );
-    return json.data;
+    return normalizeArtifactRunStatusFields(json.data);
   },
 };
