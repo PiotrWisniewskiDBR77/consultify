@@ -6,6 +6,7 @@ import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { requireV8OrgContext } from '../middleware/v8Auth.middleware.js';
 import { v8OutputsGate } from '../middleware/v8FeatureGate.middleware.js';
 import activityService from '../services/ActivityService.js';
+import { resolveArtifactContent } from '../services/artifacts/artifactContentResolverService.js';
 import * as organizationService from '../services/organizationService.js';
 import {
   computeDeckListScorecard,
@@ -1580,6 +1581,27 @@ router.get(
     const count = await artifactRegistryService.countTemplateUsage(artifactId, organizationId);
     res.json({ data: { artifactId, usageCount: count } });
   })
+);
+
+router.get(
+  '/:id/content',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const content = await resolveArtifactContent({
+      artifactId: String(req.params.id || ''),
+      organizationId,
+    });
+    res.setHeader('ETag', content.etag);
+    res.setHeader('Cache-Control', 'private, must-revalidate');
+    const candidates = String(req.headers['if-none-match'] || '')
+      .split(',')
+      .map((value) => value.trim());
+    if (candidates.includes('*') || candidates.includes(content.etag)) {
+      return res.status(304).end();
+    }
+    const { etag: _etag, ...payload } = content;
+    res.json({ data: payload });
+  }),
 );
 
 router.get(

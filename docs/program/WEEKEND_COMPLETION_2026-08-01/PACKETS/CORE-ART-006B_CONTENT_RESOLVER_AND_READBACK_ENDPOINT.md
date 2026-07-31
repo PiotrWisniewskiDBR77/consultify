@@ -1,7 +1,7 @@
 ---
 doc_id: CORE-ART-006B
 truth_type: operations
-status: READY
+status: ACCEPTED
 owner: codex
 product_owner: piotr
 priority: P0
@@ -39,3 +39,15 @@ powstają w `006C–006E`.
 ## Recovery
 
 Nowy endpoint i resolver są addytywne; rollback nie zmienia danych ani obecnych tras.
+
+## Odbiór 2026-07-31
+
+Decyzja: **GO**.
+
+- resolver: `7/7 PASS`;
+- route ETag/304: `2/2 PASS`;
+- razem z kontraktem V1: `27/27 PASS`;
+- `git diff --check`: PASS.
+
+Hash obejmuje wyłącznie treść kanoniczną, a ETag wiąże go z revision. `resolvedAt` nie
+wpływa na cache identity. Registry przechowuje wyłącznie wskaźnik origin.
