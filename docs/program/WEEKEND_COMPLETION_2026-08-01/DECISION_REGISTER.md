@@ -46,6 +46,7 @@ last_reviewed: 2026-07-31
 | `WK-D-034` | Zbiorcze decyzje produktowe | zatwierdzone rekomendacje `A1–A24` i defaulty `D1–D20` z `MASTER_PRODUCT_DECISIONS_FOR_APPROVAL.md`; zakres odłożony nie blokuje MVP, a Excel/Calendar/Deck/Canvas Host wymagają wskazanych POC | Piotr | 2026-07-31 | zamyka etap 1 programu; sprzeczne pytania są rozstrzygnięte przez ten pakiet |
 | `WK-D-035` | Artifact authority | `CORE-ART-001..007` jest przyjętym fundamentem: jeden registry/envelope, kanoniczne typy, wersjonowany content read-back, source lineage, ETag i fail-closed review quorum; Canvas zapisuje kanonicznie, a Wave5 mirrors są tylko linkami pochodzenia | Codex | 2026-07-31 | zastępuje wcześniejszy Canvas NO_GO dotyczący braku materialization read-back; pełny Chat→Canvas golden flow nadal wymaga odbioru domenowego |
 | `WK-D-036` | Finance route authority | `/finance` jest jedyną trasą montującą moduł; `/economics` pozostaje wyłącznie kompatybilnym redirectem zachowującym query/hash, a stare nazwy API/ID są długiem migracyjnym | Codex | 2026-07-31 | `FIN-001` ACCEPTED; usuwa dwóch właścicieli URL bez migracji danych/API |
+| `WK-D-037` | Results route authority | `/results` jest jedyną trasą montującą moduł; `/benefits` i `/kpi-okr` są kompatybilnymi redirectami zachowującymi query/hash; `MODULE_BENEFITS` i stare nazwy API/DB pozostają na czas migracji | Codex | 2026-07-31 | `RES-001A` ACCEPTED; migracja scorecard store pozostaje osobną częścią `RES-001B` |
 
 ## Otwarte decyzje
 

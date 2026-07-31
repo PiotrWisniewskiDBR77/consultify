@@ -2243,7 +2243,16 @@ export const AppRoutes: React.FC = () => {
           directly rather than mounting a view, so the router manifest no longer
           carries a dead view module. See Module 07 audit (route cleanup).
         */}
-        <Route path={ROUTES.KPI_OKR} element={<Navigate to={ROUTES.BENEFITS} replace />} />
+        <Route
+          path={ROUTES.KPI_OKR}
+          element={
+            <RedirectPreservingQuery
+              from={ROUTES.KPI_OKR}
+              to={ROUTES.RESULTS}
+              reason="results_canonical_route"
+            />
+          }
+        />
         <Route
           path={ROUTES.PRESENTATIONS}
           element={
@@ -2385,6 +2394,16 @@ export const AppRoutes: React.FC = () => {
         />
         <Route
           path={ROUTES.BENEFITS}
+          element={
+            <RedirectPreservingQuery
+              from={ROUTES.BENEFITS}
+              to={ROUTES.RESULTS}
+              reason="results_canonical_route"
+            />
+          }
+        />
+        <Route
+          path={ROUTES.RESULTS}
           element={
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>

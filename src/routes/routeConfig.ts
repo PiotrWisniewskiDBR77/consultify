@@ -123,6 +123,7 @@ export const ROUTES = {
   MEETING: '/meeting',
   KPI_OKR: '/kpi-okr',
   BENEFITS: '/benefits',
+  RESULTS: '/results',
   CONCLUSIONS: '/conclusions',
   MCP_IRIS: '/mcp/iris',
   MCP_MARKETPLACE: '/mcp/marketplace',
@@ -372,10 +373,10 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.EXCELE]: ROUTES.EXCELE,
   [AppView.PREZENTACJE_GEN]: ROUTES.PREZENTACJE_GEN,
   [AppView.TABELE]: ROUTES.TABELE,
-  [AppView.KPI_OKR_DASHBOARD]: ROUTES.KPI_OKR,
+  [AppView.KPI_OKR_DASHBOARD]: ROUTES.RESULTS,
   [AppView.PORTFOLIO_ROADMAP]: ROUTES.PORTFOLIO,
   [AppView.INITIATIVE_MANAGEMENT]: ROUTES.PORTFOLIO,
-  [AppView.BENEFITS_REALIZATION]: ROUTES.BENEFITS,
+  [AppView.BENEFITS_REALIZATION]: ROUTES.RESULTS,
   [AppView.CONCLUSIONS]: ROUTES.CONCLUSIONS,
   [AppView.MCP_IRIS_COMING_SOON]: ROUTES.MCP_IRIS,
   [AppView.MCP_MARKETPLACE_COMING_SOON]: ROUTES.MCP_MARKETPLACE,
@@ -666,6 +667,11 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized === ROUTES.SETTINGS.INTEGRATIONS) return AppView.SETTINGS_INTEGRATIONS_MODULE;
   if (normalized === `${ROUTES.SETTINGS.ROOT}/theme`) return AppView.SETTINGS_APPEARANCE_MODULE;
 
+  // Both historical app-view IDs emit the canonical Results route. Resolve
+  // the reverse mapping explicitly to the sidebar/owner view instead of
+  // depending on object insertion order between duplicate route values.
+  if (normalized === ROUTES.RESULTS) return AppView.BENEFITS_REALIZATION;
+
   const exact = getAppViewFromRoute(normalized);
   if (exact) return exact;
 
@@ -695,7 +701,13 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.IMPLEMENTATION)) return AppView.IMPLEMENTATION;
   if (normalized.startsWith(ROUTES.EXECUTION)) return AppView.FULL_STEP5_EXECUTION;
   if (normalized.startsWith(ROUTES.ROLLOUT)) return AppView.FULL_ROLLOUT;
-  if (normalized.startsWith(ROUTES.BENEFITS)) return AppView.BENEFITS_REALIZATION;
+  if (
+    normalized.startsWith(ROUTES.RESULTS) ||
+    normalized.startsWith(ROUTES.BENEFITS) ||
+    normalized.startsWith(ROUTES.KPI_OKR)
+  ) {
+    return AppView.BENEFITS_REALIZATION;
+  }
   if (normalized.startsWith(ROUTES.CONCLUSIONS)) return AppView.CONCLUSIONS;
 
   if (normalized.startsWith(ROUTES.SETTINGS.ROOT)) return AppView.SETTINGS_PROFILE_MODULE;

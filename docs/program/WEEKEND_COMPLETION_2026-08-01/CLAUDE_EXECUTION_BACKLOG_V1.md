@@ -42,9 +42,10 @@ Jedna paczka ma jednego ownera zapisu, ograniczony zestaw plików, jeden weryfik
 | `FIN-002` | trwały Investment Case: ROI, scenario, versioned baseline/actual | NPV/IRR/ROI/payback fixture + save/reopen |
 | `FIN-003` | statement import/map/validate | representative XLSX/CSV fixture + canonical read-back |
 | `FIN-004` | Finance → Candidate Pack przez jeden write path | numerical anchors + pełny lineage read-back, bez direct Initiative |
-| `RES-001` | Results owner i Benefits redirects | one table/many scorecards, no duplicate store |
-| `RES-002` | KPI/OKR definition gate | good/bad metric fixtures |
-| `RES-003` | threshold → Deviation/Recovery/escalation | clock-controlled workflow E2E |
+| `RES-001A` | `/results` owner; Benefits/KPI aliases | **ACCEPTED**: query/hash preservation + deterministic AppView |
+| `RES-001B` | przepiąć scorecards z Goals API na V8 `kpi_scorecards` | one table/many scorecards, no duplicate store, reopen |
+| `RES-002` | KPI/OKR definition gate | good/bad metric fixtures z owner/source/cadence/baseline/target |
+| `RES-003` | threshold → Deviation→Recovery→Task→escalation | clock-controlled workflow E2E |
 
 ## Fala 3 — Initiative → Execution → Results
 

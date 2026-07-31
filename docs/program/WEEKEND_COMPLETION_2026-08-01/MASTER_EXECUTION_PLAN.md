@@ -77,9 +77,10 @@ lub Finance.
 | 12 | `FIN-002` | trwały Investment Case: ROI/scenario/baseline/actual | concept + integrate |
 | 13 | `FIN-003` | statement import/map/validation | integrate |
 | 14 | `FIN-004` | Finance → kanoniczny Candidate Pack | integrate |
-| 15 | `RES-001` | Results vs Benefits ownership i kanon API | discovery/decision |
-| 16 | `RES-002` | KPI lifecycle z measurement i deviation | integrate |
-| 17 | `RES-003` | Initiative ↔ Finance ↔ KPI golden thread | integrate |
+| 15 | `RES-001A` | `/results` owner, `/benefits` i `/kpi-okr` redirect-only | **ACCEPTED** |
+| 16 | `RES-001B` | jeden owner store scorecardów KPI | integrate |
+| 17 | `RES-002` | KPI lifecycle z measurement i deviation | integrate |
+| 18 | `RES-003` | Initiative ↔ Finance ↔ KPI golden thread | integrate |
 
 Wyjście: trzy główne moduły przestają być kolekcją ekranów i realizują
 odtwarzalne procesy.

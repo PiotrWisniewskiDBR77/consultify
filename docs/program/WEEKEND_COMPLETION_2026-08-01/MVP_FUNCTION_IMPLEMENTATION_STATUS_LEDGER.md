@@ -31,10 +31,10 @@ last_reviewed: 2026-07-31
 | Investment Case calculations | `CZĘŚCIOWA/BRAK lifecycle` | realne NPV/IRR/payback, ale lokalny kalkulator bez ROI, save/version/reopen/scenario/baseline/actual | `FIN-002` |
 | statement import/mapping | `CZĘŚCIOWA+` | realne upload/detect/extract/map/correct/confirm; dwa kontrakty, brak reprezentatywnego XLSX/CSV E2E i CSV w pickerze | `FIN-003` |
 | Initiative Candidate Pack from Finance | `BRAK targetu` | historyczny flow tworzy Initiative bezpośrednio i ma atrapę receipt; brak Candidate Pack, dedupe i pełnego lineage | `FIN-004` |
-| Results Hub / KPI table | `CZĘŚCIOWA` | route nadal Benefits, lokalne KPI tables | `RES-001` |
-| OKR definition quality gate | `CZĘŚCIOWA` | komponenty/metody istnieją fragmentarycznie | `RES-002` |
-| threshold → Deviation → Recovery | `CZĘŚCIOWA/BRAK E2E` | elementy alertów i corrective actions rozproszone | `RES-003` |
-| KPI visibility/roll-up | `CZĘŚCIOWA` | brak dowodu pełnego scope enforcement | `RES-004` |
+| Results Hub / KPI table | `CZĘŚCIOWA+` | `/results` owner, `/benefits` i `/kpi-okr` redirect-only (`RES-001A`); jedna realna tabela KPI, ale scorecards nadal używają konkurencyjnego Goals store | `RES-001B` |
+| OKR definition quality gate | `BRAK gate/CZĘŚCIOWA CRUD` | Objective/KR CRUD działa; brak enforcement owner/source/cadence/baseline/target i mierzalności | `RES-002` |
+| threshold → Deviation → Recovery | `CZĘŚCIOWA+` | threshold→Deviation Case→notification→RCA/actions/resolve działa; Recovery owner object, Task handoff i clock escalation brak lub niepodłączone | `RES-003` |
+| KPI visibility/roll-up | `CZĘŚCIOWA/BRAK visibility` | org scope działa; brak polityki visibility, a roll-up istnieje w dwóch modelach scorecardów | `RES-004` |
 | Execution List | `CZĘŚCIOWA` | kilka shelli i widoków, brak wyboru jednego kanonu | `EXE-001` |
 | plan/tasks/milestones/roles | `CZĘŚCIOWA` | funkcje istnieją w wielu komponentach | `EXE-002` |
 | risks/issues/change/decisions | `CZĘŚCIOWA` | lokalne moduły bez jednego management spine | `EXE-003` |
