@@ -1,7 +1,7 @@
 ---
 doc_id: CORE-ART-007
 truth_type: operations
-status: READY
+status: ACCEPTED
 owner: codex
 product_owner: piotr
 priority: P0
@@ -62,3 +62,15 @@ historycznych rekordów.
 
 Zmiana jest addytywna. W razie rollbacku pozostają istniejące reviewers i gates; nie
 wolno usuwać historii decyzji.
+
+## Odbiór 2026-08-01
+
+Decyzja: **GO**.
+
+- publish service + canonical T2 flow + pełny artifacts route suite: `126/126 PASS`;
+- `git diff --check`: PASS;
+- review code wykrył i naprawił guard dla idempotentnych `approved/published`;
+- decyzje po `published/recalled/archived` są zamknięte i wymagają recall.
+
+Quorum ma politykę `ALL`, deduplikuje reviewerów, stosuje latest-decision-wins, blokuje
+self-review i użytkowników nieprzypisanych oraz używa CAS przy zmianie stanu.

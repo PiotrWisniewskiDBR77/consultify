@@ -49,6 +49,9 @@ export type ReviewType = (typeof ReviewTypeValues)[number];
 export const ReviewResultValues = ['approved', 'rejected', 'changes_requested'] as const;
 export type ReviewResult = (typeof ReviewResultValues)[number];
 
+export const ReviewPolicyValues = ['ALL'] as const;
+export type ReviewPolicy = (typeof ReviewPolicyValues)[number];
+
 export const CoordinationModeValues = ['coordinated', 'independent'] as const;
 export type CoordinationMode = (typeof CoordinationModeValues)[number];
 
@@ -87,6 +90,16 @@ export interface PublishRecord {
   approvedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  reviewReadiness?: ReviewReadiness;
+}
+
+export interface ReviewReadiness {
+  policy: ReviewPolicy;
+  required: string[];
+  approved: string[];
+  pending: string[];
+  rejected: string[];
+  satisfied: boolean;
 }
 
 export interface ReviewGate {
@@ -149,6 +162,16 @@ export const PublishRecordSchema = z.object({
   approvedAt: z.string().nullable(),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1),
+  reviewReadiness: z
+    .object({
+      policy: z.enum(ReviewPolicyValues),
+      required: z.array(z.string().uuid()),
+      approved: z.array(z.string().uuid()),
+      pending: z.array(z.string().uuid()),
+      rejected: z.array(z.string().uuid()),
+      satisfied: z.boolean(),
+    })
+    .optional(),
 });
 
 export const ReviewGateSchema = z.object({

@@ -1398,6 +1398,9 @@ router.post(
     if (!record) {
       return res.status(409).json({ error: 'Publish record missing. Start review first.' });
     }
+    if (record.currentState === 'published') {
+      return res.status(200).json({ data: { publishRecord: record, gate: null } });
+    }
 
     let current = record;
     if (current.currentState === 'reviewable_share') {
@@ -1409,31 +1412,39 @@ router.post(
       });
     }
 
-    const gate = await publishReviewService.submitReviewGate({
-      artifactId,
-      organizationId,
-      reviewType: reviewType as any,
-      reviewerId: userId,
-      result: 'approved',
-      comments,
-    });
-
-    if (current.currentState === 'in_review') {
-      current = await publishReviewService.transitionPublishState({
-        recordId: current.recordId,
+    let gate;
+    try {
+      gate = await publishReviewService.submitReviewGate({
+        artifactId,
         organizationId,
-        newState: 'approved',
-        actor: userId,
+        reviewType: reviewType as any,
+        reviewerId: userId,
+        result: 'approved',
+        comments,
       });
-    }
 
-    if (current.currentState === 'approved') {
-      current = await publishReviewService.transitionPublishState({
-        recordId: current.recordId,
-        organizationId,
-        newState: 'published',
-        actor: userId,
-      });
+      if (current.currentState === 'in_review') {
+        current = await publishReviewService.transitionPublishState({
+          recordId: current.recordId,
+          organizationId,
+          newState: 'approved',
+          actor: userId,
+        });
+      }
+
+      if (current.currentState === 'approved') {
+        current = await publishReviewService.transitionPublishState({
+          recordId: current.recordId,
+          organizationId,
+          newState: 'published',
+          actor: userId,
+        });
+      }
+    } catch (error) {
+      if (error instanceof publishReviewService.PublishReviewError) {
+        return res.status(409).json({ error: error.message, code: error.code });
+      }
+      throw error;
     }
 
     await updateTemplateArtifactPostPublish({
