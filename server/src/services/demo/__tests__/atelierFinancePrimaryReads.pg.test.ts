@@ -89,13 +89,6 @@ vi.hoisted(() => {
   process.env.DB_MANAGED_SCHEMA = process.env.DB_MANAGED_SCHEMA ?? 'false';
 });
 
-// MUST be set before `DatabaseConfig` is first read — it caches the resolved
-// config on first access, and `PostgresDatabase.getReadPool()` reads
-// `databaseConfig.readReplica` from it.
-if (READ_SEAM_URL) {
-  process.env.DB_READ_URL = READ_SEAM_URL;
-}
-
 import * as DbPromise from '../../../utils/DbPromise.js';
 import logger from '../../../utils/Logger.js';
 import { openDecisiveReadSession } from '../atelierFinancePromotionTransaction.js';
@@ -115,6 +108,28 @@ const REAL_DB_REQUESTED =
 const REACHABLE = REAL_DB_REQUESTED
   ? (await canReach(PRIMARY_URL)) && (await canReach(READ_SEAM_URL))
   : false;
+
+/**
+ * ARM THE SEAM — as late as possible, only when it is real, and put it back.
+ *
+ * `DatabaseConfig` resolves `DB_READ_URL` LAZILY on first access, so setting it
+ * here (after the imports have been evaluated, before any database call) is what
+ * `PostgresDatabase.getReadPool()` will see. Two things are deliberate:
+ *
+ *   - GATED ON REACHABLE. Pointing `DB_READ_URL` at a database that does not
+ *     exist would break every read in the process instead of skipping this file;
+ *   - RESTORED IN `afterAll`. `process.env` is shared across the files in a
+ *     vitest worker even when their module registries are not, and a leaked
+ *     `DB_READ_URL` hands every other pg suite a configured read replica — which
+ *     changes what `atelierFinanceFailClosed.pg.test.ts` expects from a
+ *     divergent seam probe (a refusal when no replica is configured, a loud log
+ *     when one is). Running this file in its own vitest invocation is still the
+ *     recommendation; this makes the batched case safe rather than lucky.
+ */
+const PREVIOUS_DB_READ_URL = process.env.DB_READ_URL;
+if (REACHABLE) {
+  process.env.DB_READ_URL = READ_SEAM_URL;
+}
 
 async function canReach(connectionString: string): Promise<boolean> {
   const probe = new Pool({ connectionString, max: 1, connectionTimeoutMillis: 3000 });
@@ -175,6 +190,8 @@ suite('FIN-005 P1-A — decisive reads come from the PRIMARY, never the read sea
     }
     const { default: db } = await import('../../../database/PostgresDatabase.js');
     await (db as unknown as { close: () => Promise<void> }).close().catch(() => undefined);
+    if (PREVIOUS_DB_READ_URL === undefined) delete process.env.DB_READ_URL;
+    else process.env.DB_READ_URL = PREVIOUS_DB_READ_URL;
   }, 120_000);
 
   // -------------------------------------------------------------------------
