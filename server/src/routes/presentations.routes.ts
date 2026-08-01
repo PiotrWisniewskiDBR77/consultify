@@ -659,6 +659,12 @@ const PUBLIC_DECK_DENY_FIELDS = new Set([
   'share_created_by',
   'created_by',
   'updated_by',
+  // MAT-006B — `declared_slide_count` is the raw column kept for internal
+  // diagnostics (it is the number that can lie). A public share viewer has no
+  // use for it and it exposes internal bookkeeping drift, so it is stripped.
+  // `slide_count` (derived) and `content_state` DO stay: they are what let the
+  // viewer say "this deck has no content" instead of rendering "Card 1 of 0".
+  'declared_slide_count',
 ]);
 
 function toPublicDeckRow(row: any) {
@@ -2328,31 +2334,89 @@ router.get(
     try {
       await ensureDeckLineageSchema();
       // MAT-006B — the list must not advertise slides the deck cannot serve.
-      // Pulling `deck_json` here would drag 40+ KB per row through the listing,
-      // so the query only asks the cheap question the column cannot lie about:
-      // does the row hold ANY canonical content at all? A row with neither
-      // content column can never render a card, so its count is forced to 0 and
-      // its state is stated explicitly. Rows that DO carry content keep their
-      // stored count here (the derived count needs the payload, and the
-      // canonical GET the builder calls next reports it).
+      //
+      // The first attempt at this gate used a pure-SQL predicate
+      // (`COALESCE(deck_json,'') <> '' OR COALESCE(unified_json,'') <> ''`) and
+      // echoed the stored `slide_count` whenever it was true. That is not
+      // fail-closed: a non-empty JSON string is not proof of renderable cards.
+      // It still passed a positive count through for `'{}'`, for invalid JSON
+      // (which `safeJsonParse` discards), for `{"schemaVersion":1,"cards":[]}`,
+      // and for the generator's cards+1 drift — i.e. every shape that actually
+      // occurs on `demo`. Only parsing the payload can answer the question, so
+      // the list now parses it, in JS, through the same
+      // `resolveDeckContentCoherence()` the canonical GET uses. List and
+      // canonical GET are therefore the same number by construction; there is
+      // no 'unverified' middle state left to hide behind.
+      //
+      // COST — this is a deliberate trade. The listing now reads `deck_json`
+      // (tens of rows x ~40 KB on a demo tenant) and JSON.parses each one. Two
+      // things keep the shape sane, neither of them measured:
+      //   1. `unified_json` is NOT selected up front. Every writer that stores
+      //      content stores `deck_json` (presentationGeneratorService.ts:2127
+      //      writes both in one UPDATE), so the second column is dead weight for
+      //      effectively every row. It is fetched only for the rows whose
+      //      `deck_json` yielded zero cards AND that hold a `unified_json` —
+      //      the legacy shape. Omitting it can only ever UNDERSTATE a count
+      //      (`normalizeDeckDocument` falls back to `unified_json` only when
+      //      `deck_json` produced no cards), never overstate it, so the second
+      //      pass is a correctness top-up, not a guess.
+      //   2. Neither content column is returned to the client. The response
+      //      carries the same fields it always did, plus the derived count.
+      // If this listing ever becomes hot, the fix is a persisted derived count
+      // (a generated column or a write-path invariant), not a return to a
+      // predicate that cannot see inside the payload.
       const rows = (await dbAll(
         `SELECT pd.id, pd.title, pd.description, pd.deck_type, pd.audience, pd.goal, pd.language, pd.theme, pd.presentation_mode, pd.slide_count, pd.status, pd.export_format, pd.exported_at, pd.created_at, pd.updated_at, pd.source_id, pd.thumbnail_url, pd.source_refs_json, pd.created_by,
                 (u.first_name || ' ' || u.last_name) AS created_by_name,
-                (CASE WHEN COALESCE(pd.deck_json, '') <> '' OR COALESCE(pd.unified_json, '') <> ''
-                      THEN 1 ELSE 0 END) AS has_canonical_content
+                pd.deck_json,
+                (CASE WHEN COALESCE(pd.unified_json, '') <> '' THEN 1 ELSE 0 END) AS has_unified_json
          FROM presentation_decks pd
          LEFT JOIN users u ON u.id = pd.created_by
          WHERE pd.organization_id = ? ORDER BY pd.updated_at DESC`,
         [orgId]
       )) as any[];
-      const data = (rows || []).map((row: any) => {
-        const hasContent = Number(row?.has_canonical_content) === 1;
+
+      const deckRows: any[] = rows || [];
+      const coherences = deckRows.map((row: any) => resolveDeckContentCoherence(row));
+      const needsUnifiedJson = deckRows
+        .filter(
+          (row: any, index: number) =>
+            coherences[index].cardCount === 0 && Number(row?.has_unified_json) === 1
+        )
+        .map((row: any) => String(row?.id));
+      if (needsUnifiedJson.length > 0) {
+        const placeholders = needsUnifiedJson.map(() => '?').join(', ');
+        const unifiedRows = (await dbAll(
+          `SELECT id, unified_json FROM presentation_decks
+           WHERE organization_id = ? AND id IN (${placeholders})`,
+          [orgId, ...needsUnifiedJson]
+        )) as any[];
+        const unifiedById = new Map(
+          (unifiedRows || []).map((u: any) => [String(u?.id), u?.unified_json])
+        );
+        deckRows.forEach((row: any, index: number) => {
+          if (!unifiedById.has(String(row?.id))) return;
+          coherences[index] = resolveDeckContentCoherence({
+            ...row,
+            unified_json: unifiedById.get(String(row?.id)),
+          });
+        });
+      }
+
+      const data = deckRows.map((row: any, index: number) => {
+        // Content columns are read to derive the count; they are not shipped.
+        const { deck_json: _deckJson, has_unified_json: _hasUnifiedJson, ...listRow } = row;
+        const coherence = coherences[index];
         return {
-          ...row,
-          has_canonical_content: hasContent,
-          declared_slide_count: Number(row?.slide_count) || 0,
-          slide_count: hasContent ? Number(row?.slide_count) || 0 : 0,
-          content_state: hasContent ? 'canonical' : 'missing',
+          ...listRow,
+          has_canonical_content: coherence.hasCanonicalContent,
+          // The raw column, kept for diagnostics only — this is the number that
+          // lied on `demo` ("Ready · 11" over zero renderable cards).
+          declared_slide_count: coherence.declaredSlideCount,
+          // Derived from the persisted content. `content_state === 'missing'`
+          // always travels with `slide_count === 0`.
+          slide_count: coherence.cardCount,
+          content_state: coherence.hasCanonicalContent ? 'canonical' : 'missing',
         };
       });
       res.json({ success: true, data });
