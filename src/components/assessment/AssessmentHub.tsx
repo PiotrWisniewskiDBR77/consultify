@@ -1203,16 +1203,33 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     switch (activeTab) {
       case 'list':
       case 'processes':
-        data = assessments.map((item) => ({
-          id: item.id,
-          name: item.name,
-          framework: mapApiFramework(item.type),
-          status: mapAssessmentApiStatus(item.status),
-          progress: item.progress ?? 0,
-          updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
-          // #69: raw list rows are `SELECT *` — createdBy arrives as snake_case.
-          createdBy: item.createdBy || item.created_by,
-        }));
+        data = assessments.map((item) => {
+          // Codex fix #4 (frontend half): GET /api/v8/assessment (list) never
+          // sent `progress` — that field doesn't exist in the API response at
+          // all (see V8AssessmentListItem / assessment.routes.ts `router.get('/')`).
+          // The list route derives DRD completion server-side and returns it
+          // under `completionPercent`/`completion_percent` (camelCase always
+          // present when derived; snake_case always present as the raw
+          // persisted column via `...row`, same keys the single-record
+          // GET /:id endpoint already used). Reading the non-existent
+          // `item.progress` silently fell back to `?? 0`, so Processes always
+          // showed 0% regardless of what the backend computed. `item.progress`
+          // stays as a last-resort fallback for any caller that still sends it.
+          const rawItem = item as unknown as {
+            completionPercent?: number;
+            completion_percent?: number;
+          };
+          return {
+            id: item.id,
+            name: item.name,
+            framework: mapApiFramework(item.type),
+            status: mapAssessmentApiStatus(item.status),
+            progress: rawItem.completionPercent ?? rawItem.completion_percent ?? item.progress ?? 0,
+            updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+            // #69: raw list rows are `SELECT *` — createdBy arrives as snake_case.
+            createdBy: item.createdBy || item.created_by,
+          };
+        });
         break;
       case 'reports': {
         const builderReports = reports.map((item) => ({
