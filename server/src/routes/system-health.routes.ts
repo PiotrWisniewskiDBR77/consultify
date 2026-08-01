@@ -424,58 +424,23 @@ router.get('/health', async (req: Request, res: Response) => {
 });
 
 /**
- * POST /api/system/repair
- * Auto-repair system issues
+ * REMOVED (SEC-PUB-001): `POST /repair` — served here as `POST /api/system/repair`
+ * via the unguarded `app.use('/api/system', ...)` mount in `index.ts`.
+ *
+ * It ran `child_process.exec('npm run db:test')` with no `verifyToken` and no
+ * `requireSuperAdmin`, so any anonymous request spawned a shell that mutated the
+ * database, and repeating it was a trivial process-exhaustion DoS. It had no
+ * caller: the only frontend reference, `src/views/SystemHealthDashboard.tsx`, is
+ * never imported and fetched a path (`/api/system/health/repair`) that never
+ * routed here anyway.
+ *
+ * Do not reinstate it on this router. Any future version must be a separate
+ * superadmin-only router behind `requireSuperAdmin`, gated by an explicit env
+ * flag defaulting to false, with no `child_process` in the web process (dispatch
+ * to a dedicated job/worker instead), a distributed lock, rate limiting, an audit
+ * log entry per invocation, and an execution timeout with concurrency control.
+ *
+ * Coverage: tests/integration/systemHealthRepairRemoved.contract.test.ts
  */
-router.post('/repair', async (req: Request, res: Response) => {
-  try {
-    const { exec } = await import('child_process');
-    const { promisify } = await import('util');
-    const execAsync = promisify(exec);
-
-    logger.info('[System Health] Running auto-repair...');
-
-    // Run the database test script which auto-fixes issues
-    const { stdout, stderr } = await execAsync('npm run db:test', {
-      cwd: process.cwd(),
-    });
-
-    logger.info('[System Health] Auto-repair completed');
-
-    // Re-run health checks
-    const checks: HealthCheck[] = [];
-    checks.push(await checkDatabase());
-    checks.push(await checkTables());
-    checks.push(await checkUsers());
-    checks.push(await checkDefaultLogin());
-
-    const hasError = checks.some((c) => c.status === 'error');
-    const hasWarning = checks.some((c) => c.status === 'warning');
-
-    let overall: 'healthy' | 'warning' | 'error';
-    if (hasError) {
-      overall = 'error';
-    } else if (hasWarning) {
-      overall = 'warning';
-    } else {
-      overall = 'healthy';
-    }
-
-    res.json({
-      overall,
-      timestamp: new Date().toISOString(),
-      checks,
-      autoRepairsApplied: 1,
-      repairOutput: stdout,
-    });
-  } catch (error) {
-    logger.error('[System Health] Auto-repair failed:', error);
-    res.status(500).json({
-      overall: 'error',
-      timestamp: new Date().toISOString(),
-      error: `Auto-repair failed: ${error}`,
-    });
-  }
-});
 
 export default router;
