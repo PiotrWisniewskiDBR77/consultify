@@ -36,7 +36,7 @@ Statusy końcowe alternatywne: `BLOCKED`, `DEFERRED`, `REJECTED`.
 | `WK-P0-015` | mapa fragmentów route→UI→API→service→data→test | READY | komplet dla 16 pozycji |
 | `WK-P0-016` | wybór kanonicznych implementacji i freeze alternatyw | BLOCKED | decyzje keep/merge/redirect/archive |
 | `WK-P0-017` | pierwszy pionowy pakiet scalający | BLOCKED | 10/10 bramki integracji |
-| `OPS-DEMO-001` | kontrolowana promocja zaakceptowanego kandydata na Railway `demo` | READY | fast-forward, deployment `SUCCESS`, revision match, `/ping`, log smoke i brak `5xx` |
+| `OPS-DEMO-001` | kontrolowana promocja zaakceptowanego kandydata na Railway `demo` | ACCEPTED | revision `9917d25c75`, deployment `9ea5c9c8` `SUCCESS`, health/routes `200`, log smoke bez fatal/crash/error |
 
 ## P1 — ważne, ale nie blokuje ograniczonego odbioru
 

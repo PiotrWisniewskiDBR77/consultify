@@ -1,7 +1,7 @@
 ---
 doc_id: ops-demo-001-controlled-demo-promotion
 truth_type: operations
-status: ready
+status: accepted
 owner: codex
 product_owner: piotr
 last_reviewed: 2026-08-01
@@ -59,5 +59,13 @@ są bezwzględnie poza zakresem.
 
 ## Stan
 
-`READY` — zezwala wyłącznie na promocję `demo` i jej read-only smoke. Nie zezwala
-na produkcję, migracje, zmianę zmiennych ani testy mutujące PostgreSQL.
+`ACCEPTED` — `origin/demo` wypromowano bez force push do merge-rewizji
+`9917d25c75f7447289517a0cef3981b3b4c4789f`. Railway deployment
+`9ea5c9c8-d4e3-4ac3-b313-7d39e426cf5c` osiągnął `SUCCESS`; `/ping`,
+`/api/health` oraz publiczne wejścia wszystkich modułów MVP zwróciły `200`, a
+bounded log smoke nie wykazał fatal/crash/error. Produkcja, konfiguracja, zmienne i
+PostgreSQL nie zostały zmienione.
+
+Jawny dług infrastrukturalny z logów builda: obraz używa Node 20 przy ostrzeżeniu
+`concurrently@10` wymagającym Node 22, a Dockerfile przekazuje `GEMINI_API_KEY` przez
+build ARG/ENV. Nie blokowało to deploymentu, lecz wymaga osobnego pakietu hardeningu.
