@@ -116,37 +116,27 @@ import {
 // Health Check (Ping) - synchronous
 app.get('/ping', HealthCheckController.ping);
 
-// Test route to verify server is working
-app.get('/test-frontend-path', (req: Request, res: Response) => {
-  const testPaths = [
-    '/app/dist',
-    path.join(__dirname, '../../../dist'),
-    path.join(__dirname, '../../dist'),
-  ];
-
-  const results = testPaths.map((p) => ({
-    path: p,
-    exists: fs.existsSync(p),
-    hasIndex: fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html')),
-  }));
-
-  // Try to detect frontend path if not set
-  let detectedPath = (global as any).frontendDistPath;
-  if (!detectedPath || detectedPath === 'not set') {
-    const found = testPaths.find(
-      (p) => fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'))
-    );
-    detectedPath = found || 'not found';
-  }
-
-  res.json({
-    __dirname,
-    NODE_ENV: process.env.NODE_ENV,
-    paths: results,
-    frontendDistPath: detectedPath,
-    globalFrontendDistPath: (global as any).frontendDistPath || 'not set',
-  });
-});
+/**
+ * REMOVED (SEC-PUB-002): `GET /test-frontend-path`.
+ *
+ * Anonymous, mounted here — before helmet, CORS, sanitisation, CSRF and the global
+ * rate limiter — and it answered with `__dirname`, `NODE_ENV`, the resolved
+ * frontend dist path and the existence of three container paths. That is the
+ * deployment layout of the running container, handed to anyone who asks, with no
+ * limiter and six `fs.existsSync` calls per request.
+ *
+ * Deleted rather than gated: it has zero consumers (`grep -rl "test-frontend-path"`
+ * finds nothing in `src/`, `tests/`, `e2e/` or `scripts/`), and the only genuinely
+ * useful part — the resolved dist path — is already served by `/api/build-info`,
+ * which does have a caller.
+ *
+ * If a diagnostic like this is ever needed again it belongs behind the test
+ * gateway conjunction used by `/api/auth/demo-login`: NODE_ENV === 'test' AND an
+ * explicit enable flag AND a configured TEST_SUPPORT_KEY — never on a router that
+ * production mounts.
+ *
+ * Coverage: tests/integration/publicSystemSurface.contract.test.ts
+ */
 
 // Mount Health Check Routes
 // Registered BEFORE the shared health routers so this more specific path wins.
