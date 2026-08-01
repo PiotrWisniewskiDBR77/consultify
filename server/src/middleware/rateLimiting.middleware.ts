@@ -455,9 +455,30 @@ const SHARED_STORE_UNAVAILABLE_RETRY_AFTER_SECONDS = 30;
 let sharedStoreFactoryOverride: SharedRateLimitStoreFactory | null = null;
 let sharedStoreGeneration = 0;
 
+/**
+ * `redis` selects the cross-replica store. `local` is now a FIRST-CLASS value
+ * meaning "in-process counters, deliberately" — it resolves to exactly the same
+ * behaviour as leaving the variable unset, but it lets an operator DECLARE the
+ * single-replica posture instead of having it inferred from an absent variable.
+ * `server/src/config/rateLimitPosture.ts` refuses startup on any other value, so
+ * a typo can no longer mean "local" by accident.
+ */
 function isSharedStoreEnabled(): boolean {
   const configured = normalizeOptionalString(process.env[SHARED_STORE_ENV]);
   return configured?.toLowerCase() === 'redis';
+}
+
+/**
+ * The exact predicate the limiter middleware uses to wave a request through
+ * without counting it. Extracted so the readiness probe below reports on the
+ * REAL path rather than on a config value that merely looks right.
+ */
+function isRateLimitBypassed(): boolean {
+  if (process.env.NODE_ENV === 'test') return true;
+  const disableRateLimitRequested = process.env.DISABLE_RATE_LIMIT === 'true';
+  if (!disableRateLimitRequested) return false;
+  const allowProdDisable = process.env.RATE_LIMIT_ALLOW_PROD_DISABLE === 'true';
+  return process.env.NODE_ENV !== 'production' || allowProdDisable;
 }
 
 /**
@@ -488,16 +509,23 @@ function resolveSharedStoreFailMode(): SharedStoreFailMode {
  *    contract); this limiter counts in `{ count, resetAt }` epoch milliseconds;
  * 2. window — its window is constructor-bound, not per-call, so each limiter
  *    needs its own instance;
- * 3. failure semantics — its `increment` swallows EVERY Redis error and returns
- *    `totalHits: 1`, i.e. it fails open INDISTINGUISHABLY: during an outage each
- *    request looks like the first hit of a fresh window and the quota silently
- *    becomes infinite. A caller cannot tell that apart from a genuine first hit,
- *    so this adapter probes the client itself and throws, letting the fail-mode
- *    policy above make a deliberate choice.
+ * 3. failure semantics — by DEFAULT its `increment` swallows every Redis error
+ *    and returns `totalHits: 1`, i.e. it fails open INDISTINGUISHABLY: during an
+ *    outage each request looks like the first hit of a fresh window and the quota
+ *    silently becomes infinite. That default is retained for the
+ *    express-rate-limit gateway limiters in index.ts, which want fail-open.
  *
- * The same probe rejects the in-process MOCK client (`MOCK_REDIS=true`, or no
- * `REDIS_URL`), whose `incr` returns a constant 1 — that would look like a
- * working shared store while enforcing nothing at all.
+ * This adapter therefore constructs the store with `throwOnError: true`, so a
+ * rejected INCR, a rejected TTL read, a rejected EXPIRE or a non-numeric reply
+ * ALL propagate here and let the fail-mode policy above make a deliberate
+ * choice. The pre-call connectivity check below is kept as a cheap short circuit,
+ * but it is no longer load-bearing: it only catches "not connected", which is one
+ * failure out of many.
+ *
+ * The in-process MOCK client (`MOCK_REDIS=true`, or no `REDIS_URL`) is refused
+ * twice over — here, and inside the store, which requires a real `ttl` command.
+ * Its `incr` returns a constant 1, which would look like a working shared store
+ * while enforcing nothing at all.
  */
 async function createRedisSharedRateLimitStore(windowMs: number): Promise<SharedRateLimitStore> {
   const [storeModule, clientModule] = await Promise.all([
@@ -510,7 +538,7 @@ async function createRedisSharedRateLimitStore(windowMs: number): Promise<Shared
     incr?: unknown;
     ttl?: unknown;
   };
-  const store = new RedisStore({ windowMs });
+  const store = new RedisStore({ windowMs, throwOnError: true });
 
   return {
     async increment(key: string): Promise<{ count: number; resetAt: number }> {
@@ -540,6 +568,112 @@ function resolveSharedStoreFactory(): SharedRateLimitStoreFactory {
 function setSharedRateLimitStoreFactory(factory: SharedRateLimitStoreFactory | null): void {
   sharedStoreFactoryOverride = factory;
   sharedStoreGeneration += 1;
+}
+
+// ---------------------------------------------------------------------------
+// Runtime state + readiness probe (OPS-DEMO-002)
+// ---------------------------------------------------------------------------
+
+export interface RateLimitRuntimeState {
+  /** The store the demo-signup limiters will actually count in. */
+  store: 'local' | 'redis';
+  failMode: SharedStoreFailMode;
+  /** `true` when every limiter is currently waving requests through. */
+  bypassed: boolean;
+}
+
+export function getRateLimitRuntimeState(): RateLimitRuntimeState {
+  return {
+    store: isSharedStoreEnabled() ? 'redis' : 'local',
+    failMode: resolveSharedStoreFailMode(),
+    bypassed: isRateLimitBypassed(),
+  };
+}
+
+export interface RateLimiterProbeResult extends RateLimitRuntimeState {
+  /** The limiter is present AND demonstrably counting. */
+  ok: boolean;
+  /** Short, non-sensitive reason. Never contains a key, address or IP. */
+  detail: string;
+  durationMs: number;
+}
+
+const PROBE_WINDOW_MS = 10_000;
+const PROBE_TIMEOUT_MS = 1_500;
+
+/**
+ * Cheap liveness probe of the LIMITER PATH, not of a config value.
+ *
+ * "Is `RATE_LIMIT_SHARED_STORE=redis` set?" proves nothing: the previous round
+ * found that a missing `REDIS_URL` yields a mock client whose `incr()` returns a
+ * constant 1, so a limiter can be fully configured and still count nothing. The
+ * probe therefore does the one thing a broken store cannot fake — it increments
+ * the SAME throwaway key TWICE and requires the count to strictly increase.
+ *
+ * Cost: two INCRs (plus a TTL) against one random key with a 10-second window,
+ * which then expires on its own. The local variant additionally deletes the key.
+ * Nothing about a real caller is touched, and the probe key is random so it can
+ * never collide with production traffic.
+ */
+export async function probeRateLimiterHealth(): Promise<RateLimiterProbeResult> {
+  const startedAt = Date.now();
+  const state = getRateLimitRuntimeState();
+  const finish = (ok: boolean, detail: string): RateLimiterProbeResult => ({
+    ...state,
+    ok,
+    detail,
+    durationMs: Math.max(0, Date.now() - startedAt),
+  });
+
+  if (state.bypassed) {
+    return finish(false, 'rate limiting is disabled for this process');
+  }
+
+  const probeKey = `rl:__probe__:${crypto.randomBytes(12).toString('hex')}`;
+
+  try {
+    if (state.store === 'redis') {
+      const run = (async () => {
+        const sharedStore = await resolveSharedStoreFactory()(PROBE_WINDOW_MS);
+        if (!sharedStore || typeof sharedStore.increment !== 'function') {
+          throw new Error('shared store factory returned no usable store');
+        }
+        const first = await sharedStore.increment(probeKey, PROBE_WINDOW_MS);
+        const second = await sharedStore.increment(probeKey, PROBE_WINDOW_MS);
+        return { first, second };
+      })();
+      const timeout = new Promise<never>((_, reject) => {
+        const timer = setTimeout(
+          () => reject(new Error('shared store did not answer in time')),
+          PROBE_TIMEOUT_MS
+        );
+        timer.unref?.();
+      });
+      const { first, second } = await Promise.race([run, timeout]);
+      const firstCount = toSafeNonNegativeIntCount(first?.count, 0);
+      const secondCount = toSafeNonNegativeIntCount(second?.count, 0);
+      if (firstCount < 1 || secondCount <= firstCount) {
+        // A store that answers but does not advance is the mock-client failure:
+        // it looks healthy and enforces nothing.
+        return finish(false, 'shared store did not advance its counter');
+      }
+      return finish(true, 'shared store counted two probe hits');
+    }
+
+    // Read the count out IMMEDIATELY: on a fresh key `increment` returns the very
+    // object it stored, so holding the result and reading `.count` after the
+    // second call would observe the mutated value and always look identical.
+    const firstCount = increment(probeKey, PROBE_WINDOW_MS).count;
+    const secondCount = increment(probeKey, PROBE_WINDOW_MS).count;
+    store.delete(probeKey);
+    if (firstCount !== 1 || secondCount !== 2) {
+      return finish(false, 'in-process store did not advance its counter');
+    }
+    return finish(true, 'in-process store counted two probe hits');
+  } catch {
+    store.delete(probeKey);
+    return finish(false, 'store probe failed');
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -715,13 +849,8 @@ function createLimiter(opts: {
   };
 
   return (req: Request, res: Response, next: NextFunction): void => {
-    if (process.env.NODE_ENV === 'test') {
-      safeInvokeNext(next);
-      return;
-    }
-    const disableRateLimitRequested = process.env.DISABLE_RATE_LIMIT === 'true';
-    const allowProdDisable = process.env.RATE_LIMIT_ALLOW_PROD_DISABLE === 'true';
-    if (disableRateLimitRequested && (process.env.NODE_ENV !== 'production' || allowProdDisable)) {
+    // Same predicate the readiness probe reports on — see isRateLimitBypassed.
+    if (isRateLimitBypassed()) {
       safeInvokeNext(next);
       return;
     }
@@ -923,11 +1052,15 @@ export const __private__ = {
   REJECTION_LOG_INTERVAL_MS,
   // Shared-store seam (OPS-DEMO-002) — prepared, opt-in, default off
   isSharedStoreEnabled,
+  isRateLimitBypassed,
   resolveSharedStoreFailMode,
   setSharedRateLimitStoreFactory,
   createRedisSharedRateLimitStore,
+  getRateLimitRuntimeState,
+  probeRateLimiterHealth,
   SHARED_STORE_ENV,
   SHARED_STORE_FAIL_MODE_ENV,
+  PROBE_WINDOW_MS,
 };
 
 export default defaultRateLimiter;
