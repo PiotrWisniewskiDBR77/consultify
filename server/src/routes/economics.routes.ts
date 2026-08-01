@@ -437,6 +437,7 @@ router.get(
                i.title as initiative_title,
                af.npv as financial_npv,
                af.roi_percent as financial_roi,
+               af.currency as financial_currency,
                u.first_name, u.last_name
         FROM digitization_analyses da
         LEFT JOIN projects p ON da.project_id = p.id
@@ -495,6 +496,11 @@ router.get(
         axisScores: safeJsonParse(row.axis_scores, {}),
         npv: row.financial_npv,
         roi: row.financial_roi,
+        // FIN-006/A O2: af.currency is nullable when an analysis has no
+        // analysis_financials row yet; EUR (not PLN) is the neutral fallback
+        // here — PLN was never a deliberate default for financial analyses,
+        // it only ever leaked in from an unrelated schema DEFAULT elsewhere.
+        currency: row.financial_currency || 'EUR',
         importedFrom: row.imported_from,
         importDate: row.import_date,
         createdAt: row.created_at,
@@ -662,7 +668,7 @@ router.get(
     try {
       const row = await dbGet<any>(
         `SELECT da.*, p.name as project_name, i.name as initiative_name, i.title as initiative_title,
-         af.npv as financial_npv, af.roi_percent as financial_roi,
+         af.npv as financial_npv, af.roi_percent as financial_roi, af.currency as financial_currency,
          u.first_name, u.last_name
          FROM digitization_analyses da
          LEFT JOIN projects p ON da.project_id = p.id
@@ -696,6 +702,8 @@ router.get(
         axisScores: safeJsonParse(row.axis_scores, {}),
         npv: row.financial_npv,
         roi: row.financial_roi,
+        // FIN-006/A O2: same neutral fallback as GET /analyses (list).
+        currency: row.financial_currency || 'EUR',
         importedFrom: row.imported_from,
         importDate: row.import_date,
         createdAt: row.created_at,
@@ -900,7 +908,10 @@ router.get(
       benefitRealizationMonths: row.benefit_realization_months || 6,
       analysisHorizonYears: row.analysis_horizon_years || 5,
       discountRate: row.discount_rate || 10,
-      currency: row.currency || 'PLN',
+      // FIN-006/A O2: same reasoning as GET/PUT /economics/analyses (list &
+      // detail) — EUR is the neutral fallback, PLN was never a deliberate
+      // default for financial analyses.
+      currency: row.currency || 'EUR',
       assumptions: safeJsonParse(row.assumptions, []),
     };
 
@@ -1493,7 +1504,9 @@ router.post(
       benefitRealizationMonths: row.benefit_realization_months || 6,
       analysisHorizonYears: row.analysis_horizon_years || 5,
       discountRate: row.discount_rate || 10,
-      currency: row.currency || 'PLN',
+      // FIN-006/A O2: same neutral EUR fallback as the sibling
+      // GET /analyses/:id/financials handler above (same source table/field).
+      currency: row.currency || 'EUR',
       assumptions: safeJsonParse(row.assumptions, []),
     };
 
