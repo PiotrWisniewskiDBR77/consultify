@@ -1,7 +1,7 @@
 /**
  * FIN-005 — Atelier Toys Finance golden-flow coherence gate.
  *
- * Two questions this test answers, both raised by the 2026-08-01 staging probe:
+ * Three questions this test answers, all raised by the 2026-08-01 staging probe:
  *
  * 1. **Does the canonical Atelier demo fixture tell ONE story?**
  *    statement pack -> analysis -> model, all Atelier Toys, one currency, one
@@ -9,81 +9,36 @@
  *    technical seed leftovers, no `(kopia)` duplicates.
  *
  * 2. **Is "READY" earned or asserted?**
- *    The seed writes `readiness_status = 'ready'` / `validation_status = 'pass'`.
- *    A literal proves nothing. So the captured statement values are fed back
- *    through the PRODUCTION functions — `validateStatement()` and
- *    `evaluateStatementReadiness()` from `financialStatementService` — and the
- *    computed verdict must equal the persisted one. If somebody edits a number
- *    and the balance sheet stops balancing, the seed's stored `ready` becomes a
- *    lie and this test fails.
+ *    The seed no longer writes `readiness_status='ready'` in the INSERT that
+ *    creates the row. It writes the statement NOT-ready, reads it back out of
+ *    the database, recomputes the verdict with the PRODUCTION functions
+ *    `validateStatement()` / `evaluateStatementReadiness()` and only then
+ *    promotes it. This test asserts BOTH halves: that the first write really is
+ *    not-ready, and that the final persisted verdict equals the one production
+ *    computes from the same rows. If somebody edits a number and the balance
+ *    sheet stops balancing, the promotion never happens and this test fails.
+ *
+ * 3. **Does the seed report its own outcome?**
+ *    `upsertAtelierFinanceGoldenFlow` returns a discriminated result; `complete`
+ *    must mean all three statements earned ready and the pack was promoted.
  *
  * SCOPE — deliberately narrow. Every assertion runs against the rows THIS SEED
  * WRITES for one throw-away org id. It never queries live data and never
  * inspects other tenants, so historical DBR77/Apator records outside the
  * canonical demo fixture are untouched and unjudged by this gate.
  *
- * The DB layer is mocked (same pattern as `atelierSpineCoherence.test.ts`), so
- * this runs anywhere with no Postgres.
+ * The DB layer is an in-memory fake (`helpers/fakeFinanceDb.ts`) that stores
+ * rows and answers the read-backs, so this runs anywhere with no Postgres.
  */
 
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-interface CapturedRow {
-  table: string;
-  columns: string[];
-  row: Record<string, unknown>;
-}
+import { fakeDb, type FakeRow } from './helpers/fakeFinanceDb.js';
 
-const captured: CapturedRow[] = [];
-
-function parseInsert(sql: string, params: unknown[]): CapturedRow | null {
-  const match = sql.match(/INSERT\s+INTO\s+([a-zA-Z0-9_]+)\s*\(([^)]*)\)/i);
-  if (!match) return null;
-  const table = match[1];
-  const columns = match[2]
-    .split(',')
-    .map((c) => c.trim())
-    .filter(Boolean);
-  const row: Record<string, unknown> = {};
-  columns.forEach((col, i) => {
-    row[col] = params[i];
-  });
-  return { table, columns, row };
-}
-
-function handleSchemaProbe(sql: string): { handled: boolean; result?: unknown } {
-  if (/information_schema\.tables/i.test(sql)) return { handled: true, result: { exists: true } };
-  if (/information_schema\.columns/i.test(sql) && /EXISTS/i.test(sql)) {
-    return { handled: true, result: { exists: true } };
-  }
-  return { handled: false };
-}
-
-vi.mock('../../../utils/DbPromise.js', () => {
-  const get = vi.fn(async (sql: string) => {
-    const probe = handleSchemaProbe(sql);
-    if (probe.handled) return probe.result;
-    return null;
-  });
-  const all = vi.fn(async () => []);
-  const run = vi.fn(async (sql: string, params: unknown[] = []) => {
-    const parsed = parseInsert(sql, params as unknown[]);
-    if (parsed) captured.push(parsed);
-    return { success: true, changes: 1 };
-  });
-  return {
-    get,
-    all,
-    run,
-    transaction: vi.fn(async () => ({ success: true, results: [] })),
-    tableExists: vi.fn(async () => true),
-    columnExists: vi.fn(async () => true),
-    exec: vi.fn(async () => ({ success: true })),
-    safeAll: vi.fn(async () => []),
-    count: vi.fn(async () => 0),
-    DbPromise: {},
-    default: {},
-  };
+vi.mock('../../../utils/DbPromise.js', async () => {
+  const { createDbPromiseMock } = await import('./helpers/fakeFinanceDb.js');
+  const { vi: vitest } = await import('vitest');
+  return createDbPromiseMock(vitest as never);
 });
 
 vi.mock('../../organizationContext/OrganizationContextService.js', () => ({
@@ -110,14 +65,36 @@ import {
   ATELIER_FY2014_CF,
   ATELIER_FY2014_PL,
   buildAtelierAnalysisStatementData,
+  getAtelierExpectedValueCounts,
   upsertAtelierFinanceGoldenFlow,
+  type AtelierFinanceSeedResult,
 } from '../atelierFinanceSeed.js';
 import { seedAtelierToysDemoDataset } from '../demoSeedService.js';
 
 const ORG_ID = 'demo-atelier-finance-test';
 
-function rowsFor(table: string): Array<Record<string, unknown>> {
-  return captured.filter((c) => c.table === table).map((c) => c.row);
+/** Final persisted state of a table (post-promotion), not the INSERT payload. */
+function rowsFor(table: string): FakeRow[] {
+  return fakeDb.rows(table);
+}
+
+/** The payload of the FIRST INSERT issued against a table — phase 1. */
+function firstInsertPayload(table: string, idSuffix: string): Record<string, unknown> | null {
+  for (const call of fakeDb.callsFor(1, 'insert')) {
+    if (call.table !== table) continue;
+    const match = call.sql.match(/INSERT\s+INTO\s+[a-zA-Z0-9_]+\s*\(([^)]*)\)/i);
+    if (!match) continue;
+    const columns = match[1]
+      .split(',')
+      .map((column) => column.trim())
+      .filter(Boolean);
+    const row: Record<string, unknown> = {};
+    columns.forEach((column, index) => {
+      row[column] = call.params[index];
+    });
+    if (String(row.id ?? '').endsWith(idSuffix)) return row;
+  }
+  return null;
 }
 
 function str(value: unknown): string {
@@ -143,12 +120,25 @@ describe('FIN-005 — Atelier Finance fixture arithmetic', () => {
     expect(statementData.bs).toHaveLength(ATELIER_FY2014_BS.length);
     expect(statementData.cf).toHaveLength(ATELIER_FY2014_CF.length);
   });
+
+  it('the exported expected value counts match the fixture', () => {
+    expect(getAtelierExpectedValueCounts()).toEqual({
+      'P&L': ATELIER_FY2014_PL.length,
+      BS: ATELIER_FY2014_BS.length,
+      CF: ATELIER_FY2014_CF.length,
+    });
+  });
 });
 
 describe('FIN-005 — statements earn READY through production code', () => {
+  let result: AtelierFinanceSeedResult;
+
   beforeAll(async () => {
-    captured.length = 0;
-    await upsertAtelierFinanceGoldenFlow({ organizationId: ORG_ID, createdBy: 'user-cfo' });
+    fakeDb.reset();
+    result = await upsertAtelierFinanceGoldenFlow({
+      organizationId: ORG_ID,
+      createdBy: 'user-cfo',
+    });
   });
 
   const cases = [
@@ -157,7 +147,25 @@ describe('FIN-005 — statements earn READY through production code', () => {
     { type: 'CF', slug: 'atelier-fy2014-cf', lines: ATELIER_FY2014_CF },
   ];
 
+  it('the seed reports a complete golden flow', () => {
+    expect(result.status).toBe('complete');
+    expect(result.reason).toBeUndefined();
+    expect(result.statementIds).toHaveLength(3);
+    expect(result.unpromotedStatementIds).toEqual([]);
+    expect(result.packId).toBeTruthy();
+    expect(result.analysisId).toBeTruthy();
+  });
+
   for (const testCase of cases) {
+    it(`${testCase.type} — the creating INSERT is NOT ready (READY is never asserted up front)`, () => {
+      const inserted = firstInsertPayload('financial_statements', testCase.slug);
+      expect(inserted, `${testCase.type} statement was not written`).toBeTruthy();
+      expect(str(inserted?.status)).toBe('imported');
+      expect(str(inserted?.validation_status)).toBe('pending');
+      expect(str(inserted?.readiness_status)).toBe('pending');
+      expect(Number(inserted?.readiness_score)).toBe(0);
+    });
+
     it(`${testCase.type} — validateStatement returns pass with zero warnings`, () => {
       const result = validateStatement(
         testCase.lines.map((line) => ({
@@ -178,7 +186,7 @@ describe('FIN-005 — statements earn READY through production code', () => {
       expect(result.status).toBe('pass');
     });
 
-    it(`${testCase.type} — evaluateStatementReadiness computes the persisted verdict`, () => {
+    it(`${testCase.type} — the PERSISTED verdict equals the one production computes`, () => {
       const values = testCase.lines.map((line) => ({
         canonicalLineId: line.lineId,
         value: line.value,
@@ -203,17 +211,19 @@ describe('FIN-005 — statements earn READY through production code', () => {
         values,
       });
 
-      // The seed stores these literals; production must agree with them.
       const persisted = rowsFor('financial_statements').find((row) =>
         str(row.id).endsWith(testCase.slug)
       );
       expect(persisted, `${testCase.type} statement was not written`).toBeTruthy();
 
       expect(readiness.readinessStatus).toBe('ready');
-      expect(readiness.readinessStatus).toBe(str(persisted?.readiness_status));
-      expect(validation.status).toBe(str(persisted?.validation_status));
       expect(readiness.readinessScore).toBe(100);
+      // The stored verdict is the one the seed READ BACK and recomputed, so it
+      // must equal what production says about the same numbers.
+      expect(str(persisted?.readiness_status)).toBe(readiness.readinessStatus);
+      expect(str(persisted?.validation_status)).toBe(validation.status);
       expect(Number(persisted?.readiness_score)).toBe(readiness.readinessScore);
+      expect(str(persisted?.status)).toBe('confirmed');
     });
   }
 
@@ -229,18 +239,40 @@ describe('FIN-005 — statements earn READY through production code', () => {
     }
   });
 
+  it('the pack starts as a draft and is promoted only after the statements are', () => {
+    const inserted = firstInsertPayload('financial_statement_packs', 'atelier-fy2014');
+    expect(inserted).toBeTruthy();
+    expect(str(inserted?.pack_status)).toBe('draft');
+    expect(str(inserted?.pack_readiness_status)).toBe('pending');
+    expect(Number(inserted?.source_statement_count)).toBe(0);
+    expect(JSON.parse(str(inserted?.missing_statement_types))).toEqual(['P&L', 'BS', 'CF']);
+  });
+
   it('the pack is complete: one P&L, one BS, one CF, no missing types', () => {
     const packs = rowsFor('financial_statement_packs');
     expect(packs).toHaveLength(1);
     const pack = packs[0];
 
     expect(str(pack.entity_name)).toBe(ATELIER_FINANCE_ENTITY_NAME);
+    expect(str(pack.pack_status)).toBe('confirmed');
     expect(str(pack.pack_readiness_status)).toBe('ready');
     expect(JSON.parse(str(pack.missing_statement_types))).toEqual([]);
     expect(Number(pack.source_statement_count)).toBe(3);
 
-    const types = rowsFor('financial_statements').map((row) => str(row.statement_type)).sort();
+    const types = rowsFor('financial_statements')
+      .map((row) => str(row.statement_type))
+      .sort();
     expect(types).toEqual(['BS', 'CF', 'P&L']);
+  });
+
+  it('the analysis is written DRAFT and promoted to APPROVED only after read-back', () => {
+    const inserted = firstInsertPayload('financial_analyses', 'atelier-fy2014-baseline');
+    expect(inserted).toBeTruthy();
+    expect(str(inserted?.status)).toBe('DRAFT');
+
+    const analyses = rowsFor('financial_analyses');
+    expect(analyses).toHaveLength(1);
+    expect(str(analyses[0].status)).toBe('APPROVED');
   });
 
   it('no raw JS Date value reaches the period columns', () => {
@@ -258,7 +290,7 @@ describe('FIN-005 — statements earn READY through production code', () => {
 
 describe('FIN-005 — the golden flow is linked end to end', () => {
   beforeAll(async () => {
-    captured.length = 0;
+    fakeDb.reset();
     await seedAtelierToysDemoDataset({ organizationId: ORG_ID, locale: 'en' });
   });
 
@@ -271,12 +303,15 @@ describe('FIN-005 — the golden flow is linked end to end', () => {
     for (const statement of statements) {
       expect(str(statement.statement_pack_id)).toBe(packId);
       expect(str(statement.organization_id)).toBe(ORG_ID);
+      expect(str(statement.readiness_status)).toBe('ready');
     }
   });
 
   it('the approved analysis is seeded from that pack and those statements', () => {
     const packId = str(rowsFor('financial_statement_packs')[0]?.id);
-    const statementIds = rowsFor('financial_statements').map((row) => str(row.id)).sort();
+    const statementIds = rowsFor('financial_statements')
+      .map((row) => str(row.id))
+      .sort();
 
     const analyses = rowsFor('financial_analyses');
     expect(analyses).toHaveLength(1);
@@ -329,7 +364,7 @@ describe('FIN-005 — the golden flow is linked end to end', () => {
 
 describe('FIN-005 — no foreign or technical records in the canonical demo fixture', () => {
   beforeAll(async () => {
-    captured.length = 0;
+    fakeDb.reset();
     await seedAtelierToysDemoDataset({ organizationId: ORG_ID, locale: 'en' });
   });
 
@@ -390,9 +425,10 @@ describe('FIN-005 — no foreign or technical records in the canonical demo fixt
       }
     }
 
-    expect(offences, `foreign records in the canonical Atelier demo fixture:\n${offences.join('\n')}`).toEqual(
-      []
-    );
+    expect(
+      offences,
+      `foreign records in the canonical Atelier demo fixture:\n${offences.join('\n')}`
+    ).toEqual([]);
   });
 
   it('every customer-visible Finance record names Atelier Toys', () => {
