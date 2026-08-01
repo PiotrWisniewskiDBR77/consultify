@@ -1775,11 +1775,61 @@ udokumentowana explicite, nie tylko twierdzona prozą.
 (gałąź `wip/fin-005-assumption-caveats-r10`, osobna, niescalona:
 `ecc92ae06a wip(FIN-005): round-10 assumption-caveats surfacing — started without instruction, preserved not merged`)
 
-**Nowy HEAD: `5d777c8fdd`.**
+**Nowy HEAD: `5d777c8fdd`** — **rozszerzone o §20 poniżej na wyraźną prośbę
+Piotra.**
+
+---
+
+## 20. Domknięcie widocznych czerwonych testów przed oddaniem (2026-08-01)
+
+Piotr: „widzę, że skipujesz, widzę, że nie wszystko przeszło... nie oddawaj,
+tylko sam z tym powalcz w jednej rundzie". Dotychczas 10 awarii w
+`finance.routes.test.ts` było raportowane jako „przedistniejące, niezwiązane"
+(potwierdzone `git stash`-em w rundzie 8) i zostawiane bez naprawy — słusznie
+co do PRZYCZYNY (nie były skutkiem żadnej pracy FIN-005), ale nie co do
+DECYZJI: gałąź nie powinna wracać do Codeksa z widocznymi czerwonymi testami,
+nawet jeśli ich nie spowodowałem.
+
+**Obie przyczyny — błędy w testach, zero zmian w kodzie produkcyjnym:**
+
+1. **9 asercji** (`POST /models`, `GET /models/:id`, `GET .../validations`,
+   `GET .../outputs`, `POST .../compute`, `POST .../approve`,
+   `PUT /models/:id`, `POST .../events`, `DELETE /models/:id`) zakładało
+   `mockGetModel).toHaveBeenCalledWith('model-1')` — jeden argument. Każdy z
+   tych handlerów w `finance.routes.ts` faktycznie woła
+   `getModel(modelId, organizationId)` — potwierdzone grepem każdego
+   wywołania w pliku, spójnie. Naprawione na `('model-1', ORG)` — dokładnie
+   ta sama korekta, którą już zrobiłem dla własnego testu trasy appraisal w
+   rundzie 8.
+2. **`POST /budgets`** zakładało `res.status` = 200. `finance.routes.ts:982`
+   jawnie robi `res.status(201)` — standardowy REST dla endpointu tworzenia.
+   Tytuł testu mówił „returns 200" — po prostu błędnie. Naprawione na 201.
+
+**Dodatkowo zweryfikowane, nie tylko wyjaśnione**: „1 skipped" w real-PG to
+legalny, DZIAŁAJĄCY warunek (test wykrywania driftu schematu, uruchamia się
+tylko na celowo zdryfowanej bazie) — zbudowana `fin005_drift` (kolumna
+`readiness_status` usunięta) i uruchomiona komenda sankcjonowana wprost na
+niej: **1 PASS / 0 FAIL / 45 skipped, 3× identycznie**, dopasowane do
+oryginalnego potwierdzenia z rundy 7. To nie jest coś zepsutego — to gałąź
+testu, która wymaga innej topologii bazy niż główny przebieg.
+
+### 20.1 Bramki (pełny, rzeczywiście zielony zestaw)
+
+| Bramka | Wynik |
+| --- | --- |
+| mockowane FIN-005 (23 pliki) | **437 PASS / 0 FAIL / 10 skipped**, 3× identycznie — po raz pierwszy w tym pakiecie BEZ adnotacji „przedistniejące awarie" |
+| real PG, główny przebieg (`fin005_pri`+`fin005_rep` seam) | **45 PASS / 0 FAIL / 1 skipped**, 3× identycznie |
+| real PG, zdryfowana baza (`fin005_drift`) | **1 PASS / 0 FAIL / 45 skipped**, 3× identycznie — dowód, że drift-gate naprawdę działa, nie tylko że się poprawnie pomija |
+| `tsc --noEmit` backend | **147 = 147** |
+| `tsc --noEmit` frontend | **0 błędów** |
+| `npm run build:backend` | **PASS** |
+| `git diff --check` | **PASS** |
+
+**Nowy HEAD: `2ab57a951e`.**
 
 **Status: AWAITING_CODEX_REVIEW.** Working tree czysty, nic nie wypchnięte,
 nic niescalone, żaden `--write`/`--rollback`/mutacja Railway nie został
-uruchomiony — wyłącznie lokalne bazy scratch (`fin005_pri`, `fin005_rep`),
-posprzątane po weryfikacji. Gałąź NIE jest deklarowana jako ostatecznie
-zaakceptowana. Zgodnie z instrukcją Codeksa: po tym raporcie nie wykonuję
-żadnej dodatkowej pracy na tej gałęzi bez nowego polecenia.
+uruchomiony — wyłącznie lokalne bazy scratch (`fin005_pri`, `fin005_rep`,
+`fin005_drift`), posprzątane po weryfikacji. Gałąź NIE jest deklarowana jako
+ostatecznie zaakceptowana — decyzję o `FROZEN_FOR_INTEGRATION`/merge
+podejmie Codex.
