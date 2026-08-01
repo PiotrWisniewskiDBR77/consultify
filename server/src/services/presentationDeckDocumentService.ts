@@ -569,6 +569,176 @@ export function normalizeDeckDocument(row: any): DeckDocument | null {
   return null;
 }
 
+/**
+ * MAT-007/009 (2026-08-01) — root-cause fix for the "Ready, N slides in the
+ * list / 0 cards in the builder" incident (see
+ * docs/program/WEEKEND_COMPLETION_2026-08-01/PACKETS/MAT-006B_PRESENTATION_LIFECYCLE_E2E.md).
+ *
+ * `POST /decks` and `POST /decks/from-template` in presentations.routes.ts
+ * historically wrote an accurate `slide_count` onto `presentation_decks` but
+ * persisted the actual slide content only into the `presentation_cards`
+ * table — a table `normalizeDeckDocument` (above) never reads and that is
+ * not guaranteed to exist in every environment. The result: `GET
+ * /decks/:id` returned a row with `deck_json`/`unified_json` both empty,
+ * `normalizeDeckDocument` fell through to `null`, and the builder rendered
+ * an empty deck ("Card 1 of 0") even though the list correctly reported the
+ * slide count.
+ *
+ * This builds a proper canonical `schemaVersion: 1` DeckDocument (the same
+ * shape `normalizeDeckDocument`'s fast path expects) directly from the
+ * loosely-typed `{ type, content }` slide payloads these two routes accept,
+ * so the row is self-consistent with `deck_json` from the moment it is
+ * created — no separate table, no read-side reconstruction needed.
+ */
+export interface StructuredSlideInput {
+  type?: string;
+  content?: Record<string, unknown> | null;
+}
+
+function structuredSlideToCard(
+  deckId: string,
+  slide: StructuredSlideInput,
+  index: number
+): DeckDocumentCard {
+  const intent = String(slide?.type || 'content');
+  const content: Record<string, unknown> =
+    slide?.content && typeof slide.content === 'object' ? (slide.content as any) : {};
+  const cardId = `card-${deckId}-${index}`;
+  const title = String(content.title || content.heading || `Slide ${index + 1}`);
+  const subtitle = typeof content.subtitle === 'string' ? content.subtitle : undefined;
+  const body = typeof content.body === 'string' ? content.body : undefined;
+
+  const blocks: DeckCardBlock[] = [];
+  let order = 0;
+  const pushBlock = (type: string, blockContent: Record<string, unknown>) => {
+    blocks.push({
+      block_id: `block-${deckId}-${index}-${order}`,
+      card_id: cardId,
+      type,
+      content: blockContent,
+      is_refreshable: false,
+      position: { area: 'full', order },
+      ai_editable: true,
+    });
+    order += 1;
+  };
+
+  // `POST /decks/from-template` (mapOutlineBlueprintToDeckSlides) already
+  // hands us a pre-flattened `content.blocks: [{type: 'heading'|'text',
+  // content: string}]` array — use it directly instead of re-deriving a
+  // heading from `content.title` (which would duplicate it).
+  const nestedBlocks = Array.isArray((content as any).blocks) ? (content as any).blocks : null;
+  if (nestedBlocks && nestedBlocks.length) {
+    for (const b of nestedBlocks) {
+      const btype = b && (b as any).type === 'heading' ? 'heading' : 'paragraph';
+      const btext =
+        typeof (b as any)?.content === 'string'
+          ? (b as any).content
+          : (b as any)?.content != null
+            ? JSON.stringify((b as any).content)
+            : '';
+      if (btext) pushBlock(btype, { text: btext });
+    }
+  } else {
+    pushBlock('heading', { text: title, level: 2 });
+    if (subtitle) pushBlock('paragraph', { text: subtitle });
+    if (body) pushBlock('paragraph', { text: body });
+    if (Array.isArray((content as any).items) && (content as any).items.length) {
+      pushBlock('bullet_list', { items: (content as any).items.map(String) });
+    }
+    if (Array.isArray((content as any).messages) && (content as any).messages.length) {
+      pushBlock('bullet_list', {
+        items: (content as any).messages.map((m: any) =>
+          m && typeof m === 'object'
+            ? [m.title, m.description].filter(Boolean).join(': ')
+            : String(m)
+        ),
+      });
+    }
+  }
+  // Fallback: if nothing beyond the heading matched a known shape, dump any
+  // remaining string-valued content fields so a slide never silently loses
+  // its only content instead of showing as "empty" for a different reason.
+  if (blocks.length <= 1 && !nestedBlocks) {
+    const fallbackText = Object.entries(content)
+      .filter(([key, value]) => key !== 'title' && key !== 'heading' && typeof value === 'string' && value)
+      .map(([, value]) => String(value))
+      .join(' · ');
+    if (fallbackText) pushBlock('paragraph', { text: fallbackText });
+  }
+
+  return {
+    card_id: cardId,
+    deck_id: deckId,
+    order_index: index,
+    intent,
+    layout_id: intent === 'title' || intent === 'cover' ? 'cover_centered' : 'content_full',
+    title,
+    key_message: subtitle || body,
+    blocks,
+    source_refs: [],
+    has_refreshable_data: false,
+    background: { type: intent === 'title' || intent === 'cover' ? 'gradient' : 'theme' },
+    animations: { entrance: 'fade', block_stagger: false },
+    is_locked: false,
+  } satisfies DeckDocumentCard;
+}
+
+export function buildDeckDocumentFromStructuredSlides(params: {
+  deckId: string;
+  organizationId: string;
+  title: string;
+  theme?: string;
+  slides: StructuredSlideInput[];
+  status?: DeckStatus;
+  createdBy?: string | null;
+}): DeckDocument {
+  const nowIso = new Date().toISOString();
+  const slides = Array.isArray(params.slides) ? params.slides : [];
+  const cards = slides.map((slide, index) => structuredSlideToCard(params.deckId, slide, index));
+  return {
+    schemaVersion: 1,
+    deck_id: params.deckId,
+    deckId: params.deckId,
+    organization_id: params.organizationId,
+    title: params.title,
+    theme_id: params.theme || 'modern',
+    presentation_mode: 'briefing',
+    communication_register: 'professional',
+    image_style_preset: 'minimal_no_images',
+    color_set_id: 'brand_kit',
+    status: params.status || 'draft',
+    card_size: '16:9',
+    cards,
+    source_refs: [],
+    generation_settings: {
+      text_mode: 'preserve',
+      content_depth: 'concise',
+      audience: 'internal',
+      tone: 'professional',
+      language: 'en',
+      image_source: 'none',
+    },
+    animations_enabled: true,
+    share_settings: { is_shared: false, permissions: 'view' },
+    speaker_notes_generated: false,
+    meta: { title: params.title, deckType: 'custom' },
+    lifecycle: {
+      status: params.status || 'draft',
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      exportedAt: null,
+    },
+    generation: { outline: [], generationSettings: {}, warnings: [] },
+    delivery: { exportFormat: null, exportPath: null },
+    traceability: { sourceRefs: [], sourceArtifacts: [] },
+    ai: { reviewState: 'clean' },
+    created_by: params.createdBy || 'system',
+    created_at: nowIso,
+    updated_at: nowIso,
+  } satisfies DeckDocument;
+}
+
 function deckDocumentFromLegacyDeckJson(row: any, deckJson: any): DeckDocument {
   const title = String(row?.title || deckJson.title || 'Untitled');
   const sourceRefs = sourceRefsFromUnknown(deckJson.source_refs);
