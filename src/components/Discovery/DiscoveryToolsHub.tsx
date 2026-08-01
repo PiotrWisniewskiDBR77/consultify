@@ -2287,16 +2287,44 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     [handleShowList]
   );
 
+  // TLS-01: `docId` is now a DURABLE, two-way-synced reflection of
+  // `activeDocumentId`, not a one-shot deep-link param that gets stripped
+  // after use. Previously, once a tool document opened, the URL reverted to
+  // having no `docId` at all — reload/share/back-forward silently lost which
+  // workspace (e.g. a SWOT session) was open, falling back only to a
+  // per-tab `sessionStorage` cache. Now: opening/switching/closing a
+  // document updates `docId` in the URL, and a `docId` present in the URL
+  // (initial load, reload, browser back/forward, a shared/bookmarked link)
+  // opens that document — making the URL the actual source of truth for
+  // which surface/workspace is active, per the reopen-by-workspaceId
+  // requirement.
+  const docIdParam = String(searchParams.get('docId') || '').trim() || null;
+
+  // URL -> state
   useEffect(() => {
     if (!hydrated) return;
-    const docId = String(searchParams.get('docId') || '').trim();
-    if (!docId) return;
-    void openDocumentById(docId).finally(() => {
-      const next = new URLSearchParams(searchParams);
+    if (!docIdParam) return;
+    if (docIdParam === activeDocumentId) return;
+    void openDocumentById(docIdParam);
+    // docIdParam is intentionally the only reactive dependency here — the
+    // state->URL direction below owns reacting to activeDocumentId changes;
+    // including it here too would cause both effects to fight/re-trigger
+    // each other on every local navigation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, docIdParam]);
+
+  // state -> URL
+  useEffect(() => {
+    if (!hydrated) return;
+    if (docIdParam === (activeDocumentId || null)) return;
+    const next = new URLSearchParams(searchParams);
+    if (activeDocumentId) {
+      next.set('docId', activeDocumentId);
+    } else {
       next.delete('docId');
-      setSearchParams(next, { replace: true });
-    });
-  }, [hydrated, openDocumentById, searchParams, setSearchParams]);
+    }
+    setSearchParams(next, { replace: true });
+  }, [hydrated, activeDocumentId, docIdParam, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!hydrated) return;
