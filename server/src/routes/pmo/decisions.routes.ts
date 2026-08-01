@@ -19,10 +19,16 @@ import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import { PlaybookSchema } from '../../services/decisionPlaybookService.js';
 import {
+  CreateDecisionAlternativeSchema,
+  CreateDecisionCommentSchema,
+  CreateDecisionRiskSchema,
   CreateDecisionSchema,
   DecideSchema,
   EscalateDecisionSchema,
   RemindDecisionSchema,
+  UpdateDecisionAlternativeSchema,
+  UpdateDecisionCommentSchema,
+  UpdateDecisionRiskSchema,
   UpdateDecisionSchema,
 } from '../../validators/decision.validators.js';
 
@@ -175,5 +181,98 @@ router.patch('/:id/workflow', verifyAdmin, DecisionController.transitionWorkflow
  *         language?: 'pl'|'en', context?: string }
  */
 router.post('/:id/generate-section', DecisionController.generateSection);
+
+// ==========================================
+// MW-DEC-001 — Decision detail aggregate + comments/alternatives/risks
+//
+// Real backend for what DecisionDetailView.tsx (frontend) previously faked
+// entirely in localStorage. Single canonical Decision domain owner — same
+// controller/router as everything else in this file, per CLAUDE.md
+// architectural rules (no second Decision backend).
+// ==========================================
+
+/**
+ * GET /api/decisions/:id/detail
+ * Single aggregate read: decision + impacts + audit history + comments +
+ * alternatives + risks + evidence links — avoids N+1 orchestration on the
+ * client.
+ */
+router.get('/:id/detail', DecisionController.getDecisionDetail);
+
+/**
+ * POST /api/decisions/:id/comments
+ * Any org member with access to the decision may comment (matches the
+ * existing GET /:id read-scope: org membership, not team membership).
+ */
+router.post(
+  '/:id/comments',
+  requireDecisionCapability('decision.comment', { shadow: true }),
+  validateBody(CreateDecisionCommentSchema),
+  DecisionController.createComment
+);
+
+/** PUT /api/decisions/:id/comments/:commentId — author or admin only. */
+router.put(
+  '/:id/comments/:commentId',
+  requireDecisionCapability('decision.comment', { shadow: true }),
+  validateBody(UpdateDecisionCommentSchema),
+  DecisionController.updateComment
+);
+
+/** DELETE /api/decisions/:id/comments/:commentId — soft-delete; author or admin only. */
+router.delete(
+  '/:id/comments/:commentId',
+  requireDecisionCapability('decision.comment', { shadow: true }),
+  DecisionController.deleteComment
+);
+
+/**
+ * POST /api/decisions/:id/alternatives
+ * Decision preparer (created_by), decision owner (decision_maker_id), or
+ * admin only — dossier content, not open discussion.
+ */
+router.post(
+  '/:id/alternatives',
+  requireDecisionCapability('decision.update', { shadow: true }),
+  validateBody(CreateDecisionAlternativeSchema),
+  DecisionController.createAlternative
+);
+
+router.put(
+  '/:id/alternatives/:alternativeId',
+  requireDecisionCapability('decision.update', { shadow: true }),
+  validateBody(UpdateDecisionAlternativeSchema),
+  DecisionController.updateAlternative
+);
+
+router.delete(
+  '/:id/alternatives/:alternativeId',
+  requireDecisionCapability('decision.update', { shadow: true }),
+  DecisionController.deleteAlternative
+);
+
+/**
+ * POST /api/decisions/:id/risks
+ * Same authorization as alternatives (preparer/owner/admin).
+ */
+router.post(
+  '/:id/risks',
+  requireDecisionCapability('decision.update', { shadow: true }),
+  validateBody(CreateDecisionRiskSchema),
+  DecisionController.createRisk
+);
+
+router.put(
+  '/:id/risks/:riskId',
+  requireDecisionCapability('decision.update', { shadow: true }),
+  validateBody(UpdateDecisionRiskSchema),
+  DecisionController.updateRisk
+);
+
+router.delete(
+  '/:id/risks/:riskId',
+  requireDecisionCapability('decision.update', { shadow: true }),
+  DecisionController.deleteRisk
+);
 
 export default router;

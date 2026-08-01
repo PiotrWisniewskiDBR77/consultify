@@ -10,6 +10,26 @@ import { v4 as uuidv4 } from 'uuid';
 
 import auditEventsService from '../services/AuditEventsService.js';
 import {
+  DecisionConflictError,
+  DecisionNotFoundError,
+  DecisionSubResourceNotFoundError,
+  DecisionValidationError,
+  createDecisionAlternative,
+  createDecisionComment,
+  createDecisionRisk,
+  deleteDecisionAlternative,
+  deleteDecisionComment,
+  deleteDecisionRisk,
+  enqueueDecisionFinalizedNotification,
+  finalizeDecisionTransition,
+  getDecisionAggregateExtras,
+  isPrivilegedRole,
+  updateDecisionAlternative,
+  updateDecisionComment,
+  updateDecisionRisk,
+} from '../services/decisionCollaborationService.js';
+import { assertNotFinalized } from '../services/decisionOutcomeService.js';
+import {
   type DecisionPlaybook,
   validateRequiredFields,
 } from '../services/decisionPlaybookService.js';
@@ -30,11 +50,17 @@ import logger from '../utils/Logger.js';
 import { parseMaybeJson } from '../utils/pgFlags.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
+  CreateDecisionAlternativeRequest,
+  CreateDecisionCommentRequest,
   CreateDecisionRequest,
+  CreateDecisionRiskRequest,
   DecideRequest,
   EscalateDecisionRequest,
   RemindDecisionRequest,
+  UpdateDecisionAlternativeRequest,
+  UpdateDecisionCommentRequest,
   UpdateDecisionRequest,
+  UpdateDecisionRiskRequest,
 } from '../validators/decision.validators.js';
 
 // ==========================================
@@ -136,7 +162,20 @@ function buildStructuredFields(row: DecisionRow): {
 const normalizeStatus = (status?: string | null): string => {
   if (!status) return 'pending';
   const normalized = status.toLowerCase();
-  if (['pending', 'approved', 'rejected', 'escalated', 'cancelled'].includes(normalized)) {
+  // MW-DEC-001: 'returned_for_clarification' added to the OUTCOME axis (see
+  // decisionOutcomeService.ts) — must pass through unchanged like the other
+  // recognized statuses, not collapse to 'pending' (that would silently hide
+  // the new state on every list/detail read).
+  if (
+    [
+      'pending',
+      'approved',
+      'rejected',
+      'escalated',
+      'cancelled',
+      'returned_for_clarification',
+    ].includes(normalized)
+  ) {
     return normalized;
   }
   if (normalized === 'made') return 'approved';
@@ -168,6 +207,7 @@ const isDecisionStatusInput = (status?: string | null): boolean => {
     'cancelled',
     'made',
     'expired',
+    'returned_for_clarification',
   ].includes(normalized);
 };
 
@@ -365,6 +405,49 @@ const parseHistoryDetails = (value?: string | null): Record<string, unknown> | u
     return undefined;
   }
 };
+
+/**
+ * MW-DEC-001: shared error → HTTP mapping for the comments/alternatives/
+ * risks endpoints. Keeps DecisionNotFoundError (never leaks cross-tenant
+ * existence — always a generic 404) / DecisionSubResourceNotFoundError (404)
+ * / DecisionConflictError (403 for authorship 'FORBIDDEN', 409 for domain
+ * conflicts like 'DECISION_FINALIZED') / DecisionValidationError (400)
+ * consistent across every new endpoint instead of duplicating the same
+ * if/else chain nine times.
+ */
+function respondToCollaborationError(res: Response, err: unknown): boolean {
+  if (err instanceof DecisionNotFoundError) {
+    res.status(404).json({ error: 'Decision not found' });
+    return true;
+  }
+  if (err instanceof DecisionSubResourceNotFoundError) {
+    res.status(404).json({ error: err.message });
+    return true;
+  }
+  if (err instanceof DecisionConflictError) {
+    const statusCode = err.code === 'FORBIDDEN' ? 403 : 409;
+    res.status(statusCode).json({ error: err.message, code: err.code, ...(err.details || {}) });
+    return true;
+  }
+  if (err instanceof DecisionValidationError) {
+    res.status(400).json({ error: err.message });
+    return true;
+  }
+  return false;
+}
+
+/** Decision-preparer authorization shared by alternatives/risks mutation endpoints. */
+function isDossierEditor(
+  decision: { created_by?: string | null; decision_maker_id?: string | null },
+  userId: string,
+  role?: string | null
+): boolean {
+  return (
+    decision.created_by === userId ||
+    decision.decision_maker_id === userId ||
+    isPrivilegedRole(role)
+  );
+}
 
 // ==========================================
 // CONTROLLER METHODS
@@ -1101,15 +1184,32 @@ export class DecisionController {
   );
 
   /**
-   * Make a decision (approve/reject/defer)
+   * Make a decision (approve/reject/return-for-clarification/defer)
+   *
+   * MW-DEC-001: this is now the SINGLE atomic final-transition path. The
+   * `decisions` UPDATE and the `decision_history` INSERT run on one pinned
+   * pg.Client inside BEGIN/COMMIT (finalizeDecisionTransition, in
+   * decisionCollaborationService.ts) — previously these were two independent
+   * `queryHelpers.queryRun` calls (two separate pool acquisitions), which is
+   * NOT atomic: a crash between them could leave status flipped without a
+   * matching decision_history row, or vice versa. See acquirePgClient() doc
+   * in PostgresDatabase.ts for why pool.query()-per-call cannot give
+   * atomicity.
+   *
+   * Also now enforces: a terminal decision (approved/rejected) can never be
+   * re-decided (409 DECISION_FINALIZED), and an optional `version`/
+   * `expectedVersion` in the body is checked against the row's real
+   * optimistic-concurrency counter (409 STALE_VERSION on mismatch) instead of
+   * silently overwriting a concurrent change.
    */
   static decide = asyncHandler(
     async (req: AuthenticatedRequest<DecideRequest>, res: Response): Promise<void> => {
       const { id } = req.params;
-      const { decision, rationale, notes, status, outcome } = req.body as DecideRequest & {
-        status?: string;
-        outcome?: string;
-      };
+      const { decision, rationale, notes, status, outcome, version, expectedVersion } =
+        req.body as DecideRequest & {
+          status?: string;
+          outcome?: string;
+        };
       const userId = req.user?.id;
       const orgId = req.user?.organizationId;
       if (!userId || !orgId) {
@@ -1125,7 +1225,7 @@ export class DecisionController {
       const requestedStatus = String(statusInput || '').toLowerCase();
       const isDeferredAction = requestedStatus === 'deferred';
       const normalizedStatus = normalizeStatus(statusInput || '');
-      if (!['approved', 'rejected', 'pending'].includes(normalizedStatus)) {
+      if (!['approved', 'rejected', 'pending', 'returned_for_clarification'].includes(normalizedStatus)) {
         res.status(400).json({ error: 'Invalid decision' });
         return;
       }
@@ -1139,10 +1239,14 @@ export class DecisionController {
             ? 'Rejected'
             : '');
 
-      // Get decision first — scoped to caller's org
+      // Get decision first — scoped to caller's org (authorization check
+      // only; the atomic transition below re-reads the row with FOR UPDATE
+      // as the authoritative source for the terminal-state/version checks).
       const currentDecision = await queryHelpers.queryOne<{
         decision_maker_id?: string;
         status?: string;
+        title?: string;
+        created_by?: string;
       }>(`SELECT * FROM decisions WHERE id = ? AND organization_id = ?`, [id, orgId]);
 
       if (!currentDecision) {
@@ -1161,55 +1265,57 @@ export class DecisionController {
         return;
       }
 
-      if (normalizedStatus !== 'pending' && rationaleText.trim() === '') {
-        res.status(400).json({ error: 'Decision rationale is required' });
-        return;
+      const expectedVersionValue =
+        typeof expectedVersion === 'number' ? expectedVersion : version;
+
+      let result;
+      try {
+        result = await finalizeDecisionTransition({
+          decisionId: id,
+          organizationId: orgId,
+          actorId: userId,
+          actorRole: req.user?.role,
+          targetStatus: normalizedStatus,
+          rationaleText,
+          notes: notes || (isDeferredAction ? 'Deferred' : undefined),
+          expectedVersion: expectedVersionValue,
+        });
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
       }
 
-      const sql = `UPDATE decisions 
-                     SET status = ?, decision_rationale = ?, decided_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-                     WHERE id = ?`;
+      // V4-TASK-08: Unified audit log (best-effort, after the atomic commit —
+      // never gates the committed decision on audit-log success)
+      auditEventsService
+        .log({
+          actorId: userId,
+          actorType: 'USER',
+          action: 'DECISION_DECIDE',
+          resourceType: 'decision',
+          resourceId: id,
+          before: { status: result.previousStatus },
+          after: { status: result.status, rationale: rationaleText },
+          metadata: { version: result.version },
+          organizationId: orgId,
+        })
+        .catch((err: any) => logger.error('[DecisionController] Audit log failed:', err?.message));
 
-      await queryHelpers.queryRun(sql, [normalizedStatus, rationaleText || null, id]);
-
-      await queryHelpers.queryRun(
-        `INSERT INTO decision_history (id, decision_id, action, old_status, new_status, changed_by, details)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          uuidv4(),
-          id,
-          isDeferredAction ? 'deferred' : normalizedStatus,
-          normalizeStatus(currentDecision.status || null),
-          normalizedStatus,
-          userId,
-          JSON.stringify({
-            notes: rationaleText || (isDeferredAction ? 'Deferred' : undefined),
-            outcome: isDeferredAction ? 'deferred' : normalizedStatus,
-          }),
-        ]
-      );
-
-      // V4-TASK-08: Unified audit log
-      if (orgId) {
-        auditEventsService
-          .log({
-            actorId: userId,
-            actorType: 'USER',
-            action: 'DECISION_DECIDE',
-            resourceType: 'decision',
-            resourceId: id,
-            before: { status: normalizeStatus(currentDecision.status || null) },
-            after: { status: normalizedStatus, rationale: rationaleText },
-            metadata: {},
-            organizationId: orgId,
-          })
-          .catch((err: any) =>
-            logger.error('[DecisionController] Audit log failed:', err?.message)
-          );
+      // Best-effort notification to the requester (created_by) — persists a
+      // notification_outbox row via the existing NotificationOutboxService;
+      // does not claim delivery (see enqueueDecisionFinalizedNotification doc).
+      if (currentDecision.created_by && currentDecision.created_by !== userId) {
+        void enqueueDecisionFinalizedNotification({
+          organizationId: orgId,
+          decisionId: id,
+          decisionTitle: currentDecision.title || 'Decision',
+          targetStatus: result.status,
+          recipientUserId: currentDecision.created_by,
+        });
       }
 
       // If decision is resolved, refresh blocks on impacted items
-      if (orgId && normalizedStatus !== 'pending') {
+      if (orgId && result.status !== 'pending' && result.status !== 'returned_for_clarification') {
         const impacts = await queryHelpers.queryAll<{
           impacted_type: string;
           impacted_id: string;
@@ -1235,7 +1341,13 @@ export class DecisionController {
         }
       }
 
-      res.json({ id, status: normalizedStatus.toUpperCase(), decidedBy: userId });
+      res.json({
+        id,
+        status: result.status.toUpperCase(),
+        decidedBy: result.decidedBy,
+        decidedAt: result.decidedAt,
+        version: result.version,
+      });
     }
   );
 
@@ -1283,6 +1395,18 @@ export class DecisionController {
         req.user?.role !== 'SUPERADMIN'
       ) {
         res.status(403).json({ error: 'Permission denied' });
+        return;
+      }
+
+      // MW-DEC-001: a decision at a terminal outcome (approved/rejected) can
+      // never silently drift back to an earlier state through this generic
+      // update surface — e.g. PUT { status: 'pending' } on an already-
+      // approved decision must not resurrect it. Re-decision only ever
+      // happens through PATCH/PUT /:id/decide, which itself refuses to
+      // re-transition a terminal decision (finalizeDecisionTransition).
+      const finalizedGuard = assertNotFinalized(currentDecision.status);
+      if (!finalizedGuard.allowed) {
+        res.status(409).json({ error: finalizedGuard.reason, code: finalizedGuard.code });
         return;
       }
 
@@ -2048,6 +2172,460 @@ export class DecisionController {
       logger.info(`[DecisionController] Decision ${id} soft-deleted (cancelled) by ${userId}`);
 
       res.json({ success: true, id, message: 'Decision cancelled' });
+    }
+  );
+
+  // ==========================================
+  // MW-DEC-001 — Decision detail aggregate + comments/alternatives/risks
+  //
+  // Replaces the localStorage-only "decision enhancements" shim in
+  // DecisionDetailView.tsx (frontend, not touched by this packet) with a
+  // real, organization-scoped, author-from-token backend. See
+  // 932_decision_workflow_canonical.sql for the schema and
+  // decisionCollaborationService.ts for the data-access layer this class
+  // calls into (single canonical Decision domain owner — no second
+  // controller/service tree for these objects).
+  // ==========================================
+
+  /**
+   * GET /api/decisions/:id/detail
+   * Single aggregate read: decision + impacts + audit history + comments +
+   * alternatives + risks + evidence links (link_graph_edges). Exists so the
+   * frontend never has to orchestrate N+1 calls to hydrate one decision
+   * dossier screen.
+   */
+  static getDecisionDetail = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const sql = `
+        SELECT
+          d.*,
+          owner.first_name || ' ' || owner.last_name as owner_name,
+          owner.avatar_url as owner_avatar_url,
+          requester.first_name || ' ' || requester.last_name as requested_by_name
+        FROM decisions d
+        LEFT JOIN users owner ON d.decision_maker_id = owner.id
+        LEFT JOIN users requester ON d.created_by = requester.id
+        WHERE d.id = ?
+      `;
+      const decision = await queryHelpers.queryOne<DecisionRow & { version?: number; decided_by?: string | null }>(
+        sql,
+        [id]
+      );
+      if (!decision || decision.organization_id !== orgId) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+
+      const [impacts, history, extras] = await Promise.all([
+        queryHelpers.queryAll(
+          `SELECT id, impacted_type, impacted_id, impact_description, is_blocker
+           FROM decision_impacts WHERE decision_id = ? ORDER BY created_at ASC`,
+          [id]
+        ),
+        queryHelpers.queryAll(
+          `SELECT dh.id, dh.action, dh.old_status, dh.new_status, dh.changed_by, dh.changed_at, dh.details,
+                  TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) AS changed_by_name
+           FROM decision_history dh
+           LEFT JOIN users u ON dh.changed_by = u.id
+           WHERE dh.decision_id = ?
+           ORDER BY dh.changed_at ASC`,
+          [id]
+        ),
+        getDecisionAggregateExtras(id, orgId),
+      ]);
+
+      const escalation = computeEscalationLevel(decision.deadline, decision.priority, decision.impact);
+      const statusNormalized = normalizeStatus(decision.status);
+      const { type: relatedObjectType, id: relatedObjectId } = resolveRelatedObject(decision);
+      const structured = buildStructuredFields(decision);
+
+      res.json({
+        id: decision.id,
+        title: decision.title,
+        description: decision.description || undefined,
+        decisionType: decision.type,
+        pmoDomain: decision.pmo_domain || undefined,
+        status: toApiStatus(statusNormalized),
+        priority: normalizePriority(decision.priority),
+        impact: normalizeImpact(decision.impact),
+        escalationLevel: escalation.level === 'red' ? 2 : escalation.level === 'amber' ? 1 : 0,
+        escalationLevelName: escalation.level,
+        decisionOwnerId: decision.decision_maker_id,
+        ownerName: decision.owner_name || undefined,
+        ownerAvatarUrl: decision.owner_avatar_url || undefined,
+        requestedById: decision.created_by,
+        requestedByName: decision.requested_by_name || undefined,
+        createdAt: decision.created_at,
+        dueDate: decision.deadline || undefined,
+        rationale: decision.decision_rationale || undefined,
+        decidedAt: decision.decided_at || undefined,
+        decidedBy: decision.decided_by || undefined,
+        version: Number(decision.version ?? 1),
+        workflowStatus: decision.workflow_status || 'proposed',
+        relatedObjectType,
+        relatedObjectId,
+        alternatives: structured.alternatives,
+        risks: structured.risks,
+        consequencesOfInaction: structured.consequencesOfInaction,
+        recommendation: structured.recommendation,
+        assumptions: structured.assumptions,
+        impacts: impacts.map((impact: any) => ({
+          id: impact.id,
+          impactedType: impact.impacted_type,
+          impactedId: impact.impacted_id,
+          impactDescription: impact.impact_description,
+          isBlocker: impact.is_blocker === 1,
+        })),
+        auditTrail: history.map((entry: any) => ({
+          id: entry.id,
+          action: entry.action,
+          by: entry.changed_by,
+          userName: entry.changed_by_name || undefined,
+          oldStatus: normalizeStatus(entry.old_status || null),
+          newStatus: normalizeStatus(entry.new_status || null),
+          at: entry.changed_at,
+          notes: parseHistoryNotes(entry.details),
+          details: parseHistoryDetails(entry.details),
+        })),
+        // MW-DEC-001 real, persisted dossier objects (replaces the
+        // DecisionDetailView.tsx localStorage shim):
+        comments: extras.comments,
+        dossierAlternatives: extras.alternatives,
+        dossierRisks: extras.risks,
+        links: extras.links,
+      });
+    }
+  );
+
+  /** POST /api/decisions/:id/comments */
+  static createComment = asyncHandler(
+    async (req: AuthenticatedRequest<CreateDecisionCommentRequest>, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      try {
+        const comment = await createDecisionComment({
+          decisionId: id,
+          organizationId: orgId,
+          authorId: userId,
+          body: req.body?.body,
+        });
+        res.status(201).json(comment);
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** PUT /api/decisions/:id/comments/:commentId */
+  static updateComment = asyncHandler(
+    async (req: AuthenticatedRequest<UpdateDecisionCommentRequest>, res: Response): Promise<void> => {
+      const { id, commentId } = req.params as { id: string; commentId: string };
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      try {
+        const comment = await updateDecisionComment({
+          decisionId: id,
+          organizationId: orgId,
+          commentId,
+          actorId: userId,
+          actorRole: req.user?.role,
+          body: req.body?.body,
+        });
+        res.json(comment);
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** DELETE /api/decisions/:id/comments/:commentId (soft-delete) */
+  static deleteComment = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id, commentId } = req.params as { id: string; commentId: string };
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      try {
+        await deleteDecisionComment({
+          decisionId: id,
+          organizationId: orgId,
+          commentId,
+          actorId: userId,
+          actorRole: req.user?.role,
+        });
+        res.json({ success: true, id: commentId });
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** POST /api/decisions/:id/alternatives */
+  static createAlternative = asyncHandler(
+    async (
+      req: AuthenticatedRequest<CreateDecisionAlternativeRequest>,
+      res: Response
+    ): Promise<void> => {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const decisionRow = await queryHelpers.queryOne<{
+        created_by?: string;
+        decision_maker_id?: string;
+      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
+        id,
+        orgId,
+      ]);
+      if (!decisionRow) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+      if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
+        res.status(403).json({ error: 'Only the decision preparer, owner, or admin can add alternatives' });
+        return;
+      }
+      try {
+        const alt = await createDecisionAlternative({
+          decisionId: id,
+          organizationId: orgId,
+          createdBy: userId,
+          title: req.body?.title,
+          description: req.body?.description,
+          benefits: req.body?.benefits,
+          drawbacks: req.body?.drawbacks,
+          costOrFeasibility: req.body?.costOrFeasibility,
+          isRecommended: req.body?.isRecommended,
+        });
+        res.status(201).json(alt);
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** PUT /api/decisions/:id/alternatives/:alternativeId */
+  static updateAlternative = asyncHandler(
+    async (
+      req: AuthenticatedRequest<UpdateDecisionAlternativeRequest>,
+      res: Response
+    ): Promise<void> => {
+      const { id, alternativeId } = req.params as { id: string; alternativeId: string };
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const decisionRow = await queryHelpers.queryOne<{
+        created_by?: string;
+        decision_maker_id?: string;
+      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
+        id,
+        orgId,
+      ]);
+      if (!decisionRow) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+      if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
+        res.status(403).json({ error: 'Only the decision preparer, owner, or admin can edit alternatives' });
+        return;
+      }
+      try {
+        const alt = await updateDecisionAlternative({
+          decisionId: id,
+          organizationId: orgId,
+          alternativeId,
+          patch: req.body || {},
+        });
+        res.json(alt);
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** DELETE /api/decisions/:id/alternatives/:alternativeId */
+  static deleteAlternative = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id, alternativeId } = req.params as { id: string; alternativeId: string };
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const decisionRow = await queryHelpers.queryOne<{
+        created_by?: string;
+        decision_maker_id?: string;
+      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
+        id,
+        orgId,
+      ]);
+      if (!decisionRow) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+      if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
+        res
+          .status(403)
+          .json({ error: 'Only the decision preparer, owner, or admin can delete alternatives' });
+        return;
+      }
+      try {
+        await deleteDecisionAlternative({ decisionId: id, organizationId: orgId, alternativeId });
+        res.json({ success: true, id: alternativeId });
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** POST /api/decisions/:id/risks */
+  static createRisk = asyncHandler(
+    async (req: AuthenticatedRequest<CreateDecisionRiskRequest>, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const decisionRow = await queryHelpers.queryOne<{
+        created_by?: string;
+        decision_maker_id?: string;
+      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
+        id,
+        orgId,
+      ]);
+      if (!decisionRow) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+      if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
+        res.status(403).json({ error: 'Only the decision preparer, owner, or admin can add risks' });
+        return;
+      }
+      try {
+        const risk = await createDecisionRisk({
+          decisionId: id,
+          organizationId: orgId,
+          createdBy: userId,
+          description: req.body?.description,
+          severity: req.body?.severity,
+          likelihood: req.body?.likelihood,
+          mitigation: req.body?.mitigation,
+          ownerId: req.body?.ownerId,
+        });
+        res.status(201).json(risk);
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** PUT /api/decisions/:id/risks/:riskId */
+  static updateRisk = asyncHandler(
+    async (req: AuthenticatedRequest<UpdateDecisionRiskRequest>, res: Response): Promise<void> => {
+      const { id, riskId } = req.params as { id: string; riskId: string };
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const decisionRow = await queryHelpers.queryOne<{
+        created_by?: string;
+        decision_maker_id?: string;
+      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
+        id,
+        orgId,
+      ]);
+      if (!decisionRow) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+      if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
+        res.status(403).json({ error: 'Only the decision preparer, owner, or admin can edit risks' });
+        return;
+      }
+      try {
+        const risk = await updateDecisionRisk({
+          decisionId: id,
+          organizationId: orgId,
+          riskId,
+          patch: req.body || {},
+        });
+        res.json(risk);
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** DELETE /api/decisions/:id/risks/:riskId */
+  static deleteRisk = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id, riskId } = req.params as { id: string; riskId: string };
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const decisionRow = await queryHelpers.queryOne<{
+        created_by?: string;
+        decision_maker_id?: string;
+      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
+        id,
+        orgId,
+      ]);
+      if (!decisionRow) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+      if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
+        res.status(403).json({ error: 'Only the decision preparer, owner, or admin can delete risks' });
+        return;
+      }
+      try {
+        await deleteDecisionRisk({ decisionId: id, organizationId: orgId, riskId });
+        res.json({ success: true, id: riskId });
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
     }
   );
 }
