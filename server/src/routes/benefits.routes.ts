@@ -25,6 +25,7 @@ import {
   parseStreamableHttpConfig,
 } from '../services/mcp/mcpProviderClient.js';
 import { handleTimeSeriesRecorded } from '../services/results/kpiDeviationService.js';
+import { assertKpiPermission } from '../services/results/kpiPermissions.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -188,6 +189,7 @@ router.get(
 router.post(
   '/kpis',
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'edit_definition'))) return;
     const orgId = getOrgId(req);
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
@@ -255,6 +257,7 @@ router.post(
 router.put(
   '/kpis/:kpiId',
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'edit_definition'))) return;
     const orgId = getOrgId(req);
     const { kpiId } = req.params;
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -353,6 +356,7 @@ router.put(
 router.delete(
   '/kpis/:kpiId',
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'delete_kpi'))) return;
     const orgId = getOrgId(req);
     const { kpiId } = req.params;
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -459,6 +463,7 @@ router.get(
 router.post(
   '/kpis/:kpiId/time-series',
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'record_measurement'))) return;
     const { kpiId } = req.params;
     const orgId = getOrgId(req);
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -655,6 +660,7 @@ router.post(
   '/deviation-cases/:caseId/acknowledge',
   requireAudit as any,
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'manage_deviation'))) return;
     const orgId = getOrgId(req);
     const { caseId } = req.params;
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -696,6 +702,7 @@ router.put(
   '/deviation-cases/:caseId/rca',
   requireAudit as any,
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'manage_deviation'))) return;
     const orgId = getOrgId(req);
     const { caseId } = req.params;
     const { rcaText } = req.body || {};
@@ -739,6 +746,7 @@ router.post(
   '/deviation-cases/:caseId/actions',
   requireAudit as any,
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'manage_deviation'))) return;
     const orgId = getOrgId(req);
     const { caseId } = req.params;
     const { title, ownerUserId, dueDate } = req.body || {};
@@ -792,6 +800,7 @@ router.put(
   '/deviation-cases/:caseId/actions/:actionId',
   requireAudit as any,
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'manage_deviation'))) return;
     const orgId = getOrgId(req);
     const { caseId, actionId } = req.params;
     const { title, ownerUserId, dueDate, status } = req.body || {};
@@ -860,6 +869,7 @@ router.post(
   '/deviation-cases/:caseId/resolve',
   requireAudit as any,
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'manage_deviation'))) return;
     const orgId = getOrgId(req);
     const { caseId } = req.params;
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -901,6 +911,7 @@ router.post(
   '/deviation-cases/:caseId/close',
   requireAudit as any,
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'manage_deviation'))) return;
     const orgId = getOrgId(req);
     const userId = getUserId(req);
     const { caseId } = req.params;
@@ -984,6 +995,7 @@ router.post(
 router.post(
   '/kpis/:kpiId/refresh/iris',
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'record_measurement'))) return;
     const orgId = getOrgId(req);
     const { kpiId } = req.params;
     const providerId = req.body?.providerId ? String(req.body.providerId).trim() : null;
@@ -1204,6 +1216,7 @@ router.get(
 router.post(
   '/iris/assets/search',
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'record_measurement'))) return;
     const orgId = getOrgId(req);
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
@@ -1261,6 +1274,7 @@ router.post(
 router.delete(
   '/kpis/:kpiId/time-series/:tsId',
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'delete_kpi'))) return;
     const { kpiId, tsId } = req.params;
     const orgId = getOrgId(req);
     await dbRun(`DELETE FROM kpi_time_series WHERE id = ? AND kpi_id = ? AND organization_id = ?`, [
@@ -1303,6 +1317,7 @@ router.get(
 router.post(
   '/kpi-mappings',
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'edit_definition'))) return;
     const orgId = getOrgId(req);
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const {
@@ -1375,6 +1390,7 @@ router.post(
 router.delete(
   '/kpi-mappings/:mappingId',
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'edit_definition'))) return;
     const orgId = getOrgId(req);
     await dbRun(`DELETE FROM initiative_kpi_mappings WHERE id = ? AND organization_id = ?`, [
       req.params.mappingId,
@@ -1403,6 +1419,7 @@ router.get(
 router.put(
   '/roi/:initiativeId/assumptions',
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'edit_definition'))) return;
     const orgId = getOrgId(req);
     const { initiativeId } = req.params;
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -1489,6 +1506,7 @@ router.get(
 router.post(
   '/roi/:initiativeId/realized',
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'edit_definition'))) return;
     const orgId = getOrgId(req);
     const { initiativeId } = req.params;
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -1625,6 +1643,7 @@ router.get(
 router.post(
   '/attribution/:kpiId/snapshot',
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'create_report'))) return;
     const orgId = getOrgId(req);
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const kpiId = String(req.params.kpiId);
@@ -1721,6 +1740,7 @@ router.get(
 router.post(
   '/financial/statement-lines',
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'edit_definition'))) return;
     const orgId = getOrgId(req);
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const { statementType, lineCode, lineName, lineNamePl, parentLineId, sortOrder } =
@@ -1802,6 +1822,7 @@ router.get(
 router.post(
   '/financial/kpi-mappings',
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'edit_definition'))) return;
     const orgId = getOrgId(req);
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const {
@@ -1892,6 +1913,7 @@ router.post(
 router.delete(
   '/financial/kpi-mappings/:mappingId',
   asyncHandler(async (req, res) => {
+    if (!(await assertKpiPermission(req as any, res, 'edit_definition'))) return;
     const orgId = getOrgId(req);
     await dbRun(`DELETE FROM kpi_financial_mappings WHERE id = ? AND organization_id = ?`, [
       req.params.mappingId,

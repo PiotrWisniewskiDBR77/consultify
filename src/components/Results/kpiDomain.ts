@@ -10,6 +10,7 @@ export type KpiWorkflowTab = 'results_initiatives' | 'results_kpi' | 'results_re
 export type KpiDrawerSection =
   | 'summary'
   | 'deviation'
+  | 'recovery'
   | 'record'
   | 'history'
   | 'definition'

@@ -32,6 +32,7 @@ import {
 import { InitiativeKPI, KPIMeasurement } from '@/types/core';
 
 import type { KpiDrawerSection } from './kpiDomain';
+import { RecoveryCardPanel } from './RecoveryCardPanel';
 import { isResultsFlagEnabled } from './resultsFeatureFlags';
 import { buildLinkedInitiatives, dedupeInitiativeOptions } from './resultsLineage';
 
@@ -996,6 +997,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   useEffect(() => {
     const targets: Partial<Record<KpiDrawerSection, string>> = {
       deviation: 'kpi-drawer-deviation',
+      recovery: 'kpi-drawer-recovery',
       record: 'kpi-drawer-record',
       history: 'kpi-drawer-history',
       settings: 'kpi-drawer-settings',
@@ -1243,6 +1245,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     ['definition', t('results.drawer.definitionTitle', 'Definition')],
                     ['targets', t('results.drawer.targetsTitle', 'Targets')],
                     ['deviation', t('results.deviation.title', 'Deviation case')],
+                    ...(isResultsFlagEnabled('recoveryCard')
+                      ? ([['recovery', t('results.recoveryCard.tabLabel', 'Recovery Card')]] as const)
+                      : []),
                     ['record', t('results.drawer.recordTitle', 'Record New Value')],
                     ['history', t('results.drawer.history', 'History')],
                     ['lineage', t('results.drawer.lineageTitle', 'Lineage')],
@@ -1634,6 +1639,34 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                 ) : (
                   <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/[0.08] px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
                     {t('results.deviation.empty', 'No active deviation case for this KPI.')}
+                  </div>
+                )
+              ) : null}
+
+              {/* Recovery card (RES-003A) — behind resultsFeatureFlags.recoveryCard, default OFF */}
+              {normalizedSection === 'recovery' && isResultsFlagEnabled('recoveryCard') ? (
+                openCase ? (
+                  <div id="kpi-drawer-recovery" className="scroll-mt-4">
+                    <RecoveryCardPanel
+                      kpiId={kpiId}
+                      deviationCaseId={openCase.id}
+                      onChanged={() => {
+                        // Recovery-card mutations don't change the KPI's own
+                        // measurements, so quickStats doesn't need a refetch
+                        // today. Revisit if/when the cockpit surfaces
+                        // recovery-card counts in the summary tab.
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    id="kpi-drawer-recovery"
+                    className="rounded-lg border border-dashed border-slate-200 dark:border-white/[0.08] px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400 scroll-mt-4"
+                  >
+                    {t(
+                      'results.recoveryCard.noOpenCase',
+                      'No open deviation case for this KPI — a recovery card needs an active deviation.'
+                    )}
                   </div>
                 )
               ) : null}

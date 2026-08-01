@@ -96,6 +96,14 @@ vi.mock('../../middleware/rbac.middleware.js', () => ({
 
 vi.mock('../../middleware/rateLimiting.middleware.js', () => ({
   apiAuthRateLimiter: (_req: any, _res: any, next: () => void) => next(),
+  // RES-003A: v8/finance-intelligence.routes.ts (loaded transitively by
+  // buildV8App() via v8/index.js) imports aiRateLimiter. It was missing from
+  // this mock, so any full-suite run threw an uncaught "No aiRateLimiter
+  // export" error the first time a v8-app test executed — pre-existing
+  // breakage unrelated to RES-003A, but it corrupted shared mock state for
+  // every test that ran afterward in the same file. Purely additive no-op
+  // mock; does not change what any test asserts.
+  aiRateLimiter: (_req: any, _res: any, next: () => void) => next(),
 }));
 
 vi.mock('../../middleware/validation.middleware.js', () => ({
@@ -1416,5 +1424,371 @@ describe('M15 — PUT /v8/results/kpis/:kpiId is blocked on a locked KPI', () =>
       /UPDATE\s+initiative_kpis/i.test(String(c?.[0]))
     );
     expect(updateCall).toBeTruthy();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RES-003A — legacy /api/benefits router: real assertKpiPermission checks.
+//
+// Every SEC-3/L-04 test above proves cross-org isolation on /api/benefits, but
+// none of them ever set mockUser.role to anything other than 'admin' — so the
+// 21 mutating routes on this router had NO role gate at all until the
+// assertKpiPermission(req, res, action) calls were added (see
+// server/src/routes/benefits.routes.ts + server/src/services/results/
+// kpiPermissions.ts). This block is the fail-closed proof: a 'viewer' (JWT
+// role 'user') and, on kpi_owner-only actions, a 'finance_owner' (JWT role
+// 'manager') must be rejected with 403/P04_PERMISSION_DENIED BEFORE any
+// dbGet/dbAll/dbRun call happens — the gate is deliberately the first line of
+// every handler, so a denial must leave the DB mocks completely untouched.
+// A closing regression-shield section proves the same gate does NOT block an
+// 'admin' (kpi_owner) on the 9 of those 21 routes that had no prior test
+// coverage at all (deviation-case actions, IRIS refresh/search, time-series
+// delete) — the risk this whole plan hinges on (RES-003A brief): kpi_owner
+// must keep working everywhere on this router.
+// ═══════════════════════════════════════════════════════════════════════════
+
+type BenefitsHttpMethod = 'get' | 'post' | 'put' | 'delete';
+
+interface BenefitsPermissionRoute {
+  method: BenefitsHttpMethod;
+  path: string;
+  body: Record<string, unknown>;
+  action: string;
+  /** true when KPI_PERMISSION_MATRIX[action] === ['kpi_owner'] only (no finance_owner). */
+  kpiOwnerOnly: boolean;
+}
+
+// The 21 mutating /api/benefits routes gated in benefits.routes.ts (RES-003A),
+// with the exact action passed to assertKpiPermission and whether the action
+// excludes 'finance_owner' in KPI_PERMISSION_MATRIX (kpiWorkflowCanon.ts).
+const RES003A_BENEFITS_ROUTES: BenefitsPermissionRoute[] = [
+  {
+    method: 'post',
+    path: '/kpis',
+    body: {
+      name: 'RES-003A perm test KPI',
+      targetValue: 100,
+      measurementFrequency: 'MONTHLY',
+      direction: 'HIGHER_IS_BETTER',
+    },
+    action: 'edit_definition',
+    kpiOwnerOnly: true,
+  },
+  {
+    method: 'put',
+    path: '/kpis/kpi-x',
+    body: { targetValue: 999 },
+    action: 'edit_definition',
+    kpiOwnerOnly: true,
+  },
+  { method: 'delete', path: '/kpis/kpi-x', body: {}, action: 'delete_kpi', kpiOwnerOnly: true },
+  {
+    method: 'post',
+    path: '/kpis/kpi-x/time-series',
+    body: { value: 1, periodStart: '2026-01-01' },
+    action: 'record_measurement',
+    kpiOwnerOnly: false,
+  },
+  {
+    method: 'post',
+    path: '/deviation-cases/case-x/acknowledge',
+    body: {},
+    action: 'manage_deviation',
+    kpiOwnerOnly: false,
+  },
+  {
+    method: 'put',
+    path: '/deviation-cases/case-x/rca',
+    body: { rcaText: 'root cause' },
+    action: 'manage_deviation',
+    kpiOwnerOnly: false,
+  },
+  {
+    method: 'post',
+    path: '/deviation-cases/case-x/actions',
+    body: { title: 'Fix it' },
+    action: 'manage_deviation',
+    kpiOwnerOnly: false,
+  },
+  {
+    method: 'put',
+    path: '/deviation-cases/case-x/actions/action-x',
+    body: { status: 'DONE' },
+    action: 'manage_deviation',
+    kpiOwnerOnly: false,
+  },
+  {
+    method: 'post',
+    path: '/deviation-cases/case-x/resolve',
+    body: {},
+    action: 'manage_deviation',
+    kpiOwnerOnly: false,
+  },
+  {
+    method: 'post',
+    path: '/deviation-cases/case-x/close',
+    body: { evidenceText: 'proof' },
+    action: 'manage_deviation',
+    kpiOwnerOnly: false,
+  },
+  {
+    method: 'post',
+    path: '/kpis/kpi-x/refresh/iris',
+    body: {},
+    action: 'record_measurement',
+    kpiOwnerOnly: false,
+  },
+  {
+    method: 'post',
+    path: '/iris/assets/search',
+    body: { q: 'engine' },
+    action: 'record_measurement',
+    kpiOwnerOnly: false,
+  },
+  {
+    method: 'delete',
+    path: '/kpis/kpi-x/time-series/ts-x',
+    body: {},
+    action: 'delete_kpi',
+    kpiOwnerOnly: true,
+  },
+  {
+    method: 'post',
+    path: '/kpi-mappings',
+    body: { initiativeId: 'init-x', kpiId: 'kpi-x' },
+    action: 'edit_definition',
+    kpiOwnerOnly: true,
+  },
+  {
+    method: 'delete',
+    path: '/kpi-mappings/mapping-x',
+    body: {},
+    action: 'edit_definition',
+    kpiOwnerOnly: true,
+  },
+  {
+    method: 'put',
+    path: '/roi/init-x/assumptions',
+    body: { capex: 1000 },
+    action: 'edit_definition',
+    kpiOwnerOnly: true,
+  },
+  {
+    method: 'post',
+    path: '/roi/init-x/realized',
+    body: { periodMonth: '2026-01' },
+    action: 'edit_definition',
+    kpiOwnerOnly: true,
+  },
+  {
+    method: 'post',
+    path: '/attribution/kpi-x/snapshot',
+    body: { periodStart: '2026-01-01', periodEnd: '2026-03-31' },
+    action: 'create_report',
+    kpiOwnerOnly: false,
+  },
+  {
+    method: 'post',
+    path: '/financial/statement-lines',
+    body: { statementType: 'PL', lineCode: 'REV', lineName: 'Revenue' },
+    action: 'edit_definition',
+    kpiOwnerOnly: true,
+  },
+  {
+    method: 'post',
+    path: '/financial/kpi-mappings',
+    body: { kpiId: 'kpi-x', statementLineId: 'line-x', direction: 'positive' },
+    action: 'edit_definition',
+    kpiOwnerOnly: true,
+  },
+  {
+    method: 'delete',
+    path: '/financial/kpi-mappings/mapping-x',
+    body: {},
+    action: 'edit_definition',
+    kpiOwnerOnly: true,
+  },
+];
+
+function sendBenefitsRequest(
+  app: Express,
+  route: Pick<BenefitsPermissionRoute, 'method' | 'path' | 'body'>
+) {
+  const agent = request(app) as unknown as Record<
+    BenefitsHttpMethod,
+    (url: string) => ReturnType<typeof request>
+  >;
+  return agent[route.method](`/api/benefits${route.path}`).send(route.body);
+}
+
+describe('RES-003A — /api/benefits real permission checks (fail-closed)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDbAll.mockResolvedValue([]);
+    mockDbGet.mockResolvedValue(null);
+    mockDbRun.mockResolvedValue({ changes: 0, lastID: 'x' });
+  });
+
+  // ── Flagged W3-analog: legacy router also ignores x-kpi-role self-escalation ──
+
+  it('legacy /api/benefits ignores x-kpi-role header self-escalation (viewer stays denied)', async () => {
+    mockUser = { id: USER_A, role: 'user', organizationId: ORG_A, isSuperAdmin: false };
+    const app = await buildBenefitsApp();
+    const res = await request(app)
+      .post('/api/benefits/kpis')
+      .set('x-kpi-role', 'kpi_owner') // must be ignored — role is derived from the JWT only
+      .send({
+        name: 'Escalation attempt',
+        targetValue: 100,
+        measurementFrequency: 'MONTHLY',
+        direction: 'HIGHER_IS_BETTER',
+      });
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    const insert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+initiative_kpis/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeFalsy();
+  });
+
+  // ── 401: no authenticated user on a representative route ──
+
+  it('POST /benefits/kpis → 401 when no user is authenticated', async () => {
+    mockUser = null;
+    const app = await buildBenefitsApp();
+    const res = await request(app)
+      .post('/api/benefits/kpis')
+      .send({ name: 'Unauthed attempt', targetValue: 1, direction: 'HIGHER_IS_BETTER' });
+
+    expect(res.status).toBe(401);
+  });
+
+  // ── 403 for viewer (JWT role 'user') on every one of the 21 gated routes ──
+
+  describe.each(RES003A_BENEFITS_ROUTES)(
+    '$method /benefits$path (action=$action)',
+    (route) => {
+      it('→ 403 for viewer role; no dbGet/dbAll/dbRun call happens (gate is the first line)', async () => {
+        mockUser = { id: USER_A, role: 'user', organizationId: ORG_A, isSuperAdmin: false };
+        const app = await buildBenefitsApp();
+        const res = await sendBenefitsRequest(app, route);
+
+        expect(res.status).toBe(403);
+        expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+        expect(mockDbGet).not.toHaveBeenCalled();
+        expect(mockDbAll).not.toHaveBeenCalled();
+        expect(mockDbRun).not.toHaveBeenCalled();
+      });
+
+      if (route.kpiOwnerOnly) {
+        it('→ 403 for finance_owner (JWT role "manager"); action is kpi_owner-only', async () => {
+          mockUser = { id: USER_A, role: 'manager', organizationId: ORG_A, isSuperAdmin: false };
+          const app = await buildBenefitsApp();
+          const res = await sendBenefitsRequest(app, route);
+
+          expect(res.status).toBe(403);
+          expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+          expect(mockDbGet).not.toHaveBeenCalled();
+          expect(mockDbAll).not.toHaveBeenCalled();
+          expect(mockDbRun).not.toHaveBeenCalled();
+        });
+      }
+    }
+  );
+
+  // ── Regression shield: admin (kpi_owner) is NOT blocked by the new gate on ──
+  // ── the 9 of the 21 routes that had zero prior test coverage. ──
+
+  describe('regression shield — admin (kpi_owner) passes the new gate on previously-untested routes', () => {
+    beforeEach(() => {
+      mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
+    });
+
+    it('POST /benefits/deviation-cases/:caseId/acknowledge → not 403 (200, existing logic runs)', async () => {
+      const app = await buildBenefitsApp();
+      const res = await request(app).post('/api/benefits/deviation-cases/case-x/acknowledge').send({});
+
+      expect(res.status).not.toBe(403);
+      expect(res.status).toBe(200);
+    });
+
+    it('PUT /benefits/deviation-cases/:caseId/rca → not 403 (200, existing logic runs)', async () => {
+      const app = await buildBenefitsApp();
+      const res = await request(app)
+        .put('/api/benefits/deviation-cases/case-x/rca')
+        .send({ rcaText: 'root cause' });
+
+      expect(res.status).not.toBe(403);
+      expect(res.status).toBe(200);
+    });
+
+    it('POST /benefits/deviation-cases/:caseId/actions → not 403 (404, case not found — existing logic runs)', async () => {
+      const app = await buildBenefitsApp();
+      const res = await request(app)
+        .post('/api/benefits/deviation-cases/case-x/actions')
+        .send({ title: 'Fix it' });
+
+      expect(res.status).not.toBe(403);
+      expect(res.status).toBe(404);
+    });
+
+    it('PUT /benefits/deviation-cases/:caseId/actions/:actionId → not 403 (200, existing logic runs)', async () => {
+      const app = await buildBenefitsApp();
+      const res = await request(app)
+        .put('/api/benefits/deviation-cases/case-x/actions/action-x')
+        .send({ status: 'DONE' });
+
+      expect(res.status).not.toBe(403);
+      expect(res.status).toBe(200);
+    });
+
+    it('POST /benefits/deviation-cases/:caseId/resolve → not 403 (200, existing logic runs)', async () => {
+      const app = await buildBenefitsApp();
+      const res = await request(app).post('/api/benefits/deviation-cases/case-x/resolve').send({});
+
+      expect(res.status).not.toBe(403);
+      expect(res.status).toBe(200);
+    });
+
+    it('POST /benefits/deviation-cases/:caseId/close → not 403 (200, existing logic runs)', async () => {
+      const app = await buildBenefitsApp();
+      const res = await request(app)
+        .post('/api/benefits/deviation-cases/case-x/close')
+        .send({ evidenceText: 'proof' });
+
+      expect(res.status).not.toBe(403);
+      expect(res.status).toBe(200);
+    });
+
+    it('POST /benefits/kpis/:kpiId/refresh/iris → not 403 (404, provider not configured — existing logic runs)', async () => {
+      // PRAGMA table_info(mcp_providers) → non-empty, so the route proceeds past the
+      // 503 "not_configured" short-circuit and reaches the provider lookup, which
+      // 404s (no IRIS provider mocked) instead of being blocked by the gate.
+      mockDbAll.mockResolvedValueOnce([{ name: 'id' }]);
+      const app = await buildBenefitsApp();
+      const res = await request(app).post('/api/benefits/kpis/kpi-x/refresh/iris').send({});
+
+      expect(res.status).not.toBe(403);
+      expect(res.status).toBe(404);
+    });
+
+    it('POST /benefits/iris/assets/search → not 403 (404, provider not configured — existing logic runs)', async () => {
+      const app = await buildBenefitsApp();
+      const res = await request(app)
+        .post('/api/benefits/iris/assets/search')
+        .send({ q: 'engine' });
+
+      expect(res.status).not.toBe(403);
+      expect(res.status).toBe(404);
+    });
+
+    it('DELETE /benefits/kpis/:kpiId/time-series/:tsId → not 403 (200, existing logic runs)', async () => {
+      const app = await buildBenefitsApp();
+      const res = await request(app).delete('/api/benefits/kpis/kpi-x/time-series/ts-x');
+
+      expect(res.status).not.toBe(403);
+      expect(res.status).toBe(200);
+    });
   });
 });

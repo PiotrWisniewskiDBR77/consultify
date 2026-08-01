@@ -27,6 +27,24 @@ import {
   projectToTarget,
 } from '../../services/results/kpiForecastService.js';
 import {
+  buildRecoveryCardDTO,
+  closeRecoveryCard,
+  ensureRecoveryAction,
+  ensureRecoveryCardForCase,
+  ensureRecoveryCheckpoint,
+  getRecoveryCardDTO,
+  linkRecoveryActionTask,
+  markRecoveryActionTaskLinkFailed,
+  progressRecoveryCard,
+  RecoveryCardServiceError,
+  resolveRecoveryCheckpoint,
+  toActionDTO,
+  toCheckpointDTO,
+  updateRecoveryCard,
+  type RecoveryActionRow,
+  type RecoveryCardRow,
+} from '../../services/results/kpiRecoveryCardService.js';
+import {
   createKpiReportSnapshot,
   getKpiReportSnapshot,
 } from '../../services/results/kpiReportSnapshotService.js';
@@ -60,6 +78,38 @@ function resultsMeta() {
 
 function resultsWriteMeta() {
   return { version: 'v8' as const, contract: V8_RESULTS_WRITE_CONTRACT };
+}
+
+/**
+ * RES-003A Recovery Card db adapter for kpiRecoveryCardService. Unlike most
+ * dbGet/dbAll/dbRun call sites in this file, `{ fallback: false }` is
+ * deliberate here: these routes lean on "0 rows returned" as the signal for
+ * an optimistic-concurrency version conflict (see closeRecoveryCard /
+ * progressRecoveryCard / updateRecoveryCard), so a real SQL error must throw
+ * instead of silently resolving to `[]`/`null` and being misread as a
+ * legitimate version conflict.
+ */
+function buildRecoveryDb() {
+  return {
+    get: (sql: string, params?: unknown[]) => dbGet(sql, params, { fallback: false }),
+    all: (sql: string, params?: unknown[]) => dbAll(sql, params, { fallback: false }),
+    run: (sql: string, params?: unknown[]) => dbRun(sql, params, { fallback: false }),
+  } as any;
+}
+
+/** Maps a RecoveryCardServiceError to the right HTTP status; returns true if handled. */
+function mapRecoveryServiceError(err: unknown, res: Response): boolean {
+  if (!(err instanceof RecoveryCardServiceError)) return false;
+  const statusByCode: Record<string, number> = {
+    NOT_FOUND: 404,
+    TASK_NOT_FOUND: 404,
+    VALIDATION_ERROR: 400,
+    TASK_ALREADY_LINKED: 409,
+    CONFLICT: 409,
+  };
+  const status = statusByCode[err.code] || 500;
+  res.status(status).json({ error: err.message, code: `RESULTS_RECOVERY_${err.code}` });
+  return true;
 }
 
 async function createV8KpiReportArtifact(params: {
@@ -114,43 +164,15 @@ async function createV8KpiReportArtifact(params: {
   return report.report.id;
 }
 
-/**
- * P04-B: Derive KPI permission role from the user's verified JWT org role.
- * The header `x-kpi-role` was removed — it allowed self-escalation (W3).
- * Mapping: owner/administrator/admin/super_admin → kpi_owner,
- *          manager → finance_owner, everything else → viewer.
- */
-function p04KpiRoleFromRequest(req: AuthRequest): KpiPermissionRole {
-  const orgRole = (req.user?.role ?? '').toLowerCase();
-  if (['super_admin', 'owner', 'administrator', 'admin'].includes(orgRole)) return 'kpi_owner';
-  if (orgRole === 'manager') return 'finance_owner';
-  return 'viewer';
-}
-
-type P04KpiGuardedAction =
-  | 'edit_definition'
-  | 'edit_targets'
-  | 'delete_kpi'
-  | 'record_measurement'
-  | 'create_report'
-  | 'manage_deviation'
-  | 'create_signal'
-  | 'create_next_action'
-  | 'manage_reconciliation'
-  | 'comment';
-
-async function p04AssertKpiPermission(
-  req: AuthRequest,
-  res: Response,
-  action: P04KpiGuardedAction
-): Promise<boolean> {
-  const role = p04KpiRoleFromRequest(req);
-  if (!canPerformKpiAction(role, action)) {
-    res.status(403).json({ error: 'Permission denied', code: 'P04_PERMISSION_DENIED' });
-    return false;
-  }
-  return true;
-}
+// P04-B permission gate: extracted (RES-003A) to services/results/kpiPermissions.js
+// so the legacy /api/benefits router can apply the identical role-derivation
+// and assertion instead of forking a copy. See that file for the doc-comment
+// on why 'edit_finance_artifacts'/'manage_reconciliation_finance' are excluded.
+import {
+  assertKpiPermission as p04AssertKpiPermission,
+  kpiRoleFromRequest as p04KpiRoleFromRequest,
+  type KpiGuardedAction as P04KpiGuardedAction,
+} from '../../services/results/kpiPermissions.js';
 
 /**
  * KPI lifecycle statuses that represent a finalized / locked KPI set.
@@ -1543,6 +1565,702 @@ router.post(
   })
 );
 
+// ============================================================================
+// RES-003A — KPI Recovery Card canonical loop.
+// See server/migrations/20260801_res003a_kpi_recovery_card.sql for schema +
+// rationale, and server/src/services/results/kpiRecoveryCardService.ts for
+// the state-machine logic. Every mutating endpoint below gates on
+// 'manage_deviation' — a narrower capability specifically for close/escalate
+// is a deliberate product decision this round did not make (NEEDS_CODEX_DECISION).
+// ============================================================================
+
+/**
+ * GET /api/v8/results/deviation-cases/:caseId/recovery-card
+ * Returns the Recovery Card for a deviation case if one exists. Does NOT
+ * auto-create — cards are created either automatically on deviation
+ * detection (handleTimeSeriesRecorded) or explicitly via the POST below.
+ */
+router.get(
+  '/deviation-cases/:caseId/recovery-card',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
+    if (!caseId) {
+      return res.status(400).json({
+        error: 'caseId is required',
+        code: 'RESULTS_DEVIATION_CASE_ID_REQUIRED',
+      });
+    }
+
+    const row = await dbGet<RecoveryCardRow>(
+      `SELECT * FROM kpi_recovery_cards WHERE deviation_case_id = ? AND organization_id = ?`,
+      [caseId, organizationId]
+    );
+    if (!row) {
+      return res.status(404).json({
+        error: 'Recovery card not found',
+        code: 'RESULTS_RECOVERY_CARD_NOT_FOUND',
+      });
+    }
+
+    const card = await buildRecoveryCardDTO(buildRecoveryDb(), organizationId, row);
+    return res.json({ data: card, meta: resultsMeta() });
+  })
+);
+
+/**
+ * POST /api/v8/results/deviation-cases/:caseId/recovery-card
+ * Explicit create — thin wrapper over ensureRecoveryCardForCase for callers
+ * that want to open a Recovery Card before/without a new time-series write
+ * triggering it automatically.
+ */
+router.post(
+  '/deviation-cases/:caseId/recovery-card',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
+    const { organizationId, userId } = getV8Context(req);
+    const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
+    if (!caseId) {
+      return res.status(400).json({
+        error: 'caseId is required',
+        code: 'RESULTS_DEVIATION_CASE_ID_REQUIRED',
+      });
+    }
+
+    // Explicit ownership precheck BEFORE the insert path: without this, a
+    // cross-org caller could POST an arbitrary caseId and — via
+    // ensureRecoveryCardForCase's own re-derivation of org/kpi from the
+    // case row — still succeed in creating a card, just scoped to whichever
+    // org actually owns that case. 404 here stops that before any write.
+    const kase = await dbGet<{ id: string; kpi_id: string; severity: string | null }>(
+      `SELECT id, kpi_id, severity FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      [caseId, organizationId]
+    );
+    if (!kase?.id) {
+      return res.status(404).json({
+        error: 'Deviation case not found',
+        code: 'RESULTS_DEVIATION_CASE_NOT_FOUND',
+      });
+    }
+    const severity: 'AMBER' | 'RED' = String(kase.severity || '').toUpperCase() === 'RED' ? 'RED' : 'AMBER';
+
+    try {
+      const result = await ensureRecoveryCardForCase({
+        db: buildRecoveryDb(),
+        orgId: organizationId,
+        kpiId: kase.kpi_id,
+        caseId,
+        severity,
+        actorUserId: userId || null,
+      });
+      if (!result?.cardId) {
+        return res.status(404).json({
+          error: 'Deviation case not found',
+          code: 'RESULTS_DEVIATION_CASE_NOT_FOUND',
+        });
+      }
+      const cardRow = await dbGet<RecoveryCardRow>(
+        `SELECT * FROM kpi_recovery_cards WHERE id = ? AND organization_id = ?`,
+        [result.cardId, organizationId]
+      );
+      if (!cardRow) {
+        return res.status(500).json({
+          error: 'Recovery card creation failed',
+          code: 'RESULTS_RECOVERY_CARD_CREATE_FAILED',
+        });
+      }
+      const card = await buildRecoveryCardDTO(buildRecoveryDb(), organizationId, cardRow);
+      return res.status(result.created ? 201 : 200).json({
+        data: { ...card, created: result.created },
+        meta: resultsWriteMeta(),
+      });
+    } catch (err) {
+      if (mapRecoveryServiceError(err, res)) return;
+      throw err;
+    }
+  })
+);
+
+/**
+ * PUT /api/v8/results/recovery-cards/:id
+ * Edits the RCA / plan fields. Version-guarded (409 + fresh state on conflict).
+ */
+router.put(
+  '/recovery-cards/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
+    const { organizationId, userId } = getV8Context(req);
+    const cardId = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+    const {
+      version,
+      hypothesis,
+      confirmedCause,
+      impactDescription,
+      priority,
+      expectedImpact,
+      dependencies,
+      risks,
+      expectedRecoveryDate,
+      effectivenessCriteria,
+    } = req.body || {};
+
+    if (!cardId) {
+      return res.status(400).json({
+        error: 'id is required',
+        code: 'RESULTS_RECOVERY_CARD_ID_REQUIRED',
+      });
+    }
+    if (version === undefined || version === null) {
+      return res.status(400).json({
+        error: 'version is required',
+        code: 'RESULTS_RECOVERY_CARD_VERSION_REQUIRED',
+      });
+    }
+
+    const owned = await dbGet<{ id: string }>(
+      `SELECT id FROM kpi_recovery_cards WHERE id = ? AND organization_id = ?`,
+      [cardId, organizationId]
+    );
+    if (!owned?.id) {
+      return res.status(404).json({
+        error: 'Recovery card not found',
+        code: 'RESULTS_RECOVERY_CARD_NOT_FOUND',
+      });
+    }
+
+    try {
+      const result = await updateRecoveryCard({
+        db: buildRecoveryDb(),
+        orgId: organizationId,
+        recoveryCardId: cardId,
+        expectedVersion: Number(version),
+        patch: {
+          hypothesis,
+          confirmedCause,
+          impactDescription,
+          priority,
+          expectedImpact,
+          dependencies,
+          risks,
+          expectedRecoveryDate,
+          effectivenessCriteria,
+        },
+        actorUserId: userId || null,
+      });
+      if (!result.ok) {
+        const fresh = await getRecoveryCardDTO(buildRecoveryDb(), organizationId, cardId);
+        return res.status(409).json({
+          error: 'Version conflict',
+          code: 'RESULTS_RECOVERY_CARD_VERSION_CONFLICT',
+          data: fresh,
+        });
+      }
+      return res.json({ data: result.card, meta: resultsWriteMeta() });
+    } catch (err) {
+      if (mapRecoveryServiceError(err, res)) return;
+      throw err;
+    }
+  })
+);
+
+/**
+ * POST /api/v8/results/recovery-cards/:id/actions
+ * Creates an immediate/durable recovery action line. Ownership of :id is
+ * enforced inside ensureRecoveryAction (SELECT before any INSERT).
+ */
+router.post(
+  '/recovery-cards/:id/actions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
+    const { organizationId, userId } = getV8Context(req);
+    const cardId = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+    const { title, description, actionType, ownerUserId, dueDate, idempotencyKey } = req.body || {};
+
+    if (!cardId) {
+      return res.status(400).json({
+        error: 'id is required',
+        code: 'RESULTS_RECOVERY_CARD_ID_REQUIRED',
+      });
+    }
+
+    try {
+      const result = await ensureRecoveryAction({
+        db: buildRecoveryDb(),
+        orgId: organizationId,
+        recoveryCardId: cardId,
+        actionType,
+        title,
+        description: description || null,
+        ownerUserId: ownerUserId || null,
+        dueDate: dueDate ? String(dueDate).slice(0, 10) : null,
+        idempotencyKey: idempotencyKey || null,
+        actorUserId: userId || null,
+      });
+      const actionRow = await dbGet<RecoveryActionRow>(
+        `SELECT * FROM kpi_recovery_actions WHERE id = ? AND organization_id = ?`,
+        [result.actionId, organizationId]
+      );
+      return res.status(result.created ? 201 : 200).json({
+        data: actionRow ? toActionDTO(actionRow) : null,
+        meta: resultsWriteMeta(),
+      });
+    } catch (err) {
+      if (mapRecoveryServiceError(err, res)) return;
+      throw err;
+    }
+  })
+);
+
+/**
+ * PUT /api/v8/results/recovery-cards/:id/actions/:actionId
+ * Ownership pattern mirrors the existing PUT .../deviation-cases/:caseId/actions/:actionId
+ * (INNER JOIN to the parent, org-scoped) — no separate version guard here,
+ * same as that precedent.
+ */
+router.put(
+  '/recovery-cards/:id/actions/:actionId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
+    const { organizationId } = getV8Context(req);
+    const cardId = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+    const actionId = typeof req.params.actionId === 'string' ? req.params.actionId.trim() : '';
+    const { status, ownerUserId, dueDate } = req.body || {};
+
+    if (!cardId || !actionId) {
+      return res.status(400).json({
+        error: 'id and actionId are required',
+        code: 'RESULTS_RECOVERY_ACTION_ID_REQUIRED',
+      });
+    }
+    const validStatuses = ['OPEN', 'DONE', 'CANCELLED'];
+    if (status !== undefined && !validStatuses.includes(status)) {
+      return res.status(400).json({
+        error: `status must be one of: ${validStatuses.join(', ')}`,
+        code: 'RESULTS_RECOVERY_ACTION_INVALID_STATUS',
+      });
+    }
+
+    const owned = await dbGet<{ id: string }>(
+      `
+      SELECT a.id
+      FROM kpi_recovery_actions a
+      INNER JOIN kpi_recovery_cards c ON c.id = a.recovery_card_id
+      WHERE a.id = ? AND a.recovery_card_id = ? AND c.organization_id = ?
+      `,
+      [actionId, cardId, organizationId]
+    );
+    if (!owned?.id) {
+      return res.status(404).json({
+        error: 'Recovery action not found',
+        code: 'RESULTS_RECOVERY_ACTION_NOT_FOUND',
+      });
+    }
+
+    await dbRun(
+      `
+      UPDATE kpi_recovery_actions
+      SET status = COALESCE(?, status),
+          owner_user_id = COALESCE(?, owner_user_id),
+          due_date = COALESCE(?, due_date),
+          updated_at = now()
+      WHERE id = ? AND recovery_card_id = ? AND organization_id = ?
+      `,
+      [
+        status || null,
+        ownerUserId || null,
+        dueDate ? String(dueDate).slice(0, 10) : null,
+        actionId,
+        cardId,
+        organizationId,
+      ]
+    );
+
+    const actionRow = await dbGet<RecoveryActionRow>(
+      `SELECT * FROM kpi_recovery_actions WHERE id = ? AND organization_id = ?`,
+      [actionId, organizationId]
+    );
+    return res.json({ data: actionRow ? toActionDTO(actionRow) : null, meta: resultsWriteMeta() });
+  })
+);
+
+/**
+ * POST /api/v8/results/recovery-cards/:id/actions/:actionId/link-task
+ * THE fix for the execution_follow_up_ref bug documented in the migration:
+ * creates a real `tasks` row and links it via kpi_recovery_actions.linked_task_id
+ * with an explicit task_link_status, instead of the old silently-swallowed
+ * UPDATE ... execution_follow_up_ref in /workflow/kpi/:id/next-action (that
+ * endpoint is left untouched — it is a separate, no-longer-used path).
+ */
+router.post(
+  '/recovery-cards/:id/actions/:actionId/link-task',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
+    const { organizationId, userId } = getV8Context(req);
+    const cardId = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+    const actionId = typeof req.params.actionId === 'string' ? req.params.actionId.trim() : '';
+
+    if (!cardId || !actionId) {
+      return res.status(400).json({
+        error: 'id and actionId are required',
+        code: 'RESULTS_RECOVERY_ACTION_ID_REQUIRED',
+      });
+    }
+
+    const action = await dbGet<{
+      id: string;
+      title: string;
+      description: string | null;
+      owner_user_id: string | null;
+      due_date: string | null;
+    }>(
+      `
+      SELECT a.id, a.title, a.description, a.owner_user_id, a.due_date
+      FROM kpi_recovery_actions a
+      INNER JOIN kpi_recovery_cards c ON c.id = a.recovery_card_id
+      WHERE a.id = ? AND a.recovery_card_id = ? AND c.organization_id = ?
+      `,
+      [actionId, cardId, organizationId]
+    );
+    if (!action?.id) {
+      return res.status(404).json({
+        error: 'Recovery action not found',
+        code: 'RESULTS_RECOVERY_ACTION_NOT_FOUND',
+      });
+    }
+
+    const recoveryDb = buildRecoveryDb();
+    let taskId: string;
+    try {
+      taskId = uuidv4();
+      await dbRun(
+        `
+        INSERT INTO tasks (
+          id, organization_id, title, description, status, priority,
+          assignee_id, due_date, created_by, source_type, source_id, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, 'todo', 'medium', ?, ?, ?, 'kpi_recovery_action', ?, now(), now())
+        `,
+        [
+          taskId,
+          organizationId,
+          action.title,
+          action.description || `KPI recovery action (${actionId})`,
+          action.owner_user_id || userId || null,
+          action.due_date || null,
+          userId || null,
+          actionId,
+        ]
+      );
+    } catch (err: any) {
+      await markRecoveryActionTaskLinkFailed({
+        db: recoveryDb,
+        orgId: organizationId,
+        actionId,
+        error: err?.message || 'Task creation failed',
+      }).catch(() => null);
+      return res.status(500).json({
+        error: 'Failed to create linked task',
+        code: 'RESULTS_RECOVERY_TASK_CREATE_FAILED',
+      });
+    }
+
+    try {
+      const result = await linkRecoveryActionTask({
+        db: recoveryDb,
+        orgId: organizationId,
+        actionId,
+        taskId,
+      });
+      const freshAction = await dbGet<RecoveryActionRow>(
+        `SELECT * FROM kpi_recovery_actions WHERE id = ? AND organization_id = ?`,
+        [actionId, organizationId]
+      );
+      return res.json({
+        data: { ...result, action: freshAction ? toActionDTO(freshAction) : null },
+        meta: resultsWriteMeta(),
+      });
+    } catch (err) {
+      // Never a silent swallow (that was the original bug): always record
+      // the failure on the action row, then surface an error to the caller.
+      await markRecoveryActionTaskLinkFailed({
+        db: recoveryDb,
+        orgId: organizationId,
+        actionId,
+        error: err instanceof Error ? err.message : String(err),
+      }).catch(() => null);
+      if (mapRecoveryServiceError(err, res)) return;
+      return res.status(500).json({
+        error: 'Failed to link task to recovery action',
+        code: 'RESULTS_RECOVERY_TASK_LINK_FAILED',
+      });
+    }
+  })
+);
+
+/**
+ * POST /api/v8/results/recovery-cards/:id/checkpoints
+ */
+router.post(
+  '/recovery-cards/:id/checkpoints',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
+    const { organizationId, userId } = getV8Context(req);
+    const cardId = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+    const { checkpointDate, notes } = req.body || {};
+
+    if (!cardId) {
+      return res.status(400).json({
+        error: 'id is required',
+        code: 'RESULTS_RECOVERY_CARD_ID_REQUIRED',
+      });
+    }
+
+    try {
+      const checkpoint = await ensureRecoveryCheckpoint({
+        db: buildRecoveryDb(),
+        orgId: organizationId,
+        recoveryCardId: cardId,
+        checkpointDate,
+        notes: notes || null,
+        actorUserId: userId || null,
+      });
+      return res.status(201).json({ data: toCheckpointDTO(checkpoint), meta: resultsWriteMeta() });
+    } catch (err) {
+      if (mapRecoveryServiceError(err, res)) return;
+      throw err;
+    }
+  })
+);
+
+/**
+ * PUT /api/v8/results/recovery-cards/:id/checkpoints/:checkpointId/resolve
+ */
+router.put(
+  '/recovery-cards/:id/checkpoints/:checkpointId/resolve',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
+    const { organizationId } = getV8Context(req);
+    const cardId = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+    const checkpointId =
+      typeof req.params.checkpointId === 'string' ? req.params.checkpointId.trim() : '';
+    const { status, kpiTimeSeriesId } = req.body || {};
+
+    if (!cardId || !checkpointId) {
+      return res.status(400).json({
+        error: 'id and checkpointId are required',
+        code: 'RESULTS_RECOVERY_CHECKPOINT_ID_REQUIRED',
+      });
+    }
+
+    try {
+      const checkpoint = await resolveRecoveryCheckpoint({
+        db: buildRecoveryDb(),
+        orgId: organizationId,
+        recoveryCardId: cardId,
+        checkpointId,
+        status,
+        kpiTimeSeriesId: kpiTimeSeriesId || null,
+      });
+      return res.json({ data: toCheckpointDTO(checkpoint), meta: resultsWriteMeta() });
+    } catch (err) {
+      if (mapRecoveryServiceError(err, res)) return;
+      throw err;
+    }
+  })
+);
+
+/**
+ * POST /api/v8/results/recovery-cards/:id/close
+ * Version-guarded. On a non-closeable outcome, returns 409 with `reason`
+ * and the fresh card state so the client can refetch without a second
+ * round trip.
+ */
+router.post(
+  '/recovery-cards/:id/close',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
+    const { organizationId, userId } = getV8Context(req);
+    const cardId = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+    const { version, evidenceText, evidenceRef, effectivenessRating } = req.body || {};
+
+    if (!cardId) {
+      return res.status(400).json({
+        error: 'id is required',
+        code: 'RESULTS_RECOVERY_CARD_ID_REQUIRED',
+      });
+    }
+    if (version === undefined || version === null) {
+      return res.status(400).json({
+        error: 'version is required',
+        code: 'RESULTS_RECOVERY_CARD_VERSION_REQUIRED',
+      });
+    }
+    const validRatings = ['EFFECTIVE', 'PARTIALLY_EFFECTIVE', 'INEFFECTIVE'];
+    if (!validRatings.includes(effectivenessRating)) {
+      return res.status(400).json({
+        error: `effectivenessRating must be one of: ${validRatings.join(', ')}`,
+        code: 'RESULTS_RECOVERY_CARD_INVALID_RATING',
+      });
+    }
+
+    const owned = await dbGet<{ id: string }>(
+      `SELECT id FROM kpi_recovery_cards WHERE id = ? AND organization_id = ?`,
+      [cardId, organizationId]
+    );
+    if (!owned?.id) {
+      return res.status(404).json({
+        error: 'Recovery card not found',
+        code: 'RESULTS_RECOVERY_CARD_NOT_FOUND',
+      });
+    }
+
+    try {
+      const result = await closeRecoveryCard({
+        db: buildRecoveryDb(),
+        orgId: organizationId,
+        recoveryCardId: cardId,
+        expectedVersion: Number(version),
+        evidenceText: evidenceText || null,
+        evidenceRef: evidenceRef || null,
+        effectivenessRating,
+        actorUserId: userId || null,
+      });
+      if (!result.closed) {
+        const fresh = await getRecoveryCardDTO(buildRecoveryDb(), organizationId, cardId);
+        return res.status(409).json({
+          error: 'Recovery card could not be closed',
+          code: `RESULTS_RECOVERY_CARD_CLOSE_${result.reason}`,
+          reason: result.reason,
+          latestMeasurement: 'latestMeasurement' in result ? result.latestMeasurement : undefined,
+          data: fresh,
+        });
+      }
+      return res.json({ data: result.card, meta: resultsWriteMeta() });
+    } catch (err) {
+      if (mapRecoveryServiceError(err, res)) return;
+      throw err;
+    }
+  })
+);
+
+/**
+ * POST /api/v8/results/recovery-cards/:id/continue
+ */
+router.post(
+  '/recovery-cards/:id/continue',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
+    const { organizationId, userId } = getV8Context(req);
+    const cardId = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+    const { version, note } = req.body || {};
+
+    if (!cardId) {
+      return res.status(400).json({
+        error: 'id is required',
+        code: 'RESULTS_RECOVERY_CARD_ID_REQUIRED',
+      });
+    }
+    if (version === undefined || version === null) {
+      return res.status(400).json({
+        error: 'version is required',
+        code: 'RESULTS_RECOVERY_CARD_VERSION_REQUIRED',
+      });
+    }
+
+    const owned = await dbGet<{ id: string }>(
+      `SELECT id FROM kpi_recovery_cards WHERE id = ? AND organization_id = ?`,
+      [cardId, organizationId]
+    );
+    if (!owned?.id) {
+      return res.status(404).json({
+        error: 'Recovery card not found',
+        code: 'RESULTS_RECOVERY_CARD_NOT_FOUND',
+      });
+    }
+
+    const result = await progressRecoveryCard({
+      db: buildRecoveryDb(),
+      orgId: organizationId,
+      recoveryCardId: cardId,
+      expectedVersion: Number(version),
+      decision: 'CONTINUE',
+      note: note || null,
+      actorUserId: userId || null,
+    });
+    if (!result.ok) {
+      const fresh = await getRecoveryCardDTO(buildRecoveryDb(), organizationId, cardId);
+      return res.status(409).json({
+        error: 'Version conflict',
+        code: 'RESULTS_RECOVERY_CARD_VERSION_CONFLICT',
+        data: fresh,
+      });
+    }
+    return res.json({ data: result.card, meta: resultsWriteMeta() });
+  })
+);
+
+/**
+ * POST /api/v8/results/recovery-cards/:id/escalate
+ * NEEDS_CODEX_DECISION: `escalateTo` (an addressee) is intentionally NOT
+ * accepted/wired here — there is no escalation-addressee/notification
+ * mechanism in this schema slice, and `escalationForSignal` (the closest
+ * existing concept) is dead code with zero callers. Wiring a real
+ * escalation-notification path (addressee resolution, channel, SLA) is a
+ * deliberate product decision out of scope for this round.
+ */
+router.post(
+  '/recovery-cards/:id/escalate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
+    const { organizationId, userId } = getV8Context(req);
+    const cardId = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+    const { version, note } = req.body || {};
+
+    if (!cardId) {
+      return res.status(400).json({
+        error: 'id is required',
+        code: 'RESULTS_RECOVERY_CARD_ID_REQUIRED',
+      });
+    }
+    if (version === undefined || version === null) {
+      return res.status(400).json({
+        error: 'version is required',
+        code: 'RESULTS_RECOVERY_CARD_VERSION_REQUIRED',
+      });
+    }
+
+    const owned = await dbGet<{ id: string }>(
+      `SELECT id FROM kpi_recovery_cards WHERE id = ? AND organization_id = ?`,
+      [cardId, organizationId]
+    );
+    if (!owned?.id) {
+      return res.status(404).json({
+        error: 'Recovery card not found',
+        code: 'RESULTS_RECOVERY_CARD_NOT_FOUND',
+      });
+    }
+
+    const result = await progressRecoveryCard({
+      db: buildRecoveryDb(),
+      orgId: organizationId,
+      recoveryCardId: cardId,
+      expectedVersion: Number(version),
+      decision: 'ESCALATE',
+      note: note || null,
+      actorUserId: userId || null,
+    });
+    if (!result.ok) {
+      const fresh = await getRecoveryCardDTO(buildRecoveryDb(), organizationId, cardId);
+      return res.status(409).json({
+        error: 'Version conflict',
+        code: 'RESULTS_RECOVERY_CARD_VERSION_CONFLICT',
+        data: fresh,
+      });
+    }
+    return res.json({ data: result.card, meta: resultsWriteMeta() });
+  })
+);
+
 /**
  * GET /api/v8/results/kpis/:kpiId/drawer-detail
  * Bounded KPI drawer bridge for time-series and open deviation-case continuity.
@@ -2259,7 +2977,6 @@ router.post(
 // ────────────────────────────────────────────────────────────────
 
 import {
-  canPerformKpiAction,
   computeKpiHealthPosture,
   KPI_ANTI_DUPLICATE_RULES,
   KPI_PERMISSION_MATRIX,
@@ -2268,7 +2985,6 @@ import {
   type KpiDegradedPosture,
   type KpiHealthStatus,
   type KpiNextAction,
-  type KpiPermissionRole,
   type KpiReconciliation,
   type KpiReport,
   type KpiSignal,
