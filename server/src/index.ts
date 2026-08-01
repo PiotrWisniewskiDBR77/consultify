@@ -1225,8 +1225,13 @@ logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
  * REMOVED (SEC-PUB-002): `GET /__build-info`, `GET /api/build-info`,
  * `GET /__build-graph`, `GET /api/build-graph`.
  *
- * All four were anonymous, unrate-limited, and mounted here — ahead of helmet,
- * CORS, sanitisation, CSRF, the global limiter and audit logging.
+ * All four were unrate-limited and mounted here — ahead of helmet, CORS,
+ * sanitisation, CSRF, the global limiter and audit logging.
+ *
+ * ACCESSIBILITY, precisely: the `/__*` pair was reachable ANONYMOUSLY; the
+ * `/api/*` pair sat behind the auth catch-all at :222 and required a token. All
+ * four were unnecessary and all four disclosed once the handler was reached, but
+ * only two of them were anonymous.
  *
  * DISCLOSURE: they returned `frontendDistPath`, `indexPath`, `bundleFsPath`,
  * `bundlePublicPath`, `entryPublicPath` and `assetsPath` — the container's
@@ -1235,8 +1240,8 @@ logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
  * COST: `build-info` did a `readdirSync` of the assets directory and a
  * `readFileSync` of EVERY `.js` chunk per request. `build-graph` did the same and
  * then walked the whole import graph. Both synchronous, both before any
- * authorization, on an endpoint no credential was needed to reach — a
- * resource-exhaustion surface as much as a disclosure one.
+ * authorization inside the handler — and on the `/__*` pair, reachable with no
+ * credential at all. A resource-exhaustion surface as much as a disclosure one.
  *
  * Deleted rather than guarded: an exhaustive consumer hunt (frontend, backend,
  * scripts, CI, Dockerfiles, railway.json, Playwright configs, tests, runbooks and

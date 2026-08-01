@@ -1,9 +1,15 @@
 /**
- * SEC-PUB-002 — the anonymous build-diagnostic surface is gone.
+ * SEC-PUB-002 — the build-diagnostic surface is gone.
  *
  * `GET /__build-info`, `GET /api/build-info`, `GET /__build-graph` and
- * `GET /api/build-graph` were anonymous, unrate-limited, and mounted ahead of
- * helmet, CORS, sanitisation, CSRF, the global limiter and audit logging.
+ * `GET /api/build-graph` were unrate-limited and mounted ahead of helmet, CORS,
+ * sanitisation, CSRF, the global limiter and audit logging.
+ *
+ * ACCESSIBILITY, precisely — measured, not assumed. The `/__*` pair was reachable
+ * ANONYMOUSLY. The `/api/*` pair sat behind the auth catch-all at index.ts:222,
+ * which is mounted before the handlers at ~1175, so it answered 401 without a
+ * token. Calling all four "anonymous" would overstate it. All four were
+ * nonetheless unnecessary, and all four disclosed once the handler was reached.
  *
  * They disclosed `frontendDistPath`, `indexPath`, `bundleFsPath`,
  * `bundlePublicPath`, `entryPublicPath` and `assetsPath` — the container's
@@ -166,7 +172,7 @@ describe('SEC-PUB-002 build diagnostics surface', () => {
     }, 180_000);
   });
 
-  describe('no anonymous request triggers a filesystem scan', () => {
+  describe('no request triggers a filesystem scan', () => {
     it('performs no readdirSync or readFileSync of the asset bundle', async () => {
       fsSpy.calls = [];
 
@@ -182,7 +188,7 @@ describe('SEC-PUB-002 build diagnostics surface', () => {
       expect(scanCalls, `no asset scan may run: ${scanCalls.join(', ')}`).toEqual([]);
     }, 180_000);
 
-    it('20 concurrent anonymous requests still trigger no scan', async () => {
+    it('20 concurrent requests still trigger no scan', async () => {
       fsSpy.calls = [];
 
       await Promise.all(
