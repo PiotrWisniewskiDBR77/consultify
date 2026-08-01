@@ -101,17 +101,23 @@ ownership is inline in the controller.
   underlying migration conflict itself is unresolved, and the same pattern
   may exist elsewhere in `PostgresDatabase.ts`'s `ALWAYS_BOOLEAN_COLUMNS`
   list (~150 entries, not audited).
-- `GET /api/decisions/bottlenecks` appears to silently return empty results
-  against real Postgres (invalid SQLite-flavored SQL + an error-swallowing
-  legacy DB shim) — unrelated to this packet's scope, found incidentally,
-  not fixed.
+- `GET /api/decisions/bottlenecks` was found silently returning empty
+  results against real Postgres (invalid SQLite-flavored SQL + an
+  error-swallowing legacy DB shim + the same `is_blocker` conflict) —
+  unrelated to this packet's core scope. Fixed on a **separate branch**,
+  `wip/mw-dec-bottlenecks-followup` @ `1f546ff718`, per Codex's explicit
+  instruction not to mix it into MW-DEC-001. **Not independently re-tested
+  against real Postgres by this line** — needs its own verification pass
+  before merge.
 - Comment **editing** UI was intentionally not implemented on the frontend
   (add/delete only); the backend `PUT` endpoint exists and works.
-- i18n: new frontend strings use the `t(key, 'English default')` pattern
-  under a new `myWork.decisionWorkspace.*` namespace but were not added to
-  the 7 shared `public/locales/*/translation.json` files (would have
-  required touching files outside the new component tree) — falls back to
-  English default text, same behavior as other pre-existing keys.
+- i18n: **resolved in the Codex re-review round.** Real PL+EN translations
+  for all 97 keys are now in `public/locales/{en,pl}/translation.json`
+  (commit `7b65e6554b`). Other locales (ja/ar/de/es/jp) remain out of scope.
+- Frontend test coverage: **resolved in the Codex re-review round.** 14
+  real-mount tests under `tests/components/MyWork/Decision/` (commit
+  `07729c3e6d`), including a proven red→green test for the
+  no-premature-success guarantee.
 - Decision-creation flow (`decisionId === null`) is explicitly NOT
   implemented in the new frontend component — it renders an honest "not
   supported yet" state. Only the existing-decision detail/collaborate/decide
