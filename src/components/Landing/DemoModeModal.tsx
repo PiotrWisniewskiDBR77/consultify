@@ -5,12 +5,71 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 
 interface DemoModeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (user: any, mode: 'demo' | 'trial') => void | Promise<void>;
   mode: 'demo' | 'trial';
+}
+
+/**
+ * Public entry copy. Three classes only, and they never disclose whether a given
+ * address is registered (OPS-DEMO-002 §6):
+ *
+ * - `invalidCredentials` — the login tab could not authenticate. Identical for a
+ *   wrong password and for an address that does not exist, because the backend
+ *   answers `401 Invalid email or password` in both cases.
+ * - `signupUnavailable` — the sign-up tab could not create the account. Identical
+ *   for a duplicate address and for any other creation failure.
+ * - `demoUnavailable` — the account side is fine, the seeded workspace is not.
+ *
+ * Raw backend messages are never rendered: they can carry hostnames and driver text.
+ */
+export const DEMO_MODAL_PUBLIC_ERROR_COPY = {
+  invalidCredentials: 'Invalid email or password.',
+  signupUnavailable:
+    'We could not start a demo with those details. Log in if you already have an account, or use a different email address.',
+  demoUnavailable: 'The demo workspace is temporarily unavailable. Please try again shortly.',
+  trialSignupUnavailable:
+    'We could not start a trial with those details. Log in if you already have an account, or use a different email address.',
+} as const;
+
+type PublicEntryContext = 'demoSignup' | 'demoLogin' | 'trialSignup' | 'trialLogin';
+
+function readErrorCode(error: unknown): string | null {
+  // `handleResponse` attaches the parsed body as `err.data`; other call sites use
+  // `err.code` or a nested `err.error.code`. Read all three, uppercased.
+  const raw = error as
+    | { code?: unknown; error?: { code?: unknown }; data?: { code?: unknown } }
+    | null;
+  const candidate =
+    (typeof raw?.code === 'string' && raw.code) ||
+    (typeof raw?.data?.code === 'string' && raw.data.code) ||
+    (typeof raw?.error?.code === 'string' && raw.error.code) ||
+    null;
+  return candidate ? candidate.toUpperCase() : null;
+}
+
+export function mapPublicEntryError(error: unknown, context: PublicEntryContext): string {
+  const code = readErrorCode(error);
+
+  if (
+    code === 'DEMO_SEED_UNAVAILABLE' ||
+    code === 'DEMO_UNAVAILABLE' ||
+    code === 'DEMO_NOT_CONFIGURED'
+  ) {
+    return DEMO_MODAL_PUBLIC_ERROR_COPY.demoUnavailable;
+  }
+
+  if (context === 'demoLogin' || context === 'trialLogin') {
+    return DEMO_MODAL_PUBLIC_ERROR_COPY.invalidCredentials;
+  }
+
+  return context === 'trialSignup'
+    ? DEMO_MODAL_PUBLIC_ERROR_COPY.trialSignupUnavailable
+    : DEMO_MODAL_PUBLIC_ERROR_COPY.signupUnavailable;
 }
 
 export const DemoModeModal: React.FC<DemoModeModalProps> = ({
@@ -42,39 +101,49 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
     onClose();
   };
 
+  /**
+   * Pin the isolated demo tenant into the store before navigating. `getHeaders()`
+   * reads it from there and sends `X-Demo-Session-Org`; if it is missing, the very
+   * first requests of the session resolve to the shared curated org instead of the
+   * user's own copy.
+   */
+  const adoptDemoSession = (organizationId: string | null) => {
+    const store = useAppStore.getState();
+    store.setDemoMode(true);
+    store.setDemoSessionOrgId(organizationId);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
+    const context: PublicEntryContext =
+      mode === 'demo'
+        ? tab === 'signup'
+          ? 'demoSignup'
+          : 'demoLogin'
+        : tab === 'signup'
+          ? 'trialSignup'
+          : 'trialLogin';
     try {
       if (mode === 'demo') {
         if (tab === 'signup') {
-          try {
-            const { user } = await Api.registerDemo({
-              email: form.email,
-              password: form.password,
-              firstName: form.firstName || undefined,
-              acceptedLegalDocs: ['TOS', 'PRIVACY'],
-              legalConsentAt: new Date().toISOString(),
-            });
-            onSuccess({ ...user, hasWorkspace: true }, 'demo');
-          } catch (signupErr: any) {
-            const message = String(signupErr?.message || '');
-            const emailAlreadyExists =
-              signupErr?.code === 'EMAIL_IN_USE' ||
-              message.toLowerCase().includes('already in use');
-
-            if (!emailAlreadyExists) {
-              throw signupErr;
-            }
-
-            const user = await Api.login(form.email, form.password);
-            await Api.enterDemo();
-            onSuccess({ ...user, hasWorkspace: true, isDemo: true }, 'demo');
-          }
+          // No silent "email already in use -> log in with the typed password"
+          // fallback here. It leaked account existence through behaviour and
+          // replayed a typed password against a stranger's account.
+          const { user, demoSession } = await Api.registerDemo({
+            email: form.email,
+            password: form.password,
+            firstName: form.firstName || undefined,
+            acceptedLegalDocs: ['TOS', 'PRIVACY'],
+            legalConsentAt: new Date().toISOString(),
+          });
+          adoptDemoSession(demoSession?.organizationId ?? null);
+          onSuccess({ ...user, hasWorkspace: true, isDemo: true }, 'demo');
         } else {
           const user = await Api.login(form.email, form.password);
-          await Api.enterDemo();
+          const entered = await Api.enterDemo();
+          adoptDemoSession(entered?.demoSession?.organizationId ?? null);
           onSuccess({ ...user, hasWorkspace: true, isDemo: true }, 'demo');
         }
       } else {
@@ -93,10 +162,8 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
           onSuccess({ ...user, hasWorkspace: true }, 'trial');
         }
       }
-    } catch (err: any) {
-      setError(
-        err?.message || (mode === 'demo' ? 'Failed to start demo' : 'Failed to start trial')
-      );
+    } catch (err: unknown) {
+      setError(mapPublicEntryError(err, context));
     } finally {
       setIsLoading(false);
     }
@@ -261,7 +328,11 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                     placeholder={tab === 'signup' ? 'Min. 8 characters' : '••••••••'}
                   />
                 </div>
-                {error && <p className="text-xs text-c-danger py-1">{error}</p>}
+                {error && (
+                  <p role="alert" className="text-xs text-c-danger py-1">
+                    {error}
+                  </p>
+                )}
                 <button
                   type="submit"
                   disabled={isLoading}

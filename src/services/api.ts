@@ -1380,7 +1380,24 @@ export const Api = {
     firstName?: string;
     acceptedLegalDocs?: string[];
     legalConsentAt?: string;
-  }): Promise<{ user: User; token: string; refreshToken: string; isDemo: boolean }> => {
+  }): Promise<{
+    user: User;
+    token: string;
+    refreshToken: string;
+    isDemo: boolean;
+    /**
+     * Isolated demo tenant provisioned by `register-demo`. Its `organizationId`
+     * MUST be stored as `demoSessionOrgId`, because `getHeaders()` turns it into
+     * `X-Demo-Session-Org`. Without it the backend serves the shared curated org.
+     */
+    demoSession?: {
+      id: string;
+      organizationId: string;
+      locale: 'en' | 'pl';
+      expiresAt: string;
+      anchorDate: string;
+    } | null;
+  }> => {
     let res: Response;
     try {
       res = await fetch(`${API_URL}/auth/register-demo`, {
@@ -1410,7 +1427,18 @@ export const Api = {
   /**
    * Enter demo mode (for logged-in user) - enables demo and records demo_started_at
    */
-  enterDemo: async (): Promise<{ success: boolean; isDemoMode: boolean }> => {
+  enterDemo: async (): Promise<{
+    success: boolean;
+    isDemoMode: boolean;
+    /** Same contract as `registerDemo` — see the note there. */
+    demoSession?: {
+      id: string;
+      organizationId: string;
+      locale: 'en' | 'pl';
+      expiresAt: string;
+      anchorDate: string;
+    } | null;
+  }> => {
     const result = await Api.toggleDemoMode(true);
     if (result.success && result.isDemoMode) {
       sessionStorage.setItem('isDemo', 'true');
@@ -14441,7 +14469,13 @@ export const Api = {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to toggle demo mode');
+      // Carry the machine code so callers can tell "demo workspace unavailable"
+      // apart from an auth failure instead of showing one blanket message.
+      const err: any = new Error(data.error || 'Failed to toggle demo mode');
+      err.status = res.status;
+      err.data = data;
+      if (typeof data?.code === 'string') err.code = data.code;
+      throw err;
     }
     return res.json();
   },
