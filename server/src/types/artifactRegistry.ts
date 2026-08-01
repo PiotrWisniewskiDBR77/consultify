@@ -151,7 +151,23 @@ export interface ArtifactListItem extends ArtifactRecord {
   originStatus: string | null;
   reportType: string | null;
   presentationMode: string | null;
+  /**
+   * MAT-006B — for `originRuntime === 'presentation'` this is the count DERIVED
+   * from the deck's persisted content (`resolveDeckContentCoherence`), not the
+   * `presentation_decks.slide_count` column. `null` for non-presentation rows.
+   */
   slideCount: number | null;
+  /**
+   * The raw `slide_count` column, diagnostics only — this is the number that
+   * lied on `demo` ("Ready · 11" over zero renderable cards). Optional so
+   * existing fixtures stay valid; absent on non-presentation rows.
+   */
+  declaredSlideCount?: number | null;
+  /**
+   * `'missing'` always travels with `slideCount === 0`. `null`/absent for
+   * non-presentation rows.
+   */
+  contentState?: 'canonical' | 'missing' | null;
   exportFormat: string | null;
   sourceRefs: unknown[];
   publishState: string | null;

@@ -47,6 +47,7 @@ import {
   templateSourceForRuntime,
   toBool,
 } from '../materials/templateContract.js';
+import { resolveDeckContentCoherence } from '../presentationDeckDocumentService.js';
 import {
   buildWave5LineDiffForPreview,
   mirrorLegacyArtifactIntoWave5,
@@ -268,7 +269,21 @@ interface ArtifactListRow extends ArtifactRow {
   presentation_status: string | null;
   presentation_mode: string | null;
   presentation_slide_count: number | null;
+  /**
+   * MAT-006B — raw `presentation_decks.deck_json` (TEXT). Read ONLY to derive
+   * the card count through `resolveDeckContentCoherence`; never returned to a
+   * client (`rowToListItem` builds an explicit item, it does not spread the row).
+   */
   presentation_deck_json: string | null;
+  /**
+   * 1 when the deck row holds a non-empty `unified_json`. Cheap flag so the list
+   * query does not haul a second ~40 KB TEXT column for every deck — the column
+   * itself is fetched in a second pass only for rows whose `deck_json` yielded
+   * zero cards (see `topUpPresentationUnifiedJson`).
+   */
+  presentation_has_unified_json: number | null;
+  /** Populated only by the second pass, or selected directly on single-row reads. */
+  presentation_unified_json: string | null;
   presentation_export_format: string | null;
   presentation_source_refs_json: string | null;
   publish_state: string | null;
@@ -2555,16 +2570,37 @@ function sourceRefsFromOriginSummary(summary: Record<string, unknown> | null): u
   return summary.sourceRefs as unknown[];
 }
 
-export function resolvePresentationSlideCount(
-  deckJsonRaw: string | null | undefined,
-  materializedSlideCount: number | null
-): number | null {
-  const canonicalDeck = safeJsonParse<Record<string, unknown> | null>(deckJsonRaw, null);
-  return Array.isArray(canonicalDeck?.cards)
-    ? canonicalDeck.cards.length
-    : materializedSlideCount;
+/**
+ * MAT-006B — the Materials / Reports-and-Presentations list is fed by
+ * `GET /api/artifacts` → `listArtifactsForUser`, NOT by `GET /presentations/decks`.
+ * Both canonical deck routes were already gated, but this one still selected
+ * `d.slide_count AS presentation_slide_count` and surfaced the RAW column, so
+ * the very screen that showed "Ready · 11" over a deck with zero renderable
+ * cards could still show a phantom count.
+ *
+ * The registry now derives the number through the SAME owner the deck routes
+ * use — `resolveDeckContentCoherence` — so the two surfaces cannot diverge
+ * again. Verified shapes on the Railway `demo` store this must survive:
+ *   - 10 rows with `slide_count > 0` and NO content in either column;
+ *   - `deck_json` holding invalid JSON, `'{}'`, or `{"schemaVersion":1,"cards":[]}`;
+ *   - 40+ rows where `slide_count = cards + 1` (the PPTX pipeline counts its
+ *     appended closing slide).
+ * Every one of those resolves to the derived count, never the declared column.
+ *
+ * Non-presentation rows are untouched: `slideCount` stays `null` for them, as
+ * before (the LEFT JOIN leaves every `d.*` column NULL).
+ */
+function presentationCoherenceForRow(row: ArtifactListRow) {
+  return resolveDeckContentCoherence({
+    id: row.origin_record_id,
+    organization_id: row.organization_id,
+    title: row.presentation_title,
+    status: row.presentation_status,
+    slide_count: row.presentation_slide_count,
+    deck_json: row.presentation_deck_json,
+    unified_json: row.presentation_unified_json,
+  });
 }
-
 function rowToListItem(row: ArtifactListRow): ArtifactListItem {
   const base = mapArtifactRow(row);
   const sourceRefs =
@@ -2598,6 +2634,8 @@ function rowToListItem(row: ArtifactListRow): ArtifactListItem {
 
   const resolvedTitle = originTitle || base.titleSnapshot || 'Untitled artifact';
 
+  const coherence = row.origin_runtime === 'presentation' ? presentationCoherenceForRow(row) : null;
+
   return {
     ...base,
     // Belt-and-suspenders: honor the persisted flag, but also flag on the fly if
@@ -2611,12 +2649,11 @@ function rowToListItem(row: ArtifactListRow): ArtifactListItem {
     originStatus,
     reportType: row.report_type,
     presentationMode: row.presentation_mode,
-    // `slide_count` is a legacy/materialized summary and can lag after builder
-    // autosaves. The canonical deck_json is authoritative for the current deck.
-    slideCount: resolvePresentationSlideCount(
-      row.presentation_deck_json,
-      row.presentation_slide_count
-    ),
+    // DERIVED, never the declared column. `contentState === 'missing'` always
+    // travels with `slideCount === 0` — identical contract to `GET /decks`.
+    slideCount: coherence ? coherence.cardCount : null,
+    declaredSlideCount: coherence ? coherence.declaredSlideCount : null,
+    contentState: coherence ? (coherence.hasCanonicalContent ? 'canonical' : 'missing') : null,
     exportFormat: row.origin_runtime === 'sheet' ? 'xlsx' : row.presentation_export_format,
     sourceRefs,
     publishState: row.publish_state,
@@ -2765,7 +2802,10 @@ async function getArtifactListItemRow(
             d.status AS presentation_status,
             d.presentation_mode AS presentation_mode,
             d.slide_count AS presentation_slide_count,
+            -- MAT-006B: single row, so both content columns come along directly;
+            -- there is nothing to amortize and no second pass to justify.
             d.deck_json AS presentation_deck_json,
+            d.unified_json AS presentation_unified_json,
             d.export_format AS presentation_export_format,
             COALESCE(d.source_artifacts, '[]') AS presentation_source_refs_json,
             p.current_state AS publish_state,
@@ -2797,6 +2837,62 @@ async function getArtifactListItemRow(
   );
 }
 
+/**
+ * MAT-006B second pass — mirrors `GET /presentations/decks` exactly, so the two
+ * surfaces cannot drift apart.
+ *
+ * COST, and why it is shaped this way. The list query already returns EVERY
+ * artifact row for the org (filters run in JS afterwards), so a content column
+ * on it is paid per artifact. Two things keep that bounded:
+ *   1. `deck_json` is NULL for every non-presentation row — the LEFT JOIN only
+ *      matches when `origin_runtime = 'presentation'`. The extra bytes are
+ *      bounded by the org's deck count (74 on `demo`), not its artifact count.
+ *   2. `unified_json` is NOT selected up front. Every writer that stores content
+ *      stores `deck_json` (presentationGeneratorService.ts writes both in one
+ *      UPDATE), so for effectively every row the second column is dead weight.
+ *      It is fetched only for rows whose `deck_json` yielded ZERO cards AND that
+ *      hold a non-empty `unified_json` — the legacy shape. Omitting it can only
+ *      ever UNDERSTATE a count (`normalizeDeckDocument` falls back to
+ *      `unified_json` only when `deck_json` produced no cards), never overstate
+ *      it, so this pass is a correctness top-up, not a guess.
+ * If this listing ever becomes hot, the fix is a persisted derived count (a
+ * generated column or a write-path invariant), not a SQL predicate — a
+ * non-empty JSON string is not proof of renderable cards, which is exactly how
+ * the first attempt at this gate on the deck route let `'{}'`, invalid JSON,
+ * `cards: []` and the cards+1 drift through.
+ *
+ * Mutates `rows` in place; failure is non-fatal (a missed top-up can only leave
+ * a legacy row reading 0, never inflate a count).
+ */
+async function topUpPresentationUnifiedJson(
+  organizationId: string,
+  rows: ArtifactListRow[]
+): Promise<void> {
+  const needsUnifiedJson = rows.filter(
+    (row) =>
+      row.origin_runtime === 'presentation' &&
+      Number(row.presentation_has_unified_json ?? 0) === 1 &&
+      presentationCoherenceForRow(row).cardCount === 0
+  );
+  if (needsUnifiedJson.length === 0) return;
+
+  const deckIds = needsUnifiedJson.map((row) => String(row.origin_record_id));
+  const placeholders = deckIds.map(() => '?').join(', ');
+  const unifiedRows = await dbAll<{ id: string; unified_json: string | null }>(
+    `SELECT id, unified_json FROM presentation_decks
+     WHERE organization_id = ? AND id IN (${placeholders})`,
+    [organizationId, ...deckIds],
+    { fallback: true }
+  );
+  const unifiedById = new Map(
+    (unifiedRows || []).map((row) => [String(row.id), row.unified_json ?? null])
+  );
+  for (const row of needsUnifiedJson) {
+    const unified = unifiedById.get(String(row.origin_record_id));
+    if (unified !== undefined) row.presentation_unified_json = unified;
+  }
+}
+
 export async function listArtifactsForUser(params: {
   organizationId: string;
   userId: string;
@@ -2819,7 +2915,11 @@ export async function listArtifactsForUser(params: {
             d.status AS presentation_status,
             d.presentation_mode AS presentation_mode,
             d.slide_count AS presentation_slide_count,
+            -- MAT-006B: deck_json is read to DERIVE the count; it is never
+            -- returned to a client. unified_json is deliberately NOT hauled
+            -- here - see topUpPresentationUnifiedJson().
             d.deck_json AS presentation_deck_json,
+            (CASE WHEN COALESCE(d.unified_json, '') <> '' THEN 1 ELSE 0 END) AS presentation_has_unified_json,
             d.export_format AS presentation_export_format,
             COALESCE(d.source_artifacts, '[]') AS presentation_source_refs_json,
             p.current_state AS publish_state,
@@ -2852,13 +2952,15 @@ export async function listArtifactsForUser(params: {
     { fallback: true }
   );
 
+  // MAT-006B: resolve the legacy `unified_json`-only decks before mapping, so
+  // every row's `slideCount` is derived from the best content available.
+  const listRows = rows || [];
+  await topUpPresentationUnifiedJson(organizationId, listRows);
+
   // R11 (doc slice): template cards carry a REAL identity block — canonical id,
   // runtime, source/legacy, live scope/status and an orphan flag recomputed from
   // the canonical registries. Read-only; nothing is deleted or rewritten.
-  const items = await enrichTemplateOriginSummaries(
-    organizationId,
-    (rows || []).map(rowToListItem)
-  );
+  const items = await enrichTemplateOriginSummaries(organizationId, listRows.map(rowToListItem));
   const accessMap = await getArtifactAccessGrants(
     organizationId,
     items.map((item) => item.artifactId)
@@ -2909,8 +3011,14 @@ export async function listArtifactsForUserByExecutionRunId(params: {
             d.presentation_mode,
             COALESCE(d.title, a.title_snapshot) AS presentation_title,
             d.status AS presentation_status,
-            d.slide_count,
-            d.export_format,
+            -- MAT-006B alias fix: these two were selected WITHOUT the aliases
+            -- rowToListItem actually reads (presentation_slide_count /
+            -- presentation_export_format), so slideCount and exportFormat were
+            -- permanently undefined on the execution-run artifact list.
+            d.slide_count AS presentation_slide_count,
+            d.export_format AS presentation_export_format,
+            d.deck_json AS presentation_deck_json,
+            (CASE WHEN COALESCE(d.unified_json, '') <> '' THEN 1 ELSE 0 END) AS presentation_has_unified_json,
             COALESCE(d.source_artifacts, '[]') AS presentation_source_refs_json,
             p.current_state AS publish_state,
             p.reviewers AS publish_reviewers,
@@ -2941,7 +3049,9 @@ export async function listArtifactsForUserByExecutionRunId(params: {
     { fallback: true }
   );
 
-  const items = (rows || []).map(rowToListItem);
+  const runRows = rows || [];
+  await topUpPresentationUnifiedJson(params.organizationId, runRows);
+  const items = runRows.map(rowToListItem);
   const accessMap = await getArtifactAccessGrants(
     params.organizationId,
     items.map((item) => item.artifactId)

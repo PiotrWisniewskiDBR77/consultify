@@ -758,9 +758,19 @@ export function buildDeckDocumentFromStructuredSlides(params: {
  *     as a rendered slide.
  *
  * This resolver is the single place that answers "how many cards can this row
- * actually serve, and does that agree with what it advertises". Callers use it
- * to report the derived count instead of the declared one, so no surface can
- * promise slides the canonical GET cannot deliver.
+ * actually serve, and does that agree with what it advertises".
+ *
+ * CALLERS — this resolver is the single owner of the count for every surface
+ * that shows one:
+ *   - `GET /decks/:id` and `GET /decks` (presentations.routes.ts);
+ *   - `GET /api/artifacts` → `artifactRegistryService.rowToListItem`, which
+ *     feeds the Materials / Reports-and-Presentations list Piotr actually
+ *     looks at. That surface used to read `d.slide_count AS
+ *     presentation_slide_count` raw and was therefore still capable of showing
+ *     "Ready · 11" over a deck with zero renderable cards; it now derives the
+ *     number here, so the three surfaces cannot diverge.
+ * Anything new that displays a slide count MUST come through this function
+ * rather than reading the column.
  */
 export interface DeckContentCoherence {
   /** Canonical document, or `null` when the row carries no usable content. */
