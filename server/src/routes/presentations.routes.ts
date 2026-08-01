@@ -100,6 +100,7 @@ import {
   buildDeckDocumentFromStructuredSlides,
   deckDocumentToRenderableUnifiedJson,
   normalizeDeckDocument,
+  resolveDeckContentCoherence,
   type StructuredSlideInput,
 } from '../services/presentationDeckDocumentService.js';
 import {
@@ -622,11 +623,27 @@ function isSchemaMissingError(error: unknown): boolean {
   );
 }
 
+// MAT-006B — fail-closed count/content coherence on the canonical read path.
+//
+// AS-IS that produced the staging blocker: `slide_count` was echoed verbatim
+// from the column while `normalizeDeckDocument()` silently returned `null` for
+// a row with no `deck_json.cards` and no `unified_json.slides`. The response
+// therefore claimed "11 slides" and delivered none, and the builder rendered
+// "Card 1 of 0" with no explanation of why.
+//
+// The canonical GET now reports the DERIVED count (what it can actually serve)
+// and states the content state explicitly. `content_state === 'missing'` always
+// travels with `slide_count === 0`, so no consumer of this route can advertise
+// slides that do not exist.
 function normalizeDeckRow(row: any) {
-  const canonicalDeck = normalizeDeckDocument(row);
+  const coherence = resolveDeckContentCoherence(row);
+  const canonicalDeck = coherence.document;
   return {
     ...row,
     deck_json: canonicalDeck ? JSON.stringify(canonicalDeck) : row.deck_json,
+    slide_count: coherence.cardCount,
+    declared_slide_count: coherence.declaredSlideCount,
+    content_state: coherence.hasCanonicalContent ? 'canonical' : 'missing',
     source_artifacts: JSON.parse(row.source_artifacts || '[]'),
     source_refs: JSON.parse(row.source_refs_json || '[]'),
     outline_json: JSON.parse(row.outline_json || '[]'),
@@ -2310,15 +2327,35 @@ router.get(
     const orgId = getOrgId(req);
     try {
       await ensureDeckLineageSchema();
-      const rows = await dbAll(
+      // MAT-006B — the list must not advertise slides the deck cannot serve.
+      // Pulling `deck_json` here would drag 40+ KB per row through the listing,
+      // so the query only asks the cheap question the column cannot lie about:
+      // does the row hold ANY canonical content at all? A row with neither
+      // content column can never render a card, so its count is forced to 0 and
+      // its state is stated explicitly. Rows that DO carry content keep their
+      // stored count here (the derived count needs the payload, and the
+      // canonical GET the builder calls next reports it).
+      const rows = (await dbAll(
         `SELECT pd.id, pd.title, pd.description, pd.deck_type, pd.audience, pd.goal, pd.language, pd.theme, pd.presentation_mode, pd.slide_count, pd.status, pd.export_format, pd.exported_at, pd.created_at, pd.updated_at, pd.source_id, pd.thumbnail_url, pd.source_refs_json, pd.created_by,
-                (u.first_name || ' ' || u.last_name) AS created_by_name
+                (u.first_name || ' ' || u.last_name) AS created_by_name,
+                (CASE WHEN COALESCE(pd.deck_json, '') <> '' OR COALESCE(pd.unified_json, '') <> ''
+                      THEN 1 ELSE 0 END) AS has_canonical_content
          FROM presentation_decks pd
          LEFT JOIN users u ON u.id = pd.created_by
          WHERE pd.organization_id = ? ORDER BY pd.updated_at DESC`,
         [orgId]
-      );
-      res.json({ success: true, data: rows || [] });
+      )) as any[];
+      const data = (rows || []).map((row: any) => {
+        const hasContent = Number(row?.has_canonical_content) === 1;
+        return {
+          ...row,
+          has_canonical_content: hasContent,
+          declared_slide_count: Number(row?.slide_count) || 0,
+          slide_count: hasContent ? Number(row?.slide_count) || 0 : 0,
+          content_state: hasContent ? 'canonical' : 'missing',
+        };
+      });
+      res.json({ success: true, data });
     } catch (error) {
       if (isSchemaMissingError(error)) {
         logger.warn('[Presentations] Deck listing unavailable: schema not ready');

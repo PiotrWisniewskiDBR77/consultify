@@ -741,6 +741,58 @@ export function buildDeckDocumentFromStructuredSlides(params: {
   } satisfies DeckDocument;
 }
 
+/**
+ * MAT-006B — count/content coherence for one `presentation_decks` row.
+ *
+ * `slide_count` is a free-standing integer column: the generator writes the
+ * PPTX renderer's slide tally into it, `POST /decks` writes the requested
+ * outline length, and nothing ever recomputes it from the persisted content.
+ * On the Railway `demo` store that produced two distinct failure shapes:
+ *
+ *   - three Atelier rows with `slide_count` 14 / 11 / 9 and BOTH content
+ *     columns NULL — the list advertised "Ready · 11" while
+ *     `normalizeDeckDocument()` returned `null` and the builder showed
+ *     "Card 1 of 0";
+ *   - 40+ generated rows where `slide_count` is exactly `cards + 1`, because
+ *     the PPTX pipeline counts the appended closing slide (`addClosingSlide`)
+ *     as a rendered slide.
+ *
+ * This resolver is the single place that answers "how many cards can this row
+ * actually serve, and does that agree with what it advertises". Callers use it
+ * to report the derived count instead of the declared one, so no surface can
+ * promise slides the canonical GET cannot deliver.
+ */
+export interface DeckContentCoherence {
+  /** Canonical document, or `null` when the row carries no usable content. */
+  document: DeckDocument | null;
+  /** Cards actually resolvable from the persisted content. Authoritative. */
+  cardCount: number;
+  /** The `slide_count` column as persisted (0 when absent/invalid). */
+  declaredSlideCount: number;
+  /** True when at least one content column holds a usable payload. */
+  hasCanonicalContent: boolean;
+  /** False when the row advertises a count its content cannot back. */
+  coherent: boolean;
+}
+
+function toCount(value: unknown): number {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
+}
+
+export function resolveDeckContentCoherence(row: any): DeckContentCoherence {
+  const document = normalizeDeckDocument(row);
+  const cardCount = Array.isArray(document?.cards) ? document.cards.length : 0;
+  const declaredSlideCount = toCount(row?.slide_count);
+  return {
+    document,
+    cardCount,
+    declaredSlideCount,
+    hasCanonicalContent: cardCount > 0,
+    coherent: cardCount === declaredSlideCount,
+  };
+}
+
 function deckDocumentFromLegacyDeckJson(row: any, deckJson: any): DeckDocument {
   const title = String(row?.title || deckJson.title || 'Untitled');
   const sourceRefs = sourceRefsFromUnknown(deckJson.source_refs);
