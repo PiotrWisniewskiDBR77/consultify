@@ -449,6 +449,70 @@ function isDossierEditor(
   );
 }
 
+/**
+ * BUG FIX (MW-DEC-001 acceptance suite, case 18): `createDecision` used to
+ * take `projectId`/`initiativeId`/`taskId` straight from the request body
+ * and INSERT them with zero check that they belong to the CALLER's own
+ * organization — a decision in org A could be created pointing at a real
+ * project/initiative/task belonging to org B, forging a cross-tenant
+ * relationship. The DB-level FK on `decisions.project_id` only proves the
+ * referenced row exists SOMEWHERE, not that it exists in the caller's org.
+ * This performs the real org-scoped existence check that was missing.
+ * (`updateDecision`'s Zod schema — UpdateDecisionSchema — never accepted
+ * projectId/initiativeId/taskId in the first place, so there is no matching
+ * gap to close on the update path; verified by reading its schema and the
+ * destructured fields in updateDecision below.)
+ */
+async function assertRelatedObjectsBelongToOrg(input: {
+  organizationId: string;
+  projectId?: string | null;
+  initiativeId?: string | null;
+  taskId?: string | null;
+}): Promise<{ ok: true } | { ok: false; field: string; message: string }> {
+  const { organizationId, projectId, initiativeId, taskId } = input;
+
+  if (projectId) {
+    const row = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+      [projectId, organizationId]
+    );
+    if (!row) {
+      return {
+        ok: false,
+        field: 'projectId',
+        message: 'projectId does not exist or does not belong to your organization',
+      };
+    }
+  }
+  if (initiativeId) {
+    const row = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId]
+    );
+    if (!row) {
+      return {
+        ok: false,
+        field: 'initiativeId',
+        message: 'initiativeId does not exist or does not belong to your organization',
+      };
+    }
+  }
+  if (taskId) {
+    const row = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM tasks WHERE id = ? AND organization_id = ?`,
+      [taskId, organizationId]
+    );
+    if (!row) {
+      return {
+        ok: false,
+        field: 'taskId',
+        message: 'taskId does not exist or does not belong to your organization',
+      };
+    }
+  }
+  return { ok: true };
+}
+
 // ==========================================
 // CONTROLLER METHODS
 // ==========================================
@@ -948,6 +1012,21 @@ export class DecisionController {
         return;
       }
 
+      // Cross-tenant relationship forgery guard: any caller-supplied
+      // projectId/initiativeId/taskId must genuinely belong to the caller's
+      // own organization before it is accepted — see
+      // assertRelatedObjectsBelongToOrg() doc for the vulnerability this closes.
+      const relatedObjectsCheck = await assertRelatedObjectsBelongToOrg({
+        organizationId: orgId,
+        projectId: projectIdValue,
+        initiativeId: initiativeIdValue,
+        taskId: taskIdValue,
+      });
+      if (!relatedObjectsCheck.ok) {
+        res.status(400).json({ error: relatedObjectsCheck.message, field: relatedObjectsCheck.field });
+        return;
+      }
+
       const impactEntries = Array.isArray(impacts)
         ? impacts.map((entry: any) => ({
             impactedType: entry.impactedType,
@@ -1230,14 +1309,19 @@ export class DecisionController {
         return;
       }
 
-      const rationaleValue = (rationale || outcome || '').trim();
-      const rationaleText =
-        rationaleValue ||
-        (normalizedStatus === 'approved'
-          ? 'Approved'
-          : normalizedStatus === 'rejected'
-            ? 'Rejected'
-            : '');
+      // BUG FIX (MW-DEC-001 acceptance suite, case 13b): this used to fall
+      // back to a FABRICATED default ('Approved'/'Rejected') whenever the
+      // caller omitted `rationale` entirely, which meant an omitted rationale
+      // on APPROVED/REJECTED silently succeeded with synthetic content
+      // instead of tripping the RATIONALE_REQUIRED rule in
+      // decisionOutcomeService.validateDecideTransition — that rule became
+      // unreachable dead code. `rationaleText` must now be exactly what the
+      // caller supplied (accepting `outcome` as a legacy alias field, which
+      // is still genuinely caller-supplied, not fabricated) — an empty/
+      // missing/whitespace-only value is passed through AS EMPTY so
+      // finalizeDecisionTransition's real requiresRationale() check can see
+      // and reject it with a real 400, with zero DB mutation.
+      const rationaleText = (rationale || outcome || '').trim();
 
       // Get decision first — scoped to caller's org (authorization check
       // only; the atomic transition below re-reads the row with FOR UPDATE
@@ -1314,30 +1398,54 @@ export class DecisionController {
         });
       }
 
-      // If decision is resolved, refresh blocks on impacted items
+      // If decision is resolved, refresh blocks on impacted items. This runs
+      // AFTER finalizeDecisionTransition's BEGIN/COMMIT has already landed —
+      // the decide() call has genuinely succeeded at this point. Bug found by
+      // the MW-DEC-001 acceptance suite (real Postgres): `decision_impacts.
+      // is_blocker` is INTEGER in the live schema (server/migrations/
+      // 292_decision_management.sql), not BOOLEAN, so `is_blocker = TRUE`
+      // threw "operator does not exist: integer = boolean" on every real
+      // Postgres run — turning a successfully-committed approve/reject into
+      // an uncaught 500, i.e. the server LIED to the client about a
+      // committed write failing (a false negative, the mirror image of the
+      // false-positive case the honest-failure mandate already guards
+      // against). Fixed the comparison to match the real column type
+      // (matches the `entry.isBlocker ? 1 : 0` convention already used when
+      // writing this column in createDecision above). Also wrapped the whole
+      // best-effort cascade in try/catch: this refresh is a side effect of
+      // an already-committed decision, not part of its correctness — it must
+      // never turn a successful decide() into an HTTP error again, whatever
+      // future reason it fails for.
       if (orgId && result.status !== 'pending' && result.status !== 'returned_for_clarification') {
-        const impacts = await queryHelpers.queryAll<{
-          impacted_type: string;
-          impacted_id: string;
-          is_blocker: number;
-        }>(
-          `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = ? AND is_blocker = TRUE`,
-          [id]
-        );
-        for (const impact of impacts || []) {
-          if (impact.impacted_type === 'task') {
-            await refreshTaskDecisionBlock({
-              taskId: impact.impacted_id,
-              organizationId: orgId,
-              resolvedDecisionId: id,
-            });
-          } else if (impact.impacted_type === 'initiative') {
-            await refreshInitiativeDecisionBlock({
-              initiativeId: impact.impacted_id,
-              organizationId: orgId,
-              resolvedDecisionId: id,
-            });
+        try {
+          const impacts = await queryHelpers.queryAll<{
+            impacted_type: string;
+            impacted_id: string;
+            is_blocker: number;
+          }>(
+            `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = ? AND is_blocker = 1`,
+            [id]
+          );
+          for (const impact of impacts || []) {
+            if (impact.impacted_type === 'task') {
+              await refreshTaskDecisionBlock({
+                taskId: impact.impacted_id,
+                organizationId: orgId,
+                resolvedDecisionId: id,
+              });
+            } else if (impact.impacted_type === 'initiative') {
+              await refreshInitiativeDecisionBlock({
+                initiativeId: impact.impacted_id,
+                organizationId: orgId,
+                resolvedDecisionId: id,
+              });
+            }
           }
+        } catch (err: any) {
+          logger.error(
+            '[DecisionController.decide] Post-commit impact-block refresh failed (non-fatal — decision was already committed):',
+            err?.message || err
+          );
         }
       }
 
