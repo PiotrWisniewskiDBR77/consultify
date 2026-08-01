@@ -44,6 +44,18 @@
  *   promoted AND the approved analysis exists and points at the pack.
  *   Consequence: if anything downstream fails, the fixture stays visibly
  *   not-ready instead of lying.
+ * - **ATOMIC.** All five promotions (3 statements + analysis + pack) happen in
+ *   ONE pinned PostgreSQL transaction — `atelierFinancePromotionTransaction.ts`
+ *   holds a single `pg` client for `BEGIN`, `SELECT … FOR UPDATE` on the
+ *   canonical rows, the re-run of the production verdict over those locked rows,
+ *   the five UPDATEs, a pre-COMMIT read-back and `COMMIT`. Any failure, up to
+ *   and including the backend being killed, rolls the whole thing back; there is
+ *   no half-promoted state to repair. Where a pinned connection cannot exist
+ *   (mocked in-memory database in tests, non-pg driver) the seed falls back to
+ *   verify-then-promote plus a compensating rollback and SAYS SO in the log —
+ *   at `error` level in production. Phase 0 (self-heal of a crash-damaged
+ *   fixture) and the compensating rollback both stay in place as
+ *   defence-in-depth under either path.
  * - **Arithmetically true.** The three statements reconcile with each other and
  *   pass `validateStatement` with zero warnings. `assertAtelierFy2014Coherent()`
  *   states those invariants in code so a future edit to a number cannot quietly
@@ -67,6 +79,7 @@ import {
   validateStatement,
   type ValidationMessage,
 } from '../financialStatementService.js';
+import { runPinnedPromotionTransaction } from './atelierFinancePromotionTransaction.js';
 import type { DemoLocale } from './demoLocale.js';
 
 // ---------------------------------------------------------------------------
@@ -656,11 +669,7 @@ function buildUpsertSql(table: string, upsert: ProjectedUpsert): string {
      WHERE ${guard}`;
 }
 
-/**
- * Phase-2 promotion write: an UPDATE that only fires when at least one target
- * column really differs, so a second run is a no-op here too.
- */
-async function promoteRow(params: {
+interface PromotionRowSpec {
   table: string;
   id: string;
   columns: Set<string>;
@@ -671,7 +680,18 @@ async function promoteRow(params: {
    * that actually promotes the row — and never refreshed by a no-op re-run.
    */
   literals?: Array<[column: string, literal: string]>;
-}): Promise<void> {
+}
+
+/**
+ * Build the phase-2 promotion write: an UPDATE that only fires when at least
+ * one target column really differs, so a second run is a no-op here too.
+ *
+ * SPLIT OUT FROM `promoteRow` so the SAME statement can be executed either
+ * through `DbPromise` (the compensating fallback path) or on the pinned
+ * transaction client (`atelierFinancePromotionTransaction.ts`). One builder =
+ * the two paths cannot drift apart.
+ */
+function buildPromotionUpdate(params: PromotionRowSpec): { sql: string; params: unknown[] } {
   const known = params.columns.size > 0 ? params.columns : null;
   const applicable = params.assignments.filter(
     ([column]) => !known || known.has(column.toLowerCase())
@@ -702,14 +722,23 @@ async function promoteRow(params: {
     .map(([column]) => `${column} IS DISTINCT FROM ?`)
     .join(' OR ');
 
-  await DbPromise.run(
-    `UPDATE ${params.table}
+  return {
+    sql: `UPDATE ${params.table}
         SET ${setClause}
       WHERE id = ?
         AND (${guard})`,
-    [...applicable.map(([, value]) => value), params.id, ...applicable.map(([, value]) => value)],
-    { fallback: false }
-  );
+    params: [
+      ...applicable.map(([, value]) => value),
+      params.id,
+      ...applicable.map(([, value]) => value),
+    ],
+  };
+}
+
+/** Execute a promotion write through `DbPromise` (autocommit, no transaction). */
+async function promoteRow(spec: PromotionRowSpec): Promise<void> {
+  const update = buildPromotionUpdate(spec);
+  await DbPromise.run(update.sql, update.params, { fallback: false });
 }
 
 // ---------------------------------------------------------------------------
@@ -891,6 +920,23 @@ function incomplete(
 // Phase 2 — read-back verification
 // ---------------------------------------------------------------------------
 
+/**
+ * How the read-back gate reaches the database.
+ *
+ * WHY IT IS INJECTED. The verdict that decides READY must be computed over the
+ * rows the promotion will actually write to. On the pinned-transaction path
+ * that means reading through the transaction's own connection, over rows this
+ * transaction has locked; on the fallback path it means ordinary `DbPromise`
+ * reads. Passing the reader in means BOTH paths run the identical verification
+ * code — the alternative (a second copy of the gate for the transaction) is
+ * exactly how a "verified" path quietly stops matching the one under test.
+ */
+type SqlReader = (sql: string, params?: unknown[]) => Promise<Array<Record<string, unknown>>>;
+
+/** The default reader: plain `DbPromise`, fail-closed (never swallows errors). */
+const dbPromiseReader: SqlReader = (sql, params = []) =>
+  DbPromise.all<Record<string, unknown>>(sql, params, { fallback: false });
+
 interface StatementReadBackRow {
   id?: unknown;
   organization_id?: unknown;
@@ -928,6 +974,7 @@ interface StatementVerdict {
  * the failure this gate exists to catch.
  */
 async function verifyStatementReadBack(params: {
+  read: SqlReader;
   organizationId: string;
   packId: string;
   statementId: string;
@@ -943,20 +990,18 @@ async function verifyStatementReadBack(params: {
   let statementRows: StatementReadBackRow[];
   let valueRows: StatementValueRow[];
   try {
-    statementRows = await DbPromise.all<StatementReadBackRow>(
+    statementRows = (await params.read(
       `SELECT id, organization_id, statement_pack_id, statement_type, currency, scaling, status
          FROM financial_statements
         WHERE id = ?`,
-      [params.statementId],
-      { fallback: false }
-    );
-    valueRows = await DbPromise.all<StatementValueRow>(
+      [params.statementId]
+    )) as StatementReadBackRow[];
+    valueRows = (await params.read(
       `SELECT ${valueColumnNames.join(', ')}
          FROM financial_statement_values
         WHERE statement_id = ?`,
-      [params.statementId],
-      { fallback: false }
-    );
+      [params.statementId]
+    )) as StatementValueRow[];
   } catch (error) {
     return { ok: false, reason: `read-back query failed: ${(error as Error).message}` };
   }
@@ -1370,130 +1415,168 @@ export async function upsertAtelierFinanceGoldenFlow(
 
   // ---- Phase 2: verify EVERYTHING, then promote — ATOMICALLY --------------
   //
-  // WHY "check everything, then promote" AND NOT A DATABASE TRANSACTION.
-  // `DbPromise` exposes exactly one transaction API: `transaction(statements[])`
-  // (see `src/utils/DbPromise.ts`), which BEGINs, runs a FIXED LIST of SQL
-  // strings and COMMITs. It never hands out a connection handle, so the
-  // read-backs and `promoteRow()` calls below cannot join it. Worse, every
-  // `DbPromise.run()` goes through `pool.query()` on a pg `Pool`
-  // (`src/database/PostgresDatabase.ts`), so `BEGIN`, the statements and
-  // `COMMIT` are not even guaranteed to land on the same pooled connection — a
-  // "transaction" built out of it would be a comforting lie. Hence option (a)
-  // from the FIN-005 packet:
+  // TWO PATHS, ONE CONTRACT. Whichever runs, `complete` means all five rows are
+  // promoted and `incomplete` means NONE of them is.
   //
-  //   (1) every read-back and every production verdict — all three statements,
-  //       the analysis AND the pack — runs BEFORE the first promotion write. A
-  //       single refusal returns INCOMPLETE with ZERO promotions issued.
-  //   (2) (1) cannot cover a failure OF the promotion writes themselves (the
-  //       2nd of 3 UPDATEs throwing), so ANY error mid-promotion triggers a
-  //       COMPENSATING ROLLBACK that demotes EVERY PLANNED ROW back to its
-  //       phase-1 state and then RE-READS those rows to confirm it landed.
-  //       "Every planned row", not "every row the ledger says was promoted":
-  //       a rejected promise does not prove the row was not written (a
-  //       connection reset after the UPDATE applied looks exactly like a write
-  //       that never happened). See `rollbackAtelierPromotions`.
+  // (A) PINNED TRANSACTION — the correct primitive, used whenever the process is
+  //     really talking to PostgreSQL. `atelierFinancePromotionTransaction.ts`
+  //     checks out one `pg` client, BEGINs, takes `FOR UPDATE` locks on the
+  //     pack, the three statements and the analysis, RE-RUNS the whole
+  //     production verdict over those locked rows, issues all five promotions on
+  //     that same client, reads them back on it and only then COMMITs. Any
+  //     failure ROLLBACKs; a process killed mid-transaction is rolled back by
+  //     the server when the connection drops. There is no half-promoted state to
+  //     repair.
   //
-  // INCOMPLETE means, with ONE named exception: zero statements at
-  // READY/confirmed/pass, the analysis not APPROVED, the pack not READY.
+  // (B) FALLBACK: verify everything, then promote, and compensate on error —
+  //     used when a pinned connection cannot exist: the mocked in-memory
+  //     database in tests, or any non-pg driver. `DbPromise` cannot give us a
+  //     transaction (its `transaction()` takes a fixed list of SQL strings and
+  //     never yields a connection handle, and every `run()` goes through
+  //     `pool.query()`, so BEGIN/COMMIT need not even land on the same pooled
+  //     connection), hence:
   //
-  // THE EXCEPTION — the process DYING between two promotion UPDATEs (SIGTERM on
-  // a Railway redeploy, OOM kill, `process.exit`). No catch block runs, so
-  // neither the rollback nor any result object exists, and the fixture is left
-  // half-promoted. That residue is repaired by PHASE 0 of the NEXT run
-  // (`healResidualAtelierPromotion`), which demotes a mixed fixture before
-  // rewriting it. Between the crash and that next run the fixture IS
-  // inconsistent; nothing in-process can prevent that without a real
-  // transaction, which `DbPromise` cannot give us.
+  //       (1) every read-back and every production verdict — all three
+  //           statements, the analysis AND the pack — runs BEFORE the first
+  //           promotion write. A single refusal returns INCOMPLETE with ZERO
+  //           promotions issued.
+  //       (2) (1) cannot cover a failure OF the promotion writes themselves (the
+  //           2nd of 3 UPDATEs throwing), so ANY error mid-promotion triggers a
+  //           COMPENSATING ROLLBACK that demotes EVERY PLANNED ROW back to its
+  //           phase-1 state and then RE-READS those rows to confirm it landed.
+  //           "Every planned row", not "every row the ledger says was promoted":
+  //           a rejected promise does not prove the row was not written (a
+  //           connection reset after the UPDATE applied looks exactly like a
+  //           write that never happened). See `rollbackAtelierPromotions`.
+  //
+  //     Path (B) keeps ONE named exception: the process DYING between two
+  //     promotion UPDATEs (SIGTERM on a Railway redeploy, OOM kill,
+  //     `process.exit`). No catch block runs, so neither the rollback nor any
+  //     result object exists, and the fixture is left half-promoted. That
+  //     residue is repaired by PHASE 0 of the NEXT run
+  //     (`healResidualAtelierPromotion`). Path (A) does not have this hole.
+  //
+  // PHASE 0 AND THE COMPENSATING ROLLBACK STAY IN PLACE UNDER BOTH PATHS. They
+  // are defence-in-depth, and they are what repairs residue left by an older
+  // build, by a fallback run, or by a crash between phase 1 and phase 2.
   const ledger = newPromotionLedger();
-  const expectedCounts = getAtelierExpectedValueCounts();
 
-  // -- 2a. Verify all three statements. No write happens in this loop. -------
-  const planned: Array<{ statementId: string; assignments: ColumnValue[] }> = [];
-  const refused: string[] = [];
-
-  for (const statement of ATELIER_FY2014_STATEMENTS) {
-    const statementId = makeId(organizationId, 'statement', statement.slug);
-    const verdict = await verifyStatementReadBack({
-      organizationId,
-      packId,
-      statementId,
-      statementType: statement.statementType,
-      expectedValueCount: expectedCounts[statement.statementType] ?? statement.lines.length,
-      statementColumns,
-      valueColumns,
-    });
-
-    if (!verdict.ok) {
-      refused.push(`${statement.statementType}: ${verdict.reason}`);
-      continue;
-    }
-
-    planned.push({
-      statementId,
-      assignments: [
-        ['status', 'confirmed'],
-        ['validation_status', verdict.validationStatus as string],
-        ['validation_messages', JSON.stringify(verdict.validationMessages ?? [])],
-        ['readiness_status', verdict.readinessStatus as string],
-        ['readiness_score', verdict.readinessScore as number],
-        [
-          'quality_summary',
-          isPl
-            ? 'Sprawozdanie spełnia kontrakt gotowości (zweryfikowane odczytem zwrotnym).'
-            : 'Statement passed the readiness contract (verified by read-back).',
-        ],
-        ['quality_reason_codes', JSON.stringify(verdict.reasonCodes ?? [])],
-        ['confirmed_by', createdBy],
-      ],
-    });
-  }
-
-  // ALL-OR-NOTHING. One refused statement means none is promoted — a fixture
-  // with two READY statements and one pending is neither honest nor complete.
-  if (refused.length > 0) {
-    return incomplete(
-      `only ${planned.length}/${ATELIER_FY2014_STATEMENTS.length} statements passed the READY gate, so NONE was promoted: ${refused.join(' | ')}`,
-      {
-        packId,
-        statementIds: [],
-        unpromotedStatementIds: allStatementIds,
-        analysisId,
-      },
-      ledger
-    );
-  }
-
-  // -- 2b. Verify the analysis and the pack, still before any write. ---------
-  // The analysis must exist AND point at this pack before either it or the pack
-  // may be called approved/ready.
-  const analysisVerdict = await verifyAnalysisReadBack({
+  const planContext: PromotionPlanContext = {
     organizationId,
     packId,
     analysisId,
+    statementColumns,
+    valueColumns,
+    packColumns,
     analysisColumns,
+    createdBy,
+    isPl,
+  };
+
+  // -- 2a. PINNED PATH -------------------------------------------------------
+  const pinned = await runPinnedPromotionTransaction({
+    lock: [
+      { table: 'financial_statement_packs', ids: [packId] },
+      { table: 'financial_statements', ids: allStatementIds },
+      { table: 'financial_analyses', ids: [analysisId] },
+    ],
+    plan: async (read) => {
+      const plan = await planAtelierPromotion(read, planContext);
+      if (!plan.ok) return { ok: false, reason: plan.reason };
+      return {
+        ok: true,
+        writes: plan.writes.map((write) => {
+          const update = buildPromotionUpdate(write.spec);
+          return { label: write.label, sql: update.sql, params: update.params };
+        }),
+      };
+    },
+    verify: async (read) => {
+      // Final read-back on the SAME client, before COMMIT: every one of the five
+      // rows must now claim READY. Same predicate the compensating rollback uses
+      // in the opposite direction, so the two cannot disagree.
+      const errors: string[] = [];
+      const claims = await readPromotionClaims({
+        read,
+        packId,
+        analysisId,
+        statementIds: allStatementIds,
+        onError: (message) => errors.push(message),
+      });
+      if (errors.length > 0) {
+        return { ok: false, reason: `pre-commit read-back failed: ${errors.join(' | ')}` };
+      }
+      const expected = allStatementIds.length + 2;
+      if (claims.length !== expected) {
+        return { ok: false, reason: `pre-commit read-back saw ${claims.length}/${expected} rows` };
+      }
+      const notReady = claims.filter((claim) => !claim.exists || !claim.claimsReady);
+      if (notReady.length > 0) {
+        return {
+          ok: false,
+          reason: `${notReady.length} row(s) did not read back as promoted: ${notReady
+            .map((claim) => claim.id)
+            .join(', ')}`,
+        };
+      }
+      return { ok: true };
+    },
   });
-  if (!analysisVerdict.ok) {
+
+  if (pinned.mode === 'pinned') {
+    // The ledger reports what the transaction issued. On a rollback these are
+    // writes Postgres itself undid, which is why `rowsStillClaimingReady` is
+    // still verified below rather than assumed.
+    ledger.statementPromotionsIssued = pinned.applied.filter((label) =>
+      allStatementIds.includes(label)
+    ).length;
+    ledger.analysisPromotionIssued = pinned.applied.includes(analysisId);
+    ledger.packPromotionIssued = pinned.applied.includes(packId);
+
+    if (pinned.status === 'committed') {
+      logger.info(
+        `[atelier-finance-seed] Finance golden flow COMPLETE via the PINNED transaction path (backend pid ${pinned.backendPid ?? 'unknown'})`,
+        { packId, analysisId, statementIds: allStatementIds }
+      );
+      return {
+        status: 'complete',
+        packId,
+        statementIds: allStatementIds,
+        unpromotedStatementIds: [],
+        analysisId,
+        promotion: ledger,
+      };
+    }
+
+    // ROLLED BACK. Postgres guarantees nothing survived — but this module's
+    // rule is to verify, not to assert, so read the five rows back.
+    ledger.rolledBack = true;
+    ledger.rowsStillClaimingReady = await findRowsStillClaimingReady({
+      packId,
+      analysisId,
+      statementIds: allStatementIds,
+      onError: (message) => ledger.rollbackErrors.push(message),
+    });
     return incomplete(
-      `analysis read-back failed: ${analysisVerdict.reason}`,
+      `pinned promotion transaction rolled back: ${pinned.reason}`,
       { packId, statementIds: [], unpromotedStatementIds: allStatementIds, analysisId },
       ledger
     );
   }
 
-  // The pack: exactly the three expected statement types, every one of them in
-  // the set production just judged READY, one currency across all of them.
-  // NOTE it checks membership of `verifiedStatementIds` rather than the
-  // persisted `readiness_status`: nothing has been promoted yet at this point,
-  // so the stored status is still `pending` by design.
-  const packVerdict = await verifyPackReadBack({
-    organizationId,
-    packId,
-    packColumns,
-    verifiedStatementIds: new Set(planned.map((entry) => entry.statementId)),
-  });
-  if (!packVerdict.ok) {
+  // -- 2b. FALLBACK PATH -----------------------------------------------------
+  // Reached only when no pinned connection can exist (mocked/in-memory database,
+  // non-pg driver, or a pool that refused a checkout). The reason has already
+  // been logged by the adapter — at `error` level in production.
+  logger.warn(
+    '[atelier-finance-seed] promoting WITHOUT a pinned transaction (verify-then-promote + compensating rollback)',
+    { reason: pinned.reason }
+  );
+
+  const plan = await planAtelierPromotion(dbPromiseReader, planContext);
+  if (!plan.ok) {
     return incomplete(
-      `pack read-back failed: ${packVerdict.reason}`,
+      plan.reason,
       { packId, statementIds: [], unpromotedStatementIds: allStatementIds, analysisId },
       ledger
     );
@@ -1502,53 +1585,20 @@ export async function upsertAtelierFinanceGoldenFlow(
   // -- 2c. Promote. Everything above has already agreed. --------------------
   const promoted: string[] = [];
   try {
-    for (const entry of planned) {
-      await promoteRow({
-        table: 'financial_statements',
-        id: entry.statementId,
-        columns: statementColumns,
-        assignments: entry.assignments,
-      });
-      promoted.push(entry.statementId);
-      ledger.statementPromotionsIssued = promoted.length;
+    for (const write of plan.writes) {
+      await promoteRow(write.spec);
+      if (write.kind === 'statement') {
+        promoted.push(write.label);
+        ledger.statementPromotionsIssued = promoted.length;
+      } else if (write.kind === 'analysis') {
+        ledger.analysisPromotionIssued = true;
+      } else {
+        ledger.packPromotionIssued = true;
+      }
     }
-
-    await promoteRow({
-      table: 'financial_analyses',
-      id: analysisId,
-      columns: analysisColumns,
-      assignments: [
-        ['status', 'APPROVED'],
-        ['approved_by', createdBy],
-      ],
-      literals: [['approved_at', 'CURRENT_TIMESTAMP']],
-    });
-    ledger.analysisPromotionIssued = true;
-
-    await promoteRow({
-      table: 'financial_statement_packs',
-      id: packId,
-      columns: packColumns,
-      assignments: [
-        ['pack_status', 'confirmed'],
-        ['pack_readiness_status', 'ready'],
-        ['pack_readiness_score', 100],
-        [
-          'pack_quality_summary',
-          isPl
-            ? 'Komplet sprawozdań FY2014 (RZiS, bilans, przepływy) — baza dla modelu ROI.'
-            : 'Complete FY2014 statement set (P&L, BS, CF) — the baseline the ROI model is grounded on.',
-        ],
-        ['pack_quality_reason_codes', JSON.stringify([])],
-        ['source_statement_count', planned.length],
-        ['missing_statement_types', JSON.stringify([])],
-      ],
-    });
-    ledger.packPromotionIssued = true;
   } catch (error) {
     // A promotion write threw. Everything promoted before it is committed, so
-    // undo it by hand — there is no transaction to roll back (see the note at
-    // the top of phase 2).
+    // undo it by hand — there is no transaction to roll back on this path.
     //
     // NO SHORT-CIRCUIT. The rollback runs even when the ledger recorded zero
     // promotions, and it targets EVERY PLANNED ROW rather than the recorded
@@ -1582,6 +1632,175 @@ export async function upsertAtelierFinanceGoldenFlow(
     analysisId,
     promotion: ledger,
   };
+}
+
+// ---------------------------------------------------------------------------
+// The promotion plan — one verdict, shared by both phase-2 paths
+// ---------------------------------------------------------------------------
+
+interface PromotionPlanContext {
+  organizationId: string;
+  packId: string;
+  analysisId: string;
+  statementColumns: Set<string>;
+  valueColumns: Set<string>;
+  packColumns: Set<string>;
+  analysisColumns: Set<string>;
+  createdBy: string | null;
+  isPl: boolean;
+}
+
+interface PlannedPromotionWrite {
+  kind: 'statement' | 'analysis' | 'pack';
+  /** The row id — also the label the pinned adapter reports back. */
+  label: string;
+  spec: PromotionRowSpec;
+}
+
+type PromotionPlan =
+  | { ok: false; reason: string }
+  | { ok: true; writes: PlannedPromotionWrite[] };
+
+/**
+ * Read every row back, run the PRODUCTION verdict over it, and return the five
+ * promotion writes — or the reason none of them may be issued.
+ *
+ * Pure with respect to the database: it reads through the injected `read` and
+ * writes nothing. That is what lets the pinned transaction run this exact code
+ * over rows it has locked, while the fallback path runs it over ordinary
+ * `DbPromise` reads. `verifyPackReadBack` deliberately checks membership of the
+ * just-verified statement set rather than the persisted `readiness_status`,
+ * because nothing has been promoted yet at this point.
+ */
+async function planAtelierPromotion(
+  read: SqlReader,
+  context: PromotionPlanContext
+): Promise<PromotionPlan> {
+  const expectedCounts = getAtelierExpectedValueCounts();
+  const writes: PlannedPromotionWrite[] = [];
+  const refused: string[] = [];
+  const verifiedStatementIds = new Set<string>();
+
+  for (const statement of ATELIER_FY2014_STATEMENTS) {
+    const statementId = makeId(context.organizationId, 'statement', statement.slug);
+    const verdict = await verifyStatementReadBack({
+      read,
+      organizationId: context.organizationId,
+      packId: context.packId,
+      statementId,
+      statementType: statement.statementType,
+      expectedValueCount: expectedCounts[statement.statementType] ?? statement.lines.length,
+      statementColumns: context.statementColumns,
+      valueColumns: context.valueColumns,
+    });
+
+    if (!verdict.ok) {
+      refused.push(`${statement.statementType}: ${verdict.reason}`);
+      continue;
+    }
+
+    verifiedStatementIds.add(statementId);
+    writes.push({
+      kind: 'statement',
+      label: statementId,
+      spec: {
+        table: 'financial_statements',
+        id: statementId,
+        columns: context.statementColumns,
+        assignments: [
+          ['status', 'confirmed'],
+          ['validation_status', verdict.validationStatus as string],
+          ['validation_messages', JSON.stringify(verdict.validationMessages ?? [])],
+          ['readiness_status', verdict.readinessStatus as string],
+          ['readiness_score', verdict.readinessScore as number],
+          [
+            'quality_summary',
+            context.isPl
+              ? 'Sprawozdanie spełnia kontrakt gotowości (zweryfikowane odczytem zwrotnym).'
+              : 'Statement passed the readiness contract (verified by read-back).',
+          ],
+          ['quality_reason_codes', JSON.stringify(verdict.reasonCodes ?? [])],
+          ['confirmed_by', context.createdBy],
+        ],
+      },
+    });
+  }
+
+  // ALL-OR-NOTHING. One refused statement means none is promoted — a fixture
+  // with two READY statements and one pending is neither honest nor complete.
+  if (refused.length > 0) {
+    return {
+      ok: false,
+      reason: `only ${writes.length}/${ATELIER_FY2014_STATEMENTS.length} statements passed the READY gate, so NONE was promoted: ${refused.join(' | ')}`,
+    };
+  }
+
+  // The analysis must exist AND point at this pack before either it or the pack
+  // may be called approved/ready.
+  const analysisVerdict = await verifyAnalysisReadBack({
+    read,
+    organizationId: context.organizationId,
+    packId: context.packId,
+    analysisId: context.analysisId,
+    analysisColumns: context.analysisColumns,
+  });
+  if (!analysisVerdict.ok) {
+    return { ok: false, reason: `analysis read-back failed: ${analysisVerdict.reason}` };
+  }
+
+  // The pack: exactly the three expected statement types, every one of them in
+  // the set production just judged READY, one currency across all of them.
+  const packVerdict = await verifyPackReadBack({
+    read,
+    organizationId: context.organizationId,
+    packId: context.packId,
+    packColumns: context.packColumns,
+    verifiedStatementIds,
+  });
+  if (!packVerdict.ok) {
+    return { ok: false, reason: `pack read-back failed: ${packVerdict.reason}` };
+  }
+
+  writes.push({
+    kind: 'analysis',
+    label: context.analysisId,
+    spec: {
+      table: 'financial_analyses',
+      id: context.analysisId,
+      columns: context.analysisColumns,
+      assignments: [
+        ['status', 'APPROVED'],
+        ['approved_by', context.createdBy],
+      ],
+      literals: [['approved_at', 'CURRENT_TIMESTAMP']],
+    },
+  });
+
+  writes.push({
+    kind: 'pack',
+    label: context.packId,
+    spec: {
+      table: 'financial_statement_packs',
+      id: context.packId,
+      columns: context.packColumns,
+      assignments: [
+        ['pack_status', 'confirmed'],
+        ['pack_readiness_status', 'ready'],
+        ['pack_readiness_score', 100],
+        [
+          'pack_quality_summary',
+          context.isPl
+            ? 'Komplet sprawozdań FY2014 (RZiS, bilans, przepływy) — baza dla modelu ROI.'
+            : 'Complete FY2014 statement set (P&L, BS, CF) — the baseline the ROI model is grounded on.',
+        ],
+        ['pack_quality_reason_codes', JSON.stringify([])],
+        ['source_statement_count', verifiedStatementIds.size],
+        ['missing_statement_types', JSON.stringify([])],
+      ],
+    },
+  });
+
+  return { ok: true, writes };
 }
 
 /**
@@ -1793,66 +2012,106 @@ async function findRowsStillClaimingReady(params: {
   analysisId: string;
   statementIds: string[];
   onError: (message: string) => void;
+  read?: SqlReader;
 }): Promise<string[]> {
-  const offenders: string[] = [];
+  const claims = await readPromotionClaims({
+    read: params.read ?? dbPromiseReader,
+    packId: params.packId,
+    analysisId: params.analysisId,
+    statementIds: params.statementIds,
+    onError: (message) => params.onError(`rollback verification ${message}`),
+  });
+  return claims.filter((claim) => claim.claimsReady).map((claim) => claim.id);
+}
+
+interface PromotionClaim {
+  id: string;
+  kind: 'statement' | 'analysis' | 'pack';
+  /** True when the persisted row asserts a READY-flavoured state. */
+  claimsReady: boolean;
+  /** False when the row is absent entirely. */
+  exists: boolean;
+}
+
+/**
+ * The single place that decides "does this persisted row CLAIM to be ready?".
+ *
+ * Both directions of the FIN-005 contract read it: the compensating rollback
+ * wants the answer to be NO for all five rows, the pinned transaction's
+ * pre-COMMIT read-back wants it to be YES for all five. One predicate means the
+ * two can never disagree about what READY looks like on disk.
+ */
+async function readPromotionClaims(params: {
+  read: SqlReader;
+  packId: string;
+  analysisId: string;
+  statementIds: string[];
+  onError: (message: string) => void;
+}): Promise<PromotionClaim[]> {
+  const claims: PromotionClaim[] = [];
 
   for (const statementId of params.statementIds) {
     try {
-      const rows = await DbPromise.all<Record<string, unknown>>(
+      const rows = await params.read(
         `SELECT id, status, validation_status, readiness_status
            FROM financial_statements
           WHERE id = ?`,
-        [statementId],
-        { fallback: false }
+        [statementId]
       );
-      for (const row of rows) {
-        if (
-          String(row.status ?? '') === 'confirmed' ||
-          String(row.validation_status ?? '') === 'pass' ||
-          String(row.readiness_status ?? '') === 'ready'
-        ) {
-          offenders.push(statementId);
-        }
-      }
+      claims.push({
+        id: statementId,
+        kind: 'statement',
+        exists: rows.length > 0,
+        claimsReady: rows.some(
+          (row) =>
+            String(row.status ?? '') === 'confirmed' ||
+            String(row.validation_status ?? '') === 'pass' ||
+            String(row.readiness_status ?? '') === 'ready'
+        ),
+      });
     } catch (error) {
-      params.onError(`rollback verification of ${statementId} failed: ${(error as Error).message}`);
+      params.onError(`of ${statementId} failed: ${(error as Error).message}`);
     }
   }
 
   try {
-    const rows = await DbPromise.all<Record<string, unknown>>(
-      `SELECT id, status FROM financial_analyses WHERE id = ?`,
-      [params.analysisId],
-      { fallback: false }
-    );
-    if (rows.some((row) => String(row.status ?? '') === 'APPROVED')) offenders.push(params.analysisId);
+    const rows = await params.read(`SELECT id, status FROM financial_analyses WHERE id = ?`, [
+      params.analysisId,
+    ]);
+    claims.push({
+      id: params.analysisId,
+      kind: 'analysis',
+      exists: rows.length > 0,
+      claimsReady: rows.some((row) => String(row.status ?? '') === 'APPROVED'),
+    });
   } catch (error) {
-    params.onError(`rollback verification of the analysis failed: ${(error as Error).message}`);
+    params.onError(`of the analysis failed: ${(error as Error).message}`);
   }
 
   try {
-    const rows = await DbPromise.all<Record<string, unknown>>(
+    const rows = await params.read(
       `SELECT id, pack_status, pack_readiness_status FROM financial_statement_packs WHERE id = ?`,
-      [params.packId],
-      { fallback: false }
+      [params.packId]
     );
-    if (
-      rows.some(
+    claims.push({
+      id: params.packId,
+      kind: 'pack',
+      exists: rows.length > 0,
+      claimsReady: rows.some(
         (row) =>
           String(row.pack_status ?? '') === 'confirmed' ||
           String(row.pack_readiness_status ?? '') === 'ready'
-      )
-    ) {
-      offenders.push(params.packId);
-    }
+      ),
+    });
   } catch (error) {
-    params.onError(`rollback verification of the pack failed: ${(error as Error).message}`);
+    params.onError(`of the pack failed: ${(error as Error).message}`);
   }
 
-  return offenders;
+  return claims;
 }
 
 async function verifyAnalysisReadBack(params: {
+  read: SqlReader;
   organizationId: string;
   packId: string;
   analysisId: string;
@@ -1860,12 +2119,11 @@ async function verifyAnalysisReadBack(params: {
 }): Promise<{ ok: boolean; reason?: string }> {
   let rows: Array<Record<string, unknown>>;
   try {
-    rows = await DbPromise.all<Record<string, unknown>>(
+    rows = await params.read(
       `SELECT id, organization_id, source_statement_pack_id, currency
          FROM financial_analyses
         WHERE id = ?`,
-      [params.analysisId],
-      { fallback: false }
+      [params.analysisId]
     );
   } catch (error) {
     return { ok: false, reason: `query failed: ${(error as Error).message}` };
@@ -1890,6 +2148,7 @@ async function verifyAnalysisReadBack(params: {
 }
 
 async function verifyPackReadBack(params: {
+  read: SqlReader;
   organizationId: string;
   packId: string;
   packColumns: Set<string>;
@@ -1906,19 +2165,17 @@ async function verifyPackReadBack(params: {
   let packRows: Array<Record<string, unknown>>;
   let statementRows: Array<Record<string, unknown>>;
   try {
-    packRows = await DbPromise.all<Record<string, unknown>>(
+    packRows = await params.read(
       `SELECT id, organization_id, entity_name, currency, period_label
          FROM financial_statement_packs
         WHERE id = ?`,
-      [params.packId],
-      { fallback: false }
+      [params.packId]
     );
-    statementRows = await DbPromise.all<Record<string, unknown>>(
+    statementRows = await params.read(
       `SELECT id, statement_type, currency
          FROM financial_statements
         WHERE statement_pack_id = ?`,
-      [params.packId],
-      { fallback: false }
+      [params.packId]
     );
   } catch (error) {
     return { ok: false, reason: `query failed: ${(error as Error).message}` };
