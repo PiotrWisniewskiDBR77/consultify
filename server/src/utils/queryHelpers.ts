@@ -5,7 +5,11 @@
  * Eliminates callback hell and provides consistent error handling.
  */
 
+import { Client as PgClient } from 'pg';
+
+import databaseConfig from '../config/DatabaseConfig.js';
 import { getDatabase } from '../database/Database.js';
+import { adaptQuery } from '../database/PostgresDatabase.js';
 import logger from './Logger.js';
 import { getCorrelationId } from './RequestStore.js';
 
@@ -174,6 +178,86 @@ export async function transaction<T>(callback: (db: Database) => Promise<T>): Pr
       });
     });
   });
+}
+
+/**
+ * A single query method bound to ONE pinned PostgreSQL connection, for use inside
+ * {@link withPgTransaction}. SQL is written in the same `?`-placeholder house style
+ * used everywhere else in this codebase (queryAll/queryOne/queryRun) and is adapted
+ * to Postgres `$1,$2,…` positional params internally — callers should NOT pass `$n`
+ * placeholders themselves.
+ */
+export interface PgTransactionClient {
+  query<T = unknown>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount: number }>;
+}
+
+/**
+ * Run `fn` inside a single, pinned PostgreSQL transaction (BEGIN … COMMIT/ROLLBACK
+ * on ONE dedicated `pg` connection).
+ *
+ * WHY THIS EXISTS — do not use `transaction()` above for Postgres work (it drives
+ * SQLite's `db.serialize()`/`db.run('BEGIN TRANSACTION')` API and this codebase is
+ * PostgreSQL-only per server/src/database/Database.ts), and do not assume
+ * queryAll/queryOne/queryRun can be composed into a transaction either: those go
+ * through PostgresDatabase's shared connection POOL (`getPool()`/`getReadPool()`),
+ * grabbing a *different* physical connection on every call, so a `BEGIN` issued via
+ * `queryRun` and a later `UPDATE`/`COMMIT` via `queryRun` are not guaranteed to land
+ * on the same session. This is a documented, previously-hit-in-production footgun in
+ * this codebase — see the comments at services/notificationService.ts (~line 711,
+ * "DLACZEGO NIE TRANSAKCJA") and services/tablePlatform/RecordsService.ts (~line
+ * 931, batch-insert atomicity incident on migration Z19: `recordsMigrated=N` was
+ * reported but 0 rows actually landed, because COMMIT silently ran on a connection
+ * that never saw the INSERT). `ExtensionService.installExtension` (~line 111)
+ * attempts `(db as any).connect()` for the same pinned-client need, but
+ * `PostgresDatabase` does not actually implement a `connect()` method (only
+ * `get`/`all`/`run`/`exec`/`query`/`serialize`/`close` — see
+ * server/src/database/PostgresDatabase.ts:1060-1303) — that call throws at runtime.
+ * It is dead/broken code, not a working precedent to copy.
+ *
+ * This helper opens its OWN short-lived `pg.Client` — a single dedicated connection
+ * that is NOT pulled from PostgresDatabase's shared pool — issues `BEGIN`, hands the
+ * caller a `.query()` bound to that one connection (see {@link PgTransactionClient}),
+ * then `COMMIT`s on success or `ROLLBACK`s if `fn` throws, and always closes the
+ * connection in a `finally`. Reuses the same `databaseConfig.postgres` connection
+ * config and the same `?` → `$n` / boolean-column `adaptQuery()` adapter that
+ * PostgresDatabase itself uses, so SQL written here matches the rest of the codebase.
+ */
+export async function withPgTransaction<T>(
+  fn: (client: PgTransactionClient) => Promise<T>
+): Promise<T> {
+  const client = new PgClient(databaseConfig.postgres as ConstructorParameters<typeof PgClient>[0]);
+  await client.connect();
+
+  const wrapped: PgTransactionClient = {
+    query: async <R = unknown>(sql: string, params: unknown[] = []) => {
+      const result = await client.query(adaptQuery(sql), params as unknown[]);
+      return { rows: (result.rows as R[]) || [], rowCount: result.rowCount ?? 0 };
+    },
+  };
+
+  try {
+    // Best-effort parity with the shared pool's per-connection setup
+    // (PostgresDatabase.ts sets this on every new pool connection). Not fatal if the
+    // `v8` schema doesn't exist in a given environment — `public` is always present.
+    await client.query('SET search_path TO public, v8').catch(() => undefined);
+
+    await wrapped.query('BEGIN');
+    const result = await fn(wrapped);
+    await wrapped.query('COMMIT');
+    return result;
+  } catch (err) {
+    try {
+      await wrapped.query('ROLLBACK');
+    } catch (rollbackErr) {
+      logger.error('[QueryHelper] withPgTransaction: ROLLBACK failed:', rollbackErr);
+      // Original error is more actionable to the caller than the rollback failure.
+    }
+    throw err;
+  } finally {
+    await client.end().catch((closeErr) => {
+      logger.error('[QueryHelper] withPgTransaction: failed to close client:', closeErr);
+    });
+  }
 }
 
 /**
