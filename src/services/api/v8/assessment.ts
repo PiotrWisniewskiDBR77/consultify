@@ -215,6 +215,92 @@ export interface V8AssessmentDefinitionRecord {
   publishedAt?: string | null;
 }
 
+// --- ASM-005/006/007: evidence/scoring, quality review, immutable output ---
+
+export interface V8AssessmentEvidence {
+  id: string;
+  organizationId: string;
+  assessmentId: string;
+  axisId: string;
+  areaId: string;
+  evidenceType: 'note' | 'link' | 'document' | 'reference';
+  title: string;
+  description: string | null;
+  url: string | null;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface V8AssessmentEvidencePayload {
+  axisId: string;
+  areaId: string;
+  evidenceType: 'note' | 'link' | 'document' | 'reference';
+  title: string;
+  description?: string | null;
+  url?: string | null;
+}
+
+export interface V8AssessmentAxisScoring {
+  axisId: string;
+  axisName: string;
+  areaCount: number;
+  answeredAreas: number;
+  avgAchievedLevel: number;
+  avgTargetLevel: number;
+  gap: number;
+  evidenceCount: number;
+  hasEvidence: boolean;
+}
+
+export interface V8AssessmentDerivedScoring {
+  completionPercent: number;
+  overallAvgAchievedLevel: number;
+  evidenceCoverage: number;
+  axesMissingEvidence: string[];
+  axes: V8AssessmentAxisScoring[];
+}
+
+export type V8AssessmentReviewAction = 'accept' | 'return';
+
+export interface V8AssessmentReviewPayload {
+  action: V8AssessmentReviewAction;
+  rationale: string;
+}
+
+export interface V8AssessmentReviewRecord {
+  id: string;
+  organizationId: string;
+  assessmentId: string;
+  action: V8AssessmentReviewAction;
+  actorId: string;
+  actorRole: string | null;
+  rationale: string;
+  previousStatus: string | null;
+  newStatus: string | null;
+  createdAt: string;
+}
+
+export interface V8AssessmentAcceptedSnapshot {
+  id: string;
+  organizationId: string;
+  assessmentId: string;
+  reviewId: string;
+  snapshot: unknown;
+  provenance: unknown;
+  acceptedBy: string;
+  acceptedAt: string;
+  isCurrent: boolean;
+}
+
+export interface V8AssessmentAcceptedReport {
+  assessmentId: string;
+  snapshot: unknown;
+  provenance: unknown;
+  acceptedBy: string;
+  acceptedAt: string;
+  isCurrent: boolean;
+}
+
 export const V8AssessmentApi = {
   listAssessments(params?: {
     projectId?: string;
@@ -439,5 +525,37 @@ export const V8AssessmentApi = {
     return v8Delete<{ assessmentId: string; assignmentId: string; deleted: boolean }>(
       `/assessment/${assessmentId}/assignments/${assignmentId}`
     );
+  },
+
+  // --- ASM-005/006/007: evidence/scoring, quality review, immutable output ---
+
+  listEvidence(assessmentId: string) {
+    return v8Get<{ evidence: V8AssessmentEvidence[]; scoring: V8AssessmentDerivedScoring | null }>(
+      `/assessment/${assessmentId}/evidence`
+    );
+  },
+
+  addEvidence(assessmentId: string, payload: V8AssessmentEvidencePayload) {
+    return v8Post<{ evidence: V8AssessmentEvidence }>(
+      `/assessment/${assessmentId}/evidence`,
+      payload
+    );
+  },
+
+  submitReview(assessmentId: string, payload: V8AssessmentReviewPayload) {
+    return v8Post<{ review: V8AssessmentReviewRecord; snapshot?: V8AssessmentAcceptedSnapshot }>(
+      `/assessment/${assessmentId}/review`,
+      payload
+    );
+  },
+
+  listReviewHistory(assessmentId: string) {
+    return v8Get<{ reviews: V8AssessmentReviewRecord[] }>(
+      `/assessment/${assessmentId}/review-history`
+    );
+  },
+
+  getAcceptedReport(assessmentId: string) {
+    return v8Get<V8AssessmentAcceptedReport>(`/assessment/${assessmentId}/report`);
   },
 };
