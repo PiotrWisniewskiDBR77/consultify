@@ -295,8 +295,18 @@ export function parseArgs(argv: string[]): Args {
   return args;
 }
 
+/**
+ * Absolute path to `<repo>/server/exports`, whatever the caller's cwd is.
+ *
+ * `path.resolve(process.cwd(), 'server/exports')` doubled the segment when the
+ * script was run from inside `server/`, producing `server/server/exports/` —
+ * outside the `server/exports/` ignore rule, so twelve generated reports and
+ * manifests were committed by accident. Anchor on this module's own location
+ * instead: `server/scripts/<file>` -> up two -> `server/`.
+ */
 function exportsDir(): string {
-  const dir = path.resolve(process.cwd(), 'server/exports');
+  const serverRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const dir = path.join(serverRoot, 'exports');
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 }
