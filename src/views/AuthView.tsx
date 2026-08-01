@@ -9,6 +9,7 @@ import {
   updateAnnaLpCtaContext,
 } from '@/services/annaLpCtaContext';
 import { Api, API_URL } from '@/services/api';
+import { adoptDemoSession } from '@/services/demoSessionAdoption';
 import { postPublicAnnaFunnelEvent } from '@/services/publicAnnaAnalytics';
 
 import { AuthStep, SessionMode, UserRole } from '../types';
@@ -293,6 +294,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
   };
 
   // Quick access: dev/staging PINs; production consultify.ai / www → only 1111 (Anna demo).
+  //
+  // Deliberately NOT adopting a demo session here. Neither `Api.demoLogin()` nor
+  // `Api.login()` returns a `demoSession` payload, so the only way to adopt would
+  // be an extra round trip on a path whose whole point is an instant PIN entry.
+  // The PIN accounts resolve against the shared curated org, which is what this
+  // path has always shown. See `adoptDemoSession` for the entries that do adopt.
   const handleQuickAccess = async (code: string) => {
     if (!quickAccessEnabled) return;
     const credentials = resolveQuickAccessCredentials(code, window.location.hostname);
@@ -469,13 +476,17 @@ export const AuthView: React.FC<AuthViewProps> = ({
           updateAnnaLpCtaContext({ submit_attempts: nextAttempts });
         }
 
-        const { user } = await Api.registerDemo({
+        const { user, demoSession } = await Api.registerDemo({
           email: formData.email,
           password: formData.password,
           firstName: formData.firstName || undefined,
           acceptedLegalDocs: ['TOS', 'PRIVACY'],
           legalConsentAt: new Date().toISOString(),
         });
+
+        // Before `onAuthSuccess` — that callback navigates, and the first app
+        // requests derive `X-Demo-Session-Org` from the store.
+        adoptDemoSession(demoSession);
 
         if (ctx && ctx.cta_type === 'demo') {
           void postPublicAnnaFunnelEvent('anna_lp.cta.submit_success', {
@@ -489,7 +500,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
           updateAnnaLpCtaContext({ submit_success_at_ms: Date.now() });
           clearAnnaLpCtaContext();
         }
-        onAuthSuccess({ ...user, hasWorkspace: true } as any);
+        // `isDemo: true` must survive to `handleAuthSuccess`: when the flag is
+        // absent it calls `setDemoMode(false)` + `resetDemoState()` and wipes the
+        // adoption above. `Api.registerDemo` already stamps it on the user, and
+        // it is restated here so the guarantee does not depend on that.
+        onAuthSuccess({ ...user, hasWorkspace: true, isDemo: true } as any);
       } catch (err: any) {
         setError(mapPublicAuthError(err, 'demoSignup'));
 
@@ -612,7 +627,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
       setIsDemoLoading(true);
       try {
         const user = await Api.login(submittedEmail, submittedPassword);
-        await Api.enterDemo();
+        const entered = await Api.enterDemo();
+        // Same ordering rule as the sign-up branch: adopt, then hand over to the
+        // caller that navigates.
+        adoptDemoSession(entered?.demoSession);
         onAuthSuccess({ ...user, hasWorkspace: true, isDemo: true } as any);
       } catch (err: any) {
         setError(mapPublicAuthError(err, 'login'));

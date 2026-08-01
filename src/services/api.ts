@@ -25,6 +25,10 @@ import {
   POLA_TEKSTOWE_INICJATYWY,
 } from '../utils/decodeHtmlEntities';
 import { OrganizationContextWorkerApi } from './api/organizationContextWorker.api';
+// Type-only on purpose: `demoSessionAdoption` pulls in the store, and the store
+// pulls in this module. Importing the type keeps the shape shared with zero
+// runtime edge, so no import cycle is created.
+import type { DemoSessionPayload } from './demoSessionAdoption';
 import { SettingsApi } from './api/settings.api';
 import { V8AssessmentApi } from './api/v8/assessment';
 import { V8MyWorkApi } from './api/v8/my-work';
@@ -1389,14 +1393,9 @@ export const Api = {
      * Isolated demo tenant provisioned by `register-demo`. Its `organizationId`
      * MUST be stored as `demoSessionOrgId`, because `getHeaders()` turns it into
      * `X-Demo-Session-Org`. Without it the backend serves the shared curated org.
+     * Callers adopt it with `adoptDemoSession()` from `./demoSessionAdoption`.
      */
-    demoSession?: {
-      id: string;
-      organizationId: string;
-      locale: 'en' | 'pl';
-      expiresAt: string;
-      anchorDate: string;
-    } | null;
+    demoSession?: DemoSessionPayload | null;
   }> => {
     let res: Response;
     try {
@@ -1431,13 +1430,7 @@ export const Api = {
     success: boolean;
     isDemoMode: boolean;
     /** Same contract as `registerDemo` — see the note there. */
-    demoSession?: {
-      id: string;
-      organizationId: string;
-      locale: 'en' | 'pl';
-      expiresAt: string;
-      anchorDate: string;
-    } | null;
+    demoSession?: DemoSessionPayload | null;
   }> => {
     const result = await Api.toggleDemoMode(true);
     if (result.success && result.isDemoMode) {

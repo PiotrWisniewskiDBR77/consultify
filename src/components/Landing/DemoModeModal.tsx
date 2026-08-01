@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
-import { useAppStore } from '../../store/useAppStore';
+import { adoptDemoSession } from '../../services/demoSessionAdoption';
 
 interface DemoModeModalProps {
   isOpen: boolean;
@@ -101,18 +101,6 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
     onClose();
   };
 
-  /**
-   * Pin the isolated demo tenant into the store before navigating. `getHeaders()`
-   * reads it from there and sends `X-Demo-Session-Org`; if it is missing, the very
-   * first requests of the session resolve to the shared curated org instead of the
-   * user's own copy.
-   */
-  const adoptDemoSession = (organizationId: string | null) => {
-    const store = useAppStore.getState();
-    store.setDemoMode(true);
-    store.setDemoSessionOrgId(organizationId);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -138,12 +126,12 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
             acceptedLegalDocs: ['TOS', 'PRIVACY'],
             legalConsentAt: new Date().toISOString(),
           });
-          adoptDemoSession(demoSession?.organizationId ?? null);
+          adoptDemoSession(demoSession);
           onSuccess({ ...user, hasWorkspace: true, isDemo: true }, 'demo');
         } else {
           const user = await Api.login(form.email, form.password);
           const entered = await Api.enterDemo();
-          adoptDemoSession(entered?.demoSession?.organizationId ?? null);
+          adoptDemoSession(entered?.demoSession);
           onSuccess({ ...user, hasWorkspace: true, isDemo: true }, 'demo');
         }
       } else {
