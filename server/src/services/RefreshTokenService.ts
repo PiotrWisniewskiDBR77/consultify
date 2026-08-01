@@ -27,6 +27,9 @@ import { config } from '../config/Config.js';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase, RunResult } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
+// Safe to import statically: demoPrincipalGuard imports THIS module dynamically,
+// inside a function, precisely so the two do not form a load-time cycle.
+import { assertDemoPrincipalMayReceiveCredentials } from './demo/demoPrincipalGuard.js';
 
 const getForcedSuperAdminEmails = (): Set<string> => {
   const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || '');
@@ -350,6 +353,17 @@ class RefreshTokenService {
               `[RefreshToken] Grace period: Found valid token in family, returning current tokens`
             );
 
+            // OPS-DEMO-002: the grace-period branch mints an access token before
+            // any of the normal validity checks below, so it needs its own gate —
+            // otherwise a lapsed demo principal refreshes straight through it.
+            const graceDemoCheck = await assertDemoPrincipalMayReceiveCredentials(
+              latestToken.user_id
+            );
+            if (!graceDemoCheck.allowed) {
+              logger.info('[RefreshToken] Grace period refused: demo session ended');
+              return null;
+            }
+
             // Generate new access token only (don't rotate refresh token again)
             const jti = uuidv4();
             const isDemoGrace = await isDemoOrganizationId(this.db, latestToken.organization_id!);
@@ -394,6 +408,18 @@ class RefreshTokenService {
       storedToken.role
     );
     if (forced.role) storedToken.role = forced.role;
+
+    // OPS-DEMO-002: refuse before ANY mint or rotation. Checked directly against
+    // the demo session rather than via `user_status`, because retirement is lazy:
+    // a refresh arriving after the TTU but before the first authenticated request
+    // would otherwise still see `active` and rotate a fresh 7-day family.
+    const demoCredentialCheck = await assertDemoPrincipalMayReceiveCredentials(
+      storedToken.user_id
+    );
+    if (!demoCredentialCheck.allowed) {
+      logger.info('[RefreshToken] Refresh refused: demo session ended');
+      return null;
+    }
 
     // Check if user is still active
     if (storedToken.user_status !== 'active') {

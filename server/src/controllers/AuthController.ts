@@ -9,7 +9,10 @@ import { Request, Response } from 'express';
 import type { IDatabase } from '../database/IDatabase.js';
 import { ORG_TYPES } from '../services/access/AccessTypes.js';
 import mfaService from '../services/MFAService.js';
-import { DEMO_EXPIRED_USER_STATUS } from '../services/demo/demoPrincipalGuard.js';
+import {
+  assertDemoPrincipalMayReceiveCredentials,
+  DEMO_EXPIRED_USER_STATUS,
+} from '../services/demo/demoPrincipalGuard.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { recordFailedLogin } from '../services/securityAlerts.js';
 import { setAuthCookies } from '../utils/cookieAuth.js';
@@ -210,10 +213,27 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // OPS-DEMO-002: a public demo principal whose session lapsed is retired by
-    // `retireExpiredDemoPrincipal` (users.status -> demo_expired) and must not be
-    // able to mint a fresh access token by logging in again. Scoped to that one
-    // status so no other account's login behaviour changes.
+    // OPS-DEMO-002: a public demo principal may only be issued credentials while
+    // its demo session is live.
+    //
+    // This asks the session table DIRECTLY rather than trusting
+    // `users.status === demo_expired`. Retirement is lazy — it happens on the
+    // first authenticated request after the TTL — so a prospect who simply closes
+    // the tab and logs in again tomorrow reaches this line with a session that
+    // expired hours ago and a status that still reads `active`. Gating on the
+    // status flag would mint them a fresh token in exactly that window.
+    // `assertDemoPrincipalMayReceiveCredentials` also performs the retirement it
+    // finds outstanding, so the account and its token family are closed here.
+    const demoCredentialCheck = await assertDemoPrincipalMayReceiveCredentials(user.id);
+    if (!demoCredentialCheck.allowed) {
+      res.status(403).json({
+        error: 'This demo session has ended. Start a new demo to continue.',
+        code: 'DEMO_SESSION_EXPIRED',
+      });
+      return;
+    }
+
+    // Belt and braces for an account already retired by an earlier request.
     if (String(user.status || '').trim().toLowerCase() === DEMO_EXPIRED_USER_STATUS) {
       res.status(403).json({
         error: 'This demo session has ended. Start a new demo to continue.',
