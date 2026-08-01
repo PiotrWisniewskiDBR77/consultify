@@ -183,6 +183,14 @@ vi.mock('../DeckBuilderMelsView', () => ({
       >
         edit
       </button>
+      {/* Ctrl+Z, in effect: puts the deck back to the title it was loaded with. */}
+      <button
+        type="button"
+        data-testid="user-edit-undo"
+        onClick={() => props.onTitleChange('Steering committee deck')}
+      >
+        undo
+      </button>
       {props.aiEntrySlot}
       {props.bannerSlot}
       {props.overlays}
@@ -444,5 +452,69 @@ describe('DeckBuilder — a version restore must not write (MAT-006B / P2)', () 
     await new Promise((resolve) => setTimeout(resolve, 1500));
     expect(autosavePuts()).toHaveLength(0);
     expect(serverVersion).toBe(7);
+  });
+
+  /**
+   * ★ ONE AUTOSAVE OWNER (MAT-006B / P1) — the lost update, end to end through
+   * the real builder.
+   *
+   * The deck loads at version 7 (so the deleted second writer, whose private
+   * token started at 1, would have 409-ed here by construction). The user edits,
+   * the PUT is held open, and the user undoes back to the loaded state INSIDE the
+   * round trip. Before the fix the effect compared the undone deck with a
+   * baseline that had not advanced yet, decided "nothing changed", armed nothing
+   * — and the server was left holding the edit the user had undone, with the
+   * screen showing the original and no unsaved-changes warning.
+   */
+  it('does not lose an undo made while a save is in flight', async () => {
+    let releaseFirstPut: (() => void) | null = null;
+    const originalFetch = fetchMock.getMockImplementation() as unknown as (
+      url: string,
+      init?: RequestInit
+    ) => Promise<Response>;
+    let putCount = 0;
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (String(url).endsWith('/autosave') && init?.method === 'PUT' && ++putCount === 1) {
+        await new Promise<void>((resolve) => {
+          releaseFirstPut = resolve;
+        });
+      }
+      return originalFetch(url, init);
+    });
+
+    const user = await renderBuilderAndLoad();
+
+    await user.click(screen.getByTestId('user-edit'));
+    await waitFor(() => expect(autosavePuts()).toHaveLength(1), { timeout: 3000 });
+    expect(JSON.parse(String((autosavePuts()[0] as any[])[1].body)).title).toBe(
+      'Edited by the user'
+    );
+    // The single token the builder owns, seeded from the canonical load — not 1.
+    expect(
+      ((autosavePuts()[0] as any[])[1].headers as Record<string, string>)['X-Deck-Version']
+    ).toBe('7');
+
+    // Undo while the write is still open.
+    await user.click(screen.getByTestId('user-edit-undo'));
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    // One writer: nothing raced the open request.
+    expect(autosavePuts()).toHaveLength(1);
+
+    releaseFirstPut!();
+
+    // The queued undo is written after the in-flight save completes, so the
+    // server ends up holding what the user is looking at.
+    await waitFor(() => expect(autosavePuts()).toHaveLength(2), { timeout: 3000 });
+    expect(JSON.parse(String((autosavePuts()[1] as any[])[1].body)).title).toBe(
+      'Steering committee deck'
+    );
+    // ...carrying the version the first write established — no fabricated 409.
+    expect(
+      ((autosavePuts()[1] as any[])[1].headers as Record<string, string>)['X-Deck-Version']
+    ).toBe('8');
+
+    // And it settles: no third write, no ping-pong.
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    expect(autosavePuts()).toHaveLength(2);
   });
 });

@@ -221,13 +221,20 @@ describe('useVersionHistory — server persistence', () => {
   });
 
   /**
-   * MAT-006B / P2 — this hook runs a SECOND writer next to DeckBuilder's
-   * debounced autosave: a 30 s interval (`autoSave`) guarded by
-   * `lastSavedDeckRef`. Baselining only the debounced loop would still let this
-   * one write the restored content back half a minute later — same version bump,
-   * same empty history row. It must be baselined by the restore too.
+   * MAT-006B / P1 — ★ THIS HOOK IS NOT A WRITER ANY MORE.
+   *
+   * It used to run a SECOND autosave next to DeckBuilder's debounced one: a 30 s
+   * `setInterval` PUT to the same `/autosave` endpoint, with its own baseline
+   * and its own version token that started at 1 and was never seeded from the
+   * canonical load. On any deck with `version > 1` that PUT 409-ed by
+   * construction. The loop is deleted; the assertion is now absolute — no deck
+   * state, edited or restored, may produce a write from here.
+   *
+   * The companion guarantee (an EDIT still reaches the server) moved to the one
+   * remaining writer and is covered by `useDeckAutosave.test.ts` and
+   * `DeckBuilder.restoreNoWrite.test.tsx`.
    */
-  it('does not re-write a restored deck on its own 30s autosave interval', async () => {
+  it('never issues an autosave PUT — not for a restored deck, not for an edited one', async () => {
     const restoredDeck = makeDeck({
       title: 'Restored Deck',
       cards: [{ card_id: 'r1', blocks: [] }],
@@ -271,9 +278,6 @@ describe('useVersionHistory — server persistence', () => {
     });
     expect(restored).not.toBeNull();
 
-    // Fake timers are installed BEFORE the rerender on purpose: the interval is
-    // re-created whenever `deck` changes, so the one that matters here is the
-    // fake-timed one below.
     vi.useFakeTimers();
     try {
       rerender({ deck: (restored as unknown as VersionRestoreResult).deck });
@@ -282,14 +286,164 @@ describe('useVersionHistory — server persistence', () => {
       });
       expect(autosavePuts()).toHaveLength(0);
 
-      // Control: a real edit after the restore still reaches this loop.
+      // An UNSAVED edit sits there for two full former intervals and still
+      // produces nothing: the second writer is gone, not merely baselined.
       rerender({ deck: makeDeck({ title: 'Edited after restore' }) });
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(31_000);
+        await vi.advanceTimersByTimeAsync(61_000);
       });
-      expect(autosavePuts()).toHaveLength(1);
+      expect(autosavePuts()).toHaveLength(0);
+      // ...and it is correctly reported as unsaved, so `beforeunload` still warns.
+      expect(result.current.hasUnsavedChanges).toBe(true);
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  /**
+   * The version token lives in ONE place (DeckBuilder's `serverVersionRef`, read
+   * through `getExpectedVersion`). This hook used to keep a private one starting
+   * at 1, which it also used as the restore fallback — so on a deck at version 7
+   * a restore could go out claiming version 1 and be rejected. With no token
+   * supplied the hook must refuse to guess rather than fabricate a conflict.
+   */
+  it('sends the caller-owned expected version on restore and never a fabricated one', async () => {
+    fetchMock.mockImplementation((url: string, opts?: RequestInit) => {
+      if (url.endsWith('/versions') && (!opts || opts.method === 'GET')) {
+        return Promise.resolve(jsonResponse({ success: true, data: SERVER_VERSIONS }));
+      }
+      if (url.endsWith('/versions/ver-1/restore') && opts?.method === 'POST') {
+        return Promise.resolve(jsonResponse({ success: true, version: 8 }));
+      }
+      if (url === `/api/presentations/decks/${DECK_ID}` && (!opts || opts.method === 'GET')) {
+        return Promise.resolve(
+          jsonResponse({
+            success: true,
+            data: { version: 8, deck_json: JSON.stringify(makeDeck()) },
+          })
+        );
+      }
+      return Promise.resolve(jsonResponse({}, false, 404));
+    });
+
+    // A deck the user has edited many times — exactly the case the private
+    // token got wrong.
+    const { result } = renderHook(() => useVersionHistory(makeDeck(), DECK_ID, () => 7));
+    await waitFor(() => expect(result.current.versions.length).toBe(2));
+
+    await act(async () => {
+      await result.current.restoreVersion('ver-1');
+    });
+
+    const restoreCall = fetchMock.mock.calls.find((call: any[]) =>
+      String(call[0]).endsWith('/versions/ver-1/restore')
+    );
+    expect(restoreCall).toBeTruthy();
+    expect(JSON.parse(String((restoreCall![1] as RequestInit).body))).toEqual({
+      expectedVersion: 7,
+    });
+  });
+
+  it('refuses a server restore when no expected version is available instead of guessing', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ success: true, data: SERVER_VERSIONS }));
+    const { result } = renderHook(() => useVersionHistory(makeDeck(), DECK_ID));
+    await waitFor(() => expect(result.current.versions.length).toBe(2));
+
+    let restored: VersionRestoreResult | null = { deck: makeDeck(), source: 'server' };
+    await act(async () => {
+      restored = await result.current.restoreVersion('ver-1');
+    });
+
+    expect(restored).toBeNull();
+    expect(fetchMock.mock.calls.some((call: any[]) => String(call[0]).includes('/restore'))).toBe(
+      false
+    );
+  });
+
+  /**
+   * `hasUnsavedChanges` arms the `beforeunload` warning, so a rejected write must
+   * never clear it. The old second loop advanced its baseline on any non-409
+   * response — a 500 showed "Saved" and let the user close the tab.
+   */
+  it('keeps changes marked unsaved when the writer reports a failed save', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ success: true, data: [] }));
+    const { result, rerender } = renderHook(
+      ({ deck }: { deck: Deck }) => useVersionHistory(deck, DECK_ID, () => 4),
+      { initialProps: { deck: makeDeck() } }
+    );
+    await waitFor(() => expect(result.current.historyStatus).toBe('available'));
+
+    // The loader baselined the opened deck: nothing unsaved.
+    act(() => result.current.markSaved(makeDeck()));
+    expect(result.current.hasUnsavedChanges).toBe(false);
+
+    const edited = makeDeck({ title: 'Edited' });
+    rerender({ deck: edited });
+    expect(result.current.hasUnsavedChanges).toBe(true);
+
+    // The one writer tries and fails.
+    act(() => result.current.noteSaveStarted());
+    expect(result.current.isSaving).toBe(true);
+    act(() => result.current.noteSaveFailed());
+
+    expect(result.current.isSaving).toBe(false);
+    expect(result.current.hasUnsavedChanges).toBe(true);
+    expect(result.current.lastSavedAt).toBeNull();
+
+    // Control: the same edit, accepted, does clear it and stamps the save.
+    act(() => result.current.noteSaveStarted());
+    act(() => result.current.notePersistedSave(edited));
+    expect(result.current.hasUnsavedChanges).toBe(false);
+    expect(result.current.lastSavedAt).toBeTypeOf('number');
+  });
+
+  /**
+   * The other half of the lost update, as the user experiences it: undo INSIDE a
+   * round trip makes the deck byte-identical to the last saved baseline while
+   * the server is about to hold the OTHER state. A plain string compare calls
+   * that "saved" — the badge flips to Saved and `beforeunload` goes quiet, over
+   * a write the user has not been told about.
+   */
+  it('does not call an undo made during an in-flight save "saved"', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ success: true, data: [] }));
+    const baseline = makeDeck({ title: 'baseline' });
+    const { result, rerender } = renderHook(
+      ({ deck }: { deck: Deck }) => useVersionHistory(deck, DECK_ID, () => 4),
+      { initialProps: { deck: baseline } }
+    );
+    await waitFor(() => expect(result.current.historyStatus).toBe('available'));
+
+    act(() => result.current.markSaved(baseline));
+    rerender({ deck: makeDeck({ title: 'edit A' }) });
+    expect(result.current.hasUnsavedChanges).toBe(true);
+
+    // The write of "edit A" leaves the browser, then the user undoes.
+    act(() => result.current.noteSaveStarted());
+    rerender({ deck: makeDeck({ title: 'baseline' }) });
+
+    expect(result.current.hasUnsavedChanges).toBe(true);
+  });
+
+  /**
+   * The writer reports asynchronously. If the user edited again while the PUT
+   * was in flight, the accepted payload is NOT what is on screen — reporting it
+   * as "saved" would silence `beforeunload` over live, unsaved work.
+   */
+  it('stays unsaved when the accepted payload is not the deck on screen', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ success: true, data: [] }));
+    const inFlight = makeDeck({ title: 'A' });
+    const { result, rerender } = renderHook(
+      ({ deck }: { deck: Deck }) => useVersionHistory(deck, DECK_ID, () => 4),
+      { initialProps: { deck: inFlight } }
+    );
+    await waitFor(() => expect(result.current.historyStatus).toBe('available'));
+
+    act(() => result.current.noteSaveStarted());
+    // User keeps typing while A is in flight.
+    rerender({ deck: makeDeck({ title: 'B' }) });
+    // A comes back accepted.
+    act(() => result.current.notePersistedSave(inFlight));
+
+    expect(result.current.hasUnsavedChanges).toBe(true);
   });
 });

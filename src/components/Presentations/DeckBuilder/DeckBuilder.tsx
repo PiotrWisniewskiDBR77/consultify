@@ -459,6 +459,9 @@ export const DeckBuilder: React.FC = () => {
     restoreVersion,
     saveManualCheckpoint,
     markSaved,
+    noteSaveStarted,
+    notePersistedSave,
+    noteSaveFailed,
   } = useVersionHistory(deck, deckId, getExpectedDeckVersion, syncDeckServerVersion);
 
   const { isCardOutdated, refreshCard, refreshAllCards, refreshBlock } = useDataRefresh(
@@ -630,10 +633,19 @@ export const DeckBuilder: React.FC = () => {
     []
   );
 
-  // MAT-006B — debounced autosave with a persisted-state baseline, so opening a
-  // deck (or reading it back after a restore) does not write. Declared BEFORE
-  // the loader effect so `markPersisted` is in scope there and so the autosave
-  // effect runs first on mount, while `hasLoadedInitialRef` is still false.
+  // ★ ONE AUTOSAVE OWNER (MAT-006B / P1). `useDeckAutosave` is the ONLY writer
+  // and the only user of `serverVersionRef` — the single compare-and-swap token,
+  // seeded here from the canonical load. `useVersionHistory` used to run a
+  // second, independent 30 s PUT to the same endpoint with its OWN baseline and
+  // its OWN token (hardcoded to 1, never seeded), which 409-ed by construction
+  // on every deck with `version > 1`; that loop is deleted. What it legitimately
+  // provided — the "Saving…/Saved" state, `lastSavedAt`, and re-reading the
+  // durable version timeline after a write — is preserved by reporting the
+  // writer's start/success/failure back into it.
+  //
+  // Declared BEFORE the loader effect so `markPersisted` is in scope there and
+  // so the autosave effect runs first on mount, while `hasLoadedInitialRef` is
+  // still false.
   const { markPersisted: markAutosaveBaseline } = useDeckAutosave({
     deckId,
     deck,
@@ -642,15 +654,15 @@ export const DeckBuilder: React.FC = () => {
     paused: Boolean(conflict),
     onConflict: handleAutosaveConflict,
     fetchLatestDeck,
+    onSaveStart: noteSaveStarted,
+    onSaveSuccess: notePersistedSave,
+    onSaveError: noteSaveFailed,
   });
 
-  // ★ THERE ARE TWO SAVE LOOPS, AND BOTH MUST BE BASELINED.
-  // `useDeckAutosave` is the 800 ms debounced writer; `useVersionHistory` runs an
-  // independent 30 s interval writer. Baselining only the first left the
-  // "no write on read-only reopen" guarantee half-built — opening a deck stayed
-  // quiet for 800 ms and then wrote anyway 30 s later, from the other loop.
-  // Every place that puts SERVER truth into state must call this, not either
-  // hook's own marker.
+  // Every place that puts SERVER truth into state (loader, restore read-back,
+  // agent-edit accept, "Reload latest") must call THIS, not either hook's own
+  // marker: the writer must not write that state back, and the version-history
+  // UI must not report it as a save that happened.
   const markPersisted = useCallback(
     (persisted: Deck | null) => {
       markAutosaveBaseline(persisted);

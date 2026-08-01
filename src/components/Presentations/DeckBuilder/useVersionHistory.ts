@@ -1,7 +1,27 @@
 /**
- * useVersionHistory — auto-save and version snapshot management for decks.
- * Auto-saves every 30s, creates named snapshots every 5 min.
- * Provides undo to any previous version with diff highlighting.
+ * useVersionHistory — version snapshot management for decks. Creates named
+ * in-session checkpoints every 5 min and provides undo to any previous version
+ * with diff highlighting.
+ *
+ * ★ THIS HOOK IS NOT A WRITER (MAT-006B / P1)
+ * -------------------------------------------
+ * It used to run a second, independent autosave: a 30 s `setInterval` PUT to
+ * `/autosave` — the SAME endpoint as `useDeckAutosave` — with its own baseline
+ * (`lastSavedDeckRef`) and its own version token (`serverVersionRef`, hardcoded
+ * to start at 1 and never seeded from the canonical load). Consequences:
+ *
+ *   - on any deck whose server `version` was > 1 (i.e. every deck that has ever
+ *     been edited) that PUT sent `X-Deck-Version: 1` and 409-ed BY CONSTRUCTION,
+ *     then dispatched a `deck-version-conflict` window event for which no
+ *     listener exists anywhere in `src/` — a dead writer manufacturing false
+ *     conflicts and, on the way, an audit row per attempt;
+ *   - two writers meant two baselines and two in-flight windows for the same
+ *     document, so "did this deck already save?" had no single answer.
+ *
+ * The loop is deleted. `useDeckAutosave` is the ONE writer and the ONE owner of
+ * the compare-and-swap token; it calls `noteSaveStarted` / `notePersistedSave` /
+ * `noteSaveFailed` here so the timeline, `lastSavedAt`, `isSaving` and
+ * `hasUnsavedChanges` keep being driven by real, accepted writes.
  *
  * Server-side persistence (Module 12 audit gap #3)
  * ------------------------------------------------
@@ -70,9 +90,15 @@ interface ServerVersionRow {
   created_at?: string;
 }
 
-const AUTO_SAVE_INTERVAL_MS = 30_000;
 const SNAPSHOT_INTERVAL_MS = 300_000;
 const MAX_VERSIONS = 50;
+/**
+ * A successful autosave writes a `presentation_deck_versions` row, so the
+ * timeline needs re-reading — but the debounced writer can fire every second of
+ * typing, and this GET is pure overhead when the history panel is closed. The
+ * deleted 30 s loop refreshed at most twice a minute; keep that ceiling.
+ */
+const TIMELINE_REFRESH_THROTTLE_MS = 30_000;
 
 function authHeaders(): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -125,10 +151,19 @@ export function useVersionHistory(
     hasUnsavedChanges: false,
   });
 
+  /** The deck state the SERVER is known to hold (loaded, restored, or saved). */
   const lastSavedDeckRef = useRef<string>('');
-  const baselineDeckIdRef = useRef<string | null>(null);
-  const autoSaveTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  /**
+   * The deck currently on screen, serialized. Needed because a save reports back
+   * asynchronously: when the user edited again while the write was in flight,
+   * the accepted payload is NOT the current deck and `hasUnsavedChanges` must
+   * stay true (otherwise `beforeunload` goes quiet over unsaved work).
+   */
+  const currentDeckRef = useRef<string>('');
+  /** True between "a write left the browser" and its verdict. */
+  const savePendingRef = useRef<boolean>(false);
   const snapshotTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const lastTimelineRefreshRef = useRef<number>(0);
 
   /** Merge persisted server snapshots into the timeline, de-duped by id. */
   const mergeServerVersions = useCallback((rows: ServerVersionRow[]) => {
@@ -216,58 +251,59 @@ export function useVersionHistory(
     [deck]
   );
 
-  const serverVersionRef = useRef<number>(1);
+  /** A write left the browser (reported by the ONE writer, `useDeckAutosave`). */
+  const noteSaveStarted = useCallback(() => {
+    savePendingRef.current = true;
+    setState((prev) =>
+      prev.isSaving ? prev : { ...prev, isSaving: true, hasUnsavedChanges: true }
+    );
+  }, []);
 
-  const autoSave = useCallback(async () => {
-    if (!deck) return;
+  /**
+   * A write came back rejected (409, non-2xx or network). ★ NOTHING may move:
+   * not `lastSavedDeckRef`, not `lastSavedAt`, not `hasUnsavedChanges`. An older
+   * version of this file advanced all three on a 500 or a 403 — it showed
+   * "Saved just now" and disarmed the `beforeunload` warning, so the user closed
+   * the tab believing the work was safe.
+   */
+  const noteSaveFailed = useCallback(() => {
+    savePendingRef.current = false;
+    setState((prev) => ({
+      ...prev,
+      isSaving: false,
+      hasUnsavedChanges: currentDeckRef.current !== lastSavedDeckRef.current,
+    }));
+  }, []);
 
-    const serialized = JSON.stringify(deck);
-    if (serialized === lastSavedDeckRef.current) return;
-
-    setState((prev) => ({ ...prev, isSaving: true }));
-
-    try {
-      const res = await fetch(`/api/presentations/decks/${deck.deck_id}/autosave`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-          'X-Deck-Version': String(serverVersionRef.current),
-        },
-        body: serialized,
-      });
-
-      if (res.status === 409) {
-        setState((prev) => ({ ...prev, isSaving: false }));
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(
-            new CustomEvent('deck-version-conflict', {
-              detail: { deckId: deck.deck_id },
-            })
-          );
-        }
-        return;
-      }
-
-      const data = await res.json().catch(() => ({}));
-      if (data?.version) {
-        serverVersionRef.current = data.version;
-      }
-
+  /**
+   * The server ACCEPTED exactly this deck state. This is the only path that both
+   * moves the persisted baseline and claims a save in the UI.
+   */
+  const notePersistedSave = useCallback(
+    (persisted: Deck | null) => {
+      if (!persisted) return;
+      const serialized = JSON.stringify(persisted);
       lastSavedDeckRef.current = serialized;
+      savePendingRef.current = false;
       setState((prev) => ({
         ...prev,
         isSaving: false,
         lastSavedAt: Date.now(),
-        hasUnsavedChanges: false,
+        // The accepted payload is not necessarily what is on screen: the user
+        // may have edited again while the PUT was in flight. Only the deck that
+        // actually matches the server counts as saved.
+        hasUnsavedChanges: currentDeckRef.current !== serialized,
       }));
-      // Each autosave writes a server-side snapshot row; refresh the
-      // persisted timeline so the panel reflects durable history.
-      void fetchServerVersions();
-    } catch {
-      setState((prev) => ({ ...prev, isSaving: false }));
-    }
-  }, [deck, fetchServerVersions]);
+      // Each accepted autosave writes a `presentation_deck_versions` row, so the
+      // durable timeline moved — but re-read it at most twice a minute.
+      const now = Date.now();
+      if (now - lastTimelineRefreshRef.current >= TIMELINE_REFRESH_THROTTLE_MS) {
+        lastTimelineRefreshRef.current = now;
+        void fetchServerVersions();
+      }
+    },
+    [fetchServerVersions]
+  );
 
   const restoreVersion = useCallback(
     async (versionId: string): Promise<VersionRestoreResult | null> => {
@@ -288,15 +324,21 @@ export function useVersionHistory(
       // Persisted server snapshot — restore server-side, then re-fetch the
       // canonical deck so the editor reflects exactly what was written.
       if (!resolvedDeckId) return null;
+      // ★ ONE TOKEN. The expected version is owned by `DeckBuilder` (seeded from
+      // the canonical load, advanced by the single writer) and read through
+      // `getExpectedVersion`. This hook keeps NO token of its own: the previous
+      // fallback ref started at 1 and turned every restore on an edited deck
+      // into a fabricated conflict. With no token available there is nothing
+      // honest to compare and swap against, so we do not guess and do not write.
+      const expectedVersion = getExpectedVersion?.();
+      if (typeof expectedVersion !== 'number' || !Number.isFinite(expectedVersion)) return null;
       try {
         const restoreRes = await fetch(
           `/api/presentations/decks/${resolvedDeckId}/versions/${versionId}/restore`,
           {
             method: 'POST',
             headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              expectedVersion: getExpectedVersion?.() ?? serverVersionRef.current,
-            }),
+            body: JSON.stringify({ expectedVersion }),
           }
         );
         if (!restoreRes.ok) return null;
@@ -304,7 +346,6 @@ export function useVersionHistory(
         let serverVersion: number | undefined;
         if (restoreBody?.version) {
           serverVersion = restoreBody.version;
-          serverVersionRef.current = restoreBody.version;
           onServerVersion?.(restoreBody.version);
         }
 
@@ -329,20 +370,19 @@ export function useVersionHistory(
         const canonicalVersion = row?.version;
         if (typeof canonicalVersion === 'number' && Number.isFinite(canonicalVersion)) {
           serverVersion = canonicalVersion;
-          serverVersionRef.current = canonicalVersion;
           onServerVersion?.(canonicalVersion);
         }
         const restored = parseRestoredDeck(row?.deck_json, resolvedDeckId);
         // Refresh the timeline — restore also writes a new snapshot row.
+        lastTimelineRefreshRef.current = Date.now();
         void fetchServerVersions();
         if (!restored) return null;
-        // MAT-006B — this deck is the server's own state, freshly read back. Both
-        // save loops must treat it as persisted: this hook's 30 s interval
-        // (`autoSave`, guarded by `lastSavedDeckRef`) and — via the returned
-        // `source: 'server'` — DeckBuilder's debounced autosave baseline. Neither
-        // may write the restored content straight back: that would bump the
-        // version the restore just synchronized, append a version-history row
-        // recording no change, and reorder the Materials list by `updated_at`.
+        // MAT-006B — this deck is the server's own state, freshly read back, so
+        // it is already persisted: baseline it here and — via the returned
+        // `source: 'server'` — in the writer too. Writing the restored content
+        // straight back would bump the version the restore just synchronized,
+        // append a version-history row recording no change, and reorder the
+        // Materials list by `updated_at`.
         lastSavedDeckRef.current = JSON.stringify(restored);
         setState((prev) => ({
           ...prev,
@@ -358,19 +398,15 @@ export function useVersionHistory(
   );
 
   /**
-   * MAT-006B — declare a deck state as already persisted on the SERVER, so this
-   * hook's 30 s interval does not write it back.
-   *
-   * This hook runs a SECOND, independent save loop next to DeckBuilder's
-   * debounced `useDeckAutosave`. Baselining only the debounced one left the
-   * "no write on read-only reopen" guarantee half-built: opening a deck issued
-   * no PUT for 800 ms, then one arrived 30 s later from here — same version
-   * bump, same empty history row, same `updated_at` reorder, just late enough
-   * that nobody connected it to opening the deck.
+   * MAT-006B — declare a deck state as already persisted on the SERVER, WITHOUT
+   * claiming that a save just happened. Used by every site that puts server
+   * truth into state: the loader, the restore read-back, the agent-edit accept,
+   * "Reload latest".
    *
    * Deliberately does NOT touch `lastSavedAt`: on open there is nothing to
    * report as "just saved", and writing it would make the builder claim a save
-   * that never happened. `hasUnsavedChanges` is already false at that point.
+   * that never happened. For an accepted write of our own use
+   * {@link notePersistedSave} instead.
    */
   const markSaved = useCallback((persisted: Deck | null) => {
     if (!persisted) return;
@@ -385,52 +421,22 @@ export function useVersionHistory(
     [createSnapshot]
   );
 
-  /**
-   * Acknowledge a successful persistence performed by the builder's debounced
-   * autosave lane. Keeping this in the history hook makes the save indicator
-   * and the persisted payload share one baseline instead of drifting apart.
-   */
-  const markSaved = useCallback((savedDeck: Deck) => {
-    lastSavedDeckRef.current = JSON.stringify(savedDeck);
-    baselineDeckIdRef.current = savedDeck.deck_id;
-    setState((prev) => ({
-      ...prev,
-      isSaving: false,
-      lastSavedAt: Date.now(),
-      hasUnsavedChanges: false,
-    }));
-  }, []);
-
-  // Track unsaved changes
+  // Track unsaved changes. Also records the on-screen deck so a save that
+  // resolves after further edits cannot report them as saved.
   useEffect(() => {
     if (!deck) return;
     const serialized = JSON.stringify(deck);
-    const identity = resolvedDeckId ?? deck.deck_id;
-
-    // The first canonical payload for a deck is the persistence baseline, not
-    // a user edit. Previously it was compared with an empty string, which made
-    // every fresh open/reload show "Saving…" and immediately write the exact
-    // same deck back to the server.
-    if (baselineDeckIdRef.current !== identity) {
-      baselineDeckIdRef.current = identity;
-      lastSavedDeckRef.current = serialized;
-      setState((prev) => ({ ...prev, hasUnsavedChanges: false, isSaving: false }));
-      return;
-    }
-
-    const hasUnsavedChanges = serialized !== lastSavedDeckRef.current;
+    currentDeckRef.current = serialized;
+    // ★ `savePendingRef` is why this is not just a string compare. Undo (or a
+    // drag back) DURING an in-flight write makes the deck byte-identical to the
+    // baseline again while the server is about to hold the OTHER state — calling
+    // that "saved" would silence the `beforeunload` warning over work the writer
+    // has not confirmed yet.
+    const unsaved = serialized !== lastSavedDeckRef.current || savePendingRef.current;
     setState((prev) =>
-      prev.hasUnsavedChanges === hasUnsavedChanges
-        ? prev
-        : { ...prev, hasUnsavedChanges }
+      prev.hasUnsavedChanges === unsaved ? prev : { ...prev, hasUnsavedChanges: unsaved }
     );
-  }, [deck, resolvedDeckId]);
-
-  // Auto-save timer
-  useEffect(() => {
-    autoSaveTimerRef.current = setInterval(autoSave, AUTO_SAVE_INTERVAL_MS);
-    return () => clearInterval(autoSaveTimerRef.current);
-  }, [autoSave]);
+  }, [deck]);
 
   // Snapshot timer (every 5 min)
   useEffect(() => {
@@ -457,7 +463,11 @@ export function useVersionHistory(
     restoreVersion,
     saveManualCheckpoint,
     markSaved,
-    autoSave,
+    // Reported BY the single writer (`useDeckAutosave`) — this hook no longer
+    // writes anything itself.
+    noteSaveStarted,
+    notePersistedSave,
+    noteSaveFailed,
     refreshVersions: fetchServerVersions,
   };
 }
