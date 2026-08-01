@@ -634,4 +634,147 @@ describe('EXE-002-004 — execution management spine golden flow against a real 
     );
     expect(leaked.rows.length).toBe(0);
   });
+
+  // -------------------------------------------------------------------------
+  // 4) Idempotency coverage for the other three entities — the milestone
+  //    test above (§2) only exercised the sequential-retry path for one of
+  //    the four tables the 20260801_exe002004_idempotency_keys.sql migration
+  //    touches. These close that gap for resources and tasks (sequential
+  //    retry), and add the one case §2 didn't cover for ANY entity: a
+  //    genuine concurrent race on RAID, which is the actual scenario the
+  //    unique-violation catch/re-select fallback in createRaidItem exists
+  //    for — two requests both passing the pre-insert SELECT before either
+  //    has committed its INSERT.
+  // -------------------------------------------------------------------------
+
+  itDB(
+    'idempotent retry: repeating the same resource POST with the same idempotencyKey does not duplicate',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const idempotencyKey = `idem-res-${suffix()}`;
+      const resourceRole = `Idempotent Role ${suffix()}`;
+
+      const firstRes = await request(app)
+        .post(`/api/initiatives/${h.initiativeAId}/resources`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ name: 'Idempotent Resource', role: resourceRole, idempotencyKey });
+
+      expect(firstRes.status).toBe(201);
+      const firstResourceId = (firstRes.body?.resource?.id ?? firstRes.body?.id) as string;
+      expect(firstResourceId).toBeTruthy();
+
+      const secondRes = await request(app)
+        .post(`/api/initiatives/${h.initiativeAId}/resources`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ name: 'Idempotent Resource', role: resourceRole, idempotencyKey });
+
+      expect(secondRes.status).toBe(200);
+      expect(secondRes.body?.idempotent).toBe(true);
+      expect((secondRes.body?.resource?.id ?? secondRes.body?.id) as string).toBe(
+        firstResourceId
+      );
+
+      const rows = await h.client.query(
+        'SELECT id FROM initiative_resources WHERE initiative_id = $1 AND idempotency_key = $2',
+        [h.initiativeAId, idempotencyKey]
+      );
+      expect(rows.rows.length).toBe(1);
+    }
+  );
+
+  itDB(
+    'idempotent retry: repeating the same task POST with the same idempotencyKey does not duplicate',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const idempotencyKey = `idem-task-${suffix()}`;
+      const taskTitle = `Idempotent Task ${suffix()}`;
+
+      const firstRes = await request(app)
+        .post('/api/tasks')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          title: taskTitle,
+          initiativeId: h.initiativeAId,
+          projectId: h.projectAId,
+          idempotencyKey,
+        });
+
+      expect(firstRes.status).toBe(201);
+      const firstTaskBody = firstRes.body?.task ?? firstRes.body;
+      const firstTaskId = firstTaskBody?.id as string;
+      expect(firstTaskId).toBeTruthy();
+
+      const secondRes = await request(app)
+        .post('/api/tasks')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          title: taskTitle,
+          initiativeId: h.initiativeAId,
+          projectId: h.projectAId,
+          idempotencyKey,
+        });
+
+      expect(secondRes.status).toBe(200);
+      const secondTaskBody = secondRes.body?.task ?? secondRes.body;
+      expect(secondTaskBody?.idempotent).toBe(true);
+      expect(secondTaskBody?.id).toBe(firstTaskId);
+
+      const rows = await h.client.query(
+        'SELECT id FROM tasks WHERE initiative_id = $1 AND idempotency_key = $2',
+        [h.initiativeAId, idempotencyKey]
+      );
+      expect(rows.rows.length).toBe(1);
+    }
+  );
+
+  itDB(
+    'concurrent race: two simultaneous RAID POSTs with the same idempotencyKey create exactly one row',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const idempotencyKey = `idem-race-${suffix()}`;
+      const raidTitle = `Race RAID ${suffix()}`;
+      const body = { type: 'risk', title: raidTitle, severity: 'medium', idempotencyKey };
+
+      // Fire both requests concurrently (no await between them) so their
+      // pre-insert dedup SELECTs are very likely to both run before either
+      // INSERT commits — the scenario the `err.code === '23505'` catch +
+      // re-select fallback in createRaidItem exists for. This is inherently
+      // racy in timing (not guaranteed to hit the exact interleaving every
+      // run), but the row-count + same-id assertions below hold regardless
+      // of which of the two branches (pre-insert SELECT hit vs. unique-
+      // violation catch) actually resolved each request.
+      const [resA, resB] = await Promise.all([
+        request(app)
+          .post(`/api/initiatives/${h.initiativeAId}/raid`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send(body),
+        request(app)
+          .post(`/api/initiatives/${h.initiativeAId}/raid`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send(body),
+      ]);
+
+      // Both requests must succeed (either the creator's 201 or the
+      // idempotent-replay's 200) — neither may fail outright.
+      expect([200, 201]).toContain(resA.status);
+      expect([200, 201]).toContain(resB.status);
+      expect(resA.body?.id).toBeTruthy();
+      expect(resB.body?.id).toBeTruthy();
+      // Whichever request "won", both must resolve to the SAME server row.
+      expect(resA.body.id).toBe(resB.body.id);
+      // At least one of the two must have gone through the create path
+      // (201) — this is not a test that both requests were rejected.
+      expect([resA.status, resB.status]).toContain(201);
+
+      const rows = await h.client.query(
+        'SELECT id FROM raid_items WHERE initiative_id = $1 AND idempotency_key = $2',
+        [h.initiativeAId, idempotencyKey]
+      );
+      expect(rows.rows.length).toBe(1);
+      expect(rows.rows[0].id).toBe(resA.body.id);
+    }
+  );
 });
