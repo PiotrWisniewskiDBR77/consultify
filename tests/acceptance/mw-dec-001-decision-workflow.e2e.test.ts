@@ -756,34 +756,28 @@ describe('MW-DEC-001 — Canonical Decision Workflow (real Postgres, real router
     expect(row.rows[0].decided_by).toBeNull();
   });
 
-  // FINDING (not a false pass — documented honestly, see final report): the
+  // FIXED (server/src/controllers/DecisionController.ts, commit 5cf7c03245):
+  // decide() used to synthesize a default rationale ('Approved'/'Rejected')
+  // whenever the caller omitted the field entirely, which made the
   // business-rule RATIONALE_REQUIRED path in decisionOutcomeService's
-  // validateDecideTransition (`requiresRationale(targetStatus) &&
-  // rationaleText.trim() === ''`) is UNREACHABLE through this HTTP endpoint.
-  // DecisionController.decide (server/src/controllers/DecisionController.ts
-  // ~1233-1240) synthesizes a default rationale ('Approved'/'Rejected')
-  // whenever the caller omits the field entirely:
-  //   const rationaleText = rationaleValue || (normalizedStatus === 'approved'
-  //     ? 'Approved' : normalizedStatus === 'rejected' ? 'Rejected' : '');
-  // So an omitted (not blank-string) rationale on an APPROVED/REJECTED
-  // decide never trips RATIONALE_REQUIRED — it silently succeeds with a
-  // synthetic rationale. This test proves and documents that actual
-  // behavior rather than hiding it.
-  it('case 13b (documented finding, not a spec violation of this test): omitted rationale on APPROVED silently succeeds with a synthetic default, unlike the blank-string case above', async () => {
+  // validateDecideTransition unreachable for the omitted-field case (only
+  // the explicit-blank-string case above was ever actually rejected). The
+  // fabricated fallback was removed — rationaleText is now exactly what the
+  // caller supplied, so an omitted rationale on APPROVED/REJECTED is now
+  // indistinguishable from a blank one and correctly rejected.
+  it('case 13b: omitted (not just blank-string) rationale on APPROVED is also rejected with 400, no synthetic default', async () => {
     const res = await request(app)
       .patch(`/api/decisions/${DEC_RATIONALE}/decide`)
       .set('Authorization', `Bearer ${tokenDmA}`)
       .send({ status: 'APPROVED' }); // rationale field omitted entirely
 
-    // Actual, current behavior — NOT the RATIONALE_REQUIRED 400 one might
-    // expect from decisionOutcomeService's contract. See comment above.
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(400);
     const row = await client.query(
       `SELECT status, decision_rationale FROM decisions WHERE id=$1`,
       [DEC_RATIONALE]
     );
-    expect(row.rows[0].status).toBe('approved');
-    expect(row.rows[0].decision_rationale).toBe('Approved'); // synthetic default, not caller-provided
+    expect(row.rows[0].status).toBe('pending'); // unchanged — no synthetic approval
+    expect(row.rows[0].decision_rationale).toBeNull();
   });
 
   // ═══════════════════════════ CASE 14 ═══════════════════════════
