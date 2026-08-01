@@ -20889,6 +20889,114 @@
       "actions": "Akcje",
       "empty": "Brak prezentacji."
     },
+    "recoveryCard": {
+      "tabLabel": "Karta naprawcza",
+      "title": "Karta naprawcza",
+      "empty": "Brak karty naprawczej dla tego przypadku odchylenia.",
+      "noOpenCase": "Brak otwartego przypadku odchylenia dla tego KPI — karta naprawcza wymaga aktywnego odchylenia.",
+      "createCta": "Utwórz kartę naprawczą",
+      "loading": "Wczytywanie karty naprawczej…",
+      "errorGeneric": "Nie udało się wczytać karty naprawczej.",
+      "retry": "Spróbuj ponownie",
+      "forbidden": "Brak uprawnień do tej karty naprawczej.",
+      "versionConflict": "Karta została zmieniona przez kogoś innego w międzyczasie. Wczytano najnowszy stan — Twój szkic pozostał nietknięty.",
+      "hypothesis": "Hipoteza",
+      "hypothesisPlaceholder": "Co Twoim zdaniem powoduje to odchylenie?",
+      "confirmedCause": "Potwierdzona przyczyna",
+      "confirmedCausePlaceholder": "Co potwierdziło dochodzenie?",
+      "impactDescription": "Opis wpływu",
+      "priorityLabel": "Priorytet",
+      "priority": {
+        "LOW": "Niski",
+        "MEDIUM": "Średni",
+        "HIGH": "Wysoki",
+        "CRITICAL": "Krytyczny"
+      },
+      "expectedImpact": "Oczekiwany wpływ",
+      "dependencies": "Zależności",
+      "dependenciesPlaceholder": "Dodaj zależność i naciśnij Enter",
+      "risks": "Ryzyka",
+      "risksPlaceholder": "Dodaj ryzyko i naciśnij Enter",
+      "expectedRecoveryDate": "Oczekiwana data naprawy",
+      "effectivenessCriteria": "Kryteria skuteczności",
+      "effectivenessCriteriaPlaceholder": "Po czym poznamy, że naprawa zadziałała?",
+      "effectivenessStatus": {
+        "NOT_YET_DUE": "Jeszcze nie czas na ocenę",
+        "PENDING_ASSESSMENT": "Oczekuje na ocenę",
+        "ASSESSED": "Oceniono"
+      },
+      "effectivenessRating": {
+        "EFFECTIVE": "Skuteczna",
+        "PARTIALLY_EFFECTIVE": "Częściowo skuteczna",
+        "INEFFECTIVE": "Nieskuteczna"
+      },
+      "lifecycleStatus": {
+        "DRAFT": "Szkic",
+        "ACTIVE": "Aktywna",
+        "UNDER_REVIEW": "W przeglądzie",
+        "CLOSED": "Zamknięta"
+      },
+      "actionsTitle": "Działania",
+      "actionType": {
+        "IMMEDIATE": "Natychmiastowe",
+        "DURABLE": "Trwałe"
+      },
+      "noActions": "Brak działań.",
+      "addAction": "Dodaj działanie",
+      "actionTitlePlaceholder": "Tytuł działania",
+      "actionDescriptionPlaceholder": "Opis działania (opcjonalnie)",
+      "actionOwner": "Właściciel",
+      "taskLink": {
+        "none": "Niepowiązane z zadaniem",
+        "pending": "Łączenie z zadaniem…",
+        "linked": "Powiązano z zadaniem",
+        "failed": "Nie udało się połączyć z zadaniem",
+        "connect": "Połącz z zadaniem",
+        "retry": "Spróbuj ponownie"
+      },
+      "checkpointsTitle": "Punkty kontrolne",
+      "noCheckpoints": "Brak punktów kontrolnych.",
+      "addCheckpoint": "Dodaj punkt kontrolny",
+      "checkpointDate": "Data punktu kontrolnego",
+      "checkpointNotes": "Notatki",
+      "checkpointStatus": {
+        "PENDING": "Oczekuje",
+        "MET": "Osiągnięto",
+        "MISSED": "Nieosiągnięto",
+        "CANCELLED": "Anulowano"
+      },
+      "markMet": "Osiągnięto",
+      "markMissed": "Nieosiągnięto",
+      "linkMeasurement": "Powiąż pomiar",
+      "close": "Zamknij kartę",
+      "evidenceText": "Opis dowodu",
+      "evidenceRef": "Link do dowodu (zadanie, raport, załącznik)",
+      "effectivenessRatingRequired": "Wybierz ocenę skuteczności przed zamknięciem karty.",
+      "closeBlocked": {
+        "STILL_BREACHING": "KPI wciąż przekracza próg odchylenia — nie można jeszcze zamknąć karty.",
+        "STALE_MEASUREMENT": "Najnowszy pomiar jest zbyt stary, aby ocenić skuteczność naprawy.",
+        "MISSING_EVIDENCE": "Uzupełnij dowód przed zamknięciem karty.",
+        "VERSION_CONFLICT": "Karta zmieniła się w międzyczasie. Wczytano najnowszy stan — spróbuj zamknąć ponownie."
+      },
+      "continue": "Kontynuuj",
+      "escalate": "Eskaluj",
+      "escalateTo": "Eskaluj do",
+      "notePlaceholder": "Notatka (opcjonalnie)",
+      "history": "Historia",
+      "historyCreated": "Utworzono",
+      "historyUpdated": "Zaktualizowano",
+      "historyClosed": "Zamknięto",
+      "decision": {
+        "CONTINUE": "Kontynuacja",
+        "ESCALATE": "Eskalacja",
+        "CLOSE": "Zamknięcie"
+      },
+      "saveFailed": "Zapis nie powiódł się.",
+      "saved": "Zapisano zmiany.",
+      "actionAdded": "Dodano działanie.",
+      "checkpointAdded": "Dodano punkt kontrolny.",
+      "closed": "Karta naprawcza została zamknięta."
+    },
     "reconciliation": {
       "col": {
         "status": "Status"

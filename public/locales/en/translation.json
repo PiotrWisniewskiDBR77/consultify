@@ -20315,6 +20315,114 @@
       "actions": "Actions",
       "empty": "No presentations yet."
     },
+    "recoveryCard": {
+      "tabLabel": "Recovery Card",
+      "title": "Recovery Card",
+      "empty": "No recovery card for this deviation case.",
+      "noOpenCase": "No open deviation case for this KPI — a recovery card needs an active deviation.",
+      "createCta": "Create recovery card",
+      "loading": "Loading recovery card…",
+      "errorGeneric": "Could not load the recovery card.",
+      "retry": "Retry",
+      "forbidden": "You don't have permission to view this recovery card.",
+      "versionConflict": "This card was changed by someone else in the meantime. Loaded the latest state — your draft was kept.",
+      "hypothesis": "Hypothesis",
+      "hypothesisPlaceholder": "What do you think is causing this deviation?",
+      "confirmedCause": "Confirmed cause",
+      "confirmedCausePlaceholder": "What did the investigation confirm?",
+      "impactDescription": "Impact description",
+      "priorityLabel": "Priority",
+      "priority": {
+        "LOW": "Low",
+        "MEDIUM": "Medium",
+        "HIGH": "High",
+        "CRITICAL": "Critical"
+      },
+      "expectedImpact": "Expected impact",
+      "dependencies": "Dependencies",
+      "dependenciesPlaceholder": "Add a dependency and press Enter",
+      "risks": "Risks",
+      "risksPlaceholder": "Add a risk and press Enter",
+      "expectedRecoveryDate": "Expected recovery date",
+      "effectivenessCriteria": "Effectiveness criteria",
+      "effectivenessCriteriaPlaceholder": "How will we know the recovery worked?",
+      "effectivenessStatus": {
+        "NOT_YET_DUE": "Not yet due for assessment",
+        "PENDING_ASSESSMENT": "Pending assessment",
+        "ASSESSED": "Assessed"
+      },
+      "effectivenessRating": {
+        "EFFECTIVE": "Effective",
+        "PARTIALLY_EFFECTIVE": "Partially effective",
+        "INEFFECTIVE": "Ineffective"
+      },
+      "lifecycleStatus": {
+        "DRAFT": "Draft",
+        "ACTIVE": "Active",
+        "UNDER_REVIEW": "Under review",
+        "CLOSED": "Closed"
+      },
+      "actionsTitle": "Actions",
+      "actionType": {
+        "IMMEDIATE": "Immediate",
+        "DURABLE": "Durable"
+      },
+      "noActions": "No actions yet.",
+      "addAction": "Add action",
+      "actionTitlePlaceholder": "Action title",
+      "actionDescriptionPlaceholder": "Action description (optional)",
+      "actionOwner": "Owner",
+      "taskLink": {
+        "none": "Not linked to a task",
+        "pending": "Linking to task…",
+        "linked": "Linked to task",
+        "failed": "Failed to link task",
+        "connect": "Link to task",
+        "retry": "Retry"
+      },
+      "checkpointsTitle": "Checkpoints",
+      "noCheckpoints": "No checkpoints yet.",
+      "addCheckpoint": "Add checkpoint",
+      "checkpointDate": "Checkpoint date",
+      "checkpointNotes": "Notes",
+      "checkpointStatus": {
+        "PENDING": "Pending",
+        "MET": "Met",
+        "MISSED": "Missed",
+        "CANCELLED": "Cancelled"
+      },
+      "markMet": "Met",
+      "markMissed": "Missed",
+      "linkMeasurement": "Link measurement",
+      "close": "Close card",
+      "evidenceText": "Evidence description",
+      "evidenceRef": "Evidence link (task, report, attachment)",
+      "effectivenessRatingRequired": "Select an effectiveness rating before closing the card.",
+      "closeBlocked": {
+        "STILL_BREACHING": "The KPI is still breaching its threshold — the card can't be closed yet.",
+        "STALE_MEASUREMENT": "The latest measurement is too old to assess effectiveness.",
+        "MISSING_EVIDENCE": "Add evidence before closing the card.",
+        "VERSION_CONFLICT": "The card changed in the meantime. Loaded the latest state — try closing again."
+      },
+      "continue": "Continue",
+      "escalate": "Escalate",
+      "escalateTo": "Escalate to",
+      "notePlaceholder": "Note (optional)",
+      "history": "History",
+      "historyCreated": "Created",
+      "historyUpdated": "Updated",
+      "historyClosed": "Closed",
+      "decision": {
+        "CONTINUE": "Continue",
+        "ESCALATE": "Escalate",
+        "CLOSE": "Close"
+      },
+      "saveFailed": "Save failed.",
+      "saved": "Changes saved.",
+      "actionAdded": "Action added.",
+      "checkpointAdded": "Checkpoint added.",
+      "closed": "Recovery card closed."
+    },
     "reconciliation": {
       "col": {
         "status": "Status"

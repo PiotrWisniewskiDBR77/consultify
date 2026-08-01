@@ -66,6 +66,17 @@ const FLAGS = {
     localStorage: 'ff.results_deviation_diagnostics',
     env: 'VITE_RESULTS_DEVIATION_DIAGNOSTICS_ENABLED',
   },
+  // #RES-003A (2026-08-01): canonical KPI Recovery Card — wires the
+  // hypothesis → confirmed cause → actions/checkpoints → close/continue/escalate
+  // loop into the deviation-case tab of KPITimeSeriesDrawer. Default OFF (rule
+  // #7: dev-render + Piotr's odbiór on a clean screenshot before any default
+  // flip). Not part of the D-D default-on set below — brand-new artifact-shaped
+  // screen, not a previously verified cockpit surface.
+  recoveryCard: {
+    query: 'ff_recoveryCard',
+    localStorage: 'ff.results_recovery_card',
+    env: 'VITE_RESULTS_RECOVERY_CARD_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ResultsFlag = keyof typeof FLAGS;
@@ -113,6 +124,13 @@ export function isResultsFlagEnabled(flag: ResultsFlag): boolean {
   const fromLs = readLocalStorage(keys.localStorage);
   if (fromLs !== null) return fromLs;
   if (readEnv(keys.env)) return true;
+  // recoveryCard (#RES-003A, 2026-08-01): brand-new artifact-shaped screen, not
+  // yet dev-render-verified by Piotr. Deliberately EXCLUDED from the D-D
+  // default-on fallback below — must read as OFF on every host (prod, demo,
+  // stage, dev) until an explicit opt-in via ?ff_recoveryCard=1 / localStorage
+  // / env, per CLAUDE.md rule #7. Remove this early-return only after Piotr's
+  // odbiór on a clean dev-render screenshot, same as deviationDiagnostics below.
+  if (flag === 'recoveryCard') return false;
   // deviationDiagnostics (#M15/OC2): AI RCA-suggest surface. Zweryfikowany
   // dev-render (harness light+dark, 2026-07-16 — RCA hipotezy + akcje renderują
   // czysto, dark-safe, zero crimson w bramkowanym UI) → przeniesiony do zbioru

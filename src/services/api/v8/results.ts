@@ -813,6 +813,74 @@ export const V8ResultsApi = {
     ),
   dismissClosureBenefit: (benefitId: string) =>
     v8Post<{ success: boolean }>(`/results/benefits/${encodeURIComponent(benefitId)}/dismiss`, {}),
+
+  // #RES-003A (2026-08-01) — KPI Recovery Card: canonical recovery loop for an
+  // open deviation case (hypothesis → confirmed cause → actions/checkpoints →
+  // close/continue/escalate, optimistic concurrency via `version`). Behind
+  // resultsFeatureFlags.recoveryCard (default OFF). New surface — no legacy
+  // /benefits/* equivalent, so there is nothing to fall back to.
+  getRecoveryCard: (caseId: string) =>
+    v8Get<V8ResultsKpiRecoveryCard>(
+      `/results/deviation-cases/${encodeURIComponent(caseId)}/recovery-card`
+    ),
+  createRecoveryCard: (caseId: string, payload?: V8ResultsCreateRecoveryCardPayload) =>
+    v8Post<V8ResultsKpiRecoveryCard>(
+      `/results/deviation-cases/${encodeURIComponent(caseId)}/recovery-card`,
+      payload || {}
+    ),
+  updateRecoveryCard: (cardId: string, payload: V8ResultsUpdateRecoveryCardPayload) =>
+    v8Put<V8ResultsKpiRecoveryCard>(
+      `/results/recovery-cards/${encodeURIComponent(cardId)}`,
+      payload
+    ),
+  createRecoveryAction: (cardId: string, payload: V8ResultsCreateRecoveryActionPayload) =>
+    v8Post<V8ResultsKpiRecoveryCard>(
+      `/results/recovery-cards/${encodeURIComponent(cardId)}/actions`,
+      payload
+    ),
+  updateRecoveryAction: (
+    cardId: string,
+    actionId: string,
+    payload: V8ResultsUpdateRecoveryActionPayload
+  ) =>
+    v8Put<V8ResultsKpiRecoveryCard>(
+      `/results/recovery-cards/${encodeURIComponent(cardId)}/actions/${encodeURIComponent(actionId)}`,
+      payload
+    ),
+  linkRecoveryActionTask: (cardId: string, actionId: string) =>
+    v8Post<V8ResultsKpiRecoveryCard>(
+      `/results/recovery-cards/${encodeURIComponent(cardId)}/actions/${encodeURIComponent(actionId)}/link-task`,
+      {}
+    ),
+  createRecoveryCheckpoint: (cardId: string, payload: V8ResultsCreateRecoveryCheckpointPayload) =>
+    v8Post<V8ResultsKpiRecoveryCard>(
+      `/results/recovery-cards/${encodeURIComponent(cardId)}/checkpoints`,
+      payload
+    ),
+  resolveRecoveryCheckpoint: (
+    cardId: string,
+    checkpointId: string,
+    payload: V8ResultsResolveRecoveryCheckpointPayload
+  ) =>
+    v8Put<V8ResultsKpiRecoveryCard>(
+      `/results/recovery-cards/${encodeURIComponent(cardId)}/checkpoints/${encodeURIComponent(checkpointId)}/resolve`,
+      payload
+    ),
+  closeRecoveryCard: (cardId: string, payload: V8ResultsCloseRecoveryCardPayload) =>
+    v8Post<V8ResultsKpiRecoveryCard>(
+      `/results/recovery-cards/${encodeURIComponent(cardId)}/close`,
+      payload
+    ),
+  continueRecoveryCard: (cardId: string, payload: V8ResultsContinueRecoveryCardPayload) =>
+    v8Post<V8ResultsKpiRecoveryCard>(
+      `/results/recovery-cards/${encodeURIComponent(cardId)}/continue`,
+      payload
+    ),
+  escalateRecoveryCard: (cardId: string, payload: V8ResultsEscalateRecoveryCardPayload) =>
+    v8Post<V8ResultsKpiRecoveryCard>(
+      `/results/recovery-cards/${encodeURIComponent(cardId)}/escalate`,
+      payload
+    ),
 };
 
 /** A closure-handoff benefit awaiting triage in the M15 Results inbox. */
@@ -828,4 +896,147 @@ export interface V8ResultsClosureBenefit {
   status: string;
   closedAt: string | null;
   createdAt: string | null;
+}
+
+// #RES-003A (2026-08-01) — KPI Recovery Card types. See V8ResultsApi.*Recovery*
+// methods above; contract fixed by the parallel backend track (server/**).
+export type V8ResultsRecoveryCardPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type V8ResultsRecoveryCardLifecycleStatus = 'DRAFT' | 'ACTIVE' | 'UNDER_REVIEW' | 'CLOSED';
+export type V8ResultsRecoveryCardDecision = 'CONTINUE' | 'ESCALATE' | 'CLOSE';
+export type V8ResultsRecoveryEffectivenessStatus =
+  | 'NOT_YET_DUE'
+  | 'PENDING_ASSESSMENT'
+  | 'ASSESSED';
+export type V8ResultsRecoveryEffectivenessRating =
+  | 'EFFECTIVE'
+  | 'PARTIALLY_EFFECTIVE'
+  | 'INEFFECTIVE';
+export type V8ResultsRecoveryActionType = 'IMMEDIATE' | 'DURABLE';
+export type V8ResultsRecoveryActionStatus = 'OPEN' | 'DONE' | 'CANCELLED';
+export type V8ResultsRecoveryTaskLinkStatus = 'NONE' | 'PENDING' | 'LINKED' | 'LINK_FAILED';
+export type V8ResultsRecoveryCheckpointStatus = 'PENDING' | 'MET' | 'MISSED' | 'CANCELLED';
+export type V8ResultsCloseRecoveryCardBlockedReason =
+  | 'STILL_BREACHING'
+  | 'STALE_MEASUREMENT'
+  | 'MISSING_EVIDENCE'
+  | 'VERSION_CONFLICT';
+
+export interface V8ResultsKpiRecoveryAction {
+  id: string;
+  actionType: V8ResultsRecoveryActionType;
+  title: string;
+  description?: string | null;
+  ownerUserId?: string | null;
+  dueDate?: string | null;
+  status: V8ResultsRecoveryActionStatus;
+  linkedTaskId?: string | null;
+  taskLinkStatus: V8ResultsRecoveryTaskLinkStatus;
+}
+
+export interface V8ResultsKpiRecoveryCheckpoint {
+  id: string;
+  checkpointDate: string;
+  status: V8ResultsRecoveryCheckpointStatus;
+  notes?: string | null;
+  kpiTimeSeriesId?: string | null;
+}
+
+export interface V8ResultsKpiRecoveryCard {
+  id: string;
+  deviationCaseId: string;
+  kpiId: string;
+  hypothesis?: string | null;
+  confirmedCause?: string | null;
+  impactDescription?: string | null;
+  priority: V8ResultsRecoveryCardPriority;
+  expectedImpact?: string | null;
+  dependencies: string[];
+  risks: string[];
+  expectedRecoveryDate?: string | null;
+  effectivenessCriteria?: string | null;
+  effectivenessStatus: V8ResultsRecoveryEffectivenessStatus;
+  effectivenessRating?: V8ResultsRecoveryEffectivenessRating | null;
+  lifecycleStatus: V8ResultsRecoveryCardLifecycleStatus;
+  decision?: V8ResultsRecoveryCardDecision | null;
+  version: number;
+  evidenceText?: string | null;
+  evidenceRef?: string | null;
+  actions: V8ResultsKpiRecoveryAction[];
+  checkpoints: V8ResultsKpiRecoveryCheckpoint[];
+  createdBy?: string | null;
+  createdAt: string;
+  updatedBy?: string | null;
+  updatedAt: string;
+  closedBy?: string | null;
+  closedAt?: string | null;
+}
+
+export interface V8ResultsCreateRecoveryCardPayload {
+  hypothesis?: string;
+  priority?: V8ResultsRecoveryCardPriority;
+  expectedImpact?: string;
+  expectedRecoveryDate?: string;
+  effectivenessCriteria?: string;
+}
+
+export interface V8ResultsUpdateRecoveryCardPayload {
+  version: number;
+  hypothesis?: string;
+  confirmedCause?: string;
+  impactDescription?: string;
+  priority?: V8ResultsRecoveryCardPriority;
+  expectedImpact?: string;
+  dependencies?: string[];
+  risks?: string[];
+  expectedRecoveryDate?: string;
+  effectivenessCriteria?: string;
+}
+
+export interface V8ResultsCreateRecoveryActionPayload {
+  title: string;
+  description?: string;
+  actionType: V8ResultsRecoveryActionType;
+  ownerUserId?: string;
+  dueDate?: string;
+  idempotencyKey?: string;
+}
+
+export interface V8ResultsUpdateRecoveryActionPayload {
+  status?: V8ResultsRecoveryActionStatus;
+  ownerUserId?: string;
+  dueDate?: string;
+}
+
+export interface V8ResultsCreateRecoveryCheckpointPayload {
+  checkpointDate: string;
+  notes?: string;
+}
+
+export interface V8ResultsResolveRecoveryCheckpointPayload {
+  status: 'MET' | 'MISSED';
+  kpiTimeSeriesId?: string;
+}
+
+export interface V8ResultsCloseRecoveryCardPayload {
+  version: number;
+  evidenceText?: string;
+  evidenceRef?: string;
+  effectivenessRating: V8ResultsRecoveryEffectivenessRating;
+}
+
+/** Shape of the `error.data` payload on a 409 from closeRecoveryCard. */
+export interface V8ResultsCloseRecoveryCardConflict {
+  reason: V8ResultsCloseRecoveryCardBlockedReason;
+  latestMeasurement?: unknown;
+}
+
+export interface V8ResultsContinueRecoveryCardPayload {
+  version: number;
+  note?: string;
+}
+
+export interface V8ResultsEscalateRecoveryCardPayload {
+  version: number;
+  note?: string;
+  escalateTo?: string;
 }
