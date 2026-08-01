@@ -28,12 +28,22 @@
  *   `__tests__/atelierSeedIdempotency.test.ts`.
  * - **Tenant-scoped.** Every row carries the caller's `organizationId`. The seed
  *   never reads or writes another tenant's data and never deletes anything.
- * - **Readiness-real.** The statements satisfy the production readiness contract
- *   in `financialStatementService.evaluateStatementReadiness` (status
- *   `confirmed`, validation `pass`, 100% canonical mapping coverage, every
- *   required canonical line present, resolved currency and scaling), so the pack
- *   shows as READY through the same code path a real import would take — not by
- *   a special demo branch.
+ * - **READY is EARNED, never asserted.** The seed writes in TWO PHASES. Phase 1
+ *   writes the pack and the statements in a NOT-ready state (statement
+ *   `status='imported'`, `validation_status='pending'`, `readiness_status='pending'`,
+ *   `readiness_score=0`; pack `pack_status='draft'`, `pack_readiness_status='pending'`)
+ *   together with the values. Phase 2 READS THE ROWS BACK out of the database and
+ *   only then promotes them: per statement it checks the exact expected canonical
+ *   value count (`getAtelierExpectedValueCounts()`), 100% non-null
+ *   `canonical_line_id`, a single resolved currency and correct lineage
+ *   (`statement_pack_id` = the canonical pack, `organization_id` = the caller's
+ *   org), and it recomputes the verdict with the PRODUCTION functions
+ *   `validateStatement` / `evaluateStatementReadiness` against those read-back
+ *   rows. A statement is promoted to confirmed/pass/ready only if production
+ *   agrees it is ready; the pack is promoted only once all three statements are
+ *   promoted AND the approved analysis exists and points at the pack.
+ *   Consequence: if anything downstream fails, the fixture stays visibly
+ *   not-ready instead of lying.
  * - **Arithmetically true.** The three statements reconcile with each other and
  *   pass `validateStatement` with zero warnings. `assertAtelierFy2014Coherent()`
  *   states those invariants in code so a future edit to a number cannot quietly
@@ -50,7 +60,13 @@
  */
 
 import * as DbPromise from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 import { ensureCanonicalRegistryInDatabase } from '../financeCanonicalRegistrySyncService.js';
+import {
+  evaluateStatementReadiness,
+  validateStatement,
+  type ValidationMessage,
+} from '../financialStatementService.js';
 import type { DemoLocale } from './demoLocale.js';
 
 // ---------------------------------------------------------------------------
@@ -445,44 +461,149 @@ async function getTableColumns(tableName: string): Promise<Set<string>> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Schema contract
+// ---------------------------------------------------------------------------
+
+/**
+ * Columns without which this fixture cannot be BOTH written AND verified.
+ *
+ * DELIBERATE CHOICE — a missing table/column returns INCOMPLETE, it does not
+ * throw. The FIN-005 packet allows either ("failure albo jawny INCOMPLETE").
+ * This seed runs inside `seedAtelierToysDemoDataset`, so a throw would abort
+ * every other module of the Atelier demo dataset (interviews, initiatives, KPIs,
+ * deliverables) because of a Finance schema problem. Returning an explicit
+ * `{ status: 'incomplete', missing: [...] }` keeps the blast radius at Finance
+ * while making the degradation impossible to miss: it is logged as a warning AND
+ * carried in the seed result, and — the point of the whole exercise — nothing is
+ * ever promoted to READY.
+ *
+ * The only throw left in this module is `assertAtelierFy2014Coherent()`, which
+ * fires on a fixture ARITHMETIC bug: a developer error the unit test gates, not
+ * environment drift.
+ */
+const REQUIRED_SCHEMA: Record<string, readonly string[]> = {
+  financial_statement_packs: [
+    'id',
+    'organization_id',
+    'entity_name',
+    'period_start',
+    'period_end',
+    'period_label',
+    'currency',
+    'scaling',
+    'pack_status',
+    'pack_readiness_status',
+    'pack_readiness_score',
+  ],
+  financial_statements: [
+    'id',
+    'organization_id',
+    'statement_pack_id',
+    'entity_name',
+    'statement_type',
+    'period_start',
+    'period_end',
+    'period_label',
+    'currency',
+    'scaling',
+    'status',
+    'validation_status',
+    'readiness_status',
+    'readiness_score',
+  ],
+  financial_statement_values: ['id', 'statement_id', 'canonical_line_id', 'value'],
+  financial_analyses: [
+    'id',
+    'organization_id',
+    'title',
+    'status',
+    'source_statement_pack_id',
+  ],
+};
+
+interface SchemaProbe {
+  /** Column names (lower-case) per table; EMPTY set = introspection unavailable. */
+  columns: Record<string, Set<string>>;
+  /** `table` or `table.column` entries that are required and absent. */
+  missing: string[];
+  /**
+   * Tables that exist but whose column list came back empty. In production that
+   * cannot happen (a table always has columns), so it means the
+   * `information_schema` probe itself was unavailable — the case the mocked test
+   * harnesses reproduce. See `projectUpsert` for why this stays safe.
+   */
+  unverified: string[];
+}
+
+async function probeAtelierFinanceSchema(): Promise<SchemaProbe> {
+  const columns: Record<string, Set<string>> = {};
+  const missing: string[] = [];
+  const unverified: string[] = [];
+
+  for (const [table, required] of Object.entries(REQUIRED_SCHEMA)) {
+    if (!(await tableExists(table))) {
+      columns[table] = new Set<string>();
+      missing.push(table);
+      continue;
+    }
+    const tableColumns = await getTableColumns(table);
+    columns[table] = tableColumns;
+    if (tableColumns.size === 0) {
+      unverified.push(table);
+      continue;
+    }
+    for (const column of required) {
+      if (!tableColumns.has(column.toLowerCase())) missing.push(`${table}.${column}`);
+    }
+  }
+
+  return { columns, missing, unverified };
+}
+
+// ---------------------------------------------------------------------------
+// Idempotent upserts
+// ---------------------------------------------------------------------------
+
 type ColumnValue = [column: string, value: unknown];
+
+interface ProjectedUpsert {
+  columns: string[];
+  values: unknown[];
+  /** `col=excluded.col` assignments for the columns that may be refreshed. */
+  updateSet: string[];
+  hasUpdatedAt: boolean;
+}
 
 /**
  * Build an upsert against only the columns that actually exist in the target
  * database.
  *
  * WHY THIS IS NOT OVER-ENGINEERING — found by running this seed against a real
- * Postgres rather than a mocked one. The Finance tables have accumulated
- * columns across several migrations (`document_class`, `extraction_strategy`,
+ * Postgres rather than a mocked one. The Finance tables have accumulated columns
+ * across several migrations (`document_class`, `extraction_strategy`,
  * `template_family`, `readiness_status`, `readiness_score`, `quality_summary`,
  * `quality_reason_codes`, `values_version` all arrived later than the base
  * table), and migration `20260628_finance_seed_readiness_fix.sql` exists
  * precisely because the demo environment had drifted on exactly these columns.
  *
- * A fixed column list with `{ fallback: false }` therefore risks throwing on a
- * tenant whose schema is one migration behind — and because this seed runs
- * inside `seedAtelierToysDemoDataset`, that single throw would abort the WHOLE
- * Atelier demo dataset, not just Finance. Every neighbouring seeder in
- * `demoSeedService` guards the same way (`columnExists` before adding
- * `initiative_id`); this matches that convention.
- *
- * `required` columns are the ones the row is meaningless without: if any is
- * missing the caller skips the write instead of inserting a half-row.
+ * WHY THE EMPTY-SET FALLBACK CANNOT MASK A REAL MISSING COLUMN. An empty column
+ * set means the schema probe answered nothing, and we then write EVERY column.
+ * In production that lands one of two ways, both safe:
+ *   - the columns do exist -> the write is correct;
+ *   - a column is genuinely absent -> the INSERT is issued with
+ *     `{ fallback: false }` and Postgres rejects it, so the seed reports
+ *     INCOMPLETE instead of quietly writing a half-row.
+ * On top of that, phase 2 SELECTs the readiness columns back by name, so a
+ * missing column also fails the read-back gate. Nothing reaches READY on a
+ * schema we could not verify.
  */
 function projectUpsert(
   columns: Set<string>,
   pairs: ColumnValue[],
-  options: { required: string[]; updatable: string[] }
-): { columns: string[]; values: unknown[]; updateSet: string[]; missingRequired: string[] } | null {
-  // An empty column set means the schema probe failed (or a mocked DB answered
-  // nothing). Fall back to writing every column so behaviour is unchanged where
-  // introspection is unavailable.
+  options: { updatable: string[] }
+): ProjectedUpsert {
   const known = columns.size > 0 ? columns : null;
-  const missingRequired = known
-    ? options.required.filter((column) => !known.has(column.toLowerCase()))
-    : [];
-  if (missingRequired.length > 0) return null;
-
   const selected = pairs.filter(([column]) => !known || known.has(column.toLowerCase()));
   const selectedNames = new Set(selected.map(([column]) => column.toLowerCase()));
   const updateSet = options.updatable
@@ -493,9 +614,96 @@ function projectUpsert(
     columns: selected.map(([column]) => column),
     values: selected.map(([, value]) => value),
     updateSet,
-    missingRequired,
+    hasUpdatedAt: !known || known.has('updated_at'),
   };
 }
+
+/**
+ * SQL for an upsert that is a TRUE no-op when nothing changed.
+ *
+ * FIN-005 P2: the previous version always ran `updated_at=CURRENT_TIMESTAMP`, so
+ * a second seed run mutated every row even though every value was identical.
+ * Guarding the whole `DO UPDATE` with
+ * `<table>.col IS DISTINCT FROM excluded.col OR ...` means run #2 performs ZERO
+ * row updates on an unchanged fixture. `updated_at` stays inside the SET, so a
+ * row that really did change still gets a fresh timestamp.
+ *
+ * `IS DISTINCT FROM` (not `<>`) because NULL <> NULL is NULL, which would make
+ * a nullable column look "changed" forever.
+ */
+function buildUpsertSql(table: string, upsert: ProjectedUpsert): string {
+  const columnList = upsert.columns.join(', ');
+  const valueList = upsert.columns.map(() => '?').join(', ');
+
+  if (upsert.updateSet.length === 0) {
+    // Nothing may ever be refreshed on this row, so a re-run must not touch it.
+    return `INSERT INTO ${table} (${columnList}) VALUES (${valueList}) ON CONFLICT(id) DO NOTHING`;
+  }
+
+  const setClause = [
+    ...upsert.updateSet,
+    ...(upsert.hasUpdatedAt ? ['updated_at=CURRENT_TIMESTAMP'] : []),
+  ].join(',\n       ');
+  const guard = upsert.updateSet
+    .map((assignment) => assignment.split('=')[0])
+    .map((column) => `${table}.${column} IS DISTINCT FROM excluded.${column}`)
+    .join('\n       OR ');
+
+  return `INSERT INTO ${table} (${columnList})
+     VALUES (${valueList})
+     ON CONFLICT(id) DO UPDATE SET
+       ${setClause}
+     WHERE ${guard}`;
+}
+
+/**
+ * Phase-2 promotion write: an UPDATE that only fires when at least one target
+ * column really differs, so a second run is a no-op here too.
+ */
+async function promoteRow(params: {
+  table: string;
+  id: string;
+  columns: Set<string>;
+  assignments: ColumnValue[];
+  /**
+   * Columns set to a SQL literal (e.g. `approved_at=CURRENT_TIMESTAMP`). They
+   * are NOT part of the guard, so they are stamped exactly once — on the run
+   * that actually promotes the row — and never refreshed by a no-op re-run.
+   */
+  literals?: Array<[column: string, literal: string]>;
+}): Promise<void> {
+  const known = params.columns.size > 0 ? params.columns : null;
+  const applicable = params.assignments.filter(
+    ([column]) => !known || known.has(column.toLowerCase())
+  );
+  if (applicable.length === 0) return;
+  const applicableLiterals = (params.literals ?? []).filter(
+    ([column]) => !known || known.has(column.toLowerCase())
+  );
+
+  const hasUpdatedAt = !known || known.has('updated_at');
+  const setClause = [
+    ...applicable.map(([column]) => `${column}=?`),
+    ...applicableLiterals.map(([column, literal]) => `${column}=${literal}`),
+    ...(hasUpdatedAt ? ['updated_at=CURRENT_TIMESTAMP'] : []),
+  ].join(', ');
+  const guard = applicable
+    .map(([column]) => `${column} IS DISTINCT FROM ?`)
+    .join(' OR ');
+
+  await DbPromise.run(
+    `UPDATE ${params.table}
+        SET ${setClause}
+      WHERE id = ?
+        AND (${guard})`,
+    [...applicable.map(([, value]) => value), params.id, ...applicable.map(([, value]) => value)],
+    { fallback: false }
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Public contract
+// ---------------------------------------------------------------------------
 
 export interface AtelierFinanceSeedInput {
   organizationId: string;
@@ -505,22 +713,244 @@ export interface AtelierFinanceSeedInput {
   locale?: DemoLocale;
 }
 
+/**
+ * Explicit, discriminated outcome — FIN-005 P1.
+ *
+ * `complete` means: pack + 3 statements + approved analysis exist, every
+ * statement was read back and independently judged READY by the production
+ * readiness code, and the pack was promoted. Anything less is `incomplete` and
+ * says why. There is no third, silent state.
+ */
 export interface AtelierFinanceSeedResult {
+  status: 'complete' | 'incomplete';
+  /** Human-readable cause; present exactly when `status === 'incomplete'`. */
+  reason?: string;
+  /** Missing tables / `table.column` entries, when the cause is schema drift. */
+  missing?: string[];
   /** Null when the Finance statement tables are absent in this environment. */
   packId: string | null;
+  /** Statements that EARNED ready through the read-back gate. */
   statementIds: string[];
+  /** Statements written but refused promotion (read-back or verdict failed). */
+  unpromotedStatementIds: string[];
   analysisId: string | null;
 }
 
 const SOURCE_FILE_NAME = 'Atelier-Toys-FY2014-Financial-Statements.xlsx';
 
+/** Phase-1 (not-ready) statement state — the honest state of a fresh import. */
+const PHASE1_STATEMENT_STATUS = 'imported';
+const PHASE1_VALIDATION_STATUS = 'pending';
+const PHASE1_READINESS_STATUS = 'pending';
+const PHASE1_READINESS_SCORE = 0;
+
+/** Phase-1 (not-ready) pack state. */
+const PHASE1_PACK_STATUS = 'draft';
+const PHASE1_PACK_READINESS_STATUS = 'pending';
+const PHASE1_PACK_READINESS_SCORE = 0;
+
+function incomplete(
+  reason: string,
+  partial: Partial<AtelierFinanceSeedResult> = {}
+): AtelierFinanceSeedResult {
+  const result: AtelierFinanceSeedResult = {
+    status: 'incomplete',
+    reason,
+    packId: null,
+    statementIds: [],
+    unpromotedStatementIds: [],
+    analysisId: null,
+    ...partial,
+  };
+  logger.warn('[atelier-finance-seed] Finance golden flow INCOMPLETE — nothing promoted to READY', {
+    reason,
+    missing: result.missing,
+    packId: result.packId,
+    promotedStatements: result.statementIds,
+    unpromotedStatements: result.unpromotedStatementIds,
+  });
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2 — read-back verification
+// ---------------------------------------------------------------------------
+
+interface StatementReadBackRow {
+  id?: unknown;
+  organization_id?: unknown;
+  statement_pack_id?: unknown;
+  statement_type?: unknown;
+  currency?: unknown;
+  scaling?: unknown;
+  status?: unknown;
+}
+
+interface StatementValueRow {
+  id?: unknown;
+  canonical_line_id?: unknown;
+  value?: unknown;
+  is_non_financial?: unknown;
+}
+
+interface StatementVerdict {
+  ok: boolean;
+  reason?: string;
+  currency?: string;
+  validationStatus?: 'pass' | 'warnings' | 'needs_review';
+  validationMessages?: ValidationMessage[];
+  readinessStatus?: string;
+  readinessScore?: number;
+  reasonCodes?: string[];
+}
+
 /**
- * Materialize the Atelier Toys FY2014 statement pack and the approved analysis
- * grounded on it. Returns the pack id so the caller can bind the canonical ROI
- * model to the same source (`financial_models.source_statement_pack_id`).
+ * Read one statement and its values back OUT of the database and decide, using
+ * production code only, whether it may be called READY.
+ *
+ * Everything here is deliberately about the persisted rows, not the in-memory
+ * fixture: a fixture that is perfect in memory and truncated on disk is exactly
+ * the failure this gate exists to catch.
+ */
+async function verifyStatementReadBack(params: {
+  organizationId: string;
+  packId: string;
+  statementId: string;
+  statementType: string;
+  expectedValueCount: number;
+  statementColumns: Set<string>;
+  valueColumns: Set<string>;
+}): Promise<StatementVerdict> {
+  const valueColumnNames = ['id', 'canonical_line_id', 'value', 'is_non_financial'].filter(
+    (column) => params.valueColumns.size === 0 || params.valueColumns.has(column)
+  );
+
+  let statementRows: StatementReadBackRow[];
+  let valueRows: StatementValueRow[];
+  try {
+    statementRows = await DbPromise.all<StatementReadBackRow>(
+      `SELECT id, organization_id, statement_pack_id, statement_type, currency, scaling, status
+         FROM financial_statements
+        WHERE id = ?`,
+      [params.statementId],
+      { fallback: false }
+    );
+    valueRows = await DbPromise.all<StatementValueRow>(
+      `SELECT ${valueColumnNames.join(', ')}
+         FROM financial_statement_values
+        WHERE statement_id = ?`,
+      [params.statementId],
+      { fallback: false }
+    );
+  } catch (error) {
+    return { ok: false, reason: `read-back query failed: ${(error as Error).message}` };
+  }
+
+  if (statementRows.length !== 1) {
+    return { ok: false, reason: `read-back returned ${statementRows.length} statement rows, expected 1` };
+  }
+  const row = statementRows[0];
+
+  // Lineage — the row must belong to the caller's tenant and to THIS pack.
+  if (String(row.organization_id ?? '') !== params.organizationId) {
+    return {
+      ok: false,
+      reason: `organization_id mismatch: ${String(row.organization_id ?? 'null')} != ${params.organizationId}`,
+    };
+  }
+  if (String(row.statement_pack_id ?? '') !== params.packId) {
+    return {
+      ok: false,
+      reason: `statement_pack_id mismatch: ${String(row.statement_pack_id ?? 'null')} != ${params.packId}`,
+    };
+  }
+  if (String(row.statement_type ?? '') !== params.statementType) {
+    return {
+      ok: false,
+      reason: `statement_type mismatch: ${String(row.statement_type ?? 'null')} != ${params.statementType}`,
+    };
+  }
+
+  // Single resolved currency, matching the canonical fixture.
+  const currency = String(row.currency ?? '').trim().toUpperCase();
+  if (currency !== ATELIER_FINANCE_CURRENCY) {
+    return { ok: false, reason: `currency mismatch: ${currency || 'null'} != ${ATELIER_FINANCE_CURRENCY}` };
+  }
+
+  // Exact expected value count — a truncated write must never read as READY.
+  if (valueRows.length !== params.expectedValueCount) {
+    return {
+      ok: false,
+      reason: `read-back found ${valueRows.length} values, expected ${params.expectedValueCount}`,
+    };
+  }
+
+  // 100% canonical mapping coverage, verified on the persisted rows.
+  const unmapped = valueRows.filter((value) => !String(value.canonical_line_id ?? '').trim());
+  if (unmapped.length > 0) {
+    return { ok: false, reason: `${unmapped.length} persisted value(s) carry a null canonical_line_id` };
+  }
+
+  // Recompute the verdict with PRODUCTION code against the READ-BACK rows.
+  const lines = valueRows.map((value) => ({
+    canonicalLineId: String(value.canonical_line_id),
+    value: Number(value.value ?? 0),
+    isNonFinancial: Boolean(value.is_non_financial),
+  }));
+  const validation = validateStatement(lines, params.statementType);
+  const readiness = evaluateStatementReadiness({
+    // The status we are ABOUT to persist — the stored verdict must correspond to
+    // the stored status, not to the intermediate one.
+    rawStatus: 'confirmed',
+    statementType: params.statementType,
+    validationStatus: validation.status,
+    currency,
+    scaling: String(row.scaling ?? '').trim() || ATELIER_FINANCE_SCALING,
+    validationMessages: validation.messages,
+    values: lines,
+  });
+
+  if (validation.status !== 'pass') {
+    return {
+      ok: false,
+      reason: `production validateStatement returned "${validation.status}": ${validation.messages
+        .filter((message) => message.type !== 'info')
+        .map((message) => message.code)
+        .join(', ')}`,
+    };
+  }
+  if (!readiness.isReady || readiness.readinessStatus !== 'ready') {
+    return {
+      ok: false,
+      reason: `production evaluateStatementReadiness returned "${readiness.readinessStatus}" (${readiness.reasonCodes.join(', ') || 'no reason codes'})`,
+    };
+  }
+
+  return {
+    ok: true,
+    currency,
+    validationStatus: validation.status,
+    validationMessages: validation.messages,
+    readinessStatus: readiness.readinessStatus,
+    readinessScore: readiness.readinessScore,
+    reasonCodes: readiness.reasonCodes,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Seed entry point
+// ---------------------------------------------------------------------------
+
+/**
+ * Materialize the Atelier Toys FY2014 statement pack, the three statements, the
+ * values and the approved analysis grounded on them — in two phases, so READY is
+ * earned by a real write plus a real read-back and never asserted up front.
+ *
+ * Returns the pack id so the caller can bind the canonical ROI model to the same
+ * source (`financial_models.source_statement_pack_id`).
  *
  * Safe to call on a tenant that already has the fixture: every write is an
- * upsert on a stable id.
+ * upsert on a stable id, guarded so an unchanged re-run updates zero rows.
  */
 export async function upsertAtelierFinanceGoldenFlow(
   input: AtelierFinanceSeedInput
@@ -528,13 +958,23 @@ export async function upsertAtelierFinanceGoldenFlow(
   const { organizationId } = input;
   const isPl = input.locale === 'pl';
   const createdBy = input.createdBy || null;
-  const empty: AtelierFinanceSeedResult = { packId: null, statementIds: [], analysisId: null };
 
-  // Fail closed on an environment without the Finance schema rather than
-  // half-seeding a pack with no statements under it.
-  if (!(await tableExists('financial_statement_packs'))) return empty;
-  if (!(await tableExists('financial_statements'))) return empty;
-  if (!(await tableExists('financial_statement_values'))) return empty;
+  // ---- Schema gate -------------------------------------------------------
+  const schema = await probeAtelierFinanceSchema();
+  if (schema.missing.length > 0) {
+    return incomplete(
+      `Finance schema is missing required tables/columns: ${schema.missing.join(', ')}`,
+      { missing: schema.missing }
+    );
+  }
+  if (schema.unverified.length > 0) {
+    // Not fatal (see projectUpsert): the write itself runs with fallback:false
+    // and the phase-2 read-back names every readiness column, so an actually
+    // missing column still fails closed instead of producing a false READY.
+    logger.warn('[atelier-finance-seed] schema introspection unavailable; relying on write+read-back gates', {
+      tables: schema.unverified,
+    });
+  }
 
   // Guard the numbers before writing any of them.
   assertAtelierFy2014Coherent();
@@ -543,13 +983,17 @@ export async function upsertAtelierFinanceGoldenFlow(
   // the same idempotent sync the Finance routes run on entry.
   await ensureCanonicalRegistryInDatabase();
 
+  const packColumns = schema.columns.financial_statement_packs;
+  const statementColumns = schema.columns.financial_statements;
+  const valueColumns = schema.columns.financial_statement_values;
+  const analysisColumns = schema.columns.financial_analyses;
   const packId = makeId(organizationId, 'statement-pack', ATELIER_FINANCE_SLUGS.pack);
 
+  // ---- Phase 1: write the fixture in a NOT-ready state --------------------
   // Every value is a bound parameter (no inline SQL literals) so that column
   // position and parameter position stay 1:1 — the demo test harnesses parse
   // captured INSERTs positionally, and an inline literal would silently
   // misalign the row they assert on.
-  const packColumns = await getTableColumns('financial_statement_packs');
   const packUpsert = projectUpsert(
     packColumns,
     [
@@ -561,25 +1005,29 @@ export async function upsertAtelierFinanceGoldenFlow(
       ['period_label', ATELIER_FINANCE_PERIOD_LABEL],
       ['currency', ATELIER_FINANCE_CURRENCY],
       ['scaling', ATELIER_FINANCE_SCALING],
-      ['pack_status', 'confirmed'],
-      ['pack_readiness_status', 'ready'],
-      ['pack_readiness_score', 100],
+      ['pack_status', PHASE1_PACK_STATUS],
+      ['pack_readiness_status', PHASE1_PACK_READINESS_STATUS],
+      ['pack_readiness_score', PHASE1_PACK_READINESS_SCORE],
       [
         'pack_quality_summary',
         isPl
-          ? 'Komplet sprawozdań FY2014 (RZiS, bilans, przepływy) — baza dla modelu ROI.'
-          : 'Complete FY2014 statement set (P&L, BS, CF) — the baseline the ROI model is grounded on.',
+          ? 'Import FY2014 zapisany — oczekuje na weryfikację odczytem.'
+          : 'FY2014 import written — awaiting read-back verification.',
       ],
-      ['pack_quality_reason_codes', '[]'],
-      ['source_statement_count', 3],
-      ['missing_statement_types', '[]'],
+      ['pack_quality_reason_codes', JSON.stringify(['READ_BACK_PENDING'])],
+      ['source_statement_count', 0],
+      ['missing_statement_types', JSON.stringify(['P&L', 'BS', 'CF'])],
       [
         'metadata_json',
         JSON.stringify({ canonicalFixture: 'atelier-toys-fy2014', seededBy: 'atelierFinanceSeed' }),
       ],
     ],
     {
-      required: ['id', 'organization_id', 'period_start', 'period_end'],
+      // NOTE the omissions: `pack_status`, `pack_readiness_*`, the quality
+      // columns and the statement counters are NOT updatable here. They are
+      // written once at INSERT time in their not-ready form and afterwards only
+      // ever set by the phase-2 promotion. That is what stops a re-run from
+      // first DOWNGRADING a healthy fixture and then re-promoting it.
       updatable: [
         'entity_name',
         'period_start',
@@ -587,36 +1035,25 @@ export async function upsertAtelierFinanceGoldenFlow(
         'period_label',
         'currency',
         'scaling',
-        'pack_status',
-        'pack_readiness_status',
-        'pack_readiness_score',
-        'pack_quality_summary',
-        'pack_quality_reason_codes',
-        'source_statement_count',
-        'missing_statement_types',
         'metadata_json',
       ],
     }
   );
-  if (!packUpsert) return empty;
 
-  await DbPromise.run(
-    `INSERT INTO financial_statement_packs (${packUpsert.columns.join(', ')})
-     VALUES (${packUpsert.columns.map(() => '?').join(', ')})
-     ON CONFLICT(id) DO UPDATE SET
-       ${[...packUpsert.updateSet, 'updated_at=CURRENT_TIMESTAMP'].join(',\n       ')}`,
-    packUpsert.values,
-    { fallback: false }
-  );
+  try {
+    await DbPromise.run(buildUpsertSql('financial_statement_packs', packUpsert), packUpsert.values, {
+      fallback: false,
+    });
+  } catch (error) {
+    return incomplete(`pack write failed: ${(error as Error).message}`);
+  }
 
-  const statementIds: string[] = [];
   const hasIngestRuns = await tableExists('financial_statement_ingest_runs');
-  const statementColumns = await getTableColumns('financial_statements');
-  const valueColumns = await getTableColumns('financial_statement_values');
   const ingestRunColumns = hasIngestRuns
     ? await getTableColumns('financial_statement_ingest_runs')
     : new Set<string>();
 
+  const writtenStatementIds: string[] = [];
   for (const statement of ATELIER_FY2014_STATEMENTS) {
     const statementId = makeId(organizationId, 'statement', statement.slug);
 
@@ -640,18 +1077,18 @@ export async function upsertAtelierFinanceGoldenFlow(
         ['document_class', 'spreadsheet'],
         ['extraction_strategy', 'atelier_demo_seed'],
         ['template_family', 'atelier_fy2014'],
-        ['status', 'confirmed'],
-        ['validation_status', 'pass'],
+        ['status', PHASE1_STATEMENT_STATUS],
+        ['validation_status', PHASE1_VALIDATION_STATUS],
         ['validation_messages', '[]'],
-        ['readiness_status', 'ready'],
-        ['readiness_score', 100],
+        ['readiness_status', PHASE1_READINESS_STATUS],
+        ['readiness_score', PHASE1_READINESS_SCORE],
         [
           'quality_summary',
           isPl
-            ? 'Sprawozdanie spełnia kontrakt gotowości i jest źródłem dla analizy oraz modelu.'
-            : 'Statement passed the readiness contract and is the source for the analysis and the ROI model.',
+            ? 'Sprawozdanie zapisane — gotowość ustalana przez odczyt zwrotny.'
+            : 'Statement written — readiness is decided by the read-back gate.',
         ],
-        ['quality_reason_codes', '[]'],
+        ['quality_reason_codes', JSON.stringify(['READ_BACK_PENDING'])],
         ['values_version', 1],
         [
           'notes',
@@ -660,18 +1097,10 @@ export async function upsertAtelierFinanceGoldenFlow(
             : 'Canonical Atelier Toys demo data (FY2014).',
         ],
         ['created_by', createdBy],
-        ['confirmed_by', createdBy],
       ],
       {
-        required: [
-          'id',
-          'organization_id',
-          'statement_type',
-          'period_start',
-          'period_end',
-          'status',
-          'validation_status',
-        ],
+        // `status`, `validation_*`, `readiness_*`, `quality_*` and `confirmed_by`
+        // are promotion-owned — see the pack note above.
         updatable: [
           'statement_pack_id',
           'entity_name',
@@ -680,28 +1109,24 @@ export async function upsertAtelierFinanceGoldenFlow(
           'period_label',
           'currency',
           'scaling',
-          'status',
-          'validation_status',
-          'readiness_status',
-          'readiness_score',
-          'quality_summary',
+          'source_file_name',
+          'source_file_path',
           'notes',
         ],
       }
     );
-    // A schema without the core statement columns cannot carry the fixture at
-    // all; skip rather than write a row the readiness contract would reject.
-    if (!statementUpsert) continue;
-    statementIds.push(statementId);
 
-    await DbPromise.run(
-      `INSERT INTO financial_statements (${statementUpsert.columns.join(', ')})
-       VALUES (${statementUpsert.columns.map(() => '?').join(', ')})
-       ON CONFLICT(id) DO UPDATE SET
-         ${[...statementUpsert.updateSet, 'updated_at=CURRENT_TIMESTAMP'].join(',\n         ')}`,
-      statementUpsert.values,
-      { fallback: false }
-    );
+    try {
+      await DbPromise.run(buildUpsertSql('financial_statements', statementUpsert), statementUpsert.values, {
+        fallback: false,
+      });
+    } catch (error) {
+      return incomplete(`statement ${statement.statementType} write failed: ${(error as Error).message}`, {
+        packId,
+        unpromotedStatementIds: [...writtenStatementIds, statementId],
+      });
+    }
+    writtenStatementIds.push(statementId);
 
     if (hasIngestRuns) {
       // Lineage: the pack shows a completed ingest run rather than a statement
@@ -731,17 +1156,11 @@ export async function upsertAtelierFinanceGoldenFlow(
           ],
           ['created_by', createdBy],
         ],
-        {
-          required: ['id', 'statement_id', 'organization_id'],
-          updatable: ['run_status', 'current_stage', 'summary_json'],
-        }
+        { updatable: ['run_status', 'current_stage', 'summary_json'] }
       );
-      if (ingestUpsert) {
+      if (ingestUpsert.columns.some((column) => column.toLowerCase() === 'statement_id')) {
         await DbPromise.run(
-          `INSERT INTO financial_statement_ingest_runs (${ingestUpsert.columns.join(', ')})
-           VALUES (${ingestUpsert.columns.map(() => '?').join(', ')})
-           ON CONFLICT(id) DO UPDATE SET
-             ${[...ingestUpsert.updateSet, 'updated_at=CURRENT_TIMESTAMP'].join(',\n             ')}`,
+          buildUpsertSql('financial_statement_ingest_runs', ingestUpsert),
           ingestUpsert.values,
           { fallback: true }
         );
@@ -780,7 +1199,6 @@ export async function upsertAtelierFinanceGoldenFlow(
           ],
         ],
         {
-          required: ['id', 'statement_id', 'canonical_line_id', 'value'],
           updatable: [
             'canonical_line_id',
             'original_label',
@@ -794,38 +1212,288 @@ export async function upsertAtelierFinanceGoldenFlow(
           ],
         }
       );
-      if (!valueUpsert) continue;
 
-      await DbPromise.run(
-        `INSERT INTO financial_statement_values (${valueUpsert.columns.join(', ')})
-         VALUES (${valueUpsert.columns.map(() => '?').join(', ')})
-         ON CONFLICT(id) DO UPDATE SET
-           ${[
-             ...valueUpsert.updateSet,
-             ...(valueColumns.size === 0 || valueColumns.has('updated_at')
-               ? ['updated_at=CURRENT_TIMESTAMP']
-               : []),
-           ].join(',\n           ')}`,
-        valueUpsert.values,
-        { fallback: false }
-      );
+      try {
+        await DbPromise.run(
+          buildUpsertSql('financial_statement_values', valueUpsert),
+          valueUpsert.values,
+          { fallback: false }
+        );
+      } catch (error) {
+        return incomplete(
+          `value ${statement.statementType}/${line.code} write failed: ${(error as Error).message}`,
+          { packId, unpromotedStatementIds: writtenStatementIds }
+        );
+      }
     }
   }
 
+  // The approved analysis is written (as DRAFT) before promotion, because the
+  // pack may only be promoted once the analysis exists AND points at it.
   const analysisId = await upsertAtelierFinanceAnalysis({
     organizationId,
     packId,
-    statementIds,
+    statementIds: writtenStatementIds,
     projectId: input.projectId ?? null,
     createdBy,
     isPl,
+    analysisColumns,
   });
+  if (!analysisId) {
+    return incomplete('approved analysis could not be written; pack stays not-ready', {
+      packId,
+      unpromotedStatementIds: writtenStatementIds,
+    });
+  }
 
-  return { packId, statementIds, analysisId };
+  // ---- Phase 2: read back, judge with production code, then promote -------
+  const expectedCounts = getAtelierExpectedValueCounts();
+  const promoted: string[] = [];
+  const refused: Array<{ id: string; reason: string }> = [];
+
+  for (const statement of ATELIER_FY2014_STATEMENTS) {
+    const statementId = makeId(organizationId, 'statement', statement.slug);
+    const verdict = await verifyStatementReadBack({
+      organizationId,
+      packId,
+      statementId,
+      statementType: statement.statementType,
+      expectedValueCount: expectedCounts[statement.statementType] ?? statement.lines.length,
+      statementColumns,
+      valueColumns,
+    });
+
+    if (!verdict.ok) {
+      refused.push({ id: statementId, reason: `${statement.statementType}: ${verdict.reason}` });
+      continue;
+    }
+
+    try {
+      await promoteRow({
+        table: 'financial_statements',
+        id: statementId,
+        columns: statementColumns,
+        assignments: [
+          ['status', 'confirmed'],
+          ['validation_status', verdict.validationStatus as string],
+          ['validation_messages', JSON.stringify(verdict.validationMessages ?? [])],
+          ['readiness_status', verdict.readinessStatus as string],
+          ['readiness_score', verdict.readinessScore as number],
+          [
+            'quality_summary',
+            isPl
+              ? 'Sprawozdanie spełnia kontrakt gotowości (zweryfikowane odczytem zwrotnym).'
+              : 'Statement passed the readiness contract (verified by read-back).',
+          ],
+          ['quality_reason_codes', JSON.stringify(verdict.reasonCodes ?? [])],
+          ['confirmed_by', createdBy],
+        ],
+      });
+    } catch (error) {
+      refused.push({
+        id: statementId,
+        reason: `${statement.statementType}: promotion write failed: ${(error as Error).message}`,
+      });
+      continue;
+    }
+    promoted.push(statementId);
+  }
+
+  if (promoted.length !== ATELIER_FY2014_STATEMENTS.length) {
+    return incomplete(
+      `only ${promoted.length}/${ATELIER_FY2014_STATEMENTS.length} statements earned READY: ${refused
+        .map((entry) => entry.reason)
+        .join(' | ')}`,
+      {
+        packId,
+        statementIds: promoted,
+        unpromotedStatementIds: refused.map((entry) => entry.id),
+        analysisId,
+      }
+    );
+  }
+
+  // The analysis must exist AND point at this pack before either it or the pack
+  // may be called approved/ready.
+  const analysisVerdict = await verifyAnalysisReadBack({
+    organizationId,
+    packId,
+    analysisId,
+    analysisColumns,
+  });
+  if (!analysisVerdict.ok) {
+    return incomplete(`analysis read-back failed: ${analysisVerdict.reason}`, {
+      packId,
+      statementIds: promoted,
+      unpromotedStatementIds: [],
+      analysisId,
+    });
+  }
+
+  try {
+    await promoteRow({
+      table: 'financial_analyses',
+      id: analysisId,
+      columns: analysisColumns,
+      assignments: [
+        ['status', 'APPROVED'],
+        ['approved_by', createdBy],
+      ],
+      literals: [['approved_at', 'CURRENT_TIMESTAMP']],
+    });
+  } catch (error) {
+    return incomplete(`analysis promotion failed: ${(error as Error).message}`, {
+      packId,
+      statementIds: promoted,
+      unpromotedStatementIds: [],
+      analysisId,
+    });
+  }
+
+  // Finally the pack: three promoted statements + one approved analysis bound to
+  // it, all in one currency, verified against the persisted pack row.
+  const packVerdict = await verifyPackReadBack({ organizationId, packId, packColumns });
+  if (!packVerdict.ok) {
+    return incomplete(`pack read-back failed: ${packVerdict.reason}`, {
+      packId,
+      statementIds: promoted,
+      unpromotedStatementIds: [],
+      analysisId,
+    });
+  }
+
+  try {
+    await promoteRow({
+      table: 'financial_statement_packs',
+      id: packId,
+      columns: packColumns,
+      assignments: [
+        ['pack_status', 'confirmed'],
+        ['pack_readiness_status', 'ready'],
+        ['pack_readiness_score', 100],
+        [
+          'pack_quality_summary',
+          isPl
+            ? 'Komplet sprawozdań FY2014 (RZiS, bilans, przepływy) — baza dla modelu ROI.'
+            : 'Complete FY2014 statement set (P&L, BS, CF) — the baseline the ROI model is grounded on.',
+        ],
+        ['pack_quality_reason_codes', JSON.stringify([])],
+        ['source_statement_count', promoted.length],
+        ['missing_statement_types', JSON.stringify([])],
+      ],
+    });
+  } catch (error) {
+    return incomplete(`pack promotion failed: ${(error as Error).message}`, {
+      packId,
+      statementIds: promoted,
+      unpromotedStatementIds: [],
+      analysisId,
+    });
+  }
+
+  return {
+    status: 'complete',
+    packId,
+    statementIds: promoted,
+    unpromotedStatementIds: [],
+    analysisId,
+  };
+}
+
+async function verifyAnalysisReadBack(params: {
+  organizationId: string;
+  packId: string;
+  analysisId: string;
+  analysisColumns: Set<string>;
+}): Promise<{ ok: boolean; reason?: string }> {
+  let rows: Array<Record<string, unknown>>;
+  try {
+    rows = await DbPromise.all<Record<string, unknown>>(
+      `SELECT id, organization_id, source_statement_pack_id, currency
+         FROM financial_analyses
+        WHERE id = ?`,
+      [params.analysisId],
+      { fallback: false }
+    );
+  } catch (error) {
+    return { ok: false, reason: `query failed: ${(error as Error).message}` };
+  }
+
+  if (rows.length !== 1) return { ok: false, reason: `expected 1 analysis row, got ${rows.length}` };
+  const row = rows[0];
+  if (String(row.organization_id ?? '') !== params.organizationId) {
+    return { ok: false, reason: `organization_id mismatch: ${String(row.organization_id ?? 'null')}` };
+  }
+  if (String(row.source_statement_pack_id ?? '') !== params.packId) {
+    return {
+      ok: false,
+      reason: `source_statement_pack_id mismatch: ${String(row.source_statement_pack_id ?? 'null')}`,
+    };
+  }
+  const currency = String(row.currency ?? '').trim().toUpperCase();
+  if (currency && currency !== ATELIER_FINANCE_CURRENCY) {
+    return { ok: false, reason: `currency mismatch: ${currency} != ${ATELIER_FINANCE_CURRENCY}` };
+  }
+  return { ok: true };
+}
+
+async function verifyPackReadBack(params: {
+  organizationId: string;
+  packId: string;
+  packColumns: Set<string>;
+}): Promise<{ ok: boolean; reason?: string }> {
+  let packRows: Array<Record<string, unknown>>;
+  let statementRows: Array<Record<string, unknown>>;
+  try {
+    packRows = await DbPromise.all<Record<string, unknown>>(
+      `SELECT id, organization_id, entity_name, currency, period_label
+         FROM financial_statement_packs
+        WHERE id = ?`,
+      [params.packId],
+      { fallback: false }
+    );
+    statementRows = await DbPromise.all<Record<string, unknown>>(
+      `SELECT id, statement_type, currency, readiness_status
+         FROM financial_statements
+        WHERE statement_pack_id = ?`,
+      [params.packId],
+      { fallback: false }
+    );
+  } catch (error) {
+    return { ok: false, reason: `query failed: ${(error as Error).message}` };
+  }
+
+  if (packRows.length !== 1) return { ok: false, reason: `expected 1 pack row, got ${packRows.length}` };
+  const pack = packRows[0];
+  if (String(pack.organization_id ?? '') !== params.organizationId) {
+    return { ok: false, reason: `organization_id mismatch: ${String(pack.organization_id ?? 'null')}` };
+  }
+
+  const expectedTypes = ATELIER_FY2014_STATEMENTS.map((statement) => statement.statementType).sort();
+  const actualTypes = statementRows.map((row) => String(row.statement_type ?? '')).sort();
+  if (actualTypes.join('|') !== expectedTypes.join('|')) {
+    return { ok: false, reason: `pack holds [${actualTypes.join(', ')}], expected [${expectedTypes.join(', ')}]` };
+  }
+
+  const notReady = statementRows.filter((row) => String(row.readiness_status ?? '') !== 'ready');
+  if (notReady.length > 0) {
+    return { ok: false, reason: `${notReady.length} statement(s) under the pack are not READY` };
+  }
+
+  // One single currency across the pack and every statement under it.
+  const currencies = new Set(
+    [pack, ...statementRows].map((row) => String(row.currency ?? '').trim().toUpperCase())
+  );
+  if (currencies.size !== 1 || !currencies.has(ATELIER_FINANCE_CURRENCY)) {
+    return { ok: false, reason: `pack currency set is [${[...currencies].join(', ')}]` };
+  }
+
+  return { ok: true };
 }
 
 /**
- * The approved FY2014 analysis, seeded from the pack above.
+ * The FY2014 analysis, seeded from the pack above and promoted to APPROVED only
+ * after phase 2 confirms it points at that pack.
  *
  * Written to `financial_analyses` — the table the Finance → Analysis tab reads
  * through `listAnalyses()`. (The legacy `digitization_analyses` row written by
@@ -840,15 +1508,13 @@ async function upsertAtelierFinanceAnalysis(params: {
   projectId: string | null;
   createdBy: string | null;
   isPl: boolean;
+  analysisColumns: Set<string>;
 }): Promise<string | null> {
-  if (!(await tableExists('financial_analyses'))) return null;
-
   const analysisId = makeId(params.organizationId, 'analysis', ATELIER_FINANCE_SLUGS.analysis);
   const { periods, statementData } = buildAtelierAnalysisStatementData();
-  const analysisColumns = await getTableColumns('financial_analyses');
 
   const analysisUpsert = projectUpsert(
-    analysisColumns,
+    params.analysisColumns,
     [
       ['id', analysisId],
       ['organization_id', params.organizationId],
@@ -860,22 +1526,22 @@ async function upsertAtelierFinanceAnalysis(params: {
           ? 'Analiza bazowa FY2014: rentowność, struktura bilansu i przepływy przed startem programu Atelier Forward.'
           : 'FY2014 baseline: profitability, balance-sheet structure and cash generation before the Atelier Forward program starts.',
       ],
-      ['status', 'APPROVED'],
+      // DRAFT, not APPROVED: approval is granted in phase 2, once the analysis
+      // has been read back and proven to point at the canonical pack.
+      ['status', 'DRAFT'],
       ['analysis_type', 'comprehensive'],
       ['periods', JSON.stringify(periods)],
       ['statement_data', JSON.stringify(statementData)],
       ['currency', ATELIER_FINANCE_CURRENCY],
       ['source_statement_ids', JSON.stringify(params.statementIds)],
       ['source_statement_pack_id', params.packId],
-      ['approved_by', params.createdBy],
       ['created_by', params.createdBy],
     ],
     {
-      required: ['id', 'organization_id', 'title', 'status'],
+      // `status` and `approved_by` are promotion-owned.
       updatable: [
         'title',
         'description',
-        'status',
         'analysis_type',
         'periods',
         'statement_data',
@@ -885,27 +1551,22 @@ async function upsertAtelierFinanceAnalysis(params: {
       ],
     }
   );
-  if (!analysisUpsert) return null;
 
-  const hasApprovedAt = analysisColumns.size === 0 || analysisColumns.has('approved_at');
-  await DbPromise.run(
-    `INSERT INTO financial_analyses (${analysisUpsert.columns.join(', ')}${
-      hasApprovedAt ? ', approved_at' : ''
-    })
-     VALUES (${analysisUpsert.columns.map(() => '?').join(', ')}${
-       hasApprovedAt ? ', CURRENT_TIMESTAMP' : ''
-     })
-     ON CONFLICT(id) DO UPDATE SET
-       ${[...analysisUpsert.updateSet, 'updated_at=CURRENT_TIMESTAMP'].join(',\n       ')}`,
-    analysisUpsert.values,
-    // NOT `{ fallback: true }`. `DbPromise.run` swallows the error when fallback
-    // is on, so a constraint or jsonb-cast failure here would leave the pack and
-    // the model in place with NO analysis — two thirds of the golden flow — and
-    // the seed would still report success. The approved analysis is one of the
-    // three legs FIN-005 requires; if it cannot be written, the seed must say so.
-    // Environments without the table are already handled by `tableExists` above.
-    { fallback: false }
-  );
+  try {
+    await DbPromise.run(
+      buildUpsertSql('financial_analyses', analysisUpsert),
+      analysisUpsert.values,
+      // NOT `{ fallback: true }`. `DbPromise.run` swallows the error when fallback
+      // is on, so a constraint or jsonb-cast failure here would leave the pack and
+      // the model in place with NO analysis — two thirds of the golden flow — and
+      // the seed would still report success. The approved analysis is one of the
+      // three legs FIN-005 requires; if it cannot be written, the seed must say so.
+      { fallback: false }
+    );
+  } catch (error) {
+    logger.warn('[atelier-finance-seed] analysis write failed', { error: (error as Error).message });
+    return null;
+  }
 
   return analysisId;
 }
