@@ -27,6 +27,7 @@ import http from 'http';
 
 // TypeScript imports (ES Modules)
 import { initSentry } from './config/index.js';
+import { reportRateLimitStartupConfig } from './config/rateLimitPosture.js';
 import { startHealthCheck } from './cron/HealthCheckJob.js';
 import Scheduler from './cron/Scheduler.js';
 import {
@@ -838,6 +839,28 @@ app.use(
 // RATE LIMITING
 // ============================================================
 
+/**
+ * Declare the rate-limit posture ONCE, at boot, before a single request is
+ * served. Until now the posture was only ever inferred per request from silent
+ * env defaults, so a typo or a leftover `DISABLE_RATE_LIMIT=true` produced a
+ * server that booted happily and enforced nothing.
+ *
+ * With `RATE_LIMIT_POSTURE` unset (today's staging) this only LOGS: the resolver
+ * produces no errors for an inferred posture, so behaviour is unchanged. Errors
+ * are only possible once someone declares the posture explicitly, which is the
+ * point — declaring it buys fail-fast.
+ */
+const rateLimitStartupConfig = reportRateLimitStartupConfig(logger, process.env);
+if (rateLimitStartupConfig.errors.length > 0 && !isTest) {
+  logger.error(
+    '[RateLimit] refusing to start: the declared rate limit posture cannot be satisfied'
+  );
+  process.exit(1);
+}
+
+// `throwOnError` is deliberately NOT passed here: these gateway limiters front
+// authenticated product traffic and must keep failing OPEN on a Redis blip.
+// The demo signup limiters opt in separately — see rateLimiting.middleware.ts.
 const redisStore = new RedisRateLimitStore({ windowMs: 15 * 60 * 1000 });
 const authRedisStore = new RedisRateLimitStore({ windowMs: 60 * 60 * 1000 });
 
