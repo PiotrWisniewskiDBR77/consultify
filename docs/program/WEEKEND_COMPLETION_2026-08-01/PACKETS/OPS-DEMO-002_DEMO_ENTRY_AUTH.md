@@ -563,6 +563,100 @@ zamyka dopiero bramka w samym handlerze.
 Zgłoszone, nienaprawione (inne pakiety): `switch-organization`, `demo-login`,
 OAuth login/callback i impersonacja też wołają `generateTokenPair` bez bramki TTL.
 
+## Runda 7 — nadpisanie tenanta i korekty rundy 6
+
+### P0 — `x-org-context` nadpisywał tenant sesji
+
+Runda 5 wykluczyła publiczne demo z ratunkowej ścieżki „dowolne ACTIVE membership".
+Ta sama ucieczka istniała **drugimi drzwiami**: blok „Respect the UI-selected
+organization" (`attachUser`) sprawdzał `x-org-context` / `x-organization-id` przeciwko
+`organization_members` — a konto publicznego demo ma ACTIVE membership w organizacji
+**bazowej**, bo tam zapisuje je rejestracja. Nagłówek `x-org-context: <DEMO_ORG_ID>`
+przechodził więc kontrolę i nadpisywał `resolvedOrganizationId` ustawiony z sesji.
+
+Teraz dla principala publicznego demo org wyznaczona z **aktywnej sesji jest
+ostateczna**: mechanizm UI-selected organization nie wykonuje się w ogóle, a nagłówek
+sterujący organizacją kończy się `403 DEMO_SESSION_INVALID` — nie cichym zignorowaniem.
+Odmowa jest lepsza: ciche zignorowanie zostawia wywołującego w przekonaniu, że
+przełączenie nastąpiło, i nie zostawia nam śladu próby. Zwykły użytkownik zachowuje
+legalne przełączanie organizacji.
+
+Testy sondują przez `record-event`, bo ono zapisuje z `req.organizationId` — wiersz,
+który wyląduje w bazie, jest bezpośrednim dowodem na org rozstrzygniętą przez
+middleware. Sondowanie `/api/demo/organization` niczego by nie dowiodło: czyta wiersz
+sesji wprost i nigdy nie dotyka `req.organizationId`.
+
+### P0 — anonimowy `repair` uruchamiający `child_process`
+
+**Korekta ścieżki — teza zadania była odwrócona.** W repo są DWA podobnie nazwane pliki:
+
+| Plik | Montaż | Ścieżka | Bramki |
+| --- | --- | --- | --- |
+| `routes/system-health.routes.ts` | `index.ts:150` | `/api/system` | **żadnych** ← podatny |
+| `routes/systemHealth.routes.ts` | `Gateway.ts:643` | `/api/system-health` | `defaultRateLimiter` + `verifySuperAdmin` |
+
+Zmierzone na żywym aplikacyjnym stacku: `POST /api/system-health/repair` → `401`
+(nigdy nie istniał), `POST /api/system/repair` → **realnie uruchomiony `execAsync`**.
+Komentarz w handlerze był poprawny; błędne było założenie, że jest błędny.
+
+Endpoint **usunięty w całości** — nie dodano `verifyToken`, bo to by nie wystarczyło.
+Jedyny znaleziony konsument (`SystemHealthDashboard.tsx`) jest martwy podwójnie: plik
+nie jest nigdzie importowany, a wołał ścieżkę, która i tak nie routowała do `/repair`.
+W komentarzu zostały warunki ewentualnego powrotu: osobny router superadmina,
+`requireSuperAdmin`, flaga środowiskowa domyślnie `false`, brak `child_process`
+w procesie web, dedykowany worker, distributed lock, rate limit, audit log, timeout
+i kontrola równoległości.
+
+Kontrola negatywna zmierzyła skalę: po przywróceniu handlera **12 równoległych żądań
+= 12 procesów**. Asercja szpiega na `exec` jest w teście celowo **przed** asercją
+statusu, żeby przejście po samym kodzie odpowiedzi nie mogło zamaskować handlera,
+który shell-outuje przed odpowiedzią. Aplikacja zwraca `401`, nie `404`, dla nieznanych
+tras `/api/*` — test sprawdza więc, że usunięta ścieżka jest **nieodróżnialna od
+nigdy nieistniejącej**, zamiast zaszywać `404`.
+
+Odnotowane, nienaprawione: `HealthCheckController` woła `execSync('git rev-parse …')`
+na nieuwierzytelnionym `/ping` — dwa procesy synchronicznie na każdy anonimowy ping,
+gdy brak zmiennych git.
+
+### Korekty rundy 6 — trzy fałszywe zielenie i dwie luki, wszystkie moje
+
+Przegląd adwersaryjny obalił część tego, co runda 6 ogłosiła jako pokryte:
+
+1. **Testy natywnych gatewayów WS niczego nie dowodziły.** Używały wymyślonych
+   identyfikatorów zasobów, więc odmowa pochodziła z kontroli istnienia zasobu —
+   zwykły użytkownik NIE-demo dostaje identyczne `403`. Test używa teraz realnej,
+   zaseedowanej idei. **I nawet wtedy guard nie jest tam czynnikiem rozstrzygającym**:
+   po jego wyłączeniu połączenie dalej jest odrzucane, bo `assertIdeaMembership`
+   wymaga ACTIVE membership w organizacji sesji, a wiersz konta demo leży w bazowej.
+   Nie udało mi się skonstruować konfiguracji, w której to guard odrzuca natywne WS —
+   **jest tam obroną w głąb, nie naprawą**. Namespace'y Socket.IO są odwrotnością:
+   po wyłączeniu guarda wszystkie cztery wpuszczają principala demo. Tam jest realna dziura.
+   *(Moja poprzednia diagnoza — że odrzuca `resolveWsOrgContext` — była błędna; ono
+   rozwiązuje się czysto i zwraca org sesji.)*
+2. **Test „nic nie zapisuje" miał złą listę tabel.** `idea_map_nodes` **nie istnieje
+   nigdzie w repo**, `notebook_pages` jest w ścieżce realtime tylko czytane, a brakowało
+   `collab_session_events` (lock/unlock/graph_patch) i `my_idea_maps` (kanoniczny graf
+   CRDT). Do tego `countRows` zwracało `-1` dla nieistniejącej tabeli i porównywało
+   `-1 === -1` — na czystej bazie CI wszystkie cztery asercje byłyby puste. Lista jest
+   poprawiona, a test **odmawia przejścia**, jeśli nie porównał ani jednej realnej tabeli.
+3. **`evaluateRealtimeAccess` deklarowało fail-closed, a było fail-OPEN.** Delegowało do
+   `isPublicDemoPrincipal`, które samo połyka błąd magazynu i zwraca `false` — celowo,
+   bo bramka HTTP musi failować otwarcie. `catch` w module realtime nigdy więc nie
+   widział awarii: **blip bazy wpuszczał każdego principala demo do realtime**. Marker
+   jest teraz czytany bezpośrednio, więc błąd dociera do `catch`.
+4. **Domyślny namespace Socket.IO `/` nie miał żadnego middleware.** `namespace.use`
+   obejmuje tylko swój namespace, a Socket.IO zawsze serwuje `/`. Klient
+   **nieuwierzytelniony** otwierał tam socket. Naprawione przez `io.use(...)` na
+   serwerze.
+5. **Natywne gatewaye WS nie rejestrowały połączeń do przemiatania.** `trackRealtimeConnection`
+   miał jednego wywołującego — `socketAuth`. Trzy gatewaye sprawdzały principala raz przy
+   upgrade i nigdy więcej. Teraz rejestrują i są rozłączane przez sweep.
+
+Martwy kod odnotowany: `/collab` (`ideaCollab.gateway.ts`) i `/dt`
+(`collaborativeSession.gateway.ts`, obsługuje `vote`/`add_comment` **bez żadnej
+autoryzacji**) nie są nigdzie inicjalizowane. Podpięcie któregokolwiek przywróci całą
+klasę tego błędu.
+
 ## Bramki wykonane lokalnie
 
 Wszystko z `--retry=0`.

@@ -13,7 +13,18 @@ last_reviewed: 2026-08-01
 
 ## Werdykt
 
-Stan: **FINDING — rejestr do triage'u, nic nie jest naprawiane w tym pakiecie.**
+Stan: **FINDING — rejestr do triage'u, nic nie jest naprawiane w tym pakiecie,
+z jednym wyjątkiem: pozycja P0 `POST /api/system/repair` została USUNIĘTA (2026-08-01).**
+
+> **AKTUALIZACJA 2026-08-01 — P0 zamknięty.** `POST /api/system/repair` nie istnieje.
+> Handler usunięto z `server/src/routes/system-health.routes.ts`; w jego miejscu stoi
+> komentarz z warunkami ewentualnego przywrócenia. Regresję pilnuje
+> `tests/integration/systemHealthRepairRemoved.contract.test.ts`, który uruchamia
+> **realną aplikację** (`server/src/index`) i szpieguje `child_process.exec`.
+> Rejestr poniżej liczy więc **54 trasy** (było 55) i **16 przypadkowych** (było 17).
+>
+> Przy okazji usunięcia skorygowano dwa błędy tego dokumentu i dopisano dwa nowe
+> ustalenia — patrz „Korekty i uzupełnienia (2026-08-01)” na końcu.
 
 W API istnieje **55 tras zapisujących** (`POST` / `PUT` / `PATCH` / `DELETE`), do których
 handler dochodzi **bez jakiegokolwiek uwierzytelnienia w łańcuchu middleware** — bez
@@ -25,7 +36,8 @@ zalogowany użytkownik.
 w ogóle nie czytają poświadczenia: nie ma czego eskalować. Principal demo dostaje na nich
 dokładnie tyle, ile przypadkowy przechodzień. Praca jest niezależna od pakietu wejścia do
 demo i może iść własnym tempem — z jednym wyjątkiem opisanym niżej
-(`/api/system/repair`), który ma charakter P0 i nie powinien czekać na kolejkę.
+(`/api/system/repair`), który miał charakter P0 i nie czekał na kolejkę — **jest już
+usunięty** (2026-08-01).
 
 Z 55 tras **38 jest publicznych z zamysłu** (rejestracja, reset hasła, webhooki
 z własnym podpisem, formularze publiczne, linki udostępnione tokenem), a **17 jest
@@ -186,7 +198,7 @@ webhooków) i `POST /api/auth/login-history` (sekcja `/api/auth`).
 
 | M | Ścieżka | Plik:linia | Zapisuje / robi | Limit | Walid. | Tenant z ciała |
 | --- | --- | --- | --- | --- | --- | --- |
-| POST | `/api/system/repair` | `server/src/routes/system-health.routes.ts:430` | **`child_process.exec('npm run db:test')`** | nie | nie | — |
+| ~~POST~~ | ~~`/api/system/repair`~~ **USUNIĘTA 2026-08-01** | `server/src/routes/system-health.routes.ts:427` (komentarz w miejscu handlera) | ~~**`child_process.exec('npm run db:test')`**~~ — trasa nie istnieje, `child_process` nie występuje już w tym pliku | — | — | — |
 | POST | `/api/access-control/codes/register` | `server/src/routes/access-control.routes.ts:387` | `users`, `access_codes`, `access_code_usage` — **druga ścieżka rejestracji** | nie | nie | `code` + `email` z ciała |
 | POST | `/api/analytics/journey/track` | `server/src/routes/journeyAnalytics.routes.ts:16` | zdarzenia journey (`behaviorIntelligenceService.ingestJourneyEvent`) | `apiAuthRateLimiter` | nie | **tak — `userId` i `organizationId`** |
 | POST | `/api/analytics/journey/track/batch` | `server/src/routes/journeyAnalytics.routes.ts:37` | zdarzenia journey (wsad) | `apiAuthRateLimiter` | nie | **tak — `userId` i `organizationId`** |
@@ -238,7 +250,7 @@ Kryterium: trasa robi coś, co ma sens **wyłącznie** dla znanego aktora, albo 
 
 | Trasa | Dlaczego przypadek |
 | --- | --- |
-| `POST /api/system/repair` | Uruchamia proces powłoki na serwerze. **Nie ma żadnego wywołania z frontu** (`grep` po `src/` — zero trafień). Montowana bezwarunkowo w `index.ts:150`, **przed** Gatewayem, więc żaden guard bramy jej nie obejmuje. Bliźniaczy moduł `systemHealth.routes.ts` montowany pod `/api/system-health` ma na każdej mutacji `verifySuperAdmin` — czyli sam projekt uznaje tę klasę operacji za superadmińską. |
+| `POST /api/system/repair` **(USUNIĘTA 2026-08-01)** | Uruchamiała proces powłoki na serwerze. **KOREKTA:** zdanie „nie ma żadnego wywołania z frontu (`grep` po `src/` — zero trafień)” było **nieprawdziwe co do dowodu, prawdziwe co do wniosku**. Trafienie w `src/` istnieje: `src/views/SystemHealthDashboard.tsx:45` (`runAutoRepair`). Ten konsument był jednak martwy podwójnie: (a) plik nie jest **nigdzie importowany** (zero trafień na `SystemHealthDashboard` poza samą definicją), (b) wołał `POST /api/system/health/repair`, a trasa nasłuchiwała na `/api/system/repair` — więc nawet po wyrenderowaniu dostałby odpowiedź odmowną. Realnego konsumenta nie było, usunięcie było bezpieczne. Montowana bezwarunkowo w `index.ts:150`, **przed** Gatewayem, więc żaden guard bramy jej nie obejmował. Bliźniaczy moduł `systemHealth.routes.ts` montowany pod `/api/system-health` ma na każdej mutacji `verifySuperAdmin` — czyli sam projekt uznaje tę klasę operacji za superadmińską. |
 | `POST /api/auth/login-history` | Zapisuje wiersz `login_history` dla **dowolnego** `userId` z ciała. Rejestr forensyczny, który każdy może zatruć. Sąsiednie trasy w tym samym pliku (`GET /suspicious`) mają `verifyToken`. |
 | `POST /api/llm/status/refresh`, `POST /api/llm/status/test/:provider` | Jedyni konsumenci to `src/views/admin/AdminLLMView.tsx` i `src/components/Admin/AI/ModelsProvidersTab.tsx` — ekrany administracyjne. Wszystkie pozostałe mutacje w `llm.routes.ts` mają `verifySuperAdmin`. Te dwie są wyjątkiem bez uzasadnienia. |
 | `POST /api/feedback/ai-insights` | Sąsiednie trasy administracyjne w `feedback.routes.ts` mają `verifySuperAdmin`, publiczne zgłoszenia mają `optionalVerifyToken` + `feedbackRateLimiter`. Ta jedna nie ma nic — a wywołuje model. |
@@ -315,7 +327,7 @@ razem z resztą martwych duplikatów, nie do naprawy.
 
 | Trasa | Co zrobić | Dlaczego tak |
 | --- | --- | --- |
-| `POST /api/system/repair` | **Usunąć trasę.** Nie dodawać guarda. | Zero wywołań z frontu; funkcja to `exec('npm run db:test')`, która na Railway nie ma sensu operacyjnego. Guard zostawiłby zdalne uruchamianie powłoki jako „funkcję”. Jeśli operacja ma zostać — przenieść do skryptu CLI poza HTTP. |
+| `POST /api/system/repair` | ~~**Usunąć trasę.** Nie dodawać guarda.~~ → **ZROBIONE 2026-08-01.** | Brak realnego konsumenta (jedyne trafienie w `src/` to martwy, nieimportowany widok wołający inną ścieżkę); funkcja to `exec('npm run db:test')`, która na Railway nie ma sensu operacyjnego. Guard zostawiłby zdalne uruchamianie powłoki jako „funkcję”. Warunki ewentualnego przywrócenia zapisano w komentarzu w miejscu handlera: osobny router superadmiński + `requireSuperAdmin`, jawna flaga env domyślnie `false`, **zero `child_process` w procesie webowym** (dedykowany worker), zamek rozproszony, rate limiting, wpis audytowy, timeout wykonania i kontrola współbieżności. |
 | `POST /api/webhooks/github` | **Podpis.** `X-Hub-Signature-256`, HMAC-SHA256 z sekretu per integracja, odrzucenie przy braku sekretu (jak w `v8-sync-inbound`). | To webhook z definicji — auth sesyjny nie ma zastosowania, właściwym mechanizmem jest podpis. |
 | `POST /api/webhooks/jira/:integrationId` | **Podpis** + weryfikacja, że `:integrationId` należy do organizacji, której dotyczy `tasks`. | Trasa zapisuje do `tasks`. Bez podpisu to anonimowa mutacja danych tenanta. |
 | `POST /api/webhooks/:provider` | **Usunąć catch-all.** Zostawić wyłącznie jawnie zarejestrowanych dostawców. | Nieograniczony `INSERT` sterowany ścieżką to nie jest interfejs, to worek. |
@@ -440,16 +452,82 @@ Konwencja katalogu wymaga wpisu w plikach współdzielonych. Nie zostały dotkni
    „Odkrycia stagingowe wymagające naprawy”:
 
    ```
-   | `SEC-PUB-001` | Anonimowa powierzchnia zapisu API | READY_FOR_DECISION | 55 tras zapisu bez auth; 16 przypadkowych; 7 przypadków zaufania do ciała żądania; niezależne od OPS-DEMO-002 |
+   | `SEC-PUB-001` | Anonimowa powierzchnia zapisu API | READY_FOR_DECISION | 54 trasy zapisu bez auth (P0 `/api/system/repair` USUNIĘTY 2026-08-01); 16 przypadkowych; 7 przypadków zaufania do ciała żądania; +2 nowe pozycje do triage'u (K3 `execSync` na `/ping`, K4 `GET /api/system-health` bez guarda); niezależne od OPS-DEMO-002 |
    ```
 
 2. `docs/program/WEEKEND_COMPLETION_2026-08-01/README.md` — odnośnik
    `[SEC-PUB-001](PACKETS/SEC-PUB-001_ANONYMOUS_WRITE_SURFACE.md)` obok istniejących
    odnośników do `OPS-DEMO-002` i `SEC-AUTH-001`.
 
+## Korekty i uzupełnienia (2026-08-01)
+
+Ustalone przy usuwaniu P0, **na żywej aplikacji** (nie z lektury kodu): sondą
+`supertest` po realnym `server/src/index`.
+
+### K1. Ścieżka w rejestrze była poprawna — mylił się opis zadania
+
+Zlecenie naprawy wskazywało `POST /api/system-health/repair` (mount `Gateway.ts:643`)
+i twierdziło, że komentarz handlera podaje złą ścieżkę. **Jest odwrotnie.** To dwa różne
+pliki o mylnie podobnych nazwach:
+
+| Plik | Montowany w | Pod | Guardy |
+| --- | --- | --- | --- |
+| `routes/system-health.routes.ts` (z myślnikiem) | `index.ts:150` | `/api/system` | **żadnych** ← tu był defekt |
+| `routes/systemHealth.routes.ts` (camelCase) | `Gateway.ts:643` | `/api/system-health` | `defaultRateLimiter` + `verifySuperAdmin` na mutacjach |
+
+Zmierzone: `POST /api/system-health/repair` → `401` (trasa nigdy nie istniała),
+`POST /api/system/repair` → `500` przy realnym `exec` / `200` przy zamockowanym.
+Rejestr (`:189`) miał więc rację, a `Gateway.ts` nie był w ogóle dotknięty tą naprawą.
+
+### K2. Aplikacja nie odpowiada `404` na nieznane `/api/*`
+
+Sonda: `POST /api/system/definitely-not-a-route` → **`401`**, nie `404`. Catch-all
+odrzuca żądanie przed jakimkolwiek handlerem 404. Ma to znaczenie dla każdego testu
+regresji w tym pakiecie: asercja „usunięta trasa zwraca 404” byłaby **fałszywie
+czerwona**. Właściwa asercja to „nieodróżnialna od trasy, której nigdy nie było”.
+
+### K3. NOWE — drugi anonimowy shell-out: `execSync` na `/ping`
+
+`server/src/controllers/HealthCheckController.ts:36,41` woła
+`execSync('git rev-parse --short HEAD')` i `execSync('git rev-parse --abbrev-ref HEAD')`.
+Kontroler jest podpięty jako `app.get('/ping', HealthCheckController.ping)`
+(`index.ts:112`) — **bez uwierzytelnienia**.
+
+Ocena — **niższa waga niż `/repair`, ale nie zero**:
+
+- argumenty są **stałe**, brak wejścia od użytkownika → **brak wstrzyknięcia polecenia**;
+- odpala się tylko gdy **brak** `gitSha`/`gitBranch` w env (`:25-32`) — na Railway env
+  jest ustawione, więc na produkcji ścieżka jest zwykle martwa;
+- ale w środowisku bez tych zmiennych **każde anonimowe `/ping` forkuje dwa procesy**,
+  synchronicznie, blokując pętlę zdarzeń → wektor wyczerpania zasobów.
+
+**Rekomendacja (nie wykonana — poza zakresem tego zlecenia):** policzyć raz przy starcie
+i zapamiętać, albo wymagać env i nie sięgać po `git` w runtime.
+
+### K4. NOWE — `GET /api/system-health` jest publiczny
+
+Bliźniaczy moduł ma `verifySuperAdmin` na mutacjach i na większości odczytów, ale
+**trasa bazowa** (`systemHealth.routes.ts:75`) go nie ma. Zmierzone: `GET /api/system-health`
+→ **`200` bez poświadczenia** (dla kontrastu `GET /api/system-health/detailed` → `401`).
+To ujawnienie stanu infrastruktury, nie zapis — dlatego jest poza rejestrem tego pakietu
+(rejestr obejmuje `POST`/`PUT`/`PATCH`/`DELETE`). **Nie naprawiane:** plik należy do
+innego strumienia prac. Do triage'u jako osobna pozycja.
+
+### K5. Pozostałe `exec`/`spawn` w `routes/` i `controllers/` — czyste
+
+Przegląd `server/src/routes/**` i `server/src/controllers/**` pod kątem `child_process`,
+`execAsync`, `exec(`, `spawn(`: poza K3 wszystkie trafienia to **fałszywe alarmy** —
+`RegExp.prototype.exec` (`aiMemory.routes.ts:393`, `report-builder.routes.ts:3536`,
+`presentations.routes.ts:795`) i `DbPromise.exec` / `db.exec`, czyli SQL, nie powłoka
+(`testSupport.routes.ts` ×7, `assessment-level-attachments.routes.ts:63`).
+**Innych anonimowych shell-outów nie ma.**
+
 ## Stan
 
-`READY_FOR_DECISION` — rejestr kompletny i zweryfikowany statycznie. Kolejność i termin
-naprawy ustala właściciel. Rekomendacja techniczna: pozycje z sekcji „Zamknąć
-natychmiast” (12 pozycji, 14 tras) przed wystawieniem stagingu publicznie; reszta
-zwykłą kolejką.
+`READY_FOR_DECISION` — rejestr kompletny i zweryfikowany statycznie; pozycja P0
+dodatkowo zweryfikowana dynamicznie i **zamknięta**. Kolejność i termin naprawy reszty
+ustala właściciel. Rekomendacja techniczna: pozostałe pozycje z sekcji „Zamknąć
+natychmiast” (11 pozycji, 13 tras — po odjęciu zamkniętego `/api/system/repair`) przed
+wystawieniem stagingu publicznie; reszta zwykłą kolejką. Do triage'u dochodzą dwie nowe
+pozycje z korekt: **K3** (`execSync` na anonimowym `/ping`) i **K4**
+(`GET /api/system-health` bez guarda).
