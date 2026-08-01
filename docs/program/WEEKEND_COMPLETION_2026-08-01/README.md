@@ -116,6 +116,9 @@ zakończone na podstawie samej deklaracji implementatora.
 22. [`AGREEMENTS/QUESTION_GENERATOR_CONTRACT.md`](AGREEMENTS/QUESTION_GENERATOR_CONTRACT.md)
     — generator pełnego instrumentu pytań, coverage, sekwencji i branchingu.
 23. [`AGREEMENTS/INTERVIEW_ANSWER_ASSISTANCE_AND_VERIFICATION_CONTRACT.md`](AGREEMENTS/INTERVIEW_ANSWER_ASSISTANCE_AND_VERIFICATION_CONTRACT.md)
+24. [`CLAUDE_PARALLEL_LAUNCH_PROMPTS_2026-08-01.md`](CLAUDE_PARALLEL_LAUNCH_PROMPTS_2026-08-01.md)
+    — trzy gotowe, niekolidujące prompty dla równoległych linii Opusa: Materials,
+    Finance i publiczne Demo/Auth.
     — pełny system pomocy w odpowiedzi, readiness check i manager review.
 24. [`AGREEMENTS/MY_WORK_DOCUMENTATION_MAP.md`](AGREEMENTS/MY_WORK_DOCUMENTATION_MAP.md)
     — podział My Work na siedem osobnych pakietów oraz kolejność ich uzgodnień.
