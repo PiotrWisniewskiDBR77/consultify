@@ -1137,6 +1137,13 @@ export async function createModel(params: {
   createdBy: string;
   sourceStatementId?: string;
   sourceStatementPackId?: string;
+  /**
+   * FIN-04: when supplied, this scenario is created UNDER an existing
+   * Investment Case (`COALESCE(case_id, id)` of the referenced row) rather
+   * than becoming its own case root. Must belong to the caller's own org —
+   * verified below, same cross-org FK-injection guard as project/initiative.
+   */
+  caseId?: string;
 }): Promise<string> {
   const id = uuidv4();
 
@@ -1158,6 +1165,18 @@ export async function createModel(params: {
     );
     if (!ownedInitiative?.id) throw new Error('Source initiative not found');
   }
+  let resolvedCaseRootId: string | null = null;
+  if (params.caseId) {
+    const caseRoot = await dbGet<{ id: string; case_id: string | null }>(
+      `SELECT id, case_id FROM financial_models WHERE id = ? AND organization_id = ?`,
+      [params.caseId, params.organizationId]
+    );
+    if (!caseRoot?.id) throw new Error('Investment Case not found');
+    // Always store the CASE ROOT id, never an intermediate scenario id —
+    // COALESCE(case_id, id) is "the case id" for any row (see migration
+    // 20260801_fin003_004_case_scenario_baseline.sql doc comment).
+    resolvedCaseRootId = caseRoot.case_id || caseRoot.id;
+  }
 
   const seeded =
     params.sourceStatementPackId && params.organizationId
@@ -1168,7 +1187,7 @@ export async function createModel(params: {
   const assumptions = mergeAssumptions(seeded?.assumptions || {}, params.assumptions);
   try {
     await dbRun(
-      `INSERT INTO financial_models (id, organization_id, project_id, initiative_id, name, description, currency, horizon_months, start_date, granularity, scenario, assumptions_json, created_by, source_statement_id, source_statement_pack_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO financial_models (id, organization_id, project_id, initiative_id, name, description, currency, horizon_months, start_date, granularity, scenario, assumptions_json, created_by, source_statement_id, source_statement_pack_id, case_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         params.organizationId,
@@ -1185,6 +1204,7 @@ export async function createModel(params: {
         params.createdBy,
         params.sourceStatementId || null,
         params.sourceStatementPackId || null,
+        resolvedCaseRootId,
       ]
     );
   } catch {
@@ -1362,7 +1382,7 @@ export async function getModelAssumptionsStatus(
 
 export async function listModels(orgId: string): Promise<any[]> {
   return ((await dbAll(
-    `SELECT fm.id, fm.name, fm.description, fm.project_id, fm.initiative_id, fm.currency, fm.horizon_months, fm.start_date, fm.granularity, fm.scenario, fm.status, fm.version, fm.created_at, fm.updated_at, fm.source_statement_id, fm.source_statement_pack_id,
+    `SELECT fm.id, fm.name, fm.description, fm.project_id, fm.initiative_id, fm.currency, fm.horizon_months, fm.start_date, fm.granularity, fm.scenario, fm.status, fm.version, fm.created_at, fm.updated_at, fm.source_statement_id, fm.source_statement_pack_id, fm.case_id, fm.is_baseline,
             (SELECT COUNT(*) FROM financial_model_events fme WHERE fme.model_id = fm.id AND fme.is_active = TRUE) AS event_count
      FROM financial_models fm
      WHERE fm.organization_id = ?
@@ -1372,7 +1392,25 @@ export async function listModels(orgId: string): Promise<any[]> {
   )) || []) as any[];
 }
 
-export async function updateModel(modelId: string, updates: Record<string, any>): Promise<void> {
+export interface UpdateModelResult {
+  success: boolean;
+  code?: 'VERSION_CONFLICT';
+  serverVersion?: number;
+}
+
+/**
+ * FIN-03: `opts.expectedVersion`, when supplied, turns this into a
+ * compare-and-swap write — `WHERE id = ? AND version = ?` — mirroring the
+ * established CAS pattern in presentations.routes.ts (conditional UPDATE,
+ * `changes === 0` => stale, re-read the current version, report it). Without
+ * `opts.expectedVersion` this is the original unconditional metadata update
+ * (unchanged behavior for every pre-existing caller).
+ */
+export async function updateModel(
+  modelId: string,
+  updates: Record<string, any>,
+  opts?: { expectedVersion?: number }
+): Promise<UpdateModelResult> {
   const allowedFields = [
     'name',
     'description',
@@ -1403,18 +1441,90 @@ export async function updateModel(modelId: string, updates: Record<string, any>)
     sets.push('assumptions_json = ?');
     vals.push(JSON.stringify(updates.assumptions));
   }
-  if (sets.length === 0) return;
+  if (sets.length === 0) return { success: true };
   sets.push('updated_at = CURRENT_TIMESTAMP');
+
+  if (opts?.expectedVersion !== undefined) {
+    const whereVals = [...vals, modelId, opts.expectedVersion];
+    const result = (await dbRun(
+      `UPDATE financial_models SET ${sets.join(', ')} WHERE id = ? AND version = ?`,
+      whereVals
+    )) as { changes?: number } | undefined;
+    if ((result?.changes ?? 0) === 0) {
+      const latest = await dbGet<{ version: number }>(
+        `SELECT version FROM financial_models WHERE id = ?`,
+        [modelId]
+      );
+      return { success: false, code: 'VERSION_CONFLICT', serverVersion: latest?.version };
+    }
+    return { success: true };
+  }
+
   vals.push(modelId);
   await dbRun(`UPDATE financial_models SET ${sets.join(', ')} WHERE id = ?`, vals);
+  return { success: true };
+}
+
+/**
+ * FIN-03: idempotency check for a create-model / approve-model call. Looks up
+ * `financial_model_idempotency` (org + key + operation scoped, unique
+ * constraint added by migration 20260801_fin003_004_case_scenario_baseline.sql).
+ * Returns the ORIGINAL resource id a prior call with the same key produced,
+ * or null when this key has never been seen for this operation.
+ */
+export async function findIdempotentResource(
+  organizationId: string,
+  idempotencyKey: string,
+  operation: 'create_model' | 'approve_model'
+): Promise<string | null> {
+  const row = await dbGet<{ resource_id: string }>(
+    `SELECT resource_id FROM financial_model_idempotency WHERE organization_id = ? AND idempotency_key = ? AND operation = ?`,
+    [organizationId, idempotencyKey, operation]
+  );
+  return row?.resource_id || null;
+}
+
+/**
+ * Records a (org, key, operation) -> resource mapping. Uses ON CONFLICT DO
+ * NOTHING so a genuine race between two requests bearing the SAME key for
+ * the SAME operation resolves to "whichever INSERT wins" without erroring —
+ * the caller should always re-read via findIdempotentResource after a
+ * conflict rather than trust its own in-flight resourceId blindly.
+ */
+export async function recordIdempotentResource(
+  organizationId: string,
+  idempotencyKey: string,
+  operation: 'create_model' | 'approve_model',
+  resourceId: string
+): Promise<void> {
+  try {
+    await dbRun(
+      `INSERT INTO financial_model_idempotency (id, organization_id, idempotency_key, operation, resource_id, created_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT (organization_id, idempotency_key, operation) DO NOTHING`,
+      [uuidv4(), organizationId, idempotencyKey, operation, resourceId]
+    );
+  } catch {
+    // Idempotency table may not exist yet if migration not applied — fail
+    // open on RECORDING (the create/approve itself already succeeded), the
+    // same fail-soft convention as the financial_model_versions insert below.
+  }
 }
 
 export async function approveModel(
   modelId: string,
-  userId: string
-): Promise<{ success: boolean; error?: string }> {
+  userId: string,
+  opts?: { expectedVersion?: number }
+): Promise<{ success: boolean; error?: string; code?: 'VERSION_CONFLICT'; serverVersion?: number }> {
   const model = await getModel(modelId);
   if (!model) return { success: false, error: 'Model not found' };
+
+  if (opts?.expectedVersion !== undefined && Number(model.version || 1) !== opts.expectedVersion) {
+    return {
+      success: false,
+      code: 'VERSION_CONFLICT',
+      serverVersion: Number(model.version || 1),
+      error: 'Version conflict: model was modified since you last read it.',
+    };
+  }
 
   // Recompute and validate
   const result = await computeModel(modelId);
@@ -1431,10 +1541,27 @@ export async function approveModel(
     computedAt: new Date().toISOString(),
   });
   const nextVersion = (model.version || 1) + 1;
-  await dbRun(
-    `UPDATE financial_models SET status = 'approved', approved_by = ?, approved_at = CURRENT_TIMESTAMP, approved_snapshot = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-    [userId, snapshot, nextVersion, modelId]
-  );
+  // Compare-and-swap: pin the UPDATE to the version we just read above, same
+  // as updateModel()'s CAS path — the loser of a concurrent double-approve
+  // (double-click, network retry) gets changes=0 here and a VERSION_CONFLICT,
+  // instead of silently bumping the version a second time / racing the
+  // financial_model_versions INSERT into a duplicate row.
+  const updateResult = (await dbRun(
+    `UPDATE financial_models SET status = 'approved', approved_by = ?, approved_at = CURRENT_TIMESTAMP, approved_snapshot = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND version = ?`,
+    [userId, snapshot, nextVersion, modelId, model.version || 1]
+  )) as { changes?: number } | undefined;
+  if ((updateResult?.changes ?? 0) === 0) {
+    const latest = await dbGet<{ version: number }>(
+      `SELECT version FROM financial_models WHERE id = ?`,
+      [modelId]
+    );
+    return {
+      success: false,
+      code: 'VERSION_CONFLICT',
+      serverVersion: latest?.version,
+      error: 'Version conflict: model was modified concurrently. Refresh and retry.',
+    };
+  }
 
   try {
     await dbRun(
@@ -1446,6 +1573,152 @@ export async function approveModel(
   }
 
   return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// FIN-04: Investment Case scenario grouping + baseline
+// ---------------------------------------------------------------------------
+
+/** "The case id" for any model row — root rows are their own case. */
+function caseRootExpr(): string {
+  return 'COALESCE(case_id, id)';
+}
+
+/**
+ * All scenarios (siblings, including the case root itself) that belong to
+ * the same Investment Case as `anyModelId`, org-scoped. Each row carries
+ * `is_baseline` so the caller can render which one is active.
+ */
+export async function listCaseScenarios(anyModelId: string, orgId: string): Promise<any[]> {
+  const anchor = await dbGet<{ id: string; case_id: string | null }>(
+    `SELECT id, case_id FROM financial_models WHERE id = ? AND organization_id = ?`,
+    [anyModelId, orgId]
+  );
+  if (!anchor?.id) return [];
+  const caseRootId = anchor.case_id || anchor.id;
+  return ((await dbAll(
+    `SELECT id, name, scenario, status, version, is_baseline, case_id, currency, start_date, horizon_months, created_at, updated_at
+     FROM financial_models
+     WHERE organization_id = ? AND ${caseRootExpr()} = ?
+     ORDER BY created_at ASC`,
+    [orgId, caseRootId]
+  )) || []) as any[];
+}
+
+export interface SetBaselineResult {
+  success: boolean;
+  error?: string;
+  code?: 'NOT_FOUND';
+  caseId?: string;
+  previousBaselineModelId?: string | null;
+}
+
+/**
+ * FIN-04 — atomically make `targetModelId` the ONE active baseline of its
+ * Investment Case, demoting whatever was previously the baseline.
+ *
+ * Real transactional guarantee, not application-level "hope nothing races".
+ *
+ * WHY NOT plain `dbRun()` (even twice, even as a single data-modifying CTE):
+ *   - Two separate `dbRun()` calls each pull a connection from the pool
+ *     independently (see `executeWithLogging`/`getPool()` in
+ *     PostgresDatabase.ts) — they are NOT the same session, so a `BEGIN` on
+ *     one call has no effect on the next; there is no shared transaction to
+ *     be atomic within.
+ *   - A single compound statement — `WITH demoted AS (UPDATE ... RETURNING
+ *     id) UPDATE ... RETURNING id` — was tried first and empirically FAILS:
+ *     per PostgreSQL's documented semantics for data-modifying CTEs ("the
+ *     sub-statements in WITH are executed concurrently with each other and
+ *     with the main query ... they cannot see one another's effects on the
+ *     target tables"), the demote and the promote are not guaranteed to
+ *     apply in that order. When the promote's row write lands before the
+ *     demote's, both rows are transiently TRUE at once and the immediate
+ *     (non-deferred) unique index `idx_fm_one_baseline_per_case` raises
+ *     `duplicate key value violates unique constraint` — reproduced live
+ *     against the local Postgres while building this function.
+ *
+ * The actually-correct mechanism: one PINNED connection
+ * (`getPoolClientForPinnedTransaction()` — PostgresDatabase.ts, the same
+ * "one connection for the whole call" primitive FIN-005's Atelier promotion
+ * uses for its own atomic multi-statement write), on which we run
+ * `BEGIN` → demote → promote → `COMMIT`. Within ONE transaction, the second
+ * statement (promote) sees the FIRST statement's (demote) already-applied
+ * effect — Postgres transaction-local statement visibility, not the
+ * same-snapshot CTE trap above — so by the time promote runs, zero rows are
+ * TRUE for this case and setting the target TRUE raises no conflict. A
+ * second concurrent `setBaseline` call for a sibling scenario of the same
+ * case takes a row lock on `BEGIN`'s demote and genuinely queues behind this
+ * transaction (or vice versa) — last COMMIT wins, but there is never a
+ * window where two scenarios of the same case are BOTH committed baseline.
+ * The partial unique index remains the belt-and-suspenders backstop for any
+ * other code path that might ever touch `is_baseline` directly.
+ */
+export async function setBaseline(
+  targetModelId: string,
+  orgId: string,
+  actorId: string
+): Promise<SetBaselineResult> {
+  const target = await dbGet<{ id: string; case_id: string | null; is_baseline: boolean }>(
+    `SELECT id, case_id, is_baseline FROM financial_models WHERE id = ? AND organization_id = ?`,
+    [targetModelId, orgId]
+  );
+  if (!target?.id) return { success: false, code: 'NOT_FOUND', error: 'Model not found' };
+
+  const caseRootId = target.case_id || target.id;
+
+  const { getPoolClientForPinnedTransaction } = await import('../database/PostgresDatabase.js');
+  const client = await getPoolClientForPinnedTransaction();
+  try {
+    await client.query('BEGIN');
+
+    const previousResult = await client.query(
+      `SELECT id FROM financial_models WHERE organization_id = $1 AND COALESCE(case_id, id) = $2 AND is_baseline = TRUE AND id != $3`,
+      [orgId, caseRootId, targetModelId]
+    );
+    const previousBaselineModelId: string | null = previousResult.rows[0]?.id || null;
+
+    // Demote first, in its own statement — its effect is visible to the
+    // NEXT statement in this same transaction (unlike the CTE trap above).
+    await client.query(
+      `UPDATE financial_models SET is_baseline = FALSE, updated_at = CURRENT_TIMESTAMP
+       WHERE organization_id = $1 AND COALESCE(case_id, id) = $2 AND is_baseline = TRUE AND id != $3`,
+      [orgId, caseRootId, targetModelId]
+    );
+
+    const promoteResult = await client.query(
+      `UPDATE financial_models SET is_baseline = TRUE, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1 AND organization_id = $2
+       RETURNING id`,
+      [targetModelId, orgId]
+    );
+
+    if ((promoteResult.rowCount ?? 0) === 0) {
+      await client.query('ROLLBACK');
+      return { success: false, code: 'NOT_FOUND', error: 'Model not found' };
+    }
+
+    try {
+      await client.query(
+        `INSERT INTO financial_model_baseline_audit (id, organization_id, case_id, previous_baseline_model_id, new_baseline_model_id, changed_by, changed_at) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)`,
+        [uuidv4(), orgId, caseRootId, previousBaselineModelId, targetModelId, actorId]
+      );
+    } catch {
+      // Audit table may not exist yet if migration not applied — fail-soft
+      // on the audit write only; the baseline change itself still commits.
+    }
+
+    await client.query('COMMIT');
+    return { success: true, caseId: caseRootId, previousBaselineModelId };
+  } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      // Connection may already be broken; nothing more we can do here.
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 // ---------------------------------------------------------------------------
