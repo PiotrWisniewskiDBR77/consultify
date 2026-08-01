@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
+import { toPeriodIsoDate } from './financePeriodFormat.js';
 import { getVerifiedPackSeed } from './financialStatementPackService.js';
 import { loadLatestStatementVersionSnapshot } from './financialStatementService.js';
 import {
@@ -655,6 +656,26 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
   const model = (await dbGet(`SELECT * FROM financial_models WHERE id = ?`, [modelId])) as any;
   if (!model) throw new Error('Model not found');
 
+  // FINDING (pre-existing, unrelated to FIN-03/FIN-04's own scope, fixed here
+  // as a small vertical-slice MVP_BLOCKER — see final report): `start_date`/
+  // `period_start`/`period_end` are Postgres DATE columns. node-pg hands them
+  // back as JS `Date` objects (no OID 1082 type parser registered — same root
+  // cause documented in financePeriodFormat.ts's module doc, built for FIN-005
+  // for exactly this class of bug). `generateMonthlyPeriods()` and the event
+  // period-matching below (`${event.period_start}T00:00:00.000Z`) both assume
+  // a `YYYY-MM-DD` STRING; template-literal-interpolating a `Date` object
+  // produces garbage that parses to `Invalid Date`, silently zeroing every
+  // period and event match. Reproduced live against a real local Postgres
+  // while building this packet's own acceptance tests (every period came back
+  // "Invalid Date NaN", cashflows all zero) — this blocks the golden flow's
+  // own "compute NPV/IRR/payback" step for ANY model on real Postgres, not
+  // just ones created via this packet's new case/scenario paths. Normalizing
+  // once here, at the read boundary, with the existing canonical
+  // `toPeriodIsoDate()` (already proven correct for the Postgres
+  // local-midnight discriminator) is the same "owner-side fix at the read
+  // boundary" pattern financePeriodFormat.ts's own doc comment prescribes.
+  model.start_date = toPeriodIsoDate(model.start_date) || model.start_date;
+
   const events = (
     (await dbAll(
       `SELECT * FROM financial_model_events WHERE model_id = ? AND is_active = TRUE ORDER BY sort_order, created_at`,
@@ -662,6 +683,8 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     )) || []
   ).map((e: any) => ({
     ...e,
+    period_start: toPeriodIsoDate(e.period_start) || e.period_start,
+    period_end: e.period_end ? toPeriodIsoDate(e.period_end) || e.period_end : e.period_end,
     posting_rules:
       typeof e.posting_rules === 'string' ? JSON.parse(e.posting_rules) : e.posting_rules || {},
     parameters: typeof e.parameters === 'string' ? JSON.parse(e.parameters) : e.parameters || {},
@@ -1670,6 +1693,27 @@ export async function setBaseline(
   const client = await getPoolClientForPinnedTransaction();
   try {
     await client.query('BEGIN');
+
+    // Lock EVERY row of this case (root + all scenarios) up front, before
+    // reading or touching anything. This closes a real TOCTOU race that a
+    // narrower lock leaves open: reproduced live — race two setBaseline()
+    // calls for a case whose CURRENT baseline is neither target (e.g.
+    // baseline=Upside, racing Base vs Downside). Both transactions' demote
+    // step only touches rows that are baseline AT THE MOMENT the demote
+    // statement runs — since neither Base nor Downside is baseline yet,
+    // neither transaction's demote ever locks the OTHER's target row. Tx1
+    // commits (target1=TRUE) before Tx2's promote runs; Tx2's promote then
+    // collides with Tx1's now-committed TRUE row -> a genuine Postgres
+    // `duplicate key value violates unique constraint` (not merely a
+    // theoretical race — this exact error was observed in this suite before
+    // this FOR UPDATE was added). Locking every row of the case FIRST means
+    // the second transaction's very first statement blocks until the first
+    // transaction fully commits, so by the time it proceeds it always reads
+    // the true post-commit state.
+    await client.query(
+      `SELECT id FROM financial_models WHERE organization_id = $1 AND COALESCE(case_id, id) = $2 FOR UPDATE`,
+      [orgId, caseRootId]
+    );
 
     const previousResult = await client.query(
       `SELECT id FROM financial_models WHERE organization_id = $1 AND COALESCE(case_id, id) = $2 AND is_baseline = TRUE AND id != $3`,
