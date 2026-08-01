@@ -2,7 +2,11 @@
  * M13 Inicjatywy — headless acceptance (mirrors the M07 harness).
  *
  * Runs against the e2e webServer (MOCK_DB + ENABLE_TEST_SUPPORT) with a
- * register-demo session from tests/e2e/smoke/global-setup.ts. Each scenario
+ * privileged, NON-demo session from tests/e2e/smoke/global-setup.ts — that
+ * setup calls POST /api/test-support/bootstrap and, only if the route is
+ * absent, POST /api/auth/register (the regular signup). It never uses
+ * /api/auth/register-demo, which is the public unprivileged read-only demo
+ * signup. Each scenario
  * seeds an initiative via the API, navigates the real UI, asserts no error
  * boundary, and saves ONE screenshot as evidence (tests/e2e/screenshots/m13/).
  *

@@ -1,10 +1,19 @@
 /**
  * M06 Ideas · Mind Map — shared E2E harness (TESTY_M06 Manual gate).
  *
- * Secret-free, CI-reproducible: authenticates via /api/auth/register-demo
- * (no QA creds needed), creates an idea, opens the mind-map workspace and
- * provides a screenshot helper that writes one PNG per scenario into
- * tests/e2e/screenshots/m06/<id>.png (the artifact the Manual gate requires).
+ * Authenticates via POST /api/test-support/bootstrap ONLY (a real fresh org, a
+ * real member, a NON-demo write-access token), creates an idea, opens the
+ * mind-map workspace and provides a screenshot helper that writes one PNG per
+ * scenario into tests/e2e/screenshots/m06/<id>.png (the artifact the Manual gate
+ * requires).
+ *
+ * There is deliberately NO `/api/auth/register-demo` fallback. That endpoint is
+ * the public demo signup: unprivileged by design (TEAM_MEMBER in the shared demo
+ * org) and read-only — POST /map/sync answers 403 DEMO_READ_ONLY — which broke
+ * every persistence scenario (§2.1 sync=200, §15.6 reload-persists) while the
+ * canvas still looked fine client-side. Requires on the target backend:
+ *   ENABLE_TEST_SUPPORT=true   TEST_SUPPORT_KEY=<>=12 chars>   NODE_ENV != production
+ * and the same TEST_SUPPORT_KEY on the runner.
  *
  * Live target (default): localhost:3000 (frontend) + localhost:3001 (backend,
  * staging DB). Run with E2E_USE_WEB_SERVER unset so global-setup/storageState
@@ -14,6 +23,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { expect, type Page } from '@playwright/test';
+
+import { getPrivilegedSessionForPage } from '../_helpers/privilegedSession';
 
 export const SHOT_DIR = path.resolve(process.cwd(), 'tests/e2e/screenshots/m06');
 export const CANVAS_LABEL = 'Idea map workspace';
@@ -25,75 +36,34 @@ export type DemoSession = {
   user: Record<string, unknown>;
 };
 
-const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
-
 /**
  * Mint a full WRITE-ACCESS (non-demo) session via test-support bootstrap.
  *
- * register-demo returns a DEMO session, and demo mode is read-only at the server
- * (POST /map/sync → 403 DEMO_READ_ONLY). That made every persistence scenario
- * (§2.1 sync=200, §15.6 reload-persists) fail even though the canvas worked
- * client-side. Bootstrap creates a real org + ADMIN member and signs a non-demo
- * token, so writes are allowed — mirroring the M07 interactions harness.
+ * MANDATORY — throws (naming ENABLE_TEST_SUPPORT / TEST_SUPPORT_KEY) when
+ * test-support is unavailable. See the file header for why there is no
+ * register-demo fallback.
  *
- * Returns null when test-support is disabled (e.g. plain staging without the
- * flag); callers fall back to register-demo (read-only is still enough for the
- * many read-only scenarios).
+ * The bootstrap request is issued RELATIVE (apiBaseUrl: '') so it goes through
+ * the same origin/proxy the rest of this harness uses.
  */
-async function bootstrapSession(page: Page): Promise<DemoSession | null> {
-  const runId = `m06-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`;
-  try {
-    const resp = await page.request.post('/api/test-support/bootstrap', {
-      headers: { 'x-test-support-key': TEST_SUPPORT_KEY, 'content-type': 'application/json' },
-      data: { runId, role: 'ADMIN' },
-      timeout: 45000,
-    });
-    if (!resp.ok()) return null;
-    const json = (await resp.json()) as { token?: string; userId?: string };
-    const token = String(json.token || '');
-    if (!token) return null;
-    return { token, user: { id: json.userId, email: `e2e+${runId}@local.test` } };
-  } catch {
-    return null;
-  }
+export async function authenticate(page: Page): Promise<DemoSession> {
+  const session = await getPrivilegedSessionForPage(page, {
+    role: 'ADMIN',
+    label: 'm06',
+    apiBaseUrl: '',
+    timeoutMs: 45000,
+  });
+  return {
+    token: session.token,
+    user: {
+      id: session.userId,
+      email: session.email,
+      role: session.role,
+      organizationId: session.organizationId,
+    },
+  };
 }
 
-/** Authenticate a fresh user (unique per call) and return its auth token.
- *  Prefers a write-access bootstrap session; falls back to read-only
- *  register-demo. Retries on transient 5xx (staging DB hiccups are known). */
-export async function registerDemo(page: Page): Promise<DemoSession> {
-  const bootstrapped = await bootstrapSession(page);
-  if (bootstrapped) return bootstrapped;
-
-  let lastErr = '';
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    const nonce = `${Date.now()}-${attempt}-${Math.floor(Math.random() * 1e6)}`;
-    const email = `e2e-m06-${nonce}@local.test`;
-    try {
-      const resp = await page.request.post('/api/auth/register-demo', {
-        timeout: 45000,
-        data: { email, password: `E2eM06-${nonce}-Pass1`, firstName: 'M06QA' },
-      });
-      if (resp.ok()) {
-        const json = (await resp.json()) as {
-          token?: string;
-          accessToken?: string;
-          user?: Record<string, unknown>;
-        };
-        const token = String(json.token || json.accessToken || '');
-        expect(token.length, 'empty auth token from register-demo').toBeGreaterThan(0);
-        return { token, user: json.user || { email } };
-      }
-      lastErr = `HTTP ${resp.status()}`;
-    } catch (e) {
-      // Transient proxy/connection reset under staging latency — retry.
-      lastErr = e instanceof Error ? e.message : String(e);
-    }
-    await page.waitForTimeout(1000 * (attempt + 1));
-  }
-  expect(false, `register-demo failed after retries: ${lastErr}`).toBeTruthy();
-  throw new Error('unreachable');
-}
 
 /** Seed localStorage so the SPA treats the session as authenticated + tour-complete. */
 export async function injectSession(page: Page, session: DemoSession): Promise<void> {
@@ -183,20 +153,20 @@ export async function createIdea(
 }
 
 /**
- * Module-level cached demo session. register-demo creates a user + demo org + triggers an
- * org-context snapshot rebuild — doing it once per TEST (128×) saturates the staging pool and
- * hangs the backend. With workers=1 this module is shared across all M06 specs in the run, so we
- * register ONCE and every test reuses the token (each still creates its own isolated idea).
+ * Module-level cached session. Bootstrap creates a user + org + triggers an org-context
+ * snapshot rebuild — doing it once per TEST (128×) saturates the staging pool and hangs the
+ * backend. With workers=1 this module is shared across all M06 specs in the run, so we
+ * authenticate ONCE and every test reuses the token (each still creates its own isolated idea).
  */
 let _cachedSession: DemoSession | null = null;
 
 export async function getSharedSession(page: Page): Promise<DemoSession> {
   if (_cachedSession && _cachedSession.token) return _cachedSession;
-  _cachedSession = await registerDemo(page);
+  _cachedSession = await authenticate(page);
   return _cachedSession;
 }
 
-/** Drop the cached session (call on a 401 so the next bootstrap re-registers). */
+/** Drop the cached session (call on a 401 so the next bootstrap re-authenticates). */
 export function resetSharedSession(): void {
   _cachedSession = null;
 }

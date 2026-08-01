@@ -7,6 +7,7 @@
 
 import { test, expect } from '@playwright/test';
 
+import { getPrivilegedSession } from '../_helpers/privilegedSession';
 import { readTestSupportState } from '../_helpers/testSupportState';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
@@ -85,15 +86,20 @@ test.describe('Table Platform Views', () => {
       const state = readTestSupportState();
       token = state.token;
     } catch {
-      const authRes = await request.post(`${API_BASE_URL}/api/auth/register-demo`, {
-        data: { email: `tp-views-${Date.now()}@test.com`, password: 'Test1234!', name: 'TP Views Test' },
-      });
-      if (!authRes.ok()) {
+      // Bootstrap only — register-demo is the public, unprivileged, read-only demo signup
+      // and cannot stand in for a real session here.
+      try {
+        const session = await getPrivilegedSession(request, {
+          role: 'ADMIN',
+          label: 'tp-views',
+          apiBaseUrl: API_BASE_URL,
+        });
+        token = session.token;
+      } catch (error) {
+        console.warn(error instanceof Error ? error.message : String(error));
         test.skip();
         return;
       }
-      const authData = await authRes.json();
-      token = authData.token;
     }
 
     const res = await request.get(`${API_BASE_URL}/api/table-platform/bases`, {

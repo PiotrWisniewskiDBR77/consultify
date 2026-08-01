@@ -17,50 +17,30 @@
  */
 import { expect, test } from '@playwright/test';
 
+import {
+  getPrivilegedSessionForPage,
+  privilegedAuthUser,
+  type PrivilegedSession,
+} from '../_helpers/privilegedSession';
 import { dismissOverlayIfPresent, suppressOnboarding } from '../smoke/work-canvas-helpers';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 
-async function bootstrapToken(page: import('@playwright/test').Page): Promise<string> {
-  const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
-  const runId = `deck-e2e-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-  const res = await page.request
-    .post(`${API_BASE_URL}/api/test-support/bootstrap`, {
-      headers: { 'x-test-support-key': TEST_SUPPORT_KEY, 'content-type': 'application/json' },
-      data: { runId },
-    })
-    .catch(() => null);
-  if (res && res.ok()) {
-    const payload = (await res.json()) as { token?: string };
-    if (payload?.token) return String(payload.token);
-  }
-  const reg = await page.request
-    .post(`${API_BASE_URL}/api/auth/register-demo`, {
-      data: { email: `e2e+${runId}@local.test`, password: 'Playwright#123', firstName: 'E2E' },
-    })
-    .catch(() => null);
-  if (reg && reg.ok()) {
-    const payload = (await reg.json()) as any;
-    return String(payload?.token || payload?.accessToken || '');
-  }
-  return '';
+/** Deck creation + autosave are real writes, so the session must be a privileged, non-demo
+ *  one. Bootstrap only: the public `register-demo` signup is unprivileged and read-only by
+ *  design, and its former use here silently turned every autosave into a 403. */
+async function bootstrapSession(
+  page: import('@playwright/test').Page
+): Promise<PrivilegedSession> {
+  return getPrivilegedSessionForPage(page, { role: 'ADMIN', label: 'deck-e2e', apiBaseUrl: API_BASE_URL });
 }
 
-async function seedAuth(page: import('@playwright/test').Page, token: string) {
-  await page.addInitScript((t: string) => {
-    localStorage.setItem('token', t);
+async function seedAuth(page: import('@playwright/test').Page, session: PrivilegedSession) {
+  const token = session.token;
+  const authUser = privilegedAuthUser(session, { lastName: 'Deck' });
+  await page.addInitScript(({ t, user }) => {
+    localStorage.setItem('token', String(t));
     localStorage.setItem('refreshToken', 'e2e-refresh');
-    const user = {
-      id: 'e2e-deck-user',
-      email: 'e2e-deck@local.test',
-      role: 'ADMIN',
-      organizationId: 'e2e-org-id',
-      organizationName: 'E2E Organization',
-      firstName: 'E2E',
-      lastName: 'Deck',
-      isAuthenticated: true,
-      accessLevel: 'full',
-    };
     localStorage.setItem('user', JSON.stringify(user));
     localStorage.setItem(
       'consultinity-storage',
@@ -68,12 +48,12 @@ async function seedAuth(page: import('@playwright/test').Page, token: string) {
         state: {
           sessionMode: 'FULL',
           currentUser: user,
-          currentOrganization: { id: 'e2e-org-id', name: 'E2E Organization' },
+          currentOrganization: { id: user.organizationId, name: user.organizationName },
         },
         version: 0,
       })
     );
-  }, token);
+  }, { t: token, user: authUser });
 }
 
 async function createDeck(
@@ -99,9 +79,11 @@ test.describe('Deck Builder — create + edit persistence [@module:presentations
   test.setTimeout(120000);
 
   test('deck title edit survives a hard reload (autosave)', async ({ page }) => {
-    const token = await bootstrapToken(page);
-    test.skip(!token, 'Could not acquire an auth token from test-support/register-demo endpoints.');
-    await seedAuth(page, token);
+    // Throws (with the exact env vars to set) when test-support is not enabled — deliberately
+    // NOT a soft skip, and deliberately no register-demo fallback.
+    const session = await bootstrapSession(page);
+    const token = session.token;
+    await seedAuth(page, session);
     await suppressOnboarding(page);
 
     const title = `E2E Deck ${Date.now()}`;

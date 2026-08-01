@@ -3,7 +3,9 @@
  * Captures the canvas screen inventory (light + dark) as PNG artifacts for the auditor.
  * Output: docs/qa/screens/m02-canvas-2026-06-20/
  *
- * Demo-auth (register-demo) covers the editor/menu/state surfaces. Capability-gated
+ * Auth: test-support bootstrap (a real, non-demo session — the public `register-demo`
+ * signup is unprivileged/read-only and is no longer used). Covers the editor/menu/state
+ * surfaces. Capability-gated
  * screens (deck render, share strip, public viewer, generation plan) require owner DBR77
  * and are captured separately via the live owner session.
  */

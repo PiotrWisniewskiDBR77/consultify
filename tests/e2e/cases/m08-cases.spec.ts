@@ -38,11 +38,11 @@ import path from 'node:path';
 
 import { expect, Page, test } from '@playwright/test';
 
+import { getPrivilegedSessionForPage } from '../_helpers/privilegedSession';
 import { readTestSupportState } from '../_helpers/testSupportState';
 import { seedPageAuth } from './_m07-helpers';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
-const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
 const SHOTS_DIR = path.resolve('tests/e2e/screenshots/cases/m08');
 const ERROR_BOUNDARY_RE = /Coś poszło nie tak|Something went wrong/i;
 const WORKSPACE_REGION = /Idea map workspace|Obszar roboczy mapy idei/;
@@ -56,29 +56,15 @@ function uniqueLabel(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function freshToken(page: Page, current: string): Promise<string> {
-  const runId = `m08c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-  const bootstrap = await page.request
-    .post(`${API_BASE_URL}/api/test-support/bootstrap`, {
-      headers: { 'x-test-support-key': TEST_SUPPORT_KEY, 'content-type': 'application/json' },
-      data: { runId },
-    })
-    .catch(() => null);
-  if (bootstrap && bootstrap.ok()) {
-    const payload = (await bootstrap.json()) as { token?: string };
-    if (payload?.token) return String(payload.token);
-  }
-  const reg = await page.request
-    .post(`${API_BASE_URL}/api/auth/register-demo`, {
-      data: { email: `e2e+${runId}@local.test`, password: `E2E-${Date.now()}-Pass1`, firstName: 'E2E' },
-    })
-    .catch(() => null);
-  if (reg && reg.ok()) {
-    const payload = (await reg.json()) as any;
-    const tok = String(payload?.token || payload?.accessToken || '');
-    if (tok) return tok;
-  }
-  return current;
+/** Re-mint a write-access token after a 401/403. Bootstrap only — the public
+ *  `register-demo` signup is unprivileged and read-only by design (403 DEMO_READ_ONLY). */
+async function freshToken(page: Page, _current: string): Promise<string> {
+  const session = await getPrivilegedSessionForPage(page, {
+    role: 'ADMIN',
+    label: 'm08c',
+    apiBaseUrl: API_BASE_URL,
+  });
+  return session.token;
 }
 
 async function createIdea(page: Page, token: string, title: string) {

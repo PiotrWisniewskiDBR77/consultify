@@ -10,10 +10,14 @@
  *
  * ORG-SCOPING FIX (same root cause as collab-whiteboard.spec.ts /
  * collab-mindmap.spec.ts / collab-ideas-table.spec.ts): a naive "second user"
- * via its own register-demo call mints its OWN fresh org, landing on a
- * DIFFERENT board. Fix: mint the member's token via the E2E_MODE unsigned-JWT
- * auth bypass (server/src/middleware/auth.middleware.ts ~L1030-1114) with the
- * SAME organizationId decoded from the owner's real register-demo token.
+ * bootstrapped on its own mints its OWN fresh org, landing on a DIFFERENT
+ * board. Fix: mint the member's token via the E2E_MODE unsigned-JWT auth bypass
+ * (server/src/middleware/auth.middleware.ts ~L1030-1114) with the SAME
+ * organizationId decoded from the owner's real test-support token.
+ *
+ * AUTH: the owner session comes from test-support bootstrap only (see
+ * tests/e2e/_helpers/privilegedSession.ts). Requires ENABLE_TEST_SUPPORT=true +
+ * a matching TEST_SUPPORT_KEY on the target backend.
  *
  * MEMBERSHIP-GATE (same as collab-whiteboard.spec.ts / collab-mindmap.spec.ts):
  * mindmap/whiteboard/process_flow are just different `preferredTool` values
@@ -31,8 +35,8 @@
  * shape-toolbar button once a start node exists.
  *
  * Two assertions, in order of strength (both `expect.soft`, matching the
- * collab-whiteboard.spec.ts convention — the shared register-demo harness has
- * a documented pre-existing DEMO_READ_ONLY flakiness independent of this spec):
+ * collab-whiteboard.spec.ts convention — that suite still carries a documented
+ * pre-existing flakiness independent of this spec):
  *   1. PRIMARY (realtime): member's node count increases within ~1.5s of the
  *      owner adding a step, with NO reload — proves the WS graph_patch push
  *      (relay layer proven headlessly by
@@ -43,6 +47,7 @@
  */
 import { expect, type Page, test } from '@playwright/test';
 
+import { getPrivilegedSessionForPage } from '../_helpers/privilegedSession';
 import { dismissOverlayIfPresent, suppressOnboarding } from '../smoke/work-canvas-helpers';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
@@ -83,43 +88,28 @@ function makeSameOrgMemberToken(organizationId: string): string {
   return `${header}.${payload}.e2e`;
 }
 
-/** Acquire an OWNER token via register-demo with patient retries (mirrors
- *  m09-whiteboard-helpers.ts ensureOwnerToken / _m06.ts registerDemo). */
+/** Acquire an OWNER token via test-support bootstrap (mirrors m09-whiteboard-helpers.ts).
+ *  No register-demo fallback: the owner here CREATES an idea and writes the flow graph, and
+ *  the public demo signup is unprivileged + read-only (403 DEMO_READ_ONLY) by design. */
 async function ensureOwnerToken(page: Page): Promise<string> {
-  let lastErr = '';
-  const runNonce = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    try {
-      const resp = await page.request.post(`${API_BASE_URL}/api/auth/register-demo`, {
-        timeout: 50000,
-        data: {
-          email: `e2e+pf-owner-${runNonce}-${attempt}@local.test`,
-          password: 'Playwright#123',
-          firstName: 'Owner',
-        },
-      });
-      if (resp.ok()) {
-        const json = await resp.json();
-        const token = String(json?.token || json?.accessToken || '').trim();
-        if (token) return token;
-        lastErr = 'register-demo ok but no token';
-      } else {
-        lastErr = `register-demo ${resp.status()}`;
-      }
-    } catch (e) {
-      lastErr = e instanceof Error ? e.message : String(e);
-    }
-    await page.waitForTimeout(1500 * (attempt + 1));
-  }
-  throw new Error(`ensureOwnerToken failed after retries: ${lastErr}`);
+  const session = await getPrivilegedSessionForPage(page, {
+    role: 'ADMIN',
+    label: 'pf-collab-owner',
+    apiBaseUrl: API_BASE_URL,
+    timeoutMs: 50000,
+  });
+  return session.token;
 }
 
+/** Seed localStorage from the SIGNED token — the role is never defaulted to 'ADMIN', so a
+ *  privilege mismatch surfaces instead of hiding behind a passing client guard. */
 async function seedPageAuth(page: Page, token: string) {
   const j = decodeJwt(token);
   const user = {
     id: String(j.id || j.userId || j.sub || 'demo-owner'),
     email: String(j.email || 'e2e+pf-owner@local.test'),
-    role: String(j.role || 'ADMIN'),
+    role: String(j.role || ''),
+    isSuperAdmin: j.isSuperAdmin === true,
     organizationId: String(j.organizationId || j.orgId || 'demo-org'),
     organizationName: 'E2E Organization',
     firstName: 'Owner',
@@ -253,7 +243,7 @@ test.describe('Collab — Process Flow, two users same org [@module:collab]', ()
       const ownerNodesBefore = await nodeCount(page);
 
       // Defensive: a stray demo-read-only access gate (documented pre-existing
-      // flakiness in shared register-demo harnesses, see collab-whiteboard.spec.ts
+      // flakiness in the shared collab harnesses, see collab-whiteboard.spec.ts
       // header) would silently block the click.
       const demoGateClose = page.getByRole('button', { name: /^Close$/i }).first();
       if (await demoGateClose.isVisible({ timeout: 500 }).catch(() => false)) {

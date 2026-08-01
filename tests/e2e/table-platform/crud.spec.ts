@@ -7,6 +7,7 @@
 
 import { test, expect } from '@playwright/test';
 
+import { getPrivilegedSession } from '../_helpers/privilegedSession';
 import { readTestSupportState } from '../_helpers/testSupportState';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
@@ -15,21 +16,28 @@ function authHeaders(token: string) {
   return { Authorization: `Bearer ${token}`, 'content-type': 'application/json' };
 }
 
+/**
+ * Token for the API smoke. Global-setup state first, then test-support bootstrap.
+ * NOT register-demo: this test creates and deletes a base, and the public demo signup is
+ * unprivileged + read-only by design (403 DEMO_READ_ONLY), so it could never do that.
+ * Returns null (→ honest skip) only when test-support is unavailable.
+ */
 async function getToken(request: any): Promise<string | null> {
   try {
     const state = readTestSupportState();
     return state.token;
   } catch {
-    const authRes = await request.post(`${API_BASE_URL}/api/auth/register-demo`, {
-      data: {
-        email: `smoke-crud-${Date.now()}@test.com`,
-        password: 'Test1234!',
-        name: 'Smoke CRUD Test',
-      },
-    });
-    if (!authRes.ok()) return null;
-    const authData = await authRes.json();
-    return authData.token ?? null;
+    try {
+      const session = await getPrivilegedSession(request, {
+        role: 'ADMIN',
+        label: 'tp-crud',
+        apiBaseUrl: API_BASE_URL,
+      });
+      return session.token;
+    } catch (error) {
+      console.warn(error instanceof Error ? error.message : String(error));
+      return null;
+    }
   }
 }
 

@@ -2,7 +2,7 @@
  * CASES_M06_MIND_MAP_30 — 30 rich, executable Playwright scenarios for M06 Ideas · Mind Map.
  *
  * Source of truth: Harvard/Testy manualne/CASES_M06_MIND_MAP_30.md (MC-06-01 … MC-06-30).
- * Harness: reuses tests/e2e/m06/_m06.ts (write-access bootstrap → register-demo fallback,
+ * Harness: reuses tests/e2e/m06/_m06.ts (write-access test-support bootstrap, no fallback,
  * injectSession, dismissTour, createIdea, openMindmap, fitView, selectRoot, selectNodeByIndex).
  *
  * Conventions per the case spec:

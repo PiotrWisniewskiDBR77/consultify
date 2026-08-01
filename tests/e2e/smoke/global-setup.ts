@@ -116,7 +116,8 @@ export default async function globalSetup(_config: FullConfig) {
 
       if (isTestSupportRouteMissing) {
         // Some environments intentionally don't expose /api/test-support.
-        // Fall back to register-demo bootstrap path instead of hard-failing.
+        // Fall back to tryRegisterFallback() — the REGULAR /api/auth/register signup, NOT
+        // /api/auth/register-demo (that one is the public unprivileged read-only demo entry).
         break;
       }
 

@@ -141,7 +141,7 @@ test.describe('M06 §27 — Regresja', () => {
     const { token } = await bootstrap(page);
     void token;
     // Navigate to the ideas list without bypassing the beta gate.
-    // Demo users created via /api/auth/register-demo may or may not have Ideas beta access.
+    // The bootstrapped e2e user may or may not have Ideas beta access.
     await page.goto('/my-work/ideas', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2000);
     await shot(page, '27.7-beta-gate');

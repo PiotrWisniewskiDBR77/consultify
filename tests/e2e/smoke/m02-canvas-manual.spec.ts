@@ -3,7 +3,9 @@
  * Source of truth: Harvard/Testy manualne/TESTY_M02_CANVAS.md
  *
  * Runs against the ALREADY-RUNNING dev stack (frontend :3000 + backend :3001 → trolley non-prod DB).
- * Auth via loginAsOwner (register-demo fallback → ADMIN demo user).
+ * Auth via loginAsOwner → test-support bootstrap (a real, non-demo ADMIN). The public
+ * `register-demo` fallback was removed: it is unprivileged and read-only by design.
+ * Requires ENABLE_TEST_SUPPORT=true + a matching TEST_SUPPORT_KEY on the backend.
  *
  * Architecture note (verified 2026-06-20): the standalone `/ai/work-canvas` route now
  * redirects into the chat shell and mounts WorkCanvasDocumentPanel ("chat-shell Canvas").
@@ -421,8 +423,8 @@ test.describe('M02 §4 autosave + persistence', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 test.describe('M02 §7A generation surface (deliverables flag)', () => {
   // NOTE: the full chat→canvas doc/deck/sheet generation requires a canvas/deliverables
-  // capability that the register-demo user does NOT have (the §1.3/1.4 gating test proves
-  // demo users get no canvas.* caps). That end-to-end flow is verified live on owner DBR77
+  // capability that the bootstrapped e2e user does NOT have (the §1.3/1.4 gating test proves
+  // non-entitled users get no canvas.* caps). That end-to-end flow is verified live on owner DBR77
   // (Chrome session 2026-06-20: POST /generations→200, doc rich-PL + deck slides rendered).
   // Here we assert the capability-independent deploy gate: the deliverables route is ENABLED
   // (ENABLE_DELIVERABLES_LIGHT) — i.e. NOT the 404 signature of a disabled flag.

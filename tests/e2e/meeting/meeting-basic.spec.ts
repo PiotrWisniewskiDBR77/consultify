@@ -12,9 +12,12 @@
  * generateMeetingNotes` calls — grep-verified against src/services/api.ts,
  * not stubs) are both fully built. MODULE_MEETING is a closed beta
  * (src/utils/betaAccess.ts) but ADMIN/OWNER/SUPERADMIN are exempt
- * (BETA_ADMINS_EXEMPT) and `register-demo` always mints an ADMIN role
- * (server/src/routes/auth.routes.ts), so the harness reaches the module with
- * no special flag. The server-side `betaGate` middleware is currently a
+ * (BETA_ADMINS_EXEMPT), and the harness session is a real ADMIN minted by
+ * test-support bootstrap, so the module is reachable with no special flag.
+ * NOTE: `register-demo` does NOT mint an ADMIN — it is the public demo signup
+ * and creates a CONSULTANT in the read-only demo org
+ * (server/src/services/demo/demoSignupProvisioning.ts `DEMO_SIGNUP_ROLE`), which is exactly why
+ * it is not used here. The server-side `betaGate` middleware is currently a
  * pure pass-through no-op (server/src/middleware/betaGate.middleware.ts) —
  * gating is client-only today.
  *
@@ -30,14 +33,16 @@
  * much, so the persistence assertions are written against "count increased
  * to ≥1", not exact wording — robust to either source.
  *
- * Uses the m06 harness's `registerDemo()` (tests/e2e/m06/_m06.ts), which
- * prefers the test-support `/api/test-support/bootstrap` WRITE-access path
- * over demo-read-only register-demo (see that file's header) — meeting
- * create/update are real writes, so a demo-read-only session would 403.
+ * Uses the m06 harness's `authenticate()` (tests/e2e/m06/_m06.ts), which mints
+ * a WRITE-access session via `/api/test-support/bootstrap` and has NO
+ * register-demo fallback (see that file's header) — meeting create/update are
+ * real writes, so a demo read-only session would 403. This spec therefore
+ * REQUIRES ENABLE_TEST_SUPPORT=true + a matching TEST_SUPPORT_KEY on the
+ * target backend.
  */
 import { expect, test } from '@playwright/test';
 
-import { injectSession, registerDemo } from '../m06/_m06';
+import { authenticate, injectSession } from '../m06/_m06';
 import { dismissOverlayIfPresent, suppressOnboarding } from '../smoke/work-canvas-helpers';
 
 function escapeRegExp(value: string): string {
@@ -64,7 +69,7 @@ test.describe('M21 Meeting — create + AI notes + persistence after F5 [@module
   test('create a meeting, generate AI notes, reload — meeting + decisions/follow-ups persist', async ({
     page,
   }) => {
-    const session = await registerDemo(page);
+    const session = await authenticate(page);
     await injectSession(page, session);
     await suppressOnboarding(page);
 

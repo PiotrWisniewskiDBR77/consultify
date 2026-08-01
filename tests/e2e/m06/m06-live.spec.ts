@@ -13,7 +13,8 @@
  *    Tab/arrows) is disabled;
  *  - added nodes persist across reload (POST /map/sync + rehydrate).
  *
- * Fresh isolated context per test (register-demo via addInitScript → no session/
+ * Fresh isolated context per test (test-support bootstrap session injected via
+ * addInitScript → no session/
  * cookie contamination). The surface is focused before keyboard ops because in
  * headless Chromium a synthetic node-click leaves focus on <body>; a real mouse
  * user gets canvas focus by clicking — focusing the [data-mm-surface] element

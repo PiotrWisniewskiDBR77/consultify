@@ -2,7 +2,8 @@
  * M07 — Ideas · Process Flow — headless acceptance (mirrors the M03/M08 harness).
  *
  * Runs against the running staging dev servers (E2E_BASE_URL/E2E_API_URL) with a
- * register-demo session bootstrapped by tests/e2e/smoke/global-setup.ts. Each
+ * privileged, non-demo session bootstrapped by tests/e2e/smoke/global-setup.ts
+ * (test-support bootstrap; `/api/auth/register` only as a last resort). Each
  * scenario seeds its own idea via the API, navigates directly to the Process Flow
  * workspace, asserts the real UI, and captures one screenshot as evidence
  * (docs/qa/screens/m07-headless-2026-06-20/<id>.png — /tests/ is gitignored).
@@ -22,10 +23,10 @@ import path from 'node:path';
 
 import { APIResponse, expect, Page, test } from '@playwright/test';
 
+import { getPrivilegedSessionForPage } from './_helpers/privilegedSession';
 import { readTestSupportState } from './_helpers/testSupportState';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
-const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
 const SHOTS_DIR = path.resolve('docs/qa/screens/m07-headless-2026-06-20');
 const ERROR_BOUNDARY_RE = /Coś poszło nie tak|Something went wrong/i;
 const WORKSPACE_REGION = /Idea map workspace|Obszar roboczy mapy idei/;
@@ -42,33 +43,16 @@ async function shot(page: Page, id: string) {
   await page.screenshot({ path: path.join(SHOTS_DIR, `${id}.png`), fullPage: false });
 }
 
-async function freshToken(page: Page, current: string): Promise<string> {
-  const runId = `m07-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-  const bootstrap = await page.request
-    .post(`${API_BASE_URL}/api/test-support/bootstrap`, {
-      headers: { 'x-test-support-key': TEST_SUPPORT_KEY, 'content-type': 'application/json' },
-      data: { runId },
-    })
-    .catch(() => null);
-  if (bootstrap && bootstrap.ok()) {
-    const payload = (await bootstrap.json()) as { token?: string };
-    if (payload?.token) return String(payload.token);
-  }
-  const reg = await page.request
-    .post(`${API_BASE_URL}/api/auth/register-demo`, {
-      data: {
-        email: `e2e+${runId}@local.test`,
-        password: `E2E-${Date.now()}-Pass1`,
-        firstName: 'E2E',
-      },
-    })
-    .catch(() => null);
-  if (reg && reg.ok()) {
-    const payload = (await reg.json()) as any;
-    const tok = String(payload?.token || payload?.accessToken || '');
-    if (tok) return tok;
-  }
-  return current;
+/** Re-mint a write-access token after a 401/403. Bootstrap only — the public
+ *  `register-demo` signup is unprivileged and read-only by design, so using it here
+ *  would swap a dead token for one that 403s on every seed write. */
+async function freshToken(page: Page, _current: string): Promise<string> {
+  const session = await getPrivilegedSessionForPage(page, {
+    role: 'ADMIN',
+    label: 'm07',
+    apiBaseUrl: API_BASE_URL,
+  });
+  return session.token;
 }
 
 async function createIdea(page: Page, token: string, title: string) {

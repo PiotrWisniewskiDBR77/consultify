@@ -1,7 +1,19 @@
+/**
+ * Admin + SuperAdmin readiness smoke.
+ *
+ * This spec walks /settings/*, /admin/* and /superadmin/* — routes that are guarded by real
+ * privilege. Its sessions therefore come ONLY from test-support bootstrap
+ * (tests/e2e/_helpers/privilegedSession.ts). The public `register-demo` signup used to be a
+ * fallback here; it is unprivileged by design (TEAM_MEMBER in the read-only demo org), and the
+ * old code papered over that by overwriting `role` in localStorage — so the guards passed on
+ * the client and the routes redirected/403'd underneath. Requires ENABLE_TEST_SUPPORT=true and
+ * a matching TEST_SUPPORT_KEY on the target backend.
+ */
 import { expect, Page, request, test } from '@playwright/test';
 
+import { getPrivilegedSession, privilegedAuthUser } from '../_helpers/privilegedSession';
+
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
-const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
 
 const SETTINGS_FLOW_ROUTES: Array<{ path: string; expected: RegExp }> = [
   { path: '/settings/profile', expected: /\/settings\/profile$/ },
@@ -65,6 +77,11 @@ async function dismissTourModal(page: Page) {
   }
 }
 
+/**
+ * Mint the privileged persona this spec needs. Bootstrap-only, no fallback: the routes under
+ * test are privilege-gated, so a degraded session must fail loudly rather than be masked by a
+ * fabricated `role` in localStorage.
+ */
 async function bootstrapSession(role: 'ADMIN' | 'SUPERADMIN') {
   const req = await request.newContext({
     baseURL: API_BASE_URL,
@@ -73,67 +90,26 @@ async function bootstrapSession(role: 'ADMIN' | 'SUPERADMIN') {
   const runId = `smoke-${role.toLowerCase()}-${Date.now().toString(36)}`;
 
   try {
-    const res = await req.post('/api/test-support/bootstrap', {
-      headers: {
-        'x-test-support-key': TEST_SUPPORT_KEY,
-      },
-      data: {
-        runId,
-        role,
-      },
+    const session = await getPrivilegedSession(req, {
+      role,
+      label: `smoke-${role.toLowerCase()}`,
+      runId,
+      apiBaseUrl: API_BASE_URL,
     });
 
-    if (res.ok()) {
-      const data = (await res.json()) as {
-        token: string;
-        userId: string;
-        organizationId: string;
-      };
-
-      return {
-        req,
-        token: data.token,
-        user: {
-          id: data.userId,
-          email: `e2e+${runId}@local.test`,
-          name: role === 'SUPERADMIN' ? 'E2E SuperAdmin' : 'E2E Admin',
-          role,
-          organizationId: data.organizationId,
-          isAuthenticated: true,
-          accessLevel: 'full',
-        },
-      };
-    }
-  } catch {
-    // Fall through to the demo registration path for environments without test-support.
+    return {
+      req,
+      token: session.token,
+      // Role/isSuperAdmin come from the SERVER-signed token via privilegedAuthUser — never
+      // overridden with the requested role.
+      user: privilegedAuthUser(session, {
+        name: role === 'SUPERADMIN' ? 'E2E SuperAdmin' : 'E2E Admin',
+      }),
+    };
+  } catch (error) {
+    await req.dispose();
+    throw error;
   }
-
-  const email = `${runId}@local.test`;
-  const password = 'SmokePass123';
-  const res = await req.post('/api/auth/register-demo', {
-    data: {
-      email,
-      password,
-      firstName: role === 'SUPERADMIN' ? 'Synthetic' : 'Smoke',
-      acceptedLegalDocs: ['TERMS', 'PRIVACY'],
-    },
-  });
-  expect(res.ok()).toBeTruthy();
-  const auth = (await res.json()) as {
-    token: string;
-    user: Record<string, unknown>;
-  };
-
-  return {
-    req,
-    token: auth.token,
-    user: {
-      ...(auth.user || {}),
-      role,
-      isAuthenticated: true,
-      accessLevel: 'full',
-    },
-  };
 }
 
 async function authenticateAdminDemo(page: Page) {

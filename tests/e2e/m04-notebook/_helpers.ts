@@ -89,7 +89,12 @@ export async function makeApiWithToken(token: string): Promise<APIRequestContext
 /**
  * Zarejestruj ŚWIEŻE konto demo (inna organizacja) i zwróć jego token — do testów
  * izolacji cross-user/cross-org. Zwraca null gdy register-demo niedostępny na env
- * (wtedy caller robi uczciwy skip). Wzorzec z m07-process-flow.spec.ts.
+ * (wtedy caller robi uczciwy skip).
+ *
+ * CELOWO register-demo, NIE test-support/bootstrap: ten scenariusz POTRZEBUJE konta
+ * NIEUPRZYWILEJOWANEGO (publiczna rejestracja demo daje rolę TEAM_MEMBER w read-only
+ * organizacji demo). To jest wymaganie testu ACL, nie zaniedbanie — nie „naprawiaj"
+ * tego na tests/e2e/_helpers/privilegedSession.ts.
  */
 export async function freshToken(page: Page): Promise<string | null> {
   const runId = `m04-${Math.random().toString(36).slice(2, 10)}`;

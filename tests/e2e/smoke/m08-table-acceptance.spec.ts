@@ -27,10 +27,10 @@ import path from 'node:path';
 
 import { expect, Page, test } from '@playwright/test';
 
+import { getPrivilegedSessionForPage } from '../_helpers/privilegedSession';
 import { readTestSupportState } from '../_helpers/testSupportState';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
-const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
 // Screenshots land under docs/qa/screens (tracked) — /tests/ is gitignored, so
 // evidence written there would not be committable. Matches the m03 convention.
 const SHOTS_DIR = path.resolve('docs/qa/screens/m08-headless-2026-06-20');
@@ -45,30 +45,16 @@ function uniqueLabel(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function freshToken(page: Page, current: string): Promise<string> {
-  const runId = `m08-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-  const bootstrap = await page.request
-    .post(`${API_BASE_URL}/api/test-support/bootstrap`, {
-      headers: { 'x-test-support-key': TEST_SUPPORT_KEY, 'content-type': 'application/json' },
-      data: { runId },
-    })
-    .catch(() => null);
-  if (bootstrap && bootstrap.ok()) {
-    const payload = (await bootstrap.json()) as { token?: string };
-    if (payload?.token) return String(payload.token);
-  }
-  // register-demo fallback (matches global-setup when test-support is absent)
-  const reg = await page.request
-    .post(`${API_BASE_URL}/api/auth/register-demo`, {
-      data: { email: `e2e+${runId}@local.test`, password: `E2E-${Date.now()}-Pass1`, firstName: 'E2E' },
-    })
-    .catch(() => null);
-  if (reg && reg.ok()) {
-    const payload = (await reg.json()) as any;
-    const tok = String(payload?.token || payload?.accessToken || '');
-    if (tok) return tok;
-  }
-  return current;
+/** Re-mint a write-access token after a 401/403. Bootstrap only — the public
+ *  `register-demo` signup is unprivileged and read-only by design (403 DEMO_READ_ONLY),
+ *  so it cannot stand in for the seed writes this suite performs. */
+async function freshToken(page: Page, _current: string): Promise<string> {
+  const session = await getPrivilegedSessionForPage(page, {
+    role: 'ADMIN',
+    label: 'm08',
+    apiBaseUrl: API_BASE_URL,
+  });
+  return session.token;
 }
 
 async function createIdea(page: Page, token: string, title: string) {

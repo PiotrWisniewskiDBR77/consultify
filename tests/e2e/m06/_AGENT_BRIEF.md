@@ -14,7 +14,7 @@ Repo: `/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify` · branch `L
 ## Harness API (`./_m06`)
 ```ts
 import { bootstrap, createIdea, openMindmap, shot, nodeCount, CANVAS_LABEL } from './_m06';
-const { token } = await bootstrap(page);              // register-demo (secret-free) + tour skip → /dashboard
+const { token } = await bootstrap(page);              // test-support bootstrap + tour skip → /dashboard
 const ideaId = await createIdea(page, token, title?); // Recommendation-map idea, returns id
 await openMindmap(page, ideaId);                       // → /my-work/ideas/:id/workspace/mindmap, waits for canvas
 await shot(page, '2.1-tab-child');                     // writes tests/e2e/screenshots/m06/2.1-tab-child.png
@@ -39,8 +39,10 @@ await nodeCount(page);                                 // count of .react-flow__
 - `[REAL-AI]` / AI endpoints (§11, §2.5, §18.4/5): attempt empirically. Fire the request; 200+content →
   assert + screenshot (PASS). 5xx/disabled/no-key → honest-skip with the actual HTTP status + screenshot of
   the triggered-but-empty state.
-- Two-tab realtime (§16): Playwright supports two contexts/pages — IMPLEMENT it. NOTE: `register-demo`
-  always uses org `demo-org`, so two demo users are the SAME org → use that for cooperation/graph_patch tests.
+- Two-tab realtime (§16): Playwright supports two contexts/pages — IMPLEMENT it. NOTE: the harness caches ONE
+  bootstrapped session per run (`getSharedSession`), so two pages share the SAME org → use that for
+  cooperation/graph_patch tests. (`register-demo` is NOT used: it is the public, unprivileged,
+  read-only demo signup.)
   Cross-org reject (§16.5) is already covered by `tests/integration/gateways/ideaCollabWs.orgscope.test.ts` —
   reference that and skip the live cross-org attempt. If WS won't connect locally, honest-skip with reason.
 - A documented skip COUNTS. A fake pass does NOT. Never assert success on a broken flow — instead report it

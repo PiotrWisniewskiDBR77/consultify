@@ -1,7 +1,12 @@
 import { expect, type Page } from '@playwright/test';
 
+import {
+  decodeJwtPayload,
+  getPrivilegedSessionForPage,
+  TEST_SUPPORT_SETUP_HINT,
+} from '../_helpers/privilegedSession';
+
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
-const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
 
 function base64UrlEncode(obj: unknown): string {
   const json = JSON.stringify(obj);
@@ -30,38 +35,52 @@ function makeE2EToken(): string {
   return `${header}.${payload}.e2e`;
 }
 
+/**
+ * Seed localStorage from the token itself.
+ *
+ * Identity fields (id / email / role / isSuperAdmin / organizationId) are read out of the
+ * SIGNED token payload — they are never hardcoded to `ADMIN` / `isSuperAdmin: true`. Seeding
+ * a role the server did not grant is exactly the failure this suite must expose: the client
+ * guards would pass while every API call 403'd.
+ */
 async function seedE2EAuthToken(page: Page, token: string): Promise<void> {
-  await page.addInitScript((t: string) => {
-    localStorage.setItem('token', t);
-    localStorage.setItem('refreshToken', 'e2e-refresh');
+  const claims = decodeJwtPayload(token);
+  const e2eUser = {
+    id: String(claims.id || claims.userId || claims.sub || 'e2e-user-id'),
+    email: String(claims.email || 'e2e@local.test'),
+    role: String(claims.role || ''),
+    userRole: String(claims.role || ''),
+    isSuperAdmin: claims.isSuperAdmin === true,
+    organizationId: String(claims.organizationId || claims.orgId || 'e2e-org-id'),
+    organizationName: 'E2E Organization',
+    firstName: 'E2E',
+    lastName: 'User',
+    avatarUrl: null,
+    impersonatorId: null,
+    companyName: 'E2E Organization',
+    isAuthenticated: true,
+    accessLevel: 'full',
+  };
 
-    const e2eUser = {
-      id: 'e2e-user-id',
-      email: 'e2e@local.test',
-      role: 'ADMIN',
-      organizationId: 'e2e-org-id',
-      organizationName: 'E2E Organization',
-      firstName: 'E2E',
-      lastName: 'User',
-      avatarUrl: null,
-      impersonatorId: null,
-      companyName: 'E2E Organization',
-      isAuthenticated: true,
-      accessLevel: 'full',
-    };
+  await page.addInitScript(
+    ({ t, user }) => {
+      localStorage.setItem('token', String(t));
+      localStorage.setItem('refreshToken', 'e2e-refresh');
 
-    const persisted = {
-      state: {
-        sessionMode: 'FULL',
-        currentUser: e2eUser,
-        currentOrganization: { id: 'e2e-org-id', name: 'E2E Organization' },
-      },
-      version: 0,
-    };
+      const persisted = {
+        state: {
+          sessionMode: 'FULL',
+          currentUser: user,
+          currentOrganization: { id: user.organizationId, name: user.organizationName },
+        },
+        version: 0,
+      };
 
-    localStorage.setItem('consultinity-storage', JSON.stringify(persisted));
-    localStorage.setItem('user', JSON.stringify(e2eUser));
-  }, token);
+      localStorage.setItem('consultinity-storage', JSON.stringify(persisted));
+      localStorage.setItem('user', JSON.stringify(user));
+    },
+    { t: token, user: e2eUser }
+  );
 }
 
 export function isStrictCanvasGate(): boolean {
@@ -72,29 +91,31 @@ export async function seedE2EAuth(page: Page): Promise<void> {
   await seedE2EAuthToken(page, makeE2EToken());
 }
 
+/**
+ * Real-session bootstrap for the runtime gate.
+ *
+ * Tier 1 — test-support bootstrap (the only privileged path).
+ * Tier 2 — gateway-only `/api/auth/demo-login` (a real seeded account).
+ * Tier 3 — the synthetic E2E_MODE unsigned token, and ONLY outside the strict gate.
+ *
+ * `register-demo` is deliberately absent: it is the public demo signup — unprivileged
+ * (TEAM_MEMBER in the shared demo org) and read-only (403 DEMO_READ_ONLY on writes).
+ * Falling back to it produced a session that looked like ADMIN on the client and was
+ * refused by the server.
+ */
 export async function seedE2EAuthWithBootstrap(page: Page): Promise<void> {
   const errors: string[] = [];
 
   try {
-    const bootstrap = await page.request.post(`${API_BASE_URL}/api/test-support/bootstrap`, {
-      headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
-      data: { runId: `canvas-ui-${Date.now().toString(36)}`, role: 'ADMIN' },
+    const session = await getPrivilegedSessionForPage(page, {
+      role: 'ADMIN',
+      label: 'canvas-ui',
+      apiBaseUrl: API_BASE_URL,
     });
-    if (bootstrap.ok()) {
-      const payload = (await bootstrap.json()) as Record<string, unknown>;
-      if (typeof payload.token === 'string' && payload.token.trim()) {
-        await seedE2EAuthToken(page, payload.token);
-        return;
-      }
-    } else {
-      errors.push(
-        `test-support/bootstrap ${bootstrap.status()}: ${await bootstrap.text().catch(() => '<no-body>')}`
-      );
-    }
+    await seedE2EAuthToken(page, session.token);
+    return;
   } catch (error) {
-    errors.push(
-      `test-support/bootstrap request failed: ${error instanceof Error ? error.message : String(error)}`
-    );
+    errors.push(error instanceof Error ? error.message : String(error));
   }
 
   try {
@@ -116,38 +137,14 @@ export async function seedE2EAuthWithBootstrap(page: Page): Promise<void> {
     );
   }
 
-  // Fallback for environments where anonymous demo-login is deprecated.
-  try {
-    const suffix = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-    const registerDemo = await page.request.post(`${API_BASE_URL}/api/auth/register-demo`, {
-      data: {
-        email: `e2e+${suffix}@local.test`,
-        password: `E2E-${suffix}-Pass1!`,
-        firstName: 'E2E',
-      },
-    });
-    if (registerDemo.ok()) {
-      const payload = (await registerDemo.json()) as Record<string, unknown>;
-      if (typeof payload.token === 'string' && payload.token.trim()) {
-        await seedE2EAuthToken(page, payload.token);
-        return;
-      }
-    } else {
-      errors.push(
-        `auth/register-demo ${registerDemo.status()}: ${await registerDemo.text().catch(() => '<no-body>')}`
-      );
-    }
-  } catch (error) {
-    errors.push(
-      `auth/register-demo request failed: ${error instanceof Error ? error.message : String(error)}`
-    );
-  }
+  // NOTE: the former `register-demo` tier is gone on purpose — see the doc comment above.
 
   if (isStrictCanvasGate()) {
     throw new Error(
       [
         'Strict Canvas gate: real auth bootstrap is required.',
-        'Enable test support (`ENABLE_TEST_SUPPORT=true`) or test gateway demo login (`ENABLE_TEST_GATEWAY=true`).',
+        TEST_SUPPORT_SETUP_HINT,
+        'Alternatively enable the test gateway demo login (`ENABLE_TEST_GATEWAY=true`).',
         ...errors.map((item) => `- ${item}`),
       ].join('\n')
     );

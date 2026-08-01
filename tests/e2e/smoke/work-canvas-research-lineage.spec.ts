@@ -1,7 +1,8 @@
 import { type APIRequestContext, expect, test } from '@playwright/test';
 
+import { getPrivilegedSession, TEST_SUPPORT_SETUP_HINT } from '../_helpers/privilegedSession';
+
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
-const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
 
 type ResearchFinalizePayload = {
   data?: {
@@ -41,34 +42,33 @@ function syntheticE2EToken(): string {
   return `${header}.${payload}.e2e`;
 }
 
+/**
+ * Resolve a session for the lineage gate.
+ *
+ * `register-demo` is deliberately NOT a tier here. It is the public demo signup:
+ * unprivileged by design (TEAM_MEMBER in the shared demo org) and read-only
+ * (`403 DEMO_READ_ONLY`), so the research finalize writes this spec performs would be
+ * refused while the harness believed it held an ADMIN session.
+ */
 async function resolveAuthToken(
   request: APIRequestContext,
   runId: string
 ): Promise<{
   token: string;
-  source: 'test-support' | 'demo-login' | 'register-demo' | 'synthetic';
+  source: 'test-support' | 'demo-login' | 'synthetic';
   errors: string[];
 }> {
   const errors: string[] = [];
   try {
-    const bootstrap = await request.post(`${API_BASE_URL}/api/test-support/bootstrap`, {
-      headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
-      data: { runId, role: 'ADMIN' },
+    const session = await getPrivilegedSession(request, {
+      role: 'ADMIN',
+      label: 'canvas-research-lineage',
+      runId,
+      apiBaseUrl: API_BASE_URL,
     });
-    if (bootstrap.ok()) {
-      const payload = (await bootstrap.json()) as Record<string, unknown>;
-      if (typeof payload.token === 'string' && payload.token.trim()) {
-        return { token: payload.token, source: 'test-support', errors };
-      }
-    } else {
-      errors.push(
-        `test-support/bootstrap ${bootstrap.status()}: ${await bootstrap.text().catch(() => '<no-body>')}`
-      );
-    }
+    return { token: session.token, source: 'test-support', errors };
   } catch (error) {
-    errors.push(
-      `test-support/bootstrap request failed: ${error instanceof Error ? error.message : String(error)}`
-    );
+    errors.push(error instanceof Error ? error.message : String(error));
   }
 
   try {
@@ -89,32 +89,7 @@ async function resolveAuthToken(
     );
   }
 
-  // Fallback for environments where anonymous demo-login is deprecated: register a
-  // fresh demo account (ADMIN role, owns the drafts it creates) and use its token.
-  try {
-    const registerDemo = await request.post(`${API_BASE_URL}/api/auth/register-demo`, {
-      data: {
-        email: `e2e+${runId}@local.test`,
-        password: `E2E-${runId}-Pass1!`,
-        firstName: 'E2E',
-      },
-    });
-    if (registerDemo.ok()) {
-      const payload = (await registerDemo.json()) as Record<string, unknown>;
-      const token = typeof payload.token === 'string' ? payload.token.trim() : '';
-      if (token) {
-        return { token, source: 'register-demo', errors };
-      }
-    } else {
-      errors.push(
-        `auth/register-demo ${registerDemo.status()}: ${await registerDemo.text().catch(() => '<no-body>')}`
-      );
-    }
-  } catch (error) {
-    errors.push(
-      `auth/register-demo request failed: ${error instanceof Error ? error.message : String(error)}`
-    );
-  }
+  // NOTE: the former `register-demo` tier is gone on purpose — see the doc comment above.
 
   return { token: syntheticE2EToken(), source: 'synthetic', errors };
 }
@@ -128,7 +103,8 @@ test.describe('Work Canvas research lineage Playwright gate', () => {
       throw new Error(
         [
           'Strict Canvas gate: real auth bootstrap is required.',
-          'Enable test support (`ENABLE_TEST_SUPPORT=true`) or test gateway demo login (`ENABLE_TEST_GATEWAY=true`).',
+          TEST_SUPPORT_SETUP_HINT,
+          'Alternatively enable the test gateway demo login (`ENABLE_TEST_GATEWAY=true`).',
           ...auth.errors.map((item) => `- ${item}`),
         ].join('\n')
       );

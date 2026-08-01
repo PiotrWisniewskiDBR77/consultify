@@ -2,20 +2,25 @@
  * Multiplayer collaboration — Mind Map ("Recommendation map"), two real browser
  * contexts.
  *
- * Reuses the proven M06 harness (tests/e2e/m06/_m06.ts: registerDemo →
+ * Reuses the proven M06 harness (tests/e2e/m06/_m06.ts: authenticate →
  * injectSession → createIdea → openMindmap) for the OWNER session, and mirrors
  * the org-scoping + membership-gate fix already proven live for Whiteboard in
  * tests/e2e/tools/collab-whiteboard.spec.ts (read that file's header first —
  * this one is the same recipe, adapted to Mind Map's node-add gesture).
  *
+ * AUTH: the OWNER session is minted via test-support bootstrap ONLY (see
+ * tests/e2e/_helpers/privilegedSession.ts). The public `register-demo` signup
+ * is unprivileged by design (TEAM_MEMBER in the read-only demo org) and is not
+ * a fallback — this spec writes the board, so it needs a real write session.
+ * Requires ENABLE_TEST_SUPPORT=true + a matching TEST_SUPPORT_KEY.
+ *
  * ORG-SCOPING FIX (same root cause as collab-whiteboard.spec.ts /
- * collab-ideas-table.spec.ts): a naive "second user" via its own
- * register-demo/bootstrap call mints its OWN fresh org (server/src/routes/
- * testSupport.routes.ts:595-599 / the register-demo user-creation path), so
- * the member would land in a DIFFERENT org than the owner and never see the
- * same board. Fix: mint the member's token via the E2E_MODE unsigned-JWT auth
- * bypass (server/src/middleware/auth.middleware.ts ~L1030-1114) with the SAME
- * organizationId decoded from the owner's real token.
+ * collab-ideas-table.spec.ts): a naive "second user" with its own bootstrap
+ * call mints its OWN fresh org (server/src/routes/testSupport.routes.ts
+ * :595-599), so the member would land in a DIFFERENT org than the owner and
+ * never see the same board. Fix: mint the member's token via the E2E_MODE
+ * unsigned-JWT auth bypass (server/src/middleware/auth.middleware.ts
+ * ~L1030-1114) with the SAME organizationId decoded from the owner's real token.
  *
  * MEMBERSHIP-GATE (same as collab-whiteboard.spec.ts): the shared idea-map
  * backbone (mindmap/whiteboard/process_flow are just different
@@ -39,7 +44,7 @@
  * Two assertions, in order of strength (both `expect.soft`, matching the
  * collab-whiteboard.spec.ts / m06-16-collab.spec.ts §16.3 convention for
  * timing-sensitive multiplayer checks — the shared owner-token harness has a
- * documented pre-existing DEMO_READ_ONLY flakiness independent of this spec):
+ * documented pre-existing flakiness independent of this spec):
  *   1. PRIMARY (realtime): member's node count increases within ~1.5s of the
  *      owner adding a child, with NO reload — proves the WS graph_patch push
  *      works end-to-end.
@@ -48,7 +53,7 @@
  */
 import { expect, test } from '@playwright/test';
 
-import { createIdea, dismissTour, injectSession, nodeCount, registerDemo } from '../m06/_m06';
+import { authenticate, createIdea, dismissTour, injectSession, nodeCount } from '../m06/_m06';
 import { dismissOverlayIfPresent, suppressOnboarding } from '../smoke/work-canvas-helpers';
 
 const CANVAS_LABEL = 'Idea map workspace';
@@ -114,7 +119,7 @@ test.describe('Collab — Mind Map, two users same org [@module:collab]', () => 
     page,
     browser,
   }) => {
-    const session = await registerDemo(page);
+    const session = await authenticate(page);
     await injectSession(page, session);
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 45000 });
     await dismissTour(page);
@@ -161,7 +166,7 @@ test.describe('Collab — Mind Map, two users same org [@module:collab]', () => 
       test.skip(ownerNodesBefore === 0, 'No root node was auto-seeded — cannot select a node to branch from');
 
       // Defensive: a stray demo-read-only access gate (documented pre-existing
-      // flakiness in shared register-demo harnesses, see collab-whiteboard.spec.ts
+      // flakiness in the shared collab harnesses, see collab-whiteboard.spec.ts
       // header) would silently block the click.
       const demoGateClose = page.getByRole('button', { name: /^Close$/i }).first();
       if (await demoGateClose.isVisible({ timeout: 500 }).catch(() => false)) {

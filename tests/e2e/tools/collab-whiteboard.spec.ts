@@ -19,8 +19,8 @@
  *
  * Fix: mint the member's token via the E2E_MODE unsigned-JWT auth bypass
  * (server/src/middleware/auth.middleware.ts ~L1030-1114) with the SAME
- * organizationId as the owner (decoded from the owner's real bootstrap/
- * register-demo token), same technique as collab-ideas-table.spec.ts.
+ * organizationId as the owner (decoded from the owner's real test-support
+ * bootstrap token), same technique as collab-ideas-table.spec.ts.
  *
  * REMAINING GATE: server/src/gateways/ideaCollabWs.gateway.ts:359-383 and
  * server/src/routes/my-work.routes.ts's /map route additionally require
@@ -53,15 +53,17 @@
  * was observed, mid-run, putting the OWNER's own session into a
  * "DEMO_READ_ONLY / Access required — Demo mode is read-only" gate with a
  * "Reconnect / Single-user mode" presence banner and a "Presence update
- * failed" toast -- i.e. `register-demo`'s returned session sometimes
- * resolves to a demo/sample org rather than a real E2E tenant. This is a
+ * failed" toast -- i.e. the session sometimes resolved to a demo/sample org
+ * rather than a real E2E tenant. (That harness used `register-demo` as a
+ * fallback at the time; it no longer does -- ensureOwnerToken is now
+ * test-support-bootstrap-only.) This is a
  * PRE-EXISTING characteristic of the shared M09 harness (not something this
  * spec introduced), independent of the org-scoping and membership-gate fixes
  * documented above, which DID work (the member genuinely loaded the SAME
  * board as the owner -- confirmed by matching title text in screenshots, not
  * a fallback/default idea). Root-causing the demo-mode flakiness itself is
- * out of scope here (it lives in ensureOwnerToken()/register-demo, used by
- * many other M09 specs); flagging as a follow-up. Given this, the two node-
+ * out of scope here (it lived in the ensureOwnerToken() register-demo
+ * fallback, used by many other M09 specs); flagging as a follow-up. Given this, the two node-
  * count assertions are soft: they report the real finding (pass or fail)
  * without gating the whole suite on pre-existing harness flakiness that has
  * nothing to do with document/deck/sheet/Teresa/collab work in this task.

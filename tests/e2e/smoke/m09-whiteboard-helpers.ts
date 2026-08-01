@@ -3,8 +3,11 @@
  * Source of truth: Harvard/Testy manualne/TESTY_M09_IDEAS_WHITEBOARD.md
  *
  * Runs against the ALREADY-RUNNING dev stack (frontend :3000 + backend :3001).
- * Auth reuses the Work-Canvas bootstrap path (test-support/bootstrap → demo-login →
- * register-demo) so no real credentials are required for the local smoke run.
+ * The owner session is minted via test-support bootstrap ONLY (see
+ * tests/e2e/_helpers/privilegedSession.ts): this suite creates ideas and writes
+ * board state, and the public `register-demo` signup is unprivileged + read-only
+ * by design, so it can never stand in. Requires ENABLE_TEST_SUPPORT=true and a
+ * matching TEST_SUPPORT_KEY on the target backend.
  *
  * Navigation contract (verified 2026-06-20 against qa-idea-mindmap-checklist.spec.ts):
  *   - create idea:  POST /api/my-work/my-ideas  → { id }
@@ -14,6 +17,10 @@
  */
 import { expect, type Page } from '@playwright/test';
 
+import {
+  getPrivilegedSessionForPage,
+  type PrivilegedSession,
+} from '../_helpers/privilegedSession';
 import { API_BASE_URL, loginAsMember } from './work-canvas-helpers';
 
 export const SHOT_DIR = 'tests/e2e/screenshots/m09';
@@ -87,54 +94,41 @@ function userIdFromToken(token: string): string {
   return String(j.id || j.userId || j.sub || '');
 }
 
-// Cache ONE owner token across all tests in this worker. The staging DB makes register-demo
-// slow/contended (~18s idle, > the per-attempt helper timeout under load), so paying it once
-// and reusing the token keeps each test fast and reliable.
-let cachedOwnerToken: string | null = null;
+// Cache ONE owner session across all tests in this worker. Bootstrap creates a real org +
+// member, so paying it once and reusing the token keeps each test fast and reliable.
+let cachedOwnerSession: PrivilegedSession | null = null;
 
-/** Acquire (once) a demo OWNER token via register-demo with patient retries; cache it. */
-async function ensureOwnerToken(page: Page): Promise<string> {
-  if (cachedOwnerToken) return cachedOwnerToken;
-  let lastErr = '';
-  // Unique email per RUN — a fixed `m09-owner-${attempt}` collides with users registered by
-  // any earlier run (register-demo → 400 EMAIL_IN_USE), so every re-run failed. Stamp it.
-  const runNonce = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    try {
-      const resp = await page.request.post(`${API_BASE_URL}/api/auth/register-demo`, {
-        timeout: 50000,
-        data: {
-          email: `e2e+m09-owner-${runNonce}-${attempt}@local.test`,
-          password: 'Playwright#123',
-          firstName: 'Owner',
-        },
-      });
-      if (resp.ok()) {
-        const json = await resp.json();
-        const token = String(json?.token || json?.accessToken || '').trim();
-        if (token) {
-          cachedOwnerToken = token;
-          return token;
-        }
-        lastErr = 'register-demo ok but no token';
-      } else {
-        lastErr = `register-demo ${resp.status()}`;
-      }
-    } catch (e) {
-      lastErr = e instanceof Error ? e.message : String(e);
-    }
-    await page.waitForTimeout(1500 * (attempt + 1));
-  }
-  throw new Error(`ensureOwnerToken failed after retries: ${lastErr}`);
+/**
+ * Acquire (once) a privileged, NON-demo OWNER session via test-support bootstrap; cache it.
+ * There is deliberately no register-demo fallback: that endpoint is the public, unprivileged,
+ * read-only demo signup, and a whiteboard suite that writes boards would 403 on every save
+ * while the client still believed it was an admin.
+ */
+async function ensureOwnerSession(page: Page): Promise<PrivilegedSession> {
+  if (cachedOwnerSession) return cachedOwnerSession;
+  cachedOwnerSession = await getPrivilegedSessionForPage(page, {
+    role: 'ADMIN',
+    label: 'm09-owner',
+    apiBaseUrl: API_BASE_URL,
+    timeoutMs: 50000,
+  });
+  return cachedOwnerSession;
 }
 
-/** Seed a page's localStorage with an auth token + derived user (replicates app session shape). */
+async function ensureOwnerToken(page: Page): Promise<string> {
+  return (await ensureOwnerSession(page)).token;
+}
+
+/** Seed a page's localStorage with an auth token + derived user (replicates app session shape).
+ *  The role comes from the SERVER-signed token — never defaulted to 'ADMIN', so a privilege
+ *  mismatch shows up as a failing client guard instead of silently 403-ing every API call. */
 async function seedPageAuth(page: Page, token: string) {
   const j = decodeJwt(token);
   const user = {
     id: String(j.id || j.userId || j.sub || 'demo-owner'),
     email: String(j.email || 'e2e+m09-owner@local.test'),
-    role: String(j.role || 'ADMIN'),
+    role: String(j.role || ''),
+    isSuperAdmin: j.isSuperAdmin === true,
     organizationId: String(j.organizationId || j.orgId || 'demo-org'),
     organizationName: 'E2E Organization',
     firstName: 'Owner',
@@ -273,7 +267,7 @@ export async function seedWhiteboardPreference(page: Page, ideaId: string, token
 
 export async function openWhiteboardAsOwner(page: Page, title?: string): Promise<WbSession> {
   await seedTourSuppression(page);
-  const token = await ensureOwnerToken(page); // cached across tests → pay register-demo once
+  const token = await ensureOwnerToken(page); // cached across tests → pay bootstrap once
   await seedPageAuth(page, token);
   await suppressFirstRunOnboarding(page, token);
   const ideaId = await createIdea(page, token, title);

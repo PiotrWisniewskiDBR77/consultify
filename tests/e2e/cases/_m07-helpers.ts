@@ -78,7 +78,7 @@ function decodeJwtPayload(token: string): Record<string, any> {
  * relying on the project storageState. The storageState is fragile: it is origin-scoped (breaks
  * when the backend port changes) and a partial re-mint can leave the FE flashing the login page
  * even with a valid token. Setting the full auth payload as an init-script makes M07 auth
- * self-contained (mirrors the M09 register-demo seedPageAuth).
+ * self-contained (mirrors the M09 seedPageAuth).
  */
 export async function seedPageAuth(page: Page, token: string) {
   const j = decodeJwtPayload(token);
