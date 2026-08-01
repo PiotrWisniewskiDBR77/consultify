@@ -3372,136 +3372,133 @@ export class InitiativeController {
 
   /**
    * Approve initiative
+   *
+   * H16 fix (2026-08-01): now a thin adapter over executeInitiativeTransition,
+   * targeting the real next canonical status from REVIEW: PROMOTED (gate
+   * ACCEPT — GATE_PERMISSIONS[ACCEPT] = PROJECT_SPONSOR / STEERING_COMMITTEE,
+   * expanding to PORTFOLIO_OWNER when no steering board is enabled, or ADMIN
+   * unconditionally). This REPLACES the old bespoke REVIEW->'approved'
+   * shortcut, which used a more permissive legacy role table
+   * (evaluateInitiativeGateAccess granted PMO too — an over-grant neither the
+   * canonical GATE_PERMISSIONS nor the independent effectiveAccessService
+   * capability template agree with) and skipped PROMOTED/PLANNING entirely,
+   * the GOVERNANCE_DECISION_MAKING GO/NO-GO gate, the AI soft-block, and
+   * readiness checks.
+   *
+   * BEHAVIOR CHANGE — document for callers:
+   *   Before: any REVIEW-status initiative, PMO/Sponsor/Steering/Portfolio/Admin
+   *     role, no GO/NO-GO decision required -> status='approved' (lowercase;
+   *     not even a legal VALID_TRANSITIONS target).
+   *   After:  only a REVIEW-status initiative, caller holding
+   *     PROJECT_SPONSOR/STEERING_COMMITTEE(/PORTFOLIO_OWNER)/ADMIN, WITH a
+   *     current (non-superseded) approved GOVERNANCE_DECISION_MAKING decision
+   *     -> status='PROMOTED' (canonical). PMO alone can no longer call this
+   *     endpoint successfully (403) unless also holding one of the roles above.
+   *   roadmapQuarter/roadmapYear: the canonical transition engine has no
+   *     concept of these fields (grepped updateInitiative's FIELD_MAP — no
+   *     other endpoint sets them either). Preserved here as a best-effort,
+   *     non-blocking side update AFTER a successful transition so existing
+   *     callers don't silently lose this capability.
+   *   comment: now flows into the transition's audit trail (reason) instead
+   *     of the approval_comment column directly — that column is only written
+   *     by the canonical engine when nextStatus === 'APPROVED', a later stage
+   *     than PROMOTED.
+   *   Known caller: tests/e2e/m13/m13-manual.spec.ts §4.2 posts an empty body
+   *     to this route right after submit-review (status is PENDING_REVIEW at
+   *     that point, not REVIEW) and only asserts `status < 500` — both the
+   *     old and new code return 400 there, so that test is unaffected. A
+   *     caller that wants a real PROMOTED result now needs REVIEW status, one
+   *     of the roles above, and a current approved GOVERNANCE_DECISION_MAKING
+   *     decision to already exist — none of which the old endpoint required.
    */
   static approveInitiative = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
       const userId = req.user?.id;
       const initiativeId = req.params.id;
-      const { comment, roadmapQuarter, roadmapYear } = req.body;
+      const { comment, roadmapQuarter, roadmapYear } = req.body as Record<string, unknown>;
 
       if (!orgId || !userId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
-      const initiative = await queryHelpers.queryOne<{ status: string }>(
-        'SELECT status FROM initiatives WHERE id = ? AND organization_id = ?',
-        [initiativeId, orgId]
-      );
-
-      if (!initiative) {
-        res.status(404).json({ error: 'Initiative not found' });
-        return;
-      }
-
-      // M13 SECURITY: APPROVE gate owned by Project Sponsor / Steering Committee
-      // (or PMO / Portfolio Owner / Admin). Pilot participants are rejected (403).
-      const approveGate = await evaluateInitiativeGateAccess({
-        organizationId: String(orgId),
-        initiativeId: String(initiativeId),
-        userId: String(userId),
-        gate: 'APPROVE',
-        systemRoleHint: req.user?.role,
-        isSuperAdmin: req.user?.isSuperAdmin === true,
+      const result = await executeInitiativeTransition({
+        req,
+        orgId,
+        initiativeId,
+        actorId: userId,
+        nextStatusInput: 'PROMOTED',
+        reason: comment ? String(comment) : null,
       });
-      if (!approveGate.allowed) {
-        res.status(403).json({ error: approveGate.reason, code: approveGate.code });
+
+      if (!result.ok) {
+        res.status(result.statusCode).json({ ...result.body, initiativeId });
         return;
       }
 
-      if (initiative.status !== 'review') {
-        res.status(400).json({ error: `Cannot approve from status: ${initiative.status}` });
-        return;
+      // Best-effort, non-blocking: preserve legacy roadmapQuarter/roadmapYear
+      // persistence. This is a plain data write (no authorization or
+      // state-machine logic of its own) — the transition above already
+      // enforced who may act and whether the GO/NO-GO decision is current, so
+      // this cannot reintroduce the bypass being closed.
+      if (roadmapQuarter !== undefined || roadmapYear !== undefined) {
+        try {
+          const cols = getColumnNameSet(await queryHelpers.getTableColumns('initiatives'));
+          const updates: string[] = [];
+          const vals: unknown[] = [];
+          pushOptionalColumnUpdate(updates, vals, cols, 'roadmap_quarter', roadmapQuarter ?? null);
+          pushOptionalColumnUpdate(updates, vals, cols, 'roadmap_year', roadmapYear ?? null);
+          if (updates.length > 0) {
+            vals.push(initiativeId, orgId);
+            await queryHelpers.queryRun(
+              `UPDATE initiatives SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
+              vals
+            );
+          }
+        } catch (e: any) {
+          logger.warn(
+            '[initiatives] approveInitiative: roadmap fields best-effort write failed:',
+            e?.message
+          );
+        }
       }
-
-      await queryHelpers.queryRun(
-        `UPDATE initiatives SET 
-                status = 'approved',
-                approved_at = CURRENT_TIMESTAMP,
-                approved_by = ?,
-                approval_comment = ?,
-                roadmap_quarter = ?,
-                roadmap_year = ?,
-                updated_at = CURRENT_TIMESTAMP
-             WHERE id = ?`,
-        [userId, comment || null, roadmapQuarter || null, roadmapYear || null, initiativeId]
-      );
 
       res.json({
         success: true,
         message: 'Initiative approved',
         initiativeId,
-        newStatus: 'approved',
-      });
-    }
-  );
-
-  /**
-   * Reject initiative (back to planning)
-   */
-  static rejectInitiative = asyncHandler(
-    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-      const orgId = req.user?.organizationId;
-      const userId = req.user?.id;
-      const initiativeId = req.params.id;
-      const { reason } = req.body;
-
-      if (!orgId || !userId) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
-
-      const initiative = await queryHelpers.queryOne<{ status: string }>(
-        'SELECT status FROM initiatives WHERE id = ? AND organization_id = ?',
-        [initiativeId, orgId]
-      );
-
-      if (!initiative) {
-        res.status(404).json({ error: 'Initiative not found' });
-        return;
-      }
-
-      // M13 SECURITY: REJECT gate owned by Project Sponsor / Steering Committee
-      // (or PMO / Portfolio Owner / Admin). Pilot participants are rejected (403).
-      const rejectGate = await evaluateInitiativeGateAccess({
-        organizationId: String(orgId),
-        initiativeId: String(initiativeId),
-        userId: String(userId),
-        gate: 'REJECT',
-        systemRoleHint: req.user?.role,
-        isSuperAdmin: req.user?.isSuperAdmin === true,
-      });
-      if (!rejectGate.allowed) {
-        res.status(403).json({ error: rejectGate.reason, code: rejectGate.code });
-        return;
-      }
-
-      if (initiative.status !== 'review') {
-        res.status(400).json({ error: `Cannot reject from status: ${initiative.status}` });
-        return;
-      }
-
-      await queryHelpers.queryRun(
-        `UPDATE initiatives SET 
-                status = 'planning',
-                approval_comment = ?,
-                updated_at = CURRENT_TIMESTAMP
-             WHERE id = ?`,
-        [reason || 'Rejected - needs more work', initiativeId]
-      );
-
-      res.json({
-        success: true,
-        message: 'Initiative rejected and returned to planning',
-        initiativeId,
-        newStatus: 'planning',
+        newStatus: result.status,
       });
     }
   );
 
   /**
    * Start execution
+   *
+   * H16 fix (2026-08-01): now a thin adapter over executeInitiativeTransition,
+   * targeting EXECUTING. This closes the SCHEDULED->EXECUTING bypass this
+   * packet exists for: the handler previously had ZERO authorization inside
+   * it (no role check, no capability call — only the inert shadow-mode
+   * capability middleware wrapped the route, and shadow mode always calls
+   * next() regardless of the computed verdict) and accepted a direct
+   * APPROVED->EXECUTING jump, skipping SCHEDULED entirely — illegal per
+   * VALID_TRANSITIONS[APPROVED] (only SCHEDULED/CANCELLED).
+   *
+   * BEHAVIOR CHANGE — document for callers:
+   *   Before: any initiative with status (case-insensitively) 'approved' ->
+   *     status='EXECUTING', no role check, no decision check, no audit row.
+   *   After:  only a SCHEDULED-status initiative; caller must hold PMO/ADMIN
+   *     (gate START, GATE_PERMISSIONS[START] = PMO); AND a current approved
+   *     GOVERNANCE_DECISION_MAKING decision must exist (new — this transition
+   *     previously had no decision gate at all, even on the canonical PATCH
+   *     path). Calling this on an APPROVED (not yet SCHEDULED) initiative now
+   *     correctly returns 400 INVALID_TRANSITION instead of silently
+   *     "succeeding" by skipping the SCHEDULED gate.
+   *   Known caller: tests/acceptance/h16-start-execution.e2e.test.ts
+   *     currently documents/asserts the OLD bypass behavior as correct; a
+   *     separate agent owns rewriting it to assert this new contract (that
+   *     rewrite is the actual proof this fix works end-to-end).
    */
   static startExecution = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -3514,40 +3511,24 @@ export class InitiativeController {
         return;
       }
 
-      const initiative = await queryHelpers.queryOne<{ status: string }>(
-        'SELECT status FROM initiatives WHERE id = ? AND organization_id = ?',
-        [initiativeId, orgId]
-      );
+      const result = await executeInitiativeTransition({
+        req,
+        orgId,
+        initiativeId,
+        actorId: userId,
+        nextStatusInput: 'EXECUTING',
+      });
 
-      if (!initiative) {
-        res.status(404).json({ error: 'Initiative not found' });
+      if (!result.ok) {
+        res.status(result.statusCode).json({ ...result.body, initiativeId });
         return;
       }
-
-      // Case-insensitive gate: legacy REST chain zapisuje 'approved' (lowercase),
-      // nowszy/kanoniczny path 'APPROVED' (uppercase). Oba muszą móc wystartować.
-      if (String(initiative.status).toUpperCase() !== 'APPROVED') {
-        res.status(400).json({ error: `Cannot start execution from status: ${initiative.status}` });
-        return;
-      }
-
-      // RED #1 (H1.6): status kanoniczny = UPPERCASE 'EXECUTING' (constants/initiativeStatuses.ts,
-      // realne dane na parity, ExecutionController.getExecutionSummary filtruje IN ('EXECUTING',...)).
-      // Lowercase 'executing' byłby NIEWIDOCZNY dla GET execution summary (case split-brain).
-      await queryHelpers.queryRun(
-        `UPDATE initiatives SET
-                status = 'EXECUTING',
-                execution_started_at = CURRENT_TIMESTAMP,
-                updated_at = CURRENT_TIMESTAMP
-             WHERE id = ?`,
-        [initiativeId]
-      );
 
       res.json({
         success: true,
         message: 'Initiative execution started',
         initiativeId,
-        newStatus: 'EXECUTING',
+        newStatus: result.status,
       });
     }
   );
