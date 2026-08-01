@@ -139,4 +139,20 @@ describe('MAT-003A workbook golden round-trip (SQLite + real XLSX)', () => {
     expect(sheet!.getCell('A2').value).toBe(21);
     expect(sheet!.getCell('B2').value).toEqual(expect.objectContaining({ formula: 'A2*2' }));
   });
+
+  it('fails closed when a blank workbook cannot be persisted', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/workbook', workbookRoutes);
+
+    // ensureWorkbookSchema has already completed in the preceding golden test,
+    // so removing the durable store simulates a runtime persistence outage.
+    await runSql('DROP TABLE generated_workbooks');
+
+    const response = await request(app)
+      .post('/api/workbook/blank')
+      .send({ title: 'Must not become memory-only' })
+      .expect(500);
+    expect(response.body.id).toBeUndefined();
+  });
 });

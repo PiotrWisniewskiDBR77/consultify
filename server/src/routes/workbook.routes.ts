@@ -1011,17 +1011,10 @@ router.post(
     const fileName = `${title.replace(/\s+/g, '_')}.xlsx`;
     const generatedAt = new Date().toISOString();
 
-    workbookCache.set(id, {
-      buffer,
-      fileName,
-      schema,
-      createdAt: generatedAt,
-      // MAT-010 tenant scoping — see `getOwnedCachedWorkbook`.
-      organizationId: user.organizationId,
-    });
-    pruneCache();
-
-    // Persist metadata (best-effort — pobranie i tak działa z cache/rebuild).
+    // A blank workbook is an authored object, not a transient preview.  Do not
+    // acknowledge creation until PostgreSQL confirms the durable row.  The old
+    // fail-soft path returned 201 and served the file from process memory even
+    // when INSERT failed, so the workbook disappeared after a restart.
     try {
       await queryHelpers.queryRun(
         `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at)
@@ -1047,8 +1040,27 @@ router.post(
         ]
       );
     } catch (err) {
-      logger.warn('[WorkbookRoutes] Failed to persist blank workbook metadata:', err);
+      logger.error('[WorkbookRoutes] Failed to persist blank workbook metadata:', err);
+      res.status(500).json({
+        error: 'Failed to persist blank workbook',
+        classified: createP23Error(
+          'persistence_failed',
+          err instanceof Error ? err.message : String(err)
+        ),
+      });
+      return;
     }
+
+    // Cache only after durable persistence. A process restart may now rebuild
+    // the exact same XLSX from schema_json instead of losing the object.
+    workbookCache.set(id, {
+      buffer,
+      fileName,
+      schema,
+      createdAt: generatedAt,
+      organizationId: user.organizationId,
+    });
+    pruneCache();
 
     // Register in V8 artifact registry (Outputs Library), jak w `/generate`.
     let artifactId: string | null = null;
@@ -1674,7 +1686,6 @@ router.patch(
       });
       return;
     }
-
     // Invaliduje bufor .xlsx w pamięci — następny GET /:id/download odbuduje
     // plik ZE ŚWIEŻEGO schema_json (istniejąca ścieżka "Try to regenerate from
     // stored schema" poniżej), zamiast serwować stary, przed-edycją bufor.

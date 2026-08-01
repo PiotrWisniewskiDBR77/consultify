@@ -82,6 +82,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const editFocusTargetRef = useRef<'cell' | 'formula'>('cell');
 
   // Nowy skoroszyt (reopen na inny id) → zacznij od świeżych danych serwera;
   // edycje w toku dla POPRZEDNIEGO workbookId nigdy nie mieszają się z nowym.
@@ -104,7 +105,12 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const activeComputed = computedSheets[activeSheetIndex];
 
   useEffect(() => {
-    if (editingValue !== null) inputRef.current?.focus();
+    // Starting an edit from the formula bar must not steal focus into the
+    // transient cell input. Doing so fires formula-bar blur immediately and
+    // used to persist an empty value before the user's text was entered.
+    if (editingValue !== null && editFocusTargetRef.current === 'cell') {
+      inputRef.current?.focus();
+    }
   }, [editingValue]);
 
   // Naprawa odkryta w render-verify (2026-07-28): po Escape/zatwierdzeniu
@@ -173,7 +179,13 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   );
 
   const startEditing = useCallback(
-    (rowIndex: number, colIndex: number, initial?: string) => {
+    (
+      rowIndex: number,
+      colIndex: number,
+      initial?: string,
+      focusTarget: 'cell' | 'formula' = 'cell'
+    ) => {
+      editFocusTargetRef.current = focusTarget;
       setSelected({ rowIndex, colIndex });
       const col = activeRaw?.columns?.[colIndex];
       const rawCell = col ? activeRaw?.rows?.[rowIndex]?.cells?.[col.key] : undefined;
@@ -346,12 +358,13 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           {formulaBarAddress || '—'}
         </span>
         <input
+          data-testid="workbook-formula-bar"
           type="text"
           value={formulaBarText}
           readOnly={!selected}
           onFocus={() => {
             if (selected && editingValue === null) {
-              startEditing(selected.rowIndex, selected.colIndex);
+              startEditing(selected.rowIndex, selected.colIndex, undefined, 'formula');
             }
           }}
           onChange={(e) => setEditingValue(e.target.value)}
@@ -388,6 +401,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
       </div>
 
       <div
+        data-testid="editable-spreadsheet-grid"
         ref={containerRef}
         className="overflow-x-auto max-h-[520px] overflow-y-auto focus:outline-none"
         onKeyDown={handleContainerKeyDown}
@@ -416,6 +430,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
                   const isEditingThis = isSelected && editingValue !== null;
                   return (
                     <td
+                      data-testid={`workbook-cell-${ri}-${col.key}`}
                       key={`${col.key}-${ci}`}
                       onClick={() => {
                         setSelected({ rowIndex: ri, colIndex: ci });
