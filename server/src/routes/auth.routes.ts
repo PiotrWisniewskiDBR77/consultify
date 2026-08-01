@@ -20,6 +20,10 @@ import {
 } from '../middleware/rateLimiting.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
 import {
+  assertDemoPrincipalMayReceiveCredentials,
+  DEMO_SESSION_EXPIRED_CODE,
+} from '../services/demo/demoPrincipalGuard.js';
+import {
   DEMO_SIGNUP_ROLE,
   provisionPublicDemoAccount,
 } from '../services/demo/demoSignupProvisioning.js';
@@ -42,6 +46,7 @@ import {
   ACCESS_TOKEN_COOKIE,
   clearAuthCookies,
   REFRESH_TOKEN_COOKIE,
+  setAccessTokenCookie,
   setAuthCookies,
 } from '../utils/cookieAuth.js';
 import { all as _dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -524,6 +529,39 @@ router.get(
         return res.status(404).json({ error: 'User not found' });
       }
 
+      // -------------------------------------------------------------------
+      // OPS-DEMO-002 — a lapsed public demo principal gets nothing from /me.
+      //
+      // This endpoint mints an access token further down (role change / user
+      // remap), and `generateTokenPair` — which it used to call — carries NO
+      // demo TTL gate of its own: the gate added earlier lives in
+      // `refreshAccessToken` and in `AuthController.login`. So `/me` was a third
+      // door that handed a lapsed public demo principal a brand-new refresh
+      // family (7 days on staging, 30 in production), on a GET.
+      //
+      // The check runs on `user.id` — the row this request actually resolved,
+      // which after the email fallback below is NOT necessarily the id in the
+      // token. That distinction is the whole point: `attachUser` gates on the
+      // TOKEN's id, so a token whose id no longer resolves sails past the
+      // middleware and lands here, where the remap re-attaches it to the demo
+      // account by email. Gating on `req.user.id` would repeat that miss.
+      //
+      // Deliberately NOT conditional on whether a token is about to be minted:
+      // answering `isAuthenticated: true` for an account whose demo is over is
+      // dishonest whether or not credentials ride along, and 403 is what the
+      // rest of the system already says (`attachUser`, `login`). The shared
+      // helper also performs the lazy retirement — status flip plus family
+      // revocation — that nothing else will run for this principal.
+      // For every non-demo caller this is a cached marker lookup and a pass.
+      // -------------------------------------------------------------------
+      const demoCredentialCheck = await assertDemoPrincipalMayReceiveCredentials(user.id);
+      if (!demoCredentialCheck.allowed) {
+        return res.status(403).json({
+          error: 'This demo session has ended. Start a new demo to continue.',
+          code: DEMO_SESSION_EXPIRED_CODE,
+        });
+      }
+
       // Permanent role fix for selected internal accounts.
       // Ensure DB is updated so future tokens stay consistent.
       const isForcedPlatformSuperAdmin =
@@ -570,31 +608,73 @@ router.get(
         membershipRole,
       });
 
-      // Check if effective role changed vs JWT - if so, generate new token
+      // ---------------------------------------------------------------------
+      // Effective role changed vs the JWT, or the user was re-mapped by email:
+      // hand back an ACCESS token carrying the corrected claims.
+      //
+      // ACCESS TOKEN ONLY — no refresh family. This used to call
+      // `generateTokenPair`, which inserts a fresh `refresh_tokens` row and
+      // therefore opens a second full-length family (30 days by default, 7 on
+      // staging) every time a GET /me disagreed with the token's role claim.
+      // A re-map is not a re-authentication: it is a lookup correction, and it
+      // must not extend the caller's ability to stay signed in beyond the
+      // family they logged in with. The client keeps
+      // its existing refresh token (`tokenService.saveTokens` preserves the
+      // stored one when the response omits `refreshToken`), so nothing about
+      // the session's lifetime changes — only its claims.
+      //
+      // Claims mirror `RefreshTokenService.generateTokenPair` exactly, including
+      // `isDemo`. That flag is read from the organization row rather than from
+      // `req.user.isDemo`, because `attachUser` ORs the client's `X-Demo-Mode`
+      // header into that field — minting from it would let a header bake itself
+      // into a signed token.
+      // ---------------------------------------------------------------------
       let newToken: string | null = null;
-      let newRefreshToken: string | null = null;
+      // Never set. Kept as a named constant so the response shape below stays
+      // explicit about what /me does and does not issue.
+      const newRefreshToken: string | null = null;
       if (effectiveRole !== req.user!.role || remappedUserId) {
-        const deviceInfo = (req.get('user-agent') || 'Unknown Device').substring(0, 200);
-        const tokenPair = await refreshTokenService.generateTokenPair(
+        let isDemoOrganization = false;
+        try {
+          const orgTypeRow = await dbGet<{ organization_type?: string }>(
+            'SELECT organization_type FROM organizations WHERE id = ? LIMIT 1',
+            [user.organization_id]
+          );
+          isDemoOrganization =
+            String(orgTypeRow?.organization_type || '')
+              .trim()
+              .toUpperCase() === 'DEMO';
+        } catch {
+          isDemoOrganization = false;
+        }
+
+        newToken = jwt.sign(
           {
             id: user.id,
             email: user.email,
             role: effectiveRole,
-            organization_id: user.organization_id,
+            organizationId: user.organization_id,
+            isSuperAdmin: effectiveRole === 'SUPERADMIN',
+            isDemo: isDemoOrganization,
+            jti: uuidv4(),
           },
-          {
-            deviceInfo,
-            ip: req.ip,
-            userAgent: req.get('user-agent'),
-          }
+          config.JWT_SECRET,
+          { expiresIn: authRuntimeConfig.accessTokenExpiry }
         );
-        newToken = tokenPair.accessToken;
-        newRefreshToken = tokenPair.refreshToken;
       }
 
       if (newToken) {
         try {
-          setAuthCookies(res, newToken, newRefreshToken || req.cookies?.[REFRESH_TOKEN_COOKIE]);
+          const existingRefreshToken = newRefreshToken || req.cookies?.[REFRESH_TOKEN_COOKIE];
+          // Only rewrite the refresh cookie when there is a real value to write:
+          // now that /me never mints one, `setAuthCookies` would otherwise be
+          // handed `undefined` and Express would serialize it as the literal
+          // string "undefined".
+          if (existingRefreshToken) {
+            setAuthCookies(res, newToken, existingRefreshToken);
+          } else {
+            setAccessTokenCookie(res, newToken);
+          }
         } catch {
           // ignore cookie write failures
         }
