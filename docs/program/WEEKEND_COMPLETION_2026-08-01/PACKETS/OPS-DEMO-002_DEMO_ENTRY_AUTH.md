@@ -177,14 +177,26 @@ Obowiązuje teraz dopasowanie **dokładne: metoda + znormalizowana ścieżka**, 
 | Operacja | Dlaczego dopuszczona |
 | --- | --- |
 | `POST /api/auth/logout` | zakończenie sesji |
-| `POST /api/auth/revoke-all` | odpowiednik „logout-all"; unieważnia **własne** rodziny tokenów |
 | `POST /api/auth/refresh` | rotacja w oknie demo; ma **własną** bramkę TTL, która odrzuca wygasły principal |
 | `POST /api/demo/toggle` | **wyłącznie wyjście** — `enabled` musi być jawnie `false`/`'false'`/`0`/`'0'`; wszystko inne (w tym brak pola) to odmowa |
 | `POST /api/demo/record-event` | beacon telemetryczny; trasa wyprowadza `organizationId` server-side |
 
-**Uwaga nazewnicza do przeglądu:** pakiet prosił o `POST /api/auth/logout-all`. Taka
-trasa nie istnieje — odpowiednikiem w tym kodzie jest `POST /api/auth/revoke-all`
-i to ona jest na liście.
+**Brak pozycji „logout-all" — świadomie, po przeglądzie.** `POST /api/auth/revoke-all`
+był tu wpisany jako odpowiednik i było to błędne na dwa sposoby:
+
+1. handler odrzuca każdego, kto nie jest `ADMIN`/`SUPERADMIN`
+   (`auth.routes.ts`), więc principal demo (`CONSULTANT`) i tak dostawał `403` —
+   pozycja nie dawała żadnej zdolności;
+2. handler zapisuje wyłącznie wiersz-marker do `revoked_tokens`.
+   `RefreshTokenService` **nigdy nie czyta tej tabeli** (`grep` zwraca `0`), więc po
+   „revoke-all" refresh token dalej rotuje i wydaje działający access token. Trasa
+   nie kończy sesji.
+
+Allowlista opisywała więc zdolność, której system nie zapewnia. Usunięta z
+`PUBLIC_DEMO_WRITE_ALLOWLIST`, z `EXPIRED_DEMO_ALLOWED_PATHS` i z tego dokumentu.
+Wada podstawowa jest opisana w [`SEC-AUTH-001`](SEC-AUTH-001_REVOKE_ALL_DOES_NOT_END_SESSIONS.md)
+i **celowo nie jest naprawiana w tym pakiecie** — nic w ścieżce demo od niej nie
+zależy, bo operacją wygaszenia jest zwykły `logout`.
 
 **Cross-tenant w `record-event` — realna dziura, zamknięta.** Trasa czytała
 `organizationId` **z ciała żądania** (`organizationId || req.user.organizationId`,
@@ -420,26 +432,85 @@ zachowanie z miękkiego `test.skip` na twardy błąd. Skrypty `claude-verify` s�
 przepięcia na bootstrap **wyłączone z użycia** — celowo, bo dotąd robiły zrzuty ekranów
 przekierowań zamiast docelowych tras.
 
+## Runda 5 — trzy defekty znalezione przez czerwony zespół, wszystkie moje
+
+Przegląd adwersaryjny obalił trzy rzeczy, które ten dokument ogłaszał jako
+sprawdzone. Wszystkie naprawione, każda z kontrolą negatywną.
+
+**R5-1 — „brak nagłówka nie poszerza dostępu" było NIEPRAWDĄ.** Ratunkowa ścieżka
+„dowolne ACTIVE membership" w `attachUser` (dopisana przy QA 2026-06-08) nadpisywała
+`resolvedOrganizationId` **po** moim rozstrzygnięciu z sesji. Wiersz członkostwa
+konta demo leży w organizacji **bazowej** (tam zapisuje go rejestracja), a tenant
+roboczy to osobna organizacja sesji bez żadnego członkostwa — więc sonda zawsze
+chybiała, fallback zawsze strzelał i każde żądanie **bez nagłówków** wracało do
+organizacji wspólnej. Mój własny test tego nie widział, bo sondował
+`/api/demo/organization`, które czyta wiersz sesji wprost i nigdy nie dotyka
+`req.organizationId`. Poprawka: wykluczenie principala publicznego demo z tej
+ratunkowej ścieżki. Nowy test pisze przez `record-event` i czyta z bazy, na której
+organizacji zdarzenie wylądowało.
+
+**R5-2 — wylogowanie wygasłego konta było odrzucane u prawdziwego klienta.** Po
+wygaśnięciu żądanie przechodziło przez listę wind-down, ale zaraz potem trafiało w
+ogólną kontrolę „obcy `X-Demo-Session-Org`" — a realny klient trzyma te nagłówki w
+store i dokłada je do każdego żądania (`src/services/api.ts`). Wynik: `403
+DEMO_SESSION_INVALID` na `logout`, czyli dokładnie na operacji, którą klient musi
+wykonać. W testach było niewidoczne, bo `attachUser` ma fallback aktywny wyłącznie
+przy `NODE_ENV === 'test'`. Nowy test przestawia `NODE_ENV` na czas jednego żądania.
+
+**R5-3 — limiter IP dało się ominąć podrobionym tokenem.** `extractKey` czyta id
+użytkownika przez `jwt.decode` — **bez weryfikacji podpisu**. Na endpoincie
+uwierzytelnionym to nieszkodliwe; na `register-demo`, który jest anonimowy i
+provisionuje tenant przy każdym sukcesie, wystarczyło dołączyć dowolny śmieciowy
+bearer i rotować pole `id`, by każde żądanie trafiało do świeżego kubełka. Oba
+limitery demo mają teraz jawny `keyResolver` liczony **wyłącznie z tożsamości
+sieciowej**.
+
+### Ustalenia czerwonego zespołu przekazane dalej, nie naprawiane tutaj
+
+Świadomie poza zakresem tej rundy — wymagają własnych pakietów i decyzji:
+
+- **płaszczyzna realtime nie ma bramki demo.** Siedem wejść WS/Socket.IO weryfikuje
+  wyłącznie podpis JWT; nie czytają `demo_sessions`, `users.status` ani
+  `revoked_tokens` i zapisują do bazy bez `writeAllowed`. Access token wygasłego
+  konta otwiera socket przez cały pozostały czas życia tokenu;
+- **68 tras zapisu nie ma `verifyToken`**, więc guard read-only ich nie widzi
+  (`register`/`register-demo`/`reset-password` były znane, reszta nie). Sformułowanie
+  „bezwarunkowe read-only" jest prawdziwe **dla principala**, a nie dla całej
+  powierzchni zapisu — patrz zawężenie w sekcji o read-only;
+- **`POST /api/analytics/journey/track`** ma dokładnie tę samą wadę caller-trust,
+  którą naprawiliśmy w `record-event`, i jest w dodatku nieuwierzytelniona;
+- `GET /api/auth/me` mintuje nową rodzinę refresh tokenów bez bramki TTL;
+- `toggle {enabled:false}` jest jednokierunkowe: `demo:entry_source` nie jest
+  czyszczone, więc po wyjściu każde kolejne żądanie dostaje `403`.
+
 ## Bramki wykonane lokalnie
+
+Wszystko z `--retry=0`.
 
 | Bramka | Wynik |
 | --- | --- |
-| `tests/integration/demoPublicEntry.contract.test.ts` (realny Express + realna baza) | **`46/46 PASS`** |
-| `tests/unit/backend/demo/` (allowlista 566 tras, saga, fault injection) | **`227/227 PASS`**, 4 pliki |
-| `tests/unit/backend/rateLimiting/` (limitery, Redis faults, kontrakt startu, health) | **`76/76 PASS`**, 14 plików |
-| `tests/unit/backend/auth/` (macierz flag gatewaya) | `27/27 PASS` |
-| **Pełny pakiet regresji OPS-DEMO-002** | **`619/619 PASS`, 33 pliki** (`--retry=0`) |
-| Kontrola negatywna — reguła prefiksowa zamiast dokładnej allowlisty (poziom jednostkowy) | **66 przypadków odmowy przechodziło**: 16/16 nazwanych tras auth, 7/7 ciał `toggle {enabled:true}`, 23/31 prób obejścia ścieżki |
-| Kontrola negatywna — allowlista + `record-event` cofnięte (poziom HTTP) | **`8/46 FAIL`**, w tym cross-tenant zapis zdarzenia |
-| Kontrola negatywna — Redis store z `HEAD` | **`11/13 FAIL`** — wszystkie błędy INCR/TTL/EXPIRE przepuszczane |
-| Kontrola negatywna — kontrakt startu i surface health z `HEAD` | `7/7 FAIL` |
-| Kontrole negatywne rund 1–3 (read-only, TTL, gateway, saga, limitery, trasa, AuthView) | nadal aktualne |
+| `tests/integration/demoPublicEntry.contract.test.ts` | **`50/50 PASS`** |
+| `tests/unit/backend/demo/` | `227/227 PASS`, 4 pliki |
+| `tests/unit/backend/rateLimiting/` | `78/78 PASS`, 14 plików |
+| `tests/unit/backend/auth/demoLoginGateway.test.ts` | `36/36 PASS` |
+| **Pełny pakiet regresji OPS-DEMO-002** | patrz raport końcowy rundy |
 | `npm run type-check` | PASS |
-| **Realny type-check 9 zmienionych plików backendu** | **0 błędów w moich plikach**; 30 linii wyjścia to istniejące błędy w plikach wciąganych tranzytywnie |
-| `npm run build:backend` | PASS — ale to `tsc --noCheck`, **nie jest dowodem typowym** i nie jest tu cytowany jako taki |
+| **Realny type-check zmienionych plików backendu** | 0 błędów w moich plikach |
+| `npm run build:backend` | PASS — `tsc --noCheck`, **nie jest dowodem typowym** |
 | `check-ssot-paths.sh`, `check-ssot-registry.mjs` | PASS |
 | `git diff --check` | PASS |
-| Skan sekretów w diffie | czysty (jedyne trafienia to nazwy tras zawierające `api-keys` oraz jawnie oznaczony placeholder `redis://…@redis.invalid`) |
+| Skan sekretów | czysty |
+
+### Kontrole negatywne rundy 5
+
+| Cofnięta zmiana | Wynik |
+| --- | --- |
+| `revoke-all` z powrotem na allowliście | **6 FAIL** |
+| usunięty wyjątek `logout` | **20 FAIL** |
+| `organizationId` z ciała w `record-event` | **1 FAIL** (test cross-tenant) |
+| `throwOnError` wyłączone w store Redis | **8/13 FAIL** |
+| cofnięte wykluczenie z ratunkowej ścieżki membership (R5-1) | **1 FAIL** |
+| cofnięty wyjątek wind-down dla wygasłego konta (R5-2) | **1 FAIL** |
 
 ## Niewykonane świadomie
 
