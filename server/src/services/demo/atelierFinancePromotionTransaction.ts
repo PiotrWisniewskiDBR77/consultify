@@ -93,6 +93,24 @@
  * is never consulted for this decision (it selects the LOG LEVEL, nothing
  * more) — a production process with `NODE_ENV` unset still fails closed.
  *
+ * AND NO ENV VAR IS EVIDENCE EITHER (FIN-005 P1-1b, the falsified claim).
+ * An earlier build accepted the bare string `MOCK_DB === 'true'` as a seam,
+ * on the stated grounds that "`Database.ts` treats this as its primary mock
+ * switch". That is true only inside `createDatabase()`, which `DbPromise` never
+ * calls; `DbPromise` resolves through `getDatabaseInstance()`, and THAT only
+ * honours `MOCK_DB` when `NODE_ENV === 'test'` and `RUN_DB_TESTS !== '1'`. So
+ *
+ *     DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=true DATABASE_URL=…
+ *
+ * produced `seam recognised` while every write went to a REAL PostgreSQL, which
+ * re-opened the non-atomic path on exactly the databases this module exists to
+ * protect. A stray `MOCK_DB=true` in a Railway service variable was enough, and
+ * `NODE_ENV=production` did not protect. The signal is GONE. The seam is now
+ * decided by WHAT THE DATABASE IS — see `decidePinnedTransactionSeam`: the live
+ * probe runs FIRST, and any claim of a mock (an `isMock` instance, a non-postgres
+ * driver setting) is DOWNGRADED to a refusal the moment a real PostgreSQL answers
+ * the module the caller writes through.
+ *
  * ===========================================================================
  * NO FALLBACK PROMOTION ON POSTGRESQL (FIN-005 P1-2)
  * ===========================================================================
@@ -121,9 +139,13 @@
  * adapter opens a FRESH connection — the pinned one is unusable — and asks the
  * caller's `reconcile` callback to read the promoted records back and classify:
  *
- *   all five READY and coherent      -> the commit really landed (`committed`,
+ *   all five match the INTENDED
+ *   POST-STATE, exactly, and the
+ *   fixture is coherent              -> the commit really landed (`committed`,
  *                                       `commitAck: 'lost-then-confirmed'`)
- *   all five pending / pre-state     -> it did not (`rolled-back`, with the
+ *   all five match the PRE-STATE
+ *   SNAPSHOT taken under the row
+ *   locks, exactly                   -> it did not (`rolled-back`, with the
  *                                       reconciliation as the evidence)
  *   anything mixed, anything else,
  *   or the read itself failing       -> `commit-indeterminate`,
@@ -139,18 +161,31 @@
  * would live in the fake store while the promotion ran against a real database:
  * split brain, and far worse than no transaction at all.
  *
- * Two independent mechanisms, in this order:
+ * `decidePinnedTransactionSeam()` composes two mechanisms, and the ORDER is the
+ * whole point — the live database outranks every declaration about it:
  *
- *   1. `identifyNonPostgresSeam()` — positive identification of the seam
- *      itself (a fully doubled `DbPromise`, `MOCK_DB=true`, a database instance
- *      that declares `isMock`, or a configured driver that is not postgres).
- *      Recognised => `unavailable`, and no pool is ever touched.
+ *   1. `identifyNonPostgresSeam()` — positive identification of the seam itself.
+ *      Exactly ONE of its signals may decide alone (`decidesAlone`): a
+ *      WHOLESALE-DOUBLED `DbPromise`. That is a structural fact about the loaded
+ *      module graph — `get`, `all` AND `run` replaced by spy functions — which
+ *      no environment variable can produce and which no probe can see past,
+ *      because the probe would have to travel through the very module that has
+ *      been replaced. The other signals (an instance declaring `isMock`, a
+ *      configured driver that is not postgres) are CLAIMS, and claims lose.
  *   2. `probePinnedTransactionSupport()` — asks THE SAME MODULE THE CALLER
  *      WRITES THROUGH a Postgres-only expression (`current_database()` /
  *      `pg_backend_pid()`) through `DbPromise.all`. Only a genuine pg driver
- *      answers with one row. A failure here on an unrecognised seam is a
- *      REFUSAL, not a degradation. The pinned client is then asked for
- *      `current_database()` too and refuses if the names disagree.
+ *      answers with one row.
+ *
+ *      IF IT ANSWERS, THIS IS PostgreSQL. `unavailable` is then impossible: a
+ *      claimed seam is downgraded, the pinned transaction is attempted, and if
+ *      it cannot be established the outcome is `refused`. No `isMock` flag, no
+ *      `DB_TYPE`, no env var of any kind can talk the module off that path.
+ *      IF IT DOES NOT ANSWER, a recognised claim explains why (`unavailable`);
+ *      an unexplained failure is a REFUSAL, not a degradation.
+ *
+ *      The pinned client is then asked for `current_database()` too and refuses
+ *      if the names disagree.
  *
  * `unavailable` is logged at `error` level in production (a production seed run
  * SHOULD have a real connection; silently degrading is the failure mode this
@@ -191,9 +226,19 @@ export interface PinnedLockRequest {
 /**
  * The caller's verdict after a LOST COMMIT ACK, computed on a FRESH connection.
  *
- * `committed`     — every promoted record was read back READY and coherent.
- * `not-committed` — every promoted record is in its pending / pre-promotion state.
- * `indeterminate` — anything mixed, anything else, or the read did not succeed.
+ * `committed`     — every promoted record matches the INTENDED POST-STATE.
+ * `not-committed` — every promoted record matches the PRE-TRANSACTION SNAPSHOT.
+ * `indeterminate` — anything else at all, or the read did not succeed.
+ *
+ * TWO EXACT STATES, NOT A FLAG (FIN-005 P1-3b). A verdict of the shape "no row
+ * looks ready, therefore nothing committed" is not a reading of the pre-state —
+ * it cannot tell a rollback from a concurrent actor having moved a row to some
+ * third state, and on a fixture that was ALREADY promoted before this run it
+ * gets the `committed` direction wrong too. So the caller is expected to
+ * SNAPSHOT the locked rows inside `plan(read)` (they are under `FOR UPDATE`
+ * there, so the snapshot is the exact state the writes would apply to) and
+ * classify by exact match against that snapshot or against the state its own
+ * writes intended. Anything that matches neither is `indeterminate`.
  */
 export interface PinnedReconciliation {
   verdict: 'committed' | 'not-committed' | 'indeterminate';
@@ -204,7 +249,15 @@ export interface PinnedReconciliation {
 export interface PinnedPromotionRequest {
   /** Rows to `SELECT … FOR UPDATE` before the plan runs. */
   lock: PinnedLockRequest[];
-  /** Computes the verdict and the writes, over the LOCKED rows. */
+  /**
+   * Computes the verdict and the writes, over the LOCKED rows.
+   *
+   * This is also the ONLY place a caller can take a trustworthy pre-transaction
+   * snapshot: the rows are held under `FOR UPDATE` for the whole call, so what
+   * is read here is exactly what the writes will apply to. A caller whose
+   * `reconcile` classifies against a pre-state must capture it from THIS
+   * callback — see `PinnedReconciliation`.
+   */
   plan: (read: PinnedReader) => Promise<PinnedPlan>;
   /** Final read-back on the same client, after the writes, before COMMIT. */
   verify: (read: PinnedReader) => Promise<{ ok: boolean; reason?: string }>;
@@ -217,6 +270,12 @@ export interface PinnedPromotionRequest {
   reconcile: (read: PinnedReader) => Promise<PinnedReconciliation>;
   /** Per-statement timeout on the pinned session. Default 15s. */
   statementTimeoutMs?: number;
+  /**
+   * Ceiling on JS pauses BETWEEN statements inside the transaction. Its own
+   * budget on purpose — see the note at the call site. Default 60s, and never
+   * allowed below `statementTimeoutMs`.
+   */
+  idleInTransactionTimeoutMs?: number;
   /** Ceiling on the pool checkout itself. Default 10s. */
   connectTimeoutMs?: number;
 }
@@ -273,6 +332,13 @@ export type PinnedPromotionOutcome =
     };
 
 const DEFAULT_STATEMENT_TIMEOUT_MS = Number(process.env.DB_QUERY_TIMEOUT) || 15_000;
+/**
+ * Deliberately NOT derived from `DB_QUERY_TIMEOUT`. See the call site: this
+ * bounds the gaps between statements, not the statements themselves, so sharing
+ * the per-query budget turns an ordinary JS pause into a killed backend.
+ */
+const DEFAULT_IDLE_IN_TRANSACTION_TIMEOUT_MS =
+  Number(process.env.DB_IDLE_IN_TRANSACTION_TIMEOUT) || 60_000;
 const DEFAULT_CONNECT_TIMEOUT_MS = 10_000;
 
 /** Sentinel aliases chosen so no application table can collide with them. */
@@ -330,6 +396,39 @@ export interface NonPgSeamVerdict {
   recognised: boolean;
   /** The signal that matched, or the evidence weighed when none did. */
   signal: string;
+  /**
+   * May this verdict decide the outcome WITHOUT a live probe?
+   *
+   * True for exactly one signal — a wholesale-doubled `DbPromise` — because the
+   * probe travels through that very module and so cannot contradict it. Every
+   * other signal is a CLAIM about the database and is overruled by a real
+   * PostgreSQL answering. See `decidePinnedTransactionSeam`.
+   */
+  decidesAlone: boolean;
+}
+
+/**
+ * The key `server/src/database/Database.ts` keeps its singleton under.
+ *
+ * READ DIRECTLY, ON PURPOSE. The obvious call — `getDatabaseInstance()` — is not
+ * a question, it is a command: when nothing is installed yet it CREATES an
+ * instance and writes it to `process` and `globalThis`. A read-only predicate
+ * that installs the process-wide database singleton as a side effect is a bug
+ * waiting for a caller, so this peeks at what is ALREADY there and never
+ * conjures one. The literal is duplicated because `Database.ts` does not export
+ * it; if it ever diverges this peek answers `null`, which is the FAIL-CLOSED
+ * direction — no seam recognised, and the live probe decides.
+ */
+const DATABASE_SINGLETON_GLOBAL_KEY = '__CONSULTIFY_GLOBAL_DB_INSTANCE__';
+
+/** The installed database singleton, or `null` when none has been installed. */
+function peekInstalledDatabaseInstance(): { isMock?: unknown } | null {
+  const holder =
+    (process as unknown as Record<string, unknown>)[DATABASE_SINGLETON_GLOBAL_KEY] ??
+    (globalThis as unknown as Record<string, unknown>)[DATABASE_SINGLETON_GLOBAL_KEY];
+  if (!holder || typeof holder !== 'object') return null;
+  if ((holder as { __CLOSED__?: unknown }).__CLOSED__) return null;
+  return holder as { isMock?: unknown };
 }
 
 /**
@@ -348,17 +447,33 @@ function isTestDouble(value: unknown): boolean {
  *
  * READ THIS BEFORE ADDING A SIGNAL. The answer gates the ONLY route to the
  * caller's non-atomic promotion path, so it must never be reachable by
- * inference, by absence of evidence, or by `NODE_ENV`. `NODE_ENV` says
+ * inference, by absence of evidence, by `NODE_ENV`, or by ANY environment
+ * variable. An env var states an INTENTION; the question here is a FACT about
+ * the database, and the two came apart badly once already (see the P1-1b note in
+ * the module docblock: `MOCK_DB=true` on a real PostgreSQL). `NODE_ENV` says
  * something about the process, nothing about the database: a staging box, a
  * `NODE_ENV`-less container and a developer's laptop pointed at the demo
- * database would all be misclassified by it. It is deliberately not consulted
- * here. Every signal below is an explicit declaration made by the seam itself.
+ * database would all be misclassified by it. Neither is consulted here.
  *
- * The DbPromise signal demands that `get`, `all` AND `run` are all doubles.
- * A PARTIAL mock — a test that wraps `all` to inject a probe failure while
- * leaving the real `run` in place, which is exactly what the fail-closed suite
- * does — is deliberately NOT recognised: it still writes to the real database,
- * so it must fail closed like any other real database.
+ * WHAT SURVIVES, AND WHAT EACH ONE IS WORTH:
+ *
+ *   1. A WHOLESALE-DOUBLED `DbPromise` — `get`, `all` AND `run` are all spy
+ *      functions. Structural, not declared: it requires a test runner to have
+ *      replaced the module, and no env var can produce it. This is the only
+ *      signal with `decidesAlone: true`, because the live probe travels through
+ *      the replaced module and therefore cannot check it.
+ *      A PARTIAL mock — a test that wraps `all` to inject a probe failure while
+ *      leaving the real `run` in place, which is exactly what the fail-closed
+ *      suite does — is deliberately NOT recognised: it still writes to the real
+ *      database, so it must fail closed like any other real database.
+ *   2. The INSTALLED database instance declares `isMock === true`. A claim, and
+ *      a good one (it is the object `DbPromise` actually dispatches through) —
+ *      but still overruled by a real PostgreSQL answering the probe.
+ *   3. The configured driver is a non-empty type other than `postgres`. The
+ *      weakest of the three (it is `DB_TYPE` in a hat) and likewise overruled.
+ *
+ * Signals 2 and 3 carry `decidesAlone: false`. On their own they never open the
+ * non-atomic path: `decidePinnedTransactionSeam` asks the database first.
  */
 export async function identifyNonPostgresSeam(): Promise<NonPgSeamVerdict> {
   const considered: string[] = [];
@@ -367,47 +482,98 @@ export async function identifyNonPostgresSeam(): Promise<NonPgSeamVerdict> {
   if (isTestDouble(DbPromise.get) && isTestDouble(DbPromise.all) && isTestDouble(DbPromise.run)) {
     return {
       recognised: true,
+      decidesAlone: true,
       signal:
         'the DbPromise module is a test double (get/all/run are all mock functions) — no statement this process issues can reach PostgreSQL',
     };
   }
   considered.push('DbPromise get/all/run are real functions, not test doubles');
 
-  // 2. Explicit opt-in. `Database.ts` treats this as its primary mock switch.
-  if (process.env.MOCK_DB === 'true') {
-    return { recognised: true, signal: 'MOCK_DB=true — the mock database was explicitly requested' };
-  }
-  considered.push(`MOCK_DB=${process.env.MOCK_DB ?? '<unset>'}`);
+  // NOT A SIGNAL — recorded so the log and the tests can SEE that it was weighed
+  // and thrown away. `MOCK_DB` reaches `getDatabaseInstance()` only when
+  // `NODE_ENV === 'test'` and `RUN_DB_TESTS !== '1'`; outside that window it is a
+  // claim with nothing behind it, and it used to open the non-atomic path on a
+  // real database. FIN-005 P1-1b.
+  considered.push(
+    `MOCK_DB=${process.env.MOCK_DB ?? '<unset>'} (IGNORED — an env var is a statement of intent, never evidence about the live database)`
+  );
 
-  // 3. The live database instance declares itself a mock.
-  try {
-    const { getDatabaseInstance } = await import('../../database/Database.js');
-    const instance = getDatabaseInstance() as unknown as { isMock?: unknown } | null;
-    if (instance && instance.isMock === true) {
-      return {
-        recognised: true,
-        signal: 'the active database instance declares isMock=true',
-      };
-    }
-    considered.push('the active database instance does not declare isMock');
-  } catch (error) {
-    // Could not even ask. That is NOT evidence of a mock.
-    considered.push(`the active database instance could not be inspected (${(error as Error).message})`);
+  // 2. The INSTALLED database instance declares itself a mock. Peeked, never
+  //    created: see `peekInstalledDatabaseInstance`.
+  const instance = peekInstalledDatabaseInstance();
+  if (instance && instance.isMock === true) {
+    return {
+      recognised: true,
+      decidesAlone: false,
+      signal: 'the installed database instance declares isMock=true',
+    };
   }
+  considered.push(
+    instance
+      ? 'the installed database instance does not declare isMock'
+      : 'no database instance is installed yet (asking for one would create it, so it was not asked)'
+  );
 
-  // 4. A configured driver that is not postgres cannot host a pg transaction.
+  // 3. A configured driver that is not postgres cannot host a pg transaction.
   try {
     const { databaseConfig } = await import('../../config/DatabaseConfig.js');
     const type = String((databaseConfig as { type?: unknown } | null)?.type ?? '');
     if (type && type !== 'postgres') {
-      return { recognised: true, signal: `the configured database driver is "${type}", not postgres` };
+      return {
+        recognised: true,
+        decidesAlone: false,
+        signal: `the configured database driver is "${type}", not postgres`,
+      };
     }
     considered.push(`the configured database driver is "${type || '<unknown>'}"`);
   } catch (error) {
     considered.push(`the database configuration could not be inspected (${(error as Error).message})`);
   }
 
-  return { recognised: false, signal: considered.join('; ') };
+  return { recognised: false, decidesAlone: false, signal: considered.join('; ') };
+}
+
+/**
+ * What the seam question is FOR: which of the three doors this call goes through.
+ *
+ *   `postgres` — a real PostgreSQL answered the module the caller writes
+ *                through. The pinned transaction is attempted. `unavailable` is
+ *                unreachable from here, whatever any flag claims.
+ *   `seam`     — no PostgreSQL answered AND a positively identified seam
+ *                explains it (or `DbPromise` itself is a wholesale double, in
+ *                which case nothing could have answered). `unavailable`.
+ *   `refuse`   — no PostgreSQL answered and nothing explains it. Fail closed.
+ *
+ * THE PROBE RUNS BEFORE ANY CLAIM IS BELIEVED. That single ordering is what
+ * makes the predicate un-foolable by an environment variable: `MOCK_DB`,
+ * `DB_TYPE`, `NODE_ENV` and an `isMock` flag are all upstream of the database,
+ * and the database gets the first word. No pool is opened on any of these paths
+ * — the probe goes through `DbPromise`, exactly like the caller's own writes.
+ */
+export type PinnedSeamDecision =
+  | { outcome: 'postgres'; probe: PinnedSupportProbe; seam: NonPgSeamVerdict }
+  | { outcome: 'seam'; probe: PinnedSupportProbe | null; seam: NonPgSeamVerdict }
+  | { outcome: 'refuse'; probe: PinnedSupportProbe; seam: NonPgSeamVerdict };
+
+export async function decidePinnedTransactionSeam(): Promise<PinnedSeamDecision> {
+  const seam = await identifyNonPostgresSeam();
+
+  // The one signal the probe cannot check, because the probe goes through the
+  // module that has been replaced. Nothing is asked of the database here — a
+  // doubled `DbPromise` would only answer whatever the double felt like.
+  if (seam.recognised && seam.decidesAlone) return { outcome: 'seam', probe: null, seam };
+
+  const probe = await probePinnedTransactionSupport();
+
+  // A REAL PostgreSQL ANSWERED. Every claim of a mock is downgraded here — this
+  // is the belt-and-braces the P1-1b defect needed. From this point the only
+  // outcomes are a pinned transaction or a refusal.
+  if (probe.supported) return { outcome: 'postgres', probe, seam };
+
+  // Nothing answered. Is there a positively identified reason?
+  if (seam.recognised) return { outcome: 'seam', probe, seam };
+
+  return { outcome: 'refuse', probe, seam };
 }
 
 function isProduction(): boolean {
@@ -497,23 +663,34 @@ async function connectWithDeadline(
 export async function runPinnedPromotionTransaction(
   request: PinnedPromotionRequest
 ): Promise<PinnedPromotionOutcome> {
-  // (1) Is this a seam where no pinned transaction can exist? Asked FIRST, so a
-  //     recognised mock never opens a pool, and so a fake that could somehow
-  //     answer the probe cannot smuggle us onto a real database.
-  const seam = await identifyNonPostgresSeam();
-  if (seam.recognised) return reportUnavailable(seam.signal);
-
-  // (2) Not a recognised seam ⇒ this is a real database as far as anything can
-  //     tell. From here on, EVERY failure is a refusal.
-  const probe = await probePinnedTransactionSupport();
-  if (!probe.supported) {
+  // (1) Ask the DATABASE what it is — the live probe first, every declaration
+  //     about it second. No pool is opened on any branch below: the probe goes
+  //     through `DbPromise`, exactly like the caller's own writes.
+  const decision = await decidePinnedTransactionSeam();
+  const seam = decision.seam;
+  if (decision.outcome === 'seam') return reportUnavailable(seam.signal);
+  if (decision.outcome === 'refuse') {
     return refuse(
-      `the availability probe failed on a database that is NOT a recognised test seam: ${probe.reason}`,
+      `the availability probe failed on a database that is NOT a recognised test seam: ${decision.probe.reason}`,
       seam.signal
     );
   }
 
+  // (2) A real PostgreSQL answered. From here on, EVERY failure is a refusal.
+  const probe = decision.probe;
+
   const statementTimeoutMs = request.statementTimeoutMs ?? DEFAULT_STATEMENT_TIMEOUT_MS;
+  // Its OWN budget, never a share of `statement_timeout`'s. They measure
+  // different things: `statement_timeout` bounds ONE query on the server;
+  // `idle_in_transaction_session_timeout` bounds the JS pauses BETWEEN queries —
+  // the plan callback's arithmetic, a garbage-collection stall, an await on
+  // something slow. Giving them one number means a transaction whose queries are
+  // all fast still gets its backend killed because the process paused, and a
+  // slow-but-legitimate run turns into a spurious `incomplete`.
+  const idleInTransactionTimeoutMs = Math.max(
+    request.idleInTransactionTimeoutMs ?? DEFAULT_IDLE_IN_TRANSACTION_TIMEOUT_MS,
+    statementTimeoutMs
+  );
   const connectTimeoutMs = request.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS;
 
   let client: PoolClient;
@@ -606,7 +783,7 @@ export async function runPinnedPromotionTransaction(
     // Bounded time, enforced by the server rather than by hope.
     await client.query(`SET LOCAL statement_timeout = ${Number(statementTimeoutMs)}`);
     await client.query(
-      `SET LOCAL idle_in_transaction_session_timeout = ${Number(statementTimeoutMs)}`
+      `SET LOCAL idle_in_transaction_session_timeout = ${Number(idleInTransactionTimeoutMs)}`
     );
 
     // Same-connection identity check: the pinned client must be on the very
@@ -676,6 +853,7 @@ export async function runPinnedPromotionTransaction(
         backendPid,
         connectTimeoutMs,
         statementTimeoutMs,
+        idleInTransactionTimeoutMs,
       });
     }
     began = false;
@@ -707,11 +885,13 @@ async function checkOutPinnedClient(): Promise<PoolClient> {
  * A `COMMIT` whose result never arrived — resolve it with EVIDENCE, on a
  * connection that is not the (now unusable) pinned one.
  *
- * Never returns `committed` unless the caller's `reconcile` read all five
- * promoted records back as READY and coherent, and never returns `rolled-back`
- * unless it read them all back in their pre-promotion state. Everything else —
- * mixed rows, an unexpected shape, a fresh checkout that fails, a `reconcile`
- * that throws — is `commit-indeterminate` / `NEEDS_OPERATOR`.
+ * Never returns `committed` unless the caller's `reconcile` matched all five
+ * promoted records against the state its own writes intended, and never returns
+ * `rolled-back` unless it matched them against the pre-transaction snapshot it
+ * took under the row locks. Everything else — mixed rows, a row a third party
+ * moved somewhere neither state predicts, an unexpected shape, a fresh checkout
+ * that fails, a `reconcile` that throws — is `commit-indeterminate` /
+ * `NEEDS_OPERATOR`.
  */
 async function reconcileLostCommitAck(params: {
   request: PinnedPromotionRequest;
@@ -720,6 +900,7 @@ async function reconcileLostCommitAck(params: {
   backendPid: number | null;
   connectTimeoutMs: number;
   statementTimeoutMs: number;
+  idleInTransactionTimeoutMs: number;
 }): Promise<PinnedPromotionOutcome> {
   const { request, commitError, applied, backendPid } = params;
   const preface = `COMMIT did not return a result (${commitError.message}); the transaction may or may not have committed`;
@@ -731,17 +912,35 @@ async function reconcileLostCommitAck(params: {
 
   let reconciliation: PinnedReconciliation;
   let fresh: PoolClient | null = null;
+  let freshInTransaction = false;
   try {
     const client = await connectWithDeadline(() => checkOutPinnedClient(), params.connectTimeoutMs);
     fresh = client;
-    // Read-only, and bounded: a reconciliation that hangs is a reconciliation
-    // that never answers.
-    await client.query(`SET statement_timeout = ${Number(params.statementTimeoutMs)}`);
+    // BOUNDED, AND THE BOUNDS DO NOT ESCAPE. `SET` (no LOCAL) is SESSION state,
+    // and `pg` does not reset session state when a client goes back to the pool
+    // — a plain `SET statement_timeout` here would ride a healthy pooled
+    // connection into whatever the application does next. So the reconciliation
+    // runs inside its own transaction and uses `SET LOCAL`, exactly like the
+    // pinned path. READ ONLY on top: this connection exists to LOOK at a
+    // transaction whose fate is unknown, and the server, not a code review,
+    // should be what stops it writing. The transaction also gives the five rows
+    // one consistent snapshot instead of five independent ones.
+    await client.query('BEGIN READ ONLY');
+    freshInTransaction = true;
+    await client.query(`SET LOCAL statement_timeout = ${Number(params.statementTimeoutMs)}`);
+    await client.query(
+      `SET LOCAL idle_in_transaction_session_timeout = ${Number(params.idleInTransactionTimeoutMs)}`
+    );
     const read: PinnedReader = async (sql, sqlParams = []) => {
       const result = await client.query(toPositional(sql), sqlParams as unknown[]);
       return (result.rows ?? []) as PinnedRow[];
     };
     reconciliation = await request.reconcile(read);
+    // Deliberately NOT committed here — the `finally` ends it with ROLLBACK.
+    // The transaction is READ ONLY, so the two are identical in effect, and this
+    // connection exists precisely because a COMMIT's answer went missing: adding
+    // a second COMMIT whose answer could also go missing would put the
+    // RECONCILIATION in doubt as well.
   } catch (error) {
     reconciliation = {
       verdict: 'indeterminate',
@@ -749,8 +948,20 @@ async function reconcileLostCommitAck(params: {
     };
   } finally {
     if (fresh) {
+      let releaseError: Error | undefined;
+      if (freshInTransaction) {
+        // End the READ ONLY transaction so the `SET LOCAL`s die with it — this
+        // is the normal exit as well as the error exit. If even the ROLLBACK
+        // fails the connection is unusable: destroy it rather than return a
+        // mid-transaction client to the pool.
+        try {
+          await fresh.query('ROLLBACK');
+        } catch (error) {
+          releaseError = error as Error;
+        }
+      }
       try {
-        fresh.release();
+        fresh.release(releaseError);
       } catch {
         /* already gone */
       }

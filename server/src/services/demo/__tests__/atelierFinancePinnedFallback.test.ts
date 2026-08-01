@@ -33,9 +33,21 @@ vi.mock('../../organizationContext/OrganizationContextService.js', () => ({
   },
 }));
 
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+
 import logger from '../../../utils/Logger.js';
-import { upsertAtelierFinanceGoldenFlow } from '../atelierFinanceSeed.js';
 import { probePinnedTransactionSupport } from '../atelierFinancePromotionTransaction.js';
+import {
+  acknowledgeAtelierFinanceCommitIndeterminate,
+  atelierFinanceOperatorHoldPath,
+  upsertAtelierFinanceGoldenFlow,
+} from '../atelierFinanceSeed.js';
+
+process.env.ATELIER_FINANCE_HOLD_DIR =
+  process.env.ATELIER_FINANCE_HOLD_DIR ??
+  fs.mkdtempSync(path.join(os.tmpdir(), 'fin005-holds-unit-'));
 
 const ORG_ID = 'demo-atelier-pinned-fallback-test';
 
@@ -175,6 +187,73 @@ describe('FIN-005 — pinned transaction availability detection', () => {
       lines.some((line) => line.includes('pinned promotion transaction UNAVAILABLE')),
       `expected a production ERROR log; saw: ${JSON.stringify(lines)}`
     ).toBe(true);
+  });
+
+  // -------------------------------------------------------------------------
+  // FIN-005 P1-3c — the NEEDS_OPERATOR hold gates the seed BEFORE anything runs.
+  //
+  // The pg suite proves the whole cycle (in-doubt COMMIT -> hold -> blocked
+  // run -> acknowledge -> heal). This proves the cheap half that matters most:
+  // while a hold stands the seed touches NOTHING — not the schema probe, not
+  // phase 0's heal, not a single write.
+  // -------------------------------------------------------------------------
+  it('REFUSES to run — and issues zero statements — while an unacknowledged hold stands', async () => {
+    const heldOrg = `${ORG_ID}-held`;
+    const holdFile = atelierFinanceOperatorHoldPath(heldOrg);
+    fs.mkdirSync(path.dirname(holdFile), { recursive: true });
+    fs.writeFileSync(
+      holdFile,
+      JSON.stringify({
+        organizationId: heldOrg,
+        recordedAt: '2026-08-01T00:00:00.000Z',
+        packId: 'pack-x',
+        analysisId: 'analysis-x',
+        statementIds: ['s1', 's2', 's3'],
+        reason: 'COMMIT did not return a result',
+        reconciliation: 'MIXED state after a lost COMMIT ack: 4/5',
+        applied: [],
+        backendPid: 4242,
+        rowsClaimingReady: ['s1', 's2', 's3', 'pack-x'],
+        acknowledgement: `rm "${holdFile}"`,
+      }),
+      'utf8'
+    );
+
+    try {
+      fakeDb.reset({ schema: FULL_SCHEMA });
+      const result = await upsertAtelierFinanceGoldenFlow({ organizationId: heldOrg });
+
+      expect(result.status).toBe('incomplete');
+      expect(result.reason).toMatch(/NEEDS_OPERATOR — refusing to run/);
+      expect(result.reason).toMatch(/MIXED state after a lost COMMIT ack: 4\/5/);
+      expect(result.reason).toMatch(/has not been acknowledged/);
+      // Not one statement was issued: the gate sits above the schema probe.
+      expect(fakeDb.calls, 'a held tenant must produce no database traffic').toHaveLength(0);
+
+      // Acknowledged, the very same call goes through.
+      expect(acknowledgeAtelierFinanceCommitIndeterminate(heldOrg)).toBe(true);
+      const after = await upsertAtelierFinanceGoldenFlow({ organizationId: heldOrg });
+      expect(after.status, after.reason ?? '').toBe('complete');
+    } finally {
+      fs.rmSync(holdFile, { force: true });
+    }
+  });
+
+  it('a corrupt hold file still blocks — its content is evidence, not a permission slip', async () => {
+    const heldOrg = `${ORG_ID}-corrupt`;
+    const holdFile = atelierFinanceOperatorHoldPath(heldOrg);
+    fs.mkdirSync(path.dirname(holdFile), { recursive: true });
+    fs.writeFileSync(holdFile, 'this file was truncated mid-write {', 'utf8');
+    try {
+      fakeDb.reset({ schema: FULL_SCHEMA });
+      const result = await upsertAtelierFinanceGoldenFlow({ organizationId: heldOrg });
+      expect(result.status).toBe('incomplete');
+      expect(result.reason).toMatch(/NEEDS_OPERATOR — refusing to run/);
+      expect(result.reason).toMatch(/not valid JSON/);
+      expect(fakeDb.calls).toHaveLength(0);
+    } finally {
+      fs.rmSync(holdFile, { force: true });
+    }
   });
 
   it('logs the unavailability below ERROR outside production', async () => {

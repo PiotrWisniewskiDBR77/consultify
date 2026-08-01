@@ -53,9 +53,24 @@
  *   no half-promoted state to repair. Where a pinned connection cannot exist
  *   (mocked in-memory database in tests, non-pg driver) the seed falls back to
  *   verify-then-promote plus a compensating rollback and SAYS SO in the log —
- *   at `error` level in production. Phase 0 (self-heal of a crash-damaged
- *   fixture) and the compensating rollback both stay in place as
- *   defence-in-depth under either path.
+ *   at `error` level in production. That fallback is reachable ONLY when the
+ *   live database itself fails to answer a PostgreSQL probe: no environment
+ *   variable (`MOCK_DB`, `DB_TYPE`, `NODE_ENV`) can open it. Phase 0 (self-heal
+ *   of a crash-damaged fixture) and the compensating rollback both stay in place
+ *   as defence-in-depth under either path.
+ * - **AN IN-DOUBT COMMIT STOPS THE LINE.** When a COMMIT's answer is lost and
+ *   reconciliation cannot classify the outcome, the verdict is written to disk
+ *   as an OPERATOR HOLD and every later run for that tenant REFUSES — no heal,
+ *   no rewrite, no promotion — until a human acknowledges it. See the OPERATOR
+ *   HOLD section. Without that, phase 0 of the next run would demote the
+ *   residue, re-promote and report `complete`, erasing the only evidence there
+ *   was.
+ * - **A LOST COMMIT ACK IS CLASSIFIED ON WHOLE ROWS.** The pre-transaction state
+ *   of all five rows is snapshotted inside the pinned transaction, under the
+ *   `FOR UPDATE` locks; the reconciliation reports `committed` only on an exact
+ *   match to the state the writes intended, `not-committed` only on an exact
+ *   match to that snapshot, and INDETERMINATE for anything else. See the
+ *   PRE-STATE / POST-STATE section.
  * - **Arithmetically true.** The three statements reconcile with each other and
  *   pass `validateStatement` with zero warnings. `assertAtelierFy2014Coherent()`
  *   states those invariants in code so a future edit to a number cannot quietly
@@ -71,8 +86,13 @@
  * uplift, EUR 0.8M capex, EUR 0.4M opex reduction) numerically unchanged.
  */
 
+import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+
 import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { baseStorageDir } from '../../utils/storagePaths.js';
 import { ensureCanonicalRegistryInDatabase } from '../financeCanonicalRegistrySyncService.js';
 import {
   evaluateStatementReadiness,
@@ -917,6 +937,190 @@ function incomplete(
 }
 
 // ---------------------------------------------------------------------------
+// The OPERATOR HOLD — an in-doubt COMMIT that outlives the process (FIN-005 P1-3c)
+// ---------------------------------------------------------------------------
+
+/**
+ * WHY THIS EXISTS. `commit-indeterminate` used to be a string in a return value
+ * and nothing else. Nothing wrote it down, so the very next
+ * `upsertAtelierFinanceGoldenFlow` ran phase 0, saw the mixed residue the
+ * in-doubt COMMIT had left, demoted it, re-promoted it and returned `complete` —
+ * and the suites asserted exactly that "healing", while the runbook told the
+ * operator to re-run. In the documented flow an in-doubt COMMIT was therefore
+ * GUARANTEED to be erased, silently, by the next run. A `NEEDS_OPERATOR` that
+ * clears itself is not `NEEDS_OPERATOR`.
+ *
+ * So the verdict is now written to disk and PHASE 0 MUST CONSULT IT. While a
+ * hold exists the seed refuses to do anything at all for that tenant: no heal,
+ * no phase-1 write, no promotion. The residue stays exactly as the in-doubt
+ * COMMIT left it, which is the only state a human can actually investigate.
+ * Only an explicit acknowledgement — deleting the file, or calling
+ * `acknowledgeAtelierFinanceCommitIndeterminate` — lets the seed run again.
+ *
+ * WHERE IT LIVES, AND THE ONE CAVEAT. `baseStorageDir()` is this codebase's
+ * existing durable surface: `STORAGE_DIR` > `RAILWAY_VOLUME_MOUNT_PATH` >
+ * `process.cwd()`. On a Railway service WITHOUT a mounted volume the last of
+ * those is ephemeral, so a redeploy would drop the hold — the seed logs that
+ * loudly when it writes one. Running this seed against a Railway database
+ * therefore requires `STORAGE_DIR` to point at a volume; that is a deployment
+ * precondition, not a code detail, and it is in the runbook.
+ * `ATELIER_FINANCE_HOLD_DIR` overrides the location outright (tests use it).
+ *
+ * NO MIGRATION ON PURPOSE. The uncertainty being recorded is uncertainty ABOUT
+ * THE DATABASE; a hold that can only be written by succeeding at a database
+ * write is a hold that is missing exactly when it is needed.
+ */
+export interface AtelierFinanceOperatorHold {
+  organizationId: string;
+  recordedAt: string;
+  packId: string | null;
+  analysisId: string | null;
+  statementIds: string[];
+  /** The adapter's reason string, verbatim. */
+  reason: string;
+  /** The reconciliation detail, verbatim — the evidence a human starts from. */
+  reconciliation: string;
+  /** Write labels the transaction issued before the COMMIT went in doubt. */
+  applied: string[];
+  backendPid: number | null;
+  /** Row ids that claimed READY when the reconciliation looked. */
+  rowsClaimingReady: string[];
+  /** Literal instruction, stored in the file so it travels with the evidence. */
+  acknowledgement: string;
+}
+
+/** Directory the holds live in. */
+export function atelierFinanceOperatorHoldDir(): string {
+  const override = process.env.ATELIER_FINANCE_HOLD_DIR;
+  if (override && override.trim()) return path.resolve(override.trim());
+  return path.join(baseStorageDir(), 'fin005-operator-holds');
+}
+
+/**
+ * One hold per tenant. The organization id is slugified for readability and
+ * suffixed with a hash of the raw value, so two ids that slugify the same cannot
+ * share (or clear) each other's hold.
+ */
+export function atelierFinanceOperatorHoldPath(organizationId: string): string {
+  const slug = organizationId.replace(/[^a-zA-Z0-9._-]+/g, '-').slice(0, 80) || 'org';
+  const digest = crypto.createHash('sha256').update(organizationId).digest('hex').slice(0, 12);
+  return path.join(
+    atelierFinanceOperatorHoldDir(),
+    `atelier-finance-commit-indeterminate--${slug}--${digest}.json`
+  );
+}
+
+/**
+ * Is this tenant on hold?
+ *
+ * FAIL-CLOSED ON AMBIGUITY. `ENOENT` — the file, or the whole directory, is not
+ * there — is the ONLY answer that means "no hold". Any other error (EACCES on
+ * the directory, an I/O fault) means a hold may exist and we cannot see it, so
+ * it is treated as one. A file we cannot parse is likewise a hold: its content
+ * is evidence for a human, not a machine-readable permission slip.
+ */
+export function readAtelierFinanceOperatorHold(
+  organizationId: string
+): AtelierFinanceOperatorHold | null {
+  const file = atelierFinanceOperatorHoldPath(organizationId);
+  let raw: string;
+  try {
+    raw = fs.readFileSync(file, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    return {
+      organizationId,
+      recordedAt: 'unknown',
+      packId: null,
+      analysisId: null,
+      statementIds: [],
+      reason: `a commit-indeterminate hold may exist but could not be read: ${(error as Error).message}`,
+      reconciliation: 'unreadable',
+      applied: [],
+      backendPid: null,
+      rowsClaimingReady: [],
+      acknowledgement: acknowledgementInstruction(organizationId),
+    };
+  }
+  try {
+    return { ...(JSON.parse(raw) as AtelierFinanceOperatorHold), organizationId };
+  } catch (error) {
+    return {
+      organizationId,
+      recordedAt: 'unknown',
+      packId: null,
+      analysisId: null,
+      statementIds: [],
+      reason: `a commit-indeterminate hold exists but its file is not valid JSON: ${(error as Error).message}`,
+      reconciliation: raw.slice(0, 500),
+      applied: [],
+      backendPid: null,
+      rowsClaimingReady: [],
+      acknowledgement: acknowledgementInstruction(organizationId),
+    };
+  }
+}
+
+/** The exact words handed to the operator, in the log AND inside the file. */
+function acknowledgementInstruction(organizationId: string): string {
+  return (
+    `INVESTIGATE FIRST, THEN ACKNOWLEDGE. Read the five canonical Finance rows for ` +
+    `organization "${organizationId}" and decide whether the in-doubt COMMIT landed. ` +
+    `Record the decision in the FIN-005 runbook. The seed will REFUSE to run for this ` +
+    `tenant — it will not heal, rewrite or re-promote anything — until the hold file is ` +
+    `deleted: rm "${atelierFinanceOperatorHoldPath(organizationId)}". Deleting it is the ` +
+    `acknowledgement, and it authorises the NEXT run to demote the residue and re-earn READY.`
+  );
+}
+
+/**
+ * Record the hold. Returns the error message when it could NOT be written —
+ * which the caller must surface, because an unpersisted hold means the next run
+ * would erase the evidence, i.e. exactly the defect this closes.
+ */
+function writeAtelierFinanceOperatorHold(hold: AtelierFinanceOperatorHold): string | null {
+  const file = atelierFinanceOperatorHoldPath(hold.organizationId);
+  try {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, `${JSON.stringify(hold, null, 2)}\n`, 'utf8');
+  } catch (error) {
+    return (error as Error).message;
+  }
+  if (
+    !process.env.ATELIER_FINANCE_HOLD_DIR &&
+    !process.env.STORAGE_DIR &&
+    !process.env.RAILWAY_VOLUME_MOUNT_PATH
+  ) {
+    logger.error(
+      `[atelier-finance-seed] the NEEDS_OPERATOR hold was written under process.cwd() (${file}) because neither STORAGE_DIR nor RAILWAY_VOLUME_MOUNT_PATH is set. On an ephemeral container this hold DOES NOT SURVIVE A REDEPLOY — set STORAGE_DIR to a mounted volume before running this seed against a hosted database.`
+    );
+  }
+  return null;
+}
+
+/**
+ * The operator's acknowledgement, in code form. Deleting the file by hand is
+ * equivalent and is what the runbook tells a human to do; this exists so a
+ * script (and the test suite) can do the same thing without hard-coding the
+ * path layout.
+ *
+ * Returns true when a hold was actually cleared.
+ */
+export function acknowledgeAtelierFinanceCommitIndeterminate(organizationId: string): boolean {
+  const file = atelierFinanceOperatorHoldPath(organizationId);
+  try {
+    fs.unlinkSync(file);
+    logger.warn(
+      `[atelier-finance-seed] NEEDS_OPERATOR hold ACKNOWLEDGED for organization "${organizationId}" (${file}); the next seed run may heal the residue`
+    );
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+    throw error;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Phase 2 — read-back verification
 // ---------------------------------------------------------------------------
 
@@ -1119,6 +1323,28 @@ export async function upsertAtelierFinanceGoldenFlow(
   const isPl = input.locale === 'pl';
   const createdBy = input.createdBy || null;
 
+  // ---- Phase 0 gate: an UNACKNOWLEDGED in-doubt COMMIT blocks everything ---
+  // Consulted before the schema probe, before the heal, before the first write.
+  // A previous run left a COMMIT whose fate is unknown; healing over it would
+  // destroy the only evidence a human has, and re-promoting would report
+  // `complete` over a fixture nobody ever looked at. So: nothing happens for
+  // this tenant until the hold is acknowledged. See the OPERATOR HOLD section.
+  const hold = readAtelierFinanceOperatorHold(organizationId);
+  if (hold) {
+    return incomplete(
+      `NEEDS_OPERATOR — refusing to run: a previous run left a COMMIT IN DOUBT for this tenant and the hold has not been acknowledged. ` +
+        `Recorded ${hold.recordedAt}: ${hold.reason}. Reconciliation said: ${hold.reconciliation}. ` +
+        `Rows claiming READY at that moment: [${hold.rowsClaimingReady.join(', ') || 'none'}]. ` +
+        `Hold file: ${atelierFinanceOperatorHoldPath(organizationId)}. ${hold.acknowledgement}`,
+      {
+        packId: hold.packId,
+        statementIds: [],
+        unpromotedStatementIds: hold.statementIds,
+        analysisId: hold.analysisId,
+      }
+    );
+  }
+
   // ---- Schema gate -------------------------------------------------------
   const schema = await probeAtelierFinanceSchema();
   if (schema.missing.length > 0) {
@@ -1157,6 +1383,7 @@ export async function upsertAtelierFinanceGoldenFlow(
   // cannot handle the process being killed between two promotion UPDATEs. If
   // the fixture is sitting in a mixed state, demote all of it before rewriting.
   await healResidualAtelierPromotion({
+    organizationId,
     packId,
     analysisId: makeId(organizationId, 'analysis', ATELIER_FINANCE_SLUGS.analysis),
     statementIds: allStatementIds,
@@ -1496,6 +1723,14 @@ export async function upsertAtelierFinanceGoldenFlow(
   // -- 2a. PINNED PATH -------------------------------------------------------
   /** Set by `reconcile` (lost COMMIT ack only) so the ledger can report it. */
   let reconciledRowsClaimingReady: string[] = [];
+  /**
+   * The two states a lost COMMIT ack is classified against — see the PRE-STATE /
+   * POST-STATE section. Both are captured inside `plan`, where the five rows are
+   * held under `FOR UPDATE`: the snapshot is therefore the exact state the writes
+   * would apply to, not a state something else could have moved in between.
+   */
+  let preTransactionState: PromotionStateSnapshot | null = null;
+  let intendedState: PromotionStateSnapshot | null = null;
 
   const pinned = await runPinnedPromotionTransaction({
     lock: [
@@ -1504,8 +1739,23 @@ export async function upsertAtelierFinanceGoldenFlow(
       { table: 'financial_analyses', ids: [analysisId] },
     ],
     plan: async (read) => {
+      // FIRST, under the locks. A read failure here throws and aborts the
+      // transaction on purpose: without a pre-state there is nothing a lost
+      // COMMIT ack could be classified against, so it must not be allowed to
+      // commit at all.
+      preTransactionState = await readPromotionState({
+        read,
+        packId,
+        analysisId,
+        statementIds: allStatementIds,
+        statementColumns,
+        analysisColumns,
+        packColumns,
+      });
+
       const plan = await planAtelierPromotion(read, planContext);
       if (!plan.ok) return { ok: false, reason: plan.reason };
+      intendedState = intendedPromotionState(plan.writes);
       return {
         ok: true,
         writes: plan.writes.map((write) => {
@@ -1544,10 +1794,32 @@ export async function upsertAtelierFinanceGoldenFlow(
       }
       return { ok: true };
     },
-    // Runs on a FRESH connection, and ONLY after a COMMIT whose answer was lost.
-    // Same predicate as everything else here, so the three verdicts cannot drift
-    // from what the rest of the module means by READY.
+    // Runs on a FRESH connection (inside its own READ ONLY transaction), and
+    // ONLY after a COMMIT whose answer was lost.
+    //
+    // IT CLASSIFIES ON WHOLE ROWS, NOT ON FLAGS. Two exactly-known states are
+    // available: `preTransactionState`, captured under the row locks, and
+    // `intendedState`, derived from the very write specs that were executed.
+    // Every promotion-owned column of all five rows must match one of them,
+    // ALL of them the same one. A row a concurrent actor moved somewhere else,
+    // a row whose `pack_readiness_score` disagrees with its `pack_status` — none
+    // of that can be reported as "pre-state" or "committed" any more.
     reconcile: async (read) => {
+      const expected = allStatementIds.length + 2;
+      const ids = [...allStatementIds, analysisId, packId];
+      const pre = preTransactionState;
+      const post = intendedState;
+      if (!pre || !post || ids.some((id) => !(id in pre) || !(id in post))) {
+        return {
+          verdict: 'indeterminate',
+          detail:
+            'no complete pre-transaction snapshot was captured under the row locks, so the outcome cannot be classified against one',
+        };
+      }
+
+      // The claim read still runs: `rowsStillClaimingReady` is what the ledger
+      // and the operator's log line report, and it is also the cheapest proof
+      // that all five rows are still present.
       const errors: string[] = [];
       const claims = await readPromotionClaims({
         read,
@@ -1556,7 +1828,6 @@ export async function upsertAtelierFinanceGoldenFlow(
         statementIds: allStatementIds,
         onError: (message) => errors.push(message),
       });
-      const expected = allStatementIds.length + 2;
       if (errors.length > 0) {
         return {
           verdict: 'indeterminate',
@@ -1569,6 +1840,9 @@ export async function upsertAtelierFinanceGoldenFlow(
           detail: `the post-COMMIT read saw ${claims.length}/${expected} rows`,
         };
       }
+      reconciledRowsClaimingReady = claims
+        .filter((claim) => claim.claimsReady)
+        .map((claim) => claim.id);
       const missing = claims.filter((claim) => !claim.exists).map((claim) => claim.id);
       if (missing.length > 0) {
         return {
@@ -1576,35 +1850,84 @@ export async function upsertAtelierFinanceGoldenFlow(
           detail: `${missing.length} promoted record(s) no longer exist: ${missing.join(', ')}`,
         };
       }
-      const ready = claims.filter((claim) => claim.claimsReady).map((claim) => claim.id);
-      reconciledRowsClaimingReady = ready;
-      if (ready.length === expected) {
-        // Every promoted record is READY. Coherence, not just the flags: re-run
-        // the PRODUCTION verdict over the committed rows. It reads the pack,
-        // the statements, their values and the analysis and refuses on any
-        // incoherence, so a "committed" verdict can never bless a fixture that
-        // merely has five ready-looking flags on it.
+
+      let actual: PromotionStateSnapshot;
+      try {
+        actual = await readPromotionState({
+          read,
+          packId,
+          analysisId,
+          statementIds: allStatementIds,
+          statementColumns,
+          analysisColumns,
+          packColumns,
+        });
+      } catch (error) {
+        return {
+          verdict: 'indeterminate',
+          detail: `the post-COMMIT state read failed: ${(error as Error).message}`,
+        };
+      }
+
+      // INDEPENDENT membership, not a priority order. A row whose pre-state
+      // already equalled the intended state belongs to BOTH buckets, and
+      // charging it to only the first would starve the other — a genuinely
+      // rolled-back transaction over a fixture that was already partly promoted
+      // would then land in `indeterminate` for no reason.
+      const matchedPost: string[] = [];
+      const matchedPre: string[] = [];
+      const matchedNeither: string[] = [];
+      for (const id of ids) {
+        const row = actual[id] ?? null;
+        const isPost = stateMatches(post[id], row);
+        const isPre = stateMatches(pre[id], row);
+        if (isPost) matchedPost.push(id);
+        if (isPre) matchedPre.push(id);
+        if (!isPost && !isPre) matchedNeither.push(`${id} (${describeStateDiff(post[id], row)})`);
+      }
+
+      if (matchedPost.length === expected) {
+        // The intended state is on disk. Coherence on top of identity: re-run
+        // the PRODUCTION verdict over the committed rows — it reads the pack,
+        // the statements, their VALUES and the analysis, which no column
+        // comparison can stand in for.
         const coherence = await planAtelierPromotion(read, planContext);
         if (!coherence.ok) {
           return {
             verdict: 'indeterminate',
-            detail: `all ${expected} records read back READY but the production verdict refuses the fixture: ${coherence.reason}`,
+            detail: `all ${expected} records match the intended post-promotion state but the production verdict refuses the fixture: ${coherence.reason}`,
           };
         }
+        // Honest footnote: when the pre-state ALREADY equalled the intended
+        // state, the five UPDATEs were no-ops (they are guarded by
+        // `IS DISTINCT FROM`), so committed and rolled back are the same
+        // outcome and no read could ever tell them apart. Say so rather than
+        // imply the wire was observed.
+        const wroteNothing = ids.every((id) => stateMatches(post[id], pre[id]));
         return {
           verdict: 'committed',
-          detail: `all ${expected} promoted records read back READY and coherent on a fresh connection`,
+          detail: wroteNothing
+            ? `all ${expected} promoted records match the intended post-promotion state on a fresh connection AND already matched it before the transaction — the five guarded UPDATEs were no-ops, so committed and rolled back are materially the same outcome here`
+            : `all ${expected} promoted records match the intended post-promotion state EXACTLY, on every promotion-owned column, and the fixture is coherent (read on a fresh connection)`,
         };
       }
-      if (ready.length === 0) {
+
+      if (matchedPre.length === expected) {
         return {
           verdict: 'not-committed',
-          detail: `all ${expected} promoted records read back in their pre-promotion state on a fresh connection`,
+          detail: `all ${expected} promoted records read back in their pre-promotion state on a fresh connection — every promotion-owned column matches the snapshot taken under the FOR UPDATE locks`,
         };
       }
+
       return {
         verdict: 'indeterminate',
-        detail: `MIXED state after a lost COMMIT ack: ${ready.length}/${expected} records claim READY (${ready.join(', ')})`,
+        detail:
+          `MIXED state after a lost COMMIT ack: ${matchedPost.length}/${expected} records match the intended post-promotion state, ` +
+          `${matchedPre.length}/${expected} match the pre-transaction snapshot` +
+          (matchedNeither.length > 0
+            ? `, and ${matchedNeither.length} match NEITHER: ${matchedNeither.join('; ')}`
+            : '') +
+          ` (claiming READY: ${reconciledRowsClaimingReady.join(', ') || 'none'})`,
       };
     },
   });
@@ -1663,8 +1986,42 @@ export async function upsertAtelierFinanceGoldenFlow(
         allStatementIds.includes(label)
       ).length;
       ledger.rowsStillClaimingReady = reconciledRowsClaimingReady;
+
+      // PERSIST THE VERDICT. Without this the next run's phase 0 would see the
+      // residue, demote it, re-promote and return `complete` — erasing the only
+      // evidence of an in-doubt COMMIT, silently, in the flow the runbook itself
+      // documents. The hold blocks every subsequent run for this tenant until a
+      // human acknowledges it. See the OPERATOR HOLD section.
+      const holdPath = atelierFinanceOperatorHoldPath(organizationId);
+      const acknowledgement = acknowledgementInstruction(organizationId);
+      const holdError = writeAtelierFinanceOperatorHold({
+        organizationId,
+        recordedAt: new Date().toISOString(),
+        packId,
+        analysisId,
+        statementIds: allStatementIds,
+        reason: pinned.reason,
+        reconciliation: pinned.reconciliation.detail,
+        applied: pinned.applied,
+        backendPid: pinned.backendPid,
+        rowsClaimingReady: reconciledRowsClaimingReady,
+        acknowledgement,
+      });
+
+      if (holdError) {
+        // The one case that is WORSE than the in-doubt COMMIT itself: nothing
+        // stops the next run from healing over it. Say so in the reason, not
+        // only in a log line.
+        logger.error(
+          `[atelier-finance-seed] COULD NOT PERSIST the NEEDS_OPERATOR hold at ${holdPath}: ${holdError}. The NEXT seed run for "${organizationId}" will NOT be blocked and may erase this residue — block it by other means immediately.`
+        );
+      }
+
       return incomplete(
-        `pinned promotion transaction COMMIT INDETERMINATE — NEEDS_OPERATOR: ${pinned.reason}`,
+        `pinned promotion transaction COMMIT INDETERMINATE — NEEDS_OPERATOR: ${pinned.reason}. ` +
+          (holdError
+            ? `THE HOLD COULD NOT BE PERSISTED (${holdPath}: ${holdError}) — the next run is NOT blocked and may erase this residue. ${acknowledgement}`
+            : `A hold has been recorded at ${holdPath}; this seed will REFUSE to run for this tenant until it is acknowledged. ${acknowledgement}`),
         { packId, statementIds: [], unpromotedStatementIds: allStatementIds, analysisId },
         ledger
       );
@@ -2104,6 +2461,7 @@ async function demoteAtelierRows(params: {
  * counts as not promoted.
  */
 async function healResidualAtelierPromotion(params: {
+  organizationId: string;
   packId: string;
   analysisId: string;
   statementIds: string[];
@@ -2112,6 +2470,17 @@ async function healResidualAtelierPromotion(params: {
   packColumns: Set<string>;
   isPl: boolean;
 }): Promise<void> {
+  // Belt and braces. The seed entry point already refuses outright while a hold
+  // stands; this second check means the heal cannot be reached from any future
+  // caller without the acknowledgement, because the heal is precisely the thing
+  // that destroys an in-doubt COMMIT's evidence.
+  if (readAtelierFinanceOperatorHold(params.organizationId)) {
+    logger.error(
+      `[atelier-finance-seed] residual-state heal REFUSED — an unacknowledged NEEDS_OPERATOR hold stands for organization "${params.organizationId}"`
+    );
+    return;
+  }
+
   const readErrors: string[] = [];
   const stillPromoted = await findRowsStillClaimingReady({
     packId: params.packId,
@@ -2162,6 +2531,211 @@ async function findRowsStillClaimingReady(params: {
     onError: (message) => params.onError(`rollback verification ${message}`),
   });
   return claims.filter((claim) => claim.claimsReady).map((claim) => claim.id);
+}
+
+// ---------------------------------------------------------------------------
+// PRE-STATE / POST-STATE — how a lost COMMIT ack is classified (FIN-005 P1-3b)
+// ---------------------------------------------------------------------------
+//
+// WHAT WAS WRONG WITH FLAGS. The reconciliation used to answer `not-committed`
+// whenever no row "claimed READY", and `committed` whenever they all did.
+// `claimsReady` is an OR over three columns, and no snapshot of the rows was
+// ever taken, so:
+//   - a row a concurrent actor had moved to some THIRD state was reported as
+//     "in its pre-promotion state" — a claim nothing had checked;
+//   - on a fixture whose rows were ALREADY confirmed/pass/ready from an earlier
+//     run, a transaction that genuinely rolled back reconciled to
+//     `lost-then-confirmed`, because the coherence re-run never reads
+//     `pack_readiness_score`, `source_statement_count` or
+//     `missing_statement_types` either.
+//
+// So the classification now compares FULL ROWS against two exactly-known states:
+// the snapshot taken inside `plan(read)` while the rows are held under
+// `FOR UPDATE`, and the state the planned writes intended. Neither is a guess,
+// and anything matching neither is INDETERMINATE.
+
+/** Every promotion-owned column, per table. Read together, compared together. */
+const PROMOTION_STATE_COLUMNS = {
+  statement: [
+    'status',
+    'validation_status',
+    'validation_messages',
+    'readiness_status',
+    'readiness_score',
+    'quality_summary',
+    'quality_reason_codes',
+    'confirmed_by',
+  ],
+  analysis: ['status', 'approved_by', 'approved_at'],
+  pack: [
+    'pack_status',
+    'pack_readiness_status',
+    'pack_readiness_score',
+    'pack_quality_summary',
+    'pack_quality_reason_codes',
+    'source_statement_count',
+    'missing_statement_types',
+  ],
+} as const;
+
+/**
+ * Marker for a column the promotion sets to a SQL literal whose value cannot be
+ * predicted (`approved_at = CURRENT_TIMESTAMP`). The post-state requires it to
+ * be present; it cannot require WHICH timestamp.
+ */
+const EXPECT_NOT_NULL = '~~expect:not-null';
+const CANONICAL_NULL = '~~null';
+
+/**
+ * One comparable string per cell, so a value that came back from the driver as
+ * a number, a `Date` or a JSON-ish string compares equal to the JS value the
+ * write intended. `real`/`integer` columns arrive as numbers, the JSON columns
+ * on these tables are `text`, and both sides have to land on the same token.
+ */
+function canonicalCell(value: unknown): string {
+  if (value === null || value === undefined) return CANONICAL_NULL;
+  if (value instanceof Date) return `~~date:${value.toISOString()}`;
+  if (typeof value === 'boolean') return `~~bool:${value}`;
+  if (typeof value === 'object') return JSON.stringify(value);
+
+  const text = String(value);
+  const trimmed = text.trim();
+
+  // NUMBERS FIRST, TO SIX SIGNIFICANT DIGITS. `readiness_score` and
+  // `pack_readiness_score` are `real` (float4): a JS double written as 92.3 reads
+  // back as 92.30000305175781, and comparing raw representations would report a
+  // perfectly committed row as "matches neither state" — a spurious
+  // NEEDS_OPERATOR. Six digits is inside float4's guaranteed precision. It also
+  // makes `numeric` columns (which arrive as strings) and `integer` columns
+  // (which arrive as numbers) land on the same token.
+  if (trimmed !== '' && Number.isFinite(Number(trimmed))) {
+    return `~~num:${Number(Number(trimmed).toPrecision(6))}`;
+  }
+
+  if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+    try {
+      return JSON.stringify(JSON.parse(trimmed));
+    } catch {
+      /* not JSON after all — compare the raw text */
+    }
+  }
+  return text;
+}
+
+/** rowId -> canonical column map, or `null` when the row was absent. */
+type PromotionRowState = Record<string, string> | null;
+type PromotionStateSnapshot = Record<string, PromotionRowState>;
+
+function selectableColumns(wanted: readonly string[], known: Set<string>): string[] {
+  if (known.size === 0) return [...wanted];
+  return wanted.filter((column) => known.has(column.toLowerCase()));
+}
+
+/**
+ * Read the promotion-owned columns of all five rows.
+ *
+ * THROWS on a read failure, deliberately. Called from inside `plan(read)`, where
+ * a throw aborts the pinned transaction — if the pre-state cannot be
+ * established, the transaction must not be allowed to commit, because a lost
+ * COMMIT ack would then have nothing to be classified against.
+ */
+async function readPromotionState(params: {
+  read: SqlReader;
+  packId: string;
+  analysisId: string;
+  statementIds: string[];
+  statementColumns: Set<string>;
+  analysisColumns: Set<string>;
+  packColumns: Set<string>;
+}): Promise<PromotionStateSnapshot> {
+  const snapshot: PromotionStateSnapshot = {};
+
+  const capture = async (table: string, id: string, columns: string[]): Promise<void> => {
+    if (columns.length === 0) {
+      throw new Error(`no promotion-owned column is readable on ${table}`);
+    }
+    const rows = await params.read(`SELECT ${columns.join(', ')} FROM ${table} WHERE id = ?`, [id]);
+    if (rows.length === 0) {
+      snapshot[id] = null;
+      return;
+    }
+    const state: Record<string, string> = {};
+    for (const column of columns) state[column] = canonicalCell(rows[0][column]);
+    snapshot[id] = state;
+  };
+
+  for (const statementId of params.statementIds) {
+    await capture(
+      'financial_statements',
+      statementId,
+      selectableColumns(PROMOTION_STATE_COLUMNS.statement, params.statementColumns)
+    );
+  }
+  await capture(
+    'financial_analyses',
+    params.analysisId,
+    selectableColumns(PROMOTION_STATE_COLUMNS.analysis, params.analysisColumns)
+  );
+  await capture(
+    'financial_statement_packs',
+    params.packId,
+    selectableColumns(PROMOTION_STATE_COLUMNS.pack, params.packColumns)
+  );
+
+  return snapshot;
+}
+
+/**
+ * The state the planned writes INTEND, derived from the very specs that are
+ * executed — same filter on `columns` as `buildPromotionUpdate`, so the two
+ * cannot describe different rows.
+ */
+function intendedPromotionState(writes: PlannedPromotionWrite[]): PromotionStateSnapshot {
+  const intended: PromotionStateSnapshot = {};
+  for (const write of writes) {
+    const known = write.spec.columns.size > 0 ? write.spec.columns : null;
+    const state: Record<string, string> = {};
+    for (const [column, value] of write.spec.assignments) {
+      if (known && !known.has(column.toLowerCase())) continue;
+      state[column] = canonicalCell(value);
+    }
+    for (const [column] of write.spec.literals ?? []) {
+      if (known && !known.has(column.toLowerCase())) continue;
+      // `CURRENT_TIMESTAMP` — the value is unknowable, its presence is not.
+      state[column] = EXPECT_NOT_NULL;
+    }
+    intended[write.label] = state;
+  }
+  return intended;
+}
+
+/** Does `actual` satisfy every column `expected` names? */
+function stateMatches(expected: PromotionRowState, actual: PromotionRowState): boolean {
+  if (expected === null || actual === null) return expected === actual;
+  for (const [column, want] of Object.entries(expected)) {
+    const got = actual[column];
+    if (want === EXPECT_NOT_NULL) {
+      if (got === undefined || got === CANONICAL_NULL) return false;
+      continue;
+    }
+    if (got !== want) return false;
+  }
+  return true;
+}
+
+/** First disagreement, for the operator's log line. */
+function describeStateDiff(expected: PromotionRowState, actual: PromotionRowState): string {
+  if (expected === null) return actual === null ? 'identical' : 'expected the row to be absent';
+  if (actual === null) return 'the row is absent';
+  for (const [column, want] of Object.entries(expected)) {
+    const got = actual[column];
+    if (want === EXPECT_NOT_NULL) {
+      if (got === undefined || got === CANONICAL_NULL) return `${column} is null, expected a value`;
+      continue;
+    }
+    if (got !== want) return `${column}=${JSON.stringify(got)} expected ${JSON.stringify(want)}`;
+  }
+  return 'identical';
 }
 
 interface PromotionClaim {

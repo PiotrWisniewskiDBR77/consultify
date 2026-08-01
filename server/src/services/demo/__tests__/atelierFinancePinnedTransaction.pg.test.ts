@@ -169,6 +169,8 @@ const ORG_KEYS = [
   'commit-ack-committed',
   'commit-ack-mixed',
   'commit-ack-unreadable',
+  'timeout-scope',
+  'idle-budget',
   'drift',
 ] as const;
 
@@ -652,6 +654,129 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
       }
       // The commit really did land; the adapter simply refused to claim it.
       await expectFixtureFullyReady(ids);
+    },
+    180_000
+  );
+
+  // -------------------------------------------------------------------------
+  // SESSION STATE MUST NOT ESCAPE ONTO A POOLED CONNECTION.
+  //
+  // The reconciliation used to run `SET statement_timeout = …` — no LOCAL — on
+  // a freshly checked-out client and then release it HEALTHY. `pg` does not
+  // reset session state on release, so that value rode the connection into
+  // whatever the application did next. It now runs inside its own
+  // `BEGIN READ ONLY` with `SET LOCAL`, which dies with the transaction.
+  // -------------------------------------------------------------------------
+
+  it(
+    'the reconciliation bounds itself with SET LOCAL inside a READ ONLY transaction, and leaks nothing to the pool',
+    async () => {
+      const ids = await seedThenDemote('timeout-scope');
+
+      const { getPoolClientForPinnedTransaction } = await import(
+        '../../../database/PostgresDatabase.js'
+      );
+
+      // What a clean pooled connection looks like, measured rather than assumed.
+      const baselineClient = await getPoolClientForPinnedTransaction();
+      const baseline = String(
+        (await baselineClient.query('SHOW statement_timeout')).rows[0].statement_timeout
+      );
+      baselineClient.release();
+
+      const DISTINCTIVE_MS = 7_777;
+      let insideReadOnly = '';
+      let insideTimeout = '';
+      let reconcilePid = 0;
+
+      let pinnedPid = 0;
+      const outcome = await runPinnedPromotionTransaction({
+        lock: lockRequest(ids),
+        plan: async (read) => {
+          pinnedPid = await backendPid(read);
+          return { ok: true, writes: promotionWrites(ids) };
+        },
+        verify: async (read) => {
+          await read('COMMIT');
+          await terminateBackend(pinnedPid);
+          return { ok: true };
+        },
+        reconcile: async (read) => {
+          insideReadOnly = String((await read('SHOW transaction_read_only'))[0].transaction_read_only);
+          insideTimeout = String((await read('SHOW statement_timeout'))[0].statement_timeout);
+          reconcilePid = await backendPid(read);
+          return { verdict: 'committed', detail: 'scope probe' };
+        },
+        statementTimeoutMs: DISTINCTIVE_MS,
+      });
+
+      expect(outcome).toMatchObject({ mode: 'pinned', status: 'committed' });
+      // The bound really was applied, and it was applied inside a READ ONLY
+      // transaction — which is what makes `SET LOCAL` the correct form.
+      expect(insideReadOnly, 'the reconciliation must run READ ONLY').toBe('on');
+      expect(insideTimeout).toBe(`${DISTINCTIVE_MS}ms`);
+
+      // Now take connections back out of the pool and prove none of them
+      // inherited it. `pg` hands back the most recently released client first,
+      // so the very first checkout is normally the one the reconciliation used;
+      // the loop covers the pool regardless of which one that is.
+      const seen: string[] = [];
+      const held: Array<{ release: () => void }> = [];
+      let sawReconcileBackend = false;
+      try {
+        for (let i = 0; i < 5; i++) {
+          const client = await getPoolClientForPinnedTransaction();
+          held.push(client);
+          const pid = Number((await client.query('SELECT pg_backend_pid() AS pid')).rows[0].pid);
+          if (pid === reconcilePid) sawReconcileBackend = true;
+          seen.push(String((await client.query('SHOW statement_timeout')).rows[0].statement_timeout));
+        }
+      } finally {
+        for (const client of held) client.release();
+      }
+
+      expect(
+        sawReconcileBackend,
+        'the reconciliation backend must be back in the pool to be checked'
+      ).toBe(true);
+      expect(
+        seen.every((value) => value === baseline),
+        `a pooled connection inherited the reconciliation's statement_timeout: ${JSON.stringify(seen)} (baseline ${baseline})`
+      ).toBe(true);
+    },
+    180_000
+  );
+
+  it(
+    'idle_in_transaction_session_timeout gets its OWN budget, not a share of statement_timeout',
+    async () => {
+      const ids = await seedThenDemote('idle-budget');
+
+      let statementTimeout = '';
+      let idleTimeout = '';
+      const outcome = await runPinnedPromotionTransaction({
+        lock: lockRequest(ids),
+        plan: async (read) => {
+          statementTimeout = String((await read('SHOW statement_timeout'))[0].statement_timeout);
+          idleTimeout = String(
+            (await read('SHOW idle_in_transaction_session_timeout'))[0]
+              .idle_in_transaction_session_timeout
+          );
+          return { ok: false, reason: 'timeout budget probe only' };
+        },
+        verify: async () => ({ ok: true }),
+        reconcile: reconcileFor(ids),
+        statementTimeoutMs: 3_000,
+        idleInTransactionTimeoutMs: 41_000,
+      });
+
+      expect(outcome).toMatchObject({ mode: 'pinned', status: 'rolled-back' });
+      expect(statementTimeout).toBe('3s');
+      // The defect this replaces: both were set from `statementTimeoutMs`, so a
+      // JS pause between two queries killed the backend on the per-query budget
+      // and a slow-but-legitimate run became a spurious `incomplete`.
+      expect(idleTimeout).toBe('41s');
+      expect(idleTimeout).not.toBe(statementTimeout);
     },
     180_000
   );

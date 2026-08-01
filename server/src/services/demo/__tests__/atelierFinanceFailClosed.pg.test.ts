@@ -145,15 +145,31 @@ function withLostCommitAck(client: PoolClient): PoolClient {
   }) as PoolClient;
 }
 
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+
 import logger from '../../../utils/Logger.js';
 import {
-  getAtelierFinanceCanonicalIds,
-  upsertAtelierFinanceGoldenFlow,
+  decidePinnedTransactionSeam,
+  identifyNonPostgresSeam,
+} from '../atelierFinancePromotionTransaction.js';
+import {
+  acknowledgeAtelierFinanceCommitIndeterminate,
   type AtelierCanonicalIds,
+  atelierFinanceOperatorHoldPath,
+  getAtelierFinanceCanonicalIds,
+  readAtelierFinanceOperatorHold,
+  upsertAtelierFinanceGoldenFlow,
 } from '../atelierFinanceSeed.js';
-import { identifyNonPostgresSeam } from '../atelierFinancePromotionTransaction.js';
 
 process.env.DB_MANAGED_SCHEMA = process.env.DB_MANAGED_SCHEMA ?? 'false';
+
+// The NEEDS_OPERATOR hold is a FILE. Point it at a scratch directory so this
+// suite cannot leave one under the repository (or, worse, inherit one).
+process.env.ATELIER_FINANCE_HOLD_DIR =
+  process.env.ATELIER_FINANCE_HOLD_DIR ??
+  fs.mkdtempSync(path.join(os.tmpdir(), 'fin005-holds-'));
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -213,6 +229,8 @@ const ORG_KEYS = [
   'commit-landed',
   'commit-aborted',
   'commit-mixed',
+  'commit-stale-flags',
+  'mock-db-true',
 ] as const;
 
 type OrgKey = (typeof ORG_KEYS)[number];
@@ -221,6 +239,17 @@ const orgFor = (key: OrgKey): string => `${ORG_PREFIX}-${key}`;
 const idsFor = (key: OrgKey): AtelierCanonicalIds => getAtelierFinanceCanonicalIds(orgFor(key));
 
 let control: Pool;
+
+/** Drop every NEEDS_OPERATOR hold this suite's tenants could be holding. */
+function clearAllHolds(): void {
+  for (const key of ORG_KEYS) {
+    try {
+      acknowledgeAtelierFinanceCommitIndeterminate(orgFor(key));
+    } catch {
+      /* nothing to clear */
+    }
+  }
+}
 
 const suite = REACHABLE && HEALTHY_SCHEMA ? describe.sequential : describe.skip;
 
@@ -236,6 +265,7 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
   }, 120_000);
 
   afterAll(async () => {
+    clearAllHolds();
     if (!control) return;
     for (const key of ORG_KEYS) {
       await deleteFixture(idsFor(key)).catch(() => undefined);
@@ -253,6 +283,10 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
     fault.checkout = null;
     fault.commit = null;
     fault.mixedStatementId = '';
+    // A hold left by a previous test (or a previous, aborted run of this file)
+    // would block every later seed for that tenant. Clear them all: the one test
+    // that cares about a hold creates its own inside the test body.
+    clearAllHolds();
   });
 
   // -------------------------------------------------------------------------
@@ -275,19 +309,115 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
   );
 
   it(
-    'recognises the seam when MOCK_DB=true — an explicit declaration, not an inference',
+    'asking the seam question INSTALLS NOTHING — it is a read, not a command',
+    async () => {
+      // `getDatabaseInstance()` creates and installs the process-wide singleton
+      // when none exists. The seam predicate used to call it, so a read-only
+      // question changed the process. It now peeks at what is already there.
+      const KEY = '__CONSULTIFY_GLOBAL_DB_INSTANCE__';
+      const holder = process as unknown as Record<string, unknown>;
+      const globalHolder = globalThis as unknown as Record<string, unknown>;
+      const savedProcess = holder[KEY];
+      const savedGlobal = globalHolder[KEY];
+      try {
+        delete holder[KEY];
+        delete globalHolder[KEY];
+        const seam = await identifyNonPostgresSeam();
+        expect(holder[KEY], 'the seam question must not install a database').toBeUndefined();
+        expect(globalHolder[KEY], 'the seam question must not install a database').toBeUndefined();
+        expect(seam.recognised, `seam said: ${seam.signal}`).toBe(false);
+        expect(seam.signal).toMatch(/no database instance is installed yet/);
+      } finally {
+        if (savedProcess !== undefined) holder[KEY] = savedProcess;
+        if (savedGlobal !== undefined) globalHolder[KEY] = savedGlobal;
+      }
+    },
+    60_000
+  );
+
+  // -------------------------------------------------------------------------
+  // FIN-005 P1-1b — the falsified claim, kept dead.
+  //
+  // `MOCK_DB=true` used to be an accepted seam signal, on the stated grounds
+  // that `Database.ts` treats it as its primary mock switch. It does — inside
+  // `createDatabase()`, which `DbPromise` never calls. `DbPromise` resolves
+  // through `getDatabaseInstance()`, and THAT honours `MOCK_DB` only when
+  // `NODE_ENV === 'test'` and `RUN_DB_TESTS !== '1'`. This process is the
+  // counter-example: `MOCK_DB=true` here, and every write still lands in a real
+  // PostgreSQL. The seam used to say "mock", the seed took the non-atomic path,
+  // and it could still return `complete`.
+  //
+  // BEFORE THE FIX these two tests fail: `identifyNonPostgresSeam()` returned
+  // `recognised: true` on the env var alone, and `decidePinnedTransactionSeam()`
+  // did not exist. Verified by running them against the previous commit.
+  // -------------------------------------------------------------------------
+
+  it(
+    'IGNORES MOCK_DB=true — an env var is a claim about intent, never evidence about the database',
     async () => {
       const previous = process.env.MOCK_DB;
       process.env.MOCK_DB = 'true';
       try {
         const seam = await identifyNonPostgresSeam();
-        expect(seam.recognised).toBe(true);
-        expect(seam.signal).toMatch(/MOCK_DB=true/);
+        expect(
+          seam.recognised,
+          `MOCK_DB must not open the non-atomic path; seam said: ${seam.signal}`
+        ).toBe(false);
+        expect(seam.signal).toMatch(/MOCK_DB=true \(IGNORED/);
       } finally {
         process.env.MOCK_DB = previous;
       }
     },
     60_000
+  );
+
+  it(
+    'asks the DATABASE first: with MOCK_DB=true the decision is still "postgres", never "seam"',
+    async () => {
+      const previous = process.env.MOCK_DB;
+      process.env.MOCK_DB = 'true';
+      try {
+        const decision = await decidePinnedTransactionSeam();
+        expect(decision.outcome, `decision evidence: ${decision.seam.signal}`).toBe('postgres');
+        if (decision.outcome === 'postgres') {
+          expect(decision.probe.supported).toBe(true);
+          expect(decision.probe.database).toBeTruthy();
+        }
+      } finally {
+        process.env.MOCK_DB = previous;
+      }
+    },
+    60_000
+  );
+
+  it(
+    'MOCK_DB=true on a real PostgreSQL still promotes through the PINNED transaction',
+    async () => {
+      const ids = await seedThenDemote('mock-db-true');
+
+      const previous = process.env.MOCK_DB;
+      const warn = vi.spyOn(logger, 'warn');
+      let result: Awaited<ReturnType<typeof seed>>;
+      let warnLines: string[];
+      try {
+        process.env.MOCK_DB = 'true';
+        result = await seed('mock-db-true');
+      } finally {
+        process.env.MOCK_DB = previous;
+        warnLines = warn.mock.calls.map((call) => String(call[0]));
+        warn.mockRestore();
+      }
+
+      expect(result.status, result.reason ?? '').toBe('complete');
+      // THE TEETH. Before the fix this line was present and the fixture was
+      // promoted by five separate autocommitted UPDATEs on a real database.
+      expect(
+        warnLines.some((line) => line.includes('WITHOUT a pinned transaction')),
+        'a stray MOCK_DB=true must not be able to open the non-atomic path'
+      ).toBe(false);
+      await expectFixtureFullyReady(ids);
+    },
+    180_000
   );
 
   // -------------------------------------------------------------------------
@@ -471,6 +601,87 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
     180_000
   );
 
+  // -------------------------------------------------------------------------
+  // FIN-005 P1-3b — the `committed` direction used to rest on FLAGS.
+  //
+  // `claimsReady` is an OR over three columns, and the coherence re-run
+  // (`planAtelierPromotion`) never reads `pack_readiness_score`,
+  // `source_statement_count` or `missing_statement_types`. So a fixture whose
+  // rows were ALREADY ready-looking from an earlier run reconciled to
+  // `lost-then-confirmed` even when the transaction had genuinely rolled back,
+  // and the seed returned COMPLETE over a pack that says it is ready while
+  // scoring 0 and listing all three statement types as missing.
+  //
+  // BEFORE THE FIX this test fails on the FIRST assertion: the seed returns
+  // `complete`. Verified by running it against the previous commit.
+  // -------------------------------------------------------------------------
+  it(
+    'a lost COMMIT ACK over a ROLLBACK of an already-ready-looking fixture is NOT "confirmed" — the pre-state decides',
+    async () => {
+      const ids = idsFor('commit-stale-flags');
+      await deleteFixture(ids);
+      const first = await seed('commit-stale-flags');
+      expect(first.status, first.reason ?? '').toBe('complete');
+
+      // Leave every readiness FLAG looking promoted and break only the columns
+      // no flag check reads. This is what an interrupted older build leaves
+      // behind, and it is not the state the promotion intends.
+      await control.query(
+        `UPDATE financial_statement_packs
+            SET pack_readiness_score = 0,
+                source_statement_count = 0,
+                missing_statement_types = '["P&L","BS","CF"]'
+          WHERE id = $1`,
+        [ids.packId]
+      );
+
+      let result: Awaited<ReturnType<typeof seed>>;
+      try {
+        fault.commit = 'aborted';
+        result = await seed('commit-stale-flags');
+      } finally {
+        fault.commit = null;
+      }
+
+      // The transaction really did roll back, and the reconciliation says so on
+      // the strength of the pre-state snapshot rather than of five flags.
+      expect(result.status, result.reason ?? '').toBe('incomplete');
+      expect(result.reason).toMatch(/reconciliation proved it did NOT/);
+      expect(result.reason).toMatch(
+        /every promotion-owned column matches the snapshot taken under the FOR UPDATE locks/
+      );
+
+      // And the evidence that the old verdict was WRONG, not merely imprecise:
+      // the pack still carries the incoherent numbers the "committed" verdict
+      // would have blessed as a complete fixture.
+      const pack = await control.query(
+        `SELECT pack_status, pack_readiness_status, pack_readiness_score, source_statement_count,
+                missing_statement_types
+           FROM financial_statement_packs WHERE id = $1`,
+        [ids.packId]
+      );
+      expect(pack.rows[0]?.pack_status).toBe('confirmed');
+      expect(pack.rows[0]?.pack_readiness_status).toBe('ready');
+      expect(Number(pack.rows[0]?.pack_readiness_score)).toBe(0);
+      expect(Number(pack.rows[0]?.source_statement_count)).toBe(0);
+
+      // No hold: `not-committed` is a decided outcome, not an in-doubt one.
+      expect(readAtelierFinanceOperatorHold(orgFor('commit-stale-flags'))).toBeNull();
+
+      // ...and the fixture recovers on the next, fault-free run.
+      const recovery = await seed('commit-stale-flags');
+      expect(recovery.status, recovery.reason ?? '').toBe('complete');
+      await expectFixtureFullyReady(ids);
+      const healed = await control.query(
+        `SELECT pack_readiness_score, source_statement_count FROM financial_statement_packs WHERE id = $1`,
+        [ids.packId]
+      );
+      expect(Number(healed.rows[0]?.pack_readiness_score)).toBe(100);
+      expect(Number(healed.rows[0]?.source_statement_count)).toBe(3);
+    },
+    180_000
+  );
+
   it(
     'a lost COMMIT ACK over a MIXED result is NEEDS_OPERATOR — never complete, never "rolled back"',
     async () => {
@@ -493,7 +704,42 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
       expect(result.promotion?.rolledBack).toBe(false);
       expect(result.promotion?.rowsStillClaimingReady).toHaveLength(4);
 
-      // The residue is real, and the NEXT run heals it rather than inheriting it.
+      // ---------------------------------------------------------------------
+      // FIN-005 P1-3c — the verdict SURVIVES, and the next run does not erase it.
+      //
+      // BEFORE THE FIX this block read `const recovery = await seed(...);
+      // expect(recovery.status).toBe('complete')` — the suite asserted the
+      // silent erasure as if it were a feature. Nothing persisted the verdict,
+      // so the next run's phase 0 saw the mixed residue, demoted it,
+      // re-promoted and returned `complete`. A NEEDS_OPERATOR that clears
+      // itself is not NEEDS_OPERATOR.
+      // ---------------------------------------------------------------------
+      const holdFile = atelierFinanceOperatorHoldPath(orgFor('commit-mixed'));
+      expect(fs.existsSync(holdFile), 'the in-doubt verdict must be on disk').toBe(true);
+      const hold = readAtelierFinanceOperatorHold(orgFor('commit-mixed'));
+      expect(hold?.rowsClaimingReady).toHaveLength(4);
+      expect(hold?.reconciliation).toMatch(/MIXED state after a lost COMMIT ack: 4\/5/);
+      expect(hold?.acknowledgement).toMatch(/rm "/);
+
+      // Snapshot the residue: the blocked run must not touch a single row.
+      const residueBefore = await residueSnapshot(ids);
+
+      const blocked = await seed('commit-mixed');
+      expect(blocked.status).toBe('incomplete');
+      expect(blocked.reason).toMatch(/NEEDS_OPERATOR — refusing to run/);
+      expect(blocked.reason).toMatch(/has not been acknowledged/);
+      expect(await residueSnapshot(ids), 'a blocked run must heal nothing').toEqual(residueBefore);
+
+      // A SECOND blocked run behaves identically — the hold does not decay.
+      const blockedAgain = await seed('commit-mixed');
+      expect(blockedAgain.status).toBe('incomplete');
+      expect(await residueSnapshot(ids)).toEqual(residueBefore);
+
+      // The operator investigates, then acknowledges. Only now may the fixture
+      // be healed and READY re-earned.
+      expect(acknowledgeAtelierFinanceCommitIndeterminate(orgFor('commit-mixed'))).toBe(true);
+      expect(fs.existsSync(holdFile)).toBe(false);
+
       const recovery = await seed('commit-mixed');
       expect(recovery.status, recovery.reason ?? '').toBe('complete');
       await expectFixtureFullyReady(ids);
@@ -548,6 +794,31 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
         WHERE id = $1`,
       [ids.packId]
     );
+  }
+
+  /**
+   * Every promotion-owned column of the five rows, plus `updated_at`. Used to
+   * prove that a run blocked by an unacknowledged hold changed NOTHING — not
+   * the readiness flags, not a timestamp.
+   */
+  async function residueSnapshot(ids: AtelierCanonicalIds): Promise<unknown> {
+    const statements = await control.query(
+      `SELECT id, status, validation_status, validation_messages, readiness_status, readiness_score,
+              quality_summary, quality_reason_codes, confirmed_by, updated_at
+         FROM financial_statements WHERE id = ANY($1::text[]) ORDER BY id`,
+      [ids.statementIds]
+    );
+    const analysis = await control.query(
+      `SELECT id, status, approved_by, approved_at, updated_at FROM financial_analyses WHERE id = $1`,
+      [ids.analysisId]
+    );
+    const pack = await control.query(
+      `SELECT id, pack_status, pack_readiness_status, pack_readiness_score, pack_quality_summary,
+              pack_quality_reason_codes, source_statement_count, missing_statement_types, updated_at
+         FROM financial_statement_packs WHERE id = $1`,
+      [ids.packId]
+    );
+    return { statements: statements.rows, analysis: analysis.rows, pack: pack.rows };
   }
 
   async function expectNoPartialReady(ids: AtelierCanonicalIds): Promise<void> {

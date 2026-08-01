@@ -27,11 +27,17 @@
  * ===========================================================================
  * WHAT THIS FILE PROVES
  * ===========================================================================
- * RED  — drive the seed down the fallback path deliberately (via the explicitly
- *        recognised `MOCK_DB=true` seam, on a real database) and watch READY
- *        come back from the dead after the seed has already returned
- *        `incomplete`. A test that cannot fail proves nothing; this one is the
- *        proof that the green half is not vacuous.
+ * The RED half — the fallback ALGORITHM really does resurrect READY after
+ * reporting failure — lives in `atelierFinanceLateWriteFallback.test.ts`. It
+ * used to live here, forced onto a real database by setting `MOCK_DB=true`
+ * mid-run, and that door is exactly what FIN-005 P1-1b closed: an env var can no
+ * longer talk this module off PostgreSQL. What is left here is the pair of
+ * PostgreSQL proofs.
+ *
+ * P1-1b — the same fault with `MOCK_DB=true` set. The seed STILL takes the
+ *         pinned transaction, and nothing lands late. Before the fix this test
+ *         went the other way: the fallback announced itself and READY came back
+ *         from the dead.
  *
  * GREEN — the same fault, the same database, the ordinary PostgreSQL path. The
  *         promotion goes through the pinned transaction, the server's own
@@ -188,51 +194,42 @@ suite('FIN-005 — a late UPDATE after a JS timeout cannot resurrect READY', () 
   }, 60_000);
 
   // -------------------------------------------------------------------------
-  // RED — the old fallback path, exercised deliberately on a real database.
+  // THE DOOR THAT USED TO OPEN — FIN-005 P1-1b.
+  //
+  // This test used to be the RED half, and it worked like this: set
+  // `MOCK_DB=true` mid-run, ON THIS REAL DATABASE, because the seam predicate
+  // accepted that bare env string as "no PostgreSQL here". The seed then took
+  // the compensating path against a real Postgres and the abandoned UPDATE
+  // resurrected READY after the seed had reported failure. That is not a test
+  // fixture — it is a production hazard that a stray Railway service variable
+  // could trigger, and `NODE_ENV=production` did not protect.
+  //
+  // The seam is now decided by asking the DATABASE first, so the env var cannot
+  // open that door. Same fault, same database, same env var: the promotion goes
+  // through the pinned transaction and nothing lands late.
+  //
+  // THE RED HALF DID NOT DISAPPEAR — it moved to
+  // `atelierFinanceLateWriteFallback.test.ts`, where the fallback is reached
+  // through the one seam that is real (a wholesale-doubled `DbPromise`) and the
+  // resurrection is still demonstrated. Without it, the GREEN test below would
+  // be a green light with no red light behind it.
   // -------------------------------------------------------------------------
 
   it(
-    'RED: on the compensating fallback path the late UPDATE DOES resurrect READY after the seed reported failure',
+    'MOCK_DB=true can no longer open the non-atomic path: the pinned transaction still runs, and nothing lands late',
     async () => {
       const ids = await seedThenDemote('red-fallback');
       const victim = ids.statementIds[0];
       await armFault(victim, 'slow-promotion');
 
-      // `MOCK_DB=true` is one of the EXPLICITLY RECOGNISED seams — the only door
-      // onto the non-atomic path. Setting it here forces the legacy behaviour on
-      // a real database, which is exactly what has to be shown to be dangerous.
-      // The database singleton was already created by the seed above, so writes
-      // still go to real PostgreSQL.
       const previousMockDb = process.env.MOCK_DB;
       const warn = vi.spyOn(logger, 'warn');
       let result: Awaited<ReturnType<typeof seed>>;
       let warnLines: string[];
+      const startedAt = Date.now();
       try {
         process.env.MOCK_DB = 'true';
-        const running = seed('red-fallback');
-
-        // Wait until the promotion UPDATE is provably in flight (asleep inside
-        // the trigger — only this test's row is armed, so nothing else can be
-        // sleeping there), then arm the SECOND fault: the compensating demote of
-        // this row will not land.
-        //
-        // WHY THE DEMOTE HAS TO BE LOST FOR THE HOLE TO BE VISIBLE. Postgres
-        // queues the demote behind the promotion on the same row lock, so left
-        // alone it applies AFTER the promotion and papers over the damage. The
-        // fallback's safety therefore rests entirely on winning a race it has no
-        // way to enforce: a dropped connection, an exhausted pool, a process
-        // that exits, or — as here — a demote that simply fails, and READY comes
-        // back. The seed itself concedes this case; it reports it as
-        // `rollbackErrors` and then still says nothing claims READY.
-        //
-        // Arming AFTER phase 1 is what makes the fault precise: phase 1 writes
-        // `pending` too, and arming earlier would break the fixture instead of
-        // the compensation.
-        const promotionPid = await waitForSleepingPromotion(60_000);
-        expect(promotionPid, 'the promotion UPDATE must be in flight').toBeGreaterThan(0);
-        await armFault(victim, 'lose-demote');
-
-        result = await running;
+        result = await seed('red-fallback');
       } finally {
         process.env.MOCK_DB = previousMockDb;
         // Read the calls BEFORE restoring: `mockRestore` clears the history, and
@@ -240,31 +237,32 @@ suite('FIN-005 — a late UPDATE after a JS timeout cannot resurrect READY', () 
         warnLines = warn.mock.calls.map((call) => String(call[0]));
         warn.mockRestore();
       }
+      const elapsed = Date.now() - startedAt;
 
-      // The fallback really did run…
+      // TEETH. This single line is the whole regression: before the fix it was
+      // present, and the fixture was promoted by five autocommitted UPDATEs on a
+      // real database.
+      expect(warnLines.length, 'the spy must actually have observed the run').toBeGreaterThan(0);
       expect(
         warnLines.some((line) => line.includes('WITHOUT a pinned transaction')),
-        'this half of the proof requires the fallback path'
-      ).toBe(true);
+        'a stray MOCK_DB=true must not degrade a real PostgreSQL to the non-atomic path'
+      ).toBe(false);
 
-      // …the operation returned FAILURE, and said its compensation could not
-      // reach the row it needed to undo…
+      // The slow promotion is cancelled by the server INSIDE the transaction,
+      // exactly as on the ordinary path — produced only by the pinned path.
       expect(result.status).toBe('incomplete');
-      expect(result.promotion?.rolledBack).toBe(true);
-      expect(result.promotion?.rollbackErrors.join(' | ')).toMatch(
-        new RegExp(`statement ${victim}: `)
-      );
-      // …while still reporting, truthfully at that instant, that the fixture is
-      // clean. This is the claim that decays.
-      expect(result.promotion?.rowsStillClaimingReady ?? []).toEqual([]);
-      expect(await isStatementReady(victim), 'nothing is READY yet — that is the trap').toBe(false);
+      expect(result.reason).toMatch(/^pinned promotion transaction rolled back: /);
+      expect(result.reason).toMatch(/canceling statement|statement timeout/i);
+      expect(elapsed, 'the server-side timeout must bound the call').toBeLessThan(60_000);
 
-      // …and then the write nobody cancelled landed.
-      const resurrected = await waitForStatementReady(victim, (TRIGGER_SLEEP_SECONDS + 40) * 1_000);
+      // And no write appears afterwards — waited out past the trigger's ENTIRE
+      // sleep, the window in which the old behaviour resurrected the row.
+      const resurrected = await waitForStatementReady(victim, (TRIGGER_SLEEP_SECONDS + 5) * 1_000);
       expect(
         resurrected,
-        'RED PROOF: the UPDATE that the JS timeout abandoned lands and re-promotes the row, long after the seed reported failure'
-      ).toBe(true);
+        'no late write may appear: the UPDATE was cancelled inside a transaction that rolled back'
+      ).toBe(false);
+      await expectNoPartialReady(ids);
     },
     240_000
   );
@@ -344,34 +342,13 @@ suite('FIN-005 — a late UPDATE after a JS timeout cannot resurrect READY', () 
     return ids;
   }
 
-  /** Arm one of the two row-scoped faults for `statementId`. */
-  async function armFault(statementId: string, mode: 'slow-promotion' | 'lose-demote'): Promise<void> {
+  /** Arm the row-scoped slow-promotion fault for `statementId`. */
+  async function armFault(statementId: string, mode: 'slow-promotion'): Promise<void> {
     await control.query(
       `INSERT INTO ${FAULT_TABLE} (target_id, mode) VALUES ($1, $2)
          ON CONFLICT (target_id, mode) DO NOTHING`,
       [statementId, mode]
     );
-  }
-
-  /**
-   * Poll until the promotion UPDATE is asleep inside the trigger, and return its
-   * backend pid. Only this test's row is ever armed `slow-promotion`, so nothing
-   * another suite is doing can be mistaken for it.
-   */
-  async function waitForSleepingPromotion(budgetMs: number): Promise<number> {
-    const deadline = Date.now() + budgetMs;
-    for (;;) {
-      const sleeping = await control.query(
-        `SELECT pid FROM pg_stat_activity
-          WHERE datname = current_database()
-            AND state = 'active'
-            AND wait_event = 'PgSleep'
-            AND query ILIKE '%UPDATE financial_statements%'`
-      );
-      if (sleeping.rows.length > 0) return Number(sleeping.rows[0].pid);
-      if (Date.now() >= deadline) return 0;
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
   }
 
   /** Does the persisted row CLAIM a READY-flavoured state? Read out of band. */
@@ -470,9 +447,8 @@ async function installSlowPromotionTrigger(): Promise<void> {
   );
   await control.query(`DELETE FROM ${FAULT_TABLE}`);
   // Row-scoped and mode-scoped. `slow-promotion` fires ONLY on a promotion
-  // (`ready`), so phase 0's heal and phase 1's upserts run at full speed;
-  // `lose-demote` fires ONLY on a demotion (`pending`) and is armed by the test
-  // only AFTER phase 1 is finished, so it cannot touch the fixture build.
+  // (`ready`), so phase 0's heal and phase 1's upserts run at full speed and the
+  // fault lands exactly on the write under test.
   await control.query(`
     CREATE OR REPLACE FUNCTION fin005_late_write_slow_promotion() RETURNS trigger AS $fn$
     BEGIN
@@ -480,10 +456,6 @@ async function installSlowPromotionTrigger(): Promise<void> {
          AND EXISTS (SELECT 1 FROM ${FAULT_TABLE}
                       WHERE target_id = NEW.id AND mode = 'slow-promotion') THEN
         PERFORM pg_sleep(${TRIGGER_SLEEP_SECONDS});
-      ELSIF NEW.readiness_status = 'pending'
-         AND EXISTS (SELECT 1 FROM ${FAULT_TABLE}
-                      WHERE target_id = NEW.id AND mode = 'lose-demote') THEN
-        RAISE EXCEPTION 'FIN005_LATE_WRITE_DEMOTE_LOST %', NEW.id;
       END IF;
       RETURN NEW;
     END;
