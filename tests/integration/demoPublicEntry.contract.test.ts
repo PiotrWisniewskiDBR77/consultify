@@ -520,6 +520,99 @@ describe('OPS-DEMO-002 public demo entry contract', () => {
       }
     }, 180_000);
 
+    /**
+     * The session org is FINAL for a public demo principal. These probe through
+     * `record-event`, which writes using `req.organizationId` — so the row that
+     * lands is direct evidence of the org the middleware resolved. Probing
+     * `/api/demo/organization` instead would prove nothing: it reads the session
+     * row directly and never consults `req.organizationId`.
+     */
+    async function eventOrgFor(token: string, headers: Record<string, string> = {}) {
+      let req = request(app)
+        .post('/api/demo/record-event')
+        .set('Authorization', `Bearer ${token}`);
+      for (const [key, value] of Object.entries(headers)) req = req.set(key, value);
+      return req.send({ eventType: 'demo_ai_limit_reached' });
+    }
+
+    it.each([['x-org-context'], ['x-organization-id']])(
+      'refuses %s pointing at the base org — the session tenant is final',
+      async (header) => {
+        // A public demo account holds an ACTIVE membership in the base demo org,
+        // so the UI org-switch path accepted this header and overwrote the
+        // server-derived session tenant.
+        const a = await registerDemo(fixtureEmail('orgctx'));
+        const orgA = a.body.demoSession.organizationId as string;
+
+        const before = await dbGet<{ c: number }>(
+          `SELECT COUNT(*) as c FROM conversion_events WHERE organization_id = ? AND user_id = ?`,
+          ['demo-org', a.body.user.id]
+        );
+
+        const res = await eventOrgFor(a.body.token, { [header]: 'demo-org' });
+        expect(res.status).toBe(403);
+        expect(res.body.code).toBe('DEMO_SESSION_INVALID');
+
+        // Read-back: nothing was attributed to the base org, and nothing leaked
+        // into the session tenant either — the request was refused outright.
+        const onBase = await dbGet<{ c: number }>(
+          `SELECT COUNT(*) as c FROM conversion_events WHERE organization_id = ? AND user_id = ?`,
+          ['demo-org', a.body.user.id]
+        );
+        expect(Number(onBase?.c || 0)).toBe(Number(before?.c || 0));
+        expect(orgA).not.toBe('demo-org');
+      },
+      180_000
+    );
+
+    it('refuses an org-context header naming another demo tenant', async () => {
+      const a = await registerDemo(fixtureEmail('orgctx-cross-a'));
+      const b = await registerDemo(fixtureEmail('orgctx-cross-b'));
+      const res = await eventOrgFor(a.body.token, {
+        'x-org-context': b.body.demoSession.organizationId as string,
+      });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('DEMO_SESSION_INVALID');
+    }, 180_000);
+
+    it('refuses an org-context header even for an org the account really belongs to', async () => {
+      // The account genuinely has an ACTIVE membership in the base demo org. That
+      // membership is exactly what used to make the switch succeed.
+      const a = await registerDemo(fixtureEmail('orgctx-member'));
+      const membership = await dbGet<{ organization_id: string }>(
+        `SELECT organization_id FROM organization_members WHERE user_id = ? LIMIT 1`,
+        [a.body.user.id]
+      );
+      expect(membership?.organization_id).toBeTruthy();
+
+      const res = await eventOrgFor(a.body.token, {
+        'x-org-context': membership!.organization_id,
+      });
+      expect(res.status).toBe(403);
+    }, 180_000);
+
+    it('an ordinary non-demo user keeps legitimate org switching', async () => {
+      const email = `ops-demo-002+orgswitch-${RUN_ID}@fixture.invalid`;
+      const reg = await request(app).post('/api/auth/register').send({
+        email,
+        password: FIXTURE_PASSWORD,
+        firstName: 'Org',
+        lastName: 'Switch',
+        companyName: `ops-demo-002 switch ${RUN_ID}`,
+      });
+      expect([200, 201]).toContain(reg.status);
+      const token = reg.body?.token;
+      const ownOrg = reg.body?.user?.organizationId;
+      expect(token).toBeTruthy();
+
+      // Same header on a non-demo principal must NOT be refused.
+      const res = await request(app)
+        .get('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .set('x-org-context', ownOrg);
+      expect(res.status).not.toBe(403);
+    }, 180_000);
+
     it('a header-less request is attributed to the session tenant, not the base org', async () => {
       // The "any ACTIVE membership" rescue in attachUser used to overwrite the
       // server-derived session org with the base org on every header-less request,

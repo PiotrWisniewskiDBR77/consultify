@@ -229,11 +229,56 @@ describe('OPS-DEMO-002 realtime denial', () => {
       });
     }
 
+    /**
+     * NOTE ON FIXTURE CHOICE — this test was false-green before.
+     *
+     * It originally used made-up ids (`idea-fixture` etc). Those refuse for a
+     * reason that has nothing to do with the demo policy: the gateway's
+     * resource-existence check (`SELECT id FROM my_ideas WHERE id = ? AND
+     * organization_id = ?`, `canViewNote`, `canJoinDeck`) cannot find them in any
+     * org — an ordinary NON-demo user gets exactly the same 403. The case passed
+     * with the guard entirely removed.
+     *
+     * Using a REAL seeded idea removes the existence check as the explanation.
+     *
+     * Even then the guard is NOT the deciding factor here: with the guard
+     * neutralised this case still refuses, because `assertIdeaMembership` requires
+     * an ACTIVE membership in the session org and a demo principal's membership row
+     * lives in the BASE org. I could not construct any configuration in which the
+     * demo guard is what refuses a native WS connection — an earlier check always
+     * gets there first. So on these three gateways the guard is DEFENCE IN DEPTH,
+     * not a fix, and this case documents the refusal rather than proving the guard.
+     *
+     * The Socket.IO namespaces are the opposite: the control below shows all four
+     * admit a demo principal the moment the guard is removed. That is the real hole.
+     */
+    async function seededIdeaFor(sessionOrgId: string): Promise<string | null> {
+      const row = await dbGet<{ id: string }>(
+        `SELECT id FROM my_ideas WHERE organization_id = ? LIMIT 1`,
+        [sessionOrgId],
+        { fallback: false }
+      );
+      return row?.id || null;
+    }
+
+    it('refuses a public demo token on idea collaboration for a REAL seeded idea', async () => {
+      const a = await registerDemo(fixtureEmail('ws-idea'));
+      __resetDemoPrincipalCache();
+      const ideaId = await seededIdeaFor(a.body.demoSession.organizationId as string);
+      // If the seed produced no idea the case would be vacuous — fail loudly
+      // rather than silently proving nothing.
+      expect(ideaId, 'the demo seed must provide an idea for this test to mean anything').toBeTruthy();
+
+      expect(await tryWebSocket(`/ws/collab/${ideaId}`, a.body.token)).toBe('refused');
+    }, 180_000);
+
     it.each([
-      ['idea collaboration (CRDT / edit locks)', '/ws/collab/idea-fixture'],
       ['notebook collaboration (presence)', '/ws/notebook/notebook-fixture'],
       ['presentation collaboration (comments)', '/ws/presentations/deck-fixture'],
     ])('refuses a public demo token on %s', async (_label, path) => {
+      // Kept for breadth. These use synthetic ids, so on their own they only show
+      // the connection is refused — the case above is the one that isolates the
+      // demo policy from the existence check.
       const a = await registerDemo(fixtureEmail('ws'));
       __resetDemoPrincipalCache();
       expect(await tryWebSocket(path, a.body.token)).toBe('refused');
@@ -310,20 +355,28 @@ describe('OPS-DEMO-002 realtime denial', () => {
      * one of them untouched.
      */
     const REALTIME_WRITE_TABLES = [
+      // Written on CONNECT, unconditionally, not gated by writeAllowed — this is
+      // the write a refused handshake must prevent.
       'collab_sessions',
+      // lock_node / unlock_node / graph_patch
+      'collab_session_events',
+      // the CRDT canonical graph
+      'my_idea_maps',
+      // notebook presence
       'realtime_presence',
-      'idea_map_nodes',
-      'notebook_pages',
     ];
 
-    async function countRows(table: string): Promise<number> {
+    async function countRows(table: string): Promise<number | null> {
       try {
         const row = await dbGet<{ c: number }>(`SELECT COUNT(*) as c FROM ${table}`, [], {
           fallback: false,
         });
         return Number(row?.c || 0);
       } catch {
-        return -1; // table absent in this schema — treated as "nothing to compare"
+        // A missing table used to return -1 and be compared against -1 — a
+        // vacuous pass. Signal it so the assertion below can refuse to be
+        // meaningless instead of quietly succeeding.
+        return null;
       }
     }
 
@@ -331,7 +384,7 @@ describe('OPS-DEMO-002 realtime denial', () => {
       const a = await registerDemo(fixtureEmail('nowrite'));
       __resetDemoPrincipalCache();
 
-      const before: Record<string, number> = {};
+      const before: Record<string, number | null> = {};
       for (const table of REALTIME_WRITE_TABLES) before[table] = await countRows(table);
 
       const { default: WebSocket } = await import('ws');
@@ -369,10 +422,20 @@ describe('OPS-DEMO-002 realtime denial', () => {
 
       await new Promise<void>((resolve) => probeServer.close(() => resolve()));
 
+      let compared = 0;
       for (const table of REALTIME_WRITE_TABLES) {
         const after = await countRows(table);
+        if (before[table] === null) {
+          // Absent from this schema — cannot be evidence either way. Counted so
+          // the guard below can refuse a run where nothing was really checked.
+          continue;
+        }
+        compared += 1;
         expect(after, `${table} must be unchanged`).toBe(before[table]);
       }
+      // At least one real table has to have been compared, otherwise this test
+      // asserts nothing at all.
+      expect(compared, 'no realtime write table was present to compare').toBeGreaterThan(0);
     }, 180_000);
   });
 
