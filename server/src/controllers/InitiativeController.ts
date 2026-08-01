@@ -3416,7 +3416,10 @@ export class InitiativeController {
       const orgId = req.user?.organizationId;
       const userId = req.user?.id;
       const initiativeId = req.params.id;
-      const { comment, roadmapQuarter, roadmapYear } = req.body as Record<string, unknown>;
+      const { comment, roadmapQuarter, roadmapYear, overrideReason } = req.body as Record<
+        string,
+        unknown
+      >;
 
       if (!orgId || !userId) {
         res.status(401).json({ error: 'Unauthorized' });
@@ -3430,6 +3433,12 @@ export class InitiativeController {
         actorId: userId,
         nextStatusInput: 'PROMOTED',
         reason: comment ? String(comment) : null,
+        // ACCEPT (REVIEW->PROMOTED) is one of the 9 AI_GATES — inherited from the
+        // canonical engine along with everything else. Threaded through so a
+        // caller hitting the (flag-gated, per-org, fail-open) AI soft-block via
+        // THIS route retains the same override escape hatch PATCH /:id/status
+        // already has, instead of being stuck with no way to proceed.
+        overrideReason: overrideReason ? String(overrideReason) : null,
       });
 
       if (!result.ok) {
@@ -3505,6 +3514,7 @@ export class InitiativeController {
       const orgId = req.user?.organizationId;
       const userId = req.user?.id;
       const initiativeId = req.params.id;
+      const { overrideReason } = req.body as Record<string, unknown>;
 
       if (!orgId || !userId) {
         res.status(401).json({ error: 'Unauthorized' });
@@ -3517,6 +3527,9 @@ export class InitiativeController {
         initiativeId,
         actorId: userId,
         nextStatusInput: 'EXECUTING',
+        // START (SCHEDULED->EXECUTING) is also an AI_GATE — see the identical
+        // note in approveInitiative above.
+        overrideReason: overrideReason ? String(overrideReason) : null,
       });
 
       if (!result.ok) {
