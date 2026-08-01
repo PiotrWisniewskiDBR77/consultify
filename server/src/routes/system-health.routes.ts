@@ -47,14 +47,21 @@ const router = Router();
 const READINESS_TIMEOUT_MS = 2000;
 
 async function isDatabaseReady(): Promise<boolean> {
+  let timer: NodeJS.Timeout | undefined;
   try {
     const db = await getDatabaseAsync();
     // One trivial round trip. Deliberately not a table audit: readiness answers
     // "can this process serve traffic", not "is the schema what I expect".
     const probe = db.query<unknown>('SELECT 1', []);
-    const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('readiness timeout')), READINESS_TIMEOUT_MS)
-    );
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error('readiness timeout')), READINESS_TIMEOUT_MS);
+      // Never hold the process open on this timer.
+      timer.unref?.();
+    });
+    // NOTE: `Promise.race` bounds how long we WAIT; it does not cancel the query.
+    // A slow query keeps running to completion in the driver — this endpoint just
+    // stops waiting for it and reports not-ready. Saying otherwise would overstate
+    // what this does.
     await Promise.race([probe, timeout]);
     return true;
   } catch (error) {
@@ -64,6 +71,10 @@ async function isDatabaseReady(): Promise<boolean> {
       error: (error as Error)?.message || String(error),
     });
     return false;
+  } finally {
+    // Clear on the fast path too: without this every ready response leaves a
+    // pending timer alive for the full timeout window.
+    if (timer) clearTimeout(timer);
   }
 }
 

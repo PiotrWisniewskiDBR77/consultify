@@ -1532,6 +1532,24 @@ const isViteServerReachable = async (viteUrl: string): Promise<boolean> => {
   }
 };
 
+/**
+ * The one body the SPA catch-all is allowed to return when it cannot serve the
+ * frontend. It is constant and carries no deployment detail: this handler answers
+ * every unknown non-API path for anonymous callers, so any path, __dirname or
+ * error message placed here would be a public disclosure of the deployment
+ * layout. Diagnostics belong in the server log — see the two call sites below.
+ *
+ * Status stays 500: a missing frontend bundle is a server-side deployment fault,
+ * and 503 would additionally promise the caller that retrying helps, which is
+ * wrong for a bundle that is simply not on disk.
+ */
+const FRONTEND_UNAVAILABLE_BODY = Object.freeze({
+  error: Object.freeze({
+    code: 'FRONTEND_NOT_FOUND',
+    message: 'Frontend unavailable',
+  }),
+});
+
 const serveIndexHtml = async (req: Request, res: Response): Promise<void> => {
   // In stable dev mode we run Vite separately on :3000.
   // Serving /dist from the backend (:3001) in dev is a common source of "dead UI"
@@ -1566,17 +1584,14 @@ const serveIndexHtml = async (req: Request, res: Response): Promise<void> => {
   logger.info(`[Server] Serving index.html for ${req.path} from ${indexPath}`);
 
   if (!fs.existsSync(indexPath)) {
-    logger.error(`[Server] Frontend index.html not found at: ${indexPath}`);
-    res.status(500).json({
-      error: {
-        code: 'FRONTEND_NOT_FOUND',
-        message: 'Frontend files not found',
-        path: indexPath,
-        __dirname,
-        frontendDistPath,
-        resolvedPath: path.resolve(frontendDistPath, 'index.html'),
-      },
-    });
+    // The deployment layout is an operator concern, never a caller concern: the
+    // catch-all answers every unknown non-API path, so anything put in this body
+    // is readable by any anonymous visitor. Detail goes to the log only.
+    logger.error(
+      `[Server] Frontend index.html not found for ${req.method} ${req.path} — ` +
+        `indexPath=${indexPath} frontendDistPath=${frontendDistPath} __dirname=${__dirname}`
+    );
+    res.status(500).json(FRONTEND_UNAVAILABLE_BODY);
     return;
   }
 
@@ -1588,16 +1603,13 @@ const serveIndexHtml = async (req: Request, res: Response): Promise<void> => {
   res.setHeader('X-Consultify-Cache-Guard', 'staging-cache-kill-v3');
   res.sendFile(indexPath, (err: Error | null) => {
     if (err) {
-      logger.error(`[Server] Error sending index.html: ${err.message}`);
+      // Same reasoning as above: the failure detail is logged, never returned.
+      logger.error(
+        `[Server] Error sending index.html for ${req.method} ${req.path} — indexPath=${indexPath}`,
+        err
+      );
       if (!res.headersSent) {
-        res.status(500).json({
-          error: {
-            code: 'SERVE_ERROR',
-            message: 'Failed to serve frontend',
-            error: err.message,
-            path: indexPath,
-          },
-        });
+        res.status(500).json(FRONTEND_UNAVAILABLE_BODY);
       }
     } else {
       logger.info(`[Server] ✓ Successfully sent index.html for ${req.path}`);
