@@ -739,9 +739,27 @@ const attachUser = async (
   const normalizedDisplayName = readOptionalStringClaim(decodedClaims, 'name') || 'User';
   const normalizedEmail = readOptionalStringClaim(decodedClaims, 'email') || '';
 
+  // OPS-DEMO-002: for a public demo principal the org resolved from its ACTIVE
+  // session above is FINAL. Refuse any attempt to steer it with a client header
+  // rather than ignoring one — a silent ignore leaves a caller believing the switch
+  // happened and leaves us unable to see the attempt.
+  //
+  // This block is why the previous exclusion was not enough. A public demo account
+  // holds an ACTIVE membership in the base demo org (that is where signup writes
+  // it), so `x-org-context: <DEMO_ORG_ID>` passed the membership probe below and
+  // overwrote the session tenant — the same escape the membership rescue further
+  // down had, through a different door.
+  if (publicDemo.isPublicDemoPrincipal && requestedOrgContextId) {
+    res.status(403).json({
+      error: 'Demo workspace mismatch. Reload the demo to continue.',
+      code: DEMO_SESSION_INVALID_CODE,
+    });
+    return;
+  }
+
   // Respect the UI-selected organization when the user is a valid active member.
   let orgContextConfirmed = false;
-  if (!isDemoHeader && requestedOrgContextId) {
+  if (!isDemoHeader && !publicDemo.isPublicDemoPrincipal && requestedOrgContextId) {
     try {
       const membership = await dbGet<{ role?: string; status?: string }>(
         `SELECT role, status
