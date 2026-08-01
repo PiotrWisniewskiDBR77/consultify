@@ -156,17 +156,16 @@ describe('SEC-PUB-001 anonymous auto-repair shell-out is removed', () => {
 
   // Targeted removal, not a broken router: the sibling route on the very same
   // module must still answer.
-  it('GET /api/system/health (same router) still responds', async () => {
+  it('GET /api/system/health (same router) still responds — now as readiness only', async () => {
+    // SEC-PUB-002 replaced the detailed body (`overall` + `checks`) with a minimal
+    // readiness answer. The detailed diagnostics live behind verifySuperAdmin at
+    // /api/system-health. This assertion follows that change deliberately; the
+    // point it still makes is that removing `/repair` did not break its sibling.
     const res = await request(app).get('/api/system/health');
 
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        overall: expect.any(String),
-        timestamp: expect.any(String),
-        checks: expect.any(Array),
-      })
-    );
+    expect([200, 503]).toContain(res.status);
+    expect(res.body.status === 'ready' || res.body.status === 'not-ready').toBe(true);
+    expect(res.body).not.toHaveProperty('checks');
     // The health check must not have gained a shell-out of its own.
     expect(spawnLog.calls).toEqual([]);
   });
