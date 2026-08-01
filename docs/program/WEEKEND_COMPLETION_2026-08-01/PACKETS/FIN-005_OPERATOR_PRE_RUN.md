@@ -758,7 +758,15 @@ Dodatkowo, o komendzie seeda z §2:
   i pochodne) są tylko-do-wstawienia i nigdy nie są nadpisywane;
 - **nie zasiewa** `financial_model_outputs`, `financial_model_validations`,
   `assumptions_json` ani `analysis_financials` — powody i konsekwencje w §2.3a,
-  pozycja odbioru w §8;
+  pozycja odbioru w §8. **Runda 8:** to już nie znaczy „NPV/ROI/payback nie
+  istnieją" — `GET /api/v8/finance/models/:modelId/appraisal` liczy je na
+  żywo z kanonicznych `financial_model_events` (przez `computeModel()` +
+  `investmentAppraisalService.appraise()`, bez drugiego silnika), za każdym
+  razem od nowa — tylko nigdy nic z tego nie trafia do
+  `financial_model_outputs`. To odróżnia `financeFixtureComplete` (dane
+  wejściowe istnieją i mają lineage) od `financeGoldenFlowComplete` (policzono
+  realny NPV) — pełna specyfikacja w raporcie rundy 8 handoffu
+  (`FIN-005_IMPLEMENTATION_HANDOFF.md` §17);
 - **nie widzi**, którą ścieżką seed promował fixture. Komenda odmawia zapisu,
   gdy przypięte połączenie nie działa, i odmawia, gdy seed nie zwróci
   `complete` — ale samo „nigdy nie schodź na ścieżkę nieatomową" jest
