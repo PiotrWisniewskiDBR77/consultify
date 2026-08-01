@@ -1,7 +1,7 @@
 ---
 doc_id: FIN-005-implementation-handoff
 truth_type: operations
-status: AWAITING_CODEX_REVIEW
+status: FROZEN_FOR_INTEGRATION
 owner: claude
 process_owner: codex
 product_owner: piotr
@@ -1291,3 +1291,243 @@ zadeklarowana liczba bez pomiaru na czystym base to dokładnie to ryzyko).
 niescalone. Żaden `--write`/rollback/cleanup nie został uruchomiony na żadnym
 celu poza lokalnymi bazami scratch (`fin005_pri`, `fin005_rep`, `fin005_drift`)
 — posprzątane po zakończeniu weryfikacji.
+
+---
+
+## 17. Runda ósma — DATASET COMPLETE ≠ GOLDEN FLOW COMPLETE (2026-08-01)
+
+Blocker zlecony przez Codeksa: po canonical seedzie model ma trzy zdarzenia
+prognozy, ale `financial_model_outputs` puste, NPV/ROI/payback nigdy nie
+policzone, UI pokazywał „compute not run yet" — a `financeGoldenFlow.status
+=== 'complete'` (istniejący od rundy 5) certyfikował TYLKO pakiet
+sprawozdań + analizę, nigdy inwestycji modelu. Diff względem `f1aba0e2eb`:
+`a336cb6fba`, `73019e738b`, `3d738ed876`, `7e69fd8de4`, `68304aaf98`. **HEAD:
+`68304aaf98`.**
+
+### 17.1 `financeFixtureComplete` vs `financeGoldenFlowComplete`
+
+Rozdzielone jawnie w `atelierFinanceSeed.ts` (`AtelierFinanceGoldenFlowCompleteness`,
+`verifyAtelierFinanceGoldenFlowComplete()`), wywoływane z `demoSeedService.ts`
+zaraz po `upsertAtelierRoiFinancialModel` i wystawione na najwyższym poziomie
+wyniku seeda jako nowe pole `financeGoldenFlowCompleteness` (obok
+niezmienionego `financeGoldenFlow`):
+
+- **`fixtureComplete`** = dokładnie to, co `financeGoldenFlow.status ===
+  'complete'` zawsze znaczyło: pakiet + 3 sprawozdania + zatwierdzona analiza
+  istnieją, mają lineage, zostały promowane. Bez zmian.
+- **`goldenFlowComplete`** = `fixtureComplete` **I** faktyczne wywołanie
+  `computeModel()` + `investmentAppraisalService.appraise()` na kanonicznym
+  modelu dało skończone NPV z realną aktywnością cash-flow (nie samo istnienie
+  okresów — `computeModel()` generuje okresy z `start_date`/`horizon_months`
+  nawet przy zerowych zdarzeniach, więc pusty model wyglądałby "kompletnie"
+  bez tej bramki; zamknięte przez sprawdzenie, że przynajmniej jeden okres ma
+  niezerowy `OPERATING_CF`/`INVESTING_CF`/`FINANCING_CF`).
+
+**fixtureComplete + outputs missing ≠ golden flow complete — udowodnione
+testem, nie zadeklarowane** (`atelierFinanceGoldenFlowCompleteness.test.ts`,
+5 testów): pusty fixture nigdy nie dotyka bazy przy sprawdzaniu golden flow;
+awaria `computeModel()` jest raportowana, nie połykana; model bez aktywnych
+zdarzeń raportuje `goldenFlowComplete: false` mimo dobrze uformowanych
+okresów; **kontrola negatywna**: prawdziwe (nie wstrzyknięte) przepełnienie do
+`Infinity` przez `Math.pow` w silniku `expandEventToAmounts` (ekstremalny
+`growth_rate`, przechodzi przez `aggregateMonthlyOutputs`'s `|| 0`, które
+łapie `NaN`, ale NIE `Infinity`, bo `Infinity` jest prawdziwe) jest łapane
+przez `Number.isFinite(npv)` — usunięcie tej bramki zamieniłoby to po cichu w
+`goldenFlowComplete: true`.
+
+### 17.2 Kanoniczna ścieżka compute
+
+Dwa istniejące, wcześniej NIEPOŁĄCZONE silniki:
+- `computeModel()` (`financialModelingService.ts`) — P&L/BS/CF z
+  `financial_model_events`, ZERO pól NPV/IRR/payback.
+- `investmentAppraisalService.appraise()` — prawdziwy silnik NPV/IRR/MIRR/
+  payback/PI, DB-free, bierze płaski `{cashflows, initialInvestment,
+  discountRatePct, hurdleRatePct}` — zero pojęcia o modelu.
+
+Nowy `financialModelAppraisalAdapter.ts` to WYŁĄCZNIE przekształcenie —
+zero nowych formuł. `initialInvestment` = ujemny `INVESTING_CF` pierwszego
+okresu (jeśli ujemny; jeśli nie, zostaje w `cashflows[0]`, nie jest
+odrzucany); inwestycja w PÓŹNIEJSZYM okresie zostaje w swoim okresie, nie
+jest przesuwana do t=0 (przetestowane osobno, żeby to nie stało się
+prawdziwe dopiero na oczach operatora). Stopa dyskontowa/progowa **zawsze**
+parametrem wywołania — `financial_models` nie ma kolumny `discount_rate`
+(sprawdzone w `migrations/571_financial_modeling_t054.sql`), więc nic nie
+jest domyślne w silniku.
+
+Nowy endpoint: **`GET /api/v8/finance/models/:modelId/appraisal`**
+(`finance.routes.ts`) — tylko-do-odczytu (`computeModel()` robi wyłącznie
+SELECT), wymaga `discountRatePct`/`hurdleRatePct` jako query params (400 bez
+nich — ta sama zasada „nigdy nie domyślne" co `/value/appraise`), liczy od
+nowa z zapisanych zdarzeń przy KAŻDYM wywołaniu — reopen jest deterministyczny
+z konstrukcji, nie przez cache.
+
+**DB-free compute dozwolone dla demo tylko exact method/path**: `GET` jest
+zawsze przepuszczany przez `demoWriteProtection` (klasyfikuje wyłącznie po
+czasowniku HTTP) — ten endpoint nie potrzebuje żadnej zmiany w
+`demoGuard.middleware.ts` ani w allowliście. Osobno wpięta gotowa, przetestowana
+(22 testy) allowlista FIN-006/B dla 4 tras `POST /value/*`
+(`Gateway.ts`, wariant dokładnego dopasowania z
+`FIN-006_CROSS_MODULE_CURRENCY_AND_VALUE_ENGINE.md` §B.3) — to zamyka OSOBNY,
+wcześniej zdiagnozowany bug „Value engine temporarily unavailable”
+(`ValueOfficePanel`), nie ten sam problem co §17 golden flow. Strukturalny
+dowód wpięcia: `gatewayFinanceValueAllowlist.test.ts` (4 testy) — sam moduł
+allowlisty już miał 22 testy, ale mocowały własną aplikację Express, nigdy
+`Gateway.ts`.
+
+### 17.3 Wyniki liczbowe i ich lineage
+
+Na prawdziwych kanonicznych zdarzeniach Atelier (revenue-uplift 2 400 000
+EUR/rok, digital-capex 800 000 EUR jednorazowo, opex-reduction −400 000
+EUR/rok), stopa 10% (patrz niżej skąd):
+
+```
+input.initialInvestment = 800 000
+input.cashflows         = [2 400 000, 2 001 920, 2 003 841.54]  (FY2015/16/17)
+result.npv              ≈ 4 541 813 EUR
+result.irr              ≈ 282.5%
+result.payback          ≈ 0.33 roku (≈4 miesiące)
+result.pi                ≈ 6.68
+result.verdict           = "go"
+```
+
+Zmierzone testem end-to-end na REALNYM `computeModel()` (nie zsyntetyzowane) —
+`financialModelAppraisalAdapter.test.ts` — z jawną asercją `!== 1_820_000`
+(sfabrykowana liczba w niepowiązanym legacy `analysis_financials`,
+`demoSeedService.ts:3593`). Stopa 10% pochodzi z JEDYNEGO istniejącego
+kanonicznego źródła tej stopy dla tej inicjatywy — `analysis_financials.
+discount_rate = 10`, zaseedowane dla TEGO SAMEGO biznes-case'u — udokumentowane
+jako `ATELIER_CANONICAL_DISCOUNT_RATE_PCT` w `atelierFinanceSeed.ts`, nie
+wymyślone.
+
+**★★ Dwa realne, wcześniej nieznane znaleziska, świadomie NIE naprawione
+(decyzja produktowa, nie mój mandat):**
+
+1. **Zdarzenie „OpEx reduction" jest w kanonicznym silniku kodowane jako
+   KOSZT, nie oszczędność.** `expandEventToAmounts` + jego switch w
+   `computeModel()` robi `totalOPEX += Math.abs(amt)` dla `event_type ===
+   'opex'`, niezależnie od znaku `amount` — zapisane `-400_000` staje się
+   wydatkiem `-400 000` w P&L, nie korzyścią `+400 000`, wbrew nazwie
+   zdarzenia I wbrew równoległemu (fałszywemu) rekordowi
+   `analysis_financials.annual_cost_savings = 400_000` (dodatnia
+   „oszczędność"). Silnik architektonicznie nie ma sposobu wyrazić „redukcję
+   kosztu" przez `event_type: 'opex'` — potrzebowałby innego typu zdarzenia
+   albo zmiany silnika. Nie zmieniłem znaku ani typu zdarzenia — to byłoby
+   wymyślaniem ekonomiki bez mandatu (ten sam precedens co `assumptions_json`
+   w rundzie 6).
+2. **Brak modelowanego opóźnienia wdrożenia.** `digital-capex` i
+   `revenue-uplift` mają identyczny `period_start: '2015-01-01'` — capex i
+   pierwszy rok przychodu są współbieżne, mimo że `analysis_financials.
+   implementation_months = 12` sugeruje zamierzone 12-miesięczne opóźnienie,
+   nigdy nie zakodowane w `financial_model_events`. To mechaniczna przyczyna
+   nierealistycznie wysokiego IRR/szybkiego payback powyżej — liczby są
+   PRAWDZIWE (silnik kanoniczny, żadnej drugiej matematyki), ale opowieść
+   biznesowa którą kodują jest wątpliwa.
+
+Oba są otwartymi pytaniami produktowymi dla Piotra/Codeksa, nie defektami
+tego okablowania — mechanizm jest poprawny; to co mechanizm poprawnie liczy
+z DZISIEJSZYCH danych zasługuje na osobną decyzję.
+
+### 17.4 UI — świadomie NIE zamontowane
+
+`InvestmentAppraisalPanel.tsx` dostał tryb `modelId`-bound: automatyczny fetch
+przy montowaniu (nic do edycji — to zdarzenia modelu, nie wejście
+użytkownika), ukrywa edytowalne kontrolki kalkulatora, pokazuje etykiety
+okresów. W pełni przetestowany (4 testy:
+`InvestmentAppraisalPanel.modelBound.test.tsx`) — auto-fetch, stan awarii,
+determinizm ponownego otwarcia (identyczny wynik przy re-mount), tryb
+standalone bez zmian.
+
+**Celowo NIE zamontowany na żadnym żywym ekranie** (np. w
+`FinancialModelWorkspace.tsx`). Powód: reguła #7 tego repo — Piotr nigdy nie
+jest pierwszym testerem wizualnym; nowa powierzchnia UI wymaga prototypu,
+własnoręcznego renderu+zrzutu, dopiero potem akceptu, za flagą domyślnie OFF.
+Ten pakiet jest zamknięciem MECHANIZMU (backend, w pełni przetestowany,
+demo-safe), nie UI — montaż + rytuał wizualny to następny, osobny krok,
+jawnie nazwany tutaj, nie ukryty.
+
+### 17.5 Waluta (FIN-006/A)
+
+Wykonane O1+O2 z `FIN-006_CROSS_MODULE_CURRENCY_AND_VALUE_ENGINE.md`
+(rekomendacja z rundy 6, nigdy wcześniej zaaplikowana) plus dwa świeże
+znaleziska:
+
+- **O1 (dane, przyczyna źródłowa)**: `demoSeedService.ts`'s `upsertInitiatives`
+  nigdy nie ustawiało `budget_currency`, więc dziedziczyło domyślne `'PLN'`
+  kolumny (`migrations/564...sql:139`) mimo że Finance mówi EUR o tym samym
+  programie. Teraz `budget_currency = ATELIER_FINANCE_CURRENCY`, idempotentnie
+  (`ON CONFLICT ... UPDATE`, naprawia już zaseedowane wiersze).
+- **O2 (UI, downstream)**: `ExecutionHub.tsx` (Summary One-Look, realny
+  fetch zamiast `currency="PLN"`), `economics.routes.ts` (list+detail+
+  financials+calculate-metrics nigdy nie zwracały `af.currency` — wartość w
+  bazie była poprawnie EUR, cicho porzucana przed frontendem), `FullROIView.
+  tsx` (udokumentowany „Initiatives/Results spine NPV handoff"),
+  `InitiativeFinancialIntegration.tsx`. Świadomie NIEZMIENIONE:
+  `ExecutionSummaryOneLook.tsx`'s własny domyślny `'PLN'` (odpala się tylko
+  przy awarii API, identycznie dla każdego tenanta — zgadywanie EUR byłoby
+  równie błędne dla klienta polskiego na tej samej ścieżce awarii).
+  Udokumentowane, świadomie poza zakresem: `InitiativeCompactPanel.tsx:901`,
+  `ResourcesSection.tsx`, `assessment/modals/InitiativeDetailsModal.tsx`,
+  `ResultsThreePairsView.tsx`, `PortfolioAiPanel.tsx`, inne tenanty (Elkomtech
+  zostaje PLN — to polski klient), `organization_settings` (FIN-006's „O3").
+
+**Test spójności EUR na całej trasie** (`atelierSpineCoherence.test.ts`, nowy
+test) — każda zaseedowana inicjatywa Atelier ma `budget_currency = 'EUR'`,
+nigdy `'PLN'`; przechwytuje realne INSERT-y całego seeda, nie atrapę.
+
+### 17.6 Read-only proof
+
+`GET /models/:modelId/appraisal` — `computeModel()` robi wyłącznie
+`SELECT * FROM financial_models` + `SELECT * FROM financial_model_events`;
+handler trasy nie wywołuje `DbPromise.run` ani `persistComputeResult`.
+`verifyAtelierFinanceGoldenFlowComplete()` — ta sama gwarancja, potwierdzona
+testem: pusty fixture „nigdy nie dotyka bazy" (asercja na `dbGet`/`dbAll`
+mock nie wywołanych, §17.1). Żaden nowy kod w tej rundzie nie pisze do
+`financial_model_outputs`, `financial_model_validations` ani żadnej innej
+tabeli Finance — potwierdzone `grep -c "DbPromise.run\|dbRun"` na
+`financialModelAppraisalAdapter.ts` → 0.
+
+### 17.7 Bramki
+
+| Bramka | Wynik |
+| --- | --- |
+| mockowane FIN-005+R7+R8 (22 pliki) | **411 PASS / 10 skipped**, 3× identycznie. 1 plik (`finance.routes.test.ts`) ma 10 PRZEDISTNIEJĄCYCH awarii (potwierdzone przez `git stash` do bazowego stanu — identyczne 10 awarii bez ŻADNEJ zmiany tej rundy) |
+| real PG, `npm run test:fin005:pg`, primary+replica seam (`FIN005_READ_SEAM_URL`) | **45 PASS / 0 FAIL / 1 skipped**, 3× identycznie — dokładne dopasowanie do bazowego wyniku rundy 7 |
+| `tsc --noEmit` backend | **147 = 147**, identyczny zbiór `file:line:code` względem prawdziwego base commita `c522a861…`, zmierzone w osobnym worktree |
+| `tsc --noEmit` frontend | **0 błędów** |
+| `npm run build:backend` | **PASS** |
+| `git diff --check` (`f1aba0e2eb..HEAD`) | **PASS** |
+| currency-fix testy niezależne (economics/FullROIView/initiatives-links) | **46/46 PASS** |
+
+**Uwaga metodologiczna — bootstrap bazy scratch.** `migrate.ts` (własny
+runner projektu) ma dwa niepowiązane z FIN-005 defekty na całkiem świeżej
+bazie: (1) błąd dzielenia instrukcji SQL w `000_initdb_core_tables.sql`
+(plik jest poprawny — `psql -f` przechodzi czysto; błąd jest w niestandardowym
+parserze `PostgresDatabase.ts`), (2) część migracji używa `randomblob()`/
+`DATETIME` (dialekt SQLite) bez odpowiednika Postgres, bez pliku
+`_postgres.sql`-siostry. Ominięte lokalnie (zastosowanie migracji przez
+surowe `psql -f` z tekstowym podstawieniem `hex(randomblob(N))` →
+`md5(random()::text||clock_timestamp()::text)`, `DATETIME`→`TIMESTAMP`) —
+wyłącznie do zbudowania jednorazowej bazy scratch, zero zmian w plikach
+migracji repo. Warte osobnego zgłoszenia jako dług infrastruktury testowej,
+poza zakresem tego pakietu.
+
+### 17.8 Otwarte
+
+1. Montaż `InvestmentAppraisalPanel`'s trybu `modelId`-bound na żywym
+   ekranie — wymaga rytuału wizualnego (§17.4).
+2. Znak zdarzenia „OpEx reduction" i brak opóźnienia wdrożenia (§17.3) —
+   decyzja produktowa, nie techniczna.
+3. `financial_models` nie ma kolumny `discount_rate` — `ATELIER_CANONICAL_
+   DISCOUNT_RATE_PCT` w `atelierFinanceSeed.ts` to jedyne źródło, poza
+   granicą jednego tenanta; przyszły pakiet powinien dodać kolumnę.
+4. Migracje SQLite-dialect bez odpowiednika Postgres (§17.7) — dług
+   infrastruktury, nie FIN-005.
+5. Wcześniej otwarte pozycje (§16.7) bez zmian.
+
+**Status: FROZEN_FOR_INTEGRATION.** `financeGoldenFlowComplete` = `true` —
+mechanizm (nie sama obecność danych) zweryfikowany: kanoniczny compute,
+demo-safe, deterministyczny reopen, zero drugiego silnika, zero wpisanych
+ręcznie liczb. Working tree czysty, `HEAD 68304aaf98`, nic nie wypchnięte,
+nic niescalone, żaden `--write`/`--rollback`/mutacja Railway nie został
+uruchomiony. UI (§17.4) i dwa znaleziska ekonomiczne (§17.3) pozostają
+jawnie otwarte, nie ukryte pod tym statusem.
