@@ -2470,7 +2470,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const { orgId } = identity;
+    const { userId, orgId } = identity;
     if (!(await requireTables(res, ['canonical_inbox_items']))) return;
 
     const { id } = req.params;
@@ -2479,16 +2479,22 @@ router.post(
       return res.status(400).json({ error: 'until (ISO date) is required' });
     }
 
+    // SECURITY: scoped by user_id AND organization_id — previously this only
+    // checked organization_id, so any org member could snooze another user's
+    // inbox item. A missing row and a wrong-owner row both resolve to the
+    // same "not found" response below (no enumeration leak).
     const ownerRow = await queryHelpers.queryOne<{ organization_id: string }>(
-      `SELECT organization_id FROM canonical_inbox_items WHERE id = ?`,
-      [id]
+      `SELECT organization_id FROM canonical_inbox_items WHERE id = ? AND user_id = ? AND organization_id = ?`,
+      [id, userId, orgId]
     );
     if (!ownerRow) return res.status(404).json({ error: 'Inbox item not found' });
-    if (String(ownerRow.organization_id) !== String(orgId)) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
 
-    const item = await inboxService.triageItem(id, 'snooze', { snoozedUntil: until });
+    const item = await inboxService.triageItem(
+      id,
+      'snooze',
+      { snoozedUntil: until },
+      { userId, organizationId: orgId }
+    );
     if (!item) return res.status(404).json({ error: 'Inbox item not found' });
     res.json({ success: true, item });
   })

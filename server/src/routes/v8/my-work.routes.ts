@@ -41,6 +41,7 @@ import type {
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import { decodeHtmlEntities, deepDecodeHtmlEntities } from '../../utils/htmlEntities.js';
+import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 
 const router = Router();
@@ -56,6 +57,7 @@ const notebookAttachmentUpload = multer({
 /** B-05: V8 envelope for governed canonical inbox (V4-INBX-01) intake surface. */
 const V8_INBOX_CANONICAL_CONTRACT = 'my_work_inbox_canonical_v1';
 const V8_INBOX_TRIAGE_MUTATION_CONTRACT = 'my_work_inbox_triage_mutation_v1';
+const V8_INBOX_CLOSE_BY_TASK_CONTRACT = 'my_work_inbox_close_by_task_v1';
 const V8_INBOX_AI_ASSIST_CONTRACT = 'my_work_inbox_ai_assist_v1';
 const V8_NOTEBOOK_CONTRACT = 'my_work_notebook_v1';
 const V8_CALENDAR_CONTRACT = 'my_work_calendar_v1';
@@ -668,6 +670,109 @@ router.post(
       data: { success: true, ...result },
       meta: { version: 'v8', contract: V8_INBOX_CANONICAL_CONTRACT },
     });
+  })
+);
+
+/**
+ * POST /api/v8/my-work/inbox/tasks/:taskId/close
+ *
+ * Golden-flow Inbox close, keyed by the Task (source of truth) rather than
+ * the inbox item id — this is Step 2 of the
+ * Task-assigned → Inbox item → accept/in-progress → Inbox closes flow.
+ *
+ * Task is the source of truth; this route never trusts a client-supplied
+ * status/ownership claim — it always re-reads the task from the DB and
+ * derives userId/organizationId from the server auth context (getV8Context),
+ * never from the request body. Sits behind the router-level v8OrgGate, so a
+ * non-V8-enabled org already gets a 404 V8_ORG_DISABLED before reaching this
+ * handler — that IS the required fail-closed "unsupported for this org"
+ * response; there is no legacy-Inbox fallback here.
+ *
+ * Safely retriable: closeInboxItemForSource() is idempotent (not_materialized
+ * / already_closed / closed), so calling this again after a 500
+ * INBOX_CLOSE_RECOVERY_REQUIRED response either succeeds or returns
+ * already_closed — never a duplicate side effect, never a second error on
+ * "already handled."
+ */
+router.post(
+  '/inbox/tasks/:taskId/close',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireCanonicalInboxTable(res))) return;
+
+    const { taskId } = req.params;
+    const expectedStatus =
+      typeof req.body?.expectedStatus === 'string' ? req.body.expectedStatus : undefined;
+
+    const task = await queryHelpers.queryOne<{
+      id: string;
+      organization_id: string;
+      assignee_id: string | null;
+      owner_id: string | null;
+      status: string | null;
+    }>(
+      `SELECT id, organization_id, assignee_id, owner_id, status
+       FROM tasks WHERE id = ? AND organization_id = ?`,
+      [taskId, organizationId]
+    );
+
+    if (!task) {
+      return res.status(404).json({
+        error: 'Task not found',
+        code: 'INBOX_CLOSE_TASK_NOT_FOUND',
+      });
+    }
+
+    const isOwnerOrAssignee = task.assignee_id === userId || task.owner_id === userId;
+    if (!isOwnerOrAssignee) {
+      return res.status(403).json({
+        error: 'Only the task assignee/owner may close its inbox item',
+        code: 'INBOX_CLOSE_FORBIDDEN',
+      });
+    }
+
+    if (expectedStatus !== undefined && String(task.status || '') !== expectedStatus) {
+      return res.status(409).json({
+        error: "Task status has changed since the caller's expectedStatus was read",
+        code: 'INBOX_CLOSE_STATE_MISMATCH',
+        currentStatus: task.status,
+      });
+    }
+
+    // From here on, the Task transition (Step 1, PUT /api/tasks/:id) is
+    // assumed already committed by the caller — a failure past this point is
+    // a close-mutation failure, not a task-transition failure, and must be
+    // reported honestly as recovery-required rather than silently swallowed.
+    try {
+      const result = await inboxService.closeInboxItemForSource(
+        userId,
+        organizationId,
+        'task',
+        taskId,
+        { closedVia: V8_INBOX_CLOSE_BY_TASK_CONTRACT, taskStatus: task.status }
+      );
+
+      return res.json({
+        data: {
+          success: true,
+          taskId,
+          status: result.status,
+          inboxItem: result.item,
+        },
+        meta: { version: 'v8', contract: V8_INBOX_CLOSE_BY_TASK_CONTRACT },
+      });
+    } catch (err: any) {
+      logger.error('[v8/my-work] Inbox close-by-task failed after task read', {
+        taskId,
+        organizationId,
+        error: err?.message,
+      });
+      return res.status(500).json({
+        error:
+          'Task update succeeded but closing its inbox item failed. Retry this call — it is safe to repeat.',
+        code: 'INBOX_CLOSE_RECOVERY_REQUIRED',
+      });
+    }
   })
 );
 

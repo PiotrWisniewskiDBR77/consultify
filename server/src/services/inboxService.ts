@@ -29,6 +29,19 @@ export interface CanonicalInboxItem {
   delegatedBy?: string;
   delegationNotes?: string;
   metadata?: Record<string, unknown>;
+  /**
+   * Status of the SOURCE entity (task/decision) at materialization time —
+   * distinct from this inbox item's own triage `status` above. Copied at
+   * upsert time (matching how title/description are handled), not a live
+   * join. Always null for notification-sourced items (notifications have
+   * no "current status" concept).
+   */
+  sourceStatus?: string;
+  /**
+   * initiative_id of the SOURCE task/decision, copied at materialization
+   * time. Always null for notification-sourced items.
+   */
+  initiativeId?: string;
   createdAt: string;
   updatedAt?: string;
   resolvedAt?: string;
@@ -79,6 +92,8 @@ function rowToItem(r: any): CanonicalInboxItem {
     delegatedBy: r.delegated_by || undefined,
     delegationNotes: r.delegation_notes || undefined,
     metadata,
+    sourceStatus: r.source_status || undefined,
+    initiativeId: r.initiative_id || undefined,
     createdAt: r.created_at,
     updatedAt: r.updated_at || undefined,
     resolvedAt: r.resolved_at || undefined,
@@ -116,14 +131,17 @@ export async function materializeInboxItems(
 
   const UPSERT_SQL = `INSERT INTO canonical_inbox_items
     (id, user_id, organization_id, item_type, source_entity_type, source_entity_id,
-     title, description, priority, section, status, sla_deadline, created_at, updated_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+     title, description, priority, section, status, sla_deadline, source_status,
+     initiative_id, created_at, updated_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)
   ON CONFLICT (user_id, source_entity_type, source_entity_id) DO UPDATE SET
     title = excluded.title,
     description = excluded.description,
     priority = excluded.priority,
     section = excluded.section,
     sla_deadline = excluded.sla_deadline,
+    source_status = excluded.source_status,
+    initiative_id = excluded.initiative_id,
     updated_at = excluded.updated_at`;
 
   const BATCH_SIZE = 40;
@@ -157,7 +175,8 @@ export async function materializeInboxItems(
       [orgId, userId]
     ),
     queryHelpers.queryAll<any>(
-      `SELECT d.id, d.title, d.description, d.type, d.priority, d.deadline, d.status
+      `SELECT d.id, d.title, d.description, d.type, d.priority, d.deadline, d.status,
+              d.initiative_id
        FROM decisions d
        WHERE d.organization_id = ?
          AND d.decision_maker_id = ?
@@ -191,6 +210,8 @@ export async function materializeInboxItems(
       priorityForItem(t.priority),
       section,
       t.due_date || null,
+      t.status || null,
+      t.initiative_id || null,
       now,
       now,
     ];
@@ -211,6 +232,8 @@ export async function materializeInboxItems(
       priorityForItem(d.priority),
       section,
       d.deadline || null,
+      d.status || null,
+      d.initiative_id || null,
       now,
       now,
     ];
@@ -244,6 +267,10 @@ export async function materializeInboxItems(
       n.body || null,
       priorityForItem(n.priority),
       section,
+      null,
+      // Notifications have no "current status"/initiative concept — both
+      // source_status and initiative_id are legitimately null here.
+      null,
       null,
       now,
       now,
@@ -302,10 +329,26 @@ export async function getInboxItems(
   return rows.map(rowToItem);
 }
 
+export interface InboxOwnershipScope {
+  userId: string;
+  organizationId: string;
+}
+
+/**
+ * Mutates a single canonical_inbox_items row, scoped to its owner.
+ *
+ * `scope` is mandatory: without it, any caller who knows/guesses an itemId
+ * could mutate another user's or another org's inbox item (this was a real,
+ * pre-existing tenancy gap — the UPDATE/SELECT below now carry an explicit
+ * `user_id`/`organization_id` predicate). A non-owner and a nonexistent
+ * itemId both resolve to `null` here — never distinguish the two, to avoid
+ * leaking existence of another tenant's/user's item.
+ */
 export async function triageItem(
   itemId: string,
   action: string,
-  params?: Record<string, unknown>
+  params: Record<string, unknown> | undefined,
+  scope: InboxOwnershipScope
 ): Promise<CanonicalInboxItem | null> {
   const now = new Date().toISOString();
   let newStatus: string;
@@ -329,13 +372,23 @@ export async function triageItem(
      SET status = ?, updated_at = ?,
          resolved_at = CASE WHEN ? = 'resolved' THEN ? ELSE resolved_at END,
          metadata_json = COALESCE(?, metadata_json)
-     WHERE id = ?`,
-    [newStatus, now, newStatus, now, params ? JSON.stringify(params) : null, itemId]
+     WHERE id = ? AND user_id = ? AND organization_id = ?`,
+    [
+      newStatus,
+      now,
+      newStatus,
+      now,
+      params ? JSON.stringify(params) : null,
+      itemId,
+      scope.userId,
+      scope.organizationId,
+    ]
   );
 
-  const row = await queryHelpers.queryOne<any>(`SELECT * FROM canonical_inbox_items WHERE id = ?`, [
-    itemId,
-  ]);
+  const row = await queryHelpers.queryOne<any>(
+    `SELECT * FROM canonical_inbox_items WHERE id = ? AND user_id = ? AND organization_id = ?`,
+    [itemId, scope.userId, scope.organizationId]
+  );
   return row ? rowToItem(row) : null;
 }
 
@@ -365,8 +418,9 @@ export async function delegateItem(
   await queryHelpers.queryRun(
     `INSERT INTO canonical_inbox_items
        (id, user_id, organization_id, item_type, source_entity_type, source_entity_id,
-        title, description, priority, section, status, sla_deadline, metadata_json, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)`,
+        title, description, priority, section, status, sla_deadline, source_status,
+        initiative_id, metadata_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)`,
     [
       newId,
       toUserId,
@@ -379,6 +433,10 @@ export async function delegateItem(
       original.priority,
       original.section,
       original.sla_deadline || null,
+      // Carry the source's status/initiative forward — delegation should not
+      // silently drop these fields for the new recipient's copy.
+      original.source_status || null,
+      original.initiative_id || null,
       JSON.stringify({ delegatedFrom: delegatedBy, originalItemId: itemId }),
       now,
       now,
@@ -389,6 +447,48 @@ export async function delegateItem(
     itemId,
   ]);
   return row ? rowToItem(row) : null;
+}
+
+export type InboxCloseResult = 'closed' | 'already_closed' | 'not_materialized';
+
+/**
+ * Closes the canonical inbox item projected from a given source entity
+ * (e.g. a Task), scoped to the caller's ownership. This is the Inbox side
+ * of the golden flow: Task is the source of truth, Inbox is a projection,
+ * this function must never fabricate a success.
+ *
+ * Looks up the row via the unique (user_id, source_entity_type,
+ * source_entity_id) key. Three honest outcomes, never a silent 200:
+ * - `not_materialized`: no canonical_inbox_items row exists for this source
+ *   at all (not an error — the item may never have been materialized).
+ * - `already_closed`: the row exists and is already `status='resolved'`
+ *   (idempotent no-op, safe to call repeatedly).
+ * - `closed`: the row existed in a non-resolved state and was just resolved
+ *   via `triageItem()`, under the same ownership scope used to find it.
+ */
+export async function closeInboxItemForSource(
+  userId: string,
+  organizationId: string,
+  sourceEntityType: string,
+  sourceEntityId: string,
+  metadata?: Record<string, unknown>
+): Promise<{ status: InboxCloseResult; item: CanonicalInboxItem | null }> {
+  const row = await queryHelpers.queryOne<any>(
+    `SELECT * FROM canonical_inbox_items
+     WHERE user_id = ? AND organization_id = ? AND source_entity_type = ? AND source_entity_id = ?`,
+    [userId, organizationId, sourceEntityType, sourceEntityId]
+  );
+
+  if (!row) {
+    return { status: 'not_materialized', item: null };
+  }
+
+  if (row.status === 'resolved') {
+    return { status: 'already_closed', item: rowToItem(row) };
+  }
+
+  const closed = await triageItem(row.id, 'done', metadata, { userId, organizationId });
+  return { status: 'closed', item: closed };
 }
 
 export async function updateSlaStatus(orgId: string): Promise<{ updated: number }> {
@@ -456,6 +556,7 @@ export default {
   getInboxItems,
   triageItem,
   delegateItem,
+  closeInboxItemForSource,
   updateSlaStatus,
   getInboxStats,
 };
