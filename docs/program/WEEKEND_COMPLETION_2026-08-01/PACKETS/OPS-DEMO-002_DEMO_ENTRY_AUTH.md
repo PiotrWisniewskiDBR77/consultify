@@ -165,6 +165,55 @@ Skala luki zmierzona kontrolą negatywną: **9 różnych endpointów zapisu**
 organization update, delete) było osiągalnych bare-requestem — wszystkie 11 testów
 tej sekcji pada na kodzie sprzed poprawki.
 
+### Dokładna allowlista zapisów (runda 4)
+
+Wyjątki prefiksowe `/api/auth/*` i `/api/demo/*` **usunięte**. Prefiks pod `/api/auth/`
+oddawał publicznemu kontu demo także `switch-organization`, `change-password`,
+`mfa/{setup,enable,disable}`, `revoke-all`, `revert-impersonation` i historię logowań,
+a pod `/api/demo/` — `toggle {enabled:true}`, czyli operację **provisioningu**.
+
+Obowiązuje teraz dopasowanie **dokładne: metoda + znormalizowana ścieżka**, pięć pozycji:
+
+| Operacja | Dlaczego dopuszczona |
+| --- | --- |
+| `POST /api/auth/logout` | zakończenie sesji |
+| `POST /api/auth/revoke-all` | odpowiednik „logout-all"; unieważnia **własne** rodziny tokenów |
+| `POST /api/auth/refresh` | rotacja w oknie demo; ma **własną** bramkę TTL, która odrzuca wygasły principal |
+| `POST /api/demo/toggle` | **wyłącznie wyjście** — `enabled` musi być jawnie `false`/`'false'`/`0`/`'0'`; wszystko inne (w tym brak pola) to odmowa |
+| `POST /api/demo/record-event` | beacon telemetryczny; trasa wyprowadza `organizationId` server-side |
+
+**Uwaga nazewnicza do przeglądu:** pakiet prosił o `POST /api/auth/logout-all`. Taka
+trasa nie istnieje — odpowiednikiem w tym kodzie jest `POST /api/auth/revoke-all`
+i to ona jest na liście.
+
+**Cross-tenant w `record-event` — realna dziura, zamknięta.** Trasa czytała
+`organizationId` **z ciała żądania** (`organizationId || req.user.organizationId`,
+ciało wygrywało), więc dowolny uwierzytelniony wywołujący mógł zapisać zdarzenie na
+konto obcego tenanta. Atrybucja pochodzi teraz wyłącznie z organizacji rozstrzygniętej
+server-side; dla publicznego demo to jego aktywny tenant sesji. Test czyta z powrotem
+`conversion_events` i sprawdza, że nic nie wylądowało u B, a zdarzenie A jest u A.
+
+**Normalizacja ścieżki jest częścią kontraktu.** `normalizeGuardPath` odrzuca
+(`null` = DENY) nieodwracalne kodowanie procentowe, `..`, backslashe i bajt zerowy,
+skleja powielone `/`, ucina końcowy `/` i sprowadza do małych liter — bo Express
+domyślnie routuje bez rozróżniania wielkości znaków, więc guard musi widzieć to samo,
+co router.
+
+**Trzy trasy poza zasięgiem guarda — świadomie.** `register`, `register-demo`
+i `reset-password` nie mają `verifyToken`, więc `attachUser` nigdy się dla nich nie
+uruchamia. To endpointy **publiczne**: anonimowy nieznajomy wywoła je bez żadnego
+tokenu. Właściwa własność nie brzmi więc „principal demo jest odrzucony", tylko
+„poświadczenie demo nic nie daje" — i tak to jest testowane (identyczny wynik
+z tokenem i bez). `isWriteAllowedForPublicDemo` i tak je odrzuca, jako obrona
+w głąb, gdyby kiedyś zyskały uwierzytelnienie. Ochroną tych tras są limitery
+i polityka rejestracji publicznej, nie ten guard.
+
+Pokrycie: tabelaryczny test nad **566 realnymi trasami zapisu** wyekstrahowanymi
+z `Gateway.ts` (`/api/auth/*` i `/api/demo/*` **kompletne**, reszta próbkowana per
+przestrzeń nazw), plus próby obejścia normalizacji. Kontrola negatywna na starej
+regule prefiksowej: **66 przypadków odmowy przechodziło**, w tym 16/16 nazwanych
+tras wysokiego ryzyka i 7/7 ciał `toggle {enabled:true}`.
+
 ### Czas dostępu — semantyka 24 h domknięta
 
 Sama sesja wygasała, ale konto żyło dalej. Trzy drogi kontynuacji były otwarte i
@@ -249,27 +298,68 @@ jawnie pomija wszystko pod `/api/auth/`, a `authLimiter` jest zamontowany tylko 
 `/api/auth/register-demo`. Endpoint jest przy tym nieuwierzytelniony, wyjęty z CSRF
 i provisionuje seedowany tenant przy każdym sukcesie.
 
-Dwa niezależne limitery (`server/src/middleware/rateLimiting.middleware.ts`):
+Dwa niezależne limitery: `demoSignupIpRateLimiter` (adres źródłowy, 5/godz. w prod)
+i `demoSignupIdentityRateLimiter` (**sha256 adresu** z separacją domenową, 3/godz.).
+Klucz tożsamości liczony z tej samej znormalizowanej postaci, której używa
+wyszukiwanie konta, więc wielkość liter nie omija kwoty; surowy adres **nigdy** nie
+trafia do przestrzeni kluczy.
 
-| Limiter | Klucz | Prod |
-| --- | --- | --- |
-| `demoSignupIpRateLimiter` | adres źródłowy | 5 / godz. |
-| `demoSignupIdentityRateLimiter` | **sha256 adresu** z separacją domenową, obcięty do 32 znaków | 3 / godz. |
+#### Fail-closed naprawdę, nie tylko na sondzie (runda 4)
 
-Klucz tożsamości jest liczony z tej samej znormalizowanej postaci, której używa
-wyszukiwanie konta, więc różnice wielkości liter nie omijają kwoty. Surowy adres
-**nigdy** nie trafia do przestrzeni kluczy — w odróżnieniu od istniejącego
-`authLimiter`, który trzyma `auth:<email>` w Redisie (dług zgłoszony osobno).
-- **Cleanup operatorski**: `server/scripts/cleanup-orphan-demo-orgs.ts` — dry-run
-  domyślnie, `--apply` wymaga `FORCE_PURGE=true`, backup JSON przed usunięciem,
-  odmowa na hoście produkcyjnym. Poprawki w tym pakiecie:
-  - wzorzec liczony z `DEMO_ORG_ID` (`${DEMO_ORG_ID}-session-%`) zamiast twardego
-    `demo-org-session-%` — przy `DEMO_ORG_ID=atelier` stary wzorzec nie trafiał w nic
-    i raportował „już czysto”, gdy organizacje przyrastały;
-  - odmowa, gdy wzorzec obejmie samą organizację bazową;
-  - pomijanie organizacji z **aktywną, niewygasłą** sesją (`--include-active` aby
-    wymusić) — inaczej narzędzie potrafiło skasować workspace prospekta w trakcie demo.
-- **Rollback kodu**: `git revert` commitów gałęzi; nie ma migracji ani zmian schematu.
+`RedisRateLimitStore.increment()` połykał **każdy** błąd Redisa i zwracał
+`{ totalHits: 1 }`. To gorsze niż fail-open: podczas awarii każde żądanie wygląda jak
+pierwsze trafienie świeżego okna, więc kwota po cichu staje się nieskończona, a
+wywołujący nie ma jak tego wykryć. Poprzednia runda obchodziła to sondą **przed**
+wywołaniem — co łapie tylko „brak połączenia", a nie błąd rzucony przez INCR, odczyt
+TTL czy EXPIRE w trakcie.
+
+Store dostał opcję `throwOnError` (domyślnie `false`, więc istniejący wywołujący
+w `index.ts` jest bajt w bajt taki sam — to limitery ruchu uwierzytelnionego, które
+mają fail-open). Adapter demo buduje store z `throwOnError: true`, a sonda została
+jako tani skrót, **nie jako mechanizm nośny**. Przy `failMode: closed` dowolny błąd
+Redisa daje `503` z `Retry-After` — nie `429`, bo `429` twierdziłby „przekroczyłeś
+kwotę", a my w tym momencie po prostu nie policzyliśmy. Testy pokrywają błąd na INCR,
+na odczycie TTL, na EXPIRE oraz na **drugim** wywołaniu (okno już założone), żeby
+dowieść, że to nie artefakt zimnego startu.
+
+#### Kontrakt konfiguracji startowej (runda 4)
+
+Nowy moduł `server/src/config/rateLimitPosture.ts`, wołany raz przy starcie.
+
+| Zmienna | Postawa domyślna (nieustawiona = dzisiejszy staging) | `RATE_LIMIT_POSTURE=single-replica` | `RATE_LIMIT_POSTURE=public-production` |
+| --- | --- | --- | --- |
+| `RATE_LIMIT_SHARED_STORE` | `local`/brak lub `redis` | `local` pierwszoklasowe | musi być `redis` → **odmowa startu** |
+| `..._FAIL_MODE` | dowolne z closed/local/open | jw. | musi być `closed` → **odmowa** |
+| `DISABLE_RATE_LIMIT=true` | **głośny `logger.error`, ale startuje** | **odmowa** | **odmowa** |
+| `RATE_LIMIT_ALLOW_PROD_DISABLE=true` | ignorowane | ostrzeżenie | **odmowa** |
+| `REDIS_URL` realny | — | ostrzeżenie przy `redis` bez niego | **odmowa** gdy brak / nierozwinięty / zły schemat |
+| `MOCK_REDIS=true` | — | — | **odmowa** |
+| nieznana wartość którejkolwiek | **odmowa** | **odmowa** | **odmowa** |
+
+`DISABLE_RATE_LIMIT` tylko loguje przy postawie *domniemanej*, bo to wieloletnia
+wygoda lokalnego devu czytana bezwarunkowo — zamiana jej w crash startu byłaby karą
+dla procesu, który nigdy nie przystąpił do kontraktu. Zadeklarowanie postawy kupuje
+fail-fast. **Nic nie odmawia startu, dopóki ktoś nie ustawi nowej zmiennej** —
+staging bez zmian.
+
+Start zawsze loguje jedną linię `[RateLimit] startup posture: …` ze znacznikami
+`(inferred, not declared)` / `(default)`, żeby operator widział, co **zadeklarowano**,
+a co przyjęto.
+
+**Sonda gotowości** (`GET /api/health/ready/rate-limit`, bez auth, celowo bez
+szczegółów) inkrementuje ten sam jednorazowy klucz **dwukrotnie** i wymaga, by licznik
+**ściśle wzrósł**. Tego zepsuty store nie podrobi — mockowy klient Redisa odpowiada
+radośnie stałym `1` i tę sondę oblewa.
+
+#### Telemetria (runda 4)
+
+`GET /api/health/rate-limit` — **`verifyToken` + `requireSuperAdmin`** — podaje per
+limiter `rejected` i `storeUnavailable`, aktywny store, fail mode, `bypassed` oraz
+postawę zadeklarowaną vs efektywną. Publiczny agregat pozostaje **wyłącznie**
+istniejącym, nieoznaczonym licznikiem `rateLimitHits` (który dotąd nie miał ani
+jednego wywołującego i od napisania raportował `0`). Logowanie odrzuceń jest
+zliczająco-podsumowujące: najwyżej jedna linia na limiter na minutę, z wolumenem
+i liczbą odrębnych źródeł — bez adresu, IP i klucza.
 
 ### Komunikaty publiczne
 
@@ -334,24 +424,22 @@ przekierowań zamiast docelowych tras.
 
 | Bramka | Wynik |
 | --- | --- |
-| `tests/integration/demoPublicEntry.contract.test.ts` (realny Express + realna baza) | **`35/35 PASS`** (`--retry=0`) |
-| `tests/unit/backend/demo/` (saga + fault injection, w tym partial-write-then-throw) | `26/26 PASS`, 3 pliki |
-| `tests/unit/backend/rateLimiting/` (limitery + telemetria + shared store) | `32/32 PASS`, 11 plików |
-| `tests/unit/backend/auth/demoLoginGateway.test.ts` (macierz flag produkcyjnych) | `27/27 PASS` |
-| **Pełny pakiet regresji OPS-DEMO-002** (integracja + saga + limitery + gateway + UI + host allowlist + `attachUser` + `security-auth-flow`) | **`402/403 PASS`, 33 pliki** |
-| Jedyna porażka w pakiecie: `mapRole maps superadmin to owner` | **potwierdzona jako istniejąca przed zmianą** — uruchomiona na pliku z `HEAD` daje identyczny wynik |
-| Kontrola negatywna A — usunięty read-only w `attachUser` | **`11/35 FAIL`** — wszystkie 9 endpointów zapisu przechodziło bare-requestem |
-| Kontrola negatywna B — usunięte bezpośrednie kontrole TTL w login/refresh | **`4/35 FAIL`** (DIRECT login, DIRECT refresh, retirement, drugi refresh) |
-| Kontrola negatywna C — predykat gatewaya z `HEAD` | `26/27 FAIL` |
-| Kontrola negatywna D — saga z `HEAD` (współbieżność + partial write) | `8/18 FAIL` |
-| Kontrola negatywna E — limitery z `HEAD` (telemetria) | `17/32 FAIL` |
-| Kontroli negatywnych z rund 1–2 (trasa, guard, limitery, AuthView) | nadal aktualne |
+| `tests/integration/demoPublicEntry.contract.test.ts` (realny Express + realna baza) | **`46/46 PASS`** |
+| `tests/unit/backend/demo/` (allowlista 566 tras, saga, fault injection) | **`227/227 PASS`**, 4 pliki |
+| `tests/unit/backend/rateLimiting/` (limitery, Redis faults, kontrakt startu, health) | **`76/76 PASS`**, 14 plików |
+| `tests/unit/backend/auth/` (macierz flag gatewaya) | `27/27 PASS` |
+| **Pełny pakiet regresji OPS-DEMO-002** | **`619/619 PASS`, 33 pliki** (`--retry=0`) |
+| Kontrola negatywna — reguła prefiksowa zamiast dokładnej allowlisty (poziom jednostkowy) | **66 przypadków odmowy przechodziło**: 16/16 nazwanych tras auth, 7/7 ciał `toggle {enabled:true}`, 23/31 prób obejścia ścieżki |
+| Kontrola negatywna — allowlista + `record-event` cofnięte (poziom HTTP) | **`8/46 FAIL`**, w tym cross-tenant zapis zdarzenia |
+| Kontrola negatywna — Redis store z `HEAD` | **`11/13 FAIL`** — wszystkie błędy INCR/TTL/EXPIRE przepuszczane |
+| Kontrola negatywna — kontrakt startu i surface health z `HEAD` | `7/7 FAIL` |
+| Kontrole negatywne rund 1–3 (read-only, TTL, gateway, saga, limitery, trasa, AuthView) | nadal aktualne |
 | `npm run type-check` | PASS |
-| **Realny type-check 6 zmienionych plików backendu** (scratch `tsconfig` z `server/tsconfig.json`) | **0 błędów w moich plikach**; 30 linii wyjścia to istniejące błędy w plikach wciąganych tranzytywnie |
+| **Realny type-check 9 zmienionych plików backendu** | **0 błędów w moich plikach**; 30 linii wyjścia to istniejące błędy w plikach wciąganych tranzytywnie |
 | `npm run build:backend` | PASS — ale to `tsc --noCheck`, **nie jest dowodem typowym** i nie jest tu cytowany jako taki |
 | `check-ssot-paths.sh`, `check-ssot-registry.mjs` | PASS |
 | `git diff --check` | PASS |
-| Skan sekretów w diffie | brak trafień |
+| Skan sekretów w diffie | czysty (jedyne trafienia to nazwy tras zawierające `api-keys` oraz jawnie oznaczony placeholder `redis://…@redis.invalid`) |
 
 ## Niewykonane świadomie
 
