@@ -65,17 +65,36 @@ export interface FakeDbConfig {
    * Nth write by closing over its own counter — and, crucially, let the
    * COMPENSATING ROLLBACK's writes through afterwards.
    */
-  onWrite?: (write: {
-    kind: 'insert' | 'update';
-    table: string;
-    /** Primary key the statement targets, when it can be determined. */
-    id: string | null;
-    sql: string;
-    params: unknown[];
-    /** Column -> bound value, as this statement would apply it. */
-    values: Record<string, unknown>;
-  }) => string | null | undefined | void;
+  onWrite?: FakeWriteHook;
+  /**
+   * FAULT INJECTION on writes that HAVE ALREADY LANDED. Called AFTER the write
+   * has been applied to the store; returning a message makes the call throw
+   * anyway.
+   *
+   * WHY THIS EXISTS SEPARATELY FROM `onWrite`. `onWrite` fires before the store
+   * is touched, so it can only model "the write was rejected AND never
+   * applied". Postgres also produces the other outcome, and it is the dangerous
+   * one: the UPDATE is applied by the server and the client never sees the
+   * result — a connection reset, a `pg_terminate_backend`, a pool timeout, a
+   * proxy hiccup. `pool.query` rejects, the caller concludes "not promoted",
+   * and the row is confirmed/pass/ready on disk. A compensating rollback that
+   * only undoes what it recorded as promoted cannot repair that row, and a
+   * verification re-read scoped to the same list cannot even SEE it. This hook
+   * is what makes that case expressible.
+   */
+  onWriteAfterApply?: FakeWriteHook;
 }
+
+export type FakeWriteHook = (write: {
+  kind: 'insert' | 'update';
+  table: string;
+  /** Primary key the statement targets, when it can be determined. */
+  id: string | null;
+  sql: string;
+  params: unknown[];
+  /** Column -> bound value, as this statement would apply it. */
+  values: Record<string, unknown>;
+}) => string | null | undefined | void;
 
 const IDENTIFIER = '[a-zA-Z0-9_]+';
 
@@ -153,16 +172,25 @@ export class FakeFinanceDb {
     this.calls.push({ run: this.run, kind, table, sql, params });
   }
 
-  /** Give the fault-injection hook its say; throw what it asks us to throw. */
-  private maybeFail(write: {
-    kind: 'insert' | 'update';
-    table: string;
-    id: string | null;
-    sql: string;
-    params: unknown[];
-    values: Record<string, unknown>;
-  }): void {
-    const message = this.config.onWrite?.(write);
+  /**
+   * Give the fault-injection hooks their say; throw what they ask us to throw.
+   * `phase` selects which hook runs: `before` = the write is rejected and never
+   * reaches the store; `after` = the write HAS landed and the caller is told it
+   * failed anyway.
+   */
+  private maybeFail(
+    phase: 'before' | 'after',
+    write: {
+      kind: 'insert' | 'update';
+      table: string;
+      id: string | null;
+      sql: string;
+      params: unknown[];
+      values: Record<string, unknown>;
+    }
+  ): void {
+    const hook = phase === 'before' ? this.config.onWrite : this.config.onWriteAfterApply;
+    const message = hook?.(write);
     if (message) throw new Error(message);
   }
 
@@ -206,17 +234,22 @@ export class FakeFinanceDb {
 
       const store = this.store(table);
       const id = String(incoming.id ?? `__auto-${++this.autoKey}`);
-      this.maybeFail({ kind: 'insert', table, id, sql, params, values: incoming });
+      const write = { kind: 'insert' as const, table, id, sql, params, values: incoming };
+      this.maybeFail('before', write);
       const existing = store.get(id);
       if (!existing) {
         store.set(id, { ...incoming });
+        this.maybeFail('after', write);
         return { success: true, changes: 1 };
       }
 
       // ON CONFLICT ... DO UPDATE SET a=excluded.a, ... (with the IS DISTINCT
       // FROM guard applied semantically: only really-different values land).
       const doUpdate = sql.match(/DO\s+UPDATE\s+SET\s+([\s\S]*?)(?:\s+WHERE\s|$)/i);
-      if (!doUpdate) return { success: true, changes: 0 };
+      if (!doUpdate) {
+        this.maybeFail('after', write);
+        return { success: true, changes: 0 };
+      }
       let changed = false;
       for (const assignment of doUpdate[1].split(',')) {
         const [rawColumn, rawValue] = assignment.split('=');
@@ -233,6 +266,7 @@ export class FakeFinanceDb {
       if (changed && /updated_at\s*=\s*CURRENT_TIMESTAMP/i.test(doUpdate[1])) {
         existing.updated_at = '<<now>>';
       }
+      this.maybeFail('after', write);
       return { success: true, changes: changed ? 1 : 0 };
     }
 
@@ -259,18 +293,22 @@ export class FakeFinanceDb {
       }
       const id = String(params[paramIndex]);
 
-      this.maybeFail({
-        kind: 'update',
+      const write = {
+        kind: 'update' as const,
         table,
         id,
         sql,
         params,
         values: Object.fromEntries(bound),
-      });
+      };
+      this.maybeFail('before', write);
 
       const store = this.store(table);
       const existing = store.get(id);
-      if (!existing) return { success: true, changes: 0 };
+      if (!existing) {
+        this.maybeFail('after', write);
+        return { success: true, changes: 0 };
+      }
 
       let changed = false;
       for (const [column, value] of bound) {
@@ -282,6 +320,7 @@ export class FakeFinanceDb {
       if (changed) {
         for (const column of literals) existing[column] = '<<now>>';
       }
+      this.maybeFail('after', write);
       return { success: true, changes: changed ? 1 : 0 };
     }
 

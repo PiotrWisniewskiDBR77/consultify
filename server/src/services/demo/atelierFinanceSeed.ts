@@ -676,7 +676,18 @@ async function promoteRow(params: {
   const applicable = params.assignments.filter(
     ([column]) => !known || known.has(column.toLowerCase())
   );
-  if (applicable.length === 0) return;
+  // FAIL LOUDLY. Returning here would report a promotion (or a demotion) that
+  // was never written — the ledger would record success and the seed could
+  // return `complete` over a row nothing ever touched. `REQUIRED_SCHEMA`
+  // mandates every load-bearing column, so this is unreachable today; it stays
+  // as a throw so a future schema change cannot turn it into a silent lie.
+  if (applicable.length === 0) {
+    throw new Error(
+      `no writable column on ${params.table} for [${params.assignments
+        .map(([column]) => column)
+        .join(', ')}] — refusing to report a write that cannot happen`
+    );
+  }
   const applicableLiterals = (params.literals ?? []).filter(
     ([column]) => !known || known.has(column.toLowerCase())
   );
@@ -783,7 +794,14 @@ function phase1PackQualitySummary(isPl: boolean): string {
  * after the demoted rows were RE-READ out of the database.
  */
 export interface AtelierPromotionLedger {
-  /** Statement promotion UPDATEs that completed without throwing. */
+  /**
+   * Statement promotion UPDATEs that completed without throwing.
+   *
+   * A LOWER BOUND on what reached the database, never an upper one: a write can
+   * land and still reject (connection reset after the UPDATE applied). Never
+   * use these counters to decide which rows need undoing — the rollback treats
+   * every planned row as in doubt for exactly this reason.
+   */
   statementPromotionsIssued: number;
   analysisPromotionIssued: boolean;
   packPromotionIssued: boolean;
@@ -821,7 +839,8 @@ function describePromotionLedger(ledger: AtelierPromotionLedger): string {
     `pack=${ledger.packPromotionIssued ? 'promoted' : 'not promoted'}`;
 
   if (!ledger.rolledBack) {
-    return `${issued}; no promotion needed rolling back`;
+    // The run never reached the promotion phase, so there is nothing to undo.
+    return `${issued}; promotion never started, nothing to roll back`;
   }
   if (ledger.rollbackErrors.length > 0 || ledger.rowsStillClaimingReady.length > 0) {
     return (
@@ -829,7 +848,9 @@ function describePromotionLedger(ledger: AtelierPromotionLedger): string {
       `rows still claiming READY: [${ledger.rowsStillClaimingReady.join(', ') || 'none'}]`
     );
   }
-  return `${issued}; every issued promotion was rolled back and re-read as not-ready`;
+  // Note the wording: EVERY planned row was demoted and re-read, not just the
+  // ones the counters above recorded — see `rollbackAtelierPromotions`.
+  return `${issued}; every planned row was demoted and re-read as not-ready`;
 }
 
 function incomplete(
@@ -1082,6 +1103,23 @@ export async function upsertAtelierFinanceGoldenFlow(
   const valueColumns = schema.columns.financial_statement_values;
   const analysisColumns = schema.columns.financial_analyses;
   const packId = makeId(organizationId, 'statement-pack', ATELIER_FINANCE_SLUGS.pack);
+  const allStatementIds = ATELIER_FY2014_STATEMENTS.map((statement) =>
+    makeId(organizationId, 'statement', statement.slug)
+  );
+
+  // ---- Phase 0: heal what a CRASH left behind ------------------------------
+  // Phase 2's compensating rollback handles a promotion write that fails; it
+  // cannot handle the process being killed between two promotion UPDATEs. If
+  // the fixture is sitting in a mixed state, demote all of it before rewriting.
+  await healResidualAtelierPromotion({
+    packId,
+    analysisId: makeId(organizationId, 'analysis', ATELIER_FINANCE_SLUGS.analysis),
+    statementIds: allStatementIds,
+    statementColumns,
+    analysisColumns,
+    packColumns,
+    isPl,
+  });
 
   // ---- Phase 1: write the fixture in a NOT-ready state --------------------
   // Every value is a bound parameter (no inline SQL literals) so that column
@@ -1347,17 +1385,27 @@ export async function upsertAtelierFinanceGoldenFlow(
   //       the analysis AND the pack — runs BEFORE the first promotion write. A
   //       single refusal returns INCOMPLETE with ZERO promotions issued.
   //   (2) (1) cannot cover a failure OF the promotion writes themselves (the
-  //       2nd of 3 UPDATEs throwing), so any error mid-promotion triggers a
-  //       COMPENSATING ROLLBACK that demotes every already-promoted row back to
-  //       its phase-1 state and then RE-READS those rows to confirm it landed.
+  //       2nd of 3 UPDATEs throwing), so ANY error mid-promotion triggers a
+  //       COMPENSATING ROLLBACK that demotes EVERY PLANNED ROW back to its
+  //       phase-1 state and then RE-READS those rows to confirm it landed.
+  //       "Every planned row", not "every row the ledger says was promoted":
+  //       a rejected promise does not prove the row was not written (a
+  //       connection reset after the UPDATE applied looks exactly like a write
+  //       that never happened). See `rollbackAtelierPromotions`.
   //
-  // INCOMPLETE therefore means, with no exceptions: zero statements at
+  // INCOMPLETE means, with ONE named exception: zero statements at
   // READY/confirmed/pass, the analysis not APPROVED, the pack not READY.
+  //
+  // THE EXCEPTION — the process DYING between two promotion UPDATEs (SIGTERM on
+  // a Railway redeploy, OOM kill, `process.exit`). No catch block runs, so
+  // neither the rollback nor any result object exists, and the fixture is left
+  // half-promoted. That residue is repaired by PHASE 0 of the NEXT run
+  // (`healResidualAtelierPromotion`), which demotes a mixed fixture before
+  // rewriting it. Between the crash and that next run the fixture IS
+  // inconsistent; nothing in-process can prevent that without a real
+  // transaction, which `DbPromise` cannot give us.
   const ledger = newPromotionLedger();
   const expectedCounts = getAtelierExpectedValueCounts();
-  const allStatementIds = ATELIER_FY2014_STATEMENTS.map((statement) =>
-    makeId(organizationId, 'statement', statement.slug)
-  );
 
   // -- 2a. Verify all three statements. No write happens in this loop. -------
   const planned: Array<{ statementId: string; assignments: ColumnValue[] }> = [];
@@ -1500,24 +1548,24 @@ export async function upsertAtelierFinanceGoldenFlow(
   } catch (error) {
     // A promotion write threw. Everything promoted before it is committed, so
     // undo it by hand — there is no transaction to roll back (see the note at
-    // the top of phase 2). If the FIRST promotion is the one that threw there is
-    // nothing to undo, and the ledger must not claim a rollback that never ran.
-    const anythingIssued =
-      ledger.statementPromotionsIssued > 0 ||
-      ledger.analysisPromotionIssued ||
-      ledger.packPromotionIssued;
-    if (anythingIssued) {
-      await rollbackAtelierPromotions({
-        packId,
-        analysisId,
-        promotedStatementIds: promoted,
-        statementColumns,
-        analysisColumns,
-        packColumns,
-        isPl,
-        ledger,
-      });
-    }
+    // the top of phase 2).
+    //
+    // NO SHORT-CIRCUIT. The rollback runs even when the ledger recorded zero
+    // promotions, and it targets EVERY PLANNED ROW rather than the recorded
+    // ones: a rejected promise does not prove the row was not written (see
+    // `rollbackAtelierPromotions`). Skipping the rollback on
+    // "nothing issued" would also skip its verification RE-READ, which is the
+    // only thing that can catch exactly that case.
+    await rollbackAtelierPromotions({
+      packId,
+      analysisId,
+      plannedStatementIds: allStatementIds,
+      statementColumns,
+      analysisColumns,
+      packColumns,
+      isPl,
+      ledger,
+    });
 
     return incomplete(
       `promotion write failed: ${(error as Error).message}`,
@@ -1539,21 +1587,31 @@ export async function upsertAtelierFinanceGoldenFlow(
 /**
  * Compensating rollback for a promotion that failed part-way.
  *
- * Demotes, in reverse order of promotion, every row whose promotion UPDATE
- * actually returned (`ledger.*Issued`), back to the exact phase-1 payload the
- * seed writes on a fresh run — then RE-READS all five rows and records any that
- * still claim ready/confirmed/pass/APPROVED. A row whose promotion threw is not
- * demoted: `DbPromise.run(..., { fallback: false })` rejects on error and a
- * single UPDATE cannot half-apply, so that row was never promoted.
+ * TREATS EVERY PLANNED ROW AS IN DOUBT — all three statements, the analysis and
+ * the pack — regardless of what the ledger recorded, and regardless of which
+ * write threw.
  *
- * Failures of the rollback itself are recorded, never swallowed: the caller
- * escalates the log line to `error` and says the fixture may still hold
- * promoted rows.
+ * WHY, and why the older "only demote what `ledger.*Issued` recorded" was
+ * wrong. A rejected `DbPromise.run()` promise does NOT prove the row was left
+ * alone. `promoteRow` → `DbPromise.run` → `PostgresDatabase.run` →
+ * `pool.query`: Postgres applies the UPDATE and only then sends the result. A
+ * connection reset, a `pg_terminate_backend`, a pool timeout or a proxy hiccup
+ * AFTER the row was updated but BEFORE the client saw the response surfaces
+ * here as a rejection over an already-promoted row. Statement atomicity in the
+ * server says nothing about delivery to the caller. Demoting a row that really
+ * was never promoted costs nothing: `promoteRow`'s `IS DISTINCT FROM` guard
+ * makes it a zero-row no-op.
+ *
+ * It then RE-READS all five rows and records any that still claim
+ * ready/confirmed/pass/APPROVED. Failures of the rollback itself are recorded,
+ * never swallowed: the caller escalates the log line to `error` and says the
+ * fixture may still hold promoted rows.
  */
 async function rollbackAtelierPromotions(params: {
   packId: string;
   analysisId: string;
-  promotedStatementIds: string[];
+  /** EVERY statement the promotion phase planned to touch — not just the recorded ones. */
+  plannedStatementIds: string[];
   statementColumns: Set<string>;
   analysisColumns: Set<string>;
   packColumns: Set<string>;
@@ -1563,45 +1621,83 @@ async function rollbackAtelierPromotions(params: {
   const { ledger } = params;
   ledger.rolledBack = true;
 
-  if (ledger.packPromotionIssued) {
-    try {
-      await promoteRow({
-        table: 'financial_statement_packs',
-        id: params.packId,
-        columns: params.packColumns,
-        assignments: [
-          ['pack_status', PHASE1_PACK_STATUS],
-          ['pack_readiness_status', PHASE1_PACK_READINESS_STATUS],
-          ['pack_readiness_score', PHASE1_PACK_READINESS_SCORE],
-          ['pack_quality_summary', phase1PackQualitySummary(params.isPl)],
-          ['pack_quality_reason_codes', PHASE1_QUALITY_REASON_CODES],
-          ['source_statement_count', 0],
-          ['missing_statement_types', PHASE1_MISSING_STATEMENT_TYPES],
-        ],
-      });
-    } catch (error) {
-      ledger.rollbackErrors.push(`pack: ${(error as Error).message}`);
-    }
+  ledger.rollbackErrors.push(
+    ...(await demoteAtelierRows({
+      packId: params.packId,
+      analysisId: params.analysisId,
+      statementIds: params.plannedStatementIds,
+      statementColumns: params.statementColumns,
+      analysisColumns: params.analysisColumns,
+      packColumns: params.packColumns,
+      isPl: params.isPl,
+    }))
+  );
+
+  // Do not TAKE the rollback's word for it — read the rows back. Same scope as
+  // the demotion: a row whose promotion "failed" may still be sitting there.
+  ledger.rowsStillClaimingReady = await findRowsStillClaimingReady({
+    packId: params.packId,
+    analysisId: params.analysisId,
+    statementIds: params.plannedStatementIds,
+    onError: (message) => ledger.rollbackErrors.push(message),
+  });
+}
+
+/**
+ * Write the phase-1 (not-ready) payload back over the pack, the analysis and the
+ * given statements, in reverse order of promotion. Returns one message per
+ * failed demotion; never throws.
+ *
+ * Shared by the compensating rollback (phase 2) and the residual-state heal
+ * (phase 0), so a demoted row is byte-identical to a freshly written one in
+ * both paths.
+ */
+async function demoteAtelierRows(params: {
+  packId: string;
+  analysisId: string;
+  statementIds: string[];
+  statementColumns: Set<string>;
+  analysisColumns: Set<string>;
+  packColumns: Set<string>;
+  isPl: boolean;
+}): Promise<string[]> {
+  const errors: string[] = [];
+
+  try {
+    await promoteRow({
+      table: 'financial_statement_packs',
+      id: params.packId,
+      columns: params.packColumns,
+      assignments: [
+        ['pack_status', PHASE1_PACK_STATUS],
+        ['pack_readiness_status', PHASE1_PACK_READINESS_STATUS],
+        ['pack_readiness_score', PHASE1_PACK_READINESS_SCORE],
+        ['pack_quality_summary', phase1PackQualitySummary(params.isPl)],
+        ['pack_quality_reason_codes', PHASE1_QUALITY_REASON_CODES],
+        ['source_statement_count', 0],
+        ['missing_statement_types', PHASE1_MISSING_STATEMENT_TYPES],
+      ],
+    });
+  } catch (error) {
+    errors.push(`pack: ${(error as Error).message}`);
   }
 
-  if (ledger.analysisPromotionIssued) {
-    try {
-      await promoteRow({
-        table: 'financial_analyses',
-        id: params.analysisId,
-        columns: params.analysisColumns,
-        assignments: [
-          ['status', 'DRAFT'],
-          ['approved_by', null],
-          ['approved_at', null],
-        ],
-      });
-    } catch (error) {
-      ledger.rollbackErrors.push(`analysis: ${(error as Error).message}`);
-    }
+  try {
+    await promoteRow({
+      table: 'financial_analyses',
+      id: params.analysisId,
+      columns: params.analysisColumns,
+      assignments: [
+        ['status', 'DRAFT'],
+        ['approved_by', null],
+        ['approved_at', null],
+      ],
+    });
+  } catch (error) {
+    errors.push(`analysis: ${(error as Error).message}`);
   }
 
-  for (const statementId of [...params.promotedStatementIds].reverse()) {
+  for (const statementId of [...params.statementIds].reverse()) {
     try {
       await promoteRow({
         table: 'financial_statements',
@@ -1619,17 +1715,72 @@ async function rollbackAtelierPromotions(params: {
         ],
       });
     } catch (error) {
-      ledger.rollbackErrors.push(`statement ${statementId}: ${(error as Error).message}`);
+      errors.push(`statement ${statementId}: ${(error as Error).message}`);
     }
   }
 
-  // Do not TAKE the rollback's word for it — read the rows back.
-  ledger.rowsStillClaimingReady = await findRowsStillClaimingReady({
+  return errors;
+}
+
+/**
+ * Phase 0 — heal a fixture a CRASH left half-promoted.
+ *
+ * The compensating rollback in phase 2 covers a promotion write that FAILS.
+ * It cannot cover the process DYING between two promotion UPDATEs — a Railway
+ * redeploy SIGTERM, an OOM kill, a `process.exit`. No catch block runs, no
+ * result object is ever returned, and the fixture is left with (say) the P&L
+ * confirmed/pass/ready while the balance sheet is still pending.
+ *
+ * So the NEXT run repairs it: if the five promotion-owned rows are in a MIXED
+ * state (some claim ready, some do not), every one of them is demoted to the
+ * phase-1 payload before phase 1 rewrites the fixture and phase 2 re-earns
+ * READY. Without this, a crash followed by a run whose read-back gate refuses
+ * would leave a READY statement inside a fixture reported as INCOMPLETE —
+ * exactly the state the rest of this module exists to make impossible.
+ *
+ * MIXED, precisely: at least one but not all five rows claim
+ * ready/confirmed/pass/APPROVED. All five = a healthy, fully promoted fixture,
+ * left untouched so a second run stays byte-identical. None = a fresh or
+ * honestly not-ready fixture, also untouched. A row that does not exist yet
+ * counts as not promoted.
+ */
+async function healResidualAtelierPromotion(params: {
+  packId: string;
+  analysisId: string;
+  statementIds: string[];
+  statementColumns: Set<string>;
+  analysisColumns: Set<string>;
+  packColumns: Set<string>;
+  isPl: boolean;
+}): Promise<void> {
+  const readErrors: string[] = [];
+  const stillPromoted = await findRowsStillClaimingReady({
     packId: params.packId,
     analysisId: params.analysisId,
-    statementIds: params.promotedStatementIds,
-    onError: (message) => ledger.rollbackErrors.push(message),
+    statementIds: params.statementIds,
+    onError: (message) => readErrors.push(message),
   });
+
+  const total = params.statementIds.length + 2; // + analysis + pack
+  if (readErrors.length > 0) {
+    // Reading the current state failed (table absent in this environment, or a
+    // transport error). Not fatal: phase 1 + phase 2 still fail closed.
+    logger.warn('[atelier-finance-seed] could not inspect residual promotion state on entry', {
+      errors: readErrors,
+    });
+  }
+  if (stillPromoted.length === 0 || stillPromoted.length === total) return;
+
+  logger.warn(
+    `[atelier-finance-seed] residual MIXED promotion state found on entry (${stillPromoted.length}/${total} rows claim READY) — ` +
+      'demoting the whole fixture before re-seeding; a previous run was almost certainly killed mid-promotion',
+    { rowsClaimingReady: stillPromoted }
+  );
+
+  const errors = await demoteAtelierRows(params);
+  if (errors.length > 0) {
+    logger.warn('[atelier-finance-seed] residual-state heal did not fully complete', { errors });
+  }
 }
 
 /**
@@ -1763,7 +1914,7 @@ async function verifyPackReadBack(params: {
       { fallback: false }
     );
     statementRows = await DbPromise.all<Record<string, unknown>>(
-      `SELECT id, statement_type, currency, readiness_status
+      `SELECT id, statement_type, currency
          FROM financial_statements
         WHERE statement_pack_id = ?`,
       [params.packId],
