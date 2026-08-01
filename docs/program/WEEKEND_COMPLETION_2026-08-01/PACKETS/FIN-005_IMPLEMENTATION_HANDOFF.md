@@ -773,7 +773,7 @@ Kontrola anty-pusta: ponowne wprowadzenie zwarcia `anythingIssued` i zakresu
 test samo-naprawy. Test bez zębów wygląda identycznie jak dobry — dlatego to
 sprawdzenie jest w raporcie.
 
-### 13.7 ★ NOWY BLOKER POZA GRANICĄ PAKIETU — `DbPromise.run()` nie odrzuca przy timeout
+### 13.7 ★ BLOKER `DbPromise.run()` — ZAMKNIĘTY w rundzie piątej (§14.1)
 
 `server/src/utils/DbPromise.ts` — gałąź timeoutu w `run()`:
 
@@ -801,10 +801,163 @@ tak samo naprawiany przez fazę 0 przy następnym uruchomieniu.
 
 ### 13.8 Otwarte, świadomie niezrobione
 
-1. `DbPromise.run()` timeout — §13.7, osobny pakiet.
+1. ~~`DbPromise.run()` timeout~~ — **naprawione**, §14.1.
 2. Brak trwałej tabeli audit/outbox — wymaga migracji.
 3. Zarządzanie kluczem HMAC out of band — brak procedury rotacji;
    utrata klucza czyni istniejący manifest nieużywalnym przez skrypt.
 4. Semantyka `FOR UPDATE` sprawdzona tylko na atrapie.
 5. Wartości allowlisty Railway niepotwierdzone na żywym połączeniu (fail-closed).
 6. Ryzyko rezydualne atomowości między zapisami (§13.3) — mitygowane fazą 0.
+
+## 14. Runda piąta — DB runtime (2026-08-01)
+
+Trzy punkty: naprawa `DbPromise.run()`, prawdziwa przypięta transakcja dla
+promocji i runbook operatora. Commity: `057a714f69`, `b0e1ea5fe0`,
+`72331187a7`, `a45f456052`.
+
+### 14.1 `DbPromise.run()` — timeout rozstrzyga zamiast wisieć
+
+Diff jest **czysto addytywny**: 49 wstawień, **zero usunięć**. Dodane brakujące
+`else reject(...)` (komunikat bajtowo identyczny z `all()`/`get()`, linie
+222/339/427) oraz wspólny settle-guard.
+
+**Audyt spóźnionego callbacku wykrył, że `all()` i `get()` miały ten sam hazard**
+— cichszy, ale realny: promise połykał drugie rozstrzygnięcie, ale kod NAD nim
+wykonywał się ponownie, więc `recordQueryPerformance` odpalał drugi raz
+(zawyżając telemetrię), a `get()` dublował `warn` i `error`. Guard tłumi
+duplikat metryki i logu; **semantyka rozstrzygnięcia bez zmian** — zwycięzcą i
+tak był pierwszy settler.
+
+**Analiza promienia rażenia** (sedno tej zmiany — zamienia zawieszenie w błąd):
+82 miejsca wywołania `run()` z `{ fallback: false }`, **wszystkie oczekiwane
+(`await` lub zwrot do oczekującego), zero fire-and-forget, zero w `finally`**.
+To istotne, bo `src/index.ts` instaluje `unhandledRejection`, który loguje i woła
+`fireCrashAlert` — jedno `void run(…, {fallback:false})` zaczęłoby po tej
+zmianie budzić kogoś alertem. Nie ma takiego. Zweryfikowane przeze mnie:
+jedyne trafienia na „nieoczekiwane `run(`" to deklaracje typów w interfejsach.
+
+Realna zmiana: handler czekający na zablokowany zapis dotąd trzymał request
+otwarty do timeoutu klienta/proxy, trzymając połączenie do bazy; teraz zwróci
+błąd. Nowy błąd, ale alternatywą był wyciekający request — czyli sam defekt.
+Jeden konsument wychodzi na tym jednoznacznie lepiej: `transaction()` wykonuje
+`BEGIN`/`COMMIT`/`ROLLBACK` z `fallback:false`; timeout dotąd zawieszał całą
+transakcję z otwartą instrukcją, teraz odrzuca do własnego `catch`.
+
+Regresja: **cała suita serwera, 519 plików, na HEAD i na bazie `c522a861`** —
+63 fail / 8266 pass (HEAD) vs 65 fail / 8005 pass (baza), **zero nowych
+awarii**, każda z 19 czerwonych suit ma identyczną liczbę porażek na bazie; dwie
+są czerwone na bazie i zielone na HEAD. Nowa suita timeoutów: **13/13**.
+
+Uczciwa uwaga: **żadna istniejąca suita nie mogła tego wykryć** — nowa gałąź
+wykonuje się dopiero, gdy zapytanie przekroczy `DB_QUERY_TIMEOUT` (domyślnie
+15 s), a atrapy odpowiadają synchronicznie. Dlatego defekt przeżył od kwietnia.
+
+### 14.2 Przypięta transakcja dla promocji
+
+`atelierFinancePromotionTransaction.ts`: jeden `pg` `PoolClient` na `BEGIN` →
+`SELECT … FOR UPDATE` na pakiecie, 3 sprawozdaniach i analizie → ponowny werdykt
+produkcyjny na zablokowanych wierszach → 5 promocji → read-back przed `COMMIT` →
+`COMMIT`; każdy błąd rolluje na tym samym kliencie, release raz, w `finally`.
+`statement_timeout` i `idle_in_transaction_session_timeout` ograniczają wywołanie.
+
+`PostgresDatabase.ts` dostał **jeden** wąsko nazwany eksport
+`getPoolClientForPinnedTransaction()` z jawnym kontraktem (wołający jest
+właścicielem klienta i musi go zwolnić; funkcja nie robi `BEGIN`).
+
+**Brak cichego fallbacku** — sprawdziłem w logu realnego przebiegu:
+
+```text
+pinned promotion transaction COMMITTED — 5 promotion(s) on one connection
+  applied: [3 sprawozdania, analiza, pakiet]   backendPid: 33602
+Finance golden flow COMPLETE via the PINNED transaction path (backend pid 33602)
+```
+
+Wykrywanie atrapy pyta moduł, przez który seed pisze, o wyrażenie wyłącznie
+postgresowe (`current_database()`/`pg_backend_pid()`) — atrapa nie umie
+odpowiedzieć, więc mockowany test nigdy nie otwiera puli. Fallback jest logowany
+na poziomie **error** w produkcji. Faza 0 i kompensacja zostają jako
+defense-in-depth.
+
+Czego adapter jawnie NIE gwarantuje (zapisane w docblocku): nie blokuje
+`financial_statement_values`, nie ponawia, zapisy fazy 1 nie są transakcyjne,
+a `COMMIT` w stanie in-doubt jest raportowany jako wycofany — zaniża sukces,
+nigdy go nie zawyża.
+
+### 14.3 Matryca awarii na realnym PostgreSQL
+
+| Awaria | Sposób wstrzyknięcia | Wynik |
+| --- | --- | --- |
+| przed pierwszym UPDATE | trigger plpgsql | rollback, 0 częściowego READY |
+| po promocji sprawozdania 1 / 2 / 3 | trigger plpgsql | rollback, 0 częściowego READY |
+| po promocji analizy | trigger plpgsql | rollback, 0 częściowego READY |
+| po promocji pakietu, przed `COMMIT` | odmowa read-backu | 5 zapisów zaaplikowanych, **wszystkie cofnięte** |
+| zerwane połączenie | `pg_terminate_backend` z 2. połączenia | rollback, 0 częściowego READY |
+| timeout | `statement_timeout` | rollback, 0 częściowego READY |
+| ekwiwalent SIGTERM | backend zabity po 5 zapisach, bez czystego ROLLBACK | 3 sprawozdania READY *wewnątrz* tx, **0 na dysku po** |
+
+Każda pozycja sprawdza dodatkowo: zakończenie w ograniczonym czasie, kolejny
+przebieg kończy się sukcesem, fixture spójny po odzyskaniu. Doszedł też test
+blokady `FOR UPDATE` z konkurencyjnym pisarzem — **zamyka pozycję 3 z §13.8**,
+która dotąd była sprawdzona tylko na atrapie.
+
+**Dwa realne defekty wyszły przy budowie tej matrycy**, oba naprawione: zabity
+backend emitował nieobsłużone zdarzenie `error` na kliencie pg, co zabiłoby
+proces (seed ginący od awarii, którą ma przetrwać), oraz współdzielona funkcja
+triggera podnosiła `record "new" has no field readiness_status`, udając
+wstrzykniętą awarię.
+
+### 14.4 ★ Suita PG była niedeterministyczna — odesłana i naprawiona
+
+Pierwsza wersja suity dała **7 porażek, a przy powtórzeniu tej samej komendy 9**.
+Nie zaraportowałem jej jako zielonej. Objawy: fault z jednego testu aktywny w
+teście, który żadnego nie wstrzykuje; `violates foreign key constraint
+financial_statement_values_statement_id_fkey`; „fault się nie zaaplikował".
+Przyczyna: wszystkie 14 testów dzieliło JEDNĄ organizację, reset fixture'u
+biegł w `beforeEach` (przerwany hook zostawia zapytania w locie i kasuje wiersze
+spod seeda innego testu), a faulty były globalnymi obiektami na wspólnych
+tabelach.
+
+Naprawione: organizacja per test, reset w ciele testu, faulty jako zbiór
+identyfikatorów per organizacja, arm/disarm w `try/finally` plus czyszczenie w
+`beforeEach` i `afterEach`, `describe.sequential`.
+
+**Zweryfikowane przeze mnie: cztery kolejne przebiegi tej samej komendy —
+13 passed / 1 skipped za każdym razem.** Pominięty jest test driftu, który
+poprawnie uruchamia się dopiero na bazie zdryfowanej (tam: 1 passed /
+13 skipped). Bez zmiennych bazy: 14 skipped, czysto, bez porażki.
+
+Niezależnie od suity agenta przepuściłem produkt przez własny harness z
+izolowaną organizacją i deterministycznym faultem: full, heal, drift oraz
+5 punktów awarii — wszystko zielone.
+
+Kontrola anty-pusta: wyłączenie ścieżki przypiętej czerwieni 12 z 14 testów
+(test byte-identical słusznie zostaje zielony — trzyma na obu ścieżkach).
+
+### 14.5 Bramki po rundzie piątej
+
+| Bramka | Wynik |
+| --- | --- |
+| targeted FIN-005 backend, mockowane (19 plików) | **359 PASS / 14 skipped** |
+| real PostgreSQL — matryca przypiętej transakcji ×4 przebiegi | **13 PASS / 1 skipped**, identycznie |
+| real PostgreSQL — drift | **1 PASS / 13 skipped** |
+| bez bazy — czysty skip | **14 skipped**, zero porażek |
+| własny harness: full / heal / drift / fault ×5 | **PASS** |
+| `DbPromise` timeout | **13 PASS** |
+| pełna suita serwera vs baza (519 plików) | **zero nowych awarii** |
+| `tsc --noEmit` backend | **216 przed = 216 po**, identyczny zbiór `file:line:code` |
+| `tsc --noEmit` frontend | **0 błędów** |
+| `npm run build:backend` | **PASS** |
+| `git diff --check` | **PASS** |
+
+### 14.6 Otwarte po rundzie piątej
+
+1. Brak trwałej tabeli audit/outbox — wymaga migracji (`DURABLE_AUDIT_TABLE_PROPOSAL`).
+2. Zarządzanie kluczem HMAC out of band — brak procedury rotacji; utrata klucza
+   czyni manifest nieużywalnym przez skrypt. Runbook operatora
+   (`FIN-005_OPERATOR_PRE_RUN.md` §4) wymaga ustalenia tego przed pierwszym
+   `--write`.
+3. Wartości allowlisty Railway niepotwierdzone na żywym połączeniu — fail-closed;
+   runbook §1 wymaga potwierdzenia.
+4. Ścieżka fallback (bez pg) zachowuje udokumentowane ryzyko rezydualne — proces
+   zabity między dwoma UPDATE-ami; faza 0 naprawia przy następnym uruchomieniu.
+   Ta ścieżka biegnie już tylko tam, gdzie połączenie pg nie może istnieć.
