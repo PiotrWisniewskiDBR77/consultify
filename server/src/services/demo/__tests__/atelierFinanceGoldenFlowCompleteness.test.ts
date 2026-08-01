@@ -196,7 +196,7 @@ describe('verifyAtelierFinanceGoldenFlowComplete', () => {
     expect(dbGet).toHaveBeenCalledWith(expect.stringMatching(/financial_models/), [MODEL_ID]);
   });
 
-  it('FIN-005 round 9: reads the discount/hurdle rate from the model\'s own assumptions_json, not the hardcoded constant', async () => {
+  it('FIN-005 round 9/10 — case 1: an explicit rate in assumptions_json produces exactly the expected new numbers', async () => {
     // A rate that deliberately differs from ATELIER_CANONICAL_DISCOUNT_RATE_PCT
     // (10) — if the appraisal used the constant instead of assumptions_json,
     // input.discountRatePct below would read 10, not 7.
@@ -209,20 +209,123 @@ describe('verifyAtelierFinanceGoldenFlowComplete', () => {
     expect(result.appraisal!.input.discountRatePct).toBe(7);
     expect(result.appraisal!.input.hurdleRatePct).toBe(6);
     expect(result.appraisal!.input.discountRatePct).not.toBe(ATELIER_CANONICAL_DISCOUNT_RATE_PCT);
+    // The exact numbers a 7%/6% rate produces on the real canonical Atelier
+    // events — computed independently via a throwaway probe against the real
+    // computeModel()+appraiseComputeResult(), not guessed or copied from
+    // another rate's result.
+    expect(result.appraisal!.result.npv).toBeCloseTo(6_179_065.99, 0);
+    expect(result.appraisal!.result.verdict).toBe('go');
   });
 
-  it('falls back to ATELIER_CANONICAL_DISCOUNT_RATE_PCT ONLY when assumptions_json genuinely lacks discountRatePct', async () => {
+  it('FIN-005 round 10 (Codex fix) — case 2: missing discountRatePct => goldenFlowComplete=false, NEVER a fallback to the constant', async () => {
     // No discountRatePct/hurdleRatePct at all — the shape an older, pre-round-9
-    // fixture would have. The seed written today always populates these keys
-    // (see demoSeedService.ts's upsertAtelierRoiFinancialModel); this pins the
-    // defensive path for a row it did not write.
+    // fixture would have. Round 9 wrongly treated this as an acceptable
+    // "complete" case via ATELIER_CANONICAL_DISCOUNT_RATE_PCT; Codex's review
+    // correctly rejected that as a silent hardcoded acceptance fallback. This
+    // is now a genuine refusal — no appraisal is computed at all.
     dbGet.mockResolvedValue(atelierModelRow({}));
     dbAll.mockResolvedValue(ATELIER_EVENTS);
 
     const result = await verifyAtelierFinanceGoldenFlowComplete(ORG_ID, 'complete');
 
+    expect(result.fixtureComplete).toBe(true);
+    expect(result.goldenFlowComplete).toBe(false);
+    expect(result.reason).toMatch(/discountRatePct is missing or not a finite number/);
+    expect(result.appraisal).toBeUndefined();
+  });
+
+  it('FIN-005 round 10 (Codex fix) — case 3: discountRatePct present but not a number => goldenFlowComplete=false', async () => {
+    for (const badValue of ['10', null, true, [10], { pct: 10 }, NaN, Infinity]) {
+      dbGet.mockResolvedValue(
+        atelierModelRow({ ...ATELIER_MODEL_ASSUMPTIONS, discountRatePct: badValue as unknown })
+      );
+      dbAll.mockResolvedValue(ATELIER_EVENTS);
+
+      const result = await verifyAtelierFinanceGoldenFlowComplete(ORG_ID, 'complete');
+
+      expect(result.goldenFlowComplete, `discountRatePct = ${JSON.stringify(badValue)}`).toBe(false);
+      expect(result.reason, `discountRatePct = ${JSON.stringify(badValue)}`).toMatch(
+        /discountRatePct is missing or not a finite number/
+      );
+    }
+  });
+
+  it('FIN-005 round 10 (Codex fix) — case 4: the model read itself fails => goldenFlowComplete=false', async () => {
+    // dbGet is called TWICE in the success path: once by computeModel() for
+    // its own model fetch (must succeed, or we'd hit the earlier
+    // "computeModel() failed" branch instead of exercising rate resolution),
+    // then again by resolveAtelierAppraisalRates()'s getModel() — THAT second
+    // call is the one this test fails.
+    dbGet.mockResolvedValueOnce(atelierModelRow()).mockRejectedValueOnce(new Error('pool exhausted'));
+    dbAll.mockResolvedValue(ATELIER_EVENTS);
+
+    const result = await verifyAtelierFinanceGoldenFlowComplete(ORG_ID, 'complete');
+
+    expect(result.fixtureComplete).toBe(true);
+    expect(result.goldenFlowComplete).toBe(false);
+    expect(result.reason).toMatch(/could not read model .* to resolve its appraisal rate/);
+    expect(result.reason).toMatch(/pool exhausted/);
+    expect(result.appraisal).toBeUndefined();
+  });
+
+  it('FIN-005 round 10 (Codex fix) — case 5: NO scenario in this file ever accepts on ATELIER_CANONICAL_DISCOUNT_RATE_PCT as a fallback', async () => {
+    // Structural guard, not just behavioral: read the resolver's own source
+    // and confirm the constant is never returned inside an `ok: true` branch
+    // (i.e. never used to ACCEPT a rate) — only referenced in comments/docs.
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const sourcePath = path.join(
+      path.dirname(fileURLToPath(import.meta.url)),
+      '../atelierFinanceSeed.ts'
+    );
+    const source = fs.readFileSync(sourcePath, 'utf8');
+    const fnStart = source.indexOf('async function resolveAtelierAppraisalRates(');
+    const fnEnd = source.indexOf('\nasync function ', fnStart + 1);
+    const fnBody = source.slice(fnStart, fnEnd === -1 ? undefined : fnEnd);
+    expect(
+      fnBody,
+      'resolveAtelierAppraisalRates must never reference ATELIER_CANONICAL_DISCOUNT_RATE_PCT — no acceptance fallback'
+    ).not.toContain('ATELIER_CANONICAL_DISCOUNT_RATE_PCT');
+  });
+
+  it('FIN-005 round 10 (Codex fix) — case 6: hurdleRatePct may default to the explicitly-read discountRatePct', async () => {
+    // Allowed per Codex's instruction: "hurdleRatePct może domyślnie równać
+    // się jawnie odczytanemu discountRatePct" — only discountRatePct itself
+    // must never be defaulted/invented.
+    dbGet.mockResolvedValue(
+      atelierModelRow({ ...ATELIER_MODEL_ASSUMPTIONS, discountRatePct: 9, hurdleRatePct: undefined })
+    );
+    dbAll.mockResolvedValue(ATELIER_EVENTS);
+
+    const result = await verifyAtelierFinanceGoldenFlowComplete(ORG_ID, 'complete');
+
     expect(result.goldenFlowComplete).toBe(true);
-    expect(result.appraisal!.input.discountRatePct).toBe(ATELIER_CANONICAL_DISCOUNT_RATE_PCT);
-    expect(result.appraisal!.input.hurdleRatePct).toBe(ATELIER_CANONICAL_DISCOUNT_RATE_PCT);
+    expect(result.appraisal!.input.discountRatePct).toBe(9);
+    expect(result.appraisal!.input.hurdleRatePct).toBe(9);
+  });
+});
+
+/**
+ * FIN-005 round 10 (Codex fix) — case 6 (route/checker consistency): both
+ * `GET /models/:modelId/appraisal` (finance.routes.ts) and
+ * `verifyAtelierFinanceGoldenFlowComplete` (this file's subject) must refuse
+ * on the SAME condition — no explicit rate available. The route's behavior
+ * for "no query param and no assumptions_json.discountRatePct" (400) is
+ * pinned in `finance.routes.test.ts`; this test pins the checker's behavior
+ * for the identical missing-rate shape, so a reviewer can compare the two
+ * side by side rather than trusting a claim of consistency.
+ */
+describe('verifyAtelierFinanceGoldenFlowComplete — consistency with GET .../appraisal\'s "no rate" contract', () => {
+  it('a model with NO assumptions_json.discountRatePct is refused here exactly as the route refuses the equivalent no-query-param request', async () => {
+    dbGet.mockResolvedValue(atelierModelRow({})); // no discountRatePct — same shape finance.routes.test.ts uses for its 400 case
+    dbAll.mockResolvedValue(ATELIER_EVENTS);
+
+    const result = await verifyAtelierFinanceGoldenFlowComplete(ORG_ID, 'complete');
+
+    // Route: 400 "discountRatePct is required...". Checker: goldenFlowComplete
+    // false with an equivalent reason. Neither ever invents a number.
+    expect(result.goldenFlowComplete).toBe(false);
+    expect(result.reason).toMatch(/discountRatePct is missing or not a finite number/);
   });
 });

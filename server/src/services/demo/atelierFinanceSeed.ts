@@ -164,9 +164,19 @@ export const ATELIER_FINANCE_CURRENCY = 'EUR';
  * explicit, testable RUNTIME source is `financial_models.assumptions_json`
  * (`{ discountRatePct, hurdleRatePct }`), written from this constant by
  * `upsertAtelierRoiFinancialModel()` and read back by
- * `resolveAtelierAppraisalRates()` below — not this constant directly. The
- * constant remains the fallback for a row `assumptions_json` genuinely lacks
- * the key on (see `resolveAtelierAppraisalRates`).
+ * `resolveAtelierAppraisalRates()` below — not this constant directly.
+ *
+ * FIN-005 round 10 (Codex fix): round 9 also used this constant as a
+ * fallback INSIDE the golden-flow acceptance path, which let
+ * `verifyAtelierFinanceGoldenFlowComplete()` return `goldenFlowComplete: true`
+ * even when `assumptions_json` carried no genuine explicit rate — silently
+ * defeating the "never hardcoded" invariant at the one place it matters most,
+ * the completeness verdict. `resolveAtelierAppraisalRates()` no longer falls
+ * back to this constant at all: a missing/invalid rate is now a refusal
+ * (`goldenFlowComplete: false`), matching `GET /models/:modelId/appraisal`'s
+ * own "explicit rate or 400" contract. This constant is ONLY the value the
+ * seed writes into `assumptions_json` the first time — it has no role in
+ * acceptance anymore.
  */
 export const ATELIER_CANONICAL_DISCOUNT_RATE_PCT = 10;
 export const ATELIER_FINANCE_SCALING = 'units';
@@ -3253,19 +3263,22 @@ export interface AtelierFinanceGoldenFlowCompleteness {
 }
 
 /**
- * FIN-005 round 9 — resolve the discount/hurdle rate the appraisal actually
- * uses from the model's OWN `assumptions_json`, not from the bare
- * `ATELIER_CANONICAL_DISCOUNT_RATE_PCT` constant.
+ * FIN-005 round 10 (Codex fix) — resolve the discount/hurdle rate STRICTLY
+ * from the model's own `assumptions_json`. This is the golden-flow
+ * ACCEPTANCE path: unlike round 9's version, there is NO fallback to
+ * `ATELIER_CANONICAL_DISCOUNT_RATE_PCT` here anymore. A model read failure,
+ * a missing `assumptions_json`, or a non-numeric `discountRatePct` are all
+ * refusals (`{ ok: false }`), never silently patched over — a golden flow
+ * cannot be "complete" on a rate nobody can point to in the data. This
+ * mirrors `GET /models/:modelId/appraisal`'s own contract (finance.routes.ts):
+ * an explicit rate or nothing — the route and this checker must agree on
+ * what "no rate" means, so a demo that would 400 at the API can never
+ * silently read as `goldenFlowComplete: true` here.
  *
  * `assumptions_json.discountRatePct` / `.hurdleRatePct` are written by
- * `upsertAtelierRoiFinancialModel()` (demoSeedService.ts) FROM this same
- * constant — the constant still seeds the value the first time, but
- * `assumptions_json` is the canonical, explicit, readable, testable RUNTIME
- * source from here on (Piotr: "wartość musi być jawna, odczytywalna i
- * testowana"). The constant is used here ONLY as a defensive fallback for a
- * row the current seed did not write (an older fixture, a schema without the
- * column, or a read that failed) — and firing that fallback is itself a
- * signal something upstream is wrong, so it is logged, not swallowed.
+ * `upsertAtelierRoiFinancialModel()` (demoSeedService.ts), seeded FROM
+ * `ATELIER_CANONICAL_DISCOUNT_RATE_PCT` — that constant's only remaining job
+ * is supplying that one seed write, not accepting a completeness verdict.
  *
  * Read-only: `getModel()` (`financialModelingService.ts`) only SELECTs
  * `financial_models`; nothing is written here. Deliberately calls the
@@ -3273,41 +3286,43 @@ export interface AtelierFinanceGoldenFlowCompleteness {
  * `atelierFinancePrimaryReadStructure.test.ts` asserts this file never calls
  * those two functions itself.
  */
+type AtelierAppraisalRateResolution =
+  | { ok: true; discountRatePct: number; hurdleRatePct: number }
+  | { ok: false; reason: string };
+
 async function resolveAtelierAppraisalRates(
   modelId: string,
   organizationId: string
-): Promise<{ discountRatePct: number; hurdleRatePct: number }> {
-  let assumptions: Record<string, unknown> = {};
+): Promise<AtelierAppraisalRateResolution> {
+  let model: Awaited<ReturnType<typeof getModel>>;
   try {
-    const model = await getModel(modelId, organizationId);
-    const raw = model?.assumptions_json;
-    assumptions = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+    model = await getModel(modelId, organizationId);
   } catch (error) {
-    logger.warn(
-      '[atelier-finance-seed] could not read assumptions_json for the appraisal rate — falling back to ATELIER_CANONICAL_DISCOUNT_RATE_PCT',
-      { modelId, organizationId, error: (error as Error).message }
-    );
+    return {
+      ok: false,
+      reason: `could not read model "${modelId}" to resolve its appraisal rate: ${(error as Error).message}`,
+    };
   }
 
-  const seededDiscountRate = assumptions.discountRatePct;
-  const discountRatePct =
-    typeof seededDiscountRate === 'number' && Number.isFinite(seededDiscountRate)
-      ? seededDiscountRate
-      : (() => {
-          logger.warn(
-            '[atelier-finance-seed] assumptions_json.discountRatePct missing or invalid on the canonical model — falling back to ATELIER_CANONICAL_DISCOUNT_RATE_PCT; the seed should always populate this key',
-            { modelId, organizationId, assumptions }
-          );
-          return ATELIER_CANONICAL_DISCOUNT_RATE_PCT;
-        })();
+  const raw = model?.assumptions_json;
+  const assumptions: Record<string, unknown> =
+    raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
 
-  const seededHurdleRate = assumptions.hurdleRatePct;
+  const discountRatePct = assumptions.discountRatePct;
+  if (typeof discountRatePct !== 'number' || !Number.isFinite(discountRatePct)) {
+    return {
+      ok: false,
+      reason: `assumptions_json.discountRatePct is missing or not a finite number on model "${modelId}" — the golden flow requires an explicit, data-carried rate, never a hardcoded acceptance default`,
+    };
+  }
+
+  const hurdleRatePctRaw = assumptions.hurdleRatePct;
   const hurdleRatePct =
-    typeof seededHurdleRate === 'number' && Number.isFinite(seededHurdleRate)
-      ? seededHurdleRate
+    typeof hurdleRatePctRaw === 'number' && Number.isFinite(hurdleRatePctRaw)
+      ? hurdleRatePctRaw
       : discountRatePct;
 
-  return { discountRatePct, hurdleRatePct };
+  return { ok: true, discountRatePct, hurdleRatePct };
 }
 
 /**
@@ -3365,7 +3380,17 @@ export async function verifyAtelierFinanceGoldenFlowComplete(
   }
 
   const rates = await resolveAtelierAppraisalRates(modelId, organizationId);
-  const appraisal = appraiseComputeResult(computeResult, rates);
+  if (!rates.ok) {
+    return {
+      fixtureComplete: true,
+      goldenFlowComplete: false,
+      reason: rates.reason,
+    };
+  }
+  const appraisal = appraiseComputeResult(computeResult, {
+    discountRatePct: rates.discountRatePct,
+    hurdleRatePct: rates.hurdleRatePct,
+  });
 
   if (!Number.isFinite(appraisal.result.npv)) {
     return {
