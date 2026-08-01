@@ -770,10 +770,35 @@ export async function closeRecoveryCard(
   // Step 4: freshness guard — a measurement recorded strictly after the card
   // most recently went ACTIVE (active_since), not just after the original
   // deviation was detected (see schema comment on active_since for why).
+  //
+  // TIMEZONE FIX (bug found by real-PG acceptance test, see the header
+  // comment in tests/acceptance/res003a-kpi-recovery-card.e2e.test.ts):
+  // kpi_time_series.created_at is `timestamp without time zone` (stored as
+  // UTC wall-clock digits — the column's DEFAULT is CURRENT_TIMESTAMP under
+  // the app DB session's UTC default; see server/migrations-v2/
+  // 001_baseline_20260413.sql) while kpi_recovery_cards.active_since is
+  // `timestamptz`. Comparing them used to bind `row.active_since` as a bare
+  // parameter: node-pg serializes a JS Date using the Node PROCESS's local
+  // wall-clock digits plus an explicit UTC offset, and when Postgres infers
+  // the parameter's type from the naive `created_at` column (`timestamp`,
+  // no zone) it silently DISCARDS that offset — shifting the effective
+  // comparison value by the server process's local UTC offset. On a
+  // non-UTC process TZ (e.g. Europe/Warsaw, UTC+2) this turned a
+  // 2-second-fresher measurement into one read back as ~2 hours STALER,
+  // wrongly blocking closure with STALE_MEASUREMENT.
+  //
+  // Fix: force the parameter's SQL type to `timestamptz` via an explicit
+  // cast (so Postgres honours the offset node-pg attaches, regardless of
+  // what timezone the Node process happens to be in), then project that
+  // absolute instant onto UTC wall-clock digits with `AT TIME ZONE 'UTC'`
+  // — the same representation `created_at` is stored in. This makes the
+  // comparison correct independent of the Node process's TZ (dev machine,
+  // CI, or Railway container).
   const measurement = await db.get<{ value: number | string; created_at: string }>(
     `
     SELECT value, created_at FROM kpi_time_series
-    WHERE kpi_id = ? AND organization_id = ? AND created_at > ?
+    WHERE kpi_id = ? AND organization_id = ?
+      AND created_at > (?::timestamptz AT TIME ZONE 'UTC')
     ORDER BY created_at DESC LIMIT 1
     `,
     [row.kpi_id, orgId, row.active_since]
