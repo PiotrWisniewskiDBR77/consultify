@@ -38,6 +38,10 @@ import {
   type DecisionWorkflowStatus,
   validateDecisionWorkflowTransition,
 } from '../services/decisionWorkflowService.js';
+import {
+  executeInitiativeTransition,
+  type InitiativeTransitionActor,
+} from '../services/initiative/initiativeTransitionService.js';
 import { recordHandoff as recordStageHandoff } from '../services/initiative/stageHandoffService.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import NotificationService from '../services/notificationService.js';
@@ -314,26 +318,96 @@ const refreshTaskDecisionBlock = async (input: {
   );
 };
 
+// Stable, honest, non-human-impersonating actor identity for the
+// decision-driven cascade unblock below — same convention as
+// `initiativeAutoStartJob.ts`'s `SYSTEM_ACTOR_ID`/`SYSTEM_ACTOR_LABEL` (see
+// that file's doc comment for why a plain `system:<feature>` sentinel string
+// is safe and preferred over a fabricated user id or NULL).
+const DECISION_UNBLOCK_SYSTEM_ACTOR_ID = 'system:decision-driven-unblock';
+const DECISION_UNBLOCK_SYSTEM_ACTOR_LABEL = 'System (decision resolution → initiative unblock)';
+const DECISION_UNBLOCK_SYSTEM_ACTOR: InitiativeTransitionActor = {
+  kind: 'system',
+  systemActorId: DECISION_UNBLOCK_SYSTEM_ACTOR_ID,
+  systemActorLabel: DECISION_UNBLOCK_SYSTEM_ACTOR_LABEL,
+};
+
+/**
+ * Post-commit cascade: re-evaluate an initiative's BLOCKED status after one
+ * of its decision-blockers has just been resolved (`decide()` calls this
+ * AFTER `finalizeDecisionTransition` has already committed the decision
+ * itself — this function's own outcome, success or failure, must never turn
+ * that already-committed decision into an HTTP error; the caller wraps this
+ * whole call in try/catch).
+ *
+ * MW-DEC-001/INI-005 integration fix (2026-08-01): this used to end with an
+ * UNCONDITIONAL raw `UPDATE initiatives SET status = ... 'EXECUTING' ...`,
+ * gated only by (a) a tag-match on `blocked_reason` that can never fire for
+ * a SECOND blocking decision (both this function and `createDecision`'s
+ * auto-block loop only ever write the FIRST blocker's tag into
+ * `blocked_reason` — `CASE WHEN blocked_reason IS NULL OR ='' THEN ? ELSE
+ * blocked_reason END` never overwrites an already-set reason — so a real
+ * initiative could get stuck permanently BLOCKED once two decisions had
+ * blocked it) and (b) a `stillBlocked` count of OTHER open blockers — with
+ * ZERO check of the just-resolved decision's own outcome. That meant a
+ * REJECTED decision (rejection is not GO consent) could flip a genuinely
+ * still-not-approved initiative straight to EXECUTING, on the shared
+ * connection pool, with no row lock, no GO/NO-GO recheck, and no
+ * `initiative_status_history`/`initiative_history` row.
+ *
+ * FIX: the tag-guard is gone entirely (removing it is safe — see below), the
+ * rejected-outcome short-circuit below is the actual bug fix, and every path
+ * that can reach EXECUTING now goes through the SAME canonical engine
+ * (`executeInitiativeTransition`, the UNBLOCK gate) every other initiative
+ * status write in this codebase goes through — which supplies its own row
+ * lock, its own FRESH GO/NO-GO decision-currency check (so "all blockers
+ * resolved but no current GO decision" correctly stays BLOCKED), and the
+ * audit rows this cascade used to skip.
+ */
 const refreshInitiativeDecisionBlock = async (input: {
   initiativeId: string;
   organizationId: string;
   resolvedDecisionId: string;
+  /** The status the triggering decision was JUST set to ('approved' /
+   *  'rejected' / ...) — see the rejected short-circuit below. */
+  resolvedDecisionStatus: string;
+  /** The user who resolved the decision — logged for traceability only; NOT
+   *  used as the RBAC-checked actor for the unblock transition itself (see
+   *  the system-actor reasoning below). */
+  actorId?: string | null;
 }): Promise<void> => {
-  const { initiativeId, organizationId, resolvedDecisionId } = input;
+  const { initiativeId, organizationId, resolvedDecisionId, resolvedDecisionStatus, actorId } =
+    input;
 
-  const initiative = await queryHelpers.queryOne<{
-    status?: string;
-    blocked_reason?: string | null;
-  }>(`SELECT status, blocked_reason FROM initiatives WHERE id = ? AND organization_id = ?`, [
-    initiativeId,
-    organizationId,
-  ]);
+  // CORE FIX: a REJECTED decision is not GO consent for anything — never
+  // even attempt an unblock. This is a legitimate, expected outcome (not an
+  // error): the initiative simply stays exactly as it is (still BLOCKED if
+  // it was blocked by this decision and no other decision has since
+  // resolved it a different way).
+  if (resolvedDecisionStatus === 'rejected') {
+    logger.info(
+      `[decision] Decision ${resolvedDecisionId} resolved as REJECTED — initiative ${initiativeId} left unchanged (rejection is not GO consent for unblock)`
+    );
+    return;
+  }
+
+  const initiative = await queryHelpers.queryOne<{ status?: string }>(
+    `SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`,
+    [initiativeId, organizationId]
+  );
   if (!initiative) return;
+  if (String(initiative.status || '').toUpperCase() !== 'BLOCKED') return;
 
-  // Only unblock initiatives that we blocked for this decision (tag-based)
-  const tag = DECISION_BLOCK_TAG(resolvedDecisionId);
-  if (!initiative.blocked_reason || !initiative.blocked_reason.includes(tag)) return;
-
+  // Cheap PRE-FILTER only, deliberately NOT run inside a transaction and NOT
+  // a correctness boundary: `executeInitiativeTransition` below re-verifies
+  // everything that matters — a fresh `SELECT ... FOR UPDATE` row lock AND a
+  // fresh GO/NO-GO decision-currency recheck — inside its OWN transaction
+  // regardless of what this read sees. A stale read here just means we
+  // sometimes call the engine when it's obviously still blocked by another
+  // open decision (harmless: the engine's own UNEXPECTED_CURRENT_STATUS/
+  // GATE_DECISION_REQUIRED refusals handle that correctly too); it is never
+  // a path to an incorrect unblock. Keeping it on the shared pool (not
+  // `withPgTransaction`) avoids holding a second connection/lock open for a
+  // check the engine is about to redo anyway.
   const stillBlocked = await queryHelpers.queryOne<{ count: number }>(
     `
       SELECT COUNT(*) as count
@@ -347,29 +421,103 @@ const refreshInitiativeDecisionBlock = async (input: {
     `,
     [organizationId, initiativeId]
   );
-
   if ((stillBlocked?.count || 0) > 0) return;
 
-  // Only record handoff when the initiative was actually blocked (conditional SQL won't fire for others)
-  const wasBlocked =
-    initiative.status != null && String(initiative.status).toUpperCase() === 'BLOCKED';
-
-  await queryHelpers.queryRun(
-    `UPDATE initiatives SET
-      status = CASE WHEN UPPER(status) = 'BLOCKED' THEN 'EXECUTING' ELSE status END,
-      unblocked_at = CURRENT_TIMESTAMP,
-      blocked_reason = NULL,
-      updated_at = CURRENT_TIMESTAMP
-     WHERE id = ? AND organization_id = ?`,
-    [initiativeId, organizationId]
-  );
-
-  // Best-effort handoff audit: BLOCKED → EXECUTING (decision auto-unblock).
-  if (wasBlocked) {
-    void recordStageHandoff(organizationId, initiativeId, 'BLOCKED', 'EXECUTING').catch((e) =>
-      logger.warn('[decision] recordStageHandoff failed (auto-unblock):', e)
+  // All known decision-blockers resolved -> attempt the canonical
+  // BLOCKED->EXECUTING (UNBLOCK) transition through the SAME engine every
+  // other initiative status write goes through. This is the ONE authorized
+  // change to initiativeTransitionService.ts in this packet: the
+  // system-actor allow-list there was widened from {START} to {START,
+  // UNBLOCK} specifically to authorize this call.
+  //
+  // ACTOR CHOICE (documented, single choice — not a silent A/B): call this
+  // as the explicit, honestly-labeled SYSTEM actor
+  // (`DECISION_UNBLOCK_SYSTEM_ACTOR`), NOT as the resolving user
+  // (`req.user`). Rationale: `GateType.UNBLOCK` requires a human
+  // PROJECT_SPONSOR/STEERING_COMMITTEE(/PORTFOLIO_OWNER/ADMIN) role
+  // (`GATE_PERMISSIONS[UNBLOCK]`) — the user who happens to resolve a
+  // blocking decision (e.g. a PM approving a SCOPE_CHANGE decision) has no
+  // reason to also hold that role, so trying "real user first, system
+  // fallback" would silently 403 for the common case before ever reaching
+  // the fallback, and building both paths as an untested A/B is exactly what
+  // the brief for this packet warned against. The system-actor route is
+  // also the one the engine was actually widened for. The resolving user's
+  // identity is NOT discarded — it's threaded into `reason` below for
+  // traceability, just never used as the RBAC-checked actor.
+  //
+  // CAUSAL/AUDIT REFERENCE: no separate audit-log write for "decision X
+  // caused this re-evaluation" — `executeInitiativeTransition` already
+  // writes exactly one `initiative_status_history` row and one
+  // `initiative_history` row per successful transition (writing our own here
+  // too would duplicate them, which the brief explicitly warns against).
+  // Instead, `resolvedDecisionId` (and, best-effort, the resolving user) are
+  // embedded directly in the `reason` string, which the engine persists
+  // verbatim into both `initiative_status_history.reason` and
+  // `initiative_history.notes.reason` — sufficient to trace "Decision X ->
+  // Initiative Y unblocked" without a second write path.
+  let result;
+  try {
+    result = await executeInitiativeTransition({
+      orgId: organizationId,
+      initiativeId,
+      actorId: DECISION_UNBLOCK_SYSTEM_ACTOR_ID,
+      nextStatusInput: 'EXECUTING',
+      expectedCurrentStatus: 'BLOCKED',
+      reason: `Decision ${resolvedDecisionId} resolved (approved) — cascade unblock: last open decision-blocker cleared${
+        actorId ? ` (resolved by user ${actorId})` : ''
+      }`,
+      actor: DECISION_UNBLOCK_SYSTEM_ACTOR,
+    });
+  } catch (err: any) {
+    // Any OTHER thrown exception (not a structured `ok:false` refusal) — the
+    // outer try/catch in decide() also guards this, but log locally too so
+    // the failure is attributable to this specific initiative/decision pair.
+    logger.error(
+      `[decision] Cascade unblock threw for initiative ${initiativeId} (triggering decision ${resolvedDecisionId}):`,
+      err?.message || err
     );
+    return;
   }
+
+  if (!result.ok) {
+    const rule = (result.body as { rule?: string }).rule;
+    if (rule === 'GATE_DECISION_REQUIRED') {
+      // CORRECT, EXPECTED outcome: all decision-blockers resolved, but there
+      // is no CURRENT approved GOVERNANCE_DECISION_MAKING decision for this
+      // initiative -> it correctly stays BLOCKED. Not an error.
+      logger.info(
+        `[decision] Initiative ${initiativeId} stays BLOCKED after decision ${resolvedDecisionId}: no current approved Go/No-Go decision (GATE_DECISION_REQUIRED)`
+      );
+      return;
+    }
+    if (rule === 'UNEXPECTED_CURRENT_STATUS') {
+      // Our pre-filter read was stale, or something else changed the
+      // initiative's status between that read and the engine's own fresh
+      // row lock — not an error, just nothing to cascade.
+      logger.info(
+        `[decision] Initiative ${initiativeId} was not BLOCKED by the time the cascade-unblock ran (decision ${resolvedDecisionId}) — no-op`
+      );
+      return;
+    }
+    // Any other structured refusal (invalid transition, superseded gate,
+    // an unexpected role-denial for the system actor, ...) — worth a real
+    // warning: it means an initiative that looked fully unblockable did not
+    // actually get unblocked. Still non-fatal to decide()'s own response.
+    logger.warn(
+      `[decision] Cascade unblock refused for initiative ${initiativeId} (decision ${resolvedDecisionId}): ${result.statusCode} ${JSON.stringify(
+        result.body
+      )}`
+    );
+    return;
+  }
+
+  // ok:true — never report/log this as anything other than what it is: a
+  // real, committed BLOCKED->EXECUTING transition, traceable via the
+  // engine's own correlationId and the decisionId embedded in `reason`
+  // above.
+  logger.info(
+    `[decision] Cascade unblock succeeded: initiative ${initiativeId} BLOCKED → EXECUTING (correlationId=${result.correlationId}, triggering decisionId=${resolvedDecisionId})`
+  );
 };
 
 const normalizePriority = (priority?: string | null): string =>
@@ -1477,6 +1625,8 @@ export class DecisionController {
                 initiativeId: impact.impacted_id,
                 organizationId: orgId,
                 resolvedDecisionId: id,
+                resolvedDecisionStatus: result.status,
+                actorId: userId,
               });
             }
           }
