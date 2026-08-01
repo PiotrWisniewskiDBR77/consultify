@@ -25,9 +25,9 @@ last_reviewed: 2026-08-01
 | Materials Library | `CZĘŚCIOWA+` | live registry bez produkcyjnych mocków; documents/decks realne, Sheets bez archive/share, ownership gate nadal rozdzielony | `MAT-001` |
 | Document create/edit/save/reopen/version/export | `CZĘŚCIOWA+` | autosave z 409, reopen, checkpoint/restore (`MAT-005A`) i DOCX/PDF/MD działają; list→share handoff domknięty w `MAT-002`; brak pełnego lifecycle E2E i revoke/rotate UI | `MAT-005B` |
 | Workbook/Excel | `CZĘŚCIOWA+` | `MAT-003A` udowadnia real-route SQLite create→cell/formula edit→reopen→XLSX read-back; brak wersji, concurrency, operacji strukturalnych i browser E2E; dwa runtime'y | `MAT-003B..D` |
-| Deck/Presentation | `CZĘŚCIOWA+` | `MAT-006B`: zinwentaryzowany pełny lifecycle, składowe kontrakty są pokryte, CAS restore/read-back działa, a awaria historii ma jawny `unavailable`; brak jednego staging E2E z otwarciem PPTX/PDF | staging acceptance z packetu `MAT-006B` |
+| Deck/Presentation | `BLOCKED staging` | `MAT-006B`: lista pokazuje seed `Ready/11`, ale builder otwiera ten sam deck jako `0` slajdów; eksport/share nie mogą być uczciwie odebrane | naprawa kanonicznej zawartości seeda + ponowny `MAT-006B` |
 | artifact share/download | `CZĘŚCIOWA+` | Document list handoff działa; Document i Deck mają realne share API, Sheets brak; zamrożony export receipt do domknięcia | `MAT-005..007` |
-| Finance Hub | `CZĘŚCIOWA+` | `FIN-001`: `/finance` jest jedynym ownerem UI, `/economics` zachowuje query/hash i przekierowuje; V8/legacy data fallback pozostaje | `FIN-002` |
+| Finance Hub | `BLOCKED staging` | route z `FIN-001` działa, ale `FIN-005` wykazał w demo Atelier Toys obce dane DBR77/Apator, duplikaty, surowe daty i niedostępny value engine | `FIN-005` + `FIN-002` |
 | Investment Case calculations | `CZĘŚCIOWA/BRAK lifecycle` | realne NPV/IRR/payback, ale lokalny kalkulator bez ROI, save/version/reopen/scenario/baseline/actual | `FIN-002` |
 | statement import/mapping | `CZĘŚCIOWA+` | realne upload/detect/extract/map/correct/confirm; dwa kontrakty, brak reprezentatywnego XLSX/CSV E2E i CSV w pickerze | `FIN-003` |
 | Initiative Candidate Pack from Finance | `BRAK targetu` | historyczny flow tworzy Initiative bezpośrednio i ma atrapę receipt; brak Candidate Pack, dedupe i pełnego lineage | `FIN-004` |

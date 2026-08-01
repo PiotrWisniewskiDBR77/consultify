@@ -67,7 +67,10 @@ zakończone na podstawie samej deklaracji implementatora.
    — twardy kanon Consultify, Railway `demo`, domeny i PostgreSQL stagingu.
 1. [`ACCEPTANCE_BOARD.md`](ACCEPTANCE_BOARD.md) — jedna kolejka i status;
    pakiet operacyjny: [`OPS-DEMO-001`](PACKETS/OPS-DEMO-001_CONTROLLED_DEMO_PROMOTION.md)
-   — kontrolowana promocja kandydata i rollback na `demo`.
+   — kontrolowana promocja kandydata i rollback na `demo`; bieżące odkrycia runtime:
+   [`MAT-006B`](PACKETS/MAT-006B_PRESENTATION_LIFECYCLE_E2E.md) i
+   [`FIN-005`](PACKETS/FIN-005_DEMO_GOLDEN_FLOW_COHERENCE.md), a wejście publiczne
+   śledzi [`OPS-DEMO-002`](PACKETS/OPS-DEMO-002_DEMO_ENTRY_AUTH.md).
 2. [`ROLE_AND_HANDOFF_PROTOCOL.md`](ROLE_AND_HANDOFF_PROTOCOL.md) — sposób
    przekazywania zadań Claude.
 3. [`TASK_PACKET_TEMPLATE.md`](TASK_PACKET_TEMPLATE.md) — obowiązkowa karta

@@ -140,6 +140,7 @@ export function isQuickAccessShortcutHost(hostname: string): boolean {
   return (
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
+    hostname.startsWith('demo.') ||
     hostname.startsWith('stage.') ||
     hostname.startsWith('staging.') ||
     hostname === 'consultify.ai' ||
@@ -164,6 +165,8 @@ export function resolveQuickAccessCredentials(
   code: string,
   hostname: string
 ): QuickAccessCredentials | null {
+  if (!isQuickAccessShortcutHost(hostname)) return null;
+
   const isProdPublic = hostname === 'consultify.ai' || hostname === 'www.consultify.ai';
 
   if (isProdPublic) {
