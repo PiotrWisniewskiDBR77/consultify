@@ -30,6 +30,11 @@
  * Fixtures use the reversible `odbior--ini005--autostart--` prefix; cleaned
  * up in `afterAll`.
  */
+// INI-005 JWT hermeticity: MUST be imported first — sets process.env.JWT_SECRET
+// to a fixed value before any dynamic import can load server/src/config/Config.ts.
+// See tests/acceptance/ini005TestSecret.ts for the full root-cause writeup.
+import { assertJwtSecretHermetic } from './ini005TestSecret.js';
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { pgClient } from './harness.js';
@@ -173,6 +178,7 @@ let autoStartScheduledInitiatives: (opts?: { limit?: number }) => Promise<{
 }>;
 
 beforeAll(async () => {
+  await assertJwtSecretHermetic();
   await seed();
   ({ autoStartScheduledInitiatives } = await import('../../server/src/jobs/initiativeAutoStartJob.js'));
 }, 60_000);

@@ -33,6 +33,11 @@
  * cleans up after itself in `afterAll` (and pre-cleans in `beforeAll` in case
  * a previous interrupted run left rows behind).
  */
+// INI-005 JWT hermeticity: MUST be imported first — sets process.env.JWT_SECRET
+// to a fixed value before any dynamic import can load server/src/config/Config.ts.
+// See tests/acceptance/ini005TestSecret.ts for the full root-cause writeup.
+import { assertJwtSecretHermetic } from './ini005TestSecret.js';
+
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -302,6 +307,7 @@ async function cleanup(): Promise<void> {
 }
 
 beforeAll(async () => {
+  await assertJwtSecretHermetic();
   await seed();
   await cleanup();
   app = await buildApp();

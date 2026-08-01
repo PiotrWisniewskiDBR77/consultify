@@ -22,6 +22,11 @@
  * Real router + real auth + real Postgres. Fixtures use the reversible
  * `odbior--ini005--` prefix; cleaned up in `afterAll`.
  */
+// INI-005 JWT hermeticity: MUST be imported first — sets process.env.JWT_SECRET
+// to a fixed value before any dynamic import can load server/src/config/Config.ts.
+// See tests/acceptance/ini005TestSecret.ts for the full root-cause writeup.
+import { assertJwtSecretHermetic } from './ini005TestSecret.js';
+
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -90,6 +95,7 @@ let sponsorToken: string;
 let adminToken: string;
 
 beforeAll(async () => {
+  await assertJwtSecretHermetic();
   await seed();
   adminToken = mintToken();
   sponsorToken = mintToken({ id: USER_SPONSOR, email: `${PREFIX}sponsor@acceptance.local` });

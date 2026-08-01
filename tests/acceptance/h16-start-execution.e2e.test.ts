@@ -49,6 +49,11 @@
  *
  * Artefakty z odwracalnym prefiksem `odbior--h16--`, probe sprząta po sobie.
  */
+// INI-005 JWT hermeticity: MUST be imported first — sets process.env.JWT_SECRET
+// to a fixed value before any dynamic import can load server/src/config/Config.ts.
+// See tests/acceptance/ini005TestSecret.ts for the full root-cause writeup.
+import { assertJwtSecretHermetic } from './ini005TestSecret.js';
+
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -149,6 +154,7 @@ async function getRow(
 }
 
 beforeAll(async () => {
+  await assertJwtSecretHermetic();
   await seed();
   app = await buildApp();
   token = mintToken(); // SEED user resolves to effective ADMIN — bypasses RBAC by design;
