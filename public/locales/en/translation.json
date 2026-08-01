@@ -3667,6 +3667,28 @@
         "approve": "Approve",
         "reject": "Reject",
         "returnForClarification": "Return for clarification"
+      },
+      "create": {
+        "heading": "New decision",
+        "noProjectTitle": "Select a project first",
+        "noProjectDescription": "Select a project before creating a decision.",
+        "titleLabel": "Title",
+        "titlePlaceholder": "Decision title",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "What must be decided and why now?",
+        "priorityLabel": "Priority",
+        "priorityOptions": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "critical": "Critical"
+        },
+        "dueDateLabel": "Due date",
+        "submit": "Create decision",
+        "submitting": "Creating…",
+        "retry": "Retry",
+        "permissionDenied": "You don't have permission to create decisions in this project.",
+        "genericError": "Could not create the decision. {{msg}}"
       }
     },
     "decisionPreview": {

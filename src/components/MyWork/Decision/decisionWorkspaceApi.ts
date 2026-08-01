@@ -62,9 +62,43 @@ export interface DecideInput {
   expectedVersion?: number;
 }
 
+/**
+ * MW-05: input for POST /api/decisions (DecisionController.createDecision).
+ * `projectId` is required in practice — the server 400s with "Missing
+ * decision context" if projectId/initiativeId/taskId are all absent — but is
+ * kept optional here to mirror the server's own Zod schema
+ * (`CreateDecisionSchema`) exactly rather than inventing a stricter contract
+ * client-side.
+ */
+export interface CreateDecisionInput {
+  projectId?: string | null;
+  title: string;
+  description?: string;
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+  impact?: 'low' | 'medium' | 'high';
+  dueDate?: string | null;
+  decisionType?: string;
+}
+
+/**
+ * Matches `createDecision`'s response EXACTLY — see
+ * `server/src/controllers/DecisionController.ts`:
+ * `res.status(201).json({ id, projectId: projectIdValue, title: decodedTitle, status: 'PENDING' })`.
+ * No other fields are invented here.
+ */
+export interface CreateDecisionResult {
+  id: string;
+  projectId?: string | null;
+  title: string;
+  status: string;
+}
+
 export const decisionWorkspaceApi = {
   getDetail: (decisionId: string): Promise<DecisionDetailDTO> =>
     Api.get(`/decisions/${decisionId}/detail`) as Promise<DecisionDetailDTO>,
+
+  create: (input: CreateDecisionInput): Promise<CreateDecisionResult> =>
+    Api.post('/decisions', input) as Promise<CreateDecisionResult>,
 
   postComment: (decisionId: string, body: string): Promise<DecisionCommentDTO> =>
     Api.post(`/decisions/${decisionId}/comments`, { body }) as Promise<DecisionCommentDTO>,

@@ -67,6 +67,13 @@ export interface DecisionWorkspaceProps {
   decisionId: string | null;
   onClose: () => void;
   onSaved?: (data: unknown) => void;
+  /**
+   * MW-05: the project a brand-new (not-yet-created, `decisionId === null`)
+   * decision would belong to. Used ONLY by the create flow below — an
+   * existing decision (`decisionId` set) already carries its own project via
+   * `detail`/`links` and never reads this prop.
+   */
+  projectId?: string | null;
 }
 
 const priorityLevel = (priority?: string): PriorityLevel => {
@@ -118,6 +125,7 @@ export const DecisionWorkspace: React.FC<DecisionWorkspaceProps> = ({
   decisionId,
   onClose,
   onSaved,
+  projectId,
 }) => {
   const { t, i18n } = useTranslation();
   const { currentUser } = useAppStore();
@@ -203,6 +211,66 @@ export const DecisionWorkspace: React.FC<DecisionWorkspaceProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [decisionId]);
 
+  // ---- MW-05: create-a-new-decision draft state ----
+  // Only rendered/used in the `!decisionId` branch below, but declared here
+  // (unconditionally, alongside the other hooks) per the Rules of Hooks.
+  const [createDraft, setCreateDraft] = useState<{
+    title: string;
+    description: string;
+    priority: 'low' | 'medium' | 'high' | 'critical';
+    dueDate: string;
+  }>({ title: '', description: '', priority: 'medium', dueDate: '' });
+  const [createSubmitting, setCreateSubmitting] = useState(false);
+  const [createError, setCreateError] = useState<{
+    kind: 'permission' | 'generic';
+    message: string;
+  } | null>(null);
+
+  const handleCreateSubmit = useCallback(async () => {
+    const title = createDraft.title.trim();
+    if (!title || createSubmitting || !projectId) return;
+    setCreateSubmitting(true);
+    setCreateError(null);
+    try {
+      const result = await decisionWorkspaceApi.create({
+        projectId,
+        title,
+        description: createDraft.description.trim() || undefined,
+        priority: createDraft.priority,
+        dueDate: createDraft.dueDate || null,
+      });
+      // Real 201 confirmed — hand the real id/title/status up to the parent.
+      // The parent swaps its working id for `result.id`, which re-renders
+      // this component with a real `decisionId` prop; the existing
+      // `useEffect` above then fetches the full aggregate via
+      // `getDetail()`/`GET /:id/detail`. No local state is fabricated here.
+      onSaved?.({ id: result.id, title: result.title, status: result.status });
+    } catch (err) {
+      const apiErr = readDecisionApiError(err);
+      if (apiErr.status === 403) {
+        setCreateError({
+          kind: 'permission',
+          message: t(
+            'myWork.decisionWorkspace.create.permissionDenied',
+            "You don't have permission to create decisions in this project."
+          ),
+        });
+      } else {
+        setCreateError({
+          kind: 'generic',
+          message: t(
+            'myWork.decisionWorkspace.create.genericError',
+            'Could not create the decision. {{msg}}',
+            { msg: apiErr.data?.error || apiErr.message || '' }
+          ),
+        });
+      }
+      // Draft is intentionally kept so the user can retry without retyping.
+    } finally {
+      setCreateSubmitting(false);
+    }
+  }, [createDraft, createSubmitting, onSaved, projectId, t]);
+
   const isPolish = i18n.language?.startsWith('pl');
   const isAdminLike = isAdminLikeRole(currentUser?.role);
   const dateLocale = isPolish ? 'pl-PL' : 'en-US';
@@ -237,26 +305,168 @@ export const DecisionWorkspace: React.FC<DecisionWorkspaceProps> = ({
     });
   }, [detail, navigate]);
 
-  // ---- Not-yet-created decisions are out of scope for this workspace ----
-  // See the MW-DEC-001 integration note: creating a brand-new decision keeps
-  // going through the existing creation flow; this component is the detail/
-  // collaboration/decide surface for a decision that already exists.
+  // ---- MW-05: not-yet-created decisions — real create flow ----
+  // Backed by the already-working POST /api/decisions endpoint
+  // (DecisionController.createDecision): session-derived actor/org from the
+  // JWT, fail-closed `req.can('approve_changes')` check, tenant-ownership
+  // verification, atomic transaction. This component never fabricates a
+  // "created" state locally — success only flows through `onSaved`, and the
+  // parent re-renders this same component with the real `decisionId`, which
+  // triggers the existing `useEffect`/`loadDetail()` above to fetch it for
+  // real via GET /:id/detail.
   if (!decisionId) {
+    if (!projectId) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
+          <EmptyState
+            title={t('myWork.decisionWorkspace.create.noProjectTitle', 'Select a project first')}
+            description={t(
+              'myWork.decisionWorkspace.create.noProjectDescription',
+              'Select a project before creating a decision.'
+            )}
+          />
+          <button
+            onClick={onClose}
+            className="h-8 px-3 rounded-lg text-xs font-medium text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors"
+          >
+            {t('myWork.decisionWorkspace.close', 'Close')}
+          </button>
+        </div>
+      );
+    }
+
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
-        <EmptyState
-          title={t('myWork.decisionWorkspace.noIdTitle', 'No decision selected')}
-          description={t(
-            'myWork.decisionWorkspace.noIdDescription',
-            'Creating a new decision is not supported in this view yet.'
-          )}
-        />
-        <button
-          onClick={onClose}
-          className="h-8 px-3 rounded-lg text-xs font-medium text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors"
-        >
-          {t('myWork.decisionWorkspace.close', 'Close')}
-        </button>
+      <div className="flex h-full flex-col overflow-hidden bg-c-bg">
+        <div className="shrink-0 border-b border-c-border-subtle px-5 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-base font-semibold text-c-text">
+              {t('myWork.decisionWorkspace.create.heading', 'New decision')}
+            </h1>
+            <button
+              onClick={onClose}
+              aria-label={t('myWork.decisionWorkspace.close', 'Close')}
+              className="shrink-0 h-8 w-8 flex items-center justify-center rounded-lg text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
+          <div className="max-w-md space-y-3">
+            <div>
+              <label className="mb-1 block text-[11px] font-medium text-c-text-secondary">
+                {t('myWork.decisionWorkspace.create.titleLabel', 'Title')}
+              </label>
+              <input
+                value={createDraft.title}
+                onChange={(e) => setCreateDraft((d) => ({ ...d, title: e.target.value }))}
+                placeholder={t('myWork.decisionWorkspace.create.titlePlaceholder', 'Decision title')}
+                disabled={createSubmitting}
+                className="w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs font-medium text-c-text placeholder:text-c-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-60"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-[11px] font-medium text-c-text-secondary">
+                {t('myWork.decisionWorkspace.create.descriptionLabel', 'Description')}
+              </label>
+              <textarea
+                value={createDraft.description}
+                onChange={(e) => setCreateDraft((d) => ({ ...d, description: e.target.value }))}
+                placeholder={t(
+                  'myWork.decisionWorkspace.create.descriptionPlaceholder',
+                  'What must be decided and why now?'
+                )}
+                rows={3}
+                disabled={createSubmitting}
+                className="w-full resize-none rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text placeholder:text-c-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-60"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="mb-1 block text-[11px] font-medium text-c-text-secondary">
+                  {t('myWork.decisionWorkspace.create.priorityLabel', 'Priority')}
+                </label>
+                <select
+                  value={createDraft.priority}
+                  onChange={(e) =>
+                    setCreateDraft((d) => ({
+                      ...d,
+                      priority: e.target.value as typeof d.priority,
+                    }))
+                  }
+                  disabled={createSubmitting}
+                  className="w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-60"
+                >
+                  <option value="low">
+                    {t('myWork.decisionWorkspace.create.priorityOptions.low', 'Low')}
+                  </option>
+                  <option value="medium">
+                    {t('myWork.decisionWorkspace.create.priorityOptions.medium', 'Medium')}
+                  </option>
+                  <option value="high">
+                    {t('myWork.decisionWorkspace.create.priorityOptions.high', 'High')}
+                  </option>
+                  <option value="critical">
+                    {t('myWork.decisionWorkspace.create.priorityOptions.critical', 'Critical')}
+                  </option>
+                </select>
+              </div>
+
+              <div className="flex-1">
+                <label className="mb-1 block text-[11px] font-medium text-c-text-secondary">
+                  {t('myWork.decisionWorkspace.create.dueDateLabel', 'Due date')}
+                </label>
+                <input
+                  type="date"
+                  value={createDraft.dueDate}
+                  onChange={(e) => setCreateDraft((d) => ({ ...d, dueDate: e.target.value }))}
+                  disabled={createSubmitting}
+                  className="w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-60"
+                />
+              </div>
+            </div>
+
+            {createError ? (
+              <div className="flex items-start gap-1.5 text-[11px] text-danger-600 dark:text-danger-400">
+                <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+                <span>{createError.message}</span>
+              </div>
+            ) : null}
+
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                onClick={() => void handleCreateSubmit()}
+                disabled={!createDraft.title.trim() || createSubmitting}
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised border border-c-border-subtle text-c-text hover:bg-c-surface disabled:opacity-40 transition-colors"
+              >
+                {createSubmitting ? <Loader2 size={13} className="animate-spin" /> : null}
+                {createSubmitting
+                  ? t('myWork.decisionWorkspace.create.submitting', 'Creating…')
+                  : t('myWork.decisionWorkspace.create.submit', 'Create decision')}
+              </button>
+              {createError ? (
+                <button
+                  onClick={() => void handleCreateSubmit()}
+                  disabled={createSubmitting}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-40"
+                >
+                  <RefreshCw size={13} />
+                  {t('myWork.decisionWorkspace.create.retry', 'Retry')}
+                </button>
+              ) : null}
+              <button
+                onClick={onClose}
+                disabled={createSubmitting}
+                className="h-8 px-3 rounded-lg text-xs font-medium text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-40"
+              >
+                {t('myWork.decisionWorkspace.close', 'Close')}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
