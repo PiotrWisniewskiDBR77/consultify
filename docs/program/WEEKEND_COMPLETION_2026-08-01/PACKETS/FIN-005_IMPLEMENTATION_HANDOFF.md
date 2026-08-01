@@ -640,3 +640,171 @@ stagingu.
 4. **Wartości allowlisty Railway** (nazwa serwisu, nazwa bazy, port) nadal
    przepisane z dokumentacji, niepotwierdzone na żywym połączeniu. Fail-closed.
 5. **Ryzyko rezydualne atomowości** z §12.1 (kill -9 między zapisami).
+
+## 13. Runda czwarta — po przeglądzie adwersaryjnym (2026-08-01)
+
+Po rundzie trzeciej uruchomiłem osobny przegląd adwersaryjny, którego zadaniem
+było OBALIĆ twierdzenia §12, nie potwierdzić je. Znalazł **realny bloker**,
+którego moje własne testy fault-injection nie mogły złapać.
+
+Commity: `ec0e597487` (bloker + samo-naprawa), `12cecf0e67` (odcisk fixture'u +
+nity skryptu).
+
+### 13.1 BLOKER — `INCOMPLETE` mogło współistnieć z promowanym sprawozdaniem
+
+Dwa defekty się składały:
+
+1. Bramka `anythingIssued` **pomijała kompensujący rollback i jego weryfikacyjny
+   ponowny odczyt**, gdy błąd wystąpił przy *pierwszym* zapisie promocyjnym.
+2. Rollback demotował i ponownie czytał wyłącznie ID, których promise się
+   **rozwiązał**. Zapis, którego promise **odrzuca po zaaplikowaniu wiersza**,
+   nie był ani demotowany, ani ponownie czytany.
+
+Kod twierdził, że przypadek 2 jest niemożliwy — „pojedynczy UPDATE nie może
+zaaplikować się połowicznie, więc ten wiersz nigdy nie został promowany".
+**Twierdzenie było fałszywe**: myliło atomowość instrukcji w Postgresie z
+dostarczeniem wyniku do klienta. `promoteRow` → `DbPromise.run` →
+`PostgresDatabase.run` → `pool.query`; zerwane połączenie albo
+`pg_terminate_backend` PO zaaplikowaniu UPDATE-u dociera jako odrzucony promise.
+Wiersz jest wtedy `confirmed`/`pass`/`ready` w bazie, a kod wierzy, że nie
+został promowany — i loguje na poziomie `warn` „issued 0/3 statement
+promotion(s) … no promotion needed rolling back".
+
+Asymetria, która to ukrywała: pakiet i analiza były czytane ponownie
+bezwarunkowo, więc dla nich detekcja działała. Tylko sprawozdania były bramkowane
+listą `promoted`.
+
+**Naprawa:** zwarcie `anythingIssued` usunięte; rollback demotuje i ponownie
+czyta **wszystkie zaplanowane** wiersze (strażnik `IS DISTINCT FROM` czyni
+democję niepromowanego wiersza zerowierszowym no-opem, więc jest to darmowe);
+fałszywy komentarz zastąpiony prawdziwym powodem.
+`statementPromotionsIssued` jest teraz udokumentowany jako **dolne ograniczenie**.
+
+### 13.2 ★ Dlaczego moje testy tego nie złapały — lekcja metodyczna
+
+Wstrzykiwałem awarie w bazie (`CHECK` + trigger). Postgres gwarantuje atomowość
+instrukcji, więc modelowałem **wyłącznie „odrzucone bez zaaplikowania"**.
+Atrapa in-memory miała dokładnie ten sam ślepy punkt — `maybeFail` odpalał się
+PRZED dotknięciem magazynu. Co gorsza, dwie asercje w suicie atomowości
+**kodyfikowały zwarcie `anythingIssued` jako zamierzone zachowanie**, więc
+naprawa wymagała ich odwrócenia.
+
+Klasa błędu, której nie da się złapać uruchamianiem: obie warstwy testowe
+dzieliły to samo założenie, co kod pod testem. Znalazł to przegląd **czytający**
+kod, nie wykonujący go.
+
+Atrapa ma teraz hook `onWriteAfterApply` (zapisuje do magazynu, POTEM rzuca) i
+sześć scenariuszy tej klasy.
+
+### 13.3 Samo-naprawa zamiast samej dokumentacji (S1)
+
+Ryzyko rezydualne z §12.7 — proces zabity MIĘDZY dwoma zapisami promocyjnymi —
+nie rzuca wyjątku, więc żadna kompensacja w procesie się nie uruchomi. Zamiast
+tylko to opisać, doszła **faza 0**: przy starcie, gdy stan jest MIESZANY (1–4 z 5
+wierszy promocyjnych twierdzi READY), wszystkie są demotowane przed fazą 1.
+Pełne 5 = zdrowy fixture, 0 = świeży — oba nietknięte, więc drugi przebieg
+byte-identical zostaje nienaruszony.
+
+Zweryfikowane przeze mnie na realnym PostgreSQL osobnym trybem harnessu:
+instaluję dokładnie ślad po `kill -9` w środku promocji (2/3 sprawozdań na
+`ready`, reszta zdemotowana), uruchamiam seed:
+
+```text
+crash residue installed: 2/3 statements claim READY
+PASS  seed recovered the fixture to complete
+PASS  all three statements consistently READY after the heal
+PASS  pack READY
+```
+
+**Ryzyko rezydualne pozostaje i jest nazwane w kodzie:** między awarią a
+następnym uruchomieniem fixture JEST niespójny, i bez prawdziwej transakcji nic
+w procesie tego nie zmieni.
+
+### 13.4 Odcisk fixture'u widzi teraz stan, nie tylko graf ID (S2)
+
+`computeCanonicalFixtureDigest` liczył odcisk **grafu ID** — readback nie
+pobierał kolumn statusu. Współbieżna democja pakietu z `ready` na `pending`
+dawała **identyczny odcisk** i przechodziła obie bramki. To dokładnie stan, jaki
+zostawia przerwany seed: kwarantanna posprzątałaby wokół fixture'u, który nie
+jest gotowy.
+
+Readback i materiał odcisku obejmują teraz `pack_status`,
+`pack_readiness_status`, `status` i `readiness_status` sprawozdań oraz `status`
+analizy. Kolumna nieobecna w schemacie jest kodowana jako `<column-absent>`,
+osobno od `NULL` — bez tego znikająca kolumna hashowałaby się identycznie jak
+kolumna ustawiona na NULL.
+
+Dodatkowo **`--write` wymaga teraz fixture'u READY**, nie tylko kompletnego:
+„kompletny, ale pending" to sygnatura przerwanego seeda, a kontrakt pakietu mówi
+„najpierw seed, potem kwarantanna". Tryb dry-run bez zmian — raportowanie
+półzasianego tenanta jest właśnie tym, do czego dry-run służy.
+
+### 13.5 Nity zamknięte
+
+Branded refusal z `new URL()` i z `readManifest` (bez echa connection stringa —
+niesie hasło) · deklarowany port przez `/^\d+$/` zamiast `Number()` (odrzuca
+`0x6DA2`, `2.8146e4`, `28146.0`) · status reuse kwarantanny dokładny i
+case-sensitive · `promoteRow` rzuca zamiast po cichu wracać, gdy żadna kolumna
+przypisania nie przetrwa filtra schematu · martwy `SELECT readiness_status`
+usunięty · mylące komunikaty „expected exactly 1 … found" przeredagowane.
+
+### 13.6 Bramki po rundzie czwartej
+
+| Bramka | Wynik |
+| --- | --- |
+| targeted FIN-005 backend (16 plików) | **342 PASS** |
+| FIN-005 demo + scripts (9 plików) | **217 PASS** |
+| real PostgreSQL — round-trip | **PASS** |
+| real PostgreSQL — drift | **PASS** |
+| real PostgreSQL — byte-identical drugi przebieg | **PASS** |
+| real PostgreSQL — fault injection ×5 punktów promocji | **PASS** |
+| real PostgreSQL — samo-naprawa śladu po awarii | **PASS** |
+| crash-after-commit recovery | **PASS** |
+| HMAC tampering ×9 wektorów | **PASS** |
+| environment negatives (CLI, po wszystkich edycjach) | **PASS** |
+| frontend targeted (21 plików) | **109 PASS / 6 pre-existing** |
+| `tsc --noEmit` backend | **216 przed = 216 po**, identyczny zbiór `file:line:code` |
+| `tsc --noEmit` frontend | **0 błędów** |
+| `npm run build:backend` | **PASS** |
+| `git diff --check` | **PASS** |
+
+Kontrola anty-pusta: ponowne wprowadzenie zwarcia `anythingIssued` i zakresu
+„tylko zarejestrowane" czerwieni 5 z nowych testów; wyłączenie fazy 0 czerwieni
+test samo-naprawy. Test bez zębów wygląda identycznie jak dobry — dlatego to
+sprawdzenie jest w raporcie.
+
+### 13.7 ★ NOWY BLOKER POZA GRANICĄ PAKIETU — `DbPromise.run()` nie odrzuca przy timeout
+
+`server/src/utils/DbPromise.ts` — gałąź timeoutu w `run()`:
+
+```ts
+if (fallback) {
+  resolve({ success: false, error: 'timeout' });
+}
+// brak else reject
+```
+
+`all()` i `get()` mają obie gałęzie. `run()` nie ma. Przy `{ fallback: false }`
+timeout jest **martwy**: promise czeka bez końca na prawdziwy callback.
+Zablokowany zapis zawiesza cały seed demo zamiast go zerwać.
+
+Zweryfikowane przeze mnie: defekt pochodzi z commita `0b5eff2f9f` (2026-04-12),
+**ta gałąź tego pliku nie dotyka** (`git diff c522a861..HEAD -- server/src/utils/DbPromise.ts`
+jest pusty). To współdzielone narzędzie całego backendu, więc naprawa nie mieści
+się w granicy FIN-005 — **wymaga własnego pakietu**.
+
+Dlaczego to materialne dla FIN-005: argument atomowości seeda opiera się na tym,
+że `run()` odrzuca przy błędzie. Odrzuca przy błędzie sterownika, ale NIE przy
+timeout z `fallback: false`. Kompensujący rollback nigdy się wtedy nie uruchomi,
+bo nie ma wyjątku — dokładnie ten sam kształt co ryzyko rezydualne z §13.3, i
+tak samo naprawiany przez fazę 0 przy następnym uruchomieniu.
+
+### 13.8 Otwarte, świadomie niezrobione
+
+1. `DbPromise.run()` timeout — §13.7, osobny pakiet.
+2. Brak trwałej tabeli audit/outbox — wymaga migracji.
+3. Zarządzanie kluczem HMAC out of band — brak procedury rotacji;
+   utrata klucza czyni istniejący manifest nieużywalnym przez skrypt.
+4. Semantyka `FOR UPDATE` sprawdzona tylko na atrapie.
+5. Wartości allowlisty Railway niepotwierdzone na żywym połączeniu (fail-closed).
+6. Ryzyko rezydualne atomowości między zapisami (§13.3) — mitygowane fazą 0.
