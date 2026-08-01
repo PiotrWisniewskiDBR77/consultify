@@ -262,10 +262,6 @@ const ensurePermission = async (
   const user = req.user;
   if (!user) return false;
   if (process.env.TOOLS_SKIP_PERMISSIONS === 'true') return true;
-  if (process.env.NODE_ENV !== 'production') {
-    const key = String(permissionKey || '').toUpperCase();
-    if (key.startsWith('TOOLS_')) return true;
-  }
   // FIX (role-case family, continuation of AssessmentController fix): user.role on
   // AuthenticatedUser is lowercase (mapRoleForAuthenticatedUser in auth.middleware.ts
   // emits 'owner'/'administrator'/etc), while hasPermission()/ROLES compare against
@@ -282,7 +278,7 @@ const ensurePermission = async (
   if (allowed) return true;
   const role = String(user.role || '').toUpperCase();
   const key = String(permissionKey || '').toUpperCase();
-  if (role === 'ADMIN' && key.startsWith('TOOLS_')) {
+  if (['ADMIN', 'ADMINISTRATOR'].includes(role) && key.startsWith('TOOLS_')) {
     return true;
   }
   return false;
@@ -380,42 +376,29 @@ const ensureToolsSchema = async (): Promise<void> => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`
     );
-    // V4-TOOL-02: runtime contract & DoD status columns
-    // IF NOT EXISTS (Postgres-native, supported since 9.6) makes these true no-ops
-    // on repeat calls instead of throwing 42701 "column already exists" — which
-    // queryHelpers.queryRun logs via logger.error() BEFORE the try/catch here
-    // ever sees it, spamming logs on every create/update tool_session.
-    try {
-      await queryHelpers.queryRun(
-        `ALTER TABLE tool_sessions ADD COLUMN IF NOT EXISTS runtime_contract_json TEXT`
-      );
-    } catch {
-      // defensive: should be no-op now, keep catch for forward-compat
-    }
-    try {
-      await queryHelpers.queryRun(
-        `ALTER TABLE tool_sessions ADD COLUMN IF NOT EXISTS dod_status TEXT DEFAULT 'pending'`
-      );
-    } catch {
-      // defensive: should be no-op now, keep catch for forward-compat
-    }
-    // P27-B: wizard state, missing items, failure reason
-    // H3: output_json — generated tool outputs; read by the Conclusions sync
-    // (ConclusionService.syncToolOutputs) and written by demo seeds. Aligning
-    // the runtime schema here keeps that SELECT from failing on fresh DBs.
+    // V4-TOOL-02 / P27-B / H3 additive runtime columns. Inspect before ALTER
+    // instead of relying on PostgreSQL-only `ADD COLUMN IF NOT EXISTS`: the
+    // controller's persistence contract is also exercised against SQLite, and
+    // silently swallowing its syntax error left the table half-provisioned.
+    const sessionColumns = new Set(
+      (await queryHelpers.getTableColumns('tool_sessions')).map((column) => column.name)
+    );
     for (const col of [
+      { name: 'runtime_contract_json', def: 'TEXT' },
+      { name: 'dod_status', def: "TEXT DEFAULT 'pending'" },
       { name: 'wizard_state_json', def: 'TEXT' },
       { name: 'missing_items_json', def: 'TEXT' },
       { name: 'failure_reason', def: 'TEXT' },
       { name: 'last_generation_batch_id', def: 'TEXT' },
       { name: 'output_json', def: 'TEXT' },
     ]) {
+      if (sessionColumns.has(col.name)) continue;
       try {
-        await queryHelpers.queryRun(
-          `ALTER TABLE tool_sessions ADD COLUMN IF NOT EXISTS ${col.name} ${col.def}`
-        );
+        await queryHelpers.queryRun(`ALTER TABLE tool_sessions ADD COLUMN ${col.name} ${col.def}`);
+        sessionColumns.add(col.name);
       } catch {
-        // defensive: should be no-op now, keep catch for forward-compat
+        // Concurrent first-use initialization may have added it after the
+        // column inspection. A following request re-reads the schema.
       }
     }
 

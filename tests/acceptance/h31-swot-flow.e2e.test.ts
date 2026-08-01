@@ -388,7 +388,7 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
       .put(`/api/tools/${sessionId}`)
       .set('Authorization', `Bearer ${token}`)
       .send({
-        completionPercent: 90,
+        completionPercent: 100,
         confidenceAvg: 4,
         answers: { items: reloadedItems, tensions, moves, summary },
       });
@@ -476,6 +476,20 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
         organization_id: ORG_B_ID,
         role: 'OWNER',
       });
+      const tokenBAdmin = mintToken({
+        id: USER_B_ID,
+        email: USER_B_EMAIL,
+        organizationId: ORG_B_ID,
+        organization_id: ORG_B_ID,
+        role: 'ADMIN',
+      });
+      const tokenBUser = mintToken({
+        id: USER_B_ID,
+        email: USER_B_EMAIL,
+        organizationId: ORG_B_ID,
+        organization_id: ORG_B_ID,
+        role: 'USER',
+      });
       const foreignRead = await request(toolsApp)
         .get(`/api/tools/${sessionId}`)
         .set('Authorization', `Bearer ${tokenB}`);
@@ -501,6 +515,69 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
       expect(ownerAfterAttack.status).toBe(200);
       expect(ownerAfterAttack.body?.answers?.summary?.verdict).toBe(verdict);
       evidence('[h31] tenant isolation OK — org B read/write 404, no conclusion leak, owner data unchanged');
+
+      // -----------------------------------------------------------------
+      // 9) QUALITY / FINALIZE — real role gate, tenant gate, immutable
+      //    approved snapshot and post-approval write rejection.
+      // -----------------------------------------------------------------
+      const unauthorizedApprove = await request(toolsApp)
+        .post(`/api/tools/${sessionId}/approve`)
+        .set('Authorization', `Bearer ${tokenB}`)
+        .send({});
+      expect(unauthorizedApprove.status).toBe(404);
+
+      const orgBOwnSession = await request(toolsApp)
+        .post('/api/tools')
+        .set('Authorization', `Bearer ${tokenBUser}`)
+        .send({ toolType: 'dynamic-swot', name: `${PREFIX}org-b-role-check` });
+      expect(orgBOwnSession.status).toBe(200);
+      createdToolSessionIds.push(orgBOwnSession.body.id);
+      const userRoleApprove = await request(toolsApp)
+        .post(`/api/tools/${orgBOwnSession.body.id}/approve`)
+        .set('Authorization', `Bearer ${tokenBUser}`)
+        .send({});
+      expect(userRoleApprove.status).toBe(403);
+
+      const foreignAdminApprove = await request(toolsApp)
+        .post(`/api/tools/${sessionId}/approve`)
+        .set('Authorization', `Bearer ${tokenBAdmin}`)
+        .send({});
+      expect(foreignAdminApprove.status).toBe(404);
+
+      const review = await request(toolsApp)
+        .post(`/api/tools/${sessionId}/request-review`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ priority: 'high' });
+      expect(review.status).toBe(200);
+      expect(review.body?.status).toBe('REVIEW');
+
+      const approve = await request(toolsApp)
+        .post(`/api/tools/${sessionId}/approve`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ priority: 'high' });
+      expect(approve.status).toBe(200);
+      expect(approve.body?.status).toBe('APPROVED');
+
+      const approvedRead = await request(toolsApp)
+        .get(`/api/tools/${sessionId}`)
+        .set('Authorization', `Bearer ${token}`);
+      expect(approvedRead.status).toBe(200);
+      expect(approvedRead.body?.status).toBe('APPROVED');
+      expect(approvedRead.body?.contextSnapshot?.snapshotVersion).toBe(1);
+      expect(approvedRead.body?.contextSnapshot?.approvedSnapshot?.answers).toEqual(finalAnswers);
+
+      const tamperAfterApproval = await request(toolsApp)
+        .put(`/api/tools/${sessionId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ answers: { summary: { verdict: 'OWNER TAMPER AFTER APPROVAL' } } });
+      expect(tamperAfterApproval.status).toBe(409);
+
+      const finalApprovedRead = await request(toolsApp)
+        .get(`/api/tools/${sessionId}`)
+        .set('Authorization', `Bearer ${token}`);
+      expect(finalApprovedRead.body?.answers).toEqual(finalAnswers);
+      expect(finalApprovedRead.body?.contextSnapshot?.approvedSnapshot?.answers).toEqual(finalAnswers);
+      evidence('[h31] quality/finalize OK — role 403, foreign admin 404, approved snapshot immutable, tamper 409');
     } finally {
       await client.end();
     }
