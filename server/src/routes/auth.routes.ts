@@ -81,6 +81,13 @@ const FORCED_SUPERADMIN_EMAILS = (() => {
 })();
 
 const passwordResetSuccessMessage = 'If the email exists, a reset link has been sent.';
+
+/**
+ * Role granted to a public `Try demo` signup. Deliberately NOT `ADMIN`/`OWNER`:
+ * the demo is read-only and a prospect must never reach the organization-admin or
+ * super-admin lanes. See OPS-DEMO-002.
+ */
+const DEMO_SIGNUP_ROLE = 'TEAM_MEMBER';
 const APLIX_ACCESS_CODE = 'APLIX-2026';
 const APLIX_DEFAULT_TEMPLATE_SUFFIXES = [
   'aplix_global_all_v1',
@@ -1044,25 +1051,42 @@ router.post(
   '/register-demo',
   validateBody(RegisterDemoRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { email: requestedEmail, password, firstName, acceptedLegalDocs } = req.body;
-    const email = String(requestedEmail || '').trim();
-    const normalizedEmail = normalizeAuthEmail(requestedEmail);
+    const { password, firstName, acceptedLegalDocs } = req.body;
+    // Store the SAME normalized form the login lookup uses. `login` resolves the
+    // account with `WHERE email = ?` on an already-lowercased address, so storing
+    // the raw mixed-case input here produced accounts that could never sign in and
+    // could never be re-registered (the duplicate check below is case-insensitive).
+    // That was the root cause of the "account exists but the password is wrong"
+    // dead end on demo.consultify.ai (OPS-DEMO-002).
+    const normalizedEmail = normalizeAuthEmail(req.body?.email);
+
+    // Public demo signup must not become an account-existence oracle. Every
+    // non-seed failure — duplicate address included — answers with one identical
+    // body, so a prospect address and an unknown address are indistinguishable
+    // from outside. The real reason is logged server-side only.
+    const respondSignupUnavailable = () =>
+      res.status(409).json({
+        error:
+          'We could not start a demo with those details. Log in if you already have an account, or use a different email address.',
+        code: 'DEMO_SIGNUP_UNAVAILABLE',
+      });
 
     const existingUser = await dbGet<{ id: string; organization_id: string }>(
       buildCaseInsensitiveUserEmailLookupQuery('id, organization_id'),
       [normalizedEmail]
     );
     if (existingUser) {
-      return res.status(400).json({
-        error: 'Email already in use. Please log in and click "Enter Demo".',
-        code: 'EMAIL_IN_USE',
-      });
+      logger.info('[Auth] Demo signup rejected: address already registered');
+      return respondSignupUnavailable();
     }
 
     const { default: setUserDemoPreference } =
       await import('../middleware/demoGuard.middleware.js').then((m) => ({
         default: m.setUserDemoPreference,
       }));
+    const { resolveOrCreateDemoSession } = await import(
+      '../services/demo/demoSessionService.js'
+    );
 
     const userId = uuidv4();
     const hashedPassword = bcrypt.hashSync(password, 8);
@@ -1077,25 +1101,38 @@ router.post(
       { fallback: true }
     );
 
-    // Create user in demo org
+    // Create user in demo org.
+    // Role is TEAM_MEMBER, not ADMIN: a public demo signup must not reach the
+    // organization-administration lane (adminP32 admits OWNER/ADMIN). The demo is
+    // read-only anyway — every write is refused by demoWriteProtection — so the
+    // smallest role that still browses every module is the correct one.
     const userResult = await dbRun(
       `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [userId, demoOrgId, email, hashedPassword, firstName || '', '', 'ADMIN', 'active'],
+      [
+        userId,
+        demoOrgId,
+        normalizedEmail,
+        hashedPassword,
+        firstName || '',
+        '',
+        DEMO_SIGNUP_ROLE,
+        'active',
+      ],
       { fallback: false }
     );
 
     if (!userResult.success) {
       logger.error('[Auth] Register demo user failed:', userResult.error);
-      return res.status(500).json({ error: 'Failed to create account' });
+      return respondSignupUnavailable();
     }
 
     // Ensure organization_members row exists for multi-org support
     await dbRun(
       `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
-       VALUES (?, ?, ?, 'ADMIN', 'ACTIVE', datetime('now'))
+       VALUES (?, ?, ?, ?, 'ACTIVE', datetime('now'))
        ON CONFLICT(organization_id, user_id) DO NOTHING`,
-      [uuidv4(), demoOrgId, userId]
+      [uuidv4(), demoOrgId, userId, DEMO_SIGNUP_ROLE]
     );
 
     if (Array.isArray(acceptedLegalDocs) && acceptedLegalDocs.length > 0) {
@@ -1127,6 +1164,39 @@ router.post(
       // Continue — user is created; preference is for analytics only
     }
 
+    // Provision the isolated demo tenant BEFORE answering. Without this the client
+    // has no `X-Demo-Session-Org` to send and every demo signup silently shares the
+    // curated base org. `resolveOrCreateDemoSession` honours DEMO_USE_BASE_ORG, so
+    // the curated read-only presentation mode keeps working unchanged.
+    const requestedDemoLocale = String(
+      req.get('X-App-Language') || req.get('Accept-Language') || 'en'
+    );
+    let demoSession: Awaited<ReturnType<typeof resolveOrCreateDemoSession>>;
+    try {
+      demoSession = await resolveOrCreateDemoSession(
+        userId,
+        'register_demo',
+        requestedDemoLocale
+      );
+    } catch (seedErr: any) {
+      // Compensating rollback: leaving a half-provisioned account behind would make
+      // the address permanently unusable (the duplicate check would reject every
+      // retry). Removing it keeps `Try demo` idempotent — the prospect can retry
+      // with the same address once the seed is healthy again.
+      logger.error('[Auth] Demo signup seed failed, rolling back account', {
+        userId,
+        error: seedErr?.message || String(seedErr),
+      });
+      await dbRun(`DELETE FROM organization_members WHERE user_id = ?`, [userId], {
+        fallback: true,
+      });
+      await dbRun(`DELETE FROM users WHERE id = ?`, [userId], { fallback: true });
+      return res.status(503).json({
+        error: 'The demo workspace is temporarily unavailable. Please try again shortly.',
+        code: 'DEMO_SEED_UNAVAILABLE',
+      });
+    }
+
     const user = await dbGet<{
       id: string;
       email: string;
@@ -1139,7 +1209,10 @@ router.post(
     ]);
 
     if (!user) {
-      return res.status(500).json({ error: 'Account created but login failed' });
+      return res.status(503).json({
+        error: 'The demo workspace is temporarily unavailable. Please try again shortly.',
+        code: 'DEMO_SEED_UNAVAILABLE',
+      });
     }
 
     const tokenResult = await refreshTokenService.generateTokenPair(user, {
@@ -1155,7 +1228,7 @@ router.post(
 
     await recordDemoTrialEvent({
       eventType: DEMO_TRIAL_EVENT_TYPES.DEMO_STARTED,
-      organizationId: demoOrgId,
+      organizationId: demoSession.session_org_id || demoOrgId,
       userId,
       source: 'register_demo',
       language: language || undefined,
@@ -1187,13 +1260,22 @@ router.post(
       /* ignore */
     }
 
-    logger.info('[Auth] Demo signup successful', { userId, email });
+    logger.info('[Auth] Demo signup successful', { userId });
     return res.json({
       user: safeUser,
       token: tokenResult.accessToken,
       refreshToken: tokenResult.refreshToken,
       expiresIn: config.JWT_EXPIRES_IN,
       isDemo: true,
+      // The client must echo `organizationId` back as `X-Demo-Session-Org`, otherwise
+      // the backend falls back to the shared curated org and isolation is lost.
+      demoSession: {
+        id: demoSession.id,
+        organizationId: demoSession.session_org_id,
+        locale: demoSession.locale,
+        expiresAt: demoSession.expires_at,
+        anchorDate: demoSession.anchor_date,
+      },
     });
   })
 );
