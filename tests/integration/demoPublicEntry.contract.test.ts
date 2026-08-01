@@ -363,6 +363,127 @@ describe('OPS-DEMO-002 public demo entry contract', () => {
       expect(exit.status).not.toBe(403);
     }, 180_000);
 
+    it('ENTERING demo through the same route is refused — that is provisioning', async () => {
+      const a = await registerDemo(fixtureEmail('bare-enter'));
+      const enter = await request(app)
+        .post('/api/demo/toggle')
+        .set('Authorization', `Bearer ${a.body.token}`)
+        .send({ enabled: true });
+      expect(enter.status).toBe(403);
+      expect(enter.body.code).toBe('DEMO_READ_ONLY');
+    }, 180_000);
+
+    /**
+     * These all live under `/api/auth/`, which the previous prefix exception waved
+     * through wholesale. Each is a real mutation a public demo account had.
+     */
+    const AUTH_WRITES_THAT_MUST_BE_REFUSED: Array<[string, string, object]> = [
+      ['switch-organization', '/api/auth/switch-organization', { organizationId: 'demo-org' }],
+      ['change-password', '/api/auth/change-password', { currentPassword: 'x', newPassword: 'yyyyyyyy' }],
+      ['mfa setup', '/api/auth/mfa/setup', {}],
+      ['mfa enable', '/api/auth/mfa/enable', { token: '000000' }],
+      ['mfa disable', '/api/auth/mfa/disable', { password: 'x' }],
+      ['revert-impersonation', '/api/auth/revert-impersonation', {}],
+    ];
+
+    it.each(AUTH_WRITES_THAT_MUST_BE_REFUSED)(
+      'refuses %s with 403 DEMO_READ_ONLY',
+      async (_label, path, body) => {
+        const a = await registerDemo(fixtureEmail('auth-write'));
+        const res = await request(app)
+          .post(path)
+          .set('Authorization', `Bearer ${a.body.token}`)
+          .send(body);
+        expect(res.status).toBe(403);
+        expect(res.body.code).toBe('DEMO_READ_ONLY');
+      },
+      180_000
+    );
+
+    /**
+     * `register`, `register-demo` and `reset-password` carry no `verifyToken`, so
+     * `attachUser` never runs and the guard structurally cannot see them. They are
+     * PUBLIC endpoints: an anonymous stranger can call them with no token at all.
+     *
+     * The property that matters is therefore not "the demo principal is refused"
+     * but "the demo credential buys nothing" — the outcome must be identical with
+     * and without it. (`isWriteAllowedForPublicDemo` denies these paths anyway, as
+     * defence in depth should any of them ever gain authentication.)
+     */
+    it.each([
+      [
+        'register',
+        '/api/auth/register',
+        // A fresh address per call — otherwise the second request is merely a
+        // duplicate and the comparison measures nothing.
+        () => ({
+          email: fixtureEmail('anon-register'),
+          password: 'anon-fixture-pass',
+          firstName: 'A',
+          lastName: 'B',
+          companyName: `ops-demo-002 ${RUN_ID} ${caseCounter}`,
+        }),
+      ],
+      [
+        'reset-password',
+        '/api/auth/reset-password',
+        () => ({ token: 'not-a-real-token', newPassword: 'anon-fixture-pass' }),
+      ],
+    ])(
+      'the demo token confers nothing extra on the public route %s',
+      async (_label, path, makeBody) => {
+        const a = await registerDemo(fixtureEmail('public-route'));
+
+        const anonymous = await request(app)
+          .post(path as string)
+          .send((makeBody as () => object)());
+        const withDemoToken = await request(app)
+          .post(path as string)
+          .set('Authorization', `Bearer ${a.body.token}`)
+          .send((makeBody as () => object)());
+
+        // Same treatment either way: the credential is simply irrelevant here.
+        expect(withDemoToken.status).toBe(anonymous.status);
+      },
+      180_000
+    );
+
+    it('logout is still permitted', async () => {
+      const a = await registerDemo(fixtureEmail('bare-logout'));
+      const out = await request(app)
+        .post('/api/auth/logout')
+        .set('Authorization', `Bearer ${a.body.token}`)
+        .send({});
+      expect(out.status).not.toBe(403);
+    }, 180_000);
+
+    it('record-event cannot be attributed to another tenant', async () => {
+      const a = await registerDemo(fixtureEmail('event-a'));
+      const b = await registerDemo(fixtureEmail('event-b'));
+      const orgA = a.body.demoSession.organizationId as string;
+      const orgB = b.body.demoSession.organizationId as string;
+
+      // A files an event claiming B's organization in the body.
+      const res = await request(app)
+        .post('/api/demo/record-event')
+        .set('Authorization', `Bearer ${a.body.token}`)
+        .send({ eventType: 'demo_ai_limit_reached', organizationId: orgB });
+      expect(res.status).toBe(200);
+
+      // Read back: nothing landed against B, and A's own event is attributed to A.
+      const forB = await dbGet<{ c: number }>(
+        `SELECT COUNT(*) as c FROM conversion_events WHERE organization_id = ? AND user_id = ?`,
+        [orgB, a.body.user.id]
+      );
+      expect(Number(forB?.c || 0)).toBe(0);
+
+      const forA = await dbGet<{ c: number }>(
+        `SELECT COUNT(*) as c FROM conversion_events WHERE organization_id = ? AND user_id = ?`,
+        [orgA, a.body.user.id]
+      );
+      expect(Number(forA?.c || 0)).toBeGreaterThan(0);
+    }, 180_000);
+
     it('the refusal is not cacheable', async () => {
       const a = await registerDemo(fixtureEmail('bare-cache'));
       const res = await request(app)
