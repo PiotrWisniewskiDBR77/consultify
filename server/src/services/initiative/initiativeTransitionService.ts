@@ -319,6 +319,19 @@ interface ExecuteInitiativeTransitionParams {
    *  non-HTTP callers (there is no request). */
   requestIp?: string | null;
   requestUserAgent?: string | null;
+  /**
+   * Disambiguation guard (INI-005 follow-up, 2026-08-01) — required when the
+   * SAME `nextStatusInput` is reachable from more than one `from` status via
+   * DIFFERENT gates. Concretely: EXECUTING is reachable both from SCHEDULED
+   * (gate START) and from BLOCKED (gate UNBLOCK) — `isValidTransition` alone
+   * accepts either, so without this guard a caller hitting the /unblock
+   * adapter on a SCHEDULED (not BLOCKED) initiative would silently succeed
+   * via the START gate instead of failing with a clear "not blocked" error.
+   * When set, the locked row's current status must match exactly or the
+   * transition is refused (400 UNEXPECTED_CURRENT_STATUS) before any gate/
+   * RBAC/decision check runs.
+   */
+  expectedCurrentStatus?: string | null;
   /** Defaults to `{ kind: 'user' }` — every existing caller is unaffected. */
   actor?: InitiativeTransitionActor;
 }
@@ -427,6 +440,28 @@ export async function executeInitiativeTransition(
     const currentStatus = normalizeInitiativeDbStatusForRead(String(lockedRow.status || ''));
     const initiativeName = String(lockedRow.name || 'Initiative');
     const initiativeColumns = getColumnNameSet(await queryHelpers.getTableColumns('initiatives'));
+
+    // DISAMBIGUATION GUARD (see ExecuteInitiativeTransitionParams.expectedCurrentStatus
+    // doc comment): must run BEFORE isValidTransition, since e.g. SCHEDULED->EXECUTING
+    // and BLOCKED->EXECUTING are BOTH independently valid — this is the check that
+    // makes /unblock fail cleanly on a non-BLOCKED initiative instead of silently
+    // acting as if it were /start-execution.
+    if (params.expectedCurrentStatus) {
+      const expected = normalizeStatus(params.expectedCurrentStatus);
+      if (currentStatus !== expected) {
+        return {
+          kind: 'error',
+          statusCode: 400,
+          body: {
+            error: `This action requires the initiative to be ${expected}, but it is ${currentStatus}`,
+            rule: 'UNEXPECTED_CURRENT_STATUS',
+            from: currentStatus,
+            expected,
+            to: nextStatus,
+          },
+        };
+      }
+    }
 
     // TRANSITION VALIDATION: check if from→to is allowed
     if (!isValidTransition(currentStatus as any, nextStatus as any)) {
@@ -887,7 +922,21 @@ export async function executeInitiativeTransition(
     // (GOVERNANCE_DECISION_MAKING) — it's the same GO/NO-GO governance
     // decision that must still be current (not superseded by a later
     // NO-GO/pending re-decision) at the moment execution actually starts.
-    if (currentStatus === 'SCHEDULED' && nextStatus === 'EXECUTING') {
+    //
+    // EXTENDED (INI-005 follow-up, 2026-08-01) to also cover BLOCKED ->
+    // EXECUTING (UNBLOCK, /unblock endpoint — previously a raw UPDATE with
+    // NO decision check at all). Design decision, made explicit: unblocking
+    // resumes execution, and the exact rework/supersession risk the H16 fix
+    // exists for applies just as much here — a block can span a rework cycle
+    // where the initiative's GO decision gets superseded by a NO-GO before
+    // anyone unblocks it. Requiring a CURRENT approved GOVERNANCE_DECISION_
+    // MAKING decision at unblock time (not just at the original SCHEDULED->
+    // EXECUTING start) closes that gap too, for the same reason and via the
+    // same check — not a separate, parallel decision type.
+    if (
+      (currentStatus === 'SCHEDULED' || currentStatus === 'BLOCKED') &&
+      nextStatus === 'EXECUTING'
+    ) {
       const executionGoNoGo = await hasApprovedGateDecision(
         orgId,
         id,
@@ -898,13 +947,19 @@ export async function executeInitiativeTransition(
           kind: 'error',
           statusCode: 400,
           body: {
-            error: 'Go/No-Go decision is required to start execution of this initiative',
+            error:
+              currentStatus === 'BLOCKED'
+                ? 'A current Go/No-Go decision is required to unblock and resume execution of this initiative'
+                : 'Go/No-Go decision is required to start execution of this initiative',
             rule: 'GATE_DECISION_REQUIRED',
           },
           notify: {
             type: 'initiative.gate_blocked',
             title: 'Initiative gate blocked',
-            body: `${initiativeName}: Go/No-Go decision is required to start execution.`,
+            body:
+              currentStatus === 'BLOCKED'
+                ? `${initiativeName}: a current Go/No-Go decision is required to unblock.`
+                : `${initiativeName}: Go/No-Go decision is required to start execution.`,
             priority: 'high',
             metadata: { currentStatus, nextStatus, gate: 'GOVERNANCE_DECISION_MAKING' },
           },
@@ -1066,7 +1121,13 @@ export async function executeInitiativeTransition(
         null
       ); // will be set when EXECUTING starts
     }
-    if (nextStatus === 'EXECUTING') {
+    // INI-005 follow-up (2026-08-01): only set execution_started_at on a
+    // GENUINE first start (SCHEDULED->EXECUTING, the START gate). Excluded
+    // for BLOCKED->EXECUTING (UNBLOCK) — that's a resume, not a new start;
+    // the raw UPDATE this replaced never touched this column on unblock
+    // either, so this preserves that behavior rather than resetting the
+    // original start timestamp every time an initiative is blocked/unblocked.
+    if (nextStatus === 'EXECUTING' && currentStatus !== 'BLOCKED') {
       pushOptionalColumnUpdate(
         lifecycleUpdates,
         lifecycleParams,

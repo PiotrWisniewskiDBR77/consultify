@@ -2195,23 +2195,30 @@ export class InitiativeController {
 
   /**
    * ★ KNOWN GAP — NOT FIXED IN THIS PASS (INI-005 correction round, 2026-08-01).
-   * `blockInitiative`, `unblockInitiative` and `completeInitiative` below are
-   * the SAME anti-pattern family the initiativeAutoStartJob bypass (this
-   * packet's actual target) was: each does a raw `queryRun UPDATE initiatives
-   * SET status = ...` directly, with NO row lock, NO transaction, NO GO/NO-GO
-   * or gate-decision check, NO readiness check, and only the inert
-   * shadow-mode capability middleware guarding the route (which always calls
-   * next() regardless of the computed verdict — i.e. no real authorization).
-   * `completeInitiative` additionally writes `initiatives.status='done'`
-   * through a code path completely separate from `executeInitiativeTransition`,
-   * so its only audit trail is the best-effort `fireClosureHandoff` below —
-   * no `initiative_status_history`/`initiative_history` row at all.
+   * `blockInitiative` and `completeInitiative` below are the SAME anti-pattern
+   * family the initiativeAutoStartJob bypass (this packet's original target)
+   * was: each does a raw `queryRun UPDATE initiatives SET status = ...`
+   * directly, with NO row lock, NO transaction, NO GO/NO-GO or gate-decision
+   * check, NO readiness check, and only the inert shadow-mode capability
+   * middleware guarding the route (which always calls next() regardless of
+   * the computed verdict — i.e. no real authorization). `completeInitiative`
+   * additionally writes `initiatives.status='done'` through a code path
+   * completely separate from `executeInitiativeTransition`, so its only audit
+   * trail is the best-effort `fireClosureHandoff` below — no
+   * `initiative_status_history`/`initiative_history` row at all.
    *
-   * The mission for THIS round is explicitly scoped to the auto-start job
-   * (see initiativeAutoStartJob.ts); converting these three to thin adapters
-   * over `executeInitiativeTransition` (same as `updateInitiativeStatus`/
-   * `approveInitiative`/`startExecution`) is real, necessary follow-up work,
-   * flagged here so the gap is documented rather than silently left implicit.
+   * `unblockInitiative` WAS in this same family but is FIXED as of the
+   * INI-005 follow-up (2026-08-01) — see its doc comment below; it is now a
+   * thin adapter over `executeInitiativeTransition`, same as
+   * `updateInitiativeStatus`/`approveInitiative`/`startExecution`. It was
+   * fixed ahead of `blockInitiative`/`completeInitiative` because an
+   * exhaustive-inventory pass proved it live-reachable as an EXECUTING-bypass
+   * of the exact same severity class as the auto-start job (no current-status
+   * check at all — reachable from ANY status, not just BLOCKED).
+   *
+   * Converting the remaining two to thin adapters is real, necessary
+   * follow-up work, flagged here so the gap is documented rather than
+   * silently left implicit.
    */
 
   /**
@@ -2250,32 +2257,87 @@ export class InitiativeController {
 
   /**
    * Unblock initiative
+   *
+   * INI-005 follow-up fix (2026-08-01): now a thin adapter over
+   * executeInitiativeTransition, targeting EXECUTING via the UNBLOCK gate
+   * (GATE_PERMISSIONS[UNBLOCK] = PROJECT_SPONSOR / STEERING_COMMITTEE,
+   * expanding to PORTFOLIO_OWNER when no steering board is enabled, or ADMIN
+   * unconditionally — identical resolution rule to approveInitiative/
+   * startExecution). This closes a confirmed live EXECUTING-bypass: the
+   * previous handler did a raw UPDATE with NO current-status check (it
+   * "unblocked" an initiative in ANY status, not only BLOCKED), NO role
+   * check beyond the inert shadow-mode capability middleware, NO row lock,
+   * NO decision check, and NO initiative_status_history/initiative_history
+   * row — same severity class as the initiativeAutoStartJob bypass fixed
+   * earlier in this branch.
+   *
+   * `expectedCurrentStatus: 'BLOCKED'` is passed explicitly because EXECUTING
+   * is ALSO reachable from SCHEDULED (the START gate) — without this guard,
+   * calling /unblock on a SCHEDULED (not BLOCKED) initiative would silently
+   * succeed via START instead of failing. See
+   * ExecuteInitiativeTransitionParams.expectedCurrentStatus for the full
+   * rationale.
+   *
+   * DESIGN DECISION (made explicit, not left implicit): unblock now ALSO
+   * requires a CURRENT approved GOVERNANCE_DECISION_MAKING decision, exactly
+   * like the original SCHEDULED->EXECUTING start. Rationale: unblocking
+   * resumes execution, and a block can span a rework cycle in which the
+   * initiative's GO decision gets superseded by a NO-GO before anyone
+   * unblocks it — the identical supersession risk the H16 fix exists to
+   * catch. See initiativeTransitionService.ts's extended GO/NO-GO check.
+   *
+   * BEHAVIOR CHANGE — document for callers:
+   *   Before: ANY initiative (any status) -> status='executing' (lowercase),
+   *     no role check, no decision check, no audit row. Did not even require
+   *     req.user?.id (only organizationId).
+   *   After:  only a BLOCKED-status initiative; caller must hold
+   *     PROJECT_SPONSOR/STEERING_COMMITTEE(/PORTFOLIO_OWNER)/ADMIN; AND a
+   *     current approved GOVERNANCE_DECISION_MAKING decision must exist.
+   *     Requires req.user?.id (401 if absent, matching every other adapter
+   *     in this file). Response newStatus is now the canonical uppercase
+   *     'EXECUTING' (was lowercase 'executing'). execution_started_at is
+   *     preserved across block/unblock (previously untouched by the raw
+   *     UPDATE too — the shared engine now explicitly special-cases this so
+   *     it isn't reset to "now" the way a genuine SCHEDULED->EXECUTING start
+   *     is).
    */
   static unblockInitiative = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
       const initiativeId = req.params.id;
+      const { reason } = req.body as Record<string, unknown>;
 
-      if (!orgId) {
+      if (!orgId || !userId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
-      await queryHelpers.queryRun(
-        `UPDATE initiatives SET 
-                status = 'executing',
-                unblocked_at = CURRENT_TIMESTAMP,
-                blocked_reason = NULL,
-                updated_at = CURRENT_TIMESTAMP
-             WHERE id = ? AND organization_id = ?`,
-        [initiativeId, orgId]
-      );
+      const result = await executeInitiativeTransition({
+        orgId,
+        initiativeId,
+        actorId: userId,
+        actorRole: req.user?.role ?? null,
+        actorFirstName: req.user?.firstName ?? null,
+        actorLastName: req.user?.lastName ?? null,
+        actorEmail: req.user?.email ?? null,
+        requestIp: (req as any).ip ?? null,
+        requestUserAgent: (req as any).get?.('user-agent') ?? null,
+        nextStatusInput: 'EXECUTING',
+        expectedCurrentStatus: 'BLOCKED',
+        reason: reason ? String(reason) : null,
+      });
+
+      if (!result.ok) {
+        res.status(result.statusCode).json({ ...result.body, initiativeId });
+        return;
+      }
 
       res.json({
         success: true,
         message: 'Initiative unblocked',
         initiativeId,
-        newStatus: 'executing',
+        newStatus: result.status,
       });
     }
   );
