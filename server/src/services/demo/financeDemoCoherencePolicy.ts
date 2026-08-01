@@ -9,23 +9,36 @@
  *
  * Everything in this module is PURE — no `pg`, no `fs`, no `process.env` reads.
  * The script does the I/O and hands the observed state in, which is what makes
- * the dangerous decisions testable without a database.
+ * the dangerous decisions testable without a database. (The manifest signing key
+ * is read from the environment by `financeDemoManifestSignature.ts` and passed
+ * in, so this module never touches `process.env` either.)
  *
- * The module answers six questions, in the order the script asks them:
+ * The module answers seven questions, in the order the script asks them:
  *
  *  1. WHICH DATABASE am I allowed to touch?      → `assertApprovedDemoTarget`
+ *  1b. IS THIS TENANT MARKED as a demo tenant?   → `assertDemoOrganizationMarker`
  *  2. WHICH ROWS are canonical (never movable)?  → `isCanonicalDemoRowId`
  *  3. IS THE SEED materialized before I move     → `assertCanonicalFixtureMaterialized`
- *     anything out?
+ *     anything out, and is it STILL the same        `assertCanonicalFixtureUnchanged`
+ *     fixture inside the transaction?
  *  4. IS THE QUARANTINE ORG safe to write into?  → `assertQuarantineOrganizationReusable`
  *  5. DID ANYTHING BREAK the object graph?       → `findCrossOrgDependencyViolations`
- *  6. IS THE ROLLBACK PLAN still trustworthy?    → `assertManifestIntegrity`,
- *                                                  `assertRecordUnchangedSinceQuarantine`
+ *  6. IS THE ROLLBACK PLAN AUTHENTIC and still   → `assertManifestIntegrity` (HMAC-SHA256),
+ *     trustworthy?                                  `assertRecordUnchangedSinceQuarantine`
  */
 
 import { createHash } from 'node:crypto';
 
 import { getAtelierFinanceCanonicalIds } from './atelierFinanceSeed.js';
+import {
+  buildManifestSignature,
+  verifyManifestSignature,
+  MANIFEST_SIGNATURE_ALGORITHM,
+  type ManifestSignature,
+  type ManifestSigningKey,
+} from './financeDemoManifestSignature.js';
+
+export type { ManifestSignature, ManifestSigningKey };
 
 export const FIN005_POLICY_LABEL = 'finance-demo-cleanup';
 
@@ -102,7 +115,16 @@ export const FIN005_FORBIDDEN_TARGET_PATTERNS: ReadonlyArray<{ label: string; pa
 
 export interface ObservedTarget {
   host: string;
-  port: number | null;
+  /**
+   * The port actually parsed from the connection string.
+   *
+   * `null`/`undefined` means the connection string carried NO port. That is a
+   * REFUSAL, not "the default port": a URL without a port would otherwise be
+   * accepted against an allowlist entry that has one, and `postgres://host/db`
+   * resolves to 5432 at the driver — a completely different server from
+   * `host:28146`. The caller must not substitute a default.
+   */
+  port: number | null | undefined;
   database: string;
 }
 
@@ -154,8 +176,9 @@ export function assertApprovedDemoTarget(input: {
         `(or the matching FIN005_* environment variables).`
     );
   }
-  if (!Number.isFinite(declared.port as number)) {
-    fail(`Declared port "${normalizeText(input.declared.port)}" is not a number.`);
+  const declaredPort = declared.port as number;
+  if (!Number.isInteger(declaredPort) || declaredPort < 1 || declaredPort > 65535) {
+    fail(`Declared port "${normalizeText(input.declared.port)}" is not a valid TCP port.`);
   }
 
   // (1) Denylist first — production is refused before anything else is consulted.
@@ -192,9 +215,33 @@ export function assertApprovedDemoTarget(input: {
       `Refusing to run: declared database "${declared.database}" but the connection resolves to "${actualDatabase || '<unknown>'}".`
     );
   }
-  if (input.actual.port !== null && Number(input.actual.port) !== Number(declared.port)) {
+  // The observed port must EXIST and be EXACTLY the declared one. An absent,
+  // null, NaN or out-of-range observed port is a refusal: "I could not see the
+  // port" is not evidence that the port is right, and the allowlist entry has
+  // one. This is the check that keeps `postgres://trolley.proxy.rlwy.net/railway`
+  // (no port → driver default 5432) from passing as the approved
+  // `trolley.proxy.rlwy.net:28146`.
+  const observedPort = input.actual.port;
+  if (observedPort === null || observedPort === undefined) {
     fail(
-      `Refusing to run: declared port ${declared.port} but the connection resolves to ${input.actual.port}.`
+      `Refusing to run: the connection string carries no port, so the approved port ${declared.port} ` +
+        `cannot be confirmed. Declare the port in DATABASE_URL — it is never defaulted.`
+    );
+  }
+  const observedPortNumber = Number(observedPort);
+  if (
+    !Number.isInteger(observedPortNumber) ||
+    observedPortNumber < 1 ||
+    observedPortNumber > 65535
+  ) {
+    fail(
+      `Refusing to run: the connection resolves to port "${String(observedPort)}", which is not a ` +
+        `valid TCP port. Expected exactly ${declared.port}.`
+    );
+  }
+  if (observedPortNumber !== Number(declared.port)) {
+    fail(
+      `Refusing to run: declared port ${declared.port} but the connection resolves to ${observedPortNumber}.`
     );
   }
 
@@ -226,6 +273,80 @@ function describeTarget(
     `${normalizeText(target.railwayService)} ${normalizeText(target.host)}:${normalizeText(
       target.port
     )}/${normalizeText(target.database)} org=${normalizeText(target.organizationId)}`
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 1b. The demo marker — `organization_type` must EXIST and be exactly 'DEMO'
+// ---------------------------------------------------------------------------
+
+/**
+ * The one accepted value of `organizations.organization_type`.
+ *
+ * EXACT AND CASE-SENSITIVE, deliberately. FIN-005 §11.6 says the value must
+ * "równać się dokładnie DEMO" — equal exactly DEMO. A case-insensitive compare
+ * was considered and REJECTED: `'demo'` in lower case is not a value this
+ * product writes (the seed and `ensureQuarantineOrganization` both write the
+ * upper-case literal), so a lower-case row is an unexplained row, and an
+ * unexplained row in a guard that authorises moving other people's financial
+ * records is exactly what must fail closed. Padding (`' DEMO '`) is refused for
+ * the same reason — it is not a value we write either.
+ */
+export const DEMO_ORGANIZATION_TYPE = 'DEMO';
+
+export interface ObservedOrganizationType {
+  /**
+   * `false` when `organizations.organization_type` does not exist in this
+   * schema at all. An absent column is a REFUSAL, not "unknown, carry on":
+   * without the column there is no evidence the tenant is a demo tenant.
+   */
+  columnPresent: boolean;
+  /** The raw value as read, distinguishing NULL (`null`) from `''`. */
+  value: string | null | undefined;
+}
+
+/**
+ * Why the marker is unacceptable, or `null` when it is exactly `'DEMO'`.
+ * Returned rather than thrown so the quarantine-reuse check can fold it into
+ * its own list of problems.
+ */
+export function describeDemoMarkerProblem(
+  observed: ObservedOrganizationType | null | undefined
+): string | null {
+  if (!observed || observed.columnPresent !== true) {
+    return `the organizations table has no organization_type column in this schema, so "${DEMO_ORGANIZATION_TYPE}" cannot be proven`;
+  }
+  const value = observed.value;
+  if (value === null || value === undefined) {
+    return `organization_type is NULL, expected exactly "${DEMO_ORGANIZATION_TYPE}"`;
+  }
+  if (typeof value !== 'string') {
+    return `organization_type is not text (${typeof value}), expected exactly "${DEMO_ORGANIZATION_TYPE}"`;
+  }
+  if (value === '') {
+    return `organization_type is an empty string, expected exactly "${DEMO_ORGANIZATION_TYPE}"`;
+  }
+  if (value !== DEMO_ORGANIZATION_TYPE) {
+    const nearMiss =
+      value.trim().toUpperCase() === DEMO_ORGANIZATION_TYPE
+        ? ' — the comparison is exact and case-sensitive on purpose; fix the row, do not loosen the check'
+        : '';
+    return `organization_type is "${value}", expected exactly "${DEMO_ORGANIZATION_TYPE}"${nearMiss}`;
+  }
+  return null;
+}
+
+/** Throwing wrapper — used for the target demo tenant. */
+export function assertDemoOrganizationMarker(params: {
+  organizationId: string;
+  observed: ObservedOrganizationType | null | undefined;
+  role?: string;
+}): void {
+  const problem = describeDemoMarkerProblem(params.observed);
+  if (!problem) return;
+  fail(
+    `Refusing to run against ${params.role || 'organization'} "${normalizeText(params.organizationId)}": ${problem}. ` +
+      `Only a tenant explicitly marked as a demo tenant may be touched by this script.`
   );
 }
 
@@ -473,6 +594,79 @@ export function assertCanonicalFixtureMaterialized(
   );
 }
 
+/**
+ * A stable digest of everything the fixture check looks at.
+ *
+ * WHY: `assertCanonicalFixtureMaterialized` proves the fixture is COMPLETE and
+ * COHERENT, but two different fixtures can both be complete — e.g. a statement
+ * value re-pointed from one canonical statement to another still passes every
+ * completeness rule while no longer being the fixture the operator approved.
+ * The digest is the equality check: whatever the precondition saw must still be
+ * true, byte for byte, inside the transaction that moves rows.
+ *
+ * Order-insensitive (everything is sorted) so a different `ORDER BY` between the
+ * two reads cannot raise a false alarm.
+ */
+export function computeCanonicalFixtureDigest(readback: CanonicalFixtureReadback): string {
+  const material = {
+    packs: (readback.packs || [])
+      .map((row) => [row.id, row.organizationId])
+      .sort((a, b) => a[0].localeCompare(b[0])),
+    statements: (readback.statements || [])
+      .map((row) => [row.id, row.organizationId, row.statementPackId ?? null])
+      .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
+    values: (readback.values || [])
+      .map((row) => [row.id, row.statementId])
+      .sort((a, b) => a[0].localeCompare(b[0])),
+    analyses: (readback.analyses || [])
+      .map((row) => [
+        row.id,
+        row.organizationId,
+        row.sourceStatementPackId ?? null,
+        [...(row.sourceStatementIds || [])].sort(),
+      ])
+      .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
+    models: (readback.models || [])
+      .map((row) => [row.id, row.organizationId, row.sourceStatementPackId ?? null])
+      .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
+  };
+  return createHash('sha256').update(canonicalJson(material)).digest('hex');
+}
+
+/**
+ * Refuse when the canonical fixture is not IDENTICAL to what the precondition
+ * saw.
+ *
+ * THE HOLE THIS CLOSES: the precondition ran before the transaction. Between it
+ * and the write, anything could have edited the fixture — another operator, a
+ * re-seed, the UI. The caller re-reads the fixture with `SELECT … FOR UPDATE`
+ * INSIDE the transaction and passes both readbacks here; any difference aborts
+ * the transaction, so nothing moves.
+ */
+export function assertCanonicalFixtureUnchanged(params: {
+  before: CanonicalFixtureReadback;
+  after: CanonicalFixtureReadback;
+  organizationId: string;
+  phase: string;
+}): void {
+  const before = computeCanonicalFixtureDigest(params.before);
+  const after = computeCanonicalFixtureDigest(params.after);
+  if (before === after) return;
+
+  const count = (readback: CanonicalFixtureReadback) =>
+    `packs=${readback.packs?.length ?? 0} statements=${readback.statements?.length ?? 0} ` +
+    `values=${readback.values?.length ?? 0} analyses=${readback.analyses?.length ?? 0} ` +
+    `models=${readback.models?.length ?? 0}`;
+
+  fail(
+    `The canonical Atelier Finance fixture in "${normalizeText(params.organizationId)}" CHANGED between the ` +
+      `precondition and ${params.phase}. Refusing and rolling back — nothing was moved.\n` +
+      `  - precondition: ${count(params.before)} (digest ${before})\n` +
+      `  - ${params.phase}: ${count(params.after)} (digest ${after})\n` +
+      `  Re-run the dry run, confirm the fixture, and start again.`
+  );
+}
+
 // ---------------------------------------------------------------------------
 // 4. Run-specific quarantine organization
 // ---------------------------------------------------------------------------
@@ -513,6 +707,11 @@ export function buildQuarantineOrgName(runId: unknown): string {
 export interface QuarantineOrganizationRow {
   id: string;
   name: string | null;
+  /**
+   * `false` when the schema has no `organization_type` column. Required, so a
+   * caller that forgets it fails to compile — and fails closed at runtime.
+   */
+  organizationTypeColumnPresent: boolean;
   organizationType: string | null;
   status: string | null;
   isActive: boolean | null;
@@ -538,8 +737,14 @@ export function assertQuarantineOrganizationReusable(
   if (row.id !== expected.id) {
     problems.push(`id "${row.id}" is not the expected "${expected.id}"`);
   }
-  if (normalizeText(row.organizationType).toUpperCase() !== 'DEMO') {
-    problems.push(`organization_type is "${row.organizationType ?? '<null>'}", expected "DEMO"`);
+  // Same strict marker as the target tenant: the column must exist and the
+  // value must be exactly 'DEMO'.
+  const markerProblem = describeDemoMarkerProblem({
+    columnPresent: row.organizationTypeColumnPresent,
+    value: row.organizationType,
+  });
+  if (markerProblem) {
+    problems.push(markerProblem);
   }
   if (normalizeText(row.name) !== expected.name) {
     problems.push(`name is "${row.name ?? '<null>'}", expected the run marker "${expected.name}"`);
@@ -704,7 +909,7 @@ export function assertNoCrossOrgDependencies(graph: DependencyGraph, phase: stri
 }
 
 // ---------------------------------------------------------------------------
-// 6. Manifest integrity — checksum, per-record fingerprint, rollback refusal
+// 6. Manifest integrity — HMAC signature, per-record fingerprint, rollback refusal
 // ---------------------------------------------------------------------------
 
 /**
@@ -804,32 +1009,98 @@ export interface CleanupManifest {
   plannedEntries: ManifestEntry[];
   /** Confirmed by `RETURNING` after the UPDATEs; empty in a PREPARED manifest. */
   entries: ManifestEntry[];
+  /** HMAC-SHA256 over everything above, plus the key id that produced it. */
+  signature?: ManifestSignature;
+  /**
+   * v1/v2 ONLY — a plain unkeyed SHA-256 that anybody who could edit the file
+   * could recompute. Declared here so its presence can be REFUSED explicitly
+   * rather than ignored. Never written by this version.
+   */
   checksum?: string;
 }
 
-export const MANIFEST_VERSION = 2;
+export const MANIFEST_VERSION = 3;
 
-/** SHA-256 over the whole manifest except the checksum field itself. */
-export function computeManifestChecksum(manifest: CleanupManifest): string {
-  const { checksum: _ignored, ...rest } = manifest;
-  return createHash('sha256').update(canonicalJson(rest)).digest('hex');
+/**
+ * The exact bytes the signature covers: the whole manifest except the signature
+ * itself. A legacy `checksum` field is dropped rather than covered — v3 refuses
+ * such manifests outright, and this keeps the payload unambiguous.
+ */
+export function manifestSignaturePayload(manifest: CleanupManifest): string {
+  const { signature: _signature, checksum: _legacyChecksum, ...rest } = manifest;
+  return canonicalJson(rest);
 }
 
-export function signManifest(manifest: CleanupManifest): CleanupManifest {
-  return { ...manifest, checksum: computeManifestChecksum(manifest) };
+/**
+ * Sign with HMAC-SHA256. Requires a key — there is no unkeyed path, because an
+ * unkeyed digest is not a signature (see `financeDemoManifestSignature.ts`).
+ */
+export function signManifest(
+  manifest: CleanupManifest,
+  key: ManifestSigningKey
+): CleanupManifest {
+  const { signature: _signature, checksum: _legacyChecksum, ...rest } = manifest;
+  return { ...rest, signature: buildManifestSignature(canonicalJson(rest), key) };
 }
 
-export function assertManifestIntegrity(manifest: CleanupManifest): void {
+/**
+ * Refuse any manifest that is not authentically ours.
+ *
+ * Refusal cases, all tested: no signature at all; a legacy unkeyed `checksum`;
+ * a different algorithm; a different key id (rotation); a tampered body; a
+ * manifest re-signed with a plain SHA-256 in the signature field.
+ *
+ * No branch of this function prints key material — only the key ID, which is a
+ * public label.
+ */
+export function assertManifestIntegrity(
+  manifest: CleanupManifest,
+  key: ManifestSigningKey
+): void {
   if (!manifest || typeof manifest !== 'object') fail('Manifest is not an object.');
-  if (!manifest.checksum) {
-    fail('Manifest carries no checksum — refusing to trust it. Manifests are untrusted files.');
+  if (!key || !key.secret || !key.keyId) {
+    fail('No manifest signing key was supplied — refusing to validate a manifest without one.');
   }
-  const expected = computeManifestChecksum(manifest);
-  if (expected !== manifest.checksum) {
+  if (manifest.checksum !== undefined) {
     fail(
-      `Manifest checksum mismatch (expected ${expected}, found ${manifest.checksum}). ` +
-        `The file was edited or truncated — refusing to run.`
+      'Manifest carries a legacy unkeyed `checksum` field. v1/v2 manifests were "signed" with a ' +
+        'plain SHA-256 that anyone who can edit the file can recompute, so they are no longer ' +
+        'accepted. Refusing to trust it — restore by hand after reviewing the rows, or re-run the ' +
+        'quarantine to produce an HMAC-signed manifest.'
     );
+  }
+
+  const result = verifyManifestSignature(
+    manifestSignaturePayload(manifest),
+    manifest.signature,
+    key
+  );
+  if (result.ok) return;
+
+  switch (result.failure) {
+    case 'missing':
+      fail(
+        'Manifest carries no HMAC signature — refusing to trust it. Manifests are untrusted files.'
+      );
+      break;
+    case 'algorithm':
+      fail(
+        `Manifest signature algorithm "${String(manifest.signature?.algorithm)}" is not ` +
+          `${MANIFEST_SIGNATURE_ALGORITHM}. An unkeyed digest is not a signature — refusing.`
+      );
+      break;
+    case 'key-id':
+      fail(
+        `Manifest was signed with key id "${String(manifest.signature?.keyId)}" but this run holds ` +
+          `key id "${key.keyId}". Either the signing key was rotated since the quarantine, or the ` +
+          `manifest is not ours. Refusing. (No key material is ever printed.)`
+      );
+      break;
+    default:
+      fail(
+        'Manifest HMAC does not verify — the file was edited, truncated, or signed with a different ' +
+          'key. Refusing to run.'
+      );
   }
 }
 

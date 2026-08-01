@@ -12,9 +12,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { getAtelierFinanceCanonicalIds } from '../atelierFinanceSeed.js';
+import { createHash } from 'node:crypto';
+
 import {
   assertApprovedDemoTarget,
   assertCanonicalFixtureMaterialized,
+  assertCanonicalFixtureUnchanged,
+  assertDemoOrganizationMarker,
   assertManifestEntriesConsistent,
   assertManifestIntegrity,
   assertNoCrossOrgDependencies,
@@ -23,12 +27,15 @@ import {
   assertStatementPackRestorable,
   buildQuarantineOrgId,
   buildQuarantineOrgName,
+  canonicalJson,
   classifyFinanceDemoRows,
-  computeManifestChecksum,
+  computeCanonicalFixtureDigest,
   computeRowFingerprint,
+  describeDemoMarkerProblem,
   financeDemoNameFlags,
   findCrossOrgDependencyViolations,
   isCanonicalDemoRowId,
+  manifestSignaturePayload,
   projectQuarantinedRow,
   resolveRollbackEntries,
   signManifest,
@@ -42,6 +49,23 @@ import {
   type ManifestEntry,
   type QuarantineOrganizationRow,
 } from '../financeDemoCoherencePolicy.js';
+import {
+  computeManifestHmac,
+  resolveManifestSigningKey,
+  MANIFEST_HMAC_KEY_ENV,
+  MANIFEST_HMAC_KEY_ID_ENV,
+  type ManifestSigningKey,
+} from '../financeDemoManifestSignature.js';
+
+/** A key for the tests. Never a real one, and never printed by the code. */
+const KEY: ManifestSigningKey = resolveManifestSigningKey({
+  [MANIFEST_HMAC_KEY_ENV]: 'fin005-unit-test-key-0123456789abcdef',
+  [MANIFEST_HMAC_KEY_ID_ENV]: 'test-key-a',
+});
+const OTHER_KEY: ManifestSigningKey = resolveManifestSigningKey({
+  [MANIFEST_HMAC_KEY_ENV]: 'fin005-unit-test-key-ROTATED-9876543210',
+  [MANIFEST_HMAC_KEY_ID_ENV]: 'test-key-b',
+});
 
 const ORG = 'demo-org';
 const CANONICAL = getAtelierFinanceCanonicalIds(ORG);
@@ -293,6 +317,66 @@ describe('assertApprovedDemoTarget', () => {
     ).toThrow(/declared port .* but the connection resolves to/i);
   });
 
+  // -- P1: the observed port must EXIST and match EXACTLY -------------------
+  describe('observed port', () => {
+    it('accepts only an exact match', () => {
+      expect(
+        assertApprovedDemoTarget({
+          declared: { ...APPROVED },
+          actual: { ...approvedActual, port: APPROVED.port },
+        }).port
+      ).toBe(APPROVED.port);
+    });
+
+    it('REFUSES a connection string with no port instead of assuming the default', () => {
+      // `postgres://trolley.proxy.rlwy.net/railway` has no port; the driver
+      // would silently use 5432 — a different server from the approved 28146.
+      for (const missing of [null, undefined]) {
+        expect(() =>
+          assertApprovedDemoTarget({
+            declared: { ...APPROVED },
+            actual: { ...approvedActual, port: missing },
+          })
+        ).toThrow(/carries no port/i);
+      }
+    });
+
+    it('refuses a NaN or nonsense observed port', () => {
+      for (const bogus of [Number.NaN, 0, -1, 70000, 5432.5]) {
+        expect(() =>
+          assertApprovedDemoTarget({
+            declared: { ...APPROVED },
+            actual: { ...approvedActual, port: bogus },
+          })
+        ).toThrow(/port/i);
+      }
+      expect(() =>
+        assertApprovedDemoTarget({
+          declared: { ...APPROVED },
+          actual: { ...approvedActual, port: Number.NaN },
+        })
+      ).toThrow(/not a valid TCP port/i);
+    });
+
+    it('refuses a different port on the very same approved host', () => {
+      expect(() =>
+        assertApprovedDemoTarget({
+          declared: { ...APPROVED },
+          actual: { ...approvedActual, port: 5432 },
+        })
+      ).toThrow(/declared port 28146 but the connection resolves to 5432/);
+    });
+
+    it('refuses a declared port that is not a valid TCP port', () => {
+      expect(() =>
+        assertApprovedDemoTarget({
+          declared: { ...APPROVED, port: 'not-a-port' },
+          actual: approvedActual,
+        })
+      ).toThrow(/not a valid TCP port/i);
+    });
+  });
+
   it('refuses a mismatched project, environment, service or organization id', () => {
     for (const override of [
       { railwayProject: 'consultify-sandbox' },
@@ -304,6 +388,52 @@ describe('assertApprovedDemoTarget', () => {
         assertApprovedDemoTarget({ declared: { ...APPROVED, ...override }, actual: approvedActual })
       ).toThrow(/not on the FIN-005 allowlist/i);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// P1 — the demo marker must EXIST and equal exactly 'DEMO'
+// ---------------------------------------------------------------------------
+
+describe('demo organization marker', () => {
+  const check = (observed: { columnPresent: boolean; value: string | null | undefined }) => () =>
+    assertDemoOrganizationMarker({ organizationId: ORG, observed, role: 'demo organization' });
+
+  it('accepts exactly "DEMO"', () => {
+    expect(check({ columnPresent: true, value: 'DEMO' })).not.toThrow();
+    expect(describeDemoMarkerProblem({ columnPresent: true, value: 'DEMO' })).toBeNull();
+  });
+
+  it('REFUSES when the column does not exist in this schema', () => {
+    // No column ⇒ no evidence. "Unknown" must never read as "demo".
+    expect(check({ columnPresent: false, value: null })).toThrow(/no organization_type column/i);
+    expect(check({ columnPresent: false, value: 'DEMO' })).toThrow(/no organization_type column/i);
+  });
+
+  it('REFUSES a NULL value', () => {
+    expect(check({ columnPresent: true, value: null })).toThrow(/organization_type is NULL/);
+    expect(check({ columnPresent: true, value: undefined })).toThrow(/organization_type is NULL/);
+  });
+
+  it('REFUSES an empty string', () => {
+    expect(check({ columnPresent: true, value: '' })).toThrow(/empty string/i);
+  });
+
+  it('REFUSES every other value, including a lower-case or padded near-miss', () => {
+    expect(check({ columnPresent: true, value: 'TRIAL' })).toThrow(/is "TRIAL"/);
+    expect(check({ columnPresent: true, value: 'PAID' })).toThrow(/is "PAID"/);
+    expect(check({ columnPresent: true, value: 'CUSTOMER' })).toThrow(/is "CUSTOMER"/);
+    // Case-sensitive by decision (packet §11.6: "równać się dokładnie DEMO").
+    expect(check({ columnPresent: true, value: 'demo' })).toThrow(/case-sensitive on purpose/);
+    expect(check({ columnPresent: true, value: 'Demo' })).toThrow(/case-sensitive on purpose/);
+    expect(check({ columnPresent: true, value: ' DEMO ' })).toThrow(/case-sensitive on purpose/);
+    expect(check({ columnPresent: true, value: 'DEMO_ORG' })).toThrow(/is "DEMO_ORG"/);
+  });
+
+  it('refuses a missing observation altogether', () => {
+    expect(() =>
+      assertDemoOrganizationMarker({ organizationId: ORG, observed: null })
+    ).toThrow(/no organization_type column/i);
   });
 });
 
@@ -333,6 +463,7 @@ describe('quarantine organization', () => {
   const okRow = (overrides: Partial<QuarantineOrganizationRow> = {}): QuarantineOrganizationRow => ({
     id: `${ORG}-fin005-quarantine-r1`,
     name: buildQuarantineOrgName('r1'),
+    organizationTypeColumnPresent: true,
     organizationType: 'DEMO',
     status: 'inactive',
     isActive: false,
@@ -378,6 +509,22 @@ describe('quarantine organization', () => {
     expect(() =>
       assertQuarantineOrganizationReusable(okRow({ organizationType: 'TRIAL' }), expected)
     ).toThrow(/organization_type is "TRIAL"/);
+    // The SAME strict marker as the target tenant applies to the reuse check.
+    expect(() =>
+      assertQuarantineOrganizationReusable(okRow({ organizationType: null }), expected)
+    ).toThrow(/organization_type is NULL/);
+    expect(() =>
+      assertQuarantineOrganizationReusable(okRow({ organizationType: '' }), expected)
+    ).toThrow(/empty string/i);
+    expect(() =>
+      assertQuarantineOrganizationReusable(okRow({ organizationType: 'demo' }), expected)
+    ).toThrow(/case-sensitive on purpose/);
+    expect(() =>
+      assertQuarantineOrganizationReusable(
+        okRow({ organizationTypeColumnPresent: false }),
+        expected
+      )
+    ).toThrow(/no organization_type column/i);
     expect(() => assertQuarantineOrganizationReusable(okRow({ isActive: true }), expected)).toThrow(
       /is_active is true/
     );
@@ -495,6 +642,65 @@ describe('seed-before-quarantine precondition', () => {
     const fixture = completeFixture();
     fixture.models[0].organizationId = 'someone-else';
     expect(() => assertCanonicalFixtureMaterialized(fixture, ORG)).toThrow(/belongs to "someone-else"/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// P1 — the fixture must be the SAME fixture at COMMIT time
+// ---------------------------------------------------------------------------
+
+describe('canonical fixture digest — transactional guard', () => {
+  const unchanged = (after: CanonicalFixtureReadback) =>
+    assertCanonicalFixtureUnchanged({
+      before: completeFixture(),
+      after,
+      organizationId: ORG,
+      phase: 'pre-COMMIT',
+    });
+
+  it('is stable across two identical readbacks, whatever the row order', () => {
+    const shuffled = completeFixture();
+    shuffled.statements.reverse();
+    shuffled.values.reverse();
+    expect(computeCanonicalFixtureDigest(shuffled)).toBe(
+      computeCanonicalFixtureDigest(completeFixture())
+    );
+    expect(() => unchanged(shuffled)).not.toThrow();
+  });
+
+  it('REFUSES when a statement disappeared between the precondition and COMMIT', () => {
+    const after = completeFixture();
+    after.statements = after.statements.slice(0, 2);
+    expect(() => unchanged(after)).toThrow(/CHANGED between the precondition and pre-COMMIT/);
+    expect(() => unchanged(after)).toThrow(/nothing was moved/i);
+  });
+
+  it('REFUSES when a statement value disappeared', () => {
+    const after = completeFixture();
+    after.values = after.values.slice(0, after.values.length - 1);
+    expect(() => unchanged(after)).toThrow(/CHANGED between the precondition/);
+  });
+
+  it('REFUSES a lineage re-point that would still pass the completeness check', () => {
+    // This is the case a completeness-only re-check misses: every id is still
+    // there, every rule still holds, but the value now hangs off a different
+    // canonical statement — it is not the fixture the operator approved.
+    const after = completeFixture();
+    after.values[0] = { ...after.values[0], statementId: CANONICAL.statementIds[2] };
+    expect(verifyCanonicalFixture(after, ORG).ok).toBe(true);
+    expect(() => unchanged(after)).toThrow(/CHANGED between the precondition/);
+  });
+
+  it('REFUSES when the analysis lineage moved', () => {
+    const after = completeFixture();
+    after.analyses[0].sourceStatementIds = [CANONICAL.statementIds[0]];
+    expect(() => unchanged(after)).toThrow(/CHANGED between the precondition/);
+  });
+
+  it('reports both row counts so the operator can see what moved', () => {
+    const after = completeFixture();
+    after.models = [];
+    expect(() => unchanged(after)).toThrow(/models=1[\s\S]*models=0/);
   });
 });
 
@@ -637,8 +843,8 @@ function manifestEntry(): ManifestEntry {
   };
 }
 
-function baseManifest(overrides: Partial<CleanupManifest> = {}): CleanupManifest {
-  return signManifest({
+function unsignedManifest(overrides: Partial<CleanupManifest> = {}): CleanupManifest {
+  return {
     label: 'finance-demo-cleanup',
     version: MANIFEST_VERSION,
     runId: 'r1',
@@ -652,24 +858,115 @@ function baseManifest(overrides: Partial<CleanupManifest> = {}): CleanupManifest
     plannedEntries: [manifestEntry()],
     entries: [manifestEntry()],
     ...overrides,
-  });
+  };
 }
 
-describe('manifest integrity', () => {
+function baseManifest(overrides: Partial<CleanupManifest> = {}): CleanupManifest {
+  return signManifest(unsignedManifest(overrides), KEY);
+}
+
+describe('manifest integrity — HMAC-SHA256, not an unkeyed digest', () => {
   it('accepts a manifest it signed itself', () => {
-    expect(() => assertManifestIntegrity(baseManifest())).not.toThrow();
+    const manifest = baseManifest();
+    expect(manifest.signature).toMatchObject({ algorithm: 'HMAC-SHA256', keyId: KEY.keyId });
+    expect(manifest.signature?.value).toMatch(/^[0-9a-f]{64}$/);
+    expect(() => assertManifestIntegrity(manifest, KEY)).not.toThrow();
   });
 
-  it('refuses an unsigned manifest — files are untrusted input', () => {
-    const unsigned = { ...baseManifest(), checksum: undefined } as CleanupManifest;
-    expect(() => assertManifestIntegrity(unsigned)).toThrow(/no checksum/i);
+  it('refuses a manifest with no signature at all — files are untrusted input', () => {
+    expect(() => assertManifestIntegrity(unsignedManifest(), KEY)).toThrow(/no HMAC signature/i);
+    const emptied = { ...baseManifest(), signature: undefined } as CleanupManifest;
+    expect(() => assertManifestIntegrity(emptied, KEY)).toThrow(/no HMAC signature/i);
   });
 
   it('refuses a hand-edited manifest', () => {
     const tampered = baseManifest();
     tampered.entries[0].toOrganizationId = 'acme-corp';
-    expect(() => assertManifestIntegrity(tampered)).toThrow(/checksum mismatch/i);
-    expect(computeManifestChecksum(tampered)).not.toBe(tampered.checksum);
+    expect(() => assertManifestIntegrity(tampered, KEY)).toThrow(/HMAC does not verify/i);
+  });
+
+  it('refuses a manifest re-signed with the OLD unkeyed SHA-256 scheme', () => {
+    // The exact forgery the previous implementation allowed: an attacker edits
+    // the body and recomputes the digest, because no key was involved.
+    const forged = baseManifest();
+    forged.entries[0].toOrganizationId = 'acme-corp';
+    forged.signature = {
+      algorithm: 'HMAC-SHA256',
+      keyId: KEY.keyId,
+      // Plain SHA-256 over the same payload the old `computeManifestChecksum` used.
+      value: createHash('sha256').update(manifestSignaturePayload(forged)).digest('hex'),
+    };
+    expect(() => assertManifestIntegrity(forged, KEY)).toThrow(/HMAC does not verify/i);
+
+    // …and the same forgery on an UNMODIFIED body is refused too.
+    const honestBody = baseManifest();
+    honestBody.signature = {
+      algorithm: 'HMAC-SHA256',
+      keyId: KEY.keyId,
+      value: createHash('sha256').update(manifestSignaturePayload(honestBody)).digest('hex'),
+    };
+    expect(() => assertManifestIntegrity(honestBody, KEY)).toThrow(/HMAC does not verify/i);
+  });
+
+  it('refuses a legacy v2 manifest carrying the unkeyed `checksum` field', () => {
+    const legacy = {
+      ...unsignedManifest(),
+      checksum: createHash('sha256').update(canonicalJson(unsignedManifest())).digest('hex'),
+    } as CleanupManifest;
+    expect(() => assertManifestIntegrity(legacy, KEY)).toThrow(/legacy unkeyed `checksum`/);
+    // Even if somebody bolts a valid HMAC onto it, the legacy field is refused.
+    const both = signManifest(legacy, KEY);
+    both.checksum = 'deadbeef';
+    expect(() => assertManifestIntegrity(both, KEY)).toThrow(/legacy unkeyed `checksum`/);
+  });
+
+  it('refuses a signature made with a DIFFERENT key, and names the key rotation', () => {
+    const signedElsewhere = signManifest(unsignedManifest(), OTHER_KEY);
+    expect(() => assertManifestIntegrity(signedElsewhere, KEY)).toThrow(/signed with key id/i);
+
+    // Same key id claimed, different key material ⇒ the HMAC itself refuses.
+    const spoofedKeyId = signManifest(unsignedManifest(), OTHER_KEY);
+    spoofedKeyId.signature = { ...spoofedKeyId.signature!, keyId: KEY.keyId };
+    expect(() => assertManifestIntegrity(spoofedKeyId, KEY)).toThrow(/HMAC does not verify/i);
+  });
+
+  it('refuses an unknown algorithm', () => {
+    const manifest = baseManifest();
+    manifest.signature = { ...manifest.signature!, algorithm: 'SHA-256' };
+    expect(() => assertManifestIntegrity(manifest, KEY)).toThrow(/is not HMAC-SHA256/);
+  });
+
+  it('never puts key material in the manifest or in a refusal message', () => {
+    const secret = KEY.secret.toString('utf8');
+    const manifest = baseManifest();
+    expect(JSON.stringify(manifest)).not.toContain(secret);
+
+    const tampered = baseManifest();
+    tampered.runId = 'r2';
+    let message = '';
+    try {
+      assertManifestIntegrity(tampered, KEY);
+    } catch (error) {
+      message = String((error as Error).message);
+    }
+    expect(message).toBeTruthy();
+    expect(message).not.toContain(secret);
+
+    let rotationMessage = '';
+    try {
+      assertManifestIntegrity(signManifest(unsignedManifest(), OTHER_KEY), KEY);
+    } catch (error) {
+      rotationMessage = String((error as Error).message);
+    }
+    expect(rotationMessage).not.toContain(secret);
+    expect(rotationMessage).not.toContain(OTHER_KEY.secret.toString('utf8'));
+  });
+
+  it('signs the payload the verifier checks — no field is silently excluded', () => {
+    const manifest = baseManifest();
+    expect(manifest.signature!.value).toBe(
+      computeManifestHmac(manifestSignaturePayload(manifest), KEY)
+    );
   });
 
   it('refuses entries that disagree with the manifest header', () => {

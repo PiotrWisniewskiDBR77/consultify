@@ -14,6 +14,7 @@
  * Those need a live run, which is out of scope for this packet.
  */
 
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -22,15 +23,23 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { getAtelierFinanceCanonicalIds } from '../../services/demo/atelierFinanceSeed.js';
 import {
+  assertApprovedDemoTarget,
   assertManifestIntegrity,
   computeRowFingerprint,
   resolveRollbackEntries,
+  signManifest,
+  FIN005_APPROVED_DEMO_TARGETS,
   type CanonicalFixtureReadback,
   type CleanupManifest,
   type DependencyGraph,
   type FinanceDemoClassification,
   type QuarantineOrganizationRow,
 } from '../../services/demo/financeDemoCoherencePolicy.js';
+import {
+  resolveManifestSigningKey,
+  MANIFEST_HMAC_KEY_ENV,
+  MANIFEST_HMAC_KEY_ID_ENV,
+} from '../../services/demo/financeDemoManifestSignature.js';
 import {
   buildReport,
   escapeLike,
@@ -53,6 +62,12 @@ const CANONICAL = getAtelierFinanceCanonicalIds(ORG);
 const RUN_ID = '2026-08-01-a';
 const QUAR = `${ORG}-fin005-quarantine-${RUN_ID}`;
 const QUAR_NAME = `FIN-005 quarantine (run ${RUN_ID})`;
+
+/** Test signing key. The real one lives in the operator's environment only. */
+const KEY = resolveManifestSigningKey({
+  [MANIFEST_HMAC_KEY_ENV]: 'fin005-script-test-signing-key-0123456789',
+  [MANIFEST_HMAC_KEY_ID_ENV]: 'script-test-key',
+});
 
 // ---------------------------------------------------------------------------
 // In-memory gateway
@@ -95,6 +110,48 @@ class FakeDb {
     this.orgs = snapshot.orgs;
     this.tables = snapshot.tables;
   }
+}
+
+/**
+ * The canonical fixture as the script reads it: exact ids only, scoped to the
+ * organization (statement values are keyed by id — they carry no
+ * organization_id of their own).
+ */
+function fixtureOf(db: FakeDb, organizationId: string): CanonicalFixtureReadback {
+  const canonical = getAtelierFinanceCanonicalIds(organizationId);
+  const pick = (table: string, ids: string[]) =>
+    db
+      .rows(table)
+      .filter((row) => ids.includes(String(row.id)) && row.organization_id === organizationId);
+
+  return {
+    packs: pick('financial_statement_packs', [canonical.packId]).map((row) => ({
+      id: String(row.id),
+      organizationId: String(row.organization_id),
+    })),
+    statements: pick('financial_statements', canonical.statementIds).map((row) => ({
+      id: String(row.id),
+      organizationId: String(row.organization_id),
+      statementPackId: (row.statement_pack_id as string | null) ?? null,
+    })),
+    values: db
+      .rows('financial_statement_values')
+      .filter((row) => canonical.statementValueIds.includes(String(row.id)))
+      .map((row) => ({ id: String(row.id), statementId: String(row.statement_id) })),
+    analyses: pick('financial_analyses', [canonical.analysisId]).map((row) => ({
+      id: String(row.id),
+      organizationId: String(row.organization_id),
+      sourceStatementPackId: (row.source_statement_pack_id as string | null) ?? null,
+      sourceStatementIds: row.source_statement_ids
+        ? (JSON.parse(String(row.source_statement_ids)) as string[])
+        : [],
+    })),
+    models: pick('financial_models', [canonical.modelId]).map((row) => ({
+      id: String(row.id),
+      organizationId: String(row.organization_id),
+      sourceStatementPackId: (row.source_statement_pack_id as string | null) ?? null,
+    })),
+  };
 }
 
 function createFakeGateway(db: FakeDb): CleanupGateway & { db: FakeDb; commits: number } {
@@ -157,12 +214,16 @@ function createFakeGateway(db: FakeDb): CleanupGateway & { db: FakeDb; commits: 
       return {
         id: org.id,
         name: org.name,
+        organizationTypeColumnPresent: true,
         organizationType: org.organization_type,
         status: org.status,
         isActive: org.is_active,
         userCount: org.userCount,
         memberCount: org.memberCount,
       };
+    },
+    async lockCanonicalFixture(organizationId) {
+      return fixtureOf(db, organizationId);
     },
     async lockRows(table, ids, organizationId) {
       return db
@@ -216,7 +277,13 @@ function createFakeGateway(db: FakeDb): CleanupGateway & { db: FakeDb; commits: 
     },
     async organizationExists(id) {
       const org = db.orgs.get(id);
-      return org ? { id: org.id, organizationType: org.organization_type } : null;
+      return org
+        ? {
+            id: org.id,
+            organizationTypeColumnPresent: true,
+            organizationType: org.organization_type,
+          }
+        : null;
     },
     async currentDatabase() {
       return 'railway';
@@ -238,8 +305,8 @@ function createFakeGateway(db: FakeDb): CleanupGateway & { db: FakeDb; commits: 
     async countObserveOnly() {
       return [];
     },
-    async readCanonicalFixture(): Promise<CanonicalFixtureReadback> {
-      return { packs: [], statements: [], values: [], analyses: [], models: [] };
+    async readCanonicalFixture(organizationId): Promise<CanonicalFixtureReadback> {
+      return fixtureOf(db, organizationId);
     },
     async readDependencyGraph() {
       return graph();
@@ -269,6 +336,15 @@ function createFakeGateway(db: FakeDb): CleanupGateway & { db: FakeDb; commits: 
 // Fixtures
 // ---------------------------------------------------------------------------
 
+/** Value ids embed their statement slug — map each back to its statement. */
+function statementOfValue(valueId: string): string {
+  return (
+    CANONICAL.statementIds.find((statementId) =>
+      valueId.startsWith(`${statementId.replace('--statement--', '--statement-value--')}--`)
+    ) || CANONICAL.statementIds[0]
+  );
+}
+
 function seedDb(): FakeDb {
   const db = new FakeDb();
   db.orgs.set(ORG, {
@@ -281,25 +357,43 @@ function seedDb(): FakeDb {
     memberCount: 3,
   });
 
-  // Canonical Atelier fixture — must never move.
+  // Canonical Atelier fixture — must never move, and must be COMPLETE: the
+  // write path now re-reads and locks it inside the transaction, so a partial
+  // fixture here would (correctly) refuse every run.
   db.insert('financial_statement_packs', {
     id: CANONICAL.packId,
     organization_id: ORG,
     entity_name: 'Atelier Toys',
     period_label: 'FY2014',
   });
-  db.insert('financial_statements', {
-    id: CANONICAL.statementIds[0],
+  for (const statementId of CANONICAL.statementIds) {
+    db.insert('financial_statements', {
+      id: statementId,
+      organization_id: ORG,
+      entity_name: 'Atelier Toys',
+      statement_pack_id: CANONICAL.packId,
+    });
+  }
+  for (const valueId of CANONICAL.statementValueIds) {
+    db.insert('financial_statement_values', {
+      id: valueId,
+      statement_id: statementOfValue(valueId),
+      amount: 1000,
+    });
+  }
+  db.insert('financial_analyses', {
+    id: CANONICAL.analysisId,
     organization_id: ORG,
-    entity_name: 'Atelier Toys',
-    statement_pack_id: CANONICAL.packId,
+    title: 'Atelier Toys — FY2014 analysis',
+    source_statement_pack_id: CANONICAL.packId,
+    source_statement_ids: JSON.stringify(CANONICAL.statementIds),
   });
   db.insert('financial_models', {
     id: CANONICAL.modelId,
     organization_id: ORG,
     name: 'Atelier Toys — Transformation 2015 ROI',
     source_statement_pack_id: CANONICAL.packId,
-    source_analysis_id: null,
+    source_analysis_id: CANONICAL.analysisId,
   });
 
   // Foreign rows, including an OLD technical fixture carrying the seed prefix.
@@ -364,6 +458,11 @@ afterEach(() => {
   fs.rmSync(workDir, { recursive: true, force: true });
 });
 
+/** The fixture as the read-only precondition saw it, before the transaction. */
+function preconditionSnapshot(db: FakeDb): CanonicalFixtureReadback {
+  return structuredClone(fixtureOf(db, ORG));
+}
+
 function runParams(db: FakeDb, overrides: Record<string, unknown> = {}) {
   return {
     gateway: createFakeGateway(db),
@@ -375,6 +474,8 @@ function runParams(db: FakeDb, overrides: Record<string, unknown> = {}) {
     manifestPath: path.join(workDir, 'manifest.json'),
     host: 'trolley.proxy.rlwy.net',
     database: 'railway',
+    signingKey: KEY,
+    preconditionFixture: preconditionSnapshot(db),
     ...overrides,
   } as Parameters<typeof executeQuarantineRun>[0];
 }
@@ -525,6 +626,110 @@ describe('executeQuarantineRun', () => {
     await expect(executeQuarantineRun(runParams(db))).rejects.toThrow(/expected to lock 2 row\(s\)/);
   });
 
+  // -------------------------------------------------------------------------
+  // P1 — the canonical fixture is re-read and LOCKED inside the transaction
+  // -------------------------------------------------------------------------
+
+  describe('transactional fixture guard', () => {
+    /**
+     * The precondition ran and passed; then the fixture changed. Every case
+     * below must ROLL BACK with nothing moved — a demo tenant emptied of its
+     * foreign rows AND missing its canonical fixture is the worst outcome
+     * available.
+     */
+    const mutatedBetweenPreconditionAndWrite = (
+      label: string,
+      mutate: (db: FakeDb) => void,
+      expected: RegExp
+    ) => {
+      it(label, async () => {
+        const db = seedDb();
+        const preconditionFixture = preconditionSnapshot(db); // complete, verified
+        mutate(db);
+
+        await expect(
+          executeQuarantineRun(runParams(db, { preconditionFixture }))
+        ).rejects.toThrow(expected);
+
+        // NOTHING moved…
+        expect(db.table('financial_statements').get('uuid-dbr77-pl')!.organization_id).toBe(ORG);
+        expect(db.table('financial_models').get('uuid-copy-1')!.organization_id).toBe(ORG);
+        // …and no rollback plan was written, because nothing was ever planned.
+        expect(fs.existsSync(path.join(workDir, 'manifest.json'))).toBe(false);
+      });
+    };
+
+    mutatedBetweenPreconditionAndWrite(
+      'REFUSES when a canonical statement was removed after the precondition',
+      (db) => db.table('financial_statements').delete(CANONICAL.statementIds[1]),
+      /canonical Atelier Finance fixture is not fully materialized/
+    );
+
+    mutatedBetweenPreconditionAndWrite(
+      'REFUSES when a canonical statement value was deleted after the precondition',
+      (db) => db.table('financial_statement_values').delete(CANONICAL.statementValueIds[0]),
+      /canonical statement values|CHANGED between the precondition/
+    );
+
+    mutatedBetweenPreconditionAndWrite(
+      'REFUSES when lineage was re-pointed after the precondition',
+      (db) => {
+        db.table('financial_analyses').get(CANONICAL.analysisId)!.source_statement_pack_id =
+          'some-other-pack';
+      },
+      /not sourced from the canonical pack|CHANGED between the precondition/
+    );
+
+    mutatedBetweenPreconditionAndWrite(
+      'REFUSES a re-point that still passes the completeness check',
+      (db) => {
+        // Still 1 pack / 3 statements / all values / 1 analysis / 1 model, and
+        // every lineage rule still holds — but it is no longer the fixture the
+        // operator approved. Only the digest catches this.
+        const valueId = CANONICAL.statementValueIds[0];
+        const value = db.table('financial_statement_values').get(valueId)!;
+        value.statement_id =
+          CANONICAL.statementIds.find((id) => id !== value.statement_id) ||
+          CANONICAL.statementIds[2];
+      },
+      /CHANGED between the precondition/
+    );
+
+    it('REFUSES a fixture mutated after the manifest write but before COMMIT', async () => {
+      // The narrowest window there is: the rollback plan is already fsync'd,
+      // the rows are about to move. The pre-COMMIT re-check has to catch it,
+      // and the transaction has to undo the moves.
+      const db = seedDb();
+      const manifestPath = path.join(workDir, 'manifest.json');
+      await expect(
+        executeQuarantineRun(
+          runParams(db, {
+            manifestPath,
+            writeManifest: (filePath: string, manifest: CleanupManifest) => {
+              writeJsonFileAtomically(filePath, manifest);
+              // A concurrent session drops a canonical statement value.
+              db.table('financial_statement_values').delete(CANONICAL.statementValueIds[3]);
+            },
+          })
+        )
+      ).rejects.toThrow(/canonical statement values|CHANGED between the precondition/);
+
+      // The transaction rolled back: the rows are still in the demo tenant, and
+      // the deletion itself is undone with it.
+      expect(db.table('financial_statements').get('uuid-dbr77-pl')!.organization_id).toBe(ORG);
+      expect(db.table('financial_models').get('uuid-copy-1')!.organization_id).toBe(ORG);
+      // A PREPARED manifest is on disk, as designed — it is the plan, not proof
+      // that anything moved.
+      expect(readManifest(manifestPath).status).toBe('PREPARED');
+    });
+
+    it('accepts an unchanged fixture — the guard is not simply refusing everything', async () => {
+      const db = seedDb();
+      const manifest = await executeQuarantineRun(runParams(db));
+      expect(manifest.entries).toHaveLength(3);
+    });
+  });
+
   it('cannot move a canonical row even if the caller hand-edits the candidate list', async () => {
     const db = seedDb();
     const foreign = [
@@ -575,7 +780,7 @@ describe('crash between COMMIT and the final manifest write', () => {
     const onDisk = readManifest(manifestPath);
     expect(onDisk.status).toBe('PREPARED');
     expect(onDisk.entries).toEqual([]);
-    expect(() => assertManifestIntegrity(onDisk)).not.toThrow();
+    expect(() => assertManifestIntegrity(onDisk, KEY)).not.toThrow();
 
     const recovered = resolveRollbackEntries(onDisk);
     expect(recovered.recoveredFromPlan).toBe(true);
@@ -609,6 +814,7 @@ describe('crash between COMMIT and the final manifest write', () => {
       manifest: readManifest(manifestPath),
       target: { host: 'trolley.proxy.rlwy.net', database: 'railway' },
       approvedOrganizationId: ORG,
+      signingKey: KEY,
     });
 
     expect(outcome.recoveredFromPlan).toBe(true);
@@ -627,8 +833,7 @@ describe('crash between COMMIT and the final manifest write', () => {
     const manifest = readManifest(manifestPath);
     const prepared: CleanupManifest = { ...manifest, status: 'PREPARED', entries: [] };
     // Re-sign, because the rollback refuses an unsigned/edited manifest.
-    const { signManifest } = await import('../../services/demo/financeDemoCoherencePolicy.js');
-    const resigned = signManifest(prepared);
+    const resigned = signManifest(prepared, KEY);
 
     const row = db.table('financial_models').get('uuid-copy-1')!;
     row.organization_id = ORG;
@@ -638,6 +843,7 @@ describe('crash between COMMIT and the final manifest write', () => {
       manifest: resigned,
       target: { host: 'trolley.proxy.rlwy.net', database: 'railway' },
       approvedOrganizationId: ORG,
+      signingKey: KEY,
     });
     // The already-correct row is skipped, the other two are restored.
     expect(outcome.restored).toBe(2);
@@ -664,6 +870,7 @@ describe('executeRollbackRun', () => {
       manifest,
       target: { host: 'trolley.proxy.rlwy.net', database: 'railway' },
       approvedOrganizationId: ORG,
+      signingKey: KEY,
     });
     expect(outcome).toEqual({ restored: 3, recoveredFromPlan: false });
     expect(db.table('financial_statements').get('uuid-dbr77-pl')!.statement_pack_id).toBe(
@@ -681,13 +888,14 @@ describe('executeRollbackRun', () => {
         manifest,
         target: { host: 'trolley.proxy.rlwy.net', database: 'railway' },
         approvedOrganizationId: ORG,
+        signingKey: KEY,
       })
     ).rejects.toThrow(/changed after it was quarantined/);
     // All-or-nothing: nothing was restored.
     expect(db.table('financial_statements').get('uuid-dbr77-pl')!.organization_id).toBe(QUAR);
   });
 
-  it('refuses a manifest whose checksum does not verify', async () => {
+  it('refuses a manifest whose HMAC does not verify', async () => {
     const { db, manifest } = await quarantined();
     const tampered = { ...manifest, quarantineOrgId: 'elkomtech' };
     await expect(
@@ -696,8 +904,51 @@ describe('executeRollbackRun', () => {
         manifest: tampered,
         target: { host: 'trolley.proxy.rlwy.net', database: 'railway' },
         approvedOrganizationId: ORG,
+        signingKey: KEY,
       })
-    ).rejects.toThrow(/checksum mismatch/);
+    ).rejects.toThrow(/HMAC does not verify/);
+    // Nothing was restored — the refusal happens before the transaction opens.
+    expect(db.table('financial_statements').get('uuid-dbr77-pl')!.organization_id).toBe(QUAR);
+  });
+
+  it('refuses an authentic manifest presented with the WRONG key', async () => {
+    const { db, manifest } = await quarantined();
+    const otherKey = resolveManifestSigningKey({
+      [MANIFEST_HMAC_KEY_ENV]: 'fin005-script-test-signing-key-ROTATED-99',
+      [MANIFEST_HMAC_KEY_ID_ENV]: 'script-test-key-b',
+    });
+    await expect(
+      executeRollbackRun({
+        gateway: createFakeGateway(db),
+        manifest,
+        target: { host: 'trolley.proxy.rlwy.net', database: 'railway' },
+        approvedOrganizationId: ORG,
+        signingKey: otherKey,
+      })
+    ).rejects.toThrow(/signed with key id/);
+    expect(db.table('financial_statements').get('uuid-dbr77-pl')!.organization_id).toBe(QUAR);
+  });
+
+  it('refuses a manifest re-signed with the OLD unkeyed SHA-256', async () => {
+    const { db, manifest } = await quarantined();
+    const forged = { ...manifest, quarantineOrgId: QUAR };
+    forged.entries = manifest.entries.map((entry) => ({ ...entry, displayName: 'edited' }));
+    const { signature: _drop, ...body } = forged;
+    forged.signature = {
+      algorithm: 'HMAC-SHA256',
+      keyId: KEY.keyId,
+      value: createHash('sha256').update(JSON.stringify(body)).digest('hex'),
+    };
+    await expect(
+      executeRollbackRun({
+        gateway: createFakeGateway(db),
+        manifest: forged,
+        target: { host: 'trolley.proxy.rlwy.net', database: 'railway' },
+        approvedOrganizationId: ORG,
+        signingKey: KEY,
+      })
+    ).rejects.toThrow(/HMAC does not verify/);
+    expect(db.table('financial_statements').get('uuid-dbr77-pl')!.organization_id).toBe(QUAR);
   });
 
   it('refuses to restore into an organization other than the approved one', async () => {
@@ -708,6 +959,7 @@ describe('executeRollbackRun', () => {
         manifest,
         target: { host: 'trolley.proxy.rlwy.net', database: 'railway' },
         approvedOrganizationId: 'some-other-org',
+        signingKey: KEY,
       })
     ).rejects.toThrow(/approved target organization/);
   });
@@ -720,6 +972,7 @@ describe('executeRollbackRun', () => {
         manifest,
         target: { host: 'centerbeam.proxy.rlwy.net', database: 'railway' },
         approvedOrganizationId: ORG,
+        signingKey: KEY,
       })
     ).rejects.toThrow(/Refusing to replay across databases/);
   });
@@ -733,6 +986,7 @@ describe('executeRollbackRun', () => {
         manifest,
         target: { host: 'trolley.proxy.rlwy.net', database: 'railway' },
         approvedOrganizationId: ORG,
+        signingKey: KEY,
       })
     ).rejects.toThrow(/belongs to/);
   });
@@ -791,6 +1045,34 @@ describe('CLI surface', () => {
     expect(
       parseConnectionFingerprint('postgresql://u:p@trolley.proxy.rlwy.net:28146/railway')
     ).toEqual({ host: 'trolley.proxy.rlwy.net', port: 28146, database: 'railway' });
+  });
+
+  it('reports a MISSING port as missing — it is never defaulted to 5432', () => {
+    // The wiring, not just the policy: a portless URL must arrive at the guard
+    // as `null` so the guard can refuse it.
+    expect(parseConnectionFingerprint('postgresql://u:p@trolley.proxy.rlwy.net/railway')).toEqual({
+      host: 'trolley.proxy.rlwy.net',
+      port: null,
+      database: 'railway',
+    });
+
+    const approved = FIN005_APPROVED_DEMO_TARGETS[0];
+    expect(() =>
+      assertApprovedDemoTarget({
+        declared: { ...approved },
+        actual: parseConnectionFingerprint(`postgresql://u:p@${approved.host}/${approved.database}`),
+      })
+    ).toThrow(/carries no port/i);
+
+    // …and the fully specified URL is accepted through the same path.
+    expect(
+      assertApprovedDemoTarget({
+        declared: { ...approved },
+        actual: parseConnectionFingerprint(
+          `postgresql://u:p@${approved.host}:${approved.port}/${approved.database}`
+        ),
+      }).organizationId
+    ).toBe(approved.organizationId);
   });
 });
 

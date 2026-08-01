@@ -53,6 +53,15 @@
  *    refused by FINGERPRINT before the allowlist is even consulted, so a
  *    `DEMO`-typed organization in production cannot let it through.
  *
+ *    The OBSERVED port must exist and be exactly the approved one. A connection
+ *    string with no port is refused rather than assumed to be the default: the
+ *    approved target is a proxy port (28146), and `host/db` with no port lands
+ *    on 5432 — a different server entirely.
+ *
+ *    Independently, the demo tenant must carry `organization_type = 'DEMO'`
+ *    EXACTLY (case-sensitive). A missing column, NULL, `''`, `TRIAL`, `PAID` or
+ *    lower-case `demo` all refuse.
+ *
  * 3. NO `--force-org`. The escape hatch is GONE, deliberately and with no
  *    replacement in this script. Anything the allowlist refuses is out of band:
  *    it gets its own packet, its own review and its own tooling. If you are
@@ -66,17 +75,30 @@
  *    organization_members. Rows are never moved into a tenant that has people
  *    in it.
  *
- * 5. SEED BEFORE QUARANTINE. `--write` first reads back the exact canonical
- *    ids and refuses unless it finds 1 pack, 3 statements, the full statement
- *    value set, 1 analysis, 1 model and valid lineage between them. Quarantine
- *    without the seed leaves the demo Finance module empty.
+ * 5. SEED BEFORE QUARANTINE, AND STILL SEEDED AT COMMIT. `--write` first reads
+ *    back the exact canonical ids and refuses unless it finds 1 pack, 3
+ *    statements, the full statement value set, 1 analysis, 1 model and valid
+ *    lineage between them. Quarantine without the seed leaves the demo Finance
+ *    module empty. That precondition runs OUTSIDE the transaction, so it is not
+ *    enough on its own: inside the transaction the same fixture is re-read with
+ *    `SELECT … FOR UPDATE` (which also locks it against concurrent writers),
+ *    re-checked for completeness and coherence, and compared byte for byte
+ *    against what the precondition saw. Any difference ⇒ `ROLLBACK`, nothing
+ *    moves.
  *
- * 6. DURABLE ROLLBACK. A manifest carrying the FULL prior state of every row
- *    (all columns, plus a SHA-256 per-row fingerprint and a checksum over the
- *    whole file) is written, fsync'd and atomically renamed into place BEFORE
- *    `COMMIT`. A crash between `COMMIT` and the final manifest write is
- *    recoverable: the `PREPARED` manifest on disk already contains everything
- *    the rollback needs (`plannedEntries`).
+ * 6. DURABLE, AUTHENTICATED ROLLBACK. A manifest carrying the FULL prior state
+ *    of every row (all columns, plus a SHA-256 per-row fingerprint and an
+ *    HMAC-SHA256 signature over the whole file) is written, fsync'd and
+ *    atomically renamed into place BEFORE `COMMIT`. A crash between `COMMIT`
+ *    and the final manifest write is recoverable: the `PREPARED` manifest on
+ *    disk already contains everything the rollback needs (`plannedEntries`).
+ *
+ *    The signature is KEYED. `--write` and `--rollback` both require
+ *    `FIN005_MANIFEST_HMAC_KEY` (+ `FIN005_MANIFEST_HMAC_KEY_ID`). The earlier
+ *    unkeyed SHA-256 proved only that the file had not been truncated by
+ *    accident — anybody who could edit the manifest could recompute it, and the
+ *    manifest is what `--rollback` writes into the database. Manifests carrying
+ *    the old `checksum` field are refused outright.
  *
  *    NOT DONE — flagged, not implemented: persisting the prior state to a
  *    durable DB audit/outbox table inside the same transaction. That would need
@@ -90,7 +112,7 @@
  *    ingest→statement, analysis→pack/statements, model→pack/analysis. Any
  *    inconsistency ⇒ `ROLLBACK`.
  *
- * 8. ROLLBACK REFUSES ON DRIFT. The manifest checksum must verify, and every
+ * 8. ROLLBACK REFUSES ON DRIFT. The manifest HMAC must verify, and every
  *    row must still carry the fingerprint it had immediately after quarantine.
  *    A row edited in the meantime is refused rather than silently overwritten.
  *    A restored `statement_pack_id` must point at a pack that exists, belongs
@@ -109,13 +131,19 @@
  *     --expect-host trolley.proxy.rlwy.net --expect-port 28146 \
  *     --expect-database railway --demo-org-id demo-org
  *
- *   # 2. after the printed list is approved (seed must already be materialized)
+ *   # 2. after the printed list is approved (seed must already be materialized).
+ *   #    The manifest key is REQUIRED here and must be the same one used for the
+ *   #    rollback. Keep it out of shell history (e.g. read it from a file).
  *   DATABASE_URL=... FINANCE_DEMO_CLEANUP_CONFIRM=QUARANTINE_FOREIGN_FINANCE \
+ *     FIN005_MANIFEST_HMAC_KEY="$(cat ~/.fin005-manifest-key)" \
+ *     FIN005_MANIFEST_HMAC_KEY_ID=fin005-2026-08-a \
  *     npx tsx server/scripts/finance-demo-coherence-cleanup.ts \
  *     <same target flags> --run-id 2026-08-01a --write
  *
- *   # 3. rollback (from the manifest written by step 2)
+ *   # 3. rollback (from the manifest written by step 2, same key + key id)
  *   DATABASE_URL=... FINANCE_DEMO_CLEANUP_CONFIRM=QUARANTINE_FOREIGN_FINANCE \
+ *     FIN005_MANIFEST_HMAC_KEY="$(cat ~/.fin005-manifest-key)" \
+ *     FIN005_MANIFEST_HMAC_KEY_ID=fin005-2026-08-a \
  *     npx tsx server/scripts/finance-demo-coherence-cleanup.ts \
  *     <same target flags> --rollback server/exports/<manifest>.json
  */
@@ -128,7 +156,9 @@ import pg from 'pg';
 
 import {
   assertCanonicalFixtureMaterialized,
+  assertCanonicalFixtureUnchanged,
   assertApprovedDemoTarget,
+  assertDemoOrganizationMarker,
   assertManifestEntriesConsistent,
   assertManifestIntegrity,
   assertNoCrossOrgDependencies,
@@ -148,8 +178,10 @@ import {
   type DependencyGraph,
   type FinanceDemoClassification,
   type ManifestEntry,
+  type ManifestSigningKey,
   type QuarantineOrganizationRow,
 } from '../src/services/demo/financeDemoCoherencePolicy.js';
+import { resolveManifestSigningKey } from '../src/services/demo/financeDemoManifestSignature.js';
 import { getAtelierFinanceCanonicalIds } from '../src/services/demo/atelierFinanceSeed.js';
 import {
   logSelectedDatabaseTarget,
@@ -329,6 +361,12 @@ export function readManifest(filePath: string): CleanupManifest {
 export interface CleanupTransaction {
   ensureQuarantineOrganization(id: string, name: string): Promise<void>;
   readQuarantineOrganization(id: string): Promise<QuarantineOrganizationRow | null>;
+  /**
+   * Re-read the EXACT canonical fixture with `SELECT … FOR UPDATE`, inside the
+   * transaction. The lock is the point: after this call no other session can
+   * change the fixture until we commit or roll back.
+   */
+  lockCanonicalFixture(organizationId: string): Promise<CanonicalFixtureReadback>;
   /** `SELECT * … FOR UPDATE` — every column, so the prior state is complete. */
   lockRows(table: string, ids: string[], organizationId: string): Promise<Array<Record<string, unknown>>>;
   moveRows(params: {
@@ -352,7 +390,11 @@ export interface CleanupTransaction {
 }
 
 export interface CleanupGateway {
-  organizationExists(id: string): Promise<{ id: string; organizationType: string | null } | null>;
+  organizationExists(
+    id: string
+  ): Promise<
+    { id: string; organizationTypeColumnPresent: boolean; organizationType: string | null } | null
+  >;
   currentDatabase(): Promise<string>;
   listScopedRows(organizationId: string): Promise<Array<{ table: string; id: string; displayName: string }>>;
   countObserveOnly(organizationId: string): Promise<Array<{ table: string; count: number }>>;
@@ -414,6 +456,88 @@ export function createPgGateway(pool: pg.Pool): CleanupGateway {
     }
     const present = new Set(clearableColumnsCache.get(cacheKey) || []);
     return wanted.filter((column) => present.has(column));
+  }
+
+  /**
+   * Read the exact canonical fixture.
+   *
+   * `lock: true` appends `FOR UPDATE` and MUST be used inside the quarantine
+   * transaction: it both re-reads the fixture and holds it against concurrent
+   * writers until COMMIT/ROLLBACK. `lock: false` is the read-only precondition
+   * pass on the pool.
+   */
+  async function fixture(
+    runner: pg.Pool | pg.PoolClient,
+    organizationId: string,
+    options: { lock: boolean }
+  ): Promise<CanonicalFixtureReadback> {
+    const canonical = getAtelierFinanceCanonicalIds(organizationId);
+    // `FOR UPDATE` is only legal on a plain row-returning SELECT, which every
+    // query below is.
+    const forUpdate = options.lock ? ' FOR UPDATE' : '';
+    const pick = async (sql: string, ids: string[]) =>
+      ids.length ? (await runner.query(`${sql}${forUpdate}`, [ids, organizationId])).rows || [] : [];
+
+    const packs = await pick(
+      `SELECT id::text AS id, organization_id::text AS organization_id
+         FROM financial_statement_packs WHERE id = ANY($1::text[]) AND organization_id = $2`,
+      [canonical.packId]
+    );
+    const statements = await pick(
+      `SELECT id::text AS id, organization_id::text AS organization_id,
+              statement_pack_id::text AS statement_pack_id
+         FROM financial_statements WHERE id = ANY($1::text[]) AND organization_id = $2`,
+      canonical.statementIds
+    );
+    const values = canonical.statementValueIds.length
+      ? (
+          await runner.query(
+            `SELECT id::text AS id, statement_id::text AS statement_id
+               FROM financial_statement_values WHERE id = ANY($1::text[])${forUpdate}`,
+            [canonical.statementValueIds]
+          )
+        ).rows || []
+      : [];
+    const analyses = await pick(
+      `SELECT id::text AS id, organization_id::text AS organization_id,
+              source_statement_pack_id::text AS source_statement_pack_id,
+              source_statement_ids
+         FROM financial_analyses WHERE id = ANY($1::text[]) AND organization_id = $2`,
+      [canonical.analysisId]
+    );
+    const models = await pick(
+      `SELECT id::text AS id, organization_id::text AS organization_id,
+              source_statement_pack_id::text AS source_statement_pack_id
+         FROM financial_models WHERE id = ANY($1::text[]) AND organization_id = $2`,
+      [canonical.modelId]
+    );
+
+    return {
+      packs: packs.map((row) => ({
+        id: String(row.id),
+        organizationId: String(row.organization_id),
+      })),
+      statements: statements.map((row) => ({
+        id: String(row.id),
+        organizationId: String(row.organization_id),
+        statementPackId: row.statement_pack_id ?? null,
+      })),
+      values: values.map((row) => ({
+        id: String(row.id),
+        statementId: String(row.statement_id),
+      })),
+      analyses: analyses.map((row) => ({
+        id: String(row.id),
+        organizationId: String(row.organization_id),
+        sourceStatementPackId: row.source_statement_pack_id ?? null,
+        sourceStatementIds: parseJsonArray(row.source_statement_ids),
+      })),
+      models: models.map((row) => ({
+        id: String(row.id),
+        organizationId: String(row.organization_id),
+        sourceStatementPackId: row.source_statement_pack_id ?? null,
+      })),
+    };
   }
 
   async function graph(
@@ -494,18 +618,22 @@ export function createPgGateway(pool: pg.Pool): CleanupGateway {
   return {
     async organizationExists(id) {
       const columns = await existingColumns(pool, 'organizations');
+      const columnPresent = columns.has('organization_type');
       const result = await pool.query(
         `SELECT id::text AS id${
-          columns.has('organization_type') ? ', organization_type::text AS organization_type' : ''
+          columnPresent ? ', organization_type::text AS organization_type' : ''
         } FROM organizations WHERE id = $1 LIMIT 1`,
         [id]
       );
       if (!result.rowCount) return null;
+      const raw = (result.rows[0] as Record<string, unknown>).organization_type;
       return {
         id: String(result.rows[0].id),
-        organizationType: (result.rows[0] as Record<string, unknown>).organization_type
-          ? String((result.rows[0] as Record<string, unknown>).organization_type)
-          : null,
+        organizationTypeColumnPresent: columnPresent,
+        // NOTE the shape: `''` must survive as `''` and NULL as `null`. The
+        // previous `raw ? String(raw) : null` collapsed an empty string into
+        // "column absent", which the caller then waved through.
+        organizationType: raw === null || raw === undefined ? null : String(raw),
       };
     },
 
@@ -561,71 +689,8 @@ export function createPgGateway(pool: pg.Pool): CleanupGateway {
       return out;
     },
 
-    async readCanonicalFixture(organizationId) {
-      const canonical = getAtelierFinanceCanonicalIds(organizationId);
-      const pick = async (sql: string, ids: string[]) =>
-        ids.length ? (await pool.query(sql, [ids, organizationId])).rows || [] : [];
-
-      const packs = await pick(
-        `SELECT id::text AS id, organization_id::text AS organization_id
-           FROM financial_statement_packs WHERE id = ANY($1::text[]) AND organization_id = $2`,
-        [canonical.packId]
-      );
-      const statements = await pick(
-        `SELECT id::text AS id, organization_id::text AS organization_id,
-                statement_pack_id::text AS statement_pack_id
-           FROM financial_statements WHERE id = ANY($1::text[]) AND organization_id = $2`,
-        canonical.statementIds
-      );
-      const values = canonical.statementValueIds.length
-        ? (
-            await pool.query(
-              `SELECT id::text AS id, statement_id::text AS statement_id
-                 FROM financial_statement_values WHERE id = ANY($1::text[])`,
-              [canonical.statementValueIds]
-            )
-          ).rows || []
-        : [];
-      const analyses = await pick(
-        `SELECT id::text AS id, organization_id::text AS organization_id,
-                source_statement_pack_id::text AS source_statement_pack_id,
-                source_statement_ids
-           FROM financial_analyses WHERE id = ANY($1::text[]) AND organization_id = $2`,
-        [canonical.analysisId]
-      );
-      const models = await pick(
-        `SELECT id::text AS id, organization_id::text AS organization_id,
-                source_statement_pack_id::text AS source_statement_pack_id
-           FROM financial_models WHERE id = ANY($1::text[]) AND organization_id = $2`,
-        [canonical.modelId]
-      );
-
-      return {
-        packs: packs.map((row) => ({
-          id: String(row.id),
-          organizationId: String(row.organization_id),
-        })),
-        statements: statements.map((row) => ({
-          id: String(row.id),
-          organizationId: String(row.organization_id),
-          statementPackId: row.statement_pack_id ?? null,
-        })),
-        values: values.map((row) => ({
-          id: String(row.id),
-          statementId: String(row.statement_id),
-        })),
-        analyses: analyses.map((row) => ({
-          id: String(row.id),
-          organizationId: String(row.organization_id),
-          sourceStatementPackId: row.source_statement_pack_id ?? null,
-          sourceStatementIds: parseJsonArray(row.source_statement_ids),
-        })),
-        models: models.map((row) => ({
-          id: String(row.id),
-          organizationId: String(row.organization_id),
-          sourceStatementPackId: row.source_statement_pack_id ?? null,
-        })),
-      };
+    readCanonicalFixture(organizationId) {
+      return fixture(pool, organizationId, { lock: false });
     },
 
     readDependencyGraph(organizationIds) {
@@ -702,6 +767,7 @@ export function createPgGateway(pool: pg.Pool): CleanupGateway {
           return {
             id: String(row.id),
             name: row.name === undefined || row.name === null ? null : String(row.name),
+            organizationTypeColumnPresent: present.has('organization_type'),
             organizationType:
               row.organization_type === undefined || row.organization_type === null
                 ? null
@@ -712,6 +778,10 @@ export function createPgGateway(pool: pg.Pool): CleanupGateway {
             userCount: Number(users.rows?.[0]?.count || 0),
             memberCount,
           };
+        },
+
+        lockCanonicalFixture(organizationId) {
+          return fixture(client, organizationId, { lock: true });
         },
 
         async lockRows(table, ids, organizationId) {
@@ -946,6 +1016,14 @@ export interface QuarantineRunParams {
   manifestPath: string;
   host: string;
   database: string;
+  /** HMAC key for the manifest. Required — there is no unsigned path. */
+  signingKey: ManifestSigningKey;
+  /**
+   * The canonical fixture exactly as the precondition saw it, OUTSIDE the
+   * transaction. Re-read under `FOR UPDATE` inside the transaction and compared
+   * against this; any difference aborts before COMMIT.
+   */
+  preconditionFixture: CanonicalFixtureReadback;
   /** Injectable so tests can observe exactly what hit the disk and when. */
   writeManifest?: (filePath: string, manifest: CleanupManifest) => void;
   /** Fault injection: `afterCommit` throwing simulates a crash post-COMMIT. */
@@ -997,6 +1075,25 @@ export async function executeQuarantineRun(params: QuarantineRunParams): Promise
         name: params.quarantineOrgName,
       });
     }
+
+    // 1b. TRANSACTIONAL FIXTURE GUARD.
+    //
+    // The precondition ran outside this transaction, so between it and now the
+    // fixture could have been re-seeded, edited or partly deleted — and moving
+    // every non-canonical row out of a tenant whose canonical fixture is broken
+    // leaves the demo Finance module empty. Re-read it under `FOR UPDATE` (which
+    // also blocks concurrent writers for the rest of the transaction), prove it
+    // is STILL complete and coherent, and prove it is still the SAME fixture the
+    // precondition approved. Any difference throws, and the throw rolls the
+    // transaction back before a single row has moved.
+    const lockedFixture = await tx.lockCanonicalFixture(params.demoOrgId);
+    assertCanonicalFixtureMaterialized(lockedFixture, params.demoOrgId);
+    assertCanonicalFixtureUnchanged({
+      before: params.preconditionFixture,
+      after: lockedFixture,
+      organizationId: params.demoOrgId,
+      phase: 'the locked in-transaction re-read',
+    });
 
     // 2. Lock the rows and capture EVERY column as the prior state.
     const planned: ManifestEntry[] = [];
@@ -1052,7 +1149,7 @@ export async function executeQuarantineRun(params: QuarantineRunParams): Promise
     }
 
     // 3. Durable rollback plan on disk BEFORE anything commits.
-    manifest = signManifest({ ...manifest, plannedEntries: planned });
+    manifest = signManifest({ ...manifest, plannedEntries: planned }, params.signingKey);
     writeManifest(params.manifestPath, manifest);
 
     // 4. Move.
@@ -1086,15 +1183,30 @@ export async function executeQuarantineRun(params: QuarantineRunParams): Promise
     const graph = await tx.readDependencyGraph([params.demoOrgId, params.quarantineOrgId]);
     assertNoCrossOrgDependencies(graph, 'pre-COMMIT');
 
+    // 6. Final confirmation immediately before COMMIT. The rows are locked, so
+    //    this is belt-and-braces against our own UPDATEs having touched the
+    //    fixture — the one thing the lock cannot protect us from.
+    const fixtureAtCommit = await tx.lockCanonicalFixture(params.demoOrgId);
+    assertCanonicalFixtureMaterialized(fixtureAtCommit, params.demoOrgId);
+    assertCanonicalFixtureUnchanged({
+      before: params.preconditionFixture,
+      after: fixtureAtCommit,
+      organizationId: params.demoOrgId,
+      phase: 'pre-COMMIT',
+    });
+
     return entries;
   }, params.hooks);
 
-  manifest = signManifest({
-    ...manifest,
-    status: 'COMMITTED',
-    completedAt: now().toISOString(),
-    entries: confirmed,
-  });
+  manifest = signManifest(
+    {
+      ...manifest,
+      status: 'COMMITTED',
+      completedAt: now().toISOString(),
+      entries: confirmed,
+    },
+    params.signingKey
+  );
   writeManifest(params.manifestPath, manifest);
   return manifest;
 }
@@ -1116,9 +1228,11 @@ export async function executeRollbackRun(params: {
   manifest: CleanupManifest;
   target: { host: string; database: string };
   approvedOrganizationId: string;
+  /** Same HMAC key the write run used. A rotated or wrong key REFUSES. */
+  signingKey: ManifestSigningKey;
 }): Promise<{ restored: number; recoveredFromPlan: boolean }> {
   const manifest = params.manifest;
-  assertManifestIntegrity(manifest);
+  assertManifestIntegrity(manifest, params.signingKey);
 
   const demoOrgId = String(manifest.demoOrgId || '').trim();
   const quarantineOrgId = String(manifest.quarantineOrgId || '').trim();
@@ -1234,6 +1348,15 @@ export function resolveDeclaredTarget(args: Args): Record<string, string> {
   };
 }
 
+/**
+ * The fingerprint of the connection we are ACTUALLY about to open.
+ *
+ * The port is whatever the connection string says and NOTHING ELSE. It is not
+ * defaulted to 5432, and it is not defaulted to the declared/allowlisted port:
+ * a URL with no port returns `null`, and `assertApprovedDemoTarget` refuses on
+ * `null`. Substituting a default here would mean the guard "confirms" a port it
+ * never observed, which is the whole defect this shape exists to prevent.
+ */
 export function parseConnectionFingerprint(connectionString: string): {
   host: string;
   port: number | null;
@@ -1294,20 +1417,28 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
         `[${LABEL}] Organization "${demoOrgId}" does not exist in the target database.`
       );
     }
-    if (org.organizationType && org.organizationType.toUpperCase() !== 'DEMO') {
-      throw new Error(
-        `[${LABEL}] Organization "${demoOrgId}" has organization_type="${org.organizationType}", not "DEMO". Refusing to run.`
-      );
-    }
+    // STRICT demo marker: the column must exist and the value must be exactly
+    // "DEMO". Absent column, NULL, '' and anything else all REFUSE — the old
+    // `org.organizationType && …` form waved through every one of them.
+    assertDemoOrganizationMarker({
+      organizationId: demoOrgId,
+      observed: {
+        columnPresent: org.organizationTypeColumnPresent,
+        value: org.organizationType,
+      },
+      role: 'demo organization',
+    });
 
     if (args.rollback) {
       requireConfirmation(CONFIRM_ENV, CONFIRM_VALUE, LABEL);
+      const signingKey = resolveManifestSigningKey(process.env, 'a --rollback run');
       const manifest = readManifest(String(args.rollback));
       const outcome = await executeRollbackRun({
         gateway,
         manifest,
         target: { host: target.host, database: target.database },
         approvedOrganizationId: demoOrgId,
+        signingKey,
       });
       console.log(
         `✅ Rollback complete — ${outcome.restored} row(s) returned to the demo tenant` +
@@ -1361,9 +1492,15 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
 
     requireConfirmation(CONFIRM_ENV, CONFIRM_VALUE, LABEL);
 
+    // Fail before anything else if the manifest cannot be signed: a write run
+    // that cannot produce an authenticated rollback plan must not start.
+    const signingKey = resolveManifestSigningKey(process.env, 'a --write run');
+
     // SEED BEFORE QUARANTINE — read back the exact canonical ids and refuse if
-    // the golden flow is not fully materialized.
-    assertCanonicalFixtureMaterialized(await gateway.readCanonicalFixture(demoOrgId), demoOrgId);
+    // the golden flow is not fully materialized. This readback is ALSO the
+    // baseline the transaction re-checks under `FOR UPDATE` before COMMIT.
+    const preconditionFixture = await gateway.readCanonicalFixture(demoOrgId);
+    assertCanonicalFixtureMaterialized(preconditionFixture, demoOrgId);
 
     console.log(
       `[${LABEL}] Write mode (run ${runId}). This will:\n` +
@@ -1387,6 +1524,8 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
       manifestPath,
       host: target.host,
       database: target.database,
+      signingKey,
+      preconditionFixture,
     });
 
     console.log(
