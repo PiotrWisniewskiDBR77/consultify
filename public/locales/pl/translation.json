@@ -8629,7 +8629,17 @@
       "emptyPlanTitle": "Ta inicjatywa nie ma jeszcze planu",
       "emptyPlanHint": "Zadania zasilają harmonogram (Gantt) i postęp inicjatywy. Dodaj pierwsze zadanie albo pozwól AI zaproponować kompletny plan.",
       "emptyPlanAddFirst": "Dodaj pierwsze zadanie",
-      "emptyPlanGenerateAi": "Wygeneruj plan z AI"
+      "emptyPlanGenerateAi": "Wygeneruj plan z AI",
+      "addMilestone": "Dodaj kamień milowy",
+      "newMilestoneTitle": "Nowy kamień milowy",
+      "milestoneNamePlaceholder": "np. Zatwierdzenie startu",
+      "targetDate": "Data docelowa",
+      "createMilestone": "Utwórz kamień milowy",
+      "milestoneCreated": "Kamień milowy utworzony",
+      "failedToCreateMilestone": "Nie udało się utworzyć kamienia milowego",
+      "milestonesHeading": "Kamienie milowe",
+      "noMilestonesYet": "Brak kamieni milowych",
+      "taskCreated": "Zadanie utworzone"
     },
     "decisionsSection": {
       "missingInitiativeId": "Brak ID inicjatywy",

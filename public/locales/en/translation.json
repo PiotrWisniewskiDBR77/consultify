@@ -9361,7 +9361,17 @@
       "emptyPlanTitle": "This initiative has no plan yet",
       "emptyPlanHint": "Tasks feed the schedule (Gantt) and initiative progress. Add the first task or let AI propose a complete plan.",
       "emptyPlanAddFirst": "Add the first task",
-      "emptyPlanGenerateAi": "Generate a plan with AI"
+      "emptyPlanGenerateAi": "Generate a plan with AI",
+      "addMilestone": "Add milestone",
+      "newMilestoneTitle": "New milestone",
+      "milestoneNamePlaceholder": "e.g. Go-live approved",
+      "targetDate": "Target date",
+      "createMilestone": "Create milestone",
+      "milestoneCreated": "Milestone created",
+      "failedToCreateMilestone": "Failed to create milestone",
+      "milestonesHeading": "Milestones",
+      "noMilestonesYet": "No milestones yet",
+      "taskCreated": "Task created"
     },
     "decisionsSection": {
       "missingInitiativeId": "Missing initiative ID",
