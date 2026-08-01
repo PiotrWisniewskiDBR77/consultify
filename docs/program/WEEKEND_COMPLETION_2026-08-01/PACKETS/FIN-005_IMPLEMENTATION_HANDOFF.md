@@ -961,3 +961,167 @@ Kontrola anty-pusta: wyłączenie ścieżki przypiętej czerwieni 12 z 14 testó
 4. Ścieżka fallback (bez pg) zachowuje udokumentowane ryzyko rezydualne — proces
    zabity między dwoma UPDATE-ami; faza 0 naprawia przy następnym uruchomieniu.
    Ta ścieżka biegnie już tylko tam, gdzie połączenie pg nie może istnieć.
+
+## 15. Runda szósta — finalna korekta linii B (2026-08-01)
+
+Cztery P1 zlecone, dwa dodatkowe blokery znalezione przez przegląd adwersaryjny
+i **potwierdzone przeze mnie osobno**, oba naprawione i ponownie zweryfikowane
+tymi samymi atakami. Diff względem `fa3b649fd6`: `8e1da202b3`, `8064d83ab7`,
+`ffc729a23b`, `0ea8f0a896`.
+
+### 15.1 Fail-closed na PostgreSQL
+
+Wcześniej: `mode:'unavailable'` przechodziło do nieatomowej ścieżki, a komentarz
+w kodzie sam wymieniał wśród wyzwalaczy „**a pool that refused a checkout**" —
+warunek realnej bazy, nie atrapy.
+
+Teraz: pięć kształtów wyniku zamiast trzech. Wszystko poza pozytywnie
+rozpoznanym seamem to `refused` → seed `incomplete`, **zero UPDATE-ów
+promocyjnych**. Wejście do ścieżki nieatomowej jest jedno i napisane jawnie, nie
+przez przelot — nowy wariant unii w przyszłości wpada w `incomplete`.
+
+**Zweryfikowane przeze mnie** wstrzyknięciem awarii w miejscu checkoutu, na
+realnym PostgreSQL:
+
+```text
+ERROR  pinned promotion transaction REFUSED — could not check out a pinned
+       connection; failing closed with ZERO promotion UPDATEs issued
+       (no compensating fallback on PostgreSQL).
+STATUS = incomplete · statements promoted = 0/3 · pack ready = 0 · analysis APPROVED = 0
+```
+
+### 15.2 ★ BLOKER znaleziony przez przegląd: `MOCK_DB=true` otwierało ścieżkę nieatomową
+
+Predykat seamu zwracał `recognised:true` na goły string `MOCK_DB === 'true'`,
+**zanim** zapytał, czym baza jest. Komentarz twierdził, że `Database.ts` traktuje
+to jako główny przełącznik atrapy — prawda tylko wewnątrz `createDatabase()`,
+którego `DbPromise` nigdy nie woła.
+
+Zmierzone przeze mnie na `fa3b649fd6`:
+
+```text
+MOCK_DB=true, DATABASE_URL=…/fin005_b
+→ instanceIsMock: false, dbPromiseWritesTo: "fin005_b", backendPid: 28330
+```
+
+Seam mówił „atrapa", zapisy szły do realnego PostgreSQL. Wystarczyło zabłąkane
+`MOCK_DB=true` w zmiennych Railway albo w powłoce operatora; `NODE_ENV=production`
+nie chronił. **Własny test repo wykorzystywał to jako drogę do fallbacku.**
+
+Naprawa: o seamie decyduje sonda **żywej bazy przez ten sam moduł, przez który
+idą zapisy**. Jeśli PostgreSQL odpowiada — wynik to `postgres`, koniec;
+`unavailable` jest stamtąd nieosiągalne. Deklaracje (`isMock`, sterownik) są
+strukturalnie *za* sondą. `MOCK_DB` usunięty jako sygnał; został wyłącznie jako
+tekst dowodowy:
+
+> `MOCK_DB=true (IGNORED — an env var is a statement of intent, never evidence about the live database)`
+
+**Zweryfikowane przeze mnie tym samym atakiem**: `MOCK_DB=true` na realnej bazie
+→ decyzja `postgres`; end-to-end z awarią checkoutu → `incomplete`, zero promocji.
+
+### 15.3 ★ BLOKER znaleziony przez przegląd: połączenie zapisujące nigdy nie było autoryzowane
+
+Wszystkie bramki komendy seeda biegły na puli z `--database-url || DATABASE_URL`,
+a `upsertAtelierFinanceGoldenFlow` pisał przez `DbPromise`, które rozwiązuje
+`process.env.DATABASE_URL` **niezależnie**. Jedynym mostkiem było porównanie
+**nazwy bazy** — a każda baza Railway nazywa się `railway` (demo
+`trolley:28146/railway`, produkcja `centerbeam:37823/railway`, oba w fixture'ach
+tego pakietu).
+
+Czyli `--database-url <demo>` + `DATABASE_URL=<produkcja>` przechodziło denylist
+produkcji, allowlistę, marker DEMO i odczyt kontrolny — wszystko na demo — a
+33 wiersze lądowały w produkcji.
+
+Naprawa: `--database-url` **usunięty** (jego użycie to twardy błąd, żeby stary
+alias się zatrzymał), a tożsamość porównywana przez
+`pg_control_system().system_identifier` + OID bazy + adres/port + start
+postmastera, na **obu** ścieżkach. Przy okazji wyszła druga dziura:
+`DbPromise.all`/`get` idą przez `getReadPool()`, więc stary check po nazwie
+czytał **replikę**, nie pulę zapisu.
+
+**Zweryfikowane przeze mnie na dwóch klastrach o identycznej nazwie bazy:**
+
+```text
+cluster A: system_identifier 7610146894575327780, database "fin005_b", oid 533481
+cluster B: system_identifier 7669010021664630220, database "fin005_b", oid 16384
+database NAME identical? true
+REFUSED -> systemIdentifier + databaseOid differ
+SAME cluster accepted (control) — correct
+```
+
+### 15.4 Spóźniony UPDATE po timeoucie JS
+
+Fallback promocyjny na PostgreSQL **nie istnieje** — timeout JS nie jest granicą
+transakcyjną, więc wszystkie promocje idą wyłącznie przez przypiętą transakcję.
+Test RED (fallback przez jedyny pozostały legalny seam: hurtowo zamockowany
+`DbPromise`) pokazuje wskrzeszenie READY po zwróceniu `incomplete`; test GREEN
+na zwykłym PG pokazuje, że sesyjny `SET LOCAL statement_timeout` anuluje
+zapytanie po stronie serwera **wewnątrz** transakcji. Falsyfikacja: gdy zapis
+ląduje na czas zamiast z opóźnieniem, RED pada na `rowsStillClaimingReady` —
+asercje dotyczą spóźnienia, nie samej awarii.
+
+### 15.5 `commit-indeterminate`
+
+Pięć statusów. `lost-then-confirmed` wymaga, by świeże połączenie odczytało
+wszystkie pięć wierszy **dokładnie** w stanie docelowym (pełne porównanie
+kolumn, nie flaga READY) i by werdykt produkcyjny się zgodził; `not-committed`
+wymaga dokładnej zgodności ze snapshotem pre-state pobranym pod blokadą
+`FOR UPDATE`; wszystko inne to `indeterminate` + `NEEDS_OPERATOR`.
+
+Przegląd wykazał, że `NEEDS_OPERATOR` **kasował się sam** przy następnym
+przebiegu (faza 0 leczyła residuum), a runbook wręcz kazał operatorowi ponowić.
+Teraz werdykt zapisuje się jako **operator hold** (plik JSON per tenant),
+bramka stoi nad sondą schematu i nad fazą 0, seed zwraca `incomplete` i wydaje
+**zero instrukcji**, dopóki hold nie zostanie usunięty. Skasowanie pliku JEST
+potwierdzeniem.
+
+⚠ Precondition operacyjny: bez `STORAGE_DIR` na zamontowanym wolumenie hold
+ląduje pod `process.cwd()` i nie przeżyje redeployu Railway. Seed loguje to na
+poziomie `error` w momencie zapisu.
+
+### 15.6 Ekonomika modelu ROI
+
+Wąska komenda seeda zasiewa teraz trzy kanoniczne `financial_model_events`
+(2 400 000 / 800 000 / −400 000 EUR), przepisane pole po polu z
+`upsertAtelierRoiFinancialModel`, z testem czytającym źródło tamtej funkcji.
+
+Świadomie **nie** zasiewane, z powodami: `assumptions_json` — pełny dataset też
+go nie pisze, więc dopisanie byłoby wymyśleniem ekonomiki (mój brief był tu
+błędny, agent słusznie odmówił i postawił test na tej przesłance);
+`financial_model_outputs` — jedyny pisarz zaczyna od `DELETE FROM`, a ta komenda
+ma kontrakt „zero instrukcji destrukcyjnych".
+
+**Konsekwencja jest otwarta i jest w runbooku jako decyzja operatora:**
+NPV/ROI/okres zwrotu pozostaną puste, bo `POST /models/:id/compute` blokuje
+bramka read-only demo, a `reseedModelFromSource` odmawia modelowi `approved`.
+
+### 15.7 Bramki
+
+| Bramka | Wynik |
+| --- | --- |
+| mockowane FIN-005 (18 plików) | **309 PASS / 47 skipped** |
+| real PG, 3 pliki `*.pg.test.ts`, ×3 przebiegi | **36 PASS / 1 skipped**, identycznie |
+| real PG, drift | **1 PASS / 19 skipped** |
+| komenda seeda (real PG + bliźniaczy klaster) | **36 PASS / 1 skipped** |
+| `tsc --noEmit` backend | **216 przed = 216 po**, identyczny zbiór `file:line:code` |
+| `tsc --noEmit` frontend | **0 błędów** |
+| `npm run build:backend` | **PASS** |
+| `git diff --check` | **PASS** |
+
+Wszystkie testy z `--retry=0`. **Pliki `*.pg.test.ts` MUSZĄ iść z
+`--fileParallelism=false`** — dzielą jedną bazę i instalują globalne triggery;
+równolegle dają fałszywe porażki wyglądające jak błędy adaptera.
+
+### 15.8 Otwarte
+
+1. `STORAGE_DIR` na wolumenie — precondition dla operator holdu (§15.5).
+2. NPV/ROI/zwrot puste — decyzja operatora (§15.6).
+3. Brak trwałej tabeli audit/outbox — wymaga migracji.
+4. Rotacja klucza HMAC bez procedury.
+5. Wartości allowlisty Railway niepotwierdzone na żywym połączeniu (fail-closed);
+   bramka tożsamości dowodzi, że pisze autoryzowane połączenie, ale nie że
+   deklarowany fingerprint nazywa właściwe środowisko — to zostaje §1 runbooku.
+6. Kosmetyka: komunikat odmowy tożsamości ma zdublowany rodzajnik
+   („the the write pool").
+7. `getPoolClientForPinnedTransaction()` ma teraz dwóch wołających, a jego
+   docblock nadal mówi o jednym.

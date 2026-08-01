@@ -1,0 +1,1465 @@
+{
+  "version": 2,
+  "label": "fin005-atelier-finance-seed",
+  "status": "COMPLETED",
+  "runId": "2026-08-01T11-15-01-069Z",
+  "createdAt": "2026-08-01T11:15:01.069Z",
+  "target": {
+    "railwayProject": "local-scratch",
+    "railwayEnvironment": "scratch",
+    "railwayService": "Postgres",
+    "host": "127.0.0.1",
+    "port": 5432,
+    "database": "fin005_b",
+    "organizationId": "fin005-seed-demo",
+    "systemIdentifier": "7610146894575327780",
+    "databaseOid": "533481"
+  },
+  "locale": "en",
+  "priorFixtureDigest": "ebe78f081b03ae258a53dec5c5e76ed1de29ca1ca6719b0a19511b6b15f79421",
+  "priorRows": {
+    "financial_statement_packs": [
+      {
+        "id": "fin005-seed-demo--statement-pack--atelier-fy2014",
+        "organization_id": "fin005-seed-demo",
+        "entity_name": "Atelier Toys",
+        "period_start": "2013-12-31T23:00:00.000Z",
+        "period_end": "2014-12-30T23:00:00.000Z",
+        "period_label": "FY2014",
+        "currency": "EUR",
+        "scaling": "units",
+        "pack_status": "confirmed",
+        "pack_readiness_status": "ready",
+        "pack_readiness_score": 100,
+        "pack_quality_summary": "Complete FY2014 statement set (P&L, BS, CF) — the baseline the ROI model is grounded on.",
+        "pack_quality_reason_codes": "[]",
+        "source_statement_count": 3,
+        "missing_statement_types": "[]",
+        "metadata_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"seededBy\":\"atelierFinanceSeed\"}",
+        "created_at": "2026-08-01T11:15:01.007Z",
+        "updated_at": "2026-08-01T11:15:01.027Z",
+        "aggregate_scope": "company",
+        "base_pack_id": null,
+        "source_initiative_ids": []
+      }
+    ],
+    "financial_statements": [
+      {
+        "id": "fin005-seed-demo--statement--atelier-fy2014-bs",
+        "organization_id": "fin005-seed-demo",
+        "entity_name": "Atelier Toys",
+        "statement_type": "BS",
+        "period_start": "2013-12-31T23:00:00.000Z",
+        "period_end": "2014-12-30T23:00:00.000Z",
+        "period_label": "FY2014",
+        "currency": "EUR",
+        "scaling": "units",
+        "source_file_name": "Atelier-Toys-FY2014-Financial-Statements.xlsx",
+        "source_file_path": "seed://atelier-toys/Atelier-Toys-FY2014-Financial-Statements.xlsx",
+        "source_import_id": null,
+        "parse_method": "manual",
+        "overall_confidence": 0.99,
+        "validation_status": "pass",
+        "validation_messages": "[{\"type\":\"info\",\"code\":\"BS_EQUATION_OK\",\"message\":\"Balance sheet equation verified\"}]",
+        "status": "confirmed",
+        "notes": "Canonical Atelier Toys demo data (FY2014).",
+        "created_by": null,
+        "confirmed_by": null,
+        "confirmed_at": null,
+        "created_at": "2026-08-01T11:15:01.017Z",
+        "updated_at": "2026-08-01T11:15:01.027Z",
+        "statement_pack_id": "fin005-seed-demo--statement-pack--atelier-fy2014",
+        "document_class": "spreadsheet",
+        "extraction_strategy": "atelier_demo_seed",
+        "quality_reason_codes": "[]",
+        "quality_summary": "Statement passed the readiness contract (verified by read-back).",
+        "readiness_score": 100,
+        "readiness_status": "ready",
+        "template_family": "atelier_fy2014",
+        "values_version": 1
+      },
+      {
+        "id": "fin005-seed-demo--statement--atelier-fy2014-cf",
+        "organization_id": "fin005-seed-demo",
+        "entity_name": "Atelier Toys",
+        "statement_type": "CF",
+        "period_start": "2013-12-31T23:00:00.000Z",
+        "period_end": "2014-12-30T23:00:00.000Z",
+        "period_label": "FY2014",
+        "currency": "EUR",
+        "scaling": "units",
+        "source_file_name": "Atelier-Toys-FY2014-Financial-Statements.xlsx",
+        "source_file_path": "seed://atelier-toys/Atelier-Toys-FY2014-Financial-Statements.xlsx",
+        "source_import_id": null,
+        "parse_method": "manual",
+        "overall_confidence": 0.99,
+        "validation_status": "pass",
+        "validation_messages": "[]",
+        "status": "confirmed",
+        "notes": "Canonical Atelier Toys demo data (FY2014).",
+        "created_by": null,
+        "confirmed_by": null,
+        "confirmed_at": null,
+        "created_at": "2026-08-01T11:15:01.023Z",
+        "updated_at": "2026-08-01T11:15:01.027Z",
+        "statement_pack_id": "fin005-seed-demo--statement-pack--atelier-fy2014",
+        "document_class": "spreadsheet",
+        "extraction_strategy": "atelier_demo_seed",
+        "quality_reason_codes": "[]",
+        "quality_summary": "Statement passed the readiness contract (verified by read-back).",
+        "readiness_score": 100,
+        "readiness_status": "ready",
+        "template_family": "atelier_fy2014",
+        "values_version": 1
+      },
+      {
+        "id": "fin005-seed-demo--statement--atelier-fy2014-pl",
+        "organization_id": "fin005-seed-demo",
+        "entity_name": "Atelier Toys",
+        "statement_type": "P&L",
+        "period_start": "2013-12-31T23:00:00.000Z",
+        "period_end": "2014-12-30T23:00:00.000Z",
+        "period_label": "FY2014",
+        "currency": "EUR",
+        "scaling": "units",
+        "source_file_name": "Atelier-Toys-FY2014-Financial-Statements.xlsx",
+        "source_file_path": "seed://atelier-toys/Atelier-Toys-FY2014-Financial-Statements.xlsx",
+        "source_import_id": null,
+        "parse_method": "manual",
+        "overall_confidence": 0.99,
+        "validation_status": "pass",
+        "validation_messages": "[]",
+        "status": "confirmed",
+        "notes": "Canonical Atelier Toys demo data (FY2014).",
+        "created_by": null,
+        "confirmed_by": null,
+        "confirmed_at": null,
+        "created_at": "2026-08-01T11:15:01.009Z",
+        "updated_at": "2026-08-01T11:15:01.027Z",
+        "statement_pack_id": "fin005-seed-demo--statement-pack--atelier-fy2014",
+        "document_class": "spreadsheet",
+        "extraction_strategy": "atelier_demo_seed",
+        "quality_reason_codes": "[]",
+        "quality_summary": "Statement passed the readiness contract (verified by read-back).",
+        "readiness_score": 100,
+        "readiness_status": "ready",
+        "template_family": "atelier_fy2014",
+        "values_version": 1
+      }
+    ],
+    "financial_statement_ingest_runs": [
+      {
+        "id": "fin005-seed-demo--statement-ingest-run--atelier-fy2014-bs",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-bs",
+        "organization_id": "fin005-seed-demo",
+        "run_status": "completed",
+        "current_stage": "confirm",
+        "source_file_name": "Atelier-Toys-FY2014-Financial-Statements.xlsx",
+        "source_file_path": "seed://atelier-toys/Atelier-Toys-FY2014-Financial-Statements.xlsx",
+        "parse_method": "manual",
+        "document_class": "spreadsheet",
+        "extraction_strategy": "atelier_demo_seed",
+        "template_family": "atelier_fy2014",
+        "raw_text_length": 0,
+        "latest_reason_codes": null,
+        "summary_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"statementType\":\"BS\",\"lineCount\":11}",
+        "started_at": "2026-08-01T11:15:01.017Z",
+        "completed_at": null,
+        "created_by": null,
+        "updated_at": "2026-08-01T11:15:01.017Z"
+      },
+      {
+        "id": "fin005-seed-demo--statement-ingest-run--atelier-fy2014-cf",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-cf",
+        "organization_id": "fin005-seed-demo",
+        "run_status": "completed",
+        "current_stage": "confirm",
+        "source_file_name": "Atelier-Toys-FY2014-Financial-Statements.xlsx",
+        "source_file_path": "seed://atelier-toys/Atelier-Toys-FY2014-Financial-Statements.xlsx",
+        "parse_method": "manual",
+        "document_class": "spreadsheet",
+        "extraction_strategy": "atelier_demo_seed",
+        "template_family": "atelier_fy2014",
+        "raw_text_length": 0,
+        "latest_reason_codes": null,
+        "summary_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"statementType\":\"CF\",\"lineCount\":5}",
+        "started_at": "2026-08-01T11:15:01.023Z",
+        "completed_at": null,
+        "created_by": null,
+        "updated_at": "2026-08-01T11:15:01.023Z"
+      },
+      {
+        "id": "fin005-seed-demo--statement-ingest-run--atelier-fy2014-pl",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-pl",
+        "organization_id": "fin005-seed-demo",
+        "run_status": "completed",
+        "current_stage": "confirm",
+        "source_file_name": "Atelier-Toys-FY2014-Financial-Statements.xlsx",
+        "source_file_path": "seed://atelier-toys/Atelier-Toys-FY2014-Financial-Statements.xlsx",
+        "parse_method": "manual",
+        "document_class": "spreadsheet",
+        "extraction_strategy": "atelier_demo_seed",
+        "template_family": "atelier_fy2014",
+        "raw_text_length": 0,
+        "latest_reason_codes": null,
+        "summary_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"statementType\":\"P&L\",\"lineCount\":11}",
+        "started_at": "2026-08-01T11:15:01.010Z",
+        "completed_at": null,
+        "created_by": null,
+        "updated_at": "2026-08-01T11:15:01.010Z"
+      }
+    ],
+    "financial_statement_values": [
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--ap",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-bs",
+        "canonical_line_id": "fsl-bs-ap",
+        "original_label": "Trade payables",
+        "value": 16400000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 7,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.020Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"AP\",\"periodLabel\":\"FY2014\",\"sourceRow\":7,\"originalLabel\":\"Trade payables\"}",
+        "updated_at": "2026-08-01T11:15:01.020Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--ar",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-bs",
+        "canonical_line_id": "fsl-bs-ar",
+        "original_label": "Trade receivables",
+        "value": 18300000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 2,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.018Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"AR\",\"periodLabel\":\"FY2014\",\"sourceRow\":2,\"originalLabel\":\"Trade receivables\"}",
+        "updated_at": "2026-08-01T11:15:01.018Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--cash",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-bs",
+        "canonical_line_id": "fsl-bs-cash",
+        "original_label": "Cash & cash equivalents",
+        "value": 9600000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 1,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.018Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"CASH\",\"periodLabel\":\"FY2014\",\"sourceRow\":1,\"originalLabel\":\"Cash & cash equivalents\"}",
+        "updated_at": "2026-08-01T11:15:01.018Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--current_assets",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-bs",
+        "canonical_line_id": "fsl-bs-current-assets",
+        "original_label": "Total current assets",
+        "value": 49600000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 4,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.019Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"CURRENT_ASSETS\",\"periodLabel\":\"FY2014\",\"sourceRow\":4,\"originalLabel\":\"Total current assets\"}",
+        "updated_at": "2026-08-01T11:15:01.019Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--current_liabilities",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-bs",
+        "canonical_line_id": "fsl-bs-current-liabilities",
+        "original_label": "Total current liabilities",
+        "value": 24800000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 8,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.021Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"CURRENT_LIABILITIES\",\"periodLabel\":\"FY2014\",\"sourceRow\":8,\"originalLabel\":\"Total current liabilities\"}",
+        "updated_at": "2026-08-01T11:15:01.021Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--fixed_assets",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-bs",
+        "canonical_line_id": "fsl-bs-fixed",
+        "original_label": "Property, plant & equipment and intangibles",
+        "value": 42900000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 5,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.019Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"FIXED_ASSETS\",\"periodLabel\":\"FY2014\",\"sourceRow\":5,\"originalLabel\":\"Property, plant & equipment and intangibles\"}",
+        "updated_at": "2026-08-01T11:15:01.019Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--inventory",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-bs",
+        "canonical_line_id": "fsl-bs-inventory",
+        "original_label": "Inventories",
+        "value": 21700000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 3,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.018Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"INVENTORY\",\"periodLabel\":\"FY2014\",\"sourceRow\":3,\"originalLabel\":\"Inventories\"}",
+        "updated_at": "2026-08-01T11:15:01.018Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--long_term_debt",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-bs",
+        "canonical_line_id": "fsl-bs-long-term-debt",
+        "original_label": "Long-term borrowings",
+        "value": 22700000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 9,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.021Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"LONG_TERM_DEBT\",\"periodLabel\":\"FY2014\",\"sourceRow\":9,\"originalLabel\":\"Long-term borrowings\"}",
+        "updated_at": "2026-08-01T11:15:01.021Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--total_assets",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-bs",
+        "canonical_line_id": "fsl-bs-total-assets",
+        "original_label": "Total assets",
+        "value": 92500000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 6,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.020Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"TOTAL_ASSETS\",\"periodLabel\":\"FY2014\",\"sourceRow\":6,\"originalLabel\":\"Total assets\"}",
+        "updated_at": "2026-08-01T11:15:01.020Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--total_equity",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-bs",
+        "canonical_line_id": "fsl-bs-equity",
+        "original_label": "Total equity",
+        "value": 45000000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 11,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.022Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"TOTAL_EQUITY\",\"periodLabel\":\"FY2014\",\"sourceRow\":11,\"originalLabel\":\"Total equity\"}",
+        "updated_at": "2026-08-01T11:15:01.022Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--total_liabilities",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-bs",
+        "canonical_line_id": "fsl-bs-total-liabilities",
+        "original_label": "Total liabilities",
+        "value": 47500000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 10,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.022Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"TOTAL_LIABILITIES\",\"periodLabel\":\"FY2014\",\"sourceRow\":10,\"originalLabel\":\"Total liabilities\"}",
+        "updated_at": "2026-08-01T11:15:01.022Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-cf--capex",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-cf",
+        "canonical_line_id": "fsl-cf-capex",
+        "original_label": "Purchases of property, plant & equipment",
+        "value": 6900000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 2,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.024Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"CAPEX\",\"periodLabel\":\"FY2014\",\"sourceRow\":2,\"originalLabel\":\"Purchases of property, plant & equipment\"}",
+        "updated_at": "2026-08-01T11:15:01.024Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-cf--financing_cf",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-cf",
+        "canonical_line_id": "fsl-cf-financing",
+        "original_label": "Net cash used in financing activities",
+        "value": -2860000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 4,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.025Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"FINANCING_CF\",\"periodLabel\":\"FY2014\",\"sourceRow\":4,\"originalLabel\":\"Net cash used in financing activities\"}",
+        "updated_at": "2026-08-01T11:15:01.025Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-cf--investing_cf",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-cf",
+        "canonical_line_id": "fsl-cf-investing",
+        "original_label": "Net cash used in investing activities",
+        "value": -7300000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 3,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.024Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"INVESTING_CF\",\"periodLabel\":\"FY2014\",\"sourceRow\":3,\"originalLabel\":\"Net cash used in investing activities\"}",
+        "updated_at": "2026-08-01T11:15:01.024Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-cf--net_change_cash",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-cf",
+        "canonical_line_id": "fsl-cf-net-change-cash",
+        "original_label": "Net increase in cash",
+        "value": 1080000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 5,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.025Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"NET_CHANGE_CASH\",\"periodLabel\":\"FY2014\",\"sourceRow\":5,\"originalLabel\":\"Net increase in cash\"}",
+        "updated_at": "2026-08-01T11:15:01.025Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-cf--operating_cf",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-cf",
+        "canonical_line_id": "fsl-cf-operating",
+        "original_label": "Net cash from operating activities",
+        "value": 11240000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 1,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.023Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"OPERATING_CF\",\"periodLabel\":\"FY2014\",\"sourceRow\":1,\"originalLabel\":\"Net cash from operating activities\"}",
+        "updated_at": "2026-08-01T11:15:01.023Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--cogs",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-pl",
+        "canonical_line_id": "fsl-pl-cogs",
+        "original_label": "Cost of goods sold",
+        "value": 71040000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 2,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.012Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"COGS\",\"periodLabel\":\"FY2014\",\"sourceRow\":2,\"originalLabel\":\"Cost of goods sold\"}",
+        "updated_at": "2026-08-01T11:15:01.012Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--depreciation",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-pl",
+        "canonical_line_id": "fsl-pl-depreciation",
+        "original_label": "Depreciation & amortisation",
+        "value": 4180000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 6,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.014Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"DEPRECIATION\",\"periodLabel\":\"FY2014\",\"sourceRow\":6,\"originalLabel\":\"Depreciation & amortisation\"}",
+        "updated_at": "2026-08-01T11:15:01.014Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--ebit",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-pl",
+        "canonical_line_id": "fsl-pl-ebit",
+        "original_label": "Operating profit (EBIT)",
+        "value": 8360000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 7,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.015Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"EBIT\",\"periodLabel\":\"FY2014\",\"sourceRow\":7,\"originalLabel\":\"Operating profit (EBIT)\"}",
+        "updated_at": "2026-08-01T11:15:01.015Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--ebitda",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-pl",
+        "canonical_line_id": "fsl-pl-ebitda",
+        "original_label": "EBITDA",
+        "value": 12540000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 5,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.014Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"EBITDA\",\"periodLabel\":\"FY2014\",\"sourceRow\":5,\"originalLabel\":\"EBITDA\"}",
+        "updated_at": "2026-08-01T11:15:01.014Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--ebt",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-pl",
+        "canonical_line_id": "fsl-pl-ebt",
+        "original_label": "Profit before tax",
+        "value": 7240000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 9,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.016Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"EBT\",\"periodLabel\":\"FY2014\",\"sourceRow\":9,\"originalLabel\":\"Profit before tax\"}",
+        "updated_at": "2026-08-01T11:15:01.016Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--gross_profit",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-pl",
+        "canonical_line_id": "fsl-pl-gross",
+        "original_label": "Gross profit",
+        "value": 47360000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 3,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.013Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"GROSS_PROFIT\",\"periodLabel\":\"FY2014\",\"sourceRow\":3,\"originalLabel\":\"Gross profit\"}",
+        "updated_at": "2026-08-01T11:15:01.013Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--interest_expense",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-pl",
+        "canonical_line_id": "fsl-pl-interest",
+        "original_label": "Interest expense",
+        "value": 1120000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 8,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.015Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"INTEREST_EXPENSE\",\"periodLabel\":\"FY2014\",\"sourceRow\":8,\"originalLabel\":\"Interest expense\"}",
+        "updated_at": "2026-08-01T11:15:01.015Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--net_income",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-pl",
+        "canonical_line_id": "fsl-pl-net",
+        "original_label": "Net profit for the year",
+        "value": 5430000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 11,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.017Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"NET_INCOME\",\"periodLabel\":\"FY2014\",\"sourceRow\":11,\"originalLabel\":\"Net profit for the year\"}",
+        "updated_at": "2026-08-01T11:15:01.017Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--opex",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-pl",
+        "canonical_line_id": "fsl-pl-opex",
+        "original_label": "Selling, general & administrative",
+        "value": 34820000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 4,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.013Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"OPEX\",\"periodLabel\":\"FY2014\",\"sourceRow\":4,\"originalLabel\":\"Selling, general & administrative\"}",
+        "updated_at": "2026-08-01T11:15:01.013Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--revenue",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-pl",
+        "canonical_line_id": "fsl-pl-revenue",
+        "original_label": "Net sales",
+        "value": 118400000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 1,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.011Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"REVENUE\",\"periodLabel\":\"FY2014\",\"sourceRow\":1,\"originalLabel\":\"Net sales\"}",
+        "updated_at": "2026-08-01T11:15:01.011Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      },
+      {
+        "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--tax_expense",
+        "statement_id": "fin005-seed-demo--statement--atelier-fy2014-pl",
+        "canonical_line_id": "fsl-pl-tax",
+        "original_label": "Income tax",
+        "value": 1810000,
+        "confidence": 0.99,
+        "source_page": 1,
+        "source_row": 10,
+        "is_manually_corrected": false,
+        "corrected_by": null,
+        "corrected_at": null,
+        "mapping_status": "auto",
+        "notes": null,
+        "created_at": "2026-08-01T11:15:01.016Z",
+        "value_origin": "mapped",
+        "mapping_confidence": 0.99,
+        "source_candidate_row_id": null,
+        "selected_mapping_candidate_id": null,
+        "period_granularity": "annual",
+        "evidence_json": "{\"canonicalFixture\":\"atelier-toys-fy2014\",\"canonicalCode\":\"TAX_EXPENSE\",\"periodLabel\":\"FY2014\",\"sourceRow\":10,\"originalLabel\":\"Income tax\"}",
+        "updated_at": "2026-08-01T11:15:01.016Z",
+        "classification_reason": null,
+        "is_non_financial": false,
+        "quality_label": null
+      }
+    ],
+    "financial_analyses": [
+      {
+        "id": "fin005-seed-demo--analysis--atelier-fy2014-baseline",
+        "organization_id": "fin005-seed-demo",
+        "project_id": null,
+        "title": "Atelier Toys — FY2014 Baseline Financial Analysis",
+        "description": "FY2014 baseline: profitability, balance-sheet structure and cash generation before the Atelier Forward program starts.",
+        "status": "APPROVED",
+        "analysis_type": "comprehensive",
+        "periods": [
+          "FY2014"
+        ],
+        "statement_data": {
+          "bs": [
+            {
+              "code": "CASH",
+              "name": "Cash & cash equivalents",
+              "values": {
+                "FY2014": 9600000
+              }
+            },
+            {
+              "code": "AR",
+              "name": "Trade receivables",
+              "values": {
+                "FY2014": 18300000
+              }
+            },
+            {
+              "code": "INVENTORY",
+              "name": "Inventories",
+              "values": {
+                "FY2014": 21700000
+              }
+            },
+            {
+              "code": "CURRENT_ASSETS",
+              "name": "Total current assets",
+              "values": {
+                "FY2014": 49600000
+              }
+            },
+            {
+              "code": "FIXED_ASSETS",
+              "name": "Property, plant & equipment and intangibles",
+              "values": {
+                "FY2014": 42900000
+              }
+            },
+            {
+              "code": "TOTAL_ASSETS",
+              "name": "Total assets",
+              "values": {
+                "FY2014": 92500000
+              }
+            },
+            {
+              "code": "AP",
+              "name": "Trade payables",
+              "values": {
+                "FY2014": 16400000
+              }
+            },
+            {
+              "code": "CURRENT_LIABILITIES",
+              "name": "Total current liabilities",
+              "values": {
+                "FY2014": 24800000
+              }
+            },
+            {
+              "code": "LONG_TERM_DEBT",
+              "name": "Long-term borrowings",
+              "values": {
+                "FY2014": 22700000
+              }
+            },
+            {
+              "code": "TOTAL_LIABILITIES",
+              "name": "Total liabilities",
+              "values": {
+                "FY2014": 47500000
+              }
+            },
+            {
+              "code": "TOTAL_EQUITY",
+              "name": "Total equity",
+              "values": {
+                "FY2014": 45000000
+              }
+            }
+          ],
+          "cf": [
+            {
+              "code": "OPERATING_CF",
+              "name": "Net cash from operating activities",
+              "values": {
+                "FY2014": 11240000
+              }
+            },
+            {
+              "code": "CAPEX",
+              "name": "Purchases of property, plant & equipment",
+              "values": {
+                "FY2014": 6900000
+              }
+            },
+            {
+              "code": "INVESTING_CF",
+              "name": "Net cash used in investing activities",
+              "values": {
+                "FY2014": -7300000
+              }
+            },
+            {
+              "code": "FINANCING_CF",
+              "name": "Net cash used in financing activities",
+              "values": {
+                "FY2014": -2860000
+              }
+            },
+            {
+              "code": "NET_CHANGE_CASH",
+              "name": "Net increase in cash",
+              "values": {
+                "FY2014": 1080000
+              }
+            }
+          ],
+          "pl": [
+            {
+              "code": "REVENUE",
+              "name": "Net sales",
+              "values": {
+                "FY2014": 118400000
+              }
+            },
+            {
+              "code": "COGS",
+              "name": "Cost of goods sold",
+              "values": {
+                "FY2014": 71040000
+              }
+            },
+            {
+              "code": "GROSS_PROFIT",
+              "name": "Gross profit",
+              "values": {
+                "FY2014": 47360000
+              }
+            },
+            {
+              "code": "OPEX",
+              "name": "Selling, general & administrative",
+              "values": {
+                "FY2014": 34820000
+              }
+            },
+            {
+              "code": "EBITDA",
+              "name": "EBITDA",
+              "values": {
+                "FY2014": 12540000
+              }
+            },
+            {
+              "code": "DEPRECIATION",
+              "name": "Depreciation & amortisation",
+              "values": {
+                "FY2014": 4180000
+              }
+            },
+            {
+              "code": "EBIT",
+              "name": "Operating profit (EBIT)",
+              "values": {
+                "FY2014": 8360000
+              }
+            },
+            {
+              "code": "INTEREST_EXPENSE",
+              "name": "Interest expense",
+              "values": {
+                "FY2014": 1120000
+              }
+            },
+            {
+              "code": "EBT",
+              "name": "Profit before tax",
+              "values": {
+                "FY2014": 7240000
+              }
+            },
+            {
+              "code": "TAX_EXPENSE",
+              "name": "Income tax",
+              "values": {
+                "FY2014": 1810000
+              }
+            },
+            {
+              "code": "NET_INCOME",
+              "name": "Net profit for the year",
+              "values": {
+                "FY2014": 5430000
+              }
+            }
+          ]
+        },
+        "currency": "EUR",
+        "approved_by": null,
+        "approved_at": "2026-08-01T11:15:01.027Z",
+        "created_by": null,
+        "created_at": "2026-08-01T11:15:01.026Z",
+        "updated_at": "2026-08-01T11:15:01.027Z",
+        "source_statement_pack_id": "fin005-seed-demo--statement-pack--atelier-fy2014",
+        "source_statement_ids": [
+          "fin005-seed-demo--statement--atelier-fy2014-pl",
+          "fin005-seed-demo--statement--atelier-fy2014-bs",
+          "fin005-seed-demo--statement--atelier-fy2014-cf"
+        ]
+      }
+    ],
+    "financial_models": [
+      {
+        "id": "fin005-seed-demo--financial-model--transformation-2015-roi",
+        "organization_id": "fin005-seed-demo",
+        "project_id": null,
+        "initiative_id": null,
+        "name": "Atelier Toys — Transformation 2015 ROI",
+        "description": "Board business case for the 3-year digitization program: NPV, ROI, and payback.",
+        "currency": "EUR",
+        "horizon_months": 36,
+        "start_date": "2014-12-31T23:00:00.000Z",
+        "granularity": "annual",
+        "scenario": "base",
+        "status": "approved",
+        "assumptions_json": "{}",
+        "version": 1,
+        "approved_by": null,
+        "approved_at": null,
+        "approved_snapshot": null,
+        "created_by": null,
+        "created_at": "2026-08-01T11:15:01.037Z",
+        "updated_at": "2026-08-01T11:15:01.037Z",
+        "source_statement_id": null,
+        "source_statement_pack_id": "fin005-seed-demo--statement-pack--atelier-fy2014"
+      }
+    ],
+    "financial_model_events": [
+      {
+        "id": "fin005-seed-demo--financial-model-event--digital-capex",
+        "model_id": "fin005-seed-demo--financial-model--transformation-2015-roi",
+        "event_type": "capex_purchase",
+        "name": "Digital transformation capex",
+        "description": null,
+        "amount": 800000,
+        "currency": "EUR",
+        "period_start": "2014-12-31T23:00:00.000Z",
+        "period_end": null,
+        "recurrence": "one_time",
+        "growth_rate": 0,
+        "cf_classification": "investing",
+        "posting_rules": "{}",
+        "parameters": "{}",
+        "sort_order": 2,
+        "is_active": true,
+        "created_by": null,
+        "created_at": "2026-08-01T11:15:01.039Z",
+        "updated_at": "2026-08-01T11:15:01.039Z"
+      },
+      {
+        "id": "fin005-seed-demo--financial-model-event--opex-reduction",
+        "model_id": "fin005-seed-demo--financial-model--transformation-2015-roi",
+        "event_type": "opex",
+        "name": "OpEx reduction (automation)",
+        "description": null,
+        "amount": -400000,
+        "currency": "EUR",
+        "period_start": "2015-12-31T23:00:00.000Z",
+        "period_end": null,
+        "recurrence": "annual",
+        "growth_rate": 0,
+        "cf_classification": "operating",
+        "posting_rules": "{}",
+        "parameters": "{}",
+        "sort_order": 3,
+        "is_active": true,
+        "created_by": null,
+        "created_at": "2026-08-01T11:15:01.039Z",
+        "updated_at": "2026-08-01T11:15:01.039Z"
+      },
+      {
+        "id": "fin005-seed-demo--financial-model-event--revenue-uplift",
+        "model_id": "fin005-seed-demo--financial-model--transformation-2015-roi",
+        "event_type": "revenue",
+        "name": "Revenue uplift (digitized lines)",
+        "description": null,
+        "amount": 2400000,
+        "currency": "EUR",
+        "period_start": "2014-12-31T23:00:00.000Z",
+        "period_end": null,
+        "recurrence": "annual",
+        "growth_rate": 0.08,
+        "cf_classification": "operating",
+        "posting_rules": "{}",
+        "parameters": "{}",
+        "sort_order": 1,
+        "is_active": true,
+        "created_by": null,
+        "created_at": "2026-08-01T11:15:01.038Z",
+        "updated_at": "2026-08-01T11:15:01.038Z"
+      }
+    ]
+  },
+  "absentBefore": {
+    "financial_statement_packs": [],
+    "financial_statements": [],
+    "financial_statement_ingest_runs": [],
+    "financial_statement_values": [],
+    "financial_analyses": [],
+    "financial_models": [],
+    "financial_model_events": []
+  },
+  "plan": [
+    {
+      "table": "financial_statement_packs",
+      "id": "fin005-seed-demo--statement-pack--atelier-fy2014",
+      "action": "unchanged",
+      "detail": "ready"
+    },
+    {
+      "table": "financial_statements",
+      "id": "fin005-seed-demo--statement--atelier-fy2014-pl",
+      "action": "unchanged",
+      "detail": "ready"
+    },
+    {
+      "table": "financial_statements",
+      "id": "fin005-seed-demo--statement--atelier-fy2014-bs",
+      "action": "unchanged",
+      "detail": "ready"
+    },
+    {
+      "table": "financial_statements",
+      "id": "fin005-seed-demo--statement--atelier-fy2014-cf",
+      "action": "unchanged",
+      "detail": "ready"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--revenue",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--cogs",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--gross_profit",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--opex",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--ebitda",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--depreciation",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--ebit",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--interest_expense",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--ebt",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--tax_expense",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--net_income",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--cash",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--ar",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--inventory",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--current_assets",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--fixed_assets",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--total_assets",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--ap",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--current_liabilities",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--long_term_debt",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--total_liabilities",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--total_equity",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-cf--operating_cf",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-cf--capex",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-cf--investing_cf",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-cf--financing_cf",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-cf--net_change_cash",
+      "action": "unchanged",
+      "detail": "ok"
+    },
+    {
+      "table": "financial_analyses",
+      "id": "fin005-seed-demo--analysis--atelier-fy2014-baseline",
+      "action": "unchanged",
+      "detail": "approved"
+    },
+    {
+      "table": "financial_models",
+      "id": "fin005-seed-demo--financial-model--transformation-2015-roi",
+      "action": "unchanged",
+      "detail": "bound"
+    },
+    {
+      "table": "financial_model_events",
+      "id": "fin005-seed-demo--financial-model-event--revenue-uplift",
+      "action": "unchanged",
+      "detail": "canonical"
+    },
+    {
+      "table": "financial_model_events",
+      "id": "fin005-seed-demo--financial-model-event--digital-capex",
+      "action": "unchanged",
+      "detail": "canonical"
+    },
+    {
+      "table": "financial_model_events",
+      "id": "fin005-seed-demo--financial-model-event--opex-reduction",
+      "action": "unchanged",
+      "detail": "canonical"
+    }
+  ],
+  "recovery": [
+    "This command never deletes and never moves rows between tenants.",
+    "To undo a row this run CREATED: it is listed in `absentBefore` — remove it with a reviewed, separate operation.",
+    "To undo a row this run CHANGED: its complete prior state is in `priorRows`.",
+    "This manifest is unsigned evidence, not an executable rollback plan."
+  ],
+  "postFixtureDigest": "ebe78f081b03ae258a53dec5c5e76ed1de29ca1ca6719b0a19511b6b15f79421"
+}

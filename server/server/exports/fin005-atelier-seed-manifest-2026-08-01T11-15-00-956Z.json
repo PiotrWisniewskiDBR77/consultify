@@ -1,0 +1,309 @@
+{
+  "version": 2,
+  "label": "fin005-atelier-finance-seed",
+  "status": "COMPLETED",
+  "runId": "2026-08-01T11-15-00-956Z",
+  "createdAt": "2026-08-01T11:15:00.956Z",
+  "target": {
+    "railwayProject": "local-scratch",
+    "railwayEnvironment": "scratch",
+    "railwayService": "Postgres",
+    "host": "127.0.0.1",
+    "port": 5432,
+    "database": "fin005_b",
+    "organizationId": "fin005-seed-demo",
+    "systemIdentifier": "7610146894575327780",
+    "databaseOid": "533481"
+  },
+  "locale": "en",
+  "priorFixtureDigest": "b625c134948fa5d759e853821a95708d8ae35a8e836afe1f792b06c4b537164d",
+  "priorRows": {
+    "financial_statement_packs": [],
+    "financial_statements": [],
+    "financial_statement_ingest_runs": [],
+    "financial_statement_values": [],
+    "financial_analyses": [],
+    "financial_models": [],
+    "financial_model_events": []
+  },
+  "absentBefore": {
+    "financial_statement_packs": [
+      "fin005-seed-demo--statement-pack--atelier-fy2014"
+    ],
+    "financial_statements": [
+      "fin005-seed-demo--statement--atelier-fy2014-pl",
+      "fin005-seed-demo--statement--atelier-fy2014-bs",
+      "fin005-seed-demo--statement--atelier-fy2014-cf"
+    ],
+    "financial_statement_ingest_runs": [
+      "fin005-seed-demo--statement-ingest-run--atelier-fy2014-pl",
+      "fin005-seed-demo--statement-ingest-run--atelier-fy2014-bs",
+      "fin005-seed-demo--statement-ingest-run--atelier-fy2014-cf"
+    ],
+    "financial_statement_values": [
+      "fin005-seed-demo--statement-value--atelier-fy2014-pl--revenue",
+      "fin005-seed-demo--statement-value--atelier-fy2014-pl--cogs",
+      "fin005-seed-demo--statement-value--atelier-fy2014-pl--gross_profit",
+      "fin005-seed-demo--statement-value--atelier-fy2014-pl--opex",
+      "fin005-seed-demo--statement-value--atelier-fy2014-pl--ebitda",
+      "fin005-seed-demo--statement-value--atelier-fy2014-pl--depreciation",
+      "fin005-seed-demo--statement-value--atelier-fy2014-pl--ebit",
+      "fin005-seed-demo--statement-value--atelier-fy2014-pl--interest_expense",
+      "fin005-seed-demo--statement-value--atelier-fy2014-pl--ebt",
+      "fin005-seed-demo--statement-value--atelier-fy2014-pl--tax_expense",
+      "fin005-seed-demo--statement-value--atelier-fy2014-pl--net_income",
+      "fin005-seed-demo--statement-value--atelier-fy2014-bs--cash",
+      "fin005-seed-demo--statement-value--atelier-fy2014-bs--ar",
+      "fin005-seed-demo--statement-value--atelier-fy2014-bs--inventory",
+      "fin005-seed-demo--statement-value--atelier-fy2014-bs--current_assets",
+      "fin005-seed-demo--statement-value--atelier-fy2014-bs--fixed_assets",
+      "fin005-seed-demo--statement-value--atelier-fy2014-bs--total_assets",
+      "fin005-seed-demo--statement-value--atelier-fy2014-bs--ap",
+      "fin005-seed-demo--statement-value--atelier-fy2014-bs--current_liabilities",
+      "fin005-seed-demo--statement-value--atelier-fy2014-bs--long_term_debt",
+      "fin005-seed-demo--statement-value--atelier-fy2014-bs--total_liabilities",
+      "fin005-seed-demo--statement-value--atelier-fy2014-bs--total_equity",
+      "fin005-seed-demo--statement-value--atelier-fy2014-cf--operating_cf",
+      "fin005-seed-demo--statement-value--atelier-fy2014-cf--capex",
+      "fin005-seed-demo--statement-value--atelier-fy2014-cf--investing_cf",
+      "fin005-seed-demo--statement-value--atelier-fy2014-cf--financing_cf",
+      "fin005-seed-demo--statement-value--atelier-fy2014-cf--net_change_cash"
+    ],
+    "financial_analyses": [
+      "fin005-seed-demo--analysis--atelier-fy2014-baseline"
+    ],
+    "financial_models": [
+      "fin005-seed-demo--financial-model--transformation-2015-roi"
+    ],
+    "financial_model_events": [
+      "fin005-seed-demo--financial-model-event--revenue-uplift",
+      "fin005-seed-demo--financial-model-event--digital-capex",
+      "fin005-seed-demo--financial-model-event--opex-reduction"
+    ]
+  },
+  "plan": [
+    {
+      "table": "financial_statement_packs",
+      "id": "fin005-seed-demo--statement-pack--atelier-fy2014",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statements",
+      "id": "fin005-seed-demo--statement--atelier-fy2014-pl",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statements",
+      "id": "fin005-seed-demo--statement--atelier-fy2014-bs",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statements",
+      "id": "fin005-seed-demo--statement--atelier-fy2014-cf",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--revenue",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--cogs",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--gross_profit",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--opex",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--ebitda",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--depreciation",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--ebit",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--interest_expense",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--ebt",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--tax_expense",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-pl--net_income",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--cash",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--ar",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--inventory",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--current_assets",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--fixed_assets",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--total_assets",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--ap",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--current_liabilities",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--long_term_debt",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--total_liabilities",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-bs--total_equity",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-cf--operating_cf",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-cf--capex",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-cf--investing_cf",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-cf--financing_cf",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_statement_values",
+      "id": "fin005-seed-demo--statement-value--atelier-fy2014-cf--net_change_cash",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_analyses",
+      "id": "fin005-seed-demo--analysis--atelier-fy2014-baseline",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_models",
+      "id": "fin005-seed-demo--financial-model--transformation-2015-roi",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_model_events",
+      "id": "fin005-seed-demo--financial-model-event--revenue-uplift",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_model_events",
+      "id": "fin005-seed-demo--financial-model-event--digital-capex",
+      "action": "create",
+      "detail": "absent"
+    },
+    {
+      "table": "financial_model_events",
+      "id": "fin005-seed-demo--financial-model-event--opex-reduction",
+      "action": "create",
+      "detail": "absent"
+    }
+  ],
+  "recovery": [
+    "This command never deletes and never moves rows between tenants.",
+    "To undo a row this run CREATED: it is listed in `absentBefore` — remove it with a reviewed, separate operation.",
+    "To undo a row this run CHANGED: its complete prior state is in `priorRows`.",
+    "This manifest is unsigned evidence, not an executable rollback plan."
+  ],
+  "postFixtureDigest": "ebe78f081b03ae258a53dec5c5e76ed1de29ca1ca6719b0a19511b6b15f79421"
+}
