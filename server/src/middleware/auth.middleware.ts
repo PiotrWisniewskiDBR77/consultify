@@ -16,6 +16,7 @@ import {
   DEMO_SESSION_EXPIRED_CODE,
   DEMO_SESSION_INVALID_CODE,
   isPathAllowedForExpiredDemo,
+  isWriteAllowedForPublicDemo,
   resolvePublicDemoPrincipal,
   retireExpiredDemoPrincipal,
 } from '../services/demo/demoPrincipalGuard.js';
@@ -575,6 +576,22 @@ const READ_ONLY_IMPERSONATION_PATHS = new Set([
 ]);
 
 /**
+ * A refusal that a CDN must never cache as if it were the real answer. Mirrors
+ * what `demoWriteProtection` sets before its own 403.
+ */
+function safeWriteNoStoreHeaders(res: Response): void {
+  try {
+    if (typeof (res as Response & { setHeader?: unknown }).setHeader !== 'function') return;
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('CDN-Cache-Control', 'no-store');
+  } catch {
+    /* header writer unavailable — the status/body below still carry the refusal */
+  }
+}
+
+/**
  * Attach user data to request
  */
 const attachUser = async (
@@ -642,6 +659,32 @@ const attachUser = async (
         res.status(403).json({
           error: 'Demo workspace mismatch. Reload the demo to continue.',
           code: DEMO_SESSION_INVALID_CODE,
+        });
+        return;
+      }
+
+      // -----------------------------------------------------------------------
+      // Read-only, enforced from the authenticated principal — not from a header.
+      //
+      // `demoWriteProtection` cannot do this job. It is mounted globally in
+      // Gateway.ts BEFORE any authentication runs, so `req.user` is empty there
+      // and its only usable signal is the client-supplied `X-Demo-Mode` header
+      // (its other signal, "effective org == DEMO_ORG_ID", stopped matching once
+      // a public demo principal was correctly seated in its OWN session tenant).
+      // A bare write with no headers therefore sailed straight through.
+      //
+      // Here the principal is already resolved from the token and the database,
+      // so the decision cannot be influenced by anything the caller sends. This
+      // is also deliberately unconditional: `DEMO_WRITES_ENABLED` may loosen the
+      // header-based path for other demo users, but a public signup is an
+      // anonymous stranger and stays read-only regardless.
+      // -----------------------------------------------------------------------
+      const requestMethod = String(safeRead(() => (req as Request).method, '') || '');
+      if (!isWriteAllowedForPublicDemo(requestMethod, requestPath)) {
+        safeWriteNoStoreHeaders(res);
+        res.status(403).json({
+          error: 'Demo mode is read-only',
+          code: 'DEMO_READ_ONLY',
         });
         return;
       }

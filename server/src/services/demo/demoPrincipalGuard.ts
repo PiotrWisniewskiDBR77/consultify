@@ -26,11 +26,15 @@
  */
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
-import refreshTokenService from '../RefreshTokenService.js';
 import {
   DEMO_ENTRY_SOURCE_PREF_KEY,
   PUBLIC_DEMO_ENTRY_SOURCE,
 } from './demoSignupProvisioning.js';
+
+// NOTE: RefreshTokenService is imported dynamically inside
+// `retireExpiredDemoPrincipal`, never at module scope. RefreshTokenService has to
+// import THIS module to gate refresh on an active demo session, and a static
+// import in both directions is a cycle.
 
 /** `users.status` for a public demo principal whose session has lapsed. */
 export const DEMO_EXPIRED_USER_STATUS = 'demo_expired';
@@ -162,6 +166,7 @@ export async function retireExpiredDemoPrincipal(userId: string): Promise<void> 
   }
 
   try {
+    const { default: refreshTokenService } = await import('../RefreshTokenService.js');
     await refreshTokenService.revokeAllUserTokens(userId, 'demo_session_expired');
   } catch (error: unknown) {
     logger.warn('[DemoPrincipalGuard] failed to revoke demo refresh tokens', {
@@ -169,6 +174,44 @@ export async function retireExpiredDemoPrincipal(userId: string): Promise<void> 
       error: (error as Error)?.message || String(error),
     });
   }
+}
+
+/**
+ * The single question login and refresh both have to ask BEFORE minting anything:
+ * may this principal still be issued credentials?
+ *
+ * Deliberately independent of `users.status`. Retirement is best-effort and runs
+ * lazily on the request path, so an account can be past its TTL while its status
+ * still reads `active` — a credential path that trusted the status flag would
+ * happily mint a fresh token in exactly that window. This reads the session
+ * directly, and retires the principal itself when it finds none.
+ */
+export async function assertDemoPrincipalMayReceiveCredentials(
+  userId: string
+): Promise<{ allowed: boolean }> {
+  const state = await resolvePublicDemoPrincipal(userId);
+  if (!state.isPublicDemoPrincipal) return { allowed: true };
+  if (state.session) return { allowed: true };
+
+  await retireExpiredDemoPrincipal(userId);
+  return { allowed: false };
+}
+
+/**
+ * Writes a public demo principal may still perform. Everything else is refused,
+ * whatever headers the caller sends.
+ *
+ * `/api/auth/*` covers logout and refresh; `/api/demo/*` covers leaving demo mode
+ * and the telemetry beacon. Both are the endpoints that let a session wind itself
+ * down, so blocking them would trap the client rather than protect anything.
+ */
+const PUBLIC_DEMO_WRITABLE_PREFIXES = ['/api/auth/', '/api/demo/'];
+
+export function isWriteAllowedForPublicDemo(method: string, pathname: string): boolean {
+  const normalizedMethod = String(method || '').toUpperCase();
+  if (['GET', 'HEAD', 'OPTIONS'].includes(normalizedMethod)) return true;
+  const normalizedPath = String(pathname || '').split('?')[0] || '';
+  return PUBLIC_DEMO_WRITABLE_PREFIXES.some((prefix) => normalizedPath.startsWith(prefix));
 }
 
 /**
