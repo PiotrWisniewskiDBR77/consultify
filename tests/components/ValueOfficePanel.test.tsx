@@ -90,7 +90,16 @@ describe('ValueOfficePanel', () => {
     expect(portfolioFetcher).toHaveBeenCalledWith(sampleInitiatives);
   });
 
-  it('używa przykładu, gdy brak inicjatyw z kokpitu', async () => {
+  /**
+   * Test odziedziczony po wersji panelu, która przy braku inicjatyw wołała
+   * fetcher z listą PRZYKŁADOWĄ. Ta ścieżka została świadomie usunięta
+   * ("Real-data-only: no synthetic fallback" w `ValueOfficePanel.tsx`) — dane
+   * demo to twarz produktu i panel nie ma prawa dorysować sobie inicjatyw,
+   * których organizacja nie ma. Test asercjonował więc zachowanie, którego już
+   * nie ma, i był CZERWONY już na `c522a861` (przed pracą nad FIN-005).
+   * Tu zapisuje kontrakt, który obowiązuje naprawdę.
+   */
+  it('brak inicjatyw = pusty stan, ZERO wywołań silnika (bez danych syntetycznych)', async () => {
     const valueBridgeFetcher = vi.fn().mockResolvedValue(bridgeResponse);
     const portfolioFetcher = vi.fn().mockResolvedValue(portfolioResponse);
 
@@ -102,15 +111,15 @@ describe('ValueOfficePanel', () => {
     );
 
     await waitFor(() => {
-      expect(valueBridgeFetcher).toHaveBeenCalled();
+      expect(screen.getByTestId('value-office-empty')).toBeTruthy();
     });
-    // Fetcher dostał niepustą listę przykładową, nie [].
-    const passed = valueBridgeFetcher.mock.calls[0][0];
-    expect(Array.isArray(passed)).toBe(true);
-    expect(passed.length).toBeGreaterThan(0);
+    expect(valueBridgeFetcher).not.toHaveBeenCalled();
+    expect(portfolioFetcher).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('mock-waterfall')).toBeNull();
+    expect(screen.queryByTestId('mock-bubble')).toBeNull();
   });
 
-  it('fail-soft: błąd fetchu degraduje do cichej notki, nie blokuje kokpitu', async () => {
+  it('fail-soft: błąd fetchu nie blokuje kokpitu, ale jawnie mówi że wyniku NIE MA', async () => {
     const valueBridgeFetcher = vi.fn().mockRejectedValue(new Error('boom'));
     const portfolioFetcher = vi.fn().mockResolvedValue(portfolioResponse);
 
@@ -124,11 +133,44 @@ describe('ValueOfficePanel', () => {
 
     // Panel nadal obecny (data-testid stabilny), ale bez wykresów.
     await waitFor(() => {
-      expect(screen.getByTestId('value-office-panel').textContent).toContain(
-        'niedostępny'
-      );
+      expect(screen.getByTestId('value-office-failed')).toBeTruthy();
     });
+    // FIN-005: komunikat nie może sugerować wykonanej kalkulacji.
+    expect(screen.getByTestId('value-office-panel').textContent).toContain(
+      'could not be calculated'
+    );
     expect(screen.queryByTestId('mock-waterfall')).toBeNull();
     expect(screen.queryByTestId('mock-bubble')).toBeNull();
+  });
+
+  /**
+   * FIN-005: 403 DEMO_READ_ONLY z bramki demo to NIE awaria silnika. Panel musi
+   * nazwać prawdziwy powód, żeby nikt nie odczytał pustej sekcji jako
+   * domkniętego golden flow. Dowód po stronie serwera:
+   * `server/src/routes/v8/__tests__/financeValueRoutes.demoGuard.test.ts`.
+   */
+  it('403 DEMO_READ_ONLY: panel mówi wprost, że to tryb demo, nie awaria', async () => {
+    const demoBlocked = Object.assign(new Error('Demo mode is read-only'), {
+      status: 403,
+      code: 'DEMO_READ_ONLY',
+    });
+    const valueBridgeFetcher = vi.fn().mockRejectedValue(demoBlocked);
+    const portfolioFetcher = vi.fn().mockRejectedValue(demoBlocked);
+
+    render(
+      <ValueOfficePanel
+        initiatives={sampleInitiatives}
+        valueBridgeFetcher={valueBridgeFetcher}
+        portfolioFetcher={portfolioFetcher}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('value-office-demo-blocked')).toBeTruthy();
+    });
+    const text = screen.getByTestId('value-office-panel').textContent || '';
+    expect(text).toContain('not available in demo mode');
+    // Stara kopia ("the cockpit works normally") bagatelizowała brak wyniku.
+    expect(text).not.toContain('works normally');
   });
 });
