@@ -213,5 +213,5 @@ if (doNaprawy.length) {
 }
 
 const tresc = raport.join('\n');
-fs.writeFileSync('AUDYT_SRODOWISKA_ODBIORU.md', tresc, 'utf8');
+fs.writeFileSync('docs/testing/reports/AUDYT_SRODOWISKA_ODBIORU.md', tresc, 'utf8');
 console.log(tresc);

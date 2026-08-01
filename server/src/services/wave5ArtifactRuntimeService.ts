@@ -297,10 +297,11 @@ function contentForGeneratedKind(input: GenerateWave5ArtifactInput): string {
 function mapArtifact(row: any, versions: any[] = [], mutations: any[] = []): any {
   if (!row) return null;
   const provenance = safeJsonParse<Record<string, unknown>>(row.provenance_json, {});
+  const quarantinedMirror = (provenance as any)?.metadata?.contentAuthority === 'origin_runtime';
   const contentEnvelope: ArtifactContentEnvelope = createArtifactContentEnvelope({
     artifactType: row.artifact_type,
     canonicalFormat: row.canonical_format || undefined,
-    contentMd: row.content_md || row.content,
+    contentMd: quarantinedMirror ? '' : row.content_md ?? row.content,
     contentJson: safeJsonParse(row.content_json_native, undefined),
     contentSchemaVersion: row.content_schema_version || undefined,
   });
@@ -315,8 +316,9 @@ function mapArtifact(row: any, versions: any[] = [], mutations: any[] = []): any
     canonicalFormat: contentEnvelope.canonicalFormat,
     contentMd: contentEnvelope.contentMd,
     contentJson: contentEnvelope.contentJson,
-    markdownProjectionStatus:
-      row.markdown_projection_status || contentEnvelope.markdownProjectionStatus,
+    markdownProjectionStatus: quarantinedMirror
+      ? 'missing'
+      : contentEnvelope.markdownProjectionStatus,
     markdownProjectedAt: row.markdown_projected_at || contentEnvelope.markdownProjectedAt || null,
     projectionError: row.projection_error || contentEnvelope.projectionError || null,
     version: Number(row.current_version || 1),
@@ -477,7 +479,7 @@ export async function createWave5Artifact(input: CreateWave5ArtifactInput): Prom
   const contentEnvelope = createArtifactContentEnvelope({
     artifactType,
     canonicalFormat: input.canonicalFormat,
-    contentMd: input.contentMd || content,
+    contentMd: input.contentMd ?? content,
     contentJson: input.contentJson,
     contentSchemaVersion: input.contentSchemaVersion,
   });
@@ -929,29 +931,47 @@ export async function mirrorLegacyArtifactIntoWave5(
   const existing = await getWave5Artifact(input.legacyArtifactId, input.organizationId).catch(
     () => null
   );
-  if (existing) return existing;
+  const authorityMetadata = {
+    mirroredFrom: 'v8_output_artifacts',
+    legacyArtifactId: input.legacyArtifactId,
+    contentAuthority: 'origin_runtime',
+    quarantineStatus: 'legacy_mirror',
+    canonicalContent: false,
+    originRuntime: input.originRuntime || null,
+    originRecordId: input.originRecordId || null,
+  };
+  if (existing) {
+    const isLegacyMirror =
+      existing.provenance?.metadata?.mirroredFrom === 'v8_output_artifacts' ||
+      existing.sourceRefs?.some?.((ref: any) => ref?.sourceClass === 'legacy_artifact') ||
+      String(existing.content || '').includes('Legacy artifact mirrored into Wave 5 runtime.');
+    if (!isLegacyMirror) return existing;
+    const provenance = {
+      ...(existing.provenance || {}),
+      metadata: { ...(existing.provenance?.metadata || {}), ...authorityMetadata },
+    };
+    await dbRun(
+      `UPDATE wave5_artifacts SET provenance_json = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE artifact_id = ? AND organization_id = ?`,
+      [safeJsonStringify(provenance), input.legacyArtifactId, input.organizationId]
+    );
+    return getWave5Artifact(input.legacyArtifactId, input.organizationId);
+  }
   const artifactType =
     input.outputType === 'presentation'
       ? 'slide_deck'
       : input.outputType === 'sheet'
         ? 'spreadsheet'
         : 'report';
-  const content = [
-    `# ${input.title}`,
-    '',
-    `Legacy ${input.outputType} artifact mirrored into Wave 5 runtime.`,
-    '',
-    `- Legacy artifact id: ${input.legacyArtifactId}`,
-    `- Origin runtime: ${input.originRuntime || 'unknown'}`,
-    `- Origin record id: ${input.originRecordId || 'unknown'}`,
-    `- Execution run id: ${input.executionRunId || 'unknown'}`,
-  ].join('\n');
   return createWave5Artifact({
     organizationId: input.organizationId,
     userId: input.userId,
     artifactType,
     title: input.title,
-    content,
+    content: '',
+    canonicalFormat: 'markdown',
+    contentMd: '',
+    contentSchemaVersion: 'legacy-mirror-link/v1',
     aiRunId: input.executionRunId || null,
     sourceRefs: [
       {
@@ -963,10 +983,7 @@ export async function mirrorLegacyArtifactIntoWave5(
         contextSnapshotId: input.contextSnapshotId || null,
       },
     ],
-    metadata: {
-      mirroredFrom: 'v8_output_artifacts',
-      legacyArtifactId: input.legacyArtifactId,
-    },
+    metadata: authorityMetadata,
     externalArtifactId: input.legacyArtifactId,
   });
 }

@@ -118,6 +118,12 @@ export const DocumentStudioView: React.FC = () => {
   const [searchParams] = useSearchParams();
   const artifactIdFromQuery = searchParams.get('artifactId');
   const artifactIdFromUrl = artifactIdFromPath || artifactIdFromQuery || undefined;
+  // Materials may request a one-shot handoff into an existing governed tool.
+  // Capture it once because successful artifact loading canonicalizes the URL
+  // and intentionally removes the action, preventing refresh from reopening it.
+  const [initialDocumentAction] = useState<'share' | null>(() =>
+    searchParams.get('action') === 'share' ? 'share' : null
+  );
 
   // Materiały wspólny launcher (2026-07-24) — `?entry=blank|ai|template` sygnalizuje
   // tryb wybrany w KROK 2 tablicy (Harvard/wdrozenie-100/_MATERIALY_INWENTARYZACJA_2026-07-24.md
@@ -352,7 +358,7 @@ export const DocumentStudioView: React.FC = () => {
         setPhase('document');
         // Normalize `?artifactId=` entries to the canonical path form so the
         // URL matches what the generation flow produces (and back/refresh stay sane).
-        if (!artifactIdFromPath) {
+        if (!artifactIdFromPath || initialDocumentAction) {
           navigate(`/document-studio/${encodeURIComponent(artifactIdFromUrl)}`, { replace: true });
         }
       } catch (err) {
@@ -376,7 +382,7 @@ export const DocumentStudioView: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [artifactIdFromUrl, artifactId, artifactIdFromPath, navigate]);
+  }, [artifactIdFromUrl, artifactId, artifactIdFromPath, initialDocumentAction, navigate]);
 
   /**
    * C1 — shared progressive-generation runner. Streams the document via SSE
@@ -1002,6 +1008,7 @@ export const DocumentStudioView: React.FC = () => {
           <DocumentStudioDocumentPanel
             artifactId={artifactId}
             schema={schema}
+            initialOverflowToolId={initialDocumentAction ?? undefined}
             generationWarnings={generationWarnings}
             onStartOver={handleStartOver}
             onSchemaUpdated={setSchema}

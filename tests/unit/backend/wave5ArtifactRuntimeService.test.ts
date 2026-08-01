@@ -36,11 +36,11 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         artifactType,
         title,
         content,
-        _canonicalFormat,
-        _contentMd,
-        _contentJsonNative,
-        _contentSchemaVersion,
-        _markdownProjectionStatus,
+        canonicalFormat,
+        contentMd,
+        contentJsonNative,
+        contentSchemaVersion,
+        markdownProjectionStatus,
         _markdownProjectedAt,
         _projectionError,
         projectId,
@@ -53,6 +53,7 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         provenanceJson,
         createdBy,
       ] = params;
+      if (db.artifacts.has(artifactId)) throw new Error('duplicate key');
       db.artifacts.set(artifactId, {
         artifact_id: artifactId,
         organization_id: organizationId,
@@ -60,6 +61,11 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         status: 'draft',
         title,
         content,
+        canonical_format: canonicalFormat,
+        content_md: contentMd,
+        content_json_native: contentJsonNative,
+        content_schema_version: contentSchemaVersion,
+        markdown_projection_status: markdownProjectionStatus,
         current_version: 1,
         project_id: projectId,
         conversation_id: conversationId,
@@ -168,6 +174,12 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
       Object.assign(db.artifacts.get(artifactId), { status: 'proposed' });
       return { changes: 1 };
     }
+    if (normalized.includes('SET provenance_json = ?')) {
+      const [provenanceJson, artifactId, organizationId] = params;
+      const artifact = db.artifacts.get(artifactId);
+      if (artifact?.organization_id === organizationId) artifact.provenance_json = provenanceJson;
+      return { changes: artifact?.organization_id === organizationId ? 1 : 0 };
+    }
     if (normalized.includes("SET status = 'approved'")) {
       if (normalized.includes('wave5_mutation_proposals')) {
         const [reviewedBy, mutationId] = params;
@@ -227,7 +239,8 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   get: async (sql: string, params: any[] = []) => {
     const normalized = sql.replace(/\s+/g, ' ').trim();
     if (normalized.includes('FROM wave5_artifacts')) {
-      return db.artifacts.get(params[0]) || null;
+      const artifact = db.artifacts.get(params[0]);
+      return artifact?.organization_id === params[1] ? artifact : null;
     }
     if (normalized.includes('FROM wave5_mutation_proposals')) {
       return db.mutations.get(params[0]) || null;
@@ -385,6 +398,11 @@ describe('Wave 5 artifact runtime', () => {
         originRecordId: 'deck-1',
       })
     );
+    expect(mirrored.contentMd).toBe('');
+    expect(mirrored.markdownProjectionStatus).toBe('missing');
+    expect(mirrored.provenance.metadata).toMatchObject({
+      contentAuthority: 'origin_runtime', quarantineStatus: 'legacy_mirror', canonicalContent: false,
+    });
 
     const duplicate = await mirrorLegacyArtifactIntoWave5({
       organizationId: 'org-1',
@@ -395,6 +413,23 @@ describe('Wave 5 artifact runtime', () => {
     });
     expect(duplicate.artifactId).toBe('v8-artifact-1');
     expect(db.artifacts.size).toBe(1);
+
+    db.artifacts.set('historic-mirror', {
+      artifact_id: 'historic-mirror', organization_id: 'org-1', artifact_type: 'report',
+      content: '# Old\nLegacy report artifact mirrored into Wave 5 runtime.', content_md: 'old placeholder',
+      source_refs_json: JSON.stringify([{ sourceClass: 'legacy_artifact', originRuntime: 'report', originRecordId: 'report-old' }]),
+      provenance_json: JSON.stringify({ metadata: { mirroredFrom: 'v8_output_artifacts' } }), current_version: 1,
+    });
+    const historic = await mirrorLegacyArtifactIntoWave5({
+      organizationId: 'org-1', userId: 'user-1', legacyArtifactId: 'historic-mirror',
+      outputType: 'report', title: 'Old', originRuntime: 'report', originRecordId: 'report-old',
+    });
+    expect(historic.content).toContain('Legacy report artifact mirrored');
+    expect(historic.provenance.metadata).toMatchObject({ contentAuthority: 'origin_runtime', quarantineStatus: 'legacy_mirror' });
+    await expect(mirrorLegacyArtifactIntoWave5({
+      organizationId: 'foreign', userId: 'user-1', legacyArtifactId: 'historic-mirror',
+      outputType: 'report', title: 'Foreign', originRuntime: 'report', originRecordId: 'report-old',
+    })).rejects.toBeTruthy();
   });
 
   it('generates report, deck and table as first-class structured artifacts', async () => {

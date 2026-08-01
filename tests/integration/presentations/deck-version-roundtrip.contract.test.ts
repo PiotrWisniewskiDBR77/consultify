@@ -57,15 +57,11 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
     params: unknown[] = []
   ): Promise<{ success: boolean; changes?: number; error?: string }> =>
     new Promise((resolve, reject) => {
-      sqliteCtx.db.run(
-        sql,
-        params,
-        function (this: { changes: number }, err: Error | null) {
-          // Surface write failures so a broken INSERT/UPDATE cannot pass silently.
-          if (err) return reject(err);
-          resolve({ success: true, changes: this.changes });
-        }
-      );
+      sqliteCtx.db.run(sql, params, function (this: { changes: number }, err: Error | null) {
+        // Surface write failures so a broken INSERT/UPDATE cannot pass silently.
+        if (err) return reject(err);
+        resolve({ success: true, changes: this.changes });
+      });
     }),
 }));
 
@@ -136,12 +132,7 @@ function run(sql: string, params: unknown[] = []): Promise<void> {
   });
 }
 
-function seedDeck(
-  id: string,
-  org: string,
-  deckJson: string,
-  version = 1
-): Promise<void> {
+function seedDeck(id: string, org: string, deckJson: string, version = 1): Promise<void> {
   return run(
     `INSERT INTO presentation_decks (id, organization_id, title, deck_json, version)
      VALUES (?, ?, ?, ?, ?)`,
@@ -156,9 +147,7 @@ let app: express.Express;
 
 beforeAll(async () => {
   await ddl();
-  const { default: router } = await import(
-    '../../../server/src/routes/presentations.routes.js'
-  );
+  const { default: router } = await import('../../../server/src/routes/presentations.routes.js');
   app = express();
   app.use(express.json({ limit: '20mb' }));
   app.use('/api/presentations', router);
@@ -183,7 +172,12 @@ describe('M19 · L-07 — deck version snapshot round-trip (S4, real SQL)', () =
     const v1Json = JSON.stringify({ cards: [{ id: 'c1', title: 'Original' }] });
     await seedDeck('deck-1', ORG, v1Json, 1);
 
-    const newBody = { cards: [{ id: 'c1', title: 'Edited' }, { id: 'c2', title: 'Added' }] };
+    const newBody = {
+      cards: [
+        { id: 'c1', title: 'Edited' },
+        { id: 'c2', title: 'Added' },
+      ],
+    };
     const res = await request(app)
       .put('/api/presentations/decks/deck-1/autosave')
       .set('x-deck-version', '1')
@@ -216,9 +210,9 @@ describe('M19 · L-07 — deck version snapshot round-trip (S4, real SQL)', () =
     expect(snapshotId).toBeTruthy();
 
     // Restore the v1 snapshot.
-    const restore = await request(app).post(
-      `/api/presentations/decks/deck-1/versions/${snapshotId}/restore`
-    );
+    const restore = await request(app)
+      .post(`/api/presentations/decks/deck-1/versions/${snapshotId}/restore`)
+      .send({ expectedVersion: 2 });
     expect(restore.status).toBe(200);
     expect(restore.body.restoredFromVersion).toBe(1);
 
@@ -271,6 +265,35 @@ describe('M19 · L-07 — deck version snapshot round-trip (S4, real SQL)', () =
       `/api/presentations/decks/deck-1/versions/${snapshotId}/restore`
     );
     expect(restore.status).toBe(404);
+  });
+
+  it('restore rejects a stale expectedVersion with 409 and leaves live content unchanged', async () => {
+    const v1Json = JSON.stringify({ cards: [{ id: 'c1', title: 'Version One' }] });
+    await seedDeck('deck-1', ORG, v1Json, 1);
+    await request(app)
+      .put('/api/presentations/decks/deck-1/autosave')
+      .set('x-deck-version', '1')
+      .send({ cards: [{ id: 'c1', title: 'Version Two' }] });
+    const versions = await request(app).get('/api/presentations/decks/deck-1/versions');
+    const snapshotId = versions.body.data[0].id as string;
+    const restore = await request(app)
+      .post(`/api/presentations/decks/deck-1/versions/${snapshotId}/restore`)
+      .send({ expectedVersion: 1 });
+    expect(restore.status).toBe(409);
+    expect(restore.body).toMatchObject({
+      code: 'VERSION_CONFLICT',
+      serverVersion: 2,
+      clientVersion: 1,
+    });
+    const liveDeck: any = await new Promise((resolve, reject) =>
+      sqliteCtx.db.get(
+        'SELECT deck_json, version FROM presentation_decks WHERE id = ?',
+        ['deck-1'],
+        (err: Error | null, row: unknown) => (err ? reject(err) : resolve(row))
+      )
+    );
+    expect(JSON.parse(liveDeck.deck_json).cards[0].title).toBe('Version Two');
+    expect(liveDeck.version).toBe(2);
   });
 
   it('version conflict: stale x-deck-version is rejected 409 and writes NO snapshot', async () => {

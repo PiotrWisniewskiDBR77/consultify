@@ -17,11 +17,9 @@ describe('initiativeDeepLink', () => {
   });
 
   it('builds module-specific links with tab', () => {
-    expect(buildInitiativeDeepLink('i2', { module: 'execution' })).toBe(
-      '/implementation?open=i2'
-    );
+    expect(buildInitiativeDeepLink('i2', { module: 'execution' })).toBe('/execution?open=i2');
     expect(buildInitiativeDeepLink('i3', { module: 'economics', tab: 'models' })).toBe(
-      '/economics?tab=models&open=i3'
+      '/finance?tab=models&open=i3'
     );
   });
 

@@ -5,6 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import {
   applyArtifactSubstrateDdl,
   clearArtifactSubstrateTables,
+  seedGovernedTable,
 } from '../helpers/artifactSubstrateSqliteContext.js';
 
 const sqliteCtx = vi.hoisted(() => {
@@ -118,12 +119,81 @@ vi.mock('../../../server/src/middleware/v8FeatureGate.middleware.js', () => ({
 }));
 
 import artifactRunsRouter from '../../../server/src/routes/artifact-runs.routes.js';
+import artifactsRouter from '../../../server/src/routes/artifacts.routes.js';
 import * as reportBuilderService from '../../../server/src/services/reportBuilderService.js';
+import { errorHandlerMiddleware } from '../../../server/src/utils/ErrorHandler.js';
 
 describe('artifact-runs routes (sqlite-backed integration)', () => {
   const app = express();
   app.use(express.json());
   app.use('/api/artifact-runs', artifactRunsRouter);
+  app.use('/api/artifacts', artifactsRouter);
+  app.use(errorHandlerMiddleware);
+
+  const sqliteRun = (sql: string, params: unknown[] = []) =>
+    new Promise<void>((resolve, reject) => {
+      sqliteCtx.db.run(sql, params, (err) => (err ? reject(err) : resolve()));
+    });
+
+  const sqliteGet = <T,>(sql: string, params: unknown[] = []) =>
+    new Promise<T | null>((resolve, reject) => {
+      sqliteCtx.db.get(sql, params, (err, row) =>
+        err ? reject(err) : resolve((row || null) as T | null),
+      );
+    });
+
+  async function getPrimaryOrigin(artifactId: string) {
+    const origin = await sqliteGet<{ origin_runtime: string; origin_record_id: string }>(
+      `SELECT origin_runtime, origin_record_id FROM v8_artifact_origin_links
+       WHERE artifact_id = ? AND organization_id = ? AND is_primary_origin = 1`,
+      [artifactId, 'org-a'],
+    );
+    expect(origin).toBeTruthy();
+    return origin!;
+  }
+
+  async function expectStableContentReadBack(
+    artifactId: string,
+    origin: { origin_runtime: string; origin_record_id: string },
+  ) {
+    const first = await request(app).get(`/api/artifacts/${artifactId}/content`);
+    expect(first.status, JSON.stringify(first.body)).toBe(200);
+    expect(first.headers['cache-control']).toBe('private, must-revalidate');
+    expect(first.headers.etag).toMatch(/^"[a-f0-9]{64}"$/);
+    expect(first.body.data).toEqual(
+      expect.objectContaining({
+        artifactId,
+        origin: {
+          originRuntime: origin.origin_runtime,
+          originRecordId: origin.origin_record_id,
+        },
+        contentHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        envelope: expect.objectContaining({
+          envelopeVersion: 'artifact-content/v1',
+          canonicalFormat: 'json',
+          provenance: expect.objectContaining({
+            originRuntime: origin.origin_runtime,
+            originRecordId: origin.origin_record_id,
+          }),
+        }),
+      }),
+    );
+    expect(JSON.stringify(first.body.data.envelope)).not.toContain(
+      'mirrored into Wave 5 runtime',
+    );
+
+    const second = await request(app).get(`/api/artifacts/${artifactId}/content`);
+    expect(second.status).toBe(200);
+    expect(second.headers.etag).toBe(first.headers.etag);
+    expect(second.body.data.contentHash).toBe(first.body.data.contentHash);
+
+    const notModified = await request(app)
+      .get(`/api/artifacts/${artifactId}/content`)
+      .set('If-None-Match', first.headers.etag);
+    expect(notModified.status).toBe(304);
+    expect(notModified.text).toBe('');
+    return first;
+  }
 
   beforeAll(async () => {
     await applyArtifactSubstrateDdl(sqliteCtx.db);
@@ -155,10 +225,46 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
       }),
   );
 
-  it('persists a run through POST -> GET -> accept-plan -> materialize -> retry', async () => {
-    spineMocks.initiateHandoff
-      .mockResolvedValueOnce({ executionRunId: 'exec-run-1' })
-      .mockResolvedValueOnce({ executionRunId: 'exec-run-2' });
+  it.each([
+    ['document', 'sheet'],
+    ['presentation', 'report'],
+  ])('rejects contradictory explicit pair %s/%s before creating a run', async (artifactFamily, outputType) => {
+    const response = await request(app).post('/api/artifact-runs/from-chat').send({
+      conversationId: 'conv-invalid-pair',
+      contextSnapshotId: 'snap-invalid-pair',
+      goal: 'Create output',
+      requestedArtifactFamily: artifactFamily,
+      requestedOutputType: outputType,
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toEqual(
+      expect.objectContaining({
+        code: 'ARTIFACT_TYPE_MAPPING_INVALID',
+        artifactFamily,
+        outputType,
+      }),
+    );
+    expect(spineMocks.initiateHandoff).not.toHaveBeenCalled();
+  });
+
+  it('requires explicit output type for template runs without guessing from goal text', async () => {
+    const response = await request(app).post('/api/artifact-runs/from-chat').send({
+      conversationId: 'conv-template',
+      contextSnapshotId: 'snap-template',
+      goal: 'Create a presentation template',
+      requestedArtifactFamily: 'template',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toEqual(
+      expect.objectContaining({ code: 'ARTIFACT_TYPE_MAPPING_INVALID' }),
+    );
+    expect(spineMocks.initiateHandoff).not.toHaveBeenCalled();
+  });
+
+  it('persists a run through POST -> GET -> accept-plan -> materialize and rejects retry of completed', async () => {
+    spineMocks.initiateHandoff.mockResolvedValueOnce({ executionRunId: 'exec-run-1' });
     spineMocks.createProposal.mockResolvedValue({ proposalId: 'proposal-abc' });
 
     await new Promise<void>((resolve, reject) => {
@@ -215,7 +321,19 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
       expect.objectContaining({
         runId,
         runStatus: 'proposal_created',
+        persistedRunStatus: 'proposal_created',
+        effectiveRunStatus: 'proposal_created',
         proposalId: 'proposal-abc',
+      }),
+    );
+    spineMocks.getRun.mockResolvedValue({ state: 'applying' });
+    const divergentStatusRes = await request(app).get(`/api/artifact-runs/${runId}`);
+    expect(divergentStatusRes.status).toBe(200);
+    expect(divergentStatusRes.body.data).toEqual(
+      expect.objectContaining({
+        persistedRunStatus: 'proposal_created',
+        effectiveRunStatus: 'applying',
+        runStatus: 'applying',
       }),
     );
     spineMocks.getRun.mockResolvedValue({ state: 'approved_for_apply' });
@@ -233,9 +351,99 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
       expect.objectContaining({
         runId,
         runStatus: 'completed',
+        persistedRunStatus: 'completed',
+        effectiveRunStatus: 'completed',
       }),
     );
     expect(materializeRes.body.data.artifactId).toBeTruthy();
+
+    const reportArtifactId = String(materializeRes.body.data.artifactId);
+    const reportOrigin = await getPrimaryOrigin(reportArtifactId);
+    expect(reportOrigin.origin_runtime).toBe('report');
+    expect(materializeRes.body.data.materializationOrigin).toEqual({
+      originRuntime: 'report',
+      originRecordId: reportOrigin.origin_record_id,
+    });
+    await sqliteRun(
+      `UPDATE report_builder_sections
+       SET generated_content = ?, edited_content = NULL, content_format = 'markdown', updated_at = ?
+       WHERE report_id = ?`,
+      ['Initial governed report content', '2026-08-01T08:00:00.000Z', reportOrigin.origin_record_id],
+    );
+    await sqliteRun('UPDATE report_builder_reports SET updated_at = ? WHERE id = ?', [
+      '2026-08-01T08:00:00.000Z',
+      reportOrigin.origin_record_id,
+    ]);
+    const initialReportContent = await expectStableContentReadBack(reportArtifactId, reportOrigin);
+    expect(initialReportContent.body.data.envelope).toEqual(expect.objectContaining({
+      canonicalKind: 'document',
+      contentSchemaVersion: 'report-builder/v1',
+      contentMd: expect.stringContaining('Initial governed report content'),
+    }));
+    expect(initialReportContent.body.data.originRevision).toBeTruthy();
+
+    await sqliteRun(
+      `UPDATE report_builder_sections SET edited_content = ?, updated_at = ? WHERE report_id = ?`,
+      ['Edited governed report content', '2026-08-01T09:00:00.000Z', reportOrigin.origin_record_id],
+    );
+    await sqliteRun('UPDATE report_builder_reports SET updated_at = ? WHERE id = ?', [
+      '2026-08-01T09:00:00.000Z',
+      reportOrigin.origin_record_id,
+    ]);
+    const changedReportContent = await request(app)
+      .get(`/api/artifacts/${reportArtifactId}/content`)
+      .set('If-None-Match', initialReportContent.headers.etag);
+    expect(changedReportContent.status).toBe(200);
+    expect(changedReportContent.headers.etag).not.toBe(initialReportContent.headers.etag);
+    expect(changedReportContent.body.data.contentHash).not.toBe(
+      initialReportContent.body.data.contentHash,
+    );
+    expect(changedReportContent.body.data.originRevision).not.toBe(
+      initialReportContent.body.data.originRevision,
+    );
+    expect(changedReportContent.body.data.envelope.contentMd).toContain(
+      'Edited governed report content',
+    );
+    expect(changedReportContent.body.data.envelope.contentJson.sections[0].source).toBe('edited');
+
+    const retryRes = await request(app).post(`/api/artifact-runs/${runId}/retry`).send({});
+    expect(retryRes.status).toBe(409);
+    expect(retryRes.body.error).toEqual(
+      expect.objectContaining({
+        code: 'ARTIFACT_RUN_RETRY_NOT_ALLOWED',
+        runId,
+        runStatus: 'completed',
+      }),
+    );
+
+    const historyRes = await request(app).get(`/api/artifact-runs/${runId}/history`);
+    expect(historyRes.status).toBe(200);
+    expect(historyRes.body.data.map((item: any) => item.runId)).toEqual([runId]);
+  });
+
+  it.each(['failed', 'cancelled'])('creates one retry child for persisted %s', async (status) => {
+    spineMocks.initiateHandoff
+      .mockResolvedValueOnce({ executionRunId: `exec-parent-${status}` })
+      .mockResolvedValueOnce({ executionRunId: `exec-child-${status}` });
+
+    const createRes = await request(app).post('/api/artifact-runs/from-chat').send({
+      conversationId: `conv-${status}`,
+      contextSnapshotId: `snap-${status}`,
+      goal: `Retry ${status} report`,
+      requestedArtifactFamily: 'document',
+      requestedOutputType: 'report',
+    });
+    expect(createRes.status).toBe(201);
+    const runId = String(createRes.body.data.run.runId);
+
+    await new Promise<void>((resolve, reject) => {
+      sqliteCtx.db.run(
+        `UPDATE v8_artifact_runs SET run_status = ?, updated_at = ?
+         WHERE run_id = ? AND organization_id = ?`,
+        [status, new Date().toISOString(), runId, 'org-a'],
+        (err) => (err ? reject(err) : resolve()),
+      );
+    });
 
     const retryRes = await request(app).post(`/api/artifact-runs/${runId}/retry`).send({});
     expect(retryRes.status).toBe(201);
@@ -243,18 +451,13 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
       expect.objectContaining({
         retryOfRunId: runId,
         runStatus: 'planned',
-        executionRunId: 'exec-run-2',
+        executionRunId: `exec-child-${status}`,
       }),
     );
 
-    spineMocks.getRun.mockImplementation(async (executionRunId: string) =>
-      executionRunId === 'exec-run-1'
-        ? { state: 'approved_for_apply' }
-        : { state: 'planning' }
-    );
-    const historyRes = await request(app).get(`/api/artifact-runs/${retryRes.body.data.runId}/history`);
-    expect(historyRes.status).toBe(200);
-    expect(historyRes.body.data.map((item: any) => item.runId)).toEqual([runId, retryRes.body.data.runId]);
+    const parentRes = await request(app).get(`/api/artifact-runs/${runId}`);
+    expect(parentRes.status).toBe(200);
+    expect(parentRes.body.data.runStatus).toBe(status);
   });
 
   it('materializes a presentation run through the governed artifact-run route', async () => {
@@ -299,11 +502,68 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
       }),
     );
     expect(materializeRes.body.data.artifactId).toBeTruthy();
+
+    const presentationArtifactId = String(materializeRes.body.data.artifactId);
+    const presentationOrigin = await getPrimaryOrigin(presentationArtifactId);
+    expect(presentationOrigin.origin_runtime).toBe('presentation');
+    expect(materializeRes.body.data.materializationOrigin).toEqual({
+      originRuntime: 'presentation',
+      originRecordId: presentationOrigin.origin_record_id,
+    });
+    const initialDeck = {
+      title: 'Board presentation',
+      slides: [{ title: 'Initial decision', bullets: ['Approve initial plan'] }],
+    };
+    await sqliteRun(
+      `UPDATE presentation_decks
+       SET content_json_native = ?, deck_json = ?, version = 1, updated_at = ? WHERE id = ?`,
+      [JSON.stringify(initialDeck), JSON.stringify({ title: 'Stale deck' }), '2026-08-01T10:00:00.000Z', presentationOrigin.origin_record_id],
+    );
+    const initialPresentationContent = await expectStableContentReadBack(
+      presentationArtifactId,
+      presentationOrigin,
+    );
+    expect(initialPresentationContent.body.data.envelope).toEqual(expect.objectContaining({
+      canonicalKind: 'presentation',
+      contentSchemaVersion: 'presentation-deck/v1',
+      contentJson: initialDeck,
+      contentMd: expect.stringContaining('Initial decision'),
+    }));
+    expect(initialPresentationContent.body.data.originRevision).toBeTruthy();
+
+    const changedDeck = {
+      title: 'Board presentation',
+      slides: [{ title: 'Updated decision', bullets: ['Approve revised plan'] }],
+    };
+    await sqliteRun(
+      `UPDATE presentation_decks
+       SET content_json_native = ?, version = 2, updated_at = ? WHERE id = ?`,
+      [JSON.stringify(changedDeck), '2026-08-01T11:00:00.000Z', presentationOrigin.origin_record_id],
+    );
+    const changedPresentationContent = await request(app)
+      .get(`/api/artifacts/${presentationArtifactId}/content`)
+      .set('If-None-Match', initialPresentationContent.headers.etag);
+    expect(changedPresentationContent.status).toBe(200);
+    expect(changedPresentationContent.headers.etag).not.toBe(
+      initialPresentationContent.headers.etag,
+    );
+    expect(changedPresentationContent.body.data.contentHash).not.toBe(
+      initialPresentationContent.body.data.contentHash,
+    );
+    expect(changedPresentationContent.body.data.originRevision).not.toBe(
+      initialPresentationContent.body.data.originRevision,
+    );
+    expect(changedPresentationContent.body.data.envelope.contentMd).toContain('Updated decision');
   });
 
   it('materializes a sheet run through the governed artifact-run route when a governed table target is provided', async () => {
     spineMocks.initiateHandoff.mockResolvedValueOnce({ executionRunId: 'exec-run-sheet-1' });
     spineMocks.createProposal.mockResolvedValue({ proposalId: 'proposal-sheet-1' });
+    await seedGovernedTable(sqliteCtx.db, {
+      tableId: 'tbl-governed-1',
+      organizationId: 'org-a',
+      tableName: 'Governed matrix',
+    });
 
     const createRes = await request(app).post('/api/artifact-runs/from-chat').send({
       conversationId: 'conv-sheet-1',
@@ -337,5 +597,58 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
       }),
     );
     expect(materializeRes.body.data.artifactId).toBeTruthy();
+
+    const sheetArtifactId = String(materializeRes.body.data.artifactId);
+    const sheetOrigin = await getPrimaryOrigin(sheetArtifactId);
+    expect(sheetOrigin.origin_runtime).toBe('sheet');
+    expect(materializeRes.body.data.materializationOrigin).toEqual({
+      originRuntime: 'sheet',
+      originRecordId: sheetOrigin.origin_record_id,
+    });
+    await sqliteRun(
+      `INSERT INTO tp_views
+       (id, table_id, name, view_type, visible_field_ids, config, is_default, ordinal, created_at, updated_at)
+       VALUES (?, ?, ?, 'grid', ?, '{}', 1, 0, ?, ?)`,
+      ['view-governed-1', sheetOrigin.origin_record_id, 'Default view', JSON.stringify([
+        'field-name-tbl-governed-1',
+        'field-status-tbl-governed-1',
+      ]), '2026-08-01T12:00:00.000Z', '2026-08-01T12:00:00.000Z'],
+    );
+    await sqliteRun(
+      `INSERT INTO tp_records (id, table_id, data, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)`,
+      [
+        'record-governed-1', sheetOrigin.origin_record_id,
+        JSON.stringify({ 'field-name-tbl-governed-1': 'Alpha', 'field-status-tbl-governed-1': 'Open' }),
+        '2026-08-01T12:00:00.000Z', '2026-08-01T12:00:00.000Z',
+        'record-governed-2', sheetOrigin.origin_record_id,
+        JSON.stringify({ 'field-name-tbl-governed-1': 'Beta', 'field-status-tbl-governed-1': 'Closed' }),
+        '2026-08-01T12:01:00.000Z', '2026-08-01T12:01:00.000Z',
+      ],
+    );
+    const initialSheetContent = await expectStableContentReadBack(sheetArtifactId, sheetOrigin);
+    expect(initialSheetContent.body.data.originRevision).toBeNull();
+    expect(initialSheetContent.body.data.envelope).toEqual(expect.objectContaining({
+      canonicalKind: 'sheet',
+      contentSchemaVersion: 'table-platform/sheet-snapshot-v1',
+      contentMd: expect.stringContaining('Alpha'),
+    }));
+    expect(initialSheetContent.body.data.envelope.contentJson.records).toHaveLength(2);
+
+    await sqliteRun('UPDATE tp_records SET data = ?, updated_at = ? WHERE id = ?', [
+      JSON.stringify({ 'field-name-tbl-governed-1': 'Alpha revised', 'field-status-tbl-governed-1': 'Open' }),
+      '2026-08-01T13:00:00.000Z',
+      'record-governed-1',
+    ]);
+    const changedSheetContent = await request(app)
+      .get(`/api/artifacts/${sheetArtifactId}/content`)
+      .set('If-None-Match', initialSheetContent.headers.etag);
+    expect(changedSheetContent.status).toBe(200);
+    expect(changedSheetContent.headers.etag).not.toBe(initialSheetContent.headers.etag);
+    expect(changedSheetContent.body.data.contentHash).not.toBe(
+      initialSheetContent.body.data.contentHash,
+    );
+    expect(changedSheetContent.body.data.originRevision).toBeNull();
+    expect(changedSheetContent.body.data.envelope.contentMd).toContain('Alpha revised');
   });
 });

@@ -12,6 +12,9 @@ last_updated: 2026-05-10
 
 # Function Contract — Inbox / Skrzynka
 
+> Szczegółowy aktualny kontrakt produktu, źródeł, routingu, synchronizacji, UX i MVP znajduje się w
+> `docs/program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/MY_WORK_INBOX_REVIEW.md`.
+
 ## 1. Function Identity
 
 - Function ID: `MW_INBOX`

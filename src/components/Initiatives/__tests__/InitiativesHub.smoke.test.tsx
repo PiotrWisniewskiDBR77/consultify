@@ -16,6 +16,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (k: string, opts?: any) => {
+      if (k === 'initiatives.form.newInitiative') return 'New Initiative';
       if (typeof opts === 'string') return opts;
       if (opts?.defaultValue) return opts.defaultValue;
       return k;
@@ -30,7 +31,18 @@ vi.mock('react-hot-toast', () => {
   return { default: Object.assign(fn, { success: vi.fn(), error: vi.fn() }) };
 });
 
-const { getPortfolio } = vi.hoisted(() => ({ getPortfolio: vi.fn() }));
+const { getPortfolio, portfolioStoreState, appStoreState, conversationStoreState } = vi.hoisted(
+  () => ({
+    getPortfolio: vi.fn(),
+    portfolioStoreState: { refreshTrigger: 0 },
+    appStoreState: {
+      currentProjectId: 'proj-1',
+      currentUser: { id: 'u1', firstName: 'T', lastName: 'U', role: 'ADMIN' },
+      currentOrganization: { id: 'org-1' },
+    },
+    conversationStoreState: { addMessage: vi.fn() },
+  })
+);
 
 vi.mock('@/services/api/v8/planning', () => ({
   V8PlanningApi: {
@@ -63,18 +75,17 @@ vi.mock('../Wizard/InitiativeWizardModal', () => ({
 }));
 
 vi.mock('@/store/useConversationStore', () => ({
-  useConversationStore: () => ({}),
+  useConversationStore: (selector: (state: typeof conversationStoreState) => unknown) =>
+    selector(conversationStoreState),
 }));
 
 vi.mock('../../../store/portfolioSlice', () => ({
-  usePortfolioStore: () => ({ filters: {}, setFilters: vi.fn() }),
+  usePortfolioStore: (selector: (state: typeof portfolioStoreState) => unknown) =>
+    selector(portfolioStoreState),
 }));
 
 vi.mock('../../../store/useAppStore', () => ({
-  useAppStore: () => ({
-    currentProjectId: 'proj-1',
-    currentUser: { id: 'u1', firstName: 'T', lastName: 'U', role: 'ADMIN' },
-  }),
+  useAppStore: () => appStoreState,
 }));
 
 import { InitiativesHub } from '../InitiativesHub';
@@ -120,11 +131,13 @@ describe('InitiativesHub smoke', () => {
     });
   });
 
-  it('exposes the "AI Initiative Wizard" CTA and opens the wizard modal on click', async () => {
+  it('exposes the canonical "New Initiative" CTA and opens the wizard in default table view', async () => {
     renderHub();
     await waitFor(() => expect(screen.getByTestId('initiatives-hub')).toBeInTheDocument());
-    const wizardBtn = await screen.findByText('AI Initiative Wizard');
-    fireEvent.click(wizardBtn);
+    const [primaryWizardButton] = await screen.findAllByRole('button', {
+      name: 'New Initiative',
+    });
+    fireEvent.click(primaryWizardButton);
     await waitFor(() => {
       expect(screen.getByTestId('initiative-wizard-modal')).toBeInTheDocument();
     });

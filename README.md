@@ -9,21 +9,25 @@
 
 **Consultinity** serves as a digital executive consultant, guiding organizations through the complex journey of digital maturity—from initial assessment to full-scale rollout.
 
-## 📚 Documentation - Enterprise Edition
+## 📚 Dokumentacja
 
-> **✅ VC Technical Due Diligence Ready**  
-> **Quality metrics live in CI and `docs/metrics/QUALITY_METRICS.md`**
+**Aktualny punkt wejścia:** [docs/ssot/README.md](docs/ssot/README.md)
 
-**Complete Documentation**: [docs/README.md](docs/README.md)
+Dokumentacja rozdziela stan działający, kierunek produktu, standardy,
+operacje i dowody. Historyczne deklaracje pokrycia testami, compliance lub
+gotowości due diligence wymagają ponownego potwierdzenia na konkretnym
+commicie i środowisku.
 
-### Quick Links for Investors & VCs
+Rozbudowany indeks historyczny: [docs/README.md](docs/README.md).
+
+### Materiały kierunkowe i due diligence
 
 - **[Executive Summary](docs/executive/EXECUTIVE_SUMMARY.md)** - 2-page technical overview
 - **[Tech DD Checklist](docs/due-diligence/TECH_DD_CHECKLIST.md)** - Pre-answered common questions
 - **[Quality Metrics](docs/metrics/QUALITY_METRICS.md)** - current coverage and pass-rate reference
 - **[Compliance Matrix](docs/security-compliance/COMPLIANCE_MATRIX.md)** - GDPR/SOC2/ISO27001 status
 
-### Technical Documentation (8-Pillar Enterprise Structure)
+### Dokumentacja techniczna i organizacyjna
 
 1. **[Executive](docs/executive/)** - Technical overview, metrics, roadmap
 2. **[Architecture](docs/architecture/)** - System, infrastructure, security, API design
@@ -35,22 +39,23 @@
 8. **[Metrics](docs/metrics/)** - KPIs, performance, quality
 9. **[Due Diligence](docs/due-diligence/)** - DD checklist, OSS licenses, IP docs
 
-### Platform Status
+### Status deklaracji zewnętrznych
 
 | Metric          | Status                                      |
 | --------------- | ------------------------------------------- |
-| Test Coverage   | See `docs/metrics/QUALITY_METRICS.md`       |
-| Test Pass Rate  | See CI / `docs/metrics/QUALITY_METRICS.md`  |
-| GDPR Compliance | 🟡 Ready for cert (Q2 2026)                 |
-| SOC 2 Type I    | 🟡 Audit scheduled (Q1 2026)                |
-| Uptime SLA      | 🟡 99.9% target                             |
+| Test Coverage   | wymaga aktualnego raportu dla revision      |
+| Test Pass Rate  | potwierdza bieżący CI / wykonana bramka     |
+| GDPR Compliance | stan należy potwierdzić dowodami prawnymi   |
+| SOC 2 Type I    | nie uznajemy za ukończone bez raportu       |
+| Uptime SLA      | cel operacyjny, nie dowód osiągniętego SLA  |
 
 ## 🚀 Quick Start (Development)
 
 ### Recommended: Staging-First Dev Mode (safe default)
 
-This repo contains many macOS/iCloud duplicate files (e.g. `Foo 2.tsx`, `Bar 13.ts`) which can cause file-watch “storms”
-and make `vite` + `tsx watch` feel laggy or unstable.
+Historyczne kopie macOS/iCloud zostały przeniesione do odzyskiwalnej
+`_quarantine/`. Gdy problem wróci, użyj bezpiecznego polecenia poniżej zamiast
+ręcznego kasowania.
 
 Run the default staging mode:
 

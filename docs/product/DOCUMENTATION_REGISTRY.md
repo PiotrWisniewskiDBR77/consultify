@@ -1,5 +1,9 @@
 # Documentation Registry (Canonical vs Legacy)
 
+> Global read order: start with `docs/SOURCE_OF_TRUTH.md`. This registry owns
+> product-target truth; it does not override runtime, operations, data or UI
+> authorities outside its declared scope.
+
 ## Purpose
 
 This document clarifies which documents are **canonical** for product behavior and governance, and which documents are **legacy snapshots** or **non-authoritative** working files.

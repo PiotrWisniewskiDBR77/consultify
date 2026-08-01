@@ -132,7 +132,7 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
   benefits: {
     id: 'benefits',
     name: 'Benefits',
-    route: '/benefits',
+    route: '/results',
     statuses: [InitiativeStatus.TRACKING],
     color: 'teal',
     betaModuleId: 'MODULE_BENEFITS',

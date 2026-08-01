@@ -3,7 +3,7 @@
  *
  * Audyt 2026-06-24: deep-link do inicjatywy był rozjechany (różne ścieżki/parametry
  * per moduł, hardkodowane `?initiativeId=`). Ten helper to jedyne źródło budowania
- * i odczytu deep-linku — wszystkie moduły (Initiatives/Execution/Economics) używają go,
+ * i odczytu deep-linku — wszystkie moduły (Initiatives/Execution/Finance) używają go,
  * dzięki czemu link z dowolnego miejsca otwiera tę samą inicjatywę spójnie.
  *
  * USPOJNIENIE D1 (2026-06-26): param ujednolicony na `open` — to FAKTYCZNA
@@ -17,8 +17,8 @@ export type InitiativeLinkModule = 'initiatives' | 'execution' | 'economics';
 
 const MODULE_BASE: Record<InitiativeLinkModule, string> = {
   initiatives: '/initiatives',
-  execution: '/implementation',
-  economics: '/economics',
+  execution: '/execution',
+  economics: '/finance',
 };
 
 /** Zbuduj kanoniczny deep-link do inicjatywy (domyślnie moduł Initiatives). */

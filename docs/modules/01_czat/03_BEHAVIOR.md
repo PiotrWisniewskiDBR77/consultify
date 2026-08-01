@@ -1,25 +1,28 @@
 ---
 module_id: MODULE_CHAT
 doc_kind: BEHAVIOR
-version: 2.0
+version: 2.1
 owner: user
 status: canonical
-last_updated: 2026-05-10
+last_updated: 2026-07-29
 ---
 
 # Behavior — Czat / Teresa Chat Engine
 
 ## Runtime Behavior (As-Is)
 
-- `/chat` mounts `AIChatWelcomeView`, which initializes conversation state from `useConversationStore`, streams AI responses, and persists assistant output through store/API helpers.
-- `/chat/:conversationId` mounts `UnifiedChatPanel` and keeps route-linked conversation context active.
+- `/chat` and `/chat/:conversationId` mount one canonical shell:
+  `ConversationRouteSync` plus `UnifiedChatPanel` in `full` mode.
+- `ConversationRouteSync` synchronizes the optional route parameter with the
+  active conversation. The empty `/chat` state and an opened conversation do
+  not use separate top-level views.
 - Chat runtime provides explicit response/action surfaces (citations, proposal/action cards, message actions) through dedicated AI Chat components imported in both chat surfaces.
 - Conversation-scoped handoff exists from chat to other modules through explicit route targets and context openings (for example mapping to `initiatives`, `my-work`, `meeting`, `interview` in chat runtime code).
 
 Evidence:
 
 - route: `src/routes/routeConfig.ts`, `src/routes/AppRoutes.tsx`
-- component: `src/views/AIChatWelcomeView.tsx`, `src/components/AIChat/UnifiedChatPanel.tsx`, `src/components/AIChat/ConversationRouteSync.tsx`
+- component: `src/components/AIChat/UnifiedChatPanel.tsx`, `src/components/AIChat/ConversationRouteSync.tsx`
 - API: `server/src/routes/ai.routes.ts`, `server/src/routes/conversations.routes.ts`
 - test: `tests/components/AppRoutes.ai-chat-routing.test.tsx`, `tests/integration/ai/ai-chat.routes.test.ts`
 

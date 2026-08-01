@@ -23,6 +23,7 @@ import type {
   PublishRecord,
   RecallOutputParams,
   ReviewGate,
+  ReviewReadiness,
   SubmitReviewGateParams,
   TransitionPublishStateParams,
 } from '../../types/publishReviewSemantics.js';
@@ -43,6 +44,24 @@ import logger from '../../utils/Logger.js';
 // ==========================================
 
 const LOG_PREFIX = '[V8:PublishReview]';
+
+export type PublishReviewErrorCode =
+  | 'REVIEW_CONFIGURATION_REQUIRED'
+  | 'REVIEW_QUORUM_REQUIRED'
+  | 'REVIEWER_NOT_ASSIGNED'
+  | 'SELF_REVIEW_NOT_ALLOWED'
+  | 'REVIEW_DECISION_CLOSED'
+  | 'PUBLISH_TRANSITION_CONFLICT';
+
+export class PublishReviewError extends Error {
+  constructor(
+    public readonly code: PublishReviewErrorCode,
+    message: string
+  ) {
+    super(message);
+    this.name = 'PublishReviewError';
+  }
+}
 
 interface PublishRecordRow {
   record_id: string;
@@ -111,12 +130,63 @@ function rowToPublishRecord(row: PublishRecordRow): PublishRecord {
     currentState: row.current_state as PublishLifecycleState,
     publishedBy: row.published_by,
     publishedAt: row.published_at || null,
-    reviewers: JSON.parse(row.reviewers || '[]'),
+    reviewers: [...new Set<string>(JSON.parse(row.reviewers || '[]'))],
     approvedBy: row.approved_by || null,
     approvedAt: row.approved_at || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+export function deriveReviewReadiness(reviewers: string[], gates: ReviewGate[]): ReviewReadiness {
+  const required = [...new Set(reviewers)];
+  const latestByReviewer = new Map<string, ReviewGate>();
+  for (const gate of gates) {
+    if (!required.includes(gate.reviewerId)) continue;
+    const previous = latestByReviewer.get(gate.reviewerId);
+    if (
+      !previous ||
+      gate.createdAt > previous.createdAt ||
+      (gate.createdAt === previous.createdAt && gate.gateId > previous.gateId)
+    ) {
+      latestByReviewer.set(gate.reviewerId, gate);
+    }
+  }
+
+  const approved = required.filter((id) => latestByReviewer.get(id)?.result === 'approved');
+  const rejected = required.filter((id) => {
+    const result = latestByReviewer.get(id)?.result;
+    return result === 'rejected' || result === 'changes_requested';
+  });
+  const pending = required.filter((id) => !approved.includes(id) && !rejected.includes(id));
+  return {
+    policy: 'ALL',
+    required,
+    approved,
+    pending,
+    rejected,
+    satisfied: required.length > 0 && approved.length === required.length,
+  };
+}
+
+async function readinessForRecord(record: PublishRecord): Promise<ReviewReadiness> {
+  const gates = await getReviewGates(record.artifactId, record.organizationId);
+  return deriveReviewReadiness(record.reviewers, gates);
+}
+
+function assertReviewReady(readiness: ReviewReadiness): void {
+  if (readiness.required.length === 0) {
+    throw new PublishReviewError(
+      'REVIEW_CONFIGURATION_REQUIRED',
+      'At least one assigned reviewer is required before approval or publication'
+    );
+  }
+  if (!readiness.satisfied) {
+    throw new PublishReviewError(
+      'REVIEW_QUORUM_REQUIRED',
+      'All assigned reviewers must have a latest approved decision'
+    );
+  }
 }
 
 function rowToReviewGate(row: ReviewGateRow): ReviewGate {
@@ -190,7 +260,7 @@ export async function createPublishRecord(
     currentState: 'private_draft',
     publishedBy: validated.publishedBy,
     publishedAt: null,
-    reviewers: validated.reviewers,
+    reviewers: [...new Set(validated.reviewers)],
     approvedBy: null,
     approvedAt: null,
     createdAt: now,
@@ -243,6 +313,15 @@ export async function transitionPublishState(
   }
 
   const currentState = row.current_state as PublishLifecycleState;
+  if (
+    currentState === validated.newState &&
+    (currentState === 'approved' || currentState === 'published')
+  ) {
+    const current = rowToPublishRecord(row);
+    current.reviewReadiness = await readinessForRecord(current);
+    assertReviewReady(current.reviewReadiness);
+    return current;
+  }
   const allowedNext = VALID_STATE_TRANSITIONS[currentState];
 
   if (!allowedNext.includes(validated.newState)) {
@@ -250,6 +329,13 @@ export async function transitionPublishState(
       `Invalid state transition: ${currentState} → ${validated.newState}. ` +
         `Allowed transitions from ${currentState}: [${allowedNext.join(', ')}]`
     );
+  }
+
+  const currentRecord = rowToPublishRecord(row);
+  if (validated.newState === 'approved' || validated.newState === 'published') {
+    const readiness = await readinessForRecord(currentRecord);
+    assertReviewReady(readiness);
+    currentRecord.reviewReadiness = readiness;
   }
 
   const now = new Date().toISOString();
@@ -265,10 +351,10 @@ export async function transitionPublishState(
     publishedAt = now;
   }
 
-  await dbRun(
+  const update = await dbRun(
     `UPDATE v8_publish_records
      SET current_state = ?, published_at = ?, approved_by = ?, approved_at = ?, updated_at = ?
-     WHERE record_id = ? AND organization_id = ?`,
+     WHERE record_id = ? AND organization_id = ? AND current_state = ?`,
     [
       validated.newState,
       publishedAt,
@@ -277,15 +363,36 @@ export async function transitionPublishState(
       now,
       validated.recordId,
       validated.organizationId,
+      currentState,
     ]
   );
+
+  if (update.changes === 0) {
+    const concurrent = await dbGet<PublishRecordRow>(
+      `SELECT * FROM v8_publish_records WHERE record_id = ? AND organization_id = ?`,
+      [validated.recordId, validated.organizationId],
+      { fallback: true }
+    );
+    if (
+      concurrent &&
+      (concurrent.current_state === validated.newState || concurrent.current_state === 'published')
+    ) {
+      const result = rowToPublishRecord(concurrent);
+      result.reviewReadiness = await readinessForRecord(result);
+      return result;
+    }
+    throw new PublishReviewError(
+      'PUBLISH_TRANSITION_CONFLICT',
+      'Publish state changed concurrently; retry with the current state'
+    );
+  }
 
   logger.info(
     `${LOG_PREFIX} Transitioned record ${validated.recordId}: ${currentState} → ${validated.newState} ` +
       `(actor=${validated.actor})`
   );
 
-  return rowToPublishRecord({
+  const result = rowToPublishRecord({
     ...row,
     current_state: validated.newState,
     published_at: publishedAt,
@@ -293,6 +400,8 @@ export async function transitionPublishState(
     approved_at: approvedAt,
     updated_at: now,
   });
+  result.reviewReadiness = currentRecord.reviewReadiness;
+  return result;
 }
 
 export async function getPublishRecord(
@@ -307,7 +416,9 @@ export async function getPublishRecord(
   );
 
   if (!row) return null;
-  return rowToPublishRecord(row);
+  const record = rowToPublishRecord(row);
+  record.reviewReadiness = await readinessForRecord(record);
+  return record;
 }
 
 // ==========================================
@@ -316,6 +427,51 @@ export async function getPublishRecord(
 
 export async function submitReviewGate(params: SubmitReviewGateParams): Promise<ReviewGate> {
   const validated = SubmitReviewGateParamsSchema.parse(params);
+
+  const recordRow = await dbGet<PublishRecordRow>(
+    `SELECT * FROM v8_publish_records
+     WHERE artifact_id = ? AND organization_id = ?
+       AND EXISTS (
+         SELECT 1 FROM organization_members
+         WHERE organization_id = ? AND user_id = ?
+       )`,
+    [
+      validated.artifactId,
+      validated.organizationId,
+      validated.organizationId,
+      validated.reviewerId,
+    ],
+    { fallback: true }
+  );
+  if (!recordRow) {
+    throw new PublishReviewError(
+      'REVIEWER_NOT_ASSIGNED',
+      'Only an assigned reviewer in the artifact organization may submit a decision'
+    );
+  }
+  const record = rowToPublishRecord(recordRow);
+  if (
+    record.currentState === 'published' ||
+    record.currentState === 'recalled' ||
+    record.currentState === 'archived'
+  ) {
+    throw new PublishReviewError(
+      'REVIEW_DECISION_CLOSED',
+      'Review decisions are closed after publication; recall must happen before further review'
+    );
+  }
+  if (!record.reviewers.includes(validated.reviewerId)) {
+    throw new PublishReviewError(
+      'REVIEWER_NOT_ASSIGNED',
+      'Only an assigned reviewer may submit a decision'
+    );
+  }
+  if (record.publishedBy === validated.reviewerId) {
+    throw new PublishReviewError(
+      'SELF_REVIEW_NOT_ALLOWED',
+      'The publisher cannot review their own artifact'
+    );
+  }
 
   const gateId = uuidv4();
   const now = new Date().toISOString();

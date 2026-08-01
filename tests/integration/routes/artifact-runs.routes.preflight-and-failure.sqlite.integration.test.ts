@@ -5,6 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import {
   applyArtifactSubstrateDdl,
   clearArtifactSubstrateTables,
+  seedGovernedTable,
 } from '../helpers/artifactSubstrateSqliteContext.js';
 
 const sqliteCtx = vi.hoisted(() => {
@@ -122,11 +123,13 @@ vi.mock('../../../server/src/middleware/v8FeatureGate.middleware.js', () => ({
 }));
 
 import artifactRunsRouter from '../../../server/src/routes/artifact-runs.routes.js';
+import { errorHandlerMiddleware } from '../../../server/src/utils/ErrorHandler.js';
 
 describe('artifact-runs preflight + failure packaging (sqlite integration)', () => {
   const app = express();
   app.use(express.json());
   app.use('/api/artifact-runs', artifactRunsRouter);
+  app.use(errorHandlerMiddleware);
 
   beforeAll(async () => {
     await applyArtifactSubstrateDdl(sqliteCtx.db);
@@ -209,14 +212,23 @@ describe('artifact-runs preflight + failure packaging (sqlite integration)', () 
       title: 'Governed matrix',
       config: {},
     });
-    expect(badMaterialize.status).toBe(500);
+    expect(badMaterialize.status).toBe(409);
+    expect(badMaterialize.body.error).toEqual(
+      expect.objectContaining({
+        code: 'ARTIFACT_RUN_PREFLIGHT_BLOCKED',
+        preflightState: 'attention_required',
+        unmetChecks: expect.arrayContaining([
+          expect.objectContaining({ id: 'materialization_target', status: 'failed' }),
+        ]),
+      }),
+    );
 
     const afterFailure = await request(app).get(`/api/artifact-runs/${runId}`);
     expect(afterFailure.status).toBe(200);
     expect(afterFailure.body.data.runStatus).toBe('failed');
     expect(afterFailure.body.data.failurePackage).toEqual(
       expect.objectContaining({
-        stage: 'materialize',
+        stage: 'preflight',
         occurredAt: expect.any(String),
       }),
     );
@@ -251,6 +263,11 @@ describe('artifact-runs preflight + failure packaging (sqlite integration)', () 
 
     // Successful retry materialization should create exactly one canonical artifact.
     spineMocks.getRun.mockResolvedValue({ state: 'approved_for_apply' });
+    await seedGovernedTable(sqliteCtx.db, {
+      tableId: 'tbl-governed-1',
+      organizationId: 'org-a',
+      tableName: 'Matrix',
+    });
     const okMaterialize = await request(app)
       .post(`/api/artifact-runs/${retryRes.body.data.runId}/materialize`)
       .send({
@@ -274,4 +291,3 @@ describe('artifact-runs preflight + failure packaging (sqlite integration)', () 
     expect(artifactCountAfterSuccess).toBe(1);
   });
 });
-

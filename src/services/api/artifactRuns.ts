@@ -1,7 +1,20 @@
 import { fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 
 export type ArtifactPlanOutputType = 'report' | 'presentation' | 'sheet';
-export type ArtifactFamily = 'document' | 'presentation' | 'sheet';
+export const ArtifactFamilyValues = ['document', 'presentation', 'sheet', 'template'] as const;
+export type ArtifactFamily = (typeof ArtifactFamilyValues)[number];
+export const ArtifactOriginRuntimeValues = [
+  'report',
+  'presentation',
+  'sheet',
+  'native_artifact',
+  'report_template',
+  'presentation_template',
+  'sheet_template',
+  'document_template',
+  'work_canvas',
+] as const;
+export type ArtifactOriginRuntime = (typeof ArtifactOriginRuntimeValues)[number];
 export type ArtifactVisibilityScope =
   | 'private'
   | 'project'
@@ -44,6 +57,51 @@ export interface ArtifactRunFailurePackage {
   cleanupNotes?: string | null;
 }
 
+export interface ArtifactRunOperationContract {
+  contractId: string;
+  version: 'v1';
+  kind: 'teresa_handoff' | 'governed_execution' | 'artifact_runtime' | 'tool_invocation';
+  stage:
+    | 'draft'
+    | 'proposal_ready'
+    | 'pending_review'
+    | 'approved'
+    | 'executing'
+    | 'completed'
+    | 'rejected'
+    | 'failed';
+  links: {
+    organizationId: string;
+    userId: string | null;
+    conversationId: string | null;
+    sessionId: string | null;
+    contextSnapshotId: string | null;
+    executionRunId: string | null;
+    teresaProposalId: string | null;
+    governedProposalId: string | null;
+    chatProposalId: string | null;
+    artifactRunId: string | null;
+    artifactId: string | null;
+    toolInvocationId: string | null;
+    targetModule: string | null;
+    targetRef: {
+      artifactId: string;
+      artifactType: string;
+      artifactModule: string;
+      relationship: 'target' | 'source' | 'reference';
+    } | null;
+  };
+  preview: {
+    title: string;
+    summary: string;
+    intent: string;
+    previewLines: string[];
+    riskLabel: string | null;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ArtifactRunPlan {
   artifactFamily: ArtifactFamily;
   outputType: ArtifactPlanOutputType;
@@ -63,6 +121,9 @@ export interface ArtifactRunRecord {
   sourceContextId: string | null;
   requestedByUserId: string;
   plan: ArtifactRunPlan;
+  persistedRunStatus: ArtifactRunStatus;
+  effectiveRunStatus: ArtifactRunStatus;
+  /** Backward-compatible alias of effectiveRunStatus. */
   runStatus: ArtifactRunStatus;
   proposalId: string | null;
   retryOfRunId: string | null;
@@ -70,19 +131,14 @@ export interface ArtifactRunRecord {
   preflight: ArtifactRunPreflight | null;
   failurePackage: ArtifactRunFailurePackage | null;
   materializationOrigin: {
-    originRuntime:
-      | 'report'
-      | 'presentation'
-      | 'sheet'
-      | 'native_artifact'
-      | 'report_template'
-      | 'presentation_template';
+    originRuntime: ArtifactOriginRuntime;
     originRecordId: string;
   } | null;
   startedAt: string;
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  operationContract?: ArtifactRunOperationContract;
 }
 
 export interface ArtifactRunPlanningEnvelope {
@@ -112,6 +168,26 @@ export interface MaterializeArtifactRunParams {
 
 const ARTIFACT_RUNS_BASE = '/api/artifact-runs';
 
+/**
+ * Compatibility-only normalization for payloads produced before explicit status fields.
+ * The client never derives lifecycle state from Execution Spine; backend values are canonical.
+ */
+export function normalizeArtifactRunStatusFields(
+  payload: ArtifactRunRecord | (Omit<ArtifactRunRecord, 'persistedRunStatus' | 'effectiveRunStatus'> & {
+    persistedRunStatus?: ArtifactRunStatus;
+    effectiveRunStatus?: ArtifactRunStatus;
+  })
+): ArtifactRunRecord {
+  const effectiveRunStatus = payload.effectiveRunStatus ?? payload.runStatus;
+  const persistedRunStatus = payload.persistedRunStatus ?? payload.runStatus;
+  return {
+    ...payload,
+    persistedRunStatus,
+    effectiveRunStatus,
+    runStatus: effectiveRunStatus,
+  } as ArtifactRunRecord;
+}
+
 export const ArtifactRunsApi = {
   createFromChat: async (
     params: CreateArtifactRunFromChatParams
@@ -127,7 +203,10 @@ export const ArtifactRunsApi = {
       res,
       'Failed to create artifact run from chat'
     );
-    return json.data;
+    return {
+      ...json.data,
+      run: normalizeArtifactRunStatusFields(json.data.run),
+    };
   },
 
   getRun: async (runId: string): Promise<ArtifactRunRecord> => {
@@ -139,7 +218,7 @@ export const ArtifactRunsApi = {
       res,
       'Failed to fetch artifact run'
     );
-    return json.data;
+    return normalizeArtifactRunStatusFields(json.data);
   },
 
   getHistory: async (runId: string): Promise<ArtifactRunRecord[]> => {
@@ -151,7 +230,7 @@ export const ArtifactRunsApi = {
       res,
       'Failed to fetch artifact run history'
     );
-    return json.data;
+    return json.data.map(normalizeArtifactRunStatusFields);
   },
 
   acceptPlan: async (runId: string): Promise<ArtifactRunRecord> => {
@@ -167,7 +246,7 @@ export const ArtifactRunsApi = {
       res,
       'Failed to accept artifact run plan'
     );
-    return json.data;
+    return normalizeArtifactRunStatusFields(json.data);
   },
 
   materialize: async (
@@ -188,7 +267,7 @@ export const ArtifactRunsApi = {
       res,
       'Failed to materialize artifact run'
     );
-    return json.data;
+    return normalizeArtifactRunStatusFields(json.data);
   },
 
   retry: async (runId: string): Promise<ArtifactRunRecord> => {
@@ -201,7 +280,7 @@ export const ArtifactRunsApi = {
       res,
       'Failed to retry artifact run'
     );
-    return json.data;
+    return normalizeArtifactRunStatusFields(json.data);
   },
 
   preflight: async (runId: string): Promise<ArtifactRunRecord> => {
@@ -219,6 +298,6 @@ export const ArtifactRunsApi = {
       res,
       'Failed to preflight artifact run'
     );
-    return json.data;
+    return normalizeArtifactRunStatusFields(json.data);
   },
 };

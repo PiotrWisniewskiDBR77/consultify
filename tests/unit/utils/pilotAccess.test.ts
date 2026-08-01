@@ -23,6 +23,7 @@ describe('pilotAccess', () => {
     expect(isPilotAllowedPath('/share/abc')).toBe(true);
     expect(isPilotAllowedPath('/my-work')).toBe(true);
     expect(isPilotAllowedPath('/initiatives')).toBe(true);
+    expect(isPilotAllowedPath('/execution')).toBe(true);
     expect(isPilotAllowedPath('/implementation')).toBe(true);
     // Out-of-scope modules stay denied.
     expect(isPilotAllowedPath('/finance')).toBe(false);

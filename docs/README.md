@@ -1,12 +1,20 @@
-# Consultify Documentation - Enterprise Edition
+# Consultinity — dokumentacja
 
-**VC Technical Due Diligence Ready** ✅  
-**Test Coverage**: 96% | **Pass Rate**: 100% | **Tests**: 5,826
+> Aktualny punkt wejścia: [`ssot/README.md`](ssot/README.md).
+>
+> Ten rozbudowany indeks zawiera również materiały historyczne. Dawne
+> deklaracje gotowości, pokrycia testami i liczby testów nie są traktowane jako
+> aktualny dowód bez ponownego wykonania bramki na wskazanym commicie.
 
 ---
 
 ## Documentation Authority
 
+- `docs/ssot/README.md` is the complete, curated application knowledge entrypoint.
+- `docs/SOURCE_OF_TRUTH.md` is the single entrypoint that explains which
+  authority answers each kind of question across the application.
+- `docs/FUNCTIONAL_DOCUMENTATION.md` is the canonical functional navigation,
+  ordered exactly like the user-visible application menu.
 - `docs/product/DOCUMENTATION_REGISTRY.md` is the canonical registry for product behavior and readiness packages.
 - `docs/ui-standards/README.md` and `docs/ui-standards/FROZEN_LAYOUTS.md` are the canonical UI/UX authority.
 - `docs/strategy/README.md` is the canonical strategy index.
@@ -242,6 +250,6 @@ Historical parallel trees are preserved, but they are not the default source of 
 
 ---
 
-**Last Updated**: February 24, 2026  
-**Documentation Version**: Enterprise 1.1  
+**Last Updated**: February 24, 2026
+**Documentation Version**: Enterprise 1.1
 **Status**: ✅ VC DD Ready

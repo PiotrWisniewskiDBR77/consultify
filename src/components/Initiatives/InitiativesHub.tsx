@@ -94,6 +94,7 @@ import { TaskDetailView } from '../MyWork/TaskDetailView';
 import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 // Portfolio view components
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
+import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
 // ModuleHub components
 import { FilterChip, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
@@ -227,7 +228,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const handledDeepLinkOpenRef = useRef<string | null>(null);
 
   // View state
-  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
+  const [viewMode, setViewMode] = useState<ViewMode>(DEFAULT_INITIATIVES_VIEW_MODE);
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);

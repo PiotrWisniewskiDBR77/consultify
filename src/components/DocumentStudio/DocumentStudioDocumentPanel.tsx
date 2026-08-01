@@ -52,6 +52,7 @@ import {
 
 import {
   cancelDocumentStudioApproval,
+  createDocumentStudioSnapshot,
   createDocumentStudioShareLink,
   DocumentManualSaveConflictError,
   exportDocumentStudioArtifact,
@@ -73,6 +74,7 @@ import {
   QaOverrideUnauthorizedError,
   recordDocumentStudioApprovalDecision,
   requestDocumentStudioApproval,
+  rollbackDocumentStudioSnapshot,
   saveDocumentStudioManualContent,
 } from './api';
 import { CreateTemplateFromArtifactModal } from './CreateTemplateFromArtifactModal';
@@ -108,6 +110,8 @@ import type {
 interface DocumentStudioDocumentPanelProps {
   artifactId: string;
   schema: DocumentSchema;
+  /** Opens a governed right-rail tool after a deep-link handoff from Materials. */
+  initialOverflowToolId?: 'share';
   /**
    * A4 — generation-time warnings recorded when the pipeline degraded via
    * a silent fallback (LLM prose failure, chart rasterization fallback,
@@ -887,13 +891,28 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
   );
 }
 
-function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactElement {
+export function SchemaDiffPanel({
+  artifactId,
+  onSchemaUpdated,
+}: {
+  artifactId: string;
+  onSchemaUpdated: (nextSchema: DocumentSchema) => void;
+}): React.ReactElement {
   const { t } = useTranslation();
   const [result, setResult] = useState<DocumentSchemaDiffResponse | null>(null);
   const [snapshots, setSnapshots] = useState<DocumentVersionSnapshotSummary[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [capturing, setCapturing] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [restoreConfirm, setRestoreConfirm] = useState(false);
+
+  const loadSnapshots = useCallback(async () => {
+    const items = await listDocumentStudioSnapshots(artifactId);
+    setSnapshots(items);
+    return items;
+  }, [artifactId]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -919,7 +938,7 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
     // Best-effort: the baseline picker is optional sugar — the diff itself
     // defaults to the latest snapshot when the list cannot be loaded.
     let cancelled = false;
-    void listDocumentStudioSnapshots(artifactId)
+    void loadSnapshots()
       .then((items) => {
         if (!cancelled) setSnapshots(items);
       })
@@ -929,7 +948,57 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
     return () => {
       cancelled = true;
     };
-  }, [artifactId]);
+  }, [loadSnapshots]);
+
+  const captureSnapshot = useCallback(async () => {
+    setCapturing(true);
+    setError(null);
+    try {
+      const snapshot = await createDocumentStudioSnapshot(artifactId, {
+        label: t('documentStudio.panel.snapshotManualLabel', 'Manual checkpoint'),
+        reason: 'document_studio_ui_capture',
+      });
+      await loadSnapshots();
+      setSelectedVersionId(snapshot.versionId);
+      setRestoreConfirm(false);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.snapshotCreateFailed', 'Failed to create snapshot')
+      );
+    } finally {
+      setCapturing(false);
+    }
+  }, [artifactId, loadSnapshots, t]);
+
+  const restoreSnapshot = useCallback(async () => {
+    if (!selectedVersionId) return;
+    if (!restoreConfirm) {
+      setRestoreConfirm(true);
+      return;
+    }
+    setRestoring(true);
+    setError(null);
+    try {
+      await rollbackDocumentStudioSnapshot(artifactId, selectedVersionId, {
+        reason: 'document_studio_ui_restore',
+      });
+      const canonical = await getDocumentStudioArtifact(artifactId);
+      onSchemaUpdated(canonical.schema);
+      await loadSnapshots();
+      setRestoreConfirm(false);
+      await refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.snapshotRestoreFailed', 'Failed to restore snapshot')
+      );
+    } finally {
+      setRestoring(false);
+    }
+  }, [artifactId, loadSnapshots, onSchemaUpdated, refresh, restoreConfirm, selectedVersionId, t]);
 
   return (
     <div className="flex h-full flex-col overflow-y-auto p-4">
@@ -951,6 +1020,34 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
             : t('documentStudio.panel.refresh', 'Refresh')}
         </Button>
       </div>
+      <div className="mb-3 flex flex-wrap gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          onClick={() => void captureSnapshot()}
+          disabled={capturing || restoring}
+          data-testid="document-snapshot-capture"
+        >
+          {capturing
+            ? t('documentStudio.panel.snapshotCapturing', 'Capturing…')
+            : t('documentStudio.panel.snapshotCapture', 'Create checkpoint')}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={restoreConfirm ? 'danger' : 'secondary'}
+          onClick={() => void restoreSnapshot()}
+          disabled={!selectedVersionId || restoring || capturing}
+          data-testid="document-snapshot-restore"
+        >
+          {restoring
+            ? t('documentStudio.panel.snapshotRestoring', 'Restoring…')
+            : restoreConfirm
+              ? t('documentStudio.panel.snapshotRestoreConfirm', 'Confirm restore')
+              : t('documentStudio.panel.snapshotRestore', 'Restore selected')}
+        </Button>
+      </div>
       {error ? (
         <div className="rounded-lg border border-danger-500/30 bg-danger-500/10 p-3 text-xs text-danger-700 dark:text-danger-300">
           {error}
@@ -961,7 +1058,10 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
           {t('documentStudio.panel.diffBaselinePicker', 'Compare against snapshot')}
           <select
             value={selectedVersionId}
-            onChange={(event) => setSelectedVersionId(event.target.value)}
+            onChange={(event) => {
+              setSelectedVersionId(event.target.value);
+              setRestoreConfirm(false);
+            }}
             className="mt-1 h-9 w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 text-sm"
             data-testid="schema-diff-baseline-select"
           >
@@ -1155,10 +1255,7 @@ function GovernancePanel({ policy }: { policy: DocumentStudioPolicy | null }): R
           {t('documentStudio.panel.toolGovernance', 'Governance')}
         </h3>
         <p className="text-xs text-c-text-secondary">
-          {t(
-            'documentStudio.panel.governanceSubtitle',
-            'Export governance policy for this user.'
-          )}
+          {t('documentStudio.panel.governanceSubtitle', 'Export governance policy for this user.')}
         </p>
       </div>
       <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs">
@@ -1699,6 +1796,7 @@ function TeresaDrawerPanel({
 export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelProps> = ({
   artifactId,
   schema,
+  initialOverflowToolId,
   generationWarnings = [],
   onStartOver,
   onSchemaUpdated,
@@ -1788,9 +1886,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     async (nextTitle: string): Promise<void> => {
       const trimmed = nextTitle.trim();
       if (!trimmed) {
-        toast.error(
-          t('documentStudio.panel.titleSaveEmpty', 'Tytuł nie może być pusty.')
-        );
+        toast.error(t('documentStudio.panel.titleSaveEmpty', 'Tytuł nie może być pusty.'));
         return;
       }
       if (trimmed === schema.title) return;
@@ -1836,7 +1932,10 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         toast.error(
           err instanceof Error
             ? err.message
-            : t('documentStudio.panel.titleSaveFailed', 'Nie udało się zapisać tytułu. Spróbuj ponownie.')
+            : t(
+                'documentStudio.panel.titleSaveFailed',
+                'Nie udało się zapisać tytułu. Spróbuj ponownie.'
+              )
         );
       }
     },
@@ -2025,13 +2124,17 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   // across `more` re-opens (last pick shown again) rather than reaching into
   // shell internals to auto-reset it. The explicit "back to menu" affordance
   // (`renderOverflowToolPanel`) always lets the user return to the full list.
-  const [overflowSelection, setOverflowSelection] = useState<string | null>(null);
+  const [overflowSelection, setOverflowSelection] = useState<string | null>(
+    initialOverflowToolId ?? null
+  );
 
   // M1 primary action (kanon ARTIFACT_ANATOMY_STANDARD §Archetyp B: "Udostępnij"
   // jest primary w M1). The chip lives in the top bar while ShareLinksPanel is a
   // rail tool folded behind `more`; controlled rail state lets the chip jump
   // straight to it instead of leaving the user to hunt through the overflow menu.
-  const [activeRailToolId, setActiveRailToolId] = useState<string | null>(null);
+  const [activeRailToolId, setActiveRailToolId] = useState<string | null>(
+    initialOverflowToolId ? 'more' : null
+  );
   const handleOpenShare = useCallback(() => {
     setOverflowSelection('share');
     setActiveRailToolId('more');
@@ -2135,10 +2238,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         // overwrite. The new (empty-content) artifact still exists and is
         // reachable from "Otwórz", so nothing is lost — just not cloned.
         throw new Error(
-          t(
-            'documentStudio.fileMenu.saveAsFailed',
-            'Nie udało się zduplikować dokumentu'
-          )
+          t('documentStudio.fileMenu.saveAsFailed', 'Nie udało się zduplikować dokumentu')
         );
       }
       const saved = await saveDocumentStudioManualContent(created.artifactId, {
@@ -2440,7 +2540,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     if (overflowToolId === 'activity') {
       content = <ActivityPanel artifactId={artifactId} />;
     } else if (overflowToolId === 'diff') {
-      content = <SchemaDiffPanel artifactId={artifactId} />;
+      content = <SchemaDiffPanel artifactId={artifactId} onSchemaUpdated={onSchemaUpdated} />;
     } else if (overflowToolId === 'share') {
       content = <ShareLinksPanel artifactId={artifactId} />;
     } else if (overflowToolId === 'variants') {
@@ -2546,11 +2646,9 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           onCreated={(template) => {
             setShowSaveAsTemplateModal(false);
             toast.success(
-              t(
-                'documentStudio.createFromArtifact.success',
-                'Utworzono szkic wzorca: {{name}}',
-                { name: template.name }
-              )
+              t('documentStudio.createFromArtifact.success', 'Utworzono szkic wzorca: {{name}}', {
+                name: template.name,
+              })
             );
           }}
         />

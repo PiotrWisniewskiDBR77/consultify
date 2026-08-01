@@ -23,6 +23,7 @@ const PILOT_ALLOWED_ROUTE_PREFIXES = [
   '/interview',
   '/my-work',
   '/initiatives',
+  '/execution',
   '/implementation',
   '/settings',
   '/share/',
@@ -148,7 +149,7 @@ export function getPilotBlockedFallbackPath(path?: string | null): string {
     return '/initiatives';
   }
   if (normalized.startsWith('/execution') || normalized.startsWith('/implementation')) {
-    return '/implementation';
+    return '/execution';
   }
   return '/interview';
 }

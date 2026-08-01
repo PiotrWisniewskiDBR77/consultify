@@ -1877,7 +1877,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         query.set('initiativeId', encodeURIComponent(id));
         query.set('tab', String(activeTab || 'list'));
         query.set('view', String(viewMode || 'table'));
-        const url = `${window.location.origin}${ROUTES.IMPLEMENTATION}?${query.toString()}`;
+        const url = `${window.location.origin}${ROUTES.EXECUTION}?${query.toString()}`;
         await navigator.clipboard.writeText(url);
         toast.success(t('common.copied', 'Copied'));
       } catch {
@@ -1947,7 +1947,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     async (initiativeId: string, newStatus: string) => {
       if (isPilotParticipant) {
         dispatchPilotAccessBlocked({
-          href: '/implementation',
+          href: '/execution',
         });
         return;
       }
@@ -2014,7 +2014,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const handleBulkStatusChange = useCallback(
     async (newStatus: InitiativeStatus) => {
       if (isPilotParticipant) {
-        dispatchPilotAccessBlocked({ href: '/implementation' });
+        dispatchPilotAccessBlocked({ href: '/execution' });
         return;
       }
       const ids = Array.from(summarySelectedIds);
@@ -2769,7 +2769,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       if (isPilotParticipant) {
         setActiveTask(null);
         dispatchPilotAccessBlocked({
-          href: '/implementation',
+          href: '/execution',
         });
         return;
       }
@@ -3013,7 +3013,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     async (initiativeId: string, field: string, value: string, reason?: string) => {
       if (isPilotParticipant) {
         dispatchPilotAccessBlocked({
-          href: '/implementation',
+          href: '/execution',
         });
         return;
       }
@@ -3316,7 +3316,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const utilizationPercent =
       currentWeekCapacity && currentWeekCapacity.capacityHours > 0
         ? (currentWeekCapacity.utilizationPercent ??
-          Math.round((currentWeekCapacity.allocatedHours / currentWeekCapacity.capacityHours) * 100))
+          Math.round(
+            (currentWeekCapacity.allocatedHours / currentWeekCapacity.capacityHours) * 100
+          ))
         : null;
     const criticalCapacity = capacityAlerts.filter((a) => a.severity === 'critical').length;
     const headcount = new Set(

@@ -41,6 +41,7 @@ import { StudioUnavailableView } from '@/views/StudioUnavailableView';
 
 import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
 import { LicensedToolsRedirect } from './LicensedToolsRedirect';
+import { buildCanonicalRedirectTarget, buildCanonicalTabRedirectTarget } from './canonicalRedirect';
 import { buildMaterialsStudioBreadcrumb } from './materialsStudioBreadcrumb';
 import { resolvePresentationWizardRedirectTarget } from './presentationWizardRedirect';
 import { ROUTES } from './routeConfig';
@@ -102,18 +103,13 @@ const ConclusionsHub = lazyWithRetry(() =>
 const FullInitiativesView = lazyWithRetry(() =>
   import('@/views/FullInitiativesView').then((m) => ({ default: m.FullInitiativesView }))
 );
-// FullRoadmapView (deprecated, @ts-nocheck) is intentionally NOT imported here:
-// /roadmap now redirects to /portfolio (see route below). The file is kept for
-// Wave-2 cleanup only.
-const PortfolioView = lazyWithRetry(() => import('@/views/PortfolioView'));
+// FullRoadmapView and PortfolioView are retained as legacy source files only.
+// Their historical routes redirect to the single InitiativesHub owner below.
 const FullROIView = lazyWithRetry(() =>
   import('@/views/FullROIView').then((m) => ({ default: m.FullROIView }))
 );
 const EconomicsView = lazyWithRetry(() =>
   import('@/views/EconomicsView').then((m) => ({ default: m.EconomicsView }))
-);
-const FullExecutionView = lazyWithRetry(() =>
-  import('@/views/FullExecutionView').then((m) => ({ default: m.FullExecutionView }))
 );
 const ReportBuilderView = lazyWithRetry(() =>
   import('@/views/ReportBuilderView').then((m) => ({ default: m.ReportBuilderView }))
@@ -498,7 +494,21 @@ const RedirectPreservingQuery: React.FC<{ from: string; to: string; reason: stri
   reason,
 }) => {
   const location = useLocation();
-  const target = `${to}${location.search || ''}`;
+  const target = buildCanonicalRedirectTarget(to, location);
+  React.useEffect(() => {
+    trackFunnelEvent('route_redirected', { from, to: target, reason });
+  }, [from, target, reason]);
+  return <Navigate to={target} replace />;
+};
+
+const RedirectToCanonicalTab: React.FC<{
+  from: string;
+  to: string;
+  tab: string;
+  reason: string;
+}> = ({ from, to, tab, reason }) => {
+  const location = useLocation();
+  const target = buildCanonicalTabRedirectTarget(to, location, tab);
   React.useEffect(() => {
     trackFunnelEvent('route_redirected', { from, to: target, reason });
   }, [from, target, reason]);
@@ -1159,9 +1169,7 @@ export const AppRoutes: React.FC = () => {
               <Navigate
                 to={(() => {
                   const raw = new URLSearchParams(location.search).get('redirect');
-                  return raw && raw.startsWith('/') && !raw.startsWith('//')
-                    ? raw
-                    : ROUTES.AI_CHAT;
+                  return raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : ROUTES.AI_CHAT;
                 })()}
                 replace
               />
@@ -1980,24 +1988,27 @@ export const AppRoutes: React.FC = () => {
           }
         />
         {/*
-          Module 05: /roadmap is retired. The deprecated @ts-nocheck FullRoadmapView
-          is no longer reachable; the Portfolio hub's Timeline tab covers the roadmap
-          use case. Redirect to /portfolio so old links/bookmarks land safely.
+          Module 05: /roadmap and /portfolio are legacy aliases. Preserve route
+          state while sending bookmarks to the single /initiatives owner.
         */}
-        <Route path={ROUTES.ROADMAP} element={<Navigate to={ROUTES.PORTFOLIO} replace />} />
+        <Route
+          path={ROUTES.ROADMAP}
+          element={
+            <RedirectPreservingQuery
+              from={ROUTES.ROADMAP}
+              to={ROUTES.INITIATIVES}
+              reason="initiatives_canonical_route"
+            />
+          }
+        />
         <Route
           path={ROUTES.PORTFOLIO}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Initiatives']} noPadding>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Initiatives"
-              >
-                <RouteErrorBoundary>
-                  <PortfolioView />
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+            <RedirectPreservingQuery
+              from={ROUTES.PORTFOLIO}
+              to={ROUTES.INITIATIVES}
+              reason="initiatives_canonical_route"
+            />
           }
         />
         <Route
@@ -2020,18 +2031,11 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.ECONOMICS}
           element={
-            <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || ['Finance']} noPadding>
-                <ProductionModuleGate
-                  enabled={!hideNonCoreModulesOnPublicProduction}
-                  moduleName="Finance"
-                >
-                  <RouteErrorBoundary>
-                    <EconomicsView />
-                  </RouteErrorBoundary>
-                </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
+            <RedirectPreservingQuery
+              from={ROUTES.ECONOMICS}
+              to={ROUTES.FINANCE}
+              reason="finance_canonical_route"
+            />
           }
         />
         <Route
@@ -2108,13 +2112,13 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['Execution']}>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Implementation"
+                moduleName="Execution"
               >
                 <RouteErrorBoundary>
                   <AnimationWrapper variant="slideUp">
                     <V8UnavailableBanner moduleName="Execution">
                       <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                        <FullExecutionView />
+                        <ExecutionHub />
                       </Suspense>
                     </V8UnavailableBanner>
                   </AnimationWrapper>
@@ -2126,22 +2130,11 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.IMPLEMENTATION}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Implementation']}>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Implementation"
-              >
-                <RouteErrorBoundary>
-                  <AnimationWrapper variant="slideUp">
-                    <V8UnavailableBanner moduleName="Implementation">
-                      <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                        <ExecutionHub />
-                      </Suspense>
-                    </V8UnavailableBanner>
-                  </AnimationWrapper>
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+            <RedirectPreservingQuery
+              from={ROUTES.IMPLEMENTATION}
+              to={ROUTES.EXECUTION}
+              reason="execution_canonical_route"
+            />
           }
         />
         {/* Rollout consolidated into ExecutionHub as a tab (Module 06 Realizacja).
@@ -2149,9 +2142,10 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.ROLLOUT}
           element={
-            <RedirectWithTracking
+            <RedirectToCanonicalTab
               from={ROUTES.ROLLOUT}
-              to={`${ROUTES.EXECUTION}?tab=rollout`}
+              to={ROUTES.EXECUTION}
+              tab="rollout"
               reason="rollout_consolidated_into_execution_hub"
             />
           }
@@ -2251,7 +2245,16 @@ export const AppRoutes: React.FC = () => {
           directly rather than mounting a view, so the router manifest no longer
           carries a dead view module. See Module 07 audit (route cleanup).
         */}
-        <Route path={ROUTES.KPI_OKR} element={<Navigate to={ROUTES.BENEFITS} replace />} />
+        <Route
+          path={ROUTES.KPI_OKR}
+          element={
+            <RedirectPreservingQuery
+              from={ROUTES.KPI_OKR}
+              to={ROUTES.RESULTS}
+              reason="results_canonical_route"
+            />
+          }
+        />
         <Route
           path={ROUTES.PRESENTATIONS}
           element={
@@ -2393,6 +2396,16 @@ export const AppRoutes: React.FC = () => {
         />
         <Route
           path={ROUTES.BENEFITS}
+          element={
+            <RedirectPreservingQuery
+              from={ROUTES.BENEFITS}
+              to={ROUTES.RESULTS}
+              reason="results_canonical_route"
+            />
+          }
+        />
+        <Route
+          path={ROUTES.RESULTS}
           element={
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>

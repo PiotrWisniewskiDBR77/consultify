@@ -7,10 +7,15 @@ status: active
 owner: user
 owner_business: user
 owner_tech: user
-last_updated: 2026-05-10
+last_updated: 2026-07-31
 ---
 
 # Function Contract — Manager / Menedzer
+
+> Pełny kontrakt produktowy i remanent implementacji:
+> [`MY_WORK_MANAGER_REVIEW.md`](../../../program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/MY_WORK_MANAGER_REVIEW.md)
+> oraz
+> [`MANAGER_AS_IS_MVP_GAPS_AND_GOLDEN_FLOWS.md`](../../../program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/MANAGER_AS_IS_MVP_GAPS_AND_GOLDEN_FLOWS.md).
 
 ## 1. Function Identity
 
@@ -22,8 +27,10 @@ last_updated: 2026-05-10
 
 ## 2. User Job and Business Outcome
 
-- User job: get executive-level portfolio and team-health overview.
-- Business outcome: faster management decisions and better execution steering.
+- User job: detect exceptions, understand causes, decide and confirm that an
+  intervention improved the expected outcome.
+- Business outcome: steer portfolio, projects, people, time, budget, risks,
+  decisions, KPI and benefits through one evidence-backed operating cockpit.
 - Non-goals: manager view must not bypass policy/approval for underlying records.
 
 ## 3. Trigger and Entry Points
@@ -56,7 +63,8 @@ last_updated: 2026-05-10
 
 ## 6. Outputs and Side Effects
 
-- Produced objects/artifacts: no canonical object ownership; emits management navigation intents.
+- Produced objects/artifacts: management briefs, intervention proposals and
+  source-module commands; no duplicate canonical object ownership.
 - Downstream handoff: to source tabs `tasks`, `decisions`, `calendar` (and contextual fallback paths) via explicit `onNavigate`.
 - Side effects visible to user: executive cards and jump-to-action transitions.
 - Handoff success rule: navigation success is not equal to owner-module mutation success; canonical completion is confirmed only after owner-module read-back.
@@ -75,7 +83,8 @@ last_updated: 2026-05-10
 - Error: safe failure state, no raw internals.
 - Degraded: partial metrics clearly flagged.
 - Access denied: explicit restricted-access state for non-privileged roles.
-- Success: users can jump into concrete execution or decision tabs.
+- Success: users can trace an exception to evidence, initiate an authorized
+  intervention and confirm its canonical read-back and later result.
 - Next action guidance per state: route to source tab for action, or retry.
 
 ## 9. AI, Source, Evidence, Approval
@@ -87,9 +96,13 @@ last_updated: 2026-05-10
 
 ## 10. Security, Roles, and Tenancy
 
-- Allowed roles: privileged manager/admin roles as enforced in hub checks.
+- Allowed roles: only users with explicit manager capability; Admin Panel owns
+  assignment and revocation policy.
 - Denied/restricted roles: users without manager access.
-- ACL/tenant scope: tenant-scoped executive data only.
+- ACL/tenant scope: visibility is a separate configured management scope over
+  people, teams, projects, portfolios and organization units. Module access
+  never implies organization-wide visibility. UI, deep links, APIs, exports,
+  search and Teresa must enforce the same effective scope.
 - Sensitive data masking/redaction: strict by role and tenant boundaries.
 
 ## 11. Acceptance Criteria and Test Evidence
@@ -104,6 +117,9 @@ last_updated: 2026-05-10
   - `src/components/MyWork/Executive/ExecutiveDashboard.tsx`
 - Known `doc_gap`: exact role matrix wording in docs should be unified globally.
 - Known `code_gap`: dedicated manager navigation and owner read-back e2e chain is not yet documented as complete.
+- Known `code_gap`: capacity currently compares lifetime open-task estimates
+  against weekly capacity; the UI guard correctly shows a degraded state, but
+  the source aggregation must become time-windowed before the metric is trusted.
 - Backlog linkage: implementation tasks are tracked as `MW-MGR-*` in `IMPLEMENTATION_TASK_BOARD.md`.
 
 - Route evidence: module route/view scope for `02_moja-praca` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.

@@ -939,7 +939,7 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
         <button
           onClick={() =>
             navigate(
-              `${ROUTES.BENEFITS}?tab=results_reports&rmode=reports&initiativeId=${encodeURIComponent(String(init.id))}`
+              `${ROUTES.RESULTS}?tab=results_reports&rmode=reports&initiativeId=${encodeURIComponent(String(init.id))}`
             )
           }
           className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"

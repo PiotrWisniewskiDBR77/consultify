@@ -123,6 +123,7 @@ export const ROUTES = {
   MEETING: '/meeting',
   KPI_OKR: '/kpi-okr',
   BENEFITS: '/benefits',
+  RESULTS: '/results',
   CONCLUSIONS: '/conclusions',
   MCP_IRIS: '/mcp/iris',
   MCP_MARKETPLACE: '/mcp/marketplace',
@@ -347,15 +348,12 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.FULL_STEP1_CYBERSECURITY]: ROUTES.ASSESSMENT.DRD,
   [AppView.FULL_STEP1_AI]: ROUTES.ASSESSMENT.DRD,
   [AppView.FULL_STEP2_INITIATIVES]: ROUTES.INITIATIVES,
-  // Module 05: /roadmap is retired — the Portfolio Timeline tab covers the
-  // roadmap use case. Map legacy navigate() calls to the Portfolio hub so they
-  // land safely instead of on the deprecated @ts-nocheck FullRoadmapView.
-  [AppView.FULL_STEP3_ROADMAP]: ROUTES.PORTFOLIO,
+  [AppView.FULL_STEP3_ROADMAP]: ROUTES.INITIATIVES,
   [AppView.FULL_STEP4_ROI]: ROUTES.ROI,
   [AppView.ECONOMICS]: ROUTES.FINANCE,
   [AppView.FULL_STEP5_EXECUTION]: ROUTES.EXECUTION,
-  [AppView.IMPLEMENTATION]: ROUTES.IMPLEMENTATION,
-  [AppView.FULL_PILOT_EXECUTION]: ROUTES.IMPLEMENTATION,
+  [AppView.IMPLEMENTATION]: ROUTES.EXECUTION,
+  [AppView.FULL_PILOT_EXECUTION]: ROUTES.EXECUTION,
   [AppView.FULL_ROLLOUT]: ROUTES.ROLLOUT,
   [AppView.FULL_STEP6_REPORTS]: ROUTES.REPORTS.BUILDER,
   [AppView.REPORTS_ENTRY]: ROUTES.REPORTS.ROOT,
@@ -372,10 +370,10 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.EXCELE]: ROUTES.EXCELE,
   [AppView.PREZENTACJE_GEN]: ROUTES.PREZENTACJE_GEN,
   [AppView.TABELE]: ROUTES.TABELE,
-  [AppView.KPI_OKR_DASHBOARD]: ROUTES.KPI_OKR,
-  [AppView.PORTFOLIO_ROADMAP]: ROUTES.PORTFOLIO,
-  [AppView.INITIATIVE_MANAGEMENT]: ROUTES.PORTFOLIO,
-  [AppView.BENEFITS_REALIZATION]: ROUTES.BENEFITS,
+  [AppView.KPI_OKR_DASHBOARD]: ROUTES.RESULTS,
+  [AppView.PORTFOLIO_ROADMAP]: ROUTES.INITIATIVES,
+  [AppView.INITIATIVE_MANAGEMENT]: ROUTES.INITIATIVES,
+  [AppView.BENEFITS_REALIZATION]: ROUTES.RESULTS,
   [AppView.CONCLUSIONS]: ROUTES.CONCLUSIONS,
   [AppView.MCP_IRIS_COMING_SOON]: ROUTES.MCP_IRIS,
   [AppView.MCP_MARKETPLACE_COMING_SOON]: ROUTES.MCP_MARKETPLACE,
@@ -666,6 +664,14 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized === ROUTES.SETTINGS.INTEGRATIONS) return AppView.SETTINGS_INTEGRATIONS_MODULE;
   if (normalized === `${ROUTES.SETTINGS.ROOT}/theme`) return AppView.SETTINGS_APPEARANCE_MODULE;
 
+  // Both historical app-view IDs emit the canonical Results route. Resolve
+  // the reverse mapping explicitly to the sidebar/owner view instead of
+  // depending on object insertion order between duplicate route values.
+  if (normalized === ROUTES.RESULTS) return AppView.BENEFITS_REALIZATION;
+  // Initiatives has several historical AppView ids pointing at the same owner.
+  // Keep URL sync on the sidebar/owner identity instead of object insertion order.
+  if (normalized === ROUTES.INITIATIVES) return AppView.FULL_STEP2_INITIATIVES;
+
   const exact = getAppViewFromRoute(normalized);
   if (exact) return exact;
 
@@ -692,10 +698,16 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.ONBOARDING)) return AppView.ONBOARDING_WIZARD;
   if (normalized.startsWith(ROUTES.ONBOARDING_ADMIN)) return AppView.ONBOARDING_WIZARD;
   if (normalized.startsWith(ROUTES.ONBOARDING_SEED_BASE)) return AppView.ONBOARDING_WIZARD;
-  if (normalized.startsWith(ROUTES.IMPLEMENTATION)) return AppView.IMPLEMENTATION;
+  if (normalized.startsWith(ROUTES.IMPLEMENTATION)) return AppView.FULL_STEP5_EXECUTION;
   if (normalized.startsWith(ROUTES.EXECUTION)) return AppView.FULL_STEP5_EXECUTION;
   if (normalized.startsWith(ROUTES.ROLLOUT)) return AppView.FULL_ROLLOUT;
-  if (normalized.startsWith(ROUTES.BENEFITS)) return AppView.BENEFITS_REALIZATION;
+  if (
+    normalized.startsWith(ROUTES.RESULTS) ||
+    normalized.startsWith(ROUTES.BENEFITS) ||
+    normalized.startsWith(ROUTES.KPI_OKR)
+  ) {
+    return AppView.BENEFITS_REALIZATION;
+  }
   if (normalized.startsWith(ROUTES.CONCLUSIONS)) return AppView.CONCLUSIONS;
 
   if (normalized.startsWith(ROUTES.SETTINGS.ROOT)) return AppView.SETTINGS_PROFILE_MODULE;

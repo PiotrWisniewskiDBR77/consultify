@@ -36,6 +36,7 @@ export interface VersionSnapshot {
 
 interface VersionHistoryState {
   versions: VersionSnapshot[];
+  historyStatus: 'loading' | 'available' | 'unavailable';
   isSaving: boolean;
   lastSavedAt: number | null;
   hasUnsavedChanges: boolean;
@@ -90,9 +91,16 @@ function parseRestoredDeck(deckJsonRaw: unknown, deckId: string): Deck | null {
   return { ...(candidate as unknown as Deck), deck_id: deckId };
 }
 
-export function useVersionHistory(deck: Deck | null, deckId?: string | null) {
+export function useVersionHistory(
+  deck: Deck | null,
+  deckId?: string | null,
+  getExpectedVersion?: () => number | null,
+  onServerVersion?: (version: number) => void
+) {
+  const resolvedDeckId = deckId ?? deck?.deck_id ?? null;
   const [state, setState] = useState<VersionHistoryState>({
     versions: [],
+    historyStatus: resolvedDeckId ? 'loading' : 'available',
     isSaving: false,
     lastSavedAt: null,
     hasUnsavedChanges: false,
@@ -101,7 +109,6 @@ export function useVersionHistory(deck: Deck | null, deckId?: string | null) {
   const lastSavedDeckRef = useRef<string>('');
   const autoSaveTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const snapshotTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
-  const resolvedDeckId = deckId ?? deck?.deck_id ?? null;
 
   /** Merge persisted server snapshots into the timeline, de-duped by id. */
   const mergeServerVersions = useCallback((rows: ServerVersionRow[]) => {
@@ -128,20 +135,25 @@ export function useVersionHistory(deck: Deck | null, deckId?: string | null) {
 
   const fetchServerVersions = useCallback(async () => {
     if (!resolvedDeckId) return;
+    setState((prev) => ({ ...prev, historyStatus: 'loading' }));
     try {
       const res = await fetch(`/api/presentations/decks/${resolvedDeckId}/versions`, {
         method: 'GET',
         headers: authHeaders(),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setState((prev) => ({ ...prev, historyStatus: 'unavailable' }));
+        return;
+      }
       const body = (await res.json().catch(() => null)) as
         | { data?: ServerVersionRow[] }
         | ServerVersionRow[]
         | null;
       const rows = Array.isArray(body) ? body : Array.isArray(body?.data) ? body.data : [];
       mergeServerVersions(rows);
+      setState((prev) => ({ ...prev, historyStatus: 'available' }));
     } catch {
-      /* non-blocking: fall back to in-session timeline only */
+      setState((prev) => ({ ...prev, historyStatus: 'unavailable' }));
     }
   }, [resolvedDeckId, mergeServerVersions]);
 
@@ -257,12 +269,19 @@ export function useVersionHistory(deck: Deck | null, deckId?: string | null) {
       try {
         const restoreRes = await fetch(
           `/api/presentations/decks/${resolvedDeckId}/versions/${versionId}/restore`,
-          { method: 'POST', headers: authHeaders() }
+          {
+            method: 'POST',
+            headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              expectedVersion: getExpectedVersion?.() ?? serverVersionRef.current,
+            }),
+          }
         );
         if (!restoreRes.ok) return null;
         const restoreBody = (await restoreRes.json().catch(() => ({}))) as { version?: number };
         if (restoreBody?.version) {
           serverVersionRef.current = restoreBody.version;
+          onServerVersion?.(restoreBody.version);
         }
 
         const deckRes = await fetch(`/api/presentations/decks/${resolvedDeckId}`, {
@@ -286,7 +305,7 @@ export function useVersionHistory(deck: Deck | null, deckId?: string | null) {
         return null;
       }
     },
-    [state.versions, resolvedDeckId, fetchServerVersions]
+    [state.versions, resolvedDeckId, fetchServerVersions, getExpectedVersion, onServerVersion]
   );
 
   const saveManualCheckpoint = useCallback(

@@ -63,12 +63,18 @@ vi.mock('../../../server/src/services/organizationService.js', () => ({
 }));
 
 vi.mock('../../../server/src/services/v8/publishReviewService.js', () => ({
+  PublishReviewError: class PublishReviewError extends Error {
+    constructor(public code: string, message: string) {
+      super(message);
+    }
+  },
   getPublishRecord: vi.fn().mockResolvedValue(null),
   transitionPublishState: vi.fn(),
   submitReviewGate: vi.fn(),
 }));
 
 import artifactsRouter from '../../../server/src/routes/artifacts.routes.js';
+import * as publishReviewService from '../../../server/src/services/v8/publishReviewService.js';
 
 describe('artifacts access routes (HTTP contract; artifactRegistryService mocked)', () => {
   const app = express();
@@ -434,6 +440,54 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
     expect(String(res.body?.error || '')).toContain('Provenance stamp unavailable');
   });
 
+  it('returns a stable quorum error when not every assigned reviewer has approved', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'admin-2', organizationId: 'org-1', role: 'ADMIN' };
+    });
+    getArtifactForUserMock.mockResolvedValue({
+      artifactId: 'tmpl-quorum',
+      artifactFamily: 'template',
+      originSummary: { template: { scope: 'org' } },
+    });
+    vi.mocked(publishReviewService.getPublishRecord).mockResolvedValueOnce({
+      recordId: 'record-1',
+      artifactId: 'tmpl-quorum',
+      artifactType: 'report',
+      organizationId: 'org-1',
+      currentState: 'in_review',
+      publishedBy: 'admin-1',
+      publishedAt: null,
+      reviewers: ['admin-2', 'admin-3'],
+      approvedBy: null,
+      approvedAt: null,
+      createdAt: '2026-08-01T00:00:00.000Z',
+      updatedAt: '2026-08-01T00:00:00.000Z',
+    });
+    vi.mocked(publishReviewService.submitReviewGate).mockResolvedValueOnce({
+      gateId: 'gate-1',
+      artifactId: 'tmpl-quorum',
+      organizationId: 'org-1',
+      reviewType: 'peer_review',
+      reviewerId: 'admin-2',
+      result: 'approved',
+      comments: null,
+      createdAt: '2026-08-01T00:00:00.000Z',
+    });
+    vi.mocked(publishReviewService.transitionPublishState).mockRejectedValueOnce(
+      new publishReviewService.PublishReviewError(
+        'REVIEW_QUORUM_REQUIRED',
+        'All assigned reviewers must have a latest approved decision'
+      )
+    );
+
+    const res = await request(app)
+      .post('/api/artifacts/tmpl-quorum/publish')
+      .send({ reviewType: 'peer_review' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('REVIEW_QUORUM_REQUIRED');
+  });
+
   it('allows access grant mutation for artifact owners', async () => {
     verifyTokenMock.mockImplementation((req: any) => {
       req.user = { id: 'owner-1', organizationId: 'org-1', role: 'USER' };
@@ -556,7 +610,7 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
     expect(res.status).toBe(409);
     expect(res.body).toEqual(
       expect.objectContaining({
-        error: 'Artifact art-5 cannot enter review before artifact validation passes',
+        error: 'Cannot enter review before artifact validation passes',
       })
     );
   });

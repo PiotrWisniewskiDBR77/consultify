@@ -61,6 +61,7 @@ import {
   applyFinanceLock,
   createCoordinatedPublish,
   createPublishRecord,
+  deriveReviewReadiness,
   getFinanceLocks,
   getPublishRecord,
   getRecallHistory,
@@ -220,7 +221,9 @@ function makeLockRow(overrides?: Partial<Record<string, unknown>>) {
 // ==========================================
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  mockDbRun.mockReset().mockResolvedValue({ success: true });
+  mockDbGet.mockReset().mockResolvedValue(null);
+  mockDbAll.mockReset().mockResolvedValue([]);
 });
 
 // ------------------------------------------
@@ -252,6 +255,14 @@ describe('createPublishRecord', () => {
   it('defaults reviewers to empty array when not provided', async () => {
     const result = await createPublishRecord(makePublishParams({ reviewers: undefined }));
     expect(result.reviewers).toEqual([]);
+  });
+
+  it('deduplicates configured reviewers before persistence', async () => {
+    const result = await createPublishRecord(
+      makePublishParams({ reviewers: [USER_ID_2, USER_ID_2] })
+    );
+    expect(result.reviewers).toEqual([USER_ID_2]);
+    expect(mockDbRun.mock.calls[0][1]).toContain(JSON.stringify([USER_ID_2]));
   });
 
   it('accepts all artifact types', async () => {
@@ -333,6 +344,7 @@ describe('transitionPublishState', () => {
 
   it('transitions in_review → approved and sets approvedBy/approvedAt', async () => {
     mockDbGet.mockResolvedValueOnce(makePublishRecordRow({ current_state: 'in_review' }));
+    mockDbAll.mockResolvedValueOnce([makeReviewGateRow()]);
 
     const result = await transitionPublishState({
       recordId: RECORD_ID,
@@ -361,6 +373,7 @@ describe('transitionPublishState', () => {
 
   it('transitions approved → published and sets publishedAt', async () => {
     mockDbGet.mockResolvedValueOnce(makePublishRecordRow({ current_state: 'approved' }));
+    mockDbAll.mockResolvedValueOnce([makeReviewGateRow()]);
 
     const result = await transitionPublishState({
       recordId: RECORD_ID,
@@ -372,6 +385,63 @@ describe('transitionPublishState', () => {
     expect(result.currentState).toBe('published');
     expect(result.publishedAt).toBeDefined();
   });
+
+  it('returns the concurrent winner without overwriting publishedAt', async () => {
+    const publishedAt = '2026-03-23T12:00:00.000Z';
+    mockDbGet
+      .mockResolvedValueOnce(makePublishRecordRow({ current_state: 'approved' }))
+      .mockResolvedValueOnce(
+        makePublishRecordRow({ current_state: 'published', published_at: publishedAt })
+      );
+    mockDbAll.mockResolvedValue([makeReviewGateRow()]);
+    mockDbRun.mockResolvedValueOnce({ success: true, changes: 0 });
+
+    const result = await transitionPublishState({
+      recordId: RECORD_ID,
+      organizationId: ORG_A,
+      newState: 'published',
+      actor: USER_ID,
+    });
+
+    expect(result.currentState).toBe('published');
+    expect(result.publishedAt).toBe(publishedAt);
+  });
+
+  it('is idempotent when the record is already published', async () => {
+    const publishedAt = '2026-03-23T12:00:00.000Z';
+    mockDbGet.mockResolvedValueOnce(
+      makePublishRecordRow({ current_state: 'published', published_at: publishedAt })
+    );
+    mockDbAll.mockResolvedValueOnce([makeReviewGateRow()]);
+
+    const result = await transitionPublishState({
+      recordId: RECORD_ID,
+      organizationId: ORG_A,
+      newState: 'published',
+      actor: USER_ID,
+    });
+
+    expect(result.publishedAt).toBe(publishedAt);
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
+  it.each(['approved', 'published'] as const)(
+    'rejects an idempotent %s call when current quorum is not satisfied',
+    async (state) => {
+      mockDbGet.mockResolvedValueOnce(makePublishRecordRow({ current_state: state }));
+      mockDbAll.mockResolvedValueOnce([]);
+
+      await expect(
+        transitionPublishState({
+          recordId: RECORD_ID,
+          organizationId: ORG_A,
+          newState: state,
+          actor: USER_ID,
+        })
+      ).rejects.toMatchObject({ code: 'REVIEW_QUORUM_REQUIRED' });
+      expect(mockDbRun).not.toHaveBeenCalled();
+    }
+  );
 
   it('transitions published → recalled', async () => {
     mockDbGet.mockResolvedValueOnce(makePublishRecordRow({ current_state: 'published' }));
@@ -512,6 +582,10 @@ describe('getPublishRecord', () => {
 // ------------------------------------------
 
 describe('submitReviewGate', () => {
+  beforeEach(() => {
+    mockDbGet.mockResolvedValueOnce(makePublishRecordRow());
+  });
+
   it('creates a peer_review gate', async () => {
     const result = await submitReviewGate(makeReviewGateParams({ reviewType: 'peer_review' }));
 
@@ -573,6 +647,114 @@ describe('submitReviewGate', () => {
       submitReviewGate(makeReviewGateParams({ result: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
+});
+
+describe('review quorum', () => {
+  it('deduplicates reviewers and applies only the latest decision per reviewer', () => {
+    const readiness = deriveReviewReadiness(
+      [USER_ID_2, USER_ID_2],
+      [
+        makeReviewGateRow({ result: 'rejected', created_at: '2026-03-23T10:00:00.000Z' }) as any,
+        makeReviewGateRow({
+          gate_id: '00000000-0000-4000-8000-bbbbbbbbbbbc',
+          result: 'approved',
+          created_at: '2026-03-23T11:00:00.000Z',
+        }) as any,
+      ].map((row) => ({
+        gateId: row.gate_id,
+        artifactId: row.artifact_id,
+        organizationId: row.organization_id,
+        reviewType: row.review_type,
+        reviewerId: row.reviewer_id,
+        result: row.result,
+        comments: row.comments,
+        createdAt: row.created_at,
+      }))
+    );
+
+    expect(readiness).toMatchObject({
+      policy: 'ALL',
+      required: [USER_ID_2],
+      approved: [USER_ID_2],
+      pending: [],
+      rejected: [],
+      satisfied: true,
+    });
+  });
+
+  it('lets a later rejection replace an earlier approval', () => {
+    const readiness = deriveReviewReadiness(
+      [USER_ID_2],
+      [
+        {
+          gateId: 'gate-1',
+          artifactId: ARTIFACT_ID,
+          organizationId: ORG_A,
+          reviewType: 'peer_review',
+          reviewerId: USER_ID_2,
+          result: 'approved',
+          comments: null,
+          createdAt: '2026-03-23T10:00:00.000Z',
+        },
+        {
+          gateId: 'gate-2',
+          artifactId: ARTIFACT_ID,
+          organizationId: ORG_A,
+          reviewType: 'peer_review',
+          reviewerId: USER_ID_2,
+          result: 'changes_requested',
+          comments: null,
+          createdAt: '2026-03-23T11:00:00.000Z',
+        },
+      ]
+    );
+    expect(readiness).toMatchObject({ approved: [], rejected: [USER_ID_2], satisfied: false });
+  });
+
+  it('fails closed when no reviewers are configured', async () => {
+    mockDbGet.mockResolvedValueOnce(
+      makePublishRecordRow({ current_state: 'in_review', reviewers: '[]' })
+    );
+
+    await expect(
+      transitionPublishState({
+        recordId: RECORD_ID,
+        organizationId: ORG_A,
+        newState: 'approved',
+        actor: USER_ID,
+      })
+    ).rejects.toMatchObject({ code: 'REVIEW_CONFIGURATION_REQUIRED' });
+  });
+
+  it('rejects a decision from an unassigned reviewer without inserting a gate', async () => {
+    mockDbGet.mockResolvedValueOnce(makePublishRecordRow());
+
+    await expect(
+      submitReviewGate(makeReviewGateParams({ reviewerId: USER_ID }))
+    ).rejects.toMatchObject({ code: 'REVIEWER_NOT_ASSIGNED' });
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
+  it('blocks self-review even when the publisher is assigned', async () => {
+    mockDbGet.mockResolvedValueOnce(makePublishRecordRow({ reviewers: JSON.stringify([USER_ID]) }));
+
+    await expect(
+      submitReviewGate(makeReviewGateParams({ reviewerId: USER_ID }))
+    ).rejects.toMatchObject({ code: 'SELF_REVIEW_NOT_ALLOWED' });
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
+  it.each(['published', 'recalled', 'archived'] as const)(
+    'blocks a new review decision when the record is %s',
+    async (state) => {
+      mockDbGet.mockResolvedValueOnce(makePublishRecordRow({ current_state: state }));
+
+      await expect(submitReviewGate(makeReviewGateParams())).rejects.toMatchObject({
+        code: 'REVIEW_DECISION_CLOSED',
+      });
+      expect(mockDbRun).not.toHaveBeenCalled();
+    }
+  );
 });
 
 // ------------------------------------------

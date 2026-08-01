@@ -398,7 +398,7 @@ export const FullROIView: React.FC = () => {
             )}
             action={{
               label: t('initiatives.roi.empty.cta', 'Go to Portfolio'),
-              onClick: () => navigate(ROUTES.PORTFOLIO),
+              onClick: () => navigate(ROUTES.INITIATIVES),
             }}
           />
         </div>
@@ -477,7 +477,7 @@ export const FullROIView: React.FC = () => {
             variant="brand"
             size="sm"
             icon={<TrendingUp className="h-3.5 w-3.5" />}
-            onClick={() => navigate(ROUTES.PORTFOLIO)}
+            onClick={() => navigate(ROUTES.INITIATIVES)}
           >
             {t('initiatives.roi.empty.cta', 'Go to Portfolio')}
           </Button>

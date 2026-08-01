@@ -1,13 +1,24 @@
 ---
 module_id: MODULE_CHAT
 doc_kind: STATUS
-version: 2.0
+version: 2.1
 owner: user
 status: canonical
-last_updated: 2026-05-10
+last_updated: 2026-07-29
 ---
 
 # Status — Czat / Teresa Chat Engine
+
+## Aktualna ocena
+
+- dokumentacja: `B` — kontrakt jest mocny, lecz bramka kompletności nie przeszła;
+- Chat: `real / code-verified`;
+- Canvas: `partial / NO_GO`;
+- testy celowane (2026-07-29): `70/74 PASS`, `4 FAIL`;
+- kanoniczny opis bieżącego stanu: `09_AS_IS.md`;
+- kierunek produktu: `10_TO_BE.md`;
+- luki i kolejność domknięcia: `11_GAPS_AND_ROADMAP.md`;
+- dowody i wynik bramki: `12_TESTS_AND_EVIDENCE.md`.
 
 ## Status Tags (As-Is)
 
@@ -16,6 +27,8 @@ last_updated: 2026-05-10
 - `partial`: v10 runtime path `/internal/v10-runtime` is present but separate/internal compared to main user path.
 - `startup_incomplete / NO_GO`: Canvas user-facing startup path is not proven end-to-end.
 - `real`: route transition coverage exists for `/chat` and `/chat/:conversationId`.
+- `real`: oba adresy montują ten sam shell: `ConversationRouteSync` +
+  `UnifiedChatPanel mode="full"`.
 - `doc_gap`: prior baseline docs were generic and did not list concrete route/component/service evidence.
 
 ## Function Coverage Status
@@ -47,7 +60,8 @@ last_updated: 2026-05-10
 - Current Canvas gate: `NO_GO`.
 - Required P0 path: `conversation -> canvas draft -> review_required -> accept/reject -> owner-lane read-back`.
 - Runtime implementation must follow `IMPLEMENTATION_PLAN.md` priority order: P0 startup first, P1 governed expansion second, P2 preserved backlog only.
-- Do not start another module until owner accepts this module status or explicitly defers Canvas startup completion as a known `NO_GO`.
+- Kolejny moduł dokumentacji może być opracowywany, ale Canvas nie może zostać
+  oznaczony jako gotowy ani podnieść oceny Chat do `A` bez zamknięcia bramki.
 
 ## Next Implementation Decision
 

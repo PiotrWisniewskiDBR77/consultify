@@ -1,0 +1,63 @@
+---
+module_id: MODULE_CHAT
+doc_kind: AS_IS
+status: canonical
+owner: documentation-maintainer
+last_updated: 2026-07-29
+---
+
+# Chat — AS-IS
+
+## Rola w aplikacji
+
+Chat jest głównym interfejsem współpracy z Teresą. Użytkownik rozpoczyna lub
+otwiera rozmowę, przekazuje kontekst i pliki, otrzymuje odpowiedzi, źródła oraz
+propozycje dalszych działań. Chat może przekazać wynik do powierzchni pracy,
+ale nie jest właścicielem danych biznesowych innych modułów.
+
+## Wejścia i powierzchnie
+
+- menu `Chat` prowadzi do `/chat`;
+- rozmowa ma adres `/chat/:conversationId`;
+- oba adresy używają `ConversationRouteSync` i `UnifiedChatPanel mode="full"`;
+- `/internal/v10-runtime` jest powierzchnią wewnętrzną, nie pozycją menu;
+- starsze wejścia Work Canvas przekierowują do kanonicznego Chat w trybie
+  dzielonym.
+
+## Odpowiedzialności
+
+- tworzenie, otwieranie, edycja, archiwizacja i usuwanie rozmów;
+- przechowywanie wiadomości i metadanych rozmowy;
+- rozmowy osobiste i zespołowe oraz grupowanie w projektach Chat;
+- generowanie odpowiedzi AI, cytowań, załączników i propozycji działań;
+- udostępnianie rozmowy;
+- przekazanie wybranego wyniku do Canvas lub modułu docelowego.
+
+## Dane i backend
+
+Kanoniczne encje to `conversations` i `conversation_messages`. Rozmowa zawiera
+m.in. organizację, twórcę, projekt, język, tytuł, tagi, stan
+archiwizacji/usunięcia i skrót ostatniej wiadomości. API rozmów jest montowane
+pod `/api/conversations`; żądania przechodzą uwierzytelnienie i kontrolę
+członkostwa w organizacji. Projekty Chat i udostępnienia mają osobne trasy.
+Usunięcie jest miękkie, a trwałe czyszczenie wykonuje harmonogram po okresie
+ochronnym.
+
+## Granice i uczciwy stan
+
+Chat jest obecny i potwierdzony w kodzie oraz testach tras. Canvas ma znaczącą
+implementację, lecz nie ma kompletnego dowodu ścieżki
+`wybrany wynik -> szkic -> przegląd -> akceptacja/odrzucenie -> odczyt w
+module właścicielskim`. Dlatego Canvas pozostaje `NO_GO`, a moduł nie spełnia
+jeszcze poziomu `A`.
+
+## Źródła wykonawcze
+
+- routing: `src/routes/routeConfig.ts`, `src/routes/AppRoutes.tsx`;
+- UI: `src/components/AIChat/UnifiedChatPanel.tsx`,
+  `src/components/AIChat/ConversationRouteSync.tsx`;
+- API: `server/src/routes/conversations.routes.ts`,
+  `server/src/routes/ai.routes.ts`, `server/src/routes/chat-projects.routes.ts`,
+  `server/src/routes/share.routes.ts`;
+- dane: `server/src/database/DatabaseInitializer.ts`;
+- retencja: `server/src/services/conversationPurgeScheduler.ts`.

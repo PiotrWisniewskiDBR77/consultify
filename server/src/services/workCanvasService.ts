@@ -16,6 +16,11 @@ import {
 } from './v8/artifactRegistryService.js';
 import * as contextSnapshotService from './v8/contextSnapshotService.js';
 import * as executionSpineService from './v8/executionSpineService.js';
+import {
+  buildCanvasCanonicalWrite,
+  resolveCanvasCanonicalEnvelope,
+} from './artifacts/canvasCanonicalPersistence.js';
+import type { ArtifactContentEnvelopeV1 } from '../types/artifactContent.js';
 
 export type WorkCanvasKind =
   | 'markdown'
@@ -67,6 +72,15 @@ export interface WorkCanvasDraftRecord extends WorkCanvasDraftInput {
   artifactVersion: number | null;
   createdAt: string;
   updatedAt: string;
+  contentEnvelope: ArtifactContentEnvelopeV1;
+  canonicalFormat: 'markdown' | 'json';
+  contentMd: string;
+  contentJson?: unknown;
+  blocks: unknown[];
+  contentSchemaVersion: string | null;
+  markdownProjectionStatus: ArtifactContentEnvelopeV1['markdownProjectionStatus'];
+  markdownProjectedAt: string | null;
+  projectionError: string | null;
 }
 
 export interface WorkCanvasProposalRecord {
@@ -130,6 +144,14 @@ type DraftRow = {
   audit_status: WorkCanvasDraftRecord['auditStatus'];
   created_at: string;
   updated_at: string;
+  canonical_format?: string | null;
+  content_md?: string | null;
+  content_json_native?: string | null;
+  blocks_json?: string | null;
+  content_schema_version?: string | null;
+  markdown_projection_status?: string | null;
+  markdown_projected_at?: string | null;
+  projection_error?: string | null;
 };
 
 type ProposalRow = {
@@ -229,6 +251,13 @@ async function ensureSchema(): Promise<void> {
       // writes it directly, so the column must exist even when this service
       // boots before any work-canvas route ran.
       await dbRun('ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_md TEXT', []);
+      await dbRun("ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS canonical_format TEXT NOT NULL DEFAULT 'markdown'", []);
+      await dbRun('ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_json_native TEXT', []);
+      await dbRun('ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS blocks_json TEXT', []);
+      await dbRun('ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_schema_version TEXT', []);
+      await dbRun('ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS markdown_projection_status TEXT', []);
+      await dbRun('ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS markdown_projected_at TEXT', []);
+      await dbRun('ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS projection_error TEXT', []);
       await dbRun(
         `CREATE TABLE IF NOT EXISTS work_canvas_proposals (
           id TEXT PRIMARY KEY,
@@ -280,6 +309,7 @@ async function ensureSchema(): Promise<void> {
 }
 
 function mapDraft(row: DraftRow): WorkCanvasDraftRecord {
+  const contentEnvelope = resolveCanvasCanonicalEnvelope(row);
   return {
     id: row.id,
     organizationId: row.organization_id,
@@ -287,7 +317,16 @@ function mapDraft(row: DraftRow): WorkCanvasDraftRecord {
     conversationId: row.conversation_id,
     kind: row.kind,
     title: row.title,
-    content: parseJson(row.content_json, ''),
+    content: contentEnvelope.canonicalFormat === 'json' ? contentEnvelope.contentJson : contentEnvelope.contentMd,
+    contentEnvelope,
+    canonicalFormat: contentEnvelope.canonicalFormat,
+    contentMd: contentEnvelope.contentMd,
+    contentJson: contentEnvelope.contentJson,
+    blocks: contentEnvelope.blocks || [],
+    contentSchemaVersion: contentEnvelope.contentSchemaVersion,
+    markdownProjectionStatus: contentEnvelope.markdownProjectionStatus,
+    markdownProjectedAt: contentEnvelope.markdownProjectedAt || null,
+    projectionError: contentEnvelope.projectionError || null,
     sources: parseJson(row.sources_json, []),
     provenance: parseJson(row.provenance_json, {}),
     clientId: row.client_id,
@@ -403,13 +442,19 @@ export async function createDraft(params: {
   await ensureSchema();
   const id = uuidv4();
   const now = nowIso();
+  const canonical = buildCanvasCanonicalWrite(
+    { kind: params.input.kind, canonical_format: typeof params.input.content === 'string' ? 'markdown' : 'json' },
+    { canonicalFormat: typeof params.input.content === 'string' ? 'markdown' : 'json', content: params.input.content ?? '' },
+  );
   await dbRun(
     `INSERT INTO work_canvas_drafts (
       id, organization_id, created_by, conversation_id, kind, title, content_json,
+      canonical_format, content_md, content_json_native, blocks_json, content_schema_version,
+      markdown_projection_status, markdown_projected_at, projection_error,
       sources_json, provenance_json, client_id, project_id, owner_id,
       research_session_id, artifact_run_id, artifact_id, artifact_version,
       save_state, lifecycle_state, dirty_state, visibility, audit_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       params.organizationId,
@@ -417,7 +462,15 @@ export async function createDraft(params: {
       params.input.conversationId,
       params.input.kind,
       params.input.title,
-      JSON.stringify(params.input.content ?? ''),
+      canonical.content_json,
+      canonical.canonical_format,
+      canonical.content_md,
+      canonical.content_json_native,
+      canonical.blocks_json,
+      canonical.content_schema_version,
+      canonical.markdown_projection_status,
+      canonical.markdown_projected_at,
+      canonical.projection_error,
       JSON.stringify(params.input.sources || []),
       JSON.stringify(params.input.provenance || { conversationId: params.input.conversationId }),
       params.input.clientId || null,
@@ -450,22 +503,24 @@ export async function updateDraft(params: {
   const existing = await getDraft(params);
   if (!existing) throw Object.assign(new Error('Canvas draft not found'), { statusCode: 404 });
   const now = nowIso();
-  const nextContent = params.patch.content ?? existing.content;
-  // The draft GET mapper prefers content_md over content_json, and the editor's
-  // PUT route writes both columns. A service-side update that touches only
-  // content_json leaves its markdown permanently shadowed by whatever stale
-  // content_md a client autosave froze earlier (audit P0-1/D2 — generated
-  // documents were lost to the skeleton). String content therefore must land
-  // in content_md too; non-string content leaves the projection untouched.
-  const nextContentMd =
-    typeof nextContent === 'string'
-      ? nextContent.startsWith('"')
-        ? JSON.parse(nextContent)
-        : nextContent
-      : null;
+  const nextContent = params.patch.content !== undefined ? params.patch.content : existing.content;
+  const canonical = buildCanvasCanonicalWrite(
+    {
+      kind: existing.kind, canonical_format: existing.canonicalFormat,
+      content_json: JSON.stringify(existing.content), content_md: existing.contentMd,
+      content_json_native: existing.contentJson === undefined ? null : JSON.stringify(existing.contentJson),
+      blocks_json: existing.blocks.length ? JSON.stringify(existing.blocks) : null,
+      content_schema_version: existing.contentSchemaVersion,
+      markdown_projection_status: existing.markdownProjectionStatus,
+      markdown_projected_at: existing.markdownProjectedAt, projection_error: existing.projectionError,
+    },
+    { content: nextContent, canonicalFormat: typeof nextContent === 'string' ? 'markdown' : 'json' },
+  );
   await dbRun(
     `UPDATE work_canvas_drafts
-     SET kind = ?, title = ?, content_json = ?, content_md = COALESCE(?, content_md),
+     SET kind = ?, title = ?, content_json = ?, canonical_format = ?, content_md = ?,
+         content_json_native = ?, blocks_json = ?, content_schema_version = ?,
+         markdown_projection_status = ?, markdown_projected_at = ?, projection_error = ?,
          sources_json = ?, provenance_json = ?,
          client_id = ?, project_id = ?, owner_id = ?, research_session_id = ?,
          artifact_run_id = ?, artifact_id = ?, dirty_state = ?, updated_at = ?
@@ -473,8 +528,15 @@ export async function updateDraft(params: {
     [
       params.patch.kind || existing.kind,
       params.patch.title || existing.title,
-      JSON.stringify(nextContent),
-      nextContentMd,
+      canonical.content_json,
+      canonical.canonical_format,
+      canonical.content_md,
+      canonical.content_json_native,
+      canonical.blocks_json,
+      canonical.content_schema_version,
+      canonical.markdown_projection_status,
+      canonical.markdown_projected_at,
+      canonical.projection_error,
       JSON.stringify(params.patch.sources || existing.sources || []),
       JSON.stringify(params.patch.provenance || existing.provenance || {}),
       params.patch.clientId ?? existing.clientId ?? null,
