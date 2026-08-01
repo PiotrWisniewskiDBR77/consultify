@@ -27,6 +27,7 @@ import { gateAiSoftBlocks } from '../../types/gateAi.js';
 import logger from '../../utils/Logger.js';
 import { flagOn } from '../../utils/pgFlags.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import type { PgTransactionClient } from '../../utils/queryHelpers.js';
 import { getGateReadiness } from './gateAiReadinessService.js';
 import { recordGateAiEvent } from './gateAiTelemetryService.js';
 import { getTimelineFlags } from './gateTimelineService.js';
@@ -72,6 +73,27 @@ interface GateDecisionCheck {
 }
 
 /**
+ * Thrown (never returned as a normal `{kind:'error',...}` outcome) by the
+ * pre-commit gate-decision recheck inside `executeInitiativeTransition`'s
+ * `withPgTransaction` body when the decision that satisfied a gate earlier in
+ * the SAME transition has been superseded by the time the write path is about
+ * to run. MUST be a `throw`, not a `return`: by this point (specifically for
+ * the APPROVED->SCHEDULED branch) a schedule-baseline INSERT may already have
+ * executed on this same pinned connection, and only a thrown error causes
+ * `withPgTransaction` to ROLLBACK — an early `return` from the transaction body
+ * still reaches `COMMIT` (see `queryHelpers.withPgTransaction`).
+ */
+export class TransitionGateSupersededError extends Error {
+  constructor(
+    public readonly gate: string,
+    public readonly pmoDomain: string
+  ) {
+    super(`Gate decision for ${pmoDomain} was superseded during the transition`);
+    this.name = 'TransitionGateSupersededError';
+  }
+}
+
+/**
  * GO/NO-GO decision-currency check for a gate.
  *
  * ★ Decision-currency fix (2026-08-01): `decisions` has no `superseded`/`is_current`/
@@ -91,26 +113,66 @@ interface GateDecisionCheck {
  *
  * Returns which decision satisfied the gate (`decisionId`) so callers can preserve a
  * decision reference in the transition history.
+ *
+ * ★ TOCTOU fix (2026-08-01, INI-005 decision-race follow-up): this now takes a
+ * REQUIRED pinned `client` (the same `withPgTransaction` client that holds the
+ * `initiatives` row lock in `executeInitiativeTransition`) instead of reading via
+ * the shared connection pool (`queryHelpers.queryOne`). Previously this read was
+ * invisible to the row lock — a concurrent write to `decisions` from
+ * `DecisionController.ts` (which runs as a bare autocommit statement against the
+ * shared pool, outside any lock) could land between this read and the transition's
+ * write path without being detected.
+ *
+ * As the very first statement, on the SAME pinned client, we take a
+ * transaction-scoped advisory lock keyed on (orgId, initiativeId, pmoDomain):
+ * transaction-scoped because `pg_advisory_xact_lock` auto-releases on
+ * COMMIT/ROLLBACK of the caller's transaction — no explicit unlock needed, no risk
+ * of a leaked lock outliving the connection. This matches the house pattern already
+ * used in `server/src/services/tablePlatform/RecordsService.ts:106`
+ * (`pg_advisory_xact_lock(hashtext($1 || $2))`), just with `hashtextextended` over
+ * three concatenated key parts instead of two.
+ *
+ * ★ HONEST SCOPE: this lock only protects transition-vs-transition races (two
+ * concurrent `executeInitiativeTransition` calls for the same gate tuple) today —
+ * it does NOT block `DecisionController.ts`'s writes (`createDecision`/`decide`/
+ * `updateDecision`/`escalateDecision`/`deleteDecision`), because that file does not
+ * (yet) take this same lock. A decision write can still race in between this call
+ * and the transition's COMMIT undetected by the lock alone; the pre-commit recheck
+ * in `executeInitiativeTransition` (see `decisionGatePmoDomain`/
+ * `TransitionGateSupersededError` below) catches the subset of that race that lands
+ * before the recheck runs, but a race landing between the recheck and COMMIT is
+ * still an open, disclosed gap. See this module's DecisionController integration
+ * contract (documented in the INI-005 decision-race handoff, not implemented here —
+ * `DecisionController.ts` is out of scope for this change) for the required
+ * follow-up: those five methods need to take the SAME advisory lock, in a pinned
+ * transaction of their own.
  */
 export const hasApprovedGateDecision = async (
   orgId: string,
   initiativeId: string,
-  pmoDomain: string
+  pmoDomain: string,
+  client: PgTransactionClient
 ): Promise<GateDecisionCheck> => {
+  await client.query(
+    `SELECT pg_advisory_xact_lock(hashtextextended(? || ':' || ? || ':' || ?, 0))`,
+    [orgId, initiativeId, pmoDomain]
+  );
+
   const sql = `
         SELECT id, status, decision_maker_id, deadline
         FROM decisions
         WHERE organization_id = ?
           AND initiative_id = ?
           AND pmo_domain = ?
-        ORDER BY COALESCE(decided_at, created_at) DESC
+        ORDER BY COALESCE(decided_at, created_at) DESC, id DESC
         LIMIT 1
     `;
-  const latest = await queryHelpers.queryOne<Record<string, unknown>>(sql, [
+  const latestResult = await client.query<Record<string, unknown>>(sql, [
     orgId,
     initiativeId,
     pmoDomain,
   ]);
+  const latest = latestResult.rows[0];
   if (!latest) return { ok: false, decisionId: null };
 
   const status = String(latest.status || '').toLowerCase();
@@ -334,6 +396,22 @@ interface ExecuteInitiativeTransitionParams {
   expectedCurrentStatus?: string | null;
   /** Defaults to `{ kind: 'user' }` — every existing caller is unaffected. */
   actor?: InitiativeTransitionActor;
+  /**
+   * ★ TEST-ONLY synchronization hook (decision-race test packet, 2026-08-01).
+   * Lets acceptance tests pause this function at controlled points to inject a
+   * concurrent write (e.g. a competing `decisions` UPDATE via a second pg
+   * client) and deterministically observe how the transition reacts — without
+   * resorting to `setTimeout`/sleep-based races. Defaults to a no-op.
+   *
+   * NEVER populated by any real HTTP adapter: every production call site
+   * (`InitiativeController.ts`'s four `executeInitiativeTransition({...})`
+   * call sites and `initiativeAutoStartJob.ts`'s one) builds this params
+   * object as an explicit field-literal object, never a spread of `req.body`
+   * or any other externally-controlled object — so there is no way a request
+   * body could inject this field. (Verified by inspection as part of this
+   * change; re-verify if a new call site is ever added.)
+   */
+  __testSyncHook?: (point: 'after-decision-read' | 'before-commit') => Promise<void>;
 }
 
 type ExecuteInitiativeTransitionResult =
@@ -368,6 +446,9 @@ export async function executeInitiativeTransition(
   } = params;
   const actor: InitiativeTransitionActor = params.actor ?? { kind: 'user' };
   const isSystemActor = actor.kind === 'system';
+  // Test-only synchronization hook — see `__testSyncHook`'s doc comment on
+  // `ExecuteInitiativeTransitionParams`. No-op for every real caller.
+  const syncHook = params.__testSyncHook ?? (async () => {});
 
   const actorName = isSystemActor
     ? actor.systemActorLabel
@@ -415,15 +496,22 @@ export async function executeInitiativeTransition(
         initiativeName: string;
       };
 
-  // No outer try/catch here on purpose: an unexpected error thrown inside the
-  // transaction rolls it back (see withPgTransaction) and then propagates
-  // uncaught out of this function to the calling asyncHandler-wrapped route
-  // method, which forwards it to Express's error middleware — the same coded,
-  // non-leaking 5xx envelope every other unexpected failure in this codebase
-  // gets (see asyncHandler.ts: `.catch(next)`). We do NOT want a bespoke 500
-  // JSON shape here that bypasses that shared handling, and we must never
-  // return an `ok: true` response if COMMIT didn't unambiguously succeed.
-  const outcome: TransitionOutcome = await queryHelpers.withPgTransaction(async (client) => {
+  // Deliberately narrow try/catch (decision-race fix, 2026-08-01): this exists
+  // ONLY to translate the specific, expected `TransitionGateSupersededError`
+  // thrown by the pre-commit gate-decision recheck (see `decisionGatePmoDomain`
+  // below) into this function's normal structured 409 response shape. It must
+  // `throw` (not `return`) from inside the transaction body so `withPgTransaction`
+  // ROLLBACKs before this catch ever runs (see `TransitionGateSupersededError`'s
+  // doc comment). EVERY OTHER error continues to propagate uncaught out of this
+  // function to the calling asyncHandler-wrapped route method, which forwards it
+  // to Express's error middleware — the same coded, non-leaking 5xx envelope
+  // every other unexpected failure in this codebase gets (see asyncHandler.ts:
+  // `.catch(next)`). We do NOT want a bespoke 500 JSON shape here that bypasses
+  // that shared handling, and we must never return an `ok: true` response if
+  // COMMIT didn't unambiguously succeed.
+  let outcome: TransitionOutcome;
+  try {
+    outcome = await queryHelpers.withPgTransaction(async (client) => {
     // CONCURRENCY FIX: lock the row FIRST. Every check below reads
     // `currentStatus`/`initiativeName`/etc. from THIS locked row.
     const lockedRows = (
@@ -675,10 +763,14 @@ export async function executeInitiativeTransition(
     // Canonical flow (PMO):
     // DRAFT -> PENDING_REVIEW -> REVIEW -> PROMOTED -> PLANNING -> APPROVED -> SCHEDULED -> EXECUTING -> DONE -> TRACKING
     let satisfyingDecisionId: string | null = null;
+    // Tracks which pmoDomain satisfied the gate above, so the pre-commit recheck
+    // (right before the write path) knows which gate tuple to re-verify against
+    // a possible concurrent decision write. See `TransitionGateSupersededError`.
+    let decisionGatePmoDomain: string | null = null;
 
     // REVIEW -> PROMOTED: requires Go/No-Go decision (governance)
     if (currentStatus === 'REVIEW' && nextStatus === 'PROMOTED') {
-      const goNoGo = await hasApprovedGateDecision(orgId, id, 'GOVERNANCE_DECISION_MAKING');
+      const goNoGo = await hasApprovedGateDecision(orgId, id, 'GOVERNANCE_DECISION_MAKING', client);
       if (!goNoGo.ok) {
         return {
           kind: 'error',
@@ -697,11 +789,18 @@ export async function executeInitiativeTransition(
         };
       }
       satisfyingDecisionId = goNoGo.decisionId;
+      decisionGatePmoDomain = 'GOVERNANCE_DECISION_MAKING';
+      await syncHook('after-decision-read');
     }
 
     // PROMOTED -> PLANNING: requires Resources Commit decision
     if (currentStatus === 'PROMOTED' && nextStatus === 'PLANNING') {
-      const resourcesCommit = await hasApprovedGateDecision(orgId, id, 'RESOURCE_RESPONSIBILITY');
+      const resourcesCommit = await hasApprovedGateDecision(
+        orgId,
+        id,
+        'RESOURCE_RESPONSIBILITY',
+        client
+      );
       if (!resourcesCommit.ok) {
         return {
           kind: 'error',
@@ -720,13 +819,15 @@ export async function executeInitiativeTransition(
         };
       }
       satisfyingDecisionId = resourcesCommit.decisionId;
+      decisionGatePmoDomain = 'RESOURCE_RESPONSIBILITY';
+      await syncHook('after-decision-read');
     }
 
     // APPROVED -> SCHEDULED: requires Schedule Lock decision (and dates + milestones + baseline)
     let plannedStart: unknown;
     let plannedEnd: unknown;
     if (currentStatus === 'APPROVED' && nextStatus === 'SCHEDULED') {
-      const scheduleLock = await hasApprovedGateDecision(orgId, id, 'SCHEDULE_MILESTONES');
+      const scheduleLock = await hasApprovedGateDecision(orgId, id, 'SCHEDULE_MILESTONES', client);
       if (!scheduleLock.ok) {
         return {
           kind: 'error',
@@ -745,6 +846,8 @@ export async function executeInitiativeTransition(
         };
       }
       satisfyingDecisionId = scheduleLock.decisionId;
+      decisionGatePmoDomain = 'SCHEDULE_MILESTONES';
+      await syncHook('after-decision-read');
 
       plannedStart = lockedRow.planned_start_date;
       plannedEnd = lockedRow.planned_end_date;
@@ -940,7 +1043,8 @@ export async function executeInitiativeTransition(
       const executionGoNoGo = await hasApprovedGateDecision(
         orgId,
         id,
-        'GOVERNANCE_DECISION_MAKING'
+        'GOVERNANCE_DECISION_MAKING',
+        client
       );
       if (!executionGoNoGo.ok) {
         return {
@@ -966,6 +1070,8 @@ export async function executeInitiativeTransition(
         };
       }
       satisfyingDecisionId = executionGoNoGo.decisionId;
+      decisionGatePmoDomain = 'GOVERNANCE_DECISION_MAKING';
+      await syncHook('after-decision-read');
     }
 
     // DEF-1 hardening (parytet z kanonicznym validateTransition): BLOCKED wymaga
@@ -1065,6 +1171,28 @@ export async function executeInitiativeTransition(
         throw e;
       }
     }
+
+    // ★ PRE-COMMIT GATE-DECISION RECHECK (decision-race fix, 2026-08-01).
+    // The advisory lock inside `hasApprovedGateDecision` only serializes this
+    // transition against OTHER transitions — it does NOT block a concurrent
+    // `DecisionController.ts` write (that file runs bare autocommit statements
+    // against the shared pool and does not take this lock; see the honest-scope
+    // note on `hasApprovedGateDecision`). So even with the earlier read pinned
+    // to this transaction's client, a competing decision write (e.g. a NO-GO
+    // superseding the GO this transition read moments ago) can still land
+    // between that read and this point. Re-run the SAME check right before the
+    // write path commits, on the SAME pinned client: if the gate no longer
+    // resolves to the exact decision row this transition already validated
+    // against, THROW (not return — see `TransitionGateSupersededError`'s doc
+    // comment for why an early `return` here would let an already-executed
+    // schedule-baseline INSERT reach COMMIT anyway).
+    if (satisfyingDecisionId && decisionGatePmoDomain) {
+      const recheck = await hasApprovedGateDecision(orgId, id, decisionGatePmoDomain, client);
+      if (!recheck.ok || recheck.decisionId !== satisfyingDecisionId) {
+        throw new TransitionGateSupersededError(gate ?? decisionGatePmoDomain, decisionGatePmoDomain);
+      }
+    }
+    await syncHook('before-commit');
 
     // ---- WRITE PATH (atomic from here on: state UPDATE + both history INSERTs) ----
     const now = new Date().toISOString();
@@ -1342,7 +1470,23 @@ export async function executeInitiativeTransition(
       correlationId,
       initiativeName,
     };
-  });
+    });
+  } catch (err) {
+    if (err instanceof TransitionGateSupersededError) {
+      return {
+        ok: false,
+        statusCode: 409,
+        body: {
+          error:
+            'The gate decision required for this transition was superseded by a newer decision while it was being processed. Re-check the gate and retry.',
+          rule: 'GATE_DECISION_SUPERSEDED',
+          gate: err.gate,
+          pmoDomain: err.pmoDomain,
+        },
+      };
+    }
+    throw err;
+  }
 
   if (outcome.kind === 'error') {
     if (outcome.notify) {
