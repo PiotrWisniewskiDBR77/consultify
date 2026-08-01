@@ -42,3 +42,15 @@ wejścia do seedowanego workspace nie działa znanymi danymi dostępowymi.
 4. dodać smoke: landing → Try demo → auth → Atelier Toys → `/chat`;
 5. nie logować, nie dokumentować ani nie seedować hasła produkcyjnego;
 6. po naprawie potwierdzić tenant isolation i sposób usunięcia kont testowych.
+
+## Slice naprawczy gotowy lokalnie
+
+- `demo.consultify.ai` zostało dodane do jawnej allowlisty hostów stagingowych;
+- resolver PIN-u odrzuca teraz każdy host spoza allowlisty (wcześniej sam resolver
+  zwracał stagingowe dane także dla dowolnej innej domeny, jeśli został wywołany poza UI guardem);
+- produkcyjne `consultify.ai` nadal dopuszcza wyłącznie istniejący skrót `1111`;
+- testy host allowlist / obcy host / produkcja: `3/3 PASS`;
+- frontend type-check: PASS.
+
+Status pozostaje `BLOCKED`, ponieważ ten slice naprawia kontrolowany dostęp QA, ale nie
+materializuje brakującego konta Anna ani nie naprawia publicznego `Try demo`.
