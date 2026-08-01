@@ -44,6 +44,15 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
     () => availableStatements.find((statement) => statement.id === selectedStatementPackId) || null,
     [availableStatements, selectedStatementPackId]
   );
+  /**
+   * FIN-005: the payload already takes its currency from the selected pack, but
+   * the input LABELS hardcoded "(PLN)" — and `finance.investment.capex` /
+   * `finance.investment.benefits` have no entry in any locale file, so that
+   * hardcoded fallback is literally what renders. On the EUR Atelier golden
+   * flow the investment-case form therefore asked for zlotys while storing
+   * euros. Label and payload must name the same currency.
+   */
+  const inputCurrency = String(selectedStatementPack?.currency || '').trim() || 'PLN';
 
   const selectStatementPack = useCallback((statementPackId: string) => {
     setSelectedStatementPackId(statementPackId);
@@ -157,7 +166,9 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-slate-500">
-                  {t('finance.investment.capex', 'Initial investment (PLN)')}
+                  {t('finance.investment.capex', 'Initial investment ({{currency}})', {
+                    currency: inputCurrency,
+                  })}
                 </label>
                 <input
                   type="number"
@@ -196,7 +207,9 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
               </div>
               <div>
                 <label className="text-xs text-slate-500">
-                  {t('finance.investment.benefits', 'Annual benefits (PLN/yr)')}
+                  {t('finance.investment.benefits', 'Annual benefits ({{currency}}/yr)', {
+                    currency: inputCurrency,
+                  })}
                 </label>
                 <input
                   type="number"

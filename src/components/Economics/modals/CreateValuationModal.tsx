@@ -61,12 +61,28 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
     }
     setCreating(true);
     try {
+      /**
+       * FIN-005: was hardcoded 'PLN'. A valuation built ON a EUR source (the
+       * Atelier FY2014 model/analysis) was stored and displayed as zlotys,
+       * contradicting the source it is derived from. Inherit the source's
+       * currency; 'PLN' stays only as the manual-source default.
+       */
+      const selectedSource =
+        sourceType === 'financial_model'
+          ? sources.financialModels.find((item: any) => String(item.id) === sourceId)
+          : sourceType === 'financial_analysis'
+            ? sources.financialAnalyses.find((item: any) => String(item.id) === sourceId)
+            : sourceType === 'budget'
+              ? sources.budgets.find((item: any) => String(item.id) === sourceId)
+              : null;
+      const sourceCurrency = String(selectedSource?.currency || '').trim();
+
       const result = await Api.post('/api/economics/valuations', {
         title: title.trim(),
         sourceType,
         sourceId: sourceType === 'manual' ? null : sourceId,
         horizonYears,
-        currency: 'PLN',
+        currency: sourceCurrency || 'PLN',
       });
       const created = result as any;
       toast.success(t('finance.toast.valuationCreated', 'Valuation created'));
