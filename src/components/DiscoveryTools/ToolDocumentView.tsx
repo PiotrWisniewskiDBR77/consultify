@@ -513,6 +513,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       .finally(() => setToolBacklinksLoading(false));
   }, [toolSessionId]);
 
+  const createSessionInFlightRef = useRef(false);
   useEffect(() => {
     const initSession = async () => {
       if (sessionId) {
@@ -521,7 +522,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         return;
       }
 
+      if (createSessionInFlightRef.current) return;
       if (!currentSession || currentSession.toolType !== toolType) {
+        createSessionInFlightRef.current = true;
         createSession(toolType);
         const name = `${toolMeta.name} — Session`;
         try {
@@ -538,6 +541,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         } catch (error) {
           console.error('Failed to create tool session:', error);
           toast.error(t('discoveryToolsMain.toolDocumentView.failedToCreateSession'));
+          // A genuine failure should stay retryable if deps change again
+          // (e.g. currentProjectId resolves later) — only a duplicate
+          // RACE is what this guard exists to block.
+          createSessionInFlightRef.current = false;
         }
       }
     };
@@ -568,11 +575,13 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     currentSession && toolSessionId && currentSession.id === toolSessionId
   );
 
+  const pendingAutoSaveFlushRef = useRef<null | (() => Promise<void>)>(null);
   useEffect(() => {
     if (!currentSession || !toolSessionId) return;
     if (!isSessionHydrated) return;
     setSaveState('dirty');
-    const timeout = setTimeout(async () => {
+
+    const flush = async () => {
       setSaveState('saving');
       try {
         await Api.updateToolSession(toolSessionId, {
@@ -588,7 +597,14 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       } catch (error) {
         console.error('Auto-save failed:', error);
         setSaveState('error');
+      } finally {
+        pendingAutoSaveFlushRef.current = null;
       }
+    };
+
+    pendingAutoSaveFlushRef.current = flush;
+    const timeout = setTimeout(() => {
+      void flush();
     }, 2000);
 
     return () => clearTimeout(timeout);
@@ -602,6 +618,22 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     toolSessionId,
     wizardStatePayload,
   ]);
+
+  // TLS-03: flush any still-pending (debounced-but-not-yet-fired) autosave
+  // when this document is truly unmounted (closed / navigated away from),
+  // so an edit made in the last <2s before leaving is not silently
+  // discarded. Deliberately a SEPARATE effect with an EMPTY dependency
+  // array — its cleanup must run only on real unmount, not on every
+  // keystroke re-run of the debounce effect above (which already clears
+  // its own stale timer via its own cleanup; flushing there too would
+  // defeat debouncing and fire a save on every edit).
+  useEffect(() => {
+    return () => {
+      if (pendingAutoSaveFlushRef.current) {
+        void pendingAutoSaveFlushRef.current();
+      }
+    };
+  }, []);
 
   const handleSave = async () => {
     if (!toolSessionId || !currentSession) return;
