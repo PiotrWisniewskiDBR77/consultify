@@ -575,18 +575,27 @@ export async function executeInitiativeTransition(
         ? null
         : getGateForTransition(currentStatus as any, nextStatus as any);
     if (gate && isSystemActor) {
-      // ★ System-actor RBAC carve-out (INI-005 fix, 2026-08-01) — DELIBERATELY
-      // NARROW. The system actor (currently only `initiativeAutoStartJob`) is
-      // authorized for EXACTLY the START gate (SCHEDULED->EXECUTING) and
-      // nothing else — it never reaches this engine for any other gate today,
-      // but if it ever did (bug, future caller reusing `{kind:'system'}`),
-      // this rejects it instead of silently granting a human role. This is
-      // NOT a blanket "system can do anything" bypass: there is no human role
-      // lookup here at all (a cron job has no `req.user`/role to look up),
-      // just a hardcoded allow-list of one gate. Every other check in this
-      // function — readiness, and critically the GO/NO-GO decision-currency
-      // check a few lines below — is UNCHANGED and still runs for this actor.
-      if (gate !== GateType.START) {
+      // ★ System-actor RBAC carve-out (INI-005 fix, 2026-08-01; widened
+      // 2026-08-01 for the Decision/Initiative integration packet) —
+      // DELIBERATELY NARROW allow-list, not a blanket "system can do
+      // anything" bypass. Originally just `GateType.START`
+      // (`initiativeAutoStartJob`, SCHEDULED->EXECUTING). Now also allows
+      // `GateType.UNBLOCK` (BLOCKED->EXECUTING) for exactly one caller:
+      // `DecisionController.ts`'s post-commit cascade, which re-evaluates an
+      // initiative's block state after a decision resolves. Rationale for
+      // including UNBLOCK here rather than requiring a human
+      // PROJECT_SPONSOR/STEERING_COMMITTEE role for this one automated path:
+      // the actual safety gate — the GO/NO-GO decision-currency check
+      // (`hasApprovedGateDecision` for GOVERNANCE_DECISION_MAKING, a few
+      // lines below) — is NEVER skipped for system actors regardless of this
+      // allow-list, exactly like the START case. Widening this allow-list
+      // only removes the human-RBAC-role requirement for a cascade that is
+      // itself gated by that same GO/NO-GO check; it does not weaken it.
+      // There is still no human role lookup at all for a system actor (a
+      // cascade/cron caller has no `req.user`/role to look up) — just this
+      // hardcoded allow-list of two gates.
+      const SYSTEM_ACTOR_ALLOWED_GATES: readonly string[] = [GateType.START, GateType.UNBLOCK];
+      if (!SYSTEM_ACTOR_ALLOWED_GATES.includes(gate)) {
         return {
           kind: 'error',
           statusCode: 403,
