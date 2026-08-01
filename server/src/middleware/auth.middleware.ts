@@ -635,11 +635,22 @@ const attachUser = async (
   // demo headers at all.
   // ---------------------------------------------------------------------------
   const publicDemo = await resolvePublicDemoPrincipal(decodedUserId);
+  /**
+   * True when a LAPSED demo principal is on the short wind-down allowlist. Such a
+   * request legitimately still carries the client's stored `X-Demo-Session-Org`,
+   * which now names a session that no longer exists — so the generic mismatch
+   * check further down must not treat it as a forged header and refuse the very
+   * logout the client is trying to perform.
+   */
+  let expiredDemoWindDown = false;
   if (publicDemo.isPublicDemoPrincipal) {
     const requestPath = String(
       safeRead(() => (req as Request).originalUrl, '') || safeRead(() => (req as Request).url, '')
     );
     if (!publicDemo.session) {
+      if (isPathAllowedForExpiredDemo(requestPath)) {
+        expiredDemoWindDown = true;
+      }
       if (!isPathAllowedForExpiredDemo(requestPath)) {
         // Lazily retire the principal: nothing sweeps demo_sessions on a schedule,
         // so the request path is where expiry actually takes effect. This also
@@ -700,7 +711,8 @@ const attachUser = async (
     isDemoHeader &&
     requestedDemoSessionOrgId &&
     !validatedDemoSessionOrgId &&
-    !fallbackDemoSessionOrgId
+    !fallbackDemoSessionOrgId &&
+    !expiredDemoWindDown
   ) {
     res.status(403).json({
       error: 'Demo workspace mismatch. Reload the demo to continue.',
@@ -758,7 +770,18 @@ const attachUser = async (
   // blocked conversation creation — surfaced first by the voice path, which force-creates
   // a conversation on click. Only runs when the org wasn't already confirmed above, and
   // only issues the fallback query when the resolved org isn't a confirmed ACTIVE member.
-  if (!isDemoHeader && !orgContextConfirmed) {
+  // OPS-DEMO-002: a public demo principal is EXCLUDED from this rescue.
+  //
+  // Its membership row lives in the curated base org (that is where signup writes
+  // it), while its working tenant is the derived session org — which has no
+  // membership row at all. So the probe below always misses for a demo principal,
+  // the fallback always fires, and `resolvedOrganizationId` was silently rewritten
+  // from the session tenant back to the shared base org on every header-less
+  // request. That made the "omitting the header cannot widen access" guarantee
+  // false for everything reading `req.organizationId`, and my own test missed it by
+  // probing `/api/demo/organization`, which reads the session row directly and
+  // never consults `req.organizationId`.
+  if (!isDemoHeader && !orgContextConfirmed && !publicDemo.isPublicDemoPrincipal) {
     try {
       const resolvedMembership = resolvedOrganizationId
         ? await dbGet<{ status?: string }>(
