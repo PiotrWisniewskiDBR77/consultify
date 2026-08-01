@@ -6,6 +6,7 @@
  * Enforces real limits per endpoint category.
  */
 
+import crypto from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
@@ -264,8 +265,21 @@ function extractKey(req: Request): string {
 // ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
-function createLimiter(opts: { windowMs: number; max: number; prefix: string; message?: string }) {
-  const { prefix, message = 'Too many requests, please try again later.' } = opts;
+function createLimiter(opts: {
+  windowMs: number;
+  max: number;
+  prefix: string;
+  message?: string;
+  /**
+   * Overrides the default identity (user id, else IP). Must return an ALREADY
+   * OPAQUE value — the returned string lands in the store key verbatim, so a raw
+   * email address here would put registered addresses in the key space. Return
+   * an empty string to fall back to the default identity, which is what an
+   * anonymous request with no usable identifier should do.
+   */
+  keyResolver?: (req: Request) => string;
+}) {
+  const { prefix, message = 'Too many requests, please try again later.', keyResolver } = opts;
   const { windowMs, max } = resolveLimiterParams(opts.windowMs, opts.max);
   return (req: Request, res: Response, next: NextFunction): void => {
     if (process.env.NODE_ENV === 'test') {
@@ -284,7 +298,10 @@ function createLimiter(opts: { windowMs: number; max: number; prefix: string; me
       return;
     }
     try {
-      const key = `rl:${prefix}:${extractKey(req)}`;
+      const resolved = keyResolver
+        ? normalizeOptionalString(safeRead(() => keyResolver(req), undefined as unknown))
+        : undefined;
+      const key = `rl:${prefix}:${resolved ? capKeySegment(resolved) : extractKey(req)}`;
       const { count, resetAt } = increment(key, windowMs);
       const remaining = toSafeNonNegativeIntCount(max - count, 0);
       const resetSeconds = toSafeNonNegativeIntSeconds(resetAt / 1000, 0);
@@ -371,6 +388,63 @@ export const apiAuthRateLimiter = createLimiter({
   max: isProd ? 12_000 : 60_000,
   prefix: 'api-auth',
   message: 'Too many requests, please try again later.',
+});
+
+// ---------------------------------------------------------------------------
+// Public demo signup (OPS-DEMO-002)
+// ---------------------------------------------------------------------------
+
+/**
+ * Opaque identity for the per-address demo signup quota.
+ *
+ * The address is hashed with a domain-separated prefix and truncated, so the
+ * rate-limit key space never contains a registered address. Callers must pass
+ * the SAME normalized form the account lookup uses (lowercased, trimmed),
+ * otherwise `Foo@x.test` and `foo@x.test` would get separate quotas.
+ */
+export function hashRateLimitIdentity(namespace: string, value: string): string {
+  const normalized = String(value || '').trim();
+  if (!normalized) return '';
+  return crypto
+    .createHash('sha256')
+    .update(`rate-limit-identity-v1:${namespace}:${normalized}`)
+    .digest('hex')
+    .slice(0, 32);
+}
+
+function demoSignupIdentityKey(req: Request): string {
+  const email = normalizeOptionalString(
+    safeRead(() => (req.body as { email?: unknown } | undefined)?.email, undefined as unknown)
+  );
+  if (!email) return '';
+  const hashed = hashRateLimitIdentity('demo-signup', email.trim().toLowerCase());
+  return hashed ? `id:${hashed}` : '';
+}
+
+/**
+ * Public demo signup, per source IP. This is the endpoint's only network-level
+ * brake: it provisions a seeded tenant per success, so an unthrottled caller can
+ * fill the demo database and enumerate addresses at will.
+ */
+export const demoSignupIpRateLimiter = createLimiter({
+  windowMs: 60 * 60_000,
+  max: isProd ? 5 : 500,
+  prefix: 'demo-signup-ip',
+  message: 'Too many demo requests from this network. Please try again later.',
+});
+
+/**
+ * Public demo signup, per address (hashed). Distinct from the IP bucket so that
+ * hammering one address from many networks is still bounded — that is the shape
+ * an enumeration or provisioning-abuse attempt takes behind a proxy pool.
+ * Falls back to the IP identity when the body carries no address.
+ */
+export const demoSignupIdentityRateLimiter = createLimiter({
+  windowMs: 60 * 60_000,
+  max: isProd ? 3 : 500,
+  prefix: 'demo-signup-id',
+  message: 'Too many demo requests for this address. Please try again later.',
+  keyResolver: demoSignupIdentityKey,
 });
 
 /** Public invitation token endpoints: stricter anti-enumeration limits */
