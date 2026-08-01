@@ -483,6 +483,86 @@ sieciowej**.
 - `toggle {enabled:false}` jest jednokierunkowe: `demo:entry_source` nie jest
   czyszczone, więc po wyjściu każde kolejne żądanie dostaje `403`.
 
+## Runda 6 — realtime i `/auth/me`
+
+### Realtime: publiczne demo nie dostaje żadnego połączenia
+
+Płaszczyzna realtime to druga, równoległa powierzchnia autoryzacji — **nie
+przechodzi przez `attachUser`**, gdzie mieszka guard read-only. `socketAuth.ts`
+sprawdzał wyłącznie podpis i termin JWT.
+
+Polityka MVP: **całkowita odmowa**, nie częściowa allowlista eventów. Klasyfikacja
+read/write w siedmiu gatewayach ma znacznie gorszy tryb awarii — jeden
+niesklasyfikowany event w jednym gatewayu to cichy zapis, bez jednego miejsca do
+audytu. Odmowa to jedna decyzja w jednym module, a odwiedzający publiczne demo nic
+nie traci: workspace jest read-only, więc nie ma z kim synchronizować.
+
+Rozpoznanie principala jest **w całości server-side**: z podpisanego JWT bierzemy
+tylko `userId`; marker publicznego demo, sesja i tenant czytane są z bazy.
+`organizationId` i flagi demo z handshake'u nie są konsultowane.
+
+Zabezpieczone wejścia:
+
+| Wejście | Przez co |
+| --- | --- |
+| `/chat-projects` (Socket.IO) | `socketAuthMiddleware` |
+| `/org-context` (Socket.IO) | `socketAuthMiddleware` |
+| `/facilitation` (Socket.IO) | `socketAuthMiddleware` |
+| `/table-platform` — TablePlatform RealtimeService, tu żyje `cell:update` | `socketAuthMiddleware` |
+| `/ws/collab/:ideaId` — idea collaboration, CRDT, edit locks | guard w gatewayu |
+| `/ws/notebook/:id` — notebook collaboration, presence | guard w gatewayu |
+| `/ws/presentations/:deckId` — komentarze, presence | guard w gatewayu |
+
+Poza tym: `ideaCollab.gateway.ts` (namespace `/collab`) i
+`collaborativeSession.gateway.ts` **nie są nigdzie inicjalizowane** — martwy kod.
+Nie mają żadnej autoryzacji, więc gdyby kiedyś zostały podpięte, byłyby anonimową
+powierzchnią; odnotowane, nie ruszane.
+
+**Co dokładnie ta zmiana naprawia, a co było już zamknięte — bez zaokrągleń.**
+Kontrola negatywna (cofnięcie całego okablowania rundy 6) pokazuje:
+
+- **namespace'y Socket.IO BYŁY podatne.** Po cofnięciu `socketAuth.ts` token
+  publicznego demo **łączy się**. Guard zamyka realną dziurę na wszystkich
+  czterech — w tym `/table-platform`, gdzie żyje `cell:update`;
+- **natywne gatewaye WS już odmawiały** przy `HEAD`. `resolveWsOrgContext` jest
+  fail-closed, a organizacja sesji demo nie ma wiersza członkostwa, więc handshake
+  padał już wcześniej. Guard jest tam **obroną w głąb, a nie naprawą** — i tak to
+  trzeba nazwać.
+
+Pierwsza wersja tych testów przechodziła **pozornie**: łączyła się z namespace'ami,
+których nigdy nie utworzono, a socket.io odrzuca takie połączenia sam z siebie.
+Test tworzy teraz namespace jawnie i nakłada produkcyjny `socketAuthMiddleware`,
+więc wynik połączenia jest zdaniem o tym middleware. Kontrola negatywna jest tym,
+co utrzymuje ten test w uczciwości.
+
+**Wygaśnięcie w trakcie połączenia.** Sam handshake nie wystarcza — dowodzi tylko,
+że principal kwalifikował się w momencie łączenia. Otwarte połączenia są
+rejestrowane i przemiatane co 60 s; principal, który przestaje się kwalifikować,
+zostaje rozłączony. Ponieważ publiczne demo nie kwalifikuje się nigdy, przypadek
+„sesja wygasła przy otwartym sockecie" jest pokryty przez tę samą ścieżkę.
+
+### `/auth/me` nie odnawia tokenów wygasłemu demo
+
+`/me` mintował **nową rodzinę refresh tokenów przy każdym wywołaniu** dla konta
+demo (zmierzone: 1 wiersz po rejestracji → 3 po dwóch wywołaniach), bo rola
+efektywna nigdy nie równa się roli z claimu. `generateTokenPair` nie ma bramki TTL —
+bramka z poprzednich rund siedzi w `refreshAccessToken` i w `login`.
+
+Naprawione: bramka `assertDemoPrincipalMayReceiveCredentials` przed czymkolwiek
+wydanym, a przemapowanie roli/organizacji **nie mintuje już rodziny refresh** —
+podpisywany jest wyłącznie access token. Klient zachowuje swój dotychczasowy
+refresh token, więc długość sesji się nie zmienia; poprawiane są tylko claimy.
+
+Istotny szczegół, który to uzasadnia: `attachUser` kluczuje po **id z tokenu**, a
+`/me` ma fallback po e-mailu, który potrafi przypiąć żądanie do **innego** konta.
+Token poprawnie podpisany, którego `id` już nie istnieje, a `email` tak, przechodzi
+przez middleware i ląduje w handlerze — zmierzone na `HEAD`: `200`, nowy access
+i nowy refresh, wygasający za miesiąc, dla konta z wygasłą sesją demo. Tę ścieżkę
+zamyka dopiero bramka w samym handlerze.
+
+Zgłoszone, nienaprawione (inne pakiety): `switch-organization`, `demo-login`,
+OAuth login/callback i impersonacja też wołają `generateTokenPair` bez bramki TTL.
+
 ## Bramki wykonane lokalnie
 
 Wszystko z `--retry=0`.
