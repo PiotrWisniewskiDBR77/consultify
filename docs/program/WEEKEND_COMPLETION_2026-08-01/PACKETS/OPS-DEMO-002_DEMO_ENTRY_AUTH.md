@@ -142,33 +142,85 @@ do pasma pilotowego, wiersz `organization_members` **istnieje** (asercja bezwaru
 warunkowa była pusta dokładnie wtedy, gdy błąd występował), token demo nie wchodzi na
 `/api/superadmin/*`.
 
+### Read-only nie do ominięcia (runda 3)
+
+`demoWriteProtection` **nie może** pełnić tej roli. Jest montowany globalnie w
+`Gateway.ts` **przed** jakimkolwiek uwierzytelnieniem, więc `req.user` jest tam
+pusty, a jedynym użytecznym sygnałem zostaje nagłówek `X-Demo-Mode` podawany przez
+klienta. Drugi jego sygnał — „org efektywna = `DEMO_ORG_ID`" — przestał trafiać
+dokładnie wtedy, gdy principal publicznego demo zaczął (poprawnie) siadać we
+własnym tenancie sesji. Efekt: **zapis bez żadnych nagłówków przechodził w całości**.
+
+Decyzja jest teraz podejmowana w `attachUser`, na principalu rozstrzygniętym
+z tokena i bazy, więc klient nie ma na nią żadnego wpływu. Bezwarunkowo:
+`DEMO_WRITES_ENABLED` może rozluźniać ścieżkę nagłówkową dla innych użytkowników
+demo, ale publiczne zgłoszenie to anonimowy nieznajomy i zostaje read-only.
+
+Dozwolone pozostają `/api/auth/*` i `/api/demo/*` — to jedyne trasy, którymi sesja
+może się sama zamknąć (wylogowanie, wyjście z demo); ich zablokowanie uwięziłoby
+klienta, nie chroniąc niczego.
+
+Skala luki zmierzona kontrolą negatywną: **9 różnych endpointów zapisu**
+(assessment, initiative, project, task, invitation, admin org, access-code,
+organization update, delete) było osiągalnych bare-requestem — wszystkie 11 testów
+tej sekcji pada na kodzie sprzed poprawki.
+
 ### Czas dostępu — semantyka 24 h domknięta
 
 Sama sesja wygasała, ale konto żyło dalej. Trzy drogi kontynuacji były otwarte i
-wszystkie są teraz zamknięte przez `server/src/services/demo/demoPrincipalGuard.ts`,
-wywoływany z `attachUser` (jeden punkt dławienia dla `verifyToken`, `optionalAuth`
-i ścieżki E2E):
+wszystkie są teraz zamknięte przez `server/src/services/demo/demoPrincipalGuard.ts`.
 
 | Wektor | Było | Jest |
 | --- | --- | --- |
-| Token dostępowy po wygaśnięciu | degradacja do org bazowej, przeglądanie bez końca | `403 DEMO_SESSION_EXPIRED` |
-| `GET /api/demo/status` | `resolveOrCreateDemoSession` **wystawiał świeżą sesję 24 h** (bo `demo:enabled` przeżywa wygaśnięcie) | żądanie odrzucone zanim dojdzie do trasy |
+| Token dostępowy po wygaśnięciu | degradacja do org bazowej, przeglądanie bez końca | `403 DEMO_SESSION_EXPIRED` (`attachUser`) |
+| `GET /api/demo/status` | `resolveOrCreateDemoSession` **wystawiał świeżą sesję 24 h** | żądanie odrzucone zanim dojdzie do trasy |
 | Ponowny `POST /api/auth/login` | mintował nowy token | `403 DEMO_SESSION_EXPIRED` |
-| Refresh token (7 dni) | ważny sześć dni dłużej niż demo | unieważniony przy wygaszeniu → `401` |
+| Refresh token (7 dni), ścieżka normalna | rotacja nowej rodziny | `401`, sprawdzone **przed** mintem i rotacją |
+| Refresh token, ścieżka **grace period** | mintowała token **przed** wszystkimi normalnymi kontrolami | osobna bramka w tej gałęzi |
 
-Wygaszenie jest **leniwe, na ścieżce żądania**, bo nic nie zamiata `demo_sessions`
-harmonogramem — jedynymi wywołaniami `cleanupExpiredDemoSessions` są same trasy demo,
-do których wygasły klient nie ma powodu wracać. Pierwsze żądanie po TTL ustawia
-`users.status = demo_expired` i unieważnia rodzinę refresh tokenów.
+**Bez zależności od leniwego wygaszania (runda 3).** Login i refresh pytają teraz
+**bezpośrednio o aktywną sesję**, a nie o `users.status`. Wygaszanie jest leniwe —
+dzieje się przy pierwszym uwierzytelnionym żądaniu po TTL — więc prospekt, który po
+prostu zamknie kartę i zaloguje się nazajutrz, trafia w okno, w którym sesja jest
+wygasła, a status wciąż brzmi `active`. Bramka oparta na statusie wystawiłaby mu
+wtedy świeży token. `assertDemoPrincipalMayReceiveCredentials` sam też domyka
+konto i unieważnia rodzinę tokenów, więc odmowa jest jednocześnie retirementem.
+Pokryte testami **DIRECT** — bez żadnego wcześniejszego chronionego GET-a.
 
 Zakres jest wąski celowo: guard dotyczy **wyłącznie** principali oznaczonych przy
 rejestracji markerem `demo:entry_source = register_demo`. Zwykły klient, który włącza
-„pokaż dane demo” z menu profilu, nie jest efemeryczny i nie zmienia zachowania.
-Marker jest trwały i **nie** wywodzi się z `demo_sessions.source` — ta kolumna jest
-sterowana przez klienta w `/api/demo/toggle` i jest nadpisywana na `status_refresh`
-przy odtwarzaniu sesji, czyli znikałaby dokładnie wtedy, gdy jest potrzebna.
+„pokaż dane demo" z menu profilu, nie jest efemeryczny i nie zmienia zachowania.
+
+### Test gateway wyłączony twardo na produkcji (runda 3)
+
+`/api/auth/demo-login` otwierał się na **alternatywie**
+`NODE_ENV==='test' || E2E_MODE==='true' || ENABLE_TEST_GATEWAY==='true'`, więc jedna
+zmienna środowiskowa ustawiona omyłkowo na Railway wskrzeszała anonimowy endpoint
+uwierzytelniania, który dodatkowo **auto-provisionuje** użytkownika demo. Teraz to
+**koniunkcja** trzech warunków — `NODE_ENV === 'test'` **i** jawna flaga **i**
+skonfigurowany `TEST_SUPPORT_KEY` (≥12 znaków, ten sam próg co `testSupport.routes.ts`)
+— w jednym predykacie używanym przez obie bramki (wejście i auto-provisioning).
+Macierz 11 kombinacji zamkniętych i 3 otwartych; testy trasy dowodzą przy tym, że
+w kombinacjach zamkniętych `dbRun`/`dbGet` **nie są w ogóle wołane**.
 
 ### Rollback — saga kompensacyjna
+
+**Runda 3 — trzy dodatkowe domknięcia.** (a) Kompensacja każdego kroku jest teraz
+rejestrowana **przed** wywołaniem, nie po nim: krok, który zapisze jeden wiersz
+i dopiero potem rzuci (legalService pisze po wierszu na dokument; krok preferencji
+to pięć osobnych zapytań; `insertMembership` rzuca na read-backu **po** commicie;
+`issueTokens` utrwala rodzinę tokenów przed zwróceniem), inaczej zostawiał ten
+zapis na zawsze — kompensacja nie była jeszcze zarejestrowana. (b) Zniknął zbędny
+`SELECT` po udanym provisioningu, którego gałąź błędu zwracała `503` **mając już
+żywe konto, sesję i tokeny**; odpowiedź buduje się teraz z tego, co saga zwraca.
+(c) Tożsamość tenanta: saga bije własny `runId` (uuid) i wywodzi z niego id
+tenanta, więc sprzątanie porównuje `=` zamiast `LIKE`. Poprzednio zamiatała
+`${DEMO_ORG_ID}-session-<10 znaków id użytkownika>-%` — dwa id kolidują na 10
+znakach, więc **rollback jednego zgłoszenia mógł skasować żywy workspace innego
+prospekta**; test współbieżności pada na starej implementacji i przechodzi na nowej.
+Marker własności mieszka w `user_preferences` (nie w `demo_session_tenants`, które
+ma FK na `demo_sessions` i `organizations` — a właśnie okno przed ich istnieniem
+trzeba pokryć) i jest zapisywany **przed** seedem.
 
 Rejestracja dotyka siedmiu magazynów bez wspólnej transakcji. Zamiast `try/catch`
 mamy sagę (`server/src/services/demo/demoSignupProvisioning.ts`): każdy krok w przód
@@ -282,22 +334,24 @@ przekierowań zamiast docelowych tras.
 
 | Bramka | Wynik |
 | --- | --- |
-| `tests/integration/demoPublicEntry.contract.test.ts` (realny Express + realna baza) | `20/20 PASS` (`--retry=0`) |
-| `tests/unit/backend/demo/demoSignupProvisioning.faults.test.ts` (fault injection sagi) | `15/15 PASS` |
-| `tests/unit/backend/rateLimiting/` (z nowym `demoSignupRateLimiter.429`) | `15/15 PASS`, 9 plików |
-| `tests/components/AuthView.demo-entry.contract.test.tsx` + `demoSessionAdoption` + modal | w zbiorczym przebiegu poniżej |
-| Zbiorczy przebieg: integracja + saga + limitery + UI + host allowlist + regresje | **`114/114 PASS`, 23 pliki** (`--retry=0`) |
-| Regresja `attachUser`: `tests/unit/auth/`, `auth.middleware.test.ts`, `security-auth-flow` | `222/223` — jedyna porażka (`mapRole maps superadmin to owner`) **potwierdzona jako istniejąca przed zmianą** przez uruchomienie na pliku z `HEAD` |
-| Kontrola negatywna 1 — usunięty guard w `attachUser` | `7/20 FAIL` (TTL ×5, fail-closed ×2) |
-| Kontrola negatywna 2 — usunięte limitery | `7/7 FAIL` (`is not a function`) |
-| Kontrola negatywna 3 — `AuthView.tsx` z `HEAD` | `5/6 FAIL` w nowym zestawie UI |
-| Kontrola negatywna 4 — trasa `register-demo` z `HEAD` (poprzednia runda) | `8/11 FAIL` |
+| `tests/integration/demoPublicEntry.contract.test.ts` (realny Express + realna baza) | **`35/35 PASS`** (`--retry=0`) |
+| `tests/unit/backend/demo/` (saga + fault injection, w tym partial-write-then-throw) | `26/26 PASS`, 3 pliki |
+| `tests/unit/backend/rateLimiting/` (limitery + telemetria + shared store) | `32/32 PASS`, 11 plików |
+| `tests/unit/backend/auth/demoLoginGateway.test.ts` (macierz flag produkcyjnych) | `27/27 PASS` |
+| **Pełny pakiet regresji OPS-DEMO-002** (integracja + saga + limitery + gateway + UI + host allowlist + `attachUser` + `security-auth-flow`) | **`402/403 PASS`, 33 pliki** |
+| Jedyna porażka w pakiecie: `mapRole maps superadmin to owner` | **potwierdzona jako istniejąca przed zmianą** — uruchomiona na pliku z `HEAD` daje identyczny wynik |
+| Kontrola negatywna A — usunięty read-only w `attachUser` | **`11/35 FAIL`** — wszystkie 9 endpointów zapisu przechodziło bare-requestem |
+| Kontrola negatywna B — usunięte bezpośrednie kontrole TTL w login/refresh | **`4/35 FAIL`** (DIRECT login, DIRECT refresh, retirement, drugi refresh) |
+| Kontrola negatywna C — predykat gatewaya z `HEAD` | `26/27 FAIL` |
+| Kontrola negatywna D — saga z `HEAD` (współbieżność + partial write) | `8/18 FAIL` |
+| Kontrola negatywna E — limitery z `HEAD` (telemetria) | `17/32 FAIL` |
+| Kontroli negatywnych z rund 1–2 (trasa, guard, limitery, AuthView) | nadal aktualne |
 | `npm run type-check` | PASS |
-| `npm run build:backend` | PASS (uwaga: `tsc --noCheck` — nie sprawdza typów) |
-| **Realny type-check nowych plików backendu** (`server/tsconfig.json`, filtr na zmienione pliki) | PASS — 0 błędów w `demoSignupProvisioning`, `demoPrincipalGuard`, `rateLimiting.middleware`; pozostałe błędy są istniejące, w plikach niedotykanych |
+| **Realny type-check 6 zmienionych plików backendu** (scratch `tsconfig` z `server/tsconfig.json`) | **0 błędów w moich plikach**; 30 linii wyjścia to istniejące błędy w plikach wciąganych tranzytywnie |
+| `npm run build:backend` | PASS — ale to `tsc --noCheck`, **nie jest dowodem typowym** i nie jest tu cytowany jako taki |
 | `check-ssot-paths.sh`, `check-ssot-registry.mjs` | PASS |
 | `git diff --check` | PASS |
-| Skan sekretów w diffie | brak trafień (fixture'y i celowe łańcuchy „leak" w asercjach non-leakage odfiltrowane) |
+| Skan sekretów w diffie | brak trafień |
 
 ## Niewykonane świadomie
 
@@ -336,43 +390,62 @@ przekierowań zamiast docelowych tras.
 
 ## Ryzyka otwarte
 
-1. **Latencja pierwszego wejścia.** Przy wyłączonym `DEMO_USE_BASE_ORG` seed
-   Atelier Toys biegnie synchronicznie w `register-demo`. Na Railway trzeba zmierzyć
-   czas odpowiedzi; jeśli zbliża się do limitu bramy, właściwą odpowiedzią jest
-   `DEMO_USE_BASE_ORG=true` albo osobny pakiet na seed asynchroniczny.
+1. **Limiter jest w pamięci procesu — zaakceptowane dla stagingu jednorepikowego.**
+   Do dokumentu operacyjnego, dosłownie:
+
+   > Limitery publicznej rejestracji demo egzekwują kwotę w liczniku w pamięci
+   > procesu. Jest to poprawne wyłącznie dopóki API działa jako pojedyncza replika:
+   > przy skalowaniu poziomym efektywna kwota mnoży się przez liczbę replik, więc
+   > N replik dopuszcza N × 5 rejestracji na godzinę na adres IP i N × 3 na adres
+   > e-mail. Akceptujemy to na jednorepikowym stagingu, gdzie mnożnik wynosi 1.
+   >
+   > Zanim ten endpoint zostanie wystawiony na publiczną, wieloreplikową produkcję,
+   > trzeba włączyć ścieżkę współdzielonego magazynu przez `RATE_LIMIT_SHARED_STORE=redis`
+   > na każdej replice, z zweryfikowaną instancją Redis — nie z wbudowanym mockiem,
+   > który nie egzekwuje niczego. Przy niedostępności magazynu limitery domyślnie
+   > **fail-closed** (HTTP 503, `Retry-After: 30`), świadomie wymieniając dostępność
+   > formularza demo na ochronę przed nadużyciem nieuwierzytelnionego endpointu,
+   > który przy każdym sukcesie provisionuje tenant; `RATE_LIMIT_SHARED_STORE_FAIL_MODE=local`
+   > lub `=open` mogą to nadpisać wyłącznie jako zapisane, zaakceptowane ryzyko.
+   >
+   > Odrzucenia są widoczne per limiter w `GET /api/health/aggregated`
+   > (`components.metrics.details.rateLimitHits`, też jako `rate_limit_hits_total`)
+   > oraz w dławionych podsumowaniach `[RateLimit]`, które podają nazwę limitera,
+   > wolumen i liczbę odrębnych źródeł — bez adresu, IP i klucza.
+
+   Ścieżka współdzielona jest **przygotowana i wyłączona**; włączenie jej jest
+   osobną decyzją operacyjną, nie skutkiem ubocznym tego pakietu.
 2. **Enumeracja na rejestracji jest ograniczona, nie usunięta** — patrz sekcja wyżej.
-   Świadomie zaakceptowane; pełne domknięcie wymaga rozdzielenia rejestracji od
-   wejścia, czyli decyzji produktowej Piotra.
+   Pełne domknięcie wymaga rozdzielenia rejestracji od wejścia (potwierdzenie mailem
+   przed provisioningiem), czyli decyzji produktowej Piotra.
 3. **`optionalAuth` też przechodzi przez guard.** Wygasły principal demo dostanie
    `403` na trasie publicznej z opcjonalnym tokenem, zamiast być potraktowany jako
-   anonim. Kierunek jest bezpieczny (fail closed) i dotyczy tylko kont efemerycznych,
-   ale to zauważalna zmiana zachowania — do potwierdzenia w smoke.
-4. **Limiter jest w pamięci procesu.** `rateLimiting.middleware.ts` trzyma licznik
-   w `Map`, więc kwota jest per replika. Przy skalowaniu `demo` w poziomie realny
-   limit rośnie proporcjonalnie do liczby replik. Wystarczające dla stagingu; przed
-   produkcją wymaga backendu współdzielonego (Redis store już istnieje dla warstwy
-   `express-rate-limit`).
-5. **`resolveQuickAccessCredentials` trzyma realne adresy i hasła w kodzie frontu.**
-   Trafiają do bundla przeglądarki. Poza zakresem tego pakietu (nie wolno ruszać
-   host guarda), ale to dług bezpieczeństwa do osobnej paczki. `1111` wskazuje na
-   `anna.zielinska@ateliertoys-demo.com`, które **nie istnieje** — skrót produkcyjny
-   jest martwy.
-6. **Istniejący `authLimiter` trzyma `auth:<surowy email>` jako klucz Redis**
-   (`server/src/index.ts`). Nowy limiter demo hashuje, stary nie — przestrzeń kluczy
-   Redis zawiera zarejestrowane adresy. Osobny pakiet.
-7. **Ten sam defekt normalizacji adresu istnieje w `POST /api/auth/register`**
-   (ścieżka trialowa). Nie naprawiono — poza zakresem pakietu. Poprawka to podmiana
-   jednego argumentu na `normalizedEmail`; osobny pakiet, bo dotyka rejestracji
-   produkcyjnej.
-8. **`tests/e2e/demo-flow.spec`** (bez rozszerzenia `.ts`, więc niezbierany) opisuje
-   nieistniejący już modal `Experience Consultinity` i wycofane konto demo wpisane
-   na sztywno w asercję. Martwy plik do usunięcia w porządkach.
-9. **Harnessy wymagają teraz `ENABLE_TEST_SUPPORT`** — patrz sekcja o harnessach.
-   Jeśli CI ich nie ustawia, wymienione specyfikacje padną zamiast po cichu
-   degradować. To zamierzone, ale wymaga decyzji konfiguracyjnej.
-10. **`auth.routes.ts` ma `// @ts-nocheck`**, a `build:backend` to `tsc --noCheck`.
-    Nowe pliki backendu są za to sprawdzone realnym `tsc` (patrz bramki). Dowodem dla
-    samej trasy pozostaje test integracyjny na realnym runtime.
+   anonim. Kierunek jest bezpieczny (fail closed) i dotyczy tylko kont efemerycznych.
+4. **Read-only publicznego demo jest bezwarunkowe.** `DEMO_WRITES_ENABLED=true`
+   **nie** odblokuje zapisu dla konta z publicznej rejestracji (nadal działa dla
+   ścieżki nagłówkowej innych użytkowników demo). Jeśli interaktywne demo z zapisem
+   ma kiedyś objąć prospektów, to osobna, jawna decyzja.
+5. **Latencja pierwszego wejścia.** Przy wyłączonym `DEMO_USE_BASE_ORG` seed Atelier
+   Toys biegnie synchronicznie w `register-demo`. Do zmierzenia na Railway.
+6. **`resolveQuickAccessCredentials` trzyma realne adresy i hasła w kodzie frontu.**
+   Trafiają do bundla przeglądarki. PIN `1111` wskazuje konto, które nie istnieje.
+   Osobny pakiet — host guarda nie wolno ruszać w tym.
+7. **Istniejący `authLimiter` trzyma `auth:<surowy email>` jako klucz Redis.** Nowy
+   limiter demo hashuje, stary nie. Osobny pakiet.
+8. **Ten sam defekt normalizacji adresu istnieje w `POST /api/auth/register`**
+   (ścieżka trialowa). Poza zakresem; poprawka to jeden argument.
+9. **Harnessy wymagają teraz `ENABLE_TEST_SUPPORT` + `TEST_SUPPORT_KEY`.** Dodatkowo
+   `demo-login` jest domyślnie zamknięty pod vitest (brak klucza) — żaden istniejący
+   test na tym nie polegał, ale to zmiana konfiguracji, o której CI musi wiedzieć.
+   Skrypty `scripts/claude-verify/*` są wyłączone z użycia do czasu przepięcia na
+   bootstrap.
+10. **`demoSessionService.startDemoSession` przyjął opcjonalny 4. argument**
+    (`sessionOrgId`), żeby saga mogła nazwać własny tenant przed seedem. Zmiana
+    addytywna, zachowanie istniejących wywołań bajt w bajt identyczne — ale to plik
+    spoza pierwotnego zakresu pakietu i wymaga świadomego przeglądu.
+11. **`auth.routes.ts` ma `// @ts-nocheck`**, a `build:backend` to `tsc --noCheck`.
+    Pozostałe zmienione pliki backendu są sprawdzone realnym `tsc`; dowodem dla samej
+    trasy pozostaje test integracyjny na realnym runtime.
 
 ## Stan
 
