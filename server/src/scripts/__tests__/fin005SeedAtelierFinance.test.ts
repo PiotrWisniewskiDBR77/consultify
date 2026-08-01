@@ -681,11 +681,57 @@ describe('FIN-005 seed — the ROI model economics are transcribed, not invented
     );
   });
 
-  it('does NOT invent assumptions_json — the full dataset writes none either', () => {
-    // The reviewer asked for `assumptions_json`; the honest answer is that the
-    // canonical fixture has none, so writing one here would be an invention.
-    // Assert the premise instead of asserting the absence of a symbol.
-    expect(roiSeederSource).not.toContain('assumptions_json');
+  it('FIN-005 round 9: assumptions_json now carries ONLY Piotr\'s explicitly-decided keys — nothing else invented', () => {
+    // Superseded premise (rounds 5-8): "the canonical fixture has no
+    // assumptions_json, so writing one would be an invention." Piotr's round-9
+    // decision explicitly asked for the opposite: the discount/hurdle rate and
+    // the missing-implementation-lag marker must be DATA, not a bare TS
+    // constant — "wartość musi być jawna, odczytywalna i testowana." So the
+    // full dataset (demoSeedService.ts) now DOES write assumptions_json. What
+    // this test still guards: the write is an ALLOWLIST of exactly the keys
+    // Piotr decided on, not an open door to invent baseline economics
+    // (initialCash, initialEquity, a fabricated `baseline` P&L ratio set,
+    // etc. — none of those were asked for and none should appear here).
+    expect(roiSeederSource, 'assumptions_json must now be written').toContain('assumptions_json');
+    expect(roiSeederSource, 'discountRatePct').toContain('discountRatePct');
+    expect(roiSeederSource, 'hurdleRatePct').toContain('hurdleRatePct');
+    expect(roiSeederSource, 'implementationLagMonths').toContain('implementationLagMonths');
+    expect(roiSeederSource, 'implementationLagAssumptionStatus').toContain(
+      'implementationLagAssumptionStatus'
+    );
+    // The lag is recorded as an explicit UNKNOWN, never a number — "nie dodawaj
+    // arbitralnego przesunięcia."
+    expect(roiSeederSource, 'implementationLagMonths must stay null, never a number').toMatch(
+      /implementationLagMonths:\s*null/
+    );
+    expect(
+      roiSeederSource,
+      'implementationLagAssumptionStatus must flag this as a real open decision'
+    ).toContain("'NEEDS_PRODUCT_DECISION'");
+
+    // Nothing beyond that allowlist. `computeModel()` (financialModelingService.ts)
+    // reads `initialCash`/`initialEquity`/`initialDebt`/`initialPPE`/`initialAR`/
+    // `initialInventory`/`initialAP`/`baseline` off assumptions_json for P&L
+    // extrapolation — none of those are part of Piotr's decision, so none may
+    // appear here; if one does, someone started inventing balance-sheet
+    // assumptions nobody asked for.
+    const uninventedKeys = [
+      'initialCash',
+      'initialEquity',
+      'initialDebt',
+      'initialPPE',
+      'initialAR',
+      'initialInventory',
+      'initialAP',
+      'baseline',
+    ];
+    for (const key of uninventedKeys) {
+      expect(roiSeederSource, `${key} must not be invented`).not.toContain(key);
+    }
+
+    // The narrow FIN-005 CLI seed command (server/scripts/fin005-seed-atelier-finance.ts)
+    // is untouched by this decision — it seeds the statement/analysis/pack leg,
+    // never the model, so it still has no reason to mention assumptions_json.
     expect(MODULE_SOURCE.replace(/\/\*[\s\S]*?\*\//g, '')).not.toContain("'assumptions_json'");
   });
 
