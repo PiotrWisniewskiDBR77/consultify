@@ -11,7 +11,11 @@
  * 6. Cybersecurity
  * 7. AI Maturity
  *
- * Each axis has multiple areas with 5-level maturity scale.
+ * Each axis has multiple areas. The maturity scale length is PER-AXIS
+ * (drdStructure.ts: DRDAxis.levelCount is 5, 6, or 7 depending on the axis —
+ * e.g. Processes/Data Management have 7 levels). Never hardcode 1-5; read the
+ * level count from the area/axis (ASM-001A fix — a hardcoded 1-5 selector
+ * made achievedLevel:6/7 on a 7-level axis render as an absurd "6/5").
  */
 
 import {
@@ -183,10 +187,18 @@ export const DRDForm: React.FC<DRDFormProps> = ({
   };
 
   // Render level selector
-  const renderLevelSelector = (areaId: string, type: 'actual' | 'target', currentValue: number) => {
+  // levelCount is PER-AXIS (drdStructure.ts DRDAxis.levelCount / area.levels.length,
+  // 5/6/7 depending on axis) — never hardcode 1-5, that clamps 6/7-level axes.
+  const renderLevelSelector = (
+    areaId: string,
+    type: 'actual' | 'target',
+    currentValue: number,
+    levelCount: number
+  ) => {
+    const levels = Array.from({ length: levelCount }, (_, i) => i + 1);
     return (
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map((level) => (
+      <div className="flex flex-wrap gap-1">
+        {levels.map((level) => (
           <button
             key={level}
             onClick={() => handleAreaScoreChange(areaId, type, level)}
@@ -215,6 +227,10 @@ export const DRDForm: React.FC<DRDFormProps> = ({
     const scores = currentAxisData.areaScores?.[area.id] || [0, 0];
     const gap = scores[1] - scores[0];
     const isExpanded = activeAreaId === area.id;
+    // Ground truth = the area's own level list; falls back to the axis's
+    // declared levelCount, then to 5 for any structure missing both (defensive,
+    // keeps older/incomplete data from crashing rather than assuming 5 is right).
+    const levelCount = area.levels.length || currentAxis?.levelCount || 5;
 
     return (
       <div
@@ -268,13 +284,13 @@ export const DRDForm: React.FC<DRDFormProps> = ({
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   {t('assessment.form.currentLevel', 'Current Level')}
                 </label>
-                {renderLevelSelector(area.id, 'actual', scores[0])}
+                {renderLevelSelector(area.id, 'actual', scores[0], levelCount)}
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   {t('assessment.form.targetLevel', 'Target Level')}
                 </label>
-                {renderLevelSelector(area.id, 'target', scores[1])}
+                {renderLevelSelector(area.id, 'target', scores[1], levelCount)}
               </div>
             </div>
 
@@ -372,7 +388,11 @@ export const DRDForm: React.FC<DRDFormProps> = ({
           </div>
           {progress.avgScore > 0 && (
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-              {t('assessment.form.avgScore', 'Average score')}: {progress.avgScore}/5
+              {/* Cross-axis average: axes have DIFFERENT level counts (5/6/7), so
+                  there is no single denominator to append here (a hardcoded /5
+                  would be wrong for the same reason the per-axis "6/5" bug was —
+                  ASM-001A). Show the raw average only. */}
+              {t('assessment.form.avgScore', 'Average score')}: {progress.avgScore}
             </p>
           )}
         </div>
@@ -437,7 +457,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
                   {t('assessment.form.currentLevel', 'Current Level')}
                 </p>
                 <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                  {currentAxisData.actual || '-'}/5
+                  {currentAxisData.actual || '-'}/{currentAxis.levelCount || 5}
                 </p>
               </div>
               <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-200 dark:border-green-500/30">
@@ -445,7 +465,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
                   {t('assessment.form.targetLevel', 'Target Level')}
                 </p>
                 <p className="text-2xl font-bold text-green-700 dark:text-green-300">
-                  {currentAxisData.target || '-'}/5
+                  {currentAxisData.target || '-'}/{currentAxis.levelCount || 5}
                 </p>
               </div>
               <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-200 dark:border-amber-500/30">
