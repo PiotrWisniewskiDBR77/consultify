@@ -260,7 +260,7 @@ export const V8AssessmentApi = {
    */
   getDefinitions(methodologyId: string) {
     return v8Get<{ methodologyId: string; versions: V8AssessmentDefinitionRecord[] }>(
-      `/definitions/${encodeURIComponent(methodologyId)}`
+      `/assessment/definitions/${encodeURIComponent(methodologyId)}`
     );
   },
 
