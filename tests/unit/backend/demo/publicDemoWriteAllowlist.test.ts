@@ -649,12 +649,11 @@ describe('public demo write allowlist — shape', () => {
       }))
     ).toEqual([
       { method: 'POST', path: '/api/auth/logout', guarded: false },
-      { method: 'POST', path: '/api/auth/revoke-all', guarded: false },
       { method: 'POST', path: '/api/auth/refresh', guarded: false },
       { method: 'POST', path: '/api/demo/toggle', guarded: true },
       { method: 'POST', path: '/api/demo/record-event', guarded: false },
     ]);
-    expect(PUBLIC_DEMO_WRITE_ALLOWLIST).toHaveLength(5);
+    expect(PUBLIC_DEMO_WRITE_ALLOWLIST).toHaveLength(4);
   });
 
   it('documents a reason for every row', () => {
@@ -687,14 +686,13 @@ describe('public demo write allowlist — the real route surface is denied', () 
     expect(new Set(ROUTE_SURFACE.map(label)).size).toBe(ROUTE_SURFACE.length);
   });
 
-  it('intersects the allowlist in exactly the five documented rows', () => {
+  it('intersects the allowlist in exactly the four documented rows', () => {
     // Pins the relationship in both directions: every allowlist row appears in
     // the enumerated surface (so it is a real route, not a typo), and no other
     // enumerated route is allowlisted.
     expect(ROUTE_SURFACE.filter(isAllowlisted).map(label).sort()).toEqual([
       'POST /api/auth/logout',
       'POST /api/auth/refresh',
-      'POST /api/auth/revoke-all',
       'POST /api/demo/record-event',
       'POST /api/demo/toggle',
     ]);
@@ -970,7 +968,7 @@ describe('public demo write allowlist — path normalization cannot be talked in
 });
 
 describe('expired demo principal — a strictly smaller door', () => {
-  const STILL_OPEN = ['/api/auth/logout', '/api/auth/revoke-all'];
+  const STILL_OPEN = ['/api/auth/logout'];
 
   it.each(STILL_OPEN)('lets a lapsed principal reach %s to drop its credentials', (path) => {
     expect(isPathAllowedForExpiredDemo(path)).toBe(true);
@@ -992,6 +990,11 @@ describe('expired demo principal — a strictly smaller door', () => {
     '/api/auth/logout-all',
     // The old implementation matched `${allowed}/` as a prefix.
     '/api/auth/logout/everywhere',
+    // revoke-all is NOT a demo capability: the handler admits only ADMIN/SUPERADMIN,
+    // and it writes a marker RefreshTokenService never reads, so a refresh still
+    // rotates afterwards. It claimed a logout-all the system does not perform.
+    // Tracked in SEC-AUTH-001.
+    '/api/auth/revoke-all',
     '/api/auth/revoke-all/now',
     // Bypass shapes.
     '/api/auth/logout/../change-password',
@@ -1015,7 +1018,7 @@ describe('expired demo principal — a strictly smaller door', () => {
   it('is a strict subset of the live write allowlist', () => {
     const live = PUBLIC_DEMO_WRITE_ALLOWLIST.map((entry) => entry.path);
     const expiredOpen = live.filter((path) => isPathAllowedForExpiredDemo(path));
-    expect(expiredOpen.sort()).toEqual(['/api/auth/logout', '/api/auth/revoke-all']);
+    expect(expiredOpen.sort()).toEqual(['/api/auth/logout']);
     expect(expiredOpen.length).toBeLessThan(live.length);
   });
 });

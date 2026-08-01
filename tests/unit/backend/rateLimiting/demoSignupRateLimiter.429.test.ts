@@ -193,3 +193,64 @@ describe('demo signup rate limiting (production behaviour)', () => {
     expect(res.statusCode).toBe(200);
   });
 });
+
+describe('demo signup quota cannot be chosen by the caller', () => {
+  /**
+   * The default key resolver prefers a user id read out of the bearer token with
+   * `jwt.decode` — unverified. On `register-demo`, which is unauthenticated and
+   * provisions a tenant per success, that let an attacker attach any junk bearer,
+   * rotate the `id` claim, and land every request in a fresh bucket.
+   */
+  const junkBearer = (id: string) => {
+    const b64 = (o: unknown) => Buffer.from(JSON.stringify(o)).toString('base64url');
+    return `${b64({ alg: 'none', typ: 'JWT' })}.${b64({ id })}.`;
+  };
+
+  it('ignores an unverified token and keeps counting per network', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const { demoSignupIpRateLimiter } = await loadLimiters();
+
+    const res = makeRes();
+    const next = vi.fn();
+    // Same IP, a different forged identity every time.
+    for (let i = 0; i < 6; i += 1) {
+      demoSignupIpRateLimiter(
+        {
+          method: 'POST',
+          ip: '198.51.100.240',
+          headers: { authorization: `Bearer ${junkBearer(`forged-${i}`)}` },
+          body: {},
+        } as any,
+        res as any,
+        next
+      );
+    }
+
+    expect(next).toHaveBeenCalledTimes(5);
+    expect(res.statusCode).toBe(429);
+  });
+
+  it('the identity limiter falls back to the network, not to a token-derived key', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const { demoSignupIdentityRateLimiter } = await loadLimiters();
+
+    const res = makeRes();
+    const next = vi.fn();
+    // No address in the body, forged identity rotating: must still be bounded.
+    for (let i = 0; i < 4; i += 1) {
+      demoSignupIdentityRateLimiter(
+        {
+          method: 'POST',
+          ip: '198.51.100.241',
+          headers: { authorization: `Bearer ${junkBearer(`forged-${i}`)}` },
+          body: {},
+        } as any,
+        res as any,
+        next
+      );
+    }
+
+    expect(next).toHaveBeenCalledTimes(3);
+    expect(res.statusCode).toBe(429);
+  });
+});

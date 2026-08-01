@@ -448,6 +448,110 @@ describe('OPS-DEMO-002 public demo entry contract', () => {
       180_000
     );
 
+    it('revoke-all is NOT a demo capability — it is refused', async () => {
+      // It was allowlisted as a self-service "logout-all". It is not one: the
+      // handler admits only ADMIN/SUPERADMIN, and it merely writes a marker that
+      // RefreshTokenService never reads, so a refresh still rotates afterwards.
+      // Tracked in SEC-AUTH-001; nothing in the demo path depends on it.
+      const a = await registerDemo(fixtureEmail('revoke-all'));
+      const res = await request(app)
+        .post('/api/auth/revoke-all')
+        .set('Authorization', `Bearer ${a.body.token}`)
+        .send({});
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('DEMO_READ_ONLY');
+    }, 180_000);
+
+    it('an EXPIRED principal is also refused revoke-all, and still gets logout', async () => {
+      const a = await registerDemo(fixtureEmail('revoke-all-expired'));
+      const userId = a.body.user.id as string;
+      await dbRun(
+        `UPDATE demo_sessions SET expires_at = ? WHERE user_id = ?`,
+        [new Date(Date.now() - 60_000).toISOString(), userId],
+        { fallback: false }
+      );
+      __resetDemoPrincipalCache();
+
+      const revoke = await request(app)
+        .post('/api/auth/revoke-all')
+        .set('Authorization', `Bearer ${a.body.token}`)
+        .send({});
+      expect(revoke.status).toBe(403);
+      expect(revoke.body.code).toBe('DEMO_SESSION_EXPIRED');
+
+      const out = await request(app)
+        .post('/api/auth/logout')
+        .set('Authorization', `Bearer ${a.body.token}`)
+        .send({});
+      expect(out.status).not.toBe(403);
+    }, 180_000);
+
+    it('an expired principal can log out even while sending its stale demo headers', async () => {
+      // The real client keeps X-Demo-Mode and X-Demo-Session-Org in its store and
+      // attaches them to every request. After expiry that header names a session
+      // that no longer exists, and the generic mismatch check used to refuse the
+      // very logout the client needs.
+      //
+      // NODE_ENV is moved off 'test' for this one request on purpose: attachUser
+      // has a test-only fallback that accepts the requested session org verbatim,
+      // which masks this path entirely under the normal suite env.
+      const a = await registerDemo(fixtureEmail('expired-logout-headers'));
+      const userId = a.body.user.id as string;
+      const staleOrg = a.body.demoSession.organizationId as string;
+      await dbRun(
+        `UPDATE demo_sessions SET expires_at = ? WHERE user_id = ?`,
+        [new Date(Date.now() - 60_000).toISOString(), userId],
+        { fallback: false }
+      );
+      __resetDemoPrincipalCache();
+
+      const previousNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'staging';
+      try {
+        const out = await request(app)
+          .post('/api/auth/logout')
+          .set('Authorization', `Bearer ${a.body.token}`)
+          .set('X-Demo-Mode', 'true')
+          .set('X-Demo-Session-Org', staleOrg)
+          .send({});
+        expect(out.status).not.toBe(403);
+      } finally {
+        process.env.NODE_ENV = previousNodeEnv;
+      }
+    }, 180_000);
+
+    it('a header-less request is attributed to the session tenant, not the base org', async () => {
+      // The "any ACTIVE membership" rescue in attachUser used to overwrite the
+      // server-derived session org with the base org on every header-less request,
+      // because a demo principal's membership row lives in the base org. Probing
+      // /api/demo/organization cannot see that — it reads the session row directly.
+      // record-event does write through req.organizationId, so it can.
+      const a = await registerDemo(fixtureEmail('bare-attribution'));
+      const orgA = a.body.demoSession.organizationId as string;
+
+      const before = await dbGet<{ c: number }>(
+        `SELECT COUNT(*) as c FROM conversion_events WHERE organization_id = ? AND user_id = ?`,
+        ['demo-org', a.body.user.id]
+      );
+
+      const res = await request(app)
+        .post('/api/demo/record-event')
+        .set('Authorization', `Bearer ${a.body.token}`)
+        .send({ eventType: 'demo_ai_limit_reached' });
+      expect(res.status).toBe(200);
+
+      const onSession = await dbGet<{ c: number }>(
+        `SELECT COUNT(*) as c FROM conversion_events WHERE organization_id = ? AND user_id = ?`,
+        [orgA, a.body.user.id]
+      );
+      const onBase = await dbGet<{ c: number }>(
+        `SELECT COUNT(*) as c FROM conversion_events WHERE organization_id = ? AND user_id = ?`,
+        ['demo-org', a.body.user.id]
+      );
+      expect(Number(onSession?.c || 0)).toBeGreaterThan(0);
+      expect(Number(onBase?.c || 0)).toBe(Number(before?.c || 0));
+    }, 180_000);
+
     it('logout is still permitted', async () => {
       const a = await registerDemo(fixtureEmail('bare-logout'));
       const out = await request(app)
