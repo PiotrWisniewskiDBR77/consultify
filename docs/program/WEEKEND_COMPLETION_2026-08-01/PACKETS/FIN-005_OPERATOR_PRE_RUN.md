@@ -34,12 +34,19 @@ obce rekordy poza tenant demo; uruchomiona wcześniej zostawiłaby Finance puste
 Skrypt sam tego pilnuje: `--write` czyta z bazy dokładny kanoniczny fixture
 i odmawia, gdy czegokolwiek brakuje — ale kolejność i tak należy do operatora.
 
+Komenda tego kroku jest w **§2**. **Nie jest nią** `npm run db:seed:atelier`:
+to pełna przebudowa datasetu demo (użytkownicy, projekty, inicjatywy, zadania,
+decyzje, raporty, dokumenty, wywiady, KPI, powiadomienia…), bez allowlisty
+fingerprintu i bez zapisu stanu sprzed uruchomienia. Do FIN-005 służy wyłącznie
+`server/scripts/fin005-seed-atelier-finance.ts`.
+
 ---
 
 ## 1. Potwierdź żywy cel Railway (read-only)
 
-Skrypt ma twardą allowlistę fingerprintu i **nie ma domyślnych wartości** —
-każde pole musi zostać zadeklarowane jawnie. Wartości w
+**Oba** skrypty operatora — seed z §2 i kwarantanna z §3/§7 — czytają TĘ SAMĄ
+allowlistę i tę samą bramkę `assertApprovedDemoTarget`: twardy fingerprint,
+**bez wartości domyślnych**, każde pole zadeklarowane jawnie. Wartości w
 `FIN005_APPROVED_DEMO_TARGETS` (`server/src/services/demo/financeDemoCoherencePolicy.ts`)
 są przepisane z dokumentacji i **nie były potwierdzone na żywym połączeniu**,
 bo ta gałąź nie może dotykać Railway.
@@ -68,7 +75,168 @@ odblokowuje niczego.
 
 ---
 
-## 2. Preflight — wyłącznie do odczytu
+## 2. Seed kanonicznego fixture'u Atelier Finance
+
+Dedykowana komenda, nie przebudowa datasetu. Zasiewa **wyłącznie** złoty
+przepływ Finance FIN-005: pakiet FY2014 → 3 sprawozdania → 27 wartości →
+zatwierdzona analiza → kanoniczny model ROI związany z tym pakietem (33 wiersze,
+dokładnie zbiór ID z `getAtelierFinanceCanonicalIds`). **Niczego nie usuwa,
+nie tworzy ani nie kasuje organizacji, nie wykonuje DDL.**
+
+Bramki, w kolejności odpalania: brak furtek (`--force*` nie istnieje) → jawnie
+zadeklarowany cel (ta sama allowlista i ten sam `assertApprovedDemoTarget`, co
+kwarantanna) → baza raportowana przez SERWER = baza zatwierdzona →
+`organization_type` **dokładnie** `DEMO` → **przypięty PostgreSQL** →
+preflight → token potwierdzenia → manifest odtworzenia → weryfikacja READY.
+
+### 2.1. Zmienne środowiskowe
+
+| Zmienna | Dry-run | `--write` | Uwaga |
+| --- | --- | --- | --- |
+| `DATABASE_URL` | wymagana | wymagana | **musi zawierać port** — brak portu = ODMOWA, nigdy „domyślne 5432" |
+| `DB_TYPE=postgres` | wymagana | wymagana | bez tego seed pisze przez inny sterownik |
+| `FIN005_SEED_CONFIRM` | — | `SEED_ATELIER_FINANCE_GOLDEN_FLOW` | **własny token**, celowo INNY niż `QUARANTINE_FOREIGN_FINANCE` z §7 |
+
+`FIN005_MANIFEST_HMAC_KEY` **nie jest** tu potrzebny — to klucz kwarantanny
+(§5). Manifest tej komendy jest nieszyfrowanym zapisem stanu „przed", nie
+wykonywalnym planem cofnięcia; szczegół w §2.5.
+
+### 2.2. Dry-run (domyślny, wyłącznie do odczytu)
+
+```bash
+DB_TYPE=postgres DATABASE_URL="<demo>" \
+npx tsx server/scripts/fin005-seed-atelier-finance.ts \
+  --demo-org-id "<DEMO_ORG_ID>" \
+  --locale en \
+  --railway-project consultify \
+  --railway-environment demo \
+  --railway-service "<POTWIERDZONY_SERVICE>" \
+  --expect-host trolley.proxy.rlwy.net \
+  --expect-port 28146 \
+  --expect-database "<POTWIERDZONA_BAZA>"
+```
+
+`--locale` jest **obowiązkowy i bez wartości domyślnej** — decyduje o tytułach
+widocznych dla klienta (model i analiza). Dla odbioru z §8 to `en`.
+
+Oczekiwane wyjście na tenancie bez fixture'u (dosłownie, poza znacznikiem czasu
+i pid-em):
+
+```
+[fin005-atelier-finance-seed] Target: source=DATABASE_URL host=trolley.proxy.rlwy.net database=railway
+[fin005-atelier-finance-seed] pinned PostgreSQL: AVAILABLE — PostgreSQL database "railway"; BEGIN/ROLLBACK proved on a pinned connection to "railway" (backend pid 79032)
+[fin005-atelier-finance-seed] preflight for "demo-org": create=33 promote=0 relink=0 unchanged=0
+- report: .../server/exports/fin005-atelier-seed-dry-run-<stamp>.md
+✅ Dry run complete. Nothing was written.
+   Re-run with --write and FIN005_SEED_CONFIRM=SEED_ATELIER_FINANCE_GOLDEN_FLOW.
+```
+
+Na tenancie już zasianym ostatnie dwie linie brzmią:
+
+```
+✅ Dry run complete. Nothing was written.
+   The canonical fixture is already materialized and READY — --write would change nothing.
+```
+
+Raport `server/exports/fin005-atelier-seed-dry-run-*.md` wymienia **wiersz po
+wierszu**, co zmieniłby zapis, w czterech kategoriach: `create` (nie istnieje),
+`promote` (istnieje, ale nie jest w stanie terminalnym READY), `relink`
+(istnieje i jest READY, ale wisi na złym rodzicu), `unchanged`.
+
+**Bramki zatrzymujące dry-run** (żadna nie tworzy stanu pośredniego):
+
+- `Refusing to run: the target must be declared explicitly, no defaults. Missing: …`
+- `declared host "…" but the connection resolves to "…"` / analogicznie dla bazy i portu
+- `carries no port, so the approved port … cannot be confirmed`
+- `matches a forbidden production database host (centerbeam)` — także dla `prod`/`production`/`live`
+- `is not on the FIN-005 allowlist`
+- `organization_type is "…", expected exactly "DEMO"`
+- `Organization "…" does not exist in the target database. This command never creates a tenant`
+
+Jeżeli przypięte połączenie nie działa, dry-run kończy się dodatkową linią:
+
+```
+⛔ --write would REFUSE: the pinned PostgreSQL promotion path is unavailable (…). Fix the connection; there is no non-atomic fallback.
+```
+
+**Nie przechodź wtedy dalej.** `--write` odmówi, a fallback na ścieżkę
+nieatomową nie istnieje ani w tej komendzie, ani (docelowo) w samym seedzie.
+
+### 2.3. `--write`
+
+```bash
+DB_TYPE=postgres DATABASE_URL="<demo>" \
+FIN005_SEED_CONFIRM=SEED_ATELIER_FINANCE_GOLDEN_FLOW \
+npx tsx server/scripts/fin005-seed-atelier-finance.ts \
+  --demo-org-id "<DEMO_ORG_ID>" \
+  --locale en \
+  --railway-project consultify \
+  --railway-environment demo \
+  --railway-service "<SERVICE>" \
+  --expect-host trolley.proxy.rlwy.net \
+  --expect-port 28146 \
+  --expect-database "<BAZA>" \
+  --write
+```
+
+Oczekiwane wyjście:
+
+```
+[fin005-atelier-finance-seed] Target: source=DATABASE_URL host=trolley.proxy.rlwy.net database=railway
+[fin005-atelier-finance-seed] pinned PostgreSQL: AVAILABLE — PostgreSQL database "railway"; BEGIN/ROLLBACK proved on a pinned connection to "railway" (backend pid …)
+[fin005-atelier-finance-seed] preflight for "demo-org": create=33 promote=0 relink=0 unchanged=0
+- report: .../server/exports/fin005-atelier-seed-write-<stamp>.md
+[fin005-atelier-finance-seed] Write mode (run <stamp>). This will:
+  - upsert the canonical Atelier Toys FY2014 pack, 3 statements, 27 statement values, the approved analysis and the canonical ROI model in "demo-org";
+  - promote them to READY inside ONE pinned PostgreSQL transaction;
+  - touch no other organization and no row outside the canonical id set;
+  - remove nothing, drop nothing, run no DDL.
+- recovery manifest (prior state, written BEFORE the first write): .../server/exports/fin005-atelier-seed-manifest-<stamp>.json
+✅ Seed complete — the canonical Atelier Finance fixture is materialized and READY in "demo-org".
+- fixture digest (after): <64 znaki hex>
+- manifest: .../server/exports/fin005-atelier-seed-manifest-<stamp>.json
+- nothing was deleted, no organization was created or removed.
+```
+
+Powtórne uruchomienie `--write` na gotowym fixture jest **bezoperacyjne**:
+`create=0 promote=0 relink=0 unchanged=33`, ten sam `fixture digest`, zero
+zmian w wierszach (łącznie z `updated_at` — sprawdzane testem na realnym
+PostgreSQL przez porównanie pełnych snapshotów `SELECT *`).
+
+**Bramki zatrzymujące zapis:**
+
+- `Confirmation required. Set FIN005_SEED_CONFIRM=SEED_ATELIER_FINANCE_GOLDEN_FLOW`
+  — token kwarantanny tu **nie działa**;
+- `Refusing to write: the pinned PostgreSQL promotion path is unavailable (…)`;
+- `The Atelier Finance golden flow did not complete: …. Nothing was promoted to READY; the quarantine must NOT be run.`
+- `Refusing to quarantine: the canonical Atelier Finance fixture is not fully materialized and READY …`
+  — postwarunek; oznacza, że mimo zapisu fixture nie jest gotowy. **Nie
+  uruchamiaj kwarantanny.**
+
+### 2.4. Kolejność wobec kwarantanny
+
+Seed (§2) → weryfikacja READY (§4) → preflight kwarantanny (§3, do odczytu,
+kolejność §3/§4 dowolna) → klucz HMAC (§5) → manifest (§6) → `--write`
+kwarantanny (§7). Kwarantanna uruchomiona przed seedem zostawiłaby Finance puste.
+
+### 2.5. Manifest odtworzenia tej komendy — czym jest, a czym nie
+
+`server/exports/fin005-atelier-seed-manifest-<stamp>.json` powstaje **przed
+pierwszą mutacją** (plik tymczasowy → `fsync` → atomowy `rename` → `fsync`
+katalogu, ta sama dyscyplina co manifest kwarantanny) i zawiera pełny stan
+„przed" każdego kanonicznego wiersza, listę ID, których jeszcze nie było, oraz
+plan zmian. Po udanym przebiegu jest atomowo nadpisany ze statusem `COMPLETED`
+i skrótem fixture'u „po".
+
+**Nie jest** podpisany HMAC i **nie ma** dla niego `--rollback`. Powód jest
+jawny: ta komenda nigdy nie przenosi ani nie usuwa cudzych danych — wstawia
+kanoniczne wiersze i promuje je. Manifest jest **materiałem dowodowym** do
+ręcznego przywrócenia wiersza, który istniał wcześniej, a nie wykonywalnym
+cofnięciem. Skopiuj go poza laptop operatora razem z manifestem z §6.
+
+---
+
+## 3. Preflight kwarantanny — wyłącznie do odczytu
 
 Uruchom dry-run. Jest domyślny, nie przyjmuje żadnego zapisu i nie wymaga klucza
 HMAC (dry-run nie produkuje manifestu).
@@ -100,9 +268,9 @@ więc skrypt niczego nie zakłada.
 
 ---
 
-## 3. Potwierdź, że fixture jest READY
+## 4. Potwierdź, że fixture jest READY
 
-`--write` wymaga fixture'u **READY**, nie tylko kompletnego: „kompletny, ale
+`--write` kwarantanny wymaga fixture'u **READY**, nie tylko kompletnego: „kompletny, ale
 `pending`" to sygnatura przerwanego seeda, a kontrakt pakietu mówi „najpierw
 seed, potem kwarantanna".
 
@@ -137,13 +305,15 @@ SELECT s.statement_type, s.status, s.validation_status, s.readiness_status,
 ```
 
 Jeżeli stan jest **mieszany** (część `ready`, część `pending`) — to ślad po
-przerwanym seedzie. Uruchom seed ponownie: faza 0 demotuje mieszany stan i
-odbudowuje spójny fixture (zweryfikowane na realnym PostgreSQL, handoff §13.3).
+przerwanym seedzie. Uruchom **ponownie komendę z §2.3** (`--write`): faza 0
+seeda demotuje mieszany stan i odbudowuje spójny fixture (zweryfikowane na
+realnym PostgreSQL, handoff §13.3). Dry-run z §2.2 pokaże ten stan jako wiersze
+`promote` — to jest właśnie sygnatura przerwanego seeda.
 Nie uruchamiaj kwarantanny na mieszanym fixture.
 
 ---
 
-## 4. Przygotuj i zabezpiecz klucz HMAC
+## 5. Przygotuj i zabezpiecz klucz HMAC
 
 Manifest rollbacku jest uwierzytelniony **HMAC-SHA256**. Klucz jest **wymagany**
 dla `--write` i dla `--rollback` (dry-run go nie potrzebuje).
@@ -173,10 +343,11 @@ Wymagania:
 
 ---
 
-## 5. Zachowaj manifest poza maszyną operatora
+## 6. Zachowaj manifest kwarantanny poza maszyną operatora
 
-Manifest jest **jedynym** trwałym planem cofnięcia: nie ma tabeli audit/outbox w
-bazie (wymagałaby migracji, poza granicą pakietu — propozycja DDL leży w
+Dotyczy manifestu **kwarantanny** (manifest seeda z §2.5 jest osobnym plikiem
+i nie ma klucza HMAC). Manifest kwarantanny jest **jedynym** trwałym planem
+cofnięcia: nie ma tabeli audit/outbox w bazie (wymagałaby migracji, poza granicą pakietu — propozycja DDL leży w
 skrypcie jako `DURABLE_AUDIT_TABLE_PROPOSAL`).
 
 Skrypt zapisuje go do pliku tymczasowego, robi `fsync` i atomowy `rename`
@@ -198,7 +369,7 @@ pochodzi z innego hosta/bazy niż podłączony cel.
 
 ---
 
-## 6. Dopiero teraz `--write`
+## 7. Dopiero teraz `--write` kwarantanny
 
 ```bash
 DATABASE_URL="<demo>" \
@@ -219,11 +390,11 @@ Skrypt powie przed zapisem, co zrobi: utworzy nieaktywną organizację kwarantan
 `statement_pack_id` na przenoszonych sprawozdaniach (zapisane do rollbacku) i
 **nie usunie niczego**.
 
-Po zapisie: powtórz zapytania walidacyjne z §2 i porównaj ze stanem „przed".
+Po zapisie: powtórz zapytania walidacyjne z §3 i porównaj ze stanem „przed".
 
 ---
 
-## 7. Odbiór wzrokiem (Finance na `demo.consultify.ai`)
+## 8. Odbiór wzrokiem (Finance na `demo.consultify.ai`)
 
 - PERIOD pokazuje `FY2014`, nigdzie `Thu Dec 31 …`;
 - Statements: jeden pakiet `Atelier Toys`, READY, komplet P&L / BS / CF;
@@ -238,7 +409,22 @@ Werdykt: `GO / FIX / NO-GO`.
 
 ---
 
-## 8. Czego ta gałąź NIE zrobiła
+## 9. Czego ta gałąź NIE zrobiła
 
 Deployu · migracji · `--write` · `--rollback` · żadnej mutacji `demo` ·
 żadnego kontaktu z `production` ani `consultify.ai` · pusha ani merge'a.
+
+Dodatkowo, o komendzie seeda z §2:
+
+- była uruchomiona **wyłącznie na lokalnym, jednorazowym PostgreSQL** (pełny
+  zestaw migracji), nigdy na demo ani na Railway. Wyjścia zacytowane w §2.2
+  i §2.3 pochodzą z tamtego przebiegu, z podmienionymi nazwami hosta i bazy;
+- **nie zasiewa** `financial_model_events` ani `financial_model_outputs` —
+  ekonomia modelu ROI należy do pełnego datasetu. Na tenancie, który już je ma,
+  komenda ich nie rusza (kolumny `project_id`, `initiative_id`, `description`
+  i pochodne są tylko-do-wstawienia). Na tenancie bez nich model pozostanie bez
+  zdarzeń — sprawdź to na odbiorze z §8;
+- **nie widzi**, którą ścieżką seed promował fixture. Komenda odmawia zapisu,
+  gdy przypięte połączenie nie działa, i odmawia, gdy seed nie zwróci
+  `complete` — ale samo „nigdy nie schodź na ścieżkę nieatomową" jest
+  odpowiedzialnością `atelierFinanceSeed.ts`, nie tej komendy.
