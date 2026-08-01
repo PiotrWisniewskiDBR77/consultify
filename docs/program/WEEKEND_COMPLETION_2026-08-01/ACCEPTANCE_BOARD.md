@@ -29,7 +29,7 @@ Statusy końcowe alternatywne: `BLOCKED`, `DEFERRED`, `REJECTED`.
 | `WK-P0-008` | Tools — pełny lifecycle SWOT | CONCEPT | E2E SWOT |
 | `WK-P0-009` | Assessment — scoring/raport/handoff | DISCOVERY | E2E jednego frameworka |
 | `WK-P0-010` | Initiative → Execution → Results | IN_IMPLEMENTATION | kanoniczne wejście Execution przyjęte; nadal potrzebny jeden spójny golden flow |
-| `WK-P0-011` | Materials all — zapis, wznowienie, szablony i eksport | IN_IMPLEMENTATION | artifact foundation, Document share/restore, Workbook round-trip i Presentation CAS restore przyjęte; pozostają workbook versions/concurrency, Sheets actions i lifecycle E2E |
+| `WK-P0-011` | Materials all — zapis, wznowienie, szablony i eksport | BLOCKED | staging: deck `Ready/11` otwiera się jako `0` slajdów; Documents i Sheets mają po `0` artefaktów; naprawa i ponowny lifecycle w `MAT-006B` |
 | `WK-P0-012` | Admin/Settings — guardy i krytyczne mutacje | DISCOVERY | RBAC + audit |
 | `WK-P0-013` | migracje, backup i próbny restore | DISCOVERY | odtwarzalny raport |
 | `WK-P0-014` | globalny smoke i decyzja release | BLOCKED | wszystkie wymagane P0 rozstrzygnięte |
@@ -37,6 +37,7 @@ Statusy końcowe alternatywne: `BLOCKED`, `DEFERRED`, `REJECTED`.
 | `WK-P0-016` | wybór kanonicznych implementacji i freeze alternatyw | BLOCKED | decyzje keep/merge/redirect/archive |
 | `WK-P0-017` | pierwszy pionowy pakiet scalający | BLOCKED | 10/10 bramki integracji |
 | `OPS-DEMO-001` | kontrolowana promocja zaakceptowanego kandydata na Railway `demo` | ACCEPTED | revision `9917d25c75`, deployment `9ea5c9c8` `SUCCESS`, health/routes `200`, log smoke bez fatal/crash/error |
+| `OPS-DEMO-002` | publiczne wejście Try demo | BLOCKED | modal działa, lecz kanoniczne konta demo są odrzucane; administratorskie wejście techniczne działa |
 
 ## P1 — ważne, ale nie blokuje ograniczonego odbioru
 
@@ -47,6 +48,14 @@ Statusy końcowe alternatywne: `BLOCKED`, `DEFERRED`, `REJECTED`.
 - dostępność kluczowych podróży;
 - obsługa błędów i pustych stanów;
 - telemetryka krytycznych operacji.
+
+## Odkrycia stagingowe wymagające naprawy
+
+| ID | Zakres | Status | Dowód / następny krok |
+| --- | --- | --- | --- |
+| `MAT-006B` | Presentation lifecycle | BLOCKED | listowy `Ready/11` ≠ builder `0`; naprawić kanoniczną zawartość seeda i powtórzyć E2E |
+| `FIN-005` | Finance demo coherence | BLOCKED | obce dane DBR77/Apator, odrzucone importy, duplikaty, surowe daty i niedostępny value engine |
+| `OPS-DEMO-002` | Demo entry auth | BLOCKED | landing → Try demo nie wpuszcza kanonicznego konta Atelier Toys |
 
 ## Cel środowiskowy
 

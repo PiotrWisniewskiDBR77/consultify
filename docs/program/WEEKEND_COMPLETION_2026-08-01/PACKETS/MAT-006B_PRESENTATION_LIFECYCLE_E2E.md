@@ -1,7 +1,7 @@
 ---
 doc_id: MAT-006B
 truth_type: operations
-status: ACCEPTED_CONTRACT_SLICE
+status: BLOCKED
 owner: codex
 product_owner: piotr
 priority: P0
@@ -50,6 +50,40 @@ pozostaje wymagany przed uznaniem całego golden flow za odebrany.**
 - regresje CAS restore i real-SQL round-trip pozostają zielone;
 - istniejące kontrakty export/share/revoke pozostają zielone;
 - brak zmian w generatorze, rendererach PPTX/PDF i share API.
+
+## Próba stagingowa 2026-08-01
+
+Środowisko: wyłącznie `https://demo.consultify.ai`, Railway `demo`, revision
+`9917d25c75f7447289517a0cef3981b3b4c4789f`.
+
+Wynik: **NO-GO / BLOCKED**.
+
+- konto administratorskie weszło do seedowanego kontekstu `Demo Mode · Atelier Toys`;
+- lista Materials pokazała `Line 3 Digital Twin — Steering Committee Deck` jako
+  `Ready`, `11` slajdów;
+- preview listy otworzył się poprawnie;
+- po `Open` builder otworzył ten sam identyfikator
+  `atelier--deck--line3-steering`, ale pokazał `Card 1 of 0` oraz
+  `Deck has no content yet. Generate slides first.`;
+- `Present` był wyłączony;
+- w tym stanie nie da się uczciwie wykonać reopen, restore, PPTX/PDF ani share/revoke;
+- Documents miało `0` raportów, a Sheets `0` workbooków; Template Library działała
+  i zwróciła `94` szablony.
+
+To jest niespójność kanonicznego rekordu, nie kosmetyka: listowy `slide_count` obiecuje
+gotowy deck, podczas gdy `GET /decks/:id` nie dostarcza builderowi `deck_json.cards`
+ani konwertowalnych `unified_json.slides`.
+
+## Pakiet naprawczy przed ponowną próbą
+
+1. naprawić seed/materializację trzech decków Atelier Toys tak, aby `slide_count`
+   wynikał z kanonicznej zawartości, a nie niezależnego licznika;
+2. dodać test spójności: każdy deck `Ready` z `slide_count > 0` musi po canonical GET
+   mieć dokładnie tyle samo kart/slajdów;
+3. seedować co najmniej jeden gotowy Document i jeden gotowy Sheet dla tego samego
+   tenantowego story;
+4. dopiero potem powtórzyć pełny lifecycle poniżej na namespaced fixture i usunąć
+   fixture po teście.
 
 ## Pozostała bramka stagingowa
 
