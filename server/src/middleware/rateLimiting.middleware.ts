@@ -10,6 +10,9 @@ import crypto from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
+import logger from '../utils/Logger.js';
+import { incrementRateLimitHits } from './metrics.middleware.js';
+
 // ---------------------------------------------------------------------------
 // In-Memory Sliding Window Store
 // ---------------------------------------------------------------------------
@@ -263,6 +266,283 @@ function extractKey(req: Request): string {
 }
 
 // ---------------------------------------------------------------------------
+// Rejection telemetry (OPS-DEMO-002)
+// ---------------------------------------------------------------------------
+/**
+ * Counts refusals per limiter so an operator can tell a demo-signup flood apart
+ * from ordinary auth throttling. Two surfaces, deliberately:
+ *
+ * 1. the SHARED facility — `incrementRateLimitHits()` from metrics.middleware,
+ *    already surfaced by `GET /api/health/aggregated`
+ *    (`components.metrics.details.rateLimitHits`). That counter existed but had
+ *    zero callers, so the aggregate was permanently 0 until now;
+ * 2. this module's per-limiter breakdown, which the shared bucket cannot express
+ *    (it is a single unlabelled number).
+ *
+ * PRIVACY: the store key holds an IP or an opaque identity hash. Neither is ever
+ * logged or exposed. Keys are only ever counted, and the distinct-source tally
+ * hashes the key again before it touches a set, so nothing reversible is held.
+ */
+const REJECTION_LOG_INTERVAL_MS = 60_000;
+const MAX_TRACKED_LIMITER_PREFIXES = 64;
+const MAX_TRACKED_REJECTION_SOURCES = 1_000;
+const MAX_TELEMETRY_COUNTER = Number.MAX_SAFE_INTEGER;
+
+/** `rejected` = refused over quota. `store-unavailable` = the shared store could not answer. */
+export type RateLimitTelemetryReason = 'rejected' | 'store-unavailable';
+
+export interface RateLimitTelemetryEntry {
+  rejected: number;
+  storeUnavailable: number;
+}
+
+export type RateLimitTelemetrySnapshot = Record<string, RateLimitTelemetryEntry>;
+
+interface RejectionLogWindow {
+  lastLoggedAt: number;
+  pending: number;
+  sources: Set<string>;
+  sourcesTruncated: boolean;
+}
+
+const telemetryCounters = new Map<string, RateLimitTelemetryEntry>();
+const rejectionLogWindows = new Map<string, RejectionLogWindow>();
+
+function addBoundedTelemetryCounter(current: unknown, delta: number): number {
+  const currentValue =
+    typeof current === 'number' && Number.isFinite(current) && current >= 0 ? current : 0;
+  return Math.min(MAX_TELEMETRY_COUNTER, currentValue + delta);
+}
+
+function telemetryBucketFor(prefix: string): RateLimitTelemetryEntry | null {
+  const existing = telemetryCounters.get(prefix);
+  if (existing) return existing;
+  // Prefixes are compile-time constants, so this cap should never bind; it only
+  // stops a future caller from turning the counter map into an unbounded label space.
+  if (telemetryCounters.size >= MAX_TRACKED_LIMITER_PREFIXES) return null;
+  const created: RateLimitTelemetryEntry = { rejected: 0, storeUnavailable: 0 };
+  telemetryCounters.set(prefix, created);
+  return created;
+}
+
+/**
+ * Count-and-summarise rather than one line per refused request: under a real
+ * flood the per-request line IS the denial of service against the log pipeline.
+ * The first refusal of a quiet period logs immediately (so the signal is not
+ * delayed), then at most one summary per limiter per minute.
+ *
+ * `hashRateLimitIdentity` is declared further down; function declarations hoist.
+ */
+function summariseRateLimitEvent(
+  prefix: string,
+  key: string,
+  reason: RateLimitTelemetryReason
+): void {
+  const windowKey = `${prefix}|${reason}`;
+  let window = rejectionLogWindows.get(windowKey);
+  if (!window) {
+    if (rejectionLogWindows.size >= MAX_TRACKED_LIMITER_PREFIXES * 2) return;
+    window = { lastLoggedAt: 0, pending: 0, sources: new Set<string>(), sourcesTruncated: false };
+    rejectionLogWindows.set(windowKey, window);
+  }
+  window.pending = addBoundedTelemetryCounter(window.pending, 1);
+  if (window.sources.size < MAX_TRACKED_REJECTION_SOURCES) {
+    window.sources.add(hashRateLimitIdentity('rate-limit-source', key));
+  } else {
+    window.sourcesTruncated = true;
+  }
+
+  const now = Date.now();
+  if (window.lastLoggedAt > 0 && now - window.lastLoggedAt < REJECTION_LOG_INTERVAL_MS) return;
+
+  const bucket = telemetryCounters.get(prefix);
+  const payload = {
+    limiter: prefix,
+    reason,
+    events: window.pending,
+    distinctSources: window.sources.size,
+    distinctSourcesTruncated: window.sourcesTruncated,
+    totalSinceReset:
+      (reason === 'store-unavailable' ? bucket?.storeUnavailable : bucket?.rejected) ?? 0,
+    summaryWindowMs: REJECTION_LOG_INTERVAL_MS,
+  };
+  window.lastLoggedAt = now;
+  window.pending = 0;
+  window.sources.clear();
+  window.sourcesTruncated = false;
+
+  logger.warn(
+    reason === 'store-unavailable'
+      ? '[RateLimit] shared store unavailable'
+      : '[RateLimit] requests refused over quota',
+    payload
+  );
+}
+
+function recordRateLimitEvent(
+  prefix: string,
+  key: string,
+  reason: RateLimitTelemetryReason
+): void {
+  try {
+    const bucket = telemetryBucketFor(prefix);
+    if (bucket) {
+      if (reason === 'store-unavailable') {
+        bucket.storeUnavailable = addBoundedTelemetryCounter(bucket.storeUnavailable, 1);
+      } else {
+        bucket.rejected = addBoundedTelemetryCounter(bucket.rejected, 1);
+      }
+    }
+    if (reason === 'rejected') {
+      try {
+        incrementRateLimitHits();
+      } catch {
+        // The shared metrics bucket is best effort; never let it break the limiter.
+      }
+    }
+    summariseRateLimitEvent(prefix, key, reason);
+  } catch {
+    // Telemetry must never change whether a request is allowed.
+  }
+}
+
+/** Per-limiter refusal counts, keyed by limiter prefix (`auth`, `demo-signup-ip`, ...). */
+export function getRateLimitTelemetry(): RateLimitTelemetrySnapshot {
+  const snapshot: RateLimitTelemetrySnapshot = Object.create(null) as RateLimitTelemetrySnapshot;
+  for (const [prefix, bucket] of telemetryCounters) {
+    snapshot[prefix] = { rejected: bucket.rejected, storeUnavailable: bucket.storeUnavailable };
+  }
+  return snapshot;
+}
+
+/** Clears counters and the log-throttle windows, so tests are deterministic. */
+export function resetRateLimitTelemetry(): void {
+  telemetryCounters.clear();
+  rejectionLogWindows.clear();
+}
+
+// ---------------------------------------------------------------------------
+// Shared (cross-replica) store seam — PREPARED, OFF BY DEFAULT
+// ---------------------------------------------------------------------------
+/**
+ * The in-memory bucket above is per-process: on a horizontally scaled deployment
+ * the effective quota is multiplied by the replica count. Single-replica staging
+ * is fine; a public production deployment is not.
+ *
+ * This seam lets a limiter delegate counting to a store shared by all replicas.
+ * It is OPT-IN and defaults OFF, so nothing changes without an explicit decision:
+ *
+ *   RATE_LIMIT_SHARED_STORE=redis            enables it (any other value = in-memory)
+ *   RATE_LIMIT_SHARED_STORE_FAIL_MODE=...    closed (default) | local | open
+ *
+ * Only limiters created with `sharedStore: true` consult the flag at all, so
+ * turning it on cannot silently change the auth/api limiters.
+ */
+export interface SharedRateLimitStore {
+  increment(key: string, windowMs: number): Promise<{ count: number; resetAt: number }>;
+}
+
+export type SharedRateLimitStoreFactory = (
+  windowMs: number
+) => SharedRateLimitStore | Promise<SharedRateLimitStore>;
+
+type SharedStoreFailMode = 'closed' | 'local' | 'open';
+
+const SHARED_STORE_ENV = 'RATE_LIMIT_SHARED_STORE';
+const SHARED_STORE_FAIL_MODE_ENV = 'RATE_LIMIT_SHARED_STORE_FAIL_MODE';
+const SHARED_STORE_UNAVAILABLE_RETRY_AFTER_SECONDS = 30;
+
+let sharedStoreFactoryOverride: SharedRateLimitStoreFactory | null = null;
+let sharedStoreGeneration = 0;
+
+function isSharedStoreEnabled(): boolean {
+  const configured = normalizeOptionalString(process.env[SHARED_STORE_ENV]);
+  return configured?.toLowerCase() === 'redis';
+}
+
+/**
+ * Fail direction when the shared store cannot answer.
+ *
+ * DEFAULT: `closed`. These limiters guard an unauthenticated endpoint that
+ * provisions a seeded tenant per success. A store outage during a flood is
+ * exactly when an unbounded quota is most expensive, and the blast radius of
+ * failing closed is a temporarily unavailable signup form — a funnel outage,
+ * not a data or security incident. Note this is the OPPOSITE of the
+ * `express-rate-limit` layer in index.ts, which fails open because it fronts
+ * authenticated product traffic where closing would take the whole app down.
+ *
+ * `local` degrades to the per-replica in-memory bucket (bounded, but N x quota).
+ * `open` lets every request through; that is an explicitly accepted risk.
+ */
+function resolveSharedStoreFailMode(): SharedStoreFailMode {
+  const configured = normalizeOptionalString(process.env[SHARED_STORE_FAIL_MODE_ENV])?.toLowerCase();
+  if (configured === 'open' || configured === 'local') return configured;
+  return 'closed';
+}
+
+/**
+ * Thin adapter over the existing `RedisRateLimitStore`. An adapter is required
+ * rather than using that class directly, for three reasons:
+ *
+ * 1. shape — it returns `{ totalHits, resetTime: Date }` (the express-rate-limit
+ *    contract); this limiter counts in `{ count, resetAt }` epoch milliseconds;
+ * 2. window — its window is constructor-bound, not per-call, so each limiter
+ *    needs its own instance;
+ * 3. failure semantics — its `increment` swallows EVERY Redis error and returns
+ *    `totalHits: 1`, i.e. it fails open INDISTINGUISHABLY: during an outage each
+ *    request looks like the first hit of a fresh window and the quota silently
+ *    becomes infinite. A caller cannot tell that apart from a genuine first hit,
+ *    so this adapter probes the client itself and throws, letting the fail-mode
+ *    policy above make a deliberate choice.
+ *
+ * The same probe rejects the in-process MOCK client (`MOCK_REDIS=true`, or no
+ * `REDIS_URL`), whose `incr` returns a constant 1 — that would look like a
+ * working shared store while enforcing nothing at all.
+ */
+async function createRedisSharedRateLimitStore(windowMs: number): Promise<SharedRateLimitStore> {
+  const [storeModule, clientModule] = await Promise.all([
+    import('../utils/RedisRateLimitStore.js'),
+    import('../utils/RedisClient.js'),
+  ]);
+  const RedisStore = storeModule.RedisRateLimitStore ?? storeModule.default;
+  const redisClient = clientModule.default as unknown as {
+    isOpen?: boolean;
+    incr?: unknown;
+    ttl?: unknown;
+  };
+  const store = new RedisStore({ windowMs });
+
+  return {
+    async increment(key: string): Promise<{ count: number; resetAt: number }> {
+      if (!redisClient || redisClient.isOpen !== true) {
+        throw new Error('shared rate limit store is not connected');
+      }
+      if (typeof redisClient.incr !== 'function' || typeof redisClient.ttl !== 'function') {
+        throw new Error('shared rate limit store is backed by the in-process mock client');
+      }
+      const result = await store.increment(key);
+      const count = toSafeNonNegativeIntCount(result?.totalHits, 0);
+      if (count < 1) throw new Error('shared rate limit store returned an unusable hit count');
+      const resetTime = result?.resetTime;
+      const resetAtRaw = resetTime instanceof Date ? resetTime.getTime() : Number.NaN;
+      const resetAt =
+        Number.isFinite(resetAtRaw) && resetAtRaw > 0 ? resetAtRaw : Date.now() + windowMs;
+      return { count, resetAt };
+    },
+  };
+}
+
+function resolveSharedStoreFactory(): SharedRateLimitStoreFactory {
+  return sharedStoreFactoryOverride ?? createRedisSharedRateLimitStore;
+}
+
+/** Test seam: inject a fake store factory. `null` restores the Redis-backed one. */
+function setSharedRateLimitStoreFactory(factory: SharedRateLimitStoreFactory | null): void {
+  sharedStoreFactoryOverride = factory;
+  sharedStoreGeneration += 1;
+}
+
+// ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
 function createLimiter(opts: {
@@ -270,6 +550,12 @@ function createLimiter(opts: {
   max: number;
   prefix: string;
   message?: string;
+  /**
+   * Opts this limiter into the shared-store seam above. Even then the store is
+   * only used when `RATE_LIMIT_SHARED_STORE=redis`; otherwise the limiter runs
+   * the unchanged, fully synchronous in-memory path.
+   */
+  sharedStore?: boolean;
   /**
    * Overrides the default identity (user id, else IP). Must return an ALREADY
    * OPAQUE value — the returned string lands in the store key verbatim, so a raw
@@ -279,8 +565,155 @@ function createLimiter(opts: {
    */
   keyResolver?: (req: Request) => string;
 }) {
-  const { prefix, message = 'Too many requests, please try again later.', keyResolver } = opts;
+  const {
+    prefix,
+    message = 'Too many requests, please try again later.',
+    keyResolver,
+    sharedStore = false,
+  } = opts;
   const { windowMs, max } = resolveLimiterParams(opts.windowMs, opts.max);
+
+  let cachedSharedStore: { generation: number; promise: Promise<SharedRateLimitStore> } | null =
+    null;
+
+  const loadSharedStore = (): Promise<SharedRateLimitStore> => {
+    if (cachedSharedStore && cachedSharedStore.generation === sharedStoreGeneration) {
+      return cachedSharedStore.promise;
+    }
+    const generation = sharedStoreGeneration;
+    const promise = Promise.resolve()
+      .then(() => resolveSharedStoreFactory()(windowMs))
+      .then((store) => {
+        if (!store || typeof store.increment !== 'function') {
+          throw new Error('shared rate limit store factory returned no usable store');
+        }
+        return store;
+      });
+    // A construction failure must not be cached forever, or one bad boot would
+    // pin the limiter to its fail mode for the process lifetime.
+    promise.catch(() => {
+      if (cachedSharedStore && cachedSharedStore.promise === promise) cachedSharedStore = null;
+    });
+    cachedSharedStore = { generation, promise };
+    return promise;
+  };
+
+  const sendOverQuota = (res: Response, next: NextFunction, resetAt: number): void => {
+    const retryAfter = Math.max(1, toSafeNonNegativeIntSeconds((resetAt - Date.now()) / 1000, 0));
+    safeSetHeader(res, 'Retry-After', String(retryAfter));
+    if (safeRead(() => res.headersSent, false)) {
+      safeInvokeNext(next);
+      return;
+    }
+    try {
+      res.status(429).json({
+        error: message,
+        code: 'RATE_LIMIT_EXCEEDED',
+        retryAfter,
+      });
+    } catch {
+      if (!safeRead(() => res.headersSent, false)) {
+        safeRead(() => {
+          const statusResult = res.status(429) as Response | { end?: () => void };
+          if (statusResult && typeof statusResult.end === 'function') {
+            statusResult.end();
+            return;
+          }
+          if (typeof (res as Response & { end?: () => void }).end === 'function') {
+            (res as Response & { end?: () => void }).end?.();
+          }
+        }, undefined as void);
+      }
+    }
+  };
+
+  const applyDecision = (
+    res: Response,
+    next: NextFunction,
+    key: string,
+    count: number,
+    resetAt: number,
+    localBucket: boolean
+  ): void => {
+    const remaining = toSafeNonNegativeIntCount(max - count, 0);
+    const resetSeconds = toSafeNonNegativeIntSeconds(resetAt / 1000, 0);
+
+    safeSetHeader(res, 'X-RateLimit-Limit', max);
+    safeSetHeader(res, 'X-RateLimit-Remaining', remaining);
+    safeSetHeader(res, 'X-RateLimit-Reset', resetSeconds);
+
+    if (count > max) {
+      if (localBucket) clampOverLimitCount(key, max);
+      recordRateLimitEvent(prefix, key, 'rejected');
+      sendOverQuota(res, next, resetAt);
+      return;
+    }
+    safeInvokeNext(next);
+  };
+
+  const handleSharedStoreFailure = (key: string, res: Response, next: NextFunction): void => {
+    recordRateLimitEvent(prefix, key, 'store-unavailable');
+    const failMode = resolveSharedStoreFailMode();
+    if (failMode === 'open') {
+      safeInvokeNext(next);
+      return;
+    }
+    if (failMode === 'local') {
+      try {
+        const local = increment(key, windowMs);
+        applyDecision(res, next, key, local.count, local.resetAt, true);
+      } catch {
+        safeInvokeNext(next);
+      }
+      return;
+    }
+    // 'closed': refuse rather than serve an unbounded quota on a public,
+    // unauthenticated provisioning endpoint.
+    if (safeRead(() => res.headersSent, false)) {
+      safeInvokeNext(next);
+      return;
+    }
+    safeSetHeader(res, 'Retry-After', String(SHARED_STORE_UNAVAILABLE_RETRY_AFTER_SECONDS));
+    try {
+      res.status(503).json({
+        error: 'Service temporarily unavailable. Please try again shortly.',
+        code: 'RATE_LIMIT_STORE_UNAVAILABLE',
+        retryAfter: SHARED_STORE_UNAVAILABLE_RETRY_AFTER_SECONDS,
+      });
+    } catch {
+      if (!safeRead(() => res.headersSent, false)) {
+        safeRead(() => {
+          const statusResult = res.status(503) as Response | { end?: () => void };
+          if (statusResult && typeof statusResult.end === 'function') statusResult.end();
+        }, undefined as void);
+      }
+    }
+  };
+
+  const runSharedPath = async (key: string, res: Response, next: NextFunction): Promise<void> => {
+    let decision: { count: number; resetAt: number };
+    try {
+      const store = await loadSharedStore();
+      const result = await store.increment(key, windowMs);
+      const count = toSafeNonNegativeIntCount(result?.count, 0);
+      const resetAt = Number(result?.resetAt);
+      if (count < 1 || !Number.isFinite(resetAt)) {
+        throw new Error('shared rate limit store returned an unusable result');
+      }
+      decision = { count, resetAt };
+    } catch {
+      handleSharedStoreFailure(key, res, next);
+      return;
+    }
+    // Kept out of the try above so a response-writing failure is not misread as
+    // a store outage and answered twice.
+    try {
+      applyDecision(res, next, key, decision.count, decision.resetAt, false);
+    } catch {
+      safeInvokeNext(next);
+    }
+  };
+
   return (req: Request, res: Response, next: NextFunction): void => {
     if (process.env.NODE_ENV === 'test') {
       safeInvokeNext(next);
@@ -302,48 +735,16 @@ function createLimiter(opts: {
         ? normalizeOptionalString(safeRead(() => keyResolver(req), undefined as unknown))
         : undefined;
       const key = `rl:${prefix}:${resolved ? capKeySegment(resolved) : extractKey(req)}`;
-      const { count, resetAt } = increment(key, windowMs);
-      const remaining = toSafeNonNegativeIntCount(max - count, 0);
-      const resetSeconds = toSafeNonNegativeIntSeconds(resetAt / 1000, 0);
 
-      safeSetHeader(res, 'X-RateLimit-Limit', max);
-      safeSetHeader(res, 'X-RateLimit-Remaining', remaining);
-      safeSetHeader(res, 'X-RateLimit-Reset', resetSeconds);
-
-      if (count > max) {
-        clampOverLimitCount(key, max);
-        const retryAfter = Math.max(
-          1,
-          toSafeNonNegativeIntSeconds((resetAt - Date.now()) / 1000, 0)
-        );
-        safeSetHeader(res, 'Retry-After', String(retryAfter));
-        if (safeRead(() => res.headersSent, false)) {
-          safeInvokeNext(next);
-          return;
-        }
-        try {
-          res.status(429).json({
-            error: message,
-            code: 'RATE_LIMIT_EXCEEDED',
-            retryAfter,
-          });
-        } catch {
-          if (!safeRead(() => res.headersSent, false)) {
-            safeRead(() => {
-              const statusResult = res.status(429) as Response | { end?: () => void };
-              if (statusResult && typeof statusResult.end === 'function') {
-                statusResult.end();
-                return;
-              }
-              if (typeof (res as Response & { end?: () => void }).end === 'function') {
-                (res as Response & { end?: () => void }).end?.();
-              }
-            }, undefined as void);
-          }
-        }
+      // Opt-in only. With the flag unset (the default, including staging) this
+      // branch is never taken and the limiter stays fully synchronous.
+      if (sharedStore && isSharedStoreEnabled()) {
+        void runSharedPath(key, res, next);
         return;
       }
-      safeInvokeNext(next);
+
+      const { count, resetAt } = increment(key, windowMs);
+      applyDecision(res, next, key, count, resetAt, true);
     } catch {
       // Limiter is defense-in-depth; unexpected internal failures should not block requests.
       if (safeRead(() => res.headersSent, false)) {
@@ -431,6 +832,7 @@ export const demoSignupIpRateLimiter = createLimiter({
   max: isProd ? 5 : 500,
   prefix: 'demo-signup-ip',
   message: 'Too many demo requests from this network. Please try again later.',
+  sharedStore: true,
 });
 
 /**
@@ -445,6 +847,7 @@ export const demoSignupIdentityRateLimiter = createLimiter({
   prefix: 'demo-signup-id',
   message: 'Too many demo requests for this address. Please try again later.',
   keyResolver: demoSignupIdentityKey,
+  sharedStore: true,
 });
 
 /** Public invitation token endpoints: stricter anti-enumeration limits */
@@ -514,6 +917,17 @@ export const __private__ = {
   MAX_RATE_LIMIT_WINDOW_MS,
   MAX_RATE_LIMIT_MAX,
   getStoreSize: (): number => store.size,
+  // Telemetry (OPS-DEMO-002)
+  getRateLimitTelemetry,
+  resetRateLimitTelemetry,
+  REJECTION_LOG_INTERVAL_MS,
+  // Shared-store seam (OPS-DEMO-002) — prepared, opt-in, default off
+  isSharedStoreEnabled,
+  resolveSharedStoreFailMode,
+  setSharedRateLimitStoreFactory,
+  createRedisSharedRateLimitStore,
+  SHARED_STORE_ENV,
+  SHARED_STORE_FAIL_MODE_ENV,
 };
 
 export default defaultRateLimiter;
