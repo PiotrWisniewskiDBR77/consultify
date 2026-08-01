@@ -54,6 +54,7 @@ import {
   Sparkles,
   Square,
   Star,
+  User,
   X,
   Zap,
 } from 'lucide-react';
@@ -260,6 +261,26 @@ export interface InboxItem {
   suggestedConfidence?: number;
   /** V4-INBX-01: Canonical type (task|decision|approval|signal) */
   itemType?: 'task' | 'decision' | 'approval' | 'signal';
+  /** Raw source entity type as materialized (task|decision|notification|…). */
+  sourceEntityType?: string;
+  /** Who this item belongs to (canonical_inbox_items.user_id). */
+  userId?: string;
+  /** Which org this item was materialized under. */
+  organizationId?: string;
+  /** Last time the canonical row itself changed (triage, re-materialize). */
+  updatedAt?: string;
+  /**
+   * Status of the SOURCE task/decision at materialization time — distinct
+   * from `itemStatus` above (this item's own triage status). Undefined for
+   * notification-sourced items and for items materialized before this field
+   * existed. Render only if present (MW-CORE-003 golden-flow packet).
+   */
+  sourceStatus?: string;
+  /**
+   * initiative_id of the SOURCE task/decision. Undefined for
+   * notification-sourced items — render only if present, no placeholder.
+   */
+  initiativeId?: string;
   _key: InboxItemKey;
 }
 
@@ -408,6 +429,12 @@ function mapCanonicalItem(item: V8CanonicalInboxItem): InboxItem {
     itemStatus,
     reason: buildCanonicalReason(section),
     isActionable: ACTIONABLE_SECTIONS.has(section),
+    sourceEntityType: item.sourceEntityType,
+    userId: item.userId,
+    organizationId: item.organizationId,
+    updatedAt: item.updatedAt ? new Date(item.updatedAt).toISOString() : undefined,
+    sourceStatus: item.sourceStatus || undefined,
+    initiativeId: item.initiativeId || undefined,
     _key: `${item.sourceEntityType}:${item.sourceEntityId}` as InboxItemKey,
   };
 }
@@ -1217,6 +1244,33 @@ const PreviewPane: React.FC<{
   const kindCfg = ENTITY_KIND_CONFIG[entityKind];
   const KindIcon = kindCfg.icon;
 
+  // MW-CORE-003 golden-flow packet: identity/lineage so the user understands
+  // why this item appeared. Recipient/organization are resolved to a display
+  // name only when the id matches the signed-in session's own user/org
+  // (an Inbox item's userId/organizationId are almost always "me, this org"
+  // by construction — GET is already scoped that way) — otherwise the raw id
+  // is shown, same fallback used for source identifiers elsewhere in this
+  // panel (RelationItem.title convention, FALA 1 2026-07-27).
+  const { currentUser, currentOrganization } = useAppStore();
+  const recipientLabel =
+    item.userId && currentUser?.id === item.userId
+      ? currentUser.displayName ||
+        `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() ||
+        currentUser.email ||
+        item.userId
+      : item.userId;
+  const organizationLabel =
+    item.organizationId && currentOrganization?.id === item.organizationId
+      ? currentOrganization.name || item.organizationId
+      : item.organizationId;
+  const sourceTaskDeepLink =
+    item.sourceEntityType === 'task' && item.linkedTaskId
+      ? `/my-work?taskId=${encodeURIComponent(item.linkedTaskId)}`
+      : undefined;
+  const lineageUpdatedText = item.updatedAt
+    ? formatRelativeTime(item.updatedAt, isPolish).text
+    : undefined;
+
   const [snoozeOpen, setSnoozeOpen] = useState(false);
   const [detailsMenuOpen, setDetailsMenuOpen] = useState(false);
   const [detailsOverride, setDetailsOverride] = useState<string | null>(null);
@@ -1613,7 +1667,106 @@ const PreviewPane: React.FC<{
       }
     >
       <div className="space-y-4">
-        <PreviewMetaCard pills={metaPills} trailing={metaTrailing} />
+        <PreviewMetaCard pills={metaPills} trailing={metaTrailing}>
+          {/* MW-CORE-003 golden-flow packet: identity/lineage — why this item
+              appeared and where it came from. Source/recipient/org/updated
+              are always derivable; sourceStatus/initiativeId render ONLY
+              when present (no placeholder dash — most notification-sourced
+              items legitimately have neither). */}
+          <div className="mt-2.5 pt-2.5 border-t border-slate-200/60 dark:border-white/[0.06] grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+            <div className="col-span-2 flex items-center gap-1.5">
+              <KindIcon size={12} className="text-slate-400 dark:text-slate-500 shrink-0" />
+              <span className="text-slate-500 dark:text-slate-400">
+                {i18n.t('myWork.inboxContent.lineageSource', 'Source')}:
+              </span>
+              <span className="text-slate-700 dark:text-slate-300 font-medium">
+                {isPolish ? kindCfg.labelPl : kindCfg.labelEn}
+              </span>
+            </div>
+
+            {item.linkedTaskId ? (
+              <div className="col-span-2 flex items-center gap-1.5 min-w-0">
+                <span className="text-slate-500 dark:text-slate-400 shrink-0">
+                  {i18n.t('myWork.inboxContent.lineageSourceTask', 'Source task')}:
+                </span>
+                {sourceTaskDeepLink ? (
+                  <a
+                    href={sourceTaskDeepLink}
+                    onClick={(e) => {
+                      if (onOpenTask) {
+                        e.preventDefault();
+                        onOpenTask(item.linkedTaskId!);
+                      }
+                    }}
+                    className="text-c-info hover:underline truncate"
+                    title={item.linkedTaskId}
+                  >
+                    {item.linkedTaskId.slice(0, 8)}…
+                  </a>
+                ) : (
+                  <span className="text-slate-700 dark:text-slate-300 truncate">
+                    {item.linkedTaskId}
+                  </span>
+                )}
+              </div>
+            ) : null}
+
+            {recipientLabel ? (
+              <div className="flex items-center gap-1.5 min-w-0">
+                <User size={12} className="text-slate-400 dark:text-slate-500 shrink-0" />
+                <span className="text-slate-500 dark:text-slate-400 shrink-0">
+                  {i18n.t('myWork.inboxContent.lineageRecipient', 'Recipient')}:
+                </span>
+                <span className="text-slate-700 dark:text-slate-300 truncate">
+                  {recipientLabel}
+                </span>
+              </div>
+            ) : null}
+
+            {organizationLabel ? (
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-slate-500 dark:text-slate-400 shrink-0">
+                  {i18n.t('myWork.inboxContent.lineageOrganization', 'Organization')}:
+                </span>
+                <span className="text-slate-700 dark:text-slate-300 truncate">
+                  {organizationLabel}
+                </span>
+              </div>
+            ) : null}
+
+            {lineageUpdatedText ? (
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Clock size={12} className="text-slate-400 dark:text-slate-500 shrink-0" />
+                <span className="text-slate-500 dark:text-slate-400 shrink-0">
+                  {i18n.t('myWork.inboxContent.lineageUpdated', 'Updated')}:
+                </span>
+                <span className="text-slate-700 dark:text-slate-300 truncate">
+                  {lineageUpdatedText}
+                </span>
+              </div>
+            ) : null}
+
+            {item.sourceStatus ? (
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-slate-500 dark:text-slate-400 shrink-0">
+                  {i18n.t('myWork.inboxContent.lineageSourceStatus', 'Source status')}:
+                </span>
+                <EntityStatusChip status={item.sourceStatus} />
+              </div>
+            ) : null}
+
+            {item.initiativeId ? (
+              <div className="col-span-2 flex items-center gap-1.5 min-w-0">
+                <span className="text-slate-500 dark:text-slate-400 shrink-0">
+                  {i18n.t('myWork.inboxContent.lineageInitiative', 'Initiative')}:
+                </span>
+                <span className="text-slate-700 dark:text-slate-300 truncate">
+                  {item.initiativeId}
+                </span>
+              </div>
+            ) : null}
+          </div>
+        </PreviewMetaCard>
 
         <PreviewDetailsSection
           text={detailsDisplayText}
