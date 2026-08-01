@@ -849,6 +849,36 @@ describe('V8 finance read-only routes', () => {
 
       expect(second.body.data).toEqual(first.body.data);
     });
+
+    // Added by the FIN-005 opex-sign-regression task (server/src/services/__tests__/financialModelOpexSignRegression.test.ts)
+    // to cover assumptions_json-based rate resolution once the sibling agent's
+    // route change landed. NOTE: at the time this test was written, the route
+    // change (reading discountRatePct/hurdleRatePct from model.assumptions_json
+    // when no query param is given — see the "Rate resolution" doc comment
+    // above the handler, finance.routes.ts) had ALREADY landed in this shared
+    // worktree, so this test is GREEN, not the "expected red until it lands"
+    // placeholder originally anticipated. Kept as a permanent regression test
+    // for that behavior; the integrator should not mistake a red run here as
+    // this agent's own bug — if it's red, the route change may have moved.
+    it('falls back to model.assumptions_json.discountRatePct/hurdleRatePct when no query param is given', async () => {
+      mockGetModel.mockResolvedValue({
+        id: 'model-1',
+        organization_id: ORG,
+        assumptions_json: { discountRatePct: 15, hurdleRatePct: 15 },
+      });
+      mockComputeModel.mockResolvedValue(REAL_MODEL_EVENTS_PERIODS);
+
+      const app = createApp();
+      const res = await request(app).get('/api/v8/finance/models/model-1/appraisal');
+
+      expect(res.status).toBe(200);
+      expect(mockComputeModel).toHaveBeenCalledWith('model-1');
+
+      const { input, result } = res.body.data;
+      expect(input.discountRatePct).toBe(15);
+      expect(input.hurdleRatePct).toBe(15);
+      expect(Number.isFinite(result.npv)).toBe(true);
+    });
   });
 
   it('POST /api/v8/finance/models/:id/compute returns envelope and delegates to computeModel', async () => {

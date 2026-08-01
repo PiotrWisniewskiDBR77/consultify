@@ -4,6 +4,7 @@ import logger from '../../utils/Logger.js';
 import { fireClosureHandoff } from '../executionResultsBridge.js';
 import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
 import {
+  ATELIER_CANONICAL_DISCOUNT_RATE_PCT,
   ATELIER_CANONICAL_MODEL_NAME_EN,
   ATELIER_CANONICAL_MODEL_NAME_PL,
   ATELIER_FINANCE_CURRENCY,
@@ -3448,6 +3449,43 @@ async function upsertAtelierRoiFinancialModel(
     modelVals.push(sourceStatementPackId);
   }
 
+  /**
+   * FIN-005 round 9 — Piotr's two explicit, final decisions on the ROI story:
+   *
+   * 1. "Nie wymyślaj opóźnienia wdrożenia. Jeżeli źródłowe dane nie zawierają
+   *    harmonogramu uruchomienia CAPEX, przychodów i oszczędności, oznacz tę
+   *    informację jako brakujące jawne założenie. Nie dodawaj arbitralnego
+   *    przesunięcia." The three canonical events (`digital-capex` and
+   *    `revenue-uplift` both `period_start: '2015-01-01'`, `opex-reduction`
+   *    `period_start: '2016-01-01'`) stay EXACTLY as dated — no ramp-up is
+   *    invented here, and none should ever be added by changing a
+   *    `period_start`. What source data does not say is recorded as an
+   *    explicit missing assumption instead, so the gap is visible to whoever
+   *    reads `assumptions_json` rather than silently smoothed over.
+   * 2. The discount/hurdle rate stops being a bare TypeScript constant
+   *    (`ATELIER_CANONICAL_DISCOUNT_RATE_PCT`, only in source) and becomes
+   *    DATA — written into the model's own `assumptions_json` so it is
+   *    "jawna, odczytywalna i testowana" (explicit, readable, tested). The
+   *    constant still SEEDS this value; `assumptions_json` is now the
+   *    canonical RUNTIME source `verifyAtelierFinanceGoldenFlowComplete`
+   *    reads back (see atelierFinanceSeed.ts).
+   */
+  const hasModelAssumptionsCol = await columnExists('financial_models', 'assumptions_json');
+  if (hasModelAssumptionsCol) {
+    modelCols.push('assumptions_json');
+    modelVals.push(
+      JSON.stringify({
+        implementationLagMonths: null,
+        implementationLagAssumptionStatus: 'NEEDS_PRODUCT_DECISION',
+        implementationLagAssumptionNote: isPl
+          ? 'Źródłowe dane nie zawierają harmonogramu wdrożenia (opóźnienia) między CAPEX a realizacją przychodów/oszczędności — zdarzenia modelowane dokładnie wg zaseedowanych dat, bez zakładanego przesunięcia.'
+          : 'Source data does not specify a ramp-up schedule between CAPEX and revenue/savings realization — events are modeled exactly as dated, with no assumed delay.',
+        discountRatePct: ATELIER_CANONICAL_DISCOUNT_RATE_PCT,
+        hurdleRatePct: ATELIER_CANONICAL_DISCOUNT_RATE_PCT,
+      })
+    );
+  }
+
   await DbPromise.run(
     `INSERT INTO financial_models (${modelCols.join(', ')})
      VALUES (${modelCols.map(() => '?').join(', ')})
@@ -3458,12 +3496,22 @@ async function upsertAtelierRoiFinancialModel(
        status=excluded.status,
        horizon_months=excluded.horizon_months${
          hasModelSourcePackCol ? ',\n       source_statement_pack_id=excluded.source_statement_pack_id' : ''
-       }`,
+       }${hasModelAssumptionsCol ? ',\n       assumptions_json=excluded.assumptions_json' : ''}`,
     modelVals,
     { fallback: false }
   );
 
   // Three economic events drive the business case (revenue uplift, capex, opex reduction).
+  //
+  // FIN-005 round 9 — Piotr's product decision: "OpEx reduction" IS a genuine
+  // benefit, not a cost. `opex-reduction` below carries `amount: -400_000` on
+  // purpose. The compute engine (`financialModelingService.ts`,
+  // `expandEventToAmounts`/`applyEventToPeriod`) respects an `event_type:
+  // 'opex'` event's stored sign — a negative amount REDUCES modeled opex (a
+  // saving), a positive amount adds to it (a cost), matching the event's own
+  // name and the parallel `analysis_financials.annual_cost_savings = 400_000`
+  // row below. Do not `Math.abs()` this value and do not flip its sign: the
+  // stored `-400_000` is what "reduction" means here.
   const events: Array<{
     slug: string;
     type: string;

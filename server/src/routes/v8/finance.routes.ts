@@ -455,13 +455,23 @@ router.get(
  * (`computeModel()`) fed through the canonical appraisal engine
  * (`investmentAppraisalService.appraise()`, via `appraiseComputeResult`).
  * Read-only: `computeModel()` only SELECTs the model and its events, and this
- * handler persists nothing. `discountRatePct`/`hurdleRatePct` are REQUIRED
- * query params — this route never defaults or hardcodes a rate (the same
- * invariant `POST /value/appraise` already enforces on its caller).
+ * handler persists nothing.
+ *
+ * Rate resolution (never a silent default):
+ *   1. `?discountRatePct=`/`?hurdleRatePct=` query params, if given, ALWAYS win
+ *      (matches investmentAppraisalService's own "never hardcoded" invariant —
+ *      an explicit caller-supplied rate always overrides anything stored).
+ *   2. Else, `model.assumptions_json.discountRatePct` / `.hurdleRatePct`, if
+ *      present (canonical per-model rate — see financialModelAppraisalAdapter.ts
+ *      module doc: `financial_models` has no `discount_rate` column, so a rate
+ *      explicitly recorded in assumptions_json is the model's own canonical
+ *      value). `hurdleRatePct` defaults to `discountRatePct` when only one of
+ *      the two is present, at either resolution layer.
+ *   3. Else — 400. No number is ever invented at this layer.
  *
  * Reopen determinism: this recomputes from the model's stored events on every
- * call. Same events + same rates in the query string => byte-identical result,
- * with no cached/materialized state to go stale.
+ * call. Same events + same resolved rates => byte-identical result, with no
+ * cached/materialized state to go stale.
  */
 router.get(
   '/models/:modelId/appraisal',
@@ -473,18 +483,49 @@ router.get(
       return res.status(404).json({ error: 'Model not found' });
     }
 
+    // `getModel()` already JSON.parse()s assumptions_json into an object.
+    const assumptions = (model.assumptions_json || {}) as Record<string, unknown>;
+    const assumptionsDiscountRatePct =
+      typeof assumptions.discountRatePct === 'number' && Number.isFinite(assumptions.discountRatePct)
+        ? assumptions.discountRatePct
+        : undefined;
+    const assumptionsHurdleRatePct =
+      typeof assumptions.hurdleRatePct === 'number' && Number.isFinite(assumptions.hurdleRatePct)
+        ? assumptions.hurdleRatePct
+        : undefined;
+
     const discountRatePctRaw = req.query.discountRatePct;
-    const discountRatePct = Number(discountRatePctRaw);
-    if (discountRatePctRaw === undefined || !Number.isFinite(discountRatePct)) {
+    let discountRatePct: number | undefined;
+    if (discountRatePctRaw !== undefined) {
+      discountRatePct = Number(discountRatePctRaw);
+      if (!Number.isFinite(discountRatePct)) {
+        return res.status(400).json({
+          error: 'discountRatePct must be a finite number (percent, e.g. 10 for 10%) when provided.',
+        });
+      }
+    } else if (assumptionsDiscountRatePct !== undefined) {
+      discountRatePct = assumptionsDiscountRatePct;
+    }
+    if (discountRatePct === undefined) {
       return res.status(400).json({
-        error: 'discountRatePct is required and must be a finite number (percent, e.g. 10 for 10%).',
+        error:
+          'discountRatePct is required — pass it as a query param, or set model.assumptions_json.discountRatePct.',
       });
     }
+
     const hurdleRatePctRaw = req.query.hurdleRatePct;
-    const hurdleRatePct =
-      hurdleRatePctRaw === undefined ? discountRatePct : Number(hurdleRatePctRaw);
-    if (!Number.isFinite(hurdleRatePct)) {
-      return res.status(400).json({ error: 'hurdleRatePct must be a finite number when provided.' });
+    let hurdleRatePct: number;
+    if (hurdleRatePctRaw !== undefined) {
+      hurdleRatePct = Number(hurdleRatePctRaw);
+      if (!Number.isFinite(hurdleRatePct)) {
+        return res
+          .status(400)
+          .json({ error: 'hurdleRatePct must be a finite number when provided.' });
+      }
+    } else if (assumptionsHurdleRatePct !== undefined) {
+      hurdleRatePct = assumptionsHurdleRatePct;
+    } else {
+      hurdleRatePct = discountRatePct;
     }
 
     const computeResult = await computeModel(modelId);

@@ -21,6 +21,7 @@ vi.mock('../../../utils/DbPromise.js', () => ({
 }));
 
 import {
+  ATELIER_CANONICAL_DISCOUNT_RATE_PCT,
   atelierCanonicalModelId,
   verifyAtelierFinanceGoldenFlowComplete,
 } from '../atelierFinanceSeed.js';
@@ -28,14 +29,44 @@ import {
 const ORG_ID = 'org-atelier-r8';
 const MODEL_ID = atelierCanonicalModelId(ORG_ID);
 
-const ATELIER_MODEL_ROW = {
-  id: MODEL_ID,
-  organization_id: ORG_ID,
-  start_date: '2015-01-01',
-  horizon_months: 36,
-  granularity: 'annual',
-  assumptions_json: '{}',
+/**
+ * FIN-005 round 9: the seed (`upsertAtelierRoiFinancialModel`,
+ * demoSeedService.ts) now writes `discountRatePct`/`hurdleRatePct` plus the
+ * two explicit "no implementation lag was invented" keys into
+ * `assumptions_json` — see `resolveAtelierAppraisalRates` in
+ * `atelierFinanceSeed.ts`. This fixture mirrors what the real seed writes so
+ * these tests exercise the actual runtime shape, not a stale `{}`.
+ */
+const ATELIER_MODEL_ASSUMPTIONS = {
+  implementationLagMonths: null,
+  implementationLagAssumptionStatus: 'NEEDS_PRODUCT_DECISION',
+  implementationLagAssumptionNote:
+    'Source data does not specify a ramp-up schedule between CAPEX and revenue/savings realization — events are modeled exactly as dated, with no assumed delay.',
+  discountRatePct: 10,
+  hurdleRatePct: 10,
 };
+
+/**
+ * A FACTORY, not a shared constant: `getModel()` (`financialModelingService.ts`)
+ * mutates the row it is handed — it JSON.parses `assumptions_json` in place —
+ * and every test below wires `dbGet.mockResolvedValue(...)` to the SAME
+ * object reference every call. Sharing one object across tests would make a
+ * later test observe an already-parsed `assumptions_json` from an earlier
+ * test's call to `getModel()`, which happens to be harmless here but is not a
+ * property worth relying on.
+ */
+function atelierModelRow(
+  assumptions: Record<string, unknown> = ATELIER_MODEL_ASSUMPTIONS
+): Record<string, unknown> {
+  return {
+    id: MODEL_ID,
+    organization_id: ORG_ID,
+    start_date: '2015-01-01',
+    horizon_months: 36,
+    granularity: 'annual',
+    assumptions_json: JSON.stringify(assumptions),
+  };
+}
 
 const ATELIER_EVENTS = [
   {
@@ -105,7 +136,7 @@ describe('verifyAtelierFinanceGoldenFlowComplete', () => {
   });
 
   it('fixtureComplete=true does NOT imply goldenFlowComplete=true — a compute failure is reported, not swallowed', async () => {
-    dbGet.mockResolvedValue(ATELIER_MODEL_ROW);
+    dbGet.mockResolvedValue(atelierModelRow());
     dbAll.mockRejectedValue(new Error('connection reset'));
 
     const result = await verifyAtelierFinanceGoldenFlowComplete(ORG_ID, 'complete');
@@ -117,7 +148,7 @@ describe('verifyAtelierFinanceGoldenFlowComplete', () => {
   });
 
   it('reports incomplete when the model has zero forecast events (well-formed but all-zero periods)', async () => {
-    dbGet.mockResolvedValue(ATELIER_MODEL_ROW);
+    dbGet.mockResolvedValue(atelierModelRow());
     dbAll.mockResolvedValue([]); // no events
 
     const result = await verifyAtelierFinanceGoldenFlowComplete(ORG_ID, 'complete');
@@ -140,7 +171,7 @@ describe('verifyAtelierFinanceGoldenFlowComplete', () => {
     // Number.isFinite(npv) gate is load-bearing: remove it, and this would
     // silently become `goldenFlowComplete: true`.
     expect(2_400_000 * Math.pow(1 + 1e300 / 100, 35 / 12)).toBe(Infinity); // pins the JS behavior this relies on
-    dbGet.mockResolvedValue(ATELIER_MODEL_ROW);
+    dbGet.mockResolvedValue(atelierModelRow());
     dbAll.mockResolvedValue([{ ...ATELIER_EVENTS[0], growth_rate: 1e300 }]);
 
     const result = await verifyAtelierFinanceGoldenFlowComplete(ORG_ID, 'complete');
@@ -151,7 +182,7 @@ describe('verifyAtelierFinanceGoldenFlowComplete', () => {
   });
 
   it('goldenFlowComplete=true only after ACTUALLY computing a finite NPV from the real canonical events', async () => {
-    dbGet.mockResolvedValue(ATELIER_MODEL_ROW);
+    dbGet.mockResolvedValue(atelierModelRow());
     dbAll.mockResolvedValue(ATELIER_EVENTS);
 
     const result = await verifyAtelierFinanceGoldenFlowComplete(ORG_ID, 'complete');
@@ -163,5 +194,35 @@ describe('verifyAtelierFinanceGoldenFlowComplete', () => {
     expect(Number.isFinite(result.appraisal!.result.npv)).toBe(true);
     // Evidence, not a claim: dbAll/dbGet were genuinely called with the model id.
     expect(dbGet).toHaveBeenCalledWith(expect.stringMatching(/financial_models/), [MODEL_ID]);
+  });
+
+  it('FIN-005 round 9: reads the discount/hurdle rate from the model\'s own assumptions_json, not the hardcoded constant', async () => {
+    // A rate that deliberately differs from ATELIER_CANONICAL_DISCOUNT_RATE_PCT
+    // (10) — if the appraisal used the constant instead of assumptions_json,
+    // input.discountRatePct below would read 10, not 7.
+    dbGet.mockResolvedValue(atelierModelRow({ ...ATELIER_MODEL_ASSUMPTIONS, discountRatePct: 7, hurdleRatePct: 6 }));
+    dbAll.mockResolvedValue(ATELIER_EVENTS);
+
+    const result = await verifyAtelierFinanceGoldenFlowComplete(ORG_ID, 'complete');
+
+    expect(result.goldenFlowComplete).toBe(true);
+    expect(result.appraisal!.input.discountRatePct).toBe(7);
+    expect(result.appraisal!.input.hurdleRatePct).toBe(6);
+    expect(result.appraisal!.input.discountRatePct).not.toBe(ATELIER_CANONICAL_DISCOUNT_RATE_PCT);
+  });
+
+  it('falls back to ATELIER_CANONICAL_DISCOUNT_RATE_PCT ONLY when assumptions_json genuinely lacks discountRatePct', async () => {
+    // No discountRatePct/hurdleRatePct at all — the shape an older, pre-round-9
+    // fixture would have. The seed written today always populates these keys
+    // (see demoSeedService.ts's upsertAtelierRoiFinancialModel); this pins the
+    // defensive path for a row it did not write.
+    dbGet.mockResolvedValue(atelierModelRow({}));
+    dbAll.mockResolvedValue(ATELIER_EVENTS);
+
+    const result = await verifyAtelierFinanceGoldenFlowComplete(ORG_ID, 'complete');
+
+    expect(result.goldenFlowComplete).toBe(true);
+    expect(result.appraisal!.input.discountRatePct).toBe(ATELIER_CANONICAL_DISCOUNT_RATE_PCT);
+    expect(result.appraisal!.input.hurdleRatePct).toBe(ATELIER_CANONICAL_DISCOUNT_RATE_PCT);
   });
 });

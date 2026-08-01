@@ -95,7 +95,7 @@ import {
   appraiseComputeResult,
   type ModelAppraisal,
 } from '../financialModelAppraisalAdapter.js';
-import { computeModel } from '../financialModelingService.js';
+import { computeModel, getModel } from '../financialModelingService.js';
 import {
   evaluateStatementReadiness,
   validateStatement,
@@ -152,15 +152,21 @@ export {
 export const ATELIER_FINANCE_ENTITY_NAME = 'Atelier Toys';
 export const ATELIER_FINANCE_CURRENCY = 'EUR';
 /**
- * FIN-005 round 8: the ONLY rate `financial_models` carries for this business
- * case today (`financial_models` has no `discount_rate` column — checked
- * against migrations/571_financial_modeling_t054.sql). Matches the
- * `discount_rate` value already seeded into the legacy `analysis_financials`
- * row for this same initiative (`upsertAtelierRoiFinancialModel`,
- * demoSeedService.ts) — reused, not invented. `investmentAppraisalService`'s
- * own invariant ("never hardcoded") still holds: this constant is a CALLER's
- * choice of parameter for the Atelier fixture specifically, not a default
- * baked into the appraisal engine or its route.
+ * FIN-005 round 8: matches the `discount_rate` value already seeded into the
+ * legacy `analysis_financials` row for this same initiative
+ * (`upsertAtelierRoiFinancialModel`, demoSeedService.ts) — reused, not
+ * invented. `investmentAppraisalService`'s own invariant ("never hardcoded")
+ * still holds: this constant is a CALLER's choice of parameter for the
+ * Atelier fixture specifically, not a default baked into the appraisal
+ * engine or its route.
+ *
+ * FIN-005 round 9: this constant is now only the SEED value. The canonical,
+ * explicit, testable RUNTIME source is `financial_models.assumptions_json`
+ * (`{ discountRatePct, hurdleRatePct }`), written from this constant by
+ * `upsertAtelierRoiFinancialModel()` and read back by
+ * `resolveAtelierAppraisalRates()` below — not this constant directly. The
+ * constant remains the fallback for a row `assumptions_json` genuinely lacks
+ * the key on (see `resolveAtelierAppraisalRates`).
  */
 export const ATELIER_CANONICAL_DISCOUNT_RATE_PCT = 10;
 export const ATELIER_FINANCE_SCALING = 'units';
@@ -3247,6 +3253,64 @@ export interface AtelierFinanceGoldenFlowCompleteness {
 }
 
 /**
+ * FIN-005 round 9 — resolve the discount/hurdle rate the appraisal actually
+ * uses from the model's OWN `assumptions_json`, not from the bare
+ * `ATELIER_CANONICAL_DISCOUNT_RATE_PCT` constant.
+ *
+ * `assumptions_json.discountRatePct` / `.hurdleRatePct` are written by
+ * `upsertAtelierRoiFinancialModel()` (demoSeedService.ts) FROM this same
+ * constant — the constant still seeds the value the first time, but
+ * `assumptions_json` is the canonical, explicit, readable, testable RUNTIME
+ * source from here on (Piotr: "wartość musi być jawna, odczytywalna i
+ * testowana"). The constant is used here ONLY as a defensive fallback for a
+ * row the current seed did not write (an older fixture, a schema without the
+ * column, or a read that failed) — and firing that fallback is itself a
+ * signal something upstream is wrong, so it is logged, not swallowed.
+ *
+ * Read-only: `getModel()` (`financialModelingService.ts`) only SELECTs
+ * `financial_models`; nothing is written here. Deliberately calls the
+ * already-exported `getModel()` rather than `DbPromise.get`/`.all` directly —
+ * `atelierFinancePrimaryReadStructure.test.ts` asserts this file never calls
+ * those two functions itself.
+ */
+async function resolveAtelierAppraisalRates(
+  modelId: string,
+  organizationId: string
+): Promise<{ discountRatePct: number; hurdleRatePct: number }> {
+  let assumptions: Record<string, unknown> = {};
+  try {
+    const model = await getModel(modelId, organizationId);
+    const raw = model?.assumptions_json;
+    assumptions = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  } catch (error) {
+    logger.warn(
+      '[atelier-finance-seed] could not read assumptions_json for the appraisal rate — falling back to ATELIER_CANONICAL_DISCOUNT_RATE_PCT',
+      { modelId, organizationId, error: (error as Error).message }
+    );
+  }
+
+  const seededDiscountRate = assumptions.discountRatePct;
+  const discountRatePct =
+    typeof seededDiscountRate === 'number' && Number.isFinite(seededDiscountRate)
+      ? seededDiscountRate
+      : (() => {
+          logger.warn(
+            '[atelier-finance-seed] assumptions_json.discountRatePct missing or invalid on the canonical model — falling back to ATELIER_CANONICAL_DISCOUNT_RATE_PCT; the seed should always populate this key',
+            { modelId, organizationId, assumptions }
+          );
+          return ATELIER_CANONICAL_DISCOUNT_RATE_PCT;
+        })();
+
+  const seededHurdleRate = assumptions.hurdleRatePct;
+  const hurdleRatePct =
+    typeof seededHurdleRate === 'number' && Number.isFinite(seededHurdleRate)
+      ? seededHurdleRate
+      : discountRatePct;
+
+  return { discountRatePct, hurdleRatePct };
+}
+
+/**
  * Verify golden-flow completeness for the canonical Atelier model. Read-only:
  * `computeModel()` only SELECTs the model and its events; nothing is written
  * or persisted to `financial_model_outputs` by this check.
@@ -3300,9 +3364,8 @@ export async function verifyAtelierFinanceGoldenFlowComplete(
     };
   }
 
-  const appraisal = appraiseComputeResult(computeResult, {
-    discountRatePct: ATELIER_CANONICAL_DISCOUNT_RATE_PCT,
-  });
+  const rates = await resolveAtelierAppraisalRates(modelId, organizationId);
+  const appraisal = appraiseComputeResult(computeResult, rates);
 
   if (!Number.isFinite(appraisal.result.npv)) {
     return {

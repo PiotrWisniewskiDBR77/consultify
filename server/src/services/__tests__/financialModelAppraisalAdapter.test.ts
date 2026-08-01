@@ -198,4 +198,91 @@ describe('financialModelAppraisalAdapter — end to end on the REAL canonical At
     const at20 = appraiseComputeResult(computeResult, { discountRatePct: 20 });
     expect(at5.result.npv).not.toBeCloseTo(at20.result.npv, 0);
   });
+
+  it('pins the NEW (fixed opex-sign) canonical Atelier appraisal, and proves it differs from the OLD (buggy Math.abs()) numbers in the round-8 report (§17.3)', async () => {
+    const computeResult = await computeModel('model-atelier');
+    const appraisal = appraiseComputeResult(computeResult, { discountRatePct: 10, hurdleRatePct: 10 });
+
+    // NEW (fixed sign) — pinned to the values this fix produces.
+    expect(appraisal.result.npv).toBeCloseTo(5_804_022.19, 1);
+    expect(appraisal.result.irr).toBeCloseTo(307.161, 2);
+    expect(appraisal.result.payback).toBeCloseTo(0.3333, 3);
+
+    // OLD (buggy Math.abs()-flips-the-saving-to-a-cost) numbers, documented in
+    // docs/program/WEEKEND_COMPLETION_2026-08-01/PACKETS/FIN-005_IMPLEMENTATION_HANDOFF.md
+    // §17.3: NPV≈4,541,813, IRR≈282.5%, payback≈0.33yr. This proves the fix
+    // actually MOVED the number (a genuine saving can only raise NPV, never
+    // lower it), not merely re-confirmed the old one.
+    const OLD_BUGGY_NPV = 4_541_813.33;
+    const OLD_BUGGY_IRR_PCT = 282.5337066347494;
+    expect(appraisal.result.npv).not.toBeCloseTo(OLD_BUGGY_NPV, 0);
+    expect(appraisal.result.npv).toBeGreaterThan(OLD_BUGGY_NPV);
+    expect(appraisal.result.irr).toBeGreaterThan(OLD_BUGGY_IRR_PCT);
+    // Payback is unaffected here: period 0 alone already recovers the 800k
+    // capex outlay (2,400,000 > 800,000) regardless of the opex fix, which
+    // only starts applying in period 1 (2016).
+    expect(appraisal.result.payback).toBeCloseTo(0.3333333333333333, 6);
+  });
+});
+
+describe('financialModelAppraisalAdapter — computeModel() opex sign semantics (OpEx reduction is a saving, not forced to a cost)', () => {
+  const OPEX_SIGN_MODEL_ROW = {
+    id: 'model-opex-sign',
+    organization_id: 'org-opex-sign',
+    start_date: '2020-01-01',
+    horizon_months: 1,
+    granularity: 'monthly',
+    assumptions_json: '{}',
+  };
+
+  function singleOpexEvent(amount: number) {
+    return [
+      {
+        id: 'e-opex',
+        model_id: 'model-opex-sign',
+        event_type: 'opex',
+        name: amount < 0 ? 'OpEx reduction (automation)' : 'Real OpEx cost',
+        amount,
+        period_start: '2020-01-01',
+        period_end: null,
+        recurrence: 'one_time',
+        growth_rate: 0,
+        cf_classification: 'operating',
+        posting_rules: '{}',
+        parameters: '{}',
+        sort_order: 1,
+        is_active: true,
+      },
+    ];
+  }
+
+  it('a NEGATIVE opex amount is a genuine saving: reduces OPEX and INCREASES net income (the product decision this fix implements)', async () => {
+    dbGet.mockResolvedValue(OPEX_SIGN_MODEL_ROW);
+    dbAll.mockResolvedValue(singleOpexEvent(-400_000));
+
+    const result = await computeModel('model-opex-sign');
+    const period = result.periods[0];
+
+    // Pre-fix, Math.abs() would have flipped this into a -400,000 COST
+    // (out.pl.OPEX === -400000). The fix respects the stored sign: a negative
+    // amount REDUCES totalOPEX, so out.pl.OPEX = -totalOPEX becomes a
+    // POSITIVE contribution to profit — a saving, exactly as the event name says.
+    expect(period.pl.OPEX).toBe(400_000);
+    expect(period.pl.EBITDA).toBe(400_000);
+    expect(period.pl.EBIT).toBe(400_000);
+    expect(period.pl.NET_INCOME).toBe(400_000);
+  });
+
+  it('a POSITIVE opex amount still behaves exactly as before the fix (regression guard: Math.abs(x) === x for x > 0)', async () => {
+    dbGet.mockResolvedValue(OPEX_SIGN_MODEL_ROW);
+    dbAll.mockResolvedValue(singleOpexEvent(50_000));
+
+    const result = await computeModel('model-opex-sign');
+    const period = result.periods[0];
+
+    expect(period.pl.OPEX).toBe(-50_000);
+    expect(period.pl.EBITDA).toBe(-50_000);
+    expect(period.pl.EBIT).toBe(-50_000);
+    expect(period.pl.NET_INCOME).toBe(-50_000);
+  });
 });

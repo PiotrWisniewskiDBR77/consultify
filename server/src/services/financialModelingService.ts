@@ -767,7 +767,12 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
           totalCOGS += Math.abs(amt);
           break;
         case 'opex':
-          totalOPEX += Math.abs(amt);
+          // Respect the sign of `amt`: a positive amount is a real cost (the
+          // common case), a negative amount is a genuine OPEX REDUCTION/saving
+          // (e.g. "OpEx reduction (automation)") and must reduce totalOPEX, not
+          // get flipped into an increase by Math.abs(). `out.pl.OPEX = -totalOPEX`
+          // below then turns a reduction into a positive profit contribution.
+          totalOPEX += amt;
           break;
         case 'depreciation_run':
           totalDepr += Math.abs(amt);

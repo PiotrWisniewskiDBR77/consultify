@@ -25,8 +25,12 @@
  *   - WACC/discount rate and hurdle rate are ALWAYS caller-supplied parameters,
  *     matching investmentAppraisalService's own invariant ("never hardcoded").
  *     `financial_models` has no `discount_rate` column (verified against
- *     migrations/571_financial_modeling_t054.sql) — there is no per-model
- *     canonical rate to default to, so none is defaulted here.
+ *     migrations/571_financial_modeling_t054.sql), so this module never reads
+ *     the DB or a model row for a rate — it stays a pure reshape. The route
+ *     layer (`GET /models/:modelId/appraisal`, finance.routes.ts) is what may
+ *     resolve a canonical rate from `model.assumptions_json.discountRatePct` /
+ *     `.hurdleRatePct` (or an explicit query param) BEFORE calling into this
+ *     module — this module itself still never defaults or invents a number.
  */
 
 import type { ComputeResult, PeriodOutput } from './financialModelingService.js';
