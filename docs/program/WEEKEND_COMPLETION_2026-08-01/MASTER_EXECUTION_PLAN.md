@@ -160,5 +160,7 @@ Pozostałe elementy otrzymują zaakceptowany backlog, nie pozorny status `done`.
 
 ## Środowisko docelowe
 
-Wszystkie fale kończą się odbiorem na staging. Produkcja nie jest automatycznym
-następnym krokiem; wymaga osobnej bramki i decyzji Piotra.
+Wszystkie fale kończą się wyłącznie odbiorem na Railway project `consultify`,
+environment `demo`, pod `https://demo.consultify.ai`, z PostgreSQL tego samego
+environment. Lokalne środowisko nie jest targetem odbioru. Produkcja nie jest
+automatycznym następnym krokiem; wymaga osobnej bramki i decyzji Piotra.

@@ -14,7 +14,7 @@ last_reviewed: 2026-07-31
 ## 1. Zatwierdzona definicja
 
 **Organization (Organizacja)** to wspólna, kontrolowana pamięć o firmie, dla
-której prowadzona jest praca w Consultinity. Utrzymuje jej tożsamość, model
+której prowadzona jest praca w Consultify. Utrzymuje jej tożsamość, model
 działania, cele, wyzwania, strategię, kluczowe fakty i wiedzę wraz ze źródłami,
 aktualnością oraz poziomem zaufania.
 
@@ -52,7 +52,7 @@ drugiej implementacji tych funkcji.
 
 ## 3. Potrzeba użytkownika
 
-Użytkownik chce, aby Consultinity:
+Użytkownik chce, aby Consultify:
 
 - rozumiało jego firmę bez ciągłego powtarzania kontekstu;
 - odróżniało fakt od celu, opinii, hipotezy i decyzji;
@@ -250,7 +250,7 @@ Organization:
 11. Test izolacji potwierdza brak odczytu i zapisu między organizacjami.
 12. UI pokazuje kompletność, aktualność, konflikty i wykorzystane źródła.
 13. Nawigacja, nagłówki, sekcje, stany i komponenty są zgodne z aktualnym
-    kanonem UI/UX Consultinity.
+    kanonem UI/UX Consultify.
 
 ## 16. Rekomendacja Codex
 
@@ -293,7 +293,7 @@ aktualnego kanonu sekcji 2026.
 - pokazać kompletność, świeżość, źródła i konflikty bez technicznego szumu;
 - zachować wygodne przejście do Admin Panel, ale nie jako drugi zestaw sekcji;
 - sprawdzić light/dark, responsywność, klawiaturę i dostępność;
-- porównać wizualnie z najnowszymi, zaakceptowanymi modułami Consultinity.
+- porównać wizualnie z najnowszymi, zaakceptowanymi modułami Consultify.
 
 ### Priorytet
 

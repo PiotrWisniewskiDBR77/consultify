@@ -1,17 +1,27 @@
 ---
 doc_id: FIN-003A
 truth_type: operations
-status: BLOCKED_LOCAL_DB_ROLE
+status: SUPERSEDED_AS_ACCEPTANCE_GATE
 owner: codex
 product_owner: piotr
 priority: P0
 depends_on: FIN-001
-last_reviewed: 2026-07-31
+last_reviewed: 2026-08-01
 ---
 
 # FIN-003A — real XLSX statement import E2E
 
-## Werdykt
+## Werdykt po decyzji środowiskowej 2026-08-01
+
+**Ten lokalny runner nie jest już bramką odbiorową.** Product Owner ustalił, że
+jedynym targetem odbioru jest Railway environment `demo`, `demo.consultify.ai` i jego
+PostgreSQL. Plik testowy może pozostać jako development harness, lecz jego PASS nie
+może nadać funkcji statusu `GO`.
+
+Następcą jest `FIN-003B`: kontrolowany staging E2E z namespaced fixture, cleanupem,
+tenant isolation, backup/recovery oraz read-backiem z PostgreSQL `demo`.
+
+## Historyczny werdykt
 
 **Test zaimplementowany; wykonanie BLOCKED przed migracjami.** Repozytorium zawiera oddzielną konfigurację
 `server/.env.test`, która wskazuje na osiągalny lokalny PostgreSQL
@@ -20,7 +30,7 @@ zakresem tej paczki i nie wolno ich użyć. Nie tworzymy emulatora SQLite udają
 Postgresa, ponieważ ten flow korzysta z wielu tabel, wersji, JSON semantics, `FILTER`,
 `ON CONFLICT` i pełnych migracji.
 
-## Wymagany dowód po udostępnieniu lokalnej bazy
+## Historyczny lokalny dowód
 
 Test acceptance używa `tests/acceptance/harness.ts`, realnego routera Finance Statements,
 JWT, migracji i fixture XLSX z P&L FY2025 PLN. Przechodzi:

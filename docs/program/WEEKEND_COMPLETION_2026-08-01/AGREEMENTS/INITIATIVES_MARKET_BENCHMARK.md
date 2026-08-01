@@ -21,7 +21,7 @@ portfelem i decyzjami inwestycyjnymi:
 - Jira Product Discovery.
 
 Źródłami są oficjalne strony produktów i dokumentacja producentów. Celem nie
-jest kopiowanie ekranów, lecz wybór mechanizmów potrzebnych Consultinity.
+jest kopiowanie ekranów, lecz wybór mechanizmów potrzebnych Consultify.
 
 ## 2. Wzorce konkurencji
 
@@ -88,7 +88,7 @@ Najmocniejsze mechanizmy:
 Wniosek: różne wizualizacje powinny być zapisanymi widokami jednego rejestru, a
 nie osobnymi kopiami Initiative.
 
-## 3. Funkcje rekomendowane dla Consultinity
+## 3. Funkcje rekomendowane dla Consultify
 
 ### A. List — obowiązkowe wejście
 

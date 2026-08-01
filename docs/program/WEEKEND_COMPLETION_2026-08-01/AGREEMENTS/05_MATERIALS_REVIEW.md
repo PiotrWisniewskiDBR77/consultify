@@ -14,7 +14,7 @@ last_reviewed: 2026-07-31
 ## 1. Proponowana definicja
 
 **Materials (Materiały)** to wspólna biblioteka i środowisko tworzenia
-profesjonalnych rezultatów pracy Consultinity:
+profesjonalnych rezultatów pracy Consultify:
 
 - dokumentów i raportów;
 - prezentacji;
@@ -323,7 +323,7 @@ tym samym produktem.
 
 Decyzja technologiczna pozostaje hybrydowa:
 
-- Consultinity posiada model workbooka, generatory, AI, governance i eksport;
+- Consultify posiada model workbooka, generatory, AI, governance i eksport;
 - grid oraz silnik formuł mogą korzystać z gotowych komponentów po spike’u
   technicznym i licencyjnym;
 - nie próbujemy ręcznie odtwarzać pełnego Excela;

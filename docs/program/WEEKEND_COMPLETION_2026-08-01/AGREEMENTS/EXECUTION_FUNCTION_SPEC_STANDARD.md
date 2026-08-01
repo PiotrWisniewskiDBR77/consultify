@@ -123,7 +123,7 @@ Każdy krok wskazuje:
 - filtry, sortowanie i wyszukiwanie;
 - responsive;
 - accessibility;
-- zgodność z kanonem UI Consultinity.
+- zgodność z kanonem UI Consultify.
 
 ### L. Stany interfejsu
 

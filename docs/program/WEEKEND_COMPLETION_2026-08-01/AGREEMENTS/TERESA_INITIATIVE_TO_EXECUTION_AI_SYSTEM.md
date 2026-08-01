@@ -60,9 +60,9 @@ intervention → verification → outcome learning`
 - rekomendacje pozostają częścią istniejącego workflow;
 - praca AI nie tworzy odrębnej prawdy obok danych projektu.
 
-### Przewaga projektowana dla Consultinity
+### Przewaga projektowana dla Consultify
 
-Consultinity łączy te mechanizmy w zamkniętą pętlę. Teresa nie tylko generuje
+Consultify łączy te mechanizmy w zamkniętą pętlę. Teresa nie tylko generuje
 tekst, lecz:
 
 1. ocenia sens Initiative;

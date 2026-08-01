@@ -13,7 +13,7 @@ last_reviewed: 2026-07-31
 
 ## 1. Proponowana definicja
 
-**Finance** to finansowy system analityczny Consultinity. Zamienia dane
+**Finance** to finansowy system analityczny Consultify. Zamienia dane
 źródłowe i jawne założenia w odtwarzalne modele, analizy, scenariusze,
 prognozy, wyceny oraz decyzje inwestycyjne.
 

@@ -3,7 +3,7 @@ doc_id: weekend-decision-register
 truth_type: product-target
 status: canonical
 owner: piotr
-last_reviewed: 2026-07-31
+last_reviewed: 2026-08-01
 ---
 
 # Rejestr decyzji weekendu
@@ -27,7 +27,7 @@ last_reviewed: 2026-07-31
 | `WK-D-015` | Meeting — wizja | Teresa docelowo jest aktywnym konsultantem i facilitatorem spotkania wieloosobowego: zadaje pytania, proponuje metody i uruchamia na żywo mapy myśli, whiteboard, flow, Canvas i Notebook; działa na wspólnym ekranie w sali oraz przez integracje z Teams/Zoom/Google Meet, bez budowy własnego audio-video | Piotr | 2026-07-31 | kierunek obowiązuje; rozwój etapowy po podstawowym golden flow |
 | `WK-D-016` | Tools vs Assessment vs Audits | Tools to elastyczne metody konsultingowe; Assessment to zamknięte, płatne postępowania rozwoju cyfrowego DRD/SIRI; Audits to odrębny silnik audytów branżowych i organizacyjnych generujący blueprint z normy/instrukcji oraz prowadzący od dowodu do raportu, planu naprawczego, inicjatyw i raportów realizacji | Piotr | 2026-07-31 | obowiązuje; DRD/SIRI i ich raporty należy usunąć z własności Audits |
 | `WK-D-017` | Faza Audits | Audits nie wchodzi do MVP; obecnie porządkujemy kontrakt i granice, a pełny silnik audytowy powstanie w drugiej fali rozwoju produktu | Piotr | 2026-07-31 | nie blokuje odbioru MVP; nie uruchamiać pełnej implementacji w bieżącej fali |
-| `WK-D-018` | UI/UX Audits | Audits ma wykorzystywać istniejące standardy i komponenty Consultinity dla tabel, preview, Menu 3, wizardów, insightów, arkuszy pytań, dokumentów, raportów i działań; nie budujemy równoległego języka UI | Piotr | 2026-07-31 | każda przyszła funkcja Audits wymaga mapy do kanonicznego wzorca; odstępstwo wymaga jawnej decyzji |
+| `WK-D-018` | UI/UX Audits | Audits ma wykorzystywać istniejące standardy i komponenty Consultify dla tabel, preview, Menu 3, wizardów, insightów, arkuszy pytań, dokumentów, raportów i działań; nie budujemy równoległego języka UI | Piotr | 2026-07-31 | każda przyszła funkcja Audits wymaga mapy do kanonicznego wzorca; odstępstwo wymaga jawnej decyzji |
 | `WK-D-019` | Materials — produkcja i delivery | Przed produkcją materiału/template Teresa lub okno przedstawia Generation Brief do review; trzy formaty mają wspólny shell/menu i wyspecjalizowane edytory; prezentacje wymagają grafik/layoutów Gamma+; każdy materiał ma viewer, download, share link i kontrolowaną wysyłkę linku/załącznika | Piotr | 2026-07-31 | obowiązuje w golden flows Materials i kanonie generatorów |
 | `WK-D-020` | Finance — rozliczenie inwestycji | Samodzielny Investment Case liczy NPV/IRR/ROI/payback bez pełnego modelu przedsiębiorstwa; decyzja zamraża baseline, a po realizacji Finance porównuje go z actual costs i KPI, przelicza opłacalność i tworzy post-investment review | Piotr | 2026-07-31 | obowiązuje; Benefits Realization Ledger spina Finance z Initiative, Execution i Results |
 | `WK-D-021` | Finance — wynik analizy | Finance nie ma osobnej zakładki Overview; analiza ma prowadzić do jawnego rozstrzygnięcia, a zatwierdzone wnioski mogą być grupowane i przekazywane jako Initiative Candidate Pack z pełnym lineage, numerical anchors i read-backiem | Piotr | 2026-07-31 | obowiązuje; scalić historyczne ścieżki tworzenia inicjatyw w jeden generator kandydatów |
@@ -48,6 +48,7 @@ last_reviewed: 2026-07-31
 | `WK-D-036` | Finance route authority | `/finance` jest jedyną trasą montującą moduł; `/economics` pozostaje wyłącznie kompatybilnym redirectem zachowującym query/hash, a stare nazwy API/ID są długiem migracyjnym | Codex | 2026-07-31 | `FIN-001` ACCEPTED; usuwa dwóch właścicieli URL bez migracji danych/API |
 | `WK-D-037` | Results route authority | `/results` jest jedyną trasą montującą moduł; `/benefits` i `/kpi-okr` są kompatybilnymi redirectami zachowującymi query/hash; `MODULE_BENEFITS` i stare nazwy API/DB pozostają na czas migracji | Codex | 2026-07-31 | `RES-001A` ACCEPTED; migracja scorecard store pozostaje osobną częścią `RES-001B` |
 | `WK-D-038` | Execution route authority | `/execution` jest jedyną trasą montującą ExecutionHub; `/implementation` i `/rollout` są kompatybilnymi redirectami z zachowaniem stanu URL | Codex | 2026-07-31 | `EXE-001` ACCEPTED; FullExecutionView nie uczestniczy już w runtime |
+| `WK-D-039` | nazwa i środowisko odbioru | produkt nazywa się Consultify; `Consultinity` jest wycofaną nazwą; jedynym stagingiem odbiorowym jest Railway project `consultify`, environment `demo`, `demo.consultify.ai` i jego PostgreSQL; `consultify.ai` oraz Railway `production` są poza zakresem i nie wolno ich dotykać | Piotr | 2026-08-01 | localhost nie jest evidence; każdy packet i odbiór muszą wskazywać jawny kontekst `demo` |
 
 ## Otwarte decyzje
 

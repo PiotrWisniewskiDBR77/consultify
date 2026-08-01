@@ -14,7 +14,7 @@ last_reviewed: 2026-07-31
 
 Analiza odpowiada na pytanie, jakie zdolności musi posiadać Execution, aby
 rzeczywiście zarządzał realizacją, a nie był kolejną listą zadań. Ocena nie jest
-ograniczona obecnym kodem Consultinity.
+ograniczona obecnym kodem Consultify.
 
 Źródłem są oficjalne materiały producentów. Benchmark obejmuje wzorce, nie
 kopiowanie wyglądu ani pełnego zakresu któregokolwiek produktu.
@@ -31,7 +31,7 @@ Najważniejsze wzorce:
 - porównanie baseline z actual i variance;
 - zasoby przypisane do krytycznych zadań.
 
-Wniosek dla Consultinity: plan musi być obliczalny. Nie wystarczy ręcznie
+Wniosek dla Consultify: plan musi być obliczalny. Nie wystarczy ręcznie
 oznaczany status projektu. System powinien umieć wyjaśnić, co naprawdę przesuwa
 termin końcowy.
 
@@ -47,7 +47,7 @@ Najważniejsze wzorce:
 - release/version jako kontrolowany punkt dostarczenia;
 - powiązanie zadania z development i deployment evidence.
 
-Wniosek dla Consultinity: każda większa interwencja powinna mieć bezpieczny
+Wniosek dla Consultify: każda większa interwencja powinna mieć bezpieczny
 tryb `what-if`, a zmiana planu powinna być publikowana dopiero po akceptacji.
 
 ### Asana — przejrzystość portfolio i odpowiedzialność
@@ -62,7 +62,7 @@ Najważniejsze wzorce:
 - połączenie projektu z celami organizacji;
 - archiwizacja zachowująca historię.
 
-Wniosek dla Consultinity: inne widoki są potrzebne operatorowi, managerowi i
+Wniosek dla Consultify: inne widoki są potrzebne operatorowi, managerowi i
 zarządowi, ale wszystkie muszą czytać tę samą prawdę. Status update powinien
 być workflow, nie ręcznie przygotowywanym slajdem.
 
@@ -78,7 +78,7 @@ Najważniejsze wzorce:
 - forecast potrzeb zasobowych;
 - kontrolowane role i uproszczone widoki dla odbiorców.
 
-Wniosek dla Consultinity: organizacja potrzebuje biblioteki typów wykonania,
+Wniosek dla Consultify: organizacja potrzebuje biblioteki typów wykonania,
 ale każdy blueprint musi pozostawać konfigurowalny i wersjonowany.
 
 ## 3. Wspólny mianownik najlepszych systemów
@@ -96,7 +96,7 @@ Dojrzały system Execution musi łączyć:
 9. raportowanie dopasowane do odbiorcy;
 10. zachowanie historii i dowodów.
 
-## 4. Luka rynkowa, którą może wykorzystać Consultinity
+## 4. Luka rynkowa, którą może wykorzystać Consultify
 
 Konkurenci dobrze przechowują oraz wizualizują pracę, ale użytkownik nadal
 często musi sam:
@@ -109,7 +109,7 @@ często musi sam:
 - sprawdzić skuteczność interwencji;
 - spiąć wykonanie z finansami i rzeczywistym rezultatem.
 
-Przewagą Consultinity powinien być **zarządczy closed loop** prowadzony przez
+Przewagą Consultify powinien być **zarządczy closed loop** prowadzony przez
 Teresę:
 
 `signal → diagnosis → options → decision → governed action → verification`

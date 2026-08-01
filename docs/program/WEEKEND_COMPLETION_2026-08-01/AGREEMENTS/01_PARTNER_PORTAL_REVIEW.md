@@ -15,12 +15,12 @@ last_reviewed: 2026-07-31
 
 **Partner Portal (Portal Partnera)** to chronione centrum aktywacji i sprzedaży
 dla partnera będącego osobą fizyczną albo organizacją. Ma zachęcić partnera do współpracy, nauczyć go
-aktualnej wartości Consultinity, wyposażyć w bieżące metody i materiały
+aktualnej wartości Consultify, wyposażyć w bieżące metody i materiały
 sprzedażowe, potwierdzić kompetencje, przypisać sprzedaż kodem oraz przeprowadzić
 przejrzyste rozliczenie.
 
-Portal nie jest osobną wersją Consultinity dla klienta końcowego. Klient pracuje
-w normalnej aplikacji Consultinity. Dostęp partnera do organizacji i projektów
+Portal nie jest osobną wersją Consultify dla klienta końcowego. Klient pracuje
+w normalnej aplikacji Consultify. Dostęp partnera do organizacji i projektów
 klienta może wspierać późniejsze delivery, ale nie jest rdzeniem pierwszego
 golden flow Portalu Partnera.
 
@@ -28,7 +28,7 @@ golden flow Portalu Partnera.
 
 | Nazwa | Znaczenie |
 | --- | --- |
-| **Program Poleceń** | prosta, oddzielna formuła dla osoby fizycznej, która rekomenduje Consultinity i zarabia na skutecznym poleceniu |
+| **Program Poleceń** | prosta, oddzielna formuła dla osoby fizycznej, która rekomenduje Consultify i zarabia na skutecznym poleceniu |
 | **Program Partnerski** | rozszerzona, oddzielna formuła dla firmy, konsultanta lub wdrożeniowca |
 | **Portal Partnera** | wspólny mechanizm techniczny obsługujący obie formuły, z zakresem dopasowanym do ich typu |
 | **Partner polecający** | uczestnik Programu Poleceń |
@@ -48,22 +48,22 @@ uczestnictwa.
 ### Główni
 
 - osoba fizyczna polecająca produkt w swojej sieci kontaktów;
-- pracownik firmy korzystającej z Consultinity, który zna produkt, jest z niego
+- pracownik firmy korzystającej z Consultify, który zna produkt, jest z niego
   zadowolony i chce legalnie polecać go dalej poza obowiązkami wobec pracodawcy;
 - właściciel lub administrator organizacji partnerskiej;
 - specjalista sprzedaży pozyskujący i kwalifikujący polecenia.
-- konsultant lub ambasador produktu, który rekomenduje Consultinity klientom.
+- konsultant lub ambasador produktu, który rekomenduje Consultify klientom.
 
 ### Wspierający
 
-- Partner Program Manager po stronie Consultinity;
+- Partner Program Manager po stronie Consultify;
 - finanse/operator zatwierdzający prowizje i wypłaty;
 - administrator bezpieczeństwa nadający dostęp do klientów.
 
 ### Poza portalem
 
 Pracownik klienta końcowego nie staje się użytkownikiem Portalu Partnera tylko
-dlatego, że korzysta z Consultinity. Może jednak dobrowolnie zapisać się do
+dlatego, że korzysta z Consultify. Może jednak dobrowolnie zapisać się do
 programu jako osoba fizyczna, zaakceptować jego zasady i otrzymać własny kod.
 Jego konto partnerskie, wynagrodzenie i rozliczenia muszą być oddzielone od
 danych oraz uprawnień pracodawcy.
@@ -75,7 +75,7 @@ Partner potrzebuje jednego miejsca, aby wiedzieć:
 - czy jego organizacja jest aktywna i na jakim jest poziomie;
 - jakie kompetencje i certyfikaty posiada;
 - co nowego pojawiło się w produkcie i jak o tym mówić;
-- jak obecnie sprzedawać Consultinity i komu;
+- jak obecnie sprzedawać Consultify i komu;
 - jak pozyskać klienta oraz przypisać sprzedaż swoim kodem;
 - z jakich aktualnych prezentacji, metod i materiałów korzystać;
 - jakie wynagrodzenie naliczono, dlaczego i kiedy zostanie wypłacone;
@@ -92,18 +92,18 @@ Istnieją dwa wejścia:
 3. **Istniejący partner:** logowanie → Portal Partnera → bieżące zadanie,
    klient, szkolenie albo rozliczenie.
 
-Samo konto pracownika lub klienta Consultinity nie tworzy partnerstwa.
+Samo konto pracownika lub klienta Consultify nie tworzy partnerstwa.
 Uczestnictwo wymaga osobnej akceptacji regulaminu. Profil osoby fizycznej nie
 może automatycznie przejmować danych ani uprawnień organizacji pracodawcy.
 
 ## 6. Golden flow
 
-1. Użytkownik produktu widzi prosty komunikat: znasz Consultinity, poleć je
+1. Użytkownik produktu widzi prosty komunikat: znasz Consultify, poleć je
    dalej i zarabiaj na skutecznych poleceniach.
 2. Zapisuje się jako osoba fizyczna, akceptuje warunki i uzupełnia minimalne
    dane potrzebne do rozliczeń.
 3. Portal pokazuje mu aktualną prezentację produktu: co jest nowe, dla kogo
-   jest Consultinity i jaką wartość dziś sprzedaje.
+   jest Consultify i jaką wartość dziś sprzedaje.
 4. Partner przechodzi aktualną ścieżkę sprzedażową i poznaje obowiązujące
    metody, argumenty, scenariusze oraz materiały.
 5. Zdaje wymagany egzamin i otrzymuje lub odnawia certyfikat.
@@ -200,7 +200,7 @@ Portal Partnera:
 - nie jest CRM-em całej firmy partnerskiej;
 - nie zastępuje modułów pracy klienta;
 - nie jest publicznym katalogiem;
-- nie jest panelem administracyjnym Consultinity;
+- nie jest panelem administracyjnym Consultify;
 - nie księguje samodzielnie pieniędzy — pokazuje dane właściciela finansowego;
 - nie pozwala partnerowi tworzyć dowolnego dostępu do klienta bez zgody i audytu.
 - nie pozwala pracownikowi wykorzystywać danych, kontaktów ani pozycji
@@ -301,7 +301,7 @@ HubSpot rozdziela obecnie co najmniej dwa modele:
   certyfikacjami, wsparciem sprzedażowym, rejestracją transakcji i revenue share.
 
 To wspiera naszą decyzję o jednym rdzeniu technicznym i dwóch prostych
-ścieżkach uczestnictwa. Consultinity może być jeszcze prostsze: osoba
+ścieżkach uczestnictwa. Consultify może być jeszcze prostsze: osoba
 zadowolona z produktu zapisuje się, uczy aktualnej oferty, otrzymuje kod,
 poleca i widzi rozliczenie. Ścieżka wdrożeniowa jest rozszerzeniem, nie warunkiem
 uczestnictwa.

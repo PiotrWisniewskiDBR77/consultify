@@ -11,7 +11,7 @@ last_reviewed: 2026-07-30
 
 ## Werdykt wykonawczy
 
-Głównym problemem Consultinity nie jest brak kodu. Jest nim **niski poziom
+Głównym problemem Consultify nie jest brak kodu. Jest nim **niski poziom
 integracji dużej liczby częściowo gotowych fragmentów**.
 
 W wielu obszarach istnieją jednocześnie:

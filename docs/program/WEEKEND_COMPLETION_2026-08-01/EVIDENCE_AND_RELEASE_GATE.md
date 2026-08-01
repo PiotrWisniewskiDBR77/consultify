@@ -3,7 +3,7 @@ doc_id: weekend-evidence-release-gate
 truth_type: delivery-status
 status: canonical
 owner: codex-piotr
-last_reviewed: 2026-07-30
+last_reviewed: 2026-08-01
 ---
 
 # Evidence i bramka końcowa
@@ -32,6 +32,10 @@ Zadanie jest `ACCEPTED`, gdy:
 - znane luki;
 - decyzja `GO / GO_WITH_GAPS / NO_GO`.
 
+Dowód runtime pochodzi wyłącznie z Railway environment `demo` pod
+`https://demo.consultify.ai` i jego PostgreSQL. Test lokalny może być bramką
+developmentu, ale nie zastępuje staging acceptance.
+
 ## Globalna bramka
 
 1. repo i revision są jednoznaczne;
@@ -44,6 +48,7 @@ Zadanie jest `ACCEPTED`, gdy:
 8. nie ma niejawnego mock/demo w ścieżce produkcyjnej;
 9. monitoring i rollback są gotowe;
 10. wszystkie P0 są `ACCEPTED`, `DEFERRED_BY_OWNER` lub jawnie blokują release.
+11. revision poddane odbiorowi jest faktycznie wdrożone na Railway `demo`.
 
 ## Werdykty
 

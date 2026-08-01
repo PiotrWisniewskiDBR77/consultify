@@ -6,14 +6,14 @@ owner: piotr
 process-manager: codex
 implementation-lead: claude
 window: 2026-08-01/2026-08-02
-last_reviewed: 2026-07-30
+last_reviewed: 2026-08-01
 ---
 
 # Weekend odbioru i dokończenia aplikacji
 
 ## Cel
 
-W weekend 1–2 sierpnia 2026 doprowadzamy Consultinity do stanu, w którym:
+W weekend 1–2 sierpnia 2026 doprowadzamy Consultify do stanu, w którym:
 
 - krytyczne przepływy użytkownika są działające i odebrane;
 - moduły nie udają funkcji, których nie realizują;
@@ -63,6 +63,8 @@ zakończone na podstawie samej deklaracji implementatora.
 
 ## Dokumenty sterujące
 
+0. [`ENVIRONMENT_AND_NAMING_AUTHORITY.md`](ENVIRONMENT_AND_NAMING_AUTHORITY.md)
+   — twardy kanon Consultify, Railway `demo`, domeny i PostgreSQL stagingu.
 1. [`ACCEPTANCE_BOARD.md`](ACCEPTANCE_BOARD.md) — jedna kolejka i status.
 2. [`ROLE_AND_HANDOFF_PROTOCOL.md`](ROLE_AND_HANDOFF_PROTOCOL.md) — sposób
    przekazywania zadań Claude.

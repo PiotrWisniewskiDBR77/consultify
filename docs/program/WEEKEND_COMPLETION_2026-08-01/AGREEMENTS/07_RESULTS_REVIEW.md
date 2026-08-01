@@ -203,7 +203,7 @@ powtarzalności odchylenia, trendu pogarszającego lub przekroczenia ustalonego
 terminu naprawy. Każda eskalacja ma historię, adresata, przyczynę i status
 doręczenia.
 
-Powiadomienia są częścią wspólnego systemu komunikacyjnego Consultinity:
+Powiadomienia są częścią wspólnego systemu komunikacyjnego Consultify:
 in-app notification i My Work są obowiązkowe; e-mail, Teams lub inne kanały
 mogą być włączane polityką organizacji. Powiadomienie prowadzi bezpośrednio do
 KPI, Deviation Case lub wymaganej czynności i nie zastępuje rejestrowanego
@@ -261,7 +261,7 @@ Check-in zawiera:
 ## 7.3. Widoczność i uprawnienia OKR
 
 Metoda OKR korzysta z przejrzystości, dlatego domyślnie cele organizacyjne i
-zespołowe są widoczne szerzej niż edytowalne. Jednocześnie Consultinity musi
+zespołowe są widoczne szerzej niż edytowalne. Jednocześnie Consultify musi
 chronić dane osobowe, poufne cele i wrażliwe wartości pomiarów.
 
 Widoczność jest ustalana osobno dla Objective, KR, wartości pomiarowych i

@@ -403,7 +403,7 @@ spełnienie wymogu, lecz nie wydaje własnego certyfikatu VDA ani ISO.
 ## 21. Kanon UI/UX i zasada ponownego użycia
 
 Audits nie tworzy osobnego języka interfejsu. Nowa jest logika audytowa, ale
-jej prezentacja i obsługa powstają z istniejących standardów Consultinity.
+jej prezentacja i obsługa powstają z istniejących standardów Consultify.
 Obowiązuje zasada **reuse before create**.
 
 ### Obowiązujące źródła standardu
@@ -574,7 +574,7 @@ Jest to golden flow **drugiej fali**, a nie bramka obecnego MVP.
 
 ## 26. Rekomendacja Codex
 
-Audits ma potencjał stać się **warstwą zaufania Consultinity**: miejscem, które
+Audits ma potencjał stać się **warstwą zaufania Consultify**: miejscem, które
 odróżnia opinię od dowodu, propozycję AI od zatwierdzonego ustalenia oraz
 deklarację naprawy od zweryfikowanego zamknięcia.
 

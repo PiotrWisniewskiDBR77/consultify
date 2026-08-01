@@ -13,7 +13,7 @@ last_reviewed: 2026-08-01
 
 Repozytorium ma bezpieczny, przetestowany fundament artefaktów oraz kanoniczne wejścia
 do Finance, Results i Execution. Nie oznacza to jeszcze odbioru całego MVP. Kolejny etap
-to pionowe golden flows na lokalnej bazie testowej i stagingu, wykonywane zgodnie z
+to pionowe golden flows na Railway `demo`, wykonywane zgodnie z
 [`MASTER_EXECUTION_PLAN.md`](MASTER_EXECUTION_PLAN.md), bez dotykania produkcji.
 
 ## Co zostało przyjęte
@@ -36,10 +36,9 @@ status funkcji jest utrzymywany w
 
 ## Jawne blokady i ograniczenia
 
-1. `FIN-003A` ma zaimplementowany, fail-closed test realnego importu na PostgreSQL.
-   Lokalny serwer `localhost:5432/consultinity_test` odpowiada, ale migracje zatrzymują
-   się przed zapisem, ponieważ brakuje roli `consultinity` wskazanej w
-   `server/.env.test`. Zdalne bazy są zabronione w tym teście.
+1. `FIN-003A` ma zaimplementowany test realnego importu, ale jego lokalny runner został
+   wycofany jako bramka odbiorowa. Test trzeba przepiąć na kontrolowany fixture i
+   cleanup w PostgreSQL Railway environment `demo`.
 2. `RES-001B` wymaga migracji ze scorecardów opartych o Goals do kanonicznego V8
    `kpi_scorecards`; nie wolno zgadywać, czy historyczne rekordy są jednorazowe.
 3. Materials nadal nie ma pełnego E2E Document/Presentation, wersji Workbook,
@@ -54,7 +53,7 @@ status funkcji jest utrzymywany w
 ## Pierwsza kolejka odbioru
 
 1. `MAT-006B` i `MAT-005B`: pełne lifecycle E2E z export/share/revoke.
-2. `FIN-003A`: realny import statement na wyłącznie lokalnym PostgreSQL.
+2. `FIN-003B`: realny import statement na PostgreSQL Railway `demo`.
 3. `RES-001B`: inwentaryzacja danych i bezpieczny plan jednej prawdy scorecardów.
 4. `INI-001..006` + `EXE-002A`: Candidate, role, approval, portfolio/roadmap i wspólny
    management snapshot bez tworzenia kolejnego store.
@@ -63,11 +62,11 @@ status funkcji jest utrzymywany w
 
 ## Poranny protokół
 
-1. potwierdzić czyste uruchomienie aplikacji i migracji na lokalnym profilu testowym;
+1. potwierdzić revision oraz stan aplikacji i usług w Railway `demo`;
 2. uruchomić bramki SSOT, linków, typów oraz celowane testy przyjętych paczek;
-3. wykonać golden flows na rzeczywistym UI i zachować screenshoty/identyfikatory;
+3. wykonać golden flows na `demo.consultify.ai` i zachować screenshoty/identyfikatory;
 4. każdą funkcję oznaczyć `GO`, `FIX` albo `NO-GO` w Acceptance Board;
-5. dopiero po odbiorze lokalnym powtórzyć flow na stagingu;
+5. testy lokalne traktować wyłącznie jako development gate, nie evidence odbiorowe;
 6. produkcja pozostaje poza zakresem i wymaga oddzielnej decyzji.
 
 ## Recovery i ochrona pracy
@@ -77,5 +76,5 @@ status funkcji jest utrzymywany w
 - nie usuwano historycznych materiałów repozytorium;
 - zastane, niezwiązane zmiany w `.claude`, `Harvard`, plikach audytowych,
   `dev-render` i `tmp` pozostają poza zakresem commitów;
-- testy bazodanowe muszą fail-closed, jeżeli konfiguracja nie wskazuje jawnie na
-  lokalną bazę `consultinity_test`.
+- testy stagingowe muszą fail-closed, jeżeli kontekst Railway nie wskazuje jawnie na
+  project `consultify` i environment `demo`.

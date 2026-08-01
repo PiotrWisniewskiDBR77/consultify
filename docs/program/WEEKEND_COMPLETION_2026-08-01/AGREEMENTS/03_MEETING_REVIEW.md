@@ -22,7 +22,7 @@ w zatwierdzone decyzje, zobowiązania oraz wiedzę organizacyjną.
 Meeting nie powinien budować od zera własnej technologii audio-video ani
 konkurować z Teams, Zoom lub Google Meet. Powinien działać w dwóch trybach:
 
-1. **tryb sali** — komputer z Consultinity jest podłączony do projektora lub
+1. **tryb sali** — komputer z Consultify jest podłączony do projektora lub
    wspólnego ekranu, a Teresa pracuje razem z osobami obecnymi w pomieszczeniu;
 2. **tryb spotkania zdalnego** — Teresa dołącza do Teams, Zoom lub Google Meet
    jako jawny uczestnik i współpracuje z wieloma użytkownikami.
@@ -520,7 +520,7 @@ rezultaty przestają być odizolowanymi fragmentami wewnątrz modułu.
 1. Meeting obejmuje pracę przed, w trakcie i po spotkaniu.
 2. Teresa jest docelowo aktywnym konsultantem i facilitatorem.
 3. Moduł obsługuje tryb sali oraz integracje z Teams/Zoom/Google Meet.
-4. Consultinity nie buduje własnego silnika audio-video.
+4. Consultify nie buduje własnego silnika audio-video.
 5. Teresa może uruchamiać współdzielone narzędzia i artefakty w trakcie pracy.
 6. Meeting orkiestruje całą aplikację, ale finalne obiekty pozostają we
    właściwych modułach.

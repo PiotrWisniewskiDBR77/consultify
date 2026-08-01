@@ -13,7 +13,7 @@ last_reviewed: 2026-07-30
 Nie budujemy od zera pełnego odpowiednika Excela i nie wymieniamy istniejącego
 stosu na zamknięty pakiet. Przyjmujemy wariant hybrydowy:
 
-1. Consultinity zachowuje własny kanoniczny model skoroszytu, generatory,
+1. Consultify zachowuje własny kanoniczny model skoroszytu, generatory,
    formuły domenowe, AI, wersjonowanie, uprawnienia, audyt i eksport `.xlsx`.
 2. Gotowe komponenty oceniamy dla dwóch wymienialnych warstw: interakcji z
    siatką oraz zgodnego z Excelem silnika formuł.
@@ -37,7 +37,7 @@ stosu na zamknięty pakiet. Przyjmujemy wariant hybrydowy:
 
 Pełny edytor arkusza oznacza lata pracy nad zakresami, schowkiem, klawiaturą,
 undo/redo, fill handle, formatami, dostępnością i wydajnością. To nie jest
-przewaga Consultinity. Przewagą są konsultingowe modele, dane, AI i bezpieczne
+przewaga Consultify. Przewagą są konsultingowe modele, dane, AI i bezpieczne
 przejście od rozmowy do materiału.
 
 Całkowity gotowiec również jest złym wyborem: obecny backend zawiera znaczną

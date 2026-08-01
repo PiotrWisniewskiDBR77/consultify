@@ -11,7 +11,7 @@ last_reviewed: 2026-07-30
 
 ## Diagnoza
 
-Consultinity nie jest pustą aplikacją wymagającą budowy od zera. Repo zawiera
+Consultify nie jest pustą aplikacją wymagającą budowy od zera. Repo zawiera
 dużo częściowo gotowych rozwiązań, ale ich wartość jest ograniczona przez brak
 pełnego spięcia:
 
