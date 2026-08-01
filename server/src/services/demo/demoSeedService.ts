@@ -1,11 +1,13 @@
 import { DRD_STRUCTURE } from '../../data/drdStructure.js';
 import * as DbPromise from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 import { fireClosureHandoff } from '../executionResultsBridge.js';
 import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
 import {
   ATELIER_CANONICAL_MODEL_NAME_EN,
   ATELIER_CANONICAL_MODEL_NAME_PL,
   ATELIER_FINANCE_CURRENCY,
+  type AtelierFinanceSeedResult,
   upsertAtelierFinanceGoldenFlow,
 } from './atelierFinanceSeed.js';
 import {
@@ -50,6 +52,12 @@ export interface SeedDemoDatasetResult {
   };
   scenarios: ReturnType<typeof getAtelierToysDemoScenarios>;
   toolCoverage: ReturnType<typeof getAtelierToysToolCoverage>;
+  /**
+   * FIN-005 — explicit outcome of the Finance golden flow. Never swallowed: an
+   * `incomplete` here means Finance rows exist but NOTHING was promoted to
+   * READY, and `reason` / `missing` say exactly why.
+   */
+  financeGoldenFlow: AtelierFinanceSeedResult;
 }
 
 type UserMap = Record<string, { id: string; email: string }>;
@@ -4070,6 +4078,22 @@ export async function seedAtelierToysDemoDataset(
     projectId: projectMap['forward-pmo'] || null,
     locale,
   });
+  // FIN-005 P1: the Finance seed returns an explicit discriminated outcome.
+  // A degraded Finance fixture (missing table/column, failed read-back, a
+  // statement that production refused to call READY) must never be swallowed:
+  // surface it in the log AND carry it in the seed result so the caller sees
+  // that Finance is present but NOT ready.
+  if (financeGoldenFlow.status !== 'complete') {
+    logger.warn('[demo-seed] Atelier Finance golden flow is INCOMPLETE', {
+      organizationId,
+      reason: financeGoldenFlow.reason,
+      missing: financeGoldenFlow.missing,
+      packId: financeGoldenFlow.packId,
+      promotedStatements: financeGoldenFlow.statementIds.length,
+      unpromotedStatements: financeGoldenFlow.unpromotedStatementIds.length,
+      analysisId: financeGoldenFlow.analysisId,
+    });
+  }
   await upsertAtelierRoiFinancialModel(
     organizationId,
     userMap,
@@ -4102,6 +4126,7 @@ export async function seedAtelierToysDemoDataset(
     },
     scenarios,
     toolCoverage,
+    financeGoldenFlow,
   };
 }
 
