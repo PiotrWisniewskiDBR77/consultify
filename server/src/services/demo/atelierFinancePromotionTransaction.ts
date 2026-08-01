@@ -61,15 +61,75 @@
  *     seed is the retry.
  *   - It does NOT make the phase-1 writes transactional. Only the promotion is
  *     pinned; the fixture rows themselves are written before this runs.
- *   - It is NOT available everywhere — see the availability probe below. When
- *     it is not, the caller must fall back to its own compensating path. This
- *     module never silently pretends to have run.
- *   - A `COMMIT` that is issued but whose result never reaches this process
- *     (connection reset in the COMMIT round-trip) is reported as
- *     `'rolled-back'` while the database may in fact have committed. That is
- *     the classic in-doubt outcome, and it is safe here in one direction only:
- *     we may under-report success, never over-report it. The caller's next run
- *     converges (all five promoted = healthy fixture, left alone).
+ *
+ * ===========================================================================
+ * FAIL-CLOSED — the two ways "no pinned transaction" can end (FIN-005 P1-1)
+ * ===========================================================================
+ * An earlier build conflated them and that WAS the defect: any probe or
+ * checkout failure returned `unavailable`, and the caller then promoted through
+ * a NON-ATOMIC compensating path and could still report `complete`. On a real
+ * database that is precisely the class of fault this module exists to remove.
+ *
+ * They are now distinct outcomes, and only ONE of them lets a caller degrade:
+ *
+ *   `mode: 'unavailable'` — a NON-PostgreSQL seam was POSITIVELY IDENTIFIED
+ *       (see `identifyNonPostgresSeam`). This is the mocked/in-memory test
+ *       world, where no pinned connection can exist even in principle. The
+ *       caller may use its own compensating path here and nowhere else.
+ *
+ *   `mode: 'refused'` — everything else. A real (or merely unproven-to-be-fake)
+ *       database where the pinned transaction could not be established: the
+ *       probe failed, the pool checkout timed out, the pool was exhausted, the
+ *       connection failed, or the pinned client turned out to be on a different
+ *       database. ZERO promotion UPDATEs have been issued in every one of those
+ *       branches — the probe and the checkout both precede `BEGIN`, and the
+ *       identity check precedes the locks and the writes. The caller MUST end
+ *       the seed as `incomplete`. Railway `demo` can therefore never degrade to
+ *       non-atomic promotion: nothing there identifies a seam.
+ *
+ * AMBIGUITY FAILS CLOSED. `identifyNonPostgresSeam` only ever answers "yes" to
+ * a POSITIVE, named signal; the absence of a signal is never read as "this must
+ * be a mock". In particular `NODE_ENV` is NOT evidence about the database and
+ * is never consulted for this decision (it selects the LOG LEVEL, nothing
+ * more) — a production process with `NODE_ENV` unset still fails closed.
+ *
+ * ===========================================================================
+ * NO FALLBACK PROMOTION ON POSTGRESQL (FIN-005 P1-2)
+ * ===========================================================================
+ * `DbPromise.run`'s timeout settles the JS promise; it does NOT cancel the
+ * query in the driver. On a compensating path that is lethal: the UPDATE runs
+ * long, the promise rejects, the compensation demotes the rows, and the
+ * ORIGINAL UPDATE then lands — part of the fixture is READY again, after the
+ * operation reported failure. (Worse, the demote is guarded by
+ * `IS DISTINCT FROM`, so while the promotion is still in flight the row still
+ * reads as phase-1 and the demote matches ZERO rows and "succeeds".)
+ *
+ * A JS timeout is not a transaction boundary. So there is no promotion fallback
+ * on PostgreSQL at all: every PostgreSQL promotion goes through the pinned
+ * transaction, and a pinned transaction that cannot be established refuses.
+ * The one and only place this module builds `{ mode: 'unavailable' }` is
+ * `reportUnavailable`, which is called from exactly one site — the recognised
+ * seam branch at the top of `runPinnedPromotionTransaction`. That is what a
+ * reviewer should grep for.
+ *
+ * ===========================================================================
+ * COMMIT INDETERMINATE (FIN-005 P1-3)
+ * ===========================================================================
+ * A `COMMIT` whose result never reaches this process (connection reset in the
+ * COMMIT round-trip) may or may not have committed. Reporting it as
+ * `rolled-back` is a claim with no evidence behind it. So on a COMMIT error the
+ * adapter opens a FRESH connection — the pinned one is unusable — and asks the
+ * caller's `reconcile` callback to read the promoted records back and classify:
+ *
+ *   all five READY and coherent      -> the commit really landed (`committed`,
+ *                                       `commitAck: 'lost-then-confirmed'`)
+ *   all five pending / pre-state     -> it did not (`rolled-back`, with the
+ *                                       reconciliation as the evidence)
+ *   anything mixed, anything else,
+ *   or the read itself failing       -> `commit-indeterminate`,
+ *                                       `operatorAction: 'NEEDS_OPERATOR'`
+ *
+ * `commit-indeterminate` is never `complete` for the caller.
  *
  * ===========================================================================
  * AVAILABILITY — how "this is not a real pg connection" is detected
@@ -79,18 +139,23 @@
  * would live in the fake store while the promotion ran against a real database:
  * split brain, and far worse than no transaction at all.
  *
- * So availability is decided by asking THE SAME MODULE THE CALLER WRITES
- * THROUGH. `probePinnedTransactionSupport()` sends a Postgres-only expression
- * (`current_database()` / `pg_backend_pid()`) through `DbPromise.all`. Only a
- * genuine pg driver answers it with one row; the in-memory fake and the mock
- * database return nothing (or throw), and any non-pg driver cannot answer at
- * all. Only after that probe succeeds is a client checked out — so a mocked
- * test never opens a pool. The pinned client is then asked for
- * `current_database()` too and refuses to proceed if the names disagree.
+ * Two independent mechanisms, in this order:
+ *
+ *   1. `identifyNonPostgresSeam()` — positive identification of the seam
+ *      itself (a fully doubled `DbPromise`, `MOCK_DB=true`, a database instance
+ *      that declares `isMock`, or a configured driver that is not postgres).
+ *      Recognised => `unavailable`, and no pool is ever touched.
+ *   2. `probePinnedTransactionSupport()` — asks THE SAME MODULE THE CALLER
+ *      WRITES THROUGH a Postgres-only expression (`current_database()` /
+ *      `pg_backend_pid()`) through `DbPromise.all`. Only a genuine pg driver
+ *      answers with one row. A failure here on an unrecognised seam is a
+ *      REFUSAL, not a degradation. The pinned client is then asked for
+ *      `current_database()` too and refuses if the names disagree.
  *
  * `unavailable` is logged at `error` level in production (a production seed run
  * SHOULD have a real connection; silently degrading is the failure mode this
- * whole packet exists to remove) and at `info`/`warn` elsewhere.
+ * whole packet exists to remove) and at `info`/`warn` elsewhere. `refused` is
+ * logged at `error` level ALWAYS.
  */
 
 import type { PoolClient } from 'pg';
@@ -123,6 +188,19 @@ export interface PinnedLockRequest {
   ids: string[];
 }
 
+/**
+ * The caller's verdict after a LOST COMMIT ACK, computed on a FRESH connection.
+ *
+ * `committed`     — every promoted record was read back READY and coherent.
+ * `not-committed` — every promoted record is in its pending / pre-promotion state.
+ * `indeterminate` — anything mixed, anything else, or the read did not succeed.
+ */
+export interface PinnedReconciliation {
+  verdict: 'committed' | 'not-committed' | 'indeterminate';
+  /** Human-readable evidence; goes verbatim into the outcome and the log. */
+  detail: string;
+}
+
 export interface PinnedPromotionRequest {
   /** Rows to `SELECT … FOR UPDATE` before the plan runs. */
   lock: PinnedLockRequest[];
@@ -130,6 +208,13 @@ export interface PinnedPromotionRequest {
   plan: (read: PinnedReader) => Promise<PinnedPlan>;
   /** Final read-back on the same client, after the writes, before COMMIT. */
   verify: (read: PinnedReader) => Promise<{ ok: boolean; reason?: string }>;
+  /**
+   * Read the promoted records on a FRESH connection and classify a lost COMMIT
+   * ACK. REQUIRED, not optional: a caller that forgets it would leave the
+   * adapter with nothing to reason from and force `NEEDS_OPERATOR` on every
+   * in-doubt COMMIT.
+   */
+  reconcile: (read: PinnedReader) => Promise<PinnedReconciliation>;
   /** Per-statement timeout on the pinned session. Default 15s. */
   statementTimeoutMs?: number;
   /** Ceiling on the pool checkout itself. Default 10s. */
@@ -137,14 +222,29 @@ export interface PinnedPromotionRequest {
 }
 
 export type PinnedPromotionOutcome =
-  /** No pinned connection could be used; the caller MUST use its own path. */
-  | { mode: 'unavailable'; reason: string }
+  /**
+   * A non-PostgreSQL seam was POSITIVELY IDENTIFIED. The ONLY outcome that
+   * permits a caller to promote through its own non-atomic path.
+   */
+  | { mode: 'unavailable'; reason: string; seam: string }
+  /**
+   * A real (or unproven) database where the pinned transaction could not be
+   * established. ZERO promotion UPDATEs were issued. The caller MUST fail.
+   */
+  | { mode: 'refused'; reason: string; evidence: string }
   | {
       mode: 'pinned';
       status: 'committed';
       /** Labels of the writes that were applied and committed. */
       applied: string[];
       backendPid: number | null;
+      /**
+       * `acknowledged` — the server answered the COMMIT.
+       * `lost-then-confirmed` — the answer was lost and reconciliation on a
+       * fresh connection PROVED the commit landed.
+       */
+      commitAck: 'acknowledged' | 'lost-then-confirmed';
+      reconciliation?: PinnedReconciliation;
     }
   | {
       mode: 'pinned';
@@ -155,6 +255,21 @@ export type PinnedPromotionOutcome =
       /** False when the ROLLBACK statement itself could not be sent. */
       rollbackIssued: boolean;
       backendPid: number | null;
+      /** Present when "rolled back" was PROVED by post-COMMIT reconciliation. */
+      reconciliation?: PinnedReconciliation;
+    }
+  | {
+      /**
+       * The COMMIT result was lost and reconciliation could not classify the
+       * outcome. NOT rolled back, NOT complete — a human has to look.
+       */
+      mode: 'pinned';
+      status: 'commit-indeterminate';
+      reason: string;
+      applied: string[];
+      backendPid: number | null;
+      reconciliation: PinnedReconciliation;
+      operatorAction: 'NEEDS_OPERATOR';
     };
 
 const DEFAULT_STATEMENT_TIMEOUT_MS = Number(process.env.DB_QUERY_TIMEOUT) || 15_000;
@@ -206,19 +321,130 @@ export async function probePinnedTransactionSupport(): Promise<PinnedSupportProb
   }
 }
 
+// ---------------------------------------------------------------------------
+// Positive identification of a non-PostgreSQL seam (FIN-005 P1-1)
+// ---------------------------------------------------------------------------
+
+export interface NonPgSeamVerdict {
+  /** True ONLY when one of the named signals below actually matched. */
+  recognised: boolean;
+  /** The signal that matched, or the evidence weighed when none did. */
+  signal: string;
+}
+
+/**
+ * Is a vitest/jest test double? `_isMockFunction` plus a `.mock` record is the
+ * marker every spy library in this repo stamps on its doubles.
+ */
+function isTestDouble(value: unknown): boolean {
+  if (typeof value !== 'function') return false;
+  const fn = value as { _isMockFunction?: unknown; mock?: unknown };
+  return fn._isMockFunction === true && typeof fn.mock === 'object' && fn.mock !== null;
+}
+
+/**
+ * Decide — POSITIVELY — whether this process is wired to something that is not
+ * PostgreSQL and therefore cannot host a pinned transaction even in principle.
+ *
+ * READ THIS BEFORE ADDING A SIGNAL. The answer gates the ONLY route to the
+ * caller's non-atomic promotion path, so it must never be reachable by
+ * inference, by absence of evidence, or by `NODE_ENV`. `NODE_ENV` says
+ * something about the process, nothing about the database: a staging box, a
+ * `NODE_ENV`-less container and a developer's laptop pointed at the demo
+ * database would all be misclassified by it. It is deliberately not consulted
+ * here. Every signal below is an explicit declaration made by the seam itself.
+ *
+ * The DbPromise signal demands that `get`, `all` AND `run` are all doubles.
+ * A PARTIAL mock — a test that wraps `all` to inject a probe failure while
+ * leaving the real `run` in place, which is exactly what the fail-closed suite
+ * does — is deliberately NOT recognised: it still writes to the real database,
+ * so it must fail closed like any other real database.
+ */
+export async function identifyNonPostgresSeam(): Promise<NonPgSeamVerdict> {
+  const considered: string[] = [];
+
+  // 1. The module the caller writes through has been wholesale replaced.
+  if (isTestDouble(DbPromise.get) && isTestDouble(DbPromise.all) && isTestDouble(DbPromise.run)) {
+    return {
+      recognised: true,
+      signal:
+        'the DbPromise module is a test double (get/all/run are all mock functions) — no statement this process issues can reach PostgreSQL',
+    };
+  }
+  considered.push('DbPromise get/all/run are real functions, not test doubles');
+
+  // 2. Explicit opt-in. `Database.ts` treats this as its primary mock switch.
+  if (process.env.MOCK_DB === 'true') {
+    return { recognised: true, signal: 'MOCK_DB=true — the mock database was explicitly requested' };
+  }
+  considered.push(`MOCK_DB=${process.env.MOCK_DB ?? '<unset>'}`);
+
+  // 3. The live database instance declares itself a mock.
+  try {
+    const { getDatabaseInstance } = await import('../../database/Database.js');
+    const instance = getDatabaseInstance() as unknown as { isMock?: unknown } | null;
+    if (instance && instance.isMock === true) {
+      return {
+        recognised: true,
+        signal: 'the active database instance declares isMock=true',
+      };
+    }
+    considered.push('the active database instance does not declare isMock');
+  } catch (error) {
+    // Could not even ask. That is NOT evidence of a mock.
+    considered.push(`the active database instance could not be inspected (${(error as Error).message})`);
+  }
+
+  // 4. A configured driver that is not postgres cannot host a pg transaction.
+  try {
+    const { databaseConfig } = await import('../../config/DatabaseConfig.js');
+    const type = String((databaseConfig as { type?: unknown } | null)?.type ?? '');
+    if (type && type !== 'postgres') {
+      return { recognised: true, signal: `the configured database driver is "${type}", not postgres` };
+    }
+    considered.push(`the configured database driver is "${type || '<unknown>'}"`);
+  } catch (error) {
+    considered.push(`the database configuration could not be inspected (${(error as Error).message})`);
+  }
+
+  return { recognised: false, signal: considered.join('; ') };
+}
+
 function isProduction(): boolean {
   return process.env.NODE_ENV === 'production';
 }
 
-/** Loud in production, quiet elsewhere — but never silent. */
-function reportUnavailable(reason: string): { mode: 'unavailable'; reason: string } {
-  const message = `[atelier-finance-seed] pinned promotion transaction UNAVAILABLE — ${reason}; falling back to verify-then-promote with compensating rollback`;
+/**
+ * THE ONLY PLACE THIS MODULE BUILDS `{ mode: 'unavailable' }`.
+ *
+ * Called from exactly one site — the recognised-seam branch at the top of
+ * `runPinnedPromotionTransaction`. Everything else that goes wrong produces
+ * `refuse(...)`. Grep for `mode: 'unavailable'` to confirm there is no second
+ * door onto the caller's fallback.
+ *
+ * Loud in production, quiet elsewhere — but never silent. (`NODE_ENV` picks the
+ * LEVEL here; it never decides whether the seam is real.)
+ */
+function reportUnavailable(seam: string): { mode: 'unavailable'; reason: string; seam: string } {
+  const message = `[atelier-finance-seed] pinned promotion transaction UNAVAILABLE — recognised non-PostgreSQL seam: ${seam}; the caller may use its compensating path HERE ONLY`;
   if (isProduction()) {
     logger.error(message);
   } else {
     logger.info(message);
   }
-  return { mode: 'unavailable', reason };
+  return { mode: 'unavailable', reason: seam, seam };
+}
+
+/**
+ * Fail closed. A real (or unproven) database that cannot give us a pinned
+ * transaction ends the promotion — it never degrades to a non-atomic path.
+ * Every caller of this has issued ZERO promotion UPDATEs.
+ */
+function refuse(reason: string, evidence: string): { mode: 'refused'; reason: string; evidence: string } {
+  logger.error(
+    `[atelier-finance-seed] pinned promotion transaction REFUSED — ${reason}; failing closed with ZERO promotion UPDATEs issued (no compensating fallback on PostgreSQL). Why this is not treated as a test seam: ${evidence}`
+  );
+  return { mode: 'refused', reason, evidence };
 }
 
 /**
@@ -271,8 +497,21 @@ async function connectWithDeadline(
 export async function runPinnedPromotionTransaction(
   request: PinnedPromotionRequest
 ): Promise<PinnedPromotionOutcome> {
+  // (1) Is this a seam where no pinned transaction can exist? Asked FIRST, so a
+  //     recognised mock never opens a pool, and so a fake that could somehow
+  //     answer the probe cannot smuggle us onto a real database.
+  const seam = await identifyNonPostgresSeam();
+  if (seam.recognised) return reportUnavailable(seam.signal);
+
+  // (2) Not a recognised seam ⇒ this is a real database as far as anything can
+  //     tell. From here on, EVERY failure is a refusal.
   const probe = await probePinnedTransactionSupport();
-  if (!probe.supported) return reportUnavailable(probe.reason);
+  if (!probe.supported) {
+    return refuse(
+      `the availability probe failed on a database that is NOT a recognised test seam: ${probe.reason}`,
+      seam.signal
+    );
+  }
 
   const statementTimeoutMs = request.statementTimeoutMs ?? DEFAULT_STATEMENT_TIMEOUT_MS;
   const connectTimeoutMs = request.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS;
@@ -281,21 +520,16 @@ export async function runPinnedPromotionTransaction(
   try {
     // Imported lazily so that a mocked/in-memory run never even loads the pool
     // module's connection machinery.
-    const { getPoolClientForPinnedTransaction } = await import(
-      '../../database/PostgresDatabase.js'
-    );
-    client = await connectWithDeadline(
-      () => getPoolClientForPinnedTransaction(),
-      connectTimeoutMs
-    );
+    client = await connectWithDeadline(() => checkOutPinnedClient(), connectTimeoutMs);
   } catch (error) {
-    // A real Postgres that will not give us a connection is NOT a quiet
-    // "unsupported environment" — say so at error level regardless of NODE_ENV.
-    const reason = `could not check out a pinned connection: ${(error as Error).message}`;
-    logger.error(
-      `[atelier-finance-seed] pinned promotion transaction UNAVAILABLE — ${reason}; falling back to verify-then-promote with compensating rollback`
+    // Checkout timeout, pool exhaustion ("too many clients already", "timeout
+    // exceeded when trying to connect"), a refused socket — all of them are a
+    // real Postgres that will not give us a connection, and all of them fail
+    // closed. Nothing has been written: this is still before `BEGIN`.
+    return refuse(
+      `could not check out a pinned connection: ${(error as Error).message}`,
+      seam.signal
     );
-    return { mode: 'unavailable', reason };
   }
 
   // A backend that is terminated under us (`pg_terminate_backend`, a killed
@@ -382,9 +616,13 @@ export async function runPinnedPromotionTransaction(
     const pinnedDb = String(identity[0]?.pinned_probe_db ?? '').trim();
     backendPid = Number(identity[0]?.pinned_probe_pid ?? 0) || null;
     if (!pinnedDb || (probe.database && pinnedDb !== probe.database)) {
+      // Still before the locks and before the first write: zero promotion
+      // UPDATEs. A database mismatch is a REFUSAL — promoting through the
+      // caller's own path here is exactly the split brain this guards against.
       await rollback();
-      return reportUnavailable(
-        `pinned connection is on database "${pinnedDb || 'unknown'}" but the service layer reports "${probe.database}"`
+      return refuse(
+        `pinned connection is on database "${pinnedDb || 'unknown'}" but the service layer reports "${probe.database}"`,
+        seam.signal
       );
     }
 
@@ -422,18 +660,149 @@ export async function runPinnedPromotionTransaction(
       );
     }
 
-    await client.query('COMMIT');
+    try {
+      await client.query('COMMIT');
+    } catch (commitError) {
+      // IN DOUBT. The COMMIT may have landed and the answer been lost, or the
+      // transaction may have aborted. Claiming "rolled back" here would be an
+      // assertion with no evidence — FIN-005 P1-3. The pinned connection is
+      // unusable, so destroy it and reconcile on a FRESH one.
+      began = false;
+      releaseOnce(commitError as Error);
+      return await reconcileLostCommitAck({
+        request,
+        commitError: commitError as Error,
+        applied,
+        backendPid,
+        connectTimeoutMs,
+        statementTimeoutMs,
+      });
+    }
     began = false;
     logger.info(
       `[atelier-finance-seed] pinned promotion transaction COMMITTED — ${applied.length} promotion(s) on one connection`,
       { applied, backendPid, database: pinnedDb }
     );
-    return { mode: 'pinned', status: 'committed', applied, backendPid };
+    return {
+      mode: 'pinned',
+      status: 'committed',
+      applied,
+      backendPid,
+      commitAck: 'acknowledged',
+    };
   } catch (error) {
     return await rolledBack((error as Error).message);
   } finally {
     releaseOnce();
   }
+}
+
+/** The single door onto the pool. Lazily imported so a mocked run never opens it. */
+async function checkOutPinnedClient(): Promise<PoolClient> {
+  const { getPoolClientForPinnedTransaction } = await import('../../database/PostgresDatabase.js');
+  return getPoolClientForPinnedTransaction();
+}
+
+/**
+ * A `COMMIT` whose result never arrived — resolve it with EVIDENCE, on a
+ * connection that is not the (now unusable) pinned one.
+ *
+ * Never returns `committed` unless the caller's `reconcile` read all five
+ * promoted records back as READY and coherent, and never returns `rolled-back`
+ * unless it read them all back in their pre-promotion state. Everything else —
+ * mixed rows, an unexpected shape, a fresh checkout that fails, a `reconcile`
+ * that throws — is `commit-indeterminate` / `NEEDS_OPERATOR`.
+ */
+async function reconcileLostCommitAck(params: {
+  request: PinnedPromotionRequest;
+  commitError: Error;
+  applied: string[];
+  backendPid: number | null;
+  connectTimeoutMs: number;
+  statementTimeoutMs: number;
+}): Promise<PinnedPromotionOutcome> {
+  const { request, commitError, applied, backendPid } = params;
+  const preface = `COMMIT did not return a result (${commitError.message}); the transaction may or may not have committed`;
+
+  logger.error(
+    `[atelier-finance-seed] pinned promotion transaction COMMIT IS IN DOUBT — ${preface}; reconciling on a fresh connection`,
+    { applied, backendPid }
+  );
+
+  let reconciliation: PinnedReconciliation;
+  let fresh: PoolClient | null = null;
+  try {
+    const client = await connectWithDeadline(() => checkOutPinnedClient(), params.connectTimeoutMs);
+    fresh = client;
+    // Read-only, and bounded: a reconciliation that hangs is a reconciliation
+    // that never answers.
+    await client.query(`SET statement_timeout = ${Number(params.statementTimeoutMs)}`);
+    const read: PinnedReader = async (sql, sqlParams = []) => {
+      const result = await client.query(toPositional(sql), sqlParams as unknown[]);
+      return (result.rows ?? []) as PinnedRow[];
+    };
+    reconciliation = await request.reconcile(read);
+  } catch (error) {
+    reconciliation = {
+      verdict: 'indeterminate',
+      detail: `the reconciliation read itself failed: ${(error as Error).message}`,
+    };
+  } finally {
+    if (fresh) {
+      try {
+        fresh.release();
+      } catch {
+        /* already gone */
+      }
+    }
+  }
+
+  if (reconciliation.verdict === 'committed') {
+    logger.warn(
+      `[atelier-finance-seed] pinned promotion transaction COMMITTED after a LOST COMMIT ACK — ${reconciliation.detail}`,
+      { applied, backendPid }
+    );
+    return {
+      mode: 'pinned',
+      status: 'committed',
+      applied,
+      backendPid,
+      commitAck: 'lost-then-confirmed',
+      reconciliation,
+    };
+  }
+
+  if (reconciliation.verdict === 'not-committed') {
+    logger.warn(
+      `[atelier-finance-seed] pinned promotion transaction ROLLED BACK (proved by reconciliation after a lost COMMIT ack) — ${reconciliation.detail}`,
+      { applied, backendPid }
+    );
+    return {
+      mode: 'pinned',
+      status: 'rolled-back',
+      reason: `${preface}; reconciliation proved it did NOT: ${reconciliation.detail}`,
+      applied,
+      // The pinned connection is gone; no ROLLBACK statement was ever sent.
+      // Postgres aborted the transaction when the connection dropped.
+      rollbackIssued: false,
+      backendPid,
+      reconciliation,
+    };
+  }
+
+  logger.error(
+    `[atelier-finance-seed] pinned promotion transaction COMMIT INDETERMINATE — NEEDS_OPERATOR — ${reconciliation.detail}`,
+    { applied, backendPid }
+  );
+  return {
+    mode: 'pinned',
+    status: 'commit-indeterminate',
+    reason: `${preface}; reconciliation could not classify it: ${reconciliation.detail}`,
+    applied,
+    backendPid,
+    reconciliation,
+    operatorAction: 'NEEDS_OPERATOR',
+  };
 }
 
 /**

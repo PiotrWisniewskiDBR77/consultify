@@ -1418,6 +1418,14 @@ export async function upsertAtelierFinanceGoldenFlow(
   // TWO PATHS, ONE CONTRACT. Whichever runs, `complete` means all five rows are
   // promoted and `incomplete` means NONE of them is.
   //
+  // ON POSTGRESQL THERE IS EXACTLY ONE PATH: (A). (FIN-005 P1-1 / P1-2.)
+  // `runPinnedPromotionTransaction` only ever returns `unavailable` when it has
+  // POSITIVELY IDENTIFIED a non-PostgreSQL seam; anything else that goes wrong —
+  // probe failure, checkout timeout, pool exhaustion, connection failure,
+  // database mismatch — comes back as `refused`, with zero promotion UPDATEs
+  // issued, and ends this function as `incomplete`. Railway `demo` can therefore
+  // never degrade to non-atomic promotion.
+  //
   // (A) PINNED TRANSACTION — the correct primitive, used whenever the process is
   //     really talking to PostgreSQL. `atelierFinancePromotionTransaction.ts`
   //     checks out one `pg` client, BEGINs, takes `FOR UPDATE` locks on the
@@ -1426,15 +1434,25 @@ export async function upsertAtelierFinanceGoldenFlow(
   //     that same client, reads them back on it and only then COMMITs. Any
   //     failure ROLLBACKs; a process killed mid-transaction is rolled back by
   //     the server when the connection drops. There is no half-promoted state to
-  //     repair.
+  //     repair. A COMMIT whose answer is lost is reconciled on a fresh
+  //     connection and reported as committed / rolled-back / INDETERMINATE —
+  //     never guessed.
   //
   // (B) FALLBACK: verify everything, then promote, and compensate on error —
-  //     used when a pinned connection cannot exist: the mocked in-memory
-  //     database in tests, or any non-pg driver. `DbPromise` cannot give us a
-  //     transaction (its `transaction()` takes a fixed list of SQL strings and
-  //     never yields a connection handle, and every `run()` goes through
-  //     `pool.query()`, so BEGIN/COMMIT need not even land on the same pooled
-  //     connection), hence:
+  //     REACHABLE ONLY IN A RECOGNISED TEST / NON-PG SEAM: the mocked in-memory
+  //     database in tests, `MOCK_DB=true`, a database instance that declares
+  //     `isMock`, or a configured driver that is not postgres. It is NOT an
+  //     option on a real PostgreSQL, because a `DbPromise` timeout settles the
+  //     JS promise without cancelling the query: the UPDATE can land AFTER the
+  //     compensation ran and resurrect READY (and the compensating demote,
+  //     guarded by `IS DISTINCT FROM`, matches zero rows while the promotion is
+  //     still in flight, so it "succeeds" without doing anything). A JS timeout
+  //     is not a transaction boundary.
+  //
+  //     Within that seam `DbPromise` still cannot give us a transaction (its
+  //     `transaction()` takes a fixed list of SQL strings and never yields a
+  //     connection handle, and every `run()` goes through `pool.query()`, so
+  //     BEGIN/COMMIT need not even land on the same pooled connection), hence:
   //
   //       (1) every read-back and every production verdict — all three
   //           statements, the analysis AND the pack — runs BEFORE the first
@@ -1449,7 +1467,9 @@ export async function upsertAtelierFinanceGoldenFlow(
   //           connection reset after the UPDATE applied looks exactly like a
   //           write that never happened). See `rollbackAtelierPromotions`.
   //
-  //     Path (B) keeps ONE named exception: the process DYING between two
+  //     Path (B) keeps TWO named exceptions, both tolerable ONLY because it can
+  //     no longer run on a real database. The first is the late-write hole
+  //     above. The second is the process DYING between two
   //     promotion UPDATEs (SIGTERM on a Railway redeploy, OOM kill,
   //     `process.exit`). No catch block runs, so neither the rollback nor any
   //     result object exists, and the fixture is left half-promoted. That
@@ -1474,6 +1494,9 @@ export async function upsertAtelierFinanceGoldenFlow(
   };
 
   // -- 2a. PINNED PATH -------------------------------------------------------
+  /** Set by `reconcile` (lost COMMIT ack only) so the ledger can report it. */
+  let reconciledRowsClaimingReady: string[] = [];
+
   const pinned = await runPinnedPromotionTransaction({
     lock: [
       { table: 'financial_statement_packs', ids: [packId] },
@@ -1521,7 +1544,84 @@ export async function upsertAtelierFinanceGoldenFlow(
       }
       return { ok: true };
     },
+    // Runs on a FRESH connection, and ONLY after a COMMIT whose answer was lost.
+    // Same predicate as everything else here, so the three verdicts cannot drift
+    // from what the rest of the module means by READY.
+    reconcile: async (read) => {
+      const errors: string[] = [];
+      const claims = await readPromotionClaims({
+        read,
+        packId,
+        analysisId,
+        statementIds: allStatementIds,
+        onError: (message) => errors.push(message),
+      });
+      const expected = allStatementIds.length + 2;
+      if (errors.length > 0) {
+        return {
+          verdict: 'indeterminate',
+          detail: `the post-COMMIT read failed: ${errors.join(' | ')}`,
+        };
+      }
+      if (claims.length !== expected) {
+        return {
+          verdict: 'indeterminate',
+          detail: `the post-COMMIT read saw ${claims.length}/${expected} rows`,
+        };
+      }
+      const missing = claims.filter((claim) => !claim.exists).map((claim) => claim.id);
+      if (missing.length > 0) {
+        return {
+          verdict: 'indeterminate',
+          detail: `${missing.length} promoted record(s) no longer exist: ${missing.join(', ')}`,
+        };
+      }
+      const ready = claims.filter((claim) => claim.claimsReady).map((claim) => claim.id);
+      reconciledRowsClaimingReady = ready;
+      if (ready.length === expected) {
+        // Every promoted record is READY. Coherence, not just the flags: re-run
+        // the PRODUCTION verdict over the committed rows. It reads the pack,
+        // the statements, their values and the analysis and refuses on any
+        // incoherence, so a "committed" verdict can never bless a fixture that
+        // merely has five ready-looking flags on it.
+        const coherence = await planAtelierPromotion(read, planContext);
+        if (!coherence.ok) {
+          return {
+            verdict: 'indeterminate',
+            detail: `all ${expected} records read back READY but the production verdict refuses the fixture: ${coherence.reason}`,
+          };
+        }
+        return {
+          verdict: 'committed',
+          detail: `all ${expected} promoted records read back READY and coherent on a fresh connection`,
+        };
+      }
+      if (ready.length === 0) {
+        return {
+          verdict: 'not-committed',
+          detail: `all ${expected} promoted records read back in their pre-promotion state on a fresh connection`,
+        };
+      }
+      return {
+        verdict: 'indeterminate',
+        detail: `MIXED state after a lost COMMIT ack: ${ready.length}/${expected} records claim READY (${ready.join(', ')})`,
+      };
+    },
   });
+
+  // -- 2a-bis. REFUSED — fail closed. ---------------------------------------
+  // A real (or unproven) PostgreSQL that could not host the pinned transaction.
+  // Every refusal branch in the adapter is upstream of the first write, so ZERO
+  // promotion UPDATEs were issued and there is nothing to compensate: the ledger
+  // stays at "promotion never started, nothing to roll back", which is literally
+  // true. There is no fallback promotion on PostgreSQL.
+  if (pinned.mode === 'refused') {
+    return incomplete(
+      `pinned promotion transaction REFUSED (fail-closed, zero promotion UPDATEs issued): ${pinned.reason}`,
+      { packId, statementIds: [], unpromotedStatementIds: allStatementIds, analysisId },
+      ledger
+    );
+  }
 
   if (pinned.mode === 'pinned') {
     // The ledger reports what the transaction issued. On a rollback these are
@@ -1535,8 +1635,13 @@ export async function upsertAtelierFinanceGoldenFlow(
 
     if (pinned.status === 'committed') {
       logger.info(
-        `[atelier-finance-seed] Finance golden flow COMPLETE via the PINNED transaction path (backend pid ${pinned.backendPid ?? 'unknown'})`,
-        { packId, analysisId, statementIds: allStatementIds }
+        `[atelier-finance-seed] Finance golden flow COMPLETE via the PINNED transaction path (backend pid ${pinned.backendPid ?? 'unknown'}, commit ack ${pinned.commitAck})`,
+        {
+          packId,
+          analysisId,
+          statementIds: allStatementIds,
+          reconciliation: pinned.reconciliation?.detail,
+        }
       );
       return {
         status: 'complete',
@@ -1546,6 +1651,23 @@ export async function upsertAtelierFinanceGoldenFlow(
         analysisId,
         promotion: ledger,
       };
+    }
+
+    // IN DOUBT. The COMMIT answer was lost AND reconciliation on a fresh
+    // connection could not classify the outcome. This is neither `complete` nor
+    // an honest "rolled back": no compensating demotion is attempted, because
+    // guessing at a possibly-committed transaction is how a half-promoted
+    // fixture gets made. A human decides.
+    if (pinned.status === 'commit-indeterminate') {
+      ledger.statementPromotionsIssued = pinned.applied.filter((label) =>
+        allStatementIds.includes(label)
+      ).length;
+      ledger.rowsStillClaimingReady = reconciledRowsClaimingReady;
+      return incomplete(
+        `pinned promotion transaction COMMIT INDETERMINATE — NEEDS_OPERATOR: ${pinned.reason}`,
+        { packId, statementIds: [], unpromotedStatementIds: allStatementIds, analysisId },
+        ledger
+      );
     }
 
     // ROLLED BACK. Postgres guarantees nothing survived — but this module's
@@ -1565,12 +1687,30 @@ export async function upsertAtelierFinanceGoldenFlow(
   }
 
   // -- 2b. FALLBACK PATH -----------------------------------------------------
-  // Reached only when no pinned connection can exist (mocked/in-memory database,
-  // non-pg driver, or a pool that refused a checkout). The reason has already
-  // been logged by the adapter — at `error` level in production.
+  // ONE DOOR, WRITTEN EXPLICITLY rather than reached by falling through, so that
+  // `grep "mode === 'unavailable'"` finds every place the non-atomic path can be
+  // entered — and there is exactly one, here.
+  if (pinned.mode !== 'unavailable') {
+    // Unreachable: 'refused' and 'pinned' both returned above. Kept so a future
+    // outcome added to the union fails closed instead of falling into (B).
+    return incomplete(
+      `unexpected pinned promotion outcome: ${JSON.stringify(pinned)}`,
+      { packId, statementIds: [], unpromotedStatementIds: allStatementIds, analysisId },
+      ledger
+    );
+  }
+
+  // THE ONLY WAY IN IS `mode === 'unavailable'`, and the adapter builds that
+  // exactly once, in `reportUnavailable`, from a POSITIVELY IDENTIFIED non-PG
+  // seam (`identifyNonPostgresSeam`). A checkout failure, a probe failure, a
+  // pool that is exhausted or a database mismatch all come back as `refused`
+  // and returned above. So this code cannot run against PostgreSQL — which is
+  // what makes its late-write hole (a `DbPromise` timeout does not cancel the
+  // query) survivable. The reason has already been logged by the adapter — at
+  // `error` level in production.
   logger.warn(
     '[atelier-finance-seed] promoting WITHOUT a pinned transaction (verify-then-promote + compensating rollback)',
-    { reason: pinned.reason }
+    { seam: pinned.seam }
   );
 
   const plan = await planAtelierPromotion(dbPromiseReader, planContext);
