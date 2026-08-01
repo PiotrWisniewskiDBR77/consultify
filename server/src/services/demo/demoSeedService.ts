@@ -4092,6 +4092,10 @@ export async function seedAtelierToysDemoDataset(
       promotedStatements: financeGoldenFlow.statementIds.length,
       unpromotedStatements: financeGoldenFlow.unpromotedStatementIds.length,
       analysisId: financeGoldenFlow.analysisId,
+      // What the promotion phase actually did (FIN-005: promotion is atomic, so
+      // this normally reads "0 issued"; a non-zero count means a promotion write
+      // failed and was compensated — and any rollback error is in here too).
+      promotion: financeGoldenFlow.promotion,
     });
   }
   await upsertAtelierRoiFinancialModel(

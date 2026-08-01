@@ -261,9 +261,43 @@ describe('FIN-005 — schema drift never yields a half-fixture or a false READY'
   });
 });
 
-describe('FIN-005 — a failed read-back refuses promotion', () => {
-  it('fewer values on disk than the canonical contract -> that statement stays pending', async () => {
+/**
+ * The single assertion the ALL-OR-NOTHING contract rests on: after an
+ * `incomplete` run, ZERO statements are at READY/confirmed/pass, the analysis is
+ * not APPROVED and the pack is not READY — read from the STORE, not from the
+ * return value.
+ *
+ * The previous version of this file tolerated the opposite: the truncated-P&L
+ * test asserted `result.statementIds` had length 2 and only checked that the
+ * refused statement stayed pending, i.e. it accepted BS and CF sitting at
+ * `readiness_status='ready'` inside a fixture the seed reported as incomplete.
+ * That partial state IS the FIN-005 defect, so the expectation is inverted here.
+ */
+function expectNothingPromoted(): void {
+  for (const row of fakeDb.rows('financial_statements')) {
+    expect(row.status, `${String(row.id)} was promoted`).toBe('imported');
+    expect(row.validation_status, `${String(row.id)} was promoted`).toBe('pending');
+    expect(row.readiness_status, `${String(row.id)} was promoted`).toBe('pending');
+    expect(Number(row.readiness_score)).toBe(0);
+    expect(row.confirmed_by ?? null).toBeNull();
+  }
+  for (const row of fakeDb.rows('financial_analyses')) {
+    expect(row.status, `${String(row.id)} was approved`).toBe('DRAFT');
+  }
+  for (const row of fakeDb.rows('financial_statement_packs')) {
+    expect(row.pack_status, `${String(row.id)} was promoted`).toBe('draft');
+    expect(row.pack_readiness_status).toBe('pending');
+    expect(Number(row.pack_readiness_score)).toBe(0);
+    expect(JSON.parse(String(row.missing_statement_types))).toEqual(['P&L', 'BS', 'CF']);
+    expect(Number(row.source_statement_count)).toBe(0);
+  }
+}
+
+describe('FIN-005 — a failed read-back refuses promotion, for ALL statements', () => {
+  it('fewer values on disk than the canonical contract -> NOTHING is promoted', async () => {
     // The P&L write is silently truncated by one row on the way back out.
+    // BS and CF are perfect — and must STILL not be promoted, because a fixture
+    // with two READY statements and one pending is neither honest nor complete.
     fakeDb.reset({
       schema: FULL_SCHEMA,
       onSelect: (table, rows) => {
@@ -277,30 +311,18 @@ describe('FIN-005 — a failed read-back refuses promotion', () => {
 
     expect(result.status).toBe('incomplete');
     expect(result.reason).toMatch(/read-back found \d+ values, expected \d+/);
-    expect(result.statementIds).toHaveLength(2);
-    expect(result.unpromotedStatementIds).toHaveLength(1);
-    expect(result.unpromotedStatementIds[0]).toContain('atelier-fy2014-pl');
+    expect(result.reason).toMatch(/so NONE was promoted/);
+    expect(result.statementIds).toEqual([]);
+    expect(result.unpromotedStatementIds).toHaveLength(3);
+    expect(result.promotion?.statementPromotionsIssued).toBe(0);
+    expect(result.promotion?.analysisPromotionIssued).toBe(false);
+    expect(result.promotion?.packPromotionIssued).toBe(false);
 
-    const pl = fakeDb.rows('financial_statements').find((row) =>
-      String(row.id).endsWith('atelier-fy2014-pl')
-    );
-    expect(pl?.status).toBe('imported');
-    expect(pl?.validation_status).toBe('pending');
-    expect(pl?.readiness_status).toBe('pending');
-    expect(Number(pl?.readiness_score)).toBe(0);
-
-    // The pack must not be ready while one of its statements is not.
-    const pack = fakeDb.rows('financial_statement_packs')[0];
-    expect(pack.pack_status).toBe('draft');
-    expect(pack.pack_readiness_status).toBe('pending');
-    expect(Number(pack.pack_readiness_score)).toBe(0);
-    expect(JSON.parse(String(pack.missing_statement_types))).toEqual(['P&L', 'BS', 'CF']);
-
-    // And the analysis stays a draft, because the pack never earned its story.
-    expect(fakeDb.rows('financial_analyses')[0].status).toBe('DRAFT');
+    expectNothingPromoted();
+    expectNothingClaimsReady();
   });
 
-  it('a value with a null canonical_line_id -> that statement stays pending', async () => {
+  it('a value with a null canonical_line_id -> NOTHING is promoted', async () => {
     fakeDb.reset({
       schema: FULL_SCHEMA,
       onSelect: (table, rows) => {
@@ -317,16 +339,14 @@ describe('FIN-005 — a failed read-back refuses promotion', () => {
 
     expect(result.status).toBe('incomplete');
     expect(result.reason).toMatch(/null canonical_line_id/);
-    expect(result.unpromotedStatementIds[0]).toContain('atelier-fy2014-bs');
+    expect(result.statementIds).toEqual([]);
+    expect(result.unpromotedStatementIds).toHaveLength(3);
 
-    const bs = fakeDb.rows('financial_statements').find((row) =>
-      String(row.id).endsWith('atelier-fy2014-bs')
-    );
-    expect(bs?.readiness_status).toBe('pending');
-    expect(fakeDb.rows('financial_statement_packs')[0].pack_readiness_status).toBe('pending');
+    expectNothingPromoted();
+    expectNothingClaimsReady();
   });
 
-  it('a statement whose lineage points at the wrong pack is refused', async () => {
+  it('a statement whose lineage points at the wrong pack -> NOTHING is promoted', async () => {
     fakeDb.reset({
       schema: FULL_SCHEMA,
       onSelect: (table, rows) => {
@@ -343,6 +363,9 @@ describe('FIN-005 — a failed read-back refuses promotion', () => {
 
     expect(result.status).toBe('incomplete');
     expect(result.reason).toMatch(/statement_pack_id mismatch/);
-    expect(fakeDb.rows('financial_statement_packs')[0].pack_readiness_status).toBe('pending');
+    expect(result.statementIds).toEqual([]);
+
+    expectNothingPromoted();
+    expectNothingClaimsReady();
   });
 });

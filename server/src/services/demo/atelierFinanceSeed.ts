@@ -734,6 +734,12 @@ export interface AtelierFinanceSeedResult {
   /** Statements written but refused promotion (read-back or verdict failed). */
   unpromotedStatementIds: string[];
   analysisId: string | null;
+  /**
+   * What the promotion phase actually did. On `incomplete` this is the evidence
+   * behind the log line; on `complete` it records the three-plus-two promotions
+   * that landed. Optional so older callers keep compiling.
+   */
+  promotion?: AtelierPromotionLedger;
 }
 
 const SOURCE_FILE_NAME = 'Atelier-Toys-FY2014-Financial-Statements.xlsx';
@@ -749,9 +755,87 @@ const PHASE1_PACK_STATUS = 'draft';
 const PHASE1_PACK_READINESS_STATUS = 'pending';
 const PHASE1_PACK_READINESS_SCORE = 0;
 
+/** Phase-1 quality payloads, shared by the phase-1 write and the rollback, so a
+ *  demoted row is byte-identical to a freshly written one. */
+const PHASE1_QUALITY_REASON_CODES = JSON.stringify(['READ_BACK_PENDING']);
+const PHASE1_MISSING_STATEMENT_TYPES = JSON.stringify(
+  ATELIER_FY2014_STATEMENTS.map((statement) => statement.statementType)
+);
+
+function phase1StatementQualitySummary(isPl: boolean): string {
+  return isPl
+    ? 'Sprawozdanie zapisane — gotowość ustalana przez odczyt zwrotny.'
+    : 'Statement written — readiness is decided by the read-back gate.';
+}
+
+function phase1PackQualitySummary(isPl: boolean): string {
+  return isPl
+    ? 'Import FY2014 zapisany — oczekuje na weryfikację odczytem.'
+    : 'FY2014 import written — awaiting read-back verification.';
+}
+
+/**
+ * Exactly what the promotion phase DID — never what we hope it did.
+ *
+ * Every field is set from an operation that actually returned, so the log line
+ * built from this ledger asserts nothing that was not observed. `rolledBack`
+ * plus an empty `rollbackErrors`/`rowsStillClaimingReady` is only ever reported
+ * after the demoted rows were RE-READ out of the database.
+ */
+export interface AtelierPromotionLedger {
+  /** Statement promotion UPDATEs that completed without throwing. */
+  statementPromotionsIssued: number;
+  analysisPromotionIssued: boolean;
+  packPromotionIssued: boolean;
+  /** True once a compensating rollback was attempted. */
+  rolledBack: boolean;
+  /** Errors thrown by the compensating rollback itself. */
+  rollbackErrors: string[];
+  /** Ids that STILL claim ready/confirmed/pass/APPROVED after the rollback. */
+  rowsStillClaimingReady: string[];
+}
+
+function newPromotionLedger(): AtelierPromotionLedger {
+  return {
+    statementPromotionsIssued: 0,
+    analysisPromotionIssued: false,
+    packPromotionIssued: false,
+    rolledBack: false,
+    rollbackErrors: [],
+    rowsStillClaimingReady: [],
+  };
+}
+
+/**
+ * The one-line truth about the promotion phase.
+ *
+ * FIN-005 defect #2: the old logger hard-coded "nothing promoted to READY",
+ * which was a lie whenever promotion had already started. This states the
+ * counts it observed and distinguishes the three real cases: nothing issued /
+ * issued-and-reverted / issued-and-rollback-did-not-complete.
+ */
+function describePromotionLedger(ledger: AtelierPromotionLedger): string {
+  const issued =
+    `issued ${ledger.statementPromotionsIssued}/${ATELIER_FY2014_STATEMENTS.length} statement promotion(s), ` +
+    `analysis=${ledger.analysisPromotionIssued ? 'promoted' : 'not promoted'}, ` +
+    `pack=${ledger.packPromotionIssued ? 'promoted' : 'not promoted'}`;
+
+  if (!ledger.rolledBack) {
+    return `${issued}; no promotion needed rolling back`;
+  }
+  if (ledger.rollbackErrors.length > 0 || ledger.rowsStillClaimingReady.length > 0) {
+    return (
+      `${issued}; COMPENSATING ROLLBACK DID NOT COMPLETE — errors: [${ledger.rollbackErrors.join(' | ') || 'none'}], ` +
+      `rows still claiming READY: [${ledger.rowsStillClaimingReady.join(', ') || 'none'}]`
+    );
+  }
+  return `${issued}; every issued promotion was rolled back and re-read as not-ready`;
+}
+
 function incomplete(
   reason: string,
-  partial: Partial<AtelierFinanceSeedResult> = {}
+  partial: Partial<AtelierFinanceSeedResult> = {},
+  ledger: AtelierPromotionLedger = newPromotionLedger()
 ): AtelierFinanceSeedResult {
   const result: AtelierFinanceSeedResult = {
     status: 'incomplete',
@@ -761,14 +845,24 @@ function incomplete(
     unpromotedStatementIds: [],
     analysisId: null,
     ...partial,
+    promotion: ledger,
   };
-  logger.warn('[atelier-finance-seed] Finance golden flow INCOMPLETE — nothing promoted to READY', {
+  const message = `[atelier-finance-seed] Finance golden flow INCOMPLETE — ${describePromotionLedger(ledger)}; reason: ${reason}`;
+  const payload = {
     reason,
     missing: result.missing,
     packId: result.packId,
     promotedStatements: result.statementIds,
     unpromotedStatements: result.unpromotedStatementIds,
-  });
+    promotion: ledger,
+  };
+  // A rollback that did not complete is not a warning — the fixture may be
+  // holding promoted rows and a human has to look.
+  if (ledger.rollbackErrors.length > 0 || ledger.rowsStillClaimingReady.length > 0) {
+    logger.error(message, payload);
+  } else {
+    logger.warn(message, payload);
+  }
   return result;
 }
 
@@ -1008,15 +1102,10 @@ export async function upsertAtelierFinanceGoldenFlow(
       ['pack_status', PHASE1_PACK_STATUS],
       ['pack_readiness_status', PHASE1_PACK_READINESS_STATUS],
       ['pack_readiness_score', PHASE1_PACK_READINESS_SCORE],
-      [
-        'pack_quality_summary',
-        isPl
-          ? 'Import FY2014 zapisany — oczekuje na weryfikację odczytem.'
-          : 'FY2014 import written — awaiting read-back verification.',
-      ],
-      ['pack_quality_reason_codes', JSON.stringify(['READ_BACK_PENDING'])],
+      ['pack_quality_summary', phase1PackQualitySummary(isPl)],
+      ['pack_quality_reason_codes', PHASE1_QUALITY_REASON_CODES],
       ['source_statement_count', 0],
-      ['missing_statement_types', JSON.stringify(['P&L', 'BS', 'CF'])],
+      ['missing_statement_types', PHASE1_MISSING_STATEMENT_TYPES],
       [
         'metadata_json',
         JSON.stringify({ canonicalFixture: 'atelier-toys-fy2014', seededBy: 'atelierFinanceSeed' }),
@@ -1082,13 +1171,8 @@ export async function upsertAtelierFinanceGoldenFlow(
         ['validation_messages', '[]'],
         ['readiness_status', PHASE1_READINESS_STATUS],
         ['readiness_score', PHASE1_READINESS_SCORE],
-        [
-          'quality_summary',
-          isPl
-            ? 'Sprawozdanie zapisane — gotowość ustalana przez odczyt zwrotny.'
-            : 'Statement written — readiness is decided by the read-back gate.',
-        ],
-        ['quality_reason_codes', JSON.stringify(['READ_BACK_PENDING'])],
+        ['quality_summary', phase1StatementQualitySummary(isPl)],
+        ['quality_reason_codes', PHASE1_QUALITY_REASON_CODES],
         ['values_version', 1],
         [
           'notes',
@@ -1246,10 +1330,38 @@ export async function upsertAtelierFinanceGoldenFlow(
     });
   }
 
-  // ---- Phase 2: read back, judge with production code, then promote -------
+  // ---- Phase 2: verify EVERYTHING, then promote — ATOMICALLY --------------
+  //
+  // WHY "check everything, then promote" AND NOT A DATABASE TRANSACTION.
+  // `DbPromise` exposes exactly one transaction API: `transaction(statements[])`
+  // (see `src/utils/DbPromise.ts`), which BEGINs, runs a FIXED LIST of SQL
+  // strings and COMMITs. It never hands out a connection handle, so the
+  // read-backs and `promoteRow()` calls below cannot join it. Worse, every
+  // `DbPromise.run()` goes through `pool.query()` on a pg `Pool`
+  // (`src/database/PostgresDatabase.ts`), so `BEGIN`, the statements and
+  // `COMMIT` are not even guaranteed to land on the same pooled connection — a
+  // "transaction" built out of it would be a comforting lie. Hence option (a)
+  // from the FIN-005 packet:
+  //
+  //   (1) every read-back and every production verdict — all three statements,
+  //       the analysis AND the pack — runs BEFORE the first promotion write. A
+  //       single refusal returns INCOMPLETE with ZERO promotions issued.
+  //   (2) (1) cannot cover a failure OF the promotion writes themselves (the
+  //       2nd of 3 UPDATEs throwing), so any error mid-promotion triggers a
+  //       COMPENSATING ROLLBACK that demotes every already-promoted row back to
+  //       its phase-1 state and then RE-READS those rows to confirm it landed.
+  //
+  // INCOMPLETE therefore means, with no exceptions: zero statements at
+  // READY/confirmed/pass, the analysis not APPROVED, the pack not READY.
+  const ledger = newPromotionLedger();
   const expectedCounts = getAtelierExpectedValueCounts();
-  const promoted: string[] = [];
-  const refused: Array<{ id: string; reason: string }> = [];
+  const allStatementIds = ATELIER_FY2014_STATEMENTS.map((statement) =>
+    makeId(organizationId, 'statement', statement.slug)
+  );
+
+  // -- 2a. Verify all three statements. No write happens in this loop. -------
+  const planned: Array<{ statementId: string; assignments: ColumnValue[] }> = [];
+  const refused: string[] = [];
 
   for (const statement of ATELIER_FY2014_STATEMENTS) {
     const statementId = makeId(organizationId, 'statement', statement.slug);
@@ -1264,55 +1376,46 @@ export async function upsertAtelierFinanceGoldenFlow(
     });
 
     if (!verdict.ok) {
-      refused.push({ id: statementId, reason: `${statement.statementType}: ${verdict.reason}` });
+      refused.push(`${statement.statementType}: ${verdict.reason}`);
       continue;
     }
 
-    try {
-      await promoteRow({
-        table: 'financial_statements',
-        id: statementId,
-        columns: statementColumns,
-        assignments: [
-          ['status', 'confirmed'],
-          ['validation_status', verdict.validationStatus as string],
-          ['validation_messages', JSON.stringify(verdict.validationMessages ?? [])],
-          ['readiness_status', verdict.readinessStatus as string],
-          ['readiness_score', verdict.readinessScore as number],
-          [
-            'quality_summary',
-            isPl
-              ? 'Sprawozdanie spełnia kontrakt gotowości (zweryfikowane odczytem zwrotnym).'
-              : 'Statement passed the readiness contract (verified by read-back).',
-          ],
-          ['quality_reason_codes', JSON.stringify(verdict.reasonCodes ?? [])],
-          ['confirmed_by', createdBy],
+    planned.push({
+      statementId,
+      assignments: [
+        ['status', 'confirmed'],
+        ['validation_status', verdict.validationStatus as string],
+        ['validation_messages', JSON.stringify(verdict.validationMessages ?? [])],
+        ['readiness_status', verdict.readinessStatus as string],
+        ['readiness_score', verdict.readinessScore as number],
+        [
+          'quality_summary',
+          isPl
+            ? 'Sprawozdanie spełnia kontrakt gotowości (zweryfikowane odczytem zwrotnym).'
+            : 'Statement passed the readiness contract (verified by read-back).',
         ],
-      });
-    } catch (error) {
-      refused.push({
-        id: statementId,
-        reason: `${statement.statementType}: promotion write failed: ${(error as Error).message}`,
-      });
-      continue;
-    }
-    promoted.push(statementId);
+        ['quality_reason_codes', JSON.stringify(verdict.reasonCodes ?? [])],
+        ['confirmed_by', createdBy],
+      ],
+    });
   }
 
-  if (promoted.length !== ATELIER_FY2014_STATEMENTS.length) {
+  // ALL-OR-NOTHING. One refused statement means none is promoted — a fixture
+  // with two READY statements and one pending is neither honest nor complete.
+  if (refused.length > 0) {
     return incomplete(
-      `only ${promoted.length}/${ATELIER_FY2014_STATEMENTS.length} statements earned READY: ${refused
-        .map((entry) => entry.reason)
-        .join(' | ')}`,
+      `only ${planned.length}/${ATELIER_FY2014_STATEMENTS.length} statements passed the READY gate, so NONE was promoted: ${refused.join(' | ')}`,
       {
         packId,
-        statementIds: promoted,
-        unpromotedStatementIds: refused.map((entry) => entry.id),
+        statementIds: [],
+        unpromotedStatementIds: allStatementIds,
         analysisId,
-      }
+      },
+      ledger
     );
   }
 
+  // -- 2b. Verify the analysis and the pack, still before any write. ---------
   // The analysis must exist AND point at this pack before either it or the pack
   // may be called approved/ready.
   const analysisVerdict = await verifyAnalysisReadBack({
@@ -1322,15 +1425,46 @@ export async function upsertAtelierFinanceGoldenFlow(
     analysisColumns,
   });
   if (!analysisVerdict.ok) {
-    return incomplete(`analysis read-back failed: ${analysisVerdict.reason}`, {
-      packId,
-      statementIds: promoted,
-      unpromotedStatementIds: [],
-      analysisId,
-    });
+    return incomplete(
+      `analysis read-back failed: ${analysisVerdict.reason}`,
+      { packId, statementIds: [], unpromotedStatementIds: allStatementIds, analysisId },
+      ledger
+    );
   }
 
+  // The pack: exactly the three expected statement types, every one of them in
+  // the set production just judged READY, one currency across all of them.
+  // NOTE it checks membership of `verifiedStatementIds` rather than the
+  // persisted `readiness_status`: nothing has been promoted yet at this point,
+  // so the stored status is still `pending` by design.
+  const packVerdict = await verifyPackReadBack({
+    organizationId,
+    packId,
+    packColumns,
+    verifiedStatementIds: new Set(planned.map((entry) => entry.statementId)),
+  });
+  if (!packVerdict.ok) {
+    return incomplete(
+      `pack read-back failed: ${packVerdict.reason}`,
+      { packId, statementIds: [], unpromotedStatementIds: allStatementIds, analysisId },
+      ledger
+    );
+  }
+
+  // -- 2c. Promote. Everything above has already agreed. --------------------
+  const promoted: string[] = [];
   try {
+    for (const entry of planned) {
+      await promoteRow({
+        table: 'financial_statements',
+        id: entry.statementId,
+        columns: statementColumns,
+        assignments: entry.assignments,
+      });
+      promoted.push(entry.statementId);
+      ledger.statementPromotionsIssued = promoted.length;
+    }
+
     await promoteRow({
       table: 'financial_analyses',
       id: analysisId,
@@ -1341,28 +1475,8 @@ export async function upsertAtelierFinanceGoldenFlow(
       ],
       literals: [['approved_at', 'CURRENT_TIMESTAMP']],
     });
-  } catch (error) {
-    return incomplete(`analysis promotion failed: ${(error as Error).message}`, {
-      packId,
-      statementIds: promoted,
-      unpromotedStatementIds: [],
-      analysisId,
-    });
-  }
+    ledger.analysisPromotionIssued = true;
 
-  // Finally the pack: three promoted statements + one approved analysis bound to
-  // it, all in one currency, verified against the persisted pack row.
-  const packVerdict = await verifyPackReadBack({ organizationId, packId, packColumns });
-  if (!packVerdict.ok) {
-    return incomplete(`pack read-back failed: ${packVerdict.reason}`, {
-      packId,
-      statementIds: promoted,
-      unpromotedStatementIds: [],
-      analysisId,
-    });
-  }
-
-  try {
     await promoteRow({
       table: 'financial_statement_packs',
       id: packId,
@@ -1378,17 +1492,38 @@ export async function upsertAtelierFinanceGoldenFlow(
             : 'Complete FY2014 statement set (P&L, BS, CF) — the baseline the ROI model is grounded on.',
         ],
         ['pack_quality_reason_codes', JSON.stringify([])],
-        ['source_statement_count', promoted.length],
+        ['source_statement_count', planned.length],
         ['missing_statement_types', JSON.stringify([])],
       ],
     });
+    ledger.packPromotionIssued = true;
   } catch (error) {
-    return incomplete(`pack promotion failed: ${(error as Error).message}`, {
-      packId,
-      statementIds: promoted,
-      unpromotedStatementIds: [],
-      analysisId,
-    });
+    // A promotion write threw. Everything promoted before it is committed, so
+    // undo it by hand — there is no transaction to roll back (see the note at
+    // the top of phase 2). If the FIRST promotion is the one that threw there is
+    // nothing to undo, and the ledger must not claim a rollback that never ran.
+    const anythingIssued =
+      ledger.statementPromotionsIssued > 0 ||
+      ledger.analysisPromotionIssued ||
+      ledger.packPromotionIssued;
+    if (anythingIssued) {
+      await rollbackAtelierPromotions({
+        packId,
+        analysisId,
+        promotedStatementIds: promoted,
+        statementColumns,
+        analysisColumns,
+        packColumns,
+        isPl,
+        ledger,
+      });
+    }
+
+    return incomplete(
+      `promotion write failed: ${(error as Error).message}`,
+      { packId, statementIds: [], unpromotedStatementIds: allStatementIds, analysisId },
+      ledger
+    );
   }
 
   return {
@@ -1397,7 +1532,173 @@ export async function upsertAtelierFinanceGoldenFlow(
     statementIds: promoted,
     unpromotedStatementIds: [],
     analysisId,
+    promotion: ledger,
   };
+}
+
+/**
+ * Compensating rollback for a promotion that failed part-way.
+ *
+ * Demotes, in reverse order of promotion, every row whose promotion UPDATE
+ * actually returned (`ledger.*Issued`), back to the exact phase-1 payload the
+ * seed writes on a fresh run — then RE-READS all five rows and records any that
+ * still claim ready/confirmed/pass/APPROVED. A row whose promotion threw is not
+ * demoted: `DbPromise.run(..., { fallback: false })` rejects on error and a
+ * single UPDATE cannot half-apply, so that row was never promoted.
+ *
+ * Failures of the rollback itself are recorded, never swallowed: the caller
+ * escalates the log line to `error` and says the fixture may still hold
+ * promoted rows.
+ */
+async function rollbackAtelierPromotions(params: {
+  packId: string;
+  analysisId: string;
+  promotedStatementIds: string[];
+  statementColumns: Set<string>;
+  analysisColumns: Set<string>;
+  packColumns: Set<string>;
+  isPl: boolean;
+  ledger: AtelierPromotionLedger;
+}): Promise<void> {
+  const { ledger } = params;
+  ledger.rolledBack = true;
+
+  if (ledger.packPromotionIssued) {
+    try {
+      await promoteRow({
+        table: 'financial_statement_packs',
+        id: params.packId,
+        columns: params.packColumns,
+        assignments: [
+          ['pack_status', PHASE1_PACK_STATUS],
+          ['pack_readiness_status', PHASE1_PACK_READINESS_STATUS],
+          ['pack_readiness_score', PHASE1_PACK_READINESS_SCORE],
+          ['pack_quality_summary', phase1PackQualitySummary(params.isPl)],
+          ['pack_quality_reason_codes', PHASE1_QUALITY_REASON_CODES],
+          ['source_statement_count', 0],
+          ['missing_statement_types', PHASE1_MISSING_STATEMENT_TYPES],
+        ],
+      });
+    } catch (error) {
+      ledger.rollbackErrors.push(`pack: ${(error as Error).message}`);
+    }
+  }
+
+  if (ledger.analysisPromotionIssued) {
+    try {
+      await promoteRow({
+        table: 'financial_analyses',
+        id: params.analysisId,
+        columns: params.analysisColumns,
+        assignments: [
+          ['status', 'DRAFT'],
+          ['approved_by', null],
+          ['approved_at', null],
+        ],
+      });
+    } catch (error) {
+      ledger.rollbackErrors.push(`analysis: ${(error as Error).message}`);
+    }
+  }
+
+  for (const statementId of [...params.promotedStatementIds].reverse()) {
+    try {
+      await promoteRow({
+        table: 'financial_statements',
+        id: statementId,
+        columns: params.statementColumns,
+        assignments: [
+          ['status', PHASE1_STATEMENT_STATUS],
+          ['validation_status', PHASE1_VALIDATION_STATUS],
+          ['validation_messages', '[]'],
+          ['readiness_status', PHASE1_READINESS_STATUS],
+          ['readiness_score', PHASE1_READINESS_SCORE],
+          ['quality_summary', phase1StatementQualitySummary(params.isPl)],
+          ['quality_reason_codes', PHASE1_QUALITY_REASON_CODES],
+          ['confirmed_by', null],
+        ],
+      });
+    } catch (error) {
+      ledger.rollbackErrors.push(`statement ${statementId}: ${(error as Error).message}`);
+    }
+  }
+
+  // Do not TAKE the rollback's word for it — read the rows back.
+  ledger.rowsStillClaimingReady = await findRowsStillClaimingReady({
+    packId: params.packId,
+    analysisId: params.analysisId,
+    statementIds: params.promotedStatementIds,
+    onError: (message) => ledger.rollbackErrors.push(message),
+  });
+}
+
+/**
+ * Re-read the five rows the promotion phase can touch and return the ids of any
+ * that still claim a READY-flavoured state. Used to VERIFY a rollback instead of
+ * asserting it worked.
+ */
+async function findRowsStillClaimingReady(params: {
+  packId: string;
+  analysisId: string;
+  statementIds: string[];
+  onError: (message: string) => void;
+}): Promise<string[]> {
+  const offenders: string[] = [];
+
+  for (const statementId of params.statementIds) {
+    try {
+      const rows = await DbPromise.all<Record<string, unknown>>(
+        `SELECT id, status, validation_status, readiness_status
+           FROM financial_statements
+          WHERE id = ?`,
+        [statementId],
+        { fallback: false }
+      );
+      for (const row of rows) {
+        if (
+          String(row.status ?? '') === 'confirmed' ||
+          String(row.validation_status ?? '') === 'pass' ||
+          String(row.readiness_status ?? '') === 'ready'
+        ) {
+          offenders.push(statementId);
+        }
+      }
+    } catch (error) {
+      params.onError(`rollback verification of ${statementId} failed: ${(error as Error).message}`);
+    }
+  }
+
+  try {
+    const rows = await DbPromise.all<Record<string, unknown>>(
+      `SELECT id, status FROM financial_analyses WHERE id = ?`,
+      [params.analysisId],
+      { fallback: false }
+    );
+    if (rows.some((row) => String(row.status ?? '') === 'APPROVED')) offenders.push(params.analysisId);
+  } catch (error) {
+    params.onError(`rollback verification of the analysis failed: ${(error as Error).message}`);
+  }
+
+  try {
+    const rows = await DbPromise.all<Record<string, unknown>>(
+      `SELECT id, pack_status, pack_readiness_status FROM financial_statement_packs WHERE id = ?`,
+      [params.packId],
+      { fallback: false }
+    );
+    if (
+      rows.some(
+        (row) =>
+          String(row.pack_status ?? '') === 'confirmed' ||
+          String(row.pack_readiness_status ?? '') === 'ready'
+      )
+    ) {
+      offenders.push(params.packId);
+    }
+  } catch (error) {
+    params.onError(`rollback verification of the pack failed: ${(error as Error).message}`);
+  }
+
+  return offenders;
 }
 
 async function verifyAnalysisReadBack(params: {
@@ -1441,6 +1742,15 @@ async function verifyPackReadBack(params: {
   organizationId: string;
   packId: string;
   packColumns: Set<string>;
+  /**
+   * The statements production has just judged READY. The pack gate checks
+   * membership of THIS set rather than the persisted `readiness_status`, because
+   * the atomic phase 2 verifies the pack BEFORE issuing any promotion — the
+   * stored status is still `pending` at that moment, by design. Membership is
+   * the stronger check anyway: it also rejects a foreign statement that has been
+   * attached to the canonical pack.
+   */
+  verifiedStatementIds: Set<string>;
 }): Promise<{ ok: boolean; reason?: string }> {
   let packRows: Array<Record<string, unknown>>;
   let statementRows: Array<Record<string, unknown>>;
@@ -1475,9 +1785,16 @@ async function verifyPackReadBack(params: {
     return { ok: false, reason: `pack holds [${actualTypes.join(', ')}], expected [${expectedTypes.join(', ')}]` };
   }
 
-  const notReady = statementRows.filter((row) => String(row.readiness_status ?? '') !== 'ready');
-  if (notReady.length > 0) {
-    return { ok: false, reason: `${notReady.length} statement(s) under the pack are not READY` };
+  const unverified = statementRows.filter(
+    (row) => !params.verifiedStatementIds.has(String(row.id ?? ''))
+  );
+  if (unverified.length > 0) {
+    return {
+      ok: false,
+      reason: `${unverified.length} statement(s) under the pack were not judged READY by production: ${unverified
+        .map((row) => String(row.id ?? 'null'))
+        .join(', ')}`,
+    };
   }
 
   // One single currency across the pack and every statement under it.

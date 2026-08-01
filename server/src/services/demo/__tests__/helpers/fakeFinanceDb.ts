@@ -53,6 +53,28 @@ export interface FakeDbConfig {
    * or corrupted write that the in-memory fixture cannot express.
    */
   onSelect?: (table: string, rows: FakeRow[]) => FakeRow[];
+  /**
+   * FAULT INJECTION on writes. Called before an INSERT/UPDATE touches the store;
+   * return an error message to make the write throw exactly as Postgres would
+   * (deadlock, constraint violation, connection reset), or `null`/`undefined` to
+   * let it through.
+   *
+   * This is what makes the FIN-005 atomicity contract testable: the promotion
+   * phase issues five UPDATEs, and a fixture that is honest only when all five
+   * succeed is not atomic. The hook is a plain function, so a test can fail the
+   * Nth write by closing over its own counter — and, crucially, let the
+   * COMPENSATING ROLLBACK's writes through afterwards.
+   */
+  onWrite?: (write: {
+    kind: 'insert' | 'update';
+    table: string;
+    /** Primary key the statement targets, when it can be determined. */
+    id: string | null;
+    sql: string;
+    params: unknown[];
+    /** Column -> bound value, as this statement would apply it. */
+    values: Record<string, unknown>;
+  }) => string | null | undefined | void;
 }
 
 const IDENTIFIER = '[a-zA-Z0-9_]+';
@@ -131,6 +153,19 @@ export class FakeFinanceDb {
     this.calls.push({ run: this.run, kind, table, sql, params });
   }
 
+  /** Give the fault-injection hook its say; throw what it asks us to throw. */
+  private maybeFail(write: {
+    kind: 'insert' | 'update';
+    table: string;
+    id: string | null;
+    sql: string;
+    params: unknown[];
+    values: Record<string, unknown>;
+  }): void {
+    const message = this.config.onWrite?.(write);
+    if (message) throw new Error(message);
+  }
+
   async execRun(sql: string, params: unknown[]): Promise<{ success: boolean; changes: number }> {
     const insert = sql.match(
       new RegExp(`INSERT\\s+INTO\\s+(${IDENTIFIER})\\s*\\(([^)]*)\\)\\s*VALUES\\s*\\(([^)]*)\\)`, 'i')
@@ -171,6 +206,7 @@ export class FakeFinanceDb {
 
       const store = this.store(table);
       const id = String(incoming.id ?? `__auto-${++this.autoKey}`);
+      this.maybeFail({ kind: 'insert', table, id, sql, params, values: incoming });
       const existing = store.get(id);
       if (!existing) {
         store.set(id, { ...incoming });
@@ -222,6 +258,15 @@ export class FakeFinanceDb {
         else if (rawValue.trim().toUpperCase() === 'CURRENT_TIMESTAMP') literals.push(column);
       }
       const id = String(params[paramIndex]);
+
+      this.maybeFail({
+        kind: 'update',
+        table,
+        id,
+        sql,
+        params,
+        values: Object.fromEntries(bound),
+      });
 
       const store = this.store(table);
       const existing = store.get(id);
