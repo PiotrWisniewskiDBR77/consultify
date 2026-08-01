@@ -37,7 +37,7 @@ import bcrypt from 'bcryptjs';
 import express from 'express';
 import request from 'supertest';
 
-import { mintToken, pgClient, requireLocalDbUrl } from './harness.js';
+import { assertAuthHermetic, mintToken, pgClient, requireLocalDbUrl } from './harness.js';
 
 requireLocalDbUrl();
 
@@ -172,6 +172,13 @@ async function main() {
     app = express();
     app.use(express.json({ limit: '1mb' }));
     app.use('/api/v8/assessment', verifyToken, attachV8Context, assessmentRouter);
+
+    // Deliberately NOT wrapped in step() — a real fail-fast guard must throw
+    // and abort the whole run immediately with ONE clear diagnostic, not be
+    // swallowed into "1 of 6 steps failed" alongside a wall of confusing
+    // downstream 401s that all share the same root cause.
+    await assertAuthHermetic(app, '/api/v8/assessment');
+    console.log('  ✓ FAIL-FAST: harness JWT_SECRET matches the mounted verifyToken middleware');
 
     const tokenA = mintToken({
       id: USER_A,
