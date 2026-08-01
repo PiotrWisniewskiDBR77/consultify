@@ -254,7 +254,13 @@ function fail(message: string): never {
 }
 
 function exportsDir(): string {
-  const dir = path.resolve(process.cwd(), 'server/exports');
+  // Anchored on this module's own location, NOT on the caller's cwd. Running
+  // from inside `server/` used to resolve `server/server/exports/`, which the
+  // `server/exports/` ignore rule does not match — that is how twelve generated
+  // reports and manifests were committed by accident. `server/scripts/<file>`
+  // -> up one -> `server/`.
+  const serverRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const dir = path.join(serverRoot, 'exports');
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 }

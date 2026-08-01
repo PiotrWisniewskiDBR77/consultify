@@ -51,8 +51,13 @@
  *   npx vitest run --retry=0 --fileParallelism=false \
  *     server/src/services/demo/__tests__/atelierFinanceDeathWindow.pg.test.ts
  *
- * This file installs a trigger on `financial_statement_packs` for the whole
- * database, exactly like the other pg suites do on `financial_statements`.
+ * This file installs NO schema objects. Its only fault is an extra row in ONE
+ * tenant's `financial_statement_values`, which the production verdict refuses —
+ * so a batched run cannot interfere with the two suites that DO install triggers
+ * on `financial_statements`. An earlier draft used a trigger on
+ * `financial_statement_packs` and did interfere: batched, it made
+ * `atelierFinanceLateWrite.pg.test.ts` fail on a foreign-key violation that had
+ * nothing to do with either file's subject.
  *
  * ===========================================================================
  * HOW THIS WAS PROVED RED
@@ -80,7 +85,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import pg, { Pool } from 'pg';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 vi.hoisted(() => {
   process.env.DB_MANAGED_SCHEMA = process.env.DB_MANAGED_SCHEMA ?? 'false';
@@ -156,14 +161,10 @@ suite('FIN-005 P1-B — the process-death window', () => {
         [orgFor(key), `FIN-005 death-window fixture (${key})`]
       );
     }
-    await installPackFault(control);
-    await control.query(`DELETE FROM fin005_death_window_fault`);
   }, 120_000);
 
   afterAll(async () => {
     if (!control) return;
-    await control.query(`DELETE FROM fin005_death_window_fault`).catch(() => undefined);
-    await removePackFault(control).catch(() => undefined);
     for (const key of ORG_KEYS) {
       await deleteFixture(idsFor(key)).catch(() => undefined);
       await control
@@ -175,14 +176,6 @@ suite('FIN-005 P1-B — the process-death window', () => {
     const { default: db } = await import('../../../database/PostgresDatabase.js');
     await (db as unknown as { close: () => Promise<void> }).close().catch(() => undefined);
   }, 120_000);
-
-  beforeEach(async () => {
-    await control.query(`DELETE FROM fin005_death_window_fault`);
-  });
-
-  afterEach(async () => {
-    await control.query(`DELETE FROM fin005_death_window_fault`).catch(() => undefined);
-  });
 
   // -------------------------------------------------------------------------
   // #5 / #6 — the marker is DURABLE BEFORE `BEGIN`, and carries the payload.
@@ -277,9 +270,18 @@ suite('FIN-005 P1-B — the process-death window', () => {
     expect(first.status, first.reason ?? '').toBe('complete');
     await demoteFixture(ids);
 
-    await control.query(`INSERT INTO fin005_death_window_fault (pack_id) VALUES ($1)`, [
-      ids.packId,
-    ]);
+    // THE FAULT, WITHOUT DDL. An extra value row under a canonical statement
+    // makes `verifyStatementReadBack` count more values than the canonical
+    // contract declares, so the production verdict refuses INSIDE the pinned
+    // transaction and it ROLLS BACK. It survives phase 1 because phase 1 upserts
+    // the canonical ids and never deletes anything.
+    await control.query(
+      `INSERT INTO financial_statement_values (id, statement_id, canonical_line_id, value)
+       SELECT $1, $2, canonical_line_id, 1 FROM financial_statement_values
+        WHERE statement_id = $2 LIMIT 1
+       ON CONFLICT (id) DO NOTHING`,
+      [`${ids.statementIds[0]}--death-window-extra`, ids.statementIds[0]]
+    );
 
     const markerFile = atelierFinancePromotionMarkerPath(orgFor('rollback'));
     const observed: Observed[] = [];
@@ -303,6 +305,10 @@ suite('FIN-005 P1-B — the process-death window', () => {
     expect(readAtelierFinancePromotionMarker(orgFor('rollback'))).toBeNull();
     // Postgres rolled it back, and the re-read agrees.
     expect(result.promotion?.rowsStillClaimingReady ?? []).toEqual([]);
+
+    await control.query(`DELETE FROM financial_statement_values WHERE id = $1`, [
+      `${ids.statementIds[0]}--death-window-extra`,
+    ]);
   }, 240_000);
 
   // -------------------------------------------------------------------------
@@ -526,44 +532,3 @@ suite('FIN-005 P1-B — the process-death window', () => {
     );
   }
 });
-
-/**
- * The fault: a `BEFORE UPDATE` trigger that raises when the canonical PACK is
- * being promoted, and only for a pack id explicitly listed in the control table.
- * It fires on the LAST of the five promotion writes, so the transaction has
- * really done work before it rolls back.
- */
-async function installPackFault(pool: Pool): Promise<void> {
-  await pool.query(
-    `CREATE TABLE IF NOT EXISTS fin005_death_window_fault (pack_id TEXT PRIMARY KEY)`
-  );
-  await pool.query(`
-    CREATE OR REPLACE FUNCTION fin005_death_window_pack_fault() RETURNS trigger AS $fn$
-    BEGIN
-      IF NEW.pack_status = 'confirmed'
-         AND EXISTS (SELECT 1 FROM fin005_death_window_fault f WHERE f.pack_id = NEW.id) THEN
-        RAISE EXCEPTION 'fin005 death-window fault: refusing to promote pack %', NEW.id;
-      END IF;
-      RETURN NEW;
-    END;
-    $fn$ LANGUAGE plpgsql;
-  `);
-  await pool.query(
-    `DROP TRIGGER IF EXISTS fin005_death_window_pack_trg ON financial_statement_packs`
-  );
-  await pool.query(`
-    CREATE TRIGGER fin005_death_window_pack_trg
-      BEFORE UPDATE ON financial_statement_packs
-      FOR EACH ROW EXECUTE FUNCTION fin005_death_window_pack_fault();
-  `);
-}
-
-async function removePackFault(pool: Pool): Promise<void> {
-  await pool
-    .query(`DROP TRIGGER IF EXISTS fin005_death_window_pack_trg ON financial_statement_packs`)
-    .catch(() => undefined);
-  await pool
-    .query(`DROP FUNCTION IF EXISTS fin005_death_window_pack_fault()`)
-    .catch(() => undefined);
-  await pool.query(`DROP TABLE IF EXISTS fin005_death_window_fault`).catch(() => undefined);
-}

@@ -166,6 +166,104 @@ zwróć uwagę, że nazwa bazy się **zgadza**):
 There is no --database-url to reconcile: set DATABASE_URL to the one approved target and re-run.
 ```
 
+### 2.1b. Odczyty decydujące — dowód, że idą na primary (runda 7)
+
+**Problem, który ta bramka zamyka.** §2.1a dowodzi, że pula odczytu skonfigurowana
+w `DATABASE_URL`/`DB_READ_*` wskazuje na ten sam klaster co pula zapisu. To
+**nie** dowodzi, że w danym momencie ta pula odpowiada z primary, a nie z
+opóźnionej repliki. Weryfikacja promocji (postwarunek, rekoncyliacja, decyzja
+compensate/complete) czyta przez `DbPromise.all/get`, czyli przez pulę odczytu —
+gdyby ta pula w danej chwili trafiła na replikę w tyle, promocja mogłaby uznać
+świeżo zapisane wiersze za nieobecne i **cofnąć poprawny zapis** (albo odwrotnie:
+uznać stary stan repliki za powód do kompensacji).
+
+**Co jest teraz.** Każdy odczyt decydujący (ten, od którego zależy werdykt
+`complete`/`compensate`, nie diagnostyka) jest związany albo z **przypiętym
+klientem** transakcji promocji (`PoolClient` z §2.1a — `BEGIN`…`COMMIT` na
+jednym połączeniu), albo — poza transakcją — ze **świeżym klientem z
+autoryzowanej puli zapisu**, nigdy z puli odczytu. Przed pierwszym zapisem seed
+dowodzi to explicite: pyta połączenie, na którym te odczyty będą się odbywać, o
+`pg_is_in_recovery()`. To jedyne pole, którego replika nie może podrobić —
+`system_identifier`, nazwa bazy i OID są identyczne na obu.
+
+Linia w logu (dry-run i `--write`):
+
+```
+[fin005-atelier-finance-seed] decisive reads: PRIMARY PROVEN — pg_is_in_recovery()=false on the authorised write pool (backend pid …)
+```
+
+**To jest twardy refusal wyłącznie na celu HOSTED** (`isHostedTarget()` — każdy
+host poza `localhost`/`127.0.0.1`/`::1`/`0.0.0.0`/`host.docker.internal`; na
+lokalnej bazie testowej nie ma repliki, więc dowód się wykonuje, ale nie
+blokuje). Na demo/produkcji (zawsze hosted) `--write` **odmawia** bez tego
+dowodu:
+
+```
+⛔ --write would REFUSE: the seed's decisive reads were not proved to reach the PRIMARY (…). A lagging replica turns a successful write into a compensation.
+```
+
+W dry-runie jest to ostrzeżenie o tym, co `--write` by zrobił — dry-run sam
+niczego nie odmawia, bo nic nie pisze. Nigdy nie kompensuj (nie cofaj, nie
+oznaczaj `NEEDS_OPERATOR`) na podstawie stanu odczytanego z repliki — jeśli
+zobaczysz taką decyzję w logu bez linii „PRIMARY PROVEN" powyżej, to jest defekt,
+nie normalna praca.
+
+### 2.1c. Trwały magazyn na blokadę operatora — `STORAGE_DIR` (runda 7)
+
+**Problem, który ta bramka zamyka.** `NEEDS_OPERATOR` (hold z komitem w
+niepewności, §4a) i znacznik `PROMOTION_IN_PROGRESS` (§4a) muszą przetrwać
+redeploy — to właśnie wtedy proces, który był w środku promocji, ginie i
+znacznik zostaje jedynym śladem. Kontener na Railway ma **efemeryczny** system
+plików: bez zamontowanego wolumenu każdy plik zapisany pod `process.cwd()`
+znika przy następnym deployu, razem z dowodem, że coś wymaga decyzji operatora.
+
+**Co jest teraz.** Na celu HOSTED `--write` **odmawia zanim wykona pierwszy
+zapis SQL**, jeśli nie potrafi **dowieść** (nie: odczytać zmienną) trwałego
+magazynu. Sama obecność `STORAGE_DIR` albo `RAILWAY_VOLUME_MOUNT_PATH` w
+środowisku **nie wystarcza** — komenda:
+
+1. odrzuca `STORAGE_DIR` wskazujący na `process.cwd()` (to ten sam efemeryczny
+   system plików pod inną nazwą);
+2. sprawdza, że zadeklarowana ścieżka faktycznie jest osobnym punktem montowania
+   (`st_dev` różni się od `st_dev` katalogu głównego — coś tam jest
+   zamontowane, a nie tylko zadeklarowane);
+3. wykonuje **cały** cykl trwałości na docelowym katalogu i go wycofuje:
+   `mkdir -p` → otwórz plik tymczasowy → zapisz → `fsync` na PLIKU → atomowy
+   `rename` na miejsce → `fsync` na KATALOGU (krok, który najczęściej się
+   pomija — bez niego wpis katalogowy z rename'a nie jest trwały) → odczytaj z
+   powrotem i porównaj bajt po bajcie → posprzątaj.
+
+Dopiero po tym `--write` przechodzi dalej. Linia w logu:
+
+```
+[fin005-atelier-finance-seed] durable operator hold: OK — STORAGE_DIR=/data (/data is on its own filesystem (st_dev …, root …)); durability PROVED on /data/fin005-operator-holds: mkdir -p … -> write temp file -> fsync the FILE -> atomic rename into place -> fsync the DIRECTORY -> read the bytes back and compare -> clean the probe file up
+```
+
+Komunikaty odmowy (przykłady — dowolny z nich zatrzymuje `--write` **przed**
+pierwszym zapisem):
+
+- `neither STORAGE_DIR nor RAILWAY_VOLUME_MOUNT_PATH is set, so the operator hold would be written under process.cwd() (…)`
+- `STORAGE_DIR=… points at the process working directory (…). That is the ephemeral container filesystem under another name`
+- `STORAGE_DIR=… does not look like a mounted volume: … is on the SAME filesystem as … — nothing is mounted there`
+- `STORAGE_DIR=… is a mount, but the durability probe on … <krok> failed: <błąd>`
+- `ATELIER_FINANCE_HOLD_DIR is set (…). It is a TEST relocation and is refused for a hosted write`
+  (ta zmienna istnieje wyłącznie dla testów PG; jeśli jest ustawiona na
+  hoście operatora — usuń ją, to nie jest sposób na obejście bramki)
+
+**Weryfikacja przed pierwszym uruchomieniem na demo:** ustaw `STORAGE_DIR` na
+zamontowany wolumen Railway i sprawdź samą bramkę bez seedowania czegokolwiek:
+
+```bash
+STORAGE_DIR=/data node -e "
+const { requireDurableOperatorHoldStorage } = require('./server/dist/services/demo/atelierFinanceOperatorHold.js');
+console.log(requireDurableOperatorHoldStorage());
+"
+```
+
+Oczekiwane: `{ ok: true, source: 'STORAGE_DIR', dir: '/data/fin005-operator-holds', … }`.
+`ok: false` — napraw magazyn **zanim** uruchomisz §2.3, nie próbuj obejść tego
+zmienną testową.
+
 ### 2.2. Dry-run (domyślny, wyłącznie do odczytu)
 
 ```bash
@@ -453,6 +551,73 @@ seeda demotuje mieszany stan i odbudowuje spójny fixture (zweryfikowane na
 realnym PostgreSQL, handoff §13.3). Dry-run z §2.2 pokaże ten stan jako wiersze
 `promote` — to jest właśnie sygnatura przerwanego seeda.
 Nie uruchamiaj kwarantanny na mieszanym fixture.
+
+---
+
+## 4a. Jeśli seed odmawia z `NEEDS_OPERATOR` (runda 7)
+
+Dwa **oddzielne** zapisy trwałe mogą zablokować kolejne uruchomienie tego
+samego tenanta. Oba fail-closed: plik nieczytelny albo uszkodzony liczy się
+jako blokada, nie jako „brak blokady". Żaden kolejny seed **nie czyści** żadnego
+z nich sam — to zrobiłoby dokładnie to, przed czym mają chronić (zgubienie
+dowodu przed decyzją człowieka).
+
+**1. Hold „commit w niepewności"** (istniał przed rundą 7, format bez zmian) —
+`fin005-operator-holds/atelier-finance-commit-indeterminate--<slug>--<hash>.json`.
+Zapisywany, gdy transakcja zwróciła `commit-indeterminate` (round-6): backend
+zerwał połączenie między `COMMIT` a potwierdzeniem, więc nie wiadomo, czy zapis
+wszedł.
+
+**2. Znacznik `PROMOTION_IN_PROGRESS`** (nowy w rundzie 7) —
+`fin005-operator-holds/atelier-finance-promotion-marker--<slug>--<hash>.json`.
+Zapisywany **przed `BEGIN`**, z `runId`, `organizationId`, dokładnie pięcioma
+id wierszy w zakresie promocji (pakiet, 3 sprawozdania, analiza), sha256 stanu
+„przed" i sha256 zamierzonego stanu „po", tożsamością celu i znacznikiem czasu.
+Aktualizowany na wynik (`COMMITTED` / `ROLLED_BACK` / `NEEDS_OPERATOR`). Jeśli
+proces padnie między zapisaniem znacznika a aktualizacją wyniku, plik **zostaje
+w stanie `PROMOTION_IN_PROGRESS`** — to jest właśnie sygnatura procesu, który
+umarł w środku, i to ona blokuje.
+
+Komunikat odmowy (przykład dla obu przypadków — treść identyczna co do struktury):
+
+```
+NEEDS_OPERATOR — refusing to run: a PROMOTION_IN_PROGRESS promotion marker stands for this tenant. Run "<runId>" recorded the marker at <ts> and NEVER recorded an outcome, which means the process died between BEGIN and the confirmed result — the promotion transaction MAY HAVE COMMITTED and nothing observed it. Rows in scope: [<5 id-ków>]. Pre-state digest <sha>, intended post-state digest <sha>, target <host>:<port>/<db> (oid <oid>, system_identifier <id>). Marker file: <ścieżka>. This run will NOT clear it. INVESTIGATE FIRST, THEN ACKNOWLEDGE. …
+```
+
+**Procedura operatora — dosłownie, w tej kolejności:**
+
+1. **Nie usuwaj pliku ręcznie.** Usunięcie pliku odblokowuje seed, ale nie
+   zostawia śladu decyzji — to jest dokładnie ten defekt, który znacznik miał
+   zamknąć.
+2. Przeczytaj plik blokady (hold albo znacznik) i porównaj `rowIds`/
+   `statementIds` z pięcioma kanonicznymi wierszami Finance dla tego tenanta
+   (§4 — te same zapytania SQL). Ustal, czy `preStateDigest` czy
+   `intendedPostStateDigest` odpowiada temu, co faktycznie jest w bazie.
+3. Zdecyduj: `commit-landed` (zapis wszedł — stan bazy zgadza się z
+   zamierzonym), `commit-did-not-land` (zapis nie wszedł — stan bazy zgadza się
+   ze stanem „przed"), `residue-reseeded-by-hand` (naprawiłeś ręcznie), albo
+   `other` (z notatką co faktycznie zaszło).
+4. Potwierdź programowo — to jedyna droga, która jest jednocześnie
+   odblokowaniem i audytem:
+
+```ts
+import { acknowledgeAtelierFinanceCommitIndeterminate } from '../src/services/demo/atelierFinanceOperatorHold';
+
+acknowledgeAtelierFinanceCommitIndeterminate('<DEMO_ORG_ID>', {
+  operator: '<imię i nazwisko albo konto — nigdy puste>',
+  decision: 'commit-landed', // | 'commit-did-not-land' | 'residue-reseeded-by-hand' | 'other'
+  note: '<co dokładnie sprawdziłeś i dlaczego bezpiecznie kontynuować — trafia do trwałego, podpisanego czasem audytu>',
+});
+```
+
+To zapisuje trwały rekord audytu w `fin005-operator-holds/acknowledged/` (z
+pełną treścią oczyszczanego holdu/znacznika w środku) **przed** usunięciem
+blokady — w tej kolejności, żeby awaria zapisu audytu nigdy nie skończyła się
+odblokowanym tenantem bez śladu decyzji. Puste `operator` albo `note` rzuca
+wyjątek zamiast ciche odblokować.
+5. Dopiero po potwierdzeniu uruchom ponownie §2.3 — kolejny seed zdemotuje
+   pozostałość i odbuduje spójny fixture (faza 0, jak przy mieszanym stanie w
+   §4).
 
 ---
 
