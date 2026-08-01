@@ -126,9 +126,13 @@ app.get('/ping', HealthCheckController.ping);
  * limiter and six `fs.existsSync` calls per request.
  *
  * Deleted rather than gated: it has zero consumers (`grep -rl "test-frontend-path"`
- * finds nothing in `src/`, `tests/`, `e2e/` or `scripts/`), and the only genuinely
- * useful part — the resolved dist path — is already served by `/api/build-info`,
- * which does have a caller.
+ * finds nothing in `src/`, `tests/`, `e2e/` or `scripts/`).
+ *
+ * CORRECTION: an earlier version of this note justified the deletion by saying the
+ * resolved dist path was "already served by `/api/build-info`, which does have a
+ * caller". That was wrong on both counts — the only reference to build-info was an
+ * ALLOWLIST entry in `src/services/api.ts`, not a call, and build-info has since
+ * been deleted for the same reasons (SEC-PUB-002).
  *
  * If a diagnostic like this is ever needed again it belongs behind the test
  * gateway conjunction used by `/api/auth/demo-login`: NODE_ENV === 'test' AND an
@@ -1217,272 +1221,43 @@ try {
 logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 
-app.get(['/__build-info', '/api/build-info'], (_req: Request, res: Response) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
+/**
+ * REMOVED (SEC-PUB-002): `GET /__build-info`, `GET /api/build-info`,
+ * `GET /__build-graph`, `GET /api/build-graph`.
+ *
+ * All four were anonymous, unrate-limited, and mounted here — ahead of helmet,
+ * CORS, sanitisation, CSRF, the global limiter and audit logging.
+ *
+ * DISCLOSURE: they returned `frontendDistPath`, `indexPath`, `bundleFsPath`,
+ * `bundlePublicPath`, `entryPublicPath` and `assetsPath` — the container's
+ * directory layout, to anyone who asked, in a 200 body.
+ *
+ * COST: `build-info` did a `readdirSync` of the assets directory and a
+ * `readFileSync` of EVERY `.js` chunk per request. `build-graph` did the same and
+ * then walked the whole import graph. Both synchronous, both before any
+ * authorization, on an endpoint no credential was needed to reach — a
+ * resource-exhaustion surface as much as a disclosure one.
+ *
+ * Deleted rather than guarded: an exhaustive consumer hunt (frontend, backend,
+ * scripts, CI, Dockerfiles, railway.json, Playwright configs, tests, runbooks and
+ * handoffs, plus a search on the response field names rather than the paths)
+ * found NO active consumer. Git history explains why: `6dc4063fef` added
+ * build-info together with an allowlist entry in `src/services/api.ts` for a
+ * caller that was never written, and `db065c29bc` described build-graph as
+ * something that "can be used as a hard runtime gate in staging" — a gate nothing
+ * in CI, scripts or Playwright ever implemented.
+ *
+ * RESIDUAL RISK, stated rather than hidden: static search cannot see a human.
+ * build-graph was built to spot stale chunk/entry mismatches after a deploy, and
+ * this project's operators do verify deploys by hand with curl. If that habit
+ * exists and is undocumented, this removes it. The capability should then come
+ * back as ONE superadmin-only route with a limiter, no filesystem paths in any
+ * response including errors, and the scan cached or moved off the request path —
+ * not as four anonymous aliases.
+ *
+ * Coverage: tests/integration/buildSurfaceRemoved.contract.test.ts
+ */
 
-  const indexPath = path.resolve(frontendDistPath, 'index.html');
-  if (!fs.existsSync(indexPath)) {
-    return res.status(500).json({
-      ok: false,
-      error: 'INDEX_NOT_FOUND',
-      indexPath,
-    });
-  }
-
-  let html = '';
-  try {
-    html = fs.readFileSync(indexPath, 'utf-8');
-  } catch (error: any) {
-    return res.status(500).json({
-      ok: false,
-      error: 'INDEX_READ_FAILED',
-      message: error?.message || String(error),
-      indexPath,
-    });
-  }
-
-  const bundleMatch = html.match(/\/assets\/index-[^"']+\.js/);
-  const bundlePublicPath = bundleMatch?.[0] || null;
-  const bundleFsPath = bundlePublicPath
-    ? path.resolve(frontendDistPath, bundlePublicPath.replace(/^\//, ''))
-    : null;
-
-  const markers = {
-    oldAppProvidersLog: false,
-    oldTokenServiceLog: false,
-    transportCircuitOpen: false,
-    globalTransportCircuitOpen: false,
-    tokenServiceInitGuard: false,
-    staleEntryBundleAliasGuard: true,
-    cacheSelfHealV4: html.includes('__consultify_hard_reset_done_v4'),
-  };
-  let scannedAssetCount = 0;
-
-  const scanJsForMarkers = (js: string) => {
-    markers.oldAppProvidersLog =
-      markers.oldAppProvidersLog || js.includes('[AppProviders] Initializing providers');
-    markers.oldTokenServiceLog =
-      markers.oldTokenServiceLog || js.includes('[TokenService] Initialized');
-    markers.transportCircuitOpen =
-      markers.transportCircuitOpen || js.includes('CLIENT_TRANSPORT_CIRCUIT_OPEN');
-    markers.globalTransportCircuitOpen =
-      markers.globalTransportCircuitOpen || js.includes('CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN');
-    markers.tokenServiceInitGuard =
-      markers.tokenServiceInitGuard || js.includes('__consultifyTokenServiceInitialized__');
-  };
-
-  if (bundleFsPath && fs.existsSync(bundleFsPath)) {
-    try {
-      const js = fs.readFileSync(bundleFsPath, 'utf-8');
-      scanJsForMarkers(js);
-      scannedAssetCount += 1;
-    } catch {
-      // Keep defaults when asset cannot be read.
-    }
-  }
-
-  const assetsPath = path.resolve(frontendDistPath, 'assets');
-  if (fs.existsSync(assetsPath)) {
-    try {
-      const jsAssetNames = fs
-        .readdirSync(assetsPath)
-        .filter((assetName) => assetName.endsWith('.js'));
-      for (const assetName of jsAssetNames) {
-        const assetPath = path.resolve(assetsPath, assetName);
-        if (assetPath === bundleFsPath) continue;
-        try {
-          scanJsForMarkers(fs.readFileSync(assetPath, 'utf-8'));
-          scannedAssetCount += 1;
-        } catch {
-          // Keep scanning other chunks when one asset cannot be read.
-        }
-      }
-    } catch {
-      // Keep marker defaults when assets cannot be listed.
-    }
-  }
-
-  return res.json({
-    ok: true,
-    frontendDistPath,
-    indexPath,
-    bundlePublicPath,
-    bundleFsPath,
-    bundleExists: !!(bundleFsPath && fs.existsSync(bundleFsPath)),
-    scannedAssetCount,
-    markers,
-    generatedAt: new Date().toISOString(),
-  });
-});
-
-app.get(['/__build-graph', '/api/build-graph'], (_req: Request, res: Response) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-
-  const indexPath = path.resolve(frontendDistPath, 'index.html');
-  if (!fs.existsSync(indexPath)) {
-    return res.status(500).json({
-      ok: false,
-      error: 'INDEX_NOT_FOUND',
-      indexPath,
-    });
-  }
-
-  let html = '';
-  try {
-    html = fs.readFileSync(indexPath, 'utf-8');
-  } catch (error: any) {
-    return res.status(500).json({
-      ok: false,
-      error: 'INDEX_READ_FAILED',
-      message: error?.message || String(error),
-      indexPath,
-    });
-  }
-
-  const entryMatch = html.match(/\/assets\/index-[^"']+\.js/);
-  const entryPublicPath = entryMatch?.[0] || null;
-  if (!entryPublicPath) {
-    return res.status(500).json({
-      ok: false,
-      error: 'ENTRY_NOT_FOUND',
-      message: 'Could not resolve entry index-*.js in index.html',
-      indexPath,
-    });
-  }
-
-  const assetsPath = path.resolve(frontendDistPath, 'assets');
-  const entryFsPath = path.resolve(frontendDistPath, entryPublicPath.replace(/^\//, ''));
-  if (!fs.existsSync(entryFsPath)) {
-    return res.status(500).json({
-      ok: false,
-      error: 'ENTRY_FILE_NOT_FOUND',
-      entryPublicPath,
-      entryFsPath,
-    });
-  }
-
-  const graphNodes: Array<{
-    path: string;
-    imports: string[];
-    exists: boolean;
-  }> = [];
-  const missingImports: Array<{
-    from: string;
-    importPath: string;
-  }> = [];
-
-  const jsFiles: string[] = [];
-  try {
-    if (fs.existsSync(assetsPath)) {
-      for (const name of fs.readdirSync(assetsPath)) {
-        if (name.endsWith('.js')) {
-          jsFiles.push(`/assets/${name}`);
-        }
-      }
-    }
-  } catch (error: any) {
-    return res.status(500).json({
-      ok: false,
-      error: 'ASSETS_SCAN_FAILED',
-      message: error?.message || String(error),
-      assetsPath,
-    });
-  }
-
-  // Always include entry first for readability.
-  const ordered = [
-    entryPublicPath,
-    ...jsFiles.filter((assetPath) => assetPath !== entryPublicPath),
-  ];
-
-  const nodeByPath = new Map<string, { path: string; imports: string[]; exists: boolean }>();
-
-  for (const assetPath of ordered) {
-    const fsPath = path.resolve(frontendDistPath, assetPath.replace(/^\//, ''));
-    if (!fs.existsSync(fsPath)) {
-      graphNodes.push({
-        path: assetPath,
-        imports: [],
-        exists: false,
-      });
-      nodeByPath.set(assetPath, {
-        path: assetPath,
-        imports: [],
-        exists: false,
-      });
-      continue;
-    }
-
-    try {
-      const source = fs.readFileSync(fsPath, 'utf-8');
-      const imports = extractRelativeJsImports(source);
-
-      const node = {
-        path: assetPath,
-        imports,
-        exists: true,
-      };
-      graphNodes.push(node);
-      nodeByPath.set(assetPath, node);
-    } catch (error: any) {
-      const node = {
-        path: assetPath,
-        imports: [],
-        exists: false,
-      };
-      graphNodes.push(node);
-      nodeByPath.set(assetPath, node);
-      logger.warn(
-        `[Server] Failed reading asset for build graph ${assetPath}: ${error?.message || error}`
-      );
-    }
-  }
-
-  // Reachable subgraph from the current entry (includes lazy chunks because
-  // Vite keeps chunk URLs as string literals in parent chunks).
-  const reachable = new Set<string>();
-  const queue: string[] = [entryPublicPath];
-  while (queue.length > 0) {
-    const current = queue.shift();
-    if (!current || reachable.has(current)) continue;
-    reachable.add(current);
-    const node = nodeByPath.get(current);
-    if (!node) continue;
-    for (const imported of node.imports) {
-      if (!reachable.has(imported)) queue.push(imported);
-    }
-  }
-
-  for (const assetPath of reachable) {
-    const node = nodeByPath.get(assetPath);
-    if (!node) continue;
-    for (const imported of node.imports) {
-      if (!nodeByPath.has(imported)) {
-        missingImports.push({
-          from: assetPath,
-          importPath: imported,
-        });
-      }
-    }
-  }
-
-  return res.json({
-    ok: missingImports.length === 0,
-    frontendDistPath,
-    indexPath,
-    entryPublicPath,
-    assetsCount: ordered.length,
-    reachableAssetsCount: reachable.size,
-    missingImportsCount: missingImports.length,
-    missingImports,
-    graphNodes,
-    generatedAt: new Date().toISOString(),
-  });
-});
 
 const isStaticAssetRequest = (requestPath: string): boolean =>
   /\.[a-z0-9]+$/i.test(requestPath) ||

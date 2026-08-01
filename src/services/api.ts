@@ -326,8 +326,12 @@ const shouldBypassAuthLoopGuard = (path: string): boolean =>
   path.startsWith('/api/health') ||
   path.startsWith('/api/auth/login') ||
   path.startsWith('/api/auth/refresh') ||
-  path.startsWith('/api/auth/logout') ||
-  path.startsWith('/api/build-info');
+  path.startsWith('/api/auth/logout');
+// `/api/build-info` was allowlisted here by the route's own author in the same
+// commit that added the endpoint (6dc4063fef), for a caller that was never
+// written. The route is gone (SEC-PUB-002), so the entry could only ever have
+// been unreachable — removed rather than left as a breadcrumb pointing at a
+// path that no longer exists.
 
 const maybeGetAuthLoopGuardResponse = (path: string): Response | null => {
   if (shouldBypassAuthLoopGuard(path)) return null;
