@@ -222,6 +222,51 @@ function tryExtractUserIdFromToken(req: Request): string | null {
   }
 }
 
+/**
+ * Network-only identity, ignoring any credential the caller presents.
+ *
+ * `extractKey` prefers a user id read out of the token with `jwt.decode` — an
+ * UNVERIFIED read. On an authenticated endpoint that is harmless: a forged id only
+ * buys you a bucket of your own. On an UNAUTHENTICATED provisioning endpoint it is
+ * a bypass — attach any junk bearer, rotate the `id` claim, and every request
+ * lands in a fresh bucket. `register-demo` has no legitimate authenticated caller,
+ * so its quota must never be influenced by a token.
+ */
+export function networkOnlyRateLimitKey(req: Request): string {
+  const ipFromReqRaw = normalizeOptionalString(safeRead(() => req.ip, undefined as unknown));
+  const ipFromReq = ipFromReqRaw ? capKeySegment(normalizeIpKeyMaterial(ipFromReqRaw)) : null;
+  const ipFromSocketRaw = normalizeOptionalString(
+    safeRead(() => req.socket?.remoteAddress, undefined as unknown)
+  );
+  const ipFromSocket = ipFromSocketRaw
+    ? capKeySegment(normalizeIpKeyMaterial(ipFromSocketRaw))
+    : null;
+  const forwardedHeader = safeRead(() => req.headers['x-forwarded-for'], undefined as unknown);
+  const trustProxy = Boolean(
+    safeRead(
+      () =>
+        (req as Request & { app?: { get?: (name: string) => unknown } }).app?.get?.('trust proxy'),
+      false
+    )
+  );
+  const ipFromForwarded = (() => {
+    if (!trustProxy) return null;
+    if (typeof forwardedHeader === 'string') {
+      const candidate = normalizeOptionalString(forwardedHeader.split(',')[0]);
+      return candidate ? capKeySegment(normalizeIpKeyMaterial(candidate)) : null;
+    }
+    if (Array.isArray(forwardedHeader)) {
+      for (const forwardedEntry of forwardedHeader) {
+        if (typeof forwardedEntry !== 'string') continue;
+        const candidate = normalizeOptionalString(forwardedEntry.split(',')[0]);
+        if (candidate) return capKeySegment(normalizeIpKeyMaterial(candidate));
+      }
+    }
+    return null;
+  })();
+  return `ip:${capKeySegment(ipFromReq || ipFromForwarded || ipFromSocket || 'unknown')}`;
+}
+
 function extractKey(req: Request): string {
   const uid =
     normalizeOptionalString(safeRead(() => (req as any)._rateLimitUserId, undefined as unknown)) ||
@@ -946,9 +991,13 @@ function demoSignupIdentityKey(req: Request): string {
   const email = normalizeOptionalString(
     safeRead(() => (req.body as { email?: unknown } | undefined)?.email, undefined as unknown)
   );
-  if (!email) return '';
+  if (!email) {
+    // No address to key on: fall back to the NETWORK identity, never to the
+    // default resolver, whose token-derived key an anonymous caller can choose.
+    return networkOnlyRateLimitKey(req);
+  }
   const hashed = hashRateLimitIdentity('demo-signup', email.trim().toLowerCase());
-  return hashed ? `id:${hashed}` : '';
+  return hashed ? `id:${hashed}` : networkOnlyRateLimitKey(req);
 }
 
 /**
@@ -962,6 +1011,9 @@ export const demoSignupIpRateLimiter = createLimiter({
   prefix: 'demo-signup-ip',
   message: 'Too many demo requests from this network. Please try again later.',
   sharedStore: true,
+  // Network identity only — see `networkOnlyRateLimitKey`. Without this the bucket
+  // is chosen by an unverified `id` claim and the quota is trivially bypassed.
+  keyResolver: networkOnlyRateLimitKey,
 });
 
 /**
