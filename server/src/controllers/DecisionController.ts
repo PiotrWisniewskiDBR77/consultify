@@ -39,6 +39,7 @@ import {
   validateDecisionWorkflowTransition,
 } from '../services/decisionWorkflowService.js';
 import {
+  applyDecisionBlockTransitionOnClient,
   executeInitiativeTransition,
   type InitiativeTransitionActor,
 } from '../services/initiative/initiativeTransitionService.js';
@@ -1270,254 +1271,170 @@ export class DecisionController {
       const relatedObjectIdValue =
         relatedObjectId || initiativeIdValue || taskIdValue || projectIdValue || null;
 
-      try {
-        await queryHelpers.queryRun(sql, [
-          id,
-          orgId,
-          projectIdValue,
-          initiativeIdValue,
-          taskIdValue,
-          decodedTitle,
-          description || null,
-          normalizedType,
-          decisionOwnerId || userId,
-          normalizedDueDate,
-          escalationDeadline || null,
-          'pending',
-          userId,
-          normalizedPriority,
-          normalizedImpact,
-          'none',
-          pmoDomain || null,
-          shouldRequireDecision ? 1 : 0,
-        ]);
-      } catch (error) {
-        const legacySql = `INSERT INTO decisions (
-              id, organization_id, project_id, title, description, pmo_domain,
-              decision_owner_id, related_object_type, related_object_id, due_date,
-              priority, status, required, audit_trail, impact, escalation_level, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
-        await queryHelpers.queryRun(legacySql, [
-          id,
-          orgId,
-          projectIdValue,
-          decodedTitle,
-          description || null,
-          pmoDomain || null,
-          decisionOwnerId || userId,
-          relatedObjectTypeValue,
-          relatedObjectIdValue,
-          normalizedDueDate,
-          normalizedPriority,
-          'pending',
-          shouldRequireDecision ? 1 : 0,
-          JSON.stringify({ decisionType: normalizedType, createdBy: userId }),
-          normalizedImpact,
-          'none',
-        ]);
-      }
-
-      await queryHelpers.queryRun(
-        `INSERT INTO decision_history (id, decision_id, action, old_status, new_status, changed_by, details)
-         VALUES (?, ?, 'created', NULL, 'pending', ?, ?)`,
-        [
-          uuidv4(),
-          id,
-          userId,
-          JSON.stringify({ notes: 'Decision created', priority: normalizedPriority }),
-        ]
-      );
-
-      if (impactEntries.length > 0) {
-        for (const entry of impactEntries) {
-          await queryHelpers.queryRun(
-            `INSERT INTO decision_impacts (id, decision_id, impacted_type, impacted_id, impact_description, is_blocker)
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [
-              uuidv4(),
-              id,
-              entry.impactedType,
-              entry.impactedId,
-              entry.impactDescription || null,
-              entry.isBlocker ? 1 : 0,
-            ]
-          );
+      // Codex review follow-up (2026-08-01, "Blocker 1"): everything below —
+      // the `decisions` INSERT (+ legacy-schema fallback), the
+      // `decision_history` INSERT, every `decision_impacts` INSERT, and —
+      // for each blocking impact on an Initiative — the Initiative BLOCK
+      // write plus its two audit rows, ALL run on ONE pinned
+      // `withPgTransaction` client now. Previously these were independent
+      // shared-pool calls (confirmed non-atomic even with EACH OTHER by the
+      // original discovery pass): a Decision could persist with impact rows
+      // committed while the resulting Initiative BLOCK silently failed,
+      // still returning 201, with no way for a caller to detect or recover
+      // the inconsistency. Now: if ANYTHING in this transaction throws (a
+      // genuine failure — a broken column, a DB error, an unexpected
+      // exception from `applyDecisionBlockTransitionOnClient`), the WHOLE
+      // transaction rolls back — the Decision is never created at all — and
+      // the exception propagates uncaught out of this handler to
+      // `asyncHandler`'s `.catch(next)`, reaching Express's shared
+      // coded-5xx error middleware (never a bespoke JSON shape, never a
+      // silent 201). A structured, EXPECTED refusal from
+      // `applyDecisionBlockTransitionOnClient` (initiative not found,
+      // already terminal, unrecognized status) is NOT a failure of this
+      // kind — it's a legitimate business outcome (the Decision is still
+      // created; it just doesn't/can't block that particular initiative) —
+      // logged, not thrown, so it does not roll back the Decision itself.
+      //
+      // `applyDecisionBlockTransitionOnClient` (not the standalone
+      // `applyDecisionBlockTransition` wrapper) is called directly, passing
+      // THIS transaction's own `client` — nesting two independent
+      // `withPgTransaction` calls would NOT achieve atomicity (two separate
+      // physical connections commit independently of each other; the inner
+      // one could durably commit the block even if the outer one later
+      // rolled back the Decision). This is still the ONE canonical
+      // implementation of the Decision-driven BLOCK mutation — no
+      // duplicated writer — see that function's doc comment.
+      //
+      // Task-blocking (a DIFFERENT, unaudited, pre-existing raw writer, out
+      // of scope for this packet — see the `task` branch below) stays on
+      // the shared pool exactly as before: it is NOT part of this atomic
+      // unit. A task-block landing on its own connection while this
+      // transaction later rolls back is a disclosed, pre-existing gap
+      // (tasks/decisions were never atomic with each other even before this
+      // fix), not something this change introduces or is scoped to close.
+      const tag = DECISION_BLOCK_TAG(id);
+      await queryHelpers.withPgTransaction(async (client) => {
+        try {
+          await client.query(sql, [
+            id,
+            orgId,
+            projectIdValue,
+            initiativeIdValue,
+            taskIdValue,
+            decodedTitle,
+            description || null,
+            normalizedType,
+            decisionOwnerId || userId,
+            normalizedDueDate,
+            escalationDeadline || null,
+            'pending',
+            userId,
+            normalizedPriority,
+            normalizedImpact,
+            'none',
+            pmoDomain || null,
+            shouldRequireDecision ? 1 : 0,
+          ]);
+        } catch (error) {
+          const legacySql = `INSERT INTO decisions (
+                id, organization_id, project_id, title, description, pmo_domain,
+                decision_owner_id, related_object_type, related_object_id, due_date,
+                priority, status, required, audit_trail, impact, escalation_level, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
+          await client.query(legacySql, [
+            id,
+            orgId,
+            projectIdValue,
+            decodedTitle,
+            description || null,
+            pmoDomain || null,
+            decisionOwnerId || userId,
+            relatedObjectTypeValue,
+            relatedObjectIdValue,
+            normalizedDueDate,
+            normalizedPriority,
+            'pending',
+            shouldRequireDecision ? 1 : 0,
+            JSON.stringify({ decisionType: normalizedType, createdBy: userId }),
+            normalizedImpact,
+            'none',
+          ]);
         }
-      }
 
-      // Auto-block impacted items if this decision is a blocker (PMO gate)
-      if (impactEntries.length > 0) {
-        const tag = DECISION_BLOCK_TAG(id);
-        for (const entry of impactEntries) {
-          if (!entry.isBlocker) continue;
-          if (entry.impactedType === 'task') {
-            await queryHelpers.queryRun(
-              `UPDATE tasks SET
-                status = CASE WHEN status = 'done' THEN status ELSE 'blocked' END,
-                blocked_at = COALESCE(blocked_at, CURRENT_TIMESTAMP),
-                blocked_by_decision_id = COALESCE(blocked_by_decision_id, ?),
-                blocked_reason = CASE
-                  WHEN blocked_reason IS NULL OR blocked_reason = '' THEN ?
-                  ELSE blocked_reason
-                END,
-                updated_at = CURRENT_TIMESTAMP
-               WHERE id = ? AND organization_id = ?`,
-              [id, `${tag} Blocked by decision: ${decodedTitle}`, entry.impactedId, orgId]
+        await client.query(
+          `INSERT INTO decision_history (id, decision_id, action, old_status, new_status, changed_by, details)
+           VALUES (?, ?, 'created', NULL, 'pending', ?, ?)`,
+          [
+            uuidv4(),
+            id,
+            userId,
+            JSON.stringify({ notes: 'Decision created', priority: normalizedPriority }),
+          ]
+        );
+
+        if (impactEntries.length > 0) {
+          for (const entry of impactEntries) {
+            await client.query(
+              `INSERT INTO decision_impacts (id, decision_id, impacted_type, impacted_id, impact_description, is_blocker)
+               VALUES (?, ?, ?, ?, ?, ?)`,
+              [
+                uuidv4(),
+                id,
+                entry.impactedType,
+                entry.impactedId,
+                entry.impactDescription || null,
+                entry.isBlocker ? 1 : 0,
+              ]
             );
-          } else if (entry.impactedType === 'initiative') {
-            // MW-DEC-001/INI-005 integration fix (2026-08-01): this used to be
-            // a bare `queryHelpers.queryRun` UPDATE on the shared connection
-            // pool — no row lock, no advisory lock, and (unlike the decide()
-            // cascade above) NO wrapping try/catch, so a failure here could
-            // 500 the whole `createDecision` request AFTER the decision/
-            // history/impact rows had already committed in the outer flow.
-            // It also shared the same "only the FIRST blocker's tag is ever
-            // recorded" `blocked_reason` bug documented on
-            // `refreshInitiativeDecisionBlock` above.
-            //
-            // FIX: wrap in `withPgTransaction` and take the EXACT SAME
-            // advisory lock (same key format, same 'GOVERNANCE_DECISION_MAKING'
-            // domain string) that `hasApprovedGateDecision` takes for the
-            // UNBLOCK gate in `initiativeTransitionService.ts` — so a decision
-            // creating a block and a decision-driven unblock attempt on the
-            // SAME initiative genuinely serialize against each other instead
-            // of racing on the shared pool. This does NOT route through
-            // `executeInitiativeTransition`: that engine's BLOCK gate only
-            // permits EXECUTING->BLOCKED today, narrower than the real-world
-            // need to block during planning/review/etc — widening the gate's
-            // preconditions is out of scope for this packet (`blockInitiative`'s
-            // own deferred fix). Instead this brings the write up to the same
-            // safety STANDARD (pinned client, lock, real audit rows, never a
-            // silent 500) without changing WHICH transitions are legal.
-            try {
-              await queryHelpers.withPgTransaction(async (client) => {
-                await client.query(
-                  `SELECT pg_advisory_xact_lock(hashtextextended(? || ':' || ? || ':' || ?, 0))`,
-                  [orgId, entry.impactedId, 'GOVERNANCE_DECISION_MAKING']
-                );
+          }
+        }
 
-                const rows = (
-                  await client.query<{ status?: string }>(
-                    `SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`,
-                    [entry.impactedId, orgId]
-                  )
-                ).rows;
-                const preBlockRow = rows[0];
-                if (!preBlockRow) return; // not found / not in this org — nothing to block
-                const preBlockStatus = preBlockRow.status
-                  ? String(preBlockRow.status).toUpperCase()
-                  : null;
-
-                await client.query(
-                  `UPDATE initiatives SET
-                    status = CASE WHEN UPPER(status) = 'DONE' THEN status ELSE 'BLOCKED' END,
-                    blocked_at = COALESCE(blocked_at, CURRENT_TIMESTAMP),
-                    blocked_reason = CASE
-                      WHEN blocked_reason IS NULL OR blocked_reason = '' THEN ?
-                      ELSE blocked_reason
-                    END,
-                    updated_at = CURRENT_TIMESTAMP
-                   WHERE id = ? AND organization_id = ?`,
-                  [`${tag} Blocked by decision: ${decodedTitle}`, entry.impactedId, orgId]
-                );
-
-                // Real audit rows (replacing the old best-effort recordStageHandoff
-                // call) — only when the initiative genuinely moved (not already
-                // DONE, not already BLOCKED), same conditional the old handoff
-                // call used. Column shapes mirror
-                // `executeInitiativeTransition`'s own INSERTs in
-                // initiativeTransitionService.ts so both write paths produce
-                // structurally identical history rows.
-                if (preBlockStatus && preBlockStatus !== 'DONE' && preBlockStatus !== 'BLOCKED') {
-                  const correlationId = uuidv4();
-                  const now = new Date().toISOString();
-                  const blockReason = `Blocked by decision ${id}: ${decodedTitle}`;
-
-                  const statusHistoryColumns = await getTableColumns('initiative_status_history');
-                  const statusHistoryCols = [
-                    'id',
-                    'initiative_id',
-                    'organization_id',
-                    'from_status',
-                    'to_status',
-                  ];
-                  const statusHistoryVals: unknown[] = [
-                    correlationId,
-                    entry.impactedId,
-                    orgId,
-                    preBlockStatus,
-                    'BLOCKED',
-                  ];
-                  if (statusHistoryColumns.has('changed_by')) {
-                    statusHistoryCols.push('changed_by');
-                    statusHistoryVals.push(userId);
-                  }
-                  if (statusHistoryColumns.has('reason')) {
-                    statusHistoryCols.push('reason');
-                    statusHistoryVals.push(blockReason);
-                  }
-                  if (statusHistoryColumns.has('gate_type')) {
-                    statusHistoryCols.push('gate_type');
-                    statusHistoryVals.push('DECISION_AUTO_BLOCK');
-                  }
-                  if (statusHistoryColumns.has('created_at')) {
-                    statusHistoryCols.push('created_at');
-                    statusHistoryVals.push(now);
-                  }
-                  await client.query(
-                    `INSERT INTO initiative_status_history (${statusHistoryCols.join(
-                      ', '
-                    )}) VALUES (${statusHistoryCols.map(() => '?').join(', ')})`,
-                    statusHistoryVals
-                  );
-
-                  const historyColumns = await getTableColumns('initiative_history');
-                  const histId = uuidv4();
-                  const historyNotes = JSON.stringify({
-                    from: preBlockStatus,
-                    to: 'BLOCKED',
-                    reason: blockReason,
-                    gate: 'DECISION_AUTO_BLOCK',
-                    correlationId,
-                    decisionId: id,
-                  });
-                  const historyCols = ['id', 'initiative_id', 'action'];
-                  const historyVals: unknown[] = [histId, entry.impactedId, 'status_changed'];
-                  if (historyColumns.has('changed_by')) {
-                    historyCols.push('changed_by');
-                    historyVals.push(userId);
-                  }
-                  if (historyColumns.has('changed_at')) {
-                    historyCols.push('changed_at');
-                    historyVals.push(now);
-                  }
-                  if (historyColumns.has('notes')) {
-                    historyCols.push('notes');
-                    historyVals.push(historyNotes);
-                  }
-                  await client.query(
-                    `INSERT INTO initiative_history (${historyCols.join(
-                      ', '
-                    )}) VALUES (${historyCols.map(() => '?').join(', ')})`,
-                    historyVals
-                  );
-                }
-              });
-            } catch (err: any) {
-              // Must NOT crash `createDecision`'s 201 response: the decision/
-              // history/impact rows already committed in the OUTER flow above
-              // this loop. This auto-block step is a best-effort post-commit
-              // cascade, mirroring the exact safety standard decide()'s own
-              // cascade already has (see refreshInitiativeDecisionBlock's
-              // caller in decide()).
-              logger.error(
-                `[decision] Auto-block failed for initiative ${entry.impactedId} (decision ${id}):`,
-                err?.message || err
+        // Auto-block impacted items if this decision is a blocker (PMO gate)
+        if (impactEntries.length > 0) {
+          for (const entry of impactEntries) {
+            if (!entry.isBlocker) continue;
+            if (entry.impactedType === 'task') {
+              // Deliberately NOT part of this transaction — see the comment
+              // above this whole block.
+              await queryHelpers.queryRun(
+                `UPDATE tasks SET
+                  status = CASE WHEN status = 'done' THEN status ELSE 'blocked' END,
+                  blocked_at = COALESCE(blocked_at, CURRENT_TIMESTAMP),
+                  blocked_by_decision_id = COALESCE(blocked_by_decision_id, ?),
+                  blocked_reason = CASE
+                    WHEN blocked_reason IS NULL OR blocked_reason = '' THEN ?
+                    ELSE blocked_reason
+                  END,
+                  updated_at = CURRENT_TIMESTAMP
+                 WHERE id = ? AND organization_id = ?`,
+                [id, `${tag} Blocked by decision: ${decodedTitle}`, entry.impactedId, orgId]
               );
+            } else if (entry.impactedType === 'initiative') {
+              const blockResult = await applyDecisionBlockTransitionOnClient(client, {
+                orgId,
+                initiativeId: entry.impactedId,
+                decisionId: id,
+                reason: `${tag} Blocked by decision: ${decodedTitle}`,
+              });
+              if (!blockResult.ok) {
+                // Not found / terminal-status / unrecognized-status refusal
+                // — correct, EXPECTED outcomes, not errors: the Decision is
+                // still created, it just doesn't block that particular
+                // initiative. Logged, not thrown — does not roll back the
+                // transaction.
+                logger.info(
+                  `[decision] Auto-block skipped for initiative ${entry.impactedId} (decision ${id}): ${blockResult.statusCode} ${JSON.stringify(
+                    blockResult.body
+                  )}`
+                );
+              }
+              // ok:true (including `alreadyBlocked`) needs no special
+              // handling here — the mutation (or confirmed idempotent
+              // no-op) already committed as part of THIS transaction.
             }
           }
         }
-      }
+      });
 
       // V4-TASK-08: Unified audit log
       auditEventsService

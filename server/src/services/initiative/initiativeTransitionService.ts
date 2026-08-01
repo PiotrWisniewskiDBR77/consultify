@@ -17,6 +17,8 @@ import {
   GATE_PERMISSIONS,
   GateType,
   getGateForTransition,
+  InitiativeStatus,
+  isTerminalStatus,
   isValidTransition,
   VALID_TRANSITIONS,
 } from '../../constants/initiativeStatuses.js';
@@ -36,6 +38,7 @@ import { isInitiativeGateAiEnabled } from './initiativeGateAiConfig.js';
 import { getBlockingReadinessItems } from './initiativeGateReadinessService.js';
 import {
   coerceInitiativeStatusForWrite,
+  hasInitiativeStatusSchemaDrift,
   normalizeInitiativeDbStatusForRead,
 } from './initiativeLifecycleCanon.js';
 import { recordHandoff as recordStageHandoff } from './stageHandoffService.js';
@@ -1711,4 +1714,307 @@ export async function executeInitiativeTransition(
   }
 
   return { ok: true, id, status: nextStatus, previousStatus: currentStatus, gate, correlationId };
+}
+
+// ==========================================
+// DECISION-DRIVEN BLOCK (narrow canonical entry point)
+// ==========================================
+
+export type DecisionBlockTransitionResult =
+  | {
+      ok: true;
+      id: string;
+      status: string;
+      previousStatus: string;
+      alreadyBlocked: boolean;
+      correlationId: string | null;
+    }
+  | { ok: false; statusCode: number; body: Record<string, unknown> };
+
+export interface ApplyDecisionBlockTransitionParams {
+  orgId: string;
+  initiativeId: string;
+  decisionId: string;
+  reason?: string | null;
+}
+
+/**
+ * Statuses a Decision-driven block must NEVER move an initiative INTO/past —
+ * checked case-insensitively against a small EXPLICIT set, not a single
+ * `===`/`isTerminalStatus` comparison (2026-08-01 Codex review: "Nie opieraj
+ * ochrony tylko na lowercase/uppercase jednego statusu"). `isTerminalStatus`
+ * (the canon's own terminal check) only covers CANCELLED/ARCHIVED — it does
+ * NOT include DONE. 'COMPLETED' is a legacy synonym for DONE that some
+ * non-canonical write paths still persist (`normalizeInitiativeDbStatusForRead`
+ * already maps it to DONE — this set is additional, explicit defense, not a
+ * replacement for that normalization). Checked in combination with
+ * `isTerminalStatus` below for defense in depth: if the canon ever grows a
+ * new terminal status, it is protected here automatically too.
+ */
+const DECISION_BLOCK_TERMINAL_OR_DONE_STATUSES = new Set<string>([
+  'DONE',
+  'COMPLETED',
+  'CANCELLED',
+  'ARCHIVED',
+]);
+
+/**
+ * Stable, honest, non-human-impersonating actor identity for the
+ * Decision-driven BLOCK cascade below — parallel to
+ * `initiativeAutoStartJob.ts`'s `SYSTEM_ACTOR_ID` and to
+ * `DecisionController.ts`'s `DECISION_UNBLOCK_SYSTEM_ACTOR_ID`
+ * (`system:decision-driven-unblock`, the UNBLOCK-side mirror of this
+ * constant).
+ */
+export const DECISION_BLOCK_SYSTEM_ACTOR_ID = 'system:decision-driven-block';
+
+/**
+ * NARROW canonical entry point for exactly ONE mutation: "a Decision impact
+ * marks an Initiative as a blocker" -> the Initiative moves to BLOCKED.
+ *
+ * WHY NOT `executeInitiativeTransition`'s general BLOCK gate: that gate only
+ * permits EXECUTING->BLOCKED (`GATE_TRANSITIONS[GateType.BLOCK]`), matching
+ * ordinary human blocking via `InitiativeController.blockInitiative`
+ * (requires `GATE_PERMISSIONS[GateType.BLOCK]` =
+ * `[Role.INITIATIVE_OWNER, Role.PMO]`). A Decision-driven block legitimately
+ * needs to block an initiative from ANY non-terminal, non-DONE status (a
+ * decision can be created against an initiative in DRAFT, REVIEW, PLANNING,
+ * SCHEDULED, ... not just EXECUTING) — widening the general BLOCK gate's
+ * preconditions to accept every one of those source statuses would make
+ * ordinary HUMAN block permissions correspondingly more permissive for
+ * everyone, not just this one automated cascade. That is out of scope here:
+ * `GATE_PERMISSIONS`, `VALID_TRANSITIONS`/`GATE_TRANSITIONS[GateType.BLOCK]`,
+ * and `InitiativeController.blockInitiative` are all untouched by this
+ * function.
+ *
+ * Instead, this is ONE MORE narrowly-scoped canonical entry point living in
+ * the same canonical file as `executeInitiativeTransition` — not a second,
+ * competing transition engine. This function (and its client-parameterized
+ * core, `applyDecisionBlockTransitionOnClient`, below) is the SOLE owner of
+ * the Decision-driven BLOCK mutation, its validation, and its audit, exactly
+ * as `executeInitiativeTransition` is the sole owner of every OTHER
+ * initiative status transition.
+ *
+ * SPLIT INTO TWO FUNCTIONS (2026-08-01 Codex review — atomicity follow-up):
+ * `applyDecisionBlockTransitionOnClient(client, params)` is the actual
+ * validation/mutation/audit logic, parameterized by an ALREADY-OPEN pinned
+ * transaction client — it does not open or commit a transaction itself.
+ * `applyDecisionBlockTransition(params)` (this function) is a thin wrapper
+ * that opens its OWN `withPgTransaction` around that core, for callers that
+ * want a standalone atomic call. `DecisionController.ts`'s `createDecision`
+ * does NOT call this wrapper — it calls `applyDecisionBlockTransitionOnClient`
+ * directly, passing its OWN outer transaction's client, so the Decision
+ * INSERT + `decision_history` + `decision_impacts` + this BLOCK + both
+ * Initiative audit rows all commit or roll back as ONE atomic unit (nesting
+ * two independent `withPgTransaction` calls would NOT achieve that: two
+ * separate physical connections commit independently of each other, so the
+ * inner one could durably commit the block even if the outer one later rolls
+ * back the decision itself). This still means there is only ONE
+ * implementation of the mutation — the core function — never a duplicate.
+ *
+ * LOCKING: takes the row lock (`SELECT ... FOR UPDATE`) first, then the SAME
+ * advisory-lock key (`orgId:initiativeId:GOVERNANCE_DECISION_MAKING`) that
+ * `hasApprovedGateDecision` takes for the UNBLOCK gate inside
+ * `executeInitiativeTransition` — same order (row lock, then advisory lock)
+ * as that function, so the two paths cannot deadlock against each other, and
+ * a concurrent decision-driven block and a concurrent decision-driven
+ * unblock on the SAME initiative genuinely serialize.
+ *
+ * TERMINAL PROTECTION: never blocks DONE, COMPLETED (legacy DONE synonym),
+ * CANCELLED, or ARCHIVED — see `DECISION_BLOCK_TERMINAL_OR_DONE_STATUSES`
+ * above. A genuinely UNRECOGNIZED status value (not a known canonical status
+ * and not one of the STEP3/STEP4/STEP5/COMPLETED legacy synonyms
+ * `normalizeInitiativeDbStatusForRead` already understands) is rejected
+ * FAIL-CLOSED rather than silently treated as blockable — see the
+ * `hasInitiativeStatusSchemaDrift` check below; relying on
+ * `normalizeInitiativeDbStatusForRead`'s own fallback (which defaults any
+ * unrecognized string to 'DRAFT', a normal blockable status) would do the
+ * opposite of fail-closed.
+ *
+ * IDEMPOTENCY: if the initiative is already BLOCKED, this is a no-op for the
+ * state/audit (`alreadyBlocked: true`, no duplicate `initiative_status_history`/
+ * `initiative_history` rows) — a second decision blocking an already-blocked
+ * initiative must not fabricate a fake "transition happened" audit trail.
+ */
+export async function applyDecisionBlockTransitionOnClient(
+  client: PgTransactionClient,
+  params: ApplyDecisionBlockTransitionParams
+): Promise<DecisionBlockTransitionResult> {
+  const { orgId, initiativeId, decisionId } = params;
+
+  // Row lock FIRST (same order as executeInitiativeTransition) — every
+  // check below reads `currentStatus` from THIS locked row.
+  const lockedRows = (
+    await client.query<Record<string, unknown>>(
+      `SELECT * FROM initiatives WHERE id = ? AND organization_id = ? FOR UPDATE`,
+      [initiativeId, orgId]
+    )
+  ).rows;
+  const lockedRow = lockedRows[0];
+  if (!lockedRow) {
+    return { ok: false, statusCode: 404, body: { error: 'Initiative not found' } };
+  }
+
+  // Then the advisory lock — same key/domain the UNBLOCK path already
+  // takes, so the two cascades serialize against each other.
+  await client.query(
+    `SELECT pg_advisory_xact_lock(hashtextextended(? || ':' || ? || ':' || ?, 0))`,
+    [orgId, initiativeId, 'GOVERNANCE_DECISION_MAKING']
+  );
+
+  // FAIL-CLOSED on schema drift / an unrecognized raw status (test case 19):
+  // checked BEFORE normalizing, on the RAW value — see doc comment above.
+  if (hasInitiativeStatusSchemaDrift(lockedRow.status)) {
+    const rawStatus = String(lockedRow.status ?? '')
+      .trim()
+      .toUpperCase();
+    return {
+      ok: false,
+      statusCode: 400,
+      body: {
+        error: `Cannot block an initiative with an unrecognized status (${rawStatus || '(empty)'})`,
+        rule: 'INITIATIVE_STATUS_UNRECOGNIZED',
+        from: rawStatus,
+      },
+    };
+  }
+
+  const currentStatus = normalizeInitiativeDbStatusForRead(String(lockedRow.status || ''));
+
+  // Terminal/DONE protection — explicit set PLUS the canon's own
+  // `isTerminalStatus`, combined (defense in depth, see doc comment above).
+  if (
+    DECISION_BLOCK_TERMINAL_OR_DONE_STATUSES.has(currentStatus) ||
+    isTerminalStatus(currentStatus as any)
+  ) {
+    return {
+      ok: false,
+      statusCode: 400,
+      body: {
+        error: `Cannot block an initiative that is ${currentStatus}`,
+        rule: 'INITIATIVE_TERMINAL',
+        from: currentStatus,
+      },
+    };
+  }
+
+  if (currentStatus === InitiativeStatus.BLOCKED) {
+    // Idempotent no-op — do not fabricate a second transition/audit row.
+    return {
+      ok: true,
+      id: initiativeId,
+      status: currentStatus,
+      previousStatus: currentStatus,
+      alreadyBlocked: true,
+      correlationId: null,
+    };
+  }
+
+  const now = new Date().toISOString();
+  const reasonText = params.reason ?? `Blocked by Decision ${decisionId}`;
+
+  const initiativeColumns = getColumnNameSet(await queryHelpers.getTableColumns('initiatives'));
+  const lifecycleUpdates: string[] = ['status = ?', 'updated_at = ?'];
+  const lifecycleParams: unknown[] = ['BLOCKED', now];
+  pushOptionalColumnUpdate(lifecycleUpdates, lifecycleParams, initiativeColumns, 'blocked_at', now);
+  // Legacy `blocked_reason` bookkeeping (best-effort, additive only — the
+  // canonical audit trail is the two INSERTs below, not this column). Only
+  // fills it in when unset, mirroring the semantics of the raw UPDATE this
+  // replaces.
+  if (initiativeColumns.has('blocked_reason')) {
+    lifecycleUpdates.push(
+      `blocked_reason = CASE WHEN blocked_reason IS NULL OR blocked_reason = '' THEN ? ELSE blocked_reason END`
+    );
+    lifecycleParams.push(reasonText);
+  }
+  lifecycleParams.push(initiativeId, orgId);
+  await client.query(
+    `UPDATE initiatives SET ${lifecycleUpdates.join(', ')} WHERE id = ? AND organization_id = ?`,
+    lifecycleParams
+  );
+
+  // Audit trail — same shape as executeInitiativeTransition's own INSERTs.
+  const correlationId = uuidv4();
+
+  const statusHistoryColumns = getColumnNameSet(
+    await queryHelpers.getTableColumns('initiative_status_history')
+  );
+  const statusHistoryCols = ['id', 'initiative_id', 'organization_id', 'from_status', 'to_status'];
+  const statusHistoryVals: unknown[] = [correlationId, initiativeId, orgId, currentStatus, 'BLOCKED'];
+  if (statusHistoryColumns.has('changed_by')) {
+    statusHistoryCols.push('changed_by');
+    statusHistoryVals.push(DECISION_BLOCK_SYSTEM_ACTOR_ID);
+  }
+  if (statusHistoryColumns.has('reason')) {
+    statusHistoryCols.push('reason');
+    statusHistoryVals.push(reasonText);
+  }
+  if (statusHistoryColumns.has('gate_type')) {
+    statusHistoryCols.push('gate_type');
+    statusHistoryVals.push('DECISION_AUTO_BLOCK');
+  }
+  if (statusHistoryColumns.has('created_at')) {
+    statusHistoryCols.push('created_at');
+    statusHistoryVals.push(now);
+  }
+  await client.query(
+    `INSERT INTO initiative_status_history (${statusHistoryCols.join(
+      ', '
+    )}) VALUES (${statusHistoryCols.map(() => '?').join(', ')})`,
+    statusHistoryVals
+  );
+
+  const historyColumns = getColumnNameSet(await queryHelpers.getTableColumns('initiative_history'));
+  const histId = uuidv4();
+  const historyNotes = JSON.stringify({
+    from: currentStatus,
+    to: 'BLOCKED',
+    reason: reasonText,
+    gate: 'DECISION_AUTO_BLOCK',
+    correlationId,
+    decisionId,
+  });
+  const historyCols = ['id', 'initiative_id', 'action'];
+  const historyVals: unknown[] = [histId, initiativeId, 'status_changed'];
+  if (historyColumns.has('changed_by')) {
+    historyCols.push('changed_by');
+    historyVals.push(DECISION_BLOCK_SYSTEM_ACTOR_ID);
+  }
+  if (historyColumns.has('changed_at')) {
+    historyCols.push('changed_at');
+    historyVals.push(now);
+  }
+  if (historyColumns.has('notes')) {
+    historyCols.push('notes');
+    historyVals.push(historyNotes);
+  }
+  await client.query(
+    `INSERT INTO initiative_history (${historyCols.join(', ')}) VALUES (${historyCols
+      .map(() => '?')
+      .join(', ')})`,
+    historyVals
+  );
+
+  return {
+    ok: true,
+    id: initiativeId,
+    status: 'BLOCKED',
+    previousStatus: currentStatus,
+    alreadyBlocked: false,
+    correlationId,
+  };
+}
+
+/**
+ * Standalone wrapper — opens its own transaction around
+ * `applyDecisionBlockTransitionOnClient`. See that function's doc comment for
+ * why `createDecision` does NOT call this wrapper and instead calls the core
+ * function directly with its own outer transaction's client.
+ */
+export async function applyDecisionBlockTransition(
+  params: ApplyDecisionBlockTransitionParams
+): Promise<DecisionBlockTransitionResult> {
+  return queryHelpers.withPgTransaction((client) =>
+    applyDecisionBlockTransitionOnClient(client, params)
+  );
 }
