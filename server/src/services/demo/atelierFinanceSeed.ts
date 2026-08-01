@@ -335,6 +335,85 @@ function makeId(orgId: string, entity: string, slug: string): string {
   return `${orgId}--${entity}--${slug}`;
 }
 
+/** Id of the canonical ROI model, owned by `demoSeedService`, listed here so the
+ *  canonical-ID contract below is complete. */
+export function atelierCanonicalModelId(organizationId: string): string {
+  return makeId(organizationId, 'financial-model', 'transformation-2015-roi');
+}
+
+/**
+ * THE canonical-ID contract for the FIN-005 Atelier Finance fixture.
+ *
+ * This is the single authority on which Finance rows the demo tenant is allowed
+ * to contain. It is an EXACT SET, not a prefix rule.
+ *
+ * WHY EXACT, NOT `startsWith('<org>--')`: the demo tenant has accumulated rows
+ * from older technical fixtures (M16 seeds, staging probes) that were ALSO
+ * written with `makeId(orgId, …)` and therefore carry the same prefix. A prefix
+ * rule silently blesses every one of them, which is exactly the failure FIN-005
+ * is meant to end. Only the ids enumerated here are canonical; anything else in
+ * the tenant is foreign, prefix or no prefix.
+ *
+ * Both the seed (what it writes) and the cleanup script (what it must never
+ * quarantine) read this function, so the two can never drift apart.
+ */
+export interface AtelierCanonicalIds {
+  packId: string;
+  statementIds: string[];
+  ingestRunIds: string[];
+  statementValueIds: string[];
+  analysisId: string;
+  modelId: string;
+  /** Every id above, flattened — the whitelist. */
+  all: Set<string>;
+  /** Canonical ids grouped by the table that holds them. */
+  byTable: Record<string, string[]>;
+}
+
+export function getAtelierFinanceCanonicalIds(organizationId: string): AtelierCanonicalIds {
+  const packId = makeId(organizationId, 'statement-pack', ATELIER_FINANCE_SLUGS.pack);
+  const statementIds = ATELIER_FY2014_STATEMENTS.map((statement) =>
+    makeId(organizationId, 'statement', statement.slug)
+  );
+  const ingestRunIds = ATELIER_FY2014_STATEMENTS.map((statement) =>
+    makeId(organizationId, 'statement-ingest-run', statement.slug)
+  );
+  const statementValueIds = ATELIER_FY2014_STATEMENTS.flatMap((statement) =>
+    statement.lines.map((line) =>
+      makeId(organizationId, 'statement-value', `${statement.slug}--${line.code.toLowerCase()}`)
+    )
+  );
+  const analysisId = makeId(organizationId, 'analysis', ATELIER_FINANCE_SLUGS.analysis);
+  const modelId = atelierCanonicalModelId(organizationId);
+
+  const byTable: Record<string, string[]> = {
+    financial_statement_packs: [packId],
+    financial_statements: statementIds,
+    financial_statement_ingest_runs: ingestRunIds,
+    financial_statement_values: statementValueIds,
+    financial_analyses: [analysisId],
+    financial_models: [modelId],
+  };
+
+  return {
+    packId,
+    statementIds,
+    ingestRunIds,
+    statementValueIds,
+    analysisId,
+    modelId,
+    all: new Set(Object.values(byTable).flat()),
+    byTable,
+  };
+}
+
+/** Expected canonical value count per statement type — used by the READY gate. */
+export function getAtelierExpectedValueCounts(): Record<string, number> {
+  return Object.fromEntries(
+    ATELIER_FY2014_STATEMENTS.map((statement) => [statement.statementType, statement.lines.length])
+  );
+}
+
 async function tableExists(tableName: string): Promise<boolean> {
   try {
     const row = await DbPromise.get<{ exists: boolean }>(
