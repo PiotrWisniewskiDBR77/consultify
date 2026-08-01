@@ -8639,6 +8639,8 @@
       "failedToCreateMilestone": "Nie udało się utworzyć kamienia milowego",
       "milestonesHeading": "Kamienie milowe",
       "noMilestonesYet": "Brak kamieni milowych",
+      "milestonesLoading": "Wczytywanie kamieni milowych…",
+      "milestonesLoadError": "Nie udało się wczytać kamieni milowych",
       "taskCreated": "Zadanie utworzone"
     },
     "decisionsSection": {

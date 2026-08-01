@@ -9371,6 +9371,8 @@
       "failedToCreateMilestone": "Failed to create milestone",
       "milestonesHeading": "Milestones",
       "noMilestonesYet": "No milestones yet",
+      "milestonesLoading": "Loading milestones…",
+      "milestonesLoadError": "Could not load milestones",
       "taskCreated": "Task created"
     },
     "decisionsSection": {

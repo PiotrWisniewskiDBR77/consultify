@@ -53,6 +53,17 @@ type RemovalCandidate = {
   why: string;
 };
 
+/**
+ * Client-generated key for retry-safe POSTs — a transport-level retry of an
+ * in-flight create request resends the same body (same key), so the server's
+ * idempotency_key uniqueness check can return the original row instead of
+ * inserting a duplicate. See server/migrations/20260801_exe002004_idempotency_keys.sql.
+ */
+const generateClientRequestId = (): string =>
+  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `creq-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
 // EXE-02/03/04 gap-fill: backend already exposes POST/GET
 // /initiatives/:id/milestones (separate initiative_milestones table), but the
 // UI never rendered or created milestones — only tasks. This is the minimal
@@ -301,6 +312,8 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
   const [newTaskAssigneeId, setNewTaskAssigneeId] = useState('');
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [milestones, setMilestones] = useState<MilestoneItem[]>([]);
+  const [milestonesLoading, setMilestonesLoading] = useState(true);
+  const [milestonesLoadError, setMilestonesLoadError] = useState(false);
   const [showCreateMilestoneModal, setShowCreateMilestoneModal] = useState(false);
   const [newMilestoneName, setNewMilestoneName] = useState('');
   const [newMilestoneDate, setNewMilestoneDate] = useState('');
@@ -731,14 +744,24 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
   // (endpoint already existed and was consumed read-only in
   // InitiativeDrawer.tsx; this section had no reader and no writer at all).
   useEffect(() => {
-    if (!initiativeId) return;
+    if (!initiativeId) {
+      setMilestonesLoading(false);
+      return;
+    }
     let cancelled = false;
+    setMilestonesLoading(true);
+    setMilestonesLoadError(false);
     (async () => {
       try {
         const response = await Api.get(`/initiatives/${initiativeId}/milestones`);
         if (!cancelled) setMilestones(response?.milestones || []);
       } catch {
-        if (!cancelled) setMilestones([]);
+        if (!cancelled) {
+          setMilestones([]);
+          setMilestonesLoadError(true);
+        }
+      } finally {
+        if (!cancelled) setMilestonesLoading(false);
       }
     })();
     return () => {
@@ -773,6 +796,8 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
         dueDate: options?.dueDate || null,
         assigneeId: options?.assigneeId || null,
         estimatedHours: null,
+        // Retry-safe create — see generateClientRequestId doc comment above.
+        idempotencyKey: generateClientRequestId(),
       });
 
       const selectedUser = users.find((u) => u.id === (options?.assigneeId || ''));
@@ -862,6 +887,10 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
         name: newMilestoneName.trim(),
         description: '',
         targetDate: newMilestoneDate || null,
+        // Retry-safe: a network drop + client retry (or double-submit that
+        // slips past isCreatingMilestone) must not create a duplicate
+        // milestone — see server/migrations/20260801_exe002004_idempotency_keys.sql.
+        idempotencyKey: generateClientRequestId(),
       });
       const created = res?.milestone;
       if (created) {
@@ -1649,7 +1678,18 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
             </span>
           )}
         </div>
-        {milestones.length === 0 ? (
+        {milestonesLoading ? (
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {t('initiatives.tasksMilestonesSection.milestonesLoading', 'Loading milestones…')}
+          </p>
+        ) : milestonesLoadError ? (
+          <p className="text-xs text-danger-500 dark:text-danger-400">
+            {t(
+              'initiatives.tasksMilestonesSection.milestonesLoadError',
+              'Could not load milestones'
+            )}
+          </p>
+        ) : milestones.length === 0 ? (
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {t('initiatives.tasksMilestonesSection.noMilestonesYet', 'No milestones yet')}
           </p>
