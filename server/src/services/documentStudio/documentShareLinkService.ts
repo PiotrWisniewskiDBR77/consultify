@@ -47,12 +47,15 @@ import {
   bumpShareLinkConsumeCount,
   countActiveShareLinksForArtifact,
   loadAuditForShareLink,
+  loadShareLinkById,
   loadShareLinkByToken,
   loadShareLinkByTokenHash,
   loadShareLinksForOrg,
   markShareLinkStatusInDao,
   persistShareLink,
   persistShareLinkAuditEntry,
+  revokeActiveShareLinkInDao,
+  rotateActiveShareLinkTokenInDao,
 } from './documentShareLinkRegistryDao.js';
 import type {
   DocumentShareLink,
@@ -318,6 +321,65 @@ export function createShareLink(params: CreateShareLinkParams): DocumentShareLin
   return { ...link };
 }
 
+/**
+ * Durable route boundary for link creation. Unlike the legacy synchronous
+ * helper, this function does not publish the token in process memory or to
+ * the caller until the registry row is confirmed by the database.
+ */
+export async function createShareLinkDurable(
+  params: CreateShareLinkParams
+): Promise<DocumentShareLink> {
+  if (!params.artifactId) throw new Error('artifactId is required');
+  if (!params.organizationId) throw new Error('organizationId is required');
+  if (!params.userId) throw new Error('userId is required');
+  if (!VALID_ACCESS_SCOPES.has(params.accessScope)) {
+    throw new Error(`unsupported share-link accessScope: ${params.accessScope}`);
+  }
+  if (params.expiresAt) {
+    const t = Date.parse(params.expiresAt);
+    if (!Number.isFinite(t)) throw new Error('expiresAt must be a valid ISO-8601 timestamp');
+    if (t <= Date.now()) throw new Error('expiresAt must be in the future');
+  }
+
+  const now = nowIso();
+  const token = generateToken();
+  const link: DocumentShareLink = {
+    shareLinkId: makeId('share-link'),
+    artifactId: params.artifactId,
+    organizationId: params.organizationId,
+    token,
+    tokenHash: hashToken(token),
+    accessScope: params.accessScope,
+    status: 'active',
+    expiresAt: params.expiresAt,
+    label: params.label?.trim() || undefined,
+    createdBy: params.userId,
+    createdAt: now,
+    consumeCount: 0,
+  };
+  const persisted = await persistShareLink(link);
+  if (!persisted.ok) throw new Error('share_link_persistence_failed');
+
+  const key = linkKey(link.organizationId, link.shareLinkId);
+  registryStore.set(key, link);
+  tokenIndex.set(link.token, key);
+  pushAudit({
+    auditId: makeId('share-link-audit'),
+    shareLinkId: link.shareLinkId,
+    artifactId: link.artifactId,
+    organizationId: link.organizationId,
+    action: 'share_link_created',
+    actorId: params.userId,
+    occurredAt: now,
+    details: {
+      accessScope: link.accessScope,
+      expiresAt: link.expiresAt ?? null,
+      label: link.label ?? null,
+    },
+  });
+  return { ...link };
+}
+
 // =============================================================================
 // Revoke
 // =============================================================================
@@ -371,6 +433,52 @@ export function revokeShareLink(params: RevokeShareLinkParams): DocumentShareLin
     details: { reason: reason ?? null },
   });
 
+  return { ...next };
+}
+
+/** Security-sensitive durable revoke used by the HTTP route. */
+export async function revokeShareLinkDurable(
+  params: RevokeShareLinkParams
+): Promise<DocumentShareLink> {
+  if (!params.shareLinkId) throw new Error('shareLinkId is required');
+  if (!params.organizationId) throw new Error('organizationId is required');
+  if (!params.userId) throw new Error('userId is required');
+  await ensureHydrated(params.organizationId);
+  const key = linkKey(params.organizationId, params.shareLinkId);
+  const existing = registryStore.get(key);
+  if (!existing) throw new Error('share_link_not_found');
+  if (existing.status === 'revoked') return { ...existing };
+
+  const now = nowIso();
+  const reason = params.reason?.trim() || undefined;
+  const next: DocumentShareLink = {
+    ...existing,
+    status: 'revoked',
+    revokedBy: params.userId,
+    revokedAt: now,
+    revokedReason: reason,
+  };
+  const persisted = await revokeActiveShareLinkInDao(next);
+  if (!persisted.ok) throw new Error('share_link_persistence_failed');
+  if (persisted.conflict) {
+    const latest = await loadShareLinkById(params.shareLinkId, params.organizationId);
+    if (latest?.status === 'revoked') {
+      registryStore.set(key, latest);
+      return { ...latest };
+    }
+    throw new Error('share_link_concurrent_change');
+  }
+  registryStore.set(key, next);
+  pushAudit({
+    auditId: makeId('share-link-audit'),
+    shareLinkId: next.shareLinkId,
+    artifactId: next.artifactId,
+    organizationId: next.organizationId,
+    action: 'share_link_revoked',
+    actorId: params.userId,
+    occurredAt: now,
+    details: { reason: reason ?? null },
+  });
   return { ...next };
 }
 
@@ -460,6 +568,47 @@ export function rotateShareLinkToken(params: RotateShareLinkTokenParams): Docume
     },
   });
 
+  return { ...next };
+}
+
+/** Security-sensitive durable token rotation used by the HTTP route. */
+export async function rotateShareLinkTokenDurable(
+  params: RotateShareLinkTokenParams
+): Promise<DocumentShareLink> {
+  if (!params.shareLinkId) throw new Error('shareLinkId is required');
+  if (!params.organizationId) throw new Error('organizationId is required');
+  if (!params.userId) throw new Error('userId is required');
+  await ensureHydrated(params.organizationId);
+  const key = linkKey(params.organizationId, params.shareLinkId);
+  const existing = registryStore.get(key);
+  if (!existing) throw new Error('share_link_not_found');
+  if (existing.status !== 'active' || !getShareLinkRuntimeStatus(existing).isUsable) {
+    throw new Error('share_link_not_active');
+  }
+
+  const newToken = generateToken();
+  const newTokenHash = hashToken(newToken);
+  const next: DocumentShareLink = { ...existing, token: newToken, tokenHash: newTokenHash };
+  const persisted = await rotateActiveShareLinkTokenInDao(
+    next,
+    existing.tokenHash || hashToken(existing.token)
+  );
+  if (!persisted.ok) throw new Error('share_link_persistence_failed');
+  if (persisted.conflict) throw new Error('share_link_concurrent_change');
+
+  registryStore.set(key, next);
+  if (existing.token) tokenIndex.delete(existing.token);
+  tokenIndex.set(newToken, key);
+  pushAudit({
+    auditId: makeId('share-link-audit'),
+    shareLinkId: next.shareLinkId,
+    artifactId: next.artifactId,
+    organizationId: next.organizationId,
+    action: 'share_link_token_rotated',
+    actorId: params.userId,
+    occurredAt: nowIso(),
+    details: { reason: params.reason?.trim() || null, newTokenHash },
+  });
   return { ...next };
 }
 
@@ -830,7 +979,7 @@ export async function getActiveShareLinkCount(
 // =============================================================================
 
 /** @internal Test-only reset of all in-process + DAO stores. */
-export async function __resetShareLinkRegistryForTests(): Promise<void> {
+export function __resetShareLinkMemoryForTests(): void {
   registryStore.clear();
   auditStore.clear();
   tokenIndex.clear();
@@ -838,6 +987,11 @@ export async function __resetShareLinkRegistryForTests(): Promise<void> {
   expiredAuditedLinks.clear();
   hydratedOrgs.clear();
   hydrationInflight.clear();
+}
+
+/** @internal Test-only reset of all in-process + DAO stores. */
+export async function __resetShareLinkRegistryForTests(): Promise<void> {
+  __resetShareLinkMemoryForTests();
   await __resetShareLinkRegistryDaoForTests();
 }
 

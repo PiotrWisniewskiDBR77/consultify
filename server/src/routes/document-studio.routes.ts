@@ -255,15 +255,15 @@ import { loadShareLinkById } from '../services/documentStudio/documentShareLinkR
 import {
   authorizeShareLinkEditSession,
   consumeShareLink,
-  createShareLink,
+  createShareLinkDurable,
   createShareLinkEditSession,
   ensureShareLinkRegistryHydrated,
   getShareLink,
   getShareLinkRuntimeStatus,
   listShareLinkAuditEntries,
   listShareLinks,
-  revokeShareLink,
-  rotateShareLinkToken,
+  revokeShareLinkDurable,
+  rotateShareLinkTokenDurable,
 } from '../services/documentStudio/documentShareLinkService.js';
 import {
   ingestFileSource,
@@ -5296,7 +5296,6 @@ router.post(
     }
     const expiresAt = typeof req.body?.expiresAt === 'string' ? req.body.expiresAt : undefined;
     const label = typeof req.body?.label === 'string' ? req.body.label : undefined;
-
     // Blocker C (Codex, third round) — the same request-bound idempotency as
     // checkpoint/restore. `createShareLink` mints a brand-new, independent,
     // live token on every call with no dedup, so a retried request must be
@@ -5372,7 +5371,14 @@ router.post(
       }
 
       try {
-        const link = createShareLink({
+        // Never mint a public capability for a guessed/non-existent id. The
+        // tenant-scoped canonical read is the ownership/existence gate.
+        const document = await getDocumentArtifact(artifactId, organizationId);
+        if (!document) {
+          res.status(404).json({ error: 'document_not_found' });
+          return;
+        }
+        const link = await createShareLinkDurable({
           artifactId,
           organizationId,
           userId,
@@ -5392,8 +5398,8 @@ router.post(
           return;
         }
 
-        // Codex final review, Blocker 2 — confirm the fire-and-forget
-        // `persistShareLink` write actually landed before responding.
+        // Preserve the existing idempotency read-back check even though the
+        // durable creator already awaits persistence.
         const durable = shareIdempotencyKey
           ? await pollForDurability(() => loadShareLinkById(link.shareLinkId, organizationId))
           : true;
@@ -5464,7 +5470,9 @@ router.post(
           err,
           correlationId: (req as any).correlationId,
         });
-        res.status(400).json({ error: 'share_link_create_failed', message });
+        res
+          .status(message === 'share_link_persistence_failed' ? 503 : 400)
+          .json({ error: 'share_link_create_failed', message });
       } finally {
         shareHeartbeat?.stop();
       }
@@ -5552,7 +5560,7 @@ router.post(
     }
     const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
     try {
-      const revoked = revokeShareLink({
+      const revoked = await revokeShareLinkDurable({
         shareLinkId,
         organizationId,
         userId,
@@ -5588,11 +5596,17 @@ router.post(
         res.status(404).json({ error: message });
         return;
       }
+      if (message === 'share_link_concurrent_change') {
+        res.status(409).json({ error: message });
+        return;
+      }
       logger.warn('[DocumentStudio] share-link revoke failed', {
         err,
         correlationId: (req as any).correlationId,
       });
-      res.status(400).json({ error: 'share_link_revoke_failed', message });
+      res
+        .status(message === 'share_link_persistence_failed' ? 503 : 400)
+        .json({ error: 'share_link_revoke_failed', message });
     }
   })
 );
@@ -5643,7 +5657,7 @@ router.post(
     const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
     await ensureShareLinkRegistryHydrated(organizationId);
     try {
-      const rotated = rotateShareLinkToken({
+      const rotated = await rotateShareLinkTokenDurable({
         shareLinkId,
         organizationId,
         userId,
@@ -5661,11 +5675,17 @@ router.post(
         res.status(409).json({ error: message });
         return;
       }
+      if (message === 'share_link_concurrent_change') {
+        res.status(409).json({ error: message });
+        return;
+      }
       logger.warn('[DocumentStudio] share-link rotate failed', {
         err,
         correlationId: (req as any).correlationId,
       });
-      res.status(400).json({ error: 'share_link_rotate_failed', message });
+      res
+        .status(message === 'share_link_persistence_failed' ? 503 : 400)
+        .json({ error: 'share_link_rotate_failed', message });
     }
   })
 );

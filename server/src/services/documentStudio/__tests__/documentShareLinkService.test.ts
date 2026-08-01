@@ -689,12 +689,12 @@ describe('edit session authorization for edit scope', () => {
     expect(auth.organizationId).toBe('org-A');
   });
 
-  it('rejects session mint for non-edit scopes', async () => {
+  it('rejects session mint for view-only scopes', async () => {
     const link = createShareLink({
       artifactId: 'art-comment-1',
       organizationId: 'org-A',
       userId: 'user-1',
-      accessScope: 'comment',
+      accessScope: 'read',
     });
     await expect(
       createShareLinkEditSession({

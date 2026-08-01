@@ -24,7 +24,10 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { __resetDocumentCommentsForTests } from '../../services/documentStudio/documentCommentsService.js';
-import { __resetShareLinkRegistryForTests } from '../../services/documentStudio/documentShareLinkService.js';
+import {
+  __resetShareLinkRegistryForTests,
+  listShareLinks,
+} from '../../services/documentStudio/documentShareLinkService.js';
 
 const mockDbAll = vi.fn();
 const mockDbRun = vi.fn();
@@ -34,6 +37,31 @@ vi.mock('../../utils/DbPromise.js', () => ({
   all: (...args: unknown[]) => mockDbAll(...args),
   run: (...args: unknown[]) => mockDbRun(...args),
   get: (...args: unknown[]) => mockDbGet(...args),
+}));
+
+vi.mock('../../services/wave5ArtifactRuntimeService.js', () => ({
+  getWave5Artifact: vi.fn(async (artifactId: string, organizationId: string) =>
+    artifactId === 'art-share-test-1' && organizationId === 'org-share-A'
+      ? {
+          artifact_id: artifactId,
+          organization_id: organizationId,
+          title: 'Shareable document',
+          metadata_json: {
+            documentStudioSchema: {
+              artifactId,
+              documentId: artifactId,
+              title: 'Shareable document',
+              sections: [],
+              createdAt: '2026-08-01T20:00:00.000Z',
+              updatedAt: '2026-08-01T20:00:00.000Z',
+            },
+          },
+        }
+      : null
+  ),
+  createWave5Artifact: vi.fn(),
+  buildWave5ExportManifest: vi.fn(async () => ({})),
+  markWave5ArtifactExported: vi.fn(async () => undefined),
 }));
 
 let mockUser: { id: string; organizationId: string; role: string } | null = null;
@@ -72,7 +100,7 @@ beforeEach(async () => {
   vi.clearAllMocks();
   mockUser = { id: UID, organizationId: ORG, role: 'CONSULTANT' };
   mockDbAll.mockResolvedValue([]);
-  mockDbRun.mockResolvedValue({ rowCount: 0, success: true });
+  mockDbRun.mockResolvedValue({ rowCount: 1, changes: 1, success: true });
   mockDbGet.mockResolvedValue(null);
   await __resetShareLinkRegistryForTests();
   __resetDocumentCommentsForTests();
@@ -116,6 +144,26 @@ describe('POST /api/document-studio/:artifactId/share-links — create', () => {
       .post(`/api/document-studio/${ARTIFACT}/share-links`)
       .send({ accessScope: 'read' });
     expect(res.status).toBe(401);
+  });
+
+  it('returns 404 and creates no link for a guessed/non-existent artifact id', async () => {
+    const res = await request(createApp())
+      .post('/api/document-studio/not-a-real-document/share-links')
+      .send({ accessScope: 'read' });
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('document_not_found');
+    expect(listShareLinks(ORG, { includeExpired: true })).toHaveLength(0);
+  });
+
+  it('returns 503 and does not publish a token when durable creation is not confirmed', async () => {
+    mockDbRun.mockResolvedValueOnce({ success: false, error: 'database unavailable' });
+    const res = await request(createApp())
+      .post(`/api/document-studio/${ARTIFACT}/share-links`)
+      .send({ accessScope: 'read' });
+    expect(res.status).toBe(503);
+    expect(res.body.message).toBe('share_link_persistence_failed');
+    expect(res.body.shareLink).toBeUndefined();
+    expect(listShareLinks(ORG, { includeExpired: true })).toHaveLength(0);
   });
 });
 
@@ -193,6 +241,26 @@ describe('POST /api/document-studio/share-links/:shareLinkId/revoke', () => {
     const res = await request(app).post(`/api/document-studio/share-links/${id}/revoke`).send({});
     expect(res.status).toBe(404);
   });
+
+  it('returns 503 and keeps the link active when durable revoke is not confirmed', async () => {
+    const app = createApp();
+    const created = await request(app)
+      .post(`/api/document-studio/${ARTIFACT}/share-links`)
+      .send({ accessScope: 'read' });
+    const { shareLinkId, token } = created.body.shareLink;
+    mockDbRun.mockResolvedValueOnce({ success: false, error: 'database unavailable' });
+
+    const revoke = await request(app)
+      .post(`/api/document-studio/share-links/${shareLinkId}/revoke`)
+      .send({});
+    expect(revoke.status).toBe(503);
+    expect(listShareLinks(ORG, { includeExpired: true })[0]?.status).toBe('active');
+    mockUser = null;
+    const resolve = await request(app)
+      .post('/api/document-studio/share-links/resolve')
+      .send({ token });
+    expect(resolve.status).toBe(200);
+  });
 });
 
 describe('POST /api/document-studio/share-links/:shareLinkId/rotate', () => {
@@ -238,6 +306,26 @@ describe('POST /api/document-studio/share-links/:shareLinkId/rotate', () => {
       .send({});
     expect(rotate.status).toBe(409);
     expect(rotate.body.error).toBe('share_link_not_active');
+  });
+
+  it('returns 503 and leaves the old token valid when rotation persistence fails', async () => {
+    const app = createApp();
+    const created = await request(app)
+      .post(`/api/document-studio/${ARTIFACT}/share-links`)
+      .send({ accessScope: 'read' });
+    const { shareLinkId, token } = created.body.shareLink;
+    mockDbRun.mockResolvedValueOnce({ success: false, error: 'database unavailable' });
+
+    const rotate = await request(app)
+      .post(`/api/document-studio/share-links/${shareLinkId}/rotate`)
+      .send({});
+    expect(rotate.status).toBe(503);
+    expect(listShareLinks(ORG, { includeExpired: true })[0]?.token).toBe(token);
+    mockUser = null;
+    const resolve = await request(app)
+      .post('/api/document-studio/share-links/resolve')
+      .send({ token });
+    expect(resolve.status).toBe(200);
   });
 });
 

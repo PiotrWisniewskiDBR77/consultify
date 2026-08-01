@@ -74,6 +74,8 @@ import {
   QaOverrideUnauthorizedError,
   recordDocumentStudioApprovalDecision,
   requestDocumentStudioApproval,
+  revokeDocumentStudioShareLink,
+  rotateDocumentStudioShareLink,
   rollbackDocumentStudioSnapshot,
   saveDocumentStudioManualContent,
 } from './api';
@@ -641,6 +643,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
   const [createdToken, setCreatedToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [mutatingLinkId, setMutatingLinkId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -692,6 +695,40 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
     }
   };
 
+  const rotateLink = async (link: DocumentShareLink): Promise<void> => {
+    setMutatingLinkId(link.shareLinkId);
+    setError(null);
+    setCreatedToken(null);
+    try {
+      const rotated = await rotateDocumentStudioShareLink(
+        link.shareLinkId,
+        'Rotated from Document Studio'
+      );
+      setCreatedToken(rotated.token);
+      await refresh();
+      toast.success(t('documentStudio.panel.shareRotated', 'Share link rotated'));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to rotate share link');
+    } finally {
+      setMutatingLinkId(null);
+    }
+  };
+
+  const revokeLink = async (link: DocumentShareLink): Promise<void> => {
+    setMutatingLinkId(link.shareLinkId);
+    setError(null);
+    try {
+      await revokeDocumentStudioShareLink(link.shareLinkId, 'Revoked from Document Studio');
+      setCreatedToken(null);
+      await refresh();
+      toast.success(t('documentStudio.panel.shareRevoked', 'Share link revoked'));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to revoke share link');
+    } finally {
+      setMutatingLinkId(null);
+    }
+  };
+
   return (
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3">
@@ -739,6 +776,15 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
           <div className="mt-3 rounded-lg border border-success-500/30 bg-success-500/10 p-2 text-xs text-success-700 dark:text-emerald-300">
             {t('documentStudio.panel.shareToken', 'Token')}:{' '}
             <span className="break-all font-mono">{createdToken}</span>
+            <a
+              className="mt-2 block break-all underline"
+              href={`/shared/doc/${encodeURIComponent(createdToken)}`}
+              target="_blank"
+              rel="noreferrer"
+              data-testid="document-share-public-link"
+            >
+              {`${window.location.origin}/shared/doc/${encodeURIComponent(createdToken)}`}
+            </a>
           </div>
         ) : null}
       </div>
@@ -771,6 +817,30 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
                 count: link.consumeCount,
               })}
             </div>
+            {(link.runtimeStatus?.effectiveStatus ?? link.status) === 'active' ? (
+              <div className="mt-3 flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={mutatingLinkId !== null}
+                  onClick={() => void rotateLink(link)}
+                  data-testid={`document-share-rotate-${link.shareLinkId}`}
+                >
+                  {t('documentStudio.panel.shareRotate', 'Rotate')}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={mutatingLinkId !== null}
+                  onClick={() => void revokeLink(link)}
+                  data-testid={`document-share-revoke-${link.shareLinkId}`}
+                >
+                  {t('documentStudio.panel.shareRevoke', 'Revoke')}
+                </Button>
+              </div>
+            ) : null}
           </li>
         ))}
       </ul>

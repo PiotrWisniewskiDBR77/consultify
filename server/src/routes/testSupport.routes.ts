@@ -604,12 +604,24 @@ router.post(
 
       await ensureWs4SqliteSchema();
 
-      await DbPromise.run(
-        `INSERT INTO organizations (id, name, plan, status, is_active)
-         VALUES (?, ?, ?, ?, ?)`,
-        [organizationId, `E2E Tenant (${runId})`, 'enterprise', 'active', 1],
-        { fallback: false }
-      );
+      // An enterprise bootstrap must also identify as PAID to entitlement
+      // guards. Older schemas may not carry organization_type, so retain a
+      // narrow compatibility fallback for those test databases.
+      try {
+        await DbPromise.run(
+          `INSERT INTO organizations (id, name, plan, status, is_active, organization_type)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [organizationId, `E2E Tenant (${runId})`, 'enterprise', 'active', 1, 'PAID'],
+          { fallback: false }
+        );
+      } catch {
+        await DbPromise.run(
+          `INSERT INTO organizations (id, name, plan, status, is_active)
+           VALUES (?, ?, ?, ?, ?)`,
+          [organizationId, `E2E Tenant (${runId})`, 'enterprise', 'active', 1],
+          { fallback: false }
+        );
+      }
 
       await DbPromise.run(
         `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)

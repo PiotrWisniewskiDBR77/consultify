@@ -352,6 +352,9 @@ function createMockDatabase(): MockDatabase {
     const wherePart = normalizeSql(sql).slice(whereIdx + 7);
     const rows = store.tables.get(table)!;
     const whereMatches = Array.from(wherePart.matchAll(/\b([a-zA-Z0-9_]+)\s*=\s*(\?|\$\d+)/gi));
+    const whereLiteralMatches = Array.from(
+      wherePart.matchAll(/\b([a-zA-Z0-9_]+)\s*=\s*['"]([^'"]*)['"]/gi)
+    );
     if (!whereMatches.length) return false;
 
     let setParamCount = 0;
@@ -361,14 +364,24 @@ function createMockDatabase(): MockDatabase {
       setParamCount += countPlaceholders(mm[2]);
     }
 
-    const idx = rows.findIndex((row) =>
-      whereMatches.every((match, index) => {
-        const column = String(match[1] || '').toLowerCase();
-        const expected = params?.[setParamCount + index];
-        const actual = row[column];
-        return actual != null && String(actual) === String(expected);
-      })
-    );
+    const idx = rows.findIndex((row) => {
+      let sequentialWhereParamIndex = setParamCount;
+      return (
+        whereMatches.every((match) => {
+          const column = String(match[1] || '').toLowerCase();
+          const placeholder = String(match[2] || '');
+          const expected = placeholder.startsWith('$')
+            ? params?.[Number.parseInt(placeholder.slice(1), 10) - 1]
+            : params?.[sequentialWhereParamIndex++];
+          const actual = row[column];
+          return actual != null && String(actual) === String(expected);
+        }) &&
+        whereLiteralMatches.every((match) => {
+          const column = String(match[1] || '').toLowerCase();
+          return String(row[column]) === String(match[2] || '');
+        })
+      );
+    });
     if (idx < 0) return true;
 
     let pIdx = 0;

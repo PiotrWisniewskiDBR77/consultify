@@ -216,6 +216,68 @@ export async function persistShareLink(link: DocumentShareLink): Promise<{ ok: b
 }
 
 /**
+ * Revoke an active link with a compare-and-set update. A concurrent rotation
+ * may complete first, but it cannot resurrect the row after this update.
+ */
+export async function revokeActiveShareLinkInDao(
+  link: DocumentShareLink
+): Promise<{ ok: boolean; conflict: boolean }> {
+  if (!link?.shareLinkId || !link.organizationId) return { ok: false, conflict: false };
+  try {
+    const result = await dbRun(
+      `UPDATE document_share_links
+          SET status = $3, payload_json = $4::jsonb
+        WHERE share_link_id = $1 AND organization_id = $2 AND status = 'active'`,
+      [link.shareLinkId, link.organizationId, link.status, JSON.stringify(link)]
+    );
+    if (result.success !== true) return { ok: false, conflict: false };
+    return { ok: true, conflict: (result.changes ?? 0) !== 1 };
+  } catch (err) {
+    logger.warn('[DocumentStudio][ShareLinkDao] revokeActiveShareLinkInDao failed', {
+      shareLinkId: link.shareLinkId,
+      organizationId: link.organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return { ok: false, conflict: false };
+  }
+}
+
+/** Rotate only the exact active token version observed by the caller. */
+export async function rotateActiveShareLinkTokenInDao(
+  link: DocumentShareLink,
+  expectedTokenHash: string
+): Promise<{ ok: boolean; conflict: boolean }> {
+  if (!link?.shareLinkId || !link.organizationId || !expectedTokenHash) {
+    return { ok: false, conflict: false };
+  }
+  try {
+    const result = await dbRun(
+      `UPDATE document_share_links
+          SET token = $4, token_hash = $5, payload_json = $6::jsonb
+        WHERE share_link_id = $1 AND organization_id = $2
+          AND status = 'active' AND token_hash = $3`,
+      [
+        link.shareLinkId,
+        link.organizationId,
+        expectedTokenHash,
+        link.token,
+        link.tokenHash ?? null,
+        JSON.stringify(link),
+      ]
+    );
+    if (result.success !== true) return { ok: false, conflict: false };
+    return { ok: true, conflict: (result.changes ?? 0) !== 1 };
+  } catch (err) {
+    logger.warn('[DocumentStudio][ShareLinkDao] rotateActiveShareLinkTokenInDao failed', {
+      shareLinkId: link.shareLinkId,
+      organizationId: link.organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return { ok: false, conflict: false };
+  }
+}
+
+/**
  * Apply a status update + revocation metadata in a single hop. Used by the
  * service's `revokeShareLink` path so the DAO never sees a half-revoked row.
  * Updates both the scalar `status` column and the persisted payload. Returns

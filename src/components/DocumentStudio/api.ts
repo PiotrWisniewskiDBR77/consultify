@@ -1110,6 +1110,36 @@ export async function createDocumentStudioShareLink(
   return json.shareLink;
 }
 
+export async function revokeDocumentStudioShareLink(
+  shareLinkId: string,
+  reason?: string
+): Promise<DocumentShareLink> {
+  const res = await fetchWithRetry(
+    `${BASE}/share-links/${encodeURIComponent(shareLinkId)}/revoke`,
+    { method: 'POST', headers: getHeaders(), body: JSON.stringify({ reason }) }
+  );
+  const json = await handleResponse<{ shareLink: DocumentShareLink }>(
+    res,
+    'DocumentStudio revoke share link'
+  );
+  return json.shareLink;
+}
+
+export async function rotateDocumentStudioShareLink(
+  shareLinkId: string,
+  reason?: string
+): Promise<DocumentShareLink> {
+  const res = await fetchWithRetry(
+    `${BASE}/share-links/${encodeURIComponent(shareLinkId)}/rotate`,
+    { method: 'POST', headers: getHeaders(), body: JSON.stringify({ reason }) }
+  );
+  const json = await handleResponse<{ shareLink: DocumentShareLink }>(
+    res,
+    'DocumentStudio rotate share link'
+  );
+  return json.shareLink;
+}
+
 export async function listDocumentStudioVariants(
   artifactId: string
 ): Promise<DocumentVariantSummary[]> {
