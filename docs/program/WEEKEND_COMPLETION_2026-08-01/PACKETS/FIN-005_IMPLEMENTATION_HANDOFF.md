@@ -1,7 +1,7 @@
 ---
 doc_id: FIN-005-implementation-handoff
 truth_type: operations
-status: READY_FOR_CODEX_REVIEW
+status: AWAITING_CODEX_REVIEW
 owner: claude
 process_owner: codex
 product_owner: piotr
@@ -417,9 +417,9 @@ Finance puste.
 Trwałość: pełny prior state pobierany `SELECT … FOR UPDATE`, podpisany manifest
 zapisywany do pliku tymczasowego, `fsync`, atomowy `rename` — **przed `COMMIT`**.
 Fault injection zabija proces po `COMMIT`, przed finalnym zapisem manifestu;
-osobny test odtwarza bazę z manifestu `PREPARED`. Rollback weryfikuje sumę
-kontrolną, fingerprint każdego wiersza i własność pakietu, i odmawia, gdy rekord
-zmienił się po kwarantannie. Postconditions cross-org (`statement→pack`,
+osobny test odtwarza bazę z manifestu `PREPARED`. Rollback weryfikuje podpis
+(HMAC — patrz §12.3), fingerprint każdego wiersza i własność pakietu, i odmawia,
+gdy rekord zmienił się po kwarantannie. Postconditions cross-org (`statement→pack`,
 `value→statement`, `ingest→statement`, `analysis→pack/statements`,
 `model→pack/analysis`) biegną przed `COMMIT` i po rollbacku; niespójność =
 `ROLLBACK`.
@@ -486,3 +486,157 @@ Gotowy jednokrokowy diff dla `Gateway.ts` leży w `FIN-006` §B.3.
 | demo read-only guard | bez regresji — `Gateway.ts` i `demoGuard.middleware.ts` nietknięte |
 
 Nadal bez deployu, bez migracji, bez `--write`, bez mutacji stagingu.
+
+## 12. Runda trzecia — final review (2026-08-01)
+
+Pięć punktów. Wszystkie wykonane i zweryfikowane niezależnie od testów agentów.
+Commity: `ed25af6f11` (atomowa promocja), `01a4e1d106` (cztery defekty P1
+w skrypcie czyszczącym).
+
+### 12.1 Atomowa promocja — defekt odtworzony i zamknięty na realnym Postgresie
+
+Awarie wstrzykiwane **w bazie** (`CHECK` constraint i trigger `plpgsql`), nie
+łatką w kodzie — więc dowód nie zależy od atrap in-memory.
+
+| Punkt awarii | Przed (`fd11233784`) | Po (`ed25af6f11`) |
+| --- | --- | --- |
+| promocja sprawozdania #1 | — | zero promocji |
+| promocja sprawozdania #2 | **2/3 promowane** (PL + CF, BS pending) | zero promocji |
+| promocja sprawozdania #3 | — | zero promocji |
+| promocja analizy | **3/3 sprawozdania READY** | zero promocji, analiza nie-APPROVED |
+| promocja pakietu | **3/3 READY + analiza APPROVED** | zero promocji, pakiet nie-READY |
+
+We wszystkich trzech przypadkach „przed" seed dodatkowo **zgłaszał SUKCES** —
+w wyniku nie było nawet `incomplete`. Defekt był podwójny: brak atomowości
+i nieprawdziwy status.
+
+Rozwiązanie: **sprawdź wszystko, potem promuj**. Wszystkie read-backi i werdykty
+produkcyjne dla trzech sprawozdań, analizy i pakietu wykonują się przed
+pierwszym zapisem promocyjnym; awaria w trakcie samych zapisów uruchamia
+kompensujący rollback (demote w odwrotnej kolejności), który **nie zakłada, że
+zadziałał** — ponownie czyta wszystkie pięć wierszy i raportuje
+`rowsStillClaimingReady`, gdyby kompensacja sama padła.
+
+Świadomie NIE użyto transakcji: `DbPromise.transaction()` przyjmuje tylko listę
+gotowych stringów SQL i nie oddaje uchwytu połączenia, a każde `run()` idzie
+przez `pool.query()`, więc `BEGIN`/`COMMIT` nie muszą trafić na to samo
+połączenie z puli. Transakcja zbudowana z tego API byłaby fikcją. Powód jest
+zapisany w kodzie.
+
+Logger mówi teraz dokładnie, co się stało:
+`INCOMPLETE — issued 3/3 statement promotion(s), analysis=not promoted,
+pack=not promoted; every issued promotion was rolled back and re-read as
+not-ready; reason: …`.
+
+**Test, który akceptował stan częściowy:** `atelierFinanceSchemaGate` →
+„fewer values on disk → that statement stays pending". Asercjonował
+`statementIds` długości 2 i jeden nieporomowany, sprawdzając tylko odrzucony
+wiersz — więc BS i CF na `ready` wewnątrz fixture'u zgłoszonego jako
+`incomplete` były akceptowanym wynikiem. Teraz wymaga zera promocji.
+
+**Ryzyko rezydualne:** proces zabity MIĘDZY dwoma zapisami promocyjnymi (bez
+wyjątku, więc bez kompensacji) może zostawić stan częściowy. Bez prawdziwej
+transakcji nie da się tego domknąć w kodzie seeda. Ponowne uruchomienie seeda
+naprawia stan (promocje są idempotentne i strzeżone `IS DISTINCT FROM`).
+
+### 12.2 Exact port
+
+`ObservedTarget.port` jest wymagany. Sprawdzone przeze mnie bezpośrednio:
+
+| Wejście | Wynik |
+| --- | --- |
+| dokładny port | akceptacja |
+| brak portu w URL (`null`) | odmowa |
+| `undefined` | odmowa |
+| `NaN` | odmowa |
+| `0` | odmowa |
+| inny port (`5432`) | odmowa |
+| poza zakresem (`99999`) | odmowa |
+| śmieć (`"28146abc"`) | odmowa |
+
+Nit: numeryczny string poprawnego portu (`"28146"`, `" 28146 "`) jest
+akceptowany — porównanie jest liczbowe. Realna ścieżka
+(`parseConnectionFingerprint`) zwraca `number`, więc string nie może stamtąd
+przyjść; nie jest to luka, tylko luźniejszy kontrakt typu.
+
+### 12.3 Strict demo marker
+
+`organization_type` musi ISTNIEĆ i równać się dokładnie `DEMO`, porównanie
+case-sensitive (decyzja i uzasadnienie w komentarzu). Sprawdzone przeze mnie:
+brak kolumny, `NULL`, `''`, `demo`, `' DEMO '`, `TRIAL`, `PAID`,
+`DEMO_ARCHIVED`, wartość nietekstowa — **wszystkie odmówione**, każde z
+własnym komunikatem. Stosowane w obu miejscach: organizacja docelowa i reuse
+organizacji kwarantanny.
+
+### 12.4 Manifest HMAC
+
+Niekluczowany SHA-256 usunięty (`computeManifestChecksum` skasowany).
+HMAC-SHA256, sekret z `FIN005_MANIFEST_HMAC_KEY` (min. 32 znaki), key id
+z `FIN005_MANIFEST_HMAC_KEY_ID`, oba **wymagane** dla `--write` i `--rollback`.
+Porównanie `crypto.timingSafeEqual` za `constantTimeEquals`, który przy różnej
+długości zwraca `false` zamiast rzucać. `MANIFEST_VERSION` 2 → 3; manifesty v2
+są odrzucane.
+
+Zaatakowałem to niezależnie od testów agenta:
+
+| Atak | Wynik |
+| --- | --- |
+| poprawnie podpisany manifest | akceptacja |
+| zły klucz | odmowa |
+| podmieniony wpis | odmowa |
+| usunięty podpis | odmowa |
+| **stary v2, przeliczony zwykłym SHA-256** | odmowa |
+| `plannedEntries` podłożone po podpisaniu | odmowa |
+| podmieniony `keyId` | odmowa |
+| skrócony HMAC (test na `timingSafeEqual`) | odmowa, bez `TypeError` |
+| downgrade algorytmu na `SHA-256` | odmowa |
+| sekret obecny w JSON manifestu? | **nie** |
+
+`grep` po całym repo: sekret nie trafia do żadnego `console`, `logger`, raportu
+ani manifestu.
+
+### 12.5 Transakcyjna bramka fixture'u
+
+`lockCanonicalFixture()` wykonuje te same zapytania po kanonicznych ID z
+`FOR UPDATE` na kliencie transakcji. Wewnątrz transakcji fixture jest
+weryfikowany dwa razy: przed zablokowaniem wierszy i tuż przed `COMMIT`, za
+każdym razem porównywany z odciskiem z prekondycji
+(`computeCanonicalFixtureDigest` / `assertCanonicalFixtureUnchanged`) — więc
+łapane są też zmiany, które nadal przechodzą reguły kompletności (np. wartość
+przepięta na inne kanoniczne sprawozdanie). Różnica ⇒ `ROLLBACK`, nic się nie
+rusza.
+
+### 12.6 Bramki po rundzie trzeciej
+
+| Bramka | Wynik |
+| --- | --- |
+| targeted FIN-005 backend (16 plików) | **320 PASS** |
+| FIN-005 demo + scripts (9 plików) | **195 PASS** |
+| real PostgreSQL — round-trip | **PASS** |
+| real PostgreSQL — drift (zero fałszywego READY) | **PASS** |
+| real PostgreSQL — byte-identical drugi przebieg | **PASS** |
+| real PostgreSQL — fault injection ×5 punktów promocji | **PASS** (było RED na 3 z 3 zmierzonych) |
+| crash-after-commit recovery | **PASS** (test skryptu) |
+| HMAC tampering ×9 wektorów | **PASS** |
+| environment negatives — port ×8, marker ×10 | **PASS** |
+| `tsc --noEmit` backend | **216 przed = 216 po**, identyczny zbiór `file:line:code` |
+| `tsc --noEmit` frontend | **0 błędów** |
+| `npm run build:backend` | **PASS** |
+| `git diff --check` | **PASS** |
+
+Nadal bez deployu, bez migracji, bez `--write`, bez rollbacku, bez mutacji
+stagingu.
+
+### 12.7 Otwarte, świadomie niezrobione
+
+1. **Brak trwałej tabeli audit/outbox** — wymagałaby migracji, poza granicą
+   pakietu. Proponowany DDL w skrypcie jako `DURABLE_AUDIT_TABLE_PROPOSAL`.
+2. **Zarządzanie kluczem HMAC out of band** — brak procedury rotacji i
+   przechowywania. Utrata klucza czyni istniejący manifest nieużywalnym przez
+   skrypt (wiersze trzeba by przywrócić ręcznie z zapisanego prior state).
+   Do rozstrzygnięcia przez Codex przed pierwszym `--write`.
+3. **Semantyka `FOR UPDATE`** sprawdzona tylko na atrapie — realne blokowanie
+   współbieżnego pisarza wymaga żywego round-tripu.
+4. **Wartości allowlisty Railway** (nazwa serwisu, nazwa bazy, port) nadal
+   przepisane z dokumentacji, niepotwierdzone na żywym połączeniu. Fail-closed.
+5. **Ryzyko rezydualne atomowości** z §12.1 (kill -9 między zapisami).
