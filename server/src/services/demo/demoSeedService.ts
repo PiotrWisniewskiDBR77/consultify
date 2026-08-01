@@ -3,6 +3,12 @@ import * as DbPromise from '../../utils/DbPromise.js';
 import { fireClosureHandoff } from '../executionResultsBridge.js';
 import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
 import {
+  ATELIER_CANONICAL_MODEL_NAME_EN,
+  ATELIER_CANONICAL_MODEL_NAME_PL,
+  ATELIER_FINANCE_CURRENCY,
+  upsertAtelierFinanceGoldenFlow,
+} from './atelierFinanceSeed.js';
+import {
   type DemoLeaderTemplate,
   getAtelierToysDeliverables,
   getAtelierToysDemoScenarios,
@@ -3342,7 +3348,14 @@ async function upsertAtelierRoiFinancialModel(
   userMap: UserMap,
   projectMap: Record<string, string>,
   initiativeMap: InitiativeMap,
-  locale: DemoLocale
+  locale: DemoLocale,
+  /**
+   * FIN-005: id of the canonical FY2014 statement pack (see
+   * `atelierFinanceSeed.ts`). Binding it to `source_statement_pack_id` is what
+   * makes the model *grounded* — the demo run-sheet claims the ROI rests on "a
+   * confirmed FY2014 P&L", and before this the model had no source at all.
+   */
+  sourceStatementPackId: string | null
 ): Promise<void> {
   if (!(await tableExists('financial_models'))) return;
 
@@ -3352,9 +3365,7 @@ async function upsertAtelierRoiFinancialModel(
   const projectId = projectMap['forward-pmo'] || null;
   const initiativeId = initiativeMap['line-3-digital-twin'] || null;
 
-  const modelName = isPl
-    ? 'Atelier Toys — Transformacja 2015 (ROI)'
-    : 'Atelier Toys — Transformation 2015 ROI';
+  const modelName = isPl ? ATELIER_CANONICAL_MODEL_NAME_PL : ATELIER_CANONICAL_MODEL_NAME_EN;
   const modelDescription = isPl
     ? 'Business case zarządu dla 3-letniego programu cyfryzacji: NPV, ROI i okres zwrotu.'
     : 'Board business case for the 3-year digitization program: NPV, ROI, and payback.';
@@ -3380,7 +3391,11 @@ async function upsertAtelierRoiFinancialModel(
     projectId,
     modelName,
     modelDescription,
-    'PLN',
+    // FIN-005: was 'PLN' — the app-wide default currency, not a choice. Every
+    // other Atelier number is euro-denominated (Digital ARR EUR 6.2M -> 8M,
+    // initiative budgets, the FY2014 statements this model is now grounded on),
+    // so the Finance golden flow is standardised on EUR. Economics unchanged.
+    ATELIER_FINANCE_CURRENCY,
     36,
     '2015-01-01',
     'annual',
@@ -3392,6 +3407,13 @@ async function upsertAtelierRoiFinancialModel(
     modelCols.push('initiative_id');
     modelVals.push(initiativeId);
   }
+  const hasModelSourcePackCol =
+    Boolean(sourceStatementPackId) &&
+    (await columnExists('financial_models', 'source_statement_pack_id'));
+  if (hasModelSourcePackCol) {
+    modelCols.push('source_statement_pack_id');
+    modelVals.push(sourceStatementPackId);
+  }
 
   await DbPromise.run(
     `INSERT INTO financial_models (${modelCols.join(', ')})
@@ -3399,8 +3421,11 @@ async function upsertAtelierRoiFinancialModel(
      ON CONFLICT(id) DO UPDATE SET
        name=excluded.name,
        description=excluded.description,
+       currency=excluded.currency,
        status=excluded.status,
-       horizon_months=excluded.horizon_months`,
+       horizon_months=excluded.horizon_months${
+         hasModelSourcePackCol ? ',\n       source_statement_pack_id=excluded.source_statement_pack_id' : ''
+       }`,
     modelVals,
     { fallback: false }
   );
@@ -3467,6 +3492,7 @@ async function upsertAtelierRoiFinancialModel(
          ON CONFLICT(id) DO UPDATE SET
            name=excluded.name,
            amount=excluded.amount,
+           currency=excluded.currency,
            is_active=excluded.is_active`,
         [
           eventId,
@@ -3474,7 +3500,7 @@ async function upsertAtelierRoiFinancialModel(
           event.type,
           isPl ? event.namePl : event.nameEn,
           event.amount,
-          'PLN',
+          ATELIER_FINANCE_CURRENCY,
           event.periodStart,
           event.recurrence,
           event.growthRate,
@@ -3542,6 +3568,7 @@ async function upsertAtelierRoiFinancialModel(
          irr=excluded.irr,
          payback_months=excluded.payback_months,
          roi_percent=excluded.roi_percent,
+         currency=excluded.currency,
          last_calculated_at=excluded.last_calculated_at`,
       [
         makeId(organizationId, 'analysis-financials', 'transformation-2015-roi'),
@@ -3559,7 +3586,7 @@ async function upsertAtelierRoiFinancialModel(
         34,
         14,
         218,
-        'PLN',
+        ATELIER_FINANCE_CURRENCY,
         new Date().toISOString(),
       ],
       { fallback: true }
@@ -4033,7 +4060,24 @@ export async function seedAtelierToysDemoDataset(
     initiativeMap,
     anchorDate
   );
-  await upsertAtelierRoiFinancialModel(organizationId, userMap, projectMap, initiativeMap, locale);
+  // FIN-005 — Finance golden flow. The statement pack comes FIRST so the ROI
+  // model can be bound to it: statement -> analysis -> model, one story, one
+  // currency, one lineage. Before this the model existed with no source
+  // statement and no analysis, and Finance showed another tenant's records.
+  const financeGoldenFlow = await upsertAtelierFinanceGoldenFlow({
+    organizationId,
+    createdBy: userMap['claire-laurent']?.id || userMap['hugo-bernard']?.id || null,
+    projectId: projectMap['forward-pmo'] || null,
+    locale,
+  });
+  await upsertAtelierRoiFinancialModel(
+    organizationId,
+    userMap,
+    projectMap,
+    initiativeMap,
+    locale,
+    financeGoldenFlow.packId
+  );
   // Spine stage 07: Results / KPIs (realized numbers reconcile with ROI + context).
   await upsertAtelierResultsKpis(organizationId, userMap, projectMap);
   // Spine stage 06: Execution / Rollout artifacts.
@@ -4146,6 +4190,14 @@ export async function deleteDemoDatasetForOrganization(organizationId: string): 
     ['financial_models', 'organization_id'],
     ['analysis_financials', 'organization_id'],
     ['digitization_analyses', 'organization_id'],
+    // FIN-005 Finance golden flow (statement pack -> analysis -> model). Listed
+    // FK-first so a demo dataset delete stays complete: leaving these behind
+    // would strand the exact rows the coherence gate checks for.
+    ['financial_analyses', 'organization_id'],
+    ['financial_statement_values', 'statement_id', 'financial_statements', 'organization_id'],
+    ['financial_statement_ingest_runs', 'organization_id'],
+    ['financial_statements', 'organization_id'],
+    ['financial_statement_packs', 'organization_id'],
     // Spine: Interviews + Insights (03)
     ['interview_insight_handoffs', 'organization_id'],
     ['interview_insight_findings', 'organization_id'],
