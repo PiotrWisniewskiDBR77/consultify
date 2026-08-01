@@ -28,6 +28,9 @@ const evidence = (line: string) => {
 
 const PREFIX = 'odbior--parity--';
 const PROJECT_ID = `${PREFIX}project-0001`;
+const FOREIGN_ORG_ID = `${PREFIX}foreign-org`;
+const FOREIGN_USER_ID = `${PREFIX}foreign-user`;
+const FOREIGN_EMAIL = `${PREFIX}foreign@acceptance.local`;
 
 let token: string;
 let interviewApp: Express;
@@ -45,6 +48,28 @@ beforeAll(async () => {
   const client = pgClient();
   await client.connect();
   try {
+    await client.query(
+      `INSERT INTO organizations (id, name, plan, status, is_active, created_at)
+       VALUES ($1, $2, 'enterprise', 'active', 1, CURRENT_TIMESTAMP)
+       ON CONFLICT (id) DO NOTHING`,
+      [FOREIGN_ORG_ID, `${PREFIX}Foreign Org`]
+    );
+    await client.query(
+      `INSERT INTO users
+         (id, organization_id, email, password, role, status, first_name, last_name, created_at)
+       VALUES ($1, $2, $3, 'not-used', 'ADMIN', 'active', 'Foreign', 'Tenant', CURRENT_TIMESTAMP)
+       ON CONFLICT (id) DO NOTHING`,
+      [FOREIGN_USER_ID, FOREIGN_ORG_ID, FOREIGN_EMAIL]
+    );
+    await client.query(
+      `INSERT INTO organization_members
+         (id, organization_id, user_id, role, status, created_at)
+       SELECT $1, $2, $3, 'OWNER', 'ACTIVE', CURRENT_TIMESTAMP
+       WHERE NOT EXISTS (
+         SELECT 1 FROM organization_members WHERE organization_id = $2 AND user_id = $3
+       )`,
+      [`${PREFIX}foreign-membership`, FOREIGN_ORG_ID, FOREIGN_USER_ID]
+    );
     await client.query(
       `INSERT INTO projects (id, organization_id, name, status, owner_id, created_at)
        VALUES ($1, $2, $3, 'active', $4, CURRENT_TIMESTAMP)
@@ -102,6 +127,11 @@ afterAll(async () => {
         .catch(() => {});
     }
     await client.query('DELETE FROM projects WHERE id = $1', [PROJECT_ID]).catch(() => {});
+    await client
+      .query('DELETE FROM organization_members WHERE user_id = $1', [FOREIGN_USER_ID])
+      .catch(() => {});
+    await client.query('DELETE FROM users WHERE id = $1', [FOREIGN_USER_ID]).catch(() => {});
+    await client.query('DELETE FROM organizations WHERE id = $1', [FOREIGN_ORG_ID]).catch(() => {});
   } finally {
     await client.end();
   }
@@ -111,7 +141,7 @@ afterAll(async () => {
 // 1) INTERVIEW — create → persist → reload
 // ============================================================================
 describe('PARITY: INTERVIEW — /api/interview/sessions (real runtime)', () => {
-  it('creates a session via API, persists it in Postgres, and reads it back', async () => {
+  it('creates a session, saves an answer, reopens the same id and rejects a foreign tenant', async () => {
     const name = `${PREFIX}Interview ${Date.now()}`;
 
     const createRes = await request(interviewApp)
@@ -151,6 +181,78 @@ describe('PARITY: INTERVIEW — /api/interview/sessions (real runtime)', () => {
       .set('Authorization', `Bearer ${token}`);
     expect(getRes.status).toBe(200);
     expect(getRes.body?.id).toBe(sessionId);
+
+    const questionsRes = await request(interviewApp)
+      .get(`/api/interview/sessions/${sessionId}/questions`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(questionsRes.status).toBe(200);
+    expect(Array.isArray(questionsRes.body)).toBe(true);
+    expect(questionsRes.body.length).toBeGreaterThan(0);
+
+    const questionId = String(questionsRes.body[0].id);
+    const answerText = `${PREFIX}durable answer ${Date.now()}`;
+    const saveRes = await request(interviewApp)
+      .patch(`/api/interview/questions/${questionId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ answerText, status: 'answered', notes: 'verified respondent context' });
+    expect(saveRes.status).toBe(200);
+    expect(saveRes.body?.id).toBe(questionId);
+    expect(saveRes.body?.answerText).toBe(answerText);
+
+    // Independent API read-back is the resume contract: same session id, persisted answer.
+    const reopenedQuestions = await request(interviewApp)
+      .get(`/api/interview/sessions/${sessionId}/questions`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(reopenedQuestions.status).toBe(200);
+    expect(reopenedQuestions.body.find((q: any) => q.id === questionId)).toMatchObject({
+      answerText,
+      status: 'answered',
+    });
+
+    const client2 = pgClient();
+    await client2.connect();
+    try {
+      const { rows } = await client2.query(
+        `SELECT q.answer_text, q.status, q.session_id, s.answered_questions
+           FROM interview_questions q
+           JOIN interview_sessions s ON s.id = q.session_id
+          WHERE q.id = $1 AND q.organization_id = $2`,
+        [questionId, SEED.ORG_ID]
+      );
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        answer_text: answerText,
+        status: 'answered',
+        session_id: sessionId,
+      });
+      expect(Number(rows[0].answered_questions)).toBeGreaterThanOrEqual(1);
+    } finally {
+      await client2.end();
+    }
+
+    const foreignToken = mintToken({
+      id: FOREIGN_USER_ID,
+      email: FOREIGN_EMAIL,
+      organizationId: FOREIGN_ORG_ID,
+      organization_id: FOREIGN_ORG_ID,
+    });
+    await request(interviewApp)
+      .get(`/api/interview/sessions/${sessionId}`)
+      .set('Authorization', `Bearer ${foreignToken}`)
+      .expect(404);
+    await request(interviewApp)
+      .patch(`/api/interview/questions/${questionId}`)
+      .set('Authorization', `Bearer ${foreignToken}`)
+      .send({ answerText: 'foreign overwrite', status: 'answered' })
+      .expect(404);
+
+    const ownerReadAfterAttack = await request(interviewApp)
+      .get(`/api/interview/sessions/${sessionId}/questions`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    expect(ownerReadAfterAttack.body.find((q: any) => q.id === questionId)?.answerText).toBe(
+      answerText
+    );
   }, 30_000);
 
   it('rejects an unauthenticated create (real auth is enforced)', async () => {
