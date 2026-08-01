@@ -1058,6 +1058,19 @@ export async function resolveRecoveryCheckpoint(
     throw serviceError('VALIDATION_ERROR', "status must be 'MET' or 'MISSED'");
   }
 
+  if (kpiTimeSeriesId) {
+    // Never link a measurement belonging to a different org, even though the
+    // FK on kpi_time_series_id only guarantees the row exists SOMEWHERE — it
+    // does not scope by organization_id.
+    const ownedMeasurement = await db.get<{ id: string }>(
+      `SELECT id FROM kpi_time_series WHERE id = ? AND organization_id = ?`,
+      [kpiTimeSeriesId, orgId]
+    );
+    if (!ownedMeasurement?.id) {
+      throw serviceError('KPI_TIME_SERIES_NOT_FOUND', 'KPI time series measurement not found for this organization');
+    }
+  }
+
   const updated = await db.all<RecoveryCheckpointRow>(
     `
     UPDATE kpi_recovery_checkpoints
