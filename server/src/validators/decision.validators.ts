@@ -74,15 +74,76 @@ export const CreateDecisionSchema = z.object({
 export const DecideSchema = z
   .object({
     decision: z.enum(['approved', 'rejected', 'deferred']).optional(),
-    status: z.enum(['APPROVED', 'REJECTED', 'PENDING', 'ESCALATED']).optional(),
+    // MW-DEC-001: RETURNED_FOR_CLARIFICATION added to the OUTCOME axis
+    // (decisions.status) — see decisionOutcomeService.ts. PENDING/ESCALATED
+    // kept for backward compatibility with existing callers; ESCALATED is
+    // rejected downstream by decisionOutcomeService (escalation stays on its
+    // own dedicated endpoint/axis, untouched by this schema).
+    status: z
+      .enum(['APPROVED', 'REJECTED', 'PENDING', 'ESCALATED', 'RETURNED_FOR_CLARIFICATION'])
+      .optional(),
     rationale: z.string().min(1).max(2000).optional(),
     outcome: z.string().max(2000).optional(),
     notes: z.string().max(1000).optional(),
+    // Optimistic-concurrency token (decisions.version). Optional for
+    // backward compatibility; when present and stale, the server returns 409
+    // instead of silently overwriting a concurrent change.
+    version: z.number().int().nonnegative().optional(),
+    expectedVersion: z.number().int().nonnegative().optional(),
   })
   .refine((data) => data.decision || data.status, {
     message: 'Decision status required',
     path: ['decision'],
   });
+
+// ==========================================
+// COLLABORATION SCHEMAS (MW-DEC-001 — comments / alternatives / risks)
+// ==========================================
+
+export const CreateDecisionCommentSchema = z.object({
+  body: z.string().min(1).max(4000),
+});
+
+export const UpdateDecisionCommentSchema = z.object({
+  body: z.string().min(1).max(4000),
+});
+
+export const CreateDecisionAlternativeSchema = z.object({
+  title: z.string().min(1).max(255),
+  description: z.string().max(5000).optional(),
+  benefits: z.string().max(5000).optional(),
+  drawbacks: z.string().max(5000).optional(),
+  costOrFeasibility: z.string().max(2000).optional(),
+  isRecommended: z.boolean().optional(),
+});
+
+export const UpdateDecisionAlternativeSchema = z.object({
+  title: z.string().min(1).max(255).optional(),
+  description: z.string().max(5000).optional().nullable(),
+  benefits: z.string().max(5000).optional().nullable(),
+  drawbacks: z.string().max(5000).optional().nullable(),
+  costOrFeasibility: z.string().max(2000).optional().nullable(),
+  isRecommended: z.boolean().optional(),
+});
+
+export const DecisionRiskSeverityEnum = z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
+export const DecisionRiskLikelihoodEnum = z.enum(['LOW', 'MEDIUM', 'HIGH']);
+
+export const CreateDecisionRiskSchema = z.object({
+  description: z.string().min(1).max(2000),
+  severity: DecisionRiskSeverityEnum.optional(),
+  likelihood: DecisionRiskLikelihoodEnum.optional(),
+  mitigation: z.string().max(2000).optional(),
+  ownerId: z.string().optional().nullable(),
+});
+
+export const UpdateDecisionRiskSchema = z.object({
+  description: z.string().min(1).max(2000).optional(),
+  severity: DecisionRiskSeverityEnum.optional(),
+  likelihood: DecisionRiskLikelihoodEnum.optional(),
+  mitigation: z.string().max(2000).optional().nullable(),
+  ownerId: z.string().optional().nullable(),
+});
 
 export const EscalateDecisionSchema = z.object({
   reason: z.string().max(500).optional(),
@@ -125,3 +186,9 @@ export type EscalateDecisionRequest = z.infer<typeof EscalateDecisionSchema>;
 export type UpdateDecisionRequest = z.infer<typeof UpdateDecisionSchema>;
 export type RemindDecisionRequest = z.infer<typeof RemindDecisionSchema>;
 export type GetDecisionsQuery = z.infer<typeof GetDecisionsQuerySchema>;
+export type CreateDecisionCommentRequest = z.infer<typeof CreateDecisionCommentSchema>;
+export type UpdateDecisionCommentRequest = z.infer<typeof UpdateDecisionCommentSchema>;
+export type CreateDecisionAlternativeRequest = z.infer<typeof CreateDecisionAlternativeSchema>;
+export type UpdateDecisionAlternativeRequest = z.infer<typeof UpdateDecisionAlternativeSchema>;
+export type CreateDecisionRiskRequest = z.infer<typeof CreateDecisionRiskSchema>;
+export type UpdateDecisionRiskRequest = z.infer<typeof UpdateDecisionRiskSchema>;
