@@ -8,19 +8,19 @@
  * decision creation support), but has not been visually accepted by the
  * product owner yet.
  *
- * Wizualnie NOWY (real backend fetch/save flow, own layout/loading/error
- * states) → domyślnie OFF (reguła #7/#9: nic wizualnie nowego nie idzie na
- * żywo bez zrzutu i akceptu Piotra). The legacy `DecisionDetailView` remains
- * the default render; flipping this flag ON swaps the "decision" document
- * type to `DecisionWorkspace`. Flip to ON only after Piotr accepts a clean
- * screenshot pass.
+ * MW-05 (decision creation) accepted by Codex review. Per that review,
+ * MW-06 now defaults ON for MVP — `DecisionWorkspace` is the live "decision"
+ * document view. The legacy `DecisionDetailView` stays reachable instantly
+ * as a kill-switch via any of the three overrides below (query for an
+ * immediate per-session bypass, localStorage for a user/org override, env
+ * for a build-time override) — no code change or redeploy needed to revert.
  *
  * Resolution order (highest wins), identical contract to
  * `m03TasksStandardTableFlag.ts` / `m03InboxStandardTableFlag.ts`:
- *   1. URL query `?ff_m05DecisionWorkspace=0|1` — bypass operatora (staging / zrzut).
+ *   1. URL query `?ff_m05DecisionWorkspace=0|1` — instant kill-switch bypass.
  *   2. `localStorage["ff.m05_decision_workspace"]` — override user/org.
  *   3. `import.meta.env.VITE_M05_DECISION_WORKSPACE` — override build-time.
- *   4. Default: OFF (pending akcept Piotra).
+ *   4. Default: ON (MVP).
  */
 
 const LS_KEY = 'ff.m05_decision_workspace';
@@ -39,7 +39,7 @@ function readEnvFlag(): boolean {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    return parsed === null ? false : parsed; // domyślnie OFF — brak akceptu Piotra
+    return parsed === null ? true : parsed; // domyślnie ON — MVP, akcept Codex
   } catch {
     return false;
   }
