@@ -124,15 +124,25 @@ function fixtureOf(db: FakeDb, organizationId: string): CanonicalFixtureReadback
       .rows(table)
       .filter((row) => ids.includes(String(row.id)) && row.organization_id === organizationId);
 
+  // The state columns are part of the read-back: `undefined` when the column is
+  // absent from the row (the fake's stand-in for schema drift), the value
+  // otherwise. Mirrors `stateOf` in the pg gateway.
+  const state = (row: Row, column: string): string | null | undefined =>
+    column in row ? ((row[column] as string | null) ?? null) : undefined;
+
   return {
     packs: pick('financial_statement_packs', [canonical.packId]).map((row) => ({
       id: String(row.id),
       organizationId: String(row.organization_id),
+      packStatus: state(row, 'pack_status'),
+      packReadinessStatus: state(row, 'pack_readiness_status'),
     })),
     statements: pick('financial_statements', canonical.statementIds).map((row) => ({
       id: String(row.id),
       organizationId: String(row.organization_id),
       statementPackId: (row.statement_pack_id as string | null) ?? null,
+      status: state(row, 'status'),
+      readinessStatus: state(row, 'readiness_status'),
     })),
     values: db
       .rows('financial_statement_values')
@@ -145,6 +155,7 @@ function fixtureOf(db: FakeDb, organizationId: string): CanonicalFixtureReadback
       sourceStatementIds: row.source_statement_ids
         ? (JSON.parse(String(row.source_statement_ids)) as string[])
         : [],
+      status: state(row, 'status'),
     })),
     models: pick('financial_models', [canonical.modelId]).map((row) => ({
       id: String(row.id),
@@ -360,11 +371,15 @@ function seedDb(): FakeDb {
   // Canonical Atelier fixture — must never move, and must be COMPLETE: the
   // write path now re-reads and locks it inside the transaction, so a partial
   // fixture here would (correctly) refuse every run.
+  // The state phase 2 of the seed writes. Without it the fixture reads as a
+  // crashed seed and every --write run correctly refuses.
   db.insert('financial_statement_packs', {
     id: CANONICAL.packId,
     organization_id: ORG,
     entity_name: 'Atelier Toys',
     period_label: 'FY2014',
+    pack_status: 'confirmed',
+    pack_readiness_status: 'ready',
   });
   for (const statementId of CANONICAL.statementIds) {
     db.insert('financial_statements', {
@@ -372,6 +387,8 @@ function seedDb(): FakeDb {
       organization_id: ORG,
       entity_name: 'Atelier Toys',
       statement_pack_id: CANONICAL.packId,
+      status: 'confirmed',
+      readiness_status: 'ready',
     });
   }
   for (const valueId of CANONICAL.statementValueIds) {
@@ -387,6 +404,7 @@ function seedDb(): FakeDb {
     title: 'Atelier Toys — FY2014 analysis',
     source_statement_pack_id: CANONICAL.packId,
     source_statement_ids: JSON.stringify(CANONICAL.statementIds),
+    status: 'APPROVED',
   });
   db.insert('financial_models', {
     id: CANONICAL.modelId,
@@ -694,6 +712,49 @@ describe('executeQuarantineRun', () => {
       },
       /CHANGED between the precondition/
     );
+
+    mutatedBetweenPreconditionAndWrite(
+      'REFUSES a readiness DEMOTION that leaves every id in place',
+      (db) => {
+        // Nothing is deleted, nothing is re-pointed: the pack is simply no
+        // longer READY, which is what a crashed re-seed leaves behind. Digesting
+        // the id graph alone, this produced an IDENTICAL digest and ran.
+        db.table('financial_statement_packs').get(CANONICAL.packId)!.pack_readiness_status =
+          'pending';
+      },
+      /pack_readiness_status|CHANGED between the precondition/
+    );
+
+    it('REFUSES a readiness demotion between the precondition and the pre-COMMIT check', async () => {
+      // The narrowest window, and the one the id-only digest could not see: the
+      // rollback plan is fsync'd, the rows have moved, and ONLY a readiness
+      // column changes. The pre-COMMIT re-check must catch it and undo the moves.
+      const db = seedDb();
+      const manifestPath = path.join(workDir, 'manifest.json');
+      const statementId = CANONICAL.statementIds[1];
+
+      await expect(
+        executeQuarantineRun(
+          runParams(db, {
+            manifestPath,
+            writeManifest: (filePath: string, manifest: CleanupManifest) => {
+              writeJsonFileAtomically(filePath, manifest);
+              // A concurrent seed run demotes one statement. Every id, every
+              // link and every row count is unchanged.
+              db.table('financial_statements').get(statementId)!.readiness_status = 'pending';
+            },
+          })
+        )
+      ).rejects.toThrow(/readiness_status|CHANGED between the precondition/);
+
+      // Rolled back: nothing moved, and the demotion is undone with it.
+      expect(db.table('financial_statements').get('uuid-dbr77-pl')!.organization_id).toBe(ORG);
+      expect(db.table('financial_models').get('uuid-copy-1')!.organization_id).toBe(ORG);
+      expect(db.table('financial_models').get(`${ORG}--financial-model--m16-seed`)!.organization_id)
+        .toBe(ORG);
+      expect(db.table('financial_statements').get(statementId)!.readiness_status).toBe('ready');
+      expect(readManifest(manifestPath).status).toBe('PREPARED');
+    });
 
     it('REFUSES a fixture mutated after the manifest write but before COMMIT', async () => {
       // The narrowest window there is: the rollback plan is already fsync'd,
@@ -1073,6 +1134,46 @@ describe('CLI surface', () => {
         ),
       }).organizationId
     ).toBe(approved.organizationId);
+  });
+
+  it('refuses an unparsable connection string as ITS OWN refusal, not a raw TypeError', () => {
+    // `new URL` throws a bare `TypeError: Invalid URL` — still a refusal, but
+    // unbranded and raised before the denylist has looked at anything.
+    for (const bad of [
+      'postgres://h:abc/db',
+      'postgres://h:65536/db',
+      'postgres://h:+28146/db',
+      'not a url at all',
+      '',
+    ]) {
+      expect(() => parseConnectionFingerprint(bad)).toThrow(
+        /\[finance-demo-cleanup\] Refusing to run: the connection string is not a parsable URL/
+      );
+      // And the value itself — which carries the password — is never echoed.
+      expect(() => parseConnectionFingerprint(bad)).not.toThrow(/28146\/db|abc\/db/);
+    }
+  });
+});
+
+describe('readManifest', () => {
+  it('brands a corrupt manifest instead of throwing a raw SyntaxError', () => {
+    const manifestPath = path.join(workDir, 'corrupt.json');
+    fs.writeFileSync(manifestPath, '{"runId": "2026-08-01-a", "entries": [', 'utf8');
+    expect(() => readManifest(manifestPath)).toThrow(
+      /\[finance-demo-cleanup\] Refusing to run: the manifest .* is not valid JSON/
+    );
+  });
+
+  it('brands an unreadable manifest', () => {
+    expect(() => readManifest(path.join(workDir, 'does-not-exist.json'))).toThrow(
+      /\[finance-demo-cleanup\] Refusing to run: the manifest .* could not be read \(ENOENT\)/
+    );
+  });
+
+  it('still parses a valid manifest — verification stays in the caller', () => {
+    const manifestPath = path.join(workDir, 'ok.json');
+    writeJsonFileAtomically(manifestPath, { runId: RUN_ID, status: 'PREPARED' });
+    expect(readManifest(manifestPath).runId).toBe(RUN_ID);
   });
 });
 

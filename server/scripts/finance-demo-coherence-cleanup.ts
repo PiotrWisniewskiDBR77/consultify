@@ -86,6 +86,16 @@
  *    against what the precondition saw. Any difference ⇒ `ROLLBACK`, nothing
  *    moves.
  *
+ *    COMPLETE IS NOT ENOUGH — THE FIXTURE MUST BE **READY**. The seed writes the
+ *    id graph in phase 1 and promotes it in phase 2, so a crashed seed leaves
+ *    every id present in `draft`/`imported`/`pending` state: complete, coherent
+ *    and not a demo anybody can show. `--write` therefore also requires the
+ *    promotion columns (`pack_status`/`pack_readiness_status`,
+ *    `status`/`readiness_status`, analysis `status`), and those same columns are
+ *    part of the digest — otherwise a demotion between the precondition and
+ *    COMMIT would hash identically and be waved through. Dry runs are exempt:
+ *    reporting on a half-seeded tenant is what a dry run is for.
+ *
  * 6. DURABLE, AUTHENTICATED ROLLBACK. A manifest carrying the FULL prior state
  *    of every row (all columns, plus a SHA-256 per-row fingerprint and an
  *    HMAC-SHA256 signature over the whole file) is written, fsync'd and
@@ -349,8 +359,30 @@ export function writeJsonFileAtomically(filePath: string, payload: unknown): voi
   }
 }
 
+/**
+ * Read the manifest, branded refusal on anything unreadable or unparsable.
+ *
+ * PARSE ONLY. Verification (HMAC, shape, drift) happens in the caller, AFTER
+ * this returns — parse-then-verify, never the reverse. The failure text names the
+ * path but never the file contents: a manifest carries full prior row state.
+ */
 export function readManifest(filePath: string): CleanupManifest {
-  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as CleanupManifest;
+  let raw: string;
+  try {
+    raw = fs.readFileSync(filePath, 'utf8');
+  } catch (error) {
+    throw new Error(
+      `[${LABEL}] Refusing to run: the manifest "${filePath}" could not be read (${(error as NodeJS.ErrnoException)?.code || 'read error'}).`
+    );
+  }
+  try {
+    return JSON.parse(raw) as CleanupManifest;
+  } catch {
+    throw new Error(
+      `[${LABEL}] Refusing to run: the manifest "${filePath}" is not valid JSON. It is corrupt or truncated — ` +
+        `do not hand-edit it; the signature would not verify anyway. Restore the file written by the --write run.`
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -442,29 +474,40 @@ function parseJsonArray(value: unknown): string[] {
 }
 
 export function createPgGateway(pool: pg.Pool): CleanupGateway {
-  const clearableColumnsCache = new Map<string, string[]>();
+  const columnCache = new Map<string, string[]>();
 
-  async function clearableColumns(
+  /** Which of `wanted` actually exist on `table` in this schema (cached). */
+  async function presentColumns(
     runner: pg.Pool | pg.PoolClient,
     table: string,
     wanted: readonly string[]
   ): Promise<string[]> {
     const cacheKey = table;
-    if (!clearableColumnsCache.has(cacheKey)) {
+    if (!columnCache.has(cacheKey)) {
       const columns = await existingColumns(runner, table);
-      clearableColumnsCache.set(cacheKey, [...columns]);
+      columnCache.set(cacheKey, [...columns]);
     }
-    const present = new Set(clearableColumnsCache.get(cacheKey) || []);
+    const present = new Set(columnCache.get(cacheKey) || []);
     return wanted.filter((column) => present.has(column));
   }
 
   /**
-   * Read the exact canonical fixture.
+   * Read the exact canonical fixture — ids, lineage AND state.
    *
    * `lock: true` appends `FOR UPDATE` and MUST be used inside the quarantine
    * transaction: it both re-reads the fixture and holds it against concurrent
    * writers until COMMIT/ROLLBACK. `lock: false` is the read-only precondition
    * pass on the pool.
+   *
+   * THE STATE COLUMNS ARE NOT OPTIONAL EXTRAS. Without `pack_status`,
+   * `pack_readiness_status`, the statements' `status`/`readiness_status` and the
+   * analysis `status`, the digest covers the ID GRAPH only — and a demotion from
+   * `ready` to `pending` between the precondition and COMMIT (exactly what a
+   * crashed re-seed leaves behind) would hash identically and be waved through.
+   *
+   * Each column is selected only if it exists in this schema; an absent column
+   * comes back as `undefined`, which the policy treats as "READY cannot be
+   * proven" (a refusal) and digests as its own token.
    */
   async function fixture(
     runner: pg.Pool | pg.PoolClient,
@@ -478,14 +521,40 @@ export function createPgGateway(pool: pg.Pool): CleanupGateway {
     const pick = async (sql: string, ids: string[]) =>
       ids.length ? (await runner.query(`${sql}${forUpdate}`, [ids, organizationId])).rows || [] : [];
 
+    /**
+     * `undefined` when the column is absent from this schema, otherwise the
+     * value (`null` included). The two are deliberately distinguishable.
+     */
+    const stateOf = (
+      row: Record<string, unknown>,
+      column: string,
+      present: readonly string[]
+    ): string | null | undefined => {
+      if (!present.includes(column)) return undefined;
+      const value = row[column];
+      return value === null || value === undefined ? null : String(value);
+    };
+    const projection = (columns: readonly string[]) =>
+      columns.map((column) => `, "${column}"::text AS "${column}"`).join('');
+
+    const packStateColumns = await presentColumns(runner, 'financial_statement_packs', [
+      'pack_status',
+      'pack_readiness_status',
+    ]);
+    const statementStateColumns = await presentColumns(runner, 'financial_statements', [
+      'status',
+      'readiness_status',
+    ]);
+    const analysisStateColumns = await presentColumns(runner, 'financial_analyses', ['status']);
+
     const packs = await pick(
-      `SELECT id::text AS id, organization_id::text AS organization_id
+      `SELECT id::text AS id, organization_id::text AS organization_id${projection(packStateColumns)}
          FROM financial_statement_packs WHERE id = ANY($1::text[]) AND organization_id = $2`,
       [canonical.packId]
     );
     const statements = await pick(
       `SELECT id::text AS id, organization_id::text AS organization_id,
-              statement_pack_id::text AS statement_pack_id
+              statement_pack_id::text AS statement_pack_id${projection(statementStateColumns)}
          FROM financial_statements WHERE id = ANY($1::text[]) AND organization_id = $2`,
       canonical.statementIds
     );
@@ -501,7 +570,7 @@ export function createPgGateway(pool: pg.Pool): CleanupGateway {
     const analyses = await pick(
       `SELECT id::text AS id, organization_id::text AS organization_id,
               source_statement_pack_id::text AS source_statement_pack_id,
-              source_statement_ids
+              source_statement_ids${projection(analysisStateColumns)}
          FROM financial_analyses WHERE id = ANY($1::text[]) AND organization_id = $2`,
       [canonical.analysisId]
     );
@@ -516,11 +585,15 @@ export function createPgGateway(pool: pg.Pool): CleanupGateway {
       packs: packs.map((row) => ({
         id: String(row.id),
         organizationId: String(row.organization_id),
+        packStatus: stateOf(row, 'pack_status', packStateColumns),
+        packReadinessStatus: stateOf(row, 'pack_readiness_status', packStateColumns),
       })),
       statements: statements.map((row) => ({
         id: String(row.id),
         organizationId: String(row.organization_id),
         statementPackId: row.statement_pack_id ?? null,
+        status: stateOf(row, 'status', statementStateColumns),
+        readinessStatus: stateOf(row, 'readiness_status', statementStateColumns),
       })),
       values: values.map((row) => ({
         id: String(row.id),
@@ -531,6 +604,7 @@ export function createPgGateway(pool: pg.Pool): CleanupGateway {
         organizationId: String(row.organization_id),
         sourceStatementPackId: row.source_statement_pack_id ?? null,
         sourceStatementIds: parseJsonArray(row.source_statement_ids),
+        status: stateOf(row, 'status', analysisStateColumns),
       })),
       models: models.map((row) => ({
         id: String(row.id),
@@ -796,7 +870,7 @@ export function createPgGateway(pool: pg.Pool): CleanupGateway {
 
         async moveRows(params) {
           if (!params.ids.length) return [];
-          const clear = await clearableColumns(client, params.table, params.clearColumns);
+          const clear = await presentColumns(client, params.table, params.clearColumns);
           const setClause = [
             'organization_id = $1',
             ...clear.map((column) => `"${column}" = NULL`),
@@ -1362,7 +1436,20 @@ export function parseConnectionFingerprint(connectionString: string): {
   port: number | null;
   database: string;
 } {
-  const url = new URL(connectionString);
+  let url: URL;
+  try {
+    url = new URL(connectionString);
+  } catch {
+    // `new URL` throws a bare `TypeError: Invalid URL` — a refusal, but an
+    // unbranded one, raised before the denylist has looked at anything. Re-throw
+    // it as this script's own refusal. The connection string is NEVER echoed: it
+    // carries the database password.
+    throw new Error(
+      `[${LABEL}] Refusing to run: the connection string is not a parsable URL, so its host, port and ` +
+        `database cannot be confirmed against the approved target. Check DATABASE_URL / --database-url ` +
+        `(the value is not printed here — it contains the password).`
+    );
+  }
   return {
     host: url.hostname,
     port: url.port ? Number(url.port) : null,
@@ -1496,9 +1583,11 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
     // that cannot produce an authenticated rollback plan must not start.
     const signingKey = resolveManifestSigningKey(process.env, 'a --write run');
 
-    // SEED BEFORE QUARANTINE — read back the exact canonical ids and refuse if
-    // the golden flow is not fully materialized. This readback is ALSO the
-    // baseline the transaction re-checks under `FOR UPDATE` before COMMIT.
+    // SEED BEFORE QUARANTINE — read back the exact canonical ids AND their state,
+    // and refuse if the golden flow is not fully materialized and READY. (Dry
+    // runs never reach this: reporting on a half-seeded tenant is exactly what a
+    // dry run is for.) This readback is ALSO the baseline the transaction
+    // re-checks under `FOR UPDATE` before COMMIT.
     const preconditionFixture = await gateway.readCanonicalFixture(demoOrgId);
     assertCanonicalFixtureMaterialized(preconditionFixture, demoOrgId);
 

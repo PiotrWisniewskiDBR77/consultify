@@ -40,6 +40,7 @@ import {
   resolveRollbackEntries,
   signManifest,
   verifyCanonicalFixture,
+  CANONICAL_FIXTURE_READY_STATE,
   FIN005_APPROVED_DEMO_TARGETS,
   MANIFEST_VERSION,
   QUARANTINE_ORG_MARKER,
@@ -69,6 +70,8 @@ const OTHER_KEY: ManifestSigningKey = resolveManifestSigningKey({
 
 const ORG = 'demo-org';
 const CANONICAL = getAtelierFinanceCanonicalIds(ORG);
+/** The state phase 2 of the seed writes; anything else is an unfinished seed. */
+const READY = CANONICAL_FIXTURE_READY_STATE;
 
 // ---------------------------------------------------------------------------
 // P1 — canonical ownership by EXACT whitelist
@@ -375,6 +378,27 @@ describe('assertApprovedDemoTarget', () => {
         })
       ).toThrow(/not a valid TCP port/i);
     });
+
+    it('parses the DECLARED port strictly — digits only, no Number() exotica', () => {
+      // `Number()` happily turns all three of these into the approved port
+      // (0x6DA2 = 28066, 2.8146e4 = 28146, '28146.0' = 28146). None is a port an
+      // operator typed on purpose, and "exactly this port" must mean exactly.
+      for (const exotic of ['0x6DA2', '2.8146e4', '28146.0', ' 28146 x', '+28146', '28146e0']) {
+        expect(() =>
+          assertApprovedDemoTarget({
+            declared: { ...APPROVED, port: exotic },
+            actual: { ...approvedActual, port: 28146 },
+          })
+        ).toThrow(/not a valid TCP port/i);
+      }
+      // The plain decimal string still works — this is a tightening, not a break.
+      expect(
+        assertApprovedDemoTarget({
+          declared: { ...APPROVED, port: '28146' },
+          actual: { ...approvedActual, port: 28146 },
+        }).port
+      ).toBe(28146);
+    });
   });
 
   it('refuses a mismatched project, environment, service or organization id', () => {
@@ -535,19 +559,43 @@ describe('quarantine organization', () => {
       assertQuarantineOrganizationReusable(okRow({ name: 'Some other org' }), expected)
     ).toThrow(/expected the run marker/);
   });
+
+  it('matches the status EXACTLY, like the organization_type marker', () => {
+    // Case-folding here while `organization_type` is compared case-sensitively
+    // was an inconsistency, not a policy: this script only ever writes the
+    // literal 'inactive'.
+    for (const drift of ['INACTIVE', 'Inactive', 'inActive', '']) {
+      expect(() =>
+        assertQuarantineOrganizationReusable(okRow({ status: drift }), expected)
+      ).toThrow(/expected exactly "inactive"/);
+    }
+    // NULL is the one accepted alternative and means exactly one thing: this
+    // schema has no `status` column, so the create path never set it.
+    expect(assertQuarantineOrganizationReusable(okRow({ status: null }), expected)).toBe('reuse');
+  });
 });
 
 // ---------------------------------------------------------------------------
 // P1 — seed-before-quarantine precondition
 // ---------------------------------------------------------------------------
 
+/** A fixture the finished seed would leave behind: complete, coherent AND READY. */
 function completeFixture(): CanonicalFixtureReadback {
   return {
-    packs: [{ id: CANONICAL.packId, organizationId: ORG }],
+    packs: [
+      {
+        id: CANONICAL.packId,
+        organizationId: ORG,
+        packStatus: READY.packStatus,
+        packReadinessStatus: READY.packReadinessStatus,
+      },
+    ],
     statements: CANONICAL.statementIds.map((id) => ({
       id,
       organizationId: ORG,
       statementPackId: CANONICAL.packId,
+      status: READY.statementStatus,
+      readinessStatus: READY.statementReadinessStatus,
     })),
     values: CANONICAL.statementValueIds.map((id) => ({
       id,
@@ -563,6 +611,7 @@ function completeFixture(): CanonicalFixtureReadback {
         organizationId: ORG,
         sourceStatementPackId: CANONICAL.packId,
         sourceStatementIds: [...CANONICAL.statementIds],
+        status: READY.analysisStatus,
       },
     ],
     models: [
@@ -577,6 +626,60 @@ describe('seed-before-quarantine precondition', () => {
     expect(result.violations).toEqual([]);
     expect(result.ok).toBe(true);
     expect(() => assertCanonicalFixtureMaterialized(completeFixture(), ORG)).not.toThrow();
+  });
+
+  it('REFUSES a fixture that is COMPLETE but not READY — a crashed seed', () => {
+    // The exact state a seed that died between phase 1 and phase 2 leaves: every
+    // canonical id present, every lineage rule satisfied, nothing promoted.
+    const crashed = completeFixture();
+    crashed.packs[0].packStatus = 'draft';
+    crashed.packs[0].packReadinessStatus = 'pending';
+    for (const statement of crashed.statements) {
+      statement.status = 'imported';
+      statement.readinessStatus = 'pending';
+    }
+    crashed.analyses[0].status = 'DRAFT';
+
+    // Complete, and still not something to quarantine around.
+    expect(() => assertCanonicalFixtureMaterialized(crashed, ORG)).toThrow(
+      /the seed did not finish/
+    );
+    expect(() => assertCanonicalFixtureMaterialized(crashed, ORG)).toThrow(/materialized and READY/);
+    const { violations } = verifyCanonicalFixture(crashed, ORG);
+    // Pack (2) + 3 statements × 2 + analysis (1).
+    expect(violations).toHaveLength(9);
+  });
+
+  it('REFUSES each promotion column on its own, NULL included', () => {
+    const cases: Array<[(fixture: CanonicalFixtureReadback) => void, RegExp]> = [
+      [(f) => (f.packs[0].packReadinessStatus = 'pending'), /pack_readiness_status/],
+      [(f) => (f.packs[0].packStatus = null), /"pack_status" is NULL/],
+      [(f) => (f.statements[1].readinessStatus = 'recoverable'), /readiness_status/],
+      [(f) => (f.statements[0].status = null), /"status" is NULL/],
+      [(f) => (f.analyses[0].status = 'REVIEW'), /analysis .*"status" is "REVIEW"/],
+    ];
+    for (const [mutate, expected] of cases) {
+      const fixture = completeFixture();
+      mutate(fixture);
+      expect(() => assertCanonicalFixtureMaterialized(fixture, ORG)).toThrow(expected);
+    }
+  });
+
+  it('REFUSES when a promotion column does not exist in this schema at all', () => {
+    // Schema drift: no column ⇒ no evidence ⇒ READY cannot be proven.
+    const drifted = completeFixture();
+    drifted.packs[0].packReadinessStatus = undefined;
+    expect(() => assertCanonicalFixtureMaterialized(drifted, ORG)).toThrow(
+      /column "pack_readiness_status" does not exist in this schema/
+    );
+  });
+
+  it('is case-sensitive about the promotion literals', () => {
+    const fixture = completeFixture();
+    fixture.statements[0].readinessStatus = 'READY';
+    expect(() => assertCanonicalFixtureMaterialized(fixture, ORG)).toThrow(
+      /is "READY", expected exactly "ready"/
+    );
   });
 
   it('REFUSES when nothing is seeded at all — quarantine would empty the demo', () => {
@@ -595,8 +698,10 @@ describe('seed-before-quarantine precondition', () => {
   it('refuses a missing statement', () => {
     const fixture = completeFixture();
     fixture.statements = fixture.statements.slice(0, 2);
+    // The read-back is id-filtered to the canonical set, so it can only ever be
+    // MISSING rows — the message must not imply extras were found.
     expect(() => assertCanonicalFixtureMaterialized(fixture, ORG)).toThrow(
-      /expected exactly 3 canonical statements/
+      /1 of the 3 canonical statements .* are missing from the read-back/
     );
   });
 
@@ -689,6 +794,48 @@ describe('canonical fixture digest — transactional guard', () => {
     after.values[0] = { ...after.values[0], statementId: CANONICAL.statementIds[2] };
     expect(verifyCanonicalFixture(after, ORG).ok).toBe(true);
     expect(() => unchanged(after)).toThrow(/CHANGED between the precondition/);
+  });
+
+  it('REFUSES a readiness demotion that leaves the ID GRAPH identical', () => {
+    // THE HOLE THIS CLOSES: digesting ids and links only, a concurrent demotion
+    // of the pack from `ready` to `pending` — exactly what a crashed re-seed
+    // leaves — produced the SAME digest and sailed through both guards.
+    const after = completeFixture();
+    after.packs[0].packReadinessStatus = 'pending';
+
+    expect(computeCanonicalFixtureDigest(after)).not.toBe(
+      computeCanonicalFixtureDigest(completeFixture())
+    );
+    expect(() => unchanged(after)).toThrow(/CHANGED between the precondition/);
+    // The row counts are identical, so the message must say what actually moved.
+    expect(() => unchanged(after)).toThrow(/row counts are identical/);
+  });
+
+  it('sees a demotion of every promotion column, on every canonical row', () => {
+    const mutations: Array<(fixture: CanonicalFixtureReadback) => void> = [
+      (f) => (f.packs[0].packStatus = 'draft'),
+      (f) => (f.packs[0].packReadinessStatus = 'pending'),
+      (f) => (f.statements[2].status = 'imported'),
+      (f) => (f.statements[1].readinessStatus = 'recoverable'),
+      (f) => (f.analyses[0].status = 'DRAFT'),
+    ];
+    const baseline = computeCanonicalFixtureDigest(completeFixture());
+    for (const mutate of mutations) {
+      const after = completeFixture();
+      mutate(after);
+      expect(computeCanonicalFixtureDigest(after)).not.toBe(baseline);
+      expect(() => unchanged(after)).toThrow(/CHANGED between the precondition/);
+    }
+  });
+
+  it('distinguishes "column is NULL" from "column does not exist"', () => {
+    // `canonicalJson` maps undefined to null, so without an explicit token a
+    // column DISAPPEARING would hash the same as a column set to NULL.
+    const nulled = completeFixture();
+    nulled.packs[0].packStatus = null;
+    const absent = completeFixture();
+    absent.packs[0].packStatus = undefined;
+    expect(computeCanonicalFixtureDigest(nulled)).not.toBe(computeCanonicalFixtureDigest(absent));
   });
 
   it('REFUSES when the analysis lineage moved', () => {

@@ -18,9 +18,9 @@
  *  1. WHICH DATABASE am I allowed to touch?      → `assertApprovedDemoTarget`
  *  1b. IS THIS TENANT MARKED as a demo tenant?   → `assertDemoOrganizationMarker`
  *  2. WHICH ROWS are canonical (never movable)?  → `isCanonicalDemoRowId`
- *  3. IS THE SEED materialized before I move     → `assertCanonicalFixtureMaterialized`
- *     anything out, and is it STILL the same        `assertCanonicalFixtureUnchanged`
- *     fixture inside the transaction?
+ *  3. IS THE SEED materialized AND READY before   → `assertCanonicalFixtureMaterialized`
+ *     I move anything out, and is it STILL the      `assertCanonicalFixtureUnchanged`
+ *     same fixture inside the transaction?
  *  4. IS THE QUARANTINE ORG safe to write into?  → `assertQuarantineOrganizationReusable`
  *  5. DID ANYTHING BREAK the object graph?       → `findCrossOrgDependencyViolations`
  *  6. IS THE ROLLBACK PLAN AUTHENTIC and still   → `assertManifestIntegrity` (HMAC-SHA256),
@@ -167,7 +167,13 @@ export function assertApprovedDemoTarget(input: {
       missing.push(field);
       continue;
     }
-    declared[field] = field === 'port' ? Number(value) : value;
+    // The port is the only numeric field, and it is parsed STRICTLY: digits and
+    // nothing else. `Number()` would accept '0x6DA2' (→ 28066), '2.8146e4' and
+    // '28146.0' as the approved port — none of those is a port an operator meant
+    // to type, and "exactly this port" is the doctrine this guard exists for.
+    // (`Number()` alone is not a bypass — the value must still equal the observed
+    // port and an allowlist entry — but an exactness check must be exact.)
+    declared[field] = field === 'port' ? (/^\d+$/.test(value) ? Number(value) : Number.NaN) : value;
   }
   if (missing.length) {
     fail(
@@ -453,26 +459,103 @@ export function classifyFinanceDemoRows(
 // 3. Seed-before-quarantine precondition
 // ---------------------------------------------------------------------------
 
+/**
+ * A state column as it was read back.
+ *
+ * Three distinct values, and the difference matters:
+ *  - `string`      — the column exists and holds this value;
+ *  - `null`        — the column exists and is NULL;
+ *  - `undefined`   — the column does NOT exist in this schema (drift). Never a
+ *                    silent pass: the READY gate refuses it, and the digest
+ *                    encodes it as its own token so a column that disappears
+ *                    between two reads is a change, not a coincidence.
+ */
+export type FixtureStateColumn = string | null | undefined;
+
 export interface CanonicalFixtureReadback {
-  packs: Array<{ id: string; organizationId: string }>;
-  statements: Array<{ id: string; organizationId: string; statementPackId: string | null }>;
+  packs: Array<{
+    id: string;
+    organizationId: string;
+    /** `financial_statement_packs.pack_status` — required; see FixtureStateColumn. */
+    packStatus: FixtureStateColumn;
+    /** `financial_statement_packs.pack_readiness_status`. */
+    packReadinessStatus: FixtureStateColumn;
+  }>;
+  statements: Array<{
+    id: string;
+    organizationId: string;
+    statementPackId: string | null;
+    /** `financial_statements.status`. */
+    status: FixtureStateColumn;
+    /** `financial_statements.readiness_status`. */
+    readinessStatus: FixtureStateColumn;
+  }>;
   values: Array<{ id: string; statementId: string }>;
   analyses: Array<{
     id: string;
     organizationId: string;
     sourceStatementPackId: string | null;
     sourceStatementIds: string[];
+    /** `financial_analyses.status`. */
+    status: FixtureStateColumn;
   }>;
   models: Array<{ id: string; organizationId: string; sourceStatementPackId: string | null }>;
 }
 
 /**
- * Read back the EXACT canonical ids and prove the golden flow exists before a
- * single foreign row is moved.
+ * The terminal state phase 2 of the Atelier seed writes once — and only once —
+ * the fixture has passed its own read-back gates. Anything else means the seed
+ * did not finish (a crash leaves phase-1 state: `draft`/`imported`/`pending`).
+ *
+ * Compared EXACTLY and case-sensitively: these are the literals the seed writes
+ * and the literals the Finance routes treat as approved. A mismatch is a refusal,
+ * never a repair.
+ */
+export const CANONICAL_FIXTURE_READY_STATE = Object.freeze({
+  packStatus: 'confirmed',
+  packReadinessStatus: 'ready',
+  statementStatus: 'confirmed',
+  statementReadinessStatus: 'ready',
+  analysisStatus: 'APPROVED',
+});
+
+/** Describe a state column that is not exactly the expected READY literal. */
+function describeStateProblem(
+  subject: string,
+  column: string,
+  observed: FixtureStateColumn,
+  expected: string
+): string | null {
+  if (observed === undefined) {
+    return `${subject}: column "${column}" does not exist in this schema, so READY cannot be proven`;
+  }
+  if (observed === null) {
+    return `${subject}: "${column}" is NULL, expected exactly "${expected}"`;
+  }
+  if (observed !== expected) {
+    return `${subject}: "${column}" is "${observed}", expected exactly "${expected}" — the seed did not finish`;
+  }
+  return null;
+}
+
+/**
+ * Read back the EXACT canonical ids and prove the golden flow exists, is
+ * coherent AND is READY before a single foreign row is moved.
  *
  * The order is not decoration. Quarantine removes everything that is not
  * canonical; if the canonical fixture was never seeded, quarantine leaves the
  * client-facing Finance module EMPTY. This check is the interlock.
+ *
+ * READINESS IS PART OF THE INTERLOCK, not a nicety. A crashed seed leaves the
+ * complete id graph in phase-1 state (`draft`/`imported`/`pending`): every
+ * lineage rule passes and the demo is still not seeded. Quarantining then tidies
+ * up around a fixture that cannot be shown to a client. "Seed first, then
+ * quarantine" means the seed FINISHED.
+ *
+ * NOTE ON THE MESSAGES BELOW: every readback query is filtered to the canonical
+ * ids, so the readback is always a SUBSET of the canonical set. Missing rows are
+ * detectable; extra rows are structurally impossible and no message here claims
+ * to have found one.
  */
 export function verifyCanonicalFixture(
   readback: CanonicalFixtureReadback,
@@ -489,23 +572,53 @@ export function verifyCanonicalFixture(
   // -- pack ------------------------------------------------------------------
   if (!same(ids(readback.packs), [canonical.packId])) {
     violations.push(
-      `expected exactly 1 canonical statement pack (${canonical.packId}), found [${ids(readback.packs).join(', ') || 'none'}]`
+      `the canonical statement pack (${canonical.packId}) is missing from the read-back — read back [${ids(readback.packs).join(', ') || 'nothing'}]`
     );
   }
   for (const pack of readback.packs) {
     if (pack.organizationId !== org) {
       violations.push(`pack ${pack.id} belongs to "${pack.organizationId}", not "${org}"`);
     }
+    const packStatusProblem = describeStateProblem(
+      `pack ${pack.id}`,
+      'pack_status',
+      pack.packStatus,
+      CANONICAL_FIXTURE_READY_STATE.packStatus
+    );
+    if (packStatusProblem) violations.push(packStatusProblem);
+    const packReadinessProblem = describeStateProblem(
+      `pack ${pack.id}`,
+      'pack_readiness_status',
+      pack.packReadinessStatus,
+      CANONICAL_FIXTURE_READY_STATE.packReadinessStatus
+    );
+    if (packReadinessProblem) violations.push(packReadinessProblem);
   }
 
   // -- statements ------------------------------------------------------------
   const expectedStatements = [...canonical.statementIds].sort();
   if (!same(ids(readback.statements), expectedStatements)) {
+    const present = new Set(ids(readback.statements));
     violations.push(
-      `expected exactly 3 canonical statements [${expectedStatements.join(', ')}], found [${ids(readback.statements).join(', ') || 'none'}]`
+      `${expectedStatements.filter((id) => !present.has(id)).length} of the 3 canonical statements ` +
+        `[${expectedStatements.join(', ')}] are missing from the read-back — read back [${ids(readback.statements).join(', ') || 'nothing'}]`
     );
   }
   for (const statement of readback.statements) {
+    const statusProblem = describeStateProblem(
+      `statement ${statement.id}`,
+      'status',
+      statement.status,
+      CANONICAL_FIXTURE_READY_STATE.statementStatus
+    );
+    if (statusProblem) violations.push(statusProblem);
+    const readinessProblem = describeStateProblem(
+      `statement ${statement.id}`,
+      'readiness_status',
+      statement.readinessStatus,
+      CANONICAL_FIXTURE_READY_STATE.statementReadinessStatus
+    );
+    if (readinessProblem) violations.push(readinessProblem);
     if (statement.organizationId !== org) {
       violations.push(
         `statement ${statement.id} belongs to "${statement.organizationId}", not "${org}"`
@@ -524,7 +637,7 @@ export function verifyCanonicalFixture(
     const actual = new Set(readback.values.map((row) => row.id));
     const missingValues = expectedValues.filter((id) => !actual.has(id));
     violations.push(
-      `expected ${expectedValues.length} canonical statement values, found ${readback.values.length}` +
+      `${expectedValues.length} canonical statement values expected, ${readback.values.length} read back` +
         (missingValues.length ? ` (missing ${missingValues.length}, e.g. ${missingValues[0]})` : '')
     );
   }
@@ -540,13 +653,20 @@ export function verifyCanonicalFixture(
   // -- analysis --------------------------------------------------------------
   if (!same(ids(readback.analyses), [canonical.analysisId])) {
     violations.push(
-      `expected exactly 1 canonical analysis (${canonical.analysisId}), found [${ids(readback.analyses).join(', ') || 'none'}]`
+      `the canonical analysis (${canonical.analysisId}) is missing from the read-back — read back [${ids(readback.analyses).join(', ') || 'nothing'}]`
     );
   }
   for (const analysis of readback.analyses) {
     if (analysis.organizationId !== org) {
       violations.push(`analysis ${analysis.id} belongs to "${analysis.organizationId}", not "${org}"`);
     }
+    const analysisStatusProblem = describeStateProblem(
+      `analysis ${analysis.id}`,
+      'status',
+      analysis.status,
+      CANONICAL_FIXTURE_READY_STATE.analysisStatus
+    );
+    if (analysisStatusProblem) violations.push(analysisStatusProblem);
     if (analysis.sourceStatementPackId !== canonical.packId) {
       violations.push(
         `analysis ${analysis.id} is not sourced from the canonical pack (source_statement_pack_id="${analysis.sourceStatementPackId ?? '<null>'}")`
@@ -564,7 +684,7 @@ export function verifyCanonicalFixture(
   // -- model -----------------------------------------------------------------
   if (!same(ids(readback.models), [canonical.modelId])) {
     violations.push(
-      `expected exactly 1 canonical model (${canonical.modelId}), found [${ids(readback.models).join(', ') || 'none'}]`
+      `the canonical model (${canonical.modelId}) is missing from the read-back — read back [${ids(readback.models).join(', ') || 'nothing'}]`
     );
   }
   for (const model of readback.models) {
@@ -589,8 +709,8 @@ export function assertCanonicalFixtureMaterialized(
   const { ok, violations } = verifyCanonicalFixture(readback, organizationId);
   if (ok) return;
   fail(
-    `Refusing to quarantine: the canonical Atelier Finance fixture is not fully materialized in "${normalizeText(organizationId)}". ` +
-      `Run the demo seed FIRST, otherwise the demo Finance module is left empty.\n  - ${violations.join('\n  - ')}`
+    `Refusing to quarantine: the canonical Atelier Finance fixture is not fully materialized and READY in "${normalizeText(organizationId)}". ` +
+      `Run the demo seed FIRST and let it FINISH, otherwise the demo Finance module is left empty or not client-ready.\n  - ${violations.join('\n  - ')}`
   );
 }
 
@@ -606,14 +726,36 @@ export function assertCanonicalFixtureMaterialized(
  *
  * Order-insensitive (everything is sorted) so a different `ORDER BY` between the
  * two reads cannot raise a false alarm.
+ *
+ * THE STATE COLUMNS ARE PART OF THE MATERIAL. Digesting the id graph alone would
+ * mean a demotion of the pack from `ready` to `pending` between the precondition
+ * and COMMIT produces an IDENTICAL digest — the run would quarantine rows around
+ * a fixture that is complete but no longer ready to be the demo. A crashed
+ * re-seed leaves exactly that state, so this is not hypothetical.
  */
 export function computeCanonicalFixtureDigest(readback: CanonicalFixtureReadback): string {
+  // `canonicalJson` maps `undefined` to `null`, which would make "the column does
+  // not exist" and "the column is NULL" hash identically. They are different
+  // facts, so an absent column gets its own token.
+  const state = (value: FixtureStateColumn) => (value === undefined ? '<column-absent>' : value);
+
   const material = {
     packs: (readback.packs || [])
-      .map((row) => [row.id, row.organizationId])
-      .sort((a, b) => a[0].localeCompare(b[0])),
+      .map((row) => [
+        row.id,
+        row.organizationId,
+        state(row.packStatus),
+        state(row.packReadinessStatus),
+      ])
+      .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
     statements: (readback.statements || [])
-      .map((row) => [row.id, row.organizationId, row.statementPackId ?? null])
+      .map((row) => [
+        row.id,
+        row.organizationId,
+        row.statementPackId ?? null,
+        state(row.status),
+        state(row.readinessStatus),
+      ])
       .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
     values: (readback.values || [])
       .map((row) => [row.id, row.statementId])
@@ -624,6 +766,7 @@ export function computeCanonicalFixtureDigest(readback: CanonicalFixtureReadback
         row.organizationId,
         row.sourceStatementPackId ?? null,
         [...(row.sourceStatementIds || [])].sort(),
+        state(row.status),
       ])
       .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
     models: (readback.models || [])
@@ -658,11 +801,16 @@ export function assertCanonicalFixtureUnchanged(params: {
     `values=${readback.values?.length ?? 0} analyses=${readback.analyses?.length ?? 0} ` +
     `models=${readback.models?.length ?? 0}`;
 
+  const sameCounts = count(params.before) === count(params.after);
   fail(
     `The canonical Atelier Finance fixture in "${normalizeText(params.organizationId)}" CHANGED between the ` +
       `precondition and ${params.phase}. Refusing and rolling back — nothing was moved.\n` +
       `  - precondition: ${count(params.before)} (digest ${before})\n` +
       `  - ${params.phase}: ${count(params.after)} (digest ${after})\n` +
+      (sameCounts
+        ? `  The row counts are identical, so what changed is a state column ` +
+          `(status / readiness_status) or a lineage link, not a row.\n`
+        : '') +
       `  Re-run the dry run, confirm the fixture, and start again.`
   );
 }
@@ -749,9 +897,17 @@ export function assertQuarantineOrganizationReusable(
   if (normalizeText(row.name) !== expected.name) {
     problems.push(`name is "${row.name ?? '<null>'}", expected the run marker "${expected.name}"`);
   }
-  const status = normalizeText(row.status).toLowerCase();
-  if (status && status !== 'inactive') {
-    problems.push(`status is "${row.status}", expected "inactive"`);
+  // Exact and case-sensitive, like the `organization_type` marker above: this
+  // script only ever writes the literal 'inactive', so 'INACTIVE' or 'Inactive'
+  // is somebody else's row and must not be waved through.
+  //
+  // NULL is the one accepted alternative, and it means exactly one thing: the
+  // schema has no `status` column, so the read-back maps it to null and the
+  // create path never sets it. An EMPTY string is a present column somebody else
+  // wrote, and is refused. The binding checks are the user/member counts, the
+  // run-marker name and `organization_type = 'DEMO'` — this one is corroboration.
+  if (row.status !== null && row.status !== undefined && normalizeText(row.status) !== 'inactive') {
+    problems.push(`status is "${row.status}", expected exactly "inactive"`);
   }
   if (row.isActive === true) {
     problems.push('is_active is true, expected false');
