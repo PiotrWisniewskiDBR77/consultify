@@ -43,6 +43,9 @@ import { mintToken, pgClient } from './harness.js';
 import { SEED, seed } from './seed.mjs';
 
 const PREFIX = 'odbior--h31--';
+const ORG_B_ID = `${PREFIX}org-b`;
+const USER_B_ID = `${PREFIX}user-b`;
+const USER_B_EMAIL = `${PREFIX}owner-b@acceptance.local`;
 
 function evidence(line: string): void {
   // eslint-disable-next-line no-console
@@ -65,6 +68,35 @@ const createdConclusionIds: string[] = [];
 
 beforeAll(async () => {
   await seed(); // idempotent — org/user/membership odbioru
+  const client = pgClient();
+  await client.connect();
+  try {
+    const now = new Date().toISOString();
+    await client.query(
+      `INSERT INTO organizations (id, name, plan, status, is_active, created_at)
+       VALUES ($1, $2, 'enterprise', 'active', 1, $3)
+       ON CONFLICT (id) DO NOTHING`,
+      [ORG_B_ID, 'H31 cross-tenant org B', now]
+    );
+    await client.query(
+      `INSERT INTO users
+         (id, organization_id, email, password, role, status, first_name, last_name, created_at)
+       VALUES ($1, $2, $3, 'not-used-by-token-auth', 'ADMIN', 'active', 'H31', 'OrgB', $4)
+       ON CONFLICT (id) DO NOTHING`,
+      [USER_B_ID, ORG_B_ID, USER_B_EMAIL, now]
+    );
+    await client.query(
+      `INSERT INTO organization_members
+         (id, organization_id, user_id, role, status, created_at)
+       SELECT $1, $2, $3, 'OWNER', 'ACTIVE', $4
+       WHERE NOT EXISTS (
+         SELECT 1 FROM organization_members WHERE organization_id = $2 AND user_id = $3
+       )`,
+      [`${PREFIX}membership-b`, ORG_B_ID, USER_B_ID, now]
+    );
+  } finally {
+    await client.end();
+  }
   toolsApp = await buildToolsApp();
   token = mintToken();
 }, 60_000);
@@ -89,6 +121,9 @@ afterAll(async () => {
         .catch(() => {});
       await client.query('DELETE FROM tool_sessions WHERE id = ANY($1)', [createdToolSessionIds]);
     }
+    await client.query('DELETE FROM organization_members WHERE organization_id = $1', [ORG_B_ID]);
+    await client.query('DELETE FROM users WHERE id = $1', [USER_B_ID]);
+    await client.query('DELETE FROM organizations WHERE id = $1', [ORG_B_ID]);
   } finally {
     await client.end();
   }
@@ -429,6 +464,43 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
       evidence(
         `[h31] W2 conclusion persisted — conclusions.id=${row.id} status=${row.status} confidenceLevel=${row.confidence_level} statement.length=${row.statement.length}`
       );
+
+      // -----------------------------------------------------------------
+      // 8) TENANT ISOLATION — a real second org cannot read or overwrite the
+      //    session, and cannot see the derived conclusion.
+      // -----------------------------------------------------------------
+      const tokenB = mintToken({
+        id: USER_B_ID,
+        email: USER_B_EMAIL,
+        organizationId: ORG_B_ID,
+        organization_id: ORG_B_ID,
+        role: 'OWNER',
+      });
+      const foreignRead = await request(toolsApp)
+        .get(`/api/tools/${sessionId}`)
+        .set('Authorization', `Bearer ${tokenB}`);
+      expect(foreignRead.status).toBe(404);
+
+      const foreignWrite = await request(toolsApp)
+        .put(`/api/tools/${sessionId}`)
+        .set('Authorization', `Bearer ${tokenB}`)
+        .send({ answers: { summary: { verdict: 'FOREIGN OVERWRITE' } } });
+      expect(foreignWrite.status).toBe(404);
+
+      const foreignConclusions = await client.query(
+        `SELECT id FROM conclusions
+         WHERE organization_id = $1 AND source_module = 'tool'
+           AND source_artifact_refs_json LIKE $2`,
+        [ORG_B_ID, `%${sessionId}%`]
+      );
+      expect(foreignConclusions.rows).toHaveLength(0);
+
+      const ownerAfterAttack = await request(toolsApp)
+        .get(`/api/tools/${sessionId}`)
+        .set('Authorization', `Bearer ${token}`);
+      expect(ownerAfterAttack.status).toBe(200);
+      expect(ownerAfterAttack.body?.answers?.summary?.verdict).toBe(verdict);
+      evidence('[h31] tenant isolation OK — org B read/write 404, no conclusion leak, owner data unchanged');
     } finally {
       await client.end();
     }

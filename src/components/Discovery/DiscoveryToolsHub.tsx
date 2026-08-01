@@ -738,6 +738,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   });
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId, hydrated } =
     useModuleOpenDocuments('tools');
+  const urlOpenAttemptRef = useRef<string | null>(null);
+  const [urlOpenAttemptEpoch, finishUrlOpenAttempt] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [libraryCategoryFilter, setLibraryCategoryFilter] = useState<
     'all' | 'strategic' | 'operational' | 'digital' | 'automation' | 'licensed' | 'other'
@@ -2305,7 +2307,17 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     if (!hydrated) return;
     if (!docIdParam) return;
     if (docIdParam === activeDocumentId) return;
-    void openDocumentById(docIdParam);
+    urlOpenAttemptRef.current = docIdParam;
+    void openDocumentById(docIdParam).finally(() => {
+      if (urlOpenAttemptRef.current === docIdParam) {
+        urlOpenAttemptRef.current = null;
+        // `openDocumentById` may resolve without changing activeDocumentId
+        // (invalid/foreign id). Force one reconciliation pass so that case can
+        // remove the stale parameter; a successful open keeps it because state
+        // and URL now match.
+        finishUrlOpenAttempt((value) => value + 1);
+      }
+    });
     // docIdParam is intentionally the only reactive dependency here — the
     // state->URL direction below owns reacting to activeDocumentId changes;
     // including it here too would cause both effects to fight/re-trigger
@@ -2317,6 +2329,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   useEffect(() => {
     if (!hydrated) return;
     if (docIdParam === (activeDocumentId || null)) return;
+    // On initial hydration URL->state and state->URL effects run in the same
+    // commit. Do not let the still-null state erase a valid deep link while
+    // `openDocumentById` is resolving it asynchronously.
+    if (urlOpenAttemptRef.current === docIdParam) return;
     const next = new URLSearchParams(searchParams);
     if (activeDocumentId) {
       next.set('docId', activeDocumentId);
@@ -2324,7 +2340,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       next.delete('docId');
     }
     setSearchParams(next, { replace: true });
-  }, [hydrated, activeDocumentId, docIdParam, searchParams, setSearchParams]);
+  }, [
+    hydrated,
+    activeDocumentId,
+    docIdParam,
+    searchParams,
+    setSearchParams,
+    urlOpenAttemptEpoch,
+  ]);
 
   useEffect(() => {
     if (!hydrated) return;
