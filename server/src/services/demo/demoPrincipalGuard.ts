@@ -252,9 +252,17 @@ function isLeavingDemo(body: unknown): boolean {
  *
  * What remains is only what lets a session wind itself down or report on itself.
  *
- * NAMING NOTE for review: the packet asked for `POST /api/auth/logout-all`. No
- * such route exists — the equivalent in this codebase is `POST /api/auth/revoke-all`,
- * which revokes the caller's own token families only. That is what is allowlisted.
+ * NO "logout-all" ENTRY, deliberately. `POST /api/auth/revoke-all` was allowlisted
+ * here as the equivalent and that was wrong twice over:
+ *   1. the handler refuses anyone who is not ADMIN/SUPERADMIN, so a demo principal
+ *      (CONSULTANT) gets 403 regardless — the entry granted nothing;
+ *   2. it only writes a marker row into `revoked_tokens`. `RefreshTokenService`
+ *      never reads that table, so a refresh token still rotates into a working
+ *      access token afterwards. The route does not end sessions at all.
+ * Allowlisting it therefore documented a capability the system does not provide.
+ * The underlying defect is tracked in SEC-AUTH-001 and is deliberately NOT fixed
+ * here; nothing in the demo path depends on it, because plain `logout` is the
+ * wind-down operation.
  */
 export const PUBLIC_DEMO_WRITE_ALLOWLIST: ReadonlyArray<{
   method: string;
@@ -264,7 +272,6 @@ export const PUBLIC_DEMO_WRITE_ALLOWLIST: ReadonlyArray<{
   why: string;
 }> = [
   { method: 'POST', path: '/api/auth/logout', why: 'end the session' },
-  { method: 'POST', path: '/api/auth/revoke-all', why: 'end every session (logout-all)' },
   {
     method: 'POST',
     path: '/api/auth/refresh',
@@ -310,10 +317,12 @@ export function isWriteAllowedForPublicDemo(
  * credentials instead of being trapped with a token it can neither use nor drop.
  *
  * Strictly smaller than the live-session allowlist: no refresh (there is nothing
- * left to refresh into) and no demo routes (the session is over). Exact match on
- * the normalized path, same rules as everywhere else.
+ * left to refresh into), no demo routes (the session is over), and no
+ * `revoke-all` — see the note on the write allowlist for why that route cannot
+ * serve as a logout-all. Exact match on the normalized path, same rules as
+ * everywhere else.
  */
-const EXPIRED_DEMO_ALLOWED_PATHS = ['/api/auth/logout', '/api/auth/revoke-all'];
+const EXPIRED_DEMO_ALLOWED_PATHS = ['/api/auth/logout'];
 
 export function isPathAllowedForExpiredDemo(pathname: string): boolean {
   const normalized = normalizeGuardPath(pathname);
