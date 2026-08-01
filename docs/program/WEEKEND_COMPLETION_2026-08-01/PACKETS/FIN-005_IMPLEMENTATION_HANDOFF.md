@@ -121,6 +121,14 @@ rejestry**. Oba zostały zachowane i oba wskazują teraz tę samą historię.
 | `577d28eb5a` | zamknięcie przyczyny duplikatów + trzy zaszyte PLN na ścieżce investment case |
 | `001ced2744` | diagnoza value engine + jawny stan w UI + i18n |
 | `9e96fc1fb9` | polityka spójności + skrypt dry-run/rollback |
+| `061f079a15` | dokładny kontrakt kanonicznych ID (wspólny dla seeda i kwarantanny) |
+| `b0f10179f0` | READY zdobywane dwufazowo: zapis → read-back → promocja |
+| `80f2a2d1a0` | jawny `INCOMPLETE` zamiast cichej degradacji |
+| `1c7762e219` | testy: zero fałszywego READY, odmowa promocji, no-op drugiego przebiegu |
+| `7645d1cd65` | hardening kwarantanny + trwały rollback |
+| `d73bfc58d5` | stale closure waluty w `CreateValuationModal` |
+| `cbe5cad1e3` | audytowana propozycja allowlisty dla bezstanowego value engine |
+| `74995e8159` | `FIN-006` — packet-bloker (waluta międzymodułowa + bramka value engine) |
 
 ## 5. Testy — wykonane i wyniki
 
@@ -191,12 +199,19 @@ stąd osobny pomiar `tsc --noEmit` z porównaniem do baseline.
 
 ## 7. Znane ryzyka i dług
 
-1. **★ Waluta w Initiatives/Execution — do osobnego pakietu.** Inicjatywy
-   Atelier mają `estimated_budget` bez `budget_currency`, a
-   `InitiativeCompactPanel.tsx:901` i `executionBudgetService.ts` renderują
-   twarde `PLN`. Po tej zmianie **ten sam program czyta EUR w Finance i PLN w
-   Initiatives/Execution**. Initiatives/Execution są jawnie poza granicą tego
-   pakietu — musi to być na rejestrze przed pokazaniem demo klientowi.
+1. **★ Waluta w Initiatives/Execution — osobny pakiet: `FIN-006`.**
+   **KOREKTA wcześniejszego zapisu w tym dokumencie:** napisałem, że inicjatywy
+   Atelier nie mają `budget_currency`. To było nieprawdziwe. Migracja
+   `564_execution_delay_budget_t041_t042.sql:139` zakłada kolumnę z
+   `DEFAULT 'PLN'`, a seed jej nie zapisuje — więc **PLN jest utrwalone w bazie**,
+   nie „brakujące". Zmienia to naprawę: zasiane wiersze wymagają `UPDATE`, nie
+   tylko poprawki seeda. Sprawdzone bezpośrednio w migracji i w seedzie.
+   Powierzchnie renderujące twarde `PLN`: `InitiativeCompactPanel.tsx:901` (żywa;
+   `:1335`/`:1341` są martwe dla realnych rekordów), `ExecutionHub.tsx:5496`,
+   `ExecutionSummaryOneLook.tsx:211` oraz `ResourcesSection.tsx` — w tym `:519`,
+   gdzie PLN jest instrukcją w prompcie do LLM. Po tej zmianie **ten sam program
+   czyta EUR w Finance i PLN w Initiatives/Execution**. Szczegóły i opcje
+   naprawy: `FIN-006_CROSS_MODULE_CURRENCY_AND_VALUE_ENGINE.md`.
 2. **Domyślna waluta org.** `valuationService.ts:207` zwraca `PLN`, gdy brak
    `organization_settings.finance`, a seed demo tego wiersza nie pisze. Zapis
    należy do globalnej orkiestracji demo — poza granicą pakietu.
@@ -309,3 +324,165 @@ Przyjąłem EUR i zaznaczam to jawnie, bo to zmiana liczby biznesowej na ekranie
 
 **Powiązana decyzja (ryzyko §7.1):** Initiatives/Execution nadal renderują
 twarde `PLN`. Bez osobnego pakietu ten sam program pokaże klientowi dwie waluty.
+
+## 11. Runda druga — po review kodu i data-ops (2026-08-01)
+
+Recenzja zwróciła osiem punktów P1/P2. Wszystkie wykonane. Kluczowe: **dwa
+defekty w moim własnym kodzie były reprodukowalne na realnym PostgreSQL i miały
+zieloną bramkę testów z mockiem**. Zbudowałem dwie lokalne bazy z pełnym
+zestawem migracji — jedną kompletną, drugą z usuniętymi kolumnami
+`readiness_status`/`readiness_score` (dokładnie ten drift, dla którego istnieje
+migracja `20260628_finance_seed_readiness_fix.sql`) — i zmierzyłem przed/po.
+
+| Bramka | Przed (`061f079a15`) | Po |
+| --- | --- | --- |
+| B — drugi przebieg byte-identical | **RED**: `updated_at` zmieniało się w `financial_statement_packs`, `financial_statements`, `financial_analyses`, `financial_statement_values` | **GREEN**: wszystkie 5 tabel bez zmian bajt w bajt |
+| C — zero fałszywego READY przy drifcie | **RED**: seed zgłaszał SUKCES, 1 pakiet `pack_readiness_status='ready'`, 3 sprawozdania `confirmed/pass` | **GREEN**: seed zwraca `INCOMPLETE`, **zero wierszy zapisanych** |
+| A — round-trip na pełnym schemacie | GREEN | GREEN |
+
+### 11.1 READY zdobywane, nie deklarowane (P1)
+
+Seed pisze w **dwóch fazach**. Faza 1: pakiet `draft`/`pending`, sprawozdania
+`imported`/`pending`/`readiness_score=0`, analiza `DRAFT`, plus wartości.
+Faza 2: **odczyt wierszy z bazy** i dopiero wtedy promocja — per sprawozdanie
+sprawdzana jest dokładna oczekiwana liczba wartości kanonicznych, 100% niepustych
+`canonical_line_id`, jedna waluta i lineage (`statement_pack_id` = kanoniczny
+pakiet, `organization_id` = tenant wywołujący). Werdykt jest **przeliczany
+funkcjami produkcyjnymi** `validateStatement` / `evaluateStatementReadiness` na
+odczytanych wierszach; bez zgody produkcji nie ma promocji. Pakiet awansuje
+dopiero, gdy wszystkie trzy sprawozdania awansowały i analiza wskazuje na pakiet.
+Kolumny promocyjne są wyłączone z `DO UPDATE` fazy 1, więc re-run nie degraduje
+zdrowego fixture'u.
+
+### 11.2 Brak tabeli/kolumny = jawny INCOMPLETE (P1)
+
+`REQUIRED_SCHEMA` jest sondowany na wejściu. Brak czegokolwiek → zwrot
+`{ status: 'incomplete', missing: [...] }` z `logger.warn` i **zerem zapisów**;
+`demoSeedService` wystawia to w wyniku seeda. Ścieżki `continue`/pusty wynik
+zniknęły. Decyzja udokumentowana w kodzie: INCOMPLETE zamiast wyjątku, bo seed
+działa wewnątrz `seedAtelierToysDemoDataset` i wyjątek wywaliłby wszystkie
+pozostałe moduły datasetu demo.
+
+### 11.3 Prawdziwa idempotencja (P2)
+
+Każdy upsert emituje `ON CONFLICT(id) DO UPDATE SET … WHERE <tabela>.kol IS
+DISTINCT FROM excluded.kol OR …`. Przebieg bez zmiany wejścia nie aktualizuje
+żadnego wiersza — potwierdzone porównaniem pełnych snapshotów wierszy
+(z `updated_at`) na realnej bazie.
+
+### 11.4 Kanoniczna własność przez dokładną whitelistę (P1)
+
+`startsWith('<org>--')` usunięte. `getAtelierFinanceCanonicalIds(orgId)` zwraca
+dokładny zbiór ID per tabela (pakiet, 3 sprawozdania, 3 ingest runy, 27 wartości,
+analiza, model); czyta go zarówno seed, jak i skrypt czyszczący, więc nie mogą się
+rozjechać. Testy dowodzą, że stare fixture'y techniczne **z kanonicznym
+prefiksem** (`--financial-model--m16-seed`, `--statement--staging-probe`,
+`--analysis--fixture-01`) są klasyfikowane jako OBCE. Prefiks trafia do raportu
+jako `legacy_prefixed`, nigdy jako ochrona.
+
+### 11.5 Bramka środowiska (P1)
+
+Twarda allowlista fingerprintu (`project/environment/service/host/port/database/org`).
+Każde pole musi być zadeklarowane jawnie — brak defaultów. Denylista produkcji
+działa **przed** allowlistą i odmawia niezależnie od tego, jakie organizacje tam
+istnieją. `--force-org` **usunięty**; jego użycie to twardy błąd z uzasadnieniem.
+
+Zweryfikowane przeze mnie z linii poleceń, nie na słowo agenta:
+
+| Próba | Wynik |
+| --- | --- |
+| `--force-org` | odmowa: flaga usunięta, sprawa out-of-band ma własny pakiet |
+| cel niezadeklarowany | odmowa przed utworzeniem połączenia |
+| pełna deklaracja produkcji (`centerbeam`, env `production`) | odmowa: „never runs against production, regardless of which organizations exist there” |
+| host demo, ale zadeklarowane `staging` | odmowa: cel spoza allowlisty |
+
+⚠ Nazwa serwisu Railway i nazwa bazy w allowliście są przepisane z dokumentacji,
+**niepotwierdzone na żywym połączeniu** (ta gałąź nie może dotykać Railway).
+Tryb awarii jest bezpieczny w obie strony: zła wartość powoduje ODMOWĘ, nigdy
+uruchomienie w niezatwierdzonym miejscu. Codex musi potwierdzić dokładne wartości
+przed pierwszym żywym uruchomieniem.
+
+### 11.6 Kwarantanna i trwały rollback (P1/P2)
+
+Organizacja kwarantanny jest **per-run**. Reuse istniejącej wymaga dokładnie:
+nieaktywna, `organization_type='DEMO'`, marker runu w nazwie, **zero users i zero
+`organization_members`** — inaczej fail closed. Przeniesienie do dowolnego tenanta
+klienta jest niemożliwe (osobny test).
+
+`--write` najpierw czyta z bazy dokładny kanoniczny fixture (1 pakiet /
+3 sprawozdania / pełny zbiór wartości / 1 analiza / 1 model) wraz z lineage
+i odmawia, gdy czegokolwiek brakuje — kwarantanna przed seedem zostawiłaby
+Finance puste.
+
+Trwałość: pełny prior state pobierany `SELECT … FOR UPDATE`, podpisany manifest
+zapisywany do pliku tymczasowego, `fsync`, atomowy `rename` — **przed `COMMIT`**.
+Fault injection zabija proces po `COMMIT`, przed finalnym zapisem manifestu;
+osobny test odtwarza bazę z manifestu `PREPARED`. Rollback weryfikuje sumę
+kontrolną, fingerprint każdego wiersza i własność pakietu, i odmawia, gdy rekord
+zmienił się po kwarantannie. Postconditions cross-org (`statement→pack`,
+`value→statement`, `ingest→statement`, `analysis→pack/statements`,
+`model→pack/analysis`) biegną przed `COMMIT` i po rollbacku; niespójność =
+`ROLLBACK`.
+
+**Nie zrobione świadomie:** brak trwałej tabeli audit/outbox w bazie — wymagałaby
+migracji, która jest poza granicą pakietu. Proponowany DDL jest zapisany w
+skrypcie jako `DURABLE_AUDIT_TABLE_PROPOSAL` z adnotacją „NEEDS MIGRATION”.
+Dziś trwałość opiera się wyłącznie na zfsyncowanym manifeście.
+
+### 11.7 Waluta — stale closure (P2)
+
+EUR dla całego Atelier Toys jest zatwierdzone, więc to już nie jest decyzja.
+Realny defekt: `CreateValuationModal` czytał walutę źródła wewnątrz
+`useCallback`, którego lista zależności pomijała `sources`. Ścieżka, która
+naprawdę pękała, to modal otwarty **z góry zaseedowany**
+(`FinanceHub.tsx:3611`, „zrób wycenę z TEGO modelu”): nic w liście zależności nie
+zmienia się między montowaniem a wysłaniem, więc przeżywał callback z pierwszego
+renderu, `find()` działał na pustych tablicach i payload cicho wracał do `PLN`.
+Lookup przeniesiony do zakresu renderu (`useMemo`). Test dla tej ścieżki był
+czerwony przed poprawką.
+
+Uwaga metodyczna warta zapamiętania: mock `react-i18next` zwracający nowy `t` przy
+każdym renderze unieważnia każdy `useCallback` i czyni defekty typu stale closure
+**strukturalnie niewykrywalnymi**. Testy używają stabilnej tożsamości `t`.
+
+`CreateAnalysisModal` nie miał tego defektu (derywuje w zakresie renderu) —
+dodane testy regresyjne mają zęby: usunięcie zależności czerwieni pierwszy z nich.
+
+### 11.8 Value engine — propozycja, nie zmiana
+
+`Gateway.ts` i `demoGuard.middleware.ts` **nietknięte**. Powstał osobny,
+audytowany moduł z dokładną listą ścieżek. Wszystkie sześć tras value layer jest
+bezstanowych — zweryfikowałem niezależnie, że sześć serwisów ma **zero importów**
+(`grep -cE '^import'` = 0), więc nie mają jak dotknąć bazy. Do zwolnienia
+zaproponowane są **cztery** — tylko te z realnym callerem produkcyjnym;
+`capital/ration` i `value-assurance` zostają zablokowane mimo bycia DB-free.
+Zwolniony jest wyłącznie kanoniczny mount `/api/v8/finance/value/*`, nie alias
+`/finance-value`. Dopasowanie jest **exact-match**, nie `startsWith`, żeby
+przyszłe `appraise-and-save` nie odziedziczyło zwolnienia.
+
+Testy montują **prawdziwy** middleware i prawdziwe routery w kolejności z
+Gateway i dowodzą obu połówek: cztery trasy compute zwracają 200 z realnym
+wynikiem w trybie demo, a trasy zapisujące (`POST /api/v8/finance/models`,
+`/analyses`, zapisy `/api/finance-statements/*`) **nadal zwracają 403
+`DEMO_READ_ONLY`** pod tą samą allowlistą.
+
+Gotowy jednokrokowy diff dla `Gateway.ts` leży w `FIN-006` §B.3.
+
+### 11.9 Bramki po rundzie drugiej
+
+| Bramka | Wynik |
+| --- | --- |
+| targeted FIN-005 backend (16 plików) | **280 PASS** |
+| targeted frontend (22 pliki) | **111 PASS / 6 FAIL** — 6 pre-existing, potwierdzone przeze mnie 6/6 czerwone na `c522a861` w świeżym worktree, identyczne komunikaty |
+| real PostgreSQL round-trip (A) | **PASS** |
+| second-run byte-identical (B) | **PASS** (było RED) |
+| schema-drift negative (C) | **PASS** (było RED) |
+| cleanup fault-injection + cross-tenant | **81 PASS** (policy 58 + skrypt 23) |
+| `tsc --noEmit` backend | **216 przed = 216 po**, diff pusty |
+| `tsc --noEmit` frontend | **0 błędów** |
+| `tsc` na `scripts/` (poza projektowym tsconfig) | **0 błędów** |
+| `npm run build:backend` | **PASS** |
+| `git diff --check` | **PASS** |
+| demo read-only guard | bez regresji — `Gateway.ts` i `demoGuard.middleware.ts` nietknięte |
+
+Nadal bez deployu, bez migracji, bez `--write`, bez mutacji stagingu.
