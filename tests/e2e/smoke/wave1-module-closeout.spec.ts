@@ -143,8 +143,8 @@ test.describe('Wave 1 module closeout smoke', () => {
     { path: '/assessment/overview' },
     { path: '/initiatives' },
     { path: '/execution' },
-    { path: '/kpi-okr', expectedUrl: '/benefits' },
-    { path: '/benefits' },
+    { path: '/kpi-okr', expectedUrl: '/results' },
+    { path: '/benefits', expectedUrl: '/results' },
     { path: '/finance' },
     { path: '/settings/integrations', expectedUrl: '/settings/connected-apps' },
     { path: '/docs' },
@@ -159,4 +159,16 @@ test.describe('Wave 1 module closeout smoke', () => {
       await expect(page).toHaveURL(new RegExp(finalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     });
   }
+
+  test('legacy Results aliases preserve query and hash on the canonical route', async ({ page }) => {
+    await seedAuth(page);
+    await page.goto('/benefits?tab=results_kpi&mode=scorecards&initiativeId=i-1#owner', {
+      waitUntil: 'domcontentloaded',
+    });
+
+    await expect(page).toHaveURL(
+      /\/results\?tab=results_kpi&mode=scorecards&initiativeId=i-1#owner$/
+    );
+    await expect(page.getByText(/Coś poszło nie tak|Something went wrong/i)).toHaveCount(0);
+  });
 });
