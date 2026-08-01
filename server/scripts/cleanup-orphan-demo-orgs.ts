@@ -21,9 +21,12 @@
  *     unless `ALLOW_PROD=true` is ALSO set. demo/staging (TROLLEY) is the target.
  *   - Before any delete it writes a full JSON backup (org rows + every dependent
  *     row it will touch) under server/_backup/.
- *   - Only orgs whose id matches `demo-org-session-%` are ever considered. A
+ *   - Only orgs whose id matches `${DEMO_ORG_ID}-session-%` are ever considered
+ *     (pattern derived from the SAME env var demoSessionService uses). A
  *     belt-and-braces guard also refuses any target whose name is NOT the
  *     expected ephemeral name unless `--allow-any-name` is passed.
+ *   - The curated base org (`DEMO_ORG_ID`) is never a target, and orgs backing an
+ *     ACTIVE unexpired `demo_sessions` row are skipped unless `--include-active`.
  *
  * FK topology (verified on pg18 parity dump 2026-07-19):
  *   organizations.id is referenced by 164 FKs — 129 ON DELETE CASCADE (auto),
@@ -72,8 +75,16 @@ const log = {
   step: (m: string) => console.log(`${colors.dim}  → ${m}${colors.reset}`),
 };
 
-const ORG_ID_PATTERN = 'demo-org-session-%';
-const EXPECTED_NAME = 'Atelier Toys';
+/**
+ * Session org ids are built by demoSessionService.makeSessionOrgId() as
+ * `${DEMO_ORG_ID}-session-<user>-<ts>`. The pattern MUST be derived from the same
+ * env var: demo/staging examples set `DEMO_ORG_ID=atelier`, and a hardcoded
+ * `demo-org-session-%` silently matched nothing there — a cleanup that reports
+ * "already clean" while ephemeral orgs keep accumulating (OPS-DEMO-002 §5).
+ */
+const DEMO_ORG_ID = process.env.DEMO_ORG_ID || 'demo-org';
+const ORG_ID_PATTERN = `${DEMO_ORG_ID}-session-%`;
+const EXPECTED_NAME = process.env.DEMO_ORG_NAME || 'Atelier Toys';
 
 function parseArgs(argv: string[]) {
   return {
@@ -84,6 +95,12 @@ function parseArgs(argv: string[]) {
       const n = i >= 0 ? Number(argv[i + 1]) : NaN;
       return Number.isFinite(n) && n > 0 ? n : undefined;
     })(),
+    /**
+     * Keep orgs that still back an ACTIVE, unexpired `demo_sessions` row. Without
+     * this the operator tool can delete the workspace of a prospect who is mid-demo.
+     * Pass `--include-active` only for a deliberate full wipe.
+     */
+    includeActive: argv.includes('--include-active'),
   };
 }
 
@@ -165,7 +182,7 @@ async function main() {
   try {
     // 1) Resolve targets.
     const limitSql = args.limit ? ` LIMIT ${args.limit}` : '';
-    const targets = await q<{ id: string; name: string | null; created_at: string | null }>(
+    let targets = await q<{ id: string; name: string | null; created_at: string | null }>(
       client,
       `SELECT id, name, created_at FROM organizations
         WHERE id LIKE $1
@@ -176,6 +193,44 @@ async function main() {
     if (!targets.length) {
       log.ok(`No organizations match ${ORG_ID_PATTERN}. Nothing to clean. (DB is already clean of K7 residue.)`);
       return;
+    }
+
+    // Never touch the curated base org itself, whatever the pattern matches.
+    const selfReferential = targets.filter((t) => t.id === DEMO_ORG_ID);
+    if (selfReferential.length) {
+      throw new Error(
+        `Refusing: the pattern matched the curated base org ${DEMO_ORG_ID} itself. Aborting to protect the demo dataset.`
+      );
+    }
+
+    // Live-session guard: an org that still backs an active, unexpired demo session
+    // belongs to somebody currently walking through the demo.
+    let live = new Set<string>();
+    if (!args.includeActive) {
+      const hasSessions = await q<{ n: string }>(
+        client,
+        `SELECT COUNT(*)::int AS n FROM information_schema.tables WHERE table_name = 'demo_sessions'`
+      );
+      if (Number(hasSessions[0]?.n || 0) > 0) {
+        const activeRows = await q<{ session_org_id: string }>(
+          client,
+          `SELECT DISTINCT session_org_id
+             FROM demo_sessions
+            WHERE status = 'active'
+              AND expires_at > $1
+              AND session_org_id = ANY($2::text[])`,
+          [new Date().toISOString(), targets.map((t) => t.id)]
+        );
+        live = new Set(activeRows.map((r) => r.session_org_id));
+      }
+      if (live.size) {
+        log.warn(`Skipping ${live.size} org(s) with an ACTIVE unexpired demo session (use --include-active to override).`);
+        targets = targets.filter((t) => !live.has(t.id));
+      }
+      if (!targets.length) {
+        log.ok('Every matching org is still in an active demo session. Nothing to clean.');
+        return;
+      }
     }
 
     // Name guard.
