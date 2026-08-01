@@ -2423,7 +2423,14 @@
         "sla": "SLA"
       },
       "linkedTask": "Powiązane zadanie",
-      "linkedDecision": "Powiązana decyzja"
+      "linkedDecision": "Powiązana decyzja",
+      "lineageSource": "Źródło",
+      "lineageSourceTask": "Zadanie źródłowe",
+      "lineageRecipient": "Odbiorca",
+      "lineageOrganization": "Organizacja",
+      "lineageUpdated": "Zaktualizowano",
+      "lineageSourceStatus": "Status źródła",
+      "lineageInitiative": "Inicjatywa"
     },
     "notificationDetail": {
       "toastError": "Nie znaleziono powiadomienia",
@@ -3335,6 +3342,13 @@
       "viewSourceInMindmap": "Pokaż źródło w mapie →",
       "viewSource": "Pokaż źródło →",
       "taskStarted": "Rozpoczęto zadanie",
+      "acceptFlowSuccess": "Zadanie rozpoczęte — Skrzynka zaktualizowana",
+      "acceptFlowError": "Nie udało się rozpocząć zadania",
+      "inboxCloseRecoveryTitle": "Zadanie rozpoczęte — synchronizacja Skrzynki w toku",
+      "inboxCloseRetry": "Ponów synchronizację Skrzynki",
+      "inboxCloseRecoveryBody": "Zadanie zostało poprawnie zaktualizowane, ale zamknięcie jego elementu w Skrzynce się nie powiodło. Ponowienie jest bezpieczne — nigdy nie zduplikuje aktualizacji zadania.",
+      "inboxCloseUnsupportedTitle": "Synchronizacja Skrzynki niedostępna dla tej organizacji",
+      "inboxCloseUnsupportedBody": "Samo zadanie zostało zaktualizowane poprawnie. Ta organizacja nie obsługuje jeszcze automatycznego zamykania Skrzynki, więc nie ma tu nic do ponowienia.",
       "start": "Rozpocznij",
       "sentToReview": "Wysłano do przeglądu",
       "sendToReview": "Do przeglądu",

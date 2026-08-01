@@ -27,6 +27,8 @@ const MOCK_TABLE_FALLBACK_COLUMNS: Record<string, string[]> = {
     'delegated_by',
     'delegation_notes',
     'metadata_json',
+    'source_status',
+    'initiative_id',
     'created_at',
     'updated_at',
     'resolved_at',

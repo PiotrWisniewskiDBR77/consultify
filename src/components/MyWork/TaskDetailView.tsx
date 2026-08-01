@@ -67,6 +67,7 @@ import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Api } from '@/services/api';
+import { V8MyWorkApi } from '@/services/api/v8/my-work';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { InitiativeService } from '@/services/initiativeService';
 import { useAppStore } from '@/store/useAppStore';
@@ -214,6 +215,15 @@ function useTaskCardContractEnabled(): boolean {
     return false;
   }, []);
 }
+
+// M1 primary CTA icon while the accept/mark-in-progress golden flow (Step 1
+// task PUT + Step 2 Inbox close) is in flight. `NModeHeaderPrimaryAction.icon`
+// is rendered as `<Icon size={16} />` with no className passthrough, so a
+// plain `Loader2` wouldn't spin — this tiny wrapper supplies `animate-spin`.
+const AcceptFlowSpinnerIcon: React.FC<{ size?: number; className?: string }> = ({
+  size,
+  className,
+}) => <Loader2 size={size} className={`animate-spin ${className || ''}`} />;
 
 // Status configuration
 const STATUS_CONFIG = {
@@ -370,6 +380,13 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [saving, setSaving] = useState(false);
   const [lastSavedSnapshot, setLastSavedSnapshot] = useState<string>('');
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+
+  // ── Golden flow: accept assignment / mark in-progress (MW-CORE-002/003) ──
+  // Four honest outcomes for the Task-assigned → Inbox → accept flow's ONE
+  // allowed action — see `handleAcceptAssignment`/`runInboxClose` below.
+  const [acceptFlowState, setAcceptFlowState] = useState<
+    'idle' | 'in-flight' | 'recovery-required' | 'unsupported'
+  >('idle');
 
   // Form State
   const [title, setTitle] = useState('');
@@ -805,6 +822,13 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     } else {
       resetForm();
     }
+  }, [taskId]);
+
+  // Ephemeral accept-flow banner state (recovery-required/unsupported) must
+  // not leak across tasks if this component instance is reused for a
+  // different taskId.
+  useEffect(() => {
+    setAcceptFlowState('idle');
   }, [taskId]);
 
   useEffect(() => {
@@ -1645,6 +1669,81 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const isDone = status === 'done';
   const isDecisionBlocked = Boolean(blockedByDecisionId);
 
+  // ── Golden flow: accept assignment / mark in-progress ─────────────────────
+  // MW-CORE-002/003's ONE allowed action for Task-assigned → Inbox item →
+  // accept/in-progress → Inbox closes. Step 1 is a dedicated write through
+  // the canonical `PUT /api/tasks/:id` (Api.updateTask → TaskController,
+  // capability-checked, real read-back) — deliberately NOT the
+  // `Api.updatePersonalTask` autosave path used by the general Save button
+  // elsewhere in this file, so Step 2 (Inbox close) can trust a real,
+  // server-confirmed status before it ever runs. Four honest outcomes, no
+  // optimistic success anywhere:
+  //   failure            — Step 1 rejects: error toast only, nothing else changes.
+  //   success            — Step 1 confirmed AND Step 2 resolves (closed /
+  //                         already_closed / not_materialized all count):
+  //                         status set from the real read-back, success toast,
+  //                         cross-tab refresh via the existing emitMyWorkEvent bus.
+  //   recovery-required  — Step 1 confirmed, Step 2 rejects with anything other
+  //                         than V8_ORG_DISABLED/not_configured: amber banner,
+  //                         "Retry Inbox sync" re-runs ONLY Step 2, never Step 1.
+  //   unsupported        — Step 2 rejects with V8_ORG_DISABLED (org has no v8
+  //                         Inbox path — the router's v8OrgGate already fails
+  //                         closed before the handler runs): distinct banner,
+  //                         no retry — retrying can't change an unsupported org.
+  const runInboxClose = useCallback(
+    async (id: string) => {
+      try {
+        await V8MyWorkApi.closeInboxTaskItem(id);
+        setAcceptFlowState('idle');
+        toast.success(
+          t('myWork.taskDetail.acceptFlowSuccess', 'Task started — Inbox updated')
+        );
+        emitMyWorkEvent({ type: 'item:triaged', entityType: 'inbox', entityId: id });
+        emitMyWorkEvent({ type: 'item:updated', entityType: 'task', entityId: id });
+      } catch (error: any) {
+        const code = error?.data?.code;
+        if (code === 'V8_ORG_DISABLED' || code === 'not_configured') {
+          setAcceptFlowState('unsupported');
+        } else {
+          console.error('[TaskDetailView] Inbox close (Step 2) failed', error);
+          setAcceptFlowState('recovery-required');
+        }
+      }
+    },
+    [t, emitMyWorkEvent]
+  );
+
+  const handleAcceptAssignment = useCallback(async () => {
+    if (!taskId || acceptFlowState === 'in-flight') return;
+    const previousStatus = status;
+    setAcceptFlowState('in-flight');
+
+    let readBackStatus: string | undefined;
+    try {
+      const updated = await Api.updateTask(taskId, { status: 'in_progress' });
+      readBackStatus = updated?.status;
+    } catch (error) {
+      // failure state — nothing else changes, no banner.
+      console.error('[TaskDetailView] Accept assignment (Step 1) failed', error);
+      toast.error(t('myWork.taskDetail.acceptFlowError', 'Failed to start task'));
+      setAcceptFlowState('idle');
+      return;
+    }
+
+    // Step 1 confirmed — reflect the REAL read-back status, never optimistic.
+    const nextStatus = (readBackStatus || 'in_progress') as keyof typeof STATUS_CONFIG;
+    setStatus(nextStatus);
+    if (previousStatus === 'blocked') setBlockedReason('');
+    addActivityLogEntry(
+      'status_change',
+      t('myWork.taskDetail.taskStarted', 'Task started'),
+      previousStatus,
+      nextStatus
+    );
+
+    await runInboxClose(taskId);
+  }, [taskId, status, acceptFlowState, t, runInboxClose]);
+
   // Single M1 primary CTA driven by lifecycle status (Formuła §M1 / wzorzec
   // Decision `DecisionDetailView.tsx:5041` — "Approve = M1 primary … workflow
   // keeps secondary actions"). Exactly one forward-progress action lives in
@@ -1653,19 +1752,36 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const taskPrimaryAction = useMemo(() => {
     if (readMode) return undefined;
     if (status === 'todo' || status === 'blocked') {
+      // Golden flow only applies to an already-persisted task (the realistic
+      // case — an Inbox-sourced item always has one). A brand-new, unsaved
+      // draft has no taskId yet to PUT against, so it keeps the previous
+      // local-only behavior until first Save.
+      if (!taskId) {
+        return {
+          label: { en: 'Start', pl: 'Rozpocznij' },
+          icon: Play,
+          onClick: () => {
+            const old = status;
+            setStatus('in_progress');
+            if (status === 'blocked') setBlockedReason('');
+            addActivityLogEntry(
+              'status_change',
+              t('myWork.taskDetail.taskStarted', 'Task started'),
+              old,
+              'in_progress'
+            );
+          },
+        };
+      }
+      const inFlight = acceptFlowState === 'in-flight';
       return {
-        label: { en: 'Start', pl: 'Rozpocznij' },
-        icon: Play,
+        label: inFlight
+          ? { en: 'Starting…', pl: 'Uruchamianie…' }
+          : { en: 'Start', pl: 'Rozpocznij' },
+        icon: inFlight ? AcceptFlowSpinnerIcon : Play,
+        disabled: inFlight,
         onClick: () => {
-          const old = status;
-          setStatus('in_progress');
-          if (status === 'blocked') setBlockedReason('');
-          addActivityLogEntry(
-            'status_change',
-            t('myWork.taskDetail.taskStarted', 'Task started'),
-            old,
-            'in_progress'
-          );
+          void handleAcceptAssignment();
         },
       };
     }
@@ -1717,7 +1833,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     }
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [readMode, status, t]);
+  }, [readMode, status, t, taskId, acceptFlowState, handleAcceptAssignment]);
 
   // ── Risk helpers (matching Decision pattern) ──────────────────────────────
   const riskLevelOptions = useMemo(() => ['low', 'medium', 'high', 'critical'] as const, []);
@@ -5423,6 +5539,53 @@ Return ONLY the final comment text.`;
                         'Describe blocking reason...'
                       )}
                     />
+                  </div>
+                )}
+
+                {/* ── Golden flow (MW-CORE-002/003): accept/mark-in-progress →
+                    Inbox close banners. Transient, same tier as the
+                    deadline/blocked banners above — not a permanent chrome
+                    element. Distinct from each other on purpose: amber +
+                    retry when the close itself is recoverable (the Task
+                    transition already succeeded), plain info + no retry when
+                    the org simply doesn't support the v8 Inbox path — a
+                    retry cannot fix that one. ── */}
+                {acceptFlowState === 'recovery-required' && (
+                  <div className="mb-3">
+                    <Callout
+                      variant="warning"
+                      title={t(
+                        'myWork.taskDetail.inboxCloseRecoveryTitle',
+                        'Task started — Inbox sync pending'
+                      )}
+                      action={{
+                        label: t('myWork.taskDetail.inboxCloseRetry', 'Retry Inbox sync'),
+                        onClick: () => {
+                          if (taskId) void runInboxClose(taskId);
+                        },
+                      }}
+                    >
+                      {t(
+                        'myWork.taskDetail.inboxCloseRecoveryBody',
+                        'The task was updated successfully, but closing its Inbox item failed. Retrying is safe — it will never duplicate the task update.'
+                      )}
+                    </Callout>
+                  </div>
+                )}
+                {acceptFlowState === 'unsupported' && (
+                  <div className="mb-3">
+                    <Callout
+                      variant="info"
+                      title={t(
+                        'myWork.taskDetail.inboxCloseUnsupportedTitle',
+                        'Inbox sync not available for this organization'
+                      )}
+                    >
+                      {t(
+                        'myWork.taskDetail.inboxCloseUnsupportedBody',
+                        'The task itself was updated normally. This organization does not yet support automatic Inbox closing, so there is nothing to retry here.'
+                      )}
+                    </Callout>
                   </div>
                 )}
 

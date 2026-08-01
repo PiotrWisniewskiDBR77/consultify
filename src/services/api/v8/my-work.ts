@@ -70,6 +70,19 @@ export interface V8CanonicalInboxItem {
   delegatedBy?: string;
   delegationNotes?: string;
   metadata?: Record<string, unknown>;
+  /**
+   * Status of the SOURCE task/decision at materialization time — distinct
+   * from this inbox item's own triage `status` above. Copied at upsert time
+   * (server: inboxService.ts rowToItem), not a live join. Always undefined
+   * for notification-sourced items. Genuinely optional/nullable.
+   */
+  sourceStatus?: string;
+  /**
+   * initiative_id of the SOURCE task/decision, copied at materialization
+   * time. Always undefined for notification-sourced items. Genuinely
+   * optional/nullable.
+   */
+  initiativeId?: string;
   createdAt: string;
   updatedAt?: string;
   resolvedAt?: string;
@@ -267,6 +280,27 @@ export const V8MyWorkApi = {
     params?: Record<string, unknown>;
     aiItems?: Array<{ itemKey: string; confidence?: number | null }>;
   }) => v8Post<V8InboxBulkTriageResult>('/my-work/inbox/bulk-triage', body),
+  /**
+   * Golden-flow Inbox close, keyed by the Task (source of truth) — Step 2 of
+   * Task-assigned → Inbox item → accept/in-progress → Inbox closes.
+   * `taskId`, not the inbox item id: server re-reads the task and derives
+   * ownership/org from the auth context, never trusting the caller. The
+   * optional `expectedStatus` lets a caller assert the status it just read
+   * back from Step 1, surfacing a 409 (INBOX_CLOSE_STATE_MISMATCH) if the
+   * task changed underneath it instead of silently closing against stale
+   * state. See server/src/routes/v8/my-work.routes.ts
+   * `POST /inbox/tasks/:taskId/close` — errors carry `.data.code` (e.g.
+   * `V8_ORG_DISABLED`, `INBOX_CLOSE_FORBIDDEN`, `INBOX_CLOSE_STATE_MISMATCH`,
+   * `INBOX_CLOSE_RECOVERY_REQUIRED`) via the shared `handleResponse` error
+   * shape (`err.status` / `err.data`).
+   */
+  closeInboxTaskItem: (taskId: string, body?: { expectedStatus?: string }) =>
+    v8Post<{
+      success: boolean;
+      taskId: string;
+      status: 'closed' | 'already_closed' | 'not_materialized';
+      inboxItem: V8CanonicalInboxItem | null;
+    }>(`/my-work/inbox/tasks/${encodeURIComponent(taskId)}/close`, body),
   aiAssistInboxItem: (body: {
     language?: string;
     item: {
