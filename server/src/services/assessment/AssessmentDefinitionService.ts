@@ -180,6 +180,37 @@ export async function getDefinitionById(
   return row ? mapRow(row) : null;
 }
 
+/**
+ * ASM-001A: returns a definition ONLY if it is published — used by the
+ * POST /api/v8/assessment create-path to validate a `definitionId`/
+ * `definitionVersion` pair supplied by the Library tab before an assessment
+ * is allowed to bind to it. Narrow/additive: unlike `listDefinitionVersions`,
+ * this filters out draft/deprecated rows instead of leaving that check to callers.
+ * Definitions are global (not org-scoped) by design — same as every other
+ * method in this service.
+ */
+export async function getPublishedDefinition(
+  methodologyId: string,
+  version?: string
+): Promise<AssessmentDefinitionRecord | null> {
+  await ensureSchema();
+  const normalizedMethodologyId = normalizeMethodologyId(methodologyId);
+  const normalizedVersion = version === undefined || version === null ? undefined : String(version).trim();
+
+  if (normalizedVersion) {
+    const row = await queryHelpers.queryOne(
+      `SELECT *
+         FROM assessment_definitions
+        WHERE methodology_id = ? AND version = ? AND status = 'published'
+        LIMIT 1`,
+      [normalizedMethodologyId, normalizedVersion]
+    );
+    return row ? mapRow(row) : null;
+  }
+
+  return getPublishedDefinitionByMethodology(normalizedMethodologyId);
+}
+
 export async function createDraftDefinitionVersion(input: {
   methodologyId: string;
   version: string;
@@ -273,6 +304,7 @@ const AssessmentDefinitionService = {
   ensurePublishedDefinition,
   listDefinitionVersions,
   getDefinitionById,
+  getPublishedDefinition,
   createDraftDefinitionVersion,
   publishDefinitionVersion,
 };
