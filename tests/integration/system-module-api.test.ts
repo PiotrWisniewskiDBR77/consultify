@@ -41,9 +41,13 @@ describe('systemHealth.routes', () => {
     app.use('/api/system-health', systemHealthRouter);
   });
 
-  it('GET /api/system-health returns mocked health', async () => {
-    const res = await request(app).get('/api/system-health').expect(200);
-    expect(res.body.status).toBe('ok');
+  it('GET /api/system-health (base route) is gone — SEC-PUB-002', async () => {
+    // It was the router's only route without verifySuperAdmin and it called the
+    // same getDetailedHealth() as the guarded /detailed, so it served host,
+    // runtime, database and AI-provider detail to anonymous callers. Deleted as a
+    // duplicate; the guarded /detailed is the surviving surface.
+    const res = await request(app).get('/api/system-health');
+    expect(res.status).toBe(404);
   });
 
   it('GET /api/system-health/detailed works with mocked superadmin middleware', async () => {

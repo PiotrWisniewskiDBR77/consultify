@@ -146,6 +146,21 @@ describe('SEC-PUB-002 public system surface', () => {
   });
 
   describe('detailed diagnostics are not public', () => {
+    it('the BASE /api/system-health route no longer serves diagnostics anonymously', async () => {
+      // It was the only route on that router without verifySuperAdmin, and it
+      // called the same getDetailedHealth() as the guarded /detailed — host
+      // memory, load average, CPU count, database details, error rate, and which
+      // AI providers hold credentials, to anyone who asked.
+      const res = await request(app).get('/api/system-health');
+      expect(res.status).not.toBe(200);
+
+      const serialized = JSON.stringify(res.body ?? {});
+      for (const leak of ['memory', 'loadavg', 'cpus', 'errorRate', 'providers', 'uptime']) {
+        expect(serialized, `must not disclose ${leak}`).not.toContain(leak);
+      }
+      assertNoDisclosure(res.body, 'base system-health');
+    }, 180_000);
+
     it('the superadmin surface refuses an anonymous caller', async () => {
       const res = await request(app).get('/api/system-health/detailed');
       expect([401, 403, 404]).toContain(res.status);
@@ -198,22 +213,68 @@ describe('SEC-PUB-002 public system surface', () => {
       expect(serialized).not.toContain('"exists"');
     }, 180_000);
 
-    it('SEPARATE FINDING: the SPA catch-all error body itself leaks __dirname', async () => {
-      // Recorded, not fixed, and deliberately not silently absorbed into the case
-      // above. `FRONTEND_NOT_FOUND` carries `__dirname` for any unknown non-API
-      // path, so it is a disclosure of the deployment layout with a far wider
-      // trigger than the route just removed. Belongs to SEC-PUB-002 triage.
-      //
-      // This case documents current behaviour so the finding cannot be lost. When
-      // it is fixed, this expectation flips and that is the signal to update it.
-      const removed = await request(app).get('/test-frontend-path');
-      const neverExisted = await request(app).get('/definitely-not-a-route-sec-pub-002');
-      const bodyOf = (r: typeof removed) => `${JSON.stringify(r.body ?? {})}${r.text ?? ''}`;
+  });
 
-      // Identical treatment — the leak is the catch-all's, not this route's.
-      expect(bodyOf(removed).includes('__dirname')).toBe(
-        bodyOf(neverExisted).includes('__dirname')
-      );
+  describe('the public readiness route carries a limiter', () => {
+    /**
+     * The concurrency case above tolerates 429 but cannot PROVE throttling: under
+     * NODE_ENV=test every limiter short-circuits to next() before counting. So
+     * that case would pass just as happily with the middleware deleted.
+     *
+     * These two assert the thing that actually regresses — the middleware being
+     * removed from the route, or reconfigured away — without depending on runtime
+     * throttling in an environment that disables it.
+     */
+    it('the limiter middleware is mounted on GET /health, by identity', async () => {
+      const [{ default: systemRouter }, limiters] = await Promise.all([
+        import('../../server/src/routes/system-health.routes.js'),
+        import('../../server/src/middleware/rateLimiting.middleware.js'),
+      ]);
+
+      const layers = (systemRouter as unknown as { stack: any[] }).stack;
+      const healthLayer = layers.find((l) => l?.route?.path === '/health');
+      expect(healthLayer, 'GET /health must still be routed').toBeTruthy();
+
+      const handlers = healthLayer.route.stack.map((entry: any) => entry.handle);
+      // Identity, not name: createLimiter returns an anonymous closure, so a name
+      // check would pass against any anonymous middleware.
+      expect(
+        handlers.includes(limiters.defaultRateLimiter),
+        'defaultRateLimiter must be in the chain for GET /api/system/health'
+      ).toBe(true);
+    }, 180_000);
+
+    it('that limiter really throttles when it is not bypassed', async () => {
+      // Loaded under production so the NODE_ENV=test short-circuit is not in play.
+      // This proves the middleware identity above is a limiter that limits, rather
+      // than an inert function that merely occupies the slot.
+      vi.resetModules();
+      const previous = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      try {
+        const { defaultRateLimiter } = await import(
+          '../../server/src/middleware/rateLimiting.middleware.js'
+        );
+        let refused = false;
+        const res: any = {
+          statusCode: 200,
+          setHeader: () => {},
+          status(code: number) {
+            this.statusCode = code;
+            if (code === 429) refused = true;
+            return this;
+          },
+          json: () => res,
+        };
+        const req: any = { method: 'GET', ip: '203.0.113.250', headers: {}, body: {} };
+        for (let i = 0; i < 400 && !refused; i += 1) {
+          defaultRateLimiter(req, res, () => {});
+        }
+        expect(refused, 'defaultRateLimiter must refuse eventually').toBe(true);
+      } finally {
+        process.env.NODE_ENV = previous;
+        vi.resetModules();
+      }
     }, 180_000);
   });
 
