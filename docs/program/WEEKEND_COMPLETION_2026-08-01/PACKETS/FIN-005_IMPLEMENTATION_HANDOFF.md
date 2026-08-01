@@ -1680,9 +1680,106 @@ brakuje, nic nie zbędne.
    decyzją 4 Piotra.
 6. Wcześniej otwarte pozycje (§16.7) bez zmian.
 
-**Status: AWAITING_CODEX_REVIEW.** Working tree czysty, `HEAD fac1389bf9`, nic
-nie wypchnięte, nic niescalone, żaden `--write`/`--rollback`/mutacja Railway
-nie został uruchomiony — wyłącznie lokalne bazy scratch (`fin005_pri`,
-`fin005_rep`), posprzątane po weryfikacji. Gałąź NIE jest deklarowana jako
-ostatecznie zaakceptowana — decyzję o statusie `FROZEN_FOR_INTEGRATION`/
-merge podejmie Codex.
+**Status rundy 9: AWAITING_CODEX_REVIEW** (HEAD `fac1389bf9`) — **Codex
+przejrzał i zwrócił FIX; patrz §19.**
+
+---
+
+## 19. Codex review — FIX (2026-08-01)
+
+Werdykt Codeksu dla HEAD `86d4031c7c`: **FIX**. Dwa blockery.
+
+### 19.1 Blocker 1 — fałszywy raport czystego drzewa
+
+Raport rundy 9 deklarował czyste drzewo na `86d4031c7c`, ale worktree NIE
+było czyste: zlecony wcześniej follow-up task (`task_c16e5c67`, „Surface the
+Atelier implementation-lag missing-assumption marker") został uruchomiony
+przez Piotra w OSOBNEJ sesji, która działała w TYM SAMYM współdzielonym
+worktree (`/private/tmp/fin005-atelier`) i zostawiła niezacommitowaną pracę
+na wierzchu mojego „czystego" HEAD-a — nierozkazana runda 10.
+
+**Naprawione dokładnie tak, jak zażądał Codex — praca zabezpieczona, nie
+usunięta:**
+```
+git checkout -b wip/fin-005-assumption-caveats-r10
+git add -A && git commit ...
+git checkout fix/fin-005-atelier-coherence   # HEAD wraca do 86d4031c7c, drzewo czyste
+```
+Gałąź `wip/fin-005-assumption-caveats-r10` niesie 7 plików (`assumptionCaveats.ts`
++ test, zmiany w `finance.routes.ts`/`.test.ts`, `atelierFinanceGoldenFlowCompleteness.test.ts`,
+`atelierFinanceSeed.ts`, handoff doc) — **nie scalona z FIN-005**, zgodnie z
+instrukcją: widoczność caveat opóźnienia wdrożenia zostaje osobnym follow-upem
+(decyzja Piotra, runda 9, punkt 4 — „nie buduj teraz prototypu UI").
+`fix/fin-005-atelier-coherence` zweryfikowana z powrotem na `86d4031c7c`,
+`git status --short` pusty.
+
+### 19.2 Blocker 2 — golden flow musiał failować closed bez jawnej stopy
+
+`GET /models/:modelId/appraisal` poprawnie zwracał 400 bez `discountRatePct`.
+Ale `resolveAtelierAppraisalRates()` w `atelierFinanceSeed.ts` nadal wracała
+do `ATELIER_CANONICAL_DISCOUNT_RATE_PCT`, gdy `assumptions_json` nie miał
+prawidłowej stopy — pozwalając `verifyAtelierFinanceGoldenFlowComplete()`
+zwrócić `goldenFlowComplete: true` na twardej stałej akceptacyjnej, dokładnie
+to, przed czym miał chronić własny inwariant rundy 9 („nigdy nie na sztywno").
+
+**Naprawione — wyłącznie bramka kompletności, nic więcej:**
+`resolveAtelierAppraisalRates()` zwraca teraz rozróżnialny wynik
+`{ok:true, discountRatePct, hurdleRatePct} | {ok:false, reason}` zamiast
+kiedykolwiek podstawiać stałą:
+- brak/nie-liczba `assumptions_json.discountRatePct` → `{ok:false}` →
+  `goldenFlowComplete=false`, `reason` nazywa brakującą stopę wprost;
+- nieudany odczyt modelu (`getModel()` rzuca) → `{ok:false}` →
+  `goldenFlowComplete=false`, `reason` niesie oryginalny błąd;
+- `hurdleRatePct` WOLNO domyślnie równać się jawnie odczytanemu
+  `discountRatePct` (wyjątek dozwolony przez Codeksa) — tylko sam
+  `discountRatePct` nigdy nie jest wymyślany;
+- `ATELIER_CANONICAL_DISCOUNT_RATE_PCT` zachowuje DOKŁADNIE jedną rolę:
+  wartość, którą `upsertAtelierRoiFinancialModel()` zasiewa do
+  `assumptions_json` pierwszy raz. Zero roli w akceptacji — przypięte testem
+  strukturalnym skanującym źródło `resolveAtelierAppraisalRates()`.
+
+Żadna migracja, żadna zmiana daty zdarzenia, żaden UI, żaden inny
+`event_type` — dokładnie zakres, o który poprosił Codex.
+
+**6 wymaganych testów** w `atelierFinanceGoldenFlowCompleteness.test.ts`:
+(1) jawna stopa → dokładne nowe liczby (NPV przy 7%/6% = 6 179 065,99 EUR,
+policzone przez jednorazowy sondaż realnego silnika, nie zgadnięte —
+pierwsza wersja tej asercji miała ZŁĄ liczbę, złapaną przed commitem
+właśnie przez ten sondaż); (2) brak `discountRatePct` → `false`; (3)
+`discountRatePct` obecny, ale nie-liczba, 7 kształtów złej wartości
+(string/null/bool/tablica/obiekt/NaN/Infinity) → `false`; (4) odczyt modelu
+zawodzi → `false` (z sekwencjonowanym mockiem `dbGet`, żeby własny odczyt
+`computeModel()` nadal się udał, a zawiódł tylko odczyt stopy); (5) bramka
+strukturalna „nigdy nie ma fallbacku"; (6) `hurdleRatePct` domyślnie =
+jawnie odczytany `discountRatePct`. Siódmy test krzyżowo odsyła do
+przypadku 400 w `finance.routes.test.ts`, żeby spójność trasa/checker była
+udokumentowana explicite, nie tylko twierdzona prozą.
+
+### 19.3 Bramki (po obu naprawach)
+
+| Bramka | Wynik |
+| --- | --- |
+| mockowane FIN-005+R7+R8+R9+R10 (23 pliki) | **427 PASS / 10 skipped**, 3× identycznie (te same 10 znanych przedistniejących awarii, potwierdzone identyczne co do nazwy testu) |
+| real PG, `npm run test:fin005:pg`, primary+replica seam | **45 PASS / 0 FAIL / 1 skipped**, 3× identycznie |
+| `tsc --noEmit` backend | **147 = 147**, zero w dotkniętych plikach |
+| `tsc --noEmit` frontend | **0 błędów** |
+| `npm run build:backend` | **PASS** |
+| `git diff --check` (working tree) | **PASS** |
+| skan sekretów | Brak dedykowanego narzędzia w środowisku (brak `gitleaks`/`trufflehog`) — wykonany ręczny skan wzorcowy (`api[_-]?key`, `secret`, `password`, `token\s*[:=]`, `bearer`, connection string z hasłem, klucze prywatne, AWS key ID) na pełnym diffie rund 9+10 — **zero trafień** |
+
+### 19.4 Commity od `86d4031c7c`
+
+```
+5d777c8fdd fix(FIN-005): golden-flow completeness must fail closed without an explicit rate — Codex review
+```
+(gałąź `wip/fin-005-assumption-caveats-r10`, osobna, niescalona:
+`ecc92ae06a wip(FIN-005): round-10 assumption-caveats surfacing — started without instruction, preserved not merged`)
+
+**Nowy HEAD: `5d777c8fdd`.**
+
+**Status: AWAITING_CODEX_REVIEW.** Working tree czysty, nic nie wypchnięte,
+nic niescalone, żaden `--write`/`--rollback`/mutacja Railway nie został
+uruchomiony — wyłącznie lokalne bazy scratch (`fin005_pri`, `fin005_rep`),
+posprzątane po weryfikacji. Gałąź NIE jest deklarowana jako ostatecznie
+zaakceptowana. Zgodnie z instrukcją Codeksa: po tym raporcie nie wykonuję
+żadnej dodatkowej pracy na tej gałęzi bez nowego polecenia.
