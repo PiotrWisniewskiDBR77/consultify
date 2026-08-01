@@ -1,59 +1,44 @@
-import { execSync } from 'node:child_process';
-
 import { Request, Response } from 'express';
 
 import { getDatabase } from '../database/Database.js';
+
+/**
+ * Deploy identity exposed on the PUBLIC health endpoint.
+ *
+ * Resolved ONCE at module load, from the deploy environment only, and frozen
+ * for the process lifetime: serving it costs a property read, never work.
+ *
+ * Why env-only (the git CLI fallback was deliberately removed):
+ * - The previous implementation shelled out with `execSync('git rev-parse …')`
+ *   whenever these vars were missing. `/api/health` is unauthenticated, so every
+ *   anonymous request forked two processes synchronously and blocked the event
+ *   loop — a cheap remote resource-exhaustion vector. No child process may run
+ *   on the request path.
+ * - Moving that shell-out to import time would not pay for itself either: it
+ *   would fork in every process (including every test worker) for a value the
+ *   target environment never uses. Railway injects RAILWAY_GIT_COMMIT_SHA, and
+ *   the same env vars are already the *sole* source for `announceDeploy()` /
+ *   `detectCrashLoop()` in `server/src/index.ts`, which simply fail soft when
+ *   they are absent. Local dev now behaves identically: no env, no `gitSha`.
+ *
+ * The branch name is intentionally NOT exposed. It is internal information with
+ * no consumer; only `gitSha` is read (by deploy verification, which curls
+ * `/api/health` and compares the commit). Neither is any filesystem path.
+ */
+const PUBLIC_GIT_SHA: string | undefined = (() => {
+  const raw = process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GITHUB_SHA || process.env.GIT_SHA;
+  // Keep the value byte-identical to what the platform set (deploy checks compare
+  // full 40-char SHAs); only trim and bound it so a malformed var cannot bloat
+  // the public body.
+  const sha = typeof raw === 'string' ? raw.trim().slice(0, 64) : '';
+  return sha || undefined;
+})();
 
 /**
  * Health Check Controller
  * Handles application health monitoring endpoints
  */
 export class HealthCheckController {
-  private static getGitMeta(): { gitSha?: string; gitBranch?: string; gitSource?: string } {
-    const gitShaFromEnv =
-      process.env.APP_BUILD_SHA ||
-      process.env.RAILWAY_GIT_COMMIT_SHA ||
-      process.env.GITHUB_SHA ||
-      process.env.GIT_SHA ||
-      undefined;
-
-    const gitBranchFromEnv =
-      process.env.APP_BUILD_BRANCH ||
-      process.env.RAILWAY_GIT_BRANCH ||
-      process.env.GITHUB_REF_NAME ||
-      process.env.GIT_BRANCH ||
-      undefined;
-
-    // Prefer env (works in Railway/GitHub Actions). For local dev, fall back to git CLI.
-    if (gitShaFromEnv || gitBranchFromEnv) {
-      return {
-        gitSha: gitShaFromEnv,
-        gitBranch: gitBranchFromEnv,
-        gitSource: 'env',
-      };
-    }
-
-    try {
-      const sha = String(
-        execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
-      )
-        .trim()
-        .slice(0, 12);
-      const branch = String(
-        execSync('git rev-parse --abbrev-ref HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
-      )
-        .trim()
-        .slice(0, 64);
-      return {
-        gitSha: sha || undefined,
-        gitBranch: branch || undefined,
-        gitSource: 'git',
-      };
-    } catch {
-      return {};
-    }
-  }
-
   /**
    * Simple ping endpoint (synchronous)
    * Used by load balancers for basic uptime check
@@ -77,8 +62,6 @@ export class HealthCheckController {
       version: string;
       environment: string;
       gitSha?: string;
-      gitBranch?: string;
-      gitSource?: string;
     } = {
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -87,10 +70,8 @@ export class HealthCheckController {
       environment: process.env.NODE_ENV || 'development',
     };
 
-    const gitMeta = HealthCheckController.getGitMeta();
-    if (gitMeta.gitSha) health.gitSha = gitMeta.gitSha;
-    if (gitMeta.gitBranch) health.gitBranch = gitMeta.gitBranch;
-    if (gitMeta.gitSource) health.gitSource = gitMeta.gitSource;
+    // Precomputed at module load — no work, no child process, on the request path.
+    if (PUBLIC_GIT_SHA) health.gitSha = PUBLIC_GIT_SHA;
 
     // Check Database connectivity (fast, bounded)
     // - We use a strict timeout to keep this endpoint responsive.
