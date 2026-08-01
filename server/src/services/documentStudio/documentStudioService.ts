@@ -2461,7 +2461,24 @@ export async function updateDocumentManualContent(
   }
   nextSchema.updatedAt = nowIso();
 
-  persistSchemaOverlayWriteThrough(params.artifactId, params.organizationId, nextSchema);
+  // The autosave response is a durability boundary: do not acknowledge the
+  // edit (or place it in the process cache) until PostgreSQL confirms it.
+  // `expectedVersion` is also checked inside the UPSERT so two requests that
+  // read the same version cannot both win.
+  const persistence = await daoPersistSchemaOverlay(
+    params.artifactId,
+    params.organizationId,
+    nextSchema,
+    params.expectedVersion
+  );
+  if (persistence.conflict) {
+    const winner = await daoLoadSchemaOverlay(params.artifactId, params.organizationId);
+    throw new DocumentManualSaveConflictError(winner?.updatedAt ?? current.updatedAt);
+  }
+  if (!persistence.ok) {
+    throw new Error('manual_save_persistence_failed');
+  }
+  schemaOverlayStore.set(schemaOverlayKey(params.artifactId, params.organizationId), nextSchema);
 
   pushAuditEntry({
     auditId: makeId('doc-audit'),

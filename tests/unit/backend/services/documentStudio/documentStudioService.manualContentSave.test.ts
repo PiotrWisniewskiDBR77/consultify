@@ -108,7 +108,16 @@ vi.mock('../../../../../server/src/services/wave5ArtifactRuntimeService.js', () 
 // without touching Postgres.
 let overlayTable = new Map<string, DocumentSchema>();
 const persistSchemaOverlayMock = vi.fn(
-  async (artifactId: string, organizationId: string, schema: DocumentSchema) => {
+  async (
+    artifactId: string,
+    organizationId: string,
+    schema: DocumentSchema,
+    expectedVersion?: string
+  ) => {
+    const previous = overlayTable.get(`${artifactId}::${organizationId}`);
+    if (expectedVersion && previous && previous.updatedAt !== expectedVersion) {
+      return { ok: false, conflict: true };
+    }
     overlayTable.set(`${artifactId}::${organizationId}`, schema);
     return { ok: true };
   }
@@ -119,7 +128,7 @@ vi.mock('../../../../../server/src/services/documentStudio/documentEditorStateRe
   persistProposal: (...args: unknown[]) => persistProposalMock(...(args as [])),
   persistAuditEntry: vi.fn(async () => ({ ok: true })),
   persistSchemaOverlay: (...args: unknown[]) =>
-    persistSchemaOverlayMock(...(args as [string, string, DocumentSchema])),
+    persistSchemaOverlayMock(...(args as [string, string, DocumentSchema, string?])),
   loadProposalsForArtifact: vi.fn(async () => []),
   loadAuditForArtifact: vi.fn(async () => []),
   loadSchemaOverlay: vi.fn(async () => null),
@@ -253,5 +262,22 @@ describe('P0 fix — manual content autosave persists through the schema-overlay
         expectedVersion: BASE_SCHEMA.updatedAt,
       })
     ).rejects.toBeInstanceOf(DocumentManualSaveNotFoundError);
+  });
+
+  it('(e) does not acknowledge or cache a save when durable persistence fails', async () => {
+    persistSchemaOverlayMock.mockResolvedValueOnce({ ok: false });
+
+    await expect(
+      updateDocumentManualContent({
+        artifactId: ARTIFACT,
+        organizationId: ORG,
+        userId: 'user-manual',
+        sections: BASE_SCHEMA.sections,
+        expectedVersion: BASE_SCHEMA.updatedAt,
+      })
+    ).rejects.toThrow('manual_save_persistence_failed');
+
+    const reread = await getDocumentArtifact(ARTIFACT, ORG);
+    expect(reread?.updatedAt).toBe(BASE_SCHEMA.updatedAt);
   });
 });

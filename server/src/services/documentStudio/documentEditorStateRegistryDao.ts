@@ -336,8 +336,9 @@ export async function loadSchemaOverlay(
 export async function persistSchemaOverlay(
   artifactId: string,
   organizationId: string,
-  schema: DocumentSchema
-): Promise<{ ok: boolean }> {
+  schema: DocumentSchema,
+  expectedVersion?: string
+): Promise<{ ok: boolean; conflict?: boolean }> {
   if (!artifactId || !organizationId || !schema) return { ok: false };
   try {
     const result = await dbRun(
@@ -348,9 +349,23 @@ export async function persistSchemaOverlay(
        )
        ON CONFLICT (artifact_id, organization_id) DO UPDATE SET
          schema_json = EXCLUDED.schema_json,
-         updated_at = EXCLUDED.updated_at`,
-      [artifactId, organizationId, JSON.stringify(schema), new Date().toISOString()]
+         updated_at = EXCLUDED.updated_at
+       ${
+         expectedVersion
+           ? `WHERE document_studio_schema_overlay.schema_json->>'updatedAt' = $5`
+           : ''
+       }`,
+      [
+        artifactId,
+        organizationId,
+        JSON.stringify(schema),
+        new Date().toISOString(),
+        ...(expectedVersion ? [expectedVersion] : []),
+      ]
     );
+    if (result.success === true && expectedVersion && Number(result.changes ?? 0) === 0) {
+      return { ok: false, conflict: true };
+    }
     return { ok: result.success === true };
   } catch (err) {
     logger.warn('[DocumentStudio][EditorStateDao] persistSchemaOverlay failed', {

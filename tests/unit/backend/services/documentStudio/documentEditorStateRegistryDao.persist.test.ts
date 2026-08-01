@@ -37,8 +37,14 @@ vi.mock('../../../../../server/src/utils/Logger.js', () => ({
   },
 }));
 
-import { persistProposal } from '../../../../../server/src/services/documentStudio/documentEditorStateRegistryDao.js';
-import type { DocumentEditorProposal } from '../../../../../server/src/services/documentStudio/documentStudioTypes.js';
+import {
+  persistProposal,
+  persistSchemaOverlay,
+} from '../../../../../server/src/services/documentStudio/documentEditorStateRegistryDao.js';
+import type {
+  DocumentEditorProposal,
+  DocumentSchema,
+} from '../../../../../server/src/services/documentStudio/documentStudioTypes.js';
 
 function makeProposal(overrides: Partial<DocumentEditorProposal> = {}): DocumentEditorProposal {
   return {
@@ -112,5 +118,35 @@ describe('documentEditorStateRegistryDao.persistProposal', () => {
     );
     expect(outcome.ok).toBe(false);
     expect(runMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('documentEditorStateRegistryDao.persistSchemaOverlay optimistic lock', () => {
+  const schema = {
+    artifactId: 'artifact-1',
+    updatedAt: '2026-08-01T20:00:01.000Z',
+  } as DocumentSchema;
+
+  beforeEach(() => runMock.mockReset());
+
+  it('performs the version comparison atomically inside the UPSERT', async () => {
+    runMock.mockResolvedValueOnce({ success: true, changes: 1 });
+
+    await expect(
+      persistSchemaOverlay('artifact-1', 'org-1', schema, '2026-08-01T20:00:00.000Z')
+    ).resolves.toEqual({ ok: true });
+
+    expect(runMock).toHaveBeenCalledWith(
+      expect.stringContaining("schema_json->>'updatedAt' = $5"),
+      expect.arrayContaining(['2026-08-01T20:00:00.000Z'])
+    );
+  });
+
+  it('reports a conflict when the conditional UPSERT changes no row', async () => {
+    runMock.mockResolvedValueOnce({ success: true, changes: 0 });
+
+    await expect(
+      persistSchemaOverlay('artifact-1', 'org-1', schema, 'stale-version')
+    ).resolves.toEqual({ ok: false, conflict: true });
   });
 });

@@ -45,24 +45,12 @@ test.describe('Document Studio — autosave + comments [@module:document-studio]
       timeout: 30000,
     });
 
-    // Mode 1 intake: description only (useLlm defaults to false -> deterministic
-    // rule-based outline, no dependency on the QA-mock LLM short-circuit).
-    const marker = `E2E doc autosave ${Date.now()}`;
-    await page
-      .locator('[data-testid="docstudio-intake-input"]')
-      .fill(
-        `Prepare a short internal status note for the QA harness. Marker: ${marker}. ` +
-          'Include scope, key findings, and next steps.'
-      );
-
-    const generateBtn = page.locator('[data-testid="docstudio-generate-btn"]');
-    await expect(generateBtn).toBeEnabled();
-    await generateBtn.click();
-
-    // Mode 1 lands on the outline phase first ("Generate document" button).
-    const outlineGenerate = page.getByRole('button', { name: /Generate document/i });
-    await expect(outlineGenerate).toBeVisible({ timeout: 30000 });
-    await outlineGenerate.click();
+    // Current entry UX presents three equal modes. "Czysto" creates the
+    // document immediately and is the shortest deterministic route to the
+    // real editor (no LLM or obsolete intake-form assumptions).
+    const cleanStart = page.getByText(/^Czysto$/i).first();
+    await expect(cleanStart).toBeVisible({ timeout: 30000 });
+    await cleanStart.click();
 
     // Document phase: the TipTap editor mounts.
     const editor = page.locator('[data-testid="document-tiptap-editor"] .ProseMirror');
