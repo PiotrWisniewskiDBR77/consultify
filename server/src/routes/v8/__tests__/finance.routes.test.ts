@@ -553,7 +553,7 @@ describe('V8 finance read-only routes', () => {
         currency: 'PLN',
       })
     );
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
   });
 
   it('POST /models/:id/duplicate — stale source FK → kopiuje bez graftu (NIE 500) [BUG-09 regress]', async () => {
@@ -686,7 +686,7 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.model?.id).toBe('model-1');
     expect(res.body.data?.model?.source_statement_pack?.entity_name).toBe('Acme Sp. z o.o.');
     expect(res.body.data?.model?.events).toHaveLength(1);
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
     expect(mockListEvents).toHaveBeenCalledWith('model-1');
   });
 
@@ -718,7 +718,7 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data?.validations).toHaveLength(2);
     expect(res.body.data?.summary).toEqual({ total: 2, pass: 1, fail: 0, warning: 1 });
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
     expect(mockGetValidations).toHaveBeenCalledWith('model-1');
   });
 
@@ -757,7 +757,7 @@ describe('V8 finance read-only routes', () => {
       { lineCode: 'REV', lineName: 'Revenue', value: 100 },
       { lineCode: 'COGS', lineName: 'COGS', value: -40 },
     ]);
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
     expect(mockGetOutputs).toHaveBeenCalledWith('model-1', 'base');
   });
 
@@ -906,7 +906,7 @@ describe('V8 finance read-only routes', () => {
       periodCount: 2,
       validationSummary: { total: 2, pass: 1, fail: 0, warning: 1 },
     });
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
     expect(mockComputeModel).toHaveBeenCalledWith('model-1');
     expect(mockPersistComputeResult).toHaveBeenCalledWith(
       'model-1',
@@ -929,7 +929,7 @@ describe('V8 finance read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data).toEqual({ success: true, status: 'approved' });
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
     expect(mockApproveModel).toHaveBeenCalledWith('model-1', UID);
   });
 
@@ -951,7 +951,7 @@ describe('V8 finance read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data).toEqual({ success: true });
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
     expect(mockUpdateModel).toHaveBeenCalledWith('model-1', {
       assumptions: { initialCash: 1000 },
     });
@@ -977,7 +977,7 @@ describe('V8 finance read-only routes', () => {
     expect(res.status).toBe(201);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data).toEqual({ success: true, id: 'event-1' });
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
     expect(mockAddEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         modelId: 'model-1',
@@ -1023,7 +1023,7 @@ describe('V8 finance read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data).toEqual({ success: true, deleted: 'model-1' });
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
     expect(mockDbRun).toHaveBeenCalledTimes(4);
     expect(mockDbRun).toHaveBeenNthCalledWith(
       1,
@@ -1598,7 +1598,7 @@ describe('V8 finance read-only routes', () => {
     expect(mockListBudgets).toHaveBeenCalledWith(ORG);
   });
 
-  it('POST /api/v8/finance/budgets creates a budget and returns 200', async () => {
+  it('POST /api/v8/finance/budgets creates a budget and returns 201', async () => {
     mockCreateBudget.mockResolvedValue({
       id: 'budget-created',
       organizationId: ORG,
@@ -1615,7 +1615,9 @@ describe('V8 finance read-only routes', () => {
       periodStart: '2026-01-01',
       periodEnd: '2026-12-31',
     });
-    expect(res.status).toBe(200);
+    // finance.routes.ts:982 explicitly returns 201 (standard REST for a
+    // creation endpoint) — this test's expectation of 200 was simply wrong.
+    expect(res.status).toBe(201);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data?.budget?.id).toBe('budget-created');
     expect(mockCreateBudget).toHaveBeenCalledWith(
