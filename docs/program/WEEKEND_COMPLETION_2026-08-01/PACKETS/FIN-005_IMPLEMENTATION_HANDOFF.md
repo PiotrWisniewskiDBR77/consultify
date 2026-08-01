@@ -1,7 +1,7 @@
 ---
 doc_id: FIN-005-implementation-handoff
 truth_type: operations
-status: FROZEN_FOR_INTEGRATION
+status: AWAITING_CODEX_REVIEW
 owner: claude
 process_owner: codex
 product_owner: piotr
@@ -1524,10 +1524,165 @@ poza zakresem tego pakietu.
    infrastruktury, nie FIN-005.
 5. Wcześniej otwarte pozycje (§16.7) bez zmian.
 
-**Status: FROZEN_FOR_INTEGRATION.** `financeGoldenFlowComplete` = `true` —
-mechanizm (nie sama obecność danych) zweryfikowany: kanoniczny compute,
-demo-safe, deterministyczny reopen, zero drugiego silnika, zero wpisanych
-ręcznie liczb. Working tree czysty, `HEAD 68304aaf98`, nic nie wypchnięte,
-nic niescalone, żaden `--write`/`--rollback`/mutacja Railway nie został
-uruchomiony. UI (§17.4) i dwa znaleziska ekonomiczne (§17.3) pozostają
-jawnie otwarte, nie ukryte pod tym statusem.
+**Status rundy 7: FROZEN_FOR_INTEGRATION** (HEAD `68304aaf98`) — **zmienione
+rundą 9 poniżej, patrz §18.** UI (§17.4) i dwa znaleziska ekonomiczne (§17.3)
+pozostały jawnie otwarte, nie ukryte pod tym statusem — runda 9 podejmuje
+decyzję Piotra na jednym z nich (znak OpEx).
+
+---
+
+## 18. Runda dziewiąta — decyzje produktowe Piotra (2026-08-01)
+
+Piotr: „To nie jest jeszcze odebrane przez Codex, więc nie zamykaj gałęzi jako
+ostatecznie zaakceptowanej" — cofnięcie statusu `FROZEN_FOR_INTEGRATION` z
+rundy 7. Trzy decyzje podjęte, wykonane trzema równoległymi agentami Sonnet
+(jeden writer na plik) + niezależny red-team. Diff względem `68304aaf98`:
+`11636c63be`, `fac1389bf9`. **HEAD: `fac1389bf9`.**
+
+### 18.1 Decyzja 1 — „OpEx reduction" to korzyść, nie koszt
+
+Silnik (`computeModel()`, `financialModelingService.ts`) dla `event_type:
+'opex'` robił `totalOPEX += Math.abs(amt)` — odrzucał znak KAŻDEGO zdarzenia
+opex, więc zapisane `amount: -400_000` (miało znaczyć „redukcja o 400k")
+zamieniało się w KOSZT +400k, dokładnie odwrotnie niż nazwa i intencja
+zdarzenia. Naprawione: `totalOPEX += amt` (szanuje znak — ujemna kwota
+zmniejsza opex = korzyść, dodatnia zachowuje się jak zwykły koszt, bez zmian
+dla powszechnego przypadku, bo `Math.abs(x) === x` dla `x ≥ 0`).
+
+**Zasięg rażenia sprawdzony i potwierdzony jako izolowany**: grep całego repo
+nie znalazł żadnego INNEGO fixture/seed/testu z ujemną kwotą `event_type:
+'opex'`, który polegałby na starym (odwróconym) zachowaniu. Ta sama klasa
+błędu istnieje w `cogs`/`depreciation_run`/`interest_accrual`/`tax_accrual`/
+`tax_payment`/`capex_purchase`/`debt_repayment`/`dividend` — NIE naprawione
+(poza zakresem decyzji Piotra), zgłoszone jako obserwacja na przyszłość.
+
+**Dowód znaku wprost z silnika** (FY2016, prawdziwe zdarzenia Atelier):
+`pl.OPEX = +400000` (kontrybucja do zysku, nie koszt) — zweryfikowane
+niezależnie 3×: agent silnika, agent testów, mój własny odczyt, identyczne co
+do grosza.
+
+### 18.2 Decyzja 2 — brak wymyślonego opóźnienia; jawny brakujący assumption
+
+`period_start` żadnego zdarzenia NIE zmienione (`digital-capex`/
+`revenue-uplift` nadal `2015-01-01`, `opex-reduction` nadal `2016-01-01`).
+Zamiast tego `upsertAtelierRoiFinancialModel()` (`demoSeedService.ts`) zapisuje
+teraz do `financial_models.assumptions_json`:
+```json
+{
+  "implementationLagMonths": null,
+  "implementationLagAssumptionStatus": "NEEDS_PRODUCT_DECISION",
+  "implementationLagAssumptionNote": "Source data does not specify a ramp-up schedule between CAPEX and revenue/savings realization — events are modeled exactly as dated, with no assumed delay."
+}
+```
+**Znalezisko red-teamu (nie blocker, do śledzenia)**: nic w repo dziś nie
+CZYTA tego znacznika — żaden UI, raport ani health-check. Zapisany uczciwie i
+przetestowany, ale niewidoczny poza surowym JSON-em. Zgłoszone jako osobny
+follow-up (task poza tą gałęzią), nie naprawione tutaj — zgodnie z decyzją 4
+Piotra („nie buduj teraz prototypu UI").
+
+### 18.3 Decyzja 3 — discount_rate: sprawdzone, nie wymyślona kolumna
+
+Zbadane PRZED jakąkolwiek migracją, zgodnie z instrukcją Piotra:
+`financial_models` nie ma kolumny `discount_rate` (bez zmian od rundy 8), ale
+`assumptions_json` (istnieje od migracji 571) jest bezpiecznym miejscem —
+`computeModel()`/`financialModelToAssumptions()`/`assumptionsRegistry.ts`
+czytają wyłącznie ustalony allowlist kluczy, nigdy nie iterują całego obiektu,
+więc dodatkowe klucze są obojętne. **Zero nowej kolumny, zero migracji.**
+
+`assumptions_json` niesie teraz `discountRatePct`/`hurdleRatePct` (zaseedowane
+z `ATELIER_CANONICAL_DISCOUNT_RATE_PCT`, który zostaje TYLKO wartością
+zasiewającą). `GET /models/:modelId/appraisal` (`finance.routes.ts`) rozwiązuje
+stopę: jawny query param zawsze wygrywa; inaczej `assumptions_json`; inaczej
+400 — nigdy cichy default. `verifyAtelierFinanceGoldenFlowComplete()`
+(`atelierFinanceSeed.ts`) czyta tę samą wartość przez ISTNIEJĄCE `getModel()`
+(nie drugie wywołanie `DbPromise` — utrzymuje inwariant „dokładnie jedna
+sesja" z `atelierFinancePrimaryReadStructure.test.ts`), z fallbackiem do stałej
+TYLKO gdy klucz faktycznie brakuje, logowanym jako ostrzeżenie.
+
+**Niuans architektoniczny znaleziony przez red-team (nie blocker)**:
+`resolveAtelierAppraisalRates()`'s odczyt przez `getModel()` → `DbPromise.get`
+→ `getReadPool()` trafia na pulę odczytu (replikę w produkcji), tuż po
+zapisie przez seed — dokładnie kształt, przed którym broni cała aparatura P1-A
+z rundy 7. Ale `verifyAtelierFinanceGoldenFlowComplete()` już WCZEŚNIEJ
+czytało model tą samą drogą przez `computeModel()` — to nie nowa ekspozycja,
+tylko rozszerzenie już zaakceptowanego wzorca o jedno pole. Najgorszy
+scenariusz: fałszywe ostrzeżenie + fallback do stałej liczbowo identycznej z
+zaseedowaną wartością — żadna zła liczba nie może z tego wyniknąć.
+
+### 18.4 Liczby przed/po (kanoniczne zdarzenia Atelier, stopa 10%)
+
+| | PRZED (błędny znak) | PO (poprawiony znak) |
+| --- | --- | --- |
+| cashflows | `[2400000, 2001920, 2003841.54]` | `[2400000, 2801920, 2803841.54]` |
+| initialInvestment | 800 000 | 800 000 (bez zmian) |
+| NPV | 4 541 813,33 EUR | **5 804 022,19 EUR** |
+| IRR | 282,53% | **307,16%** |
+| MIRR | 107,14% | 122,31% |
+| payback | 0,333 roku | 0,333 roku (bez zmian — FY2015 sam z siebie odzyskuje 800k capex) |
+| PI | 6,68 | 8,26 |
+| verdict | go | go |
+
+Wyższe NPV/IRR jest kierunkowo gwarantowane (koszt zamieniony w rozpoznaną
+korzyść może tylko poprawić rentowność) — potwierdzone przez dwóch niezależnych
+agentów inżynieryjnych ORAZ red-team, który świadomie cofnął naprawę i
+zobaczył, że nowe testy stają się czerwone.
+
+### 18.5 Testy — udowodnione nie-wydmuszkowe
+
+`financialModelOpexSignRegression.test.ts` (nowy) — negatywna kontrola: obok
+prawdziwego silnika zawiera osobną, ręcznie skopiowaną kopię STAREJ logiki
+(`Math.abs(amt)`) i dowodzi, że da ona PRZECIWNY znak niż naprawiony silnik —
+technika asercji naprawdę łapie ten błąd, nie jest fasadowa. Red-team
+zweryfikował to niezależnie: cofnął jednoliniową naprawę we własnej kopii i
+zobaczył dokładnie te 3 asercje (nie inne) stające się czerwone.
+
+3 nowe testy w `financialModelAppraisalAdapter.test.ts`, 2 nowe w
+`atelierFinanceGoldenFlowCompleteness.test.ts` (stopa płynie z
+`assumptions_json`; fallback do stałej gdy brak klucza), 1 nowy w
+`finance.routes.test.ts` (fallback na poziomie trasy).
+
+**Jedna prawdziwa regresja znaleziona i naprawiona przeze mnie (integratora)**:
+test z rundy 5-8 zakładał, że `assumptions_json` NIGDY nie jest zapisywany —
+dokładnie założenie, które decyzja 3 Piotra świadomie odwraca. Przepisany na
+allowlistę dokładnie pięciu zdecydowanych kluczy + jawny zakaz ośmiu kluczy
+`computeModel()` czyta jako ekonomikę bazową (`initialCash`, `initialEquity`,
+`initialDebt`, `initialPPE`, `initialAR`, `initialInventory`, `initialAP`,
+`baseline`) — krzyżowo zweryfikowane przez red-team linia po linii, nic nie
+brakuje, nic nie zbędne.
+
+### 18.6 Bramki
+
+| Bramka | Wynik |
+| --- | --- |
+| mockowane FIN-005+R7+R8+R9 (23 pliki) | **422 PASS / 10 skipped**, 3× identycznie po naprawie regresji z §18.5 (10 znanych przedistniejących awarii w `finance.routes.test.ts`, potwierdzone jako niezwiązane — dokładnie ten sam zestaw co w rundzie 8) |
+| real PG, `npm run test:fin005:pg`, primary+replica seam | **45 PASS / 0 FAIL / 1 skipped**, 3× identycznie — dokładne dopasowanie do bazy z rund 7/8 |
+| `tsc --noEmit` backend | **147 = 147**, identyczny zbiór `file:line:code`, zero błędów w dotkniętych plikach |
+| `tsc --noEmit` frontend | **0 błędów** |
+| `npm run build:backend` | **PASS** |
+| `git diff --check` (`68304aaf98..HEAD` oraz working tree) | **PASS** |
+| Red-team (niezależny, adwersaryjny) | **Zero blockerów.** Znak zweryfikowany ręcznie i przez cofnięcie naprawy; zasięg rażenia potwierdzony izolowany; testy udowodnione nie-wydmuszkowe przez realne złamanie kodu; własna naprawa integratora zweryfikowana linia po linii; dyscyplina własności plików czysta (bez markerów konfliktu, bez osieroconych edycji) |
+
+### 18.7 Otwarte
+
+1. Znacznik brakującego założenia o opóźnieniu wdrożenia (§18.2) nie jest
+   dziś nigdzie czytany — zgłoszone jako osobny follow-up task, poza tą
+   gałęzią.
+2. Ta sama klasa błędu znaku (`Math.abs()` odrzuca znak) istnieje w 8 innych
+   `event_type` w tym samym silniku — nienaprawiona, poza zakresem decyzji
+   Piotra, wymaga osobnej decyzji produktowej jeśli kiedyś ma być zamknięta.
+3. `financial_models` nadal nie ma kolumny `discount_rate` — `assumptions_json`
+   jest teraz kanonicznym źródłem RUNTIME, ale to rozwiązanie per-tenant
+   (Atelier), nie systemowe; przyszły pakiet może rozważyć kolumnę, jeśli
+   wzorzec ma się powtórzyć dla innych tenantów.
+4. Migracje SQLite-dialect bez odpowiednika Postgres (§17.7) — zgłoszone jako
+   osobny follow-up task, poza tą gałęzią, bez zmian.
+5. Montaż UI (§17.4) — bez zmian, nadal nie zbudowany w tej rundzie zgodnie z
+   decyzją 4 Piotra.
+6. Wcześniej otwarte pozycje (§16.7) bez zmian.
+
+**Status: AWAITING_CODEX_REVIEW.** Working tree czysty, `HEAD fac1389bf9`, nic
+nie wypchnięte, nic niescalone, żaden `--write`/`--rollback`/mutacja Railway
+nie został uruchomiony — wyłącznie lokalne bazy scratch (`fin005_pri`,
+`fin005_rep`), posprzątane po weryfikacji. Gałąź NIE jest deklarowana jako
+ostatecznie zaakceptowana — decyzję o statusie `FROZEN_FOR_INTEGRATION`/
+merge podejmie Codex.
