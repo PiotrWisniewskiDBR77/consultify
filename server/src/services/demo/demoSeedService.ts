@@ -7,8 +7,10 @@ import {
   ATELIER_CANONICAL_MODEL_NAME_EN,
   ATELIER_CANONICAL_MODEL_NAME_PL,
   ATELIER_FINANCE_CURRENCY,
+  type AtelierFinanceGoldenFlowCompleteness,
   type AtelierFinanceSeedResult,
   upsertAtelierFinanceGoldenFlow,
+  verifyAtelierFinanceGoldenFlowComplete,
 } from './atelierFinanceSeed.js';
 import {
   type DemoLeaderTemplate,
@@ -56,8 +58,19 @@ export interface SeedDemoDatasetResult {
    * FIN-005 — explicit outcome of the Finance golden flow. Never swallowed: an
    * `incomplete` here means Finance rows exist but NOTHING was promoted to
    * READY, and `reason` / `missing` say exactly why.
+   *
+   * NOTE: `financeGoldenFlow.status === 'complete'` certifies ONLY the
+   * statement/analysis leg — see `financeGoldenFlowCompleteness` below for
+   * whether the model's NPV/IRR/payback are actually computable.
    */
   financeGoldenFlow: AtelierFinanceSeedResult;
+  /**
+   * FIN-005 round 8 — the claim `financeGoldenFlow.status` does NOT make:
+   * whether a user can open the canonical model and get a real, computed
+   * NPV/IRR/payback. See `verifyAtelierFinanceGoldenFlowComplete` in
+   * `atelierFinanceSeed.ts` for what is actually checked.
+   */
+  financeGoldenFlowCompleteness: AtelierFinanceGoldenFlowCompleteness;
 }
 
 type UserMap = Record<string, { id: string; email: string }>;
@@ -2184,6 +2197,7 @@ async function upsertInitiatives(
   const hasSuccessCriteria = await columnExists('initiatives', 'success_criteria');
   const hasRisks = await columnExists('initiatives', 'key_risks');
   const hasEstimatedBudget = await columnExists('initiatives', 'estimated_budget');
+  const hasBudgetCurrency = await columnExists('initiatives', 'budget_currency');
   const hasTaskComments = await tableExists('task_comments');
 
   for (const initiative of initiatives) {
@@ -2263,6 +2277,15 @@ async function upsertInitiatives(
       cols.push('estimated_budget');
       vals.push(initiative.budgetCapex + initiative.budgetOpex);
     }
+    if (hasBudgetCurrency) {
+      // FIN-006/A O1: seed used to leave this column unset, so it silently
+      // inherited the schema DEFAULT 'PLN' (migrations/564:139) while Finance
+      // (FIN-005) reports the same Atelier program in EUR. Source the value
+      // from the SAME constant Finance already uses so the two modules can
+      // never drift onto two different literals again.
+      cols.push('budget_currency');
+      vals.push(ATELIER_FINANCE_CURRENCY);
+    }
 
     // USPOJNIENIE A3: ŚWIADOMY WYJĄTEK od „jeden lejek". Seed demo jest
     // idempotentny (deterministyczne id via makeId + ON CONFLICT DO UPDATE) —
@@ -2273,7 +2296,9 @@ async function upsertInitiatives(
     await DbPromise.run(
       `INSERT INTO initiatives (${cols.join(', ')})
        VALUES (${cols.map(() => '?').join(', ')})
-       ON CONFLICT(id) DO UPDATE SET name=excluded.name, status=excluded.status`,
+       ON CONFLICT(id) DO UPDATE SET name=excluded.name, status=excluded.status${
+         hasBudgetCurrency ? ', budget_currency=excluded.budget_currency' : ''
+       }`,
       vals,
       { fallback: false }
     );
@@ -4106,6 +4131,23 @@ export async function seedAtelierToysDemoDataset(
     locale,
     financeGoldenFlow.packId
   );
+  // FIN-005 round 8: `financeGoldenFlow.status === 'complete'` certifies ONLY
+  // the statement/analysis leg (see the doc comment on
+  // `verifyAtelierFinanceGoldenFlowComplete`). Whether the model actually
+  // produces a real NPV/IRR/payback is a SEPARATE, explicitly-named claim —
+  // computed here by actually invoking the canonical compute + appraisal
+  // engines, never inferred from the fixture existing.
+  const financeGoldenFlowCompleteness = await verifyAtelierFinanceGoldenFlowComplete(
+    organizationId,
+    financeGoldenFlow.status
+  );
+  if (!financeGoldenFlowCompleteness.goldenFlowComplete) {
+    logger.warn('[demo-seed] Atelier Finance golden flow fixture is complete but NOT compute-complete', {
+      organizationId,
+      fixtureComplete: financeGoldenFlowCompleteness.fixtureComplete,
+      reason: financeGoldenFlowCompleteness.reason,
+    });
+  }
   // Spine stage 07: Results / KPIs (realized numbers reconcile with ROI + context).
   await upsertAtelierResultsKpis(organizationId, userMap, projectMap);
   // Spine stage 06: Execution / Rollout artifacts.
@@ -4131,6 +4173,7 @@ export async function seedAtelierToysDemoDataset(
     scenarios,
     toolCoverage,
     financeGoldenFlow,
+    financeGoldenFlowCompleteness,
   };
 }
 

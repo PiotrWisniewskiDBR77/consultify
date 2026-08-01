@@ -92,6 +92,11 @@ import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { ensureCanonicalRegistryInDatabase } from '../financeCanonicalRegistrySyncService.js';
 import {
+  appraiseComputeResult,
+  type ModelAppraisal,
+} from '../financialModelAppraisalAdapter.js';
+import { computeModel } from '../financialModelingService.js';
+import {
   evaluateStatementReadiness,
   validateStatement,
   type ValidationMessage,
@@ -146,6 +151,18 @@ export {
 
 export const ATELIER_FINANCE_ENTITY_NAME = 'Atelier Toys';
 export const ATELIER_FINANCE_CURRENCY = 'EUR';
+/**
+ * FIN-005 round 8: the ONLY rate `financial_models` carries for this business
+ * case today (`financial_models` has no `discount_rate` column — checked
+ * against migrations/571_financial_modeling_t054.sql). Matches the
+ * `discount_rate` value already seeded into the legacy `analysis_financials`
+ * row for this same initiative (`upsertAtelierRoiFinancialModel`,
+ * demoSeedService.ts) — reused, not invented. `investmentAppraisalService`'s
+ * own invariant ("never hardcoded") still holds: this constant is a CALLER's
+ * choice of parameter for the Atelier fixture specifically, not a default
+ * baked into the appraisal engine or its route.
+ */
+export const ATELIER_CANONICAL_DISCOUNT_RATE_PCT = 10;
 export const ATELIER_FINANCE_SCALING = 'units';
 export const ATELIER_FINANCE_PERIOD_LABEL = 'FY2014';
 export const ATELIER_FINANCE_PERIOD_START = '2014-01-01';
@@ -3188,4 +3205,113 @@ async function upsertAtelierFinanceAnalysis(params: {
   }
 
   return analysisId;
+}
+
+// ---------------------------------------------------------------------------
+// FIN-005 round 8 — financeFixtureComplete vs financeGoldenFlowComplete
+// ---------------------------------------------------------------------------
+
+/**
+ * `AtelierFinanceSeedResult.status === 'complete'` (above) has ALWAYS meant
+ * only "the statement pack + 3 statements + approved analysis exist, are
+ * grounded and were promoted" — it never asserted anything about the model's
+ * investment case, because the model is seeded by a SEPARATE function
+ * (`upsertAtelierRoiFinancialModel`, demoSeedService.ts) that this file does
+ * not call. The field name `financeGoldenFlow` on the overall demo-seed
+ * result (demoSeedService.ts's return value) invites exactly the wrong
+ * reading: that `.status === 'complete'` certifies the WHOLE golden flow,
+ * NPV/ROI/payback included. Before round 8 nothing computed those at all —
+ * `financial_model_outputs` stayed empty and the UI showed "compute not run
+ * yet" regardless of what this field said.
+ *
+ * This type names the two claims separately so a caller cannot read one and
+ * assume the other:
+ *   - `fixtureComplete` — the canonical inputs exist: statement pack,
+ *     analysis, model, and its forecast events, with lineage. Equivalent to
+ *     `AtelierFinanceSeedResult.status === 'complete'`.
+ *   - `goldenFlowComplete` — a user can open the model and get a REAL,
+ *     non-hardcoded NPV/IRR/payback, computed by the canonical engines
+ *     (`computeModel` + `investmentAppraisalService.appraise`, composed by
+ *     `financialModelAppraisalAdapter`), and reopening produces the same
+ *     result from the same stored events. `fixtureComplete` alone can never
+ *     make this `true` — it is only set after actually invoking both engines
+ *     and getting a finite result back.
+ */
+export interface AtelierFinanceGoldenFlowCompleteness {
+  fixtureComplete: boolean;
+  goldenFlowComplete: boolean;
+  /** Present when `goldenFlowComplete` is false — never silently omitted. */
+  reason?: string;
+  /** The appraisal actually computed, when `goldenFlowComplete` is true — evidence, not a claim. */
+  appraisal?: ModelAppraisal;
+}
+
+/**
+ * Verify golden-flow completeness for the canonical Atelier model. Read-only:
+ * `computeModel()` only SELECTs the model and its events; nothing is written
+ * or persisted to `financial_model_outputs` by this check.
+ *
+ * `fixtureStatus` is the caller's already-computed `AtelierFinanceSeedResult`
+ * (or any equivalent) — passed in rather than re-derived, so this function
+ * cannot silently disagree with the seed's own verdict about the statement/
+ * analysis leg.
+ */
+export async function verifyAtelierFinanceGoldenFlowComplete(
+  organizationId: string,
+  fixtureStatus: 'complete' | 'incomplete'
+): Promise<AtelierFinanceGoldenFlowCompleteness> {
+  const fixtureComplete = fixtureStatus === 'complete';
+  if (!fixtureComplete) {
+    return {
+      fixtureComplete: false,
+      goldenFlowComplete: false,
+      reason: 'the statement/analysis fixture is not complete — golden flow cannot be evaluated on top of it',
+    };
+  }
+
+  const modelId = atelierCanonicalModelId(organizationId);
+  let computeResult;
+  try {
+    computeResult = await computeModel(modelId);
+  } catch (error) {
+    return {
+      fixtureComplete: true,
+      goldenFlowComplete: false,
+      reason: `computeModel() failed for "${modelId}": ${(error as Error).message}`,
+    };
+  }
+
+  // `computeModel()` always generates periods from `model.start_date` /
+  // `horizon_months` — that happens with ZERO events too, all zeroed out. A
+  // truly empty investment case (no events) must not read as "complete" just
+  // because the shape of the result is well-formed; require at least one
+  // period with real (non-zero) cash-flow activity.
+  const hasComputedActivity = computeResult.periods.some(
+    (period) =>
+      (period.cf.OPERATING_CF ?? 0) !== 0 ||
+      (period.cf.INVESTING_CF ?? 0) !== 0 ||
+      (period.cf.FINANCING_CF ?? 0) !== 0
+  );
+  if (computeResult.periods.length === 0 || !hasComputedActivity) {
+    return {
+      fixtureComplete: true,
+      goldenFlowComplete: false,
+      reason: `computeModel() produced no cash-flow activity for "${modelId}" — no active forecast events, or the model horizon is empty`,
+    };
+  }
+
+  const appraisal = appraiseComputeResult(computeResult, {
+    discountRatePct: ATELIER_CANONICAL_DISCOUNT_RATE_PCT,
+  });
+
+  if (!Number.isFinite(appraisal.result.npv)) {
+    return {
+      fixtureComplete: true,
+      goldenFlowComplete: false,
+      reason: `appraise() returned a non-finite NPV (${appraisal.result.npv}) for "${modelId}"`,
+      appraisal,
+    };
+  }
+
+  return { fixtureComplete: true, goldenFlowComplete: true, appraisal };
 }

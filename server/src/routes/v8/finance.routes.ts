@@ -36,6 +36,7 @@ import {
   listAnalyses,
   runFullAnalysis,
 } from '../../services/financialAnalysisService.js';
+import { appraiseComputeResult } from '../../services/financialModelAppraisalAdapter.js';
 import {
   addEvent,
   approveModel,
@@ -442,6 +443,55 @@ router.get(
 
     return res.json({
       data: { raw: outputs, grouped },
+      meta: financeMeta(),
+    });
+  })
+);
+
+/**
+ * GET /models/:modelId/appraisal — FIN-005/FIN-006 golden-flow closer.
+ *
+ * NPV / IRR / payback for a model, derived from its OWN canonical compute
+ * (`computeModel()`) fed through the canonical appraisal engine
+ * (`investmentAppraisalService.appraise()`, via `appraiseComputeResult`).
+ * Read-only: `computeModel()` only SELECTs the model and its events, and this
+ * handler persists nothing. `discountRatePct`/`hurdleRatePct` are REQUIRED
+ * query params — this route never defaults or hardcodes a rate (the same
+ * invariant `POST /value/appraise` already enforces on its caller).
+ *
+ * Reopen determinism: this recomputes from the model's stored events on every
+ * call. Same events + same rates in the query string => byte-identical result,
+ * with no cached/materialized state to go stale.
+ */
+router.get(
+  '/models/:modelId/appraisal',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId, organizationId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    const discountRatePctRaw = req.query.discountRatePct;
+    const discountRatePct = Number(discountRatePctRaw);
+    if (discountRatePctRaw === undefined || !Number.isFinite(discountRatePct)) {
+      return res.status(400).json({
+        error: 'discountRatePct is required and must be a finite number (percent, e.g. 10 for 10%).',
+      });
+    }
+    const hurdleRatePctRaw = req.query.hurdleRatePct;
+    const hurdleRatePct =
+      hurdleRatePctRaw === undefined ? discountRatePct : Number(hurdleRatePctRaw);
+    if (!Number.isFinite(hurdleRatePct)) {
+      return res.status(400).json({ error: 'hurdleRatePct must be a finite number when provided.' });
+    }
+
+    const computeResult = await computeModel(modelId);
+    const appraisal = appraiseComputeResult(computeResult, { discountRatePct, hurdleRatePct });
+
+    return res.json({
+      data: appraisal,
       meta: financeMeta(),
     });
   })
