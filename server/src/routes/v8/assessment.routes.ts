@@ -12,6 +12,8 @@ import { ensureAssessmentSchema, normalizeStatus } from '../../controllers/Asses
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import AssessmentDefinitionService from '../../services/assessment/AssessmentDefinitionService.js';
+import { computeDrdCompletion } from '../../services/assessment/drdCompletion.js';
+import type { DrdAreasMap } from '../../services/assessment/drdCompletion.js';
 import AssessmentWorkbenchService, {
   assertPromotionPayloadShape,
   buildBoundedPromotionPayload,
@@ -104,6 +106,85 @@ const isGlobalAdminRole = (role: string): boolean => {
   );
 };
 
+// ASM-001A Codex fix #2: create/edit capability enforcement (fail-closed).
+//
+// There is no single canonical org-level "viewer" role name in this repo.
+// `server/src/utils/roleNormalization.ts` (normalizeApplicationRole) buckets
+// the raw `organization_members.role` value into OWNER / ADMIN / GUEST /
+// USER, folding VIEWER, CLIENT and GUEST into the read-only GUEST bucket —
+// but that normalizer is deliberately fail-OPEN for anything it doesn't
+// recognize (falls through to USER, i.e. "can edit"). A capability gate
+// must be fail-CLOSED instead, so this is a standalone allow-list, not a
+// reuse of that normalizer.
+//
+// The role vocabulary below is the union of raw role strings actually used
+// across server/src (grep 'ADMIN'|'OWNER'|'MEMBER'|'VIEWER'|
+// 'PROJECT_MANAGER' in roleNormalization.ts, assessmentRBAC.ts,
+// rbac.middleware.ts, auth.middleware.ts, and acceptance-test fixtures).
+// assessmentRBAC.ts's own `hasPermission()` — the existing, already-shipped
+// RBAC helper for this same "assessment" resource — draws the identical
+// line: SUPER_ADMIN / ORG_ADMIN / PROJECT_MANAGER / CONSULTANT can
+// create+update; VIEWER can only read. This list mirrors that split using
+// the raw (non-normalized) role strings that actually appear in
+// `req.userRole` / `organization_members.role`.
+//
+// Decision surfaced for Codex to confirm: MEMBER/USER/TEAM_MEMBER/MANAGER/
+// SME/REVIEWER are treated as create+edit-capable (same bucket
+// normalizeApplicationRole calls USER) — if any of those should be
+// read-only in this product, they need to move to the blocked set below.
+const ASSESSMENT_READ_ONLY_ORG_ROLES = new Set([
+  'VIEWER',
+  'GUEST',
+  'CLIENT',
+  'READONLY',
+  'READ_ONLY',
+  'OBSERVER',
+  'STAKEHOLDER',
+]);
+
+const ASSESSMENT_CREATE_CAPABLE_ORG_ROLES = new Set([
+  'OWNER',
+  'ADMIN',
+  'ADMINISTRATOR',
+  'SUPERADMIN',
+  'SUPER_ADMIN',
+  'ORG_ADMIN',
+  'USER',
+  'MEMBER',
+  'TEAM_MEMBER',
+  'PROJECT_MANAGER',
+  'MANAGER',
+  'CONSULTANT',
+  'SME',
+  'REVIEWER',
+]);
+
+/**
+ * Fail-closed org-level capability check for assessment create/edit.
+ * Missing/blank role -> denied. Unrecognized role -> denied. Explicit
+ * read-only/viewer-semantics role -> denied. Only a role on the explicit
+ * allow-list is granted.
+ */
+function canCreateOrEditAssessment(role: string | undefined | null): boolean {
+  const normalized = String(role || '')
+    .trim()
+    .toUpperCase();
+  if (!normalized) return false;
+  if (ASSESSMENT_READ_ONLY_ORG_ROLES.has(normalized)) return false;
+  return ASSESSMENT_CREATE_CAPABLE_ORG_ROLES.has(normalized);
+}
+
+function buildCapabilityDenied(role: string | undefined | null) {
+  return {
+    error: 'Insufficient role to perform this action',
+    code: 'INSUFFICIENT_ROLE',
+    role: role || null,
+    whatNext: [
+      'Ask an organization admin or owner to grant a role capable of creating or editing assessments.',
+    ],
+  };
+}
+
 async function ensureAssessmentInOrg(
   assessmentId: string,
   organizationId: string
@@ -192,15 +273,39 @@ router.get(
     params.push(limit, offset);
 
     const rows = (await queryHelpers.queryAll(sql, params)) as Array<Record<string, unknown>>;
-    const items = rows.map((row) => ({
-      ...row,
-      status: normalizeStatus(String(row.status || 'DRAFT')),
-      backendStatus: row.status,
-      answers: parseJsonSafely(row.answers_json as string | null | undefined, {}),
-      scoreSummary: parseJsonSafely(row.score_summary as string | null | undefined, {}),
-      assessmentDefinitionId: row.assessment_definition_id || null,
-      assessmentDefinitionVersion: row.assessment_definition_version || null,
-    }));
+    const items = rows.map((row) => {
+      const answers = parseJsonSafely(row.answers_json as string | null | undefined, {});
+
+      // ASM-001A Codex fix #4 (list): mirrors the single-assessment GET/:id
+      // server-derived DRD completion — the list previously returned
+      // whatever was last persisted to completion_percent, which can be
+      // stale. Only DRD rows with an answers.drd.areas map are recomputed;
+      // every other framework (SIRI/ADMA/CMMI/Lean) and DRD rows with no
+      // areas yet keep the persisted value untouched. computeDrdCompletion
+      // is a pure, in-memory function (no SQL), so looping it over the
+      // page's rows is cheap even though this is a list endpoint.
+      const isDrdAssessment = String(row.assessment_type || '').toUpperCase() === 'DRD';
+      const drdAreas = isDrdAssessment
+        ? (answers as { drd?: { areas?: DrdAreasMap } })?.drd?.areas
+        : undefined;
+      const derivedCompletionPercent = drdAreas ? computeDrdCompletion(drdAreas) : undefined;
+
+      return {
+        ...row,
+        status: normalizeStatus(String(row.status || 'DRAFT')),
+        backendStatus: row.status,
+        answers,
+        scoreSummary: parseJsonSafely(row.score_summary as string | null | undefined, {}),
+        assessmentDefinitionId: row.assessment_definition_id || null,
+        assessmentDefinitionVersion: row.assessment_definition_version || null,
+        ...(derivedCompletionPercent !== undefined
+          ? {
+              completion_percent: derivedCompletionPercent,
+              completionPercent: derivedCompletionPercent,
+            }
+          : {}),
+      };
+    });
 
     return res.json({
       data: {
@@ -257,11 +362,23 @@ router.get(
       return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
     }
 
+    const answers = parseJsonSafely(assessment.answers_json as string | null | undefined, {});
+
+    // ASM-001A: DRD completion is server-derived from answers.drd.areas,
+    // never trusted from whatever was last written to the row by a client.
+    // Non-DRD frameworks (SIRI/ADMA/CMMI/Lean) are untouched — they keep
+    // reading the persisted completion_percent as-is.
+    const isDrdAssessment = String(assessment.assessment_type || '').toUpperCase() === 'DRD';
+    const drdAreas = isDrdAssessment
+      ? (answers as { drd?: { areas?: DrdAreasMap } })?.drd?.areas
+      : undefined;
+    const derivedCompletionPercent = drdAreas ? computeDrdCompletion(drdAreas) : undefined;
+
     const normalized = {
       ...assessment,
       status: normalizeStatus(String(assessment.status || 'DRAFT')),
       backendStatus: assessment.status,
-      answers: parseJsonSafely(assessment.answers_json as string | null | undefined, {}),
+      answers,
       contextSnapshot: parseJsonSafely(
         assessment.context_snapshot as string | null | undefined,
         {}
@@ -270,6 +387,9 @@ router.get(
       navigation: parseJsonSafely(assessment.navigation_json as string | null | undefined, null),
       assessmentDefinitionId: assessment.assessment_definition_id || null,
       assessmentDefinitionVersion: assessment.assessment_definition_version || null,
+      ...(derivedCompletionPercent !== undefined
+        ? { completion_percent: derivedCompletionPercent, completionPercent: derivedCompletionPercent }
+        : {}),
     };
 
     return res.json({
@@ -282,7 +402,15 @@ router.get(
 router.post(
   '/',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
+
+    // ASM-001A Codex fix #2: fail-closed capability check, BEFORE any DB
+    // write. actor/organization come exclusively from getV8Context (session),
+    // never from body/query.
+    if (!canCreateOrEditAssessment(userRole)) {
+      return res.status(403).json(buildCapabilityDenied(userRole));
+    }
+
     const assessmentType = String(req.body?.assessmentType || '')
       .trim()
       .toUpperCase();
@@ -305,6 +433,52 @@ router.post(
       });
     }
 
+    // ASM-001A: DRD assessments created from the Library tab bind to a
+    // published assessment_definitions row. Backwards-compatible — callers
+    // that don't send definitionId/definitionVersion (every caller today)
+    // keep the exact pre-existing behavior of a null-bound assessment.
+    let boundDefinitionId: string | null = null;
+    let boundDefinitionVersion: string | null = null;
+
+    const requestedDefinitionId =
+      typeof req.body?.definitionId === 'string' ? req.body.definitionId.trim() : '';
+    const requestedDefinitionVersion =
+      typeof req.body?.definitionVersion === 'string' ? req.body.definitionVersion.trim() : '';
+
+    if (assessmentType === 'DRD' && (requestedDefinitionId || requestedDefinitionVersion)) {
+      if (!requestedDefinitionId) {
+        return res.status(400).json({
+          error: 'definitionId is required when definitionVersion is supplied',
+          code: 'DEFINITION_NOT_FOUND',
+        });
+      }
+
+      const definition = await AssessmentDefinitionService.getDefinitionById(
+        requestedDefinitionId
+      );
+      if (!definition) {
+        return res.status(400).json({
+          error: 'Assessment definition not found',
+          code: 'DEFINITION_NOT_FOUND',
+        });
+      }
+      if (requestedDefinitionVersion && definition.version !== requestedDefinitionVersion) {
+        return res.status(400).json({
+          error: 'Assessment definition version does not match the referenced definition',
+          code: 'DEFINITION_NOT_FOUND',
+        });
+      }
+      if (definition.status !== 'published') {
+        return res.status(422).json({
+          error: 'Assessment definition is not published',
+          code: 'DEFINITION_NOT_PUBLISHED',
+        });
+      }
+
+      boundDefinitionId = definition.id;
+      boundDefinitionVersion = definition.version;
+    }
+
     await ensureAssessmentSchema();
 
     const id = uuidv4();
@@ -314,8 +488,9 @@ router.post(
       `INSERT INTO assessments (
         id, organization_id, project_id, assessment_type, name, status,
         completion_percent, confidence_avg, answers_json, context_snapshot,
+        assessment_definition_id, assessment_definition_version,
         created_by, updated_by, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         organizationId,
@@ -327,6 +502,8 @@ router.post(
         0,
         '{}',
         '{}',
+        boundDefinitionId,
+        boundDefinitionVersion,
         userId,
         userId,
         now,
@@ -353,8 +530,8 @@ router.post(
           projectId,
           status: 'DRAFT',
           backendStatus: 'DRAFT',
-          assessmentDefinitionId: null,
-          assessmentDefinitionVersion: null,
+          assessmentDefinitionId: boundDefinitionId,
+          assessmentDefinitionVersion: boundDefinitionVersion,
           createdAt: now,
           updatedAt: now,
         },
@@ -428,7 +605,7 @@ router.post(
 router.put(
   '/:assessmentId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
     const assessmentId = firstParam(req.params.assessmentId);
     if (!assessmentId) {
       return res
@@ -447,8 +624,9 @@ router.put(
       confidence_avg?: number | null;
       current_section_id?: string | null;
       navigation_json?: string | null;
+      assessment_type?: string | null;
     }>(
-      `SELECT answers_json, context_snapshot, score_summary, p28_workbench_v1, completion_percent, confidence_avg, current_section_id, navigation_json
+      `SELECT answers_json, context_snapshot, score_summary, p28_workbench_v1, completion_percent, confidence_avg, current_section_id, navigation_json, assessment_type
        FROM assessments
        WHERE id = ? AND organization_id = ?`,
       [assessmentId, organizationId]
@@ -461,10 +639,30 @@ router.put(
       confidence_avg?: number | null;
       current_section_id?: string | null;
       navigation_json?: string | null;
+      assessment_type?: string | null;
     } | null;
 
     if (!existing) {
       return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
+    }
+
+    // ASM-001A Codex fix #2: capability check happens AFTER the org-scoped
+    // existence check above — so a foreign-org assessmentId still 404s
+    // (never leaks a 403 that would confirm the resource exists in some
+    // other org). Reuses the existing per-assessment permission helper that
+    // already gates every /workbench/* sub-route — extended here to the
+    // main edit endpoint per Codex's explicit instruction. Zero change to
+    // ensureWorkbenchPermission itself.
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canEdit',
+    });
+    if (!permission.ok) {
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
     }
 
     if (req.body?.scoreSummary !== undefined && existing.p28_workbench_v1) {
@@ -490,8 +688,19 @@ router.put(
       req.body?.scoreSummary !== undefined
         ? req.body.scoreSummary
         : parseJsonSafely(existing.score_summary, {});
-    const nextCompletionPercent =
-      req.body?.completionPercent !== undefined
+
+    // ASM-001A: DRD assessments derive completion_percent server-side from
+    // answers.drd.areas — whatever the client sent in completionPercent is
+    // ignored for DRD once the answers carry a drd.areas map. Non-DRD
+    // frameworks (SIRI/ADMA/CMMI/Lean) keep the exact pre-existing
+    // "trust the client" behavior — zero change in scope for those.
+    const isDrdAssessment = String(existing.assessment_type || '').toUpperCase() === 'DRD';
+    const drdAreasForCompletion = isDrdAssessment
+      ? (nextAnswers as { drd?: { areas?: DrdAreasMap } })?.drd?.areas
+      : undefined;
+    const nextCompletionPercent = drdAreasForCompletion
+      ? computeDrdCompletion(drdAreasForCompletion)
+      : req.body?.completionPercent !== undefined
         ? Number(req.body.completionPercent)
         : Number(existing.completion_percent || 0);
     const nextConfidenceAvg =
@@ -545,7 +754,13 @@ router.put(
       .catch((err: unknown) => logger.warn('[Assessment] non-blocking operation failed', err));
 
     return res.json({
-      data: { id: assessmentId, updatedAt: now },
+      data: {
+        id: assessmentId,
+        updatedAt: now,
+        // ASM-001A: surfaced so callers don't need a round-trip GET to see the
+        // server-derived value for DRD; harmless additive field for non-DRD.
+        completionPercent: nextCompletionPercent,
+      },
       meta: assessmentMutationMeta(),
     });
   })

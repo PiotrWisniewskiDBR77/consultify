@@ -1,6 +1,8 @@
 /**
  * AssessmentHub
- * New simplified Assessment module with 3 tabs (Assessment, Reports, Initiatives)
+ * New simplified Assessment module with 3 tabs (Assessment, Reports, Initiatives).
+ * Behind `assessmentFiveSurfacesV1` (ASM-001A): 5 stable, URL-synced tab ids
+ * (Library/Processes/Outputs/Reports/Initiatives) — see `fiveSurfacesEnabled`.
  * Uses shared ModuleHub components
  */
 
@@ -19,9 +21,11 @@ import {
   FileText,
   Globe,
   Layers,
+  Library,
   Lightbulb,
   Loader2,
   Monitor,
+  Package,
   Presentation,
   Trash2,
   Upload,
@@ -32,7 +36,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+import { EmptyState, LoadingState as SharedLoadingState } from '@/components/shared/states';
 import {
   StandardPreview,
   type StandardPreviewActions,
@@ -85,6 +89,7 @@ import {
 import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
+import { AssessmentLibraryTab } from './library/AssessmentLibraryTab';
 import { NewAssessmentReportModal } from './modals/NewAssessmentReportModal';
 import { NewAssessmentData, NewAssessmentModal } from './NewAssessmentModal';
 
@@ -301,7 +306,28 @@ interface AssessmentHubProps {
   initialTab?: ModuleTab;
 }
 
-export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list' }) => {
+// ASM-001A: the 5 stable tab ids behind `assessmentFiveSurfacesV1`. `list` is
+// the pre-ASM-001A id ('processes' content is byte-identical) — kept as a
+// compat target so old bookmarks/links (`?tab=list`) keep working, and as the
+// catch-all for any other unrecognized `?tab=` value.
+const FIVE_SURFACES_TAB_IDS = new Set<string>([
+  'library',
+  'processes',
+  'outputs',
+  'reports',
+  'initiatives',
+]);
+
+function resolveFiveSurfacesTabFromUrl(raw: string | null): ModuleTab | null {
+  if (!raw) return null;
+  if (raw === 'list') return 'processes';
+  if (FIVE_SURFACES_TAB_IDS.has(raw)) return raw as ModuleTab;
+  // Unknown value (typo'd link, stale bookmark from a future tab id, etc.) —
+  // fall back to the closest living equivalent of the old default tab.
+  return 'processes';
+}
+
+export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -315,8 +341,49 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   const addChatMessage = useConversationStore((s) => s.addMessage);
   const wizardEnabled = isEnabled('assessmentInitiativesWizard');
+  // ASM-001A: five-surface Hub (Library default tab + `?tab=` as source of
+  // truth). OFF = today's exact behavior — see resolveFiveSurfacesTabFromUrl
+  // and the effect below, both no-ops when this is false.
+  const fiveSurfacesEnabled = isEnabled('assessmentFiveSurfacesV1');
   // State
-  const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
+  const [activeTab, setActiveTabState] = useState<ModuleTab>(() => {
+    if (initialTab) return initialTab;
+    if (!fiveSurfacesEnabled) return 'list';
+    return resolveFiveSurfacesTabFromUrl(searchParams.get('tab')) || 'library';
+  });
+  // Tab changes go through this wrapper so the URL stays the source of truth
+  // when the flag is ON; when it's OFF this is byte-identical to calling the
+  // state setter directly (no `?tab=` read/write at all).
+  const setActiveTab = useCallback(
+    (tab: ModuleTab) => {
+      setActiveTabState(tab);
+      if (!fiveSurfacesEnabled) return;
+      const next = new URLSearchParams(searchParams);
+      next.set('tab', String(tab));
+      setSearchParams(next);
+    },
+    [fiveSurfacesEnabled, searchParams, setSearchParams]
+  );
+  // Keeps `activeTab` in sync with the URL for cases `setActiveTab` doesn't
+  // cover itself: browser back/forward, a shared link landing directly on a
+  // tab, and a first mount with no `?tab=` at all (canonicalized here so the
+  // URL always reflects what's on screen once the flag is ON).
+  useEffect(() => {
+    if (!fiveSurfacesEnabled) return;
+    const raw = searchParams.get('tab');
+    const mapped = resolveFiveSurfacesTabFromUrl(raw) || 'library';
+    // Canonicalize: missing (`?tab=` absent) or legacy/unknown values get
+    // rewritten to the resolved tab id, so the URL is always the single
+    // source of truth once the flag is ON.
+    if (!raw || mapped !== raw) {
+      const next = new URLSearchParams(searchParams);
+      next.set('tab', String(mapped));
+      setSearchParams(next, { replace: true });
+    }
+    if (mapped !== activeTab) {
+      setActiveTabState(mapped);
+    }
+  }, [fiveSurfacesEnabled, searchParams, activeTab, setSearchParams]);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
@@ -575,6 +642,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     let data: any[] = [];
     switch (activeTab) {
       case 'list':
+      case 'processes':
         data = assessments;
         break;
       case 'reports':
@@ -601,21 +669,57 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     return counts;
   }, [activeTab, assessments, reports, initiatives, importedReports]);
 
-  // Tab configuration
-  const tabs = useMemo(
-    () => [
+  // Tab configuration — ASM-001A: 5 stable tab ids behind
+  // `assessmentFiveSurfacesV1`. OFF keeps the original 3 tabs verbatim
+  // (same ids/labels/counts as before this change).
+  const tabs = useMemo(() => {
+    if (!fiveSurfacesEnabled) {
+      return [
+        {
+          id: 'list' as ModuleTab,
+          label: 'Assessment',
+          icon: <FileText size={16} />,
+          count: assessments.length,
+        },
+        {
+          id: 'reports' as ModuleTab,
+          label: 'Reports',
+          icon: <FileText size={16} />,
+          // Count all report documents (APPROVED + legacy FINAL),
+          // while the default filter still shows APPROVED only.
+          count: reports.length + importedReports.length,
+        },
+        {
+          id: 'initiatives' as ModuleTab,
+          label: 'Initiatives',
+          icon: <Lightbulb size={16} />,
+          count: initiatives.length,
+        },
+      ];
+    }
+    return [
       {
-        id: 'list' as ModuleTab,
-        label: 'Assessment',
+        id: 'library' as ModuleTab,
+        label: 'Library',
+        icon: <Library size={16} />,
+      },
+      {
+        // Former 'list' — identical content (same table, columns, preview),
+        // only the tab id + label changed.
+        id: 'processes' as ModuleTab,
+        label: 'Processes',
         icon: <FileText size={16} />,
         count: assessments.length,
+      },
+      {
+        id: 'outputs' as ModuleTab,
+        label: 'Outputs',
+        icon: <Package size={16} />,
       },
       {
         id: 'reports' as ModuleTab,
         label: 'Reports',
         icon: <FileText size={16} />,
-        // Count all report documents (APPROVED + legacy FINAL),
-        // while the default filter still shows APPROVED only.
         count: reports.length + importedReports.length,
       },
       {
@@ -624,9 +728,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         icon: <Lightbulb size={16} />,
         count: initiatives.length,
       },
-    ],
-    [assessments.length, reports, initiatives, importedReports]
-  );
+    ];
+  }, [fiveSurfacesEnabled, assessments.length, reports, initiatives, importedReports]);
 
   // Table columns for assessments
   // Dynamic columns per active tab
@@ -1099,16 +1202,34 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
     switch (activeTab) {
       case 'list':
-        data = assessments.map((item) => ({
-          id: item.id,
-          name: item.name,
-          framework: mapApiFramework(item.type),
-          status: mapAssessmentApiStatus(item.status),
-          progress: item.progress ?? 0,
-          updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
-          // #69: raw list rows are `SELECT *` — createdBy arrives as snake_case.
-          createdBy: item.createdBy || item.created_by,
-        }));
+      case 'processes':
+        data = assessments.map((item) => {
+          // Codex fix #4 (frontend half): GET /api/v8/assessment (list) never
+          // sent `progress` — that field doesn't exist in the API response at
+          // all (see V8AssessmentListItem / assessment.routes.ts `router.get('/')`).
+          // The list route derives DRD completion server-side and returns it
+          // under `completionPercent`/`completion_percent` (camelCase always
+          // present when derived; snake_case always present as the raw
+          // persisted column via `...row`, same keys the single-record
+          // GET /:id endpoint already used). Reading the non-existent
+          // `item.progress` silently fell back to `?? 0`, so Processes always
+          // showed 0% regardless of what the backend computed. `item.progress`
+          // stays as a last-resort fallback for any caller that still sends it.
+          const rawItem = item as unknown as {
+            completionPercent?: number;
+            completion_percent?: number;
+          };
+          return {
+            id: item.id,
+            name: item.name,
+            framework: mapApiFramework(item.type),
+            status: mapAssessmentApiStatus(item.status),
+            progress: rawItem.completionPercent ?? rawItem.completion_percent ?? item.progress ?? 0,
+            updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+            // #69: raw list rows are `SELECT *` — createdBy arrives as snake_case.
+            createdBy: item.createdBy || item.created_by,
+          };
+        });
         break;
       case 'reports': {
         const builderReports = reports.map((item) => ({
@@ -1199,7 +1320,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   }, [currentData]);
 
   const emptyStateMessage =
-    activeTab === 'list' && loadWarning
+    (activeTab === 'list' || activeTab === 'processes') && loadWarning
       ? 'Assessment list is temporarily unavailable. Retry or create a new assessment while staging recovers.'
       : 'No assessments found. Create your first assessment to get started.';
 
@@ -1252,7 +1373,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         title: `Assessment Hub: ${tabs.find((tab) => tab.id === activeTab)?.label || 'Assessment'}`,
         projectId: currentProjectId || undefined,
         pmoContext: {
-          assessmentId: activeTab === 'list' ? assessments[0]?.id : undefined,
+          assessmentId:
+            activeTab === 'list' || activeTab === 'processes' ? assessments[0]?.id : undefined,
         },
       });
       convId = conversation.id;
@@ -1346,7 +1468,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             ? 'Reports'
             : activeTab === 'initiatives'
               ? 'Initiatives'
-              : 'Assessment',
+              : activeTab === 'library'
+                ? 'Library'
+                : activeTab === 'outputs'
+                  ? 'Outputs'
+                  : 'Assessment',
         badge: currentData.length,
         active: true,
         title: t(
@@ -1433,7 +1559,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   }, [selectedListIds, currentData, handleRowAction]);
 
   const bulkCommandRowContent =
-    activeTab === 'list' && selectedListIds.size > 0 ? (
+    (activeTab === 'list' || activeTab === 'processes') && selectedListIds.size > 0 ? (
       <div className={MENU_3_INNER_CLASS}>
         <div className={MENU_3_LEFT_CLASS}>
           <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
@@ -1632,28 +1758,27 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   // Esc closes preview; single-key shortcuts (O) active while preview open
   // (kanon B.24/B.31) — generalized across all 3 tabs (#73).
   useEffect(() => {
-    const selectedRowId =
-      activeTab === 'list'
-        ? selectedAssessmentId
-        : activeTab === 'reports'
-          ? selectedReportRowId
-          : activeTab === 'initiatives'
-            ? selectedInitiativeRowId
-            : null;
+    const isProcessesTab = activeTab === 'list' || activeTab === 'processes';
+    const selectedRowId = isProcessesTab
+      ? selectedAssessmentId
+      : activeTab === 'reports'
+        ? selectedReportRowId
+        : activeTab === 'initiatives'
+          ? selectedInitiativeRowId
+          : null;
     if (!selectedRowId) return;
-    const actions =
-      activeTab === 'list'
-        ? listPreviewActions
-        : activeTab === 'reports'
-          ? reportPreviewActions
-          : initiativePreviewActions;
+    const actions = isProcessesTab
+      ? listPreviewActions
+      : activeTab === 'reports'
+        ? reportPreviewActions
+        : initiativePreviewActions;
     const shortcuts = standardPreviewShortcuts(actions);
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable)
         return;
       if (e.key === 'Escape') {
-        if (activeTab === 'list') setSelectedAssessmentId(null);
+        if (isProcessesTab) setSelectedAssessmentId(null);
         else if (activeTab === 'reports') setSelectedReportRowId(null);
         else if (activeTab === 'initiatives') setSelectedInitiativeRowId(null);
         return;
@@ -1815,6 +1940,37 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       return null;
     }
 
+    // ASM-001A: 'library' — published-definition catalog + Start. Thin
+    // adapter component (own StandardTable instance), rendered ahead of the
+    // grid/list branches below since it has no relation to `currentData`/
+    // `viewMode` (those drive the 'processes'/'reports'/'initiatives' tabs).
+    if (activeTab === 'library') {
+      return (
+        <div className="h-full overflow-hidden">
+          <AssessmentLibraryTab />
+        </div>
+      );
+    }
+
+    // ASM-001A: 'outputs' — placeholder surface, not wired to any backend
+    // yet. Honest empty state (shared/states), no CTA that would promise a
+    // feature that doesn't exist.
+    if (activeTab === 'outputs') {
+      return (
+        <div className="h-full overflow-auto p-6">
+          <EmptyState
+            variant="new"
+            icon={Package}
+            title={t('assessment.outputs.emptyState.title', 'Outputs are not wired up yet')}
+            description={t(
+              'assessment.outputs.emptyState.description',
+              'This surface will bring together assessment-derived outputs (reports, initiative packs, exports) in one place. Nothing to show here yet.'
+            )}
+          />
+        </div>
+      );
+    }
+
     // Show list/grid view
     if (viewMode === 'grid') {
       return (
@@ -1829,9 +1985,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     }
 
     // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): Assessment
-    // 'list' tab → StandardTable + StandardPreview. Moduł deklaruje TYLKO
-    // dane + kontrakt kebaba/akcji; cały chrome pochodzi z fasad Standard*.
-    if (activeTab === 'list') {
+    // 'list'/'processes' tab → StandardTable + StandardPreview. Moduł
+    // deklaruje TYLKO dane + kontrakt kebaba/akcji; cały chrome pochodzi z
+    // fasad Standard*. ('processes' = ASM-001A rename of 'list', identical
+    // body — see the tab-id check below.)
+    if (activeTab === 'list' || activeTab === 'processes') {
       const selectedRow = selectedListRow;
       const previewActions = listPreviewActions;
 
@@ -1944,7 +2102,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                 }}
                 relations={[]}
                 actions={previewActions}
-                whatsNext={activeTab === 'list' ? listPreviewWhatsNext : undefined}
+                whatsNext={
+                  activeTab === 'list' || activeTab === 'processes' ? listPreviewWhatsNext : undefined
+                }
               />
             </aside>
           ) : null}
@@ -2364,9 +2524,13 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={handleNewItem}
+        onNewItem={
+          activeTab === 'library' || activeTab === 'outputs' ? undefined : handleNewItem
+        }
         newItemLabel={getNewItemLabel()}
-        filterControls={statusDropdownControl}
+        filterControls={
+          activeTab === 'library' || activeTab === 'outputs' ? undefined : statusDropdownControl
+        }
         commandRowContent={hubCommandRowContent}
       >
         {/* min-h-0 flex-1 overflow-hidden: without this the 'list' tab's
@@ -2375,7 +2539,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             fix already applied in InitiativesHub. */}
         <div className="min-h-0 flex-1 overflow-hidden space-y-3">
           {loadWarning &&
-            !(activeTab === 'list' && !activeDocumentId && assessments.length === 0) && (
+            !(
+              (activeTab === 'list' || activeTab === 'processes') &&
+              !activeDocumentId &&
+              assessments.length === 0
+            ) && (
               <div className="mx-4 mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
@@ -2391,7 +2559,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                 </div>
               </div>
             )}
-          {loadWarning && activeTab === 'list' && !activeDocumentId && assessments.length === 0 ? (
+          {loadWarning &&
+          (activeTab === 'list' || activeTab === 'processes') &&
+          !activeDocumentId &&
+          assessments.length === 0 ? (
             // Hard failure (no cached data): show ErrorState with retry instead of the
             // empty-list CTA, which would falsely imply the user has 0 assessments.
             <ErrorState message={loadWarning} retry={() => void refreshData()} />

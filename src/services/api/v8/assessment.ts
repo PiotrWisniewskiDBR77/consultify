@@ -68,6 +68,16 @@ export interface V8AssessmentCreatePayload {
   assessmentType: string;
   name: string;
   projectId?: string | null;
+  /**
+   * ASM-001A: optional binding to a published `assessment_definitions` row
+   * (Library tab). Backend-optional/backward-compatible — omitting both
+   * fields keeps today's behavior (no definition binding). When provided,
+   * the server validates the definition is `published` before accepting the
+   * create, returning 400/422 `DEFINITION_NOT_PUBLISHED` /
+   * `DEFINITION_NOT_FOUND` otherwise (see AssessmentLibraryTab).
+   */
+  definitionId?: string;
+  definitionVersion?: string;
 }
 
 export interface V8AssessmentUpdatePayload {
@@ -231,7 +241,27 @@ export const V8AssessmentApi = {
   },
 
   updateAssessment(assessmentId: string, payload: V8AssessmentUpdatePayload) {
-    return v8Put<{ id: string; updatedAt: string }>(`/assessment/${assessmentId}`, payload);
+    // ASM-001A: `completionPercent` is optional/forward-compatible — the DRD
+    // lane will start receiving a server-derived value here (instead of the
+    // legacy `{id, updatedAt}`-only response) once the backend recomputes it
+    // instead of trusting the client; other frameworks are unaffected.
+    return v8Put<{ id: string; updatedAt: string; completionPercent?: number }>(
+      `/assessment/${assessmentId}`,
+      payload
+    );
+  },
+
+  /**
+   * ASM-001A: list every definition version (draft/published/deprecated) for
+   * a methodology. The Library tab filters to `status === 'published'` and
+   * picks the newest version client-side — there is deliberately no
+   * server-side "published only" filter endpoint yet (MVP scope decision,
+   * see AssessmentLibraryTab).
+   */
+  getDefinitions(methodologyId: string) {
+    return v8Get<{ methodologyId: string; versions: V8AssessmentDefinitionRecord[] }>(
+      `/assessment/definitions/${encodeURIComponent(methodologyId)}`
+    );
   },
 
   getWorkbench(assessmentId: string) {

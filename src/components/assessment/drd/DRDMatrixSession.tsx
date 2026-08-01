@@ -22,6 +22,7 @@
  *     never fabricates a scoreSummary (P28 no-silent-scoring respected — we only
  *     write answers; formal scoring/promotion still flows through the workbench).
  */
+import { Target } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -62,6 +63,16 @@ const EMPTY_CELL_CLASS = 'bg-c-surface-raised';
 
 function getAchievedLevel(value: DRDEditorAnswers | undefined, areaId: string): number {
   const raw = Number(value?.areas?.[areaId]?.achievedLevel || 0);
+  return Number.isFinite(raw) && raw > 0 ? raw : 0;
+}
+
+// ASM-001A: DRDMatrixSession never read `targetLevel` before this — only
+// `achievedLevel`. Form (DRDAssessmentEditor) and Table both already show
+// achieved ("AS {n}") alongside target ("TO {n}") using this exact labeling;
+// the Matrix needs the same pairing so "Matrix shows the same achieved/
+// target values as Form" is true on screen, not only in the shared data.
+function getTargetLevel(value: DRDEditorAnswers | undefined, areaId: string): number {
+  const raw = Number(value?.areas?.[areaId]?.targetLevel || 0);
   return Number.isFinite(raw) && raw > 0 ? raw : 0;
 }
 
@@ -187,6 +198,7 @@ export const DRDMatrixSession: React.FC<Props> = ({
                   <div className="px-2 pb-2 pt-1 grid grid-cols-1 gap-1.5">
                     {ax.areas.map((area) => {
                       const lvl = getAchievedLevel(value, area.id);
+                      const tgt = getTargetLevel(value, area.id);
                       const cls =
                         lvl > 0 ? LEVEL_TAG_CLASS[lvl] || EMPTY_CELL_CLASS : EMPTY_CELL_CLASS;
                       const isSelectedArea = ax.id === axis.id && area.id === (currentAreaId || '');
@@ -212,14 +224,34 @@ export const DRDMatrixSession: React.FC<Props> = ({
                           >
                             {area.id} · {isPl ? area.namePL || area.name : area.name}
                           </span>
-                          <span
-                            className={`ml-2 shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                              lvl > 0
-                                ? 'bg-white/25 text-c-tag-foreground'
-                                : 'bg-c-surface-raised text-c-text-muted'
-                            }`}
-                          >
-                            {lvl > 0 ? lvl : '–'}
+                          <span className="ml-2 shrink-0 flex items-center gap-1">
+                            <span
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                lvl > 0
+                                  ? 'bg-white/25 text-c-tag-foreground'
+                                  : 'bg-c-surface-raised text-c-text-muted'
+                              }`}
+                              title={
+                                isPl
+                                  ? `Osiągnięty poziom: ${lvl || '—'}`
+                                  : `Achieved (AS-IS) level: ${lvl || '—'}`
+                              }
+                            >
+                              {lvl > 0 ? lvl : '–'}
+                            </span>
+                            {tgt > 0 && (
+                              <span
+                                className="inline-flex items-center gap-0.5 h-5 px-1.5 rounded-full border border-dashed border-blue-500/50 bg-blue-500/10 text-[9px] font-bold text-blue-700 dark:text-blue-200"
+                                title={
+                                  isPl
+                                    ? `Poziom docelowy: ${tgt}`
+                                    : `Target (TO-BE) level: ${tgt}`
+                                }
+                              >
+                                <Target size={9} />
+                                {tgt}
+                              </span>
+                            )}
                           </span>
                         </button>
                       );
@@ -250,6 +282,17 @@ export const DRDMatrixSession: React.FC<Props> = ({
           <div className="mt-3 text-[11px] text-c-text-muted tabular-nums">
             {t('assessment.drd.matrix.areasAssessed', 'Areas assessed')}: {assessedAreas}/
             {totalAreas}
+          </div>
+          <div className="mt-2 flex items-center gap-1.5 text-[10px] text-c-text-muted">
+            <span className="inline-flex items-center gap-0.5 rounded-full border border-dashed border-blue-500/50 bg-blue-500/10 px-1 text-blue-700 dark:text-blue-200">
+              <Target size={9} />
+            </span>
+            <span>
+              {t(
+                'assessment.drd.matrix.targetLegend',
+                'Dashed blue = target level (TO-BE), alongside the achieved (AS-IS) circle.'
+              )}
+            </span>
           </div>
         </div>
       </aside>

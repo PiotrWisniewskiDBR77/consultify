@@ -134,15 +134,133 @@ describe('DRDMatrixSession', () => {
 
 describe('DRDForm (Piotr original) renders as the default DRD session surface', () => {
   it('renders without error and reflects hydrated area scores from the adapter', () => {
-    const areaA = DRD_STRUCTURE[0].areas[0].id;
+    const axis1 = DRD_STRUCTURE[0]; // "Digital Processes" — levelCount 7 (ASM-001A fixture)
+    const areaA = axis1.areas[0].id;
     const answers = { areas: { [areaA]: { achievedLevel: 3, targetLevel: 5 } } };
     render(
       <DRDForm data={areasToFormData(answers)} onChange={vi.fn()} showProgress />
     );
     // Axis tabs present (first axis name shown).
-    expect(screen.getAllByText(new RegExp(DRD_STRUCTURE[0].name, 'i')).length).toBeGreaterThan(0);
-    // Hydrated axis summary reflects the actual score (3/5).
-    expect(screen.getByText('3/5')).toBeTruthy();
+    expect(screen.getAllByText(new RegExp(axis1.name, 'i')).length).toBeGreaterThan(0);
+    // ASM-001A: axis summary denominator must be the AXIS's own levelCount (7
+    // for "Digital Processes"), never a hardcoded /5. Before the fix this
+    // rendered "3/5" (wrong denominator for a 7-level axis).
+    expect(axis1.levelCount).toBe(7);
+    expect(screen.getByText(`3/${axis1.levelCount}`)).toBeTruthy();
+    expect(screen.queryByText('3/5')).toBeNull();
+  });
+});
+
+describe('DRDForm — per-axis levelCount (ASM-001A fix: no hardcoded 1-5)', () => {
+  // Real fixture from drdStructure.ts: Axis 1 "Digital Processes" has
+  // levelCount: 7 (confirmed 7 areas x 7 levels each, e.g. area "1A").
+  const axis7Levels = DRD_STRUCTURE.find((a) => a.levelCount === 7)!;
+  // A levelCount:5 axis whose name doesn't collide with one of its own area
+  // names (axis "Digital Products" has an area ALSO named "Digital Products",
+  // which would make text queries ambiguous) — resolves to "Digital Business
+  // Models" (axis 3).
+  const axis5Levels = DRD_STRUCTURE.find(
+    (a) => a.levelCount === 5 && !a.areas.some((ar) => ar.name === a.name)
+  )!;
+
+  it(`offers levels 1-${axis7Levels.levelCount} for "${axis7Levels.name}" (levelCount ${axis7Levels.levelCount}) and writes level 6/7 to onChange`, () => {
+    const onChange = vi.fn();
+    const area = axis7Levels.areas[0];
+    render(<DRDForm data={{}} onChange={onChange} showProgress={false} />);
+
+    // Axis 1 is the default active tab — expand its first area.
+    fireEvent.click(screen.getByText(area.name));
+
+    // "Current Level" text also appears in the always-visible axis summary
+    // <p> block — scope to the expanded area's <label> (the level-selector one).
+    const currentLevelLabel = screen
+      .getAllByText('Current Level')
+      .find((el) => el.tagName === 'LABEL') as HTMLElement;
+    const selector = currentLevelLabel.parentElement as HTMLElement;
+    const buttons = within(selector).getAllByRole('button');
+
+    // Exactly levelCount buttons — not clamped to 5, not overflowing either.
+    expect(buttons.map((b) => b.textContent)).toEqual(
+      Array.from({ length: axis7Levels.levelCount }, (_, i) => String(i + 1))
+    );
+
+    // Level 6 is selectable (would not exist under the old [1,2,3,4,5] hardcode).
+    fireEvent.click(within(selector).getByText('6'));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    let next = onChange.mock.calls[0][0];
+    // DRDForm's native onChange shape: { [axisKey]: { areaScores: { [areaId]: [actual, target] } } }.
+    const axisKey = Object.keys(next)[0];
+    expect(next[axisKey].areaScores[area.id]).toEqual([6, 0]);
+
+    // Level 7 is also selectable.
+    onChange.mockClear();
+    fireEvent.click(within(selector).getByText('7'));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    next = onChange.mock.calls[0][0];
+    expect(next[axisKey].areaScores[area.id]).toEqual([7, 0]);
+  });
+
+  it(`regression: "${axis5Levels.name}" (levelCount ${axis5Levels.levelCount}) still offers exactly ${axis5Levels.levelCount} levels, unchanged`, () => {
+    const onChange = vi.fn();
+    const area = axis5Levels.areas[0];
+    render(<DRDForm data={{}} onChange={onChange} showProgress={false} />);
+
+    // Switch to the axis-under-test's tab (not the default axis 1). Scoped to
+    // role=button so this can't accidentally match an area card whose name
+    // happens to equal the axis name (e.g. axis "Digital Products" / area "2A
+    // Digital Products") — a button's accessible name there is longer
+    // (id + score text), so only the tab itself matches. Regex (not exact
+    // string) because the tab's accessible name also folds in the mobile-only
+    // "<axis.id>" span text (jsdom ignores the `sm:hidden` Tailwind class).
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(axis5Levels.name) }));
+    fireEvent.click(screen.getByText(area.name));
+
+    // "Current Level" text also appears in the always-visible axis summary
+    // <p> block — scope to the expanded area's <label> (the level-selector one).
+    const currentLevelLabel = screen
+      .getAllByText('Current Level')
+      .find((el) => el.tagName === 'LABEL') as HTMLElement;
+    const selector = currentLevelLabel.parentElement as HTMLElement;
+    const buttons = within(selector).getAllByRole('button');
+
+    expect(buttons).toHaveLength(5);
+    expect(buttons.map((b) => b.textContent)).toEqual(['1', '2', '3', '4', '5']);
+  });
+});
+
+describe('DRDForm <-> DRDMatrixSession parity for a levelCount=7 axis (ASM-001A reopen scenario)', () => {
+  it('achievedLevel:6/targetLevel:7 on a 7-level axis renders as "6" (Matrix) and "6/7" (Form axis summary) — never "6/5" or clamped', () => {
+    const axis7Levels = DRD_STRUCTURE.find((a) => a.levelCount === 7)!;
+    const area = axis7Levels.areas[0];
+    const answers = { areas: { [area.id]: { achievedLevel: 6, targetLevel: 7 } } };
+
+    // --- Form side: same reopen data flows through the real adapter. ---
+    const { unmount } = render(
+      <DRDForm data={areasToFormData(answers)} onChange={vi.fn()} showProgress={false} />
+    );
+    expect(screen.getByText(`6/${axis7Levels.levelCount}`)).toBeTruthy();
+    expect(screen.queryByText('6/5')).toBeNull();
+    unmount();
+
+    // --- Matrix side: same canonical answers, no adapter needed. ---
+    render(
+      <DRDMatrixSession
+        value={answers}
+        onChange={vi.fn()}
+        currentAxisId={axis7Levels.id}
+        currentAreaId={area.id}
+        onAxisChange={vi.fn()}
+      />
+    );
+    const overview = screen.getByText('Matrix overview').closest('aside')!;
+    const cell = within(overview)
+      .getAllByTitle(new RegExp(area.name, 'i'))
+      .find((el) => el.className.includes('bg-c-tag-'));
+    expect(cell).toBeTruthy();
+    // Achieved level shown as the raw number 6 (not clamped, not "6/5").
+    expect(within(cell as HTMLElement).getByText('6')).toBeTruthy();
+    // Target level (TO-BE) chip shows 7.
+    expect(within(cell as HTMLElement).getByText('7')).toBeTruthy();
   });
 });
 
