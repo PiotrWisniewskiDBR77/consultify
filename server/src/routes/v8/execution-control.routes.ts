@@ -74,16 +74,34 @@ const DismissAlertSchema = z.object({
   signalId: z.string().min(1),
 });
 
+// ★ INI-005 follow-up fix (2026-08-01): `field` used to be a Zod enum that
+// INCLUDED 'status', with `value: z.string()` completely unconstrained — i.e.
+// `{field:'status', value:'EXECUTING'}` was a legal request that did a raw
+// `UPDATE initiatives SET status = ?` with NO transition validation, NO row
+// lock, NO GO/NO-GO decision check, NO audit-history row. Unlike the sibling
+// `executionControl.routes.ts` variant (admin-only), THIS route is guarded
+// only by `requireV8OrgContext` (org-membership) — no role check at all — so
+// it was reachable by any authenticated org member. This endpoint's real
+// purpose is timeline/date fields (see the allow-list below, same set used
+// by the `smooth`/`replan` siblings) — status changes belong exclusively to
+// the canonical transition endpoints (PATCH /:id/status, /approve,
+// /start-execution, /unblock). This is a lock-down, not a redesign: 'status'
+// is removed from what this endpoint will write, full stop; it is NOT routed
+// through the transition engine from here.
+const TIMELINE_UPDATABLE_FIELDS = [
+  'planned_start_date',
+  'planned_end_date',
+  'start_date',
+  'actual_end_date',
+  'progress',
+] as const;
+
 const TimelineUpdateSchema = z.object({
   initiativeId: z.string().min(1),
-  field: z.enum([
-    'status',
-    'planned_start_date',
-    'planned_end_date',
-    'start_date',
-    'actual_end_date',
-    'progress',
-  ]),
+  // Intentionally z.string() (not z.enum) here — the allow-list is enforced
+  // explicitly in the handler below so a `field:'status'` request gets a
+  // clear, pointed 400 instead of a generic Zod "invalid enum value" error.
+  field: z.string().min(1),
   value: z.string(),
   reason: z.string().optional(),
 });
@@ -753,6 +771,20 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const { initiativeId, field, value, reason } = req.body;
+
+    if (field === 'status') {
+      return res.status(400).json({
+        error:
+          "Status changes are not allowed via /timeline-update. Use PATCH /api/initiatives/:id/status (or /approve, /start-execution, /unblock) instead.",
+        code: 'TIMELINE_UPDATE_STATUS_FORBIDDEN',
+      });
+    }
+    if (!(TIMELINE_UPDATABLE_FIELDS as readonly string[]).includes(field)) {
+      return res.status(400).json({
+        error: `Unsupported field '${field}'. Allowed fields: ${TIMELINE_UPDATABLE_FIELDS.join(', ')}`,
+        code: 'TIMELINE_UPDATE_FIELD_NOT_ALLOWED',
+      });
+    }
 
     const existing = (await dbAll(
       `SELECT ${field} as current_value FROM initiatives WHERE id = ? AND organization_id = ?`,

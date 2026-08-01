@@ -2999,14 +2999,25 @@ router.post(
 );
 
 /**
- * POST /api/initiatives/:id/reject
- * Reject initiative (back to planning)
+ * POST /api/initiatives/:id/reject — REMOVED (H16 fix, 2026-08-01).
+ *
+ * rejectInitiative bypassed the canonical gate/decision engine (used the
+ * legacy evaluateInitiativeGateAccess role table which over-grants PMO, wrote
+ * status='planning' directly — not even VALID_TRANSITIONS[REVIEW]'s actual
+ * REJECT target of DRAFT — with no decision check and no audit row). A
+ * repo-wide grep (excluding node_modules) for `'/reject'` / `rejectInitiative`
+ * found ZERO real callers — no UI button, no test asserting its behavior, no
+ * script — confirming the same finding from an earlier caller-inventory pass.
+ * The one hit was a generic route-wiring "fail-closed contract" test
+ * (tests/integration/routes/pmo.initiatives.fail-closed.contract.test.ts) that
+ * mocks the ENTIRE InitiativeController surface for unrelated route
+ * assertions; it does not exercise this route and is unaffected by its
+ * removal. Deleted per the mission's explicit instruction to prefer deletion
+ * over preserving an unsafe surface once caller-absence is proven. If a
+ * REJECT-style adapter is ever needed again, route it through
+ * executeInitiativeTransition targeting canonical DRAFT (the real REJECT gate
+ * target), the same way approveInitiative/startExecution now do.
  */
-router.post(
-  '/:id/reject',
-  requireInitiativeCapability('initiative.approve', { shadow: true }),
-  InitiativeController.rejectInitiative
-);
 
 /**
  * POST /api/initiatives/:id/start-execution
