@@ -213,6 +213,32 @@ const isDecisionStatusInput = (status?: string | null): boolean => {
 
 const DECISION_BLOCK_TAG = (decisionId: string) => `[decision:${decisionId}]`;
 
+// BUG FIX (found by MW-DEC-001 final-falsification review — see also
+// getDecisions and decide()'s post-commit cascade below): `decision_impacts`
+// has a genuine SCHEMA CONFLICT across two old, pre-existing migrations —
+// 292_decision_management.sql / 297_decision_impacts_table.sql define
+// `is_blocker INTEGER DEFAULT 0`, but 728_beta_missing_tables_2.sql
+// `CREATE TABLE IF NOT EXISTS decision_impacts (... is_blocker BOOLEAN
+// DEFAULT FALSE ...)` — same table name, incompatible column type. Whichever
+// migration's CREATE TABLE runs first on a given database wins (IF NOT
+// EXISTS), so the real column type is environment-dependent and NOT
+// reliably knowable from source alone (this acceptance-test container
+// applies every migration in numeric order, so 292 wins and the column is
+// INTEGER here — verified via `\d decision_impacts` against the real
+// container). Compounding this: `PostgresDatabase.ts`'s auto-generated
+// `ALWAYS_BOOLEAN_COLUMNS` list (sourced from a schema dump where the column
+// apparently WAS boolean) unconditionally rewrites any `is_blocker = 1` back
+// to `is_blocker = TRUE` before the query reaches Postgres — so a plain
+// `= 1` literal here would silently be neutralized and fail exactly the
+// same way as `= TRUE` on an INTEGER column. Neither literal form is safe
+// across environments. Using `::text IN ('1','true')` sidesteps both
+// problems: a text cast is valid from either INTEGER or BOOLEAN, the
+// normalizer's regex only rewrites bare `col = 0/1` (not `col::text IN
+// (...)`) so it leaves this alone, and the predicate is correct whichever
+// migration created the table. Root cause (the 292/297-vs-728 migration
+// conflict, and the ALWAYS_BOOLEAN_COLUMNS misclassification) is a
+// pre-existing, cross-cutting infra issue outside this packet's scope —
+// reported as an open finding, not fixed at the source here.
 const refreshTaskDecisionBlock = async (input: {
   taskId: string;
   organizationId: string;
@@ -242,7 +268,7 @@ const refreshTaskDecisionBlock = async (input: {
       WHERE d.organization_id = ?
         AND di.impacted_type = 'task'
         AND di.impacted_id = ?
-        AND di.is_blocker = TRUE
+        AND di.is_blocker::text IN ('1','true')
         AND d.status IN ('pending', 'escalated')
       ORDER BY
         CASE WHEN d.deadline IS NULL THEN 1 ELSE 0 END,
@@ -316,7 +342,7 @@ const refreshInitiativeDecisionBlock = async (input: {
       WHERE d.organization_id = ?
         AND di.impacted_type = 'initiative'
         AND di.impacted_id = ?
-        AND di.is_blocker = TRUE
+        AND di.is_blocker::text IN ('1','true')
         AND d.status IN ('pending', 'escalated')
     `,
     [organizationId, initiativeId]
@@ -532,8 +558,19 @@ export class DecisionController {
       // on an under-migrated env) the whole query would error and queryAll would
       // swallow it to [], silently emptying the decisions list. Default to 0.
       const hasDecisionImpacts = (await getTableColumns('decision_impacts')).has('is_blocker');
+      // BUG FIX (found by MW-DEC-001 final-falsification review, T1a/T1b):
+      // GET /api/decisions (this list endpoint) 500'd on every single call
+      // whenever `decision_impacts` exists (unconditionally — some migration
+      // always creates it). See the long comment above refreshTaskDecisionBlock
+      // for the full root cause: `decision_impacts.is_blocker` has a genuine
+      // cross-migration type conflict (INTEGER via 292/297 vs BOOLEAN via 728,
+      // same `CREATE TABLE IF NOT EXISTS decision_impacts`) compounded by
+      // PostgresDatabase.ts's ALWAYS_BOOLEAN_COLUMNS unconditionally rewriting
+      // `is_blocker = 1` back to `is_blocker = TRUE`. `::text IN ('1','true')`
+      // is correct against either underlying type and is not touched by that
+      // rewriter.
       const blockedItemsCountSelect = hasDecisionImpacts
-        ? `(SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = TRUE)`
+        ? `(SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker::text IN ('1','true'))`
         : `0`;
       // Mirror the Initiatives `?source` filter semantics (e.g. ?source=interview_insight).
       const normalizedSourceFilter = source ? source.toString().trim().toLowerCase() : '';
@@ -1400,18 +1437,20 @@ export class DecisionController {
 
       // If decision is resolved, refresh blocks on impacted items. This runs
       // AFTER finalizeDecisionTransition's BEGIN/COMMIT has already landed —
-      // the decide() call has genuinely succeeded at this point. Bug found by
-      // the MW-DEC-001 acceptance suite (real Postgres): `decision_impacts.
-      // is_blocker` is INTEGER in the live schema (server/migrations/
-      // 292_decision_management.sql), not BOOLEAN, so `is_blocker = TRUE`
-      // threw "operator does not exist: integer = boolean" on every real
-      // Postgres run — turning a successfully-committed approve/reject into
-      // an uncaught 500, i.e. the server LIED to the client about a
-      // committed write failing (a false negative, the mirror image of the
-      // false-positive case the honest-failure mandate already guards
-      // against). Fixed the comparison to match the real column type
-      // (matches the `entry.isBlocker ? 1 : 0` convention already used when
-      // writing this column in createDecision above). Also wrapped the whole
+      // the decide() call has genuinely succeeded at this point. Originally
+      // "fixed" (commit 5cf7c03245) by changing `is_blocker = TRUE` to
+      // `is_blocker = 1` — that fix did NOT actually work: PostgresDatabase.ts's
+      // auto-generated ALWAYS_BOOLEAN_COLUMNS list unconditionally rewrites any
+      // `is_blocker = 1` back to `is_blocker = TRUE` before the query reaches
+      // Postgres (verified directly against the acceptance container — the
+      // rewritten query still throws "operator does not exist: integer =
+      // boolean"). This was never caught because the whole cascade below is
+      // wrapped in try/catch (by design — see below), so decide() kept
+      // returning 200 while this side effect silently kept failing on every
+      // real-Postgres run. Real, verified root cause and the actual fix
+      // (`::text IN ('1','true')`, immune to that rewriter and correct
+      // whichever migration created the table) are documented in the long
+      // comment above refreshTaskDecisionBlock. Also wrapped the whole
       // best-effort cascade in try/catch: this refresh is a side effect of
       // an already-committed decision, not part of its correctness — it must
       // never turn a successful decide() into an HTTP error again, whatever
@@ -1423,7 +1462,7 @@ export class DecisionController {
             impacted_id: string;
             is_blocker: number;
           }>(
-            `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = ? AND is_blocker = 1`,
+            `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = ? AND is_blocker::text IN ('1','true')`,
             [id]
           );
           for (const impact of impacts || []) {
