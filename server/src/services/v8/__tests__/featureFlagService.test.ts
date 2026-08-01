@@ -175,7 +175,9 @@ describe('featureFlagService', () => {
       const result = await isV8Enabled(TENANT_ORG_ID);
 
       expect(result).toBe(true);
-      expect(mockDbAll).toHaveBeenCalledWith(expect.any(String), [TENANT_ORG_ID]);
+      expect(mockDbAll).toHaveBeenCalledWith(expect.any(String), [TENANT_ORG_ID], {
+        fallback: false,
+      });
     });
 
     it('rejects blank organizationId', async () => {
@@ -206,6 +208,16 @@ describe('featureFlagService', () => {
       const flags = await getV8Flags(ORG_ID);
 
       expect(flags).toEqual({ chat: true, finance: false, results: true });
+    });
+
+    it('falls back to the original public migration table when the v8 schema table is absent', async () => {
+      mockDbAll
+        .mockRejectedValueOnce(new Error('relation "v8.v8_feature_flags" does not exist'))
+        .mockResolvedValueOnce([{ module: 'workspace', enabled: 1 }]);
+
+      await expect(getV8Flags(ORG_ID)).resolves.toEqual({ workspace: true });
+      expect(mockDbAll.mock.calls[0]?.[0]).toContain('v8.v8_feature_flags');
+      expect(mockDbAll.mock.calls[1]?.[0]).toContain('FROM v8_feature_flags');
     });
 
     it('uses cache on second call', async () => {
@@ -239,7 +251,9 @@ describe('featureFlagService', () => {
       const flags = await getV8Flags(TENANT_ORG_ID);
 
       expect(flags).toEqual({ results: true });
-      expect(mockDbAll).toHaveBeenCalledWith(expect.any(String), [TENANT_ORG_ID]);
+      expect(mockDbAll).toHaveBeenCalledWith(expect.any(String), [TENANT_ORG_ID], {
+        fallback: false,
+      });
     });
 
     it('rejects blank organizationId', async () => {
@@ -280,6 +294,18 @@ describe('featureFlagService', () => {
       await expect(setV8OrgFlag(ORG_ID, 'chat', true)).rejects.toThrow(
         /v8_feature_flags table does not exist/
       );
+    });
+
+    it('upserts into the original public migration table when the v8 schema table is absent', async () => {
+      mockDbRun
+        .mockRejectedValueOnce(new Error('relation "v8.v8_feature_flags" does not exist'))
+        .mockResolvedValueOnce({ success: true });
+
+      await setV8OrgFlag(ORG_ID, 'workspace', true, USER_ID);
+
+      expect(mockDbRun).toHaveBeenCalledTimes(2);
+      expect(mockDbRun.mock.calls[0]?.[0]).toContain('INSERT INTO v8.v8_feature_flags');
+      expect(mockDbRun.mock.calls[1]?.[0]).toContain('INSERT INTO v8_feature_flags');
     });
 
     it('rejects invalid module name', async () => {
@@ -329,7 +355,9 @@ describe('featureFlagService', () => {
       const result = await isV8ShadowMode(TENANT_ORG_ID);
 
       expect(result).toBe(true);
-      expect(mockDbGet).toHaveBeenCalledWith(expect.any(String), [TENANT_ORG_ID]);
+      expect(mockDbGet).toHaveBeenCalledWith(expect.any(String), [TENANT_ORG_ID], {
+        fallback: false,
+      });
     });
 
     it('returns true when shadow_mode row is enabled', async () => {

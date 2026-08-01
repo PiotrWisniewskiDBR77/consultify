@@ -157,9 +157,15 @@ export async function seedE2EAuthWithBootstrap(page: Page): Promise<void> {
 }
 
 export async function dismissTourModal(page: Page) {
-  const skipTour = page.getByRole('button', { name: /Skip tour|Pomiń/i }).first();
+  const skipTour = page
+    .getByRole('button', { name: /Skip tour|Skip for now|Pomiń/i })
+    .first();
   const consultantCard = page.getByRole('button', { name: /Consultant|Konsultant/i }).first();
   const welcomeTitle = page.getByText(/Welcome to Consultinity|Witamy w Consultinity/i);
+
+  // The first-run modal mounts after the route shell on slower production builds.
+  // Give it a short bounded window before concluding that there is nothing to dismiss.
+  await skipTour.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
 
   for (let i = 0; i < 12; i++) {
     const hasSkip = await skipTour.isVisible().catch(() => false);

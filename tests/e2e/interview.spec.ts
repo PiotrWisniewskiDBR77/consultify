@@ -71,32 +71,65 @@ test.describe('Interview Module - v2.0', () => {
     await expect(page.getByRole('button', { name: /Finance/i }).first()).toBeVisible();
   });
 
-  test('should allow adding and answering a custom question', async ({ page }) => {
+  test('should persist an answer and resume the same session', async ({ page }) => {
+    test.setTimeout(120_000);
+    const answer = `Durable interview answer ${Date.now()}`;
+    const token = await page.evaluate(() => localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+    const flagsResponse = await page.request.get(`${API_BASE_URL}/api/v8/admin/flags`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(flagsResponse.ok(), await flagsResponse.text()).toBeTruthy();
+    const flagsPayload = await flagsResponse.json();
+    expect(flagsPayload?.data?.workspace).toBe(true);
+    const projectResponse = await page.request.post(`${API_BASE_URL}/api/projects`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { name: `E2E Interview Browser Project ${Date.now()}` },
+    });
+    expect(projectResponse.ok(), await projectResponse.text()).toBeTruthy();
+
+    // Completing first-run onboarding may redirect to AI Chat. Return to the
+    // intended module before proving the Interview lifecycle.
     await page.goto('/interview');
+    await expect(page.getByText(/Interview is unavailable/i)).not.toBeVisible();
     await page.click('button:has-text("Sessions")');
-    await page.click('button:has-text("New Session"), button:has-text("Nowa sesja")');
-
-    // Expand Strategy section if needed and add a question
-    await page.click('button:has-text("Strategy")');
-    await page.click('button:has-text("Add question"), button:has-text("Dodaj pytanie")');
-    await page.fill(
-      'input[placeholder*="question"], input[placeholder*="pytania"]',
-      'What is your main constraint?'
+    const createSessionResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        response.url().includes('/api/interview/sessions') &&
+        response.ok()
     );
-    await page.keyboard.press('Enter');
+    await page.getByRole('button', { name: /New session|Nowa sesja/i }).click();
+    const createdSession = await (await createSessionResponse).json();
+    const sessionId = String(createdSession?.id || createdSession?.data?.id || '');
+    expect(sessionId).toBeTruthy();
 
-    // Open the question and add an answer
-    await page.click('text=What is your main constraint?');
-    const addAnswerCta = page
-      .locator('text=Click to add your answer')
-      .or(page.locator('text=Kliknij, aby dodać odpowiedź'));
-    await addAnswerCta.first().click();
+    const answerBox = page.getByRole('textbox', {
+      name: /Write the answer or record it below|Napisz odpowiedź/i,
+    });
+    await answerBox.fill(answer);
+    await expect(answerBox).toHaveValue(answer);
+    const saveResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'PATCH' &&
+        response.url().includes('/api/interview/questions/')
+    );
+    await page.getByRole('button', { name: /Save answer|Zapisz odpowiedź/i }).click();
+    const savedResponse = await saveResponse;
+    expect(savedResponse.ok()).toBeTruthy();
+    const savedQuestion = await savedResponse.json();
+    expect(savedQuestion?.questionText).toBeTruthy();
 
-    await page
-      .locator('textarea')
-      .first()
-      .fill('Main constraint is limited availability of skilled operators.');
-    await page.click('button:has-text("Save"), button:has-text("Zapisz")');
+    // A fresh document navigation proves that the answer is read back from the
+    // same durable session rather than retained in React state.
+    await page.goto(`/interview?sessionId=${encodeURIComponent(sessionId)}`);
+    await dismissTourModal(page);
+    await expect(page).toHaveURL(new RegExp(`sessionId=${sessionId}`));
+    const savedQuestionPattern = new RegExp(
+      String(savedQuestion.questionText).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').slice(0, 80)
+    );
+    await page.getByRole('button', { name: savedQuestionPattern }).click();
+    await expect(answerBox).toHaveValue(answer, { timeout: 30_000 });
   });
 });
 
