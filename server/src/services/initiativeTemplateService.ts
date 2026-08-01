@@ -66,6 +66,7 @@ export interface CreateTemplateParams {
   category: string;
   description?: string;
   applicableAxes?: string[];
+  cardScope?: InitiativeTemplate['cardScope'];
   problemStructured?: string;
   targetState?: string;
   killCriteria?: string[];
@@ -164,6 +165,7 @@ export class InitiativeTemplateService {
     const now = new Date().toISOString();
 
     const templateData = {
+      cardScope: template.cardScope || undefined,
       problemStructured: template.problemStructured || null,
       targetState: template.targetState || null,
       killCriteria: template.killCriteria || [],
@@ -242,6 +244,31 @@ export class InitiativeTemplateService {
       createdBy: userId,
       createdAt: now,
       updatedAt: now,
+      // Return the same persisted composition contract immediately. Previously
+      // create omitted these fields, so the UI saw a different card set until
+      // the template was fetched again.
+      level: template.level || 'standard',
+      isSystem: false,
+      sourceTypes: template.sourceTypes || ['assessment', 'tool', 'manual'],
+      visibleSections,
+      requiredFields: template.requiredFields || [],
+      workflowConfig: template.workflowConfig || {},
+      notificationConfig: template.notificationConfig || {},
+      suggestedDecisions: template.suggestedDecisions || [],
+      suggestedMilestones: template.suggestedMilestones || [],
+      suggestedKpis: template.suggestedKpis || [],
+      sectionsCount,
+      sectionOrder,
+      sectionConfig,
+      suggestedTaskItems: template.suggestedTaskItems || [],
+      teamConfig: template.teamConfig || {},
+      escalationConfig: template.escalationConfig || {},
+      gateConfig: template.gateConfig || {},
+      raidTemplates: template.raidTemplates || [],
+      financialConfig: template.financialConfig || {},
+      benefitsConfig: template.benefitsConfig || {},
+      statusReportConfig: template.statusReportConfig || {},
+      validationRules: template.validationRules || {},
     };
   }
 
@@ -261,6 +288,7 @@ export class InitiativeTemplateService {
     const now = new Date().toISOString();
 
     const templateData = {
+      cardScope: updates.cardScope ?? existing.cardScope,
       problemStructured: updates.problemStructured ?? existing.problemStructured,
       targetState: updates.targetState ?? existing.targetState,
       killCriteria: updates.killCriteria ?? existing.killCriteria,

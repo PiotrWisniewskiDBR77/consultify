@@ -127,6 +127,43 @@ describe('InitiativeTemplateService', () => {
             expect(sql).toContain('INSERT INTO');
             expect(params[1]).toBe('New Template'); // Name is 2nd param
         });
+
+        it('returns the persisted dynamic card composition without requiring a reopen', async () => {
+            const cardScope = { showTasks: true, showRaid: false };
+            const visibleSections = { overview: true, tasks: true, raid: false };
+            const sectionOrder = { overview: 10, tasks: 20, raid: 30 };
+            const sectionConfig = { tasks: { collapsed: false } };
+
+            const template = await InitiativeTemplateService.createTemplate(
+                {
+                    name: 'Dynamic cards',
+                    category: 'transformation',
+                    organizationId: testOrgId,
+                    cardScope,
+                    visibleSections,
+                    sectionOrder,
+                    sectionConfig,
+                    requiredFields: ['problemDefinition'],
+                },
+                testUserId
+            );
+
+            expect(template).toMatchObject({
+                cardScope,
+                visibleSections,
+                sectionOrder,
+                sectionConfig,
+                sectionsCount: 2,
+                requiredFields: ['problemDefinition'],
+                isSystem: false,
+            });
+
+            const [, , params] = vi.mocked(DbPromise.run).mock.lastCall;
+            expect(JSON.parse(params[5])).toMatchObject({ cardScope });
+            expect(JSON.parse(params[14])).toEqual(visibleSections);
+            expect(JSON.parse(params[22])).toEqual(sectionOrder);
+            expect(JSON.parse(params[23])).toEqual(sectionConfig);
+        });
     });
 
     describe('updateTemplate', () => {
@@ -166,6 +203,28 @@ describe('InitiativeTemplateService', () => {
                 )
             ).rejects.toThrow('Template not found');
         });
+
+        it('preserves cardScope when updating unrelated template fields', async () => {
+            const cardScope = { showTasks: true, showGates: false };
+            vi.mocked(DbPromise.get).mockResolvedValue({
+                id: 't-card-scope',
+                name: 'Before',
+                category: 'transformation',
+                template_data: JSON.stringify({ cardScope }),
+                visible_sections: JSON.stringify({ overview: true, tasks: true }),
+                section_order: JSON.stringify({ overview: 10, tasks: 20 }),
+            });
+
+            const updated = await InitiativeTemplateService.updateTemplate(
+                't-card-scope',
+                { name: 'After' },
+                testUserId
+            );
+
+            expect(updated.cardScope).toEqual(cardScope);
+            const [, , params] = vi.mocked(DbPromise.run).mock.lastCall;
+            expect(JSON.parse(params[4])).toMatchObject({ cardScope });
+        });
     });
 
     describe('deleteTemplate', () => {
@@ -184,7 +243,6 @@ describe('InitiativeTemplateService', () => {
         });
     });
 });
-
 
 
 
