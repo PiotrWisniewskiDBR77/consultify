@@ -1,426 +1,84 @@
 /**
- * System Health Check API
- * Comprehensive health monitoring with auto-repair
+ * Public readiness probe — `/api/system` (mounted in `server/src/index.ts`).
+ *
+ * WHAT THIS FILE USED TO BE, and why it is now four lines of logic.
+ *
+ * `GET /api/system/health` was an anonymous, unrate-limited "comprehensive system
+ * health check". It ran twelve sequential SQL queries plus a `bcrypt.compare` on
+ * every request, and its response body disclosed:
+ *
+ *   - a hardcoded administrator address and its password, verbatim, in ALL THREE
+ *     branches of a "default login" check — including a success branch that
+ *     answered `Default credentials working` together with that account's role.
+ *     That is a live credential oracle: anyone on the internet could ask the server
+ *     whether a known administrator password still worked and get a straight
+ *     answer. The pair is deliberately not repeated here — it is recorded in
+ *     SEC-PUB-002, and it should be treated as compromised and rotated;
+ *   - the email address and role of EVERY `ADMIN`/`SUPERADMIN` account;
+ *   - the total user count, table names, environment configuration and connection
+ *     pool internals.
+ *
+ * The bcrypt call also made it a cheap asymmetric CPU attack, and the twelve
+ * queries a database one, from an unauthenticated endpoint with no limiter.
+ *
+ * Detailed diagnostics were NOT reimplemented here. They already exist, correctly
+ * guarded, in `server/src/routes/systemHealth.routes.ts` — mounted at
+ * `/api/system-health` from the Gateway behind `defaultRateLimiter` +
+ * `verifySuperAdmin`. Duplicating them behind a second guard would just be a
+ * second thing to get wrong. (Those two modules have near-identical names; that
+ * confusion has already cost this programme a review round, hence this note.)
+ *
+ * What remains public is a readiness probe and nothing else: a fixed, small cost
+ * and a body that carries no users, no addresses, no credentials, no table names,
+ * no configuration, no filesystem paths and no error text.
  */
-
-import bcrypt from 'bcryptjs';
 import { Request, Response, Router } from 'express';
 
 import { getDatabaseAsync } from '../database/index.js';
+import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
 
-interface HealthCheck {
-  name: string;
-  status: 'healthy' | 'warning' | 'error';
-  message: string;
-  details?: any;
-  autoFixAvailable?: boolean;
-  autoFixed?: boolean;
-}
-
-interface SystemHealth {
-  overall: 'healthy' | 'warning' | 'error';
-  timestamp: string;
-  checks: HealthCheck[];
-  autoRepairsApplied: number;
-}
-
-async function tableExists(db: any, tableName: string): Promise<boolean> {
-  const result = await db.query(
-    `SELECT 1 AS ok
-     FROM information_schema.tables
-     WHERE table_schema = 'public' AND table_name = $1
-     LIMIT 1`,
-    [tableName]
-  );
-  return (result?.rows || []).length > 0;
-}
-
 /**
- * Check database connection
+ * How long the probe waits for the database before calling itself not-ready.
+ * Bounded so the endpoint cannot be used to pin request handlers open.
  */
-async function checkDatabase(): Promise<HealthCheck> {
+const READINESS_TIMEOUT_MS = 2000;
+
+async function isDatabaseReady(): Promise<boolean> {
   try {
     const db = await getDatabaseAsync();
-    await db.query('SELECT 1', []);
-
-    return {
-      name: 'Database Connection',
-      status: 'healthy',
-      message: 'Database is connected and responsive',
-    };
-  } catch (error) {
-    return {
-      name: 'Database Connection',
-      status: 'error',
-      message: `Database connection failed: ${error}`,
-      autoFixAvailable: false,
-    };
-  }
-}
-
-/**
- * Check critical tables
- */
-async function checkTables(): Promise<HealthCheck> {
-  try {
-    const db = await getDatabaseAsync();
-    const criticalTables = ['users', 'organizations', 'sessions', 'projects', 'refresh_tokens'];
-
-    const missing: string[] = [];
-    const existing: string[] = [];
-
-    for (const table of criticalTables) {
-      const exists = await tableExists(db as any, table);
-      if (exists) {
-        existing.push(table);
-      } else {
-        missing.push(table);
-      }
-    }
-
-    if (missing.length === 0) {
-      return {
-        name: 'Critical Tables',
-        status: 'healthy',
-        message: `All ${criticalTables.length} critical tables present`,
-        details: { existing },
-      };
-    } else {
-      return {
-        name: 'Critical Tables',
-        status: 'error',
-        message: `Missing ${missing.length} tables: ${missing.join(', ')}`,
-        details: { missing, existing },
-        autoFixAvailable: true,
-      };
-    }
-  } catch (error) {
-    return {
-      name: 'Critical Tables',
-      status: 'error',
-      message: `Table check failed: ${error}`,
-      autoFixAvailable: false,
-    };
-  }
-}
-
-/**
- * Check users and admin accounts
- */
-async function checkUsers(): Promise<HealthCheck> {
-  try {
-    const db = await getDatabaseAsync();
-
-    // Check if users table exists
-    const hasUsersTable = await tableExists(db as any, 'users');
-    if (!hasUsersTable) {
-      return {
-        name: 'User Accounts',
-        status: 'error',
-        message: 'Users table does not exist',
-        autoFixAvailable: true,
-      };
-    }
-
-    // Count users
-    const users = await db.query<any>('SELECT COUNT(*) as count FROM users', []);
-    const userCount = Number(users?.rows?.[0]?.count ?? 0);
-
-    // Check for admin users
-    const admins = await db.query(
-      `SELECT email, role FROM users WHERE role IN ('ADMIN', 'SUPERADMIN')`,
-      []
+    // One trivial round trip. Deliberately not a table audit: readiness answers
+    // "can this process serve traffic", not "is the schema what I expect".
+    const probe = db.query<unknown>('SELECT 1', []);
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('readiness timeout')), READINESS_TIMEOUT_MS)
     );
-
-    if (userCount === 0) {
-      return {
-        name: 'User Accounts',
-        status: 'error',
-        message: 'No users in database',
-        details: { userCount: 0, adminCount: 0 },
-        autoFixAvailable: true,
-      };
-    }
-
-    if (admins.rows.length === 0) {
-      return {
-        name: 'User Accounts',
-        status: 'warning',
-        message: `${userCount} users but no admin accounts`,
-        details: { userCount, adminCount: 0 },
-        autoFixAvailable: true,
-      };
-    }
-
-    return {
-      name: 'User Accounts',
-      status: 'healthy',
-      message: `${userCount} users, ${admins.rows.length} admins`,
-      details: {
-        userCount,
-        adminCount: admins.rows.length,
-        admins: admins.rows.map((a: any) => ({ email: a.email, role: a.role })),
-      },
-    };
+    await Promise.race([probe, timeout]);
+    return true;
   } catch (error) {
-    return {
-      name: 'User Accounts',
-      status: 'error',
-      message: `User check failed: ${error}`,
-      autoFixAvailable: false,
-    };
-  }
-}
-
-/**
- * Check default login credentials
- */
-async function checkDefaultLogin(): Promise<HealthCheck> {
-  try {
-    const db = await getDatabaseAsync();
-    const testEmail = 'admin@dbr77.com';
-    const testPassword = '123456';
-
-    const user = await db.query<any>('SELECT * FROM users WHERE email = $1', [testEmail]);
-
-    if (user.rows.length === 0) {
-      return {
-        name: 'Default Login',
-        status: 'warning',
-        message: `Default user ${testEmail} not found`,
-        details: { email: testEmail, password: testPassword },
-        autoFixAvailable: true,
-      };
-    }
-
-    // Verify password
-    const isValid = await bcrypt.compare(testPassword, user.rows[0].password);
-
-    if (!isValid) {
-      return {
-        name: 'Default Login',
-        status: 'warning',
-        message: 'Default password incorrect',
-        details: { email: testEmail, password: testPassword },
-        autoFixAvailable: true,
-      };
-    }
-
-    return {
-      name: 'Default Login',
-      status: 'healthy',
-      message: 'Default credentials working',
-      details: {
-        email: testEmail,
-        password: testPassword,
-        role: user.rows[0].role,
-      },
-    };
-  } catch (error) {
-    return {
-      name: 'Default Login',
-      status: 'error',
-      message: `Login check failed: ${error}`,
-      autoFixAvailable: false,
-    };
-  }
-}
-
-/**
- * Check LLM providers
- */
-async function checkLLMProviders(): Promise<HealthCheck> {
-  try {
-    const db = await getDatabaseAsync();
-
-    // Check if table exists
-    const hasTable = await tableExists(db as any, 'llm_providers');
-    if (!hasTable) {
-      return {
-        name: 'LLM Providers',
-        status: 'warning',
-        message: 'LLM providers table missing',
-        autoFixAvailable: false,
-      };
-    }
-
-    const providers = await db.query('SELECT name, provider, is_active FROM llm_providers', []);
-    const activeProviders = (providers?.rows || []).filter((p: any) => {
-      const v = p?.is_active;
-      return v === true || v === 1 || v === '1' || v === 'true';
+    // Logged server-side only. The response body never carries error text: a
+    // driver message names hosts, databases and sometimes credentials.
+    logger.warn('[SystemReadiness] not ready', {
+      error: (error as Error)?.message || String(error),
     });
-
-    if (activeProviders.length === 0) {
-      return {
-        name: 'LLM Providers',
-        status: 'warning',
-        message: 'No active LLM providers configured',
-        details: { activeCount: 0 },
-        autoFixAvailable: false,
-      };
-    }
-
-    return {
-      name: 'LLM Providers',
-      status: 'healthy',
-      message: `${activeProviders.length} active LLM provider(s)`,
-      details: {
-        activeCount: activeProviders.length,
-        providers: activeProviders.map((p: any) => ({
-          name: p.name,
-          provider: p.provider,
-        })),
-      },
-    };
-  } catch (error) {
-    return {
-      name: 'LLM Providers',
-      status: 'error',
-      message: `LLM check failed: ${error}`,
-      autoFixAvailable: false,
-    };
+    return false;
   }
 }
 
 /**
- * Check environment variables
+ * GET /api/system/health — public readiness.
+ *
+ * Answers `ready` or `not-ready` and nothing else. Rate limited despite the small
+ * cost, because it is anonymous and mounted before the global limiter.
  */
-async function checkEnvironment(): Promise<HealthCheck> {
-  const critical = ['NODE_ENV', 'JWT_SECRET', 'DATABASE_URL'];
-  const missing: string[] = [];
-  const present: string[] = [];
-
-  for (const key of critical) {
-    if (process.env[key]) {
-      present.push(key);
-    } else {
-      missing.push(key);
-    }
-  }
-
-  if (missing.length === 0) {
-    return {
-      name: 'Environment Variables',
-      status: 'healthy',
-      message: 'All critical env vars set',
-      details: { present },
-    };
-  } else {
-    return {
-      name: 'Environment Variables',
-      status: 'warning',
-      message: `Missing: ${missing.join(', ')}`,
-      details: { missing, present },
-      autoFixAvailable: false,
-    };
-  }
-}
-
-/**
- * Check connection pool
- */
-async function checkConnectionPool(): Promise<HealthCheck> {
-  try {
-    const { getConnectionPool } = await import('../database/index.js');
-    const pool = getConnectionPool();
-
-    if (!pool) {
-      return {
-        name: 'Connection Pool',
-        status: 'warning',
-        message: 'Connection pool not initialized',
-        autoFixAvailable: false,
-      };
-    }
-
-    const stats = pool.getStats();
-    const utilization = (stats.active / stats.total) * 100;
-
-    let status: 'healthy' | 'warning' | 'error' = 'healthy';
-    let message = `Pool: ${stats.active}/${stats.total} active (${utilization.toFixed(0)}%)`;
-
-    if (utilization > 80) {
-      status = 'warning';
-      message = `High utilization: ${utilization.toFixed(0)}%`;
-    }
-
-    if (stats.waiting > 0) {
-      status = 'warning';
-      message = `${stats.waiting} requests waiting`;
-    }
-
-    return {
-      name: 'Connection Pool',
-      status,
-      message,
-      details: stats,
-    };
-  } catch (error) {
-    return {
-      name: 'Connection Pool',
-      status: 'warning',
-      message: 'Pool not available (using singleton)',
-      autoFixAvailable: false,
-    };
-  }
-}
-
-/**
- * GET /api/system/health
- * Comprehensive system health check
- */
-router.get('/health', async (req: Request, res: Response) => {
-  try {
-    const checks: HealthCheck[] = [];
-
-    // Run all health checks
-    checks.push(await checkDatabase());
-    checks.push(await checkTables());
-    checks.push(await checkUsers());
-    checks.push(await checkDefaultLogin());
-    checks.push(await checkLLMProviders());
-    checks.push(await checkEnvironment());
-    checks.push(await checkConnectionPool());
-
-    // Determine overall status
-    const hasError = checks.some((c) => c.status === 'error');
-    const hasWarning = checks.some((c) => c.status === 'warning');
-
-    let overall: 'healthy' | 'warning' | 'error';
-    if (hasError) {
-      overall = 'error';
-    } else if (hasWarning) {
-      overall = 'warning';
-    } else {
-      overall = 'healthy';
-    }
-
-    const response: SystemHealth = {
-      overall,
-      timestamp: new Date().toISOString(),
-      checks,
-      autoRepairsApplied: 0,
-    };
-
-    res.json(response);
-  } catch (error) {
-    logger.error('[System Health] Check failed:', error);
-    res.status(500).json({
-      overall: 'error',
-      timestamp: new Date().toISOString(),
-      checks: [
-        {
-          name: 'System Health',
-          status: 'error',
-          message: `Health check failed: ${error}`,
-        },
-      ],
-      autoRepairsApplied: 0,
-    });
-  }
+router.get('/health', defaultRateLimiter, async (_req: Request, res: Response) => {
+  const ready = await isDatabaseReady();
+  res.status(ready ? 200 : 503).json({
+    status: ready ? 'ready' : 'not-ready',
+    timestamp: new Date().toISOString(),
+  });
 });
 
 /**
@@ -441,6 +99,10 @@ router.get('/health', async (req: Request, res: Response) => {
  * log entry per invocation, and an execution timeout with concurrency control.
  *
  * Coverage: tests/integration/systemHealthRepairRemoved.contract.test.ts
+ *
+ * REMOVED (SEC-PUB-002): the detailed health checks and the default-login probe —
+ * see the file header. Coverage:
+ * tests/integration/publicSystemSurface.contract.test.ts
  */
 
 export default router;
