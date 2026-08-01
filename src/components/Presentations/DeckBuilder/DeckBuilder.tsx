@@ -458,6 +458,7 @@ export const DeckBuilder: React.FC = () => {
     markSaved,
     restoreVersion,
     saveManualCheckpoint,
+    markSaved,
   } = useVersionHistory(deck, deckId, getExpectedDeckVersion, syncDeckServerVersion);
 
   const { isCardOutdated, refreshCard, refreshAllCards, refreshBlock } = useDataRefresh(
@@ -612,6 +613,51 @@ export const DeckBuilder: React.FC = () => {
   }, [deck?.deck_id]);
 
   useCommandPaletteShortcut(() => setCommandPaletteOpen(true));
+
+  const handleAutosaveConflict = useCallback(
+    (next: {
+      serverVersion: number | null;
+      pendingServer: { deckJson: any; title: string } | null;
+    }) => {
+      setConflict(next);
+      toast.error(t('presentations.versionConflictDetected'));
+    },
+    [t]
+  );
+
+  const fetchLatestDeck = useCallback(
+    (id: string) => Api.get(`/presentations/decks/${id}`) as Promise<any>,
+    []
+  );
+
+  // MAT-006B — debounced autosave with a persisted-state baseline, so opening a
+  // deck (or reading it back after a restore) does not write. Declared BEFORE
+  // the loader effect so `markPersisted` is in scope there and so the autosave
+  // effect runs first on mount, while `hasLoadedInitialRef` is still false.
+  const { markPersisted: markAutosaveBaseline } = useDeckAutosave({
+    deckId,
+    deck,
+    hasLoadedInitialRef,
+    serverVersionRef,
+    paused: Boolean(conflict),
+    onConflict: handleAutosaveConflict,
+    fetchLatestDeck,
+  });
+
+  // ★ THERE ARE TWO SAVE LOOPS, AND BOTH MUST BE BASELINED.
+  // `useDeckAutosave` is the 800 ms debounced writer; `useVersionHistory` runs an
+  // independent 30 s interval writer. Baselining only the first left the
+  // "no write on read-only reopen" guarantee half-built — opening a deck stayed
+  // quiet for 800 ms and then wrote anyway 30 s later, from the other loop.
+  // Every place that puts SERVER truth into state must call this, not either
+  // hook's own marker.
+  const markPersisted = useCallback(
+    (persisted: Deck | null) => {
+      markAutosaveBaseline(persisted);
+      markSaved(persisted);
+    },
+    [markAutosaveBaseline, markSaved]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -1034,7 +1080,17 @@ export const DeckBuilder: React.FC = () => {
       try {
         const restored = await restoreVersion(versionId);
         if (restored) {
-          setDeck(restored);
+          // MAT-006B — a SERVER restore has already been persisted, and the deck
+          // below is its canonical read-back (the CAS token was synchronized to
+          // it inside the hook). Baseline it, or the debounced autosave writes
+          // the server's own content straight back 800 ms later: another version
+          // bump that desynchronizes the token the restore just fixed, another
+          // `presentation_deck_versions` snapshot recording no change, and an
+          // `updated_at` reorder of the Materials list.
+          // An in-session checkpoint (`source: 'session'`) is NOT on the server,
+          // so it deliberately keeps the write.
+          if (restored.source === 'server') markPersisted(restored.deck);
+          setDeck(restored.deck);
           toast.success(t('presentations.versionRestored'));
         } else {
           toast.error(t('presentations.couldNotRestoreThatVersion'));
@@ -1043,7 +1099,7 @@ export const DeckBuilder: React.FC = () => {
         toast.error(t('presentations.couldNotRestoreThatVersion'));
       }
     },
-    [restoreVersion, setDeck]
+    [restoreVersion, setDeck, markPersisted, t]
   );
 
   const handleAcceptAgentEdit = useCallback(async () => {
@@ -1057,14 +1113,35 @@ export const DeckBuilder: React.FC = () => {
           res?.data && typeof res.data === 'object' && 'data' in res.data
             ? res.data.data
             : res?.data;
-        setDeck(payload?.deck || pendingAgentEdit.deck);
+        // MAT-006B — `POST /agent-edit/:id/accept` UPDATEs `deck_json`, bumps
+        // `version` and writes the history snapshot server-side, then answers
+        // with the persisted deck and its new version. Two consequences:
+        //   1. the CAS token must follow the server, otherwise the next autosave
+        //      still carries the pre-accept version and 409s into the conflict
+        //      banner for a user who did nothing wrong;
+        //   2. the returned deck is server truth, so baselining it stops the
+        //      debounced autosave from re-writing what accept just wrote.
+        if (typeof payload?.version === 'number' && Number.isFinite(payload.version)) {
+          serverVersionRef.current = payload.version;
+        }
+        if (payload?.deck) {
+          markPersisted(payload.deck);
+          setDeck(payload.deck);
+        } else {
+          // Unexpected response shape — the server persisted something we did
+          // not get back. Keep the local proposal AND the write that reconciles
+          // it; that is the safe direction (content preserved, not dropped).
+          setDeck(pendingAgentEdit.deck);
+        }
       } else {
+        // No operationId: nothing was persisted server-side, so this really is
+        // an unsaved change — autosave must write it.
         setDeck(pendingAgentEdit.deck);
       }
       toast.success(t('presentations.changesAppliedAndSaved'));
     }
     setPendingAgentEdit(null);
-  }, [pendingAgentEdit, setDeck, deck?.deck_id]);
+  }, [pendingAgentEdit, setDeck, deck?.deck_id, markPersisted, t]);
 
   const handleRejectAgentEdit = useCallback(async () => {
     if (pendingAgentEdit?.operationId && deck?.deck_id) {

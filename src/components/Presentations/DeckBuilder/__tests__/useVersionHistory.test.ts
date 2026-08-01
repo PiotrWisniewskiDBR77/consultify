@@ -14,7 +14,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Deck } from '../../wizard/types';
-import { useVersionHistory } from '../useVersionHistory';
+import { useVersionHistory, type VersionRestoreResult } from '../useVersionHistory';
 
 const DECK_ID = 'deck-123';
 
@@ -143,14 +143,18 @@ describe('useVersionHistory — server persistence', () => {
     const { result } = renderHook(() => useVersionHistory(deck, DECK_ID, () => 2, onServerVersion));
     await waitFor(() => expect(result.current.versions.length).toBe(2));
 
-    let restored: Deck | null = null;
+    let restored: VersionRestoreResult | null = null;
     await act(async () => {
       restored = await result.current.restoreVersion('ver-1');
     });
 
     expect(restored).not.toBeNull();
-    expect((restored as unknown as Deck).title).toBe('Restored Deck');
-    expect((restored as unknown as Deck).deck_id).toBe(DECK_ID);
+    expect((restored as unknown as VersionRestoreResult).deck.title).toBe('Restored Deck');
+    expect((restored as unknown as VersionRestoreResult).deck.deck_id).toBe(DECK_ID);
+    // MAT-006B — the caller needs to know this content is already on the server,
+    // so it can baseline it instead of autosaving it straight back.
+    expect((restored as unknown as VersionRestoreResult).source).toBe('server');
+    expect((restored as unknown as VersionRestoreResult).serverVersion).toBe(3);
     expect(onServerVersion).toHaveBeenCalledWith(3);
 
     // Server restore endpoint was hit, then the canonical deck re-fetched.
@@ -175,7 +179,7 @@ describe('useVersionHistory — server persistence', () => {
     const deck = makeDeck();
     const { result } = renderHook(() => useVersionHistory(deck, DECK_ID, () => 2));
     await waitFor(() => expect(result.current.versions.length).toBe(2));
-    let restored: Deck | null = makeDeck();
+    let restored: VersionRestoreResult | null = { deck: makeDeck(), source: 'server' };
     await act(async () => {
       restored = await result.current.restoreVersion('ver-1');
     });
@@ -202,14 +206,90 @@ describe('useVersionHistory — server persistence', () => {
     expect(checkpoint?.persisted).toBeFalsy();
 
     const callsBefore = fetchMock.mock.calls.length;
-    let restored: Deck | null = null;
+    let restored: VersionRestoreResult | null = null;
     await act(async () => {
       restored = await result.current.restoreVersion(checkpoint!.id);
     });
 
     // Local restore returns the cached deck JSON and makes no extra fetch.
     expect(restored).not.toBeNull();
-    expect((restored as unknown as Deck).deck_id).toBe(DECK_ID);
+    expect((restored as unknown as VersionRestoreResult).deck.deck_id).toBe(DECK_ID);
+    // Not on the server — the caller must still let autosave persist it.
+    expect((restored as unknown as VersionRestoreResult).source).toBe('session');
+    expect((restored as unknown as VersionRestoreResult).serverVersion).toBeUndefined();
     expect(fetchMock.mock.calls.length).toBe(callsBefore);
+  });
+
+  /**
+   * MAT-006B / P2 — this hook runs a SECOND writer next to DeckBuilder's
+   * debounced autosave: a 30 s interval (`autoSave`) guarded by
+   * `lastSavedDeckRef`. Baselining only the debounced loop would still let this
+   * one write the restored content back half a minute later — same version bump,
+   * same empty history row. It must be baselined by the restore too.
+   */
+  it('does not re-write a restored deck on its own 30s autosave interval', async () => {
+    const restoredDeck = makeDeck({
+      title: 'Restored Deck',
+      cards: [{ card_id: 'r1', blocks: [] }],
+    });
+    fetchMock.mockImplementation((url: string, opts?: RequestInit) => {
+      if (url.endsWith('/versions') && (!opts || opts.method === 'GET')) {
+        return Promise.resolve(jsonResponse({ success: true, data: SERVER_VERSIONS }));
+      }
+      if (url.endsWith('/versions/ver-1/restore') && opts?.method === 'POST') {
+        return Promise.resolve(jsonResponse({ success: true, version: 3 }));
+      }
+      if (url === `/api/presentations/decks/${DECK_ID}` && (!opts || opts.method === 'GET')) {
+        return Promise.resolve(
+          jsonResponse({
+            success: true,
+            data: { version: 3, deck_json: JSON.stringify(restoredDeck) },
+          })
+        );
+      }
+      if (url.endsWith('/autosave')) {
+        return Promise.resolve(jsonResponse({ success: true, version: 4 }));
+      }
+      return Promise.resolve(jsonResponse({}, false, 404));
+    });
+    const autosavePuts = () =>
+      fetchMock.mock.calls.filter(
+        (call: any[]) =>
+          String(call[0]).endsWith('/autosave') &&
+          (call[1] as RequestInit | undefined)?.method === 'PUT'
+      );
+
+    const { result, rerender } = renderHook(
+      ({ deck }: { deck: Deck }) => useVersionHistory(deck, DECK_ID, () => 2),
+      { initialProps: { deck: makeDeck() } }
+    );
+    await waitFor(() => expect(result.current.versions.length).toBe(2));
+
+    let restored: VersionRestoreResult | null = null;
+    await act(async () => {
+      restored = await result.current.restoreVersion('ver-1');
+    });
+    expect(restored).not.toBeNull();
+
+    // Fake timers are installed BEFORE the rerender on purpose: the interval is
+    // re-created whenever `deck` changes, so the one that matters here is the
+    // fake-timed one below.
+    vi.useFakeTimers();
+    try {
+      rerender({ deck: (restored as unknown as VersionRestoreResult).deck });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(31_000);
+      });
+      expect(autosavePuts()).toHaveLength(0);
+
+      // Control: a real edit after the restore still reaches this loop.
+      rerender({ deck: makeDeck({ title: 'Edited after restore' }) });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(31_000);
+      });
+      expect(autosavePuts()).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

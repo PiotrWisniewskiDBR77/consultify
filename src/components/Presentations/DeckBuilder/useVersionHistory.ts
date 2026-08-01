@@ -21,6 +21,25 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { Deck } from '../wizard/types';
 
+/**
+ * Outcome of {@link useVersionHistory}'s `restoreVersion`.
+ *
+ * `source` is what the caller needs in order to decide whether the deck it is
+ * about to put into state is ALREADY the server's state:
+ *   - `'server'` — the restore was performed server-side and the deck below is
+ *     the canonical read-back. The caller MUST baseline it (`markPersisted`)
+ *     so the debounced autosave does not write the server's own content back
+ *     (version bump + an empty history snapshot + `updated_at` reorder).
+ *   - `'session'` — an ephemeral in-session checkpoint restored from cached
+ *     JSON. The server does NOT hold this content, so it must still autosave.
+ */
+export interface VersionRestoreResult {
+  deck: Deck;
+  source: 'server' | 'session';
+  /** Server deck version after the restore; only ever set for `source: 'server'`. */
+  serverVersion?: number;
+}
+
 export interface VersionSnapshot {
   id: string;
   timestamp: number;
@@ -251,14 +270,16 @@ export function useVersionHistory(
   }, [deck, fetchServerVersions]);
 
   const restoreVersion = useCallback(
-    async (versionId: string): Promise<Deck | null> => {
+    async (versionId: string): Promise<VersionRestoreResult | null> => {
       const version = state.versions.find((v) => v.id === versionId);
       if (!version) return null;
 
       // Ephemeral in-session snapshot — restore instantly from cached JSON.
+      // The server does NOT hold this content, so the caller must let autosave
+      // persist it; that is why `source` is 'session'.
       if (!version.persisted) {
         try {
-          return JSON.parse(version.deckData) as Deck;
+          return { deck: JSON.parse(version.deckData) as Deck, source: 'session' };
         } catch {
           return null;
         }
@@ -280,7 +301,9 @@ export function useVersionHistory(
         );
         if (!restoreRes.ok) return null;
         const restoreBody = (await restoreRes.json().catch(() => ({}))) as { version?: number };
+        let serverVersion: number | undefined;
         if (restoreBody?.version) {
+          serverVersion = restoreBody.version;
           serverVersionRef.current = restoreBody.version;
           onServerVersion?.(restoreBody.version);
         }
@@ -298,16 +321,62 @@ export function useVersionHistory(
           deckBody && typeof deckBody === 'object' && 'data' in deckBody
             ? (deckBody.data as Record<string, unknown>)
             : (deckBody as Record<string, unknown> | null);
+        // MAT-006B — the canonical read-back carries the deck's CURRENT version.
+        // It outranks the restore response: it is what the next compare-and-swap
+        // will be checked against. Without this the token can lag (older servers
+        // answer the restore without a `version`) and the user's first real edit
+        // after a restore 409s into the conflict banner for no reason.
+        const canonicalVersion = row?.version;
+        if (typeof canonicalVersion === 'number' && Number.isFinite(canonicalVersion)) {
+          serverVersion = canonicalVersion;
+          serverVersionRef.current = canonicalVersion;
+          onServerVersion?.(canonicalVersion);
+        }
         const restored = parseRestoredDeck(row?.deck_json, resolvedDeckId);
         // Refresh the timeline — restore also writes a new snapshot row.
         void fetchServerVersions();
-        return restored;
+        if (!restored) return null;
+        // MAT-006B — this deck is the server's own state, freshly read back. Both
+        // save loops must treat it as persisted: this hook's 30 s interval
+        // (`autoSave`, guarded by `lastSavedDeckRef`) and — via the returned
+        // `source: 'server'` — DeckBuilder's debounced autosave baseline. Neither
+        // may write the restored content straight back: that would bump the
+        // version the restore just synchronized, append a version-history row
+        // recording no change, and reorder the Materials list by `updated_at`.
+        lastSavedDeckRef.current = JSON.stringify(restored);
+        setState((prev) => ({
+          ...prev,
+          hasUnsavedChanges: false,
+          lastSavedAt: Date.now(),
+        }));
+        return { deck: restored, source: 'server', serverVersion };
       } catch {
         return null;
       }
     },
     [state.versions, resolvedDeckId, fetchServerVersions, getExpectedVersion, onServerVersion]
   );
+
+  /**
+   * MAT-006B — declare a deck state as already persisted on the SERVER, so this
+   * hook's 30 s interval does not write it back.
+   *
+   * This hook runs a SECOND, independent save loop next to DeckBuilder's
+   * debounced `useDeckAutosave`. Baselining only the debounced one left the
+   * "no write on read-only reopen" guarantee half-built: opening a deck issued
+   * no PUT for 800 ms, then one arrived 30 s later from here — same version
+   * bump, same empty history row, same `updated_at` reorder, just late enough
+   * that nobody connected it to opening the deck.
+   *
+   * Deliberately does NOT touch `lastSavedAt`: on open there is nothing to
+   * report as "just saved", and writing it would make the builder claim a save
+   * that never happened. `hasUnsavedChanges` is already false at that point.
+   */
+  const markSaved = useCallback((persisted: Deck | null) => {
+    if (!persisted) return;
+    lastSavedDeckRef.current = JSON.stringify(persisted);
+    setState((prev) => (prev.hasUnsavedChanges ? { ...prev, hasUnsavedChanges: false } : prev));
+  }, []);
 
   const saveManualCheckpoint = useCallback(
     (label: string) => {
