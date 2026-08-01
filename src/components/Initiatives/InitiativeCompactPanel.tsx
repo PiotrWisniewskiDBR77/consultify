@@ -234,6 +234,10 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
     readiness: any[];
     availableTransitions: any[];
   } | null>(null);
+  // INI-005: guards the quick status-action buttons (Approve/Reject/Start
+  // Execution/...) below against a double-click firing two concurrent
+  // PATCH /:id/status requests from the same panel.
+  const [isChangingStatus, setIsChangingStatus] = useState(false);
 
   const id = initiative?.id || propInitiativeId;
   const {
@@ -372,7 +376,9 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
 
   // D3.1: Approval validation — check critical fields before allowing APPROVED status
   const handleStatusAction = async (action: StatusAction) => {
-    if (!id) return;
+    // INI-005: re-entrancy guard — a double-click on the quick status-action
+    // button must not fire two concurrent PATCH /:id/status requests.
+    if (!id || isChangingStatus) return;
 
     // D3.1: Block approval if critical fields are missing
     if (action.targetStatus === InitiativeStatus.APPROVED && initiative) {
@@ -401,6 +407,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
       }
     }
 
+    setIsChangingStatus(true);
     try {
       const { transition, blockingItems } = await getInitiativeStatusPreflightTruth(
         id,
@@ -455,6 +462,8 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
       fetchData();
     } catch (e: any) {
       toast.error(e?.message || t('initiatives.toast.statusChangeFailed', 'Status change failed'));
+    } finally {
+      setIsChangingStatus(false);
     }
   };
 
@@ -546,7 +555,8 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
               <button
                 key={action.targetStatus}
                 onClick={() => handleStatusAction(action)}
-                className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-c-info/10 text-c-info hover:bg-c-info/20 transition-colors"
+                disabled={isChangingStatus}
+                className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-c-info/10 text-c-info hover:bg-c-info/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-c-info/10"
               >
                 <ArrowRight size={10} />
                 {action.label}
