@@ -32,7 +32,7 @@ const MENU_VIEW_IDS: AppView[] = [
   AppView.BENEFITS_REALIZATION,
   AppView.ECONOMICS,
   AppView.FULL_STEP6_REPORTS,
-  AppView.AFFILIATE_DASHBOARD,
+  AppView.PARTNER_DASHBOARD,
   AppView.ADMIN_DASHBOARD,
   AppView.CONTEXT_BUILDER_PROFILE,
   AppView.CONTEXT_BUILDER_GOALS,
@@ -92,7 +92,8 @@ describe('Route Configuration Integrity', () => {
       expect(ROUTES.AUTH).toBe('/auth');
       expect(ROUTES.AI_CHAT).toBe('/chat');
       expect(ROUTES.MY_WORK).toBe('/my-work');
-      expect(ROUTES.DASHBOARD).toBe('/dashboard');
+      // Dashboard was retired; the compatibility entry now resolves to Chat.
+      expect(ROUTES.DASHBOARD).toBe('/chat');
     });
 
     it('has nested route objects for complex modules', () => {
@@ -181,7 +182,11 @@ describe('Critical Navigation Paths', () => {
       expectedRoute: '/assessment/overview',
       name: 'Assessment',
     },
-    { view: AppView.PORTFOLIO_ROADMAP, expectedRoute: '/portfolio', name: 'Portfolio/Initiatives' },
+    {
+      view: AppView.PORTFOLIO_ROADMAP,
+      expectedRoute: '/initiatives',
+      name: 'Portfolio/Initiatives',
+    },
     { view: AppView.IMPLEMENTATION, expectedRoute: '/execution', name: 'Execution' },
     { view: AppView.BENEFITS_REALIZATION, expectedRoute: '/results', name: 'Results' },
     { view: AppView.SETTINGS_PROFILE_MODULE, expectedRoute: '/settings/profile', name: 'Settings' },
