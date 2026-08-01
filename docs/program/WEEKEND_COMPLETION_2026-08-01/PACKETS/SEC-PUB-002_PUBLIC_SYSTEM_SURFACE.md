@@ -605,3 +605,20 @@ publicznym wystawieniem `demo.consultify.ai`, bez czekania na kolejkę**; pozycj
 w tej samej partii co `OPS-DEMO-002`; pozycje 9-10 zwykłą kolejką. Ustalenia Z1-Z5 do
 triage'u jako osobne pozycje — Z1 i Z2 rekomenduję ocenić wcześniej niż resztę, bo ich
 koszt na żądanie jest najwyższy w całym przeglądzie.
+
+## Odsyłacz — część operacyjna pozycji 2 jest w osobnym runbooku
+
+Pozycja 2 listy P0 ma dwie połowy. Połowa kodowa (usunięcie zaszytych literałów
+z repozytorium) należy do strumienia kodu. Połowa operacyjna — **rotacja ujawnionego
+poświadczenia, unieważnienie sesji i rodzin refresh tokenów oraz weryfikacja
+niewymagająca ujawnienia nowej wartości** — jest tu świadomie opisana jako „pytanie
+operacyjne do właściciela, poza kodem" i **nie ma w tym pakiecie procedury**.
+
+Procedura powstała jako:
+[`OPS-SEC-001`](OPS-SEC-001_RUNBOOK_WYSTAWIENIA_PUBLICZNEGO.md) — runbook operatora
+przed publicznym wystawieniem `demo.consultify.ai`, bramka blokująca **O-1**
+(sześć kroków + testy weryfikacyjne W1-W5, werdykt **NO-GO** do czasu jej zamknięcia).
+
+Do rozdziału odpowiedzialności, nie do zmiany treści tego rejestru: ustalenia U1 i U2
+pozostają autorytetem dla **opisu** ujawnienia, `OPS-SEC-001` jest autorytetem dla
+**czynności na żywym środowisku**.
