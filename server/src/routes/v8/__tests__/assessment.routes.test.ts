@@ -694,6 +694,212 @@ describe('V8 Assessment bounded routes', () => {
     );
     expect(res.body.data?.deleted).toBe(true);
   });
+
+  // --- ASM-001A Codex fix #2: capability enforcement on create/edit ---
+
+  it('POST /api/v8/assessment rejects a viewer/read-only role with 403, zero insert', async () => {
+    mockUser = { id: UID, role: 'VIEWER', organizationId: ORG, isSuperAdmin: false };
+
+    const res = await request(createApp())
+      .post('/api/v8/assessment')
+      .set('Authorization', 'Bearer x')
+      .send({ assessmentType: 'DRD', name: 'Should be denied' });
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('INSUFFICIENT_ROLE');
+    expect(mockQueryRun).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/assessment rejects a GUEST role with 403, zero insert', async () => {
+    mockUser = { id: UID, role: 'GUEST', organizationId: ORG, isSuperAdmin: false };
+
+    const res = await request(createApp())
+      .post('/api/v8/assessment')
+      .set('Authorization', 'Bearer x')
+      .send({ assessmentType: 'DRD', name: 'Should be denied' });
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('INSUFFICIENT_ROLE');
+    expect(mockQueryRun).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/assessment rejects a blank/missing role with 403 (fail-closed)', async () => {
+    mockUser = { id: UID, role: '', organizationId: ORG, isSuperAdmin: false };
+
+    const res = await request(createApp())
+      .post('/api/v8/assessment')
+      .set('Authorization', 'Bearer x')
+      .send({ assessmentType: 'DRD', name: 'Should be denied' });
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('INSUFFICIENT_ROLE');
+    expect(mockQueryRun).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/assessment allows an OWNER role (regression guard for asm-001a-*.mjs, which use OWNER)', async () => {
+    mockUser = { id: UID, role: 'OWNER', organizationId: ORG, isSuperAdmin: false };
+
+    const res = await request(createApp())
+      .post('/api/v8/assessment')
+      .set('Authorization', 'Bearer x')
+      .send({ assessmentType: 'DRD', name: 'Allowed for OWNER' });
+
+    expect(res.status).toBe(201);
+  });
+
+  it('POST /api/v8/assessment allows a PROJECT_MANAGER role', async () => {
+    mockUser = { id: UID, role: 'PROJECT_MANAGER', organizationId: ORG, isSuperAdmin: false };
+
+    const res = await request(createApp())
+      .post('/api/v8/assessment')
+      .set('Authorization', 'Bearer x')
+      .send({ assessmentType: 'DRD', name: 'Allowed for PM' });
+
+    expect(res.status).toBe(201);
+  });
+
+  it('PUT /api/v8/assessment/:id rejects a viewer role with 403, zero update', async () => {
+    mockUser = { id: UID, role: 'VIEWER', organizationId: ORG, isSuperAdmin: false };
+    mockQueryOne.mockResolvedValue({
+      answers_json: '{"existing":true}',
+      context_snapshot: '{}',
+      score_summary: '{}',
+      completion_percent: 10,
+      confidence_avg: 1,
+      current_section_id: null,
+      navigation_json: '{}',
+    });
+    mockGetUserRole.mockResolvedValue({
+      role: 'viewer',
+      permissions: { canView: true, canEdit: false, canApprove: false },
+      assignedAreas: null,
+      isOwner: false,
+    });
+
+    const res = await request(createApp())
+      .put('/api/v8/assessment/a-viewer-edit')
+      .set('Authorization', 'Bearer x')
+      .send({ name: 'Should not be saved' });
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('P28_PERMISSION_DENIED');
+    const updateCalls = mockQueryRun.mock.calls.filter(
+      ([sql]) => typeof sql === 'string' && sql.includes('UPDATE assessments')
+    );
+    expect(updateCalls).toHaveLength(0);
+  });
+
+  it('PUT /api/v8/assessment/:id allows a role with canEdit permission (200)', async () => {
+    mockUser = { id: UID, role: 'CONSULTANT', organizationId: ORG, isSuperAdmin: false };
+    mockQueryOne.mockResolvedValue({
+      answers_json: '{"existing":true}',
+      context_snapshot: '{}',
+      score_summary: '{}',
+      completion_percent: 10,
+      confidence_avg: 1,
+      current_section_id: null,
+      navigation_json: '{}',
+    });
+    mockGetUserRole.mockResolvedValue({
+      role: 'editor',
+      permissions: { canView: true, canEdit: true, canApprove: false },
+      assignedAreas: null,
+      isOwner: false,
+    });
+
+    const res = await request(createApp())
+      .put('/api/v8/assessment/a-consultant-edit')
+      .set('Authorization', 'Bearer x')
+      .send({ name: 'Consultant can save' });
+
+    expect(res.status).toBe(200);
+  });
+
+  it('PUT /api/v8/assessment/:id cross-tenant still returns 404, not 403 (regression guard: capability check must run AFTER org-scope check)', async () => {
+    mockUser = { id: UID, role: 'VIEWER', organizationId: ORG, isSuperAdmin: false };
+    mockQueryOne.mockResolvedValue(null); // no row for this org -> ASSESSMENT_NOT_FOUND
+
+    const res = await request(createApp())
+      .put('/api/v8/assessment/foreign-org-assessment')
+      .set('Authorization', 'Bearer x')
+      .send({ name: 'Cross-tenant attempt' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('ASSESSMENT_NOT_FOUND');
+    // getUserRole must never even be consulted for a cross-tenant 404 —
+    // proves the permission check did not run before the org-scope check.
+    expect(mockGetUserRole).not.toHaveBeenCalled();
+  });
+
+  // --- ASM-001A Codex fix #4 (list): server-derived DRD completion on GET / ---
+
+  it('GET /api/v8/assessment (list) derives completion_percent server-side for DRD rows, ignoring the stale stored value', async () => {
+    const firstAreaId = DRD_STRUCTURE[0].areas[0].id;
+    const drdAnswers = { drd: { areas: { [firstAreaId]: { achievedLevel: 2 } } } };
+    const expectedPercent = computeDrdCompletion(drdAnswers.drd.areas);
+
+    mockQueryAll.mockResolvedValue([
+      {
+        id: 'a-list-drd',
+        organization_id: ORG,
+        name: 'DRD in list',
+        status: 'DRAFT',
+        assessment_type: 'DRD',
+        answers_json: JSON.stringify(drdAnswers),
+        completion_percent: 999, // deliberately stale — must NOT be trusted
+      },
+    ]);
+
+    const res = await request(createApp())
+      .get('/api/v8/assessment')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.items?.[0]?.completion_percent).toBe(expectedPercent);
+    expect(res.body.data?.items?.[0]?.completion_percent).not.toBe(999);
+  });
+
+  it('GET /api/v8/assessment (list) leaves completion_percent untouched for non-DRD frameworks (regression guard)', async () => {
+    mockQueryAll.mockResolvedValue([
+      {
+        id: 'a-list-siri',
+        organization_id: ORG,
+        name: 'SIRI in list',
+        status: 'DRAFT',
+        assessment_type: 'SIRI',
+        answers_json: '{}',
+        completion_percent: 33,
+      },
+    ]);
+
+    const res = await request(createApp())
+      .get('/api/v8/assessment')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.items?.[0]?.completion_percent).toBe(33);
+  });
+
+  it('GET /api/v8/assessment (list) keeps the persisted completion_percent for a DRD row with no drd.areas yet', async () => {
+    mockQueryAll.mockResolvedValue([
+      {
+        id: 'a-list-drd-empty',
+        organization_id: ORG,
+        name: 'DRD empty in list',
+        status: 'DRAFT',
+        assessment_type: 'DRD',
+        answers_json: '{}',
+        completion_percent: 0,
+      },
+    ]);
+
+    const res = await request(createApp())
+      .get('/api/v8/assessment')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.items?.[0]?.completion_percent).toBe(0);
+  });
 });
 
 // ASM-001A: unit coverage for the pure completion formula. Kept in this file

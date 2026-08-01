@@ -106,6 +106,85 @@ const isGlobalAdminRole = (role: string): boolean => {
   );
 };
 
+// ASM-001A Codex fix #2: create/edit capability enforcement (fail-closed).
+//
+// There is no single canonical org-level "viewer" role name in this repo.
+// `server/src/utils/roleNormalization.ts` (normalizeApplicationRole) buckets
+// the raw `organization_members.role` value into OWNER / ADMIN / GUEST /
+// USER, folding VIEWER, CLIENT and GUEST into the read-only GUEST bucket —
+// but that normalizer is deliberately fail-OPEN for anything it doesn't
+// recognize (falls through to USER, i.e. "can edit"). A capability gate
+// must be fail-CLOSED instead, so this is a standalone allow-list, not a
+// reuse of that normalizer.
+//
+// The role vocabulary below is the union of raw role strings actually used
+// across server/src (grep 'ADMIN'|'OWNER'|'MEMBER'|'VIEWER'|
+// 'PROJECT_MANAGER' in roleNormalization.ts, assessmentRBAC.ts,
+// rbac.middleware.ts, auth.middleware.ts, and acceptance-test fixtures).
+// assessmentRBAC.ts's own `hasPermission()` — the existing, already-shipped
+// RBAC helper for this same "assessment" resource — draws the identical
+// line: SUPER_ADMIN / ORG_ADMIN / PROJECT_MANAGER / CONSULTANT can
+// create+update; VIEWER can only read. This list mirrors that split using
+// the raw (non-normalized) role strings that actually appear in
+// `req.userRole` / `organization_members.role`.
+//
+// Decision surfaced for Codex to confirm: MEMBER/USER/TEAM_MEMBER/MANAGER/
+// SME/REVIEWER are treated as create+edit-capable (same bucket
+// normalizeApplicationRole calls USER) — if any of those should be
+// read-only in this product, they need to move to the blocked set below.
+const ASSESSMENT_READ_ONLY_ORG_ROLES = new Set([
+  'VIEWER',
+  'GUEST',
+  'CLIENT',
+  'READONLY',
+  'READ_ONLY',
+  'OBSERVER',
+  'STAKEHOLDER',
+]);
+
+const ASSESSMENT_CREATE_CAPABLE_ORG_ROLES = new Set([
+  'OWNER',
+  'ADMIN',
+  'ADMINISTRATOR',
+  'SUPERADMIN',
+  'SUPER_ADMIN',
+  'ORG_ADMIN',
+  'USER',
+  'MEMBER',
+  'TEAM_MEMBER',
+  'PROJECT_MANAGER',
+  'MANAGER',
+  'CONSULTANT',
+  'SME',
+  'REVIEWER',
+]);
+
+/**
+ * Fail-closed org-level capability check for assessment create/edit.
+ * Missing/blank role -> denied. Unrecognized role -> denied. Explicit
+ * read-only/viewer-semantics role -> denied. Only a role on the explicit
+ * allow-list is granted.
+ */
+function canCreateOrEditAssessment(role: string | undefined | null): boolean {
+  const normalized = String(role || '')
+    .trim()
+    .toUpperCase();
+  if (!normalized) return false;
+  if (ASSESSMENT_READ_ONLY_ORG_ROLES.has(normalized)) return false;
+  return ASSESSMENT_CREATE_CAPABLE_ORG_ROLES.has(normalized);
+}
+
+function buildCapabilityDenied(role: string | undefined | null) {
+  return {
+    error: 'Insufficient role to perform this action',
+    code: 'INSUFFICIENT_ROLE',
+    role: role || null,
+    whatNext: [
+      'Ask an organization admin or owner to grant a role capable of creating or editing assessments.',
+    ],
+  };
+}
+
 async function ensureAssessmentInOrg(
   assessmentId: string,
   organizationId: string
@@ -194,15 +273,39 @@ router.get(
     params.push(limit, offset);
 
     const rows = (await queryHelpers.queryAll(sql, params)) as Array<Record<string, unknown>>;
-    const items = rows.map((row) => ({
-      ...row,
-      status: normalizeStatus(String(row.status || 'DRAFT')),
-      backendStatus: row.status,
-      answers: parseJsonSafely(row.answers_json as string | null | undefined, {}),
-      scoreSummary: parseJsonSafely(row.score_summary as string | null | undefined, {}),
-      assessmentDefinitionId: row.assessment_definition_id || null,
-      assessmentDefinitionVersion: row.assessment_definition_version || null,
-    }));
+    const items = rows.map((row) => {
+      const answers = parseJsonSafely(row.answers_json as string | null | undefined, {});
+
+      // ASM-001A Codex fix #4 (list): mirrors the single-assessment GET/:id
+      // server-derived DRD completion — the list previously returned
+      // whatever was last persisted to completion_percent, which can be
+      // stale. Only DRD rows with an answers.drd.areas map are recomputed;
+      // every other framework (SIRI/ADMA/CMMI/Lean) and DRD rows with no
+      // areas yet keep the persisted value untouched. computeDrdCompletion
+      // is a pure, in-memory function (no SQL), so looping it over the
+      // page's rows is cheap even though this is a list endpoint.
+      const isDrdAssessment = String(row.assessment_type || '').toUpperCase() === 'DRD';
+      const drdAreas = isDrdAssessment
+        ? (answers as { drd?: { areas?: DrdAreasMap } })?.drd?.areas
+        : undefined;
+      const derivedCompletionPercent = drdAreas ? computeDrdCompletion(drdAreas) : undefined;
+
+      return {
+        ...row,
+        status: normalizeStatus(String(row.status || 'DRAFT')),
+        backendStatus: row.status,
+        answers,
+        scoreSummary: parseJsonSafely(row.score_summary as string | null | undefined, {}),
+        assessmentDefinitionId: row.assessment_definition_id || null,
+        assessmentDefinitionVersion: row.assessment_definition_version || null,
+        ...(derivedCompletionPercent !== undefined
+          ? {
+              completion_percent: derivedCompletionPercent,
+              completionPercent: derivedCompletionPercent,
+            }
+          : {}),
+      };
+    });
 
     return res.json({
       data: {
@@ -299,7 +402,15 @@ router.get(
 router.post(
   '/',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
+
+    // ASM-001A Codex fix #2: fail-closed capability check, BEFORE any DB
+    // write. actor/organization come exclusively from getV8Context (session),
+    // never from body/query.
+    if (!canCreateOrEditAssessment(userRole)) {
+      return res.status(403).json(buildCapabilityDenied(userRole));
+    }
+
     const assessmentType = String(req.body?.assessmentType || '')
       .trim()
       .toUpperCase();
@@ -494,7 +605,7 @@ router.post(
 router.put(
   '/:assessmentId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
     const assessmentId = firstParam(req.params.assessmentId);
     if (!assessmentId) {
       return res
@@ -533,6 +644,25 @@ router.put(
 
     if (!existing) {
       return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
+    }
+
+    // ASM-001A Codex fix #2: capability check happens AFTER the org-scoped
+    // existence check above — so a foreign-org assessmentId still 404s
+    // (never leaks a 403 that would confirm the resource exists in some
+    // other org). Reuses the existing per-assessment permission helper that
+    // already gates every /workbench/* sub-route — extended here to the
+    // main edit endpoint per Codex's explicit instruction. Zero change to
+    // ensureWorkbenchPermission itself.
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canEdit',
+    });
+    if (!permission.ok) {
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
     }
 
     if (req.body?.scoreSummary !== undefined && existing.p28_workbench_v1) {
