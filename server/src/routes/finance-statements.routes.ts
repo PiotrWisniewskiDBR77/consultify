@@ -42,6 +42,10 @@ import {
 } from '../services/financeAggregateScopeService.js';
 import { ensureCanonicalRegistryInDatabase } from '../services/financeCanonicalRegistrySyncService.js';
 import {
+  serializeRowPeriodFields,
+  serializeRowsPeriodFields,
+} from '../services/financePeriodFormat.js';
+import {
   getFinanceTraceId,
   logFinanceError,
   logFinanceEvent,
@@ -1709,7 +1713,11 @@ router.get(
         [orgId]
       );
     }
-    res.json(statements || []);
+    // FIN-005: `period_start`/`period_end` are Postgres DATE columns, so these
+    // rows carry JS `Date` objects. Serialize at the read boundary so the list
+    // response can never contain a raw Date (and legacy rows whose
+    // `period_label` already holds one are repaired on the way out).
+    res.json(serializeRowsPeriodFields(statements));
   })
 );
 
@@ -2315,7 +2323,10 @@ router.get(
       })),
     });
     res.json({
-      ...stmtData,
+      // FIN-005: `stmtData` carries the raw DATE columns from Postgres; without
+      // this the statement-detail response ships JS Date objects (and any
+      // legacy raw `Date.toString()` label) straight to the workspace.
+      ...serializeRowPeriodFields(stmtData),
       totalLineCount,
       mappedLineCount,
       unmappedLineCount,

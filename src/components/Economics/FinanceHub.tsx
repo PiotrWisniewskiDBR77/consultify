@@ -242,10 +242,18 @@ const WhatIfSensitivityPanel = lazy(() =>
  * compact locale date instead; otherwise pass the label through unchanged.
  */
 const JS_DATE_TOSTRING_RE = /^[A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+\d{1,2}\s+\d{4}\b/; // "Thu Dec 31 2026 ..."
-function sanitizeStatementTitle(raw?: string | null): string {
-  const value = String(raw ?? '').trim();
+/**
+ * FIN-005: the owner-side fix now serializes Finance period columns before they
+ * leave the API (`server/src/services/financePeriodFormat.ts`), so this guard is
+ * defence in depth. It also covers the ISO *timestamp* shape
+ * ("2026-12-31T00:00:00.000Z") — a `Date` crossing JSON turns into that, and
+ * rendering it raw is the same class of leak as the `Date.toString()` form.
+ */
+const ISO_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/; // "2026-12-31T00:00:00.000Z"
+function sanitizeStatementTitle(raw?: unknown): string {
+  const value = raw instanceof Date ? raw.toISOString() : String(raw ?? '').trim();
   if (!value) return '';
-  const looksLikeDate = JS_DATE_TOSTRING_RE.test(value);
+  const looksLikeDate = JS_DATE_TOSTRING_RE.test(value) || ISO_TIMESTAMP_RE.test(value);
   if (looksLikeDate) {
     const parsed = new Date(value);
     // `toLocaleDateString(undefined, …)` brało format z PRZEGLĄDARKI, nie
@@ -1112,6 +1120,44 @@ export const FinanceHub: React.FC = () => {
     [buildAnalyzeTitle, t]
   );
 
+  /**
+   * FIN-005: names already taken in this tenant, so "Duplikuj" cannot mint a
+   * second record with an identical title. Reads the RAW loaded collections
+   * (not `filteredRows`) — a search box or an active filter must not hide a
+   * name and let a collision through.
+   */
+  const getExistingTitles = useCallback(
+    (kind: FinanceRow['kind']): string[] => {
+      const namesOf = (rows: any[], ...fields: string[]) =>
+        (rows || [])
+          .map((row) => {
+            for (const field of fields) {
+              const value = row?.[field];
+              if (typeof value === 'string' && value.trim()) return value;
+            }
+            return '';
+          })
+          .filter(Boolean);
+
+      switch (kind) {
+        case 'models':
+          return namesOf(models, 'name', 'title');
+        case 'analysis':
+        case 'investment':
+          return namesOf(analyses, 'title', 'name');
+        case 'valuation':
+          return namesOf(valuations, 'title', 'name');
+        case 'prediction':
+          // The prediction tab mixes models and budgets in one list.
+          return [...namesOf(models, 'name', 'title'), ...namesOf(budgets, 'title', 'name')];
+        case 'statements':
+        default:
+          return namesOf(statements, 'entity_name', 'period_label');
+      }
+    },
+    [models, analyses, valuations, budgets, statements]
+  );
+
   // ---- Row actions ----
   const { getRowActions, handleDelete: handleFinanceDelete } = useFinanceRowActions({
     handleOpenFull,
@@ -1129,6 +1175,7 @@ export const FinanceHub: React.FC = () => {
     loadBudgetPreviewScenarios,
     loadValuationPreviewResults,
     getBudgetRawId,
+    getExistingTitles,
   });
 
   // ---- Preview ----
@@ -3083,9 +3130,13 @@ export const FinanceHub: React.FC = () => {
             statementType: 'PACK',
             statementPackId: String(pack.id),
             entityName: String(pack.entity_name || ''),
-            periodStart: String(pack.period_start || ''),
-            periodEnd: String(pack.period_end || ''),
-            periodLabel: String(pack.period_label || ''),
+            // FIN-005: the same guard as the statements list above. This branch
+            // (post-import refresh) built the row with a bare `String(...)`, so
+            // a pack whose period columns still carry a raw Date value showed
+            // it in the PERIOD column of the freshly imported row.
+            periodStart: sanitizeStatementTitle(pack.period_start),
+            periodEnd: sanitizeStatementTitle(pack.period_end),
+            periodLabel: sanitizeStatementTitle(pack.period_label),
             currency: String(pack.currency || 'PLN'),
             scaling: String(pack.scaling || 'units'),
             sourceFileName: '',

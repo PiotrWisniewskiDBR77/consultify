@@ -48,6 +48,7 @@ import {
   updateEvent,
   updateModel,
 } from '../services/financialModelingService.js';
+import { serializeRowPeriodFields } from '../services/financePeriodFormat.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 import { run as dbRun } from '../utils/DbPromise.js';
@@ -322,8 +323,11 @@ router.get(
     res.json({
       ...model,
       events,
-      source_statement: sourceStatement || null,
-      source_statement_pack: sourceStatementPack || null,
+      // FIN-005: same Date leak as the v8 model-detail route — see there.
+      source_statement: sourceStatement ? serializeRowPeriodFields(sourceStatement) : null,
+      source_statement_pack: sourceStatementPack
+        ? serializeRowPeriodFields(sourceStatementPack)
+        : null,
     });
   })
 );

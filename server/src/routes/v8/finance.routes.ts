@@ -15,6 +15,7 @@ import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { createBudget, listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
+import { serializeRowPeriodFields } from '../../services/financePeriodFormat.js';
 import {
   getFinanceTraceId,
   logFinanceError,
@@ -366,8 +367,16 @@ router.get(
         model: {
           ...model,
           events,
-          source_statement: sourceStatement || null,
-          source_statement_pack: sourceStatementPack || null,
+          // FIN-005: these two rows are selected straight from Postgres, so
+          // `period_start`/`period_end` are JS `Date` objects and a legacy
+          // `period_label` may still hold a raw `Date.toString()`. Before
+          // FIN-005 the Atelier model had no source pack, so this path never
+          // carried a period at all — binding the model to the FY2014 pack is
+          // exactly what activates it. Serialize like every other read boundary.
+          source_statement: sourceStatement ? serializeRowPeriodFields(sourceStatement) : null,
+          source_statement_pack: sourceStatementPack
+            ? serializeRowPeriodFields(sourceStatementPack)
+            : null,
         },
       },
       meta: financeMeta(),
