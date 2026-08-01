@@ -241,6 +241,7 @@ describe('L2 — initiativeCandidateService', () => {
 
   it('B-B10: acceptCandidate — istniejący → status=accepted + payload z briefem dla F1', async () => {
     const { acceptCandidate } = await candidateMod();
+    mockFunnelCreate.mockResolvedValue({ id: 'init-from-candidate', status: 'DRAFT' });
     mockQueryOne.mockResolvedValue({
       id: 'c1', organization_id: 'org-1', source_type: 'assessment', source_id: 'as-1',
       title: 'Inicjatywa: Skalowanie', rationale: 'AI: szansa wzrostu', fit_score: 0.6, status: 'pending',
@@ -249,8 +250,11 @@ describe('L2 — initiativeCandidateService', () => {
     const payload = await acceptCandidate(db, 'c1', 'org-1');
     expect(payload).toMatchObject({ candidateId: 'c1', organizationId: 'org-1', sourceType: 'assessment' });
     expect(payload!.brief).toContain('Inicjatywa: Skalowanie');
-    const upd = mockQueryRun.mock.calls.find((c) => /UPDATE initiative_candidates SET status = 'accepted'/.test(String(c[0])));
+    const upd = mockQueryRun.mock.calls.find(
+      (c) => /UPDATE initiative_candidates[\s\S]*status = 'accepted'/.test(String(c[0]))
+    );
     expect(upd).toBeTruthy();
+    expect(String(upd![0])).toContain('initiative_id = ?');
   });
 
   it('B-B11: acceptCandidate — brak id → null', async () => {
