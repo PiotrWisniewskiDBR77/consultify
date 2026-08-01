@@ -41,7 +41,10 @@ import {
   type WsOrgContext,
 } from '../realtime/wsOrgContext.js';
 import logger from '../utils/Logger.js';
-import { evaluateRealtimeAccess } from '../realtime/demoRealtimeGuard.js';
+import {
+  evaluateRealtimeAccess,
+  trackRealtimeConnection,
+} from '../realtime/demoRealtimeGuard.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -326,6 +329,17 @@ export function attachPresentationCollabWs(server: HttpServer): void {
             avatarUrl,
           };
           (ws as PresenceSocket).__orgCtx = orgCtx;
+          // OPS-DEMO-002: register for the periodic re-evaluation sweep. A handshake
+          // check alone only proves the principal qualified at connect time; this is
+          // what makes a principal that stops qualifying get disconnected.
+          const untrack = trackRealtimeConnection(userId, () => {
+            try {
+              ws.close(1008, 'realtime access revoked');
+            } catch {
+              /* already gone */
+            }
+          });
+          ws.on('close', untrack);
           wss.emit('connection', ws, request, deckId);
         });
       })

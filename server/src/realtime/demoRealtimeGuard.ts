@@ -27,7 +27,11 @@
  * consulted.
  */
 import logger from '../utils/Logger.js';
-import { resolvePublicDemoPrincipal } from '../services/demo/demoPrincipalGuard.js';
+import { get as dbGet } from '../utils/DbPromise.js';
+import {
+  DEMO_ENTRY_SOURCE_PREF_KEY,
+  PUBLIC_DEMO_ENTRY_SOURCE,
+} from '../services/demo/demoSignupProvisioning.js';
 
 export const REALTIME_DEMO_DENIED_REASON = 'demo_realtime_forbidden';
 
@@ -49,8 +53,21 @@ export async function evaluateRealtimeAccess(userId: string): Promise<RealtimeAc
   if (!normalizedUserId) return { allowed: false, reason: 'missing_principal' };
 
   try {
-    const principal = await resolvePublicDemoPrincipal(normalizedUserId);
-    if (principal.isPublicDemoPrincipal) {
+    // Read the marker DIRECTLY rather than through `resolvePublicDemoPrincipal`.
+    //
+    // That helper delegates to `isPublicDemoPrincipal`, which swallows a storage
+    // fault and returns `false` — deliberately, because the HTTP guard must fail
+    // OPEN so a database blip cannot lock every customer out of the product. The
+    // consequence here was that this module documented "fail CLOSED" while the
+    // catch below could never see the fault: a blip admitted every demo principal
+    // to realtime. Realtime is an enhancement, so it takes the opposite trade and
+    // needs the error to reach it.
+    const marker = await dbGet<{ value: string }>(
+      `SELECT value FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [normalizedUserId, DEMO_ENTRY_SOURCE_PREF_KEY],
+      { fallback: false }
+    );
+    if (String(marker?.value || '').trim() === PUBLIC_DEMO_ENTRY_SOURCE) {
       return { allowed: false, reason: REALTIME_DEMO_DENIED_REASON };
     }
     return { allowed: true };

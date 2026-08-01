@@ -2138,6 +2138,15 @@ if (startServer && shouldStartHttpServer) {
         cors: { origin: '*', methods: ['GET', 'POST'] },
         path: '/socket.io',
       });
+      // OPS-DEMO-002: middleware registered with `namespace.use` covers only that
+      // namespace, and Socket.IO ALWAYS serves the default namespace `/`. It had no
+      // middleware at all, so an unauthenticated client — and an expired demo
+      // principal — could open a socket there. No handlers are registered on `/`,
+      // so there is no event surface, but it is still an unauthenticated
+      // resource-consuming connection and it falsified the stated policy.
+      // `io.use` applies to the server, which is what the default namespace needs.
+      const { socketAuthMiddleware } = await import('./realtime/socketAuth.js');
+      io.use(socketAuthMiddleware);
       const { tablePlatformRealtime } = await import('./services/tablePlatform/RealtimeService.js');
       tablePlatformRealtime.init(io);
       logger.info('[Server] Table Platform Realtime (Socket.IO /table-platform) initialized');
