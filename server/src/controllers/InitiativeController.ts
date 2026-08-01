@@ -153,25 +153,58 @@ const getTopBarCapabilities = (status: string, userRoles: string[]) => {
   };
 };
 
+interface GateDecisionCheck {
+  ok: boolean;
+  decisionId: string | null;
+}
+
+/**
+ * GO/NO-GO decision-currency check for a gate.
+ *
+ * ★ Decision-currency fix (2026-08-01): `decisions` has no `superseded`/`is_current`/
+ * version column and no unique constraint on (organization_id, initiative_id,
+ * pmo_domain) — decisionService always INSERTs a fresh row, it never supersedes an
+ * older one for the same gate tuple. That means multiple decision rows for the same
+ * gate legitimately accumulate over time (e.g. a rework cycle: GO → sent back to
+ * REVIEW → a second decision for the same tuple comes back NO-GO or is still
+ * pending). The PREVIOUS implementation used `.some()` over ALL rows for the tuple,
+ * so a stale APPROVED row from a superseded round kept satisfying the gate forever,
+ * regardless of what the newest decision actually says.
+ *
+ * FIX: only the MOST RECENT decision row for the tuple (by
+ * `COALESCE(decided_at, created_at) DESC`) may satisfy the gate. If the latest row
+ * is anything other than approved+owner+deadline (NO-GO, pending, escalated, …), the
+ * gate is blocked even if an older approved row exists.
+ *
+ * Returns which decision satisfied the gate (`decisionId`) so callers can preserve a
+ * decision reference in the transition history.
+ */
 const hasApprovedGateDecision = async (
   orgId: string,
   initiativeId: string,
   pmoDomain: string
-): Promise<boolean> => {
+): Promise<GateDecisionCheck> => {
   const sql = `
         SELECT id, status, decision_maker_id, deadline
         FROM decisions
         WHERE organization_id = ?
           AND initiative_id = ?
           AND pmo_domain = ?
+        ORDER BY COALESCE(decided_at, created_at) DESC
+        LIMIT 1
     `;
-  const rows = await queryHelpers.queryAll(sql, [orgId, initiativeId, pmoDomain]);
-  return rows.some((row: Record<string, unknown>) => {
-    const status = String(row.status || '').toLowerCase();
-    const hasOwner = !!row.decision_maker_id;
-    const hasDueDate = !!row.deadline;
-    return status === 'approved' && hasOwner && hasDueDate;
-  });
+  const latest = await queryHelpers.queryOne<Record<string, unknown>>(sql, [
+    orgId,
+    initiativeId,
+    pmoDomain,
+  ]);
+  if (!latest) return { ok: false, decisionId: null };
+
+  const status = String(latest.status || '').toLowerCase();
+  const hasOwner = !!latest.decision_maker_id;
+  const hasDueDate = !!latest.deadline;
+  const ok = status === 'approved' && hasOwner && hasDueDate;
+  return { ok, decisionId: ok ? String(latest.id) : null };
 };
 
 const getInitiativeNotificationRecipients = async (
@@ -1554,8 +1587,8 @@ export class InitiativeController {
 
       // REVIEW -> PROMOTED: requires Go/No-Go decision (governance)
       if (currentStatus === 'REVIEW' && nextStatus === 'PROMOTED') {
-        const hasGoNoGo = await hasApprovedGateDecision(orgId, id, 'GOVERNANCE_DECISION_MAKING');
-        if (!hasGoNoGo) {
+        const goNoGo = await hasApprovedGateDecision(orgId, id, 'GOVERNANCE_DECISION_MAKING');
+        if (!goNoGo.ok) {
           try {
             const recipients = await getInitiativeNotificationRecipients(orgId, id);
             await Promise.allSettled(
@@ -1592,12 +1625,12 @@ export class InitiativeController {
 
       // PROMOTED -> PLANNING: requires Resources Commit decision
       if (currentStatus === 'PROMOTED' && nextStatus === 'PLANNING') {
-        const hasResourcesCommit = await hasApprovedGateDecision(
+        const resourcesCommit = await hasApprovedGateDecision(
           orgId,
           id,
           'RESOURCE_RESPONSIBILITY'
         );
-        if (!hasResourcesCommit) {
+        if (!resourcesCommit.ok) {
           try {
             const recipients = await getInitiativeNotificationRecipients(orgId, id);
             await Promise.allSettled(
@@ -1634,8 +1667,8 @@ export class InitiativeController {
 
       // APPROVED -> SCHEDULED: requires Schedule Lock decision (and dates)
       if (currentStatus === 'APPROVED' && nextStatus === 'SCHEDULED') {
-        const hasScheduleLock = await hasApprovedGateDecision(orgId, id, 'SCHEDULE_MILESTONES');
-        if (!hasScheduleLock) {
+        const scheduleLock = await hasApprovedGateDecision(orgId, id, 'SCHEDULE_MILESTONES');
+        if (!scheduleLock.ok) {
           try {
             const recipients = await getInitiativeNotificationRecipients(orgId, id);
             await Promise.allSettled(
