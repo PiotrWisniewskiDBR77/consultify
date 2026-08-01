@@ -69,29 +69,27 @@ const serviceFallback = (
 };
 
 /**
- * GET /api/system-health
- * Basic health check (public)
+ * REMOVED (SEC-PUB-002): `GET /api/system-health` — the router's BASE route.
+ *
+ * It was labelled "Basic health check (public)" and was indeed public: it was the
+ * ONLY route on this router without `verifySuperAdmin`, while all ten siblings
+ * have it. And it was not basic — it called the same `getDetailedHealth()` as the
+ * guarded `/detailed`, so an anonymous caller received host memory, load average,
+ * CPU count, runtime and database details, the error rate, and which AI providers
+ * hold credentials.
+ *
+ * Deleted rather than guarded, because it was a duplicate: `/detailed` already
+ * serves exactly this, correctly gated. No consumer exists — the SuperAdmin UI
+ * calls `/system-health/services` and `/system-health/metrics`
+ * (src/components/SuperAdmin/system/EnterpriseHealthMonitor.tsx), never the base
+ * path.
+ *
+ * Public readiness lives at `GET /api/system/health` and answers
+ * `{status, timestamp}` only.
+ *
+ * Coverage: tests/integration/publicSystemSurface.contract.test.ts
  */
-router.get(
-  '/',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!SystemHealthService?.getDetailedHealth) {
-      return serviceFallback(req, res, { health: {} });
-    }
 
-    try {
-      const health = await SystemHealthService.getDetailedHealth();
-      return res.json(health);
-    } catch (error: unknown) {
-      logger.error('[SystemHealth] Error:', error);
-      return res.status(503).json({
-        success: false,
-        error: 'Health check failed',
-        code: 'SYSTEM_HEALTH_SUMMARY_READ_FAILED',
-      });
-    }
-  })
-);
 
 /**
  * GET /api/system-health/detailed
