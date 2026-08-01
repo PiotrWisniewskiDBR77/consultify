@@ -189,7 +189,7 @@ dowodzi to explicite: pyta połączenie, na którym te odczyty będą się odbyw
 Linia w logu (dry-run i `--write`):
 
 ```
-[fin005-atelier-finance-seed] decisive reads: PRIMARY PROVEN — pg_is_in_recovery()=false on the authorised write pool (backend pid …)
+[fin005-atelier-finance-seed] decisive reads: PRIMARY PROVEN — primary PROVED: write-pool connection to database "<db>" (oid <oid>) at <addr>:<port>, backend pid <pid>, pg_is_in_recovery()=false, system_identifier <id>
 ```
 
 **To jest twardy refusal wyłącznie na celu HOSTED** (`isHostedTarget()` — każdy
@@ -254,11 +254,14 @@ pierwszym zapisem):
 zamontowany wolumen Railway i sprawdź samą bramkę bez seedowania czegokolwiek:
 
 ```bash
-STORAGE_DIR=/data node -e "
-const { requireDurableOperatorHoldStorage } = require('./server/dist/services/demo/atelierFinanceOperatorHold.js');
+STORAGE_DIR=/data npx tsx -e "
+import { requireDurableOperatorHoldStorage } from './server/src/services/demo/atelierFinanceOperatorHold.js';
 console.log(requireDurableOperatorHoldStorage());
 "
 ```
+
+(moduł jest ESM/TS — `require('./server/dist/…')` **nie zadziała**; zawsze
+`npx tsx`, tak jak sam seed jest uruchamiany)
 
 Oczekiwane: `{ ok: true, source: 'STORAGE_DIR', dir: '/data/fin005-operator-holds', … }`.
 `ok: false` — napraw magazyn **zanim** uruchomisz §2.3, nie próbuj obejść tego
@@ -600,15 +603,20 @@ NEEDS_OPERATOR — refusing to run: a PROMOTION_IN_PROGRESS promotion marker sta
 4. Potwierdź programowo — to jedyna droga, która jest jednocześnie
    odblokowaniem i audytem:
 
-```ts
-import { acknowledgeAtelierFinanceCommitIndeterminate } from '../src/services/demo/atelierFinanceOperatorHold';
-
-acknowledgeAtelierFinanceCommitIndeterminate('<DEMO_ORG_ID>', {
+```bash
+npx tsx -e "
+import { acknowledgeAtelierFinanceCommitIndeterminate } from './server/src/services/demo/atelierFinanceSeed.js';
+console.log(acknowledgeAtelierFinanceCommitIndeterminate('<DEMO_ORG_ID>', {
   operator: '<imię i nazwisko albo konto — nigdy puste>',
   decision: 'commit-landed', // | 'commit-did-not-land' | 'residue-reseeded-by-hand' | 'other'
   note: '<co dokładnie sprawdziłeś i dlaczego bezpiecznie kontynuować — trafia do trwałego, podpisanego czasem audytu>',
-});
+}));
+"
 ```
+
+(funkcja jest zdefiniowana w `atelierFinanceOperatorHold.ts` i re-eksportowana
+z `atelierFinanceSeed.ts` — importuj z tego drugiego, tak jak sam seed woła
+tę funkcję wewnętrznie).
 
 To zapisuje trwały rekord audytu w `fin005-operator-holds/acknowledged/` (z
 pełną treścią oczyszczanego holdu/znacznika w środku) **przed** usunięciem
