@@ -1,5 +1,6 @@
 import type { IDatabase } from '../../database/IDatabase.js';
 import notificationService from '../notificationService.js';
+import { ensureRecoveryCardForCase } from './kpiRecoveryCardService.js';
 
 export type KpiDirection = 'HIGHER_IS_BETTER' | 'LOWER_IS_BETTER';
 export type KpiThresholdMode = 'ABSOLUTE' | 'PERCENT_FROM_TARGET';
@@ -161,6 +162,11 @@ export interface HandleTimeSeriesRecordedInput {
 export async function handleTimeSeriesRecorded(input: HandleTimeSeriesRecordedInput): Promise<{
   createdOrUpdatedCaseId?: string;
   eval: KpiEvalResult;
+  // RES-003A: optional so the 3 existing callers (benefits.routes.ts:540,
+  // results.routes.ts:1695, resultsEnterpriseService.ts:220) that don't read
+  // these fields keep working unchanged.
+  recoveryCardId?: string;
+  recoveryCardCreated?: boolean;
 }> {
   const { db, orgId, kpiId, value, periodStart, periodEnd, recordedByUserId } = input;
   const def = await getKpiDefinition(db, orgId, kpiId);
@@ -225,6 +231,31 @@ export async function handleTimeSeriesRecorded(input: HandleTimeSeriesRecordedIn
     caseId = created?.id ? String(created.id) : '';
   }
 
+  // RES-003A: auto-create/reopen the Recovery Card owner object for this
+  // case. Non-fatal by design — the same style as the notificationService
+  // call two lines below — because a Recovery Card side-effect must never
+  // break deviation-case durability (the case row is already committed above).
+  let recoveryCardId: string | undefined;
+  let recoveryCardCreated: boolean | undefined;
+  if (caseId) {
+    try {
+      const recovery = await ensureRecoveryCardForCase({
+        db,
+        orgId,
+        kpiId,
+        caseId,
+        severity,
+        actorUserId: recordedByUserId ?? null,
+      });
+      if (recovery?.cardId) {
+        recoveryCardId = recovery.cardId;
+        recoveryCardCreated = recovery.created;
+      }
+    } catch {
+      // Recovery Card side-effect must never break deviation-case durability.
+    }
+  }
+
   if (ownerUserId) {
     await notificationService
       .send({
@@ -244,5 +275,5 @@ export async function handleTimeSeriesRecorded(input: HandleTimeSeriesRecordedIn
       .catch(() => null);
   }
 
-  return { createdOrUpdatedCaseId: caseId, eval: evalRes };
+  return { createdOrUpdatedCaseId: caseId, eval: evalRes, recoveryCardId, recoveryCardCreated };
 }
