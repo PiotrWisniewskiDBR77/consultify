@@ -114,43 +114,15 @@ async function createV8KpiReportArtifact(params: {
   return report.report.id;
 }
 
-/**
- * P04-B: Derive KPI permission role from the user's verified JWT org role.
- * The header `x-kpi-role` was removed — it allowed self-escalation (W3).
- * Mapping: owner/administrator/admin/super_admin → kpi_owner,
- *          manager → finance_owner, everything else → viewer.
- */
-function p04KpiRoleFromRequest(req: AuthRequest): KpiPermissionRole {
-  const orgRole = (req.user?.role ?? '').toLowerCase();
-  if (['super_admin', 'owner', 'administrator', 'admin'].includes(orgRole)) return 'kpi_owner';
-  if (orgRole === 'manager') return 'finance_owner';
-  return 'viewer';
-}
-
-type P04KpiGuardedAction =
-  | 'edit_definition'
-  | 'edit_targets'
-  | 'delete_kpi'
-  | 'record_measurement'
-  | 'create_report'
-  | 'manage_deviation'
-  | 'create_signal'
-  | 'create_next_action'
-  | 'manage_reconciliation'
-  | 'comment';
-
-async function p04AssertKpiPermission(
-  req: AuthRequest,
-  res: Response,
-  action: P04KpiGuardedAction
-): Promise<boolean> {
-  const role = p04KpiRoleFromRequest(req);
-  if (!canPerformKpiAction(role, action)) {
-    res.status(403).json({ error: 'Permission denied', code: 'P04_PERMISSION_DENIED' });
-    return false;
-  }
-  return true;
-}
+// P04-B permission gate: extracted (RES-003A) to services/results/kpiPermissions.js
+// so the legacy /api/benefits router can apply the identical role-derivation
+// and assertion instead of forking a copy. See that file for the doc-comment
+// on why 'edit_finance_artifacts'/'manage_reconciliation_finance' are excluded.
+import {
+  assertKpiPermission as p04AssertKpiPermission,
+  kpiRoleFromRequest as p04KpiRoleFromRequest,
+  type KpiGuardedAction as P04KpiGuardedAction,
+} from '../../services/results/kpiPermissions.js';
 
 /**
  * KPI lifecycle statuses that represent a finalized / locked KPI set.
@@ -2259,7 +2231,6 @@ router.post(
 // ────────────────────────────────────────────────────────────────
 
 import {
-  canPerformKpiAction,
   computeKpiHealthPosture,
   KPI_ANTI_DUPLICATE_RULES,
   KPI_PERMISSION_MATRIX,
@@ -2268,7 +2239,6 @@ import {
   type KpiDegradedPosture,
   type KpiHealthStatus,
   type KpiNextAction,
-  type KpiPermissionRole,
   type KpiReconciliation,
   type KpiReport,
   type KpiSignal,
