@@ -19,7 +19,10 @@ import {
   demoSignupIpRateLimiter,
 } from '../middleware/rateLimiting.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
-import { provisionPublicDemoAccount } from '../services/demo/demoSignupProvisioning.js';
+import {
+  DEMO_SIGNUP_ROLE,
+  provisionPublicDemoAccount,
+} from '../services/demo/demoSignupProvisioning.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import legalService from '../services/legalService.js';
 import mfaService from '../services/MFAService.js';
@@ -1130,24 +1133,25 @@ router.post(
 
     const { userId, organizationId: demoOrgId, session: demoSession, tokens } = provisioned;
 
-    const user = await dbGet<{
-      id: string;
-      email: string;
-      first_name: string;
-      last_name: string;
-      role: string;
-      organization_id: string;
-    }>('SELECT id, email, first_name, last_name, role, organization_id FROM users WHERE id = ?', [
-      userId,
-    ]);
-
-    if (!user) {
-      return res.status(503).json({
-        error: 'The demo workspace is temporarily unavailable. Please try again shortly.',
-        code: 'DEMO_SEED_UNAVAILABLE',
-      });
-    }
-
+    // No read-back of the row we just wrote. The saga has already committed the
+    // account, the session and the tokens by this point, so a failed SELECT here
+    // used to answer 503 DEMO_SEED_UNAVAILABLE while leaving a LIVE account behind
+    // — and because the duplicate check above is the first thing the next attempt
+    // hits, that address became permanently unusable. There is no failure path to
+    // report because there is no longer a query that can fail.
+    //
+    // Every field below is what `provisionPublicDemoAccount` itself wrote, taken
+    // from its result or from the values it was handed:
+    //   id              -> provisioned.userId
+    //   email           -> normalizedEmail (the exact string inserted; the row is
+    //                      written from it, so re-reading could only echo it back)
+    //   first_name      -> firstName (same value passed into the saga)
+    //   last_name       -> '' (the saga inserts a literal empty string)
+    //   role            -> DEMO_SIGNUP_ROLE (the saga's own constant, imported so
+    //                      the two cannot drift)
+    //   organization_id -> provisioned.organizationId (the base demo org the user
+    //                      row belongs to — NOT the isolated session tenant, which
+    //                      travels separately in `demoSession`)
     const language = String(req.get('Accept-Language') || '')
       .split(',')[0]
       ?.split('-')[0]
@@ -1167,13 +1171,13 @@ router.post(
     ]);
 
     const safeUser = {
-      id: user.id,
-      email: user.email,
-      firstName: user.first_name || '',
-      lastName: user.last_name || '',
-      role: user.role,
+      id: userId,
+      email: normalizedEmail,
+      firstName: firstName || '',
+      lastName: '',
+      role: DEMO_SIGNUP_ROLE,
       status: 'active',
-      organizationId: user.organization_id,
+      organizationId: demoOrgId,
       companyName: org?.name || 'Atelier Toys',
       isDemo: true,
       hasWorkspace: true,
@@ -1208,17 +1212,73 @@ router.post(
   })
 );
 
+/**
+ * Minimum length a configured `TEST_SUPPORT_KEY` must have to count as real.
+ * Same threshold `server/src/routes/testSupport.routes.ts` (`assertEnabled`) uses,
+ * so "this box is provisioned for test support" means one thing in both places.
+ */
+const TEST_SUPPORT_KEY_MIN_LENGTH = 12;
+
+/**
+ * Is the anonymous demo gateway (`POST /api/auth/demo-login`) reachable?
+ *
+ * That endpoint is unauthenticated, CSRF-exempt, hands out a full session, AND
+ * auto-provisions a demo user when the seeded one is missing. It exists only so
+ * CI/E2E can obtain a deterministic session without depending on a seed script.
+ *
+ * ALL THREE conditions must hold simultaneously. The conjunction is the whole
+ * point: each condition on its own is something a single deploy mistake can flip.
+ *
+ *   1. `NODE_ENV === 'test'` — never 'production', never 'staging', never unset.
+ *      This is the anchor: a real deployment cannot be switched to NODE_ENV=test
+ *      by accident without visibly breaking much else first.
+ *   2. an explicit opt-in flag (`ENABLE_TEST_GATEWAY` or `E2E_MODE`) — so a
+ *      process that legitimately runs under NODE_ENV=test (a unit-test worker, a
+ *      script) does not expose the gateway unless somebody asked for it. This is
+ *      ADDITIONAL to (1), not an alternative to it.
+ *   3. a configured `TEST_SUPPORT_KEY` of at least TEST_SUPPORT_KEY_MIN_LENGTH
+ *      characters — the same signal `testSupport.routes.ts` requires. A harness
+ *      provisioned for test support has one; a production box does not.
+ *
+ * The previous form was a DISJUNCTION — `NODE_ENV === 'test' || E2E_MODE ===
+ * 'true' || ENABLE_TEST_GATEWAY === 'true'` — so setting one variable on a
+ * production deployment re-opened anonymous auth plus auto-provisioning. Env vars
+ * are the easiest thing to get wrong on Railway, which made that a one-typo hole.
+ * With the conjunction a production box has to get three independent things wrong
+ * at once, and the one that dominates (NODE_ENV) is not a stray toggle.
+ *
+ * Deliberately NOT an `x-test-support-key` REQUEST-HEADER check, unlike
+ * `testSupport.routes.ts`. Every existing caller — the Playwright specs under
+ * `tests/e2e/**` and the browser client in `src/services/api.ts` — posts to this
+ * endpoint with no custom headers, so a header requirement would break them all.
+ * It would also buy nothing against the threat actually being closed here, which
+ * is a MISCONFIGURED DEPLOYMENT, not an attacker who is already inside a
+ * NODE_ENV=test process. The key is read as a provisioning assertion about the
+ * environment, not as a per-request credential. `testSupport.routes.ts` keeps the
+ * header check because its callers are server-side fixtures that can send one.
+ *
+ * Read from `process.env` at REQUEST time, not module load, so the answer can
+ * never be a stale snapshot taken before the process finished configuring itself
+ * (and so tests can toggle env per case without re-importing the module).
+ */
+export function isDemoLoginGatewayOpen(env: NodeJS.ProcessEnv = process.env): boolean {
+  if (env.NODE_ENV !== 'test') return false;
+
+  const explicitlyEnabled = env.ENABLE_TEST_GATEWAY === 'true' || env.E2E_MODE === 'true';
+  if (!explicitlyEnabled) return false;
+
+  const testSupportKey = env.TEST_SUPPORT_KEY;
+  if (!testSupportKey || testSupportKey.length < TEST_SUPPORT_KEY_MIN_LENGTH) return false;
+
+  return true;
+}
+
 // DEMO LOGIN - Anonymous demo (deprecated in production; use register-demo or login+demo/enter)
 // Kept for E2E and test gateway compatibility
 router.post(
   '/demo-login',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const isTestGateway =
-      process.env.NODE_ENV === 'test' ||
-      process.env.E2E_MODE === 'true' ||
-      process.env.ENABLE_TEST_GATEWAY === 'true';
-
-    if (!isTestGateway) {
+    if (!isDemoLoginGatewayOpen()) {
       return res.status(410).json({
         error: 'Anonymous demo is no longer available. Please sign up or log in to try the demo.',
         code: 'DEMO_LOGIN_DEPRECATED',
@@ -1254,12 +1314,13 @@ router.post(
       if (!user) {
         // Deterministic E2E/CI support: auto-provision a demo user when running in test gateway mode.
         // This avoids flaky smoke tests that depend on external seed scripts.
-        const isTestGateway =
-          process.env.NODE_ENV === 'test' ||
-          process.env.E2E_MODE === 'true' ||
-          process.env.ENABLE_TEST_GATEWAY === 'true';
-
-        if (!isTestGateway) {
+        //
+        // Same predicate as the entry guard above — not a second copy. The two
+        // copies of this computation used to drift apart trivially, and this is the
+        // branch that WRITES an ADMIN-shaped account into whatever database the
+        // process is pointed at, so it must never be reachable on a stricter
+        // condition than the endpoint itself.
+        if (!isDemoLoginGatewayOpen()) {
           logger.error('[Auth] Demo user not found - please run seed script');
           return res.status(404).json({
             error: 'Demo user not found. Please contact support.',
