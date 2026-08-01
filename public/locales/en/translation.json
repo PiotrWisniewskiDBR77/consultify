@@ -9798,6 +9798,7 @@
       "createTaskError": "Nie udało się utworzyć zadania",
       "createDecisionError": "Nie udało się utworzyć decyzji",
       "createRaidError": "Nie udało się dodać elementu RAID",
+      "deleteRaidError": "Nie udało się usunąć elementu RAID",
       "aiGenerationError": "Generowanie AI nie powiodło się",
       "approvalRequestError": "Nie udało się wysłać prośby o zatwierdzenie",
       "archiveError": "Nie udało się zarchiwizować",
