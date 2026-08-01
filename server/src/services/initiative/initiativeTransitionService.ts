@@ -270,9 +270,8 @@ export const hasPendingExecutionGateDecisions = async (
  * transaction commits/rolls back — they must never hold the row lock open.
  *
  * EXTRACTION (INI-005 fix, 2026-08-01): moved here from InitiativeController.ts
- * (and decoupled from the Express `req` object — see the params below) so
- * `initiativeAutoStartJob` (a cron job with no `req`) can call the SAME
- * engine instead of maintaining a second, unaudited copy of this validation.
+ * so `initiativeAutoStartJob` can call the SAME engine — see the `actor`
+ * parameter below and its `kind: 'system'` branch for the auto-start carve-out.
  */
 interface GateBlockedNotify {
   type: string;
@@ -282,11 +281,33 @@ interface GateBlockedNotify {
   metadata?: Record<string, unknown>;
 }
 
+/**
+ * Who is performing the transition.
+ *
+ * `{ kind: 'user' }` (the default when `actor` is omitted) is every existing
+ * HTTP caller — behavior is byte-identical to before this type existed.
+ *
+ * `{ kind: 'system', ... }` is the ONLY way a non-human caller (currently:
+ * `initiativeAutoStartJob`) may drive this engine. It does NOT grant a
+ * blanket bypass — see the narrow `gate !== GateType.START` carve-out below
+ * and the AI-soft-block skip. It NEVER affects the GO/NO-GO decision-currency
+ * check, which always runs regardless of actor kind.
+ *
+ * `systemActorId` is what gets written to `changed_by`/`approved_by`/etc. —
+ * it must be a stable, honest, non-human-impersonating string (see
+ * `SYSTEM_ACTOR_AUTO_START` in initiativeAutoStartJob.ts). `systemActorLabel`
+ * is a human-readable version used for the audit-trail `actorName`.
+ */
+export type InitiativeTransitionActor =
+  | { kind: 'user' }
+  | { kind: 'system'; systemActorId: string; systemActorLabel: string };
+
 interface ExecuteInitiativeTransitionParams {
   orgId: string;
   initiativeId: string;
   actorId: string;
-  /** Human caller's role — used for the RBAC/gate lookup. */
+  /** Human caller's role — used for the RBAC/gate lookup. Ignored (and not
+   *  required) when `actor.kind === 'system'`. */
   actorRole?: string | null;
   actorFirstName?: string | null;
   actorLastName?: string | null;
@@ -298,6 +319,8 @@ interface ExecuteInitiativeTransitionParams {
    *  non-HTTP callers (there is no request). */
   requestIp?: string | null;
   requestUserAgent?: string | null;
+  /** Defaults to `{ kind: 'user' }` — every existing caller is unaffected. */
+  actor?: InitiativeTransitionActor;
 }
 
 type ExecuteInitiativeTransitionResult =
@@ -330,9 +353,12 @@ export async function executeInitiativeTransition(
     requestIp = null,
     requestUserAgent = null,
   } = params;
+  const actor: InitiativeTransitionActor = params.actor ?? { kind: 'user' };
+  const isSystemActor = actor.kind === 'system';
 
-  const actorName =
-    actorFirstName && actorLastName
+  const actorName = isSystemActor
+    ? actor.systemActorLabel
+    : actorFirstName && actorLastName
       ? `${actorFirstName} ${actorLastName}`
       : actorEmail || undefined;
 
@@ -425,7 +451,32 @@ export async function executeInitiativeTransition(
       nextStatus === 'CANCELLED'
         ? null
         : getGateForTransition(currentStatus as any, nextStatus as any);
-    if (gate) {
+    if (gate && isSystemActor) {
+      // ★ System-actor RBAC carve-out (INI-005 fix, 2026-08-01) — DELIBERATELY
+      // NARROW. The system actor (currently only `initiativeAutoStartJob`) is
+      // authorized for EXACTLY the START gate (SCHEDULED->EXECUTING) and
+      // nothing else — it never reaches this engine for any other gate today,
+      // but if it ever did (bug, future caller reusing `{kind:'system'}`),
+      // this rejects it instead of silently granting a human role. This is
+      // NOT a blanket "system can do anything" bypass: there is no human role
+      // lookup here at all (a cron job has no `req.user`/role to look up),
+      // just a hardcoded allow-list of one gate. Every other check in this
+      // function — readiness, and critically the GO/NO-GO decision-currency
+      // check a few lines below — is UNCHANGED and still runs for this actor.
+      if (gate !== GateType.START) {
+        return {
+          kind: 'error',
+          statusCode: 403,
+          body: {
+            error: 'System actor is not authorized for this gate',
+            gate,
+            from: currentStatus,
+            to: nextStatus,
+          },
+        };
+      }
+      // Authorized — fall through without a human accessCtx/role lookup.
+    } else if (gate) {
       const accessCtx = await resolveInitiativeAccessContext(orgId, id, actorId, actorRole);
       const isAdmin = accessCtx.effectiveRoles.includes('ADMIN');
       const steeringBoardEnabled = !!accessCtx.steeringBoard.enabled;
@@ -492,7 +543,17 @@ export async function executeInitiativeTransition(
     // Forward-progress gates only; flag OFF or any error → zero behavior change.
     // Below-threshold readiness OR a blocking timeline flag requires an explicit
     // `overrideReason` to proceed; every decision is recorded to telemetry.
-    if (gate && isAiGate(gate)) {
+    //
+    // System-actor design decision (INI-005 fix, 2026-08-01): this soft-block
+    // is SKIPPED for the system actor. Rationale: it's an advisory heuristic
+    // whose only escape hatch is a human-authored `overrideReason` — that
+    // doesn't translate to an unattended job (there's no human to author a
+    // justification, and inventing one would be dishonest telemetry). By
+    // contrast, readiness (`getBlockingReadinessItems`, below/unchanged) is a
+    // hard data-completeness gate, not a judgment call, so it still applies
+    // to the system actor — and the GO/NO-GO decision-currency check is
+    // NEVER skipped for any actor, system included.
+    if (gate && isAiGate(gate) && !isSystemActor) {
       try {
         if (await isInitiativeGateAiEnabled(orgId)) {
           const [aiReadiness, timeline] = await Promise.all([
@@ -1420,7 +1481,7 @@ export async function executeInitiativeTransition(
   try {
     await auditEventsService.log({
       actorId,
-      actorType: 'USER',
+      actorType: isSystemActor ? 'SYSTEM' : 'USER',
       action: 'initiative.status_changed',
       resourceType: 'initiative',
       resourceId: id,

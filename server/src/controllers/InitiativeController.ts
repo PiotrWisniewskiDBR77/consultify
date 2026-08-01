@@ -2194,6 +2194,27 @@ export class InitiativeController {
   );
 
   /**
+   * ★ KNOWN GAP — NOT FIXED IN THIS PASS (INI-005 correction round, 2026-08-01).
+   * `blockInitiative`, `unblockInitiative` and `completeInitiative` below are
+   * the SAME anti-pattern family the initiativeAutoStartJob bypass (this
+   * packet's actual target) was: each does a raw `queryRun UPDATE initiatives
+   * SET status = ...` directly, with NO row lock, NO transaction, NO GO/NO-GO
+   * or gate-decision check, NO readiness check, and only the inert
+   * shadow-mode capability middleware guarding the route (which always calls
+   * next() regardless of the computed verdict — i.e. no real authorization).
+   * `completeInitiative` additionally writes `initiatives.status='done'`
+   * through a code path completely separate from `executeInitiativeTransition`,
+   * so its only audit trail is the best-effort `fireClosureHandoff` below —
+   * no `initiative_status_history`/`initiative_history` row at all.
+   *
+   * The mission for THIS round is explicitly scoped to the auto-start job
+   * (see initiativeAutoStartJob.ts); converting these three to thin adapters
+   * over `executeInitiativeTransition` (same as `updateInitiativeStatus`/
+   * `approveInitiative`/`startExecution`) is real, necessary follow-up work,
+   * flagged here so the gap is documented rather than silently left implicit.
+   */
+
+  /**
    * Block initiative
    */
   static blockInitiative = asyncHandler(
