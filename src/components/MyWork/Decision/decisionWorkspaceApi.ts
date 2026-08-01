@@ -1,0 +1,120 @@
+/**
+ * MW-DEC-001 — thin client for the canonical Decision detail/collaboration
+ * endpoints (server/src/routes/pmo/decisions.routes.ts). Deliberately reuses
+ * the SAME `Api.get/post/put/delete` helpers every other screen in this repo
+ * uses (src/services/api.ts) instead of raw `fetch` — that keeps auth
+ * headers, demo-mode blocking, 401 refresh-and-retry, and error shape
+ * (`err.status` / `err.data`) identical to the rest of the app. This file
+ * only adds thin, typed wrappers around specific decision routes; it does
+ * not add new transport plumbing and does not modify api.ts.
+ */
+import { Api } from '@/services/api';
+
+import type {
+  DecideResultDTO,
+  DecideTargetStatus,
+  DecisionAlternativeDTO,
+  DecisionCommentDTO,
+  DecisionDetailDTO,
+  DecisionRiskDTO,
+} from './types';
+
+/**
+ * `Api.get/post/put/delete` (src/services/api.ts `handleResponse`) throw a
+ * plain `Error` with `.status` (HTTP status) and `.data` (parsed JSON body,
+ * e.g. `{ error, code, currentVersion, expectedVersion }` for a 409) already
+ * attached — this type just names that shape so call sites can branch on it
+ * without `as any` everywhere.
+ */
+export interface DecisionApiError extends Error {
+  status?: number;
+  data?: { error?: string; code?: string; [key: string]: unknown };
+}
+
+/** Normalizes whatever `Api.*` throws into the shape above (never throws itself). */
+export function readDecisionApiError(err: unknown): DecisionApiError {
+  if (err instanceof Error) return err as DecisionApiError;
+  const wrapped = new Error(typeof err === 'string' ? err : 'Request failed') as DecisionApiError;
+  return wrapped;
+}
+
+export interface CreateAlternativeInput {
+  title: string;
+  description?: string;
+  benefits?: string;
+  drawbacks?: string;
+  costOrFeasibility?: string;
+  isRecommended?: boolean;
+}
+
+export interface CreateRiskInput {
+  description: string;
+  severity?: string;
+  likelihood?: string;
+  mitigation?: string;
+  ownerId?: string | null;
+}
+
+export interface DecideInput {
+  status: DecideTargetStatus;
+  rationale?: string;
+  notes?: string;
+  expectedVersion?: number;
+}
+
+export const decisionWorkspaceApi = {
+  getDetail: (decisionId: string): Promise<DecisionDetailDTO> =>
+    Api.get(`/decisions/${decisionId}/detail`) as Promise<DecisionDetailDTO>,
+
+  postComment: (decisionId: string, body: string): Promise<DecisionCommentDTO> =>
+    Api.post(`/decisions/${decisionId}/comments`, { body }) as Promise<DecisionCommentDTO>,
+
+  updateComment: (decisionId: string, commentId: string, body: string): Promise<DecisionCommentDTO> =>
+    Api.put(`/decisions/${decisionId}/comments/${commentId}`, { body }) as Promise<DecisionCommentDTO>,
+
+  deleteComment: (decisionId: string, commentId: string): Promise<void> =>
+    Api.delete(`/decisions/${decisionId}/comments/${commentId}`) as unknown as Promise<void>,
+
+  postAlternative: (
+    decisionId: string,
+    input: CreateAlternativeInput
+  ): Promise<DecisionAlternativeDTO> =>
+    Api.post(`/decisions/${decisionId}/alternatives`, input) as Promise<DecisionAlternativeDTO>,
+
+  updateAlternative: (
+    decisionId: string,
+    alternativeId: string,
+    patch: Partial<CreateAlternativeInput>
+  ): Promise<DecisionAlternativeDTO> =>
+    Api.put(
+      `/decisions/${decisionId}/alternatives/${alternativeId}`,
+      patch
+    ) as Promise<DecisionAlternativeDTO>,
+
+  deleteAlternative: (decisionId: string, alternativeId: string): Promise<void> =>
+    Api.delete(`/decisions/${decisionId}/alternatives/${alternativeId}`) as unknown as Promise<void>,
+
+  postRisk: (decisionId: string, input: CreateRiskInput): Promise<DecisionRiskDTO> =>
+    Api.post(`/decisions/${decisionId}/risks`, input) as Promise<DecisionRiskDTO>,
+
+  updateRisk: (
+    decisionId: string,
+    riskId: string,
+    patch: Partial<CreateRiskInput>
+  ): Promise<DecisionRiskDTO> =>
+    Api.put(`/decisions/${decisionId}/risks/${riskId}`, patch) as Promise<DecisionRiskDTO>,
+
+  deleteRisk: (decisionId: string, riskId: string): Promise<void> =>
+    Api.delete(`/decisions/${decisionId}/risks/${riskId}`) as unknown as Promise<void>,
+
+  /**
+   * PUT /:id/decide. `expectedVersion` should always be the `version` field
+   * from the last successful `getDetail()` read — the server 409s with
+   * `code: 'STALE_VERSION'` when it does not match the current row, instead
+   * of silently overwriting a concurrent change.
+   */
+  decide: (decisionId: string, input: DecideInput): Promise<DecideResultDTO> =>
+    Api.put(`/decisions/${decisionId}/decide`, input) as Promise<DecideResultDTO>,
+};
+
+export default decisionWorkspaceApi;

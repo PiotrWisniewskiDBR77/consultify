@@ -10,6 +10,26 @@ import { v4 as uuidv4 } from 'uuid';
 
 import auditEventsService from '../services/AuditEventsService.js';
 import {
+  DecisionConflictError,
+  DecisionNotFoundError,
+  DecisionSubResourceNotFoundError,
+  DecisionValidationError,
+  createDecisionAlternative,
+  createDecisionComment,
+  createDecisionRisk,
+  deleteDecisionAlternative,
+  deleteDecisionComment,
+  deleteDecisionRisk,
+  enqueueDecisionFinalizedNotification,
+  finalizeDecisionTransition,
+  getDecisionAggregateExtras,
+  isPrivilegedRole,
+  updateDecisionAlternative,
+  updateDecisionComment,
+  updateDecisionRisk,
+} from '../services/decisionCollaborationService.js';
+import { assertNotFinalized } from '../services/decisionOutcomeService.js';
+import {
   type DecisionPlaybook,
   validateRequiredFields,
 } from '../services/decisionPlaybookService.js';
@@ -18,7 +38,11 @@ import {
   type DecisionWorkflowStatus,
   validateDecisionWorkflowTransition,
 } from '../services/decisionWorkflowService.js';
-import { recordHandoff as recordStageHandoff } from '../services/initiative/stageHandoffService.js';
+import {
+  applyDecisionBlockTransitionOnClient,
+  executeInitiativeTransition,
+  type InitiativeTransitionActor,
+} from '../services/initiative/initiativeTransitionService.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import NotificationService from '../services/notificationService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
@@ -30,11 +54,17 @@ import logger from '../utils/Logger.js';
 import { parseMaybeJson } from '../utils/pgFlags.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
+  CreateDecisionAlternativeRequest,
+  CreateDecisionCommentRequest,
   CreateDecisionRequest,
+  CreateDecisionRiskRequest,
   DecideRequest,
   EscalateDecisionRequest,
   RemindDecisionRequest,
+  UpdateDecisionAlternativeRequest,
+  UpdateDecisionCommentRequest,
   UpdateDecisionRequest,
+  UpdateDecisionRiskRequest,
 } from '../validators/decision.validators.js';
 
 // ==========================================
@@ -136,7 +166,20 @@ function buildStructuredFields(row: DecisionRow): {
 const normalizeStatus = (status?: string | null): string => {
   if (!status) return 'pending';
   const normalized = status.toLowerCase();
-  if (['pending', 'approved', 'rejected', 'escalated', 'cancelled'].includes(normalized)) {
+  // MW-DEC-001: 'returned_for_clarification' added to the OUTCOME axis (see
+  // decisionOutcomeService.ts) — must pass through unchanged like the other
+  // recognized statuses, not collapse to 'pending' (that would silently hide
+  // the new state on every list/detail read).
+  if (
+    [
+      'pending',
+      'approved',
+      'rejected',
+      'escalated',
+      'cancelled',
+      'returned_for_clarification',
+    ].includes(normalized)
+  ) {
     return normalized;
   }
   if (normalized === 'made') return 'approved';
@@ -168,11 +211,38 @@ const isDecisionStatusInput = (status?: string | null): boolean => {
     'cancelled',
     'made',
     'expired',
+    'returned_for_clarification',
   ].includes(normalized);
 };
 
 const DECISION_BLOCK_TAG = (decisionId: string) => `[decision:${decisionId}]`;
 
+// BUG FIX (found by MW-DEC-001 final-falsification review — see also
+// getDecisions and decide()'s post-commit cascade below): `decision_impacts`
+// has a genuine SCHEMA CONFLICT across two old, pre-existing migrations —
+// 292_decision_management.sql / 297_decision_impacts_table.sql define
+// `is_blocker INTEGER DEFAULT 0`, but 728_beta_missing_tables_2.sql
+// `CREATE TABLE IF NOT EXISTS decision_impacts (... is_blocker BOOLEAN
+// DEFAULT FALSE ...)` — same table name, incompatible column type. Whichever
+// migration's CREATE TABLE runs first on a given database wins (IF NOT
+// EXISTS), so the real column type is environment-dependent and NOT
+// reliably knowable from source alone (this acceptance-test container
+// applies every migration in numeric order, so 292 wins and the column is
+// INTEGER here — verified via `\d decision_impacts` against the real
+// container). Compounding this: `PostgresDatabase.ts`'s auto-generated
+// `ALWAYS_BOOLEAN_COLUMNS` list (sourced from a schema dump where the column
+// apparently WAS boolean) unconditionally rewrites any `is_blocker = 1` back
+// to `is_blocker = TRUE` before the query reaches Postgres — so a plain
+// `= 1` literal here would silently be neutralized and fail exactly the
+// same way as `= TRUE` on an INTEGER column. Neither literal form is safe
+// across environments. Using `::text IN ('1','true')` sidesteps both
+// problems: a text cast is valid from either INTEGER or BOOLEAN, the
+// normalizer's regex only rewrites bare `col = 0/1` (not `col::text IN
+// (...)`) so it leaves this alone, and the predicate is correct whichever
+// migration created the table. Root cause (the 292/297-vs-728 migration
+// conflict, and the ALWAYS_BOOLEAN_COLUMNS misclassification) is a
+// pre-existing, cross-cutting infra issue outside this packet's scope —
+// reported as an open finding, not fixed at the source here.
 const refreshTaskDecisionBlock = async (input: {
   taskId: string;
   organizationId: string;
@@ -202,7 +272,7 @@ const refreshTaskDecisionBlock = async (input: {
       WHERE d.organization_id = ?
         AND di.impacted_type = 'task'
         AND di.impacted_id = ?
-        AND di.is_blocker = TRUE
+        AND di.is_blocker::text IN ('1','true')
         AND d.status IN ('pending', 'escalated')
       ORDER BY
         CASE WHEN d.deadline IS NULL THEN 1 ELSE 0 END,
@@ -248,26 +318,96 @@ const refreshTaskDecisionBlock = async (input: {
   );
 };
 
+// Stable, honest, non-human-impersonating actor identity for the
+// decision-driven cascade unblock below — same convention as
+// `initiativeAutoStartJob.ts`'s `SYSTEM_ACTOR_ID`/`SYSTEM_ACTOR_LABEL` (see
+// that file's doc comment for why a plain `system:<feature>` sentinel string
+// is safe and preferred over a fabricated user id or NULL).
+const DECISION_UNBLOCK_SYSTEM_ACTOR_ID = 'system:decision-driven-unblock';
+const DECISION_UNBLOCK_SYSTEM_ACTOR_LABEL = 'System (decision resolution → initiative unblock)';
+const DECISION_UNBLOCK_SYSTEM_ACTOR: InitiativeTransitionActor = {
+  kind: 'system',
+  systemActorId: DECISION_UNBLOCK_SYSTEM_ACTOR_ID,
+  systemActorLabel: DECISION_UNBLOCK_SYSTEM_ACTOR_LABEL,
+};
+
+/**
+ * Post-commit cascade: re-evaluate an initiative's BLOCKED status after one
+ * of its decision-blockers has just been resolved (`decide()` calls this
+ * AFTER `finalizeDecisionTransition` has already committed the decision
+ * itself — this function's own outcome, success or failure, must never turn
+ * that already-committed decision into an HTTP error; the caller wraps this
+ * whole call in try/catch).
+ *
+ * MW-DEC-001/INI-005 integration fix (2026-08-01): this used to end with an
+ * UNCONDITIONAL raw `UPDATE initiatives SET status = ... 'EXECUTING' ...`,
+ * gated only by (a) a tag-match on `blocked_reason` that can never fire for
+ * a SECOND blocking decision (both this function and `createDecision`'s
+ * auto-block loop only ever write the FIRST blocker's tag into
+ * `blocked_reason` — `CASE WHEN blocked_reason IS NULL OR ='' THEN ? ELSE
+ * blocked_reason END` never overwrites an already-set reason — so a real
+ * initiative could get stuck permanently BLOCKED once two decisions had
+ * blocked it) and (b) a `stillBlocked` count of OTHER open blockers — with
+ * ZERO check of the just-resolved decision's own outcome. That meant a
+ * REJECTED decision (rejection is not GO consent) could flip a genuinely
+ * still-not-approved initiative straight to EXECUTING, on the shared
+ * connection pool, with no row lock, no GO/NO-GO recheck, and no
+ * `initiative_status_history`/`initiative_history` row.
+ *
+ * FIX: the tag-guard is gone entirely (removing it is safe — see below), the
+ * rejected-outcome short-circuit below is the actual bug fix, and every path
+ * that can reach EXECUTING now goes through the SAME canonical engine
+ * (`executeInitiativeTransition`, the UNBLOCK gate) every other initiative
+ * status write in this codebase goes through — which supplies its own row
+ * lock, its own FRESH GO/NO-GO decision-currency check (so "all blockers
+ * resolved but no current GO decision" correctly stays BLOCKED), and the
+ * audit rows this cascade used to skip.
+ */
 const refreshInitiativeDecisionBlock = async (input: {
   initiativeId: string;
   organizationId: string;
   resolvedDecisionId: string;
+  /** The status the triggering decision was JUST set to ('approved' /
+   *  'rejected' / ...) — see the rejected short-circuit below. */
+  resolvedDecisionStatus: string;
+  /** The user who resolved the decision — logged for traceability only; NOT
+   *  used as the RBAC-checked actor for the unblock transition itself (see
+   *  the system-actor reasoning below). */
+  actorId?: string | null;
 }): Promise<void> => {
-  const { initiativeId, organizationId, resolvedDecisionId } = input;
+  const { initiativeId, organizationId, resolvedDecisionId, resolvedDecisionStatus, actorId } =
+    input;
 
-  const initiative = await queryHelpers.queryOne<{
-    status?: string;
-    blocked_reason?: string | null;
-  }>(`SELECT status, blocked_reason FROM initiatives WHERE id = ? AND organization_id = ?`, [
-    initiativeId,
-    organizationId,
-  ]);
+  // CORE FIX: a REJECTED decision is not GO consent for anything — never
+  // even attempt an unblock. This is a legitimate, expected outcome (not an
+  // error): the initiative simply stays exactly as it is (still BLOCKED if
+  // it was blocked by this decision and no other decision has since
+  // resolved it a different way).
+  if (resolvedDecisionStatus === 'rejected') {
+    logger.info(
+      `[decision] Decision ${resolvedDecisionId} resolved as REJECTED — initiative ${initiativeId} left unchanged (rejection is not GO consent for unblock)`
+    );
+    return;
+  }
+
+  const initiative = await queryHelpers.queryOne<{ status?: string }>(
+    `SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`,
+    [initiativeId, organizationId]
+  );
   if (!initiative) return;
+  if (String(initiative.status || '').toUpperCase() !== 'BLOCKED') return;
 
-  // Only unblock initiatives that we blocked for this decision (tag-based)
-  const tag = DECISION_BLOCK_TAG(resolvedDecisionId);
-  if (!initiative.blocked_reason || !initiative.blocked_reason.includes(tag)) return;
-
+  // Cheap PRE-FILTER only, deliberately NOT run inside a transaction and NOT
+  // a correctness boundary: `executeInitiativeTransition` below re-verifies
+  // everything that matters — a fresh `SELECT ... FOR UPDATE` row lock AND a
+  // fresh GO/NO-GO decision-currency recheck — inside its OWN transaction
+  // regardless of what this read sees. A stale read here just means we
+  // sometimes call the engine when it's obviously still blocked by another
+  // open decision (harmless: the engine's own UNEXPECTED_CURRENT_STATUS/
+  // GATE_DECISION_REQUIRED refusals handle that correctly too); it is never
+  // a path to an incorrect unblock. Keeping it on the shared pool (not
+  // `withPgTransaction`) avoids holding a second connection/lock open for a
+  // check the engine is about to redo anyway.
   const stillBlocked = await queryHelpers.queryOne<{ count: number }>(
     `
       SELECT COUNT(*) as count
@@ -276,34 +416,108 @@ const refreshInitiativeDecisionBlock = async (input: {
       WHERE d.organization_id = ?
         AND di.impacted_type = 'initiative'
         AND di.impacted_id = ?
-        AND di.is_blocker = TRUE
+        AND di.is_blocker::text IN ('1','true')
         AND d.status IN ('pending', 'escalated')
     `,
     [organizationId, initiativeId]
   );
-
   if ((stillBlocked?.count || 0) > 0) return;
 
-  // Only record handoff when the initiative was actually blocked (conditional SQL won't fire for others)
-  const wasBlocked =
-    initiative.status != null && String(initiative.status).toUpperCase() === 'BLOCKED';
-
-  await queryHelpers.queryRun(
-    `UPDATE initiatives SET
-      status = CASE WHEN UPPER(status) = 'BLOCKED' THEN 'EXECUTING' ELSE status END,
-      unblocked_at = CURRENT_TIMESTAMP,
-      blocked_reason = NULL,
-      updated_at = CURRENT_TIMESTAMP
-     WHERE id = ? AND organization_id = ?`,
-    [initiativeId, organizationId]
-  );
-
-  // Best-effort handoff audit: BLOCKED → EXECUTING (decision auto-unblock).
-  if (wasBlocked) {
-    void recordStageHandoff(organizationId, initiativeId, 'BLOCKED', 'EXECUTING').catch((e) =>
-      logger.warn('[decision] recordStageHandoff failed (auto-unblock):', e)
+  // All known decision-blockers resolved -> attempt the canonical
+  // BLOCKED->EXECUTING (UNBLOCK) transition through the SAME engine every
+  // other initiative status write goes through. This is the ONE authorized
+  // change to initiativeTransitionService.ts in this packet: the
+  // system-actor allow-list there was widened from {START} to {START,
+  // UNBLOCK} specifically to authorize this call.
+  //
+  // ACTOR CHOICE (documented, single choice — not a silent A/B): call this
+  // as the explicit, honestly-labeled SYSTEM actor
+  // (`DECISION_UNBLOCK_SYSTEM_ACTOR`), NOT as the resolving user
+  // (`req.user`). Rationale: `GateType.UNBLOCK` requires a human
+  // PROJECT_SPONSOR/STEERING_COMMITTEE(/PORTFOLIO_OWNER/ADMIN) role
+  // (`GATE_PERMISSIONS[UNBLOCK]`) — the user who happens to resolve a
+  // blocking decision (e.g. a PM approving a SCOPE_CHANGE decision) has no
+  // reason to also hold that role, so trying "real user first, system
+  // fallback" would silently 403 for the common case before ever reaching
+  // the fallback, and building both paths as an untested A/B is exactly what
+  // the brief for this packet warned against. The system-actor route is
+  // also the one the engine was actually widened for. The resolving user's
+  // identity is NOT discarded — it's threaded into `reason` below for
+  // traceability, just never used as the RBAC-checked actor.
+  //
+  // CAUSAL/AUDIT REFERENCE: no separate audit-log write for "decision X
+  // caused this re-evaluation" — `executeInitiativeTransition` already
+  // writes exactly one `initiative_status_history` row and one
+  // `initiative_history` row per successful transition (writing our own here
+  // too would duplicate them, which the brief explicitly warns against).
+  // Instead, `resolvedDecisionId` (and, best-effort, the resolving user) are
+  // embedded directly in the `reason` string, which the engine persists
+  // verbatim into both `initiative_status_history.reason` and
+  // `initiative_history.notes.reason` — sufficient to trace "Decision X ->
+  // Initiative Y unblocked" without a second write path.
+  let result;
+  try {
+    result = await executeInitiativeTransition({
+      orgId: organizationId,
+      initiativeId,
+      actorId: DECISION_UNBLOCK_SYSTEM_ACTOR_ID,
+      nextStatusInput: 'EXECUTING',
+      expectedCurrentStatus: 'BLOCKED',
+      reason: `Decision ${resolvedDecisionId} resolved (approved) — cascade unblock: last open decision-blocker cleared${
+        actorId ? ` (resolved by user ${actorId})` : ''
+      }`,
+      actor: DECISION_UNBLOCK_SYSTEM_ACTOR,
+    });
+  } catch (err: any) {
+    // Any OTHER thrown exception (not a structured `ok:false` refusal) — the
+    // outer try/catch in decide() also guards this, but log locally too so
+    // the failure is attributable to this specific initiative/decision pair.
+    logger.error(
+      `[decision] Cascade unblock threw for initiative ${initiativeId} (triggering decision ${resolvedDecisionId}):`,
+      err?.message || err
     );
+    return;
   }
+
+  if (!result.ok) {
+    const rule = (result.body as { rule?: string }).rule;
+    if (rule === 'GATE_DECISION_REQUIRED') {
+      // CORRECT, EXPECTED outcome: all decision-blockers resolved, but there
+      // is no CURRENT approved GOVERNANCE_DECISION_MAKING decision for this
+      // initiative -> it correctly stays BLOCKED. Not an error.
+      logger.info(
+        `[decision] Initiative ${initiativeId} stays BLOCKED after decision ${resolvedDecisionId}: no current approved Go/No-Go decision (GATE_DECISION_REQUIRED)`
+      );
+      return;
+    }
+    if (rule === 'UNEXPECTED_CURRENT_STATUS') {
+      // Our pre-filter read was stale, or something else changed the
+      // initiative's status between that read and the engine's own fresh
+      // row lock — not an error, just nothing to cascade.
+      logger.info(
+        `[decision] Initiative ${initiativeId} was not BLOCKED by the time the cascade-unblock ran (decision ${resolvedDecisionId}) — no-op`
+      );
+      return;
+    }
+    // Any other structured refusal (invalid transition, superseded gate,
+    // an unexpected role-denial for the system actor, ...) — worth a real
+    // warning: it means an initiative that looked fully unblockable did not
+    // actually get unblocked. Still non-fatal to decide()'s own response.
+    logger.warn(
+      `[decision] Cascade unblock refused for initiative ${initiativeId} (decision ${resolvedDecisionId}): ${result.statusCode} ${JSON.stringify(
+        result.body
+      )}`
+    );
+    return;
+  }
+
+  // ok:true — never report/log this as anything other than what it is: a
+  // real, committed BLOCKED->EXECUTING transition, traceable via the
+  // engine's own correlationId and the decisionId embedded in `reason`
+  // above.
+  logger.info(
+    `[decision] Cascade unblock succeeded: initiative ${initiativeId} BLOCKED → EXECUTING (correlationId=${result.correlationId}, triggering decisionId=${resolvedDecisionId})`
+  );
 };
 
 const normalizePriority = (priority?: string | null): string =>
@@ -366,6 +580,113 @@ const parseHistoryDetails = (value?: string | null): Record<string, unknown> | u
   }
 };
 
+/**
+ * MW-DEC-001: shared error → HTTP mapping for the comments/alternatives/
+ * risks endpoints. Keeps DecisionNotFoundError (never leaks cross-tenant
+ * existence — always a generic 404) / DecisionSubResourceNotFoundError (404)
+ * / DecisionConflictError (403 for authorship 'FORBIDDEN', 409 for domain
+ * conflicts like 'DECISION_FINALIZED') / DecisionValidationError (400)
+ * consistent across every new endpoint instead of duplicating the same
+ * if/else chain nine times.
+ */
+function respondToCollaborationError(res: Response, err: unknown): boolean {
+  if (err instanceof DecisionNotFoundError) {
+    res.status(404).json({ error: 'Decision not found' });
+    return true;
+  }
+  if (err instanceof DecisionSubResourceNotFoundError) {
+    res.status(404).json({ error: err.message });
+    return true;
+  }
+  if (err instanceof DecisionConflictError) {
+    const statusCode = err.code === 'FORBIDDEN' ? 403 : 409;
+    res.status(statusCode).json({ error: err.message, code: err.code, ...(err.details || {}) });
+    return true;
+  }
+  if (err instanceof DecisionValidationError) {
+    res.status(400).json({ error: err.message });
+    return true;
+  }
+  return false;
+}
+
+/** Decision-preparer authorization shared by alternatives/risks mutation endpoints. */
+function isDossierEditor(
+  decision: { created_by?: string | null; decision_maker_id?: string | null },
+  userId: string,
+  role?: string | null
+): boolean {
+  return (
+    decision.created_by === userId ||
+    decision.decision_maker_id === userId ||
+    isPrivilegedRole(role)
+  );
+}
+
+/**
+ * BUG FIX (MW-DEC-001 acceptance suite, case 18): `createDecision` used to
+ * take `projectId`/`initiativeId`/`taskId` straight from the request body
+ * and INSERT them with zero check that they belong to the CALLER's own
+ * organization — a decision in org A could be created pointing at a real
+ * project/initiative/task belonging to org B, forging a cross-tenant
+ * relationship. The DB-level FK on `decisions.project_id` only proves the
+ * referenced row exists SOMEWHERE, not that it exists in the caller's org.
+ * This performs the real org-scoped existence check that was missing.
+ * (`updateDecision`'s Zod schema — UpdateDecisionSchema — never accepted
+ * projectId/initiativeId/taskId in the first place, so there is no matching
+ * gap to close on the update path; verified by reading its schema and the
+ * destructured fields in updateDecision below.)
+ */
+async function assertRelatedObjectsBelongToOrg(input: {
+  organizationId: string;
+  projectId?: string | null;
+  initiativeId?: string | null;
+  taskId?: string | null;
+}): Promise<{ ok: true } | { ok: false; field: string; message: string }> {
+  const { organizationId, projectId, initiativeId, taskId } = input;
+
+  if (projectId) {
+    const row = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+      [projectId, organizationId]
+    );
+    if (!row) {
+      return {
+        ok: false,
+        field: 'projectId',
+        message: 'projectId does not exist or does not belong to your organization',
+      };
+    }
+  }
+  if (initiativeId) {
+    const row = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId]
+    );
+    if (!row) {
+      return {
+        ok: false,
+        field: 'initiativeId',
+        message: 'initiativeId does not exist or does not belong to your organization',
+      };
+    }
+  }
+  if (taskId) {
+    const row = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM tasks WHERE id = ? AND organization_id = ?`,
+      [taskId, organizationId]
+    );
+    if (!row) {
+      return {
+        ok: false,
+        field: 'taskId',
+        message: 'taskId does not exist or does not belong to your organization',
+      };
+    }
+  }
+  return { ok: true };
+}
+
 // ==========================================
 // CONTROLLER METHODS
 // ==========================================
@@ -385,8 +706,19 @@ export class DecisionController {
       // on an under-migrated env) the whole query would error and queryAll would
       // swallow it to [], silently emptying the decisions list. Default to 0.
       const hasDecisionImpacts = (await getTableColumns('decision_impacts')).has('is_blocker');
+      // BUG FIX (found by MW-DEC-001 final-falsification review, T1a/T1b):
+      // GET /api/decisions (this list endpoint) 500'd on every single call
+      // whenever `decision_impacts` exists (unconditionally — some migration
+      // always creates it). See the long comment above refreshTaskDecisionBlock
+      // for the full root cause: `decision_impacts.is_blocker` has a genuine
+      // cross-migration type conflict (INTEGER via 292/297 vs BOOLEAN via 728,
+      // same `CREATE TABLE IF NOT EXISTS decision_impacts`) compounded by
+      // PostgresDatabase.ts's ALWAYS_BOOLEAN_COLUMNS unconditionally rewriting
+      // `is_blocker = 1` back to `is_blocker = TRUE`. `::text IN ('1','true')`
+      // is correct against either underlying type and is not touched by that
+      // rewriter.
       const blockedItemsCountSelect = hasDecisionImpacts
-        ? `(SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = TRUE)`
+        ? `(SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker::text IN ('1','true'))`
         : `0`;
       // Mirror the Initiatives `?source` filter semantics (e.g. ?source=interview_insight).
       const normalizedSourceFilter = source ? source.toString().trim().toLowerCase() : '';
@@ -865,6 +1197,21 @@ export class DecisionController {
         return;
       }
 
+      // Cross-tenant relationship forgery guard: any caller-supplied
+      // projectId/initiativeId/taskId must genuinely belong to the caller's
+      // own organization before it is accepted — see
+      // assertRelatedObjectsBelongToOrg() doc for the vulnerability this closes.
+      const relatedObjectsCheck = await assertRelatedObjectsBelongToOrg({
+        organizationId: orgId,
+        projectId: projectIdValue,
+        initiativeId: initiativeIdValue,
+        taskId: taskIdValue,
+      });
+      if (!relatedObjectsCheck.ok) {
+        res.status(400).json({ error: relatedObjectsCheck.message, field: relatedObjectsCheck.field });
+        return;
+      }
+
       const impactEntries = Array.isArray(impacts)
         ? impacts.map((entry: any) => ({
             impactedType: entry.impactedType,
@@ -924,140 +1271,170 @@ export class DecisionController {
       const relatedObjectIdValue =
         relatedObjectId || initiativeIdValue || taskIdValue || projectIdValue || null;
 
-      try {
-        await queryHelpers.queryRun(sql, [
-          id,
-          orgId,
-          projectIdValue,
-          initiativeIdValue,
-          taskIdValue,
-          decodedTitle,
-          description || null,
-          normalizedType,
-          decisionOwnerId || userId,
-          normalizedDueDate,
-          escalationDeadline || null,
-          'pending',
-          userId,
-          normalizedPriority,
-          normalizedImpact,
-          'none',
-          pmoDomain || null,
-          shouldRequireDecision ? 1 : 0,
-        ]);
-      } catch (error) {
-        const legacySql = `INSERT INTO decisions (
-              id, organization_id, project_id, title, description, pmo_domain,
-              decision_owner_id, related_object_type, related_object_id, due_date,
-              priority, status, required, audit_trail, impact, escalation_level, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
-        await queryHelpers.queryRun(legacySql, [
-          id,
-          orgId,
-          projectIdValue,
-          decodedTitle,
-          description || null,
-          pmoDomain || null,
-          decisionOwnerId || userId,
-          relatedObjectTypeValue,
-          relatedObjectIdValue,
-          normalizedDueDate,
-          normalizedPriority,
-          'pending',
-          shouldRequireDecision ? 1 : 0,
-          JSON.stringify({ decisionType: normalizedType, createdBy: userId }),
-          normalizedImpact,
-          'none',
-        ]);
-      }
-
-      await queryHelpers.queryRun(
-        `INSERT INTO decision_history (id, decision_id, action, old_status, new_status, changed_by, details)
-         VALUES (?, ?, 'created', NULL, 'pending', ?, ?)`,
-        [
-          uuidv4(),
-          id,
-          userId,
-          JSON.stringify({ notes: 'Decision created', priority: normalizedPriority }),
-        ]
-      );
-
-      if (impactEntries.length > 0) {
-        for (const entry of impactEntries) {
-          await queryHelpers.queryRun(
-            `INSERT INTO decision_impacts (id, decision_id, impacted_type, impacted_id, impact_description, is_blocker)
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [
-              uuidv4(),
-              id,
-              entry.impactedType,
-              entry.impactedId,
-              entry.impactDescription || null,
-              entry.isBlocker ? 1 : 0,
-            ]
-          );
+      // Codex review follow-up (2026-08-01, "Blocker 1"): everything below —
+      // the `decisions` INSERT (+ legacy-schema fallback), the
+      // `decision_history` INSERT, every `decision_impacts` INSERT, and —
+      // for each blocking impact on an Initiative — the Initiative BLOCK
+      // write plus its two audit rows, ALL run on ONE pinned
+      // `withPgTransaction` client now. Previously these were independent
+      // shared-pool calls (confirmed non-atomic even with EACH OTHER by the
+      // original discovery pass): a Decision could persist with impact rows
+      // committed while the resulting Initiative BLOCK silently failed,
+      // still returning 201, with no way for a caller to detect or recover
+      // the inconsistency. Now: if ANYTHING in this transaction throws (a
+      // genuine failure — a broken column, a DB error, an unexpected
+      // exception from `applyDecisionBlockTransitionOnClient`), the WHOLE
+      // transaction rolls back — the Decision is never created at all — and
+      // the exception propagates uncaught out of this handler to
+      // `asyncHandler`'s `.catch(next)`, reaching Express's shared
+      // coded-5xx error middleware (never a bespoke JSON shape, never a
+      // silent 201). A structured, EXPECTED refusal from
+      // `applyDecisionBlockTransitionOnClient` (initiative not found,
+      // already terminal, unrecognized status) is NOT a failure of this
+      // kind — it's a legitimate business outcome (the Decision is still
+      // created; it just doesn't/can't block that particular initiative) —
+      // logged, not thrown, so it does not roll back the Decision itself.
+      //
+      // `applyDecisionBlockTransitionOnClient` (not the standalone
+      // `applyDecisionBlockTransition` wrapper) is called directly, passing
+      // THIS transaction's own `client` — nesting two independent
+      // `withPgTransaction` calls would NOT achieve atomicity (two separate
+      // physical connections commit independently of each other; the inner
+      // one could durably commit the block even if the outer one later
+      // rolled back the Decision). This is still the ONE canonical
+      // implementation of the Decision-driven BLOCK mutation — no
+      // duplicated writer — see that function's doc comment.
+      //
+      // Task-blocking (a DIFFERENT, unaudited, pre-existing raw writer, out
+      // of scope for this packet — see the `task` branch below) stays on
+      // the shared pool exactly as before: it is NOT part of this atomic
+      // unit. A task-block landing on its own connection while this
+      // transaction later rolls back is a disclosed, pre-existing gap
+      // (tasks/decisions were never atomic with each other even before this
+      // fix), not something this change introduces or is scoped to close.
+      const tag = DECISION_BLOCK_TAG(id);
+      await queryHelpers.withPgTransaction(async (client) => {
+        try {
+          await client.query(sql, [
+            id,
+            orgId,
+            projectIdValue,
+            initiativeIdValue,
+            taskIdValue,
+            decodedTitle,
+            description || null,
+            normalizedType,
+            decisionOwnerId || userId,
+            normalizedDueDate,
+            escalationDeadline || null,
+            'pending',
+            userId,
+            normalizedPriority,
+            normalizedImpact,
+            'none',
+            pmoDomain || null,
+            shouldRequireDecision ? 1 : 0,
+          ]);
+        } catch (error) {
+          const legacySql = `INSERT INTO decisions (
+                id, organization_id, project_id, title, description, pmo_domain,
+                decision_owner_id, related_object_type, related_object_id, due_date,
+                priority, status, required, audit_trail, impact, escalation_level, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
+          await client.query(legacySql, [
+            id,
+            orgId,
+            projectIdValue,
+            decodedTitle,
+            description || null,
+            pmoDomain || null,
+            decisionOwnerId || userId,
+            relatedObjectTypeValue,
+            relatedObjectIdValue,
+            normalizedDueDate,
+            normalizedPriority,
+            'pending',
+            shouldRequireDecision ? 1 : 0,
+            JSON.stringify({ decisionType: normalizedType, createdBy: userId }),
+            normalizedImpact,
+            'none',
+          ]);
         }
-      }
 
-      // Auto-block impacted items if this decision is a blocker (PMO gate)
-      if (impactEntries.length > 0) {
-        const tag = DECISION_BLOCK_TAG(id);
-        for (const entry of impactEntries) {
-          if (!entry.isBlocker) continue;
-          if (entry.impactedType === 'task') {
-            await queryHelpers.queryRun(
-              `UPDATE tasks SET
-                status = CASE WHEN status = 'done' THEN status ELSE 'blocked' END,
-                blocked_at = COALESCE(blocked_at, CURRENT_TIMESTAMP),
-                blocked_by_decision_id = COALESCE(blocked_by_decision_id, ?),
-                blocked_reason = CASE
-                  WHEN blocked_reason IS NULL OR blocked_reason = '' THEN ?
-                  ELSE blocked_reason
-                END,
-                updated_at = CURRENT_TIMESTAMP
-               WHERE id = ? AND organization_id = ?`,
-              [id, `${tag} Blocked by decision: ${decodedTitle}`, entry.impactedId, orgId]
-            );
-          } else if (entry.impactedType === 'initiative') {
-            // Fetch current status before overwriting so we can record an accurate handoff.
-            const preBlockRow = await queryHelpers
-              .queryOne<{
-                status?: string;
-              }>(`SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`, [
+        await client.query(
+          `INSERT INTO decision_history (id, decision_id, action, old_status, new_status, changed_by, details)
+           VALUES (?, ?, 'created', NULL, 'pending', ?, ?)`,
+          [
+            uuidv4(),
+            id,
+            userId,
+            JSON.stringify({ notes: 'Decision created', priority: normalizedPriority }),
+          ]
+        );
+
+        if (impactEntries.length > 0) {
+          for (const entry of impactEntries) {
+            await client.query(
+              `INSERT INTO decision_impacts (id, decision_id, impacted_type, impacted_id, impact_description, is_blocker)
+               VALUES (?, ?, ?, ?, ?, ?)`,
+              [
+                uuidv4(),
+                id,
+                entry.impactedType,
                 entry.impactedId,
-                orgId,
-              ])
-              .catch(() => null);
-            const preBlockStatus = preBlockRow?.status
-              ? String(preBlockRow.status).toUpperCase()
-              : null;
-
-            await queryHelpers.queryRun(
-              `UPDATE initiatives SET
-                status = CASE WHEN UPPER(status) = 'DONE' THEN status ELSE 'BLOCKED' END,
-                blocked_at = COALESCE(blocked_at, CURRENT_TIMESTAMP),
-                blocked_reason = CASE
-                  WHEN blocked_reason IS NULL OR blocked_reason = '' THEN ?
-                  ELSE blocked_reason
-                END,
-                updated_at = CURRENT_TIMESTAMP
-               WHERE id = ? AND organization_id = ?`,
-              [`${tag} Blocked by decision: ${decodedTitle}`, entry.impactedId, orgId]
+                entry.impactDescription || null,
+                entry.isBlocker ? 1 : 0,
+              ]
             );
+          }
+        }
 
-            // Best-effort handoff audit: <prevStatus> → BLOCKED (decision auto-block).
-            if (preBlockStatus && preBlockStatus !== 'DONE' && preBlockStatus !== 'BLOCKED') {
-              void recordStageHandoff(
+        // Auto-block impacted items if this decision is a blocker (PMO gate)
+        if (impactEntries.length > 0) {
+          for (const entry of impactEntries) {
+            if (!entry.isBlocker) continue;
+            if (entry.impactedType === 'task') {
+              // Deliberately NOT part of this transaction — see the comment
+              // above this whole block.
+              await queryHelpers.queryRun(
+                `UPDATE tasks SET
+                  status = CASE WHEN status = 'done' THEN status ELSE 'blocked' END,
+                  blocked_at = COALESCE(blocked_at, CURRENT_TIMESTAMP),
+                  blocked_by_decision_id = COALESCE(blocked_by_decision_id, ?),
+                  blocked_reason = CASE
+                    WHEN blocked_reason IS NULL OR blocked_reason = '' THEN ?
+                    ELSE blocked_reason
+                  END,
+                  updated_at = CURRENT_TIMESTAMP
+                 WHERE id = ? AND organization_id = ?`,
+                [id, `${tag} Blocked by decision: ${decodedTitle}`, entry.impactedId, orgId]
+              );
+            } else if (entry.impactedType === 'initiative') {
+              const blockResult = await applyDecisionBlockTransitionOnClient(client, {
                 orgId,
-                entry.impactedId,
-                preBlockStatus,
-                'BLOCKED',
-                userId
-              ).catch((e) => logger.warn('[decision] recordStageHandoff failed (auto-block):', e));
+                initiativeId: entry.impactedId,
+                decisionId: id,
+                reason: `${tag} Blocked by decision: ${decodedTitle}`,
+              });
+              if (!blockResult.ok) {
+                // Not found / terminal-status / unrecognized-status refusal
+                // — correct, EXPECTED outcomes, not errors: the Decision is
+                // still created, it just doesn't block that particular
+                // initiative. Logged, not thrown — does not roll back the
+                // transaction.
+                logger.info(
+                  `[decision] Auto-block skipped for initiative ${entry.impactedId} (decision ${id}): ${blockResult.statusCode} ${JSON.stringify(
+                    blockResult.body
+                  )}`
+                );
+              }
+              // ok:true (including `alreadyBlocked`) needs no special
+              // handling here — the mutation (or confirmed idempotent
+              // no-op) already committed as part of THIS transaction.
             }
           }
         }
-      }
+      });
 
       // V4-TASK-08: Unified audit log
       auditEventsService
@@ -1101,15 +1478,32 @@ export class DecisionController {
   );
 
   /**
-   * Make a decision (approve/reject/defer)
+   * Make a decision (approve/reject/return-for-clarification/defer)
+   *
+   * MW-DEC-001: this is now the SINGLE atomic final-transition path. The
+   * `decisions` UPDATE and the `decision_history` INSERT run on one pinned
+   * pg.Client inside BEGIN/COMMIT (finalizeDecisionTransition, in
+   * decisionCollaborationService.ts) — previously these were two independent
+   * `queryHelpers.queryRun` calls (two separate pool acquisitions), which is
+   * NOT atomic: a crash between them could leave status flipped without a
+   * matching decision_history row, or vice versa. See acquirePgClient() doc
+   * in PostgresDatabase.ts for why pool.query()-per-call cannot give
+   * atomicity.
+   *
+   * Also now enforces: a terminal decision (approved/rejected) can never be
+   * re-decided (409 DECISION_FINALIZED), and an optional `version`/
+   * `expectedVersion` in the body is checked against the row's real
+   * optimistic-concurrency counter (409 STALE_VERSION on mismatch) instead of
+   * silently overwriting a concurrent change.
    */
   static decide = asyncHandler(
     async (req: AuthenticatedRequest<DecideRequest>, res: Response): Promise<void> => {
       const { id } = req.params;
-      const { decision, rationale, notes, status, outcome } = req.body as DecideRequest & {
-        status?: string;
-        outcome?: string;
-      };
+      const { decision, rationale, notes, status, outcome, version, expectedVersion } =
+        req.body as DecideRequest & {
+          status?: string;
+          outcome?: string;
+        };
       const userId = req.user?.id;
       const orgId = req.user?.organizationId;
       if (!userId || !orgId) {
@@ -1125,24 +1519,33 @@ export class DecisionController {
       const requestedStatus = String(statusInput || '').toLowerCase();
       const isDeferredAction = requestedStatus === 'deferred';
       const normalizedStatus = normalizeStatus(statusInput || '');
-      if (!['approved', 'rejected', 'pending'].includes(normalizedStatus)) {
+      if (!['approved', 'rejected', 'pending', 'returned_for_clarification'].includes(normalizedStatus)) {
         res.status(400).json({ error: 'Invalid decision' });
         return;
       }
 
-      const rationaleValue = (rationale || outcome || '').trim();
-      const rationaleText =
-        rationaleValue ||
-        (normalizedStatus === 'approved'
-          ? 'Approved'
-          : normalizedStatus === 'rejected'
-            ? 'Rejected'
-            : '');
+      // BUG FIX (MW-DEC-001 acceptance suite, case 13b): this used to fall
+      // back to a FABRICATED default ('Approved'/'Rejected') whenever the
+      // caller omitted `rationale` entirely, which meant an omitted rationale
+      // on APPROVED/REJECTED silently succeeded with synthetic content
+      // instead of tripping the RATIONALE_REQUIRED rule in
+      // decisionOutcomeService.validateDecideTransition — that rule became
+      // unreachable dead code. `rationaleText` must now be exactly what the
+      // caller supplied (accepting `outcome` as a legacy alias field, which
+      // is still genuinely caller-supplied, not fabricated) — an empty/
+      // missing/whitespace-only value is passed through AS EMPTY so
+      // finalizeDecisionTransition's real requiresRationale() check can see
+      // and reject it with a real 400, with zero DB mutation.
+      const rationaleText = (rationale || outcome || '').trim();
 
-      // Get decision first — scoped to caller's org
+      // Get decision first — scoped to caller's org (authorization check
+      // only; the atomic transition below re-reads the row with FOR UPDATE
+      // as the authoritative source for the terminal-state/version checks).
       const currentDecision = await queryHelpers.queryOne<{
         decision_maker_id?: string;
         status?: string;
+        title?: string;
+        created_by?: string;
       }>(`SELECT * FROM decisions WHERE id = ? AND organization_id = ?`, [id, orgId]);
 
       if (!currentDecision) {
@@ -1161,81 +1564,117 @@ export class DecisionController {
         return;
       }
 
-      if (normalizedStatus !== 'pending' && rationaleText.trim() === '') {
-        res.status(400).json({ error: 'Decision rationale is required' });
-        return;
+      const expectedVersionValue =
+        typeof expectedVersion === 'number' ? expectedVersion : version;
+
+      let result;
+      try {
+        result = await finalizeDecisionTransition({
+          decisionId: id,
+          organizationId: orgId,
+          actorId: userId,
+          actorRole: req.user?.role,
+          targetStatus: normalizedStatus,
+          rationaleText,
+          notes: notes || (isDeferredAction ? 'Deferred' : undefined),
+          expectedVersion: expectedVersionValue,
+        });
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
       }
 
-      const sql = `UPDATE decisions 
-                     SET status = ?, decision_rationale = ?, decided_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-                     WHERE id = ?`;
+      // V4-TASK-08: Unified audit log (best-effort, after the atomic commit —
+      // never gates the committed decision on audit-log success)
+      auditEventsService
+        .log({
+          actorId: userId,
+          actorType: 'USER',
+          action: 'DECISION_DECIDE',
+          resourceType: 'decision',
+          resourceId: id,
+          before: { status: result.previousStatus },
+          after: { status: result.status, rationale: rationaleText },
+          metadata: { version: result.version },
+          organizationId: orgId,
+        })
+        .catch((err: any) => logger.error('[DecisionController] Audit log failed:', err?.message));
 
-      await queryHelpers.queryRun(sql, [normalizedStatus, rationaleText || null, id]);
+      // Best-effort notification to the requester (created_by) — persists a
+      // notification_outbox row via the existing NotificationOutboxService;
+      // does not claim delivery (see enqueueDecisionFinalizedNotification doc).
+      if (currentDecision.created_by && currentDecision.created_by !== userId) {
+        void enqueueDecisionFinalizedNotification({
+          organizationId: orgId,
+          decisionId: id,
+          decisionTitle: currentDecision.title || 'Decision',
+          targetStatus: result.status,
+          recipientUserId: currentDecision.created_by,
+        });
+      }
 
-      await queryHelpers.queryRun(
-        `INSERT INTO decision_history (id, decision_id, action, old_status, new_status, changed_by, details)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          uuidv4(),
-          id,
-          isDeferredAction ? 'deferred' : normalizedStatus,
-          normalizeStatus(currentDecision.status || null),
-          normalizedStatus,
-          userId,
-          JSON.stringify({
-            notes: rationaleText || (isDeferredAction ? 'Deferred' : undefined),
-            outcome: isDeferredAction ? 'deferred' : normalizedStatus,
-          }),
-        ]
-      );
-
-      // V4-TASK-08: Unified audit log
-      if (orgId) {
-        auditEventsService
-          .log({
-            actorId: userId,
-            actorType: 'USER',
-            action: 'DECISION_DECIDE',
-            resourceType: 'decision',
-            resourceId: id,
-            before: { status: normalizeStatus(currentDecision.status || null) },
-            after: { status: normalizedStatus, rationale: rationaleText },
-            metadata: {},
-            organizationId: orgId,
-          })
-          .catch((err: any) =>
-            logger.error('[DecisionController] Audit log failed:', err?.message)
+      // If decision is resolved, refresh blocks on impacted items. This runs
+      // AFTER finalizeDecisionTransition's BEGIN/COMMIT has already landed —
+      // the decide() call has genuinely succeeded at this point. Originally
+      // "fixed" (commit 5cf7c03245) by changing `is_blocker = TRUE` to
+      // `is_blocker = 1` — that fix did NOT actually work: PostgresDatabase.ts's
+      // auto-generated ALWAYS_BOOLEAN_COLUMNS list unconditionally rewrites any
+      // `is_blocker = 1` back to `is_blocker = TRUE` before the query reaches
+      // Postgres (verified directly against the acceptance container — the
+      // rewritten query still throws "operator does not exist: integer =
+      // boolean"). This was never caught because the whole cascade below is
+      // wrapped in try/catch (by design — see below), so decide() kept
+      // returning 200 while this side effect silently kept failing on every
+      // real-Postgres run. Real, verified root cause and the actual fix
+      // (`::text IN ('1','true')`, immune to that rewriter and correct
+      // whichever migration created the table) are documented in the long
+      // comment above refreshTaskDecisionBlock. Also wrapped the whole
+      // best-effort cascade in try/catch: this refresh is a side effect of
+      // an already-committed decision, not part of its correctness — it must
+      // never turn a successful decide() into an HTTP error again, whatever
+      // future reason it fails for.
+      if (orgId && result.status !== 'pending' && result.status !== 'returned_for_clarification') {
+        try {
+          const impacts = await queryHelpers.queryAll<{
+            impacted_type: string;
+            impacted_id: string;
+            is_blocker: number;
+          }>(
+            `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = ? AND is_blocker::text IN ('1','true')`,
+            [id]
           );
-      }
-
-      // If decision is resolved, refresh blocks on impacted items
-      if (orgId && normalizedStatus !== 'pending') {
-        const impacts = await queryHelpers.queryAll<{
-          impacted_type: string;
-          impacted_id: string;
-          is_blocker: number;
-        }>(
-          `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = ? AND is_blocker = TRUE`,
-          [id]
-        );
-        for (const impact of impacts || []) {
-          if (impact.impacted_type === 'task') {
-            await refreshTaskDecisionBlock({
-              taskId: impact.impacted_id,
-              organizationId: orgId,
-              resolvedDecisionId: id,
-            });
-          } else if (impact.impacted_type === 'initiative') {
-            await refreshInitiativeDecisionBlock({
-              initiativeId: impact.impacted_id,
-              organizationId: orgId,
-              resolvedDecisionId: id,
-            });
+          for (const impact of impacts || []) {
+            if (impact.impacted_type === 'task') {
+              await refreshTaskDecisionBlock({
+                taskId: impact.impacted_id,
+                organizationId: orgId,
+                resolvedDecisionId: id,
+              });
+            } else if (impact.impacted_type === 'initiative') {
+              await refreshInitiativeDecisionBlock({
+                initiativeId: impact.impacted_id,
+                organizationId: orgId,
+                resolvedDecisionId: id,
+                resolvedDecisionStatus: result.status,
+                actorId: userId,
+              });
+            }
           }
+        } catch (err: any) {
+          logger.error(
+            '[DecisionController.decide] Post-commit impact-block refresh failed (non-fatal — decision was already committed):',
+            err?.message || err
+          );
         }
       }
 
-      res.json({ id, status: normalizedStatus.toUpperCase(), decidedBy: userId });
+      res.json({
+        id,
+        status: result.status.toUpperCase(),
+        decidedBy: result.decidedBy,
+        decidedAt: result.decidedAt,
+        version: result.version,
+      });
     }
   );
 
@@ -1283,6 +1722,18 @@ export class DecisionController {
         req.user?.role !== 'SUPERADMIN'
       ) {
         res.status(403).json({ error: 'Permission denied' });
+        return;
+      }
+
+      // MW-DEC-001: a decision at a terminal outcome (approved/rejected) can
+      // never silently drift back to an earlier state through this generic
+      // update surface — e.g. PUT { status: 'pending' } on an already-
+      // approved decision must not resurrect it. Re-decision only ever
+      // happens through PATCH/PUT /:id/decide, which itself refuses to
+      // re-transition a terminal decision (finalizeDecisionTransition).
+      const finalizedGuard = assertNotFinalized(currentDecision.status);
+      if (!finalizedGuard.allowed) {
+        res.status(409).json({ error: finalizedGuard.reason, code: finalizedGuard.code });
         return;
       }
 
@@ -2048,6 +2499,460 @@ export class DecisionController {
       logger.info(`[DecisionController] Decision ${id} soft-deleted (cancelled) by ${userId}`);
 
       res.json({ success: true, id, message: 'Decision cancelled' });
+    }
+  );
+
+  // ==========================================
+  // MW-DEC-001 — Decision detail aggregate + comments/alternatives/risks
+  //
+  // Replaces the localStorage-only "decision enhancements" shim in
+  // DecisionDetailView.tsx (frontend, not touched by this packet) with a
+  // real, organization-scoped, author-from-token backend. See
+  // 932_decision_workflow_canonical.sql for the schema and
+  // decisionCollaborationService.ts for the data-access layer this class
+  // calls into (single canonical Decision domain owner — no second
+  // controller/service tree for these objects).
+  // ==========================================
+
+  /**
+   * GET /api/decisions/:id/detail
+   * Single aggregate read: decision + impacts + audit history + comments +
+   * alternatives + risks + evidence links (link_graph_edges). Exists so the
+   * frontend never has to orchestrate N+1 calls to hydrate one decision
+   * dossier screen.
+   */
+  static getDecisionDetail = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const sql = `
+        SELECT
+          d.*,
+          owner.first_name || ' ' || owner.last_name as owner_name,
+          owner.avatar_url as owner_avatar_url,
+          requester.first_name || ' ' || requester.last_name as requested_by_name
+        FROM decisions d
+        LEFT JOIN users owner ON d.decision_maker_id = owner.id
+        LEFT JOIN users requester ON d.created_by = requester.id
+        WHERE d.id = ?
+      `;
+      const decision = await queryHelpers.queryOne<DecisionRow & { version?: number; decided_by?: string | null }>(
+        sql,
+        [id]
+      );
+      if (!decision || decision.organization_id !== orgId) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+
+      const [impacts, history, extras] = await Promise.all([
+        queryHelpers.queryAll(
+          `SELECT id, impacted_type, impacted_id, impact_description, is_blocker
+           FROM decision_impacts WHERE decision_id = ? ORDER BY created_at ASC`,
+          [id]
+        ),
+        queryHelpers.queryAll(
+          `SELECT dh.id, dh.action, dh.old_status, dh.new_status, dh.changed_by, dh.changed_at, dh.details,
+                  TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) AS changed_by_name
+           FROM decision_history dh
+           LEFT JOIN users u ON dh.changed_by = u.id
+           WHERE dh.decision_id = ?
+           ORDER BY dh.changed_at ASC`,
+          [id]
+        ),
+        getDecisionAggregateExtras(id, orgId),
+      ]);
+
+      const escalation = computeEscalationLevel(decision.deadline, decision.priority, decision.impact);
+      const statusNormalized = normalizeStatus(decision.status);
+      const { type: relatedObjectType, id: relatedObjectId } = resolveRelatedObject(decision);
+      const structured = buildStructuredFields(decision);
+
+      res.json({
+        id: decision.id,
+        title: decision.title,
+        description: decision.description || undefined,
+        decisionType: decision.type,
+        pmoDomain: decision.pmo_domain || undefined,
+        status: toApiStatus(statusNormalized),
+        priority: normalizePriority(decision.priority),
+        impact: normalizeImpact(decision.impact),
+        escalationLevel: escalation.level === 'red' ? 2 : escalation.level === 'amber' ? 1 : 0,
+        escalationLevelName: escalation.level,
+        decisionOwnerId: decision.decision_maker_id,
+        ownerName: decision.owner_name || undefined,
+        ownerAvatarUrl: decision.owner_avatar_url || undefined,
+        requestedById: decision.created_by,
+        requestedByName: decision.requested_by_name || undefined,
+        createdAt: decision.created_at,
+        dueDate: decision.deadline || undefined,
+        rationale: decision.decision_rationale || undefined,
+        decidedAt: decision.decided_at || undefined,
+        decidedBy: decision.decided_by || undefined,
+        version: Number(decision.version ?? 1),
+        workflowStatus: decision.workflow_status || 'proposed',
+        relatedObjectType,
+        relatedObjectId,
+        alternatives: structured.alternatives,
+        risks: structured.risks,
+        consequencesOfInaction: structured.consequencesOfInaction,
+        recommendation: structured.recommendation,
+        assumptions: structured.assumptions,
+        impacts: impacts.map((impact: any) => ({
+          id: impact.id,
+          impactedType: impact.impacted_type,
+          impactedId: impact.impacted_id,
+          impactDescription: impact.impact_description,
+          isBlocker: impact.is_blocker === 1,
+        })),
+        auditTrail: history.map((entry: any) => ({
+          id: entry.id,
+          action: entry.action,
+          by: entry.changed_by,
+          userName: entry.changed_by_name || undefined,
+          oldStatus: normalizeStatus(entry.old_status || null),
+          newStatus: normalizeStatus(entry.new_status || null),
+          at: entry.changed_at,
+          notes: parseHistoryNotes(entry.details),
+          details: parseHistoryDetails(entry.details),
+        })),
+        // MW-DEC-001 real, persisted dossier objects (replaces the
+        // DecisionDetailView.tsx localStorage shim):
+        comments: extras.comments,
+        dossierAlternatives: extras.alternatives,
+        dossierRisks: extras.risks,
+        links: extras.links,
+      });
+    }
+  );
+
+  /** POST /api/decisions/:id/comments */
+  static createComment = asyncHandler(
+    async (req: AuthenticatedRequest<CreateDecisionCommentRequest>, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      try {
+        const comment = await createDecisionComment({
+          decisionId: id,
+          organizationId: orgId,
+          authorId: userId,
+          body: req.body?.body,
+        });
+        res.status(201).json(comment);
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** PUT /api/decisions/:id/comments/:commentId */
+  static updateComment = asyncHandler(
+    async (req: AuthenticatedRequest<UpdateDecisionCommentRequest>, res: Response): Promise<void> => {
+      const { id, commentId } = req.params as { id: string; commentId: string };
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      try {
+        const comment = await updateDecisionComment({
+          decisionId: id,
+          organizationId: orgId,
+          commentId,
+          actorId: userId,
+          actorRole: req.user?.role,
+          body: req.body?.body,
+        });
+        res.json(comment);
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** DELETE /api/decisions/:id/comments/:commentId (soft-delete) */
+  static deleteComment = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id, commentId } = req.params as { id: string; commentId: string };
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      try {
+        await deleteDecisionComment({
+          decisionId: id,
+          organizationId: orgId,
+          commentId,
+          actorId: userId,
+          actorRole: req.user?.role,
+        });
+        res.json({ success: true, id: commentId });
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** POST /api/decisions/:id/alternatives */
+  static createAlternative = asyncHandler(
+    async (
+      req: AuthenticatedRequest<CreateDecisionAlternativeRequest>,
+      res: Response
+    ): Promise<void> => {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const decisionRow = await queryHelpers.queryOne<{
+        created_by?: string;
+        decision_maker_id?: string;
+      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
+        id,
+        orgId,
+      ]);
+      if (!decisionRow) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+      if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
+        res.status(403).json({ error: 'Only the decision preparer, owner, or admin can add alternatives' });
+        return;
+      }
+      try {
+        const alt = await createDecisionAlternative({
+          decisionId: id,
+          organizationId: orgId,
+          createdBy: userId,
+          title: req.body?.title,
+          description: req.body?.description,
+          benefits: req.body?.benefits,
+          drawbacks: req.body?.drawbacks,
+          costOrFeasibility: req.body?.costOrFeasibility,
+          isRecommended: req.body?.isRecommended,
+        });
+        res.status(201).json(alt);
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** PUT /api/decisions/:id/alternatives/:alternativeId */
+  static updateAlternative = asyncHandler(
+    async (
+      req: AuthenticatedRequest<UpdateDecisionAlternativeRequest>,
+      res: Response
+    ): Promise<void> => {
+      const { id, alternativeId } = req.params as { id: string; alternativeId: string };
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const decisionRow = await queryHelpers.queryOne<{
+        created_by?: string;
+        decision_maker_id?: string;
+      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
+        id,
+        orgId,
+      ]);
+      if (!decisionRow) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+      if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
+        res.status(403).json({ error: 'Only the decision preparer, owner, or admin can edit alternatives' });
+        return;
+      }
+      try {
+        const alt = await updateDecisionAlternative({
+          decisionId: id,
+          organizationId: orgId,
+          alternativeId,
+          patch: req.body || {},
+        });
+        res.json(alt);
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** DELETE /api/decisions/:id/alternatives/:alternativeId */
+  static deleteAlternative = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id, alternativeId } = req.params as { id: string; alternativeId: string };
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const decisionRow = await queryHelpers.queryOne<{
+        created_by?: string;
+        decision_maker_id?: string;
+      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
+        id,
+        orgId,
+      ]);
+      if (!decisionRow) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+      if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
+        res
+          .status(403)
+          .json({ error: 'Only the decision preparer, owner, or admin can delete alternatives' });
+        return;
+      }
+      try {
+        await deleteDecisionAlternative({ decisionId: id, organizationId: orgId, alternativeId });
+        res.json({ success: true, id: alternativeId });
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** POST /api/decisions/:id/risks */
+  static createRisk = asyncHandler(
+    async (req: AuthenticatedRequest<CreateDecisionRiskRequest>, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const decisionRow = await queryHelpers.queryOne<{
+        created_by?: string;
+        decision_maker_id?: string;
+      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
+        id,
+        orgId,
+      ]);
+      if (!decisionRow) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+      if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
+        res.status(403).json({ error: 'Only the decision preparer, owner, or admin can add risks' });
+        return;
+      }
+      try {
+        const risk = await createDecisionRisk({
+          decisionId: id,
+          organizationId: orgId,
+          createdBy: userId,
+          description: req.body?.description,
+          severity: req.body?.severity,
+          likelihood: req.body?.likelihood,
+          mitigation: req.body?.mitigation,
+          ownerId: req.body?.ownerId,
+        });
+        res.status(201).json(risk);
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** PUT /api/decisions/:id/risks/:riskId */
+  static updateRisk = asyncHandler(
+    async (req: AuthenticatedRequest<UpdateDecisionRiskRequest>, res: Response): Promise<void> => {
+      const { id, riskId } = req.params as { id: string; riskId: string };
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const decisionRow = await queryHelpers.queryOne<{
+        created_by?: string;
+        decision_maker_id?: string;
+      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
+        id,
+        orgId,
+      ]);
+      if (!decisionRow) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+      if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
+        res.status(403).json({ error: 'Only the decision preparer, owner, or admin can edit risks' });
+        return;
+      }
+      try {
+        const risk = await updateDecisionRisk({
+          decisionId: id,
+          organizationId: orgId,
+          riskId,
+          patch: req.body || {},
+        });
+        res.json(risk);
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  /** DELETE /api/decisions/:id/risks/:riskId */
+  static deleteRisk = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id, riskId } = req.params as { id: string; riskId: string };
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const decisionRow = await queryHelpers.queryOne<{
+        created_by?: string;
+        decision_maker_id?: string;
+      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
+        id,
+        orgId,
+      ]);
+      if (!decisionRow) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+      if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
+        res.status(403).json({ error: 'Only the decision preparer, owner, or admin can delete risks' });
+        return;
+      }
+      try {
+        await deleteDecisionRisk({ decisionId: id, organizationId: orgId, riskId });
+        res.json({ success: true, id: riskId });
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
     }
   );
 }

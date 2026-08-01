@@ -528,6 +528,34 @@ function getReadPool(): Pool {
   return getPool();
 }
 
+/**
+ * Acquire a single pinned PoolClient for a genuine multi-statement Postgres
+ * transaction (BEGIN ... COMMIT/ROLLBACK on ONE connection).
+ *
+ * Why this exists (MW-DEC-001): `IDatabase.query()`/`run()`/`all()`/`get()`
+ * all go through `getPool().query()` — the `pg` pool acquires a (possibly
+ * different) connection PER CALL. Issuing `BEGIN`, then a separate `UPDATE`,
+ * then a separate `INSERT`, then `COMMIT` as four independent pool queries
+ * does NOT give atomicity: each statement can land on a different physical
+ * connection, so `BEGIN`/`COMMIT` silently no-op relative to the writes and a
+ * crash between statements can leave a decision half-updated (e.g. status
+ * flipped to APPROVED without decision_rationale/decided_by/decided_at, or
+ * without the decision_history audit row). Any caller needing real
+ * atomicity — see DecisionController.decide / decisionCollaborationService.
+ * finalizeDecisionTransition — must call `acquirePgClient()`, run
+ * `BEGIN`/statements/`COMMIT` (or `ROLLBACK` on error) on the SAME returned
+ * client, and always `client.release()` in a `finally`.
+ *
+ * (`ExtensionService.installExtension` calls `(db as any).connect()` for the
+ * same reason, but `IDatabase`/`PostgresDatabase` never implemented
+ * `connect()` — that call throws at runtime. This is the real, working
+ * equivalent; not touched here since ExtensionService is outside this
+ * packet's scope.)
+ */
+export async function acquirePgClient(): Promise<PoolClient> {
+  return getPool().connect();
+}
+
 function sanitizeParams(params: unknown[]): unknown[] {
   return params.map((p) => (typeof p === 'string' ? p.replace(/\0/g, '') : p));
 }
