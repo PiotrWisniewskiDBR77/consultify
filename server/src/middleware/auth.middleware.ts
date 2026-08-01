@@ -680,7 +680,8 @@ const attachUser = async (
       // anonymous stranger and stays read-only regardless.
       // -----------------------------------------------------------------------
       const requestMethod = String(safeRead(() => (req as Request).method, '') || '');
-      if (!isWriteAllowedForPublicDemo(requestMethod, requestPath)) {
+      const requestBody = safeRead(() => (req as Request).body, undefined as unknown);
+      if (!isWriteAllowedForPublicDemo(requestMethod, requestPath, requestBody)) {
         safeWriteNoStoreHeaders(res);
         res.status(403).json({
           error: 'Demo mode is read-only',

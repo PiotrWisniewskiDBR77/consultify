@@ -198,31 +198,125 @@ export async function assertDemoPrincipalMayReceiveCredentials(
 }
 
 /**
- * Writes a public demo principal may still perform. Everything else is refused,
- * whatever headers the caller sends.
+ * Normalize a request path for exact allowlist matching.
  *
- * `/api/auth/*` covers logout and refresh; `/api/demo/*` covers leaving demo mode
- * and the telemetry beacon. Both are the endpoints that let a session wind itself
- * down, so blocking them would trap the client rather than protect anything.
+ * Returns `null` for anything it cannot reduce to a plain, unambiguous path —
+ * and a `null` is a DENY, never a pass. Undecodable escapes and traversal
+ * segments are exactly how a prefix check gets talked into matching something it
+ * did not mean to.
+ *
+ * Lower-cased because Express routes case-insensitively by default: `/API/Auth/…`
+ * reaches the same handler, so the allowlist has to see the same thing the router
+ * does. This cannot widen the allowlist — only exact members are ever allowed.
  */
-const PUBLIC_DEMO_WRITABLE_PREFIXES = ['/api/auth/', '/api/demo/'];
+export function normalizeGuardPath(rawPath: string): string | null {
+  let path = String(rawPath || '');
+  path = path.split('?')[0] || '';
+  path = path.split('#')[0] || '';
+  if (!path) return null;
 
-export function isWriteAllowedForPublicDemo(method: string, pathname: string): boolean {
-  const normalizedMethod = String(method || '').toUpperCase();
-  if (['GET', 'HEAD', 'OPTIONS'].includes(normalizedMethod)) return true;
-  const normalizedPath = String(pathname || '').split('?')[0] || '';
-  return PUBLIC_DEMO_WRITABLE_PREFIXES.some((prefix) => normalizedPath.startsWith(prefix));
+  if (path.includes('%')) {
+    try {
+      path = decodeURIComponent(path);
+    } catch {
+      return null;
+    }
+  }
+
+  if (path.includes('\\') || path.includes('..') || path.includes('\0')) return null;
+  if (!path.startsWith('/')) return null;
+
+  path = path.replace(/\/{2,}/g, '/');
+  if (path.length > 1) path = path.replace(/\/+$/, '');
+  return path.toLowerCase();
+}
+
+function isLeavingDemo(body: unknown): boolean {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return false;
+  const enabled = (body as { enabled?: unknown }).enabled;
+  // Mirror of the toggle route's own truthiness test, inverted and made explicit.
+  // Anything ambiguous — missing, null, a string the route would read as true —
+  // is a DENY, because "enter demo" is a provisioning operation.
+  return enabled === false || enabled === 'false' || enabled === 0 || enabled === '0';
 }
 
 /**
- * Paths a lapsed demo principal may still reach, so the client can wind itself
- * down cleanly instead of being trapped with a token it cannot use or discard.
+ * The complete set of writes a public demo principal may perform.
+ *
+ * Exact method + normalized path. There is deliberately no prefix rule: an
+ * `/api/auth/*` exception also hands a public demo account `switch-organization`,
+ * `change-password`, `register`, `register-demo`, `revoke-all`, `reset-password`
+ * and the whole `mfa/*` group, and an `/api/demo/*` exception hands it
+ * `toggle {enabled: true}` — a provisioning operation. None of those are needed to
+ * walk a read-only demo.
+ *
+ * What remains is only what lets a session wind itself down or report on itself.
+ *
+ * NAMING NOTE for review: the packet asked for `POST /api/auth/logout-all`. No
+ * such route exists — the equivalent in this codebase is `POST /api/auth/revoke-all`,
+ * which revokes the caller's own token families only. That is what is allowlisted.
  */
-const EXPIRED_DEMO_ALLOWED_PATHS = ['/api/auth/logout', '/api/auth/logout-all'];
+export const PUBLIC_DEMO_WRITE_ALLOWLIST: ReadonlyArray<{
+  method: string;
+  path: string;
+  /** Extra condition on the body; absent means the path alone is sufficient. */
+  guard?: (body: unknown) => boolean;
+  why: string;
+}> = [
+  { method: 'POST', path: '/api/auth/logout', why: 'end the session' },
+  { method: 'POST', path: '/api/auth/revoke-all', why: 'end every session (logout-all)' },
+  {
+    method: 'POST',
+    path: '/api/auth/refresh',
+    why: 'rotates within the demo window; carries its own TTL gate that refuses a lapsed principal',
+  },
+  {
+    method: 'POST',
+    path: '/api/demo/toggle',
+    guard: isLeavingDemo,
+    why: 'leave demo mode — LEAVING ONLY; enabled:true would provision',
+  },
+  {
+    method: 'POST',
+    path: '/api/demo/record-event',
+    why: 'telemetry beacon; the route derives organizationId server-side and ignores the body',
+  },
+];
+
+/**
+ * Writes a public demo principal may still perform. Everything else is refused,
+ * whatever headers the caller sends.
+ */
+export function isWriteAllowedForPublicDemo(
+  method: string,
+  pathname: string,
+  body?: unknown
+): boolean {
+  const normalizedMethod = String(method || '').toUpperCase();
+  if (['GET', 'HEAD', 'OPTIONS'].includes(normalizedMethod)) return true;
+
+  const normalizedPath = normalizeGuardPath(pathname);
+  if (!normalizedPath) return false;
+
+  const entry = PUBLIC_DEMO_WRITE_ALLOWLIST.find(
+    (candidate) => candidate.method === normalizedMethod && candidate.path === normalizedPath
+  );
+  if (!entry) return false;
+  return entry.guard ? entry.guard(body) : true;
+}
+
+/**
+ * Paths a LAPSED demo principal may still reach, so the client can discard its
+ * credentials instead of being trapped with a token it can neither use nor drop.
+ *
+ * Strictly smaller than the live-session allowlist: no refresh (there is nothing
+ * left to refresh into) and no demo routes (the session is over). Exact match on
+ * the normalized path, same rules as everywhere else.
+ */
+const EXPIRED_DEMO_ALLOWED_PATHS = ['/api/auth/logout', '/api/auth/revoke-all'];
 
 export function isPathAllowedForExpiredDemo(pathname: string): boolean {
-  const normalized = String(pathname || '').split('?')[0] || '';
-  return EXPIRED_DEMO_ALLOWED_PATHS.some(
-    (allowed) => normalized === allowed || normalized.startsWith(`${allowed}/`)
-  );
+  const normalized = normalizeGuardPath(pathname);
+  if (!normalized) return false;
+  return EXPIRED_DEMO_ALLOWED_PATHS.includes(normalized);
 }

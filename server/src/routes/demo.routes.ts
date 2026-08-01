@@ -364,7 +364,18 @@ router.post(
     if (!userId) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
-    const { eventType, organizationId, metadata } = req.body || {};
+    // `organizationId` is deliberately NOT read from the body. It used to be
+    // (`organizationId || req.user.organizationId`), with the body winning — so any
+    // authenticated caller, a public demo account included, could file a telemetry
+    // event against an arbitrary tenant. The attribution is now always the
+    // server-resolved organization: for a public demo principal that is its active
+    // session tenant, decided in `attachUser` from the database.
+    const { eventType, metadata } = req.body || {};
+    const resolvedOrganizationId =
+      (req as AuthRequest & { organizationId?: string }).organizationId ||
+      req.user?.organizationId ||
+      (req.user as { organization_id?: string } | undefined)?.organization_id;
+
     const allowed = [
       DEMO_TRIAL_EVENT_TYPES.TRIAL_EXPIRY_WARNING_SHOWN,
       DEMO_TRIAL_EVENT_TYPES.DEMO_AI_LIMIT_REACHED,
@@ -376,9 +387,12 @@ router.post(
         allowed: allowed.join(', '),
       });
     }
+    if (!resolvedOrganizationId) {
+      return res.status(403).json({ success: false, error: 'Organization context required' });
+    }
     await recordDemoTrialEvent({
       eventType,
-      organizationId: organizationId || (req as any).user?.organizationId,
+      organizationId: resolvedOrganizationId,
       userId,
       source: 'frontend',
       metadata: typeof metadata === 'object' ? metadata : undefined,
