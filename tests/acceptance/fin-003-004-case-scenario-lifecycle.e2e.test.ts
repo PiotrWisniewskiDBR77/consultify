@@ -478,6 +478,21 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
     expect(row.rows[0].name).not.toBe('B-HIJACKED-NAME');
   });
 
+  it('test 6b: org B cannot graft a scenario onto org A\'s case via a forged caseId', async () => {
+    const forgeRes = await request(app)
+      .post('/api/v8/finance/models')
+      .set('Authorization', `Bearer ${tokenB}`)
+      .send({ name: `${P}forged-scenario`, startDate: '2021-01-01', caseId: caseRootId });
+    expect(forgeRes.status).toBe(400);
+    expect(String(forgeRes.body.error)).toMatch(/Investment Case not found/);
+
+    // Org A's case is still exactly its original 4 rows — no forged row grafted on.
+    const caseRes = await request(app)
+      .get(`/api/v8/finance/models/${caseRootId}/case`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    expect(caseRes.body.data.count).toBe(4);
+  });
+
   // ═══════════════ TEST 7: results recompute correctly after reopen ═══════════════
   it('test 7: NPV/IRR/payback recompute deterministically on reopen, and change when assumptions change', async () => {
     const createRes = await request(app)
