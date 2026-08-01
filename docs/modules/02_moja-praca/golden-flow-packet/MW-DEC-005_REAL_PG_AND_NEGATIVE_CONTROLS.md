@@ -4,6 +4,7 @@ module_id: MODULE_MY_WORK
 line: Line B — MW-DEC-001 Canonical Decision Workflow
 status: AWAITING_CODEX_REVIEW
 last_updated: 2026-08-01
+doc_fix_only: true
 ---
 
 # MW-DEC-005 — Real PostgreSQL Acceptance and Negative Controls
@@ -66,7 +67,49 @@ gate: 31/31 passed.**
 | Optimistic concurrency/version guard | YES | Status code stayed 409 (coincidentally) but the specific error code changed, proving the intended guard was gone and a different one caught the request instead |
 | Final-rationale requirement | YES | Case 13 (blank-string) stayed green independently via Zod validation — another two-layer defense instance |
 | Split final transition + audit onto independent clients | YES, with a real fault-injection red signal (not just code reading) | Produced an actual "decision APPROVED, decision_history row count 0" failure caught by the read-back assertions |
-| Restore localStorage-only comment success / return success before read-back | N/A as a red-test control (no automated frontend suite exists in this packet) — verified by code reading instead: every mutating call in the new component `await`s the real HTTP response before updating UI state; zero localStorage calls for business state | Reported honestly as static-analysis-only, not fabricated as a passing test |
+| Restore localStorage-only comment success / return success before read-back | **YES — updated 2026-08-01, superseding the original code-reading-only entry below** | See "Frontend premature-success and Storage controls" section below for the real red→green evidence added in the Codex re-review round. |
+
+## Frontend premature-success and Storage controls (added 2026-08-01, Codex re-review round)
+
+At the time this document was first written, control H ("restore
+localStorage-only comment success / return success before read-back") had
+**no automated frontend suite to test against** and was reported as
+code-reading-only, N/A as a red-test control. That gap is now closed:
+`tests/components/MyWork/Decision/` (commit `07729c3e6d`) contains **14
+real-mount component tests**, HTTP boundary mocked only (`Api.get/post/
+put/delete`/`getUsers`), the real `DecisionWorkspace` component tree
+rendered throughout — not a decoy/mock stand-in.
+
+- **Comment / alternative / risk / decide — UI updates only after the
+  server responds**: each has a dedicated success test asserting the new
+  row/state appears ONLY after the mocked HTTP promise resolves, and a
+  dedicated failure test asserting the UI shows an inline error, preserves
+  the user's draft, and does **not** add anything to the list on rejection.
+- **Premature/optimistic success — real red→green proof, not an assertion
+  that happens to pass**: the no-premature-success test drives `decide()`
+  with a manually-controlled (not-yet-resolved) promise and asserts the UI
+  still shows the pre-decided state before resolving it. This was proven
+  capable of catching a real regression: a one-line optimistic state flip
+  was temporarily added to `DecisionDecideBar.tsx` (setting the
+  finalized-looking UI state synchronously before the `await`), the test
+  was re-run and **failed** (red) as expected, the temporary change was
+  reverted, and the test passed (green) again. Both runs' output were
+  captured, not paraphrased.
+- **Storage as business-state source**: a dedicated test spies on
+  `localStorage`/`sessionStorage` (`vi.spyOn(Storage.prototype, ...)`) across
+  a full comment + alternative + risk + decide flow and asserts zero calls
+  for any business data.
+
+Independently re-run by the orchestrator (not just claimed by the writing
+agent): **14/14 passed**, both at the time of the fix and again as the
+final gate of the Codex re-review round.
+
+**Caveat unchanged from the original entry**: this is component-level
+coverage for the NEW `DecisionWorkspace` tree only. The OLD
+`DecisionDetailView.tsx` (still live in production, still localStorage-based
+per MW-DEC-001/MW-DEC-004) has no test coverage change from this packet —
+this control proves the new component doesn't repeat the old file's
+behavior, it does not retroactively fix or test the old file.
 
 ## Concurrency evidence
 
