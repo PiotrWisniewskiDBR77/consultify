@@ -73,8 +73,21 @@ async function ensureWorkstreamsSchema(): Promise<void> {
   }
 }
 
-// All routes require auth
-router.use(verifyToken);
+// All routes require auth.
+//
+// FIX (MAT-007/009, 2026-08-01): this guard was previously attached with a
+// pathless `router.use(verifyToken)`. Because this router is mounted at the
+// '/api' ROOT (see Gateway.ts: `app.use('/api', workstreamsRoutes)`, ahead of
+// e.g. `/api/presentations`), a pathless .use() ran for EVERY /api/* request
+// that reached this middleware layer and 401'd unauthenticated traffic to
+// ANY route mounted after it — including the intentionally public
+// `/api/presentations/shared/:token` viewer (see
+// `createBetaGate(['/shared/', '/embed/'])` in Gateway.ts, which explicitly
+// carves that path out of auth). This matches the exact bug class already
+// fixed in transactionReadiness.routes.ts (2026-07-20) — the guard MUST stay
+// scoped to this router's own two path segments only.
+router.use('/projects/:projectId/workstreams', verifyToken);
+router.use('/workstreams', verifyToken);
 
 // -------------------------------
 // Project-scoped endpoints

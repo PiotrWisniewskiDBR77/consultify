@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ZodError } from 'zod';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { exportsDir } from '../utils/storagePaths.js';
 import { sanitizeOrgIdForUploadPath } from '../middleware/fileUpload.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
@@ -574,6 +575,51 @@ async function ensureDeckLineageSchema(): Promise<void> {
     if (!isSchemaMissingError(error)) {
       logger.warn('[Presentations] Could not ensure source_refs_json column', error);
     }
+  }
+}
+
+// MAT-007/009 root-cause fix (part 2): POST /decks and POST /decks/from-template
+// build canonical deck_json (see buildDeckDocumentFromStructuredSlides above) but,
+// unlike the AI generateDeck() pipeline (presentationGeneratorService.ts:2076-2127),
+// never rendered a physical PPTX or set export_path — so GET /decks/:id/download
+// (`if (!deck || !deck.export_path) return res.status(404)`) 404s for every deck
+// created through these two routes, even after the content-shape fix above. This
+// reuses the EXACT same render call the generator pipeline already makes
+// (PptxPipelineService.generateFromUnifiedJson via deckDocumentToRenderableUnifiedJson)
+// so the golden-flow export step works against a real, existing contract instead of
+// a new one. Best-effort / non-fatal: a render failure must not fail deck creation —
+// the deck is still fully usable in the builder; export can be retried by editing +
+// re-triggering a stale re-render, or a future manual export attempt will just 404
+// exactly as it did before this change, not worse.
+async function renderInitialPptxForDeck(params: {
+  deckId: string;
+  organizationId: string;
+  deckDocument: ReturnType<typeof buildDeckDocumentFromStructuredSlides>;
+}): Promise<void> {
+  try {
+    if (!Array.isArray(params.deckDocument.cards) || params.deckDocument.cards.length === 0) {
+      return;
+    }
+    const unifiedJson = deckDocumentToRenderableUnifiedJson(params.deckDocument, null);
+    const pipeline = new PptxPipelineService();
+    const result = await pipeline.generateFromUnifiedJson(unifiedJson, {
+      template: (params.deckDocument.meta?.theme as any) || undefined,
+      language: (params.deckDocument.meta?.language as any) || undefined,
+      confidentiality: (params.deckDocument.meta?.confidentiality as any) || undefined,
+    });
+    const exportDir = exportsDir('presentations');
+    const exportPath = path.join(exportDir, `${params.deckId}.pptx`);
+    fs.mkdirSync(exportDir, { recursive: true });
+    fs.writeFileSync(exportPath, result.buffer);
+    await dbRun(
+      `UPDATE presentation_decks SET export_path = ?, export_format = 'pptx', exported_at = CURRENT_TIMESTAMP, updated_at = updated_at WHERE id = ? AND organization_id = ?`,
+      [exportPath, params.deckId, params.organizationId]
+    );
+  } catch (renderErr) {
+    logger.warn('[presentations] initial PPTX render failed (non-fatal, deck still usable)', {
+      deckId: params.deckId,
+      error: (renderErr as any)?.message || renderErr,
+    });
   }
 }
 
@@ -1786,6 +1832,12 @@ router.post(
         throw artifactErr;
       }
 
+      await renderInitialPptxForDeck({
+        deckId,
+        organizationId: orgId,
+        deckDocument: canonicalDeckDocument,
+      });
+
       res.status(201).json({ success: true, data: { id: deckId, title, slideCount } });
     } catch (error: any) {
       logger.error('[presentations] Failed to create deck:', error);
@@ -1943,6 +1995,12 @@ router.post(
         ]);
         throw artifactErr;
       }
+
+      await renderInitialPptxForDeck({
+        deckId,
+        organizationId: orgId,
+        deckDocument: canonicalDeckDocument,
+      });
 
       res.status(201).json({ success: true, data: { id: deckId, title, slideCount } });
     } catch (error: any) {
