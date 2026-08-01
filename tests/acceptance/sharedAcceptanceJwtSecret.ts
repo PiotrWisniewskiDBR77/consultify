@@ -1,5 +1,25 @@
 /**
- * INI-005 — JWT test-secret hermeticity.
+ * Shared acceptance-suite JWT test-secret hermeticity.
+ *
+ * Originally built for INI-005 (see git history: `tests/acceptance/
+ * ini005TestSecret.ts`), renamed and generalized during the
+ * Decision+Initiative/Execution integration round (2026-08-01) once running
+ * both suites in ONE vitest invocation (this repo's `vitest.acceptance.config.ts`
+ * uses `pool: 'forks'` + `fileParallelism: false` — a single sequential fork,
+ * one shared Node process/module-cache for every file in the run) proved the
+ * MW-DEC-001 acceptance suite hits the EXACT SAME root-cause bug below
+ * whenever `JWT_SECRET` isn't exported in the shell — confirmed empirically:
+ * `mw-dec-001-decision-workflow.e2e.test.ts` +
+ * `mw-dec-001-falsification-review.e2e.test.ts` alone, `JWT_SECRET` unset ->
+ * 27 failed / 4 passed; same two files with
+ * `JWT_SECRET=development_secret_key_change_in_production_abc123xyz`
+ * (MW-DEC-003's own documented run command) -> 31/31. The Decision line
+ * worked around this operationally (always pass the env var explicitly);
+ * this module fixes it structurally, the same way it already does for
+ * INI-005. One canonical secret now backs the entire acceptance suite,
+ * removing any possibility of two different "pinned" secrets ever existing
+ * side by side regardless of which files a given vitest invocation includes
+ * or what order it runs them in.
  *
  * ROOT CAUSE (confirmed 2026-08-01 by direct read of both files):
  *   - tests/acceptance/harness.ts `getJwtSecret()` falls back to
@@ -53,12 +73,16 @@
  * every INI-005 acceptance test file that mints tokens.
  */
 
-export const INI005_TEST_JWT_SECRET = 'ini005-hermetic-test-secret-do-not-use-elsewhere-32c';
+export const SHARED_ACCEPTANCE_TEST_JWT_SECRET =
+  'shared-acceptance-suite-hermetic-test-secret-do-not-use-elsewhere-32c';
+
+/** @deprecated kept as an alias so any pre-existing importer of the old name still compiles */
+export const INI005_TEST_JWT_SECRET = SHARED_ACCEPTANCE_TEST_JWT_SECRET;
 
 // Side effect: runs as soon as this module is imported. See the module
 // doc-comment above for why this is guaranteed to happen before Config.ts's
 // own JWT_SECRET fallback could ever be evaluated.
-process.env.JWT_SECRET = INI005_TEST_JWT_SECRET;
+process.env.JWT_SECRET = SHARED_ACCEPTANCE_TEST_JWT_SECRET;
 
 /**
  * Fail loudly and immediately if the real server Config's resolved
@@ -85,9 +109,10 @@ export async function assertJwtSecretHermetic(): Promise<void> {
         `JWT_SECRET to "${configSecret}". mintToken() and the real ` +
         'verifyToken middleware would sign/verify with DIFFERENT secrets — ' +
         'every authenticated request in this suite would 401. Check that ' +
-        "tests/acceptance/ini005TestSecret.ts is imported first (before " +
-        "'./harness.js') in this test file, and that process.env.JWT_SECRET " +
-        'is not being overwritten elsewhere after that import.'
+        "tests/acceptance/sharedAcceptanceJwtSecret.ts is imported first " +
+        "(before './harness.js') in this test file, and that " +
+        'process.env.JWT_SECRET is not being overwritten elsewhere after ' +
+        'that import.'
     );
   }
 }

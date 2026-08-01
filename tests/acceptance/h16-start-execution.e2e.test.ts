@@ -51,8 +51,8 @@
  */
 // INI-005 JWT hermeticity: MUST be imported first — sets process.env.JWT_SECRET
 // to a fixed value before any dynamic import can load server/src/config/Config.ts.
-// See tests/acceptance/ini005TestSecret.ts for the full root-cause writeup.
-import { assertJwtSecretHermetic } from './ini005TestSecret.js';
+// See tests/acceptance/sharedAcceptanceJwtSecret.ts for the full root-cause writeup.
+import { assertJwtSecretHermetic } from './sharedAcceptanceJwtSecret.js';
 
 import express, { type Express } from 'express';
 import request from 'supertest';

@@ -42,6 +42,14 @@ import pg from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+// See tests/acceptance/sharedAcceptanceJwtSecret.ts for the full root-cause
+// writeup — added during the Decision+Initiative/Execution integration round
+// (2026-08-01) after this suite was found to fail 27/31 whenever the shell
+// running it doesn't happen to export JWT_SECRET (the same bug INI-005 fixed
+// structurally; this suite previously only worked around it operationally
+// via MW-DEC-003's documented `JWT_SECRET=...` run command). Must be
+// imported before './harness.js' — see that module's doc comment for why.
+import { assertJwtSecretHermetic } from './sharedAcceptanceJwtSecret.js';
 import { getJwtSecret, requireLocalDbUrl } from './harness.js';
 
 const P = 'mwdec--';
@@ -188,6 +196,7 @@ describe('MW-DEC-001 — Canonical Decision Workflow (real Postgres, real router
   let tokenB: string;
 
   beforeAll(async () => {
+    await assertJwtSecretHermetic();
     requireLocalDbUrl();
     client = new pg.Client({ connectionString: process.env.DATABASE_URL });
     await client.connect();

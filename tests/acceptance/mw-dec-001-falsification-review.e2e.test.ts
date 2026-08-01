@@ -24,6 +24,10 @@ import pg from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+// See tests/acceptance/sharedAcceptanceJwtSecret.ts for the full root-cause
+// writeup — added during the Decision+Initiative/Execution integration round
+// (2026-08-01); see the identical note in mw-dec-001-decision-workflow.e2e.test.ts.
+import { assertJwtSecretHermetic } from './sharedAcceptanceJwtSecret.js';
 import { getJwtSecret, requireLocalDbUrl } from './harness.js';
 
 const P = 'zzfals--';
@@ -105,6 +109,7 @@ function buildApp(decisionsRouter: express.Router): Express {
 
 describe('ZZ-FALSIFY — independent adversarial probes on MW-DEC-001', () => {
   beforeAll(async () => {
+    await assertJwtSecretHermetic();
     requireLocalDbUrl();
     client = new pg.Client({ connectionString: process.env.DATABASE_URL });
     await client.connect();
