@@ -833,8 +833,14 @@ export const V8ResultsApi = {
       `/results/recovery-cards/${encodeURIComponent(cardId)}`,
       payload
     ),
+  // Sub-resource mutations below return ONLY the sub-resource (camelCase),
+  // never the full card — callers must refetch getRecoveryCard() afterwards
+  // to refresh `actions`/`checkpoints` in local state. Contrast with
+  // updateRecoveryCard/closeRecoveryCard/continueRecoveryCard/
+  // escalateRecoveryCard above and close/continue/escalate below, which DO
+  // return the full card with actions/checkpoints embedded.
   createRecoveryAction: (cardId: string, payload: V8ResultsCreateRecoveryActionPayload) =>
-    v8Post<V8ResultsKpiRecoveryCard>(
+    v8Post<V8ResultsKpiRecoveryAction>(
       `/results/recovery-cards/${encodeURIComponent(cardId)}/actions`,
       payload
     ),
@@ -843,17 +849,22 @@ export const V8ResultsApi = {
     actionId: string,
     payload: V8ResultsUpdateRecoveryActionPayload
   ) =>
-    v8Put<V8ResultsKpiRecoveryCard>(
+    v8Put<V8ResultsKpiRecoveryAction>(
       `/results/recovery-cards/${encodeURIComponent(cardId)}/actions/${encodeURIComponent(actionId)}`,
       payload
     ),
+  // POST link-task does NOT return a bare ActionDTO — the route wraps it as
+  // `{ linked, linkedTaskId, action }` (linkRecoveryActionTask service result
+  // spread with a freshly-reloaded action DTO). Verified against
+  // server/src/routes/v8/results.routes.ts (2026-08-01, parallel backend
+  // track): `data: { ...result, action: freshAction ? toActionDTO(...) : null }`.
   linkRecoveryActionTask: (cardId: string, actionId: string) =>
-    v8Post<V8ResultsKpiRecoveryCard>(
+    v8Post<V8ResultsLinkRecoveryActionTaskResponse>(
       `/results/recovery-cards/${encodeURIComponent(cardId)}/actions/${encodeURIComponent(actionId)}/link-task`,
       {}
     ),
   createRecoveryCheckpoint: (cardId: string, payload: V8ResultsCreateRecoveryCheckpointPayload) =>
-    v8Post<V8ResultsKpiRecoveryCard>(
+    v8Post<V8ResultsKpiRecoveryCheckpoint>(
       `/results/recovery-cards/${encodeURIComponent(cardId)}/checkpoints`,
       payload
     ),
@@ -862,7 +873,7 @@ export const V8ResultsApi = {
     checkpointId: string,
     payload: V8ResultsResolveRecoveryCheckpointPayload
   ) =>
-    v8Put<V8ResultsKpiRecoveryCard>(
+    v8Put<V8ResultsKpiRecoveryCheckpoint>(
       `/results/recovery-cards/${encodeURIComponent(cardId)}/checkpoints/${encodeURIComponent(checkpointId)}/resolve`,
       payload
     ),
@@ -933,12 +944,35 @@ export interface V8ResultsKpiRecoveryAction {
   taskLinkStatus: V8ResultsRecoveryTaskLinkStatus;
 }
 
+/**
+ * POST .../actions/:actionId/link-task response shape — a sub-resource
+ * endpoint, but NOT a bare ActionDTO: it wraps the link outcome
+ * (`linked`/`linkedTaskId`) around the refreshed action.
+ */
+export interface V8ResultsLinkRecoveryActionTaskResponse {
+  linked: boolean;
+  linkedTaskId: string | null;
+  action: V8ResultsKpiRecoveryAction | null;
+}
+
 export interface V8ResultsKpiRecoveryCheckpoint {
   id: string;
   checkpointDate: string;
   status: V8ResultsRecoveryCheckpointStatus;
   notes?: string | null;
   kpiTimeSeriesId?: string | null;
+}
+
+/**
+ * Shape of one `dependencies`/`risks` entry — JSONB column, matches the
+ * migration schema. `description` is the only required field; `relatedId`
+ * (e.g. an initiative/task/KPI id) and `note` are optional supplementary
+ * detail entered behind an "add details" expand in the UI.
+ */
+export interface V8ResultsRecoveryListItem {
+  description: string;
+  relatedId?: string;
+  note?: string;
 }
 
 export interface V8ResultsKpiRecoveryCard {
@@ -950,8 +984,8 @@ export interface V8ResultsKpiRecoveryCard {
   impactDescription?: string | null;
   priority: V8ResultsRecoveryCardPriority;
   expectedImpact?: string | null;
-  dependencies: string[];
-  risks: string[];
+  dependencies: V8ResultsRecoveryListItem[];
+  risks: V8ResultsRecoveryListItem[];
   expectedRecoveryDate?: string | null;
   effectivenessCriteria?: string | null;
   effectivenessStatus: V8ResultsRecoveryEffectivenessStatus;
@@ -986,8 +1020,8 @@ export interface V8ResultsUpdateRecoveryCardPayload {
   impactDescription?: string;
   priority?: V8ResultsRecoveryCardPriority;
   expectedImpact?: string;
-  dependencies?: string[];
-  risks?: string[];
+  dependencies?: V8ResultsRecoveryListItem[];
+  risks?: V8ResultsRecoveryListItem[];
   expectedRecoveryDate?: string;
   effectivenessCriteria?: string;
 }

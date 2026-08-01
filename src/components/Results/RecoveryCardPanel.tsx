@@ -41,6 +41,7 @@ import {
   type V8ResultsRecoveryActionType,
   type V8ResultsRecoveryCardPriority,
   type V8ResultsRecoveryEffectivenessRating,
+  type V8ResultsRecoveryListItem,
 } from '@/services/api/v8/results';
 
 interface RecoveryCardPanelProps {
@@ -57,8 +58,8 @@ interface EditDraft {
   impactDescription: string;
   priority: V8ResultsRecoveryCardPriority;
   expectedImpact: string;
-  dependencies: string[];
-  risks: string[];
+  dependencies: V8ResultsRecoveryListItem[];
+  risks: V8ResultsRecoveryListItem[];
   expectedRecoveryDate: string;
   effectivenessCriteria: string;
 }
@@ -200,64 +201,167 @@ function Segmented<T extends string>({
   );
 }
 
-/** Tag list editor for `dependencies` / `risks` — Enter to add, × to remove. */
-function TagListEditor({
+const detailInputCls =
+  'h-7 px-2 text-xs rounded border border-c-border bg-transparent text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-1 focus:ring-c-focus/40 disabled:opacity-60 disabled:cursor-not-allowed';
+
+/**
+ * List editor for `dependencies` / `risks` — each entry is a
+ * `{ description, relatedId?, note? }` object (JSONB shape, matches the
+ * migration + the backend contract, not a plain string). `description` is
+ * required and shown/edited inline; `relatedId`/`note` are optional and live
+ * behind a per-row "more details" expand so the common case (just a
+ * description) stays a single line.
+ */
+function ItemListEditor({
   values,
   onChange,
   placeholder,
   disabled,
 }: {
-  values: string[];
-  onChange: (next: string[]) => void;
+  values: V8ResultsRecoveryListItem[];
+  onChange: (next: V8ResultsRecoveryListItem[]) => void;
   placeholder: string;
   disabled?: boolean;
 }) {
-  const [draft, setDraft] = useState('');
+  const { t } = useTranslation();
+  const [draftDescription, setDraftDescription] = useState('');
+  const [draftRelatedId, setDraftRelatedId] = useState('');
+  const [draftNote, setDraftNote] = useState('');
+  const [showNewDetails, setShowNewDetails] = useState(false);
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
   const commit = useCallback(() => {
-    const trimmed = draft.trim();
-    if (!trimmed) return;
-    onChange([...values, trimmed]);
-    setDraft('');
-  }, [draft, values, onChange]);
+    const description = draftDescription.trim();
+    if (!description) return;
+    const relatedId = draftRelatedId.trim();
+    const note = draftNote.trim();
+    const item: V8ResultsRecoveryListItem = {
+      description,
+      ...(relatedId ? { relatedId } : {}),
+      ...(note ? { note } : {}),
+    };
+    onChange([...values, item]);
+    setDraftDescription('');
+    setDraftRelatedId('');
+    setDraftNote('');
+    setShowNewDetails(false);
+  }, [draftDescription, draftRelatedId, draftNote, values, onChange]);
+
+  const updateItem = useCallback(
+    (idx: number, patch: Partial<V8ResultsRecoveryListItem>) => {
+      onChange(values.map((item, i) => (i === idx ? { ...item, ...patch } : item)));
+    },
+    [values, onChange]
+  );
 
   return (
     <div className="space-y-2">
       {values.length > 0 ? (
-        <div className="flex flex-wrap gap-1.5">
-          {values.map((tag, idx) => (
-            <span
-              key={`${tag}-${idx}`}
-              className="inline-flex items-center gap-1 rounded-full border border-c-border bg-c-surface px-2.5 py-1 text-xs text-c-text-secondary"
+        <div className="space-y-1.5">
+          {values.map((item, idx) => (
+            <div
+              key={idx}
+              className="rounded-lg border border-c-border bg-c-surface px-2.5 py-1.5 space-y-1.5"
             >
-              {tag}
-              {!disabled ? (
+              <div className="flex items-center gap-1.5">
+                {disabled ? (
+                  <span className="flex-1 text-xs text-c-text-secondary">{item.description}</span>
+                ) : (
+                  <input
+                    className={`flex-1 ${detailInputCls}`}
+                    value={item.description}
+                    onChange={(e) => updateItem(idx, { description: e.target.value })}
+                  />
+                )}
                 <button
                   type="button"
-                  onClick={() => onChange(values.filter((_, i) => i !== idx))}
-                  className="text-c-text-muted hover:text-c-text-secondary"
-                  aria-label="Remove"
+                  onClick={() => setExpandedIdx((cur) => (cur === idx ? null : idx))}
+                  className="flex-shrink-0 text-[11px] text-c-text-muted hover:text-c-text-secondary underline"
                 >
-                  <X size={12} />
+                  {expandedIdx === idx
+                    ? t('results.recoveryCard.hideDetails', 'hide details')
+                    : t('results.recoveryCard.moreDetails', 'more details')}
                 </button>
+                {!disabled ? (
+                  <button
+                    type="button"
+                    onClick={() => onChange(values.filter((_, i) => i !== idx))}
+                    className="flex-shrink-0 text-c-text-muted hover:text-c-text-secondary"
+                    aria-label="Remove"
+                  >
+                    <X size={12} />
+                  </button>
+                ) : null}
+              </div>
+              {expandedIdx === idx ? (
+                <div className="grid grid-cols-2 gap-1.5">
+                  <input
+                    className={detailInputCls}
+                    value={item.relatedId || ''}
+                    disabled={disabled}
+                    onChange={(e) => updateItem(idx, { relatedId: e.target.value || undefined })}
+                    placeholder={t('results.recoveryCard.relatedId', 'Related ID')}
+                  />
+                  <input
+                    className={detailInputCls}
+                    value={item.note || ''}
+                    disabled={disabled}
+                    onChange={(e) => updateItem(idx, { note: e.target.value || undefined })}
+                    placeholder={t('results.recoveryCard.note', 'Note')}
+                  />
+                </div>
               ) : null}
-            </span>
+            </div>
           ))}
         </div>
       ) : null}
       {!disabled ? (
-        <input
-          className={inputCls}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              commit();
-            }
-          }}
-          placeholder={placeholder}
-        />
+        <div className="space-y-1.5">
+          <input
+            className={inputCls}
+            value={draftDescription}
+            onChange={(e) => setDraftDescription(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                commit();
+              }
+            }}
+            placeholder={placeholder}
+          />
+          {showNewDetails ? (
+            <div className="grid grid-cols-2 gap-1.5">
+              <input
+                className={inputCls}
+                value={draftRelatedId}
+                onChange={(e) => setDraftRelatedId(e.target.value)}
+                placeholder={t('results.recoveryCard.relatedId', 'Related ID')}
+              />
+              <input
+                className={inputCls}
+                value={draftNote}
+                onChange={(e) => setDraftNote(e.target.value)}
+                placeholder={t('results.recoveryCard.note', 'Note')}
+              />
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowNewDetails(true)}
+              className="text-[11px] text-c-text-muted hover:text-c-text-secondary underline"
+            >
+              {t('results.recoveryCard.addDetails', 'add details')}
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={!draftDescription.trim()}
+            onClick={commit}
+            className={secondaryPillCls}
+          >
+            {t('common.add', 'Add')}
+          </button>
+        </div>
       ) : null}
     </div>
   );
@@ -441,7 +545,10 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
     if (!card || !newActionTitle.trim()) return;
     setAddingAction(true);
     try {
-      const data = await V8ResultsApi.createRecoveryAction(card.id, {
+      // createRecoveryAction returns only the new action (sub-resource
+      // response) — refetch the card to pick it up in `actions` rather than
+      // trying to splice the partial response into local state.
+      await V8ResultsApi.createRecoveryAction(card.id, {
         title: newActionTitle.trim(),
         description: newActionDescription.trim() || undefined,
         actionType: newActionType,
@@ -449,7 +556,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
         dueDate: newActionDue || undefined,
         idempotencyKey: crypto.randomUUID(),
       });
-      setCard(data);
+      await fetchCard({ background: true });
       setNewActionTitle('');
       setNewActionDescription('');
       setNewActionOwner('');
@@ -477,10 +584,12 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       setActionBusyId(action.id);
       try {
         const nextStatus = action.status === 'DONE' ? 'OPEN' : 'DONE';
-        const data = await V8ResultsApi.updateRecoveryAction(card.id, action.id, {
+        // updateRecoveryAction returns only the updated action — refetch to
+        // refresh the card's `actions` array from the server.
+        await V8ResultsApi.updateRecoveryAction(card.id, action.id, {
           status: nextStatus,
         });
-        setCard(data);
+        await fetchCard({ background: true });
         onChanged?.();
       } catch (error: any) {
         if (error?.status === 409) {
@@ -499,10 +608,10 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       if (!card) return;
       setActionBusyId(action.id);
       try {
-        const data = await V8ResultsApi.updateRecoveryAction(card.id, action.id, {
+        await V8ResultsApi.updateRecoveryAction(card.id, action.id, {
           status: 'CANCELLED',
         });
-        setCard(data);
+        await fetchCard({ background: true });
         onChanged?.();
       } catch (error: any) {
         if (error?.status === 409) {
@@ -521,27 +630,34 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       if (!card) return;
       setActionBusyId(action.id);
       try {
-        const data = await V8ResultsApi.linkRecoveryActionTask(card.id, action.id);
-        setCard(data);
+        // linkRecoveryActionTask returns only the action — refetch for the
+        // card-level `actions` array to reflect the new taskLinkStatus.
+        await V8ResultsApi.linkRecoveryActionTask(card.id, action.id);
+        await fetchCard({ background: true });
         onChanged?.();
       } catch (error: any) {
+        if (error?.status === 409) {
+          await fetchCard({ background: true });
+        }
         toast.error(error?.message || t('results.recoveryCard.saveFailed', 'Save failed.'));
       } finally {
         setActionBusyId(null);
       }
     },
-    [card, onChanged, t]
+    [card, fetchCard, onChanged, t]
   );
 
   const handleAddCheckpoint = useCallback(async () => {
     if (!card || !newCheckpointDate) return;
     setAddingCheckpoint(true);
     try {
-      const data = await V8ResultsApi.createRecoveryCheckpoint(card.id, {
+      // createRecoveryCheckpoint returns only the new checkpoint — refetch
+      // the card to pick it up in `checkpoints`.
+      await V8ResultsApi.createRecoveryCheckpoint(card.id, {
         checkpointDate: newCheckpointDate,
         notes: newCheckpointNotes.trim() || undefined,
       });
-      setCard(data);
+      await fetchCard({ background: true });
       setNewCheckpointDate('');
       setNewCheckpointNotes('');
       toast.success(t('results.recoveryCard.checkpointAdded', 'Checkpoint added.'));
@@ -566,11 +682,13 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       setCheckpointBusyId(checkpoint.id);
       try {
         const kpiTimeSeriesId = checkpointMeasurementDraft[checkpoint.id]?.trim() || undefined;
-        const data = await V8ResultsApi.resolveRecoveryCheckpoint(card.id, checkpoint.id, {
+        // resolveRecoveryCheckpoint returns only the checkpoint — refetch to
+        // refresh the card's `checkpoints` array.
+        await V8ResultsApi.resolveRecoveryCheckpoint(card.id, checkpoint.id, {
           status,
           kpiTimeSeriesId,
         });
-        setCard(data);
+        await fetchCard({ background: true });
         onChanged?.();
       } catch (error: any) {
         if (error?.status === 409) {
@@ -1011,7 +1129,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
             <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
               {t('results.recoveryCard.dependencies', 'Dependencies')}
             </div>
-            <TagListEditor
+            <ItemListEditor
               values={draft.dependencies}
               disabled={!editMode}
               onChange={(next) => setEditDraft((d) => (d ? { ...d, dependencies: next } : d))}
@@ -1022,7 +1140,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
             <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
               {t('results.recoveryCard.risks', 'Risks')}
             </div>
-            <TagListEditor
+            <ItemListEditor
               values={draft.risks}
               disabled={!editMode}
               onChange={(next) => setEditDraft((d) => (d ? { ...d, risks: next } : d))}
