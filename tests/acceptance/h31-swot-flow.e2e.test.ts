@@ -54,9 +54,12 @@ function evidence(line: string): void {
 
 async function buildToolsApp(): Promise<Express> {
   const toolsRouter = (await import('../../server/src/routes/tools.routes.js')).default;
+  const reportBuilderRouter = (await import('../../server/src/routes/report-builder.routes.js'))
+    .default;
   const app = express();
   app.use(express.json({ limit: '5mb' }));
   app.use('/api/tools', toolsRouter);
+  app.use('/api/report-builder', reportBuilderRouter);
   return app;
 }
 
@@ -65,6 +68,7 @@ let token: string;
 
 const createdToolSessionIds: string[] = [];
 const createdConclusionIds: string[] = [];
+const createdReportIds: string[] = [];
 
 beforeAll(async () => {
   await seed(); // idempotent — org/user/membership odbioru
@@ -114,6 +118,14 @@ afterAll(async () => {
           createdToolSessionIds,
         ])
         .catch(() => {});
+      if (createdReportIds.length) {
+        await client.query('DELETE FROM report_builder_sections WHERE report_id = ANY($1)', [
+          createdReportIds,
+        ]);
+        await client.query('DELETE FROM report_builder_reports WHERE id = ANY($1)', [
+          createdReportIds,
+        ]);
+      }
       await client
         .query('DELETE FROM tool_decisions WHERE tool_session_id = ANY($1)', [
           createdToolSessionIds,
@@ -280,7 +292,8 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
       linkedCorrelationIds: [] as string[],
       linkedItemIds: c.linkedItemIds,
       insight: `Napięcie ${c.type}: elementy ${c.linkedItemIds.join(' + ')} tworzą konkretną implikację strategiczną wymagającą decyzji zarządu.`,
-      whyNow: 'Presja konkurencyjna i zbliżający się cykl budżetowy Q3 wymagają decyzji w tym kwartale.',
+      whyNow:
+        'Presja konkurencyjna i zbliżający się cykl budżetowy Q3 wymagają decyzji w tym kwartale.',
       confidence: 4,
       proposalStatus: 'accepted',
     }));
@@ -311,7 +324,8 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
         },
         rejectedAlternative: {
           option: 'Obniżka cen w odpowiedzi na konkurencję regionalną',
-          reason: 'Erodowałaby marżę bez gwarancji utrzymania klientów — konkurenci mogą przebić każdą obniżkę',
+          reason:
+            'Erodowałaby marżę bez gwarancji utrzymania klientów — konkurenci mogą przebić każdą obniżkę',
         },
         whyFirst: 'Blokuje największe ryzyko odpływu przychodu, zanim skalujemy inne inicjatywy',
         ownerRole: 'Dyrektor Sprzedaży',
@@ -328,8 +342,7 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
         estimatedEffort: 'high',
         riskLevel: 'medium',
         confidence: 3,
-        firstStep:
-          'CTO zamawia wdrożenie modułu raportowania czasu rzeczywistego do końca Q4',
+        firstStep: 'CTO zamawia wdrożenie modułu raportowania czasu rzeczywistego do końca Q4',
         proposalStatus: 'accepted',
         tradeoff: {
           chosen: 'Naprawa fundamentu raportowania ERP przed nowymi kontraktami MŚP',
@@ -514,7 +527,9 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
         .set('Authorization', `Bearer ${token}`);
       expect(ownerAfterAttack.status).toBe(200);
       expect(ownerAfterAttack.body?.answers?.summary?.verdict).toBe(verdict);
-      evidence('[h31] tenant isolation OK — org B read/write 404, no conclusion leak, owner data unchanged');
+      evidence(
+        '[h31] tenant isolation OK — org B read/write 404, no conclusion leak, owner data unchanged'
+      );
 
       // -----------------------------------------------------------------
       // 9) QUALITY / FINALIZE — real role gate, tenant gate, immutable
@@ -576,10 +591,195 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
         .get(`/api/tools/${sessionId}`)
         .set('Authorization', `Bearer ${token}`);
       expect(finalApprovedRead.body?.answers).toEqual(finalAnswers);
-      expect(finalApprovedRead.body?.contextSnapshot?.approvedSnapshot?.answers).toEqual(finalAnswers);
-      evidence('[h31] quality/finalize OK — role 403, foreign admin 404, approved snapshot immutable, tamper 409');
+      expect(finalApprovedRead.body?.contextSnapshot?.approvedSnapshot?.answers).toEqual(
+        finalAnswers
+      );
+      evidence(
+        '[h31] quality/finalize OK — role 403, foreign admin 404, approved snapshot immutable, tamper 409'
+      );
+
+      // -----------------------------------------------------------------
+      // 10) OUTPUT / REPORT — the approved tool creates one canonical,
+      //     generated Report Builder artifact. It can be read back, exported,
+      //     and re-promoted idempotently; another tenant sees neither source
+      //     nor output.
+      // -----------------------------------------------------------------
+      const promoteReport = await request(toolsApp)
+        .post(`/api/tools/${sessionId}/promote`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          outputType: 'report',
+          title: `${PREFIX}SWOT generated report`,
+          selectedSections: ['executive-summary', 'swot-matrix', 'insights'],
+        });
+      expect(promoteReport.status).toBe(200);
+      const reportId = String(promoteReport.body?.id || '');
+      expect(reportId).toBeTruthy();
+      createdReportIds.push(reportId);
+
+      const reportRead = await request(toolsApp)
+        .get(`/api/report-builder/${reportId}`)
+        .set('Authorization', `Bearer ${token}`);
+      expect(reportRead.status).toBe(200);
+      expect(reportRead.body?.report?.id).toBe(reportId);
+      expect(reportRead.body?.report?.sourceType).toBe('TOOL');
+      expect(reportRead.body?.report?.sourceId).toBe(sessionId);
+      expect(reportRead.body?.report?.status).toBe('GENERATED');
+      expect(reportRead.body?.sections?.length).toBeGreaterThan(0);
+      expect(
+        reportRead.body.sections.every(
+          (section: any) =>
+            String(section.generatedContent || section.editedContent || '').length > 20
+        )
+      ).toBe(true);
+
+      const exportPdf = await request(toolsApp)
+        .get(`/api/report-builder/${reportId}/export/pdf`)
+        .set('Authorization', `Bearer ${token}`);
+      expect(exportPdf.status).toBe(200);
+      expect(exportPdf.headers['content-type']).toContain('application/pdf');
+      expect(exportPdf.body?.length || 0).toBeGreaterThan(500);
+
+      const repeatPromotion = await request(toolsApp)
+        .post(`/api/tools/${sessionId}/promote`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ outputType: 'report', title: `${PREFIX}ignored duplicate title` });
+      expect(repeatPromotion.status).toBe(200);
+      expect(repeatPromotion.body?.id).toBe(reportId);
+      expect(repeatPromotion.body?.deduplicated).toBe(true);
+
+      const foreignReportRead = await request(toolsApp)
+        .get(`/api/report-builder/${reportId}`)
+        .set('Authorization', `Bearer ${tokenBAdmin}`);
+      expect(foreignReportRead.status).toBe(404);
+      const foreignPromotion = await request(toolsApp)
+        .post(`/api/tools/${sessionId}/promote`)
+        .set('Authorization', `Bearer ${tokenBAdmin}`)
+        .send({ outputType: 'report', title: 'foreign report' });
+      expect(foreignPromotion.status).toBe(404);
+      evidence(
+        `[h31] output/report OK — report=${reportId}, read-back + PDF export + dedupe + tenant isolation`
+      );
     } finally {
       await client.end();
     }
+  });
+});
+
+describe('TLS-06 — approved SWOT output/report on real PostgreSQL', () => {
+  it.skip('creates one canonical generated report, reopens and exports it, deduplicates, and isolates tenants', async () => {
+    const createRes = await request(toolsApp)
+      .post('/api/tools')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ toolType: 'dynamic-swot', name: `${PREFIX}tls06-source` });
+    expect(createRes.status).toBe(200);
+    const sessionId = String(createRes.body?.id || '');
+    createdToolSessionIds.push(sessionId);
+
+    const answers = {
+      items: [
+        { id: 's', quadrant: 'strengths', text: 'Trusted B2B position' },
+        { id: 'w', quadrant: 'weaknesses', text: 'Legacy reporting' },
+        { id: 'o', quadrant: 'opportunities', text: 'Automation demand' },
+        { id: 't', quadrant: 'threats', text: 'Price pressure' },
+      ],
+      tensions: [{ id: 'st', title: 'Value versus price', insight: 'Defend value first' }],
+      recommendedMoves: [
+        { id: 'm1', title: 'Retention programme', rationale: 'Protect the strongest base' },
+      ],
+      summary: { executiveSummary: 'Protect B2B value while repairing reporting.' },
+    };
+    const ready = await request(toolsApp)
+      .put(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        status: 'IN_PROGRESS',
+        answers,
+        completionPercent: 100,
+        confidenceAvg: 4,
+        missingItems: [],
+      });
+    expect(ready.status, JSON.stringify(ready.body)).toBe(200);
+    const review = await request(toolsApp)
+      .put(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'REVIEW' });
+    expect(review.status, JSON.stringify(review.body)).toBe(200);
+    const approve = await request(toolsApp)
+      .post(`/api/tools/${sessionId}/approve`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({});
+    expect(approve.status, JSON.stringify(approve.body)).toBe(200);
+    const approvedRead = await request(toolsApp)
+      .get(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send();
+    expect(approvedRead.status).toBe(200);
+    expect(String(approvedRead.body?.status).replace(/['"]/g, '')).toBe('APPROVED');
+
+    const promoteReport = await request(toolsApp)
+      .post(`/api/tools/${sessionId}/promote`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        outputType: 'report',
+        title: `${PREFIX}SWOT generated report`,
+        selectedSections: ['executive-summary', 'swot-matrix', 'insights'],
+      });
+    expect(promoteReport.status, JSON.stringify(promoteReport.body)).toBe(200);
+    const reportId = String(promoteReport.body?.id || '');
+    expect(reportId).toBeTruthy();
+    createdReportIds.push(reportId);
+
+    const reportRead = await request(toolsApp)
+      .get(`/api/report-builder/${reportId}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(reportRead.status).toBe(200);
+    expect(reportRead.body?.report).toMatchObject({
+      id: reportId,
+      sourceType: 'TOOL',
+      sourceId: sessionId,
+      status: 'GENERATED',
+    });
+    expect(reportRead.body?.sections?.length).toBeGreaterThan(0);
+    expect(
+      reportRead.body.sections.every(
+        (section: any) =>
+          String(section.generatedContent || section.editedContent || '').length > 20
+      )
+    ).toBe(true);
+
+    const exportPdf = await request(toolsApp)
+      .get(`/api/report-builder/${reportId}/export/pdf`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(exportPdf.status).toBe(200);
+    expect(exportPdf.headers['content-type']).toContain('application/pdf');
+    expect(exportPdf.body?.length || 0).toBeGreaterThan(500);
+
+    const repeatPromotion = await request(toolsApp)
+      .post(`/api/tools/${sessionId}/promote`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ outputType: 'report', title: `${PREFIX}ignored duplicate title` });
+    expect(repeatPromotion.status).toBe(200);
+    expect(repeatPromotion.body).toMatchObject({ id: reportId, deduplicated: true });
+
+    const tokenBAdmin = mintToken({
+      id: USER_B_ID,
+      email: USER_B_EMAIL,
+      organizationId: ORG_B_ID,
+      organization_id: ORG_B_ID,
+      role: 'ADMIN',
+    });
+    const foreignReportRead = await request(toolsApp)
+      .get(`/api/report-builder/${reportId}`)
+      .set('Authorization', `Bearer ${tokenBAdmin}`);
+    expect(foreignReportRead.status).toBe(404);
+    const foreignPromotion = await request(toolsApp)
+      .post(`/api/tools/${sessionId}/promote`)
+      .set('Authorization', `Bearer ${tokenBAdmin}`)
+      .send({ outputType: 'report', title: 'foreign report' });
+    expect(foreignPromotion.status).toBe(404);
+    evidence(
+      `[tls06] report=${reportId}, durable read-back + PDF export + dedupe + tenant isolation`
+    );
   });
 });

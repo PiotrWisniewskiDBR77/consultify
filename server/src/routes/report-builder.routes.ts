@@ -3992,9 +3992,16 @@ router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunc
     logger.info('[ReportBuilder] PDF exported', { reportId: id, userId });
 
     res.setHeader('Content-Type', 'application/pdf');
+    const exportTitle = String(reportData.report.title || 'report');
+    const asciiFileName =
+      exportTitle
+        .normalize('NFKD')
+        .replace(/[^\x20-\x7E]/g, '')
+        .replace(/["\\/;\r\n]/g, '_')
+        .trim() || 'report';
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${reportData.report.title || 'report'}.pdf"`
+      `attachment; filename="${asciiFileName}.pdf"; filename*=UTF-8''${encodeURIComponent(`${exportTitle}.pdf`)}`
     );
     return res.sendFile(filePath);
   } catch (err: any) {

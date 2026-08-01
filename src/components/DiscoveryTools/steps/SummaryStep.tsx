@@ -21,6 +21,7 @@ import {
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 import {
@@ -195,6 +196,7 @@ function DynamicSwotOutputs({
   onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const swotData = session.inputData as SWOTData;
 
   const allInitiatives: InitiativeDraft[] = useMemo(() => {
@@ -222,7 +224,8 @@ function DynamicSwotOutputs({
   const [presSections, setPresSections] = useState<Set<string>>(
     new Set(['executive-summary', 'swot-matrix'])
   );
-  const [reportCreated, setReportCreated] = useState(false);
+  const [reportId, setReportId] = useState<string | null>(null);
+  const [reportCreating, setReportCreating] = useState(false);
   const [presCreated, setPresCreated] = useState(false);
 
   const toggleReportSection = (id: string) => {
@@ -250,6 +253,33 @@ function DynamicSwotOutputs({
 
   const setAction = (id: string, action: InitiativeAction) => {
     setInitiativeActions((prev) => ({ ...prev, [id]: action }));
+  };
+
+  const handleCreateReport = async () => {
+    if (reportCreating || reportSections.size === 0) return;
+    setReportCreating(true);
+    try {
+      const result = await Api.promoteToolOutput(session.id, {
+        outputType: 'report',
+        title: `${session.name || 'SWOT'} — SWOT Report`,
+        description: isPolish
+          ? 'Raport utworzony z zatwierdzonej sesji Dynamic SWOT.'
+          : 'Report created from an approved Dynamic SWOT session.',
+        selectedSections: Array.from(reportSections),
+      });
+      if (!result?.id) throw new Error('Report identifier missing from server response');
+      setReportId(String(result.id));
+      toast.success(
+        isPolish ? 'Raport zapisano w Report Builderze.' : 'Report saved in Report Builder.'
+      );
+    } catch (error: any) {
+      toast.error(
+        error?.message ||
+          (isPolish ? 'Nie udało się utworzyć raportu.' : 'Failed to create report.')
+      );
+    } finally {
+      setReportCreating(false);
+    }
   };
 
   // H1.4 / S6.2 — materialize the recommendations into the real Initiatives
@@ -721,19 +751,27 @@ function DynamicSwotOutputs({
                 {reportSections.size}{' '}
                 {t('discoveryToolsSteps.summaryStep.dynamicSwot.sectionsSelected')}
               </div>
-              {reportCreated ? (
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-4 py-2 text-xs font-medium text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
+              {reportId ? (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/reports/builder/${encodeURIComponent(reportId)}`)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-4 py-2 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+                >
                   <Check className="h-3.5 w-3.5" />
                   {t('discoveryToolsSteps.summaryStep.dynamicSwot.reportCreated')}
-                </span>
+                </button>
               ) : (
                 <button
-                  onClick={() => setReportCreated(true)}
-                  disabled={reportSections.size === 0}
+                  onClick={handleCreateReport}
+                  disabled={reportSections.size === 0 || reportCreating}
                   className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-slate-800 disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
                 >
                   <FileText className="h-3.5 w-3.5" />
-                  {t('discoveryToolsSteps.summaryStep.dynamicSwot.generateReport')}
+                  {reportCreating
+                    ? isPolish
+                      ? 'Tworzenie…'
+                      : 'Creating…'
+                    : t('discoveryToolsSteps.summaryStep.dynamicSwot.generateReport')}
                 </button>
               )}
             </div>

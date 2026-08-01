@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import pg from 'pg';
 
 import { readTestSupportState } from '../_helpers/testSupportState';
 
@@ -13,8 +14,18 @@ const completeSwotAnswers = {
   items: [
     { id: 'tls-q-s', text: 'Trusted B2B brand', quadrant: 'strengths', proposalStatus: 'accepted' },
     { id: 'tls-q-w', text: 'Legacy reporting', quadrant: 'weaknesses', proposalStatus: 'accepted' },
-    { id: 'tls-q-o', text: 'Growing automation demand', quadrant: 'opportunities', proposalStatus: 'accepted' },
-    { id: 'tls-q-t', text: 'Lower-price entrants', quadrant: 'threats', proposalStatus: 'accepted' },
+    {
+      id: 'tls-q-o',
+      text: 'Growing automation demand',
+      quadrant: 'opportunities',
+      proposalStatus: 'accepted',
+    },
+    {
+      id: 'tls-q-t',
+      text: 'Lower-price entrants',
+      quadrant: 'threats',
+      proposalStatus: 'accepted',
+    },
   ],
   tensions: [
     {
@@ -155,7 +166,7 @@ test('TLS-05: ready SWOT is submitted and approved in UI, frozen in PostgreSQL a
   request,
 }) => {
   test.setTimeout(120_000);
-  const { token } = readTestSupportState();
+  const { token, organizationId } = readTestSupportState();
   const headers = { Authorization: `Bearer ${token}`, 'content-type': 'application/json' };
 
   const create = await request.post(`${API_BASE_URL}/api/tools`, {
@@ -193,13 +204,16 @@ test('TLS-05: ready SWOT is submitted and approved in UI, frozen in PostgreSQL a
   await page.getByRole('button', { name: /Outputs & Actions/i }).click();
   await expect(page.getByRole('heading', { name: /Outputs & Actions/i })).toBeVisible();
   await expect
-    .poll(async () => {
-      const read = await request.get(`${API_BASE_URL}/api/tools/${sessionId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (read.status() !== 200) return false;
-      return (await read.json())?.answers?.context?.timeframe === 'medium';
-    }, { timeout: 15_000, message: 'normalized UI state was not durably autosaved before review' })
+    .poll(
+      async () => {
+        const read = await request.get(`${API_BASE_URL}/api/tools/${sessionId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (read.status() !== 200) return false;
+        return (await read.json())?.answers?.context?.timeframe === 'medium';
+      },
+      { timeout: 15_000, message: 'normalized UI state was not durably autosaved before review' }
+    )
     .toBe(true);
 
   const preApprovalRead = await request.get(`${API_BASE_URL}/api/tools/${sessionId}`, {
@@ -256,4 +270,63 @@ test('TLS-05: ready SWOT is submitted and approved in UI, frozen in PostgreSQL a
   expect(finalBody.status).toBe('APPROVED');
   expect(finalBody.answers).toEqual(answersAtApproval);
   expect(finalBody.contextSnapshot.approvedSnapshot.answers).toEqual(answersAtApproval);
+
+  const promotionResponsePromise = page.waitForResponse(
+    (response) =>
+      response.url().includes(`/api/tools/${sessionId}/promote`) &&
+      response.request().method() === 'POST'
+  );
+  const generateReport = page.getByRole('button', { name: /Generate report|Generuj raport/i });
+  await expect(generateReport).toBeEnabled();
+  await generateReport.click();
+  const promotionResponse = await promotionResponsePromise;
+  const promotionBody = await promotionResponse.json();
+  expect(promotionResponse.status(), JSON.stringify(promotionBody)).toBe(200);
+  const reportId = String(promotionBody?.id || '');
+  expect(reportId).toBeTruthy();
+
+  const reportRead = await request.get(`${API_BASE_URL}/api/report-builder/${reportId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  expect(reportRead.status()).toBe(200);
+  const reportBody = await reportRead.json();
+  expect(reportBody.report).toMatchObject({
+    id: reportId,
+    sourceType: 'TOOL',
+    sourceId: sessionId,
+    status: 'GENERATED',
+  });
+  expect(reportBody.sections.length).toBeGreaterThan(0);
+  expect(
+    reportBody.sections.every(
+      (section: any) => String(section.generatedContent || section.editedContent || '').length > 20
+    )
+  ).toBe(true);
+
+  const db = new pg.Client({ connectionString: process.env.DATABASE_URL });
+  await db.connect();
+  try {
+    await db.query(
+      `UPDATE organizations SET plan = 'enterprise', organization_type = 'PAID' WHERE id = $1`,
+      [organizationId]
+    );
+  } finally {
+    await db.end();
+  }
+
+  const pdfExport = await request.get(`${API_BASE_URL}/api/report-builder/${reportId}/export/pdf`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  expect(pdfExport.status(), await pdfExport.text()).toBe(200);
+  expect(pdfExport.headers()['content-type']).toContain('application/pdf');
+  expect((await pdfExport.body()).length).toBeGreaterThan(500);
+
+  await page.getByRole('button', { name: /Report created|Raport utworzony/i }).click();
+  await expect(page).toHaveURL(new RegExp(`/reports/builder/${reportId}`));
+  await page.reload();
+  await expect(page).toHaveURL(new RegExp(`/reports/builder/${reportId}`));
+  await expect(page.getByRole('textbox', { name: /Report title/i })).toHaveValue(
+    reportBody.report.title,
+    { timeout: 30_000 }
+  );
 });
