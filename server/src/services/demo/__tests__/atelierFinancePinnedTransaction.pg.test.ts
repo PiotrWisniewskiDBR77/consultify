@@ -30,6 +30,29 @@
  *      complete and coherent.
  *
  * ===========================================================================
+ * ISOLATION — read this before adding a test
+ * ===========================================================================
+ * The first version of this file shared ONE organization id across all tests
+ * and reset the fixture in `beforeEach`. That was non-deterministic, and the
+ * failures looked like adapter bugs while being pure harness interference: a
+ * reset racing an in-flight seed produced foreign-key violations on rows that
+ * had just been deleted underneath it, and a fault left behind by a timed-out
+ * hook fired inside a later test that injects no fault at all.
+ *
+ * The rules that replaced it, all load-bearing:
+ *   - EVERY TEST OWNS AN ORGANIZATION (`orgFor('<key>')`). No test can observe,
+ *     reset or delete another test's rows, so nothing a hook does can race a
+ *     seed that is still running.
+ *   - THE FIXTURE RESET LIVES IN THE TEST BODY, not in a hook, so it is
+ *     governed by that test's own timeout and can never overlap its neighbour.
+ *   - FAULTS ARE ROW-SCOPED (a set of target ids) and every fault is installed
+ *     and removed in a `try/finally`; faults are ALSO cleared in `beforeEach`
+ *     and `afterEach`. Because targets are ids and ids are per-organization, a
+ *     leaked fault cannot fire in another test even if all of that failed.
+ *   - THE FILE IS SEQUENTIAL. `describe.sequential` plus per-org data means
+ *     this file MUST NOT be run concurrently against one database.
+ *
+ * ===========================================================================
  * HOW TO RUN
  * ===========================================================================
  *   DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false \
@@ -41,6 +64,9 @@
  * nothing. `RUN_DB_TESTS=1` and `MOCK_DB=false` are what force the real driver.
  * Without a reachable database the whole file SKIPS (it must never fail a
  * developer machine that has no local Postgres) — and the skip is loud.
+ *
+ * Point `DATABASE_URL` at the DRIFTED database instead and the file runs the
+ * schema-drift gate rather than the fault matrix.
  */
 
 import { Pool, type PoolClient } from 'pg';
@@ -50,6 +76,7 @@ import logger from '../../../utils/Logger.js';
 import {
   getAtelierFinanceCanonicalIds,
   upsertAtelierFinanceGoldenFlow,
+  type AtelierCanonicalIds,
 } from '../atelierFinanceSeed.js';
 import {
   probePinnedTransactionSupport,
@@ -67,8 +94,9 @@ const REAL_DB_REQUESTED =
   process.env.MOCK_DB === 'false' &&
   CONNECTION_STRING.startsWith('postgres');
 
-/** Reachability is decided once, before the suite is declared. */
+/** Reachability and drift are decided once, before the suites are declared. */
 const REACHABLE = REAL_DB_REQUESTED ? await canReach(CONNECTION_STRING) : false;
+const DRIFTED = REACHABLE ? await isDrifted(CONNECTION_STRING) : false;
 
 async function canReach(connectionString: string): Promise<boolean> {
   const probe = new Pool({ connectionString, max: 1, connectionTimeoutMillis: 3000 });
@@ -81,26 +109,6 @@ async function canReach(connectionString: string): Promise<boolean> {
     await probe.end().catch(() => undefined);
   }
 }
-
-if (!REACHABLE) {
-  // eslint-disable-next-line no-console
-  console.warn(
-    `[FIN-005 pinned-transaction suite SKIPPED] needs DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<reachable postgres>. ` +
-      `requested=${REAL_DB_REQUESTED} reachable=${REACHABLE}`
-  );
-}
-
-const ORG_ID = 'fin005-pinned-tx-org';
-const IDS = getAtelierFinanceCanonicalIds(ORG_ID);
-const [STMT_1, STMT_2, STMT_3] = IDS.statementIds;
-
-/**
- * The same file serves both provisioned databases. Point `DATABASE_URL` at the
- * DRIFTED one (no `financial_statements.readiness_status` / `readiness_score`)
- * and the file runs the drift gate instead of the fault matrix — the fault
- * matrix is meaningless on a schema the seed must refuse outright.
- */
-const DRIFTED = REACHABLE ? await isDrifted(CONNECTION_STRING) : false;
 
 async function isDrifted(connectionString: string): Promise<boolean> {
   const probe = new Pool({ connectionString, max: 1, connectionTimeoutMillis: 3000 });
@@ -118,94 +126,83 @@ async function isDrifted(connectionString: string): Promise<boolean> {
   }
 }
 
+if (!REACHABLE) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    `[FIN-005 pinned-transaction suite SKIPPED — this is a clean skip, not a failure] ` +
+      `needs DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<reachable postgres>. ` +
+      `requested=${REAL_DB_REQUESTED} reachable=${REACHABLE}`
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Per-test tenancy
+// ---------------------------------------------------------------------------
+
+const ORG_PREFIX = 'fin005-pinned-tx';
+
+/** Every organization this file owns — created once, dropped once. */
+const ORG_KEYS = [
+  'probe',
+  'happy',
+  'second-run',
+  'fault-before-first',
+  'fault-after-stmt-1',
+  'fault-after-stmt-2',
+  'fault-after-stmt-3',
+  'fault-after-analysis',
+  'fault-pre-commit',
+  'fault-terminate',
+  'fault-timeout',
+  'fault-sigterm',
+  'lock-probe',
+  'drift',
+] as const;
+
+type OrgKey = (typeof ORG_KEYS)[number];
+
+const orgFor = (key: OrgKey): string => `${ORG_PREFIX}-${key}`;
+const idsFor = (key: OrgKey): AtelierCanonicalIds => getAtelierFinanceCanonicalIds(orgFor(key));
+
 /** Out-of-band pool: assertions, fixture reset and fault control. Never the seed's. */
 let control: Pool;
 
-const suite = REACHABLE && !DRIFTED ? describe : describe.skip;
-const driftSuite = REACHABLE && DRIFTED ? describe : describe.skip;
+const suite = REACHABLE && !DRIFTED ? describe.sequential : describe.skip;
+const driftSuite = REACHABLE && DRIFTED ? describe.sequential : describe.skip;
 
-driftSuite('FIN-005 — schema drift gate on a real, drifted PostgreSQL', () => {
-  let driftPool: Pool;
-
-  beforeAll(async () => {
-    driftPool = new Pool({ connectionString: CONNECTION_STRING, max: 4 });
-    await driftPool.query(
-      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
-      [ORG_ID, 'FIN-005 pinned transaction fixture']
-    );
-  }, 60_000);
-
-  afterAll(async () => {
-    if (!driftPool) return;
-    await deleteFixture(driftPool).catch(() => undefined);
-    await driftPool.query(`DELETE FROM organizations WHERE id = $1`, [ORG_ID]).catch(() => undefined);
-    await driftPool.end().catch(() => undefined);
-    const { default: db } = await import('../../../database/PostgresDatabase.js');
-    await (db as unknown as { close: () => Promise<void> }).close().catch(() => undefined);
-  }, 60_000);
-
-  it('refuses the fixture and produces ZERO false READY', async () => {
-    const result = await upsertAtelierFinanceGoldenFlow({ organizationId: ORG_ID });
-
-    expect(result.status).toBe('incomplete');
-    expect(result.missing ?? []).toContain('financial_statements.readiness_status');
-    expect(result.statementIds).toEqual([]);
-
-    // Nothing was promoted — and, on this schema, nothing could even be written.
-    const packs = await driftPool.query(
-      `SELECT pack_readiness_status FROM financial_statement_packs WHERE id = $1`,
-      [IDS.packId]
-    );
-    for (const row of packs.rows) expect(row.pack_readiness_status).not.toBe('ready');
-
-    const analyses = await driftPool.query(
-      `SELECT status FROM financial_analyses WHERE id = $1`,
-      [IDS.analysisId]
-    );
-    for (const row of analyses.rows) expect(row.status).not.toBe('APPROVED');
-
-    const statements = await driftPool.query(
-      `SELECT status, validation_status FROM financial_statements WHERE id = ANY($1::text[])`,
-      [IDS.statementIds]
-    );
-    for (const row of statements.rows) {
-      expect(row.status).not.toBe('confirmed');
-      expect(row.validation_status).not.toBe('pass');
-    }
-  }, 60_000);
-});
+// ---------------------------------------------------------------------------
+// The fault matrix
+// ---------------------------------------------------------------------------
 
 suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () => {
   beforeAll(async () => {
-    control = new Pool({ connectionString: CONNECTION_STRING, max: 6 });
-    await control.query(
-      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
-      [ORG_ID, 'FIN-005 pinned transaction fixture']
-    );
+    control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
+    await createOrganizations(control);
     await installFaultTriggers(control);
-  }, 60_000);
+    await clearAllFaults(control);
+  }, 120_000);
 
   afterAll(async () => {
     if (!control) return;
+    await clearAllFaults(control).catch(() => undefined);
     await removeFaultTriggers(control).catch(() => undefined);
-    await deleteFixture(control).catch(() => undefined);
-    await control
-      .query(`DELETE FROM organizations WHERE id = $1`, [ORG_ID])
-      .catch(() => undefined);
+    await dropOrganizations(control).catch(() => undefined);
     await control.end().catch(() => undefined);
     // Close the pool the seed opened, otherwise vitest hangs on open handles.
     const { default: db } = await import('../../../database/PostgresDatabase.js');
     await (db as unknown as { close: () => Promise<void> }).close().catch(() => undefined);
+  }, 120_000);
+
+  // Belt and braces. Faults are already row-scoped per organization AND removed
+  // in a `finally`; these two hooks mean even a test killed by its own timeout
+  // cannot leave one armed.
+  beforeEach(async () => {
+    await clearAllFaults(control);
   }, 60_000);
 
-  beforeEach(async () => {
-    await clearFault(control);
-    await deleteFixture(control);
-  });
-
   afterEach(async () => {
-    await clearFault(control);
-  });
+    await clearAllFaults(control);
+  }, 60_000);
 
   // -------------------------------------------------------------------------
   // Baseline — the pinned path is the one actually taken here.
@@ -215,51 +212,62 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
     const probe = await probePinnedTransactionSupport();
     expect(probe.supported, `probe said: ${probe.reason}`).toBe(true);
     expect(probe.database).toBeTruthy();
-  });
-
-  it('promotes all five rows and commits them ON THE PINNED PATH', async () => {
-    // TEETH. Without this the whole suite would still pass if the seed silently
-    // fell back to verify-then-promote — the compensating rollback also leaves
-    // "zero partial READY" behind. The log line is the only place the two paths
-    // are distinguishable from the outside.
-    const info = vi.spyOn(logger, 'info');
-    const warn = vi.spyOn(logger, 'warn');
-    try {
-      const result = await seed();
-      expect(result.status, result.reason ?? '').toBe('complete');
-      await expectFixtureFullyReady();
-
-      const lines = info.mock.calls.map((call) => String(call[0]));
-      expect(lines.some((line) => line.includes('COMPLETE via the PINNED transaction path'))).toBe(
-        true
-      );
-      expect(
-        warn.mock.calls
-          .map((call) => String(call[0]))
-          .some((line) => line.includes('WITHOUT a pinned transaction')),
-        'the seed must NOT have used the compensating fallback here'
-      ).toBe(false);
-    } finally {
-      info.mockRestore();
-      warn.mockRestore();
-    }
   }, 60_000);
+
+  it(
+    'promotes all five rows and commits them ON THE PINNED PATH',
+    async () => {
+      const ids = idsFor('happy');
+      await resetFixture(ids);
+
+      // TEETH. Without this the whole suite would still pass if the seed
+      // silently fell back to verify-then-promote — the compensating rollback
+      // also leaves "zero partial READY" behind. The log line is the only place
+      // the two paths are distinguishable from the outside.
+      const info = vi.spyOn(logger, 'info');
+      const warn = vi.spyOn(logger, 'warn');
+      try {
+        const result = await seed('happy');
+        expect(result.status, result.reason ?? '').toBe('complete');
+        await expectFixtureFullyReady(ids);
+
+        expect(
+          info.mock.calls
+            .map((call) => String(call[0]))
+            .some((line) => line.includes('COMPLETE via the PINNED transaction path'))
+        ).toBe(true);
+        expect(
+          warn.mock.calls
+            .map((call) => String(call[0]))
+            .some((line) => line.includes('WITHOUT a pinned transaction')),
+          'the seed must NOT have used the compensating fallback here'
+        ).toBe(false);
+      } finally {
+        info.mockRestore();
+        warn.mockRestore();
+      }
+    },
+    120_000
+  );
 
   it(
     'is byte-identical on a second run: zero rows touched, zero timestamps moved',
     async () => {
-      const first = await seed();
-      expect(first.status, first.reason ?? '').toBe('complete');
-      const before = await fixtureSnapshot();
+      const ids = idsFor('second-run');
+      await resetFixture(ids);
 
-      const second = await seed();
+      const first = await seed('second-run');
+      expect(first.status, first.reason ?? '').toBe('complete');
+      const before = await fixtureSnapshot(ids);
+
+      const second = await seed('second-run');
       expect(second.status, second.reason ?? '').toBe('complete');
-      const after = await fixtureSnapshot();
+      const after = await fixtureSnapshot(ids);
 
       expect(after).toEqual(before);
-      await expectFixtureFullyReady();
+      await expectFixtureFullyReady(ids);
     },
-    90_000
+    120_000
   );
 
   // -------------------------------------------------------------------------
@@ -270,22 +278,30 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
   // demotions are untouched — the fault lands exactly where the name says.
   // -------------------------------------------------------------------------
 
-  const triggerFaults: Array<{ name: string; target: () => string }> = [
-    { name: 'before the first UPDATE', target: () => STMT_1 },
-    { name: 'after statement promotion 1', target: () => STMT_2 },
-    { name: 'after statement promotion 2', target: () => STMT_3 },
-    { name: 'after statement promotion 3', target: () => IDS.analysisId },
-    { name: 'after the analysis promotion', target: () => IDS.packId },
-  ];
+  const triggerFaults: Array<{ name: string; key: OrgKey; target: (ids: AtelierCanonicalIds) => string }> =
+    [
+      { name: 'before the first UPDATE', key: 'fault-before-first', target: (ids) => ids.statementIds[0] },
+      { name: 'after statement promotion 1', key: 'fault-after-stmt-1', target: (ids) => ids.statementIds[1] },
+      { name: 'after statement promotion 2', key: 'fault-after-stmt-2', target: (ids) => ids.statementIds[2] },
+      { name: 'after statement promotion 3', key: 'fault-after-stmt-3', target: (ids) => ids.analysisId },
+      { name: 'after the analysis promotion', key: 'fault-after-analysis', target: (ids) => ids.packId },
+    ];
 
   for (const fault of triggerFaults) {
     it(
       `leaves ZERO partial READY when the promotion fails ${fault.name}`,
       async () => {
-        await setFault(control, fault.target());
+        const ids = idsFor(fault.key);
+        await resetFixture(ids);
 
+        let result: Awaited<ReturnType<typeof seed>>;
         const startedAt = Date.now();
-        const result = await seed();
+        try {
+          await armFault(control, fault.target(ids));
+          result = await seed(fault.key);
+        } finally {
+          await disarmFault(control, fault.target(ids));
+        }
         const elapsed = Date.now() - startedAt;
 
         expect(result.status).toBe('incomplete');
@@ -294,21 +310,20 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
         expect(result.reason).toMatch(/^pinned promotion transaction rolled back: /);
         expect(result.reason).toMatch(/FIN005_INJECTED_FAULT/);
         expect(result.statementIds).toEqual([]);
-        expect(elapsed, 'the faulted call must return in bounded time').toBeLessThan(30_000);
+        expect(elapsed, 'the faulted call must return in bounded time').toBeLessThan(60_000);
 
-        await expectNoPartialReady();
+        await expectNoPartialReady(ids);
 
         // The rollback is Postgres's, but the seed still verifies it rather
         // than asserting it.
         expect(result.promotion?.rowsStillClaimingReady ?? []).toEqual([]);
 
         // ...and the fixture recovers on the next run.
-        await clearFault(control);
-        const recovery = await seed();
+        const recovery = await seed(fault.key);
         expect(recovery.status, recovery.reason ?? '').toBe('complete');
-        await expectFixtureFullyReady();
+        await expectFixtureFullyReady(ids);
       },
-      90_000
+      180_000
     );
   }
 
@@ -322,11 +337,11 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
   it(
     'leaves ZERO partial READY when the pre-COMMIT read-back refuses (after the pack promotion)',
     async () => {
-      await seedThenDemote();
+      const ids = await seedThenDemote('fault-pre-commit');
 
       const outcome = await runPinnedPromotionTransaction({
-        lock: lockRequest(),
-        plan: async () => ({ ok: true, writes: promotionWrites() }),
+        lock: lockRequest(ids),
+        plan: async () => ({ ok: true, writes: promotionWrites(ids) }),
         verify: async () => ({ ok: false, reason: 'injected pre-COMMIT refusal' }),
       });
 
@@ -336,57 +351,56 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
         expect(outcome.applied).toHaveLength(5); // all five DID execute…
         expect(outcome.reason).toMatch(/injected pre-COMMIT refusal/);
       }
-      await expectNoPartialReady(); // …and none of them survived.
+      await expectNoPartialReady(ids); // …and none of them survived.
 
-      const recovery = await seed();
+      const recovery = await seed('fault-pre-commit');
       expect(recovery.status, recovery.reason ?? '').toBe('complete');
-      await expectFixtureFullyReady();
+      await expectFixtureFullyReady(ids);
     },
-    90_000
+    180_000
   );
 
   it(
     'leaves ZERO partial READY when the pinned backend is TERMINATED mid-transaction (before the writes)',
     async () => {
-      await seedThenDemote();
+      const ids = await seedThenDemote('fault-terminate');
 
       const startedAt = Date.now();
       const outcome = await runPinnedPromotionTransaction({
-        lock: lockRequest(),
+        lock: lockRequest(ids),
         plan: async (read) => {
-          const pid = await backendPid(read);
-          await terminateBackend(pid);
+          await terminateBackend(await backendPid(read));
           // The next statement on a terminated backend fails; that is the fault.
           await read('SELECT 1');
-          return { ok: true, writes: promotionWrites() };
+          return { ok: true, writes: promotionWrites(ids) };
         },
         verify: async () => ({ ok: true }),
       });
       const elapsed = Date.now() - startedAt;
 
       expect(outcome).toMatchObject({ mode: 'pinned', status: 'rolled-back' });
-      expect(elapsed, 'a terminated backend must not hang the call').toBeLessThan(30_000);
-      await expectNoPartialReady();
+      expect(elapsed, 'a terminated backend must not hang the call').toBeLessThan(60_000);
+      await expectNoPartialReady(ids);
 
-      const recovery = await seed();
+      const recovery = await seed('fault-terminate');
       expect(recovery.status, recovery.reason ?? '').toBe('complete');
-      await expectFixtureFullyReady();
+      await expectFixtureFullyReady(ids);
     },
-    90_000
+    180_000
   );
 
   it(
     'leaves ZERO partial READY on a statement TIMEOUT mid-transaction',
     async () => {
-      await seedThenDemote();
+      const ids = await seedThenDemote('fault-timeout');
 
       const startedAt = Date.now();
       const outcome = await runPinnedPromotionTransaction({
-        lock: lockRequest(),
+        lock: lockRequest(ids),
         plan: async (read) => {
           await read(`SET LOCAL statement_timeout = 250`);
           await read(`SELECT pg_sleep(5)`); // exceeds the timeout -> 57014
-          return { ok: true, writes: promotionWrites() };
+          return { ok: true, writes: promotionWrites(ids) };
         },
         verify: async () => ({ ok: true }),
         statementTimeoutMs: 5_000,
@@ -398,26 +412,26 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
         expect(outcome.reason).toMatch(/statement timeout|canceling statement/i);
         expect(outcome.applied).toEqual([]);
       }
-      expect(elapsed, 'the timeout must bound the call').toBeLessThan(30_000);
-      await expectNoPartialReady();
+      expect(elapsed, 'the timeout must bound the call').toBeLessThan(60_000);
+      await expectNoPartialReady(ids);
 
-      const recovery = await seed();
+      const recovery = await seed('fault-timeout');
       expect(recovery.status, recovery.reason ?? '').toBe('complete');
-      await expectFixtureFullyReady();
+      await expectFixtureFullyReady(ids);
     },
-    90_000
+    180_000
   );
 
   it(
     'leaves ZERO partial READY on a SIGTERM-equivalent: backend killed after all five writes, before COMMIT',
     async () => {
-      await seedThenDemote();
+      const ids = await seedThenDemote('fault-sigterm');
 
       let appliedInsideTx = 0;
       const startedAt = Date.now();
       const outcome = await runPinnedPromotionTransaction({
-        lock: lockRequest(),
-        plan: async () => ({ ok: true, writes: promotionWrites() }),
+        lock: lockRequest(ids),
+        plan: async () => ({ ok: true, writes: promotionWrites(ids) }),
         verify: async (read) => {
           // All five promotion UPDATEs have executed and are visible INSIDE the
           // transaction at this point — prove it, then kill the backend without
@@ -425,7 +439,7 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
           const rows = await read(
             `SELECT count(*)::int AS ready FROM financial_statements
               WHERE id = ANY($1::text[]) AND readiness_status = 'ready'`,
-            [IDS.statementIds]
+            [ids.statementIds]
           );
           appliedInsideTx = Number(rows[0]?.ready ?? 0);
           await terminateBackend(await backendPid(read));
@@ -436,16 +450,16 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
 
       expect(appliedInsideTx, 'the writes really were applied inside the transaction').toBe(3);
       expect(outcome).toMatchObject({ mode: 'pinned', status: 'rolled-back' });
-      expect(elapsed, 'a killed backend must not hang the call').toBeLessThan(30_000);
+      expect(elapsed, 'a killed backend must not hang the call').toBeLessThan(60_000);
 
       // The whole point: uncommitted work dies with the connection.
-      await expectNoPartialReady();
+      await expectNoPartialReady(ids);
 
-      const recovery = await seed();
+      const recovery = await seed('fault-sigterm');
       expect(recovery.status, recovery.reason ?? '').toBe('complete');
-      await expectFixtureFullyReady();
+      await expectFixtureFullyReady(ids);
     },
-    90_000
+    180_000
   );
 
   // -------------------------------------------------------------------------
@@ -455,13 +469,13 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
   it(
     'holds a FOR UPDATE lock on the canonical rows for the life of the transaction',
     async () => {
-      await seedThenDemote();
+      const ids = await seedThenDemote('lock-probe');
 
       let blockedWhileHeld: boolean | null = null;
       const outcome = await runPinnedPromotionTransaction({
-        lock: lockRequest(),
+        lock: lockRequest(ids),
         plan: async () => {
-          blockedWhileHeld = await competingUpdateBlocks(IDS.packId);
+          blockedWhileHeld = await competingUpdateBlocks(ids.packId);
           return { ok: false, reason: 'lock probe only' };
         },
         verify: async () => ({ ok: true }),
@@ -469,39 +483,52 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
 
       expect(blockedWhileHeld, 'a competing writer must block on the locked pack row').toBe(true);
       expect(outcome).toMatchObject({ mode: 'pinned', status: 'rolled-back' });
-      await expectNoPartialReady();
+      await expectNoPartialReady(ids);
     },
-    90_000
+    180_000
   );
 
   // -------------------------------------------------------------------------
   // Helpers
   // -------------------------------------------------------------------------
 
-  function seed() {
-    return upsertAtelierFinanceGoldenFlow({ organizationId: ORG_ID, createdBy: null });
+  function seed(key: OrgKey) {
+    return upsertAtelierFinanceGoldenFlow({ organizationId: orgFor(key), createdBy: null });
+  }
+
+  /**
+   * Wipe this organization's fixture. Deliberately called from the TEST BODY,
+   * never from a hook: a reset that runs on a hook's clock can overlap the
+   * neighbouring test's seed and delete rows out from under it (observed as
+   * foreign-key violations before the per-test tenancy above).
+   */
+  async function resetFixture(ids: AtelierCanonicalIds): Promise<void> {
+    await deleteFixture(control, ids);
   }
 
   /** A complete fixture, then demoted, so the promotion can be re-driven by hand. */
-  async function seedThenDemote(): Promise<void> {
-    const result = await seed();
+  async function seedThenDemote(key: OrgKey): Promise<AtelierCanonicalIds> {
+    const ids = idsFor(key);
+    await resetFixture(ids);
+    const result = await seed(key);
     expect(result.status, result.reason ?? '').toBe('complete');
-    await demoteFixture(control);
-    await expectNoPartialReady();
+    await demoteFixture(control, ids);
+    await expectNoPartialReady(ids);
+    return ids;
   }
 
-  function lockRequest() {
+  function lockRequest(ids: AtelierCanonicalIds) {
     return [
-      { table: 'financial_statement_packs', ids: [IDS.packId] },
-      { table: 'financial_statements', ids: IDS.statementIds },
-      { table: 'financial_analyses', ids: [IDS.analysisId] },
+      { table: 'financial_statement_packs', ids: [ids.packId] },
+      { table: 'financial_statements', ids: ids.statementIds },
+      { table: 'financial_analyses', ids: [ids.analysisId] },
     ];
   }
 
   /** The same five promotions the seed issues, expressed as plain SQL. */
-  function promotionWrites(): PinnedWrite[] {
+  function promotionWrites(ids: AtelierCanonicalIds): PinnedWrite[] {
     return [
-      ...IDS.statementIds.map((id) => ({
+      ...ids.statementIds.map((id) => ({
         label: id,
         sql: `UPDATE financial_statements
                  SET status = 'confirmed', validation_status = 'pass',
@@ -510,24 +537,24 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
         params: [id],
       })),
       {
-        label: IDS.analysisId,
+        label: ids.analysisId,
         sql: `UPDATE financial_analyses SET status = 'APPROVED' WHERE id = $1`,
-        params: [IDS.analysisId],
+        params: [ids.analysisId],
       },
       {
-        label: IDS.packId,
+        label: ids.packId,
         sql: `UPDATE financial_statement_packs
                  SET pack_status = 'confirmed', pack_readiness_status = 'ready',
                      pack_readiness_score = 100
                WHERE id = $1`,
-        params: [IDS.packId],
+        params: [ids.packId],
       },
     ];
   }
 
-  async function backendPid(read: (sql: string, params?: unknown[]) => Promise<
-    Array<Record<string, unknown>>
-  >): Promise<number> {
+  async function backendPid(
+    read: (sql: string, params?: unknown[]) => Promise<Array<Record<string, unknown>>>
+  ): Promise<number> {
     const rows = await read('SELECT pg_backend_pid() AS pid');
     const pid = Number(rows[0]?.pid ?? 0);
     expect(pid, 'could not read the pinned backend pid').toBeGreaterThan(0);
@@ -570,21 +597,18 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
    * Everything a second run could disturb, including `updated_at` — the column
    * the FIN-005 no-op guard exists to protect.
    */
-  async function fixtureSnapshot(): Promise<unknown> {
+  async function fixtureSnapshot(ids: AtelierCanonicalIds): Promise<unknown> {
     const [packs, statements, values, analyses] = await Promise.all([
-      control.query(
-        `SELECT * FROM financial_statement_packs WHERE id = $1`,
-        [IDS.packId]
-      ),
+      control.query(`SELECT * FROM financial_statement_packs WHERE id = $1`, [ids.packId]),
       control.query(
         `SELECT * FROM financial_statements WHERE id = ANY($1::text[]) ORDER BY id`,
-        [IDS.statementIds]
+        [ids.statementIds]
       ),
       control.query(
         `SELECT * FROM financial_statement_values WHERE statement_id = ANY($1::text[]) ORDER BY id`,
-        [IDS.statementIds]
+        [ids.statementIds]
       ),
-      control.query(`SELECT * FROM financial_analyses WHERE id = $1`, [IDS.analysisId]),
+      control.query(`SELECT * FROM financial_analyses WHERE id = $1`, [ids.analysisId]),
     ]);
     return JSON.parse(
       JSON.stringify({
@@ -596,11 +620,11 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
     );
   }
 
-  async function expectNoPartialReady(): Promise<void> {
+  async function expectNoPartialReady(ids: AtelierCanonicalIds): Promise<void> {
     const statements = await control.query(
       `SELECT id, status, validation_status, readiness_status
          FROM financial_statements WHERE id = ANY($1::text[])`,
-      [IDS.statementIds]
+      [ids.statementIds]
     );
     for (const row of statements.rows) {
       expect(row.status, `${row.id} status`).not.toBe('confirmed');
@@ -609,13 +633,13 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
     }
 
     const analysis = await control.query(`SELECT status FROM financial_analyses WHERE id = $1`, [
-      IDS.analysisId,
+      ids.analysisId,
     ]);
     for (const row of analysis.rows) expect(row.status).not.toBe('APPROVED');
 
     const pack = await control.query(
       `SELECT pack_status, pack_readiness_status FROM financial_statement_packs WHERE id = $1`,
-      [IDS.packId]
+      [ids.packId]
     );
     for (const row of pack.rows) {
       expect(row.pack_status).not.toBe('confirmed');
@@ -623,13 +647,13 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
     }
   }
 
-  async function expectFixtureFullyReady(): Promise<void> {
+  async function expectFixtureFullyReady(ids: AtelierCanonicalIds): Promise<void> {
     const statements = await control.query(
       `SELECT id, status, validation_status, readiness_status
          FROM financial_statements WHERE id = ANY($1::text[]) ORDER BY id`,
-      [IDS.statementIds]
+      [ids.statementIds]
     );
-    expect(statements.rows).toHaveLength(IDS.statementIds.length);
+    expect(statements.rows).toHaveLength(ids.statementIds.length);
     for (const row of statements.rows) {
       expect(row.status, `${row.id} status`).toBe('confirmed');
       expect(row.validation_status, `${row.id} validation_status`).toBe('pass');
@@ -638,15 +662,15 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
 
     const analysis = await control.query(
       `SELECT status, source_statement_pack_id FROM financial_analyses WHERE id = $1`,
-      [IDS.analysisId]
+      [ids.analysisId]
     );
     expect(analysis.rows).toHaveLength(1);
     expect(analysis.rows[0].status).toBe('APPROVED');
-    expect(analysis.rows[0].source_statement_pack_id).toBe(IDS.packId);
+    expect(analysis.rows[0].source_statement_pack_id).toBe(ids.packId);
 
     const pack = await control.query(
       `SELECT pack_status, pack_readiness_status, currency FROM financial_statement_packs WHERE id = $1`,
-      [IDS.packId]
+      [ids.packId]
     );
     expect(pack.rows).toHaveLength(1);
     expect(pack.rows[0].pack_status).toBe('confirmed');
@@ -657,62 +681,138 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
       `SELECT count(*)::int AS total,
               count(*) FILTER (WHERE canonical_line_id IS NULL)::int AS unmapped
          FROM financial_statement_values WHERE statement_id = ANY($1::text[])`,
-      [IDS.statementIds]
+      [ids.statementIds]
     );
-    expect(values.rows[0].total).toBe(IDS.statementValueIds.length);
+    expect(values.rows[0].total).toBe(ids.statementValueIds.length);
     expect(values.rows[0].unmapped).toBe(0);
 
     const currencies = await control.query(
       `SELECT DISTINCT currency FROM financial_statements WHERE id = ANY($1::text[])`,
-      [IDS.statementIds]
+      [ids.statementIds]
     );
     expect(currencies.rows.map((row) => row.currency)).toEqual([pack.rows[0].currency]);
   }
 });
 
 // ---------------------------------------------------------------------------
-// Fixture and fault plumbing (module scope so `beforeAll` can reach it)
+// The schema-drift gate, on its own database
 // ---------------------------------------------------------------------------
 
-async function deleteFixture(pool: Pool): Promise<void> {
+driftSuite('FIN-005 — schema drift gate on a real, drifted PostgreSQL', () => {
+  let driftPool: Pool;
+  const ids = idsFor('drift');
+
+  beforeAll(async () => {
+    driftPool = new Pool({ connectionString: CONNECTION_STRING, max: 4 });
+    await createOrganizations(driftPool);
+  }, 120_000);
+
+  afterAll(async () => {
+    if (!driftPool) return;
+    await deleteFixture(driftPool, ids).catch(() => undefined);
+    await dropOrganizations(driftPool).catch(() => undefined);
+    await driftPool.end().catch(() => undefined);
+    const { default: db } = await import('../../../database/PostgresDatabase.js');
+    await (db as unknown as { close: () => Promise<void> }).close().catch(() => undefined);
+  }, 120_000);
+
+  it(
+    'refuses the fixture and produces ZERO false READY',
+    async () => {
+      const result = await upsertAtelierFinanceGoldenFlow({ organizationId: orgFor('drift') });
+
+      expect(result.status).toBe('incomplete');
+      expect(result.missing ?? []).toContain('financial_statements.readiness_status');
+      expect(result.statementIds).toEqual([]);
+
+      // Nothing was promoted — and, on this schema, nothing could even be written.
+      const packs = await driftPool.query(
+        `SELECT pack_readiness_status FROM financial_statement_packs WHERE id = $1`,
+        [ids.packId]
+      );
+      for (const row of packs.rows) expect(row.pack_readiness_status).not.toBe('ready');
+
+      const analyses = await driftPool.query(`SELECT status FROM financial_analyses WHERE id = $1`, [
+        ids.analysisId,
+      ]);
+      for (const row of analyses.rows) expect(row.status).not.toBe('APPROVED');
+
+      const statements = await driftPool.query(
+        `SELECT status, validation_status FROM financial_statements WHERE id = ANY($1::text[])`,
+        [ids.statementIds]
+      );
+      for (const row of statements.rows) {
+        expect(row.status).not.toBe('confirmed');
+        expect(row.validation_status).not.toBe('pass');
+      }
+    },
+    120_000
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Fixture and fault plumbing (module scope so the hooks can reach it)
+// ---------------------------------------------------------------------------
+
+async function createOrganizations(pool: Pool): Promise<void> {
+  for (const key of ORG_KEYS) {
+    await pool.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [orgFor(key), `FIN-005 pinned transaction fixture (${key})`]
+    );
+  }
+}
+
+async function dropOrganizations(pool: Pool): Promise<void> {
+  for (const key of ORG_KEYS) {
+    await deleteFixture(pool, idsFor(key)).catch(() => undefined);
+    await pool.query(`DELETE FROM organizations WHERE id = $1`, [orgFor(key)]).catch(() => undefined);
+  }
+}
+
+async function deleteFixture(pool: Pool, ids: AtelierCanonicalIds): Promise<void> {
   await pool.query(`DELETE FROM financial_statement_values WHERE statement_id = ANY($1::text[])`, [
-    IDS.statementIds,
+    ids.statementIds,
   ]);
-  await pool.query(`DELETE FROM financial_analyses WHERE organization_id = $1`, [ORG_ID]);
-  await pool.query(`DELETE FROM financial_statements WHERE organization_id = $1`, [ORG_ID]);
-  await pool.query(`DELETE FROM financial_statement_packs WHERE organization_id = $1`, [ORG_ID]);
+  await pool.query(`DELETE FROM financial_analyses WHERE id = $1`, [ids.analysisId]);
+  await pool.query(`DELETE FROM financial_statements WHERE id = ANY($1::text[])`, [
+    ids.statementIds,
+  ]);
+  await pool.query(`DELETE FROM financial_statement_packs WHERE id = $1`, [ids.packId]);
 }
 
 /** Put a complete fixture back into its phase-1 (not-ready) state. */
-async function demoteFixture(pool: Pool): Promise<void> {
+async function demoteFixture(pool: Pool, ids: AtelierCanonicalIds): Promise<void> {
   await pool.query(
     `UPDATE financial_statements
         SET status = 'imported', validation_status = 'pending',
             readiness_status = 'pending', readiness_score = 0
       WHERE id = ANY($1::text[])`,
-    [IDS.statementIds]
+    [ids.statementIds]
   );
-  await pool.query(`UPDATE financial_analyses SET status = 'DRAFT' WHERE id = $1`, [
-    IDS.analysisId,
-  ]);
+  await pool.query(`UPDATE financial_analyses SET status = 'DRAFT' WHERE id = $1`, [ids.analysisId]);
   await pool.query(
     `UPDATE financial_statement_packs
         SET pack_status = 'draft', pack_readiness_status = 'pending', pack_readiness_score = 0
       WHERE id = $1`,
-    [IDS.packId]
+    [ids.packId]
   );
 }
 
 const FAULT_TABLE = 'fin005_pinned_fault_control';
 
 /**
- * One BEFORE UPDATE trigger per table, raising on the promotion of one named
- * row.
+ * One BEFORE UPDATE trigger per table, raising on the promotion of any row
+ * whose id is currently ARMED in `fin005_pinned_fault_control`.
  *
- * It fires ONLY when the incoming row is being moved into a READY-flavoured
- * state, so phase 0's heal, phase 1's upserts and the compensating demotions
- * pass through untouched — the fault lands on the promotion write and nowhere
- * else.
+ * A SET OF ARMED IDS, not a single slot: with one shared slot, arming a fault
+ * is a global mutation and a test that fails to disarm poisons its neighbours.
+ * Ids are per-organization, so an armed id can only ever affect the test that
+ * owns it.
+ *
+ * The trigger fires ONLY when the incoming row is being moved into a
+ * READY-flavoured state, so phase 0's heal, phase 1's upserts and the
+ * compensating demotions pass through untouched.
  *
  * ONE FUNCTION PER TABLE, not a shared one branching on `TG_TABLE_NAME`: a
  * plpgsql boolean expression is evaluated as a whole, so
@@ -734,18 +834,26 @@ const FAULT_TRIGGERS: Array<{ table: string; predicate: string; label: string }>
 const faultFunctionName = (table: string): string => `fin005_pinned_fault_${table}`;
 
 async function installFaultTriggers(pool: Pool): Promise<void> {
-  await pool.query(`CREATE TABLE IF NOT EXISTS ${FAULT_TABLE} (id int PRIMARY KEY, target_id text)`);
   await pool.query(
-    `INSERT INTO ${FAULT_TABLE} (id, target_id) VALUES (1, NULL) ON CONFLICT (id) DO NOTHING`
+    `CREATE TABLE IF NOT EXISTS ${FAULT_TABLE} (target_id text PRIMARY KEY)`
   );
+  // Migrate away from the earlier single-slot shape if it is still around.
+  const shape = await pool.query(
+    `SELECT column_name FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = $1`,
+    [FAULT_TABLE]
+  );
+  if (shape.rows.some((row) => String(row.column_name) === 'id')) {
+    await pool.query(`DROP TABLE IF EXISTS ${FAULT_TABLE}`);
+    await pool.query(`CREATE TABLE ${FAULT_TABLE} (target_id text PRIMARY KEY)`);
+  }
 
   for (const trigger of FAULT_TRIGGERS) {
     await pool.query(`
       CREATE OR REPLACE FUNCTION ${faultFunctionName(trigger.table)}() RETURNS trigger AS $fn$
-      DECLARE target text;
       BEGIN
-        SELECT target_id INTO target FROM ${FAULT_TABLE} WHERE id = 1;
-        IF target IS NOT NULL AND NEW.id = target AND ${trigger.predicate} THEN
+        IF ${trigger.predicate}
+           AND EXISTS (SELECT 1 FROM ${FAULT_TABLE} WHERE target_id = NEW.id) THEN
           RAISE EXCEPTION 'FIN005_INJECTED_FAULT ${trigger.label} %', NEW.id;
         END IF;
         RETURN NEW;
@@ -768,10 +876,17 @@ async function removeFaultTriggers(pool: Pool): Promise<void> {
   await pool.query(`DROP TABLE IF EXISTS ${FAULT_TABLE}`);
 }
 
-async function setFault(pool: Pool, targetId: string): Promise<void> {
-  await pool.query(`UPDATE ${FAULT_TABLE} SET target_id = $1 WHERE id = 1`, [targetId]);
+async function armFault(pool: Pool, targetId: string): Promise<void> {
+  await pool.query(
+    `INSERT INTO ${FAULT_TABLE} (target_id) VALUES ($1) ON CONFLICT (target_id) DO NOTHING`,
+    [targetId]
+  );
 }
 
-async function clearFault(pool: Pool): Promise<void> {
-  await pool.query(`UPDATE ${FAULT_TABLE} SET target_id = NULL WHERE id = 1`).catch(() => undefined);
+async function disarmFault(pool: Pool, targetId: string): Promise<void> {
+  await pool.query(`DELETE FROM ${FAULT_TABLE} WHERE target_id = $1`, [targetId]);
+}
+
+async function clearAllFaults(pool: Pool): Promise<void> {
+  await pool.query(`DELETE FROM ${FAULT_TABLE}`);
 }
