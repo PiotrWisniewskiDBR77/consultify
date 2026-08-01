@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   ArrowLeft,
   Check,
   Edit3,
@@ -351,6 +352,12 @@ export const AssessmentSessionEditorView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  // ASM-001A: V8-vs-legacy-fallback provenance, and a visible (not just
+  // console.error) autosave-failure state. See loadCoreAssessmentSession /
+  // updateCoreAssessmentSession (sets isDegradedLegacyMode) and scheduleSave /
+  // handleManualSave (set autosaveFailed via the GET read-back below).
+  const [isDegradedLegacyMode, setIsDegradedLegacyMode] = useState(false);
+  const [autosaveFailed, setAutosaveFailed] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [serverUpdatedAt, setServerUpdatedAt] = useState<Date | null>(null);
   const [lastEditorName, setLastEditorName] = useState<string | null>(null);
@@ -420,33 +427,78 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
     try {
       const data = await V8AssessmentApi.getAssessment(assessmentId);
+      setIsDegradedLegacyMode(false);
       return mapV8AssessmentToSession(data.assessment);
     } catch (error) {
       if (!shouldFallbackToLegacyAssessmentLane(error)) {
         throw error;
       }
 
+      // ASM-001A: V8 endpoint rejected/unavailable — running on the legacy
+      // assessment-workflow-v2 route. Surface this in the header (V8 vs
+      // "Legacy (degraded)" badge) instead of silently swapping data sources.
+      setIsDegradedLegacyMode(true);
       return (await Api.get(`/assessment-workflow-v2/${assessmentId}`)) as AssessmentSession;
     }
   }, [assessmentId]);
 
   const updateCoreAssessmentSession = useCallback(
-    async (payload: Record<string, any>): Promise<{ updatedAt?: string }> => {
+    async (payload: Record<string, any>): Promise<{ updatedAt?: string; completionPercent?: number }> => {
       if (!assessmentId) throw new Error('Missing assessment id');
 
       try {
-        return await V8AssessmentApi.updateAssessment(assessmentId, payload);
+        const result = await V8AssessmentApi.updateAssessment(assessmentId, payload);
+        setIsDegradedLegacyMode(false);
+        return result;
       } catch (error) {
         if (!shouldFallbackToLegacyAssessmentLane(error)) {
           throw error;
         }
 
+        setIsDegradedLegacyMode(true);
         return (await Api.put(`/assessment-workflow-v2/${assessmentId}`, payload)) as {
           updatedAt?: string;
         };
       }
     },
     [assessmentId]
+  );
+
+  /**
+   * ASM-001A: "Form save kończy się GET/read-back; błąd read-back nie daje
+   * fałszywego success." A PUT returning 200 only proves the request was
+   * accepted — it does not prove the write is durable/consistent (replica
+   * lag, the legacy fallback route silently dropping a field, etc.). This
+   * re-fetches the assessment right after a save and reports failure when
+   * either the GET itself fails OR the returned answers don't match what was
+   * just sent — it deliberately does NOT clobber the live `answers` state
+   * (the user may already be typing again), only the read-only metadata
+   * (status/completion/updated_at/updated_by) that the header displays.
+   */
+  const verifySavedAnswers = useCallback(
+    async (expectedAnswers: Record<string, any>): Promise<boolean> => {
+      if (!assessmentId) return false;
+      const fresh = await loadCoreAssessmentSession();
+      if (!isMountedRef.current) return true;
+      const matches = JSON.stringify(fresh.answers ?? {}) === JSON.stringify(expectedAnswers ?? {});
+      setAssessment((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: fresh.status,
+              completion_percent: fresh.completion_percent,
+              confidence_avg: fresh.confidence_avg,
+              updated_at: fresh.updated_at,
+              updated_by: fresh.updated_by,
+              updated_by_name: fresh.updated_by_name,
+              updated_by_email: fresh.updated_by_email,
+            }
+          : fresh
+      );
+      if (fresh.updated_at) setServerUpdatedAt(new Date(fresh.updated_at));
+      return matches;
+    },
+    [assessmentId, loadCoreAssessmentSession]
   );
 
   const loadSessionWorkbench = useCallback(async () => {
@@ -794,9 +846,37 @@ export const AssessmentSessionEditorView: React.FC = () => {
               level: currentLevel,
             }).catch(() => {});
           }
+
+          // ASM-001A: PUT accepted != durably saved — verify with a GET
+          // read-back before treating the autosave as trustworthy. This
+          // fires once per debounced autosave (the 600ms setTimeout above
+          // already coalesces a burst of keystrokes into a single PUT; this
+          // adds one GET after that single PUT, not one per keystroke).
+          try {
+            const verified = await verifySavedAnswers(nextAnswers);
+            if (!isMountedRef.current) return;
+            setAutosaveFailed(!verified);
+            if (!verified) {
+              toast.error(
+                'Autosave could not be confirmed — the server copy does not match your latest edit yet. Your changes are still here; try Save manually.'
+              );
+            }
+          } catch {
+            if (isMountedRef.current) {
+              setAutosaveFailed(true);
+              toast.error(
+                'Autosave could not be confirmed — reloading the assessment to verify failed. Your changes are still here; try Save manually.'
+              );
+            }
+          }
         } catch (e: any) {
           console.error('[AssessmentSessionEditorView] Auto-save failed:', e);
-          // Silent fail for auto-save; user can manually save if needed
+          // ASM-001A: was a silent fail (console only) — now visibly surfaced
+          // so the user knows their edits are not actually persisted yet.
+          if (isMountedRef.current) {
+            setAutosaveFailed(true);
+            toast.error('Autosave failed — your latest changes were not saved. Try Save manually.');
+          }
         } finally {
           if (isMountedRef.current) {
             setIsSaving(false);
@@ -814,6 +894,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
       currentUser?.id,
       persistAssessmentUserState,
       updateCoreAssessmentSession,
+      verifySavedAnswers,
     ]
   );
 
@@ -856,7 +937,24 @@ export const AssessmentSessionEditorView: React.FC = () => {
           level: currentLevel,
         }).catch(() => {});
       }
-      toast.success('Assessment saved successfully');
+
+      // ASM-001A: read-back before reporting success (same rationale as
+      // scheduleSave) — a manual save is the one moment the user explicitly
+      // asked "did this work", so it must not lie.
+      let verified = false;
+      try {
+        verified = await verifySavedAnswers(answers);
+      } catch {
+        verified = false;
+      }
+      setAutosaveFailed(!verified);
+      if (verified) {
+        toast.success('Assessment saved successfully');
+      } else {
+        toast.error(
+          'Save was sent, but could not be confirmed on reload — please check your connection and try again.'
+        );
+      }
     } catch (e: any) {
       const errorMsg = e?.message || 'Failed to save assessment';
       setError(errorMsg);
@@ -876,6 +974,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
     currentUser?.id,
     persistAssessmentUserState,
     updateCoreAssessmentSession,
+    verifySavedAnswers,
   ]);
 
   // Exit handlers
@@ -1418,23 +1517,34 @@ export const AssessmentSessionEditorView: React.FC = () => {
   const title = assessment?.name || 'Assessment';
   const status = assessment?.status || 'DRAFT';
 
-  const headerMeta = useMemo(() => {
-    const parts: string[] = [];
-    if (framework) parts.push(framework.toUpperCase());
-    parts.push(status);
-    const completionPercent = framework
-      ? calcCompletionPercent(framework, answers)
-      : (assessment?.completion_percent ?? 0);
-    if (completionPercent > 0) parts.push(`${completionPercent}% complete`);
-    return parts.join(' · ');
-  }, [framework, status, answers, assessment?.completion_percent]);
-
+  // ASM-001A: for DRD, prefer the server-derived `completion_percent` (set by
+  // updateCoreAssessmentSession's response / the verifySavedAnswers
+  // read-back) over the client-side heuristic — the backend now recomputes
+  // it from the persisted answers instead of trusting whatever the client
+  // last sent. Falls back to the client calc only before the very first
+  // load/save round-trip has populated `assessment.completion_percent`.
+  // SIRI/ADMA/CMMI/Lean are unaffected — the backend doesn't change their
+  // completionPercent handling, so they keep today's client-side calc.
   const overallProgress = useMemo(() => {
+    if (framework === 'drd') {
+      if (assessment?.completion_percent !== undefined && assessment?.completion_percent !== null) {
+        return assessment.completion_percent;
+      }
+      return calcDrdCompletionPercent(answers?.drd || {});
+    }
     if (framework) {
       return calcCompletionPercent(framework, answers);
     }
     return assessment?.completion_percent ?? 0;
   }, [framework, answers, assessment?.completion_percent]);
+
+  const headerMeta = useMemo(() => {
+    const parts: string[] = [];
+    if (framework) parts.push(framework.toUpperCase());
+    parts.push(status);
+    if (overallProgress > 0) parts.push(`${overallProgress}% complete`);
+    return parts.join(' · ');
+  }, [framework, status, overallProgress]);
 
   const drdMetrics = useMemo(() => {
     if (framework !== 'drd') return null;
@@ -1851,6 +1961,25 @@ export const AssessmentSessionEditorView: React.FC = () => {
                 >
                   {String(status).toUpperCase()}
                 </span>
+                {/* ASM-001A: UI must explicitly distinguish the V8 runtime
+                    from the degraded assessment-workflow-v2 fallback — the
+                    two lanes have different guarantees (see
+                    shouldFallbackToLegacyAssessmentLane). */}
+                <span
+                  className={`shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${
+                    isDegradedLegacyMode
+                      ? 'bg-amber-100/60 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200/60 dark:border-amber-900/30'
+                      : 'bg-slate-100 dark:bg-navy-800 text-c-text-muted border-c-border'
+                  }`}
+                  title={
+                    isDegradedLegacyMode
+                      ? 'Running on the legacy assessment-workflow-v2 fallback — the V8 endpoint rejected or was unavailable.'
+                      : 'Using the V8 assessment runtime.'
+                  }
+                  data-testid="assessment-editor-provenance-badge"
+                >
+                  {isDegradedLegacyMode ? 'Legacy (degraded)' : 'V8'}
+                </span>
                 {assessmentId && (
                   <InitiativeSuggestionBadge sourceType="assessment" sourceId={assessmentId} />
                 )}
@@ -1995,8 +2124,21 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   <span className="truncate">{drdPositionLabel}</span>
                 </div>
               )}
-              {editedMeta && (
+              {editedMeta && !autosaveFailed && (
                 <div className="text-[11px] text-c-text-muted truncate">{editedMeta}</div>
+              )}
+              {/* ASM-001A: visible, persistent autosave-failure indicator — the
+                  toast in scheduleSave/handleManualSave is transient and easy
+                  to miss; this stays until the next successful save/read-back. */}
+              {autosaveFailed && (
+                <div
+                  className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-danger-600 dark:text-danger-400"
+                  role="status"
+                  data-testid="assessment-editor-autosave-failed"
+                >
+                  <AlertTriangle size={12} />
+                  <span>Autosave not confirmed — try Save</span>
+                </div>
               )}
             </div>
 

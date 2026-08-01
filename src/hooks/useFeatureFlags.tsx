@@ -174,6 +174,23 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     allowLocalOverride: true,
   },
   {
+    id: 'assessmentFiveSurfacesV1',
+    name: 'Assessment: Five-surface Hub (Library/Processes/Outputs/Reports/Initiatives)',
+    description:
+      'ASM-001A: expands AssessmentHub from 3 tab ids (list/reports/initiatives) to 5 stable, ' +
+      'URL-synced tab ids — library (new: published-definition picker + Start), processes ' +
+      "(renamed from list, identical content/columns/preview), outputs (new placeholder with " +
+      "EmptyState), reports (unchanged), initiatives (unchanged). Library becomes the default " +
+      "tab and `?tab=` becomes the source of truth for the active tab (survives refresh/back/" +
+      "forward, deep-linkable); legacy/unknown `?tab=` values (including the old `list`) " +
+      "resolve to processes. OFF = today's exact behavior — 3 tabs, `list` default, zero " +
+      "`?tab=` reads/writes — kill-switch per CLAUDE.md rule #7 (Piotr never first visual " +
+      'tester; ships OFF until screenshot acceptance).',
+    defaultValue: false,
+    category: 'experimental',
+    allowLocalOverride: true,
+  },
+  {
     id: 'mindmapHeuristicAiOverlays',
     name: 'Mind Map: Heuristic AI Overlays (DP-5)',
     description:
