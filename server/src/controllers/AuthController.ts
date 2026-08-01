@@ -9,6 +9,7 @@ import { Request, Response } from 'express';
 import type { IDatabase } from '../database/IDatabase.js';
 import { ORG_TYPES } from '../services/access/AccessTypes.js';
 import mfaService from '../services/MFAService.js';
+import { DEMO_EXPIRED_USER_STATUS } from '../services/demo/demoPrincipalGuard.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { recordFailedLogin } from '../services/securityAlerts.js';
 import { setAuthCookies } from '../utils/cookieAuth.js';
@@ -206,6 +207,18 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (!passwordIsValid) {
       void recordFailedLogin(normalizedEmail, req.ip);
       res.status(401).json({ error: 'Invalid email or password' });
+      return;
+    }
+
+    // OPS-DEMO-002: a public demo principal whose session lapsed is retired by
+    // `retireExpiredDemoPrincipal` (users.status -> demo_expired) and must not be
+    // able to mint a fresh access token by logging in again. Scoped to that one
+    // status so no other account's login behaviour changes.
+    if (String(user.status || '').trim().toLowerCase() === DEMO_EXPIRED_USER_STATUS) {
+      res.status(403).json({
+        error: 'This demo session has ended. Start a new demo to continue.',
+        code: 'DEMO_SESSION_EXPIRED',
+      });
       return;
     }
 

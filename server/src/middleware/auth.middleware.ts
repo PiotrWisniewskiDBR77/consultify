@@ -12,6 +12,13 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import {
+  DEMO_SESSION_EXPIRED_CODE,
+  DEMO_SESSION_INVALID_CODE,
+  isPathAllowedForExpiredDemo,
+  resolvePublicDemoPrincipal,
+  retireExpiredDemoPrincipal,
+} from '../services/demo/demoPrincipalGuard.js';
 import { DEMO_ORG_ID, DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 
 // Used by security integrity gate and to ensure test bypasses never run in prod.
@@ -602,12 +609,73 @@ const attachUser = async (
     isDemoHeader && requestedDemoSessionOrgId && process.env.NODE_ENV === 'test'
       ? requestedDemoSessionOrgId
       : undefined;
+
+  // ---------------------------------------------------------------------------
+  // OPS-DEMO-002 — public demo principals: lifetime + server-derived tenancy.
+  //
+  // This runs BEFORE the "any ACTIVE membership" rescue further down, which would
+  // otherwise re-seat a lapsed demo account in the shared curated org even with no
+  // demo headers at all.
+  // ---------------------------------------------------------------------------
+  const publicDemo = await resolvePublicDemoPrincipal(decodedUserId);
+  if (publicDemo.isPublicDemoPrincipal) {
+    const requestPath = String(
+      safeRead(() => (req as Request).originalUrl, '') || safeRead(() => (req as Request).url, '')
+    );
+    if (!publicDemo.session) {
+      if (!isPathAllowedForExpiredDemo(requestPath)) {
+        // Lazily retire the principal: nothing sweeps demo_sessions on a schedule,
+        // so the request path is where expiry actually takes effect. This also
+        // revokes the refresh family and blocks a fresh login.
+        await retireExpiredDemoPrincipal(decodedUserId);
+        res.status(403).json({
+          error: 'This demo session has ended. Start a new demo to continue.',
+          code: DEMO_SESSION_EXPIRED_CODE,
+        });
+        return;
+      }
+    } else {
+      // A foreign or stale session org must be refused, not quietly downgraded to
+      // the base org — degrading is what let a caller probe other tenants' ids and
+      // still get a 200.
+      if (requestedDemoSessionOrgId && requestedDemoSessionOrgId !== publicDemo.session.sessionOrgId) {
+        res.status(403).json({
+          error: 'Demo workspace mismatch. Reload the demo to continue.',
+          code: DEMO_SESSION_INVALID_CODE,
+        });
+        return;
+      }
+    }
+  }
+
+  // Fail closed for EVERY caller, not just public demo principals: a session org
+  // that does not validate against this user's own active session is refused.
+  // Silently degrading to the curated base org turned a cross-tenant probe into a
+  // 200 and made a forged header indistinguishable from a legitimate one.
+  if (
+    isDemoHeader &&
+    requestedDemoSessionOrgId &&
+    !validatedDemoSessionOrgId &&
+    !fallbackDemoSessionOrgId
+  ) {
+    res.status(403).json({
+      error: 'Demo workspace mismatch. Reload the demo to continue.',
+      code: DEMO_SESSION_INVALID_CODE,
+    });
+    return;
+  }
+
+  // For a public demo principal the effective organization is whatever the ACTIVE
+  // session says — never the token, never a header, never the base-org fallback.
+  // A missing X-Demo-Session-Org therefore cannot silently widen access.
   let resolvedOrganizationId =
-    isDemoHeader && (validatedDemoSessionOrgId || fallbackDemoSessionOrgId)
-      ? validatedDemoSessionOrgId || fallbackDemoSessionOrgId
-      : isDemoHeader
-        ? DEMO_ORG_ID
-        : tokenOrganizationId;
+    publicDemo.isPublicDemoPrincipal && publicDemo.session
+      ? publicDemo.session.sessionOrgId
+      : isDemoHeader && (validatedDemoSessionOrgId || fallbackDemoSessionOrgId)
+        ? validatedDemoSessionOrgId || fallbackDemoSessionOrgId
+        : isDemoHeader
+          ? DEMO_ORG_ID
+          : tokenOrganizationId;
   let resolvedUserRole =
     readOptionalStringClaim(decodedClaims, 'role') ||
     readOptionalStringClaim(decodedClaims, 'userRole');

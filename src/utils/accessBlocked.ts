@@ -29,6 +29,11 @@ export const DEFAULT_ACCESS_BLOCKED_CODES = [
   'AI_TOKEN_BUDGET_EXCEEDED',
   'INSUFFICIENT_TOKENS',
   'DEMO_READ_ONLY',
+  // OPS-DEMO-002: the demo principal's session lapsed, or its workspace header no
+  // longer matches an active session. Unregistered codes are dropped silently by
+  // `dispatchAccessBlocked`, which would leave the user staring at a dead screen.
+  'DEMO_SESSION_EXPIRED',
+  'DEMO_SESSION_INVALID',
   'FEATURE_ACCESS_DENIED',
   ...HIGH_RISK_ACCESS_BLOCKED_CODES,
 ] as const;
