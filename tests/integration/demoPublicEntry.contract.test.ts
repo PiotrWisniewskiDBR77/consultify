@@ -291,6 +291,89 @@ describe('OPS-DEMO-002 public demo entry contract', () => {
     }, 180_000);
   });
 
+  describe('read-only is not negotiable by the client', () => {
+    /**
+     * The whole point: NO demo headers. `demoWriteProtection` is mounted globally
+     * before authentication, so its only usable signal is `X-Demo-Mode` — a bare
+     * write used to sail past it entirely.
+     */
+    const BARE_WRITES: Array<{ label: string; method: 'post' | 'put' | 'delete'; path: string; body?: unknown }> = [
+      { label: 'assessment create', method: 'post', path: '/api/assessments', body: { name: 'ops-demo-002 must not persist' } },
+      { label: 'initiative create', method: 'post', path: '/api/initiatives', body: { title: 'ops-demo-002 must not persist' } },
+      { label: 'project create', method: 'post', path: '/api/projects', body: { name: 'ops-demo-002 must not persist' } },
+      { label: 'task create', method: 'post', path: '/api/tasks', body: { title: 'ops-demo-002 must not persist' } },
+      { label: 'invite', method: 'post', path: '/api/invitations', body: { email: 'ops-demo-002+invitee@fixture.invalid', role: 'ADMIN' } },
+      { label: 'admin org update', method: 'put', path: '/api/admin/organization', body: { name: 'ops-demo-002 must not persist' } },
+      { label: 'access code verify', method: 'post', path: '/api/organizations/verify-access-code', body: { accessCode: 'APLIX-2026' } },
+      { label: 'organization update', method: 'put', path: '/api/organizations/demo-org', body: { name: 'ops-demo-002 must not persist' } },
+      { label: 'initiative delete', method: 'delete', path: '/api/initiatives/whatever' },
+    ];
+
+    it.each(BARE_WRITES)(
+      'refuses a bare $label with 403 DEMO_READ_ONLY and no headers at all',
+      async ({ method, path, body }) => {
+        const a = await registerDemo(fixtureEmail('bare-write'));
+        const req = request(app)[method](path).set('Authorization', `Bearer ${a.body.token}`);
+        const res = body ? await req.send(body as object) : await req.send();
+
+        expect(res.status).toBe(403);
+        expect(res.body.code).toBe('DEMO_READ_ONLY');
+      },
+      180_000
+    );
+
+    it('read-back proves a bare write persisted nothing', async () => {
+      const a = await registerDemo(fixtureEmail('bare-readback'));
+      const orgA = a.body.demoSession.organizationId as string;
+      const marker = `ops-demo-002-bare-${RUN_ID}`;
+
+      const before = await dbGet<{ c: number }>(
+        `SELECT COUNT(*) as c FROM initiatives WHERE title = ?`,
+        [marker]
+      );
+
+      const write = await request(app)
+        .post('/api/initiatives')
+        .set('Authorization', `Bearer ${a.body.token}`)
+        .send({ title: marker, organizationId: orgA });
+      expect(write.status).toBe(403);
+
+      const after = await dbGet<{ c: number }>(
+        `SELECT COUNT(*) as c FROM initiatives WHERE title = ?`,
+        [marker]
+      );
+      expect(Number(after?.c || 0)).toBe(Number(before?.c || 0));
+      expect(Number(after?.c || 0)).toBe(0);
+    }, 180_000);
+
+    it('reads still work — this is read-only, not locked out', async () => {
+      const a = await registerDemo(fixtureEmail('bare-read'));
+      const read = await request(app)
+        .get('/api/demo/organization')
+        .set('Authorization', `Bearer ${a.body.token}`);
+      expect(read.status).toBe(200);
+    }, 180_000);
+
+    it('leaving demo mode is still permitted, so the client can wind down', async () => {
+      const a = await registerDemo(fixtureEmail('bare-exit'));
+      const exit = await request(app)
+        .post('/api/demo/toggle')
+        .set('Authorization', `Bearer ${a.body.token}`)
+        .send({ enabled: false });
+      expect(exit.status).not.toBe(403);
+    }, 180_000);
+
+    it('the refusal is not cacheable', async () => {
+      const a = await registerDemo(fixtureEmail('bare-cache'));
+      const res = await request(app)
+        .post('/api/initiatives')
+        .set('Authorization', `Bearer ${a.body.token}`)
+        .send({ title: 'x' });
+      expect(res.status).toBe(403);
+      expect(String(res.headers['cache-control'] || '')).toContain('no-store');
+    }, 180_000);
+  });
+
   describe('session lifetime — access must end with the session', () => {
     /** Force the TTL to have elapsed without waiting 24h for it. */
     async function expireSessionOf(userId: string): Promise<void> {
@@ -358,14 +441,14 @@ describe('OPS-DEMO-002 public demo entry contract', () => {
       expect(Number(active?.c || 0)).toBe(0);
     }, 180_000);
 
-    it('an expired principal cannot log in again', async () => {
-      const email = fixtureEmail('ttl-login');
+    it('DIRECT login after expiry is refused with no prior protected request', async () => {
+      const email = fixtureEmail('ttl-login-direct');
       const a = await registerDemo(email);
-      const userId = a.body.user.id as string;
 
-      // Touch one request so the lazy retirement runs.
-      await expireSessionOf(userId);
-      await request(app).get('/api/demo/organization').set('Authorization', `Bearer ${a.body.token}`);
+      // Deliberately NO authenticated GET first. The lazy retirement never ran, so
+      // users.status is still 'active' — a gate that trusted that flag would mint
+      // a fresh token right here.
+      await expireSessionOf(a.body.user.id as string);
 
       const login = await request(app)
         .post('/api/auth/login')
@@ -375,17 +458,48 @@ describe('OPS-DEMO-002 public demo entry contract', () => {
       expect(login.body.token).toBeUndefined();
     }, 180_000);
 
-    it('an expired principal cannot ride the 7-day refresh token', async () => {
-      const a = await registerDemo(fixtureEmail('ttl-refresh'));
-      const userId = a.body.user.id as string;
+    it('DIRECT refresh after expiry is refused with no prior protected request', async () => {
+      const a = await registerDemo(fixtureEmail('ttl-refresh-direct'));
       const refreshToken = a.body.refreshToken as string;
 
-      await expireSessionOf(userId);
-      await request(app).get('/api/demo/organization').set('Authorization', `Bearer ${a.body.token}`);
+      await expireSessionOf(a.body.user.id as string);
 
       const refreshed = await request(app).post('/api/auth/refresh').send({ refreshToken });
       expect(refreshed.status).toBe(401);
       expect(refreshed.body.token).toBeUndefined();
+    }, 180_000);
+
+    it('the refused login retires the account and revokes the token family', async () => {
+      const email = fixtureEmail('ttl-retire');
+      const a = await registerDemo(email);
+      const userId = a.body.user.id as string;
+      await expireSessionOf(userId);
+
+      await request(app).post('/api/auth/login').send({ email, password: FIXTURE_PASSWORD });
+
+      const user = await dbGet<{ status: string }>('SELECT status FROM users WHERE id = ?', [
+        userId,
+      ]);
+      expect(String(user?.status || '').toLowerCase()).toBe('demo_expired');
+
+      const live = await dbGet<{ c: number }>(
+        `SELECT COUNT(*) as c FROM refresh_tokens WHERE user_id = ? AND revoked_at IS NULL`,
+        [userId]
+      );
+      expect(Number(live?.c || 0)).toBe(0);
+    }, 180_000);
+
+    it('a second refresh attempt after the first refusal is still refused', async () => {
+      const a = await registerDemo(fixtureEmail('ttl-refresh-twice'));
+      const refreshToken = a.body.refreshToken as string;
+      await expireSessionOf(a.body.user.id as string);
+
+      const first = await request(app).post('/api/auth/refresh').send({ refreshToken });
+      expect(first.status).toBe(401);
+      // Guards against a rotation/grace path handing out credentials on retry.
+      const second = await request(app).post('/api/auth/refresh').send({ refreshToken });
+      expect(second.status).toBe(401);
+      expect(second.body.token).toBeUndefined();
     }, 180_000);
 
     it('a live session is untouched by the guard', async () => {
