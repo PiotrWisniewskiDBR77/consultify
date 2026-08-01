@@ -56,6 +56,10 @@ export interface V8FinanceModelSummary {
   version?: number | null;
   source_statement_id?: string | null;
   source_statement_pack_id?: string | null;
+  /** FIN-04: null when this row IS an Investment Case root; otherwise the root's id. */
+  case_id?: string | null;
+  /** FIN-04: at most one TRUE per (org, case) — enforced server-side (see setBaseline). */
+  is_baseline?: boolean | null;
   created_at?: string | null;
   updated_at?: string | null;
 }
@@ -132,6 +136,29 @@ export interface V8FinanceModelCreatePayload {
   initiativeId?: string;
   sourceStatementId?: string;
   sourceStatementPackId?: string;
+  /** FIN-04: create this model AS A SCENARIO of an existing Investment Case. */
+  caseId?: string;
+  /**
+   * FIN-03: a client-generated key (e.g. uuid) that survives a retry — a
+   * double-click or a network-retried POST with the SAME key returns the
+   * original Investment Case/scenario instead of creating a duplicate.
+   */
+  idempotencyKey?: string;
+}
+
+export interface V8FinanceCaseScenario {
+  id: string;
+  name: string;
+  scenario?: string | null;
+  status?: string | null;
+  version?: number | null;
+  is_baseline: boolean;
+  case_id: string | null;
+  currency?: string | null;
+  start_date?: string | null;
+  horizon_months?: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface V8FinanceModelEventCreatePayload {
@@ -507,8 +534,30 @@ export const V8FinanceApi = {
     }),
   computeModel: (modelId: string) =>
     v8Post<V8FinanceModelComputeResult>(`/finance/models/${modelId}/compute`, {}),
-  approveModel: (modelId: string) =>
-    v8Post<V8FinanceModelApproveResult>(`/finance/models/${modelId}/approve`, {}),
+  approveModel: (
+    modelId: string,
+    opts?: { expectedVersion?: number; idempotencyKey?: string }
+  ) =>
+    v8Post<V8FinanceModelApproveResult & { code?: string; serverVersion?: number }>(
+      `/finance/models/${modelId}/approve`,
+      {
+        ...(opts?.expectedVersion !== undefined ? { expectedVersion: opts.expectedVersion } : {}),
+        ...(opts?.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : {}),
+      }
+    ),
+  /** FIN-04: siblings (Base/Upside/Downside + case root) of modelId's Investment Case. */
+  getCaseScenarios: (modelId: string) =>
+    v8Get<{ scenarios: V8FinanceCaseScenario[]; count: number; baselineModelId: string | null }>(
+      `/finance/models/${modelId}/case`
+    ),
+  /** FIN-04: atomically make modelId the baseline of its case (demotes the previous one). */
+  setBaseline: (modelId: string) =>
+    v8Post<{
+      success: boolean;
+      caseId: string;
+      baselineModelId: string;
+      previousBaselineModelId: string | null;
+    }>(`/finance/models/${modelId}/set-baseline`, {}),
   refreshModelSource: (modelId: string) =>
     v8Post<{
       success: boolean;
@@ -519,8 +568,15 @@ export const V8FinanceApi = {
     v8Post<{ success: boolean; id: string }>(`/finance/models/${modelId}/events`, body),
   deleteModelEvent: (eventId: string) =>
     v8Delete<{ success: boolean; deleted: string }>(`/finance/events/${eventId}`),
-  updateModel: (modelId: string, body: { assumptions?: Record<string, unknown> }) =>
-    v8Put<{ success: boolean }>(`/finance/models/${modelId}`, body),
+  updateModel: (
+    modelId: string,
+    body: { assumptions?: Record<string, unknown> } & Record<string, unknown>,
+    opts?: { expectedVersion?: number }
+  ) =>
+    v8Put<{ success: boolean; code?: string; serverVersion?: number }>(
+      `/finance/models/${modelId}`,
+      opts?.expectedVersion !== undefined ? { ...body, expectedVersion: opts.expectedVersion } : body
+    ),
   deleteModel: (modelId: string) =>
     v8Delete<{ success: boolean; deleted: string }>(`/finance/models/${modelId}`),
   getValuations: () =>
