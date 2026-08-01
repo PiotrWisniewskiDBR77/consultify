@@ -9,11 +9,29 @@
  * step fails — the account exists, so every retry is rejected as a duplicate,
  * while no workspace was ever provisioned.
  *
- * This module runs those steps as a saga: each forward step registers its own
- * compensation, a failure unwinds them in reverse, and every compensation is
- * READ BACK to confirm it actually removed the row. Compensation that cannot be
- * verified is reported as incomplete rather than assumed — a silent half-rollback
- * is the failure mode that produced the dead accounts in the first place.
+ * This module runs those steps as a saga:
+ *
+ *  1. EVERY compensation is registered BEFORE the forward step it undoes. A step
+ *     that writes one row and then throws on the next statement (legalService
+ *     writes one acceptance per document; the preferences step writes
+ *     `demo:enabled`, `demo:started_at`, then three markers) would otherwise
+ *     leave that partial write behind, because the compensation was never
+ *     pushed. Registering first costs nothing: an undo whose forward step never
+ *     ran deletes zero rows and verifies clean.
+ *  2. A failure unwinds them in reverse order.
+ *  3. Every compensation is READ BACK to confirm it actually removed the row.
+ *     Compensation that cannot be verified is reported as incomplete rather than
+ *     assumed — a silent half-rollback is the failure mode that produced the
+ *     dead accounts in the first place.
+ *
+ * TENANT IDENTITY. The saga mints its own `runId` and derives the session tenant
+ * org id from it, so the tenant this run creates is named by a value nothing else
+ * in the system can produce. Cleanup therefore deletes an exact id and never a
+ * `LIKE` prefix. The previous implementation swept
+ * `${DEMO_ORG_ID}-session-<first 10 alphanumerics of the user id>-%`, which is
+ * wrong twice: two user ids collide on 10 characters (one signup's rollback
+ * could delete another prospect's live workspace), and the value was
+ * interpolated into a `LIKE` pattern without escaping `%`/`_`.
  *
  * The collaborators are injected so fault injection in tests does not need a
  * production backdoor.
@@ -21,7 +39,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { setUserDemoPreference } from '../../middleware/demoGuard.middleware.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import legalService from '../legalService.js';
 import refreshTokenService from '../RefreshTokenService.js';
@@ -64,6 +82,48 @@ export const FORBIDDEN_DEMO_SIGNUP_ROLES = ['SUPERADMIN', 'SUPER_ADMIN', 'OWNER'
 export const DEMO_ENTRY_SOURCE_PREF_KEY = 'demo:entry_source';
 export const PUBLIC_DEMO_ENTRY_SOURCE = 'register_demo';
 
+/**
+ * Durable ownership marker for the tenant a single saga run created.
+ *
+ * HOME: `user_preferences`, not `demo_session_tenants`.
+ *
+ * `demo_session_tenants` looks like the natural ledger — it is literally the
+ * tenant table — but its production schema (server/src/database/PostgresDatabase.ts)
+ * declares `FOREIGN KEY(session_id) REFERENCES demo_sessions(id)` and
+ * `FOREIGN KEY(tenant_org_id) REFERENCES organizations(id)`. A claim row written
+ * BEFORE the tenant is seeded would therefore be rejected: at that instant
+ * neither the `demo_sessions` row nor the org row exists. That is precisely the
+ * window this marker has to cover, so the FK-constrained table cannot host it.
+ *
+ * `user_preferences` is an unconstrained `(user_id, key)` key/value store which
+ * already carries the demo session bookkeeping (`demo:session_org_id` and
+ * friends, written by demoSessionService). The saga writes both markers in the
+ * `set_demo_preferences` step, which runs BEFORE `start_demo_session` — so if the
+ * process dies after the tenant org has been seeded but before the
+ * `demo_sessions` row exists, the marker still names the exact org id to
+ * reclaim, and `server/scripts/cleanup-orphan-demo-orgs.ts --run-id <runId>` can
+ * delete that one tenant and nothing else.
+ */
+export const PROVISION_RUN_ID_PREF_KEY = 'demo:provision_run_id';
+export const PROVISION_TENANT_ORG_PREF_KEY = 'demo:provision_tenant_org_id';
+
+/** Infix that marks a session tenant owned by a provisioning run. */
+export const PROVISION_TENANT_INFIX = '-session-run-';
+
+/**
+ * Tenant org id for one provisioning run.
+ *
+ * Carries the FULL run id (a uuid with its separators stripped), so the id is
+ * globally unique by construction and can be matched with `=` instead of `LIKE`.
+ * The `${baseOrgId}-session-` prefix is preserved because the rest of the
+ * product recognises ephemeral demo tenants by it (superadminSeedFilter,
+ * demoService reclamation, the operator cleanup script).
+ */
+export function makeProvisionTenantOrgId(baseOrgId: string, runId: string): string {
+  const compact = String(runId).replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'run';
+  return `${baseOrgId}${PROVISION_TENANT_INFIX}${compact}`;
+}
+
 export interface CompensationStep {
   step: string;
   ok: boolean;
@@ -80,17 +140,32 @@ export interface CompensationReport {
 
 export interface ProvisionSuccess {
   ok: true;
+  /** Unique id of this provisioning run; owns `tenantOrgId`. */
+  runId: string;
   userId: string;
   organizationId: string;
+  /** The isolated tenant this run created (equals the base org only in DEMO_USE_BASE_ORG mode). */
+  tenantOrgId: string;
   session: DemoSessionRecord;
   tokens: { accessToken: string; refreshToken: string };
 }
 
 export interface ProvisionFailure {
   ok: false;
+  /** Unique id of this provisioning run — the handle for manual cleanup. */
+  runId: string;
+  /** Tenant org id this run owned, whether or not it was ever created. */
+  tenantOrgId: string;
+  userId: string;
   failedStep: string;
   error: string;
   compensation: CompensationReport;
+  /**
+   * True when every compensation was verified: nothing the signup created
+   * survives, so the same address can be retried immediately. False means rows
+   * may remain and an operator has to reclaim them (`runId` names the tenant).
+   */
+  retrySafe: boolean;
 }
 
 export type ProvisionResult = ProvisionSuccess | ProvisionFailure;
@@ -127,8 +202,18 @@ export interface ProvisionDeps {
     ipAddress: string;
     userAgent: string;
   }) => Promise<void>;
-  setDemoPreferences: (userId: string) => Promise<void>;
-  startSession: (userId: string, locale: string) => Promise<DemoSessionRecord>;
+  /** Writes `demo:enabled`, `demo:started_at`, the entry-source marker and the run/tenant markers. */
+  setDemoPreferences: (input: {
+    userId: string;
+    runId: string;
+    tenantOrgId: string;
+  }) => Promise<void>;
+  /** Seeds and records the isolated tenant under the id THIS run owns. */
+  startSession: (
+    userId: string,
+    locale: string,
+    tenantOrgId: string
+  ) => Promise<DemoSessionRecord>;
   issueTokens: (user: {
     id: string;
     email: string;
@@ -136,28 +221,32 @@ export interface ProvisionDeps {
     organization_id: string;
   }) => Promise<{ accessToken: string; refreshToken: string }>;
   readUser: (userId: string) => Promise<{ id: string } | null>;
+  /** Exact existence check for one organization id — no pattern matching. */
+  orgExists: (organizationId: string) => Promise<boolean>;
   countRows: (sql: string, params: unknown[]) => Promise<number>;
   deleteRows: (sql: string, params: unknown[]) => Promise<void>;
   deleteSessionTenant: (organizationId: string) => Promise<void>;
-  /** Every session tenant this user could own, found by id prefix. */
-  findSessionOrgIds: (userId: string) => Promise<string[]>;
   revokeTokens: (userId: string) => Promise<void>;
-}
-
-/**
- * Prefix `demoSessionService.makeSessionOrgId` builds session tenants with.
- * Duplicated here on purpose: the saga has to be able to find a tenant that was
- * created by a `startDemoSession` call which then THREW before returning its id —
- * seeding happens before the `demo_sessions` row is written, so a mid-step
- * failure leaves an org nobody holds a reference to.
- */
-export function sessionOrgIdPrefix(userId: string, baseOrgId: string): string {
-  const normalizedUser = String(userId).replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) || 'user';
-  return `${baseOrgId}-session-${normalizedUser}-`;
 }
 
 function demoOrgId(): string {
   return process.env.DEMO_ORG_ID || 'demo-org';
+}
+
+/** DELETE-then-INSERT upsert that fails loudly. Mirrors demoSessionService. */
+async function writePreference(userId: string, key: string, value: string): Promise<void> {
+  await dbRun(`DELETE FROM user_preferences WHERE user_id = ? AND key = ?`, [userId, key], {
+    fallback: true,
+  });
+  const written = await dbRun(
+    `INSERT INTO user_preferences (user_id, key, value, updated_at)
+     VALUES (?, ?, ?, ?)`,
+    [userId, key, value, new Date().toISOString()],
+    { fallback: false }
+  );
+  if (!written.success) {
+    throw new Error(`preference ${key} failed: ${written.error || 'unknown'}`);
+  }
 }
 
 const realDeps: ProvisionDeps = {
@@ -194,6 +283,8 @@ const realDeps: ProvisionDeps = {
     );
     if (!result.success) throw new Error(`membership insert failed: ${result.error || 'unknown'}`);
 
+    // NOTE: this read-back throws AFTER the INSERT has already committed, which
+    // is exactly why the membership compensation is registered before the call.
     const row = await dbGet<{ id: string }>(
       `SELECT id FROM organization_members WHERE organization_id = ? AND user_id = ? LIMIT 1`,
       [orgId, userId],
@@ -203,6 +294,8 @@ const realDeps: ProvisionDeps = {
   },
 
   recordLegalAcceptance: async ({ userId, demoOrgId: orgId, acceptedLegalDocs, ipAddress, userAgent }) => {
+    // legalService writes one acceptance row per document, so a failure on the
+    // second document leaves the first behind. Compensated unconditionally.
     await legalService.acceptDocuments(
       userId,
       acceptedLegalDocs,
@@ -213,26 +306,22 @@ const realDeps: ProvisionDeps = {
     );
   },
 
-  setDemoPreferences: async (userId) => {
+  setDemoPreferences: async ({ userId, runId, tenantOrgId }) => {
+    // Four independent writes. Any of them can throw with the earlier ones
+    // already committed — hence a compensation registered before the call that
+    // clears every preference row for this user.
     await setUserDemoPreference(userId, true, { setStartedAt: true });
-    await dbRun(
-      `DELETE FROM user_preferences WHERE user_id = ? AND key = ?`,
-      [userId, DEMO_ENTRY_SOURCE_PREF_KEY],
-      { fallback: true }
-    );
-    const marker = await dbRun(
-      `INSERT INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, ?)`,
-      [userId, DEMO_ENTRY_SOURCE_PREF_KEY, PUBLIC_DEMO_ENTRY_SOURCE, new Date().toISOString()],
-      { fallback: false }
-    );
-    if (!marker.success) {
-      throw new Error(`demo entry marker failed: ${marker.error || 'unknown'}`);
-    }
+    await writePreference(userId, DEMO_ENTRY_SOURCE_PREF_KEY, PUBLIC_DEMO_ENTRY_SOURCE);
+    // Written BEFORE the tenant is seeded: this is the marker that survives the
+    // window where the org exists but the demo_sessions row does not.
+    await writePreference(userId, PROVISION_RUN_ID_PREF_KEY, runId);
+    await writePreference(userId, PROVISION_TENANT_ORG_PREF_KEY, tenantOrgId);
   },
 
-  startSession: async (userId, locale) =>
-    resolveOrCreateDemoSession(userId, PUBLIC_DEMO_ENTRY_SOURCE, locale),
+  startSession: async (userId, locale, tenantOrgId) =>
+    resolveOrCreateDemoSession(userId, PUBLIC_DEMO_ENTRY_SOURCE, locale, {
+      sessionOrgId: tenantOrgId,
+    }),
 
   issueTokens: async (user) => {
     const pair = await refreshTokenService.generateTokenPair(user, {
@@ -244,6 +333,15 @@ const realDeps: ProvisionDeps = {
 
   readUser: async (userId) =>
     dbGet<{ id: string }>(`SELECT id FROM users WHERE id = ?`, [userId], { fallback: false }),
+
+  orgExists: async (organizationId) => {
+    const row = await dbGet<{ id: string }>(
+      `SELECT id FROM organizations WHERE id = ?`,
+      [organizationId],
+      { fallback: false }
+    );
+    return Boolean(row?.id);
+  },
 
   countRows: async (sql, params) => {
     const row = await dbGet<{ c: number }>(sql, params, { fallback: false });
@@ -257,15 +355,6 @@ const realDeps: ProvisionDeps = {
 
   deleteSessionTenant: async (organizationId) => {
     await deleteDemoDatasetForOrganization(organizationId);
-  },
-
-  findSessionOrgIds: async (userId) => {
-    const rows = await dbAll<{ id: string }>(
-      `SELECT id FROM organizations WHERE id LIKE ?`,
-      [`${sessionOrgIdPrefix(userId, demoOrgId())}%`],
-      { fallback: false }
-    );
-    return (rows || []).map((r) => r.id).filter(Boolean);
   },
 
   revokeTokens: async (userId) => {
@@ -284,9 +373,10 @@ interface Compensation {
  * Provision a public demo account, or leave the database exactly as it was.
  *
  * On failure the returned `compensation` report says, per step, whether the undo
- * ran and whether a read-back confirmed it. `complete: false` means a retry with
- * the same address may still be rejected as a duplicate — the caller must
- * surface that as an operational fault, not as a normal rejection.
+ * ran and whether a read-back confirmed it. `retrySafe`/`compensation.complete`
+ * false means a retry with the same address may still be rejected as a duplicate
+ * — the caller must surface that as an operational fault, not as a normal
+ * rejection, and `runId` is the handle an operator uses to reclaim the tenant.
  */
 export async function provisionPublicDemoAccount(
   input: ProvisionInput,
@@ -294,16 +384,34 @@ export async function provisionPublicDemoAccount(
 ): Promise<ProvisionResult> {
   const deps: ProvisionDeps = { ...realDeps, ...overrides };
   const orgId = demoOrgId();
+  const runId = uuidv4();
   const userId = uuidv4();
+  const tenantOrgId = makeProvisionTenantOrgId(orgId, runId);
   const compensations: Compensation[] = [];
 
   let currentStep = 'ensure_demo_org';
   try {
+    // UNIFORM RULE, applied to every step below: the compensation is pushed
+    // BEFORE the forward call. Any step that writes something and then throws
+    // would otherwise never register its undo, and the partial write would
+    // survive the unwind. An undo whose step never wrote anything is harmless:
+    // it deletes zero rows and its read-back verifies clean.
+    //
+    // `ensure_demo_org` is the one step with NO compensation, and that is
+    // deliberate rather than an oversight: the curated base org is shared,
+    // long-lived and must survive a failed signup. `ON CONFLICT DO NOTHING`
+    // makes it idempotent and it writes at most that one row.
     await deps.ensureDemoOrg(orgId);
-    // Not compensated on purpose: the curated base org is shared, long-lived and
-    // must survive a failed signup. `ON CONFLICT DO NOTHING` makes it idempotent.
 
     currentStep = 'insert_user';
+    // `insertUser` is the one place where registering before the call would be
+    // impossible on a database-generated id — there would be no id to delete.
+    // It is not: `userId` is generated here, so the rule holds uniformly.
+    compensations.push({
+      step: 'insert_user',
+      undo: () => deps.deleteRows(`DELETE FROM users WHERE id = ?`, [userId]),
+      verify: async () => (await deps.readUser(userId)) === null,
+    });
     await deps.insertUser({
       userId,
       demoOrgId: orgId,
@@ -311,14 +419,8 @@ export async function provisionPublicDemoAccount(
       hashedPassword: input.hashedPassword,
       firstName: input.firstName || '',
     });
-    compensations.push({
-      step: 'insert_user',
-      undo: () => deps.deleteRows(`DELETE FROM users WHERE id = ?`, [userId]),
-      verify: async () => (await deps.readUser(userId)) === null,
-    });
 
     currentStep = 'insert_membership';
-    await deps.insertMembership({ userId, demoOrgId: orgId });
     compensations.push({
       step: 'insert_membership',
       undo: () => deps.deleteRows(`DELETE FROM organization_members WHERE user_id = ?`, [userId]),
@@ -328,9 +430,21 @@ export async function provisionPublicDemoAccount(
           [userId]
         )) === 0,
     });
+    await deps.insertMembership({ userId, demoOrgId: orgId });
 
     currentStep = 'record_legal_acceptance';
     if (Array.isArray(input.acceptedLegalDocs) && input.acceptedLegalDocs.length > 0) {
+      // Registered even though the step is non-fatal: legalService writes one row
+      // per document, so "it threw" does NOT mean "it wrote nothing".
+      compensations.push({
+        step: 'record_legal_acceptance',
+        undo: () =>
+          deps.deleteRows(`DELETE FROM legal_document_acceptances WHERE user_id = ?`, [userId]),
+        verify: async () =>
+          (await deps.countRows(`SELECT COUNT(*) as c FROM legal_document_acceptances WHERE user_id = ?`, [
+            userId,
+          ])) === 0,
+      });
       try {
         await deps.recordLegalAcceptance({
           userId,
@@ -339,19 +453,10 @@ export async function provisionPublicDemoAccount(
           ipAddress: input.ipAddress,
           userAgent: input.userAgent,
         });
-        compensations.push({
-          step: 'record_legal_acceptance',
-          undo: () =>
-            deps.deleteRows(`DELETE FROM legal_document_acceptances WHERE user_id = ?`, [userId]),
-          verify: async () =>
-            (await deps.countRows(`SELECT COUNT(*) as c FROM legal_document_acceptances WHERE user_id = ?`, [
-              userId,
-            ])) === 0,
-        });
       } catch (legalErr: unknown) {
         // Consent recording is an audit nicety; it must not cost the prospect the
-        // demo. Registered as non-fatal, and the compensation above is skipped
-        // because nothing was written.
+        // demo. Whatever it managed to write is still compensated on a later
+        // failure, because the compensation above is already registered.
         logger.warn('[DemoProvisioning] legal acceptance recording failed (non-fatal)', {
           error: (legalErr as Error)?.message || String(legalErr),
         });
@@ -359,7 +464,6 @@ export async function provisionPublicDemoAccount(
     }
 
     currentStep = 'set_demo_preferences';
-    await deps.setDemoPreferences(userId);
     compensations.push({
       step: 'set_demo_preferences',
       undo: () => deps.deleteRows(`DELETE FROM user_preferences WHERE user_id = ?`, [userId]),
@@ -368,27 +472,27 @@ export async function provisionPublicDemoAccount(
           userId,
         ])) === 0,
     });
+    await deps.setDemoPreferences({ userId, runId, tenantOrgId });
 
     currentStep = 'start_demo_session';
-    // Registered BEFORE the call, and written to sweep by id prefix rather than by
-    // a returned id. `startDemoSession` seeds the tenant org first and inserts the
-    // `demo_sessions` row afterwards, so a failure between the two leaves an
-    // orphan org that no return value ever names. Compensating on the prefix is
-    // the only way to reach it, and it stays correct for the success path too.
+    // The tenant org id belongs to THIS run (it carries the full run id), so the
+    // compensation names one exact organization instead of sweeping a truncated
+    // prefix. That is what makes the orphan case reachable safely: seeding
+    // creates the org before the `demo_sessions` row exists, and a failure in
+    // between used to leave an org that no return value named — the reason the
+    // prefix sweep existed, and the reason it could delete a concurrent
+    // prospect's live workspace.
     compensations.push({
       step: 'start_demo_session',
       undo: async () => {
-        for (const sessionOrgId of await deps.findSessionOrgIds(userId)) {
-          // Never delete the curated base org: under DEMO_USE_BASE_ORG the session
-          // points at DEMO_ORG_ID itself, and the prefix cannot match it anyway.
-          if (sessionOrgId && sessionOrgId !== orgId) {
-            await deps.deleteSessionTenant(sessionOrgId);
-          }
+        // Never delete the curated base org: under DEMO_USE_BASE_ORG the session
+        // points at DEMO_ORG_ID itself and no per-run tenant is ever created.
+        if (tenantOrgId !== orgId && (await deps.orgExists(tenantOrgId))) {
+          await deps.deleteSessionTenant(tenantOrgId);
         }
-        await deps.deleteRows(
-          `DELETE FROM demo_session_tenants WHERE session_id IN (SELECT id FROM demo_sessions WHERE user_id = ?)`,
-          [userId]
-        );
+        await deps.deleteRows(`DELETE FROM demo_session_tenants WHERE tenant_org_id = ?`, [
+          tenantOrgId,
+        ]);
         await deps.deleteRows(`DELETE FROM demo_sessions WHERE user_id = ?`, [userId]);
       },
       verify: async () => {
@@ -396,19 +500,19 @@ export async function provisionPublicDemoAccount(
           `SELECT COUNT(*) as c FROM demo_sessions WHERE user_id = ?`,
           [userId]
         );
-        const orphanOrgs = (await deps.findSessionOrgIds(userId)).filter((id) => id !== orgId);
-        return sessions === 0 && orphanOrgs.length === 0;
+        const tenants = await deps.countRows(
+          `SELECT COUNT(*) as c FROM demo_session_tenants WHERE tenant_org_id = ?`,
+          [tenantOrgId]
+        );
+        const orphanOrg = tenantOrgId !== orgId && (await deps.orgExists(tenantOrgId));
+        return sessions === 0 && tenants === 0 && !orphanOrg;
       },
     });
-    const session = await deps.startSession(userId, input.locale);
+    const session = await deps.startSession(userId, input.locale, tenantOrgId);
 
     currentStep = 'issue_tokens';
-    const tokens = await deps.issueTokens({
-      id: userId,
-      email: input.normalizedEmail,
-      role: DEMO_SIGNUP_ROLE,
-      organization_id: orgId,
-    });
+    // `generateTokenPair` persists the refresh-token family before it returns, so
+    // a throw on the way out leaves a usable token behind. Registered first.
     compensations.push({
       step: 'issue_tokens',
       undo: () => deps.revokeTokens(userId),
@@ -418,11 +522,19 @@ export async function provisionPublicDemoAccount(
           [userId]
         )) === 0,
     });
+    const tokens = await deps.issueTokens({
+      id: userId,
+      email: input.normalizedEmail,
+      role: DEMO_SIGNUP_ROLE,
+      organization_id: orgId,
+    });
 
     return {
       ok: true,
+      runId,
       userId,
       organizationId: orgId,
+      tenantOrgId: session.session_org_id || tenantOrgId,
       session,
       tokens,
     };
@@ -432,14 +544,26 @@ export async function provisionPublicDemoAccount(
     const compensation = await unwind(compensations);
     if (!compensation.complete) {
       // Loud on purpose: an unverified unwind means the address is likely stuck
-      // and a human has to clean it up before that prospect can retry.
+      // and a human has to clean it up before that prospect can retry. `runId`
+      // names the tenant exactly — see cleanup-orphan-demo-orgs.ts --run-id.
       logger.error('[DemoProvisioning] INCOMPLETE COMPENSATION — manual cleanup required', {
+        runId,
         userId,
+        tenantOrgId,
         failedStep: currentStep,
         steps: compensation.steps,
       });
     }
-    return { ok: false, failedStep: currentStep, error: message, compensation };
+    return {
+      ok: false,
+      runId,
+      userId,
+      tenantOrgId,
+      failedStep: currentStep,
+      error: message,
+      compensation,
+      retrySafe: compensation.complete,
+    };
   }
 }
 

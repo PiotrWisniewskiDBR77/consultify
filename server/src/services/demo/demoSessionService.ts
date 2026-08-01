@@ -202,7 +202,18 @@ export async function cleanupExpiredDemoSessions(): Promise<number> {
 export async function startDemoSession(
   userId: string,
   source = 'demo_toggle',
-  requestedLocale: DemoLocale | string = 'en'
+  requestedLocale: DemoLocale | string = 'en',
+  /**
+   * Caller-supplied tenant org id. Additive and optional: every existing caller
+   * omits it and keeps the derived `makeSessionOrgId` value.
+   *
+   * The public-signup saga supplies one because it has to be able to reclaim the
+   * tenant after a failure that happens BETWEEN the seed below and the
+   * `demo_sessions` INSERT — a window in which the generated id exists only
+   * inside this function, so the saga could previously only sweep for it by a
+   * truncated `LIKE` prefix that also matched other users' live tenants.
+   */
+  sessionOrgId?: string
 ): Promise<DemoSessionRecord & { stats: Awaited<ReturnType<typeof getDemoDatasetStats>> }> {
   await ensureDemoSessionTables();
   await cleanupExpiredDemoSessions();
@@ -213,7 +224,7 @@ export async function startDemoSession(
     id: makeSessionId(userId),
     user_id: userId,
     base_org_id: DEMO_ORG_ID,
-    session_org_id: makeSessionOrgId(userId),
+    session_org_id: sessionOrgId || makeSessionOrgId(userId),
     locale,
     source,
     status: 'active',
@@ -275,7 +286,7 @@ export async function resolveOrCreateDemoSession(
   userId: string,
   source = 'demo_toggle',
   requestedLocale: DemoLocale | string = 'en',
-  options: { restartOnLocaleMismatch?: boolean } = {}
+  options: { restartOnLocaleMismatch?: boolean; sessionOrgId?: string } = {}
 ): Promise<DemoSessionRecord & { stats: Awaited<ReturnType<typeof getDemoDatasetStats>> }> {
   const locale = normalizeDemoLocale(requestedLocale);
 
@@ -338,7 +349,7 @@ export async function resolveOrCreateDemoSession(
   const active = await getActiveDemoSession(userId);
   if (active) {
     if (options.restartOnLocaleMismatch && active.locale !== locale) {
-      return startDemoSession(userId, source, locale);
+      return startDemoSession(userId, source, locale, options.sessionOrgId);
     }
     return {
       ...active,
@@ -346,7 +357,7 @@ export async function resolveOrCreateDemoSession(
     };
   }
 
-  return startDemoSession(userId, source, locale);
+  return startDemoSession(userId, source, locale, options.sessionOrgId);
 }
 
 export async function endDemoSession(userId: string): Promise<void> {

@@ -21,10 +21,17 @@
  *     unless `ALLOW_PROD=true` is ALSO set. demo/staging (TROLLEY) is the target.
  *   - Before any delete it writes a full JSON backup (org rows + every dependent
  *     row it will touch) under server/_backup/.
- *   - Only orgs whose id matches `${DEMO_ORG_ID}-session-%` are ever considered
- *     (pattern derived from the SAME env var demoSessionService uses). A
- *     belt-and-braces guard also refuses any target whose name is NOT the
+ *   - Only orgs whose id STARTS WITH `${DEMO_ORG_ID}-session-` are ever
+ *     considered (prefix derived from the SAME env var demoSessionService uses).
+ *     The match is a literal `left(id, char_length($1)) = $1`, NOT a `LIKE`
+ *     pattern: `DEMO_ORG_ID` is operator-supplied and a `%` or `_` in it would
+ *     silently widen a `LIKE` into a wildcard that matches unrelated orgs.
+ *     A belt-and-braces guard also refuses any target whose name is NOT the
  *     expected ephemeral name unless `--allow-any-name` is passed.
+ *   - `--run-id <uuid>` narrows the target to the SINGLE tenant created by one
+ *     public-signup saga run (`demoSignupProvisioning.makeProvisionTenantOrgId`),
+ *     matched with `=`. That is the exact handle logged as `runId` when a signup
+ *     reports INCOMPLETE COMPENSATION.
  *   - The curated base org (`DEMO_ORG_ID`) is never a target, and orgs backing an
  *     ACTIVE unexpired `demo_sessions` row are skipped unless `--include-active`.
  *
@@ -43,6 +50,10 @@
  *   # 2) APPLY (destructive — needs Piotr's OK on the dry-run list first):
  *   DATABASE_PUBLIC_URL="…" FORCE_PURGE=true \
  *     npx tsx scripts/cleanup-orphan-demo-orgs.ts --apply
+ *   # 3) Reclaim ONE tenant left behind by a failed signup (runId from the
+ *   #    "INCOMPLETE COMPENSATION" log line) — dry-run first, as always:
+ *   DATABASE_PUBLIC_URL="…" \
+ *     npx tsx scripts/cleanup-orphan-demo-orgs.ts --run-id 6f1c…-…
  *
  * NOTE: this script is intentionally NOT wired into any autorun/boot path. It is
  * an operator tool. It never runs as a side effect of anything.
@@ -77,19 +88,45 @@ const log = {
 
 /**
  * Session org ids are built by demoSessionService.makeSessionOrgId() as
- * `${DEMO_ORG_ID}-session-<user>-<ts>`. The pattern MUST be derived from the same
+ * `${DEMO_ORG_ID}-session-<user>-<ts>`, or by
+ * demoSignupProvisioning.makeProvisionTenantOrgId() as
+ * `${DEMO_ORG_ID}-session-run-<runId>`. The prefix MUST be derived from the same
  * env var: demo/staging examples set `DEMO_ORG_ID=atelier`, and a hardcoded
- * `demo-org-session-%` silently matched nothing there — a cleanup that reports
+ * `demo-org-session-` silently matched nothing there — a cleanup that reports
  * "already clean" while ephemeral orgs keep accumulating (OPS-DEMO-002 §5).
+ *
+ * The prefix is compared literally (`left(id, char_length($1)) = $1`). It used to
+ * be `id LIKE '${DEMO_ORG_ID}-session-%'` with the env var interpolated raw, so a
+ * `DEMO_ORG_ID` containing `%` or `_` turned the guard into a wildcard.
  */
 const DEMO_ORG_ID = process.env.DEMO_ORG_ID || 'demo-org';
-const ORG_ID_PATTERN = `${DEMO_ORG_ID}-session-%`;
+const ORG_ID_PREFIX = `${DEMO_ORG_ID}-session-`;
 const EXPECTED_NAME = process.env.DEMO_ORG_NAME || 'Atelier Toys';
+
+/**
+ * Mirror of `demoSignupProvisioning.makeProvisionTenantOrgId`. Duplicated rather
+ * than imported: importing that module drags in the middleware / seed / token
+ * services and a live DB handle, which an operator script must not need.
+ */
+function provisionTenantOrgId(runId: string): string {
+  const compact = String(runId).replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'run';
+  return `${DEMO_ORG_ID}-session-run-${compact}`;
+}
 
 function parseArgs(argv: string[]) {
   return {
     apply: argv.includes('--apply') || argv.includes('--yes'),
     allowAnyName: argv.includes('--allow-any-name'),
+    /**
+     * Exact single-tenant mode: delete ONLY the tenant owned by one provisioning
+     * run. Nothing else can ever be matched, because the id carries the full run
+     * uuid and is compared with `=`.
+     */
+    runId: (() => {
+      const i = argv.findIndex((a) => a === '--run-id');
+      const v = i >= 0 ? String(argv[i + 1] || '').trim() : '';
+      return v && !v.startsWith('--') ? v : undefined;
+    })(),
     limit: (() => {
       const i = argv.findIndex((a) => a === '--limit');
       const n = i >= 0 ? Number(argv[i + 1]) : NaN;
@@ -171,8 +208,13 @@ async function main() {
     }
   })();
 
+  const targetOrgId = args.runId ? provisionTenantOrgId(args.runId) : undefined;
+  const targetDescription = targetOrgId
+    ? `exactly ${targetOrgId} (run ${args.runId})`
+    : `id starting with "${ORG_ID_PREFIX}"`;
+
   console.log('');
-  console.log(`${colors.bold}K7 — cleanup orphan demo orgs (${ORG_ID_PATTERN})${colors.reset}`);
+  console.log(`${colors.bold}K7 — cleanup orphan demo orgs (${targetDescription})${colors.reset}`);
   log.info(`DB host: ${hostForLog}`);
   log.info(`Mode: ${args.apply ? `${colors.red}APPLY (destructive)${colors.reset}` : `${colors.green}DRY-RUN (no writes)${colors.reset}`}`);
   console.log('');
@@ -182,24 +224,36 @@ async function main() {
   try {
     // 1) Resolve targets.
     const limitSql = args.limit ? ` LIMIT ${args.limit}` : '';
-    let targets = await q<{ id: string; name: string | null; created_at: string | null }>(
-      client,
-      `SELECT id, name, created_at FROM organizations
-        WHERE id LIKE $1
-        ORDER BY created_at NULLS LAST${limitSql}`,
-      [ORG_ID_PATTERN]
-    );
+    // No LIKE anywhere. `--run-id` matches one id with `=`; the sweep compares a
+    // literal prefix, so `%`/`_` inside DEMO_ORG_ID cannot widen the match.
+    // `id <> $2` keeps the curated base org out of the result set even if a
+    // future id scheme were to make the prefix match it.
+    let targets = targetOrgId
+      ? await q<{ id: string; name: string | null; created_at: string | null }>(
+          client,
+          `SELECT id, name, created_at FROM organizations
+            WHERE id = $1 AND id <> $2`,
+          [targetOrgId, DEMO_ORG_ID]
+        )
+      : await q<{ id: string; name: string | null; created_at: string | null }>(
+          client,
+          `SELECT id, name, created_at FROM organizations
+            WHERE left(id, char_length($1)) = $1 AND id <> $2
+            ORDER BY created_at NULLS LAST${limitSql}`,
+          [ORG_ID_PREFIX, DEMO_ORG_ID]
+        );
 
     if (!targets.length) {
-      log.ok(`No organizations match ${ORG_ID_PATTERN}. Nothing to clean. (DB is already clean of K7 residue.)`);
+      log.ok(`No organizations match ${targetDescription}. Nothing to clean. (DB is already clean of K7 residue.)`);
       return;
     }
 
-    // Never touch the curated base org itself, whatever the pattern matches.
+    // Belt and braces: the SQL already excludes it, so reaching this means the
+    // targeting logic itself is broken and the run must not continue.
     const selfReferential = targets.filter((t) => t.id === DEMO_ORG_ID);
     if (selfReferential.length) {
       throw new Error(
-        `Refusing: the pattern matched the curated base org ${DEMO_ORG_ID} itself. Aborting to protect the demo dataset.`
+        `Refusing: the target set contains the curated base org ${DEMO_ORG_ID} itself. Aborting to protect the demo dataset.`
       );
     }
 
@@ -233,6 +287,12 @@ async function main() {
       }
     }
 
+    if (targetOrgId && targets.length !== 1) {
+      throw new Error(
+        `Refusing: --run-id must resolve to exactly one org, resolved ${targets.length}.`
+      );
+    }
+
     // Name guard.
     const wrongName = targets.filter((t) => (t.name || '') !== EXPECTED_NAME);
     if (wrongName.length && !args.allowAnyName) {
@@ -245,7 +305,7 @@ async function main() {
     }
 
     const ids = targets.map((t) => t.id);
-    log.info(`Found ${colors.bold}${targets.length}${colors.reset} orphan org(s) matching ${ORG_ID_PATTERN}.`);
+    log.info(`Found ${colors.bold}${targets.length}${colors.reset} orphan org(s) matching ${targetDescription}.`);
     targets.slice(0, 15).forEach((t) => console.log(`   - ${t.id} | ${t.name} | ${t.created_at ?? '?'}`));
     if (targets.length > 15) log.step(`... and ${targets.length - 15} more`);
     console.log('');
@@ -290,7 +350,13 @@ async function main() {
       createdAt: new Date().toISOString(),
       hostname: os.hostname(),
       dbHost: hostForLog,
-      criteria: { orgIdPattern: ORG_ID_PATTERN, expectedName: EXPECTED_NAME, limit: args.limit ?? null },
+      criteria: {
+        orgIdPrefix: targetOrgId ? null : ORG_ID_PREFIX,
+        orgIdExact: targetOrgId ?? null,
+        runId: args.runId ?? null,
+        expectedName: EXPECTED_NAME,
+        limit: args.limit ?? null,
+      },
       organizations: await q(client, `SELECT * FROM organizations WHERE id = ANY($1::text[])`, [ids]),
       noActionDependents: {} as Record<string, any[]>,
     };
