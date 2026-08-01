@@ -38,6 +38,7 @@ Statusy końcowe alternatywne: `BLOCKED`, `DEFERRED`, `REJECTED`.
 | `WK-P0-017` | pierwszy pionowy pakiet scalający | BLOCKED | 10/10 bramki integracji |
 | `OPS-DEMO-001` | kontrolowana promocja zaakceptowanego kandydata na Railway `demo` | ACCEPTED | revision `9917d25c75`, deployment `9ea5c9c8` `SUCCESS`, health/routes `200`, log smoke bez fatal/crash/error |
 | `OPS-DEMO-002` | publiczne wejście Try demo | BLOCKED | modal działa, lecz kanoniczne konta demo są odrzucane; administratorskie wejście techniczne działa |
+| `OPS-DEMO-003` | recovery i namespaced fixtures | READY | utwardzić backup/restore i additive cleanup przed mutującymi E2E |
 
 ## P1 — ważne, ale nie blokuje ograniczonego odbioru
 
@@ -56,6 +57,9 @@ Statusy końcowe alternatywne: `BLOCKED`, `DEFERRED`, `REJECTED`.
 | `MAT-006B` | Presentation lifecycle | BLOCKED | listowy `Ready/11` ≠ builder `0`; naprawić kanoniczną zawartość seeda i powtórzyć E2E |
 | `FIN-005` | Finance demo coherence | BLOCKED | obce dane DBR77/Apator, odrzucone importy, duplikaty, surowe daty i niedostępny value engine |
 | `OPS-DEMO-002` | Demo entry auth | BLOCKED | landing → Try demo nie wpuszcza kanonicznego konta Atelier Toys |
+| `RES-005` | Results demo coherence | READY | rdzeń 127/127 PASS, ale staging miesza DBR77 z Atelier i ma legacy/scorecard split-brain |
+| `EXE-003` | Initiative → Execution contract | READY | portfele 71 vs 13, duplikaty i sprzeczne EVM HIGH vs alert OK |
+| `OPS-DEMO-003` | Recovery hardening | READY | obecny in-place restore nie jest bezpieczną bramką mutujących testów |
 
 ## Cel środowiskowy
 
