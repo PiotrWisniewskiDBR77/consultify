@@ -160,6 +160,7 @@ import {
   atelierFinanceOperatorHoldPath,
   getAtelierFinanceCanonicalIds,
   readAtelierFinanceOperatorHold,
+  readAtelierFinancePromotionMarker,
   upsertAtelierFinanceGoldenFlow,
 } from '../atelierFinanceSeed.js';
 
@@ -240,11 +241,23 @@ const idsFor = (key: OrgKey): AtelierCanonicalIds => getAtelierFinanceCanonicalI
 
 let control: Pool;
 
-/** Drop every NEEDS_OPERATOR hold this suite's tenants could be holding. */
+/**
+ * Drop every NEEDS_OPERATOR hold AND every blocking promotion marker this
+ * suite's tenants could be holding.
+ *
+ * Goes through the real, attributed acknowledgement (FIN-005 P1-B #11) rather
+ * than unlinking files: the suite exercises the operator API the runbook names,
+ * so a change to that API cannot leave the suite passing against a door nobody
+ * uses.
+ */
 function clearAllHolds(): void {
   for (const key of ORG_KEYS) {
     try {
-      acknowledgeAtelierFinanceCommitIndeterminate(orgFor(key));
+      acknowledgeAtelierFinanceCommitIndeterminate(orgFor(key), {
+        operator: 'fin005-suite',
+        decision: 'other',
+        note: 'suite reset between tests; no operator decision is being recorded here',
+      });
     } catch {
       /* nothing to clear */
     }
@@ -464,7 +477,7 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
       arm: () => {
         fault.checkout = 'exhausted';
       },
-      reason: /could not check out a pinned connection: sorry, too many clients already/,
+      reason: /could not check out a (pinned connection|client from the authorised write pool): sorry, too many clients already/,
       timeoutMs: 180_000,
     },
     {
@@ -473,7 +486,7 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
       arm: () => {
         fault.checkout = 'refused';
       },
-      reason: /could not check out a pinned connection: connect ECONNREFUSED/,
+      reason: /could not check out a (pinned connection|client from the authorised write pool): connect ECONNREFUSED/,
       timeoutMs: 180_000,
     },
     {
@@ -482,7 +495,7 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
       arm: () => {
         fault.checkout = 'hang';
       },
-      reason: /could not check out a pinned connection: pool checkout did not complete within/,
+      reason: /could not check out a (pinned connection|client from the authorised write pool): pool checkout did not complete within/,
       timeoutMs: 180_000,
     },
   ];
@@ -512,8 +525,15 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
         const elapsed = Date.now() - startedAt;
 
         expect(result.status).toBe('incomplete');
+        // TWO GATES CAN REFUSE, and both are fail-closed with zero promotion
+        // UPDATEs. FIN-005 P1-A added the earlier one: the DECISIVE READ SESSION
+        // is opened before the schema probe, so a probe failure or a pool that
+        // will not hand out a client now stops the run BEFORE a single statement
+        // is issued rather than after phase 1 has written the not-ready fixture.
+        // The pinned transaction's own refusal is still reachable for faults that
+        // only bite at promotion time (the database divergence below).
         expect(result.reason).toMatch(
-          /^pinned promotion transaction REFUSED \(fail-closed, zero promotion UPDATEs issued\): /
+          /^(pinned promotion transaction REFUSED \(fail-closed, zero promotion UPDATEs issued\): |refusing to run: decisive reads could not be bound to the primary: )/
         );
         expect(result.reason).toMatch(refusal.reason);
         expect(result.statementIds).toEqual([]);
@@ -719,7 +739,17 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
       const hold = readAtelierFinanceOperatorHold(orgFor('commit-mixed'));
       expect(hold?.rowsClaimingReady).toHaveLength(4);
       expect(hold?.reconciliation).toMatch(/MIXED state after a lost COMMIT ack: 4\/5/);
-      expect(hold?.acknowledgement).toMatch(/rm "/);
+      // The instruction names the ATTRIBUTED acknowledgement, and says in so
+      // many words that deleting the file by hand is not it.
+      expect(hold?.acknowledgement).toMatch(/acknowledgeAtelierFinanceCommitIndeterminate/);
+      expect(hold?.acknowledgement).toMatch(/Do NOT simply delete/);
+
+      // FIN-005 P1-B — the promotion marker is in NEEDS_OPERATOR as well, and
+      // carries the run id, the five row ids and the target it ran against.
+      const marker = readAtelierFinancePromotionMarker(orgFor('commit-mixed'));
+      expect(marker?.state).toBe('NEEDS_OPERATOR');
+      expect(marker?.rowIds).toHaveLength(5);
+      expect(marker?.target.database).toBeTruthy();
 
       // Snapshot the residue: the blocked run must not touch a single row.
       const residueBefore = await residueSnapshot(ids);
@@ -737,8 +767,20 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
 
       // The operator investigates, then acknowledges. Only now may the fixture
       // be healed and READY re-earned.
-      expect(acknowledgeAtelierFinanceCommitIndeterminate(orgFor('commit-mixed'))).toBe(true);
+      const ack = acknowledgeAtelierFinanceCommitIndeterminate(orgFor('commit-mixed'), {
+        operator: 'fin005-suite',
+        decision: 'commit-did-not-land',
+        note: 'reconciliation showed a MIXED state; the residue was inspected and re-seeding is authorised',
+      });
+      expect(ack.cleared).toBe(true);
+      // The audit record is written BEFORE anything is cleared, and it names who
+      // decided what.
+      const audit = JSON.parse(fs.readFileSync(ack.auditPath as string, 'utf8'));
+      expect(audit.operator).toBe('fin005-suite');
+      expect(audit.decision).toBe('commit-did-not-land');
+      expect(audit.clearedHold).toBeTruthy();
       expect(fs.existsSync(holdFile)).toBe(false);
+      expect(readAtelierFinancePromotionMarker(orgFor('commit-mixed'))).toBeNull();
 
       const recovery = await seed('commit-mixed');
       expect(recovery.status, recovery.reason ?? '').toBe('complete');

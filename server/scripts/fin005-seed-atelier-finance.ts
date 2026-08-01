@@ -170,7 +170,15 @@ import {
   ATELIER_CANONICAL_MODEL_NAME_PL,
   ATELIER_FINANCE_CURRENCY,
 } from '../src/services/demo/atelierFinanceSeed.js';
-import { probePinnedTransactionSupport } from '../src/services/demo/atelierFinancePromotionTransaction.js';
+import {
+  probePinnedTransactionSupport,
+  proveDecisiveReadsGoToPrimary,
+} from '../src/services/demo/atelierFinancePromotionTransaction.js';
+import {
+  atelierFinanceOperatorHoldDir,
+  requireDurableOperatorHoldStorage,
+  type DurableStorageVerdict,
+} from '../src/services/demo/atelierFinanceOperatorHold.js';
 // The WRITE seam, imported for a read-only identity probe and nothing else.
 // `getPoolClientForPinnedTransaction()` is `PostgresDatabase.getPool().connect()`
 // — the exact pool `DbPromise` writes through and the exact connection
@@ -808,6 +816,37 @@ export const GATEWAY_METHODS_USED = [
 ];
 
 // ---------------------------------------------------------------------------
+// Hosted or local? (FIN-005 P1-A #4, P1-B #1)
+// ---------------------------------------------------------------------------
+
+/**
+ * A HOSTED target is one where the process running this command is not the
+ * machine holding the database — i.e. anything that is not a loopback address.
+ *
+ * Two guards key off this and only this:
+ *   - the operator hold must live on a mounted volume, because a hosted
+ *     container's filesystem is ephemeral and NEEDS_OPERATOR must survive a
+ *     redeploy;
+ *   - the decisive reads must be PROVED to reach the primary, because a hosted
+ *     deployment is where a read replica actually exists.
+ *
+ * A local scratch database (the DB-backed suites, a developer's laptop) has
+ * neither hazard: there is no volume to mount and no replica to lag. The
+ * decisive-read proof still RUNS there — it is just not a hard refusal, because
+ * the run cannot reach a replica it does not have.
+ */
+export function isHostedTarget(host: string): boolean {
+  const normalized = String(host || '').trim().toLowerCase().replace(/^\[|\]$/g, '');
+  if (!normalized) return false;
+  return !['localhost', '127.0.0.1', '::1', '0.0.0.0', 'host.docker.internal'].includes(normalized);
+}
+
+export interface DecisiveReadReport {
+  proven: boolean;
+  reason: string;
+}
+
+// ---------------------------------------------------------------------------
 // Pinned PostgreSQL — mandatory, never papered over
 // ---------------------------------------------------------------------------
 
@@ -1115,6 +1154,8 @@ export function buildPreflightReport(params: {
   runId: string;
   pinned: { supported: boolean; reason: string };
   identity: ConnectionIdentityReport;
+  decisiveReads: DecisiveReadReport;
+  durableHoldStorage: DurableStorageVerdict;
 }): string {
   const { preflight } = params;
   const lines: string[] = [];
@@ -1135,6 +1176,12 @@ export function buildPreflightReport(params: {
     );
   }
   lines.push(`- pinned PostgreSQL: ${params.pinned.supported ? 'AVAILABLE' : 'UNAVAILABLE'} — ${params.pinned.reason}`);
+  lines.push(
+    `- decisive reads: ${params.decisiveReads.proven ? 'PRIMARY PROVEN' : 'UNPROVEN'} — ${params.decisiveReads.reason}`
+  );
+  lines.push(
+    `- durable operator hold: ${params.durableHoldStorage.ok ? 'OK' : 'REFUSED'} (${params.durableHoldStorage.source}) — ${params.durableHoldStorage.reason}`
+  );
   lines.push(`- fixture digest (before): \`${preflight.digest}\``);
   lines.push(
     `- plan: create=${preflight.summary.create} promote=${preflight.summary.promote} ` +
@@ -1306,6 +1353,11 @@ export interface SeedRunOutcome {
   fixtureDigestAfter?: string;
   pinned: { supported: boolean; reason: string };
   identity: ConnectionIdentityReport;
+  /** FIN-005 P1-A #4 — are the decisive reads proved to reach the primary? */
+  decisiveReads: DecisiveReadReport;
+  /** FIN-005 P1-B #1 — can a NEEDS_OPERATOR hold survive a redeploy? */
+  durableHoldStorage: DurableStorageVerdict;
+  hosted: boolean;
 }
 
 export interface SeedRunOptions {
@@ -1446,6 +1498,7 @@ export async function runFin005AtelierFinanceSeed(
   });
   const demoOrgId = approved.organizationId;
   const runId = String(args['run-id'] || stamp(now)).trim();
+  const hosted = isHostedTarget(target.host);
 
   const pool = new pg.Pool({ connectionString: target.connectionString });
   const gateway: CleanupGateway = createPgGateway(pool);
@@ -1539,6 +1592,54 @@ export async function runFin005AtelierFinanceSeed(
       `[${LABEL}] pinned PostgreSQL: ${pinned.supported ? 'AVAILABLE' : 'UNAVAILABLE'} — ${pinned.reason}`
     );
 
+    // (6b) DECISIVE READS FROM THE PRIMARY — FIN-005 P1-A #4.
+    //
+    //     Guard (4) proves the read pool is on the same CLUSTER and the same
+    //     DATABASE as the primary. It cannot prove more than that, and it is
+    //     right not to try: a physical standby shares `system_identifier`, the
+    //     database name AND the database OID with its primary, so those fields
+    //     are exactly what a legitimate replica reproduces. What a standby does
+    //     NOT reproduce is the WAL position — it lags — and a post-write
+    //     verification served by a lagging standby reads the PRE-write rows and
+    //     concludes the write failed. The seed's answer to "the write failed" is
+    //     to compensate.
+    //
+    //     So this asks a different question: does the connection the seed's
+    //     DECISIVE reads are bound to answer `pg_is_in_recovery() = false`? That
+    //     is the one field a standby cannot fake. A hosted `--write` refuses
+    //     without the proof.
+    const decisiveProof = await proveDecisiveReadsGoToPrimary();
+    const decisiveReads: DecisiveReadReport = {
+      proven: decisiveProof.proven,
+      reason: decisiveProof.reason,
+    };
+    log(
+      `[${LABEL}] decisive reads: ${decisiveReads.proven ? 'PRIMARY PROVEN' : 'UNPROVEN'} — ${decisiveReads.reason}`
+    );
+
+    // (6c) DURABLE OPERATOR HOLD — FIN-005 P1-B #1-#4.
+    //
+    //     The hold is the record that says "a COMMIT is in doubt, do not touch
+    //     this tenant". Without a mounted volume it lands on the container's own
+    //     filesystem and dies with the next redeploy — which is precisely when a
+    //     NEEDS_OPERATOR run is followed by a redeploy. Durability is PROVED
+    //     here by performing the whole fsync/rename sequence, not by observing
+    //     that an environment variable exists.
+    const durableHoldStorage = hosted
+      ? requireDurableOperatorHoldStorage()
+      : {
+          ok: true,
+          dir: atelierFinanceOperatorHoldDir(),
+          source: 'none' as const,
+          reason:
+            `local target (${target.host}) — the hold lands in ${atelierFinanceOperatorHoldDir()} and the ` +
+            `mounted-volume requirement does not apply; the seed still proves the directory is writable ` +
+            `and fsync-able before its first mutation`,
+        };
+    log(
+      `[${LABEL}] durable operator hold: ${durableHoldStorage.ok ? 'OK' : 'REFUSED'} — ${durableHoldStorage.reason}`
+    );
+
     // (7) Preflight — read-only, and the same read-back the quarantine uses.
     const priorFixture = await gateway.readCanonicalFixture(demoOrgId);
     const priorEvents = await readModelEvents(pool, demoOrgId);
@@ -1557,6 +1658,8 @@ export async function runFin005AtelierFinanceSeed(
         runId,
         pinned,
         identity,
+        decisiveReads,
+        durableHoldStorage,
       }),
       'utf8'
     );
@@ -1594,7 +1697,30 @@ export async function runFin005AtelierFinanceSeed(
             `was authorised (${identity.reason}).`
         );
       }
-      return { dryRun, runId, organizationId: demoOrgId, preflight, reportPath, pinned, identity };
+      if (hosted && !decisiveReads.proven) {
+        log(
+          `⛔ --write would REFUSE: the seed's decisive reads were not proved to reach the PRIMARY ` +
+            `(${decisiveReads.reason}). A lagging replica turns a successful write into a compensation.`
+        );
+      }
+      if (!durableHoldStorage.ok) {
+        log(
+          `⛔ --write would REFUSE: ${durableHoldStorage.reason} A NEEDS_OPERATOR hold that does not ` +
+            `survive a redeploy is not a hold.`
+        );
+      }
+      return {
+        dryRun,
+        runId,
+        organizationId: demoOrgId,
+        preflight,
+        reportPath,
+        pinned,
+        identity,
+        decisiveReads,
+        durableHoldStorage,
+        hosted,
+      };
     }
 
     // ---- write path --------------------------------------------------------
@@ -1612,6 +1738,28 @@ export async function runFin005AtelierFinanceSeed(
         `Refusing to write: the pinned PostgreSQL promotion path is unavailable (${pinned.reason}). ` +
           `The fixture is promoted to READY inside ONE pinned transaction; without it a crash leaves a ` +
           `partially-promoted fixture. This command never falls back to a non-atomic path.`
+      );
+    }
+
+    // FIN-005 P1-A #4. Every SQL write below this line is still un-issued.
+    if (hosted && !decisiveReads.proven) {
+      fail(
+        `Refusing to write: the seed's DECISIVE reads were not proved to reach the primary ` +
+          `(${decisiveReads.reason}). Promotion verification, the post-condition, reconciliation, the ` +
+          `decision to compensate and the complete/incomplete verdict are all computed from those reads. ` +
+          `A read replica shares system_identifier, database name and database OID with its primary — the ` +
+          `identity guard above cannot tell them apart — but it LAGS, so a verification served by one sees ` +
+          `the pre-write rows and concludes the write failed. On a hosted target that proof is mandatory.`
+      );
+    }
+
+    // FIN-005 P1-B #1-#4. Also still before the first SQL write.
+    if (!durableHoldStorage.ok) {
+      fail(
+        `Refusing to write: ${durableHoldStorage.reason} The seed can end in NEEDS_OPERATOR (a COMMIT ` +
+          `whose answer was lost), and that verdict is a FILE. If the file cannot outlive the container, ` +
+          `the next run erases the only evidence of an in-doubt COMMIT — which is the exact failure this ` +
+          `guard exists to prevent. Attach a volume and set STORAGE_DIR to its mount path.`
       );
     }
 
@@ -1651,6 +1799,10 @@ export async function runFin005AtelierFinanceSeed(
       createdBy: args['created-by'] ? String(args['created-by']) : null,
       projectId: args['project-id'] ? String(args['project-id']) : null,
       locale,
+      // Stamped into the PROMOTION_IN_PROGRESS marker, so a marker found by a
+      // LATER run names the operator run that wrote it — and so that later run
+      // is structurally unable to remove it (FIN-005 P1-B #10).
+      runId,
     });
     if (seedResult.status !== 'complete') {
       fail(
@@ -1736,6 +1888,9 @@ export async function runFin005AtelierFinanceSeed(
       fixtureDigestAfter,
       pinned,
       identity,
+      decisiveReads,
+      durableHoldStorage,
+      hosted,
     };
   } finally {
     await gateway.close().catch(() => undefined);

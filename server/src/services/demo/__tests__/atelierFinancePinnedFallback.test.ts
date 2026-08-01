@@ -230,8 +230,20 @@ describe('FIN-005 — pinned transaction availability detection', () => {
       // Not one statement was issued: the gate sits above the schema probe.
       expect(fakeDb.calls, 'a held tenant must produce no database traffic').toHaveLength(0);
 
-      // Acknowledged, the very same call goes through.
-      expect(acknowledgeAtelierFinanceCommitIndeterminate(heldOrg)).toBe(true);
+      // Acknowledged — EXPLICITLY and ATTRIBUTABLY (FIN-005 P1-B #11) — the very
+      // same call goes through. The acknowledgement is not a bare `rm`: it names
+      // an operator, a decision and a note, and it writes a durable audit record
+      // BEFORE it clears anything.
+      const ack = acknowledgeAtelierFinanceCommitIndeterminate(heldOrg, {
+        operator: 'fin005-suite',
+        decision: 'commit-did-not-land',
+        note: 'synthetic hold planted by the test; no real in-doubt COMMIT to investigate',
+      });
+      expect(ack.cleared).toBe(true);
+      expect(ack.auditPath).toBeTruthy();
+      expect(JSON.parse(fs.readFileSync(ack.auditPath as string, 'utf8')).operator).toBe(
+        'fin005-suite'
+      );
       const after = await upsertAtelierFinanceGoldenFlow({ organizationId: heldOrg });
       expect(after.status, after.reason ?? '').toBe('complete');
     } finally {

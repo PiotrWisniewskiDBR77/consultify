@@ -191,6 +191,48 @@
  * SHOULD have a real connection; silently degrading is the failure mode this
  * whole packet exists to remove) and at `info`/`warn` elsewhere. `refused` is
  * logged at `error` level ALWAYS.
+ *
+ * ===========================================================================
+ * DECISIVE READS COME FROM THE PRIMARY (FIN-005 P1-A)
+ * ===========================================================================
+ * `DbPromise.get` and `DbPromise.all` route to `getReadPool()`, which is the
+ * READ REPLICA pool whenever `DB_READ_URL` / `DATABASE_READ_URL` is set. A
+ * physical standby shares `system_identifier`, the database NAME and the
+ * database OID with its primary — the connection-identity guard in
+ * `fin005-seed-atelier-finance.ts` deliberately allows exactly that, because a
+ * legitimate replica is indistinguishable from its primary on those fields.
+ *
+ * What a replica does NOT share is the WAL position. It lags. So a
+ * post-write verification that reads the replica can see the PRE-write rows and
+ * conclude the write failed — and the seed's answer to "the write failed" is to
+ * COMPENSATE: demote the fixture, or heal it, or report `incomplete`. Every one
+ * of those is a destructive decision taken on evidence that was simply late.
+ *
+ * `openDecisiveReadSession()` is the answer. It hands out a reader bound to a
+ * client checked out from the EXACTLY-AUTHORISED WRITE POOL
+ * (`getPoolClientForPinnedTransaction` → `PostgresDatabase.getPool()`, the same
+ * pool `DbPromise.run` writes through and the same pool the pinned transaction
+ * promotes on). It is not a wrapper around `DbPromise`; the read pool is not
+ * reachable from it at all.
+ *
+ * Two further guarantees, both cheap and both load-bearing:
+ *
+ *   - `pg_is_in_recovery()` MUST be false. This is the one field a physical
+ *     standby cannot fake, and it is what makes "this is the primary" a proof
+ *     rather than a naming convention. A write pool pointed at a standby is a
+ *     refusal, not a degradation.
+ *   - No session state is set on the borrowed client. `statement_timeout` is
+ *     already a POOL-level connection parameter (`DatabaseConfig.getPostgresConfig`
+ *     sets `statement_timeout` from `DB_STATEMENT_TIMEOUT`), so the bound is
+ *     inherited rather than issued — a plain `SET` here would ride a pooled
+ *     connection into whatever the application does next, exactly the hazard
+ *     `reconcileLostCommitAck` documents.
+ *
+ * The session holds ONE client and issues each read in autocommit. It
+ * deliberately does NOT open a transaction: the seed writes phase 1 through
+ * `DbPromise.run` on OTHER connections, and a long-lived transaction here would
+ * pin a snapshot from before those writes and then fail to see them — a
+ * self-inflicted version of the very staleness this exists to remove.
  */
 
 import type { PoolClient } from 'pg';
@@ -278,6 +320,24 @@ export interface PinnedPromotionRequest {
   idleInTransactionTimeoutMs?: number;
   /** Ceiling on the pool checkout itself. Default 10s. */
   connectTimeoutMs?: number;
+  /**
+   * The database name the caller's DECISIVE READS are bound to — i.e. the name
+   * reported by `openDecisiveReadSession()`'s client, which comes from the
+   * exactly-authorised WRITE pool.
+   *
+   * WHY THIS PARAMETER EXISTS (FIN-005 P1-A). The identity check below used to
+   * compare the pinned client against `probePinnedTransactionSupport()`, and
+   * that probe goes through `DbPromise.all` — the READ pool. On a deployment
+   * with a read replica that means the pinned transaction was being validated
+   * against a DIFFERENT SERVER, and the guard's own stated purpose ("the writes
+   * and the read-backs would not see each other") was being evaluated against
+   * the one connection the writes and read-backs must never use.
+   *
+   * When supplied, the pinned client is compared against THIS — the primary.
+   * When absent, the read-pool probe is used as before, which is correct for the
+   * single-pool deployments and the direct-adapter tests that pass nothing.
+   */
+  expectPrimaryDatabase?: string | null;
 }
 
 export type PinnedPromotionOutcome =
@@ -343,7 +403,30 @@ const DEFAULT_CONNECT_TIMEOUT_MS = 10_000;
 
 /** Sentinel aliases chosen so no application table can collide with them. */
 const PROBE_SQL =
-  'SELECT current_database() AS pinned_probe_db, pg_backend_pid() AS pinned_probe_pid';
+  'SELECT current_database() AS pinned_probe_db, pg_backend_pid() AS pinned_probe_pid, ' +
+  'pg_is_in_recovery() AS pinned_probe_in_recovery';
+
+/**
+ * Everything the DECISIVE READ SEAM has to know about the backend it borrowed.
+ *
+ * `inRecovery` is the discriminator that matters and the reason this SQL is not
+ * simply `PROBE_SQL`: a physical standby answers `current_database()`,
+ * `system_identifier` and the database OID identically to its primary, and
+ * differs only in that it is replaying WAL. Everything else here is evidence
+ * recorded into the promotion marker so a human can tell WHICH server a run
+ * was on. `pg_control_system()` is superuser-only unless granted, so
+ * `systemIdentifier` is best-effort and never gates anything on its own.
+ */
+const PRIMARY_IDENTITY_SQL =
+  `SELECT current_database() AS primary_db, ` +
+  `(SELECT oid::text FROM pg_database WHERE datname = current_database()) AS primary_db_oid, ` +
+  `COALESCE(host(inet_server_addr()), '<unix-socket>') AS primary_addr, ` +
+  `COALESCE(inet_server_port()::text, '<none>') AS primary_port, ` +
+  `pg_backend_pid()::text AS primary_pid, ` +
+  `pg_is_in_recovery() AS primary_in_recovery`;
+
+const PRIMARY_SYSTEM_IDENTIFIER_SQL =
+  'SELECT system_identifier::text AS primary_system_identifier FROM pg_control_system()';
 
 export interface PinnedSupportProbe {
   supported: boolean;
@@ -581,6 +664,37 @@ function isProduction(): boolean {
 }
 
 /**
+ * Is a SECOND pool configured for reads?
+ *
+ * Asked of `DatabaseConfig`, which is the object `PostgresDatabase.getReadPool()`
+ * actually consults, rather than of the environment: the question is "does
+ * `getReadPool()` return something other than `getPool()`", and only the config
+ * can answer it. `getReadPool()` falls back to the primary pool when
+ * `readReplica` is undefined, which is exactly the case where a divergent probe
+ * database is impossible and therefore a refusal.
+ */
+async function isReadReplicaConfigured(): Promise<{ configured: boolean; detail: string }> {
+  try {
+    const { databaseConfig } = await import('../../config/DatabaseConfig.js');
+    const replica = (
+      databaseConfig as { readReplica?: { host?: string; database?: string } } | null
+    )?.readReplica;
+    if (!replica) return { configured: false, detail: 'databaseConfig.readReplica is undefined' };
+    return {
+      configured: true,
+      detail: `databaseConfig.readReplica -> ${replica.host ?? '<host?>'}/${replica.database ?? '<db?>'}`,
+    };
+  } catch (error) {
+    // Cannot tell ⇒ treat as NOT configured, which is the FAIL-CLOSED direction:
+    // an unexplained divergence becomes a refusal rather than a log line.
+    return {
+      configured: false,
+      detail: `the database configuration could not be inspected (${(error as Error).message})`,
+    };
+  }
+}
+
+/**
  * THE ONLY PLACE THIS MODULE BUILDS `{ mode: 'unavailable' }`.
  *
  * Called from exactly one site — the recognised-seam branch at the top of
@@ -792,14 +906,66 @@ export async function runPinnedPromotionTransaction(
     const identity = await read(PROBE_SQL);
     const pinnedDb = String(identity[0]?.pinned_probe_db ?? '').trim();
     backendPid = Number(identity[0]?.pinned_probe_pid ?? 0) || null;
-    if (!pinnedDb || (probe.database && pinnedDb !== probe.database)) {
+    const pinnedInRecovery = identity[0]?.pinned_probe_in_recovery === true;
+
+    // FIN-005 P1-A. A standby replays WAL and refuses every write; a promotion
+    // "committed" there is not a promotion. It also answers `current_database()`
+    // and `system_identifier` exactly like its primary, so no name comparison
+    // can see it. Still before the locks and before the first write.
+    if (pinnedInRecovery) {
+      await rollback();
+      return refuse(
+        `the pinned connection is on a STANDBY (pg_is_in_recovery() = true), not the primary; database "${pinnedDb || 'unknown'}"`,
+        seam.signal
+      );
+    }
+
+    // The comparison target: the PRIMARY the caller's decisive reads are bound
+    // to when it supplied one, and only otherwise the read-pool probe. See
+    // `expectPrimaryDatabase`.
+    const expectedDb = (request.expectPrimaryDatabase ?? probe.database) || '';
+    const expectedSource = request.expectPrimaryDatabase
+      ? 'the decisive read session (write pool)'
+      : 'the service layer (DbPromise → read pool)';
+    if (!pinnedDb || (expectedDb && pinnedDb !== expectedDb)) {
       // Still before the locks and before the first write: zero promotion
       // UPDATEs. A database mismatch is a REFUSAL — promoting through the
       // caller's own path here is exactly the split brain this guards against.
       await rollback();
       return refuse(
-        `pinned connection is on database "${pinnedDb || 'unknown'}" but the service layer reports "${probe.database}"`,
+        `pinned connection is on database "${pinnedDb || 'unknown'}" but ${expectedSource} reports "${expectedDb}"`,
         seam.signal
+      );
+    }
+
+    // THE SEAM PROBE TRAVELLED THROUGH THE READ POOL, and the read pool may be a
+    // different server. That divergence is now handled by CONFIGURATION, not by
+    // a name comparison that cannot tell the two apart:
+    //
+    //   no read replica configured — `getReadPool()` RETURNS `getPool()`. The
+    //       probe and the pinned client are then literally the same pool, so a
+    //       divergence has no legitimate explanation at all and is a REFUSAL.
+    //       (This is the case the fail-closed suite arms.)
+    //   a read replica configured — the probe legitimately answers from another
+    //       server. Its database name is RECORDED and logged at error level,
+    //       and it decides NOTHING: after FIN-005 P1-A no verdict, no
+    //       verification and no compensation in this packet reads the replica.
+    if (probe.database && expectedDb && probe.database !== expectedDb) {
+      const replica = await isReadReplicaConfigured();
+      if (!replica.configured) {
+        await rollback();
+        return refuse(
+          `pinned connection is on database "${pinnedDb}" but the service layer reports ` +
+            `"${probe.database}", and NO read replica is configured — DbPromise's reads and the pinned ` +
+            `client resolve to the SAME pool, so this divergence has no legitimate explanation`,
+          seam.signal
+        );
+      }
+      logger.error(
+        `[atelier-finance-seed] the READ POOL is on database "${probe.database}" while the primary is ` +
+          `"${expectedDb}". A read replica is configured (${replica.detail}), so this is reported rather ` +
+          `than refused — and it decides nothing: every decisive read in this promotion is bound to the ` +
+          `primary. Verify DB_READ_URL points at a replica OF THIS primary.`
       );
     }
 
@@ -872,6 +1038,230 @@ export async function runPinnedPromotionTransaction(
     return await rolledBack((error as Error).message);
   } finally {
     releaseOnce();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// DECISIVE READS — bound to the primary, never to the read pool (FIN-005 P1-A)
+// ---------------------------------------------------------------------------
+
+/** What the primary told us about itself, recorded as evidence. */
+export interface PrimaryIdentity {
+  database: string;
+  databaseOid: string;
+  serverAddr: string;
+  serverPort: string;
+  backendPid: string;
+  /** Always `false` on a session this module hands out — a `true` is a refusal. */
+  inRecovery: boolean;
+  /** Best-effort: `pg_control_system()` is superuser-only unless granted. */
+  systemIdentifier: string | null;
+}
+
+export interface DecisiveReadSession {
+  /**
+   * `primary`      — a client from the exactly-authorised WRITE pool, proved
+   *                  not to be in recovery. Every decisive read goes here.
+   * `non-postgres` — a POSITIVELY IDENTIFIED non-PostgreSQL seam (the mocked
+   *                  test world). There is no pool, no primary and no replica;
+   *                  `DbPromise` is the only store there is.
+   */
+  seam: 'primary' | 'non-postgres';
+  read: PinnedReader;
+  /** Present only on `seam: 'primary'`. */
+  identity: PrimaryIdentity | null;
+  /** Human-readable proof, for the log, the report and the marker. */
+  evidence: string;
+  close(): Promise<void>;
+}
+
+export type DecisiveReadOutcome =
+  | { ok: true; session: DecisiveReadSession }
+  | { ok: false; reason: string; evidence: string };
+
+/**
+ * Open a reader whose statements are PROVED to reach the primary.
+ *
+ * The three doors are the same three `decidePinnedTransactionSeam()` names, and
+ * for the same reasons:
+ *
+ *   `postgres` — check a client out of `PostgresDatabase.getPool()` (the write
+ *                pool), prove `pg_is_in_recovery() = false`, and hand it back
+ *                as the reader. `DbPromise.get` / `DbPromise.all` — and
+ *                therefore `getReadPool()` — are not reachable from the
+ *                returned session at all.
+ *   `seam`     — a positively identified non-PostgreSQL seam. There is exactly
+ *                one store, so `DbPromise.all` IS the primary. Reported as
+ *                `seam: 'non-postgres'` so a caller can never mistake it for a
+ *                proof about a real database.
+ *   `refuse`   — no PostgreSQL answered and nothing explains it. FAIL CLOSED:
+ *                the caller must not read, must not write and must not
+ *                compensate.
+ *
+ * The caller MUST `close()` the session in a `finally`; the borrowed client is
+ * returned to the pool there and nowhere else.
+ */
+export async function openDecisiveReadSession(options?: {
+  connectTimeoutMs?: number;
+}): Promise<DecisiveReadOutcome> {
+  const decision = await decidePinnedTransactionSeam();
+
+  if (decision.outcome === 'refuse') {
+    const reason =
+      `decisive reads could not be bound to the primary: the availability probe failed on a database ` +
+      `that is NOT a recognised test seam (${decision.probe.reason})`;
+    logger.error(`[atelier-finance-seed] ${reason}; failing closed with ZERO statements issued`);
+    return { ok: false, reason, evidence: decision.seam.signal };
+  }
+
+  if (decision.outcome === 'seam') {
+    const evidence = `recognised non-PostgreSQL seam: ${decision.seam.signal}`;
+    return {
+      ok: true,
+      session: {
+        seam: 'non-postgres',
+        identity: null,
+        evidence,
+        read: (sql, params = []) =>
+          DbPromise.all<PinnedRow>(sql, (params ?? []) as unknown[], { fallback: false }),
+        close: async () => {
+          /* nothing was borrowed */
+        },
+      },
+    };
+  }
+
+  let client: PoolClient;
+  try {
+    client = await connectWithDeadline(
+      () => checkOutPinnedClient(),
+      options?.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS
+    );
+  } catch (error) {
+    const reason = `decisive reads could not be bound to the primary: could not check out a client from the authorised write pool: ${(error as Error).message}`;
+    logger.error(`[atelier-finance-seed] ${reason}; failing closed with ZERO statements issued`);
+    return { ok: false, reason, evidence: decision.seam.signal };
+  }
+
+  // A backend terminated under us emits `error` on the client as well as
+  // rejecting the query; without a listener node turns that into an uncaught
+  // exception. Same reasoning as the pinned path.
+  const onClientError = (error: Error): void => {
+    logger.warn('[atelier-finance-seed] the decisive read connection errored out', {
+      error: error.message,
+    });
+  };
+  client.on('error', onClientError);
+
+  let released = false;
+  const releaseOnce = async (error?: Error): Promise<void> => {
+    if (released) return;
+    released = true;
+    if (!error) client.removeListener('error', onClientError);
+    try {
+      client.release(error);
+    } catch (releaseError) {
+      logger.warn('[atelier-finance-seed] releasing the decisive read client failed', {
+        error: (releaseError as Error).message,
+      });
+    }
+  };
+
+  let identity: PrimaryIdentity;
+  try {
+    const rows = (await client.query(PRIMARY_IDENTITY_SQL)).rows ?? [];
+    const row = (rows[0] ?? {}) as Record<string, unknown>;
+    const database = String(row.primary_db ?? '').trim();
+    if (!database) {
+      throw new Error('the connection answered without current_database(); it is not PostgreSQL');
+    }
+    let systemIdentifier: string | null = null;
+    try {
+      const sys = (await client.query(PRIMARY_SYSTEM_IDENTIFIER_SQL)).rows ?? [];
+      const sysRow = sys[0] as Record<string, unknown> | undefined;
+      systemIdentifier = String(sysRow?.primary_system_identifier ?? '').trim() || null;
+    } catch {
+      // Superuser-only unless granted. Recorded as unreadable; nothing gates on
+      // it here — `pg_is_in_recovery()` is the proof that matters.
+      systemIdentifier = null;
+    }
+    identity = {
+      database,
+      databaseOid: String(row.primary_db_oid ?? '').trim(),
+      serverAddr: String(row.primary_addr ?? '').trim(),
+      serverPort: String(row.primary_port ?? '').trim(),
+      backendPid: String(row.primary_pid ?? '').trim(),
+      inRecovery: row.primary_in_recovery === true,
+      systemIdentifier,
+    };
+  } catch (error) {
+    await releaseOnce(error as Error);
+    const reason = `decisive reads could not be bound to the primary: the identity probe on the write pool failed (${(error as Error).message})`;
+    logger.error(`[atelier-finance-seed] ${reason}; failing closed with ZERO statements issued`);
+    return { ok: false, reason, evidence: decision.seam.signal };
+  }
+
+  if (identity.inRecovery) {
+    await releaseOnce();
+    const reason =
+      `decisive reads could not be bound to the primary: the authorised WRITE pool is connected to a ` +
+      `STANDBY (pg_is_in_recovery() = true) on database "${identity.database}". A standby lags its ` +
+      `primary and refuses every write, so neither a verdict nor a compensation may be computed from it`;
+    logger.error(`[atelier-finance-seed] ${reason}; failing closed with ZERO statements issued`);
+    return { ok: false, reason, evidence: decision.seam.signal };
+  }
+
+  const evidence =
+    `primary PROVED: write-pool connection to database "${identity.database}" (oid ${identity.databaseOid}) ` +
+    `at ${identity.serverAddr}:${identity.serverPort}, backend pid ${identity.backendPid}, ` +
+    `pg_is_in_recovery()=false, system_identifier ${identity.systemIdentifier ?? '<unreadable>'}`;
+  logger.info(`[atelier-finance-seed] decisive reads bound to the PRIMARY — ${evidence}`);
+
+  return {
+    ok: true,
+    session: {
+      seam: 'primary',
+      identity,
+      evidence,
+      read: async (sql, params = []) => {
+        if (released) {
+          throw new Error('the decisive read session has been closed');
+        }
+        const result = await client.query(toPositional(sql), (params ?? []) as unknown[]);
+        return (result.rows ?? []) as PinnedRow[];
+      },
+      close: () => releaseOnce(),
+    },
+  };
+}
+
+/**
+ * The CLI's gate (FIN-005 P1-A #4): may a hosted `--write` proceed?
+ *
+ * Opens a decisive read session, keeps its verdict and closes it again. A
+ * `non-postgres` seam is NOT a proof about a hosted database and is reported as
+ * unproven, so `--write` refuses on it exactly as it refuses on a standby.
+ */
+export async function proveDecisiveReadsGoToPrimary(): Promise<{
+  proven: boolean;
+  reason: string;
+  identity: PrimaryIdentity | null;
+}> {
+  const outcome = await openDecisiveReadSession();
+  if (!outcome.ok) return { proven: false, reason: outcome.reason, identity: null };
+  try {
+    if (outcome.session.seam !== 'primary') {
+      return {
+        proven: false,
+        reason:
+          `UNPROVEN — the decisive reads resolved to a recognised non-PostgreSQL seam ` +
+          `(${outcome.session.evidence}), which says nothing about a hosted database`,
+        identity: null,
+      };
+    }
+    return { proven: true, reason: outcome.session.evidence, identity: outcome.session.identity };
+  } finally {
+    await outcome.session.close();
   }
 }
 
