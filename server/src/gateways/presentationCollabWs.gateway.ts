@@ -41,6 +41,7 @@ import {
   type WsOrgContext,
 } from '../realtime/wsOrgContext.js';
 import logger from '../utils/Logger.js';
+import { evaluateRealtimeAccess } from '../realtime/demoRealtimeGuard.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -261,7 +262,7 @@ export function attachPresentationCollabWs(server: HttpServer): void {
   const db = getDatabase();
 
   // --- Upgrade handler with JWT auth ---
-  server.on('upgrade', (request, socket, head) => {
+  server.on('upgrade', async (request, socket, head) => {
     const url = new URL(request.url || '', `http://${request.headers.host}`);
     const match = url.pathname.match(/^\/ws\/presentations\/([^/]+)$/);
     if (!match) return; // not ours — let other gateways handle it
@@ -292,6 +293,17 @@ export function attachPresentationCollabWs(server: HttpServer): void {
 
     if (!userId) {
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+      socket.destroy();
+      return;
+    }
+
+    // OPS-DEMO-002: a verified signature is not enough. Public demo principals get
+    // no realtime connection at all — this plane bypasses `attachUser`, where the
+    // HTTP read-only guard lives. Decided server-side; the handshake's
+    // `organizationId` is not consulted.
+    const realtimeDecision = await evaluateRealtimeAccess(userId);
+    if (!realtimeDecision.allowed) {
+      socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
       socket.destroy();
       return;
     }

@@ -28,6 +28,7 @@ import type { Server as SocketIOServer, Socket } from 'socket.io';
 
 import { get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { evaluateRealtimeAccess, trackRealtimeConnection } from './demoRealtimeGuard.js';
 
 interface DecodedSocketUser {
   id: string;
@@ -85,12 +86,39 @@ export const socketAuthMiddleware = (socket: Socket, next: (err?: Error) => void
       next(new Error('unauthorized'));
       return;
     }
-    socket.data.user = {
-      id: userId,
-      organizationId: payload.organizationId,
-      role: payload.role,
-    } as DecodedSocketUser;
-    next();
+
+    // OPS-DEMO-002: a verified signature is not sufficient. The principal itself
+    // has to qualify, decided server-side from the database — never from the
+    // handshake, whose `organizationId` and demo flags are client-supplied.
+    void evaluateRealtimeAccess(userId)
+      .then((decision) => {
+        if (!decision.allowed) {
+          logger.info('[socketAuth] realtime connection refused', { reason: decision.reason });
+          // Same opaque error as every other failure here: a distinct message
+          // would let a client probe which accounts are demo principals.
+          next(new Error('unauthorized'));
+          return;
+        }
+        socket.data.user = {
+          id: userId,
+          organizationId: payload.organizationId,
+          role: payload.role,
+        } as DecodedSocketUser;
+        // Re-evaluated periodically: a handshake check only proves the principal
+        // qualified at connect time.
+        const untrack = trackRealtimeConnection(userId, () => {
+          try {
+            socket.disconnect(true);
+          } catch {
+            /* already gone */
+          }
+        });
+        socket.on('disconnect', untrack);
+        next();
+      })
+      .catch(() => {
+        next(new Error('unauthorized'));
+      });
   });
 };
 
