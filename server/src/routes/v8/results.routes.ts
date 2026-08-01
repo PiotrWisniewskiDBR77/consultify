@@ -27,17 +27,21 @@ import {
   projectToTarget,
 } from '../../services/results/kpiForecastService.js';
 import {
+  buildRecoveryCardDTO,
   closeRecoveryCard,
   ensureRecoveryAction,
   ensureRecoveryCardForCase,
   ensureRecoveryCheckpoint,
+  getRecoveryCardDTO,
   linkRecoveryActionTask,
   markRecoveryActionTaskLinkFailed,
   progressRecoveryCard,
   RecoveryCardServiceError,
   resolveRecoveryCheckpoint,
-  toRecoveryCardDTO,
+  toActionDTO,
+  toCheckpointDTO,
   updateRecoveryCard,
+  type RecoveryActionRow,
   type RecoveryCardRow,
 } from '../../services/results/kpiRecoveryCardService.js';
 import {
@@ -1599,7 +1603,8 @@ router.get(
       });
     }
 
-    return res.json({ data: toRecoveryCardDTO(row), meta: resultsMeta() });
+    const card = await buildRecoveryCardDTO(buildRecoveryDb(), organizationId, row);
+    return res.json({ data: card, meta: resultsMeta() });
   })
 );
 
@@ -1654,18 +1659,19 @@ router.post(
           code: 'RESULTS_DEVIATION_CASE_NOT_FOUND',
         });
       }
-      const card = await dbGet<RecoveryCardRow>(
+      const cardRow = await dbGet<RecoveryCardRow>(
         `SELECT * FROM kpi_recovery_cards WHERE id = ? AND organization_id = ?`,
         [result.cardId, organizationId]
       );
-      if (!card) {
+      if (!cardRow) {
         return res.status(500).json({
           error: 'Recovery card creation failed',
           code: 'RESULTS_RECOVERY_CARD_CREATE_FAILED',
         });
       }
+      const card = await buildRecoveryCardDTO(buildRecoveryDb(), organizationId, cardRow);
       return res.status(result.created ? 201 : 200).json({
-        data: { ...toRecoveryCardDTO(card), created: result.created },
+        data: { ...card, created: result.created },
         meta: resultsWriteMeta(),
       });
     } catch (err) {
@@ -1742,14 +1748,11 @@ router.put(
         actorUserId: userId || null,
       });
       if (!result.ok) {
-        const fresh = await dbGet<RecoveryCardRow>(
-          `SELECT * FROM kpi_recovery_cards WHERE id = ? AND organization_id = ?`,
-          [cardId, organizationId]
-        );
+        const fresh = await getRecoveryCardDTO(buildRecoveryDb(), organizationId, cardId);
         return res.status(409).json({
           error: 'Version conflict',
           code: 'RESULTS_RECOVERY_CARD_VERSION_CONFLICT',
-          data: fresh ? toRecoveryCardDTO(fresh) : null,
+          data: fresh,
         });
       }
       return res.json({ data: result.card, meta: resultsWriteMeta() });
@@ -1793,11 +1796,14 @@ router.post(
         idempotencyKey: idempotencyKey || null,
         actorUserId: userId || null,
       });
-      const action = await dbGet(
+      const actionRow = await dbGet<RecoveryActionRow>(
         `SELECT * FROM kpi_recovery_actions WHERE id = ? AND organization_id = ?`,
         [result.actionId, organizationId]
       );
-      return res.status(result.created ? 201 : 200).json({ data: action, meta: resultsWriteMeta() });
+      return res.status(result.created ? 201 : 200).json({
+        data: actionRow ? toActionDTO(actionRow) : null,
+        meta: resultsWriteMeta(),
+      });
     } catch (err) {
       if (mapRecoveryServiceError(err, res)) return;
       throw err;
@@ -1869,11 +1875,11 @@ router.put(
       ]
     );
 
-    const action = await dbGet(
+    const actionRow = await dbGet<RecoveryActionRow>(
       `SELECT * FROM kpi_recovery_actions WHERE id = ? AND organization_id = ?`,
       [actionId, organizationId]
     );
-    return res.json({ data: action, meta: resultsWriteMeta() });
+    return res.json({ data: actionRow ? toActionDTO(actionRow) : null, meta: resultsWriteMeta() });
   })
 );
 
@@ -1965,11 +1971,14 @@ router.post(
         actionId,
         taskId,
       });
-      const fresh = await dbGet(
+      const freshAction = await dbGet<RecoveryActionRow>(
         `SELECT * FROM kpi_recovery_actions WHERE id = ? AND organization_id = ?`,
         [actionId, organizationId]
       );
-      return res.json({ data: { ...result, action: fresh }, meta: resultsWriteMeta() });
+      return res.json({
+        data: { ...result, action: freshAction ? toActionDTO(freshAction) : null },
+        meta: resultsWriteMeta(),
+      });
     } catch (err) {
       // Never a silent swallow (that was the original bug): always record
       // the failure on the action row, then surface an error to the caller.
@@ -2015,7 +2024,7 @@ router.post(
         notes: notes || null,
         actorUserId: userId || null,
       });
-      return res.status(201).json({ data: checkpoint, meta: resultsWriteMeta() });
+      return res.status(201).json({ data: toCheckpointDTO(checkpoint), meta: resultsWriteMeta() });
     } catch (err) {
       if (mapRecoveryServiceError(err, res)) return;
       throw err;
@@ -2052,7 +2061,7 @@ router.put(
         status,
         kpiTimeSeriesId: kpiTimeSeriesId || null,
       });
-      return res.json({ data: checkpoint, meta: resultsWriteMeta() });
+      return res.json({ data: toCheckpointDTO(checkpoint), meta: resultsWriteMeta() });
     } catch (err) {
       if (mapRecoveryServiceError(err, res)) return;
       throw err;
@@ -2117,16 +2126,13 @@ router.post(
         actorUserId: userId || null,
       });
       if (!result.closed) {
-        const fresh = await dbGet<RecoveryCardRow>(
-          `SELECT * FROM kpi_recovery_cards WHERE id = ? AND organization_id = ?`,
-          [cardId, organizationId]
-        );
+        const fresh = await getRecoveryCardDTO(buildRecoveryDb(), organizationId, cardId);
         return res.status(409).json({
           error: 'Recovery card could not be closed',
           code: `RESULTS_RECOVERY_CARD_CLOSE_${result.reason}`,
           reason: result.reason,
           latestMeasurement: 'latestMeasurement' in result ? result.latestMeasurement : undefined,
-          data: fresh ? toRecoveryCardDTO(fresh) : null,
+          data: fresh,
         });
       }
       return res.json({ data: result.card, meta: resultsWriteMeta() });
@@ -2182,14 +2188,11 @@ router.post(
       actorUserId: userId || null,
     });
     if (!result.ok) {
-      const fresh = await dbGet<RecoveryCardRow>(
-        `SELECT * FROM kpi_recovery_cards WHERE id = ? AND organization_id = ?`,
-        [cardId, organizationId]
-      );
+      const fresh = await getRecoveryCardDTO(buildRecoveryDb(), organizationId, cardId);
       return res.status(409).json({
         error: 'Version conflict',
         code: 'RESULTS_RECOVERY_CARD_VERSION_CONFLICT',
-        data: fresh ? toRecoveryCardDTO(fresh) : null,
+        data: fresh,
       });
     }
     return res.json({ data: result.card, meta: resultsWriteMeta() });
@@ -2247,14 +2250,11 @@ router.post(
       actorUserId: userId || null,
     });
     if (!result.ok) {
-      const fresh = await dbGet<RecoveryCardRow>(
-        `SELECT * FROM kpi_recovery_cards WHERE id = ? AND organization_id = ?`,
-        [cardId, organizationId]
-      );
+      const fresh = await getRecoveryCardDTO(buildRecoveryDb(), organizationId, cardId);
       return res.status(409).json({
         error: 'Version conflict',
         code: 'RESULTS_RECOVERY_CARD_VERSION_CONFLICT',
-        data: fresh ? toRecoveryCardDTO(fresh) : null,
+        data: fresh,
       });
     }
     return res.json({ data: result.card, meta: resultsWriteMeta() });

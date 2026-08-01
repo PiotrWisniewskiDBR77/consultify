@@ -62,9 +62,25 @@ export interface RecoveryCardRow {
   closed_at: string | null;
 }
 
-export interface RecoveryCardDTO extends Omit<RecoveryCardRow, 'dependencies' | 'risks'> {
-  dependencies: RecoveryReferenceItem[];
-  risks: RecoveryReferenceItem[];
+/** Raw DB row shape (snake_case) for kpi_recovery_actions. */
+export interface RecoveryActionRow {
+  id: string;
+  organization_id: string;
+  recovery_card_id: string;
+  action_type: RecoveryActionType;
+  title: string;
+  description: string | null;
+  owner_user_id: string | null;
+  due_date: string | null;
+  status: RecoveryActionStatus;
+  linked_task_id: string | null;
+  task_link_status: RecoveryTaskLinkStatus;
+  task_link_error: string | null;
+  task_link_attempted_at: string | null;
+  idempotency_key: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface RecoveryCheckpointRow {
@@ -78,6 +94,68 @@ export interface RecoveryCheckpointRow {
   created_by: string | null;
   created_at: string;
   resolved_at: string | null;
+}
+
+/**
+ * API response shapes (camelCase). These are the ONLY shapes route handlers
+ * should ever send to the client — never spread a raw *Row straight into a
+ * response (see the RES-003A contract-fix packet: the earlier round of this
+ * file did exactly that for the card, and left actions/checkpoints as raw
+ * snake_case rows entirely).
+ */
+export interface RecoveryActionDTO {
+  id: string;
+  actionType: RecoveryActionType;
+  title: string;
+  description: string | null;
+  ownerUserId: string | null;
+  dueDate: string | null;
+  status: RecoveryActionStatus;
+  linkedTaskId: string | null;
+  taskLinkStatus: RecoveryTaskLinkStatus;
+  taskLinkError: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RecoveryCheckpointDTO {
+  id: string;
+  checkpointDate: string;
+  status: RecoveryCheckpointStatus;
+  notes: string | null;
+  kpiTimeSeriesId: string | null;
+  createdAt: string;
+  resolvedAt: string | null;
+}
+
+export interface RecoveryCardDTO {
+  id: string;
+  deviationCaseId: string;
+  kpiId: string;
+  hypothesis: string | null;
+  confirmedCause: string | null;
+  impactDescription: string | null;
+  priority: RecoveryPriority;
+  expectedImpact: string | null;
+  dependencies: RecoveryReferenceItem[];
+  risks: RecoveryReferenceItem[];
+  expectedRecoveryDate: string | null;
+  effectivenessCriteria: string | null;
+  effectivenessStatus: RecoveryEffectivenessStatus;
+  effectivenessRating: RecoveryEffectivenessRating | null;
+  lifecycleStatus: RecoveryLifecycleStatus;
+  decision: RecoveryDecision | null;
+  version: number;
+  evidenceText: string | null;
+  evidenceRef: string | null;
+  actions: RecoveryActionDTO[];
+  checkpoints: RecoveryCheckpointDTO[];
+  createdBy: string | null;
+  createdAt: string;
+  updatedBy: string | null;
+  updatedAt: string;
+  closedBy: string | null;
+  closedAt: string | null;
 }
 
 /**
@@ -110,12 +188,142 @@ function parseJsonArray(value: unknown): RecoveryReferenceItem[] {
   return [];
 }
 
-export function toRecoveryCardDTO(row: RecoveryCardRow): RecoveryCardDTO {
+/** kpi_recovery_actions row -> camelCase ActionDTO, field-by-field. */
+export function toActionDTO(row: RecoveryActionRow): RecoveryActionDTO {
   return {
-    ...row,
+    id: row.id,
+    actionType: row.action_type,
+    title: row.title,
+    description: row.description,
+    ownerUserId: row.owner_user_id,
+    dueDate: row.due_date,
+    status: row.status,
+    linkedTaskId: row.linked_task_id,
+    taskLinkStatus: row.task_link_status,
+    taskLinkError: row.task_link_error,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+/** kpi_recovery_checkpoints row -> camelCase CheckpointDTO, field-by-field. */
+export function toCheckpointDTO(row: RecoveryCheckpointRow): RecoveryCheckpointDTO {
+  return {
+    id: row.id,
+    checkpointDate: row.checkpoint_date,
+    status: row.status,
+    notes: row.notes,
+    kpiTimeSeriesId: row.kpi_time_series_id,
+    createdAt: row.created_at,
+    resolvedAt: row.resolved_at,
+  };
+}
+
+/**
+ * kpi_recovery_cards row -> camelCase CardDTO, field-by-field, with
+ * already-mapped actions/checkpoints embedded. `dependencies`/`risks` are
+ * parsed from JSONB into the real `{description, relatedId?, note?}[]` shape
+ * (never flattened to strings) — same parseJsonArray used by
+ * updateRecoveryCard's read-after-write below, so the JSONB round-trip is
+ * handled identically everywhere in this file regardless of whether the DB
+ * driver already parsed the column or returned it as a JSON string.
+ */
+export function toCardDTO(
+  row: RecoveryCardRow,
+  actions: RecoveryActionDTO[],
+  checkpoints: RecoveryCheckpointDTO[]
+): RecoveryCardDTO {
+  return {
+    id: row.id,
+    deviationCaseId: row.deviation_case_id,
+    kpiId: row.kpi_id,
+    hypothesis: row.hypothesis,
+    confirmedCause: row.confirmed_cause,
+    impactDescription: row.impact_description,
+    priority: row.priority,
+    expectedImpact: row.expected_impact,
     dependencies: parseJsonArray(row.dependencies),
     risks: parseJsonArray(row.risks),
+    expectedRecoveryDate: row.expected_recovery_date,
+    effectivenessCriteria: row.effectiveness_criteria,
+    effectivenessStatus: row.effectiveness_status,
+    effectivenessRating: row.effectiveness_rating,
+    lifecycleStatus: row.lifecycle_status,
+    decision: row.decision,
+    version: Number(row.version),
+    evidenceText: row.evidence_text,
+    evidenceRef: row.evidence_ref,
+    actions,
+    checkpoints,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedBy: row.updated_by,
+    updatedAt: row.updated_at,
+    closedBy: row.closed_by,
+    closedAt: row.closed_at,
   };
+}
+
+async function fetchRecoveryActionRows(
+  db: IDatabase,
+  orgId: string,
+  recoveryCardId: string
+): Promise<RecoveryActionRow[]> {
+  return db.all<RecoveryActionRow>(
+    `SELECT * FROM kpi_recovery_actions WHERE recovery_card_id = ? AND organization_id = ? ORDER BY created_at ASC`,
+    [recoveryCardId, orgId]
+  );
+}
+
+async function fetchRecoveryCheckpointRows(
+  db: IDatabase,
+  orgId: string,
+  recoveryCardId: string
+): Promise<RecoveryCheckpointRow[]> {
+  return db.all<RecoveryCheckpointRow>(
+    `SELECT * FROM kpi_recovery_checkpoints WHERE recovery_card_id = ? AND organization_id = ? ORDER BY checkpoint_date ASC`,
+    [recoveryCardId, orgId]
+  );
+}
+
+/**
+ * Builds the full CardDTO (embedded actions/checkpoints) for an
+ * already-loaded card row. Exported so route handlers can reuse the exact
+ * same embedding logic for both the "success" and the "409 conflict, return
+ * fresh state" branches, instead of two DTO-building code paths drifting
+ * apart.
+ */
+export async function buildRecoveryCardDTO(
+  db: IDatabase,
+  orgId: string,
+  row: RecoveryCardRow
+): Promise<RecoveryCardDTO> {
+  const [actionRows, checkpointRows] = await Promise.all([
+    fetchRecoveryActionRows(db, orgId, row.id),
+    fetchRecoveryCheckpointRows(db, orgId, row.id),
+  ]);
+  return toCardDTO(row, actionRows.map(toActionDTO), checkpointRows.map(toCheckpointDTO));
+}
+
+/**
+ * Loads a card by id (org-scoped) and returns the full embedded DTO, or
+ * `null` if it doesn't exist / isn't owned by this org. Used by every route
+ * that returns the "full card" shape: GET, POST create, PUT update, close,
+ * continue, escalate — including each of their 409 conflict/refetch
+ * branches, so a version conflict still returns actions/checkpoints, not a
+ * bare card.
+ */
+export async function getRecoveryCardDTO(
+  db: IDatabase,
+  orgId: string,
+  recoveryCardId: string
+): Promise<RecoveryCardDTO | null> {
+  const row = await db.get<RecoveryCardRow>(
+    `SELECT * FROM kpi_recovery_cards WHERE id = ? AND organization_id = ?`,
+    [recoveryCardId, orgId]
+  );
+  if (!row) return null;
+  return buildRecoveryCardDTO(db, orgId, row);
 }
 
 const MAX_REFERENCE_ITEMS = 50;
@@ -627,7 +835,7 @@ export async function closeRecoveryCard(
   if (!updated[0]) {
     return { closed: false, reason: 'VERSION_CONFLICT' };
   }
-  return { closed: true, card: toRecoveryCardDTO(updated[0]) };
+  return { closed: true, card: await buildRecoveryCardDTO(db, orgId, updated[0]) };
 }
 
 // ============================================================================
@@ -679,7 +887,7 @@ export async function progressRecoveryCard(
   if (!updated[0]) {
     return { ok: false, reason: 'VERSION_CONFLICT' };
   }
-  return { ok: true, card: toRecoveryCardDTO(updated[0]) };
+  return { ok: true, card: await buildRecoveryCardDTO(db, orgId, updated[0]) };
 }
 
 // ============================================================================
@@ -761,7 +969,7 @@ export async function updateRecoveryCard(
   if (!updated[0]) {
     return { ok: false, reason: 'VERSION_CONFLICT' };
   }
-  return { ok: true, card: toRecoveryCardDTO(updated[0]) };
+  return { ok: true, card: await buildRecoveryCardDTO(db, orgId, updated[0]) };
 }
 
 // ============================================================================
