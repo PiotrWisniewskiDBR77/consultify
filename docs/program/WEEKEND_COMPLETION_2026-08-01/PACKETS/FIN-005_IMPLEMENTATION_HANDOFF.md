@@ -1125,3 +1125,169 @@ równolegle dają fałszywe porażki wyglądające jak błędy adaptera.
    („the the write pool").
 7. `getPoolClientForPinnedTransaction()` ma teraz dwóch wołających, a jego
    docblock nadal mówi o jednym.
+
+---
+
+## 16. Runda siódma — primary consistency, durable hold, test evidence (2026-08-01)
+
+Trzy P1 zlecone (odczyty decydujące zawsze z primary; trwały magazyn na
+`PROMOTION_IN_PROGRESS`/`NEEDS_OPERATOR`; jedna kanoniczna komenda testów PG
+odporna na cichy skip) plus higiena źródeł. Diff względem `02feb7f5de`:
+`6139dce2bb`, `2e2f3fa835`, `e1caadf420`, `9b0e94bd7d`, `af2f98e63f`,
+`91c3af1081`. HEAD: `91c3af1081`. 29 plików, +4588/−3931 (usunięte: 8
+wygenerowanych manifestów/raportów, które nie powinny były trafić do repo —
+§16.4).
+
+### 16.1 Odczyty decydujące — zawsze primary, nigdy replika
+
+Wcześniej: bramka tożsamości (§2.1a runbooku) dowodziła, że skonfigurowana pula
+odczytu wskazuje na ten sam klaster co pula zapisu — ale **nie** dowodziła, że w
+danej chwili ta pula odpowiada z primary, a nie z opóźnionej repliki. Werdykt
+promocji (postwarunek, rekoncyliacja, decyzja compensate/complete) czytał przez
+`DbPromise.all/get`, czyli przez pulę odczytu.
+
+Teraz: `openDecisiveReadSession()` pożycza jeden klient z autoryzowanej puli
+**zapisu** (`getPoolClientForPinnedTransaction()`), dowodzi
+`pg_is_in_recovery() = false` — jedyne pole, którego replika nie może podrobić,
+bo `system_identifier`/nazwa/OID są identyczne — i oddaje go jako `SqlReader`.
+Wszystkie odczyty decydujące (sonda schematu, faza 0 `healResidualAtelierPromotion`,
+`findRowsStillClaimingReady` na każdej z trzech ścieżek wywołania, preconditiony
+`hasIngestRuns`/`ingestRunColumns`, werdykt na ścieżce fallback) przeniesione z
+`DbPromise.all/get` na tę sesję. Strukturalnie wymuszone: `SqlReader` nie ma już
+domyślnej wartości, `read` jest wymaganym parametrem we wszystkich trzech
+funkcjach kompensacji, a `atelierFinanceSeed.ts` ma **zero** wywołań
+`DbPromise.get`/`DbPromise.all` — sam plik jest tego dowodem
+(`atelierFinancePrimaryReadStructure.test.ts` skanuje źródło).
+
+Bramka na celu HOSTED (`isHostedTarget()` — każdy host poza loopbackiem):
+`--write` **odmawia przed pierwszym zapisem SQL** bez dowodu primary. Falsyfikacja
+(`atelierFinancePrimaryReads.pg.test.ts`, real PostgreSQL): cofnięcie trasowania
+odczytu z powrotem na `DbPromise.all` w `seedAtelierFinanceOnPrimary` psuje 3 z 5
+testów w trzech niezależnych kierunkach — faza 0 leczy na bazie nieaktualnego
+dowodu, faza 0 NIE odpala się, gdy primary jest w stanie mieszanym a seam mówi
+READY, i zdrowy primary raportuje fałszywy dryf schematu odczytany z seamu.
+
+### 16.2 Trwały magazyn — `PROMOTION_IN_PROGRESS` przeżywa śmierć procesu
+
+Nowy moduł `atelierFinanceOperatorHold.ts` (805 linii). Trwałość jest
+**dowodzona wykonaniem**, nie deklaracją zmiennej: `proveDurableStorage()`
+wykonuje pełny cykl `mkdir -p` → otwórz plik tymczasowy → zapisz → `fsync`
+PLIKU → atomowy `rename` → `fsync` KATALOGU (krok najczęściej pomijany — bez
+niego wpis katalogowy z rename'a nie jest trwały) → odczytaj z powrotem i
+porównaj bajt po bajcie → posprzątaj, i to PRZED fazą 1 seeda.
+
+Bramka `requireDurableOperatorHoldStorage()` na celu HOSTED odmawia, gdy: nic
+nie zadeklarowano; `STORAGE_DIR` wskazuje na `process.cwd()`; `st_dev`
+zadeklarowanej ścieżki równa się `st_dev` katalogu głównego (zadeklarowane ≠
+zamontowane); sonda fsync zawodzi; albo `ATELIER_FINANCE_HOLD_DIR` (zmienna
+testowa) jest ustawiona — odrzucona wprost dla zapisu hostowanego, na wzór
+precedensu `MOCK_DB=true` z rundy 6.
+
+Znacznik `PROMOTION_IN_PROGRESS` zapisywany trwale **przed `BEGIN`**: `runId`,
+`organizationId`, dokładnie pięć id wierszy w zakresie, `preStateDigest` i
+`intendedPostStateDigest` (oba liczone na primary), tożsamość celu, znacznik
+czasu. Na wynik: stan terminalny zapisuje się trwale **najpierw**, dopiero
+potem `removeOwnPromotionMarker()` może usunąć plik — i robi to **tylko** gdy
+`runId` na dysku zgadza się z bieżącym uruchomieniem ORAZ stan jest terminalny,
+więc kolejny seed strukturalnie nie może wyczyścić cudzego znacznika.
+`commit-indeterminate` ustawia `NEEDS_OPERATOR` **i** zapisuje osobny hold; faza
+0 blokuje na obu. Potwierdzenie (`acknowledgeAtelierFinanceCommitIndeterminate`)
+wymaga `{ operator, decision, note }` (puste rzuca wyjątek), zapisuje trwały,
+podpisany czasem rekord audytu z pełną treścią czyszczonego holdu/znacznika
+**przed** jego usunięciem, i dopiero wtedy odblokowuje tenanta.
+
+Falsyfikacja (`atelierFinanceDeathWindow.pg.test.ts`, real PostgreSQL): usunięcie
+zapisu znacznika sprzed `BEGIN` psuje 3 z 4 testów (kolejność zapisów, oba testy
+cyklu życia); usunięcie gałęzi znacznika z bramki fazy 0 sprawia, że pozostały
+znacznik `PROMOTION_IN_PROGRESS` **nie blokuje** kolejnego uruchomienia (raportuje
+`complete` zamiast odmowy); usunięcie kontroli `runId`/stanu z
+`removeOwnPromotionMarker` psuje testy własności w `atelierFinanceDurableHold.test.ts`.
+
+### 16.3 Jedna kanoniczna komenda testów PG, odporna na cichy skip
+
+`npm run test:fin005:pg` (`scripts/testing/run-fin005-pg-tests.mjs`) wymusza
+`--retry=0 --fileParallelism=false`, odkrywa każdy `*.pg.test.ts` na dysku (nie
+niesie nieaktualnej listy), i **FAILuje** gdy wszystko zostało pominięte mimo
+zadeklarowanego `DATABASE_URL` — cichy skip nie może już wyglądać jak sukces.
+Test-ratchet (`fin005PgTestCommand.test.ts`, 12 testów) pilnuje, żeby flagi nie
+zniknęły z definicji w root `package.json`.
+
+**★ BLOKER znaleziony przeglądem (niedeterminizm), potwierdzony i zamknięty
+niezależnie przeze mnie i przez agenta, który go wprowadził.** Zestaw PG dawał
+raz 44 PASS/1 FAIL, raz 45 PASS/0 FAIL na identycznej komendzie. Przyczyna:
+`atelierFinanceDeathWindow.pg.test.ts` instalował trigger `BEFORE UPDATE` na
+`financial_statement_packs` — obiekt schematu globalny dla całej bazy, nie
+odizolowany per-tenant. Uruchomiony wsadowo z innymi plikami `.pg.test.ts`,
+kolidował z `atelierFinanceLateWrite.pg.test.ts` i dawał fałszywe
+`relation "fin005_late_write_faults" does not exist`. Naprawa: fault bez DDL —
+jeden dodatkowy wiersz `financial_statement_values` pod kanonicznym
+sprawozdaniem, który werdykt produkcyjny odrzuca WEWNĄTRZ przypiętej transakcji
+(ten sam rollback, zero `CREATE TRIGGER`).
+
+**Zweryfikowane przeze mnie osobno, zanim zaufałem raportowi agenta**: 3 czyste
+przebiegi (`rm -rf fin005-operator-holds` między nimi, dropnięta tabela faultów)
+dają identycznie **45 PASS / 0 FAIL / 1 skipped**. Czwarty przebieg — mój
+własny, do tego raportu — też **45/0/1**. Cztery kolejne identyczne wyniki na
+czterech oddzielnych inwokacjach = niedeterminizm zamknięty, nie zamaskowany.
+
+### 16.4 Higiena źródeł
+
+12 wygenerowanych artefaktów (manifesty i raporty seeda) trafiło do repo w
+poprzedniej rundzie przez `git add -A` — dokładnie zagrożenie, przed którym
+sam ostrzegałem każdego agenta. Naprawa: `git rm --cached`, `.gitignore`
+rozszerzony o `**/server/exports/` (poprzednia reguła `server/exports/` nie
+łapała `server/server/exports/` — patrz niżej) oraz `fin005-operator-holds/`
+(hold jest **z definicji** czymś, co ma zablokować kolejny seed — commitowanie
+go jest błędem kategorii). Root cause path bug: `exportsDir()` w
+`fin005-seed-atelier-finance.ts` rozwiązywał `server/exports` względem
+`process.cwd()`, więc uruchomienie komendy z wnętrza `server/` pisało do
+`server/server/exports/`. Naprawione: ścieżka zakotwiczona na lokalizacji
+modułu (`fileURLToPath(import.meta.url)`), nie na katalogu wywołania.
+
+### 16.5 Runbook operatora
+
+`FIN-005_OPERATOR_PRE_RUN.md` rozszerzony o trzy sekcje odpowiadające nowym
+bramkom: §2.1b (dowód primary dla odczytów decydujących — treść linii logu i
+komunikatu odmowy), §2.1c (dowód trwałości `STORAGE_DIR` — pełna sekwencja
+fsync i komenda weryfikacyjna `npx tsx`), §4a (procedura operatora dla holdu
+`commit-indeterminate` vs znacznika `PROMOTION_IN_PROGRESS` — jak je odróżnić,
+jak NIE kasować pliku ręcznie, dokładne wywołanie
+`acknowledgeAtelierFinanceCommitIndeterminate`). Treść pierwszej wersji
+poprawiona po recenzji przez agenta, który implementował kod — trzy niedokładne
+cytaty (dokładna linia logu primary, martwy `require('./server/dist/…')` na
+module ESM/TS, ścieżka importu funkcji potwierdzenia) skorygowane w `91c3af1081`.
+
+### 16.6 Bramki
+
+| Bramka | Wynik |
+| --- | --- |
+| mockowane FIN-005 (18 plików, ten sam kanoniczny zestaw co runda 6) | **356 PASS / 10 skipped**, 3× identycznie |
+| real PG, `npm run test:fin005:pg` (5 plików `*.pg.test.ts`) | **45 PASS / 0 FAIL / 1 skipped**, 4× identycznie (2× ja, 2× agent) na czterech oddzielnych inwokacjach |
+| real PG, drift (`fin005_drift`, klon z usuniętymi `readiness_status`/`readiness_score`) | **1 PASS / 19 skipped**, 3× identycznie — zero fałszywego READY |
+| `tsc --noEmit` backend | **147 = 147**, identyczny zbiór `file:line:code` — zmierzone przeze mnie na PRAWDZIWYM commicie bazowym `c522a861…` w osobnym `git worktree`, nie zadeklarowane |
+| `tsc --noEmit` frontend | **0 błędów** |
+| `npm run build:backend` | **PASS** |
+| `git diff --check` (`02feb7f5de..HEAD`) | **PASS** |
+| lint na nowych/zmienionych plikach | **czyste**; dwa zmienione pliki wracają do dokładnego baseline'u HEAD (33 i 8 istniejących błędów prettier, zero nowych) |
+
+Wcześniejsze rundy raportowały bazowy `tsc` jako „216 przed = 216 po" — to była
+deklaracja bez osobnego pomiaru na prawdziwym base commicie. Zmierzone teraz
+osobno: `147 = 147`. Rozjazd ze starszym raportem nie jest regresją tej rundy —
+jest korektą metody pomiaru (Złota Reguła #1: audyty się starzeją, a
+zadeklarowana liczba bez pomiaru na czystym base to dokładnie to ryzyko).
+
+### 16.7 Otwarte
+
+1. `tsc --noEmit` backend ma nadal 147 istniejących błędów spoza FIN-005 —
+   niezmienione, poza zakresem tego pakietu.
+2. NPV/ROI/okres zwrotu modelu ROI puste — nadal decyzja operatora (§15.6/§15.8).
+3. Brak trwałej tabeli audit/outbox dla holdów/znaczników — dziś to pliki JSON
+   na dysku; migracja do tabeli to osobny pakiet.
+4. Rotacja klucza HMAC bez procedury (bez zmian od rundy 3).
+5. Wartości allowlisty Railway niepotwierdzone na żywym połączeniu (bez zmian
+   od rundy 6) — to zostaje §1 runbooku.
+
+**Status: AWAITING_CODEX_REVIEW.** Working tree czysty, nic nie wypchnięte, nic
+niescalone. Żaden `--write`/rollback/cleanup nie został uruchomiony na żadnym
+celu poza lokalnymi bazami scratch (`fin005_pri`, `fin005_rep`, `fin005_drift`)
+— posprzątane po zakończeniu weryfikacji.
