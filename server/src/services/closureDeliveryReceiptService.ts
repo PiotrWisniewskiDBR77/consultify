@@ -312,17 +312,29 @@ const STALE_DELIVERING_LEASE_MINUTES = 5;
 
 async function claimLeg(receiptId: string, leg: 'results' | 'finance'): Promise<boolean> {
   const statusCol = leg === 'results' ? 'results_status' : 'finance_status';
-  const result = await queryHelpers.queryRun(
-    `UPDATE closure_delivery_receipts
-        SET ${statusCol} = 'DELIVERING', updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-        AND (
-          ${statusCol} IN ('PENDING', 'FAILED')
-          OR (${statusCol} = 'DELIVERING' AND updated_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_DELIVERING_LEASE_MINUTES} minutes')
-        )`,
-    [receiptId]
-  );
-  return result.changes > 0;
+  // Deliberately `withPgTransaction` (a dedicated, pinned `pg.Client`), NOT
+  // `queryHelpers.queryRun` (the shared connection POOL) — this codebase has
+  // a documented, previously-hit-in-production footgun where an affected-row
+  // count reported through the pool's callback-style shim can be misattributed
+  // under concurrent overlapping calls (see queryHelpers.ts's own comment on
+  // `withPgTransaction`, "recordsMigrated=N reported but 0 rows actually
+  // landed"). This claim is exactly the kind of concurrent, correctness
+  // -critical single statement that footgun applies to — verified empirically
+  // during EXE-09 review that using the pool here produced intermittent,
+  // timing-dependent false claim results; the pinned connection did not.
+  return withPgTransaction(async (client) => {
+    const { rowCount } = await client.query(
+      `UPDATE closure_delivery_receipts
+          SET ${statusCol} = 'DELIVERING', updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+          AND (
+            ${statusCol} IN ('PENDING', 'FAILED')
+            OR (${statusCol} = 'DELIVERING' AND updated_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_DELIVERING_LEASE_MINUTES} minutes')
+          )`,
+      [receiptId]
+    );
+    return rowCount > 0;
+  });
 }
 
 /**
