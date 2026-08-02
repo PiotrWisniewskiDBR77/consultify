@@ -375,6 +375,15 @@ router.patch('/questions/:questionId', InterviewController.updateQuestion);
 /** POST /interview/questions/:questionId/ai-suggest - Suggest answer draft for a question */
 router.post('/questions/:questionId/ai-suggest', InterviewController.aiSuggestQuestion);
 
+/** GET /interview/questions/:questionId/ai-suggestions - Durable Teresa provenance */
+router.get('/questions/:questionId/ai-suggestions', InterviewController.getAiSuggestionAudit);
+
+/** POST /interview/questions/:questionId/ai-suggestions/:suggestionId/reject - Reject draft */
+router.post(
+  '/questions/:questionId/ai-suggestions/:suggestionId/reject',
+  InterviewController.rejectAiSuggestion
+);
+
 /** POST /interview/questions/:questionId/ai-improve - Improve/clean up user's answer */
 router.post('/questions/:questionId/ai-improve', InterviewController.aiImproveAnswer);
 

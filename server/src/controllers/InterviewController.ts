@@ -1332,6 +1332,34 @@ async function snapshotInterviewAnswers(params: {
   return (answeredQuestions || []).length;
 }
 
+async function ensureInterviewAiSuggestionAuditTable(): Promise<void> {
+  await queryHelpers.queryRun(
+    `CREATE TABLE IF NOT EXISTS interview_ai_suggestion_audit (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL,
+      session_id TEXT NOT NULL,
+      question_id TEXT NOT NULL,
+      generated_by TEXT NOT NULL,
+      source TEXT NOT NULL DEFAULT 'interview_question_ai_suggest',
+      model_id TEXT NOT NULL,
+      provider TEXT,
+      prompt_version TEXT NOT NULL,
+      suggested_answer_text TEXT NOT NULL,
+      tags_json TEXT NOT NULL DEFAULT '[]',
+      confidence_score INTEGER NOT NULL,
+      decision TEXT NOT NULL DEFAULT 'pending' CHECK (decision IN ('pending', 'accepted', 'rejected')),
+      final_answer_text TEXT,
+      generated_at TIMESTAMP NOT NULL,
+      decided_at TIMESTAMP,
+      decided_by TEXT
+    )`
+  );
+  await queryHelpers.queryRun(
+    `CREATE INDEX IF NOT EXISTS idx_interview_ai_suggestion_question
+       ON interview_ai_suggestion_audit(organization_id, question_id, generated_at DESC)`
+  );
+}
+
 async function ensureInterviewTemplateV6Columns(): Promise<void> {
   const cols = await getTableColumns('interview_library_templates');
   const missingColumns: Array<{ name: string; sql: string }> = [
@@ -6644,9 +6672,10 @@ Recent answered Q&A (may be empty):
 ${JSON.stringify(answered || [], null, 2)}
 `;
 
+    const modelConfig = await llmService.resolveModelConfig({ id: 'standard' });
     const result = await llmService.call({
       type: 'structured',
-      modelConfig: { id: 'standard' },
+      modelConfig,
       systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
       schema: SuggestionSchema,
@@ -6655,7 +6684,117 @@ ${JSON.stringify(answered || [], null, 2)}
       cache: false,
     });
 
-    res.json((result as any).object || { answerText: '', tags: [], confidenceScore: 3 });
+    const suggestion = (result as any).object as z.infer<typeof SuggestionSchema> | undefined;
+    if (!suggestion?.answerText?.trim()) {
+      res.status(502).json({ error: 'AI suggestion was empty' });
+      return;
+    }
+
+    await ensureInterviewAiSuggestionAuditTable();
+    const suggestionId = uuidv4();
+    const generatedAt = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_ai_suggestion_audit
+       (id, organization_id, session_id, question_id, generated_by, source, model_id,
+        provider, prompt_version, suggested_answer_text, tags_json, confidence_score,
+        decision, generated_at)
+       VALUES (?, ?, ?, ?, ?, 'interview_question_ai_suggest', ?, ?, 'int04-v1', ?, ?, ?, 'pending', ?)`,
+      [
+        suggestionId,
+        user.organizationId,
+        (question as any).session_id,
+        questionId,
+        user.id,
+        String(modelConfig.id || 'standard'),
+        modelConfig.provider ? String(modelConfig.provider) : null,
+        suggestion.answerText.trim(),
+        JSON.stringify(suggestion.tags || []),
+        suggestion.confidenceScore || 3,
+        generatedAt,
+      ]
+    );
+
+    res.json({
+      ...suggestion,
+      answerText: suggestion.answerText.trim(),
+      suggestionId,
+      generatedAt,
+    });
+  }),
+
+  getAiSuggestionAudit: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { questionId } = req.params;
+    const question = await queryHelpers.queryOne(
+      `SELECT q.id, s.owner_id
+         FROM interview_questions q
+         JOIN interview_sessions s ON s.id = q.session_id
+        WHERE q.id = ? AND q.organization_id = ? AND s.organization_id = ?`,
+      [questionId, user.organizationId, user.organizationId]
+    );
+    if (!question) {
+      res.status(404).json({ error: 'Question not found' });
+      return;
+    }
+    const canRead =
+      String((question as any).owner_id) === user.id ||
+      isOrgWideInterviewManagerRole(String(user.role));
+    if (!canRead) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    await ensureInterviewAiSuggestionAuditTable();
+    const rows = await queryHelpers.queryAll(
+      `SELECT id, source, model_id, provider, prompt_version, suggested_answer_text,
+              tags_json, confidence_score, decision, final_answer_text, generated_at,
+              generated_by, decided_at, decided_by
+         FROM interview_ai_suggestion_audit
+        WHERE question_id = ? AND organization_id = ?
+        ORDER BY generated_at DESC`,
+      [questionId, user.organizationId]
+    );
+    res.json(
+      (rows as any[]).map((row) => ({
+        id: row.id,
+        source: row.source,
+        modelId: row.model_id,
+        provider: row.provider,
+        promptVersion: row.prompt_version,
+        suggestedAnswerText: row.suggested_answer_text,
+        tags: parseJson(row.tags_json, []),
+        confidenceScore: row.confidence_score,
+        decision: row.decision,
+        finalAnswerText: row.final_answer_text,
+        generatedAt: row.generated_at,
+        generatedBy: row.generated_by,
+        decidedAt: row.decided_at,
+        decidedBy: row.decided_by,
+      }))
+    );
+  }),
+
+  rejectAiSuggestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { questionId, suggestionId } = req.params;
+    await ensureInterviewAiSuggestionAuditTable();
+    const now = new Date().toISOString();
+    const result = await queryHelpers.queryRun(
+      `UPDATE interview_ai_suggestion_audit a
+          SET decision = 'rejected', decided_at = ?, decided_by = ?
+        FROM interview_questions q
+        JOIN interview_sessions s ON s.id = q.session_id
+       WHERE a.id = ? AND a.question_id = ? AND a.organization_id = ?
+         AND a.decision = 'pending' AND q.id = a.question_id
+         AND q.organization_id = a.organization_id AND s.organization_id = a.organization_id
+         AND s.owner_id = ?`,
+      [now, user.id, suggestionId, questionId, user.organizationId, user.id]
+    );
+    if (result.changes !== 1) {
+      res.status(404).json({ error: 'Pending suggestion not found' });
+      return;
+    }
+    res.json({ id: suggestionId, decision: 'rejected', decidedAt: now, decidedBy: user.id });
   }),
 
   aiImproveAnswer: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -7069,6 +7208,7 @@ ${JSON.stringify(questions || [], null, 2)}
       voiceTranscript,
       voiceTranscriptStatus,
       voiceAudioEvidenceId,
+      aiSuggestionId,
     } = req.body;
 
     // Lock edits when session is submitted/completed
@@ -7159,10 +7299,50 @@ ${JSON.stringify(questions || [], null, 2)}
     params.push(new Date().toISOString());
     params.push(questionId, user.organizationId);
 
-    await queryHelpers.queryRun(
-      `UPDATE interview_questions SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
-      params
-    );
+    let updateResult;
+    if (aiSuggestionId !== undefined) {
+      if (
+        typeof aiSuggestionId !== 'string' ||
+        !aiSuggestionId.trim() ||
+        typeof answerText !== 'string' ||
+        !answerText.trim()
+      ) {
+        res.status(400).json({ error: 'aiSuggestionId requires a non-empty answerText' });
+        return;
+      }
+      await ensureInterviewAiSuggestionAuditTable();
+      const decidedAt = new Date().toISOString();
+      updateResult = await queryHelpers.queryRun(
+        `WITH accepted AS (
+           UPDATE interview_ai_suggestion_audit
+              SET decision = 'accepted', final_answer_text = ?, decided_at = ?, decided_by = ?
+            WHERE id = ? AND question_id = ? AND organization_id = ? AND decision = 'pending'
+            RETURNING id
+         )
+         UPDATE interview_questions
+            SET ${updates.join(', ')}
+          WHERE id = ? AND organization_id = ?
+            AND EXISTS (SELECT 1 FROM accepted)`,
+        [
+          answerText.trim(),
+          decidedAt,
+          user.id,
+          aiSuggestionId.trim(),
+          questionId,
+          user.organizationId,
+          ...params,
+        ]
+      );
+      if (updateResult.changes !== 1) {
+        res.status(409).json({ error: 'AI suggestion is missing or already decided' });
+        return;
+      }
+    } else {
+      updateResult = await queryHelpers.queryRun(
+        `UPDATE interview_questions SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
+        params
+      );
+    }
 
     // Update session progress
     const question = (await queryHelpers.queryOne(
