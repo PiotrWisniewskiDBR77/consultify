@@ -23,7 +23,6 @@ import {
   assertCardMeetsFormula,
   CardContentGateError,
 } from '../services/cardContentFormulaValidator.js';
-import { fireClosureHandoff } from '../services/executionResultsBridge.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { getGateReadiness } from '../services/initiative/gateAiReadinessService.js';
 import { getTimelineFlags } from '../services/initiative/gateTimelineService.js';
@@ -2243,28 +2242,33 @@ export class InitiativeController {
 
   /**
    * ★ KNOWN GAP — NOT FIXED IN THIS PASS (INI-005 correction round, 2026-08-01).
-   * `blockInitiative` and `completeInitiative` below are the SAME anti-pattern
-   * family the initiativeAutoStartJob bypass (this packet's original target)
-   * was: each does a raw `queryRun UPDATE initiatives SET status = ...`
-   * directly, with NO row lock, NO transaction, NO GO/NO-GO or gate-decision
-   * check, NO readiness check, and only the inert shadow-mode capability
-   * middleware guarding the route (which always calls next() regardless of
-   * the computed verdict — i.e. no real authorization). `completeInitiative`
-   * additionally writes `initiatives.status='done'` through a code path
-   * completely separate from `executeInitiativeTransition`, so its only audit
-   * trail is the best-effort `fireClosureHandoff` below — no
-   * `initiative_status_history`/`initiative_history` row at all.
+   * `blockInitiative` below is in the SAME anti-pattern family the
+   * initiativeAutoStartJob bypass (this packet's original target) was: it
+   * does a raw `queryRun UPDATE initiatives SET status = ...` directly, with
+   * NO row lock, NO transaction, NO GO/NO-GO or gate-decision check, NO
+   * readiness check, and only the inert shadow-mode capability middleware
+   * guarding the route (which always calls next() regardless of the computed
+   * verdict — i.e. no real authorization).
    *
    * `unblockInitiative` WAS in this same family but is FIXED as of the
    * INI-005 follow-up (2026-08-01) — see its doc comment below; it is now a
    * thin adapter over `executeInitiativeTransition`, same as
    * `updateInitiativeStatus`/`approveInitiative`/`startExecution`. It was
-   * fixed ahead of `blockInitiative`/`completeInitiative` because an
-   * exhaustive-inventory pass proved it live-reachable as an EXECUTING-bypass
-   * of the exact same severity class as the auto-start job (no current-status
-   * check at all — reachable from ANY status, not just BLOCKED).
+   * fixed ahead of `blockInitiative` because an exhaustive-inventory pass
+   * proved it live-reachable as an EXECUTING-bypass of the exact same
+   * severity class as the auto-start job (no current-status check at all —
+   * reachable from ANY status, not just BLOCKED).
    *
-   * Converting the remaining two to thin adapters is real, necessary
+   * `completeInitiative` was ALSO in this family (raw `status = 'done'`
+   * UPDATE, no transition check, no evidence/GO-NO-GO gate) but is now
+   * CLOSED as of EXE-08 (2026-08-02): rather than converting it into a thin
+   * adapter, the route is disabled outright — it always returns 410 Gone and
+   * points callers at the new closure-request/evidence-pack flow instead
+   * (see its doc comment below). DONE can now only be reached through
+   * `initiativeClosureService`'s closure-request approval, which itself
+   * calls `executeInitiativeTransition`.
+   *
+   * Converting `blockInitiative` to a thin adapter is real, necessary
    * follow-up work, flagged here so the gap is documented rather than
    * silently left implicit.
    */
@@ -2391,46 +2395,44 @@ export class InitiativeController {
   );
 
   /**
-   * Complete initiative (mark as done)
+   * Complete initiative (mark as done) — DISABLED (EXE-08, 2026-08-02).
+   *
+   * This handler used to run a raw `UPDATE initiatives SET status = 'done'`
+   * directly: no `isValidTransition` check, no row lock, no readiness/
+   * evidence check, no GO/NO-GO, and no `initiative_history`/
+   * `initiative_status_history` row. The route's capability middleware
+   * (`requireInitiativeCapability('initiative.complete', { shadow: true })`)
+   * runs in shadow mode by default and never actually blocks, so in practice
+   * ANY authenticated org member could push ANY initiative (including DRAFT)
+   * straight to `done` through this route — a direct bypass of the new
+   * closure-request/evidence-pack gate (EXE-08: initiatives can now only
+   * reach DONE via a `closure-requests/:requestId/approve` call, which routes
+   * through the canonical `executeInitiativeTransition`).
+   *
+   * The route is kept mounted (no routing changes, no 404 for existing
+   * clients) but no longer performs the transition: it always returns 410
+   * Gone and points callers at the closure-request flow instead. Do not
+   * reintroduce a `status = 'done'` UPDATE here — use
+   * `initiativeClosureService`/`executeInitiativeTransition` instead.
    */
   static completeInitiative = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
       const userId = req.user?.id;
       const initiativeId = req.params.id;
-      const { enableBenefitsTracking } = req.body;
 
       if (!orgId || !userId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
-      await queryHelpers.queryRun(
-        `UPDATE initiatives SET
-                status = 'done',
-                done_at = CURRENT_TIMESTAMP,
-                done_by = ?,
-                benefits_tracking_enabled = ?,
-                updated_at = CURRENT_TIMESTAMP
-             WHERE id = ? AND organization_id = ?`,
-        [userId, enableBenefitsTracking ? 1 : 0, initiativeId, orgId]
-      );
-
-      // G1 fix (2026-07-10): this endpoint was a second DONE-transition path
-      // that bypassed the M14→M15 closure handoff entirely (audit found it
-      // has no frontend caller today, but it is a live, unguarded route —
-      // leaving it unwired would silently reopen the same data-integrity gap
-      // the moment anything starts calling it). Same choke-point wrapper as
-      // updateInitiativeStatus; fire-and-forget + idempotent internally.
-      fireClosureHandoff(orgId, initiativeId, userId);
-
-      res.json({
-        success: true,
-        message: 'Initiative completed',
-        initiativeId,
-        newStatus: 'done',
-        benefitsTrackingEnabled: !!enableBenefitsTracking,
+      res.status(410).json({
+        error:
+          'Direct completion via /complete is no longer supported. Create and approve a closure request instead.',
+        code: 'CLOSURE_REQUEST_REQUIRED',
+        useInstead: '/api/initiatives/:id/closure-requests',
       });
+      return;
     }
   );
 
@@ -2627,6 +2629,10 @@ export class InitiativeController {
   /**
    * Archive initiative
    */
+  // NOTE (EXE-08, 2026-08-02): same raw-UPDATE bypass pattern as the old
+  // completeInitiative (no isValidTransition/lock/history row) — status here
+  // goes straight to 'ARCHIVED' via queryRun below. Out of scope for EXE-08
+  // (DONE-transition closure gate only); left for a future packet.
   static archiveInitiative = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
