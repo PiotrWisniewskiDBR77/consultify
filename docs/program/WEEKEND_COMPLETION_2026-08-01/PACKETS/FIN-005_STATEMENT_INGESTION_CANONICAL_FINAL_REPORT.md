@@ -258,7 +258,6 @@ $ git status --short
 ```
 
 Implementation HEAD (before this report's own commit): `6f7fd2e08d19ef0efbae5b73fd7aa4dd2afb3faa`.
-Documentation/final HEAD after this report's commit: see the commit this
-file is checked in with — `git log -1 --oneline` on the branch.
+Documentation/final HEAD (this report's own commit): `a836f15a86`.
 
 AWAITING_CODEX_REVIEW
