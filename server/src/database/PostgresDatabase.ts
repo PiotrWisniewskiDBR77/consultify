@@ -6,7 +6,7 @@
  * Provides SQLite-compatible interface for PostgreSQL
  */
 
-import { Client, Pool, type PoolClient, type PoolConfig } from 'pg';
+import { Client, Pool, type PoolClient, type PoolConfig, type QueryResultRow } from 'pg';
 
 import databaseConfig from '../config/DatabaseConfig.js';
 import logger from '../utils/Logger.js';
@@ -503,8 +503,8 @@ function getPool(): Pool {
 }
 
 export interface PinnedTransactionClient {
-  queryAll<T = any>(sql: string, params?: unknown[]): Promise<T[]>;
-  queryOne<T = any>(sql: string, params?: unknown[]): Promise<T | null>;
+  queryAll<T extends QueryResultRow = any>(sql: string, params?: unknown[]): Promise<T[]>;
+  queryOne<T extends QueryResultRow = any>(sql: string, params?: unknown[]): Promise<T | null>;
   queryRun(sql: string, params?: unknown[]): Promise<{ changes: number }>;
 }
 
@@ -513,15 +513,20 @@ export async function withPinnedPostgresTransaction<T>(
   work: (tx: PinnedTransactionClient) => Promise<T>
 ): Promise<T> {
   const client = await getPool().connect();
-  const query = async <R>(sql: string, params: unknown[] = []) => {
+  const query = async <R extends QueryResultRow = any>(sql: string, params: unknown[] = []) => {
     const adaptedSql = adaptQuery(sql);
     enforceReadOnly(adaptedSql);
     return client.query<R>(adaptedSql, params);
   };
   const tx: PinnedTransactionClient = {
-    queryAll: async <R>(sql: string, params: unknown[] = []) => (await query<R>(sql, params)).rows,
-    queryOne: async <R>(sql: string, params: unknown[] = []) =>
-      (await query<R>(sql, params)).rows[0] ?? null,
+    queryAll: async <R extends QueryResultRow = any>(
+      sql: string,
+      params: unknown[] = []
+    ): Promise<R[]> => (await query<R>(sql, params)).rows,
+    queryOne: async <R extends QueryResultRow = any>(
+      sql: string,
+      params: unknown[] = []
+    ): Promise<R | null> => (await query<R>(sql, params)).rows[0] ?? null,
     queryRun: async (sql: string, params: unknown[] = []) => ({
       changes: (await query(sql, params)).rowCount ?? 0,
     }),
