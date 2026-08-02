@@ -1,10 +1,10 @@
 -- V4-RSLT runtime completion
 -- Completes enterprise execution for Results KPI schedules, connectors, and metric audit trail.
 
-ALTER TABLE kpi_report_schedules ADD COLUMN IF NOT EXISTS next_run_at TIMESTAMP;
-ALTER TABLE kpi_report_schedules ADD COLUMN IF NOT EXISTS last_run_status TEXT DEFAULT 'never';
+ALTER TABLE IF EXISTS kpi_report_schedules ADD COLUMN IF NOT EXISTS next_run_at TIMESTAMP;
+ALTER TABLE IF EXISTS kpi_report_schedules ADD COLUMN IF NOT EXISTS last_run_status TEXT DEFAULT 'never';
 
-ALTER TABLE kpi_connectors ADD COLUMN IF NOT EXISTS last_run_message TEXT;
+ALTER TABLE IF EXISTS kpi_connectors ADD COLUMN IF NOT EXISTS last_run_message TEXT;
 
 CREATE TABLE IF NOT EXISTS kpi_metric_audit_log (
   id TEXT PRIMARY KEY,

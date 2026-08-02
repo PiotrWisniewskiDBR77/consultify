@@ -10,10 +10,64 @@
 -- Fully additive + idempotent (safe to re-run / safe on a shared DB):
 -- only ADD COLUMN IF NOT EXISTS and CREATE INDEX IF NOT EXISTS.
 
+-- Historical definitions for these owner tables were SQLite-flavoured or
+-- absent from the active PostgreSQL path. Create the canonical minimum first
+-- so the additive reconciliation below also works on a fresh database.
+CREATE TABLE IF NOT EXISTS initiative_milestones (
+  id TEXT PRIMARY KEY,
+  initiative_id TEXT NOT NULL REFERENCES initiatives(id) ON DELETE CASCADE,
+  organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  target_date DATE,
+  actual_date DATE,
+  status TEXT DEFAULT 'PENDING',
+  order_index INTEGER DEFAULT 0,
+  is_gate INTEGER DEFAULT 0,
+  gate_decision_id TEXT,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  created_by TEXT
+);
+
+CREATE TABLE IF NOT EXISTS initiative_resources (
+  id TEXT PRIMARY KEY,
+  initiative_id TEXT NOT NULL REFERENCES initiatives(id) ON DELETE CASCADE,
+  organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  user_id TEXT,
+  name TEXT DEFAULT '',
+  role TEXT NOT NULL DEFAULT 'member',
+  allocation_percentage INTEGER DEFAULT 100,
+  start_date DATE,
+  end_date DATE,
+  notes TEXT,
+  source TEXT DEFAULT 'manual',
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS raid_items (
+  id TEXT PRIMARY KEY,
+  organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  initiative_id TEXT REFERENCES initiatives(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('RISK', 'ASSUMPTION', 'ISSUE', 'DEPENDENCY')),
+  title TEXT NOT NULL,
+  description TEXT,
+  status TEXT DEFAULT 'OPEN',
+  probability TEXT,
+  impact TEXT,
+  owner_id TEXT,
+  due_date TEXT,
+  linked_items TEXT,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 ALTER TABLE initiative_milestones ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
 ALTER TABLE initiative_resources ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
 ALTER TABLE raid_items ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
 ALTER TABLE tasks ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS created_by TEXT;
 
 -- The canonical controllers already read/write these lifecycle fields, but a
 -- fresh acceptance database can miss them because their historical DDL lives

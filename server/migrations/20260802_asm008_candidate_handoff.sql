@@ -21,6 +21,11 @@
 -- Fully additive + idempotent (safe to re-run / safe on a shared DB): only
 -- CREATE TABLE/INDEX IF NOT EXISTS.
 
+-- Promotion read-back resolves the resulting Initiative through these lineage
+-- columns. Their historical migration was not replay-safe on fresh Postgres.
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS source_type TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS source_id TEXT;
+
 CREATE TABLE IF NOT EXISTS public.assessment_candidate_handoffs (
     id text DEFAULT (gen_random_uuid())::text NOT NULL PRIMARY KEY,
     organization_id text NOT NULL,

@@ -12,6 +12,18 @@
 -- Fully additive + idempotent (safe to re-run / safe on a shared DB): only
 -- CREATE TABLE/INDEX IF NOT EXISTS.
 
+-- Assessment permission bootstrap writes the canonical role matrix on first
+-- use. Its historical table definition was hidden behind a failing monolithic
+-- baseline, so keep this active workflow deployable on a fresh database.
+CREATE TABLE IF NOT EXISTS role_permissions (
+  id TEXT PRIMARY KEY,
+  role TEXT NOT NULL,
+  permission_key TEXT NOT NULL,
+  description TEXT,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (role, permission_key)
+);
+
 -- Evidence attached to one axis+area of one assessment. axis_id mirrors
 -- DRD_STRUCTURE axis.id (numeric, e.g. "1"); area_id mirrors area.id
 -- (e.g. "1A"). Kept as text for cross-db portability, same convention as
