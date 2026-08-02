@@ -1,12 +1,13 @@
 import { createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
-import { getDatabase } from '../database/Database.js';
+import type { ArtifactContentEnvelopeV1 } from '../types/artifactContent.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import decisionService from './decisionService.js';
-import initiativeService from './initiativeService.js';
-import { TaskService } from './TaskService.js';
+import {
+  buildCanvasCanonicalWrite,
+  resolveCanvasCanonicalEnvelope,
+} from './artifacts/canvasCanonicalPersistence.js';
 import {
   acceptArtifactRunPlan,
   createArtifactRunFromChat,
@@ -16,11 +17,6 @@ import {
 } from './v8/artifactRegistryService.js';
 import * as contextSnapshotService from './v8/contextSnapshotService.js';
 import * as executionSpineService from './v8/executionSpineService.js';
-import {
-  buildCanvasCanonicalWrite,
-  resolveCanvasCanonicalEnvelope,
-} from './artifacts/canvasCanonicalPersistence.js';
-import type { ArtifactContentEnvelopeV1 } from '../types/artifactContent.js';
 
 export type WorkCanvasKind =
   | 'markdown'
@@ -34,6 +30,7 @@ export type WorkCanvasKind =
 
 export type WorkCanvasTarget =
   | 'note'
+  | 'table'
   | 'idea'
   | 'initiative'
   | 'task'
@@ -43,7 +40,7 @@ export type WorkCanvasTarget =
   | 'client_deliverable'
   | 'kpi_roi_artifact';
 
-export type WorkCanvasProposalStatus = 'proposed' | 'approved' | 'rejected';
+export type WorkCanvasProposalStatus = 'proposed' | 'executing' | 'approved' | 'rejected';
 
 export interface WorkCanvasDraftInput {
   conversationId: string;
@@ -107,6 +104,7 @@ export interface WorkCanvasActionReadBack {
   entityStatus?: string | null;
   target: WorkCanvasTarget;
   targetObjectId: string | null;
+  url?: string | null;
   title?: string;
   projectId?: string | null;
   ownerId?: string | null;
@@ -251,13 +249,31 @@ async function ensureSchema(): Promise<void> {
       // writes it directly, so the column must exist even when this service
       // boots before any work-canvas route ran.
       await dbRun('ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_md TEXT', []);
-      await dbRun("ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS canonical_format TEXT NOT NULL DEFAULT 'markdown'", []);
-      await dbRun('ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_json_native TEXT', []);
+      await dbRun(
+        "ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS canonical_format TEXT NOT NULL DEFAULT 'markdown'",
+        []
+      );
+      await dbRun(
+        'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_json_native TEXT',
+        []
+      );
       await dbRun('ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS blocks_json TEXT', []);
-      await dbRun('ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_schema_version TEXT', []);
-      await dbRun('ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS markdown_projection_status TEXT', []);
-      await dbRun('ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS markdown_projected_at TEXT', []);
-      await dbRun('ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS projection_error TEXT', []);
+      await dbRun(
+        'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_schema_version TEXT',
+        []
+      );
+      await dbRun(
+        'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS markdown_projection_status TEXT',
+        []
+      );
+      await dbRun(
+        'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS markdown_projected_at TEXT',
+        []
+      );
+      await dbRun(
+        'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS projection_error TEXT',
+        []
+      );
       await dbRun(
         `CREATE TABLE IF NOT EXISTS work_canvas_proposals (
           id TEXT PRIMARY KEY,
@@ -317,7 +333,10 @@ function mapDraft(row: DraftRow): WorkCanvasDraftRecord {
     conversationId: row.conversation_id,
     kind: row.kind,
     title: row.title,
-    content: contentEnvelope.canonicalFormat === 'json' ? contentEnvelope.contentJson : contentEnvelope.contentMd,
+    content:
+      contentEnvelope.canonicalFormat === 'json'
+        ? contentEnvelope.contentJson
+        : contentEnvelope.contentMd,
     contentEnvelope,
     canonicalFormat: contentEnvelope.canonicalFormat,
     contentMd: contentEnvelope.contentMd,
@@ -376,6 +395,8 @@ export function requiredCapabilityForTarget(target: WorkCanvasTarget): string {
       return 'canvas.convert.decision';
     case 'idea':
       return 'canvas.convert.idea';
+    case 'table':
+      return 'canvas.output.table';
     case 'project_brief':
     case 'client_deliverable':
       return 'artifact.create';
@@ -443,8 +464,14 @@ export async function createDraft(params: {
   const id = uuidv4();
   const now = nowIso();
   const canonical = buildCanvasCanonicalWrite(
-    { kind: params.input.kind, canonical_format: typeof params.input.content === 'string' ? 'markdown' : 'json' },
-    { canonicalFormat: typeof params.input.content === 'string' ? 'markdown' : 'json', content: params.input.content ?? '' },
+    {
+      kind: params.input.kind,
+      canonical_format: typeof params.input.content === 'string' ? 'markdown' : 'json',
+    },
+    {
+      canonicalFormat: typeof params.input.content === 'string' ? 'markdown' : 'json',
+      content: params.input.content ?? '',
+    }
   );
   await dbRun(
     `INSERT INTO work_canvas_drafts (
@@ -506,15 +533,19 @@ export async function updateDraft(params: {
   const nextContent = params.patch.content !== undefined ? params.patch.content : existing.content;
   const canonical = buildCanvasCanonicalWrite(
     {
-      kind: existing.kind, canonical_format: existing.canonicalFormat,
-      content_json: JSON.stringify(existing.content), content_md: existing.contentMd,
-      content_json_native: existing.contentJson === undefined ? null : JSON.stringify(existing.contentJson),
+      kind: existing.kind,
+      canonical_format: existing.canonicalFormat,
+      content_json: JSON.stringify(existing.content),
+      content_md: existing.contentMd,
+      content_json_native:
+        existing.contentJson === undefined ? null : JSON.stringify(existing.contentJson),
       blocks_json: existing.blocks.length ? JSON.stringify(existing.blocks) : null,
       content_schema_version: existing.contentSchemaVersion,
       markdown_projection_status: existing.markdownProjectionStatus,
-      markdown_projected_at: existing.markdownProjectedAt, projection_error: existing.projectionError,
+      markdown_projected_at: existing.markdownProjectedAt,
+      projection_error: existing.projectionError,
     },
-    { content: nextContent, canonicalFormat: typeof nextContent === 'string' ? 'markdown' : 'json' },
+    { content: nextContent, canonicalFormat: typeof nextContent === 'string' ? 'markdown' : 'json' }
   );
   await dbRun(
     `UPDATE work_canvas_drafts
@@ -801,6 +832,7 @@ export async function saveDraftAsArtifact(params: {
         artifactId: materialized.artifactId,
         artifactRunId: materialized.runId,
         artifactVersion: saved.artifactVersion,
+        url: `/presentations?tab=outputs&artifactId=${encodeURIComponent(materialized.artifactId)}`,
         sourceDraftId: saved.id,
         auditEventId: params.auditEventId || null,
       },
@@ -1015,6 +1047,43 @@ async function commitProposalToDomain(params: {
   );
   const assigneeId = readString(params.proposal.payload.assigneeId, ownerId);
 
+  if (params.proposal.target === 'table') {
+    if (params.draft.kind !== 'table') {
+      throw Object.assign(new Error('Table handoff requires a Canvas with kind=table'), {
+        statusCode: 400,
+        code: 'CANVAS_NOT_TABLE_KIND',
+      });
+    }
+    const { materializeCanvasTable } = await import('./canvasTableMaterialize.js');
+    const table = await materializeCanvasTable({
+      organizationId: params.organizationId,
+      actorUserId: params.actorUserId,
+      sourceDraftId: params.draft.id,
+      title,
+      contentMd: params.draft.contentMd,
+    });
+    await appendDraftMaterializedTo({
+      organizationId: params.organizationId,
+      draft: params.draft,
+      entry: {
+        target: 'table',
+        entityId: table.tableId,
+        url: table.url,
+        title,
+        at: nowIso(),
+      },
+    });
+    return {
+      status: 'created',
+      entityStatus: 'created',
+      target: 'table',
+      targetObjectId: table.tableId,
+      title,
+      url: table.url,
+      sourceDraftId: params.draft.id,
+    };
+  }
+
   // M-7 — task / initiative / decision / note now route through the SAME
   // shared materializer that /save-to-workspace uses
   // (services/canvasMaterialize.ts). Previously this switch had its own
@@ -1079,6 +1148,7 @@ async function commitProposalToDomain(params: {
       target: params.proposal.target,
       targetObjectId: materialized.id,
       title: materialized.title,
+      url: materialized.url,
       projectId: projectId || params.draft.projectId,
       ownerId: ownerId || undefined,
       assigneeId: assigneeId || undefined,
@@ -1171,8 +1241,14 @@ export async function approveProposal(params: {
   }
   const existing = await getProposal(params);
   if (!existing) throw Object.assign(new Error('Canvas proposal not found'), { statusCode: 404 });
-  if (existing.status !== 'proposed') {
+  if (existing.status === 'approved' || existing.status === 'rejected') {
     return existing;
+  }
+  if (existing.status === 'executing') {
+    throw Object.assign(new Error('Canvas proposal execution already in progress'), {
+      statusCode: 409,
+      code: 'CANVAS_PROPOSAL_ALREADY_CLAIMED',
+    });
   }
   const draft = await getDraft({
     organizationId: params.organizationId,
@@ -1180,13 +1256,38 @@ export async function approveProposal(params: {
   });
   if (!draft) throw Object.assign(new Error('Canvas draft not found'), { statusCode: 404 });
   assertProposalFresh(existing, draft);
-  const readBack = await commitProposalToDomain({
-    organizationId: params.organizationId,
-    actorUserId: params.actorUserId,
-    proposal: existing,
-    draft,
-    auditEventId: params.auditEventId || null,
-  });
+  const claim = await dbRun(
+    `UPDATE work_canvas_proposals SET status = ?, updated_at = ?
+     WHERE id = ? AND organization_id = ? AND status = 'proposed'`,
+    ['executing', nowIso(), params.proposalId, params.organizationId],
+    { fallback: false }
+  );
+  if (claim.changes !== 1) {
+    const latest = await getProposal(params);
+    if (latest?.status === 'approved' || latest?.status === 'rejected') return latest;
+    throw Object.assign(new Error('Canvas proposal execution already in progress'), {
+      statusCode: 409,
+      code: 'CANVAS_PROPOSAL_ALREADY_CLAIMED',
+    });
+  }
+  let readBack: WorkCanvasActionReadBack;
+  try {
+    readBack = await commitProposalToDomain({
+      organizationId: params.organizationId,
+      actorUserId: params.actorUserId,
+      proposal: existing,
+      draft,
+      auditEventId: params.auditEventId || null,
+    });
+  } catch (error) {
+    await dbRun(
+      `UPDATE work_canvas_proposals SET status = 'proposed', updated_at = ?
+       WHERE id = ? AND organization_id = ? AND status = 'executing'`,
+      [nowIso(), params.proposalId, params.organizationId],
+      { fallback: false }
+    );
+    throw error;
+  }
   const now = nowIso();
   const approvedReadBack = {
     ...readBack,

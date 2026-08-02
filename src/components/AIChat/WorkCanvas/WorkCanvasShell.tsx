@@ -49,6 +49,8 @@ import {
 
 const TARGETS: WorkCanvasTarget[] = [
   'idea',
+  'note',
+  'table',
   'initiative',
   'task',
   'project_brief',
@@ -366,6 +368,7 @@ function ReadBackView({ readBack }: { readBack: Record<string, unknown> }) {
     [t('canvas.workShell.readBack.run', 'Run'), readBack.artifactRunId],
     [t('canvas.workShell.readBack.audit', 'Audit'), readBack.auditEventId],
   ].filter(([, value]) => value !== undefined && value !== null && value !== '');
+  const url = typeof readBack.url === 'string' ? readBack.url : null;
 
   return (
     <dl className="mt-2 grid gap-1 text-xs leading-5 text-indigo-800 dark:text-indigo-200">
@@ -375,6 +378,11 @@ function ReadBackView({ readBack }: { readBack: Record<string, unknown> }) {
           <dd className="max-w-[180px] truncate text-right">{String(value)}</dd>
         </div>
       ))}
+      {url ? (
+        <a className="mt-1 font-semibold underline" href={url}>
+          {t('canvas.workShell.readBack.openTarget', 'Open created object')}
+        </a>
+      ) : null}
     </dl>
   );
 }

@@ -5,6 +5,11 @@ import * as XLSX from 'xlsx';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import {
+  buildCanvasCanonicalWrite,
+  inferCanvasVersionFormat,
+  resolveCanvasCanonicalEnvelope,
+} from '../services/artifacts/canvasCanonicalPersistence.js';
+import {
   type ArtifactContentEnvelope,
   type CanonicalFormat,
   type CanvasArtifactBlock,
@@ -14,21 +19,17 @@ import {
   normalizeCanvasArtifactBlocks,
   projectCanvasArtifactBlockToMarkdown,
 } from '../services/artifacts/contentProjectionService.js';
+import { materializeCanvasTable } from '../services/canvasTableMaterialize.js';
 import {
   hasEffectiveCapability,
   resolveEffectiveAccess,
 } from '../services/effectiveAccessService.js';
 import { unifiedExportService } from '../services/export/UnifiedExportService.js';
+import * as workCanvasService from '../services/workCanvasService.js';
 import { insertDynamic } from '../utils/dbDynamic.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-import { getTableColumns } from '../utils/dbSchema.js';
 import { decodeHtmlEntities, deepDecodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
-import {
-  buildCanvasCanonicalWrite,
-  inferCanvasVersionFormat,
-  resolveCanvasCanonicalEnvelope,
-} from '../services/artifacts/canvasCanonicalPersistence.js';
 
 const router = Router();
 
@@ -45,20 +46,6 @@ type DraftKind =
 type ProposalStatus = 'proposed' | 'approved' | 'rejected';
 type WorkspaceTarget = 'idea' | 'note' | 'initiative' | 'decision' | 'task';
 
-// Proposal targets that approval can MATERIALIZE into a real entity. Targets
-// outside this set (project_brief, research_report, client_deliverable, task —
-// which need project/initiative context they don't have here) stay honest
-// placeholders rather than being faked.
-const MATERIALIZABLE_TARGETS: ReadonlySet<string> = new Set([
-  'idea',
-  'note',
-  'initiative',
-  'decision',
-  // C4.1 — Tasks bridge. createWorkspaceResource now has a 'task' branch that
-  // uses TaskService.createTask (same canonical path commitProposalToDomain uses),
-  // so approve/save-to-workspace produce a real tasks row instead of 422.
-  'task',
-]);
 type OutputType = 'presentation' | 'table' | 'report';
 type ExportFormat = 'markdown' | 'csv' | 'json' | 'pdf' | 'docx' | 'xlsx' | 'pptx';
 type WorkflowTemplate =
@@ -312,16 +299,6 @@ type VersionRow = {
 
 let storageReadyPromise: Promise<void> | null = null;
 
-const targetLabels: Record<string, string> = {
-  idea: 'Idea',
-  initiative: 'Initiative',
-  task: 'Task',
-  project_brief: 'Brief',
-  decision: 'Decision',
-  research_report: 'Research Report',
-  client_deliverable: 'Client Deliverable',
-};
-
 const workflowTemplateTitles: Record<WorkflowTemplate, string> = {
   market_research_to_report: 'Market research to report',
   meeting_note_to_initiatives: 'Meeting note to initiatives',
@@ -524,6 +501,17 @@ function envelope<T>(data: T, extra: Record<string, unknown> = {}) {
   return { success: true, data, ...extra };
 }
 
+function sendProposalServiceError(res: Response, error: unknown) {
+  const typed = error as { statusCode?: unknown; code?: unknown; recovery?: unknown };
+  const statusCode = Number(typed?.statusCode) || 500;
+  return res.status(statusCode).json({
+    error: error instanceof Error ? error.message : 'Canvas proposal operation failed',
+    code: typeof typed?.code === 'string' ? typed.code : 'CANVAS_PROPOSAL_OPERATION_FAILED',
+    recoverable: statusCode >= 409,
+    ...(typeof typed?.recovery === 'string' ? { recovery: typed.recovery } : {}),
+  });
+}
+
 function parseJson(value: string | null, fallback: unknown): unknown {
   if (!value) return fallback;
   try {
@@ -659,9 +647,10 @@ function toDraft(row: DraftRow): WorkCanvasDraft {
     conversationId: row.conversation_id,
     kind: row.kind,
     title: row.title,
-    content: contentEnvelope.canonicalFormat === 'json'
-      ? contentEnvelope.contentJson
-      : contentEnvelope.contentMd,
+    content:
+      contentEnvelope.canonicalFormat === 'json'
+        ? contentEnvelope.contentJson
+        : contentEnvelope.contentMd,
     contentEnvelope,
     canonicalFormat: contentEnvelope.canonicalFormat,
     contentMd: contentEnvelope.contentMd,
@@ -3456,13 +3445,17 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
   };
   const canonicalWrite = buildCanvasCanonicalWrite(
     {
-      kind: draft.kind, canonical_format: draft.canonicalFormat,
-      content_json: JSON.stringify(draft.content), content_md: draft.contentMd,
-      content_json_native: draft.contentJson === undefined ? null : JSON.stringify(draft.contentJson),
+      kind: draft.kind,
+      canonical_format: draft.canonicalFormat,
+      content_json: JSON.stringify(draft.content),
+      content_md: draft.contentMd,
+      content_json_native:
+        draft.contentJson === undefined ? null : JSON.stringify(draft.contentJson),
       blocks_json: draft.blocks.length ? JSON.stringify(draft.blocks) : null,
       content_schema_version: draft.contentSchemaVersion,
       markdown_projection_status: draft.markdownProjectionStatus,
-      markdown_projected_at: draft.markdownProjectedAt, projection_error: draft.projectionError,
+      markdown_projected_at: draft.markdownProjectedAt,
+      projection_error: draft.projectionError,
     },
     {
       canonicalFormat: updated.canonicalFormat,
@@ -3471,7 +3464,7 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
       ...(payload.contentJson !== undefined ? { contentJson: payload.contentJson } : {}),
       ...(Array.isArray(payload.blocks) ? { blocks: updated.blocks } : {}),
       contentSchemaVersion: updated.contentSchemaVersion,
-    },
+    }
   );
   updated.contentEnvelope = canonicalWrite.envelope;
   updated.canonicalFormat = updated.contentEnvelope.canonicalFormat;
@@ -3563,103 +3556,61 @@ router.post('/drafts/:draftId/proposals', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
   const { organizationId, userId } = authContext(req);
-  const target = String(req.body?.target || 'idea');
-  const now = new Date().toISOString();
-  const proposal: WorkCanvasProposal = {
-    id: randomUUID(),
-    draftId: draft.id,
-    organizationId,
-    createdBy: userId,
-    target,
-    title: `${targetLabels[target] || target}: ${draft.title}`,
-    summary: `Proposal generated from canvas draft ${draft.id}.`,
-    status: 'proposed',
-    payload: req.body?.payload && typeof req.body.payload === 'object' ? req.body.payload : {},
-    requiredCapability: target === 'task' ? 'canvas.convert.task' : 'canvas.convert.idea',
-    targetObjectId: null,
-    readBack: null,
-    auditEventId: null,
-    createdAt: now,
-    updatedAt: now,
-  };
-  await dbRun(
-    `INSERT INTO work_canvas_proposals (
-      id, draft_id, organization_id, created_by, target, title, summary, status,
-      payload_json, required_capability, target_object_id, read_back_json,
-      audit_event_id, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      proposal.id,
-      proposal.draftId,
-      proposal.organizationId,
-      proposal.createdBy,
-      proposal.target,
-      proposal.title,
-      proposal.summary,
-      proposal.status,
-      JSON.stringify(proposal.payload),
-      proposal.requiredCapability,
-      proposal.targetObjectId,
-      JSON.stringify(proposal.readBack),
-      proposal.auditEventId,
-      proposal.createdAt,
-      proposal.updatedAt,
-    ],
-    { fallback: false }
-  );
-  return res.status(201).json(envelope(proposal, { auditEventId: `ae-${randomUUID()}` }));
+  try {
+    const proposal = await workCanvasService.createProposal({
+      organizationId,
+      actorUserId: userId,
+      draftId: draft.id,
+      target: String(req.body?.target || 'idea') as workCanvasService.WorkCanvasTarget,
+      payload:
+        req.body?.payload && typeof req.body.payload === 'object' ? req.body.payload : undefined,
+    });
+    return res.status(201).json(envelope(proposal, { auditEventId: `ae-${randomUUID()}` }));
+  } catch (error) {
+    return sendProposalServiceError(res, error);
+  }
 });
 
 router.get('/drafts/:draftId/proposals', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
-  return res.json(envelope(await draftProposals(draft.id)));
+  return res.json(
+    envelope(
+      await workCanvasService.listProposals({
+        organizationId: authContext(req).organizationId,
+        draftId: draft.id,
+      })
+    )
+  );
 });
 
 router.post('/proposals/:proposalId/reject', async (req: AuthRequest, res) => {
-  await ensureStorage();
-  const proposalRow = await dbGet<ProposalRow>(
-    `SELECT * FROM work_canvas_proposals WHERE id = ? AND organization_id = ?`,
-    [req.params.proposalId, authContext(req).organizationId],
-    { fallback: false }
-  );
-  const proposal = proposalRow ? toProposal(proposalRow) : null;
-  if (!proposal || proposal.organizationId !== authContext(req).organizationId) {
+  const { organizationId } = authContext(req);
+  const proposal = await workCanvasService.getProposal({
+    organizationId,
+    proposalId: req.params.proposalId,
+  });
+  if (!proposal || !(await ownedDraft(req, proposal.draftId))) {
     return res.status(404).json({ error: 'Canvas proposal not found' });
   }
-  const updated: WorkCanvasProposal = {
-    ...proposal,
-    status: 'rejected',
-    readBack: { target: proposal.target, status: 'rejected' },
-    updatedAt: new Date().toISOString(),
-  };
-  await dbRun(
-    `UPDATE work_canvas_proposals
-     SET status = ?, read_back_json = ?, updated_at = ?
-     WHERE id = ? AND organization_id = ?`,
-    [
-      updated.status,
-      JSON.stringify(updated.readBack),
-      updated.updatedAt,
-      updated.id,
-      updated.organizationId,
-    ],
-    { fallback: false }
-  );
-  return res.json(
-    envelope(updated, { readBack: updated.readBack, auditEventId: `ae-${randomUUID()}` })
-  );
+  try {
+    const updated = await workCanvasService.rejectProposal({
+      organizationId,
+      proposalId: proposal.id,
+    });
+    return res.json(envelope(updated, { readBack: updated.readBack }));
+  } catch (error) {
+    return sendProposalServiceError(res, error);
+  }
 });
 
 router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
-  await ensureStorage();
-  const proposalRow = await dbGet<ProposalRow>(
-    `SELECT * FROM work_canvas_proposals WHERE id = ? AND organization_id = ?`,
-    [req.params.proposalId, authContext(req).organizationId],
-    { fallback: false }
-  );
-  const proposal = proposalRow ? toProposal(proposalRow) : null;
-  if (!proposal || proposal.organizationId !== authContext(req).organizationId) {
+  const { organizationId, userId } = authContext(req);
+  const proposal = await workCanvasService.getProposal({
+    organizationId,
+    proposalId: req.params.proposalId,
+  });
+  if (!proposal || !(await ownedDraft(req, proposal.draftId))) {
     return res.status(404).json({ error: 'Canvas proposal not found' });
   }
   if (!(await hasCanvasCapability(req, proposal.requiredCapability))) {
@@ -3675,130 +3626,18 @@ router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
       requiredCapability: proposal.requiredCapability,
     });
   }
-  const auditEventId = `ae-${randomUUID()}`;
-  let materializedId: string | null = null;
-  let readBack: Record<string, unknown>;
-
-  if (MATERIALIZABLE_TARGETS.has(proposal.target)) {
-    // Governed materialization: approval now actually CREATES the target entity
-    // (idea/note/initiative/decision) instead of leaving a placeholder.
-    const draft = await ownedDraft(req, proposal.draftId);
-    if (!draft) {
-      return res.status(404).json({ error: 'Canvas draft for proposal not found' });
-    }
-    try {
-      const { organizationId, userId } = authContext(req);
-      const resource = await createWorkspaceResource(
-        draft,
-        proposal.target as WorkspaceTarget,
-        userId,
-        organizationId
-      );
-      materializedId = resource.id;
-      readBack = {
-        ...resource.readBack,
-        target: proposal.target,
-        targetObjectId: resource.id,
-        status: 'approved',
-        entityStatus: 'created',
-        url: resource.url,
-        auditEventId,
-      };
-      // C4 — provenance loop closure on the LIVE approval writer: append this
-      // materialization to the draft's `provenance.materializedTo[]` ledger
-      // (same entry shape as the /save-to-workspace writer above). Best-effort:
-      // the entity already exists, so a failed provenance write must never
-      // fail the approval.
-      try {
-        const previousMaterialized = Array.isArray(draft.provenance?.materializedTo)
-          ? (draft.provenance.materializedTo as unknown[])
-          : [];
-        await updateDraftAfterOperation(draft, {
-          materializedTo: [
-            ...previousMaterialized,
-            {
-              target: proposal.target,
-              entityId: resource.id,
-              url: resource.url,
-              title: resource.title,
-              at: new Date().toISOString(),
-            },
-          ],
-        });
-      } catch (provenanceError) {
-        logger.warn('[work-canvas] canvas.proposal.materialized_to_append_failed', {
-          proposalId: proposal.id,
-          draftId: draft.id,
-          target: proposal.target,
-          error:
-            provenanceError instanceof Error ? provenanceError.message : String(provenanceError),
-        });
-      }
-    } catch (error) {
-      logger.error('[work-canvas] canvas.proposal.materialize_failed', {
-        proposalId: proposal.id,
-        target: proposal.target,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      // C8 — surface the materializer's cross-org rejection as a real 403.
-      const errorRecord = error as { statusCode?: unknown; code?: unknown };
-      if (errorRecord?.statusCode === 403) {
-        return res.status(403).json({
-          error: 'Referenced entity is outside organization',
-          code: typeof errorRecord.code === 'string' ? errorRecord.code : 'CANVAS_FORBIDDEN',
-          recoverable: true,
-        });
-      }
-      return res.status(500).json({
-        error: 'Failed to create the approved workspace resource.',
-        code: 'CANVAS_PROPOSAL_MATERIALIZE_FAILED',
-        recoverable: true,
-      });
-    }
-  } else {
-    // Honest 422 for targets without a materialization home in Wave 1
-    // (project_brief / research_report / client_deliverable / task).
-    // Returning a real status here (instead of a silent "approved_with_placeholder")
-    // lets the client surface an inline "not available yet" message rather than
-    // implying the resource was created.
-    logger.info('[work-canvas] canvas.proposal.target_not_yet_supported', {
+  try {
+    const updated = await workCanvasService.approveProposal({
+      organizationId,
+      actorUserId: userId,
       proposalId: proposal.id,
-      target: proposal.target,
     });
-    return res.status(422).json({
-      error: 'target_not_yet_supported',
-      code: 'CANVAS_TARGET_NOT_YET_SUPPORTED',
-      target: proposal.target,
-      message: `Converting this draft into a "${proposal.target}" is not available yet in this release. You can still save it to an idea, note, or initiative, or export it.`,
-      recoverable: true,
-      supportedTargets: Array.from(MATERIALIZABLE_TARGETS),
-    });
+    return res.json(
+      envelope(updated, { readBack: updated.readBack, auditEventId: updated.auditEventId })
+    );
+  } catch (error) {
+    return sendProposalServiceError(res, error);
   }
-
-  const updated: WorkCanvasProposal = {
-    ...proposal,
-    status: 'approved',
-    targetObjectId: materializedId,
-    readBack,
-    auditEventId,
-    updatedAt: new Date().toISOString(),
-  };
-  await dbRun(
-    `UPDATE work_canvas_proposals
-     SET status = ?, target_object_id = ?, read_back_json = ?, audit_event_id = ?, updated_at = ?
-     WHERE id = ? AND organization_id = ?`,
-    [
-      updated.status,
-      materializedId,
-      JSON.stringify(updated.readBack),
-      updated.auditEventId,
-      updated.updatedAt,
-      updated.id,
-      updated.organizationId,
-    ],
-    { fallback: false }
-  );
-  return res.json(envelope(updated, { readBack, auditEventId: updated.auditEventId }));
 });
 
 router.get('/drafts/:draftId/versions', async (req: AuthRequest, res) => {
@@ -3946,22 +3785,40 @@ router.post('/drafts/:draftId/versions/:versionId/restore', async (req: AuthRequ
   const restoredFormat = inferCanvasVersionFormat(versionRow);
   const restoredWrite = buildCanvasCanonicalWrite(
     {
-      kind: draft.kind, canonical_format: draft.canonicalFormat,
-      content_json: JSON.stringify(draft.content), content_md: draft.contentMd,
-      content_json_native: draft.contentJson === undefined ? null : JSON.stringify(draft.contentJson),
+      kind: draft.kind,
+      canonical_format: draft.canonicalFormat,
+      content_json: JSON.stringify(draft.content),
+      content_md: draft.contentMd,
+      content_json_native:
+        draft.contentJson === undefined ? null : JSON.stringify(draft.contentJson),
       blocks_json: draft.blocks.length ? JSON.stringify(draft.blocks) : null,
       content_schema_version: draft.contentSchemaVersion,
       markdown_projection_status: draft.markdownProjectionStatus,
-      markdown_projected_at: draft.markdownProjectedAt, projection_error: draft.projectionError,
+      markdown_projected_at: draft.markdownProjectedAt,
+      projection_error: draft.projectionError,
     },
     restoredFormat === 'json'
-      ? { canonicalFormat: 'json', contentJson: version.contentJson, contentMd: version.contentMd, blocks: version.blocks, contentSchemaVersion: 'legacy/v0' }
-      : { canonicalFormat: 'markdown', contentMd: version.contentMd, blocks: version.blocks, contentSchemaVersion: 'legacy/v0' },
+      ? {
+          canonicalFormat: 'json',
+          contentJson: version.contentJson,
+          contentMd: version.contentMd,
+          blocks: version.blocks,
+          contentSchemaVersion: 'legacy/v0',
+        }
+      : {
+          canonicalFormat: 'markdown',
+          contentMd: version.contentMd,
+          blocks: version.blocks,
+          contentSchemaVersion: 'legacy/v0',
+        }
   );
   const restoredEnvelope = restoredWrite.envelope;
   const restored: WorkCanvasDraft = {
     ...draft,
-    content: restoredEnvelope.canonicalFormat === 'json' ? restoredEnvelope.contentJson : restoredEnvelope.contentMd,
+    content:
+      restoredEnvelope.canonicalFormat === 'json'
+        ? restoredEnvelope.contentJson
+        : restoredEnvelope.contentMd,
     contentEnvelope: restoredEnvelope,
     canonicalFormat: restoredEnvelope.canonicalFormat,
     contentMd: restoredEnvelope.contentMd,
@@ -4001,7 +3858,7 @@ router.post('/drafts/:draftId/versions/:versionId/restore', async (req: AuthRequ
   const readBackRow = await dbGet<DraftRow>(
     `SELECT * FROM work_canvas_drafts WHERE id = ? AND organization_id = ?`,
     [restored.id, restored.organizationId],
-    { fallback: false },
+    { fallback: false }
   );
   if (!readBackRow) return res.status(500).json({ error: 'Canvas restore read-back failed' });
   return res.json(envelope({ draft: toDraft(readBackRow), restoredVersion: version }));
@@ -4395,76 +4252,14 @@ router.post('/drafts/:draftId/send-to-table-studio', async (req: AuthRequest, re
   const title = firstMarkdownHeading(draft.contentMd, draft.title || 'Canvas table');
 
   try {
-    const { buildCanvasTableSeed } = await import('../services/canvasTableSeed.js');
-    const seed = buildCanvasTableSeed(draft.contentMd);
-    if (!seed || seed.fields.length === 0) {
-      return res.status(400).json({
-        error: 'No markdown table found in the Canvas draft',
-        code: 'CANVAS_TABLE_EMPTY',
-      });
-    }
-
-    const metadataService = (await import('../services/tablePlatform/MetadataService.js')).default;
-    const recordsService = (await import('../services/tablePlatform/RecordsService.js')).default;
-
-    // Find or auto-create the org-scoped "Canvas Workspace" base. Uses the
-    // same workspaceId=orgId fallback pattern as v8/artifactRegistryService.
-    const workspaceTarget = organizationId;
-    const existingBase = await dbGet<{ id: string }>(
-      `SELECT id FROM tp_bases
-        WHERE organization_id = ? AND workspace_id = ? AND name = ?
-        ORDER BY created_at DESC LIMIT 1`,
-      [organizationId, workspaceTarget, 'Canvas Workspace'],
-      { fallback: true }
-    );
-    let baseId = existingBase?.id || '';
-    if (!baseId) {
-      const newBase = await metadataService.createBase(
-        workspaceTarget,
-        organizationId,
-        'Canvas Workspace',
-        userId
-      );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      baseId = (newBase as any)?.id;
-    }
-    if (!baseId) throw new Error('Failed to bootstrap Canvas Workspace base');
-
-    // Create the table. createTable seeds a default 'Name' field as the
-    // primary; we then add the inferred fields. Default field stays as the
-    // human-readable row identifier (first column of the canvas table is
-    // copied into it via the records loop below).
-    const newTable = await metadataService.createTable(baseId, title, undefined, userId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const tableId: string = (newTable as any)?.id || '';
-    if (!tableId) throw new Error('Failed to create Table Studio table');
-
-    // Add inferred fields (skip the auto-created 'Name' field name to avoid
-    // collision — buildCanvasTableSeed wouldn't produce 'Name' unless the
-    // user explicitly used it, in which case we let it merge by skipping).
-    const existingNameSet = new Set(['name']);
-    for (const field of seed.fields) {
-      if (existingNameSet.has(field.name.toLowerCase())) continue;
-      await metadataService.createField(
-        tableId,
-        field.name,
-        field.fieldType,
-        field.options || {},
-        userId
-      );
-      existingNameSet.add(field.name.toLowerCase());
-    }
-
-    // Insert records. Take the first column as the Name field's value so
-    // the row identifier is informative.
-    const primaryFieldName = seed.fields[0]?.name;
-    for (const record of seed.records) {
-      const payload: Record<string, unknown> = { ...record };
-      if (primaryFieldName && record[primaryFieldName] !== undefined) {
-        payload.Name = String(record[primaryFieldName]);
-      }
-      await recordsService.createRecord(tableId, payload, userId);
-    }
+    const materialized = await materializeCanvasTable({
+      organizationId,
+      actorUserId: userId,
+      sourceDraftId: draft.id,
+      title,
+      contentMd: draft.contentMd,
+    });
+    const { baseId, tableId } = materialized;
 
     // Back-link on the Canvas draft.
     const previousLinks =
@@ -4497,8 +4292,8 @@ router.post('/drafts/:draftId/send-to-table-studio', async (req: AuthRequest, re
           target: 'table_studio',
           baseId,
           tableId,
-          fieldCount: seed.fields.length,
-          recordCount: seed.records.length,
+          fieldCount: materialized.fieldCount,
+          recordCount: materialized.recordCount,
           status: 'created',
         },
       })

@@ -10,6 +10,7 @@ export type WorkCanvasKind =
 
 export type WorkCanvasTarget =
   | 'note'
+  | 'table'
   | 'idea'
   | 'initiative'
   | 'task'
@@ -119,7 +120,7 @@ export interface WorkCanvasConversionProposal {
   target: WorkCanvasTarget;
   title: string;
   summary: string;
-  status: 'proposed' | 'approved' | 'rejected';
+  status: 'proposed' | 'executing' | 'approved' | 'rejected';
   payload?: Record<string, unknown>;
   requiredCapability?: string;
   targetObjectId?: string | null;
@@ -137,6 +138,7 @@ export interface WorkCanvasActionResult<T> {
 
 export const WORK_CANVAS_TARGET_LABEL: Record<WorkCanvasTarget, string> = {
   note: 'Note',
+  table: 'Table',
   idea: 'Idea',
   initiative: 'Initiative',
   task: 'Task',

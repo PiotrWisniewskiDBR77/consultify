@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { embeddingService } from './ai/embeddingService.js';
@@ -256,25 +257,32 @@ class NotebookService {
 
     const tokensEstimate = Math.ceil(data.contentText.length / 4);
 
+    // Deployments created from the baseline schema may not yet have the V4
+    // capture columns (the historical migration lives under never-ran/).
+    // Keep the canonical ingest path compatible with both schemas instead of
+    // making Note handoff fail after approval.
+    const notebookColumns = await getTableColumns('notebook_pages', { fallback: false });
+    const values: Record<string, unknown> = {
+      id,
+      owner_user_id: userId,
+      organization_id: orgId,
+      project_id: data.projectId || null,
+      visibility: 'private',
+      title: data.title,
+      content_json: contentJson,
+      content_text: data.contentText,
+      tags_json: JSON.stringify(data.tags || []),
+      status: 'active',
+      capture_source: data.source,
+      capture_metadata: JSON.stringify({ ...(data.metadata || {}), ...persistedSourceMetadata }),
+      created_at: now,
+      updated_at: now,
+    };
+    const insertColumns = Object.keys(values).filter((column) => notebookColumns.has(column));
     await queryHelpers.queryRun(
-      `INSERT INTO notebook_pages
-       (id, owner_user_id, organization_id, project_id, visibility, title,
-        content_json, content_text, tags_json, status, capture_source, capture_metadata, created_at, updated_at)
-       VALUES (?, ?, ?, ?, 'private', ?, ?, ?, ?, 'active', ?, ?, ?, ?)`,
-      [
-        id,
-        userId,
-        orgId,
-        data.projectId || null,
-        data.title,
-        contentJson,
-        data.contentText,
-        JSON.stringify(data.tags || []),
-        data.source,
-        JSON.stringify({ ...(data.metadata || {}), ...persistedSourceMetadata }),
-        now,
-        now,
-      ]
+      `INSERT INTO notebook_pages (${insertColumns.join(', ')})
+       VALUES (${insertColumns.map(() => '?').join(', ')})`,
+      insertColumns.map((column) => values[column])
     );
 
     let ftsIndexed = false;
@@ -1099,9 +1107,7 @@ function normalizeNotebookBlock(block: Record<string, unknown>): Record<string, 
  * J26: extract + strip the optional `_replaceRange` targeting hint from a
  * proposal block. Mutates `block` so the metadata never lands in the stored doc.
  */
-function extractReplaceRange(
-  block: Record<string, unknown>
-): { from: number; to: number } | null {
+function extractReplaceRange(block: Record<string, unknown>): { from: number; to: number } | null {
   const raw = (block as any)._replaceRange;
   delete (block as any)._replaceRange;
   if (raw && typeof raw === 'object') {
