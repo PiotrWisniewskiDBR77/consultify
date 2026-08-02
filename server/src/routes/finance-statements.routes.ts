@@ -440,6 +440,25 @@ router.post(
       throw error;
     }
 
+    // FIN-005 Codex review Blocker 2: set the instant the Statement row for
+    // this attempt is durably created (right after createStatement()
+    // succeeds, below) — mirrors the exact anyStatementPersisted/
+    // primaryStatementId pattern the upload-and-analyze endpoints already
+    // use. Before this, every failIdempotentUpload call here derived the
+    // statementId from `result.body.statementId` — which the notes-persist
+    // failure branch (below) never set, so a Statement that WAS durably
+    // created before that later step failed had no way to reach
+    // failIdempotentUpload at all: not "orphaned and tracked" but not
+    // tracked in any way. Deriving from this hoisted variable instead means
+    // every failure branch — regardless of what result.body happens to
+    // contain — can still record the real statementId for Fix 1's
+    // orphan-tracking/Blocker 1's recovery to find. It is also the signal
+    // used to gate cleanupUnpersistedUpload: once a real Statement's
+    // sourceFilePath is this upload's file, no later failure in the SAME
+    // attempt may delete it.
+    let anyStatementPersisted = false;
+    let primaryStatementId: string | null = null;
+
     // The actual upload+persist work, factored out so it can be called
     // EITHER directly (no Idempotency-Key — nothing to serialize) OR from
     // inside withStatementUploadIdempotencyLock (key present — exactly one
@@ -557,6 +576,11 @@ router.post(
         templateFamily: documentProfile.templateFamily,
         createdBy: userId,
       });
+      // FIN-005 Blocker 2: record this the instant the Statement row exists
+      // — every step below (notes persist, source artifacts, etc.) can fail
+      // without losing track of it.
+      anyStatementPersisted = true;
+      primaryStatementId = statementId;
       const statementPackId = await syncStatementToPack(statementId);
       const ingestRunId = await startStatementIngestRun({
         statementId,
@@ -723,8 +747,18 @@ router.post(
     };
 
     if (!idempotencyKey) {
-      const { statusCode, body } = await performUpload();
-      return res.status(statusCode).json(body);
+      try {
+        const { statusCode, body } = await performUpload();
+        if (statusCode >= 400 && !anyStatementPersisted) {
+          await cleanupUnpersistedUpload(file.path, 'upload failed (unkeyed)');
+        }
+        return res.status(statusCode).json(body);
+      } catch (error) {
+        if (!anyStatementPersisted) {
+          await cleanupUnpersistedUpload(file.path, 'upload threw (unkeyed)');
+        }
+        throw error;
+      }
     }
 
     // FIN-005 Codex review Blocker 2 + 3, hardened by the round-3 reservation
@@ -770,7 +804,10 @@ router.post(
       try {
         result = await performUpload();
       } catch (error) {
-        await failIdempotentUpload(reservation.reservationId);
+        if (!anyStatementPersisted) {
+          await cleanupUnpersistedUpload(file.path, 'upload threw');
+        }
+        await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
         throw error;
       }
 
@@ -781,13 +818,27 @@ router.post(
         // not be left 'in_progress' forever, and must never be finalized as
         // 'completed'. The route still returns performUpload's OWN status
         // code/body to the client unchanged.
-        await failIdempotentUpload(reservation.reservationId);
+        //
+        // FIN-005 Blocker 2: this used to derive the statementId for
+        // failIdempotentUpload from `result.body.statementId` — which the
+        // notes-persist-failure branch inside performUpload() never sets
+        // (its controlled-failure body is `{ error, detail }`, no
+        // statementId) — so a Statement that WAS durably created before that
+        // later step failed was passed to failIdempotentUpload with no id at
+        // all: not "orphaned and tracked" (Fix 1's `orphaned_statement_ids`)
+        // but not tracked in any way. `primaryStatementId` is set the
+        // instant createStatement() succeeds, independent of what ends up in
+        // the response body, so it survives every failure shape.
+        if (!anyStatementPersisted) {
+          await cleanupUnpersistedUpload(file.path, 'upload controlled failure');
+        }
+        await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
         return { kind: 'fresh' as const, statusCode: result.statusCode, body: result.body };
       }
 
       const finalized = await finalizeIdempotentUpload({
         reservationId: reservation.reservationId,
-        statementId: String(result.body.statementId || ''),
+        statementId: primaryStatementId || '',
         statusCode: result.statusCode,
         responseJson: JSON.stringify(result.body),
       });
@@ -810,10 +861,7 @@ router.post(
         // reclaim of this same row move it into `orphaned_statement_ids`
         // instead of silently losing the reference the moment the reclaim
         // nulls `statement_id` for the next attempt.
-        await failIdempotentUpload(
-          reservation.reservationId,
-          String(result.body.statementId || '') || undefined
-        );
+        await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
         return { kind: 'finalize_failed' as const };
       }
 
