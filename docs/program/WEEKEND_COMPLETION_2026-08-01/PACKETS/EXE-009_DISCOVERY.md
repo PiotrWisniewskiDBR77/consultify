@@ -7,6 +7,46 @@ business_owner: piotr
 last_reviewed: 2026-08-02
 ---
 
+# ★★★ Round-2 correction (Codex review, same date)
+
+Round 1 of this packet (below) built the Finance leg as a NEW, isolated
+`closure_finance_actuals` table, with `expected_roi` as a fallback monetary
+amount when no KPI target existed. **Codex review rejected both**: the new
+table was written by nobody-reads-it code (not a real Finance delivery), and
+`expected_roi` is a free-text ROI/percentage narrative field in this schema,
+never a currency amount (confirmed: `903_expected_roi_to_text.sql`'s own
+header, `CharterBuilder.tsx`'s "Expected ROI (%)" label as a field distinct
+from "Business Value (PLN)").
+
+**Corrected design** (see `closureDeliveryReceiptService.ts`'s own header for
+the full rationale): the Finance leg now calls the EXISTING canonical
+`executionRealizationService.recordExecutionRealization` (writes
+`roi_realized_values`, read by the real `ROITrackingPanel.tsx` via
+`GET /benefits/roi/portfolio/summary` — confirmed via a fresh canonical-
+Finance inventory that this is the one real, UI-rendered,
+organization+initiative-scoped realization table in the codebase, and that
+the program's own doctrine, `EXE-002_MANAGEMENT_SPINE_AUDIT.md`'s FLOW-001,
+is closure → Results → Finance, not closure → Finance directly). Migration
+937 adds an additive `closure_receipt_id` dedup key to that table.
+`expected_roi` is no longer read by the Finance leg at all — the only signal
+used is a planned KPI whose `unit` literally equals the initiative's own
+`budget_currency` code, which the round-1 discovery below already
+established is rare in current seed/demo data, meaning `NEEDS_DECISION` is
+the expected, correct outcome for most real closures today.
+
+Also fixed in round 2: `POST .../closure-receipt/retry` now reuses the exact
+`CLOSURE_APPROVER_ROLES` gate `/approve` uses (was previously open to any org
+member); `attemptDelivery`/`manualRetryReceipt` renamed to
+`attemptDeliveryInternal`/`retryDeliveryForOrg` to make the tenant-trust
+boundary explicit; and a second real concurrency bug (shared-pool read-after-
+write on the Results/Finance read-back queries, same root cause class as the
+`claimLeg` fix below) was found and fixed while re-testing.
+
+The base-selection reasoning below (stay on `feat/exe-008-closure-evidence-
+gate` alone, do not merge Finance/Atelier) was independently re-verified
+against fresh HEAD SHAs during the round-2 review and still holds — see the
+EXE-009 completion report for the refreshed evidence.
+
 # EXE-09 — discovery gate (closure → Results/Finance durable receipt)
 
 Base decision, canonical ownership map, and known gaps established before any
