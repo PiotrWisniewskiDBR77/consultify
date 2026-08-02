@@ -93,6 +93,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const [dayLoad, setDayLoad] = useState<CalendarConflictResponse | null>(null);
   const [dayLoadLoading, setDayLoadLoading] = useState(false);
   const [dayLoadError, setDayLoadError] = useState<string | null>(null);
+  // Bumped after any calendar write settles, so the day-load/capacity read
+  // model is re-read from the server. Without it, `refetch()` refreshed only
+  // the events feed while the "Day load" summary kept the counts it fetched
+  // when the date was last selected — i.e. moving a task onto or off the
+  // selected day left the capacity hint stale until the user changed date.
+  const [dayLoadRefreshKey, setDayLoadRefreshKey] = useState(0);
 
   const toLocalDateKey = useCallback((value: Date) => {
     const year = value.getFullYear();
@@ -316,7 +322,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [currentDate, t, toLocalDateKey]);
+  }, [currentDate, t, toLocalDateKey, dayLoadRefreshKey]);
 
   const handleEventClick = useCallback(
     (eventId: string, source: string) => {
@@ -335,20 +341,63 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     refetch();
   }, [refetch]);
 
+  // Every path that re-pulls the events feed must also re-pull the day-load
+  // read model — they are two independent server reads of the same underlying
+  // schedule, and refreshing only one leaves the capacity summary contradicting
+  // the grid next to it.
+  const refreshAfterWrite = useCallback(() => {
+    refetch();
+    setDayLoadRefreshKey((key) => key + 1);
+  }, [refetch]);
+
   const handleEventMove = useCallback(
     async (payload: CalendarEventMovePayload) => {
       if (!payload.source || !payload.sourceId || !payload.start) return false;
+      if (payload.source === 'task' && !payload.expectedVersion) {
+        // No version read back yet (e.g. stale extendedProps) — refuse rather
+        // than write blind and risk a silent overwrite.
+        toast.error(
+          t('myWork.calendarView.toastRescheduleFailed', 'Failed to reschedule the task.')
+        );
+        refreshAfterWrite();
+        return false;
+      }
 
       try {
         await Api.updateMyWorkCalendarEvent(payload);
-        refetch();
+        refreshAfterWrite();
         return true;
-      } catch (error) {
+      } catch (error: any) {
+        const status = Number(error?.status);
+        if (status === 409) {
+          toast.error(
+            t(
+              'myWork.calendarView.toastVersionConflict',
+              'This task was changed by someone else — restoring the current state.'
+            )
+          );
+        } else if (status === 403) {
+          toast.error(t('myWork.calendarView.toastForbidden', "You can't reschedule this task."));
+        } else if (status === 404) {
+          toast.error(
+            t(
+              'myWork.calendarView.toastNotFound',
+              'This task no longer exists — refreshing the calendar.'
+            )
+          );
+        } else {
+          toast.error(
+            t('myWork.calendarView.toastRescheduleFailed', 'Failed to reschedule the task.')
+          );
+        }
         console.error('Failed to reschedule calendar event', error);
+        // Any failure re-pulls the canonical state from the backend so the grid
+        // never keeps showing a position the server rejected.
+        refreshAfterWrite();
         return false;
       }
     },
-    [refetch]
+    [refreshAfterWrite, t]
   );
 
   useEffect(() => {
