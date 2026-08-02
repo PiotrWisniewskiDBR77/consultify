@@ -882,271 +882,471 @@ router.post(
     if (!userId || !orgId) return res.status(401).json({ error: 'Unauthorized' });
     const traceId = getFinanceTraceId((req as any).correlationId);
 
-    await ensureCanonicalRegistryInDatabase();
-
-    // 1. Extract text (for fallback and notes)
-    let text: string;
-    let parseMethod: string;
+    // FIN-005 Fix 2: this endpoint (and the v8 twin at
+    // /api/v8/finance/statements/upload-and-analyze) is what the product's
+    // FinancialStatementImportWizard actually calls — the idempotency state
+    // machine below was previously wired ONLY into /upload, which nothing in
+    // the frontend calls. A slow upload (LLM analysis can legitimately
+    // exceed the client's request timeout) retried by the client used to
+    // create a genuine duplicate Statement/Pack every time.
+    let idempotencyKey: string | null;
     try {
-      const result = await extractTextFromFile(file.path, file.originalname);
-      text = result.text.replace(/\0/g, '');
-      parseMethod = result.parseMethod;
-    } catch (e: any) {
-      return res.status(422).json({ error: 'File extraction failed', detail: e?.message });
+      idempotencyKey = getIdempotencyKey(req);
+    } catch (error) {
+      if (error instanceof IdempotencyKeyTooLongError) {
+        return res.status(400).json({
+          error: `Idempotency-Key must be at most ${MAX_IDEMPOTENCY_KEY_CHARS} characters`,
+          code: 'IDEMPOTENCY_KEY_TOO_LONG',
+        });
+      }
+      throw error;
     }
 
-    const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod) ? parseMethod : 'manual';
+    // Set the instant the FIRST Statement row for this attempt is durably
+    // created (fallback branch, or the first loop iteration below) — once
+    // true, `file.path` is a real Statement's `sourceFilePath` and must
+    // NEVER be deleted by a later failure in this SAME attempt (e.g. a
+    // second section's saveStatementValues throwing), even though the
+    // attempt as a whole is reported as failed. This is the reconciliation
+    // between "delete the temp file on every non-persisting exit path" and
+    // "never break an already-persisted Statement's evidentiary source" for
+    // the multi-section case, where a partial success is possible.
+    // `primaryStatementId` is the id finalizeIdempotentUpload/
+    // failIdempotentUpload are called with — per FIN-005 Fix 2 scope, a
+    // multi-section document is treated as ONE atomic unit for idempotency
+    // purposes (single reservation/completion), so only the FIRST created
+    // statement is tracked on the marker row; the full set is still
+    // returned in the response body unchanged (`statementIds`/`statements`).
+    // A second-or-later section's id in a genuinely PARTIAL multi-section
+    // failure is a known, accepted residual gap — see the FIN-005 Fix 2
+    // final report for why this mirrors the pre-existing single-statement
+    // notesRes-persist-failure gap in `/upload` rather than inventing a
+    // new multi-id tracking mechanism outside this task's scope.
+    let anyStatementPersisted = false;
+    let primaryStatementId: string | null = null;
 
-    logFinanceEvent('statement.smartUpload.started', {
-      traceId,
-      organizationId: orgId,
-      userId,
-      fileName: file.originalname,
-      sizeBytes: file.size,
-    });
+    const performUploadAndAnalyze = async (): Promise<{
+      statusCode: number;
+      body: Record<string, unknown>;
+    }> => {
+      await ensureCanonicalRegistryInDatabase();
 
-    // 2. LLM analyzes entire document — finds all sections, extracts all lines
-    const analysis = await analyzeAndExtractFullDocument({
-      filePath: file.path,
-      fileName: file.originalname,
-      traceId,
-    });
+      // 1. Extract text (for fallback and notes)
+      let text: string;
+      let parseMethod: string;
+      try {
+        const result = await extractTextFromFile(file.path, file.originalname);
+        text = result.text.replace(/\0/g, '');
+        parseMethod = result.parseMethod;
+      } catch (e: any) {
+        return { statusCode: 422, body: { error: 'File extraction failed', detail: e?.message } };
+      }
 
-    if (!analysis || analysis.sections.length === 0) {
-      // Fallback: create single statement with heuristic detection (old behavior)
-      const detection = detectStatementType(text);
-      const documentProfile = classifyStatementDocument({
+      const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod)
+        ? parseMethod
+        : 'manual';
+
+      logFinanceEvent('statement.smartUpload.started', {
+        traceId,
+        organizationId: orgId,
+        userId,
         fileName: file.originalname,
-        parseMethod: effectiveParseMethod,
-        text,
-      });
-      const statementId = await createStatement({
-        organizationId: orgId,
-        statementType: detection.statementType === 'UNKNOWN' ? 'P&L' : detection.statementType,
-        periodStart: detection.periodStart || new Date().getFullYear() + '-01-01',
-        periodEnd: detection.periodEnd || new Date().getFullYear() + '-12-31',
-        periodLabel: detection.periodLabel || undefined,
-        currency: detection.currency,
-        scaling: detection.scaling,
-        sourceFileName: file.originalname,
-        sourceFilePath: file.path,
-        parseMethod: effectiveParseMethod,
-        overallConfidence: detection.confidence,
-        documentClass: documentProfile.documentClass,
-        extractionStrategy: documentProfile.extractionStrategy,
-        templateFamily: documentProfile.templateFamily,
-        createdBy: userId,
-      });
-      const statementPackId = await syncStatementToPack(statementId);
-      await dbRun(
-        `UPDATE financial_statements SET notes = ? WHERE id = ?`,
-        [`${text.substring(0, 100000)}`, statementId],
-        { fallback: false }
-      );
-
-      return res.status(201).json({
-        success: true,
-        mode: 'fallback',
-        statementPackId,
-        statementIds: [statementId],
-        analysis: null,
-        message: 'LLM analysis unavailable — created single statement with heuristic detection.',
-      });
-    }
-
-    // 3. Create statements for each section found by LLM
-    const createdStatements: Array<{
-      statementId: string;
-      statementType: string;
-      lineCount: number;
-    }> = [];
-    let packId: string | null = null;
-
-    for (const section of analysis.sections) {
-      const statementId = await createStatement({
-        organizationId: orgId,
-        statementType: section.statementType,
-        periodStart: analysis.periodStart || new Date().getFullYear() + '-01-01',
-        periodEnd: analysis.periodEnd || new Date().getFullYear() + '-12-31',
-        periodLabel: analysis.periodLabel || undefined,
-        currency: analysis.currency,
-        scaling: analysis.scaling,
-        sourceFileName: file.originalname,
-        sourceFilePath: file.path,
-        parseMethod: effectiveParseMethod,
-        overallConfidence: 0.9,
-        documentClass: 'mixed_report',
-        extractionStrategy: 'llm_full_document',
-        templateFamily: null,
-        createdBy: userId,
+        sizeBytes: file.size,
       });
 
-      // Store text for later reference
-      await dbRun(
-        `UPDATE financial_statements SET notes = ? WHERE id = ?`,
-        [`${text.substring(0, 100000)}`, statementId],
-        { fallback: false }
-      );
-
-      // Sync to pack (first statement creates the pack, rest join it)
-      const thisPackId = await syncStatementToPack(statementId);
-      if (!packId && thisPackId) packId = thisPackId;
-
-      // Update pack metadata with entity name from LLM
-      if (packId && analysis.entityName) {
-        await dbRun(
-          `UPDATE financial_statement_packs SET entity_name = ? WHERE id = ? AND (entity_name IS NULL OR entity_name = '')`,
-          [analysis.entityName, packId]
-        );
-      }
-
-      const ingestRunId = await startStatementIngestRun({
-        statementId,
-        organizationId: orgId,
-        sourceFileName: file.originalname,
-        sourceFilePath: file.path,
-        parseMethod: effectiveParseMethod,
-        documentClass: 'mixed_report',
-        extractionStrategy: 'llm_full_document',
-        templateFamily: null,
-        rawTextLength: text.length,
-        summary: {
-          analysis: { entityName: analysis.entityName, sectionType: section.statementType },
-        },
-        createdBy: userId,
+      // 2. LLM analyzes entire document — finds all sections, extracts all lines
+      const analysis = await analyzeAndExtractFullDocument({
+        filePath: file.path,
+        fileName: file.originalname,
+        traceId,
       });
 
-      // 4. Save LLM-extracted lines as values and auto-map
-      const extractedLines = section.lines.map((line, idx) => ({
-        originalLabel: line.originalLabel,
-        value: line.value,
-        confidence: line.confidence,
-        sourceRow: line.sourceRow ?? idx + 1,
-        suggestedCanonicalId: line.suggestedCanonicalId || undefined,
-        suggestedCanonicalLabel: undefined as string | undefined,
-        isNonFinancial: false,
-      }));
-
-      let mappedLines = extractedLines;
-      try {
-        const autoMapped = await autoMapLines(extractedLines as any, section.statementType, {
+      if (!analysis || analysis.sections.length === 0) {
+        // Fallback: create single statement with heuristic detection (old behavior)
+        const detection = detectStatementType(text);
+        const documentProfile = classifyStatementDocument({
+          fileName: file.originalname,
+          parseMethod: effectiveParseMethod,
+          text,
+        });
+        const statementId = await createStatement({
           organizationId: orgId,
+          statementType: detection.statementType === 'UNKNOWN' ? 'P&L' : detection.statementType,
+          periodStart: detection.periodStart || new Date().getFullYear() + '-01-01',
+          periodEnd: detection.periodEnd || new Date().getFullYear() + '-12-31',
+          periodLabel: detection.periodLabel || undefined,
+          currency: detection.currency,
+          scaling: detection.scaling,
+          sourceFileName: file.originalname,
+          sourceFilePath: file.path,
+          parseMethod: effectiveParseMethod,
+          overallConfidence: detection.confidence,
+          documentClass: documentProfile.documentClass,
+          extractionStrategy: documentProfile.extractionStrategy,
+          templateFamily: documentProfile.templateFamily,
+          createdBy: userId,
         });
-        if (autoMapped && autoMapped.length > 0) mappedLines = autoMapped as any;
-      } catch (mapError) {
-        logger.warn('[SmartUpload] Auto-map failed, saving raw lines', {
-          statementId,
-          statementType: section.statementType,
-          error: String(mapError),
-        });
+        anyStatementPersisted = true;
+        primaryStatementId = statementId;
+        const statementPackId = await syncStatementToPack(statementId);
+        await dbRun(
+          `UPDATE financial_statements SET notes = ? WHERE id = ?`,
+          [`${text.substring(0, 100000)}`, statementId],
+          { fallback: false }
+        );
+
+        return {
+          statusCode: 201,
+          body: {
+            success: true,
+            mode: 'fallback',
+            statementPackId,
+            statementIds: [statementId],
+            analysis: null,
+            message: 'LLM analysis unavailable — created single statement with heuristic detection.',
+          },
+        };
       }
 
-      const valuesToSave = mappedLines.map((l) => ({
-        canonicalLineId: (l as any).suggestedCanonicalId || null,
-        originalLabel: l.originalLabel,
-        value: l.value,
-        confidence: l.confidence,
-        sourceRow: l.sourceRow,
-        mappingStatus: ((l as any).suggestedCanonicalId ? 'auto' : 'unmapped') as
-          | 'auto'
-          | 'unmapped',
-        isNonFinancial: !!(l as any).isNonFinancial,
-      }));
+      // 3. Create statements for each section found by LLM
+      const createdStatements: Array<{
+        statementId: string;
+        statementType: string;
+        lineCount: number;
+      }> = [];
+      let packId: string | null = null;
 
-      await saveStatementValues(statementId, valuesToSave);
-      await updateStatementStatus(statementId, 'imported');
+      for (const section of analysis.sections) {
+        const statementId = await createStatement({
+          organizationId: orgId,
+          statementType: section.statementType,
+          periodStart: analysis.periodStart || new Date().getFullYear() + '-01-01',
+          periodEnd: analysis.periodEnd || new Date().getFullYear() + '-12-31',
+          periodLabel: analysis.periodLabel || undefined,
+          currency: analysis.currency,
+          scaling: analysis.scaling,
+          sourceFileName: file.originalname,
+          sourceFilePath: file.path,
+          parseMethod: effectiveParseMethod,
+          overallConfidence: 0.9,
+          documentClass: 'mixed_report',
+          extractionStrategy: 'llm_full_document',
+          templateFamily: null,
+          createdBy: userId,
+        });
+        anyStatementPersisted = true;
+        if (!primaryStatementId) primaryStatementId = statementId;
 
-      // 5. Run validation + readiness
-      try {
-        const validationResult = validateStatement(valuesToSave, section.statementType);
-        if (validationResult) {
-          await persistStatementValidationLedger({
+        // Store text for later reference
+        await dbRun(
+          `UPDATE financial_statements SET notes = ? WHERE id = ?`,
+          [`${text.substring(0, 100000)}`, statementId],
+          { fallback: false }
+        );
+
+        // Sync to pack (first statement creates the pack, rest join it)
+        const thisPackId = await syncStatementToPack(statementId);
+        if (!packId && thisPackId) packId = thisPackId;
+
+        // Update pack metadata with entity name from LLM
+        if (packId && analysis.entityName) {
+          await dbRun(
+            `UPDATE financial_statement_packs SET entity_name = ? WHERE id = ? AND (entity_name IS NULL OR entity_name = '')`,
+            [analysis.entityName, packId]
+          );
+        }
+
+        const ingestRunId = await startStatementIngestRun({
+          statementId,
+          organizationId: orgId,
+          sourceFileName: file.originalname,
+          sourceFilePath: file.path,
+          parseMethod: effectiveParseMethod,
+          documentClass: 'mixed_report',
+          extractionStrategy: 'llm_full_document',
+          templateFamily: null,
+          rawTextLength: text.length,
+          summary: {
+            analysis: { entityName: analysis.entityName, sectionType: section.statementType },
+          },
+          createdBy: userId,
+        });
+
+        // 4. Save LLM-extracted lines as values and auto-map
+        const extractedLines = section.lines.map((line, idx) => ({
+          originalLabel: line.originalLabel,
+          value: line.value,
+          confidence: line.confidence,
+          sourceRow: line.sourceRow ?? idx + 1,
+          suggestedCanonicalId: line.suggestedCanonicalId || undefined,
+          suggestedCanonicalLabel: undefined as string | undefined,
+          isNonFinancial: false,
+        }));
+
+        let mappedLines = extractedLines;
+        try {
+          const autoMapped = await autoMapLines(extractedLines as any, section.statementType, {
+            organizationId: orgId,
+          });
+          if (autoMapped && autoMapped.length > 0) mappedLines = autoMapped as any;
+        } catch (mapError) {
+          logger.warn('[SmartUpload] Auto-map failed, saving raw lines', {
             statementId,
             statementType: section.statementType,
-            messages: validationResult.messages || [],
-            values: valuesToSave.map((value) => ({
-              canonicalLineId: value.canonicalLineId,
-              value: Number(value.value || 0),
-              isNonFinancial: value.isNonFinancial,
-            })),
+            error: String(mapError),
           });
-          const readinessResult = evaluateStatementReadiness({
-            rawStatus: 'imported',
-            statementType: section.statementType,
-            validationStatus: validationResult.status,
+        }
+
+        const valuesToSave = mappedLines.map((l) => ({
+          canonicalLineId: (l as any).suggestedCanonicalId || null,
+          originalLabel: l.originalLabel,
+          value: l.value,
+          confidence: l.confidence,
+          sourceRow: l.sourceRow,
+          mappingStatus: ((l as any).suggestedCanonicalId ? 'auto' : 'unmapped') as
+            | 'auto'
+            | 'unmapped',
+          isNonFinancial: !!(l as any).isNonFinancial,
+        }));
+
+        await saveStatementValues(statementId, valuesToSave);
+        await updateStatementStatus(statementId, 'imported');
+
+        // 5. Run validation + readiness
+        try {
+          const validationResult = validateStatement(valuesToSave, section.statementType);
+          if (validationResult) {
+            await persistStatementValidationLedger({
+              statementId,
+              statementType: section.statementType,
+              messages: validationResult.messages || [],
+              values: valuesToSave.map((value) => ({
+                canonicalLineId: value.canonicalLineId,
+                value: Number(value.value || 0),
+                isNonFinancial: value.isNonFinancial,
+              })),
+            });
+            const readinessResult = evaluateStatementReadiness({
+              rawStatus: 'imported',
+              statementType: section.statementType,
+              validationStatus: validationResult.status,
+              currency: analysis.currency,
+              scaling: analysis.scaling,
+              validationMessages: validationResult.messages,
+              values: valuesToSave,
+            });
+            if (readinessResult) {
+              await updateStatementReadinessState(statementId, readinessResult);
+            }
+          }
+        } catch (valError) {
+          logger.warn('[SmartUpload] Validation/readiness failed, continuing', {
+            statementId,
+            error: String(valError),
+          });
+        }
+
+        await updateStatementIngestRun({
+          ingestRunId,
+          currentStage: 'complete',
+          runStatus: 'completed',
+          documentClass: 'mixed_report',
+          extractionStrategy: 'llm_full_document',
+          templateFamily: null,
+          rawTextLength: text.length,
+        });
+
+        createdStatements.push({
+          statementId,
+          statementType: section.statementType,
+          lineCount: section.lines.length,
+        });
+      }
+
+      // 8. Recompute pack quality
+      if (packId) {
+        try {
+          await recomputeStatementPackForOrganization(orgId, packId);
+        } catch (recomputeError) {
+          logger.warn('[SmartUpload] Pack recompute failed', {
+            packId,
+            error: String(recomputeError),
+          });
+        }
+      }
+
+      logFinanceEvent('statement.smartUpload.completed', {
+        traceId,
+        packId,
+        entityName: analysis.entityName,
+        sectionCount: analysis.sections.length,
+        statementIds: createdStatements.map((s) => s.statementId),
+      });
+
+      return {
+        statusCode: 201,
+        body: {
+          success: true,
+          mode: 'smart',
+          statementPackId: packId,
+          statementIds: createdStatements.map((s) => s.statementId),
+          statements: createdStatements,
+          analysis: {
+            entityName: analysis.entityName,
+            periodLabel: analysis.periodLabel,
+            periodStart: analysis.periodStart,
+            periodEnd: analysis.periodEnd,
             currency: analysis.currency,
             scaling: analysis.scaling,
-            validationMessages: validationResult.messages,
-            values: valuesToSave,
-          });
-          if (readinessResult) {
-            await updateStatementReadinessState(statementId, readinessResult);
-          }
-        }
-      } catch (valError) {
-        logger.warn('[SmartUpload] Validation/readiness failed, continuing', {
-          statementId,
-          error: String(valError),
-        });
-      }
+            language: analysis.language,
+            documentDescription: analysis.documentDescription,
+            sectionTypes: analysis.sections.map((s) => s.statementType),
+            totalLines: analysis.sections.reduce((sum, s) => sum + s.lines.length, 0),
+            warnings: analysis.warnings,
+          },
+        },
+      };
+    };
 
-      await updateStatementIngestRun({
-        ingestRunId,
-        currentStage: 'complete',
-        runStatus: 'completed',
-        documentClass: 'mixed_report',
-        extractionStrategy: 'llm_full_document',
-        templateFamily: null,
-        rawTextLength: text.length,
-      });
-
-      createdStatements.push({
-        statementId,
-        statementType: section.statementType,
-        lineCount: section.lines.length,
-      });
-    }
-
-    // 8. Recompute pack quality
-    if (packId) {
+    if (!idempotencyKey) {
       try {
-        await recomputeStatementPackForOrganization(orgId, packId);
-      } catch (recomputeError) {
-        logger.warn('[SmartUpload] Pack recompute failed', {
-          packId,
-          error: String(recomputeError),
-        });
+        const { statusCode, body } = await performUploadAndAnalyze();
+        if (statusCode >= 400 && !anyStatementPersisted) {
+          await cleanupUnpersistedUpload(file.path, 'upload-and-analyze failed (unkeyed)');
+        }
+        return res.status(statusCode).json(body);
+      } catch (error) {
+        if (!anyStatementPersisted) {
+          await cleanupUnpersistedUpload(file.path, 'upload-and-analyze threw (unkeyed)');
+        }
+        throw error;
       }
     }
 
-    logFinanceEvent('statement.smartUpload.completed', {
-      traceId,
-      packId,
-      entityName: analysis.entityName,
-      sectionCount: analysis.sections.length,
-      statementIds: createdStatements.map((s) => s.statementId),
-    });
+    // Keyed path — same reserve -> work -> finalize/fail pattern as /upload
+    // (see reserveIdempentUpload/finalizeIdempotentUpload/failIdempotentUpload
+    // in financialStatementService.ts), plus the cleanup-on-failure calls
+    // /upload itself does not do for every failure branch (this endpoint
+    // adds them explicitly — see the FIN-005 Fix 2 final report for the
+    // scope decision on why /upload was left as-is here).
+    const key = idempotencyKey;
+    const requestHash = sha256Hex(await (await import('fs')).promises.readFile(file.path));
 
-    res.status(201).json({
-      success: true,
-      mode: 'smart',
-      statementPackId: packId,
-      statementIds: createdStatements.map((s) => s.statementId),
-      statements: createdStatements,
-      analysis: {
-        entityName: analysis.entityName,
-        periodLabel: analysis.periodLabel,
-        periodStart: analysis.periodStart,
-        periodEnd: analysis.periodEnd,
-        currency: analysis.currency,
-        scaling: analysis.scaling,
-        language: analysis.language,
-        documentDescription: analysis.documentDescription,
-        sectionTypes: analysis.sections.map((s) => s.statementType),
-        totalLines: analysis.sections.reduce((sum, s) => sum + s.lines.length, 0),
-        warnings: analysis.warnings,
-      },
-    });
+    type LockOutcome =
+      | { kind: 'replay'; statusCode: number; body: Record<string, unknown> }
+      | { kind: 'conflict' }
+      | { kind: 'in_progress' }
+      | { kind: 'schema_missing' }
+      | { kind: 'fresh'; statusCode: number; body: Record<string, unknown> }
+      | { kind: 'finalize_failed' };
+
+    const outcome: LockOutcome = await withStatementUploadIdempotencyLock(
+      orgId,
+      key,
+      async (): Promise<LockOutcome> => {
+        const reservation = await reserveIdempotentUpload(orgId, key, requestHash, userId);
+
+        if (reservation.kind !== 'owner') {
+          if (reservation.kind === 'replay') {
+            logFinanceEvent('statement.smartUpload.idempotent_replay', {
+              traceId,
+              organizationId: orgId,
+              idempotencyKey: key,
+            });
+          }
+          return reservation;
+        }
+
+        let result: { statusCode: number; body: Record<string, unknown> };
+        try {
+          result = await performUploadAndAnalyze();
+        } catch (error) {
+          if (!anyStatementPersisted) {
+            await cleanupUnpersistedUpload(file.path, 'upload-and-analyze threw');
+          }
+          await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
+          throw error;
+        }
+
+        if (result.statusCode >= 400) {
+          if (!anyStatementPersisted) {
+            await cleanupUnpersistedUpload(file.path, 'upload-and-analyze controlled failure');
+          }
+          await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
+          return { kind: 'fresh' as const, statusCode: result.statusCode, body: result.body };
+        }
+
+        const finalized = await finalizeIdempotentUpload({
+          reservationId: reservation.reservationId,
+          statementId: primaryStatementId || '',
+          statusCode: result.statusCode,
+          responseJson: JSON.stringify(result.body),
+        });
+        if (!finalized) {
+          // Defensive — should not normally happen. Do NOT return a 2xx on
+          // an unconfirmed finalize. No file cleanup: performUploadAndAnalyze()
+          // DID succeed, so file.path is a real Statement's sourceFilePath.
+          logFinanceError(
+            'statement.smartUpload.finalize_unconfirmed',
+            new Error('finalize UPDATE did not affect the owned reservation row'),
+            {
+              traceId,
+              organizationId: orgId,
+              idempotencyKey: key,
+              reservationId: reservation.reservationId,
+            }
+          );
+          await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
+          return { kind: 'finalize_failed' as const };
+        }
+
+        return { kind: 'fresh' as const, statusCode: result.statusCode, body: result.body };
+      }
+    );
+
+    switch (outcome.kind) {
+      case 'conflict':
+        await cleanupUnpersistedUpload(file.path, 'idempotency key reused with different content');
+        return res.status(409).json({
+          error: 'Idempotency-Key was already used with a different upload',
+          code: 'IDEMPOTENCY_KEY_REUSED',
+        });
+      case 'in_progress':
+        await cleanupUnpersistedUpload(
+          file.path,
+          'genuinely concurrent in-flight upload for this key'
+        );
+        res.setHeader('Retry-After', '5');
+        return res.status(409).json({
+          error: 'Another upload for this Idempotency-Key is already in progress — retry shortly',
+          code: 'UPLOAD_IN_PROGRESS',
+        });
+      case 'schema_missing':
+        await cleanupUnpersistedUpload(file.path, 'idempotency schema unavailable for a keyed upload');
+        return res.status(503).json({
+          error:
+            'Idempotency-Key support is temporarily unavailable on this server — retry without the header, or contact support',
+          code: 'IDEMPOTENCY_SCHEMA_UNAVAILABLE',
+        });
+      case 'finalize_failed':
+        return res.status(500).json({
+          error: 'Upload completed but could not be durably confirmed — please retry',
+          code: 'STATEMENT_UPLOAD_FINALIZE_FAILED',
+        });
+      case 'replay':
+        await cleanupUnpersistedUpload(
+          file.path,
+          'idempotent replay of a previously completed upload-and-analyze'
+        );
+        res.setHeader('Idempotency-Replayed', 'true');
+        return res.status(outcome.statusCode).json(outcome.body);
+      case 'fresh':
+        return res.status(outcome.statusCode).json(outcome.body);
+      default: {
+        const _exhaustive: never = outcome;
+        throw new Error(`Unreachable idempotency outcome: ${JSON.stringify(_exhaustive)}`);
+      }
+    }
   })
 );
 
