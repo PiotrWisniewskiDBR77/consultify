@@ -29,20 +29,25 @@
  * JSON. This module reuses exactly that gate — it does not invent a status
  * field that does not exist on the schema.
  *
- * HONEST AMBIGUITY (documented per FIN-06 instructions, not silently
- * papered over): because "existence in the current advisory JSON" is the
- * only gate, this is a weaker signal than a true acceptance/approval flag.
- * Two consequences worth flagging:
- *   1. `generateAdvisory()` requires the valuation to be `APPROVED` at
- *      GENERATION time, but `setBackToDraftIfApproved()` (called from
- *      `updateAssumptions`) can silently flip the valuation back to `DRAFT`
- *      afterwards WITHOUT clearing the now-stale `advisory` JSON. This
- *      module does not re-check `valuations.status` because the pre-existing
- *      function being replaced never did either — adding a new gate here
- *      would be inventing behavior beyond what "reuse the existing check"
- *      calls for. Flagged as a known, pre-existing gap rather than one this
- *      round introduces.
- *   2. Every recommendation surfaced by `generateAdvisory()` is an
+ * CODEX BLOCKER 2 FIX (2026-08-02): the original version of this module
+ * flagged, but deliberately did not close, exactly the gap Codex's
+ * independent review then rejected — a recommendation still inside a STALE
+ * advisory JSON was treated as eligible even after its parent valuation had
+ * been flipped back to `DRAFT` by `setBackToDraftIfApproved()`
+ * (`updateAssumptions`, which does NOT clear `advisory` on downgrade). FIN-06's
+ * contract is "Finance APPROVED source -> Candidate Pack" — existence alone
+ * does not satisfy that. Fix, minimal, no new table/column on the
+ * recommendation itself (Codex's explicit constraint): both
+ * `findRecommendationAcrossValuations` (preview) and
+ * `readRecommendationFromValuation` (confirm's re-check, run AFTER the
+ * `SELECT ... FOR UPDATE` lock) now also select `valuations.status` and
+ * require it to be exactly `'APPROVED'` before returning a match — the same
+ * `valuations.status` column `generateAdvisory()` itself already gates on at
+ * generation time, just re-checked at handoff time. The frontend/session
+ * never supplies this value; it is read fresh from the DB on every call.
+ *
+ * Remaining, narrower honest note: every recommendation surfaced by
+ * `generateAdvisory()` is an
  *      algorithmically-produced suggestion (see the hard-coded
  *      `recommendations` array literal in `generateAdvisory()`), not
  *      something a human explicitly "accepts" one-by-one before this point
@@ -100,6 +105,7 @@ interface ValuationRow {
   currency: string | null;
   assumptions: string | Record<string, unknown> | null;
   version: number | null;
+  status: string | null;
 }
 
 interface AdvisoryRecommendation {
@@ -120,6 +126,17 @@ interface ResolvedRecommendation {
   currency: string | null;
   assumptions: string | Record<string, unknown> | null;
   version: number | null;
+  /** `valuations.status` at the moment of this read — 'DRAFT' | 'REVIEW' | 'APPROVED'. */
+  status: string | null;
+}
+
+const APPROVED_STATUS = 'APPROVED';
+
+/** True only when the recommendation's PARENT valuation is currently
+ *  `APPROVED` — never trusts any client-supplied status, always the value
+ *  just read from the DB in this same call. */
+function isApproved(resolved: ResolvedRecommendation): boolean {
+  return resolved.status === APPROVED_STATUS;
 }
 
 // Non-generic on purpose: `PinnedTransactionClient.queryAll`/`queryOne` are
@@ -145,7 +162,7 @@ async function findRecommendationAcrossValuations(
   recommendationId: string
 ): Promise<ResolvedRecommendation | null> {
   const rows = (await queryAll(
-    `SELECT id, project_id, advisory, currency, assumptions, version FROM valuations
+    `SELECT id, project_id, advisory, currency, assumptions, version, status FROM valuations
      WHERE organization_id = ? AND advisory IS NOT NULL`,
     [organizationId]
   )) as ValuationRow[];
@@ -163,6 +180,7 @@ async function findRecommendationAcrossValuations(
         currency: row.currency ?? null,
         assumptions: row.assumptions ?? null,
         version: row.version ?? null,
+        status: row.status ?? null,
       };
     }
   }
@@ -183,7 +201,7 @@ async function readRecommendationFromValuation(
   recommendationId: string
 ): Promise<ResolvedRecommendation | null> {
   const row = (await queryOne(
-    `SELECT id, project_id, advisory, currency, assumptions, version FROM valuations
+    `SELECT id, project_id, advisory, currency, assumptions, version, status FROM valuations
      WHERE id = ? AND organization_id = ?`,
     [valuationId, organizationId]
   )) as ValuationRow | null;
@@ -201,6 +219,7 @@ async function readRecommendationFromValuation(
     currency: row.currency ?? null,
     assumptions: row.assumptions ?? null,
     version: row.version ?? null,
+    status: row.status ?? null,
   };
 }
 
@@ -319,6 +338,7 @@ export async function previewValuationRecommendationCandidate(params: {
         recommendationId
       );
       if (!found) return { ok: false, reason: 'NOT_FOUND' };
+      if (!isApproved(found)) return { ok: false, reason: 'NOT_APPROVED' };
       return { ok: true, data: found };
     },
     buildCandidateFields,
@@ -377,6 +397,15 @@ export async function confirmValuationRecommendationCandidateHandoff(params: {
         recommendationId
       );
       if (!found) return { ok: false, reason: 'NOT_FOUND' };
+      // TOCTOU re-check, INSIDE the lock, on a value just re-read from the
+      // DB (never the client/preview's stale copy): if the valuation was
+      // approved when the user previewed but has since been flipped back to
+      // DRAFT (setBackToDraftIfApproved), fail closed here -- zero Candidate,
+      // zero receipt, zero Initiative. Existing idempotent receipts for an
+      // ALREADY-completed handoff remain authoritative regardless (the core
+      // checks `finance_candidate_handoffs` for a match before this closure
+      // ever runs again).
+      if (!isApproved(found)) return { ok: false, reason: 'NOT_APPROVED' };
       return { ok: true, data: found };
     },
     buildCandidateFields,
