@@ -29,6 +29,11 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
+import { WorkCanvasApi } from '@/services/api/workCanvas';
+import type {
+  WorkCanvasConversionProposal,
+  WorkCanvasTarget,
+} from '@/components/AIChat/WorkCanvas/types';
 import type {
   ActiveCanvasDocument,
   CanvasActionAvailability,
@@ -940,6 +945,10 @@ function WorkCanvasMarkdownDocumentPanel({
   // payload does not clobber the copy-with-provenance contract on first autosave.
   const draftOriginProvenanceRef = React.useRef<Record<string, unknown> | null>(null);
   const expandSourceNoticeShownRef = React.useRef(false);
+  const handoffKeysRef = React.useRef(new Map<string, string>());
+  const handoffFlightsRef = React.useRef(
+    new Map<string, Promise<WorkCanvasConversionProposal>>()
+  );
 
   const activeTemplate =
     starterTemplates.find((template) => template.id === documentState.activeStarterId) ||
@@ -962,6 +971,22 @@ function WorkCanvasMarkdownDocumentPanel({
     setActionFeedbackTone('alert');
     setActionFeedback(workCanvasActionErrorMessage(error, fallback));
   }, []);
+
+  const showDurableHandoffReceipt = React.useCallback(
+    (proposal: WorkCanvasConversionProposal, prefix = 'Created') => {
+      const url =
+        proposal.readBack && typeof proposal.readBack.url === 'string'
+          ? proposal.readBack.url
+          : null;
+      const objectId = proposal.targetObjectId || 'unknown';
+      setStatusFeedback(
+        url
+          ? `${prefix} ${proposal.target} (${objectId}). [Open created object](${url})`
+          : `${prefix} ${proposal.target} (${objectId}).`
+      );
+    },
+    [setStatusFeedback]
+  );
 
   // C3 (KROK 6): remember the loaded draft's provenance (so saves preserve it)
   // and surface a one-time "Źródło: notatka …" notice for notebook-expand drafts.
@@ -1030,6 +1055,15 @@ function WorkCanvasMarkdownDocumentPanel({
               );
               setShareInfo(extractShareFromDraft(draftById));
               captureDraftOriginProvenance(draftById);
+              const durableReceipt = (jsonById?.data?.proposals || [])
+                .filter(
+                  (proposal: WorkCanvasConversionProposal) =>
+                    proposal.status === 'approved' && proposal.targetObjectId
+                )
+                .sort((a: WorkCanvasConversionProposal, b: WorkCanvasConversionProposal) =>
+                  String(b.updatedAt || b.createdAt).localeCompare(String(a.updatedAt || a.createdAt))
+                )[0];
+              if (durableReceipt) showDurableHandoffReceipt(durableReceipt, 'Previously created');
               lastSavedContentRef.current =
                 typeof draftById.contentMd === 'string'
                   ? draftById.contentMd
@@ -1710,6 +1744,7 @@ function WorkCanvasMarkdownDocumentPanel({
     otherCanvasDraftsLoaded,
     isOtherCanvasDraftsLoading,
     loadOtherCanvasDrafts,
+    showDurableHandoffReceipt,
   ]);
 
   const copyMarkdown = async () => {
@@ -1756,6 +1791,48 @@ function WorkCanvasMarkdownDocumentPanel({
     setStatusFeedback('Document location opened.');
   };
 
+  const runGovernedHandoff = async (
+    draft: CanvasDocumentState,
+    target: WorkCanvasTarget
+  ): Promise<WorkCanvasConversionProposal> => {
+    if (!draft.draftId) throw new Error('Canvas draft must be persisted before handoff.');
+    const payload = {
+      title: draft.title,
+      source: 'active_chat_canvas',
+      contentMd: draft.contentMd,
+    };
+    const signature = JSON.stringify([draft.draftId, target, payload]);
+    const existingFlight = handoffFlightsRef.current.get(signature);
+    if (existingFlight) return existingFlight;
+
+    let key = handoffKeysRef.current.get(signature);
+    if (!key) {
+      key =
+        globalThis.crypto?.randomUUID?.() ||
+        `canvas-handoff-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      handoffKeysRef.current.set(signature, key);
+    }
+
+    const flight = (async () => {
+      const proposed = await WorkCanvasApi.createProposal(draft.draftId!, target, payload, key!);
+      const approved =
+        proposed.data.status === 'approved'
+          ? proposed.data
+          : (await WorkCanvasApi.approveProposal(proposed.data.id)).data;
+      if (approved.status !== 'approved' || !approved.targetObjectId) {
+        throw new Error('Canvas handoff did not produce a durable owner receipt.');
+      }
+      handoffKeysRef.current.delete(signature);
+      return approved;
+    })();
+    handoffFlightsRef.current.set(signature, flight);
+    try {
+      return await flight;
+    } finally {
+      handoffFlightsRef.current.delete(signature);
+    }
+  };
+
   /**
    * Canvas → Outputs handoff (P1-3): persist + export the draft as a durable
    * artifact, then route to the Outputs Library so the user sees it land.
@@ -1770,33 +1847,8 @@ function WorkCanvasMarkdownDocumentPanel({
         setAlertFeedback('Save to Outputs is available after the draft is saved.');
         return;
       }
-      // Materialize a durable artifact via the export route (markdown is always supported).
-      await Api.workCanvasExportDraft(draft.draftId, 'markdown');
-      // M-5 — register the Canvas in the canonical Outputs Library so the
-      // aggregate tab can list it. Idempotent — re-clicking updates the
-      // artifact metadata. Non-fatal: a failed register doesn't block the
-      // download or the redirect.
-      try {
-        await Api.workCanvasRegisterInOutputs(draft.draftId);
-      } catch (registerError) {
-        // Surface but don't block — the download already succeeded.
-        // eslint-disable-next-line no-console
-        console.warn('[Canvas] Outputs registration failed', registerError);
-      }
-      setStatusFeedback('Saved to Outputs. Opening…');
-      // W2-E3 — `/outputs` does not exist in AppRoutes.tsx (the previous
-      // assignment 404'd). The Outputs aggregate tab lives inside the
-      // Presentations module — landing the user there with the source draft
-      // as a query string lets the aggregator surface this Canvas's
-      // downstream entries (decks, reports) without a fake hub.
-      const draftIdForRedirect = draft.draftId;
-      if (typeof window !== 'undefined') {
-        window.setTimeout(() => {
-          window.location.assign(
-            `/presentations?tab=outputs&source=canvas&draftId=${encodeURIComponent(draftIdForRedirect)}`
-          );
-        }, 600);
-      }
+      const receipt = await runGovernedHandoff(draft, 'client_deliverable');
+      showDurableHandoffReceipt(receipt);
     } catch (error) {
       setCanvasErrorFeedback(error, 'Failed to save Canvas to Outputs.');
     } finally {
@@ -1820,10 +1872,8 @@ function WorkCanvasMarkdownDocumentPanel({
         setAlertFeedback('Table Studio handoff is available once the draft is saved.');
         return;
       }
-      const result = await Api.workCanvasSendToTableStudio(draft.draftId);
-      setStatusFeedback(
-        `Table created in Table Studio. [Open →](${result.data.linkedResource.url})`
-      );
+      const receipt = await runGovernedHandoff(draft, 'table');
+      showDurableHandoffReceipt(receipt);
     } catch (error) {
       setCanvasErrorFeedback(error, 'Failed to send Canvas to Table Studio.');
     } finally {
@@ -1848,11 +1898,8 @@ function WorkCanvasMarkdownDocumentPanel({
         setAlertFeedback('Document Studio handoff is available once the draft is saved.');
         return;
       }
-      const result = await Api.workCanvasSendToDocumentStudio(draft.draftId, {
-        language: 'pl',
-      });
-      const url = result.data.linkedResource.url;
-      setStatusFeedback(`Document created in Document Studio. [Open →](${url})`);
+      const receipt = await runGovernedHandoff(draft, 'client_deliverable');
+      showDurableHandoffReceipt(receipt);
     } catch (error) {
       setCanvasErrorFeedback(error, 'Failed to send Canvas to Document Studio.');
     } finally {
@@ -2485,25 +2532,8 @@ function WorkCanvasMarkdownDocumentPanel({
     try {
       const draft = await ensurePersistedDraft();
       if (!draft?.draftId) throw new Error('Canvas draft could not be saved before handoff.');
-      const result = await Api.workCanvasSaveToWorkspace(draft.draftId, { target });
-      const linked = result.data.linkedResource;
-      setDocumentState((current) =>
-        mapDraftResponseToCanvasDocumentState(result.data.draft, {
-          ...current,
-          saveState: 'saved',
-        })
-      );
-      // W2-E2 — trust the backend-returned `linked.url`. Previously the
-      // frontend reconstructed its own paths and diverged from the backend
-      // (`/decisions/:id` stripped the id at AppRoutes; `/initiatives` ignored
-      // the id; note went to a tab not the page). One contract, one fix site.
-      const targetPath =
-        typeof linked.url === 'string' && linked.url.length > 0 ? linked.url : null;
-      setStatusFeedback(
-        targetPath
-          ? `${linked.title} saved to ${linked.type}. [Open →](${targetPath})`
-          : `${linked.title} saved to ${linked.type}.`
-      );
+      const receipt = await runGovernedHandoff(draft, target);
+      showDurableHandoffReceipt(receipt);
     } catch (error) {
       setCanvasErrorFeedback(error, `Failed to save Canvas to ${target}.`);
     } finally {

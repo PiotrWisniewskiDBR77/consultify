@@ -6,6 +6,9 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const PREFIX = 'chat-007-009-';
+const MATERIAL_USER_ID = '10000000-0000-4000-8000-000000000009';
+const MATERIAL_CONVERSATION_ID = '20000000-0000-4000-8000-000000000009';
+const MATERIAL_ORG_ID = '30000000-0000-4000-8000-000000000009';
 
 let app: Express;
 let token: string;
@@ -28,6 +31,7 @@ async function cleanup(): Promise<void> {
     await client.query(`DELETE FROM initiatives WHERE title LIKE $1`, [`%${PREFIX}%`]);
     await client.query(`DELETE FROM notebook_pages WHERE title LIKE $1`, [`%${PREFIX}%`]);
     await client.query(`DELETE FROM tp_tables WHERE name LIKE $1`, [`%${PREFIX}%`]);
+    await client.query('DELETE FROM conversations WHERE id = $1', [MATERIAL_CONVERSATION_ID]);
   } finally {
     await client.end();
   }
@@ -38,6 +42,34 @@ beforeAll(async () => {
   const service = await import('../../server/src/services/workCanvasService.js');
   await service.listProposals({ organizationId: SEED.ORG_ID, draftId: 'schema-probe' });
   await cleanup();
+  const client = pgClient();
+  await client.connect();
+  try {
+    const now = new Date().toISOString();
+    await client.query(
+      `INSERT INTO organizations (id, name, plan, status, is_active, created_at)
+       VALUES ($1, $2, 'enterprise', 'active', 1, $3) ON CONFLICT (id) DO NOTHING`,
+      [MATERIAL_ORG_ID, `${PREFIX}material-org`, now]
+    );
+    await client.query(
+      `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name, created_at)
+       VALUES ($1, $2, $3, 'not-used', 'ADMIN', 'active', 'Material', 'Fixture', $4)
+       ON CONFLICT (id) DO NOTHING`,
+      [MATERIAL_USER_ID, MATERIAL_ORG_ID, `${PREFIX}material@example.test`, now]
+    );
+    await client.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
+       VALUES ($1, $2, $3, 'OWNER', 'ACTIVE', $4) ON CONFLICT DO NOTHING`,
+      [`${PREFIX}material-membership`, MATERIAL_ORG_ID, MATERIAL_USER_ID, now]
+    );
+    await client.query(
+      `INSERT INTO conversations (id, user_id, organization_id, title, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $5) ON CONFLICT (id) DO NOTHING`,
+      [MATERIAL_CONVERSATION_ID, MATERIAL_USER_ID, MATERIAL_ORG_ID, `${PREFIX}material`, now]
+    );
+  } finally {
+    await client.end();
+  }
   token = mintToken();
   const router = (await import('../../server/src/routes/work-canvas.routes.js')).default;
   app = express();
@@ -194,5 +226,48 @@ describe('CHAT-07/08/09 — owner handoff, durable receipt and reopen', () => {
         await client.end();
       }
     }
+  });
+
+  it('materializes a client deliverable and restores its owner URL from a fresh GET', async () => {
+    const materialToken = mintToken({
+      id: MATERIAL_USER_ID,
+      email: `${PREFIX}material@example.test`,
+      role: 'OWNER',
+      organizationId: MATERIAL_ORG_ID,
+      organization_id: MATERIAL_ORG_ID,
+    });
+    const materialAuth = { Authorization: `Bearer ${materialToken}` };
+    const created = await request(app)
+      .post('/api/work-canvas/drafts')
+      .set(materialAuth)
+      .send({
+        conversationId: MATERIAL_CONVERSATION_ID,
+        kind: 'markdown',
+        title: `${PREFIX}material`,
+        contentMd: '# Client material\n\nA durable governed deliverable.',
+      });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const draftId = created.body.data.id as string;
+    const proposed = await request(app)
+      .post(`/api/work-canvas/drafts/${draftId}/proposals`)
+      .set(materialAuth)
+      .send({ target: 'client_deliverable', idempotencyKey: `${PREFIX}material-key` });
+    expect(proposed.status, JSON.stringify(proposed.body)).toBe(201);
+    const approved = await request(app)
+      .post(`/api/work-canvas/proposals/${proposed.body.data.id}/approve`)
+      .set(materialAuth);
+    expect(approved.status, JSON.stringify(approved.body)).toBe(200);
+    expect(approved.body.data.targetObjectId).toEqual(expect.any(String));
+    expect(approved.body.data.readBack.url).toContain('artifactId=');
+
+    const reopened = await request(app)
+      .get(`/api/work-canvas/drafts/${draftId}`)
+      .set(materialAuth);
+    expect(reopened.status).toBe(200);
+    const receipt = reopened.body.data.proposals.find(
+      (proposal: { id: string }) => proposal.id === proposed.body.data.id
+    );
+    expect(receipt.targetObjectId).toBe(approved.body.data.targetObjectId);
+    expect(receipt.readBack.url).toBe(approved.body.data.readBack.url);
   });
 });

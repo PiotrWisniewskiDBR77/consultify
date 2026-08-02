@@ -6,6 +6,9 @@ export function workCanvasActionErrorMessage(error: unknown, fallback: string): 
   if (code === 'CANVAS_DRAFT_CONFLICT') {
     return 'Canvas changed elsewhere. Your local edits are still visible. Reload latest or retry from the current draft before applying this action.';
   }
+  if (code === 'CANVAS_PROPOSAL_IDEMPOTENCY_CONFLICT') {
+    return 'This handoff retry no longer matches its original draft, target, or payload. No object was created. Start a new handoff from the current Canvas.';
+  }
   if (code === 'CANVAS_WORKFLOW_REVIEW_REQUIRED') {
     return 'Workflow is still in review. Mark the workflow approved before generating a durable output.';
   }
