@@ -117,12 +117,96 @@ const EXT_TO_MIME_BASES: Record<string, string[]> = {
   doc: ['application/msword'],
   xlsx: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
   xls: ['application/vnd.ms-excel'],
+  // FIN-005: CSV statement import. Browsers/OS's are inconsistent about the
+  // client-declared MIME for .csv (Excel-generated exports commonly send
+  // application/vnd.ms-excel; some browsers send text/csv, some fall back to
+  // text/plain or application/octet-stream) — accept the realistic set, and
+  // rely on sniffFileSignature() (below) plus the extension/path hardening
+  // already in this file for the actual safety guarantee rather than the
+  // client-supplied header alone.
+  csv: [
+    'text/csv',
+    'application/csv',
+    'application/vnd.ms-excel',
+    'text/plain',
+    'application/octet-stream',
+  ],
 };
 
 const ALLOWED_EXTENSIONS = new Set(Object.keys(EXT_TO_MIME_BASES));
 
 // Known-safe extension set used by buildSafeUploadedFilename
 const KNOWN_SAFE_EXTS = ALLOWED_EXTENSIONS;
+
+// ==========================================
+// CONTENT SNIFFING (magic bytes)
+// ==========================================
+
+export const FILE_UPLOAD_SIGNATURE_MISMATCH_CODE = 'FILE_UPLOAD_SIGNATURE_MISMATCH';
+export const FILE_UPLOAD_SIGNATURE_MISMATCH_MESSAGE =
+  'File content does not match its declared type';
+
+/**
+ * Verify the FIRST BYTES of an already-saved upload actually match the
+ * claimed extension, instead of trusting only the client-supplied `mimetype`
+ * header (which fileFilter checks, but which the client fully controls).
+ *
+ * - pdf: `%PDF-` signature.
+ * - xlsx/docx: PK zip local-file-header signature (both are OOXML zip
+ *   containers) — this only confirms "is a zip", not "is a valid xlsx"; real
+ *   structural validation happens when XLSX.read() parses it.
+ * - xls (legacy binary): OLE2 compound-file signature.
+ * - doc (legacy binary): same OLE2 signature as xls — both are CFBF
+ *   containers, cannot be told apart from the header alone.
+ * - csv: no reliable magic number for plain text. We instead reject files
+ *   that look like a DIFFERENT known binary format (zip/OLE2/PDF) wearing a
+ *   `.csv` extension, and reject a null byte in the first chunk (real CSV
+ *   text never contains one; a null byte this early is a strong signal of a
+ *   disguised binary).
+ */
+export function sniffFileSignature(buffer: Buffer, ext: string): boolean {
+  const normalizedExt = String(ext || '').toLowerCase();
+  const head = buffer.subarray(0, 8);
+
+  const isPdf = head.subarray(0, 5).toString('latin1') === '%PDF-';
+  const isZip =
+    head.length >= 4 &&
+    head[0] === 0x50 &&
+    head[1] === 0x4b &&
+    (head[2] === 0x03 || head[2] === 0x05 || head[2] === 0x07) &&
+    (head[3] === 0x04 || head[3] === 0x06 || head[3] === 0x08);
+  const isOle2 =
+    head.length >= 8 &&
+    head[0] === 0xd0 &&
+    head[1] === 0xcf &&
+    head[2] === 0x11 &&
+    head[3] === 0xe0 &&
+    head[4] === 0xa1 &&
+    head[5] === 0xb1 &&
+    head[6] === 0x1a &&
+    head[7] === 0xe1;
+
+  switch (normalizedExt) {
+    case 'pdf':
+      return isPdf;
+    case 'xlsx':
+    case 'docx':
+      return isZip;
+    case 'xls':
+    case 'doc':
+      // Some producers still emit legacy .xls as a plain CSV/TSV with an .xls
+      // extension — accept OLE2 (real BIFF) but do not hard-fail plain text,
+      // since that False-positive would break real-world exports; only
+      // reject a mismatched OTHER binary signature.
+      return isOle2 || (!isZip && !isPdf);
+    case 'csv':
+      // Reject disguised binaries; a genuine CSV/TSV is never a zip/OLE2/PDF.
+      if (isPdf || isZip || isOle2) return false;
+      return !buffer.subarray(0, 4096).includes(0x00);
+    default:
+      return true;
+  }
+}
 
 /**
  * Build a filesystem-safe unique filename from the client-supplied originalname.

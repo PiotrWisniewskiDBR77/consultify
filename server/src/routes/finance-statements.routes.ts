@@ -31,6 +31,7 @@
 import { Request, Response, Router } from 'express';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import { sniffFileSignature } from '../middleware/fileUpload.middleware.js';
 import { upload } from '../middleware/fileUpload.middleware.js';
 import {
   searchStatementDocumentIntelligence,
@@ -175,6 +176,82 @@ function isSchemaCompatError(error: unknown): boolean {
 
 const DB_ALLOWED_PARSE_METHODS = new Set(['text_extraction', 'ocr', 'manual']);
 
+// ════════════════════════════════════════════════
+// FIN-005: Upload idempotency
+// ════════════════════════════════════════════════
+
+const MAX_IDEMPOTENCY_KEY_CHARS = 200;
+
+/** Read a client-supplied idempotency key from header or body, bounded and trimmed. */
+function getIdempotencyKey(req: AuthRequest): string | null {
+  const headerRaw = req.headers?.['idempotency-key'];
+  const header = Array.isArray(headerRaw) ? headerRaw[0] : headerRaw;
+  const bodyRaw = (req.body as Record<string, unknown> | undefined)?.idempotencyKey;
+  const raw = String(header || bodyRaw || '').trim();
+  if (!raw) return null;
+  return raw.slice(0, MAX_IDEMPOTENCY_KEY_CHARS);
+}
+
+/**
+ * Look up a previously-recorded upload response for this org+key. Returns
+ * null if none exists OR if the idempotency table isn't present yet
+ * (schema-compat fallback — never blocks upload on a missing optional
+ * table).
+ */
+async function findIdempotentUpload(
+  organizationId: string,
+  idempotencyKey: string
+): Promise<{ statusCode: number; responseJson: string } | null> {
+  try {
+    const rows = await dbAll<{ status_code: number; response_json: string }>(
+      `SELECT status_code, response_json FROM financial_statement_upload_idempotency
+       WHERE organization_id = ? AND idempotency_key = ? LIMIT 1`,
+      [organizationId, idempotencyKey]
+    );
+    const row = Array.isArray(rows) ? rows[0] : undefined;
+    if (!row) return null;
+    return { statusCode: Number(row.status_code) || 201, responseJson: String(row.response_json) };
+  } catch (error) {
+    if (isSchemaCompatError(error)) return null;
+    throw error;
+  }
+}
+
+/** Best-effort record of a successful upload response, keyed by org+idempotency key. */
+async function recordIdempotentUpload(params: {
+  organizationId: string;
+  idempotencyKey: string;
+  statementId: string;
+  statusCode: number;
+  responseJson: string;
+  createdBy?: string;
+}): Promise<void> {
+  try {
+    await dbRun(
+      `INSERT INTO financial_statement_upload_idempotency
+        (id, organization_id, idempotency_key, statement_id, status_code, response_json, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [
+        `fsui-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+        params.organizationId,
+        params.idempotencyKey,
+        params.statementId,
+        params.statusCode,
+        params.responseJson,
+        params.createdBy || null,
+      ],
+      { fallback: false }
+    );
+  } catch (error) {
+    // Best-effort: a failure to RECORD the idempotency marker must never
+    // fail the (already-successful) upload itself. A missing/incompatible
+    // table just means this specific retry-dedup doesn't apply this time.
+    if (!isSchemaCompatError(error)) {
+      logger.warn(`[FinanceStatements] Failed to record upload idempotency marker: ${error}`);
+    }
+  }
+}
+
 async function ensureIngestRun(params: {
   statementId: string;
   organizationId?: string;
@@ -220,6 +297,76 @@ function parseJsonArray(raw: unknown): any[] {
 // T050: Financial Statement Ingestion
 // ════════════════════════════════════════════════
 
+// Pathological-workbook guard (FIN-005): a small compressed .xlsx can still
+// decompress into a huge sheet grid. These caps are generous for any real
+// financial statement (which is a handful of sheets and a few hundred rows)
+// while bounding the worst case. Not a full pre-decompression zip-bomb
+// defense (SheetJS doesn't expose central-directory sizes before parsing) —
+// see FIN-005 report for the documented residual risk.
+const MAX_XLSX_SHEETS = 200;
+const MAX_XLSX_CELLS = 500_000;
+
+// CSV decode guard (FIN-005): cap how much we'll ever try to decode/scan for
+// delimiter detection, independent of the 10 MB upload cap enforced by
+// fileUpload.middleware — defense in depth if that cap is ever changed.
+const MAX_CSV_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Decode an uploaded CSV buffer into text, handling the encoding/delimiter
+ * variants common in real-world (especially Polish-locale) exports:
+ *  - UTF-8 BOM (EF BB BF) — stripped.
+ *  - UTF-16 LE/BE BOM — decoded properly instead of read as UTF-8 garbage.
+ *  - Windows-1250 (cp1250) — common for older Polish accounting software
+ *    exports; detected by re-checking for the U+FFFD replacement character
+ *    that a genuine UTF-8 decode of cp1250 bytes produces, then re-decoded
+ *    via the platform's built-in `TextDecoder('windows-1250')`.
+ * Delimiter (comma vs semicolon — semicolon is the norm for Polish-locale
+ * Excel CSV exports since a comma is the decimal separator there) is left to
+ * the downstream extractor, which tokenizes on whitespace/number boundaries
+ * rather than a fixed delimiter — this function's job is only to get the
+ * BYTES turned into correct TEXT.
+ */
+function decodeCsvBuffer(buffer: Buffer): string {
+  const bounded = buffer.subarray(0, MAX_CSV_BYTES);
+
+  // UTF-16 BOM checks first — decoding UTF-16 bytes as UTF-8/cp1250 would be
+  // silently wrong rather than throwing.
+  if (bounded.length >= 2 && bounded[0] === 0xff && bounded[1] === 0xfe) {
+    return bounded.subarray(2).toString('utf16le');
+  }
+  if (bounded.length >= 2 && bounded[0] === 0xfe && bounded[1] === 0xff) {
+    // UTF-16 BE: swap byte pairs, then decode as LE (Node has no native BE decoder).
+    const swapped = Buffer.alloc(bounded.length - 2);
+    for (let i = 2; i + 1 < bounded.length; i += 2) {
+      swapped[i - 2] = bounded[i + 1];
+      swapped[i - 1] = bounded[i];
+    }
+    return swapped.toString('utf16le');
+  }
+
+  // UTF-8 BOM (EF BB BF) — strip before decoding.
+  const hasUtf8Bom =
+    bounded.length >= 3 && bounded[0] === 0xef && bounded[1] === 0xbb && bounded[2] === 0xbf;
+  const withoutBom = hasUtf8Bom ? bounded.subarray(3) : bounded;
+
+  const utf8Text = withoutBom.toString('utf-8');
+  // A genuine UTF-8 decode of non-UTF-8 bytes (e.g. real Windows-1250) always
+  // produces U+FFFD replacement characters where multi-byte sequences don't
+  // form valid UTF-8. A real UTF-8 file legitimately containing U+FFFD is
+  // vanishingly rare in a financial export, so this is a safe, cheap signal.
+  if (utf8Text.includes('�')) {
+    try {
+      const decoder = new TextDecoder('windows-1250');
+      return decoder.decode(withoutBom);
+    } catch {
+      // Platform lacks the windows-1250 decoder (shouldn't happen on modern
+      // Node with full-icu) — fall back to the UTF-8 read rather than throw.
+      return utf8Text;
+    }
+  }
+  return utf8Text;
+}
+
 async function extractTextFromFile(
   filePath: string,
   originalName: string
@@ -231,7 +378,8 @@ async function extractTextFromFile(
   }
   if (ext === 'csv') {
     const fs = await import('fs');
-    const text = fs.readFileSync(filePath, 'utf-8');
+    const buffer = fs.readFileSync(filePath);
+    const text = decodeCsvBuffer(buffer);
     return { text, parseMethod: 'csv_import' };
   }
   if (ext === 'xlsx' || ext === 'xls') {
@@ -239,7 +387,34 @@ async function extractTextFromFile(
       const fs = await import('fs');
       const XLSX = await import('xlsx');
       const buffer = fs.readFileSync(filePath);
+
+      // Zip-bomb / pathological-workbook guard, BEFORE the full parse below.
+      // `bookSheets: true` is a lightweight SheetJS peek that returns sheet
+      // names without parsing cell content, so it's cheap even on a
+      // maliciously crafted archive.
+      const peek = XLSX.read(buffer, { type: 'buffer', bookSheets: true });
+      if (peek.SheetNames.length > MAX_XLSX_SHEETS) {
+        throw new Error(
+          `Workbook has ${peek.SheetNames.length} sheets, exceeding the ${MAX_XLSX_SHEETS}-sheet safety limit`
+        );
+      }
+
       const wb = XLSX.read(buffer, { type: 'buffer', cellDates: true });
+      let totalCells = 0;
+      for (const sheetName of wb.SheetNames) {
+        const ws = wb.Sheets[sheetName];
+        const ref = ws?.['!ref'];
+        if (!ref) continue;
+        const range = XLSX.utils.decode_range(ref);
+        const rows = range.e.r - range.s.r + 1;
+        const cols = range.e.c - range.s.c + 1;
+        totalCells += Math.max(0, rows) * Math.max(0, cols);
+        if (totalCells > MAX_XLSX_CELLS) {
+          throw new Error(
+            `Workbook cell count exceeds the ${MAX_XLSX_CELLS.toLocaleString('en-US')}-cell safety limit`
+          );
+        }
+      }
 
       const skipSheetPattern =
         /^(cover|okładka|spis\s+treści|table\s+of\s+contents|notes|noty|index|summary|disclaimer|info)$/i;
@@ -304,6 +479,54 @@ router.post(
     if (!file) return res.status(400).json({ error: 'File required (PDF, XLSX, XLS, or CSV)' });
     if (!userId || !orgId) return res.status(401).json({ error: 'Unauthorized' });
     const traceId = getFinanceTraceId((req as any).correlationId);
+
+    // FIN-005: idempotency — a retry with the same org + Idempotency-Key
+    // returns the ORIGINAL response instead of creating a second statement
+    // (and, by extension, a second pack).
+    const idempotencyKey = getIdempotencyKey(req);
+    if (idempotencyKey) {
+      const existing = await findIdempotentUpload(orgId, idempotencyKey);
+      if (existing) {
+        logFinanceEvent('statement.upload.idempotent_replay', {
+          traceId,
+          organizationId: orgId,
+          idempotencyKey,
+        });
+        res.setHeader('Idempotency-Replayed', 'true');
+        return res.status(existing.statusCode).json(JSON.parse(existing.responseJson));
+      }
+    }
+
+    // FIN-005: verify the saved file's first bytes actually match its
+    // declared extension — fileFilter only checked the client-supplied MIME
+    // header, which the client fully controls.
+    const ext = (file.originalname || '').toLowerCase().split('.').pop() || '';
+    try {
+      const fsSniff = await import('fs');
+      const headBuffer = fsSniff.readFileSync(file.path).subarray(0, 4096);
+      if (!sniffFileSignature(headBuffer, ext)) {
+        try {
+          fsSniff.unlinkSync(file.path);
+        } catch {
+          // best-effort cleanup; the mismatch rejection is what matters
+        }
+        logFinanceError('statement.upload.signature_mismatch', new Error('signature mismatch'), {
+          traceId,
+          fileName: file.originalname,
+          ext,
+        });
+        return res.status(422).json({
+          error: 'File content does not match its declared type',
+          code: 'FILE_UPLOAD_SIGNATURE_MISMATCH',
+        });
+      }
+    } catch (sniffError: any) {
+      logFinanceError('statement.upload.signature_check_failed', sniffError, {
+        traceId,
+        fileName: file.originalname,
+      });
+      return res.status(422).json({ error: 'Unable to verify uploaded file', detail: sniffError?.message });
+    }
 
     await ensureCanonicalRegistryInDatabase();
 
@@ -520,7 +743,7 @@ router.post(
       `[FinanceStatements] Uploaded ${file.originalname} (${parseMethod}) → statement ${statementId} type=${detection.statementType}`
     );
 
-    res.status(201).json({
+    const responseBody = {
       success: true,
       statementId,
       statementPackId,
@@ -532,7 +755,20 @@ router.post(
       documentClass: documentProfile.documentClass,
       extractionStrategy: documentProfile.extractionStrategy,
       templateFamily: documentProfile.templateFamily,
-    });
+    };
+
+    if (idempotencyKey) {
+      await recordIdempotentUpload({
+        organizationId: orgId,
+        idempotencyKey,
+        statementId,
+        statusCode: 201,
+        responseJson: JSON.stringify(responseBody),
+        createdBy: userId,
+      });
+    }
+
+    res.status(201).json(responseBody);
   })
 );
 
