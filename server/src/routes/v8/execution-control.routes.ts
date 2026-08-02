@@ -1209,15 +1209,43 @@ router.post(
         userId
       );
     } else {
+      // Org-scope existence guard MUST run before anything else in this branch —
+      // including the idempotency-replay check below. Checking idempotency first
+      // (as this used to) let a caller from ANY org probe execution_audit_log for
+      // a (entityId, idempotencyKey) pair written by a DIFFERENT org and get a 200
+      // idempotent-replay response without ever proving they own that initiative —
+      // a cross-tenant existence oracle bypassing the 404 this endpoint otherwise
+      // enforces. Found in adversarial review; fixed by reordering, not by adding
+      // organization_id to the idempotency SELECT alone (that alone would still
+      // 404 correctly, but keeping the existence check first and unconditional is
+      // the same defense-in-depth shape every other guard in this file uses).
+      const old = (await dbAll(
+        `SELECT forecast_start_date, forecast_end_date, planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [entityId, organizationId]
+      )) as {
+        forecast_start_date: string | null;
+        forecast_end_date: string | null;
+        planned_start_date: string | null;
+        planned_end_date: string | null;
+      }[];
+      if (!old?.length) {
+        return res
+          .status(404)
+          .json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+      }
+
       // EXE-06 idempotent retry: a client-supplied idempotencyKey that already
       // produced an execution_audit_log row for this initiative's 'replan' means
       // this request is a replay (e.g. a retried POST) — skip the UPDATE/audit
       // writes and return the same response shape with `idempotent: true`, but
-      // still compute a fresh readback since that is a pure read.
+      // still compute a fresh readback since that is a pure read. Only reachable
+      // once the org-scope guard above has already confirmed entityId belongs to
+      // organizationId, so this SELECT doesn't need its own org predicate to be
+      // safe — but include one anyway for defense in depth.
       if (idempotencyKey) {
         const existingAudit = (await dbAll(
-          `SELECT id FROM execution_audit_log WHERE initiative_id = ? AND field_changed = 'replan' AND idempotency_key = ?`,
-          [entityId, idempotencyKey]
+          `SELECT id FROM execution_audit_log WHERE initiative_id = ? AND organization_id = ? AND field_changed = 'replan' AND idempotency_key = ?`,
+          [entityId, organizationId, idempotencyKey]
         )) as { id: string }[];
         if (existingAudit?.length) {
           const readback = await refreshControlTower(
@@ -1240,20 +1268,6 @@ router.post(
         }
       }
 
-      const old = (await dbAll(
-        `SELECT forecast_start_date, forecast_end_date, planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
-        [entityId, organizationId]
-      )) as {
-        forecast_start_date: string | null;
-        forecast_end_date: string | null;
-        planned_start_date: string | null;
-        planned_end_date: string | null;
-      }[];
-      if (!old?.length) {
-        return res
-          .status(404)
-          .json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
-      }
       const sets: string[] = [];
       const params: unknown[] = [];
       if (forecastStartDate) {

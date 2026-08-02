@@ -33,22 +33,20 @@
  * `NODE_ENV !== 'production'`, so no flag seeding is required for the E2E
  * test orgs created here.
  *
- * KNOWN DEFECT this file documents (not silently works around): the
+ * FIXED DEFECT this file caught (kept here as a regression note): the
  * `quick-update` route runs `validateBody(QuickUpdateInitiativeSchema)`
  * (server/src/validators/initiative.validators.ts) BEFORE
- * `quickUpdateInitiative` runs, and that schema has no `idempotencyKey`
- * field. `validateBody` replaces `req.body` with the *parsed* (and
- * therefore key-stripped) result
- * (server/src/middleware/validation.middleware.ts, `req.body = result.data`),
- * so a client-supplied `idempotencyKey` on `PATCH .../quick-update` never
- * reaches the controller over the real HTTP route, even though the
- * controller itself has a correct idempotent-replay branch keyed on it. The
- * `replan` (`ReplanSchema` includes `idempotencyKey`) and `/changes` (no
- * `validateBody` in front of it) endpoints do NOT have this defect. The
- * progress idempotency test below asserts the CONTRACT the task specifies
- * (replay -> `idempotent: true`, exactly one history row) — if it fails, the
- * fix is almost certainly one line in `QuickUpdateInitiativeSchema` (add
- * `idempotencyKey: z.string().optional()`), not a controller change.
+ * `quickUpdateInitiative` runs, and `validateBody` replaces `req.body` with
+ * the *parsed* result (server/src/middleware/validation.middleware.ts,
+ * `req.body = result.data`) — so any field the controller reads but the
+ * schema doesn't declare is silently stripped before the handler sees it.
+ * `QuickUpdateInitiativeSchema` originally had no `idempotencyKey` field,
+ * so a client-supplied key on `PATCH .../quick-update` never reached the
+ * controller even though its idempotent-replay branch was otherwise
+ * correct. Fixed in the same branch (`idempotencyKey: z.string().optional()`
+ * added to the schema) — the progress idempotency test below now exercises
+ * the real, fixed path. If this regresses, the fix is almost certainly that
+ * one line in `QuickUpdateInitiativeSchema` again.
  *
  * DB / skip behavior: mirrors execution-spine.golden-flow.realdb.test.ts's
  * `pgReachable()` + `itDB` convention byte-for-byte.
@@ -656,6 +654,62 @@ describe('EXE-005-006 — change + progress spine golden flow against a real Pos
         [h.initiativeAId, h.userBId]
       );
       expect(historyRows.rows.length).toBe(0);
+    }
+  );
+
+  itDB(
+    "cross-tenant: POST replan on org A initiative as org B user, with org A's own idempotencyKey -> still 404, not an idempotent-replay 200",
+    async (h) => {
+      // Regression test for an adversarial-review finding: the idempotency-replay
+      // check in the INITIATIVE branch of /interventions/replan used to run
+      // BEFORE the org-scope existence guard, so a cross-tenant caller who
+      // guessed/observed an (entityId, idempotencyKey) pair already recorded by
+      // the legitimate org could get back `200 { idempotent: true }` without ever
+      // being proven to own that initiative — a cross-tenant existence oracle
+      // bypassing the 404 this endpoint otherwise enforces on every other path.
+      // The sibling test above only sends an attack request WITHOUT an
+      // idempotencyKey, so it never exercised the vulnerable branch — this test
+      // specifically targets it.
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const attackerToken = makeE2EToken(h.userBId, h.orgBId);
+      const idempotencyKey = `idem-replan-xtenant-${suffix()}`;
+
+      // 1. Org A legitimately performs a replan with this idempotencyKey — this
+      // creates the execution_audit_log row an attacker might discover/guess.
+      const legitRes = await request(app)
+        .post('/api/v8/execution-control/interventions/replan')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          entityType: 'INITIATIVE',
+          entityId: h.initiativeAId,
+          forecastEndDate: '2028-07-01',
+          reason: 'Legitimate reforecast',
+          idempotencyKey,
+        });
+      expect(legitRes.status).toBe(200);
+
+      // 2. Org B replays the SAME idempotencyKey against the SAME initiativeId —
+      // must be 404 (org B does not own this initiative), never a 200 replay.
+      const attackRes = await request(app)
+        .post('/api/v8/execution-control/interventions/replan')
+        .set('Authorization', `Bearer ${attackerToken}`)
+        .send({
+          entityType: 'INITIATIVE',
+          entityId: h.initiativeAId,
+          forecastEndDate: '2099-01-01',
+          reason: 'Cross-tenant idempotency-oracle attempt',
+          idempotencyKey,
+        });
+      expect(attackRes.status).toBe(404);
+      expect(attackRes.body?.data?.idempotent).not.toBe(true);
+
+      // 3. The legitimate forecast must be untouched by the attack attempt.
+      const row = await h.client.query(
+        `SELECT forecast_end_date FROM initiatives WHERE id = $1`,
+        [h.initiativeAId]
+      );
+      expect(String(row.rows[0]?.forecast_end_date)).toContain('2028-07-01');
     }
   );
 
