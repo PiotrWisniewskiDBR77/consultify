@@ -97,6 +97,30 @@ async function buildFinanceApp(): Promise<Express> {
   return app;
 }
 
+/**
+ * FIN-005 Fix 2 regression suite: mounts the REAL v8 finance router behind
+ * the REAL verifyToken -> requireV8OrgContext -> attachV8Context middleware
+ * chain — mirrors routes/v8/index.ts:46-63 and the identical pattern already
+ * proven in tests/acceptance/fin-003-004-case-scenario-lifecycle.e2e.test.ts.
+ */
+async function buildV8FinanceApp(): Promise<Express> {
+  const { verifyToken } = await import('../../server/src/middleware/auth.middleware.js');
+  const { requireV8OrgContext, attachV8Context } = await import(
+    '../../server/src/middleware/v8Auth.middleware.js'
+  );
+  const financeRouter = (await import('../../server/src/routes/v8/finance.routes.js')).default;
+  const app = express();
+  app.use(express.json({ limit: '5mb' }));
+  app.use(
+    '/api/v8/finance',
+    verifyToken as any,
+    requireV8OrgContext as any,
+    attachV8Context as any,
+    financeRouter as unknown as express.Router
+  );
+  return app;
+}
+
 async function cleanup(): Promise<void> {
   const db = client();
   await db.connect();
@@ -1352,3 +1376,301 @@ describe('FIN-005 statement ingestion golden flow — real route and PostgreSQL'
     }
   }, 60_000);
 });
+
+// ═══════════════════════════════════════════════════════════════════════
+// FIN-005 Fix 2 — idempotency + temp-file cleanup wired into the endpoints
+// the PRODUCT actually calls: POST /api/v8/finance/statements/upload-and-
+// analyze (tried first by FinancialStatementImportWizard.tsx) and its
+// legacy fallback POST /api/finance-statements/upload-and-analyze. Before
+// this fix, NEITHER endpoint sent/checked an Idempotency-Key or cleaned up
+// its multer temp file on failure — the entire reservation/finalize/fail
+// state machine proven above lived ONLY on /upload, which nothing in the
+// frontend calls. This is the real-HTTP, real-Postgres proof that the
+// actual user-facing gap (a slow upload — LLM analysis can legitimately
+// exceed the client's timeout — retried by the client used to create a
+// genuine duplicate Statement) is closed on both endpoints.
+//
+// `analyzeAndExtractFullDocument` returns null (no OPENAI_API_KEY / no
+// compatible provider configured for this fresh test org) in this
+// environment, so every upload here takes the "fallback" branch — ONE
+// Statement created via heuristic detection, not the multi-section "smart"
+// LLM branch. That still exercises the full reserve -> business-write ->
+// finalize/fail -> cleanup wiring for real; the multi-section branch is
+// covered structurally by the code's own anyStatementPersisted/
+// primaryStatementId handling (see the route files) and is not
+// re-exercised here since it requires a real or stubbed LLM response,
+// which this acceptance suite deliberately does not fake (see file header:
+// "No mocks of the router, service, or DB under test").
+// ═══════════════════════════════════════════════════════════════════════
+
+const FIX2_ENDPOINTS: Array<{
+  label: 'legacy' | 'v8';
+  buildApp: () => Promise<Express>;
+  path: string;
+  unwrap: (body: any) => any;
+}> = [
+  {
+    label: 'legacy',
+    buildApp: buildFinanceApp,
+    path: '/api/finance-statements/upload-and-analyze',
+    unwrap: (body: any) => body,
+  },
+  {
+    label: 'v8',
+    buildApp: buildV8FinanceApp,
+    path: '/api/v8/finance/statements/upload-and-analyze',
+    unwrap: (body: any) => body?.data,
+  },
+];
+
+describe.each(FIX2_ENDPOINTS)(
+  'FIN-005 Fix 2 — upload-and-analyze idempotency + cleanup ($label)',
+  ({ label, buildApp, path: endpointPath, unwrap }) => {
+    let app: Express;
+    let token2: string;
+
+    beforeAll(async () => {
+      guardedDatabaseUrl();
+      await seed();
+      app = await buildApp();
+      token2 = mintToken();
+    });
+
+    afterAll(async () => {
+      await cleanup();
+    });
+
+    it(`(a) ${label}: N concurrent identical-key+identical-file requests create exactly ONE real Statement — the rest are replays`, async () => {
+      const idempotencyKey = `${MARK}fix2-${label}-concurrent`;
+      const filename = `${MARK}fix2-${label}-concurrent.xlsx`;
+      const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      const fixture = makeXlsxFixture();
+      const N = 4;
+
+      const responses = await Promise.all(
+        Array.from({ length: N }, () =>
+          request(app)
+            .post(endpointPath)
+            .set('Authorization', `Bearer ${token2}`)
+            .set('Idempotency-Key', idempotencyKey)
+            .attach('file', fixture, { filename, contentType })
+        )
+      );
+
+      for (const res of responses) {
+        expect(res.status).toBe(201);
+      }
+      const replayedCount = responses.filter(
+        (res) => res.headers['idempotency-replayed'] === 'true'
+      ).length;
+      const freshCount = responses.filter(
+        (res) => res.headers['idempotency-replayed'] !== 'true'
+      ).length;
+      expect(freshCount).toBe(1); // exactly one request actually did the work
+      expect(replayedCount).toBe(N - 1); // every other request replayed its result
+
+      // The single source of truth: query the DB directly, not the HTTP
+      // responses (which could all independently return 201 with the same
+      // body even if the server had bugged out and created N rows).
+      const db = client();
+      await db.connect();
+      try {
+        const rows = await db.query(
+          `SELECT id FROM financial_statements WHERE source_file_name = $1 AND organization_id = $2`,
+          [filename, SEED.ORG_ID]
+        );
+        expect(rows.rows.length).toBe(1);
+
+        const markerRows = await db.query(
+          `SELECT status, statement_id FROM financial_statement_upload_idempotency
+            WHERE organization_id = $1 AND idempotency_key = $2`,
+          [SEED.ORG_ID, idempotencyKey]
+        );
+        expect(markerRows.rows.length).toBe(1);
+        expect(markerRows.rows[0].status).toBe('completed');
+        expect(markerRows.rows[0].statement_id).toBe(rows.rows[0].id);
+      } finally {
+        await db.end();
+      }
+    }, 60_000);
+
+    it(`(b) ${label}: same key + different file content → 409 IDEMPOTENCY_KEY_REUSED`, async () => {
+      const idempotencyKey = `${MARK}fix2-${label}-reuse`;
+      const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+      await request(app)
+        .post(endpointPath)
+        .set('Authorization', `Bearer ${token2}`)
+        .set('Idempotency-Key', idempotencyKey)
+        .attach('file', makeXlsxFixture(), {
+          filename: `${MARK}fix2-${label}-reuse-a.xlsx`,
+          contentType,
+        })
+        .expect(201);
+
+      const otherWorkbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(
+        otherWorkbook,
+        XLSX.utils.aoa_to_sheet([['Genuinely different content', 1]]),
+        'Other'
+      );
+      const otherFixture = XLSX.write(otherWorkbook, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+
+      const reused = await request(app)
+        .post(endpointPath)
+        .set('Authorization', `Bearer ${token2}`)
+        .set('Idempotency-Key', idempotencyKey)
+        .attach('file', otherFixture, {
+          filename: `${MARK}fix2-${label}-reuse-b.xlsx`,
+          contentType,
+        })
+        .expect(409);
+      expect(reused.body.code).toBe('IDEMPOTENCY_KEY_REUSED');
+
+      const db = client();
+      await db.connect();
+      try {
+        const rows = await db.query(
+          `SELECT id FROM financial_statements WHERE source_file_name = $1 AND organization_id = $2`,
+          [`${MARK}fix2-${label}-reuse-b.xlsx`, SEED.ORG_ID]
+        );
+        expect(rows.rows.length).toBe(0); // the rejected reuse never created a Statement
+      } finally {
+        await db.end();
+      }
+    }, 30_000);
+
+    it(`(c) ${label}: extraction failure deletes the multer temp file and creates no Statement row`, async () => {
+      const fs = await import('fs');
+      const uploadDir = path.join(process.cwd(), 'uploads', 'assessments', SEED.ORG_ID);
+      const listFiles = (): Set<string> =>
+        fs.existsSync(uploadDir) ? new Set(fs.readdirSync(uploadDir)) : new Set();
+
+      const contentType = 'application/pdf';
+      const filename = `${MARK}fix2-${label}-extract-fail.pdf`;
+      // NOTE on why this is a malformed PDF and not the round-3-style fake
+      // OOXML zip: real investigation found the v8 and legacy
+      // extractTextFromFile implementations DIVERGE for .xlsx — legacy's
+      // throws on a SheetJS parse failure (what round-3 Proof 2 relies on),
+      // but v8's wraps the same parse in its own try/catch and silently
+      // returns `{ text: '', parseMethod: 'manual' }` instead of throwing
+      // (pre-existing behavior, out of this fix's scope — see the FIN-005
+      // Fix 2 final report). Neither implementation wraps the PDF branch in
+      // a try/catch, so a genuinely unparseable PDF throws in BOTH — this
+      // is the one failure mode proven to reach `performUploadAndAnalyze`'s
+      // extraction try/catch identically on both endpoints.
+      const garbagePdf = Buffer.from('%PDF-1.4\nnot actually a valid pdf body'.repeat(5));
+
+      const beforeFiles = listFiles();
+      const res = await request(app)
+        .post(endpointPath)
+        .set('Authorization', `Bearer ${token2}`)
+        .set('Idempotency-Key', `${MARK}fix2-${label}-extract-fail-key`)
+        .attach('file', garbagePdf, { filename, contentType })
+        .expect(422);
+      expect(res.body.error).toBe('File extraction failed');
+
+      const afterFiles = listFiles();
+      expect([...afterFiles].filter((f) => !beforeFiles.has(f)).length).toBe(0); // temp file cleaned up, not leaked
+
+      const db = client();
+      await db.connect();
+      try {
+        const rows = await db.query(
+          `SELECT id FROM financial_statements WHERE source_file_name = $1 AND organization_id = $2`,
+          [filename, SEED.ORG_ID]
+        );
+        expect(rows.rows.length).toBe(0);
+      } finally {
+        await db.end();
+      }
+    }, 30_000);
+
+    it(`(d) ${label}: finalize failure — no false 201, marker reflects status='failed', retry with the same key succeeds without silently losing the first attempt's Statement`, async () => {
+      const idempotencyKey = `${MARK}fix2-${label}-finalize-fault`;
+      const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      const db = client();
+      await db.connect();
+      try {
+        const escapedKey = idempotencyKey.replace(/'/g, "''");
+        await db.query(
+          `ALTER TABLE financial_statement_upload_idempotency
+             ADD CONSTRAINT chk_test_fix2_${label}_finalize_failure
+             CHECK (idempotency_key <> '${escapedKey}' OR status <> 'completed') NOT VALID`
+        );
+
+        const filenameA = `${MARK}fix2-${label}-finalize-fault-a.xlsx`;
+        const failed = await request(app)
+          .post(endpointPath)
+          .set('Authorization', `Bearer ${token2}`)
+          .set('Idempotency-Key', idempotencyKey)
+          .attach('file', makeXlsxFixture(), { filename: filenameA, contentType });
+        // No false 201: the finalize UPDATE was rejected, so the route maps
+        // this to a 500-class failure regardless of endpoint.
+        expect(failed.status).toBe(500);
+        expect(failed.body.code).toBe('STATEMENT_UPLOAD_FINALIZE_FAILED');
+
+        const statementA = await db.query(
+          `SELECT id FROM financial_statements WHERE source_file_name = $1 AND organization_id = $2`,
+          [filenameA, SEED.ORG_ID]
+        );
+        expect(statementA.rows.length).toBe(1); // the business write DID happen
+        const statementIdA = statementA.rows[0].id;
+
+        const midRow = await db.query(
+          `SELECT status, statement_id FROM financial_statement_upload_idempotency
+            WHERE organization_id = $1 AND idempotency_key = $2`,
+          [SEED.ORG_ID, idempotencyKey]
+        );
+        expect(midRow.rows.length).toBe(1);
+        expect(midRow.rows[0].status).toBe('failed'); // never silently marked completed
+        expect(midRow.rows[0].statement_id).toBe(statementIdA); // Fix 1: recorded, not dropped
+
+        await db.query(
+          `ALTER TABLE financial_statement_upload_idempotency
+             DROP CONSTRAINT chk_test_fix2_${label}_finalize_failure`
+        );
+
+        const filenameB = `${MARK}fix2-${label}-finalize-fault-b.xlsx`;
+        const retry = await request(app)
+          .post(endpointPath)
+          .set('Authorization', `Bearer ${token2}`)
+          .set('Idempotency-Key', idempotencyKey)
+          .attach('file', makeXlsxFixture(), { filename: filenameB, contentType })
+          .expect(201);
+        const retryBody = unwrap(retry.body);
+        const statementIdB = String(retryBody.statementIds?.[0] || '');
+        expect(statementIdB).toBeTruthy();
+
+        // Retry succeeded WITHOUT creating a second Statement referenced by
+        // the marker — the marker points at exactly ONE (the winning, B)
+        // Statement, and A (the first attempt's real, already-persisted
+        // Statement) is durably tracked as orphaned rather than silently
+        // lost — this is the orphan-tracking proof (Fix 1) applied end-to-
+        // end through the actual product endpoint (Fix 2), not just /upload.
+        const finalRow = await db.query(
+          `SELECT status, statement_id, orphaned_statement_ids
+             FROM financial_statement_upload_idempotency
+            WHERE organization_id = $1 AND idempotency_key = $2`,
+          [SEED.ORG_ID, idempotencyKey]
+        );
+        expect(finalRow.rows.length).toBe(1); // same row, reclaimed — not a second marker
+        expect(finalRow.rows[0].status).toBe('completed');
+        expect(finalRow.rows[0].statement_id).toBe(statementIdB);
+        expect(finalRow.rows[0].orphaned_statement_ids).toEqual([statementIdA]);
+
+        // Statement A itself was never deleted — no silent data loss.
+        const stillThereA = await db.query(`SELECT id FROM financial_statements WHERE id = $1`, [
+          statementIdA,
+        ]);
+        expect(stillThereA.rows.length).toBe(1);
+      } finally {
+        await db.query(
+          `ALTER TABLE financial_statement_upload_idempotency
+             DROP CONSTRAINT IF EXISTS chk_test_fix2_${label}_finalize_failure`
+        );
+        await db.end();
+      }
+    }, 60_000);
+  }
+);
