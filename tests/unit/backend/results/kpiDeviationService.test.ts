@@ -75,11 +75,8 @@ describe('kpiDeviationService', () => {
               red_threshold_abs: null,
             };
           }
-          if (sql.includes('FROM kpi_deviation_cases') && sql.includes('LIMIT 1') && !sql.includes('ORDER BY')) {
-            return null; // "existing case" lookup
-          }
-          if (sql.includes('FROM kpi_deviation_cases') && sql.includes('ORDER BY')) {
-            return { id: 'case-1' }; // "created case id" lookup
+          if (sql.includes('INSERT INTO kpi_deviation_cases')) {
+            return { id: 'case-1' };
           }
           return null;
         }),
@@ -103,7 +100,10 @@ describe('kpiDeviationService', () => {
       expect(res.eval.status).toBe('RED');
       expect(res.createdOrUpdatedCaseId).toBe('case-1');
 
-      expect(db.run).toHaveBeenCalled();
+      expect(db.get).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO kpi_deviation_cases'),
+        expect.any(Array)
+      );
       expect((notificationService as any).send).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'user-1',
@@ -116,10 +116,21 @@ describe('kpiDeviationService', () => {
         })
       );
 
-      // Ensure we scoped case by org + periodStart
-      const caseLookup = sqlCalls.find((c) => c.kind === 'get' && c.sql.includes('kpi_deviation_cases'));
-      expect(caseLookup?.params).toEqual(['org-1', 'kpi-1', '2026-02-01']);
+      const caseUpsert = sqlCalls.find(
+        (c) => c.kind === 'get' && c.sql.includes('INSERT INTO kpi_deviation_cases')
+      );
+      expect(caseUpsert?.sql).toContain(
+        'ON CONFLICT (organization_id, kpi_id, period_start) DO UPDATE'
+      );
+      expect(caseUpsert?.params).toEqual([
+        'kpi-1',
+        'org-1',
+        '2026-02-01',
+        '2026-02-28',
+        'RED',
+        'user-1',
+        'RED: value 70 deviates from target 100',
+      ]);
     });
   });
 });
-
