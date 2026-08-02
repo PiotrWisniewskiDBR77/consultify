@@ -1226,6 +1226,93 @@ export async function rejectProposal(params: {
   return rejected;
 }
 
+/**
+ * FIX (Codex delta review, 2026-08-02, area 1 — "independent owner
+ * read-back"): `approveProposal` previously trusted `commitProposalToDomain`'s
+ * return value alone before flipping a proposal to `approved` — no
+ * confirming SELECT against the target's own canonical table ever ran. That
+ * is the exact same structural gap already proven to fail for real elsewhere
+ * in this codebase (Teresa Copilot's `executeProposal`/`performHandoff`
+ * marks a proposal `completed` whenever the handoff call doesn't throw, even
+ * when the handler internally fell back to an id that was never written
+ * anywhere). This helper performs one small, per-target confirming read,
+ * scoped by `organizationId` (tenant isolation) — split by target rather
+ * than adding elaborate conditionals inline in `approveProposal`.
+ *
+ * Scope note: `project_brief` / `client_deliverable` / `research_report` /
+ * `kpi_roi_artifact` route through a SEPARATE, already-gated pipeline
+ * (`saveDraftAsArtifact` → `materializeArtifactRun`, its own preflight +
+ * execution-spine validation) — out of scope for this fix (the delta review
+ * did not identify a defect there, and rebuilding that pipeline's read-back
+ * semantics is a materially larger change than what was asked for). Those
+ * targets fall through to `true` here unchanged.
+ */
+async function confirmTargetObjectReadBack(
+  target: WorkCanvasTarget,
+  targetObjectId: string,
+  organizationId: string
+): Promise<boolean> {
+  // `{ fallback: false }` on every query below is load-bearing, not
+  // decorative: dbGet's default (`fallback: true`) silently resolves ANY
+  // query error (bad column, timeout, whatever) to `null` — indistinguishable
+  // from a genuine "row not found". That would make this very read-back
+  // fix susceptible to the identical silent-swallow failure mode it exists
+  // to close off elsewhere (a real error masquerading as "target missing").
+  switch (target) {
+    case 'idea': {
+      const row = await dbGet<{ id: string }>(
+        `SELECT id FROM my_ideas WHERE id = ? AND organization_id = ?`,
+        [targetObjectId, organizationId],
+        { fallback: false }
+      );
+      return Boolean(row);
+    }
+    case 'note': {
+      const row = await dbGet<{ id: string }>(
+        `SELECT id FROM notebook_pages WHERE id = ? AND organization_id = ?`,
+        [targetObjectId, organizationId],
+        { fallback: false }
+      );
+      return Boolean(row);
+    }
+    case 'task': {
+      const row = await dbGet<{ id: string }>(
+        `SELECT id FROM tasks WHERE id = ? AND organization_id = ?`,
+        [targetObjectId, organizationId],
+        { fallback: false }
+      );
+      return Boolean(row);
+    }
+    case 'decision': {
+      const row = await dbGet<{ id: string }>(
+        `SELECT id FROM decisions WHERE id = ? AND organization_id = ?`,
+        [targetObjectId, organizationId],
+        { fallback: false }
+      );
+      return Boolean(row);
+    }
+    case 'initiative': {
+      const row = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [targetObjectId, organizationId],
+        { fallback: false }
+      );
+      return Boolean(row);
+    }
+    case 'table': {
+      const row = await dbGet<{ id: string }>(
+        `SELECT t.id FROM tp_tables t JOIN tp_bases b ON b.id = t.base_id
+          WHERE t.id = ? AND b.organization_id = ?`,
+        [targetObjectId, organizationId],
+        { fallback: false }
+      );
+      return Boolean(row);
+    }
+    default:
+      return true;
+  }
+}
+
 export async function approveProposal(params: {
   organizationId: string;
   proposalId: string;
@@ -1270,6 +1357,15 @@ export async function approveProposal(params: {
       code: 'CANVAS_PROPOSAL_ALREADY_CLAIMED',
     });
   }
+  const revertClaimToProposed = async (): Promise<void> => {
+    await dbRun(
+      `UPDATE work_canvas_proposals SET status = 'proposed', updated_at = ?
+       WHERE id = ? AND organization_id = ? AND status = 'executing'`,
+      [nowIso(), params.proposalId, params.organizationId],
+      { fallback: false }
+    );
+  };
+
   let readBack: WorkCanvasActionReadBack;
   try {
     readBack = await commitProposalToDomain({
@@ -1280,13 +1376,31 @@ export async function approveProposal(params: {
       auditEventId: params.auditEventId || null,
     });
   } catch (error) {
-    await dbRun(
-      `UPDATE work_canvas_proposals SET status = 'proposed', updated_at = ?
-       WHERE id = ? AND organization_id = ? AND status = 'executing'`,
-      [nowIso(), params.proposalId, params.organizationId],
-      { fallback: false }
-    );
+    await revertClaimToProposed();
     throw error;
+  }
+
+  // FIX (independent owner read-back, Codex delta review area 1): never
+  // trust commitProposalToDomain's return value alone — confirm the target
+  // object genuinely exists, tenant-scoped, before this proposal can ever
+  // reach `approved`. A missing object reverts the claim (retryable, same
+  // recovery path as a thrown materialize error above) and surfaces a
+  // controlled, recognizable error instead of a fabricated success.
+  if (readBack.targetObjectId) {
+    const confirmed = await confirmTargetObjectReadBack(
+      readBack.target,
+      readBack.targetObjectId,
+      params.organizationId
+    );
+    if (!confirmed) {
+      await revertClaimToProposed();
+      throw Object.assign(
+        new Error(
+          `Materialized ${readBack.target} object (${readBack.targetObjectId}) could not be confirmed by an independent read-back`
+        ),
+        { statusCode: 500, code: 'CANVAS_HANDOFF_READBACK_MISSING' }
+      );
+    }
   }
   const now = nowIso();
   const approvedReadBack = {
