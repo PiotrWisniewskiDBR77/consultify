@@ -45,22 +45,61 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 
 import { Client, type ClientConfig } from 'pg';
+import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
+import express from 'express';
 
 if (process.env.DATABASE_URL || process.env.PGHOST || process.env.DB_HOST) {
   process.env.MOCK_DB = 'false';
   process.env.RUN_DB_TESTS = '1';
   process.env.DB_TYPE = 'postgres';
+  process.env.E2E_MODE = 'true';
 }
 
 import { executeInitiativeTransition } from '../../server/src/services/initiative/initiativeTransitionService.js';
 import {
-  attemptDelivery,
+  attemptDeliveryInternal,
   getReceiptById,
   getReceiptForInitiative,
-  manualRetryReceipt,
+  retryDeliveryForOrg,
   runReconciliationSweep,
 } from '../../server/src/services/closureDeliveryReceiptService.js';
+import initiativeClosureRoutes from '../../server/src/routes/pmo/initiativeClosure.routes.js';
+
+// ---------------------------------------------------------------------------
+// Route-level RBAC test app (Codex review round 2, BLOCKER3) — same E2E JWT
+// bypass convention as the sibling EXE-08 golden-flow suite.
+// ---------------------------------------------------------------------------
+
+function base64UrlEncode(obj: unknown): string {
+  const json = JSON.stringify(obj);
+  return Buffer.from(json, 'utf8').toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+function makeE2EToken(userId: string, organizationId: string, role: string): string {
+  const header = base64UrlEncode({ alg: 'none', typ: 'JWT' });
+  const payload = base64UrlEncode({
+    e2e: true,
+    id: userId,
+    email: `${userId}@local.test`,
+    name: 'EXE-09 RealDB Test User',
+    role,
+    userRole: role,
+    organizationId,
+    isSuperAdmin: false,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 60 * 60,
+  });
+  return `${header}.${payload}.e2e`;
+}
+
+function buildApp() {
+  const app = express();
+  app.use(express.json());
+  app.use('/api/initiatives', initiativeClosureRoutes);
+  return app;
+}
 
 // ---------------------------------------------------------------------------
 // Connection probe — same contract as the sibling EXE-08 realdb suite.
@@ -128,7 +167,7 @@ const REQUIRED_TABLES = [
   'initiative_kpis',
   'initiative_benefits',
   'closure_delivery_receipts',
-  'closure_finance_actuals',
+  'roi_realized_values',
 ] as const;
 
 function suffix(): string {
@@ -144,6 +183,10 @@ interface Harness {
   orgAId: string;
   orgBId: string;
   userAId: string;
+  /** role='MEMBER', org A, NOT an owner of any test initiative — for the 403 RBAC case. */
+  userMemberId: string;
+  /** role='ADMIN', org B — for the cross-tenant 404 RBAC case. */
+  userBId: string;
   projectAId: string;
   // Fresh EXECUTING initiative per scenario — created via a factory so each
   // `it()` gets its own isolated row (no shared mutable fixture races).
@@ -205,6 +248,8 @@ async function setupHarness(): Promise<Harness | null> {
   const orgAId = `org_exe09_a_${tag}`;
   const orgBId = `org_exe09_b_${tag}`;
   const userAId = `user_exe09_a_${tag}`;
+  const userMemberId = `user_exe09_member_${tag}`;
+  const userBId = `user_exe09_b_${tag}`;
   const projectAId = `proj_exe09_a_${tag}`;
 
   await client.query(
@@ -219,6 +264,19 @@ async function setupHarness(): Promise<Harness | null> {
     `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
      VALUES ($1, $2, $3, 'e2e-not-used', 'ADMIN', 'active', 'EXE09', 'UserA') ON CONFLICT (id) DO NOTHING`,
     [userAId, orgAId, `${userAId}@local.test`]
+  );
+  // Deliberately role='MEMBER' and never made an owner of any test
+  // initiative below — proves the REAL DB-driven authorization path (see
+  // initiativeAccessResolver.ts), not a JWT-role bypass.
+  await client.query(
+    `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
+     VALUES ($1, $2, $3, 'e2e-not-used', 'MEMBER', 'active', 'EXE09', 'UserMember') ON CONFLICT (id) DO NOTHING`,
+    [userMemberId, orgAId, `${userMemberId}@local.test`]
+  );
+  await client.query(
+    `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
+     VALUES ($1, $2, $3, 'e2e-not-used', 'ADMIN', 'active', 'EXE09', 'UserB') ON CONFLICT (id) DO NOTHING`,
+    [userBId, orgBId, `${userBId}@local.test`]
   );
   await client.query(
     `INSERT INTO projects (id, organization_id, name, status, owner_id) VALUES ($1, $2, 'EXE-09 RealDB Project A', 'active', $3)`,
@@ -277,7 +335,7 @@ async function setupHarness(): Promise<Harness | null> {
 
   const cleanup = async () => {
     for (const id of initiativeIds) {
-      await client.query(`DELETE FROM closure_finance_actuals WHERE initiative_id = $1`, [id]).catch(() => {});
+      await client.query(`DELETE FROM roi_realized_values WHERE initiative_id = $1`, [id]).catch(() => {});
       await client.query(`DELETE FROM closure_delivery_receipts WHERE initiative_id = $1`, [id]).catch(() => {});
       await client.query(`DELETE FROM initiative_benefits WHERE initiative_id = $1`, [id]).catch(() => {});
       await client.query(`DELETE FROM initiative_kpis WHERE initiative_id = $1`, [id]).catch(() => {});
@@ -286,7 +344,7 @@ async function setupHarness(): Promise<Harness | null> {
       await client.query(`DELETE FROM initiatives WHERE id = $1`, [id]).catch(() => {});
     }
     await client.query(`DELETE FROM projects WHERE id = $1`, [projectAId]).catch(() => {});
-    await client.query(`DELETE FROM users WHERE id = $1`, [userAId]).catch(() => {});
+    await client.query(`DELETE FROM users WHERE id = ANY($1)`, [[userAId, userMemberId, userBId]]).catch(() => {});
     await client.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgAId, orgBId]]).catch(() => {});
     await client.end().catch(() => {});
   };
@@ -295,6 +353,8 @@ async function setupHarness(): Promise<Harness | null> {
     client,
     orgAId,
     orgBId,
+    userMemberId,
+    userBId,
     userAId,
     projectAId,
     makeInitiative,
@@ -320,6 +380,38 @@ async function closeInitiative(h: Harness, initiativeId: string): Promise<string
   const correlationId = (result as { correlationId?: string }).correlationId;
   if (!correlationId) throw new Error('closeInitiative: no correlationId in response');
   return correlationId;
+}
+
+/**
+ * `closeInitiative` (via the real `executeInitiativeTransition`) ALWAYS
+ * fires `triggerImmediateDeliveryBestEffort` as an un-awaited background
+ * call. A test that also calls `attemptDeliveryInternal` explicitly right
+ * after is therefore unknowingly racing that background call for the SAME
+ * receipt — `claimLeg` correctly guarantees only one of them does real work
+ * (no double-delivery either way), but if the test's OWN call happens to be
+ * the one that loses the claim, its raw return value reflects a snapshot
+ * from BEFORE the real winner (the background trigger) finishes, not the
+ * final state. Calling `attemptDeliveryInternal` once (to guarantee at
+ * least one attempt happens deterministically) and then polling
+ * `getReceiptById` until both legs reach a terminal status sidesteps this
+ * regardless of which of the two racers actually wins.
+ */
+async function deliverAndFetch(
+  h: Harness,
+  correlationId: string,
+  opts?: Parameters<typeof attemptDeliveryInternal>[1]
+): Promise<NonNullable<Awaited<ReturnType<typeof getReceiptById>>>> {
+  await attemptDeliveryInternal(correlationId, opts);
+  const TERMINAL_RESULTS = new Set(['DELIVERED', 'FAILED']);
+  const TERMINAL_FINANCE = new Set(['DELIVERED', 'FAILED', 'NEEDS_DECISION']);
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const receipt = await getReceiptById(correlationId, h.orgAId);
+    if (receipt && TERMINAL_RESULTS.has(receipt.resultsStatus) && TERMINAL_FINANCE.has(receipt.financeStatus)) {
+      return receipt;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  throw new Error(`deliverAndFetch: receipt ${correlationId} never reached a terminal state`);
 }
 
 describe('EXE-09 closure delivery receipt (real Postgres)', () => {
@@ -392,22 +484,27 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     expect(receipt!.initiativeId).toBe(initiativeId);
     expect(receipt!.organizationId).toBe(h.orgAId);
 
-    // Deliver deterministically (not relying on the fire-and-forget
-    // best-effort trigger's timing — same principle as the sibling suite's
-    // own "no premature success" contract, applied to the test itself).
-    const delivered = await attemptDelivery(correlationId);
+    // Deliver deterministically — closeInitiative's real transition ALSO
+    // fires a background best-effort trigger for this same receipt, racing
+    // this explicit call; deliverAndFetch polls to a terminal state
+    // regardless of which of the two racers actually does the work.
+    const delivered = await deliverAndFetch(h, correlationId);
     expect(delivered.resultsStatus).toBe('DELIVERED');
     expect(delivered.financeStatus).toBe('DELIVERED');
     expect(delivered.resultsPayload?.benefitIds).toBeInstanceOf(Array);
     expect((delivered.resultsPayload!.benefitIds as string[]).length).toBeGreaterThan(0);
 
-    const financeActual = await h.client.query(
-      `SELECT amount, currency, value_source FROM closure_finance_actuals WHERE closure_receipt_id = $1`,
+    // Canonical downstream: roi_realized_values, read by the REAL Benefits/
+    // ROI UI (src/components/Benefits/ROITrackingPanel.tsx via
+    // GET /benefits/roi/portfolio/summary) — not a new isolated table.
+    const realization = await h.client.query(
+      `SELECT id, realized_revenue_delta, source FROM roi_realized_values WHERE closure_receipt_id = $1`,
       [correlationId]
     );
-    expect(financeActual.rows).toHaveLength(1);
-    expect(Number(financeActual.rows[0].amount)).toBe(15000);
-    expect(financeActual.rows[0].currency).toBe('PLN');
+    expect(realization.rows).toHaveLength(1);
+    expect(Number(realization.rows[0].realized_revenue_delta)).toBe(15000);
+    expect(realization.rows[0].source).toBe('execution');
+    expect(delivered.financePayload?.realizationId).toBe(realization.rows[0].id);
 
     const benefitRow = await h.client.query(
       `SELECT id, source_tag FROM initiative_benefits WHERE initiative_id = $1`,
@@ -421,38 +518,44 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     const initiativeId = await h.makeInitiative('retry', { budgetCurrency: 'PLN', kpiTargetValue: 5000 });
     const correlationId = await closeInitiative(h, initiativeId);
 
-    const first = await attemptDelivery(correlationId);
-    const second = await attemptDelivery(correlationId);
-    const third = await manualRetryReceipt(correlationId, h.orgAId);
+    // First call resolves the race against closeInitiative's own background
+    // trigger deterministically; by the time it returns terminal, the
+    // second/third calls are genuine no-op retries (no more race exists).
+    const first = await deliverAndFetch(h, correlationId);
+    const second = await attemptDeliveryInternal(correlationId);
+    const third = await retryDeliveryForOrg(correlationId, h.orgAId);
 
     expect(first.resultsPayload?.benefitIds).toEqual(second.resultsPayload?.benefitIds);
     expect(second.resultsPayload?.benefitIds).toEqual(third.resultsPayload?.benefitIds);
-    expect(first.financePayload?.financeActualId).toBe(second.financePayload?.financeActualId);
-    expect(second.financePayload?.financeActualId).toBe(third.financePayload?.financeActualId);
+    expect(first.financePayload?.realizationId).toBe(second.financePayload?.realizationId);
+    expect(second.financePayload?.realizationId).toBe(third.financePayload?.realizationId);
 
     const benefitCount = await h.client.query(
       `SELECT COUNT(*)::int AS n FROM initiative_benefits WHERE initiative_id = $1`,
       [initiativeId]
     );
     expect(benefitCount.rows[0].n).toBe(1);
-    const actualCount = await h.client.query(
-      `SELECT COUNT(*)::int AS n FROM closure_finance_actuals WHERE closure_receipt_id = $1`,
+    const realizationCount = await h.client.query(
+      `SELECT COUNT(*)::int AS n FROM roi_realized_values WHERE closure_receipt_id = $1`,
       [correlationId]
     );
-    expect(actualCount.rows[0].n).toBe(1);
+    expect(realizationCount.rows[0].n).toBe(1);
   });
 
   itDB(
-    'TWO CONCURRENT attemptDelivery calls on the SAME receipt never double-write, even on the ' +
-      'no-DB-backstop expected_roi fallback path (adversarial-review regression test for the ' +
-      'claimLeg race fix)',
+    'TWO CONCURRENT attemptDeliveryInternal calls on the SAME receipt never double-write, even on ' +
+      'the no-DB-backstop RESULTS-leg expected_roi fallback path (adversarial-review regression ' +
+      'test for the claimLeg race fix — the Results leg, unlike Finance, still legitimately uses ' +
+      'expected_roi as its pre-existing EXE-08 fallback for initiative_benefits, unaffected by ' +
+      'BLOCKER2 which is about the Finance leg only). No currency-matched KPI here, so the Finance ' +
+      'leg on this receipt correctly resolves to NEEDS_DECISION, not a fabricated value.',
     async (h) => {
       // Deliberately kpiTargetValue: null — this forces
       // executionResultsBridge.handoffFromInitiativeFallback's path, the one
       // Results-leg branch whose own dedup is application-level only
       // (SELECT-then-INSERT, no unique index prior to migration 936). Before
-      // the claimLeg fix, two concurrent attemptDelivery calls could both
-      // pass that SELECT and both INSERT a duplicate benefit row.
+      // the claimLeg fix, two concurrent attemptDeliveryInternal calls could
+      // both pass that SELECT and both INSERT a duplicate benefit row.
       const { initiativeId, correlationId } = await h.seedClosedInitiativeWithReceipt('race', {
         budgetCurrency: 'PLN',
         kpiTargetValue: null,
@@ -466,11 +569,15 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
       // `a`/`b` directly would be racy. Wait for both, then re-read fresh —
       // by the time `Promise.all` resolves, every write from BOTH calls has
       // already committed.
-      await Promise.all([attemptDelivery(correlationId), attemptDelivery(correlationId)]);
+      await Promise.all([attemptDeliveryInternal(correlationId), attemptDeliveryInternal(correlationId)]);
       const final = await getReceiptById(correlationId, h.orgAId);
 
       expect(final!.resultsStatus).toBe('DELIVERED');
-      expect(final!.financeStatus).toBe('DELIVERED');
+      // No currency-matched KPI on this initiative (no KPI at all) — Finance
+      // correctly resolves to NEEDS_DECISION. expected_roi is NOT used for
+      // Finance (BLOCKER2); it's only relevant to the Results leg's own
+      // pre-existing fallback (executionResultsBridge.ts), exercised below.
+      expect(final!.financeStatus).toBe('NEEDS_DECISION');
 
       const benefitRows = await h.client.query(
         `SELECT id FROM initiative_benefits WHERE initiative_id = $1`,
@@ -478,11 +585,11 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
       );
       expect(benefitRows.rows).toHaveLength(1);
 
-      const actualRows = await h.client.query(
-        `SELECT id FROM closure_finance_actuals WHERE closure_receipt_id = $1`,
+      const realizationRows = await h.client.query(
+        `SELECT id FROM roi_realized_values WHERE closure_receipt_id = $1`,
         [correlationId]
       );
-      expect(actualRows.rows).toHaveLength(1);
+      expect(realizationRows.rows).toHaveLength(0);
     }
   );
 
@@ -511,7 +618,7 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
       kpiTargetValue: 2500,
     });
 
-    const outcome = await attemptDelivery(correlationId, {
+    const outcome = await attemptDeliveryInternal(correlationId, {
       __testForceResultsError: new Error('injected Results failure'),
     });
 
@@ -521,11 +628,11 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
 
     // Retrying without the injected fault heals only the failed leg — the
     // already-delivered Finance leg is untouched (idempotent no-op).
-    const healed = await attemptDelivery(correlationId);
+    const healed = await attemptDeliveryInternal(correlationId);
     expect(healed.resultsStatus).toBe('DELIVERED');
     expect(healed.financeStatus).toBe('DELIVERED');
     const actualCount = await h.client.query(
-      `SELECT COUNT(*)::int AS n FROM closure_finance_actuals WHERE closure_receipt_id = $1`,
+      `SELECT COUNT(*)::int AS n FROM roi_realized_values WHERE closure_receipt_id = $1`,
       [correlationId]
     );
     expect(actualCount.rows[0].n).toBe(1);
@@ -537,7 +644,7 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
       kpiTargetValue: 3500,
     });
 
-    const outcome = await attemptDelivery(correlationId, {
+    const outcome = await attemptDeliveryInternal(correlationId, {
       __testForceFinanceError: new Error('injected Finance failure'),
     });
 
@@ -545,7 +652,7 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     expect(outcome.financeLastError).toContain('injected Finance failure');
     expect(outcome.resultsStatus).toBe('DELIVERED');
 
-    const healed = await attemptDelivery(correlationId);
+    const healed = await attemptDeliveryInternal(correlationId);
     expect(healed.financeStatus).toBe('DELIVERED');
     const benefitCount = await h.client.query(
       `SELECT COUNT(*)::int AS n FROM initiative_benefits WHERE initiative_id = $1`,
@@ -585,17 +692,17 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     expect(await getReceiptForInitiative(initiativeId, h.orgBId)).toBeNull();
   });
 
-  itDB('missing mapping: no budget_currency on the initiative -> Finance leg is NEEDS_DECISION, no fabricated value, no closure_finance_actuals row', async (h) => {
+  itDB('missing mapping: no budget_currency on the initiative -> Finance leg is NEEDS_DECISION, no fabricated value, no roi_realized_values row', async (h) => {
     const initiativeId = await h.makeInitiative('no-currency', { budgetCurrency: null, kpiTargetValue: 8000 });
     const correlationId = await closeInitiative(h, initiativeId);
 
-    const outcome = await attemptDelivery(correlationId);
+    const outcome = await deliverAndFetch(h, correlationId);
     expect(outcome.resultsStatus).toBe('DELIVERED');
     expect(outcome.financeStatus).toBe('NEEDS_DECISION');
     expect(outcome.financeLastError).toMatch(/budget_currency|product decision/i);
 
     const actualCount = await h.client.query(
-      `SELECT COUNT(*)::int AS n FROM closure_finance_actuals WHERE closure_receipt_id = $1`,
+      `SELECT COUNT(*)::int AS n FROM roi_realized_values WHERE closure_receipt_id = $1`,
       [correlationId]
     );
     expect(actualCount.rows[0].n).toBe(0);
@@ -605,7 +712,176 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     const initiativeId = await h.makeInitiative('no-target', { budgetCurrency: 'EUR', kpiTargetValue: null });
     const correlationId = await closeInitiative(h, initiativeId);
 
-    const outcome = await attemptDelivery(correlationId);
+    const outcome = await deliverAndFetch(h, correlationId);
     expect(outcome.financeStatus).toBe('NEEDS_DECISION');
+  });
+
+  // ---------------------------------------------------------------------
+  // BLOCKER2 negative controls (Codex review round 2) — expected_roi must
+  // NEVER become a monetary amount, in any of its real-world shapes.
+  // ---------------------------------------------------------------------
+
+  itDB('BLOCKER2: expected_roi="20%" never creates a Finance actual', async (h) => {
+    const initiativeId = await h.makeInitiative('roi-percent-string', {
+      budgetCurrency: 'PLN',
+      kpiTargetValue: null,
+      // expectedRoi is stored via String(...) by the harness — passing the
+      // real-world shape this field actually holds in production
+      // (903_expected_roi_to_text.sql: "ROI 200%" style strings), not a
+      // bare number, by writing directly.
+    });
+    await h.client.query(`UPDATE initiatives SET expected_roi = '20%' WHERE id = $1`, [initiativeId]);
+    const correlationId = await closeInitiative(h, initiativeId);
+
+    const outcome = await deliverAndFetch(h, correlationId);
+    expect(outcome.financeStatus).toBe('NEEDS_DECISION');
+    const rows = await h.client.query(`SELECT id FROM roi_realized_values WHERE closure_receipt_id = $1`, [
+      correlationId,
+    ]);
+    expect(rows.rows).toHaveLength(0);
+  });
+
+  itDB('BLOCKER2: expected_roi="20" (bare numeric string) never creates a Finance actual — expected_roi is never read by the Finance leg at all', async (h) => {
+    const initiativeId = await h.makeInitiative('roi-bare-number', {
+      budgetCurrency: 'PLN',
+      kpiTargetValue: null,
+    });
+    await h.client.query(`UPDATE initiatives SET expected_roi = '20' WHERE id = $1`, [initiativeId]);
+    const correlationId = await closeInitiative(h, initiativeId);
+
+    const outcome = await deliverAndFetch(h, correlationId);
+    expect(outcome.financeStatus).toBe('NEEDS_DECISION');
+    const rows = await h.client.query(`SELECT id FROM roi_realized_values WHERE closure_receipt_id = $1`, [
+      correlationId,
+    ]);
+    expect(rows.rows).toHaveLength(0);
+  });
+
+  itDB('BLOCKER2: default/unset budget_currency alone, with no explicit monetary KPI, never creates a Finance actual', async (h) => {
+    // budget_currency defaults to 'PLN' at the DB column-default level, but
+    // that default is not a user confirmation of currency — with NOTHING
+    // else (no KPI at all), Finance must stay NEEDS_DECISION.
+    const initiativeId = await h.makeInitiative('default-currency-only', {
+      budgetCurrency: undefined,
+      kpiTargetValue: null,
+    });
+    const correlationId = await closeInitiative(h, initiativeId);
+
+    const outcome = await deliverAndFetch(h, correlationId);
+    expect(outcome.financeStatus).toBe('NEEDS_DECISION');
+  });
+
+  itDB('BLOCKER2: KPI in %, days, and count units never create a Finance actual, even with a real currency on the initiative', async (h) => {
+    for (const unit of ['%', 'days', 'count']) {
+      const initiativeId = await h.makeInitiative(`nonmonetary-${unit.replace(/[^a-z]/gi, '')}`, {
+        budgetCurrency: 'PLN',
+        kpiTargetValue: 50,
+        kpiUnit: unit,
+      });
+      const correlationId = await closeInitiative(h, initiativeId);
+      const outcome = await deliverAndFetch(h, correlationId);
+      expect(outcome.financeStatus).toBe('NEEDS_DECISION');
+      const rows = await h.client.query(`SELECT id FROM roi_realized_values WHERE closure_receipt_id = $1`, [
+        correlationId,
+      ]);
+      expect(rows.rows).toHaveLength(0);
+    }
+  });
+
+  itDB('BLOCKER2: explicit monetary KPI (unit == budget_currency) creates EXACTLY ONE canonical actual, confirmed via the real read model', async (h) => {
+    const initiativeId = await h.makeInitiative('explicit-monetary', {
+      budgetCurrency: 'EUR',
+      kpiTargetValue: 42000,
+      kpiUnit: 'EUR',
+    });
+    const correlationId = await closeInitiative(h, initiativeId);
+    const outcome = await deliverAndFetch(h, correlationId);
+    expect(outcome.financeStatus).toBe('DELIVERED');
+
+    // Read-back through the SAME query the real Benefits/ROI UI uses
+    // (server/src/routes/benefits.routes.ts GET /roi/portfolio/summary),
+    // not just a raw table peek — this IS the canonical read model.
+    const summary = await h.client.query(
+      `SELECT initiative_id, SUM(realized_revenue_delta) AS total
+         FROM roi_realized_values
+        WHERE organization_id = $1 AND initiative_id = $2
+        GROUP BY initiative_id`,
+      [h.orgAId, initiativeId]
+    );
+    expect(summary.rows).toHaveLength(1);
+    expect(Number(summary.rows[0].total)).toBe(42000);
+
+    const rows = await h.client.query(`SELECT id FROM roi_realized_values WHERE closure_receipt_id = $1`, [
+      correlationId,
+    ]);
+    expect(rows.rows).toHaveLength(1);
+    expect(outcome.financePayload?.realizationId).toBe(rows.rows[0].id);
+  });
+
+  // ---------------------------------------------------------------------
+  // BLOCKER4 — tenant-safe split: the ORG-CHECKED entry point must reject a
+  // wrong organization id, not just the read-only getters.
+  // ---------------------------------------------------------------------
+
+  itDB('BLOCKER4: retryDeliveryForOrg rejects a receipt under the wrong organization id (service layer)', async (h) => {
+    const initiativeId = await h.makeInitiative('retry-xtenant', { budgetCurrency: 'PLN', kpiTargetValue: 700 });
+    const correlationId = await closeInitiative(h, initiativeId);
+
+    await expect(retryDeliveryForOrg(correlationId, h.orgBId)).rejects.toThrow();
+    // Confirm it's genuinely a no-op for the foreign org — the real owner's
+    // view of the receipt is untouched by the rejected attempt.
+    const stillThere = await getReceiptById(correlationId, h.orgAId);
+    expect(stillThere).not.toBeNull();
+  });
+
+  // ---------------------------------------------------------------------
+  // BLOCKER3 — route-level RBAC for POST /closure-receipt/retry, reusing
+  // the exact CLOSURE_APPROVER_ROLES gate `/approve` uses. Real HTTP
+  // requests through the actual Express router (supertest), not a service
+  // -level unit test — this is what a real client experiences.
+  // ---------------------------------------------------------------------
+
+  itDB('BLOCKER3: a plain MEMBER (not an initiative owner) gets 403 on retry', async (h) => {
+    const initiativeId = await h.makeInitiative('rbac-member', { budgetCurrency: 'PLN', kpiTargetValue: 300 });
+    await closeInitiative(h, initiativeId);
+    const app = buildApp();
+
+    const res = await request(app)
+      .post(`/api/initiatives/${initiativeId}/closure-receipt/retry`)
+      .set('Authorization', `Bearer ${makeE2EToken(h.userMemberId, h.orgAId, 'MEMBER')}`)
+      .send({});
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('CLOSURE_APPROVER_ROLE_REQUIRED');
+  });
+
+  itDB('BLOCKER3: an ADMIN (closure-approver role) can retry successfully', async (h) => {
+    const initiativeId = await h.makeInitiative('rbac-admin', { budgetCurrency: 'PLN', kpiTargetValue: 300 });
+    await closeInitiative(h, initiativeId);
+    const app = buildApp();
+
+    const res = await request(app)
+      .post(`/api/initiatives/${initiativeId}/closure-receipt/retry`)
+      .set('Authorization', `Bearer ${makeE2EToken(h.userAId, h.orgAId, 'ADMIN')}`)
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.receipt).toBeTruthy();
+  });
+
+  itDB('BLOCKER3/4: an initiative in a DIFFERENT organization 404s on retry, never a leaky 403', async (h) => {
+    const initiativeId = await h.makeInitiative('rbac-xtenant', { budgetCurrency: 'PLN', kpiTargetValue: 300 });
+    await closeInitiative(h, initiativeId);
+    const app = buildApp();
+
+    // userBId is a real ADMIN — but in orgB, and this initiative is in orgA.
+    const res = await request(app)
+      .post(`/api/initiatives/${initiativeId}/closure-receipt/retry`)
+      .set('Authorization', `Bearer ${makeE2EToken(h.userBId, h.orgBId, 'ADMIN')}`)
+      .send({});
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('INITIATIVE_NOT_FOUND');
   });
 });
