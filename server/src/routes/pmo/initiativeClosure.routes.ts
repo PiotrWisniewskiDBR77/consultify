@@ -23,6 +23,8 @@ import type { AuthenticatedRequest } from '../../types/index.js';
 import {
   addEvidence,
   approveClosureRequest,
+  assertActorCanApprove,
+  assertInitiativeInOrg,
   ClosureGateFailure,
   createClosureRequest,
   getReadinessChecklist,
@@ -33,7 +35,7 @@ import {
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
   getReceiptForInitiative,
-  manualRetryReceipt,
+  retryDeliveryForOrg,
 } from '../../services/closureDeliveryReceiptService.js';
 
 const router = Router();
@@ -335,18 +337,27 @@ router.get('/:id/closure-receipt', async (req: AuthenticatedRequest, res: Respon
  * Operator-triggered retry (contract point 8: "użytkownik/operator może
  * odczytać stan i bezpiecznie ponowić"). Safe to call repeatedly — each leg
  * only re-attempts while its own status is retry-eligible.
+ *
+ * RBAC (Codex review round 2, BLOCKER3): reuses the EXACT same
+ * initiative-closure capability gate `/approve` uses — no new role invented.
+ * `assertInitiativeInOrg` runs FIRST (foreign-org initiative → 404, same
+ * order/behavior as `/approve` below), THEN `assertActorCanApprove` (plain
+ * member/no closure-role → 403 `CLOSURE_APPROVER_ROLE_REQUIRED`) — only then
+ * is the receipt looked up and retried.
  */
 router.post('/:id/closure-receipt/retry', async (req: AuthenticatedRequest, res: Response) => {
   const auth = requireAuth(req, res);
   if (!auth) return;
   try {
     const { id: initiativeId } = req.params;
+    await assertInitiativeInOrg(auth.orgId, initiativeId);
+    await assertActorCanApprove(auth.orgId, initiativeId, auth.actorId);
     const existing = await getReceiptForInitiative(initiativeId, auth.orgId);
     if (!existing) {
       res.status(404).json({ error: 'No closure receipt for this initiative', code: 'CLOSURE_RECEIPT_NOT_FOUND' });
       return;
     }
-    const receipt = await manualRetryReceipt(existing.id, auth.orgId);
+    const receipt = await retryDeliveryForOrg(existing.id, auth.orgId);
     res.json({ success: true, receipt });
   } catch (err) {
     handleClosureError(res, err);
