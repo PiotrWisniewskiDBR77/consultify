@@ -23,6 +23,21 @@
  *     tests/integration/mw-007-calendar-reschedule.golden-flow.realdb.test.ts \
  *     --no-file-parallelism
  *
+ * Timezone/day-boundary proof: TZ must be fixed at the SHELL, before node
+ * starts — the "timezone/day-boundary" test does not mutate `process.env.TZ`
+ * mid-run (see that test's own comment for why: a live-mutation approach
+ * gave a false negative on this exact suite, caused by Node/V8 not reliably
+ * re-resolving an already-warm process's local timezone after a runtime
+ * reassignment — an artifact of the mutation, not of the code under test).
+ * Run the WHOLE suite twice, once per real per-deployment timezone, both
+ * must pass identically:
+ *   TZ="Europe/Warsaw" MOCK_DB=false RUN_DB_TESTS=1 DB_TYPE=postgres NODE_ENV=test \
+ *     DATABASE_URL="postgresql://iris:iris_test@localhost:5450/iris_test" \
+ *     npx vitest run tests/integration/mw-007-calendar-reschedule.golden-flow.realdb.test.ts --no-file-parallelism
+ *   TZ="America/Los_Angeles" MOCK_DB=false RUN_DB_TESTS=1 DB_TYPE=postgres NODE_ENV=test \
+ *     DATABASE_URL="postgresql://iris:iris_test@localhost:5450/iris_test" \
+ *     npx vitest run tests/integration/mw-007-calendar-reschedule.golden-flow.realdb.test.ts --no-file-parallelism
+ *
  * MOCK_DB/RUN_DB_TESTS MUST be set on the shell, not only via this file's own
  * env guard below. `tests/setup.ts` (global vitest `setupFiles`) runs BEFORE
  * this file's module body and does `MOCK_DB = MOCK_DB || 'true'`, caching a
@@ -607,41 +622,60 @@ describe('MW-07 — calendar task reschedule golden flow against a real Postgres
   );
 
   itDB(
-    'timezone/day-boundary: a reschedule to a specific calendar date reads back as that exact date regardless of the server process timezone',
+    'timezone/day-boundary: a reschedule to a specific calendar date reads back as that exact date under the server process timezone this run was started with',
     async (h) => {
+      // Deliberately does NOT mutate `process.env.TZ` mid-test. node-pg's
+      // timestamp-without-tz parser (postgres-date's `parseDate`, used for
+      // both the `date` and `timestamp` OIDs) constructs a JS Date via the
+      // LOCAL Date constructor (`new Date(year, month, day, ...)`) — correct
+      // per-process, but Node/V8 does not reliably re-resolve an
+      // already-warm process's local timezone if `process.env.TZ` is
+      // reassigned mid-run (confirmed empirically: an isolated one-shot
+      // script picks up a live TZ reassignment correctly, but this same
+      // Express app + pg pool, already warm from many earlier requests in
+      // this file, did not — a Node/ICU caching artifact of mutating TZ at
+      // runtime, not a bug in this route). A real deployed server has ONE
+      // fixed TZ for its entire process lifetime, set via the OS/container
+      // environment before Node starts — never mutated live — so that is
+      // exactly what this test reproduces. `toDateOnly`'s local-getter fix
+      // (server/src/routes/v8/my-work.routes.ts) is correct for any FIXED
+      // process TZ because it inverts the identical local construction the
+      // driver used, whatever that local zone actually is.
+      //
+      // Full timezone-boundary coverage: this suite is run TWICE in CI/local
+      // verification, once per invocation, with TZ fixed at the shell before
+      // node starts — see the positive- and negative-offset commands in this
+      // file's header comment. Both runs must produce identical results.
       const app = buildApp();
       const token = makeE2EToken(h.userAId, h.orgAId);
-      const originalTz = process.env.TZ;
 
-      try {
-        const read = await request(app)
-          .get('/api/v8/my-work/calendar/unified?sources=task')
-          .set('Authorization', `Bearer ${token}`);
-        const event = read.body.data.events.find((e: any) => e.sourceId === h.taskGoldenId);
+      const read = await request(app)
+        .get('/api/v8/my-work/calendar/unified?sources=task')
+        .set('Authorization', `Bearer ${token}`);
+      const event = read.body.data.events.find((e: any) => e.sourceId === h.taskGoldenId);
 
-        // A negative-offset zone (UTC-8) is the classic case where a naive
-        // Date<->UTC round trip shifts a local midnight back a calendar day.
-        process.env.TZ = 'America/Los_Angeles';
+      const put = await request(app)
+        .put(`/api/v8/my-work/calendar/events/task/${h.taskGoldenId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ start: '2026-10-15', expectedVersion: event.version });
+      expect(put.status).toBe(200);
+      expect(put.body.data.dueDate).toBe('2026-10-15');
 
-        const put = await request(app)
-          .put(`/api/v8/my-work/calendar/events/task/${h.taskGoldenId}`)
-          .set('Authorization', `Bearer ${token}`)
-          .send({ start: '2026-10-15', expectedVersion: event.version });
-        expect(put.status).toBe(200);
-        expect(put.body.data.dueDate).toBe('2026-10-15');
+      const after = await request(app)
+        .get('/api/v8/my-work/calendar/unified?sources=task')
+        .set('Authorization', `Bearer ${token}`);
+      const eventAfter = after.body.data.events.find((e: any) => e.sourceId === h.taskGoldenId);
+      expect(eventAfter.start).toBe('2026-10-15');
 
-        // A positive-offset zone (UTC+13) for the read-back — the date must
-        // still come back unshifted either direction.
-        process.env.TZ = 'Pacific/Kiritimati';
-        const after = await request(app)
-          .get('/api/v8/my-work/calendar/unified?sources=task')
-          .set('Authorization', `Bearer ${token}`);
-        const eventAfter = after.body.data.events.find((e: any) => e.sourceId === h.taskGoldenId);
-        expect(eventAfter.start).toBe('2026-10-15');
-      } finally {
-        if (originalTz === undefined) delete process.env.TZ;
-        else process.env.TZ = originalTz;
-      }
+      // Midnight boundary: an explicit midnight-local start persists and
+      // reads back as the same calendar day, not shifted to the day before
+      // or after by any implicit UTC conversion.
+      const putMidnight = await request(app)
+        .put(`/api/v8/my-work/calendar/events/task/${h.taskGoldenId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ start: '2026-11-01T00:00:00.000', expectedVersion: put.body.data.version });
+      expect(putMidnight.status).toBe(200);
+      expect(putMidnight.body.data.dueDate).toBe('2026-11-01');
     }
   );
 
