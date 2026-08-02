@@ -147,9 +147,10 @@ async function main() {
 
     const { verifyToken } = await import('../../server/src/middleware/auth.middleware.js');
     const { attachV8Context } = await import('../../server/src/middleware/v8Auth.middleware.js');
-    const assessmentRouter = (
-      await import('../../server/src/routes/v8/assessment.routes.js')
-    ).default;
+    const assessmentRouter = (await import('../../server/src/routes/v8/assessment.routes.js'))
+      .default;
+    const { setQualityReviewFaultInjectorForTests } =
+      await import('../../server/src/services/assessment/drdQualityReview.js');
     const { DRD_STRUCTURE } = await import('../../server/src/data/drdStructure.js');
 
     app = express();
@@ -301,26 +302,29 @@ async function main() {
     // Step 5: accept succeeds.
     // ---------------------------------------------------------------------
     let acceptReviewId;
-    await step('POST /review accept -> 201, status APPROVED, response includes a snapshot', async () => {
-      const res = await request(app)
-        .post(`/api/v8/assessment/${assessmentId}/review`)
-        .set('Authorization', `Bearer ${tokenA}`)
-        .send({ action: 'accept', rationale: 'Accepting: complete and fully evidenced.' });
-      assert.equal(res.status, 201);
-      assert.equal(res.body.data.review.action, 'accept');
-      assert.equal(res.body.data.review.newStatus, 'APPROVED');
-      assert.ok(res.body.data.snapshot, 'expected a snapshot in the accept response');
-      assert.equal(res.body.data.snapshot.isCurrent, true);
-      acceptReviewId = res.body.data.review.id;
-      assert.ok(acceptReviewId);
+    await step(
+      'POST /review accept -> 201, status APPROVED, response includes a snapshot',
+      async () => {
+        const res = await request(app)
+          .post(`/api/v8/assessment/${assessmentId}/review`)
+          .set('Authorization', `Bearer ${tokenA}`)
+          .send({ action: 'accept', rationale: 'Accepting: complete and fully evidenced.' });
+        assert.equal(res.status, 201);
+        assert.equal(res.body.data.review.action, 'accept');
+        assert.equal(res.body.data.review.newStatus, 'APPROVED');
+        assert.ok(res.body.data.snapshot, 'expected a snapshot in the accept response');
+        assert.equal(res.body.data.snapshot.isCurrent, true);
+        acceptReviewId = res.body.data.review.id;
+        assert.ok(acceptReviewId);
 
-      const getRes = await request(app)
-        .get(`/api/v8/assessment/${assessmentId}`)
-        .set('Authorization', `Bearer ${tokenA}`);
-      assert.equal(getRes.status, 200);
-      assert.equal(getRes.body.data.assessment.backendStatus, 'APPROVED');
-      assert.equal(getRes.body.data.assessment.status, 'APPROVED');
-    });
+        const getRes = await request(app)
+          .get(`/api/v8/assessment/${assessmentId}`)
+          .set('Authorization', `Bearer ${tokenA}`);
+        assert.equal(getRes.status, 200);
+        assert.equal(getRes.body.data.assessment.backendStatus, 'APPROVED');
+        assert.equal(getRes.body.data.assessment.status, 'APPROVED');
+      }
+    );
 
     // ---------------------------------------------------------------------
     // Step 6: GET /report -> the accepted snapshot.
@@ -457,6 +461,95 @@ async function main() {
           assert.ok(rev.createdAt);
           assert.ok(rev.rationale && rev.rationale.trim().length >= 3);
         }
+      }
+    );
+
+    // ---------------------------------------------------------------------
+    // Transaction hardening: injected failure and concurrent accept.
+    // ---------------------------------------------------------------------
+    await step(
+      'real-PG fault after snapshot insert rolls back audit, current flip/insert, and status',
+      async () => {
+        setQualityReviewFaultInjectorForTests((stage) => {
+          if (stage === 'snapshot-inserted') throw new Error('ASM_FAULT_AFTER_SNAPSHOT_INSERT');
+        });
+        try {
+          const res = await request(app)
+            .post(`/api/v8/assessment/${assessmentId}/review`)
+            .set('Authorization', `Bearer ${tokenA}`)
+            .send({ action: 'accept', rationale: 'Fault injection must roll everything back.' });
+          assert.equal(res.status, 500);
+        } finally {
+          setQualityReviewFaultInjectorForTests(null);
+        }
+
+        const state = await client.query(
+          `SELECT
+             (SELECT status FROM assessments WHERE id = $1) AS status,
+             (SELECT count(*)::int FROM assessment_quality_reviews WHERE assessment_id = $1) AS review_count,
+             (SELECT count(*)::int FROM assessment_accepted_snapshots WHERE assessment_id = $1) AS snapshot_count,
+             (SELECT count(*)::int FROM assessment_accepted_snapshots WHERE assessment_id = $1 AND is_current) AS current_count`,
+          [assessmentId]
+        );
+        assert.deepEqual(state.rows[0], {
+          status: 'DRAFT',
+          review_count: 2,
+          snapshot_count: 1,
+          current_count: 1,
+        });
+        const reportRes = await request(app)
+          .get(`/api/v8/assessment/${assessmentId}/report`)
+          .set('Authorization', `Bearer ${tokenA}`);
+        assert.equal(reportRes.body.data.provenance.reviewId, acceptReviewId);
+      }
+    );
+
+    await step(
+      'concurrent double accept serializes: one current snapshot and coherent audit/status',
+      async () => {
+        const accept = (rationale) =>
+          request(app)
+            .post(`/api/v8/assessment/${assessmentId}/review`)
+            .set('Authorization', `Bearer ${tokenA}`)
+            .send({ action: 'accept', rationale });
+        const responses = await Promise.all([
+          accept('Concurrent accept alpha.'),
+          accept('Concurrent accept beta.'),
+        ]);
+        assert.deepEqual(
+          responses.map((res) => res.status),
+          [201, 201]
+        );
+
+        const state = await client.query(
+          `SELECT
+             (SELECT status FROM assessments WHERE id = $1) AS status,
+             (SELECT count(*)::int FROM assessment_quality_reviews WHERE assessment_id = $1 AND action = 'accept') AS accept_count,
+             (SELECT count(*)::int FROM assessment_accepted_snapshots WHERE assessment_id = $1) AS snapshot_count,
+             (SELECT count(*)::int FROM assessment_accepted_snapshots WHERE assessment_id = $1 AND is_current) AS current_count`,
+          [assessmentId]
+        );
+        assert.deepEqual(state.rows[0], {
+          status: 'APPROVED',
+          accept_count: 3,
+          snapshot_count: 3,
+          current_count: 1,
+        });
+
+        const current = await client.query(
+          `SELECT s.review_id, s.provenance_json, r.new_status, r.previous_status
+           FROM assessment_accepted_snapshots s
+           JOIN assessment_quality_reviews r ON r.id = s.review_id
+           WHERE s.assessment_id = $1 AND s.is_current`,
+          [assessmentId]
+        );
+        assert.equal(current.rowCount, 1);
+        assert.equal(current.rows[0].new_status, 'APPROVED');
+        assert.equal(
+          JSON.parse(current.rows[0].provenance_json).reviewId,
+          current.rows[0].review_id
+        );
+        assert.ok(['DRAFT', 'APPROVED'].includes(current.rows[0].previous_status));
       }
     );
   } finally {

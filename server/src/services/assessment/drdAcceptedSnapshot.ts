@@ -20,6 +20,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import type { PinnedTransactionClient } from '../../database/PostgresDatabase.js';
 
 export interface SnapshotRecord {
   id: string;
@@ -70,7 +71,9 @@ function toSnapshotRecord(row: AcceptedSnapshotRow): SnapshotRecord {
     provenance: parseJsonSafely(row.provenance_json, {}),
     acceptedBy: row.accepted_by,
     acceptedAt:
-      row.accepted_at instanceof Date ? (row.accepted_at as Date).toISOString() : String(row.accepted_at),
+      row.accepted_at instanceof Date
+        ? (row.accepted_at as Date).toISOString()
+        : String(row.accepted_at),
     isCurrent: Boolean(row.is_current),
   };
 }
@@ -84,21 +87,27 @@ function toSnapshotRecord(row: AcceptedSnapshotRow): SnapshotRecord {
  *     is the ONLY column that ever changes on an existing row.
  *  2. Insert the new row as the current one.
  */
-export async function createAcceptedSnapshot(params: {
-  organizationId: string;
-  assessmentId: string;
-  reviewId: string;
-  acceptedBy: string;
-  snapshot: unknown;
-  provenance: unknown;
-}): Promise<SnapshotRecord> {
+export async function createAcceptedSnapshot(
+  params: {
+    organizationId: string;
+    assessmentId: string;
+    reviewId: string;
+    acceptedBy: string;
+    snapshot: unknown;
+    provenance: unknown;
+  },
+  tx?: PinnedTransactionClient,
+  onStage?: (stage: 'snapshot-flipped' | 'snapshot-inserted') => void | Promise<void>
+): Promise<SnapshotRecord> {
   const { organizationId, assessmentId, reviewId, acceptedBy, snapshot, provenance } = params;
 
   // Step 1: flip prior current row (if any) — no-op if none exists.
-  await queryHelpers.queryRun(
+  const db = tx ?? queryHelpers;
+  await db.queryRun(
     `UPDATE assessment_accepted_snapshots SET is_current = false WHERE organization_id = ? AND assessment_id = ? AND is_current = true`,
     [organizationId, assessmentId]
   );
+  await onStage?.('snapshot-flipped');
 
   // Step 2: insert the new current row.
   const id = uuidv4();
@@ -106,10 +115,20 @@ export async function createAcceptedSnapshot(params: {
   const snapshotJson = JSON.stringify(snapshot);
   const provenanceJson = JSON.stringify(provenance);
 
-  await queryHelpers.queryRun(
+  await db.queryRun(
     `INSERT INTO assessment_accepted_snapshots (id, organization_id, assessment_id, review_id, snapshot_json, provenance_json, accepted_by, accepted_at, is_current) VALUES (?, ?, ?, ?, ?, ?, ?, ?, true)`,
-    [id, organizationId, assessmentId, reviewId, snapshotJson, provenanceJson, acceptedBy, acceptedAt]
+    [
+      id,
+      organizationId,
+      assessmentId,
+      reviewId,
+      snapshotJson,
+      provenanceJson,
+      acceptedBy,
+      acceptedAt,
+    ]
   );
+  await onStage?.('snapshot-inserted');
 
   return {
     id,

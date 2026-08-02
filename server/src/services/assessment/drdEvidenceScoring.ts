@@ -13,6 +13,7 @@
  */
 import { DRD_STRUCTURE } from '../../data/drdStructure.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import type { PinnedTransactionClient } from '../../database/PostgresDatabase.js';
 import { v4 as uuidv4 } from 'uuid';
 import { computeDrdCompletion } from './drdCompletion.js';
 import type { DrdAreaAnswerState, DrdAreasMap } from './drdCompletion.js';
@@ -64,7 +65,9 @@ function mapRow(row: AssessmentAxisEvidenceRow): EvidenceRecord {
     url: row.url ?? null,
     createdBy: row.created_by,
     createdAt:
-      row.created_at instanceof Date ? (row.created_at as Date).toISOString() : String(row.created_at),
+      row.created_at instanceof Date
+        ? (row.created_at as Date).toISOString()
+        : String(row.created_at),
   };
 }
 
@@ -154,11 +157,14 @@ export async function addEvidence(params: {
   };
 }
 
-export async function listEvidence(params: {
-  organizationId: string;
-  assessmentId: string;
-}): Promise<EvidenceRecord[]> {
-  const rows = await queryHelpers.queryAll<AssessmentAxisEvidenceRow>(
+export async function listEvidence(
+  params: {
+    organizationId: string;
+    assessmentId: string;
+  },
+  tx?: PinnedTransactionClient
+): Promise<EvidenceRecord[]> {
+  const rows = await (tx ?? queryHelpers).queryAll<AssessmentAxisEvidenceRow>(
     `SELECT id, organization_id, assessment_id, axis_id, area_id, evidence_type,
             title, description, url, created_by, created_at
      FROM assessment_axis_evidence
@@ -206,15 +212,12 @@ function isAreaAnswered(state: DrdAreaAnswerState | null | undefined): boolean {
   );
 
   const hasNotes = Boolean(
-    state.levelNotes &&
-      Object.values(state.levelNotes || {}).some((v) => String(v || '').trim())
+    state.levelNotes && Object.values(state.levelNotes || {}).some((v) => String(v || '').trim())
   );
 
   const hasLinks = Boolean(
     state.levelLinks &&
-      Object.values(state.levelLinks || {}).some(
-        (arr) => Array.isArray(arr) && arr.length > 0
-      )
+    Object.values(state.levelLinks || {}).some((arr) => Array.isArray(arr) && arr.length > 0)
   );
 
   return hasAchieved || hasTarget || hasDecisions || hasNotes || hasLinks;
@@ -280,8 +283,7 @@ export function computeDrdScoring(
       : 0;
 
   const axesWithEvidence = axes.filter((axis) => axis.hasEvidence).length;
-  const evidenceCoverage =
-    axes.length > 0 ? Math.round((axesWithEvidence / axes.length) * 100) : 0;
+  const evidenceCoverage = axes.length > 0 ? Math.round((axesWithEvidence / axes.length) * 100) : 0;
 
   const axesMissingEvidence = axes.filter((axis) => !axis.hasEvidence).map((axis) => axis.axisId);
 
