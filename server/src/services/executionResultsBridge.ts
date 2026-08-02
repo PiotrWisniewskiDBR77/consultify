@@ -185,12 +185,26 @@ async function handoffFromInitiativeFallback(
     return result;
   }
 
+  // EXE-09 (Codex review, minimal additive fix to frozen EXE-08 code,
+  // explicitly required this round): this query previously read
+  // `COALESCE(title, name)` — `initiatives` has never had a `title` column
+  // in this schema (confirmed: only `name`), so the query always threw
+  // "column \"title\" does not exist". With `{ fallback: true }` (the
+  // previous setting) that error was silently swallowed and `initiative`
+  // resolved to `null`, making this whole fallback path a permanent silent
+  // no-op — a real "planned KPIs or expected_roi" case would report
+  // "nothing to hand off" and mark the closure DELIVERED without ever
+  // actually creating a benefit row. Fixed: read the real column, and use
+  // `{ fallback: false }` so any FUTURE genuine error here throws instead of
+  // being swallowed — it propagates to `handoffFromClosure`'s caller
+  // (`attemptDeliveryInternal` in closureDeliveryReceiptService.ts), which
+  // records it as a retryable FAILED status rather than a false DELIVERED.
   const initiative = await dbGet<InitiativeFallbackRow>(
-    `SELECT COALESCE(title, name) AS name, expected_roi
+    `SELECT name, expected_roi
        FROM initiatives
       WHERE id = ? AND organization_id = ?`,
     [initiativeId, organizationId],
-    { fallback: true }
+    { fallback: false }
   );
 
   const expectedRoi =
