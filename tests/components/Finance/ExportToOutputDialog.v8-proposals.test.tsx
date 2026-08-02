@@ -1,5 +1,21 @@
 /**
  * @vitest-environment jsdom
+ *
+ * FIN-06 — "Create Initiatives" export action rewired to the real
+ * finance-candidate-handoff/investment-case endpoints (preview/confirm),
+ * replacing the old fabricated-stub `V8FinanceApi.createInitiativesFromAnalysis`
+ * flow this file used to cover (hence the historical filename — kept so no
+ * dangling coverage gap opens up under a renamed/orphaned file).
+ *
+ * Coverage bar (per FIN-06's "no fake receipt" mandate):
+ *   - an ineligible preview shows the REAL reason, never a success state;
+ *   - a successful confirm shows a REAL candidateId-driven result, never a
+ *     fabricated stub;
+ *   - a 4xx/409 from confirm shows a REAL error, never success;
+ *   - a source type that cannot resolve a `financial_models.id` (this
+ *     dialog's `analysisType` prop is 'financial_analysis' or 'valuation' for
+ *     two of its three real callers) never even attempts the call — it shows
+ *     an honest "unsupported" explanation instead.
  */
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -7,7 +23,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: unknown, options?: Record<string, unknown>) => {
+      const base = typeof fallback === 'string' ? fallback : ((fallback as any)?.defaultValue ?? _key);
+      if (!options) return base;
+      return Object.keys(options).reduce(
+        (acc, k) => acc.split(`{{${k}}}`).join(String((options as any)[k])),
+        base
+      );
+    },
     i18n: { language: 'en' },
   }),
 }));
@@ -19,202 +42,192 @@ vi.mock('framer-motion', () => ({
   },
 }));
 
-vi.mock('../../../src/services/api', () => ({
+vi.mock('@/services/api', () => ({
   Api: {
     get: vi.fn(),
     post: vi.fn(),
   },
 }));
 
-vi.mock('../../../src/services/api/v8/finance', () => ({
-  V8FinanceApi: {
-    getInitiativeProposals: vi.fn(),
-    createInitiativesFromAnalysis: vi.fn(),
-  },
-  shouldFallbackToLegacyFinance: (error: any) => {
-    const status = Number(error?.status);
-    return [400, 404, 405, 501].includes(status);
-  },
+const previewInvestmentCaseCandidateHandoff = vi.fn();
+const confirmInvestmentCaseCandidateHandoff = vi.fn();
+
+vi.mock('@/services/api/v8/financeCandidateHandoff', () => ({
+  previewInvestmentCaseCandidateHandoff: (...args: unknown[]) =>
+    previewInvestmentCaseCandidateHandoff(...args),
+  confirmInvestmentCaseCandidateHandoff: (...args: unknown[]) =>
+    confirmInvestmentCaseCandidateHandoff(...args),
 }));
 
-vi.mock('../../../src/services/financeExportService', () => ({
+vi.mock('@/services/financeExportService', () => ({
   exportFinancialAnalysis: vi.fn(),
 }));
 
-vi.mock('../../../src/services/funnelAnalytics', () => ({
+vi.mock('@/services/funnelAnalytics', () => ({
   trackFunnelEvent: vi.fn(),
 }));
 
 import { ExportToOutputDialog } from '../../../src/components/Finance/ExportToOutputDialog';
-import { Api } from '../../../src/services/api';
-import { V8FinanceApi } from '../../../src/services/api/v8/finance';
 
-describe('ExportToOutputDialog V8 proposals seam', () => {
+describe('ExportToOutputDialog — FIN-06 Investment Case candidate handoff', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('prefers governed initiative proposals before legacy fallback', async () => {
-    vi.mocked(V8FinanceApi.getInitiativeProposals).mockResolvedValue({
-      proposals: [
-        {
-          id: 'proposal-1',
-          title: 'Reduce overdue receivables',
-          summary: 'Shorten DSO with collections sprint',
-          kind: 'action',
-          priority: 9,
-        },
-      ],
-    } as any);
+  it('checks eligibility and shows the real ineligible reason, never a success state', async () => {
+    previewInvestmentCaseCandidateHandoff.mockResolvedValue({
+      eligible: false,
+      reason: 'NOT_APPROVED',
+    });
+    const onExportComplete = vi.fn();
 
     render(
       <ExportToOutputDialog
         open
         onClose={vi.fn()}
-        analysisId="analysis-1"
-        analysisTitle="Working capital analysis"
-        analysisType="financial"
-        onExportComplete={vi.fn()}
-      />,
+        analysisId="model-1"
+        analysisTitle="Q3 expansion model"
+        analysisType="financial_model"
+        onExportComplete={onExportComplete}
+      />
     );
 
     fireEvent.click(screen.getByRole('button', { name: /Initiatives/i }));
 
-    await waitFor(() => {
-      expect(screen.getByText('Reduce overdue receivables')).toBeInTheDocument();
-    });
-
-    expect(V8FinanceApi.getInitiativeProposals).toHaveBeenCalledWith('analysis-1');
-    expect(Api.get).not.toHaveBeenCalledWith('/economics/financial-analyses/analysis-1/initiative-proposals');
-  });
-
-  it('falls back to legacy initiative proposals when V8 seam returns a bounded compatibility status', async () => {
-    vi.mocked(V8FinanceApi.getInitiativeProposals).mockRejectedValue({ status: 404 });
-    vi.mocked(Api.get).mockResolvedValue({
-      proposals: [
-        {
-          id: 'proposal-legacy-1',
-          title: 'Protect EBITDA',
-          summary: 'Cut low-margin scope',
-          kind: 'risk',
-          priority: 7,
-        },
-      ],
-    } as any);
-
-    render(
-      <ExportToOutputDialog
-        open
-        onClose={vi.fn()}
-        analysisId="analysis-1"
-        analysisTitle="Working capital analysis"
-        analysisType="financial"
-        onExportComplete={vi.fn()}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: /Initiatives/i }));
+    expect(previewInvestmentCaseCandidateHandoff).toHaveBeenCalledWith('model-1');
 
     await waitFor(() => {
-      expect(screen.getByText('Protect EBITDA')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'This model is not approved yet — approve it first, then send it as a Candidate.'
+        )
+      ).toBeInTheDocument();
     });
 
-    expect(Api.get).toHaveBeenCalledWith('/economics/financial-analyses/analysis-1/initiative-proposals');
+    const confirmButton = screen.getByRole('button', { name: 'Send as Candidate' });
+    expect(confirmButton).toBeDisabled();
+
+    fireEvent.click(confirmButton);
+    expect(confirmInvestmentCaseCandidateHandoff).not.toHaveBeenCalled();
+    expect(onExportComplete).not.toHaveBeenCalled();
   });
 
-  it('prefers governed initiative creation before legacy fallback', async () => {
+  it('shows a real candidateId-driven success state on confirm, not a fabricated stub', async () => {
+    previewInvestmentCaseCandidateHandoff.mockResolvedValue({
+      eligible: true,
+      preview: {
+        title: 'Expand distribution network',
+        rationale: 'Approved model shows 18% IRR uplift.',
+        sourceType: 'finance_investment_case',
+        sourceId: 'model-1',
+      },
+    });
+    confirmInvestmentCaseCandidateHandoff.mockResolvedValue({
+      created: true,
+      candidateId: 'candidate-77',
+    });
     const onClose = vi.fn();
     const onExportComplete = vi.fn();
-    vi.mocked(V8FinanceApi.getInitiativeProposals).mockResolvedValue({
-      proposals: [
-        {
-          id: 'proposal-1',
-          title: 'Reduce overdue receivables',
-          summary: 'Shorten DSO with collections sprint',
-          kind: 'action',
-          priority: 9,
-        },
-      ],
-    } as any);
-    vi.mocked(V8FinanceApi.createInitiativesFromAnalysis).mockResolvedValue({
-      success: true,
-      initiativeIds: ['initiative-1'],
-    } as any);
 
     render(
       <ExportToOutputDialog
         open
         onClose={onClose}
-        analysisId="analysis-1"
-        analysisTitle="Working capital analysis"
-        analysisType="financial"
+        analysisId="model-1"
+        analysisTitle="Q3 expansion model"
+        analysisType="financial_model"
         onExportComplete={onExportComplete}
-      />,
+      />
     );
 
     fireEvent.click(screen.getByRole('button', { name: /Initiatives/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Reduce overdue receivables')).toBeInTheDocument();
+      expect(screen.getByText('Expand distribution network')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create Initiatives' }));
+    const confirmButton = screen.getByRole('button', { name: 'Send as Candidate' });
+    expect(confirmButton).not.toBeDisabled();
+    fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      expect(V8FinanceApi.createInitiativesFromAnalysis).toHaveBeenCalledWith('analysis-1', {
-        acceptedProposalIds: ['proposal-1'],
-      });
+      expect(confirmInvestmentCaseCandidateHandoff).toHaveBeenCalledWith('model-1');
     });
 
-    expect(Api.post).not.toHaveBeenCalledWith('/economics/financial-analyses/analysis-1/initiatives', {
-      acceptedProposalIds: ['proposal-1'],
+    await waitFor(() => {
+      expect(onExportComplete).toHaveBeenCalledWith(
+        expect.objectContaining({
+          outputId: 'candidate-77',
+          title: 'Sent as Initiative candidate: Expand distribution network',
+        })
+      );
     });
-    expect(onExportComplete).toHaveBeenCalledWith(
-      expect.objectContaining({ outputId: 'initiative-1' }),
-    );
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('falls back to legacy initiative creation when V8 seam returns a bounded compatibility status', async () => {
-    vi.mocked(V8FinanceApi.getInitiativeProposals).mockResolvedValue({
-      proposals: [
-        {
-          id: 'proposal-1',
-          title: 'Reduce overdue receivables',
-          summary: 'Shorten DSO with collections sprint',
-          kind: 'action',
-          priority: 9,
-        },
-      ],
-    } as any);
-    vi.mocked(V8FinanceApi.createInitiativesFromAnalysis).mockRejectedValue({ status: 404 });
-    vi.mocked(Api.post).mockResolvedValue({
-      initiativeIds: ['initiative-legacy-1'],
-    } as any);
+  it('shows a real error on a 409 from confirm, never success', async () => {
+    previewInvestmentCaseCandidateHandoff.mockResolvedValue({
+      eligible: true,
+      preview: {
+        title: 'Expand distribution network',
+        rationale: 'Approved model shows 18% IRR uplift.',
+        sourceType: 'finance_investment_case',
+        sourceId: 'model-1',
+      },
+    });
+    const confirmError: any = new Error('Finance source is not eligible for candidate handoff');
+    confirmError.status = 409;
+    confirmError.data = { error: 'Finance source is not eligible for candidate handoff', code: 'SOURCE_NOT_ELIGIBLE' };
+    confirmInvestmentCaseCandidateHandoff.mockRejectedValue(confirmError);
+    const onClose = vi.fn();
+    const onExportComplete = vi.fn();
 
+    render(
+      <ExportToOutputDialog
+        open
+        onClose={onClose}
+        analysisId="model-1"
+        analysisTitle="Q3 expansion model"
+        analysisType="financial_model"
+        onExportComplete={onExportComplete}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Initiatives/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Expand distribution network')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send as Candidate' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Finance source is not eligible for candidate handoff')).toBeInTheDocument();
+    });
+
+    expect(onExportComplete).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('never attempts the handoff for a source type that cannot resolve a financial_models.id', async () => {
     render(
       <ExportToOutputDialog
         open
         onClose={vi.fn()}
         analysisId="analysis-1"
         analysisTitle="Working capital analysis"
-        analysisType="financial"
+        analysisType="financial_analysis"
         onExportComplete={vi.fn()}
-      />,
+      />
     );
 
     fireEvent.click(screen.getByRole('button', { name: /Initiatives/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Reduce overdue receivables')).toBeInTheDocument();
+      expect(screen.getByText('Available from an approved Investment Case')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create Initiatives' }));
-
-    await waitFor(() => {
-      expect(Api.post).toHaveBeenCalledWith('/economics/financial-analyses/analysis-1/initiatives', {
-        acceptedProposalIds: ['proposal-1'],
-      });
-    });
+    expect(previewInvestmentCaseCandidateHandoff).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Send as Candidate' })).toBeDisabled();
   });
 });

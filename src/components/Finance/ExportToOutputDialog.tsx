@@ -11,9 +11,51 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
+import {
+  confirmInvestmentCaseCandidateHandoff,
+  previewInvestmentCaseCandidateHandoff,
+} from '@/services/api/v8/financeCandidateHandoff';
 import { exportFinancialAnalysis, type ExportResult } from '@/services/financeExportService';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+
+/**
+ * FIN-06 — "Investment Case" candidate handoff is keyed on a real
+ * `financial_models.id` (see `financeInvestmentCaseCandidateHandoff.ts` on
+ * the server: it queries `FROM financial_models ... status = 'approved'`).
+ * Of this dialog's three current callers, only `analysisType ===
+ * 'financial_model'` (FinanceHub rows of kind 'models'/'prediction', and
+ * `FinancialModelWorkspace.tsx` directly) passes an id that is actually a
+ * `financial_models.id`. `'financial_analysis'` (FinanceHub's
+ * analysis/investment rows — note "investment" tab there means
+ * `financial_analyses.analysis_type = 'investment_case'`, a DIFFERENT table
+ * from FIN-06's "Investment Case") and `'valuation'` never resolve to a
+ * `financial_models.id`, so the handoff is not attempted for them — see the
+ * inline explanation shown in that case instead of a broken/misleading call.
+ */
+function supportsInvestmentCaseHandoff(analysisType: string): boolean {
+  return analysisType === 'financial_model';
+}
+
+/** Known machine-readable ineligibility reason codes from the backend preview. */
+function describeIneligibleReason(reason: string, t: (key: string, fallback: string) => string): string {
+  if (reason === 'NOT_APPROVED') {
+    return t(
+      'finance.export.investmentCaseNotApproved',
+      'This model is not approved yet — approve it first, then send it as a Candidate.'
+    );
+  }
+  if (reason === 'NOT_FOUND') {
+    return t('finance.export.investmentCaseNotFound', 'This model could not be found.');
+  }
+  return reason;
+}
+
+type InvestmentCaseHandoffState =
+  | { status: 'unsupported' }
+  | { status: 'loading' }
+  | { status: 'eligible'; preview: { title: string; rationale: string; fitScore?: number } }
+  | { status: 'ineligible'; reason: string }
+  | { status: 'error'; message: string };
 
 export interface ExportToOutputDialogProps {
   open: boolean;
@@ -54,10 +96,9 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
   const [briefLanguage, setBriefLanguage] = useState<'pl' | 'en'>('pl');
   const [briefFormat, setBriefFormat] = useState('');
   const [briefScope, setBriefScope] = useState('');
-  const [initiativeProposals, setInitiativeProposals] = useState<
-    Array<{ id: string; title: string; summary: string; kind: string; priority: number }>
-  >([]);
-  const [selectedProposalIds, setSelectedProposalIds] = useState<Record<string, boolean>>({});
+  const [handoffState, setHandoffState] = useState<InvestmentCaseHandoffState>(
+    supportsInvestmentCaseHandoff(analysisType) ? { status: 'loading' } : { status: 'unsupported' }
+  );
 
   const sourceType = 'FINANCIAL_ANALYSIS';
 
@@ -81,27 +122,33 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
     }
   }, [sourceType]);
 
-  const fetchInitiativeProposals = useCallback(async () => {
-    try {
-      let resp: any;
-      try {
-        resp = await V8FinanceApi.getInitiativeProposals(analysisId);
-      } catch (error) {
-        if (!shouldFallbackToLegacyFinance(error)) {
-          throw error;
-        }
-        resp = await Api.get(`/economics/financial-analyses/${analysisId}/initiative-proposals`);
-      }
-      const proposals = Array.isArray((resp as any)?.proposals) ? (resp as any).proposals : [];
-      setInitiativeProposals(proposals);
-      const defaults: Record<string, boolean> = {};
-      for (const p of proposals) defaults[p.id] = true;
-      setSelectedProposalIds(defaults);
-    } catch {
-      setInitiativeProposals([]);
-      setSelectedProposalIds({});
+  const fetchInvestmentCasePreview = useCallback(async () => {
+    if (!supportsInvestmentCaseHandoff(analysisType)) {
+      setHandoffState({ status: 'unsupported' });
+      return;
     }
-  }, [analysisId]);
+    setHandoffState({ status: 'loading' });
+    try {
+      const result = await previewInvestmentCaseCandidateHandoff(analysisId);
+      if (result.eligible) {
+        setHandoffState({
+          status: 'eligible',
+          preview: {
+            title: result.preview.title,
+            rationale: result.preview.rationale,
+            fitScore: result.preview.fitScore,
+          },
+        });
+      } else {
+        setHandoffState({ status: 'ineligible', reason: result.reason });
+      }
+    } catch (error: any) {
+      setHandoffState({
+        status: 'error',
+        message: error?.data?.error || error?.message || 'Could not check eligibility',
+      });
+    }
+  }, [analysisId, analysisType]);
 
   useEffect(() => {
     if (open && useTemplate) {
@@ -111,9 +158,9 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
 
   useEffect(() => {
     if (open && outputType === 'initiatives') {
-      fetchInitiativeProposals();
+      fetchInvestmentCasePreview();
     }
-  }, [open, outputType, fetchInitiativeProposals]);
+  }, [open, outputType, fetchInvestmentCasePreview]);
 
   const handleConfirm = async () => {
     setSubmitting(true);
@@ -125,39 +172,42 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
       });
 
       if (outputType === 'initiatives') {
-        const acceptedProposalIds = Object.entries(selectedProposalIds)
-          .filter(([, v]) => v)
-          .map(([id]) => id);
-        if (acceptedProposalIds.length === 0) {
-          throw new Error(
-            t('finance.export.noInitiativesSelected', 'Select at least one proposal')
-          );
+        // Guard only — the footer Confirm button is disabled unless
+        // `handoffState.status === 'eligible'`, so this should be
+        // unreachable. Never attempt confirm without a real eligible
+        // preview already in hand (no fabricated success).
+        if (handoffState.status !== 'eligible') {
+          return;
         }
-        let created: any;
         try {
-          created = await V8FinanceApi.createInitiativesFromAnalysis(analysisId, {
-            acceptedProposalIds,
+          const confirmResult = await confirmInvestmentCaseCandidateHandoff(analysisId);
+          trackFunnelEvent('finance_export_investment_case_candidate_confirmed', {
+            analysisId,
+            candidateId: confirmResult.candidateId,
+            created: confirmResult.created,
           });
-        } catch (error) {
-          if (!shouldFallbackToLegacyFinance(error)) {
-            throw error;
-          }
-          created = await Api.post(`/economics/financial-analyses/${analysisId}/initiatives`, {
-            acceptedProposalIds,
+          // Real receipt, not a fabricated stub: `outputId` is the actual
+          // Candidate id the backend returned, and the title is honest
+          // about what was created — a Candidate awaiting review, not an
+          // Initiative.
+          onExportComplete({
+            outputId: confirmResult.candidateId,
+            outputType: 'report',
+            title: t(
+              'finance.export.investmentCaseCandidateCreated',
+              'Sent as Initiative candidate: {{title}}',
+              { title: handoffState.preview.title }
+            ),
+            hasTemplate: false,
           });
+          onClose();
+        } catch (error: any) {
+          const message =
+            error?.data?.error ||
+            error?.message ||
+            t('finance.export.investmentCaseConfirmFailed', 'Could not create the Candidate');
+          setHandoffState({ status: 'error', message });
         }
-        trackFunnelEvent('finance_export_initiatives_created', {
-          analysisId,
-          count: acceptedProposalIds.length,
-        });
-        // Reuse toast UX from caller, but with a minimal stub output.
-        onExportComplete({
-          outputId: (created as any)?.initiativeIds?.[0] || 'initiatives',
-          outputType: 'report',
-          title: t('finance.export.initiativesCreated', 'Initiatives created'),
-          hasTemplate: false,
-        });
-        onClose();
         return;
       }
 
@@ -454,62 +504,58 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
               </div>
             )}
 
-            {/* Initiatives propose→accept */}
+            {/* Investment Case → Candidate handoff (FIN-06). Never fabricates a
+                success state — the button only enables once a real, backend-
+                verified preview is in hand, and any ineligibility/error is
+                shown verbatim rather than swallowed. */}
             {outputType === 'initiatives' && (
               <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-800/30 p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    {t('finance.export.proposals', 'Proposals')}
-                  </div>
-                  <button
-                    type="button"
-                    className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
-                    onClick={() => {
-                      const allOn = initiativeProposals.every((p) => selectedProposalIds[p.id]);
-                      const next: Record<string, boolean> = {};
-                      for (const p of initiativeProposals) next[p.id] = !allOn;
-                      setSelectedProposalIds(next);
-                    }}
-                  >
-                    {t('finance.export.toggleAll', 'Toggle all')}
-                  </button>
+                <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {t('finance.export.investmentCaseHandoffTitle', 'Investment Case → Candidate')}
                 </div>
 
-                {initiativeProposals.length === 0 ? (
+                {handoffState.status === 'unsupported' && (
                   <div className="text-sm text-slate-500 dark:text-slate-400">
                     {t(
-                      'finance.export.noProposals',
-                      'No proposals available for this analysis yet'
+                      'finance.export.investmentCaseUnsupported',
+                      'Available from an approved Investment Case'
                     )}
                   </div>
-                ) : (
+                )}
+
+                {handoffState.status === 'loading' && (
+                  <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                    <Loader2 size={14} className="animate-spin" />
+                    {t('finance.export.checkingEligibility', 'Checking eligibility...')}
+                  </div>
+                )}
+
+                {handoffState.status === 'eligible' && (
                   <div className="space-y-2">
-                    {initiativeProposals.map((p) => (
-                      <label
-                        key={p.id}
-                        className="flex items-start gap-3 p-3 rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-white/60 dark:bg-white/[0.03]"
-                      >
-                        <input
-                          type="checkbox"
-                          className="mt-1"
-                          checked={!!selectedProposalIds[p.id]}
-                          onChange={(e) =>
-                            setSelectedProposalIds((prev) => ({
-                              ...prev,
-                              [p.id]: e.target.checked,
-                            }))
-                          }
-                        />
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                            {p.title}
-                          </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                            {p.summary}
-                          </div>
-                        </div>
-                      </label>
-                    ))}
+                    <div className="text-sm font-medium text-slate-900 dark:text-white">
+                      {handoffState.preview.title}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      {handoffState.preview.rationale}
+                    </div>
+                    <div className="text-[11px] text-slate-400 dark:text-slate-500">
+                      {t(
+                        'finance.export.investmentCaseCandidateNotice',
+                        'This sends the Investment Case to the Candidate inbox for review — it does not create an Initiative directly.'
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {handoffState.status === 'ineligible' && (
+                  <div className="text-sm text-amber-600 dark:text-amber-400">
+                    {describeIneligibleReason(handoffState.reason, t)}
+                  </div>
+                )}
+
+                {handoffState.status === 'error' && (
+                  <div className="text-sm text-red-600 dark:text-red-400">
+                    {handoffState.message}
                   </div>
                 )}
               </div>
@@ -549,7 +595,11 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
           <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 flex justify-end">
             <button
               onClick={handleConfirm}
-              disabled={submitting || (outputType !== 'initiatives' && useTemplate && !templateId)}
+              disabled={
+                submitting ||
+                (outputType !== 'initiatives' && useTemplate && !templateId) ||
+                (outputType === 'initiatives' && handoffState.status !== 'eligible')
+              }
               className="px-4 py-2 rounded-full bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {submitting ? (
@@ -558,7 +608,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
                   {t('finance.export.creating', 'Creating...')}
                 </>
               ) : outputType === 'initiatives' ? (
-                t('finance.export.createInitiatives', 'Create Initiatives')
+                t('finance.export.sendAsCandidate', 'Send as Candidate')
               ) : (
                 t('finance.export.createDraft', 'Create Draft')
               )}
