@@ -32,6 +32,11 @@ import {
 } from '../../services/assessment/drdQualityReview.js';
 import type { ReviewAction } from '../../services/assessment/drdQualityReview.js';
 import { getCurrentAcceptedSnapshot } from '../../services/assessment/drdAcceptedSnapshot.js';
+import {
+  CandidateHandoffError,
+  getCandidateHandoff,
+  handoffAssessmentToCandidate,
+} from '../../services/assessment/drdCandidateHandoff.js';
 import { assessmentAuditLogger } from '../../utils/AssessmentAuditLogger.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
@@ -1062,6 +1067,124 @@ router.get(
         acceptedAt: snapshot.acceptedAt,
         isCurrent: snapshot.isCurrent,
       },
+      meta: assessmentReadMeta(),
+    });
+  })
+);
+
+// --- ASM-08: accepted-output -> canonical Candidate handoff ---
+//
+// Reuses initiative_candidates (INI-02/03/09 F2 packet, canonical writer:
+// initiativeCandidateService.ts) — no parallel candidate table/service.
+// Assessment never creates an Initiative directly; it hands off to a
+// Candidate, which the existing (untouched) accept-candidate flow later
+// promotes to an Initiative on its own schedule.
+
+router.post(
+  '/:assessmentId/candidate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId, userRole } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    if (!assessmentId) {
+      return res
+        .status(400)
+        .json({ error: 'Assessment id is required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+
+    await ensureAssessmentSchema();
+
+    const existing = await ensureAssessmentInOrg(assessmentId, organizationId);
+    if (!existing) {
+      return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
+    }
+
+    // Handing an accepted output off toward the Initiatives funnel is a
+    // manager-level lifecycle action — same canApprove gate as accept/return
+    // (ensureWorkbenchPermission).
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canApprove',
+    });
+    if (!permission.ok) {
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
+    }
+
+    try {
+      const result = await handoffAssessmentToCandidate({
+        organizationId,
+        assessmentId,
+        actorId: userId,
+      });
+
+      assessmentAuditLogger
+        .logUpdate(req, assessmentId, {
+          candidateHandoff: true,
+          candidateId: result.candidate.id,
+          created: result.created,
+        })
+        .catch((err: unknown) => logger.warn('[Assessment] non-blocking operation failed', err));
+
+      return res.status(result.created ? 201 : 200).json({
+        data: result,
+        meta: assessmentMutationMeta(),
+      });
+    } catch (err) {
+      if (err instanceof CandidateHandoffError) {
+        return res.status(err.status).json({
+          error: err.message,
+          code: err.code,
+          ...(err.details ? { details: err.details } : {}),
+        });
+      }
+      throw err;
+    }
+  })
+);
+
+router.get(
+  '/:assessmentId/candidate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId, userRole } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    if (!assessmentId) {
+      return res
+        .status(400)
+        .json({ error: 'Assessment id is required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+
+    await ensureAssessmentSchema();
+
+    const existing = await ensureAssessmentInOrg(assessmentId, organizationId);
+    if (!existing) {
+      return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
+    }
+
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canView',
+    });
+    if (!permission.ok) {
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
+    }
+
+    const handoff = await getCandidateHandoff({ organizationId, assessmentId });
+    if (!handoff) {
+      return res.status(404).json({
+        error: 'No candidate handoff exists yet for this assessment',
+        code: 'NO_CANDIDATE_HANDOFF',
+      });
+    }
+
+    return res.json({
+      data: handoff,
       meta: assessmentReadMeta(),
     });
   })
