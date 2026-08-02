@@ -7,6 +7,43 @@ business_owner: piotr
 last_reviewed: 2026-08-02
 ---
 
+# ★★★★ Round-3 correction (Codex review, same date) — target vs. actual
+
+Round 2's Finance leg (below) resolved WHERE to write (canonical
+`roi_realized_values`) but still got WHAT to write wrong: it summed
+`initiative_kpis.target_value` (a PLAN) whenever the KPI's `unit` matched
+`budget_currency`, and wrote that into the "realized" column. Codex
+correctly flagged this as semantically invalid: a planned target is not
+evidence a benefit was REALIZED, and reaching initiative status DONE is not
+evidence either.
+
+A fresh, targeted discovery pass (this round) confirmed **no existing
+"approved actual, explicit currency" concept exists anywhere in this
+codebase**: `roi_realized_values`/`kpi_time_series` both have a
+self-asserted `source` column with no approval/sign-off field;
+`v8_roi_realization_entries.verified_by` (the one column anywhere in this
+schema with genuine approval semantics) is only ever written by a synthetic
+health-check probe, never a real user flow; `initiative_benefits.actual_annual_value`
+is declared but never written by any code path. See
+`server/src/services/closureDeliveryReceiptService.ts`'s own header comment
+for `findMonetaryActualMeasurement` for the full citation trail.
+
+**Corrected design**: the Finance leg now reads `kpi_time_series` — a
+point-in-time OBSERVATION table ("the KPI's value was measured as X at
+period P"), structurally distinct in KIND from `target_value` (a one-shot
+plan) — instead of the target. A measurement only counts if it belongs to
+the same org+initiative, its owning KPI's `unit` literally matches
+`budget_currency`, and it is within `MONETARY_MEASUREMENT_MAX_AGE_DAYS`
+(180 days, a documented policy default) of delivery time. This is NOT a
+claim that a formal human-approval gate exists before a measurement can back
+a realization — that gap is real and is recorded as a NEEDS_PRODUCT_DECISION
+in the completion report, not silently assumed away.
+
+Verified with the negative-control exercise Codex required: the round-2 bug
+was temporarily reintroduced, the new `TARGET-VS-ACTUAL #1` test went red,
+the fix was restored (diff confirmed byte-identical to before the
+injection), and the test went green again.
+
 # ★★★ Round-2 correction (Codex review, same date)
 
 Round 1 of this packet (below) built the Finance leg as a NEW, isolated

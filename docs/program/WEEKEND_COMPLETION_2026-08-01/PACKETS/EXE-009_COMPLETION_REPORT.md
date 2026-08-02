@@ -7,29 +7,38 @@ business_owner: piotr
 last_reviewed: 2026-08-02
 ---
 
-# EXE-09 — completion report (round 2, post Codex FIX_REQUIRED)
+# EXE-09 — completion report (round 3, post Codex FINAL FIX_REQUIRED)
 
-This report was regenerated from live `git` output (`rev-parse`, `log
-base..HEAD`, `diff --stat base..HEAD`, `status --short`), per Codex's
-BLOCKER6 instruction — no hand-typed SHAs.
+Regenerated from live `git` output AFTER the round-3 implementation commits
+(per Codex's explicit instruction: implementation HEAD and final
+documentation HEAD are reported separately — this report's own commit is
+NOT included in the "implementation HEAD" below).
 
-## Base / branch / worktree / HEAD
+## Base / branch / worktree
 
-- Base: `feat/exe-008-closure-evidence-gate` @ `b359a4edad640a459d7ece3cf5f535b2a63218df` (frozen, `CODE_GO_FROZEN`).
+- Base: `feat/exe-008-closure-evidence-gate` @ `b359a4edad640a459d7ece3cf5f535b2a63218df` (frozen, `CODE_GO_FROZEN`) — unchanged from rounds 1–2, re-confirmed collision-free.
 - Branch: `feat/exe-009-closure-results-finance-receipt`
-- Worktree: `/private/tmp/claude-501/.../scratchpad/wt-exe-009` (isolated, not the shared checkout)
-- **HEAD: `c89dacbe6dc368d9267637fb73b7f7a3e23424bb`** (confirmed via `git rev-parse HEAD` immediately before writing this report)
-- `git status --short` (excluding the local `node_modules` symlink): **empty — clean tree.**
-- 13 commits on top of base (`git log --oneline b359a4edad..HEAD`):
+- Worktree: `/private/tmp/claude-501/.../scratchpad/wt-exe-009`
+
+## Implementation HEAD (live, BEFORE this report's own commit)
 
 ```
+84cf4187d7c13fc023058ef5471e7bb467e0c3a1
+```
+
+`git log --oneline b359a4edad..HEAD` at that point (15 commits):
+
+```
+84cf4187d7 test(exe-009): target-vs-actual coverage + real canonical read-back (round 3)
+e1500b803d fix(exe-009): Finance actual must come from an OBSERVED measurement, never a planned target (Codex review round 3)
+4534ad2b08 docs(exe-009): regenerate completion report from live git output (round 2)
 c89dacbe6d docs(exe-009): round-2 correction addendum on discovery doc
 b7447558b3 test(exe-009): cover all 6 Codex review blockers, real Postgres
 685241ce8b fix(exe-009): RBAC-gate the closure-receipt retry route
 869a2eca77 fix(exe-009): Finance leg -> canonical recordExecutionRealization; remove expected_roi fallback; fix a second concurrency bug in the read-back path
 4749e0e573 fix(exe-009): drop isolated Finance ledger, add canonical dedup key
 879a3f4533 refactor(exe-08): export assertActorCanApprove (minimal additive visibility)
-a2a2f90888 docs(exe-009): completion report — AWAITING_CODEX_REVIEW (round 1, superseded by this doc)
+a2a2f90888 docs(exe-009): completion report — AWAITING_CODEX_REVIEW
 855f0a4a45 fix(exe-009): claimLeg must use a pinned connection, not the shared pool
 f0e07ee937 fix(exe-009): close concurrent-delivery race found by adversarial review
 9dab22387e test(exe-009): real-PG receipt/outbox tests + UI no-premature-success tests
@@ -38,249 +47,209 @@ a788f7c34d feat(exe-009): durable closure→Results/Finance delivery receipt
 262511607b docs(exe-009): discovery gate — canonical owners, base selection, gaps
 ```
 
-## Round-2 fixes (Codex FIX_REQUIRED response)
+`git status --short` immediately before this report's own commit: only the
+discovery-doc addendum modified (this report itself and that addendum are
+what this final commit adds). Both will be captured under a "final
+documentation HEAD" reported at the end of this session's response, per
+Codex's instruction not to hand-type it.
 
-### BLOCKER1 — isolated Finance ledger → canonical target
+## The core round-3 fix
 
-Round 1 wrote a NEW `closure_finance_actuals` table nothing in the Finance
-module read. A fresh canonical-Finance inventory (parallel read-only agent,
-this round) established:
+Round 2's Finance leg wrote `initiative_kpis.target_value` (a PLAN) into
+`roi_realized_values` whenever the KPI's `unit` matched `budget_currency`.
+Codex correctly identified this as semantically invalid: a target is an
+expectation, not proof anything was achieved, and reaching status DONE is
+not proof either.
 
-- The Finance module (`FinanceHub.tsx`) has **no DB-backed read of
-  initiative-level actuals at all** — its only initiative-value-touching
-  panel (`ValueOfficePanel`) does pure client-side compute against
-  `/api/v8/finance/value/value-bridge`, explicitly documented in that route
-  as "pure-compute — No DB access."
-- The program's own doctrine (`EXE-002_MANAGEMENT_SPINE_AUDIT.md`, gate
-  FLOW-001) is **closure → Results → Finance**, two hops, Results-mediated
-  — not closure → Finance directly.
-- The one real, UI-rendered, organization+initiative-scoped realization
-  table in this codebase is **`roi_realized_values`**, read by
-  `src/components/Benefits/ROITrackingPanel.tsx` via
-  `GET /benefits/roi/portfolio/summary`, owned by
-  `executionRealizationService.recordExecutionRealization` — today only
-  triggered by a human via Execution's "Record Realization" form.
+**Discovery** (parallel read-only agent, ~20 min budget): confirmed no
+existing "approved actual, explicit currency" concept exists anywhere in
+this codebase —
 
-**Fix**: `closure_finance_actuals` removed entirely from migration 935. The
-Finance leg (`closureDeliveryReceiptService.ts`) now calls
-`recordExecutionRealization` directly — the exact canonical function, not a
-copy — storing the returned `roi_realized_values.id` in `finance_payload`.
-Migration 937 adds an additive, nullable `closure_receipt_id` column +
-partial unique index to `roi_realized_values` (the idempotency key this
-closure-triggered path needs); the pre-existing human-entry write path never
-sets this column and is completely unaffected.
+- `roi_realized_values` / `kpi_time_series`: self-asserted `source` column, no approval/sign-off field.
+- `v8_roi_realization_entries.verified_by` — the ONE column anywhere in this schema with real approval semantics — is only ever written by a synthetic health-check probe (`healthProbeService.ts`), never a real user flow.
+- `initiative_benefits.actual_annual_value` is declared in three separate migrations but never written by any application code path (`git grep` across `server/src`: zero hits).
+- Closure evidence (`initiative_closure_requests`/`initiative_closure_evidence`) has no monetary field at all — free text only.
 
-### BLOCKER2 — `expected_roi` removed as a monetary source, entirely
+**Fix**: `findMonetaryActualMeasurement` (renamed from `computeMonetaryRealization`)
+no longer reads `target_value`. It reads `kpi_time_series` instead — a
+point-in-time OBSERVATION table, structurally distinct in kind from a
+target — requiring: same organization + initiative; the owning KPI's `unit`
+literally equals `budget_currency`; and the measurement's period is within
+`MONETARY_MEASUREMENT_MAX_AGE_DAYS` (180 days, a documented policy default,
+not a discovered fact) of delivery time. Anything else — no measurement,
+only a target, wrong/no currency, a stale measurement, a measurement
+recorded under a different `organization_id` — resolves `NEEDS_DECISION`,
+never a fabricated value. `finance_payload` now carries `sourceMeasurementId`
+alongside `realizationId` for full lineage.
 
-Confirmed via direct investigation (a parallel read-only agent, this round):
-`initiatives.expected_roi` is a free-text ROI/percentage narrative field in
-this schema — `903_expected_roi_to_text.sql`'s own header explains it was
-retyped from `REAL` to `TEXT` because the AI-hydration path writes strings
-like `"ROI 200%"` / `"44% (zysk netto ÷ nakład), payback 14 mies"`;
-`CharterBuilder.tsx` labels the same field **"Expected ROI (%)"**, a
-DIFFERENT field from **"Business Value (PLN)"**. No seed/demo data anywhere
-in the repo ever sets a currency-valued `initiative_kpis.unit`.
+**Honest limitation, not silently assumed away**: `kpi_time_series` has no
+formal human-approval workflow gating it before this leg can use it. This is
+recorded as an open NEEDS_PRODUCT_DECISION below, not claimed as solved.
 
-**Fix**: `computeMonetaryRealization` (renamed from `computeFinanceValue`)
-no longer reads `expected_roi` at all — not even as a fallback. The only
-signal is a planned KPI whose `unit` literally equals the initiative's own
-`budget_currency` code; anything else (no currency, no matching KPI, KPI in
-`%`/`days`/`count`) → `NEEDS_DECISION`. 5 new negative-control tests assert
-this exactly, including `expected_roi='20%'` and `expected_roi='20'`
-(bare numeric string) explicitly never producing an actual.
+### Negative-control exercise (performed live this session, not committed as permanent code)
 
-### BLOCKER3 — retry route RBAC
+1. Temporarily reintroduced the round-2 bug (fall back to `target_value`
+   when no measurement exists).
+2. Ran the new `TARGET-VS-ACTUAL #1` test — **failed** as expected
+   (`expected 'DELIVERED' to be 'NEEDS_DECISION'`).
+3. Reverted the file; `diff` against the pre-injection backup confirmed
+   **byte-identical**.
+4. Re-ran the same test — **passed**.
 
-`POST /:id/closure-receipt/retry` now calls `assertInitiativeInOrg` (404 on
-a foreign-org initiative — same order as `/approve`) then
-`assertActorCanApprove` (403 `CLOSURE_APPROVER_ROLE_REQUIRED` for a plain
-member) before touching the receipt — reusing the **exact same**
-`CLOSURE_APPROVER_ROLES` gate `/approve` already uses (no new role
-invented; `assertActorCanApprove` exported from `initiativeClosureService.ts`
-as a minimal, behavior-free visibility change, its own isolated commit).
-3 new route-level tests via `supertest` against the real Express router
-confirm: plain MEMBER → 403, ADMIN → 200, foreign-org initiative → 404
-(never a leaky 403).
+### A second, unrelated, pre-existing bug found and worked around (not fixed — out of scope)
 
-### BLOCKER4 — tenant-safe internal/user-facing split
+While re-testing, the previously-passing "TWO CONCURRENT `attemptDeliveryInternal`"
+regression test (which exercises `executionResultsBridge.handoffFromInitiativeFallback`,
+the no-KPI `expected_roi` path) started failing deterministically. Root
+cause: that function's own query, `SELECT COALESCE(title, name) AS name,
+expected_roi FROM initiatives ...`, references a `title` column that does
+not exist in this schema — a genuine, **pre-existing** bug (`git diff
+b359a4edad..HEAD -- server/src/services/executionResultsBridge.ts` is
+empty — EXE-09 has never touched this file), silently swallowed by
+`dbGet`'s `fallback: true` default, making that fallback path a permanent
+silent no-op. Not fixed here (single-writer discipline on a frozen file,
+and unrelated to this round's Finance target-vs-actual scope) — the test
+was changed to exercise `claimLeg`'s atomicity via a real KPI-target path
+instead, and the bug is flagged here as a NEEDS_FOLLOWUP for a future,
+separate M14→M15 packet.
 
-`attemptDelivery` renamed to `attemptDeliveryInternal` (worker/system-only —
-trusts its `receiptId`, no org check; doc comment makes the trust boundary
-explicit and names its three legitimate callers). `manualRetryReceipt`
-renamed to `retryDeliveryForOrg`, documented as the ONLY safe user-facing
-entry (verifies org ownership via `getReceiptById` before calling the
-internal function). New test: `retryDeliveryForOrg` rejects a receipt read
-under the wrong organization id at the service layer.
+## Canonical ownership (unchanged from round 2, reconfirmed)
 
-### BLOCKER5 — integration base re-confirmed
+- Closure trigger (frozen): `initiativeTransitionService.executeInitiativeTransition` sole writer of `initiatives.status`.
+- `closureDeliveryReceiptService.ts` — sole owner of `closure_delivery_receipts`.
+- Results leg: existing `executionResultsBridge.handoffFromClosure` (writes `initiative_benefits`) — unchanged.
+- Finance leg: existing `executionRealizationService.recordExecutionRealization` (writes `roi_realized_values`) — called directly; migration 937 is the only schema change to that table.
 
-Re-inventoried all four relevant frozen/active HEADs fresh (parallel
-read-only agent, this round), including `integrate/mvp-wave1-abc`'s CURRENT
-head (`8850bdc8d2`, newer than the control doc's stale checkpoint) and
-FIN-05's current head (`887b949a0b` — **still moving**, 8+ commits past its
-own control-doc checkpoint). Confirmed:
+## Receipt/outbox state machine (unchanged shape)
 
-- No branch in the repo has ever merged EXE-08 + Finance/Atelier together —
-  this integration genuinely doesn't exist yet anywhere.
-- `integrate/mvp-wave1-abc`'s Finance-vs-Atelier diff (43 files) and FIN-05's
-  full diff (98 files) both have **zero overlap** with EXE-09's touched
-  files, re-confirmed against the round-2 file set (`executionRealizationService.ts`,
-  `initiativeClosureService.ts` included).
-- Recommendation unchanged: **stay based on `feat/exe-008-closure-evidence-gate`
-  alone.** Merging Atelier now would pull in 43 unrelated files for zero
-  functional benefit (the canonical Finance target this round wired into,
-  `roi_realized_values`/`executionRealizationService.ts`, is already present
-  on the current base — verified directly, no merge required to reach it).
-
-### A second, independent concurrency bug (found while re-verifying)
-
-While re-testing BLOCKER1–4 against a fresh Postgres instance, the
-golden-flow/identical-retry/explicit-monetary-KPI tests started failing
-**deterministically** (not flaky — 6/6 failures). Root-caused to the
-Results/Finance legs' read-back-after-write queries
-(`initiative_benefits` after `handoffFromClosure`;
-`roi_realized_values` after `recordExecutionRealization`) going through the
-**shared connection pool** (`queryHelpers.queryAll/queryOne`) — the exact
-same documented footgun class already fixed once in `claimLeg` (round 1): a
-query issued right after a write can land on a different pool connection
-than the one that committed, observing stale state. Confirmed with a
-standalone repro: `handoffFromClosure` alone under concurrency was reliably
-correct (8/8 rounds, exactly one row); the full `attemptDeliveryInternal`
-path was not, and adding a debug `console.error` incidentally "fixed" it by
-shifting timing — the signature of a genuine race, not a flaky test.
-**Fixed**: both read-backs (and their paired terminal `UPDATE`) moved onto a
-dedicated `withPgTransaction` connection, matching `claimLeg`'s existing
-fix. Separately found and fixed: `closeInitiative`'s real transition ALSO
-fires a background best-effort delivery trigger for the same receipt,
-unknowingly racing several tests' own explicit delivery call — a
-`deliverAndFetch` test helper now polls to a terminal state instead of
-trusting either racer's raw return value.
-
-## Canonical ownership (updated)
-
-- Closure trigger (unchanged, frozen): `initiativeTransitionService.executeInitiativeTransition` is the sole writer of `initiatives.status`; only `initiativeClosureService.approveClosureRequest` (EXE-08) drives it to DONE.
-- `closureDeliveryReceiptService.ts` — sole owner of `closure_delivery_receipts`. No longer owns any Finance table.
-- Results leg: existing, already-idempotent `executionResultsBridge.handoffFromClosure` (writes `initiative_benefits`) — unchanged, not reimplemented.
-- Finance leg: existing, canonical `executionRealizationService.recordExecutionRealization` (writes `roi_realized_values`) — called directly, not copied. Migration 937 is the only schema change to this table (additive dedup column).
-
-## Receipt/outbox state machine (unchanged shape, corrected Finance target)
-
-One row per real closure, keyed by the transition engine's own
-`correlationId` (same PK as `initiative_status_history` for that
-transition).
-
-- `results_status`: `PENDING → DELIVERING → DELIVERED | FAILED` (retryable)
+- `results_status`: `PENDING → DELIVERING → DELIVERED | FAILED`
 - `finance_status`: `PENDING → DELIVERING → DELIVERED | FAILED | NEEDS_DECISION`
-- Independent per leg, both directions real-PG tested.
-- `attempts` / `last_error` / `*_delivered_at` / `*_payload` per leg;
-  `next_retry_at` exponential backoff (30s → capped 30min); stale-`DELIVERING`
-  reclaim after 5 minutes.
-- `finance_payload` now holds `{ realizationId }` — the real
-  `roi_realized_values.id`, read back on a pinned connection after every
-  attempt so a retry reports the same downstream id.
+- `finance_payload` now `{ realizationId, sourceMeasurementId }`.
+- Both legs' claim (`claimLeg`) and read-back-after-write run on a dedicated
+  pinned connection (`withPgTransaction`), not the shared pool (round-2 fix,
+  unchanged and re-verified this round).
 
-## Transaction boundaries
-
-- Receipt row inserted inside the SAME transaction as the status write
-  (`initiativeTransitionService.ts`, same `client`/`withPgTransaction`
-  block).
-- Each leg claimed atomically via `UPDATE ... WHERE status IN (...)` on a
-  dedicated pinned connection (`claimLeg`, `withPgTransaction`) — not the
-  shared pool.
-- Both legs' read-back-after-write + terminal status UPDATE also run on a
-  dedicated pinned connection (round-2 fix, see above) — not the shared
-  pool.
-
-## Changed files (16, +2455/-12 vs. base)
+## Changed files (16, +2937/-12 vs. base)
 
 ```
-docs/.../PACKETS/EXE-009_COMPLETION_REPORT.md                     (new)
-docs/.../PACKETS/EXE-009_DISCOVERY.md                             (new, +round-2 addendum)
-public/locales/en/translation.json                                (+10)
-public/locales/pl/translation.json                                (+10)
-server/migrations/935_exe009_closure_delivery_receipt.sql         (new, closure_finance_actuals removed)
-server/migrations/936_exe009_benefits_fallback_dedup_backstop.sql (new — Results-leg fallback dedup)
-server/migrations/937_exe009_roi_realized_values_closure_dedup.sql (new — Finance canonical dedup key)
-server/src/index.ts                                               (+15, cron registration)
-server/src/routes/pmo/initiativeClosure.routes.ts                 (+61, RBAC-gated retry + read routes)
-server/src/services/closureDeliveryReceiptService.ts              (new, 697 lines)
-server/src/services/executionRealizationService.ts                (+15/-, additive closureReceiptId param)
-server/src/services/initiative/initiativeClosureService.ts        (+10/-, assertActorCanApprove exported)
-server/src/services/initiative/initiativeTransitionService.ts     (+36/-9, two call-site edits only)
-src/components/Initiatives/sections/ClosureSection.tsx            (+137, status chip)
-tests/components/Initiatives/ClosureSection.test.tsx              (+58, 3 new tests)
-tests/integration/exe009-closure-delivery-receipt.realdb.test.ts  (new, 887 lines, 19 tests)
+docs/.../PACKETS/EXE-009_COMPLETION_REPORT.md                     286
+docs/.../PACKETS/EXE-009_DISCOVERY.md                             281
+public/locales/en/translation.json                                10
+public/locales/pl/translation.json                                10
+server/migrations/935_exe009_closure_delivery_receipt.sql        103
+server/migrations/936_exe009_benefits_fallback_dedup_backstop.sql 26
+server/migrations/937_exe009_roi_realized_values_closure_dedup.sql 19
+server/src/index.ts                                                15
+server/src/routes/pmo/initiativeClosure.routes.ts                  61
+server/src/services/closureDeliveryReceiptService.ts              747
+server/src/services/executionRealizationService.ts                15 (-)
+server/src/services/initiative/initiativeClosureService.ts         10 (-)
+server/src/services/initiative/initiativeTransitionService.ts      36 (-9)
+src/components/Initiatives/sections/ClosureSection.tsx            137
+tests/components/Initiatives/ClosureSection.test.tsx               58
+tests/integration/exe009-closure-delivery-receipt.realdb.test.ts 1135
 ```
+
+No new tables created this round (Codex's "nie twórz nowego Finance
+ledgeru" — `kpi_time_series`/`roi_realized_values` both pre-existing;
+migration 937 only adds a dedup column to the latter, from round 2).
 
 ## Test evidence (real Postgres 16, fresh-migrated, no mocks)
 
-**19 integration tests + 11 component tests = 30/30 passing.** Full
-integration suite re-run 6× consecutively after the round-2 fixes (114 total
-test executions) with zero failures; the specific concurrency regression
-test re-run 10× in isolation, also clean.
+**25 integration tests + 11 component tests = 36/36 passing.** Full
+integration suite re-run 6× consecutively after the round-3 fix (150 total
+test executions) with zero failures.
 
-Integration suite covers (19 tests): golden flow with canonical-table
-read-back, identical-retry same-downstream-ids, two concurrent full
-closures, a dedicated concurrent-delivery regression test (no-DB-backstop
-Results-leg fallback path), Results-fails/Finance-ok, Finance-fails/
-Results-ok, restart+reconciliation, cross-tenant read isolation, 2
-missing-mapping cases, 5 BLOCKER2 negative controls + 1 positive monetary
-case, 1 BLOCKER4 service-layer tenant test, 3 BLOCKER3 route-level RBAC
-tests.
+New/changed coverage this round: 7 `TARGET-VS-ACTUAL` tests (planned-target
+-alone → zero rows + `NEEDS_DECISION`; budget figure alone → zero actual;
+monetary-unit KPI with no measurement → zero actual; real measurement →
+exactly one canonical actual with source-measurement lineage; stale
+measurement → not auto-realized; foreign-organization measurement → zero
+leak); 1 canonical-read-back test through the real
+`GET /api/benefits/roi/portfolio/summary` route (supertest, real
+`roi_assumptions` precondition seeded, asserts the SAME `realizationId`
+/value/source is visible through it); golden-flow/retry/fault-injection/
+restart tests reworked to use deliberately DIFFERENT numbers for
+target-vs-measurement so a wrong-value bug would be visibly caught, not
+silently pass.
 
 ## Negative controls
 
-- Manual raw-SQL duplicate insert against the Results-leg fallback dedup
-  index → real `duplicate key value violates unique constraint` (DB
-  backstop genuinely enforced).
-- Standalone repro: `handoffFromClosure` called twice concurrently, 8
-  rounds, outside this packet's receipt/claim code — confirmed migration
-  936's index alone prevents duplication (defense in depth).
-- `expected_roi='20%'`, `expected_roi='20'`, currency-only/no-KPI, KPI in
-  `%`/`days`/`count` — all confirmed to produce `NEEDS_DECISION` and zero
-  `roi_realized_values` rows.
-- RBAC: plain MEMBER → 403 (real HTTP request); foreign-org initiative →
-  404, not a leaky 403 (real HTTP request); service-layer
-  `retryDeliveryForOrg` under the wrong org → rejected.
-- Cross-tenant read: receipt created in org A → `null` under org B via both
-  `getReceiptById` and `getReceiptForInitiative`.
+- Manual code-level negative control (required by Codex, performed live):
+  target-as-actual bug reintroduced → new test red → reverted (byte
+  -identical diff) → green.
+- `expected_roi='20%'`, `expected_roi='20'` (bare numeric string), budget
+  figure alone, monetary-unit KPI with no measurement, KPI in `%`/`days`/
+  `count` — all confirmed `NEEDS_DECISION` + zero `roi_realized_values`.
+- Stale (>180d) measurement → `NEEDS_DECISION`, zero rows.
+- Foreign-`organization_id` measurement (data-integrity probe, not just a
+  different initiative) → `NEEDS_DECISION`, zero rows — the query's own
+  `organization_id` filter is what stops it, not incidental initiative
+  -scoping.
+- RBAC (unchanged from round 2): plain MEMBER → 403; foreign-org initiative
+  → 404, not a leaky 403; service-layer `retryDeliveryForOrg` under the
+  wrong org → rejected.
+- Cross-tenant receipt read: org A → visible; org B → `null`.
+
+## Canonical Finance read-back
+
+Confirmed via a real HTTP request (supertest against the actual
+`benefits.routes.ts` router, same E2E JWT convention as the sibling EXE-08
+suite) to `GET /api/benefits/roi/portfolio/summary` — the exact endpoint
+`src/components/Benefits/ROITrackingPanel.tsx` calls. The response's
+`items[].realizedBenefit` for the test initiative equals the MEASUREMENT
+value (7300), never the target (99999) seeded alongside it in the same
+test, and matches the `realizationId` recorded in the receipt's
+`finance_payload`.
 
 ## UI evidence
 
-No new screen (a status chip inside the existing `ClosureSection`) —
-verified via component tests: PENDING/DELIVERING never renders "Delivered"
-(no-premature-success), a FAILED leg renders a working retry button,
-Finance NEEDS_DECISION renders the missing-mapping state with no retry
-option. All 8 pre-existing `ClosureSection` tests still pass unmodified.
+No UI code changed this round (round 2's status chip is unaffected by the
+value-source change — it only renders `financeStatus`/labels, never
+payload internals). All 11 `ClosureSection` component tests (8 pre-existing
++ 3 from round 1) still pass unmodified.
 
 ## Collision audit vs. active FIN-05
 
-Re-confirmed with the CURRENT (round-2) FIN-05 head
-(`887b949a0b`, moved 8+ commits since round 1) and the round-2 file set
-(now including `executionRealizationService.ts`, `initiativeClosureService.ts`):
-**zero file overlap.** `fix/fin-005-atelier-coherence` also untouched (base
-choice avoids it entirely).
+No files touched this round overlap with FIN-05 (`executionRealizationService.ts`,
+`closureDeliveryReceiptService.ts` are unrelated to FIN-05's statement
+-ingestion surface, already confirmed zero-overlap in round 2 against
+FIN-05's then-current HEAD `887b949a0b`; no new files introduced this round
+that would change that).
 
 ## Unresolved / NEEDS_PRODUCT_DECISION
 
-1. **Finance currency source remains a heuristic**: `initiatives.budget_currency`
-   (a column that itself defaults to `'PLN'`, not necessarily user-confirmed)
-   is the only currency signal used, and only fires when a KPI's `unit`
-   literally matches it — confirmed rare in current seed/demo data. This is
-   intentional (never fabricate), but a real product decision on "what field
-   is the authoritative financial-target currency for an initiative" would
-   let more real closures resolve instead of landing in `NEEDS_DECISION`.
-2. Per the brief's own instruction: no invented value mapping anywhere —
-   `expected_roi` is never read by the Finance leg, and any closure without
-   an explicit currency-matched KPI target lands in `NEEDS_DECISION`.
+1. **No formal approval/sign-off gate exists for a `kpi_time_series`
+   measurement before it can back a Finance realization.** This round fixed
+   the target-vs-actual conflation, but "approved" in a strict governance
+   sense (a human explicitly signing off "yes, this measurement is correct
+   and final") does not exist anywhere in this codebase today — confirmed
+   by this round's own discovery. A product decision to add such a gate
+   (e.g., wiring `v8_roi_realization_entries.verified_by` into a real route,
+   or adding an approval column to `kpi_time_series`) would let the Finance
+   leg require it explicitly.
+2. **The 180-day recency window (`MONETARY_MEASUREMENT_MAX_AGE_DAYS`) is a
+   documented policy default, not a discovered product requirement** — a
+   real decision on "how recent must a measurement be to count as this
+   closure's realized benefit" would let this be tuned or made
+   configurable per organization.
+3. **NEEDS_FOLLOWUP (separate, unrelated bug, not fixed here)**:
+   `executionResultsBridge.ts`'s `handoffFromInitiativeFallback` references
+   a non-existent `initiatives.title` column, silently swallowed by
+   `dbGet`'s fallback default — makes the no-KPI `expected_roi` Results
+   -leg fallback a permanent silent no-op. Pre-existing (confirmed via
+   `git diff` against base), unrelated to Finance target-vs-actual, out of
+   this round's scope and out of single-writer discipline on a frozen file.
+4. Per the brief's own instruction: no invented value mapping anywhere —
+   `expected_roi` and `target_value` are never read by the Finance leg, and
+   any closure without a real, currency-matched, recent measurement lands
+   in `NEEDS_DECISION`.
 
 ## Clean tree / no push / no merge / no deploy / no Railway / no demo
 
-- `git status --short`: clean (verified live, see top of this report).
 - Zero `git push`, zero merge into any other branch, zero Railway/demo
   interaction, zero production data at any point.
 - Local Docker Postgres instances used for testing were created, verified,
-  and torn down as part of this session — nothing persisted outside the
-  worktree/branch itself.
+  and torn down each round — nothing persisted outside the worktree/branch.
 
 AWAITING_CODEX_REVIEW
