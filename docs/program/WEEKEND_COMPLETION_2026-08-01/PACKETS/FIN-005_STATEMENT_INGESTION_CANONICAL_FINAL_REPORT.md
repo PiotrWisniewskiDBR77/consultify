@@ -257,7 +257,10 @@ $ git status --short
 (empty)
 ```
 
-Implementation HEAD (before this report's own commit): `6f7fd2e08d19ef0efbae5b73fd7aa4dd2afb3faa`.
-Documentation/final HEAD (this report's own commit): `a836f15a86`.
+Implementation HEAD (all code/test fixes, no docs): `6f7fd2e08d19ef0efbae5b73fd7aa4dd2afb3faa`.
+Documentation/final HEAD: whatever commit this file is checked in at —
+by construction a file cannot state its own final commit hash inside
+itself; run `git log -1 --oneline` on the branch for the true current HEAD
+rather than trusting a hash written here.
 
 AWAITING_CODEX_REVIEW
