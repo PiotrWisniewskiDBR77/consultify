@@ -8339,7 +8339,126 @@ export type ReservationOutcome =
   // the instant the redo's OWN Statement+Pack is created. `statementId` here
   // is that already-complete Statement — the caller must reuse it (a
   // recovery response), never re-run extraction/persist for this request.
-  | { kind: 'recover'; reservationId: string; statementId: string };
+  | { kind: 'recover'; reservationId: string; statementId: string }
+  // Codex round-5 — MULTI-SECTION recovery: the abandoned attempt recorded
+  // its COMPLETE intended response (every section's Statement id plus the
+  // real multi-section body) before its finalize step failed, and every one
+  // of those Statements has been re-verified as still present and fully
+  // synced to a pack. The caller replays `body` VERBATIM — same
+  // `mode: 'smart'`, same `statementIds`, same `analysis` the original
+  // success would have returned — instead of the single-id `mode: 'fallback'`
+  // reconstruction, which silently dropped every section after the first.
+  | {
+      kind: 'recover_result';
+      reservationId: string;
+      statusCode: number;
+      body: Record<string, unknown>;
+      statementIds: string[];
+    };
+
+/**
+ * What an ABANDONED keyed attempt leaves behind on its own 'failed' row, in
+ * the `response_json` column.
+ *
+ * WHY `response_json` AND NOT A NEW COLUMN: the column already exists and is
+ * NULL on every non-'completed' row, so this needs no migration and no data
+ * model change at all. The dual meaning is safe for exactly the reason the
+ * existing `statement_id` dual meaning is safe — the ONLY site that reads
+ * `response_json` as a replayable payload (`reserveIdempotentUpload`'s replay
+ * branch) is gated on `status === 'completed'` first, and the reclaim UPDATE
+ * nulls the column.
+ *
+ * `statementIds` is recorded even when `result` is absent (a throw, or a
+ * controlled non-2xx): knowing HOW MANY Statements an abandoned attempt
+ * created is what lets recovery tell "one section, honestly reconstructable"
+ * apart from "several sections, NOT reconstructable from a single id" — the
+ * latter must never be answered with a fallback single-statement success.
+ */
+export interface FailedAttemptRecord {
+  statementIds: string[];
+  /** Present only when the attempt actually produced a complete success body
+   * and then failed at finalize — the only case a full replay is honest. */
+  result?: { statusCode: number; body: Record<string, unknown> };
+}
+
+const FAILED_ATTEMPT_ENVELOPE_KEY = '__fin005_failed_attempt';
+
+function encodeFailedAttemptRecord(record: FailedAttemptRecord): string {
+  return JSON.stringify({ [FAILED_ATTEMPT_ENVELOPE_KEY]: record });
+}
+
+/** Tolerant by design: anything unparseable or foreign is treated as "nothing
+ * recorded", which degrades to the pre-existing single-id behavior instead of
+ * throwing inside the reservation path. */
+export function parseFailedAttemptRecord(raw: string | null): FailedAttemptRecord | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const envelope = parsed?.[FAILED_ATTEMPT_ENVELOPE_KEY] as
+      | { statementIds?: unknown; result?: unknown }
+      | undefined;
+    if (!envelope || !Array.isArray(envelope.statementIds)) return null;
+    const statementIds = (envelope.statementIds as unknown[]).filter(
+      (id): id is string => typeof id === 'string' && id.length > 0
+    );
+    const rawResult = envelope.result as { statusCode?: unknown; body?: unknown } | undefined;
+    const result =
+      rawResult &&
+      typeof rawResult === 'object' &&
+      rawResult.body &&
+      typeof rawResult.body === 'object'
+        ? {
+            statusCode: Number(rawResult.statusCode) || 201,
+            body: rawResult.body as Record<string, unknown>,
+          }
+        : undefined;
+    return { statementIds, result };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Re-verify, against the database, that EVERY Statement an abandoned attempt
+ * created still exists in this organization and is fully synced to a pack
+ * (`statement_pack_id IS NOT NULL` — the same completeness signal the
+ * single-id recovery path uses). Tenant-scoped as defense in depth.
+ *
+ * A recorded response is only replayable if this returns true for the whole
+ * set: replaying a body that advertises N statement ids while some of them no
+ * longer exist would hand the client a receipt it cannot read back.
+ */
+async function areAllStatementsComplete(
+  statementIds: string[],
+  organizationId: string
+): Promise<boolean> {
+  if (statementIds.length === 0) return false;
+  for (const id of statementIds) {
+    const row = await dbGet<{ id: string; statement_pack_id: string | null }>(
+      `SELECT id, statement_pack_id FROM financial_statements WHERE id = ? AND organization_id = ?`,
+      [id, organizationId],
+      { fallback: false }
+    );
+    if (!row || !row.statement_pack_id) return false;
+  }
+  return true;
+}
+
+/**
+ * Compensating hard-delete for an abandoned attempt's Statement, reusing the
+ * exact pattern the pre-existing `DELETE /finance-statements/:id` route uses.
+ * Safe to call while holding the (org, key) advisory lock — nothing else can
+ * be touching this reservation's own statements.
+ */
+async function compensateAbandonedStatement(statementId: string): Promise<void> {
+  await detachStatementFromPack(statementId);
+  await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [statementId], {
+    fallback: false,
+  });
+  await dbRun(`DELETE FROM financial_statements WHERE id = ?`, [statementId], {
+    fallback: false,
+  });
+}
 
 /**
  * Attempt to become the durable OWNER of the (organizationId, idempotencyKey)
@@ -8445,12 +8564,75 @@ export async function reserveIdempotentUpload(
     );
 
     if (eligible) {
-      // Step 2: if the abandoned attempt's `statement_id` is set, find out
-      // whether it reached a COMPLETE state — the same signal
-      // `syncStatementToPack` itself sets (`statement_pack_id`
-      // non-null) — before deciding whether to recover it or compensate for
-      // it. Tenant-scoped by `organizationId` as defense in depth.
-      const orphanId = existing.statement_id || null;
+      // ── Codex round-5: MULTI-SECTION recovery ────────────────────────────
+      //
+      // Step 2a: prefer the abandoned attempt's OWN recorded receipt over
+      // reconstructing one. `failIdempotentUpload` now persists the complete
+      // intended response (and the full set of Statement ids) whenever the
+      // attempt got as far as producing one, so a multi-section upload that
+      // died at finalize can be replayed EXACTLY — every section, the real
+      // `mode`, the real `analysis` — instead of being answered with a
+      // single-id `mode: 'fallback'` body that silently dropped sections 2..N.
+      const failedAttempt = parseFailedAttemptRecord(existing.response_json);
+      const recordedIds =
+        failedAttempt && failedAttempt.statementIds.length > 0
+          ? failedAttempt.statementIds
+          : existing.statement_id
+            ? [existing.statement_id]
+            : [];
+
+      if (failedAttempt?.result && recordedIds.length > 0) {
+        if (await areAllStatementsComplete(recordedIds, organizationId)) {
+          // Take durable ownership exactly like the single-id recovery path
+          // (finalizeIdempotentUpload requires status='in_progress'), leaving
+          // `statement_id` and `response_json` untouched so a crash HERE
+          // leaves the receipt intact for the next retry.
+          const owned = await dbGet<{ id: string }>(
+            `UPDATE financial_statement_upload_idempotency
+                SET status = 'in_progress', created_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+                AND (status = 'failed'
+                     OR (status = 'in_progress'
+                         AND created_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_IN_PROGRESS_SECONDS} seconds'))
+              RETURNING id`,
+            [existing.id],
+            { fallback: false }
+          );
+          if (owned) {
+            return {
+              kind: 'recover_result',
+              reservationId: existing.id,
+              statusCode: failedAttempt.result.statusCode,
+              body: failedAttempt.result.body,
+              statementIds: recordedIds,
+            };
+          }
+          // Lost a theoretical race — fall through to the safety net below.
+        } else {
+          // The receipt exists but the world moved on: at least one of the
+          // Statements it advertises is gone or was never completed. Replaying
+          // it would hand the client ids it cannot read back. Fail CLOSED on
+          // the replay: compensate the whole set so no partial ghost survives,
+          // then let this request redo the upload honestly.
+          for (const id of recordedIds) await compensateAbandonedStatement(id);
+        }
+      } else if (recordedIds.length > 1) {
+        // Several Statements were created but NO complete response was ever
+        // recorded (the attempt threw, or returned a controlled non-2xx). A
+        // multi-section operation cannot be honestly reconstructed from ids
+        // alone — there is no `analysis`, no section metadata, no
+        // ordering. Emitting a single-statement `mode: 'fallback'` success
+        // here is exactly the defect this round exists to remove. Compensate
+        // every one of them and let the retry redo the whole upload.
+        for (const id of recordedIds) await compensateAbandonedStatement(id);
+      }
+
+      // Step 2b: the pre-existing SINGLE-statement paths, unchanged. Reached
+      // when the abandoned attempt tracked at most one Statement and recorded
+      // no complete response — for a single-section upload one complete
+      // Statement genuinely IS the whole operation.
+      const orphanId =
+        failedAttempt?.result || recordedIds.length > 1 ? null : existing.statement_id || null;
       if (orphanId) {
         const orphanStatement = await dbGet<{ id: string; statement_pack_id: string | null }>(
           `SELECT id, statement_pack_id FROM financial_statements WHERE id = ? AND organization_id = ?`,
@@ -8619,12 +8801,27 @@ export async function finalizeIdempotentUpload(params: {
  */
 export async function failIdempotentUpload(
   reservationId: string,
-  statementId?: string
+  statementIdOrIds?: string | string[],
+  pendingResult?: { statusCode: number; body: Record<string, unknown> }
 ): Promise<void> {
+  const statementIds = (
+    Array.isArray(statementIdOrIds) ? statementIdOrIds : statementIdOrIds ? [statementIdOrIds] : []
+  ).filter((id) => typeof id === 'string' && id.length > 0);
   try {
+    // `statement_id` keeps its established meaning (the FIRST/primary
+    // Statement this abandoned attempt left behind) so the pre-existing
+    // single-statement recovery path is untouched. `response_json`
+    // additionally carries the FULL set of ids and — when the attempt got far
+    // enough to have one — the complete intended response, which is what
+    // makes multi-section recovery honest instead of a first-section guess.
+    // See FailedAttemptRecord for why reusing this column needs no migration.
+    const record =
+      statementIds.length > 0 || pendingResult
+        ? encodeFailedAttemptRecord({ statementIds, result: pendingResult })
+        : null;
     const result = await dbRun(
-      `UPDATE financial_statement_upload_idempotency SET status = 'failed', statement_id = ? WHERE id = ? AND status = 'in_progress'`,
-      [statementId || null, reservationId],
+      `UPDATE financial_statement_upload_idempotency SET status = 'failed', statement_id = ?, response_json = ? WHERE id = ? AND status = 'in_progress'`,
+      [statementIds[0] || null, record, reservationId],
       { fallback: false }
     );
     if (!result?.success || Number(result?.changes || 0) !== 1) {

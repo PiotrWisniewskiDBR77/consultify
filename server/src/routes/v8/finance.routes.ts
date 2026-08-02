@@ -1314,6 +1314,12 @@ router.post(
     // reasoning applies here.
     let anyStatementPersisted = false;
     let primaryStatementId: string | null = null;
+    // Codex round-5: EVERY Statement this attempt persists, in creation order
+    // — not just the first. `primaryStatementId` alone is what forced
+    // recovery to answer a multi-section upload with a single-section
+    // `mode: 'fallback'` body; the full set is what lets a retry either
+    // replay the whole receipt or compensate all of it.
+    const createdStatementIds: string[] = [];
 
     const performUploadAndAnalyze = async (): Promise<{
       statusCode: number;
@@ -1378,6 +1384,7 @@ router.post(
         });
         anyStatementPersisted = true;
         primaryStatementId = statementId;
+        createdStatementIds.push(statementId);
         const statementPackId = await syncStatementToPack(statementId);
         await dbRun(
           `UPDATE financial_statements SET notes = ? WHERE id = ?`,
@@ -1431,6 +1438,7 @@ router.post(
         });
         anyStatementPersisted = true;
         if (!primaryStatementId) primaryStatementId = statementId;
+        createdStatementIds.push(statementId);
 
         await dbRun(
           `UPDATE financial_statements SET notes = ? WHERE id = ?`,
@@ -1638,11 +1646,43 @@ router.post(
       async (): Promise<LockOutcome> => {
         const reservation = await reserveIdempotentUpload(organizationId, key, requestHash, userId);
 
+        if (reservation.kind === 'recover_result') {
+          // Codex round-5 — MULTI-SECTION recovery: the abandoned attempt's
+          // OWN complete response was recorded durably before its finalize
+          // failed, and every Statement it names has been re-verified as
+          // present and pack-synced. Replay it VERBATIM: same mode, same
+          // statementIds, same analysis. No re-extraction, no LLM call, no
+          // performUploadAndAnalyze() call, no new Statement/Pack.
+          const finalized = await finalizeIdempotentUpload({
+            reservationId: reservation.reservationId,
+            statementId: reservation.statementIds[0] || '',
+            statusCode: reservation.statusCode,
+            responseJson: JSON.stringify(reservation.body),
+          });
+          if (!finalized) {
+            // Keep the receipt intact for the next retry — never downgrade a
+            // recoverable multi-section attempt into a first-section guess.
+            await failIdempotentUpload(reservation.reservationId, reservation.statementIds, {
+              statusCode: reservation.statusCode,
+              body: reservation.body,
+            });
+            return { kind: 'finalize_failed' as const, recovered: true };
+          }
+          return {
+            kind: 'recover' as const,
+            statusCode: reservation.statusCode,
+            body: reservation.body,
+          };
+        }
+
         if (reservation.kind === 'recover') {
           // FIN-005 Codex round-4 Blocker 1: a prior attempt for this key
           // already durably completed a real, fully-synced Statement+Pack —
           // reuse it. No re-extraction, no LLM call, no
-          // performUploadAndAnalyze() call at all.
+          // performUploadAndAnalyze() call at all. Only ever reached for a
+          // genuinely SINGLE-statement attempt (round-5: a multi-section one
+          // either replays its recorded receipt above or is compensated and
+          // redone — never reconstructed from one id).
           const body = await buildV8UploadRecoveryResponseBody(reservation.statementId, organizationId);
           if (!body) {
             await failIdempotentUpload(reservation.reservationId, reservation.statementId);
@@ -1679,7 +1719,10 @@ router.post(
           if (!anyStatementPersisted) {
             await cleanupUnpersistedUpload(file.path, 'upload-and-analyze threw (v8)');
           }
-          await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
+          // No complete response exists for a thrown attempt — record only the
+          // id set, so a retry can tell "one section (recoverable)" from
+          // "several sections (must be compensated and redone)".
+          await failIdempotentUpload(reservation.reservationId, createdStatementIds);
           throw error;
         }
 
@@ -1687,7 +1730,7 @@ router.post(
           if (!anyStatementPersisted) {
             await cleanupUnpersistedUpload(file.path, 'upload-and-analyze controlled failure (v8)');
           }
-          await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
+          await failIdempotentUpload(reservation.reservationId, createdStatementIds);
           return { kind: 'fresh' as const, statusCode: result.statusCode, body: result.body };
         }
 
@@ -1708,7 +1751,14 @@ router.post(
               reservationId: reservation.reservationId,
             }
           );
-          await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
+          // THE round-5 fix: persist the COMPLETE response this attempt would
+          // have returned, alongside every Statement id it created. A retry
+          // with the same key replays exactly this — for a multi-section
+          // upload that means all sections, not just the first.
+          await failIdempotentUpload(reservation.reservationId, createdStatementIds, {
+            statusCode: result.statusCode,
+            body: result.body,
+          });
           return { kind: 'finalize_failed' as const };
         }
 
