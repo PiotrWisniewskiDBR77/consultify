@@ -1,12 +1,4 @@
-import {
-  CheckCircle2,
-  Download,
-  ExternalLink,
-  Loader2,
-  Play,
-  Plus,
-  X,
-} from 'lucide-react';
+import { CheckCircle2, Download, ExternalLink, Loader2, Play, Plus, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -543,13 +535,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
   // recommendation was already handed off before — so the toast says that
   // honestly instead of claiming a fresh creation.
   const handleCandidateHandoffConfirmed = useCallback(
-    ({
-      created,
-      candidateId,
-    }: {
-      created: boolean;
-      candidateId: string;
-    }) => {
+    ({ created, candidateId }: { created: boolean; candidateId: string }) => {
       // Reuses the existing `valuation_advisory_recommendation_converted`
       // FunnelEventName (funnelAnalytics.ts is outside this task's file
       // ownership) — the `created`/`candidateId` fields distinguish a fresh
@@ -1756,7 +1742,10 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
           confirmLabel={t('valuation.advisory.candidateModalConfirm', 'Wyślij')}
           cancelLabel={t('valuation.advisory.candidateModalCancel', 'Anuluj')}
           closeLabel={t('valuation.advisory.candidateModalClose', 'Zamknij')}
-          checkingLabel={t('valuation.advisory.candidateChecking', 'Sprawdzanie kwalifikowalności…')}
+          checkingLabel={t(
+            'valuation.advisory.candidateChecking',
+            'Sprawdzanie kwalifikowalności…'
+          )}
           fitScoreLabel={t('valuation.advisory.candidateFitScore', 'Dopasowanie')}
           previewErrorFallback={t(
             'valuation.advisory.candidatePreviewFailed',

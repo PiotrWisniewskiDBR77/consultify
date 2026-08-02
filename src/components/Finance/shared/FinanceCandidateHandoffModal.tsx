@@ -348,142 +348,142 @@ export const FinanceCandidateHandoffModal: React.FC<FinanceCandidateHandoffModal
 
   const body = (
     <>
-        {!embedded && (
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-c-text">{title}</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={phase === 'confirming'}
-              className="text-c-text-secondary hover:text-c-text disabled:opacity-60"
-              aria-label={closeLabel}
-            >
-              <X size={18} />
-            </button>
-          </div>
-        )}
+      {!embedded && (
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-c-text">{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={phase === 'confirming'}
+            className="text-c-text-secondary hover:text-c-text disabled:opacity-60"
+            aria-label={closeLabel}
+          >
+            <X size={18} />
+          </button>
+        </div>
+      )}
 
-        {phase === 'previewing' && (
-          <div className="flex items-center gap-2 py-6 text-sm text-c-text-secondary">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            {checkingLabel}
-          </div>
-        )}
+      {phase === 'previewing' && (
+        <div className="flex items-center gap-2 py-6 text-sm text-c-text-secondary">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          {checkingLabel}
+        </div>
+      )}
 
-        {phase === 'ineligible' && (
-          <div className="space-y-4">
-            <div className="flex items-start gap-2 rounded-lg border border-c-warning/30 bg-c-warning/10 p-3">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-c-warning" />
-              <p className="text-xs text-c-text">{ineligibleCopy}</p>
-            </div>
-            {!embedded && (
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 text-sm text-c-text-muted hover:text-c-text-secondary"
-                >
-                  {closeLabel}
-                </button>
-              </div>
-            )}
+      {phase === 'ineligible' && (
+        <div className="space-y-4">
+          <div className="flex items-start gap-2 rounded-lg border border-c-warning/30 bg-c-warning/10 p-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-c-warning" />
+            <p className="text-xs text-c-text">{ineligibleCopy}</p>
           </div>
-        )}
-
-        {(phase === 'eligible' || phase === 'confirming') && previewData && (
-          <div className="space-y-4">
-            <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
-              <div className="text-sm font-semibold text-c-text">{previewData.title}</div>
-              <p className="mt-1.5 text-xs leading-relaxed text-c-text-secondary">
-                {previewData.rationale}
-              </p>
-              {typeof previewData.fitScore === 'number' && (
-                <div className="mt-2 text-[10px] text-c-text-muted">
-                  {fitScoreLabel}: {Math.round(previewData.fitScore * 100)}%
-                </div>
-              )}
-              {previewData.sourceSnapshot && (
-                <SourceSnapshotSummary snapshot={previewData.sourceSnapshot} />
-              )}
-            </div>
-            <p className="text-xs text-c-text-muted">{noticeText}</p>
-            <div className="flex justify-end gap-2">
-              {!embedded && (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  disabled={phase === 'confirming'}
-                  className="px-4 py-2 text-sm text-c-text-muted hover:text-c-text-secondary disabled:opacity-60"
-                >
-                  {cancelLabel}
-                </button>
-              )}
+          {!embedded && (
+            <div className="flex justify-end">
               <button
                 type="button"
-                disabled={phase === 'confirming'}
-                onClick={handleConfirm}
-                className="rounded-lg bg-c-text px-4 py-2 text-sm font-medium text-c-bg hover:opacity-90 disabled:opacity-60"
+                onClick={onClose}
+                className="px-4 py-2 text-sm text-c-text-muted hover:text-c-text-secondary"
               >
-                {phase === 'confirming' ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {confirmingLabel || confirmLabel}
-                  </span>
-                ) : (
-                  confirmLabel
-                )}
+                {closeLabel}
               </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      )}
 
-        {phase === 'success' && keepOpenOnSuccess && (
-          <div className="space-y-4">
-            <div className="flex items-start gap-2 rounded-lg border border-c-success/30 bg-c-success/10 p-3">
-              <p className="text-xs text-c-text">{resultMessage}</p>
-            </div>
-            <div className="flex justify-end gap-2">
-              {reopenLink && (
-                <a
-                  href={reopenLink}
-                  className="flex items-center gap-1 px-4 py-2 text-sm text-c-info hover:underline"
-                >
-                  {reopenLabel}
-                  <ExternalLink size={12} />
-                </a>
-              )}
-              {!embedded && (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 text-sm text-c-text-muted hover:text-c-text-secondary"
-                >
-                  {closeLabel}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {phase === 'error' && (
-          <div className="space-y-4">
-            <div className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 p-3">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-c-danger" />
-              <p className="text-xs text-c-text">{errorMessage}</p>
-            </div>
-            {!embedded && (
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 text-sm text-c-text-muted hover:text-c-text-secondary"
-                >
-                  {closeLabel}
-                </button>
+      {(phase === 'eligible' || phase === 'confirming') && previewData && (
+        <div className="space-y-4">
+          <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
+            <div className="text-sm font-semibold text-c-text">{previewData.title}</div>
+            <p className="mt-1.5 text-xs leading-relaxed text-c-text-secondary">
+              {previewData.rationale}
+            </p>
+            {typeof previewData.fitScore === 'number' && (
+              <div className="mt-2 text-[10px] text-c-text-muted">
+                {fitScoreLabel}: {Math.round(previewData.fitScore * 100)}%
               </div>
             )}
+            {previewData.sourceSnapshot && (
+              <SourceSnapshotSummary snapshot={previewData.sourceSnapshot} />
+            )}
           </div>
-        )}
+          <p className="text-xs text-c-text-muted">{noticeText}</p>
+          <div className="flex justify-end gap-2">
+            {!embedded && (
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={phase === 'confirming'}
+                className="px-4 py-2 text-sm text-c-text-muted hover:text-c-text-secondary disabled:opacity-60"
+              >
+                {cancelLabel}
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={phase === 'confirming'}
+              onClick={handleConfirm}
+              className="rounded-lg bg-c-text px-4 py-2 text-sm font-medium text-c-bg hover:opacity-90 disabled:opacity-60"
+            >
+              {phase === 'confirming' ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {confirmingLabel || confirmLabel}
+                </span>
+              ) : (
+                confirmLabel
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {phase === 'success' && keepOpenOnSuccess && (
+        <div className="space-y-4">
+          <div className="flex items-start gap-2 rounded-lg border border-c-success/30 bg-c-success/10 p-3">
+            <p className="text-xs text-c-text">{resultMessage}</p>
+          </div>
+          <div className="flex justify-end gap-2">
+            {reopenLink && (
+              <a
+                href={reopenLink}
+                className="flex items-center gap-1 px-4 py-2 text-sm text-c-info hover:underline"
+              >
+                {reopenLabel}
+                <ExternalLink size={12} />
+              </a>
+            )}
+            {!embedded && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm text-c-text-muted hover:text-c-text-secondary"
+              >
+                {closeLabel}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {phase === 'error' && (
+        <div className="space-y-4">
+          <div className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 p-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-c-danger" />
+            <p className="text-xs text-c-text">{errorMessage}</p>
+          </div>
+          {!embedded && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm text-c-text-muted hover:text-c-text-secondary"
+              >
+                {closeLabel}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 

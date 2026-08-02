@@ -39,7 +39,6 @@
  * module never inserts into `initiative_candidates` directly.
  */
 import { createHash } from 'crypto';
-
 import { v4 as uuidv4 } from 'uuid';
 
 import type { PinnedTransactionClient } from '../../database/PostgresDatabase.js';
@@ -177,9 +176,7 @@ export class FinanceCandidateHandoffError extends Error {
 }
 
 /** What a caller-supplied eligibility resolver returns. */
-export type FinanceSourceResolution<T> =
-  | { ok: true; data: T }
-  | { ok: false; reason: string };
+export type FinanceSourceResolution<T> = { ok: true; data: T } | { ok: false; reason: string };
 
 /** Minimal candidate content a Phase-2 adapter derives from its resolved source. */
 export interface FinanceCandidateFields {
@@ -472,7 +469,8 @@ export async function getFinanceCandidateHandoff(params: {
     sourceId: row.source_id,
     candidateId: row.candidate_id,
     createdBy: row.created_by ?? null,
-    createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+    createdAt:
+      row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
     sourceSnapshot: normalizeStoredSnapshot(row.source_snapshot),
   };
 }

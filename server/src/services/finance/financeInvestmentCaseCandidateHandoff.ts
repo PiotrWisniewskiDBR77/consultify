@@ -165,7 +165,9 @@ async function resolveEligibleInvestmentCase(
  * breakdowns, but no single aggregate figure — summing those periods would
  * be this module deriving a new number, not carrying one over verbatim.
  */
-function buildInvestmentCaseSourceSnapshot(model: FinancialModelRow): FinanceCandidateSourceSnapshot {
+function buildInvestmentCaseSourceSnapshot(
+  model: FinancialModelRow
+): FinanceCandidateSourceSnapshot {
   const { validationRisks } = readApprovedSnapshotFacts(model.approved_snapshot);
   return {
     ...emptySourceSnapshot(),
@@ -237,12 +239,18 @@ function buildInvestmentCaseCandidateFields(model: FinancialModelRow): FinanceCa
   if (computedAt || typeof periodsCount === 'number') {
     const bits = [
       computedAt ? `computed ${computedAt}` : null,
-      typeof periodsCount === 'number' ? `${periodsCount} period(s) in the approved snapshot` : null,
+      typeof periodsCount === 'number'
+        ? `${periodsCount} period(s) in the approved snapshot`
+        : null,
     ].filter(Boolean);
     parts.push(`Approved snapshot: ${bits.join(', ')}.`);
   }
 
-  return { title, rationale: parts.join(' '), sourceSnapshot: buildInvestmentCaseSourceSnapshot(model) };
+  return {
+    title,
+    rationale: parts.join(' '),
+    sourceSnapshot: buildInvestmentCaseSourceSnapshot(model),
+  };
 }
 
 export async function previewInvestmentCaseCandidate(params: {
@@ -295,7 +303,10 @@ async function lockInvestmentCaseRow(
   );
 }
 
-export async function getInvestmentCaseCandidateHandoff(params: { organizationId: string; modelId: string }) {
+export async function getInvestmentCaseCandidateHandoff(params: {
+  organizationId: string;
+  modelId: string;
+}) {
   return getFinanceCandidateHandoff({
     organizationId: params.organizationId,
     sourceType: FINANCE_INVESTMENT_CASE_SOURCE_TYPE,

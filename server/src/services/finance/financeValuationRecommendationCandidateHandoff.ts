@@ -70,14 +70,14 @@ import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
   computeSourceFingerprint,
   confirmFinanceCandidateHandoff,
-  emptySourceSnapshot,
-  getFinanceCandidateHandoff,
-  previewFinanceCandidateHandoff,
-  unknownIfMissing,
   type ConfirmFinanceCandidateHandoffResult,
+  emptySourceSnapshot,
   type FinanceCandidateFields,
   type FinanceCandidatePreviewResult,
   type FinanceCandidateSourceSnapshot,
+  getFinanceCandidateHandoff,
+  previewFinanceCandidateHandoff,
+  unknownIfMissing,
 } from './financeCandidateHandoffCore.js';
 
 const SOURCE_TYPE = 'finance_valuation_recommendation' as const;
@@ -230,7 +230,10 @@ function formatAssumptions(raw: string | Record<string, unknown> | null): string
   }
   if (!obj || typeof obj !== 'object') return null;
   const lines = Object.entries(obj)
-    .filter(([, v]) => v !== null && (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean'))
+    .filter(
+      ([, v]) =>
+        v !== null && (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean')
+    )
     .map(([k, v]) => `${k}: ${v}`);
   return lines.length > 0 ? lines : null;
 }

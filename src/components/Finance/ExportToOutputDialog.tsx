@@ -40,7 +40,10 @@ function supportsInvestmentCaseHandoff(analysisType: string): boolean {
 }
 
 /** Known machine-readable ineligibility reason codes from the backend preview. */
-function describeIneligibleReason(reason: string, t: (key: string, fallback: string) => string): string {
+function describeIneligibleReason(
+  reason: string,
+  t: (key: string, fallback: string) => string
+): string {
   if (reason === 'NOT_APPROVED') {
     return t(
       'finance.export.investmentCaseNotApproved',
@@ -455,14 +458,20 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
                     fetchHandoff={() => getInvestmentCaseCandidateHandoff(analysisId)}
                     getReopenLink={() => null}
                     describeIneligibleReason={(reason) => describeIneligibleReason(reason, t)}
-                    title={t('finance.export.investmentCaseHandoffTitle', 'Investment Case → Candidate')}
+                    title={t(
+                      'finance.export.investmentCaseHandoffTitle',
+                      'Investment Case → Candidate'
+                    )}
                     noticeText={t(
                       'finance.export.investmentCaseCandidateNotice',
                       'This sends the Investment Case to the Candidate inbox for review — it does not create an Initiative directly.'
                     )}
                     confirmLabel={t('finance.export.sendAsCandidate', 'Send as Candidate')}
                     confirmingLabel={t('finance.export.creating', 'Creating...')}
-                    checkingLabel={t('finance.export.checkingEligibility', 'Checking eligibility...')}
+                    checkingLabel={t(
+                      'finance.export.checkingEligibility',
+                      'Checking eligibility...'
+                    )}
                     previewErrorFallback={t(
                       'finance.export.investmentCaseEligibilityFailed',
                       'Could not check eligibility'

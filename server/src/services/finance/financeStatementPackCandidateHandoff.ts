@@ -31,22 +31,25 @@
  * observes the latest committed readiness value.
  */
 import type { PinnedTransactionClient } from '../../database/PostgresDatabase.js';
+import { getStatementPackDetail } from '../financialStatementPackService.js';
 import {
   computeSourceFingerprint,
   confirmFinanceCandidateHandoff,
-  emptySourceSnapshot,
-  previewFinanceCandidateHandoff,
-  unknownIfMissing,
   type ConfirmFinanceCandidateHandoffResult,
+  emptySourceSnapshot,
   type FinanceCandidateFields,
   type FinanceCandidatePreviewResult,
   type FinanceCandidateSourceSnapshot,
   type FinanceSourceResolution,
+  previewFinanceCandidateHandoff,
+  unknownIfMissing,
 } from './financeCandidateHandoffCore.js';
-import { getStatementPackDetail } from '../financialStatementPackService.js';
 
-export { FinanceCandidateHandoffError, getFinanceCandidateHandoff } from './financeCandidateHandoffCore.js';
 export type { ConfirmFinanceCandidateHandoffResult } from './financeCandidateHandoffCore.js';
+export {
+  FinanceCandidateHandoffError,
+  getFinanceCandidateHandoff,
+} from './financeCandidateHandoffCore.js';
 
 const SOURCE_TYPE = 'finance_statement_pack' as const;
 
@@ -89,7 +92,9 @@ function formatPeriod(pack: StatementPackCandidateSource): string {
 
 function countByType(pack: StatementPackCandidateSource, type: string): number {
   const statements = Array.isArray(pack.statements) ? pack.statements : [];
-  return statements.filter((statement) => normalizeText(statement?.statement_type).toUpperCase() === type).length;
+  return statements.filter(
+    (statement) => normalizeText(statement?.statement_type).toUpperCase() === type
+  ).length;
 }
 
 /**
@@ -121,7 +126,9 @@ function parseReasonCodes(raw: unknown): string[] | null {
  * valuation, so those are honestly 'unknown' rather than forced into a
  * shape this source doesn't have.
  */
-function buildStatementPackSourceSnapshot(pack: StatementPackCandidateSource): FinanceCandidateSourceSnapshot {
+function buildStatementPackSourceSnapshot(
+  pack: StatementPackCandidateSource
+): FinanceCandidateSourceSnapshot {
   // The closest genuine "risk" signal a pack carries: its own stored
   // quality/readiness reason codes (e.g. MISSING_PL, INCONSISTENT_CURRENCY)
   // — real data, whatever it happens to contain, not fabricated.
@@ -166,7 +173,10 @@ async function resolveEligibleSource(
   organizationId: string,
   packId: string
 ): Promise<FinanceSourceResolution<StatementPackCandidateSource>> {
-  const pack = (await getStatementPackDetail(organizationId, packId)) as StatementPackCandidateSource | null;
+  const pack = (await getStatementPackDetail(
+    organizationId,
+    packId
+  )) as StatementPackCandidateSource | null;
   if (!pack) {
     return { ok: false, reason: 'NOT_FOUND' };
   }
@@ -215,7 +225,7 @@ function buildCandidateFields(pack: StatementPackCandidateSource): FinanceCandid
   // normalized to the 0..1 fitScore scale `createCandidateFromSource`
   // expects — never a fabricated number.
   if (hasReadinessScore) {
-    fields.fitScore = Math.round(Math.max(0, Math.min(100, readinessScore)) / 100 * 100) / 100;
+    fields.fitScore = Math.round((Math.max(0, Math.min(100, readinessScore)) / 100) * 100) / 100;
   }
 
   return fields;

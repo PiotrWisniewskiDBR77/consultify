@@ -25,8 +25,6 @@ import {
   previewStatementPackCandidateHandoff,
 } from '@/services/api/v8/financeCandidateHandoffStatementPack';
 
-import { FinanceCandidateHandoffModal } from './shared/FinanceCandidateHandoffModal';
-
 import {
   type FinanceStatementDetailV1,
   type FinanceStatementExplain,
@@ -37,6 +35,7 @@ import {
 } from '../Economics/financeTypes';
 import { CanonicalStatementTable } from './CanonicalStatementTable';
 import { FinancialStatementWorkspace } from './FinancialStatementWorkspace';
+import { FinanceCandidateHandoffModal } from './shared/FinanceCandidateHandoffModal';
 import { StatementExplainPanel } from './StatementExplainPanel';
 import { StatementValidationBadges } from './StatementValidationBadges';
 
