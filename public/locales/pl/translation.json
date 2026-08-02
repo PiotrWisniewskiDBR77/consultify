@@ -4105,7 +4105,9 @@
         "Pt",
         "So",
         "Nd"
-      ]
+      ],
+      "mobileFiltersButton": "Źródła i filtry",
+      "mobileFiltersTitle": "Źródła i filtry"
     },
     "calendarGrid": {
       "busy": "Zajęte",
