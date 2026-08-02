@@ -4,7 +4,13 @@
     {
       "name": "p10-p11-p12-document-studio",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3079"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3079"
+      ],
       "port": 3079
     },
     {
@@ -143,25 +149,53 @@
     {
       "name": "execution-export-prezentacja",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3421", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3421",
+        "--strictPort"
+      ],
       "port": 3421
     },
     {
       "name": "document-studio-menu-pliku",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3077", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3077",
+        "--strictPort"
+      ],
       "port": 3077
     },
     {
       "name": "fix-wzorce-kolory-ekstrakcja",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3082", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3082",
+        "--strictPort"
+      ],
       "port": 3082
     },
     {
       "name": "tabele-fala2",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3450", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3450",
+        "--strictPort"
+      ],
       "port": 3450
     },
     {
@@ -176,6 +210,16 @@
         "--strictPort"
       ],
       "port": 3260
+    },
+    {
+      "name": "mat006-frontend",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--port",
+        "3100"
+      ],
+      "port": 3100
     }
   ]
 }

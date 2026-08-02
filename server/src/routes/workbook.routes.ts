@@ -8,6 +8,8 @@
  *      a new generated_workbooks row (editable starting point)
  */
 
+import { createHash } from 'crypto';
+
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { v4 as uuidv4 } from 'uuid';
@@ -1576,7 +1578,15 @@ const workbookShareRateLimiter = rateLimit({
 function hashShareToken(token: string): string {
   // Never persist/log the raw token — a short one-way hash is enough to
   // correlate audit events without reconstructing the secret.
-  const { createHash } = require('crypto');
+  //
+  // NOTE: presentations.routes.ts's analogous `hashIp()` uses
+  // `require('crypto')` inline and that pattern was copied here initially —
+  // but this router runs as genuine ESM under `tsx` (confirmed via a live
+  // browser proof: `ReferenceError: require is not defined` at this exact
+  // line), so a top-level `import { createHash } from 'crypto'` is used
+  // instead. `presentations.routes.ts` is out of MAT-006's boundaries
+  // (frozen, Presentation Studio) so it is deliberately NOT touched here —
+  // noting this as a pre-existing latent bug there for the record only.
   return createHash('sha256').update(token).digest('hex').slice(0, 16);
 }
 
