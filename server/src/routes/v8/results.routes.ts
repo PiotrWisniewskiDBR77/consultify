@@ -19,6 +19,16 @@ import {
   suggestRca,
 } from '../../services/results/deviationRcaSuggestService.js';
 import { detectAnomalies } from '../../services/results/kpiAnomalyService.js';
+import {
+  archiveDefinition as archiveKpiDefinition,
+  createDefinition as createKpiDefinition,
+  getCurrentDefinition as getCurrentKpiDefinition,
+  getCurrentDefinitionVersionId,
+  updateDefinition as updateKpiDefinition,
+  KpiDefinitionArchivedError,
+  KpiDefinitionNotFoundError,
+  KpiDefinitionVersionConflictError,
+} from '../../services/results/kpiDefinitionService.js';
 import { handleTimeSeriesRecorded } from '../../services/results/kpiDeviationService.js';
 import {
   type KpiDirection as KpiForecastDirection,
@@ -659,7 +669,7 @@ router.post(
   '/kpis',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!(await p04AssertKpiPermission(req, res, 'edit_definition'))) return;
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const {
       name,
       description,
@@ -686,44 +696,38 @@ router.post(
       });
     }
 
-    const id = uuidv4().replace(/-/g, '');
-    await dbRun(
-      `
-      INSERT INTO initiative_kpis (
-        id, initiative_id, organization_id,
-        name, description, unit,
-        baseline_value, target_value, measurement_frequency,
-        alert_threshold, alert_direction,
-        owner_user_id, direction, threshold_mode,
-        amber_threshold_pct, red_threshold_pct,
-        amber_threshold_abs, red_threshold_abs,
-        created_at, updated_at
-      )
-      VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      `,
-      [
-        id,
-        organizationId,
-        safeName,
-        description ? String(description).trim() : null,
-        unit ? String(unit).trim() : null,
-        baselineValue != null && baselineValue !== '' ? Number(baselineValue) : null,
-        targetValue != null && targetValue !== '' ? Number(targetValue) : null,
-        measurementFrequency || 'MONTHLY',
-        alertThreshold != null && alertThreshold !== '' ? Number(alertThreshold) : null,
-        alertDirection || 'BELOW',
-        ownerUserId || null,
-        direction || 'HIGHER_IS_BETTER',
-        thresholdMode || 'PERCENT_FROM_TARGET',
+    // RES-02: canonical write goes through kpiDefinitionService — no direct
+    // SQL against initiative_kpis here anymore (this used to be a second,
+    // forked copy of the exact same INSERT in benefits.routes.ts).
+    const created = await createKpiDefinition({
+      organizationId,
+      initiativeId: null,
+      actorUserId: userId || null,
+      name: safeName,
+      description: description ? String(description).trim() : null,
+      unit: unit ? String(unit).trim() : null,
+      baselineValue: baselineValue != null && baselineValue !== '' ? Number(baselineValue) : null,
+      targetValue: targetValue != null && targetValue !== '' ? Number(targetValue) : null,
+      measurementFrequency: measurementFrequency || 'MONTHLY',
+      alertThreshold: alertThreshold != null && alertThreshold !== '' ? Number(alertThreshold) : null,
+      alertDirection: alertDirection || 'BELOW',
+      ownerUserId: ownerUserId || null,
+      direction: direction || 'HIGHER_IS_BETTER',
+      thresholdMode: thresholdMode || 'PERCENT_FROM_TARGET',
+      amberThresholdPct:
         amberThresholdPct != null && amberThresholdPct !== '' ? Number(amberThresholdPct) : null,
+      redThresholdPct:
         redThresholdPct != null && redThresholdPct !== '' ? Number(redThresholdPct) : null,
+      amberThresholdAbs:
         amberThresholdAbs != null && amberThresholdAbs !== '' ? Number(amberThresholdAbs) : null,
+      redThresholdAbs:
         redThresholdAbs != null && redThresholdAbs !== '' ? Number(redThresholdAbs) : null,
-      ]
-    );
+      source: 'v8_results_create',
+      reason: 'v8-results-kpi-create',
+    });
 
     return res.status(201).json({
-      data: { id },
+      data: { id: created.id },
       meta: resultsWriteMeta(),
     });
   })
@@ -766,9 +770,7 @@ router.put(
 
     const row = await dbGet<any>(
       `
-      SELECT k.id, k.name, k.description, k.unit, k.baseline_value, k.target_value,
-             k.measurement_frequency, k.direction, k.threshold_mode,
-             k.amber_threshold_pct, k.red_threshold_pct, k.amber_threshold_abs, k.red_threshold_abs
+      SELECT k.id
       FROM initiative_kpis k
       LEFT JOIN initiatives i ON i.id = k.initiative_id
       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?
@@ -785,7 +787,8 @@ router.put(
     // State-machine guard: block definition/target mass-assignment when the KPI
     // is in a finalized/locked lifecycle status (benefits_realization/review/
     // locked). The report-creation guard already blocks this path; the direct
-    // edit path must enforce the same lock or it is a hidden bypass.
+    // edit path must enforce the same lock or it is a hidden bypass. Unchanged
+    // by RES-02 — a lifecycle-state check, not a definition-versioning concern.
     const editLockViolation = await findKpiEditLockViolation({ organizationId, kpiId });
     if (editLockViolation) {
       return res.status(409).json({
@@ -795,135 +798,71 @@ router.put(
       });
     }
 
-    await dbRun(
-      `
-      UPDATE initiative_kpis
-      SET
-        name = COALESCE(?, name),
-        description = COALESCE(?, description),
-        unit = COALESCE(?, unit),
-        baseline_value = COALESCE(?, baseline_value),
-        target_value = COALESCE(?, target_value),
-        measurement_frequency = COALESCE(?, measurement_frequency),
-        alert_threshold = COALESCE(?, alert_threshold),
-        alert_direction = COALESCE(?, alert_direction),
-        owner_user_id = COALESCE(?, owner_user_id),
-        direction = COALESCE(?, direction),
-        threshold_mode = COALESCE(?, threshold_mode),
-        amber_threshold_pct = COALESCE(?, amber_threshold_pct),
-        red_threshold_pct = COALESCE(?, red_threshold_pct),
-        amber_threshold_abs = COALESCE(?, amber_threshold_abs),
-        red_threshold_abs = COALESCE(?, red_threshold_abs),
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-      `,
-      [
-        name != null && String(name).trim() ? String(name).trim() : null,
-        description != null ? String(description).trim() : null,
-        unit != null ? String(unit).trim() : null,
-        baselineValue != null && baselineValue !== '' ? Number(baselineValue) : null,
-        targetValue != null && targetValue !== '' ? Number(targetValue) : null,
-        measurementFrequency || null,
-        alertThreshold != null && alertThreshold !== '' ? Number(alertThreshold) : null,
-        alertDirection || null,
-        ownerUserId || null,
-        direction || null,
-        thresholdMode || null,
-        amberThresholdPct != null && amberThresholdPct !== '' ? Number(amberThresholdPct) : null,
-        redThresholdPct != null && redThresholdPct !== '' ? Number(redThresholdPct) : null,
-        amberThresholdAbs != null && amberThresholdAbs !== '' ? Number(amberThresholdAbs) : null,
-        redThresholdAbs != null && redThresholdAbs !== '' ? Number(redThresholdAbs) : null,
-        kpiId,
-      ]
-    );
-
-    const afterState = {
-      name: name != null && String(name).trim() ? String(name).trim() : row.name,
-      description: description != null ? String(description).trim() : row.description,
-      unit: unit != null ? String(unit).trim() : row.unit,
-      baselineValue:
-        baselineValue != null && baselineValue !== '' ? Number(baselineValue) : row.baseline_value,
-      targetValue:
-        targetValue != null && targetValue !== '' ? Number(targetValue) : row.target_value,
-      measurementFrequency: measurementFrequency || row.measurement_frequency,
-      direction: direction || row.direction,
-      thresholdMode: thresholdMode || row.threshold_mode,
-      amberThresholdPct:
-        amberThresholdPct != null && amberThresholdPct !== ''
-          ? Number(amberThresholdPct)
-          : row.amber_threshold_pct,
-      redThresholdPct:
-        redThresholdPct != null && redThresholdPct !== ''
-          ? Number(redThresholdPct)
-          : row.red_threshold_pct,
-      amberThresholdAbs:
-        amberThresholdAbs != null && amberThresholdAbs !== ''
-          ? Number(amberThresholdAbs)
-          : row.amber_threshold_abs,
-      redThresholdAbs:
-        redThresholdAbs != null && redThresholdAbs !== ''
-          ? Number(redThresholdAbs)
-          : row.red_threshold_abs,
-    };
-    const beforeDefinition = {
-      name: row.name,
-      description: row.description,
-      unit: row.unit,
-      measurementFrequency: row.measurement_frequency,
-      direction: row.direction,
-    };
-    const afterDefinition = {
-      name: afterState.name,
-      description: afterState.description,
-      unit: afterState.unit,
-      measurementFrequency: afterState.measurementFrequency,
-      direction: afterState.direction,
-    };
-    const beforeTargets = {
-      baselineValue: row.baseline_value,
-      targetValue: row.target_value,
-      thresholdMode: row.threshold_mode,
-      amberThresholdPct: row.amber_threshold_pct,
-      redThresholdPct: row.red_threshold_pct,
-      amberThresholdAbs: row.amber_threshold_abs,
-      redThresholdAbs: row.red_threshold_abs,
-    };
-    const afterTargets = {
-      baselineValue: afterState.baselineValue,
-      targetValue: afterState.targetValue,
-      thresholdMode: afterState.thresholdMode,
-      amberThresholdPct: afterState.amberThresholdPct,
-      redThresholdPct: afterState.redThresholdPct,
-      amberThresholdAbs: afterState.amberThresholdAbs,
-      redThresholdAbs: afterState.redThresholdAbs,
-    };
-    if (JSON.stringify(beforeDefinition) !== JSON.stringify(afterDefinition)) {
-      await resultsEnterpriseService
-        .createMetricAuditEntry(organizationId, {
-          kpiId,
-          section: 'definition',
-          eventType: 'definition_updated',
-          source: 'v8_results_update',
-          actorUserId: userId || null,
-          summary: `Definition updated for ${afterState.name || row.name || kpiId}`,
-          before: beforeDefinition,
-          after: afterDefinition,
-        })
-        .catch(() => null);
+    // RES-02: canonical CAS-versioned write. No direct SQL against
+    // initiative_kpis here anymore, and no `.catch(() => null)` audit
+    // side-effect either — kpiDefinitionService writes
+    // before/after to kpi_metric_audit_log in the SAME transaction as the
+    // version bump, so a failed audit insert now rolls back the whole write
+    // instead of silently leaving an unaudited definition change (this used
+    // to be the ONLY one of the 5 writers that audited at all).
+    const current = await getCurrentKpiDefinition(kpiId, organizationId);
+    if (!current) {
+      return res.status(404).json({
+        error: 'KPI not found',
+        code: 'RESULTS_KPI_NOT_FOUND',
+      });
     }
-    if (JSON.stringify(beforeTargets) !== JSON.stringify(afterTargets)) {
-      await resultsEnterpriseService
-        .createMetricAuditEntry(organizationId, {
-          kpiId,
-          section: 'targets',
-          eventType: 'targets_updated',
-          source: 'v8_results_update',
-          actorUserId: userId || null,
-          summary: `Targets updated for ${afterState.name || row.name || kpiId}`,
-          before: beforeTargets,
-          after: afterTargets,
-        })
-        .catch(() => null);
+    try {
+      await updateKpiDefinition({
+        organizationId,
+        kpiId,
+        expectedVersion: current.currentDefinitionVersion,
+        actorUserId: userId || null,
+        name: name != null && String(name).trim() ? String(name).trim() : undefined,
+        description: description != null ? String(description).trim() : undefined,
+        unit: unit != null ? String(unit).trim() : undefined,
+        baselineValue:
+          baselineValue != null && baselineValue !== '' ? Number(baselineValue) : undefined,
+        targetValue: targetValue != null && targetValue !== '' ? Number(targetValue) : undefined,
+        measurementFrequency: measurementFrequency || undefined,
+        alertThreshold:
+          alertThreshold != null && alertThreshold !== '' ? Number(alertThreshold) : undefined,
+        alertDirection: alertDirection || undefined,
+        ownerUserId: ownerUserId || undefined,
+        direction: direction || undefined,
+        thresholdMode: thresholdMode || undefined,
+        amberThresholdPct:
+          amberThresholdPct != null && amberThresholdPct !== ''
+            ? Number(amberThresholdPct)
+            : undefined,
+        redThresholdPct:
+          redThresholdPct != null && redThresholdPct !== '' ? Number(redThresholdPct) : undefined,
+        amberThresholdAbs:
+          amberThresholdAbs != null && amberThresholdAbs !== ''
+            ? Number(amberThresholdAbs)
+            : undefined,
+        redThresholdAbs:
+          redThresholdAbs != null && redThresholdAbs !== '' ? Number(redThresholdAbs) : undefined,
+        source: 'v8_results_update',
+        reason: 'v8-results-kpi-update',
+      });
+    } catch (error) {
+      if (error instanceof KpiDefinitionNotFoundError) {
+        return res.status(404).json({ error: 'KPI not found', code: 'RESULTS_KPI_NOT_FOUND' });
+      }
+      if (error instanceof KpiDefinitionArchivedError) {
+        return res.status(409).json({
+          error: 'Cannot edit an archived KPI',
+          code: 'RESULTS_KPI_ARCHIVED',
+        });
+      }
+      if (error instanceof KpiDefinitionVersionConflictError) {
+        return res.status(409).json({
+          error: 'KPI definition changed concurrently; reload and retry',
+          code: 'RESULTS_KPI_VERSION_CONFLICT',
+        });
+      }
+      throw error;
     }
 
     return res.json({
@@ -966,34 +905,23 @@ router.delete(
       });
     }
 
+    // RES-02: delete = archive. Every immutable definition version and every
+    // kpi_time_series/kpi_deviation_cases row is preserved — this used to
+    // hard-DELETE the KPI and cascade-delete its measurement and deviation
+    // history, exactly what the archive contract forbids. The mapping unlink
+    // still runs (a real, intended effect of "delete").
     await dbRun(`DELETE FROM initiative_kpi_mappings WHERE kpi_id = ? AND organization_id = ?`, [
       kpiId,
       organizationId,
     ]).catch(() => null);
 
-    await dbRun(`DELETE FROM kpi_time_series WHERE kpi_id = ? AND organization_id = ?`, [
-      kpiId,
-      organizationId,
-    ]).catch(() => null);
-
-    const cases = await dbAll<any>(
-      `SELECT id FROM kpi_deviation_cases WHERE organization_id = ? AND kpi_id = ?`,
-      [organizationId, kpiId]
-    ).catch(() => []);
-    const caseIds = (cases || []).map((c: any) => String(c.id)).filter(Boolean);
-    if (caseIds.length) {
-      await dbRun(
-        `DELETE FROM kpi_deviation_actions WHERE case_id IN (${caseIds.map(() => '?').join(',')})`,
-        caseIds
-      ).catch(() => null);
-    }
-
-    await dbRun(`DELETE FROM kpi_deviation_cases WHERE organization_id = ? AND kpi_id = ?`, [
+    const { userId: deletingUserId } = getV8Context(req);
+    await archiveKpiDefinition({
       organizationId,
       kpiId,
-    ]).catch(() => null);
-
-    await dbRun(`DELETE FROM initiative_kpis WHERE id = ?`, [kpiId]);
+      actorUserId: deletingUserId || null,
+      reason: 'v8-results-kpi-delete',
+    });
 
     return res.json({
       data: { success: true },
@@ -2464,10 +2392,12 @@ router.post(
     // this kpiId belongs to the caller's org. Without an ownership precheck a foreign-org
     // kpiId would have a measurement row inserted under the caller's org. Verify the parent
     // KPI is owned first (mirrors the org-scoped lookup in PUT/DELETE /kpis/:kpiId).
-    const ownedKpi = await dbGet<{ id: string }>(
-      `SELECT k.id
+    const ownedKpi = await dbGet<{ id: string; definition_version_id?: string | null }>(
+      `SELECT k.id, v.id AS definition_version_id
        FROM initiative_kpis k
        LEFT JOIN initiatives i ON i.id = k.initiative_id
+       LEFT JOIN kpi_definition_versions v
+         ON v.kpi_id = k.id AND v.version_no = k.current_definition_version
        WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
       [kpiId, organizationId]
     );
@@ -2484,10 +2414,12 @@ router.post(
     ).catch(() => null);
     const periodKey = deriveKpiPeriodKey(periodStart, kpiMeta?.measurement_frequency);
 
+    // RES-02 additive pin: which definition version was current when this
+    // measurement was recorded. No other RES-03 behavior here is touched.
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
-      `INSERT INTO kpi_time_series (id, kpi_id, organization_id, value, period_start, period_end, source, notes, recorded_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO kpi_time_series (id, kpi_id, organization_id, value, period_start, period_end, source, notes, recorded_by, definition_version_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         kpiId,
@@ -2498,6 +2430,7 @@ router.post(
         source || 'manual',
         notes ? String(notes) : null,
         userId || null,
+        ownedKpi.definition_version_id || null,
       ]
     );
 
@@ -4025,7 +3958,7 @@ router.post(
   '/benefits/:benefitId/promote',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!(await p04AssertKpiPermission(req, res, 'edit_definition'))) return;
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const benefitId = typeof req.params.benefitId === 'string' ? req.params.benefitId.trim() : '';
     if (!benefitId) {
       return res.status(400).json({
@@ -4066,7 +3999,7 @@ router.post(
           WHERE organization_id = ? AND initiative_id = ? AND name = ?
           ORDER BY created_at DESC LIMIT 1`,
         [organizationId, benefit.initiative_id, benefit.name],
-        { fallback: true }
+        { fallback: false }
       );
       return res.status(200).json({
         data: { kpiId: existing?.id || null, alreadyPromoted: true },
@@ -4081,29 +4014,28 @@ router.post(
         WHERE organization_id = ? AND initiative_id = ? AND name = ?
         ORDER BY created_at DESC LIMIT 1`,
       [organizationId, benefit.initiative_id, benefit.name],
-      { fallback: true }
+      { fallback: false }
     );
 
+    // RES-02: canonical write goes through kpiDefinitionService — no direct
+    // SQL against initiative_kpis here anymore (this was the SECOND, forked
+    // benefit-promotion writer; benefitsRegisterService.promoteBenefitToKpi
+    // is the first — both create through the same canonical service now).
     let kpiId = dup?.id || null;
     if (!kpiId) {
-      kpiId = uuidv4().replace(/-/g, '');
-      await dbRun(
-        `INSERT INTO initiative_kpis (
-           id, initiative_id, organization_id,
-           name, description, target_value,
-           measurement_frequency, alert_direction,
-           created_at, updated_at
-         )
-         VALUES (?, ?, ?, ?, ?, ?, 'MONTHLY', 'BELOW', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        [
-          kpiId,
-          benefit.initiative_id,
-          organizationId,
-          benefit.name,
-          benefit.description ?? null,
-          benefit.target_value ?? null,
-        ]
-      );
+      const promoted = await createKpiDefinition({
+        organizationId,
+        initiativeId: benefit.initiative_id,
+        actorUserId: userId || null,
+        name: benefit.name,
+        description: benefit.description ?? null,
+        targetValue: benefit.target_value ?? null,
+        measurementFrequency: 'MONTHLY',
+        alertDirection: 'BELOW',
+        source: 'v8_results_benefit_promotion',
+        reason: `closure-handoff-benefit-promotion:${benefitId}`,
+      });
+      kpiId = promoted.id;
     }
 
     await dbRun(
