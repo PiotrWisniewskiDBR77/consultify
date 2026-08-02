@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { type PgTransactionClient, withPgTransaction } from '../../utils/queryHelpers.js';
 
 type KpiListItem = {
   id: string;
@@ -22,6 +22,17 @@ type KpiListItem = {
   isOnTarget: boolean;
   openDeviationCase: { id: string; severity: 'AMBER' | 'RED'; status: string } | null;
 };
+
+export class ResultsKpiReportSnapshotError extends Error {
+  constructor(
+    public readonly code: string,
+    public readonly status: number,
+    message: string
+  ) {
+    super(message);
+    this.name = 'ResultsKpiReportSnapshotError';
+  }
+}
 
 type DeviationAction = {
   id: string;
@@ -103,9 +114,25 @@ function formatInitiativeLabel(k: KpiListItem): string {
   return `${linked[0]?.name || '—'} +${linked.length - 1}`;
 }
 
-async function listKpisForOrg(orgId: string): Promise<KpiListItem[]> {
-  const rows = await dbAll<any>(
-    `
+function toDateOnly(value: unknown): string | null {
+  if (!value) return null;
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  const text = String(value);
+  const isoPrefix = text.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+  if (isoPrefix) return isoPrefix;
+  const parsed = new Date(text);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString().slice(0, 10);
+}
+
+async function listKpisForOrg(
+  tx: PgTransactionClient,
+  orgId: string,
+  periodStart: string,
+  periodEnd: string | null
+): Promise<KpiListItem[]> {
+  const rows = (
+    await tx.query<any>(
+      `
     SELECT
       k.*,
       i.name AS initiative_name,
@@ -120,9 +147,11 @@ async function listKpisForOrg(orgId: string): Promise<KpiListItem[]> {
     LEFT JOIN initiatives i ON i.id = k.initiative_id
     LEFT JOIN users u ON u.id = k.owner_user_id
     LEFT JOIN LATERAL (
-      SELECT value, period_start
+      SELECT value, to_char(period_start, 'YYYY-MM-DD') AS period_start
       FROM kpi_time_series
       WHERE kpi_id = k.id AND organization_id = ?
+        AND period_start >= ?
+        AND (?::date IS NULL OR period_start <= ?::date)
       ORDER BY period_start DESC, created_at DESC
       LIMIT 1
     ) ts ON TRUE
@@ -136,22 +165,25 @@ async function listKpisForOrg(orgId: string): Promise<KpiListItem[]> {
     WHERE COALESCE(k.organization_id, i.organization_id) = ?
     ORDER BY k.updated_at DESC NULLS LAST, k.created_at DESC
     `,
-    [orgId, orgId, orgId]
-  );
+      [orgId, periodStart, periodEnd, periodEnd, orgId, orgId]
+    )
+  ).rows;
 
   const kpiIds = (rows || []).map((r: any) => String(r.id)).filter(Boolean);
   const mappings =
     kpiIds.length > 0
-      ? await dbAll<any>(
-          `
+      ? (
+          await tx.query<any>(
+            `
           SELECT m.kpi_id, m.initiative_id, i.name AS initiative_name
           FROM initiative_kpi_mappings m
           LEFT JOIN initiatives i ON i.id = m.initiative_id
           WHERE m.organization_id = ?
             AND m.kpi_id IN (${kpiIds.map(() => '?').join(',')})
           `,
-          [orgId, ...kpiIds]
-        )
+            [orgId, ...kpiIds]
+          )
+        ).rows
       : [];
 
   const linkedByKpi: Record<string, Array<{ id: string; name: string }>> = {};
@@ -167,7 +199,9 @@ async function listKpisForOrg(orgId: string): Promise<KpiListItem[]> {
   });
 
   return (rows || []).map((r: any) => {
-    const latestValue = r.latest_value ?? r.current_value ?? null;
+    // A period report must never borrow the live current_value from outside its
+    // requested window. No measurement in the window is honestly NO_DATA.
+    const latestValue = r.latest_value ?? null;
     const targetValue = r.target_value ?? null;
     const direction = String(r.direction || 'HIGHER_IS_BETTER');
     const isOnTarget =
@@ -200,7 +234,7 @@ async function listKpisForOrg(orgId: string): Promise<KpiListItem[]> {
           : null,
       currentValue: r.current_value ?? null,
       latestValue,
-      latestMeasurementDate: r.latest_period_start ? String(r.latest_period_start) : null,
+      latestMeasurementDate: toDateOnly(r.latest_period_start),
       isOnTarget,
       openDeviationCase: r.open_case_id
         ? {
@@ -213,9 +247,15 @@ async function listKpisForOrg(orgId: string): Promise<KpiListItem[]> {
   });
 }
 
-async function listOpenDeviationCases(orgId: string): Promise<DeviationCase[]> {
-  const cases = await dbAll<any>(
-    `
+async function listOpenDeviationCases(
+  tx: PgTransactionClient,
+  orgId: string,
+  periodStart: string,
+  periodEnd: string | null
+): Promise<DeviationCase[]> {
+  const cases = (
+    await tx.query<any>(
+      `
     SELECT
       c.*,
       k.name AS kpi_name
@@ -223,23 +263,28 @@ async function listOpenDeviationCases(orgId: string): Promise<DeviationCase[]> {
     LEFT JOIN initiative_kpis k ON k.id = c.kpi_id
     WHERE c.organization_id = ?
       AND c.status IN ('OPEN','ACKNOWLEDGED','IN_PROGRESS','MITIGATING')
+      AND COALESCE(c.period_end, c.period_start) >= ?
+      AND (?::date IS NULL OR c.period_start <= ?::date)
     ORDER BY CASE WHEN c.severity = 'RED' THEN 0 ELSE 1 END, c.detected_at DESC
     `,
-    [orgId]
-  );
+      [orgId, periodStart, periodEnd, periodEnd]
+    )
+  ).rows;
 
   const caseIds = (cases || []).map((c: any) => c.id);
   const actions =
     caseIds.length > 0
-      ? await dbAll<any>(
-          `
+      ? (
+          await tx.query<any>(
+            `
           SELECT *
           FROM kpi_deviation_actions
           WHERE case_id IN (${caseIds.map(() => '?').join(',')})
           ORDER BY created_at ASC
           `,
-          caseIds
-        )
+            caseIds
+          )
+        ).rows
       : [];
 
   const actionsByCase: Record<string, DeviationAction[]> = {};
@@ -374,96 +419,114 @@ export async function createKpiReportSnapshot(params: {
   const requestedKpiIds = (params.kpiIds || []).map((x) => String(x || '').trim()).filter(Boolean);
   const selectedSet = requestedKpiIds.length ? new Set(requestedKpiIds) : null;
 
-  const allKpis = await listKpisForOrg(params.organizationId);
-  const allDeviationCases = await listOpenDeviationCases(params.organizationId);
+  return withPgTransaction(async (tx) => {
+    const allKpis = await listKpisForOrg(tx, params.organizationId, periodStart, periodEnd);
+    const allDeviationCases = await listOpenDeviationCases(
+      tx,
+      params.organizationId,
+      periodStart,
+      periodEnd
+    );
 
-  const kpis = selectedSet ? allKpis.filter((k) => selectedSet.has(String(k.id))) : allKpis;
-  const deviationCases = selectedSet
-    ? allDeviationCases.filter((c) => selectedSet.has(String(c.kpiId)))
-    : allDeviationCases;
+    if (selectedSet) {
+      const ownedIds = new Set(allKpis.map((kpi) => String(kpi.id)));
+      const unavailable = requestedKpiIds.filter((id) => !ownedIds.has(id));
+      if (unavailable.length) {
+        throw new ResultsKpiReportSnapshotError(
+          'RESULTS_KPI_REPORT_KPI_NOT_FOUND',
+          404,
+          'One or more KPIs were not found'
+        );
+      }
+    }
 
-  const actionPlan = deviationCases.flatMap((c) =>
-    (c.actions || []).map((a) => ({
-      ...a,
-      kpiId: c.kpiId,
-      kpiName: c.kpiName,
-      severity: c.severity,
-      caseStatus: c.status,
-    }))
-  );
+    const kpis = selectedSet ? allKpis.filter((k) => selectedSet.has(String(k.id))) : allKpis;
+    const deviationCases = selectedSet
+      ? allDeviationCases.filter((c) => selectedSet.has(String(c.kpiId)))
+      : allDeviationCases;
 
-  const stats = {
-    kpisTotal: kpis.length,
-    kpisOnTarget: kpis.filter((k) => k.latestValue != null && k.isOnTarget).length,
-    kpisBelowTarget: kpis.filter((k) => k.latestValue != null && !k.isOnTarget).length,
-    kpisNoData: kpis.filter((k) => k.latestValue == null).length,
-    openDeviationCases: deviationCases.length,
-    openRedCases: deviationCases.filter((c) => c.severity === 'RED').length,
-    openAmberCases: deviationCases.filter((c) => c.severity === 'AMBER').length,
-    openActions: actionPlan.filter((a) => String(a.status || '').toUpperCase() !== 'DONE').length,
-  };
+    const actionPlan = deviationCases.flatMap((c) =>
+      (c.actions || []).map((a) => ({
+        ...a,
+        kpiId: c.kpiId,
+        kpiName: c.kpiName,
+        severity: c.severity,
+        caseStatus: c.status,
+      }))
+    );
 
-  const title =
-    (params.title && String(params.title).trim()) ||
-    `KPI performance review (${periodStart}${periodEnd ? ` → ${periodEnd}` : ''})`;
+    const stats = {
+      kpisTotal: kpis.length,
+      kpisOnTarget: kpis.filter((k) => k.latestValue != null && k.isOnTarget).length,
+      kpisBelowTarget: kpis.filter((k) => k.latestValue != null && !k.isOnTarget).length,
+      kpisNoData: kpis.filter((k) => k.latestValue == null).length,
+      openDeviationCases: deviationCases.length,
+      openRedCases: deviationCases.filter((c) => c.severity === 'RED').length,
+      openAmberCases: deviationCases.filter((c) => c.severity === 'AMBER').length,
+      openActions: actionPlan.filter((a) => String(a.status || '').toUpperCase() !== 'DONE').length,
+    };
 
-  const snapshot: ResultsKpiReportSnapshot = {
-    id: '',
-    organizationId: params.organizationId,
-    periodStart,
-    periodEnd,
-    title,
-    generatedAt: now,
-    kpis,
-    deviationCases,
-    actionPlan,
-    stats,
-  };
+    const title =
+      (params.title && String(params.title).trim()) ||
+      `KPI performance review (${periodStart}${periodEnd ? ` → ${periodEnd}` : ''})`;
 
-  const markdown = renderSnapshotMarkdown(snapshot);
+    const snapshot: ResultsKpiReportSnapshot = {
+      id: '',
+      organizationId: params.organizationId,
+      periodStart,
+      periodEnd,
+      title,
+      generatedAt: now,
+      kpis,
+      deviationCases,
+      actionPlan,
+      stats,
+    };
 
-  const snapshotId = uuidv4().replace(/-/g, '');
-  snapshot.id = snapshotId;
+    const markdown = renderSnapshotMarkdown(snapshot);
 
-  const filtersToStore: Record<string, unknown> = {
-    ...(params.filters && typeof params.filters === 'object' ? params.filters : {}),
-    ...(selectedSet ? { kpiIds: requestedKpiIds } : {}),
-  };
-  const filtersJson = Object.keys(filtersToStore).length ? JSON.stringify(filtersToStore) : null;
+    const snapshotId = uuidv4().replace(/-/g, '');
+    snapshot.id = snapshotId;
 
-  await dbRun(
-    `
+    const filtersToStore: Record<string, unknown> = {
+      ...(params.filters && typeof params.filters === 'object' ? params.filters : {}),
+      ...(selectedSet ? { kpiIds: requestedKpiIds } : {}),
+    };
+    const filtersJson = Object.keys(filtersToStore).length ? JSON.stringify(filtersToStore) : null;
+
+    await tx.query(
+      `
     INSERT INTO results_kpi_report_snapshots (
       id, organization_id, period_start, period_end, title, filters_json, snapshot_json, created_by
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `,
-    [
-      snapshotId,
-      params.organizationId,
-      periodStart,
-      periodEnd,
-      title,
-      filtersJson,
-      JSON.stringify(snapshot),
-      params.createdBy,
-    ]
-  );
+      [
+        snapshotId,
+        params.organizationId,
+        periodStart,
+        periodEnd,
+        title,
+        filtersJson,
+        JSON.stringify(snapshot),
+        params.createdBy,
+      ]
+    );
 
-  return { snapshotId, snapshot, markdown };
+    return { snapshotId, snapshot, markdown };
+  });
 }
 
 export async function getKpiReportSnapshot(params: {
   organizationId: string;
   snapshotId: string;
 }): Promise<any | null> {
-  const row = await dbGet<any>(
-    `
-    SELECT *
-    FROM results_kpi_report_snapshots
-    WHERE id = ? AND organization_id = ?
-    `,
-    [params.snapshotId, params.organizationId]
-  );
+  const row = await withPgTransaction(async (tx) => {
+    const result = await tx.query<any>(
+      `SELECT * FROM results_kpi_report_snapshots WHERE id = ? AND organization_id = ?`,
+      [params.snapshotId, params.organizationId]
+    );
+    return result.rows[0] ?? null;
+  });
   if (!row) return null;
   return {
     id: row.id,
@@ -471,8 +534,14 @@ export async function getKpiReportSnapshot(params: {
     periodStart: row.period_start,
     periodEnd: row.period_end,
     title: row.title,
-    filters: row.filters_json ? JSON.parse(row.filters_json) : null,
-    snapshot: row.snapshot_json ? JSON.parse(row.snapshot_json) : null,
+    filters:
+      typeof row.filters_json === 'string'
+        ? JSON.parse(row.filters_json)
+        : row.filters_json || null,
+    snapshot:
+      typeof row.snapshot_json === 'string'
+        ? JSON.parse(row.snapshot_json)
+        : row.snapshot_json || null,
     createdBy: row.created_by,
     createdAt: row.created_at,
   };

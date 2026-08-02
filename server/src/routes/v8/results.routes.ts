@@ -47,6 +47,7 @@ import {
 import {
   createKpiReportSnapshot,
   getKpiReportSnapshot,
+  ResultsKpiReportSnapshotError,
 } from '../../services/results/kpiReportSnapshotService.js';
 import { resultsEnterpriseService } from '../../services/resultsEnterpriseService.js';
 import {
@@ -2820,15 +2821,23 @@ router.post(
       ...(selectedGoalIds && selectedGoalIds.length ? { goalIds: selectedGoalIds } : {}),
     };
 
-    const created = await createKpiReportSnapshot({
-      organizationId,
-      periodStart: safeStart,
-      periodEnd: periodEnd ? String(periodEnd).slice(0, 10) : null,
-      title: title ? String(title) : null,
-      createdBy: userId,
-      filters: Object.keys(enrichedFilters).length ? enrichedFilters : null,
-      kpiIds: selectedKpiIds && selectedKpiIds.length ? selectedKpiIds : null,
-    });
+    let created;
+    try {
+      created = await createKpiReportSnapshot({
+        organizationId,
+        periodStart: safeStart,
+        periodEnd: periodEnd ? String(periodEnd).slice(0, 10) : null,
+        title: title ? String(title) : null,
+        createdBy: userId,
+        filters: Object.keys(enrichedFilters).length ? enrichedFilters : null,
+        kpiIds: selectedKpiIds && selectedKpiIds.length ? selectedKpiIds : null,
+      });
+    } catch (error) {
+      if (error instanceof ResultsKpiReportSnapshotError) {
+        return res.status(error.status).json({ error: error.message, code: error.code });
+      }
+      throw error;
+    }
 
     const reportId = await createV8KpiReportArtifact({ organizationId, userId, created });
 

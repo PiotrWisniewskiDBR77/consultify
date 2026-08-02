@@ -10,9 +10,9 @@ import * as ReportBuilderService from '../services/reportBuilderService.js';
 import {
   createKpiReportSnapshot,
   getKpiReportSnapshot,
+  ResultsKpiReportSnapshotError,
 } from '../services/results/kpiReportSnapshotService.js';
 import { all as dbAll } from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
 const router = Router();
@@ -62,44 +62,37 @@ async function createReportArtifactFromSnapshot(params: {
     createdBy: userId,
   });
 
-  try {
-    await ReportBuilderService.updateSectionContent(
-      rb.report.id,
-      'executive_summary',
-      created.markdown.executive_summary,
-      userId
-    );
-    await ReportBuilderService.updateSectionContent(
-      rb.report.id,
-      'kpi_overview',
-      created.markdown.kpi_overview,
-      userId
-    );
-    await ReportBuilderService.updateSectionContent(
-      rb.report.id,
-      'deviation_cases',
-      created.markdown.deviation_cases,
-      userId
-    );
-    await ReportBuilderService.updateSectionContent(
-      rb.report.id,
-      'action_plan',
-      created.markdown.action_plan,
-      userId
-    );
-    await ReportBuilderService.updateSectionContent(
-      rb.report.id,
-      'appendix',
-      created.markdown.appendix,
-      userId
-    );
-    await ReportBuilderService.updateReportStatus(rb.report.id, 'GENERATED', userId);
-  } catch (err: any) {
-    logger.warn('[Results KPI Reports] Failed to prefill report sections (non-fatal)', {
-      reportId: rb.report.id,
-      message: err?.message,
-    });
-  }
+  await ReportBuilderService.updateSectionContent(
+    rb.report.id,
+    'executive_summary',
+    created.markdown.executive_summary,
+    userId
+  );
+  await ReportBuilderService.updateSectionContent(
+    rb.report.id,
+    'kpi_overview',
+    created.markdown.kpi_overview,
+    userId
+  );
+  await ReportBuilderService.updateSectionContent(
+    rb.report.id,
+    'deviation_cases',
+    created.markdown.deviation_cases,
+    userId
+  );
+  await ReportBuilderService.updateSectionContent(
+    rb.report.id,
+    'action_plan',
+    created.markdown.action_plan,
+    userId
+  );
+  await ReportBuilderService.updateSectionContent(
+    rb.report.id,
+    'appendix',
+    created.markdown.appendix,
+    userId
+  );
+  await ReportBuilderService.updateReportStatus(rb.report.id, 'GENERATED', userId);
 
   return rb.report.id;
 }
@@ -323,15 +316,25 @@ router.post(
       ? (kpiIds as any[]).map((x) => String(x || '').trim()).filter(Boolean)
       : null;
 
-    const created = await createKpiReportSnapshot({
-      organizationId: orgId,
-      periodStart: safeStart,
-      periodEnd: periodEnd ? String(periodEnd).slice(0, 10) : null,
-      title: title ? String(title) : null,
-      createdBy: userId,
-      filters: filters && typeof filters === 'object' ? filters : null,
-      kpiIds: selectedKpiIds && selectedKpiIds.length ? selectedKpiIds : null,
-    });
+    let created;
+    try {
+      created = await createKpiReportSnapshot({
+        organizationId: orgId,
+        periodStart: safeStart,
+        periodEnd: periodEnd ? String(periodEnd).slice(0, 10) : null,
+        title: title ? String(title) : null,
+        createdBy: userId,
+        filters: filters && typeof filters === 'object' ? filters : null,
+        kpiIds: selectedKpiIds && selectedKpiIds.length ? selectedKpiIds : null,
+      });
+    } catch (error) {
+      if (error instanceof ResultsKpiReportSnapshotError) {
+        return res
+          .status(error.status)
+          .json({ success: false, error: error.message, code: error.code });
+      }
+      throw error;
+    }
 
     const reportId = await createReportArtifactFromSnapshot({ orgId, userId, created });
     res.json({ success: true, data: { snapshotId: created.snapshotId, reportId } });
