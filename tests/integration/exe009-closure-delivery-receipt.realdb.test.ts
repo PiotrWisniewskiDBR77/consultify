@@ -515,11 +515,11 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
       timeoutMs
     );
 
-  itDB('golden flow: closure creates exactly one receipt, delivers Results & Finance independently, IDs shared with the audit trail', async (h) => {
+  itDB('golden flow: closure creates exactly one receipt; Results delivers a real benefit row; Finance ALWAYS resolves NEEDS_DECISION (Codex round 4 — no approval process exists, so an observed measurement is never auto-booked)', async (h) => {
     // Deliberately DIFFERENT numbers for the planned target (Results leg,
-    // 15000) vs. the observed actual measurement (Finance leg, 12500) — the
-    // whole point of this round's fix is that these are two distinct
-    // concepts and must never collapse into the same figure.
+    // 15000) vs. the observed candidate measurement (Finance leg, 12500) —
+    // proves the two never collapse into the same figure, and proves the
+    // measurement's mere existence never becomes an automatic realization.
     const initiativeId = await h.makeInitiative('golden', {
       budgetCurrency: 'PLN',
       kpiTargetValue: 15000,
@@ -557,23 +557,35 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     // regardless of which of the two racers actually does the work.
     const delivered = await deliverAndFetch(h, correlationId);
     expect(delivered.resultsStatus).toBe('DELIVERED');
-    expect(delivered.financeStatus).toBe('DELIVERED');
     expect(delivered.resultsPayload?.benefitIds).toBeInstanceOf(Array);
     expect((delivered.resultsPayload!.benefitIds as string[]).length).toBeGreaterThan(0);
 
+    // Finance: NEVER auto-realized, no matter how clean the measurement
+    // looks. This codebase has no approval/sign-off process for a
+    // measurement — the candidate is surfaced for transparency only.
+    expect(delivered.financeStatus).toBe('NEEDS_DECISION');
+    expect(delivered.financePayload?.reason).toBe('MEASUREMENT_REQUIRES_APPROVAL');
+    expect(delivered.financePayload?.candidateAmount).toBe(12500);
+    expect(delivered.financePayload?.candidateCurrency).toBe('PLN');
+    expect(delivered.financeLastError).toMatch(/approval|decision/i);
+
     // Canonical downstream: roi_realized_values, read by the REAL Benefits/
     // ROI UI (src/components/Benefits/ROITrackingPanel.tsx via
-    // GET /benefits/roi/portfolio/summary) — not a new isolated table.
+    // GET /benefits/roi/portfolio/summary) — zero rows, always, from this
+    // automatic path.
     const realization = await h.client.query(
-      `SELECT id, realized_revenue_delta, source FROM roi_realized_values WHERE closure_receipt_id = $1`,
+      `SELECT id FROM roi_realized_values WHERE closure_receipt_id = $1`,
       [correlationId]
     );
-    expect(realization.rows).toHaveLength(1);
-    // The ACTUAL measurement (12500), never the planned target (15000).
-    expect(Number(realization.rows[0].realized_revenue_delta)).toBe(12500);
-    expect(realization.rows[0].source).toBe('execution');
-    expect(delivered.financePayload?.realizationId).toBe(realization.rows[0].id);
-    expect(delivered.financePayload?.sourceMeasurementId).toBeTruthy();
+    expect(realization.rows).toHaveLength(0);
+
+    // The candidate genuinely correlates to a real kpi_time_series row — a
+    // human deciding to approve it later has a real id to look up, not a
+    // fabricated one.
+    const measurementRow = await h.client.query(`SELECT id FROM kpi_time_series WHERE initiative_id = $1`, [
+      initiativeId,
+    ]);
+    expect(delivered.financePayload?.candidateMeasurementId).toBe(measurementRow.rows[0].id);
 
     const benefitRow = await h.client.query(
       `SELECT id, source_tag FROM initiative_benefits WHERE initiative_id = $1`,
@@ -583,7 +595,7 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     expect(benefitRow.rows[0].source_tag).toBe('M14_CLOSURE_HANDOFF');
   });
 
-  itDB('identical retry produces the SAME downstream ids, never a duplicate row', async (h) => {
+  itDB('identical retry produces the SAME downstream ids, never a duplicate row; Finance stays NEEDS_DECISION with the same candidate every time', async (h) => {
     const initiativeId = await h.makeInitiative('retry', {
       budgetCurrency: 'PLN',
       kpiTargetValue: 5000,
@@ -600,8 +612,11 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
 
     expect(first.resultsPayload?.benefitIds).toEqual(second.resultsPayload?.benefitIds);
     expect(second.resultsPayload?.benefitIds).toEqual(third.resultsPayload?.benefitIds);
-    expect(first.financePayload?.realizationId).toBe(second.financePayload?.realizationId);
-    expect(second.financePayload?.realizationId).toBe(third.financePayload?.realizationId);
+    expect(first.financeStatus).toBe('NEEDS_DECISION');
+    expect(second.financeStatus).toBe('NEEDS_DECISION');
+    expect(third.financeStatus).toBe('NEEDS_DECISION');
+    expect(first.financePayload?.candidateMeasurementId).toBe(second.financePayload?.candidateMeasurementId);
+    expect(second.financePayload?.candidateMeasurementId).toBe(third.financePayload?.candidateMeasurementId);
 
     const benefitCount = await h.client.query(
       `SELECT COUNT(*)::int AS n FROM initiative_benefits WHERE initiative_id = $1`,
@@ -612,7 +627,7 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
       `SELECT COUNT(*)::int AS n FROM roi_realized_values WHERE closure_receipt_id = $1`,
       [correlationId]
     );
-    expect(realizationCount.rows[0].n).toBe(1);
+    expect(realizationCount.rows[0].n).toBe(0);
   });
 
   itDB(
@@ -697,7 +712,7 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     expect(receiptCount.rows[0].n).toBe(1);
   });
 
-  itDB('Results leg fails while Finance leg still delivers independently', async (h) => {
+  itDB('Results leg fails while Finance leg still resolves independently (to NEEDS_DECISION — a leg failure never blocks the other leg)', async (h) => {
     const { initiativeId, correlationId } = await h.seedClosedInitiativeWithReceipt('results-fail', {
       budgetCurrency: 'PLN',
       kpiTargetValue: 2500,
@@ -710,21 +725,23 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
 
     expect(outcome.resultsStatus).toBe('FAILED');
     expect(outcome.resultsLastError).toContain('injected Results failure');
-    expect(outcome.financeStatus).toBe('DELIVERED');
+    expect(outcome.financeStatus).toBe('NEEDS_DECISION');
+    expect(outcome.financePayload?.candidateAmount).toBe(2100);
 
     // Retrying without the injected fault heals only the failed leg — the
-    // already-delivered Finance leg is untouched (idempotent no-op).
+    // already-terminal Finance leg is untouched (claimLeg won't re-claim a
+    // NEEDS_DECISION leg; it is terminal, same as DELIVERED).
     const healed = await attemptDeliveryInternal(correlationId);
     expect(healed.resultsStatus).toBe('DELIVERED');
-    expect(healed.financeStatus).toBe('DELIVERED');
+    expect(healed.financeStatus).toBe('NEEDS_DECISION');
     const actualCount = await h.client.query(
       `SELECT COUNT(*)::int AS n FROM roi_realized_values WHERE closure_receipt_id = $1`,
       [correlationId]
     );
-    expect(actualCount.rows[0].n).toBe(1);
+    expect(actualCount.rows[0].n).toBe(0);
   });
 
-  itDB('Finance leg fails while Results leg still delivers independently', async (h) => {
+  itDB('Finance leg fails (transient downstream error while looking up a candidate) while Results leg still delivers independently; the failure remains retryable', async (h) => {
     const { initiativeId, correlationId } = await h.seedClosedInitiativeWithReceipt('finance-fail', {
       budgetCurrency: 'PLN',
       kpiTargetValue: 3500,
@@ -739,13 +756,22 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     expect(outcome.financeLastError).toContain('injected Finance failure');
     expect(outcome.resultsStatus).toBe('DELIVERED');
 
+    // A FAILED leg is retryable (claimLeg's own WHERE clause includes
+    // 'FAILED') — retrying without the fault now resolves it to its real
+    // terminal state, NEEDS_DECISION, never a fabricated DELIVERED.
     const healed = await attemptDeliveryInternal(correlationId);
-    expect(healed.financeStatus).toBe('DELIVERED');
+    expect(healed.financeStatus).toBe('NEEDS_DECISION');
+    expect(healed.financePayload?.candidateAmount).toBe(3100);
     const benefitCount = await h.client.query(
       `SELECT COUNT(*)::int AS n FROM initiative_benefits WHERE initiative_id = $1`,
       [initiativeId]
     );
     expect(benefitCount.rows[0].n).toBe(1);
+    const realizationCount = await h.client.query(
+      `SELECT COUNT(*)::int AS n FROM roi_realized_values WHERE closure_receipt_id = $1`,
+      [correlationId]
+    );
+    expect(realizationCount.rows[0].n).toBe(0);
   });
 
   itDB('restart simulation: a receipt left PENDING (no immediate-delivery attempt ever ran) is recovered by the reconciliation sweep alone', async (h) => {
@@ -768,7 +794,7 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
 
     const afterSweep = await getReceiptById(correlationId, h.orgAId);
     expect(afterSweep!.resultsStatus).toBe('DELIVERED');
-    expect(afterSweep!.financeStatus).toBe('DELIVERED');
+    expect(afterSweep!.financeStatus).toBe('NEEDS_DECISION');
   });
 
   itDB('cross-tenant read: a receipt is invisible under the wrong organization id', async (h) => {
@@ -829,7 +855,7 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     expect(rows.rows).toHaveLength(0);
   });
 
-  itDB('BLOCKER2: expected_roi="20" (bare numeric string) never creates a Finance actual — expected_roi is never read by the Finance leg at all', async (h) => {
+  itDB('BLOCKER2: expected_roi="20" (bare numeric string) never creates a Finance actual — expected_roi is never read by the Finance leg at all. Codex round 4, Results-fallback regression coverage: this exact scenario (no planned KPI, a numeric expected_roi) drives executionResultsBridge.ts\'s no-KPI fallback path, previously a permanent silent no-op due to a query referencing the non-existent `initiatives.title` column — now fixed, this MUST produce a real initiative_benefits row (kpi_id IS NULL) and resultsStatus DELIVERED, never a false DELIVERED with zero rows', async (h) => {
     const initiativeId = await h.makeInitiative('roi-bare-number', {
       budgetCurrency: 'PLN',
       kpiTargetValue: null,
@@ -843,6 +869,35 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
       correlationId,
     ]);
     expect(rows.rows).toHaveLength(0);
+
+    // The Results-leg fallback (no KPI, numeric expected_roi) must produce a
+    // REAL downstream record, never a silent no-op reported as DELIVERED.
+    expect(outcome.resultsStatus).toBe('DELIVERED');
+    const benefitRows = await h.client.query(
+      `SELECT id, kpi_id, source_tag FROM initiative_benefits WHERE initiative_id = $1`,
+      [initiativeId]
+    );
+    expect(benefitRows.rows).toHaveLength(1);
+    expect(benefitRows.rows[0].kpi_id).toBeNull();
+    expect(benefitRows.rows[0].source_tag).toBe('M14_CLOSURE_HANDOFF');
+    expect(outcome.resultsPayload?.benefitIds).toEqual([benefitRows.rows[0].id]);
+  });
+
+  itDB('Results fallback, genuinely empty case: no planned KPI target AND no expected_roi at all -> resultsStatus DELIVERED with genuinely ZERO benefit rows (a legitimate "nothing to hand off" empty state, correctly distinguished from the silent-no-op bug class this round fixed)', async (h) => {
+    const initiativeId = await h.makeInitiative('no-signal-at-all', {
+      budgetCurrency: 'PLN',
+      kpiTargetValue: null,
+      expectedRoi: null,
+    });
+    const correlationId = await closeInitiative(h, initiativeId);
+
+    const outcome = await deliverAndFetch(h, correlationId);
+    expect(outcome.resultsStatus).toBe('DELIVERED');
+    expect(outcome.resultsPayload?.benefitIds).toEqual([]);
+    const benefitRows = await h.client.query(`SELECT id FROM initiative_benefits WHERE initiative_id = $1`, [
+      initiativeId,
+    ]);
+    expect(benefitRows.rows).toHaveLength(0);
   });
 
   itDB('BLOCKER2: default/unset budget_currency alone, with no explicit monetary KPI, never creates a Finance actual', async (h) => {
@@ -941,7 +996,7 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     expect(outcome.financeStatus).toBe('NEEDS_DECISION');
   });
 
-  itDB('TARGET-VS-ACTUAL #5: a real approved-shape monetary MEASUREMENT (kpi_time_series, not a target) creates EXACTLY ONE canonical actual, confirmed via the real Benefits/ROI read model', async (h) => {
+  itDB('TARGET-VS-ACTUAL #5: even a real, currency-matched, freshly OBSERVED monetary measurement (kpi_time_series, not a target) is NEVER auto-realized — Codex round 4: no approval process exists, so it only ever surfaces as a NEEDS_DECISION candidate', async (h) => {
     const initiativeId = await h.makeInitiative('real-measurement', {
       budgetCurrency: 'EUR',
       kpiTargetValue: 42000, // a DIFFERENT number — proves the target is NOT what gets used.
@@ -950,45 +1005,49 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     });
     const correlationId = await closeInitiative(h, initiativeId);
     const outcome = await deliverAndFetch(h, correlationId);
-    expect(outcome.financeStatus).toBe('DELIVERED');
+    expect(outcome.financeStatus).toBe('NEEDS_DECISION');
+    expect(outcome.financePayload?.reason).toBe('MEASUREMENT_REQUIRES_APPROVAL');
 
     const rows = await h.client.query(`SELECT id FROM roi_realized_values WHERE closure_receipt_id = $1`, [
       correlationId,
     ]);
-    expect(rows.rows).toHaveLength(1);
-    expect(outcome.financePayload?.realizationId).toBe(rows.rows[0].id);
-    // Lineage: the SOURCE measurement id is recorded, not just the resulting
-    // realization id — an auditor can trace the actual back to its origin.
-    expect(outcome.financePayload?.sourceMeasurementId).toBeTruthy();
+    expect(rows.rows).toHaveLength(0);
+
+    // Transparency, not realization: the candidate carries the MEASUREMENT's
+    // amount (12500), never the target (42000), and genuinely correlates to
+    // a real kpi_time_series row — an auditor/approver can trace it.
+    expect(outcome.financePayload?.candidateAmount).toBe(12500);
+    expect(outcome.financePayload?.candidateCurrency).toBe('EUR');
     const measurementRow = await h.client.query(`SELECT id FROM kpi_time_series WHERE initiative_id = $1`, [
       initiativeId,
     ]);
-    expect(outcome.financePayload?.sourceMeasurementId).toBe(measurementRow.rows[0].id);
+    expect(outcome.financePayload?.candidateMeasurementId).toBe(measurementRow.rows[0].id);
 
     // Read-back through the SAME query the real Benefits/ROI UI uses
     // (server/src/routes/benefits.routes.ts GET /roi/portfolio/summary) —
-    // the amount must be the MEASUREMENT (12500), never the target (42000).
+    // zero rows for this initiative; nothing was ever booked automatically.
     const summary = await h.client.query(
-      `SELECT initiative_id, SUM(realized_revenue_delta) AS total
-         FROM roi_realized_values
-        WHERE organization_id = $1 AND initiative_id = $2
-        GROUP BY initiative_id`,
+      `SELECT initiative_id FROM roi_realized_values WHERE organization_id = $1 AND initiative_id = $2`,
       [h.orgAId, initiativeId]
     );
-    expect(summary.rows).toHaveLength(1);
-    expect(Number(summary.rows[0].total)).toBe(12500);
+    expect(summary.rows).toHaveLength(0);
   });
 
-  itDB('TARGET-VS-ACTUAL #6: a measurement older than the recency window is NOT automatically realized', async (h) => {
+  itDB('TARGET-VS-ACTUAL #6: a measurement\'s age is purely informational, NEVER a gate (Codex round 4 removed the old 180-day recency window entirely) — a very old measurement still surfaces as a NEEDS_DECISION candidate, with its real age reported, and is NEVER auto-realized either way', async (h) => {
     const initiativeId = await h.makeInitiative('stale-measurement', {
       budgetCurrency: 'PLN',
       kpiTargetValue: null,
-      monetaryMeasurement: { value: 9000, ageDays: 400 }, // well past MONETARY_MEASUREMENT_MAX_AGE_DAYS (180)
+      monetaryMeasurement: { value: 9000, ageDays: 400 }, // used to be past the old 180-day gate.
     });
     const correlationId = await closeInitiative(h, initiativeId);
     const outcome = await deliverAndFetch(h, correlationId);
 
     expect(outcome.financeStatus).toBe('NEEDS_DECISION');
+    expect(outcome.financePayload?.reason).toBe('MEASUREMENT_REQUIRES_APPROVAL');
+    expect(outcome.financePayload?.candidateAmount).toBe(9000);
+    // ageDays is real/informational — a stale measurement is not hidden,
+    // just never auto-booked (same terminal outcome as a fresh one).
+    expect(Number(outcome.financePayload?.candidateAgeDays)).toBeGreaterThanOrEqual(399);
     const rows = await h.client.query(`SELECT id FROM roi_realized_values WHERE closure_receipt_id = $1`, [
       correlationId,
     ]);
@@ -1009,6 +1068,8 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     const outcome = await deliverAndFetch(h, correlationId);
 
     expect(outcome.financeStatus).toBe('NEEDS_DECISION');
+    expect(outcome.financePayload?.reason).toBe('NO_MONETARY_MEASUREMENT');
+    expect(outcome.financePayload?.candidateMeasurementId).toBeUndefined();
     const rows = await h.client.query(`SELECT id FROM roi_realized_values WHERE closure_receipt_id = $1`, [
       correlationId,
     ]);
@@ -1083,16 +1144,21 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
   });
 
   // ---------------------------------------------------------------------
-  // Codex review round 3 — canonical Finance read-back through the REAL
-  // route, not a raw SQL peek: closure receipt -> approved actual
-  // measurement -> recordExecutionRealization -> canonical GET/read model
-  // -> the SAME realizationId/value/source.
+  // Codex review round 3 canonical read-back test — its ORIGINAL premise
+  // (a closure-triggered candidate measurement automatically becomes a
+  // realized actual, visible through the real Benefits/ROI route) is
+  // INVALID under round 4's fix: the Finance leg never auto-realizes
+  // anything anymore. Rewritten (round 4) to prove the honest inverse of
+  // that claim through the SAME real route: a closure with a clean
+  // candidate measurement must NOT appear as a realized benefit through the
+  // real GET /api/benefits/roi/portfolio/summary route — no false actual
+  // ever reaches the real Finance/Benefits UI via this automatic path.
   // ---------------------------------------------------------------------
 
-  itDB('canonical read-back: the Finance actual is visible through the REAL GET /api/benefits/roi/portfolio/summary route (not just SQL)', async (h) => {
+  itDB('canonical NON-read-back: a closure with a real candidate measurement does NOT appear as a realized benefit through the REAL GET /api/benefits/roi/portfolio/summary route — Finance never auto-realizes, confirmed via the real read model, not just SQL', async (h) => {
     const initiativeId = await h.makeInitiative('read-back', {
       budgetCurrency: 'PLN',
-      kpiTargetValue: 99999, // a different number — proves the route doesn't echo the target either.
+      kpiTargetValue: 99999, // a different number — proves the route never echoes the target either.
       kpiUnit: 'PLN',
       monetaryMeasurement: { value: 7300 },
     });
@@ -1108,14 +1174,19 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
 
     const correlationId = await closeInitiative(h, initiativeId);
     const delivered = await deliverAndFetch(h, correlationId);
-    expect(delivered.financeStatus).toBe('DELIVERED');
+    expect(delivered.financeStatus).toBe('NEEDS_DECISION');
+    expect(delivered.financePayload?.reason).toBe('MEASUREMENT_REQUIRES_APPROVAL');
 
+    // Zero rows via SQL...
     const realizationRow = await h.client.query(
-      `SELECT id, source FROM roi_realized_values WHERE closure_receipt_id = $1`,
+      `SELECT id FROM roi_realized_values WHERE closure_receipt_id = $1`,
       [correlationId]
     );
-    expect(realizationRow.rows).toHaveLength(1);
+    expect(realizationRow.rows).toHaveLength(0);
 
+    // ...and confirmed through the REAL route a human/UI actually uses: no
+    // realized benefit shown for this initiative, even though a clean,
+    // currency-matched, freshly observed candidate measurement exists.
     const app = buildApp();
     const res = await request(app)
       .get('/api/benefits/roi/portfolio/summary')
@@ -1123,13 +1194,21 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
 
     expect(res.status).toBe(200);
     const item = res.body?.data?.items?.find((i: { initiativeId: string }) => i.initiativeId === initiativeId);
-    expect(item).toBeTruthy();
-    expect(item.hasRealized).toBe(true);
-    // The route sums realized_revenue_delta + realized_cost_delta + realized_savings
-    // for this initiative — only the MEASUREMENT (7300) contributed here, so
-    // the total must equal it exactly, never the target (99999).
-    expect(item.realizedBenefit).toBe(7300);
-    expect(delivered.financePayload?.realizationId).toBe(realizationRow.rows[0].id);
-    expect(realizationRow.rows[0].source).toBe('execution');
+    // Either the initiative doesn't appear as having a realized benefit at
+    // all, or it appears with hasRealized=false / zero — either shape is
+    // acceptable, but a truthy realized amount is not.
+    if (item) {
+      expect(item.hasRealized).toBeFalsy();
+      expect(item.realizedBenefit || 0).toBe(0);
+    }
+
+    // The candidate itself IS genuinely traceable, for whenever a human
+    // reviews and approves it through the existing manual Record
+    // Realization flow.
+    const measurementRow = await h.client.query(`SELECT id FROM kpi_time_series WHERE initiative_id = $1`, [
+      initiativeId,
+    ]);
+    expect(delivered.financePayload?.candidateMeasurementId).toBe(measurementRow.rows[0].id);
+    expect(delivered.financePayload?.candidateAmount).toBe(7300);
   });
 });
