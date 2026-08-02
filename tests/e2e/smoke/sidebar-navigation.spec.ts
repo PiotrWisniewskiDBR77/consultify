@@ -8,9 +8,15 @@
 import { expect, Page, test } from '@playwright/test';
 
 async function dismissTourModal(page: Page) {
-  const skipTour = page.getByRole('button', { name: /Skip tour|Pomiń/i }).first();
+  const skipTour = page
+    .getByRole('button', { name: /Skip tour|Skip for now|Pomiń/i })
+    .first();
   const consultantCard = page.getByRole('button', { name: /Consultant|Konsultant/i }).first();
   const welcomeTitle = page.getByText(/Welcome to Consultinity|Witamy w Consultinity/i);
+
+  // The onboarding dialog is mounted asynchronously after the route shell.
+  // Give it a short chance to appear before deciding there is nothing to close.
+  await welcomeTitle.waitFor({ state: 'visible', timeout: 2500 }).catch(() => {});
 
   for (let i = 0; i < 12; i++) {
     const hasSkip = await skipTour.isVisible().catch(() => false);
@@ -115,9 +121,9 @@ test.describe('L4 Smoke — sidebar navigation [@module:navigation]', () => {
     await expectNoRouteError(page);
   });
 
-  test('navigates to Benefits', async ({ page }) => {
+  test('navigates to canonical Results', async ({ page }) => {
     await navItem(page, /Results|Benefits/i).click();
-    await expect(page).toHaveURL(/\/benefits/);
+    await expect(page).toHaveURL(/\/results/);
     await expectNoRouteError(page);
   });
 
