@@ -1532,11 +1532,53 @@ export async function recordIdempotentResource(
   }
 }
 
+/**
+ * Serialize requests for one idempotency key on a pinned PostgreSQL session.
+ *
+ * The unique ledger row alone is too late for create-model: two callers can
+ * both observe an empty ledger, create different models, and only then race
+ * to record the winner.  This transaction-scoped advisory lock closes that
+ * check/create/record gap while leaving unrelated keys fully concurrent.
+ */
+export async function withFinancialModelIdempotencyLock<T>(
+  organizationId: string,
+  idempotencyKey: string,
+  operation: 'create_model' | 'approve_model',
+  work: () => Promise<T>
+): Promise<T> {
+  const { getPoolClientForPinnedTransaction } = await import('../database/PostgresDatabase.js');
+  const client = await getPoolClientForPinnedTransaction();
+  try {
+    await client.query('BEGIN');
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))`, [
+      `${organizationId}:${operation}`,
+      idempotencyKey,
+    ]);
+    const result = await work();
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      // Preserve the original failure.
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export async function approveModel(
   modelId: string,
   userId: string,
   opts?: { expectedVersion?: number }
-): Promise<{ success: boolean; error?: string; code?: 'VERSION_CONFLICT'; serverVersion?: number }> {
+): Promise<{
+  success: boolean;
+  error?: string;
+  code?: 'VERSION_CONFLICT';
+  serverVersion?: number;
+}> {
   const model = await getModel(modelId);
   if (!model) return { success: false, error: 'Model not found' };
 

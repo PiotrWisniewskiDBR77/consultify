@@ -118,9 +118,8 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
     const expressApp = express();
     expressApp.use(express.json({ limit: '5mb' }));
     const { default: verifyToken } = await import('../../server/src/middleware/auth.middleware.js');
-    const { requireV8OrgContext, attachV8Context } = await import(
-      '../../server/src/middleware/v8Auth.middleware.js'
-    );
+    const { requireV8OrgContext, attachV8Context } =
+      await import('../../server/src/middleware/v8Auth.middleware.js');
     const financeRouter = (await import('../../server/src/routes/v8/finance.routes.js')).default;
     expressApp.use(
       '/api/v8/finance',
@@ -137,11 +136,25 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
 
   afterAll(async () => {
     if (!client) return;
-    await client.query(`DELETE FROM financial_model_baseline_audit WHERE case_id LIKE $1 OR organization_id LIKE $1`, [`${P}%`]);
-    await client.query(`DELETE FROM financial_model_idempotency WHERE organization_id LIKE $1`, [`${P}%`]);
-    await client.query(`DELETE FROM financial_model_outputs WHERE model_id IN (SELECT id FROM financial_models WHERE organization_id LIKE $1)`, [`${P}%`]);
-    await client.query(`DELETE FROM financial_model_events WHERE model_id IN (SELECT id FROM financial_models WHERE organization_id LIKE $1)`, [`${P}%`]);
-    await client.query(`DELETE FROM financial_model_versions WHERE model_id IN (SELECT id FROM financial_models WHERE organization_id LIKE $1)`, [`${P}%`]);
+    await client.query(
+      `DELETE FROM financial_model_baseline_audit WHERE case_id LIKE $1 OR organization_id LIKE $1`,
+      [`${P}%`]
+    );
+    await client.query(`DELETE FROM financial_model_idempotency WHERE organization_id LIKE $1`, [
+      `${P}%`,
+    ]);
+    await client.query(
+      `DELETE FROM financial_model_outputs WHERE model_id IN (SELECT id FROM financial_models WHERE organization_id LIKE $1)`,
+      [`${P}%`]
+    );
+    await client.query(
+      `DELETE FROM financial_model_events WHERE model_id IN (SELECT id FROM financial_models WHERE organization_id LIKE $1)`,
+      [`${P}%`]
+    );
+    await client.query(
+      `DELETE FROM financial_model_versions WHERE model_id IN (SELECT id FROM financial_models WHERE organization_id LIKE $1)`,
+      [`${P}%`]
+    );
     await client.query(`DELETE FROM financial_models WHERE organization_id LIKE $1`, [`${P}%`]);
     await client.query(`DELETE FROM organization_members WHERE user_id LIKE $1`, [`${P}%`]);
     await client.query(`DELETE FROM users WHERE id LIKE $1`, [`${P}%`]);
@@ -191,7 +204,9 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
       .set('Authorization', `Bearer ${tokenA}`);
     expect(reopenGet.status).toBe(200);
     expect(reopenGet.body.data.model.id).toBe(caseId);
-    expect(reopenGet.body.data.model.assumptions_json).toEqual(firstGet.body.data.model.assumptions_json);
+    expect(reopenGet.body.data.model.assumptions_json).toEqual(
+      firstGet.body.data.model.assumptions_json
+    );
     expect(reopenGet.body.data.model.version).toBe(versionAfterSave);
     expect(reopenGet.body.data.model.currency).toBe('EUR');
     expect(reopenGet.body.data.model.name).toBe(`${P}case-1`);
@@ -222,7 +237,12 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
     const baseRes = await request(app)
       .post('/api/v8/finance/models')
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ name: `${P}scenario-base`, startDate: '2021-01-01', scenario: 'base', caseId: caseRootId });
+      .send({
+        name: `${P}scenario-base`,
+        startDate: '2021-01-01',
+        scenario: 'base',
+        caseId: caseRootId,
+      });
     expect(baseRes.status).toBe(201);
     scenarioBaseId = baseRes.body.data.model.id;
     expect(baseRes.body.data.model.case_id).toBe(caseRootId);
@@ -272,9 +292,9 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
       .get(`/api/v8/finance/models/${caseRootId}/case`)
       .set('Authorization', `Bearer ${tokenA}`);
     expect(afterPick.body.data.baselineModelId).toBe(scenarioBaseId);
-    const flags = (afterPick.body.data.scenarios as Array<{ id: string; is_baseline: boolean }>).map(
-      (s) => [s.id, s.is_baseline]
-    );
+    const flags = (
+      afterPick.body.data.scenarios as Array<{ id: string; is_baseline: boolean }>
+    ).map((s) => [s.id, s.is_baseline]);
     expect(flags.filter(([, isBase]) => isBase)).toEqual([[scenarioBaseId, true]]);
   });
 
@@ -359,6 +379,30 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
     expect(count.rows[0].c).toBe(1); // exactly one row, not two
   });
 
+  it('test 4a-concurrent: Promise.all create with one key returns the canonical winner and one row', async () => {
+    const idemKey = `${P}idem-create-concurrent`;
+    const makeRequest = () =>
+      request(app)
+        .post('/api/v8/finance/models')
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({
+          name: `${P}idem-concurrent-scenario`,
+          startDate: '2022-02-01',
+          idempotencyKey: idemKey,
+        });
+
+    const [a, b] = await Promise.all([makeRequest(), makeRequest()]);
+    expect([a.status, b.status].sort()).toEqual([200, 201]);
+    expect(a.body.data.model.id).toBe(b.body.data.model.id);
+    expect([a.body.data.idempotentReplay, b.body.data.idempotentReplay]).toContain(true);
+
+    const rows = await client.query(
+      `SELECT id FROM financial_models WHERE organization_id=$1 AND name=$2`,
+      [ORG_A, `${P}idem-concurrent-scenario`]
+    );
+    expect(rows.rows).toEqual([{ id: a.body.data.model.id }]);
+  });
+
   it('test 4b: retried approve (save version) with the same Idempotency-Key does not create a duplicate version row', async () => {
     const createRes = await request(app)
       .post('/api/v8/finance/models')
@@ -387,6 +431,30 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
     expect(versions.rows.length).toBe(1); // exactly one version row, not two
   });
 
+  it('test 4b-concurrent: Promise.all approve with one key creates one version and replays the winner', async () => {
+    const createRes = await request(app)
+      .post('/api/v8/finance/models')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ name: `${P}idem-concurrent-approve`, startDate: '2022-07-01' });
+    const modelId = createRes.body.data.model.id;
+    const idemKey = `${P}idem-approve-concurrent`;
+    const approve = () =>
+      request(app)
+        .post(`/api/v8/finance/models/${modelId}/approve`)
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({ idempotencyKey: idemKey });
+
+    const [a, b] = await Promise.all([approve(), approve()]);
+    expect(a.status).toBe(200);
+    expect(b.status).toBe(200);
+    expect([a.body.data.idempotentReplay, b.body.data.idempotentReplay]).toContain(true);
+    const versions = await client.query(
+      `SELECT version FROM financial_model_versions WHERE model_id=$1`,
+      [modelId]
+    );
+    expect(versions.rows).toHaveLength(1);
+  });
+
   // ═══════════════ TEST 5: stale-version / optimistic concurrency ═══════════════
   it('test 5: a stale expectedVersion is rejected 409 VERSION_CONFLICT on both PUT and approve, never overwrites', async () => {
     const createRes = await request(app)
@@ -394,7 +462,9 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
       .set('Authorization', `Bearer ${tokenA}`)
       .send({ name: `${P}stale-version-model`, startDate: '2023-01-01' });
     const modelId = createRes.body.data.model.id;
-    const initial = await client.query(`SELECT version FROM financial_models WHERE id=$1`, [modelId]);
+    const initial = await client.query(`SELECT version FROM financial_models WHERE id=$1`, [
+      modelId,
+    ]);
     const v0 = Number(initial.rows[0].version); // 1
 
     // approve() is the ONLY write path that bumps `version` (updateModel's
@@ -405,7 +475,9 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
     expect(approveRes.status).toBe(200);
-    const afterApprove = await client.query(`SELECT version FROM financial_models WHERE id=$1`, [modelId]);
+    const afterApprove = await client.query(`SELECT version FROM financial_models WHERE id=$1`, [
+      modelId,
+    ]);
     const v1 = Number(afterApprove.rows[0].version);
     expect(v1).toBe(v0 + 1);
 
@@ -442,9 +514,10 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
       .set('Authorization', `Bearer ${tokenA}`)
       .send({ expectedVersion: v1 });
     expect(correctApprove.status).toBe(200);
-    const afterSecondApprove = await client.query(`SELECT version FROM financial_models WHERE id=$1`, [
-      modelId,
-    ]);
+    const afterSecondApprove = await client.query(
+      `SELECT version FROM financial_models WHERE id=$1`,
+      [modelId]
+    );
     expect(Number(afterSecondApprove.rows[0].version)).toBe(v1 + 1);
   });
 
@@ -474,11 +547,13 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
     expect(caseListRes.status).toBe(404); // listCaseScenarios returns [] for an org that owns nothing here
 
     // Nothing changed on org A's side.
-    const row = await client.query(`SELECT name FROM financial_models WHERE id=$1`, [scenarioUpsideId]);
+    const row = await client.query(`SELECT name FROM financial_models WHERE id=$1`, [
+      scenarioUpsideId,
+    ]);
     expect(row.rows[0].name).not.toBe('B-HIJACKED-NAME');
   });
 
-  it('test 6b: org B cannot graft a scenario onto org A\'s case via a forged caseId', async () => {
+  it("test 6b: org B cannot graft a scenario onto org A's case via a forged caseId", async () => {
     const forgeRes = await request(app)
       .post('/api/v8/finance/models')
       .set('Authorization', `Bearer ${tokenB}`)
@@ -538,8 +613,14 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
       .get(`/api/v8/finance/models/${modelId}/appraisal`)
       .set('Authorization', `Bearer ${tokenA}`);
     expect(reopenAppraisal.status).toBe(200);
-    expect(reopenAppraisal.body.data.result.npv).toBeCloseTo(firstAppraisal.body.data.result.npv, 6);
-    expect(reopenAppraisal.body.data.result.irr).toBeCloseTo(firstAppraisal.body.data.result.irr, 6);
+    expect(reopenAppraisal.body.data.result.npv).toBeCloseTo(
+      firstAppraisal.body.data.result.npv,
+      6
+    );
+    expect(reopenAppraisal.body.data.result.irr).toBeCloseTo(
+      firstAppraisal.body.data.result.irr,
+      6
+    );
     expect(reopenAppraisal.body.data.result.payback).toBeCloseTo(
       firstAppraisal.body.data.result.payback,
       6
@@ -561,8 +642,13 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
       .get(`/api/v8/finance/models/${modelId}/appraisal`)
       .set('Authorization', `Bearer ${tokenA}`);
     expect(afterChangeAppraisal.status).toBe(200);
-    expect(afterChangeAppraisal.body.data.result.npv).not.toBeCloseTo(firstAppraisal.body.data.result.npv, 2);
-    expect(afterChangeAppraisal.body.data.result.npv).toBeGreaterThan(firstAppraisal.body.data.result.npv);
+    expect(afterChangeAppraisal.body.data.result.npv).not.toBeCloseTo(
+      firstAppraisal.body.data.result.npv,
+      2
+    );
+    expect(afterChangeAppraisal.body.data.result.npv).toBeGreaterThan(
+      firstAppraisal.body.data.result.npv
+    );
   });
 
   // ═══════════════ TEST 8: negative controls — OpEx sign + discount_rate ═══════════════

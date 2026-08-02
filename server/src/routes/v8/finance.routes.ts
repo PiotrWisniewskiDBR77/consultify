@@ -55,6 +55,7 @@ import {
   reseedModelFromSource,
   setBaseline,
   updateModel,
+  withFinancialModelIdempotencyLock,
 } from '../../services/financialModelingService.js';
 import {
   getStatementPackDetail,
@@ -298,43 +299,59 @@ router.post(
       (typeof req.headers['idempotency-key'] === 'string' && req.headers['idempotency-key']) ||
       (typeof body.idempotencyKey === 'string' && body.idempotencyKey) ||
       undefined;
-    if (idempotencyKey) {
-      const existingId = await findIdempotentResource(organizationId, idempotencyKey, 'create_model');
-      if (existingId) {
-        const existing = await getModel(existingId, organizationId);
-        if (existing) {
-          return res.status(200).json({
-            data: { model: existing, idempotentReplay: true },
-            meta: financeMeta(),
-          });
-        }
-      }
-    }
-
     try {
-      const modelId = await createModel({
-        organizationId,
-        projectId: body.projectId,
-        initiativeId: body.initiativeId,
-        name,
-        description: body.description,
-        currency: body.currency,
-        horizonMonths: body.horizonMonths,
-        startDate,
-        granularity: body.granularity,
-        scenario: body.scenario,
-        assumptions: body.assumptions,
-        createdBy: userId,
-        sourceStatementId: body.sourceStatementId,
-        sourceStatementPackId: body.sourceStatementPackId,
-        caseId: typeof body.caseId === 'string' && body.caseId.trim() ? body.caseId.trim() : undefined,
-      });
-      if (idempotencyKey) {
-        await recordIdempotentResource(organizationId, idempotencyKey, 'create_model', modelId);
-      }
-      const model = await getModel(modelId, organizationId);
-      return res.status(201).json({
-        data: { model: model ?? { id: modelId, name, start_date: startDate } },
+      const createOnce = async () => {
+        if (idempotencyKey) {
+          const existingId = await findIdempotentResource(
+            organizationId,
+            idempotencyKey,
+            'create_model'
+          );
+          if (existingId) {
+            const existing = await getModel(existingId, organizationId);
+            if (existing) return { status: 200, model: existing, idempotentReplay: true };
+          }
+        }
+        const modelId = await createModel({
+          organizationId,
+          projectId: body.projectId,
+          initiativeId: body.initiativeId,
+          name,
+          description: body.description,
+          currency: body.currency,
+          horizonMonths: body.horizonMonths,
+          startDate,
+          granularity: body.granularity,
+          scenario: body.scenario,
+          assumptions: body.assumptions,
+          createdBy: userId,
+          sourceStatementId: body.sourceStatementId,
+          sourceStatementPackId: body.sourceStatementPackId,
+          caseId:
+            typeof body.caseId === 'string' && body.caseId.trim() ? body.caseId.trim() : undefined,
+        });
+        if (idempotencyKey)
+          await recordIdempotentResource(organizationId, idempotencyKey, 'create_model', modelId);
+        const model = await getModel(modelId, organizationId);
+        return {
+          status: 201,
+          model: model ?? { id: modelId, name, start_date: startDate },
+          idempotentReplay: false,
+        };
+      };
+      const outcome = idempotencyKey
+        ? await withFinancialModelIdempotencyLock(
+            organizationId,
+            idempotencyKey,
+            'create_model',
+            createOnce
+          )
+        : await createOnce();
+      return res.status(outcome.status).json({
+        data: {
+          model: outcome.model,
+          ...(outcome.idempotentReplay ? { idempotentReplay: true } : {}),
+        },
         meta: financeMeta(),
       });
     } catch (e: any) {
@@ -519,7 +536,8 @@ router.get(
     // `getModel()` already JSON.parse()s assumptions_json into an object.
     const assumptions = (model.assumptions_json || {}) as Record<string, unknown>;
     const assumptionsDiscountRatePct =
-      typeof assumptions.discountRatePct === 'number' && Number.isFinite(assumptions.discountRatePct)
+      typeof assumptions.discountRatePct === 'number' &&
+      Number.isFinite(assumptions.discountRatePct)
         ? assumptions.discountRatePct
         : undefined;
     const assumptionsHurdleRatePct =
@@ -533,7 +551,8 @@ router.get(
       discountRatePct = Number(discountRatePctRaw);
       if (!Number.isFinite(discountRatePct)) {
         return res.status(400).json({
-          error: 'discountRatePct must be a finite number (percent, e.g. 10 for 10%) when provided.',
+          error:
+            'discountRatePct must be a finite number (percent, e.g. 10 for 10%) when provided.',
         });
       }
     } else if (assumptionsDiscountRatePct !== undefined) {
@@ -624,22 +643,10 @@ router.post(
       (typeof req.headers['idempotency-key'] === 'string' && req.headers['idempotency-key']) ||
       (typeof (req.body ?? {}).idempotencyKey === 'string' && (req.body ?? {}).idempotencyKey) ||
       undefined;
-    if (idempotencyKey) {
-      const existingId = await findIdempotentResource(organizationId, idempotencyKey, 'approve_model');
-      if (existingId === modelId) {
-        const fresh = await getModel(modelId, organizationId);
-        return res.status(200).json({
-          data: { success: true, status: fresh?.status || 'approved', idempotentReplay: true },
-          meta: financeMeta(),
-        });
-      }
-    }
-
     // Optional optimistic-concurrency guard: caller may supply the version
     // it last read (body.expectedVersion or X-Model-Version header). If the
     // model moved on since, refuse with 409 rather than silently bump again.
-    const expectedVersionRaw =
-      (req.body ?? {}).expectedVersion ?? req.headers['x-model-version'];
+    const expectedVersionRaw = (req.body ?? {}).expectedVersion ?? req.headers['x-model-version'];
     const expectedVersion =
       expectedVersionRaw !== undefined && expectedVersionRaw !== null && expectedVersionRaw !== ''
         ? Number(expectedVersionRaw)
@@ -648,23 +655,54 @@ router.post(
       return res.status(400).json({ error: 'expectedVersion must be a finite number' });
     }
 
-    const result = await approveModel(modelId, userId, { expectedVersion });
-    if (!result.success) {
-      if (result.code === 'VERSION_CONFLICT') {
-        return res.status(409).json({
-          error: result.error || 'Version conflict',
-          code: 'VERSION_CONFLICT',
-          serverVersion: result.serverVersion,
-        });
+    const approveOnce = async () => {
+      if (idempotencyKey) {
+        const existingId = await findIdempotentResource(
+          organizationId,
+          idempotencyKey,
+          'approve_model'
+        );
+        if (existingId === modelId) {
+          const fresh = await getModel(modelId, organizationId);
+          return { httpStatus: 200, status: fresh?.status || 'approved', idempotentReplay: true };
+        }
       }
-      return res.status(400).json({ error: result.error || 'Approval failed' });
+      const result = await approveModel(modelId, userId, { expectedVersion });
+      if (!result.success) {
+        return {
+          httpStatus: result.code === 'VERSION_CONFLICT' ? 409 : 400,
+          error:
+            result.error ||
+            (result.code === 'VERSION_CONFLICT' ? 'Version conflict' : 'Approval failed'),
+          code: result.code,
+          serverVersion: result.serverVersion,
+        };
+      }
+      if (idempotencyKey)
+        await recordIdempotentResource(organizationId, idempotencyKey, 'approve_model', modelId);
+      return { httpStatus: 200, status: 'approved', idempotentReplay: false };
+    };
+    const outcome = idempotencyKey
+      ? await withFinancialModelIdempotencyLock(
+          organizationId,
+          idempotencyKey,
+          'approve_model',
+          approveOnce
+        )
+      : await approveOnce();
+    if (outcome.error) {
+      return res.status(outcome.httpStatus).json({
+        error: outcome.error,
+        ...(outcome.code ? { code: outcome.code } : {}),
+        ...(outcome.serverVersion !== undefined ? { serverVersion: outcome.serverVersion } : {}),
+      });
     }
-    if (idempotencyKey) {
-      await recordIdempotentResource(organizationId, idempotencyKey, 'approve_model', modelId);
-    }
-
-    return res.json({
-      data: { success: true, status: 'approved' },
+    return res.status(outcome.httpStatus).json({
+      data: {
+        success: true,
+        status: outcome.status,
+        ...(outcome.idempotentReplay ? { idempotentReplay: true } : {}),
+      },
       meta: financeMeta(),
     });
   })
