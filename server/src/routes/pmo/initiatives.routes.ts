@@ -2007,6 +2007,190 @@ router.post(
 );
 
 /**
+ * POST /api/initiatives/:id/changes
+ * EXE-05 — create-or-link a change/decision record against the initiative,
+ * without touching the FROZEN DecisionController.ts. Mirrors the apply-template
+ * precedent above (direct INSERT INTO decisions) for the same reason: the frozen
+ * controller stays the only path for ordinary decisions created from the UI
+ * (DecisionsSection.tsx -> POST /api/decisions), while this route is a second,
+ * narrowly-scoped call site for execution-spine change management.
+ *
+ * body:
+ *  - decisionId?: string        -> LINK path: attach an existing decision to this initiative
+ *  - title?: string             -> CREATE path (required when decisionId is absent)
+ *  - description?, type?, priority?
+ *  - reason?: string            -> stored as initiative_history.notes
+ *  - idempotencyKey?: string    -> retry-safe replay guard (see 20260802_exe005006_change_progress_spine.sql)
+ */
+router.post(
+  '/:id/changes',
+  requireInitiativeCapability('initiative.change.manage', { shadow: true }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      if (!orgId || !actorId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const { id } = req.params;
+      const { decisionId, title, description, type, priority, reason, idempotencyKey } =
+        req.body || {};
+
+      // Org-scope guard BEFORE any mutation, same shape as apply-template above.
+      const initiative = await queryHelpers.queryOne(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [String(id), String(orgId)]
+      );
+      if (!initiative) return res.status(404).json({ error: 'Initiative not found' });
+
+      const isLink = Boolean(decisionId);
+
+      if (isLink) {
+        // LINK path: attach an existing decision to this initiative. Must belong to the
+        // SAME org (cross-tenant fail-closed) — 404, not 403, to avoid confirming the
+        // decision's existence to an unauthorized caller.
+        const decision = (await queryHelpers.queryOne(
+          `SELECT id, initiative_id FROM decisions WHERE id = ? AND organization_id = ?`,
+          [String(decisionId), String(orgId)]
+        )) as any;
+        if (!decision) return res.status(404).json({ error: 'Decision not found' });
+
+        // Idempotent replay guard (initiative_history dedup key, scoped to this action —
+        // see EXE-06 progress_updated precedent in InitiativeController.ts).
+        if (idempotencyKey) {
+          const existingHistory = await queryHelpers.queryOne(
+            `SELECT id FROM initiative_history WHERE initiative_id = ? AND action = 'change_linked' AND idempotency_key = ?`,
+            [String(id), String(idempotencyKey)]
+          );
+          if (existingHistory) {
+            return res
+              .status(200)
+              .json({ success: true, idempotent: true, decisionId: String(decisionId) });
+          }
+        }
+
+        // Do not steal a decision already linked to a different initiative — only
+        // (re)link if currently unlinked or already pointing here.
+        if (decision.initiative_id && String(decision.initiative_id) !== String(id)) {
+          return res.status(409).json({
+            error: 'Decision is already linked to a different initiative',
+            code: 'DECISION_ALREADY_LINKED',
+          });
+        }
+        if (!decision.initiative_id) {
+          await queryHelpers.queryRun(
+            `UPDATE decisions SET initiative_id = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
+            [String(id), new Date().toISOString(), String(decisionId), String(orgId)]
+          );
+        }
+
+        try {
+          await queryHelpers.queryRun(
+            `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by, notes, idempotency_key)
+             VALUES (?, ?, 'change_linked', NULL, ?, ?, ?, ?)`,
+            [
+              uuidv4(),
+              String(id),
+              JSON.stringify({ decisionId }),
+              String(actorId),
+              reason || null,
+              idempotencyKey || null,
+            ]
+          );
+        } catch (histErr: any) {
+          if (histErr?.code !== '23505') {
+            logger.error('[POST /:id/changes] failed to write change_linked history', {
+              initiativeId: id,
+              error: histErr?.message || String(histErr),
+            });
+          }
+        }
+
+        return res.status(200).json({ success: true, decisionId: String(decisionId) });
+      }
+
+      // CREATE path: new decision linked to this initiative, mirroring apply-template's
+      // INSERT INTO decisions shape above.
+      if (!title) return res.status(400).json({ error: 'title is required to create a change/decision' });
+
+      if (idempotencyKey) {
+        const existingDecision = (await queryHelpers.queryOne(
+          `SELECT id FROM decisions WHERE initiative_id = ? AND idempotency_key = ?`,
+          [String(id), String(idempotencyKey)]
+        )) as any;
+        if (existingDecision) {
+          return res
+            .status(200)
+            .json({ success: true, idempotent: true, decisionId: String(existingDecision.id) });
+        }
+      }
+
+      const now = new Date().toISOString();
+      const decId = uuidv4();
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO decisions (id, organization_id, initiative_id, title, description, type, priority, status, created_by, created_at, updated_at, idempotency_key)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)`,
+          [
+            decId,
+            String(orgId),
+            String(id),
+            String(title),
+            description || null,
+            String(type || 'CHANGE'),
+            String(priority || 'medium'),
+            String(actorId),
+            now,
+            now,
+            idempotencyKey || null,
+          ]
+        );
+      } catch (insertErr: any) {
+        // Unique-violation on (initiative_id, idempotency_key) means a concurrent identical
+        // retry already created the decision — treat that as success, not an error.
+        if (insertErr?.code === '23505' && idempotencyKey) {
+          const winner = (await queryHelpers.queryOne(
+            `SELECT id FROM decisions WHERE initiative_id = ? AND idempotency_key = ?`,
+            [String(id), String(idempotencyKey)]
+          )) as any;
+          if (winner) {
+            return res
+              .status(200)
+              .json({ success: true, idempotent: true, decisionId: String(winner.id) });
+          }
+        }
+        throw insertErr;
+      }
+
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by, notes, idempotency_key)
+           VALUES (?, ?, 'change_created', NULL, ?, ?, ?, ?)`,
+          [
+            uuidv4(),
+            String(id),
+            JSON.stringify({ decisionId: decId, title }),
+            String(actorId),
+            reason || null,
+            idempotencyKey || null,
+          ]
+        );
+      } catch (histErr: any) {
+        if (histErr?.code !== '23505') {
+          logger.error('[POST /:id/changes] failed to write change_created history', {
+            initiativeId: id,
+            error: histErr?.message || String(histErr),
+          });
+        }
+      }
+
+      return res.status(201).json({ success: true, decisionId: decId });
+    } catch (err: any) {
+      return failInitiative500(res, 'Failed to create/link change', 'INITIATIVE_CHANGE_FAILED', err);
+    }
+  }
+);
+
+/**
  * POST /api/initiatives/:id/apply-blueprint
  * Enhanced apply that includes WBS tasks, milestone dependencies, role templates, and DoD per level
  */
