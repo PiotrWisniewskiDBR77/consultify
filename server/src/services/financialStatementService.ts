@@ -5,6 +5,8 @@
  *        → line extraction with confidence → mapping to canonical lines → validation.
  */
 
+import crypto from 'crypto';
+
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -8195,6 +8197,353 @@ export async function withStatementUploadIdempotencyLock<T>(
     throw error;
   } finally {
     client.release();
+  }
+}
+
+// ════════════════════════════════════════════════
+// FIN-005: Upload idempotency — shared state machine
+//
+// Moved here (pure refactor, out of finance-statements.routes.ts) so the
+// SAME reservation/finalize/fail/cleanup primitives can be wired into every
+// endpoint that persists a Statement from an uploaded file — not just
+// `POST /finance-statements/upload`, which is the only one that had them
+// before. See `withStatementUploadIdempotencyLock` immediately above for the
+// outer per-(org,key) serialization layer these primitives run underneath.
+// ════════════════════════════════════════════════
+
+export const MAX_IDEMPOTENCY_KEY_CHARS = 200;
+
+/**
+ * Thrown by getIdempotencyKey() when the client-supplied key is over the
+ * length cap. Callers map this to 400 IDEMPOTENCY_KEY_TOO_LONG.
+ *
+ * Codex review Blocker 3, negative control: a PREVIOUS implementation
+ * silently truncated an over-length key with `.slice(0, MAX)`. Truncation is
+ * actively dangerous, not just sloppy — two DIFFERENT long keys that happen
+ * to share the same first MAX_IDEMPOTENCY_KEY_CHARS characters would
+ * truncate to the IDENTICAL stored key, so the second request would
+ * silently replay the first's result even though the client believed it was
+ * using a distinct key for a distinct logical operation. Rejecting is the
+ * only safe option — the client must be told to shorten the key, never have
+ * it silently reinterpreted as someone else's key.
+ */
+export class IdempotencyKeyTooLongError extends Error {}
+
+/**
+ * Minimal shape `getIdempotencyKey` needs from an Express-style request —
+ * kept structural (not `express.Request`) so this service has no dependency
+ * on the `express` types, and so it works unchanged against both the legacy
+ * `AuthRequest` (finance-statements.routes.ts) and the v8 route's own
+ * request type.
+ */
+export interface IdempotencyKeyRequestLike {
+  headers?: Record<string, string | string[] | undefined>;
+  body?: unknown;
+}
+
+/**
+ * Read a client-supplied idempotency key from header or body, trimmed.
+ * Returns null if none was supplied. Throws IdempotencyKeyTooLongError if
+ * one was supplied but exceeds MAX_IDEMPOTENCY_KEY_CHARS — see that class's
+ * doc comment for why this must reject, not truncate.
+ */
+export function getIdempotencyKey(req: IdempotencyKeyRequestLike): string | null {
+  const headerRaw = req.headers?.['idempotency-key'];
+  const header = Array.isArray(headerRaw) ? headerRaw[0] : headerRaw;
+  const bodyRaw = (req.body as Record<string, unknown> | undefined)?.idempotencyKey;
+  const raw = String(header || bodyRaw || '').trim();
+  if (!raw) return null;
+  if (raw.length > MAX_IDEMPOTENCY_KEY_CHARS) {
+    throw new IdempotencyKeyTooLongError(
+      `Idempotency-Key exceeds ${MAX_IDEMPOTENCY_KEY_CHARS} characters`
+    );
+  }
+  return raw;
+}
+
+/** SHA-256 hex digest of an uploaded file's raw bytes — see Codex review
+ * Blocker 3: the Idempotency-Key header alone doesn't tie a replay to WHAT
+ * was actually uploaded. Hashing the file bytes is sufficient to detect a
+ * reused key with different content. Only the hash is ever persisted —
+ * never the bytes. */
+export function sha256Hex(buffer: Buffer): string {
+  return crypto.createHash('sha256').update(buffer).digest('hex');
+}
+
+/**
+ * ── Codex round-3 fix: reservation/result state machine ──────────────────
+ *
+ * The PREVIOUS shape here (`findIdempotentUpload` + best-effort
+ * `recordIdempotentUpload`, both since removed) only ever wrote the
+ * completion marker ONCE, at the very end, and swallowed every failure of
+ * that write. Root cause: that write went through `dbRun()` ->
+ * `Database.js`'s global connection pool — a DIFFERENT connection than the
+ * one `withStatementUploadIdempotencyLock` holds its `pg_advisory_xact_lock`
+ * on — so it was never actually inside "the transaction" the lock implied.
+ * A failure of just that one INSERT (any reason) left the business writes
+ * (Statement + Pack, which already commit independently per-statement via
+ * that same global pool) durably committed, a 201 already sent, and NO
+ * durable marker — a same-key retry then found nothing and redid the whole
+ * upload, creating a duplicate Statement/Pack.
+ *
+ * FIX: reserve BEFORE doing any work, finalize (or fail) AFTER — both as
+ * their OWN durably-committed statements, independent of whether later
+ * steps in this request succeed. `pg_advisory_xact_lock` remains the outer
+ * serialization layer (unchanged) — it guarantees only ONE caller for a
+ * given (organizationId, idempotencyKey) is ever inside
+ * `reserveIdempotentUpload` at a time, which is what makes the
+ * SELECT-then-branch-then-UPDATE sequence below race-free without needing
+ * its own database transaction. See the `20260805_fin005_statement_upload_
+ * idempotency_state_machine.sql` migration for the schema side of this.
+ */
+
+/**
+ * How long an 'in_progress' reservation is treated as a live, in-flight
+ * upload before a later request for the same (org, key) is allowed to
+ * reclaim it. A real upload -> parse -> persist cycle for a single
+ * financial statement (a handful of sheets, a few hundred rows at most)
+ * should never approach this. It exists purely to recover a reservation
+ * abandoned by a crashed/killed process: a crash releases the
+ * pg_advisory_xact_lock immediately (the pinned connection drops, its
+ * transaction aborts), so a NEW request for the same key is NOT blocked by
+ * the lock — but without this cutoff it would be blocked forever by a
+ * permanently 'in_progress' row that no live process is ever going to
+ * finalize or fail.
+ */
+export const STALE_IN_PROGRESS_SECONDS = 60;
+
+interface IdempotencyRow {
+  id: string;
+  status: 'in_progress' | 'completed' | 'failed';
+  status_code: number;
+  response_json: string | null;
+  request_hash: string | null;
+  created_at: string;
+}
+
+export type ReservationOutcome =
+  | { kind: 'owner'; reservationId: string }
+  | { kind: 'replay'; statusCode: number; body: Record<string, unknown> }
+  | { kind: 'conflict' }
+  | { kind: 'in_progress' }
+  | { kind: 'schema_missing' };
+
+/**
+ * Attempt to become the durable OWNER of the (organizationId, idempotencyKey)
+ * reservation for this upload. MUST be called from inside
+ * `withStatementUploadIdempotencyLock` — see the block comment above.
+ *
+ * Requirement 7 (fail-CLOSED for keyed uploads on a schema gap): a
+ * schema-compat error on the reservation INSERT itself (missing table OR
+ * missing column — `status` is referenced directly, so either is caught
+ * here) is surfaced as `schema_missing`, not swallowed into "proceed
+ * without protection". A client that supplied an Idempotency-Key gets a
+ * hard rejection with ZERO business writes rather than a silent downgrade
+ * to unprotected. The UNKEYED path (no Idempotency-Key header) never calls
+ * this function at all, so it is unaffected and keeps working on a schema
+ * that predates this feature.
+ */
+export async function reserveIdempotentUpload(
+  organizationId: string,
+  idempotencyKey: string,
+  requestHash: string,
+  createdBy?: string
+): Promise<ReservationOutcome> {
+  const reservationId = `fsui-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+  let inserted: IdempotencyRow | null;
+  try {
+    inserted = await dbGet<IdempotencyRow>(
+      `INSERT INTO financial_statement_upload_idempotency
+        (id, organization_id, idempotency_key, statement_id, status_code, response_json, request_hash, status, created_by, created_at)
+       VALUES (?, ?, ?, NULL, 0, NULL, ?, 'in_progress', ?, CURRENT_TIMESTAMP)
+       ON CONFLICT (organization_id, idempotency_key) DO NOTHING
+       RETURNING id, status, status_code, response_json, request_hash, created_at`,
+      [reservationId, organizationId, idempotencyKey, requestHash, createdBy || null],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (isSchemaCompatError(error)) return { kind: 'schema_missing' };
+    throw error;
+  }
+  if (inserted) return { kind: 'owner', reservationId: inserted.id };
+
+  // Conflict: a row already exists for this (org, key) — read it and branch.
+  const existing = await dbGet<IdempotencyRow>(
+    `SELECT id, status, status_code, response_json, request_hash, created_at
+       FROM financial_statement_upload_idempotency
+      WHERE organization_id = ? AND idempotency_key = ? LIMIT 1`,
+    [organizationId, idempotencyKey],
+    { fallback: false }
+  );
+  if (!existing) {
+    // Vanishingly unlikely (the conflicting row would have to be deleted
+    // between the INSERT's conflict and this SELECT, by something other
+    // than this code path) — a real inconsistency, not a normal outcome to
+    // paper over.
+    throw new Error(
+      `[FinancialStatementService] Idempotency reservation conflict for ${organizationId}/${idempotencyKey} but no row found on re-read`
+    );
+  }
+
+  if (existing.status === 'completed') {
+    if (existing.request_hash && existing.request_hash !== requestHash) {
+      return { kind: 'conflict' };
+    }
+    // Hash matches, or this marker predates the request_hash column
+    // (schema-compat: null) — safe replay either way.
+    return {
+      kind: 'replay',
+      statusCode: Number(existing.status_code) || 201,
+      body: JSON.parse(String(existing.response_json)) as Record<string, unknown>,
+    };
+  }
+
+  // 'failed', or a stale 'in_progress' (crashed/abandoned attempt) — try to
+  // atomically reclaim the SAME row. The staleness comparison uses the
+  // DATABASE's clock (CURRENT_TIMESTAMP), not the app server's, so there is
+  // no app/DB clock-skew risk in the cutoff. Rebinding request_hash to THIS
+  // request is intentional: a 'failed'/abandoned attempt never reached
+  // 'completed', so it never actually established a content binding for
+  // this key — the reclaiming request is free to define one.
+  if (existing.status === 'failed' || existing.status === 'in_progress') {
+    // Orphan-tracking (Fix 1): a reclaim always nulled `statement_id`
+    // unconditionally to make room for the NEW attempt's id, but never
+    // recorded what the OLD (abandoned/failed) attempt's `statement_id` had
+    // been pointing at. Business writes (Statement + Pack) commit
+    // independently, via the global pool, BEFORE this key's reservation is
+    // finalized/failed — so a row that reaches 'failed' with a non-null
+    // `statement_id` (set by `failIdempotentUpload`'s `statementId` param)
+    // references a REAL, fully-persisted Statement that is about to become
+    // permanently unreferenced by any marker the instant this UPDATE nulls
+    // it out. This CASE appends that id into `orphaned_statement_ids`
+    // atomically, in the SAME UPDATE, so no separate SELECT-then-UPDATE is
+    // needed and the existing race-free reclaim guarantee (single
+    // statement, `WHERE ... RETURNING *`) is unchanged. A currently-null
+    // `statement_id` (the common case — most failures happen before any
+    // Statement is ever created) is a no-op append.
+    const reclaimed = await dbGet<IdempotencyRow>(
+      `UPDATE financial_statement_upload_idempotency
+          SET status = 'in_progress', request_hash = ?, created_by = ?, created_at = CURRENT_TIMESTAMP,
+              status_code = 0, response_json = NULL,
+              orphaned_statement_ids = CASE
+                WHEN statement_id IS NOT NULL
+                THEN orphaned_statement_ids || jsonb_build_array(statement_id)
+                ELSE orphaned_statement_ids
+              END,
+              statement_id = NULL, completed_at = NULL
+        WHERE id = ?
+          AND (status = 'failed'
+               OR (status = 'in_progress'
+                   AND created_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_IN_PROGRESS_SECONDS} seconds'))
+        RETURNING id, status, status_code, response_json, request_hash, created_at`,
+      [requestHash, createdBy || null, existing.id],
+      { fallback: false }
+    );
+    if (reclaimed) return { kind: 'owner', reservationId: reclaimed.id };
+    // Not stale after all (lost a theoretical race, or genuinely fresh) —
+    // fall through to "genuinely in progress, retry later".
+  }
+
+  return { kind: 'in_progress' };
+}
+
+/**
+ * Mark a reservation durably COMPLETE — the only signal a caller is allowed
+ * to treat as success (see e.g. the `/upload` route). Returns false — NEVER
+ * throws — both when the UPDATE affects zero rows (defensive: should not
+ * normally happen since the caller owns the reservation) AND when the
+ * UPDATE itself throws (e.g. a genuine unexpected DB error). Either way the
+ * caller treats an unconfirmed finalize as a hard failure (500-class, never
+ * 2xx) rather than trusting a write it cannot prove happened.
+ */
+export async function finalizeIdempotentUpload(params: {
+  reservationId: string;
+  statementId: string;
+  statusCode: number;
+  responseJson: string;
+}): Promise<boolean> {
+  try {
+    const result = await dbRun(
+      `UPDATE financial_statement_upload_idempotency
+          SET status = 'completed', statement_id = ?, status_code = ?, response_json = ?, completed_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND status = 'in_progress'`,
+      [params.statementId, params.statusCode, params.responseJson, params.reservationId],
+      { fallback: false }
+    );
+    return Boolean(result?.success) && Number(result?.changes || 0) === 1;
+  } catch (error) {
+    logger.error(
+      `[FinancialStatementService] Finalize UPDATE threw for idempotency reservation ${params.reservationId}: ${error}`
+    );
+    return false;
+  }
+}
+
+/**
+ * Mark a reservation FAILED so a later retry for the same (org, key) can
+ * reclaim it instead of being blocked by a dead 'in_progress' row forever.
+ * Best-effort BY DESIGN (a failure to record "this attempt failed" must
+ * never mask or replace the real error being propagated to the client) —
+ * but a real attempt: any non-schema-compat failure is logged loudly, not
+ * silently swallowed. If even this UPDATE fails or the row is somehow gone,
+ * it is left 'in_progress' and simply ages into the staleness window above
+ * for the NEXT retry's reclaim path to recover — the safety net, not the
+ * primary path.
+ *
+ * `statementId` (Fix 1, orphan-tracking): pass this when the caller's
+ * business-write step already returned a real, persisted `statementId` for
+ * this attempt before the reservation ended up failing (e.g. the
+ * finalize-UPDATE-didn't-land case). It reuses the SAME `statement_id`
+ * column the success path uses, but with a DIFFERENT meaning on a 'failed'
+ * row: "the Statement this abandoned attempt orphaned", not "the Statement
+ * this marker represents". That distinction is safe because every read
+ * site that treats `statement_id` as a completed marker's payload
+ * (`reserveIdempotentUpload`'s replay branch) is gated on
+ * `status === 'completed'` first — a 'failed' row is never mistaken for a
+ * replay regardless of what this column holds. The reclaim path (see
+ * `reserveIdempotentUpload`) is what actually preserves this id — it moves
+ * it into `orphaned_statement_ids` atomically before nulling `statement_id`
+ * for the next attempt, so it is never silently lost.
+ */
+export async function failIdempotentUpload(
+  reservationId: string,
+  statementId?: string
+): Promise<void> {
+  try {
+    const result = await dbRun(
+      `UPDATE financial_statement_upload_idempotency SET status = 'failed', statement_id = ? WHERE id = ? AND status = 'in_progress'`,
+      [statementId || null, reservationId],
+      { fallback: false }
+    );
+    if (!result?.success || Number(result?.changes || 0) !== 1) {
+      logger.warn(
+        `[FinancialStatementService] Marking idempotency reservation ${reservationId} failed did not affect exactly one row — it will age into the staleness window for a later retry to reclaim instead`
+      );
+    }
+  } catch (error) {
+    logger.warn(
+      `[FinancialStatementService] Failed to mark idempotency reservation ${reservationId} as failed: ${error}`
+    );
+  }
+}
+
+/**
+ * Best-effort delete of a multer-uploaded temp file on a request path that
+ * does NOT result in a newly-persisted Statement (replay, 409 reuse-reject,
+ * retryable in-progress-reject, fail-closed schema-missing-reject). A
+ * genuinely NEW, successfully-persisted upload keeps its file — it becomes
+ * the Statement's permanent evidentiary source — so this must only ever be
+ * called on the non-persisting paths, never the success path.
+ */
+export async function cleanupUnpersistedUpload(filePath: string, reason: string): Promise<void> {
+  try {
+    const fs = await import('fs');
+    await fs.promises.unlink(filePath);
+  } catch (error) {
+    logger.warn(
+      `[FinancialStatementService] Failed to clean up unpersisted upload temp file (${reason}): ${error}`
+    );
   }
 }
 
