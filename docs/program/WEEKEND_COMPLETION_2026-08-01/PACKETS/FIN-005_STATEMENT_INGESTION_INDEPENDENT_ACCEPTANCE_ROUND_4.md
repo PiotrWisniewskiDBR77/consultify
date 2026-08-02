@@ -1,7 +1,8 @@
 ---
 doc_id: FIN-005-statement-ingestion-independent-acceptance-round-4
 truth_type: operations
-status: AWAITING_CODEX_REVIEW
+status: superseded
+superseded_by: FIN-005_STATEMENT_INGESTION_CANONICAL_FINAL_REPORT.md
 owner: claude
 process_owner: codex
 product_owner: piotr
@@ -11,6 +12,15 @@ base_commit: b99a2d5b98884a20e7fd0000492eef9ea5ab985c
 head_commit: 887b949a0bc12f788f305f834a35a03ed35f2019
 last_reviewed: 2026-08-02
 ---
+
+> **SUPERSEDED.** Codex reviewed this round and returned `FIX_REQUIRED` with
+> four blockers — most importantly, that tracking an orphaned Statement's id
+> in `orphaned_statement_ids` (this round's own Fix 1) is not exactly-once:
+> the duplicate row was still active, merely logged. Blockers 1-4 (true
+> recover-or-compensate on reclaim, a notes-persist-failure statementId gap
+> on `/upload`, dedicated cross-tenant tests, and a v8 XLSX false-success
+> path) were fixed in the following round. Kept for history only. Current
+> truth: `FIN-005_STATEMENT_INGESTION_CANONICAL_FINAL_REPORT.md`.
 
 # FIN-005 — statement ingestion: round-4 independent acceptance report
 

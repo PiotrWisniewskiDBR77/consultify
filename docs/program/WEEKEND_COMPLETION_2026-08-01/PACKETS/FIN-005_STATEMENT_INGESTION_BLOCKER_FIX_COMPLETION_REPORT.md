@@ -1,7 +1,8 @@
 ---
 doc_id: FIN-005-statement-ingestion-blocker-fix
 truth_type: operations
-status: AWAITING_CODEX_REVIEW
+status: superseded
+superseded_by: FIN-005_STATEMENT_INGESTION_CANONICAL_FINAL_REPORT.md
 owner: claude
 process_owner: codex
 product_owner: piotr
@@ -11,6 +12,16 @@ base_commit: 03f01021ac883e267c94485982a47abc7d7f98b0
 head_commit: c741b0c0a9683413ff2dd4e5dc782fb9ff05fd57
 last_reviewed: 2026-08-02
 ---
+
+> **SUPERSEDED.** This was round 3's own completion report (HEAD
+> `c741b0c0a9` at the time). Independent verification in round 4 found this
+> round's own fault-injection test for "orphan tracking" never actually
+> queried `financial_statements`, so it missed that repeated finalize
+> failures created real duplicate Statement/Pack rows — described here as an
+> "accepted tradeoff" but later confirmed to be a genuine exactly-once gap.
+> Kept for history only. Current truth:
+> `FIN-005_STATEMENT_INGESTION_CANONICAL_FINAL_REPORT.md`.
+
 
 # FIN-005 — statement ingestion: round-3 blocker fix completion report
 
