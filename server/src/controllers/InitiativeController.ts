@@ -38,6 +38,7 @@ import {
 import { validateCardContent } from '../services/initiative/initiativeCardValidators.js';
 import { isInitiativeGateAiEnabled } from '../services/initiative/initiativeGateAiConfig.js';
 import { getBlockingReadinessItems } from '../services/initiative/initiativeGateReadinessService.js';
+import { assertCanEditInitiative } from '../services/initiative/ini005CapabilityGuard.js';
 import {
   evaluateInitiativeGateAccess,
   evaluateInitiativeWriteAccess,
@@ -1746,6 +1747,42 @@ export class InitiativeController {
         return;
       }
 
+      // INI-05: neither endpoint of the dependency was previously verified to
+      // belong to this org — the INSERT's own `organization_id` came from the
+      // caller, not from either referenced initiative, so a caller could wire
+      // a dependency edge to (or from) a foreign-org initiative id it merely
+      // guessed. Fail closed: both ids must resolve inside this tenant.
+      const [fromInOrg, toInOrg] = await Promise.all([
+        queryHelpers.queryOne(`SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`, [
+          fromInitiativeId,
+          orgId,
+        ]),
+        queryHelpers.queryOne(`SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`, [
+          toInitiativeId,
+          orgId,
+        ]),
+      ]);
+      if (!fromInOrg || !toInOrg) {
+        res.status(404).json({
+          error: 'fromInitiativeId and toInitiativeId must both belong to your organization',
+          code: 'CROSS_TENANT_DEPENDENCY_DENIED',
+        });
+        return;
+      }
+
+      // INI-04 capability gate on the initiative that owns this edge of the
+      // roadmap graph.
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId: fromInitiativeId,
+        actorId: req.user?.id,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
+        return;
+      }
+
       const existingDep = await queryHelpers.queryOne(
         `SELECT id FROM initiative_dependencies
          WHERE organization_id = ? AND from_initiative_id = ? AND to_initiative_id = ?`,
@@ -1909,6 +1946,27 @@ export class InitiativeController {
       }
 
       const { id } = req.params;
+      const dep = await queryHelpers.queryOne<{ from_initiative_id: string | null }>(
+        `SELECT from_initiative_id FROM initiative_dependencies WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+      if (!dep) {
+        res.json({ success: true });
+        return;
+      }
+      if (dep.from_initiative_id) {
+        const capVerdict = await assertCanEditInitiative({
+          organizationId: orgId,
+          initiativeId: dep.from_initiative_id,
+          actorId: req.user?.id,
+          actorRoleHint: req.user?.role,
+        });
+        if (!capVerdict.allowed) {
+          res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
+          return;
+        }
+      }
+
       await queryHelpers.queryRun(
         `DELETE FROM initiative_dependencies WHERE id = ? AND organization_id = ?`,
         [id, orgId]
@@ -2507,11 +2565,26 @@ export class InitiativeController {
         return;
       }
 
+      // INI-05: portfolio-membership reassignment is a mutation like any
+      // other — must go through the INI-04 capability matrix (edit
+      // capability + terminal-status freeze), not just the shadow-mode-only
+      // `requireInitiativeCapability` middleware on this route.
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId,
+        actorId: userId,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
+        return;
+      }
+
       const oldProjectId = initiative.project_id;
 
       // Move initiative
       await queryHelpers.queryRun(
-        `UPDATE initiatives SET 
+        `UPDATE initiatives SET
                 project_id = ?,
                 updated_at = CURRENT_TIMESTAMP
              WHERE id = ?`,
@@ -2607,6 +2680,25 @@ export class InitiativeController {
             results.push({ initiativeId, success: false, error: 'Initiative not found' });
             continue;
           }
+
+          // INI-05: same capability gate as the single-initiative `move` route
+          // (INI-04 matrix), applied per-initiative so one unauthorized id in
+          // the batch is rejected without blocking the rest.
+          const capVerdict = await assertCanEditInitiative({
+            organizationId: orgId,
+            initiativeId,
+            actorId: userId,
+            actorRoleHint: req.user?.role,
+          });
+          if (!capVerdict.allowed) {
+            results.push({
+              initiativeId,
+              success: false,
+              error: capVerdict.denial!.body.error,
+            });
+            continue;
+          }
+
           const oldProjectId = initiative.project_id;
 
           await queryHelpers.queryRun(
@@ -3198,6 +3290,17 @@ export class InitiativeController {
         return;
       }
 
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId,
+        actorId: req.user?.id,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
+        return;
+      }
+
       // EXE-02/03/04: map an existing row to the same JSON shape as the
       // normal create response, for both the pre-insert idempotency check
       // and the post-insert unique-violation race fallback below.
@@ -3288,6 +3391,25 @@ export class InitiativeController {
         throw err;
       }
 
+      // INI-05: milestone writes previously had NO audit trail at all
+      // (contrast with initiative status/owner changes). Best-effort, same
+      // convention as the rest of this controller.
+      try {
+        await auditEventsService.log({
+          actorId: req.user?.id,
+          actorType: 'USER',
+          action: 'initiative.milestone.created',
+          resourceType: 'initiative_milestone',
+          resourceId: milestoneId,
+          after: { initiativeId, name, targetDate: targetDate || null, isGate: !!isGate },
+          organizationId: orgId,
+          ip: (req as any).ip,
+          userAgent: (req as any).get?.('user-agent'),
+        });
+      } catch {
+        /* best-effort audit */
+      }
+
       res.status(201).json({
         success: true,
         milestone: {
@@ -3329,6 +3451,17 @@ export class InitiativeController {
 
       if (!milestone) {
         res.status(404).json({ error: 'Milestone not found' });
+        return;
+      }
+
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId,
+        actorId: req.user?.id,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
         return;
       }
 
@@ -3378,6 +3511,22 @@ export class InitiativeController {
         params
       );
 
+      try {
+        await auditEventsService.log({
+          actorId: req.user?.id,
+          actorType: 'USER',
+          action: 'initiative.milestone.updated',
+          resourceType: 'initiative_milestone',
+          resourceId: milestoneId,
+          after: { initiativeId, name, targetDate, actualDate, status, orderIndex, isGate },
+          organizationId: orgId,
+          ip: (req as any).ip,
+          userAgent: (req as any).get?.('user-agent'),
+        });
+      } catch {
+        /* best-effort audit */
+      }
+
       res.json({ success: true, message: 'Milestone updated' });
     }
   );
@@ -3408,7 +3557,34 @@ export class InitiativeController {
         return;
       }
 
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId,
+        actorId: req.user?.id,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
+        return;
+      }
+
       await queryHelpers.queryRun('DELETE FROM initiative_milestones WHERE id = ?', [milestoneId]);
+
+      try {
+        await auditEventsService.log({
+          actorId: req.user?.id,
+          actorType: 'USER',
+          action: 'initiative.milestone.deleted',
+          resourceType: 'initiative_milestone',
+          resourceId: milestoneId,
+          before: { initiativeId },
+          organizationId: orgId,
+          ip: (req as any).ip,
+          userAgent: (req as any).get?.('user-agent'),
+        });
+      } catch {
+        /* best-effort audit */
+      }
 
       res.json({ success: true });
     }
@@ -3549,7 +3725,7 @@ export class InitiativeController {
       }
 
       const resources = await queryHelpers.queryAll(
-        `SELECT 
+        `SELECT
           r.id,
           r.initiative_id as "initiativeId",
           r.user_id as "userId",
@@ -3560,11 +3736,12 @@ export class InitiativeController {
           r.end_date as "endDate",
           r.notes,
           r.source,
+          r.version,
           u.first_name as "firstName",
           u.last_name as "lastName",
           u.avatar_url as "avatarUrl"
         FROM initiative_resources r
-        LEFT JOIN users u ON r.user_id = u.id
+        LEFT JOIN users u ON r.user_id = u.id AND u.organization_id = r.organization_id
         WHERE r.initiative_id = ? AND r.organization_id = ?`,
         [initiativeId, orgId]
       );
@@ -3579,6 +3756,7 @@ export class InitiativeController {
   static addResource = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
       const { id: initiativeId } = req.params;
       const { userId, name, role, allocationPercentage, startDate, endDate, notes, source, idempotencyKey } =
         req.body;
@@ -3604,6 +3782,30 @@ export class InitiativeController {
       if (!initiative) {
         res.status(404).json({ error: 'Initiative not found' });
         return;
+      }
+
+      // INI-05: (1) INI-04 capability gate — real enforcement, not just the
+      // shadow-mode `requireInitiativeCapability` middleware on this route.
+      // (2) tenant scope for the RESOURCE itself: `userId` is a second
+      // foreign key this endpoint accepts from the client body — an
+      // assignable "resource/user" that must belong to this organization,
+      // same contract as INI-04's owner/sponsor cross-tenant guard.
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId,
+        actorId,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
+        return;
+      }
+      if (userId) {
+        const scope = await assertUsersInOrganization(orgId, [userId as string]);
+        if (!scope.ok) {
+          res.status(403).json(crossTenantDenialBody(scope.offending));
+          return;
+        }
       }
 
       // Map an existing row to the same JSON shape as the normal create
@@ -3725,9 +3927,21 @@ export class InitiativeController {
   static deleteResource = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
       const { id: initiativeId, resourceId } = req.params as any;
       if (!orgId) {
         res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId,
+        actorId,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
         return;
       }
 
@@ -3747,21 +3961,55 @@ export class InitiativeController {
   );
 
   /**
-   * Update resource in an initiative
+   * Update resource in an initiative.
+   *
+   * INI-05: optimistic-concurrency (CAS) contract. `expectedVersion` is
+   * OPTIONAL for backward compatibility with any caller that predates this
+   * packet: when present, the UPDATE only applies if the row's current
+   * `version` still matches, and a mismatch is reported as 409 CONFLICT
+   * (never a silent overwrite, never a 200 pretending the caller's edit won).
+   * When absent, the write proceeds unconditionally (legacy last-write-wins)
+   * — but the version counter is still bumped either way, so a client that
+   * DOES start sending `expectedVersion` becomes CAS-protected immediately.
    */
   static updateResource = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
       const { id: initiativeId, resourceId } = req.params as any;
-      const { name, role, allocationPercentage, startDate, endDate, notes } = req.body;
+      const { name, role, allocationPercentage, startDate, endDate, notes, expectedVersion } =
+        req.body;
 
       if (!orgId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId,
+        actorId,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
+        return;
+      }
+
       const now = new Date().toISOString();
-      await queryHelpers.queryRun(
+      const hasExpectedVersion =
+        expectedVersion !== undefined && expectedVersion !== null && expectedVersion !== '';
+
+      // NOTE: deliberately `queryRun` (primary pool), not `queryOne`/`queryAll`
+      // with a `RETURNING` clause — `queryHelpers.queryOne` is wired to
+      // `getReadPool()`, which falls back to the primary today but would
+      // silently target a read replica the moment one is configured, and a
+      // replica rejects (or simply never sees) a write. The CAS predicate
+      // lives entirely in the UPDATE's WHERE clause; success/conflict is
+      // read from `changes` (rowCount), and the actual new/current state is
+      // fetched via a separate, ordinary read afterward.
+      const versionPredicate = hasExpectedVersion ? 'AND version = ?' : '';
+      const writeResult = await queryHelpers.queryRun(
         `UPDATE initiative_resources SET
           name = COALESCE(?, name),
           role = COALESCE(?, role),
@@ -3769,8 +4017,10 @@ export class InitiativeController {
           start_date = COALESCE(?, start_date),
           end_date = COALESCE(?, end_date),
           notes = COALESCE(?, notes),
-          updated_at = ?
-        WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+          updated_at = ?,
+          version = version + 1
+        WHERE id = ? AND initiative_id = ? AND organization_id = ?
+          ${versionPredicate}`,
         [
           name,
           role,
@@ -3782,8 +4032,30 @@ export class InitiativeController {
           resourceId,
           initiativeId,
           orgId,
+          ...(hasExpectedVersion ? [Number(expectedVersion)] : []),
         ]
       );
+
+      if (!writeResult.changes) {
+        // Distinguish "resource doesn't exist / not in this org" (404) from
+        // "it exists but the caller's version is stale" (409 CONFLICT) so the
+        // client can tell a typo'd id apart from a real concurrent edit.
+        const current = await queryHelpers.queryOne<{ id: string; version: number }>(
+          `SELECT id, version FROM initiative_resources
+           WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+          [resourceId, initiativeId, orgId]
+        );
+        if (!current) {
+          res.status(404).json({ error: 'Resource not found', code: 'RESOURCE_NOT_FOUND' });
+          return;
+        }
+        res.status(409).json({
+          error: 'Resource was modified by another update — refresh and retry',
+          code: 'RESOURCE_VERSION_CONFLICT',
+          currentVersion: current.version,
+        });
+        return;
+      }
 
       try {
         await syncInitiativeCapacity(initiativeId, orgId);
@@ -3791,7 +4063,11 @@ export class InitiativeController {
         /* best-effort */
       }
 
-      res.json({ success: true });
+      const updated = await queryHelpers.queryOne<{ version: number }>(
+        `SELECT version FROM initiative_resources WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+        [resourceId, initiativeId, orgId]
+      );
+      res.json({ success: true, version: updated?.version ?? null });
     }
   );
 

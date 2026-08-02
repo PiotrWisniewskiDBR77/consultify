@@ -811,6 +811,12 @@ export async function getInitiativeResourcesRead(
   initiativeId: string,
   organizationId: string
 ): Promise<Record<string, unknown>[]> {
+  // INI-05: kept in sync with InitiativeController.getResources (the pmo
+  // fallback for the same UI) — this is the READ PATH THE UI PREFERS
+  // (`V8PlanningApi.getResources`, tried before the legacy fallback), so
+  // `version` must appear here or the CAS contract silently never reaches
+  // the client on the common path. `u.organization_id` join guard matches
+  // the tenant-scope fix on the legacy copy.
   return queryHelpers.queryAll(
     `SELECT
       r.id,
@@ -823,11 +829,12 @@ export async function getInitiativeResourcesRead(
       r.end_date as "endDate",
       r.notes,
       r.source,
+      r.version,
       u.first_name as "firstName",
       u.last_name as "lastName",
       u.avatar_url as "avatarUrl"
     FROM initiative_resources r
-    LEFT JOIN users u ON r.user_id = u.id
+    LEFT JOIN users u ON r.user_id = u.id AND u.organization_id = r.organization_id
     WHERE r.initiative_id = ? AND r.organization_id = ?`,
     [initiativeId, organizationId]
   );
