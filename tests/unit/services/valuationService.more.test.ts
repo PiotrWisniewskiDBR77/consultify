@@ -14,6 +14,21 @@ vi.mock('uuid', () => ({
   v4: () => 'init-uuid-0001',
 }));
 
+// FIN-06: `convertAdvisoryRecommendationToInitiative` no longer inserts an
+// Initiative directly — it delegates to the shared Finance Candidate
+// handoff adapter. Mock that adapter here so this unit test can assert the
+// delegation + the "never touches `initiatives` directly" contract without
+// standing up real Postgres (real-DB coverage lives in
+// `tests/acceptance/fin-006-valuation-recommendation-candidate-handoff.e2e.test.ts`).
+const mockConfirmValuationRecommendationCandidateHandoff = vi.fn();
+vi.mock(
+  '../../../server/src/services/finance/financeValuationRecommendationCandidateHandoff.js',
+  () => ({
+    confirmValuationRecommendationCandidateHandoff: (...args: unknown[]) =>
+      mockConfirmValuationRecommendationCandidateHandoff(...args),
+  })
+);
+
 import {
   computeValuation,
   convertAdvisoryRecommendationToInitiative,
@@ -84,7 +99,7 @@ describe('valuationService additional paths', () => {
     ).rejects.toThrow('Recommendation not found');
   });
 
-  it('convertAdvisoryRecommendationToInitiative inserts initiative and logs audit', async () => {
+  it('convertAdvisoryRecommendationToInitiative delegates to the Candidate handoff, never inserts an Initiative directly', async () => {
     const dbGet = vi.mocked(DbPromise.get);
     const dbRun = vi.mocked(DbPromise.run);
 
@@ -103,6 +118,10 @@ describe('valuationService additional paths', () => {
         ],
       }),
     });
+    mockConfirmValuationRecommendationCandidateHandoff.mockResolvedValue({
+      created: true,
+      candidateId: 'cand-uuid-0001',
+    });
 
     const result = await convertAdvisoryRecommendationToInitiative(
       'org-1',
@@ -111,15 +130,22 @@ describe('valuationService additional paths', () => {
       'user-1'
     );
 
-    expect(result.initiativeId).toBe('init-uuid-0001');
-    expect(dbRun).toHaveBeenCalledWith(
+    expect(result).toEqual({ created: true, candidateId: 'cand-uuid-0001' });
+    expect(mockConfirmValuationRecommendationCandidateHandoff).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      recommendationId: 'rec-1',
+      createdBy: 'user-1',
+    });
+    // FIN-06 mandate: this path must never touch `initiatives` directly.
+    expect(dbRun).not.toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO initiatives'),
-      expect.arrayContaining(['init-uuid-0001', 'org-1', 'proj-1'])
+      expect.anything()
     );
     expect(vi.mocked(audit.log)).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'finance.valuation_advisory_recommendation_converted',
-        resourceType: 'initiative',
+        resourceType: 'initiative_candidate',
+        resourceId: 'cand-uuid-0001',
       })
     );
   });

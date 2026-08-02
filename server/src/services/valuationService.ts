@@ -11,7 +11,7 @@ import {
   type PeriodOutput,
   persistComputeResult,
 } from './financialModelingService.js';
-import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
+import { confirmValuationRecommendationCandidateHandoff } from './finance/financeValuationRecommendationCandidateHandoff.js';
 
 export type ValuationStatus = 'DRAFT' | 'REVIEW' | 'APPROVED';
 export type ValuationSourceType = 'financial_model' | 'financial_analysis' | 'budget' | 'manual';
@@ -1624,53 +1624,43 @@ export async function generateNegotiationPack(orgId: string, valuationId: string
   return pack;
 }
 
+/**
+ * FIN-06: direct Finance -> Initiative creation from a valuation advisory
+ * recommendation is DISABLED (per FIN-06 mandate — Finance sources may no
+ * longer mint a bare Initiative row directly). This action now produces a
+ * Candidate + idempotent receipt through the shared Finance Candidate
+ * handoff (`financeValuationRecommendationCandidateHandoff.ts` ->
+ * `financeCandidateHandoffCore.ts`), never an `initiatives` row directly.
+ * The pre-existing "Convert to Initiative" button/route
+ * (`economics.routes.ts`'s `POST
+ * /valuations/:id/advisory/:recommendationId/convert-to-initiative`) is kept
+ * working end-to-end, it just produces a Candidate now.
+ *
+ * The `valuationId`/recommendation-existence checks below are preserved
+ * unchanged from the pre-FIN-06 implementation (same 'Valuation not
+ * found'/'Recommendation not found' error strings existing callers/tests
+ * rely on) purely as an eligibility pre-check; the actual creation is fully
+ * delegated to the shared handoff adapter, which re-resolves eligibility
+ * itself (org-scoped, not tied to this specific `valuationId`) inside its
+ * own lock as a TOCTOU defense.
+ */
 export async function convertAdvisoryRecommendationToInitiative(
   orgId: string,
   valuationId: string,
   recommendationId: string,
   userId: string
-): Promise<{ initiativeId: string }> {
+): Promise<{ candidateId: string; created: boolean }> {
   const val = await getValuation(orgId, valuationId);
   if (!val) throw new Error('Valuation not found');
   const advisory = safeJsonParse<any>(val.advisory, null);
   const rec = (advisory?.recommendations || []).find((r: any) => r.id === recommendationId);
   if (!rec) throw new Error('Recommendation not found');
 
-  // Uspójnienie F1.9 — przez kanoniczny lejek (DRAFT + name/title + lineage).
-  let initiativeId: string;
-  if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
-    const __r = await funnelCreateInitiative(
-      orgId,
-      {
-        title: String(rec.title || 'Valuation improvement initiative'),
-        projectId: val.project_id || null,
-        summary: String(rec.mechanism || rec.hypothesis || ''),
-        hypothesis: String(rec.hypothesis || ''),
-        sourceType: 'valuation',
-        sourceId: valuationId,
-      },
-      { validate: false, actor: { id: userId } }
-    );
-    initiativeId = __r.id;
-  } else {
-    initiativeId = uuidv4();
-    const now = new Date().toISOString();
-    await dbRun(
-      `INSERT INTO initiatives (id, organization_id, project_id, name, summary, hypothesis, status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        initiativeId,
-        orgId,
-        val.project_id || null,
-        String(rec.title || 'Valuation improvement initiative'),
-        String(rec.mechanism || rec.hypothesis || ''),
-        String(rec.hypothesis || ''),
-        'draft',
-        now,
-        now,
-      ]
-    );
-  }
+  const result = await confirmValuationRecommendationCandidateHandoff({
+    organizationId: orgId,
+    recommendationId,
+    createdBy: userId,
+  });
 
   try {
     await audit.log({
@@ -1678,14 +1668,14 @@ export async function convertAdvisoryRecommendationToInitiative(
       actorId: userId,
       action: 'finance.valuation_advisory_recommendation_converted',
       actionCategory: 'data',
-      resourceType: 'initiative',
-      resourceId: initiativeId,
+      resourceType: 'initiative_candidate',
+      resourceId: result.candidateId,
       organizationId: orgId,
-      metadata: { valuationId, recommendationId },
+      metadata: { valuationId, recommendationId, created: result.created },
     });
   } catch (e) {
     logger.warn('[Valuation] Audit log failed for conversion', e as any);
   }
 
-  return { initiativeId };
+  return result;
 }

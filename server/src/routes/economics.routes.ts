@@ -35,6 +35,7 @@ import {
   resolveStoredDepth,
   setValuationDepth,
 } from '../services/valuationDepthProfileService.js';
+import { FinanceCandidateHandoffError } from '../services/finance/financeCandidateHandoffCore.js';
 import { exportValuationPptx } from '../services/valuationExportService.js';
 import * as valuationSvc from '../services/valuationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -48,6 +49,24 @@ logger.info('[Economics Routes] Module loaded - TypeScript version');
 logger.info('[Economics Routes] Router type:', typeof Router);
 const router = Router();
 logger.info('[Economics Routes] Router created. Stack length:', router.stack?.length);
+
+// FIN-06: maps the shared Finance Candidate handoff error onto an HTTP
+// response, mirroring `interviewCandidateHandoff.routes.ts`'s `mapError`.
+function mapFinanceCandidateHandoffError(
+  err: unknown
+): { status: number; body: Record<string, unknown> } | null {
+  if (err instanceof FinanceCandidateHandoffError) {
+    return {
+      status: err.status,
+      body: {
+        error: err.message,
+        code: err.code,
+        ...(err.details ? { details: err.details } : {}),
+      },
+    };
+  }
+  return null;
+}
 
 // Helper to safely parse JSON
 function safeJsonParse(str: string | null | undefined, fallback: any = {}): any {
@@ -2130,6 +2149,17 @@ router.get(
 /**
  * POST /api/economics/financial-analyses/:id/initiatives
  * Body: { acceptedProposalIds: string[] }
+ *
+ * FIN-06: direct Finance -> Initiative creation is disabled. This endpoint
+ * used to `INSERT INTO initiatives` straight from
+ * `financial_analysis_insights` proposals — a distinct, unrelated-to-
+ * valuation-recommendations source type (financial-analysis proposals) that
+ * is explicitly OUT OF SCOPE for this round's Candidate pipeline (a 4th
+ * Finance source type, left for a future round). Route registration is kept
+ * (not deleted) but the handler now fails closed with a clear error instead
+ * of creating an Initiative, regardless of `INITIATIVE_FUNNEL_ENABLED` —
+ * both the funnel and legacy-insert branches used to create an Initiative
+ * directly, so both are removed here.
  */
 router.post(
   '/financial-analyses/:id/initiatives',
@@ -2140,88 +2170,12 @@ router.post(
     const userId = req.user?.id || (req.user as any)?.user_id;
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const analysisId = String(req.params.id);
-    const acceptedProposalIds = Array.isArray(req.body?.acceptedProposalIds)
-      ? (req.body.acceptedProposalIds as any[]).map((x) => String(x)).filter(Boolean)
-      : [];
-    if (acceptedProposalIds.length === 0) {
-      return res.status(400).json({ error: 'acceptedProposalIds is required' });
-    }
-
-    const analysis = await dbGet<any>(
-      `SELECT id, organization_id, project_id, title
-       FROM financial_analyses
-       WHERE id = ? AND organization_id = ?`,
-      [analysisId, orgId]
-    );
-    if (!analysis) return res.status(404).json({ error: 'Not found' });
-
-    const placeholders = acceptedProposalIds.map(() => '?').join(',');
-    const insights = await dbAll<any>(
-      `SELECT id, insight_type, title, description
-       FROM financial_analysis_insights
-       WHERE analysis_id = ? AND id IN (${placeholders})`,
-      [analysisId, ...acceptedProposalIds]
-    );
-
-    const now = new Date().toISOString();
-    const created: string[] = [];
-
-    for (const ins of insights || []) {
-      // F15 (data-integrity, continuation of Z139): decode HTML entities the
-      // global sanitizer may have escaped before this feeds initiatives.name.
-      const name = decodeHtmlEntities(
-        String(ins.title || `Initiative from analysis ${analysisId.slice(0, 8)}`)
-      );
-      const summary = String(ins.description || '');
-
-      // Uspójnienie F1.3 — przez kanoniczny lejek (status→DRAFT zamiast legacy 'step3').
-      let initiativeId: string;
-      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
-        const __r = await funnelCreateInitiative(
-          orgId,
-          {
-            title: name,
-            projectId: analysis.project_id || null,
-            summary: summary || null,
-            sourceType: 'financial_analysis',
-            sourceId: analysisId,
-          },
-          { validate: false, actor: { id: userId } }
-        );
-        initiativeId = __r.id;
-      } else {
-        initiativeId = uuidv4();
-        // D1 (Zwornik §9 Faza 3): live path (funnel flag off) — anchor to the
-        // portfolio project instead of persisting project_id NULL.
-        const anchoredProjectId = await resolveInitiativeProjectId(orgId, analysis.project_id, {
-          createdBy: userId ?? null,
-        });
-        await dbRun(
-          `INSERT INTO initiatives (
-          id, organization_id, project_id, name, summary, status,
-          source_type, source_id,
-          created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            initiativeId,
-            orgId,
-            anchoredProjectId,
-            name,
-            summary || null,
-            'step3',
-            'financial_analysis',
-            analysisId,
-            now,
-            now,
-          ]
-        );
-      }
-
-      created.push(initiativeId);
-    }
-
-    return res.status(201).json({ success: true, initiativeIds: created });
+    return res.status(410).json({
+      error:
+        'Direct Finance -> Initiative creation from financial-analysis proposals is disabled per FIN-06. ' +
+        'This source type has no Candidate handoff pipeline yet.',
+      code: 'DIRECT_INITIATIVE_CREATION_DISABLED',
+    });
   })
 );
 
@@ -2695,13 +2649,24 @@ router.post(
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
-    const { initiativeId } = await valuationSvc.convertAdvisoryRecommendationToInitiative(
-      orgId,
-      req.params.id,
-      req.params.recommendationId,
-      userId
-    );
-    return res.status(201).json({ success: true, initiativeId });
+    try {
+      // FIN-06: this no longer creates an Initiative directly — it produces
+      // a Candidate (+ idempotent receipt) via the shared Finance Candidate
+      // handoff. See `valuationService.ts#convertAdvisoryRecommendationToInitiative`.
+      const result = await valuationSvc.convertAdvisoryRecommendationToInitiative(
+        orgId,
+        req.params.id,
+        req.params.recommendationId,
+        userId
+      );
+      return res
+        .status(result.created ? 201 : 200)
+        .json({ success: true, candidateId: result.candidateId, created: result.created });
+    } catch (err) {
+      const mapped = mapFinanceCandidateHandoffError(err);
+      if (mapped) return res.status(mapped.status).json(mapped.body);
+      throw err;
+    }
   })
 );
 
