@@ -368,10 +368,32 @@ async function reserveIdempotentUpload(
   // 'completed', so it never actually established a content binding for
   // this key — the reclaiming request is free to define one.
   if (existing.status === 'failed' || existing.status === 'in_progress') {
+    // Orphan-tracking (Fix 1, confirmed live defect): a reclaim always nulled
+    // `statement_id` unconditionally to make room for the NEW attempt's id,
+    // but never recorded what the OLD (abandoned/failed) attempt's
+    // `statement_id` had been pointing at. `performUpload()`'s business
+    // writes (Statement + Pack) commit independently, via the global pool,
+    // BEFORE this key's reservation is finalized/failed — so a row that
+    // reaches 'failed' with a non-null `statement_id` (set by
+    // `failIdempotentUpload`'s new `statementId` param) references a REAL,
+    // fully-persisted Statement that is about to become permanently
+    // unreferenced by any marker the instant this UPDATE nulls it out. This
+    // CASE appends that id into `orphaned_statement_ids` atomically, in the
+    // SAME UPDATE, so no separate SELECT-then-UPDATE is needed and the
+    // existing race-free reclaim guarantee (single statement,
+    // `WHERE ... RETURNING *`) is unchanged. A currently-null `statement_id`
+    // (the common case — most failures happen before any Statement is ever
+    // created) is a no-op append.
     const reclaimed = await dbGet<IdempotencyRow>(
       `UPDATE financial_statement_upload_idempotency
           SET status = 'in_progress', request_hash = ?, created_by = ?, created_at = CURRENT_TIMESTAMP,
-              status_code = 0, response_json = NULL, statement_id = NULL, completed_at = NULL
+              status_code = 0, response_json = NULL,
+              orphaned_statement_ids = CASE
+                WHEN statement_id IS NOT NULL
+                THEN orphaned_statement_ids || jsonb_build_array(statement_id)
+                ELSE orphaned_statement_ids
+              END,
+              statement_id = NULL, completed_at = NULL
         WHERE id = ?
           AND (status = 'failed'
                OR (status = 'in_progress'
@@ -431,12 +453,27 @@ async function finalizeIdempotentUpload(params: {
  * 'in_progress' and simply ages into the staleness window above for the
  * NEXT retry's reclaim path to recover — the safety net, not the primary
  * path.
+ *
+ * `statementId` (Fix 1, orphan-tracking): pass this when `performUpload()`
+ * already returned a real, persisted `statementId` for this attempt before
+ * the reservation ended up failing (today: the finalize-UPDATE-didn't-land
+ * case — see the `/upload` handler). It reuses the SAME `statement_id`
+ * column the success path uses, but with a DIFFERENT meaning on a 'failed'
+ * row: "the Statement this abandoned attempt orphaned", not "the Statement
+ * this marker represents". That distinction is safe because every read site
+ * that treats `statement_id` as a completed marker's payload
+ * (`reserveIdempotentUpload`'s replay branch) is gated on
+ * `status === 'completed'` first — a 'failed' row is never mistaken for a
+ * replay regardless of what this column holds. The reclaim path (see
+ * `reserveIdempotentUpload`) is what actually preserves this id — it moves
+ * it into `orphaned_statement_ids` atomically before nulling `statement_id`
+ * for the next attempt, so it is never silently lost.
  */
-async function failIdempotentUpload(reservationId: string): Promise<void> {
+async function failIdempotentUpload(reservationId: string, statementId?: string): Promise<void> {
   try {
     const result = await dbRun(
-      `UPDATE financial_statement_upload_idempotency SET status = 'failed' WHERE id = ? AND status = 'in_progress'`,
-      [reservationId],
+      `UPDATE financial_statement_upload_idempotency SET status = 'failed', statement_id = ? WHERE id = ? AND status = 'in_progress'`,
+      [statementId || null, reservationId],
       { fallback: false }
     );
     if (!result?.success || Number(result?.changes || 0) !== 1) {
@@ -1075,7 +1112,17 @@ router.post(
           new Error('finalize UPDATE did not affect the owned reservation row'),
           { traceId, organizationId: orgId, idempotencyKey: key, reservationId: reservation.reservationId }
         );
-        await failIdempotentUpload(reservation.reservationId);
+        // Fix 1: performUpload() DID already durably create+persist a real
+        // Statement (result.body.statementId) — it is the finalize UPDATE
+        // that failed to land, not the business write. Recording that id
+        // here (instead of leaving it implicit) is what lets a later
+        // reclaim of this same row move it into `orphaned_statement_ids`
+        // instead of silently losing the reference the moment the reclaim
+        // nulls `statement_id` for the next attempt.
+        await failIdempotentUpload(
+          reservation.reservationId,
+          String(result.body.statementId || '') || undefined
+        );
         return { kind: 'finalize_failed' as const };
       }
 

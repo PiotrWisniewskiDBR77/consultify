@@ -756,14 +756,23 @@ describe('FIN-005 statement ingestion golden flow — real route and PostgreSQL'
       expect(failed.headers['idempotency-replayed']).toBeUndefined();
 
       const midRows = await db.query(
-        `SELECT status, statement_id, response_json FROM financial_statement_upload_idempotency
+        `SELECT status, statement_id, orphaned_statement_ids, response_json
+           FROM financial_statement_upload_idempotency
           WHERE organization_id = $1 AND idempotency_key = $2`,
         [SEED.ORG_ID, idempotencyKey]
       );
       expect(midRows.rows.length).toBe(1); // the reservation itself is durable — never silently dropped
       expect(midRows.rows[0].status).not.toBe('completed'); // never silently marked complete
       expect(midRows.rows[0].status).toBe('failed'); // the caught finalize failure was recorded as 'failed'
-      expect(midRows.rows[0].statement_id).toBeNull(); // the failed finalize's payload never landed
+      // Fix 1 (orphan-tracking): performUpload() DID already persist a real
+      // Statement before the finalize UPDATE was rejected by the constraint
+      // — failIdempotentUpload now records that id on the row (instead of
+      // leaving it null, which used to silently lose the reference the
+      // moment a later reclaim nulled it out for a new attempt — see the
+      // dedicated "Fix 1" orphan-tracking test below for the full
+      // double-failure reclaim proof).
+      const orphanedStatementId = midRows.rows[0].statement_id;
+      expect(orphanedStatementId).toBeTruthy();
 
       // "Once the fault is no longer forced" — remove the constraint.
       await db.query(
@@ -782,7 +791,8 @@ describe('FIN-005 statement ingestion golden flow — real route and PostgreSQL'
       expect(retry.body.statementId).toBeTruthy();
 
       const finalRows = await db.query(
-        `SELECT status, statement_id FROM financial_statement_upload_idempotency
+        `SELECT status, statement_id, orphaned_statement_ids
+           FROM financial_statement_upload_idempotency
           WHERE organization_id = $1 AND idempotency_key = $2`,
         [SEED.ORG_ID, idempotencyKey]
       );
@@ -791,6 +801,16 @@ describe('FIN-005 statement ingestion golden flow — real route and PostgreSQL'
       expect(finalRows.rows.length).toBe(1);
       expect(finalRows.rows[0].status).toBe('completed');
       expect(finalRows.rows[0].statement_id).toBe(retry.body.statementId);
+      // Fix 1: the reclaim that nulled statement_id for the retry's attempt
+      // moved the first attempt's real (orphaned) Statement id into
+      // orphaned_statement_ids instead of dropping it.
+      expect(finalRows.rows[0].orphaned_statement_ids).toEqual([orphanedStatementId]);
+
+      const orphanedStillExists = await db.query(
+        `SELECT id FROM financial_statements WHERE id = $1`,
+        [orphanedStatementId]
+      );
+      expect(orphanedStillExists.rows.length).toBe(1); // nothing was deleted
     } finally {
       await db.query(
         `ALTER TABLE financial_statement_upload_idempotency DROP CONSTRAINT IF EXISTS chk_test_force_finalize_failure`
@@ -1169,6 +1189,165 @@ describe('FIN-005 statement ingestion golden flow — real route and PostgreSQL'
         );
       }
     } finally {
+      await db.end();
+    }
+  }, 60_000);
+
+  // ═══════════ Fix 1: orphan-tracking on reclaim ═══════════
+  //
+  // Root cause (confirmed live, same fault-injection technique as round-3
+  // Proof 1 above, but forced to fail TWICE in a row on the same key):
+  // before this fix, `reserveIdempotentUpload`'s reclaim branch reset
+  // `statement_id = NULL` unconditionally, and `failIdempotentUpload` never
+  // recorded the real, already-persisted `statementId` an abandoned attempt
+  // had created. Two consecutive finalize failures for one key therefore
+  // created THREE fully independent, real `financial_statements` rows (one
+  // per attempt), with only the 3rd (winning) one ever referenced by any
+  // marker — the first two became permanently invisible orphans: no marker,
+  // no lineage, unrepairable. This test proves the fix: nothing is deleted,
+  // and every orphaned id is durably recorded on the marker row itself.
+  it('Fix 1 — two consecutive finalize failures on the same key leave THREE real Statement rows intact, with the first two recorded in orphaned_statement_ids and only the third referenced by the completed marker', async () => {
+    const idempotencyKey = `${MARK}orphan-tracking-double-finalize-fault`;
+    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const db = client();
+    await db.connect();
+    try {
+      // Same technique as round-3 Proof 1: a key-scoped CHECK constraint that
+      // forbids THIS key's row from ever reaching status='completed', so the
+      // reservation INSERT (status='in_progress') always succeeds but the
+      // finalize UPDATE (status='completed') always fails for this key,
+      // independent of every other row/key/test.
+      const escapedKey = idempotencyKey.replace(/'/g, "''");
+      await db.query(
+        `ALTER TABLE financial_statement_upload_idempotency
+           ADD CONSTRAINT chk_test_force_orphan_finalize_failure
+           CHECK (idempotency_key <> '${escapedKey}' OR status <> 'completed') NOT VALID`
+      );
+
+      // ── Attempt 1: reserves fresh, performUpload() succeeds and persists a
+      // real Statement, finalize fails (constraint) → row is 'failed' with
+      // statement_id = A (Fix 1's failIdempotentUpload statementId param).
+      const filenameA = `${MARK}orphan-attempt-A.xlsx`;
+      const attempt1 = await request(app)
+        .post('/api/finance-statements/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .set('Idempotency-Key', idempotencyKey)
+        .attach('file', makeXlsxFixture(), { filename: filenameA, contentType })
+        .expect(500);
+      expect(attempt1.body.code).toBe('STATEMENT_UPLOAD_FINALIZE_FAILED');
+
+      const rowsA = await db.query(
+        `SELECT id FROM financial_statements WHERE source_file_name = $1 AND organization_id = $2`,
+        [filenameA, SEED.ORG_ID]
+      );
+      expect(rowsA.rows.length).toBe(1); // performUpload() DID persist a real Statement
+      const statementIdA = rowsA.rows[0].id;
+
+      const afterAttempt1 = await db.query(
+        `SELECT id, status, statement_id, orphaned_statement_ids
+           FROM financial_statement_upload_idempotency
+          WHERE organization_id = $1 AND idempotency_key = $2`,
+        [SEED.ORG_ID, idempotencyKey]
+      );
+      expect(afterAttempt1.rows.length).toBe(1);
+      expect(afterAttempt1.rows[0].status).toBe('failed');
+      // Fix 1: the failed attempt's real statementId is now recorded on the
+      // row (not silently dropped) — ready to be preserved on the next reclaim.
+      expect(afterAttempt1.rows[0].statement_id).toBe(statementIdA);
+      expect(afterAttempt1.rows[0].orphaned_statement_ids).toEqual([]);
+
+      // ── Attempt 2: reclaims the SAME row (status='failed' branch). The
+      // reclaim UPDATE must atomically move statementIdA into
+      // orphaned_statement_ids BEFORE nulling statement_id for this new
+      // attempt. performUpload() succeeds again (Statement B), finalize
+      // fails again (constraint still in place) → row is 'failed' again,
+      // this time with statement_id = B.
+      const filenameB = `${MARK}orphan-attempt-B.xlsx`;
+      const attempt2 = await request(app)
+        .post('/api/finance-statements/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .set('Idempotency-Key', idempotencyKey)
+        .attach('file', makeXlsxFixture(), { filename: filenameB, contentType })
+        .expect(500);
+      expect(attempt2.body.code).toBe('STATEMENT_UPLOAD_FINALIZE_FAILED');
+
+      const rowsB = await db.query(
+        `SELECT id FROM financial_statements WHERE source_file_name = $1 AND organization_id = $2`,
+        [filenameB, SEED.ORG_ID]
+      );
+      expect(rowsB.rows.length).toBe(1);
+      const statementIdB = rowsB.rows[0].id;
+
+      const afterAttempt2 = await db.query(
+        `SELECT id, status, statement_id, orphaned_statement_ids
+           FROM financial_statement_upload_idempotency
+          WHERE organization_id = $1 AND idempotency_key = $2`,
+        [SEED.ORG_ID, idempotencyKey]
+      );
+      expect(afterAttempt2.rows.length).toBe(1); // still the SAME row — reclaimed, not duplicated
+      expect(afterAttempt2.rows[0].id).toBe(afterAttempt1.rows[0].id);
+      expect(afterAttempt2.rows[0].status).toBe('failed');
+      expect(afterAttempt2.rows[0].statement_id).toBe(statementIdB);
+      // statementIdA survived the reclaim that nulled statement_id — it is
+      // now durably recorded in orphaned_statement_ids instead of lost.
+      expect(afterAttempt2.rows[0].orphaned_statement_ids).toEqual([statementIdA]);
+
+      // Statement A itself must still exist — nothing was deleted.
+      const stillThereA = await db.query(`SELECT id FROM financial_statements WHERE id = $1`, [
+        statementIdA,
+      ]);
+      expect(stillThereA.rows.length).toBe(1);
+
+      // ── Remove the fault. Attempt 3 reclaims the same row again (pushing
+      // statementIdB into orphaned_statement_ids alongside A), performUpload()
+      // succeeds a third time (Statement C), and this time finalize succeeds.
+      await db.query(
+        `ALTER TABLE financial_statement_upload_idempotency
+           DROP CONSTRAINT chk_test_force_orphan_finalize_failure`
+      );
+
+      const filenameC = `${MARK}orphan-attempt-C.xlsx`;
+      const attempt3 = await request(app)
+        .post('/api/finance-statements/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .set('Idempotency-Key', idempotencyKey)
+        .attach('file', makeXlsxFixture(), { filename: filenameC, contentType })
+        .expect(201);
+      const statementIdC = attempt3.body.statementId;
+      expect(statementIdC).toBeTruthy();
+
+      // (a) ALL THREE real financial_statements rows exist — nothing was
+      // ever deleted, across three fully independent create-Statement calls.
+      const allThree = await db.query(
+        `SELECT id FROM financial_statements WHERE id = ANY($1::text[])`,
+        [[statementIdA, statementIdB, statementIdC]]
+      );
+      expect(allThree.rows.map((r: any) => r.id).sort()).toEqual(
+        [statementIdA, statementIdB, statementIdC].sort()
+      );
+
+      // (b) the marker's orphaned_statement_ids contains EXACTLY the first
+      // two statement ids once the third attempt has succeeded.
+      // (c) the final marker is 'completed', referencing only the 3rd
+      // (winning) statement — never A or B.
+      const finalRow = await db.query(
+        `SELECT id, status, statement_id, orphaned_statement_ids
+           FROM financial_statement_upload_idempotency
+          WHERE organization_id = $1 AND idempotency_key = $2`,
+        [SEED.ORG_ID, idempotencyKey]
+      );
+      expect(finalRow.rows.length).toBe(1); // one marker row for this key, throughout
+      expect(finalRow.rows[0].id).toBe(afterAttempt1.rows[0].id);
+      expect(finalRow.rows[0].status).toBe('completed');
+      expect(finalRow.rows[0].statement_id).toBe(statementIdC);
+      expect([...finalRow.rows[0].orphaned_statement_ids].sort()).toEqual(
+        [statementIdA, statementIdB].sort()
+      );
+    } finally {
+      await db.query(
+        `ALTER TABLE financial_statement_upload_idempotency
+           DROP CONSTRAINT IF EXISTS chk_test_force_orphan_finalize_failure`
+      );
       await db.end();
     }
   }, 60_000);
