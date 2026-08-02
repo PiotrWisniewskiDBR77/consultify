@@ -127,6 +127,9 @@ import feedbackRoutes from './routes/feedback.routes.js';
 import finalBatchRoutes from './routes/final-batch.routes.js';
 import financeEnterpriseRoutes from './routes/finance-enterprise.routes.js';
 import financeStatementsRoutes from './routes/finance-statements.routes.js';
+import financeCandidateHandoffInvestmentCaseRoutes from './routes/financeCandidateHandoffInvestmentCase.routes.js';
+import financeCandidateHandoffStatementPackRoutes from './routes/financeCandidateHandoffStatementPack.routes.js';
+import financeCandidateHandoffValuationRecommendationRoutes from './routes/financeCandidateHandoffValuationRecommendation.routes.js';
 import financialModelingRoutes from './routes/financial-modeling.routes.js';
 import gamificationRoutes from './routes/gamification.routes.js';
 import gdprRoutes from './routes/gdpr.routes.js';
@@ -1185,6 +1188,26 @@ export class ApiGateway {
         financeStatementsRoutes
       );
       app.use('/api/financial-modeling', gatewayVerifyToken, betaGate, financialModelingRoutes);
+      // FIN-06 — Finance approved source (Investment Case / Statement Pack /
+      // Valuation Recommendation) -> canonical Candidate handoff
+      // (initiative_candidates). Three separate routers (not edits to the
+      // frozen finance-statements.routes.ts/financial-modeling.routes.ts/
+      // economics.routes.ts runtimes) so this packet never touches those
+      // files' own route registrations. Paths:
+      // /api/finance/candidate-handoff/{investment-case,statement-pack,
+      // valuation-recommendation}/...
+      app.use(
+        '/api/finance/candidate-handoff/investment-case',
+        financeCandidateHandoffInvestmentCaseRoutes
+      );
+      app.use(
+        '/api/finance/candidate-handoff/statement-pack',
+        financeCandidateHandoffStatementPackRoutes
+      );
+      app.use(
+        '/api/finance/candidate-handoff/valuation-recommendation',
+        financeCandidateHandoffValuationRecommendationRoutes
+      );
       app.use('/api/finance-v4', deprecationHeader('/api/v8/finance'), financeEnterpriseRoutes);
       app.use('/api/content', contentRoutes);
       app.use('/api/referrals', referralsRoutes);
