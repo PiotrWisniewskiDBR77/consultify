@@ -226,14 +226,14 @@ async function pgReachable(): Promise<boolean> {
   }
 }
 
-async function tablesExist(client: Client, names: readonly string[]): Promise<boolean> {
+async function findMissingTables(client: Client, names: readonly string[]): Promise<string[]> {
   const result = await client.query<{ table_name: string }>(
     `SELECT table_name FROM information_schema.tables
       WHERE table_schema = 'public' AND table_name = ANY($1)`,
     [names as unknown as string[]]
   );
   const found = new Set(result.rows.map((r) => r.table_name));
-  return names.every((n) => found.has(n));
+  return names.filter((n) => !found.has(n));
 }
 
 const REQUIRED_TABLES = [
@@ -334,9 +334,20 @@ function suffix(): string {
 }
 
 async function setupHarness(): Promise<Harness | null> {
-  if (!(await pgReachable())) return null;
+  // A completely unconfigured environment (no DATABASE_URL/PGHOST/DB_HOST at
+  // all) is a legitimate "no Postgres available here" — vacuous pass, same
+  // as the sibling realdb suites.
   const config = buildClientConfig();
   if (!config) return null;
+
+  // From here on, the caller EXPLICITLY pointed this run at a database.
+  // Connection failure (Postgres genuinely not up yet) still yields a
+  // vacuous skip — but a *reachable* database with an *incomplete* schema is
+  // a real bug, not an environment gap, and must fail the suite loudly
+  // rather than silently reporting a false green (Codex review finding: a
+  // schema-incomplete run was previously indistinguishable from "no DB
+  // configured").
+  if (!(await pgReachable())) return null;
 
   const client = new Client(config);
   try {
@@ -345,14 +356,29 @@ async function setupHarness(): Promise<Harness | null> {
     return null;
   }
 
+  let missing: string[];
   try {
-    if (!(await tablesExist(client, REQUIRED_TABLES))) {
-      await client.end().catch(() => {});
-      return null;
-    }
-  } catch {
+    missing = await findMissingTables(client, REQUIRED_TABLES);
+  } catch (err) {
     await client.end().catch(() => {});
-    return null;
+    throw new Error(
+      `DATABASE_URL is configured and reachable, but the fresh-schema check itself failed: ` +
+        `${err instanceof Error ? err.message : String(err)}. Run the standard migration ` +
+        `bootstrap (server/scripts/migrate.postgres.ts --safe) against this database before ` +
+        `re-running this suite.`
+    );
+  }
+  if (missing.length > 0) {
+    await client.end().catch(() => {});
+    throw new Error(
+      `DATABASE_URL is configured and reachable, but the schema is incomplete — missing table(s): ` +
+        `${missing.join(', ')}. This is a hard FAILURE, not a skip: a configured database must be ` +
+        `fully migrated. Run the standard migration bootstrap ` +
+        `(server/scripts/migrate.postgres.ts --safe, plus --only 293_initiative_milestones.sql,` +
+        `247_initiative_enhancements.sql,063_raid_items.sql for a known pre-existing, unrelated ` +
+        `fresh-install gap in those three specific files) against this database before re-running ` +
+        `this suite.`
+    );
   }
 
   const tag = suffix();

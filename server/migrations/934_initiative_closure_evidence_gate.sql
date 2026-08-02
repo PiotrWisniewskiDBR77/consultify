@@ -13,22 +13,48 @@
 --     parent to FK against polymorphically). A bare external URL is stored
 --     only as supplementary `notes`, never as the sole evidence reference.
 --
+-- Renamed from a "20260802_...sql"-dated filename to this plain-numbered one
+-- (Codex review): this project's migration runner sorts filenames as plain
+-- strings, so every dated file runs BEFORE any plain-numbered file — which
+-- meant this file, when dated, ran before several tables it depends on
+-- (initiative_section_types, initiative_history) reliably existed on a
+-- fresh-Postgres bootstrap, silently deleting the whole feature (each
+-- migration file commits as one transaction; one failing statement rolls
+-- back everything else in the same file). Numbered 934 (after
+-- 933_initiative_section_types_closure.sql) to run safely after the plain
+-- -numbered block that creates those tables.
+--
 -- Defensive reconciliation (does NOT modify the frozen
 -- 20260802_exe005006_change_progress_spine.sql — same "additive, replay
--- -safe" reasoning as that file's own header comment): this migration's
--- `writeInitiativeHistory` helper (initiativeClosureService.ts) always
--- supplies an `idempotency_key` when writing `initiative_history`. That
--- column is added by the EXE-05/06 migration above, but on a fresh-Postgres
--- bootstrap that file can fail LATER in its own body (its final statement
--- touches `execution_audit_log`, which does not exist yet at that point in
--- migration order) and, since one migration file commits as one
--- transaction, its earlier, otherwise-successful
--- `ALTER TABLE initiative_history ADD COLUMN idempotency_key` is rolled
--- back with it — confirmed by reproducing a fresh-Postgres bootstrap.
--- `initiative_history` itself is guaranteed to already exist by the time
--- THIS file runs (created by an earlier baseline migration, independent of
--- the EXE-05/06 file — verified against the live schema), so this ALTER is
--- always safe here, whether or not the sibling file succeeded.
+-- -safe" reasoning as that file's own header comment, and the SAME
+-- CREATE TABLE IF NOT EXISTS statement it already uses for the identical
+-- reason, reproduced here verbatim rather than assumed): this migration's
+-- `writeInitiativeHistory` helper (initiativeClosureService.ts) reads and
+-- writes `initiative_history`, including its `idempotency_key` column. On a
+-- fresh-Postgres bootstrap `initiative_history` is NOT reliably already
+-- present by the time this file runs — its historical DDL lives in
+-- baseline/never-ran migrations that can fail, and the sibling EXE-05/06
+-- file's own attempt to create it gets rolled back by ITS later, unrelated
+-- failure (its last statement touches `execution_audit_log`, which does not
+-- exist yet at that point in migration order — and a migration file commits
+-- as one transaction, so that failure undoes everything earlier in the same
+-- file, including a successful CREATE TABLE). Confirmed by reproducing a
+-- fresh-Postgres bootstrap twice. Both this CREATE TABLE and the ALTER below
+-- are therefore needed here, independent of whether the sibling file
+-- succeeded.
+CREATE TABLE IF NOT EXISTS initiative_history (
+  id TEXT PRIMARY KEY,
+  initiative_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  old_value TEXT,
+  new_value TEXT,
+  changed_by TEXT NOT NULL,
+  changed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  notes TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_initiative_history_initiative ON initiative_history(initiative_id);
+CREATE INDEX IF NOT EXISTS idx_initiative_history_action ON initiative_history(action);
+
 ALTER TABLE initiative_history ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_initiative_history_idempotency
   ON initiative_history(initiative_id, action, idempotency_key)
