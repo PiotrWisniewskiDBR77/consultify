@@ -54,3 +54,12 @@ wejścia do seedowanego workspace nie działa znanymi danymi dostępowymi.
 
 Status pozostaje `BLOCKED`, ponieważ ten slice naprawia kontrolowany dostęp QA, ale nie
 materializuje brakującego konta Anna ani nie naprawia publicznego `Try demo`.
+
+## Promocja slice'u
+
+- revision `c522a861839f54d0f26baa918566589aab3f6f6b`;
+- Railway deployment `595c7e03-8495-4240-8d24-b4f090599f07`: `SUCCESS`;
+- `/ping`, `/api/health`, `/auth`, `/materials`, `/finance`: HTTP `200`;
+- runtime badge: `DEMO @c522a861839f`;
+- bounded log query: brak wpisów `@level:error` po wdrożeniu;
+- produkcja nietknięta.
