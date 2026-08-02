@@ -13,10 +13,13 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 import {
   confirmInvestmentCaseCandidateHandoff,
+  getInvestmentCaseCandidateHandoff,
   previewInvestmentCaseCandidateHandoff,
 } from '@/services/api/v8/financeCandidateHandoff';
 import { exportFinancialAnalysis, type ExportResult } from '@/services/financeExportService';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+
+import { FinanceCandidateHandoffModal } from './shared/FinanceCandidateHandoffModal';
 
 /**
  * FIN-06 — "Investment Case" candidate handoff is keyed on a real
@@ -49,13 +52,6 @@ function describeIneligibleReason(reason: string, t: (key: string, fallback: str
   }
   return reason;
 }
-
-type InvestmentCaseHandoffState =
-  | { status: 'unsupported' }
-  | { status: 'loading' }
-  | { status: 'eligible'; preview: { title: string; rationale: string; fitScore?: number } }
-  | { status: 'ineligible'; reason: string }
-  | { status: 'error'; message: string };
 
 export interface ExportToOutputDialogProps {
   open: boolean;
@@ -96,9 +92,6 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
   const [briefLanguage, setBriefLanguage] = useState<'pl' | 'en'>('pl');
   const [briefFormat, setBriefFormat] = useState('');
   const [briefScope, setBriefScope] = useState('');
-  const [handoffState, setHandoffState] = useState<InvestmentCaseHandoffState>(
-    supportsInvestmentCaseHandoff(analysisType) ? { status: 'loading' } : { status: 'unsupported' }
-  );
 
   const sourceType = 'FINANCIAL_ANALYSIS';
 
@@ -122,45 +115,11 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
     }
   }, [sourceType]);
 
-  const fetchInvestmentCasePreview = useCallback(async () => {
-    if (!supportsInvestmentCaseHandoff(analysisType)) {
-      setHandoffState({ status: 'unsupported' });
-      return;
-    }
-    setHandoffState({ status: 'loading' });
-    try {
-      const result = await previewInvestmentCaseCandidateHandoff(analysisId);
-      if (result.eligible) {
-        setHandoffState({
-          status: 'eligible',
-          preview: {
-            title: result.preview.title,
-            rationale: result.preview.rationale,
-            fitScore: result.preview.fitScore,
-          },
-        });
-      } else {
-        setHandoffState({ status: 'ineligible', reason: result.reason });
-      }
-    } catch (error: any) {
-      setHandoffState({
-        status: 'error',
-        message: error?.data?.error || error?.message || 'Could not check eligibility',
-      });
-    }
-  }, [analysisId, analysisType]);
-
   useEffect(() => {
     if (open && useTemplate) {
       fetchTemplates();
     }
   }, [open, useTemplate, fetchTemplates]);
-
-  useEffect(() => {
-    if (open && outputType === 'initiatives') {
-      fetchInvestmentCasePreview();
-    }
-  }, [open, outputType, fetchInvestmentCasePreview]);
 
   const handleConfirm = async () => {
     setSubmitting(true);
@@ -170,46 +129,6 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
         type: outputType,
         template: hasTemplate ? 'yes' : 'no',
       });
-
-      if (outputType === 'initiatives') {
-        // Guard only — the footer Confirm button is disabled unless
-        // `handoffState.status === 'eligible'`, so this should be
-        // unreachable. Never attempt confirm without a real eligible
-        // preview already in hand (no fabricated success).
-        if (handoffState.status !== 'eligible') {
-          return;
-        }
-        try {
-          const confirmResult = await confirmInvestmentCaseCandidateHandoff(analysisId);
-          trackFunnelEvent('finance_export_investment_case_candidate_confirmed', {
-            analysisId,
-            candidateId: confirmResult.candidateId,
-            created: confirmResult.created,
-          });
-          // Real receipt, not a fabricated stub: `outputId` is the actual
-          // Candidate id the backend returned, and the title is honest
-          // about what was created — a Candidate awaiting review, not an
-          // Initiative.
-          onExportComplete({
-            outputId: confirmResult.candidateId,
-            outputType: 'report',
-            title: t(
-              'finance.export.investmentCaseCandidateCreated',
-              'Sent as Initiative candidate: {{title}}',
-              { title: handoffState.preview.title }
-            ),
-            hasTemplate: false,
-          });
-          onClose();
-        } catch (error: any) {
-          const message =
-            error?.data?.error ||
-            error?.message ||
-            t('finance.export.investmentCaseConfirmFailed', 'Could not create the Candidate');
-          setHandoffState({ status: 'error', message });
-        }
-        return;
-      }
 
       const result = await exportFinancialAnalysis({
         analysisId,
@@ -504,59 +423,85 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
               </div>
             )}
 
-            {/* Investment Case → Candidate handoff (FIN-06). Never fabricates a
-                success state — the button only enables once a real, backend-
-                verified preview is in hand, and any ineligibility/error is
-                shown verbatim rather than swallowed. */}
+            {/* Investment Case → Candidate handoff (FIN-06), via the shared
+                FinanceCandidateHandoffModal (embedded variant — this dialog
+                already owns its own chrome/footer, so the shared component
+                only renders the phase-driven body). Never fabricates a
+                success state — the Confirm button only ever renders once a
+                real, backend-verified preview is in hand, and any
+                ineligibility/error is shown verbatim rather than swallowed. */}
             {outputType === 'initiatives' && (
               <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-800/30 p-4 space-y-3">
                 <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {t('finance.export.investmentCaseHandoffTitle', 'Investment Case → Candidate')}
                 </div>
 
-                {handoffState.status === 'unsupported' && (
+                {!supportsInvestmentCaseHandoff(analysisType) ? (
                   <div className="text-sm text-slate-500 dark:text-slate-400">
                     {t(
                       'finance.export.investmentCaseUnsupported',
                       'Available from an approved Investment Case'
                     )}
                   </div>
-                )}
-
-                {handoffState.status === 'loading' && (
-                  <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                    <Loader2 size={14} className="animate-spin" />
-                    {t('finance.export.checkingEligibility', 'Checking eligibility...')}
-                  </div>
-                )}
-
-                {handoffState.status === 'eligible' && (
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-slate-900 dark:text-white">
-                      {handoffState.preview.title}
-                    </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {handoffState.preview.rationale}
-                    </div>
-                    <div className="text-[11px] text-slate-400 dark:text-slate-500">
-                      {t(
-                        'finance.export.investmentCaseCandidateNotice',
-                        'This sends the Investment Case to the Candidate inbox for review — it does not create an Initiative directly.'
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {handoffState.status === 'ineligible' && (
-                  <div className="text-sm text-amber-600 dark:text-amber-400">
-                    {describeIneligibleReason(handoffState.reason, t)}
-                  </div>
-                )}
-
-                {handoffState.status === 'error' && (
-                  <div className="text-sm text-red-600 dark:text-red-400">
-                    {handoffState.message}
-                  </div>
+                ) : (
+                  <FinanceCandidateHandoffModal
+                    variant="embedded"
+                    open
+                    onClose={onClose}
+                    sourceType="finance_investment_case"
+                    sourceId={analysisId}
+                    preview={() => previewInvestmentCaseCandidateHandoff(analysisId)}
+                    confirm={() => confirmInvestmentCaseCandidateHandoff(analysisId)}
+                    fetchHandoff={() => getInvestmentCaseCandidateHandoff(analysisId)}
+                    getReopenLink={() => null}
+                    describeIneligibleReason={(reason) => describeIneligibleReason(reason, t)}
+                    title={t('finance.export.investmentCaseHandoffTitle', 'Investment Case → Candidate')}
+                    noticeText={t(
+                      'finance.export.investmentCaseCandidateNotice',
+                      'This sends the Investment Case to the Candidate inbox for review — it does not create an Initiative directly.'
+                    )}
+                    confirmLabel={t('finance.export.sendAsCandidate', 'Send as Candidate')}
+                    confirmingLabel={t('finance.export.creating', 'Creating...')}
+                    checkingLabel={t('finance.export.checkingEligibility', 'Checking eligibility...')}
+                    previewErrorFallback={t(
+                      'finance.export.investmentCaseEligibilityFailed',
+                      'Could not check eligibility'
+                    )}
+                    confirmErrorFallback={t(
+                      'finance.export.investmentCaseConfirmFailed',
+                      'Could not create the Candidate'
+                    )}
+                    onConfirmed={({ created, candidateId, preview }) => {
+                      trackFunnelEvent('finance_export_investment_case_candidate_confirmed', {
+                        analysisId,
+                        candidateId,
+                        created,
+                      });
+                      // Real receipt, not a fabricated stub: `outputId` is the
+                      // actual Candidate id the backend returned, and the
+                      // title is honest about what was created — a Candidate
+                      // awaiting review, not an Initiative — and honestly
+                      // distinguishes a fresh creation from an idempotent
+                      // replay (mirroring ValuationWorkspace's existing
+                      // created/already-exists distinction).
+                      onExportComplete({
+                        outputId: candidateId,
+                        outputType: 'report',
+                        title: created
+                          ? t(
+                              'finance.export.investmentCaseCandidateCreated',
+                              'Sent as Initiative candidate: {{title}}',
+                              { title: preview.title }
+                            )
+                          : t(
+                              'finance.export.investmentCaseCandidateAlreadyExists',
+                              'Already sent as Initiative candidate: {{title}}',
+                              { title: preview.title }
+                            ),
+                        hasTemplate: false,
+                      });
+                    }}
+                  />
                 )}
               </div>
             )}
@@ -591,29 +536,29 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 flex justify-end">
-            <button
-              onClick={handleConfirm}
-              disabled={
-                submitting ||
-                (outputType !== 'initiatives' && useTemplate && !templateId) ||
-                (outputType === 'initiatives' && handoffState.status !== 'eligible')
-              }
-              className="px-4 py-2 rounded-full bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  {t('finance.export.creating', 'Creating...')}
-                </>
-              ) : outputType === 'initiatives' ? (
-                t('finance.export.sendAsCandidate', 'Send as Candidate')
-              ) : (
-                t('finance.export.createDraft', 'Create Draft')
-              )}
-            </button>
-          </div>
+          {/* Footer — the "Initiatives" output type drives its own Confirm
+              button inside the embedded FinanceCandidateHandoffModal above
+              (it only ever renders once a real eligible preview is in
+              hand), so this generic submit footer only applies to
+              report/presentation. */}
+          {outputType !== 'initiatives' && (
+            <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 flex justify-end">
+              <button
+                onClick={handleConfirm}
+                disabled={submitting || (useTemplate && !templateId)}
+                className="px-4 py-2 rounded-full bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    {t('finance.export.creating', 'Creating...')}
+                  </>
+                ) : (
+                  t('finance.export.createDraft', 'Create Draft')
+                )}
+              </button>
+            </div>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>

@@ -37,12 +37,38 @@ import { apiGet, apiPost } from '../baseClient';
 
 const BASE = '/finance/candidate-handoff/investment-case';
 
+/**
+ * Mirrors the backend's `FinanceCandidateSourceSnapshot`
+ * (`server/src/services/finance/financeCandidateHandoffCore.ts`, landed
+ * 2026-08-02): every field is either a real value read verbatim off the
+ * `financial_models` row, or the literal string `'unknown'` — the backend
+ * NEVER substitutes 0/null for a value the model doesn't have. Kept as an
+ * open record (rather than importing the server type directly) so this
+ * client stays tolerant of a field being absent on an older cached response.
+ */
+export interface FinanceInvestmentCaseSourceSnapshot {
+  currency?: string | 'unknown';
+  capex?: number | 'unknown';
+  opex?: number | 'unknown';
+  npv?: number | 'unknown';
+  irr?: number | 'unknown';
+  roi?: number | 'unknown';
+  payback?: number | 'unknown';
+  baselineOrScenario?: string | 'unknown';
+  assumptions?: string[] | 'unknown';
+  risks?: string[] | 'unknown';
+  sourceVersion?: string | 'unknown';
+  sourceFingerprint?: string | 'unknown';
+  [key: string]: unknown;
+}
+
 export interface FinanceInvestmentCasePreview {
   title: string;
   rationale: string;
   fitScore?: number;
   sourceType: 'finance_investment_case';
   sourceId: string;
+  sourceSnapshot?: FinanceInvestmentCaseSourceSnapshot | null;
 }
 
 export type FinanceInvestmentCasePreviewResult =
@@ -53,6 +79,7 @@ export interface FinanceInvestmentCaseConfirmResult {
   /** false on an idempotent replay — the model was already handed off before. */
   created: boolean;
   candidateId: string;
+  sourceSnapshot?: FinanceInvestmentCaseSourceSnapshot | null;
 }
 
 export interface FinanceInvestmentCaseHandoff {
@@ -63,6 +90,7 @@ export interface FinanceInvestmentCaseHandoff {
   candidateId: string;
   createdBy: string | null;
   createdAt: string;
+  sourceSnapshot?: FinanceInvestmentCaseSourceSnapshot | null;
 }
 
 /**

@@ -11,6 +11,7 @@ import {
   RefreshCw,
   RotateCcw,
   Search,
+  Send,
   Upload,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -18,6 +19,13 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
+import {
+  confirmStatementPackCandidateHandoff,
+  getStatementPackCandidateHandoff,
+  previewStatementPackCandidateHandoff,
+} from '@/services/api/v8/financeCandidateHandoffStatementPack';
+
+import { FinanceCandidateHandoffModal } from './shared/FinanceCandidateHandoffModal';
 
 import {
   type FinanceStatementDetailV1,
@@ -409,6 +417,12 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
     []
   );
   const [showValidations, setShowValidations] = useState(false);
+  // FIN-06: "Send as Initiative Candidate" — via the shared
+  // FinanceCandidateHandoffModal, mirroring the same action already
+  // available from Investment Case / Valuation Recommendation. No prior
+  // agent had wired a Statement Pack entry point yet; this reuses the
+  // existing "Model"/"Analysis" quick-action slot in the header bar.
+  const [candidateHandoffOpen, setCandidateHandoffOpen] = useState(false);
   // #82g — F5 lineage (skąd/przez co/założenia), lazy-loaded on first toggle.
   const [showLineage, setShowLineage] = useState(false);
   const [lineageLoading, setLineageLoading] = useState(false);
@@ -759,6 +773,22 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 <BarChart3 size={12} />
                 <span className="hidden sm:inline">
                   {t('finance.pack.analysisLabel', 'Analysis')}
+                </span>
+              </button>
+            )}
+            {/* FIN-06 — "Send as Initiative Candidate". Real eligibility
+                (pack_readiness_status === 'ready') is resolved by the shared
+                modal's own preview call; this button only gates on the same
+                isWorkable condition as its Model/Analysis siblings. */}
+            {packRow.isWorkable && (
+              <button
+                type="button"
+                onClick={() => setCandidateHandoffOpen(true)}
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200/70 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.04]"
+              >
+                <Send size={12} />
+                <span className="hidden sm:inline">
+                  {t('finance.pack.sendAsCandidate', 'Send as Candidate')}
                 </span>
               </button>
             )}
@@ -1383,6 +1413,47 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
             {t('finance.pack.noDocumentSelected', 'No document selected for this table.')}
           </div>
         </div>
+      )}
+      {candidateHandoffOpen && (
+        <FinanceCandidateHandoffModal
+          variant="standalone"
+          open
+          onClose={() => setCandidateHandoffOpen(false)}
+          sourceType="finance_statement_pack"
+          sourceId={packRow.id}
+          preview={() => previewStatementPackCandidateHandoff(packRow.id)}
+          confirm={() => confirmStatementPackCandidateHandoff(packRow.id)}
+          fetchHandoff={() => getStatementPackCandidateHandoff(packRow.id)}
+          // No direct single-candidate deep link exists yet — same honest
+          // finding as the Investment Case / Valuation Recommendation call
+          // sites (Initiatives' "Kandydaci" tab isn't URL-addressable).
+          getReopenLink={() => null}
+          title={t('finance.pack.candidateHandoffTitle', 'Statement Pack → Candidate')}
+          noticeText={t(
+            'finance.pack.candidateHandoffNotice',
+            'This sends the Statement Pack to the Candidate inbox for review — it does not create an Initiative directly.'
+          )}
+          confirmLabel={t('finance.pack.sendAsCandidate', 'Send as Candidate')}
+          cancelLabel={t('finance.pack.candidateHandoffCancel', 'Cancel')}
+          closeLabel={t('finance.pack.candidateHandoffClose', 'Close')}
+          checkingLabel={t('finance.pack.checkingEligibility', 'Checking eligibility...')}
+          previewErrorFallback={t(
+            'finance.pack.candidateEligibilityFailed',
+            'Could not check eligibility'
+          )}
+          confirmErrorFallback={t(
+            'finance.pack.candidateHandoffFailed',
+            'Could not create the Candidate'
+          )}
+          createdMessage={t(
+            'finance.pack.candidateCreated',
+            'Sent as Initiative candidate: {{title}}'
+          )}
+          replayMessage={t(
+            'finance.pack.candidateAlreadyExists',
+            'Already sent as Initiative candidate: {{title}}'
+          )}
+        />
       )}
     </div>
   );

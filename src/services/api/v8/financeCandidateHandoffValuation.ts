@@ -27,12 +27,40 @@ import { apiGet, apiPost } from '../baseClient';
 
 const BASE = '/finance/candidate-handoff/valuation-recommendation';
 
+/**
+ * Mirrors the backend's `FinanceCandidateSourceSnapshot`
+ * (`server/src/services/finance/financeCandidateHandoffCore.ts`, landed
+ * 2026-08-02): every field is either a real value read verbatim off the
+ * valuation recommendation, or the literal string `'unknown'` — the backend
+ * NEVER substitutes 0/null for a value the source doesn't have. Kept as an
+ * open record (rather than importing the server type directly) so this
+ * client stays tolerant of a field being absent on an older cached response
+ * (the source-specific adapter populating these fields may land after this
+ * client does).
+ */
+export interface FinanceValuationRecommendationSourceSnapshot {
+  currency?: string | 'unknown';
+  capex?: number | 'unknown';
+  opex?: number | 'unknown';
+  npv?: number | 'unknown';
+  irr?: number | 'unknown';
+  roi?: number | 'unknown';
+  payback?: number | 'unknown';
+  baselineOrScenario?: string | 'unknown';
+  assumptions?: string[] | 'unknown';
+  risks?: string[] | 'unknown';
+  sourceVersion?: string | 'unknown';
+  sourceFingerprint?: string | 'unknown';
+  [key: string]: unknown;
+}
+
 export interface FinanceValuationRecommendationPreview {
   title: string;
   rationale: string;
   fitScore?: number;
   sourceType: 'finance_valuation_recommendation';
   sourceId: string;
+  sourceSnapshot?: FinanceValuationRecommendationSourceSnapshot | null;
 }
 
 export type FinanceValuationRecommendationPreviewResult =
@@ -43,6 +71,7 @@ export interface FinanceValuationRecommendationConfirmResult {
   /** false on an idempotent replay — the recommendation was already handed off before. */
   created: boolean;
   candidateId: string;
+  sourceSnapshot?: FinanceValuationRecommendationSourceSnapshot | null;
 }
 
 export interface FinanceValuationRecommendationHandoff {
@@ -53,6 +82,7 @@ export interface FinanceValuationRecommendationHandoff {
   candidateId: string;
   createdBy: string | null;
   createdAt: string;
+  sourceSnapshot?: FinanceValuationRecommendationSourceSnapshot | null;
 }
 
 /**
