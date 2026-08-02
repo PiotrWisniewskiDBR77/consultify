@@ -2,13 +2,12 @@
  * EXE-09 — durable Execution-closure → Results/Finance delivery receipt.
  *
  * Replaces the fire-and-forget-only handoff in `executionResultsBridge.ts`
- * (`fireClosureHandoff`, `.catch(logger.warn)` and forget) with a durable
- * row (migration 935_exe009_closure_delivery_receipt.sql,
- * `closure_delivery_receipts` / `closure_finance_actuals`) written INSIDE the
- * same transaction as the initiative's DONE transition
- * (`initiativeTransitionService.ts` — the only caller of
- * {@link createReceiptOnClosure}), plus a worker/reconciliation sweep
- * ({@link runReconciliationSweep}) that retries delivery until it lands.
+ * (`fireClosureHandoff`, `.catch(logger.warn)` and forget) with a durable row
+ * (migration 935_exe009_closure_delivery_receipt.sql,
+ * `closure_delivery_receipts`) written INSIDE the same transaction as the
+ * initiative's DONE transition (`initiativeTransitionService.ts` — the only
+ * caller of {@link createReceiptOnClosure}), plus a worker/reconciliation
+ * sweep ({@link runReconciliationSweep}) that retries delivery until it lands.
  *
  * Results and Finance are two INDEPENDENT legs (separate status columns,
  * separate downstream writers, separate failure isolation):
@@ -18,29 +17,43 @@
  *   partial unique index on `initiative_benefits`), then reads back the
  *   actual benefit row ids so a RETRIED attempt reports the same downstream
  *   ids rather than only whatever the first attempt saw.
- * - Finance leg computes its value INDEPENDENTLY from the initiative's own
- *   planned KPI targets / expected_roi (the same source data
- *   `handoffFromClosure` reads — not from the Results leg's output), paired
- *   with `initiatives.budget_currency`. This is deliberate: a Results-leg
- *   failure must never block or hide a successful Finance delivery, and vice
- *   versa (EXE-09 contract point 3). If either the amount or the currency
- *   cannot be determined unambiguously, the leg is marked NEEDS_DECISION —
- *   this module never invents a value or a currency (EXE-09 contract:
- *   "nie wolno wymyślać mapowania wartości").
- *
- * Finance delivery writes to a NEW, additive `closure_finance_actuals` table
- * — deliberately not any existing Finance table/service, to stay completely
- * clear of the active FIN-05 (`feat/fin-005-statement-ingestion-golden-flow`)
- * and the frozen-but-unmerged `fix/fin-005-atelier-coherence` line (see
- * docs/program/WEEKEND_COMPLETION_2026-08-01/PACKETS/EXE-009_DISCOVERY.md).
+ * - Finance leg (Codex review round 2, BLOCKER1/BLOCKER2 — read before
+ *   touching): does NOT write to any new/isolated table. Round 1 of this
+ *   packet built a standalone `closure_finance_actuals` table that nothing
+ *   in the actual Finance module read — rejected on review as "a table
+ *   named finance isn't the same as delivering to Finance." A fresh
+ *   inventory (this round) found the Finance module has NO db-backed read of
+ *   initiative-level actuals at all; the one real, UI-rendered,
+ *   organization+initiative-scoped realization table in this codebase is
+ *   `roi_realized_values` (read by `src/components/Benefits/ROITrackingPanel.tsx`
+ *   via `GET /benefits/roi/portfolio/summary`), owned by
+ *   `executionRealizationService.recordExecutionRealization` — this is the
+ *   SAME table/function a human uses today via Execution's "Record
+ *   Realization" form. This leg now calls that EXACT canonical function
+ *   (migration 937 adds an optional, additive `closure_receipt_id` dedup key
+ *   to it — the existing human-entry call site is untouched and unaffected).
+ * - The value itself is computed INDEPENDENTLY of the Results leg's output
+ *   (not read from `initiative_benefits`) so a Results-leg failure never
+ *   blocks/hides Finance and vice versa (contract point 3). `expected_roi` is
+ *   NEVER used as a monetary amount (Codex review BLOCKER2 — confirmed by
+ *   direct investigation that `expected_roi` is a free-text ROI/percentage
+ *   narrative field in this schema, not currency; see migration
+ *   903_expected_roi_to_text.sql's own header and CharterBuilder.tsx's
+ *   "Expected ROI (%)" label, a DIFFERENT field from "Business Value (PLN)").
+ *   The ONLY signal used is a planned KPI whose `unit` column is LITERALLY
+ *   the initiative's own `budget_currency` code — anything else (KPI in %,
+ *   days, count; no currency on the initiative; no matching KPI at all)
+ *   yields NEEDS_DECISION, never a fabricated value. Investigation confirmed
+ *   no seed/demo data currently sets a currency-valued KPI unit, so
+ *   NEEDS_DECISION is the expected, correct outcome for most real closures
+ *   today — that is honest, not a bug.
  */
-
-import { randomUUID } from 'node:crypto';
 
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { withPgTransaction, type PgTransactionClient } from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
 import { handoffFromClosure, CLOSURE_HANDOFF_SOURCE } from './executionResultsBridge.js';
+import { recordExecutionRealization } from './executionRealizationService.js';
 
 const LOG_PREFIX = '[ClosureDeliveryReceipt]';
 
@@ -138,7 +151,7 @@ function toReceipt(row: ReceiptRow): ClosureDeliveryReceipt {
  * transition, never client-supplied, so this insert can never collide with
  * an earlier closure of the same initiative — it is the idempotency
  * guarantee for receipt CREATION (delivery-retry idempotency is a separate
- * concern, handled by {@link attemptDelivery}).
+ * concern, handled by {@link attemptDeliveryInternal}).
  */
 export async function createReceiptOnClosure(
   client: PgTransactionClient,
@@ -191,7 +204,6 @@ export async function getReceiptForInitiative(
 
 interface InitiativeFinanceRow {
   budget_currency: string | null;
-  expected_roi: number | string | null;
 }
 
 interface PlannedKpiTargetRow {
@@ -199,21 +211,35 @@ interface PlannedKpiTargetRow {
 }
 
 /**
- * Independently compute the Finance amount/currency for this initiative —
- * deliberately NOT reading `initiative_benefits` (the Results leg's output),
- * so a Results-leg failure this attempt cannot block Finance delivery. Same
- * source-of-truth precedence as `handoffFromClosure` (planned KPI targets,
- * else `expected_roi`), so the number itself is not invented — only
- * re-derived independently. Returns `null` when the amount or currency
- * cannot be determined unambiguously — the caller must treat that as
- * NEEDS_DECISION, never substitute a default.
+ * Independently compute the monetary realization amount/currency for this
+ * initiative — deliberately NOT reading `initiative_benefits` (the Results
+ * leg's output), so a Results-leg failure this attempt cannot block Finance
+ * delivery. Returns `null` when the amount or currency cannot be determined
+ * unambiguously — the caller must treat that as NEEDS_DECISION, never
+ * substitute a default.
+ *
+ * `expected_roi` is NEVER used here (Codex review BLOCKER2, round 2). It is a
+ * free-text ROI/percentage narrative field in this schema (migration
+ * 903_expected_roi_to_text.sql: the AI hydration path writes strings like
+ * "ROI 200%" / "44% (zysk netto ÷ nakład), payback 14 mies"; the UI labels
+ * the SAME field "Expected ROI (%)" — `CharterBuilder.tsx` — as a field
+ * distinct from "Business Value (PLN)"), never a currency amount. Turning a
+ * percentage into a currency figure was a real domain-invalid bug in round 1
+ * of this packet, now removed entirely — there is no fallback path anymore.
+ *
+ * The ONLY signal used: a planned KPI whose `unit` column is LITERALLY the
+ * initiative's own `budget_currency` code. This is a real, if currently rare,
+ * signal (investigation found no seed/demo data sets a currency-valued KPI
+ * unit today, so NEEDS_DECISION is the expected, correct outcome for most
+ * real closures until a product decision creates a genuine "monetary target"
+ * field/contract) — not a heuristic dressed up as a mapping.
  */
-async function computeFinanceValue(
+async function computeMonetaryRealization(
   organizationId: string,
   initiativeId: string
 ): Promise<{ amount: number; currency: string; valueSource: string } | null> {
   const initiative = await queryHelpers.queryOne<InitiativeFinanceRow>(
-    `SELECT budget_currency, expected_roi FROM initiatives WHERE id = ? AND organization_id = ?`,
+    `SELECT budget_currency FROM initiatives WHERE id = ? AND organization_id = ?`,
     [initiativeId, organizationId]
   );
   if (!initiative || !initiative.budget_currency) {
@@ -224,51 +250,27 @@ async function computeFinanceValue(
     return null;
   }
 
-  // Only a KPI whose OWN unit literally IS the initiative's currency code is
-  // treated as a monetary target — adversarial-review fix: summing every
-  // planned KPI's target_value regardless of unit ('%', 'days', 'count', ...)
-  // mislabeled arbitrary numeric targets as money. This is stricter than
-  // `handoffFromClosure`'s own KPI selection (which takes ANY KPI with a
-  // target_value, monetary or not, since Results just records "a target
-  // existed") — deliberately so: Finance's ledger claims an amount in a
-  // specific currency, which is a stronger claim than Results' "there was a
-  // target" and needs a stronger signal that the number is actually money.
   const kpiTargets = await queryHelpers.queryAll<PlannedKpiTargetRow>(
     `SELECT target_value FROM initiative_kpis
       WHERE initiative_id = ? AND target_value IS NOT NULL AND unit = ?`,
     [initiativeId, initiative.budget_currency]
   );
-  if (kpiTargets.length > 0) {
-    const amount = kpiTargets.reduce((sum, row) => sum + Number(row.target_value), 0);
-    if (Number.isFinite(amount)) {
-      // A real match, including a legitimate sum of exactly 0 — that IS the
-      // answer, not "no answer"; only fall through to expected_roi (or
-      // NEEDS_DECISION) when there was genuinely no currency-matched KPI at
-      // all, never silently discard a computed zero.
-      return {
-        amount,
-        currency: initiative.budget_currency,
-        valueSource: `initiative_kpis.target_value (sum, unit=${initiative.budget_currency}) + initiatives.budget_currency`,
-      };
-    }
+  if (kpiTargets.length === 0) {
+    // No currency-matched KPI target — nothing to hand off. Mapping gap, not
+    // a silent zero: NEEDS_DECISION.
+    return null;
   }
 
-  const expectedRoi =
-    initiative.expected_roi !== null && initiative.expected_roi !== undefined
-      ? Number(initiative.expected_roi)
-      : null;
-  if (expectedRoi !== null && Number.isFinite(expectedRoi) && expectedRoi !== 0) {
-    return {
-      amount: expectedRoi,
-      currency: initiative.budget_currency,
-      valueSource: 'initiatives.expected_roi + initiatives.budget_currency',
-    };
-  }
+  const amount = kpiTargets.reduce((sum, row) => sum + Number(row.target_value), 0);
+  if (!Number.isFinite(amount)) return null;
 
-  // No planned KPI target and no expected_roi — same "nothing to hand off"
-  // case handoffFromClosure treats as zero benefits, no error. For Finance
-  // this is a mapping gap, not a silent zero: NEEDS_DECISION.
-  return null;
+  // A real match, including a legitimate sum of exactly 0 — that IS the
+  // answer, not "no answer".
+  return {
+    amount,
+    currency: initiative.budget_currency,
+    valueSource: `initiative_kpis.target_value (sum, unit=${initiative.budget_currency}) + initiatives.budget_currency`,
+  };
 }
 
 function backoffMs(attempts: number): number {
@@ -289,7 +291,7 @@ export interface AttemptDeliveryOptions {
  * atomic per-row in Postgres regardless of any surrounding transaction, so
  * when two callers race (the post-commit immediate-delivery trigger, the
  * operator-triggered manual retry route, and the cron reconciliation sweep
- * all call {@link attemptDelivery} independently, with NO shared lock between
+ * all call {@link attemptDeliveryInternal} independently, with NO shared lock between
  * them), at most one UPDATE affects a row — the loser's `changes` is 0 and it
  * skips this leg for this call, instead of both racing straight into
  * `handoffFromClosure`/the Finance write concurrently. This is the fix for a
@@ -338,16 +340,31 @@ async function claimLeg(receiptId: string, leg: 'results' | 'finance'): Promise<
 }
 
 /**
- * Attempt (or retry) delivery of both legs for one receipt. Safe to call
- * concurrently / repeatedly for the same receipt — see {@link claimLeg}: each
- * leg only does real work in the ONE call that wins the atomic claim; every
- * other concurrent caller sees its claim fail and leaves that leg alone this
- * round (it stays exactly as it was, to be picked up again on the very next
- * attempt). Never throws for an ordinary downstream failure — the failure is
- * recorded on the row and observable via {@link getReceiptById}; it only
- * throws if the receipt itself does not exist.
+ * Attempt (or retry) delivery of both legs for one receipt.
+ *
+ * ★ INTERNAL / worker-owned API (Codex review round 2, BLOCKER4) — this
+ * function trusts its `receiptId` argument completely and does NOT check
+ * organization ownership. That is correct for its three legitimate callers
+ * (the post-commit immediate-delivery trigger, which only ever has a
+ * `receiptId` it JUST minted inside the SAME transaction as the closure
+ * itself; the cron reconciliation sweep, which is a system-wide worker BY
+ * DESIGN and operates across all tenants; and {@link retryDeliveryForOrg},
+ * which performs the org check itself BEFORE calling this). It is NOT safe
+ * to expose to a user-facing/HTTP-adjacent code path directly — a future
+ * caller wiring a client-supplied id straight into this function would
+ * silently cross tenants. If you need an org-checked entry point, use
+ * {@link retryDeliveryForOrg}, never this function directly.
+ *
+ * Safe to call concurrently / repeatedly for the same receipt — see
+ * {@link claimLeg}: each leg only does real work in the ONE call that wins
+ * the atomic claim; every other concurrent caller sees its claim fail and
+ * leaves that leg alone this round (it stays exactly as it was, to be picked
+ * up again on the very next attempt). Never throws for an ordinary
+ * downstream failure — the failure is recorded on the row and observable via
+ * {@link getReceiptById}; it only throws if the receipt itself does not
+ * exist.
  */
-export async function attemptDelivery(
+export async function attemptDeliveryInternal(
   receiptId: string,
   opts: AttemptDeliveryOptions = {}
 ): Promise<ClosureDeliveryReceipt> {
@@ -356,7 +373,7 @@ export async function attemptDelivery(
     [receiptId]
   );
   if (!receipt) {
-    throw new Error(`${LOG_PREFIX} attemptDelivery: no receipt found for id ${receiptId}`);
+    throw new Error(`${LOG_PREFIX} attemptDeliveryInternal: no receipt found for id ${receiptId}`);
   }
 
   const { organization_id: organizationId, initiative_id: initiativeId, actor_id: actorId } = receipt;
@@ -366,21 +383,34 @@ export async function attemptDelivery(
     try {
       if (opts.__testForceResultsError) throw opts.__testForceResultsError;
       await handoffFromClosure(organizationId, initiativeId, actorId);
-      const benefitRows = await queryHelpers.queryAll<{ id: string }>(
-        `SELECT id FROM initiative_benefits WHERE initiative_id = ? AND source_tag = ?`,
-        [initiativeId, CLOSURE_HANDOFF_SOURCE]
-      );
-      await queryHelpers.queryRun(
-        `UPDATE closure_delivery_receipts
-            SET results_status = 'DELIVERED',
-                results_attempts = results_attempts + 1,
-                results_last_error = NULL,
-                results_delivered_at = CURRENT_TIMESTAMP,
-                results_payload = ?,
-                updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?`,
-        [JSON.stringify({ benefitIds: benefitRows.map((r) => r.id) }), receiptId]
-      );
+      // Read-back + terminal UPDATE on a DEDICATED pinned connection, NOT the
+      // shared pool (queryHelpers.queryAll/queryRun) — same fix, same reason,
+      // as claimLeg: this codebase has a documented footgun where a query
+      // issued right after a write can land on a different pool connection
+      // than the one that just committed, and a read can observe a state
+      // predating the write. Verified empirically under this exact
+      // concurrent-delivery scenario: reading `initiative_benefits` via the
+      // pool immediately after `handoffFromClosure` intermittently returned
+      // zero rows even though the insert had genuinely committed (confirmed
+      // via a separate, later query) — reading via a pinned connection
+      // eliminated it across repeated runs.
+      await withPgTransaction(async (client) => {
+        const { rows } = await client.query<{ id: string }>(
+          `SELECT id FROM initiative_benefits WHERE initiative_id = ? AND source_tag = ?`,
+          [initiativeId, CLOSURE_HANDOFF_SOURCE]
+        );
+        await client.query(
+          `UPDATE closure_delivery_receipts
+              SET results_status = 'DELIVERED',
+                  results_attempts = results_attempts + 1,
+                  results_last_error = NULL,
+                  results_delivered_at = CURRENT_TIMESTAMP,
+                  results_payload = ?,
+                  updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?`,
+          [JSON.stringify({ benefitIds: rows.map((r) => r.id) }), receiptId]
+        );
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       logger.warn(`${LOG_PREFIX} Results delivery failed for receipt ${receiptId}: ${message}`);
@@ -409,7 +439,7 @@ export async function attemptDelivery(
   ) {
     try {
       if (opts.__testForceFinanceError) throw opts.__testForceFinanceError;
-      const value = await computeFinanceValue(organizationId, initiativeId);
+      const value = await computeMonetaryRealization(organizationId, initiativeId);
       if (!value) {
         await queryHelpers.queryRun(
           `UPDATE closure_delivery_receipts
@@ -419,43 +449,59 @@ export async function attemptDelivery(
             WHERE id = ?`,
           [
             'No unambiguous financial target: initiative has no budget_currency, or no planned ' +
-              'KPI target/expected_roi to realize. Needs an explicit product decision on value mapping.',
+              'KPI whose unit matches that currency. Needs an explicit product decision on value ' +
+              'mapping — never fabricated from expected_roi (a percentage field, not currency).',
             receiptId,
           ]
         );
       } else {
-        const financeActualId = randomUUID();
-        await queryHelpers.queryRun(
-          `INSERT INTO closure_finance_actuals (
-             id, organization_id, initiative_id, closure_receipt_id, amount, currency, value_source, created_by
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-           ON CONFLICT (closure_receipt_id) DO NOTHING`,
-          [
-            financeActualId,
-            organizationId,
-            initiativeId,
-            receiptId,
-            value.amount,
-            value.currency,
-            value.valueSource,
-            actorId,
-          ]
-        );
-        const persisted = await queryHelpers.queryOne<{ id: string; amount: string; currency: string }>(
-          `SELECT id, amount, currency FROM closure_finance_actuals WHERE closure_receipt_id = ?`,
-          [receiptId]
-        );
-        await queryHelpers.queryRun(
-          `UPDATE closure_delivery_receipts
-              SET finance_status = 'DELIVERED',
-                  finance_attempts = finance_attempts + 1,
-                  finance_last_error = NULL,
-                  finance_delivered_at = CURRENT_TIMESTAMP,
-                  finance_payload = ?,
-                  updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?`,
-          [JSON.stringify({ financeActualId: persisted?.id ?? financeActualId }), receiptId]
-        );
+        // Idempotency: `closureReceiptId` is the dedup key (migration 937's
+        // partial unique index on roi_realized_values.closure_receipt_id) —
+        // NOT the id `recordExecutionRealization` returns. `dbRun` (this
+        // canonical service's own persistence helper) defaults to swallowing
+        // errors including a unique-violation, so a retried call could
+        // report a locally-generated id that was never actually persisted.
+        // Always re-read the row keyed by closure_receipt_id afterward — the
+        // authoritative id, whether from THIS call or an earlier one.
+        const periodMonth = new Date(receipt.created_at);
+        const periodMonthIso = `${periodMonth.getUTCFullYear()}-${String(periodMonth.getUTCMonth() + 1).padStart(2, '0')}-01`;
+        await recordExecutionRealization({
+          organizationId,
+          initiativeId,
+          periodMonth: periodMonthIso,
+          realizedRevenueDelta: value.amount,
+          varianceNotes:
+            `EXE-09 closure-triggered realization — source: ${value.valueSource}, ` +
+            `currency: ${value.currency} (informational; roi_realized_values has no currency column).`,
+          recordedBy: actorId ?? SYSTEM_ACTOR_LABEL,
+          closureReceiptId: receiptId,
+        });
+        // Read-back + terminal UPDATE on a DEDICATED pinned connection, NOT
+        // the shared pool — same fix/reason as the Results leg above.
+        await withPgTransaction(async (client) => {
+          const { rows } = await client.query<{ id: string }>(
+            `SELECT id FROM roi_realized_values WHERE closure_receipt_id = ?`,
+            [receiptId]
+          );
+          const persisted = rows[0];
+          if (!persisted) {
+            throw new Error(
+              'recordExecutionRealization completed but no roi_realized_values row was found for this ' +
+                'closure_receipt_id — cannot confirm a canonical downstream id was actually persisted.'
+            );
+          }
+          await client.query(
+            `UPDATE closure_delivery_receipts
+                SET finance_status = 'DELIVERED',
+                    finance_attempts = finance_attempts + 1,
+                    finance_last_error = NULL,
+                    finance_delivered_at = CURRENT_TIMESTAMP,
+                    finance_payload = ?,
+                    updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?`,
+            [JSON.stringify({ realizationId: persisted.id }), receiptId]
+          );
+        });
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -503,7 +549,7 @@ export async function attemptDelivery(
  * pick it up on its next tick regardless of what happens to this call.
  */
 export function triggerImmediateDeliveryBestEffort(receiptId: string): void {
-  void attemptDelivery(receiptId).catch((err) => {
+  void attemptDeliveryInternal(receiptId).catch((err) => {
     logger.warn(
       `${LOG_PREFIX} immediate delivery attempt failed for receipt ${receiptId} (reconciliation ` +
         `sweep will retry): ${err instanceof Error ? err.message : String(err)}`
@@ -512,21 +558,37 @@ export function triggerImmediateDeliveryBestEffort(receiptId: string): void {
 }
 
 /**
- * Operator-triggered retry: clears the backoff wait so the very next sweep
- * tick (or this call itself) reprocesses the receipt immediately. Safe for
- * any receipt state — a receipt with both legs already DELIVERED/
- * NEEDS_DECISION simply does nothing on the next attempt (idempotent).
+ * ★ USER-FACING / org-checked entry point (Codex review round 2, BLOCKER4) —
+ * the ONLY safe way to trigger a retry from an HTTP route or any other
+ * caller acting on behalf of a specific tenant. ALWAYS verifies the receipt
+ * belongs to `organizationId` BEFORE doing anything else — a receipt id from
+ * a foreign organization resolves to "not found" here exactly like it does
+ * everywhere else in this codebase's initiative/closure surface, never a
+ * cross-tenant retry. Callers still need their OWN role/capability check
+ * before calling this (this function only proves tenant ownership, not
+ * "is this actor allowed to act on this initiative's closure" — see
+ * `initiativeClosure.routes.ts`'s retry route, which calls
+ * `assertActorCanApprove` first, reusing the exact same gate `/approve`
+ * uses).
+ *
+ * Clears the backoff wait so the very next sweep tick (or this call itself)
+ * reprocesses the receipt immediately. Safe for any receipt state — a
+ * receipt with both legs already DELIVERED/NEEDS_DECISION simply does
+ * nothing on the next attempt (idempotent).
  */
-export async function manualRetryReceipt(receiptId: string, organizationId: string): Promise<ClosureDeliveryReceipt> {
+export async function retryDeliveryForOrg(
+  receiptId: string,
+  organizationId: string
+): Promise<ClosureDeliveryReceipt> {
   const existing = await getReceiptById(receiptId, organizationId);
   if (!existing) {
-    throw new Error(`${LOG_PREFIX} manualRetryReceipt: no receipt ${receiptId} in organization ${organizationId}`);
+    throw new Error(`${LOG_PREFIX} retryDeliveryForOrg: no receipt ${receiptId} in organization ${organizationId}`);
   }
   await queryHelpers.queryRun(
     `UPDATE closure_delivery_receipts SET next_retry_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
     [receiptId]
   );
-  return attemptDelivery(receiptId);
+  return attemptDeliveryInternal(receiptId);
 }
 
 const DEFAULT_SWEEP_BATCH_SIZE = 25;
@@ -587,7 +649,7 @@ export async function runReconciliationSweep(
   let stillPending = 0;
   for (const id of ids) {
     try {
-      const result = await attemptDelivery(id);
+      const result = await attemptDeliveryInternal(id);
       const bothTerminal =
         (result.resultsStatus === 'DELIVERED' || result.resultsStatus === 'FAILED') &&
         (result.financeStatus === 'DELIVERED' ||
