@@ -147,7 +147,10 @@ interface Harness {
   projectAId: string;
   // Fresh EXECUTING initiative per scenario — created via a factory so each
   // `it()` gets its own isolated row (no shared mutable fixture races).
-  makeInitiative: (label: string, opts?: { budgetCurrency?: string | null; kpiTargetValue?: number | null }) => Promise<string>;
+  makeInitiative: (
+    label: string,
+    opts?: { budgetCurrency?: string | null; kpiTargetValue?: number | null; kpiUnit?: string; expectedRoi?: number | null }
+  ) => Promise<string>;
   /**
    * For tests that exercise `attemptDelivery`/`runReconciliationSweep`
    * directly (fault injection, restart simulation): seeds an initiative
@@ -167,7 +170,7 @@ interface Harness {
    */
   seedClosedInitiativeWithReceipt: (
     label: string,
-    opts?: { budgetCurrency?: string | null; kpiTargetValue?: number | null }
+    opts?: { budgetCurrency?: string | null; kpiTargetValue?: number | null; kpiUnit?: string; expectedRoi?: number | null }
   ) => Promise<{ initiativeId: string; correlationId: string }>;
   cleanup: () => Promise<void>;
 }
@@ -231,15 +234,23 @@ async function setupHarness(): Promise<Harness | null> {
     await client.query(
       `INSERT INTO initiatives
          (id, organization_id, project_id, name, status, progress, owner_business_id,
-          planned_start_date, planned_end_date, budget_currency)
-       VALUES ($1, $2, $3, $4, 'EXECUTING', 0, $5, '2026-01-01', '2026-12-31', $6)`,
-      [id, orgAId, projectAId, `EXE-09 ${label}`, userAId, budgetCurrency]
+          planned_start_date, planned_end_date, budget_currency, expected_roi)
+       VALUES ($1, $2, $3, $4, 'EXECUTING', 0, $5, '2026-01-01', '2026-12-31', $6, $7)`,
+      [
+        id,
+        orgAId,
+        projectAId,
+        `EXE-09 ${label}`,
+        userAId,
+        budgetCurrency,
+        opts.expectedRoi === undefined || opts.expectedRoi === null ? null : String(opts.expectedRoi),
+      ]
     );
     if (opts.kpiTargetValue !== undefined && opts.kpiTargetValue !== null) {
       await client.query(
         `INSERT INTO initiative_kpis (id, initiative_id, name, target_value, unit)
-         VALUES ($1, $2, 'Realized value', $3, 'PLN')`,
-        [`kpi_${id}`, id, opts.kpiTargetValue]
+         VALUES ($1, $2, 'Realized value', $3, $4)`,
+        [`kpi_${id}`, id, opts.kpiTargetValue, opts.kpiUnit ?? budgetCurrency ?? 'PLN']
       );
     }
     return id;
@@ -430,6 +441,50 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     );
     expect(actualCount.rows[0].n).toBe(1);
   });
+
+  itDB(
+    'TWO CONCURRENT attemptDelivery calls on the SAME receipt never double-write, even on the ' +
+      'no-DB-backstop expected_roi fallback path (adversarial-review regression test for the ' +
+      'claimLeg race fix)',
+    async (h) => {
+      // Deliberately kpiTargetValue: null — this forces
+      // executionResultsBridge.handoffFromInitiativeFallback's path, the one
+      // Results-leg branch whose own dedup is application-level only
+      // (SELECT-then-INSERT, no unique index prior to migration 936). Before
+      // the claimLeg fix, two concurrent attemptDelivery calls could both
+      // pass that SELECT and both INSERT a duplicate benefit row.
+      const { initiativeId, correlationId } = await h.seedClosedInitiativeWithReceipt('race', {
+        budgetCurrency: 'PLN',
+        kpiTargetValue: null,
+        expectedRoi: 12000,
+      });
+
+      // Both promises are awaited together, but each one's OWN returned
+      // snapshot reflects whatever the row looked like at the moment THAT
+      // specific call finished — the loser can finish (having done no real
+      // work) before the winner commits its terminal UPDATE, so asserting on
+      // `a`/`b` directly would be racy. Wait for both, then re-read fresh —
+      // by the time `Promise.all` resolves, every write from BOTH calls has
+      // already committed.
+      await Promise.all([attemptDelivery(correlationId), attemptDelivery(correlationId)]);
+      const final = await getReceiptById(correlationId, h.orgAId);
+
+      expect(final!.resultsStatus).toBe('DELIVERED');
+      expect(final!.financeStatus).toBe('DELIVERED');
+
+      const benefitRows = await h.client.query(
+        `SELECT id FROM initiative_benefits WHERE initiative_id = $1`,
+        [initiativeId]
+      );
+      expect(benefitRows.rows).toHaveLength(1);
+
+      const actualRows = await h.client.query(
+        `SELECT id FROM closure_finance_actuals WHERE closure_receipt_id = $1`,
+        [correlationId]
+      );
+      expect(actualRows.rows).toHaveLength(1);
+    }
+  );
 
   itDB('two concurrent closure attempts on the same initiative: exactly one succeeds, exactly one receipt exists', async (h) => {
     const initiativeId = await h.makeInitiative('concurrent', { budgetCurrency: 'PLN', kpiTargetValue: 1000 });

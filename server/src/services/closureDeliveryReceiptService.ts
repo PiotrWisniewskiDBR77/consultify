@@ -224,17 +224,31 @@ async function computeFinanceValue(
     return null;
   }
 
+  // Only a KPI whose OWN unit literally IS the initiative's currency code is
+  // treated as a monetary target — adversarial-review fix: summing every
+  // planned KPI's target_value regardless of unit ('%', 'days', 'count', ...)
+  // mislabeled arbitrary numeric targets as money. This is stricter than
+  // `handoffFromClosure`'s own KPI selection (which takes ANY KPI with a
+  // target_value, monetary or not, since Results just records "a target
+  // existed") — deliberately so: Finance's ledger claims an amount in a
+  // specific currency, which is a stronger claim than Results' "there was a
+  // target" and needs a stronger signal that the number is actually money.
   const kpiTargets = await queryHelpers.queryAll<PlannedKpiTargetRow>(
-    `SELECT target_value FROM initiative_kpis WHERE initiative_id = ? AND target_value IS NOT NULL`,
-    [initiativeId]
+    `SELECT target_value FROM initiative_kpis
+      WHERE initiative_id = ? AND target_value IS NOT NULL AND unit = ?`,
+    [initiativeId, initiative.budget_currency]
   );
   if (kpiTargets.length > 0) {
     const amount = kpiTargets.reduce((sum, row) => sum + Number(row.target_value), 0);
-    if (Number.isFinite(amount) && amount !== 0) {
+    if (Number.isFinite(amount)) {
+      // A real match, including a legitimate sum of exactly 0 — that IS the
+      // answer, not "no answer"; only fall through to expected_roi (or
+      // NEEDS_DECISION) when there was genuinely no currency-matched KPI at
+      // all, never silently discard a computed zero.
       return {
         amount,
         currency: initiative.budget_currency,
-        valueSource: 'initiative_kpis.target_value (sum) + initiatives.budget_currency',
+        valueSource: `initiative_kpis.target_value (sum, unit=${initiative.budget_currency}) + initiatives.budget_currency`,
       };
     }
   }
@@ -270,12 +284,56 @@ export interface AttemptDeliveryOptions {
 }
 
 /**
+ * Atomically claim one leg for processing: flips PENDING/FAILED -> DELIVERING
+ * in a single `UPDATE ... WHERE <col> IN (...)` statement. A single UPDATE is
+ * atomic per-row in Postgres regardless of any surrounding transaction, so
+ * when two callers race (the post-commit immediate-delivery trigger, the
+ * operator-triggered manual retry route, and the cron reconciliation sweep
+ * all call {@link attemptDelivery} independently, with NO shared lock between
+ * them), at most one UPDATE affects a row — the loser's `changes` is 0 and it
+ * skips this leg for this call, instead of both racing straight into
+ * `handoffFromClosure`/the Finance write concurrently. This is the fix for a
+ * real gap found in adversarial review: without this claim, two concurrent
+ * callers could both pass `handoffFromClosure`'s own SELECT-then-INSERT dedup
+ * check for the no-KPI `expected_roi` fallback benefit (that path has no DB
+ * unique index — see migration 936) and both INSERT, producing two
+ * `initiative_benefits` rows for one closure.
+ */
+/**
+ * A leg claimed but never resolved (process killed between the claim and the
+ * terminal UPDATE, below) would otherwise sit in DELIVERING forever — nothing
+ * else in this file ever moves a row OUT of DELIVERING except the same
+ * attempt that put it there. Treating a DELIVERING leg as reclaimable once
+ * it's older than this is the standard stale-lease-reclaim pattern for an
+ * outbox worker; ordinary attempts here are fast in-process DB calls, so this
+ * is a wide margin, not a tight race with a still-genuinely-running attempt.
+ */
+const STALE_DELIVERING_LEASE_MINUTES = 5;
+
+async function claimLeg(receiptId: string, leg: 'results' | 'finance'): Promise<boolean> {
+  const statusCol = leg === 'results' ? 'results_status' : 'finance_status';
+  const result = await queryHelpers.queryRun(
+    `UPDATE closure_delivery_receipts
+        SET ${statusCol} = 'DELIVERING', updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+        AND (
+          ${statusCol} IN ('PENDING', 'FAILED')
+          OR (${statusCol} = 'DELIVERING' AND updated_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_DELIVERING_LEASE_MINUTES} minutes')
+        )`,
+    [receiptId]
+  );
+  return result.changes > 0;
+}
+
+/**
  * Attempt (or retry) delivery of both legs for one receipt. Safe to call
- * concurrently / repeatedly for the same receipt: each leg only acts while
- * its own status is retry-eligible (PENDING/FAILED) and is otherwise a
- * cheap no-op read. Never throws for an ordinary downstream failure — the
- * failure is recorded on the row and observable via {@link getReceiptById};
- * it only throws if the receipt itself does not exist.
+ * concurrently / repeatedly for the same receipt — see {@link claimLeg}: each
+ * leg only does real work in the ONE call that wins the atomic claim; every
+ * other concurrent caller sees its claim fail and leaves that leg alone this
+ * round (it stays exactly as it was, to be picked up again on the very next
+ * attempt). Never throws for an ordinary downstream failure — the failure is
+ * recorded on the row and observable via {@link getReceiptById}; it only
+ * throws if the receipt itself does not exist.
  */
 export async function attemptDelivery(
   receiptId: string,
@@ -292,7 +350,7 @@ export async function attemptDelivery(
   const { organization_id: organizationId, initiative_id: initiativeId, actor_id: actorId } = receipt;
 
   // ---- Results leg ----
-  if (receipt.results_status !== 'DELIVERED') {
+  if (receipt.results_status !== 'DELIVERED' && (await claimLeg(receiptId, 'results'))) {
     try {
       if (opts.__testForceResultsError) throw opts.__testForceResultsError;
       await handoffFromClosure(organizationId, initiativeId, actorId);
@@ -327,7 +385,16 @@ export async function attemptDelivery(
   }
 
   // ---- Finance leg (independent of the Results leg's outcome THIS attempt) ----
-  if (receipt.finance_status === 'PENDING' || receipt.finance_status === 'FAILED') {
+  // DELIVERED and NEEDS_DECISION are the only true terminal states (the
+  // latter requires a human product decision, never auto-retried); DELIVERING
+  // is included here so a STALE (crashed mid-attempt) lease can still be
+  // reclaimed by claimLeg's own staleness check — a fresh/still-in-flight
+  // DELIVERING simply fails the claim and is skipped, same as any other race.
+  if (
+    receipt.finance_status !== 'DELIVERED' &&
+    receipt.finance_status !== 'NEEDS_DECISION' &&
+    (await claimLeg(receiptId, 'finance'))
+  ) {
     try {
       if (opts.__testForceFinanceError) throw opts.__testForceFinanceError;
       const value = await computeFinanceValue(organizationId, initiativeId);
@@ -462,9 +529,18 @@ const DEFAULT_SWEEP_BATCH_SIZE = 25;
  */
 async function claimDueReceipts(limit: number): Promise<string[]> {
   return withPgTransaction(async (client) => {
+    // Also picks up a leg STUCK in DELIVERING past the stale-lease window
+    // (see claimLeg) — otherwise the sweep would never even look at a row a
+    // crashed attempt left mid-flight, regardless of claimLeg's own ability
+    // to reclaim it once selected.
     const { rows } = await client.query<{ id: string }>(
       `SELECT id FROM closure_delivery_receipts
-        WHERE (results_status IN ('PENDING', 'FAILED') OR finance_status IN ('PENDING', 'FAILED'))
+        WHERE (
+          results_status IN ('PENDING', 'FAILED')
+          OR finance_status IN ('PENDING', 'FAILED')
+          OR (results_status = 'DELIVERING' AND updated_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_DELIVERING_LEASE_MINUTES} minutes')
+          OR (finance_status = 'DELIVERING' AND updated_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_DELIVERING_LEASE_MINUTES} minutes')
+        )
           AND (next_retry_at IS NULL OR next_retry_at <= CURRENT_TIMESTAMP)
         ORDER BY created_at ASC
         LIMIT ?
