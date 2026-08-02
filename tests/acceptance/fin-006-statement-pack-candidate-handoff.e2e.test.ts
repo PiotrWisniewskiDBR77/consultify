@@ -484,4 +484,84 @@ describe('FIN-06 — statement pack candidate handoff (golden flow, idempotency,
       await client2.end();
     }
   });
+
+  it('Blocker 1: real per-type statement counts (P&L x1, BS x1, CF x0) direct DB read-back matches the preview exactly', async () => {
+    // Direct DB proof (not just the API response) that the fixture really
+    // has exactly 1 P&L, 1 BS, 0 CF for PACK.golden.
+    const client = pgClient();
+    await client.connect();
+    try {
+      const counts = await client.query(
+        `SELECT statement_type, count(*)::int AS n FROM financial_statements
+         WHERE statement_pack_id = $1 GROUP BY statement_type`,
+        [PACK.golden]
+      );
+      const byType = Object.fromEntries(counts.rows.map((r) => [r.statement_type, r.n]));
+      expect(byType['P&L']).toBe(1);
+      expect(byType['BS']).toBe(1);
+      expect(byType['CF']).toBeUndefined(); // zero rows -> no group at all
+
+      const preview = await request(app)
+        .get(`/api/finance/candidate-handoff/statement-pack/${PACK.golden}/preview`)
+        .set('Authorization', `Bearer ${ownerToken}`);
+      expect(preview.status, JSON.stringify(preview.body)).toBe(200);
+      expect(preview.body.data.eligible).toBe(true);
+      expect(preview.body.data.preview.rationale).toContain('P&L x1');
+      expect(preview.body.data.preview.rationale).toContain('BS x1');
+      expect(preview.body.data.preview.rationale).toContain('CF x0');
+    } finally {
+      await client.end();
+    }
+  });
+
+  it('Blocker 1: a genuinely broken required schema fails closed, never shows a fake eligible P&L x0/BS x0/CF x0 preview', async () => {
+    // Deliberately break a column BOTH the primary and the schema-compat
+    // fallback query require (`statement_type` -- guaranteed by the base
+    // migration, never treated as an optional "bonus" column). This is NOT
+    // the class of gap the fix's fallback is designed to tolerate -- it must
+    // propagate as a real failure, never silently resolve to an
+    // empty-but-200-eligible result.
+    const client = pgClient();
+    await client.connect();
+    try {
+      await client.query(`ALTER TABLE financial_statements RENAME COLUMN statement_type TO statement_type__sabotaged`);
+    } finally {
+      await client.end();
+    }
+
+    try {
+      const preview = await request(app)
+        .get(`/api/finance/candidate-handoff/statement-pack/${PACK.golden}/preview`)
+        .set('Authorization', `Bearer ${ownerToken}`);
+      // Must NOT be a false-positive "eligible" result with fabricated zero
+      // counts. A real failure (5xx) is the only acceptable outcome here --
+      // explicitly assert it is NOT the shape the original bug produced.
+      const looksLikeFakeEmptySuccess =
+        preview.status === 200 &&
+        preview.body?.data?.eligible === true &&
+        typeof preview.body?.data?.preview?.rationale === 'string' &&
+        preview.body.data.preview.rationale.includes('P&L x0');
+      expect(looksLikeFakeEmptySuccess, JSON.stringify(preview.body)).toBe(false);
+      expect(preview.status, JSON.stringify(preview.body)).toBeGreaterThanOrEqual(500);
+    } finally {
+      const restore = pgClient();
+      await restore.connect();
+      try {
+        await restore.query(
+          `ALTER TABLE financial_statements RENAME COLUMN statement_type__sabotaged TO statement_type`
+        );
+      } finally {
+        await restore.end();
+      }
+    }
+
+    // Confirm the sabotage was fully reverted: the golden preview is back to
+    // normal, real, correct counts.
+    const recovered = await request(app)
+      .get(`/api/finance/candidate-handoff/statement-pack/${PACK.golden}/preview`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(recovered.status, JSON.stringify(recovered.body)).toBe(200);
+    expect(recovered.body.data.eligible).toBe(true);
+    expect(recovered.body.data.preview.rationale).toContain('P&L x1');
+  });
 });

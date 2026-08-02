@@ -54,6 +54,11 @@ const VAL_CONCURRENCY = `${PREFIX}val-concurrency`;
 const VAL_CROSSTENANT = `${PREFIX}val-crosstenant`;
 const VAL_CONVERT = `${PREFIX}val-convert`;
 const VAL_RICH = `${PREFIX}val-rich`;
+// Codex Blocker 2 fixtures: a valuation that is DRAFT with a (stale)
+// advisory already present, and a separate valuation used to prove the
+// APPROVED-at-preview / DRAFT-before-confirm TOCTOU race fails closed.
+const VAL_DRAFT = `${PREFIX}val-draft`;
+const VAL_RACE = `${PREFIX}val-race`;
 
 const REC_GOLDEN = `${PREFIX}rec-golden`;
 const REC_CONCURRENCY = `${PREFIX}rec-concurrency`;
@@ -61,6 +66,8 @@ const REC_CROSSTENANT = `${PREFIX}rec-crosstenant`;
 const REC_CONVERT = `${PREFIX}rec-convert`;
 const REC_UNKNOWN = `${PREFIX}rec-does-not-exist`;
 const REC_RICH = `${PREFIX}rec-rich`;
+const REC_DRAFT = `${PREFIX}rec-draft`;
+const REC_RACE = `${PREFIX}rec-race`;
 
 function mintTokenFor(userId: string, orgId: string, email: string): string {
   return jwt.sign(
@@ -107,21 +114,37 @@ function advisoryFor(recommendationId: string, titleSuffix: string): string {
 
 async function insertValuation(
   c: pg.Client,
-  params: { id: string; orgId: string; createdBy: string; recommendationId: string; titleSuffix: string }
+  params: {
+    id: string;
+    orgId: string;
+    createdBy: string;
+    recommendationId: string;
+    titleSuffix: string;
+    status?: 'APPROVED' | 'DRAFT' | 'REVIEW';
+  }
 ): Promise<void> {
   await c.query(
     `INSERT INTO valuations
        (id, organization_id, project_id, title, status, source_type, source_id,
         horizon_years, currency, assumptions, peers, results, advisory, created_by)
-     VALUES ($1,$2,NULL,$3,'APPROVED','manual',NULL,5,'PLN','{}','[]','{}',$4,$5)`,
+     VALUES ($1,$2,NULL,$3,$6,'manual',NULL,5,'PLN','{}','[]','{}',$4,$5)`,
     [
       params.id,
       params.orgId,
       `${PREFIX}Valuation ${params.id}`,
       advisoryFor(params.recommendationId, params.titleSuffix),
       params.createdBy,
+      params.status ?? 'APPROVED',
     ]
   );
+}
+
+async function setValuationStatus(
+  c: pg.Client,
+  valuationId: string,
+  status: 'APPROVED' | 'DRAFT' | 'REVIEW'
+): Promise<void> {
+  await c.query(`UPDATE valuations SET status = $2 WHERE id = $1`, [valuationId, status]);
 }
 
 let app: Express;
@@ -181,6 +204,28 @@ beforeAll(async () => {
     createdBy: USER_A,
     recommendationId: REC_CONVERT,
     titleSuffix: 'convert',
+  });
+  // Codex Blocker 2, scenario A: DRAFT valuation with an existing (stale)
+  // advisory already containing the recommendation.
+  await insertValuation(client, {
+    id: VAL_DRAFT,
+    orgId: ORG_A,
+    createdBy: USER_A,
+    recommendationId: REC_DRAFT,
+    titleSuffix: 'draft',
+    status: 'DRAFT',
+  });
+  // Codex Blocker 2, scenario B: starts APPROVED (so preview sees it as
+  // eligible); each test that uses this fixture flips it back to DRAFT
+  // itself, between preview and confirm, to prove the re-check under the
+  // lock -- not just at preview time -- is what actually gates confirm.
+  await insertValuation(client, {
+    id: VAL_RACE,
+    orgId: ORG_A,
+    createdBy: USER_A,
+    recommendationId: REC_RACE,
+    titleSuffix: 'race',
+    status: 'APPROVED',
   });
 
   // A richer fixture, hand-built to include the OPTIONAL real fields a
@@ -540,5 +585,106 @@ describe('FIN-06 — valuation recommendation candidate handoff', () => {
       if (before === undefined) delete process.env.INITIATIVE_FUNNEL_ENABLED;
       else process.env.INITIATIVE_FUNNEL_ENABLED = before;
     }
+  });
+
+  // Codex Blocker 2 — "Finance approved source -> Candidate Pack" must be a
+  // real, re-checked gate, not just existence-in-a-possibly-stale-advisory.
+
+  it('Blocker 2 / scenario A: a DRAFT valuation with an existing advisory is never eligible', async () => {
+    const preview = await request(app)
+      .get(`/api/finance/candidate-handoff/valuation-recommendation/${REC_DRAFT}/preview`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    expect(preview.status, JSON.stringify(preview.body)).toBe(200);
+    expect(preview.body.data.eligible).toBe(false);
+    expect(preview.body.data.reason).toBe('NOT_APPROVED');
+
+    const confirm = await request(app)
+      .post(`/api/finance/candidate-handoff/valuation-recommendation/${REC_DRAFT}/confirm`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({});
+    expect(confirm.status, JSON.stringify(confirm.body)).toBe(409);
+    expect(confirm.body.code).toBe('SOURCE_NOT_ELIGIBLE');
+
+    const candidateCount = await client.query(
+      `SELECT count(*)::int AS n FROM initiative_candidates WHERE source_id = $1`,
+      [REC_DRAFT]
+    );
+    expect(candidateCount.rows[0].n).toBe(0);
+    const receiptCount = await client.query(
+      `SELECT count(*)::int AS n FROM finance_candidate_handoffs WHERE source_id = $1`,
+      [REC_DRAFT]
+    );
+    expect(receiptCount.rows[0].n).toBe(0);
+  });
+
+  it('Blocker 2 / scenario B: APPROVED at preview but flipped to DRAFT before confirm fails closed (TOCTOU)', async () => {
+    // Preview while still APPROVED — must see it as eligible (proves this
+    // isn't just "always ineligible"; the gate is a real, live status read).
+    const preview = await request(app)
+      .get(`/api/finance/candidate-handoff/valuation-recommendation/${REC_RACE}/preview`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    expect(preview.status, JSON.stringify(preview.body)).toBe(200);
+    expect(preview.body.data.eligible).toBe(true);
+
+    // The valuation is downgraded to DRAFT AFTER the preview above, BEFORE
+    // confirm below runs — simulating `setBackToDraftIfApproved` racing a
+    // pending Candidate-Pack confirmation. Confirm must re-read this fresh
+    // value from inside its own lock, never trust the preview response.
+    await setValuationStatus(client, VAL_RACE, 'DRAFT');
+
+    const confirm = await request(app)
+      .post(`/api/finance/candidate-handoff/valuation-recommendation/${REC_RACE}/confirm`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({});
+    expect(confirm.status, JSON.stringify(confirm.body)).toBe(409);
+    expect(confirm.body.code).toBe('SOURCE_NOT_ELIGIBLE');
+
+    const candidateCount = await client.query(
+      `SELECT count(*)::int AS n FROM initiative_candidates WHERE source_id = $1`,
+      [REC_RACE]
+    );
+    expect(candidateCount.rows[0].n).toBe(0);
+    const receiptCount = await client.query(
+      `SELECT count(*)::int AS n FROM finance_candidate_handoffs WHERE source_id = $1`,
+      [REC_RACE]
+    );
+    expect(receiptCount.rows[0].n).toBe(0);
+
+    // Restore to APPROVED and confirm the SAME recommendation now succeeds —
+    // proves the gate is a live re-check, not a one-way latch that would
+    // permanently poison the recommendation after one failed attempt.
+    await setValuationStatus(client, VAL_RACE, 'APPROVED');
+    const retryConfirm = await request(app)
+      .post(`/api/finance/candidate-handoff/valuation-recommendation/${REC_RACE}/confirm`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({});
+    expect(retryConfirm.status, JSON.stringify(retryConfirm.body)).toBe(201);
+    expect(retryConfirm.body.data.created).toBe(true);
+
+    const finalCandidateCount = await client.query(
+      `SELECT count(*)::int AS n FROM initiative_candidates WHERE source_id = $1`,
+      [REC_RACE]
+    );
+    expect(finalCandidateCount.rows[0].n).toBe(1);
+  });
+
+  it('Blocker 2 / scenario C: APPROVED throughout still completes the golden flow (no regression)', async () => {
+    // VAL_GOLDEN/REC_GOLDEN (used by the very first test above) is APPROVED
+    // for its entire lifetime in this suite and already proves preview +
+    // confirm succeed end-to-end. This test asserts it explicitly as a
+    // dedicated "scenario C" regression marker per Codex's required test
+    // matrix, using the already-completed golden-flow candidate rather than
+    // re-running confirm a second time (which would just exercise the
+    // idempotent-replay path, already covered by a dedicated test above).
+    const reopen = await request(app)
+      .get(`/api/finance/candidate-handoff/valuation-recommendation/${REC_GOLDEN}`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    expect(reopen.status, JSON.stringify(reopen.body)).toBe(200);
+    expect(reopen.body.data.candidateId).toBeTruthy();
+
+    const valuationStatus = await client.query(`SELECT status FROM valuations WHERE id = $1`, [
+      VAL_GOLDEN,
+    ]);
+    expect(valuationStatus.rows[0].status).toBe('APPROVED');
   });
 });
