@@ -1311,8 +1311,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         organizationData: aiConfig?.knowledgeSources?.organizationData ?? true,
       };
 
-      try {
-        await Api.chatWithAIStream(
+      const runRequest = () =>
+        Api.chatWithAIStream(
           message,
           history,
           handleChunk,
@@ -1339,96 +1339,73 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           },
           abortControllerRef.current?.signal
         );
-      } catch (error) {
-        // Auto-retry with exponential backoff on network/stream errors (not on user abort)
-        if (
-          !abortRef.current.aborted &&
-          retryCountRef.current < MAX_AUTO_RETRIES &&
-          // Only retry on network-like errors, not on access/auth/budget errors
-          !(error as Error)?.message?.includes('ACCESS_BLOCKED') &&
-          !(error as Error)?.message?.includes('Unauthorized') &&
-          !(error as Error)?.message?.includes('AI_BUDGET_EXHAUSTED') &&
-          !(error as Error)?.message?.includes('RATE_LIMIT_EXCEEDED')
-        ) {
+
+      let terminalError: Error | null = null;
+      while (!abortRef.current.aborted) {
+        try {
+          await runRequest();
+          retryCountRef.current = 0;
+          setRetryInfo(null);
+          return;
+        } catch (error) {
+          const err = error as Error & { code?: string };
+          if (abortRef.current.aborted || err?.name === 'AbortError') break;
+
+          const nonRetryableCodes = new Set([
+            'ACCESS_BLOCKED',
+            'ORG_NOT_FOUND',
+            'ORG_INACTIVE',
+            'UNAUTHORIZED',
+            'AI_BUDGET_EXHAUSTED',
+            'AI_TOKEN_BUDGET_EXCEEDED',
+            'RATE_LIMIT',
+            'RATE_LIMIT_EXCEEDED',
+            'DEEP_THINKING_CONFIRM_REQUIRED',
+          ]);
+          const nonRetryable =
+            nonRetryableCodes.has(String(err.code || '').toUpperCase()) ||
+            /ACCESS_BLOCKED|Unauthorized|AI_BUDGET_EXHAUSTED|RATE_LIMIT_EXCEEDED/i.test(
+              err.message || ''
+            );
+
+          if (nonRetryable || retryCountRef.current >= MAX_AUTO_RETRIES) {
+            terminalError = err;
+            break;
+          }
+
           retryCountRef.current += 1;
-          // Exponential backoff: 1.5s, 3s, 6s
           const backoffMs = 1500 * Math.pow(2, retryCountRef.current - 1);
           console.warn(
             `[useAIStream] Auto-retry ${retryCountRef.current}/${MAX_AUTO_RETRIES} in ${backoffMs}ms…`
           );
-          // Surface retry status to UI so user sees transparent progress
           setRetryInfo({ attempt: retryCountRef.current, maxRetries: MAX_AUTO_RETRIES, backoffMs });
-          await new Promise((r) => setTimeout(r, backoffMs));
+          await new Promise((resolve) => setTimeout(resolve, backoffMs));
           setRetryInfo(null);
-          if (!abortRef.current.aborted) {
-            try {
-              // New controller for retry
-              abortControllerRef.current?.abort();
-              abortControllerRef.current = new AbortController();
-              // Reset the streamed-content accumulator before resending. The retry reuses the
-              // same `handleChunk` closure, which APPENDS to `fullText`; without this reset any
-              // chunks received before the error would be duplicated/garbled in the re-stream
-              // (e.g. "The revenue is" + full re-stream → "The revenue isThe revenue is …").
-              fullText = '';
-              rawBuffer = '';
-              reasoningRef.current = '';
-              setReasoning('');
-              nativeReasoning = '';
-              hasNativeReasoning = false;
-              hasReceivedContent = false;
-              setStreamedContent('');
-              setCurrentStreamContent('');
-              await Api.chatWithAIStream(
-                message,
-                history,
-                handleChunk,
-                handleDone,
-                systemPrompt,
-                mergedContext,
-                roleName,
-                resolvedLanguage,
-                handleEvent,
-                {
-                  deepResearch: aiConfig?.deepResearch,
-                  webSearch: aiConfig?.webSearch,
-                  showReasoning: aiConfig?.showReasoning,
-                  multiAgent: aiConfig?.multiAgent,
-                  marketResearch: (aiConfig as any)?.marketResearch,
-                  coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
-                  privateMode: (aiConfig as any)?.privateMode ?? false,
-                  assistantScope: (aiConfig as any)?.assistantScope,
-                  memoryScope: (aiConfig as any)?.memoryScope,
-                  knowledgeSources: resolvedKnowledgeSources,
-                  responseStyle: aiConfig?.responseStyle,
-                  selectedTier: (aiConfig as any)?.selectedTier,
-                  selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
-                },
-                abortControllerRef.current?.signal
-              );
-              return; // Retry succeeded
-            } catch (retryError) {
-              // Retry also failed — fall through to error handling
-              console.error('[useAIStream] Auto-retry failed:', retryError);
-            }
-          }
-        }
+          if (abortRef.current.aborted) break;
 
-        // If aborted, don't surface as an error — but DO release the streaming
-        // state (FIX-002). Returning early without this left the typing spinner
-        // frozen after an aborted/stopped stream.
-        const err = error as any;
-        if (abortRef.current.aborted || err?.name === 'AbortError') {
-          retryCountRef.current = 0;
-          setIsStreaming(false);
-          setIsBotTyping(false);
-          return;
+          abortControllerRef.current?.abort();
+          abortControllerRef.current = new AbortController();
+          // A retry is a replacement response, not an append to the failed
+          // partial response.
+          fullText = '';
+          rawBuffer = '';
+          reasoningRef.current = '';
+          setReasoning('');
+          nativeReasoning = '';
+          hasNativeReasoning = false;
+          hasReceivedContent = false;
+          setStreamedContent('');
+          setCurrentStreamContent('');
         }
+      }
 
-        retryCountRef.current = 0;
-        setIsStreaming(false);
-        setIsBotTyping(false);
-        setLastError(error as Error);
-        options.onStreamError?.(error as Error);
+      retryCountRef.current = 0;
+      setRetryInfo(null);
+      setIsStreaming(false);
+      setIsBotTyping(false);
+      if (terminalError) {
+        setLastError(terminalError);
+        options.onStreamError?.(terminalError);
       }
     },
     [

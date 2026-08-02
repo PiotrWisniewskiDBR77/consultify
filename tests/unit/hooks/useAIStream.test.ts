@@ -79,6 +79,7 @@ describe('useAIStream', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -374,21 +375,84 @@ describe('useAIStream', () => {
   });
 
   it('should handle streaming errors gracefully', async () => {
+    vi.useFakeTimers();
     const mockOnStreamError = vi.fn();
 
     vi.mocked(Api.chatWithAIStream).mockRejectedValue(new Error('Network error'));
 
     const { result } = renderHook(() => useAIStream({ onStreamError: mockOnStreamError }));
 
+    let streamPromise: Promise<void>;
+    act(() => {
+      streamPromise = result.current.startStream('Test message', []);
+    });
     await act(async () => {
-      // startStream may implement internal retries; ensure the test doesn't fail on a thrown error
-      await result.current.startStream('Test message', []).catch(() => undefined);
+      await vi.advanceTimersByTimeAsync(1500);
+      await vi.advanceTimersByTimeAsync(3000);
+      await vi.advanceTimersByTimeAsync(6000);
+      await streamPromise!;
     });
 
     await waitFor(() => {
       expect(mockOnStreamError).toHaveBeenCalledWith(expect.any(Error));
     });
+    expect(Api.chatWithAIStream).toHaveBeenCalledTimes(4);
     expect(mockSetIsBotTyping).toHaveBeenCalledWith(false);
+  });
+
+  it('replaces partial content when a retry succeeds instead of duplicating it', async () => {
+    vi.useFakeTimers();
+    const mockOnStreamDone = vi.fn();
+
+    vi.mocked(Api.chatWithAIStream)
+      .mockImplementationOnce(async (_message, _history, onChunk) => {
+        onChunk('Partial answer');
+        throw new Error('Network interrupted');
+      })
+      .mockImplementationOnce(async (_message, _history, onChunk, onDone) => {
+        onChunk('Complete answer');
+        onDone();
+      });
+
+    const { result } = renderHook(() => useAIStream({ onStreamDone: mockOnStreamDone }));
+    let streamPromise: Promise<void>;
+    act(() => {
+      streamPromise = result.current.startStream('Test retry', []);
+    });
+    await act(async () => {
+      await vi.runAllTimersAsync();
+      await streamPromise!;
+    });
+
+    expect(mockOnStreamDone).toHaveBeenCalledWith(
+      'Complete answer',
+      expect.any(Array),
+      expect.any(Array),
+      expect.any(Object)
+    );
+    expect(mockOnStreamDone).not.toHaveBeenCalledWith(
+      expect.stringContaining('Partial answerComplete answer'),
+      expect.anything(),
+      expect.anything(),
+      expect.anything()
+    );
+  });
+
+  it('does not auto-retry non-retryable access or budget failures', async () => {
+    const mockOnStreamError = vi.fn();
+    const blocked = Object.assign(new Error('Budget exhausted'), {
+      code: 'AI_BUDGET_EXHAUSTED',
+    });
+    vi.mocked(Api.chatWithAIStream).mockRejectedValue(blocked);
+
+    const { result } = renderHook(() => useAIStream({ onStreamError: mockOnStreamError }));
+    await act(async () => {
+      await result.current.startStream('Test budget', []);
+    });
+
+    expect(Api.chatWithAIStream).toHaveBeenCalledTimes(1);
+    expect(mockOnStreamError).toHaveBeenCalledWith(blocked);
+    expect(result.current.lastError).toBe(blocked);
   });
 
   it('should extract thinking steps from content', async () => {

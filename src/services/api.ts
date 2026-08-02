@@ -2739,6 +2739,15 @@ export const Api = {
                   if (sid) {
                     console.info('[AI Stream] sessionId:', sid);
                   }
+
+                  // A provider/pipeline SSE error is not a successful assistant
+                  // response. Propagate it to useAIStream so its bounded retry
+                  // and visible manual-retry state can run. Access errors stay
+                  // non-retryable and are handled by the access modal above.
+                  const streamError: any = new Error(friendlyByCode || genericFallback);
+                  streamError.code = dataCode || 'AI_STREAM_ERROR';
+                  streamError.isStreamError = true;
+                  throw streamError;
                 }
 
                 // Budget freeze (existing behavior)
@@ -2775,6 +2784,7 @@ export const Api = {
                 }
               }
             } catch (e) {
+              if ((e as any)?.isStreamError) throw e;
               console.error('Failed to parse SSE data:', e, dataStr);
             }
           }
