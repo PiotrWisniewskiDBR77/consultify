@@ -5,19 +5,49 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    // Mirror i18next: t(key, fallbackString) OR t(key, { defaultValue }).
-    t: (key: string, opt?: unknown) => {
-      if (typeof opt === 'string') return opt;
-      if (opt && typeof opt === 'object' && 'defaultValue' in (opt as Record<string, unknown>)) {
-        return String((opt as { defaultValue: unknown }).defaultValue);
-      }
-      return key;
-    },
-    i18n: { language: 'en', changeLanguage: () => {} },
-  }),
-}));
+import enTranslation from '../../../public/locales/en/translation.json';
+
+// Two call sites in CalendarCreateEventModal.tsx don't fit the previous
+// mock's two branches: `t('...itemsOnThisDay', { count })` (interpolation
+// option, no `defaultValue`) and `t('...dayPreviewLimited')` (no second
+// argument at all, relying on the real translation.json entry — both are
+// standard, correct react-i18next usage). The old mock fell through to
+// `return key` for both, so tests asserting on the real English copy saw
+// the raw dotted key instead. Fixed by resolving dotted keys against the
+// REAL en translation.json (with `{{param}}` interpolation), same pattern
+// already established in
+// tests/components/AIChat/Wave5ArtifactRuntimePanel.mutations.test.tsx.
+vi.mock('react-i18next', () => {
+  const resolveKey = (key: string): unknown =>
+    key.split('.').reduce<any>((acc, part) => (acc == null ? undefined : acc[part]), enTranslation);
+
+  const t = (key: string, options?: any): any => {
+    if (typeof options === 'string') return options;
+    const resolved = resolveKey(key);
+    if (options?.returnObjects) {
+      return resolved ?? [];
+    }
+    let value = typeof resolved === 'string' ? resolved : options?.defaultValue ?? key;
+    if (options && typeof options === 'object') {
+      Object.keys(options).forEach((optKey) => {
+        if (optKey !== 'defaultValue' && optKey !== 'returnObjects') {
+          value = String(value).replace(
+            new RegExp(`\\{\\{?${optKey}\\}?\\}`, 'g'),
+            String(options[optKey])
+          );
+        }
+      });
+    }
+    return value;
+  };
+
+  return {
+    useTranslation: () => ({
+      t,
+      i18n: { language: 'en', changeLanguage: () => {} },
+    }),
+  };
+});
 
 vi.mock('react-hot-toast', () => ({
   default: {
