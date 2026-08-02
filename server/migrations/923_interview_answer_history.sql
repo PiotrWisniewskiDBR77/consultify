@@ -18,11 +18,10 @@
 --
 -- ── ROZWIĄZANIE (addytywna, jednostronna snapshot-historia) ─────────────
 -- Nowa tabela `interview_answer_history` — snapshot bieżących
--- `interview_questions.answer_text` per pytanie, zapisywany w
--- sendBackAssignment TUŻ PRZED odesłaniem (a więc reprezentuje "ostatnia
--- treść przed poprawką"). `reason` na razie zawsze 'send_back' (jedyny
--- trigger dziś), ale trzymany jako kolumna (nie stała), żeby przyszłe
--- triggery (np. ręczny "zapisz wersję") nie wymagały kolejnej migracji.
+-- `interview_questions.answer_text` per pytanie. Jest zapisywany przy submit
+-- (`reason='submission'`) jako niezmienny artefakt przekazany do review oraz
+-- ponownie tuż przed send-back (`reason='send_back'`) jako wersja bazowa do
+-- porównania po poprawkach.
 -- Czysty log append-only — bez UPDATE/DELETE w normalnym flow.
 
 BEGIN;

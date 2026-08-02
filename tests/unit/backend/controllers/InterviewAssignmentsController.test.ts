@@ -53,7 +53,12 @@ describe('InterviewController assignments', () => {
     mockLlmCall.mockReset();
     mockGetTableColumns.mockReset();
     mockGetTableColumns.mockResolvedValue(
-      new Set(['ai_review_snapshot_json', 'ai_reviewed_at', 'review_decision_memory_json', 'missing_items_json'])
+      new Set([
+        'ai_review_snapshot_json',
+        'ai_reviewed_at',
+        'review_decision_memory_json',
+        'missing_items_json',
+      ])
     );
     mockLlmCall.mockResolvedValue({
       object: {
@@ -125,7 +130,8 @@ describe('InterviewController assignments', () => {
         total_questions: 10,
       });
 
-    const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
 
     expect(mockQueryRun).toHaveBeenCalled();
@@ -182,7 +188,8 @@ describe('InterviewController assignments', () => {
         total_questions: 10,
       });
 
-    const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
 
     expect(mockRes.json).toHaveBeenCalledWith(
@@ -233,7 +240,8 @@ describe('InterviewController assignments', () => {
         total_questions: 10,
       });
 
-    const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).not.toHaveBeenCalledWith(409);
@@ -292,9 +300,8 @@ describe('InterviewController assignments', () => {
       .mockResolvedValueOnce({ id: 's-block', organization_id: 'org-1', status: 'active' })
       .mockResolvedValueOnce({ answered_questions: 1, total_questions: 2 });
 
-    const { InterviewController } = await import(
-      '../../../../server/src/controllers/InterviewController.js'
-    );
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(422);
@@ -303,9 +310,7 @@ describe('InterviewController assignments', () => {
         code: 'OBJECTIVE_INSUFFICIENCY',
         reason: 'required_missing',
         requiredMissingCount: 1,
-        blockedItems: expect.arrayContaining([
-          expect.objectContaining({ questionId: 'q1' }),
-        ]),
+        blockedItems: expect.arrayContaining([expect.objectContaining({ questionId: 'q1' })]),
       })
     );
     // The status must NOT have been flipped to submitted.
@@ -314,7 +319,7 @@ describe('InterviewController assignments', () => {
         (call) =>
           typeof call[0] === 'string' &&
           String(call[0]).includes('UPDATE interview_assignments') &&
-          String(call[0]).includes("status = ?")
+          String(call[0]).includes('status = ?')
       )
     ).toBe(false);
   });
@@ -368,9 +373,8 @@ describe('InterviewController assignments', () => {
       .mockResolvedValueOnce({ id: 's-ai-insuff', organization_id: 'org-1', status: 'active' })
       .mockResolvedValueOnce({ answered_questions: 1, total_questions: 1 });
 
-    const { InterviewController } = await import(
-      '../../../../server/src/controllers/InterviewController.js'
-    );
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(422);
@@ -379,9 +383,7 @@ describe('InterviewController assignments', () => {
         code: 'OBJECTIVE_INSUFFICIENCY',
         reason: 'ai_insufficient',
         requiredMissingCount: 0,
-        blockedItems: expect.arrayContaining([
-          expect.objectContaining({ questionId: 'q1' }),
-        ]),
+        blockedItems: expect.arrayContaining([expect.objectContaining({ questionId: 'q1' })]),
       })
     );
     // Status must NOT flip — draft stays editable.
@@ -428,9 +430,8 @@ describe('InterviewController assignments', () => {
       // updated session
       .mockResolvedValueOnce({ id: 's-empty', status: 'submitted', assignment_id: 'a-empty' });
 
-    const { InterviewController } = await import(
-      '../../../../server/src/controllers/InterviewController.js'
-    );
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
 
     // Not blocked.
@@ -444,9 +445,7 @@ describe('InterviewController assignments', () => {
           String(call[0]).includes('status = ?')
       )
     ).toBe(true);
-    expect(mockRes.json).toHaveBeenCalledWith(
-      expect.objectContaining({ entersContext: false })
-    );
+    expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ entersContext: false }));
   });
 
   // L-07 / SPEC_13 §5.1 — hard floor edge case (d):
@@ -513,9 +512,8 @@ describe('InterviewController assignments', () => {
       })
       .mockResolvedValueOnce({ id: 's-ok', status: 'submitted', assignment_id: 'a-ok' });
 
-    const { InterviewController } = await import(
-      '../../../../server/src/controllers/InterviewController.js'
-    );
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
 
     // Not blocked.
@@ -592,9 +590,8 @@ describe('InterviewController assignments', () => {
       .mockResolvedValueOnce({ id: 's-ai-throw', organization_id: 'org-1', status: 'active' })
       .mockResolvedValueOnce({ answered_questions: 0, total_questions: 1 });
 
-    const { InterviewController } = await import(
-      '../../../../server/src/controllers/InterviewController.js'
-    );
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(422);
@@ -679,9 +676,8 @@ describe('InterviewController assignments', () => {
       })
       .mockResolvedValueOnce({ id: 's-notify', status: 'submitted', assignment_id: 'a-notify' });
 
-    const { InterviewController } = await import(
-      '../../../../server/src/controllers/InterviewController.js'
-    );
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
 
     // Not blocked.
@@ -692,7 +688,7 @@ describe('InterviewController assignments', () => {
         (call) =>
           typeof call[0] === 'string' &&
           String(call[0]).includes('UPDATE interview_assignments') &&
-          String(call[0]).includes("status = ?")
+          String(call[0]).includes('status = ?')
       )
     ).toBe(true);
     // Response surfaces the persisted AI score.
@@ -705,7 +701,10 @@ describe('InterviewController assignments', () => {
 
   it('sendBackAssignment: reopens assignment as in_progress with feedback', async () => {
     mockReq.params.id = 'a4';
-    mockReq.body = { reason: 'Add more detail', missingItems: [{ key: 'q1', label: 'Clarify answer' }] };
+    mockReq.body = {
+      reason: 'Add more detail',
+      missingItems: [{ key: 'q1', label: 'Clarify answer' }],
+    };
     mockReq.user.role = 'ADMIN';
     mockQueryAll.mockResolvedValue([]);
 
@@ -739,7 +738,8 @@ describe('InterviewController assignments', () => {
         status: 'active',
       });
 
-    const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.sendBackAssignment(mockReq, mockRes, mockNext);
 
     expect(mockQueryRun).toHaveBeenCalledWith(
@@ -779,7 +779,17 @@ describe('InterviewController assignments', () => {
           overallVerdict: 'needs_improvement',
           recommendations: ['Add detail'],
           questionEvaluations: [],
-          weakAnswerMap: [{ key: 'ai_q1', label: 'Question 1', score: 2, verdict: 'needs_improvement', feedback: 'More detail', fixType: 'expand_answer', isRequired: true }],
+          weakAnswerMap: [
+            {
+              key: 'ai_q1',
+              label: 'Question 1',
+              score: 2,
+              verdict: 'needs_improvement',
+              feedback: 'More detail',
+              fixType: 'expand_answer',
+              isRequired: true,
+            },
+          ],
         }),
         review_decision_memory_json: '[]',
       })
@@ -812,7 +822,8 @@ describe('InterviewController assignments', () => {
         total_questions: 10,
       });
 
-    const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.approveAssignment(mockReq, mockRes, mockNext);
 
     expect(mockQueryRun).toHaveBeenCalledWith(
@@ -829,29 +840,33 @@ describe('InterviewController assignments', () => {
     );
   });
 
-  it('updateQuestion: rejects edits only when session is completed', async () => {
-    mockReq.params.questionId = 'q1';
-    mockReq.body = { answerText: 'test', status: 'answered' };
+  it.each(['submitted', 'completed'])(
+    'updateQuestion: rejects edits when session is %s',
+    async (sessionStatus) => {
+      mockReq.params.questionId = 'q1';
+      mockReq.body = { answerText: 'test', status: 'answered' };
 
-    mockQueryOne.mockResolvedValueOnce({
-      session_id: 's1',
-      session_status: 'completed',
-      owner_id: 'user-1',
-    });
+      mockQueryOne.mockResolvedValueOnce({
+        session_id: 's1',
+        session_status: sessionStatus,
+        owner_id: 'user-1',
+      });
 
-    const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
-    await InterviewController.updateQuestion(mockReq, mockRes, mockNext);
+      const { InterviewController } =
+        await import('../../../../server/src/controllers/InterviewController.js');
+      await InterviewController.updateQuestion(mockReq, mockRes, mockNext);
 
-    expect(mockRes.status).toHaveBeenCalledWith(409);
-    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Session is locked' });
-    expect(
-      mockQueryRun.mock.calls.some(
-        (call) =>
-          typeof call[0] === 'string' &&
-          String(call[0]).toLowerCase().includes('update interview_questions')
-      )
-    ).toBe(false);
-  });
+      expect(mockRes.status).toHaveBeenCalledWith(409);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Session is locked' });
+      expect(
+        mockQueryRun.mock.calls.some(
+          (call) =>
+            typeof call[0] === 'string' &&
+            String(call[0]).toLowerCase().includes('update interview_questions')
+        )
+      ).toBe(false);
+    }
+  );
 
   it('updateSession: allows status-only completion updates for ad-hoc sessions', async () => {
     mockReq.params.id = 's-ad-hoc';
@@ -886,7 +901,8 @@ describe('InterviewController assignments', () => {
         last_activity_at: '2026-05-01T00:10:00.000Z',
       });
 
-    const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.updateSession(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).not.toHaveBeenCalledWith(400);
@@ -902,4 +918,3 @@ describe('InterviewController assignments', () => {
     );
   });
 });
-

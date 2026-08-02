@@ -13,6 +13,7 @@ import { checkSimilarInitiatives } from '../services/initiativeSimilarityService
 import KnownToolsService from '../services/KnownToolsService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { hasPermission } from '../services/permissionService.js';
+import * as ReportBuilderService from '../services/reportBuilderService.js';
 import ToolInitiativeService from '../services/ToolInitiativeService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -56,7 +57,89 @@ const safeParseJSON = <T>(value: string | null | undefined, fallback: T): T => {
   }
 };
 
-const normalizeStatus = (status: string | null | undefined) => (status || 'DRAFT').toUpperCase();
+const normalizeStatus = (status: string | null | undefined) =>
+  (status || 'DRAFT')
+    .trim()
+    .replace(/^['"]|['"]$/g, '')
+    .toUpperCase();
+
+const renderToolReportSection = (
+  sectionTitle: string,
+  sectionKey: string,
+  session: ToolSessionRow,
+  answers: Record<string, any>
+): string => {
+  const items = Array.isArray(answers.items) ? answers.items : [];
+  const tensions = Array.isArray(answers.tensions) ? answers.tensions : [];
+  const moves = Array.isArray(answers.recommendedMoves) ? answers.recommendedMoves : [];
+  const summary = answers.summary && typeof answers.summary === 'object' ? answers.summary : {};
+  const itemLines = items
+    .slice(0, 20)
+    .map(
+      (item: any) =>
+        `- **${item.quadrant || 'finding'}:** ${item.text || item.content || item.title || 'Finding'}`
+    );
+  const moveLines = moves
+    .slice(0, 12)
+    .map(
+      (move: any) =>
+        `- **${move.title || 'Recommendation'}** — ${move.rationale || move.description || 'Derived from the approved tool session.'}`
+    );
+  const tensionLines = tensions
+    .slice(0, 12)
+    .map(
+      (tension: any) =>
+        `- **${tension.title || 'Strategic tension'}** — ${tension.insight || tension.whyNow || 'Validated in the approved session.'}`
+    );
+  const executive = String(
+    summary.executiveSummary || summary.verdict || 'Approved tool-session output.'
+  );
+  const base = [
+    `# ${sectionTitle}`,
+    '',
+    `Source: ${session.name} (${session.tool_type})`,
+    '',
+    executive,
+  ];
+
+  if (sectionKey === 'cover')
+    return [
+      `# ${session.name}`,
+      '',
+      'Tool Evaluation Report',
+      '',
+      `Approved source session: ${session.id}`,
+    ].join('\n');
+  if (sectionKey.includes('recommend') || sectionKey.includes('next')) {
+    return [
+      ...base,
+      '',
+      '## Recommended actions',
+      ...(moveLines.length ? moveLines : ['- No explicit actions were selected.']),
+    ].join('\n');
+  }
+  if (
+    sectionKey.includes('finding') ||
+    sectionKey.includes('gap') ||
+    sectionKey.includes('overview')
+  ) {
+    return [
+      ...base,
+      '',
+      '## Approved findings',
+      ...(itemLines.length ? itemLines : ['- No structured findings were recorded.']),
+    ].join('\n');
+  }
+  return [
+    ...base,
+    '',
+    '## Strategic tensions',
+    ...(tensionLines.length ? tensionLines : ['- No explicit strategic tensions were recorded.']),
+    '',
+    '## Recommended actions',
+    ...(moveLines.length ? moveLines : ['- No explicit actions were selected.']),
+  ].join('\n');
+};
 const safeJsonParse = (value: string | null | undefined): Record<string, unknown> => {
   if (!value) return {};
   try {
@@ -262,10 +345,6 @@ const ensurePermission = async (
   const user = req.user;
   if (!user) return false;
   if (process.env.TOOLS_SKIP_PERMISSIONS === 'true') return true;
-  if (process.env.NODE_ENV !== 'production') {
-    const key = String(permissionKey || '').toUpperCase();
-    if (key.startsWith('TOOLS_')) return true;
-  }
   // FIX (role-case family, continuation of AssessmentController fix): user.role on
   // AuthenticatedUser is lowercase (mapRoleForAuthenticatedUser in auth.middleware.ts
   // emits 'owner'/'administrator'/etc), while hasPermission()/ROLES compare against
@@ -282,7 +361,7 @@ const ensurePermission = async (
   if (allowed) return true;
   const role = String(user.role || '').toUpperCase();
   const key = String(permissionKey || '').toUpperCase();
-  if (role === 'ADMIN' && key.startsWith('TOOLS_')) {
+  if (['ADMIN', 'ADMINISTRATOR'].includes(role) && key.startsWith('TOOLS_')) {
     return true;
   }
   return false;
@@ -380,42 +459,29 @@ const ensureToolsSchema = async (): Promise<void> => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`
     );
-    // V4-TOOL-02: runtime contract & DoD status columns
-    // IF NOT EXISTS (Postgres-native, supported since 9.6) makes these true no-ops
-    // on repeat calls instead of throwing 42701 "column already exists" — which
-    // queryHelpers.queryRun logs via logger.error() BEFORE the try/catch here
-    // ever sees it, spamming logs on every create/update tool_session.
-    try {
-      await queryHelpers.queryRun(
-        `ALTER TABLE tool_sessions ADD COLUMN IF NOT EXISTS runtime_contract_json TEXT`
-      );
-    } catch {
-      // defensive: should be no-op now, keep catch for forward-compat
-    }
-    try {
-      await queryHelpers.queryRun(
-        `ALTER TABLE tool_sessions ADD COLUMN IF NOT EXISTS dod_status TEXT DEFAULT 'pending'`
-      );
-    } catch {
-      // defensive: should be no-op now, keep catch for forward-compat
-    }
-    // P27-B: wizard state, missing items, failure reason
-    // H3: output_json — generated tool outputs; read by the Conclusions sync
-    // (ConclusionService.syncToolOutputs) and written by demo seeds. Aligning
-    // the runtime schema here keeps that SELECT from failing on fresh DBs.
+    // V4-TOOL-02 / P27-B / H3 additive runtime columns. Inspect before ALTER
+    // instead of relying on PostgreSQL-only `ADD COLUMN IF NOT EXISTS`: the
+    // controller's persistence contract is also exercised against SQLite, and
+    // silently swallowing its syntax error left the table half-provisioned.
+    const sessionColumns = new Set(
+      (await queryHelpers.getTableColumns('tool_sessions')).map((column) => column.name)
+    );
     for (const col of [
+      { name: 'runtime_contract_json', def: 'TEXT' },
+      { name: 'dod_status', def: "TEXT DEFAULT 'pending'" },
       { name: 'wizard_state_json', def: 'TEXT' },
       { name: 'missing_items_json', def: 'TEXT' },
       { name: 'failure_reason', def: 'TEXT' },
       { name: 'last_generation_batch_id', def: 'TEXT' },
       { name: 'output_json', def: 'TEXT' },
     ]) {
+      if (sessionColumns.has(col.name)) continue;
       try {
-        await queryHelpers.queryRun(
-          `ALTER TABLE tool_sessions ADD COLUMN IF NOT EXISTS ${col.name} ${col.def}`
-        );
+        await queryHelpers.queryRun(`ALTER TABLE tool_sessions ADD COLUMN ${col.name} ${col.def}`);
+        sessionColumns.add(col.name);
       } catch {
-        // defensive: should be no-op now, keep catch for forward-compat
+        // Concurrent first-use initialization may have added it after the
+        // column inspection. A following request re-reads the schema.
       }
     }
 
@@ -1917,7 +1983,7 @@ export class ToolController {
         return;
       }
 
-      const { outputType, title: rawOutputTitle, description } = req.body;
+      const { outputType, title: rawOutputTitle, description, selectedSections } = req.body;
       if (!outputType || !rawOutputTitle) {
         res.status(400).json({ error: 'outputType and title are required' });
         return;
@@ -1976,6 +2042,16 @@ export class ToolController {
       )) as { initiative_id?: string | null } | null;
 
       if (existingPromotion?.initiative_id) {
+        if (outputType === 'report') {
+          const existingReport = await ReportBuilderService.getReport(
+            existingPromotion.initiative_id,
+            user.organizationId
+          );
+          if (!existingReport) {
+            res.status(409).json({ error: 'Existing report promotion is no longer available' });
+            return;
+          }
+        }
         res.json({
           id: existingPromotion.initiative_id,
           outputType,
@@ -2057,31 +2133,63 @@ export class ToolController {
       }
 
       if (outputType === 'report') {
-        try {
+        if (process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL) {
+          // Additive compatibility for pre-V3 Report Builder installations.
+          // Both fields are required by the canonical quality/export read path.
           await queryHelpers.queryRun(
-            `INSERT INTO generic_assessment_reports (
-              id, organization_id, project_id, title, report_type,
-              tags_json, upload_status, processing_status,
-              uploaded_by, uploaded_at, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `ALTER TABLE report_builder_sections ADD COLUMN IF NOT EXISTS source_refs_json TEXT`
+          );
+          await queryHelpers.queryRun(
+            `ALTER TABLE report_builder_sections ADD COLUMN IF NOT EXISTS rag TEXT`
+          );
+        }
+        const normalizedSections = Array.isArray(selectedSections)
+          ? selectedSections.filter((value): value is string => typeof value === 'string')
+          : [];
+        const created = await ReportBuilderService.createReport({
+          organizationId: session.organization_id,
+          sourceType: 'TOOL',
+          sourceId: toolId,
+          sourceName: session.name,
+          title,
+          description: description || '',
+          config: {
+            toolType: session.tool_type,
+            sourceVersion,
+            selectedSections: normalizedSections,
+            toolTrace,
+          },
+          createdBy: user.id,
+        });
+        initiativeOutputId = created.report.id;
+        const approvedAnswers = safeJsonParseAny<Record<string, any>>(session.answers_json, {});
+        const sectionSourceRefs = JSON.stringify([
+          {
+            artifact_id: toolId,
+            artifact_type: 'tool_session',
+            artifact_name: session.name,
+          },
+        ]);
+        for (const section of created.sections) {
+          await queryHelpers.queryRun(
+            `UPDATE report_builder_sections
+             SET generated_content = ?, source_refs_json = ?, updated_at = ?
+             WHERE id = ? AND report_id = ?`,
             [
-              outputId,
-              session.organization_id,
-              session.project_id || null,
-              title,
-              'tool_session_report',
-              JSON.stringify(toolTrace),
-              'completed',
-              'completed',
-              user.id,
+              renderToolReportSection(section.title, section.sectionKey, session, approvedAnswers),
+              sectionSourceRefs,
               now,
-              now,
-              now,
+              section.id,
+              created.report.id,
             ]
           );
-        } catch {
-          // Table may not exist; use a lightweight approach
         }
+        await queryHelpers.queryRun(
+          `UPDATE report_builder_reports
+           SET status = 'GENERATED', updated_at = ?
+           WHERE id = ? AND organization_id = ?`,
+          [now, created.report.id, session.organization_id]
+        );
       }
 
       if (outputType === 'presentation') {
@@ -2139,18 +2247,15 @@ export class ToolController {
 
       // Thread the funnel-created id downstream for the initiative path (F1.8);
       // other output types keep the locally-generated outputId.
-      const effectiveOutputId = outputType === 'initiative' ? initiativeOutputId : outputId;
+      const effectiveOutputId =
+        outputType === 'initiative' || outputType === 'report' ? initiativeOutputId : outputId;
 
       // Record promotion link for traceability
-      try {
-        await queryHelpers.queryRun(
-          `INSERT INTO tool_initiative_links (id, tool_session_id, batch_id, initiative_id, created_at)
-           VALUES (?, ?, ?, ?, ?)`,
-          [uuidv4(), toolId, promoteBatchId, effectiveOutputId, now]
-        );
-      } catch {
-        // Graceful fallback
-      }
+      await queryHelpers.queryRun(
+        `INSERT INTO tool_initiative_links (id, tool_session_id, batch_id, initiative_id, created_at)
+         VALUES (?, ?, ?, ?, ?)`,
+        [uuidv4(), toolId, promoteBatchId, effectiveOutputId, now]
+      );
 
       await logAudit(user.organizationId, user.id, `tool_promoted_to_${outputType}`, toolId, {
         outputId: effectiveOutputId,

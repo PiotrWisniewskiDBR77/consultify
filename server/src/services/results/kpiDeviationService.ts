@@ -1,4 +1,5 @@
 import type { IDatabase } from '../../database/IDatabase.js';
+import { v4 as uuidv4 } from 'uuid';
 import notificationService from '../notificationService.js';
 import { ensureRecoveryCardForCase } from './kpiRecoveryCardService.js';
 
@@ -179,57 +180,59 @@ export async function handleTimeSeriesRecorded(input: HandleTimeSeriesRecordedIn
     return { eval: evalRes };
   }
 
-  const existing = await db.get<{ id: string; status: string }>(
-    `
-    SELECT id, status
-    FROM kpi_deviation_cases
-    WHERE organization_id = ? AND kpi_id = ? AND period_start = ?
-    LIMIT 1
-    `,
-    [orgId, kpiId, periodStart]
-  );
-
   const ownerUserId = def.ownerUserId || recordedByUserId || null;
   const severity = evalRes.severity as 'AMBER' | 'RED';
+  // Atomic under concurrent measurements. The previous SELECT→INSERT sequence let
+  // two requests both observe "no case" and one fail on the unique constraint.
+  // The canonical identity is (organization, KPI, period_start); a repeated RED/
+  // AMBER measurement updates that same case and reopens a previously closed one.
+  const upserted = await db.get<{ id: string }>(
+    `
+    INSERT INTO kpi_deviation_cases (
+      kpi_id, organization_id, period_start, period_end, severity, status,
+      owner_user_id, deviation_summary, detected_by
+    )
+    VALUES (?, ?, ?, ?, ?, 'OPEN', ?, ?, 'system')
+    ON CONFLICT (organization_id, kpi_id, period_start) DO UPDATE SET
+      period_end = COALESCE(excluded.period_end, kpi_deviation_cases.period_end),
+      severity = excluded.severity,
+      status = CASE
+        WHEN UPPER(COALESCE(kpi_deviation_cases.status, '')) = 'CLOSED' THEN 'OPEN'
+        ELSE kpi_deviation_cases.status
+      END,
+      owner_user_id = COALESCE(kpi_deviation_cases.owner_user_id, excluded.owner_user_id),
+      deviation_summary = excluded.deviation_summary,
+      updated_at = CURRENT_TIMESTAMP
+    RETURNING id
+    `,
+    [kpiId, orgId, periodStart, periodEnd || null, severity, ownerUserId, evalRes.summary]
+  );
+  const caseId = upserted?.id ? String(upserted.id) : '';
 
-  let caseId: string;
-  if (existing?.id) {
-    caseId = String(existing.id);
-    const nextStatus =
-      String(existing.status || '').toUpperCase() === 'CLOSED' ? 'OPEN' : existing.status;
-    await db.run(
-      `
-      UPDATE kpi_deviation_cases
-      SET severity = ?, status = ?, owner_user_id = COALESCE(owner_user_id, ?),
-          deviation_summary = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ? AND organization_id = ?
-      `,
-      [severity, nextStatus, ownerUserId, evalRes.summary, caseId, orgId]
-    );
-  } else {
-    await db.run(
-      `
-      INSERT INTO kpi_deviation_cases (
-        kpi_id, organization_id, period_start, period_end, severity, status,
-        owner_user_id, deviation_summary, detected_by
-      )
-      VALUES (?, ?, ?, ?, ?, 'OPEN', ?, ?, 'system')
-      `,
-      [kpiId, orgId, periodStart, periodEnd || null, severity, ownerUserId, evalRes.summary]
-    );
-
-    const created = await db.get<{ id: string }>(
-      `
-      SELECT id
-      FROM kpi_deviation_cases
-      WHERE organization_id = ? AND kpi_id = ? AND period_start = ?
-      ORDER BY detected_at DESC, id DESC
-      LIMIT 1
-      `,
-      [orgId, kpiId, periodStart]
-    );
-    caseId = created?.id ? String(created.id) : '';
-  }
+  // Durable detection receipt in the canonical KPI audit stream. Audit failure
+  // is deliberately visible to the caller: a governed write must not silently
+  // succeed without its receipt.
+  await db.run(
+    `INSERT INTO kpi_metric_audit_log
+       (id, organization_id, kpi_id, section, event_type, source, actor_user_id,
+        summary, before_json, after_json)
+       VALUES (?, ?, ?, 'deviation_case', 'deviation_case_upserted', 'results_runtime', ?, ?, ?, ?)`,
+    [
+      uuidv4(),
+      orgId,
+      kpiId,
+      recordedByUserId || null,
+      `Deviation case ${caseId} upserted for ${periodStart}`,
+      JSON.stringify({}),
+      JSON.stringify({
+        caseId,
+        severity,
+        status: 'OPEN',
+        periodStart,
+        periodEnd: periodEnd || null,
+      }),
+    ]
+  );
 
   // RES-003A: auto-create/reopen the Recovery Card owner object for this
   // case. Non-fatal by design — the same style as the notificationService

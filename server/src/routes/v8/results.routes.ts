@@ -112,6 +112,27 @@ function mapRecoveryServiceError(err: unknown, res: Response): boolean {
   return true;
 }
 
+async function recordDeviationAudit(params: {
+  organizationId: string;
+  kpiId: string;
+  eventType: string;
+  actorUserId?: string | null;
+  summary: string;
+  before?: Record<string, unknown>;
+  after?: Record<string, unknown>;
+}) {
+  await resultsEnterpriseService.createMetricAuditEntry(params.organizationId, {
+    kpiId: params.kpiId,
+    section: 'deviation_case',
+    eventType: params.eventType,
+    source: 'results_v8',
+    actorUserId: params.actorUserId || null,
+    summary: params.summary,
+    before: params.before || {},
+    after: params.after || {},
+  });
+}
+
 async function createV8KpiReportArtifact(params: {
   organizationId: string;
   userId: string;
@@ -1096,7 +1117,7 @@ router.post(
   '/deviation-cases/:caseId/acknowledge',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     if (!caseId) {
       return res.status(400).json({
@@ -1106,7 +1127,7 @@ router.post(
     }
 
     const row = await dbGet<any>(
-      `SELECT id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      `SELECT id, kpi_id, status FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
       [caseId, organizationId]
     );
     if (!row?.id) {
@@ -1124,6 +1145,15 @@ router.post(
       `,
       [caseId, organizationId]
     );
+    await recordDeviationAudit({
+      organizationId,
+      kpiId: String(row.kpi_id),
+      eventType: 'deviation_case_acknowledged',
+      actorUserId: userId,
+      summary: `Deviation case ${caseId} acknowledged`,
+      before: { caseId, status: row.status },
+      after: { caseId, status: 'ACKNOWLEDGED' },
+    });
 
     return res.json({
       data: { success: true },
@@ -1140,7 +1170,7 @@ router.put(
   '/deviation-cases/:caseId/rca',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     const { rcaText } = req.body || {};
     if (!caseId) {
@@ -1151,7 +1181,7 @@ router.put(
     }
 
     const row = await dbGet<any>(
-      `SELECT id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      `SELECT id, kpi_id, status, rca_text FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
       [caseId, organizationId]
     );
     if (!row?.id) {
@@ -1170,6 +1200,15 @@ router.put(
       `,
       [rcaText != null ? String(rcaText) : null, caseId, organizationId]
     );
+    await recordDeviationAudit({
+      organizationId,
+      kpiId: String(row.kpi_id),
+      eventType: 'deviation_case_rca_updated',
+      actorUserId: userId,
+      summary: `RCA updated for deviation case ${caseId}`,
+      before: { caseId, status: row.status, rcaText: row.rca_text || null },
+      after: { caseId, rcaText: rcaText != null ? String(rcaText) : null },
+    });
 
     return res.json({
       data: { success: true },
@@ -1309,7 +1348,7 @@ router.post(
   '/deviation-cases/:caseId/actions',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     const { title, ownerUserId, dueDate } = req.body || {};
     const safeTitle = typeof title === 'string' ? title.trim() : '';
@@ -1328,7 +1367,7 @@ router.post(
     }
 
     const row = await dbGet<any>(
-      `SELECT id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      `SELECT id, kpi_id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
       [caseId, organizationId]
     );
     if (!row?.id) {
@@ -1346,6 +1385,14 @@ router.post(
       `,
       [id, caseId, safeTitle, ownerUserId || null, dueDate ? String(dueDate).slice(0, 10) : null]
     );
+    await recordDeviationAudit({
+      organizationId,
+      kpiId: String(row.kpi_id),
+      eventType: 'deviation_case_action_created',
+      actorUserId: userId,
+      summary: `Action created for deviation case ${caseId}`,
+      after: { caseId, actionId: id, title: safeTitle, ownerUserId: ownerUserId || null },
+    });
 
     return res.json({
       data: { id, caseId },
@@ -1362,7 +1409,7 @@ router.put(
   '/deviation-cases/:caseId/actions/:actionId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     const actionId = typeof req.params.actionId === 'string' ? req.params.actionId.trim() : '';
     const { title, ownerUserId, dueDate, status } = req.body || {};
@@ -1376,7 +1423,7 @@ router.put(
 
     const row = await dbGet<any>(
       `
-      SELECT a.id
+      SELECT a.id, a.title, a.status, a.owner_user_id, a.due_date, c.kpi_id
       FROM kpi_deviation_actions a
       INNER JOIN kpi_deviation_cases c ON c.id = a.case_id
       WHERE a.id = ? AND a.case_id = ? AND c.organization_id = ?
@@ -1413,6 +1460,29 @@ router.put(
         organizationId,
       ]
     );
+    await recordDeviationAudit({
+      organizationId,
+      kpiId: String(row.kpi_id),
+      eventType: 'deviation_case_action_updated',
+      actorUserId: userId,
+      summary: `Action ${actionId} updated for deviation case ${caseId}`,
+      before: {
+        caseId,
+        actionId,
+        title: row.title,
+        status: row.status,
+        ownerUserId: row.owner_user_id || null,
+        dueDate: row.due_date || null,
+      },
+      after: {
+        caseId,
+        actionId,
+        title: title != null ? String(title).trim() : row.title,
+        status: status || row.status,
+        ownerUserId: ownerUserId || row.owner_user_id || null,
+        dueDate: dueDate ? String(dueDate).slice(0, 10) : row.due_date || null,
+      },
+    });
 
     return res.json({
       data: { success: true },
@@ -1429,7 +1499,7 @@ router.post(
   '/deviation-cases/:caseId/resolve',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     if (!caseId) {
       return res.status(400).json({
@@ -1439,7 +1509,7 @@ router.post(
     }
 
     const row = await dbGet<any>(
-      `SELECT id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      `SELECT id, kpi_id, status FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
       [caseId, organizationId]
     );
     if (!row?.id) {
@@ -1457,6 +1527,15 @@ router.post(
       `,
       [caseId, organizationId]
     );
+    await recordDeviationAudit({
+      organizationId,
+      kpiId: String(row.kpi_id),
+      eventType: 'deviation_case_resolved',
+      actorUserId: userId,
+      summary: `Deviation case ${caseId} resolved`,
+      before: { caseId, status: row.status },
+      after: { caseId, status: 'RESOLVED' },
+    });
 
     return res.json({
       data: { success: true },
@@ -1497,7 +1576,8 @@ router.post(
     }
 
     const row = await dbGet<any>(
-      `SELECT id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      `SELECT id, kpi_id, status, evidence_text, evidence_ref, resolution_notes
+       FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
       [caseId, organizationId]
     );
     if (!row?.id) {
@@ -1557,6 +1637,29 @@ router.post(
         ]
       );
     }
+    await recordDeviationAudit({
+      organizationId,
+      kpiId: String(row.kpi_id),
+      eventType: 'deviation_case_closed',
+      actorUserId: userId,
+      summary: `Deviation case ${caseId} closed with evidence`,
+      before: {
+        caseId,
+        status: row.status,
+        evidenceText: row.evidence_text || null,
+        evidenceRef: row.evidence_ref || null,
+        resolutionNotes: row.resolution_notes || null,
+      },
+      after: {
+        caseId,
+        status: 'CLOSED',
+        evidenceText: safeEvidenceText || null,
+        evidenceRef: safeEvidenceRef || null,
+        resolutionNotes: safeResolutionNotes || null,
+        linkedInitiativeId: safeLinkedInitiativeId || null,
+        linkedTaskId: linkedTaskId || null,
+      },
+    });
 
     return res.json({
       data: { success: true },
@@ -1642,7 +1745,8 @@ router.post(
         code: 'RESULTS_DEVIATION_CASE_NOT_FOUND',
       });
     }
-    const severity: 'AMBER' | 'RED' = String(kase.severity || '').toUpperCase() === 'RED' ? 'RED' : 'AMBER';
+    const severity: 'AMBER' | 'RED' =
+      String(kase.severity || '').toUpperCase() === 'RED' ? 'RED' : 'AMBER';
 
     try {
       const result = await ensureRecoveryCardForCase({
@@ -3129,10 +3233,7 @@ router.get(
       financeLinked: !!reconciliation,
       reconciliationStatus: reconciliation
         ? (String(reconciliation.reconciliation_status) as
-            | 'pending'
-            | 'reconciled'
-            | 'disputed'
-            | 'escalated')
+            'pending' | 'reconciled' | 'disputed' | 'escalated')
         : null,
     });
 
@@ -3450,10 +3551,7 @@ router.get(
       financeLinked: !!reconciliation,
       reconciliationStatus: reconciliation
         ? (String(reconciliation.reconciliation_status) as
-            | 'pending'
-            | 'reconciled'
-            | 'disputed'
-            | 'escalated')
+            'pending' | 'reconciled' | 'disputed' | 'escalated')
         : null,
     });
 

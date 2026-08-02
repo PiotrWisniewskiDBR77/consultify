@@ -8800,6 +8800,12 @@ Return ONLY the answer text (no markdown fences).`;
                     }}
                     relations={relations}
                     onOpenFull={() => void openInterviewAssignmentFull(a, true)}
+                    onApproveAssignment={
+                      a.status === 'submitted' ? () => handleOpenApproveModal(a) : undefined
+                    }
+                    onSendBackAssignment={
+                      a.status === 'submitted' ? () => handleOpenSendBackModal(a) : undefined
+                    }
                   />
                 );
               }}

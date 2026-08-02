@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import config from '../config/Config.js';
 import adminAuditService from '../services/adminAuditService.js';
+import { setV8OrgFlag } from '../services/v8/featureFlagService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -659,6 +660,13 @@ router.post(
 
     // P25-B: Ensure contextual help primers exist for deterministic runtime tests.
     await ensureP25bKbSeedMinimum();
+
+    // When a test run explicitly enables the global V8 gate, materialize one
+    // tenant-scoped flag as well. The frontend reads explicit org flags and must
+    // not infer availability from the non-production backend fallback.
+    if (process.env.ENABLE_V8_GLOBAL === 'true') {
+      await setV8OrgFlag(organizationId, 'workspace', true, userId);
+    }
 
     const displayName =
       userRole === 'SUPERADMIN'

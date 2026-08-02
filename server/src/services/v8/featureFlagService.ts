@@ -48,6 +48,32 @@ function setCache(orgId: string, flags: Record<string, boolean>): void {
   flagCache.set(cacheKey(orgId), { flags, expiresAt: Date.now() + CACHE_TTL_MS });
 }
 
+function isNamespacedFlagTableMissing(error: unknown): boolean {
+  const message = String((error as { message?: unknown })?.message || error || '').toLowerCase();
+  return (
+    message.includes('schema "v8" does not exist') ||
+    message.includes('relation "v8.v8_feature_flags" does not exist') ||
+    message.includes('no such table: v8.v8_feature_flags')
+  );
+}
+
+async function readOrgFlagRows(orgId: string): Promise<Array<{ module: string; enabled: number }>> {
+  try {
+    return await dbAll<{ module: string; enabled: number }>(
+      `SELECT module, enabled FROM v8.v8_feature_flags WHERE organization_id = $1`,
+      [orgId],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (!isNamespacedFlagTableMissing(error)) throw error;
+    return dbAll<{ module: string; enabled: number }>(
+      `SELECT module, enabled FROM v8_feature_flags WHERE organization_id = $1`,
+      [orgId],
+      { fallback: false }
+    );
+  }
+}
+
 export function clearFlagCache(orgId?: string): void {
   if (orgId) flagCache.delete(cacheKey(orgId));
   else flagCache.clear();
@@ -124,10 +150,7 @@ export async function getV8Flags(organizationId: string): Promise<Record<string,
   const hasTable = await flagTableExists();
   if (!hasTable) return {};
 
-  const rows = await dbAll<{ module: string; enabled: number }>(
-    `SELECT module, enabled FROM v8.v8_feature_flags WHERE organization_id = $1`,
-    [orgId]
-  );
+  const rows = await readOrgFlagRows(orgId);
 
   const flags: Record<string, boolean> = {};
   for (const row of rows) {
@@ -157,13 +180,22 @@ export async function setV8OrgFlag(
   const now = new Date().toISOString();
   const flagId = `${orgId}:${module}`;
 
-  await dbRun(
-    `INSERT INTO v8.v8_feature_flags (flag_id, organization_id, module, enabled, updated_at, updated_by)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     ON CONFLICT (organization_id, module)
-     DO UPDATE SET enabled = $4, updated_at = $5, updated_by = $6`,
-    [flagId, orgId, module, enabled ? 1 : 0, now, updatedBy || null]
-  );
+  const params = [flagId, orgId, module, enabled ? 1 : 0, now, updatedBy || null];
+  const upsert = (table: string) =>
+    dbRun(
+      `INSERT INTO ${table} (flag_id, organization_id, module, enabled, updated_at, updated_by)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (organization_id, module)
+       DO UPDATE SET enabled = $4, updated_at = $5, updated_by = $6`,
+      params,
+      { fallback: false }
+    );
+  try {
+    await upsert('v8.v8_feature_flags');
+  } catch (error) {
+    if (!isNamespacedFlagTableMissing(error)) throw error;
+    await upsert('v8_feature_flags');
+  }
 
   clearFlagCache(orgId);
   Logger.info(`${LOG_PREFIX} Flag ${module} set to ${enabled} for org ${orgId}`);
@@ -179,10 +211,21 @@ export async function isV8ShadowMode(organizationId: string): Promise<boolean> {
   const hasTable = await flagTableExists();
   if (!hasTable) return allowImplicitOrgRowsFallback();
 
-  const row = await dbGet<{ enabled: number }>(
-    `SELECT enabled FROM v8.v8_feature_flags WHERE organization_id = $1 AND module = 'shadow_mode'`,
-    [orgId]
-  );
+  let row: { enabled: number } | null;
+  try {
+    row = await dbGet<{ enabled: number }>(
+      `SELECT enabled FROM v8.v8_feature_flags WHERE organization_id = $1 AND module = 'shadow_mode'`,
+      [orgId],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (!isNamespacedFlagTableMissing(error)) throw error;
+    row = await dbGet<{ enabled: number }>(
+      `SELECT enabled FROM v8_feature_flags WHERE organization_id = $1 AND module = 'shadow_mode'`,
+      [orgId],
+      { fallback: false }
+    );
+  }
 
   // Non-production may default to enabled while bootstrapping; production requires
   // an explicit row so shadow mode cannot implicitly reactivate for new tenants.
@@ -195,14 +238,26 @@ export async function getAllOrgFlags(): Promise<
   const hasTable = await flagTableExists();
   if (!hasTable) return [];
 
-  const rows = await dbAll<{
+  let rows: Array<{
     organization_id: string;
     module: string;
     enabled: number;
     updated_at: string;
-  }>(
-    `SELECT organization_id, module, enabled, updated_at FROM v8.v8_feature_flags ORDER BY organization_id, module`
-  );
+  }>;
+  try {
+    rows = await dbAll(
+      `SELECT organization_id, module, enabled, updated_at FROM v8.v8_feature_flags ORDER BY organization_id, module`,
+      [],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (!isNamespacedFlagTableMissing(error)) throw error;
+    rows = await dbAll(
+      `SELECT organization_id, module, enabled, updated_at FROM v8_feature_flags ORDER BY organization_id, module`,
+      [],
+      { fallback: false }
+    );
+  }
 
   return rows.map((r) => ({
     organizationId: r.organization_id,

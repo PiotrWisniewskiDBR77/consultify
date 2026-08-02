@@ -48,6 +48,7 @@ const backendEnv = [
   'DISABLE_AI_HEALTH_MONITOR=true',
   'DISABLE_STARTUP_HEALTH_MONITOR=true',
   'SKIP_STARTUP_VALIDATOR=true',
+  `ENABLE_V8_GLOBAL=${process.env.ENABLE_V8_GLOBAL === 'true' ? 'true' : 'false'}`,
   `TEST_SUPPORT_KEY=${testSupportKey}`,
   `E2E_MODE=${process.env.E2E_MODE || 'false'}`,
 ].join(' ');

@@ -308,7 +308,13 @@ async function resolveReportSourceRefs(
   // słownika niż `source_type` raportu (assessment/tool/interview_insight vs
   // ASSESSMENT/TOOL/INTERVIEW) — stąd jawne mapowanie zamiast porównania wprost.
   const initiativeSourceType =
-    st === 'ASSESSMENT' ? 'assessment' : st === 'TOOL' ? 'tool' : st === 'INTERVIEW' ? 'interview_insight' : null;
+    st === 'ASSESSMENT'
+      ? 'assessment'
+      : st === 'TOOL'
+        ? 'tool'
+        : st === 'INTERVIEW'
+          ? 'interview_insight'
+          : null;
 
   try {
     const rows = await queryAll<{ id: string; title: string }>(
@@ -320,7 +326,7 @@ async function resolveReportSourceRefs(
             OR (source_id = ? AND lower(coalesce(source_type, '')) = ?)
           )
         LIMIT 50`,
-      [organizationId, sid, sid, sid, initiativeSourceType || ' ']
+      [organizationId, sid, sid, sid, initiativeSourceType || '']
     );
     for (const r of rows) {
       if (!r?.id) continue;
@@ -711,6 +717,27 @@ export async function getTemplateForSource(
     }
   }
 
+  if (!row) {
+    // Production datasets created before the default-template seed may contain
+    // valid source templates with no row marked `is_default`. Do not make a
+    // durable output impossible because of that metadata drift: select one
+    // visible template deterministically, preferring the tenant-owned row.
+    row = await queryOne<{ id: string; sections_json: string }>(
+      `
+      SELECT id, sections_json
+      FROM report_builder_templates
+      WHERE (source_type = ? OR source_type = ?)
+        AND (organization_id IS NULL OR organization_id = ?)
+      ORDER BY
+        CASE WHEN organization_id = ? THEN 0 ELSE 1 END,
+        CASE WHEN source_type = ? THEN 0 ELSE 1 END,
+        id ASC
+      LIMIT 1
+    `,
+      [sourceType, fallbackSourceType, organizationId || null, organizationId || null, sourceType]
+    );
+  }
+
   if (!row) return null;
 
   return {
@@ -855,44 +882,76 @@ export async function createReport(params: CreateReportParams): Promise<{
     });
   }
 
-  // Create report (with V3 fields when provided)
-  await queryRun(
-    `
-    INSERT INTO report_builder_reports (
-      id, organization_id, project_id, source_type, source_id, source_name, source_framework,
-      title, description, report_type, template_id, config_json, company_context_json, status,
-      created_by, created_at, updated_at, version,
-      report_type_v3, goal_v3, communication_register, density, period_from, period_to, confidentiality,
-      source_refs_json
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIGURING', ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?)
-  `,
-    [
-      reportId,
-      organizationId,
-      projectId,
-      sourceType,
-      sourceId,
-      sourceName,
-      sourceFramework,
-      title,
-      description,
-      reportType,
-      templateIdToUse || null,
-      config ? JSON.stringify(config) : null,
-      JSON.stringify(companyContext),
-      createdBy,
-      now,
-      now,
-      params.reportTypeV3 || null,
-      params.goalV3 || null,
-      params.communicationRegister || null,
-      params.density || null,
-      params.periodFrom || null,
-      params.periodTo || null,
-      params.confidentiality || null,
-      resolvedSourceRefs.length > 0 ? JSON.stringify(resolvedSourceRefs) : null,
-    ]
+  const baseReportValues = [
+    reportId,
+    organizationId,
+    projectId,
+    sourceType,
+    sourceId,
+    sourceName,
+    sourceFramework,
+    title,
+    description,
+    reportType,
+    templateIdToUse || null,
+    config ? JSON.stringify(config) : null,
+    JSON.stringify(companyContext),
+    createdBy,
+    now,
+    now,
+  ];
+  const hasV3Configuration = Boolean(
+    params.reportTypeV3 ||
+    params.goalV3 ||
+    params.communicationRegister ||
+    params.density ||
+    params.periodFrom ||
+    params.periodTo ||
+    params.confidentiality
   );
+
+  // Older, otherwise valid Report Builder schemas do not have the optional V3
+  // columns. Standard reports must not fail merely because those unused fields
+  // are absent. V3 reports still use the strict extended insert and therefore
+  // fail closed when their required schema has not been migrated.
+  if (!hasV3Configuration) {
+    await queryRun(
+      `
+      INSERT INTO report_builder_reports (
+        id, organization_id, project_id, source_type, source_id, source_name, source_framework,
+        title, description, report_type, template_id, config_json, company_context_json, status,
+        created_by, created_at, updated_at, version, source_refs_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIGURING', ?, ?, ?, 1, ?)
+    `,
+      [
+        ...baseReportValues,
+        resolvedSourceRefs.length > 0 ? JSON.stringify(resolvedSourceRefs) : null,
+      ]
+    );
+  } else {
+    await queryRun(
+      `
+      INSERT INTO report_builder_reports (
+        id, organization_id, project_id, source_type, source_id, source_name, source_framework,
+        title, description, report_type, template_id, config_json, company_context_json, status,
+        created_by, created_at, updated_at, version,
+        report_type_v3, goal_v3, communication_register, density, period_from, period_to, confidentiality,
+        source_refs_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIGURING', ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+      [
+        ...baseReportValues,
+        params.reportTypeV3 || null,
+        params.goalV3 || null,
+        params.communicationRegister || null,
+        params.density || null,
+        params.periodFrom || null,
+        params.periodTo || null,
+        params.confidentiality || null,
+        resolvedSourceRefs.length > 0 ? JSON.stringify(resolvedSourceRefs) : null,
+      ]
+    );
+  }
 
   // Create sections from template
   const typedTemplateSections = templateSections as Array<{
@@ -2345,25 +2404,55 @@ export async function createExportRecord(params: {
   const id = uuidv4();
   const now = new Date().toISOString();
 
-  await queryRun(
-    `
-    INSERT INTO report_exports (
-      id, report_id, report_type, format, file_path, file_size,
-      language, exported_by, exported_at, download_count
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
-  `,
-    [
-      id,
-      params.reportId,
-      params.reportType,
-      params.format,
-      params.filePath,
-      params.fileSize,
-      params.language || 'en',
-      params.exportedBy,
-      now,
-    ]
-  );
+  // Additive self-heal for installations where the Report Builder tables
+  // predate export history. The exported file is not reported as successful
+  // unless its durable audit row can be written.
+  await queryRun(`
+    CREATE TABLE IF NOT EXISTS report_exports (
+      id TEXT PRIMARY KEY,
+      report_id TEXT NOT NULL,
+      report_type TEXT NOT NULL,
+      format TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      file_size INTEGER NOT NULL DEFAULT 0,
+      language TEXT NOT NULL DEFAULT 'en',
+      exported_by TEXT NOT NULL,
+      exported_at TIMESTAMP NOT NULL,
+      download_count INTEGER NOT NULL DEFAULT 0,
+      last_download_at TIMESTAMP
+    )
+  `);
+
+  try {
+    await queryRun(
+      `
+      INSERT INTO report_exports (
+        id, report_id, report_type, format, file_path, file_size,
+        language, exported_by, exported_at, download_count
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+    `,
+      [
+        id,
+        params.reportId,
+        params.reportType,
+        params.format,
+        params.filePath,
+        params.fileSize,
+        params.language || 'en',
+        params.exportedBy,
+        now,
+      ]
+    );
+  } catch (error) {
+    // Some callback-style PostgreSQL adapters can report an error after the
+    // statement has committed. Accept only a verified exact read-back; all
+    // genuine write failures still propagate.
+    const persisted = await queryOne<{ id: string }>(
+      `SELECT id FROM report_exports WHERE id = ? AND report_id = ?`,
+      [id, params.reportId]
+    ).catch(() => null);
+    if (!persisted) throw error;
+  }
 
   return {
     id,

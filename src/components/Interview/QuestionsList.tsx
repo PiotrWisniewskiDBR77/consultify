@@ -85,7 +85,10 @@ export interface QuestionsListProps {
   questions: InterviewQuestion[];
   category: InterviewCategory | undefined;
   runtimeMode?: 'single_question' | 'task_list' | 'conversational';
-  onUpdateQuestion: (questionId: string, updates: Partial<InterviewQuestion>) => Promise<void>;
+  onUpdateQuestion: (
+    questionId: string,
+    updates: Partial<InterviewQuestion> & { aiSuggestionId?: string }
+  ) => Promise<void>;
   onAddQuestion: (category: InterviewCategory, questionText: string) => Promise<void>;
   isLoading?: boolean;
   readOnly?: boolean;
@@ -195,6 +198,7 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
   const [showStatusMenu, setShowStatusMenu] = useState<string | null>(null);
   const [showTagMenu, setShowTagMenu] = useState<string | null>(null);
   const [aiLoadingId, setAiLoadingId] = useState<string | null>(null);
+  const [pendingAiSuggestionIds, setPendingAiSuggestionIds] = useState<Record<string, string>>({});
 
   // Chat → field insert (human-in-the-loop)
   const [chatQuestion, setChatQuestion] = useState<InterviewQuestion | null>(null);
@@ -250,6 +254,14 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
           answerText: editValue.trim(),
           notes: editNotes.trim() || undefined,
           status: 'answered',
+          ...(pendingAiSuggestionIds[questionId]
+            ? { aiSuggestionId: pendingAiSuggestionIds[questionId] }
+            : {}),
+        });
+        setPendingAiSuggestionIds((current) => {
+          const next = { ...current };
+          delete next[questionId];
+          return next;
         });
         setEditingId(null);
         setEditValue('');
@@ -272,16 +284,35 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
         setSavingId(null);
       }
     },
-    [editValue, editNotes, onUpdateQuestion, categoryQuestions, isPolish]
+    [editValue, editNotes, onUpdateQuestion, categoryQuestions, isPolish, pendingAiSuggestionIds]
   );
 
   // Cancel edit
-  const handleCancelEdit = useCallback(() => {
+  const handleCancelEdit = useCallback(async () => {
+    const questionId = editingId;
+    const suggestionId = questionId ? pendingAiSuggestionIds[questionId] : undefined;
+    if (questionId && suggestionId) {
+      try {
+        await Api.post(
+          `/interview/questions/${questionId}/ai-suggestions/${suggestionId}/reject`,
+          {}
+        );
+      } catch (error) {
+        console.error('[QuestionsList] Failed to reject AI suggestion:', error);
+        setSaveError(t('interview.questionsList.failedToSavePleaseTry'));
+        return;
+      }
+      setPendingAiSuggestionIds((current) => {
+        const next = { ...current };
+        delete next[questionId];
+        return next;
+      });
+    }
     setEditingId(null);
     setEditValue('');
     setEditNotes('');
     setSaveError(null);
-  }, []);
+  }, [editingId, pendingAiSuggestionIds, t]);
 
   // Update status
   const handleStatusChange = useCallback(
@@ -340,13 +371,27 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
 
       setAiLoadingId(question.id);
       try {
+        const previousSuggestionId = pendingAiSuggestionIds[question.id];
+        if (previousSuggestionId) {
+          await Api.post(
+            `/interview/questions/${question.id}/ai-suggestions/${previousSuggestionId}/reject`,
+            {}
+          );
+        }
         const result = await Api.post(`/interview/questions/${question.id}/ai-suggest`, {});
         const answerText = (result as any)?.answerText;
+        const suggestionId = (result as any)?.suggestionId;
         if (typeof answerText === 'string' && answerText.trim().length > 0) {
           // Ensure we're in edit mode and prefill the suggestion (human-in-the-loop)
           setEditingId(question.id);
           setExpandedId(question.id);
           setEditValue(answerText.trim());
+          if (typeof suggestionId === 'string' && suggestionId) {
+            setPendingAiSuggestionIds((current) => ({
+              ...current,
+              [question.id]: suggestionId,
+            }));
+          }
         }
       } catch (err) {
         // Silent fail (avoid UX noise); console for debugging
@@ -355,7 +400,7 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
         setAiLoadingId(null);
       }
     },
-    [aiLoadingId, readOnly]
+    [aiLoadingId, readOnly, pendingAiSuggestionIds]
   );
 
   const openChatForQuestion = useCallback(

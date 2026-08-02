@@ -823,10 +823,10 @@ describe('V8 results read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
     expect(res.body.data?.success).toBe(true);
-    expect(mockDbGet).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT id FROM kpi_deviation_cases'),
-      ['case-1', ORG]
-    );
+    expect(mockDbGet).toHaveBeenCalledWith(expect.stringContaining('FROM kpi_deviation_cases'), [
+      'case-1',
+      ORG,
+    ]);
     expect(mockDbRun).toHaveBeenCalledWith(expect.stringContaining("SET status = 'ACKNOWLEDGED'"), [
       'case-1',
       ORG,
@@ -847,10 +847,10 @@ describe('V8 results read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
     expect(res.body.data?.success).toBe(true);
-    expect(mockDbGet).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT id FROM kpi_deviation_cases'),
-      ['case-1', ORG]
-    );
+    expect(mockDbGet).toHaveBeenCalledWith(expect.stringContaining('FROM kpi_deviation_cases'), [
+      'case-1',
+      ORG,
+    ]);
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining(
         "SET rca_text = ?, status = CASE WHEN status = 'OPEN' THEN 'IN_PROGRESS' ELSE status END"
@@ -875,10 +875,10 @@ describe('V8 results read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
     expect(res.body.data?.id).toEqual(expect.any(String));
     expect(res.body.data?.caseId).toBe('case-1');
-    expect(mockDbGet).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT id FROM kpi_deviation_cases'),
-      ['case-1', ORG]
-    );
+    expect(mockDbGet).toHaveBeenCalledWith(expect.stringContaining('FROM kpi_deviation_cases'), [
+      'case-1',
+      ORG,
+    ]);
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO kpi_deviation_actions'),
       [expect.any(String), 'case-1', 'Create mitigation plan', null, '2026-03-31']
@@ -922,10 +922,10 @@ describe('V8 results read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
     expect(res.body.data?.success).toBe(true);
-    expect(mockDbGet).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT id FROM kpi_deviation_cases'),
-      ['case-1', ORG]
-    );
+    expect(mockDbGet).toHaveBeenCalledWith(expect.stringContaining('FROM kpi_deviation_cases'), [
+      'case-1',
+      ORG,
+    ]);
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining("SET status = 'RESOLVED', resolved_at = CURRENT_TIMESTAMP"),
       ['case-1', ORG]
@@ -947,10 +947,10 @@ describe('V8 results read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
     expect(res.body.data?.success).toBe(true);
-    expect(mockDbGet).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT id FROM kpi_deviation_cases'),
-      ['case-1', ORG]
-    );
+    expect(mockDbGet).toHaveBeenCalledWith(expect.stringContaining('FROM kpi_deviation_cases'), [
+      'case-1',
+      ORG,
+    ]);
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining("SET status = 'CLOSED', closed_at = CURRENT_TIMESTAMP"),
       [
