@@ -35,31 +35,38 @@
  * - The value itself is computed INDEPENDENTLY of the Results leg's output
  *   (not read from `initiative_benefits`) so a Results-leg failure never
  *   blocks/hides Finance and vice versa (contract point 3).
- * - ★ Codex review round 3 — read before touching {@link findMonetaryActualMeasurement}:
- *   a PLANNED KPI target (`initiative_kpis.target_value`) is NOT evidence a
- *   benefit was REALIZED, and reaching status DONE is not evidence either.
- *   Round 2 of this packet still wrote `target_value` into
- *   `roi_realized_values` whenever its `unit` matched the initiative's
- *   currency — semantically wrong (plan ≠ actual), fixed this round.
- *   `expected_roi` is separately never used either way (round 2, still
- *   correct): it's a free-text ROI/percentage narrative field in this
- *   schema, not currency (migration 903_expected_roi_to_text.sql;
- *   CharterBuilder.tsx's "Expected ROI (%)" label, distinct from "Business
- *   Value (PLN)"). The ONLY signal now used is an OBSERVED measurement in
- *   `kpi_time_series` (a point-in-time "the KPI's value was measured as X"
- *   row — structurally a fact, not a plan) whose owning KPI's `unit` is
- *   LITERALLY the initiative's own `budget_currency` code, recent enough
- *   (see `MONETARY_MEASUREMENT_MAX_AGE_DAYS`). Anything else (no such
- *   measurement, only a target, KPI in %/days/count, no currency on the
- *   initiative, only a stale measurement) yields NEEDS_DECISION, never a
- *   fabricated value.
+ * - ★ Codex review round 3 — a PLANNED KPI target
+ *   (`initiative_kpis.target_value`) is NOT evidence a benefit was REALIZED,
+ *   and reaching status DONE is not evidence either. Round 2 of this packet
+ *   still wrote `target_value` into `roi_realized_values` whenever its
+ *   `unit` matched the initiative's currency — semantically wrong
+ *   (plan ≠ actual), fixed that round. `expected_roi` is separately never
+ *   used either way (round 2, still correct): it's a free-text ROI/percentage
+ *   narrative field in this schema, not currency
+ *   (migration 903_expected_roi_to_text.sql; CharterBuilder.tsx's
+ *   "Expected ROI (%)" label, distinct from "Business Value (PLN)").
+ * - ★ Codex review round 4 — read before touching
+ *   {@link findCandidateMonetaryMeasurement}: round 3 still auto-wrote
+ *   `roi_realized_values` whenever an OBSERVED `kpi_time_series` measurement
+ *   existed, was currency-matched, and was "recent enough" — rejected on
+ *   review because recency + observation is NOT approval, and this codebase
+ *   has NO formal sign-off/approval field or process for a measurement at
+ *   all. Fixed this round: the Finance leg now NEVER writes
+ *   `roi_realized_values` automatically and ALWAYS terminates in
+ *   `NEEDS_DECISION`. {@link findCandidateMonetaryMeasurement} only surfaces
+ *   a CANDIDATE (for transparency, via `finance_payload.candidateMeasurementId`
+ *   and `reason: 'MEASUREMENT_REQUIRES_APPROVAL'`) — it never triggers a
+ *   write. The former recency window
+ *   (`MONETARY_MEASUREMENT_MAX_AGE_DAYS`) is gone as a gate entirely; the
+ *   candidate's age is carried as purely informational `ageDays`. Building an
+ *   actual approval/sign-off process is explicitly OUT OF SCOPE for this
+ *   packet — do not add one without a Piotr/Codex decision.
  */
 
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { withPgTransaction, type PgTransactionClient } from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
 import { handoffFromClosure, CLOSURE_HANDOFF_SOURCE } from './executionResultsBridge.js';
-import { recordExecutionRealization } from './executionRealizationService.js';
 
 const LOG_PREFIX = '[ClosureDeliveryReceipt]';
 
@@ -208,6 +215,38 @@ export async function getReceiptForInitiative(
   return row ? toReceipt(row) : null;
 }
 
+/**
+ * Codex review round 4, BLOCKER-B: "fallback nie może być silent no-op...
+ * brak rzeczywistego rekordu Results ma prowadzić do retryable
+ * failure/NEEDS_DECISION, nie do fałszywego DELIVERED." Mirrors
+ * `executionResultsBridge.ts`'s OWN decision logic for whether a closure
+ * had anything to hand off (planned KPIs with a target, or a numeric
+ * `expected_roi`) — NOT re-implementing that logic differently, just
+ * checking the same precondition independently so a zero-benefit-row
+ * outcome can be told apart from "genuinely nothing to hand off" (a
+ * legitimate DELIVERED with an empty payload) vs. "there WAS something to
+ * hand off but no benefit row exists" (a real failure — write silently
+ * didn't happen, for the title-column reason just fixed or any other
+ * future cause — must never be reported as DELIVERED).
+ */
+async function initiativeHadResultsSignal(initiativeId: string, organizationId: string): Promise<boolean> {
+  const kpiCount = await queryHelpers.queryOne<{ n: string }>(
+    `SELECT COUNT(*)::int AS n FROM initiative_kpis WHERE initiative_id = ? AND target_value IS NOT NULL`,
+    [initiativeId]
+  );
+  if (Number(kpiCount?.n ?? 0) > 0) return true;
+
+  const initiative = await queryHelpers.queryOne<{ expected_roi: string | null }>(
+    `SELECT expected_roi FROM initiatives WHERE id = ? AND organization_id = ?`,
+    [initiativeId, organizationId]
+  );
+  const expectedRoi =
+    initiative?.expected_roi !== null && initiative?.expected_roi !== undefined
+      ? Number(initiative.expected_roi)
+      : null;
+  return expectedRoi !== null && Number.isFinite(expectedRoi) && expectedRoi !== 0;
+}
+
 interface InitiativeFinanceRow {
   budget_currency: string | null;
 }
@@ -220,54 +259,34 @@ interface MonetaryMeasurementRow {
 }
 
 /**
- * A measurement older than this (relative to the moment delivery is
- * attempted) is treated as too stale to auto-realize — contract test #6
- * ("stary measurement sprzed dozwolonego okresu nie jest automatycznie
- * realizowany"). 180 days (~2 quarters) is a documented policy default, not
- * a discovered fact — a real product decision on "how recent must a
- * measurement be to count as this closure's realized benefit" would let
- * this be tuned or made explicit per-org.
- */
-const MONETARY_MEASUREMENT_MAX_AGE_DAYS = 180;
-
-/**
- * Independently find an ACTUAL, OBSERVED monetary measurement for this
- * initiative — deliberately NOT reading `initiative_benefits` (the Results
- * leg's output) and, critically, NOT `initiative_kpis.target_value` (Codex
- * review round 3, the core finding this function exists to fix — read
- * before touching):
+ * Find a CANDIDATE monetary measurement for this initiative — deliberately
+ * NOT reading `initiative_benefits` (the Results leg's output) and NOT
+ * `initiative_kpis.target_value` (round 3's fix: a plan is not evidence a
+ * benefit was realized). Round 4 (Codex review, read before touching):
+ * finding a real, observed, recent `kpi_time_series` row is STILL NOT
+ * evidence it was ever APPROVED as an actual — this codebase has no formal
+ * approval/sign-off field or workflow for a measurement at all (confirmed by
+ * a fresh discovery pass: `roi_realized_values`/`kpi_time_series` both have
+ * a self-asserted `source` column with no sign-off field;
+ * `v8_roi_realization_entries.verified_by`, the one column anywhere in this
+ * schema with real approval semantics, is only ever written by a synthetic
+ * health-check probe, never a real user flow; `initiative_benefits.actual_annual_value`
+ * is declared but never written by any code path). This function therefore
+ * NEVER results in an automatic write to `roi_realized_values` — it only
+ * returns a CANDIDATE for the caller to surface as
+ * `NEEDS_DECISION` / `MEASUREMENT_REQUIRES_APPROVAL`. Building the actual
+ * approval workflow (who can approve, what UI, what audit trail) is an
+ * explicit NEEDS_PRODUCT_DECISION, out of scope for this packet — not
+ * silently built here.
  *
- * A PLANNED target is not evidence a benefit was REALIZED. Reaching
- * initiative status DONE is not evidence either. Round 2 of this packet
- * still wrote `initiative_kpis.target_value` into `roi_realized_values` —
- * semantically wrong: a target is a plan/expectation, not a fact about what
- * actually happened. This function now reads `kpi_time_series` instead —
- * the one table in this schema that is structurally a point-in-time
- * OBSERVATION ("the KPI's value was measured as X at period P"), as opposed
- * to a one-shot plan. A fresh investigation (this round) confirmed no other
- * "actual, approved, monetary, currency-explicit" concept exists anywhere
- * in this codebase — `roi_realized_values`/`kpi_time_series` themselves have
- * a self-asserted `source` and no formal approval/sign-off field;
- * `v8_roi_realization_entries.verified_by` (the one column with real
- * approval semantics anywhere in the schema) is only ever written by a
- * synthetic health-check probe, never a real user flow;
- * `initiative_benefits.actual_annual_value` is declared but never written by
- * any code path. Using `kpi_time_series` is therefore the closest available
- * "actual" signal that exists and is genuinely written by real callers
- * today — NOT a claim that it carries a human sign-off gate. That gap
- * (no approval workflow for a measurement before it can back a Finance
- * realization) is a real, open NEEDS_PRODUCT_DECISION, documented in the
- * completion report, not silently papered over here.
- *
- * Returns `null` — the caller must treat that as NEEDS_DECISION, never
- * substitute a default — when: the initiative has no explicit
- * `budget_currency`; no KPI's `unit` matches it; or the only matching
- * measurement(s) are older than {@link MONETARY_MEASUREMENT_MAX_AGE_DAYS}.
+ * Returns `null` when the initiative has no explicit `budget_currency` or no
+ * KPI's `unit` matches it — those cases have no candidate to even show a
+ * human, not merely "unapproved".
  */
-async function findMonetaryActualMeasurement(
+async function findCandidateMonetaryMeasurement(
   organizationId: string,
   initiativeId: string
-): Promise<{ amount: number; currency: string; valueSource: string; measurementId: string } | null> {
+): Promise<{ amount: number; currency: string; valueSource: string; measurementId: string; ageDays: number } | null> {
   const initiative = await queryHelpers.queryOne<InitiativeFinanceRow>(
     `SELECT budget_currency FROM initiatives WHERE id = ? AND organization_id = ?`,
     [initiativeId, organizationId]
@@ -281,11 +300,12 @@ async function findMonetaryActualMeasurement(
   }
 
   // Most recent measurement, across any KPI on this initiative whose unit
-  // matches the initiative's currency, within the recency window. A single
-  // most-recent OBSERVED value — not a sum across KPIs the way targets were
-  // summed in earlier rounds: an "actual" is a point-in-time fact, summing
-  // unrelated point-in-time observations across different KPIs doesn't have
-  // the same clear meaning a sum of planned upside lines did.
+  // matches the initiative's currency — NO recency filter (round 4: age is
+  // informational only, never a gate). A single most-recent OBSERVED value
+  // — not a sum across KPIs the way targets were summed in earlier rounds:
+  // an "actual" is a point-in-time fact, summing unrelated point-in-time
+  // observations across different KPIs doesn't have the same clear meaning
+  // a sum of planned upside lines did.
   const measurement = await queryHelpers.queryOne<MonetaryMeasurementRow>(
     `SELECT kts.id, kts.value, kts.period_end, kts.period_start
        FROM kpi_time_series kts
@@ -293,28 +313,30 @@ async function findMonetaryActualMeasurement(
       WHERE kts.initiative_id = ?
         AND kts.organization_id = ?
         AND ik.unit = ?
-        AND COALESCE(kts.period_end, kts.period_start) >= (CURRENT_DATE - ? * INTERVAL '1 day')
       ORDER BY COALESCE(kts.period_end, kts.period_start) DESC, kts.created_at DESC
       LIMIT 1`,
-    [initiativeId, organizationId, initiative.budget_currency, MONETARY_MEASUREMENT_MAX_AGE_DAYS]
+    [initiativeId, organizationId, initiative.budget_currency]
   );
   if (!measurement) {
-    // No currency-matched, sufficiently-recent measurement — nothing to
-    // hand off. Mapping gap (or genuinely stale data), not a silent zero:
-    // NEEDS_DECISION.
+    // No currency-matched measurement at all — no candidate to show.
     return null;
   }
 
   const amount = Number(measurement.value);
   if (!Number.isFinite(amount)) return null;
 
+  const periodEnd = measurement.period_end ?? measurement.period_start;
+  const ageDays = Math.max(
+    0,
+    Math.floor((Date.now() - new Date(periodEnd).getTime()) / (24 * 60 * 60 * 1000))
+  );
+
   return {
     amount,
     currency: initiative.budget_currency,
-    valueSource:
-      `kpi_time_series measurement (id=${measurement.id}, ` +
-      `period_end=${measurement.period_end ?? measurement.period_start}, unit=${initiative.budget_currency})`,
+    valueSource: `kpi_time_series measurement (id=${measurement.id}, period_end=${periodEnd}, unit=${initiative.budget_currency})`,
     measurementId: measurement.id,
+    ageDays,
   };
 }
 
@@ -444,6 +466,18 @@ export async function attemptDeliveryInternal(
           `SELECT id FROM initiative_benefits WHERE initiative_id = ? AND source_tag = ?`,
           [initiativeId, CLOSURE_HANDOFF_SOURCE]
         );
+        if (rows.length === 0 && (await initiativeHadResultsSignal(initiativeId, organizationId))) {
+          // The initiative genuinely had planned KPIs or a valid expected_roi
+          // — handoffFromClosure should have produced at least one benefit
+          // row. Zero rows here means the write silently didn't happen.
+          // Never report this as DELIVERED — throw so the outer catch
+          // records a retryable FAILED status instead.
+          throw new Error(
+            'handoffFromClosure completed without throwing, but produced zero initiative_benefits ' +
+              'rows despite the initiative having a planned KPI target or a valid expected_roi — ' +
+              'treating as a delivery failure (silent no-op), not a false DELIVERED.'
+          );
+        }
         await client.query(
           `UPDATE closure_delivery_receipts
               SET results_status = 'DELIVERED',
@@ -484,75 +518,45 @@ export async function attemptDeliveryInternal(
   ) {
     try {
       if (opts.__testForceFinanceError) throw opts.__testForceFinanceError;
-      const measurement = await findMonetaryActualMeasurement(organizationId, initiativeId);
-      if (!measurement) {
-        await queryHelpers.queryRun(
-          `UPDATE closure_delivery_receipts
-              SET finance_status = 'NEEDS_DECISION',
-                  finance_last_error = ?,
-                  updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?`,
-          [
-            'No approved actual monetary measurement: initiative has no budget_currency, no KPI ' +
-              `whose unit matches it, or no matching kpi_time_series measurement within the last ` +
-              `${MONETARY_MEASUREMENT_MAX_AGE_DAYS} days. A planned KPI target or expected_roi is ` +
-              'NEVER used as a substitute — closure/DONE is not evidence a benefit was realized. ' +
-              'Needs an explicit product decision on an approved-actual source.',
-            receiptId,
-          ]
-        );
-      } else {
-        // Idempotency: `closureReceiptId` is the dedup key (migration 937's
-        // partial unique index on roi_realized_values.closure_receipt_id) —
-        // NOT the id `recordExecutionRealization` returns. `dbRun` (this
-        // canonical service's own persistence helper) defaults to swallowing
-        // errors including a unique-violation, so a retried call could
-        // report a locally-generated id that was never actually persisted.
-        // Always re-read the row keyed by closure_receipt_id afterward — the
-        // authoritative id, whether from THIS call or an earlier one.
-        const periodMonth = new Date(receipt.created_at);
-        const periodMonthIso = `${periodMonth.getUTCFullYear()}-${String(periodMonth.getUTCMonth() + 1).padStart(2, '0')}-01`;
-        await recordExecutionRealization({
-          organizationId,
-          initiativeId,
-          periodMonth: periodMonthIso,
-          realizedRevenueDelta: measurement.amount,
-          varianceNotes:
-            `EXE-09 closure-triggered realization — source: ${measurement.valueSource}, ` +
-            `currency: ${measurement.currency} (informational; roi_realized_values has no currency column).`,
-          recordedBy: actorId ?? SYSTEM_ACTOR_LABEL,
-          closureReceiptId: receiptId,
-        });
-        // Read-back + terminal UPDATE on a DEDICATED pinned connection, NOT
-        // the shared pool — same fix/reason as the Results leg above.
-        await withPgTransaction(async (client) => {
-          const { rows } = await client.query<{ id: string }>(
-            `SELECT id FROM roi_realized_values WHERE closure_receipt_id = ?`,
-            [receiptId]
-          );
-          const persisted = rows[0];
-          if (!persisted) {
-            throw new Error(
-              'recordExecutionRealization completed but no roi_realized_values row was found for this ' +
-                'closure_receipt_id — cannot confirm a canonical downstream id was actually persisted.'
-            );
+      // Codex review round 4: this codebase has no approval/sign-off process
+      // for a measurement at all, so an OBSERVED `kpi_time_series` row is
+      // never sufficient by itself to book a realization — no matter how
+      // recent or currency-matched. The Finance leg therefore NEVER writes
+      // `roi_realized_values` here and ALWAYS terminates in NEEDS_DECISION.
+      // A candidate measurement (if any) is surfaced only for transparency,
+      // via `candidateMeasurementId` + `reason: 'MEASUREMENT_REQUIRES_APPROVAL'`,
+      // so a human can review and record it through the existing manual
+      // "Record Realization" flow if they approve it.
+      const candidate = await findCandidateMonetaryMeasurement(organizationId, initiativeId);
+      const payload = candidate
+        ? {
+            reason: 'MEASUREMENT_REQUIRES_APPROVAL',
+            candidateMeasurementId: candidate.measurementId,
+            candidateAmount: candidate.amount,
+            candidateCurrency: candidate.currency,
+            candidateAgeDays: candidate.ageDays,
+            candidateValueSource: candidate.valueSource,
           }
-          await client.query(
-            `UPDATE closure_delivery_receipts
-                SET finance_status = 'DELIVERED',
-                    finance_attempts = finance_attempts + 1,
-                    finance_last_error = NULL,
-                    finance_delivered_at = CURRENT_TIMESTAMP,
-                    finance_payload = ?,
-                    updated_at = CURRENT_TIMESTAMP
-              WHERE id = ?`,
-            [
-              JSON.stringify({ realizationId: persisted.id, sourceMeasurementId: measurement.measurementId }),
-              receiptId,
-            ]
-          );
-        });
-      }
+        : { reason: 'NO_MONETARY_MEASUREMENT' };
+      const message = candidate
+        ? 'An observed kpi_time_series measurement exists (currency-matched to the initiative\'s ' +
+          `budget_currency; id=${candidate.measurementId}) but this codebase has no approval/sign-off ` +
+          'process for a measurement — it is surfaced as a candidate only, never auto-booked as a ' +
+          'realized actual. Needs an explicit human decision (via the existing manual Record ' +
+          'Realization flow) before roi_realized_values is written.'
+        : 'No candidate monetary measurement: initiative has no budget_currency, no KPI whose unit ' +
+          'matches it, or no matching kpi_time_series measurement at all. A planned KPI target or ' +
+          'expected_roi is NEVER used as a substitute — closure/DONE is not evidence a benefit was ' +
+          'realized. Needs an explicit product decision on an approved-actual source.';
+      await queryHelpers.queryRun(
+        `UPDATE closure_delivery_receipts
+            SET finance_status = 'NEEDS_DECISION',
+                finance_last_error = ?,
+                finance_payload = ?,
+                updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?`,
+        [message, JSON.stringify(payload), receiptId]
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       logger.warn(`${LOG_PREFIX} Finance delivery failed for receipt ${receiptId}: ${message}`);
