@@ -2329,7 +2329,13 @@ router.get(
           } catch {
             agenda = {};
           }
-          const calendarSource = agenda.calendarSource || 'outlook';
+          // MW-07 provider-honesty fix: a meeting with no explicit
+          // `agenda.calendarSource` has no real Outlook/Google lineage at
+          // all — it was previously mislabeled 'outlook' unconditionally,
+          // fabricating a sync source that never existed. 'consultify'
+          // (native, unsynced) is the only honest default; a real Outlook
+          // or Google `calendarSource` value is passed through unchanged.
+          const calendarSource = agenda.calendarSource || 'consultify';
           if (calendarSource === 'outlook' && !wantOutlook) continue;
           if (calendarSource === 'google' && !wantGoogle) continue;
           if (calendarSource === 'consultify' && !wantConsultify) continue;
