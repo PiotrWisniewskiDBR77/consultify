@@ -9,6 +9,7 @@ import ExcelJS from 'exceljs';
 
 import logger from '../../utils/Logger.js';
 import { createP23Error, type P23ClassifiedError } from '../v8/exceleCanon.js';
+import { sanitizeSpreadsheetCellText } from './workbookExportSanitizer.js';
 import type {
   CellStyle,
   ChartImage,
@@ -1094,11 +1095,21 @@ export async function buildWorkbookBuffer(
           ) {
             const num =
               typeof cellDef.value === 'number' ? cellDef.value : parseFloat(String(cellDef.value));
-            cell.value = isNaN(num) ? cellDef.value : num;
+            // MAT-006: a non-numeric string in a numeric column (e.g. a
+            // literal "=cmd|'/c calc'!A1" typed as data) falls through to the
+            // raw string below — neutralize it the same way as the text
+            // branch so it can never be mistaken for a live formula/DDE
+            // command by a spreadsheet application on re-open.
+            cell.value = isNaN(num) ? sanitizeSpreadsheetCellText(cellDef.value) : num;
           } else if (col.type === 'boolean') {
             cell.value = cellDef.value === true || cellDef.value === 'true';
           } else {
-            cell.value = cellDef.value;
+            // MAT-006 — plain-text DATA cell (never a real formula, those are
+            // handled by the `cellDef.formula` branch above): neutralize
+            // formula/DDE-injection risk (leading =, +, -, @) at this export
+            // boundary only, so the stored schema_json keeps the user's exact
+            // typed text untouched. See workbookExportSanitizer.ts header.
+            cell.value = sanitizeSpreadsheetCellText(cellDef.value);
           }
           // W7.7 — track content width
           const vw = cellTextWidth(cellDef.value);
