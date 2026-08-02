@@ -1,14 +1,14 @@
 ---
 doc_id: FIN-006-candidate-pack-handoff-report
 truth_type: operations
-status: FIN_06_AWAITING_FINAL_CODEX_REVIEW
+status: FIN06_READY_FOR_INDEPENDENT_CODEX_REVIEW
 owner: claude
 process_owner: codex
 product_owner: piotr
 packet: FIN-006
 branch: feat/fin-006-candidate-pack-initiative-handoff
 base_commit: 36aa6ffc401b9e764ab96e3c4995ef98da14decf
-head_commit: d6616aaef8062edf56ef447a6b602a597aec300b
+head_commit: 40838c55e318944a21835596bdc552e79f24d9dc
 last_reviewed: 2026-08-02
 ---
 
@@ -18,6 +18,52 @@ Worktree `/private/tmp/consultify-fin-006-candidate-pack`, branch
 `feat/fin-006-candidate-pack-initiative-handoff`, based on
 `integrate/mvp-wave1-abc` @ `36aa6ffc401b9e764ab96e3c4995ef98da14decf`.
 No push, merge, deploy, Railway, or demo mutation at any point.
+
+## Independent re-verification round (this section) — no new code commits
+
+A follow-up dispatch (citing "last known HEAD c43e259cb4", i.e. BEFORE the
+Blocker 1/2 fixes and their commits already on this branch) re-described the
+same two problems already fixed and required PROPER sabotage-based negative
+controls, which the prior round had not explicitly performed as a distinct
+meta-verification step. This round performed exactly that, on the
+already-fixed code — **zero new production commits were needed**, since the
+existing fix (HEAD `40838c55e3`, unchanged) already satisfies every
+requirement re-stated in that dispatch. What follows is the verification
+evidence.
+
+**Blocker 1 negative control** (`financialStatementPackService.ts`,
+`loadPackStatementsWithSchemaCompat`), against a genuinely fresh,
+migrations-only Postgres instance:
+1. Baseline, fixed code: `9/9 PASS`.
+2. Sabotage — reverted the function to the exact original buggy shape
+   (`return dbAll<any>(fullSql, [packId]);`, no `{fallback:false}`, no
+   schema-compat catch/fallback): `3/9 FAIL` — specifically the two Blocker-1
+   regression tests (real P&L x1/BS x1/CF x0 read-back; genuinely-broken-
+   schema fails closed) plus the pre-existing golden preview test (which
+   also depends on real counts).
+3. Restored the exact committed code (`git diff --stat` on the file: empty
+   afterward): `9/9 PASS` again.
+
+**Blocker 2 negative control**
+(`financeValuationRecommendationCandidateHandoff.ts`), against the local
+Postgres already carrying the golden-flow fixtures:
+1. Baseline, fixed code: `11/11 PASS`.
+2. Sabotage — commented out `if (!isApproved(found)) return { ok: false,
+   reason: 'NOT_APPROVED' };` at BOTH call sites (preview's
+   `resolveEligibleSource` and confirm's locked re-check): `9/11 FAIL` —
+   specifically Blocker 2 scenarios A (DRAFT valuation wrongly reported
+   `eligible:true`) and B (confirm on a since-downgraded valuation returned
+   a real `201 created:true` with a real `candidateId` instead of `409`).
+3. Restored the exact committed code (`git diff --stat` on the file: empty
+   afterward): `11/11 PASS` again.
+
+No sabotaged version was committed at any point — `git status --short` was
+empty before, and confirmed empty again immediately after each restore.
+
+Full gate re-run on the final, unchanged, already-committed state: 27/27
+FIN-006 acceptance (both a genuinely fresh AND the long-lived schema),
+20/20 component, scoped backend typecheck 0 errors, scoped lint 0 errors,
+`git diff --check` clean, secret scan clean.
 
 ## MINIMAL FIX_REQUIRED round — addendum (this section)
 
@@ -271,5 +317,8 @@ diagnosed above, not silently retried or masked).
   FIN-006 acceptance test files).
 - All required focused tests green: 27/27 acceptance, 20/20 component,
   scoped typecheck/lint clean, `git diff --check` clean, secret scan clean.
+- Both blockers' negative controls this round: PASS → SABOTAGE FAIL →
+  RESTORED PASS (see "Independent re-verification round" section above).
+  No sabotaged code committed.
 
-FIN_06_AWAITING_FINAL_CODEX_REVIEW
+FIN06_READY_FOR_INDEPENDENT_CODEX_REVIEW
