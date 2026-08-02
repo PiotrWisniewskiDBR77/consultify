@@ -7,6 +7,121 @@ business_owner: piotr
 last_reviewed: 2026-08-02
 ---
 
+# ★★★★★ Round-4 correction (Codex review, same date) — no approval process exists, so Finance ALWAYS resolves NEEDS_DECISION; Results fallback title-column bug fixed
+
+Round 3's fix (below) was still not conservative enough. It read
+`kpi_time_series` (a genuine OBSERVATION, not a plan) instead of a target —
+correct in KIND — but then auto-wrote `roi_realized_values` whenever that
+measurement was currency-matched and within an arbitrary 180-day recency
+window. Codex's finding: **recency + observation is not approval**. This
+codebase has no formal sign-off/approval field or workflow for a measurement
+at all — treating "recent and currency-matched" as sufficient to book a
+realized actual was still fabricating a certainty (that a human reviewed and
+approved this number) that does not exist anywhere in the schema or product.
+
+**Fresh discovery pass (this round), confirming the gap is real and total**:
+searched every table this packet's Finance-leg candidates could plausibly
+come from for anything resembling sign-off semantics —
+`roi_realized_values`/`kpi_time_series` both carry only a self-asserted
+`source` column; the one column anywhere in the schema with real approval
+semantics, `v8_roi_realization_entries.verified_by`, is written exclusively by
+a synthetic health-check probe, never a real user-facing flow;
+`initiative_benefits.actual_annual_value` is declared in the schema but never
+written by any code path. No hidden approval table, flag, or workflow exists
+under a different name either — this is a genuine, total product gap, not a
+naming mismatch this round could resolve by looking harder.
+
+**Corrected design** (`server/src/services/closureDeliveryReceiptService.ts`,
+commit `5d6784d25c`): `findMonetaryActualMeasurement` renamed to
+`findCandidateMonetaryMeasurement` — the function's OWN NAME now honestly
+describes what it returns: a candidate, never evidence of an approved fact.
+It drops the 180-day recency filter from its query entirely (age is no longer
+a gate of any kind — a stale candidate is exactly as valid/invalid as a fresh
+one, since neither is approved); the age is still computed and returned as a
+purely informational `ageDays` field. The Finance leg's caller no longer calls
+`recordExecutionRealization` under any circumstance and no longer writes
+`roi_realized_values` automatically, period. It ALWAYS terminates in
+`NEEDS_DECISION`, carrying `finance_payload.candidateMeasurementId` +
+`reason: 'MEASUREMENT_REQUIRES_APPROVAL'` when a candidate measurement
+exists (so a human can look it up and approve it through the EXISTING manual
+"Record Realization" flow — recordExecutionRealization itself is untouched,
+still fully usable by a human, just no longer auto-invoked by this packet),
+or `reason: 'NO_MONETARY_MEASUREMENT'` when none does. Building an actual
+approval/sign-off workflow (who can approve, what UI, what audit trail) is an
+explicit NEEDS_PRODUCT_DECISION for Piotr/Codex — out of scope for this
+packet, not silently built here.
+
+**Second, independent finding this round — Results-leg silent no-op**:
+`executionResultsBridge.ts`'s `handoffFromInitiativeFallback` (the no-KPI,
+`expected_roi`-driven path) queried `COALESCE(title, name)` — `initiatives`
+has never had a `title` column in this schema (confirmed: only `name`
+exists), so this query has ALWAYS thrown `column "title" does not exist`
+in this environment. Because the call site used `{ fallback: true }`
+(DbPromise's error-swallowing default), that error was silently absorbed and
+the query resolved to `null`, making the ENTIRE fallback path a permanent
+silent no-op — a real "planned KPIs or expected_roi, hand something off"
+case would report "nothing to hand off" and the closure receipt would mark
+`resultsStatus = 'DELIVERED'` without ever creating a benefit row. Confirmed
+via `git diff <base>..HEAD -- server/src/services/executionResultsBridge.ts`
+returning empty at the time of discovery: this bug is 100% pre-existing
+(EXE-08), not introduced by this packet, and was invisible to every prior
+round's tests because none of them asserted `resultsStatus` for this exact
+code path. Fixed (commit `0e07bf46ca`): the query now reads the real `name`
+column, and the call now uses `{ fallback: false }` so any FUTURE genuine
+error in this path throws instead of being swallowed — it propagates to
+`attemptDeliveryInternal`'s caller, which records a retryable `FAILED`
+status, never a false `DELIVERED`.
+
+**Defense-in-depth added alongside the direct fix** (same commit,
+`5d6784d25c`): a new `initiativeHadResultsSignal` check runs independently
+of `handoffFromClosure`'s own return value — if the initiative genuinely had
+a planned KPI target or a valid `expected_roi` (a real signal that SOMETHING
+should have been handed off) but the post-write read-back finds zero
+`initiative_benefits` rows, the Results leg now throws (recorded as a
+retryable `FAILED`) instead of accepting a false `DELIVERED`. This guards
+against this exact class of bug recurring from a DIFFERENT future cause, not
+just the specific `title` column.
+
+**Both fixes verified via the required negative-control exercise** (live,
+not committed): (1) the `title`-column bug was temporarily reintroduced
+(`COALESCE(title, name)` + `{ fallback: true }` restored) — the extended
+`BLOCKER2: expected_roi="20"...` test went red (Results leg correctly
+reported `FAILED` via the `initiativeHadResultsSignal` guard, proving BOTH
+fixes work together); reverted, confirmed green. (2) The Finance leg's
+auto-realize behavior was temporarily reintroduced (`finance_status` set to
+`'DELIVERED'` whenever a candidate existed) — 8 of the round-4-rewritten
+tests went red (golden flow, identical retry, both leg-independence tests,
+restart simulation, TARGET-VS-ACTUAL #5/#6, canonical NON-read-back);
+reverted, confirmed all 26 green again.
+
+**Test rewrite** (commit `6df1c59356`): every test whose premise was
+"a clean, currency-matched, observed measurement gets auto-realized" is
+rewritten to assert `NEEDS_DECISION` + `candidateMeasurementId` +
+`reason: 'MEASUREMENT_REQUIRES_APPROVAL'` instead. The round-3 canonical
+read-back test (which proved a realization DID appear through the real
+Benefits/ROI route) is renamed to "canonical NON-read-back" and now proves
+the honest inverse: a clean candidate measurement does NOT appear as a
+realized benefit through that same real route. New coverage added for the
+title-column fix: the existing `BLOCKER2` bare-numeric `expected_roi="20"`
+test now also asserts the no-KPI fallback path produces a REAL
+`initiative_benefits` row (`kpi_id IS NULL`) with `resultsStatus DELIVERED`;
+a new adjacent test confirms the genuinely-empty case (no KPI, no
+`expected_roi` at all) still correctly resolves `DELIVERED` with zero rows —
+distinguishing the legitimate empty state from the silent-no-op bug class
+just fixed.
+
+**Consequence worth stating plainly**: with no approval process in this
+codebase, the Finance leg of EVERY closure, for every initiative, will now
+ALWAYS resolve to `NEEDS_DECISION` — there is currently no code path,
+however clean the underlying data, that reaches `finance_status =
+'DELIVERED'` automatically. This is the correct, honest behavior per this
+round's review, not a regression — but it does mean the `ClosureSection.tsx`
+UI's "Delivered to Results & Finance" (`bothDelivered`) success state is
+presently unreachable in production. The UI itself needed no changes (it
+only reads `resultsStatus`/`financeStatus`, never payload internals, per the
+round-3 finding), but this is recorded here as an open, honest fact for
+whoever picks up the approval-workflow NEEDS_PRODUCT_DECISION.
+
 # ★★★★ Round-3 correction (Codex review, same date) — target vs. actual
 
 Round 2's Finance leg (below) resolved WHERE to write (canonical
