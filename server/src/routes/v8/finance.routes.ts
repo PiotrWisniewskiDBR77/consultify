@@ -107,8 +107,6 @@ import {
   withStatementUploadIdempotencyLock,
 } from '../../services/financialStatementService.js';
 import { saveStatementValuesFlow } from '../../services/financialStatementValueWriteService.js';
-import { createInitiative as funnelCreateInitiative } from '../../services/initiative/createInitiativeService.js';
-import { resolveInitiativeProjectId } from '../../services/initiativeProjectPolicyService.js';
 import {
   applyLlmProposals,
   applySecondPassProposals,
@@ -126,7 +124,6 @@ import { getFinanceDashboard } from '../../services/v8/financeIntegrationService
 import { listValuations } from '../../services/valuationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
-import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
@@ -2779,104 +2776,24 @@ router.get(
   })
 );
 
+// FIN-06 mandate: no direct Finance→Initiative creation ("Zakaz bezpośredniego
+// tworzenia Initiative przez Finance"). This endpoint used to write straight
+// into `initiatives` (either via `funnelCreateInitiative` or a raw INSERT,
+// depending on `INITIATIVE_FUNNEL_ENABLED`) from `financial_analysis_insights`
+// proposals — a source shape distinct from the three Finance source types
+// FIN-06 wires up (Investment Case / Statement Pack / Valuation
+// Recommendation), so giving it a proper Candidate pipeline is out of scope
+// here. Disabled fail-closed instead: it must never create an Initiative
+// again, regardless of the funnel flag.
 router.post(
   '/analyses/:analysisId/initiatives',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const userId = String(req.user?.id || '');
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const analysisId = String(req.params.analysisId || '');
-    const acceptedProposalIds = Array.isArray(req.body?.acceptedProposalIds)
-      ? (req.body.acceptedProposalIds as any[]).map((x) => String(x)).filter(Boolean)
-      : [];
-
-    if (acceptedProposalIds.length === 0) {
-      return res.status(400).json({ error: 'acceptedProposalIds is required' });
-    }
-
-    const analysis = await dbGet<any>(
-      `SELECT id, organization_id, project_id, title
-       FROM financial_analyses
-       WHERE id = ? AND organization_id = ?`,
-      [analysisId, organizationId]
-    );
-    if (!analysis) {
-      return res.status(404).json({ error: 'Not found' });
-    }
-
-    const placeholders = acceptedProposalIds.map(() => '?').join(',');
-    const insights = await dbAll<any>(
-      `SELECT id, insight_type, title, description
-       FROM financial_analysis_insights
-       WHERE analysis_id = ? AND id IN (${placeholders})`,
-      [analysisId, ...acceptedProposalIds]
-    );
-
-    const now = new Date().toISOString();
-    const created: string[] = [];
-
-    for (const insight of insights || []) {
-      // F15 (data-integrity, continuation of Z139): decode HTML entities the
-      // global sanitizer may have escaped before this feeds initiatives.name.
-      const name = decodeHtmlEntities(
-        String(insight.title || `Initiative from analysis ${analysisId.slice(0, 8)}`)
-      );
-      const summary = String(insight.description || '');
-
-      // Uspójnienie F1.4 — przez kanoniczny lejek (status→DRAFT zamiast legacy 'step3').
-      let initiativeId: string;
-      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
-        const __r = await funnelCreateInitiative(
-          organizationId,
-          {
-            title: name,
-            projectId: analysis.project_id || null,
-            summary: summary || null,
-            sourceType: 'financial_analysis',
-            sourceId: analysisId,
-          },
-          { validate: false, actor: { id: req.user?.id } }
-        );
-        initiativeId = __r.id;
-      } else {
-        initiativeId = uuidv4();
-        // D1 (Zwornik §9 Faza 3): live path (funnel flag off) — anchor to the
-        // portfolio project instead of persisting project_id NULL.
-        const anchoredProjectId = await resolveInitiativeProjectId(
-          organizationId,
-          analysis.project_id,
-          { createdBy: req.user?.id ?? null }
-        );
-        await dbRun(
-          `INSERT INTO initiatives (
-          id, organization_id, project_id, name, summary, status,
-          source_type, source_id,
-          created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            initiativeId,
-            organizationId,
-            anchoredProjectId,
-            name,
-            summary || null,
-            'step3',
-            'financial_analysis',
-            analysisId,
-            now,
-            now,
-          ]
-        );
-      }
-
-      created.push(initiativeId);
-    }
-
-    return res.status(201).json({
-      data: { success: true, initiativeIds: created },
-      meta: financeMeta(),
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    return res.status(410).json({
+      error:
+        'Direct Finance analysis -> Initiative creation has been disabled. Use the Candidate ' +
+        'handoff endpoints instead: for Investment-Case-shaped sources, ' +
+        'GET/POST /api/finance/candidate-handoff/investment-case/:modelId/{preview,confirm}.',
+      code: 'DIRECT_INITIATIVE_CREATION_DISABLED',
     });
   })
 );
