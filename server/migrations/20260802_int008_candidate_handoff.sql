@@ -31,6 +31,11 @@
 -- Fully additive + idempotent (safe to re-run / safe on a shared DB): only
 -- CREATE TABLE/INDEX IF NOT EXISTS.
 
+-- The active fresh-Postgres baseline lacks this legacy answer-contract field,
+-- while accepted Interview snapshots and their fixtures use it explicitly.
+ALTER TABLE IF EXISTS interview_questions
+    ADD COLUMN IF NOT EXISTS is_required INTEGER DEFAULT 0;
+
 CREATE TABLE IF NOT EXISTS public.interview_candidate_handoffs (
     id text DEFAULT (gen_random_uuid())::text NOT NULL PRIMARY KEY,
     organization_id text NOT NULL,

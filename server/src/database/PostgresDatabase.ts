@@ -3788,60 +3788,6 @@ export async function initDb(): Promise<void> {
   }
 }
 
-export interface PinnedTransactionClient {
-  queryAll<T = any>(sql: string, params?: unknown[]): Promise<T[]>;
-  queryOne<T = any>(sql: string, params?: unknown[]): Promise<T | null>;
-  queryRun(sql: string, params?: unknown[]): Promise<{ changes: number }>;
-}
-
-/**
- * Run a unit of work on one physical PostgreSQL connection.
- *
- * INT-08 integration note: this mirrors the identically-named/shaped helper
- * added on the ASM-05/06/07 lineage (commit a0dad7d024, "make quality review
- * atomic") verbatim — that lineage is not an ancestor of this branch (the
- * Interview runtime tip), so the helper doesn't exist here yet. Reintroduced
- * here rather than inventing a different transaction mechanism, so both
- * lineages share one proven pattern for "lock a row with SELECT ... FOR
- * UPDATE, do several statements on one pinned connection, commit/rollback
- * atomically."
- */
-export async function withPinnedPostgresTransaction<T>(
-  work: (tx: PinnedTransactionClient) => Promise<T>
-): Promise<T> {
-  const client = await getPool().connect();
-  const query = async <R>(sql: string, params: unknown[] = []) => {
-    const adaptedSql = adaptQuery(sql);
-    enforceReadOnly(adaptedSql);
-    const result = await client.query(adaptedSql, params);
-    return result as unknown as { rows: R[]; rowCount: number | null };
-  };
-  const tx: PinnedTransactionClient = {
-    queryAll: async <R>(sql: string, params: unknown[] = []) => (await query<R>(sql, params)).rows,
-    queryOne: async <R>(sql: string, params: unknown[] = []) =>
-      (await query<R>(sql, params)).rows[0] ?? null,
-    queryRun: async (sql: string, params: unknown[] = []) => ({
-      changes: (await query(sql, params)).rowCount ?? 0,
-    }),
-  };
-
-  try {
-    await client.query('BEGIN');
-    const result = await work(tx);
-    await client.query('COMMIT');
-    return result;
-  } catch (error) {
-    try {
-      await client.query('ROLLBACK');
-    } catch (rollbackError) {
-      logger.error('[Postgres] Transaction rollback failed', rollbackError);
-    }
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
 // Create database instance
 const db = new PostgresDatabase();
 
