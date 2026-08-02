@@ -553,7 +553,7 @@ describe('V8 finance read-only routes', () => {
         currency: 'PLN',
       })
     );
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
   });
 
   it('POST /models/:id/duplicate — stale source FK → kopiuje bez graftu (NIE 500) [BUG-09 regress]', async () => {
@@ -686,7 +686,7 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.model?.id).toBe('model-1');
     expect(res.body.data?.model?.source_statement_pack?.entity_name).toBe('Acme Sp. z o.o.');
     expect(res.body.data?.model?.events).toHaveLength(1);
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
     expect(mockListEvents).toHaveBeenCalledWith('model-1');
   });
 
@@ -718,7 +718,7 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data?.validations).toHaveLength(2);
     expect(res.body.data?.summary).toEqual({ total: 2, pass: 1, fail: 0, warning: 1 });
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
     expect(mockGetValidations).toHaveBeenCalledWith('model-1');
   });
 
@@ -757,8 +757,128 @@ describe('V8 finance read-only routes', () => {
       { lineCode: 'REV', lineName: 'Revenue', value: 100 },
       { lineCode: 'COGS', lineName: 'COGS', value: -40 },
     ]);
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
     expect(mockGetOutputs).toHaveBeenCalledWith('model-1', 'base');
+  });
+
+  describe('GET /api/v8/finance/models/:id/appraisal — FIN-005 round 8', () => {
+    const REAL_MODEL_EVENTS_PERIODS = {
+      // Real canonical Atelier FY2015/16/17 CF lines (verified against the
+      // actual expandEventToAmounts/computeModel arithmetic, not invented).
+      periods: [
+        { date: '2015-12-31', label: 'FY2015', pl: {}, bs: {}, cf: { OPERATING_CF: 2_400_000, INVESTING_CF: -800_000, FINANCING_CF: 0 } },
+        { date: '2016-12-31', label: 'FY2016', pl: {}, bs: {}, cf: { OPERATING_CF: 2_001_920, INVESTING_CF: 0, FINANCING_CF: 0 } },
+        { date: '2017-12-31', label: 'FY2017', pl: {}, bs: {}, cf: { OPERATING_CF: 2_003_841.536, INVESTING_CF: 0, FINANCING_CF: 0 } },
+      ],
+      validations: [],
+      overallStatus: 'pass',
+    };
+
+    it('requires discountRatePct — 400 without it, never calls computeModel', async () => {
+      mockGetModel.mockResolvedValue({ id: 'model-1', organization_id: ORG });
+
+      const app = createApp();
+      const res = await request(app).get('/api/v8/finance/models/model-1/appraisal');
+
+      expect(res.status).toBe(400);
+      expect(mockComputeModel).not.toHaveBeenCalled();
+    });
+
+    it('404s for a model belonging to another organization — never calls computeModel', async () => {
+      mockGetModel.mockResolvedValue({ id: 'model-1', organization_id: 'some-other-org' });
+
+      const app = createApp();
+      const res = await request(app)
+        .get('/api/v8/finance/models/model-1/appraisal')
+        .query({ discountRatePct: 10 });
+
+      expect(res.status).toBe(404);
+      expect(mockComputeModel).not.toHaveBeenCalled();
+    });
+
+    it('computes a real appraisal from computeModel() output — not hardcoded, hurdleRatePct defaults to discountRatePct', async () => {
+      mockGetModel.mockResolvedValue({ id: 'model-1', organization_id: ORG });
+      mockComputeModel.mockResolvedValue(REAL_MODEL_EVENTS_PERIODS);
+
+      const app = createApp();
+      const res = await request(app)
+        .get('/api/v8/finance/models/model-1/appraisal')
+        .query({ discountRatePct: 10 });
+
+      expect(res.status).toBe(200);
+      expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+      expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
+      expect(mockComputeModel).toHaveBeenCalledWith('model-1');
+
+      const { input, result, periodLabels } = res.body.data;
+      expect(input.initialInvestment).toBeCloseTo(800_000, 0);
+      expect(input.discountRatePct).toBe(10);
+      expect(input.hurdleRatePct).toBe(10); // defaulted, not required twice
+      expect(periodLabels).toEqual(['FY2015', 'FY2016', 'FY2017']);
+      expect(Number.isFinite(result.npv)).toBe(true);
+      expect(result.npv).not.toBe(1_820_000); // the unrelated hand-typed legacy figure
+      expect(['go', 'conditional', 'no-go']).toContain(result.verdict);
+    });
+
+    it('a different discountRatePct changes the result — the rate is a real parameter, not decoration', async () => {
+      mockGetModel.mockResolvedValue({ id: 'model-1', organization_id: ORG });
+      mockComputeModel.mockResolvedValue(REAL_MODEL_EVENTS_PERIODS);
+
+      const app = createApp();
+      const at5 = await request(app)
+        .get('/api/v8/finance/models/model-1/appraisal')
+        .query({ discountRatePct: 5 });
+      const at20 = await request(app)
+        .get('/api/v8/finance/models/model-1/appraisal')
+        .query({ discountRatePct: 20 });
+
+      expect(at5.body.data.result.npv).not.toBeCloseTo(at20.body.data.result.npv, 0);
+    });
+
+    it('reopen determinism: identical query twice gives byte-identical data', async () => {
+      mockGetModel.mockResolvedValue({ id: 'model-1', organization_id: ORG });
+      mockComputeModel.mockResolvedValue(REAL_MODEL_EVENTS_PERIODS);
+
+      const app = createApp();
+      const first = await request(app)
+        .get('/api/v8/finance/models/model-1/appraisal')
+        .query({ discountRatePct: 10 });
+      const second = await request(app)
+        .get('/api/v8/finance/models/model-1/appraisal')
+        .query({ discountRatePct: 10 });
+
+      expect(second.body.data).toEqual(first.body.data);
+    });
+
+    // Added by the FIN-005 opex-sign-regression task (server/src/services/__tests__/financialModelOpexSignRegression.test.ts)
+    // to cover assumptions_json-based rate resolution once the sibling agent's
+    // route change landed. NOTE: at the time this test was written, the route
+    // change (reading discountRatePct/hurdleRatePct from model.assumptions_json
+    // when no query param is given — see the "Rate resolution" doc comment
+    // above the handler, finance.routes.ts) had ALREADY landed in this shared
+    // worktree, so this test is GREEN, not the "expected red until it lands"
+    // placeholder originally anticipated. Kept as a permanent regression test
+    // for that behavior; the integrator should not mistake a red run here as
+    // this agent's own bug — if it's red, the route change may have moved.
+    it('falls back to model.assumptions_json.discountRatePct/hurdleRatePct when no query param is given', async () => {
+      mockGetModel.mockResolvedValue({
+        id: 'model-1',
+        organization_id: ORG,
+        assumptions_json: { discountRatePct: 15, hurdleRatePct: 15 },
+      });
+      mockComputeModel.mockResolvedValue(REAL_MODEL_EVENTS_PERIODS);
+
+      const app = createApp();
+      const res = await request(app).get('/api/v8/finance/models/model-1/appraisal');
+
+      expect(res.status).toBe(200);
+      expect(mockComputeModel).toHaveBeenCalledWith('model-1');
+
+      const { input, result } = res.body.data;
+      expect(input.discountRatePct).toBe(15);
+      expect(input.hurdleRatePct).toBe(15);
+      expect(Number.isFinite(result.npv)).toBe(true);
+    });
   });
 
   it('POST /api/v8/finance/models/:id/compute returns envelope and delegates to computeModel', async () => {
@@ -786,7 +906,7 @@ describe('V8 finance read-only routes', () => {
       periodCount: 2,
       validationSummary: { total: 2, pass: 1, fail: 0, warning: 1 },
     });
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
     expect(mockComputeModel).toHaveBeenCalledWith('model-1');
     expect(mockPersistComputeResult).toHaveBeenCalledWith(
       'model-1',
@@ -809,8 +929,10 @@ describe('V8 finance read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data).toEqual({ success: true, status: 'approved' });
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
-    expect(mockApproveModel).toHaveBeenCalledWith('model-1', UID);
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
+    expect(mockApproveModel).toHaveBeenCalledWith('model-1', UID, {
+      expectedVersion: undefined,
+    });
   });
 
   it('PUT /api/v8/finance/models/:id returns envelope and delegates to updateModel', async () => {
@@ -819,7 +941,7 @@ describe('V8 finance read-only routes', () => {
       organization_id: ORG,
       name: 'Revenue forecast',
     });
-    mockUpdateModel.mockResolvedValue(undefined);
+    mockUpdateModel.mockResolvedValue({ success: true });
 
     const app = createApp();
     const res = await request(app)
@@ -831,10 +953,12 @@ describe('V8 finance read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data).toEqual({ success: true });
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
-    expect(mockUpdateModel).toHaveBeenCalledWith('model-1', {
-      assumptions: { initialCash: 1000 },
-    });
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
+    expect(mockUpdateModel).toHaveBeenCalledWith(
+      'model-1',
+      { assumptions: { initialCash: 1000 } },
+      { expectedVersion: undefined }
+    );
   });
 
   it('POST /api/v8/finance/models/:id/events returns envelope and delegates to addEvent', async () => {
@@ -857,7 +981,7 @@ describe('V8 finance read-only routes', () => {
     expect(res.status).toBe(201);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data).toEqual({ success: true, id: 'event-1' });
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
     expect(mockAddEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         modelId: 'model-1',
@@ -903,7 +1027,7 @@ describe('V8 finance read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data).toEqual({ success: true, deleted: 'model-1' });
-    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
     expect(mockDbRun).toHaveBeenCalledTimes(4);
     expect(mockDbRun).toHaveBeenNthCalledWith(
       1,
@@ -1478,7 +1602,7 @@ describe('V8 finance read-only routes', () => {
     expect(mockListBudgets).toHaveBeenCalledWith(ORG);
   });
 
-  it('POST /api/v8/finance/budgets creates a budget and returns 200', async () => {
+  it('POST /api/v8/finance/budgets creates a budget and returns 201', async () => {
     mockCreateBudget.mockResolvedValue({
       id: 'budget-created',
       organizationId: ORG,
@@ -1495,7 +1619,9 @@ describe('V8 finance read-only routes', () => {
       periodStart: '2026-01-01',
       periodEnd: '2026-12-31',
     });
-    expect(res.status).toBe(200);
+    // finance.routes.ts:982 explicitly returns 201 (standard REST for a
+    // creation endpoint) — this test's expectation of 200 was simply wrong.
+    expect(res.status).toBe(201);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data?.budget?.id).toBe('budget-created');
     expect(mockCreateBudget).toHaveBeenCalledWith(

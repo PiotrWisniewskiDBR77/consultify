@@ -549,6 +549,37 @@ export async function withPinnedPostgresTransaction<T>(
   }
 }
 
+/**
+ * Check out a DEDICATED `pg` connection from the primary pool.
+ *
+ * WHY THIS EXPORT EXISTS (FIN-005). `DbPromise` — the only database API the
+ * services layer uses — routes every statement through `pool.query()`, which
+ * picks an arbitrary idle connection per call, and its `transaction()` helper
+ * takes a fixed list of SQL strings and never yields a connection handle. A
+ * `BEGIN` / `COMMIT` pair issued through that API is therefore not guaranteed
+ * to land on the same backend, so a "transaction" built from it is not one.
+ * The Atelier Finance demo seed promotes five rows to READY and must do so
+ * atomically, which needs a PINNED connection: `BEGIN`, `SELECT … FOR UPDATE`,
+ * the writes, the verifying read-back and `COMMIT`/`ROLLBACK` all on one
+ * client. `getPool()` is module-private, so this is the single, narrowly named
+ * door to it.
+ *
+ * CONTRACT. The caller OWNS the returned client and MUST `release()` it in a
+ * `finally` — this function does not, and cannot, do that for you. It performs
+ * no `BEGIN`; transaction control is entirely the caller's. It awaits the lazy
+ * schema initialisation exactly like `executeWithLogging` does, so the client
+ * is not handed out before the schema promise settles.
+ *
+ * Intended for one caller (`atelierFinancePromotionTransaction.ts`). Do not
+ * widen this into a general "give me a connection" utility — routes and
+ * services should keep going through `DbPromise`.
+ */
+export async function getPoolClientForPinnedTransaction(): Promise<PoolClient> {
+  const activePool = getPool();
+  if (initDbPromise) await initDbPromise;
+  return activePool.connect();
+}
+
 function getReadPool(): Pool {
   if (readPool) return readPool;
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -53,6 +53,35 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
       .catch(() => setSources({ budgets: [], financialModels: [], financialAnalyses: [] }));
   }, []);
 
+  /**
+   * FIN-005: the currency was hardcoded 'PLN'. A valuation built ON a EUR
+   * source (the Atelier FY2014 model/analysis) was stored and displayed as
+   * zlotys, contradicting the source it is derived from. Inherit the source's
+   * currency; 'PLN' stays only as the fallback for a manual/uncurrencied source.
+   *
+   * This lookup lives in RENDER scope on purpose. `sources` is filled by an
+   * async fetch after the first render, so resolving it inside the submit
+   * callback made the value a closure dependency. When FinanceHub opens the
+   * modal pre-seeded (`initialSourceType` / `initialSourceId` / `initialTitle`
+   * — "create a valuation from THIS model"), nothing in the callback's
+   * dependency list changes between mount and submit, so the first-render
+   * callback survived, `find()` ran against the still-empty arrays, and the
+   * payload silently fell back to 'PLN' — reinstating the exact bug this code
+   * removes, while reading as if it were fixed. Derived at render, the value
+   * cannot go stale regardless of the dependency list below.
+   */
+  const sourceCurrency = useMemo(() => {
+    const selectedSource =
+      sourceType === 'financial_model'
+        ? sources.financialModels.find((item: any) => String(item.id) === sourceId)
+        : sourceType === 'financial_analysis'
+          ? sources.financialAnalyses.find((item: any) => String(item.id) === sourceId)
+          : sourceType === 'budget'
+            ? sources.budgets.find((item: any) => String(item.id) === sourceId)
+            : null;
+    return String((selectedSource as any)?.currency || '').trim();
+  }, [sourceType, sourceId, sources]);
+
   const handleCreate = useCallback(async () => {
     if (!title.trim()) return;
     if (sourceType !== 'manual' && !sourceId) {
@@ -66,7 +95,7 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
         sourceType,
         sourceId: sourceType === 'manual' ? null : sourceId,
         horizonYears,
-        currency: 'PLN',
+        currency: sourceCurrency || 'PLN',
       });
       const created = result as any;
       toast.success(t('finance.toast.valuationCreated', 'Valuation created'));
@@ -77,7 +106,7 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
         status: normalizeStatus(created.status),
         sourceType: String(created.sourceType || created.source_type || sourceType),
         method: 'DCF',
-        currency: String(created.currency || 'PLN'),
+        currency: String(created.currency || sourceCurrency || 'PLN'),
         horizonYears: Number(created.horizonYears ?? created.horizon_years ?? horizonYears),
         updatedAt: String(created.updated_at || new Date().toISOString()),
       });
@@ -86,7 +115,7 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
     } finally {
       setCreating(false);
     }
-  }, [title, sourceType, sourceId, horizonYears, onCreated, t]);
+  }, [title, sourceType, sourceId, sourceCurrency, horizonYears, onCreated, t]);
 
   return (
     <div className="fixed inset-0 z-overlay bg-black/40 flex items-center justify-center p-4">

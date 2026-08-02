@@ -735,6 +735,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       message: string;
     }>
   >([]);
+  // FIN-006/A O2: real currency for the portfolio budget, sourced from
+  // executionBudgetService via V8ExecutionControlApi.getBudgetPortfolio
+  // (server already resolves it from initiatives.budget_currency). Replaces
+  // the "PLN" literal previously hardcoded on the Summary One-Look call below.
+  const [portfolioBudgetCurrency, setPortfolioBudgetCurrency] = useState<string | null>(null);
   const [isLoadingControlSignals, setIsLoadingControlSignals] = useState(false);
   const [timelineWarnings, setTimelineWarnings] = useState<GovernedTimelineWarning[]>([]);
   const [timelineWarningTotal, setTimelineWarningTotal] = useState(0);
@@ -1220,11 +1225,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         setOverspendSignals([]);
       }
     };
+    const loadBudgetCurrency = async () => {
+      try {
+        const resp = await V8ExecutionControlApi.getBudgetPortfolio(currentProjectId || undefined);
+        setPortfolioBudgetCurrency(resp?.summary?.currency ?? null);
+      } catch {
+        // non-blocking: ExecutionSummaryOneLook falls back to its own default
+        setPortfolioBudgetCurrency(null);
+      }
+    };
     setIsLoadingControlSignals(true);
     void Promise.allSettled([
       loadRiskSignals(),
       loadDelaySignals(),
       loadOverspendSignals(),
+      loadBudgetCurrency(),
     ]).finally(() => setIsLoadingControlSignals(false));
   }, [currentProjectId, executionTruthRefreshKey]);
 
@@ -5493,7 +5508,7 @@ Please return:
           topRisks={summaryOneLookProps.topRisks}
           decisions={summaryOneLookProps.decisions}
           milestones={summaryOneLookProps.milestones}
-          currency="PLN"
+          currency={portfolioBudgetCurrency ?? undefined}
           isPolish={isPolish}
           generatedAt={summaryOneLookProps.generatedAt}
           onOpenEntity={(type, id) => {

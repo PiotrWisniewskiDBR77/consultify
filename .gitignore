@@ -199,6 +199,15 @@ coverage/.tmp
 
 # Export artifacts
 server/exports/
+# Generated operator reports/manifests. `server/exports/` alone was not enough:
+# exportsDir() resolves 'server/exports' against process.cwd(), so running a
+# script from inside server/ wrote to server/server/exports/ and slipped past
+# the ignore. The path bug is fixed too; this line is the belt to that braces.
+**/server/exports/
+# FIN-005 operator holds. Without STORAGE_DIR these land in the CWD, and a
+# leftover hold legitimately BLOCKS the next seed run (that is the point).
+# They must never be committed, and never be mistaken for source.
+fin005-operator-holds/
 /exports/
 
 # Local generated reports (one-off runtime/route reports)

@@ -34,6 +34,8 @@ interface LinkedAnalysis {
   createdAt: string;
   npv?: number | null;
   roi?: number | null;
+  /** FIN-006/A O2: from GET /api/economics/analyses/:id/financials → currency. */
+  currency?: string | null;
 }
 
 interface InitiativeData {
@@ -49,13 +51,17 @@ interface InitiativeData {
 interface InitiativeFinancialIntegrationProps {
   initiative: InitiativeData;
   onNavigateToAnalysis?: (analysisId: string) => void;
+  /** Last-resort fallback only — the real value is read from the linked
+   * analysis's own currency (analysis_financials.currency) once loaded. */
   currency?: string;
 }
 
 export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegrationProps> = ({
   initiative,
   onNavigateToAnalysis,
-  currency = 'PLN',
+  // FIN-006/A O2: EUR (not PLN) is the neutral last-resort default — same
+  // reasoning as economics.routes.ts and FullROIView.tsx.
+  currency = 'EUR',
 }) => {
   const [linkedAnalysis, setLinkedAnalysis] = useState<LinkedAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,6 +90,10 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
               // Calculate NPV/ROI if financials exist
               fullAnalysis.npv = financials.npv || null;
               fullAnalysis.roi = financials.roi || null;
+              // FIN-006/A O2: thread the real currency through from
+              // analysis_financials.currency instead of leaving the display
+              // stuck on the `currency` prop's static default.
+              fullAnalysis.currency = financials.currency || null;
             }
           } catch (e) {
             // Financials may not exist yet
@@ -163,9 +173,13 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
 
   const formatCurrency = (value: number | null | undefined) => {
     if (value === null || value === undefined) return '—';
+    // FIN-006/A O2: prefer the linked analysis's own currency (real data
+    // from analysis_financials.currency); the `currency` prop is only a
+    // last-resort fallback for when no analysis has loaded yet.
+    const effectiveCurrency = linkedAnalysis?.currency || currency;
     return new Intl.NumberFormat('pl-PL', {
       style: 'currency',
-      currency,
+      currency: effectiveCurrency,
       maximumFractionDigits: 0,
     }).format(value);
   };

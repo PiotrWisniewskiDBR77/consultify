@@ -133,6 +133,28 @@ const ORG_ID = 'demo-atelier-idempotency-test';
 // Fixed anchor so any relative-date materialization is identical across runs.
 const ANCHOR = '2026-06-01T00:00:00.000Z';
 
+/**
+ * Tables written by process-global, memoized infrastructure rather than by the
+ * tenant seed itself.
+ *
+ * `financial_statement_lines` holds the canonical line registry — org-agnostic
+ * system rows (`organization_id = NULL`) shared by every tenant. The Atelier
+ * Finance seed calls `ensureCanonicalRegistryInDatabase()` to guarantee the FK
+ * target exists, and that helper memoizes per process (`lastVerifiedVersion`),
+ * so it writes on the first call and correctly no-ops afterwards. Run #2 of the
+ * seed therefore touches this table zero times.
+ *
+ * That is the desired behaviour, not drift: skipping it here keeps the
+ * idempotency contract asserted over the rows the seed actually owns.
+ */
+const PROCESS_MEMOIZED_TABLES = new Set(['financial_statement_lines']);
+
+function tenantTables(run: 1 | 2): Set<string> {
+  return new Set(
+    writes.filter((w) => w.run === run && !PROCESS_MEMOIZED_TABLES.has(w.table)).map((w) => w.table)
+  );
+}
+
 function idsFor(run: 1 | 2, table: string): Set<string> {
   return new Set(
     writes
@@ -151,9 +173,9 @@ describe('Atelier Toys canonical seed idempotency', () => {
   });
 
   it('run #2 targets exactly the same stable ids as run #1 (no duplicates, no drift)', () => {
-    const run1Tables = new Set(writes.filter((w) => w.run === 1).map((w) => w.table));
-    const run2Tables = new Set(writes.filter((w) => w.run === 2).map((w) => w.table));
-    // Both runs touch the same set of tables.
+    const run1Tables = tenantTables(1);
+    const run2Tables = tenantTables(2);
+    // Both runs touch the same set of tenant tables.
     expect([...run2Tables].sort()).toEqual([...run1Tables].sort());
 
     for (const table of run1Tables) {

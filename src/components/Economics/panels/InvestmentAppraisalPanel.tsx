@@ -12,8 +12,24 @@
  *
  * Fail-soft: a request error degrades to a quiet inline notice, never throws.
  * Tests inject a `fetcher` instead of hitting `Api`.
+ *
+ * FIN-005 round 8 — MODEL-BOUND MODE. Pass `modelId` to switch this from the
+ * standalone what-if calculator into a read-only view of ONE financial
+ * model's canonical appraisal: it fetches
+ * `GET /v8/finance/models/:modelId/appraisal` on mount (no "Oblicz" click —
+ * there is nothing to edit, the cash flows come from the model's own
+ * `financial_model_events`, not from user input) and hides the editable
+ * cash-flow/discount-rate controls. Reopening (re-mounting with the same
+ * `modelId`) re-fetches and recomputes from the same stored events, so the
+ * result is byte-identical run to run — see
+ * `financialModelAppraisalAdapter.ts` on the server for why.
+ *
+ * NOT YET MOUNTED on any live screen (`FinancialModelWorkspace.tsx` or
+ * elsewhere) — see FIN-005 round-8 report §UI. This is the tested, working
+ * capability; mounting it is a separate step gated by the project's own
+ * visual-acceptance process.
  */
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { BulletChart } from '@/components/Economics/charts';
 import { Api } from '@/services/api';
@@ -36,6 +52,12 @@ export interface AppraisalRequest {
   hurdleRatePct: number;
 }
 
+export interface ModelAppraisalResponse {
+  input: { cashflows: number[]; initialInvestment: number; discountRatePct: number; hurdleRatePct: number };
+  result: AppraisalResult;
+  periodLabels: string[];
+}
+
 interface Props {
   /** Seed cash-flow series; first negative entry is treated as the initial outlay. */
   initialCashFlows?: number[];
@@ -43,6 +65,14 @@ interface Props {
   discountRatePct?: number;
   /** Allow tests / callers to inject a fetcher. */
   fetcher?: (req: AppraisalRequest) => Promise<AppraisalResult>;
+  /**
+   * FIN-005 round 8 — switches to MODEL-BOUND MODE (see module doc). When
+   * set, `initialCashFlows`/`fetcher` are ignored: the panel fetches this
+   * model's canonical appraisal instead of running the editable calculator.
+   */
+  modelId?: string;
+  /** Allow tests to inject the model-bound fetcher without hitting `Api`. */
+  modelFetcher?: (modelId: string, rates: { discountRatePct: number; hurdleRatePct: number }) => Promise<ModelAppraisalResponse>;
 }
 
 const DEFAULT_CASHFLOWS = [-1000, 400, 400, 400, 400];
@@ -57,6 +87,19 @@ const defaultFetcher = async (req: AppraisalRequest): Promise<AppraisalResult> =
   // { data: <body> }, so the result is res.data.data (with sane fallbacks).
   const body = res?.data ?? res;
   return (body?.data ?? body) as AppraisalResult;
+};
+
+const defaultModelFetcher = async (
+  modelId: string,
+  rates: { discountRatePct: number; hurdleRatePct: number }
+): Promise<ModelAppraisalResponse> => {
+  const query = new URLSearchParams({
+    discountRatePct: String(rates.discountRatePct),
+    hurdleRatePct: String(rates.hurdleRatePct),
+  });
+  const res: any = await Api.get(`/v8/finance/models/${encodeURIComponent(modelId)}/appraisal?${query}`);
+  const body = res?.data ?? res;
+  return (body?.data ?? body) as ModelAppraisalResponse;
 };
 
 const VERDICT_STYLE: Record<AppraisalVerdict, string> = {
@@ -98,7 +141,10 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
   initialCashFlows,
   discountRatePct,
   fetcher,
+  modelId,
+  modelFetcher,
 }) => {
+  const bound = Boolean(modelId);
   const [cashflows, setCashflows] = useState<number[]>(
     initialCashFlows && initialCashFlows.length > 0 ? initialCashFlows : DEFAULT_CASHFLOWS
   );
@@ -106,8 +152,38 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
     typeof discountRatePct === 'number' ? discountRatePct : 10
   );
   const [result, setResult] = useState<AppraisalResult | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [periodLabels, setPeriodLabels] = useState<string[]>([]);
+  const [loading, setLoading] = useState(bound);
   const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!modelId) return;
+    let cancelled = false;
+    const rate = typeof discountRatePct === 'number' ? discountRatePct : 10;
+    setLoading(true);
+    setFailed(false);
+    (modelFetcher ?? defaultModelFetcher)(modelId, { discountRatePct: rate, hurdleRatePct: rate })
+      .then((res) => {
+        if (cancelled) return;
+        setResult(res?.result ?? null);
+        setPeriodLabels(res?.periodLabels ?? []);
+        setFailed(!res?.result);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setResult(null);
+        setFailed(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Re-fetches (and gets a byte-identical result — see module doc) whenever
+    // the bound model or rate changes; NOT on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modelId, discountRatePct, modelFetcher]);
 
   const updateFlow = useCallback((idx: number, raw: string) => {
     const next = Number(raw);
@@ -197,67 +273,85 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
           Analiza inwestycyjna (NPV/IRR/payback)
         </h3>
         <p className="mt-0.5 text-xs text-c-text-muted">
-          Wprowadź przepływy pieniężne (pierwszy ujemny = nakład początkowy) i stopę dyskontową.
+          {bound
+            ? 'Kanoniczny model — przepływy pochodzą z prognozy modelu, nie do edycji.'
+            : 'Wprowadź przepływy pieniężne (pierwszy ujemny = nakład początkowy) i stopę dyskontową.'}
         </p>
       </div>
 
-      {/* Inputs: cash-flow series */}
-      <div className="mb-3 flex flex-wrap items-end gap-2" data-testid="appraise-cashflows">
-        {cashflows.map((cf, idx) => (
-          <label key={idx} className="flex flex-col text-[11px] text-c-text-muted">
-            <span className="mb-0.5">{idx === 0 ? 'T0 (nakład)' : `Rok ${idx}`}</span>
-            <span className="flex items-center gap-1">
+      {!bound && (
+        <>
+          {/* Inputs: cash-flow series */}
+          <div className="mb-3 flex flex-wrap items-end gap-2" data-testid="appraise-cashflows">
+            {cashflows.map((cf, idx) => (
+              <label key={idx} className="flex flex-col text-[11px] text-c-text-muted">
+                <span className="mb-0.5">{idx === 0 ? 'T0 (nakład)' : `Rok ${idx}`}</span>
+                <span className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    value={Number.isFinite(cf) ? cf : 0}
+                    onChange={(e) => updateFlow(idx, e.target.value)}
+                    className="w-20 rounded border border-c-border bg-c-surface px-1.5 py-1 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+                    aria-label={idx === 0 ? 'Nakład początkowy' : `Przepływ rok ${idx}`}
+                  />
+                  {cashflows.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => removePeriod(idx)}
+                      className="text-c-text-muted hover:text-c-danger"
+                      aria-label={`Usuń okres ${idx}`}
+                    >
+                      ×
+                    </button>
+                  )}
+                </span>
+              </label>
+            ))}
+            <button
+              type="button"
+              onClick={addPeriod}
+              className="rounded border border-dashed border-c-border px-2 py-1 text-xs text-c-text-secondary hover:border-c-focus hover:text-c-text"
+            >
+              + okres
+            </button>
+          </div>
+
+          {/* Inputs: discount rate + compute */}
+          <div className="mb-3 flex items-end gap-3">
+            <label className="flex flex-col text-[11px] text-c-text-muted">
+              <span className="mb-0.5">Stopa dyskontowa (%)</span>
               <input
                 type="number"
-                value={Number.isFinite(cf) ? cf : 0}
-                onChange={(e) => updateFlow(idx, e.target.value)}
-                className="w-20 rounded border border-c-border bg-c-surface px-1.5 py-1 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
-                aria-label={idx === 0 ? 'Nakład początkowy' : `Przepływ rok ${idx}`}
+                value={discountRate}
+                onChange={(e) => setDiscountRate(Number(e.target.value) || 0)}
+                className="w-24 rounded border border-c-border bg-c-surface px-1.5 py-1 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+                aria-label="Stopa dyskontowa"
               />
-              {cashflows.length > 2 && (
-                <button
-                  type="button"
-                  onClick={() => removePeriod(idx)}
-                  className="text-c-text-muted hover:text-c-danger"
-                  aria-label={`Usuń okres ${idx}`}
-                >
-                  ×
-                </button>
-              )}
-            </span>
-          </label>
-        ))}
-        <button
-          type="button"
-          onClick={addPeriod}
-          className="rounded border border-dashed border-c-border px-2 py-1 text-xs text-c-text-secondary hover:border-c-focus hover:text-c-text"
-        >
-          + okres
-        </button>
-      </div>
+            </label>
+            <button
+              type="button"
+              onClick={() => void compute()}
+              disabled={loading}
+              className="rounded-xl border border-c-border bg-c-surface-raised px-3.5 py-2 text-xs font-medium text-c-text transition hover:border-c-focus disabled:opacity-50"
+              data-testid="appraise-compute"
+            >
+              {loading ? 'Liczę…' : 'Oblicz'}
+            </button>
+          </div>
+        </>
+      )}
 
-      {/* Inputs: discount rate + compute */}
-      <div className="mb-3 flex items-end gap-3">
-        <label className="flex flex-col text-[11px] text-c-text-muted">
-          <span className="mb-0.5">Stopa dyskontowa (%)</span>
-          <input
-            type="number"
-            value={discountRate}
-            onChange={(e) => setDiscountRate(Number(e.target.value) || 0)}
-            className="w-24 rounded border border-c-border bg-c-surface px-1.5 py-1 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
-            aria-label="Stopa dyskontowa"
-          />
-        </label>
-        <button
-          type="button"
-          onClick={() => void compute()}
-          disabled={loading}
-          className="rounded-xl border border-c-border bg-c-surface-raised px-3.5 py-2 text-xs font-medium text-c-text transition hover:border-c-focus disabled:opacity-50"
-          data-testid="appraise-compute"
-        >
-          {loading ? 'Liczę…' : 'Oblicz'}
-        </button>
-      </div>
+      {bound && loading && (
+        <p className="mb-3 text-xs text-c-text-muted" data-testid="appraise-loading">
+          Liczę…
+        </p>
+      )}
+
+      {bound && !loading && periodLabels.length > 0 && (
+        <p className="mb-3 text-[11px] text-c-text-muted" data-testid="appraise-period-labels">
+          Okresy: {periodLabels.join(' · ')}
+        </p>
+      )}
 
       {failed && (
         <p className="text-sm text-c-text-muted" data-testid="appraise-failed">

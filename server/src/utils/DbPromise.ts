@@ -77,6 +77,38 @@ interface DbLogger {
 const DEFAULT_TIMEOUT = Number(process.env.DB_QUERY_TIMEOUT) || 15000;
 
 // ==========================================
+// SINGLE-SETTLEMENT GUARD
+// ==========================================
+
+interface SettleGuard {
+  /**
+   * Marks the query as settled and reports whether the caller won the race.
+   * Returns `true` exactly once per query; every later caller gets `false`
+   * and must return immediately without logging, recording metrics or
+   * touching resolve/reject.
+   */
+  claim: () => boolean;
+}
+
+/**
+ * A query settles exactly once: either the driver callback fires, or the
+ * timeout does. Whichever loses the race must be completely inert — the
+ * promise itself would silently swallow a second resolve/reject, but the
+ * surrounding code also logs and calls `recordQueryPerformance`, and those
+ * side effects must not double-fire.
+ */
+function createSettleGuard(): SettleGuard {
+  let settled = false;
+  return {
+    claim: (): boolean => {
+      if (settled) return false;
+      settled = true;
+      return true;
+    },
+  };
+}
+
+// ==========================================
 // PLACEHOLDER TRANSLATION
 // ==========================================
 
@@ -177,8 +209,11 @@ export function all<T = any>(
   const startedAt = Date.now();
 
   return new Promise<T[]>((resolve, reject) => {
+    const guard = createSettleGuard();
+
     // Timeout protection
     const timeoutId = setTimeout(() => {
+      if (!guard.claim()) return;
       recordQueryPerformance('all', Date.now() - startedAt);
       dbLogger.warn('Query timeout', { sql: sql.substring(0, 100), timeout });
       if (fallback) {
@@ -191,6 +226,7 @@ export function all<T = any>(
     try {
       db.all(sql, params, (err: Error | null, rows: unknown[]) => {
         clearTimeout(timeoutId);
+        if (!guard.claim()) return;
         recordQueryPerformance('all', Date.now() - startedAt);
 
         if (err) {
@@ -221,6 +257,7 @@ export function all<T = any>(
       });
     } catch (error: unknown) {
       clearTimeout(timeoutId);
+      if (!guard.claim()) return;
       recordQueryPerformance('all', Date.now() - startedAt);
       const err = error as Error;
 
@@ -290,7 +327,10 @@ export function get<T = any>(
   const startedAt = Date.now();
 
   return new Promise<T | null>((resolve, reject) => {
+    const guard = createSettleGuard();
+
     const timeoutId = setTimeout(() => {
+      if (!guard.claim()) return;
       recordQueryPerformance('get', Date.now() - startedAt);
       dbLogger.warn('Query timeout', { sql: sql.substring(0, 100), timeout });
       if (fallback) {
@@ -303,6 +343,7 @@ export function get<T = any>(
     try {
       db.get(sql, params, (err: Error | null, row: unknown) => {
         clearTimeout(timeoutId);
+        if (!guard.claim()) return;
         recordQueryPerformance('get', Date.now() - startedAt);
 
         if (err) {
@@ -319,6 +360,7 @@ export function get<T = any>(
       });
     } catch (error: unknown) {
       clearTimeout(timeoutId);
+      if (!guard.claim()) return;
       recordQueryPerformance('get', Date.now() - startedAt);
       const err = error as Error;
       dbLogger.error('Query exception', {
@@ -373,17 +415,23 @@ export function run(
   const startedAt = Date.now();
 
   return new Promise<RunResult>((resolve, reject) => {
+    const guard = createSettleGuard();
+
     const timeoutId = setTimeout(() => {
+      if (!guard.claim()) return;
       recordQueryPerformance('run', Date.now() - startedAt);
       dbLogger.warn('Statement timeout', { sql: sql.substring(0, 100), timeout });
       if (fallback) {
         resolve({ success: false, error: 'timeout' });
+      } else {
+        reject(new Error(`Database query timeout after ${timeout}ms`));
       }
     }, timeout);
 
     try {
       db.run(sql, params, function (this: { lastID?: number; changes: number }, err: Error | null) {
         clearTimeout(timeoutId);
+        if (!guard.claim()) return;
         recordQueryPerformance('run', Date.now() - startedAt);
 
         if (err) {
@@ -407,6 +455,7 @@ export function run(
       });
     } catch (error: unknown) {
       clearTimeout(timeoutId);
+      if (!guard.claim()) return;
       recordQueryPerformance('run', Date.now() - startedAt);
       const err = error as Error;
       dbLogger.error('Statement exception', {

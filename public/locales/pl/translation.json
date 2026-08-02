@@ -19558,10 +19558,17 @@
     },
     "valueOffice": {
       "title": "Value Office — motor wartości transformacji",
-      "failed": "Motor wartości chwilowo niedostępny — kokpit działa normalnie.",
+      "failed": {
+        "title": "Nie udało się policzyć mostu wartości i portfela decyzyjnego",
+        "body": "Reszta kokpitu działa. Ta sekcja nie pokazuje wyniku — nie traktuj jej jako wykonanej kalkulacji."
+      },
       "empty": {
         "title": "Brak inicjatyw do pokazania",
         "body": "Motor wartości korzysta z inicjatyw organizacji (ich wartości, etapu, NPV i ryzyka). Dodaj lub powiąż inicjatywy, aby zobaczyć tu most wartości i portfel decyzyjny."
+      },
+      "blockedByDemo": {
+        "title": "Most wartości i portfel decyzyjny są niedostępne w trybie demo",
+        "body": "Workspace demo jest tylko do odczytu i blokuje zapytanie do motoru wartości. Reszta kokpitu działa, ale ta część historii wartości nie jest pokazana — nie traktuj jej jako wykonanej kalkulacji."
       }
     },
     "driverPlanner": {

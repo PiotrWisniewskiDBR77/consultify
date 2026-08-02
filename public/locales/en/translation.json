@@ -19090,10 +19090,17 @@
     },
     "valueOffice": {
       "title": "Value Office — transformation value engine",
-      "failed": "Value engine temporarily unavailable — the cockpit works normally.",
+      "failed": {
+        "title": "Value bridge and decision portfolio could not be calculated",
+        "body": "The rest of the cockpit is unaffected. This section shows no result — do not read it as a completed calculation."
+      },
       "empty": {
         "title": "No initiatives to show yet",
         "body": "The value engine draws on the organization’s initiatives (their value, stage, NPV and risk). Add or link initiatives to see the value bridge and decision portfolio here."
+      },
+      "blockedByDemo": {
+        "title": "Value bridge and decision portfolio are not available in demo mode",
+        "body": "The read-only demo workspace blocks the value engine request. The rest of the cockpit is unaffected, but this part of the value story is not shown — do not read it as a completed calculation."
       }
     },
     "driverPlanner": {

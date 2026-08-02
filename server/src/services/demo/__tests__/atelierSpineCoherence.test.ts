@@ -193,6 +193,22 @@ describe('Atelier Toys demo spine coherence', () => {
     expect(ids).toContain(`${ORG_ID}--initiative--atelier-digital-growth`);
   });
 
+  it('FIN-006/A — every seeded initiative is EUR, matching Finance (never the schema default PLN)', () => {
+    // migrations/564_execution_delay_budget_t041_t042.sql:139 defaults
+    // `initiatives.budget_currency` to 'PLN'. Before FIN-006/A this column was
+    // never set by the seed, so it silently inherited that default while
+    // Finance (FIN-005) reports the same Atelier program in EUR. This test
+    // fails red the moment the seed stops setting it explicitly, since
+    // `columnExists` is mocked `true` here — the omission itself, not a
+    // missing column, was the whole bug.
+    const initiatives = rowsFor('initiatives');
+    expect(initiatives.length).toBeGreaterThan(0);
+    for (const initiative of initiatives) {
+      expect(initiative.budget_currency, String(initiative.id)).toBe('EUR');
+      expect(initiative.budget_currency, String(initiative.id)).not.toBe('PLN');
+    }
+  });
+
   it('stage 03 — seeds >=5 interviews with completed status', () => {
     const interviews = rowsFor('interview_sessions');
     expect(interviews.length).toBeGreaterThanOrEqual(5);

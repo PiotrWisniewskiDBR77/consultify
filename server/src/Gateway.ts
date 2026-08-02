@@ -4,6 +4,7 @@ import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
 import verifyToken, { validateOrgMembership } from './middleware/auth.middleware.js';
 import { betaGate, createBetaGate } from './middleware/betaGate.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
+import { isStatelessComputeDemoRoute } from './routes/v8/financeValueDemoAllowlist.js';
 import { deprecationHeader } from './middleware/deprecationHeader.middleware.js';
 import { highRiskSurfaceGuard } from './middleware/highRiskSurfaceGuard.middleware.js';
 import { requireInternalToolsAccess } from './middleware/internalTools.middleware.js';
@@ -422,13 +423,25 @@ export class ApiGateway {
       // Demo Mode middleware - switches context and protects against writes.
       // Mount immediately after logging so all gateway routes share the same boundary.
       app.use(demoContextMiddleware);
-      app.use(
-        demoWriteProtection({
+      {
+        const demoWriteGuard = demoWriteProtection({
           // Demo onboarding/status endpoints must remain writable/readable enough
           // to enter and leave demo mode; auth routes handle login/logout.
           allowedRoutes: ['/api/demo/', '/api/auth/'],
-        })
-      );
+        });
+        // FIN-006/B: the V8 Finance value layer is stateless compute exposed over
+        // POST because its input is a JSON body, not because it persists anything.
+        // Exempting it by EXACT path + method (not the guard's own prefix match)
+        // keeps this from ever covering a future sibling route by accident.
+        // Audit and rationale: routes/v8/financeValueDemoAllowlist.ts.
+        app.use((req, res, next) => {
+          const pathname = String(req.originalUrl || req.url || '')
+            .split('?')[0]
+            .split('#')[0];
+          if (isStatelessComputeDemoRoute(req.method, pathname)) return next();
+          return demoWriteGuard(req, res, next);
+        });
+      }
 
       // TypeScript routes (migrated)
       logger.info('[ApiGateway] Mounting /api/auth');

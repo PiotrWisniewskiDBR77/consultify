@@ -6,6 +6,11 @@ import {
   getCanonicalStatementTypes,
 } from './financeCanonicalRegistry.js';
 import {
+  resolvePeriodLabel,
+  serializeRowPeriodFields,
+  serializeRowsPeriodFields,
+} from './financePeriodFormat.js';
+import {
   type PeriodStatements,
   RECONCILE_ENFORCE,
   reconcileStatements,
@@ -67,10 +72,16 @@ function normalizeStatementType(value: unknown): string {
   return normalized;
 }
 
+/**
+ * FIN-005 root cause: `period_end` is a Postgres `DATE`, so node-pg hands this
+ * function a JS `Date`. The old body was
+ * `normalizeText(period_label) || normalizeText(period_end)` — i.e. `String(date)`
+ * — which wrote `Thu Dec 31 2026 00:00:00 GMT+0000 (Coordinated Universal Time)`
+ * into `financial_statement_packs.period_label`, where the UI then displayed it.
+ * `resolvePeriodLabel` keeps the same fallback chain with the leak closed.
+ */
 function packPeriodLabel(statements: PackStatementRow[]): string {
-  return (
-    normalizeText(statements[0]?.period_label) || normalizeText(statements[0]?.period_end) || ''
-  );
+  return resolvePeriodLabel(statements[0]?.period_label, statements[0]?.period_end);
 }
 
 function computePackAggregate(statements: PackStatementRow[]): PackAggregate {
@@ -265,7 +276,9 @@ async function createPack(statement: PackStatementRow): Promise<string> {
       normalizeText(statement.entity_name) || null,
       statement.period_start,
       statement.period_end,
-      normalizeText(statement.period_label) || null,
+      // Same Date-leak guard as packPeriodLabel: the source statement's label
+      // may itself be a raw Date value coming back from a Postgres DATE column.
+      resolvePeriodLabel(statement.period_label, statement.period_end) || null,
       normalizeText(statement.currency) || 'PLN',
       normalizeText(statement.scaling) || 'units',
       'Statement pack created from initial statement import.',
@@ -681,7 +694,10 @@ export async function listStatementPacks(
      LIMIT 100`,
     [organizationId, normalizedFilter, normalizedFilter]
   );
-  return rows || [];
+  // Read boundary: `period_start`/`period_end` are Postgres DATE columns and
+  // arrive as JS `Date` objects. Serialize them (and repair any label already
+  // persisted as a raw Date string) so no client can render a raw Date.
+  return serializeRowsPeriodFields(rows);
 }
 
 export async function getStatementPackDetail(
@@ -709,9 +725,16 @@ export async function getStatementPackDetail(
      LEFT JOIN financial_statement_values fsv ON fsv.statement_id = fs.id
      LEFT JOIN financial_statement_validations fsvl ON fsvl.statement_id = fs.id
      WHERE fs.statement_pack_id = ?
+       -- Tenant guard. The pack above is org-filtered, but this nested query
+       -- was not, so it relied on the invariant that a statement never hangs
+       -- off another org's pack. Any operation that re-scopes a statement
+       -- WITHOUT clearing statement_pack_id (e.g. an org reassignment or the
+       -- FIN-005 quarantine) breaks that invariant and would surface a foreign
+       -- statement inside this tenant's pack detail. Filter explicitly.
+       AND fs.organization_id = ?
      GROUP BY fs.id
      ORDER BY CASE fs.statement_type WHEN 'P&L' THEN 1 WHEN 'BS' THEN 2 WHEN 'CF' THEN 3 ELSE 9 END`,
-    [packId]
+    [packId, organizationId]
   );
   const packValidations = await dbAll<any>(
     `SELECT check_code, check_name, severity, status, expected_value, actual_value, difference, tolerance, message, details_json, computed_at
@@ -722,8 +745,8 @@ export async function getStatementPackDetail(
   );
 
   return {
-    ...pack,
-    statements: (statements || []).sort(
+    ...serializeRowPeriodFields(pack),
+    statements: serializeRowsPeriodFields(statements).sort(
       (left: any, right: any) =>
         getCanonicalStatementTypeOrder(left.statement_type) -
         getCanonicalStatementTypeOrder(right.statement_type)

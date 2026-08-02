@@ -123,6 +123,30 @@ const defaultPortfolioFetcher = async (
 
 // --- Formatowanie KPI (skala k/M) ---------------------------------------
 
+/**
+ * FIN-005 — tell "blocked by the demo read-only guard" apart from "the engine
+ * broke".
+ *
+ * Both value endpoints are pure compute, but they are POSTs, and
+ * `demoWriteProtection` rejects every non-GET in demo mode with 403
+ * `DEMO_READ_ONLY` (proved in
+ * `server/src/routes/v8/__tests__/financeValueRoutes.demoGuard.test.ts`).
+ * Rendering that as "temporarily unavailable — the cockpit works normally"
+ * misrepresents a *systematically* missing part of the golden flow as a blip,
+ * which is exactly what FIN-005 rejected. Name the real reason instead.
+ */
+function isDemoReadOnlyError(error: unknown): boolean {
+  const candidate = error as
+    | { code?: unknown; status?: unknown; message?: unknown; response?: { status?: unknown; data?: { code?: unknown } } }
+    | null
+    | undefined;
+  if (!candidate) return false;
+  const code = String(candidate.code ?? candidate.response?.data?.code ?? '');
+  if (code === 'DEMO_READ_ONLY') return true;
+  const status = Number(candidate.status ?? candidate.response?.status ?? 0);
+  return status === 403 && /demo mode is read-only/i.test(String(candidate.message ?? ''));
+}
+
 const fmtMoney = (value: number): string => {
   const abs = Math.abs(value);
   const sign = value < 0 ? '-' : '';
@@ -146,12 +170,15 @@ export const ValueOfficePanel: React.FC<Props> = ({
   const [portfolio, setPortfolio] = useState<PrioritizedInitiative[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
+  /** `true` when the failure is the demo read-only guard, not the engine. */
+  const [blockedByDemoGuard, setBlockedByDemoGuard] = useState(false);
 
   useEffect(() => {
     if (!hasInitiatives) {
       setBridge(null);
       setPortfolio(null);
       setFailed(false);
+      setBlockedByDemoGuard(false);
       setLoading(false);
       return;
     }
@@ -167,12 +194,14 @@ export const ValueOfficePanel: React.FC<Props> = ({
           setBridge(bridgeRes?.data ?? null);
           setPortfolio(Array.isArray(portfolioRes?.data) ? portfolioRes.data : []);
           setFailed(false);
+          setBlockedByDemoGuard(false);
         }
-      } catch {
+      } catch (error) {
         if (!cancelled) {
           setBridge(null);
           setPortfolio(null);
           setFailed(true);
+          setBlockedByDemoGuard(isDemoReadOnlyError(error));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -229,15 +258,47 @@ export const ValueOfficePanel: React.FC<Props> = ({
   if (failed) {
     return (
       <div
-        className="rounded-xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-800"
+        className="rounded-xl border border-c-border bg-c-surface p-4"
         data-testid="value-office-panel"
       >
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {t(
-            'finance.valueOffice.failed',
-            'Value engine temporarily unavailable — the cockpit works normally.'
-          )}
-        </p>
+        <h3 className="mb-2 text-sm font-semibold text-c-text">
+          {t('finance.valueOffice.title', 'Value Office — motor wartości transformacji')}
+        </h3>
+        <div
+          className="rounded-lg border border-dashed border-c-border bg-c-surface-raised p-4"
+          data-testid={
+            blockedByDemoGuard ? 'value-office-demo-blocked' : 'value-office-failed'
+          }
+        >
+          {/*
+            FIN-005: the old single line read "Value engine temporarily
+            unavailable — the cockpit works normally", which made a value bridge
+            that can NEVER load in demo mode look like a passing blip. State
+            plainly which part of the golden flow is missing.
+          */}
+          <p className="text-sm font-medium text-c-text-secondary">
+            {blockedByDemoGuard
+              ? t(
+                  'finance.valueOffice.blockedByDemo.title',
+                  'Value bridge and decision portfolio are not available in demo mode'
+                )
+              : t(
+                  'finance.valueOffice.failed.title',
+                  'Value bridge and decision portfolio could not be calculated'
+                )}
+          </p>
+          <p className="mt-1 text-xs text-c-text-muted">
+            {blockedByDemoGuard
+              ? t(
+                  'finance.valueOffice.blockedByDemo.body',
+                  'The read-only demo workspace blocks the value engine request. The rest of the cockpit is unaffected, but this part of the value story is not shown — do not read it as a completed calculation.'
+                )
+              : t(
+                  'finance.valueOffice.failed.body',
+                  'The rest of the cockpit is unaffected. This section shows no result — do not read it as a completed calculation.'
+                )}
+          </p>
+        </div>
       </div>
     );
   }

@@ -15,6 +15,7 @@ import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { createBudget, listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
+import { serializeRowPeriodFields } from '../../services/financePeriodFormat.js';
 import {
   getFinanceTraceId,
   logFinanceError,
@@ -35,20 +36,26 @@ import {
   listAnalyses,
   runFullAnalysis,
 } from '../../services/financialAnalysisService.js';
+import { appraiseComputeResult } from '../../services/financialModelAppraisalAdapter.js';
 import {
   addEvent,
   approveModel,
   computeModel,
   createModel,
   deleteEvent,
+  findIdempotentResource,
   getModel,
   getOutputs,
   getValidations,
+  listCaseScenarios,
   listEvents,
   listModels,
   persistComputeResult,
+  recordIdempotentResource,
   reseedModelFromSource,
+  setBaseline,
   updateModel,
+  withFinancialModelIdempotencyLock,
 } from '../../services/financialModelingService.js';
 import {
   getStatementPackDetail,
@@ -283,26 +290,68 @@ router.post(
       return res.status(400).json({ error: 'name and startDate required' });
     }
 
+    // FIN-03/FIN-04 idempotency: a double-click save or a network retry that
+    // replays this exact POST with the same Idempotency-Key must return the
+    // ORIGINAL Investment Case / scenario, never mint a second one. Accepts
+    // either the standard `Idempotency-Key` header or a body field, so both
+    // a manual retry test and a header-aware HTTP client work.
+    const idempotencyKey =
+      (typeof req.headers['idempotency-key'] === 'string' && req.headers['idempotency-key']) ||
+      (typeof body.idempotencyKey === 'string' && body.idempotencyKey) ||
+      undefined;
     try {
-      const modelId = await createModel({
-        organizationId,
-        projectId: body.projectId,
-        initiativeId: body.initiativeId,
-        name,
-        description: body.description,
-        currency: body.currency,
-        horizonMonths: body.horizonMonths,
-        startDate,
-        granularity: body.granularity,
-        scenario: body.scenario,
-        assumptions: body.assumptions,
-        createdBy: userId,
-        sourceStatementId: body.sourceStatementId,
-        sourceStatementPackId: body.sourceStatementPackId,
-      });
-      const model = await getModel(modelId, organizationId);
-      return res.status(201).json({
-        data: { model: model ?? { id: modelId, name, start_date: startDate } },
+      const createOnce = async () => {
+        if (idempotencyKey) {
+          const existingId = await findIdempotentResource(
+            organizationId,
+            idempotencyKey,
+            'create_model'
+          );
+          if (existingId) {
+            const existing = await getModel(existingId, organizationId);
+            if (existing) return { status: 200, model: existing, idempotentReplay: true };
+          }
+        }
+        const modelId = await createModel({
+          organizationId,
+          projectId: body.projectId,
+          initiativeId: body.initiativeId,
+          name,
+          description: body.description,
+          currency: body.currency,
+          horizonMonths: body.horizonMonths,
+          startDate,
+          granularity: body.granularity,
+          scenario: body.scenario,
+          assumptions: body.assumptions,
+          createdBy: userId,
+          sourceStatementId: body.sourceStatementId,
+          sourceStatementPackId: body.sourceStatementPackId,
+          caseId:
+            typeof body.caseId === 'string' && body.caseId.trim() ? body.caseId.trim() : undefined,
+        });
+        if (idempotencyKey)
+          await recordIdempotentResource(organizationId, idempotencyKey, 'create_model', modelId);
+        const model = await getModel(modelId, organizationId);
+        return {
+          status: 201,
+          model: model ?? { id: modelId, name, start_date: startDate },
+          idempotentReplay: false,
+        };
+      };
+      const outcome = idempotencyKey
+        ? await withFinancialModelIdempotencyLock(
+            organizationId,
+            idempotencyKey,
+            'create_model',
+            createOnce
+          )
+        : await createOnce();
+      return res.status(outcome.status).json({
+        data: {
+          model: outcome.model,
+          ...(outcome.idempotentReplay ? { idempotentReplay: true } : {}),
+        },
         meta: financeMeta(),
       });
     } catch (e: any) {
@@ -310,7 +359,10 @@ router.post(
       if (
         message.includes('Statement') ||
         message.includes('critical lines') ||
-        message.includes('seed')
+        message.includes('seed') ||
+        message.includes('Investment Case not found') ||
+        message.includes('Source project not found') ||
+        message.includes('Source initiative not found')
       ) {
         return res.status(400).json({ error: message });
       }
@@ -366,8 +418,16 @@ router.get(
         model: {
           ...model,
           events,
-          source_statement: sourceStatement || null,
-          source_statement_pack: sourceStatementPack || null,
+          // FIN-005: these two rows are selected straight from Postgres, so
+          // `period_start`/`period_end` are JS `Date` objects and a legacy
+          // `period_label` may still hold a raw `Date.toString()`. Before
+          // FIN-005 the Atelier model had no source pack, so this path never
+          // carried a period at all — binding the model to the FY2014 pack is
+          // exactly what activates it. Serialize like every other read boundary.
+          source_statement: sourceStatement ? serializeRowPeriodFields(sourceStatement) : null,
+          source_statement_pack: sourceStatementPack
+            ? serializeRowPeriodFields(sourceStatementPack)
+            : null,
         },
       },
       meta: financeMeta(),
@@ -438,6 +498,98 @@ router.get(
   })
 );
 
+/**
+ * GET /models/:modelId/appraisal — FIN-005/FIN-006 golden-flow closer.
+ *
+ * NPV / IRR / payback for a model, derived from its OWN canonical compute
+ * (`computeModel()`) fed through the canonical appraisal engine
+ * (`investmentAppraisalService.appraise()`, via `appraiseComputeResult`).
+ * Read-only: `computeModel()` only SELECTs the model and its events, and this
+ * handler persists nothing.
+ *
+ * Rate resolution (never a silent default):
+ *   1. `?discountRatePct=`/`?hurdleRatePct=` query params, if given, ALWAYS win
+ *      (matches investmentAppraisalService's own "never hardcoded" invariant —
+ *      an explicit caller-supplied rate always overrides anything stored).
+ *   2. Else, `model.assumptions_json.discountRatePct` / `.hurdleRatePct`, if
+ *      present (canonical per-model rate — see financialModelAppraisalAdapter.ts
+ *      module doc: `financial_models` has no `discount_rate` column, so a rate
+ *      explicitly recorded in assumptions_json is the model's own canonical
+ *      value). `hurdleRatePct` defaults to `discountRatePct` when only one of
+ *      the two is present, at either resolution layer.
+ *   3. Else — 400. No number is ever invented at this layer.
+ *
+ * Reopen determinism: this recomputes from the model's stored events on every
+ * call. Same events + same resolved rates => byte-identical result, with no
+ * cached/materialized state to go stale.
+ */
+router.get(
+  '/models/:modelId/appraisal',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId, organizationId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    // `getModel()` already JSON.parse()s assumptions_json into an object.
+    const assumptions = (model.assumptions_json || {}) as Record<string, unknown>;
+    const assumptionsDiscountRatePct =
+      typeof assumptions.discountRatePct === 'number' &&
+      Number.isFinite(assumptions.discountRatePct)
+        ? assumptions.discountRatePct
+        : undefined;
+    const assumptionsHurdleRatePct =
+      typeof assumptions.hurdleRatePct === 'number' && Number.isFinite(assumptions.hurdleRatePct)
+        ? assumptions.hurdleRatePct
+        : undefined;
+
+    const discountRatePctRaw = req.query.discountRatePct;
+    let discountRatePct: number | undefined;
+    if (discountRatePctRaw !== undefined) {
+      discountRatePct = Number(discountRatePctRaw);
+      if (!Number.isFinite(discountRatePct)) {
+        return res.status(400).json({
+          error:
+            'discountRatePct must be a finite number (percent, e.g. 10 for 10%) when provided.',
+        });
+      }
+    } else if (assumptionsDiscountRatePct !== undefined) {
+      discountRatePct = assumptionsDiscountRatePct;
+    }
+    if (discountRatePct === undefined) {
+      return res.status(400).json({
+        error:
+          'discountRatePct is required — pass it as a query param, or set model.assumptions_json.discountRatePct.',
+      });
+    }
+
+    const hurdleRatePctRaw = req.query.hurdleRatePct;
+    let hurdleRatePct: number;
+    if (hurdleRatePctRaw !== undefined) {
+      hurdleRatePct = Number(hurdleRatePctRaw);
+      if (!Number.isFinite(hurdleRatePct)) {
+        return res
+          .status(400)
+          .json({ error: 'hurdleRatePct must be a finite number when provided.' });
+      }
+    } else if (assumptionsHurdleRatePct !== undefined) {
+      hurdleRatePct = assumptionsHurdleRatePct;
+    } else {
+      hurdleRatePct = discountRatePct;
+    }
+
+    const computeResult = await computeModel(modelId);
+    const appraisal = appraiseComputeResult(computeResult, { discountRatePct, hurdleRatePct });
+
+    return res.json({
+      data: appraisal,
+      meta: financeMeta(),
+    });
+  })
+);
+
 router.post(
   '/models/:modelId/compute',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -484,13 +636,73 @@ router.post(
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const result = await approveModel(modelId, userId);
-    if (!result.success) {
-      return res.status(400).json({ error: result.error || 'Approval failed' });
+    // FIN-03 idempotency: a double-click "save version" retry with the same
+    // Idempotency-Key returns the already-approved outcome instead of
+    // bumping the version a second time.
+    const idempotencyKey =
+      (typeof req.headers['idempotency-key'] === 'string' && req.headers['idempotency-key']) ||
+      (typeof (req.body ?? {}).idempotencyKey === 'string' && (req.body ?? {}).idempotencyKey) ||
+      undefined;
+    // Optional optimistic-concurrency guard: caller may supply the version
+    // it last read (body.expectedVersion or X-Model-Version header). If the
+    // model moved on since, refuse with 409 rather than silently bump again.
+    const expectedVersionRaw = (req.body ?? {}).expectedVersion ?? req.headers['x-model-version'];
+    const expectedVersion =
+      expectedVersionRaw !== undefined && expectedVersionRaw !== null && expectedVersionRaw !== ''
+        ? Number(expectedVersionRaw)
+        : undefined;
+    if (expectedVersion !== undefined && !Number.isFinite(expectedVersion)) {
+      return res.status(400).json({ error: 'expectedVersion must be a finite number' });
     }
 
-    return res.json({
-      data: { success: true, status: 'approved' },
+    const approveOnce = async () => {
+      if (idempotencyKey) {
+        const existingId = await findIdempotentResource(
+          organizationId,
+          idempotencyKey,
+          'approve_model'
+        );
+        if (existingId === modelId) {
+          const fresh = await getModel(modelId, organizationId);
+          return { httpStatus: 200, status: fresh?.status || 'approved', idempotentReplay: true };
+        }
+      }
+      const result = await approveModel(modelId, userId, { expectedVersion });
+      if (!result.success) {
+        return {
+          httpStatus: result.code === 'VERSION_CONFLICT' ? 409 : 400,
+          error:
+            result.error ||
+            (result.code === 'VERSION_CONFLICT' ? 'Version conflict' : 'Approval failed'),
+          code: result.code,
+          serverVersion: result.serverVersion,
+        };
+      }
+      if (idempotencyKey)
+        await recordIdempotentResource(organizationId, idempotencyKey, 'approve_model', modelId);
+      return { httpStatus: 200, status: 'approved', idempotentReplay: false };
+    };
+    const outcome = idempotencyKey
+      ? await withFinancialModelIdempotencyLock(
+          organizationId,
+          idempotencyKey,
+          'approve_model',
+          approveOnce
+        )
+      : await approveOnce();
+    if (outcome.error) {
+      return res.status(outcome.httpStatus).json({
+        error: outcome.error,
+        ...(outcome.code ? { code: outcome.code } : {}),
+        ...(outcome.serverVersion !== undefined ? { serverVersion: outcome.serverVersion } : {}),
+      });
+    }
+    return res.status(outcome.httpStatus).json({
+      data: {
+        success: true,
+        status: outcome.status,
+        ...(outcome.idempotentReplay ? { idempotentReplay: true } : {}),
+      },
       meta: financeMeta(),
     });
   })
@@ -532,7 +744,30 @@ router.put(
       return res.status(404).json({ error: 'Model not found' });
     }
 
-    await updateModel(modelId, req.body ?? {});
+    // FIN-03 optimistic concurrency: body.expectedVersion or X-Model-Version
+    // header, when supplied, pins the UPDATE to that version (CAS pattern —
+    // same convention as presentations.routes.ts's deck version guard). A
+    // stale write (the model moved on since the caller last read it) gets a
+    // 409 VERSION_CONFLICT with the current server version, never a silent
+    // overwrite.
+    const body = req.body ?? {};
+    const expectedVersionRaw = body.expectedVersion ?? req.headers['x-model-version'];
+    const expectedVersion =
+      expectedVersionRaw !== undefined && expectedVersionRaw !== null && expectedVersionRaw !== ''
+        ? Number(expectedVersionRaw)
+        : undefined;
+    if (expectedVersion !== undefined && !Number.isFinite(expectedVersion)) {
+      return res.status(400).json({ error: 'expectedVersion must be a finite number' });
+    }
+
+    const result = await updateModel(modelId, body, { expectedVersion });
+    if (!result.success) {
+      return res.status(409).json({
+        error: 'Version conflict: model was modified concurrently. Refresh and retry.',
+        code: 'VERSION_CONFLICT',
+        serverVersion: result.serverVersion,
+      });
+    }
     return res.json({
       data: { success: true },
       meta: financeMeta(),
@@ -631,6 +866,62 @@ router.delete(
 
     return res.json({
       data: { success: true, deleted: modelId },
+      meta: financeMeta(),
+    });
+  })
+);
+
+/**
+ * GET /models/:modelId/case — FIN-04: every scenario (Base/Upside/Downside,
+ * including the case root itself) that belongs to the same Investment Case
+ * as `:modelId`, each carrying `is_baseline`. Org-scoped via listCaseScenarios.
+ */
+router.get(
+  '/models/:modelId/case',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const scenarios = await listCaseScenarios(modelId, organizationId);
+    if (scenarios.length === 0) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+    const baseline = scenarios.find((s: any) => s.is_baseline) || null;
+    return res.json({
+      data: { scenarios, count: scenarios.length, baselineModelId: baseline?.id || null },
+      meta: financeMeta(),
+    });
+  })
+);
+
+/**
+ * POST /models/:modelId/set-baseline — FIN-04: make `:modelId` the ONE
+ * active baseline of its Investment Case, atomically demoting whatever was
+ * baseline before (see setBaseline() doc comment in
+ * financialModelingService.ts for the transactional design). Audit-logged
+ * (who/when/from/to) via financial_model_baseline_audit.
+ */
+router.post(
+  '/models/:modelId/set-baseline',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const userId = String(req.user?.id || '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const result = await setBaseline(modelId, organizationId, userId);
+    if (!result.success) {
+      return res.status(404).json({ error: result.error || 'Model not found' });
+    }
+
+    return res.json({
+      data: {
+        success: true,
+        caseId: result.caseId,
+        baselineModelId: modelId,
+        previousBaselineModelId: result.previousBaselineModelId,
+      },
       meta: financeMeta(),
     });
   })

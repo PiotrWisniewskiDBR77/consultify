@@ -1,7 +1,18 @@
 import { DRD_STRUCTURE } from '../../data/drdStructure.js';
 import * as DbPromise from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 import { fireClosureHandoff } from '../executionResultsBridge.js';
 import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
+import {
+  ATELIER_CANONICAL_DISCOUNT_RATE_PCT,
+  ATELIER_CANONICAL_MODEL_NAME_EN,
+  ATELIER_CANONICAL_MODEL_NAME_PL,
+  ATELIER_FINANCE_CURRENCY,
+  type AtelierFinanceGoldenFlowCompleteness,
+  type AtelierFinanceSeedResult,
+  upsertAtelierFinanceGoldenFlow,
+  verifyAtelierFinanceGoldenFlowComplete,
+} from './atelierFinanceSeed.js';
 import {
   type DemoLeaderTemplate,
   getAtelierToysDeliverables,
@@ -44,6 +55,23 @@ export interface SeedDemoDatasetResult {
   };
   scenarios: ReturnType<typeof getAtelierToysDemoScenarios>;
   toolCoverage: ReturnType<typeof getAtelierToysToolCoverage>;
+  /**
+   * FIN-005 — explicit outcome of the Finance golden flow. Never swallowed: an
+   * `incomplete` here means Finance rows exist but NOTHING was promoted to
+   * READY, and `reason` / `missing` say exactly why.
+   *
+   * NOTE: `financeGoldenFlow.status === 'complete'` certifies ONLY the
+   * statement/analysis leg — see `financeGoldenFlowCompleteness` below for
+   * whether the model's NPV/IRR/payback are actually computable.
+   */
+  financeGoldenFlow: AtelierFinanceSeedResult;
+  /**
+   * FIN-005 round 8 — the claim `financeGoldenFlow.status` does NOT make:
+   * whether a user can open the canonical model and get a real, computed
+   * NPV/IRR/payback. See `verifyAtelierFinanceGoldenFlowComplete` in
+   * `atelierFinanceSeed.ts` for what is actually checked.
+   */
+  financeGoldenFlowCompleteness: AtelierFinanceGoldenFlowCompleteness;
 }
 
 type UserMap = Record<string, { id: string; email: string }>;
@@ -2170,6 +2198,7 @@ async function upsertInitiatives(
   const hasSuccessCriteria = await columnExists('initiatives', 'success_criteria');
   const hasRisks = await columnExists('initiatives', 'key_risks');
   const hasEstimatedBudget = await columnExists('initiatives', 'estimated_budget');
+  const hasBudgetCurrency = await columnExists('initiatives', 'budget_currency');
   const hasTaskComments = await tableExists('task_comments');
 
   for (const initiative of initiatives) {
@@ -2249,6 +2278,15 @@ async function upsertInitiatives(
       cols.push('estimated_budget');
       vals.push(initiative.budgetCapex + initiative.budgetOpex);
     }
+    if (hasBudgetCurrency) {
+      // FIN-006/A O1: seed used to leave this column unset, so it silently
+      // inherited the schema DEFAULT 'PLN' (migrations/564:139) while Finance
+      // (FIN-005) reports the same Atelier program in EUR. Source the value
+      // from the SAME constant Finance already uses so the two modules can
+      // never drift onto two different literals again.
+      cols.push('budget_currency');
+      vals.push(ATELIER_FINANCE_CURRENCY);
+    }
 
     // USPOJNIENIE A3: ŚWIADOMY WYJĄTEK od „jeden lejek". Seed demo jest
     // idempotentny (deterministyczne id via makeId + ON CONFLICT DO UPDATE) —
@@ -2259,7 +2297,9 @@ async function upsertInitiatives(
     await DbPromise.run(
       `INSERT INTO initiatives (${cols.join(', ')})
        VALUES (${cols.map(() => '?').join(', ')})
-       ON CONFLICT(id) DO UPDATE SET name=excluded.name, status=excluded.status`,
+       ON CONFLICT(id) DO UPDATE SET name=excluded.name, status=excluded.status${
+         hasBudgetCurrency ? ', budget_currency=excluded.budget_currency' : ''
+       }`,
       vals,
       { fallback: false }
     );
@@ -3342,7 +3382,14 @@ async function upsertAtelierRoiFinancialModel(
   userMap: UserMap,
   projectMap: Record<string, string>,
   initiativeMap: InitiativeMap,
-  locale: DemoLocale
+  locale: DemoLocale,
+  /**
+   * FIN-005: id of the canonical FY2014 statement pack (see
+   * `atelierFinanceSeed.ts`). Binding it to `source_statement_pack_id` is what
+   * makes the model *grounded* — the demo run-sheet claims the ROI rests on "a
+   * confirmed FY2014 P&L", and before this the model had no source at all.
+   */
+  sourceStatementPackId: string | null
 ): Promise<void> {
   if (!(await tableExists('financial_models'))) return;
 
@@ -3352,9 +3399,7 @@ async function upsertAtelierRoiFinancialModel(
   const projectId = projectMap['forward-pmo'] || null;
   const initiativeId = initiativeMap['line-3-digital-twin'] || null;
 
-  const modelName = isPl
-    ? 'Atelier Toys — Transformacja 2015 (ROI)'
-    : 'Atelier Toys — Transformation 2015 ROI';
+  const modelName = isPl ? ATELIER_CANONICAL_MODEL_NAME_PL : ATELIER_CANONICAL_MODEL_NAME_EN;
   const modelDescription = isPl
     ? 'Business case zarządu dla 3-letniego programu cyfryzacji: NPV, ROI i okres zwrotu.'
     : 'Board business case for the 3-year digitization program: NPV, ROI, and payback.';
@@ -3380,7 +3425,11 @@ async function upsertAtelierRoiFinancialModel(
     projectId,
     modelName,
     modelDescription,
-    'PLN',
+    // FIN-005: was 'PLN' — the app-wide default currency, not a choice. Every
+    // other Atelier number is euro-denominated (Digital ARR EUR 6.2M -> 8M,
+    // initiative budgets, the FY2014 statements this model is now grounded on),
+    // so the Finance golden flow is standardised on EUR. Economics unchanged.
+    ATELIER_FINANCE_CURRENCY,
     36,
     '2015-01-01',
     'annual',
@@ -3392,6 +3441,50 @@ async function upsertAtelierRoiFinancialModel(
     modelCols.push('initiative_id');
     modelVals.push(initiativeId);
   }
+  const hasModelSourcePackCol =
+    Boolean(sourceStatementPackId) &&
+    (await columnExists('financial_models', 'source_statement_pack_id'));
+  if (hasModelSourcePackCol) {
+    modelCols.push('source_statement_pack_id');
+    modelVals.push(sourceStatementPackId);
+  }
+
+  /**
+   * FIN-005 round 9 — Piotr's two explicit, final decisions on the ROI story:
+   *
+   * 1. "Nie wymyślaj opóźnienia wdrożenia. Jeżeli źródłowe dane nie zawierają
+   *    harmonogramu uruchomienia CAPEX, przychodów i oszczędności, oznacz tę
+   *    informację jako brakujące jawne założenie. Nie dodawaj arbitralnego
+   *    przesunięcia." The three canonical events (`digital-capex` and
+   *    `revenue-uplift` both `period_start: '2015-01-01'`, `opex-reduction`
+   *    `period_start: '2016-01-01'`) stay EXACTLY as dated — no ramp-up is
+   *    invented here, and none should ever be added by changing a
+   *    `period_start`. What source data does not say is recorded as an
+   *    explicit missing assumption instead, so the gap is visible to whoever
+   *    reads `assumptions_json` rather than silently smoothed over.
+   * 2. The discount/hurdle rate stops being a bare TypeScript constant
+   *    (`ATELIER_CANONICAL_DISCOUNT_RATE_PCT`, only in source) and becomes
+   *    DATA — written into the model's own `assumptions_json` so it is
+   *    "jawna, odczytywalna i testowana" (explicit, readable, tested). The
+   *    constant still SEEDS this value; `assumptions_json` is now the
+   *    canonical RUNTIME source `verifyAtelierFinanceGoldenFlowComplete`
+   *    reads back (see atelierFinanceSeed.ts).
+   */
+  const hasModelAssumptionsCol = await columnExists('financial_models', 'assumptions_json');
+  if (hasModelAssumptionsCol) {
+    modelCols.push('assumptions_json');
+    modelVals.push(
+      JSON.stringify({
+        implementationLagMonths: null,
+        implementationLagAssumptionStatus: 'NEEDS_PRODUCT_DECISION',
+        implementationLagAssumptionNote: isPl
+          ? 'Źródłowe dane nie zawierają harmonogramu wdrożenia (opóźnienia) między CAPEX a realizacją przychodów/oszczędności — zdarzenia modelowane dokładnie wg zaseedowanych dat, bez zakładanego przesunięcia.'
+          : 'Source data does not specify a ramp-up schedule between CAPEX and revenue/savings realization — events are modeled exactly as dated, with no assumed delay.',
+        discountRatePct: ATELIER_CANONICAL_DISCOUNT_RATE_PCT,
+        hurdleRatePct: ATELIER_CANONICAL_DISCOUNT_RATE_PCT,
+      })
+    );
+  }
 
   await DbPromise.run(
     `INSERT INTO financial_models (${modelCols.join(', ')})
@@ -3399,13 +3492,26 @@ async function upsertAtelierRoiFinancialModel(
      ON CONFLICT(id) DO UPDATE SET
        name=excluded.name,
        description=excluded.description,
+       currency=excluded.currency,
        status=excluded.status,
-       horizon_months=excluded.horizon_months`,
+       horizon_months=excluded.horizon_months${
+         hasModelSourcePackCol ? ',\n       source_statement_pack_id=excluded.source_statement_pack_id' : ''
+       }${hasModelAssumptionsCol ? ',\n       assumptions_json=excluded.assumptions_json' : ''}`,
     modelVals,
     { fallback: false }
   );
 
   // Three economic events drive the business case (revenue uplift, capex, opex reduction).
+  //
+  // FIN-005 round 9 — Piotr's product decision: "OpEx reduction" IS a genuine
+  // benefit, not a cost. `opex-reduction` below carries `amount: -400_000` on
+  // purpose. The compute engine (`financialModelingService.ts`,
+  // `expandEventToAmounts`/`applyEventToPeriod`) respects an `event_type:
+  // 'opex'` event's stored sign — a negative amount REDUCES modeled opex (a
+  // saving), a positive amount adds to it (a cost), matching the event's own
+  // name and the parallel `analysis_financials.annual_cost_savings = 400_000`
+  // row below. Do not `Math.abs()` this value and do not flip its sign: the
+  // stored `-400_000` is what "reduction" means here.
   const events: Array<{
     slug: string;
     type: string;
@@ -3467,6 +3573,7 @@ async function upsertAtelierRoiFinancialModel(
          ON CONFLICT(id) DO UPDATE SET
            name=excluded.name,
            amount=excluded.amount,
+           currency=excluded.currency,
            is_active=excluded.is_active`,
         [
           eventId,
@@ -3474,7 +3581,7 @@ async function upsertAtelierRoiFinancialModel(
           event.type,
           isPl ? event.namePl : event.nameEn,
           event.amount,
-          'PLN',
+          ATELIER_FINANCE_CURRENCY,
           event.periodStart,
           event.recurrence,
           event.growthRate,
@@ -3542,6 +3649,7 @@ async function upsertAtelierRoiFinancialModel(
          irr=excluded.irr,
          payback_months=excluded.payback_months,
          roi_percent=excluded.roi_percent,
+         currency=excluded.currency,
          last_calculated_at=excluded.last_calculated_at`,
       [
         makeId(organizationId, 'analysis-financials', 'transformation-2015-roi'),
@@ -3559,7 +3667,7 @@ async function upsertAtelierRoiFinancialModel(
         34,
         14,
         218,
-        'PLN',
+        ATELIER_FINANCE_CURRENCY,
         new Date().toISOString(),
       ],
       { fallback: true }
@@ -4033,7 +4141,61 @@ export async function seedAtelierToysDemoDataset(
     initiativeMap,
     anchorDate
   );
-  await upsertAtelierRoiFinancialModel(organizationId, userMap, projectMap, initiativeMap, locale);
+  // FIN-005 — Finance golden flow. The statement pack comes FIRST so the ROI
+  // model can be bound to it: statement -> analysis -> model, one story, one
+  // currency, one lineage. Before this the model existed with no source
+  // statement and no analysis, and Finance showed another tenant's records.
+  const financeGoldenFlow = await upsertAtelierFinanceGoldenFlow({
+    organizationId,
+    createdBy: userMap['claire-laurent']?.id || userMap['hugo-bernard']?.id || null,
+    projectId: projectMap['forward-pmo'] || null,
+    locale,
+  });
+  // FIN-005 P1: the Finance seed returns an explicit discriminated outcome.
+  // A degraded Finance fixture (missing table/column, failed read-back, a
+  // statement that production refused to call READY) must never be swallowed:
+  // surface it in the log AND carry it in the seed result so the caller sees
+  // that Finance is present but NOT ready.
+  if (financeGoldenFlow.status !== 'complete') {
+    logger.warn('[demo-seed] Atelier Finance golden flow is INCOMPLETE', {
+      organizationId,
+      reason: financeGoldenFlow.reason,
+      missing: financeGoldenFlow.missing,
+      packId: financeGoldenFlow.packId,
+      promotedStatements: financeGoldenFlow.statementIds.length,
+      unpromotedStatements: financeGoldenFlow.unpromotedStatementIds.length,
+      analysisId: financeGoldenFlow.analysisId,
+      // What the promotion phase actually did (FIN-005: promotion is atomic, so
+      // this normally reads "0 issued"; a non-zero count means a promotion write
+      // failed and was compensated — and any rollback error is in here too).
+      promotion: financeGoldenFlow.promotion,
+    });
+  }
+  await upsertAtelierRoiFinancialModel(
+    organizationId,
+    userMap,
+    projectMap,
+    initiativeMap,
+    locale,
+    financeGoldenFlow.packId
+  );
+  // FIN-005 round 8: `financeGoldenFlow.status === 'complete'` certifies ONLY
+  // the statement/analysis leg (see the doc comment on
+  // `verifyAtelierFinanceGoldenFlowComplete`). Whether the model actually
+  // produces a real NPV/IRR/payback is a SEPARATE, explicitly-named claim —
+  // computed here by actually invoking the canonical compute + appraisal
+  // engines, never inferred from the fixture existing.
+  const financeGoldenFlowCompleteness = await verifyAtelierFinanceGoldenFlowComplete(
+    organizationId,
+    financeGoldenFlow.status
+  );
+  if (!financeGoldenFlowCompleteness.goldenFlowComplete) {
+    logger.warn('[demo-seed] Atelier Finance golden flow fixture is complete but NOT compute-complete', {
+      organizationId,
+      fixtureComplete: financeGoldenFlowCompleteness.fixtureComplete,
+      reason: financeGoldenFlowCompleteness.reason,
+    });
+  }
   // Spine stage 07: Results / KPIs (realized numbers reconcile with ROI + context).
   await upsertAtelierResultsKpis(organizationId, userMap, projectMap);
   // Spine stage 06: Execution / Rollout artifacts.
@@ -4058,6 +4220,8 @@ export async function seedAtelierToysDemoDataset(
     },
     scenarios,
     toolCoverage,
+    financeGoldenFlow,
+    financeGoldenFlowCompleteness,
   };
 }
 
@@ -4146,6 +4310,14 @@ export async function deleteDemoDatasetForOrganization(organizationId: string): 
     ['financial_models', 'organization_id'],
     ['analysis_financials', 'organization_id'],
     ['digitization_analyses', 'organization_id'],
+    // FIN-005 Finance golden flow (statement pack -> analysis -> model). Listed
+    // FK-first so a demo dataset delete stays complete: leaving these behind
+    // would strand the exact rows the coherence gate checks for.
+    ['financial_analyses', 'organization_id'],
+    ['financial_statement_values', 'statement_id', 'financial_statements', 'organization_id'],
+    ['financial_statement_ingest_runs', 'organization_id'],
+    ['financial_statements', 'organization_id'],
+    ['financial_statement_packs', 'organization_id'],
     // Spine: Interviews + Insights (03)
     ['interview_insight_handoffs', 'organization_id'],
     ['interview_insight_findings', 'organization_id'],

@@ -34,6 +34,8 @@ interface RoiAnalysis {
   npv?: number | null;
   roi?: number | null; // roi_percent, stored as fraction (0.45) or percent (45)
   paybackMonths?: number | null;
+  /** FIN-006/A O2: from analysis_financials.currency via GET /api/economics/analyses[/:id]. */
+  currency?: string | null;
 }
 
 type RoiTab = Extract<ModuleTab, 'roi' | 'roi_analysis'>;
@@ -48,6 +50,7 @@ const DEMO_ANALYSES: RoiAnalysis[] = [
     npv: 1_240_000,
     roi: 0.62,
     paybackMonths: 18,
+    currency: 'EUR',
   },
   {
     id: 'demo-roi-2',
@@ -57,6 +60,7 @@ const DEMO_ANALYSES: RoiAnalysis[] = [
     npv: 480_000,
     roi: 0.41,
     paybackMonths: 24,
+    currency: 'EUR',
   },
   {
     id: 'demo-roi-3',
@@ -66,6 +70,7 @@ const DEMO_ANALYSES: RoiAnalysis[] = [
     npv: 720_000,
     roi: 0.34,
     paybackMonths: 30,
+    currency: 'EUR',
   },
 ];
 
@@ -75,7 +80,11 @@ function normaliseRoiPercent(roi?: number | null): number | null {
   return Math.abs(roi) <= 5 ? roi * 100 : roi;
 }
 
-function formatCurrency(value?: number | null, currency = 'PLN'): string {
+// FIN-006/A O2: EUR (not PLN) is the neutral last-resort default — no caller
+// deliberately chose PLN here, it only ever leaked in via an unrelated
+// schema DEFAULT (see economics.routes.ts). Callers should pass the real
+// `analysis.currency` whenever it is present.
+function formatCurrency(value?: number | null, currency = 'EUR'): string {
   if (value == null || Number.isNaN(value)) return '—';
   try {
     return new Intl.NumberFormat(undefined, {
@@ -162,6 +171,7 @@ export const FullROIView: React.FC = () => {
         npv: a.npv ?? a.financial_npv ?? null,
         roi: a.roi ?? a.roi_percent ?? a.financial_roi ?? null,
         paybackMonths: a.paybackMonths ?? a.payback_months ?? null,
+        currency: a.currency ?? null,
       }));
       if (list.length === 0 && shouldAllowDemoData()) {
         setAnalyses(DEMO_ANALYSES);
@@ -197,7 +207,12 @@ export const FullROIView: React.FC = () => {
     const avgPayback = paybacks.length
       ? Math.round(paybacks.reduce((s, v) => s + v, 0) / paybacks.length)
       : null;
-    return { totalNpv, avgRoi, avgPayback, count: analyses.length };
+    // Portfolio-level currency for the aggregate NPV KPI: same
+    // first-non-null convention used by executionBudgetService's
+    // getPortfolioBudgetSummary, since a single org's analyses share one
+    // reporting currency in practice.
+    const currency = analyses.find((a) => a.currency)?.currency ?? undefined;
+    return { totalNpv, avgRoi, avgPayback, count: analyses.length, currency };
   }, [analyses]);
 
   const bestNpvId = useMemo(() => {
@@ -272,7 +287,7 @@ export const FullROIView: React.FC = () => {
                     )}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-c-text dark:text-white">
-                    {formatCurrency(a.npv)}
+                    {formatCurrency(a.npv, a.currency ?? undefined)}
                   </td>
                   <td
                     className={`px-4 py-3 text-right tabular-nums font-semibold ${
@@ -329,7 +344,7 @@ export const FullROIView: React.FC = () => {
                   <span className="text-c-text-muted dark:text-c-text-muted">
                     {t('initiatives.roi.table.npv', 'NPV')}:{' '}
                     <span className="font-semibold text-c-text dark:text-white">
-                      {formatCurrency(a.npv)}
+                      {formatCurrency(a.npv, a.currency ?? undefined)}
                     </span>
                   </span>
                   <span className="text-c-text-muted dark:text-c-text-muted">
@@ -417,7 +432,7 @@ export const FullROIView: React.FC = () => {
           />
           <KpiCard
             label={t('initiatives.roi.kpi.npv', 'Net Present Value')}
-            value={formatCurrency(kpis.totalNpv)}
+            value={formatCurrency(kpis.totalNpv, kpis.currency)}
             icon={<Wallet size={18} />}
             teresaHint={t('initiatives.roi.teresa.hint', 'Ask Teresa to model ROI')}
           />

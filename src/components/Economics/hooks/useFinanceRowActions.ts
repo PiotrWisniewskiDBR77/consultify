@@ -86,6 +86,49 @@ interface UseFinanceRowActionsParams {
   loadBudgetPreviewScenarios: (budgetRawId: string) => Promise<void>;
   loadValuationPreviewResults: (valuationId: string) => Promise<void>;
   getBudgetRawId: (rowId: string) => string;
+  /**
+   * FIN-005: names currently present in the tenant for the given record kind.
+   * Used to keep a duplicate's title collision-free — see `uniqueCopyTitle`.
+   * Optional so callers that never expose "Duplikuj" need not supply it.
+   */
+  getExistingTitles?: (kind: FinanceRow['kind']) => string[];
+}
+
+/**
+ * Build a copy title that does not collide with an existing record.
+ *
+ * FIN-005 root cause: the staging Finance → Models tab held FOUR rows literally
+ * named `DBR77 Staging Finance Model (kopia)`. They were not a database or
+ * upsert defect — the old code was
+ *
+ *   const copyTitle = `${row.title} (${t('finance.preview.copySuffix', 'copy')})`;
+ *
+ * and every duplicate was taken from the SAME source row, so N clicks on
+ * "Duplikuj" produced N byte-identical names. Nothing downstream could tell the
+ * copies apart, and the list looked like corrupted data.
+ *
+ * The first copy keeps the plain `(kopia)` form a user expects; only a genuine
+ * collision gets a counter, so the common case stays clean.
+ */
+export function uniqueCopyTitle(
+  baseTitle: string,
+  copySuffix: string,
+  existingTitles: string[]
+): string {
+  const taken = new Set(
+    existingTitles.map((title) => String(title ?? '').trim().toLowerCase()).filter(Boolean)
+  );
+  const base = String(baseTitle ?? '').trim();
+  const suffix = String(copySuffix ?? '').trim();
+  const first = suffix ? `${base} (${suffix})` : base;
+  if (!taken.has(first.toLowerCase())) return first;
+
+  // Cap the search so a pathological list can never spin the UI thread.
+  for (let counter = 2; counter <= 999; counter += 1) {
+    const candidate = suffix ? `${base} (${suffix} ${counter})` : `${base} ${counter}`;
+    if (!taken.has(candidate.toLowerCase())) return candidate;
+  }
+  return first;
 }
 
 export function useFinanceRowActions({
@@ -104,6 +147,7 @@ export function useFinanceRowActions({
   loadBudgetPreviewScenarios,
   loadValuationPreviewResults,
   getBudgetRawId,
+  getExistingTitles,
 }: UseFinanceRowActionsParams) {
   const { t, i18n } = useTranslation();
 
@@ -180,7 +224,11 @@ export function useFinanceRowActions({
   const handleDuplicate = useCallback(
     async (row: FinanceRow) => {
       try {
-        const copyTitle = `${row.title} (${t('finance.preview.copySuffix', 'copy')})`;
+        const copyTitle = uniqueCopyTitle(
+          row.title,
+          t('finance.preview.copySuffix', 'copy'),
+          getExistingTitles?.(row.kind) ?? []
+        );
         if (row.kind === 'statements') {
           toast.error(
             t(
@@ -216,21 +264,24 @@ export function useFinanceRowActions({
           });
           await loadBudgets();
         } else if (row.kind === 'analysis' || row.kind === 'investment') {
+          // FIN-005: was hardcoded 'PLN', so duplicating a EUR analysis minted a
+          // PLN copy and broke the one-currency rule inside the same tenant.
+          // Inherit from the source row, as the `valuation` branch below does.
+          const sourceCurrency = String((row as { currency?: string }).currency || '').trim();
+          const analysisPayload = {
+            title: copyTitle,
+            analysisType: (row.kind === 'investment' ? 'investment_case' : 'comprehensive') as
+              | 'investment_case'
+              | 'comprehensive',
+            currency: sourceCurrency || 'PLN',
+          };
           try {
-            await V8FinanceApi.createAnalysis({
-              title: copyTitle,
-              analysisType: row.kind === 'investment' ? 'investment_case' : 'comprehensive',
-              currency: 'PLN',
-            });
+            await V8FinanceApi.createAnalysis(analysisPayload);
           } catch (error) {
             if (!shouldFallbackToLegacyFinance(error)) {
               throw error;
             }
-            await Api.post('/api/economics/financial-analyses', {
-              title: copyTitle,
-              analysisType: row.kind === 'investment' ? 'investment_case' : 'comprehensive',
-              currency: 'PLN',
-            });
+            await Api.post('/api/economics/financial-analyses', analysisPayload);
           }
           await loadAnalyses();
         } else if (row.kind === 'valuation') {
@@ -253,7 +304,7 @@ export function useFinanceRowActions({
         );
       }
     },
-    [t, loadModels, loadAnalyses, loadBudgets, loadValuations, getBudgetRawId]
+    [t, loadModels, loadAnalyses, loadBudgets, loadValuations, getBudgetRawId, getExistingTitles]
   );
 
   const getRowActions = useCallback(
