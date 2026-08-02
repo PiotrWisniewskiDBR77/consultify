@@ -1,4 +1,13 @@
-import { CheckCircle2, Download, ExternalLink, Loader2, Play, Plus, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Download,
+  ExternalLink,
+  Loader2,
+  Play,
+  Plus,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +19,11 @@ import {
 } from '@/components/Economics/panels/EvBasketFootballField';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { API_URL, getHeaders } from '@/services/api';
+import {
+  confirmValuationRecommendationCandidateHandoff,
+  type FinanceValuationRecommendationPreview,
+  previewValuationRecommendationCandidateHandoff,
+} from '@/services/api/v8/financeCandidateHandoffValuation';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { isFinanceEvBasketEnabled } from '@/utils/financeEvBasketFlag';
 
@@ -18,6 +32,19 @@ import { ExportButton } from '../Finance/ExportButton';
 type ValuationSourceType = 'financial_model' | 'budget' | 'manual';
 type TerminalMethod = 'gordon' | 'exit_multiple';
 type ExitMultipleMetric = 'EV/EBITDA' | 'EV/Revenue';
+
+// FIN-06: preview→confirm modal for "Send as Initiative Candidate". Distinct
+// phases (rather than a single boolean) so the modal can render an honest
+// eligible/ineligible/error state instead of a generic spinner-then-success.
+type CandidateHandoffPhase = 'previewing' | 'eligible' | 'ineligible' | 'confirming' | 'error';
+
+interface CandidateHandoffModalState {
+  recommendationId: string;
+  phase: CandidateHandoffPhase;
+  preview?: FinanceValuationRecommendationPreview;
+  reason?: string;
+  errorMessage?: string;
+}
 
 interface ValuationListItem {
   id: string;
@@ -159,6 +186,15 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
   const [createSourceType, setCreateSourceType] = useState<ValuationSourceType>('budget');
   const [createSourceId, setCreateSourceId] = useState('');
   const [createHorizonYears, setCreateHorizonYears] = useState(5);
+
+  // FIN-06: "Send as Initiative Candidate" preview→confirm modal state. This
+  // recommendation-conversion action creates a Candidate, never an
+  // Initiative directly — Finance is banned from creating Initiatives
+  // straight from a recommendation. `phase` drives what the modal renders;
+  // `preview`/`reason`/`errorMessage` are only populated for their matching
+  // phase.
+  const [candidateHandoffModal, setCandidateHandoffModal] =
+    useState<CandidateHandoffModalState | null>(null);
 
   const fetchSources = useCallback(async () => {
     try {
@@ -501,54 +537,110 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
     }
   }, [fetchValuation, selectedId, t, onValuationChanged]);
 
-  const handleConvertRecommendation = useCallback(
+  // FIN-06: step 1 of the "Send as Initiative Candidate" flow — a read-only
+  // eligibility preview, no lock, no write. Opens the modal in a 'previewing'
+  // state immediately so the click has instant feedback, then resolves to
+  // 'eligible' (with the preview payload) or 'ineligible' (with the real
+  // reason from the backend — never a made-up one).
+  const handleOpenCandidateHandoff = useCallback(
     async (recommendationId: string) => {
-      if (!selectedId) return;
-      setBusy(true);
+      setCandidateHandoffModal({ recommendationId, phase: 'previewing' });
       try {
-        const res = await fetch(
-          `${API_URL}/economics/valuations/${selectedId}/advisory/${recommendationId}/convert-to-initiative`,
-          { method: 'POST', headers: getHeaders() }
-        );
-        const d = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          toast.error(
-            d?.error || t('valuation.advisory.convertFailed', 'Failed to create initiative')
-          );
-          return;
-        }
-        trackFunnelEvent('valuation_advisory_recommendation_converted', {
-          valuationId: selectedId,
-          initiativeId: d?.initiativeId,
-        });
-        const initiativeId = d?.initiativeId;
-        if (initiativeId) {
-          toast(
-            (toastMsg) => (
-              <div className="flex items-center gap-3">
-                <span>{t('valuation.advisory.convertOk', 'Initiative created')}</span>
-                <button
-                  className="text-xs font-medium text-c-info dark:text-c-info hover:underline whitespace-nowrap"
-                  onClick={() => {
-                    toast.dismiss(toastMsg.id);
-                    navigate(`/initiatives?open=${initiativeId}`);
-                  }}
-                >
-                  {t('valuation.advisory.openInitiative', 'Otwórz')}
-                </button>
-              </div>
-            ),
-            { duration: 6000 }
-          );
+        const result = await previewValuationRecommendationCandidateHandoff(recommendationId);
+        if (result.eligible) {
+          setCandidateHandoffModal({
+            recommendationId,
+            phase: 'eligible',
+            preview: result.preview,
+          });
         } else {
-          toast.success(t('valuation.advisory.convertOk', 'Initiative created'));
+          setCandidateHandoffModal({
+            recommendationId,
+            phase: 'ineligible',
+            reason: result.reason,
+          });
         }
-      } finally {
-        setBusy(false);
+      } catch (error: any) {
+        setCandidateHandoffModal({
+          recommendationId,
+          phase: 'error',
+          errorMessage:
+            error?.data?.error ||
+            error?.message ||
+            t('valuation.advisory.candidatePreviewFailed', 'Failed to check eligibility'),
+        });
       }
     },
-    [selectedId, t]
+    [t]
   );
+
+  // FIN-06: step 2 — the mutating confirm. Only ever called from the modal's
+  // 'eligible' phase. Success is only shown after this resolves; any 4xx
+  // (including a TOCTOU 409 if the source went ineligible between preview and
+  // confirm) surfaces as a real error in the modal, never a false success.
+  // `created: false` means the backend's idempotency short-circuit fired —
+  // this recommendation was already handed off before — so the toast says
+  // that honestly instead of claiming a fresh creation.
+  const handleConfirmCandidateHandoff = useCallback(async () => {
+    if (!candidateHandoffModal || candidateHandoffModal.phase !== 'eligible') return;
+    const { recommendationId } = candidateHandoffModal;
+    setCandidateHandoffModal((prev) => (prev ? { ...prev, phase: 'confirming' } : prev));
+    try {
+      const result = await confirmValuationRecommendationCandidateHandoff(recommendationId);
+      // Reuses the existing `valuation_advisory_recommendation_converted`
+      // FunnelEventName (funnelAnalytics.ts is outside this task's file
+      // ownership) — the `created`/`candidateId` fields distinguish a fresh
+      // Candidate handoff from an idempotent replay in the event payload.
+      trackFunnelEvent('valuation_advisory_recommendation_converted', {
+        valuationId: selectedId,
+        recommendationId,
+        candidateId: result.candidateId,
+        created: result.created,
+      });
+      setCandidateHandoffModal(null);
+      const message = result.created
+        ? t('valuation.advisory.candidateCreated', 'Utworzono kandydata na Initiative')
+        : t(
+            'valuation.advisory.candidateAlreadyExists',
+            'To zalecenie zostało już wcześniej wysłane jako kandydat na Initiative'
+          );
+      toast(
+        (toastMsg) => (
+          <div className="flex items-center gap-3">
+            <span>{message}</span>
+            <button
+              className="text-xs font-medium text-c-info dark:text-c-info hover:underline whitespace-nowrap"
+              onClick={() => {
+                toast.dismiss(toastMsg.id);
+                // No direct single-candidate deep link exists today
+                // (Initiatives' "Kandydaci" tab is not URL-addressable —
+                // InitiativesHub doesn't read a `tab`/`open` param for it),
+                // so this honestly opens the hub rather than guessing a URL
+                // that wouldn't actually land on the candidate.
+                navigate('/initiatives');
+              }}
+            >
+              {t('valuation.advisory.openCandidates', 'Otwórz (zakładka „Kandydaci")')}
+            </button>
+          </div>
+        ),
+        { duration: 6000 }
+      );
+    } catch (error: any) {
+      setCandidateHandoffModal((prev) =>
+        prev
+          ? {
+              ...prev,
+              phase: 'error',
+              errorMessage:
+                error?.data?.error ||
+                error?.message ||
+                t('valuation.advisory.candidateHandoffFailed', 'Failed to send candidate'),
+            }
+          : prev
+      );
+    }
+  }, [candidateHandoffModal, navigate, selectedId, t]);
 
   return (
     <div className="p-6">
@@ -1272,15 +1364,18 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   <div className="mt-3 pt-3 border-t border-c-border-subtle dark:border-c-border-subtle flex items-center gap-2">
                                     <button
                                       disabled={busy}
-                                      onClick={() => handleConvertRecommendation(String(r.id))}
+                                      onClick={() => handleOpenCandidateHandoff(String(r.id))}
                                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-c-text text-c-bg hover:opacity-90 disabled:opacity-60 transition-colors"
                                     >
                                       <Plus size={12} />
-                                      {t('valuation.advisory.convert', 'Create initiative')}
+                                      {t(
+                                        'valuation.advisory.convert',
+                                        'Wyślij jako kandydata na Initiative'
+                                      )}
                                     </button>
                                     <button
                                       disabled={busy}
-                                      onClick={() => handleConvertRecommendation(String(r.id))}
+                                      onClick={() => handleOpenCandidateHandoff(String(r.id))}
                                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border-strong text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
                                     >
                                       <ExternalLink size={12} />
@@ -1677,6 +1772,117 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {candidateHandoffModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle rounded-xl p-6 w-full max-w-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-c-text dark:text-white">
+                {t('valuation.advisory.candidateModalTitle', 'Wyślij jako kandydata na Initiative')}
+              </h2>
+              <button
+                onClick={() => setCandidateHandoffModal(null)}
+                disabled={candidateHandoffModal.phase === 'confirming'}
+                className="text-c-text-secondary hover:text-c-text-secondary disabled:opacity-60"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {candidateHandoffModal.phase === 'previewing' && (
+              <div className="flex items-center gap-2 py-6 text-sm text-c-text-secondary">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {t('valuation.advisory.candidateChecking', 'Sprawdzanie kwalifikowalności…')}
+              </div>
+            )}
+
+            {candidateHandoffModal.phase === 'ineligible' && (
+              <div className="space-y-4">
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-800 dark:text-amber-300">
+                    {candidateHandoffModal.reason}
+                  </p>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setCandidateHandoffModal(null)}
+                    className="px-4 py-2 text-sm text-c-text-muted hover:text-c-text-secondary"
+                  >
+                    {t('valuation.advisory.candidateModalClose', 'Zamknij')}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {(candidateHandoffModal.phase === 'eligible' ||
+              candidateHandoffModal.phase === 'confirming') &&
+              candidateHandoffModal.preview && (
+                <div className="space-y-4">
+                  <div className="p-3 rounded-lg bg-c-surface-raised dark:bg-c-surface-raised border border-c-border-subtle dark:border-c-border-subtle">
+                    <div className="text-sm font-semibold text-c-text dark:text-white">
+                      {candidateHandoffModal.preview.title}
+                    </div>
+                    <p className="text-xs text-c-text-secondary dark:text-c-text-secondary mt-1.5 leading-relaxed">
+                      {candidateHandoffModal.preview.rationale}
+                    </p>
+                    {typeof candidateHandoffModal.preview.fitScore === 'number' && (
+                      <div className="mt-2 text-[10px] text-c-text-muted">
+                        {t('valuation.advisory.candidateFitScore', 'Dopasowanie')}:{' '}
+                        {Math.round(candidateHandoffModal.preview.fitScore * 100)}%
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-c-text-muted">
+                    {t(
+                      'valuation.advisory.candidateModalBody',
+                      'Zostanie utworzony kandydat na Initiative — nie sama Initiative. Kandydata zaakceptujesz w zakładce „Kandydaci" w Initiatives.'
+                    )}
+                  </p>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => setCandidateHandoffModal(null)}
+                      disabled={candidateHandoffModal.phase === 'confirming'}
+                      className="px-4 py-2 text-sm text-c-text-muted hover:text-c-text-secondary disabled:opacity-60"
+                    >
+                      {t('valuation.advisory.candidateModalCancel', 'Anuluj')}
+                    </button>
+                    <button
+                      disabled={candidateHandoffModal.phase === 'confirming'}
+                      onClick={handleConfirmCandidateHandoff}
+                      className="px-4 py-2 bg-c-text text-c-bg hover:opacity-90 text-sm font-medium rounded-lg disabled:opacity-60"
+                    >
+                      {candidateHandoffModal.phase === 'confirming' ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        t('valuation.advisory.candidateModalConfirm', 'Wyślij')
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            {candidateHandoffModal.phase === 'error' && (
+              <div className="space-y-4">
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-danger-50 dark:bg-danger-900/10 border border-danger-200 dark:border-danger-500/20">
+                  <AlertTriangle className="w-4 h-4 text-danger-600 dark:text-danger-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-danger-800 dark:text-danger-300">
+                    {candidateHandoffModal.errorMessage}
+                  </p>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setCandidateHandoffModal(null)}
+                    className="px-4 py-2 text-sm text-c-text-muted hover:text-c-text-secondary"
+                  >
+                    {t('valuation.advisory.candidateModalClose', 'Zamknij')}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
