@@ -34,19 +34,25 @@
  *   to it — the existing human-entry call site is untouched and unaffected).
  * - The value itself is computed INDEPENDENTLY of the Results leg's output
  *   (not read from `initiative_benefits`) so a Results-leg failure never
- *   blocks/hides Finance and vice versa (contract point 3). `expected_roi` is
- *   NEVER used as a monetary amount (Codex review BLOCKER2 — confirmed by
- *   direct investigation that `expected_roi` is a free-text ROI/percentage
- *   narrative field in this schema, not currency; see migration
- *   903_expected_roi_to_text.sql's own header and CharterBuilder.tsx's
- *   "Expected ROI (%)" label, a DIFFERENT field from "Business Value (PLN)").
- *   The ONLY signal used is a planned KPI whose `unit` column is LITERALLY
- *   the initiative's own `budget_currency` code — anything else (KPI in %,
- *   days, count; no currency on the initiative; no matching KPI at all)
- *   yields NEEDS_DECISION, never a fabricated value. Investigation confirmed
- *   no seed/demo data currently sets a currency-valued KPI unit, so
- *   NEEDS_DECISION is the expected, correct outcome for most real closures
- *   today — that is honest, not a bug.
+ *   blocks/hides Finance and vice versa (contract point 3).
+ * - ★ Codex review round 3 — read before touching {@link findMonetaryActualMeasurement}:
+ *   a PLANNED KPI target (`initiative_kpis.target_value`) is NOT evidence a
+ *   benefit was REALIZED, and reaching status DONE is not evidence either.
+ *   Round 2 of this packet still wrote `target_value` into
+ *   `roi_realized_values` whenever its `unit` matched the initiative's
+ *   currency — semantically wrong (plan ≠ actual), fixed this round.
+ *   `expected_roi` is separately never used either way (round 2, still
+ *   correct): it's a free-text ROI/percentage narrative field in this
+ *   schema, not currency (migration 903_expected_roi_to_text.sql;
+ *   CharterBuilder.tsx's "Expected ROI (%)" label, distinct from "Business
+ *   Value (PLN)"). The ONLY signal now used is an OBSERVED measurement in
+ *   `kpi_time_series` (a point-in-time "the KPI's value was measured as X"
+ *   row — structurally a fact, not a plan) whose owning KPI's `unit` is
+ *   LITERALLY the initiative's own `budget_currency` code, recent enough
+ *   (see `MONETARY_MEASUREMENT_MAX_AGE_DAYS`). Anything else (no such
+ *   measurement, only a target, KPI in %/days/count, no currency on the
+ *   initiative, only a stale measurement) yields NEEDS_DECISION, never a
+ *   fabricated value.
  */
 
 import * as queryHelpers from '../utils/queryHelpers.js';
@@ -206,38 +212,62 @@ interface InitiativeFinanceRow {
   budget_currency: string | null;
 }
 
-interface PlannedKpiTargetRow {
-  target_value: number | string;
+interface MonetaryMeasurementRow {
+  id: string;
+  value: number | string;
+  period_end: string | null;
+  period_start: string;
 }
 
 /**
- * Independently compute the monetary realization amount/currency for this
- * initiative — deliberately NOT reading `initiative_benefits` (the Results
- * leg's output), so a Results-leg failure this attempt cannot block Finance
- * delivery. Returns `null` when the amount or currency cannot be determined
- * unambiguously — the caller must treat that as NEEDS_DECISION, never
- * substitute a default.
- *
- * `expected_roi` is NEVER used here (Codex review BLOCKER2, round 2). It is a
- * free-text ROI/percentage narrative field in this schema (migration
- * 903_expected_roi_to_text.sql: the AI hydration path writes strings like
- * "ROI 200%" / "44% (zysk netto ÷ nakład), payback 14 mies"; the UI labels
- * the SAME field "Expected ROI (%)" — `CharterBuilder.tsx` — as a field
- * distinct from "Business Value (PLN)"), never a currency amount. Turning a
- * percentage into a currency figure was a real domain-invalid bug in round 1
- * of this packet, now removed entirely — there is no fallback path anymore.
- *
- * The ONLY signal used: a planned KPI whose `unit` column is LITERALLY the
- * initiative's own `budget_currency` code. This is a real, if currently rare,
- * signal (investigation found no seed/demo data sets a currency-valued KPI
- * unit today, so NEEDS_DECISION is the expected, correct outcome for most
- * real closures until a product decision creates a genuine "monetary target"
- * field/contract) — not a heuristic dressed up as a mapping.
+ * A measurement older than this (relative to the moment delivery is
+ * attempted) is treated as too stale to auto-realize — contract test #6
+ * ("stary measurement sprzed dozwolonego okresu nie jest automatycznie
+ * realizowany"). 180 days (~2 quarters) is a documented policy default, not
+ * a discovered fact — a real product decision on "how recent must a
+ * measurement be to count as this closure's realized benefit" would let
+ * this be tuned or made explicit per-org.
  */
-async function computeMonetaryRealization(
+const MONETARY_MEASUREMENT_MAX_AGE_DAYS = 180;
+
+/**
+ * Independently find an ACTUAL, OBSERVED monetary measurement for this
+ * initiative — deliberately NOT reading `initiative_benefits` (the Results
+ * leg's output) and, critically, NOT `initiative_kpis.target_value` (Codex
+ * review round 3, the core finding this function exists to fix — read
+ * before touching):
+ *
+ * A PLANNED target is not evidence a benefit was REALIZED. Reaching
+ * initiative status DONE is not evidence either. Round 2 of this packet
+ * still wrote `initiative_kpis.target_value` into `roi_realized_values` —
+ * semantically wrong: a target is a plan/expectation, not a fact about what
+ * actually happened. This function now reads `kpi_time_series` instead —
+ * the one table in this schema that is structurally a point-in-time
+ * OBSERVATION ("the KPI's value was measured as X at period P"), as opposed
+ * to a one-shot plan. A fresh investigation (this round) confirmed no other
+ * "actual, approved, monetary, currency-explicit" concept exists anywhere
+ * in this codebase — `roi_realized_values`/`kpi_time_series` themselves have
+ * a self-asserted `source` and no formal approval/sign-off field;
+ * `v8_roi_realization_entries.verified_by` (the one column with real
+ * approval semantics anywhere in the schema) is only ever written by a
+ * synthetic health-check probe, never a real user flow;
+ * `initiative_benefits.actual_annual_value` is declared but never written by
+ * any code path. Using `kpi_time_series` is therefore the closest available
+ * "actual" signal that exists and is genuinely written by real callers
+ * today — NOT a claim that it carries a human sign-off gate. That gap
+ * (no approval workflow for a measurement before it can back a Finance
+ * realization) is a real, open NEEDS_PRODUCT_DECISION, documented in the
+ * completion report, not silently papered over here.
+ *
+ * Returns `null` — the caller must treat that as NEEDS_DECISION, never
+ * substitute a default — when: the initiative has no explicit
+ * `budget_currency`; no KPI's `unit` matches it; or the only matching
+ * measurement(s) are older than {@link MONETARY_MEASUREMENT_MAX_AGE_DAYS}.
+ */
+async function findMonetaryActualMeasurement(
   organizationId: string,
   initiativeId: string
-): Promise<{ amount: number; currency: string; valueSource: string } | null> {
+): Promise<{ amount: number; currency: string; valueSource: string; measurementId: string } | null> {
   const initiative = await queryHelpers.queryOne<InitiativeFinanceRow>(
     `SELECT budget_currency FROM initiatives WHERE id = ? AND organization_id = ?`,
     [initiativeId, organizationId]
@@ -250,26 +280,41 @@ async function computeMonetaryRealization(
     return null;
   }
 
-  const kpiTargets = await queryHelpers.queryAll<PlannedKpiTargetRow>(
-    `SELECT target_value FROM initiative_kpis
-      WHERE initiative_id = ? AND target_value IS NOT NULL AND unit = ?`,
-    [initiativeId, initiative.budget_currency]
+  // Most recent measurement, across any KPI on this initiative whose unit
+  // matches the initiative's currency, within the recency window. A single
+  // most-recent OBSERVED value — not a sum across KPIs the way targets were
+  // summed in earlier rounds: an "actual" is a point-in-time fact, summing
+  // unrelated point-in-time observations across different KPIs doesn't have
+  // the same clear meaning a sum of planned upside lines did.
+  const measurement = await queryHelpers.queryOne<MonetaryMeasurementRow>(
+    `SELECT kts.id, kts.value, kts.period_end, kts.period_start
+       FROM kpi_time_series kts
+       JOIN initiative_kpis ik ON ik.id = kts.kpi_id
+      WHERE kts.initiative_id = ?
+        AND kts.organization_id = ?
+        AND ik.unit = ?
+        AND COALESCE(kts.period_end, kts.period_start) >= (CURRENT_DATE - ? * INTERVAL '1 day')
+      ORDER BY COALESCE(kts.period_end, kts.period_start) DESC, kts.created_at DESC
+      LIMIT 1`,
+    [initiativeId, organizationId, initiative.budget_currency, MONETARY_MEASUREMENT_MAX_AGE_DAYS]
   );
-  if (kpiTargets.length === 0) {
-    // No currency-matched KPI target — nothing to hand off. Mapping gap, not
-    // a silent zero: NEEDS_DECISION.
+  if (!measurement) {
+    // No currency-matched, sufficiently-recent measurement — nothing to
+    // hand off. Mapping gap (or genuinely stale data), not a silent zero:
+    // NEEDS_DECISION.
     return null;
   }
 
-  const amount = kpiTargets.reduce((sum, row) => sum + Number(row.target_value), 0);
+  const amount = Number(measurement.value);
   if (!Number.isFinite(amount)) return null;
 
-  // A real match, including a legitimate sum of exactly 0 — that IS the
-  // answer, not "no answer".
   return {
     amount,
     currency: initiative.budget_currency,
-    valueSource: `initiative_kpis.target_value (sum, unit=${initiative.budget_currency}) + initiatives.budget_currency`,
+    valueSource:
+      `kpi_time_series measurement (id=${measurement.id}, ` +
+      `period_end=${measurement.period_end ?? measurement.period_start}, unit=${initiative.budget_currency})`,
+    measurementId: measurement.id,
   };
 }
 
@@ -439,8 +484,8 @@ export async function attemptDeliveryInternal(
   ) {
     try {
       if (opts.__testForceFinanceError) throw opts.__testForceFinanceError;
-      const value = await computeMonetaryRealization(organizationId, initiativeId);
-      if (!value) {
+      const measurement = await findMonetaryActualMeasurement(organizationId, initiativeId);
+      if (!measurement) {
         await queryHelpers.queryRun(
           `UPDATE closure_delivery_receipts
               SET finance_status = 'NEEDS_DECISION',
@@ -448,9 +493,11 @@ export async function attemptDeliveryInternal(
                   updated_at = CURRENT_TIMESTAMP
             WHERE id = ?`,
           [
-            'No unambiguous financial target: initiative has no budget_currency, or no planned ' +
-              'KPI whose unit matches that currency. Needs an explicit product decision on value ' +
-              'mapping — never fabricated from expected_roi (a percentage field, not currency).',
+            'No approved actual monetary measurement: initiative has no budget_currency, no KPI ' +
+              `whose unit matches it, or no matching kpi_time_series measurement within the last ` +
+              `${MONETARY_MEASUREMENT_MAX_AGE_DAYS} days. A planned KPI target or expected_roi is ` +
+              'NEVER used as a substitute — closure/DONE is not evidence a benefit was realized. ' +
+              'Needs an explicit product decision on an approved-actual source.',
             receiptId,
           ]
         );
@@ -469,10 +516,10 @@ export async function attemptDeliveryInternal(
           organizationId,
           initiativeId,
           periodMonth: periodMonthIso,
-          realizedRevenueDelta: value.amount,
+          realizedRevenueDelta: measurement.amount,
           varianceNotes:
-            `EXE-09 closure-triggered realization — source: ${value.valueSource}, ` +
-            `currency: ${value.currency} (informational; roi_realized_values has no currency column).`,
+            `EXE-09 closure-triggered realization — source: ${measurement.valueSource}, ` +
+            `currency: ${measurement.currency} (informational; roi_realized_values has no currency column).`,
           recordedBy: actorId ?? SYSTEM_ACTOR_LABEL,
           closureReceiptId: receiptId,
         });
@@ -499,7 +546,10 @@ export async function attemptDeliveryInternal(
                     finance_payload = ?,
                     updated_at = CURRENT_TIMESTAMP
               WHERE id = ?`,
-            [JSON.stringify({ realizationId: persisted.id }), receiptId]
+            [
+              JSON.stringify({ realizationId: persisted.id, sourceMeasurementId: measurement.measurementId }),
+              receiptId,
+            ]
           );
         });
       }
