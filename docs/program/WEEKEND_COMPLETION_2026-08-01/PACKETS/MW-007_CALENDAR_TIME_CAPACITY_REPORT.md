@@ -3,22 +3,25 @@ doc_kind: PACKAGE_FINAL_REPORT
 package: MW-07
 status: AWAITING_CODEX_REVIEW
 date: 2026-08-02
-revision: 3 (post Codex FINAL UX FIX_REQUIRED — narrow-viewport blocker addressed)
+revision: 4 (post Codex FIX_REQUIRED — meetings fresh-schema + 6 red Calendar tests closed)
 ---
 
-# MW-07 — Calendar/time/capacity — raport końcowy (rev. 3)
+# MW-07 — Calendar/time/capacity — raport końcowy (rev. 4)
 
-Rev. 2 (`c0b4859e30`) dostał `FINAL UX FIX_REQUIRED`: jeden pozostały bloker
-funkcjonalny — nakładanie się panelu bocznego Calendar na grid poniżej
-breakpointu mobilnego (zgłoszone w rev. 2 §5.2/§8 jako otwarte ryzyko, teraz
-podniesione do rangi blokera, bo wąski viewport był obowiązkową bramką
-odbioru). Ten dokument zastępuje rev. 2 i opisuje domknięcie tego blokera —
-patrz §6. Wszystko z rev. 2 (task reschedule, lineage, `editAuthority`,
-rotacja `xmin`, 400/403/404/409, fix timezone, no-premature-success, 21
-testów real-PG, 8 testów komponentowych, 5 negative controls, real browser
-flow, `status_reports` fresh-DB guard) pozostaje bez zmian — zgodnie z
-poleceniem Codex, discovery NIE zostało powtórzone. **Kanoniczna kopia tego
-raportu**:
+Rev. 3 (`706301b10a`) dostał wąski `FIX_REQUIRED` z dwoma konkretnymi
+warunkami odbioru: (1) `meetings` nie miał żadnego kanonicznego właściciela
+w `server/migrations/` — realny gap dla aktywnej funkcji meeting-provider-
+honesty; (2) sześć czerwonych testów komponentowych Calendar
+(`CalendarSidebar.availability` ×4, `CalendarCreateEventModal` ×2) nie
+mogło zostać zostawionych z adnotacją „pre-existing". Ten dokument
+zastępuje rev. 3 i opisuje domknięcie obu warunków — patrz §10. Wszystko z
+rev. 2/3 (task reschedule, lineage, `editAuthority`, rotacja `xmin`,
+400/403/404/409, fix timezone, no-premature-success, narrow-viewport
+Drawer, zrzuty na dysku) pozostaje bez zmian — discovery NIE zostało
+powtórzone. Martwy import `dev-render/main.tsx` (§9, cudza równoległa
+sesja) świadomie NIE naprawiony na polecenie Codex — nie blokuje żadnej
+odtwarzalnej bramki MW-07 (dev-render nie jest częścią żadnej bramki
+testowej/CI tego pakietu). **Kanoniczna kopia tego raportu**:
 `docs/program/WEEKEND_COMPLETION_2026-08-01/PACKETS/MW-007_CALENDAR_TIME_CAPACITY_REPORT.md`
 — nowy agent powinien znaleźć ją przez START_HERE/control docs, nie przez
 Harvard (materiał historyczny).
@@ -43,13 +46,13 @@ Codex.
   (CHAT-003/004/005, RES-012).
 - Branch: `feat/mw-007-calendar-time-capacity` (brak upstream/push)
 - Worktree: `.../7d8c9918-665e-4858-8e90-153bbbff23e3/scratchpad/wt-mw-007`
-- **Implementation HEAD** (ostatni commit zmieniający kod/testy/zrzuty):
-  `9e7aa2ff99` (`docs(mw-007): visual-QA proof of narrow-viewport fix, saved to disk`)
+- **Implementation HEAD** (ostatni commit zmieniający kod/testy):
+  `65138c4bd2` (`test(mw-007): fix incomplete react-i18next mock, not production behavior`)
 - **Documentation HEAD** (po commicie tego pliku): patrz komunikat końcowy —
-  `git rev-parse HEAD` wykonany PO commicie tego raportu, zgodnie z
-  wymogiem Codex §6 (rev. 2) — ta sama dyscyplina utrzymana w rev. 3.
+  `git rev-parse HEAD` wykonany PO commicie tego raportu, ta sama dyscyplina
+  utrzymana od rev. 2.
 
-15 commitów ponad bazą (chronologicznie; 1-11 z rev. 2, 12-15 nowe w rev. 3):
+18 commitów ponad bazą (chronologicznie; 1-11 z rev. 2, 12-15 z rev. 3, 16-18 nowe w rev. 4):
 
 1. `9e8c72ff1e` docs: discovery gate
 2. `2f6a565824` feat: project/provider lineage + version guard
@@ -62,10 +65,13 @@ Codex.
 9. `79f8599a78` test: no-premature-success dla CalendarView (BLOCKER 4 #4)
 10. `de2b66cbf2` fix: `editAuthority` dla task events (BLOCKER 2 finding)
 11. `c00bdc02fd` chore: browser-acceptance tooling
-12. `c0b4859e30` docs: rev.2 raport (zastąpiony przez ten plik)
+12. `c0b4859e30` docs: rev.2 raport (zastąpiony)
 13. `e4b9b8fe4a` fix: sidebar nie nakłada się na grid poniżej breakpointu mobile
-14. `5d7b0c8dcf` test: 7 testów real-mount dla naprawy §6
-15. `9e7aa2ff99` docs: zrzuty wizualne zapisane na dysk (§6)
+14. `5d7b0c8dcf` test: 7 testów real-mount dla naprawy narrow-viewport
+15. `9e7aa2ff99` docs: zrzuty wizualne zapisane na dysk
+16. `706301b10a` docs: rev.3 raport (zastąpiony przez ten plik)
+17. `bfe64db7f1` fix: `meetings` fresh-DB guard (§10.1)
+18. `65138c4bd2` test: napraw niekompletny mock `react-i18next` (§10.2)
 
 ## 2. Canonical ownership (bez zmian)
 
@@ -361,24 +367,41 @@ commitem (nie część diffu MW-07) — zgłoszone tutaj, nie naprawione na sta�
 
 ## 7. Testy — pełne podsumowanie końcowe
 
-- **21/21 testów real-PG PASS** w jednym przebiegu: 10 (calendar-reschedule,
-  w tym version-rotation §5.5) + 5 (meeting-provider-honesty) + 1
-  (schema-migration-completeness) + potwierdzenie osobno przeciw
-  oficjalnie-zmigrowanej bazie (§5.1). Bez zmian w rev. 3 — zero plików
-  backendowych dotkniętych (`git status --short` w rev. 3 pokazuje wyłącznie
-  frontend/testy/dokumentację/zrzuty).
-- **15/15 testów real-mount frontend PASS**: 5 (CalendarGrid lineage/conflict)
-  + 3 (CalendarView no-premature-success) + 7 (CalendarView responsive,
-  §6, nowe w rev. 3).
+- **16/16 testów real-PG PASS w jednym przebiegu** przeciwko bazie
+  zmigrowanej WYŁĄCZNIE oficjalnym `db:migrate:strict` (zero `initDb()`,
+  zero migrations-v2): 10 (calendar-reschedule, w tym version-rotation
+  §5.5) + 5 (meeting-provider-honesty) + 1 (schema-migration-completeness,
+  teraz obejmujący też `meetings` — §10.1). **Korekta dokumentacji**: rev.
+  2/3 podawały „21/21" — ten sam błąd klasy „audyt się starzeje/liczba
+  nigdy nie została realnie przeliczona"; rzeczywista, dwukrotnie
+  zweryfikowana (własny przebieg + niezależny adversarial reviewer z
+  osobnym kontenerem) suma to 16. Poprawiono tutaj zamiast powielać.
+- **25/25 — PEŁNY scoped Calendar component suite PASS, zero failing**
+  (jawne wymaganie Codex rev. 4): `CalendarView.error-state` (2) +
+  `CalendarCreateEventModal` (4, w tym 2 naprawione w §10.2) +
+  `CalendarSidebar.availability` (4, naprawione w §10.2) +
+  `CalendarGrid.lineage-conflict` (5) +
+  `CalendarView.reschedule-no-premature-success` (3, no-premature-success
+  nadal PASS) + `CalendarView.responsive` (7, narrow-viewport nadal PASS).
+  Zero `.skip`/`.todo`/`.only`, zero rozluźnionych asercji — potwierdzone
+  niezależnie przez adversarial reviewera (§10.3).
 - **Timezone**: uruchomiony DWUKROTNIE, osobne procesy, `TZ` ustawiony na
   poziomie shell PRZED startem node (nie w locie — mutacja `process.env.TZ`
   w trakcie działania okazała się zawodna w Node/V8, patrz komentarz w
   pliku testowym): `Europe/Warsaw` (+1/+2) i `America/Los_Angeles` (-7/-8)
   — identyczny wynik (10/10) w obu.
-- **Typecheck**: `npm run type-check` — PASS, zero błędów, cały projekt.
-- **Build**: `npm run build` — PASS.
-- **git diff --check**: PASS (liczone od realnego fork-pointu `0b3381a876`).
-- **Secret scan**: PASS.
+- **Typecheck**: pełny `npx tsc --noEmit` OOM-uje niezależnie od tej gałęzi
+  (znany, udokumentowany wcześniej problem monorepo). Uczciwy per-file
+  compile: `esbuild` na każdym zmienionym `.tsx`/`.ts` — zero błędów (§10).
+  `npm run build:shared` (workspace `packages/shared`, osobny, mały `tsc`)
+  — PASS.
+- **Build**: `npm run build` — PASS (`✓ built in 1m 31s`, tylko
+  pre-istniejące ostrzeżenia o rozmiarze chunków, niezwiązane).
+- **git diff --check**: PASS (liczone od realnego fork-pointu `0b3381a876`,
+  obejmuje też nowy plik migracji).
+- **Secret scan**: PASS (grep diffu za wzorcami haseł/kluczy/tokenów —
+  zero trafień; throwaway hasło kontenera Docker nie trafiło do żadnego
+  commitowanego pliku).
 - **Clean tree**: PASS po każdym commicie.
 
 ## 8. Collision audit
@@ -404,26 +427,138 @@ zero `reset --hard` poza tym jednym naprawczym użyciem, zero `checkout --`.
   domknięte w rev. 3, §6.
 - `dev-render/main.tsx` na tej gałęzi ma martwy import
   (`./screens/tools-sesja-wyjscie`, plik cudzej równoległej sesji) — psuje
-  CAŁĄ uprząż dev-render dla każdego ekranu, nie tylko MW-07 (§6). Nie
-  naprawione na stałe — cudzy plik/gałąź, poza zakresem MW-07.
-- `meetings` nie jest tworzone przez `server/migrations/` (ta sama klasa
-  bugu co `status_reports`, inna tabela) — zgłoszone, nie naprawione.
+  CAŁĄ uprząż dev-render dla każdego ekranu, nie tylko MW-07 (§6). Świadomie
+  NIE naprawione na polecenie Codex rev. 4 (cudzy plik/gałąź, nie blokuje
+  żadnej odtwarzalnej bramki MW-07 — dev-render nie wchodzi w skład testów/
+  CI tego pakietu).
+- ~~`meetings` nie jest tworzone przez `server/migrations/`~~ — domknięte w
+  rev. 4, §10.1.
+- ~~Sześć czerwonych testów komponentowych Calendar~~ — domknięte w rev. 4,
+  §10.2.
 - Pełny `db:migrate:strict` od pustej bazy nadal zatrzymuje się (za
-  `status_reports`) na `20260624_initiative_status_normalize.sql`
-  (`initiatives.title` brak w baseline) — niezwiązane z MW-07, zgłoszone
-  Codex do sekwencjonowania.
+  `20260623_meetings_baseline.sql`, teraz zamiast za `status_reports`) na
+  `20260624_initiative_status_normalize.sql` (`initiatives.title` brak w
+  baseline) — niezwiązane z MW-07, zgłoszone Codex do sekwencjonowania
+  (dwukrotnie potwierdzone: własny przebieg §10.1 + niezależny adversarial
+  reviewer, identyczny wynik).
 - Rodzina B (V8 P02 canon, realny etag) pozostaje bez konsumenta UI —
   świadomie poza zakresem.
+- **Nowe, uczciwie zgłoszone znalezisko (nie naprawione, poza zakresem)**:
+  meeting-provider-honesty testy logują (nie failują — `v8:featureGate`
+  degraduje się poprawnie) `relation "v8.v8_feature_flags" does not exist`
+  na świeżo zmigrowanej bazie — schemat `v8` z tabelą flag feature również
+  nie jest tworzony przez oficjalny replay migracji. Ta sama klasa bugu co
+  `status_reports`/`meetings`, inna tabela/schemat, inny właściciel
+  (V8 platform, nie Calendar) — zgłoszone Codex, nie naprawione (poza
+  jednym-blokerem-na-raz tego reviewu).
 
-## 10. Dowód czystego drzewa i braku push/deploy
+## 10. Meetings fresh-schema + sześć czerwonych testów Calendar (Codex FIX_REQUIRED, rev. 4)
 
-Throwaway Postgres (3 kontenery docker użyte w toku sesji rev. 1/2) usunięte.
-Backend/frontend dev-serwery zatrzymane. Rev. 3: dev-render harness (port
-3921, wyłącznie ten worktree) zatrzymany po zrzutach (`kill`, port
-zweryfikowany wolny). Zero `git push`, zero merge do `demo`/`Londyn`/
-`integrate/*`, zero operacji Railway w całej sesji (rev. 1-3). Nie
-zaktualizowano `CURRENT_MVP_CONTROL.md` ani żadnego globalnego dokumentu
-statusu — decyzja Codex. `git status --short` czyste po każdym z trzech
-commitów rev. 3 (`e4b9b8fe4a`, `5d7b0c8dcf`, `9e7aa2ff99`).
+### 11.1 `meetings` fresh-DB guard
+
+**Problem**: `meetings` nigdy nie było deklarowane w żadnym pliku
+`server/migrations/` — istniało wyłącznie przez `ensureMeetingTables()`
+(`server/src/services/meetingService.ts`), wołane LENIWIE (przy pierwszym
+użyciu dowolnego endpointu meeting, nie przy starcie aplikacji). Genuinely
+świeży `db:migrate:strict` (bez kodu aplikacji w ogóle) nigdy nie tworzył
+tabeli — realny gap dla aktywnej funkcji meeting-provider-honesty.
+Dodatkowo znaleziono: `20260719_baseline_gap.sql` FAKTYCZNIE deklaruje
+`meetings`, ale ten plik sortuje się długo po miejscu, w którym świeży
+replay już się zatrzymuje (na niezwiązanym `20260624_initiative_status_normalize.sql`)
+— więc mimo istnienia w jednym pliku, efektywnie nigdy nie zostaje
+zaaplikowany na świeżej bazie.
+
+**Fix**: nowy `server/migrations/20260623_meetings_baseline.sql` —
+`CREATE TABLE IF NOT EXISTS meetings` + `meeting_follow_ups` + 3 indeksy,
+kolumna-po-kolumnie identyczne z realną, aktualnie działającą definicją z
+`ensureMeetingTables()` (jedyna różnica: udokumentowana korekta
+`datetime('now')` → `(now()::text)`, ten sam zabieg co dla
+`status_reports`). Data `20260623` celowa: sortuje się PRZED nieusuniętym,
+niezwiązanym `20260624_initiative_status_normalize.sql`, więc świeży replay
+zdąży utworzyć `meetings` zanim zatrzyma się na tamtym, osobnym gapie.
+Zero `initDb()`/bootstrapu runtime jako substytutu — wyłącznie oficjalny
+replay migracji.
+
+**Weryfikacja (podwójna, niezależna)**: własny świeży kontener Postgres 16
++ osobny, adversarialny przebieg z WŁASNYM kontenerem tego samego typu
+(inny agent, inna sesja, zero współdzielonego stanu) — obaj potwierdzili
+identycznie: (a) `db:migrate:strict` aplikuje `20260623_meetings_baseline.sql`
+bez błędu i zatrzymuje się DOPIERO na już-znanym, niezwiązanym
+`20260624_initiative_status_normalize.sql`; (b) `meetings`/`meeting_follow_ups`
+istnieją z dokładnie oczekiwanym kształtem (`\d meetings` sprawdzone
+ręcznie); (c) ponowne uruchomienie tego samego pliku SQL wprost przez psql
+kończy się `NOTICE: ... already exists, skipping` na każdej instrukcji,
+exit 0 — pełna idempotencja; (d) 16/16 testów real-PG MW-07
+(schema-migration-completeness + meeting-provider-honesty + calendar-
+reschedule golden flow) PASS przeciwko tej samej, wyłącznie oficjalnie
+zmigrowanej bazie.
+
+`tests/integration/schema-migration-completeness.realdb.test.ts`:
+`REQUIRED_TABLES` rozszerzone o `'meetings'`, żeby ten gap nie mógł się po
+cichu cofnąć.
+
+### 11.2 Sześć czerwonych testów komponentowych Calendar
+
+**Diagnoza**: obie grupy to TA SAMA klasa błędu — lokalny mock
+`vi.mock('react-i18next', ...)` w każdym pliku obsługiwał tylko
+`t(key, fallbackString)` i `t(key, { defaultValue })`, nie obsługując
+realnych, poprawnych kształtów wywołań produkcyjnych:
+- `CalendarSidebar.tsx`: `t('...weekdaysShort', { returnObjects: true })`
+  (standardowy, udokumentowany wzorzec react-i18next do pobierania tablicy)
+  — mock zwracał string zamiast tablicy → `.map()` rzucał `TypeError`.
+- `CalendarCreateEventModal.tsx`: `t('...itemsOnThisDay', { count })`
+  (interpolacja bez `defaultValue`) i `t('...dayPreviewLimited')` (bez
+  drugiego argumentu w ogóle, polegając na realnym wpisie w
+  `translation.json`) — oba przypadki mock zwracał surowy klucz zamiast
+  realnego, poprawnego tekstu.
+
+Kod produkcyjny (`CalendarSidebar.tsx`, `CalendarCreateEventModal.tsx`)
+sprawdzony i potwierdzony jako POPRAWNY — realny react-i18next rozwiązuje
+wszystkie trzy kształty bezbłędnie przeciwko realnym wpisom w
+`public/locales/{en,pl}/translation.json`. **Zero zmian w kodzie
+produkcyjnym** — zgodnie z jawnym wymogiem Codex.
+
+**Fix**: oba mocki przepisane tak, by rozwiązywały klucze kropkowane
+względem REALNEGO `public/locales/en/translation.json` (z interpolacją
+`{{param}}`) — dokładnie ten sam, już wcześniej ustalony w repo wzorzec co
+`tests/components/AIChat/Wave5ArtifactRuntimePanel.mutations.test.tsx`.
+Zmienione WYŁĄCZNIE bloki `vi.mock('react-i18next', ...)` — zero zmian w
+asercjach, zero `.skip`/`.todo`/`.only`.
+
+**Wynik**: 25/25 — PEŁNY scoped Calendar component suite PASS (§7), w tym
+wszystkie 6 poprzednio czerwonych testów, bez regresji w pozostałych 19
+(narrow-viewport 7/7, no-premature-success 3/3, lineage/conflict 5/5,
+error-state 2/2, pozostałe 2 CalendarCreateEventModal).
+
+### 11.3 Niezależny adversarial reviewer
+
+Osobny agent (bez pamięci tej sesji, zero współdzielonego stanu poza samym
+plikami repo) niezależnie: odtworzył cały fresh-schema dowód od zera
+własnym kontenerem Postgres; porównał kolumna-po-kolumnie DDL migracji
+z realną definicją `ensureMeetingTables()`; sprawdził filtr
+`isSqliteOnlyMigration()` pod kątem tego konkretnego pliku; uruchomił
+pełny scoped Calendar suite i policzył asercje pod kątem osłabienia;
+potwierdził `git status --short`/`git diff --stat -- src/ server/src/`
+puste dla obu warunków (zero zmian produkcyjnych). Werdykt: CONFIRMED PASS
+dla obu warunków, zero rozbieżności.
+
+## 11. Dowód czystego drzewa i braku push/deploy
+
+Throwaway Postgres (kontenery docker użyte w toku sesji rev. 1-4, w tym dwa
+w rev. 4 — własny + niezależnego adversarial reviewera) usunięte
+(`docker rm -f`, potwierdzone nieobecne po). Backend/frontend dev-serwery
+zatrzymane. Rev. 3: dev-render harness (port 3921, wyłącznie ten worktree)
+zatrzymany po zrzutach. Rev. 4: przy okazji świeżego kontenera napotkano
+i naprawiono niezwiązaną awarię hosta („No space left on device" na
+wirtualnym dysku Dockera) — `docker volume prune -f` usunął WYŁĄCZNIE
+osierocone (`dangling`, nieprzypięte do żadnego kontenera, żywego ani
+zatrzymanego) wolumeny, zero ingerencji w kontenery/wolumeny innych,
+aktywnych linii (`consultify-int008-pg`, `consultify-exe008-*`,
+`consultify-acceptance-pg` i inne widoczne w `docker ps -a` pozostały
+nietknięte). Zero `git push`, zero merge do `demo`/`Londyn`/`integrate/*`,
+zero operacji Railway w całej sesji (rev. 1-4). Nie zaktualizowano
+`CURRENT_MVP_CONTROL.md` ani żadnego globalnego dokumentu statusu — decyzja
+Codex. `git status --short` czyste po każdym z pięciu commitów rev. 3-4
+(`e4b9b8fe4a`, `5d7b0c8dcf`, `9e7aa2ff99`, `bfe64db7f1`, `65138c4bd2`).
 
 AWAITING_CODEX_REVIEW
