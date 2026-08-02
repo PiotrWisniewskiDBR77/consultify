@@ -38,6 +38,8 @@
  * `createCandidateFromSource` (`initiativeCandidateService.ts`) — this
  * module never inserts into `initiative_candidates` directly.
  */
+import { createHash } from 'crypto';
+
 import { v4 as uuidv4 } from 'uuid';
 
 import type { PinnedTransactionClient } from '../../database/PostgresDatabase.js';
@@ -45,6 +47,105 @@ import { withPinnedPostgresTransaction } from '../../database/PostgresDatabase.j
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import type { CandidateDb, DiscoverySourceType } from '../initiative/initiativeCandidateService.js';
 import { createCandidateFromSource } from '../initiative/initiativeCandidateService.js';
+
+// ---------------------------------------------------------------------------
+// Source value snapshot — Codex correction (2026-08-02)
+// ---------------------------------------------------------------------------
+//
+// FIN-06 must NEVER recompute a financial figure and must NEVER silently
+// substitute 0/null for a value the source does not have. `sourceSnapshot`
+// is the structured, source-type-agnostic carrier for that invariant: every
+// field is either a real value read straight off the source (row column or
+// JSONB blob key), or the literal string 'unknown' — never a fabricated or
+// estimated number. All three adapters populate this via `unknownIfMissing`
+// (or, for list-shaped fields where the concept doesn't exist AT ALL on that
+// source type, the literal `UNKNOWN` constant written explicitly) so the
+// invariant can't drift between adapters.
+
+/** The literal sentinel for "this field genuinely has no value in the source." */
+export const UNKNOWN = 'unknown' as const;
+export type FinanceUnknown = typeof UNKNOWN;
+
+/**
+ * Structured, source-type-agnostic snapshot of the real values a Finance
+ * source carries. Every one of these is either read verbatim from the
+ * source (never derived/summed/estimated by this module) or `'unknown'`
+ * when the source genuinely has no such field/value.
+ */
+export interface FinanceCandidateSourceSnapshot {
+  currency: string | FinanceUnknown;
+  capex: number | FinanceUnknown;
+  opex: number | FinanceUnknown;
+  npv: number | FinanceUnknown;
+  irr: number | FinanceUnknown;
+  roi: number | FinanceUnknown;
+  payback: number | FinanceUnknown;
+  baselineOrScenario: string | FinanceUnknown;
+  assumptions: string[] | FinanceUnknown;
+  risks: string[] | FinanceUnknown;
+  sourceVersion: string | FinanceUnknown;
+  sourceFingerprint: string | FinanceUnknown;
+}
+
+/**
+ * A snapshot with every field defaulted to `'unknown'` — adapters spread
+ * this and only override the fields they can genuinely ground in real
+ * source data, so a field an adapter forgets to set is honestly 'unknown'
+ * rather than silently `undefined` (which would serialize away and violate
+ * the "never missing" test invariant).
+ */
+export function emptySourceSnapshot(): FinanceCandidateSourceSnapshot {
+  return {
+    currency: UNKNOWN,
+    capex: UNKNOWN,
+    opex: UNKNOWN,
+    npv: UNKNOWN,
+    irr: UNKNOWN,
+    roi: UNKNOWN,
+    payback: UNKNOWN,
+    baselineOrScenario: UNKNOWN,
+    assumptions: UNKNOWN,
+    risks: UNKNOWN,
+    sourceVersion: UNKNOWN,
+    sourceFingerprint: UNKNOWN,
+  };
+}
+
+/**
+ * Scalar carry-over helper: `null`/`undefined`/blank-string/non-finite-number
+ * -> `'unknown'`, otherwise the real value verbatim. This is the ONE place
+ * "is this value actually there" is decided for scalar fields, so the three
+ * adapters can't independently drift on what counts as "missing" (e.g. one
+ * treating `''` as a real currency, another not).
+ *
+ * Deliberately NOT used for list fields (`assumptions`/`risks`): an empty
+ * array can be a genuine, meaningful computed result (e.g. a statement
+ * pack's quality-reason-codes really is `[]` when nothing is flagged) rather
+ * than "missing", so each adapter decides that distinction explicitly at the
+ * call site instead of this helper silently collapsing `[]` to 'unknown'.
+ */
+export function unknownIfMissing(value: number | null | undefined): number | FinanceUnknown;
+export function unknownIfMissing(value: string | null | undefined): string | FinanceUnknown;
+export function unknownIfMissing<T extends number | string>(
+  value: T | null | undefined
+): T | FinanceUnknown {
+  if (value === null || value === undefined) return UNKNOWN;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : UNKNOWN;
+  if (typeof value === 'string') return value.trim().length > 0 ? value : UNKNOWN;
+  return UNKNOWN;
+}
+
+/**
+ * Deterministic content fingerprint (sha256, truncated to 16 hex chars) of
+ * whatever real, already-resolved source data is passed in. This is a
+ * lineage/idempotency-integrity identifier, NOT a financial figure — it
+ * never estimates or invents a business number, it only hashes bytes that
+ * are already real. Always computable (never 'unknown') for any resolved
+ * source, since a source that resolved at all has SOME identifying content.
+ */
+export function computeSourceFingerprint(payload: unknown): string {
+  return createHash('sha256').update(JSON.stringify(payload)).digest('hex').slice(0, 16);
+}
 
 /**
  * Error shape for this module. Callers (Phase 2 route layers) should catch
@@ -85,11 +186,22 @@ export interface FinanceCandidateFields {
   title: string;
   rationale: string;
   fitScore?: number;
+  /**
+   * Structured, real-values-only snapshot of the source (Codex correction,
+   * 2026-08-02) — see the module-header comment above. Optional on the type
+   * only so a not-yet-migrated caller doesn't hard-fail; every FIN-06
+   * adapter in this codebase populates it, and `previewFinanceCandidateHandoff`
+   * / `confirmFinanceCandidateHandoff` default a missing one to
+   * `emptySourceSnapshot()` (all fields 'unknown') rather than omitting the
+   * key.
+   */
+  sourceSnapshot?: FinanceCandidateSourceSnapshot;
 }
 
 export interface FinanceCandidatePreview extends FinanceCandidateFields {
   sourceType: DiscoverySourceType;
   sourceId: string;
+  sourceSnapshot: FinanceCandidateSourceSnapshot;
 }
 
 export type FinanceCandidatePreviewResult =
@@ -104,6 +216,31 @@ interface FinanceHandoffRow {
   candidate_id: string;
   created_by: string | null;
   created_at: string | Date;
+  /** `jsonb` — the pg driver returns this already-parsed as a plain object. */
+  source_snapshot?: unknown;
+}
+
+/**
+ * Normalizes whatever came back out of the `source_snapshot jsonb` column
+ * into a well-formed `FinanceCandidateSourceSnapshot` — defends against a
+ * pre-migration row (column just added, existing rows default to `{}`) or a
+ * driver returning the jsonb value as a JSON string rather than a
+ * pre-parsed object, without ever inventing a value for a field that isn't
+ * actually there (missing/mistyped fields fall back to 'unknown' via the
+ * `emptySourceSnapshot()` spread, never to 0/null).
+ */
+function normalizeStoredSnapshot(raw: unknown): FinanceCandidateSourceSnapshot {
+  const empty = emptySourceSnapshot();
+  let parsed: unknown = raw;
+  if (typeof parsed === 'string') {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return empty;
+    }
+  }
+  if (!parsed || typeof parsed !== 'object') return empty;
+  return { ...empty, ...(parsed as Partial<FinanceCandidateSourceSnapshot>) };
 }
 
 export interface PreviewFinanceCandidateHandoffParams<T> {
@@ -139,6 +276,9 @@ export async function previewFinanceCandidateHandoff<T>(
       title: fields.title,
       rationale: fields.rationale,
       fitScore: fields.fitScore,
+      // Preview honestly shows what confirm will capture — same snapshot
+      // shape, same 'unknown' defaulting, no lock/no write either way.
+      sourceSnapshot: fields.sourceSnapshot ?? emptySourceSnapshot(),
     },
   };
 }
@@ -171,6 +311,8 @@ export interface ConfirmFinanceCandidateHandoffParams<T> {
 export interface ConfirmFinanceCandidateHandoffResult {
   created: boolean;
   candidateId: string;
+  /** Read back from the persisted `source_snapshot` column — never re-derived. */
+  sourceSnapshot: FinanceCandidateSourceSnapshot;
 }
 
 /**
@@ -197,7 +339,14 @@ export async function confirmFinanceCandidateHandoff<T>(
       [organizationId, sourceType, sourceId]
     );
     if (existing) {
-      return { created: false, candidateId: existing.candidate_id };
+      // Retry-safe short-circuit: return the SAME snapshot captured at the
+      // original confirm, read back from the row — never re-resolved,
+      // never re-derived, matching the idempotency contract above.
+      return {
+        created: false,
+        candidateId: existing.candidate_id,
+        sourceSnapshot: normalizeStoredSnapshot(existing.source_snapshot),
+      };
     }
 
     // Fresh handoff — re-resolve eligibility INSIDE the lock (TOCTOU
@@ -234,13 +383,23 @@ export async function confirmFinanceCandidateHandoff<T>(
 
     const handoffId = uuidv4();
     const now = new Date().toISOString();
+    const snapshotToPersist = fields.sourceSnapshot ?? emptySourceSnapshot();
     const inserted = await tx.queryOne<FinanceHandoffRow>(
       `INSERT INTO finance_candidate_handoffs
-         (id, organization_id, source_type, source_id, candidate_id, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
+         (id, organization_id, source_type, source_id, candidate_id, created_by, created_at, source_snapshot)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (organization_id, source_type, source_id) DO NOTHING
        RETURNING *`,
-      [handoffId, organizationId, sourceType, sourceId, candidate.id, createdBy ?? null, now]
+      [
+        handoffId,
+        organizationId,
+        sourceType,
+        sourceId,
+        candidate.id,
+        createdBy ?? null,
+        now,
+        JSON.stringify(snapshotToPersist),
+      ]
     );
 
     // Extremely unlikely race: the ON CONFLICT actually fired (someone
@@ -263,7 +422,14 @@ export async function confirmFinanceCandidateHandoff<T>(
       );
     }
 
-    return { created: true, candidateId: receiptRow.candidate_id };
+    return {
+      created: true,
+      candidateId: receiptRow.candidate_id,
+      // Read back from the row actually persisted (matters for the rare
+      // ON CONFLICT DO NOTHING race above: the winning transaction's
+      // snapshot, not necessarily this call's `fields`).
+      sourceSnapshot: normalizeStoredSnapshot(receiptRow.source_snapshot),
+    };
   });
 }
 
@@ -287,6 +453,8 @@ export async function getFinanceCandidateHandoff(params: {
   candidateId: string;
   createdBy: string | null;
   createdAt: string;
+  /** Same snapshot captured at confirm time — reopen never re-derives it. */
+  sourceSnapshot: FinanceCandidateSourceSnapshot;
 } | null> {
   const { organizationId, sourceType, sourceId } = params;
 
@@ -305,5 +473,6 @@ export async function getFinanceCandidateHandoff(params: {
     candidateId: row.candidate_id,
     createdBy: row.created_by ?? null,
     createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+    sourceSnapshot: normalizeStoredSnapshot(row.source_snapshot),
   };
 }

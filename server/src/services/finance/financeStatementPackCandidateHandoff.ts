@@ -32,10 +32,15 @@
  */
 import type { PinnedTransactionClient } from '../../database/PostgresDatabase.js';
 import {
+  computeSourceFingerprint,
   confirmFinanceCandidateHandoff,
+  emptySourceSnapshot,
   previewFinanceCandidateHandoff,
+  unknownIfMissing,
+  type ConfirmFinanceCandidateHandoffResult,
   type FinanceCandidateFields,
   type FinanceCandidatePreviewResult,
+  type FinanceCandidateSourceSnapshot,
   type FinanceSourceResolution,
 } from './financeCandidateHandoffCore.js';
 import { getStatementPackDetail } from '../financialStatementPackService.js';
@@ -85,6 +90,70 @@ function formatPeriod(pack: StatementPackCandidateSource): string {
 function countByType(pack: StatementPackCandidateSource, type: string): number {
   const statements = Array.isArray(pack.statements) ? pack.statements : [];
   return statements.filter((statement) => normalizeText(statement?.statement_type).toUpperCase() === type).length;
+}
+
+/**
+ * Defensive parse of `pack_quality_reason_codes` (a JSON-string column, see
+ * `financialStatementPackService.ts`'s `toJson(aggregate.packQualityReasonCodes)`)
+ * back into a real string array. `null` (not `[]`) when the column is
+ * missing/unparseable — distinct from a genuinely empty, real `[]`.
+ */
+function parseReasonCodes(raw: unknown): string[] | null {
+  if (raw == null) return null;
+  if (Array.isArray(raw)) return raw.map((v) => String(v));
+  if (typeof raw !== 'string') return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.map((v) => String(v)) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Builds the structured, real-values-only `sourceSnapshot` for a resolved
+ * (eligible/`ready`) Statement Pack (Codex correction, 2026-08-02 — see
+ * `financeCandidateHandoffCore.ts`'s module header). Confirmed by reading
+ * `financial_statement_packs`' full column set
+ * (`server/migrations/20260316_financial_statement_packs.sql`): the table
+ * has NO capex/opex/npv/irr/roi/payback/scenario/assumptions/version column
+ * — statement packs are raw financial statements, not an investment case or
+ * valuation, so those are honestly 'unknown' rather than forced into a
+ * shape this source doesn't have.
+ */
+function buildStatementPackSourceSnapshot(pack: StatementPackCandidateSource): FinanceCandidateSourceSnapshot {
+  // The closest genuine "risk" signal a pack carries: its own stored
+  // quality/readiness reason codes (e.g. MISSING_PL, INCONSISTENT_CURRENCY)
+  // — real data, whatever it happens to contain, not fabricated.
+  const reasonCodes = parseReasonCodes(pack.pack_quality_reason_codes);
+  return {
+    ...emptySourceSnapshot(),
+    currency: unknownIfMissing(normalizeText(pack.currency) || null),
+    capex: 'unknown',
+    opex: 'unknown',
+    npv: 'unknown',
+    irr: 'unknown',
+    roi: 'unknown',
+    payback: 'unknown',
+    // Statement packs have no scenario/baseline concept.
+    baselineOrScenario: 'unknown',
+    // No assumptions field on this source type.
+    assumptions: 'unknown',
+    risks: reasonCodes ?? 'unknown',
+    // No version column on financial_statement_packs.
+    sourceVersion: 'unknown',
+    sourceFingerprint: computeSourceFingerprint({
+      id: pack.id,
+      organizationId: pack.organization_id,
+      currency: pack.currency,
+      periodStart: pack.period_start,
+      periodEnd: pack.period_end,
+      periodLabel: pack.period_label,
+      packReadinessStatus: pack.pack_readiness_status,
+      packReadinessScore: pack.pack_readiness_score,
+      reasonCodes,
+    }),
+  };
 }
 
 /**
@@ -139,6 +208,7 @@ function buildCandidateFields(pack: StatementPackCandidateSource): FinanceCandid
   const fields: FinanceCandidateFields = {
     title,
     rationale: `${rationaleParts.join('; ')}.`,
+    sourceSnapshot: buildStatementPackSourceSnapshot(pack),
   };
 
   // Principled real value: the pack's own readiness score (0..100),
@@ -192,7 +262,7 @@ export async function confirmStatementPackCandidateHandoff(params: {
   organizationId: string;
   packId: string;
   createdBy?: string | null;
-}): Promise<{ created: boolean; candidateId: string }> {
+}): Promise<ConfirmFinanceCandidateHandoffResult> {
   const { organizationId, packId, createdBy } = params;
   return confirmFinanceCandidateHandoff<StatementPackCandidateSource>({
     organizationId,

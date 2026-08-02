@@ -46,13 +46,18 @@ import type { PinnedTransactionClient } from '../../database/PostgresDatabase.js
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import type {
   ConfirmFinanceCandidateHandoffResult,
+  FinanceCandidateFields,
   FinanceCandidatePreviewResult,
+  FinanceCandidateSourceSnapshot,
   FinanceSourceResolution,
 } from './financeCandidateHandoffCore.js';
 import {
+  computeSourceFingerprint,
   confirmFinanceCandidateHandoff,
+  emptySourceSnapshot,
   getFinanceCandidateHandoff,
   previewFinanceCandidateHandoff,
+  unknownIfMissing,
 } from './financeCandidateHandoffCore.js';
 
 export const FINANCE_INVESTMENT_CASE_SOURCE_TYPE = 'finance_investment_case' as const;
@@ -76,19 +81,45 @@ function toIsoString(value: string | Date | null): string | null {
   return value instanceof Date ? value.toISOString() : String(value);
 }
 
+interface ApprovedSnapshotValidation {
+  checkName?: unknown;
+  status?: unknown;
+  message?: unknown;
+}
+
 /** Best-effort, defensive read of the approved snapshot — never throws. */
 function readApprovedSnapshotFacts(snapshotJson: string | null): {
   computedAt: string | null;
   periodsCount: number | null;
+  /**
+   * Real, stored validation-check messages for checks that did NOT pass
+   * (`status` = 'warning' | 'fail') — the closest genuine "risk" signal
+   * `financial_models` carries (see `financialModelingService.ts`'s
+   * `ValidationResult`/`ComputeResult`). `null` when the snapshot has no
+   * `validations` array at all (distinct from a real, empty array, which
+   * means the compute genuinely flagged nothing).
+   */
+  validationRisks: string[] | null;
 } {
-  if (!snapshotJson) return { computedAt: null, periodsCount: null };
+  if (!snapshotJson) return { computedAt: null, periodsCount: null, validationRisks: null };
   try {
-    const parsed = JSON.parse(snapshotJson) as { computedAt?: unknown; periods?: unknown };
+    const parsed = JSON.parse(snapshotJson) as {
+      computedAt?: unknown;
+      periods?: unknown;
+      validations?: unknown;
+    };
     const computedAt = typeof parsed.computedAt === 'string' ? parsed.computedAt : null;
     const periodsCount = Array.isArray(parsed.periods) ? parsed.periods.length : null;
-    return { computedAt, periodsCount };
+    let validationRisks: string[] | null = null;
+    if (Array.isArray(parsed.validations)) {
+      validationRisks = (parsed.validations as ApprovedSnapshotValidation[])
+        .filter((v) => v && (v.status === 'warning' || v.status === 'fail'))
+        .map((v) => String(v.message ?? v.checkName ?? 'validation flagged'))
+        .filter(Boolean);
+    }
+    return { computedAt, periodsCount, validationRisks };
   } catch {
-    return { computedAt: null, periodsCount: null };
+    return { computedAt: null, periodsCount: null, validationRisks: null };
   }
 }
 
@@ -118,14 +149,67 @@ async function resolveEligibleInvestmentCase(
 }
 
 /**
+ * Builds the structured, real-values-only `sourceSnapshot` for an approved
+ * `financial_models` row (Codex correction, 2026-08-02 — see
+ * `financeCandidateHandoffCore.ts`'s module header). Confirmed by reading
+ * `financialModelingService.ts` in full: `financial_models` has NO npv/irr/
+ * roi/payback column, and no computed-on-read function anywhere in that
+ * service (or `investmentAppraisalService.ts` / `livingBusinessCaseService.ts`,
+ * both pure math functions callers must feed cashflows/rates into — NOT
+ * read-only accessors keyed by `modelId` — so using them here would mean
+ * THIS module reimplementing the math, exactly what is forbidden). Those
+ * four fields are honestly 'unknown'.
+ *
+ * capex/opex are ALSO 'unknown': `approved_snapshot.periods[]` (see
+ * `computeModel`'s `PeriodOutput`) has per-period `pl.OPEX`/`cf.CAPEX_CF`
+ * breakdowns, but no single aggregate figure — summing those periods would
+ * be this module deriving a new number, not carrying one over verbatim.
+ */
+function buildInvestmentCaseSourceSnapshot(model: FinancialModelRow): FinanceCandidateSourceSnapshot {
+  const { validationRisks } = readApprovedSnapshotFacts(model.approved_snapshot);
+  return {
+    ...emptySourceSnapshot(),
+    currency: unknownIfMissing(model.currency),
+    // No aggregate CAPEX/OPEX column on financial_models and no stored
+    // total in approved_snapshot (only per-period breakdowns) — see header.
+    capex: 'unknown',
+    opex: 'unknown',
+    // No NPV/IRR/ROI/payback anywhere reachable by modelId — see header.
+    npv: 'unknown',
+    irr: 'unknown',
+    roi: 'unknown',
+    payback: 'unknown',
+    // `scenario` is a real column, directly named for exactly this purpose.
+    baselineOrScenario: unknownIfMissing(model.scenario),
+    // No assumptions text/JSON field on financial_models (model events are
+    // computation inputs, not a stored "assumptions" list) — honestly unknown.
+    assumptions: 'unknown',
+    // Real, stored validation-check messages from the approved compute run;
+    // `[]` when the snapshot has a validations array but nothing failed/
+    // warned (a genuine computed result), 'unknown' only when the snapshot
+    // itself has no validations array at all.
+    risks: validationRisks ?? 'unknown',
+    sourceVersion: unknownIfMissing(
+      typeof model.version === 'number' ? String(model.version) : null
+    ),
+    sourceFingerprint: computeSourceFingerprint({
+      id: model.id,
+      version: model.version,
+      approvedAt: toIsoString(model.approved_at),
+      approvedBy: model.approved_by,
+      currency: model.currency,
+      scenario: model.scenario,
+      horizonMonths: model.horizon_months,
+    }),
+  };
+}
+
+/**
  * Builds the Candidate's draft title/rationale from a resolved (already
  * approved) `financial_models` row. Never invents a number: every fact
  * quoted here is read straight off the row (or its own `approved_snapshot`).
  */
-function buildInvestmentCaseCandidateFields(model: FinancialModelRow): {
-  title: string;
-  rationale: string;
-} {
+function buildInvestmentCaseCandidateFields(model: FinancialModelRow): FinanceCandidateFields {
   const title = (model.name && model.name.trim()) || `Investment case ${model.id}`;
 
   const parts: string[] = [];
@@ -158,7 +242,7 @@ function buildInvestmentCaseCandidateFields(model: FinancialModelRow): {
     parts.push(`Approved snapshot: ${bits.join(', ')}.`);
   }
 
-  return { title, rationale: parts.join(' ') };
+  return { title, rationale: parts.join(' '), sourceSnapshot: buildInvestmentCaseSourceSnapshot(model) };
 }
 
 export async function previewInvestmentCaseCandidate(params: {

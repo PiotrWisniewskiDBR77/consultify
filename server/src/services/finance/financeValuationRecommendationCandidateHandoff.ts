@@ -68,11 +68,16 @@
 import type { PinnedTransactionClient } from '../../database/PostgresDatabase.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
+  computeSourceFingerprint,
   confirmFinanceCandidateHandoff,
+  emptySourceSnapshot,
   getFinanceCandidateHandoff,
   previewFinanceCandidateHandoff,
+  unknownIfMissing,
+  type ConfirmFinanceCandidateHandoffResult,
   type FinanceCandidateFields,
   type FinanceCandidatePreviewResult,
+  type FinanceCandidateSourceSnapshot,
 } from './financeCandidateHandoffCore.js';
 
 const SOURCE_TYPE = 'finance_valuation_recommendation' as const;
@@ -92,6 +97,9 @@ interface ValuationRow {
   id: string;
   project_id: string | null;
   advisory: string | null;
+  currency: string | null;
+  assumptions: string | Record<string, unknown> | null;
+  version: number | null;
 }
 
 interface AdvisoryRecommendation {
@@ -99,12 +107,19 @@ interface AdvisoryRecommendation {
   title?: string;
   mechanism?: string;
   hypothesis?: string;
+  /** Real field on a production-generated recommendation (see `generateAdvisory()`
+   *  in `valuationService.ts`) — genuinely absent on a hand-built/legacy advisory. */
+  risks?: string[];
 }
 
 interface ResolvedRecommendation {
   valuationId: string;
   projectId: string | null;
   recommendation: AdvisoryRecommendation;
+  /** Real columns off the SAME `valuations` row the recommendation lives in. */
+  currency: string | null;
+  assumptions: string | Record<string, unknown> | null;
+  version: number | null;
 }
 
 // Non-generic on purpose: `PinnedTransactionClient.queryAll`/`queryOne` are
@@ -130,7 +145,8 @@ async function findRecommendationAcrossValuations(
   recommendationId: string
 ): Promise<ResolvedRecommendation | null> {
   const rows = (await queryAll(
-    `SELECT id, project_id, advisory FROM valuations WHERE organization_id = ? AND advisory IS NOT NULL`,
+    `SELECT id, project_id, advisory, currency, assumptions, version FROM valuations
+     WHERE organization_id = ? AND advisory IS NOT NULL`,
     [organizationId]
   )) as ValuationRow[];
   for (const row of rows) {
@@ -140,7 +156,14 @@ async function findRecommendationAcrossValuations(
     );
     const rec = (advisory?.recommendations || []).find((r) => r?.id === recommendationId);
     if (rec) {
-      return { valuationId: row.id, projectId: row.project_id ?? null, recommendation: rec };
+      return {
+        valuationId: row.id,
+        projectId: row.project_id ?? null,
+        recommendation: rec,
+        currency: row.currency ?? null,
+        assumptions: row.assumptions ?? null,
+        version: row.version ?? null,
+      };
     }
   }
   return null;
@@ -160,7 +183,8 @@ async function readRecommendationFromValuation(
   recommendationId: string
 ): Promise<ResolvedRecommendation | null> {
   const row = (await queryOne(
-    `SELECT id, project_id, advisory FROM valuations WHERE id = ? AND organization_id = ?`,
+    `SELECT id, project_id, advisory, currency, assumptions, version FROM valuations
+     WHERE id = ? AND organization_id = ?`,
     [valuationId, organizationId]
   )) as ValuationRow | null;
   if (!row) return null;
@@ -170,7 +194,90 @@ async function readRecommendationFromValuation(
   );
   const rec = (advisory?.recommendations || []).find((r) => r?.id === recommendationId);
   if (!rec) return null;
-  return { valuationId: row.id, projectId: row.project_id ?? null, recommendation: rec };
+  return {
+    valuationId: row.id,
+    projectId: row.project_id ?? null,
+    recommendation: rec,
+    currency: row.currency ?? null,
+    assumptions: row.assumptions ?? null,
+    version: row.version ?? null,
+  };
+}
+
+/**
+ * Formats the top-level SCALAR keys of a valuation's `assumptions` JSONB
+ * blob (`ValuationAssumptions` in `valuationService.ts`: waccPercent,
+ * terminalGrowthPercent, horizonYears, terminalMethod, exitMultiple,
+ * netDebt, sharesOutstanding, depth, ...) as real `"key: value"` strings.
+ * Nested object fields (`waccBreakdown`, `manualForecast`, `basket`) are
+ * skipped — not dropped-and-forgotten data loss, just not flattenable into
+ * a single string without this module making formatting choices beyond
+ * plain carry-over. Returns `null` (not `[]`) when there are zero scalar
+ * keys, matching this column's `NOT NULL DEFAULT '{}'::jsonb` — an empty
+ * object here means "not filled in", not "verified zero assumptions".
+ */
+function formatAssumptions(raw: string | Record<string, unknown> | null): string[] | null {
+  if (raw == null) return null;
+  let obj: Record<string, unknown>;
+  if (typeof raw === 'string') {
+    try {
+      obj = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  } else {
+    obj = raw;
+  }
+  if (!obj || typeof obj !== 'object') return null;
+  const lines = Object.entries(obj)
+    .filter(([, v]) => v !== null && (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean'))
+    .map(([k, v]) => `${k}: ${v}`);
+  return lines.length > 0 ? lines : null;
+}
+
+/**
+ * Builds the structured, real-values-only `sourceSnapshot` for a resolved
+ * valuation advisory recommendation (Codex correction, 2026-08-02 — see
+ * `financeCandidateHandoffCore.ts`'s module header). Per this file's own
+ * instructions, scoped to what the recommendation object + its parent
+ * `valuations` row genuinely contain (confirmed by reading `generateAdvisory()`
+ * in full): no npv/irr/roi/payback/capex/opex/scenario field exists on
+ * either the recommendation or the valuation row, so those are honestly
+ * 'unknown' — this module does NOT equate `results.dcf.enterpriseValue`
+ * with "npv", since that would be asserting a characterization of the
+ * number this module cannot verify is what a caller means by "NPV".
+ */
+function buildValuationRecommendationSourceSnapshot(
+  data: ResolvedRecommendation
+): FinanceCandidateSourceSnapshot {
+  const rec = data.recommendation;
+  return {
+    ...emptySourceSnapshot(),
+    currency: unknownIfMissing(data.currency),
+    capex: 'unknown',
+    opex: 'unknown',
+    npv: 'unknown',
+    irr: 'unknown',
+    roi: 'unknown',
+    payback: 'unknown',
+    // No scenario/baseline concept stored for a valuation or its recommendations.
+    baselineOrScenario: 'unknown',
+    assumptions: formatAssumptions(data.assumptions) ?? 'unknown',
+    // Real field on a production-generated recommendation; genuinely absent
+    // (not merely empty) on some advisory shapes — `undefined` -> 'unknown',
+    // a real (possibly empty) array -> carried over as-is.
+    risks: Array.isArray(rec.risks) ? rec.risks.map((r) => String(r)) : 'unknown',
+    sourceVersion: unknownIfMissing(typeof data.version === 'number' ? String(data.version) : null),
+    sourceFingerprint: computeSourceFingerprint({
+      recommendationId: rec.id,
+      valuationId: data.valuationId,
+      title: rec.title,
+      mechanism: rec.mechanism,
+      hypothesis: rec.hypothesis,
+      currency: data.currency,
+      version: data.version,
+    }),
+  };
 }
 
 /**
@@ -190,7 +297,7 @@ function buildCandidateFields(data: ResolvedRecommendation): FinanceCandidateFie
   const rationale = parts.length
     ? parts.join(' ')
     : 'Promoted from a valuation advisory recommendation.';
-  return { title, rationale };
+  return { title, rationale, sourceSnapshot: buildValuationRecommendationSourceSnapshot(data) };
 }
 
 export async function previewValuationRecommendationCandidate(params: {
@@ -219,7 +326,7 @@ export async function confirmValuationRecommendationCandidateHandoff(params: {
   organizationId: string;
   recommendationId: string;
   createdBy?: string | null;
-}): Promise<{ created: boolean; candidateId: string }> {
+}): Promise<ConfirmFinanceCandidateHandoffResult> {
   const { organizationId, recommendationId, createdBy } = params;
 
   // Shared across the two core-supplied closures: `lockSourceRow` runs
