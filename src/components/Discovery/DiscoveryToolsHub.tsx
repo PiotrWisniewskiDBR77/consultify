@@ -129,6 +129,7 @@ import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { ChipBase } from '../ui/primitives/chips/chipBase';
 import { PriorityChip, type PriorityLevel } from '../ui/primitives/chips/PriorityChip';
+import { useSurfaceUrlSync } from './hooks/useSurfaceUrlSync';
 
 // Tool category types (V3: includes licensed assessments)
 type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation' | 'licensed';
@@ -689,9 +690,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   initialTab = 'library',
   initialCategory = 'all',
 }) => {
-  // V3-E01: Normalize legacy tab ids
-  const normalizedInitialTab =
-    initialTab === 'list' ? 'sessions' : initialTab === 'reports' ? 'outputs' : initialTab;
+  // V3-E01: Normalize legacy tab ids. TLS-01: 'reports' is now a real,
+  // independently routable surface (see useSurfaceUrlSync below) -- no
+  // longer collapsed into 'outputs'.
+  const normalizedInitialTab = initialTab === 'list' ? 'sessions' : initialTab;
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentProjectId } = useAppStore();
@@ -789,6 +791,16 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   // Data State
   const [discoveries, setDiscoveries] = useState<DisplayItem[]>([]);
   const [outputs, setOutputs] = useState<OutputItem[]>([]);
+  // TLS-01: the 'reports' surface is the formal-report subset of the same
+  // `outputs` array 'outputs' already fetches -- no new fetch, no new
+  // component, reuses the existing OutputItem list end to end.
+  const reportsOutputs = useMemo(
+    () =>
+      outputs.filter(
+        (item) => item.outputKind === 'assessment_report' || item.outputKind === 'report_builder'
+      ),
+    [outputs]
+  );
   const [initiatives, setInitiatives] = useState<DisplayItem[]>([]);
   const [assessmentSessions, setAssessmentSessions] = useState<
     Array<{
@@ -1541,9 +1553,19 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       },
       {
         id: 'outputs' as ModuleTab,
-        label: isPolish ? 'Raporty i prezentacje' : 'Reports & Presentations',
+        label: t('tools.hub.tabs.outputs', 'Outputs'),
         icon: <FolderOutput size={16} />,
         count: outputs.length,
+      },
+      {
+        // TLS-01: fifth surface -- was previously collapsed into 'outputs'
+        // (see normalizedInitialTab above) and never reachable via the tab
+        // bar even though `activeTab === 'reports'` was already handled
+        // throughout this file's rendering logic.
+        id: 'reports' as ModuleTab,
+        label: t('tools.hub.tabs.reports', 'Reports'),
+        icon: <FileText size={16} />,
+        count: reportsOutputs.length,
       },
       {
         id: 'initiatives' as ModuleTab,
@@ -1559,6 +1581,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     isPolish,
     knownTools,
     outputs.length,
+    reportsOutputs.length,
     t,
     isKnownToolsLoading,
   ]);
@@ -2342,6 +2365,16 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     setSearchParams(next, { replace: true });
   }, [hydrated, activeDocumentId, docIdParam, searchParams, setSearchParams, urlOpenAttemptEpoch]);
 
+  // TLS-01: the five surfaces (Library/Sessions/Outputs/Reports/Initiatives)
+  // are addressed via `?tab=` -- durable across reload/back-forward/deep-link,
+  // alongside the explicit docId synchronization above.
+  useSurfaceUrlSync({
+    hydrated,
+    activeTab,
+    setActiveTab,
+    defaultTab: normalizedInitialTab,
+  });
+
   useEffect(() => {
     if (!hydrated) return;
     const artifact = parseArtifactRef(searchParams.get('artifact'));
@@ -2621,8 +2654,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         data = discoveries;
         break;
       case 'outputs':
-      case 'reports':
         data = outputs;
+        break;
+      case 'reports':
+        // TLS-01: 'reports' is the formal-report subset of the same
+        // already-fetched `outputs` array -- no separate fetch.
+        data = reportsOutputs;
         break;
       case 'initiatives':
         data = initiatives;
@@ -2669,7 +2706,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     }
 
     return data;
-  }, [activeTab, discoveries, initiatives, outputs, searchQuery, statusFilter]);
+  }, [activeTab, discoveries, initiatives, outputs, reportsOutputs, searchQuery, statusFilter]);
 
   type UnifiedSessionRow =
     | (DisplayItem & { kind: 'toolSession'; sessionType: string })
@@ -2929,11 +2966,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     const base =
       activeTab === 'sessions' || activeTab === 'list'
         ? (unifiedSessionsData as any[])
-        : activeTab === 'outputs' || activeTab === 'reports'
-          ? outputs
-          : activeTab === 'initiatives'
-            ? initiatives
-            : [];
+        : activeTab === 'reports'
+          ? reportsOutputs
+          : activeTab === 'outputs'
+            ? outputs
+            : activeTab === 'initiatives'
+              ? initiatives
+              : [];
 
     const counts: Record<string, number> = { all: 0 };
     const filteredBase = base.filter(matchesSearch);
@@ -2954,7 +2993,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     }
 
     return counts;
-  }, [activeTab, currentStatusOptions, initiatives, outputs, searchQuery, unifiedSessionsData]);
+  }, [
+    activeTab,
+    currentStatusOptions,
+    initiatives,
+    outputs,
+    reportsOutputs,
+    searchQuery,
+    unifiedSessionsData,
+  ]);
 
   const libraryGridItems: GridItem[] = useMemo(() => {
     return filteredLibraryItems.map((tool) => ({
