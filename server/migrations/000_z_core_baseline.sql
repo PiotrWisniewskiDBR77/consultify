@@ -24,6 +24,27 @@ CREATE TABLE IF NOT EXISTS organizations (
     vat_number TEXT,
     tax_exempt BOOLEAN DEFAULT 0
 );
+-- Strict-schema repair (2026-08, auto-generated): "organizations" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free';
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS valid_until DATETIME;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS industry TEXT DEFAULT 'General';
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS active_llm_provider_id TEXT;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS discount_percent INTEGER DEFAULT 0;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS organization_type TEXT DEFAULT 'TRIAL';
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS is_active INTEGER DEFAULT 1;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS trial_started_at DATETIME;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS trial_expires_at DATETIME;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS billing_status TEXT;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS token_balance INTEGER DEFAULT 0;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS billing_currency TEXT DEFAULT 'USD';
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS billing_country TEXT;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS vat_number TEXT;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS tax_exempt BOOLEAN DEFAULT 0;
+
 
 CREATE TABLE IF NOT EXISTS organization_facilities (
     id TEXT PRIMARY KEY,
@@ -65,6 +86,37 @@ CREATE TABLE IF NOT EXISTS users (
     attribution_data TEXT,
     FOREIGN KEY(organization_id) REFERENCES organizations(id)
 );
+-- Strict-schema repair (2026-08, auto-generated): "users" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT UNIQUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS title TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS impersonator_id TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS token_limit INTEGER DEFAULT 100000;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS token_used INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_tokens_used INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS token_reset_at DATETIME;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login DATETIME;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT DEFAULT 'UTC';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS locale TEXT DEFAULT 'en';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS date_format TEXT DEFAULT 'YYYY-MM-DD';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS time_format TEXT DEFAULT 'HH:mm';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS first_day_of_week INTEGER DEFAULT 1;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS accessibility_settings TEXT DEFAULT '{}';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS notification_preferences TEXT DEFAULT '{}';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS ui_preferences TEXT DEFAULT '{}';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS known_devices TEXT DEFAULT '[]';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_assertiveness_level REAL DEFAULT 1.0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_autonomy_level REAL DEFAULT 1.0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS attribution_data TEXT;
+
 
 CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,
@@ -75,6 +127,14 @@ CREATE TABLE IF NOT EXISTS sessions (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id)
 );
+-- Strict-schema repair (2026-08, auto-generated): "sessions" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_id TEXT;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS project_id TEXT;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS type TEXT;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS data TEXT;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS updated_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 CREATE TABLE IF NOT EXISTS settings (
     key TEXT PRIMARY KEY,
@@ -83,6 +143,11 @@ CREATE TABLE IF NOT EXISTS settings (
     description TEXT, -- added for 210
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+-- Strict-schema repair (2026-08, auto-generated): "settings" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS key TEXT;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS value TEXT;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS category TEXT;
+
 
 -- 2. Projects & Tasks
 CREATE TABLE IF NOT EXISTS projects (
@@ -107,6 +172,27 @@ CREATE TABLE IF NOT EXISTS projects (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(organization_id) REFERENCES organizations(id)
 );
+-- Strict-schema repair (2026-08, auto-generated): "projects" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS start_date TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS end_date TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS budget REAL;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'USD';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS lead_id TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'medium';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS phase TEXT DEFAULT 'planning';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS settings TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS metadata TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS context_data TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS owner_id TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS rag_enabled INTEGER DEFAULT 1;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 CREATE TABLE IF NOT EXISTS custom_statuses (
     id TEXT PRIMARY KEY,
@@ -118,6 +204,15 @@ CREATE TABLE IF NOT EXISTS custom_statuses (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
 );
+-- Strict-schema repair (2026-08, auto-generated): "custom_statuses" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE custom_statuses ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE custom_statuses ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE custom_statuses ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE custom_statuses ADD COLUMN IF NOT EXISTS color TEXT DEFAULT '#6B7280';
+ALTER TABLE custom_statuses ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
+ALTER TABLE custom_statuses ADD COLUMN IF NOT EXISTS is_default INTEGER DEFAULT 0;
+ALTER TABLE custom_statuses ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 CREATE TABLE IF NOT EXISTS initiatives (
     id TEXT PRIMARY KEY,
@@ -157,6 +252,40 @@ CREATE TABLE IF NOT EXISTS initiatives (
     FOREIGN KEY(owner_execution_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY(sponsor_id) REFERENCES users(id) ON DELETE SET NULL
 );
+-- Strict-schema repair (2026-08, auto-generated): "initiatives" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS project_id TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS axis TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS area TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS summary TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS hypothesis TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'step3';
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS current_stage TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS business_value TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS competencies_required TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS cost_capex REAL;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS cost_opex REAL;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS expected_roi REAL;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS social_impact TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS start_date DATETIME;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS pilot_end_date DATETIME;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS end_date DATETIME;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS owner_business_id TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS owner_execution_id TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS sponsor_id TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS market_context TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS problem_statement TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS deliverables TEXT DEFAULT '[]';
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS success_criteria TEXT DEFAULT '[]';
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS scope_in TEXT DEFAULT '[]';
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS scope_out TEXT DEFAULT '[]';
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS key_risks TEXT DEFAULT '[]';
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS report_id TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS updated_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 CREATE TABLE IF NOT EXISTS tasks (
     id TEXT PRIMARY KEY,
@@ -207,6 +336,49 @@ CREATE TABLE IF NOT EXISTS tasks (
     FOREIGN KEY(reporter_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY(custom_status_id) REFERENCES custom_statuses(id) ON DELETE SET NULL
 );
+-- Strict-schema repair (2026-08, auto-generated): "tasks" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS project_id TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS title TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'todo';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'medium';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS assignee_id TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS reporter_id TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS due_date DATETIME;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS estimated_hours REAL;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS attachments TEXT DEFAULT '[]';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS tags TEXT DEFAULT '[]';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS task_type TEXT DEFAULT 'task';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS initiative_id TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS why TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS expected_outcome TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS decision_impact TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS evidence_required TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS strategic_contribution TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS roadmap_initiative_id TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS kpi_id TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS raid_item_id TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS assignees TEXT DEFAULT '[]';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS progress INTEGER DEFAULT 0;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS blocked_reason TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS sla_hours INTEGER;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS sla_due_at TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS escalation_level INTEGER DEFAULT 0;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS escalated_to_id TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS last_escalated_at TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS custom_status_id TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS step_phase TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS budget_allocated REAL;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS budget_spent REAL;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS risk_rating TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS acceptance_criteria TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS blocking_issues TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS completed_at DATETIME;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS updated_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 CREATE TABLE IF NOT EXISTS task_dependencies (
     id TEXT PRIMARY KEY,
@@ -217,6 +389,13 @@ CREATE TABLE IF NOT EXISTS task_dependencies (
     FOREIGN KEY(from_task_id) REFERENCES tasks(id) ON DELETE CASCADE,
     FOREIGN KEY(to_task_id) REFERENCES tasks(id) ON DELETE CASCADE
 );
+-- Strict-schema repair (2026-08, auto-generated): "task_dependencies" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE task_dependencies ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE task_dependencies ADD COLUMN IF NOT EXISTS from_task_id TEXT;
+ALTER TABLE task_dependencies ADD COLUMN IF NOT EXISTS to_task_id TEXT;
+ALTER TABLE task_dependencies ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'hard';
+ALTER TABLE task_dependencies ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 -- 3. Knowledge Base
 CREATE TABLE IF NOT EXISTS knowledge_docs (
@@ -226,6 +405,13 @@ CREATE TABLE IF NOT EXISTS knowledge_docs (
     status TEXT DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+-- Strict-schema repair (2026-08, auto-generated): "knowledge_docs" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE knowledge_docs ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE knowledge_docs ADD COLUMN IF NOT EXISTS filename TEXT;
+ALTER TABLE knowledge_docs ADD COLUMN IF NOT EXISTS filepath TEXT;
+ALTER TABLE knowledge_docs ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
+ALTER TABLE knowledge_docs ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 CREATE TABLE IF NOT EXISTS knowledge_chunks (
     id TEXT PRIMARY KEY,
@@ -235,6 +421,13 @@ CREATE TABLE IF NOT EXISTS knowledge_chunks (
     embedding TEXT,
     FOREIGN KEY(doc_id) REFERENCES knowledge_docs(id) ON DELETE CASCADE
 );
+-- Strict-schema repair (2026-08, auto-generated): "knowledge_chunks" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS doc_id TEXT;
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS content TEXT;
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS chunk_index INTEGER;
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS embedding TEXT;
+
 
 CREATE TABLE IF NOT EXISTS knowledge_candidates (
     id TEXT PRIMARY KEY,
@@ -260,6 +453,14 @@ CREATE TABLE IF NOT EXISTS teams (
     FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
     FOREIGN KEY(lead_id) REFERENCES users(id) ON DELETE SET NULL
 );
+-- Strict-schema repair (2026-08, auto-generated): "teams" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS lead_id TEXT;
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 CREATE TABLE IF NOT EXISTS team_members (
     team_id TEXT NOT NULL,
@@ -270,6 +471,12 @@ CREATE TABLE IF NOT EXISTS team_members (
     FOREIGN KEY(team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+-- Strict-schema repair (2026-08, auto-generated): "team_members" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE team_members ADD COLUMN IF NOT EXISTS team_id TEXT;
+ALTER TABLE team_members ADD COLUMN IF NOT EXISTS user_id TEXT;
+ALTER TABLE team_members ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'member';
+ALTER TABLE team_members ADD COLUMN IF NOT EXISTS joined_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 -- 5. Audit & Activity
 CREATE TABLE IF NOT EXISTS activity_logs (
@@ -289,6 +496,21 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
 );
+-- Strict-schema repair (2026-08, auto-generated): "activity_logs" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE activity_logs ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE activity_logs ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE activity_logs ADD COLUMN IF NOT EXISTS user_id TEXT;
+ALTER TABLE activity_logs ADD COLUMN IF NOT EXISTS action TEXT;
+ALTER TABLE activity_logs ADD COLUMN IF NOT EXISTS entity_type TEXT;
+ALTER TABLE activity_logs ADD COLUMN IF NOT EXISTS entity_id TEXT;
+ALTER TABLE activity_logs ADD COLUMN IF NOT EXISTS entity_name TEXT;
+ALTER TABLE activity_logs ADD COLUMN IF NOT EXISTS old_value TEXT;
+ALTER TABLE activity_logs ADD COLUMN IF NOT EXISTS new_value TEXT;
+ALTER TABLE activity_logs ADD COLUMN IF NOT EXISTS ip_address TEXT;
+ALTER TABLE activity_logs ADD COLUMN IF NOT EXISTS user_agent TEXT;
+ALTER TABLE activity_logs ADD COLUMN IF NOT EXISTS correlation_id TEXT;
+ALTER TABLE activity_logs ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 CREATE TABLE IF NOT EXISTS audit_logs (
     id TEXT PRIMARY KEY,
@@ -315,6 +537,14 @@ CREATE TABLE IF NOT EXISTS system_prompts (
     updated_by TEXT,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+-- Strict-schema repair (2026-08, auto-generated): "system_prompts" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE system_prompts ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE system_prompts ADD COLUMN IF NOT EXISTS key TEXT UNIQUE;
+ALTER TABLE system_prompts ADD COLUMN IF NOT EXISTS content TEXT;
+ALTER TABLE system_prompts ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE system_prompts ADD COLUMN IF NOT EXISTS updated_by TEXT;
+ALTER TABLE system_prompts ADD COLUMN IF NOT EXISTS updated_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 CREATE TABLE IF NOT EXISTS system_feedback (
     id TEXT PRIMARY KEY,
@@ -342,6 +572,20 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     last_used_at DATETIME,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+-- Strict-schema repair (2026-08, auto-generated): "refresh_tokens" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS user_id TEXT;
+ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS token_hash TEXT;
+ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS token_family TEXT;
+ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS device_info TEXT;
+ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS ip_address TEXT;
+ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS user_agent TEXT;
+ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS expires_at DATETIME;
+ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS revoked_at DATETIME;
+ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS revoked_reason TEXT;
+ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS last_used_at DATETIME;
+
 
 CREATE TABLE IF NOT EXISTS revoked_tokens (
     jti TEXT PRIMARY KEY,
@@ -351,6 +595,13 @@ CREATE TABLE IF NOT EXISTS revoked_tokens (
     reason TEXT DEFAULT 'logout',
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+-- Strict-schema repair (2026-08, auto-generated): "revoked_tokens" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE revoked_tokens ADD COLUMN IF NOT EXISTS jti TEXT;
+ALTER TABLE revoked_tokens ADD COLUMN IF NOT EXISTS user_id TEXT;
+ALTER TABLE revoked_tokens ADD COLUMN IF NOT EXISTS expires_at DATETIME;
+ALTER TABLE revoked_tokens ADD COLUMN IF NOT EXISTS revoked_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE revoked_tokens ADD COLUMN IF NOT EXISTS reason TEXT DEFAULT 'logout';
+
 
 CREATE TABLE IF NOT EXISTS access_codes (
     id TEXT PRIMARY KEY,
@@ -366,6 +617,18 @@ CREATE TABLE IF NOT EXISTS access_codes (
     FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
     FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE CASCADE
 );
+-- Strict-schema repair (2026-08, auto-generated): "access_codes" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE access_codes ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE access_codes ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE access_codes ADD COLUMN IF NOT EXISTS code TEXT UNIQUE;
+ALTER TABLE access_codes ADD COLUMN IF NOT EXISTS created_by TEXT;
+ALTER TABLE access_codes ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'USER';
+ALTER TABLE access_codes ADD COLUMN IF NOT EXISTS max_uses INTEGER DEFAULT 1;
+ALTER TABLE access_codes ADD COLUMN IF NOT EXISTS current_uses INTEGER DEFAULT 0;
+ALTER TABLE access_codes ADD COLUMN IF NOT EXISTS expires_at DATETIME;
+ALTER TABLE access_codes ADD COLUMN IF NOT EXISTS is_active INTEGER DEFAULT 1;
+ALTER TABLE access_codes ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 CREATE TABLE IF NOT EXISTS access_code_usage (
     id TEXT PRIMARY KEY,
@@ -375,6 +638,12 @@ CREATE TABLE IF NOT EXISTS access_code_usage (
     FOREIGN KEY(code_id) REFERENCES access_codes(id) ON DELETE CASCADE,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+-- Strict-schema repair (2026-08, auto-generated): "access_code_usage" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE access_code_usage ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE access_code_usage ADD COLUMN IF NOT EXISTS code_id TEXT;
+ALTER TABLE access_code_usage ADD COLUMN IF NOT EXISTS user_id TEXT;
+ALTER TABLE access_code_usage ADD COLUMN IF NOT EXISTS used_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 -- 8. Industrial Assessments (Infrastructure for migration 007, 011 & 041-043)
 CREATE TABLE IF NOT EXISTS maturity_assessments (
@@ -501,6 +770,12 @@ CREATE TABLE IF NOT EXISTS subscription_plans (
     price_monthly REAL NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+-- Strict-schema repair (2026-08, auto-generated): "subscription_plans" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS price_monthly REAL;
+ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 CREATE TABLE IF NOT EXISTS organization_billing (
     id TEXT PRIMARY KEY,
@@ -512,6 +787,14 @@ CREATE TABLE IF NOT EXISTS organization_billing (
     FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
     FOREIGN KEY(subscription_plan_id) REFERENCES subscription_plans(id)
 );
+-- Strict-schema repair (2026-08, auto-generated): "organization_billing" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS organization_id TEXT UNIQUE;
+ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS subscription_plan_id TEXT;
+ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS updated_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 -- 10. AI Infrastructure
 CREATE TABLE IF NOT EXISTS ai_audit_logs (
@@ -571,6 +854,15 @@ CREATE TABLE IF NOT EXISTS webhooks (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
 );
+-- Strict-schema repair (2026-08, auto-generated): "webhooks" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE webhooks ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE webhooks ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE webhooks ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE webhooks ADD COLUMN IF NOT EXISTS url TEXT;
+ALTER TABLE webhooks ADD COLUMN IF NOT EXISTS is_active INTEGER DEFAULT 1;
+ALTER TABLE webhooks ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE webhooks ADD COLUMN IF NOT EXISTS updated_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 -- 12. Branding & Communication
 CREATE TABLE IF NOT EXISTS email_templates (
@@ -612,6 +904,22 @@ CREATE TABLE IF NOT EXISTS llm_providers (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+-- Strict-schema repair (2026-08, auto-generated): "llm_providers" is ALSO created inline by PostgresDatabase.ts's initDb() (real app-boot bootstrap), with a different/smaller column set. If initDb() ran first (thin-bootstrap-then-migrate scenario), the CREATE TABLE IF NOT EXISTS above is a no-op and this file's extra columns (e.g. llm_providers.tier) would silently never be added. Guarded ADD COLUMN so this file is self-healing regardless of which producer created the table first. No-op wherever the columns already exist.
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS provider TEXT;
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS model_id TEXT;
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS api_key TEXT;
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS endpoint TEXT;
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS tier TEXT DEFAULT 'standard';
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS visibility TEXT DEFAULT 'admin';
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS is_active INTEGER DEFAULT 1;
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS is_default INTEGER DEFAULT 0;
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS cost_per_1k REAL DEFAULT 0;
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS context_window INTEGER DEFAULT 4096;
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS updated_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
 
 CREATE TABLE IF NOT EXISTS llm_tier_assignments (
     id TEXT PRIMARY KEY,
