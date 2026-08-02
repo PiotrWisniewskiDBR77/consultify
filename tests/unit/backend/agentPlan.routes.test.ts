@@ -347,6 +347,15 @@ describe('Agent Plan Routes (HP-4 fundament)', () => {
 
       expect(res.status).toBe(404);
     });
+
+    it('does not expose another member\'s plan from the same organization', async () => {
+      getPlan.mockResolvedValue(basePlan({ userId: 'other-user' }));
+
+      const res = await request(createApp()).get('/api/ai/agent-plan/plan-1');
+
+      expect(res.status).toBe(404);
+      expect(res.body.plan).toBeUndefined();
+    });
   });
 
   describe('GET /', () => {
@@ -396,6 +405,20 @@ describe('Agent Plan Routes (HP-4 fundament)', () => {
 
       expect(res.status).toBe(404);
       expect(approveStep).not.toHaveBeenCalled();
+    });
+
+    it('does not let a member approve another member\'s plan in the same organization', async () => {
+      getPlan.mockResolvedValueOnce(
+        basePlan({ userId: 'other-user', status: 'awaiting_approval' })
+      );
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan/plan-1/approve-step')
+        .send({ stepIndex: 0 });
+
+      expect(res.status).toBe(404);
+      expect(approveStep).not.toHaveBeenCalled();
+      expect(queueAdd).not.toHaveBeenCalled();
     });
 
     it('returns 409 when the step is not awaiting approval', async () => {

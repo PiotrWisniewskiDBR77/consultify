@@ -205,7 +205,26 @@ class AgentPlannerService {
     const plan = await this.getPlan(planId);
     if (!plan) throw new Error(`Plan ${planId} not found`);
 
-    await this.updatePlanStatus(planId, 'executing');
+    if (['completed', 'completed_with_errors', 'failed', 'cancelled'].includes(plan.status)) {
+      return plan;
+    }
+
+    // Claim the whole run before invoking any tool. Queue delivery is at-least-once;
+    // without a database CAS two workers can execute the same side effect in parallel.
+    const claim = await dbRun(
+      `UPDATE ai_agent_plans
+       SET status = 'executing', started_at = COALESCE(started_at, datetime('now')),
+           updated_at = datetime('now')
+       WHERE id = ? AND status IN ('planning', 'scheduled', 'awaiting_approval', 'paused')`,
+      [planId]
+    );
+    if (!claim.changes) {
+      const alreadyClaimed = await this.getPlan(planId);
+      if (!alreadyClaimed) throw new Error(`Plan ${planId} disappeared during execution claim`);
+      return alreadyClaimed;
+    }
+
+    plan.status = 'executing';
     emitter?.emit('agent_plan', { planId, status: 'executing', steps: plan.steps });
 
     const failedSteps: PlanStep[] = [];
@@ -658,6 +677,10 @@ class AgentPlannerService {
     organizationId: string;
     userId: string;
   }): Promise<AgentPlan> {
+    const plan = await this.getPlan(payload.planId);
+    if (!plan || plan.organizationId !== payload.organizationId) {
+      throw Object.assign(new Error('Plan not found'), { statusCode: 404 });
+    }
     const { executeToolCall } = await import('./toolDefinitions.js');
 
     const executor = async (toolName: string, input: Record<string, unknown>) => {

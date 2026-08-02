@@ -57,6 +57,7 @@ interface StepRow {
 const db = vi.hoisted(() => ({
   plans: new Map<string, PlanRow>(),
   steps: new Map<string, StepRow[]>(), // keyed by plan_id
+  failFinalization: false,
 }));
 
 function normalize(sql: string): string {
@@ -184,8 +185,18 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
     }
 
     if (s.startsWith('UPDATE ai_agent_plans')) {
+      if (s.includes("status IN ('planning', 'scheduled', 'awaiting_approval', 'paused')")) {
+        const id = params[0] as string;
+        const plan = db.plans.get(id);
+        if (!plan || !['planning', 'scheduled', 'awaiting_approval', 'paused'].includes(plan.status)) {
+          return { changes: 0 };
+        }
+        plan.status = 'executing';
+        return { changes: 1 };
+      }
       if (s.includes('result_summary = ?') && s.includes('error_message = ?')) {
         // finalizePlan
+        if (db.failFinalization) throw new Error('final result write failed');
         const [status, result_summary, error_message, id] = params as [
           string,
           string,
@@ -259,6 +270,7 @@ describe('agentPlannerService.executePlan — continue-on-error (HP-4, Piotr dec
   beforeEach(() => {
     db.plans.clear();
     db.steps.clear();
+    db.failFinalization = false;
   });
 
   it('runs every step and reports "completed" when all succeed', async () => {
@@ -398,12 +410,55 @@ describe('agentPlannerService.executePlan — continue-on-error (HP-4, Piotr dec
     });
     expect(materialized?.steps[0].approvedAt).toBeTruthy();
   });
+
+  it('claims a plan once so concurrent workers execute a side effect only once', async () => {
+    const plan = await agentPlannerService.createPlan({
+      organizationId: 'org-1',
+      userId: 'owner-1',
+      title: 'Single execution claim',
+      steps: [{ toolName: 'search_web', toolInput: { query: 'once' } }],
+    });
+
+    let release!: (value: unknown) => void;
+    const blocked = new Promise((resolve) => {
+      release = resolve;
+    });
+    const executor = vi.fn(() => blocked);
+
+    const first = agentPlannerService.executePlan(plan.id, executor);
+    await vi.waitFor(() => expect(executor).toHaveBeenCalledTimes(1));
+    const duplicate = await agentPlannerService.executePlan(plan.id, executor);
+    expect(duplicate.status).toBe('executing');
+    expect(executor).toHaveBeenCalledTimes(1);
+
+    release({ ok: true });
+    expect((await first).status).toBe('completed');
+    expect(executor).toHaveBeenCalledTimes(1);
+  });
+
+  it('never reports completed when the durable final result write fails', async () => {
+    const plan = await agentPlannerService.createPlan({
+      organizationId: 'org-1',
+      userId: 'owner-1',
+      title: 'Durable completion guard',
+      steps: [{ toolName: 'search_web', toolInput: { query: 'receipt' } }],
+    });
+    db.failFinalization = true;
+
+    await expect(
+      agentPlannerService.executePlan(plan.id, vi.fn().mockResolvedValue({ ok: true }))
+    ).rejects.toThrow('final result write failed');
+
+    expect(db.plans.get(plan.id)?.status).toBe('executing');
+    expect(db.plans.get(plan.id)?.status).not.toBe('completed');
+  });
 });
 
 describe('agentPlannerService.executePlan — retry przed failed (Fala 1, 2026-07-26)', () => {
   beforeEach(() => {
     db.plans.clear();
     db.steps.clear();
+    db.failFinalization = false;
   });
 
   it('recovers a step that fails once then succeeds — never marked failed', async () => {
@@ -449,6 +504,7 @@ describe('agentPlannerService.executePlan — zmienne między krokami (Fala 1, 2
   beforeEach(() => {
     db.plans.clear();
     db.steps.clear();
+    db.failFinalization = false;
   });
 
   it('resolves $step.N.pole to the completed result of step N (1-based)', async () => {

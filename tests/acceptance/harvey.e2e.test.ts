@@ -321,6 +321,46 @@ describe('Acceptance HARVEY · Agent HP-4 (real router + auth + planner + DB)', 
     40_000
   );
 
+  it('claims a plan atomically so concurrent deliveries execute each step once', async () => {
+    const { agentPlannerService } = await import(
+      '../../server/src/services/ai/agentPlannerService.js'
+    );
+    const plan = await agentPlannerService.createPlan({
+      organizationId: SEED.ORG_ID,
+      userId: SEED.USER_ID,
+      title: 'odbior--hv-- concurrent claim',
+      steps: [{ toolName: 'acceptance_probe', toolInput: { marker: 'once' } }],
+    });
+    createdPlanIds.push(plan.id);
+
+    let sideEffects = 0;
+    const executor = async () => {
+      sideEffects += 1;
+      await new Promise((resolve) => setTimeout(resolve, 40));
+      return { durableReceipt: 'once' };
+    };
+    const [first, duplicate] = await Promise.all([
+      agentPlannerService.executePlan(plan.id, executor),
+      agentPlannerService.executePlan(plan.id, executor),
+    ]);
+
+    expect(sideEffects).toBe(1);
+    expect([first.status, duplicate.status]).toContain('completed');
+    const client = pgClient();
+    await client.connect();
+    try {
+      const steps = await client.query(
+        `SELECT status, result_json FROM ai_agent_plan_steps WHERE plan_id = $1`,
+        [plan.id]
+      );
+      expect(steps.rows).toHaveLength(1);
+      expect(steps.rows[0].status).toBe('completed');
+      expect(JSON.parse(steps.rows[0].result_json)).toEqual({ durableReceipt: 'once' });
+    } finally {
+      await client.end();
+    }
+  }, 30_000);
+
   it('reliability: create → execute-to-gate → approval recorded succeeds 3/3 (functioning cycle)', async () => {
     const { agentPlannerService } = await import(
       '../../server/src/services/ai/agentPlannerService.js'

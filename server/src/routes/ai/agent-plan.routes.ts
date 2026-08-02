@@ -200,6 +200,15 @@ function assertPlanInOrg(
   return Boolean(plan) && plan!.organizationId === organizationId;
 }
 
+function canAccessPlan(
+  plan: NonNullable<Awaited<ReturnType<typeof agentPlannerService.getPlan>>>,
+  req: AuthRequest
+): boolean {
+  const userId = req.user?.id;
+  const role = String(req.user?.role || '').toUpperCase();
+  return plan.userId === userId || ['OWNER', 'ADMIN', 'SUPERADMIN'].includes(role);
+}
+
 /**
  * POST /api/ai/agent-plan
  * Tworzy plan (agentPlannerService.createPlan) i zleca wykonanie w tle (best-effort).
@@ -692,6 +701,9 @@ router.get(
     if (!assertPlanInOrg(plan, organizationId)) {
       return res.status(404).json({ success: false, error: 'Plan not found' });
     }
+    if (!canAccessPlan(plan, req)) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
+    }
 
     return res.json({ success: true, plan });
   })
@@ -715,6 +727,9 @@ router.post(
     const planId = String(req.params.id || '');
     const existingPlan = await agentPlannerService.getPlan(planId);
     if (!assertPlanInOrg(existingPlan, organizationId)) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
+    }
+    if (!canAccessPlan(existingPlan, req)) {
       return res.status(404).json({ success: false, error: 'Plan not found' });
     }
 
