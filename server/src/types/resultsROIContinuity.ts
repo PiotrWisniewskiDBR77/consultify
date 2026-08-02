@@ -94,6 +94,16 @@ export interface KPIDefinition {
   status: KPIStatus;
   createdAt: string;
   updatedAt: string;
+  /**
+   * RES-02 adapter: the canonical `initiative_kpis.id` this v8_kpi_definitions
+   * row corresponds to. `v8_kpi_definitions` is NOT a second owner of KPI
+   * definitions — this is the explicit pointer to the one canonical identity.
+   * `null` means an explicit UNMAPPED state (a row created before RES-02, or
+   * whose canonical KPI could not be determined) — this is NEVER guessed by
+   * name-matching or any other heuristic; every row created going forward
+   * populates it via `kpiDefinitionService.createDefinition`.
+   */
+  canonicalKpiId: string | null;
 }
 
 export interface DeviationRecord {

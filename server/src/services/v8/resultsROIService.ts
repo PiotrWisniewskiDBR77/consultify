@@ -25,6 +25,7 @@ import type {
   KPIStatus,
   KPISummary,
   KPITrendPoint,
+  MeasurementCadence,
   ReconciliationHealthSummary,
   ReconciliationStatus,
   ReconciliationVarianceItem,
@@ -52,6 +53,7 @@ import {
   RecordDeviationParamsSchema,
   RecordROIRealizationParamsSchema,
 } from '../../types/resultsROIContinuity.js';
+import { createDefinition as createKpiDefinition } from '../results/kpiDefinitionService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
@@ -92,6 +94,7 @@ interface KPIRow {
   status: string;
   created_at: string;
   updated_at: string;
+  canonical_kpi_id?: string | null;
 }
 
 interface DeviationRow {
@@ -164,6 +167,8 @@ function rowToKPI(row: KPIRow): KPIDefinition {
     status: row.status as KPIStatus,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    // Explicit unmapped state — never guessed. See KPIDefinition.canonicalKpiId.
+    canonicalKpiId: row.canonical_kpi_id ?? null,
   };
 }
 
@@ -236,14 +241,65 @@ function rowToReconciliation(row: ReconciliationRow): KPIFinanceReconciliation {
 // ==========================================
 
 /**
+ * RES-02 adapter: v8_kpi_definitions.measurement_cadence has a wider enum
+ * (daily/weekly/biweekly/monthly/quarterly/annually) than the canonical
+ * definition's measurementFrequency (DAILY/WEEKLY/MONTHLY/QUARTERLY) — a
+ * best-effort, DETERMINISTIC mapping (never a guess about identity, only
+ * about which of four buckets a cadence label falls into).
+ */
+function cadenceToCanonicalFrequency(cadence: MeasurementCadence): string {
+  switch (cadence) {
+    case 'daily':
+      return 'DAILY';
+    case 'weekly':
+    case 'biweekly':
+      return 'WEEKLY';
+    case 'quarterly':
+    case 'annually':
+      return 'QUARTERLY';
+    case 'monthly':
+    default:
+      return 'MONTHLY';
+  }
+}
+
+/**
  * Create a KPI definition in dual-mode (initiative-linked or standalone).
  * Decision W6-6: standalone mode is first-class.
+ *
+ * RES-02: v8_kpi_definitions is NOT a second owner of KPI definitions. Every
+ * new row created here also mints (or, if `canonicalKpiId` is supplied,
+ * reuses) a canonical `initiative_kpis` definition through
+ * kpiDefinitionService, and stores that id as `canonical_kpi_id` — never
+ * left unmapped for a row this function creates. Pre-RES-02 rows keep
+ * `canonical_kpi_id = NULL` (see KPIDefinition.canonicalKpiId) rather than
+ * being heuristically backfilled by name-matching.
  */
-export async function createKPI(params: CreateKPIParams): Promise<KPIDefinition> {
+export async function createKPI(
+  params: CreateKPIParams & { canonicalKpiId?: string | null }
+): Promise<KPIDefinition> {
   const validated = CreateKPIParamsSchema.parse(params);
 
   const kpiId = uuidv4();
   const now = new Date().toISOString();
+
+  let canonicalKpiId = params.canonicalKpiId || null;
+  if (!canonicalKpiId) {
+    const canonical = await createKpiDefinition({
+      organizationId: validated.organizationId,
+      initiativeId: validated.initiativeId ?? null,
+      name: validated.name,
+      description: `Created via v8 ROI/Results dual-mode KPI (mode=${validated.mode}, metricType=${validated.metricType})`,
+      category: 'roi_kpi',
+      baselineValue: validated.baselineValue ?? null,
+      targetValue: validated.targetValue ?? null,
+      currentValue: validated.currentValue ?? null,
+      measurementFrequency: cadenceToCanonicalFrequency(validated.measurementCadence),
+      source: 'resultsROIService',
+      reason: 'v8-roi-kpi-create',
+    });
+    canonicalKpiId = canonical.id;
+  }
 
   const kpi: KPIDefinition = {
     kpiId,
@@ -259,14 +315,15 @@ export async function createKPI(params: CreateKPIParams): Promise<KPIDefinition>
     status: 'design',
     createdAt: now,
     updatedAt: now,
+    canonicalKpiId,
   };
 
   await dbRun(
     `INSERT INTO v8_kpi_definitions (
       kpi_id, organization_id, name, mode, initiative_id,
       metric_type, baseline_value, target_value, current_value,
-      measurement_cadence, status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      measurement_cadence, status, created_at, updated_at, canonical_kpi_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       kpi.kpiId,
       kpi.organizationId,
@@ -281,6 +338,7 @@ export async function createKPI(params: CreateKPIParams): Promise<KPIDefinition>
       kpi.status,
       kpi.createdAt,
       kpi.updatedAt,
+      kpi.canonicalKpiId,
     ]
   );
 
@@ -1602,7 +1660,8 @@ export async function getResultsKpiCatalog(
        ORDER BY CASE WHEN severity = 'RED' THEN 0 ELSE 1 END, detected_at DESC
        LIMIT 1
      ) c ON TRUE
-     WHERE COALESCE(k.organization_id, i.organization_id, m.organization_id) = ?${kpiFilterSql}
+     WHERE COALESCE(k.organization_id, i.organization_id, m.organization_id) = ?
+       AND k.archived_at IS NULL${kpiFilterSql}
      ORDER BY k.updated_at DESC NULLS LAST, k.created_at DESC`,
     [organizationId, ...params],
     { fallback: true }
