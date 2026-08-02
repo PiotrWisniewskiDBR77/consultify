@@ -126,6 +126,96 @@ describe('M13 L-09 — InitiativeGovernanceService cross-org IDOR guard', () => 
     expect(mutationCalls()).toHaveLength(0);
   });
 
+  // ── RES-10: getGoalRollup tenant fail-closed ───────────────────────────────
+  //
+  // getGoalRollup was the ONE goal method the M13 L-09 sweep missed. It called the
+  // org-scoped getGoal() but did not short-circuit on null, then read two tables
+  // with NO organization_id:
+  //     SELECT * FROM goal_initiative_links WHERE goal_id=$1
+  //     SELECT id, progress FROM goals WHERE parent_goal_id=$1
+  // A foreign goalId therefore returned {goal:null, linkedInitiatives:N, childGoals:M,
+  // rollupProgress:X} — counts and aggregate progress of another tenant, served 200.
+  // These tests pin the fail-closed contract: null out, and NOT ONE rollup query.
+
+  /** Answers the unscoped rollup reads as if org B's data were there to leak. */
+  function armForeignRollupData() {
+    mockQueryAll.mockImplementation(async (sql: string) => {
+      if (/goal_initiative_links/i.test(sql) && !/JOIN\s+initiatives/i.test(sql)) {
+        return [
+          { contribution_weight: 1, initiative_id: 'init-of-B-1' },
+          { contribution_weight: 1, initiative_id: 'init-of-B-2' },
+        ];
+      }
+      if (/FROM\s+goals\s+WHERE\s+parent_goal_id/i.test(sql)) {
+        return [
+          { id: 'child-of-B-1', progress: 80 },
+          { id: 'child-of-B-2', progress: 40 },
+        ];
+      }
+      return [];
+    });
+  }
+
+  it('getGoalRollup returns null for a goal in another org (no rollup query, no leak)', async () => {
+    mockQueryFirst.mockResolvedValueOnce(null); // getGoal scoped to ORG_A → foreign goal invisible
+    armForeignRollupData();
+    const s = await svc();
+
+    const result = await s.getGoalRollup(ORG_A, 'goal-of-B');
+
+    // Fail-closed: nothing at all comes back — not a shape with null fields.
+    expect(result).toBeNull();
+    // The guard must fire BEFORE any rollup read. This is the assertion that would
+    // have caught the original defect: the leak was in queryAll, not in the return.
+    expect(mockQueryAll).not.toHaveBeenCalled();
+    expect(mutationCalls()).toHaveLength(0);
+    // And the ownership lookup that gated it was bound to the CALLER's org.
+    expect(everyQueryFirstIsOrgScoped()).toBe(true);
+    expect(mockQueryFirst.mock.calls[0]?.[1]).toContain(ORG_A);
+  });
+
+  it('getGoalRollup returns null for a goal id that exists nowhere (no rollup query)', async () => {
+    mockQueryFirst.mockResolvedValueOnce(null);
+    const s = await svc();
+
+    await expect(s.getGoalRollup(ORG_A, 'goal-does-not-exist')).resolves.toBeNull();
+    expect(mockQueryAll).not.toHaveBeenCalled();
+  });
+
+  it('getGoalRollup still computes the rollup for a same-org goal (positive control)', async () => {
+    mockQueryFirst.mockResolvedValueOnce({ id: 'goal-of-A', organization_id: ORG_A });
+    mockQueryAll.mockImplementation(async (sql: string) => {
+      if (/goal_initiative_links/i.test(sql) && !/JOIN\s+initiatives/i.test(sql)) {
+        return [{ contribution_weight: 1, initiative_id: 'init-of-A' }];
+      }
+      if (/FROM\s+goals\s+WHERE\s+parent_goal_id/i.test(sql)) {
+        return [{ id: 'child-of-A', progress: 60 }];
+      }
+      if (/JOIN\s+initiatives/i.test(sql)) {
+        return [{ id: 'init-of-A', progress: 40, contribution_weight: 1 }];
+      }
+      return [];
+    });
+    const s = await svc();
+
+    const result = await s.getGoalRollup(ORG_A, 'goal-of-A');
+
+    expect(result).not.toBeNull();
+    expect(result).toMatchObject({
+      goal: { id: 'goal-of-A' },
+      linkedInitiatives: 1,
+      childGoals: 1,
+      initiativeProgressCount: 1,
+      rollupProgress: 50, // (60 + 40*1) / (1 + 1)
+    });
+    // The initiative join stays org-bound — the guard did not replace that filter.
+    const joinQuery = mockQueryAll.mock.calls.find(([sql]) =>
+      /JOIN\s+initiatives/i.test(String(sql))
+    );
+    expect(String(joinQuery![0])).toMatch(/i\.organization_id\s*=\s*\$2/i);
+    expect(joinQuery![1]).toContain(ORG_A);
+  });
+
   // ── linkDecisionToInitiative / getInitiativeDecisions ───────────────────────
 
   it('linkDecisionToInitiative rejects an initiative in another org (no link written)', async () => {

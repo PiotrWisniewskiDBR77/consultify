@@ -147,7 +147,15 @@ class InitiativeGovernanceService {
   }
 
   async getGoalRollup(orgId: string, goalId: string) {
+    // TENANT FAIL-CLOSED (RES-10): the org-scoped ownership lookup MUST short-circuit
+    // before any rollup read. Previously a null result fell through, and the two reads
+    // below carry NO organization_id — `SELECT * FROM goal_initiative_links WHERE
+    // goal_id=$1` and `SELECT id, progress FROM goals WHERE parent_goal_id=$1` — so a
+    // foreign goalId leaked link counts, child-goal counts and rollup progress with a
+    // 200. Same guard shape as linkGoalToInitiative / unlinkGoalFromInitiative; the
+    // route maps this null to 404 (as `GET /goals/:goalId` already does).
     const goal = await this.getGoal(orgId, goalId);
+    if (!goal) return null;
     const links = await queryHelpers.queryAll<{
       contribution_weight: number;
       initiative_id: string;

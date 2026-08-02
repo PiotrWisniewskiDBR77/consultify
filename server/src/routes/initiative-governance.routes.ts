@@ -105,7 +105,17 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(await initiativeGovernanceService.getGoalRollup(id.orgId, req.params.goalId));
+    // TENANT FAIL-CLOSED (RES-10): a goal outside the caller's org resolves to null in
+    // the service before any rollup read; surface it as 404 with no payload, mirroring
+    // `GET /goals/:goalId` above. Do NOT let the service throw here — the global error
+    // handler classifies on `err.statusCode`, so this module's `{ status: 404 }` throws
+    // would surface as 500.
+    const rollup = await initiativeGovernanceService.getGoalRollup(id.orgId, req.params.goalId);
+    if (!rollup) {
+      res.status(404).json({ error: 'Goal not found' });
+      return;
+    }
+    res.json(rollup);
   })
 );
 
