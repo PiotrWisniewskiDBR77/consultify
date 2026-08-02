@@ -129,5 +129,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_closure_evidence_no_dup_ref
 -- entry silently never renders once this table has rows — the renderer
 -- reads its section list from here, not from the frontend default map).
 -- Placed after 'history' (order 140), left column, system section.
-INSERT OR IGNORE INTO initiative_section_types (id, key, name, name_pl, description, description_pl, category, column_position, default_order, icon, icon_color, icon_bg, component_key, is_system, is_active) VALUES
-('ist-closure', 'closure', 'Closure & Evidence', 'Zamknięcie i dowody', 'Closure request, evidence pack and approval workflow required before DONE', 'Wniosek o zamknięcie, pakiet dowodów i proces zatwierdzenia wymagany przed DONE', 'content', 'left', 145, 'CheckCircle2', 'text-emerald-600', 'from-emerald-600/10 to-teal-600/10', 'closure', 1, 1);
+DO $$
+BEGIN
+  IF to_regclass('public.initiative_section_types') IS NOT NULL THEN
+    INSERT INTO initiative_section_types (id, key, name, name_pl, description, description_pl, category, column_position, default_order, icon, icon_color, icon_bg, component_key, is_system, is_active) VALUES
+    ('ist-closure', 'closure', 'Closure & Evidence', 'Zamknięcie i dowody', 'Closure request, evidence pack and approval workflow required before DONE', 'Wniosek o zamknięcie, pakiet dowodów i proces zatwierdzenia wymagany przed DONE', 'content', 'left', 145, 'CheckCircle2', 'text-emerald-600', 'from-emerald-600/10 to-teal-600/10', 'closure', 1, 1)
+    ON CONFLICT DO NOTHING;
+  END IF;
+END $$;
