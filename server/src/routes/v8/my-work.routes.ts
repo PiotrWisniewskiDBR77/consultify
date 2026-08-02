@@ -378,6 +378,20 @@ const toDateOnly = (value: unknown): string | null => {
   if (!value) return null;
   if (value instanceof Date) {
     if (Number.isNaN(value.getTime())) return null;
+    // MW-07 acceptance correction. An earlier revision of this helper switched
+    // to LOCAL getters on the premise that these are `timestamp without time
+    // zone` columns. They are not: `tasks.due_date` (and the sibling date
+    // columns read here) are `timestamp WITH time zone` — verified with
+    // `information_schema.columns` on a database migrated purely by
+    // `db:migrate:strict`, and the app never issues `SET TIME ZONE`, so the
+    // session TimeZone is the server default (`Etc/UTC`). Writing the
+    // date-only string `'2026-03-05'` therefore stores exactly
+    // `2026-03-05 00:00:00+00`, and node-pg hands back that same absolute
+    // instant. UTC getters recover the intended calendar day in EVERY process
+    // timezone; local getters only agree when the process offset is >= 0 and
+    // silently shift the day back by one anywhere west of UTC (measured:
+    // America/Los_Angeles read 2026-03-05 back as 2026-03-04, which turned
+    // this file's own two-timezone gate red 5/10).
     return value.toISOString().slice(0, 10);
   }
   const raw = String(value).trim();
