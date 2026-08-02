@@ -153,6 +153,7 @@ import webhookRoutes from './routes/integrations/webhooks.routes.js';
 import webhookSubRoutes from './routes/integrations/webhookSubscriptions.routes.js';
 import intelligenceRoutes from './routes/intelligence.routes.js';
 import interviewRoutes from './routes/interview.routes.js';
+import interviewCandidateHandoffRoutes from './routes/interviewCandidateHandoff.routes.js';
 import interviewEnterpriseRoutes from './routes/interview-enterprise.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
 import knowledgeRoutes from './routes/knowledge.routes.js';
@@ -1122,6 +1123,12 @@ export class ApiGateway {
       // reached only via frontend `.catch()` fallbacks and are tracked for a
       // future router split, not a blanket deprecation.
       app.use('/api/interview', interviewRoutes);
+      // INT-08 — accepted interview submission / accepted insight finding ->
+      // canonical Candidate handoff (initiative_candidates). Separate router
+      // (not an edit to interviewRoutes/interview-insights.routes.ts) so
+      // this packet never touches the frozen Interview runtime's own route
+      // files. Paths: /api/interview/candidate-handoff/...
+      app.use('/api/interview/candidate-handoff', interviewCandidateHandoffRoutes);
       // Source Baskets — reusable saved source-session selections for the AI
       // Insight Creator (audit #28c/#28d). Mounted under the same /api/interview
       // prefix so paths are /api/interview/insight-baskets[...].
