@@ -7062,6 +7062,75 @@ export const Api = {
     return handleResponse(res, 'Failed to save cell edit');
   },
 
+  // MAT-006 (2026-08-02) — workbook lifecycle: versions/checkpoint/restore/
+  // share/revoke/CSV export. See server/src/routes/workbook.routes.ts.
+  getWorkbookVersions: async (
+    workbookId: string
+  ): Promise<{
+    data: Array<{ id: string; version: number; sheet_count: number; created_by: string; created_at: string }>;
+    currentVersion: number;
+  }> => {
+    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/versions`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load version history');
+  },
+
+  checkpointWorkbook: async (
+    workbookId: string,
+    expectedVersion?: number
+  ): Promise<{ ok: boolean; version: number; checkpointedFromVersion: number }> => {
+    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/checkpoint`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(expectedVersion !== undefined ? { expectedVersion } : {}),
+    });
+    return handleResponse(res, 'Failed to create checkpoint');
+  },
+
+  restoreWorkbookVersion: async (
+    workbookId: string,
+    versionId: string,
+    expectedVersion: number
+  ): Promise<{ ok: boolean; version: number; restoredFromVersion: number }> => {
+    const res = await fetch(
+      `${API_URL}/workbook/${encodeURIComponent(workbookId)}/versions/${encodeURIComponent(versionId)}/restore`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ expectedVersion }),
+      }
+    );
+    return handleResponse(res, 'Failed to restore version');
+  },
+
+  shareWorkbook: async (
+    workbookId: string,
+    expiresInDays?: number
+  ): Promise<{ shareToken: string; expiresAt: string; shareUrl: string }> => {
+    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/share`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(expiresInDays !== undefined ? { expiresInDays } : {}),
+    });
+    return handleResponse(res, 'Failed to create share link');
+  },
+
+  revokeWorkbookShare: async (workbookId: string): Promise<{ revoked: boolean }> => {
+    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/share`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to revoke share link');
+  },
+
+  getPublicSharedWorkbook: async (
+    token: string
+  ): Promise<{ data: { id: string; title: string | null; sheets: unknown[] } }> => {
+    const res = await fetch(`${API_URL}/workbook/shared/${encodeURIComponent(token)}`);
+    return handleResponse(res, 'Shared workbook not found');
+  },
+
   // --- ASSESSMENT WORKFLOW ---
   createAssessmentSession: async (payload: {
     assessmentType: 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';

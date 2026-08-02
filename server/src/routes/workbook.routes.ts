@@ -1937,7 +1937,10 @@ router.post(
       metadata: { organizationId: user.organizationId, title: before.title },
     });
 
-    res.json({ shareToken: token, expiresAt, shareUrl: `/api/workbook/shared/${token}` });
+    // `shareUrl` is the FRONTEND page (`SharedWorkbookView`, AppRoutes.tsx)
+    // that a human opens; it fetches the JSON API (`/api/workbook/shared/:token`)
+    // itself. Relative path — caller (browser) resolves it against its own origin.
+    res.json({ shareToken: token, expiresAt, shareUrl: `/excele/shared/${token}` });
   })
 );
 

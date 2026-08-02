@@ -16,7 +16,7 @@
  * narzuca `ArtifactRightPanel`. Tokeny wyłącznie `c-*` — zero
  * navy/slate/hex, zero primary-*, zero crimson (CLAUDE.md UI pkt 6).
  */
-import { Download, Eye, FolderOpen, Sparkles } from 'lucide-react';
+import { Download, Eye, FileSpreadsheet, FolderOpen, History, Link2, ShieldOff, Sparkles } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -38,6 +38,14 @@ export interface ExceleRightPanelProps {
   onDownload?: () => void;
   onPreviewFile?: () => void;
   onAllFiles?: () => void;
+  /** MAT-006 (2026-08-02) — workbook lifecycle actions. All optional/hidden
+   * when no workbookId is available (nothing to version/share/export yet). */
+  onOpenVersionHistory?: () => void;
+  onCheckpoint?: () => void;
+  onShare?: () => void;
+  onRevokeShare?: () => void;
+  isShared?: boolean;
+  onExportCsv?: () => void;
 }
 
 export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = ({
@@ -50,6 +58,12 @@ export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = ({
   onDownload,
   onPreviewFile,
   onAllFiles,
+  onOpenVersionHistory,
+  onCheckpoint,
+  onShare,
+  onRevokeShare,
+  isShared,
+  onExportCsv,
 }) => {
   const { t } = useTranslation();
 
@@ -82,6 +96,46 @@ export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = ({
             label={t('excele.rightPanel.allFiles', 'Wszystkie pliki')}
             onClick={() => onAllFiles?.()}
             disabled={!onAllFiles}
+          />
+          {/* MAT-006 (2026-08-02) — versions/checkpoint/share/CSV. Functional
+              proof only (no redesign) — see WorkbookVersionHistoryModal.tsx. */}
+          <PreviewActionButton
+            variant="neutral"
+            icon={History}
+            label={t('excele.rightPanel.versionHistory', 'Historia wersji')}
+            onClick={() => onOpenVersionHistory?.()}
+            disabled={!onOpenVersionHistory || !workbookId}
+          />
+          <PreviewActionButton
+            variant="neutral"
+            icon={Sparkles}
+            label={t('excele.rightPanel.checkpoint', 'Utwórz punkt kontrolny')}
+            onClick={() => onCheckpoint?.()}
+            disabled={!onCheckpoint || !workbookId}
+          />
+          {isShared ? (
+            <PreviewActionButton
+              variant="neutral"
+              icon={ShieldOff}
+              label={t('excele.rightPanel.revokeShare', 'Cofnij udostępnienie')}
+              onClick={() => onRevokeShare?.()}
+              disabled={!onRevokeShare || !workbookId}
+            />
+          ) : (
+            <PreviewActionButton
+              variant="neutral"
+              icon={Link2}
+              label={t('excele.rightPanel.share', 'Udostępnij (kopiuj link)')}
+              onClick={() => onShare?.()}
+              disabled={!onShare || !workbookId}
+            />
+          )}
+          <PreviewActionButton
+            variant="neutral"
+            icon={FileSpreadsheet}
+            label={t('excele.rightPanel.exportCsv', 'Eksportuj CSV')}
+            onClick={() => onExportCsv?.()}
+            disabled={!onExportCsv || !workbookId}
           />
         </div>
       ),
