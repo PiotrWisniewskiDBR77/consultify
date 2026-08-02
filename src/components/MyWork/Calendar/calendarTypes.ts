@@ -38,6 +38,10 @@ export interface CalendarEvent {
   etag?: string;
   recurrenceRule?: string;
   recurrenceSourceId?: string;
+  projectId?: string | null;
+  projectName?: string | null;
+  provider?: 'internal' | 'google' | 'microsoft';
+  version?: string;
 }
 
 export interface CalendarFilter {

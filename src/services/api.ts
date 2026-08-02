@@ -11651,6 +11651,7 @@ export const Api = {
     end?: string;
     allDay?: boolean;
     etag?: string;
+    expectedVersion?: string;
   }): Promise<any> => {
     const source = String(body.source || '').toLowerCase();
     const sourceId = String(body.sourceId || '').trim();
@@ -11665,6 +11666,7 @@ export const Api = {
         start: body.start,
         end: body.end,
         allDay: body.allDay,
+        expectedVersion: body.expectedVersion,
       });
     } catch (error) {
       if (!Api.shouldFallbackToLegacyMyWorkCalendar(error)) {

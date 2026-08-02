@@ -41,6 +41,7 @@ interface CalendarEventMovePayload {
   end?: string;
   allDay?: boolean;
   etag?: string;
+  expectedVersion?: string;
 }
 
 interface CalendarViewProps {
