@@ -46,6 +46,9 @@ export interface PlanStep {
   /** Set once a human approves a side-effect step; presence means the approval
    * gate must NOT re-fire on resume (bug fix 2026-07-16 — plan never completed). */
   approvedAt?: string | null;
+  /** Actor persisted with the approval. Exposed on read-back so the approval
+   * is an auditable receipt rather than an invisible execution flag. */
+  approvedBy?: string | null;
   durationMs?: number;
 }
 
@@ -569,6 +572,7 @@ class AgentPlannerService {
       errorMessage: s.error_message || undefined,
       requiresApproval: Boolean(s.requires_approval),
       approvedAt: s.approved_at || null,
+      approvedBy: s.approved_by || null,
       durationMs: s.duration_ms || undefined,
     }));
 
