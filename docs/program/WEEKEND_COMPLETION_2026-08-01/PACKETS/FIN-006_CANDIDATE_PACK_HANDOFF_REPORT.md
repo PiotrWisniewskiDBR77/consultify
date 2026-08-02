@@ -1,14 +1,14 @@
 ---
 doc_id: FIN-006-candidate-pack-handoff-report
 truth_type: operations
-status: FIN_06_AWAITING_CODEX_REVIEW
+status: FIN_06_AWAITING_FINAL_CODEX_REVIEW
 owner: claude
 process_owner: codex
 product_owner: piotr
 packet: FIN-006
 branch: feat/fin-006-candidate-pack-initiative-handoff
 base_commit: 36aa6ffc401b9e764ab96e3c4995ef98da14decf
-head_commit: a0d2f454f6c7297ff0c7a2dbd85ed17d6961b540
+head_commit: d6616aaef8062edf56ef447a6b602a597aec300b
 last_reviewed: 2026-08-02
 ---
 
@@ -19,27 +19,121 @@ Worktree `/private/tmp/consultify-fin-006-candidate-pack`, branch
 `integrate/mvp-wave1-abc` @ `36aa6ffc401b9e764ab96e3c4995ef98da14decf`.
 No push, merge, deploy, Railway, or demo mutation at any point.
 
-## Final HEAD and new SHAs
+## MINIMAL FIX_REQUIRED round — addendum (this section)
 
-**Final HEAD:** `a0d2f454f6c7297ff0c7a2dbd85ed17d6961b540`
+Codex's independent real-Postgres run found a genuine bug this session's own
+`consultinity_test` database masked (see §"Blocker 1 root cause" below) and
+a genuine, correctly-identified gap in Valuation Recommendation eligibility.
+Both are fixed, independently re-reproduced against a genuinely fresh schema
+before and after the fix, and covered by new regression tests. The rest of
+this document (KROK 1-4 sections below) is the PRIOR checkpoint report,
+left intact for history; this addendum documents only what changed since.
 
-Four commits on top of the last SHA you observed (`8382cc30bc`, the Gateway
-router-mount commit):
+**Final HEAD:** `d6616aaef8062edf56ef447a6b602a597aec300b`
+
+Three new commits on top of the HEAD you independently reviewed
+(`c43e259cb4`):
 
 ```
-19924b6ea2  feat(fin-006): persist canonical source snapshot and candidate lineage
-478d0ae388  feat(fin-006): finish Finance candidate preview and confirmation UX
-bd66fd2ad2  test(fin-006): verify canonical candidate handoff flows
-a0d2f454f6  fix(fin-006): eslint/prettier formatting on all FIN-006 files
+172204b1ae  fix(fin-006): fail closed on statement-pack source read
+2739615b13  fix(fin-006): require approved valuation at candidate confirmation
+d6616aaef8  test(fin-006): cover source eligibility and statement readback regressions
 ```
 
-The first three match your requested messages exactly. The fourth is a
-necessary follow-up discovered while executing your own KROK 4 lint gate
-(below) — pure `eslint --fix` (indentation, trailing commas, import order),
-zero behavior change, verified by re-running the full test suite before and
-after with identical pass counts. Not a scope addition.
+Three commits, not four — your requested `docs(fin-006): record final
+acceptance evidence` commit is this document's own update, committed
+immediately after this content lands (see final `git log` in the
+confirmation section below for its actual hash, since a file cannot
+truthfully state its own not-yet-created commit SHA).
 
-**`git status --short`:** empty.
+**`git status --short`:** empty (verified immediately before and after
+every commit in this round).
+
+### Blocker 1 root cause (full Postgres error, not the truncated logger line)
+
+Reproduced independently against a genuinely fresh, migrations-only
+Postgres instance (`consultinity_test_fin006_repro`, bootstrapped via
+`npx tsx server/scripts/migrate.postgres.ts --safe` from empty — the exact
+class of database Codex's own `consultify_fin006_test` on port 32770 is).
+My long-lived `consultinity_test` did NOT reproduce the failure at first,
+because — unlike a from-scratch migration run — it still carried a
+production-baseline-derived schema snapshot from earlier sessions this
+branch, which happens to already have the columns in question. That
+divergence was itself the first finding: the bug only shows up on a truly
+clean bootstrap, exactly Codex's environment.
+
+`getStatementPackDetail()`'s (and, identically, `recomputeStatementPack()`'s)
+statement-listing query selected `fs.readiness_status`, `fs.readiness_score`,
+`fs.quality_summary`, `fs.quality_reason_codes`, `fs.values_version`
+(`financial_statements`) and `fsv.is_non_financial`
+(`financial_statement_values`) — none of which exist on those tables via
+the `server/migrations` path alone. They are added ONLY by
+`server/migrations/20260719_baseline_gap.sql`, a large best-effort
+prod-baseline-sync migration that this repo's own earlier tooling notes
+(from FIN-005 work) already document as failing/skipping on a genuinely
+empty database. Confirmed directly: `\d financial_statements` on the fresh
+repro DB shows no such columns; the migration log for `20260719_baseline_gap.sql`
+completes without error but silently never adds them on that path.
+
+Both queries called `dbAll()` without `{ fallback: false }`. `DbPromise.ts`'s
+`all()` defaults to `fallback: true`, which on ANY query error (including
+Postgres's real `column "readiness_status" does not exist` error for this
+exact query) resolves `[]` instead of throwing — the underlying Postgres
+error was never even reaching application code as an error, just a silently
+empty result set. `financeStatementPackCandidateHandoff.ts`'s
+`countByType()` then correctly counted zero statements of every type against
+that empty array, and its `buildCandidateFields()` correctly rendered
+`"statements on file: P&L x0, BS x0, CF x0"` — every individual piece of
+code downstream of the swallowed error behaved correctly; the swallow itself
+was the defect.
+
+### Blocker 1 fix
+
+Both queries now probe with `{ fallback: false }` (so the real Postgres
+error throws instead of being swallowed) inside a `try/catch` using the
+exact `isSchemaCompatError` predicate this same file already defines and
+already uses for `loadStatementForPack`'s identical class of gap. On a
+recognized schema-compat error specifically, each retries with a second
+query using ONLY the columns the base `20260316_financial_statement_packs.sql`
+migration creates unconditionally — which is everything FIN-06's
+statement-type counting genuinely needs. Any OTHER error (not this
+specific, named class of gap) is re-thrown, never masked. `recomputeStatementPack`
+was fixed identically, not just `getStatementPackDetail`: it is the function
+that WRITES `pack_readiness_status` (the exact signal FIN-06's own
+eligibility gate depends on), and on the same schema gap it was treating a
+genuinely non-empty pack as having zero statements, which would call
+`pruneEmptyPack` on it — a live data-integrity risk broader than the
+reported preview bug, not something left half-fixed.
+
+**Direct DB read-back proof** (new test,
+`Blocker 1: real per-type statement counts...`): the fixture is confirmed,
+by a direct `GROUP BY statement_type` query against `financial_statements`,
+to have exactly 1 `P&L` row, 1 `BS` row, 0 `CF` rows — and the preview
+endpoint's `rationale` is asserted to contain exactly `P&L x1`, `BS x1`,
+`CF x0`, matching the DB precisely.
+
+**Fail-closed proof** (new test,
+`Blocker 1: a genuinely broken required schema fails closed...`): a column
+BOTH the primary and the fallback query require (`statement_type` — never
+one of the five optional "bonus" columns) is renamed away mid-test. The
+preview call is asserted to NOT return the shape the original bug produced
+(`200` + `eligible:true` + a rationale containing `P&L x0`) and instead
+returns `>= 500`. The column is restored in a `finally` block; a follow-up
+call in the same test confirms the golden preview is back to normal,
+correct counts afterward.
+
+### Blocker 2 fix
+
+`financeValuationRecommendationCandidateHandoff.ts` now selects
+`valuations.status` in both the read used by preview
+(`findRecommendationAcrossValuations`) and the read used by confirm's
+re-check INSIDE the lock (`readRecommendationFromValuation`), and requires
+it to be exactly `'APPROVED'` before treating a recommendation as eligible
+— no new table, no new status column on the recommendation object itself,
+reusing the existing `valuations.status` column (`DRAFT`/`REVIEW`/`APPROVED`)
+that `generateAdvisory()` itself already gates on at generation time. The
+value is read fresh from the database on every call; nothing from the
+client/session is trusted for this decision.
 
 ## KROK 1 — dirty-diff classification
 
@@ -67,14 +161,14 @@ were committed (`junit.xml` is gitignored — confirmed empty in
 
 | # | Requirement | Statement Pack | Investment Case | Valuation Recommendation |
 |---|---|---|---|---|
-| 1 | Source approved + tenant-scoped | ✅ `pack_readiness_status='ready'`; cross-tenant → `NOT_FOUND`/404, tested | ✅ `financial_models.status='approved'`, set only by the immutable `approveModel()` — not client-forgeable; cross-tenant → `NOT_FOUND`/404, tested | ⚠️ **tenant-scoped, verified** (cross-tenant → `NOT_FOUND`/404, tested) — **but NOT independently "approved"**: a valuation advisory recommendation is a plain object inside `valuations.advisory` JSONB with no acceptance/status field of its own. The only gate is "exists in this org's current advisory JSON" — identical to the pre-existing `convertAdvisoryRecommendationToInitiative` this replaces (verified: that function never checked a status field either). See "Open blocker" below. |
+| 1 | Source approved + tenant-scoped | ✅ `pack_readiness_status='ready'`; cross-tenant → `NOT_FOUND`/404, tested | ✅ `financial_models.status='approved'`, set only by the immutable `approveModel()` — not client-forgeable; cross-tenant → `NOT_FOUND`/404, tested | ✅ **FIXED this round.** `valuations.status='APPROVED'`, re-read fresh from the DB at both preview AND inside confirm's lock (never trusted from the client); cross-tenant → `NOT_FOUND`/404, tested. A recommendation whose parent valuation is `DRAFT` is ineligible even if the recommendation id still exists in a stale `advisory` JSON blob — tested directly (Blocker 2 scenarios A/B below). |
 | 2 | User sees Candidate Pack before save | ✅ `GET .../preview`, read-only, no write | ✅ same | ✅ same |
 | 3 | Confirm persists canonical Candidate | ✅ `createCandidateFromSource` via shared core; direct DB query confirms exactly 1 `initiative_candidates` row | ✅ same | ✅ same |
 | 4 | Finance never creates Initiative directly | ✅ never had a violation (new source) | ✅ `POST /analyses/:analysisId/initiatives` neutralized → `410 DIRECT_INITIATIVE_CREATION_DISABLED`, zero `initiatives` rows regardless of `INITIATIVE_FUNNEL_ENABLED`, tested | ✅ `convertAdvisoryRecommendationToInitiative` now delegates to the Candidate adapter (returns `candidateId`, not `initiativeId`); the unrelated `POST /financial-analyses/:id/initiatives` (a different, out-of-scope source) also neutralized → `410`, tested |
 | 5 | Retry never creates a second Candidate | ✅ N=1 retry + N=5 concurrency → exactly 1 row, direct DB query | ✅ same | ✅ same |
-| 6 | Receipt has source type, source ID, snapshot/version | ✅ `finance_candidate_handoffs.source_type='finance_statement_pack'` + `source_snapshot` (currency, readiness/version real; CAPEX/OPEX/NPV/IRR/payback literal `'unknown'` — not applicable to a pack) | ✅ `source_type='finance_investment_case'` + `source_snapshot` (currency, scenario, approved-snapshot version real; NPV/IRR/payback literal `'unknown'` — confirmed not stored on `financial_models`) | ✅ `source_type='finance_valuation_recommendation'` + `source_snapshot` from real advisory JSONB fields |
+| 6 | Receipt has source type, source ID, snapshot/version | ✅ `finance_candidate_handoffs.source_type='finance_statement_pack'` + `source_snapshot` (currency, readiness/version real; CAPEX/OPEX/NPV/IRR/payback literal `'unknown'` — not applicable to a pack); **statement-type counts now proven correct against a genuinely fresh schema** (Blocker 1 fix) | ✅ `source_type='finance_investment_case'` + `source_snapshot` (currency, scenario, approved-snapshot version real; NPV/IRR/payback literal `'unknown'` — confirmed not stored on `financial_models`) | ✅ `source_type='finance_valuation_recommendation'` + `source_snapshot` from real advisory JSONB fields |
 | 7 | Candidate independently readable/reopenable | ✅ `GET .../:packId`, tested | ✅ `GET .../:modelId`, tested | ✅ `GET .../:recommendationId`, tested |
-| 8 | Failure before finalize ⇒ no false success | ✅ TOCTOU test: pack flips ready→pending between preview and confirm → 409, 0 rows | ✅ TOCTOU test: model archived between preview and confirm → 409 `SOURCE_NOT_ELIGIBLE`, 0 rows | ✅ N=5 concurrency → exactly 1 row (no dedicated eligibility-flip test since there's no eligibility state to flip — see point 1) |
+| 8 | Failure before finalize ⇒ no false success | ✅ TOCTOU test: pack flips ready→pending between preview and confirm → 409, 0 rows. **Plus (this round): a genuine schema/query failure fails closed (>=500), never a fake `eligible:true`/`P&L x0` result** — tested via real column sabotage + revert. | ✅ TOCTOU test: model archived between preview and confirm → 409 `SOURCE_NOT_ELIGIBLE`, 0 rows | ✅ **FIXED this round**: APPROVED→DRAFT between preview and confirm → 409 `SOURCE_NOT_ELIGIBLE` inside the lock, 0 rows, then succeeds once flipped back to APPROVED (proves live re-check, not a one-way latch) |
 
 **Architectural note on point 8, all three sources:** unlike FIN-005's
 reservation/business-write split (business writes committed independently
@@ -87,21 +181,28 @@ where a Candidate exists without its receipt, or vice versa. This is a
 stronger guarantee than FIN-005 needed to retrofit, verified by reading
 `financeCandidateHandoffCore.ts` directly, not assumed.
 
-## Open blocker (your explicit decision needed)
+## Open blocker — RESOLVED this round
 
-**Valuation Recommendation has no real "approved" gate to prove point 1
-against.** This is inherited, not introduced — the code this packet
-replaces (`convertAdvisoryRecommendationToInitiative`) never had one either,
-and a recommendation is structurally just an id inside a JSONB blob with no
-independent row/status. Adding one now would mean introducing a new
-acceptance-status concept onto `valuations.advisory` — exactly the kind of
-new abstraction your STOP EXPANSION correction told me not to add this
-round. I did not invent one. Flagging this explicitly rather than either
-hiding it or unilaterally deciding it's fine: is this an acceptable,
-disclosed pre-existing gap to carry forward (with a follow-up ticket), or a
-hard blocker for FIN-006 specifically?
+The previous round flagged, but deliberately did not close, Valuation
+Recommendation's missing "approved" gate rather than unilaterally decide it
+was acceptable. Your MINIMAL FIX_REQUIRED confirmed it as Blocker 2 and
+specified the exact minimal fix (reuse `valuations.status`, no new
+table/column on the recommendation) — implemented exactly as specified, see
+"Blocker 2 fix" above. No longer an open item.
 
-## KROK 4 — focused test results
+## KROK 4 — focused test results (superseded by this round's re-run below)
+
+The table immediately below is the PRIOR round's result, kept for history.
+This round's authoritative re-run: **27/27** across the three FIN-006
+acceptance suites (was 22, +5 new: 2 for Blocker 1, 3 for Blocker 2),
+re-run against BOTH a long-lived local Postgres and a genuinely fresh,
+migrations-only Postgres instance (the class of database that reproduced
+Codex's original failure) — identical 27/27 on both. **20/20** component
+suites unaffected. Scoped backend typecheck: 0 errors in any touched file.
+Scoped lint (both newly-touched production files + both updated test
+files): 0 errors. `git diff --check`: clean. Secret scan: no findings.
+Migration re-verified on a fresh schema (table + unique index + the
+`source_snapshot` column all present via `\d finance_candidate_handoffs`).
 
 All run against real local Postgres (`RUN_DB_TESTS=1 MOCK_DB=false
 DB_TYPE=postgres`), no timeout/heap increases.
@@ -140,13 +241,35 @@ diagnosed above, not silently retried or masked).
   remains the ONLY code path any of the three adapters call to create
   anything — no adapter contains its own `INSERT INTO initiatives`.
 
-## Open items / risks carried forward (not new to this checkpoint)
+## Open items / risks carried forward
 
-1. **Valuation Recommendation eligibility gap** — see "Open blocker" above.
+1. ~~Valuation Recommendation eligibility gap~~ — **RESOLVED this round**
+   (Blocker 2).
 2. Cross-endpoint idempotent-replay envelope-shape inconsistency
    (unrelated FIN-005 finding, not touched by FIN-006).
 3. `FinancialStatementPackWorkspace.tsx`'s new UI entry point — flagged in
    KROK 1 for your explicit sign-off on whether a 3-line reused-slot button
-   counts as in-scope "finish the flow" work or should be deferred.
+   counts as in-scope "finish the flow" work or should be deferred. Still
+   open, not addressed this round (out of MINIMAL FIX_REQUIRED's two named
+   blockers).
+4. `loadStatementForPack()` (a sibling function in the same file as
+   Blocker 1's fix, used by `syncStatementToPack`/`detachStatementFromPack`/
+   `assignStatementToExistingPack`) has the identical "bonus column"
+   read pattern but returns `null` (schema-compat caught, statement treated
+   as not-found) rather than falling back to core columns — a DIFFERENT,
+   narrower failure mode than Blocker 1's, not touched this round since it
+   is not on FIN-006's own read path and changing it needs its own review of
+   those three callers' behavior on a `null`. Flagged for awareness, not
+   fixed — deliberately out of this round's minimal scope.
 
-FIN_06_AWAITING_CODEX_REVIEW
+## Final confirmation
+
+- `git status --short`: empty.
+- No push, merge, deploy, Railway, or demo mutation at any point this round.
+- No FIN-01..05 file touched this round (only `financeValuationRecommendation
+  CandidateHandoff.ts`, `financialStatementPackService.ts`, and the two
+  FIN-006 acceptance test files).
+- All required focused tests green: 27/27 acceptance, 20/20 component,
+  scoped typecheck/lint clean, `git diff --check` clean, secret scan clean.
+
+FIN_06_AWAITING_FINAL_CODEX_REVIEW
