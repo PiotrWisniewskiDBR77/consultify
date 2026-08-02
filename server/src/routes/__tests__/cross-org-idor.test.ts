@@ -158,6 +158,27 @@ vi.mock('../../services/results/kpiReportSnapshotService.js', () => ({
   createKpiReportSnapshot: vi.fn(),
 }));
 
+// RES-02: canonical KPI definition writer — create/update/archive now
+// delegate here from both /api/benefits/kpis and /api/v8/results/kpis
+// instead of running inline SQL. Keep the real error classes (importActual)
+// so route `instanceof` checks against thrown errors still work.
+const mockCreateKpiDefinition = vi.fn();
+const mockUpdateKpiDefinition = vi.fn();
+const mockArchiveKpiDefinition = vi.fn();
+const mockGetCurrentKpiDefinition = vi.fn();
+vi.mock('../../services/results/kpiDefinitionService.js', async () => {
+  const actual = await vi.importActual<typeof import('../../services/results/kpiDefinitionService.js')>(
+    '../../services/results/kpiDefinitionService.js'
+  );
+  return {
+    ...actual,
+    createDefinition: (...args: unknown[]) => mockCreateKpiDefinition(...args),
+    updateDefinition: (...args: unknown[]) => mockUpdateKpiDefinition(...args),
+    archiveDefinition: (...args: unknown[]) => mockArchiveKpiDefinition(...args),
+    getCurrentDefinition: (...args: unknown[]) => mockGetCurrentKpiDefinition(...args),
+  };
+});
+
 vi.mock('../../services/results/kpiDeviationService.js', () => ({
   handleTimeSeriesRecorded: vi.fn(),
 }));
@@ -1344,7 +1365,7 @@ describe('M15 — PUT /benefits/kpis/:kpiId is blocked on a locked KPI', () => {
     mockDbRun.mockResolvedValue({ changes: 1 });
   });
 
-  it('→ 409 RESULTS_KPI_EDIT_LOCKED when the owned KPI is in benefits_realization; no UPDATE runs', async () => {
+  it('→ 409 RESULTS_KPI_EDIT_LOCKED when the owned KPI is in benefits_realization; no update runs', async () => {
     mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
     // Ownership+status SELECT: owned by caller org, but locked.
     mockDbGet.mockResolvedValue({ id: 'kpi-locked', status: 'benefits_realization' });
@@ -1357,25 +1378,31 @@ describe('M15 — PUT /benefits/kpis/:kpiId is blocked on a locked KPI', () => {
     expect(res.status).toBe(409);
     expect(res.body.code).toBe('RESULTS_KPI_EDIT_LOCKED');
 
-    // The locked guard must short-circuit before the UPDATE.
-    const updateCall = mockDbRun.mock.calls.find((c) =>
-      /UPDATE\s+initiative_kpis/i.test(String(c?.[0]))
-    );
-    expect(updateCall).toBeFalsy();
+    // The locked guard must short-circuit before kpiDefinitionService is
+    // ever reached (RES-02: the write moved from inline SQL to the
+    // canonical service, but the lock-status guard still runs first).
+    expect(mockGetCurrentKpiDefinition).not.toHaveBeenCalled();
+    expect(mockUpdateKpiDefinition).not.toHaveBeenCalled();
   });
 
-  it('→ 200 and an UPDATE runs when the owned KPI is in an unlocked (active) status', async () => {
+  it('→ 200 and a canonical update runs when the owned KPI is in an unlocked (active) status', async () => {
     mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
     mockDbGet.mockResolvedValue({ id: 'kpi-active', status: 'active' });
+    mockGetCurrentKpiDefinition.mockResolvedValue({ id: 'kpi-active', currentDefinitionVersion: 1 });
+    mockUpdateKpiDefinition.mockResolvedValue({ id: 'kpi-active', currentDefinitionVersion: 2 });
     const app = await buildBenefitsApp();
 
     const res = await request(app).put('/api/benefits/kpis/kpi-active').send({ targetValue: 999 });
 
     expect(res.status).toBe(200);
-    const updateCall = mockDbRun.mock.calls.find((c) =>
-      /UPDATE\s+initiative_kpis/i.test(String(c?.[0]))
+    expect(mockUpdateKpiDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG_A,
+        kpiId: 'kpi-active',
+        expectedVersion: 1,
+        targetValue: 999,
+      })
     );
-    expect(updateCall).toBeTruthy();
   });
 });
 
@@ -1386,12 +1413,12 @@ describe('M15 — PUT /v8/results/kpis/:kpiId is blocked on a locked KPI', () =>
     mockDbRun.mockResolvedValue({ changes: 1 });
   });
 
-  it('→ 409 RESULTS_KPI_EDIT_LOCKED when the owned KPI is locked; no UPDATE runs', async () => {
+  it('→ 409 RESULTS_KPI_EDIT_LOCKED when the owned KPI is locked; no canonical update runs', async () => {
     mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
     // 1st dbGet: PUT ownership lookup (owned). 2nd dbGet: findKpiEditLockViolation
     // status lookup (locked).
     mockDbGet
-      .mockResolvedValueOnce({ id: 'kpi-locked', name: 'Locked KPI' })
+      .mockResolvedValueOnce({ id: 'kpi-locked' })
       .mockResolvedValueOnce({ status: 'locked' });
     const app = await buildV8App();
 
@@ -1402,17 +1429,20 @@ describe('M15 — PUT /v8/results/kpis/:kpiId is blocked on a locked KPI', () =>
     expect(res.status).toBe(409);
     expect(res.body.code).toBe('RESULTS_KPI_EDIT_LOCKED');
 
-    const updateCall = mockDbRun.mock.calls.find((c) =>
-      /UPDATE\s+initiative_kpis/i.test(String(c?.[0]))
-    );
-    expect(updateCall).toBeFalsy();
+    // The locked guard must short-circuit before kpiDefinitionService is
+    // ever reached (RES-02: the write moved from inline SQL to the
+    // canonical service, but the lock-status guard still runs first).
+    expect(mockGetCurrentKpiDefinition).not.toHaveBeenCalled();
+    expect(mockUpdateKpiDefinition).not.toHaveBeenCalled();
   });
 
-  it('→ 200 and an UPDATE runs when the owned KPI is unlocked', async () => {
+  it('→ 200 and a canonical update runs when the owned KPI is unlocked', async () => {
     mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
     mockDbGet
-      .mockResolvedValueOnce({ id: 'kpi-active', name: 'Active KPI' })
+      .mockResolvedValueOnce({ id: 'kpi-active' })
       .mockResolvedValueOnce({ status: 'active' });
+    mockGetCurrentKpiDefinition.mockResolvedValue({ id: 'kpi-active', currentDefinitionVersion: 1 });
+    mockUpdateKpiDefinition.mockResolvedValue({ id: 'kpi-active', currentDefinitionVersion: 2 });
     const app = await buildV8App();
 
     const res = await request(app)
@@ -1420,10 +1450,14 @@ describe('M15 — PUT /v8/results/kpis/:kpiId is blocked on a locked KPI', () =>
       .send({ targetValue: 999 });
 
     expect(res.status).toBe(200);
-    const updateCall = mockDbRun.mock.calls.find((c) =>
-      /UPDATE\s+initiative_kpis/i.test(String(c?.[0]))
+    expect(mockUpdateKpiDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG_A,
+        kpiId: 'kpi-active',
+        expectedVersion: 1,
+        targetValue: 999,
+      })
     );
-    expect(updateCall).toBeTruthy();
   });
 });
 
@@ -1646,10 +1680,10 @@ describe('RES-003A — /api/benefits real permission checks (fail-closed)', () =
 
     expect(res.status).toBe(403);
     expect(res.body.code).toBe('P04_PERMISSION_DENIED');
-    const insert = mockDbRun.mock.calls.find((c) =>
-      /INSERT\s+INTO\s+initiative_kpis/i.test(String(c?.[0]))
-    );
-    expect(insert).toBeFalsy();
+    // RES-02: the write moved from inline SQL to kpiDefinitionService — the
+    // permission gate must still block BEFORE the canonical service is ever
+    // reached.
+    expect(mockCreateKpiDefinition).not.toHaveBeenCalled();
   });
 
   // ── 401: no authenticated user on a representative route ──

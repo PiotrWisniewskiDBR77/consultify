@@ -3,6 +3,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { V8_RESULTS_READ_CONTRACT, V8_RESULTS_WRITE_CONTRACT } from '../results.routes.js';
+import { KpiDefinitionVersionConflictError } from '../../../services/results/kpiDefinitionService.js';
 
 const mockGetResultsDashboard = vi.fn();
 const mockGetReconciliationOverview = vi.fn();
@@ -27,6 +28,11 @@ const mockCreateReport = vi.fn();
 const mockUpdateSectionContent = vi.fn();
 const mockUpdateReportStatus = vi.fn();
 const mockHandleTimeSeriesRecorded = vi.fn();
+const mockCreateKpiDefinition = vi.fn();
+const mockUpdateKpiDefinition = vi.fn();
+const mockArchiveKpiDefinition = vi.fn();
+const mockGetCurrentKpiDefinition = vi.fn();
+const mockGetCurrentDefinitionVersionId = vi.fn();
 
 vi.mock('../../../services/v8/resultsROIService.js', () => ({
   getResultsDashboard: (...args: unknown[]) => mockGetResultsDashboard(...args),
@@ -53,6 +59,25 @@ vi.mock('../../../services/results/kpiReportSnapshotService.js', () => ({
 vi.mock('../../../services/results/kpiDeviationService.js', () => ({
   handleTimeSeriesRecorded: (...args: unknown[]) => mockHandleTimeSeriesRecorded(...args),
 }));
+
+// RES-02: kpiDefinitionService is the canonical writer the route now
+// delegates to for create/update/delete — mock the module boundary (same
+// pattern as resultsROIService above) rather than asserting on raw SQL that
+// no longer runs in THIS file. Error classes are kept REAL (importActual) so
+// the route's `instanceof` checks against thrown errors still work.
+vi.mock('../../../services/results/kpiDefinitionService.js', async () => {
+  const actual = await vi.importActual<typeof import('../../../services/results/kpiDefinitionService.js')>(
+    '../../../services/results/kpiDefinitionService.js'
+  );
+  return {
+    ...actual,
+    createDefinition: (...args: unknown[]) => mockCreateKpiDefinition(...args),
+    updateDefinition: (...args: unknown[]) => mockUpdateKpiDefinition(...args),
+    archiveDefinition: (...args: unknown[]) => mockArchiveKpiDefinition(...args),
+    getCurrentDefinition: (...args: unknown[]) => mockGetCurrentKpiDefinition(...args),
+    getCurrentDefinitionVersionId: (...args: unknown[]) => mockGetCurrentDefinitionVersionId(...args),
+  };
+});
 
 vi.mock('../../../services/reportBuilderService.js', () => ({
   createReport: (...args: unknown[]) => mockCreateReport(...args),
@@ -656,7 +681,13 @@ describe('V8 results read-only routes', () => {
     expect(res.body.error).toBe('Failed to load KPI drawer detail');
   });
 
+  // RES-02: create/update/delete now delegate to kpiDefinitionService (the
+  // canonical, CAS-versioned writer) instead of running inline SQL in this
+  // router — these assert on that delegation, not on raw SQL text that no
+  // longer runs here.
   it('POST /api/v8/results/kpis creates a KPI in the governed V8 namespace', async () => {
+    mockCreateKpiDefinition.mockResolvedValueOnce({ id: 'new-kpi-1' });
+
     const app = createApp();
     const res = await request(app)
       .post('/api/v8/results/kpis')
@@ -670,16 +701,24 @@ describe('V8 results read-only routes', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
-    expect(res.body.data?.id).toBeTruthy();
-    expect(mockDbRun).toHaveBeenCalledTimes(1);
-    expect(String(mockDbRun.mock.calls[0]?.[0] || '')).toContain('INSERT INTO initiative_kpis');
-    expect(mockDbRun.mock.calls[0]?.[1]).toEqual(
-      expect.arrayContaining([ORG, 'Revenue Growth', 100, 'MONTHLY', 'HIGHER_IS_BETTER'])
+    expect(res.body.data?.id).toBe('new-kpi-1');
+    expect(mockCreateKpiDefinition).toHaveBeenCalledTimes(1);
+    expect(mockCreateKpiDefinition.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        organizationId: ORG,
+        name: 'Revenue Growth',
+        targetValue: 100,
+        measurementFrequency: 'MONTHLY',
+        direction: 'HIGHER_IS_BETTER',
+      })
     );
+    expect(mockDbRun).not.toHaveBeenCalled();
   });
 
   it('PUT /api/v8/results/kpis/:kpiId saves governed KPI settings', async () => {
     mockDbGet.mockResolvedValueOnce({ id: 'kpi-1' });
+    mockGetCurrentKpiDefinition.mockResolvedValueOnce({ id: 'kpi-1', currentDefinitionVersion: 1 });
+    mockUpdateKpiDefinition.mockResolvedValueOnce({ id: 'kpi-1', currentDefinitionVersion: 2 });
 
     const app = createApp();
     const res = await request(app)
@@ -702,27 +741,50 @@ describe('V8 results read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
     expect(res.body.data?.success).toBe(true);
     expect(mockDbGet).toHaveBeenCalledWith(expect.stringContaining('SELECT k.id'), ['kpi-1', ORG]);
-    expect(mockDbRun).toHaveBeenCalledWith(
-      expect.stringContaining('UPDATE initiative_kpis'),
-      expect.arrayContaining([
-        'KPI Alpha Updated',
-        'Updated description',
-        '%',
-        10,
-        20,
-        'MONTHLY',
-        'HIGHER_IS_BETTER',
-        'PERCENT_FROM_TARGET',
-        5,
-        10,
-        'kpi-1',
-      ])
+    expect(mockUpdateKpiDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG,
+        kpiId: 'kpi-1',
+        expectedVersion: 1,
+        name: 'KPI Alpha Updated',
+        description: 'Updated description',
+        unit: '%',
+        baselineValue: 10,
+        targetValue: 20,
+        measurementFrequency: 'MONTHLY',
+        direction: 'HIGHER_IS_BETTER',
+        thresholdMode: 'PERCENT_FROM_TARGET',
+        amberThresholdPct: 5,
+        redThresholdPct: 10,
+      })
     );
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
+  it('PUT /api/v8/results/kpis/:kpiId returns 409 on a stale expectedVersion (CAS conflict)', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'kpi-1' });
+    mockGetCurrentKpiDefinition.mockResolvedValueOnce({ id: 'kpi-1', currentDefinitionVersion: 3 });
+    mockUpdateKpiDefinition.mockRejectedValueOnce(
+      new KpiDefinitionVersionConflictError('kpi-1', 3, 4)
+    );
+
+    const app = createApp();
+    const res = await request(app)
+      .put('/api/v8/results/kpis/kpi-1')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({ name: 'Racing Update' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('RESULTS_KPI_VERSION_CONFLICT');
   });
 
   it('DELETE /api/v8/results/kpis/:kpiId removes a governed KPI with bounded cleanup', async () => {
     mockDbGet.mockResolvedValueOnce({ id: 'kpi-1' });
-    mockDbAll.mockResolvedValueOnce([{ id: 'case-1' }]);
+    mockArchiveKpiDefinition.mockResolvedValueOnce({
+      id: 'kpi-1',
+      archivedAt: '2026-08-02T00:00:00.000Z',
+      alreadyArchived: false,
+    });
 
     const app = createApp();
     const res = await request(app)
@@ -737,11 +799,15 @@ describe('V8 results read-only routes', () => {
       'DELETE FROM initiative_kpi_mappings WHERE kpi_id = ? AND organization_id = ?',
       ['kpi-1', ORG]
     );
-    expect(mockDbRun).toHaveBeenCalledWith(
-      expect.stringContaining('DELETE FROM kpi_deviation_actions WHERE case_id IN'),
-      ['case-1']
+    // RES-02: delete = archive — no hard DELETE against initiative_kpis,
+    // kpi_time_series, or kpi_deviation_cases anymore; history is preserved.
+    expect(mockArchiveKpiDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: ORG, kpiId: 'kpi-1' })
     );
-    expect(mockDbRun).toHaveBeenCalledWith('DELETE FROM initiative_kpis WHERE id = ?', ['kpi-1']);
+    expect(mockDbRun).not.toHaveBeenCalledWith(
+      'DELETE FROM initiative_kpis WHERE id = ?',
+      expect.anything()
+    );
   });
 
   it('POST /api/v8/results/kpi-mappings creates a governed KPI mapping', async () => {
