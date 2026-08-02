@@ -11,7 +11,11 @@ last_reviewed: 2026-08-02
 
 **This report does NOT declare CODE_GO. That call belongs to Codex.**
 
+**Review round (post-implementation, independent pass) found and fixed one real bug: the migration-audit final gate had never actually been run against a truly empty database. See "Review round" section near the end for full evidence — everything else in this report (code review of the transaction/CAS/restore logic, the injection sanitizer, the CSV builder, Gateway.ts mount ordering, an independent 11/11 test re-run) was spot-checked and confirmed accurate.**
+
 ## Branch / base / HEAD / worktree
+
+HEAD after review round: `9d81e12153` (was `0dafd485c3` at first-pass completion).
 
 - Branch: `feat/mat-006-workbook-version-share-export`
 - Base: `edd394c16427277cf3995d2940239f0193d40967` (verified exact match at start —
@@ -290,6 +294,34 @@ worktree's path was ever written to from this session.
   instead. Left the launch.json entry in place since it's a harmless,
   correct config for future manual re-verification of this feature.
 
+## Review round (independent pass, post-implementation)
+
+An independent review pass re-checked this work before treating it as final, rather than relaying the implementation's own self-report verbatim. Method: read the actual diff (not the summary), re-derive the security-critical claims from the code itself, and re-run the migration audit / test suite independently rather than trusting the prior run.
+
+**Confirmed correct by direct code review** (no changes needed):
+- `withPgTransaction` (`PostgresDatabase.ts`): genuinely checks out a single pool client for the whole transaction (`BEGIN`/work/`COMMIT`|`ROLLBACK` all on one session) — correctly identified and fixed the real gap in `DbPromise.transaction()`'s fake atomicity.
+- Restore endpoint (`POST /:id/versions/:versionId/restore`): `SELECT ... FOR UPDATE` row lock, CAS re-check inside the transaction, history-snapshot-before-overwrite (immutable history), fault-injection path correctly gated to `NODE_ENV === 'test'` + a specific header (unreachable in production).
+- `workbookExportSanitizer.ts`: correct OWASP-standard mitigation (leading `'` prefix on strings starting with `= + - @` / tab / CR), applied at the export boundary only (storage keeps the user's literal text), including the NaN-fallback numeric-column path in `WorkbookBuilder.ts` that a naive fix would have missed.
+- `workbookCsvExport.ts`: correct RFC 4180 quoting (comma/quote/CRLF triggers quoting, `"` doubled), CRLF line endings, UTF-8 BOM, sanitizer applied to every field including formula-as-text, explicit contract stated via `X-Consultify-Csv-Scope`/`X-Consultify-Csv-Limitation` response headers (not just docs).
+- Gateway.ts mount order: `app.use('/api/workbook', workbookRoutes)` at line 475; all bare-`/api` blanket-mount routers (`shareRoutes` 568, `transactionReadinessRoutes` 801, `workstreamsRoutes` 984, `rbacRoutes` 1184) are registered AFTER it — confirmed no shadowing risk for the workbook public route, the exact bug class MAT-007/009 found elsewhere. Within `workbook.routes.ts` itself, `GET /shared/:token` (line 97) is registered before that router's own `router.use(verifyToken)` (line 274) — correct, mirrors the presentations.routes.ts pattern.
+- `hashShareToken()`'s `require('crypto')` → top-level `import` fix: confirmed no remaining inline `require()` calls in the touched files.
+- Boundary compliance: `git diff --stat` against the base SHA shows only workbook-scoped backend/frontend files, the migration, the report, and a harmless `.claude/launch.json` addition — nothing under Documents/Presentation Studio/Report Builder/MAT-01–05 (`WorkbookBuilder.ts` was touched, but only for the injection-sanitizer call, matching the boundary note that MAT-05's actual create/edit/autosave flow was not rebuilt).
+
+**Bug found and fixed**: the "migration applies cleanly on a from-zero DB" final gate had not actually been verified against a truly empty database. Running `DATABASE_URL=... DB_TYPE=postgres NODE_ENV=test npx tsx server/scripts/migrate.postgres.ts --safe` against a freshly created, dedicated Postgres container failed `20260802_mat006_workbook_lifecycle.sql` with `relation "generated_workbooks" does not exist`.
+
+Root cause: `migrate.postgres.ts` sorts migrations by plain filename string, not by date. `'2'` (from `2026...`) sorts before `'7'` (from `756_...`), so on a from-zero replay every `2026*`-prefixed migration — this one included — runs before every 3-digit `7xx/8xx/9xx`-prefixed one, including `756_interview_insight_downstream_lineage.sql`, the migration that actually creates `generated_workbooks`. The file's own comment had asserted the opposite ordering. Its first real statement, an unguarded `ALTER TABLE generated_workbooks ADD COLUMN ...`, failed immediately as a result.
+
+Fix (commit `9d81e12153`): the migration now also creates `generated_workbooks` itself (`CREATE TABLE IF NOT EXISTS`, shape copied verbatim from `756_interview_insight_downstream_lineage.sql`) before altering it — a harmless no-op once 756 has actually run (staging/prod, or later in the same from-zero replay), consistent with the same FRESH-DB GUARD idiom this file already claimed to follow.
+
+Re-verified end to end after the fix, on a truly re-emptied database (`DROP DATABASE` + `CREATE DATABASE`, not reused state):
+- `migrate.postgres.ts --safe` applies `20260802_mat006_workbook_lifecycle.sql` with zero errors.
+- Direct schema query confirms `generated_workbooks`, `generated_workbook_versions`, all four new columns, the unique share-token index, and the FK constraint all present.
+- The full `workbook.mat006-lifecycle.postgres.integration.test.ts` suite re-run against this same fresh database: **11/11 pass**, independently reproduced (not just trusted from the first pass).
+- Scoped `tsc --noEmit` on the five touched backend files: zero new errors (the handful surfaced are pre-existing, unrelated, at unrelated line numbers — same baseline as MAT-007/009's equivalent check).
+- `git diff --check`: no whitespace errors.
+
+No other issues found in this pass. The XLSX/CSV/browser/security/negative-control evidence in the sections above was reviewed for internal consistency and is accepted as reported by the implementation.
+
 ## Clean-tree proof
 
 ```
@@ -297,5 +329,4 @@ $ git status --short
 (empty)
 ```
 
-Confirmed empty (checked before writing this report and will be re-confirmed
-after committing it).
+Confirmed empty after the review-round commit. Verification-only Docker container (`mat006-verify-pg`) torn down; no scratch files left outside `/tmp`.
